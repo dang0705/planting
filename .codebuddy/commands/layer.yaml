@@ -1,0 +1,30 @@
+# CodeBuddy 自定义指令配置
+name: layer
+description: 云函数层管理绑定 - 快速执行云函数层配置更新和版本管理
+tags:
+  - cloudbase
+  - functions
+  - layers
+  - deployment
+category: 云开发
+usage: |
+  /layer status          # 检查所有云函数层状态
+  /layer update-all      # 批量更新所有函数到最新层版本
+  /layer update <function> # 更新指定函数的层配置
+  /layer verify          # 验证层配置一致性
+parameters:
+  - name: action
+    description: 执行的操作类型
+    type: string
+    required: true
+    values:
+      - status
+      - update-all
+      - update
+      - verify
+      - recreate-all
+      - report
+  - name: function
+    description: 要操作的函数名称（仅update操作需要）
+    type: string
+    required: false

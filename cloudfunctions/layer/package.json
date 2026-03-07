@@ -1,0 +1,9 @@
+{
+  "name": "cloudbase-layer",
+  "version": "1.0.0",
+  "description": "CloudBase 云函数共享层 - 包含通用工具和配置",
+  "main": "utils/cloudbase.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "^3.16.0"
+  }
+}

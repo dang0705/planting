@@ -1,0 +1,23 @@
+{
+  "functionsRoot": ".",
+  "functions": [
+    {
+      "name": "diagnose-http",
+      "directory": "."
+    }
+  ],
+  "routes": [
+    {
+      "functionName": "diagnose-http",
+      "path": "/stream/diagnose"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/diagnose"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/health"
+    }
+  ]
+}

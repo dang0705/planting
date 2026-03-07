@@ -1,0 +1,41 @@
+{
+  "envId": "cloud1-2grufevs395a9d5e",
+  "functions": [
+    {
+      "name": "auth-user",
+      "dir": "./cloudfunctions/auth-user",
+      "timeout": 30,
+      "runtime": "Nodejs18.15",
+      "memorySize": 256,
+      "envVariables": {
+        "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
+        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
+        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG"
+      }
+    },
+    {
+      "name": "diagnose-http",
+      "dir": "./cloudfunctions/diagnose-http",
+      "timeout": 30,
+      "runtime": "Nodejs18.15",
+      "memorySize": 256,
+      "envVariables": {
+        "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
+        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
+        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG"
+      }
+    },
+    {
+      "name": "identify",
+      "dir": "./cloudfunctions/identify",
+      "timeout": 30,
+      "runtime": "Nodejs18.15",
+      "memorySize": 256,
+      "envVariables": {
+        "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
+        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
+        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG"
+      }
+    }
+  ]
+}

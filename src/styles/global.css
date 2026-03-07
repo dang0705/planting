@@ -1,0 +1,11 @@
+@import "./tailwind.css";
+page {
+	--primary-color:#2D7A4F;
+	--secondary-color:#F8F6F0;
+}
+view,scroll-view{
+	box-sizing: border-box;
+}
+image{
+	height:unset;
+}

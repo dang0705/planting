@@ -1,0 +1,22 @@
+{
+  "name": "deploy function",
+  "description": "云函数快速部署 - 一键部署指定的云函数到 CloudBase 环境",
+  "category": "云开发",
+  "tags": ["cloudbase", "functions", "deployment", "automation"],
+  "usage": "\n/deploy function saveUserPlant     # 部署单个云函数\n/deploy function deleteUserPlant   # 部署删除植物函数\n/deploy function addUserPlant      # 部署新增植物函数\n/deploy function plant             # 部署植物相关函数\n/deploy function all               # 部署所有云函数\n/deploy function status            # 查看部署状态\n/deploy function verify            # 验证部署结果\n",
+  "parameters": [
+    {
+      "name": "functionName",
+      "description": "要部署的云函数名称",
+      "type": "string",
+      "required": true,
+      "values": ["saveUserPlant", "deleteUserPlant", "addUserPlant", "plant", "all", "status", "verify"]
+    }
+  ],
+  "mcp_tools": ["getFunctionList", "updateFunctionCode"],
+  "project": {
+    "name": "青植 - 智能植物养护助手",
+    "cloudbase_env": "cloud1-2grufevs395a9d5e",
+    "function_root": "e:/workspace/planting/cloudfunctions"
+  }
+}

@@ -1,0 +1,8 @@
+#!/bin/bash
+export PORT=9000
+/var/lang/node18/bin/node node_modules/@cloudbase/functions-framework/bin/tcb-ff.js \
+  --port=9000 \
+  --logDirname=/tmp/logs \
+  --interceptOutput=false \
+  --extendedContextKey=X-Cloudbase-Context \
+  --functionsConfigFile=cloudbase-functions.json

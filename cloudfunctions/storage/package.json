@@ -1,0 +1,7 @@
+{
+  "name": "storage",
+  "version": "1.0.0",
+  "description": "植物图片存储管理",
+  "main": "index.js",
+  "dependencies": {}
+}

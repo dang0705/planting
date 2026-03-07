@@ -1,0 +1,100 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2021": true
+  },
+  "globals": {
+    "getApp": "readonly",
+    "getCurrentPages": "readonly",
+    "getCurrentPage": "readonly",
+    "setTimeout": "readonly",
+    "clearTimeout": "readonly",
+    "setInterval": "readonly",
+    "clearInterval": "readonly",
+    "console": "readonly",
+    "Promise": "readonly",
+    "uni": "readonly",
+    "wx": "readonly",
+    "plus": "readonly",
+    "defineProps": "readonly",
+    "defineEmits": "readonly",
+    "defineExpose": "readonly",
+    "withDefaults": "readonly",
+    "defineOptions": "readonly",
+    "defineSlots": "readonly",
+    "defineModel": "readonly"
+  },
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-alert": "error",
+    "no-array-constructor": "error",
+    "no-unused-vars": "error",
+    "no-console": "warn",
+    "eqeqeq": "error",
+    "no-undef": "error",
+    "no-debugger": "error",
+    "no-var": "error",
+    "prefer-const": "error",
+    "curly": "error",
+    "no-constant-condition": "error",
+    "no-empty": "error",
+    "no-magic-numbers": "warn",
+    "no-implicit-coercion": "warn",
+    "no-eq-null": "error",
+    "no-multi-spaces": "warn",
+    "no-unsafe-finally": "error",
+    "no-fallthrough": "error",
+    "no-new-object": "error",
+    "no-prototype-builtins": "error",
+    "no-undef-init": "error",
+    "no-use-before-define": "error",
+    "no-return-assign": "error",
+    "no-void": "error",
+    "radix": "error",
+    "yoda": "error",
+    "use-isnan": "error",
+    "no-func-assign": "error",
+    "no-control-regex": "error"
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.vue"
+      ],
+      "parserOptions": {
+        "sourceType": "module"
+      },
+      "rules": {
+        "no-undef": "error",
+        "no-unused-vars": "error"
+      }
+    },
+    {
+      "files": [
+        "**/*.js",
+        "**/*.cjs",
+        "**/*.mjs"
+      ],
+      "parserOptions": {
+        "sourceType": "module"
+      }
+    }
+  ],
+  "linterOptions": {
+    "reportUnusedDisableDirectives": true
+  },
+  "ignorePatterns": [
+    ".github",
+    "uni_modules",
+    "node_modules",
+    "dist",
+    "unpackage",
+    "coverage",
+    ".output"
+  ]
+}

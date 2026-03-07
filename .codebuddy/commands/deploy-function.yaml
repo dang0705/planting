@@ -1,0 +1,49 @@
+# CodeBuddy 自定义指令配置
+name: deploy function
+description: 云函数快速部署 - 一键部署指定的云函数到 CloudBase 环境
+tags:
+  - cloudbase
+  - functions
+  - deployment
+  - automation
+category: 云开发
+usage: |
+  /deploy function saveUserPlant     # 部署单个云函数
+  /deploy function deleteUserPlant   # 部署删除植物函数
+  /deploy function addUserPlant      # 部署新增植物函数
+  /deploy function plant             # 部署植物相关函数
+  /deploy function all               # 部署所有云函数
+  /deploy function status            # 查看部署状态
+  /deploy function verify            # 验证部署结果
+parameters:
+  - name: functionName
+    description: 要部署的云函数名称
+    type: string
+    required: true
+    values:
+      - saveUserPlant
+      - deleteUserPlant
+      - addUserPlant
+      - plant
+      - all
+      - status
+      - verify
+
+# MCP 工具集成
+mcp_tools:
+  - getFunctionList
+  - updateFunctionCode
+
+# 项目特定配置
+project:
+  name: 青植 - 智能植物养护助手
+  cloudbase_env: cloud1-2grufevs395a9d5e
+  function_root: e:/workspace/planting/cloudfunctions
+
+# 函数映射关系
+function_mapping:
+  saveUserPlant: 保存用户植物函数
+  deleteUserPlant: 删除用户植物函数
+  addUserPlant: 新增用户植物函数
+  plant: 植物管理相关函数（saveUserPlant, deleteUserPlant, addUserPlant）
+  all: 所有云函数
