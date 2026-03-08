@@ -1,5 +1,6 @@
 import cloudbase from '@cloudbase/js-sdk'
-
+import { registerAuth } from '@cloudbase/js-sdk/miniprogram_dist/auth'
+registerAuth(cloudbase)
 export const CLOUDBASE_ENV_ID = 'cloud1-2grufevs395a9d5e'
 
 let cloudbaseApp = null

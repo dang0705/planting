@@ -6,7 +6,7 @@ const axios = require('axios')
 // 和风天气API配置
 const QWEATHER_CONFIG = {
   apiUrl: 'https://n773jqqeap.re.qweatherapi.com/v7/weather/now',
-  apiKey: '8e13073b403444639eba674427029def'
+  apiKey: process.env.QWEATHER_API_KEY
 }
 
 /**
@@ -84,7 +84,8 @@ function getNextMidnight() {
  */
 async function getCachedWeather(openid) {
   try {
-    const sql = 'SELECT weather_data, expires_at FROM weather_cache WHERE _openid = {{openid}} LIMIT 1'
+    const sql =
+      'SELECT weather_data, expires_at FROM weather_cache WHERE _openid = {{openid}} LIMIT 1'
     const result = await models.$runSQL(sql, { openid })
     const rows = result?.data?.executeResultList || []
 
@@ -118,14 +119,19 @@ async function saveCachedWeather(openid, weatherData) {
     const now = new Date()
     const expiresAt = getNextMidnight()
 
-    const formatDate = (date) => date.toISOString().replace('T', ' ').replace(/\.\d{3}Z$/, '')
+    const formatDate = date =>
+      date
+        .toISOString()
+        .replace('T', ' ')
+        .replace(/\.\d{3}Z$/, '')
 
     const checkSql = 'SELECT _id FROM weather_cache WHERE _openid = {{openid}} LIMIT 1'
     const checkResult = await models.$runSQL(checkSql, { openid })
     const exists = (checkResult?.data?.executeResultList || []).length > 0
 
     if (exists) {
-      const updateSql = 'UPDATE weather_cache SET weather_data = {{data}}, updated_at = {{updatedAt}}, expires_at = {{expiresAt}} WHERE _openid = {{openid}}'
+      const updateSql =
+        'UPDATE weather_cache SET weather_data = {{data}}, updated_at = {{updatedAt}}, expires_at = {{expiresAt}} WHERE _openid = {{openid}}'
       await models.$runSQL(updateSql, {
         data: JSON.stringify(weatherData),
         updatedAt: formatDate(now),
@@ -133,7 +139,8 @@ async function saveCachedWeather(openid, weatherData) {
         openid
       })
     } else {
-      const insertSql = 'INSERT INTO weather_cache (_openid, weather_data, updated_at, expires_at) VALUES ({{openid}}, {{data}}, {{updatedAt}}, {{expiresAt}})'
+      const insertSql =
+        'INSERT INTO weather_cache (_openid, weather_data, updated_at, expires_at) VALUES ({{openid}}, {{data}}, {{updatedAt}}, {{expiresAt}})'
       await models.$runSQL(insertSql, {
         openid,
         data: JSON.stringify(weatherData),
@@ -208,12 +215,13 @@ exports.main = async (event, context) => {
 
     console.log('[天气服务] ========== 完成 ==========')
     console.log(`[数据来源] ${fromCache ? '🔵 MySQL缓存' : '🟢 和风天气API'}`)
-    console.log(`[返回数据] 温度=${weatherData.temperature}℃ 湿度=${weatherData.humidity}% 天气=${weatherData.weather}`)
+    console.log(
+      `[返回数据] 温度=${weatherData.temperature}℃ 湿度=${weatherData.humidity}% 天气=${weatherData.weather}`
+    )
     console.log(`[原始湿度] raw.humidity=${weatherData.raw?.humidity}`)
     console.log(`[缓存状态] cached=${fromCache}, cacheEnabled=${useCache}`)
 
     return response
-
   } catch (error) {
     console.error('[天气服务] ========== 错误 ==========')
     console.error('错误:', error.message)

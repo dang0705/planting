@@ -1,6 +1,21 @@
 import { defineStore } from 'pinia'
 import { getFileUrl } from '@/composables/useCloudFile.js'
 
+/**
+ * 标准化搜索关键词
+ * 移除特殊字符，只保留中英文、数字和空格
+ * @param {string} text - 原始文本
+ * @returns {string} 标准化后的文本
+ */
+function normalizeSearchText(text) {
+  if (!text) return ''
+  // 移除所有非中英文、数字、空格的字符
+  return text
+    .replace(/[^\u4e00-\u9fa5a-zA-Z0-9\s]/g, '')
+    .trim()
+    .toLowerCase()
+}
+
 export const usePlantStore = defineStore('plant', {
   state: () => ({
     // plants 表 - 预设植物目录
@@ -36,6 +51,73 @@ export const usePlantStore = defineStore('plant', {
     //   fertilization_frequency, ventilation
     setPlants(list) {
       this.defaultPlants = list
+    },
+
+    /**
+     * 搜索预设植物
+     * 优先从前端缓存过滤，没有结果再请求 API
+     * @param {string} keyword - 搜索关键词
+     * @returns {Array} 搜索结果
+     */
+    async searchDefaultPlants(keyword) {
+      const normalizedKeyword = normalizeSearchText(keyword || '')
+
+      // 1. 如果有缓存数据，先前端过滤
+      if (this.defaultPlants.length > 0) {
+        console.log('[Plant Store] 使用前端缓存搜索')
+        const filtered = this.defaultPlants.filter(plant => {
+          if (!normalizedKeyword) return true
+
+          const name = normalizeSearchText(plant.name || '')
+          const category = normalizeSearchText(plant.category || '')
+          const desc = normalizeSearchText(plant.desc || '')
+
+          return (
+            name.includes(normalizedKeyword) ||
+            category.includes(normalizedKeyword) ||
+            desc.includes(normalizedKeyword)
+          )
+        })
+
+        if (filtered.length > 0 || !normalizedKeyword) {
+          return filtered
+        }
+
+        console.log('[Plant Store] 前端缓存未找到，请求 API')
+      }
+
+      // 2. 请求 API（使用标准化后的关键词）
+      try {
+        const params = normalizedKeyword ? { name: normalizedKeyword } : {}
+        const res = await wx.cloud.callFunction({
+          name: 'getDefaultPlants',
+          data: params
+        })
+        console.log(res.result?.code)
+        if (res.result?.code === 200) {
+          const list = res.result.data || []
+
+          // 解析图片 URL
+          for (const plant of list) {
+            if (plant.fileId) {
+              plant.image = await getFileUrl(plant.fileId)
+            }
+          }
+          console.log(list, 'list...')
+          // 如果是全量请求，更新缓存
+          if (!normalizedKeyword) {
+            this.setPlants(list)
+            console.log('[Plant Store] 更新全量缓存，共', list.length, '条')
+          }
+
+          return list
+        }
+
+        return []
+      } catch (e) {
+        console.error('[Plant Store] 搜索植物失败:', e)
+        return []
+      }
     },
 
     // ========== user_plants 表（用户的植物）==========
@@ -177,5 +259,12 @@ export const usePlantStore = defineStore('plant', {
         nextWater: nextWater.toISOString()
       })
     }
+  },
+  persist: {
+    storage: {
+      getItem: key => uni.getStorageSync(key),
+      setItem: (key, value) => uni.setStorageSync(key, value)
+    },
+    pick: ['defaultPlants']
   }
 })

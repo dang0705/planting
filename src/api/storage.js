@@ -10,7 +10,7 @@
  */
 function sanitizeFileName(str) {
   // 只保留字母、数字、下划线、中划线
-  return str.replace(/[^a-zA-Z0-9_-]/g, '');
+  return str.replace(/[^a-zA-Z0-9_-]/g, '')
 }
 
 /**
@@ -23,50 +23,50 @@ function compressImage(imagePath) {
     // 先获取原始文件大小
     wx.getFileSystemManager().stat({
       path: imagePath,
-      success: (statRes) => {
-        const originalSize =  statRes.stats.size;
-        console.log('原始图片大小:', (originalSize / 1024 / 1024).toFixed(2), 'MB');
+      success: statRes => {
+        const originalSize = statRes.stats.size
+        console.log('原始图片大小:', (originalSize / 1024 / 1024).toFixed(2), 'MB')
 
         // 根据原始大小选择压缩质量
-        let quality = 60;
+        let quality = 60
         if (originalSize > 5 * 1024 * 1024) {
-          quality = 40; // 大于 5MB，质量设为 40
+          quality = 40 // 大于 5MB，质量设为 40
         } else if (originalSize > 3 * 1024 * 1024) {
-          quality = 50; // 大于 3MB，质量设为 50
+          quality = 50 // 大于 3MB，质量设为 50
         }
 
-        console.log('使用压缩质量:', quality);
+        console.log('使用压缩质量:', quality)
 
         wx.compressImage({
           src: imagePath,
           quality: quality,
           type: 'jpg',
-          success: (res) => {
+          success: res => {
             // 获取压缩后的文件大小
             wx.getFileSystemManager().stat({
               path: res.tempFilePath,
-              success: (compressedStatRes) => {
-                const compressedSize = compressedStatRes.stats.size;
-                const ratio = ((1 - compressedSize / originalSize) * 100).toFixed(1);
-                console.log('压缩后大小:', (compressedSize / 1024 / 1024).toFixed(2), 'MB');
-                console.log('压缩率:', ratio, '%');
+              success: compressedStatRes => {
+                const compressedSize = compressedStatRes.stats.size
+                const ratio = ((1 - compressedSize / originalSize) * 100).toFixed(1)
+                console.log('压缩后大小:', (compressedSize / 1024 / 1024).toFixed(2), 'MB')
+                console.log('压缩率:', ratio, '%')
 
                 // 如果压缩后反而变大，使用原图
                 if (compressedSize > originalSize) {
-                  console.warn('压缩后文件变大，使用原图');
+                  console.warn('压缩后文件变大，使用原图')
                   resolve({
                     path: imagePath,
                     originalSize: originalSize,
                     compressedSize: originalSize,
                     compressed: false
-                  });
+                  })
                 } else {
                   resolve({
                     path: res.tempFilePath,
                     originalSize: originalSize,
                     compressedSize: compressedSize,
                     compressed: true
-                  });
+                  })
                 }
               },
               fail: () => {
@@ -76,44 +76,44 @@ function compressImage(imagePath) {
                   originalSize: originalSize,
                   compressedSize: 0,
                   compressed: true
-                });
+                })
               }
-            });
+            })
           },
-          fail: (err) => {
-            console.warn('图片压缩失败，使用原图:', err);
+          fail: err => {
+            console.warn('图片压缩失败，使用原图:', err)
             resolve({
               path: imagePath,
               originalSize: originalSize,
               compressedSize: originalSize,
               compressed: false
-            });
+            })
           }
-        });
+        })
       },
-      fail: (err) => {
-        console.warn('无法获取文件大小:', err);
+      fail: err => {
+        console.warn('无法获取文件大小:', err)
         // 如果无法获取大小，尝试压缩
         wx.compressImage({
           src: imagePath,
           quality: 50,
           type: 'jpg',
-          success: (res) => {
+          success: res => {
             resolve({
               path: res.tempFilePath,
               compressed: true
-            });
+            })
           },
           fail: () => {
             resolve({
               path: imagePath,
               compressed: false
-            });
+            })
           }
-        });
+        })
       }
-    });
-  });
+    })
+  })
 }
 
 /**
@@ -126,43 +126,47 @@ function compressImage(imagePath) {
 export async function uploadPlantImage(imagePath, userId, plantId = '') {
   try {
     // 先压缩图片
-    const compressResult = await compressImage(imagePath);
+    const compressResult = await compressImage(imagePath)
 
     // 清理 userId 和 plantId，移除特殊字符
-    const cleanUserId = sanitizeFileName(userId || 'user');
-    const cleanPlantId = sanitizeFileName(plantId || 'temp');
+    const cleanUserId = sanitizeFileName(userId || 'user')
+    const cleanPlantId = sanitizeFileName(plantId || 'temp')
 
     // 生成云存储路径
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substr(2, 9);
+    const timestamp = Date.now()
+    const random = Math.random().toString(36).substr(2, 9)
     // 路径格式：plants/userId/plantId_timestamp_random.jpg
-    const fileName = `plants/${cleanUserId}/${cleanPlantId}_${timestamp}_${random}.jpg`;
+    const fileName = `plants/${cleanUserId}/${cleanPlantId}_${timestamp}_${random}.jpg`
 
-    console.log('上传文件路径:', fileName);
+    console.log('上传文件路径:', fileName)
     console.log('上传文件信息:', {
-      originalSize: compressResult.originalSize ? (compressResult.originalSize / 1024 / 1024).toFixed(2) + ' MB' : '未知',
-      compressedSize: compressResult.compressedSize ? (compressResult.compressedSize / 1024 / 1024).toFixed(2) + ' MB' : '未知',
+      originalSize: compressResult.originalSize
+        ? (compressResult.originalSize / 1024 / 1024).toFixed(2) + ' MB'
+        : '未知',
+      compressedSize: compressResult.compressedSize
+        ? (compressResult.compressedSize / 1024 / 1024).toFixed(2) + ' MB'
+        : '未知',
       compressed: compressResult.compressed !== false
-    });
+    })
 
     // 直接使用 CloudBase SDK 上传到云存储（避免云函数 5MB 限制）
     const uploadResult = await wx.cloud.uploadFile({
       cloudPath: fileName,
       filePath: compressResult.path
-    });
+    })
 
     if (uploadResult.fileID) {
       return {
         fileName: fileName,
         fileId: uploadResult.fileID,
         url: uploadResult.fileID
-      };
+      }
     } else {
-      throw new Error('上传失败');
+      throw new Error('上传失败')
     }
   } catch (error) {
-    console.error('上传图片失败:', error);
-    throw error;
+    console.error('上传图片失败:', error)
+    throw error
   }
 }
 
@@ -177,16 +181,15 @@ export async function getImageUrl(fileId, maxAge = 3600) {
     const url = await wx.cloud.getTempFileURL({
       fileList: [fileId],
       maxAge: maxAge
-    });
-
+    })
     if (url.fileList && url.fileList.length > 0) {
-      return url.fileList[0].tempFileURL;
+      return url.fileList[0].tempFileURL
     } else {
-      throw new Error('获取链接失败');
+      throw new Error('获取链接失败')
     }
   } catch (error) {
-    console.error('获取图片链接失败:', error);
-    throw error;
+    console.error('获取图片链接失败:', error)
+    throw error
   }
 }
 
@@ -199,11 +202,11 @@ export async function deleteImage(fileId) {
   try {
     await wx.cloud.deleteFile({
       fileList: [fileId]
-    });
-    return true;
+    })
+    return true
   } catch (error) {
-    console.error('删除图片失败:', error);
-    throw error;
+    console.error('删除图片失败:', error)
+    throw error
   }
 }
 
@@ -226,16 +229,16 @@ export async function getPlantImages(plantId, limit = 10, offset = 0) {
           offset: offset
         }
       }
-    });
+    })
 
     if (result.result.code === 200) {
-      return result.result.data.images;
+      return result.result.data.images
     } else {
-      throw new Error(result.result.message || '获取失败');
+      throw new Error(result.result.message || '获取失败')
     }
   } catch (error) {
-    console.error('获取植物图片失败:', error);
-    throw error;
+    console.error('获取植物图片失败:', error)
+    throw error
   }
 }
 
@@ -251,20 +254,20 @@ export async function chooseAndUploadImage(userId, plantId = '') {
       count: 1,
       sizeType: ['compressed'],
       sourceType: ['camera', 'album'],
-      success: async (res) => {
+      success: async res => {
         try {
-          const imagePath = res.tempFilePaths[0];
-          const uploadResult = await uploadPlantImage(imagePath, userId, plantId);
-          resolve(uploadResult);
+          const imagePath = res.tempFilePaths[0]
+          const uploadResult = await uploadPlantImage(imagePath, userId, plantId)
+          resolve(uploadResult)
         } catch (error) {
-          reject(error);
+          reject(error)
         }
       },
-      fail: (err) => {
-        reject(err);
+      fail: err => {
+        reject(err)
       }
-    });
-  });
+    })
+  })
 }
 
 /**
@@ -276,26 +279,26 @@ export async function chooseAndUploadImage(userId, plantId = '') {
  */
 export async function uploadMultipleImages(imagePaths, userId, plantId = '') {
   try {
-    const results = [];
+    const results = []
 
     for (const imagePath of imagePaths) {
       try {
-        const result = await uploadPlantImage(imagePath, userId, plantId);
+        const result = await uploadPlantImage(imagePath, userId, plantId)
         results.push({
           success: true,
           data: result
-        });
+        })
       } catch (error) {
         results.push({
           success: false,
           error: error.message
-        });
+        })
       }
     }
 
-    return results;
+    return results
   } catch (error) {
-    console.error('批量上传失败:', error);
-    throw error;
+    console.error('批量上传失败:', error)
+    throw error
   }
 }

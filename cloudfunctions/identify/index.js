@@ -24,7 +24,7 @@ exports.main = async (event, context) => {
     console.log('植物识别请求:', { hasImage: !!image, visitorId })
 
     appendPromptToMessages(messages, getPrompt())
-
+    console.log(messages[0].Contents, 'messages...')
     const aiResponse = await callHunyuanVision(messages)
     const result = parseIdentifyResult(aiResponse)
 

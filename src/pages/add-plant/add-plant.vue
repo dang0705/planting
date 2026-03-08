@@ -152,7 +152,6 @@ import AIStreamDialog from '@/components/AIStreamDialog.vue'
 const userStore = useUserStore()
 const plantStore = usePlantStore()
 const { plants: defaultPlants, loading: plantsLoading, load: loadPlants } = useDefaultPlants()
-
 // 将植物按每组4个分组（2列x2行）
 const plantGroups = computed(() => {
   const groups = []
