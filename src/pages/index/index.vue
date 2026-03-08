@@ -40,11 +40,12 @@
         </view>
         <!-- 植物卡片列表 -->
         <view v-else class="p-4">
-          <uni-collapse>
+          <uni-collapse @change="handleCollapseChange">
             <uni-collapse-item
               v-for="plant in plantStore.userPlants"
               :key="plant.id"
               :title="plant.name"
+              :name="plant.id"
               :open="false"
               :border="false"
               show-animation
@@ -92,63 +93,77 @@
                       >
                     </view>
                   </view>
+
+                  <!-- 诊断按钮 -->
+                  <view
+                    class="ml-2 bg-primary px-3 py-1.5 rounded-lg flex items-center"
+                    @click.stop="openDiagnose(plant)"
+                  >
+                    <text class="text-white text-xs font-semibold">📷 诊断</text>
+                  </view>
                 </view>
               </template>
 
               <!-- 折叠面板内容 -->
-              <view @click="viewPlantDetail(plant)">
-                <!-- 植物大图 -->
-                <view class="relative w-full h-[200px] rounded-xl overflow-hidden mb-3">
-                  <image
-                    v-if="plant.image"
-                    :src="plant.image"
-                    class="w-full h-full"
-                    mode="aspectFill"
-                  />
-                  <view
-                    v-else
-                    class="w-full h-full flex items-center justify-center"
-                    style="background: linear-gradient(135deg, #d8f3dc 0%, #b7e4c7 100%)"
-                  >
-                    <text class="text-6xl">🪴</text>
+              <view class="px-3 py-2">
+                <!-- 诊断历史 -->
+                <view class="mb-3">
+                  <text class="block text-sm font-semibold text-gray-800 mb-2">📋 诊断历史</text>
+
+                  <!-- 加载中 -->
+                  <view v-if="loadingHistory[plant.id]" class="text-center py-4">
+                    <text class="text-xs text-gray-400">加载中...</text>
+                  </view>
+
+                  <!-- 历史记录列表 -->
+                  <view v-else-if="plantDiagnoseHistory[plant.id]?.length > 0">
+                    <view
+                      v-for="record in plantDiagnoseHistory[plant.id]"
+                      :key="record._id"
+                      class="bg-gray-50 rounded-xl p-2.5 mb-2"
+                      @click="viewDiagnoseDetail(record._id)"
+                    >
+                      <view class="flex items-start">
+                        <view class="flex-1">
+                          <text class="block text-xs font-semibold text-gray-800 mb-1">
+                            {{ record.mainIssue || '诊断记录' }}
+                          </text>
+                          <view class="flex items-center">
+                            <view
+                              class="px-2 py-0.5 rounded-full mr-2"
+                              :class="getHealthBadgeClass(record.healthStatus)"
+                            >
+                              <text class="text-white text-[10px] font-semibold">
+                                {{ getHealthText(record.healthStatus) }}
+                              </text>
+                            </view>
+                            <text class="text-[10px] text-gray-400">
+                              {{ formatTime(record.createdAt) }}
+                            </text>
+                          </view>
+                        </view>
+                        <text class="text-gray-400 ml-2">›</text>
+                      </view>
+                    </view>
+                  </view>
+
+                  <!-- 空状态 -->
+                  <view v-else class="bg-gray-50 rounded-xl p-3 text-center">
+                    <text class="text-xs text-gray-400">暂无诊断记录</text>
                   </view>
                 </view>
 
-                <!-- 植物详细信息 -->
-                <view class="px-2">
-                  <view class="flex items-center gap-3 mb-3">
-                    <text class="text-[13px] text-gray-600">📍 {{ plant.location }}</text>
-                    <text v-if="plant.category" class="text-[13px] text-gray-600">{{
-                      plant.category
-                    }}</text>
-                  </view>
+                <!-- 养护提醒 -->
+                <view
+                  v-if="needsCareToday(plant.id)"
+                  class="inline-flex px-3 py-1.5 bg-[#FFF3E0] rounded-xl mb-3"
+                >
+                  <text class="text-xs text-[#F57C00] font-semibold">💧 今日需要养护</text>
+                </view>
 
-                  <!-- 最近诊断 -->
-                  <!--                  <view
-                    v-if="getLatestDiagnosis(plant.id)"
-                    class="p-2.5 px-3 bg-gray-100 rounded-[10px] mb-2"
-                  >
-                    <text class="text-xs text-gray-400 mr-1">最近诊断：</text>
-                    <text class="text-[13px] text-gray-800">{{
-                      getLatestDiagnosis(plant.id).problem || '健康'
-                    }}</text>
-                  </view>
-                  <view v-else class="p-2.5 px-3 bg-gray-100 rounded-[10px] mb-2">
-                    <text class="text-[13px] text-gray-400">暂无诊断记录</text>
-                  </view>
--->
-                  <!-- 养护提醒 -->
-                  <view
-                    v-if="needsCareToday(plant.id)"
-                    class="inline-flex px-3 py-1.5 bg-[#FFF3E0] rounded-xl mb-2"
-                  >
-                    <text class="text-xs text-[#F57C00] font-semibold">💧 今日需要养护</text>
-                  </view>
-
-                  <!-- 查看详情按钮 -->
-                  <view class="mt-3 py-2 text-center bg-primary rounded-xl">
-                    <text class="text-sm text-white font-semibold">查看详情</text>
-                  </view>
+                <!-- 查看详情按钮 -->
+                <view class="mt-2 py-2.5 text-center bg-primary rounded-xl" @click="viewPlantDetail(plant)">
+                  <text class="text-sm text-white font-semibold">查看详情</text>
                 </view>
               </view>
             </uni-collapse-item>
@@ -182,12 +197,22 @@
         </view>
       </view>
     </view>
+
+    <!-- 诊断弹窗 -->
+    <DiagnosePopup
+      ref="diagnosePopupRef"
+      :plant-id="currentPlantId"
+      :plant-name="currentPlantName"
+      @success="handleDiagnoseSuccess"
+      @close="currentPlantId = ''; currentPlantName = ''"
+    />
   </view>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, reactive } from 'vue'
 import CustomNavbar from '@/components/CustomNavbar'
+import DiagnosePopup from '@/components/DiagnosePopup.vue'
 import { usePlantStore } from '@/store/plant.js'
 import { useUserStore } from '@/store/user.js'
 import { getCityNameByLocation } from '@/api/weather.js'
@@ -197,6 +222,12 @@ const plantStore = usePlantStore()
 const userStore = useUserStore()
 
 const loaded = ref(false)
+const diagnosePopupRef = ref(null)
+const currentPlantId = ref('')
+const currentPlantName = ref('')
+const plantDiagnoseHistory = reactive({})
+const loadingHistory = reactive({})
+
 const careTips = ref([
   { id: 1, icon: '💧', title: '浇水技巧' },
   { id: 2, icon: '☀️', title: '光照需求' },
@@ -215,6 +246,76 @@ onMounted(async () => {
     loadUserPlants()
   }
 })
+
+// 监听折叠面板展开，加载诊断历史
+function handleCollapseChange(e) {
+  // e 是展开的面板 name 数组
+  if (e && e.length > 0) {
+    const plantId = e[e.length - 1] // 获取最新展开的面板
+    if (!plantDiagnoseHistory[plantId] && !loadingHistory[plantId]) {
+      loadPlantDiagnoseHistory(plantId)
+    }
+  }
+}
+
+async function loadPlantDiagnoseHistory(plantId) {
+  loadingHistory[plantId] = true
+  try {
+    const result = await wx.cloud.callFunction({
+      name: 'getDiagnoseHistory',
+      data: {
+        action: 'getList',
+        data: {
+          page: 1,
+          pageSize: 3 // 只显示最近3条
+        }
+      }
+    })
+
+    if (result.result.code === 200) {
+      // 过滤出该植物的诊断记录
+      const allRecords = result.result.data.list
+      plantDiagnoseHistory[plantId] = allRecords.filter(r => r.plantId == plantId)
+    }
+  } catch (error) {
+    console.error('加载诊断历史失败:', error)
+  } finally {
+    loadingHistory[plantId] = false
+  }
+}
+
+function openDiagnose(plant) {
+  currentPlantId.value = plant.id
+  currentPlantName.value = plant.plantName || plant.name || '未知植物'
+  diagnosePopupRef.value?.open()
+}
+
+function handleDiagnoseSuccess(result) {
+  // 诊断成功后刷新该植物的诊断历史
+  if (currentPlantId.value) {
+    loadPlantDiagnoseHistory(currentPlantId.value)
+  }
+}
+
+function viewDiagnoseDetail(recordId) {
+  uni.navigateTo({
+    url: `/pages/diagnose-detail/diagnose-detail?id=${recordId}`
+  })
+}
+
+function formatTime(time) {
+  const date = new Date(time)
+  const now = new Date()
+  const diff = now - date
+
+  if (diff < 60000) return '刚刚'
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
+  if (diff < 604800000) return `${Math.floor(diff / 86400000)}天前`
+
+  return `${date.getMonth() + 1}月${date.getDate()}日`
+}
+
 async function userLogin() {
   await userStore.wechatLogin()
   loadUserPlants()

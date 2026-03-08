@@ -11,10 +11,10 @@ const cloudbase = require('./cloudbase');
 // 配额配置
 const QUOTA_CONFIG = {
   free: {
-    diagnoseDaily: 3,
-    identifyDaily: 3,  // 识别和诊断共享配额
-    chatDaily: 5,
-    diagnoseMonthly: 90
+    diagnoseDaily: -1,  // 不限制每日次数
+    identifyDaily: -1,  // 识别和诊断共享月度配额
+    chatDaily: -1,      // 不限制聊天
+    diagnoseMonthly: 5  // 每月 5 次免费诊断（产品定义）
   },
   basic: {
     diagnoseDaily: -1,  // -1 表示无限
@@ -156,38 +156,18 @@ async function checkAIQuota(openid, type = 'diagnose') {
     };
   }
 
-  // 免费用户检查配额
-  const usedToday = type === 'diagnose' ? user.usage_diagnoseToday : user.usage_identifyToday;
-  const dailyLimit = type === 'diagnose' ? config.diagnoseDaily : config.identifyDaily;
+  // 免费用户检查配额（仅检查月度配额）
   const usedMonth = user.usage_diagnoseMonth || 0;
   const monthlyLimit = config.diagnoseMonthly;
 
-  // 检查每日配额
-  if (usedToday >= dailyLimit) {
+  // 检查月度配额
+  if (usedMonth >= monthlyLimit) {
     return {
       allowed: false,
       code: 403,
-      message: `今日${type === 'diagnose' ? '诊断' : '识别'}次数已用完（${dailyLimit}次/天），升级会员可无限使用`,
+      message: `本月${type === 'diagnose' ? '诊断' : '识别'}次数已用完（${monthlyLimit}次/月），升级会员可无限使用`,
       data: {
         tier,
-        usedToday,
-        dailyLimit,
-        usedMonth,
-        monthlyLimit
-      }
-    };
-  }
-
-  // 检查月度配额（仅诊断）
-  if (type === 'diagnose' && usedMonth >= monthlyLimit) {
-    return {
-      allowed: false,
-      code: 403,
-      message: `本月诊断次数已用完（${monthlyLimit}次/月），升级会员可无限使用`,
-      data: {
-        tier,
-        usedToday,
-        dailyLimit,
         usedMonth,
         monthlyLimit
       }
@@ -200,9 +180,6 @@ async function checkAIQuota(openid, type = 'diagnose') {
     message: '配额充足',
     data: {
       tier,
-      usedToday,
-      dailyLimit,
-      remainingToday: dailyLimit - usedToday,
       usedMonth,
       monthlyLimit,
       remainingMonth: monthlyLimit - usedMonth

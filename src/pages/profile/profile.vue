@@ -101,28 +101,34 @@
         <text class="text-sm text-primary" @click="viewAllHistory">查看全部</text>
       </view>
 
-      <view v-if="!diagnoseStore.hasHistory" class="bg-white rounded-2xl p-6 text-center">
+      <view v-if="diagnoseHistory.length === 0 && !loadingHistory" class="bg-white rounded-2xl p-6 text-center">
         <text class="block text-4xl mb-2">🔍</text>
         <text class="block text-sm text-gray-600">还没有诊断记录</text>
       </view>
 
       <view
-        v-for="item in diagnoseStore.recentDiagnoses"
-        :key="item.id"
+        v-for="item in diagnoseHistory"
+        :key="item._id"
         class="bg-white rounded-2xl p-4 mb-3 shadow-sm"
         @click="viewDiagnoseDetail(item)"
       >
         <view class="flex">
           <image
-            v-if="item.images && item.images[0]"
-            :src="item.images[0]"
+            v-if="item.imageUrl"
+            :src="item.imageUrl"
             class="w-16 h-16 rounded-xl mr-3"
             mode="aspectFill"
           />
+          <view
+            v-else
+            class="w-16 h-16 rounded-xl mr-3 flex items-center justify-center bg-gray-100"
+          >
+            <text class="text-3xl">🪴</text>
+          </view>
           <view class="flex-1">
-            <text class="block text-base font-semibold text-gray-900 mb-1">{{ item.diagnosis?.plantName || '未知植物' }}</text>
-            <text class="block text-sm text-gray-600 mb-1">{{ item.diagnosis?.problem || '诊断中...' }}</text>
-            <text class="text-xs text-gray-400">{{ formatTime(item.createTime) }}</text>
+            <text class="block text-base font-semibold text-gray-900 mb-1">{{ item.plantName || '未知植物' }}</text>
+            <text class="block text-sm text-gray-600 mb-1 line-clamp-1">{{ item.mainIssue || '诊断中...' }}</text>
+            <text class="text-xs text-gray-400">{{ formatTime(item.createdAt) }}</text>
           </view>
         </view>
       </view>
@@ -131,12 +137,14 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/user.js'
-import { useDiagnoseStore } from '@/store/diagnose.js'
 
 const userStore = useUserStore()
-const diagnoseStore = useDiagnoseStore()
+
+// 诊断历史数据
+const diagnoseHistory = ref([])
+const loadingHistory = ref(false)
 
 // 会员状态
 const membershipText = computed(() => {
@@ -205,6 +213,37 @@ const menuItems = ref([
   }
 ])
 
+// 加载诊断历史
+onMounted(() => {
+  loadDiagnoseHistory()
+})
+
+async function loadDiagnoseHistory() {
+  if (!userStore.isAuthenticated) return
+
+  loadingHistory.value = true
+  try {
+    const result = await wx.cloud.callFunction({
+      name: 'getDiagnoseHistory',
+      data: {
+        action: 'getList',
+        data: {
+          page: 1,
+          pageSize: 5 // 只显示最近5条
+        }
+      }
+    })
+
+    if (result.result.code === 200) {
+      diagnoseHistory.value = result.result.data.list
+    }
+  } catch (error) {
+    console.error('加载诊断历史失败:', error)
+  } finally {
+    loadingHistory.value = false
+  }
+}
+
 function upgradeMembership() {
   uni.showModal({
     title: '开通会员',
@@ -241,16 +280,14 @@ function handleMenuClick(item) {
 }
 
 function viewAllHistory() {
-  uni.showToast({
-    title: '历史记录功能开发中',
-    icon: 'none'
+  uni.navigateTo({
+    url: '/pages/diagnose-history/diagnose-history'
   })
 }
 
 function viewDiagnoseDetail(item) {
-  uni.showToast({
-    title: '详情页面开发中',
-    icon: 'none'
+  uni.navigateTo({
+    url: `/pages/diagnose-detail/diagnose-detail?id=${item._id}`
   })
 }
 
@@ -267,5 +304,10 @@ function formatTime(time) {
 </script>
 
 <style scoped>
-/* 使用 Tailwind CSS */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 </style>

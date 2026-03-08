@@ -19,28 +19,37 @@ exports.main = async (event, context) => {
       return { code: 400, message: '缺少植物信息', data: null };
     }
 
-    // 如果提供了 plantId，验证是否存在于 plants 表
+    // 如果提供了 plantId，验证是否存在于 plants 表并获取植物名称
+    let plantName = null;
     if (plantId) {
-      const checkSQL = 'SELECT _id FROM plants WHERE _id = {{plantId}} LIMIT 1';
+      const checkSQL = 'SELECT _id, name FROM plants WHERE _id = {{plantId}} LIMIT 1';
       const checkResult = await models.$runSQL(checkSQL, { plantId });
       const rows = checkResult?.data?.executeResultList || [];
       if (rows.length === 0) {
         // plantId 无效，降级为 aiRecognizedName
         aiRecognizedName = nickName || plantId;
         plantId = null;
+        plantName = aiRecognizedName;
+      } else {
+        // 从 plants 表获取植物名称
+        plantName = rows[0].name;
       }
+    } else if (aiRecognizedName) {
+      // AI 识别的情况，使用 AI 识别的名称
+      plantName = aiRecognizedName;
     }
 
     // plantId 和 aiRecognizedName 互斥
     const insertSQL = `INSERT INTO user_plants (
-      _openid, plant_id, ai_recognized_name, nick_name, location, photos
+      _openid, plant_id, plant_name, ai_recognized_name, nick_name, location, photos
     ) VALUES (
-      {{openid}}, ${plantId ? '{{plantId}}' : 'NULL'}, ${plantId ? 'NULL' : '{{aiRecognizedName}}'},
+      {{openid}}, ${plantId ? '{{plantId}}' : 'NULL'}, {{plantName}}, ${plantId ? 'NULL' : '{{aiRecognizedName}}'},
       {{nickName}}, {{location}}, {{photos}}
     )`;
 
     const params = {
       openid,
+      plantName: plantName || '未知植物',
       nickName: nickName || null,
       location: location || '阳台',
       photos: photos ? JSON.stringify(photos) : null

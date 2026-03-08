@@ -153,11 +153,11 @@ export const useUserStore = defineStore('user', {
       this.membership = {
         type: user.subscription_plan || 'free',
         expireTime: user.subscription_endDate || null,
-        // premium 用户无限次，free 用户根据使用情况计算剩余次数
+        // premium 用户无限次，free 用户根据月度使用情况计算剩余次数（每月5次）
         freeQuota:
           user.subscription_plan === 'premium'
             ? 999
-            : Math.max(0, 5 - (user.usage_diagnoseToday || 0)),
+            : Math.max(0, 5 - (user.usage_diagnoseMonth || 0)),
         usedCount: user.usage_diagnoseTotal || 0
       }
     },
@@ -272,7 +272,7 @@ export const useUserStore = defineStore('user', {
             freeQuota:
               user.subscription_plan === 'premium'
                 ? 999
-                : Math.max(0, 5 - (user.usage_diagnoseToday || 0)),
+                : Math.max(0, 5 - (user.usage_diagnoseMonth || 0)),
             usedCount: user.usage_diagnoseTotal || 0
           }
 

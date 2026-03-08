@@ -1,0 +1,9 @@
+{
+  "name": "getDiagnoseHistory",
+  "version": "1.0.0",
+  "description": "获取用户诊断历史",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "^3.16.0"
+  }
+}

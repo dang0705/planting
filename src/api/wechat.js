@@ -75,20 +75,17 @@ export async function getPhoneNumber(e) {
 }
 
 /**
- * 完整的微信登录流程（使用 code 登录）
+ * 完整的微信登录流程（使用云开发自动鉴权）
  * @returns {Promise} 返回登录结果
  */
 export async function loginWithCode() {
   try {
-    // 1. 获取登录 code
-    const code = await wechatLogin()
-
-    // 2. 调用云函数进行微信登录
+    // 直接调用云函数，云函数会通过 context 自动获取用户信息
     const result = await wx.cloud.callFunction({
       name: 'auth-user',
       data: {
-        action: 'wechatLogin',
-        code: code
+        action: 'wechatLogin'
+        // 不需要传 code，云函数使用 @cloudbase/node-sdk 自动鉴权
       }
     })
 
@@ -110,16 +107,13 @@ export async function loginWithCode() {
  */
 export async function loginWithPhone(phoneCode) {
   try {
-    // 1. 获取登录 code
-    const loginCode = await wechatLogin()
-
-    // 2. 调用云函数进行手机号登录
+    // 调用云函数进行手机号登录
     const result = await wx.cloud.callFunction({
       name: 'auth-user',
       data: {
         action: 'phoneLogin',
-        loginCode: loginCode,
         phoneCode: phoneCode
+        // 不需要传 loginCode，云函数使用 @cloudbase/node-sdk 自动鉴权
       }
     })
 

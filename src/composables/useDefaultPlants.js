@@ -8,8 +8,28 @@ export function useDefaultPlants() {
   const plants = ref([])
   const loading = ref(false)
 
-  async function load() {
-    // 读缓存（只缓存基础数据，不缓存 imageUrl）
+  async function load(searchName = '') {
+    // 如果有搜索关键词，不使用缓存，直接请求
+    if (searchName && searchName.trim()) {
+      loading.value = true
+      try {
+        const res = await wx.cloud.callFunction({
+          name: 'getDefaultPlants',
+          data: { name: searchName.trim() }
+        })
+        if (res.result?.code === 200) {
+          const list = res.result.data
+          plants.value = await resolveImageUrls(list)
+        }
+      } catch (e) {
+        console.error('搜索植物失败:', e)
+      } finally {
+        loading.value = false
+      }
+      return
+    }
+
+    // 无搜索关键词，使用缓存逻辑
     let cached = null
     try {
       cached = uni.getStorageSync(CACHE_KEY)

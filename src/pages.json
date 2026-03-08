@@ -50,6 +50,22 @@
 				"navigationStyle": "custom",
 				"navigationBarTextStyle": "white"
 			}
+		},
+		{
+			"path": "pages/diagnose-history/diagnose-history",
+			"style": {
+				"navigationBarTitleText": "诊断历史",
+				"navigationBarBackgroundColor": "#2D7A4F",
+				"navigationBarTextStyle": "white"
+			}
+		},
+		{
+			"path": "pages/diagnose-detail/diagnose-detail",
+			"style": {
+				"navigationBarTitleText": "诊断详情",
+				"navigationBarBackgroundColor": "#2D7A4F",
+				"navigationBarTextStyle": "white"
+			}
 		}
 	],
 	"globalStyle": {

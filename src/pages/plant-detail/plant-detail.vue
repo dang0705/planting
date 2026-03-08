@@ -207,11 +207,9 @@ function editNickName() {
     content: plant.value?.name || '',
     success: async res => {
       if (res.confirm && res.content) {
-        const result =
-          (await plantStore.updateUserP) -
-          lant(plantId.value, {
-            nickName: res.content
-          })
+        const result = await plantStore.updateUserPlant(plantId.value, {
+          nickName: res.content
+        })
         if (result.success) {
           uni.showToast({ title: '修改成功', icon: 'success' })
         } else {

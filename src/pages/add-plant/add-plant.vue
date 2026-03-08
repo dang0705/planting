@@ -7,17 +7,44 @@
       <text class="block text-2xl font-semibold text-gray-800 mb-2">选择你的植物</text>
       <text class="block text-sm text-gray-400 mb-6">从常见植物中选择，或使用 AI 识别</text>
 
+      <!-- 搜索框 -->
+      <view class="mb-4">
+        <view class="relative">
+          <input
+            v-model="searchKeyword"
+            type="text"
+            placeholder="搜索植物名称..."
+            class="w-full bg-white rounded-2xl px-4 py-3 pr-10 text-sm border-2 border-gray-100 focus:border-primary"
+            @input="handleSearch"
+            @confirm="handleSearchConfirm"
+          />
+          <view class="absolute right-3 top-1/2 -translate-y-1/2">
+            <text v-if="!searchKeyword" class="text-gray-400">🔍</text>
+            <text v-else class="text-gray-400" @click="clearSearch">✕</text>
+          </view>
+        </view>
+        <text
+          v-if="searchKeyword && !plantsLoading && defaultPlants.length === 0"
+          class="block text-xs text-gray-400 mt-2 text-center"
+        >
+          未找到匹配的植物
+        </text>
+      </view>
+
       <view class="mb-6">
         <text class="block text-base font-semibold text-gray-800 mb-4">🌿 常见植物</text>
         <view v-if="plantsLoading" class="flex justify-center py-8">
           <text class="text-sm text-gray-400">加载中...</text>
         </view>
         <view v-else class="w-full snap-x overflow-x-auto">
-          <view class="flex gap-3 pb-2" style="width: max-content">
+          <view class="flex gap-2 pb-2">
             <view
               v-for="(group, gi) in plantGroups"
               :key="gi"
-              class="grid grid-cols-2 grid-rows-2 gap-2 w-[70vw] flex-shrink-0 snap-start"
+              :class="[
+                'gap-2 flex-shrink-0 snap-start',
+                group.length < 3 ? 'grid grid-cols-1 auto-cols-fr' : 'grid grid-cols-2 grid-rows-2'
+              ]"
             >
               <PlantCard
                 v-for="p in group"
@@ -144,6 +171,8 @@ const loginMsg = ref('添加植物需要先登录')
 const showAIDialog = ref(false)
 const aiDialogRef = ref(null)
 const pendingImage = ref({ path: '', url: '' })
+const searchKeyword = ref('')
+let searchTimer = null
 
 const formData = ref({
   image: '',
@@ -154,21 +183,25 @@ const formData = ref({
 })
 
 // 监听选中的植物，自动填充名称和图片
-watch(selectedPlant, (newPlant) => {
-  if (newPlant) {
-    // 如果昵称为空，使用植物名称作为默认昵称
-    if (!formData.value.nickname.trim()) {
-      formData.value.nickname = newPlant.name
+watch(
+  selectedPlant,
+  newPlant => {
+    if (newPlant) {
+      // 如果昵称为空，使用植物名称作为默认昵称
+      if (!formData.value.nickname.trim()) {
+        formData.value.nickname = newPlant.name
+      }
+      // 如果图片为空，使用植物的图片URL
+      if (!formData.value.image && newPlant.imageUrl) {
+        formData.value.image = newPlant.imageUrl
+      }
     }
-    // 如果图片为空，使用植物的图片URL
-    if (!formData.value.image && newPlant.imageUrl) {
-      formData.value.image = newPlant.imageUrl
-    }
-  }
-}, { immediate: true })
+  },
+  { immediate: true }
+)
 
 // 监听AI识别的植物名称
-watch(aiRecognizedName, (newName) => {
+watch(aiRecognizedName, newName => {
   if (newName && !selectedPlant.value) {
     // 如果是AI识别且未匹配到植物，且昵称为空，使用AI识别名称作为默认昵称
     if (!formData.value.nickname.trim()) {
@@ -196,6 +229,27 @@ function handleLoginClose() {
     cancelText: '去登录',
     success: r => r.confirm ? uni.navigateBack() : (showLogin.value = true)
   })*/
+}
+
+// 搜索处理（防抖）
+function handleSearch(e) {
+  const keyword = e.detail.value
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    loadPlants(keyword)
+  }, 500)
+}
+
+// 搜索确认
+function handleSearchConfirm() {
+  if (searchTimer) clearTimeout(searchTimer)
+  loadPlants(searchKeyword.value)
+}
+
+// 清除搜索
+function clearSearch() {
+  searchKeyword.value = ''
+  loadPlants()
 }
 
 async function useAIIdentify() {
@@ -341,7 +395,10 @@ async function submitForm() {
     let photos = []
     if (formData.value.image) {
       // 检查图片是否是网络URL（来自植物默认图片）
-      if (formData.value.image.startsWith('http://') || formData.value.image.startsWith('https://')) {
+      if (
+        formData.value.image.startsWith('http://') ||
+        formData.value.image.startsWith('https://')
+      ) {
         // 如果是网络URL，并且有选中的植物，使用植物的fileId
         if (selectedPlant.value?.fileId) {
           photos = [selectedPlant.value.fileId]
