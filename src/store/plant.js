@@ -103,7 +103,6 @@ export const usePlantStore = defineStore('plant', {
               plant.image = await getFileUrl(plant.fileId)
             }
           }
-          console.log(list, 'list...')
           // 如果是全量请求，更新缓存
           if (!normalizedKeyword) {
             this.setPlants(list)
