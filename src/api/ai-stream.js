@@ -101,21 +101,31 @@ function parseSSEEvent(eventText) {
 }
 
 /**
- * 识别植物 - 调用云函数 identify（非流式）
+ * 识别植物 - 调用云函数 identify-baidu（百度植物识别）
  */
 export async function identifyPlant({ messages, openid, onFinish, onError }) {
-  console.log('识别请求，调用云函数')
+  console.log('识别请求，调用百度植物识别云函数')
 
   try {
+    // 从 messages 中提取图片 URL
+    let imageUrl = ''
+    if (messages && messages[0]?.Contents) {
+      const imageContent = messages[0].Contents.find(c => c.Type === 'image_url')
+      imageUrl = imageContent?.ImageUrl?.Url || ''
+    }
+
+    if (!imageUrl) {
+      throw new Error('缺少图片URL')
+    }
+
     const res = await wx.cloud.callFunction({
-      name: 'identify',
+      name: 'identify-baidu',
       data: {
-        messages,
-        openid
+        imageUrl
       }
     })
 
-    console.log('云函数返回:', res.result)
+    console.log('百度识别云函数返回:', res.result)
 
     if (res.result.code !== 200) {
       const error = new Error(res.result.message || 'AI 请求失败')
@@ -123,7 +133,13 @@ export async function identifyPlant({ messages, openid, onFinish, onError }) {
       throw error
     }
 
-    const { fullText, result } = res.result.data
+    // 解析百度 API 返回的结果
+    const baiduResult = res.result.data
+
+    // 转换为统一格式
+    const result = parseBaiduResult(baiduResult)
+    const fullText = formatBaiduText(baiduResult)
+
     onFinish?.(result, fullText)
     return { result, fullText }
   } catch (err) {
@@ -131,6 +147,64 @@ export async function identifyPlant({ messages, openid, onFinish, onError }) {
     onError?.(err)
     throw err
   }
+}
+
+/**
+ * 解析百度识别结果
+ */
+function parseBaiduResult(baiduData) {
+  // baiduData 格式：{ result: { ingredient: {...}, plant: {...} }, type: 'plant'|'ingredient', log_id: ... }
+  const type = baiduData?.type || 'plant'
+  const resultData = baiduData?.result?.[type]?.result || []
+
+  if (resultData.length === 0) {
+    return { name: '未知植物', confidence: 0 }
+  }
+
+  // 取第一个结果
+  const topResult = resultData[0]
+
+  // 检查是否是"非xxx"
+  if (topResult.name === '非果蔬食材' || topResult.name === '非植物') {
+    return { name: '未知植物', confidence: 0 }
+  }
+
+  return {
+    name: topResult.name || '未知植物',
+    confidence: topResult.score || 0,
+    type: type
+  }
+}
+
+/**
+ * 格式化百度识别结果为文本
+ */
+function formatBaiduText(baiduData) {
+  const type = baiduData?.type || 'plant'
+  const resultData = baiduData?.result?.[type]?.result || []
+
+  if (resultData.length === 0) {
+    return '未能识别出植物，请重试'
+  }
+
+  const topResult = resultData[0]
+
+  // 检查是否是"非xxx"
+  if (topResult.name === '非果蔬食材' || topResult.name === '非植物') {
+    return '未能识别出植物，请重试'
+  }
+
+  const typeName = type === 'ingredient' ? '果蔬' : '植物'
+
+  let text = `识别结果：${topResult.name || '未知'}`
+
+  if (topResult.score) {
+    text += `\n置信度：${(topResult.score * 100).toFixed(1)}%`
+  }
+
+  text += `\n类型：${typeName}`
+
+  return text
 }
 
 /**

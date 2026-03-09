@@ -1,8 +1,8 @@
 const https = require('https')
 const { getUserInfo } = require('/opt/utils/cloudbase')
 
-const AK = 'sQuf9i4w0PGNqNn4QLkaT66Q'
-const SK = '7PIOESfBc4GsMaJwYgoHuHBUU7v9bwUS'
+const AK = 'UGqylU0BgWoCLd8PfnH6pxpl'
+const SK = 'NVCAG44tKAfXmVn0BrRHDVFnJDAQRt0x'
 
 // 腾讯云函数入口
 exports.main = async (event, context) => {
@@ -25,11 +25,22 @@ exports.main = async (event, context) => {
     const accessToken = await getAccessToken()
 
     // 调用百度植物识别 API
-    const result = await recognizePlant(imageUrl, accessToken)
+    const baiduResult = await recognizePlant(imageUrl, accessToken)
+
+    // 处理百度返回结果
+    const processedResult = processBaiduResult(baiduResult)
+
+    if (!processedResult.valid) {
+      return {
+        code: 400,
+        message: processedResult.message || '无法识别，请上传清晰的植物或果蔬图片',
+        data: null
+      }
+    }
 
     return {
       code: 200,
-      data: result,
+      data: processedResult.data,
       message: '识别成功'
     }
   } catch (error) {
@@ -43,13 +54,91 @@ exports.main = async (event, context) => {
 }
 
 /**
+ * 处理百度识别结果
+ * 规则：
+ * 1. 两边都是"非"且score最高 → 无效
+ * 2. 一边是"非" → 取另一边
+ * 3. 两边都有效 → 取score更高的
+ */
+function processBaiduResult(baiduData) {
+  const ingredientResults = baiduData?.result?.ingredient?.result || []
+  const plantResults = baiduData?.result?.plant?.result || []
+
+  if (ingredientResults.length === 0 && plantResults.length === 0) {
+    return {
+      valid: false,
+      message: '识别失败，请重新上传图片'
+    }
+  }
+
+  // 获取最高分结果
+  const topIngredient = ingredientResults[0] || { name: '', score: 0 }
+  const topPlant = plantResults[0] || { name: '', score: 0 }
+
+  const isIngredientNon = topIngredient.name === '非果蔬食材'
+  const isPlantNon = topPlant.name === '非植物'
+
+  // 规则1: 两边都是"非"且是各自最高分 → 无效
+  if (isIngredientNon && isPlantNon) {
+    return {
+      valid: false,
+      message: '无法识别，请上传清晰的植物或果蔬图片'
+    }
+  }
+
+  // 规则2: 一边是"非" → 取另一边
+  if (isIngredientNon && !isPlantNon) {
+    return {
+      valid: true,
+      data: {
+        result: plantResults,
+        type: 'plant',
+        log_id: baiduData.log_id
+      }
+    }
+  }
+
+  if (isPlantNon && !isIngredientNon) {
+    return {
+      valid: true,
+      data: {
+        result: ingredientResults,
+        type: 'ingredient',
+        log_id: baiduData.log_id
+      }
+    }
+  }
+
+  // 规则3: 两边都有效 → 取score更高的
+  if (topIngredient.score > topPlant.score) {
+    return {
+      valid: true,
+      data: {
+        result: ingredientResults,
+        type: 'ingredient',
+        log_id: baiduData.log_id
+      }
+    }
+  } else {
+    return {
+      valid: true,
+      data: {
+        result: plantResults,
+        type: 'plant',
+        log_id: baiduData.log_id
+      }
+    }
+  }
+}
+
+/**
  * 使用 HTTPS 调用百度植物识别 API
  */
-function recognizePlant(imageUrl, accessToken) {
+function recognizePlant(imgUrl, accessToken) {
   return new Promise((resolve, reject) => {
     // 使用 JSON 格式
     const postData = JSON.stringify({
-      url: imageUrl,
+      imgUrl,
       scenes: ['plant', 'ingredient']
     })
 

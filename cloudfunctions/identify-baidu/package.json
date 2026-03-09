@@ -1,7 +1,7 @@
 {
-  "name": "identify",
+  "name": "identify-baidu",
   "version": "1.0.0",
-  "description": "植物识别云函数",
+  "description": "百度植物识别云函数",
   "main": "index.js",
   "dependencies": {
     "@cloudbase/node-sdk": "^3.16.0"

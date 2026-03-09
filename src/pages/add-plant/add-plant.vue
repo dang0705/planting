@@ -292,59 +292,38 @@ async function doIdentify(path) {
         uni.hideLoading()
         userStore.useAIQuota()
 
-        // 前端匹配植物名称
+        // 前端精确匹配植物名称
         if (result?.name && result.name !== '未知植物') {
-          const aiName = result.name.trim()
+          const aiName = result.name.trim().toLowerCase()
 
-          // 清理 AI 返回的名称：移除常见的修饰词
-          const cleanedName = aiName
-            .replace(/^(盆栽|室内|室外|观赏|园艺|植物|花卉)\s*/g, '')
-            .replace(/\s*(组合|盆栽|植物|花卉)$/g, '')
-            .trim()
-            .toLowerCase()
+          console.log('[百度识别] 原始名称:', result.name)
 
-          console.log('[AI识别] 原始名称:', aiName, '清理后:', cleanedName)
-
-          // 按优先级匹配：name → alias → latinName
-          let matched = plantStore.defaultPlants.find(p => {
+          // 精确匹配 name 或 alias（alias 是逗号分隔的字符串）
+          const matched = plantStore.defaultPlants.find(p => {
             const pName = p.name?.toLowerCase()
-            // 精确匹配或包含关系
-            return pName === cleanedName ||
-                   cleanedName.includes(pName) ||
-                   pName.includes(cleanedName)
+            if (pName === aiName) return true
+
+            // 处理 alias（逗号分隔）
+            if (p.alias) {
+              const aliases = p.alias.split(',').map(a => a.trim().toLowerCase())
+              if (aliases.includes(aiName)) return true
+            }
+
+            return false
           })
 
-          if (!matched) {
-            matched = plantStore.defaultPlants.find(p => {
-              const pAlias = p.alias?.toLowerCase()
-              if (!pAlias) return false
-              return pAlias === cleanedName ||
-                     cleanedName.includes(pAlias) ||
-                     pAlias.includes(cleanedName)
-            })
-          }
-
-          if (!matched) {
-            matched = plantStore.defaultPlants.find(p => {
-              const pLatin = p.latinName?.toLowerCase()
-              if (!pLatin) return false
-              return pLatin === cleanedName ||
-                     cleanedName.includes(pLatin) ||
-                     pLatin.includes(cleanedName)
-            })
-          }
-
-          // 如果匹配��功，替换 result.name 为标准名称
+          // 如果匹配成功，替换 result.name 为标准名称
           if (matched) {
             const originalName = result.name
             result.name = matched.name
             // 替换 text 中的植物名称
             text = text.replace(new RegExp(originalName, 'g'), matched.name)
-            console.log('[AI识别] 匹配成功，使用标准名称:', matched.name)
+            console.log('[百度识别] 匹配成功，使用标准名称:', matched.name)
           } else {
-            console.log('[AI识别] 未匹配，使用AI原始名称:', aiName)
+            console.log('[百度识别] 未匹配，使用百度原始名称:', result.name)
           }
         }
+
 
         showAIDialog.value = true
         setTimeout(() => {
