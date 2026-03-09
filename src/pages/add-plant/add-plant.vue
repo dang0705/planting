@@ -291,6 +291,61 @@ async function doIdentify(path) {
       onFinish: (result, text) => {
         uni.hideLoading()
         userStore.useAIQuota()
+
+        // 前端匹配植物名称
+        if (result?.name && result.name !== '未知植物') {
+          const aiName = result.name.trim()
+
+          // 清理 AI 返回的名称：移除常见的修饰词
+          const cleanedName = aiName
+            .replace(/^(盆栽|室内|室外|观赏|园艺|植物|花卉)\s*/g, '')
+            .replace(/\s*(组合|盆栽|植物|花卉)$/g, '')
+            .trim()
+            .toLowerCase()
+
+          console.log('[AI识别] 原始名称:', aiName, '清理后:', cleanedName)
+
+          // 按优先级匹配：name → alias → latinName
+          let matched = plantStore.defaultPlants.find(p => {
+            const pName = p.name?.toLowerCase()
+            // 精确匹配或包含关系
+            return pName === cleanedName ||
+                   cleanedName.includes(pName) ||
+                   pName.includes(cleanedName)
+          })
+
+          if (!matched) {
+            matched = plantStore.defaultPlants.find(p => {
+              const pAlias = p.alias?.toLowerCase()
+              if (!pAlias) return false
+              return pAlias === cleanedName ||
+                     cleanedName.includes(pAlias) ||
+                     pAlias.includes(cleanedName)
+            })
+          }
+
+          if (!matched) {
+            matched = plantStore.defaultPlants.find(p => {
+              const pLatin = p.latinName?.toLowerCase()
+              if (!pLatin) return false
+              return pLatin === cleanedName ||
+                     cleanedName.includes(pLatin) ||
+                     pLatin.includes(cleanedName)
+            })
+          }
+
+          // 如果匹配��功，替换 result.name 为标准名称
+          if (matched) {
+            const originalName = result.name
+            result.name = matched.name
+            // 替换 text 中的植物名称
+            text = text.replace(new RegExp(originalName, 'g'), matched.name)
+            console.log('[AI识别] 匹配成功，使用标准名称:', matched.name)
+          } else {
+            console.log('[AI识别] 未匹配，使用AI原始名称:', aiName)
+          }
+        }
+
         showAIDialog.value = true
         setTimeout(() => {
           aiDialogRef.value?.setText(text)
@@ -314,23 +369,27 @@ function handleAIConfirm(result) {
     return
   }
 
-  // 在 defaultPlants 中查找匹配的植物
-  const aiName = result.name.trim()
-  const matched = defaultPlants.value.find(p => p.name === aiName)
+  // 在 defaultPlants 中查找匹配的植物（用于获取完整数据）
+  const plantName = result.name.trim()
+  const matched = plantStore.defaultPlants.find(p => p.name === plantName)
 
   if (matched) {
     // 匹配成功，使用 plants 表中的记录
+    formData.value.image = pendingImage.value.path
     selectedPlant.value = matched
     aiRecognizedName.value = ''
+    console.log('[AI确认] 使用匹配的植物数据:', matched.name)
+    uni.showToast({ title: `识别成功: ${matched.name}`, icon: 'success' })
   } else {
     // 未匹配，存储 AI 识别的名称
+    formData.value.image = pendingImage.value.path
     selectedPlant.value = null
-    aiRecognizedName.value = aiName
+    aiRecognizedName.value = plantName
+    console.log('[AI确认] 使用AI识别名称:', plantName)
+    uni.showToast({ title: `识别成功: ${plantName}`, icon: 'success' })
   }
 
-  formData.value.image = pendingImage.value.path
   showAIDialog.value = false
-  uni.showToast({ title: `识别成功: ${aiName}`, icon: 'success' })
   setTimeout(() => (step.value = 2), 500)
 }
 
