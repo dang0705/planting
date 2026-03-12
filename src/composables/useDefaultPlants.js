@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import { usePlantStore } from '@/store/plant.js'
+import { usePlantStore } from '@/store/plants.js'
 
 export function useDefaultPlants() {
   const plantStore = usePlantStore()

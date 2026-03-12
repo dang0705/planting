@@ -138,7 +138,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useUserStore } from '@/store/user.js'
-import { usePlantStore } from '@/store/plant.js'
+import { usePlantStore } from '@/store/plants.js'
 import { uploadPlantImage, getImageUrl } from '@/api/storage.js'
 import { identifyPlant } from '@/api/ai-stream.js'
 import { useDefaultPlants } from '@/composables/useDefaultPlants.js'
@@ -323,7 +323,6 @@ async function doIdentify(path) {
             console.log('[百度识别] 未匹配，使用百度原始名称:', result.name)
           }
         }
-
 
         showAIDialog.value = true
         setTimeout(() => {

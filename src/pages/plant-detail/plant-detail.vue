@@ -113,7 +113,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { usePlantStore } from '@/store/plant.js'
+import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
 
 const plantStore = usePlantStore()

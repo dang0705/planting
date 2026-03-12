@@ -162,7 +162,10 @@
                 </view>
 
                 <!-- 查看详情按钮 -->
-                <view class="mt-2 py-2.5 text-center bg-primary rounded-xl" @click="viewPlantDetail(plant)">
+                <view
+                  class="mt-2 py-2.5 text-center bg-primary rounded-xl"
+                  @click="viewPlantDetail(plant)"
+                >
                   <text class="text-sm text-white font-semibold">查看详情</text>
                 </view>
               </view>
@@ -204,7 +207,7 @@
       :plant-id="currentPlantId"
       :plant-name="currentPlantName"
       @success="handleDiagnoseSuccess"
-      @close="currentPlantId = ''; currentPlantName = ''"
+      @close="currentPlantId = '' && (currentPlantName = '')"
     />
   </view>
 </template>
@@ -213,7 +216,7 @@
 import { onMounted, ref, reactive } from 'vue'
 import CustomNavbar from '@/components/CustomNavbar'
 import DiagnosePopup from '@/components/DiagnosePopup.vue'
-import { usePlantStore } from '@/store/plant.js'
+import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
 import { getCityNameByLocation } from '@/api/weather.js'
 import loading from '@/assets/icons/loading.svg'
@@ -343,10 +346,10 @@ async function getUserLocation() {
         fail: reject
       })
     })
-    
+
     // 根据经纬度获取真实城市名称
     const cityInfo = await getCityNameByLocation(res.latitude, res.longitude)
-    
+
     userStore.setLocation({
       latitude: res.latitude,
       longitude: res.longitude,
@@ -377,10 +380,6 @@ function viewPlantDetail(plant) {
     url: `/pages/plant-detail/plant-detail?id=${plant.id}`
   })
 }
-
-/*function getLatestDiagnosis(plantId) {
-  return plantStore.getLatestDiagnosis(plantId)
-}*/
 
 function needsCareToday(plantId) {
   return plantStore.plantsNeedWater.some(p => p.id === plantId)

@@ -16,13 +16,15 @@ function normalizeSearchText(text) {
     .toLowerCase()
 }
 
-export const usePlantStore = defineStore('plant', {
+export const usePlantStore = defineStore('plants', {
   state: () => ({
     // plants 表 - 预设植物目录
     defaultPlants: [],
     // user_plants 表 - 用户的植物（JOIN plants 表后的数据）
     userPlants: [],
-    currentPlant: null
+    currentPlant: null,
+    // 缓存定时器相关
+    expireAt: 0 // 过期绝对时间戳，由 setDefaultPlantsWithCache 写入
   }),
 
   getters: {
@@ -50,7 +52,7 @@ export const usePlantStore = defineStore('plant', {
     //   recommended_min/max_humility, recommended_min/max_temperature,
     //   fertilization_frequency, ventilation
     setPlants(list) {
-      this.defaultPlants = list
+      this.setDefaultPlantsWithCache(list)
     },
 
     /**
@@ -257,13 +259,23 @@ export const usePlantStore = defineStore('plant', {
         lastWatered: now.toISOString(),
         nextWater: nextWater.toISOString()
       })
+    },
+
+    // ========== 缓存相关 ==========
+
+    // 请求 defaultPlants 接口成功后调用，expireAt = 当前时间 + 2小时
+    setDefaultPlantsWithCache(plants, offset = 10 * 60 * 1000) {
+      const TWO_HOURS = 2 * 60 * 60 * 1000
+      this.defaultPlants = plants
+      this.expireAt = Date.now() + TWO_HOURS - offset
+    },
+
+    // onShow 时调用：返回距过期的剩余毫秒数
+    getRemainingTime() {
+      return Math.max(0, this.expireAt - Date.now())
     }
   },
   persist: {
-    storage: {
-      getItem: key => uni.getStorageSync(key),
-      setItem: (key, value) => uni.setStorageSync(key, value)
-    },
-    pick: ['defaultPlants']
+    pick: ['defaultPlants', 'expireAt']
   }
 })

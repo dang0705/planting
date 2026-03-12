@@ -301,10 +301,6 @@ export const useUserStore = defineStore('user', {
 
   // Pinia 持久化配置
   persist: {
-    storage: {
-      getItem: key => uni.getStorageSync(key),
-      setItem: (key, value) => uni.setStorageSync(key, value)
-    },
     pick: [
       'userId',
       'openid',

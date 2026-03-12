@@ -273,10 +273,10 @@ export async function getWeatherInfo(options = {}) {
   try {
     const { lat, lng, useCache = WEATHER_CONFIG.USE_CACHE } = options
 
-    console.log(
+    /* console.log(
       `🔴 [天气API] 缓存开关: ${useCache ? '✅ 启用' : '❌ 禁用'} (全局配置: ${WEATHER_CONFIG.USE_CACHE})`
     )
-    console.log('🔴 [天气API] 请求参数:', { lat, lng, useCache })
+    console.log('🔴 [天气API] 请求参数:', { lat, lng, useCache })*/
 
     const result = await wx.cloud.callFunction({
       name: 'getWeather',
@@ -288,14 +288,14 @@ export async function getWeatherInfo(options = {}) {
     if (result.result.code === 200) {
       const data = result.result.data
 
-      console.log('📊 [天气数据] 温度:', data.temperature)
+      /*  console.log('📊 [天气数据] 温度:', data.temperature)
       console.log('📊 [天气数据] 湿度:', data.humidity)
       console.log('📊 [天气数据] 天气:', data.weather)
       console.log('📊 [天气数据] 体感温度:', data.feelsLike)
       console.log('📊 [天气数据] 风向:', data.windDir)
       console.log('📊 [天气数据] 风力:', data.windScale)
       console.log('📊 [天气数据] 是否来自缓存:', data.cached)
-      console.log('📊 [天气数据] 缓存开关状态:', data.cacheEnabled)
+      console.log('📊 [天气数据] 缓存开关状态:', data.cacheEnabled)*/
 
       return data
     } else {

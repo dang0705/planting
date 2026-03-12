@@ -11,8 +11,8 @@ export const usePlantingStore = defineStore('planting', {
   }),
 
   getters: {
-    activePlans: (state) => state.plans.filter(plan => !plan.archived),
-    todayReminders: (state) => {
+    activePlans: state => state.plans.filter(plan => !plan.archived),
+    todayReminders: state => {
       const today = new Date().toDateString()
       return state.plans.filter(plan => {
         return plan.reminders.some(reminder => {
