@@ -1,5 +1,6 @@
 import { useUserStore } from '@/store/user'
-import { CLOUDBASE_ENV_ID, getCloudbaseAccessToken } from '@/utils/cloudbase-auth'
+import { getCloudbaseAccessToken } from '@/utils/cloudbase-auth'
+import { BASE_URL } from '@/api/env'
 
 /**
  * AI 服务
@@ -7,9 +8,6 @@ import { CLOUDBASE_ENV_ID, getCloudbaseAccessToken } from '@/utils/cloudbase-aut
  * - 诊断（quick）：HTTP 云函数 diagnose-http（SSE 包装，混元 Vision）
  * - 诊断（deep）：HTTP 云函数 diagnose-http（SSE 流式，Agent）
  */
-
-const DIAGNOSE_HTTP_BASE_URL = `https://${CLOUDBASE_ENV_ID}.api.tcloudbasegateway.com/v1/functions/diagnose-http`
-
 function decodeChunkText(chunk, decoder) {
   if (!chunk) return ''
 
@@ -249,14 +247,10 @@ export async function streamDiagnosePlant({
   onFinish,
   onError
 }) {
-  console.log('诊断请求（流式模式），直接调用 diagnose-http HTTP 函数')
-
   try {
     const userStore = useUserStore()
-    const resolvedOpenid = openid || userStore.openid || ''
-
     // 先显示加载状态
-    onText?.('正在连接智能体...', '正在连接智能体...')
+    onText?.('思考中...', '思考中...')
 
     // 检查必要参数
     if (!plantId) {
@@ -264,7 +258,7 @@ export async function streamDiagnosePlant({
     }
 
     // 构建请求参数（手动拼接，mini program 不支持 URLSearchParams）
-    const fullUrl = `${DIAGNOSE_HTTP_BASE_URL}/stream/diagnose?webfn=true`
+    const fullUrl = `${BASE_URL}/diagnose-http/stream/diagnose?webfn=true`
 
     console.log('请求 URL:', fullUrl)
 
@@ -292,7 +286,6 @@ export async function streamDiagnosePlant({
         method: 'POST',
         header: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          ...(resolvedOpenid ? { 'x-openid': resolvedOpenid, 'x-wx-openid': resolvedOpenid } : {}),
           Accept: 'text/event-stream',
           'Content-Type': 'application/json'
         },
