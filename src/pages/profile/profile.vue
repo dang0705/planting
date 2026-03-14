@@ -77,6 +77,47 @@
 
     <!-- 功能菜单 -->
     <view class="px-4 pb-6">
+      <view class="bg-white rounded-3xl p-5 shadow-sm mb-4">
+        <view class="flex items-center justify-between mb-3">
+          <view>
+            <text class="block text-base font-semibold text-gray-900">微信支付测试</text>
+            <text class="block text-sm text-gray-500 mt-1">创建订单 -> 拉起支付 -> 查询订单状态</text>
+          </view>
+          <text class="text-2xl">💳</text>
+        </view>
+
+        <view v-if="payFlow.lastOutTradeNo" class="bg-[#F6FBF7] rounded-2xl p-3 mb-3">
+          <view class="flex items-center justify-between">
+            <text class="text-xs text-gray-500">最近订单</text>
+            <text class="text-xs text-gray-500">{{ payFlowUpdatedAtText }}</text>
+          </view>
+          <text class="block text-sm font-semibold text-gray-900 mt-1">{{ payFlow.lastOutTradeNo }}</text>
+          <text v-if="payFlow.tradeState" class="block text-xs text-gray-600 mt-1">
+            状态: {{ payFlow.tradeState }}{{ payFlow.tradeStateDesc ? ` (${payFlow.tradeStateDesc})` : '' }}
+          </text>
+        </view>
+
+        <view class="flex gap-3">
+          <button
+            class="flex-1 bg-[#0F9D58] text-white font-semibold py-3 rounded-2xl"
+            :loading="paying"
+            @click="handleWechatPayTest"
+          >
+            1. 下单并支付
+          </button>
+          <button
+            class="flex-1 bg-white border border-gray-200 text-gray-900 font-semibold py-3 rounded-2xl"
+            :disabled="!payFlow.lastOutTradeNo || querying"
+            :loading="querying"
+            @click="handleQueryLastOrder"
+          >
+            2. 查询状态
+          </button>
+        </view>
+
+        <text v-if="payFlow.tip" class="block text-xs text-gray-500 mt-2">{{ payFlow.tip }}</text>
+      </view>
+
       <view class="bg-white rounded-3xl overflow-hidden shadow-sm">
         <view
           v-for="(item, index) in menuItems"
@@ -139,12 +180,32 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/user.js'
+import { createWechatPayOrder, invokeWechatPayment, queryWechatPayOrder } from '@/api/payment'
 
 const userStore = useUserStore()
 
 // 诊断历史数据
 const diagnoseHistory = ref([])
 const loadingHistory = ref(false)
+const paying = ref(false)
+const querying = ref(false)
+
+const payFlow = ref({
+  lastOutTradeNo: '',
+  tradeState: '',
+  tradeStateDesc: '',
+  updatedAt: 0,
+  tip: ''
+})
+
+const payFlowUpdatedAtText = computed(() => {
+  if (!payFlow.value.updatedAt) return ''
+  const date = new Date(payFlow.value.updatedAt)
+  const hh = String(date.getHours()).padStart(2, '0')
+  const mm = String(date.getMinutes()).padStart(2, '0')
+  const ss = String(date.getSeconds()).padStart(2, '0')
+  return `${hh}:${mm}:${ss}`
+})
 
 // 会员状态
 const membershipText = computed(() => {
@@ -259,6 +320,91 @@ function upgradeMembership() {
       }
     }
   })
+}
+
+async function handleWechatPayTest() {
+  if (paying.value) return
+
+  const loggedIn = await userStore.ensureLogin()
+  if (!loggedIn) {
+    uni.showToast({
+      title: '请先完成微信登录',
+      icon: 'none'
+    })
+    return
+  }
+
+  paying.value = true
+  try {
+    payFlow.value.tip = '正在创建订单...'
+    const payData = await createWechatPayOrder({
+      description: '微信支付测试订单',
+      total: 1,
+      openid: userStore.openid
+    })
+
+    payFlow.value.lastOutTradeNo = String(payData.outTradeNo || '')
+    payFlow.value.updatedAt = Date.now()
+    payFlow.value.tradeState = ''
+    payFlow.value.tradeStateDesc = ''
+    payFlow.value.tip = '已下单，正在拉起微信支付...'
+
+    await invokeWechatPayment(payData)
+
+    payFlow.value.tip = '支付已完成回调，正在查询订单状态...'
+    await pollOrderStatus(payFlow.value.lastOutTradeNo)
+  } catch (error) {
+    console.error('微信支付测试失败:', error)
+    payFlow.value.tip = '流程中断，可点击“查询状态”查看订单最终状态'
+    uni.showToast({
+      title: error.errMsg || error.message || '支付测试失败',
+      icon: 'none',
+      duration: 2500
+    })
+  } finally {
+    paying.value = false
+  }
+}
+
+async function handleQueryLastOrder() {
+  if (!payFlow.value.lastOutTradeNo || querying.value) return
+  querying.value = true
+  try {
+    await pollOrderStatus(payFlow.value.lastOutTradeNo, { once: true })
+  } catch (e) {
+    uni.showToast({
+      title: e.errMsg || e.message || '查询失败',
+      icon: 'none',
+      duration: 2500
+    })
+  } finally {
+    querying.value = false
+  }
+}
+
+async function pollOrderStatus(outTradeNo, options = {}) {
+  const once = Boolean(options.once)
+  const maxTries = once ? 1 : 8
+  const delayMs = 800
+
+  for (let i = 0; i < maxTries; i += 1) {
+    const data = await queryWechatPayOrder({
+      outTradeNo,
+      openid: userStore.openid
+    })
+
+    const tradeState = String(data.trade_state || '').trim()
+    const tradeStateDesc = String(data.trade_state_desc || '').trim()
+
+    payFlow.value.tradeState = tradeState
+    payFlow.value.tradeStateDesc = tradeStateDesc
+    payFlow.value.updatedAt = Date.now()
+
+    if (once) return
+    if (tradeState && tradeState !== 'USERPAYING') return
+
+    await new Promise(resolve => setTimeout(resolve, delayMs))
+  }
 }
 
 function handleMenuClick(item) {

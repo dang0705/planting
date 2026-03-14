@@ -1,0 +1,27 @@
+{
+  "functionsRoot": ".",
+  "functions": [
+    {
+      "name": "payment",
+      "directory": "."
+    }
+  ],
+  "routes": [
+    {
+      "functionName": "payment",
+      "path": "/create-order"
+    },
+    {
+      "functionName": "payment",
+      "path": "/pay-callback"
+    },
+    {
+      "functionName": "payment",
+      "path": "/query-order"
+    },
+    {
+      "functionName": "payment",
+      "path": "/health"
+    }
+  ]
+}

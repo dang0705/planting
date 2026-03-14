@@ -9,7 +9,7 @@
 
 - 已实现：
 - AI 识别/诊断云函数已接入并可用（identify/index.js:14、diagnose-http/
-  app.js:58）。
+  index.js:58）。
 - 植物 CRUD 基本完整（getUserPlants/index.js:5、saveUserPlant/index.js:5、
   updateUserPlant/index.js:5、deleteUserPlant/index.js:5）。
 - 定位授权 + 实时天气已接通（CustomNavbar.vue:121、getWeather/

@@ -1,4 +1,4 @@
-module.exports = {
+const diagnose = {
   llm: {
     host: 'hunyuan.tencentcloudapi.com',
     model: 'hunyuan-vision',
@@ -9,4 +9,25 @@ module.exports = {
   主要问题：一句话
   处理建议：最多3条、每条不超过10字、总字数不超过100字。`
   }
+}
+
+const payment = {
+  routes: {
+    createOrder: '/create-order',
+    callback: '/pay-callback',
+    health: '/health'
+  },
+  defaults: {
+    appid: 'wx85bb3976301f75fb',
+    currency: 'CNY',
+    description: '植物服务订单',
+    total: 1
+  }
+}
+
+module.exports = {
+  diagnose,
+  payment,
+  llm: diagnose.llm,
+  prompts: diagnose.prompts
 }

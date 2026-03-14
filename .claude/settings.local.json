@@ -45,7 +45,8 @@
       "Bash(npm run:*)",
       "Bash(node:*)",
       "Bash(npx:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "WebFetch(domain:chatgpt.com)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -249,6 +249,7 @@ export async function streamDiagnosePlant({
 }) {
   try {
     const userStore = useUserStore()
+    const resolvedOpenid = openid || userStore.openid || ''
     // 先显示加载状态
     onText?.('思考中...', '思考中...')
 
@@ -286,6 +287,12 @@ export async function streamDiagnosePlant({
         method: 'POST',
         header: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(resolvedOpenid
+            ? {
+                'x-openid': resolvedOpenid,
+                'x-wx-openid': resolvedOpenid
+              }
+            : {}),
           Accept: 'text/event-stream',
           'Content-Type': 'application/json'
         },
@@ -293,6 +300,7 @@ export async function streamDiagnosePlant({
           mode,
           plantId,
           skipAuth,
+          ...(resolvedOpenid ? { openid: resolvedOpenid } : {}),
           ...(image ? { image } : {}),
           ...(description ? { description } : {}),
           ...(plantName ? { plantName } : {})

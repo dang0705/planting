@@ -2,7 +2,7 @@
   "name": "diagnose-http",
   "version": "1.0.0",
   "description": "HTTP云函数 - 植物诊断流式接口",
-  "main": "app.js",
+  "main": "index.js",
   "dependencies": {
     "@cloudbase/functions-framework": "^1.18.0",
     "@cloudbase/node-sdk": "^3.16.0"
