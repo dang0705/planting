@@ -46,7 +46,10 @@
       "Bash(node:*)",
       "Bash(npx:*)",
       "Bash(ls:*)",
-      "WebFetch(domain:chatgpt.com)"
+      "WebFetch(domain:chatgpt.com)",
+      "mcp__cloudbase__auth",
+      "mcp__ide__getDiagnostics",
+      "Bash(grep:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

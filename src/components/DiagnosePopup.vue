@@ -1,18 +1,220 @@
 <template>
   <uni-popup ref="popup" type="bottom" :safe-area="false" @change="handleChange">
-    <view class="bg-white rounded-t-3xl" style="max-height: 85vh">
+    <view class="bg-white rounded-t-3xl" style="max-height: 90vh">
       <!-- 头部 -->
       <view class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-        <text class="text-lg font-semibold text-gray-900">AI 诊断</text>
+        <text class="text-lg font-semibold text-gray-900">植物诊断</text>
         <view class="w-8 h-8 flex items-center justify-center" @click="close">
           <text class="text-gray-400 text-2xl">×</text>
         </view>
       </view>
 
+      <!-- 模式 Tab -->
+      <view v-if="!ruleResult" class="flex px-4 pt-3 gap-2">
+        <view
+          class="flex-1 py-2 rounded-xl text-center text-sm font-medium transition-all"
+          :class="diagnoseMode === 'rule' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-500'"
+          @click="switchMode('rule')"
+        >
+          🔍 症状诊断
+        </view>
+        <view
+          class="flex-1 py-2 rounded-xl text-center text-sm font-medium transition-all"
+          :class="diagnoseMode === 'ai' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-500'"
+          @click="switchMode('ai')"
+        >
+          🤖 AI 图像
+        </view>
+      </view>
+
       <!-- 内容区域 -->
       <scroll-view scroll-y class="px-4 py-4" style="max-height: 75vh">
-        <!-- 未诊断状态 -->
-        <view v-if="!result">
+
+        <!-- ===== 规则诊断：症状选择 ===== -->
+        <view v-if="diagnoseMode === 'rule' && !ruleResult">
+          <view v-if="ruleStep === 'symptoms'">
+            <text class="block text-xs text-gray-500 mb-3">选择您观察到的症状（可多选）</text>
+            <view v-if="loadingSymptoms" class="flex justify-center py-8">
+              <text class="text-gray-400 text-sm">加载中...</text>
+            </view>
+            <view v-else>
+              <view
+                v-for="cat in symptomCategories"
+                :key="cat.id"
+                class="mb-4"
+              >
+                <text class="block text-xs font-semibold text-gray-500 mb-2">{{ cat.label }}</text>
+                <view class="flex flex-wrap gap-2">
+                  <view
+                    v-for="sym in cat.symptoms"
+                    :key="sym.id"
+                    class="px-3 py-1.5 rounded-full text-xs border transition-all"
+                    :class="selectedSymptoms.includes(sym.id)
+                      ? 'bg-primary border-primary text-white'
+                      : 'bg-gray-50 border-gray-200 text-gray-600'"
+                    @click="toggleSymptom(sym.id)"
+                  >
+                    {{ sym.label }}
+                  </view>
+                </view>
+              </view>
+            </view>
+            <button
+              class="w-full bg-primary text-white font-semibold py-3 rounded-xl mt-2"
+              :class="{ 'opacity-40': selectedSymptoms.length === 0 }"
+              :disabled="selectedSymptoms.length === 0 || ruleDiagnosing"
+              @click="submitSymptoms"
+            >
+              {{ ruleDiagnosing ? '分析中...' : `开始诊断（已选 ${selectedSymptoms.length} 个）` }}
+            </button>
+          </view>
+
+          <!-- 规则诊断：追问 -->
+          <view v-if="ruleStep === 'question' && currentQuestion">
+            <!-- 当前候选预览 -->
+            <view v-if="candidates.length" class="bg-[#F0FBF4] rounded-xl p-3 mb-4">
+              <text class="block text-xs text-gray-500 mb-2">初步判断</text>
+              <view class="flex flex-wrap gap-2">
+                <view
+                  v-for="c in candidates"
+                  :key="c.id"
+                  class="flex items-center bg-white rounded-full px-2.5 py-1 shadow-sm"
+                >
+                  <text class="text-xs text-gray-700 mr-1">{{ c.name }}</text>
+                  <text class="text-xs font-bold" :class="confidenceColor(c.confidence)">{{ c.score }}%</text>
+                </view>
+              </view>
+            </view>
+
+            <view class="bg-gray-50 rounded-xl p-4 mb-3">
+              <text class="block text-sm font-semibold text-gray-900 mb-3">{{ currentQuestion.question }}</text>
+              <view class="space-y-2">
+                <view
+                  v-for="opt in currentQuestion.options"
+                  :key="opt.value"
+                  class="flex items-center p-2.5 rounded-xl border transition-all"
+                  :class="answeredConditions[currentQuestion.id] === opt.value
+                    ? 'border-primary bg-white'
+                    : 'border-transparent bg-white'"
+                  @click="answerQuestion(currentQuestion.id, opt.value)"
+                >
+                  <view
+                    class="w-4 h-4 rounded-full border-2 mr-2.5 flex items-center justify-center flex-shrink-0"
+                    :class="answeredConditions[currentQuestion.id] === opt.value
+                      ? 'border-primary bg-primary'
+                      : 'border-gray-300'"
+                  >
+                    <view v-if="answeredConditions[currentQuestion.id] === opt.value" class="w-1.5 h-1.5 bg-white rounded-full" />
+                  </view>
+                  <text class="text-sm text-gray-700">{{ opt.label }}</text>
+                </view>
+              </view>
+            </view>
+
+            <view class="flex gap-2">
+              <button
+                class="flex-1 bg-gray-100 text-gray-500 font-medium py-2.5 rounded-xl text-sm"
+                @click="skipQuestion"
+              >
+                跳过
+              </button>
+              <button
+                class="flex-2 bg-primary text-white font-semibold py-2.5 rounded-xl text-sm"
+                style="flex: 2"
+                :class="{ 'opacity-40': !answeredConditions[currentQuestion.id] }"
+                :disabled="!answeredConditions[currentQuestion.id] || ruleDiagnosing"
+                @click="submitAnswer"
+              >
+                {{ ruleDiagnosing ? '分析中...' : '确认' }}
+              </button>
+            </view>
+          </view>
+        </view>
+
+        <!-- ===== 规则诊断：结果 ===== -->
+        <view v-if="ruleResult">
+          <view class="flex items-center mb-3">
+            <view class="mr-2 p-1" @click="resetRuleDiagnose">
+              <text class="text-gray-400 text-base">←</text>
+            </view>
+            <text class="text-base font-semibold text-gray-900">诊断结果</text>
+          </view>
+
+          <!-- 健康评分 -->
+          <view class="bg-gray-50 rounded-xl p-3 mb-3">
+            <view class="flex items-center justify-between mb-2">
+              <text class="text-xs font-semibold text-gray-600">健康评分</text>
+              <view class="px-2 py-0.5 rounded-full text-xs font-bold" :class="healthStatusClass(ruleResult.healthStatus)">
+                {{ healthStatusText(ruleResult.healthStatus) }}
+              </view>
+            </view>
+            <view class="flex items-end gap-1 mb-2">
+              <text class="text-3xl font-bold text-primary">{{ ruleResult.healthScore }}</text>
+              <text class="text-gray-400 text-xs mb-1">/ 100</text>
+            </view>
+            <view class="w-full bg-gray-200 rounded-full h-1.5">
+              <view
+                class="h-1.5 rounded-full"
+                :class="healthBarClass(ruleResult.healthStatus)"
+                :style="{ width: ruleResult.healthScore + '%' }"
+              />
+            </view>
+            <text class="block text-xs text-gray-600 mt-2 leading-relaxed">{{ ruleResult.summary }}</text>
+          </view>
+
+          <!-- 候选诊断 -->
+          <view
+            v-for="(c, idx) in ruleResult.candidates"
+            :key="c.id"
+            class="bg-gray-50 rounded-xl p-3 mb-2"
+          >
+            <view class="flex items-center justify-between mb-2">
+              <view class="flex items-center">
+                <view
+                  class="w-5 h-5 rounded-full flex items-center justify-center mr-2 text-xs font-bold text-white"
+                  :class="idx === 0 ? 'bg-primary' : 'bg-gray-300'"
+                >{{ idx + 1 }}</view>
+                <text class="text-sm font-bold text-gray-900">{{ c.name }}</text>
+              </view>
+              <view class="flex items-center gap-1">
+                <text class="text-sm font-bold text-primary">{{ c.score }}%</text>
+                <text class="text-[10px] px-1.5 py-0.5 rounded-full" :class="confidenceBadge(c.confidence)">
+                  {{ confidenceLabel(c.confidence) }}
+                </text>
+              </view>
+            </view>
+            <view v-if="c.solutions?.length" class="mb-1.5">
+              <text class="block text-[10px] font-semibold text-gray-400 mb-1">处理建议</text>
+              <view v-for="s in c.solutions" :key="s" class="flex items-start mb-0.5">
+                <text class="text-primary mr-1 text-xs">•</text>
+                <text class="text-xs text-gray-700">{{ s }}</text>
+              </view>
+            </view>
+            <view v-if="c.prevention?.length" class="bg-white rounded-lg p-2">
+              <text class="block text-[10px] font-semibold text-gray-400 mb-1">预防措施</text>
+              <view v-for="p in c.prevention" :key="p" class="flex items-start mb-0.5">
+                <text class="text-green-500 mr-1 text-xs">✓</text>
+                <text class="text-[10px] text-gray-600">{{ p }}</text>
+              </view>
+            </view>
+          </view>
+
+          <view v-if="!ruleResult.candidates?.length" class="text-center py-4">
+            <text class="text-3xl block mb-2">🌿</text>
+            <text class="block text-sm font-semibold text-gray-900 mb-1">未发现明显问题</text>
+            <text class="block text-xs text-gray-500">植物整体状态良好，继续保持日常养护。</text>
+          </view>
+
+          <view class="flex gap-2 mt-2">
+            <button class="flex-1 bg-gray-100 text-gray-600 font-medium py-2.5 rounded-xl text-sm" @click="resetRuleDiagnose">重新诊断</button>
+            <button class="flex-1 bg-primary text-white font-semibold py-2.5 rounded-xl text-sm" @click="close">完成</button>
+          </view>
+        </view>
+
+        <!-- ===== AI 图像诊断 ===== -->
+        <view v-if="diagnoseMode === 'ai' && !ruleResult">
+          <!-- 未诊断状态 -->
+          <view v-if="!aiResult">
           <!-- 上传区域 -->
           <view class="mb-4">
             <text class="block text-base font-semibold text-gray-900 mb-2">📸 拍摄植物照片</text>
@@ -85,54 +287,54 @@
         </view>
 
         <!-- 诊断结果 -->
-        <view v-if="result">
+        <view v-if="aiResult">
           <!-- 植物信息 -->
           <view class="bg-gray-50 rounded-xl p-3 mb-3">
             <view class="flex items-center mb-2">
               <text class="text-2xl mr-2">🌿</text>
               <view class="flex-1">
-                <text class="block text-base font-semibold text-gray-900">{{ result.plantName }}</text>
-                <text class="block text-xs text-gray-500">{{ result.scientificName || '学名未知' }}</text>
+                <text class="block text-base font-semibold text-gray-900">{{ aiResult.plantName }}</text>
+                <text class="block text-xs text-gray-500">{{ aiResult.scientificName || '学名未知' }}</text>
               </view>
             </view>
 
             <!-- 健康状态 -->
             <view class="flex items-center justify-between p-2 bg-white rounded-lg">
               <text class="text-xs font-semibold text-gray-700">健康状态</text>
-              <view :class="getHealthClass(result.healthStatus)">
-                <text class="text-xs font-bold">{{ result.healthStatus }}</text>
+              <view :class="getHealthClass(aiResult.healthStatus)">
+                <text class="text-xs font-bold">{{ aiResult.healthStatus }}</text>
               </view>
             </view>
           </view>
 
           <!-- 问题诊断 -->
-          <view v-if="result.problem" class="mb-3">
+          <view v-if="aiResult.problem" class="mb-3">
             <text class="block text-sm font-semibold text-gray-900 mb-2">🔍 问题诊断</text>
             <view class="bg-gray-50 rounded-xl p-3">
-              <text class="block text-xs text-gray-800 mb-2">{{ result.problem }}</text>
+              <text class="block text-xs text-gray-800 mb-2">{{ aiResult.problem }}</text>
               <view class="bg-[#FFF3E0] rounded-lg p-2">
                 <text class="block text-[10px] font-semibold text-[#F4A261] mb-1">可能原因</text>
-                <text class="block text-[10px] text-gray-700">{{ result.cause }}</text>
+                <text class="block text-[10px] text-gray-700">{{ aiResult.cause }}</text>
               </view>
             </view>
           </view>
 
           <!-- 解决方案 -->
-          <view v-if="result.solution" class="mb-3">
+          <view v-if="aiResult.solution" class="mb-3">
             <text class="block text-sm font-semibold text-gray-900 mb-2">💊 解决方案</text>
             <view class="bg-gray-50 rounded-xl p-3">
               <text class="block text-xs text-gray-800 leading-relaxed whitespace-pre-line">{{
-                result.solution
+                aiResult.solution
               }}</text>
             </view>
           </view>
 
           <!-- 养护建议 -->
-          <view v-if="result.careAdvice" class="mb-3">
+          <view v-if="aiResult.careAdvice" class="mb-3">
             <text class="block text-sm font-semibold text-gray-900 mb-2">🌱 养护建议</text>
             <view class="bg-gray-50 rounded-xl p-3">
               <text class="block text-xs text-gray-800 leading-relaxed whitespace-pre-line">{{
-                result.careAdvice
+                aiResult.careAdvice
               }}</text>
             </view>
           </view>
@@ -148,6 +350,7 @@
             <button class="flex-1 bg-primary text-white font-semibold py-2.5 rounded-xl text-sm" @click="close">
               完成
             </button>
+          </view>
           </view>
         </view>
       </scroll-view>
@@ -174,6 +377,7 @@ import { useUserStore } from '@/store/user.js'
 import { useDiagnoseStore } from '@/store/diagnose.js'
 import { uploadPlantImage, getImageUrl } from '@/api/storage.js'
 import { streamDiagnosePlant, diagnosePlant } from '@/api/ai-stream.js'
+import { getSymptomCategories, runRuleDiagnose } from '@/api/rule-diagnose.js'
 import { ONE_MEGA_BYTE } from '../constants'
 import AIStreamDialog from './AIStreamDialog.vue'
 
@@ -194,12 +398,182 @@ const userStore = useUserStore()
 const diagnoseStore = useDiagnoseStore()
 
 const popup = ref(null)
+
+// AI 诊断状态
 const images = ref([])
-const result = ref(null)
+const aiResult = ref(null)
 const showAIDialog = ref(false)
 const aiStreamDialogRef = ref(null)
 const pendingImageUrl = ref('')
 const thinkingMode = ref(false)
+
+// 模式切换
+const diagnoseMode = ref('rule')
+
+// 规则诊断状态
+const ruleStep = ref('symptoms')       // 'symptoms' | 'question'
+const loadingSymptoms = ref(false)
+const symptomCategories = ref([])
+const selectedSymptoms = ref([])
+const candidates = ref([])
+const currentQuestion = ref(null)
+const answeredConditions = ref({})
+const questionRound = ref(0)
+const ruleDiagnosing = ref(false)
+const ruleResult = ref(null)
+
+// 症状列表延迟加载（弹窗打开时）
+async function loadSymptomsIfNeeded() {
+  if (symptomCategories.value.length > 0) return
+
+  loadingSymptoms.value = true
+  try {
+    symptomCategories.value = await getSymptomCategories()
+    console.log('[DiagnosePopup] symptomCategories loaded:', symptomCategories.value.length)
+  } catch (e) {
+    console.error('[DiagnosePopup] load symptoms failed:', e)
+    uni.showToast({ title: '加载症状列表失败', icon: 'none' })
+  } finally {
+    loadingSymptoms.value = false
+  }
+}
+
+function switchMode(mode) {
+  diagnoseMode.value = mode
+}
+
+function toggleSymptom(id) {
+  const idx = selectedSymptoms.value.indexOf(id)
+  if (idx === -1) selectedSymptoms.value.push(id)
+  else selectedSymptoms.value.splice(idx, 1)
+}
+
+async function submitSymptoms() {
+  if (selectedSymptoms.value.length === 0) return
+  ruleDiagnosing.value = true
+  try {
+    console.log('[RuleDiagnose] submitSymptoms, symptoms:', selectedSymptoms.value)
+    const data = await runRuleDiagnose(selectedSymptoms.value, {}, 0)
+    console.log('[RuleDiagnose] response:', JSON.stringify(data))
+    candidates.value = data.candidates || []
+    questionRound.value = 0
+
+    if (data.done || !data.nextQuestion) {
+      console.log('[RuleDiagnose] -> result (done or no nextQuestion)')
+      showRuleResult(data)
+    } else {
+      console.log('[RuleDiagnose] -> question:', data.nextQuestion.id)
+      currentQuestion.value = data.nextQuestion
+      ruleStep.value = 'question'
+    }
+  } catch (e) {
+    console.error('[RuleDiagnose] submitSymptoms error:', e)
+    uni.showToast({ title: e.message || '诊断失败', icon: 'none' })
+  } finally {
+    ruleDiagnosing.value = false
+  }
+}
+
+function answerQuestion(questionId, value) {
+  answeredConditions.value = { ...answeredConditions.value, [questionId]: value }
+}
+
+async function submitAnswer() {
+  if (!currentQuestion.value || !answeredConditions.value[currentQuestion.value.id]) return
+  ruleDiagnosing.value = true
+  try {
+    const data = await runRuleDiagnose(selectedSymptoms.value, answeredConditions.value, questionRound.value + 1)
+    candidates.value = data.candidates || []
+    questionRound.value += 1
+
+    if (data.done || !data.nextQuestion) {
+      showRuleResult(data)
+    } else {
+      currentQuestion.value = data.nextQuestion
+    }
+  } catch (e) {
+    uni.showToast({ title: e.message || '分析失败', icon: 'none' })
+  } finally {
+    ruleDiagnosing.value = false
+  }
+}
+
+async function skipQuestion() {
+  ruleDiagnosing.value = true
+  try {
+    const data = await runRuleDiagnose(selectedSymptoms.value, answeredConditions.value, 4)
+    showRuleResult(data)
+  } catch (e) {
+    uni.showToast({ title: e.message || '分析失败', icon: 'none' })
+  } finally {
+    ruleDiagnosing.value = false
+  }
+}
+
+function showRuleResult(data) {
+  const topCandidate = data.candidates?.[0]
+  let healthScore = 80
+  let healthStatus = 'healthy'
+  if (topCandidate) {
+    if (topCandidate.score >= 70) { healthScore = 30; healthStatus = 'sick' }
+    else if (topCandidate.score >= 40) { healthScore = 60; healthStatus = 'warning' }
+    else { healthScore = 80; healthStatus = 'healthy' }
+  }
+  ruleResult.value = {
+    candidates: data.candidates || [],
+    healthScore,
+    healthStatus,
+    summary: topCandidate
+      ? `初步判断为「${topCandidate.name}」，匹配度 ${topCandidate.score}%`
+      : '未发现明显病害，植物整体状态良好'
+  }
+}
+
+function resetRuleDiagnose() {
+  ruleStep.value = 'symptoms'
+  selectedSymptoms.value = []
+  candidates.value = []
+  currentQuestion.value = null
+  answeredConditions.value = {}
+  questionRound.value = 0
+  ruleResult.value = null
+}
+
+function confidenceColor(confidence) {
+  if (confidence === 'high') return 'text-red-500'
+  if (confidence === 'medium') return 'text-yellow-500'
+  return 'text-green-500'
+}
+
+function confidenceBadge(confidence) {
+  if (confidence === 'high') return 'bg-red-100 text-red-600'
+  if (confidence === 'medium') return 'bg-yellow-100 text-yellow-600'
+  return 'bg-green-100 text-green-600'
+}
+
+function confidenceLabel(confidence) {
+  if (confidence === 'high') return '高度匹配'
+  if (confidence === 'medium') return '中度匹配'
+  return '低度匹配'
+}
+
+function healthStatusClass(status) {
+  if (status === 'sick') return 'bg-red-100 text-red-600'
+  if (status === 'warning') return 'bg-yellow-100 text-yellow-600'
+  return 'bg-green-100 text-green-600'
+}
+
+function healthStatusText(status) {
+  if (status === 'sick') return '需要治疗'
+  if (status === 'warning') return '轻微问题'
+  return '状态良好'
+}
+
+function healthBarClass(status) {
+  if (status === 'sick') return 'bg-red-400'
+  if (status === 'warning') return 'bg-yellow-400'
+  return 'bg-green-400'
+}
 
 function open() {
   popup.value?.open()
@@ -210,7 +584,9 @@ function close() {
 }
 
 function handleChange(e) {
-  if (!e.show) {
+  if (e.show) {
+    loadSymptomsIfNeeded()
+  } else {
     emit('close')
   }
 }
@@ -328,7 +704,7 @@ function handleAIDialogClose() {
 
 function handleAIDialogConfirm(diagnosisResult) {
   if (diagnosisResult) {
-    result.value = {
+    aiResult.value = {
       plantName: '植物',
       scientificName: '待识别',
       healthStatus: getHealthStatusText(diagnosisResult.healthStatus),
@@ -342,10 +718,10 @@ function handleAIDialogConfirm(diagnosisResult) {
 
     diagnoseStore.addToHistory({
       images: images.value,
-      diagnosis: result.value
+      diagnosis: aiResult.value
     })
 
-    emit('success', result.value)
+    emit('success', aiResult.value)
     uni.showToast({ title: '诊断完成', icon: 'success' })
   }
   showAIDialog.value = false
@@ -390,7 +766,7 @@ function getHealthStatusText(status) {
 
 function resetDiagnose() {
   images.value = []
-  result.value = null
+  aiResult.value = null
 }
 
 function getHealthClass(status) {

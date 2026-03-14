@@ -18,6 +18,18 @@
     {
       "functionName": "diagnose-http",
       "path": "/health"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/rule-diagnose/symptoms"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/rule-diagnose/questions"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/rule-diagnose/diagnose"
     }
   ]
 }
