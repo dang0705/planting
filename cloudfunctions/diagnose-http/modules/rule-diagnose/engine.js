@@ -10,9 +10,10 @@ const { diagnosisRules } = require('./data/rules')
  *
  * @param {string[]} userSymptoms   - 用户选择的症状 ID 列表
  * @param {Object}  userConditions  - 用户回答的条件 { soil_moisture: 'wet', light: 'low', ... }
+ * @param {Object}  symptomMatches  - 症状初始匹配度 { yellow_leaves: 0.8, ... }
  * @returns {Array} 候选诊断结果，按分数降序排列
  */
-function diagnose(userSymptoms, userConditions) {
+function diagnose(userSymptoms, userConditions, symptomMatches = {}) {
   const allConditions = { ...userConditions }
   let candidates = []
 
@@ -32,8 +33,9 @@ function diagnose(userSymptoms, userConditions) {
 
     userSymptoms.forEach(s => {
       const w = symptomsMap[s] ?? 0
-      if (w > 0) positiveSum += w
-      else if (w < 0) negativeSum += Math.abs(w)
+      const matchScore = normalizeMatchScore(symptomMatches[s])
+      if (w > 0) positiveSum += w * matchScore
+      else if (w < 0) negativeSum += Math.abs(w) * matchScore
     })
 
     const symptomScore =
@@ -99,6 +101,12 @@ function scoreToConfidence(score) {
   if (score >= 0.75) return 'high'
   if (score >= 0.5) return 'medium'
   return 'low'
+}
+
+function normalizeMatchScore(value) {
+  const number = Number(value)
+  if (!Number.isFinite(number)) return 1
+  return Math.max(0.05, Math.min(1, number))
 }
 
 /**

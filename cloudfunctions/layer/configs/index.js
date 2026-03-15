@@ -2,12 +2,15 @@ const diagnose = {
   llm: {
     host: 'hunyuan.tencentcloudapi.com',
     model: 'hunyuan-vision',
-    service: 'hunyuan'
+    service: 'hunyuan',
+    options: {
+      TopP: 0.3,
+      Temperature: 0.1,
+      Seed: 42
+    }
   },
   prompts: {
-    llm: `请结合图片和症状描述输出诊断结论，必须使用中文，并按以下格式输出：
-  主要问题：一句话
-  处理建议：最多3条、每条不超过10字、总字数不超过100字。`
+    // prompts are moved to diagnose-http local utils/llm.js
   }
 }
 

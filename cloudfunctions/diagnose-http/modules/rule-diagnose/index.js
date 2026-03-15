@@ -4,15 +4,22 @@ const { jsonResponse, resolveHttpUserInfo } = require('/opt/utils/http')
 const { symptomCategories, followUpQuestions } = require('./data/questions')
 const { diagnose, calcHealthScore, calcHealthStatus } = require('./engine')
 const { chooseNextQuestion, shouldContinueAsking } = require('./question-engine')
+const { handleIdentifySymptoms } = require('./symptom-identifier')
+const { handleMatchSymptom } = require('./symptom-matcher')
 
 /**
  * GET /rule-diagnose/symptoms
  * 返回所有症状分类供前端展示
  */
-async function handleGetSymptoms(event, context, requestData) {
+async function handleGetSymptoms() {
   return jsonResponse(200, {
     code: 200,
-    data: { symptomCategories }
+    data: {
+      symptomCategories: symptomCategories.map(category => ({
+        id: category.id,
+        label: category.label
+      }))
+    }
   })
 }
 
@@ -20,7 +27,7 @@ async function handleGetSymptoms(event, context, requestData) {
  * GET /rule-diagnose/questions
  * 返回所有追问问题
  */
-async function handleGetQuestions(event, context, requestData) {
+async function handleGetQuestions() {
   return jsonResponse(200, {
     code: 200,
     data: { questions: followUpQuestions }
@@ -49,6 +56,8 @@ async function handleRuleDiagnose(event, context, requestData) {
   const body = requestData.body || {}
   const symptoms = Array.isArray(body.symptoms) ? body.symptoms : []
   const conditions = body.conditions && typeof body.conditions === 'object' ? body.conditions : {}
+  const symptomMatches =
+    body.symptomMatches && typeof body.symptomMatches === 'object' ? body.symptomMatches : {}
   const round = Number(body.round) || 0
 
   if (symptoms.length === 0) {
@@ -56,10 +65,11 @@ async function handleRuleDiagnose(event, context, requestData) {
   }
 
   // 运行诊断引擎
-  const candidates = diagnose(symptoms, conditions)
+  const candidates = diagnose(symptoms, conditions, symptomMatches)
   const candidateRuleIds = candidates.map(c => c.id)
 
   console.log('[RuleDiagnose] symptoms:', JSON.stringify(symptoms))
+  console.log('[RuleDiagnose] symptomMatches:', JSON.stringify(symptomMatches))
   console.log('[RuleDiagnose] conditions:', JSON.stringify(conditions))
   console.log('[RuleDiagnose] round:', round)
   console.log('[RuleDiagnose] candidates:', JSON.stringify(candidates))
@@ -103,7 +113,8 @@ function buildSummary(candidates) {
     return '根据您描述的症状，植物整体状态良好，建议继续保持日常养护。'
   }
   const top = candidates[0]
-  const confidenceText = top.confidence === 'high' ? '很可能' : top.confidence === 'medium' ? '可能' : '有一定可能'
+  const confidenceText =
+    top.confidence === 'high' ? '很可能' : top.confidence === 'medium' ? '可能' : '有一定可能'
   let summary = `植物${confidenceText}存在「${top.name}」问题。`
   if (top.solutions?.length) {
     summary += `建议：${top.solutions.slice(0, 2).join('、')}。`
@@ -123,6 +134,14 @@ function createRuleDiagnoseRouteTable() {
     getRuleQuestions: {
       match: path => path.includes('/rule-diagnose/questions'),
       handler: handleGetQuestions
+    },
+    identifySymptoms: {
+      match: path => path.includes('/rule-diagnose/identify-symptoms'),
+      handler: handleIdentifySymptoms
+    },
+    matchSymptom: {
+      match: path => path.includes('/rule-diagnose/match-symptom'),
+      handler: handleMatchSymptom
     },
     ruleDiagnose: {
       match: path => path.includes('/rule-diagnose/diagnose'),

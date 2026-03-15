@@ -61,7 +61,12 @@ async function executeDiagnosis({ mode, image, description, plantName, openid, s
     }
   }
 
-  const diagnosisText = await callLLMDiagnose(image, description, plantName, stream)
+  const diagnosisText = await callLLMDiagnose({
+    image,
+    systemPrompts: description,
+    plantName,
+    stream
+  })
   return {
     diagnosisText,
     result: parseLLMDiagnosis(diagnosisText)
@@ -162,19 +167,25 @@ async function handleStreamDiagnose(event, context, requestData) {
   const userInfo = await resolveHttpUserInfo(headers, query)
 
   if (!userInfo || !userInfo.openid) {
-    sse.send({ data: JSON.stringify({ type: 'error', code: 401, message: '需要登录才能使用 AI 诊断功能' }) })
+    sse.send({
+      data: JSON.stringify({ type: 'error', code: 401, message: '需要登录才能使用 AI 诊断功能' })
+    })
     sse.end()
     return ''
   }
 
   const openid = userInfo.openid
   if (!plantId) {
-    sse.send({ data: JSON.stringify({ type: 'error', code: 400, message: '缺少必填字段：plantId' }) })
+    sse.send({
+      data: JSON.stringify({ type: 'error', code: 400, message: '缺少必填字段：plantId' })
+    })
     sse.end()
     return ''
   }
   if (!image && !description) {
-    sse.send({ data: JSON.stringify({ type: 'error', code: 400, message: '需要提供植物图片或描述' }) })
+    sse.send({
+      data: JSON.stringify({ type: 'error', code: 400, message: '需要提供植物图片或描述' })
+    })
     sse.end()
     return ''
   }
@@ -293,7 +304,11 @@ async function handleStreamDiagnose(event, context, requestData) {
         }
       })
     } catch (fallbackError) {
-      sendEvent('error', { type: 'error', code: 500, message: `诊断失败: ${fallbackError.message}` })
+      sendEvent('error', {
+        type: 'error',
+        code: 500,
+        message: `诊断失败: ${fallbackError.message}`
+      })
     }
 
     if (!connectionClosed && !sse.closed) {
@@ -316,7 +331,8 @@ async function handleSyncDiagnose(event, context, requestData) {
   const mode = normalizeMode(requestPayload.mode)
 
   if (!plantId) return jsonResponse(400, { code: 400, message: '缺少必填字段：plantId' })
-  if (!image && !description) return jsonResponse(400, { code: 400, message: '需要提供植物图片或描述' })
+  if (!image && !description)
+    return jsonResponse(400, { code: 400, message: '需要提供植物图片或描述' })
 
   if (!isSkipAuth) {
     const quotaCheck = await checkAIQuota(openid, 'diagnose')

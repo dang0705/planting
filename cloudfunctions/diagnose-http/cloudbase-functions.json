@@ -29,6 +29,14 @@
     },
     {
       "functionName": "diagnose-http",
+      "path": "/rule-diagnose/identify-symptoms"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/rule-diagnose/match-symptom"
+    },
+    {
+      "functionName": "diagnose-http",
       "path": "/rule-diagnose/diagnose"
     }
   ]
