@@ -2,7 +2,7 @@
 
 const { jsonResponse, resolveHttpUserInfo } = require('/opt/utils/http')
 const { symptomCategories, followUpQuestions } = require('./data/questions')
-const { diagnose, calcHealthScore, calcHealthStatus } = require('./engine')
+const { diagnose } = require('./engine')
 const { chooseNextQuestion, shouldContinueAsking } = require('./question-engine')
 const { handleIdentifySymptoms } = require('./symptom-identifier')
 const { handleMatchSymptom } = require('./symptom-matcher')
@@ -96,8 +96,6 @@ async function handleRuleDiagnose(event, context, requestData) {
       ...(isDone
         ? {
             result: {
-              healthScore: calcHealthScore(candidates),
-              healthStatus: calcHealthStatus(candidates),
               mainIssue: candidates[0]?.name || '未发现明显问题',
               candidates,
               summary: buildSummary(candidates)
@@ -113,14 +111,12 @@ function buildSummary(candidates) {
     return '根据您描述的症状，植物整体状态良好，建议继续保持日常养护。'
   }
   const top = candidates[0]
-  const confidenceText =
-    top.confidence === 'high' ? '很可能' : top.confidence === 'medium' ? '可能' : '有一定可能'
-  let summary = `植物${confidenceText}存在「${top.name}」问题。`
+  let summary = `当前最可能的问题是「${top.name}」。`
   if (top.solutions?.length) {
     summary += `建议：${top.solutions.slice(0, 2).join('、')}。`
   }
-  if (candidates.length > 1 && candidates[1].confidence !== 'low') {
-    summary += `也需注意「${candidates[1].name}」的可能性。`
+  if (candidates.length > 1) {
+    summary += `同时也要留意「${candidates[1].name}」。`
   }
   return summary
 }

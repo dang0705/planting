@@ -113,11 +113,11 @@
           <view
             v-for="c in candidates"
             :key="c.id"
-            class="flex items-center bg-white rounded-full px-3 py-1 shadow-sm"
+            class="flex items-center bg-white rounded-full px-3 py-1 shadow-sm gap-1"
           >
-            <text class="text-xs text-gray-700 mr-1">{{ c.name }}</text>
-            <text class="text-xs font-bold" :class="confidenceColor(c.confidence)">
-              {{ c.score }}%
+            <text class="text-xs text-gray-700">{{ c.name }}</text>
+            <text class="text-xs px-2 py-0.5 rounded-full" :class="confidenceBadge(c.confidence)">
+              {{ c.likelihood || confidenceLabel(c.confidence) }}
             </text>
           </view>
         </view>
@@ -173,29 +173,8 @@
         <text class="text-xl font-bold text-gray-900">诊断结果</text>
       </view>
 
-      <!-- 健康评分 -->
       <view class="bg-white rounded-3xl p-6 mb-4 shadow-sm">
-        <view class="flex items-center justify-between mb-3">
-          <text class="text-base font-semibold text-gray-900">健康评分</text>
-          <view
-            class="px-3 py-1 rounded-full text-sm font-bold"
-            :class="healthStatusClass(ruleResult.healthStatus)"
-          >
-            {{ healthStatusText(ruleResult.healthStatus) }}
-          </view>
-        </view>
-        <view class="flex items-end gap-2 mb-3">
-          <text class="text-5xl font-bold text-primary">{{ ruleResult.healthScore }}</text>
-          <text class="text-gray-400 mb-1">/ 100</text>
-        </view>
-        <view class="w-full bg-gray-100 rounded-full h-2">
-          <view
-            class="h-2 rounded-full transition-all"
-            :class="healthBarClass(ruleResult.healthStatus)"
-            :style="{ width: ruleResult.healthScore + '%' }"
-          />
-        </view>
-        <text class="block text-sm text-gray-600 mt-3 leading-relaxed">{{ ruleResult.summary }}</text>
+        <text class="block text-sm text-gray-600 leading-relaxed">{{ ruleResult.summary }}</text>
       </view>
 
       <!-- 候选诊断 -->
@@ -214,12 +193,9 @@
             </view>
             <text class="text-base font-bold text-gray-900">{{ c.name }}</text>
           </view>
-          <view class="flex items-center gap-1">
-            <text class="text-lg font-bold text-primary">{{ c.score }}%</text>
-            <text class="text-xs px-2 py-0.5 rounded-full" :class="confidenceBadge(c.confidence)">
-              {{ confidenceLabel(c.confidence) }}
-            </text>
-          </view>
+          <text class="text-xs px-2 py-0.5 rounded-full" :class="confidenceBadge(c.confidence)">
+            {{ c.likelihood || confidenceLabel(c.confidence) }}
+          </text>
         </view>
 
         <!-- 解决方案 -->
@@ -505,15 +481,14 @@ function showRuleResult(result) {
     // 本地构造兜底结果
     const top = candidates.value[0]
     ruleResult.value = {
-      healthScore: top ? Math.max(20, 80 - top.score) : 90,
-      healthStatus: top?.score >= 70 ? 'sick' : top?.score >= 45 ? 'warning' : 'healthy',
       mainIssue: top?.name || '未发现明显问题',
       candidates: candidates.value,
       summary: top
-        ? `植物可能存在「${top.name}」问题，建议：${top.solutions?.[0] || '请参考处理建议'}`
+        ? `当前最可能的问题是「${top.name}」，建议：${top.solutions?.[0] || '请参考处理建议'}`
         : '根据您描述的症状，植物整体状态良好。'
     }
   }
+  console.log('[RuleDiagnose/page] final result:', JSON.stringify(ruleResult.value))
   step.value = 'rule-result'
 }
 
@@ -634,10 +609,6 @@ function handleLoginSuccess() { startRuleDiagnose() }
 
 // ===================== 工具函数 =====================
 
-function confidenceColor(c) {
-  return c === 'high' ? 'text-red-500' : c === 'medium' ? 'text-yellow-500' : 'text-gray-400'
-}
-
 function confidenceBadge(c) {
   return c === 'high'
     ? 'bg-red-50 text-red-500'
@@ -647,23 +618,7 @@ function confidenceBadge(c) {
 }
 
 function confidenceLabel(c) {
-  return c === 'high' ? '高可能' : c === 'medium' ? '中可能' : '低可能'
-}
-
-function healthStatusText(s) {
-  return s === 'sick' ? '需要治疗' : s === 'warning' ? '轻微问题' : '状态良好'
-}
-
-function healthStatusClass(s) {
-  return s === 'sick'
-    ? 'bg-red-100 text-red-600'
-    : s === 'warning'
-    ? 'bg-yellow-100 text-yellow-600'
-    : 'bg-green-100 text-green-600'
-}
-
-function healthBarClass(s) {
-  return s === 'sick' ? 'bg-red-400' : s === 'warning' ? 'bg-yellow-400' : 'bg-primary'
+  return c === 'high' ? '最可能' : c === 'medium' ? '较可能' : '有可能'
 }
 </script>
 

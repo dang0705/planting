@@ -19,72 +19,50 @@ function sanitizeFileName(str) {
  * @returns {Promise} 返回压缩后的图片路径和大小信息
  */
 function compressImage(imagePath) {
-  return new Promise((resolve, reject) => {
-    // 先获取原始文件大小
+  return new Promise(resolve => {
     wx.getFileSystemManager().stat({
       path: imagePath,
       success: statRes => {
         const originalSize = statRes.stats.size
         console.log('原始图片大小:', (originalSize / 1024 / 1024).toFixed(2), 'MB')
 
-        // 根据原始大小选择压缩质量
-        let quality = 60
-        if (originalSize > 5 * 1024 * 1024) {
-          quality = 40 // 大于 5MB，质量设为 40
+        // 小图直接上传，避免额外压缩耗时
+        if (originalSize <= 1.2 * 1024 * 1024) {
+          resolve({
+            path: imagePath,
+            originalSize,
+            compressedSize: originalSize,
+            compressed: false
+          })
+          return
+        }
+
+        let quality = 55
+        if (originalSize > 6 * 1024 * 1024) {
+          quality = 35
         } else if (originalSize > 3 * 1024 * 1024) {
-          quality = 50 // 大于 3MB，质量设为 50
+          quality = 45
         }
 
         console.log('使用压缩质量:', quality)
 
         wx.compressImage({
           src: imagePath,
-          quality: quality,
+          quality,
           type: 'jpg',
           success: res => {
-            // 获取压缩后的文件大小
-            wx.getFileSystemManager().stat({
+            resolve({
               path: res.tempFilePath,
-              success: compressedStatRes => {
-                const compressedSize = compressedStatRes.stats.size
-                const ratio = ((1 - compressedSize / originalSize) * 100).toFixed(1)
-                console.log('压缩后大小:', (compressedSize / 1024 / 1024).toFixed(2), 'MB')
-                console.log('压缩率:', ratio, '%')
-
-                // 如果压缩后反而变大，使用原图
-                if (compressedSize > originalSize) {
-                  console.warn('压缩后文件变大，使用原图')
-                  resolve({
-                    path: imagePath,
-                    originalSize: originalSize,
-                    compressedSize: originalSize,
-                    compressed: false
-                  })
-                } else {
-                  resolve({
-                    path: res.tempFilePath,
-                    originalSize: originalSize,
-                    compressedSize: compressedSize,
-                    compressed: true
-                  })
-                }
-              },
-              fail: () => {
-                // 无法获取压缩后大小，直接返回
-                resolve({
-                  path: res.tempFilePath,
-                  originalSize: originalSize,
-                  compressedSize: 0,
-                  compressed: true
-                })
-              }
+              originalSize,
+              compressedSize: 0,
+              compressed: true
             })
           },
           fail: err => {
             console.warn('图片压缩失败，使用原图:', err)
             resolve({
               path: imagePath,
-              originalSize: originalSize,
+              originalSize,
               compressedSize: originalSize,
               compressed: false
             })
@@ -92,24 +70,10 @@ function compressImage(imagePath) {
         })
       },
       fail: err => {
-        console.warn('无法获取文件大小:', err)
-        // 如果无法获取大小，尝试压缩
-        wx.compressImage({
-          src: imagePath,
-          quality: 50,
-          type: 'jpg',
-          success: res => {
-            resolve({
-              path: res.tempFilePath,
-              compressed: true
-            })
-          },
-          fail: () => {
-            resolve({
-              path: imagePath,
-              compressed: false
-            })
-          }
+        console.warn('无法获取文件大小，直接上传原图:', err)
+        resolve({
+          path: imagePath,
+          compressed: false
         })
       }
     })
@@ -125,7 +89,7 @@ function compressImage(imagePath) {
  */
 export async function uploadPlantImage(imagePath, userId, plantId = '') {
   try {
-    // 先压缩图片
+    const startedAt = Date.now()
     const compressResult = await compressImage(imagePath)
 
     // 清理 userId 和 plantId，移除特殊字符
@@ -154,6 +118,8 @@ export async function uploadPlantImage(imagePath, userId, plantId = '') {
       cloudPath: fileName,
       filePath: compressResult.path
     })
+
+    console.log('图片上传耗时(ms):', Date.now() - startedAt)
 
     if (uploadResult.fileID) {
       return {

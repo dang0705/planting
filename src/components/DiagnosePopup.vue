@@ -1,6 +1,6 @@
 <template>
   <uni-popup ref="popup" type="bottom" :safe-area="false" @change="handleChange">
-    <view class="bg-white rounded-t-3xl" style="max-height: 90vh">
+    <view class="bg-white rounded-t-3xl flex flex-col overflow-hidden" :style="popupContainerStyle">
       <!-- 头部 -->
       <view class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
         <text class="text-lg font-semibold text-gray-900">植物诊断</text>
@@ -28,7 +28,7 @@
       </view>
 
       <!-- 内容区域 -->
-      <scroll-view scroll-y class="px-4 py-4" style="max-height: 75vh">
+      <scroll-view scroll-y class="flex-1 min-h-0 px-4 py-4" :style="popupScrollStyle">
         <!-- ===== 规则诊断：症状选择 ===== -->
         <view v-if="diagnoseMode === 'rule' && !ruleResult">
           <view v-if="ruleStep === 'symptoms'">
@@ -37,7 +37,7 @@
               <text class="block text-sm font-semibold text-gray-900 mb-2"
                 >📸 拍摄植物照片（可选）</text
               >
-              <text class="block text-xs text-gray-500 mb-3"
+              <text class="block text-sm text-gray-500 mb-3"
                 >AI 将自动识别症状，帮您快速开始诊断</text
               >
 
@@ -47,14 +47,14 @@
                   @click="chooseRuleImage"
                 >
                   <text class="text-2xl text-gray-400 mb-1">📷</text>
-                  <text class="text-xs text-gray-400">拍照识别</text>
+                  <text class="text-sm text-gray-400">拍照识别</text>
                 </view>
                 <view
                   class="flex-1 aspect-square bg-gray-50 rounded-xl flex flex-col items-center justify-center border border-dashed border-gray-300"
                   @click="skipImageIdentify"
                 >
                   <text class="text-2xl text-gray-400 mb-1">✋</text>
-                  <text class="text-xs text-gray-400">手动选择</text>
+                  <text class="text-sm text-gray-400">手动选择</text>
                 </view>
               </view>
 
@@ -83,14 +83,14 @@
             <!-- 症状选择区域 -->
             <view v-if="showSymptomEditor">
               <view class="flex items-center justify-between mb-3">
-                <text class="block text-xs text-gray-500">{{
+                <text class="block text-sm text-gray-500">{{
                   hasIdentifiedSymptoms
                     ? 'AI 已识别以下症状，可删除并补充自定义症状'
                     : '请补充您观察到的症状，系统仅保留最终识别到的症状'
                 }}</text>
                 <text
                   v-if="hasIdentifiedSymptoms"
-                  class="text-xs text-primary"
+                  class="text-sm text-primary"
                   @click="resetSymptomSelection"
                   >重新识别</text
                 >
@@ -101,10 +101,10 @@
               <view v-else class="space-y-3">
                 <view v-if="selectedSymptomTags.length" class="bg-[#F7FAF8] rounded-xl p-3">
                   <view class="flex items-center justify-between mb-2">
-                    <text class="text-xs font-semibold text-gray-600">
+                    <text class="text-sm font-semibold text-gray-600">
                       已选症状（{{ selectedSymptomTags.length }}/{{ symptomLimit }}）
                     </text>
-                    <text class="text-[11px] text-gray-400">仅提交这些症状</text>
+                    <text class="text-sm text-gray-400">仅提交这些症状</text>
                   </view>
                   <view class="flex flex-wrap gap-2">
                     <view
@@ -112,21 +112,21 @@
                       :key="tag.id"
                       class="flex items-center bg-white border border-gray-200 rounded-full px-3 py-1.5"
                     >
-                      <text class="text-xs text-gray-800">{{ tag.label }}</text>
+                      <text class="text-sm text-gray-800">{{ tag.label }}</text>
                       <text
-                        class="text-[10px] font-semibold ml-1.5"
+                        class="text-sm font-semibold ml-1.5"
                         :class="tag.source === 'ai' ? 'text-primary' : 'text-amber-600'"
                       >
                         {{ tag.source === 'ai' ? 'AI' : '自定义' }}
                       </text>
                       <text
                         v-if="tag.originalText"
-                        class="text-[10px] text-gray-400 ml-1 truncate"
+                        class="text-sm text-gray-400 ml-1 truncate"
                         style="max-width: 120rpx"
                       >
                         {{ tag.originalText }}
                       </text>
-                      <text class="text-xs text-gray-400 ml-2" @click="removeSymptom(tag.id)"
+                      <text class="text-sm text-gray-400 ml-2" @click="removeSymptom(tag.id)"
                         >×</text
                       >
                     </view>
@@ -135,8 +135,8 @@
 
                 <view class="bg-white border border-gray-200 rounded-xl p-3">
                   <view class="flex items-center justify-between mb-2">
-                    <text class="text-xs font-semibold text-gray-700">新增自定义症状</text>
-                    <text class="text-[11px] text-gray-400">
+                    <text class="text-sm font-semibold text-gray-700">新增自定义症状</text>
+                    <text class="text-sm text-gray-400">
                       {{
                         userStore.isPremium
                           ? '最多 5 个，总输入 20 字内'
@@ -147,7 +147,7 @@
 
                   <text
                     v-if="!userStore.isPremium"
-                    class="block text-xs font-semibold text-primary mb-2"
+                    class="block text-sm font-semibold text-primary mb-2"
                   >
                     付费权益：可选择更多症状类别并获得 AI 症状映射
                   </text>
@@ -203,9 +203,40 @@
                     />
                   </view>
 
+                  <view
+                    v-if="customSymptomCandidates.length"
+                    class="bg-white rounded-xl mb-2 border border-gray-200 overflow-hidden shadow-sm"
+                  >
+                    <view
+                      v-for="candidate in customSymptomCandidates"
+                      :key="candidate.id"
+                      class="px-3 py-3 border-b border-gray-100 last:border-b-0"
+                      :class="activeCustomCandidateId === candidate.id ? 'bg-[#F2FBF5]' : 'bg-white'"
+                      @click="activeCustomCandidateId = candidate.id"
+                    >
+                      <view class="flex items-center justify-between gap-2">
+                        <text class="text-sm text-gray-800">{{ candidate.label }}</text>
+                        <text
+                          class="text-sm"
+                          :class="
+                            activeCustomCandidateId === candidate.id
+                              ? 'text-primary font-semibold'
+                              : 'text-gray-400'
+                          "
+                        >
+                          {{ activeCustomCandidateId === candidate.id ? '已选中' : '可选' }}
+                        </text>
+                      </view>
+                    </view>
+                  </view>
+
                   <button
                     class="w-full bg-gray-900 text-white font-semibold py-2.5 rounded-xl text-sm"
-                    :disabled="matchingCustomSymptom || selectedSymptoms.length >= symptomLimit"
+                    :disabled="
+                      matchingCustomSymptom ||
+                      selectedSymptoms.length >= symptomLimit ||
+                      !activeCustomCandidateId
+                    "
                     @click="addCustomSymptom"
                   >
                     {{
@@ -213,7 +244,9 @@
                         ? '识别中...'
                         : selectedSymptoms.length >= symptomLimit
                           ? `已达上限（${symptomLimit}）`
-                          : '添加症状'
+                          : !activeCustomCandidateId
+                            ? '先选择候选症状'
+                            : '添加症状'
                     }}
                   </button>
                 </view>
@@ -235,17 +268,17 @@
           <view v-if="ruleStep === 'question' && currentQuestion">
             <!-- 当前候选预览 -->
             <view v-if="candidates.length" class="bg-[#F0FBF4] rounded-xl p-3 mb-4">
-              <text class="block text-xs text-gray-500 mb-2">初步判断</text>
+              <text class="block text-sm text-gray-500 mb-2">初步判断</text>
               <view class="flex flex-wrap gap-2">
                 <view
                   v-for="c in candidates"
                   :key="c.id"
-                  class="flex items-center bg-white rounded-full px-2.5 py-1 shadow-sm"
+                  class="flex items-center bg-white rounded-full px-2.5 py-1 shadow-sm gap-1"
                 >
-                  <text class="text-xs text-gray-700 mr-1">{{ c.name }}</text>
-                  <text class="text-xs font-bold" :class="confidenceColor(c.confidence)"
-                    >{{ c.score }}%</text
-                  >
+                  <text class="text-sm text-gray-700">{{ c.name }}</text>
+                  <text class="text-sm px-1.5 py-0.5 rounded-full" :class="confidenceBadge(c.confidence)">
+                    {{ c.likelihood || confidenceLabel(c.confidence) }}
+                  </text>
                 </view>
               </view>
             </view>
@@ -313,31 +346,8 @@
             <text class="text-base font-semibold text-gray-900">诊断结果</text>
           </view>
 
-          <!-- 健康评分 -->
           <view class="bg-gray-50 rounded-xl p-3 mb-3">
-            <view class="flex items-center justify-between mb-2">
-              <text class="text-xs font-semibold text-gray-600">健康评分</text>
-              <view
-                class="px-2 py-0.5 rounded-full text-xs font-bold"
-                :class="healthStatusClass(ruleResult.healthStatus)"
-              >
-                {{ healthStatusText(ruleResult.healthStatus) }}
-              </view>
-            </view>
-            <view class="flex items-end gap-1 mb-2">
-              <text class="text-3xl font-bold text-primary">{{ ruleResult.healthScore }}</text>
-              <text class="text-gray-400 text-xs mb-1">/ 100</text>
-            </view>
-            <view class="w-full bg-gray-200 rounded-full h-1.5">
-              <view
-                class="h-1.5 rounded-full"
-                :class="healthBarClass(ruleResult.healthStatus)"
-                :style="{ width: ruleResult.healthScore + '%' }"
-              />
-            </view>
-            <text class="block text-xs text-gray-600 mt-2 leading-relaxed">{{
-              ruleResult.summary
-            }}</text>
+            <text class="block text-sm text-gray-600 leading-relaxed">{{ ruleResult.summary }}</text>
           </view>
 
           <!-- 候选诊断 -->
@@ -349,34 +359,31 @@
             <view class="flex items-center justify-between mb-2">
               <view class="flex items-center">
                 <view
-                  class="w-5 h-5 rounded-full flex items-center justify-center mr-2 text-xs font-bold text-white"
+                  class="w-5 h-5 rounded-full flex items-center justify-center mr-2 text-sm font-bold text-white"
                   :class="idx === 0 ? 'bg-primary' : 'bg-gray-300'"
                   >{{ idx + 1 }}</view
                 >
                 <text class="text-sm font-bold text-gray-900">{{ c.name }}</text>
               </view>
-              <view class="flex items-center gap-1">
-                <text class="text-sm font-bold text-primary">{{ c.score }}%</text>
-                <text
-                  class="text-[10px] px-1.5 py-0.5 rounded-full"
-                  :class="confidenceBadge(c.confidence)"
-                >
-                  {{ confidenceLabel(c.confidence) }}
-                </text>
-              </view>
+              <text
+                class="text-sm px-1.5 py-0.5 rounded-full"
+                :class="confidenceBadge(c.confidence)"
+              >
+                {{ c.likelihood || confidenceLabel(c.confidence) }}
+              </text>
             </view>
             <view v-if="c.solutions?.length" class="mb-1.5">
-              <text class="block text-[10px] font-semibold text-gray-400 mb-1">处理建议</text>
+              <text class="block text-sm font-semibold text-gray-400 mb-1">处理建议</text>
               <view v-for="s in c.solutions" :key="s" class="flex items-start mb-0.5">
-                <text class="text-primary mr-1 text-xs">•</text>
-                <text class="text-xs text-gray-700">{{ s }}</text>
+                <text class="text-primary mr-1 text-sm">•</text>
+                <text class="text-sm text-gray-700">{{ s }}</text>
               </view>
             </view>
             <view v-if="c.prevention?.length" class="bg-white rounded-lg p-2">
-              <text class="block text-[10px] font-semibold text-gray-400 mb-1">预防措施</text>
+              <text class="block text-sm font-semibold text-gray-400 mb-1">预防措施</text>
               <view v-for="p in c.prevention" :key="p" class="flex items-start mb-0.5">
-                <text class="text-green-500 mr-1 text-xs">✓</text>
-                <text class="text-[10px] text-gray-600">{{ p }}</text>
+                <text class="text-green-500 mr-1 text-sm">✓</text>
+                <text class="text-sm text-gray-600">{{ p }}</text>
               </view>
             </view>
           </view>
@@ -384,7 +391,7 @@
           <view v-if="!ruleResult.candidates?.length" class="text-center py-4">
             <text class="text-3xl block mb-2">🌿</text>
             <text class="block text-sm font-semibold text-gray-900 mb-1">未发现明显问题</text>
-            <text class="block text-xs text-gray-500">植物整体状态良好，继续保持日常养护。</text>
+            <text class="block text-sm text-gray-500">植物整体状态良好，继续保持日常养护。</text>
           </view>
 
           <view class="flex gap-2 mt-2">
@@ -410,7 +417,7 @@
             <!-- 上传区域 -->
             <view class="mb-4">
               <text class="block text-base font-semibold text-gray-900 mb-2">📸 拍摄植物照片</text>
-              <text class="block text-xs text-gray-500 mb-3">建议拍摄 2-3 张不同角度的照片</text>
+              <text class="block text-sm text-gray-500 mb-3">建议拍摄 2-3 张不同角度的照片</text>
 
               <!-- 图片预览 -->
               <view class="grid grid-cols-3 gap-2 mb-2">
@@ -424,7 +431,7 @@
                     class="absolute top-1 right-1 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center"
                     @click="removeImage(index)"
                   >
-                    <text class="text-white text-xs">×</text>
+                    <text class="text-white text-sm">×</text>
                   </view>
                 </view>
 
@@ -435,11 +442,11 @@
                   @click="chooseImage"
                 >
                   <text class="text-2xl text-gray-400 mb-0.5">+</text>
-                  <text class="text-[10px] text-gray-400">添加</text>
+                  <text class="text-sm text-gray-400">添加</text>
                 </view>
               </view>
 
-              <text class="block text-[10px] text-gray-400 text-center"
+              <text class="block text-sm text-gray-400 text-center"
                 >{{ images.length }}/5 张</text
               >
             </view>
@@ -457,7 +464,7 @@
                     :class="thinkingMode ? 'left-[18px]' : 'left-0.5'"
                   ></view>
                 </view>
-                <text class="ml-2 text-xs text-gray-600">{{
+                <text class="ml-2 text-sm text-gray-600">{{
                   thinkingMode ? '深度思考' : '快速'
                 }}</text>
               </view>
@@ -475,8 +482,8 @@
 
             <!-- 提示 -->
             <view class="mt-3 bg-[#D8F3DC] rounded-xl p-3">
-              <text class="block text-xs font-semibold text-primary mb-1">💡 拍摄技巧</text>
-              <text class="block text-[10px] text-gray-700 leading-relaxed">
+              <text class="block text-sm font-semibold text-primary mb-1">💡 拍摄技巧</text>
+              <text class="block text-sm text-gray-700 leading-relaxed">
                 • 光线充足，避免逆光\n• 拍摄病变部位特写\n• 包含整体植株照片
               </text>
             </view>
@@ -492,7 +499,7 @@
                   <text class="block text-base font-semibold text-gray-900">{{
                     aiResult.plantName
                   }}</text>
-                  <text class="block text-xs text-gray-500">{{
+                  <text class="block text-sm text-gray-500">{{
                     aiResult.scientificName || '学名未知'
                   }}</text>
                 </view>
@@ -500,9 +507,9 @@
 
               <!-- 健康状态 -->
               <view class="flex items-center justify-between p-2 bg-white rounded-lg">
-                <text class="text-xs font-semibold text-gray-700">健康状态</text>
+                <text class="text-sm font-semibold text-gray-700">健康状态</text>
                 <view :class="getHealthClass(aiResult.healthStatus)">
-                  <text class="text-xs font-bold">{{ aiResult.healthStatus }}</text>
+                  <text class="text-sm font-bold">{{ aiResult.healthStatus }}</text>
                 </view>
               </view>
             </view>
@@ -511,10 +518,10 @@
             <view v-if="aiResult.problem" class="mb-3">
               <text class="block text-sm font-semibold text-gray-900 mb-2">🔍 问题诊断</text>
               <view class="bg-gray-50 rounded-xl p-3">
-                <text class="block text-xs text-gray-800 mb-2">{{ aiResult.problem }}</text>
+                <text class="block text-sm text-gray-800 mb-2">{{ aiResult.problem }}</text>
                 <view class="bg-[#FFF3E0] rounded-lg p-2">
-                  <text class="block text-[10px] font-semibold text-[#F4A261] mb-1">可能原因</text>
-                  <text class="block text-[10px] text-gray-700">{{ aiResult.cause }}</text>
+                  <text class="block text-sm font-semibold text-[#F4A261] mb-1">可能原因</text>
+                  <text class="block text-sm text-gray-700">{{ aiResult.cause }}</text>
                 </view>
               </view>
             </view>
@@ -523,7 +530,7 @@
             <view v-if="aiResult.solution" class="mb-3">
               <text class="block text-sm font-semibold text-gray-900 mb-2">💊 解决方案</text>
               <view class="bg-gray-50 rounded-xl p-3">
-                <text class="block text-xs text-gray-800 leading-relaxed whitespace-pre-line">{{
+                <text class="block text-sm text-gray-800 leading-relaxed whitespace-pre-line">{{
                   aiResult.solution
                 }}</text>
               </view>
@@ -533,7 +540,7 @@
             <view v-if="aiResult.careAdvice" class="mb-3">
               <text class="block text-sm font-semibold text-gray-900 mb-2">🌱 养护建议</text>
               <view class="bg-gray-50 rounded-xl p-3">
-                <text class="block text-xs text-gray-800 leading-relaxed whitespace-pre-line">{{
+                <text class="block text-sm text-gray-800 leading-relaxed whitespace-pre-line">{{
                   aiResult.careAdvice
                 }}</text>
               </view>
@@ -575,7 +582,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useUserStore } from '@/store/user.js'
 import { useDiagnoseStore } from '@/store/diagnose.js'
 import { uploadPlantImage, getImageUrl } from '@/api/storage.js'
@@ -606,6 +613,12 @@ const userStore = useUserStore()
 const diagnoseStore = useDiagnoseStore()
 
 const popup = ref(null)
+const navigationBarHeight = (() => {
+  const { statusBarHeight = 0 } = uni.getSystemInfoSync()
+  return statusBarHeight + 44
+})()
+const popupContainerStyle = `height: calc(100vh - ${navigationBarHeight}px)`
+const popupScrollStyle = 'height: 100%'
 
 // AI 诊断状态
 const images = ref([])
@@ -638,6 +651,10 @@ const showManualSymptoms = ref(false)
 const customSymptomCategoryId = ref('leaves')
 const customSymptomText = ref('')
 const matchingCustomSymptom = ref(false)
+const customSymptomCandidates = ref([])
+const activeCustomCandidateId = ref('')
+let customSymptomDebounceTimer = null
+let customSymptomQueryToken = 0
 
 const symptomLimit = computed(() => (userStore.isPremium ? 5 : 1))
 const customSymptomTextLimit = computed(() => (userStore.isPremium ? 20 : 5))
@@ -646,13 +663,21 @@ const availableCustomCategories = computed(() => {
   return symptomCategories.value.filter(item => item.id === 'leaves')
 })
 const selectedSymptomTags = computed(() => {
-  return selectedSymptoms.value.map(id => ({
-    id,
-    label: symptomSources.value[id]?.label || id,
-    source: symptomSources.value[id]?.source || 'ai',
-    categoryId: symptomSources.value[id]?.categoryId || '',
-    originalText: symptomSources.value[id]?.originalText || ''
-  }))
+  return selectedSymptoms.value
+    .map(id => ({
+      id,
+      label: symptomSources.value[id]?.label || id,
+      source: symptomSources.value[id]?.source || 'ai',
+      categoryId: symptomSources.value[id]?.categoryId || '',
+      originalText: symptomSources.value[id]?.originalText || '',
+      matchScore: Number(symptomSources.value[id]?.matchScore ?? 0)
+    }))
+    .sort((a, b) => {
+      if (a.source === 'ai' && b.source === 'ai') return b.matchScore - a.matchScore
+      if (a.source === 'ai') return -1
+      if (b.source === 'ai') return 1
+      return 0
+    })
 })
 const showSymptomEditor = computed(() => {
   return (
@@ -714,6 +739,45 @@ function removeSymptom(symptomId) {
 function handleCustomCategoryChange(event) {
   const nextIndex = Number(event?.detail?.value || 0)
   customSymptomCategoryId.value = availableCustomCategories.value[nextIndex]?.id || 'leaves'
+}
+
+function resetCustomSymptomCandidates() {
+  customSymptomCandidates.value = []
+  activeCustomCandidateId.value = ''
+}
+
+async function queryCustomSymptomCandidates() {
+  const text = String(customSymptomText.value || '').trim()
+  const categoryId = userStore.isPremium ? String(customSymptomCategoryId.value || '') : 'leaves'
+
+  if (!text || text.length < 1) {
+    resetCustomSymptomCandidates()
+    return
+  }
+
+  const currentToken = ++customSymptomQueryToken
+  matchingCustomSymptom.value = true
+  try {
+    const result = await matchCustomSymptom({
+      categoryId,
+      text,
+      allowAI: userStore.isPremium
+    })
+    if (currentToken !== customSymptomQueryToken) return
+
+    const nextCandidates = (Array.isArray(result?.candidates) ? result.candidates : [])
+      .filter(item => item?.id && !selectedSymptoms.value.includes(item.id))
+      .slice(0, 3)
+    customSymptomCandidates.value = nextCandidates
+    activeCustomCandidateId.value = nextCandidates[0]?.id || ''
+  } catch (error) {
+    if (currentToken !== customSymptomQueryToken) return
+    resetCustomSymptomCandidates()
+  } finally {
+    if (currentToken === customSymptomQueryToken) {
+      matchingCustomSymptom.value = false
+    }
+  }
 }
 
 function addSymptomTag(symptom, meta) {
@@ -821,20 +885,19 @@ async function skipQuestion() {
 function showRuleResult(result, fallbackCandidates = []) {
   if (result) {
     ruleResult.value = result
+    console.log('[RuleDiagnose] final result:', JSON.stringify(result))
     return
   }
 
   const topCandidate = fallbackCandidates?.[0]
   ruleResult.value = {
     candidates: fallbackCandidates || [],
-    healthScore: topCandidate ? Math.max(20, 80 - topCandidate.score) : 90,
-    healthStatus:
-      topCandidate?.score >= 70 ? 'sick' : topCandidate?.score >= 45 ? 'warning' : 'healthy',
     mainIssue: topCandidate?.name || '未发现明显问题',
     summary: topCandidate
-      ? `植物可能存在「${topCandidate.name}」问题，建议优先参考下方处理建议。`
+      ? `当前最可能的问题是「${topCandidate.name}」，建议优先参考下方处理建议。`
       : '未发现明显病害，植物整体状态良好。'
   }
+  console.log('[RuleDiagnose] fallback result:', JSON.stringify(ruleResult.value))
 }
 
 function resetRuleDiagnose() {
@@ -850,6 +913,7 @@ function resetRuleDiagnose() {
   showManualSymptoms.value = false
   customSymptomCategoryId.value = 'leaves'
   customSymptomText.value = ''
+  resetCustomSymptomCandidates()
 }
 
 // 规则诊断图片相关函数
@@ -894,6 +958,7 @@ function resetSymptomSelection() {
   showManualSymptoms.value = false
   customSymptomCategoryId.value = 'leaves'
   customSymptomText.value = ''
+  resetCustomSymptomCandidates()
 }
 
 async function addCustomSymptom() {
@@ -925,29 +990,13 @@ async function addCustomSymptom() {
     return
   }
 
-  let matched = null
-  let source = 'custom'
-  matchingCustomSymptom.value = true
-  try {
-    const result = await matchCustomSymptom({
-      categoryId,
-      text,
-      allowAI: userStore.isPremium
-    })
-    matched = result?.matched || null
-    source = result?.source === 'ai' ? 'custom-ai' : 'custom'
-  } catch (error) {
-    uni.showToast({ title: error.message || '症状识别失败', icon: 'none' })
-    return
-  } finally {
-    matchingCustomSymptom.value = false
-  }
+  const matched = customSymptomCandidates.value.find(item => item.id === activeCustomCandidateId.value)
 
   if (!matched) {
     uni.showToast({
       title: userStore.isPremium
-        ? '无法识别该症状，请换个表述'
-        : '免费用户请重新输入更明确的叶片症状',
+        ? '请先从候选列表中选择症状'
+        : '请重新输入更明确的叶片症状',
       icon: 'none',
       duration: 2500
     })
@@ -955,7 +1004,7 @@ async function addCustomSymptom() {
   }
 
   const added = addSymptomTag(matched, {
-    source,
+    source: 'custom',
     categoryId,
     label: matched.label,
     originalText: text,
@@ -965,6 +1014,7 @@ async function addCustomSymptom() {
 
   showManualSymptoms.value = true
   customSymptomText.value = ''
+  resetCustomSymptomCandidates()
   uni.showToast({
     title: `已添加：${matched.label}`,
     icon: 'success'
@@ -1018,6 +1068,13 @@ async function uploadAndIdentifySymptoms() {
         }
         return result
       }, {})
+
+      const topSymptomTag = [...identifiedSymptomTags]
+        .sort((a, b) => Number(b?.matchScore ?? 0) - Number(a?.matchScore ?? 0))[0]
+      if (topSymptomTag?.categoryId) {
+        customSymptomCategoryId.value = topSymptomTag.categoryId
+      }
+
       if (identifiedSymptomIds.length > symptomLimit.value) {
         uni.showToast({
           title: `已保留前 ${symptomLimit.value} 个症状`,
@@ -1044,12 +1101,6 @@ async function uploadAndIdentifySymptoms() {
   }
 }
 
-function confidenceColor(confidence) {
-  if (confidence === 'high') return 'text-red-500'
-  if (confidence === 'medium') return 'text-yellow-500'
-  return 'text-green-500'
-}
-
 function confidenceBadge(confidence) {
   if (confidence === 'high') return 'bg-red-100 text-red-600'
   if (confidence === 'medium') return 'bg-yellow-100 text-yellow-600'
@@ -1060,24 +1111,6 @@ function confidenceLabel(confidence) {
   if (confidence === 'high') return '高度匹配'
   if (confidence === 'medium') return '中度匹配'
   return '低度匹配'
-}
-
-function healthStatusClass(status) {
-  if (status === 'sick') return 'bg-red-100 text-red-600'
-  if (status === 'warning') return 'bg-yellow-100 text-yellow-600'
-  return 'bg-green-100 text-green-600'
-}
-
-function healthStatusText(status) {
-  if (status === 'sick') return '需要治疗'
-  if (status === 'warning') return '轻微问题'
-  return '状态良好'
-}
-
-function healthBarClass(status) {
-  if (status === 'sick') return 'bg-red-400'
-  if (status === 'warning') return 'bg-yellow-400'
-  return 'bg-green-400'
 }
 
 function open() {
@@ -1092,9 +1125,28 @@ function handleChange(e) {
   if (e.show) {
     loadSymptomsIfNeeded()
   } else {
+    resetCustomSymptomCandidates()
     emit('close')
   }
 }
+
+watch(
+  () => [customSymptomText.value, customSymptomCategoryId.value, userStore.isPremium],
+  () => {
+    if (customSymptomDebounceTimer) {
+      clearTimeout(customSymptomDebounceTimer)
+    }
+    const text = String(customSymptomText.value || '').trim()
+    if (!text || text.length < 1) {
+      matchingCustomSymptom.value = false
+      resetCustomSymptomCandidates()
+      return
+    }
+    customSymptomDebounceTimer = setTimeout(() => {
+      queryCustomSymptomCandidates()
+    }, 280)
+  }
+)
 
 function chooseImage() {
   uni.chooseImage({
@@ -1220,8 +1272,7 @@ function handleAIDialogConfirm(diagnosisResult) {
       problem: diagnosisResult.mainIssue,
       cause: diagnosisResult.summary,
       solution: `根据诊断结果，建议：\n${diagnosisResult.summary}`,
-      careAdvice: `• 健康评分：${diagnosisResult.healthScore}分\n• 主要问题：${diagnosisResult.mainIssue}\n• 建议定期检查植物健康状况`,
-      healthScore: diagnosisResult.healthScore,
+      careAdvice: `• 主要问题：${diagnosisResult.mainIssue}\n• 建议定期检查植物健康状况`,
       images: images.value
     }
 

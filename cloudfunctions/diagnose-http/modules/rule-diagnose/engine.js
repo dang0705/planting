@@ -26,7 +26,7 @@ function diagnose(userSymptoms, userConditions, symptomMatches = {}) {
     let positiveMax = 0
     let negativeMax = 0
 
-    for (const [sid, w] of Object.entries(symptomsMap)) {
+    for (const [, w] of Object.entries(symptomsMap)) {
       if (w > 0) positiveMax += w
       else negativeMax += Math.abs(w)
     }
@@ -61,10 +61,10 @@ function diagnose(userSymptoms, userConditions, symptomMatches = {}) {
       : 0
 
     // 3. 最终分数
-    let finalScore = 0.7 * Math.max(0, symptomScore) + 0.3 * normalizedCondition
+    let finalScore = 0.82 * Math.max(0, symptomScore) + 0.18 * normalizedCondition
     finalScore = Math.max(-0.2, Math.min(1, finalScore))
 
-    if (finalScore > 0.08) {
+    if (finalScore > 0.03) {
       candidates.push({
         rule,
         score: finalScore,
@@ -87,20 +87,30 @@ function diagnose(userSymptoms, userConditions, symptomMatches = {}) {
 
   candidates.sort((a, b) => b.priorityAdjusted - a.priorityAdjusted)
 
-  return candidates.slice(0, 3).map(c => ({
+  const topCandidates = candidates.slice(0, 3)
+  return topCandidates.map((c, index) => ({
     id: c.rule.id,
     name: c.rule.name,
     score: Math.round(c.score * 100),
-    confidence: scoreToConfidence(c.score),
+    confidence: scoreToConfidence(c.score, topCandidates[0]?.score || c.score, index),
+    likelihood: scoreToLikelihood(c.score, topCandidates[0]?.score || c.score, index),
     solutions: c.rule.solutions,
     prevention: c.rule.prevention
   }))
 }
 
-function scoreToConfidence(score) {
-  if (score >= 0.75) return 'high'
-  if (score >= 0.5) return 'medium'
+function scoreToConfidence(score, topScore, index = 0) {
+  const gap = topScore - score
+  if (index === 0 && score >= 0.42) return 'high'
+  if (gap <= 0.08 || score >= 0.28) return 'medium'
   return 'low'
+}
+
+function scoreToLikelihood(score, topScore, index = 0) {
+  const confidence = scoreToConfidence(score, topScore, index)
+  if (confidence === 'high') return '最可能'
+  if (confidence === 'medium') return '较可能'
+  return '有可能'
 }
 
 function normalizeMatchScore(value) {

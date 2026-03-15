@@ -63,9 +63,9 @@ async function executeDiagnosis({ mode, image, description, plantName, openid, s
 
   const diagnosisText = await callLLMDiagnose({
     image,
-    systemPrompts: description,
-    plantName,
-    stream
+    systemPrompts: '',
+    userPrompts: userMessage,
+    streamOptions: stream
   })
   return {
     diagnosisText,

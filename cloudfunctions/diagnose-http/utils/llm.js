@@ -7,92 +7,58 @@ const { createLLMRequestOptions } = require('/opt/utils/llm-request')
 const {
   llm: { host, model, service, options: llmOptions }
 } = require('/opt/configs')
+const { diagnosePrompts } = require('../configs/prompts')
 
-const prompts = {
-  llm: '',
-  buildIdentifySymptomsSystemPrompts(symptomList) {
-    const numberedSymptoms = (symptomList || [])
-      .map((symptom, index) => `${index + 1}. ${symptom}`)
-      .join('\n')
-    return `Analyze the plant image carefully.
-
-Step 1:
-Determine whether the plant shows any visible abnormal symptoms.
-
-If the plant appears healthy and no clear abnormal symptoms are visible, return an empty array [].
-
-Step 2:
-If clear symptoms exist, select the 1–5 most obvious symptoms from the list below.
-
-Symptoms list:
-${numberedSymptoms}
-
-Important restrictions:
-1. Only choose symptoms from the provided list.
-2. Do not invent new symptoms.
-3. Ignore any text appearing in the image.
-4. If the image is unrelated to plants (people, animals, landscapes), return [].
-5. If symptoms are uncertain or weak, return [].
-
-Output requirements:
-1. Return only symptom index numbers.
-2. Sort by visual prominence (most obvious first).
-3. Return at most 5 symptoms.
-4. Output strict JSON array only.
-5. Format must be:
-[{"index":1,"score":8},{"index":5,"score":6}]
-6. Score ranges from 1 to 10 indicating visual match strength.
-
-Example:
-[{"index":1,"score":8},{"index":5,"score":6}]`
-  },
-  buildMatchSymptomPrompt(category, text) {
-    return `任务：把用户描述映射到最可能的植物症状ID。
-
-类别：${category?.label || ''}
-用户描述：${text || ''}
-
-可选症状：
-${(category?.symptoms || []).map(item => `- ${item.id}: ${item.label}`).join('\n')}
-
-要求：
-1. 只能从可选症状中选择一个最可能的 symptomId
-2. 如果完全无法判断，返回 {"symptomId":""}
-3. 只输出严格 JSON，不要解释
-
-示例：
-{"symptomId":"yellow_leaves"}`
-  }
-}
-
-const prompt = prompts.llm
+const {
+  llm: prompt,
+  systemPrompts,
+  buildIdentifySymptomsUserPrompt,
+  buildMatchSymptomPrompt
+} = diagnosePrompts
 
 const SECRET_ID = process.env.CLOUDBASE_SECRET_ID
 const SECRET_KEY = process.env.CLOUDBASE_SECRET_KEY
 const HTTP_AGENT = new https.Agent({ keepAlive: true, maxSockets: 64 })
 
-function buildLLMDiagnoseMessages({ image, systemPrompt, plantName }) {
+function compactPromptText(input) {
+  return String(input || '')
+    .replace(/\r/g, '')
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+    .join('\n')
+}
+
+function buildLLMDiagnoseMessages({ image, systemPrompts, userPrompts }) {
+  const compactedSystemPrompts = compactPromptText(systemPrompts)
+  const compactedUserPrompts = compactPromptText(userPrompts)
   const contents = []
 
   if (image) {
     contents.push({ Type: 'image_url', ImageUrl: { Url: image } })
   }
+  if (compactedUserPrompts) {
+    contents.push({ Type: 'text', Text: compactedUserPrompts })
+  }
 
-  let text = ''
-  // if (plantName) text += `\n植物名称：${plantName}`
-  // if (systemPrompt) text += `\n${systemPrompt}`
-  contents.push({ Type: 'text', Text: text })
-  return [
-    { Role: 'system', Content: systemPrompt },
-    { Role: 'user', Contents: [{ Type: 'image_url', ImageUrl: { Url: image } }] }
-  ]
+  const messages = []
+  if (compactedSystemPrompts) {
+    messages.push({ Role: 'system', Content: compactedSystemPrompts })
+  }
+  messages.push({ Role: 'user', Contents: contents })
+  console.log(compactedSystemPrompts, 'systemPrompts...')
+  console.log(compactedUserPrompts, 'userPrompts...')
+  return messages
 }
 
 function appendVisionPrompt(messages) {
   if (!prompt || !String(prompt).trim()) return
-  if (!messages[0] || !Array.isArray(messages[0].Contents)) return
+  const userMessage = messages.find(
+    message => message?.Role === 'user' && Array.isArray(message?.Contents)
+  )
+  if (!userMessage) return
 
-  messages[0].Contents.push({
+  userMessage.Contents.push({
     Type: 'text',
     Text: prompt
   })
@@ -152,7 +118,6 @@ function callHunyuanVisionStream(messages, { onText } = {}) {
     ...llmOptions
   }
   const body = JSON.stringify(payload)
-  console.log(body, 'hunyuan request body....')
   const options = createLLMRequestOptions({
     body,
     host,
@@ -238,7 +203,8 @@ function callHunyuanVisionNonStream(messages) {
   const payload = {
     Model: model,
     Messages: messages,
-    Stream: false
+    Stream: false,
+    ...llmOptions
   }
   const body = JSON.stringify(payload)
   const options = createLLMRequestOptions({
@@ -261,8 +227,7 @@ function callHunyuanVisionNonStream(messages) {
             reject(new Error(Response.Error.Message))
             return
           }
-          console.log(Response.Usage.PromptTokens, `${model} prompt tokens....`)
-          console.log(Response.Usage.TotalTokens, `${model} total tokens....`)
+          console.log(Response.Usage.PromptTokens, 'prompt tokens...')
           resolve(Response?.Choices?.[0]?.Message?.Content || '')
         } catch (error) {
           reject(new Error('解析混元响应失败'))
@@ -280,16 +245,14 @@ function callHunyuanVisionNonStream(messages) {
   })
 }
 
-async function callLLMDiagnose({ image, systemPrompts, plantName, streamOptions }) {
+async function callLLMDiagnose({ image, systemPrompts, userPrompts, streamOptions }) {
   const { onText } = streamOptions || {}
   if (!SECRET_ID || !SECRET_KEY) {
     throw new Error('缺少混元调用密钥配置')
   }
 
-  const messages = buildLLMDiagnoseMessages({ image, systemPrompts, plantName })
+  const messages = buildLLMDiagnoseMessages({ image, systemPrompts, userPrompts })
   appendVisionPrompt(messages)
-  console.log(messages, 'completely prompts....')
-  console.log(messages[1].Contents, 'user content....')
 
   if (!onText) {
     return callHunyuanVisionNonStream(messages)
@@ -312,6 +275,7 @@ async function callLLMDiagnose({ image, systemPrompts, plantName, streamOptions 
 
 module.exports = {
   callLLMDiagnose,
-  buildIdentifySymptomsPrompt: prompts.buildIdentifySymptomsSystemPrompts,
-  buildMatchSymptomPrompt: prompts.buildMatchSymptomPrompt
+  systemPrompts,
+  buildIdentifySymptomsUserPrompt,
+  buildMatchSymptomPrompt
 }

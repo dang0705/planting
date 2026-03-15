@@ -10,7 +10,7 @@ const diagnose = {
     }
   },
   prompts: {
-    // prompts are moved to diagnose-http local utils/llm.js
+    llm: ''
   }
 }
 

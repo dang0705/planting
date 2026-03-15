@@ -1,7 +1,10 @@
 'use strict'
 
 const { jsonResponse, resolveHttpUserInfo } = require('/opt/utils/http')
-const { callLLMDiagnose, buildIdentifySymptomsPrompt } = require('../../utils/llm')
+const { callLLMDiagnose } = require('../../utils/llm')
+const { diagnosePrompts } = require('../../configs/prompts')
+
+const { systemPrompts, buildIdentifySymptomsUserPrompt } = diagnosePrompts
 const { symptomCategories } = require('./data/questions')
 
 const symptomList = symptomCategories.flatMap(category =>
@@ -180,7 +183,16 @@ function mapIndexEntriesToSymptoms(indexEntries, validSymptoms) {
     })
   }
 
-  return mapped
+  return pruneLowScoreSymptoms(mapped)
+}
+
+function pruneLowScoreSymptoms(symptoms) {
+  if (!Array.isArray(symptoms) || symptoms.length < 3) return symptoms
+
+  const averageScore = symptoms.reduce((sum, item) => sum + Number(item.score || 0), 0) / symptoms.length
+  const filtered = symptoms.filter(item => Number(item.score || 0) >= averageScore)
+
+  return filtered.length ? filtered : symptoms
 }
 
 /**
@@ -208,10 +220,15 @@ async function handleIdentifySymptoms(event, context, requestData) {
   }
 
   try {
-    const prompt = buildIdentifySymptomsPrompt(symptomList)
+    const identifyUserPrompts = buildIdentifySymptomsUserPrompt(symptomList)
 
     // 调用 LLM 识别
-    const diagnosisText = await callLLMDiagnose({ image, prompt, streamOptions: {} })
+    const diagnosisText = await callLLMDiagnose({
+      image,
+      systemPrompts,
+      userPrompts: identifyUserPrompts,
+      streamOptions: {}
+    })
 
     console.log('[IdentifySymptoms] AI 返回:', diagnosisText)
 
