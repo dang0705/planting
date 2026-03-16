@@ -18,13 +18,13 @@
         >
           🔍 症状诊断
         </view>
-        <view
+        <!--        <view
           class="flex-1 py-2 rounded-xl text-center text-sm font-medium transition-all"
           :class="diagnoseMode === 'ai' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-500'"
           @click="switchMode('ai')"
         >
           🤖 AI 图像
-        </view>
+        </view>-->
       </view>
 
       <!-- 内容区域 -->
@@ -211,7 +211,9 @@
                       v-for="candidate in customSymptomCandidates"
                       :key="candidate.id"
                       class="px-3 py-3 border-b border-gray-100 last:border-b-0"
-                      :class="activeCustomCandidateId === candidate.id ? 'bg-[#F2FBF5]' : 'bg-white'"
+                      :class="
+                        activeCustomCandidateId === candidate.id ? 'bg-[#F2FBF5]' : 'bg-white'
+                      "
                       @click="activeCustomCandidateId = candidate.id"
                     >
                       <view class="flex items-center justify-between gap-2">
@@ -276,7 +278,10 @@
                   class="flex items-center bg-white rounded-full px-2.5 py-1 shadow-sm gap-1"
                 >
                   <text class="text-sm text-gray-700">{{ c.name }}</text>
-                  <text class="text-sm px-1.5 py-0.5 rounded-full" :class="confidenceBadge(c.confidence)">
+                  <text
+                    class="text-sm px-1.5 py-0.5 rounded-full"
+                    :class="confidenceBadge(c.confidence)"
+                  >
                     {{ c.likelihood || confidenceLabel(c.confidence) }}
                   </text>
                 </view>
@@ -319,6 +324,12 @@
 
             <view class="flex gap-2">
               <button
+                class="flex-1 bg-white border border-gray-200 text-gray-700 font-medium py-2.5 rounded-xl text-sm"
+                @click="goToPreviousQuestion"
+              >
+                返回上一步
+              </button>
+              <button
                 class="flex-1 bg-gray-100 text-gray-500 font-medium py-2.5 rounded-xl text-sm"
                 @click="skipQuestion"
               >
@@ -347,7 +358,9 @@
           </view>
 
           <view class="bg-gray-50 rounded-xl p-3 mb-3">
-            <text class="block text-sm text-gray-600 leading-relaxed">{{ ruleResult.summary }}</text>
+            <text class="block text-sm text-gray-600 leading-relaxed">{{
+              ruleResult.summary
+            }}</text>
           </view>
 
           <!-- 候选诊断 -->
@@ -446,9 +459,7 @@
                 </view>
               </view>
 
-              <text class="block text-sm text-gray-400 text-center"
-                >{{ images.length }}/5 张</text
-              >
+              <text class="block text-sm text-gray-400 text-center">{{ images.length }}/5 张</text>
             </view>
 
             <!-- 诊断模式 -->
@@ -585,7 +596,7 @@
 import { ref, computed, watch } from 'vue'
 import { useUserStore } from '@/store/user.js'
 import { useDiagnoseStore } from '@/store/diagnose.js'
-import { uploadPlantImage, getImageUrl } from '@/api/storage.js'
+import { uploadPlantImage, getImageUrl, imageToBase64DataUri } from '@/api/storage.js'
 import { streamDiagnosePlant, diagnosePlant } from '@/api/ai-stream.js'
 import {
   getSymptomCategories,
@@ -641,6 +652,7 @@ const candidates = ref([])
 const currentQuestion = ref(null)
 const answeredConditions = ref({})
 const questionRound = ref(0)
+const questionHistory = ref([])
 const ruleDiagnosing = ref(false)
 const ruleResult = ref(null)
 
@@ -717,6 +729,25 @@ async function ensureRuleDiagnoseLogin() {
     return false
   }
   return true
+}
+
+function ensureDiagnosePaymentAccess() {
+  if (userStore.canStartDiagnoseFlow) {
+    return true
+  }
+
+  uni.showModal({
+    title: '需先解锁本次诊断',
+    content: '当前问诊流程已改为单次付费模式，请先完成支付后再开始正式诊断。',
+    confirmText: '去支付',
+    success: res => {
+      if (res.confirm) {
+        close()
+        uni.switchTab({ url: '/pages/profile/profile' })
+      }
+    }
+  })
+  return false
 }
 
 function setSymptomSource(symptomId, meta) {
@@ -807,9 +838,54 @@ function buildSymptomMatchMap() {
   }, {})
 }
 
+function snapshotQuestionState(question, nextCandidates, nextRound) {
+  return {
+    currentQuestion: question,
+    candidates: Array.isArray(nextCandidates) ? [...nextCandidates] : [],
+    answeredConditions: { ...answeredConditions.value },
+    questionRound: nextRound
+  }
+}
+
+function pushQuestionState(question, nextCandidates, nextRound) {
+  if (!question) return
+  questionHistory.value = [
+    ...questionHistory.value,
+    snapshotQuestionState(question, nextCandidates, nextRound)
+  ]
+  currentQuestion.value = question
+  candidates.value = Array.isArray(nextCandidates) ? nextCandidates : []
+  questionRound.value = nextRound
+  ruleStep.value = 'question'
+}
+
+function goToPreviousQuestion() {
+  if (questionHistory.value.length <= 1) {
+    questionHistory.value = []
+    currentQuestion.value = null
+    answeredConditions.value = {}
+    questionRound.value = 0
+    candidates.value = []
+    ruleStep.value = 'symptoms'
+    return
+  }
+
+  const nextHistory = [...questionHistory.value]
+  nextHistory.pop()
+  const previousState = nextHistory[nextHistory.length - 1]
+  questionHistory.value = nextHistory
+  currentQuestion.value = previousState.currentQuestion
+  candidates.value = [...previousState.candidates]
+  answeredConditions.value = { ...previousState.answeredConditions }
+  questionRound.value = previousState.questionRound
+  ruleStep.value = 'question'
+}
+
 async function submitSymptoms() {
   if (selectedSymptoms.value.length === 0) return
   if (!(await ensureRuleDiagnoseLogin())) return
+  // Todo 单次诊断锁
+  // if (!ensureDiagnosePaymentAccess()) return
   ruleDiagnosing.value = true
   try {
     console.log('[RuleDiagnose] submitSymptoms, symptoms:', selectedSymptoms.value)
@@ -817,14 +893,14 @@ async function submitSymptoms() {
     console.log('[RuleDiagnose] response:', JSON.stringify(data))
     candidates.value = data.candidates || []
     questionRound.value = 0
+    questionHistory.value = []
 
     if (data.done || !data.nextQuestion) {
       console.log('[RuleDiagnose] -> result (done or no nextQuestion)')
       showRuleResult(data.result, data.candidates)
     } else {
       console.log('[RuleDiagnose] -> question:', data.nextQuestion.id)
-      currentQuestion.value = data.nextQuestion
-      ruleStep.value = 'question'
+      pushQuestionState(data.nextQuestion, data.candidates || [], 0)
     }
   } catch (e) {
     console.error('[RuleDiagnose] submitSymptoms error:', e)
@@ -841,21 +917,23 @@ function answerQuestion(questionId, value) {
 async function submitAnswer() {
   if (!currentQuestion.value || !answeredConditions.value[currentQuestion.value.id]) return
   if (!(await ensureRuleDiagnoseLogin())) return
+  // if (!ensureDiagnosePaymentAccess()) return
   ruleDiagnosing.value = true
   try {
+    const nextRound = questionRound.value + 1
     const data = await runRuleDiagnose(
       selectedSymptoms.value,
       answeredConditions.value,
-      questionRound.value + 1,
+      nextRound,
       buildSymptomMatchMap()
     )
     candidates.value = data.candidates || []
-    questionRound.value += 1
+    questionRound.value = nextRound
 
     if (data.done || !data.nextQuestion) {
       showRuleResult(data.result, data.candidates)
     } else {
-      currentQuestion.value = data.nextQuestion
+      pushQuestionState(data.nextQuestion, data.candidates || [], nextRound)
     }
   } catch (e) {
     uni.showToast({ title: e.message || '分析失败', icon: 'none' })
@@ -866,6 +944,7 @@ async function submitAnswer() {
 
 async function skipQuestion() {
   if (!(await ensureRuleDiagnoseLogin())) return
+  // if (!ensureDiagnosePaymentAccess()) return
   ruleDiagnosing.value = true
   try {
     const data = await runRuleDiagnose(
@@ -883,6 +962,7 @@ async function skipQuestion() {
 }
 
 function showRuleResult(result, fallbackCandidates = []) {
+  userStore.consumeDiagnoseAccess()
   if (result) {
     ruleResult.value = result
     console.log('[RuleDiagnose] final result:', JSON.stringify(result))
@@ -908,6 +988,7 @@ function resetRuleDiagnose() {
   currentQuestion.value = null
   answeredConditions.value = {}
   questionRound.value = 0
+  questionHistory.value = []
   ruleResult.value = null
   ruleImages.value = []
   showManualSymptoms.value = false
@@ -990,13 +1071,13 @@ async function addCustomSymptom() {
     return
   }
 
-  const matched = customSymptomCandidates.value.find(item => item.id === activeCustomCandidateId.value)
+  const matched = customSymptomCandidates.value.find(
+    item => item.id === activeCustomCandidateId.value
+  )
 
   if (!matched) {
     uni.showToast({
-      title: userStore.isPremium
-        ? '请先从候选列表中选择症状'
-        : '请重新输入更明确的叶片症状',
+      title: userStore.isPremium ? '请先从候选列表中选择症状' : '请重新输入更明确的叶片症状',
       icon: 'none',
       duration: 2500
     })
@@ -1027,17 +1108,14 @@ async function uploadAndIdentifySymptoms() {
 
   identifyingSymptoms.value = true
   try {
-    uni.showLoading({ title: '上传图片中...', mask: true })
-    const uploadResult = await uploadPlantImage(
-      ruleImages.value[0],
-      userStore.userId || 'anonymous',
-      'diagnose'
-    )
-    const imageUrl = await getImageUrl(uploadResult.fileId, 7200)
+    uni.showLoading({ title: '处理图片中...', mask: true })
+    const imageDataUri = await imageToBase64DataUri(ruleImages.value[0])
     uni.hideLoading()
 
     uni.showLoading({ title: 'AI 识别中...', mask: true })
-    const identifyResult = await identifySymptoms(imageUrl)
+    const identifyResult = await identifySymptoms(imageDataUri, {
+      filterLowScoreSymptoms: userStore.canStartDiagnoseFlow
+    })
     uni.hideLoading()
 
     const identifiedSymptomIds = identifyResult.symptoms || []
@@ -1069,8 +1147,9 @@ async function uploadAndIdentifySymptoms() {
         return result
       }, {})
 
-      const topSymptomTag = [...identifiedSymptomTags]
-        .sort((a, b) => Number(b?.matchScore ?? 0) - Number(a?.matchScore ?? 0))[0]
+      const topSymptomTag = [...identifiedSymptomTags].sort(
+        (a, b) => Number(b?.matchScore ?? 0) - Number(a?.matchScore ?? 0)
+      )[0]
       if (topSymptomTag?.categoryId) {
         customSymptomCategoryId.value = topSymptomTag.categoryId
       }
@@ -1199,11 +1278,11 @@ async function startDiagnose() {
     return
   }
 
-  if (!userStore.canDiagnose) {
+  if (!userStore.canViewAIDiagnosis) {
     uni.showModal({
-      title: '提示',
-      content: '免费诊断次数已用完，升级会员享受无限次诊断',
-      confirmText: '升级会员',
+      title: '需先开通订阅',
+      content: 'AI诊断结果现仅对订阅用户开放，请先开通会员。',
+      confirmText: '去开通',
       success: res => {
         if (res.confirm) {
           close()
@@ -1213,6 +1292,10 @@ async function startDiagnose() {
     })
     return
   }
+
+  /* if (!ensureDiagnosePaymentAccess()) {
+    return
+  }*/
 
   try {
     uni.showLoading({ title: '上传图片中...', mask: true })
@@ -1240,6 +1323,7 @@ async function startDiagnose() {
       },
       onFinish: (diagnosisResult, fullText) => {
         aiStreamDialogRef.value?.finishStream(diagnosisResult)
+        userStore.consumeDiagnoseAccess()
         userStore.useAIQuota()
       },
       onError: error => {

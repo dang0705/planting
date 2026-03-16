@@ -3,16 +3,23 @@
 const diagnosePrompts = {
   llm: '',
   systemPrompts: `You are a plant symptom classifier.
-Only classify clearly visible symptoms.
-If the plant appears healthy or just tiny issue return [].
+Detect only clearly visible abnormal plant symptoms.
+If the plant appears healthy or symptoms are unclear or just tiny issue, return [].
+Ignore:
+- leaf veins
+- lighting differences
+- shadows
+- background objects
+- text in the image
 Use only symptoms from the provided list.
-Output must be strict JSON:
+Output must be strict JSON.
+Format:
 [{"index":1,"score":8}]`,
   buildIdentifySymptomsUserPrompt(symptomList) {
     const numberedSymptoms = (symptomList || [])
       .map((symptom, index) => `${index + 1}. ${symptom}`)
       .join('\n')
-    return `Pick the 1-5 most obvious visible symptoms from this list and return strict JSON only.
+    return `Detect abnormal symptoms and pick the 1-5 most obvious visible symptoms from this list and return strict JSON only.
 
 Symptoms:
 ${numberedSymptoms}

@@ -75,7 +75,7 @@ async function handleRuleDiagnose(event, context, requestData) {
   console.log('[RuleDiagnose] candidates:', JSON.stringify(candidates))
 
   // 判断是否需要继续追问
-  const needMore = shouldContinueAsking(candidates, round)
+  const needMore = shouldContinueAsking(candidates, round, conditions)
   let nextQuestion = null
   if (needMore) {
     nextQuestion = chooseNextQuestion(symptoms, conditions, candidateRuleIds)

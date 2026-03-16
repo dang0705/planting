@@ -152,7 +152,8 @@ function normalizeMatchScore(value) {
   return Math.max(0.05, Math.min(1, number))
 }
 
-function mapIndexEntriesToSymptoms(indexEntries, validSymptoms) {
+function mapIndexEntriesToSymptoms(indexEntries, validSymptoms, options = {}) {
+  const filterLowScoreSymptoms = options.filterLowScoreSymptoms === true
   const seen = new Set()
   const mapped = []
 
@@ -183,7 +184,7 @@ function mapIndexEntriesToSymptoms(indexEntries, validSymptoms) {
     })
   }
 
-  return pruneLowScoreSymptoms(mapped)
+  return filterLowScoreSymptoms ? pruneLowScoreSymptoms(mapped) : mapped
 }
 
 function pruneLowScoreSymptoms(symptoms) {
@@ -214,6 +215,7 @@ async function handleIdentifySymptoms(event, context, requestData) {
 
   const body = requestData.body || {}
   const image = body.image
+  const filterLowScoreSymptoms = body.filterLowScoreSymptoms === true
 
   if (!image) {
     return jsonResponse(400, { code: 400, message: '缺少图片URL' })
@@ -233,7 +235,9 @@ async function handleIdentifySymptoms(event, context, requestData) {
     console.log('[IdentifySymptoms] AI 返回:', diagnosisText)
 
     // 解析返回的症状列表
-    const identifiedSymptoms = parseSymptomMatches(diagnosisText, symptomList)
+    const identifiedSymptoms = parseSymptomMatches(diagnosisText, symptomList, {
+      filterLowScoreSymptoms
+    })
 
     console.log('[IdentifySymptoms] 识别到的症状:', identifiedSymptoms)
 
@@ -268,8 +272,8 @@ async function handleIdentifySymptoms(event, context, requestData) {
 /**
  * 从 AI 返回文本中解析症状 ID
  */
-function parseSymptomMatches(text, validSymptoms) {
-  const parsedFromIndexes = parseSymptomsFromIndexes(text, validSymptoms)
+function parseSymptomMatches(text, validSymptoms, options = {}) {
+  const parsedFromIndexes = parseSymptomsFromIndexes(text, validSymptoms, options)
   if (
     parsedFromIndexes.length > 0 ||
     String(text || '').includes('"indexex"') ||
@@ -325,7 +329,7 @@ function parseSymptomMatches(text, validSymptoms) {
   return symptoms.slice(0, 5)
 }
 
-function parseSymptomsFromIndexes(text, validSymptoms) {
+function parseSymptomsFromIndexes(text, validSymptoms, options = {}) {
   const raw = String(text || '').trim()
   if (!raw) return []
 
@@ -356,7 +360,7 @@ function parseSymptomsFromIndexes(text, validSymptoms) {
             : Array.isArray(parsed?.indexes)
               ? parsed.indexes.map(index => ({ index, score: 10 }))
               : []
-      return mapIndexEntriesToSymptoms(entries, validSymptoms)
+      return mapIndexEntriesToSymptoms(entries, validSymptoms, options)
     } catch (error) {
       continue
     }

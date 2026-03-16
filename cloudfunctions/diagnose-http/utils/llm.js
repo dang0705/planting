@@ -22,32 +22,27 @@ const HTTP_AGENT = new https.Agent({ keepAlive: true, maxSockets: 64 })
 
 function compactPromptText(input) {
   return String(input || '')
-    .replace(/\r/g, '')
-    .split('\n')
-    .map(line => line.trim())
-    .filter(Boolean)
-    .join('\n')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 function buildLLMDiagnoseMessages({ image, systemPrompts, userPrompts }) {
-  const compactedSystemPrompts = compactPromptText(systemPrompts)
-  const compactedUserPrompts = compactPromptText(userPrompts)
   const contents = []
 
   if (image) {
     contents.push({ Type: 'image_url', ImageUrl: { Url: image } })
   }
-  if (compactedUserPrompts) {
-    contents.push({ Type: 'text', Text: compactedUserPrompts })
+  if (userPrompts) {
+    contents.push({ Type: 'text', Text: userPrompts })
   }
 
   const messages = []
-  if (compactedSystemPrompts) {
-    messages.push({ Role: 'system', Content: compactedSystemPrompts })
+  if (systemPrompts) {
+    messages.push({ Role: 'system', Content: systemPrompts })
   }
   messages.push({ Role: 'user', Contents: contents })
-  console.log(compactedSystemPrompts, 'systemPrompts...')
-  console.log(compactedUserPrompts, 'userPrompts...')
+  console.log(systemPrompts, 'systemPrompts...')
+  console.log(userPrompts, 'userPrompts...')
   return messages
 }
 
@@ -206,6 +201,7 @@ function callHunyuanVisionNonStream(messages) {
     Stream: false,
     ...llmOptions
   }
+  console.log(payload, 'payload...')
   const body = JSON.stringify(payload)
   const options = createLLMRequestOptions({
     body,

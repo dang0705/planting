@@ -21,14 +21,14 @@
       <view class="bg-white/20 backdrop-blur rounded-2xl p-4">
         <view class="flex items-center justify-between">
           <view>
-            <text class="block text-white/80 text-xs mb-1">诊断次数</text>
+            <text class="block text-white/80 text-xs mb-1">诊断权限</text>
             <text class="block text-white text-2xl font-bold">
-              {{ userStore.isPremium ? '无限' : `${userStore.membership.freeQuota} 次` }}
+              {{ userStore.canStartDiagnoseFlow ? '已解锁' : '待支付' }}
             </text>
           </view>
           <view>
-            <text class="block text-white/80 text-xs mb-1">已使用</text>
-            <text class="block text-white text-2xl font-bold">{{ userStore.membership.usedCount }} 次</text>
+            <text class="block text-white/80 text-xs mb-1">AI结果查看</text>
+            <text class="block text-white text-2xl font-bold">{{ userStore.canViewAIDiagnosis ? '已开通' : '未开通' }}</text>
           </view>
           <button
             v-if="!userStore.isPremium"
@@ -399,6 +399,10 @@ async function pollOrderStatus(outTradeNo, options = {}) {
     payFlow.value.tradeState = tradeState
     payFlow.value.tradeStateDesc = tradeStateDesc
     payFlow.value.updatedAt = Date.now()
+
+    if (tradeState === 'SUCCESS') {
+      userStore.grantDiagnoseAccess({ outTradeNo })
+    }
 
     if (once) return
     if (tradeState && tradeState !== 'USERPAYING') return

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { getFileUrl } from '@/composables/useCloudFile.js'
+import { buildWateringReminders } from '@/utils/watering-reminder.js'
 
 /**
  * 标准化搜索关键词
@@ -43,6 +44,9 @@ export const usePlantStore = defineStore('plants', {
         if (!p.nextWater) return false
         return new Date(p.nextWater) <= now
       })
+    },
+    wateringReminders: state => weatherData => {
+      return buildWateringReminders(state.userPlants, weatherData)
     }
   },
 

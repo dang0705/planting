@@ -33,6 +33,13 @@ export const useUserStore = defineStore('user', {
     isLoggedIn: false,
     token: '',
 
+    // 单次诊断付费状态
+    diagnoseAccess: {
+      singlePaid: false,
+      lastPaidAt: null,
+      lastOrderNo: ''
+    },
+
     // 上次刷新时间（用于控制刷新频率）
     lastRefreshTime: 0,
 
@@ -46,6 +53,8 @@ export const useUserStore = defineStore('user', {
       if (state.membership.type === 'premium') return true
       return state.membership.freeQuota > 0
     },
+    canStartDiagnoseFlow: state => state.diagnoseAccess.singlePaid === true,
+    canViewAIDiagnosis: state => state.membership.type === 'premium',
     displayName: state => state.nickname || state.username || '植物爱好者',
     isAuthenticated: state => !!state.openid
   },
@@ -203,6 +212,29 @@ export const useUserStore = defineStore('user', {
       this.membership = { ...this.membership, ...membership }
     },
 
+    grantDiagnoseAccess(payload = {}) {
+      this.diagnoseAccess = {
+        singlePaid: true,
+        lastPaidAt: Date.now(),
+        lastOrderNo: String(payload.outTradeNo || payload.out_trade_no || '')
+      }
+    },
+
+    consumeDiagnoseAccess() {
+      this.diagnoseAccess = {
+        ...this.diagnoseAccess,
+        singlePaid: false
+      }
+    },
+
+    clearDiagnoseAccess() {
+      this.diagnoseAccess = {
+        singlePaid: false,
+        lastPaidAt: null,
+        lastOrderNo: ''
+      }
+    },
+
     /**
      * 使用AI配额
      */
@@ -237,6 +269,7 @@ export const useUserStore = defineStore('user', {
       this.phoneNumber = ''
       this.token = ''
       this.isLoggedIn = false
+      this.clearDiagnoseAccess()
       this.membership = {
         type: 'free',
         expireTime: null,
@@ -314,6 +347,7 @@ export const useUserStore = defineStore('user', {
       'membership',
       'isLoggedIn',
       'token',
+      'diagnoseAccess',
       'lastRefreshTime'
     ]
   }

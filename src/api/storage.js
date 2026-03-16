@@ -9,7 +9,6 @@
  * @returns {string} 清理后的字符串
  */
 function sanitizeFileName(str) {
-  // 只保留字母、数字、下划线、中划线
   return str.replace(/[^a-zA-Z0-9_-]/g, '')
 }
 
@@ -26,7 +25,6 @@ function compressImage(imagePath) {
         const originalSize = statRes.stats.size
         console.log('原始图片大小:', (originalSize / 1024 / 1024).toFixed(2), 'MB')
 
-        // 小图直接上传，避免额外压缩耗时
         if (originalSize <= 1.2 * 1024 * 1024) {
           resolve({
             path: imagePath,
@@ -80,26 +78,34 @@ function compressImage(imagePath) {
   })
 }
 
-/**
- * 上传图片到云存储
- * @param {string} imagePath 本地图片路径
- * @param {string} userId 用户 ID
- * @param {string} plantId 植物 ID（可选）
- * @returns {Promise} 返回上传结果
- */
+export async function imageToBase64DataUri(imagePath) {
+  const startedAt = Date.now()
+  const compressResult = await compressImage(imagePath)
+  const fileSystemManager = wx.getFileSystemManager()
+
+  const base64 = await new Promise((resolve, reject) => {
+    fileSystemManager.readFile({
+      filePath: compressResult.path,
+      encoding: 'base64',
+      success: res => resolve(res.data || ''),
+      fail: reject
+    })
+  })
+
+  console.log('图片转 base64 耗时(ms):', Date.now() - startedAt)
+  return `data:image/jpeg;base64,${base64}`
+}
+
 export async function uploadPlantImage(imagePath, userId, plantId = '') {
   try {
     const startedAt = Date.now()
     const compressResult = await compressImage(imagePath)
 
-    // 清理 userId 和 plantId，移除特殊字符
     const cleanUserId = sanitizeFileName(userId || 'user')
     const cleanPlantId = sanitizeFileName(plantId || 'temp')
 
-    // 生成云存储路径
     const timestamp = Date.now()
     const random = Math.random().toString(36).substr(2, 9)
-    // 路径格式：plants/userId/plantId_timestamp_random.jpg
     const fileName = `plants/${cleanUserId}/${cleanPlantId}_${timestamp}_${random}.jpg`
 
     console.log('上传文件路径:', fileName)
@@ -113,7 +119,6 @@ export async function uploadPlantImage(imagePath, userId, plantId = '') {
       compressed: compressResult.compressed !== false
     })
 
-    // 直接使用 CloudBase SDK 上传到云存储（避免云函数 5MB 限制）
     const uploadResult = await wx.cloud.uploadFile({
       cloudPath: fileName,
       filePath: compressResult.path
@@ -123,47 +128,34 @@ export async function uploadPlantImage(imagePath, userId, plantId = '') {
 
     if (uploadResult.fileID) {
       return {
-        fileName: fileName,
+        fileName,
         fileId: uploadResult.fileID,
         url: uploadResult.fileID
       }
-    } else {
-      throw new Error('上传失败')
     }
+    throw new Error('上传失败')
   } catch (error) {
     console.error('上传图片失败:', error)
     throw error
   }
 }
 
-/**
- * 获取图片临时下载链接
- * @param {string} fileId 文件 ID
- * @param {number} maxAge 链接有效期（秒）
- * @returns {Promise} 返回下载链接
- */
 export async function getImageUrl(fileId, maxAge = 3600) {
   try {
     const url = await wx.cloud.getTempFileURL({
       fileList: [fileId],
-      maxAge: maxAge
+      maxAge
     })
     if (url.fileList && url.fileList.length > 0) {
       return url.fileList[0].tempFileURL
-    } else {
-      throw new Error('获取链接失败')
     }
+    throw new Error('获取链接失败')
   } catch (error) {
     console.error('获取图片链接失败:', error)
     throw error
   }
 }
 
-/**
- * 删除图片
- * @param {string} fileId 文件 ID
- * @returns {Promise}
- */
 export async function deleteImage(fileId) {
   try {
     await wx.cloud.deleteFile({
@@ -176,13 +168,6 @@ export async function deleteImage(fileId) {
   }
 }
 
-/**
- * 获取植物的所有图片
- * @param {string} plantId 植物 ID
- * @param {number} limit 返回数量
- * @param {number} offset 偏移量
- * @returns {Promise} 返回图片列表
- */
 export async function getPlantImages(plantId, limit = 10, offset = 0) {
   try {
     const result = await wx.cloud.callFunction({
@@ -190,30 +175,23 @@ export async function getPlantImages(plantId, limit = 10, offset = 0) {
       data: {
         action: 'getPlantImages',
         data: {
-          plantId: plantId,
-          limit: limit,
-          offset: offset
+          plantId,
+          limit,
+          offset
         }
       }
     })
 
     if (result.result.code === 200) {
       return result.result.data.images
-    } else {
-      throw new Error(result.result.message || '获取失败')
     }
+    throw new Error(result.result.message || '获取失败')
   } catch (error) {
     console.error('获取植物图片失败:', error)
     throw error
   }
 }
 
-/**
- * 选择图片并上传
- * @param {string} userId 用户 ID
- * @param {string} plantId 植物 ID（可选）
- * @returns {Promise} 返回上传结果
- */
 export async function chooseAndUploadImage(userId, plantId = '') {
   return new Promise((resolve, reject) => {
     wx.chooseImage({
@@ -236,13 +214,6 @@ export async function chooseAndUploadImage(userId, plantId = '') {
   })
 }
 
-/**
- * 批量上传图片
- * @param {string[]} imagePaths 图片路径数组
- * @param {string} userId 用户 ID
- * @param {string} plantId 植物 ID（可选）
- * @returns {Promise} 返回上传结果数组
- */
 export async function uploadMultipleImages(imagePaths, userId, plantId = '') {
   try {
     const results = []
@@ -250,15 +221,9 @@ export async function uploadMultipleImages(imagePaths, userId, plantId = '') {
     for (const imagePath of imagePaths) {
       try {
         const result = await uploadPlantImage(imagePath, userId, plantId)
-        results.push({
-          success: true,
-          data: result
-        })
+        results.push({ success: true, data: result })
       } catch (error) {
-        results.push({
-          success: false,
-          error: error.message
-        })
+        results.push({ success: false, error: error.message })
       }
     }
 
