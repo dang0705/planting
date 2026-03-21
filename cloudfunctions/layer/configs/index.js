@@ -1,10 +1,10 @@
 const diagnose = {
   llm: {
     host: 'hunyuan.tencentcloudapi.com',
-    model: 'hunyuan-vision',
+    model: 'hunyuan-t1-vision-20250916',
     service: 'hunyuan',
     options: {
-      TopP: 0.3,
+      TopP: 0.1,
       Temperature: 0.1,
       Seed: 42
     }

@@ -2,36 +2,48 @@
 
 const diagnosePrompts = {
   llm: '',
-  systemPrompts: `You are a plant symptom classifier.
-Detect only clearly visible abnormal plant symptoms.
-If the plant appears healthy or symptoms are unclear or just tiny issue, return [].
+  systemPrompts: `You are a plant evidence classifier.
+Detect only clearly visible abnormal plant evidence.
+Evidence must be separated into:
+- symptoms
+- signs
+- pests
+If the plant appears healthy or evidence is unclear or tiny, return {"symptoms":[],"signs":[],"pests":[]}.
 Ignore:
 - leaf veins
 - lighting differences
 - shadows
 - background objects
 - text in the image
-Use only symptoms from the provided list.
+Use only evidence from the provided lists.
 Output must be strict JSON.
 Format:
-[{"index":1,"score":8}]`,
-  buildIdentifySymptomsUserPrompt(symptomList) {
-    const numberedSymptoms = (symptomList || [])
-      .map((symptom, index) => `${index + 1}. ${symptom}`)
-      .join('\n')
-    return `Detect abnormal symptoms and pick the 1-5 most obvious visible symptoms from this list and return strict JSON only.
+{"symptoms":[{"index":1,"score":8}],"signs":[{"index":2,"score":9}],"pests":[{"index":1,"score":10}]}`,
+  buildIdentifySymptomsUserPrompt(evidenceGroups = {}) {
+    const formatEvidenceGroup = items =>
+      (items || []).map((item, index) => `${index + 1}. ${item}`).join('\n')
+
+    return `Detect the 1-5 most obvious visible plant evidence and return strict JSON only.
 
 Symptoms:
-${numberedSymptoms}
+${formatEvidenceGroup(evidenceGroups.symptoms)}
+
+Signs:
+${formatEvidenceGroup(evidenceGroups.signs)}
+
+Pests:
+${formatEvidenceGroup(evidenceGroups.pests)}
 
 Rules:
-- if no clear plant symptom, return []
-- return indexes only, sorted by visual prominence
-- max 5 items
-- use score 1-10
+- if no clear plant evidence, return {"symptoms":[],"signs":[],"pests":[]}
+- each array item must be {"index":number,"score":1-10}
+- index is local to its own group
+- sort each array by visual prominence
+- max 5 items per array
+- do not output names, explanations, markdown, or extra text
 
 Format:
-[{"index":1,"score":8},{"index":5,"score":6}]`
+{"symptoms":[{"index":1,"score":8}],"signs":[{"index":2,"score":9}],"pests":[{"index":1,"score":10}]}`
   },
   buildMatchSymptomPrompt(category, text) {
     return `任务：把用户描述映射到最可能的植物症状ID。

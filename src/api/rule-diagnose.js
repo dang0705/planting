@@ -83,7 +83,12 @@ export async function identifySymptoms(imageUrl, options = {}) {
   }
   return {
     symptoms: res.data?.symptoms || [],
-    symptomTags: res.data?.symptomTags || []
+    symptomTags: res.data?.symptomTags || [],
+    evidence: res.data?.evidence || {
+      symptoms: [],
+      signs: [],
+      pests: []
+    }
   }
 }
 
@@ -99,12 +104,20 @@ export async function matchCustomSymptom({ categoryId, text, allowAI = false }) 
   return res.data || {}
 }
 
-export async function runRuleDiagnose(symptoms, conditions = {}, round = 0, symptomMatches = {}) {
+export async function runRuleDiagnose(
+  symptoms,
+  conditions = {},
+  round = 0,
+  symptomMatches = {},
+  options = {}
+) {
   const res = await request('/rule-diagnose/diagnose', 'POST', {
     symptoms,
     conditions,
     round,
-    symptomMatches
+    symptomMatches,
+    plantName: options.plantName || '',
+    plantGroup: options.plantGroup || ''
   })
   if (res?.code !== 200) {
     throw new Error(res?.message || '诊断请求失败')

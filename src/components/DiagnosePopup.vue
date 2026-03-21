@@ -120,6 +120,12 @@
                         {{ tag.source === 'ai' ? 'AI' : '自定义' }}
                       </text>
                       <text
+                        v-if="tag.source === 'ai' && tag.evidenceType"
+                        class="text-sm text-gray-400 ml-1.5"
+                      >
+                        {{ evidenceTypeLabel(tag.evidenceType) }}
+                      </text>
+                      <text
                         v-if="tag.originalText"
                         class="text-sm text-gray-400 ml-1 truncate"
                         style="max-width: 120rpx"
@@ -596,8 +602,9 @@
 import { ref, computed, watch } from 'vue'
 import { useUserStore } from '@/store/user.js'
 import { useDiagnoseStore } from '@/store/diagnose.js'
+import { usePlantStore } from '@/store/plants.js'
 import { uploadPlantImage, getImageUrl, imageToBase64DataUri } from '@/api/storage.js'
-import { streamDiagnosePlant, diagnosePlant } from '@/api/ai-stream.js'
+import { streamDiagnosePlant, diagnosePlant, identifyPlant } from '@/api/ai-stream.js'
 import {
   getSymptomCategories,
   runRuleDiagnose,
@@ -615,6 +622,10 @@ const props = defineProps({
   plantName: {
     type: String,
     default: ''
+  },
+  plantGroup: {
+    type: String,
+    default: ''
   }
 })
 
@@ -622,6 +633,7 @@ const emit = defineEmits(['success', 'close'])
 
 const userStore = useUserStore()
 const diagnoseStore = useDiagnoseStore()
+const plantStore = usePlantStore()
 
 const popup = ref(null)
 const navigationBarHeight = (() => {
@@ -648,6 +660,11 @@ const loadingSymptoms = ref(false)
 const symptomCategories = ref([])
 const selectedSymptoms = ref([])
 const symptomSources = ref({})
+const identifiedEvidence = ref({
+  symptoms: [],
+  signs: [],
+  pests: []
+})
 const candidates = ref([])
 const currentQuestion = ref(null)
 const answeredConditions = ref({})
@@ -659,6 +676,8 @@ const ruleResult = ref(null)
 // 规则诊断图片识别状态
 const ruleImages = ref([])
 const identifyingSymptoms = ref(false)
+const identifiedRulePlantName = ref('')
+const identifiedRulePlantGroup = ref('')
 const showManualSymptoms = ref(false)
 const customSymptomCategoryId = ref('leaves')
 const customSymptomText = ref('')
@@ -680,12 +699,17 @@ const selectedSymptomTags = computed(() => {
       id,
       label: symptomSources.value[id]?.label || id,
       source: symptomSources.value[id]?.source || 'ai',
+      evidenceType: symptomSources.value[id]?.evidenceType || 'symptom',
       categoryId: symptomSources.value[id]?.categoryId || '',
       originalText: symptomSources.value[id]?.originalText || '',
       matchScore: Number(symptomSources.value[id]?.matchScore ?? 0)
     }))
     .sort((a, b) => {
-      if (a.source === 'ai' && b.source === 'ai') return b.matchScore - a.matchScore
+      if (a.source === 'ai' && b.source === 'ai') {
+        const evidenceRankDiff = evidenceTypeRank(b.evidenceType) - evidenceTypeRank(a.evidenceType)
+        if (evidenceRankDiff !== 0) return evidenceRankDiff
+        return b.matchScore - a.matchScore
+      }
       if (a.source === 'ai') return -1
       if (b.source === 'ai') return 1
       return 0
@@ -775,6 +799,69 @@ function handleCustomCategoryChange(event) {
 function resetCustomSymptomCandidates() {
   customSymptomCandidates.value = []
   activeCustomCandidateId.value = ''
+}
+
+function evidenceTypeRank(type) {
+  if (type === 'pest') return 3
+  if (type === 'sign') return 2
+  return 1
+}
+
+function evidenceTypeLabel(type) {
+  if (type === 'pest') return '虫体'
+  if (type === 'sign') return '病征'
+  return '病状'
+}
+
+function normalizePlantKeyword(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+}
+
+function resolvePlantContextByName(name) {
+  const normalizedName = normalizePlantKeyword(name)
+  if (!normalizedName) {
+    return {
+      plantName: '',
+      plantGroup: ''
+    }
+  }
+
+  const matched = plantStore.defaultPlants.find(item => {
+    const exactName = normalizePlantKeyword(item?.name)
+    if (exactName === normalizedName) return true
+
+    const aliases = String(item?.alias || '')
+      .split(',')
+      .map(alias => normalizePlantKeyword(alias))
+      .filter(Boolean)
+
+    return aliases.includes(normalizedName)
+  })
+
+  return {
+    plantName: matched?.name || String(name || ''),
+    plantGroup: matched?.plantGroup || ''
+  }
+}
+
+function getActiveRulePlantContext() {
+  return {
+    plantName: identifiedRulePlantName.value || props.plantName || '',
+    plantGroup: identifiedRulePlantGroup.value || props.plantGroup || ''
+  }
+}
+
+async function identifyRulePlantByImage(image) {
+  return new Promise((resolve, reject) => {
+    identifyPlant({
+      messages: [{ Role: 'user', Contents: [{ Type: 'image_url', ImageUrl: { Url: image } }] }],
+      openid: userStore.openid,
+      onFinish: result => resolve(result),
+      onError: reject
+    }).catch(reject)
+  })
 }
 
 async function queryCustomSymptomCandidates() {
@@ -889,7 +976,17 @@ async function submitSymptoms() {
   ruleDiagnosing.value = true
   try {
     console.log('[RuleDiagnose] submitSymptoms, symptoms:', selectedSymptoms.value)
-    const data = await runRuleDiagnose(selectedSymptoms.value, {}, 0, buildSymptomMatchMap())
+    const plantContext = getActiveRulePlantContext()
+    const data = await runRuleDiagnose(
+      selectedSymptoms.value,
+      {},
+      0,
+      buildSymptomMatchMap(),
+      {
+        plantName: plantContext.plantName,
+        plantGroup: plantContext.plantGroup
+      }
+    )
     console.log('[RuleDiagnose] response:', JSON.stringify(data))
     candidates.value = data.candidates || []
     questionRound.value = 0
@@ -921,11 +1018,16 @@ async function submitAnswer() {
   ruleDiagnosing.value = true
   try {
     const nextRound = questionRound.value + 1
+    const plantContext = getActiveRulePlantContext()
     const data = await runRuleDiagnose(
       selectedSymptoms.value,
       answeredConditions.value,
       nextRound,
-      buildSymptomMatchMap()
+      buildSymptomMatchMap(),
+      {
+        plantName: plantContext.plantName,
+        plantGroup: plantContext.plantGroup
+      }
     )
     candidates.value = data.candidates || []
     questionRound.value = nextRound
@@ -947,11 +1049,16 @@ async function skipQuestion() {
   // if (!ensureDiagnosePaymentAccess()) return
   ruleDiagnosing.value = true
   try {
+    const plantContext = getActiveRulePlantContext()
     const data = await runRuleDiagnose(
       selectedSymptoms.value,
       answeredConditions.value,
       4,
-      buildSymptomMatchMap()
+      buildSymptomMatchMap(),
+      {
+        plantName: plantContext.plantName,
+        plantGroup: plantContext.plantGroup
+      }
     )
     showRuleResult(data.result, data.candidates)
   } catch (e) {
@@ -984,6 +1091,7 @@ function resetRuleDiagnose() {
   ruleStep.value = 'symptoms'
   selectedSymptoms.value = []
   symptomSources.value = {}
+  identifiedEvidence.value = { symptoms: [], signs: [], pests: [] }
   candidates.value = []
   currentQuestion.value = null
   answeredConditions.value = {}
@@ -991,6 +1099,8 @@ function resetRuleDiagnose() {
   questionHistory.value = []
   ruleResult.value = null
   ruleImages.value = []
+  identifiedRulePlantName.value = ''
+  identifiedRulePlantGroup.value = ''
   showManualSymptoms.value = false
   customSymptomCategoryId.value = 'leaves'
   customSymptomText.value = ''
@@ -1025,6 +1135,8 @@ function chooseRuleImage() {
 
 function removeRuleImage() {
   ruleImages.value = []
+  identifiedRulePlantName.value = ''
+  identifiedRulePlantGroup.value = ''
 }
 
 function skipImageIdentify() {
@@ -1036,6 +1148,9 @@ function resetSymptomSelection() {
   ruleImages.value = []
   selectedSymptoms.value = []
   symptomSources.value = {}
+  identifiedEvidence.value = { symptoms: [], signs: [], pests: [] }
+  identifiedRulePlantName.value = ''
+  identifiedRulePlantGroup.value = ''
   showManualSymptoms.value = false
   customSymptomCategoryId.value = 'leaves'
   customSymptomText.value = ''
@@ -1112,6 +1227,18 @@ async function uploadAndIdentifySymptoms() {
     const imageDataUri = await imageToBase64DataUri(ruleImages.value[0])
     uni.hideLoading()
 
+    uni.showLoading({ title: '识别植物中...', mask: true })
+    try {
+      const plantIdentifyResult = await identifyRulePlantByImage(imageDataUri)
+      const matchedPlant = resolvePlantContextByName(plantIdentifyResult?.name)
+      identifiedRulePlantName.value = matchedPlant.plantName
+      identifiedRulePlantGroup.value = matchedPlant.plantGroup
+    } catch (plantError) {
+      console.warn('[RuleDiagnose] identify plant failed:', plantError)
+      identifiedRulePlantName.value = props.plantName || ''
+      identifiedRulePlantGroup.value = props.plantGroup || ''
+    }
+
     uni.showLoading({ title: 'AI 识别中...', mask: true })
     const identifyResult = await identifySymptoms(imageDataUri, {
       filterLowScoreSymptoms: userStore.canStartDiagnoseFlow
@@ -1120,8 +1247,15 @@ async function uploadAndIdentifySymptoms() {
 
     const identifiedSymptomIds = identifyResult.symptoms || []
     const identifiedSymptomTags = identifyResult.symptomTags || []
+    identifiedEvidence.value = identifyResult.evidence || { symptoms: [], signs: [], pests: [] }
 
     console.log('[RuleDiagnose] AI identified symptoms:', identifiedSymptomIds)
+    console.log('[RuleDiagnose] AI identified evidence:', JSON.stringify(identifiedEvidence.value))
+    console.log(
+      '[RuleDiagnose] AI identified plant:',
+      identifiedRulePlantName.value,
+      identifiedRulePlantGroup.value
+    )
 
     if (identifiedSymptomIds.length === 0) {
       uni.showModal({
@@ -1141,6 +1275,7 @@ async function uploadAndIdentifySymptoms() {
         result[symptomId] = {
           source: 'ai',
           label: meta?.label || symptomId,
+          evidenceType: meta?.evidenceType || 'symptom',
           categoryId: meta?.categoryId || '',
           matchScore: Number(meta?.matchScore ?? 1)
         }
@@ -1160,7 +1295,12 @@ async function uploadAndIdentifySymptoms() {
           icon: 'none'
         })
       } else {
-        uni.showToast({ title: `识别到 ${nextIds.length} 个症状`, icon: 'success' })
+        uni.showToast({
+          title: identifiedRulePlantName.value
+            ? `${identifiedRulePlantName.value}，识别到 ${nextIds.length} 个症状`
+            : `识别到 ${nextIds.length} 个症状`,
+          icon: 'success'
+        })
       }
     }
   } catch (error) {

@@ -1,108 +1,155 @@
 'use strict'
 
 const { diagnosisRules } = require('./data/rules')
+const { diseaseCategories } = require('./data/disease-categories')
+const { diseasePriors } = require('./data/disease-priors')
+const { diseaseLikelihoods } = require('./data/disease-likelihoods')
+const { environmentRules } = require('./data/environment-rules')
+const { treatments } = require('./data/treatments')
+const { evidenceTypeWeights, getEvidenceMeta } = require('./data/evidence-catalog')
+const {
+  diseaseHostProfiles,
+  inferPlantHosts,
+  inferPlantGroup,
+  getDiseaseSetForPlantGroup
+} = require('./data/disease-host-profiles')
 
-/**
- * 核心诊断算法 v2
- * 新规则格式:
- *   symptoms: { id: weight }  正数=支持, 负数=排除
- *   conditions: { key: { value: weight } }
- *
- * @param {string[]} userSymptoms   - 用户选择的症状 ID 列表
- * @param {Object}  userConditions  - 用户回答的条件 { soil_moisture: 'wet', light: 'low', ... }
- * @param {Object}  symptomMatches  - 症状初始匹配度 { yellow_leaves: 0.8, ... }
- * @returns {Array} 候选诊断结果，按分数降序排列
- */
-function diagnose(userSymptoms, userConditions, symptomMatches = {}) {
-  const allConditions = { ...userConditions }
-  let candidates = []
+const MIN_PROBABILITY = 1e-4
 
-  for (const rule of diagnosisRules) {
-    const symptomsMap = rule.symptoms || {}
+function diagnose(userSymptoms, userConditions, symptomMatches = {}, options = {}) {
+  const evidenceList = buildEvidenceList(userSymptoms, symptomMatches)
+  if (evidenceList.length === 0) return []
 
-    // 1. 症状得分（正负合并在同一个 map 里）
-    let positiveSum = 0
-    let negativeSum = 0
-    let positiveMax = 0
-    let negativeMax = 0
+  const plantGroup = String(options.plantGroup || '').trim() || inferPlantGroup(options.plantName)
+  const plantHosts = inferPlantHosts(options.plantName)
+  const allowedDiseaseIds = getDiseaseSetForPlantGroup(plantGroup)
+  const candidateRules = Array.isArray(allowedDiseaseIds)
+    ? diagnosisRules.filter(rule => allowedDiseaseIds.includes(rule.id))
+    : diagnosisRules
 
-    for (const [, w] of Object.entries(symptomsMap)) {
-      if (w > 0) positiveMax += w
-      else negativeMax += Math.abs(w)
+  const rawScores = {}
+  for (const rule of candidateRules) {
+    rawScores[rule.id] = computePosteriorScore(rule.id, evidenceList, userConditions, plantHosts)
+  }
+
+  const normalized = normalizePosteriorScores(rawScores)
+  const ranked = normalized
+    .filter(item => item.probability >= 0.01)
+    .sort((left, right) => right.probability - left.probability)
+    .slice(0, 3)
+
+  const topProbability = ranked[0]?.probability || 0
+
+  return ranked.map((item, index) => {
+    const treatment = treatments[item.disease] || {}
+    return {
+      id: item.disease,
+      name: findRule(item.disease)?.name || item.disease,
+      category: diseaseCategories[item.disease] || 'physiological',
+      plantGroup,
+      score: Math.round(item.probability * 100),
+      confidence: scoreToConfidence(item.probability, topProbability, index),
+      likelihood: scoreToLikelihood(item.probability, topProbability, index),
+      solutions: treatment.solutions || [],
+      prevention: treatment.prevention || []
     }
+  })
+}
 
-    userSymptoms.forEach(s => {
-      const w = symptomsMap[s] ?? 0
-      const matchScore = normalizeMatchScore(symptomMatches[s])
-      if (w > 0) positiveSum += w * matchScore
-      else if (w < 0) negativeSum += Math.abs(w) * matchScore
+function buildEvidenceList(userSymptoms, symptomMatches = {}) {
+  const seen = new Set()
+  const evidenceList = []
+
+  for (const name of userSymptoms || []) {
+    if (!name || seen.has(name)) continue
+    seen.add(name)
+    const meta = getEvidenceMeta(name)
+    evidenceList.push({
+      name,
+      type: meta.type,
+      weight: evidenceTypeWeights[meta.type] || evidenceTypeWeights.symptom,
+      score: normalizeMatchScore(symptomMatches[name])
     })
-
-    const symptomScore =
-      (positiveMax > 0 ? positiveSum / positiveMax : 0) -
-      (negativeMax > 0 ? negativeSum / negativeMax : 0)
-
-    // 如果症状完全不匹配（正分为0），跳过
-    if (positiveSum === 0) continue
-
-    // 2. 条件得分
-    let conditionScore = 0
-    let conditionCount = 0
-    for (const [key, map] of Object.entries(rule.conditions || {})) {
-      const val = allConditions[key]
-      if (val !== undefined && map[val] !== undefined) {
-        conditionScore += map[val]
-        conditionCount++
-      }
-    }
-    // 归一化条件分（避免条件数量影响总分）
-    const normalizedCondition = conditionCount > 0
-      ? conditionScore / (conditionCount * 7) // 7 是单条件最大权重
-      : 0
-
-    // 3. 最终分数
-    let finalScore = 0.82 * Math.max(0, symptomScore) + 0.18 * normalizedCondition
-    finalScore = Math.max(-0.2, Math.min(1, finalScore))
-
-    if (finalScore > 0.03) {
-      candidates.push({
-        rule,
-        score: finalScore,
-        priorityAdjusted: finalScore * (rule.priority || 5)
-      })
-    }
   }
 
-  // 互斥处理
-  candidates.sort((a, b) => b.priorityAdjusted - a.priorityAdjusted)
-  for (let i = 0; i < candidates.length; i++) {
-    const curr = candidates[i]
-    for (let j = i + 1; j < candidates.length; j++) {
-      if (curr.rule.mutuallyExclusiveWith?.includes(candidates[j].rule.id)) {
-        candidates[j].score *= 0.25
-        candidates[j].priorityAdjusted *= 0.25
-      }
-    }
+  return evidenceList
+}
+
+function computePosteriorScore(diseaseId, evidenceList, userConditions, plantHosts = []) {
+  const prior = Math.max(MIN_PROBABILITY, diseasePriors[diseaseId] || 0.01)
+  const likelihoods = diseaseLikelihoods[diseaseId]?.evidence || {}
+
+  let logProbability = Math.log(prior)
+
+  for (const evidence of evidenceList) {
+    const likelihood = clampProbability(
+      likelihoods[evidence.name] !== undefined ? likelihoods[evidence.name] : 0.08
+    )
+    logProbability += evidence.weight * evidence.score * Math.log(likelihood)
   }
 
-  candidates.sort((a, b) => b.priorityAdjusted - a.priorityAdjusted)
+  const environmentFactor = computeEnvironmentFactor(diseaseId, userConditions)
+  logProbability += Math.log(Math.max(MIN_PROBABILITY, environmentFactor))
+  logProbability += Math.log(Math.max(MIN_PROBABILITY, computeHostFactor(diseaseId, plantHosts)))
 
-  const topCandidates = candidates.slice(0, 3)
-  return topCandidates.map((c, index) => ({
-    id: c.rule.id,
-    name: c.rule.name,
-    score: Math.round(c.score * 100),
-    confidence: scoreToConfidence(c.score, topCandidates[0]?.score || c.score, index),
-    likelihood: scoreToLikelihood(c.score, topCandidates[0]?.score || c.score, index),
-    solutions: c.rule.solutions,
-    prevention: c.rule.prevention
+  return logProbability
+}
+
+function computeEnvironmentFactor(diseaseId, userConditions = {}) {
+  const rules = environmentRules[diseaseId] || {}
+  let factor = 1
+
+  for (const [conditionId, optionMap] of Object.entries(rules)) {
+    const selectedValue = userConditions[conditionId]
+    if (selectedValue === undefined) continue
+    factor *= optionMap[selectedValue] || 1
+  }
+
+  return Math.max(0.2, Math.min(3.5, factor))
+}
+
+function computeHostFactor(diseaseId, plantHosts = []) {
+  if (!Array.isArray(plantHosts) || plantHosts.length === 0) return 1
+
+  const diseaseHosts = diseaseHostProfiles[diseaseId]
+  if (!Array.isArray(diseaseHosts) || diseaseHosts.length === 0) return 1
+
+  const normalizedPlantHosts = plantHosts.map(item => String(item || '').toLowerCase())
+  const normalizedDiseaseHosts = diseaseHosts.map(item => String(item || '').toLowerCase())
+  const matched = normalizedPlantHosts.some(host => normalizedDiseaseHosts.includes(host))
+
+  if (matched) return 1.35
+  if (normalizedDiseaseHosts.includes('houseplants') || normalizedDiseaseHosts.includes('many_plants')) {
+    return 1
+  }
+  return 0.55
+}
+
+function normalizePosteriorScores(scoreMap) {
+  const scoreEntries = Object.entries(scoreMap || {})
+  if (scoreEntries.length === 0) return []
+
+  const maxScore = Math.max(...scoreEntries.map(([, score]) => score))
+  const expScores = scoreEntries.map(([disease, score]) => ({
+    disease,
+    expScore: Math.exp(score - maxScore)
   }))
+  const sum = expScores.reduce((total, item) => total + item.expScore, 0) || 1
+
+  return expScores.map(item => ({
+    disease: item.disease,
+    probability: item.expScore / sum
+  }))
+}
+
+function findRule(ruleId) {
+  return diagnosisRules.find(rule => rule.id === ruleId)
 }
 
 function scoreToConfidence(score, topScore, index = 0) {
   const gap = topScore - score
-  if (index === 0 && score >= 0.42) return 'high'
-  if (gap <= 0.08 || score >= 0.28) return 'medium'
+  if (index === 0 && score >= 0.5) return 'high'
+  if (gap <= 0.12 || score >= 0.18) return 'medium'
   return 'low'
 }
 
@@ -119,26 +166,10 @@ function normalizeMatchScore(value) {
   return Math.max(0.05, Math.min(1, number))
 }
 
-/**
- * 根据候选结果计算健康评分 (0-100)
- */
-function calcHealthScore(candidates) {
-  if (!candidates || candidates.length === 0) return 90
-  const topScore = candidates[0].score
-  if (topScore >= 75) return Math.max(20, 70 - topScore)
-  if (topScore >= 50) return Math.max(40, 80 - topScore * 0.5)
-  return Math.max(60, 90 - topScore * 0.3)
+function clampProbability(value) {
+  const number = Number(value)
+  if (!Number.isFinite(number)) return MIN_PROBABILITY
+  return Math.max(MIN_PROBABILITY, Math.min(0.999, number))
 }
 
-/**
- * 根据候选结果判断健康状态
- */
-function calcHealthStatus(candidates) {
-  if (!candidates || candidates.length === 0) return 'healthy'
-  const topScore = candidates[0].score
-  if (topScore >= 70) return 'sick'
-  if (topScore >= 45) return 'warning'
-  return 'healthy'
-}
-
-module.exports = { diagnose, calcHealthScore, calcHealthStatus }
+module.exports = { diagnose }

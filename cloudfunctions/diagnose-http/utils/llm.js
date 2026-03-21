@@ -1,11 +1,8 @@
 'use strict'
 
-const https = require('https')
-const { parseSSEBuffer, parseSSEEvent } = require('./sse')
 const { debugLog } = require('./common')
-const { createLLMRequestOptions } = require('/opt/utils/llm-request')
 const {
-  llm: { host, model, service, options: llmOptions }
+  llm: { model, options: llmOptions }
 } = require('/opt/configs')
 const { diagnosePrompts } = require('../configs/prompts')
 
@@ -16,33 +13,67 @@ const {
   buildMatchSymptomPrompt
 } = diagnosePrompts
 
-const SECRET_ID = process.env.CLOUDBASE_SECRET_ID
-const SECRET_KEY = process.env.CLOUDBASE_SECRET_KEY
-const HTTP_AGENT = new https.Agent({ keepAlive: true, maxSockets: 64 })
+const tencentcloud = require('tencentcloud-sdk-nodejs-hunyuan')
+const HunyuanClient = tencentcloud.hunyuan.v20230901.Client
 
-function compactPromptText(input) {
-  return String(input || '')
-    .replace(/\s+/g, ' ')
-    .trim()
+const SECRET_ID = process.env.CLOUDBASE_SECRET_ID || ''
+const SECRET_KEY = process.env.CLOUDBASE_SECRET_KEY || ''
+
+let clientInstance = null
+
+function getHunyuanClient() {
+  if (clientInstance) return clientInstance
+
+  if (!SECRET_ID || !SECRET_KEY) {
+    throw new Error('缺少混元调用密钥配置')
+  }
+
+  clientInstance = new HunyuanClient({
+    credential: {
+      secretId: SECRET_ID,
+      secretKey: SECRET_KEY
+    },
+    region: '',
+    profile: {
+      httpProfile: {
+        endpoint: 'hunyuan.tencentcloudapi.com'
+      }
+    }
+  })
+
+  return clientInstance
 }
 
-function buildLLMDiagnoseMessages({ image, systemPrompts, userPrompts }) {
-  const contents = []
+function compactPromptText(input) {
+  // Do NOT compact whitespace/newlines. Token usage is dominated by the symptom list
+  // and instruction text; whitespace compaction often has negligible impact and
+  // makes debugging harder.
+  return String(input || '')
+}
 
+function buildLLMDiagnoseMessages({ image, systemPrompts: sys, userPrompts: user }) {
+  const compactedSystemPrompts = compactPromptText(sys)
+  const compactedUserPrompts = compactPromptText(user)
+
+  const contents = []
   if (image) {
     contents.push({ Type: 'image_url', ImageUrl: { Url: image } })
   }
-  if (userPrompts) {
-    contents.push({ Type: 'text', Text: userPrompts })
+  if (compactedUserPrompts) {
+    contents.push({ Type: 'text', Text: compactedUserPrompts })
   }
 
   const messages = []
-  if (systemPrompts) {
-    messages.push({ Role: 'system', Content: systemPrompts })
+  if (compactedSystemPrompts) {
+    messages.push({ Role: 'system', Content: compactedSystemPrompts })
   }
+
   messages.push({ Role: 'user', Contents: contents })
-  console.log(systemPrompts, 'systemPrompts...')
-  console.log(userPrompts, 'userPrompts...')
+
+  // Keep log for debugging, but it is compacted.
+  console.log(compactedSystemPrompts, 'systemPrompts...')
+  console.log(compactedUserPrompts, 'userPrompts...')
+
   return messages
 }
 
@@ -55,7 +86,7 @@ function appendVisionPrompt(messages) {
 
   userMessage.Contents.push({
     Type: 'text',
-    Text: prompt
+    Text: String(prompt)
   })
 }
 
@@ -78,181 +109,146 @@ function isFinishPayload(payload) {
 }
 
 function extractPayloadError(payload) {
-  return payload?.Response?.Error?.Message || payload?.error?.message || ''
+  return (
+    payload?.Response?.Error?.Message || payload?.error?.message || payload?.Error?.Message || ''
+  )
 }
 
-function processStreamDataLine(dataLine, state) {
-  const raw = String(dataLine || '').trim()
-  if (!raw || raw === '[DONE]') {
-    state.finished = true
-    return
-  }
+function safeJsonParse(data) {
+  if (data === null || data === undefined) return null
+  if (typeof data === 'object') return data
 
-  const payload = JSON.parse(raw)
-  const payloadError = extractPayloadError(payload)
-  if (payloadError) {
-    throw new Error(payloadError)
-  }
+  const text = String(data).trim()
+  if (!text) return null
 
-  const delta = extractDeltaContent(payload)
-  if (delta) {
-    state.fullText += delta
-    state.onText?.(delta, state.fullText)
-  }
-
-  if (isFinishPayload(payload)) {
-    state.finished = true
+  try {
+    return JSON.parse(text)
+  } catch {
+    return null
   }
 }
 
-function callHunyuanVisionStream(messages, { onText } = {}) {
-  const payload = {
-    Model: model,
-    Messages: messages,
-    Stream: true,
-    ...llmOptions
-  }
-  const body = JSON.stringify(payload)
-  const options = createLLMRequestOptions({
-    body,
-    host,
-    service,
-    secretId: SECRET_ID,
-    secretKey: SECRET_KEY,
-    agent: HTTP_AGENT
-  })
+function pickNonStreamText(res) {
+  const content =
+    res?.Response?.Choices?.[0]?.Message?.Content ||
+    res?.Choices?.[0]?.Message?.Content ||
+    res?.Response?.Choices?.[0]?.Message?.Content ||
+    ''
 
-  return new Promise((resolve, reject) => {
-    const req = https.request(options, res => {
-      let rawBody = ''
-      let buffer = ''
-      const state = { fullText: '', finished: false, onText }
-
-      const handleEventText = eventText => {
-        const parsed = parseSSEEvent(eventText)
-        if (!parsed.data) return
-        processStreamDataLine(parsed.data, state)
-      }
-
-      res.on('data', chunk => {
-        const text = chunk.toString()
-        rawBody += text
-        buffer += text
-        const { completeEvents, rest } = parseSSEBuffer(buffer)
-        buffer = rest
-
-        for (const eventText of completeEvents) {
-          try {
-            handleEventText(eventText)
-          } catch (error) {
-            error.partialText = state.fullText
-            reject(error)
-            req.destroy()
-            return
-          }
-        }
-      })
-
-      res.on('end', () => {
-        if (buffer.trim()) {
-          try {
-            const parsed = parseSSEEvent(buffer)
-            if (parsed.data) {
-              processStreamDataLine(parsed.data, state)
-            }
-          } catch (error) {
-            debugLog('解析混元尾包失败:', error.message)
-          }
-        }
-
-        if (state.fullText) {
-          resolve(state.fullText)
-          return
-        }
-
-        if (res.statusCode >= 400) {
-          reject(new Error(`混元请求失败(${res.statusCode}): ${rawBody.slice(0, 200)}`))
-          return
-        }
-
-        reject(new Error('混元返回空响应'))
-      })
-
-      res.on('error', error => {
-        error.partialText = state.fullText
-        reject(error)
-      })
-    })
-
-    req.on('error', reject)
-    req.setTimeout(45000, () => {
-      req.destroy()
-      reject(new Error('混元请求超时'))
-    })
-    req.write(body)
-    req.end()
-  })
+  return String(content || '')
 }
 
-function callHunyuanVisionNonStream(messages) {
+async function callHunyuanVisionNonStream(messages) {
+  const client = getHunyuanClient()
+
   const payload = {
     Model: model,
     Messages: messages,
     Stream: false,
     ...llmOptions
   }
-  console.log(payload, 'payload...')
-  const body = JSON.stringify(payload)
-  const options = createLLMRequestOptions({
-    body,
-    host,
-    service,
-    secretId: SECRET_ID,
-    secretKey: SECRET_KEY,
-    agent: HTTP_AGENT
-  })
+
+  const res = await client.ChatCompletions(payload)
+
+  const errorMessage = extractPayloadError(res)
+  if (errorMessage) {
+    throw new Error(errorMessage)
+  }
+
+  const usage = res?.Response?.Usage || res?.Usage
+  if (usage?.PromptTokens !== undefined) {
+    console.log(usage.PromptTokens, 'prompt tokens...')
+  }
+
+  return pickNonStreamText(res)
+}
+
+function callHunyuanVisionStream(messages, { onText } = {}) {
+  const client = getHunyuanClient()
+
+  const payload = {
+    Model: model,
+    Messages: messages,
+    Stream: true,
+    ...llmOptions
+  }
 
   return new Promise((resolve, reject) => {
-    const req = https.request(options, res => {
-      let data = ''
-      res.on('data', chunk => (data += chunk))
-      res.on('end', () => {
-        try {
-          const { Response = {} } = JSON.parse(data) || {}
-          if (Response?.Error) {
-            reject(new Error(Response.Error.Message))
+    let finished = false
+    let fullText = ''
+
+    const timeout = setTimeout(() => {
+      if (finished) return
+      finished = true
+      reject(new Error('混元请求超时'))
+    }, 45000)
+
+    const finish = (err, text) => {
+      if (finished) return
+      finished = true
+      clearTimeout(timeout)
+      if (err) {
+        err.partialText = fullText
+        reject(err)
+        return
+      }
+      resolve(text)
+    }
+
+    client.ChatCompletions(payload).then(
+      res => {
+        if (!res || typeof res.on !== 'function') {
+          // SDK may return non-stream response even if Stream=true.
+          const text = pickNonStreamText(res)
+          finish(null, text)
+          return
+        }
+
+        res.on('message', message => {
+          const parsed = safeJsonParse(message)
+          if (!parsed) return
+
+          const payloadError = extractPayloadError(parsed)
+          if (payloadError) {
+            finish(new Error(payloadError))
             return
           }
-          console.log(Response.Usage.PromptTokens, 'prompt tokens...')
-          resolve(Response?.Choices?.[0]?.Message?.Content || '')
-        } catch (error) {
-          reject(new Error('解析混元响应失败'))
-        }
-      })
-    })
 
-    req.on('error', reject)
-    req.setTimeout(45000, () => {
-      req.destroy()
-      reject(new Error('混元请求超时'))
-    })
-    req.write(body)
-    req.end()
+          const delta = extractDeltaContent(parsed)
+          if (delta) {
+            fullText += delta
+            if (typeof onText === 'function') {
+              onText(delta, fullText)
+            }
+          }
+
+          if (isFinishPayload(parsed)) {
+            finish(null, fullText)
+          }
+        })
+
+        res.on('error', err => finish(err))
+        res.on('end', () => finish(null, fullText))
+      },
+      err => finish(err)
+    )
   })
 }
 
-async function callLLMDiagnose({ image, systemPrompts, userPrompts, streamOptions }) {
+async function callLLMDiagnose({ image, systemPrompts: sys, userPrompts: user, streamOptions }) {
   const { onText } = streamOptions || {}
-  if (!SECRET_ID || !SECRET_KEY) {
-    throw new Error('缺少混元调用密钥配置')
-  }
 
-  const messages = buildLLMDiagnoseMessages({ image, systemPrompts, userPrompts })
+  const messages = buildLLMDiagnoseMessages({
+    image,
+    systemPrompts: sys,
+    userPrompts: user
+  })
   appendVisionPrompt(messages)
 
   if (!onText) {
     return callHunyuanVisionNonStream(messages)
   }
+
   try {
     return await callHunyuanVisionStream(messages, { onText })
   } catch (error) {

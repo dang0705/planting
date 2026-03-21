@@ -15,17 +15,17 @@ exports.main = async (event, context) => {
       return { code: 401, message: '请先登录', data: null }
     }
 
-    const { imageUrl } = event
+    const { imageUrl, imageBase64 } = event
 
-    if (!imageUrl) {
-      return { code: 400, message: '缺少图片URL参数', data: null }
+    if (!imageUrl && !imageBase64) {
+      return { code: 400, message: '缺少图片参数', data: null }
     }
 
     // 获取百度 Access Token
     const accessToken = await getAccessToken()
 
     // 调用百度植物识别 API
-    const baiduResult = await recognizePlant(imageUrl, accessToken)
+    const baiduResult = await recognizePlant({ imageUrl, imageBase64 }, accessToken)
 
     // 处理百度返回结果
     const processedResult = processBaiduResult(baiduResult)
@@ -134,13 +134,27 @@ function processBaiduResult(baiduData) {
 /**
  * 使用 HTTPS 调用百度植物识别 API
  */
-function recognizePlant(imgUrl, accessToken) {
+function normalizeBase64Image(imageBase64) {
+  const raw = String(imageBase64 || '').trim()
+  if (!raw) return ''
+
+  const dataUriMatch = raw.match(/^data:image\/[a-zA-Z0-9.+-]+;base64,(.+)$/)
+  return (dataUriMatch?.[1] || raw).replace(/\s+/g, '')
+}
+
+function recognizePlant({ imageUrl, imageBase64 }, accessToken) {
   return new Promise((resolve, reject) => {
-    // 使用 JSON 格式
-    const postData = JSON.stringify({
-      imgUrl,
+    const payload = {
       scenes: ['plant', 'ingredient']
-    })
+    }
+
+    if (imageUrl) {
+      payload.imgUrl = imageUrl
+    } else {
+      payload.image = normalizeBase64Image(imageBase64)
+    }
+
+    const postData = JSON.stringify(payload)
 
     const options = {
       hostname: 'aip.baidubce.com',

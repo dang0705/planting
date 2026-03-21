@@ -5,10 +5,27 @@ const { callLLMDiagnose } = require('../../utils/llm')
 const { diagnosePrompts } = require('../../configs/prompts')
 
 const { systemPrompts, buildIdentifySymptomsUserPrompt } = diagnosePrompts
-const { symptomCategories } = require('./data/questions')
+const { symptomCategories } = require('./data/symptom-categories')
+const { getEvidenceMeta } = require('./data/evidence-catalog')
 
 const symptomList = symptomCategories.flatMap(category =>
   category.symptoms.map(symptom => symptom.id)
+)
+const evidenceGroups = symptomCategories.reduce(
+  (result, category) => {
+    for (const symptom of category.symptoms) {
+      const evidenceType = getEvidenceMeta(symptom.id).type
+      if (evidenceType === 'pest') {
+        result.pests.push(symptom.id)
+      } else if (evidenceType === 'sign') {
+        result.signs.push(symptom.id)
+      } else {
+        result.symptoms.push(symptom.id)
+      }
+    }
+    return result
+  },
+  { symptoms: [], signs: [], pests: [] }
 )
 
 const symptomAliasMap = {
@@ -33,6 +50,8 @@ const symptomAliasMap = {
   soil_compaction: 'small_flies'
 }
 
+const MIN_AI_SCORE = 6
+
 function buildSymptomMeta(symptomId) {
   for (const category of symptomCategories) {
     const symptom = category.symptoms.find(item => item.id === symptomId)
@@ -40,6 +59,7 @@ function buildSymptomMeta(symptomId) {
       return {
         id: symptom.id,
         label: symptom.label,
+        evidenceType: getEvidenceMeta(symptom.id).type,
         categoryId: category.id,
         categoryLabel: category.label,
         source: 'ai'
@@ -47,6 +67,12 @@ function buildSymptomMeta(symptomId) {
     }
   }
   return null
+}
+
+function sortSymptomMatches(left, right) {
+  const scoreDiff = Number(right?.score || 0) - Number(left?.score || 0)
+  if (scoreDiff !== 0) return scoreDiff
+  return Number(right?.matchScore || 0) - Number(left?.matchScore || 0)
 }
 
 function normalizeText(input) {
@@ -128,9 +154,11 @@ function parseSymptomsFromNaturalLanguage(text, validSymptoms) {
     }
 
     if (best && best.score >= 0.42 && !seen.has(best.symptomId)) {
+      const score = Math.max(1, Math.min(10, Math.round(best.score * 10)))
+      if (score < MIN_AI_SCORE) continue
       bestMatches.push({
         index: validSymptoms.indexOf(best.symptomId) + 1,
-        score: Math.max(1, Math.min(10, Math.round(best.score * 10))),
+        score,
         matchScore: normalizeMatchScore(best.score),
         symptomId: best.symptomId
       })
@@ -167,14 +195,17 @@ function mapIndexEntriesToSymptoms(indexEntries, validSymptoms, options = {}) {
     const symptomId = validSymptoms[index - 1]
     if (!symptomId || seen.has(symptomId)) continue
 
+    const normalizedScore = Number.isFinite(Number(normalizedEntry.score))
+      ? Number(normalizedEntry.score)
+      : Number.isFinite(Number(normalizedEntry.confidence))
+        ? Math.round(Number(normalizedEntry.confidence) * 10)
+        : 10
+    if (normalizedScore < MIN_AI_SCORE) continue
+
     seen.add(symptomId)
     mapped.push({
       index,
-      score: Number.isFinite(Number(normalizedEntry.score))
-        ? Number(normalizedEntry.score)
-        : Number.isFinite(Number(normalizedEntry.confidence))
-          ? Math.round(Number(normalizedEntry.confidence) * 10)
-          : 10,
+      score: normalizedScore,
       matchScore: normalizeMatchScore(
         Number.isFinite(Number(normalizedEntry.score))
           ? Number(normalizedEntry.score)
@@ -184,16 +215,100 @@ function mapIndexEntriesToSymptoms(indexEntries, validSymptoms, options = {}) {
     })
   }
 
-  return filterLowScoreSymptoms ? pruneLowScoreSymptoms(mapped) : mapped
+  return finalizeSymptomMatches(mapped, { filterLowScoreSymptoms })
 }
 
 function pruneLowScoreSymptoms(symptoms) {
   if (!Array.isArray(symptoms) || symptoms.length < 3) return symptoms
 
-  const averageScore = symptoms.reduce((sum, item) => sum + Number(item.score || 0), 0) / symptoms.length
+  const averageScore =
+    symptoms.reduce((sum, item) => sum + Number(item.score || 0), 0) / symptoms.length
   const filtered = symptoms.filter(item => Number(item.score || 0) >= averageScore)
 
   return filtered.length ? filtered : symptoms
+}
+
+function finalizeSymptomMatches(symptoms, options = {}) {
+  const list = Array.isArray(symptoms) ? [...symptoms].sort(sortSymptomMatches) : []
+  const normalized = options.filterLowScoreSymptoms ? pruneLowScoreSymptoms(list) : list
+  return normalized.slice(0, 5)
+}
+
+function buildEvidenceBuckets(symptomTags = []) {
+  return symptomTags.reduce(
+    (result, tag) => {
+      if (!tag?.id) return result
+      if (tag.evidenceType === 'pest') {
+        result.pests.push(tag)
+      } else if (tag.evidenceType === 'sign') {
+        result.signs.push(tag)
+      } else {
+        result.symptoms.push(tag)
+      }
+      return result
+    },
+    { symptoms: [], signs: [], pests: [] }
+  )
+}
+
+function extractJsonCandidates(text) {
+  const raw = String(text || '').trim()
+  if (!raw) return []
+
+  const jsonCandidates = []
+  if (raw.startsWith('{') || raw.startsWith('[')) {
+    jsonCandidates.push(raw)
+  }
+
+  const objectMatch = raw.match(/\{[\s\S]*\}/)
+  if (objectMatch) {
+    jsonCandidates.push(objectMatch[0])
+  }
+
+  const arrayMatch = raw.match(/\[[\s\S]*\]/)
+  if (arrayMatch) {
+    jsonCandidates.push(arrayMatch[0])
+  }
+
+  return jsonCandidates
+}
+
+function getValidSymptomsByEvidenceType(evidenceType) {
+  if (evidenceType === 'pest' || evidenceType === 'pests') return evidenceGroups.pests
+  if (evidenceType === 'sign' || evidenceType === 'signs') return evidenceGroups.signs
+  return evidenceGroups.symptoms
+}
+
+function parseEvidenceEntries(parsed) {
+  if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') return null
+
+  const groups = {
+    symptoms: Array.isArray(parsed.symptoms) ? parsed.symptoms : [],
+    signs: Array.isArray(parsed.signs) ? parsed.signs : [],
+    pests: Array.isArray(parsed.pests) ? parsed.pests : []
+  }
+
+  const hasEvidenceGroups =
+    Object.values(groups).some(items => items.length > 0) ||
+    Object.prototype.hasOwnProperty.call(parsed, 'symptoms') ||
+    Object.prototype.hasOwnProperty.call(parsed, 'signs') ||
+    Object.prototype.hasOwnProperty.call(parsed, 'pests')
+
+  return hasEvidenceGroups ? groups : null
+}
+
+function mapEvidenceEntriesToSymptoms(entriesByType, options = {}) {
+  const merged = []
+
+  for (const [evidenceType, entries] of Object.entries(entriesByType || {})) {
+    const validSymptoms = getValidSymptomsByEvidenceType(evidenceType)
+    const mapped = mapIndexEntriesToSymptoms(entries, validSymptoms, {
+      filterLowScoreSymptoms: false
+    })
+    merged.push(...mapped)
+  }
+
+  return finalizeSymptomMatches(merged, options)
 }
 
 /**
@@ -222,7 +337,7 @@ async function handleIdentifySymptoms(event, context, requestData) {
   }
 
   try {
-    const identifyUserPrompts = buildIdentifySymptomsUserPrompt(symptomList)
+    const identifyUserPrompts = buildIdentifySymptomsUserPrompt(evidenceGroups)
 
     // 调用 LLM 识别
     const diagnosisText = await callLLMDiagnose({
@@ -238,6 +353,20 @@ async function handleIdentifySymptoms(event, context, requestData) {
     const identifiedSymptoms = parseSymptomMatches(diagnosisText, symptomList, {
       filterLowScoreSymptoms
     })
+    const symptomTags = identifiedSymptoms
+      .map(item => {
+        const meta = buildSymptomMeta(item.symptomId)
+        if (!meta) return null
+        return {
+          ...meta,
+          score: item.score,
+          matchScore: item.matchScore,
+          index: item.index
+        }
+      })
+      .filter(Boolean)
+      .sort(sortSymptomMatches)
+    const evidence = buildEvidenceBuckets(symptomTags)
 
     console.log('[IdentifySymptoms] 识别到的症状:', identifiedSymptoms)
 
@@ -245,18 +374,8 @@ async function handleIdentifySymptoms(event, context, requestData) {
       code: 200,
       data: {
         symptoms: identifiedSymptoms.map(item => item.symptomId),
-        symptomTags: identifiedSymptoms
-          .map(item => {
-            const meta = buildSymptomMeta(item.symptomId)
-            if (!meta) return null
-            return {
-              ...meta,
-              score: item.score,
-              matchScore: item.matchScore,
-              index: item.index
-            }
-          })
-          .filter(Boolean),
+        symptomTags,
+        evidence,
         rawText: diagnosisText
       }
     })
@@ -273,23 +392,32 @@ async function handleIdentifySymptoms(event, context, requestData) {
  * 从 AI 返回文本中解析症状 ID
  */
 function parseSymptomMatches(text, validSymptoms, options = {}) {
+  const parsedEvidenceMatches = parseEvidenceMatches(text, options)
+  if (
+    parsedEvidenceMatches.length > 0 ||
+    String(text || '').includes('"signs"') ||
+    String(text || '').includes('"pests"')
+  ) {
+    return finalizeSymptomMatches(parsedEvidenceMatches, options)
+  }
+
   const parsedFromIndexes = parseSymptomsFromIndexes(text, validSymptoms, options)
   if (
     parsedFromIndexes.length > 0 ||
     String(text || '').includes('"indexex"') ||
     String(text || '').includes('"index"')
   ) {
-    return parsedFromIndexes.slice(0, 5)
+    return finalizeSymptomMatches(parsedFromIndexes, options)
   }
 
   const parsedFromJson = parseSymptomsFromJson(text, validSymptoms)
   if (parsedFromJson.length > 0 || String(text || '').includes('"symptoms"')) {
-    return parsedFromJson.slice(0, 5)
+    return finalizeSymptomMatches(parsedFromJson, options)
   }
 
   const parsedFromNaturalLanguage = parseSymptomsFromNaturalLanguage(text, validSymptoms)
   if (parsedFromNaturalLanguage.length > 0) {
-    return parsedFromNaturalLanguage.slice(0, 5)
+    return finalizeSymptomMatches(parsedFromNaturalLanguage, options)
   }
 
   const lines = String(text || '').split('\n')
@@ -326,27 +454,28 @@ function parseSymptomMatches(text, validSymptoms, options = {}) {
   }
 
   // 最多返回5个
-  return symptoms.slice(0, 5)
+  return finalizeSymptomMatches(symptoms, options)
+}
+
+function parseEvidenceMatches(text, options = {}) {
+  const jsonCandidates = extractJsonCandidates(text)
+
+  for (const candidate of jsonCandidates) {
+    try {
+      const parsed = JSON.parse(candidate)
+      const entriesByType = parseEvidenceEntries(parsed)
+      if (!entriesByType) continue
+      return mapEvidenceEntriesToSymptoms(entriesByType, options)
+    } catch (error) {
+      continue
+    }
+  }
+
+  return []
 }
 
 function parseSymptomsFromIndexes(text, validSymptoms, options = {}) {
-  const raw = String(text || '').trim()
-  if (!raw) return []
-
-  const jsonCandidates = []
-  if (raw.startsWith('{') || raw.startsWith('[')) {
-    jsonCandidates.push(raw)
-  }
-
-  const objectMatch = raw.match(/\{[\s\S]*\}/)
-  if (objectMatch) {
-    jsonCandidates.push(objectMatch[0])
-  }
-
-  const arrayMatch = raw.match(/\[[\s\S]*\]/)
-  if (arrayMatch) {
-    jsonCandidates.push(arrayMatch[0])
-  }
+  const jsonCandidates = extractJsonCandidates(text)
 
   for (const candidate of jsonCandidates) {
     try {
@@ -370,24 +499,7 @@ function parseSymptomsFromIndexes(text, validSymptoms, options = {}) {
 }
 
 function parseSymptomsFromJson(text, validSymptoms) {
-  const raw = String(text || '').trim()
-  if (!raw) return []
-
-  const jsonCandidates = []
-
-  if (raw.startsWith('{') || raw.startsWith('[')) {
-    jsonCandidates.push(raw)
-  }
-
-  const objectMatch = raw.match(/\{[\s\S]*\}/)
-  if (objectMatch) {
-    jsonCandidates.push(objectMatch[0])
-  }
-
-  const arrayMatch = raw.match(/\[[\s\S]*\]/)
-  if (arrayMatch) {
-    jsonCandidates.push(arrayMatch[0])
-  }
+  const jsonCandidates = extractJsonCandidates(text)
 
   for (const candidate of jsonCandidates) {
     try {

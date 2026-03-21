@@ -387,6 +387,158 @@ const diagnosisRules = [
       '避免温度骤变，不要突然移至温差大的环境',
       '冬季远离冷窗，夏季避免强烈热辐射'
     ]
+  },
+  {
+    id: 'succulent_black_rot',
+    name: '多肉黑腐病',
+    priority: 9,
+    symptoms: {
+      black_spots: 5,
+      soft_leaves: 5,
+      wilting: 4,
+      leaf_drop: 3,
+      brown_stems: 5,
+      stem_blackening: 6,
+      stem_softening: 6,
+      translucent_leaves: 4,
+      rosette_collapse: 5,
+      yellow_leaves: 2,
+      dry_crispy_leaves: -3
+    },
+    conditions: {
+      soil_moisture: { wet: 6, normal: 1, dry: -4 },
+      ventilation: { poor: 5, normal: 1, good: -3 },
+      temperature: { cold: 5, normal: 0, hot: -1 }
+    },
+    mutuallyExclusiveWith: ['succulent_root_rot', 'underwatering'],
+    solutions: [
+      '立即切除发黑发软的茎叶组织，保留健康部分',
+      '停止浇水并加强通风，避免继续闷湿',
+      '切口可用杀菌剂或硫磺粉处理后晾干',
+      '必要时重新扦插健康头部，弃掉腐烂部分'
+    ],
+    prevention: ['低温季减少浇水', '多肉保持通风和颗粒土', '避免叶心长期积水和闷养']
+  },
+  {
+    id: 'succulent_root_rot',
+    name: '多肉根腐',
+    priority: 8,
+    symptoms: {
+      yellow_leaves: 4,
+      wilting: 4,
+      soft_leaves: 3,
+      brown_stems: 2,
+      stem_softening: 3,
+      root_smell: 4,
+      mold_on_soil: 3,
+      dry_crispy_leaves: -2
+    },
+    conditions: {
+      soil_moisture: { wet: 6, normal: 2, dry: -5 },
+      watering_frequency: { frequent: 5, normal: 1, rare: -4 }
+    },
+    mutuallyExclusiveWith: ['succulent_black_rot', 'underwatering'],
+    solutions: [
+      '脱盆检查根系，剪除发黑发臭烂根',
+      '晾根后更换排水好的颗粒土重新上盆',
+      '恢复期控水，避免再次积水',
+      '放在明亮通风处缓苗'
+    ],
+    prevention: ['颗粒土和透气盆器', '生长期见干见湿，低温期更少浇水', '避免长期托盘积水']
+  },
+  {
+    id: 'succulent_etiolation',
+    name: '多肉徒长',
+    priority: 7,
+    symptoms: {
+      leggy_growth: 6,
+      small_leaves: 4,
+      slow_growth: 4,
+      pale_leaves: 2,
+      yellow_leaves: 1
+    },
+    conditions: {
+      light: { low: 7, medium: 3, bright_indirect: 0, direct_strong: -1 }
+    },
+    solutions: [
+      '逐步增加光照时长，避免突然暴晒',
+      '放到更明亮的位置或使用补光灯',
+      '严重徒长可砍头重新扦插',
+      '减少高氮肥和过频浇水'
+    ],
+    prevention: ['多肉长期需要充足光照', '冬季补光防徒长', '避免高温弱光闷养']
+  },
+  {
+    id: 'succulent_sunburn',
+    name: '多肉晒伤',
+    priority: 7,
+    symptoms: {
+      brown_spots: 5,
+      brown_patches: 5,
+      bleached_leaves: 4,
+      dry_crispy_leaves: 3,
+      soft_leaves: -2
+    },
+    conditions: {
+      light: { direct_strong: 7, bright_indirect: 1, low: -4 },
+      season: { summer: 4, spring: 1, autumn: 0, winter: -2 }
+    },
+    solutions: [
+      '移至散射光环境恢复',
+      '夏季中午前后遮阴',
+      '受损叶片可保留观察或后期修除',
+      '恢复期避免频繁折腾和重浇水'
+    ],
+    prevention: ['逐步增加日照，不要骤晒', '夏季强光期适当遮阴', '缺水状态下更避免暴晒']
+  },
+  {
+    id: 'orchid_crown_rot',
+    name: '兰花冠腐',
+    priority: 8,
+    symptoms: {
+      leaf_drop: 5,
+      wilting: 4,
+      soft_leaves: 4,
+      yellow_leaves: 3,
+      brown_stems: 3,
+      stem_softening: 4,
+      sudden_leaf_drop: 5
+    },
+    conditions: {
+      humidity: { high: 5, normal: 1, low: -2 },
+      ventilation: { poor: 5, normal: 1, good: -3 },
+      temperature: { cold: 3, normal: 1, hot: 0 }
+    },
+    solutions: [
+      '尽快清理腐烂叶心和基部组织',
+      '叶心保持干燥，停止向叶芯积水',
+      '用杀菌剂处理病部并加强通风',
+      '必要时与健康植株隔离'
+    ],
+    prevention: ['浇水后保持叶心干燥', '兰花环境要通风', '低温高湿时尤其防冠腐']
+  },
+  {
+    id: 'orchid_root_rot',
+    name: '兰花根腐',
+    priority: 8,
+    symptoms: {
+      yellow_leaves: 4,
+      wilting: 5,
+      soft_leaves: 3,
+      root_smell: 4,
+      leaf_drop: 2
+    },
+    conditions: {
+      soil_moisture: { wet: 6, normal: 2, dry: -3 },
+      watering_frequency: { frequent: 5, normal: 1, rare: -4 }
+    },
+    solutions: [
+      '脱盆检查根系，剪除空根烂根',
+      '更换透气植料并减少浇水',
+      '恢复期提高通风，避免闷根',
+      '重新上盆后暂缓施肥'
+    ],
+    prevention: ['兰花植料保持透气', '不要长期积水', '根据根色和植料干湿决定浇水']
   }
 ]
 

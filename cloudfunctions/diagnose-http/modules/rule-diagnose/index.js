@@ -59,26 +59,29 @@ async function handleRuleDiagnose(event, context, requestData) {
   const symptomMatches =
     body.symptomMatches && typeof body.symptomMatches === 'object' ? body.symptomMatches : {}
   const round = Number(body.round) || 0
+  const plantName = String(body.plantName || '').trim()
+  const plantGroup = String(body.plantGroup || '').trim()
 
   if (symptoms.length === 0) {
     return jsonResponse(400, { code: 400, message: '请至少选择一个症状' })
   }
 
   // 运行诊断引擎
-  const candidates = diagnose(symptoms, conditions, symptomMatches)
-  const candidateRuleIds = candidates.map(c => c.id)
+  const candidates = diagnose(symptoms, conditions, symptomMatches, { plantName, plantGroup })
 
   console.log('[RuleDiagnose] symptoms:', JSON.stringify(symptoms))
   console.log('[RuleDiagnose] symptomMatches:', JSON.stringify(symptomMatches))
   console.log('[RuleDiagnose] conditions:', JSON.stringify(conditions))
   console.log('[RuleDiagnose] round:', round)
+  console.log('[RuleDiagnose] plantName:', plantName)
+  console.log('[RuleDiagnose] plantGroup:', plantGroup)
   console.log('[RuleDiagnose] candidates:', JSON.stringify(candidates))
 
   // 判断是否需要继续追问
   const needMore = shouldContinueAsking(candidates, round, conditions)
   let nextQuestion = null
   if (needMore) {
-    nextQuestion = chooseNextQuestion(symptoms, conditions, candidateRuleIds)
+    nextQuestion = chooseNextQuestion(symptoms, conditions, candidates)
   }
 
   console.log('[RuleDiagnose] needMore:', needMore, '| nextQuestion:', JSON.stringify(nextQuestion))
@@ -96,7 +99,18 @@ async function handleRuleDiagnose(event, context, requestData) {
       ...(isDone
         ? {
             result: {
+              diagnosis: candidates[0]?.id || '',
+              confidence: Number(((candidates[0]?.score || 0) / 100).toFixed(4)),
               mainIssue: candidates[0]?.name || '未发现明显问题',
+              category: candidates[0]?.category || '',
+              plantGroup: candidates[0]?.plantGroup || 'houseplants',
+              alternatives: candidates.slice(1).map(item => ({
+                disease: item.id,
+                name: item.name,
+                confidence: Number((item.score / 100).toFixed(4)),
+                category: item.category || '',
+                plantGroup: item.plantGroup || 'houseplants'
+              })),
               candidates,
               summary: buildSummary(candidates)
             }
@@ -111,7 +125,15 @@ function buildSummary(candidates) {
     return '根据您描述的症状，植物整体状态良好，建议继续保持日常养护。'
   }
   const top = candidates[0]
-  let summary = `当前最可能的问题是「${top.name}」。`
+  let summary = `当前最可能的问题是「${top.name}」`
+  if (top.plantGroup && top.plantGroup !== 'houseplants') {
+    summary += `（按${top.plantGroup}病库筛选）`
+  }
+  if (top.category) {
+    summary += `，它属于「${top.category}」类。`
+  } else {
+    summary += '。'
+  }
   if (top.solutions?.length) {
     summary += `建议：${top.solutions.slice(0, 2).join('、')}。`
   }
@@ -123,22 +145,27 @@ function buildSummary(candidates) {
 
 function createRuleDiagnoseRouteTable() {
   return {
+    // 1
     getRuleSymptoms: {
       match: path => path.includes('/rule-diagnose/symptoms'),
       handler: handleGetSymptoms
     },
-    getRuleQuestions: {
-      match: path => path.includes('/rule-diagnose/questions'),
-      handler: handleGetQuestions
-    },
+    // 2
     identifySymptoms: {
       match: path => path.includes('/rule-diagnose/identify-symptoms'),
       handler: handleIdentifySymptoms
     },
+    // 3
+    getRuleQuestions: {
+      match: path => path.includes('/rule-diagnose/questions'),
+      handler: handleGetQuestions
+    },
+    // 4
     matchSymptom: {
       match: path => path.includes('/rule-diagnose/match-symptom'),
       handler: handleMatchSymptom
     },
+    // 5
     ruleDiagnose: {
       match: path => path.includes('/rule-diagnose/diagnose'),
       handler: handleRuleDiagnose

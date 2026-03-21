@@ -396,21 +396,37 @@ function uploadPhoto() {
     count: 1,
     sizeType: ['compressed'],
     sourceType: ['camera', 'album'],
-    success: res => {
+    success: async res => {
       const path = res.tempFilePaths[0]
       wx.getFileSystemManager().stat({
         path,
-        success: s => {
+        success: async s => {
           if (s.stats.size > 5 * ONE_MEGA_BYTE) {
             uni.showToast({ title: '图片过大，请选择 5MB 以下', icon: 'none' })
             return
           }
           formData.value.image = path
+          await triggerIdentifyFromUpload(path)
         },
-        fail: () => (formData.value.image = path)
+        fail: async () => {
+          formData.value.image = path
+          await triggerIdentifyFromUpload(path)
+        }
       })
     }
   })
+}
+
+async function triggerIdentifyFromUpload(path) {
+  if (!path) return
+  if (!userStore.isLoggedIn) return
+  if (!userStore.canDiagnose) return
+
+  try {
+    await doIdentify(path)
+  } catch (error) {
+    console.warn('上传图片后自动识别失败:', error)
+  }
 }
 
 async function submitForm() {
@@ -458,6 +474,7 @@ async function submitForm() {
       data: {
         plantId: selectedPlant.value?.id || null,
         aiRecognizedName: aiRecognizedName.value || null,
+        plantGroup: selectedPlant.value?.plantGroup || null,
         nickName: formData.value.nickname || selectedPlant.value?.name || aiRecognizedName.value,
         location: formData.value.location,
         photos: photos.length ? photos : null

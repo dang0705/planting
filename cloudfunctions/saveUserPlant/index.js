@@ -1,6 +1,7 @@
 'use strict';
 
 const { models, getUserInfo } = require('/opt/utils/cloudbase');
+const { inferPlantGroup } = require('./plant-group');
 
 exports.main = async (event, context) => {
   try {
@@ -12,7 +13,7 @@ exports.main = async (event, context) => {
       return { code: 401, message: '请先登录', data: null };
     }
 
-    let { plantId, aiRecognizedName, nickName, location, photos } = event;
+    let { plantId, aiRecognizedName, nickName, location, photos, plantGroup } = event;
 
     // 必须有 plantId 或 aiRecognizedName 其中之一
     if (!plantId && !aiRecognizedName) {
@@ -40,16 +41,19 @@ exports.main = async (event, context) => {
     }
 
     // plantId 和 aiRecognizedName 互斥
+    const resolvedPlantGroup = String(plantGroup || '').trim() || inferPlantGroup(plantName)
+
     const insertSQL = `INSERT INTO user_plants (
-      _openid, plant_id, plant_name, ai_recognized_name, nick_name, location, photos
+      _openid, plant_id, plant_name, ai_recognized_name, plant_group, nick_name, location, photos
     ) VALUES (
-      {{openid}}, ${plantId ? '{{plantId}}' : 'NULL'}, {{plantName}}, ${plantId ? 'NULL' : '{{aiRecognizedName}}'},
+      {{openid}}, ${plantId ? '{{plantId}}' : 'NULL'}, {{plantName}}, ${plantId ? 'NULL' : '{{aiRecognizedName}}'}, {{plantGroup}},
       {{nickName}}, {{location}}, {{photos}}
     )`;
 
     const params = {
       openid,
       plantName: plantName || '未知植物',
+      plantGroup: resolvedPlantGroup,
       nickName: nickName || null,
       location: location || '阳台',
       photos: photos ? JSON.stringify(photos) : null
@@ -68,7 +72,7 @@ exports.main = async (event, context) => {
     // 尝试多种可能的字段名
     const insertedId = Number(row.insertId || row['LAST_INSERT_ID()'] || row.id) || 0;
 
-    console.log('用户植物保存成功:', { id: insertedId, plantId, aiRecognizedName });
+    console.log('用户植物保存成功:', { id: insertedId, plantId, aiRecognizedName, plantGroup: resolvedPlantGroup });
 
     return {
       code: 200,
@@ -77,6 +81,7 @@ exports.main = async (event, context) => {
         id: insertedId,
         plantId: plantId || null,
         aiRecognizedName: plantId ? null : aiRecognizedName,
+        plantGroup: resolvedPlantGroup,
         nickName,
         location
       }

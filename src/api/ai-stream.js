@@ -105,21 +105,28 @@ export async function identifyPlant({ messages, openid, onFinish, onError }) {
   console.log('识别请求，调用百度植物识别云函数')
 
   try {
-    // 从 messages 中提取图片 URL
+    // 从 messages 中提取图片 URL 或 base64 data URI
     let imageUrl = ''
+    let imageBase64 = ''
     if (messages && messages[0]?.Contents) {
       const imageContent = messages[0].Contents.find(c => c.Type === 'image_url')
-      imageUrl = imageContent?.ImageUrl?.Url || ''
+      const imageValue = imageContent?.ImageUrl?.Url || ''
+      if (String(imageValue).startsWith('data:image/')) {
+        imageBase64 = imageValue
+      } else {
+        imageUrl = imageValue
+      }
     }
 
-    if (!imageUrl) {
-      throw new Error('缺少图片URL')
+    if (!imageUrl && !imageBase64) {
+      throw new Error('缺少图片参数')
     }
 
     const res = await wx.cloud.callFunction({
       name: 'identify-baidu',
       data: {
-        imageUrl
+        imageUrl,
+        imageBase64
       }
     })
 

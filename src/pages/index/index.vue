@@ -206,6 +206,7 @@
       ref="diagnosePopupRef"
       :plant-id="currentPlantId"
       :plant-name="currentPlantName"
+      :plant-group="currentPlantGroup"
       @success="handleDiagnoseSuccess"
       @close="currentPlantId = '' && (currentPlantName = '')"
     />
@@ -228,6 +229,7 @@ const loaded = ref(false)
 const diagnosePopupRef = ref(null)
 const currentPlantId = ref('')
 const currentPlantName = ref('')
+const currentPlantGroup = ref('')
 const plantDiagnoseHistory = reactive({})
 const loadingHistory = reactive({})
 
@@ -290,6 +292,7 @@ async function loadPlantDiagnoseHistory(plantId) {
 function openDiagnose(plant) {
   currentPlantId.value = plant.id
   currentPlantName.value = plant.plantName || plant.name || '未知植物'
+  currentPlantGroup.value = plant.plantGroup || ''
   diagnosePopupRef.value?.open()
 }
 

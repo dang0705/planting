@@ -153,6 +153,7 @@ export const usePlantStore = defineStore('plants', {
             plantId: p.plantId || null,
             name: p.name || '未命名植物',
             aiRecognizedName: p.aiRecognizedName || '',
+            plantGroup: p.plantGroup || '',
             location: p.location || '未设置',
             image: p.image || '',
             photos: p.photos || [],
