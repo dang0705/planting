@@ -1,38 +1,113 @@
-import { ref, computed } from 'vue'
-import { usePlantStore } from '@/store/plants.js'
+import { computed, ref } from 'vue'
+import { fetchPlantCatalog } from '@/api/plants-http.js'
+import { getFileUrl } from '@/composables/useCloudFile.js'
+import { ONE_HOUR } from '@/constants'
+import { queryClient } from '@/lib/query-client.js'
 
 export function useDefaultPlants() {
-  const plantStore = usePlantStore()
-  const searchResults = ref([])
-  const isSearching = ref(false)
+  const keywordRef = ref('')
+  const page = ref(1)
+  const pageSize = ref(10)
+  const plants = ref([])
+  const total = ref(0)
+  const hasMore = ref(false)
+  const initialLoading = ref(false)
+  const loadingMore = ref(false)
+  const loading = computed(() => initialLoading.value || loadingMore.value)
 
-  // 如果正在搜索，显示搜索结果；否则显示 show=1 的植物
-  const plants = computed(() => {
-    if (isSearching.value) {
-      return searchResults.value
-    }
-    return plantStore.defaultPlants.filter(p => p.show)
-  })
+  async function fetchCatalogPage(targetPage) {
+    const normalizedKeyword = keywordRef.value.trim()
+    console.log('[PlantCatalogQuery] fetch', {
+      keyword: normalizedKeyword,
+      pageParam: targetPage,
+      pageSize: pageSize.value
+    })
+    const payload = await queryClient.fetchQuery({
+      queryKey: ['plant-catalog', normalizedKeyword, targetPage, pageSize.value],
+      queryFn: async () => {
+        const response = await fetchPlantCatalog(normalizedKeyword, targetPage, pageSize.value)
+        const data = response?.data || {}
+        const list = Array.isArray(data?.list) ? data.list : Array.isArray(data) ? data : []
 
-  const loading = computed(() => false)
+        for (const plant of list) {
+          if (plant.imageFileId) {
+            plant.image = await getFileUrl(plant.imageFileId)
+            plant.imageUrl = plant.image
+          }
+        }
+
+        return {
+          list,
+          total: Number(data?.total || list.length || 0),
+          page: Number(data?.page || targetPage),
+          pageSize: Number(data?.pageSize || pageSize.value),
+          hasMore: Boolean(data?.hasMore)
+        }
+      },
+      staleTime: 2 * ONE_HOUR,
+      gcTime: 5 * 60 * 1000
+    })
+
+    total.value = payload.total
+    hasMore.value = payload.hasMore
+    page.value = payload.page
+    return payload.list
+  }
 
   /**
    * 加载或搜索植物
    * @param {string} keyword - 搜索关键词
    */
-  async function load(keyword = '') {
-    const results = await plantStore.searchDefaultPlants(keyword)
+  async function load(nextKeyword = '', nextPage = 1) {
+    if (nextPage !== 1) {
+      await loadNextPage()
+      return
+    }
 
-    if (keyword && keyword.trim()) {
-      // 有搜索关键词，显示搜索结果
-      isSearching.value = true
-      searchResults.value = results
-    } else {
-      // 无搜索关键词，显示默认列表
-      isSearching.value = false
-      searchResults.value = []
+    keywordRef.value = String(nextKeyword || '').trim()
+    console.log('[PlantCatalogQuery] load', {
+      keyword: keywordRef.value,
+      page: 1,
+      pageSize: pageSize.value
+    })
+    initialLoading.value = true
+    try {
+      plants.value = await fetchCatalogPage(1)
+    } finally {
+      initialLoading.value = false
     }
   }
 
-  return { plants, loading, load }
+  async function loadNextPage() {
+    if (!hasMore.value || loadingMore.value) return
+    loadingMore.value = true
+    try {
+      const nextList = await fetchCatalogPage(page.value + 1)
+      plants.value = [...plants.value, ...nextList]
+    } finally {
+      loadingMore.value = false
+    }
+  }
+
+  function reset() {
+    keywordRef.value = ''
+    page.value = 1
+    plants.value = []
+    total.value = 0
+    hasMore.value = false
+  }
+
+  return {
+    plants,
+    loading,
+    initialLoading,
+    loadingMore,
+    load,
+    loadNextPage,
+    page,
+    pageSize,
+    total,
+    hasMore,
+    reset
+  }
 }

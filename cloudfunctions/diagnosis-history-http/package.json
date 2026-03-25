@@ -1,0 +1,13 @@
+{
+  "name": "diagnosis-history-http",
+  "version": "1.0.0",
+  "description": "HTTP云函数 - 诊断历史与规则决策",
+  "main": "app.js",
+  "dependencies": {
+    "@cloudbase/functions-framework": "^1.18.0",
+    "@cloudbase/node-sdk": "^3.16.0"
+  },
+  "scripts": {
+    "start": "node node_modules/@cloudbase/functions-framework/bin/tcb-ff.js --port=9004 --functionsConfigFile=cloudbase-functions.json"
+  }
+}

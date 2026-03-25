@@ -232,19 +232,21 @@ async function refreshWeather() {
     console.log('🔍 [刷新天气] userStore.location:', userStore.location)
     console.log('🔍 [刷新天气] latitude:', latitude, 'longitude:', longitude, 'city:', city)
 
-    if (latitude !== undefined && longitude !== undefined && latitude !== null && longitude !== null) {
+    const hasCoordinates =
+      latitude !== undefined &&
+      latitude !== null &&
+      latitude !== '' &&
+      longitude !== undefined &&
+      longitude !== null &&
+      longitude !== '' &&
+      Number.isFinite(Number(latitude)) &&
+      Number.isFinite(Number(longitude))
+
+    if (hasCoordinates) {
       // 使用经纬度获取天气，使用缓存开关
       const weatherData = await getWeatherInfo({
         lat: latitude,
         lng: longitude,
-        useCache: cacheEnabled.value
-      })
-
-      weather.value = formatWeatherDisplay(weatherData)
-    } else if (city) {
-      // 使用城市名称获取天气，使用缓存开关
-      const weatherData = await getWeatherInfo({
-        city: city,
         useCache: cacheEnabled.value
       })
 

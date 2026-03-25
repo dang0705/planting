@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <view class="min-h-screen bg-[#F8F6F0]">
     <!-- 用户信息卡片 -->
     <view class="bg-gradient-to-br from-primary to-[#52B788] px-4 pt-12 pb-8">
@@ -139,6 +139,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/user.js'
+import { fetchDiagnosisHistory } from '@/api/plants-http.js'
 
 const userStore = useUserStore()
 
@@ -223,19 +224,9 @@ async function loadDiagnoseHistory() {
 
   loadingHistory.value = true
   try {
-    const result = await wx.cloud.callFunction({
-      name: 'getDiagnoseHistory',
-      data: {
-        action: 'getList',
-        data: {
-          page: 1,
-          pageSize: 5 // 只显示最近5条
-        }
-      }
-    })
-
-    if (result.result.code === 200) {
-      diagnoseHistory.value = result.result.data.list
+    const result = await fetchDiagnosisHistory(1, 5)
+    if (result?.code === 200) {
+      diagnoseHistory.value = result.data.list
     }
   } catch (error) {
     console.error('加载诊断历史失败:', error)
@@ -311,3 +302,4 @@ function formatTime(time) {
   overflow: hidden;
 }
 </style>
+

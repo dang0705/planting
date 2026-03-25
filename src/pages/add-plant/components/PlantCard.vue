@@ -14,19 +14,15 @@
       <text class="text-[28px]">🌱</text>
     </view>
     <view class="px-2 py-2">
-      <text class="block text-gray-700 font-medium text-center mb-1.5">{{ plant.name }}</text>
+      <text class="block text-gray-700 font-medium text-center mb-1.5">{{ plant.canonicalName }}</text>
       <view class="flex flex-wrap justify-center gap-1">
         <text class="text-xs px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500"
-          >💧{{ plant.wateringType }}</text
+          >💧{{ plant.watering?.way || plant.categoryCn || '植物目录' }}</text
         >
         <text
           class="text-xs px-1.5 py-0.5 rounded-full"
-          :class="
-            plant.sunningType === '全日光'
-              ? 'bg-orange-100 text-orange-700'
-              : 'bg-amber-50 text-orange-400'
-          "
-          >{{ plant.sunningType === '全日光' ? '☀️' : '🌤️' }}{{ plant.sunningType }}</text
+          :class="plant.sunning?.way === '全日光' || plant.sunning?.way === '强光' ? 'bg-orange-100 text-orange-700' : 'bg-amber-50 text-orange-400'"
+          >{{ plant.sunning?.way ? `${plant.sunning.way}` : `难度 ${plant.difficulty || 0}/5` }}</text
         >
       </view>
     </view>
@@ -34,8 +30,6 @@
 </template>
 
 <script setup>
-import { getImageUrl } from '@/api/storage'
-
 defineProps({
   plant: { type: Object, required: true },
   selected: { type: Boolean, default: false }

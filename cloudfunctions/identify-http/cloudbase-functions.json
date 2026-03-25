@@ -1,0 +1,19 @@
+{
+  "functionsRoot": ".",
+  "functions": [
+    {
+      "name": "identify-http",
+      "directory": "."
+    }
+  ],
+  "routes": [
+    {
+      "functionName": "identify-http",
+      "path": "/identify/plant"
+    },
+    {
+      "functionName": "identify-http",
+      "path": "/identify/health"
+    }
+  ]
+}

@@ -1,39 +1,74 @@
 'use strict'
 
-const https = require('https')
-const { parseSSEBuffer, parseSSEEvent } = require('./sse')
+const tencentcloud = require('tencentcloud-sdk-nodejs-hunyuan')
 const { debugLog } = require('./common')
-const { createLLMRequestOptions } = require('/opt/utils/llm-request')
+const { buildSymptomLabelerPrompt } = require('./symptom-labeler-prompt')
 const {
-  prompts: { llm: prompt },
-  llm: { host, model, service }
-} = require('/opt/configs')
+  llm: { model, options: llmOptions = {}, host: endpoint, sse }
+} = require('../configs')
 
-const SECRET_ID = process.env.CLOUDBASE_SECRET_ID
-const SECRET_KEY = process.env.CLOUDBASE_SECRET_KEY
-const HTTP_AGENT = new https.Agent({ keepAlive: true, maxSockets: 64 })
+const HunyuanClient = tencentcloud.hunyuan.v20230901.Client
+const SECRET_ID = process.env.CLOUDBASE_SECRET_ID || ''
+const SECRET_KEY = process.env.CLOUDBASE_SECRET_KEY || ''
 
-function buildLLMDiagnoseMessages(image, description, plantName) {
-  const contents = []
+let clientInstance = null
 
-  if (image) {
-    contents.push({ Type: 'image_url', ImageUrl: { Url: image } })
+function getHunyuanClient() {
+  if (clientInstance) {
+    return clientInstance
   }
 
-  let text = '请诊断这张植物图片的健康状况。'
-  if (plantName) text += `\n植物名称：${plantName}`
-  if (description) text += `\n症状描述：${description}`
-  contents.push({ Type: 'text', Text: text })
-  return [{ Role: 'user', Contents: contents }]
+  if (!SECRET_ID || !SECRET_KEY) {
+    throw new Error('缺少混元调用密钥配置')
+  }
+
+  clientInstance = new HunyuanClient({
+    credential: {
+      secretId: SECRET_ID,
+      secretKey: SECRET_KEY
+    },
+    region: '',
+    profile: {
+      httpProfile: {
+        endpoint
+      }
+    }
+  })
+
+  return clientInstance
 }
 
-function appendVisionPrompt(messages) {
-  if (!messages[0] || !Array.isArray(messages[0].Contents)) return
+function extractUsage(payload) {
+  return payload?.Response?.Usage || payload?.Usage || payload?.usage || null
+}
 
-  messages[0].Contents.push({
-    Type: 'text',
-    Text: prompt
-  })
+function normalizeUsage(usage) {
+  if (!usage || typeof usage !== 'object') {
+    return null
+  }
+
+  return {
+    promptTokens:
+      Number(
+        usage.PromptTokens ?? usage.prompt_tokens ?? usage.InputTokens ?? usage.input_tokens ?? 0
+      ) || 0,
+    completionTokens:
+      Number(
+        usage.CompletionTokens ??
+          usage.completion_tokens ??
+          usage.OutputTokens ??
+          usage.output_tokens ??
+          0
+      ) || 0,
+    totalTokens:
+      Number(
+        usage.TotalTokens ??
+          usage.total_tokens ??
+          usage.TotalTokenCount ??
+          usage.totalTokenCount ??
+          0
+      ) || 0
+  }
 }
 
 function extractDeltaContent(payload) {
@@ -55,175 +90,152 @@ function isFinishPayload(payload) {
 }
 
 function extractPayloadError(payload) {
-  return payload?.Response?.Error?.Message || payload?.error?.message || ''
+  return (
+    payload?.Response?.Error?.Message || payload?.error?.message || payload?.Error?.Message || ''
+  )
 }
 
-function processStreamDataLine(dataLine, state) {
-  const raw = String(dataLine || '').trim()
-  if (!raw || raw === '[DONE]') {
-    state.finished = true
-    return
+function safeJsonParse(data) {
+  if (data === null || data === undefined) return null
+  if (typeof data === 'object') return data
+
+  const text = String(data).trim()
+  if (!text) return null
+
+  try {
+    return JSON.parse(text)
+  } catch {
+    return null
+  }
+}
+
+function pickNonStreamText(res) {
+  return String(
+    res?.Response?.Choices?.[0]?.Message?.Content || res?.Choices?.[0]?.Message?.Content || ''
+  )
+}
+
+async function buildLLMDiagnoseMessages(image) {
+  const contents = []
+
+  if (image) {
+    contents.push({ Type: 'image_url', ImageUrl: { Url: image } })
   }
 
-  const payload = JSON.parse(raw)
-  const payloadError = extractPayloadError(payload)
-  if (payloadError) {
-    throw new Error(payloadError)
+  const prompt = await buildSymptomLabelerPrompt()
+  contents.push({ Type: 'text', Text: prompt })
+  return [{ Role: 'user', Contents: contents }]
+}
+
+function buildPayload(messages, stream) {
+  return {
+    Model: model,
+    Messages: messages,
+    Stream: !!stream,
+    ...llmOptions
+  }
+}
+
+async function callHunyuanVisionNonStream(messages) {
+  const client = getHunyuanClient()
+  const res = await client.ChatCompletions(buildPayload(messages, false))
+  const errorMessage = extractPayloadError(res)
+
+  if (errorMessage) {
+    throw new Error(errorMessage)
   }
 
-  const delta = extractDeltaContent(payload)
-  if (delta) {
-    state.fullText += delta
-    state.onText?.(delta, state.fullText)
+  const usage = normalizeUsage(extractUsage(res))
+  if (usage) {
+    console.log('diagnose-http usageToken:', usage)
   }
 
-  if (isFinishPayload(payload)) {
-    state.finished = true
-  }
+  return pickNonStreamText(res)
 }
 
 function callHunyuanVisionStream(messages, { onText } = {}) {
-  const payload = {
-    Model: model,
-    Messages: messages,
-    Stream: true
-  }
-  const body = JSON.stringify(payload)
-  const options = createLLMRequestOptions({
-    body,
-    host,
-    service,
-    secretId: SECRET_ID,
-    secretKey: SECRET_KEY,
-    agent: HTTP_AGENT
-  })
+  const client = getHunyuanClient()
 
   return new Promise((resolve, reject) => {
-    const req = https.request(options, res => {
-      let rawBody = ''
-      let buffer = ''
-      const state = { fullText: '', finished: false, onText }
+    let finished = false
+    let fullText = ''
+    let usage = null
+    const timeout = setTimeout(() => {
+      if (finished) return
+      finished = true
+      reject(new Error('混元请求超时'))
+    }, 45000)
 
-      const handleEventText = eventText => {
-        const parsed = parseSSEEvent(eventText)
-        if (!parsed.data) return
-        processStreamDataLine(parsed.data, state)
+    const finish = (err, text) => {
+      if (finished) return
+      finished = true
+      clearTimeout(timeout)
+
+      if (err) {
+        err.partialText = fullText
+        reject(err)
+        return
       }
 
-      res.on('data', chunk => {
-        const text = chunk.toString()
-        rawBody += text
-        buffer += text
-        const { completeEvents, rest } = parseSSEBuffer(buffer)
-        buffer = rest
+      if (usage) {
+        console.log('diagnose-http usageToken:', usage)
+      }
+      resolve(text)
+    }
 
-        for (const eventText of completeEvents) {
-          try {
-            handleEventText(eventText)
-          } catch (error) {
-            error.partialText = state.fullText
-            reject(error)
-            req.destroy()
+    client.ChatCompletions(buildPayload(messages, true)).then(
+      res => {
+        if (!res || typeof res.on !== 'function') {
+          const responseUsage = normalizeUsage(extractUsage(res))
+          if (responseUsage) {
+            usage = responseUsage
+          }
+          finish(null, pickNonStreamText(res))
+          return
+        }
+
+        res.on('message', message => {
+          const parsed = safeJsonParse(message)
+          if (!parsed) return
+
+          const payloadError = extractPayloadError(parsed)
+          if (payloadError) {
+            finish(new Error(payloadError))
             return
           }
-        }
-      })
 
-      res.on('end', () => {
-        if (buffer.trim()) {
-          try {
-            const parsed = parseSSEEvent(buffer)
-            if (parsed.data) {
-              processStreamDataLine(parsed.data, state)
+          const delta = extractDeltaContent(parsed)
+          if (delta) {
+            fullText += delta
+            if (typeof onText === 'function') {
+              onText(delta, fullText)
             }
-          } catch (error) {
-            debugLog('解析混元尾包失败:', error.message)
           }
-        }
 
-        if (state.fullText) {
-          resolve(state.fullText)
-          return
-        }
+          const currentUsage = normalizeUsage(extractUsage(parsed))
+          if (currentUsage) {
+            usage = currentUsage
+          }
 
-        if (res.statusCode >= 400) {
-          reject(new Error(`混元请求失败(${res.statusCode}): ${rawBody.slice(0, 200)}`))
-          return
-        }
+          if (isFinishPayload(parsed)) {
+            finish(null, fullText)
+          }
+        })
 
-        reject(new Error('混元返回空响应'))
-      })
-
-      res.on('error', error => {
-        error.partialText = state.fullText
-        reject(error)
-      })
-    })
-
-    req.on('error', reject)
-    req.setTimeout(45000, () => {
-      req.destroy()
-      reject(new Error('混元请求超时'))
-    })
-    req.write(body)
-    req.end()
+        res.on('error', err => finish(err))
+        res.on('end', () => finish(null, fullText))
+      },
+      err => finish(err)
+    )
   })
 }
 
-function callHunyuanVisionNonStream(messages) {
-  const payload = {
-    Model: model,
-    Messages: messages,
-    Stream: false
-  }
-  const body = JSON.stringify(payload)
-  const options = createLLMRequestOptions({
-    body,
-    host,
-    service,
-    secretId: SECRET_ID,
-    secretKey: SECRET_KEY,
-    agent: HTTP_AGENT
-  })
+async function callLLMDiagnose(image, { onText } = {}) {
+  const messages = await buildLLMDiagnoseMessages(image)
+  const promptText = messages?.[0]?.Contents?.find(item => item.Type === 'text')?.Text || ''
+  console.log('diagnose-http symptom prompt:', promptText)
 
-  return new Promise((resolve, reject) => {
-    const req = https.request(options, res => {
-      let data = ''
-      res.on('data', chunk => (data += chunk))
-      res.on('end', () => {
-        try {
-          const parsed = JSON.parse(data)
-          if (parsed.Response?.Error) {
-            reject(new Error(parsed.Response.Error.Message))
-            return
-          }
-
-          resolve(parsed.Response?.Choices?.[0]?.Message?.Content || '')
-        } catch (error) {
-          reject(new Error('解析混元响应失败'))
-        }
-      })
-    })
-
-    req.on('error', reject)
-    req.setTimeout(45000, () => {
-      req.destroy()
-      reject(new Error('混元请求超时'))
-    })
-    req.write(body)
-    req.end()
-  })
-}
-
-async function callLLMDiagnose(image, description, plantName, { onText } = {}) {
-  if (!SECRET_ID || !SECRET_KEY) {
-    throw new Error('缺少混元调用密钥配置')
-  }
-
-  const messages = buildLLMDiagnoseMessages(image, description, plantName)
-  appendVisionPrompt(messages)
-
-  if (!onText) {
+  if (!sse) {
     return callHunyuanVisionNonStream(messages)
   }
 
@@ -236,7 +248,7 @@ async function callLLMDiagnose(image, description, plantName, { onText } = {}) {
     }
 
     const fullText = await callHunyuanVisionNonStream(messages)
-    if (fullText) {
+    if (fullText && typeof onText === 'function') {
       onText(fullText, fullText)
     }
     return fullText

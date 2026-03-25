@@ -2,7 +2,12 @@
  * 微信登录 API
  * 集成微信登录、获取手机号等功能
  */
-import { getCloudbaseAccessToken } from '@/utils/cloudbase-auth'
+import {
+  getCloudbaseAccessToken,
+  getCloudbaseUserIdentity,
+  getWechatPhoneProfile
+} from '@/utils/cloudbase-auth'
+import { requestHttpFunction } from '@/api/http'
 
 /**
  * 微信登录
@@ -80,19 +85,19 @@ export async function getPhoneNumber(e) {
  */
 export async function loginWithCode() {
   try {
-    // 直接调用云函数，云函数会通过 context 自动获取用户信息
-    const result = await wx.cloud.callFunction({
-      name: 'auth-user',
-      data: {
-        action: 'wechatLogin'
-        // 不需要传 code，云函数使用 @cloudbase/node-sdk 自动鉴权
+    const identity = await getCloudbaseUserIdentity()
+    const result = await requestHttpFunction('auth-user-http/auth/user', {
+      method: 'POST',
+      body: {
+        action: 'wechatLogin',
+        data: identity
       }
     })
 
-    if (result.result.code === 200) {
-      return result.result.data
+    if (result.code === 200) {
+      return result.data
     } else {
-      throw new Error(result.result.message || '登录失败')
+      throw new Error(result.message || '登录失败')
     }
   } catch (error) {
     console.error('微信登录失败:', error)
@@ -101,26 +106,40 @@ export async function loginWithCode() {
 }
 
 /**
- * 使用手机号登录（需要先获取手机号 code）
- * @param {string} phoneCode - 手机号授权 code
+ * 使用手机号登录（需要先获取手机号桥接参数）
+ * @param {string|Object} phoneCode - 手机号授权 code 或桥接参数对象
  * @returns {Promise} 返回登录结果
  */
 export async function loginWithPhone(phoneCode) {
   try {
-    // 调用云函数进行手机号登录
-    const result = await wx.cloud.callFunction({
-      name: 'auth-user',
-      data: {
+    const identity = await getCloudbaseUserIdentity()
+    const phoneProfile = await getWechatPhoneProfile({
+      code: typeof phoneCode === 'string' ? phoneCode : phoneCode?.code || '',
+      cloudId: typeof phoneCode === 'object' ? phoneCode?.cloudId || phoneCode?.cloudID || '' : ''
+    })
+    const result = await requestHttpFunction('auth-user-http/auth/user', {
+      method: 'POST',
+      body: {
         action: 'phoneLogin',
-        phoneCode: phoneCode
-        // 不需要传 loginCode，云函数使用 @cloudbase/node-sdk 自动鉴权
+        data: identity
+          ? {
+              ...identity,
+              phoneNumber: phoneProfile.phoneNumber,
+              countryCode: phoneProfile.countryCode,
+              phoneSource: 'wechat_phone_bridge'
+            }
+          : {
+              phoneNumber: phoneProfile.phoneNumber,
+              countryCode: phoneProfile.countryCode,
+              phoneSource: 'wechat_phone_bridge'
+            }
       }
     })
 
-    if (result.result.code === 200) {
-      return result.result.data
+    if (result.code === 200) {
+      return result.data
     } else {
-      throw new Error(result.result.message || '登录失败')
+      throw new Error(result.message || '登录失败')
     }
   } catch (error) {
     console.error('手机号登录失败:', error)
@@ -135,9 +154,9 @@ export async function loginWithPhone(phoneCode) {
  * @returns {Promise}
  */
 export async function updateUserEmail(userId, email) {
-  const result = await wx.cloud.callFunction({
-    name: 'auth-user',
-    data: {
+  const result = await requestHttpFunction('auth-user-http/auth/user', {
+    method: 'PATCH',
+    body: {
       action: 'updateEmail',
       data: {
         userId,
@@ -146,10 +165,10 @@ export async function updateUserEmail(userId, email) {
     }
   })
 
-  if (result.result.code === 200) {
-    return result.result.data
+  if (result.code === 200) {
+    return result.data
   } else {
-    throw new Error(result.result.message || '更新邮箱失败')
+    throw new Error(result.message || '更新邮箱失败')
   }
 }
 
@@ -160,9 +179,9 @@ export async function updateUserEmail(userId, email) {
  * @returns {Promise}
  */
 export async function updateUserPhoneNumber(userId, phoneNumber) {
-  const result = await wx.cloud.callFunction({
-    name: 'auth-user',
-    data: {
+  const result = await requestHttpFunction('auth-user-http/auth/user', {
+    method: 'PATCH',
+    body: {
       action: 'updatePhoneNumber',
       data: {
         userId,
@@ -171,10 +190,10 @@ export async function updateUserPhoneNumber(userId, phoneNumber) {
     }
   })
 
-  if (result.result.code === 200) {
-    return result.result.data
+  if (result.code === 200) {
+    return result.data
   } else {
-    throw new Error(result.result.message || '更新手机号失败')
+    throw new Error(result.message || '更新手机号失败')
   }
 }
 
@@ -184,9 +203,9 @@ export async function updateUserPhoneNumber(userId, phoneNumber) {
  * @returns {Promise}
  */
 export async function getUserById(userId) {
-  const result = await wx.cloud.callFunction({
-    name: 'auth-user',
-    data: {
+  const result = await requestHttpFunction('auth-user-http/auth/user', {
+    method: 'POST',
+    body: {
       action: 'getUserByOpenid',
       data: {
         openid: userId
@@ -194,9 +213,9 @@ export async function getUserById(userId) {
     }
   })
 
-  if (result.result.code === 200) {
-    return result.result.data
+  if (result.code === 200) {
+    return result.data
   } else {
-    throw new Error(result.result.message || '获取用户信息失败')
+    throw new Error(result.message || '获取用户信息失败')
   }
 }

@@ -1,23 +1,130 @@
 import { useUserStore } from '@/store/user'
-import { getCloudbaseAccessToken } from '@/utils/cloudbase-auth'
+import { getCloudbaseAccessToken, getCloudbaseUserIdentity } from '@/utils/cloudbase-auth'
 import { BASE_URL } from '@/api/env'
+import { requestHttpFunction } from '@/api/http'
 
-/**
- * AI 服务
- * - 识别：云函数 identify（混元 Vision，非流式）
- * - 诊断（quick）：HTTP 云函数 diagnose-http（SSE 包装，混元 Vision）
- * - 诊断（deep）：HTTP 云函数 diagnose-http（SSE 流式，Agent）
- */
+function guessMimeType(path = '') {
+  const lower = String(path || '')
+    .trim()
+    .toLowerCase()
+  if (lower.endsWith('.png')) return 'image/png'
+  if (lower.endsWith('.webp')) return 'image/webp'
+  if (lower.endsWith('.gif')) return 'image/gif'
+  if (lower.endsWith('.heic')) return 'image/heic'
+  return 'image/jpeg'
+}
+
+function isTempRuntimeImagePath(path = '') {
+  const value = String(path || '')
+    .trim()
+    .toLowerCase()
+  return (
+    value.startsWith('http://tmp/') ||
+    value.startsWith('https://tmp/') ||
+    value.startsWith('wxfile://') ||
+    value.startsWith('wdfile://') ||
+    value.startsWith('file://') ||
+    value.startsWith('/tmp/') ||
+    value.startsWith('tmp/')
+  )
+}
+
+function arrayBufferToBase64(arrayBuffer) {
+  if (typeof wx !== 'undefined' && typeof wx.arrayBufferToBase64 === 'function') {
+    return wx.arrayBufferToBase64(arrayBuffer)
+  }
+
+  const bytes = new Uint8Array(arrayBuffer)
+  let binary = ''
+  for (let i = 0; i < bytes.length; i += 1) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  if (typeof btoa === 'function') {
+    return btoa(binary)
+  }
+  throw new Error('当前环境不支持 arrayBufferToBase64')
+}
+
+function fetchImageAsDataUrl(url) {
+  return new Promise((resolve, reject) => {
+    wx.request({
+      url,
+      method: 'GET',
+      responseType: 'arraybuffer',
+      success: res => {
+        if (res.statusCode < 200 || res.statusCode >= 300 || !res.data) {
+          reject(new Error(`图片下载失败 (${res.statusCode})`))
+          return
+        }
+
+        const contentType = String(
+          res.header?.['content-type'] || res.header?.['Content-Type'] || guessMimeType(url)
+        )
+        const base64 = arrayBufferToBase64(res.data)
+        if (!base64) {
+          reject(new Error('图片转 base64 失败'))
+          return
+        }
+        resolve(`data:${contentType};base64,${base64}`)
+      },
+      fail: reject
+    })
+  })
+}
+
+function assertDiagnoseImageDataUrl(image) {
+  const value = String(image || '').trim()
+  if (!value.startsWith('data:image/')) {
+    throw new Error(`诊断图片未成功转换为 base64，当前前缀: ${value.slice(0, 32) || '<empty>'}`)
+  }
+}
+
+export function convertImageToDataUrl(filePath) {
+  const path = String(filePath || '').trim()
+  if (!path) {
+    return Promise.reject(new Error('缺少图片路径'))
+  }
+  if (path.startsWith('data:image/')) {
+    return Promise.resolve(path)
+  }
+
+  return new Promise((resolve, reject) => {
+    try {
+      const fs = wx.getFileSystemManager()
+      fs.readFile({
+        filePath: path,
+        encoding: 'base64',
+        success: res => {
+          const base64 = String(res.data || '').trim()
+          if (!base64) {
+            reject(new Error('图片转 base64 失败'))
+            return
+          }
+          resolve(`data:${guessMimeType(path)};base64,${base64}`)
+        },
+        fail: async error => {
+          try {
+            if (/^https?:\/\//i.test(path) || isTempRuntimeImagePath(path)) {
+              const dataUrl = await fetchImageAsDataUrl(path)
+              resolve(dataUrl)
+              return
+            }
+            reject(error)
+          } catch (fetchError) {
+            reject(fetchError)
+          }
+        }
+      })
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
+
 function decodeChunkText(chunk, decoder) {
   if (!chunk) return ''
-
-  if (typeof chunk === 'string') {
-    return chunk
-  }
-
-  if (!(chunk instanceof ArrayBuffer) && !ArrayBuffer.isView(chunk)) {
-    return ''
-  }
+  if (typeof chunk === 'string') return chunk
+  if (!(chunk instanceof ArrayBuffer) && !ArrayBuffer.isView(chunk)) return ''
 
   const source =
     chunk instanceof ArrayBuffer
@@ -29,10 +136,9 @@ function decodeChunkText(chunk, decoder) {
   }
 
   const binary = Array.from(source, byte => String.fromCharCode(byte)).join('')
-
   try {
     return decodeURIComponent(escape(binary))
-  } catch (error) {
+  } catch {
     return binary
   }
 }
@@ -52,7 +158,7 @@ function parseJsonPayload(payload, decoder) {
 
   try {
     return JSON.parse(text)
-  } catch (error) {
+  } catch {
     return null
   }
 }
@@ -98,145 +204,122 @@ function parseSSEEvent(eventText) {
   }
 }
 
-/**
- * 识别植物 - 调用云函数 identify-baidu（百度植物识别）
- */
-export async function identifyPlant({ messages, openid, onFinish, onError }) {
-  console.log('识别请求，调用百度植物识别云函数')
-
+function getStoredUserOpenId() {
   try {
-    // 从 messages 中提取图片 URL
-    let imageUrl = ''
-    if (messages && messages[0]?.Contents) {
-      const imageContent = messages[0].Contents.find(c => c.Type === 'image_url')
-      imageUrl = imageContent?.ImageUrl?.Url || ''
-    }
-
-    if (!imageUrl) {
-      throw new Error('缺少图片URL')
-    }
-
-    const res = await wx.cloud.callFunction({
-      name: 'identify-baidu',
-      data: {
-        imageUrl
-      }
-    })
-
-    console.log('百度识别云函数返回:', res.result)
-
-    if (res.result.code !== 200) {
-      const error = new Error(res.result.message || 'AI 请求失败')
-      onError?.(error)
-      throw error
-    }
-
-    // 解析百度 API 返回的结果
-    const baiduResult = res.result.data
-
-    // 转换为统一格式
-    const result = parseBaiduResult(baiduResult)
-    const fullText = formatBaiduText(baiduResult)
-
-    onFinish?.(result, fullText)
-    return { result, fullText }
-  } catch (err) {
-    console.error('识别请求失败:', err)
-    onError?.(err)
-    throw err
+    const rawUser = uni.getStorageSync('user')
+    const user =
+      typeof rawUser === 'string'
+        ? (() => {
+            try {
+              return JSON.parse(rawUser)
+            } catch {
+              return {}
+            }
+          })()
+        : rawUser || {}
+    return user.openid || user.wechat_openid || ''
+  } catch {
+    return ''
   }
 }
 
-/**
- * 解析百度识别结果
- */
-function parseBaiduResult(baiduData) {
-  // baiduData 格式：{ result: { ingredient: {...}, plant: {...} }, type: 'plant'|'ingredient', log_id: ... }
-  const type = baiduData?.type || 'plant'
-  const resultData = baiduData?.result?.[type]?.result || []
+async function resolveDiagnoseAuth(openid, skipAuth) {
+  const userStore = useUserStore()
+  let token = ''
+  let resolvedOpenid = openid || userStore.openid || getStoredUserOpenId()
 
-  if (resultData.length === 0) {
-    return { name: '未知植物', confidence: 0 }
+  if (!skipAuth) {
+    token = await getCloudbaseAccessToken()
+
+    if (!resolvedOpenid) {
+      try {
+        const identity = await getCloudbaseUserIdentity()
+        resolvedOpenid = identity?.openid || ''
+      } catch (error) {
+        console.warn('获取 CloudBase 用户 openid 失败:', error)
+      }
+    }
+
+    try {
+      userStore.token = token
+    } catch (error) {
+      console.warn('同步 token 到 Pinia 失败:', error)
+    }
   }
 
-  // 取第一个结果
-  const topResult = resultData[0]
+  return { token, resolvedOpenid }
+}
 
-  // 检查是否是"非xxx"
-  if (topResult.name === '非果蔬食材' || topResult.name === '非植物') {
-    return { name: '未知植物', confidence: 0 }
+function buildDiagnosePayload({ mode = 'quick', plantId, image, description, plantName, skipAuth = false }) {
+  return {
+    mode,
+    plantId,
+    skipAuth,
+    ...(image ? { image } : {}),
+    ...(description ? { description } : {}),
+    ...(plantName ? { plantName } : {})
   }
+}
+
+function normalizeDiagnoseResult(result) {
+  if (!result) {
+    throw new Error('诊断响应为空')
+  }
+  if (result.code !== 200) {
+    throw new Error(result.message || '诊断请求失败')
+  }
+
+  const responseData = result.data || {}
+  const diagnosis = {
+    ...responseData.diagnosis,
+    diagnosisId:
+      responseData.recordId ||
+      responseData.diagnosisId ||
+      responseData.diagnosis?.diagnosisId ||
+      '',
+    problemCausality:
+      responseData.problemCausality || responseData.diagnosis?.problemCausality || []
+  }
+  const fullText = diagnosis.summary || diagnosis.symptoms || '诊断完成'
 
   return {
-    name: topResult.name || '未知植物',
-    confidence: topResult.score || 0,
-    type: type
+    recordId: responseData.recordId || '',
+    plantId: responseData.plantId || '',
+    diagnosis,
+    fullText,
+    timestamp: responseData.timestamp || Date.now(),
+    status: 'completed'
   }
 }
 
-/**
- * 格式化百度识别结果为文本
- */
-function formatBaiduText(baiduData) {
-  const type = baiduData?.type || 'plant'
-  const resultData = baiduData?.result?.[type]?.result || []
-
-  if (resultData.length === 0) {
-    return '未能识别出植物，请重试'
-  }
-
-  const topResult = resultData[0]
-
-  // 检查是否是"非xxx"
-  if (topResult.name === '非果蔬食材' || topResult.name === '非植物') {
-    return '未能识别出植物，请重试'
-  }
-
-  const typeName = type === 'ingredient' ? '果蔬' : '植物'
-
-  let text = `识别结果：${topResult.name || '未知'}`
-
-  if (topResult.score) {
-    text += `\n置信度：${(topResult.score * 100).toFixed(1)}%`
-  }
-
-  text += `\n类型：${typeName}`
-
-  return text
+function runSuccessCallbacks(normalizedResult, { onText, onFinish } = {}) {
+  onText?.(normalizedResult.fullText, normalizedResult.fullText)
+  onFinish?.(normalizedResult.diagnosis, normalizedResult.fullText)
 }
 
-/**
- * 诊断植物（默认模式）- 统一走 HTTP 云函数 SSE
- */
-export async function diagnosePlant({
-  image,
-  description,
-  plantName,
-  plantId,
-  openid,
-  onText,
-  onFinish,
-  onError
-}) {
-  return streamDiagnosePlant({
-    mode: 'quick',
-    image,
-    description,
-    plantName,
-    plantId,
-    openid,
-    onText,
-    onFinish,
-    onError
+function runErrorCallback(error, { onError } = {}) {
+  onError?.(error)
+  throw error
+}
+
+function validateDiagnoseInput({ plantId, image }) {
+  if (!plantId) {
+    throw new Error('缺少植物ID，无法进行诊断')
+  }
+  if (image) {
+    assertDiagnoseImageDataUrl(image)
+  }
+}
+
+async function sendSyncDiagnoseRequest(payload) {
+  return requestHttpFunction('diagnose-http/diagnose', {
+    method: 'POST',
+    body: payload
   })
 }
 
-/**
- * 诊断植物（流式模式）- 直接调用 diagnose-http HTTP 函数
- * 使用 HTTP SSE 方式获取实时流式响应
- */
-export async function streamDiagnosePlant({
-  mode = 'deep',
+async function syncDiagnosePlant({
+  mode = 'quick',
   image,
   description,
   plantName,
@@ -248,221 +331,224 @@ export async function streamDiagnosePlant({
   onError
 }) {
   try {
-    const userStore = useUserStore()
-    // 先显示加载状态
     onText?.('思考中...', '思考中...')
+    validateDiagnoseInput({ plantId, image })
+    await resolveDiagnoseAuth(openid, skipAuth)
 
-    // 检查必要参数
-    if (!plantId) {
-      throw new Error('缺少植物ID，无法进行诊断')
-    }
+    const payload = buildDiagnosePayload({
+      mode,
+      plantId,
+      image,
+      description,
+      plantName,
+      skipAuth
+    })
+    const result = await sendSyncDiagnoseRequest(payload)
+    const normalizedResult = normalizeDiagnoseResult(result)
 
-    // 构建请求参数（手动拼接，mini program 不支持 URLSearchParams）
-    const fullUrl = `${BASE_URL}/diagnose-http/stream/diagnose?webfn=true`
+    runSuccessCallbacks(normalizedResult, { onText, onFinish })
+    return normalizedResult
+  } catch (error) {
+    console.error('同步诊断失败:', error)
+    return runErrorCallback(error, { onError })
+  }
+}
 
-    console.log('请求 URL:', fullUrl)
-
-    let token = ''
-    if (!skipAuth) {
-      token = await getCloudbaseAccessToken()
-      console.log('通过 @cloudbase/js-sdk 获取 access token:', token ? '成功' : '失败')
-
-      try {
-        userStore.token = token
-      } catch (error) {
-        console.warn('同步 token 到 Pinia 失败:', error)
-      }
-    }
-
+function createSSERequest({
+  url,
+  headers,
+  payload,
+  onText
+}) {
+  return new Promise((resolve, reject) => {
+    const decoder = typeof TextDecoder !== 'undefined' ? new TextDecoder('utf-8') : null
+    let buffer = ''
     let finalResult = null
     let finalError = null
-    let streamFullText = ''
-    const decoder = typeof TextDecoder !== 'undefined' ? new TextDecoder('utf-8') : null
+    let receivedChunk = false
 
-    const res = await new Promise((resolve, reject) => {
-      let buffer = ''
-      const requestTask = wx.request({
-        url: fullUrl,
-        method: 'POST',
-        header: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          Accept: 'text/event-stream',
-          'Content-Type': 'application/json'
-        },
-        data: {
-          mode,
-          plantId,
-          skipAuth,
-          ...(image ? { image } : {}),
-          ...(description ? { description } : {}),
-          ...(plantName ? { plantName } : {})
-        },
-        enableChunked: true, // 启用分块传输（SSE 支持）
-        success: resolve,
-        fail: reject
-      })
-
-      // 监听分块数据（SSE 流式响应）
-      if (requestTask.onChunkReceived) {
-        requestTask.onChunkReceived(res => {
-          buffer += decodeChunkText(res.data, decoder)
-
-          const { completeEvents, rest } = parseSSEBuffer(buffer)
-          buffer = rest
-
-          for (const eventText of completeEvents) {
-            const parsedEvent = parseSSEEvent(eventText)
-            if (!parsedEvent.data) continue
-
-            try {
-              const parsed = JSON.parse(parsedEvent.data)
-              const eventName = parsedEvent.event || parsed.event || parsed.type || ''
-              const eventId = parsedEvent.id || parsed.id || ''
-
-              if (eventName === 'prompt' || parsed.type === 'prompt') {
-                console.log('收到 prompt SSE 事件:', { eventId, parsed })
-                continue
-              }
-
-              if ((eventName === 'reply' || parsed.type === 'reply') && parsed.content) {
-                streamFullText = parsed.fullText || `${streamFullText}${parsed.content}`
-                onText?.(parsed.content, streamFullText)
-              }
-
-              if (parsed.type === 'error') {
-                finalError = new Error(parsed.message || '流式诊断失败')
-              }
-
-              if (parsed.type === 'done' || parsed.code !== undefined) {
-                finalResult = parsed
-              }
-            } catch (error) {
-              console.warn('解析 SSE 数据失败:', error, parsedEvent)
-            }
+    const requestTask = wx.request({
+      url,
+      method: 'POST',
+      header: headers,
+      data: payload,
+      enableChunked: true,
+      success: response => {
+        if (!receivedChunk) {
+          const parsedJson = parseJsonPayload(response?.data, decoder)
+          if (parsedJson) {
+            finalResult = parsedJson
+          } else {
+            buffer += decodeChunkText(response?.data, decoder)
           }
-        })
+        }
+        resolve({ response, buffer, finalResult, finalError, decoder })
+      },
+      fail: reject
+    })
+
+    if (requestTask.onChunkReceived) {
+      requestTask.onChunkReceived(chunk => {
+        receivedChunk = true
+        buffer += decodeChunkText(chunk.data, decoder)
+
+        const { completeEvents, rest } = parseSSEBuffer(buffer)
+        buffer = rest
+
+        for (const eventText of completeEvents) {
+          const parsedEvent = parseSSEEvent(eventText)
+          if (!parsedEvent.data) continue
+
+          try {
+            const parsed = JSON.parse(parsedEvent.data)
+            const eventName = parsedEvent.event || parsed.event || parsed.type || ''
+
+            if (eventName === 'prompt' || parsed.type === 'prompt') {
+              continue
+            }
+
+            if ((eventName === 'reply' || parsed.type === 'reply') && parsed.content) {
+              onText?.('正在标注图片可见症状并匹配规则诊断...', '正在标注图片可见症状并匹配规则诊断...')
+            }
+
+            if (parsed.type === 'error') {
+              finalError = new Error(parsed.message || '流式诊断失败')
+            }
+
+            if (parsed.type === 'done' || parsed.code !== undefined) {
+              finalResult = parsed
+            }
+          } catch (error) {
+            console.warn('解析 SSE 数据失败:', error, parsedEvent)
+          }
+        }
+      })
+    }
+  })
+}
+
+function finalizeSSEResult({ response, buffer, finalResult, finalError, decoder }) {
+  if (finalError && !finalResult) {
+    throw finalError
+  }
+
+  if (!finalResult && buffer.trim()) {
+    const parsedEvent = parseSSEEvent(buffer)
+    if (parsedEvent.data) {
+      try {
+        const parsed = JSON.parse(parsedEvent.data)
+        if ((parsedEvent.event || parsed.event || parsed.type) !== 'prompt') {
+          finalResult = parsed
+        }
+      } catch (error) {
+        console.warn('解析尾部 SSE 数据失败:', error, parsedEvent)
+      }
+    }
+  }
+
+  if (finalResult) {
+    return finalResult
+  }
+
+  if (response?.statusCode === 200 && response?.data) {
+    const result = parseJsonPayload(response.data, decoder)
+    if (result) {
+      return result
+    }
+    throw new Error('诊断响应格式错误')
+  }
+
+  if (response?.statusCode === 401 || response?.statusCode === 403) {
+    const errorResult = parseJsonPayload(response?.data, decoder)
+    throw new Error(errorResult?.message || `认证失败 (${response?.statusCode})`)
+  }
+
+  throw new Error(`请求失败 (HTTP ${response?.statusCode || 'unknown'})`)
+}
+
+export async function streamDiagnosePlant({
+  mode = 'quick',
+  image,
+  description,
+  plantName,
+  plantId,
+  openid,
+  skipAuth = false,
+  onText,
+  onFinish,
+  onError
+}) {
+  try {
+    onText?.('思考中...', '思考中...')
+    validateDiagnoseInput({ plantId, image })
+
+    const { token, resolvedOpenid } = await resolveDiagnoseAuth(openid, skipAuth)
+    const url = `${BASE_URL}/diagnose-http/stream/diagnose?webfn=true`
+    const headers = {
+      ...(resolvedOpenid ? { 'x-wx-openid': resolvedOpenid, 'x-openid': resolvedOpenid } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      Accept: 'text/event-stream',
+      'Content-Type': 'application/json'
+    }
+    const payload = buildDiagnosePayload({
+      mode,
+      plantId,
+      image,
+      description,
+      plantName,
+      skipAuth
+    })
+
+    const sseResult = await createSSERequest({
+      url,
+      headers,
+      payload,
+      onText
+    })
+    const result = finalizeSSEResult(sseResult)
+    const normalizedResult = normalizeDiagnoseResult(result)
+
+    runSuccessCallbacks(normalizedResult, { onText, onFinish })
+    return normalizedResult
+  } catch (error) {
+    console.error('流式诊断失败:', error)
+    return runErrorCallback(error, { onError })
+  }
+}
+
+export async function diagnosePlant(options) {
+  return syncDiagnosePlant({
+    mode: 'quick',
+    ...options
+  })
+}
+
+export async function rerunDiagnoseWithFollowUps({
+  plantId,
+  diagnosisId,
+  observedSymptoms = [],
+  followUpAnswers = [],
+  onFinish,
+  onError
+}) {
+  try {
+    const result = await requestHttpFunction('diagnose-http/diagnose', {
+      method: 'POST',
+      body: {
+        mode: 'follow_up',
+        plantId,
+        diagnosisId,
+        skipAIExtraction: true,
+        observedSymptoms,
+        followUpAnswers
       }
     })
 
-    console.log('diagnose-http HTTP 函数返回:', res)
-    console.log('Response statusCode:', res.statusCode)
-    console.log('Response data:', res.data)
-    console.log('Response header:', res.header)
-
-    if (finalError && !finalResult) {
-      throw finalError
-    }
-
-    if (!finalResult && buffer.trim()) {
-      const parsedEvent = parseSSEEvent(buffer)
-      if (parsedEvent.data) {
-        try {
-          const parsed = JSON.parse(parsedEvent.data)
-          if ((parsedEvent.event || parsed.event || parsed.type) !== 'prompt') {
-            finalResult = parsed
-          }
-        } catch (error) {
-          console.warn('解析尾部 SSE 数据失败:', error, parsedEvent)
-        }
-      }
-    }
-
-    let result
-    if (finalResult) {
-      result = finalResult
-    } else if (res.statusCode === 200 && res.data) {
-      result = parseJsonPayload(res.data, decoder)
-      if (!result) {
-        throw new Error('诊断响应格式错误')
-      }
-    } else if (res.statusCode === 403 || res.statusCode === 401) {
-      const errorResult = parseJsonPayload(res.data, decoder)
-      if (errorResult?.message) {
-        throw new Error(errorResult.message)
-      }
-      throw new Error(`认证失败 (${res.statusCode})`)
-    } else {
-      console.error('未收到有效响应:', res)
-      throw new Error(`请求失败 (HTTP ${res.statusCode})`)
-    }
-
-    if (result.code !== 200) {
-      throw new Error(result.message || '诊断请求失败')
-    }
-
-    const responseData = result.data
-    const fullText =
-      result.fullText ||
-      streamFullText ||
-      responseData.diagnosis?.summary ||
-      responseData.diagnosis?.symptoms ||
-      '诊断完成'
-
-    onFinish?.(responseData.diagnosis, fullText)
-
-    return {
-      recordId: responseData.recordId,
-      plantId: responseData.plantId,
-      diagnosis: responseData.diagnosis,
-      fullText,
-      timestamp: responseData.timestamp,
-      status: 'completed'
-    }
+    const normalizedResult = normalizeDiagnoseResult(result)
+    onFinish?.(normalizedResult.diagnosis, normalizedResult.fullText)
+    return normalizedResult
   } catch (error) {
-    console.error('流式诊断失败:', error)
-
-    // 直接返回错误
-    onError?.(error)
-    throw error
+    console.error('问诊重算失败:', error)
+    return runErrorCallback(error, { onError })
   }
-}
-
-/**
- * 构建诊断用 messages（混元 Vision 格式）
- */
-function buildDiagnoseMessages(image, description, plantName) {
-  const contents = []
-
-  if (image) {
-    contents.push({ Type: 'image_url', ImageUrl: { Url: image } })
-  }
-
-  let textParts = '请诊断这张植物图片的健康状况。'
-  if (plantName) textParts += `\n植物名称：${plantName}`
-  if (description) textParts += `\n症状描述：${description}`
-  contents.push({ Type: 'text', Text: textParts })
-
-  return [{ Role: 'user', Contents: contents }]
-}
-
-/**
- * 解析诊断结果
- */
-function parseDiagnoseResult(text) {
-  const cleanText = text || ''
-
-  let healthScore = 65
-  let healthStatus = 'warning'
-
-  if (/严重|病害|枯死|根腐|立即|紧急|需要立即处理/.test(cleanText)) {
-    healthScore = 35
-    healthStatus = 'sick'
-  } else if (/健康|正常|良好|没问题|状态不错/.test(cleanText)) {
-    healthScore = 85
-    healthStatus = 'healthy'
-  } else if (/注意|观察|轻微|需要注意/.test(cleanText)) {
-    healthScore = 65
-    healthStatus = 'warning'
-  }
-
-  let mainIssue = '需要进一步观察'
-  if (/浇水过多|积水/.test(cleanText)) mainIssue = '浇水过多'
-  else if (/缺水|干燥/.test(cleanText)) mainIssue = '缺水'
-  else if (/光照不足/.test(cleanText)) mainIssue = '光照不足'
-  else if (/光照过强|晒伤/.test(cleanText)) mainIssue = '光照过强'
-  else if (/缺肥|营养/.test(cleanText)) mainIssue = '营养不足'
-  else if (/病虫害|虫/.test(cleanText)) mainIssue = '病虫害'
-  else if (/空调|干燥/.test(cleanText)) mainIssue = '环境过于干燥'
-
-  return { healthScore, healthStatus, mainIssue, summary: cleanText.substring(0, 200) }
 }

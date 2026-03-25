@@ -1,40 +1,112 @@
 'use strict'
 
 const { checkAIQuota } = require('/opt/utils/quota')
-const { callAgentDiagnose } = require('./utils/agent')
 const { callLLMDiagnose } = require('./utils/llm')
-const { callAIModelFallback } = require('./utils/fallback')
-const { parseAgentDiagnosis, parseLLMDiagnosis } = require('./utils/diagnosis-parser')
+const { parseLLMDiagnosis } = require('./utils/diagnosis-parser')
 const { persistDiagnosisSideEffects } = require('./utils/persist')
+const { buildSymptomLabelerPrompt } = require('./utils/symptom-labeler-prompt')
 const {
   jsonResponse,
   getHttpRequestData,
-  resolveHttpAction,
-  resolveHttpUserInfo
-} = require('./utils/http')
+  resolveHttpUserInfo,
+  isSkipAuthEnabled
+} = require('/opt/utils/http')
+const { buildStructuredDiagnosis } = require('/opt/utils/plant-diagnosis')
 const {
   debugLog,
-  isSkipAuthEnabled,
-  buildRecordId,
-  shouldFallbackToModel
+  buildRecordId
 } = require('./utils/common')
 
-function buildUserMessage({ image, description, plantName, concise = true }) {
-  let userMessage = '请帮我诊断这个植物的健康状况'
-  if (plantName) {
-    userMessage += `（植物名称：${plantName}）`
-  }
-  if (description) {
-    userMessage += `：${description}`
-  }
+async function buildUserMessage({ image, concise = true }) {
+  let userMessage = await buildSymptomLabelerPrompt()
   if (image) {
     userMessage += `\n\n植物图片：![植物图片](${image})`
   }
-  userMessage += '\n\n请告诉我植物可能存在什么问题，以及如何治疗和预防。'
   if (concise) {
-    userMessage += '请简洁输出，总字数控制在180字以内。'
+    userMessage += '\n\n请严格按上面的输出格式返回 JSON。'
   }
   return userMessage
+}
+
+function resolveHttpAction(event, requestData) {
+  const accept = String(requestData.headers?.accept || '')
+  const path = String(requestData.path || '')
+
+  if (event.action) return event.action
+  if (requestData.query.action) return requestData.query.action
+  if (requestData.body.action) return requestData.body.action
+  if (path.includes('/stream/diagnose')) return 'streamDiagnose'
+  if (path.includes('/diagnose')) return 'syncDiagnose'
+  if (path.includes('/health')) return 'health'
+  if (accept.includes('text/event-stream')) return 'streamDiagnose'
+  return ''
+}
+
+function normalizeArrayInput(value) {
+  if (Array.isArray(value)) {
+    return value
+  }
+  if (typeof value !== 'string' || !value.trim()) {
+    return []
+  }
+
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed : []
+  } catch (error) {
+    return []
+  }
+}
+
+function isFollowUpRound(payload = {}) {
+  const observedSymptoms = normalizeArrayInput(payload.observedSymptoms)
+  const followUpAnswers = normalizeArrayInput(payload.followUpAnswers)
+  return Boolean(
+    followUpAnswers.length || (Boolean(payload.skipAIExtraction) && observedSymptoms.length)
+  )
+}
+
+async function finalizeDiagnosisResult({
+  openid,
+  userPlantId,
+  description,
+  diagnosisText,
+  baseResult,
+  mode,
+  observedSymptomsInput = [],
+  followUpAnswers = [],
+  skipAIExtraction = false
+}) {
+  if (!openid || !userPlantId) {
+    return {
+      ...baseResult,
+      diagnosisMode: mode,
+      reliabilityScore: baseResult.reliabilityScore || 0,
+      needsFollowUp: Boolean(baseResult.needsFollowUp)
+    }
+  }
+
+  try {
+    return await buildStructuredDiagnosis({
+      openid,
+      userPlantId,
+      description,
+      diagnosisText,
+      baseResult,
+      mode,
+      observedSymptomsInput,
+      followUpAnswers,
+      skipAIExtraction
+    })
+  } catch (error) {
+    console.warn('基于新知识库构建结构化诊断失败:', error.message)
+    return {
+      ...baseResult,
+      diagnosisMode: mode,
+      reliabilityScore: baseResult.reliabilityScore || 0,
+      needsFollowUp: Boolean(baseResult.needsFollowUp)
+    }
+  }
 }
 
 async function main(event, context) {
@@ -75,13 +147,13 @@ async function handleCloudFunctionProxy(event, context) {
     return { code: 401, message: '需要登录才能使用 AI 诊断功能', data: null }
   }
 
-  const { plantId, image, description, plantName } = event
+  const { plantId, image, description } = event
 
   if (!plantId) {
     return { code: 400, message: '缺少必填字段：plantId', data: null }
   }
-  if (!image && !description) {
-    return { code: 400, message: '需要提供植物图片或描述', data: null }
+  if (!image) {
+    return { code: 400, message: '首轮诊断必须提供植物图片', data: null }
   }
 
   if (!isSkipAuth) {
@@ -92,14 +164,19 @@ async function handleCloudFunctionProxy(event, context) {
   }
 
   const mode = String(event.mode || 'quick').toLowerCase() === 'deep' ? 'deep' : 'quick'
-  const userMessage = buildUserMessage({ image, description, plantName, concise: true })
+  const userMessage = await buildUserMessage({ image, concise: true })
 
   try {
-    const diagnosisText =
-      mode === 'deep'
-        ? await callAgentDiagnose(userMessage, openid || `test_${Date.now()}`)
-        : await callLLMDiagnose(image, description, plantName)
-    const result = mode === 'deep' ? parseAgentDiagnosis(diagnosisText) : parseLLMDiagnosis(diagnosisText)
+    const diagnosisText = await callLLMDiagnose(image)
+    const parsedResult = parseLLMDiagnosis(diagnosisText)
+    const result = await finalizeDiagnosisResult({
+      openid,
+      userPlantId: plantId,
+      description,
+      diagnosisText,
+      baseResult: parsedResult,
+      mode
+    })
 
     let recordId = null
     if (!isSkipAuth) {
@@ -121,25 +198,13 @@ async function handleCloudFunctionProxy(event, context) {
         recordId: isSkipAuth ? `test_${Date.now()}` : recordId,
         plantId,
         diagnosis: result,
+        problemCausality: Array.isArray(result.problemCausality) ? result.problemCausality : [],
         timestamp: Date.now()
       }
     }
   } catch (error) {
     console.error('诊断失败:', error)
-    if (!shouldFallbackToModel(error)) {
-      return { code: 500, message: `诊断失败: ${error.message}`, data: null }
-    }
-
-    const fallbackResult = await callAIModelFallback(image, description)
-    return {
-      code: 200,
-      message: '诊断完成（AI模型回退）',
-      data: {
-        plantId,
-        diagnosis: fallbackResult,
-        timestamp: Date.now()
-      }
-    }
+    return { code: 500, message: `诊断失败: ${error.message}`, data: null }
   }
 }
 
@@ -148,6 +213,9 @@ async function handleStreamDiagnose(event, context, requestData = getHttpRequest
   const headers = requestData.headers || {}
   const sse = context.sse?.()
   const isSkipAuth = isSkipAuthEnabled(query.skipAuth)
+  const followUpRound = isFollowUpRound(query)
+  const followUpAnswers = normalizeArrayInput(query.followUpAnswers)
+  const observedSymptoms = normalizeArrayInput(query.observedSymptoms)
 
   if (!sse) {
     return jsonResponse(400, { code: 400, message: '当前请求不支持 SSE' })
@@ -155,9 +223,9 @@ async function handleStreamDiagnose(event, context, requestData = getHttpRequest
 
   debugLog('handleStreamDiagnose 参数:', { query })
 
-  const { plantId, image, description, plantName } = query
+  const { plantId, image, description } = query
   const mode = String(query.mode || 'quick').toLowerCase() === 'deep' ? 'deep' : 'quick'
-  const userInfo = await resolveHttpUserInfo(headers, query)
+  const userInfo = await resolveHttpUserInfo(headers, query, context)
 
   if (!userInfo || !userInfo.openid) {
     sse.send({ data: JSON.stringify({ type: 'error', code: 401, message: '需要登录才能使用 AI 诊断功能' }) })
@@ -171,13 +239,18 @@ async function handleStreamDiagnose(event, context, requestData = getHttpRequest
     sse.end()
     return ''
   }
-  if (!image && !description) {
-    sse.send({ data: JSON.stringify({ type: 'error', code: 400, message: '需要提供植物图片或描述' }) })
+  if (!followUpRound && !image) {
+    sse.send({ data: JSON.stringify({ type: 'error', code: 400, message: '首轮诊断必须提供植物图片' }) })
+    sse.end()
+    return ''
+  }
+  if (followUpRound && !observedSymptoms.length && !followUpAnswers.length) {
+    sse.send({ data: JSON.stringify({ type: 'error', code: 400, message: '缺少问诊症状或问诊答案' }) })
     sse.end()
     return ''
   }
 
-  if (!isSkipAuth) {
+  if (!isSkipAuth && !followUpRound) {
     const quotaCheck = await checkAIQuota(openid, 'diagnose')
     if (!quotaCheck.allowed) {
       sse.send({
@@ -188,7 +261,9 @@ async function handleStreamDiagnose(event, context, requestData = getHttpRequest
     }
   }
 
-  const userMessage = buildUserMessage({ image, description, plantName, concise: true })
+  const userMessage = followUpRound
+    ? '根据问诊补充答案重新计算诊断结果'
+    : await buildUserMessage({ image, concise: true })
 
   let connectionClosed = false
   let eventId = 0
@@ -224,21 +299,39 @@ async function handleStreamDiagnose(event, context, requestData = getHttpRequest
     let diagnosisText = ''
     let result
 
-    if (mode === 'deep') {
-      diagnosisText = await callAgentDiagnose(userMessage, openid, {
-        onText: (content, fullText) => {
-          sendEvent('reply', { type: 'reply', role: 'assistant', mode, content, fullText })
-        }
-      })
-      result = parseAgentDiagnosis(diagnosisText)
+    if (followUpRound) {
+      diagnosisText = Array.isArray(observedSymptoms)
+        ? observedSymptoms.map(item => item.symptomCn || item.symptomKey || '').filter(Boolean).join('、')
+        : ''
+      result = {
+        healthScore: null,
+        healthStatus: null,
+        mainIssue: null,
+        symptoms: diagnosisText,
+        treatment: '',
+        prevention: '',
+        summary: diagnosisText || '基于问诊答案重新计算'
+      }
     } else {
-      diagnosisText = await callLLMDiagnose(image, description, plantName, {
+      diagnosisText = await callLLMDiagnose(image, {
         onText: (content, fullText) => {
           sendEvent('reply', { type: 'reply', role: 'assistant', mode, content, fullText })
         }
       })
       result = parseLLMDiagnosis(diagnosisText)
     }
+
+    result = await finalizeDiagnosisResult({
+      openid,
+      userPlantId: plantId,
+      description,
+      diagnosisText,
+      baseResult: result,
+      mode: followUpRound ? 'follow_up' : mode,
+      observedSymptomsInput: observedSymptoms,
+      followUpAnswers,
+      skipAIExtraction: followUpRound
+    })
 
     let recordId = null
     if (!isSkipAuth) {
@@ -255,6 +348,7 @@ async function handleStreamDiagnose(event, context, requestData = getHttpRequest
         recordId: isSkipAuth ? `test_${Date.now()}` : recordId,
         plantId,
         diagnosis: result,
+        problemCausality: Array.isArray(result.problemCausality) ? result.problemCausality : [],
         timestamp: Date.now()
       }
     })
@@ -266,7 +360,10 @@ async function handleStreamDiagnose(event, context, requestData = getHttpRequest
         openid,
         result,
         image,
-        description
+        description,
+        sourceDiagnosisId: query.diagnosisId || null,
+        followUpAnswers,
+        skipQuotaDeduction: followUpRound
       }).catch(error => {
         console.warn('异步保存诊断结果失败:', error.message)
       })
@@ -278,30 +375,7 @@ async function handleStreamDiagnose(event, context, requestData = getHttpRequest
     return ''
   } catch (error) {
     console.error('流式诊断失败:', error)
-    if (!shouldFallbackToModel(error)) {
-      sendEvent('error', { type: 'error', code: 500, message: `诊断失败: ${error.message}` })
-      if (!connectionClosed && !sse.closed) sse.end()
-      return ''
-    }
-
-    try {
-      const fallbackResult = await callAIModelFallback(image, description)
-      const fallbackText = fallbackResult.summary || fallbackResult.symptoms || '诊断完成'
-      sendEvent('done', {
-        type: 'done',
-        code: 200,
-        message: '诊断完成（AI模型回退）',
-        fullText: fallbackText,
-        data: {
-          plantId,
-          diagnosis: fallbackResult,
-          timestamp: Date.now()
-        }
-      })
-    } catch (fallbackError) {
-      sendEvent('error', { type: 'error', code: 500, message: `诊断失败: ${fallbackError.message}` })
-    }
-
+    sendEvent('error', { type: 'error', code: 500, message: `诊断失败: ${error.message}` })
     if (!connectionClosed && !sse.closed) {
       sse.end()
     }
@@ -311,32 +385,62 @@ async function handleStreamDiagnose(event, context, requestData = getHttpRequest
 
 async function handleSyncDiagnose(event, context, requestData = getHttpRequestData(event, context)) {
   const requestPayload = { ...requestData.query, ...requestData.body }
-  const userInfo = await resolveHttpUserInfo(requestData.headers, requestPayload)
+  const followUpRound = isFollowUpRound(requestPayload)
+  const followUpAnswers = normalizeArrayInput(requestPayload.followUpAnswers)
+  const observedSymptoms = normalizeArrayInput(requestPayload.observedSymptoms)
+  const userInfo = await resolveHttpUserInfo(requestData.headers, requestPayload, context)
   if (!userInfo || !userInfo.openid) {
     return jsonResponse(401, { code: 401, message: '需要登录才能使用 AI 诊断功能' })
   }
 
   const isSkipAuth = isSkipAuthEnabled(requestPayload.skipAuth)
   const openid = userInfo.openid
-  const { plantId, image, description, plantName } = requestPayload
+  const { plantId, image, description } = requestPayload
   const mode = String(requestPayload.mode || 'quick').toLowerCase() === 'deep' ? 'deep' : 'quick'
 
   if (!plantId) return jsonResponse(400, { code: 400, message: '缺少必填字段：plantId' })
-  if (!image && !description) return jsonResponse(400, { code: 400, message: '需要提供植物图片或描述' })
+  if (!followUpRound && !image) {
+    return jsonResponse(400, { code: 400, message: '首轮诊断必须提供植物图片' })
+  }
+  if (followUpRound && !observedSymptoms.length && !followUpAnswers.length) {
+    return jsonResponse(400, { code: 400, message: '缺少问诊症状或问诊答案' })
+  }
 
-  if (!isSkipAuth) {
+  if (!isSkipAuth && !followUpRound) {
     const quotaCheck = await checkAIQuota(openid, 'diagnose')
     if (!quotaCheck.allowed) {
       return jsonResponse(403, { code: quotaCheck.code, message: quotaCheck.message })
     }
   }
 
-  const userMessage = buildUserMessage({ image, description, plantName, concise: true })
-  const diagnosisText =
-    mode === 'deep'
-      ? await callAgentDiagnose(userMessage, openid)
-      : await callLLMDiagnose(image, description, plantName)
-  const result = mode === 'deep' ? parseAgentDiagnosis(diagnosisText) : parseLLMDiagnosis(diagnosisText)
+  const userMessage = followUpRound
+    ? '根据问诊补充答案重新计算诊断结果'
+    : await buildUserMessage({ image, concise: true })
+  const diagnosisText = followUpRound
+    ? observedSymptoms.map(item => item.symptomCn || item.symptomKey || '').filter(Boolean).join('、')
+    : await callLLMDiagnose(image)
+  const parsedResult = followUpRound
+    ? {
+        healthScore: null,
+        healthStatus: null,
+        mainIssue: null,
+        symptoms: diagnosisText,
+        treatment: '',
+        prevention: '',
+        summary: diagnosisText || '基于问诊答案重新计算'
+      }
+    : parseLLMDiagnosis(diagnosisText)
+  const result = await finalizeDiagnosisResult({
+    openid,
+    userPlantId: plantId,
+    description,
+    diagnosisText,
+    baseResult: parsedResult,
+    mode: followUpRound ? 'follow_up' : mode,
+    observedSymptomsInput: observedSymptoms,
+    followUpAnswers,
+    skipAIExtraction: followUpRound
+  })
 
   let recordId = null
   if (!isSkipAuth) {
@@ -348,7 +452,10 @@ async function handleSyncDiagnose(event, context, requestData = getHttpRequestDa
         openid,
         result,
         image,
-        description
+        description,
+        sourceDiagnosisId: requestPayload.diagnosisId || null,
+        followUpAnswers,
+        skipQuotaDeduction: followUpRound
       })
     } catch (error) {
       console.warn('保存诊断记录失败:', error.message)
@@ -364,6 +471,7 @@ async function handleSyncDiagnose(event, context, requestData = getHttpRequestDa
       recordId: isSkipAuth ? `test_${Date.now()}` : recordId,
       plantId,
       diagnosis: result,
+      problemCausality: Array.isArray(result.problemCausality) ? result.problemCausality : [],
       timestamp: Date.now()
     }
   })

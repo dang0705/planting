@@ -4,6 +4,7 @@
  */
 
 import { WEATHER_CONFIG } from '@/config/weather'
+import { requestHttpFunction } from '@/api/http'
 
 /**
  * 检查位置权限状态
@@ -272,21 +273,38 @@ export function getCityNameByLocation(latitude, longitude) {
 export async function getWeatherInfo(options = {}) {
   try {
     const { lat, lng, useCache = WEATHER_CONFIG.USE_CACHE } = options
+    const hasLat = lat !== undefined && lat !== null && lat !== ''
+    const hasLng = lng !== undefined && lng !== null && lng !== ''
+    const normalizedLat = hasLat ? Number(lat) : NaN
+    const normalizedLng = hasLng ? Number(lng) : NaN
+
+    if (!Number.isFinite(normalizedLat) || !Number.isFinite(normalizedLng)) {
+      return {
+        temperature: 20,
+        humidity: 60,
+        weather: '多云',
+        feelsLike: 20,
+        windDir: '',
+        windScale: '',
+        isFallback: true
+      }
+    }
 
     /* console.log(
       `🔴 [天气API] 缓存开关: ${useCache ? '✅ 启用' : '❌ 禁用'} (全局配置: ${WEATHER_CONFIG.USE_CACHE})`
     )
     console.log('🔴 [天气API] 请求参数:', { lat, lng, useCache })*/
 
-    const result = await wx.cloud.callFunction({
-      name: 'getWeather',
-      data: { lat, lng, useCache }
+    const result = await requestHttpFunction('weather-http/weather/current', {
+      method: 'POST',
+      body: { lat: normalizedLat, lng: normalizedLng, useCache },
+      auth: true
     })
 
-    console.log('✅ [天气API] 云函数响应:', result)
+    console.log('✅ [天气API] HTTP 函数响应:', result)
 
-    if (result.result.code === 200) {
-      const data = result.result.data
+    if (result.code === 200) {
+      const data = result.data
 
       /*  console.log('📊 [天气数据] 温度:', data.temperature)
       console.log('📊 [天气数据] 湿度:', data.humidity)
@@ -299,7 +317,7 @@ export async function getWeatherInfo(options = {}) {
 
       return data
     } else {
-      throw new Error(result.result.message || '获取天气失败')
+      throw new Error(result.message || '获取天气失败')
     }
   } catch (error) {
     console.error('❌ [天气API] 失败:', error)

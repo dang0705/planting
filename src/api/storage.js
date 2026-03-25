@@ -1,3 +1,5 @@
+import { requestHttpFunction } from '@/api/http'
+
 /**
  * 云存储 API
  * 处理植物图片的上传、下载、删除等操作
@@ -219,22 +221,18 @@ export async function deleteImage(fileId) {
  */
 export async function getPlantImages(plantId, limit = 10, offset = 0) {
   try {
-    const result = await wx.cloud.callFunction({
-      name: 'storage',
-      data: {
-        action: 'getPlantImages',
-        data: {
-          plantId: plantId,
-          limit: limit,
-          offset: offset
-        }
+    const result = await requestHttpFunction('storage-http/storage/plant-images', {
+      query: {
+        plantId,
+        limit,
+        offset
       }
     })
 
-    if (result.result.code === 200) {
-      return result.result.data.images
+    if (result.code === 200) {
+      return result.data.images
     } else {
-      throw new Error(result.result.message || '获取失败')
+      throw new Error(result.message || '获取失败')
     }
   } catch (error) {
     console.error('获取植物图片失败:', error)

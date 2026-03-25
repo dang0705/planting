@@ -1,0 +1,19 @@
+{
+  "functionsRoot": ".",
+  "functions": [
+    {
+      "name": "auth-user-http",
+      "directory": "."
+    }
+  ],
+  "routes": [
+    {
+      "functionName": "auth-user-http",
+      "path": "/auth/user"
+    },
+    {
+      "functionName": "auth-user-http",
+      "path": "/auth/user/health"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "functionsRoot": ".",
+  "functions": [
+    {
+      "name": "plant-catalog-http",
+      "directory": "."
+    }
+  ],
+  "routes": [
+    {
+      "functionName": "plant-catalog-http",
+      "path": "/catalog/plants"
+    },
+    {
+      "functionName": "plant-catalog-http",
+      "path": "/catalog/map"
+    },
+    {
+      "functionName": "plant-catalog-http",
+      "path": "/catalog/health"
+    }
+  ]
+}

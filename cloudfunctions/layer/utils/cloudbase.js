@@ -26,6 +26,42 @@ function getCloudBase() {
  * @returns {object} 用户信息对象
  */
 function getUserInfo(context) {
+  const runtimeEnv = context?.environment || context?.environ || {}
+  const extendedContext = context?.extendedContext || {}
+
+  const runtimeOpenId =
+    runtimeEnv.WX_OPENID ||
+    process.env.WX_OPENID ||
+    ''
+  const runtimeAppId =
+    runtimeEnv.WX_APPID ||
+    process.env.WX_APPID ||
+    ''
+  const runtimeUid =
+    runtimeEnv.TCB_UUID ||
+    extendedContext.userId ||
+    process.env.TCB_UUID ||
+    ''
+  const runtimeCustomUserId =
+    runtimeEnv.TCB_CUSTOM_USER_ID ||
+    process.env.TCB_CUSTOM_USER_ID ||
+    ''
+  const runtimeUnionId =
+    runtimeEnv.WX_UNIONID ||
+    process.env.WX_UNIONID ||
+    ''
+
+  if (runtimeOpenId || runtimeUid || runtimeCustomUserId) {
+    const openid = runtimeOpenId || runtimeUid || runtimeCustomUserId
+
+    return {
+      OPENID: openid,
+      APPID: runtimeAppId,
+      UNIONID: runtimeUnionId,
+      ENV: context?.namespace || runtimeEnv.TCB_ENV || process.env.CLOUDBASE_ENV_ID
+    }
+  }
+
   const app = cloudbaseSDK.init({
     env: context.namespace || process.env.TCB_ENV || process.env.CLOUDBASE_ENV_ID
   })

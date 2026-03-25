@@ -1,9 +1,0 @@
-{
-  "name": "getDefaultPlants",
-  "version": "1.0.0",
-  "description": "获取默认植物列表",
-  "main": "index.js",
-  "dependencies": {
-    "@cloudbase/node-sdk": "^3.16.0"
-  }
-}

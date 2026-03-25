@@ -1,0 +1,19 @@
+{
+  "functionsRoot": ".",
+  "functions": [
+    {
+      "name": "storage-http",
+      "directory": "."
+    }
+  ],
+  "routes": [
+    {
+      "functionName": "storage-http",
+      "path": "/storage/plant-images"
+    },
+    {
+      "functionName": "storage-http",
+      "path": "/storage/health"
+    }
+  ]
+}

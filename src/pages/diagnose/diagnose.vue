@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <view class="min-h-screen bg-[#F8F6F0]">
     <!-- 诊断状态 -->
     <view v-if="!result" class="px-4 py-8">
@@ -41,24 +41,6 @@
         >
       </view>
 
-      <!-- 诊断模式切换 + 诊断按钮 -->
-      <view class="flex items-center justify-between mb-4">
-        <view class="flex items-center" @click="thinkingMode = !thinkingMode">
-          <view
-            class="w-10 h-6 rounded-full relative transition-colors"
-            :class="thinkingMode ? 'bg-primary' : 'bg-gray-300'"
-          >
-            <view
-              class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all"
-              :class="thinkingMode ? 'left-[18px]' : 'left-0.5'"
-            ></view>
-          </view>
-          <text class="ml-2 text-sm text-gray-600">{{
-            thinkingMode ? '深度思考' : '快速诊断'
-          }}</text>
-        </view>
-      </view>
-
       <button
         class="w-full bg-primary text-white font-semibold py-4 rounded-2xl shadow-lg"
         :class="{ 'opacity-50': images.length === 0 }"
@@ -94,54 +76,147 @@
         <!-- 健康状态 -->
         <view class="flex items-center justify-between p-4 bg-[#D8F3DC] rounded-2xl">
           <text class="text-sm font-semibold text-gray-900">健康状态</text>
-          <view :class="getHealthClass(result.healthStatus)">
-            <text class="text-sm font-bold">{{ result.healthStatus }}</text>
+          <view :class="getHealthClass(result.healthStatusText)">
+            <text class="text-sm font-bold">{{ result.healthStatusText }}</text>
           </view>
         </view>
       </view>
 
-      <!-- 问题诊断 -->
-      <view v-if="result.problem" class="bg-white rounded-3xl p-6 mb-4 shadow-sm">
-        <text class="block text-lg font-bold text-gray-900 mb-3">🔍 问题诊断</text>
-        <text class="block text-base text-gray-800 mb-3">{{ result.problem }}</text>
-
-        <view class="bg-[#FFF3E0] rounded-2xl p-4">
-          <text class="block text-sm font-semibold text-[#F4A261] mb-2">可能原因</text>
-          <text class="block text-sm text-gray-700">{{ result.cause }}</text>
+      <!-- 观察到的症状 -->
+      <view v-if="result.observedSymptoms?.length" class="bg-white rounded-3xl p-6 mb-4 shadow-sm">
+        <text class="block text-lg font-bold text-gray-900 mb-3">👀 观察到的症状</text>
+        <view class="flex flex-wrap gap-2">
+          <view
+            v-for="item in result.observedSymptoms"
+            :key="item.symptomKey"
+            class="px-3 py-1.5 rounded-full bg-green-50 text-green-700 text-xs"
+          >
+            {{ item.symptomCn || item.symptomKey }}
+          </view>
         </view>
       </view>
 
-      <!-- 解决方案 -->
-      <view v-if="result.solution" class="bg-white rounded-3xl p-6 mb-4 shadow-sm">
-        <text class="block text-lg font-bold text-gray-900 mb-3">💊 解决方案</text>
-        <text class="block text-base text-gray-800 leading-relaxed whitespace-pre-line">{{
-          result.solution
-        }}</text>
+      <!-- 诊断排序 -->
+      <view v-if="result.rankings?.length" class="bg-white rounded-3xl p-6 mb-4 shadow-sm">
+        <view class="flex items-center justify-between mb-3">
+          <text class="block text-lg font-bold text-gray-900">🔍 诊断排序</text>
+          <text class="text-xs text-gray-500">可信度 {{ result.reliabilityText }}%</text>
+        </view>
+        <view class="flex flex-col gap-3">
+          <view
+            v-for="item in result.rankings.slice(0, 3)"
+            :key="item.problemKey"
+            class="rounded-2xl border border-gray-100 p-4"
+            :class="item.rankNo === 1 ? 'bg-[#FFF7E8]' : 'bg-gray-50'"
+          >
+            <view class="flex items-center justify-between mb-2">
+              <text class="text-sm font-semibold text-gray-900">Top {{ item.rankNo }} · {{ item.problemCn }}</text>
+              <text class="text-xs text-gray-500">{{ item.problemType || 'unknown' }}</text>
+            </view>
+            <text class="block text-xs text-gray-600">
+              score={{ item.weightedScore }} / host={{ item.hostCompatibility }} / symptom={{ item.symptomSupportScore }}
+            </text>
+          </view>
+        </view>
       </view>
 
-      <!-- 养护建议 -->
-      <view v-if="result.careAdvice" class="bg-white rounded-3xl p-6 mb-4 shadow-sm">
-        <text class="block text-lg font-bold text-gray-900 mb-3">🌱 养护建议</text>
-        <text class="block text-base text-gray-800 leading-relaxed whitespace-pre-line">{{
-          result.careAdvice
-        }}</text>
+      <!-- 当前结论 -->
+      <view class="bg-white rounded-3xl p-6 mb-4 shadow-sm">
+        <text class="block text-lg font-bold text-gray-900 mb-3">🧠 当前结论</text>
+        <text class="block text-base text-gray-800 mb-3">{{ result.mainIssueText }}</text>
+        <view v-if="result.summaryText" class="bg-[#FFF3E0] rounded-2xl p-4">
+          <text class="block text-sm text-gray-700">{{ result.summaryText }}</text>
+        </view>
+      </view>
+
+      <!-- 问诊 -->
+      <view v-if="result.followUpRequired" class="bg-white rounded-3xl p-6 mb-4 shadow-sm">
+        <text class="block text-lg font-bold text-gray-900 mb-2">🩺 继续问诊</text>
+        <text class="block text-sm text-gray-600 mb-4">
+          当前证据还不够稳，需要补充 {{ result.followUps.length }} 个症状判断后再重新诊断。
+        </text>
+
+        <view class="flex flex-col gap-3">
+          <view
+            v-for="item in result.followUps"
+            :key="item.symptomKey"
+            class="rounded-2xl border border-gray-100 p-4"
+          >
+            <text class="block text-sm font-semibold text-gray-900 mb-2">{{ item.questionText }}</text>
+            <text class="block text-xs text-gray-500 mb-3">{{ item.rationale }}</text>
+            <view class="flex gap-3">
+              <button
+                class="flex-1 py-2 rounded-xl text-sm"
+                :class="followUpAnswers[item.symptomKey] === 'yes' ? 'bg-primary text-white' : 'bg-green-50 text-green-700'"
+                @click="setFollowUpAnswer(item.symptomKey, 'yes')"
+              >
+                是
+              </button>
+              <button
+                class="flex-1 py-2 rounded-xl text-sm"
+                :class="followUpAnswers[item.symptomKey] === 'no' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-700'"
+                @click="setFollowUpAnswer(item.symptomKey, 'no')"
+              >
+                否
+              </button>
+            </view>
+          </view>
+        </view>
+
+        <button
+          class="w-full mt-4 bg-primary text-white font-semibold py-3 rounded-2xl"
+          :class="{ 'opacity-50': submittingFollowUp || !canSubmitFollowUps() }"
+          :disabled="submittingFollowUp || !canSubmitFollowUps()"
+          @click="submitFollowUps"
+        >
+          {{ submittingFollowUp ? '重新诊断中...' : '提交问诊并重新诊断' }}
+        </button>
+      </view>
+
+      <!-- 处理建议 -->
+      <view v-if="result.treatmentText || result.preventionText" class="bg-white rounded-3xl p-6 mb-4 shadow-sm">
+        <text class="block text-lg font-bold text-gray-900 mb-3">🌱 处理建议</text>
+        <view v-if="result.treatmentText" class="mb-3">
+          <text class="block text-sm font-semibold text-gray-700 mb-1">处理</text>
+          <text class="block text-sm text-gray-800 leading-relaxed whitespace-pre-line">{{ result.treatmentText }}</text>
+        </view>
+        <view v-if="result.preventionText">
+          <text class="block text-sm font-semibold text-gray-700 mb-1">预防</text>
+          <text class="block text-sm text-gray-800 leading-relaxed whitespace-pre-line">{{ result.preventionText }}</text>
+        </view>
+      </view>
+
+      <!-- 诱因链 -->
+      <view v-if="result.problemCausality?.length" class="bg-white rounded-3xl p-6 mb-4 shadow-sm">
+        <text class="block text-lg font-bold text-gray-900 mb-3">🔗 诱因链</text>
+        <view class="flex flex-col gap-2">
+          <view
+            v-for="(item, index) in result.problemCausality.slice(0, 5)"
+            :key="`${item.causeProblemKey}-${item.effectProblemKey}-${index}`"
+            class="bg-gray-50 rounded-2xl p-3"
+          >
+            <text class="block text-sm text-gray-700">{{ formatCausalityItem(item) }}</text>
+          </view>
+        </view>
       </view>
 
       <!-- 操作按钮 -->
       <view class="flex gap-3 mb-20">
-        <button
-          class="flex-1 bg-white border-2 border-primary text-primary font-semibold py-3 rounded-2xl"
-          @click="resetDiagnose"
-        >
-          重新诊断
-        </button>
-        <button
-          class="flex-1 bg-primary text-white font-semibold py-3 rounded-2xl"
-          @click="saveToCalendar"
-        >
-          加入日历
-        </button>
-      </view>
+          <button
+            class="flex-1 bg-white border-2 border-primary text-primary font-semibold py-3 rounded-2xl"
+            @click="resetDiagnose"
+          >
+            重新诊断
+          </button>
+          <button
+            class="flex-1 bg-primary text-white font-semibold py-3 rounded-2xl"
+            :disabled="result.followUpRequired"
+            :class="{ 'opacity-50': result.followUpRequired }"
+            @click="saveToCalendar"
+          >
+            加入日历
+          </button>
+        </view>
     </view>
   </view>
 
@@ -172,8 +247,16 @@ import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/user.js'
 import { useDiagnoseStore } from '@/store/diagnose.js'
-import { uploadPlantImage, getImageUrl } from '@/api/storage.js'
-import { streamDiagnosePlant, diagnosePlant } from '@/api/ai-stream.js'
+import { convertImageToDataUrl, diagnosePlant, rerunDiagnoseWithFollowUps } from '@/api/ai-stream.js'
+import {
+  normalizeDiagnosisResult,
+  createFollowUpAnswerMap,
+  isFollowUpAnswerComplete,
+  buildFollowUpPayload,
+  getHealthClass,
+  getHealthStatusText,
+  formatCausalityItem
+} from '@/utils/diagnose-flow.js'
 import { ONE_MEGA_BYTE } from '../../constants'
 import LoginModal from '@/components/LoginModal.vue'
 import AIStreamDialog from '@/components/AIStreamDialog.vue'
@@ -189,8 +272,9 @@ const showLoginModal = ref(false)
 const showAIDialog = ref(false)
 const aiStreamDialogRef = ref(null)
 const pendingImageUrl = ref('')
-const thinkingMode = ref(false)
 const plantId = ref('')
+const followUpAnswers = ref({})
+const submittingFollowUp = ref(false)
 
 // 获取页面参数
 onLoad((options) => {
@@ -293,23 +377,13 @@ async function startDiagnose() {
   }
 
   try {
-    // 1. 先上传图片到云存储
-    uni.showLoading({ title: '上传图片中...', mask: true })
-    const uploadResult = await uploadPlantImage(
-      images.value[0],
-      userStore.userId || 'anonymous',
-      'diagnose'
-    )
-
-    // 2. 获取临时公网访问 URL（设置较长的有效期，确保 AI 诊断过程中不会过期）
-    const imageUrl = await getImageUrl(uploadResult.fileId, 7200)
+    uni.showLoading({ title: '处理图片中...', mask: true })
+    const imageUrl = await convertImageToDataUrl(images.value[0])
     uni.hideLoading()
-    console.log('图片已上传，公网 URL:', imageUrl)
+    console.log('图片已转为诊断 data url')
 
-    // 保存待诊断的图片URL
     pendingImageUrl.value = imageUrl
 
-    // 3. 显示对话框并开始诊断
     showAIDialog.value = true
     await new Promise(resolve => setTimeout(resolve, 100))
     aiStreamDialogRef.value?.startStream()
@@ -333,11 +407,7 @@ async function startDiagnose() {
       }
     }
 
-    if (thinkingMode.value) {
-      await streamDiagnosePlant(diagnoseRequest)
-    } else {
-      await diagnosePlant(diagnoseRequest)
-    }
+    await diagnosePlant(diagnoseRequest)
   } catch (error) {
     console.error('诊断失败:', error)
     uni.hideLoading()
@@ -356,27 +426,21 @@ function handleAIDialogClose() {
 // AI 对话框确认（使用诊断结果）
 function handleAIDialogConfirm(diagnosisResult) {
   if (diagnosisResult) {
-    // 转换诊断结果
-    result.value = {
-      plantName: '植物',
-      scientificName: '待识别',
-      healthStatus: getHealthStatusText(diagnosisResult.healthStatus),
-      problem: diagnosisResult.mainIssue,
-      cause: diagnosisResult.summary,
-      solution: `根据诊断结果，建议：\n${diagnosisResult.summary}`,
-      careAdvice: `• 健康评分：${diagnosisResult.healthScore}分\n• 主要问题：${diagnosisResult.mainIssue}\n• 建议定期检查植物健康状况`,
-      healthScore: diagnosisResult.healthScore,
-      images: images.value
-    }
+    result.value = normalizeDiagnosisResult(diagnosisResult, {
+      images: images.value,
+      plantName: '植物'
+    })
+    followUpAnswers.value = createFollowUpAnswerMap(result.value.followUps)
 
     // 保存到历史记录
     diagnoseStore.addToHistory({
       images: images.value,
-      diagnosis: result.value
+      diagnosis: result.value,
+      diagnosisId: result.value.diagnosisId || ''
     })
 
     uni.showToast({
-      title: '诊断完成',
+      title: result.value.followUpRequired ? '需要继续问诊' : '诊断完成',
       icon: 'success'
     })
   }
@@ -405,22 +469,19 @@ function handleAIRetry() {
       }
     }
 
-    if (thinkingMode.value) {
-      streamDiagnosePlant(callbackOpts)
-    } else {
-      diagnosePlant(callbackOpts)
-    }
+    diagnosePlant(callbackOpts)
   }
 }
 
-// 获取健康状态文本
-function getHealthStatusText(status) {
-  const statusMap = {
-    healthy: '健康',
-    warning: '轻微问题',
-    sick: '需要治疗'
+function setFollowUpAnswer(symptomKey, answerValue) {
+  followUpAnswers.value = {
+    ...followUpAnswers.value,
+    [symptomKey]: answerValue
   }
-  return statusMap[status] || '待诊断'
+}
+
+function canSubmitFollowUps() {
+  return isFollowUpAnswerComplete(result.value?.followUps || [], followUpAnswers.value)
 }
 
 function handleLoginSuccess() {
@@ -428,13 +489,64 @@ function handleLoginSuccess() {
   startDiagnose()
 }
 
+async function submitFollowUps() {
+  if (!result.value || !canSubmitFollowUps()) {
+    return
+  }
+
+  submittingFollowUp.value = true
+  try {
+    const payload = buildFollowUpPayload(result.value, followUpAnswers.value)
+    const rerunResult = await rerunDiagnoseWithFollowUps({
+      plantId: plantId.value,
+      diagnosisId: payload.diagnosisId,
+      observedSymptoms: payload.observedSymptoms,
+      followUpAnswers: payload.followUpAnswers
+    })
+
+    result.value = normalizeDiagnosisResult(rerunResult.diagnosis, {
+      images: images.value,
+      plantName: result.value.plantName || '植物'
+    })
+    followUpAnswers.value = createFollowUpAnswerMap(result.value.followUps)
+
+    diagnoseStore.addToHistory({
+      images: images.value,
+      diagnosis: result.value,
+      diagnosisId: result.value.diagnosisId || ''
+    })
+
+    uni.showToast({
+      title: result.value.followUpRequired ? '问诊已更新' : '诊断已收敛',
+      icon: 'success'
+    })
+  } catch (error) {
+    console.error('提交问诊失败:', error)
+    uni.showToast({
+      title: error.message || '问诊失败，请重试',
+      icon: 'none'
+    })
+  } finally {
+    submittingFollowUp.value = false
+  }
+}
+
 function resetDiagnose() {
   images.value = []
   result.value = null
   diagnosing.value = false
+  followUpAnswers.value = {}
 }
 
 function saveToCalendar() {
+  if (result.value?.followUpRequired) {
+    uni.showToast({
+      title: '请先完成问诊',
+      icon: 'none'
+    })
+    return
+  }
+
   uni.showToast({
     title: '已加入种植日历',
     icon: 'success'
@@ -446,18 +558,9 @@ function saveToCalendar() {
     })
   }, 1500)
 }
-
-function getHealthClass(status) {
-  const classes = {
-    健康: 'bg-green-100 text-green-700 px-3 py-1 rounded-full',
-    轻微问题: 'bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full',
-    需要治疗: 'bg-orange-100 text-orange-700 px-3 py-1 rounded-full',
-    严重问题: 'bg-red-100 text-red-700 px-3 py-1 rounded-full'
-  }
-  return classes[status] || classes['健康']
-}
 </script>
 
 <style scoped>
 /* 使用 Tailwind CSS */
 </style>
+

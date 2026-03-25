@@ -1,0 +1,19 @@
+{
+  "functionsRoot": ".",
+  "functions": [
+    {
+      "name": "weather-http",
+      "directory": "."
+    }
+  ],
+  "routes": [
+    {
+      "functionName": "weather-http",
+      "path": "/weather/current"
+    },
+    {
+      "functionName": "weather-http",
+      "path": "/weather/health"
+    }
+  ]
+}

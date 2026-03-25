@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <view class="min-h-screen bg-[#F8F6F0] pb-5">
     <StepIndicator :step="step" />
 
@@ -24,7 +24,7 @@
           </view>
         </view>
         <text
-          v-if="searchKeyword && !plantsLoading && defaultPlants.length === 0"
+          v-if="searchKeyword && !initialPlantsLoading && defaultPlants.length === 0"
           class="block text-xs text-gray-400 mt-2 text-center"
         >
           未找到匹配的植物
@@ -33,29 +33,41 @@
 
       <view class="mb-6">
         <text class="block text-base font-semibold text-gray-800 mb-4">🌿 常见植物</text>
-        <view v-if="plantsLoading" class="flex justify-center py-8">
+        <view v-if="initialPlantsLoading" class="flex justify-center py-8">
           <text class="text-sm text-gray-400">加载中...</text>
         </view>
-        <view v-else class="w-full snap-x overflow-x-auto">
+        <scroll-view
+          v-else
+          class="w-full"
+          scroll-x
+          enhanced
+          show-scrollbar="false"
+          lower-threshold="120"
+          @scrolltolower="handlePlantScrollToLower"
+        >
           <view class="flex gap-2 pb-2">
             <view
               v-for="(group, gi) in plantGroups"
-              :key="gi"
+              :key="group.key || gi"
               :class="[
                 'gap-2 flex-shrink-0 snap-start',
                 group.length < 3 ? 'grid grid-cols-1 auto-cols-fr' : 'grid grid-cols-2 grid-rows-2'
               ]"
             >
               <PlantCard
-                v-for="p in group"
+                v-for="p in group.items"
                 :key="p.id"
                 :plant="p"
                 :selected="selectedPlant?.id === p.id"
                 @select="selectedPlant = p"
               />
             </view>
+            <view class="w-16 flex-shrink-0 flex items-center justify-center">
+              <text v-if="plantsLoadingMore" class="text-xs text-gray-400">加载中...</text>
+              <text v-else-if="hasMorePlants" class="text-xs text-gray-300">更多</text>
+            </view>
           </view>
-        </view>
+        </scroll-view>
       </view>
 
       <!-- AI 识别 -->
@@ -79,8 +91,8 @@
       <button
         class="w-full text-white border-none py-4 rounded-2xl text-base font-semibold"
         style="background: linear-gradient(135deg, #2d7a4f 0%, #52b788 100%)"
-        :class="{ 'opacity-50': !selectedPlant && !aiRecognizedName }"
-        :disabled="!selectedPlant && !aiRecognizedName"
+        :class="{ 'opacity-50': !selectedPlant && !recognizedName }"
+        :disabled="!selectedPlant && !recognizedName"
         @click="step = 2"
       >
         下一步
@@ -140,7 +152,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useUserStore } from '@/store/user.js'
 import { usePlantStore } from '@/store/plants.js'
 import { uploadPlantImage, getImageUrl } from '@/api/storage.js'
-import { identifyPlant } from '@/api/ai-stream.js'
+import { createUserPlant, identifyPlantByImage } from '@/api/plants-http.js'
 import { useDefaultPlants } from '@/composables/useDefaultPlants.js'
 import { ONE_MEGA_BYTE } from '@/constants'
 import StepIndicator from './components/StepIndicator.vue'
@@ -151,19 +163,33 @@ import AIStreamDialog from '@/components/AIStreamDialog.vue'
 
 const userStore = useUserStore()
 const plantStore = usePlantStore()
-const { plants: defaultPlants, loading: plantsLoading, load: loadPlants } = useDefaultPlants()
+console.log('add-plant')
+const {
+  plants: defaultPlants,
+  loading: plantsLoading,
+  initialLoading: initialPlantsLoading,
+  loadingMore: plantsLoadingMore,
+  load: loadPlants,
+  loadNextPage,
+  hasMore: hasMorePlants
+} = useDefaultPlants()
 // 将植物按每组4个分组（2列x2行）
 const plantGroups = computed(() => {
   const groups = []
   for (let i = 0; i < defaultPlants.value.length; i += 4) {
-    groups.push(defaultPlants.value.slice(i, i + 4))
+    const items = defaultPlants.value.slice(i, i + 4)
+    groups.push({
+      key: items.map(item => item.id).join('-'),
+      length: items.length,
+      items
+    })
   }
   return groups
 })
 
 const step = ref(1)
 const selectedPlant = ref(null)
-const aiRecognizedName = ref('') // AI识别的植物名称（未匹配到plants表时使用）
+const recognizedName = ref('') // AI识别的植物名称（未匹配到 plant_catalog 时使用）
 const submitting = ref(false)
 const showLogin = ref(false)
 const loginMsg = ref('添加植物需要先登录')
@@ -188,7 +214,7 @@ watch(
     if (newPlant) {
       // 如果昵称为空，使用植物名称作为默认昵称
       if (!formData.value.nickname.trim()) {
-        formData.value.nickname = newPlant.name
+        formData.value.nickname = newPlant.canonicalName
       }
       // 如果图片为空，使用植物的图片URL
       if (!formData.value.image && newPlant.imageUrl) {
@@ -200,7 +226,7 @@ watch(
 )
 
 // 监听AI识别的植物名称
-watch(aiRecognizedName, newName => {
+watch(recognizedName, newName => {
   if (newName && !selectedPlant.value) {
     // 如果是AI识别且未匹配到植物，且昵称为空，使用AI识别名称作为默认昵称
     if (!formData.value.nickname.trim()) {
@@ -211,7 +237,7 @@ watch(aiRecognizedName, newName => {
 
 onMounted(async () => {
   if (!(await userStore.ensureLogin())) showLogin.value = true
-  loadPlants()
+  await loadPlants()
 })
 
 function handleLoginSuccess() {
@@ -251,6 +277,19 @@ function clearSearch() {
   loadPlants()
 }
 
+function handlePlantScrollToLower() {
+  console.log('[PlantScroll] loading marker reached', {
+    hasMore: hasMorePlants.value,
+    loading: plantsLoading.value,
+    initialLoading: initialPlantsLoading.value,
+    loadingMore: plantsLoadingMore.value
+  })
+  if (hasMorePlants.value && !plantsLoadingMore.value) {
+    console.log('[PlantScroll] trigger loadNextPage')
+    loadNextPage()
+  }
+}
+
 async function useAIIdentify() {
   if (!(await userStore.ensureLogin())) {
     loginMsg.value = '使用 AI 识别功能需要先登录'
@@ -284,57 +323,30 @@ async function doIdentify(path) {
     const url = await getImageUrl(fileId, 7200)
     pendingImage.value = { path, url }
 
-    uni.showLoading({ title: 'AI识别中...', mask: true })
-    await identifyPlant({
-      messages: [{ Role: 'user', Contents: [{ Type: 'image_url', ImageUrl: { Url: url } }] }],
-      openid: userStore.openid,
-      onFinish: (result, text) => {
-        uni.hideLoading()
-        userStore.useAIQuota()
+    uni.showLoading({ title: 'AI 识别中...', mask: true })
+    const response = await identifyPlantByImage(url)
+    uni.hideLoading()
 
-        // 前端精确匹配植物名称
-        if (result?.name && result.name !== '未知植物') {
-          const aiName = result.name.trim().toLowerCase()
+    if (response?.code !== 200) {
+      throw new Error(response?.message || '识别失败')
+    }
 
-          console.log('[百度识别] 原始名称:', result.name)
+    const result = {
+      name: response.data?.name || '未知植物',
+      confidence: response.data?.confidence || 0,
+      type: response.data?.type || 'plant',
+      matchedPlant: response.data?.matchedPlant || null,
+      candidates: response.data?.candidates || []
+    }
+    const text = `识别结果：${result.name}
+置信度：${((result.confidence || 0) * 100).toFixed(1)}%`
+    userStore.useAIQuota()
 
-          // 精确匹配 name 或 alias（alias 是逗号分隔的字符串）
-          const matched = plantStore.defaultPlants.find(p => {
-            const pName = p.name?.toLowerCase()
-            if (pName === aiName) return true
-
-            // 处理 alias（逗号分隔）
-            if (p.alias) {
-              const aliases = p.alias.split(',').map(a => a.trim().toLowerCase())
-              if (aliases.includes(aiName)) return true
-            }
-
-            return false
-          })
-
-          // 如果匹配成功，替换 result.name 为标准名称
-          if (matched) {
-            const originalName = result.name
-            result.name = matched.name
-            // 替换 text 中的植物名称
-            text = text.replace(new RegExp(originalName, 'g'), matched.name)
-            console.log('[百度识别] 匹配成功，使用标准名称:', matched.name)
-          } else {
-            console.log('[百度识别] 未匹配，使用百度原始名称:', result.name)
-          }
-        }
-
-        showAIDialog.value = true
-        setTimeout(() => {
-          aiDialogRef.value?.setText(text)
-          aiDialogRef.value?.finishStream(result)
-        }, 100)
-      },
-      onError: () => {
-        uni.hideLoading()
-        uni.showToast({ title: '识别失败，请重试', icon: 'none' })
-      }
-    })
+    showAIDialog.value = true
+    setTimeout(() => {
+      aiDialogRef.value?.setText(text)
+      aiDialogRef.value?.finishStream(result)
+    }, 100)
   } catch (e) {
     uni.hideLoading()
     uni.showToast({ title: '识别失败，请重试', icon: 'none' })
@@ -347,48 +359,98 @@ function handleAIConfirm(result) {
     return
   }
 
-  // 在 defaultPlants 中查找匹配的植物（用于获取完整数据）
-  const plantName = result.name.trim()
-  const matched = plantStore.defaultPlants.find(p => p.name === plantName)
+  const preferredName = (result.matchedPlant?.canonicalName || result.name || '').trim()
+  const matched = defaultPlants.value.find(p => p.canonicalName === preferredName)
 
   if (matched) {
-    // 匹配成功，使用 plants 表中的记录
     formData.value.image = pendingImage.value.path
     selectedPlant.value = matched
-    aiRecognizedName.value = ''
-    console.log('[AI确认] 使用匹配的植物数据:', matched.name)
-    uni.showToast({ title: `识别成功: ${matched.name}`, icon: 'success' })
-  } else {
-    // 未匹配，存储 AI 识别的名称
-    formData.value.image = pendingImage.value.path
-    selectedPlant.value = null
-    aiRecognizedName.value = plantName
-    console.log('[AI确认] 使用AI识别名称:', plantName)
-    uni.showToast({ title: `识别成功: ${plantName}`, icon: 'success' })
+    recognizedName.value = ''
+    console.log('[AI确认] 使用匹配的植物数据:', matched.canonicalName)
+    uni.showToast({ title: `识别成功: ${matched.canonicalName}`, icon: 'success' })
+    showAIDialog.value = false
+    setTimeout(() => (step.value = 2), 500)
+    return
   }
 
+  const candidatePlants = (result.candidates || [])
+    .map(candidate => {
+      const canonicalName = String(candidate?.canonicalName || '').trim()
+      return (
+        defaultPlants.value.find(item => item.canonicalName === canonicalName) || candidate || null
+      )
+    })
+    .filter(Boolean)
+
+  if (candidatePlants.length > 0) {
+    const limitedCandidates = candidatePlants.slice(0, 5)
+    const optionLabels = limitedCandidates.map(candidate => {
+      const internetName = String(candidate.internetName || '').trim()
+      return internetName && internetName !== candidate.canonicalName
+        ? `${candidate.canonicalName} / ${internetName}`
+        : candidate.canonicalName
+    })
+
+    uni.showActionSheet({
+      itemList: [...optionLabels, `使用识别名称：${result.name.trim()}`],
+      success: action => {
+        formData.value.image = pendingImage.value.path
+
+        if (action.tapIndex < limitedCandidates.length) {
+          const chosenPlant = limitedCandidates[action.tapIndex]
+          selectedPlant.value = chosenPlant
+          recognizedName.value = ''
+          uni.showToast({ title: `已选择: ${chosenPlant.canonicalName}`, icon: 'success' })
+        } else {
+          selectedPlant.value = null
+          recognizedName.value = result.name.trim()
+          uni.showToast({ title: `识别成功: ${result.name.trim()}`, icon: 'success' })
+        }
+
+        showAIDialog.value = false
+        setTimeout(() => (step.value = 2), 300)
+      },
+      fail: () => {
+        showAIDialog.value = false
+      }
+    })
+    return
+  }
+
+  formData.value.image = pendingImage.value.path
+  selectedPlant.value = null
+  recognizedName.value = result.name.trim()
+  console.log('[AI确认] 使用AI识别名称:', result.name.trim())
+  uni.showToast({ title: `识别成功: ${result.name.trim()}`, icon: 'success' })
   showAIDialog.value = false
   setTimeout(() => (step.value = 2), 500)
 }
 
 function handleAIRetry() {
   if (!pendingImage.value.url) return
-  uni.showLoading({ title: 'AI识别中...', mask: true })
-  identifyPlant({
-    messages: [
-      { Role: 'user', Contents: [{ Type: 'image_url', ImageUrl: { Url: pendingImage.value.url } }] }
-    ],
-    openid: userStore.openid,
-    onFinish: (result, text) => {
+  uni.showLoading({ title: 'AI 识别中...', mask: true })
+  identifyPlantByImage(pendingImage.value.url)
+    .then(response => {
       uni.hideLoading()
+      if (response?.code !== 200) {
+        throw new Error(response?.message || '识别失败')
+      }
+      const result = {
+        name: response.data?.name || '未知植物',
+        confidence: response.data?.confidence || 0,
+        type: response.data?.type || 'plant',
+        matchedPlant: response.data?.matchedPlant || null,
+        candidates: response.data?.candidates || []
+      }
+      const text = `识别结果：${result.name}
+置信度：${((result.confidence || 0) * 100).toFixed(1)}%`
       aiDialogRef.value?.setText(text)
       aiDialogRef.value?.finishStream(result)
-    },
-    onError: e => {
+    })
+    .catch(error => {
       uni.hideLoading()
-      aiDialogRef.value?.setError(e)
-    }
-  })
+      aiDialogRef.value?.setError(error)
+    })
 }
 
 function uploadPhoto() {
@@ -421,7 +483,7 @@ async function submitForm() {
   }
 
   // 必须有选中的植物或AI识别的名称
-  if (!selectedPlant.value && !aiRecognizedName.value) {
+  if (!selectedPlant.value && !recognizedName.value) {
     uni.showToast({ title: '请选择或识别植物', icon: 'none' })
     return
   }
@@ -435,13 +497,13 @@ async function submitForm() {
         formData.value.image.startsWith('http://') ||
         formData.value.image.startsWith('https://')
       ) {
-        // 如果是网络URL，并且有选中的植物，使用植物的fileId
-        if (selectedPlant.value?.fileId) {
-          photos = [selectedPlant.value.fileId]
-          console.log('使用植物默认图片fileId:', selectedPlant.value.fileId)
+        // 如果是网络URL，并且有选中的植物，使用目录植物的 imageFileId
+        if (selectedPlant.value?.imageFileId) {
+          photos = [selectedPlant.value.imageFileId]
+          console.log('使用植物默认图片imageFileId:', selectedPlant.value.imageFileId)
         } else {
-          // 没有fileId，忽略图片
-          console.warn('植物默认图片没有fileId，忽略图片')
+          // 没有 imageFileId，忽略图片
+          console.warn('植物默认图片没有 imageFileId，忽略图片')
         }
       } else {
         // 本地图片，需要上传
@@ -452,25 +514,24 @@ async function submitForm() {
       }
     }
 
-    // 调用 saveUserPlant 云函数
-    const res = await wx.cloud.callFunction({
-      name: 'saveUserPlant',
-      data: {
-        plantId: selectedPlant.value?.id || null,
-        aiRecognizedName: aiRecognizedName.value || null,
-        nickName: formData.value.nickname || selectedPlant.value?.name || aiRecognizedName.value,
-        location: formData.value.location,
-        photos: photos.length ? photos : null
-      }
+    // 调用 plant-user-http HTTP 云函数
+    const res = await createUserPlant({
+      plantId: selectedPlant.value?.id || null,
+      recognizedName: recognizedName.value || null,
+      nickname:
+        formData.value.nickname || selectedPlant.value?.canonicalName || recognizedName.value,
+      location: formData.value.location,
+      photos: photos.length ? photos : null,
+      sourceType: selectedPlant.value?.id ? 'catalog' : 'baidu',
+      recognitionType: selectedPlant.value?.id ? null : 'plant'
     })
 
-    if (res.result.code === 200) {
-      // 刷新用户植物列表
+    if (res?.code === 200) {
       await plantStore.getUserPlants()
-      uni.showToast({ title: '植物添加成功', icon: 'success' })
+      uni.showToast({ title: '保存成功', icon: 'success' })
       setTimeout(() => uni.navigateBack(), 1500)
     } else {
-      uni.showToast({ title: res.result.message || '添加失败', icon: 'none' })
+      uni.showToast({ title: res?.message || '保存失败', icon: 'none' })
     }
   } catch (e) {
     console.error('保存失败:', e)
