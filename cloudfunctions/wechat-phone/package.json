@@ -1,0 +1,6 @@
+{
+  "name": "wechat-phone",
+  "version": "1.0.0",
+  "description": "WeChat mini program phone bridge function via shared layer",
+  "main": "index.js"
+}

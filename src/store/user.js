@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
-import { loginWithCode, loginWithPhone, getAccessToken } from '@/api/wechat'
-import { requestHttpFunction } from '@/api/http'
+import { loginWithCode, loginWithPhone, getAccessToken, getUserById } from '@/api/wechat'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -255,16 +254,8 @@ export const useUserStore = defineStore('user', {
       }
 
       try {
-        const result = await requestHttpFunction('auth-user-http/auth/user', {
-          method: 'POST',
-          body: {
-            action: 'getUserByOpenid',
-            data: { openid: this.openid }
-          }
-        })
-
-        if (result.code === 200) {
-          const user = result.data
+        const user = await getUserById(this.openid)
+        if (user) {
 
           // 更新会员信息
           this.membership = {

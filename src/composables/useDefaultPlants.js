@@ -1,8 +1,6 @@
 import { computed, ref } from 'vue'
-import { fetchPlantCatalog } from '@/api/plants-http.js'
+import { fetchPlantCatalogQuery } from '@/vue-query/plants/queries/catalog.js'
 import { getFileUrl } from '@/composables/useCloudFile.js'
-import { ONE_HOUR } from '@/constants'
-import { queryClient } from '@/lib/query-client.js'
 
 export function useDefaultPlants() {
   const keywordRef = ref('')
@@ -22,31 +20,24 @@ export function useDefaultPlants() {
       pageParam: targetPage,
       pageSize: pageSize.value
     })
-    const payload = await queryClient.fetchQuery({
-      queryKey: ['plant-catalog', normalizedKeyword, targetPage, pageSize.value],
-      queryFn: async () => {
-        const response = await fetchPlantCatalog(normalizedKeyword, targetPage, pageSize.value)
-        const data = response?.data || {}
-        const list = Array.isArray(data?.list) ? data.list : Array.isArray(data) ? data : []
+    const response = await fetchPlantCatalogQuery(normalizedKeyword, targetPage, pageSize.value)
+    const data = response?.data || {}
+    const list = Array.isArray(data?.list) ? data.list : Array.isArray(data) ? data : []
 
-        for (const plant of list) {
-          if (plant.imageFileId) {
-            plant.image = await getFileUrl(plant.imageFileId)
-            plant.imageUrl = plant.image
-          }
-        }
+    for (const plant of list) {
+      if (plant.imageFileId) {
+        plant.image = await getFileUrl(plant.imageFileId)
+        plant.imageUrl = plant.image
+      }
+    }
 
-        return {
-          list,
-          total: Number(data?.total || list.length || 0),
-          page: Number(data?.page || targetPage),
-          pageSize: Number(data?.pageSize || pageSize.value),
-          hasMore: Boolean(data?.hasMore)
-        }
-      },
-      staleTime: 2 * ONE_HOUR,
-      gcTime: 5 * 60 * 1000
-    })
+    const payload = {
+      list,
+      total: Number(data?.total || list.length || 0),
+      page: Number(data?.page || targetPage),
+      pageSize: Number(data?.pageSize || pageSize.value),
+      hasMore: Boolean(data?.hasMore)
+    }
 
     total.value = payload.total
     hasMore.value = payload.hasMore

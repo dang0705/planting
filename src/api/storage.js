@@ -1,4 +1,4 @@
-import { requestHttpFunction } from '@/api/http'
+import { fetchPlantImagesQuery } from '@/vue-query/storage/queries/plant-images.js'
 
 /**
  * 云存储 API
@@ -221,13 +221,7 @@ export async function deleteImage(fileId) {
  */
 export async function getPlantImages(plantId, limit = 10, offset = 0) {
   try {
-    const result = await requestHttpFunction('storage-http/storage/plant-images', {
-      query: {
-        plantId,
-        limit,
-        offset
-      }
-    })
+    const result = await fetchPlantImagesQuery(plantId, limit, offset)
 
     if (result.code === 200) {
       return result.data.images

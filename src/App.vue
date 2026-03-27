@@ -1,10 +1,11 @@
 <script setup>
 import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
+import { CLOUDBASE_ENV_ID } from '@/utils/runtime-env'
 
 onLaunch(() => {
   console.log('App Launch')
   wx.cloud.init({
-    env: 'cloud1-2grufevs395a9d5e',
+    env: CLOUDBASE_ENV_ID,
     traceUser: true
   })
 

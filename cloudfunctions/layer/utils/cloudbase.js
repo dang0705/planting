@@ -3,8 +3,63 @@
  * 用于 MySQL 数据库操作、AI 能力和用户信息获取
  */
 const cloudbaseSDK = require('@cloudbase/node-sdk')
+const { resolveCloudbaseEnvId, resolveSqlDatabaseName } = require('./runtime-env')
 
 let cloudbaseApp = null
+const RUN_SQL_RETRY_LIMIT = 3
+const RUN_SQL_RETRY_DELAY_MS = 250
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+function isRetryableRunSqlError(error) {
+  const message = String(error?.message || error || '')
+  return (
+    message.includes('Database connection failed') ||
+    message.includes('Run query failed')
+  )
+}
+
+const SQL_TABLES = [
+  'users',
+  'user_platform_identities',
+  'plant_catalog',
+  'plant_aliases',
+  'genus_care_profile',
+  'user_plant_instances',
+  'symptoms',
+  'problems',
+  'symptom_problem_evidence',
+  'problem_host_profiles',
+  'genus_problem_candidates',
+  'plant_problem_profiles',
+  'problem_causality',
+  'diagnosis_sessions',
+  'diagnosis_symptom_observations',
+  'diagnosis_problem_rankings',
+  'diagnosis_follow_ups',
+  'identify_sessions',
+  'ai_quota_usage'
+]
+
+function qualifySqlTableNames(sql, databaseName) {
+  const dbName = String(databaseName || '').trim()
+  if (!dbName) {
+    return sql
+  }
+
+  const escapedDbName = `\`${dbName.replace(/`/g, '``')}\``
+  const tablePattern = SQL_TABLES.join('|')
+
+  return String(sql || '')
+    .replace(
+      new RegExp(`\\b(FROM|JOIN|UPDATE|INTO)\\s+(?!\\()(?!(?:\\\`?${dbName.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\\`?)\\.)((?:\\\`)?(${tablePattern})(?:\\\`)?)\\b`, 'gi'),
+      (match, keyword, originalTableRef, tableName) => {
+        return `${keyword} ${escapedDbName}.\`${tableName}\``
+      }
+    )
+}
 
 /**
  * 获取 CloudBase 实例（单例模式）
@@ -12,7 +67,7 @@ let cloudbaseApp = null
 function getCloudBase() {
   if (!cloudbaseApp) {
     cloudbaseApp = cloudbaseSDK.init({
-      env: process.env.TCB_ENV || process.env.CLOUDBASE_ENV_ID,
+      env: resolveCloudbaseEnvId(),
       secretId: process.env.CLOUDBASE_SECRET_ID,
       secretKey: process.env.CLOUDBASE_SECRET_KEY
     })
@@ -58,12 +113,12 @@ function getUserInfo(context) {
       OPENID: openid,
       APPID: runtimeAppId,
       UNIONID: runtimeUnionId,
-      ENV: context?.namespace || runtimeEnv.TCB_ENV || process.env.CLOUDBASE_ENV_ID
+      ENV: resolveCloudbaseEnvId(context)
     }
   }
 
   const app = cloudbaseSDK.init({
-    env: context.namespace || process.env.TCB_ENV || process.env.CLOUDBASE_ENV_ID
+    env: resolveCloudbaseEnvId(context)
   })
   const auth = app.auth()
   const userInfo = auth.getUserInfo()
@@ -82,7 +137,7 @@ function getUserInfo(context) {
     OPENID: openid,
     APPID: appId,
     UNIONID: '', // CloudBase Node SDK 不提供 UNIONID
-    ENV: context.namespace || process.env.CLOUDBASE_ENV_ID
+    ENV: resolveCloudbaseEnvId(context)
   }
 }
 
@@ -96,7 +151,30 @@ const models = {
    */
   async $runSQL(sql, params = {}) {
     const app = getCloudBase()
-    return app.models.$runSQL(sql, params)
+    const normalizedSql = qualifySqlTableNames(sql, resolveSqlDatabaseName())
+    let lastError = null
+
+    for (let attempt = 1; attempt <= RUN_SQL_RETRY_LIMIT; attempt += 1) {
+      try {
+        return await app.models.$runSQL(normalizedSql, params)
+      } catch (error) {
+        lastError = error
+        if (!isRetryableRunSqlError(error) || attempt >= RUN_SQL_RETRY_LIMIT) {
+          throw error
+        }
+        console.warn(
+          '[cloudbase.models.$runSQL] transient failure, retrying',
+          JSON.stringify({
+            attempt,
+            nextAttempt: attempt + 1,
+            message: String(error?.message || error).slice(0, 300)
+          })
+        )
+        await sleep(RUN_SQL_RETRY_DELAY_MS * attempt)
+      }
+    }
+
+    throw lastError
   }
 }
 

@@ -3,6 +3,23 @@
 const { models } = require('/opt/utils/cloudbase')
 const { deductQuota } = require('/opt/utils/quota')
 
+function normalizeStoredDiagnosisImage(image) {
+  const value = String(image || '').trim()
+  if (!value) {
+    return ''
+  }
+
+  if (value.startsWith('data:image/')) {
+    return ''
+  }
+
+  if (value.length > 2000) {
+    return ''
+  }
+
+  return value
+}
+
 async function saveDiagnosisSession(plantId, openid, result, image, description, recordId) {
   const sql = `
     INSERT INTO diagnosis_sessions (
@@ -26,7 +43,7 @@ async function saveDiagnosisSession(plantId, openid, result, image, description,
     openid,
     userPlantId: Number(plantId),
     diagnosisMode: result.diagnosisMode || 'quick',
-    imageUrl: image || '',
+    imageUrl: normalizeStoredDiagnosisImage(image),
     userDescription: description || '',
     aiSummary: result.summary || result.symptoms || '',
     healthScore: result.healthScore || null,

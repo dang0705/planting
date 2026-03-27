@@ -1,76 +1,56 @@
-import { requestHttpFunction } from '@/api/http'
+import {
+  fetchPlantCatalogQuery,
+  fetchPlantCatalogMapQuery
+} from '@/vue-query/plants/queries/catalog.js'
+import { fetchUserPlantsQuery } from '@/vue-query/plants/queries/user-plants.js'
+import {
+  executeCreateUserPlantMutation,
+  executePatchUserPlantMutation,
+  executeRemoveUserPlantMutation
+} from '@/vue-query/plants/mutations/user-plants.js'
+import { executeIdentifyPlantMutation } from '@/vue-query/plants/mutations/identify.js'
+import {
+  fetchDiagnosisHistoryQuery,
+  fetchDiagnosisDetailQuery,
+  fetchDiagnosisDecisionQuery
+} from '@/vue-query/diagnosis-history/queries/history.js'
 
 export function fetchPlantCatalog(keyword = '', page = 1, pageSize = 10) {
-  return requestHttpFunction('plant-catalog-http/catalog/plants', {
-    query: {
-      ...(keyword ? { keyword } : {}),
-      page,
-      pageSize
-    },
-    auth: true
-  })
+  return fetchPlantCatalogQuery(keyword, page, pageSize)
 }
 
 export function mapPlantCatalog(keyword) {
-  return requestHttpFunction('plant-catalog-http/catalog/map', {
-    query: { keyword },
-    auth: true
-  })
+  return fetchPlantCatalogMapQuery(keyword)
 }
 
 export function fetchUserPlants(page = 1, pageSize = 20) {
-  return requestHttpFunction('plant-user-http/user-plants', {
-    query: { page, pageSize }
-  })
+  return fetchUserPlantsQuery(page, pageSize)
 }
 
 export function createUserPlant(payload) {
-  return requestHttpFunction('plant-user-http/user-plants', {
-    method: 'POST',
-    body: payload
-  })
+  return executeCreateUserPlantMutation(payload)
 }
 
 export function patchUserPlant(payload) {
-  return requestHttpFunction('plant-user-http/user-plants', {
-    method: 'PATCH',
-    body: payload
-  })
+  return executePatchUserPlantMutation(payload)
 }
 
 export function removeUserPlant(id) {
-  return requestHttpFunction('plant-user-http/user-plants', {
-    method: 'DELETE',
-    body: { id }
-  })
+  return executeRemoveUserPlantMutation(id)
 }
 
 export function identifyPlantByImage(imageUrl) {
-  return requestHttpFunction('identify-http/identify/plant', {
-    method: 'POST',
-    body: { imageUrl }
-  })
+  return executeIdentifyPlantMutation(imageUrl)
 }
 
 export function fetchDiagnosisHistory(page = 1, pageSize = 10, plantId = null) {
-  return requestHttpFunction('diagnosis-history-http/diagnosis/history', {
-    query: {
-      page,
-      pageSize,
-      ...(plantId ? { plantId } : {})
-    }
-  })
+  return fetchDiagnosisHistoryQuery(page, pageSize, plantId)
 }
 
 export function fetchDiagnosisDetail(id) {
-  return requestHttpFunction('diagnosis-history-http/diagnosis/history/detail', {
-    query: { id }
-  })
+  return fetchDiagnosisDetailQuery(id)
 }
 
 export function computeDiagnosisDecision(payload) {
-  return requestHttpFunction('diagnosis-history-http/diagnosis/decision', {
-    method: 'POST',
-    body: payload
-  })
+  return fetchDiagnosisDecisionQuery(payload)
 }

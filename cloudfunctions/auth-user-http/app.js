@@ -6,6 +6,8 @@ const {
   notFound,
   methodNotAllowed,
   getHttpRequestData,
+  resolveRequestAppEnv,
+  runWithRequestAppEnv,
   resolveHttpUserInfo
 } = require('/opt/utils/http')
 
@@ -516,4 +518,8 @@ async function main(event, context) {
   }
 }
 
-module.exports.main = main
+module.exports.main = (event, context) => {
+  const request = getHttpRequestData(event, context)
+  const appEnv = resolveRequestAppEnv(request.headers, request.query, request.body)
+  return runWithRequestAppEnv(appEnv, () => main(event, context))
+}

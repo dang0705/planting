@@ -115,6 +115,24 @@ function pickNonStreamText(res) {
   )
 }
 
+function safeSerializeLogPayload(res) {
+  if (res === null || res === undefined) {
+    return res
+  }
+
+  if (typeof res === 'string') {
+    return res
+  }
+  const content = res.Choices?.[0]?.Message?.Content || ''
+  return typeof content === 'string' ? JSON.parse(content) : content
+
+  /*  try {
+    return JSON.stringify(payload)
+  } catch {
+    return '[unserializable payload]'
+  }*/
+}
+
 async function buildLLMDiagnoseMessages(image) {
   const contents = []
 
@@ -139,6 +157,7 @@ function buildPayload(messages, stream) {
 async function callHunyuanVisionNonStream(messages) {
   const client = getHunyuanClient()
   const res = await client.ChatCompletions(buildPayload(messages, false))
+  console.log('diagnose-http hunyuan non-stream raw response:', safeSerializeLogPayload(res))
   const errorMessage = extractPayloadError(res)
 
   if (errorMessage) {
@@ -186,6 +205,10 @@ function callHunyuanVisionStream(messages, { onText } = {}) {
     client.ChatCompletions(buildPayload(messages, true)).then(
       res => {
         if (!res || typeof res.on !== 'function') {
+          console.log(
+            'diagnose-http hunyuan stream fallback raw response:',
+            safeSerializeLogPayload(res)
+          )
           const responseUsage = normalizeUsage(extractUsage(res))
           if (responseUsage) {
             usage = responseUsage
@@ -195,7 +218,12 @@ function callHunyuanVisionStream(messages, { onText } = {}) {
         }
 
         res.on('message', message => {
+          console.log('diagnose-http hunyuan stream raw message:', safeSerializeLogPayload(message))
           const parsed = safeJsonParse(message)
+          console.log(
+            'diagnose-http hunyuan stream parsed message:',
+            safeSerializeLogPayload(parsed)
+          )
           if (!parsed) return
 
           const payloadError = extractPayloadError(parsed)
@@ -233,7 +261,7 @@ function callHunyuanVisionStream(messages, { onText } = {}) {
 async function callLLMDiagnose(image, { onText } = {}) {
   const messages = await buildLLMDiagnoseMessages(image)
   const promptText = messages?.[0]?.Contents?.find(item => item.Type === 'text')?.Text || ''
-  console.log('diagnose-http symptom prompt:', promptText)
+  // console.log('diagnose-http symptom prompt:', promptText)
 
   if (!sse) {
     return callHunyuanVisionNonStream(messages)

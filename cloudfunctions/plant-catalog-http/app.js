@@ -1,6 +1,13 @@
 'use strict'
 
-const { jsonResponse, notFound, methodNotAllowed, getHttpRequestData } = require('/opt/utils/http')
+const {
+  jsonResponse,
+  notFound,
+  methodNotAllowed,
+  getHttpRequestData,
+  resolveRequestAppEnv,
+  runWithRequestAppEnv
+} = require('/opt/utils/http')
 const {
   listPlantCatalog,
   getPlantCatalogById,
@@ -50,4 +57,8 @@ async function main(event, context) {
   }
 }
 
-module.exports.main = main
+module.exports.main = (event, context) => {
+  const request = getHttpRequestData(event, context)
+  const appEnv = resolveRequestAppEnv(request.headers, request.query, request.body)
+  return runWithRequestAppEnv(appEnv, () => main(event, context))
+}

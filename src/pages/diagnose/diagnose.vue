@@ -247,14 +247,15 @@ import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/user.js'
 import { useDiagnoseStore } from '@/store/diagnose.js'
-import { convertImageToDataUrl, diagnosePlant, rerunDiagnoseWithFollowUps } from '@/api/ai-stream.js'
+import { convertImageToDataUrl } from '@/api/ai-stream.js'
+import { useDiagnoseMutation } from '@/vue-query/diagnose/mutations/useDiagnoseMutation.js'
+import { useDiagnoseFollowUpMutation } from '@/vue-query/diagnose/mutations/useDiagnoseFollowUpMutation.js'
 import {
   normalizeDiagnosisResult,
   createFollowUpAnswerMap,
   isFollowUpAnswerComplete,
   buildFollowUpPayload,
   getHealthClass,
-  getHealthStatusText,
   formatCausalityItem
 } from '@/utils/diagnose-flow.js'
 import { ONE_MEGA_BYTE } from '../../constants'
@@ -275,6 +276,8 @@ const pendingImageUrl = ref('')
 const plantId = ref('')
 const followUpAnswers = ref({})
 const submittingFollowUp = ref(false)
+const diagnoseMutation = useDiagnoseMutation()
+const followUpMutation = useDiagnoseFollowUpMutation()
 
 // 获取页面参数
 onLoad((options) => {
@@ -396,7 +399,7 @@ async function startDiagnose() {
       onText: (text, fullText) => {
         aiStreamDialogRef.value?.setText(fullText)
       },
-      onFinish: (diagnosisResult, fullText) => {
+      onFinish: diagnosisResult => {
         console.log('诊断完成:', diagnosisResult)
         aiStreamDialogRef.value?.finishStream(diagnosisResult)
         userStore.useAIQuota()
@@ -407,7 +410,7 @@ async function startDiagnose() {
       }
     }
 
-    await diagnosePlant(diagnoseRequest)
+    await diagnoseMutation.mutateAsync(diagnoseRequest)
   } catch (error) {
     console.error('诊断失败:', error)
     uni.hideLoading()
@@ -461,7 +464,7 @@ function handleAIRetry() {
       onText: (text, fullText) => {
         aiStreamDialogRef.value?.setText(fullText)
       },
-      onFinish: (diagnosisResult, fullText) => {
+      onFinish: diagnosisResult => {
         aiStreamDialogRef.value?.finishStream(diagnosisResult)
       },
       onError: error => {
@@ -469,7 +472,7 @@ function handleAIRetry() {
       }
     }
 
-    diagnosePlant(callbackOpts)
+    diagnoseMutation.mutateAsync(callbackOpts)
   }
 }
 
@@ -497,7 +500,7 @@ async function submitFollowUps() {
   submittingFollowUp.value = true
   try {
     const payload = buildFollowUpPayload(result.value, followUpAnswers.value)
-    const rerunResult = await rerunDiagnoseWithFollowUps({
+    const rerunResult = await followUpMutation.mutateAsync({
       plantId: plantId.value,
       diagnosisId: payload.diagnosisId,
       observedSymptoms: payload.observedSymptoms,

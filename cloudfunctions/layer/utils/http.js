@@ -1,6 +1,7 @@
 'use strict'
 
 const { getUserInfo, getCloudBase } = require('./cloudbase')
+const { normalizeAppEnv, runWithRequestAppEnv } = require('./runtime-env')
 
 function jsonResponse(statusCode, payload) {
   return {
@@ -23,6 +24,20 @@ function normalizeHeaders(rawHeaders = {}) {
     headers[String(key).toLowerCase()] = Array.isArray(value) ? value[0] : value
     return headers
   }, {})
+}
+
+function resolveRequestAppEnv(rawHeaders = {}, query = {}, body = {}) {
+  const headers = normalizeHeaders(rawHeaders)
+  return normalizeAppEnv(
+    headers['x-app-env'] ||
+      query.appEnv ||
+      query.app_env ||
+      body.appEnv ||
+      body.app_env ||
+      process.env.APP_ENV ||
+      process.env.RUNTIME_ENV ||
+      process.env.NODE_ENV
+  )
 }
 
 function decodeCloudbaseContext(value) {
@@ -285,6 +300,8 @@ module.exports = {
   methodNotAllowed,
   notFound,
   normalizeHeaders,
+  resolveRequestAppEnv,
+  runWithRequestAppEnv,
   parseEventBody,
   getHttpRequestData,
   resolveHttpUserInfo,
