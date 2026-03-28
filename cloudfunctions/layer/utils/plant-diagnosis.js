@@ -73,12 +73,12 @@ async function getSymptomDictionary() {
         symptom_cn,
         location_key,
         symptom_type,
-        base_evidence_weight,
-        symptom_reliability,
+        COALESCE(signal_reliability, 0) AS base_evidence_weight,
+        COALESCE(signal_reliability, 0) AS symptom_reliability,
         note
       FROM symptoms
       WHERE data_status = 'audited'
-      ORDER BY base_evidence_weight DESC, symptom_reliability DESC, symptom_key ASC
+      ORDER BY COALESCE(signal_reliability, 0) DESC, symptom_key ASC
     `,
     {}
   )

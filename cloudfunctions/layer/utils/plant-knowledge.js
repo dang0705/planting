@@ -857,8 +857,11 @@ async function loadProblemRelations(problemKey) {
         relation_strength,
         note
       FROM problem_causality
-      WHERE cause_problem_key = {{problemKey}}
-         OR effect_problem_key = {{problemKey}}
+      WHERE is_active = 1
+        AND (
+          cause_problem_key = {{problemKey}}
+          OR effect_problem_key = {{problemKey}}
+        )
       ORDER BY relation_strength DESC, id ASC
     `,
     { problemKey }
@@ -908,8 +911,11 @@ async function loadProblemCausality(problemKeys) {
         relation_strength,
         note
       FROM problem_causality
-      WHERE cause_problem_key IN ${sqlInList(keys)}
-         OR effect_problem_key IN ${sqlInList(keys)}
+      WHERE is_active = 1
+        AND (
+          cause_problem_key IN ${sqlInList(keys)}
+          OR effect_problem_key IN ${sqlInList(keys)}
+        )
       ORDER BY relation_strength DESC, id ASC
     `,
     {}
@@ -950,7 +956,7 @@ async function buildDiagnosisDecision({
         p.problem_cn,
         p.problem_type,
         ppp.host_compatibility,
-        ppp.is_genus_candidate
+        COALESCE(ppp.genus_compatibility, 0) AS is_genus_candidate
       FROM plant_problem_profiles ppp
       JOIN problems p ON p.problem_key = ppp.problem_key
       WHERE ppp.plant_id = {{plantId}}
@@ -990,7 +996,12 @@ async function buildDiagnosisDecision({
     const [symptomResult, evidenceResult] = await Promise.all([
       models.$runSQL(
         `
-          SELECT symptom_key, symptom_cn, location_key, base_evidence_weight, symptom_reliability
+          SELECT
+            symptom_key,
+            symptom_cn,
+            location_key,
+            COALESCE(signal_reliability, 0) AS base_evidence_weight,
+            COALESCE(signal_reliability, 0) AS symptom_reliability
           FROM symptoms
           WHERE symptom_key IN ${sqlInList(symptomKeys)}
         `,
@@ -998,7 +1009,7 @@ async function buildDiagnosisDecision({
       ),
       models.$runSQL(
         `
-          SELECT symptom_key, problem_key, association_strength, evidence_reliability
+          SELECT symptom_key, problem_key, association_strength, edge_reliability AS evidence_reliability
           FROM symptom_problem_evidence
           WHERE symptom_key IN ${sqlInList(symptomKeys)}
             AND problem_key IN ${sqlInList(candidates.map(item => item.problem_key))}
@@ -1116,11 +1127,11 @@ async function buildDiagnosisDecision({
           spe.symptom_key,
           spe.problem_key,
           spe.association_strength,
-          spe.evidence_reliability,
+          spe.edge_reliability AS evidence_reliability,
           s.symptom_cn,
           s.location_key,
-          s.symptom_reliability,
-          s.base_evidence_weight
+          COALESCE(s.signal_reliability, 0) AS symptom_reliability,
+          COALESCE(s.signal_reliability, 0) AS base_evidence_weight
         FROM symptom_problem_evidence spe
         JOIN symptoms s ON s.symptom_key = spe.symptom_key
         WHERE spe.problem_key IN ${sqlInList(topCandidateKeys)}

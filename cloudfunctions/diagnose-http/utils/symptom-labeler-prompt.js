@@ -1,12 +1,13 @@
 'use strict'
 
-const { getSymptomDictionary } = require('/opt/utils/plant-diagnosis')
+const { getSymptomDictionary } = require('../repositories/symptom-repository')
 const {
   prompts: { llm: promptTemplate }
 } = require('/opt/configs')
 
 function buildSymptomOptionText(symptom, index) {
-  return `${index + 1}. ${symptom.symptomKey}`
+  const hint = symptom.displayTextCn ? `（${symptom.displayTextCn}）` : ''
+  return `${index + 1}. ${symptom.symptomKey}${hint}`
 }
 
 function isImageSelectableSymptom(symptom) {

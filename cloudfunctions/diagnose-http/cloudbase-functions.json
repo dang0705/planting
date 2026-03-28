@@ -17,6 +17,26 @@
     },
     {
       "functionName": "diagnose-http",
+      "path": "/diagnosis/start"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/diagnosis/answer"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/diagnosis/result"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/diagnosis/history"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/diagnosis/feedback"
+    },
+    {
+      "functionName": "diagnose-http",
       "path": "/health"
     }
   ]
