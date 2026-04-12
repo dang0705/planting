@@ -11,9 +11,15 @@ import {
 import { executeIdentifyPlantMutation } from '@/vue-query/plants/mutations/identify.js'
 import {
   fetchDiagnosisHistoryQuery,
-  fetchDiagnosisDetailQuery,
-  fetchDiagnosisDecisionQuery
+  fetchDiagnosisDetailQuery
 } from '@/vue-query/diagnosis-history/queries/history.js'
+import {
+  requestDiagnosisStart,
+  requestDiagnosisAnswer,
+  requestDiagnosisResult,
+  requestDiagnosisHistory,
+  requestDiagnosisFeedback
+} from '@/http-functions/diagnose/client.js'
 
 export function fetchPlantCatalog(keyword = '', page = 1, pageSize = 10) {
   return fetchPlantCatalogQuery(keyword, page, pageSize)
@@ -51,6 +57,22 @@ export function fetchDiagnosisDetail(id) {
   return fetchDiagnosisDetailQuery(id)
 }
 
-export function computeDiagnosisDecision(payload) {
-  return fetchDiagnosisDecisionQuery(payload)
+export function startDiagnosis(payload) {
+  return requestDiagnosisStart(payload)
+}
+
+export function submitDiagnosisAnswers(payload) {
+  return requestDiagnosisAnswer(payload)
+}
+
+export function getDiagnosisResult(params) {
+  return requestDiagnosisResult(params)
+}
+
+export function getDiagnosisHistory(params) {
+  return requestDiagnosisHistory(params)
+}
+
+export function submitDiagnosisFeedback(payload) {
+  return requestDiagnosisFeedback(payload)
 }

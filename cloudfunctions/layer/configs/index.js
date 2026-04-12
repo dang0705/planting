@@ -47,6 +47,7 @@ module.exports = {
 - 优先识别高特异性的视觉症状，如 fine_webbing、rust_pustules、powder_white、tunnels_in_leaf、gray_fuzzy_mold。
 - 对 leaf_yellowing、leaf_drop、slow_growth 这类弱症状，只有在图像中明显可见时才输出。
 - 对 yellow_new_leaves、yellow_lower_leaves 这类依赖位置判断的症状，只有在图片中层次非常明确时才输出，否则使用 leaf_yellowing。
+- 对 normal_leaf_aging_stable 这类“正常老化”信号要更保守：只有当黄化稳定停留在底部老叶，且新叶、生长点看起来正常时才输出；只要存在扩展、新叶异常、斑点、软烂或其他竞争性异常，就不要输出它。
 
 可选 symptom 列表：
 ${symptomOptionsText}

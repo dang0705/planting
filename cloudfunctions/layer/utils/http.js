@@ -121,25 +121,57 @@ function parseEventBody(event) {
   return {}
 }
 
+function normalizeHttpMethod(value, fallback = 'GET') {
+  const normalized = String(value || '').trim().toUpperCase()
+  return normalized || fallback
+}
+
+function resolveOverrideMethod(rawHeaders = {}, query = {}, body = {}) {
+  const headers = normalizeHeaders(rawHeaders)
+  const override = normalizeHttpMethod(
+    headers['x-http-method-override'] ||
+      headers['x-method-override'] ||
+      query._method ||
+      query.methodOverride ||
+      body._method ||
+      body.methodOverride,
+    ''
+  )
+
+  if (!override) {
+    return ''
+  }
+
+  return ['PATCH', 'PUT', 'DELETE'].includes(override) ? override : ''
+}
+
 function getHttpRequestData(event, context) {
   const httpContext = context.httpContext || {}
+  const rawHeaders = httpContext.headers || event?.headers || {}
   const queryFromContext =
     httpContext.query && typeof httpContext.query === 'object' ? httpContext.query : {}
   const queryFromPath = parseQueryString(httpContext.path)
   const queryFromUrl = parseQueryString(httpContext.url || httpContext.rawPath || httpContext.reqUrl)
   const body = parseEventBody(event)
-  const inferredMethod =
-    String(
-      httpContext.method ||
-        event?.httpMethod ||
-        event?.requestContext?.http?.method ||
-        ''
-    ).toUpperCase() ||
-    (body && Object.keys(body).length ? 'POST' : 'GET')
+  const inferredMethod = normalizeHttpMethod(
+    httpContext.method ||
+      event?.httpMethod ||
+      event?.requestContext?.http?.method ||
+      (body && Object.keys(body).length ? 'POST' : 'GET')
+  )
+  const methodOverride = resolveOverrideMethod(
+    rawHeaders,
+    {
+      ...queryFromPath,
+      ...queryFromUrl,
+      ...queryFromContext
+    },
+    body
+  )
 
   return {
-    headers: httpContext.headers || {},
-    method: inferredMethod,
+    headers: rawHeaders,
+    method: methodOverride || inferredMethod,
     path:
       httpContext.path ||
       httpContext.url ||
@@ -243,6 +275,35 @@ async function resolveUserFromBearerToken(headers) {
   }
 }
 
+function isTruthyFlag(value) {
+  return value === true || value === 'true' || value === '1' || value === 1
+}
+
+function buildAnonymousDevOpenId(value) {
+  const normalized = String(value || '')
+    .trim()
+    .replace(/[^A-Za-z0-9_-]/g, '_')
+    .slice(0, 96)
+
+  return normalized ? `anon_dev_${normalized}` : ''
+}
+
+function isAnonymousDevIdentityEnabled(rawHeaders, query = {}) {
+  const headers = normalizeHeaders(rawHeaders)
+  const appEnv = resolveRequestAppEnv(headers, query, query)
+
+  if (appEnv !== 'development') {
+    return false
+  }
+
+  return isTruthyFlag(
+    headers['x-terminal-e2e'] ||
+      headers['x-anonymous-dev-identity'] ||
+      query.terminalE2E ||
+      query.anonymousDevIdentity
+  )
+}
+
 async function resolveHttpUserInfo(rawHeaders, query = {}, context = null) {
   const headers = normalizeHeaders(rawHeaders)
   const headerOpenId = headers['x-wx-openid'] || headers['x-openid']
@@ -283,6 +344,29 @@ async function resolveHttpUserInfo(rawHeaders, query = {}, context = null) {
   const bearerUser = await resolveUserFromBearerToken(headers)
   if (bearerUser?.openid) {
     return bearerUser
+  }
+
+  if (isAnonymousDevIdentityEnabled(rawHeaders, query)) {
+    const authorization = headers.authorization || headers.Authorization
+    const accessToken = typeof authorization === 'string' && authorization.startsWith('Bearer ')
+      ? authorization.slice(7).trim()
+      : ''
+    const payload = decodeJwtPayload(accessToken)
+    const scopes = String(payload?.scope || '')
+      .split(/\s+/)
+      .map(item => item.trim())
+      .filter(Boolean)
+    const anonymousSubject = payload?.sub || payload?.uid || payload?.user_id || ''
+    const anonymousOpenId =
+      scopes.includes('anonymous') ? buildAnonymousDevOpenId(anonymousSubject) : ''
+
+    if (anonymousOpenId) {
+      return {
+        openid: anonymousOpenId,
+        uid: anonymousSubject || '',
+        source: 'bearer-token-anonymous-dev'
+      }
+    }
   }
 
   if (isSkipAuthEnabled(query.skipAuth)) {

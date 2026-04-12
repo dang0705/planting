@@ -2,6 +2,7 @@
 
 const { clamp01 } = require('../repositories/sql')
 const { evidence: evidenceConfig } = require('../constants/scoring')
+const { projectObservedSymptomsFromEvidence } = require('./observed-evidence')
 
 function round(value, digits = 6) {
   return Number(Number(value || 0).toFixed(digits))
@@ -28,22 +29,27 @@ function buildSymptomIndex(symptoms = []) {
 function computeVisualEvidenceScores({
   candidateProblemKeys = [],
   observedSymptoms = [],
+  observedEvidenceSet = [],
   symptomDictionary = [],
   evidenceEdges = []
 } = {}) {
+  const effectiveObservedSymptoms =
+    Array.isArray(observedEvidenceSet) && observedEvidenceSet.length
+      ? projectObservedSymptomsFromEvidence(observedEvidenceSet)
+      : observedSymptoms
   const scores = {}
   candidateProblemKeys.forEach(key => {
     scores[key] = 0
   })
 
-  if (!candidateProblemKeys.length || !observedSymptoms.length) {
+  if (!candidateProblemKeys.length || !effectiveObservedSymptoms.length) {
     return scores
   }
 
   const symptomMap = buildSymptomIndex(symptomDictionary)
   const edgeMap = buildEdgeIndex(evidenceEdges)
 
-  for (const observed of observedSymptoms.slice(0, evidenceConfig.maxVisualSymptoms)) {
+  for (const observed of effectiveObservedSymptoms.slice(0, evidenceConfig.maxVisualSymptoms)) {
     const symptomKey = String(observed?.symptomKey || '').trim()
     if (!symptomKey) continue
 

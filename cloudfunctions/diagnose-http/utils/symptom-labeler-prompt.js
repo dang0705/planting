@@ -3,7 +3,7 @@
 const { getSymptomDictionary } = require('../repositories/symptom-repository')
 const {
   prompts: { llm: promptTemplate }
-} = require('/opt/configs')
+} = require('../configs')
 
 function buildSymptomOptionText(symptom, index) {
   const hint = symptom.displayTextCn ? `（${symptom.displayTextCn}）` : ''

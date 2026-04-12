@@ -139,7 +139,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/user.js'
-import { fetchDiagnosisHistory } from '@/api/plants-http.js'
+import { getDiagnosisHistory } from '@/api/plants-http.js'
 
 const userStore = useUserStore()
 
@@ -224,10 +224,19 @@ async function loadDiagnoseHistory() {
 
   loadingHistory.value = true
   try {
-    const result = await fetchDiagnosisHistory(1, 5)
-    if (result?.code === 200) {
-      diagnoseHistory.value = result.data.list
-    }
+    const result = await getDiagnosisHistory({
+      page: 1,
+      pageSize: 5
+    })
+
+    diagnoseHistory.value = (result?.items || []).map(item => ({
+      _id: item.resultId || item.historyId || '',
+      plantName: '植物',
+      mainIssue: item?.summary?.displayName || '诊断记录',
+      createdAt: item.createdAt,
+      imageUrl: '',
+      severity: item?.summary?.severity || 'medium'
+    }))
   } catch (error) {
     console.error('加载诊断历史失败:', error)
   } finally {
@@ -272,13 +281,13 @@ function handleMenuClick(item) {
 
 function viewAllHistory() {
   uni.navigateTo({
-    url: '/pages/diagnose-history/diagnose-history'
+    url: '/pages/diagnose/diagnose'
   })
 }
 
 function viewDiagnoseDetail(item) {
   uni.navigateTo({
-    url: `/pages/diagnose-detail/diagnose-detail?id=${item._id}`
+    url: `/pages/diagnose/diagnose?id=${item._id}`
   })
 }
 
@@ -302,4 +311,3 @@ function formatTime(time) {
   overflow: hidden;
 }
 </style>
-

@@ -3,61 +3,52 @@
 const {
   jsonResponse,
   notFound,
-  methodNotAllowed,
   getHttpRequestData,
   resolveRequestAppEnv,
-  runWithRequestAppEnv,
-  resolveHttpUserInfo
+  runWithRequestAppEnv
 } = require('/opt/utils/http')
-const {
-  listDiagnosisSessions,
-  getDiagnosisSessionDetail,
-  buildDiagnosisDecision
-} = require('/opt/utils/plant-knowledge')
+
+function buildDeprecatedResponse(path = '') {
+  return jsonResponse(410, {
+    code: 410,
+    message: 'diagnosis-history-http 已下线，请改用 diagnose-http 统一诊断链路',
+    data: {
+      deprecatedFunction: 'diagnosis-history-http',
+      replacementFunction: 'diagnose-http',
+      requestedPath: path,
+      replacements: {
+        history: 'diagnose-http/diagnosis/history',
+        result: 'diagnose-http/diagnosis/result',
+        feedback: 'diagnose-http/diagnosis/feedback'
+      }
+    }
+  })
+}
 
 async function main(event, context) {
   const request = getHttpRequestData(event, context)
   const path = String(request.path || '')
-  const method = request.method || 'GET'
 
   try {
     if (path.includes('/diagnosis/history/health')) {
-      return jsonResponse(200, { code: 200, data: { status: 'ok', timestamp: Date.now() } })
-    }
-
-    const userInfo = await resolveHttpUserInfo(request.headers, request.query, context)
-    if (!userInfo?.openid) {
-      return jsonResponse(401, { code: 401, message: '请先登录', data: null })
-    }
-
-    if (path.includes('/diagnosis/history/detail')) {
-      if (method !== 'GET') return methodNotAllowed(method)
-      const detail = await getDiagnosisSessionDetail(userInfo.openid, request.query.id)
-      if (!detail) {
-        return jsonResponse(404, { code: 404, message: '诊断记录不存在', data: null })
-      }
-      return jsonResponse(200, { code: 200, data: detail })
-    }
-
-    if (path.includes('/diagnosis/history')) {
-      if (method !== 'GET') return methodNotAllowed(method)
-      const data = await listDiagnosisSessions(userInfo.openid, {
-        page: Number(request.query.page || 1),
-        pageSize: Number(request.query.pageSize || 10),
-        userPlantId: request.query.plantId || null
+      return jsonResponse(200, {
+        code: 200,
+        data: {
+          status: 'deprecated',
+          functionName: 'diagnosis-history-http',
+          replacementFunction: 'diagnose-http',
+          timestamp: Date.now()
+        }
       })
-      return jsonResponse(200, { code: 200, data })
     }
 
-    if (path.includes('/diagnosis/decision')) {
-      if (method !== 'POST') return methodNotAllowed(method)
-      const decision = await buildDiagnosisDecision({
-        openid: userInfo.openid,
-        plantId: request.body.plantId || null,
-        userPlantId: request.body.userPlantId || null,
-        observedSymptoms: request.body.observedSymptoms || []
-      })
-      return jsonResponse(200, { code: 200, data: decision })
+    if (
+      path.includes('/diagnosis/history') ||
+      path.includes('/diagnosis/history/detail') ||
+      path.includes('/diagnosis/history/feedback') ||
+      path.includes('/diagnosis/decision')
+    ) {
+      return buildDeprecatedResponse(path)
     }
 
     return notFound(path)

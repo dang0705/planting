@@ -1,4 +1,9 @@
 import { fetchPlantImagesQuery } from '@/vue-query/storage/queries/plant-images.js'
+import {
+  requestStorageFileDelete,
+  requestStorageFileUpload,
+  requestStorageFileUrl
+} from '@/http-functions/storage/client'
 
 /**
  * 云存储 API
@@ -13,6 +18,59 @@ import { fetchPlantImagesQuery } from '@/vue-query/storage/queries/plant-images.
 function sanitizeFileName(str) {
   // 只保留字母、数字、下划线、中划线
   return str.replace(/[^a-zA-Z0-9_-]/g, '')
+}
+
+function guessMimeType(ext = '') {
+  const normalized = String(ext || '')
+    .trim()
+    .toLowerCase()
+    .replace(/^\./, '')
+
+  switch (normalized) {
+    case 'png':
+      return 'image/png'
+    case 'webp':
+      return 'image/webp'
+    case 'gif':
+      return 'image/gif'
+    case 'heic':
+      return 'image/heic'
+    default:
+      return 'image/jpeg'
+  }
+}
+
+function getFileExtension(filePath = '') {
+  const normalized = String(filePath || '').trim().split('?')[0]
+  const match = normalized.match(/\.([a-zA-Z0-9]+)$/)
+  return match ? String(match[1] || '').toLowerCase() : 'jpg'
+}
+
+function readFileBase64(filePath) {
+  return new Promise((resolve, reject) => {
+    wx.getFileSystemManager().readFile({
+      filePath,
+      encoding: 'base64',
+      success: res => {
+        const base64 = String(res?.data || '').trim()
+        if (!base64) {
+          reject(new Error('读取图片失败'))
+          return
+        }
+        resolve(base64)
+      },
+      fail: reject
+    })
+  })
+}
+
+async function toImageDataUrl(filePath) {
+  const ext = getFileExtension(filePath)
+  const base64 = await readFileBase64(filePath)
+  return {
+    dataUrl: `data:${guessMimeType(ext)};base64,${base64}`,
+    ext
+  }
 }
 
 /**
@@ -134,11 +192,8 @@ export async function uploadPlantImage(imagePath, userId, plantId = '') {
     const cleanUserId = sanitizeFileName(userId || 'user')
     const cleanPlantId = sanitizeFileName(plantId || 'temp')
 
-    // 生成云存储路径
-    const timestamp = Date.now()
-    const random = Math.random().toString(36).substr(2, 9)
-    // 路径格式：plants/userId/plantId_timestamp_random.jpg
-    const fileName = `plants/${cleanUserId}/${cleanPlantId}_${timestamp}_${random}.jpg`
+    const { dataUrl, ext } = await toImageDataUrl(compressResult.path)
+    const fileName = `plants/${cleanUserId}/${cleanPlantId}`
 
     console.log('上传文件路径:', fileName)
     console.log('上传文件信息:', {
@@ -151,17 +206,19 @@ export async function uploadPlantImage(imagePath, userId, plantId = '') {
       compressed: compressResult.compressed !== false
     })
 
-    // 直接使用 CloudBase SDK 上传到云存储（避免云函数 5MB 限制）
-    const uploadResult = await wx.cloud.uploadFile({
-      cloudPath: fileName,
-      filePath: compressResult.path
+    const uploadResult = await requestStorageFileUpload({
+      dataUrl,
+      suffix: ext,
+      plantId: cleanPlantId,
+      userId: cleanUserId,
+      maxAge: 7200
     })
 
-    if (uploadResult.fileID) {
+    if (uploadResult?.fileId) {
       return {
-        fileName: fileName,
-        fileId: uploadResult.fileID,
-        url: uploadResult.fileID
+        fileName: uploadResult.cloudPath || fileName,
+        fileId: uploadResult.fileId,
+        url: uploadResult.url || uploadResult.tempUrl || ''
       }
     } else {
       throw new Error('上传失败')
@@ -180,15 +237,11 @@ export async function uploadPlantImage(imagePath, userId, plantId = '') {
  */
 export async function getImageUrl(fileId, maxAge = 3600) {
   try {
-    const url = await wx.cloud.getTempFileURL({
-      fileList: [fileId],
-      maxAge: maxAge
+    const result = await requestStorageFileUrl({
+      fileId,
+      maxAge
     })
-    if (url.fileList && url.fileList.length > 0) {
-      return url.fileList[0].tempFileURL
-    } else {
-      throw new Error('获取链接失败')
-    }
+    return result?.tempUrl || result?.url || ''
   } catch (error) {
     console.error('获取图片链接失败:', error)
     throw error
@@ -202,8 +255,8 @@ export async function getImageUrl(fileId, maxAge = 3600) {
  */
 export async function deleteImage(fileId) {
   try {
-    await wx.cloud.deleteFile({
-      fileList: [fileId]
+    await requestStorageFileDelete({
+      fileId
     })
     return true
   } catch (error) {

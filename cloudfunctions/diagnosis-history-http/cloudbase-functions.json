@@ -9,18 +9,6 @@
   "routes": [
     {
       "functionName": "diagnosis-history-http",
-      "path": "/diagnosis/history"
-    },
-    {
-      "functionName": "diagnosis-history-http",
-      "path": "/diagnosis/history/detail"
-    },
-    {
-      "functionName": "diagnosis-history-http",
-      "path": "/diagnosis/decision"
-    },
-    {
-      "functionName": "diagnosis-history-http",
       "path": "/diagnosis/history/health"
     }
   ]

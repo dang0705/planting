@@ -48,10 +48,14 @@ async function main(event, context) {
       const created = await createUserPlantInstance({
         openid,
         plantId: request.body.plantId || null,
+        plantIdentityId: request.body.plantIdentityId || null,
+        legacyPlantId: request.body.legacyPlantId || null,
         recognizedName: request.body.recognizedName || null,
         sourceType: request.body.sourceType || 'catalog',
         recognitionType: request.body.recognitionType || null,
         recognitionConfidence: request.body.recognitionConfidence || null,
+        identityResolutionStatus: request.body.identityResolutionStatus || null,
+        visualCallBatchId: request.body.visualCallBatchId || null,
         nickname: request.body.nickname || request.body.nickName || null,
         location: request.body.location || '阳台',
         photos: request.body.photos || null

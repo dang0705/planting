@@ -10,7 +10,8 @@ const {
   runWithRequestAppEnv,
   resolveHttpUserInfo
 } = require('/opt/utils/http')
-const { findCanonicalPlantMatch, recordIdentifySession } = require('/opt/utils/plant-knowledge')
+const { findCanonicalPlantMatch } = require('/opt/utils/plant-knowledge')
+const { persistIdentifyRuntimeArtifacts } = require('/opt/utils/identify-runtime')
 
 const AK = process.env.BAIDU_AK || 'UGqylU0BgWoCLd8PfnH6pxpl'
 const SK = process.env.BAIDU_SK || 'NVCAG44tKAfXmVn0BrRHDVFnJDAQRt0x'
@@ -19,6 +20,8 @@ function pickPlantMatchFields(plant) {
   if (!plant) return null
   return {
     id: plant.id || '',
+    plantIdentityId: plant.plantIdentityId || '',
+    legacyPlantId: plant.legacyPlantId || '',
     canonicalName: plant.canonicalName || '',
     matchAlias: plant.matchAlias || '',
     internetName: plant.internetName || ''
@@ -27,6 +30,29 @@ function pickPlantMatchFields(plant) {
 
 function buildIdentifyId() {
   return `identify_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+}
+
+function classifyIdentityMatches(matches = []) {
+  const normalizedMatches = Array.isArray(matches) ? matches : []
+  const strongMatch = normalizedMatches.find(item => Number(item?.matchScore || 0) >= 3) || null
+  const weakCandidates = normalizedMatches.filter(item => {
+    const score = Number(item?.matchScore || 0)
+    return score > 0 && score < 3
+  })
+  const primaryCandidate = strongMatch || weakCandidates[0] || null
+  const taxonomyMatchStatus = strongMatch
+    ? 'matched'
+    : weakCandidates.length
+      ? 'weak_matched'
+      : 'unresolved'
+
+  return {
+    strongMatch,
+    weakCandidates,
+    primaryCandidate,
+    taxonomyMatchStatus,
+    identityResolutionStatus: taxonomyMatchStatus
+  }
 }
 
 function processBaiduResult(baiduData) {
@@ -204,31 +230,44 @@ async function main(event, context) {
 
     const topResult = processed.data.result?.[0] || {}
     const matches = await findCanonicalPlantMatch(topResult.name || '')
-    const matchedPlant = matches[0] || null
-    const simplifiedMatchedPlant = pickPlantMatchFields(matchedPlant)
+    const {
+      strongMatch,
+      primaryCandidate,
+      taxonomyMatchStatus,
+      identityResolutionStatus
+    } = classifyIdentityMatches(matches)
+    const simplifiedMatchedPlant = pickPlantMatchFields(strongMatch)
     const simplifiedCandidates = matches.map(pickPlantMatchFields).filter(Boolean)
     const identifyId = buildIdentifyId()
 
-    await recordIdentifySession({
-      identifyId,
+    const runtimeArtifacts = await persistIdentifyRuntimeArtifacts({
+      sessionId: identifyId,
       openid: userInfo.openid,
       imageUrl,
+      provider: 'baidu',
       recognizedName: topResult.name || '',
       recognizedType: processed.data.type || 'plant',
       confidence: topResult.score || 0,
-      canonicalPlantId: simplifiedMatchedPlant?.id || null,
-      matchType: matchedPlant?.matchType || null,
       rawPayload: baiduResult,
-      candidateMatches: simplifiedCandidates
+      candidateMatches: simplifiedCandidates,
+      primaryCandidate,
+      taxonomyMatchStatus,
+      identityResolutionStatus,
+      inputSlotType: 'unknown',
+      legacyCanonicalPlantId: simplifiedMatchedPlant?.id || null
     })
 
     return jsonResponse(200, {
       code: 200,
       data: {
         sessionId: identifyId,
+        visualCallBatchId: runtimeArtifacts.visualCallBatchId,
         name: simplifiedMatchedPlant?.canonicalName || topResult.name || '未知植物',
         confidence: topResult.score || 0,
         type: processed.data.type || 'plant',
+        taxonomyMatchStatus,
+        identityResolutionStatus,
+        routePrimaryAction: runtimeArtifacts.routePrimaryAction,
         matchedPlant: simplifiedMatchedPlant,
         candidates: simplifiedCandidates,
         raw: processed.data

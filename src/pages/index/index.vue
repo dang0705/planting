@@ -238,7 +238,7 @@
       :plant-id="currentPlantId"
       :plant-name="currentPlantName"
       @success="handleDiagnoseSuccess"
-      @close="currentPlantId = '' && (currentPlantName = '')"
+      @close="handleDiagnosePopupClose"
     />
   </view>
 </template>
@@ -250,7 +250,7 @@ import DiagnosePopup from '@/components/DiagnosePopup.vue'
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
 import { getCityNameByLocation } from '@/api/weather.js'
-import { fetchDiagnosisHistory } from '@/api/plants-http.js'
+import { getDiagnosisHistory } from '@/api/plants-http.js'
 import loading from '@/assets/icons/loading.svg'
 
 const plantStore = usePlantStore()
@@ -296,10 +296,27 @@ function handleCollapseChange(e) {
 async function loadPlantDiagnoseHistory(plantId) {
   loadingHistory[plantId] = true
   try {
-    const result = await fetchDiagnosisHistory(1, 3, plantId)
-    if (result?.code === 200) {
-      plantDiagnoseHistory[plantId] = result.data.list || []
-    }
+    const result = await getDiagnosisHistory({
+      plantId,
+      page: 1,
+      pageSize: 3
+    })
+
+    plantDiagnoseHistory[plantId] = (result?.items || []).map(item => ({
+      _id: item.resultId || item.historyId || '',
+      mainIssue: item?.summary?.displayName || '诊断记录',
+      healthStatus:
+        !item?.outcomeType
+          ? 'unknown'
+          : item?.outcomeType === 'non_problematic'
+          ? 'healthy'
+          : item?.outcomeType === 'uncertain'
+            ? 'unknown'
+            : item?.summary?.severity === 'high'
+              ? 'danger'
+              : 'warning',
+      createdAt: item.createdAt
+    }))
   } catch (error) {
     console.error('加载诊断历史失败:', error)
   } finally {
@@ -320,9 +337,14 @@ function handleDiagnoseSuccess(result) {
   }
 }
 
+function handleDiagnosePopupClose() {
+  currentPlantId.value = ''
+  currentPlantName.value = ''
+}
+
 function viewDiagnoseDetail(recordId) {
   uni.navigateTo({
-    url: `/pages/diagnose-detail/diagnose-detail?id=${recordId}`
+    url: `/pages/diagnose/diagnose?id=${recordId}`
   })
 }
 
@@ -457,9 +479,9 @@ function getHealthText(status) {
     warning: '注意',
     danger: '异常',
     sick: '异常',
-    unknown: '未知'
+    unknown: '待确认'
   }
-  return textMap[status] || '未知'
+  return textMap[status] || '待确认'
 }
 
 function getDaysAgo(date) {
@@ -476,5 +498,3 @@ function viewTip(tip) {
   })
 }
 </script>
-
-

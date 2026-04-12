@@ -31,5 +31,17 @@ module.exports = {
   },
   unknownFlow: {
     groupUnknownThreshold: 2
+  },
+  followUpSelection: {
+    visualLockThreshold: 0.78,
+    highSpecificityThreshold: 0.72,
+    strongOverlapPenalty: 0.85,
+    weakOverlapPenalty: 0.35
+  },
+  lowConfidence: {
+    topScoreThreshold: 0.62,
+    scoreGapThreshold: 0.15,
+    unknownGroupThreshold: 2,
+    visualConfidenceThreshold: 0.65
   }
 }

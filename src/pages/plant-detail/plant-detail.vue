@@ -131,6 +131,12 @@
         </button>
       </view>
     </view>
+    <DiagnosePopup
+      ref="diagnosePopupRef"
+      :plant-id="plantId"
+      :plant-name="plant?.displayName || '植物'"
+      @success="handleDiagnoseSuccess"
+    />
   </view>
 </template>
 
@@ -139,12 +145,14 @@ import { ref, computed, onMounted } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
+import DiagnosePopup from '@/components/DiagnosePopup.vue'
 
 const plantStore = usePlantStore()
 const userStore = useUserStore()
 
 const navbarHeight = ref(88)
 const plantId = ref(null)
+const diagnosePopupRef = ref(null)
 
 const plant = computed(() => {
   return plantStore.userPlants.find(p => p.id === plantId.value)
@@ -226,8 +234,10 @@ function startDiagnosis() {
     })
     return
   }
-  uni.navigateTo({ url: `/pages/diagnose/diagnose?plantId=${plantId.value}` })
+  diagnosePopupRef.value?.open()
 }
+
+function handleDiagnoseSuccess() {}
 
 async function doWatering() {
   const result = await plantStore.completeWatering(plantId.value)

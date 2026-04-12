@@ -36,6 +36,16 @@ const expectedColumns = {
     'evidence_type',
     'data_status'
   ],
+  plant_identity_diagnosis_links: [
+    'plant_identity_id',
+    'link_level',
+    'target_profile_key',
+    'target_table_name',
+    'target_record_key',
+    'link_strength',
+    'review_status',
+    'is_active'
+  ],
   genus_problem_profiles: ['genus', 'problem_key', 'genus_compatibility', 'data_status'],
   problem_host_profiles: ['problem_key', 'host_level', 'host_name', 'host_compatibility', 'data_status'],
   plant_problem_profiles: ['plant_id', 'problem_key', 'genus_compatibility', 'host_compatibility', 'final_prior_score', 'data_status'],
@@ -43,8 +53,63 @@ const expectedColumns = {
   question_library_v5_real: ['question_key', 'question_text_cn', 'question_group_key', 'allow_unknown', 'priority', 'target_symptom_key', 'data_status'],
   question_option_mapping_v5_real: ['question_key', 'option_key', 'maps_to_symptom_key', 'value', 'association_strength', 'data_status'],
   question_strategy_v5_real: ['problem_key', 'question_group_key', 'question_key', 'priority_score', 'trigger_type', 'data_status'],
-  question_generation_engine: ['engine_rule_key', 'applies_to_group', 'input_signal', 'allow_unknown_default', 'data_status'],
-  diagnosis_result_explanations: ['problem_key', 'display_name_cn', 'result_summary_cn', 'why_it_happens_cn', 'what_to_check_next_cn', 'first_aid_cn', 'avoid_cn']
+  question_generation_engine: ['engine_rule_key', 'applies_to_group', 'input_signal', 'allow_unknown_default'],
+  diagnosis_result_explanations: ['problem_key', 'display_name_cn', 'result_summary_cn', 'why_it_happens_cn', 'what_to_check_next_cn', 'first_aid_cn', 'avoid_cn'],
+  visual_supervision_records: [
+    'session_id',
+    'visual_call_batch_id',
+    'visual_admission_record_id',
+    'adopted_by_evidence',
+    'corrected_by_question',
+    'denied_by_runtime',
+    'denied_by_outcome_competition',
+    'question_correction_scope',
+    'final_outcome_type',
+    'final_stop_reason'
+  ],
+  question_queue: [
+    'question_queue_id',
+    '_openid',
+    'session_id',
+    'diagnosis_id',
+    'round_id',
+    'round_index',
+    'route_primary_action',
+    'queue_status',
+    'service_target',
+    'exhausted_reason',
+    'question_items_json',
+    'active_item_count',
+    'asked_item_count',
+    'answered_item_count',
+    'invalidated_item_count',
+    'created_at',
+    'updated_at'
+  ],
+  stop_state: [
+    'stop_state_id',
+    '_openid',
+    'session_id',
+    'diagnosis_id',
+    'round_id',
+    'round_index',
+    'is_stopped',
+    'stop_reason_type',
+    'stop_reason',
+    'stop_reason_text',
+    'final_output_ref',
+    'allow_more_questions',
+    'output_eligible',
+    'output_judgment',
+    'conclusion_type',
+    'conclusion_status',
+    'output_conservatism',
+    'key_evidence_summary',
+    'unresolved_risks_json',
+    'next_step_hints_json',
+    'created_at',
+    'updated_at'
+  ]
 }
 
 function buildTableDiff(tableName, actualColumns = []) {

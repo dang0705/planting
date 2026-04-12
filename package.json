@@ -9,6 +9,22 @@
     "test:pinia": "node test-pinia.mjs",
     "test:tailwind": "node test-tailwind.mjs",
     "test:all": "node test-all.mjs",
+    "import-data": "node src/cli.js import-data",
+    "diff-data": "node src/cli.js diff-data",
+    "publish-data": "node src/cli.js publish-data",
+    "rollback-data": "node src/cli.js rollback-data",
+    "validate-schema": "node src/cli.js validate-schema",
+    "check:cloudbase-http": "node scripts/terminal-e2e/cloudbase-http-check.mjs",
+    "check:diagnose-smoke": "node scripts/terminal-e2e/cloudbase-http-check.mjs --smoke=diagnose --env=cloud1-2grufevs395a9d5e --app-env=development --terminal-e2e=true --device-id=codex-dev-e2e-smoke",
+    "check:diagnose-smoke:uncertain": "node scripts/terminal-e2e/cloudbase-http-check.mjs --smoke=diagnose --env=cloud1-2grufevs395a9d5e --app-env=development --terminal-e2e=true --device-id=codex-dev-e2e-uncertain-unknown --answer-pattern=unknown,unknown,unknown --expect-outcome=uncertain",
+    "check:diagnose-smoke:non-problematic": "node scripts/terminal-e2e/cloudbase-http-check.mjs --smoke=diagnose --env=cloud1-2grufevs395a9d5e --app-env=development --terminal-e2e=true --device-id=codex-dev-e2e-non-problematic --observed-evidence-set='[{\"observedEvidenceSetId\":\"terminal_smoke::normal_leaf_aging_stable\",\"evidenceKey\":\"normal_leaf_aging_stable\",\"evidenceType\":\"symptom\",\"symptomKey\":\"normal_leaf_aging_stable\",\"symptomCn\":\"底部老叶稳定黄化\",\"confidence\":0.99,\"sourceType\":\"user_answer\",\"currentStatus\":\"active\",\"targetLayer\":\"observed_evidence_set\"}]' --expect-outcome=non_problematic --expect-non-problematic-type=normal_leaf_aging",
+    "check:diagnose-smoke:stable-marking": "node scripts/terminal-e2e/cloudbase-http-check.mjs --smoke=diagnose --env=cloud1-2grufevs395a9d5e --app-env=development --terminal-e2e=true --device-id=codex-dev-e2e-stable-marking --observed-evidence-set='[{\"observedEvidenceSetId\":\"terminal_smoke::stable_natural_marking_pattern\",\"evidenceKey\":\"stable_natural_marking_pattern\",\"evidenceType\":\"symptom\",\"symptomKey\":\"stable_natural_marking_pattern\",\"symptomCn\":\"长期稳定斑驳模式\",\"confidence\":0.99,\"sourceType\":\"user_answer\",\"currentStatus\":\"active\",\"targetLayer\":\"observed_evidence_set\"}]' --answer-pattern=yes,yes,yes --expect-outcome=non_problematic --expect-non-problematic-type=stable_natural_marking",
+    "check:diagnose-visual-smoke": "node scripts/terminal-e2e/cloudbase-http-check.mjs --smoke=diagnose-visual --env=cloud1-2grufevs395a9d5e --app-env=development --terminal-e2e=true --device-id=codex-dev-e2e-visual",
+    "check:diagnose-visual-regression": "node scripts/terminal-e2e/run-visual-symptom-batch.mjs --env=cloud1-2grufevs395a9d5e --case-groups-file=scripts/terminal-e2e/manifests/diagnose-visual-regression.manifest.json --skip-auth=true --app-env=development --keep-uploaded-image=false --max-followup-loops=2 --start-mode=sync --report-file=scripts/terminal-e2e/manifests/diagnose-visual-regression.report.json",
+    "check:diagnose-outcome-regression": "node scripts/terminal-e2e/run-diagnose-outcome-batch.mjs --env=cloud1-2grufevs395a9d5e --case-groups-file=scripts/terminal-e2e/manifests/diagnose-outcome-regression.manifest.json --skip-auth=true --app-env=development --max-followup-loops=2 --report-file=scripts/terminal-e2e/manifests/diagnose-outcome-regression.report.json",
+    "check:diagnose-fast-convergence-regression": "node scripts/terminal-e2e/run-high-specificity-fast-convergence-batch.mjs --case-groups-file=scripts/terminal-e2e/manifests/high-specificity-fast-convergence.manifest.json --report-file=scripts/terminal-e2e/manifests/high-specificity-fast-convergence.report.json",
+    "check:diagnose-regression:full": "node scripts/terminal-e2e/run-diagnose-regression-full.mjs --env=cloud1-2grufevs395a9d5e --app-env=development --skip-auth=true --max-followup-loops=2 --start-mode=sync --keep-uploaded-image=false",
+    "report:shadow-compare": "node scripts/terminal-e2e/report-shadow-compare.mjs",
     "dev:custom": "uni -p",
     "dev:h5": "uni",
     "dev:h5:ssr": "uni --ssr",
@@ -69,10 +85,12 @@
     "@dcloudio/uni-mp-xhs": "3.0.0-4080720251210001",
     "@dcloudio/uni-quickapp-webview": "3.0.0-4080720251210001",
     "@dcloudio/uni-ui": "^1.5.11",
+    "mysql2": "^3.15.3",
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^4.7.1",
     "vue": "^3.4.21",
-    "vue-i18n": "^9.1.9"
+    "vue-i18n": "^9.1.9",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@dcloudio/types": "^3.4.8",
@@ -80,8 +98,6 @@
     "@dcloudio/uni-cli-shared": "3.0.0-4080720251210001",
     "@dcloudio/uni-stacktracey": "3.0.0-4080720251210001",
     "@dcloudio/vite-plugin-uni": "3.0.0-4080720251210001",
-    "@oxfmt/binding-win32-x64-msvc": "^0.35.0",
-    "@oxlint/binding-win32-x64-msvc": "^1.50.0",
     "@vitejs/plugin-vue": "^6.0.4",
     "@vue/runtime-core": "^3.4.21",
     "autoprefixer": "^10.4.24",
@@ -94,5 +110,13 @@
     "tailwindcss": "^3",
     "vite": "^5.2.8",
     "weapp-tailwindcss": "^4.9.8"
+  },
+  "optionalDependencies": {
+    "@oxfmt/binding-darwin-arm64": "^0.35.0",
+    "@oxfmt/binding-darwin-x64": "^0.35.0",
+    "@oxfmt/binding-win32-x64-msvc": "^0.35.0",
+    "@oxlint/binding-darwin-arm64": "^1.50.0",
+    "@oxlint/binding-darwin-x64": "^1.50.0",
+    "@oxlint/binding-win32-x64-msvc": "^1.50.0"
   }
 }

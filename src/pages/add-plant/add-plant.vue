@@ -59,7 +59,7 @@
                 :key="p.id"
                 :plant="p"
                 :selected="selectedPlant?.id === p.id"
-                @select="selectedPlant = p"
+                @select="handlePlantSelect(p)"
               />
             </view>
             <view class="w-16 flex-shrink-0 flex items-center justify-center">
@@ -190,6 +190,7 @@ const plantGroups = computed(() => {
 const step = ref(1)
 const selectedPlant = ref(null)
 const recognizedName = ref('') // AI识别的植物名称（未匹配到 plant_catalog 时使用）
+const identifyContext = ref(null)
 const submitting = ref(false)
 const showLogin = ref(false)
 const loginMsg = ref('添加植物需要先登录')
@@ -290,6 +291,70 @@ function handlePlantScrollToLower() {
   }
 }
 
+function normalizeIdentifyPlantCandidate(candidate) {
+  if (!candidate || typeof candidate !== 'object') return null
+
+  const normalizedId = String(candidate.id || '').trim()
+  const plantIdentityId = String(candidate.plantIdentityId || '').trim()
+  const legacyPlantId = String(candidate.legacyPlantId || '').trim()
+  const canonicalName = String(candidate.canonicalName || candidate.name || '').trim()
+  const internetName = String(candidate.internetName || '').trim()
+
+  const matchedDefaultPlant =
+    defaultPlants.value.find(item => {
+      const sameIdentity = plantIdentityId && item.plantIdentityId === plantIdentityId
+      const sameLegacy = legacyPlantId && item.legacyPlantId === legacyPlantId
+      const sameId = normalizedId && item.id === normalizedId
+      const sameName = canonicalName && item.canonicalName === canonicalName
+      return sameIdentity || sameLegacy || sameId || sameName
+    }) || null
+
+  if (matchedDefaultPlant) {
+    return matchedDefaultPlant
+  }
+
+  if (!canonicalName) return null
+
+  return {
+    id: normalizedId || legacyPlantId || plantIdentityId || canonicalName,
+    plantId: normalizedId || legacyPlantId || plantIdentityId || '',
+    plantIdentityId,
+    legacyPlantId,
+    canonicalName,
+    internetName
+  }
+}
+
+function buildIdentifyContext(result, overrides = {}) {
+  return {
+    sessionId: String(result?.sessionId || '').trim(),
+    visualCallBatchId: String(result?.visualCallBatchId || '').trim(),
+    recognizedName: String(result?.recognizedName || result?.name || '').trim(),
+    recognitionConfidence: Number(result?.confidence || 0),
+    recognitionType: String(result?.type || 'plant').trim() || 'plant',
+    taxonomyMatchStatus: String(result?.taxonomyMatchStatus || '').trim(),
+    identityResolutionStatus: String(result?.identityResolutionStatus || '').trim(),
+    routePrimaryAction: String(result?.routePrimaryAction || '').trim(),
+    selectionMode: overrides.selectionMode || 'recognized_name',
+    selectedPlant: overrides.selectedPlant || null
+  }
+}
+
+function applyIdentifySelection({ plant = null, fallbackName = '', context }) {
+  formData.value.image = pendingImage.value.path
+  selectedPlant.value = plant
+  recognizedName.value = plant ? '' : fallbackName
+  identifyContext.value = context
+  showAIDialog.value = false
+  setTimeout(() => (step.value = 2), 400)
+}
+
+function handlePlantSelect(plant) {
+  identifyContext.value = null
+  selectedPlant.value = plant
+  recognizedName.value = ''
+}
+
 async function useAIIdentify() {
   if (!(await userStore.ensureLogin())) {
     loginMsg.value = '使用 AI 识别功能需要先登录'
@@ -324,7 +389,7 @@ async function doIdentify(path) {
     pendingImage.value = { path, url }
 
     uni.showLoading({ title: 'AI 识别中...', mask: true })
-    const response = await identifyPlantByImage(url)
+    const response = await identifyPlantByImageWithRetry(url)
     uni.hideLoading()
 
     if (response?.code !== 200) {
@@ -333,8 +398,14 @@ async function doIdentify(path) {
 
     const result = {
       name: response.data?.name || '未知植物',
+      recognizedName: response.data?.name || '未知植物',
       confidence: response.data?.confidence || 0,
       type: response.data?.type || 'plant',
+      sessionId: response.data?.sessionId || '',
+      visualCallBatchId: response.data?.visualCallBatchId || '',
+      taxonomyMatchStatus: response.data?.taxonomyMatchStatus || '',
+      identityResolutionStatus: response.data?.identityResolutionStatus || '',
+      routePrimaryAction: response.data?.routePrimaryAction || '',
       matchedPlant: response.data?.matchedPlant || null,
       candidates: response.data?.candidates || []
     }
@@ -349,8 +420,41 @@ async function doIdentify(path) {
     }, 100)
   } catch (e) {
     uni.hideLoading()
-    uni.showToast({ title: '识别失败，请重试', icon: 'none' })
+    uni.showToast({ title: e?.message || '识别失败，请重试', icon: 'none' })
   }
+}
+
+function isRetryableRequestError(error) {
+  const message = String(error?.message || error || '').toLowerCase()
+  return (
+    message.includes('timeout') ||
+    message.includes('timed out') ||
+    message.includes('network error') ||
+    message.includes('request:fail') ||
+    message.includes('fail timeout')
+  )
+}
+
+async function identifyPlantByImageWithRetry(imageUrl, attempts = 2) {
+  let lastError = null
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await identifyPlantByImage(imageUrl)
+    } catch (error) {
+      lastError = error
+      if (attempt >= attempts || !isRetryableRequestError(error)) {
+        break
+      }
+    }
+  }
+
+  const message = String(lastError?.message || lastError || '')
+  if (/timeout|timed out|fail timeout/i.test(message)) {
+    throw new Error('识别超时，请重试')
+  }
+
+  throw lastError instanceof Error ? lastError : new Error('识别失败，请重试')
 }
 
 function handleAIConfirm(result) {
@@ -359,27 +463,23 @@ function handleAIConfirm(result) {
     return
   }
 
-  const preferredName = (result.matchedPlant?.canonicalName || result.name || '').trim()
-  const matched = defaultPlants.value.find(p => p.canonicalName === preferredName)
+  const matched = normalizeIdentifyPlantCandidate(result.matchedPlant)
 
   if (matched) {
-    formData.value.image = pendingImage.value.path
-    selectedPlant.value = matched
-    recognizedName.value = ''
+    applyIdentifySelection({
+      plant: matched,
+      context: buildIdentifyContext(result, {
+        selectionMode: 'matched',
+        selectedPlant: matched
+      })
+    })
     console.log('[AI确认] 使用匹配的植物数据:', matched.canonicalName)
     uni.showToast({ title: `识别成功: ${matched.canonicalName}`, icon: 'success' })
-    showAIDialog.value = false
-    setTimeout(() => (step.value = 2), 500)
     return
   }
 
   const candidatePlants = (result.candidates || [])
-    .map(candidate => {
-      const canonicalName = String(candidate?.canonicalName || '').trim()
-      return (
-        defaultPlants.value.find(item => item.canonicalName === canonicalName) || candidate || null
-      )
-    })
+    .map(candidate => normalizeIdentifyPlantCandidate(candidate))
     .filter(Boolean)
 
   if (candidatePlants.length > 0) {
@@ -394,21 +494,27 @@ function handleAIConfirm(result) {
     uni.showActionSheet({
       itemList: [...optionLabels, `使用识别名称：${result.name.trim()}`],
       success: action => {
-        formData.value.image = pendingImage.value.path
-
         if (action.tapIndex < limitedCandidates.length) {
           const chosenPlant = limitedCandidates[action.tapIndex]
-          selectedPlant.value = chosenPlant
-          recognizedName.value = ''
+          applyIdentifySelection({
+            plant: chosenPlant,
+            context: buildIdentifyContext(result, {
+              selectionMode: 'candidate',
+              selectedPlant: chosenPlant
+            })
+          })
           uni.showToast({ title: `已选择: ${chosenPlant.canonicalName}`, icon: 'success' })
         } else {
-          selectedPlant.value = null
-          recognizedName.value = result.name.trim()
+          applyIdentifySelection({
+            plant: null,
+            fallbackName: result.name.trim(),
+            context: buildIdentifyContext(result, {
+              selectionMode: 'recognized_name',
+              selectedPlant: null
+            })
+          })
           uni.showToast({ title: `识别成功: ${result.name.trim()}`, icon: 'success' })
         }
-
-        showAIDialog.value = false
-        setTimeout(() => (step.value = 2), 300)
       },
       fail: () => {
         showAIDialog.value = false
@@ -417,19 +523,22 @@ function handleAIConfirm(result) {
     return
   }
 
-  formData.value.image = pendingImage.value.path
-  selectedPlant.value = null
-  recognizedName.value = result.name.trim()
+  applyIdentifySelection({
+    plant: null,
+    fallbackName: result.name.trim(),
+    context: buildIdentifyContext(result, {
+      selectionMode: 'recognized_name',
+      selectedPlant: null
+    })
+  })
   console.log('[AI确认] 使用AI识别名称:', result.name.trim())
   uni.showToast({ title: `识别成功: ${result.name.trim()}`, icon: 'success' })
-  showAIDialog.value = false
-  setTimeout(() => (step.value = 2), 500)
 }
 
 function handleAIRetry() {
   if (!pendingImage.value.url) return
   uni.showLoading({ title: 'AI 识别中...', mask: true })
-  identifyPlantByImage(pendingImage.value.url)
+  identifyPlantByImageWithRetry(pendingImage.value.url)
     .then(response => {
       uni.hideLoading()
       if (response?.code !== 200) {
@@ -437,8 +546,14 @@ function handleAIRetry() {
       }
       const result = {
         name: response.data?.name || '未知植物',
+        recognizedName: response.data?.name || '未知植物',
         confidence: response.data?.confidence || 0,
         type: response.data?.type || 'plant',
+        sessionId: response.data?.sessionId || '',
+        visualCallBatchId: response.data?.visualCallBatchId || '',
+        taxonomyMatchStatus: response.data?.taxonomyMatchStatus || '',
+        identityResolutionStatus: response.data?.identityResolutionStatus || '',
+        routePrimaryAction: response.data?.routePrimaryAction || '',
         matchedPlant: response.data?.matchedPlant || null,
         candidates: response.data?.candidates || []
       }
@@ -490,6 +605,31 @@ async function submitForm() {
 
   submitting.value = true
   try {
+    const selectedCatalogPlant = selectedPlant.value || identifyContext.value?.selectedPlant || null
+    const payloadPlantIdentityId = String(
+      selectedCatalogPlant?.plantIdentityId || ''
+    ).trim()
+    const payloadLegacyPlantId = String(
+      selectedCatalogPlant?.legacyPlantId || ''
+    ).trim()
+    const payloadPlantId = String(
+      selectedCatalogPlant?.id || payloadLegacyPlantId || payloadPlantIdentityId || ''
+    ).trim()
+    const payloadRecognizedName = String(
+      identifyContext.value?.recognizedName || recognizedName.value || ''
+    ).trim()
+    const payloadSourceType = identifyContext.value ? 'baidu' : payloadPlantId ? 'catalog' : 'baidu'
+    const payloadRecognitionType = identifyContext.value?.recognitionType || null
+    const payloadRecognitionConfidence = Number.isFinite(identifyContext.value?.recognitionConfidence)
+      ? identifyContext.value.recognitionConfidence
+      : null
+    const payloadIdentityResolutionStatus = payloadPlantIdentityId
+      ? 'matched'
+      : identifyContext.value?.identityResolutionStatus || 'unresolved'
+    const payloadVisualCallBatchId = String(
+      identifyContext.value?.visualCallBatchId || ''
+    ).trim()
+
     let photos = []
     if (formData.value.image) {
       // 检查图片是否是网络URL（来自植物默认图片）
@@ -516,14 +656,19 @@ async function submitForm() {
 
     // 调用 plant-user-http HTTP 云函数
     const res = await createUserPlant({
-      plantId: selectedPlant.value?.id || null,
-      recognizedName: recognizedName.value || null,
+      plantId: payloadPlantId || null,
+      plantIdentityId: payloadPlantIdentityId || null,
+      legacyPlantId: payloadLegacyPlantId || null,
+      recognizedName: payloadRecognizedName || null,
       nickname:
-        formData.value.nickname || selectedPlant.value?.canonicalName || recognizedName.value,
+        formData.value.nickname || selectedCatalogPlant?.canonicalName || payloadRecognizedName,
       location: formData.value.location,
       photos: photos.length ? photos : null,
-      sourceType: selectedPlant.value?.id ? 'catalog' : 'baidu',
-      recognitionType: selectedPlant.value?.id ? null : 'plant'
+      sourceType: payloadSourceType,
+      recognitionType: payloadRecognitionType,
+      recognitionConfidence: payloadRecognitionConfidence,
+      identityResolutionStatus: payloadIdentityResolutionStatus,
+      visualCallBatchId: payloadVisualCallBatchId || null
     })
 
     if (res?.code === 200) {

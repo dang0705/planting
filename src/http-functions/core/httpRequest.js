@@ -54,6 +54,7 @@ async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}) {
   return {
     ...headers,
     'x-app-env': getRequestAppEnvHeader(),
+    'x-env': getRequestAppEnvHeader(),
     ...(openid ? { 'x-wx-openid': openid, 'x-openid': openid } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {})
   }
@@ -63,6 +64,32 @@ function createUrl(functionPath, query) {
   const queryString = buildQueryString(query)
   const joiner = queryString ? '&' : '?'
   return `${BASE_URL}/${functionPath}${queryString}${joiner}webfn=true`
+}
+
+function resolveHttpMethodTransport(method = 'GET', query = {}, headers = {}) {
+  const requestedMethod = String(method || 'GET').toUpperCase()
+
+  if (requestedMethod === 'GET' || requestedMethod === 'POST') {
+    return {
+      requestMethod: requestedMethod,
+      requestQuery: query,
+      requestHeaders: headers,
+      logicalMethod: requestedMethod
+    }
+  }
+
+  return {
+    requestMethod: 'POST',
+    requestQuery: {
+      ...query,
+      _method: requestedMethod
+    },
+    requestHeaders: {
+      ...headers,
+      'x-http-method-override': requestedMethod
+    },
+    logicalMethod: requestedMethod
+  }
 }
 
 export function httpRequest(defaults = {}) {
@@ -92,14 +119,19 @@ export function httpRequest(defaults = {}) {
         ...headers
       }
     })
-    const url = createUrl(functionPath, query)
+    const {
+      requestMethod,
+      requestQuery,
+      requestHeaders
+    } = resolveHttpMethodTransport(method, query, mergedHeaders)
+    const url = createUrl(functionPath, requestQuery)
 
     return new Promise((resolve, reject) => {
       const requestTask = uni.request({
         url,
-        method,
+        method: requestMethod,
         data: payload,
-        header: mergedHeaders,
+        header: requestHeaders,
         ...(responseType ? { responseType } : {}),
         ...(enableChunked !== undefined ? { enableChunked } : {}),
         ...(timeout ? { timeout } : {}),

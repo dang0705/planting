@@ -13,6 +13,14 @@
     },
     {
       "functionName": "storage-http",
+      "path": "/storage/diagnose-images"
+    },
+    {
+      "functionName": "storage-http",
+      "path": "/storage/files"
+    },
+    {
+      "functionName": "storage-http",
       "path": "/storage/health"
     }
   ]

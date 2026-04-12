@@ -3,21 +3,11 @@
 const { models } = require('/opt/utils/cloudbase')
 const { deductQuota } = require('/opt/utils/quota')
 
-function normalizeStoredDiagnosisImage(image) {
-  const value = String(image || '').trim()
-  if (!value) {
-    return ''
-  }
-
-  if (value.startsWith('data:image/')) {
-    return ''
-  }
-
-  if (value.length > 2000) {
-    return ''
-  }
-
-  return value
+function toNullableDecimalString(value, digits = 6) {
+  if (value === null || value === undefined || value === '') return ''
+  const num = Number(value)
+  if (!Number.isFinite(num)) return ''
+  return num.toFixed(digits)
 }
 
 async function saveDiagnosisSession(plantId, openid, result, image, description, recordId) {
@@ -31,7 +21,11 @@ async function saveDiagnosisSession(plantId, openid, result, image, description,
     SELECT
       {{diagnosisId}}, {{openid}}, up.id, up.plant_id, {{diagnosisMode}}, {{imageUrl}},
       {{userDescription}}, {{aiSummary}}, {{healthScore}}, {{healthStatus}}, {{topProblemKey}},
-      {{topProblemScore}}, {{reliabilityScore}}, {{needsFollowUp}}, {{finalProblemKey}},
+      CASE
+        WHEN NULLIF({{topProblemScore}}, '') <=> NULL THEN NULL
+        ELSE CAST({{topProblemScore}} AS DECIMAL(12,6))
+      END,
+      {{reliabilityScore}}, {{needsFollowUp}}, {{finalProblemKey}},
       {{finalProblemCn}}, {{treatment}}, {{prevention}}
     FROM user_plant_instances up
     WHERE up.id = {{userPlantId}} AND up._openid = {{openid}}
@@ -43,13 +37,13 @@ async function saveDiagnosisSession(plantId, openid, result, image, description,
     openid,
     userPlantId: Number(plantId),
     diagnosisMode: result.diagnosisMode || 'quick',
-    imageUrl: normalizeStoredDiagnosisImage(image),
+    imageUrl: '',
     userDescription: description || '',
     aiSummary: result.summary || result.symptoms || '',
     healthScore: result.healthScore || null,
     healthStatus: result.healthStatus || null,
     topProblemKey: result.topProblemKey || result.finalProblemKey || null,
-    topProblemScore: result.topProblemScore || null,
+    topProblemScore: toNullableDecimalString(result.topProblemScore ?? null),
     reliabilityScore: result.reliabilityScore || null,
     needsFollowUp: result.needsFollowUp ? 1 : 0,
     finalProblemKey: result.finalProblemKey || result.topProblemKey || null,
@@ -259,4 +253,3 @@ async function persistDiagnosisSideEffects({
 module.exports = {
   persistDiagnosisSideEffects
 }
-

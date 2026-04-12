@@ -64,30 +64,169 @@ function parseCareJson(value) {
   return parseJsonField(value, null)
 }
 
+function normalizeNullableString(value) {
+  const normalized = String(value ?? '').trim()
+  if (!normalized) return null
+
+  const lowered = normalized.toLowerCase()
+  if (lowered === 'null' || lowered === 'undefined') {
+    return null
+  }
+
+  return normalized
+}
+
+function resolveCatalogPlantId(row = {}) {
+  return row.legacy_plant_id || row.plant_identity_id || ''
+}
+
+function resolveUserPlantCatalogLookupId(row = {}) {
+  return row.plant_identity_id || row.plant_id || row.legacy_plant_id || ''
+}
+
+function buildCatalogFieldMatchCondition(operator, paramName) {
+  const placeholder = `{{${paramName}}}`
+  return `(
+    REPLACE(LOWER(COALESCE(pie.primary_display_name, '')), ' ', '') ${operator} ${placeholder}
+    OR REPLACE(LOWER(COALESCE(pie.canonical_identity_name, '')), ' ', '') ${operator} ${placeholder}
+    OR REPLACE(LOWER(COALESCE(pie.canonical_identity_name_cn, '')), ' ', '') ${operator} ${placeholder}
+    OR REPLACE(LOWER(COALESCE(pie.canonical_identity_name_en, '')), ' ', '') ${operator} ${placeholder}
+    OR REPLACE(LOWER(COALESCE(pie.scientific_name, '')), ' ', '') ${operator} ${placeholder}
+  )`
+}
+
+function buildCatalogAliasMatchCondition(operator, paramName) {
+  const placeholder = `{{${paramName}}}`
+  return `EXISTS (
+    SELECT 1
+    FROM plant_identity_aliases pia
+    WHERE pia.plant_identity_id = pie.plant_identity_id
+      AND pia.is_active = 1
+      AND REPLACE(LOWER(COALESCE(pia.alias_name, '')), ' ', '') ${operator} ${placeholder}
+  )`
+}
+
+function buildCatalogSearchCondition(operator, paramName) {
+  return `(
+    ${buildCatalogFieldMatchCondition(operator, paramName)}
+    OR ${buildCatalogAliasMatchCondition(operator, paramName)}
+  )`
+}
+
+function buildCatalogAliasMatchSubquery(selectField) {
+  return `(
+    SELECT pia.${selectField}
+    FROM plant_identity_aliases pia
+    WHERE pia.plant_identity_id = pie.plant_identity_id
+      AND pia.is_active = 1
+      AND (
+        REPLACE(LOWER(COALESCE(pia.alias_name, '')), ' ', '') = {{normalized}}
+        OR REPLACE(LOWER(COALESCE(pia.alias_name, '')), ' ', '') LIKE {{fuzzy}}
+      )
+    ORDER BY
+      CASE
+        WHEN REPLACE(LOWER(COALESCE(pia.alias_name, '')), ' ', '') = {{normalized}} THEN 0
+        ELSE 1
+      END,
+      pia.is_preferred_search_alias DESC,
+      CHAR_LENGTH(pia.alias_name),
+      pia.alias_name
+    LIMIT 1
+  )`
+}
+
+const CATALOG_FROM_SQL = `
+  FROM plant_identity_entities pie
+  LEFT JOIN (
+    SELECT
+      plant_identity_id,
+      GROUP_CONCAT(DISTINCT alias_name ORDER BY alias_name SEPARATOR '、') AS alias_names
+    FROM plant_identity_aliases
+    WHERE is_active = 1
+    GROUP BY plant_identity_id
+  ) alias_summary ON alias_summary.plant_identity_id = pie.plant_identity_id
+  LEFT JOIN genus_care_profiles gcp
+    ON gcp.genus_name = pie.genus_name
+   AND gcp.family_name_canonical = pie.family_name_canonical
+   AND gcp.is_active = 1
+`
+
+const CATALOG_SELECT_SQL = `
+  SELECT
+    pie.plant_identity_id,
+    pie.legacy_plant_id,
+    pie.canonical_identity_name,
+    pie.canonical_identity_name_cn,
+    pie.canonical_identity_name_en,
+    pie.primary_display_name,
+    pie.identity_level,
+    pie.family_name_canonical,
+    pie.family_name_cn,
+    pie.family_name_en,
+    pie.genus_name,
+    pie.species_name,
+    pie.scientific_name,
+    pie.category_name_cn,
+    pie.category_name_en,
+    pie.basic_description,
+    pie.cover_image_ref,
+    pie.review_status AS identity_review_status,
+    gcp.watering_strategy_json,
+    gcp.fertilizing_strategy_json,
+    gcp.light_strategy_json,
+    gcp.airflow_strategy_json,
+    gcp.temp_min_c,
+    gcp.temp_max_c,
+    gcp.humidity_min,
+    gcp.humidity_max,
+    gcp.toxicity_level,
+    gcp.review_status AS care_review_status,
+    gcp.evidence_level,
+    alias_summary.alias_names
+`
+
 function mapPlantRow(row) {
+  const catalogId = resolveCatalogPlantId(row)
+  const canonicalName =
+    row.primary_display_name ||
+    row.canonical_identity_name_cn ||
+    row.canonical_identity_name ||
+    row.scientific_name ||
+    ''
+  const scientificName = row.scientific_name || row.canonical_identity_name_en || ''
+  const internetName =
+    scientificName && scientificName !== canonicalName ? scientificName : row.canonical_identity_name_en || ''
+
   return {
-    id: row.plant_id,
-    canonicalName: row.canonical_name,
+    id: catalogId,
+    plantId: catalogId,
+    plantIdentityId: row.plant_identity_id || '',
+    legacyPlantId: row.legacy_plant_id || '',
+    canonicalName,
     aliasNames: row.alias_names || '',
-    latinName: row.latin_name || '',
-    imageFileId: row.image_file_id || '',
-    plantDesc: row.plant_desc || '',
-    categoryCn: row.category_cn || '',
-    categoryEn: row.category_en || '',
-    genus: row.genus || '',
-    familyEn: row.family_en || '',
-    difficulty: Number(row.difficulty || 0),
-    internetName: row.internet_name || '',
-    watering: parseCareJson(row.care_watering),
-    fertilization: parseCareJson(row.care_fertilization),
-    sunning: parseCareJson(row.care_sunning),
-    ventilation: parseCareJson(row.care_ventilation),
-    temperatureMin: row.temperature_min === null || row.temperature_min === undefined ? null : Number(row.temperature_min),
-    temperatureMax: row.temperature_max === null || row.temperature_max === undefined ? null : Number(row.temperature_max),
+    latinName: scientificName,
+    scientificName,
+    imageFileId: row.cover_image_ref || '',
+    plantDesc: row.basic_description || '',
+    categoryCn: row.category_name_cn || '',
+    categoryEn: row.category_name_en || '',
+    genus: row.genus_name || '',
+    familyCn: row.family_name_cn || '',
+    familyEn: row.family_name_en || row.family_name_canonical || '',
+    difficulty: row.difficulty === null || row.difficulty === undefined ? 0 : Number(row.difficulty || 0),
+    internetName,
+    identityLevel: row.identity_level || '',
+    identityReviewStatus: row.identity_review_status || '',
+    watering: parseCareJson(row.watering_strategy_json),
+    fertilization: parseCareJson(row.fertilizing_strategy_json),
+    sunning: parseCareJson(row.light_strategy_json),
+    ventilation: parseCareJson(row.airflow_strategy_json),
+    temperatureMin: row.temp_min_c === null || row.temp_min_c === undefined ? null : Number(row.temp_min_c),
+    temperatureMax: row.temp_max_c === null || row.temp_max_c === undefined ? null : Number(row.temp_max_c),
     humidityMin: row.humidity_min === null || row.humidity_min === undefined ? null : Number(row.humidity_min),
     humidityMax: row.humidity_max === null || row.humidity_max === undefined ? null : Number(row.humidity_max),
-    varianceLevel: row.variance_level || '',
-    careAuditStatus: row.care_audit_status || ''
+    varianceLevel: row.evidence_level || '',
+    careAuditStatus: row.care_review_status || ''
   }
 }
 
@@ -98,70 +237,30 @@ async function listPlantCatalog({ keyword = '', page = 1, pageSize = 10, offset 
     offset === undefined || offset === null
       ? (normalizedPage - 1) * normalizedPageSize
       : Math.max(0, Number(offset) || 0)
-  let sql = `
-    SELECT
-      pc.plant_id,
-      pc.canonical_name,
-      pc.image_file_id,
-      pc.plant_desc,
-      pc.category_cn,
-      pc.category_en,
-      pc.latin_name,
-      pc.genus,
-      pc.family_en,
-      pc.difficulty,
-      pc.internet_name,
-      gcp.watering AS care_watering,
-      gcp.fertilization AS care_fertilization,
-      gcp.sunning AS care_sunning,
-      gcp.ventilation AS care_ventilation,
-      gcp.temperature_min,
-      gcp.temperature_max,
-      gcp.humidity_min,
-      gcp.humidity_max,
-      gcp.variance_level,
-      gcp.care_audit_status,
-      GROUP_CONCAT(DISTINCT pa.alias_name ORDER BY pa.alias_name SEPARATOR '、') AS alias_names
-    FROM plant_catalog pc
-    LEFT JOIN plant_aliases pa ON pa.plant_id = pc.plant_id
-    LEFT JOIN genus_care_profile gcp ON gcp.genus = pc.genus
-  `
+  let sql = `${CATALOG_SELECT_SQL} ${CATALOG_FROM_SQL}`
 
   const params = { limit: normalizedPageSize, offset: normalizedOffset }
-  const conditions = []
+  const conditions = ['pie.is_active = 1']
   const normalizedKeyword = normalizePlantKeyword(keyword)
 
   if (normalizedKeyword) {
-    conditions.push(`(
-      REPLACE(LOWER(pc.canonical_name), ' ', '') LIKE {{searchPattern}}
-      OR REPLACE(LOWER(COALESCE(pc.latin_name, '')), ' ', '') LIKE {{searchPattern}}
-      OR REPLACE(LOWER(COALESCE(pc.internet_name, '')), ' ', '') LIKE {{searchPattern}}
-      OR REPLACE(LOWER(COALESCE(pa.normalized_name, '')), ' ', '') LIKE {{searchPattern}}
-    )`)
+    conditions.push(buildCatalogSearchCondition('LIKE', 'searchPattern'))
     params.searchPattern = `%${normalizedKeyword}%`
   }
 
-  if (conditions.length) {
-    sql += ` WHERE ${conditions.join(' AND ')}`
-  }
-
   sql += `
-    GROUP BY
-      pc.plant_id, pc.canonical_name, pc.image_file_id, pc.plant_desc,
-      pc.category_cn, pc.category_en, pc.latin_name, pc.genus, pc.family_en,
-      pc.difficulty, pc.internet_name,
-      gcp.watering, gcp.fertilization, gcp.sunning, gcp.ventilation,
-      gcp.temperature_min, gcp.temperature_max, gcp.humidity_min, gcp.humidity_max,
-      gcp.variance_level, gcp.care_audit_status
-    ORDER BY CAST(pc.plant_id AS UNSIGNED), pc.canonical_name
+    WHERE ${conditions.join(' AND ')}
+    ORDER BY
+      CAST(COALESCE(NULLIF(pie.legacy_plant_id, ''), '0') AS UNSIGNED),
+      pie.primary_display_name,
+      pie.plant_identity_id
     LIMIT {{limit}} OFFSET {{offset}}
   `
 
   const countSql = `
-    SELECT COUNT(DISTINCT pc.plant_id) AS total
-    FROM plant_catalog pc
-    LEFT JOIN plant_aliases pa ON pa.plant_id = pc.plant_id
-    ${conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''}
+    SELECT COUNT(*) AS total
+    FROM plant_identity_entities pie
+    WHERE ${conditions.join(' AND ')}
   `
 
   const [result, countResult] = await Promise.all([
@@ -182,40 +281,20 @@ async function listPlantCatalog({ keyword = '', page = 1, pageSize = 10, offset 
 
 async function getPlantCatalogById(plantId) {
   const sql = `
-    SELECT
-      pc.plant_id,
-      pc.canonical_name,
-      pc.image_file_id,
-      pc.plant_desc,
-      pc.category_cn,
-      pc.category_en,
-      pc.latin_name,
-      pc.genus,
-      pc.family_en,
-      pc.difficulty,
-      pc.internet_name,
-      gcp.watering AS care_watering,
-      gcp.fertilization AS care_fertilization,
-      gcp.sunning AS care_sunning,
-      gcp.ventilation AS care_ventilation,
-      gcp.temperature_min,
-      gcp.temperature_max,
-      gcp.humidity_min,
-      gcp.humidity_max,
-      gcp.variance_level,
-      gcp.care_audit_status,
-      GROUP_CONCAT(DISTINCT pa.alias_name ORDER BY pa.alias_name SEPARATOR '、') AS alias_names
-    FROM plant_catalog pc
-    LEFT JOIN plant_aliases pa ON pa.plant_id = pc.plant_id
-    LEFT JOIN genus_care_profile gcp ON gcp.genus = pc.genus
-    WHERE pc.plant_id = {{plantId}}
-    GROUP BY
-      pc.plant_id, pc.canonical_name, pc.image_file_id, pc.plant_desc,
-      pc.category_cn, pc.category_en, pc.latin_name, pc.genus, pc.family_en,
-      pc.difficulty, pc.internet_name,
-      gcp.watering, gcp.fertilization, gcp.sunning, gcp.ventilation,
-      gcp.temperature_min, gcp.temperature_max, gcp.humidity_min, gcp.humidity_max,
-      gcp.variance_level, gcp.care_audit_status
+    ${CATALOG_SELECT_SQL}
+    ${CATALOG_FROM_SQL}
+    WHERE pie.is_active = 1
+      AND (
+        pie.plant_identity_id = {{plantId}}
+        OR pie.legacy_plant_id = {{plantId}}
+      )
+    ORDER BY
+      CASE
+        WHEN pie.legacy_plant_id = {{plantId}} THEN 0
+        ELSE 1
+      END,
+      pie.primary_display_name,
+      pie.plant_identity_id
     LIMIT 1
   `
   const result = await models.$runSQL(sql, { plantId })
@@ -228,49 +307,28 @@ async function findCanonicalPlantMatch(name, limit = 5) {
   if (!normalized) return []
 
   const sql = `
-    SELECT
-      pc.plant_id,
-      pc.canonical_name,
-      pc.image_file_id,
-      pc.plant_desc,
-      pc.category_cn,
-      pc.category_en,
-      pc.latin_name,
-      pc.genus,
-      pc.family_en,
-      pc.difficulty,
-      pc.internet_name,
-      gcp.watering AS care_watering,
-      gcp.fertilization AS care_fertilization,
-      gcp.sunning AS care_sunning,
-      gcp.ventilation AS care_ventilation,
-      gcp.temperature_min,
-      gcp.temperature_max,
-      gcp.humidity_min,
-      gcp.humidity_max,
-      gcp.variance_level,
-      gcp.care_audit_status,
-      pa.alias_name,
-      pa.alias_type,
-      CASE
-        WHEN pa.normalized_name = {{normalized}} THEN 3
-        WHEN REPLACE(LOWER(pc.canonical_name), ' ', '') = {{normalized}} THEN 3
-        WHEN REPLACE(LOWER(COALESCE(pc.internet_name, '')), ' ', '') = {{normalized}} THEN 3
-        WHEN pa.normalized_name LIKE {{fuzzy}} THEN 2
-        WHEN REPLACE(LOWER(pc.canonical_name), ' ', '') LIKE {{fuzzy}} THEN 2
-        ELSE 1
-      END AS match_score
-    FROM plant_catalog pc
-    LEFT JOIN plant_aliases pa ON pa.plant_id = pc.plant_id
-    LEFT JOIN genus_care_profile gcp ON gcp.genus = pc.genus
+    ${CATALOG_SELECT_SQL},
+    ${buildCatalogAliasMatchSubquery('alias_name')} AS match_alias,
+    ${buildCatalogAliasMatchSubquery('alias_type')} AS match_alias_type,
+    CASE
+      WHEN ${buildCatalogAliasMatchCondition('=', 'normalized')} THEN 4
+      WHEN ${buildCatalogFieldMatchCondition('=', 'normalized')} THEN 3
+      WHEN ${buildCatalogAliasMatchCondition('LIKE', 'fuzzy')} THEN 2
+      WHEN ${buildCatalogFieldMatchCondition('LIKE', 'fuzzy')} THEN 1
+      ELSE 0
+    END AS match_score
+    ${CATALOG_FROM_SQL}
     WHERE
-      REPLACE(LOWER(pc.canonical_name), ' ', '') = {{normalized}}
-      OR REPLACE(LOWER(COALESCE(pc.internet_name, '')), ' ', '') = {{normalized}}
-      OR REPLACE(LOWER(COALESCE(pc.latin_name, '')), ' ', '') = {{normalized}}
-      OR pa.normalized_name = {{normalized}}
-      OR REPLACE(LOWER(pc.canonical_name), ' ', '') LIKE {{fuzzy}}
-      OR pa.normalized_name LIKE {{fuzzy}}
-    ORDER BY match_score DESC, CAST(pc.plant_id AS UNSIGNED), pc.canonical_name
+      pie.is_active = 1
+      AND (
+        ${buildCatalogSearchCondition('=', 'normalized')}
+        OR ${buildCatalogSearchCondition('LIKE', 'fuzzy')}
+      )
+    ORDER BY
+      match_score DESC,
+      CAST(COALESCE(NULLIF(pie.legacy_plant_id, ''), '0') AS UNSIGNED),
+      pie.primary_display_name,
+      pie.plant_identity_id
     LIMIT {{limit}}
   `
   const result = await models.$runSQL(sql, {
@@ -282,12 +340,13 @@ async function findCanonicalPlantMatch(name, limit = 5) {
   const rows = result?.data?.executeResultList || []
   const dedup = new Map()
   for (const row of rows) {
-    if (!dedup.has(row.plant_id)) {
-      dedup.set(row.plant_id, {
+    const catalogId = resolveCatalogPlantId(row)
+    if (!dedup.has(catalogId)) {
+      dedup.set(catalogId, {
         ...mapPlantRow(row),
         matchScore: Number(row.match_score || 0),
-        matchAlias: row.alias_name || '',
-        matchType: row.alias_type || 'canonical'
+        matchAlias: row.match_alias || '',
+        matchType: row.match_alias_type || 'canonical'
       })
     }
   }
@@ -297,24 +356,78 @@ async function findCanonicalPlantMatch(name, limit = 5) {
 async function createUserPlantInstance({
   openid,
   plantId = null,
+  plantIdentityId = null,
+  legacyPlantId = null,
   recognizedName = null,
   sourceType = 'catalog',
   recognitionType = null,
   recognitionConfidence = null,
+  identityResolutionStatus = null,
+  visualCallBatchId = null,
   nickname = null,
   location = null,
   photos = null
 }) {
   let plant = null
-  let canonicalName = recognizedName || null
+  const normalizedPlantId = normalizeNullableString(plantId)
+  const normalizedPlantIdentityId = normalizeNullableString(plantIdentityId)
+  const normalizedLegacyPlantId = normalizeNullableString(legacyPlantId)
+  const normalizedRecognizedName = normalizeNullableString(recognizedName)
+  const normalizedIdentityResolutionStatus = normalizeNullableString(identityResolutionStatus)
+  const normalizedVisualCallBatchId = normalizeNullableString(visualCallBatchId)
+  let compatibilityPlantId = null
+  let persistedPlantIdentityId = normalizedPlantIdentityId
+  let persistedLegacyPlantId = normalizedLegacyPlantId
+  let canonicalName = normalizedRecognizedName
   let plantGenus = null
   let plantFamilyEn = null
   let plantLatinName = null
+  const lookupCandidates = Array.from(
+    new Set(
+      [
+        normalizedPlantIdentityId,
+        normalizedLegacyPlantId,
+        normalizedPlantId
+      ].filter(Boolean)
+    )
+  )
 
-  if (plantId) {
-    plant = await getPlantCatalogById(plantId)
-    if (!plant) {
-      throw new Error('植物目录中不存在该 plantId')
+  if (normalizedVisualCallBatchId) {
+    const visualBatchResult = await models.$runSQL(
+      `
+        SELECT visual_call_batch_id
+        FROM visual_call_batches
+        WHERE visual_call_batch_id = {{visualCallBatchId}} AND _openid = {{openid}}
+        LIMIT 1
+      `,
+      {
+        openid,
+        visualCallBatchId: normalizedVisualCallBatchId
+      }
+    )
+
+    if (!visualBatchResult?.data?.executeResultList?.[0]?.visual_call_batch_id) {
+      throw new Error('视觉批次不存在或无权限使用')
+    }
+  }
+
+  for (const candidateId of lookupCandidates) {
+    plant = await getPlantCatalogById(candidateId)
+    if (plant) {
+      break
+    }
+  }
+
+  if (lookupCandidates.length && !plant) {
+    throw new Error('植物目录中不存在该 identity / plantId')
+  }
+
+  if (plant) {
+    compatibilityPlantId = plant.id || normalizedPlantId || normalizedLegacyPlantId || normalizedPlantIdentityId
+    persistedPlantIdentityId = plant.plantIdentityId || persistedPlantIdentityId
+    persistedLegacyPlantId = plant.legacyPlantId || persistedLegacyPlantId
+    if (!persistedLegacyPlantId && compatibilityPlantId && compatibilityPlantId !== persistedPlantIdentityId) {
+      persistedLegacyPlantId = compatibilityPlantId
     }
     canonicalName = plant.canonicalName
     plantGenus = plant.genus
@@ -322,25 +435,32 @@ async function createUserPlantInstance({
     plantLatinName = plant.latinName
   }
 
+  const finalIdentityResolutionStatus =
+    persistedPlantIdentityId
+      ? 'matched'
+      : normalizedIdentityResolutionStatus || 'unresolved'
+
   const sql = `
     INSERT INTO user_plant_instances (
-      _openid, plant_id, canonical_name, recognized_name, source_type, recognition_type,
-      recognition_confidence, nickname, location, photos, plant_genus, plant_family_en,
-      plant_latin_name
+      _openid, plant_id, plant_identity_id, legacy_plant_id, canonical_name, recognized_name,
+      source_type, recognition_type, recognition_confidence, identity_resolution_status,
+      visual_call_batch_id, nickname, location, photos, plant_genus, plant_family_en, plant_latin_name
     ) VALUES (
-      {{openid}}, {{plantId}}, {{canonicalName}}, {{recognizedName}}, {{sourceType}}, {{recognitionType}},
-      NULLIF({{recognitionConfidence}}, ''), {{nickname}}, {{location}}, {{photos}}, {{plantGenus}}, {{plantFamilyEn}},
-      {{plantLatinName}}
+      {{openid}}, {{plantId}}, {{plantIdentityId}}, {{legacyPlantId}}, {{canonicalName}}, {{recognizedName}},
+      {{sourceType}}, {{recognitionType}}, NULLIF({{recognitionConfidence}}, ''), {{identityResolutionStatus}},
+      {{visualCallBatchId}}, {{nickname}}, {{location}}, {{photos}}, {{plantGenus}}, {{plantFamilyEn}}, {{plantLatinName}}
     )
   `
 
   await models.$runSQL(sql, {
     openid,
-    plantId,
+    plantId: compatibilityPlantId,
+    plantIdentityId: persistedPlantIdentityId,
+    legacyPlantId: persistedLegacyPlantId,
     canonicalName,
-    recognizedName,
-    sourceType,
-    recognitionType,
+    recognizedName: normalizedRecognizedName,
+    sourceType: normalizeNullableString(sourceType) || 'catalog',
+    recognitionType: normalizeNullableString(recognitionType),
     recognitionConfidence:
       recognitionConfidence === null ||
       recognitionConfidence === undefined ||
@@ -348,8 +468,10 @@ async function createUserPlantInstance({
       recognitionConfidence === 'null'
         ? ''
         : recognitionConfidence,
-    nickname,
-    location,
+    identityResolutionStatus: finalIdentityResolutionStatus,
+    visualCallBatchId: normalizedVisualCallBatchId,
+    nickname: normalizeNullableString(nickname),
+    location: normalizeNullableString(location),
     photos: photos ? JSON.stringify(photos) : null,
     plantGenus,
     plantFamilyEn,
@@ -357,8 +479,97 @@ async function createUserPlantInstance({
   })
 
   const lastIdResult = await models.$runSQL('SELECT LAST_INSERT_ID() AS insertId', {})
-  const insertedId = Number(lastIdResult?.data?.executeResultList?.[0]?.insertId || 0)
-  return getUserPlantInstanceById(openid, insertedId)
+  let insertedId = Number(lastIdResult?.data?.executeResultList?.[0]?.insertId || 0)
+
+  if (!insertedId) {
+    const fallbackResult = await models.$runSQL(
+      `
+        SELECT id
+        FROM user_plant_instances
+        WHERE _openid = {{openid}}
+          AND COALESCE(plant_identity_id, '') = COALESCE({{plantIdentityId}}, '')
+          AND COALESCE(legacy_plant_id, '') = COALESCE({{legacyPlantId}}, '')
+          AND COALESCE(recognized_name, '') = COALESCE({{recognizedName}}, '')
+          AND COALESCE(nickname, '') = COALESCE({{nickname}}, '')
+          AND COALESCE(location, '') = COALESCE({{location}}, '')
+        ORDER BY id DESC
+        LIMIT 1
+      `,
+      {
+        openid,
+        plantIdentityId: persistedPlantIdentityId,
+        legacyPlantId: persistedLegacyPlantId,
+        recognizedName: normalizedRecognizedName,
+        nickname: normalizeNullableString(nickname),
+        location: normalizeNullableString(location)
+      }
+    )
+
+    insertedId = Number(fallbackResult?.data?.executeResultList?.[0]?.id || 0)
+  }
+
+  return insertedId ? getUserPlantInstanceById(openid, insertedId) : null
+}
+
+const USER_PLANT_LATEST_DIAGNOSIS_SQL = `
+  LEFT JOIN (
+    SELECT d1.user_plant_id, d1.health_status, d1.health_score, d1.created_at
+    FROM diagnosis_sessions d1
+    INNER JOIN (
+      SELECT user_plant_id, MAX(created_at) AS latest_created_at
+      FROM diagnosis_sessions
+      GROUP BY user_plant_id
+    ) latest
+      ON latest.user_plant_id = d1.user_plant_id
+     AND latest.latest_created_at = d1.created_at
+  ) ds ON ds.user_plant_id = up.id
+`
+
+function mapUserPlantInstanceRow(row, plant = null) {
+  const plantIdentityId = plant?.plantIdentityId || row.plant_identity_id || ''
+  const legacyPlantId = plant?.legacyPlantId || row.legacy_plant_id || ''
+  const canonicalName = row.canonical_name || plant?.canonicalName || row.recognized_name || ''
+
+  return {
+    id: row.id,
+    plantId: row.plant_id,
+    plantIdentityId,
+    legacyPlantId,
+    canonicalName,
+    nickname: row.nickname || '',
+    displayName: row.nickname || canonicalName || row.recognized_name || '未命名植物',
+    recognizedName: row.recognized_name || '',
+    sourceType: row.source_type || 'catalog',
+    recognitionType: row.recognition_type || '',
+    recognitionConfidence:
+      row.recognition_confidence === null || row.recognition_confidence === undefined
+        ? null
+        : Number(row.recognition_confidence),
+    identityResolutionStatus:
+      row.identity_resolution_status || (plantIdentityId ? 'matched' : 'unresolved'),
+    visualCallBatchId: row.visual_call_batch_id || '',
+    location: row.location || '未设置',
+    photos: parseJsonField(row.photos, []),
+    imageFileId: plant?.imageFileId || '',
+    lastWatered: row.last_watered || null,
+    nextWater: row.next_water || null,
+    createdAt: row.created_at || null,
+    genus: plant?.genus || row.plant_genus || '',
+    familyCn: plant?.familyCn || '',
+    familyEn: plant?.familyEn || row.plant_family_en || '',
+    latinName: plant?.latinName || row.plant_latin_name || '',
+    watering: plant?.watering || null,
+    fertilization: plant?.fertilization || null,
+    sunning: plant?.sunning || null,
+    ventilation: plant?.ventilation || null,
+    temperatureMin: plant?.temperatureMin ?? null,
+    temperatureMax: plant?.temperatureMax ?? null,
+    humidityMin: plant?.humidityMin ?? null,
+    humidityMax: plant?.humidityMax ?? null,
+    varianceLevel: plant?.varianceLevel || '',
+    healthStatus: row.health_status || 'unknown',
+    healthScore: row.health_score === null || row.health_score === undefined ? null : Number(row.health_score)
+  }
 }
 
 async function getUserPlantInstanceById(openid, id) {
@@ -366,43 +577,28 @@ async function getUserPlantInstanceById(openid, id) {
     SELECT
       up.id,
       up.plant_id,
+      up.plant_identity_id,
+      up.legacy_plant_id,
       up.canonical_name,
       up.recognized_name,
+      up.source_type,
+      up.recognition_type,
+      up.recognition_confidence,
+      up.identity_resolution_status,
+      up.visual_call_batch_id,
       up.nickname,
       up.location,
       up.photos,
       up.last_watered,
       up.next_water,
       up.created_at,
-      COALESCE(pc.image_file_id, '') AS image_file_id,
-      pc.genus,
-      pc.family_en,
-      pc.latin_name,
-      gcp.watering AS care_watering,
-      gcp.fertilization AS care_fertilization,
-      gcp.sunning AS care_sunning,
-      gcp.ventilation AS care_ventilation,
-      gcp.temperature_min,
-      gcp.temperature_max,
-      gcp.humidity_min,
-      gcp.humidity_max,
-      gcp.variance_level,
+      up.plant_genus,
+      up.plant_family_en,
+      up.plant_latin_name,
       ds.health_status,
       ds.health_score
     FROM user_plant_instances up
-    LEFT JOIN plant_catalog pc ON pc.plant_id = up.plant_id
-    LEFT JOIN genus_care_profile gcp ON gcp.genus = COALESCE(pc.genus, up.plant_genus)
-    LEFT JOIN (
-      SELECT d1.user_plant_id, d1.health_status, d1.health_score, d1.created_at
-      FROM diagnosis_sessions d1
-      INNER JOIN (
-        SELECT user_plant_id, MAX(created_at) AS latest_created_at
-        FROM diagnosis_sessions
-        GROUP BY user_plant_id
-      ) latest
-        ON latest.user_plant_id = d1.user_plant_id
-       AND latest.latest_created_at = d1.created_at
-    ) ds ON ds.user_plant_id = up.id
+    ${USER_PLANT_LATEST_DIAGNOSIS_SQL}
     WHERE up._openid = {{openid}} AND up.id = {{id}}
     LIMIT 1
   `
@@ -410,34 +606,9 @@ async function getUserPlantInstanceById(openid, id) {
   const row = result?.data?.executeResultList?.[0]
   if (!row) return null
 
-  return {
-    id: row.id,
-    plantId: row.plant_id,
-    canonicalName: row.canonical_name || '',
-    nickname: row.nickname || '',
-    displayName: row.nickname || row.canonical_name || row.recognized_name || '未命名植物',
-    recognizedName: row.recognized_name || '',
-    location: row.location || '未设置',
-    photos: parseJsonField(row.photos, []),
-    imageFileId: row.image_file_id || '',
-    lastWatered: row.last_watered || null,
-    nextWater: row.next_water || null,
-    createdAt: row.created_at || null,
-    genus: row.genus || '',
-    familyEn: row.family_en || '',
-    latinName: row.latin_name || '',
-    watering: parseCareJson(row.care_watering),
-    fertilization: parseCareJson(row.care_fertilization),
-    sunning: parseCareJson(row.care_sunning),
-    ventilation: parseCareJson(row.care_ventilation),
-    temperatureMin: row.temperature_min === null || row.temperature_min === undefined ? null : Number(row.temperature_min),
-    temperatureMax: row.temperature_max === null || row.temperature_max === undefined ? null : Number(row.temperature_max),
-    humidityMin: row.humidity_min === null || row.humidity_min === undefined ? null : Number(row.humidity_min),
-    humidityMax: row.humidity_max === null || row.humidity_max === undefined ? null : Number(row.humidity_max),
-    varianceLevel: row.variance_level || '',
-    healthStatus: row.health_status || 'unknown',
-    healthScore: row.health_score === null || row.health_score === undefined ? null : Number(row.health_score)
-  }
+  const plantLookupId = resolveUserPlantCatalogLookupId(row)
+  const plant = plantLookupId ? await getPlantCatalogById(plantLookupId) : null
+  return mapUserPlantInstanceRow(row, plant)
 }
 
 async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) {
@@ -447,43 +618,28 @@ async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) 
     SELECT
       up.id,
       up.plant_id,
+      up.plant_identity_id,
+      up.legacy_plant_id,
       up.canonical_name,
       up.recognized_name,
+      up.source_type,
+      up.recognition_type,
+      up.recognition_confidence,
+      up.identity_resolution_status,
+      up.visual_call_batch_id,
       up.nickname,
       up.location,
       up.photos,
       up.last_watered,
       up.next_water,
       up.created_at,
-      COALESCE(pc.image_file_id, '') AS image_file_id,
-      pc.genus,
-      pc.family_en,
-      pc.latin_name,
-      gcp.watering AS care_watering,
-      gcp.fertilization AS care_fertilization,
-      gcp.sunning AS care_sunning,
-      gcp.ventilation AS care_ventilation,
-      gcp.temperature_min,
-      gcp.temperature_max,
-      gcp.humidity_min,
-      gcp.humidity_max,
-      gcp.variance_level,
+      up.plant_genus,
+      up.plant_family_en,
+      up.plant_latin_name,
       ds.health_status,
       ds.health_score
     FROM user_plant_instances up
-    LEFT JOIN plant_catalog pc ON pc.plant_id = up.plant_id
-    LEFT JOIN genus_care_profile gcp ON gcp.genus = COALESCE(pc.genus, up.plant_genus)
-    LEFT JOIN (
-      SELECT d1.user_plant_id, d1.health_status, d1.health_score, d1.created_at
-      FROM diagnosis_sessions d1
-      INNER JOIN (
-        SELECT user_plant_id, MAX(created_at) AS latest_created_at
-        FROM diagnosis_sessions
-        GROUP BY user_plant_id
-      ) latest
-        ON latest.user_plant_id = d1.user_plant_id
-       AND latest.latest_created_at = d1.created_at
-    ) ds ON ds.user_plant_id = up.id
+    ${USER_PLANT_LATEST_DIAGNOSIS_SQL}
     WHERE up._openid = {{openid}}
     ORDER BY up.created_at DESC
     LIMIT {{limit}} OFFSET {{offset}}
@@ -494,41 +650,30 @@ async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) 
   )
   const total = Number(countResult?.data?.executeResultList?.[0]?.total || 0)
   const result = await models.$runSQL(sql, { openid, limit, offset })
+  const rows = result?.data?.executeResultList || []
+  const plantIds = Array.from(
+    new Set(
+      rows
+        .map(row => resolveUserPlantCatalogLookupId(row))
+        .filter(Boolean)
+    )
+  )
+  const plants = await Promise.all(
+    plantIds.map(async plantId => [plantId, await getPlantCatalogById(plantId)])
+  )
+  const plantMap = new Map(plants)
 
   return {
-    list: (result?.data?.executeResultList || []).map(row => ({
-      id: row.id,
-      plantId: row.plant_id,
-      canonicalName: row.canonical_name || '',
-      nickname: row.nickname || '',
-      displayName: row.nickname || row.canonical_name || row.recognized_name || '未命名植物',
-      recognizedName: row.recognized_name || '',
-      location: row.location || '未设置',
-      photos: parseJsonField(row.photos, []),
-      imageFileId: row.image_file_id || '',
-      lastWatered: row.last_watered || null,
-      nextWater: row.next_water || null,
-      createdAt: row.created_at || null,
-      genus: row.genus || '',
-      familyEn: row.family_en || '',
-      latinName: row.latin_name || '',
-      watering: parseCareJson(row.care_watering),
-      fertilization: parseCareJson(row.care_fertilization),
-      sunning: parseCareJson(row.care_sunning),
-      ventilation: parseCareJson(row.care_ventilation),
-      temperatureMin: row.temperature_min === null || row.temperature_min === undefined ? null : Number(row.temperature_min),
-      temperatureMax: row.temperature_max === null || row.temperature_max === undefined ? null : Number(row.temperature_max),
-      humidityMin: row.humidity_min === null || row.humidity_min === undefined ? null : Number(row.humidity_min),
-      humidityMax: row.humidity_max === null || row.humidity_max === undefined ? null : Number(row.humidity_max),
-      varianceLevel: row.variance_level || '',
-      healthStatus: row.health_status || 'unknown',
-      healthScore:
-        row.health_score === null || row.health_score === undefined ? null : Number(row.health_score)
-    })),
+    list: rows.map(row =>
+      mapUserPlantInstanceRow(
+        row,
+        plantMap.get(resolveUserPlantCatalogLookupId(row)) || null
+      )
+    ),
     total,
     page: Number(page),
     pageSize: limit,
-    hasMore: offset + (result?.data?.executeResultList || []).length < total
+    hasMore: offset + rows.length < total
   }
 }
 
@@ -606,13 +751,11 @@ async function recordIdentifySession({
       : String(canonicalPlantId).trim()
 
   if (normalizedCanonicalPlantId) {
-    const verifyResult = await models.$runSQL(
-      'SELECT plant_id FROM plant_catalog WHERE plant_id = {{plantId}} LIMIT 1',
-      { plantId: normalizedCanonicalPlantId }
-    )
-    const exists = Boolean(verifyResult?.data?.executeResultList?.length)
-    if (!exists) {
+    const catalogPlant = await getPlantCatalogById(normalizedCanonicalPlantId)
+    if (!catalogPlant) {
       normalizedCanonicalPlantId = null
+    } else {
+      normalizedCanonicalPlantId = catalogPlant.id || normalizedCanonicalPlantId
     }
   }
 

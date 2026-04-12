@@ -8,22 +8,30 @@ import {
 
 export function useDiagnoseFollowUpMutation() {
   return useMutation({
-    mutationKey: ['diagnose', 'follow-up'],
+    mutationKey: ['diagnose', 'answer'],
     mutationFn: async ({
-      plantId,
-      diagnosisId,
-      observedSymptoms = [],
-      followUpAnswers = [],
+      diagnosisSessionId,
+      roundId,
+      answers = [],
+      image = '',
+      images = [],
+      imageIds = [],
+      latestVisualCallBatchId = null,
+      visualBatchTrace = null,
       onFinish,
       onError
     } = {}) => {
       try {
         const normalizedResult = await requestDiagnoseFollowUp(
           buildFollowUpMutationPayload({
-            plantId,
-            diagnosisId,
-            observedSymptoms,
-            followUpAnswers
+            diagnosisSessionId,
+            roundId,
+            answers,
+            image,
+            images,
+            imageIds,
+            latestVisualCallBatchId,
+            visualBatchTrace
           })
         )
 

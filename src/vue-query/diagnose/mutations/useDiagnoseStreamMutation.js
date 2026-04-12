@@ -11,11 +11,17 @@ export function useDiagnoseStreamMutation() {
   return useMutation({
     mutationKey: ['diagnose', 'stream'],
     mutationFn: async ({
-      mode = 'quick',
       image,
+      images = [],
+      imageIds = [],
       description,
-      plantName,
       plantId,
+      userPlantId,
+      plantCatalogId,
+      observedSymptoms = [],
+      observedEvidenceSet = [],
+      latestVisualCallBatchId = null,
+      visualBatchTrace = null,
       onText,
       onFinish,
       onError,
@@ -23,15 +29,21 @@ export function useDiagnoseStreamMutation() {
     } = {}) => {
       try {
         onText?.('思考中...', '思考中...')
-        validateDiagnoseInput({ plantId, image })
+        validateDiagnoseInput({ plantId, userPlantId, image, images, observedSymptoms })
 
         const normalizedResult = await requestDiagnoseStream(
           buildDiagnosePayload({
-            mode,
             plantId,
+            userPlantId,
+            plantCatalogId,
             image,
+            images,
+            imageIds,
             description,
-            plantName,
+            observedSymptoms,
+            observedEvidenceSet,
+            latestVisualCallBatchId,
+            visualBatchTrace,
             skipAuth
           }),
           {

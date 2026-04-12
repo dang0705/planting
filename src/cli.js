@@ -31,11 +31,19 @@ function parseBool(value = '') {
 function printUsage() {
   console.log(`
 Usage:
-  node src/cli.js import-data --file=docs/plants_v13_user_friendly_full_v7.xlsx --batch=batch_xxx
+  node src/cli.js import-data --source=diagnosis --file=docs/plants_v13_user_friendly_full_v7.xlsx --batch=batch_xxx
+  node src/cli.js import-data --source=taxonomy --file=docs/plant_catalog.csv --batch=batch_xxx
+  node src/cli.js import-data --source=genus-care --file=docs/genus_care_profile.csv --batch=batch_xxx
   node src/cli.js diff-data --batch=batch_xxx --tables=problems,symptoms
   node src/cli.js publish-data --batch=batch_xxx --version=v1
   node src/cli.js rollback-data --batch=batch_xxx
-  node src/cli.js validate-schema --file=docs/plants_v13_user_friendly_full_v7.xlsx --output=schema-diff-report.json
+  node src/cli.js validate-schema --source=diagnosis --file=docs/plants_v13_user_friendly_full_v7.xlsx --output=schema-diff-report.json
+
+Notes:
+  - 默认会处理当前正式版里具备素材来源的表。
+  - taxonomy 默认会生成 formal 表：plant_identity_entities / plant_identity_aliases / plant_identity_match_rules / plant_identity_diagnosis_links。
+  - diagnosis 默认会包含 plant_problem_profiles。
+  - schema-only 表如 plant_identity_merge_history 需通过独立迁移脚本建表，不参与素材导入。
   `.trim())
 }
 
@@ -58,6 +66,7 @@ async function main() {
 
     if (command === 'import-data') {
       result = await runExcelImport({
+        source: args.source,
         filePath: args.file,
         batchId: args.batch,
         versionTag: args.version,
@@ -80,6 +89,7 @@ async function main() {
       })
     } else if (command === 'validate-schema') {
       result = await runSchemaValidator({
+        source: args.source,
         filePath: args.file,
         outputPath: args.output,
         schema: args.schema

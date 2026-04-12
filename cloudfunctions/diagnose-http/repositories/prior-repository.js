@@ -1,44 +1,65 @@
 'use strict'
 
 const { models } = require('/opt/utils/cloudbase')
+const {
+  getPlantCatalogById,
+  getUserPlantInstanceById
+} = require('/opt/utils/plant-knowledge')
 const { sqlInList, clamp01 } = require('./sql')
 const { table } = require('../db/table-helper')
+
+function buildResolvedPlantContext({
+  userPlant = null,
+  plant = null,
+  plantId = null
+} = {}) {
+  const resolvedPlantId =
+    plant?.plantId ||
+    userPlant?.plantId ||
+    userPlant?.legacyPlantId ||
+    (plantId !== null && plantId !== undefined ? String(plantId) : '')
+  const resolvedPlantIdentityId = plant?.plantIdentityId || userPlant?.plantIdentityId || ''
+  const resolvedIdentityStatus =
+    userPlant?.identityResolutionStatus ||
+    (resolvedPlantIdentityId ? 'matched' : 'unresolved')
+  const resolvedDisplayName =
+    userPlant?.displayName ||
+    userPlant?.canonicalName ||
+    userPlant?.recognizedName ||
+    plant?.canonicalName ||
+    '未知植物'
+
+  return {
+    userPlantId: userPlant ? Number(userPlant.id) : null,
+    plantId: resolvedPlantId || null,
+    plantDisplayName: resolvedDisplayName,
+    plantIdentityId: resolvedPlantIdentityId,
+    legacyPlantId: plant?.legacyPlantId || userPlant?.legacyPlantId || '',
+    identityResolutionStatus: resolvedIdentityStatus,
+    latestVisualCallBatchId: userPlant?.visualCallBatchId || '',
+    recognizedName: userPlant?.recognizedName || '',
+    sourceType: userPlant?.sourceType || '',
+    recognitionType: userPlant?.recognitionType || '',
+    recognitionConfidence:
+      userPlant?.recognitionConfidence === null || userPlant?.recognitionConfidence === undefined
+        ? null
+        : Number(userPlant.recognitionConfidence),
+    genus: plant?.genus || userPlant?.genus || '',
+    family: plant?.familyEn || userPlant?.familyEn || '',
+    category: plant?.categoryCn || plant?.categoryEn || ''
+  }
+}
 
 async function resolvePlantContext({ openid, plantId = null, userPlantId = null } = {}) {
   const candidateUserPlantId = userPlantId || plantId
 
   if (candidateUserPlantId !== null && candidateUserPlantId !== undefined && candidateUserPlantId !== '') {
-    const result = await models.$runSQL(
-      `
-        SELECT
-          up.id AS user_plant_id,
-          up.plant_id AS catalog_plant_id,
-          up.canonical_name,
-          up.nickname,
-          up.plant_genus,
-          up.plant_family_en,
-          pc.genus,
-          pc.family_en,
-          pc.category_cn,
-          pc.category_en
-        FROM ${table('user_plant_instances')} up
-        LEFT JOIN ${table('plant_catalog')} pc ON pc.plant_id = up.plant_id
-        WHERE up.id = {{userPlantId}} AND up._openid = {{openid}}
-        LIMIT 1
-      `,
-      { userPlantId: Number(candidateUserPlantId), openid }
-    )
-
-    const row = result?.data?.executeResultList?.[0]
-    if (row) {
-      return {
-        userPlantId: Number(row.user_plant_id),
-        plantId: row.catalog_plant_id || null,
-        plantDisplayName: row.nickname || row.canonical_name || '未知植物',
-        genus: row.genus || row.plant_genus || '',
-        family: row.family_en || row.plant_family_en || '',
-        category: row.category_cn || row.category_en || ''
-      }
+    const userPlant = await getUserPlantInstanceById(openid, Number(candidateUserPlantId))
+    if (userPlant) {
+      const catalogLookupId =
+        userPlant.plantIdentityId || userPlant.legacyPlantId || userPlant.plantId || ''
+      const plant = catalogLookupId ? await getPlantCatalogById(String(catalogLookupId)) : null
+      return buildResolvedPlantContext({ userPlant, plant })
     }
   }
 
@@ -46,35 +67,12 @@ async function resolvePlantContext({ openid, plantId = null, userPlantId = null 
     throw new Error('缺少 plantId 或 userPlantId')
   }
 
-  const catalogResult = await models.$runSQL(
-    `
-      SELECT
-        plant_id,
-        canonical_name,
-        genus,
-        family_en,
-        category_cn,
-        category_en
-      FROM ${table('plant_catalog')}
-      WHERE plant_id = {{plantId}}
-      LIMIT 1
-    `,
-    { plantId: String(plantId) }
-  )
-
-  const catalogRow = catalogResult?.data?.executeResultList?.[0]
-  if (!catalogRow) {
+  const plant = await getPlantCatalogById(String(plantId))
+  if (!plant) {
     throw new Error('植物不存在或无权限访问')
   }
 
-  return {
-    userPlantId: null,
-    plantId: catalogRow.plant_id,
-    plantDisplayName: catalogRow.canonical_name || '未知植物',
-    genus: catalogRow.genus || '',
-    family: catalogRow.family_en || '',
-    category: catalogRow.category_cn || catalogRow.category_en || ''
-  }
+  return buildResolvedPlantContext({ plant, plantId })
 }
 
 function mapCandidateRow(row = {}) {
@@ -86,6 +84,209 @@ function mapCandidateRow(row = {}) {
     matchedHostLevel: row.matched_host_level || '',
     sourceLayer: row.source_layer || '',
     dataStatus: row.data_status || 'unknown'
+  }
+}
+
+function normalizeText(value = '') {
+  return String(value || '').trim().toLowerCase()
+}
+
+function isReviewedDiagnosisLinkStatus(status = '') {
+  const normalizedStatus = normalizeText(status)
+  return normalizedStatus === 'reviewed' || normalizedStatus === 'audited'
+}
+
+function isMatchedIdentityResolutionStatus(status = '') {
+  return normalizeText(status) === 'matched'
+}
+
+function resolveLinkedDiagnosisBridge(links = [], plantContext = {}) {
+  const normalizedLinks = Array.isArray(links) ? links : []
+  const reviewedLinks = normalizedLinks.filter(item =>
+    isReviewedDiagnosisLinkStatus(item?.review_status)
+  )
+  const identityLinks = reviewedLinks.filter(item => item?.link_level === 'identity')
+  const genusLinks = reviewedLinks.filter(item => item?.link_level === 'genus')
+  const familyLinks = reviewedLinks.filter(item => item?.link_level === 'family')
+
+  if (
+    isMatchedIdentityResolutionStatus(plantContext?.identityResolutionStatus) &&
+    String(plantContext?.plantIdentityId || '').trim() &&
+    identityLinks.length
+  ) {
+    return {
+      hasAnyLinks: normalizedLinks.length > 0,
+      hasReviewedLinks: reviewedLinks.length > 0,
+      selectedLevel: 'identity',
+      selectedLinks: identityLinks,
+      weakBackgroundOnly: false
+    }
+  }
+
+  if (String(plantContext?.genus || '').trim() && genusLinks.length) {
+    return {
+      hasAnyLinks: normalizedLinks.length > 0,
+      hasReviewedLinks: reviewedLinks.length > 0,
+      selectedLevel: 'genus',
+      selectedLinks: genusLinks,
+      weakBackgroundOnly: false
+    }
+  }
+
+  if (familyLinks.length) {
+    return {
+      hasAnyLinks: normalizedLinks.length > 0,
+      hasReviewedLinks: reviewedLinks.length > 0,
+      selectedLevel: 'family',
+      selectedLinks: familyLinks,
+      weakBackgroundOnly: true
+    }
+  }
+
+  return {
+    hasAnyLinks: normalizedLinks.length > 0,
+    hasReviewedLinks: reviewedLinks.length > 0,
+    selectedLevel: '',
+    selectedLinks: [],
+    weakBackgroundOnly: false
+  }
+}
+
+async function getLinkedDiagnosisTargets(plantIdentityId = '') {
+  const safePlantIdentityId = String(plantIdentityId || '').trim()
+  if (!safePlantIdentityId) {
+    return []
+  }
+
+  const result = await models.$runSQL(
+    `
+      SELECT
+        plant_identity_id,
+        link_level,
+        target_profile_key,
+        target_table_name,
+        target_record_key,
+        link_strength,
+        review_status
+      FROM ${table('plant_identity_diagnosis_links')}
+      WHERE plant_identity_id = {{plantIdentityId}}
+        AND is_active = 1
+      ORDER BY
+        FIELD(link_level, 'identity', 'genus', 'family'),
+        FIELD(review_status, 'reviewed', 'audited', 'review_pending', 'pending'),
+        FIELD(link_strength, 'exact', 'downgraded', 'weak_background'),
+        target_table_name ASC,
+        target_record_key ASC
+    `,
+    { plantIdentityId: safePlantIdentityId }
+  )
+
+  return result?.data?.executeResultList || []
+}
+
+async function getLinkedCandidatePriors(plantContext = {}) {
+  const links = await getLinkedDiagnosisTargets(plantContext?.plantIdentityId)
+  if (!links.length) {
+    return {
+      hasAnyLinks: false,
+      hasReviewedLinks: false,
+      selectedLevel: '',
+      weakBackgroundOnly: false,
+      priors: []
+    }
+  }
+
+  const bridge = resolveLinkedDiagnosisBridge(links, plantContext)
+  const selectedLinks = Array.isArray(bridge.selectedLinks) ? bridge.selectedLinks : []
+  const identityTargetKeys = Array.from(
+    new Set(
+      selectedLinks
+        .filter(item => item?.target_table_name === 'plant_problem_profiles')
+        .map(item => String(item?.target_profile_key || '').trim())
+        .filter(Boolean)
+    )
+  )
+  const genusTargetKeys = Array.from(
+    new Set(
+      selectedLinks
+        .filter(item => item?.target_table_name === 'genus_problem_profiles')
+        .map(item => String(item?.target_profile_key || '').trim())
+        .filter(Boolean)
+    )
+  )
+
+  const queries = []
+
+  if (bridge.selectedLevel === 'identity' && identityTargetKeys.length) {
+    queries.push(
+      models.$runSQL(
+        `
+          SELECT
+            problem_key,
+            genus_compatibility,
+            host_compatibility,
+            final_prior_score,
+            matched_host_level,
+            source_layer,
+            data_status
+          FROM ${table('plant_problem_profiles')}
+          WHERE plant_id IN ${sqlInList(identityTargetKeys)}
+            AND data_status IN ('audited', 'partial', 'derived_audited')
+        `
+      ).then(result =>
+        (result?.data?.executeResultList || []).map(row => ({
+          ...mapCandidateRow(row),
+          matchedHostLevel: row.matched_host_level || 'identity',
+          sourceLayer: 'linked_identity_profile'
+        }))
+      )
+    )
+  }
+
+  if (bridge.selectedLevel === 'genus' && genusTargetKeys.length) {
+    queries.push(
+      models.$runSQL(
+        `
+          SELECT
+            problem_key,
+            genus_compatibility,
+            1 AS host_compatibility,
+            genus_compatibility AS final_prior_score,
+            'genus' AS matched_host_level,
+            'linked_genus_profile' AS source_layer,
+            data_status
+          FROM ${table('genus_problem_profiles')}
+          WHERE genus IN ${sqlInList(genusTargetKeys)}
+            AND data_status IN ('audited', 'partial')
+        `
+      ).then(result => (result?.data?.executeResultList || []).map(mapCandidateRow))
+    )
+  }
+
+  if (!queries.length) {
+    return {
+      ...bridge,
+      priors: []
+    }
+  }
+
+  const settled = await Promise.all(queries)
+  const merged = new Map()
+
+  for (const rows of settled) {
+    for (const row of rows || []) {
+      const existing = merged.get(row.problemKey)
+      if (!existing || Number(row.finalPriorScore || 0) > Number(existing.finalPriorScore || 0)) {
+        merged.set(row.problemKey, row)
+      }
+    }
+  }
+
+  return {
+    ...bridge,
+    priors: Array.from(merged.values()).sort(
+      (left, right) => Number(right.finalPriorScore || 0) - Number(left.finalPriorScore || 0)
+    )
   }
 }
 
@@ -137,6 +338,93 @@ async function getGenusCandidatePriors(genus = '') {
   )
 
   return (result?.data?.executeResultList || []).map(mapCandidateRow)
+}
+
+async function getHostCandidatePriors({ genus = '', family = '', category = '' } = {}) {
+  const tasks = []
+
+  if (genus) {
+    tasks.push(
+      models.$runSQL(
+        `
+          SELECT
+            problem_key,
+            0.5 AS genus_compatibility,
+            host_compatibility,
+            host_compatibility AS final_prior_score,
+            host_level AS matched_host_level,
+            'derived_from_host_profile' AS source_layer,
+            data_status
+          FROM ${table('problem_host_profiles')}
+          WHERE host_level = 'genus'
+            AND host_name = {{hostName}}
+            AND data_status IN ('audited', 'partial')
+        `,
+        { hostName: genus }
+      )
+    )
+  }
+
+  if (family) {
+    tasks.push(
+      models.$runSQL(
+        `
+          SELECT
+            problem_key,
+            0.5 AS genus_compatibility,
+            host_compatibility,
+            host_compatibility AS final_prior_score,
+            host_level AS matched_host_level,
+            'derived_from_host_profile' AS source_layer,
+            data_status
+          FROM ${table('problem_host_profiles')}
+          WHERE host_level = 'family'
+            AND host_name = {{hostName}}
+            AND data_status IN ('audited', 'partial')
+        `,
+        { hostName: family }
+      )
+    )
+  }
+
+  if (category) {
+    tasks.push(
+      models.$runSQL(
+        `
+          SELECT
+            problem_key,
+            0.5 AS genus_compatibility,
+            host_compatibility,
+            host_compatibility AS final_prior_score,
+            host_level AS matched_host_level,
+            'derived_from_host_profile' AS source_layer,
+            data_status
+          FROM ${table('problem_host_profiles')}
+          WHERE host_level IN ('category', 'plant_type')
+            AND host_name = {{hostName}}
+            AND data_status IN ('audited', 'partial')
+        `,
+        { hostName: category }
+      )
+    )
+  }
+
+  if (!tasks.length) {
+    return []
+  }
+
+  const settled = await Promise.all(tasks)
+  const merged = new Map()
+  for (const result of settled) {
+    for (const row of (result?.data?.executeResultList || []).map(mapCandidateRow)) {
+      const existing = merged.get(row.problemKey)
+      if (!existing || Number(row.finalPriorScore || 0) > Number(existing.finalPriorScore || 0)) {
+        merged.set(row.problemKey, row)
+      }
+    }
+  }
+
+  return Array.from(merged.values())
 }
 
 async function getGenusCompatibilityMap(genus, problemKeys = []) {
@@ -238,8 +526,10 @@ async function getHostCompatibilityMap({ genus = '', family = '', category = '' 
 
 module.exports = {
   resolvePlantContext,
+  getLinkedCandidatePriors,
   getCandidateProblemPriors,
   getGenusCandidatePriors,
+  getHostCandidatePriors,
   getGenusCompatibilityMap,
   getHostCompatibilityMap
 }

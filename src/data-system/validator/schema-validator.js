@@ -3,34 +3,131 @@
 const fs = require('fs')
 const path = require('path')
 const XLSX = require('xlsx')
-const { TABLE_CONFIGS, TABLE_CONFIG_MAP, METADATA_COLUMNS } = require('../config/tables')
+const {
+  DATA_SOURCE_CONFIGS,
+  TABLE_CONFIGS,
+  TABLE_CONFIG_MAP,
+  METADATA_COLUMNS
+} = require('../config/tables')
 const { DEV_SCHEMA, getPool, listTableColumns } = require('../db/mysql')
 
-function resolveDefaultExcelPath() {
-  return path.resolve(process.cwd(), 'docs/plants_v13_user_friendly_full_v7.xlsx')
+function resolveSourceKey(source = '', filePath = '') {
+  const normalizedSource = String(source || '').trim().toLowerCase()
+  if (normalizedSource === 'genuscare') return 'genus-care'
+  if (normalizedSource === 'all') return 'all'
+  if (DATA_SOURCE_CONFIGS[normalizedSource]) return normalizedSource
+
+  const normalizedPath = String(filePath || '').trim().toLowerCase()
+  if (normalizedPath.includes('plant_catalog')) return 'taxonomy'
+  if (normalizedPath.includes('genus_care_profile')) return 'genus-care'
+  if (normalizedPath.endsWith('.xlsx')) return 'diagnosis'
+
+  return 'diagnosis'
 }
 
-function readExcelSchema(filePath) {
+function resolveDefaultInputPath(sourceKey = 'diagnosis') {
+  const config = DATA_SOURCE_CONFIGS[sourceKey]
+  if (!config?.defaultFilePath) {
+    throw new Error(`未找到 source=${sourceKey} 的默认素材路径`)
+  }
+  return path.resolve(process.cwd(), config.defaultFilePath)
+}
+
+function pickTableConfigs(tables = [], sourceKey = 'diagnosis') {
+  const defaultConfigs = TABLE_CONFIGS.filter(config => config.enabledByDefault !== false)
+
+  if (!Array.isArray(tables) || !tables.length) {
+    if (sourceKey === 'all') return defaultConfigs
+    return defaultConfigs.filter(config => config.source === sourceKey)
+  }
+
+  const picked = []
+  for (const table of tables) {
+    const config = TABLE_CONFIG_MAP[table]
+    if (config) picked.push(config)
+  }
+  return picked
+}
+
+function groupTableConfigsBySource(tableConfigs = []) {
+  const groups = new Map()
+
+  for (const tableConfig of tableConfigs) {
+    const source = tableConfig.source || 'diagnosis'
+    if (!groups.has(source)) groups.set(source, [])
+    groups.get(source).push(tableConfig)
+  }
+
+  return groups
+}
+
+function readWorkbookSchema(filePath, tableConfigs = []) {
   const workbook = XLSX.readFile(filePath)
   const schemaMap = {}
 
-  for (const config of TABLE_CONFIGS) {
-    const sheet = workbook.Sheets[config.sheet]
+  for (const tableConfig of tableConfigs) {
+    const sheet = workbook.Sheets[tableConfig.sheet]
     if (!sheet) {
-      schemaMap[config.table] = []
+      schemaMap[tableConfig.table] = []
       continue
     }
+
     const rows = XLSX.utils.sheet_to_json(sheet, {
       header: 1,
       raw: false
     })
     const header = Array.isArray(rows[0]) ? rows[0] : []
-    schemaMap[config.table] = header
+    schemaMap[tableConfig.table] = header
       .map(item => String(item || '').trim())
       .filter(Boolean)
   }
 
   return schemaMap
+}
+
+function readCsvSchema(filePath, tableConfigs = []) {
+  const content = fs.readFileSync(filePath, 'utf8')
+  const workbook = XLSX.read(content, {
+    type: 'string',
+    raw: true
+  })
+  const firstSheetName = workbook.SheetNames[0]
+  const rows = firstSheetName
+    ? XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName], {
+        header: 1,
+        raw: true
+      })
+    : []
+  const firstRow = Array.isArray(rows[0]) ? rows[0] : []
+
+  const schemaMap = {}
+  for (const tableConfig of tableConfigs) {
+    const expectedColumns = tableConfig.inputColumns || tableConfig.columns
+    if (firstRow.length === expectedColumns.length) {
+      schemaMap[tableConfig.table] = expectedColumns
+    } else {
+      schemaMap[tableConfig.table] = firstRow.map((_, index) => `column_${index + 1}`)
+    }
+  }
+
+  return schemaMap
+}
+
+function readSourceSchema({ sourceKey, filePath, tableConfigs = [] }) {
+  const sourceConfig = DATA_SOURCE_CONFIGS[sourceKey]
+  if (!sourceConfig) {
+    throw new Error(`未识别的数据源: ${sourceKey}`)
+  }
+
+  if (sourceConfig.fileType === 'xlsx') {
+    return readWorkbookSchema(filePath, tableConfigs)
+  }
+
+  if (sourceConfig.fileType === 'csv') {
+    return readCsvSchema(filePath, tableConfigs)
+  }
+
+  throw new Error(`不支持的素材类型: ${sourceConfig.fileType}`)
 }
 
 function extractRepositorySelects() {
@@ -87,49 +184,63 @@ function extractRepositorySelects() {
   return result
 }
 
-async function readDbSchema(schema = DEV_SCHEMA) {
+async function readDbSchema(schema = DEV_SCHEMA, tableConfigs = []) {
   const pool = getPool()
   const result = {}
-  for (const config of TABLE_CONFIGS) {
+  for (const config of tableConfigs) {
     const columns = await listTableColumns(pool, schema, config.table).catch(() => [])
     result[config.table] = columns
   }
   return result
 }
 
-function validateSchemaDiff({ excelSchema = {}, dbSchema = {}, repositoryFields = {} } = {}) {
+function validateSchemaDiff({ tableConfigs = [], sourceSchema = {}, dbSchema = {}, repositoryFields = {} } = {}) {
   const errors = []
   const details = []
   const metadataSet = new Set(METADATA_COLUMNS)
 
-  for (const config of TABLE_CONFIGS) {
+  for (const config of tableConfigs) {
     const table = config.table
-    const excelColumns = excelSchema[table] || []
+    const actualSourceColumns = sourceSchema[table] || []
+    const expectedSourceColumns = config.inputColumns || config.columns
     const dbColumns = dbSchema[table] || []
     const repoColumns = repositoryFields[table] || []
 
-    const missingInDb = excelColumns.filter(column => !dbColumns.includes(column))
+    const missingInSource = expectedSourceColumns.filter(column => !actualSourceColumns.includes(column))
+    const extraInSource = actualSourceColumns.filter(column => !expectedSourceColumns.includes(column))
+    const missingInDb = config.columns.filter(column => !dbColumns.includes(column))
     const extraInDb = dbColumns.filter(column => {
-      if (excelColumns.includes(column)) return false
+      if (config.columns.includes(column)) return false
       if (metadataSet.has(column)) return false
-
-      // v2 spec allows an internal surrogate id primary key even when Excel has no id column.
-      if (column === 'id' && !excelColumns.includes('id')) return false
-
+      if (column === 'id' && !config.columns.includes('id')) return false
       return true
     })
     const missingInRepoDb = repoColumns.filter(column => !dbColumns.includes(column))
 
+    if (missingInSource.length) {
+      errors.push({
+        type: 'source_missing_expected_columns',
+        table,
+        columns: missingInSource
+      })
+    }
+    if (extraInSource.length) {
+      errors.push({
+        type: 'source_unexpected_columns',
+        table,
+        columns: extraInSource
+      })
+    }
     if (missingInDb.length) {
       errors.push({
-        type: 'excel_missing_in_db',
+        type: 'formal_columns_missing_in_db',
         table,
         columns: missingInDb
       })
     }
     if (extraInDb.length) {
       errors.push({
-        type: 'db_missing_in_excel',
+        type: 'db_columns_not_in_formal_config',
         table,
         columns: extraInDb
       })
@@ -144,9 +255,13 @@ function validateSchemaDiff({ excelSchema = {}, dbSchema = {}, repositoryFields 
 
     details.push({
       table,
-      excelColumns: excelColumns.length,
+      expectedSourceColumns: expectedSourceColumns.length,
+      actualSourceColumns: actualSourceColumns.length,
+      formalColumns: config.columns.length,
       dbColumns: dbColumns.length,
       repositoryColumns: repoColumns.length,
+      missingInSource,
+      extraInSource,
       missingInDb,
       extraInDb,
       missingInRepoDb
@@ -161,16 +276,50 @@ function validateSchemaDiff({ excelSchema = {}, dbSchema = {}, repositoryFields 
 }
 
 async function runSchemaValidator(options = {}) {
-  const excelPath = options.filePath || resolveDefaultExcelPath()
-  const outputPath = path.resolve(process.cwd(), options.outputPath || 'schema-diff-report.json')
-  const excelSchema = readExcelSchema(excelPath)
-  const dbSchema = await readDbSchema(options.schema || DEV_SCHEMA)
+  const sourceKey = resolveSourceKey(options.source, options.filePath)
+  const tableConfigs = pickTableConfigs(options.tables, sourceKey)
+  if (!tableConfigs.length) {
+    throw new Error('未找到可校验的目标表')
+  }
+  if (options.filePath && groupTableConfigsBySource(tableConfigs).size > 1) {
+    throw new Error('同时校验多个 source 时，不支持共用单个 --file 参数')
+  }
+
+  const groupedConfigs = groupTableConfigsBySource(tableConfigs)
+  const sourceSchema = {}
+  for (const [currentSourceKey, currentConfigs] of groupedConfigs.entries()) {
+    const filePath =
+      options.filePath && groupedConfigs.size === 1
+        ? path.resolve(process.cwd(), options.filePath)
+        : resolveDefaultInputPath(currentSourceKey)
+    Object.assign(
+      sourceSchema,
+      readSourceSchema({
+        sourceKey: currentSourceKey,
+        filePath,
+        tableConfigs: currentConfigs
+      })
+    )
+  }
+
+  const dbSchema = await readDbSchema(options.schema || DEV_SCHEMA, tableConfigs)
   const repositoryFields = extractRepositorySelects()
-  const validation = validateSchemaDiff({ excelSchema, dbSchema, repositoryFields })
+  const validation = validateSchemaDiff({
+    tableConfigs,
+    sourceSchema,
+    dbSchema,
+    repositoryFields
+  })
+
+  const outputPath = path.resolve(
+    process.cwd(),
+    options.outputPath ||
+      (sourceKey === 'all' ? 'schema-diff-report.json' : `schema-diff-report-${sourceKey}.json`)
+  )
 
   const report = {
     generatedAt: new Date().toISOString(),
-    excelPath,
+    source: sourceKey,
     schema: options.schema || DEV_SCHEMA,
     summary: {
       ok: validation.ok,

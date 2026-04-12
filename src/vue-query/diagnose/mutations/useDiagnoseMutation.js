@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/vue-query'
-import { requestDiagnoseSync } from '@/http-functions/diagnose/client'
+import { requestDiagnosisStart } from '@/http-functions/diagnose/client'
 import {
   buildDiagnosePayload,
   handleDiagnoseError,
@@ -9,13 +9,19 @@ import {
 
 export function useDiagnoseMutation() {
   return useMutation({
-    mutationKey: ['diagnose', 'sync'],
+    mutationKey: ['diagnose', 'start'],
     mutationFn: async ({
-      mode = 'quick',
       image,
+      images = [],
+      imageIds = [],
       description,
-      plantName,
       plantId,
+      userPlantId,
+      plantCatalogId,
+      observedSymptoms = [],
+      observedEvidenceSet = [],
+      latestVisualCallBatchId = null,
+      visualBatchTrace = null,
       onText,
       onFinish,
       onError,
@@ -23,15 +29,21 @@ export function useDiagnoseMutation() {
     } = {}) => {
       try {
         onText?.('思考中...', '思考中...')
-        validateDiagnoseInput({ plantId, image })
+        validateDiagnoseInput({ plantId, userPlantId, image, images, observedSymptoms })
 
-        const normalizedResult = await requestDiagnoseSync(
+        const normalizedResult = await requestDiagnosisStart(
           buildDiagnosePayload({
-            mode,
             plantId,
+            userPlantId,
+            plantCatalogId,
             image,
+            images,
+            imageIds,
             description,
-            plantName,
+            observedSymptoms,
+            observedEvidenceSet,
+            latestVisualCallBatchId,
+            visualBatchTrace,
             skipAuth
           })
         )

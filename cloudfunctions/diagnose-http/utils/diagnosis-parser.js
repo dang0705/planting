@@ -1,17 +1,26 @@
-﻿'use strict'
+'use strict'
 
-function extractLineValue(text, labels) {
-  const labelPattern = labels.join('|')
-  const regex = new RegExp(`(?:^|\\n)\\s*(?:${labelPattern})[：:]\\s*(.+)`, 'i')
-  const match = String(text || '').match(regex)
-  return match ? match[1].trim() : ''
-}
+const {
+  normalizeOrgan,
+  normalizeQualityGrade,
+  normalizeAnalyzability,
+  normalizeStrengthLevel,
+  normalizeConfidenceBand,
+  normalizeVisibilityScope,
+  normalizeAdmissionReadiness,
+  normalizeRouteHints,
+  normalizeSuggestedFollowupCapture,
+  normalizeNotes,
+  confidenceBandToScore,
+  clampConfidence
+} = require('./visual-contract')
 
 function extractJsonBlock(text) {
   const source = String(text || '').trim()
   if (!source) return null
 
-  const fencedMatch = source.match(/```json\s*([\s\S]*?)```/i) || source.match(/```\s*([\s\S]*?)```/i)
+  const fencedMatch =
+    source.match(/```json\s*([\s\S]*?)```/i) || source.match(/```\s*([\s\S]*?)```/i)
   if (fencedMatch?.[1]) {
     return fencedMatch[1].trim()
   }
@@ -25,49 +34,13 @@ function extractJsonBlock(text) {
   return null
 }
 
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value))
-}
-
-function parseStructuredSymptoms(text) {
-  const jsonBlock = extractJsonBlock(text)
-  if (!jsonBlock) {
-    return null
-  }
+function safeJsonParse(value) {
+  if (value === null || value === undefined) return null
+  if (typeof value === 'object') return value
 
   try {
-    const payload = JSON.parse(jsonBlock)
-    const symptoms = Array.isArray(payload?.symptoms)
-      ? payload.symptoms
-          .map(item => {
-            const symptomKey = String(item?.symptom_key || item?.symptomKey || '').trim()
-            if (!symptomKey) return null
-
-            return {
-              symptomKey,
-              confidence: clamp(Number(item?.confidence || 0) || 0.7, 0, 1),
-              evidenceSource: String(item?.evidence_type || item?.evidenceSource || 'visual').trim() || 'visual',
-              reason: String(item?.reason || '').trim()
-            }
-          })
-          .filter(Boolean)
-          .slice(0, 5)
-      : []
-
-    const uncertainSymptoms = Array.isArray(payload?.uncertain_symptoms)
-      ? payload.uncertain_symptoms
-          .map(item => String(item?.symptom_key || item?.symptomKey || item || '').trim())
-          .filter(Boolean)
-      : []
-
-    return {
-      observedSymptoms: symptoms,
-      uncertainSymptoms,
-      imageQuality: ['good', 'medium', 'poor'].includes(String(payload?.image_quality || '').trim())
-        ? String(payload.image_quality).trim()
-        : 'medium'
-    }
-  } catch (error) {
+    return JSON.parse(String(value))
+  } catch {
     return null
   }
 }
@@ -79,76 +52,151 @@ function normalizeSentence(text) {
     .trim()
 }
 
-function buildParsedDiagnosis(text) {
-  const cleanText = normalizeSentence(text)
-  const structured = parseStructuredSymptoms(cleanText)
-  const symptomsLine = extractLineValue(cleanText, ['观察症状', '症状'])
-  const observationNote = extractLineValue(cleanText, ['观察说明', '补充说明']) || ''
-  const structuredSymptomText = (structured?.observedSymptoms || [])
-    .map(item => item.symptomKey)
-    .join('、')
-  const summary = [symptomsLine, observationNote]
-    .map(item => String(item || '').trim())
+function normalizeSymptomCandidate(item) {
+  const symptomKey = String(item?.symptom_key || item?.symptomKey || '').trim()
+  if (!symptomKey) return null
+
+  return {
+    symptom_key: symptomKey,
+    display_name_cn: String(item?.display_name_cn || item?.displayNameCn || symptomKey).trim(),
+    strength_level: normalizeStrengthLevel(item?.strength_level || item?.strengthLevel, 'medium'),
+    confidence_band: normalizeConfidenceBand(item?.confidence_band || item?.confidenceBand, 'medium'),
+    visibility_scope: normalizeVisibilityScope(item?.visibility_scope || item?.visibilityScope, 'organ'),
+    supporting_region_note: String(
+      item?.supporting_region_note || item?.supportingRegionNote || ''
+    ).trim(),
+    admission_readiness: normalizeAdmissionReadiness(
+      item?.admission_readiness || item?.admissionReadiness,
+      'cautious'
+    )
+  }
+}
+
+function buildLegacyCandidates(payload = {}) {
+  return (Array.isArray(payload?.symptoms) ? payload.symptoms : [])
+    .map(item => {
+      const symptomKey = String(item?.symptom_key || item?.symptomKey || '').trim()
+      if (!symptomKey) return null
+
+      const confidence = clampConfidence(Number(item?.confidence || 0) || 0.75)
+      let confidenceBand = 'medium'
+      if (confidence >= 0.85) confidenceBand = 'high'
+      if (confidence < 0.6) confidenceBand = 'low'
+
+      return normalizeSymptomCandidate({
+        symptom_key: symptomKey,
+        display_name_cn: item?.display_name_cn || item?.displayNameCn || symptomKey,
+        strength_level: confidence >= 0.85 ? 'strong' : confidence >= 0.6 ? 'medium' : 'weak',
+        confidence_band: confidenceBand,
+        visibility_scope: item?.visibility_scope || item?.visibilityScope || 'organ',
+        supporting_region_note: item?.reason || '',
+        admission_readiness: confidence >= 0.8 ? 'ready' : confidence >= 0.6 ? 'cautious' : 'retain_only'
+      })
+    })
     .filter(Boolean)
-    .join('；')
-    .substring(0, 180)
+}
+
+function parseStructuredVisualResult(text) {
+  const jsonBlock = extractJsonBlock(text)
+  if (!jsonBlock) {
+    return null
+  }
+
+  const payload = safeJsonParse(jsonBlock)
+  if (!payload || typeof payload !== 'object') {
+    return null
+  }
+
+  const symptomCandidates = Array.isArray(payload?.symptom_candidates)
+    ? payload.symptom_candidates.map(normalizeSymptomCandidate).filter(Boolean).slice(0, 8)
+    : buildLegacyCandidates(payload).slice(0, 8)
+
+  const qualityGrade = normalizeQualityGrade(
+    payload?.image_quality_grade || payload?.image_quality,
+    'medium'
+  )
+  const analyzability = normalizeAnalyzability(
+    payload?.analyzability,
+    qualityGrade === 'good' ? 'high' : qualityGrade === 'poor' ? 'low' : 'medium'
+  )
+
+  return {
+    normalized_organ: normalizeOrgan(payload?.normalized_organ, 'unknown'),
+    image_quality_grade: qualityGrade,
+    analyzability,
+    symptom_candidates: symptomCandidates,
+    route_hints: normalizeRouteHints(payload?.route_hints || []),
+    suggested_followup_capture: normalizeSuggestedFollowupCapture(
+      payload?.suggested_followup_capture || []
+    ),
+    normalization_notes: normalizeNotes(payload?.normalization_notes || []),
+    uncertain_symptoms: (Array.isArray(payload?.uncertain_symptoms) ? payload.uncertain_symptoms : [])
+      .map(item => String(item?.symptom_key || item?.symptomKey || item || '').trim())
+      .filter(Boolean)
+      .slice(0, 5)
+  }
+}
+
+function toLegacyObservedSymptoms(visualResult = null) {
+  return (Array.isArray(visualResult?.symptom_candidates) ? visualResult.symptom_candidates : [])
+    .filter(item => normalizeAdmissionReadiness(item?.admission_readiness, 'cautious') !== 'retain_only')
+    .map(item => ({
+      symptomKey: item.symptom_key,
+      confidence: confidenceBandToScore(item.confidence_band),
+      evidenceSource: 'visual'
+    }))
+}
+
+function parseLLMVisualResult(text) {
+  const cleanText = normalizeSentence(text)
+  const structured = parseStructuredVisualResult(cleanText)
+
+  if (structured) {
+    return structured
+  }
+
+  return {
+    normalized_organ: 'unknown',
+    image_quality_grade: 'medium',
+    analyzability: 'low',
+    symptom_candidates: [],
+    route_hints: [
+      {
+        type: 'retake_image',
+        reason: 'model_output_unparseable'
+      }
+    ],
+    suggested_followup_capture: ['补拍更清晰的受损部位特写和整株图'],
+    normalization_notes: ['模型输出无法稳定解析，已降级为空结果。'],
+    uncertain_symptoms: []
+  }
+}
+
+function parseLLMDiagnosis(text) {
+  const visualResult = parseLLMVisualResult(text)
+  const observedSymptoms = toLegacyObservedSymptoms(visualResult)
+  const summary = observedSymptoms.map(item => item.symptomKey).join('、')
 
   return {
     healthScore: null,
     healthStatus: null,
     mainIssue: null,
-    observedSymptoms: structured?.observedSymptoms || [],
-    uncertainSymptoms: structured?.uncertainSymptoms || [],
-    imageQuality: structured?.imageQuality || 'medium',
-    symptoms: structuredSymptomText || symptomsLine || cleanText.substring(0, 200),
+    observedSymptoms,
+    uncertainSymptoms: visualResult.uncertain_symptoms || [],
+    imageQuality: visualResult.image_quality_grade || 'medium',
+    symptoms: summary || normalizeSentence(text).slice(0, 200),
     treatment: '',
     prevention: '',
-    summary: summary || structuredSymptomText || cleanText.substring(0, 180)
+    summary: summary || normalizeSentence(text).slice(0, 180)
   }
-}
-
-function parseLLMDiagnosis(text) {
-  return buildParsedDiagnosis(text)
-}
-
-function removeDuplicateContent(text) {
-  if (/(观察症状|观察说明|symptoms|image_quality)[：:"]/.test(String(text || ''))) {
-    return normalizeSentence(text)
-  }
-
-  const paragraphs = String(text || '')
-    .split('\n')
-    .filter(p => p.trim().length > 20)
-  if (paragraphs.length > 0) {
-    let longestPara = paragraphs[0]
-    for (const paragraph of paragraphs) {
-      if (paragraph.length > longestPara.length) {
-        longestPara = paragraph
-      }
-    }
-    return longestPara
-  }
-
-  const sentences = String(text || '').split(/[。！？]+/).filter(s => s.trim())
-  const seen = new Set()
-  const unique = []
-  for (const sentence of sentences) {
-    const trimmed = sentence.trim()
-    if (trimmed && !seen.has(trimmed)) {
-      seen.add(trimmed)
-      unique.push(trimmed)
-    }
-  }
-  return unique.join('。')
 }
 
 function parseAgentDiagnosis(text) {
-  return buildParsedDiagnosis(removeDuplicateContent(text))
+  return parseLLMDiagnosis(text)
 }
 
 module.exports = {
+  parseLLMVisualResult,
   parseLLMDiagnosis,
   parseAgentDiagnosis
 }
-
-

@@ -4,7 +4,16 @@ const tencentcloud = require('tencentcloud-sdk-nodejs-hunyuan')
 const { debugLog } = require('./common')
 const { buildSymptomLabelerPrompt } = require('./symptom-labeler-prompt')
 const {
-  llm: { model, options: llmOptions = {}, host: endpoint, sse }
+  llm: {
+    model,
+    modelProfile,
+    modelReasoningMode,
+    options: llmOptions = {},
+    host: endpoint,
+    sse,
+    requestTimeoutSec = 8,
+    maxImages = 1
+  }
 } = require('../configs')
 
 const HunyuanClient = tencentcloud.hunyuan.v20230901.Client
@@ -30,7 +39,8 @@ function getHunyuanClient() {
     region: '',
     profile: {
       httpProfile: {
-        endpoint
+        endpoint,
+        reqTimeout: requestTimeoutSec
       }
     }
   })
@@ -109,6 +119,11 @@ function safeJsonParse(data) {
   }
 }
 
+function isRetryableVisionError(error) {
+  const message = String(error?.message || error || '').toLowerCase()
+  return message.includes('timeout') || message.includes('timed out') || message.includes('network')
+}
+
 function pickNonStreamText(res) {
   return String(
     res?.Response?.Choices?.[0]?.Message?.Content || res?.Choices?.[0]?.Message?.Content || ''
@@ -123,8 +138,24 @@ function safeSerializeLogPayload(res) {
   if (typeof res === 'string') {
     return res
   }
-  const content = res.Choices?.[0]?.Message?.Content || ''
-  return typeof content === 'string' ? JSON.parse(content) : content
+
+  const content =
+    res?.Response?.Choices?.[0]?.Message?.Content ||
+    res?.Choices?.[0]?.Message?.Content ||
+    ''
+
+  if (typeof content !== 'string' || !content.trim()) {
+    return res
+  }
+
+  try {
+    return JSON.parse(content)
+  } catch {
+    return {
+      contentPreview: content.slice(0, 1000),
+      contentLength: content.length
+    }
+  }
 
   /*  try {
     return JSON.stringify(payload)
@@ -133,10 +164,14 @@ function safeSerializeLogPayload(res) {
   }*/
 }
 
-async function buildLLMDiagnoseMessages(image) {
+async function buildLLMDiagnoseMessages(images = []) {
   const contents = []
+  const normalizedImages = Array.isArray(images)
+    ? images.map(item => String(item || '').trim()).filter(Boolean)
+    : []
+  const selectedImages = normalizedImages.slice(0, Math.max(1, Number(maxImages || 1)))
 
-  if (image) {
+  for (const image of selectedImages) {
     contents.push({ Type: 'image_url', ImageUrl: { Url: image } })
   }
 
@@ -156,20 +191,52 @@ function buildPayload(messages, stream) {
 
 async function callHunyuanVisionNonStream(messages) {
   const client = getHunyuanClient()
-  const res = await client.ChatCompletions(buildPayload(messages, false))
-  console.log('diagnose-http hunyuan non-stream raw response:', safeSerializeLogPayload(res))
-  const errorMessage = extractPayloadError(res)
+  const maxAttempts = 2
+  let lastError = null
 
-  if (errorMessage) {
-    throw new Error(errorMessage)
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const res = await client.ChatCompletions(buildPayload(messages, false))
+      console.log('diagnose-http hunyuan non-stream raw response:', safeSerializeLogPayload(res))
+      const errorMessage = extractPayloadError(res)
+
+      if (errorMessage) {
+        throw new Error(errorMessage)
+      }
+
+      const usage = normalizeUsage(extractUsage(res))
+      if (usage) {
+        console.log('diagnose-http usageToken:', usage)
+      }
+
+      if (attempt > 1) {
+        console.warn('diagnose-http hunyuan non-stream recovered after retry:', { attempt })
+      }
+
+      return pickNonStreamText(res)
+    } catch (error) {
+      lastError = error
+      const retryable = isRetryableVisionError(error)
+
+      if (attempt >= maxAttempts || !retryable) {
+        console.error('diagnose-http hunyuan non-stream final failure:', {
+          attempt,
+          maxAttempts,
+          retryable,
+          reason: String(error?.message || error || '')
+        })
+        break
+      }
+
+      console.warn('diagnose-http hunyuan non-stream retry:', {
+        attempt,
+        nextAttempt: attempt + 1,
+        reason: String(error?.message || error || '')
+      })
+    }
   }
 
-  const usage = normalizeUsage(extractUsage(res))
-  if (usage) {
-    console.log('diagnose-http usageToken:', usage)
-  }
-
-  return pickNonStreamText(res)
+  throw lastError
 }
 
 function callHunyuanVisionStream(messages, { onText } = {}) {
@@ -258,12 +325,29 @@ function callHunyuanVisionStream(messages, { onText } = {}) {
   })
 }
 
-async function callLLMDiagnose(image, { onText } = {}) {
-  const messages = await buildLLMDiagnoseMessages(image)
+async function callLLMDiagnose(images = [], { onText } = {}) {
+  const normalizedImages = Array.isArray(images)
+    ? images.map(item => String(item || '').trim()).filter(Boolean)
+    : []
+  const selectedImages = normalizedImages.slice(0, Math.max(1, Number(maxImages || 1)))
+  const messages = await buildLLMDiagnoseMessages(selectedImages)
   const promptText = messages?.[0]?.Contents?.find(item => item.Type === 'text')?.Text || ''
-  // console.log('diagnose-http symptom prompt:', promptText)
+  console.log('diagnose-http symptom prompt:', promptText)
+  console.log('diagnose-http symptom prompt meta:', {
+    model,
+    modelProfile,
+    modelReasoningMode,
+    promptLength: promptText.length,
+    hasImage: selectedImages.length > 0,
+    imageCount: selectedImages.length,
+    totalInputImages: normalizedImages.length,
+    imageLengths: selectedImages.map(item => String(item || '').length),
+    imagePrefixes: selectedImages.map(item => String(item || '').slice(0, 32))
+  })
 
-  if (!sse) {
+  const shouldUseStream = Boolean(sse && typeof onText === 'function')
+
+  if (!shouldUseStream) {
     return callHunyuanVisionNonStream(messages)
   }
 

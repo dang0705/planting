@@ -1,5 +1,7 @@
 'use strict'
 
+const { expectedColumns } = require('./data-diff-builder')
+
 function classifyPriority(tableName) {
   if (['problems', 'symptoms'].includes(tableName)) return 'P1_PRIMARY_KEYSPACE'
   if (['symptom_problem_evidence'].includes(tableName)) return 'P2_EVIDENCE_CLOSURE'
@@ -24,14 +26,18 @@ function buildBackfillPlan(diffReport = {}) {
 
   const actions = tableDiffs
     .filter(item => item.missingColumns.length || item.type === 'missing')
-    .map(item => ({
-      table: item.table,
-      priority: classifyPriority(item.table),
-      missingColumns: item.missingColumns || [],
-      action: 'upsert_with_partial_status',
-      dataStatus: 'partial',
-      requiredAuditFields: ['data_status', 'data_source', 'audit_note']
-    }))
+    .map(item => {
+      const supportsDataStatus = Array.isArray(expectedColumns[item.table]) && expectedColumns[item.table].includes('data_status')
+
+      return {
+        table: item.table,
+        priority: classifyPriority(item.table),
+        missingColumns: item.missingColumns || [],
+        action: supportsDataStatus ? 'upsert_with_partial_status' : 'upsert_missing_fields',
+        dataStatus: supportsDataStatus ? 'partial' : null,
+        requiredAuditFields: supportsDataStatus ? ['data_status', 'data_source', 'audit_note'] : []
+      }
+    })
 
   return {
     generatedAt: new Date().toISOString(),

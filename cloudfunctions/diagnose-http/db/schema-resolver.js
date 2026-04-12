@@ -30,10 +30,15 @@ function resolveSchemaEnv(headers = {}, query = {}, body = {}) {
   const raw =
     pickHeader(headers, 'x-env') ||
     pickHeader(headers, 'x_schema_env') ||
+    pickHeader(headers, 'x-app-env') ||
     query?.env ||
     query?.xEnv ||
+    query?.appEnv ||
+    query?.app_env ||
     body?.env ||
     body?.xEnv ||
+    body?.appEnv ||
+    body?.app_env ||
     ''
 
   return normalizeEnv(raw)
@@ -80,4 +85,3 @@ module.exports = {
   resolveSchemaEnv,
   runWithSchemaEnv
 }
-
