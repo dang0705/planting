@@ -4,17 +4,58 @@ const { models } = require('/opt/utils/cloudbase')
 const { sqlInList, clamp01 } = require('./sql')
 const { table } = require('../db/table-helper')
 const { resolveSchema } = require('../db/schema-resolver')
+const {
+  filterPromptSymptomsByLocation
+} = require('../utils/prompt-symptom-pool')
 
 const cacheBySchema = new Map()
 
 const DICTIONARY_TTL_MS = 5 * 60 * 1000
+
+function safeJsonParse(value) {
+  if (value === null || value === undefined) return null
+  if (typeof value === 'object') return value
+
+  try {
+    return JSON.parse(String(value))
+  } catch {
+    return null
+  }
+}
+
+function normalizeAiVisualPool(value) {
+  const parsedValue = safeJsonParse(value)
+  const source = parsedValue === null ? value : parsedValue
+
+  if (Array.isArray(source)) {
+    return source
+      .map(item => String(item || '').trim().toLowerCase())
+      .filter(Boolean)
+  }
+
+  if (source && typeof source === 'object') {
+    return Object.entries(source)
+      .filter(([, enabled]) => Boolean(enabled))
+      .map(([key]) => String(key || '').trim().toLowerCase())
+      .filter(Boolean)
+  }
+
+  const normalized = String(source || '').trim().toLowerCase()
+  return normalized ? [normalized] : []
+}
+
+function isAiVisualPoolEnabled(value) {
+  return normalizeAiVisualPool(value).includes('yes')
+}
 
 function getSchemaCache(schema) {
   const safeSchema = String(schema || '').trim() || 'default'
   if (!cacheBySchema.has(safeSchema)) {
     cacheBySchema.set(safeSchema, {
       expiresAt: 0,
-      rows: []
+      rows: [],
+      promptExpiresAt: 0,
+      promptRows: []
     })
   }
   return cacheBySchema.get(safeSchema)
@@ -29,6 +70,8 @@ function mapSymptomRow(row = {}) {
     distributionKey: row.distribution_key || '',
     symptomType: row.symptom_type || 'visual',
     signalReliability: clamp01(row.signal_reliability),
+    aiVisualPool: normalizeAiVisualPool(row.ai_visual_pool),
+    aiVisualPoolEnabled: isAiVisualPoolEnabled(row.ai_visual_pool),
     displayTextCn: row.display_text_cn || row.symptom_cn || row.symptom_key,
     userObservationTipCn: row.user_observation_tip_cn || '',
     confusionNoteCn: row.confusion_note_cn || '',
@@ -65,12 +108,13 @@ async function getSymptomDictionary() {
         distribution_key,
         symptom_type,
         signal_reliability,
+        ai_visual_pool,
         display_text_cn,
         user_observation_tip_cn,
         confusion_note_cn,
         data_status
       FROM ${table('symptoms')}
-      WHERE data_status IN ('audited', 'partial')
+      WHERE data_status = 'audited'
       ORDER BY signal_reliability DESC, symptom_key ASC
     `,
     {}
@@ -79,6 +123,43 @@ async function getSymptomDictionary() {
   cache.rows = (result?.data?.executeResultList || []).map(mapSymptomRow)
   cache.expiresAt = now + DICTIONARY_TTL_MS
   return cache.rows
+}
+
+async function getPromptSymptomDictionary() {
+  const schema = resolveSchema()
+  const cache = getSchemaCache(schema)
+  const now = Date.now()
+  if (cache.promptExpiresAt > now && cache.promptRows.length) {
+    return cache.promptRows
+  }
+
+  const result = await models.$runSQL(
+    `
+      SELECT
+        symptom_key,
+        symptom_cn,
+        location_key,
+        pattern_key,
+        distribution_key,
+        symptom_type,
+        signal_reliability,
+        ai_visual_pool,
+        display_text_cn,
+        user_observation_tip_cn,
+        confusion_note_cn,
+        data_status
+      FROM ${table('symptoms')}
+      WHERE data_status = 'audited'
+        AND symptom_type IN ('visual', 'hybrid')
+        AND JSON_UNQUOTE(ai_visual_pool) = 'yes'
+      ORDER BY signal_reliability DESC, symptom_key ASC
+    `,
+    {}
+  )
+
+  cache.promptRows = (result?.data?.executeResultList || []).map(mapSymptomRow)
+  cache.promptExpiresAt = now + DICTIONARY_TTL_MS
+  return cache.promptRows
 }
 
 async function getSymptomsByKeys(symptomKeys = []) {
@@ -95,6 +176,7 @@ async function getSymptomsByKeys(symptomKeys = []) {
         distribution_key,
         symptom_type,
         signal_reliability,
+        ai_visual_pool,
         display_text_cn,
         user_observation_tip_cn,
         confusion_note_cn,
@@ -138,6 +220,8 @@ async function getEvidenceEdges({ symptomKeys = [], problemKeys = [] } = {}) {
 
 module.exports = {
   getSymptomDictionary,
+  getPromptSymptomDictionary,
+  filterPromptSymptomsByLocation,
   getSymptomsByKeys,
   getEvidenceEdges
 }

@@ -33,7 +33,43 @@
     },
     {
       "functionName": "diagnose-http",
+      "path": "/diagnosis/review/list"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/diagnosis/review/detail"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/diagnosis/review/images"
+    },
+    {
+      "functionName": "diagnose-http",
       "path": "/diagnosis/feedback"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/visual/out-of-pool/list"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/visual/out-of-pool/image"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/visual/out-of-pool/review"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/visual/out-of-pool/proxy-mappings/list"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/visual/out-of-pool/proxy-mappings/upsert"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/visual/out-of-pool/proxy-mappings/disable"
     },
     {
       "functionName": "diagnose-http",

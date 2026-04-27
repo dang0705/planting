@@ -2,22 +2,39 @@
 import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
 import { CLOUDBASE_ENV_ID } from '@/utils/runtime-env'
 
-onLaunch(() => {
-  console.log('App Launch')
+// #ifdef MP-WEIXIN
+function initMiniProgramCloud() {
   wx.cloud.init({
     env: CLOUDBASE_ENV_ID,
     traceUser: true
   })
 
   try {
-    if (wx.cloud.extend && wx.cloud.extend.AI) {
+    if (wx.cloud?.extend?.AI) {
       console.log('✅ AI 扩展已初始化')
-    } else {
-      console.warn('⚠️ AI 扩展不可用，深度思考功能可能无法使用')
+      return
     }
+    console.warn('⚠️ AI 扩展不可用，深度思考功能可能无法使用')
   } catch (error) {
     console.error('❌ AI 扩展初始化失败:', error)
   }
+}
+// #endif
+
+onLaunch(() => {
+  console.log('App Launch')
+
+  // #ifdef MP-WEIXIN
+  initMiniProgramCloud()
+  // #endif
+
+  // #ifdef H5
+  console.log('ℹ️ 当前为 H5 环境，跳过小程序 wx.cloud 初始化')
+  // #endif
+
+  // #ifdef APP-PLUS
+  console.log('ℹ️ 当前为 App 环境，跳过小程序 wx.cloud 初始化')
+  // #endif
 })
 
 onShow(() => {

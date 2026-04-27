@@ -2,6 +2,24 @@ function normalizeOutcomeType(outcomeType = '') {
   return String(outcomeType || '').trim().toLowerCase()
 }
 
+function isEnglishLikeSymptomLabel(value = '') {
+  const normalized = String(value || '').trim()
+  if (!normalized) return false
+  return /[A-Za-z]/.test(normalized) && !/[\u4e00-\u9fff]/.test(normalized)
+}
+
+function resolveDisplaySymptomCn(...candidates) {
+  const candidate = candidates
+    .map(item => String(item || '').trim())
+    .find(Boolean)
+
+  if (!candidate || isEnglishLikeSymptomLabel(candidate)) {
+    return '待确认症状'
+  }
+
+  return candidate
+}
+
 function mapSeverityToHealthText({ severity = 'medium', outcomeType = '', followUpRequired = false } = {}) {
   const normalizedOutcomeType = normalizeOutcomeType(outcomeType)
 
@@ -38,7 +56,15 @@ function normalizeObservedSymptoms(observedSymptoms = []) {
     .filter(item => item?.symptomKey)
     .map(item => ({
       symptomKey: item.symptomKey,
-      symptomCn: item.symptomCn || item.displayTextCn || item.symptomKey,
+      symptomCn: resolveDisplaySymptomCn(
+        item.symptomCn,
+        item.symptom_cn,
+        item.displayTextCn,
+        item.display_text_cn,
+        item.label,
+        item.evidenceLabel,
+        item.symptomKey
+      ),
       confidence: Number(item.confidence || 0),
       source: item.source || item.evidenceSource || 'mixed'
     }))
@@ -56,17 +82,18 @@ function normalizeObservedEvidenceSet(observedEvidenceSet = []) {
       ).trim(),
       evidenceType: String(item?.evidenceType || item?.evidence_type || '').trim(),
       symptomKey: String(item?.symptomKey || item?.symptom_key || '').trim(),
-      symptomCn: String(
-        item?.symptomCn ||
-          item?.symptom_cn ||
-          item?.displayTextCn ||
-          item?.display_text_cn ||
-          item?.symptomKey ||
-          item?.symptom_key ||
-          item?.evidenceKey ||
-          item?.evidence_key ||
-          ''
-      ).trim(),
+      symptomCn: resolveDisplaySymptomCn(
+        item?.symptomCn,
+        item?.symptom_cn,
+        item?.displayTextCn,
+        item?.display_text_cn,
+        item?.label,
+        item?.evidenceLabel,
+        item?.symptomKey,
+        item?.symptom_key,
+        item?.evidenceKey,
+        item?.evidence_key
+      ),
       confidence: Number(item?.confidence || 0),
       sourceType: String(item?.sourceType || item?.source_type || '').trim(),
       currentStatus: String(item?.currentStatus || item?.current_status || '').trim() || 'active',
@@ -163,6 +190,101 @@ function normalizeVisualAggregateSummary(summary = null) {
   }
 }
 
+function normalizeDerivedEvidenceSet(derivedEvidenceSet = []) {
+  return (Array.isArray(derivedEvidenceSet) ? derivedEvidenceSet : [])
+    .map(item => ({
+      derivedEvidenceId: String(
+        item?.derivedEvidenceId || item?.derived_evidence_id || ''
+      ).trim(),
+      derivedEvidenceKey: String(
+        item?.derivedEvidenceKey || item?.derived_evidence_key || ''
+      ).trim(),
+      derivedEvidenceType: String(
+        item?.derivedEvidenceType || item?.derived_evidence_type || ''
+      ).trim(),
+      patternKey: String(item?.patternKey || item?.pattern_key || '').trim(),
+      locationKey: String(item?.locationKey || item?.location_key || '').trim(),
+      distributionKey: String(item?.distributionKey || item?.distribution_key || '').trim(),
+      label: String(item?.label || item?.labelCn || '').trim(),
+      sourceType: String(item?.sourceType || item?.source_type || '').trim(),
+      evidenceState: String(item?.evidenceState || item?.evidence_state || '').trim(),
+      confidence: Number(item?.confidence || 0),
+      parentEvidenceKeys: normalizeStringList(
+        item?.parentEvidenceKeys || item?.parent_evidence_keys
+      ),
+      parentSymptomKeys: normalizeStringList(
+        item?.parentSymptomKeys || item?.parent_symptom_keys
+      ),
+      independenceGroupIds: normalizeStringList(
+        item?.independenceGroupIds || item?.independence_group_ids
+      ),
+      enteredRuntime: Number(item?.enteredRuntime ?? item?.entered_runtime ?? 0) ? 1 : 0,
+      enteredExplanation: Number(item?.enteredExplanation ?? item?.entered_explanation ?? 0) ? 1 : 0
+    }))
+    .filter(item => item.derivedEvidenceId)
+}
+
+function normalizeDiagnosisDirections(diagnosisDirections = []) {
+  return (Array.isArray(diagnosisDirections) ? diagnosisDirections : [])
+    .map(item => ({
+      directionId: String(item?.directionId || item?.direction_id || '').trim(),
+      directionKey: String(item?.directionKey || item?.direction_key || '').trim(),
+      categoryKey: String(item?.categoryKey || item?.category_key || '').trim(),
+      label: String(item?.label || item?.labelCn || '').trim(),
+      confidence: Number(item?.confidence || 0),
+      status: String(item?.status || '').trim(),
+      matchedSymptomKeys: normalizeStringList(
+        item?.matchedSymptomKeys || item?.matched_symptom_keys
+      ),
+      matchedPatternKeys: normalizeStringList(
+        item?.matchedPatternKeys || item?.matched_pattern_keys
+      ),
+      matchedCandidateSymptomKeys: normalizeStringList(
+        item?.matchedCandidateSymptomKeys || item?.matched_candidate_symptom_keys
+      ),
+      matchedRouteHintTypes: normalizeStringList(
+        item?.matchedRouteHintTypes || item?.matched_route_hint_types
+      ),
+      matchedRouteHintReasons: normalizeStringList(
+        item?.matchedRouteHintReasons || item?.matched_route_hint_reasons
+      ),
+      coveredFactDimensions: normalizeStringList(
+        item?.coveredFactDimensions || item?.covered_fact_dimensions
+      ),
+      preferredQuestionDimensions: normalizeStringList(
+        item?.preferredQuestionDimensions || item?.preferred_question_dimensions
+      ),
+      allowedProblemKeys: normalizeStringList(
+        item?.allowedProblemKeys || item?.allowed_problem_keys || item?.candidateProblemKeys
+      ),
+      candidateProblemKeys: normalizeStringList(
+        item?.candidateProblemKeys || item?.candidate_problem_keys
+      ),
+      supportSummary:
+        item?.supportSummary && typeof item.supportSummary === 'object'
+          ? {
+              matchedSymptomCount: Number(item.supportSummary?.matchedSymptomCount || 0),
+              matchedPatternCount: Number(item.supportSummary?.matchedPatternCount || 0),
+              confidence: Number(item.supportSummary?.confidence || 0)
+            }
+          : null,
+      outputGateHints:
+        item?.outputGateHints && typeof item.outputGateHints === 'object'
+          ? {
+              allowConclusionOnlyByProblemKey:
+                Number(item.outputGateHints?.allowConclusionOnlyByProblemKey || 0) ? 1 : 0,
+              requiresAuditedClosure:
+                Number(item.outputGateHints?.requiresAuditedClosure || 0) ? 1 : 0,
+              shouldStayInternal:
+                Number(item.outputGateHints?.shouldStayInternal || 0) ? 1 : 0
+            }
+          : null,
+      round: Math.max(1, Number(item?.round || 1)),
+      updatedAt: Number(item?.updatedAt || item?.updated_at || 0) || 0
+    }))
+    .filter(item => item.directionId)
+}
+
 function normalizeQuestionQueue(questionQueue = null) {
   if (!questionQueue || typeof questionQueue !== 'object') {
     return null
@@ -188,6 +310,8 @@ function normalizeQuestionQueue(questionQueue = null) {
       questionId: String(item?.questionId || '').trim(),
       targetSymptomKey: String(item?.targetSymptomKey || '').trim(),
       questionGroupKey: String(item?.questionGroupKey || '').trim(),
+      targetDimension: String(item?.targetDimension || '').trim(),
+      routingScope: String(item?.routingScope || '').trim(),
       questionText: String(item?.questionText || item?.text || '').trim(),
       helpText: String(item?.helpText || '').trim(),
       currentPriority: Number(item?.currentPriority || 0),
@@ -251,6 +375,123 @@ function normalizeDiagnosticTrace(trace = []) {
       payload: item?.payload && typeof item.payload === 'object' ? item.payload : null
     }))
     .filter(item => item.eventType)
+}
+
+function normalizeCoreProcess(coreProcess = null, fallback = {}) {
+  const normalizedObservedSymptoms = Array.isArray(fallback?.observedSymptoms)
+    ? fallback.observedSymptoms
+    : []
+  const normalizedObservedEvidenceSet = Array.isArray(fallback?.observedEvidenceSet)
+    ? fallback.observedEvidenceSet
+    : []
+  const normalizedDerivedEvidenceSet = Array.isArray(fallback?.derivedEvidenceSet)
+    ? fallback.derivedEvidenceSet
+    : []
+  const normalizedDiagnosisDirections = Array.isArray(fallback?.diagnosisDirections)
+    ? fallback.diagnosisDirections
+    : []
+  const normalizedQuestionQueue = fallback?.questionQueue || null
+  const normalizedStopState = fallback?.stopState || null
+  const normalizedOutputEligibility = fallback?.outputEligibility || null
+  const normalizedDiagnosticTrace = Array.isArray(fallback?.diagnosticTrace)
+    ? fallback.diagnosticTrace
+    : []
+  const normalizedVisualBatchTrace = fallback?.visualBatchTrace || null
+  const normalizedVisualAggregateSummary = fallback?.visualAggregateSummary || null
+  const normalizedShadowCompareSummary = fallback?.shadowCompareSummary || null
+  const normalizedCareBaselineSummary = fallback?.careBaselineSummary || null
+  const normalizedEnvironmentDeviationHints = Array.isArray(fallback?.environmentDeviationHints)
+    ? fallback.environmentDeviationHints
+    : []
+  const questionQueueForSummary =
+    coreProcess?.followUp?.questionQueue && typeof coreProcess.followUp.questionQueue === 'object'
+      ? normalizeQuestionQueue(coreProcess.followUp.questionQueue)
+      : normalizedQuestionQueue
+  const questionCountSummary =
+    coreProcess?.followUp?.questionCountSummary && typeof coreProcess.followUp.questionCountSummary === 'object'
+      ? {
+          totalItems: Number(coreProcess.followUp.questionCountSummary?.totalItems || 0),
+          activeItems: Number(coreProcess.followUp.questionCountSummary?.activeItems || 0),
+          askedItems: Number(coreProcess.followUp.questionCountSummary?.askedItems || 0),
+          answeredItems: Number(coreProcess.followUp.questionCountSummary?.answeredItems || 0),
+          invalidatedItems: Number(coreProcess.followUp.questionCountSummary?.invalidatedItems || 0)
+        }
+      : {
+          totalItems: Array.isArray(questionQueueForSummary?.questionItems)
+            ? questionQueueForSummary.questionItems.length
+            : 0,
+          activeItems: Number(questionQueueForSummary?.activeItemCount || 0),
+          askedItems: Number(questionQueueForSummary?.askedItemCount || 0),
+          answeredItems: Number(questionQueueForSummary?.answeredItemCount || 0),
+          invalidatedItems: Number(questionQueueForSummary?.invalidatedItemCount || 0)
+        }
+
+  return {
+    visual: {
+      latestVisualCallBatchId:
+        coreProcess?.visual?.latestVisualCallBatchId ||
+        fallback?.latestVisualCallBatchId ||
+        null,
+      visualBatchTrace:
+        normalizeVisualBatchTrace(coreProcess?.visual?.visualBatchTrace) ||
+        normalizedVisualBatchTrace,
+      visualAggregateSummary:
+        normalizeVisualAggregateSummary(coreProcess?.visual?.visualAggregateSummary) ||
+        normalizedVisualAggregateSummary,
+      shadowCompareSummary:
+        normalizeShadowCompareSummary(coreProcess?.visual?.shadowCompareSummary) ||
+        normalizedShadowCompareSummary
+    },
+    evidence: {
+      observedSymptomCount: Number(
+        coreProcess?.evidence?.observedSymptomCount ?? normalizedObservedSymptoms.length
+      ),
+      observedSymptoms: Array.isArray(coreProcess?.evidence?.observedSymptoms)
+        ? coreProcess.evidence.observedSymptoms
+        : normalizedObservedSymptoms,
+      observedEvidenceCount: Number(
+        coreProcess?.evidence?.observedEvidenceCount ?? normalizedObservedEvidenceSet.length
+      ),
+      observedEvidenceSet: Array.isArray(coreProcess?.evidence?.observedEvidenceSet)
+        ? normalizeObservedEvidenceSet(coreProcess.evidence.observedEvidenceSet)
+        : normalizedObservedEvidenceSet,
+      derivedEvidenceCount: Number(
+        coreProcess?.evidence?.derivedEvidenceCount ?? normalizedDerivedEvidenceSet.length
+      ),
+      derivedEvidenceSet: Array.isArray(coreProcess?.evidence?.derivedEvidenceSet)
+        ? normalizeDerivedEvidenceSet(coreProcess.evidence.derivedEvidenceSet)
+        : normalizedDerivedEvidenceSet,
+      diagnosisDirectionCount: Number(
+        coreProcess?.evidence?.diagnosisDirectionCount ?? normalizedDiagnosisDirections.length
+      ),
+      diagnosisDirections: Array.isArray(coreProcess?.evidence?.diagnosisDirections)
+        ? normalizeDiagnosisDirections(coreProcess.evidence.diagnosisDirections)
+        : normalizedDiagnosisDirections,
+      careBaselineSummary:
+        coreProcess?.evidence?.careBaselineSummary || normalizedCareBaselineSummary,
+      environmentDeviationHints: Array.isArray(coreProcess?.evidence?.environmentDeviationHints)
+        ? coreProcess.evidence.environmentDeviationHints
+        : normalizedEnvironmentDeviationHints
+    },
+    followUp: {
+      routePrimaryAction:
+        String(coreProcess?.followUp?.routePrimaryAction || fallback?.routePrimaryAction || '').trim(),
+      questionQueue: questionQueueForSummary,
+      questionCountSummary
+    },
+    decision: {
+      stopReason:
+        String(coreProcess?.decision?.stopReason || fallback?.stopReason || '').trim(),
+      stopState:
+        normalizeStopState(coreProcess?.decision?.stopState) || normalizedStopState,
+      outputEligibility:
+        normalizeOutputEligibility(coreProcess?.decision?.outputEligibility) ||
+        normalizedOutputEligibility,
+      diagnosticTrace: Array.isArray(coreProcess?.decision?.diagnosticTrace)
+        ? normalizeDiagnosticTrace(coreProcess.decision.diagnosticTrace)
+        : normalizedDiagnosticTrace
+    }
+  }
 }
 
 function normalizeRankings(rankings = []) {
@@ -384,6 +625,8 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
   const outcomeType = normalizeOutcomeType(diagnosis.outcomeType)
   const summaryCard = diagnosis.summaryCard || null
   const observedEvidenceSet = normalizeObservedEvidenceSet(diagnosis.observedEvidenceSet)
+  const derivedEvidenceSet = normalizeDerivedEvidenceSet(diagnosis.derivedEvidenceSet)
+  const diagnosisDirections = normalizeDiagnosisDirections(diagnosis.diagnosisDirections)
   const questionQueue = normalizeQuestionQueue(diagnosis.questionQueue)
   const stopState = normalizeStopState(diagnosis.stopState)
   const outputEligibility = normalizeOutputEligibility(diagnosis.outputEligibility)
@@ -394,6 +637,26 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
     normalizeShadowCompareSummary(diagnosis.shadowCompareSummary) ||
     visualAggregateSummary?.shadowCompareSummary ||
     null
+  const coreProcess = normalizeCoreProcess(diagnosis.coreProcess, {
+    latestVisualCallBatchId: diagnosis.latestVisualCallBatchId || null,
+    observedSymptoms,
+    observedEvidenceSet,
+    derivedEvidenceSet,
+    diagnosisDirections,
+    careBaselineSummary: diagnosis.careBaselineSummary || null,
+    environmentDeviationHints: Array.isArray(diagnosis.environmentDeviationHints)
+      ? diagnosis.environmentDeviationHints
+      : [],
+    routePrimaryAction: diagnosis.routePrimaryAction || '',
+    questionQueue,
+    stopReason: diagnosis.stopReason || '',
+    stopState,
+    outputEligibility,
+    diagnosticTrace,
+    visualBatchTrace,
+    visualAggregateSummary,
+    shadowCompareSummary
+  })
 
   const severity =
     finalResult?.severity ||
@@ -437,10 +700,17 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
     rankings,
     observedSymptoms,
     observedEvidenceSet,
+    derivedEvidenceSet,
+    diagnosisDirections,
+    careBaselineSummary: diagnosis.careBaselineSummary || null,
+    environmentDeviationHints: Array.isArray(diagnosis.environmentDeviationHints)
+      ? diagnosis.environmentDeviationHints
+      : [],
     questionQueue,
     stopState,
     outputEligibility,
     diagnosticTrace,
+    coreProcess,
     visualBatchTrace,
     visualAggregateSummary,
     shadowCompareSummary,

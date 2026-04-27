@@ -79,7 +79,7 @@
     <view class="px-4 pb-6">
       <view class="bg-white rounded-3xl overflow-hidden shadow-sm">
         <view
-          v-for="(item, index) in menuItems"
+          v-for="(item, index) in visibleMenuItems"
           :key="item.id"
           class="flex items-center justify-between px-4 py-4"
           :class="{ 'border-t border-gray-100': index > 0 }"
@@ -140,6 +140,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/user.js'
 import { getDiagnosisHistory } from '@/api/plants-http.js'
+import { isDevelopmentAppEnv } from '@/utils/runtime-env.js'
 
 const userStore = useUserStore()
 
@@ -211,8 +212,29 @@ const menuItems = ref([
     icon: '❓',
     title: '帮助与反馈',
     action: 'help'
+  },
+  {
+    id: 5,
+    icon: '🧾',
+    title: '池外视觉审核',
+    action: 'outOfPoolReview',
+    devOnly: true
+  },
+  {
+    id: 6,
+    icon: '诊',
+    title: '诊断记录管理',
+    action: 'diagnosisReview',
+    devOnly: true
   }
 ])
+
+const visibleMenuItems = computed(() =>
+  menuItems.value.filter(item => {
+    if (!item?.devOnly) return true
+    return isDevelopmentAppEnv()
+  })
+)
 
 // 加载诊断历史
 onMounted(() => {
@@ -274,6 +296,16 @@ function handleMenuClick(item) {
       uni.showToast({
         title: `${item.title}功能开发中`,
         icon: 'none'
+      })
+      break
+    case 'outOfPoolReview':
+      uni.navigateTo({
+        url: '/pages/profile/out-of-pool-review'
+      })
+      break
+    case 'diagnosisReview':
+      uni.navigateTo({
+        url: '/pages/profile/diagnosis-review'
       })
       break
   }

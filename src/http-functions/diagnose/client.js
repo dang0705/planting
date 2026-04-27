@@ -1,4 +1,27 @@
 import { httpRequest } from '@/http-functions/core/httpRequest'
+import { isDevelopmentAppEnv } from '@/utils/runtime-env'
+
+const DEV_H5_DIAGNOSIS_OPENID = 'dev_terminal_diagnosis_h5'
+
+function isH5Runtime() {
+  return typeof window !== 'undefined' && (typeof wx === 'undefined' || typeof wx?.cloud === 'undefined')
+}
+
+function shouldUseDevBypass() {
+  return isH5Runtime() && (Boolean(import.meta.env.DEV) || isDevelopmentAppEnv())
+}
+
+function buildDevBypassPayload(payload = {}) {
+  if (!shouldUseDevBypass()) {
+    return payload
+  }
+
+  return {
+    ...payload,
+    skipAuth: true,
+    openid: payload?.openid || DEV_H5_DIAGNOSIS_OPENID
+  }
+}
 
 function isRetryableRequestError(error) {
   const message = String(error?.message || error || '').toLowerCase()
@@ -320,6 +343,101 @@ function normalizeVisualAggregateSummary(summary = null) {
   }
 }
 
+function normalizeDerivedEvidenceSet(derivedEvidenceSet = []) {
+  return (Array.isArray(derivedEvidenceSet) ? derivedEvidenceSet : [])
+    .map(item => ({
+      derivedEvidenceId: String(
+        item?.derivedEvidenceId || item?.derived_evidence_id || ''
+      ).trim(),
+      derivedEvidenceKey: String(
+        item?.derivedEvidenceKey || item?.derived_evidence_key || ''
+      ).trim(),
+      derivedEvidenceType: String(
+        item?.derivedEvidenceType || item?.derived_evidence_type || ''
+      ).trim(),
+      patternKey: String(item?.patternKey || item?.pattern_key || '').trim(),
+      locationKey: String(item?.locationKey || item?.location_key || '').trim(),
+      distributionKey: String(item?.distributionKey || item?.distribution_key || '').trim(),
+      label: String(item?.label || item?.labelCn || '').trim(),
+      sourceType: String(item?.sourceType || item?.source_type || '').trim(),
+      evidenceState: String(item?.evidenceState || item?.evidence_state || '').trim(),
+      confidence: Number(item?.confidence || 0),
+      parentEvidenceKeys: normalizeStringList(
+        item?.parentEvidenceKeys || item?.parent_evidence_keys
+      ),
+      parentSymptomKeys: normalizeStringList(
+        item?.parentSymptomKeys || item?.parent_symptom_keys
+      ),
+      independenceGroupIds: normalizeStringList(
+        item?.independenceGroupIds || item?.independence_group_ids
+      ),
+      enteredRuntime: Number(item?.enteredRuntime ?? item?.entered_runtime ?? 0) ? 1 : 0,
+      enteredExplanation: Number(item?.enteredExplanation ?? item?.entered_explanation ?? 0) ? 1 : 0
+    }))
+    .filter(item => item.derivedEvidenceId)
+}
+
+function normalizeDiagnosisDirections(diagnosisDirections = []) {
+  return (Array.isArray(diagnosisDirections) ? diagnosisDirections : [])
+    .map(item => ({
+      directionId: String(item?.directionId || item?.direction_id || '').trim(),
+      directionKey: String(item?.directionKey || item?.direction_key || '').trim(),
+      categoryKey: String(item?.categoryKey || item?.category_key || '').trim(),
+      label: String(item?.label || item?.labelCn || '').trim(),
+      confidence: Number(item?.confidence || 0),
+      status: String(item?.status || '').trim(),
+      matchedSymptomKeys: normalizeStringList(
+        item?.matchedSymptomKeys || item?.matched_symptom_keys
+      ),
+      matchedPatternKeys: normalizeStringList(
+        item?.matchedPatternKeys || item?.matched_pattern_keys
+      ),
+      matchedCandidateSymptomKeys: normalizeStringList(
+        item?.matchedCandidateSymptomKeys || item?.matched_candidate_symptom_keys
+      ),
+      matchedRouteHintTypes: normalizeStringList(
+        item?.matchedRouteHintTypes || item?.matched_route_hint_types
+      ),
+      matchedRouteHintReasons: normalizeStringList(
+        item?.matchedRouteHintReasons || item?.matched_route_hint_reasons
+      ),
+      coveredFactDimensions: normalizeStringList(
+        item?.coveredFactDimensions || item?.covered_fact_dimensions
+      ),
+      preferredQuestionDimensions: normalizeStringList(
+        item?.preferredQuestionDimensions || item?.preferred_question_dimensions
+      ),
+      allowedProblemKeys: normalizeStringList(
+        item?.allowedProblemKeys || item?.allowed_problem_keys || item?.candidateProblemKeys
+      ),
+      candidateProblemKeys: normalizeStringList(
+        item?.candidateProblemKeys || item?.candidate_problem_keys
+      ),
+      supportSummary:
+        item?.supportSummary && typeof item.supportSummary === 'object'
+          ? {
+              matchedSymptomCount: Number(item.supportSummary?.matchedSymptomCount || 0),
+              matchedPatternCount: Number(item.supportSummary?.matchedPatternCount || 0),
+              confidence: Number(item.supportSummary?.confidence || 0)
+            }
+          : null,
+      outputGateHints:
+        item?.outputGateHints && typeof item.outputGateHints === 'object'
+          ? {
+              allowConclusionOnlyByProblemKey:
+                Number(item.outputGateHints?.allowConclusionOnlyByProblemKey || 0) ? 1 : 0,
+              requiresAuditedClosure:
+                Number(item.outputGateHints?.requiresAuditedClosure || 0) ? 1 : 0,
+              shouldStayInternal:
+                Number(item.outputGateHints?.shouldStayInternal || 0) ? 1 : 0
+            }
+          : null,
+      round: Math.max(1, Number(item?.round || 1)),
+      updatedAt: Number(item?.updatedAt || item?.updated_at || 0) || 0
+    }))
+    .filter(item => item.directionId)
+}
+
 function normalizeQuestionQueue(questionQueue = null) {
   if (!questionQueue || typeof questionQueue !== 'object') {
     return null
@@ -345,6 +463,8 @@ function normalizeQuestionQueue(questionQueue = null) {
       questionId: String(item?.questionId || '').trim(),
       targetSymptomKey: String(item?.targetSymptomKey || '').trim(),
       questionGroupKey: String(item?.questionGroupKey || '').trim(),
+      targetDimension: String(item?.targetDimension || '').trim(),
+      routingScope: String(item?.routingScope || '').trim(),
       questionText: String(item?.questionText || item?.text || '').trim(),
       helpText: String(item?.helpText || '').trim(),
       currentPriority: Number(item?.currentPriority || 0),
@@ -410,6 +530,124 @@ function normalizeDiagnosticTrace(trace = []) {
     .filter(item => item.eventType)
 }
 
+function normalizeCoreProcess(coreProcess = null, fallback = {}) {
+  const normalizedObservedSymptoms = Array.isArray(fallback?.observedSymptoms)
+    ? fallback.observedSymptoms
+    : []
+  const normalizedObservedEvidenceSet = Array.isArray(fallback?.observedEvidenceSet)
+    ? fallback.observedEvidenceSet
+    : []
+  const normalizedDerivedEvidenceSet = Array.isArray(fallback?.derivedEvidenceSet)
+    ? fallback.derivedEvidenceSet
+    : []
+  const normalizedDiagnosisDirections = Array.isArray(fallback?.diagnosisDirections)
+    ? fallback.diagnosisDirections
+    : []
+  const normalizedQuestionQueue = fallback?.questionQueue || null
+  const normalizedStopState = fallback?.stopState || null
+  const normalizedOutputEligibility = fallback?.outputEligibility || null
+  const normalizedDiagnosticTrace = Array.isArray(fallback?.diagnosticTrace)
+    ? fallback.diagnosticTrace
+    : []
+  const normalizedVisualBatchTrace = fallback?.visualBatchTrace || null
+  const normalizedVisualAggregateSummary = fallback?.visualAggregateSummary || null
+  const normalizedShadowCompareSummary = fallback?.shadowCompareSummary || null
+  const normalizedCareBaselineSummary = fallback?.careBaselineSummary || null
+  const normalizedEnvironmentDeviationHints = Array.isArray(fallback?.environmentDeviationHints)
+    ? fallback.environmentDeviationHints
+    : []
+  const questionQueueForSummary =
+    coreProcess?.followUp?.questionQueue && typeof coreProcess.followUp.questionQueue === 'object'
+      ? normalizeQuestionQueue(coreProcess.followUp.questionQueue)
+      : normalizedQuestionQueue
+
+  const questionCountSummary =
+    coreProcess?.followUp?.questionCountSummary && typeof coreProcess.followUp.questionCountSummary === 'object'
+      ? {
+          totalItems: Number(coreProcess.followUp.questionCountSummary?.totalItems || 0),
+          activeItems: Number(coreProcess.followUp.questionCountSummary?.activeItems || 0),
+          askedItems: Number(coreProcess.followUp.questionCountSummary?.askedItems || 0),
+          answeredItems: Number(coreProcess.followUp.questionCountSummary?.answeredItems || 0),
+          invalidatedItems: Number(coreProcess.followUp.questionCountSummary?.invalidatedItems || 0)
+        }
+      : {
+          totalItems: Array.isArray(questionQueueForSummary?.questionItems)
+            ? questionQueueForSummary.questionItems.length
+            : 0,
+          activeItems: Number(questionQueueForSummary?.activeItemCount || 0),
+          askedItems: Number(questionQueueForSummary?.askedItemCount || 0),
+          answeredItems: Number(questionQueueForSummary?.answeredItemCount || 0),
+          invalidatedItems: Number(questionQueueForSummary?.invalidatedItemCount || 0)
+        }
+
+  return {
+    visual: {
+      latestVisualCallBatchId:
+        coreProcess?.visual?.latestVisualCallBatchId ||
+        fallback?.latestVisualCallBatchId ||
+        null,
+      visualBatchTrace:
+        normalizeVisualBatchTrace(coreProcess?.visual?.visualBatchTrace) ||
+        normalizedVisualBatchTrace,
+      visualAggregateSummary:
+        normalizeVisualAggregateSummary(coreProcess?.visual?.visualAggregateSummary) ||
+        normalizedVisualAggregateSummary,
+      shadowCompareSummary:
+        normalizeShadowCompareSummary(coreProcess?.visual?.shadowCompareSummary) ||
+        normalizedShadowCompareSummary
+    },
+    evidence: {
+      observedSymptomCount: Number(
+        coreProcess?.evidence?.observedSymptomCount ?? normalizedObservedSymptoms.length
+      ),
+      observedSymptoms: Array.isArray(coreProcess?.evidence?.observedSymptoms)
+        ? coreProcess.evidence.observedSymptoms
+        : normalizedObservedSymptoms,
+      observedEvidenceCount: Number(
+        coreProcess?.evidence?.observedEvidenceCount ?? normalizedObservedEvidenceSet.length
+      ),
+      observedEvidenceSet: Array.isArray(coreProcess?.evidence?.observedEvidenceSet)
+        ? normalizeObservedEvidenceSet(coreProcess.evidence.observedEvidenceSet)
+        : normalizedObservedEvidenceSet,
+      derivedEvidenceCount: Number(
+        coreProcess?.evidence?.derivedEvidenceCount ?? normalizedDerivedEvidenceSet.length
+      ),
+      derivedEvidenceSet: Array.isArray(coreProcess?.evidence?.derivedEvidenceSet)
+        ? normalizeDerivedEvidenceSet(coreProcess.evidence.derivedEvidenceSet)
+        : normalizedDerivedEvidenceSet,
+      diagnosisDirectionCount: Number(
+        coreProcess?.evidence?.diagnosisDirectionCount ?? normalizedDiagnosisDirections.length
+      ),
+      diagnosisDirections: Array.isArray(coreProcess?.evidence?.diagnosisDirections)
+        ? normalizeDiagnosisDirections(coreProcess.evidence.diagnosisDirections)
+        : normalizedDiagnosisDirections,
+      careBaselineSummary:
+        coreProcess?.evidence?.careBaselineSummary || normalizedCareBaselineSummary,
+      environmentDeviationHints: Array.isArray(coreProcess?.evidence?.environmentDeviationHints)
+        ? coreProcess.evidence.environmentDeviationHints
+        : normalizedEnvironmentDeviationHints
+    },
+    followUp: {
+      routePrimaryAction:
+        String(coreProcess?.followUp?.routePrimaryAction || fallback?.routePrimaryAction || '').trim(),
+      questionQueue: questionQueueForSummary,
+      questionCountSummary
+    },
+    decision: {
+      stopReason:
+        String(coreProcess?.decision?.stopReason || fallback?.stopReason || '').trim(),
+      stopState:
+        normalizeStopState(coreProcess?.decision?.stopState) || normalizedStopState,
+      outputEligibility:
+        normalizeOutputEligibility(coreProcess?.decision?.outputEligibility) ||
+        normalizedOutputEligibility,
+      diagnosticTrace: Array.isArray(coreProcess?.decision?.diagnosticTrace)
+        ? normalizeDiagnosticTrace(coreProcess.decision.diagnosticTrace)
+        : normalizedDiagnosticTrace
+    }
+  }
+}
+
 function normalizeHistoryDetail(detail) {
   if (!detail || typeof detail !== 'object') {
     return null
@@ -420,6 +658,39 @@ function normalizeHistoryDetail(detail) {
     const hasPendingFollowUps =
       String(detail.stage || '').toLowerCase() === 'followup' ||
       followUps.some(item => String(item?.status || '').toLowerCase() === 'pending')
+    const observedEvidenceSet = normalizeObservedEvidenceSet(detail.observedEvidenceSet)
+    const derivedEvidenceSet = normalizeDerivedEvidenceSet(detail.derivedEvidenceSet)
+    const diagnosisDirections = normalizeDiagnosisDirections(detail.diagnosisDirections)
+    const questionQueue = normalizeQuestionQueue(detail.questionQueue)
+    const stopState = normalizeStopState(detail.stopState)
+    const outputEligibility = normalizeOutputEligibility(detail.outputEligibility)
+    const diagnosticTrace = normalizeDiagnosticTrace(detail.diagnosticTrace)
+    const visualBatchTrace = normalizeVisualBatchTrace(detail.visualBatchTrace)
+    const visualAggregateSummary = normalizeVisualAggregateSummary(detail.visualAggregateSummary)
+    const shadowCompareSummary =
+      normalizeShadowCompareSummary(detail.shadowCompareSummary) ||
+      normalizeVisualAggregateSummary(detail.visualAggregateSummary)?.shadowCompareSummary ||
+      null
+    const coreProcess = normalizeCoreProcess(detail.coreProcess, {
+      latestVisualCallBatchId: detail.latestVisualCallBatchId || null,
+      observedSymptoms: Array.isArray(detail.observedSymptoms) ? detail.observedSymptoms : [],
+      observedEvidenceSet,
+      derivedEvidenceSet,
+      diagnosisDirections,
+      careBaselineSummary: detail.careBaselineSummary || null,
+      environmentDeviationHints: Array.isArray(detail.environmentDeviationHints)
+        ? detail.environmentDeviationHints
+        : [],
+      routePrimaryAction: detail.routePrimaryAction || '',
+      questionQueue,
+      stopReason: detail.stopReason || '',
+      stopState,
+      outputEligibility,
+      diagnosticTrace,
+      visualBatchTrace,
+      visualAggregateSummary,
+      shadowCompareSummary
+    })
 
     return {
       ...detail,
@@ -439,23 +710,27 @@ function normalizeHistoryDetail(detail) {
       identityResolutionStatus: detail.identityResolutionStatus || '',
       explanation: detail.explanation || {},
       observedSymptoms: Array.isArray(detail.observedSymptoms) ? detail.observedSymptoms : [],
-      observedEvidenceSet: normalizeObservedEvidenceSet(detail.observedEvidenceSet),
+      observedEvidenceSet,
+      derivedEvidenceSet,
+      diagnosisDirections,
+      careBaselineSummary: detail.careBaselineSummary || null,
+      environmentDeviationHints: Array.isArray(detail.environmentDeviationHints)
+        ? detail.environmentDeviationHints
+        : [],
       rankings: Array.isArray(detail.rankings) ? detail.rankings : [],
       followUps,
       contributingFactors: Array.isArray(detail.contributingFactors) ? detail.contributingFactors : [],
       intermediateStates: Array.isArray(detail.intermediateStates) ? detail.intermediateStates : [],
       nextSteps: Array.isArray(detail.nextSteps) ? detail.nextSteps : [],
       whatToAvoid: Array.isArray(detail.whatToAvoid) ? detail.whatToAvoid : [],
-      questionQueue: normalizeQuestionQueue(detail.questionQueue),
-      stopState: normalizeStopState(detail.stopState),
-      outputEligibility: normalizeOutputEligibility(detail.outputEligibility),
-      diagnosticTrace: normalizeDiagnosticTrace(detail.diagnosticTrace),
-      visualBatchTrace: normalizeVisualBatchTrace(detail.visualBatchTrace),
-      visualAggregateSummary: normalizeVisualAggregateSummary(detail.visualAggregateSummary),
-      shadowCompareSummary:
-        normalizeShadowCompareSummary(detail.shadowCompareSummary) ||
-        normalizeVisualAggregateSummary(detail.visualAggregateSummary)?.shadowCompareSummary ||
-        null,
+      questionQueue,
+      stopState,
+      outputEligibility,
+      diagnosticTrace,
+      coreProcess,
+      visualBatchTrace,
+      visualAggregateSummary,
+      shadowCompareSummary,
       confidenceLevel: detail.confidenceLevel || 'normal',
       needHumanReview: Boolean(detail.needHumanReview),
       timeline: detail.timeline || { createdAt: '' },
@@ -498,6 +773,10 @@ function normalizeHistoryDetail(detail) {
         }))
       : [],
     observedEvidenceSet: [],
+    derivedEvidenceSet: [],
+    diagnosisDirections: [],
+    careBaselineSummary: null,
+    environmentDeviationHints: [],
     rankings: Array.isArray(detail.rankings)
       ? detail.rankings.map(item => ({
           problemKey: item?.problemKey || '',
@@ -526,6 +805,31 @@ function normalizeHistoryDetail(detail) {
     stopState: null,
     outputEligibility: null,
     diagnosticTrace: [],
+    coreProcess: normalizeCoreProcess(null, {
+      latestVisualCallBatchId: detail.latestVisualCallBatchId || null,
+      observedSymptoms: Array.isArray(detail.symptoms)
+        ? detail.symptoms.map(item => ({
+            symptomKey: item?.symptomKey || '',
+            symptomCn: item?.symptomCn || item?.symptomKey || '',
+            confidence: Number(item?.confidence || 0),
+            source: item?.evidenceSource || 'history'
+          }))
+        : [],
+      observedEvidenceSet: [],
+      derivedEvidenceSet: [],
+      diagnosisDirections: [],
+      careBaselineSummary: null,
+      environmentDeviationHints: [],
+      routePrimaryAction: '',
+      questionQueue: null,
+      stopReason: '',
+      stopState: null,
+      outputEligibility: null,
+      diagnosticTrace: [],
+      visualBatchTrace: null,
+      visualAggregateSummary: null,
+      shadowCompareSummary: null
+    }),
     visualBatchTrace: null,
     visualAggregateSummary: null,
     shadowCompareSummary: null,
@@ -587,10 +891,18 @@ export async function requestDiagnosisAnswer(payload) {
 }
 
 export async function requestDiagnosisResult(query) {
+  const requestQuery = {
+    id: query?.id || query?.sessionId || query?.resultId || ''
+  }
+  if (query?.skipAuth !== undefined) {
+    requestQuery.skipAuth = query.skipAuth
+  }
+  if (query?.openid) {
+    requestQuery.openid = query.openid
+  }
+
   const response = await resultDiagnosisRequester({
-    query: {
-      id: query?.id || query?.sessionId || query?.resultId || ''
-    }
+    query: requestQuery
   })
   const data = unwrapResponseEnvelope(response?.data, '读取诊断结果失败')
   return normalizeHistoryDetail(data)
@@ -603,7 +915,7 @@ export async function requestDiagnosisHistory(query = {}) {
 }
 
 export async function requestDiagnosisFeedback(payload) {
-  const response = await feedbackDiagnosisRequester({ payload })
+  const response = await feedbackDiagnosisRequester({ payload: buildDevBypassPayload(payload) })
   return unwrapResponseEnvelope(response?.data, '提交反馈失败')
 }
 

@@ -8,11 +8,105 @@ const {
 const { sqlInList, clamp01 } = require('./sql')
 const { table } = require('../db/table-helper')
 
+function parseJsonField(value, fallback = null) {
+  if (value === null || value === undefined || value === '') {
+    return fallback
+  }
+
+  if (typeof value === 'object') {
+    return value
+  }
+
+  try {
+    return JSON.parse(String(value))
+  } catch {
+    return fallback
+  }
+}
+
+function normalizeCareStrategy(value) {
+  const parsed = parseJsonField(value, null)
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return null
+  }
+
+  return Object.keys(parsed).length ? parsed : null
+}
+
+async function getGenusCareProfile(genusName = '', familyName = '') {
+  const safeGenusName = String(genusName || '').trim()
+  if (!safeGenusName) {
+    return null
+  }
+
+  const conditions = ['genus_name = {{genusName}}', 'is_active = 1']
+  const params = { genusName: safeGenusName }
+
+  if (String(familyName || '').trim()) {
+    conditions.push('family_name_canonical = {{familyName}}')
+    params.familyName = String(familyName || '').trim()
+  }
+
+  const result = await models.$runSQL(
+    `
+      SELECT
+        CAST(watering_strategy_json AS CHAR) AS watering_strategy_json_text,
+        CAST(fertilizing_strategy_json AS CHAR) AS fertilizing_strategy_json_text,
+        CAST(light_strategy_json AS CHAR) AS light_strategy_json_text,
+        CAST(airflow_strategy_json AS CHAR) AS airflow_strategy_json_text,
+        temp_min_c,
+        temp_max_c,
+        humidity_min,
+        humidity_max,
+        review_status,
+        evidence_level
+      FROM ${table('genus_care_profiles')}
+      WHERE ${conditions.join(' AND ')}
+      ORDER BY
+        FIELD(review_status, 'audited', 'reviewed', 'pending'),
+        updated_at DESC
+      LIMIT 1
+    `,
+    params
+  )
+
+  const row = result?.data?.executeResultList?.[0] || null
+  if (!row) {
+    return null
+  }
+
+  return {
+    watering: normalizeCareStrategy(row.watering_strategy_json_text),
+    fertilization: normalizeCareStrategy(row.fertilizing_strategy_json_text),
+    sunning: normalizeCareStrategy(row.light_strategy_json_text),
+    ventilation: normalizeCareStrategy(row.airflow_strategy_json_text),
+    temperatureMin:
+      row.temp_min_c === null || row.temp_min_c === undefined ? null : Number(row.temp_min_c),
+    temperatureMax:
+      row.temp_max_c === null || row.temp_max_c === undefined ? null : Number(row.temp_max_c),
+    humidityMin:
+      row.humidity_min === null || row.humidity_min === undefined ? null : Number(row.humidity_min),
+    humidityMax:
+      row.humidity_max === null || row.humidity_max === undefined ? null : Number(row.humidity_max),
+    careAuditStatus: row.review_status || '',
+    varianceLevel: row.evidence_level || ''
+  }
+}
+
 function buildResolvedPlantContext({
   userPlant = null,
   plant = null,
-  plantId = null
+  plantId = null,
+  careProfile = null
 } = {}) {
+  const normalizedPlantWatering = normalizeCareStrategy(plant?.watering || userPlant?.watering || null)
+  const normalizedPlantFertilization = normalizeCareStrategy(
+    plant?.fertilization || userPlant?.fertilization || null
+  )
+  const normalizedPlantSunning = normalizeCareStrategy(plant?.sunning || userPlant?.sunning || null)
+  const normalizedPlantVentilation = normalizeCareStrategy(
+    plant?.ventilation || userPlant?.ventilation || null
+  )
   const resolvedPlantId =
     plant?.plantId ||
     userPlant?.plantId ||
@@ -46,7 +140,29 @@ function buildResolvedPlantContext({
         : Number(userPlant.recognitionConfidence),
     genus: plant?.genus || userPlant?.genus || '',
     family: plant?.familyEn || userPlant?.familyEn || '',
-    category: plant?.categoryCn || plant?.categoryEn || ''
+    category: plant?.categoryCn || plant?.categoryEn || '',
+    watering: normalizedPlantWatering || careProfile?.watering || null,
+    fertilization: normalizedPlantFertilization || careProfile?.fertilization || null,
+    sunning: normalizedPlantSunning || careProfile?.sunning || null,
+    ventilation: normalizedPlantVentilation || careProfile?.ventilation || null,
+    temperatureMin:
+      plant?.temperatureMin === null || plant?.temperatureMin === undefined
+        ? careProfile?.temperatureMin ?? null
+        : Number(plant.temperatureMin),
+    temperatureMax:
+      plant?.temperatureMax === null || plant?.temperatureMax === undefined
+        ? careProfile?.temperatureMax ?? null
+        : Number(plant.temperatureMax),
+    humidityMin:
+      plant?.humidityMin === null || plant?.humidityMin === undefined
+        ? careProfile?.humidityMin ?? null
+        : Number(plant.humidityMin),
+    humidityMax:
+      plant?.humidityMax === null || plant?.humidityMax === undefined
+        ? careProfile?.humidityMax ?? null
+        : Number(plant.humidityMax),
+    careAuditStatus: plant?.careAuditStatus || careProfile?.careAuditStatus || '',
+    varianceLevel: plant?.varianceLevel || careProfile?.varianceLevel || ''
   }
 }
 
@@ -59,7 +175,19 @@ async function resolvePlantContext({ openid, plantId = null, userPlantId = null 
       const catalogLookupId =
         userPlant.plantIdentityId || userPlant.legacyPlantId || userPlant.plantId || ''
       const plant = catalogLookupId ? await getPlantCatalogById(String(catalogLookupId)) : null
-      return buildResolvedPlantContext({ userPlant, plant })
+      const careProfile = await getGenusCareProfile(
+        plant?.genus || userPlant?.genus || '',
+        plant?.familyEn || userPlant?.familyEn || ''
+      )
+      console.log('diagnose-http plant-context resolved from userPlant:', {
+        catalogLookupId,
+        genus: plant?.genus || userPlant?.genus || '',
+        family: plant?.familyEn || userPlant?.familyEn || '',
+        plantHasWatering: Boolean(normalizeCareStrategy(plant?.watering || null)),
+        careProfileHasWatering: Boolean(careProfile?.watering),
+        careProfileHasLight: Boolean(careProfile?.sunning)
+      })
+      return buildResolvedPlantContext({ userPlant, plant, careProfile })
     }
   }
 
@@ -72,7 +200,16 @@ async function resolvePlantContext({ openid, plantId = null, userPlantId = null 
     throw new Error('植物不存在或无权限访问')
   }
 
-  return buildResolvedPlantContext({ plant, plantId })
+  const careProfile = await getGenusCareProfile(plant?.genus || '', plant?.familyEn || '')
+  console.log('diagnose-http plant-context resolved from catalog:', {
+    plantId: String(plantId),
+    genus: plant?.genus || '',
+    family: plant?.familyEn || '',
+    plantHasWatering: Boolean(normalizeCareStrategy(plant?.watering || null)),
+    careProfileHasWatering: Boolean(careProfile?.watering),
+    careProfileHasLight: Boolean(careProfile?.sunning)
+  })
+  return buildResolvedPlantContext({ plant, plantId, careProfile })
 }
 
 function mapCandidateRow(row = {}) {

@@ -4,9 +4,14 @@
  * 云函数部署脚本
  * 用法: npm run deploy:function <function-name>
  * 示例: npm run deploy:function saveUserPlant
+ *
+ * 注意:
+ * - 这是一个本地方便脚本，不是闭环验收路径
+ * - diagnose-http 等关键函数的最终部署确认，应以可编程 CloudBase MCP + 云端日志/真链路 smoke 为准
  */
 
 const { execSync } = require('child_process');
+const path = require('path');
 
 // 获取命令行参数
 const functionName = process.argv[2];
@@ -29,10 +34,12 @@ if (!fs.existsSync(functionPath)) {
 }
 
 console.log(`🚀 开始部署云函数: ${functionName}`);
+console.warn('⚠️ 该脚本仅用于便捷触发部署，不作为闭环验收依据');
 
 try {
   // 使用 CloudBase MCP 工具部署云函数
-  const mcpCommand = `npx @cloudbase/cloudbase-mcp@latest updateFunctionCode --name "${functionName}" --functionRootPath "${process.cwd()}\\cloudfunctions"`;
+  const functionRootPath = path.join(process.cwd(), 'cloudfunctions');
+  const mcpCommand = `npx @cloudbase/cloudbase-mcp@latest updateFunctionCode --name "${functionName}" --functionRootPath "${functionRootPath}"`;
   
   console.log(`📦 执行部署命令...`);
   

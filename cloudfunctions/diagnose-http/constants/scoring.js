@@ -25,6 +25,7 @@ module.exports = {
     followUpGapThreshold: 0.15,
     maxQuestionsPerRound: 3,
     maxRounds: 4,
+    maxFollowUpRounds: 2,
     supportRolesAsTop1: ['root_cause', 'secondary_issue'],
     contributingRoles: ['predisposing_factor'],
     intermediateRoles: ['result_state', 'aggregate_cluster']

@@ -2,6 +2,10 @@ import { BASE_URL } from '@/api/env'
 import { getCloudbaseAccessToken, getCloudbaseUserIdentity } from '@/utils/cloudbase-auth'
 import { getRequestAppEnvHeader } from '@/utils/runtime-env'
 
+function isWechatMiniProgramRuntime() {
+  return typeof wx !== 'undefined' && typeof wx?.cloud !== 'undefined'
+}
+
 function buildQueryString(query = {}) {
   const entries = Object.entries(query).filter(
     ([, value]) => value !== undefined && value !== null && value !== ''
@@ -39,15 +43,23 @@ async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}) {
     return headers
   }
 
-  const token = await getCloudbaseAccessToken()
   let openid = getStoredUserOpenId()
+  let token = ''
 
-  if (!openid) {
+  if (isWechatMiniProgramRuntime()) {
     try {
-      const identity = await getCloudbaseUserIdentity()
-      openid = identity?.openid || ''
+      token = await getCloudbaseAccessToken()
     } catch (error) {
-      console.warn('获取 CloudBase 用户 openid 失败:', error)
+      console.warn('获取 CloudBase access token 失败，将继续尝试使用本地 openid:', error)
+    }
+
+    if (!openid) {
+      try {
+        const identity = await getCloudbaseUserIdentity()
+        openid = identity?.openid || ''
+      } catch (error) {
+        console.warn('获取 CloudBase 用户 openid 失败:', error)
+      }
     }
   }
 

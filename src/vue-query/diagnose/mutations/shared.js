@@ -11,7 +11,7 @@ export function buildDiagnosePayload({
   latestVisualCallBatchId = null,
   visualBatchTrace = null,
   skipAuth = false,
-  platform = 'wechat-mini-program'
+  platform = resolveDiagnoseClientPlatform()
 }) {
   const normalizedImages = normalizeDiagnoseImages(images)
   const normalizedImageIds = Array.isArray(imageIds)
@@ -22,6 +22,7 @@ export function buildDiagnosePayload({
   const resolvedImageIds = normalizedImageIds.length
     ? normalizedImageIds
     : normalizedImages.map(item => item.imageRef).filter(Boolean)
+  const reviewSourceType = resolveDiagnoseReviewSourceType(platform)
 
   return {
     plantId,
@@ -39,10 +40,31 @@ export function buildDiagnosePayload({
     clientContext: {
       source: 'DiagnosePopup',
       platform,
+      reviewSourceType,
       visualInputVersion: 'multi_image_contract_v1',
       structuredImageCount: normalizedImages.length
     }
   }
+}
+
+function resolveDiagnoseClientPlatform() {
+  try {
+    if (typeof wx !== 'undefined' && typeof wx?.cloud !== 'undefined') {
+      return 'wechat-mini-program'
+    }
+  } catch {
+    // ignore runtime probe failures
+  }
+
+  return 'web'
+}
+
+function resolveDiagnoseReviewSourceType(platform = '') {
+  const normalized = String(platform || '').trim().toLowerCase()
+  if (normalized === 'wechat-mini-program' || normalized === 'wechat_mp' || normalized === 'mini-program') {
+    return 'manual'
+  }
+  return 'web'
 }
 
 function isValidDiagnoseImageReference(image) {
@@ -61,6 +83,36 @@ function isValidDiagnoseImageReference(image) {
   }
 
   return false
+}
+
+function normalizeUploadCompression(value = null) {
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+
+  const numberFields = [
+    'originalSizeBytes',
+    'uploadedSizeBytes',
+    'compressionRatio',
+    'quality',
+    'width',
+    'height',
+    'targetSizeBytes',
+    'minimumQuality'
+  ]
+  const normalized = {
+    source: String(value.source || '').trim(),
+    compressed: Boolean(value.compressed),
+    preserveImageDetails: Boolean(value.preserveImageDetails),
+    doubleConfirmedForHunyuan: Boolean(value.doubleConfirmedForHunyuan)
+  }
+
+  for (const field of numberFields) {
+    const num = Number(value[field])
+    normalized[field] = Number.isFinite(num) && num > 0 ? num : null
+  }
+
+  return normalized
 }
 
 function normalizeDiagnoseImages(images = []) {
@@ -93,6 +145,9 @@ function normalizeDiagnoseImages(images = []) {
       const normalizedOrderIndex = Number(item?.orderIndex ?? index)
       const normalizedInputSlotOrder = Number(item?.inputSlotOrder ?? item?.orderIndex ?? index)
       const normalizedConfidence = item?.userDeclaredOrganConfidence ?? item?.declaredOrganConfidence ?? null
+      const uploadCompression = normalizeUploadCompression(
+        item?.uploadCompression || item?.compression || null
+      )
 
       return {
         imageRef,
@@ -109,6 +164,7 @@ function normalizeDiagnoseImages(images = []) {
             : Number.isFinite(Number(normalizedConfidence))
               ? Number(normalizedConfidence)
               : null,
+        ...(uploadCompression ? { uploadCompression } : {}),
         ...(item?.fileId ? { fileId: String(item.fileId).trim() } : {})
       }
     })

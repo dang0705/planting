@@ -72,6 +72,28 @@ function normalizeSymptomCandidate(item) {
   }
 }
 
+function normalizeOutOfPoolSymptomCandidate(item) {
+  const rawVisualNameCn = String(
+    item?.raw_visual_name_cn || item?.rawVisualNameCn || item?.raw_name_cn || item?.label_cn || ''
+  ).trim()
+  const rawVisualNameEn = String(
+    item?.raw_visual_name_en || item?.rawVisualNameEn || item?.raw_name_en || item?.label_en || ''
+  ).trim()
+
+  if (!rawVisualNameCn && !rawVisualNameEn) {
+    return null
+  }
+
+  return {
+    raw_visual_name_cn: rawVisualNameCn,
+    raw_visual_name_en: rawVisualNameEn,
+    closest_symptom_key_hint: String(
+      item?.closest_symptom_key_hint || item?.closestSymptomKeyHint || ''
+    ).trim(),
+    reason: String(item?.reason || item?.record_reason || 'not_in_ai_visual_pool').trim()
+  }
+}
+
 function buildLegacyCandidates(payload = {}) {
   return (Array.isArray(payload?.symptoms) ? payload.symptoms : [])
     .map(item => {
@@ -125,6 +147,14 @@ function parseStructuredVisualResult(text) {
     image_quality_grade: qualityGrade,
     analyzability,
     symptom_candidates: symptomCandidates,
+    out_of_pool_symptom_candidates: (
+      Array.isArray(payload?.out_of_pool_symptom_candidates)
+        ? payload.out_of_pool_symptom_candidates
+        : []
+    )
+      .map(normalizeOutOfPoolSymptomCandidate)
+      .filter(Boolean)
+      .slice(0, 5),
     route_hints: normalizeRouteHints(payload?.route_hints || []),
     suggested_followup_capture: normalizeSuggestedFollowupCapture(
       payload?.suggested_followup_capture || []
@@ -160,6 +190,7 @@ function parseLLMVisualResult(text) {
     image_quality_grade: 'medium',
     analyzability: 'low',
     symptom_candidates: [],
+    out_of_pool_symptom_candidates: [],
     route_hints: [
       {
         type: 'retake_image',

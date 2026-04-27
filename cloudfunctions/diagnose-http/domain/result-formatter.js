@@ -2,6 +2,7 @@
 
 const { ranking: rankingConfig } = require('../constants/scoring')
 const { buildRuntimeArtifacts } = require('./runtime-artifacts')
+const { buildCareGuidance } = require('../utils/care-baseline-guidance')
 const {
   toProblemId,
   toQuestionId,
@@ -11,6 +12,58 @@ const {
 
 function roundValue(value, digits = 4) {
   return Number(Number(value || 0).toFixed(digits))
+}
+
+function normalizeText(value = '', fallback = '') {
+  const normalized = String(value || '').trim()
+  return normalized || fallback
+}
+
+function uniqList(values = []) {
+  return Array.from(
+    new Set(
+      (Array.isArray(values) ? values : [])
+        .map(item => String(item || '').trim())
+        .filter(Boolean)
+    )
+  )
+}
+
+function resolvePrimarySymptomClass(symptomClassRuntime = null) {
+  if (!symptomClassRuntime || typeof symptomClassRuntime !== 'object') return null
+
+  const primaryClass = symptomClassRuntime?.primaryClass
+  if (primaryClass && typeof primaryClass === 'object') {
+    const classKey = normalizeText(primaryClass.classKey)
+    const classNameCn = normalizeText(primaryClass.classNameCn)
+    const runtimeNotes = normalizeText(primaryClass.runtimeNotes)
+    if (classKey || classNameCn || runtimeNotes) {
+      return {
+        classKey,
+        classNameCn,
+        runtimeNotes
+      }
+    }
+  }
+
+  const currentClassKey = normalizeText(symptomClassRuntime?.currentClassKey)
+  if (!currentClassKey) return null
+
+  return {
+    classKey: currentClassKey,
+    classNameCn: '',
+    runtimeNotes: ''
+  }
+}
+
+function buildSymptomClassUncertainPrefix(symptomClassRuntime = null) {
+  const primaryClass = resolvePrimarySymptomClass(symptomClassRuntime)
+  if (!primaryClass) return ''
+
+  const classLabel = normalizeText(primaryClass.classNameCn || primaryClass.classKey)
+  if (!classLabel) return ''
+
+  return `当前已收敛到“${classLabel}”，但还缺少足够的补充事实，暂时不能安全定位到具体原因。`
 }
 
 function pickPrimaryRanking(rankings = [], problemMap = new Map()) {
@@ -74,10 +127,25 @@ function buildHighSpecificityFastConvergenceSummary(displayName = '', baseSummar
   }`.trim()
 }
 
-function buildUncertainSummary(lowConfidence = {}) {
+function isOutOfPoolNoMappingLowConfidence(lowConfidence = {}) {
+  return normalizeText(lowConfidence?.uncertainLegalityReason || '') === 'out_of_pool_no_mapping' ||
+    (Array.isArray(lowConfidence?.reasons) &&
+      lowConfidence.reasons.some(item => normalizeText(item) === 'out_of_pool_no_mapping'))
+}
+
+function buildUncertainSummary(lowConfidence = {}, symptomClassRuntime = null) {
+  if (isOutOfPoolNoMappingLowConfidence(lowConfidence)) {
+    return '图片中存在当前自动诊断范围外的可见异常。系统无法把它稳定归入现有诊断路径，因此本次不继续常规诊断，也不判断为“暂无明显问题”。由于该异常尚未纳入当前诊断池，系统暂不能给出针对性的处理建议；建议先保持观察，避免仅凭本次结果进行大幅养护调整。'
+  }
+
   const advice = Array.isArray(lowConfidence?.advice)
     ? lowConfidence.advice.map(item => String(item || '').trim()).filter(Boolean)
     : []
+  const classPrefix = buildSymptomClassUncertainPrefix(symptomClassRuntime)
+
+  if (classPrefix) {
+    return advice.length ? `${classPrefix} ${advice[0]}`.trim() : classPrefix
+  }
 
   if (advice.length) {
     return advice[0]
@@ -86,15 +154,35 @@ function buildUncertainSummary(lowConfidence = {}) {
   return '当前证据不足，暂不能安全判断，建议补充更稳定的图片或观察信息。'
 }
 
-function buildUncertainExplanation(lowConfidence = {}) {
+function buildUncertainExplanation(lowConfidence = {}, symptomClassRuntime = null) {
+  if (isOutOfPoolNoMappingLowConfidence(lowConfidence)) {
+    return {
+      whyItHappens: '当前图片中有可见异常，但该异常超出当前自动诊断支持的症状范围，且没有已审计映射可以接入现有诊断路径。',
+      whatToCheckNext: '可继续观察该异常是否扩大、重复出现或影响整体状态；如变化明显，建议由人工或更完整资料进一步确认。',
+      firstAid: '在没有稳定归类前，先保持养护条件相对稳定，不建议仅凭本次结果进行针对性处理。',
+      avoid: '避免把该异常直接等同于某个具体问题，也避免在缺少确认时大幅调整养护或使用处理措施。',
+      reassurance: '跳过常规诊断是为了避免把诊断池外的异常硬套进现有问题。'
+    }
+  }
+
   const advice = Array.isArray(lowConfidence?.advice)
     ? lowConfidence.advice.map(item => String(item || '').trim()).filter(Boolean)
     : []
+  const primaryClass = resolvePrimarySymptomClass(symptomClassRuntime)
+  const classLabel = normalizeText(primaryClass?.classNameCn || primaryClass?.classKey)
+  const runtimeNotes = normalizeText(primaryClass?.runtimeNotes)
+  const whyItHappens = classLabel
+    ? `当前视觉和追问更支持“${classLabel}”这一症状模式，但具体 root cause 仍缺少关键上下文，继续硬判风险较高。`
+    : '当前证据不足或仍有冲突，继续硬判具体问题风险较高。'
+  const whatToCheckNext = uniqList([
+    advice[0],
+    runtimeNotes
+  ]).join(' ')
 
   return {
-    whyItHappens: '当前证据不足或仍有冲突，继续硬判具体问题风险较高。',
+    whyItHappens,
     whatToCheckNext:
-      advice[0] ||
+      whatToCheckNext ||
       '建议补拍整株、受损部位特写、叶背和盆土状态后重新判断。',
     firstAid:
       advice[1] ||
@@ -105,6 +193,17 @@ function buildUncertainExplanation(lowConfidence = {}) {
 }
 
 function buildUncertainFinalResult({ resultId, lowConfidence = {} } = {}) {
+  if (isOutOfPoolNoMappingLowConfidence(lowConfidence)) {
+    return {
+      resultId,
+      problemId: '',
+      displayName: '发现诊断范围外的可见异常',
+      summary: buildUncertainSummary(lowConfidence),
+      severity: 'low',
+      urgency: 'low'
+    }
+  }
+
   return {
     resultId,
     problemId: '',
@@ -115,9 +214,22 @@ function buildUncertainFinalResult({ resultId, lowConfidence = {} } = {}) {
   }
 }
 
-function resolveOutcomeType({ followUpRequired = false, lowConfidence = {} } = {}) {
+function resolveOutcomeType({
+  followUpRequired = false,
+  lowConfidence = {},
+  stopDecision = null
+} = {}) {
   if (followUpRequired) return null
-  return lowConfidence?.isLowConfidence ? 'uncertain' : 'problematic'
+
+  const lockedOutcomeType = normalizeText(stopDecision?.outcomeLocked || '', '')
+  if (lockedOutcomeType === 'uncertain' && lowConfidence?.uncertainLegalityReason) {
+    return 'uncertain'
+  }
+  if (lockedOutcomeType === 'problematic' || lockedOutcomeType === 'non_problematic') {
+    return lockedOutcomeType
+  }
+
+  return lowConfidence?.uncertainLegalityReason ? 'uncertain' : 'problematic'
 }
 
 function resolveRoutePrimaryAction({
@@ -131,11 +243,9 @@ function resolveRoutePrimaryAction({
   return 'standard_flow'
 }
 
-function resolveStopReason({ followUpRequired = false, outcomeType = null } = {}) {
+function resolveStopReason({ followUpRequired = false, stopDecision = null } = {}) {
   if (followUpRequired) return 'await_follow_up'
-  if (outcomeType === 'uncertain') return 'uncertain_output_ready'
-  if (outcomeType === 'non_problematic') return 'non_problematic_output_ready'
-  return 'problematic_output_ready'
+  return normalizeText(stopDecision?.stopReason || '', '')
 }
 
 function formatDiagnosisResponse({
@@ -143,15 +253,21 @@ function formatDiagnosisResponse({
   round = 1,
   stage,
   observedSymptoms = [],
+  observedEvidenceSet = [],
+  derivedEvidenceSet = [],
+  diagnosisDirections = [],
   rankings = [],
   followUps = [],
   problems = [],
   explanations = [],
   causality = [],
+  plantContext = {},
   plantId,
   followUpRequired = false,
   lowConfidence = { isLowConfidence: false, reasons: [], advice: [] },
+  symptomClassRuntime = null,
   highSpecificityFastConvergence = null,
+  stopDecision = null,
   preferredRoutePrimaryAction = ''
 }) {
   const problemMap = new Map((problems || []).map(item => [item.problemKey, item]))
@@ -164,7 +280,7 @@ function formatDiagnosisResponse({
   const contributingRoles = new Set(rankingConfig.contributingRoles)
   const intermediateRoles = new Set(rankingConfig.intermediateRoles)
 
-  const contributingFactors = rankings
+  const rawContributingFactors = rankings
     .filter(item => {
       const role = problemMap.get(item.problemKey)?.problemRole || ''
       return contributingRoles.has(role)
@@ -175,7 +291,7 @@ function formatDiagnosisResponse({
       label: problemMap.get(item.problemKey)?.displayNameCn || item.problemCn || item.problemKey
     }))
 
-  const intermediateStates = rankings
+  const rawIntermediateStates = rankings
     .filter(item => {
       const role = problemMap.get(item.problemKey)?.problemRole || ''
       return intermediateRoles.has(role)
@@ -203,18 +319,39 @@ function formatDiagnosisResponse({
         baseSummaryText,
         lowConfidence
       )
-  const outcomeType = resolveOutcomeType({ followUpRequired, lowConfidence })
+  const outcomeType = resolveOutcomeType({ followUpRequired, lowConfidence, stopDecision })
+  const shouldSuppressProblemLikePresentation = outcomeType === 'uncertain'
   const routePrimaryAction = resolveRoutePrimaryAction({
     followUpRequired,
     outcomeType,
     preferredRoutePrimaryAction
   })
-  const stopReason = resolveStopReason({ followUpRequired, outcomeType })
+  const stopReason = resolveStopReason({ followUpRequired, stopDecision })
   const explanationPayload = outcomeType === 'uncertain'
-    ? buildUncertainExplanation(lowConfidence)
+    ? buildUncertainExplanation(lowConfidence, symptomClassRuntime)
     : buildExplanation(primaryProblem, primaryExplanation)
+  const careGuidance = buildCareGuidance({
+    plantContext,
+    observedEvidenceSet,
+    primaryProblemKey: primary?.problemKey || '',
+    outcomeType
+  })
+  if (careGuidance.environmentDeviationHints.length) {
+    explanationPayload.whatToCheckNext = uniqList([
+      explanationPayload.whatToCheckNext,
+      careGuidance.environmentDeviationHints[0]
+    ]).join(' ')
+  }
   const finalResultPayload = outcomeType === 'uncertain'
-    ? buildUncertainFinalResult({ resultId, lowConfidence })
+    ? buildUncertainFinalResult({
+        resultId,
+        lowConfidence: {
+          ...lowConfidence,
+          advice: uniqList([
+            buildUncertainSummary(lowConfidence, symptomClassRuntime)
+          ])
+        }
+      })
     : primary
       ? {
           resultId,
@@ -236,6 +373,7 @@ function formatDiagnosisResponse({
               text
             }))
           : []),
+        ...careGuidance.nextSteps,
         {
           stepId: 'step_1',
           text:
@@ -250,6 +388,7 @@ function formatDiagnosisResponse({
               text
             }))
           : []),
+        ...careGuidance.nextSteps,
         {
           stepId: 'step_1',
           text:
@@ -257,6 +396,21 @@ function formatDiagnosisResponse({
             '先处理最明显的问题，再观察 3-7 天变化。'
         }
       ]
+  const contributingFactors = shouldSuppressProblemLikePresentation ? [] : rawContributingFactors
+  const intermediateStates = shouldSuppressProblemLikePresentation ? [] : rawIntermediateStates
+  const topProblemPayload = shouldSuppressProblemLikePresentation || !primary
+    ? null
+    : {
+        problemId: toProblemId(primary.problemKey),
+        problemKey: primary.problemKey,
+        displayName:
+          primaryProblem?.displayNameCn ||
+          primary.problemCn ||
+          primary.problemKey,
+        summary: summaryText,
+        severity: mapSeverity(primaryProblem),
+        urgency: mapUrgency(primaryProblem)
+      }
 
   const response = {
     diagnosisSessionId: sessionId,
@@ -268,23 +422,18 @@ function formatDiagnosisResponse({
       problemKey: item.problemKey,
       problemCn: item.problemCn,
       role: problemMap.get(item.problemKey)?.problemRole || '',
+      visualEvidence: roundValue(item.visualEvidence),
+      questionEvidence: roundValue(item.questionEvidence),
+      totalEvidence: roundValue(item.totalEvidence),
+      penalty: roundValue(item.penalty),
+      hostCompatibility: roundValue(item.hostCompatibility),
+      genusCompatibility: roundValue(item.genusCompatibility),
+      evidenceCount: Number(item.evidenceCount || 0),
       finalScore: roundValue(item.finalScore),
       baseScore: roundValue(item.baseScore),
       rankNo: item.rankNo
     })),
-    topProblem: primary
-      ? {
-          problemId: toProblemId(primary.problemKey),
-          problemKey: primary.problemKey,
-          displayName:
-            primaryProblem?.displayNameCn ||
-            primary.problemCn ||
-            primary.problemKey,
-          summary: summaryText,
-          severity: mapSeverity(primaryProblem),
-          urgency: mapUrgency(primaryProblem)
-        }
-      : null,
+    topProblem: topProblemPayload,
     finalResult: finalResultPayload,
     followUpRequired: Boolean(followUpRequired && followUps.length),
     followUps: followUps.map(question => ({
@@ -292,6 +441,8 @@ function formatDiagnosisResponse({
       questionKey: question.questionKey,
       targetSymptomKey: question.targetSymptomKey || '',
       questionGroupKey: question.questionGroupKey,
+      targetDimension: question.targetDimension || '',
+      routingScope: question.routingScope || '',
       type: 'single_choice',
       text: question.questionText,
       helpText: question.helpText,
@@ -307,9 +458,10 @@ function formatDiagnosisResponse({
     resultExplanation: explanationPayload,
     explanation: explanationPayload,
     nextSteps,
-    whatToAvoid: explanationPayload.avoid
-      ? [explanationPayload.avoid]
-      : [],
+    whatToAvoid: uniqList([
+      ...(explanationPayload.avoid ? [explanationPayload.avoid] : []),
+      ...(careGuidance.whatToAvoid || [])
+    ]),
     confidenceLevel: outcomeType === 'uncertain' ? 'low' : 'normal',
     confidenceReasons: Array.isArray(lowConfidence?.reasons) ? lowConfidence.reasons : [],
     needHumanReview: Boolean(outcomeType === 'uncertain'),
@@ -317,17 +469,51 @@ function formatDiagnosisResponse({
       ? highSpecificityFastConvergence
       : null,
     outcomeType,
+    outcomeLocked: normalizeText(stopDecision?.outcomeLocked || '', ''),
+    uncertainLegalityReason: normalizeText(
+      stopDecision?.uncertainLegalityReason || lowConfidence?.uncertainLegalityReason || '',
+      ''
+    ),
+    decisionCause:
+      stopDecision?.decisionCause && typeof stopDecision.decisionCause === 'object'
+        ? stopDecision.decisionCause
+        : null,
+    stopDecision: stopDecision
+      ? {
+          outcomeLocked: normalizeText(stopDecision.outcomeLocked || '', ''),
+          stopReason: normalizeText(stopDecision.stopReason || '', ''),
+          stopReasonDetail: normalizeText(stopDecision.stopReasonDetail || '', ''),
+          uncertainLegalityReason: normalizeText(
+            stopDecision.uncertainLegalityReason || '',
+            ''
+          ),
+          decisionCause:
+            stopDecision?.decisionCause && typeof stopDecision.decisionCause === 'object'
+              ? stopDecision.decisionCause
+              : null
+        }
+      : null,
     routePrimaryAction,
     stopReason,
+    stopReasonDetail: normalizeText(stopDecision?.stopReasonDetail || '', ''),
     sessionStatus: followUpRequired ? 'awaiting_follow_up' : 'completed',
     plantId,
+    observedEvidenceSet,
+    derivedEvidenceSet,
+    diagnosisDirections,
+    careBaselineSummary: careGuidance.careBaselineSummary,
+    environmentDeviationHints: careGuidance.environmentDeviationHints,
     resultId,
     timestamp: Date.now()
   }
 
   return {
     ...response,
-    ...buildRuntimeArtifacts(response)
+    ...buildRuntimeArtifacts(response, {
+      observedEvidenceSet,
+      derivedEvidenceSet,
+      diagnosisDirections
+    })
   }
 }
 

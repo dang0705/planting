@@ -53,10 +53,6 @@ function isProductionRuntime() {
 }
 
 function resolveSchema(env) {
-  if (isProductionRuntime()) {
-    return PROD_SCHEMA
-  }
-
   const runtimeEnv =
     normalizeEnv(env) ||
     getSchemaEnvFromContext() ||
@@ -71,7 +67,7 @@ function resolveSchema(env) {
     return DEV_SCHEMA
   }
 
-  return DEV_SCHEMA
+  return isProductionRuntime() ? PROD_SCHEMA : DEV_SCHEMA
 }
 
 function runWithSchemaEnv(env, handler) {

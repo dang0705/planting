@@ -2,7 +2,10 @@
 
 const { clamp01 } = require('../repositories/sql')
 const { evidence: evidenceConfig } = require('../constants/scoring')
-const { projectObservedSymptomsFromEvidence } = require('./observed-evidence')
+const {
+  projectObservedSymptomsFromEvidence,
+  projectVisualObservedSymptomsFromEvidence
+} = require('./observed-evidence')
 
 function round(value, digits = 6) {
   return Number(Number(value || 0).toFixed(digits))
@@ -35,7 +38,7 @@ function computeVisualEvidenceScores({
 } = {}) {
   const effectiveObservedSymptoms =
     Array.isArray(observedEvidenceSet) && observedEvidenceSet.length
-      ? projectObservedSymptomsFromEvidence(observedEvidenceSet)
+      ? projectVisualObservedSymptomsFromEvidence(observedEvidenceSet)
       : observedSymptoms
   const scores = {}
   candidateProblemKeys.forEach(key => {
@@ -85,6 +88,15 @@ function indexOptionMappings(optionMappings = []) {
   return map
 }
 
+function normalizeDirectProblemAdjustments(adjustments = []) {
+  return (Array.isArray(adjustments) ? adjustments : [])
+    .map(item => ({
+      problemKey: String(item?.problemKey || '').trim(),
+      scoreDelta: Number(item?.scoreDelta || 0)
+    }))
+    .filter(item => item.problemKey && Number(item.scoreDelta || 0) !== 0)
+}
+
 function computeQuestionEvidenceAndPenalty({
   answers = [],
   optionMappings = [],
@@ -117,13 +129,39 @@ function computeQuestionEvidenceAndPenalty({
     if (!mapping) continue
 
     const answerValue = Number(mapping.value || 0)
+    const directProblemAdjustments = normalizeDirectProblemAdjustments(
+      mapping.directProblemAdjustments
+    )
+
+    if (directProblemAdjustments.length) {
+      for (const adjustment of directProblemAdjustments) {
+        if (!candidateProblemKeys.includes(adjustment.problemKey)) continue
+
+        if (adjustment.scoreDelta > 0) {
+          questionScores[adjustment.problemKey] += adjustment.scoreDelta
+        } else {
+          penalties[adjustment.problemKey] += Math.abs(adjustment.scoreDelta)
+        }
+
+        answerEffects.push({
+          questionKey,
+          optionKey,
+          problemKey: adjustment.problemKey,
+          value: round(adjustment.scoreDelta),
+          effectType: adjustment.scoreDelta > 0 ? 'direct_problem_positive' : 'direct_problem_negative'
+        })
+      }
+    }
+
     if (answerValue === 0) {
-      answerEffects.push({
-        questionKey,
-        optionKey,
-        value: 0,
-        effectType: 'neutral'
-      })
+      if (!directProblemAdjustments.length) {
+        answerEffects.push({
+          questionKey,
+          optionKey,
+          value: 0,
+          effectType: 'neutral'
+        })
+      }
       continue
     }
 

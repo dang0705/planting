@@ -6,6 +6,10 @@ import pinia from './store/index.js'
 import './styles/global.css'
 import { createPersistedState } from 'pinia-plugin-persistedstate'
 import { queryClient } from './lib/query-client.js'
+// #ifdef H5
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+// #endif
 
 export function createApp() {
   const app = createSSRApp(App)
@@ -26,6 +30,9 @@ export function createApp() {
   )
   app.use(pinia)
   app.use(VueQueryPlugin, { queryClient })
+  // #ifdef H5
+  app.use(ElementPlus)
+  // #endif
   return {
     app
   }

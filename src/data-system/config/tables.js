@@ -674,7 +674,7 @@ const TABLE_CONFIGS = [
     rowMapper: identityRowMapper
   },
   {
-    table: 'question_templates',
+    table: 'question_library_v5_real',
     source: 'diagnosis',
     sheet: 'question_library_v5_real',
     keys: ['question_key'],
@@ -686,6 +686,8 @@ const TABLE_CONFIGS = [
       'question_group_key',
       'question_level',
       'observability',
+      'target_dimension',
+      'routing_scope',
       'allow_unknown',
       'priority',
       'data_status',
@@ -703,6 +705,8 @@ const TABLE_CONFIGS = [
       'question_group_key',
       'question_level',
       'observability',
+      'target_dimension',
+      'routing_scope',
       'allow_unknown',
       'priority',
       'data_status',
@@ -717,7 +721,7 @@ const TABLE_CONFIGS = [
     rowMapper: identityRowMapper
   },
   {
-    table: 'question_option_sets',
+    table: 'question_option_mapping_v5_real',
     source: 'diagnosis',
     sheet: 'question_option_mapping_v5_real',
     keys: ['question_key', 'option_key'],
@@ -778,6 +782,45 @@ const TABLE_CONFIGS = [
     ],
     numericColumns: [],
     jsonColumns: [],
+    rowMapper: identityRowMapper
+  },
+  {
+    table: 'diagnosis_batch_reviews',
+    source: 'diagnosis',
+    sheet: 'diagnosis_batch_reviews',
+    keys: ['diagnosis_id'],
+    inputColumns: [
+      'diagnosis_id',
+      'batch_source',
+      'source_schema',
+      'batch_generated_at',
+      'sample_label',
+      'sample_file_name',
+      'sample_absolute_path',
+      'answer_path_signature',
+      'answer_path_json',
+      'rounds_used',
+      'question_count',
+      'observed_evidence_count',
+      'diagnosis_direction_labels_json'
+    ],
+    columns: [
+      'diagnosis_id',
+      'batch_source',
+      'source_schema',
+      'batch_generated_at',
+      'sample_label',
+      'sample_file_name',
+      'sample_absolute_path',
+      'answer_path_signature',
+      'answer_path_json',
+      'rounds_used',
+      'question_count',
+      'observed_evidence_count',
+      'diagnosis_direction_labels_json'
+    ],
+    numericColumns: ['rounds_used', 'question_count', 'observed_evidence_count'],
+    jsonColumns: ['answer_path_json', 'diagnosis_direction_labels_json'],
     rowMapper: identityRowMapper
   }
 ]

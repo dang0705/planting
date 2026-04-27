@@ -67,6 +67,23 @@ const expectedColumns = {
     'final_outcome_type',
     'final_stop_reason'
   ],
+  visual_out_of_pool_candidate_reviews: [
+    'visual_out_of_pool_review_id',
+    'session_id',
+    'visual_call_batch_id',
+    'visual_raw_image_record_id',
+    'visual_normalized_image_result_id',
+    'candidate_index',
+    'raw_visual_name_cn',
+    'raw_visual_name_en',
+    'closest_symptom_key_hint',
+    'reason',
+    'review_action',
+    'reviewed_by_openid',
+    'reviewed_at',
+    'created_at',
+    'updated_at'
+  ],
   question_queue: [
     'question_queue_id',
     '_openid',

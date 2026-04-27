@@ -1,23 +1,24 @@
 'use strict'
 
-const { checkAIQuota, deductQuota } = require('/opt/utils/quota')
 const {
   jsonResponse,
   notFound,
   methodNotAllowed,
-  normalizeHeaders,
   getHttpRequestData,
   resolveRequestAppEnv,
   runWithRequestAppEnv,
-  resolveHttpUserInfo,
-  isSkipAuthEnabled
+  resolveHttpUserInfo
 } = require('/opt/utils/http')
 const { resolveSchemaEnv, runWithSchemaEnv } = require('./db/schema-resolver')
 const {
   adaptObservedSymptoms,
-  adaptLegacyFollowUpAnswers,
   normalizeOptionKey
 } = require('./mappers/legacy-rule-adapter')
+const {
+  isLegacyFollowUpPayload,
+  buildLegacyFollowUpPayload,
+  buildLegacyStartPayload
+} = require('./mappers/legacy-diagnose-request-mapper')
 const {
   fromQuestionId,
   fromOptionId
@@ -25,6 +26,7 @@ const {
 const { runDiagnosisRound } = require('./domain/diagnosis-engine')
 const { buildPublicRoundResponse: presentDiagnosisRoundResponse } = require('./presenters/diagnosis-round-presenter')
 const { getQuestionOptionMappings } = require('./repositories/question-repository')
+const { buildSyntheticFollowUpOptionMappings } = require('./utils/synthetic-follow-up')
 const {
   buildSessionId,
   markFollowUpAnswers,
@@ -43,10 +45,63 @@ const {
   invalidateQueueForRound
 } = require('./services/question-queue-runtime-service')
 const {
-  hasConsumedFollowUpRetakeQuota,
-  diagnosisRoundPresenterHelpers
+  hasConsumedFollowUpRetakeQuota
 } = require('./presenters/diagnosis-round-presenter-helpers')
 const { resolveLatestVisualCallBatchId } = require('./utils/visual-batch-id')
+const { buildLegacyHttpSuccess } = require('./presenters/legacy-diagnose-presenter')
+const {
+  resolveRequestPrincipal,
+  assertAuthenticatedUser,
+  assertInternalReviewAccess,
+  runWithQuotaGuard
+} = require('./services/request-guard')
+const {
+  listOutOfPoolCandidates,
+  getOutOfPoolCandidate,
+  getOutOfPoolCandidateImage,
+  upsertOutOfPoolCandidateReview
+} = require('./repositories/out-of-pool-review-repository')
+const {
+  disableOutOfPoolProxyMapping,
+  listOutOfPoolProxyMappings,
+  upsertOutOfPoolProxyMapping
+} = require('./repositories/out-of-pool-proxy-mapping-repository')
+const {
+  listDiagnosisReviewSessions,
+  getDiagnosisReviewImages,
+  getDiagnosisReviewDetail,
+  upsertDiagnosisBatchReviews
+} = require('./repositories/diagnosis-review-repository')
+
+function normalizeUploadCompression(value = null) {
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+
+  const numberFields = [
+    'originalSizeBytes',
+    'uploadedSizeBytes',
+    'compressionRatio',
+    'quality',
+    'width',
+    'height',
+    'targetSizeBytes',
+    'minimumQuality'
+  ]
+  const normalized = {
+    source: String(value.source || '').trim(),
+    compressed: Boolean(value.compressed),
+    preserveImageDetails: Boolean(value.preserveImageDetails),
+    doubleConfirmedForHunyuan: Boolean(value.doubleConfirmedForHunyuan)
+  }
+
+  for (const field of numberFields) {
+    const num = Number(value[field])
+    normalized[field] = Number.isFinite(num) && num > 0 ? num : null
+  }
+
+  return normalized
+}
 
 function resolveVisualImageInputs(payload = {}) {
   const imageEntries = []
@@ -67,6 +122,9 @@ function resolveVisualImageInputs(payload = {}) {
     const normalizedInputSlotOrder = Number(item?.inputSlotOrder ?? item?.orderIndex ?? index)
     const normalizedDeclaredOrganConfidence =
       item?.userDeclaredOrganConfidence ?? item?.declaredOrganConfidence ?? null
+    const uploadCompression = normalizeUploadCompression(
+      item?.uploadCompression || item?.compression || null
+    )
 
     imageEntries.push({
       imageRef,
@@ -86,7 +144,8 @@ function resolveVisualImageInputs(payload = {}) {
           ? null
           : Number.isFinite(Number(normalizedDeclaredOrganConfidence))
             ? Number(normalizedDeclaredOrganConfidence)
-            : null
+            : null,
+      ...(uploadCompression ? { uploadCompression } : {})
     })
   }
 
@@ -154,74 +213,6 @@ function normalizeRoundFromRoundId(roundId) {
   return Number(match[1] || 0) || null
 }
 
-function shouldSkipPersistence(request = null) {
-  const headers = normalizeHeaders(request?.headers || {})
-  return String(headers['x-terminal-e2e'] || '').trim().toLowerCase() !== 'true'
-}
-
-function shouldBypassQuota(request = null, openid = '', { skipAuth = false } = {}) {
-  if (skipAuth) {
-    return true
-  }
-
-  const headers = normalizeHeaders(request?.headers || {})
-  const appEnv = resolveRequestAppEnv(headers, request?.query || {}, request?.body || {})
-  const isTerminalE2E = String(headers['x-terminal-e2e'] || '').trim().toLowerCase() === 'true'
-  if (!isTerminalE2E || appEnv !== 'development') {
-    return false
-  }
-
-  const normalizedOpenid = String(openid || '').trim()
-  return normalizedOpenid.startsWith('anon_dev_') || normalizedOpenid.startsWith('dev_terminal_')
-}
-
-function buildLegacyHttpSuccess({ sessionId, plantId, roundResult, diagnosisText = '' }) {
-  const publicRound = presentDiagnosisRoundResponse(roundResult || {}, diagnosisRoundPresenterHelpers)
-  return {
-    code: 200,
-    message: '诊断完成',
-    fullText:
-      diagnosisText ||
-      roundResult?.finalResult?.summary ||
-      roundResult?.topProblem?.summary ||
-      '',
-    data: {
-      recordId: sessionId,
-      plantId: publicRound?.plantId || plantId || '',
-      userPlantId: publicRound?.userPlantId || null,
-      plantCatalogId: publicRound?.plantCatalogId || null,
-      plantIdentityId: publicRound?.plantIdentityId || '',
-      latestVisualCallBatchId: publicRound?.latestVisualCallBatchId || null,
-      diagnosisSessionId: publicRound?.diagnosisSessionId || sessionId,
-      roundId: publicRound?.roundId || roundResult?.roundId || 'round_1',
-      stage: publicRound?.stage || '',
-      status: publicRound?.status || '',
-      routePrimaryAction: publicRound?.routePrimaryAction || '',
-      outcomeType: publicRound?.outcomeType || '',
-      identityResolutionStatus: publicRound?.identityResolutionStatus || '',
-      observedSymptoms: Array.isArray(publicRound?.observedSymptoms)
-        ? publicRound.observedSymptoms
-        : [],
-      observedEvidenceSet: Array.isArray(publicRound?.observedEvidenceSet)
-        ? publicRound.observedEvidenceSet
-        : [],
-      visualBatchTrace: roundResult?.visualBatchTrace || null,
-      visualAggregateSummary: publicRound?.visualAggregateSummary || null,
-      shadowCompareSummary: publicRound?.shadowCompareSummary || null,
-      summaryCard: publicRound?.summaryCard || null,
-      questions: Array.isArray(publicRound?.questions) ? publicRound.questions : [],
-      finalResult: publicRound?.finalResult || null,
-      contributingFactors: Array.isArray(publicRound?.contributingFactors) ? publicRound.contributingFactors : [],
-      intermediateStates: Array.isArray(publicRound?.intermediateStates) ? publicRound.intermediateStates : [],
-      nextSteps: Array.isArray(publicRound?.nextSteps) ? publicRound.nextSteps : [],
-      whatToAvoid: Array.isArray(publicRound?.whatToAvoid) ? publicRound.whatToAvoid : [],
-      confidenceLevel: publicRound?.confidenceLevel || 'normal',
-      needHumanReview: Boolean(publicRound?.needHumanReview),
-      timestamp: Date.now()
-    }
-  }
-}
-
 function normalizePublicAnswers(answers = []) {
   const normalized = (Array.isArray(answers) ? answers : [])
     .map(item => {
@@ -248,6 +239,54 @@ function normalizePublicAnswers(answers = []) {
     deduped.set(item.questionKey, item)
   }
   return Array.from(deduped.values())
+}
+
+function mergeClientContextFields(primary = null, fallback = null) {
+  const source = primary && typeof primary === 'object' ? primary : {}
+  const base = fallback && typeof fallback === 'object' ? fallback : {}
+  const pickText = key => {
+    const first = String(source?.[key] || '').trim()
+    if (first) return first
+    const second = String(base?.[key] || '').trim()
+    return second || ''
+  }
+  const structuredImageCountSource = Number(source?.structuredImageCount || 0)
+  const structuredImageCountFallback = Number(base?.structuredImageCount || 0)
+
+  const merged = {
+    source: pickText('source'),
+    platform: pickText('platform'),
+    reviewSourceType: pickText('reviewSourceType'),
+    visualInputVersion: pickText('visualInputVersion'),
+    structuredImageCount:
+      structuredImageCountSource > 0
+        ? structuredImageCountSource
+        : structuredImageCountFallback > 0
+          ? structuredImageCountFallback
+          : 0,
+    auditLabel: pickText('auditLabel'),
+    auditFileName: pickText('auditFileName'),
+    auditCaseKey: pickText('auditCaseKey')
+  }
+
+  return Object.values(merged).some(value => (typeof value === 'number' ? value > 0 : Boolean(value)))
+    ? merged
+    : null
+}
+
+function resolveRequestClientContext(payload = {}, fallback = null) {
+  const explicitContext = {
+    source: payload?.source,
+    platform: payload?.platform,
+    reviewSourceType: payload?.reviewSourceType,
+    visualInputVersion: payload?.visualInputVersion,
+    structuredImageCount: payload?.structuredImageCount,
+    auditLabel: payload?.auditLabel,
+    auditFileName: payload?.auditFileName,
+    auditCaseKey: payload?.auditCaseKey
+  }
+
+  return mergeClientContextFields(payload?.clientContext || null, mergeClientContextFields(explicitContext, fallback))
 }
 
 async function extractVisualSymptoms({
@@ -315,7 +354,8 @@ async function persistRoundResult({
   round,
   image,
   description,
-  skipPersistence = false
+  skipPersistence = false,
+  clientContext = null
 }) {
   if (skipPersistence) return
 
@@ -327,11 +367,14 @@ async function persistRoundResult({
     round,
     image,
     description
+    ,
+    clientContext
   })
 }
 
 async function runStartDiagnosis({ payload, openid, skipPersistence = false, onText } = {}) {
   payload = payload || {}
+  const clientContext = resolveRequestClientContext(payload, null)
   const legacyPlantId = payload.plantId || null
   const plantCatalogId = payload.plantCatalogId || payload.catalogPlantId || null
   const userPlantId = payload.userPlantId || null
@@ -382,6 +425,7 @@ async function runStartDiagnosis({ payload, openid, skipPersistence = false, onT
     answers: [],
     askedQuestionKeys: [],
     unknownCountByGroup: {},
+    symptomClassState: null,
     round: 1,
     stage: 'preliminary',
     sessionId
@@ -405,7 +449,8 @@ async function runStartDiagnosis({ payload, openid, skipPersistence = false, onT
     round: 1,
     image: images[0] || '',
     description: payload.description || '',
-    skipPersistence
+    skipPersistence,
+    clientContext
   })
 
   return {
@@ -458,6 +503,10 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     : await getObservedSymptomsBySession(sessionId)
   const roundFromClient = normalizeRoundFromRoundId(payload.roundId)
   const expectedRound = Math.max(1, Number(sessionState.nextRound || 2) - 1)
+  const clientContext = resolveRequestClientContext(
+    payload,
+    sessionState?.runtimeSnapshot?.clientContext || null
+  )
 
   if (roundFromClient && roundFromClient !== expectedRound) {
     throw Object.assign(new Error('问诊轮次已失效，请使用当前轮题目重新提交'), { statusCode: 400 })
@@ -469,6 +518,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   let runtimeAnswers = answers
   let runtimeObservedEvidenceSet = refreshedSessionState.observedEvidenceSet || []
   let runtimeAskedQuestionKeys = refreshedSessionState.askedQuestionKeys
+  let runtimeAnsweredQuestionGroupKeys = refreshedSessionState.answeredQuestionGroupKeys || []
   let runtimeUnknownCountByGroup = refreshedSessionState.unknownCountByGroup
 
   if (hasAnswers) {
@@ -478,7 +528,10 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     }
 
     const questionKeys = Array.from(new Set(answers.map(item => item.questionKey).filter(Boolean)))
-    const optionMappings = await getQuestionOptionMappings(questionKeys)
+    const optionMappings = [
+      ...(await getQuestionOptionMappings(questionKeys)),
+      ...buildSyntheticFollowUpOptionMappings(questionKeys)
+    ]
     const validPairs = new Set(
       optionMappings.map(item => `${item.questionKey}::${item.optionKey}`)
     )
@@ -490,15 +543,23 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
       throw Object.assign(new Error('问诊选项不属于当前问题'), { statusCode: 400 })
     }
 
-    await markFollowUpAnswers(sessionId, answers)
+    await markFollowUpAnswers(sessionId, answers, {
+      optionMappings,
+      answerRound
+    })
     await markQueueItemsAnswered(sessionId, openid, answerRound, answers)
     refreshedSessionState = await getSessionState(openid, sessionId)
     if (!refreshedSessionState) {
       throw Object.assign(new Error('诊断会话不存在或已失效'), { statusCode: 404 })
     }
 
+    runtimeAnswers = Array.isArray(refreshedSessionState.answeredAnswers) &&
+      refreshedSessionState.answeredAnswers.length
+        ? refreshedSessionState.answeredAnswers
+        : answers
     runtimeObservedEvidenceSet = refreshedSessionState.observedEvidenceSet || []
     runtimeAskedQuestionKeys = refreshedSessionState.askedQuestionKeys
+    runtimeAnsweredQuestionGroupKeys = refreshedSessionState.answeredQuestionGroupKeys || []
     runtimeUnknownCountByGroup = refreshedSessionState.unknownCountByGroup
   }
 
@@ -524,6 +585,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
       refreshedSessionState.observedEvidenceSet || []
     )
     runtimeAskedQuestionKeys = []
+    runtimeAnsweredQuestionGroupKeys = []
     runtimeUnknownCountByGroup = {}
   }
 
@@ -536,10 +598,15 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     lockedPlantContext: refreshedSessionState.plantContext,
     observedSymptoms: hasImageInputs ? [] : observedSymptoms,
     observedEvidenceSet: runtimeObservedEvidenceSet,
-    visualAggregateResult: visualExtraction?.aggregateResult || null,
+    visualAggregateResult:
+      visualExtraction?.aggregateResult ||
+      refreshedSessionState.visualAggregateResult ||
+      null,
     answers: runtimeAnswers,
     askedQuestionKeys: runtimeAskedQuestionKeys,
+    answeredQuestionGroupKeys: runtimeAnsweredQuestionGroupKeys,
     unknownCountByGroup: runtimeUnknownCountByGroup,
+    symptomClassState: refreshedSessionState.symptomClassRuntime || null,
     round,
     stage: 'followup',
     sessionId
@@ -573,7 +640,8 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     round,
     image: '',
     description: '',
-    skipPersistence
+    skipPersistence,
+    clientContext
   })
 
   return {
@@ -591,25 +659,6 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     ),
     diagnosisText: roundResult?.topProblem?.summary || '',
     response: roundResult
-  }
-}
-
-async function ensureQuota(openid, { skipQuota = false } = {}) {
-  if (skipQuota || !openid) return
-
-  const quota = await checkAIQuota(openid, 'diagnose')
-  if (!quota.allowed) {
-    throw Object.assign(new Error(quota.message || '诊断配额不足'), { statusCode: quota.code || 403 })
-  }
-}
-
-async function consumeQuota(openid, { skipQuota = false } = {}) {
-  if (skipQuota || !openid) return
-
-  try {
-    await deductQuota(openid, 'diagnose')
-  } catch (error) {
-    console.warn('扣减诊断配额失败（忽略）:', error.message)
   }
 }
 
@@ -632,32 +681,26 @@ async function ensureRefactorReady() {
 
 async function handleDiagnosisStart(request, context, payload) {
   payload = payload || {}
-  const skipAuth = isSkipAuthEnabled(payload.skipAuth)
-  const userInfo = skipAuth
-    ? { openid: payload.openid || '' }
-    : await resolveHttpUserInfo(request.headers, payload, context)
-
-  if (!skipAuth && !userInfo?.openid) {
-    return jsonResponse(401, { code: 401, message: '请先登录', data: null })
-  }
+  const principal = await resolveRequestPrincipal({ request, context, payload })
 
   try {
+    assertAuthenticatedUser({ ...principal, message: '请先登录' })
     await ensureRefactorReady()
-    const skipQuota = shouldBypassQuota(request, userInfo?.openid, { skipAuth })
-    await ensureQuota(userInfo?.openid, { skipQuota })
-
-    const executed = await runStartDiagnosis({
-      payload,
-      openid: userInfo?.openid || '',
-      skipPersistence: skipAuth && shouldSkipPersistence(request)
+    const executed = await runWithQuotaGuard({
+      request,
+      openid: principal.userInfo?.openid || '',
+      skipAuth: principal.skipAuth,
+      task: async () => runStartDiagnosis({
+        payload,
+        openid: principal.userInfo?.openid || '',
+        skipPersistence: principal.skipPersistence
+      })
     })
-
-    await consumeQuota(userInfo?.openid, { skipQuota })
 
     return jsonResponse(200, {
       code: 200,
       message: '诊断开始成功',
-      data: presentDiagnosisRoundResponse(executed.response, diagnosisRoundPresenterHelpers)
+      data: presentDiagnosisRoundResponse(executed.response)
     })
   } catch (error) {
     return jsonResponse(error.statusCode || 500, {
@@ -670,27 +713,21 @@ async function handleDiagnosisStart(request, context, payload) {
 
 async function handleDiagnosisAnswer(request, context, payload) {
   payload = payload || {}
-  const skipAuth = isSkipAuthEnabled(payload.skipAuth)
-  const userInfo = skipAuth
-    ? { openid: payload.openid || '' }
-    : await resolveHttpUserInfo(request.headers, payload, context)
-
-  if (!skipAuth && !userInfo?.openid) {
-    return jsonResponse(401, { code: 401, message: '请先登录', data: null })
-  }
+  const principal = await resolveRequestPrincipal({ request, context, payload })
 
   try {
+    assertAuthenticatedUser({ ...principal, message: '请先登录' })
     await ensureRefactorReady()
     const executed = await runAnswerDiagnosis({
       payload,
-      openid: userInfo?.openid || '',
-      skipPersistence: skipAuth && shouldSkipPersistence(request)
+      openid: principal.userInfo?.openid || '',
+      skipPersistence: principal.skipPersistence
     })
 
     return jsonResponse(200, {
       code: 200,
       message: '问诊提交成功',
-      data: presentDiagnosisRoundResponse(executed.response, diagnosisRoundPresenterHelpers)
+      data: presentDiagnosisRoundResponse(executed.response)
     })
   } catch (error) {
     return jsonResponse(error.statusCode || 500, {
@@ -734,16 +771,201 @@ async function handleDiagnosisHistory(request, context, query) {
   return jsonResponse(200, { code: 200, data })
 }
 
-async function handleDiagnosisFeedback(request, context, payload) {
-  payload = payload || {}
-  const userInfo = await resolveHttpUserInfo(request.headers, payload, context)
-  if (!userInfo?.openid) {
-    return jsonResponse(401, { code: 401, message: '请先登录', data: null })
+async function handleDiagnosisReviewList(request, context, query) {
+  const principal = await resolveRequestPrincipal({ request, context, payload: query || {} })
+  assertInternalReviewAccess({ request, ...principal })
+  const outcomeType = String(
+    query?.outcomeType || query?.status || query?.outcome || 'all'
+  ).trim()
+
+  const data = await listDiagnosisReviewSessions({
+    page: Number(query?.page || 1),
+    pageSize: Number(query?.pageSize || 20),
+    outcomeType,
+    keyword: query?.keyword || '',
+    sourceType: query?.sourceType || 'all'
+  })
+
+  return jsonResponse(200, { code: 200, data })
+}
+
+async function handleDiagnosisReviewImages(request, context, query) {
+  const principal = await resolveRequestPrincipal({ request, context, payload: query || {} })
+  assertInternalReviewAccess({ request, ...principal })
+
+  const data = await getDiagnosisReviewImages({
+    diagnosisSessionId:
+      query?.diagnosisSessionId || query?.sessionId || query?.id || query?.resultId || '',
+    sourceType: query?.sourceType || 'all'
+  })
+
+  if (!data) {
+    return jsonResponse(404, { code: 404, message: '诊断图片不存在', data: null })
   }
 
-  const data = await saveDiagnosisFeedback(userInfo.openid, {
-    resultId: payload.resultId || payload.diagnosisSessionId || '',
-    feedback: payload.feedback || {}
+  return jsonResponse(200, { code: 200, data })
+}
+
+async function handleDiagnosisReviewDetail(request, context, query) {
+  const principal = await resolveRequestPrincipal({ request, context, payload: query || {} })
+  assertInternalReviewAccess({ request, ...principal })
+
+  const data = await getDiagnosisReviewDetail({
+    diagnosisSessionId:
+      query?.diagnosisSessionId || query?.sessionId || query?.id || query?.resultId || '',
+    sourceType: query?.sourceType || 'all'
+  })
+
+  if (!data) {
+    return jsonResponse(404, { code: 404, message: '诊断记录不存在', data: null })
+  }
+
+  return jsonResponse(200, { code: 200, data })
+}
+
+async function handleDiagnosisReviewImportBatch(request, context, payload) {
+  const principal = await resolveRequestPrincipal({ request, context, payload: payload || {} })
+  assertInternalReviewAccess({ request, ...principal })
+
+  const data = await upsertDiagnosisBatchReviews({
+    records: Array.isArray(payload?.records) ? payload.records : [],
+    batchSource: payload?.batchSource || 'plant-sample-combination-audit'
+  })
+
+  return jsonResponse(200, { code: 200, data })
+}
+
+async function handleDiagnosisFeedback(request, context, payload) {
+  payload = payload || {}
+  const principal = await resolveRequestPrincipal({ request, context, payload })
+
+  try {
+    assertAuthenticatedUser({ ...principal, message: '请先登录' })
+    const data = await saveDiagnosisFeedback(principal.userInfo?.openid || '', {
+      resultId: payload.resultId || payload.diagnosisSessionId || '',
+      feedback: payload.feedback || {}
+    })
+
+    return jsonResponse(200, { code: 200, data })
+  } catch (error) {
+    return jsonResponse(error.statusCode || 500, {
+      code: error.statusCode || 500,
+      message: error.message || '提交反馈失败',
+      data: null
+    })
+  }
+}
+
+async function handleOutOfPoolCandidateList(request, context, query) {
+  const principal = await resolveRequestPrincipal({ request, context, payload: query || {} })
+  assertInternalReviewAccess({ request, ...principal })
+
+  const data = await listOutOfPoolCandidates({
+    page: Number(query?.page || 1),
+    pageSize: Number(query?.pageSize || 20),
+    status: query?.status || 'all',
+    keyword: query?.keyword || ''
+  })
+
+  return jsonResponse(200, { code: 200, data })
+}
+
+async function handleOutOfPoolCandidateImage(request, context, query) {
+  const principal = await resolveRequestPrincipal({ request, context, payload: query || {} })
+  assertInternalReviewAccess({ request, ...principal })
+
+  const data = await getOutOfPoolCandidateImage({
+    visualNormalizedImageResultId: query?.visualNormalizedImageResultId,
+    candidateIndex: Number(query?.candidateIndex || 0)
+  })
+
+  if (!data) {
+    return jsonResponse(404, { code: 404, message: '池外候选图片不存在', data: null })
+  }
+
+  return jsonResponse(200, { code: 200, data })
+}
+
+async function handleOutOfPoolCandidateReview(request, context, payload) {
+  payload = payload || {}
+  const principal = await resolveRequestPrincipal({ request, context, payload })
+  assertInternalReviewAccess({ request, ...principal })
+
+  const visualNormalizedImageResultId = String(payload.visualNormalizedImageResultId || '').trim()
+  const candidateIndex = Number(payload.candidateIndex || 0)
+  const reviewAction = String(payload.reviewAction || '').trim().toLowerCase()
+
+  if (!visualNormalizedImageResultId || !Number.isFinite(candidateIndex) || candidateIndex < 1) {
+    return jsonResponse(400, { code: 400, message: '缺少候选项标识', data: null })
+  }
+
+  const candidate = await getOutOfPoolCandidate({
+    visualNormalizedImageResultId,
+    candidateIndex
+  })
+
+  if (!candidate) {
+    return jsonResponse(404, { code: 404, message: '池外候选不存在', data: null })
+  }
+
+  await upsertOutOfPoolCandidateReview({
+    candidate,
+    reviewAction,
+    reviewedByOpenid: principal.userInfo?.openid || ''
+  })
+
+  return jsonResponse(200, {
+    code: 200,
+    data: {
+      visualNormalizedImageResultId,
+      candidateIndex,
+      reviewAction
+    }
+  })
+}
+
+async function handleOutOfPoolProxyMappingList(request, context, query) {
+  const principal = await resolveRequestPrincipal({ request, context, payload: query || {} })
+  assertInternalReviewAccess({ request, ...principal })
+
+  const data = await listOutOfPoolProxyMappings({
+    page: Number(query?.page || 1),
+    pageSize: Number(query?.pageSize || 20),
+    keyword: query?.keyword || '',
+    reviewStatus: query?.reviewStatus || 'all',
+    enabled: query?.enabled || 'all'
+  })
+
+  return jsonResponse(200, { code: 200, data })
+}
+
+async function handleOutOfPoolProxyMappingUpsert(request, context, payload) {
+  payload = payload || {}
+  const principal = await resolveRequestPrincipal({ request, context, payload })
+  assertInternalReviewAccess({ request, ...principal })
+
+  const data = await upsertOutOfPoolProxyMapping({
+    mappingId: payload.mappingId || '',
+    targetSymptomKey: payload.targetSymptomKey || '',
+    matchTerms: payload.matchTerms || [],
+    rationale: payload.rationale || '',
+    reviewStatus: payload.reviewStatus || 'pending',
+    enabled: payload.enabled !== false && payload.enabled !== 0,
+    priority: Number(payload.priority || 0),
+    operatorOpenid: principal.userInfo?.openid || ''
+  })
+
+  return jsonResponse(200, { code: 200, data })
+}
+
+async function handleOutOfPoolProxyMappingDisable(request, context, payload) {
+  payload = payload || {}
+  const principal = await resolveRequestPrincipal({ request, context, payload })
+  assertInternalReviewAccess({ request, ...principal })
+
+  const data = await disableOutOfPoolProxyMapping({
+    mappingId: payload.mappingId || '',
+    operatorOpenid: principal.userInfo?.openid || ''
   })
 
   return jsonResponse(200, { code: 200, data })
@@ -751,57 +973,31 @@ async function handleDiagnosisFeedback(request, context, payload) {
 
 async function handleLegacyDiagnose(request, context, payload) {
   payload = payload || {}
-  const skipAuth = isSkipAuthEnabled(payload.skipAuth)
-  const userInfo = skipAuth
-    ? { openid: payload.openid || '' }
-    : await resolveHttpUserInfo(request.headers, payload, context)
+  const principal = await resolveRequestPrincipal({ request, context, payload })
 
-  if (!skipAuth && !userInfo?.openid) {
-    return jsonResponse(401, { code: 401, message: '需要登录才能使用 AI 诊断功能', data: null })
-  }
-
-  const isFollowUp = String(payload.mode || '').toLowerCase() === 'follow_up' ||
-    Array.isArray(payload.followUpAnswers)
+  const isFollowUp = isLegacyFollowUpPayload(payload)
 
   try {
+    assertAuthenticatedUser({ ...principal, message: '需要登录才能使用 AI 诊断功能' })
     await ensureRefactorReady()
-    const skipQuota = shouldBypassQuota(request, userInfo?.openid, { skipAuth })
-    if (!isFollowUp) {
-      await ensureQuota(userInfo?.openid, { skipQuota })
-    }
 
     const executed = isFollowUp
       ? await runAnswerDiagnosis({
-          payload: {
-            diagnosisSessionId: payload.diagnosisId,
-            roundId: payload.roundId || '',
-            followUpAnswers: adaptLegacyFollowUpAnswers(payload.followUpAnswers || [])
-          },
-          openid: userInfo?.openid || '',
-          skipPersistence: skipAuth && shouldSkipPersistence(request)
+          payload: buildLegacyFollowUpPayload(payload),
+          openid: principal.userInfo?.openid || '',
+          skipPersistence: principal.skipPersistence
         })
-      : await runStartDiagnosis({
-          payload: {
-            plantId: payload.plantId,
-            userPlantId: payload.userPlantId,
-            plantCatalogId: payload.plantCatalogId || payload.catalogPlantId,
-            image: payload.image,
-            images: payload.images,
-            imageInputs: payload.imageInputs,
-            imageIds: payload.imageIds,
-            observedSymptoms: payload.observedSymptoms,
-            observedEvidenceSet: payload.observedEvidenceSet,
-            latestVisualCallBatchId: payload.latestVisualCallBatchId,
-            visualBatchTrace: payload.visualBatchTrace,
-            description: payload.description || ''
-          },
-          openid: userInfo?.openid || '',
-          skipPersistence: skipAuth && shouldSkipPersistence(request)
+      : await runWithQuotaGuard({
+          request,
+          openid: principal.userInfo?.openid || '',
+          skipAuth: principal.skipAuth,
+          enabled: true,
+          task: async () => runStartDiagnosis({
+            payload: buildLegacyStartPayload(payload),
+            openid: principal.userInfo?.openid || '',
+            skipPersistence: principal.skipPersistence
+          })
         })
-
-    if (!isFollowUp) {
-      await consumeQuota(userInfo?.openid, { skipQuota })
-    }
 
     return jsonResponse(200, buildLegacyHttpSuccess({
       sessionId: executed.sessionId,
@@ -864,50 +1060,29 @@ async function handleLegacyDiagnoseStream(event, context, request, payload) {
     content: '开始诊断'
   })
 
-  const skipAuth = isSkipAuthEnabled(payload.skipAuth)
-  const userInfo = skipAuth
-    ? { openid: payload.openid || '' }
-    : await resolveHttpUserInfo(request.headers, payload, context)
-
-  if (!skipAuth && !userInfo?.openid) {
-    emitter.send('error', { type: 'error', code: 401, message: '需要登录才能使用 AI 诊断功能' })
-    emitter.end()
-    return ''
-  }
+  const principal = await resolveRequestPrincipal({ request, context, payload })
 
   try {
+    assertAuthenticatedUser({ ...principal, message: '需要登录才能使用 AI 诊断功能' })
     await ensureRefactorReady()
-    const skipQuota = shouldBypassQuota(request, userInfo?.openid, { skipAuth })
-    await ensureQuota(userInfo?.openid, { skipQuota })
-
-    const executed = await runStartDiagnosis({
-      payload: {
-        plantId: payload.plantId,
-        userPlantId: payload.userPlantId,
-        plantCatalogId: payload.plantCatalogId || payload.catalogPlantId,
-        image: payload.image,
-        images: payload.images,
-        imageInputs: payload.imageInputs,
-        imageIds: payload.imageIds,
-        observedSymptoms: payload.observedSymptoms,
-        observedEvidenceSet: payload.observedEvidenceSet,
-        latestVisualCallBatchId: payload.latestVisualCallBatchId,
-        visualBatchTrace: payload.visualBatchTrace,
-        description: payload.description || ''
-      },
-      openid: userInfo?.openid || '',
-      skipPersistence: skipAuth && shouldSkipPersistence(request),
-      onText: (chunk, fullText) => {
-        emitter.send('reply', {
-          type: 'reply',
-          role: 'assistant',
-          content: chunk,
-          fullText
-        })
-      }
+    const executed = await runWithQuotaGuard({
+      request,
+      openid: principal.userInfo?.openid || '',
+      skipAuth: principal.skipAuth,
+      task: async () => runStartDiagnosis({
+        payload: buildLegacyStartPayload(payload),
+        openid: principal.userInfo?.openid || '',
+        skipPersistence: principal.skipPersistence,
+        onText: (chunk, fullText) => {
+          emitter.send('reply', {
+            type: 'reply',
+            role: 'assistant',
+            content: chunk,
+            fullText
+          })
+        }
+      })
     })
-
-    await consumeQuota(userInfo?.openid, { skipQuota })
 
     emitter.send('done', {
       type: 'done',
@@ -934,11 +1109,42 @@ async function handleLegacyDiagnoseStream(event, context, request, payload) {
   }
 }
 
+function normalizeHttpPayload(payload) {
+  if (!payload) {
+    return {}
+  }
+
+  if (typeof payload === 'string') {
+    const raw = payload.trim()
+    if (!raw) {
+      return {}
+    }
+
+    try {
+      const parsed = JSON.parse(raw)
+      return parsed && typeof parsed === 'object' ? parsed : {}
+    } catch (error) {
+      console.warn('diagnose-http payload json parse failed:', error.message)
+      return {}
+    }
+  }
+
+  if (typeof payload === 'object') {
+    return payload
+  }
+
+  return {}
+}
+
 async function main(event, context) {
   const request = getHttpRequestData(event, context)
   const path = String(request.path || '')
   const method = request.method || 'GET'
-  const payload = (method === 'GET' ? request.query : request.body) || {}
+  const payload = normalizeHttpPayload(method === 'GET' ? request.query : request.body)
+  console.log('diagnose-http request routing:', {
+    method,
+    path
+  })
 
   try {
     if (path.includes('/health')) {
@@ -983,9 +1189,70 @@ async function main(event, context) {
       return handleDiagnosisHistory(request, context, request.query)
     }
 
+    if (path.includes('/diagnosis/review/list')) {
+      if (method !== 'GET') return methodNotAllowed(method)
+      return handleDiagnosisReviewList(request, context, request.query)
+    }
+
+    if (path.includes('/diagnosis/review/images')) {
+      if (method !== 'GET') return methodNotAllowed(method)
+      return handleDiagnosisReviewImages(request, context, request.query)
+    }
+
+    if (path.includes('/diagnosis/review/detail')) {
+      if (
+        method === 'POST' &&
+        String(payload?.action || request.query?.action || '').trim() === 'importBatch'
+      ) {
+        return handleDiagnosisReviewImportBatch(request, context, payload)
+      }
+      if (method !== 'GET') return methodNotAllowed(method)
+      return handleDiagnosisReviewDetail(request, context, request.query)
+    }
+
+    if (path.includes('/diagnosis/review/import')) {
+      if (method !== 'POST') return methodNotAllowed(method)
+      return handleDiagnosisReviewImportBatch(request, context, payload)
+    }
+
     if (path.includes('/diagnosis/feedback')) {
       if (method !== 'POST') return methodNotAllowed(method)
+      if (
+        String(payload?.action || request.query?.action || '').trim() === 'importBatch'
+      ) {
+        return handleDiagnosisReviewImportBatch(request, context, payload)
+      }
       return handleDiagnosisFeedback(request, context, payload)
+    }
+
+    if (path.includes('/visual/out-of-pool/list')) {
+      if (method !== 'GET') return methodNotAllowed(method)
+      return handleOutOfPoolCandidateList(request, context, request.query)
+    }
+
+    if (path.includes('/visual/out-of-pool/image')) {
+      if (method !== 'GET') return methodNotAllowed(method)
+      return handleOutOfPoolCandidateImage(request, context, request.query)
+    }
+
+    if (path.includes('/visual/out-of-pool/review')) {
+      if (method !== 'POST') return methodNotAllowed(method)
+      return handleOutOfPoolCandidateReview(request, context, payload)
+    }
+
+    if (path.includes('/visual/out-of-pool/proxy-mappings/list')) {
+      if (method !== 'GET') return methodNotAllowed(method)
+      return handleOutOfPoolProxyMappingList(request, context, request.query)
+    }
+
+    if (path.includes('/visual/out-of-pool/proxy-mappings/upsert')) {
+      if (method !== 'POST') return methodNotAllowed(method)
+      return handleOutOfPoolProxyMappingUpsert(request, context, payload)
+    }
+
+    if (path.includes('/visual/out-of-pool/proxy-mappings/disable')) {
+      if (method !== 'POST') return methodNotAllowed(method)
+      return handleOutOfPoolProxyMappingDisable(request, context, payload)
     }
 
     if (path.includes('/stream/diagnose')) {

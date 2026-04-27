@@ -25,8 +25,10 @@
 ## 2. Diagnosis 静态业务层
 - `problems`
 - `symptoms`
-- `question_templates`
-- `question_option_sets`
+- `question_library_v5_real`
+- `question_option_mapping_v5_real`
+- `question_strategy_v5_real`
+- `question_generation_engine`（仅 audited generation asset，不计入 formal runtime coverage）
 - `diagnosis_result_explanations`
 - `plant_problem_profiles`
 

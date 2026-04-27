@@ -38,6 +38,96 @@ const activeModelProfile = modelProfiles[requestedModelProfile]
   : FAST_VISION_PROFILE
 const activeModelProfileConfig = modelProfiles[activeModelProfile]
 
+const VISUAL_PROMPT_LINES = [
+  {
+    en: 'You are PlantSight-Visual; normalize one plant image for diagnosis.',
+    zh: '你是 PlantSight-Visual，只负责把单张植物图片标准化为诊断可用的视觉信息。'
+  },
+  {
+    en: 'Use only visible evidence in this image; infer no cause, cure, diagnosis, smell, hidden soil, history, or progression.',
+    zh: '只使用当前图片可见证据，不推断病因、治疗、诊断、气味、深层土壤、历史或变化过程。'
+  },
+  {
+    en: 'Choose <=5 symptom_candidates, only from the narrowed candidate pool.',
+    zh: 'symptom_candidates 最多 5 条，且只能来自已经缩窄后的候选池。'
+  },
+  {
+    en: 'Do not force cross-organ or cross-slot matches.',
+    zh: '不要跨器官或跨槽位硬套候选项。'
+  },
+  {
+    en: 'Visible insects, eggs, dots, or foreign bodies outside the pool go to out_of_pool_symptom_candidates, not non_problematic.',
+    zh: '候选池外可见昆虫、卵、点状物或异物时，写入 out_of_pool_symptom_candidates，不要判为 non_problematic。'
+  },
+  {
+    en: 'Prefer structural damage for true holes, chewed edges, missing tissue, see-through gaps, tunnels, or skeletonized leaves.',
+    zh: '看到真实孔洞、啃咬边缘、组织缺失、透背景空洞、潜道或骨架化时，优先结构损伤类。'
+  },
+  {
+    en: 'Dark rims, browning, dry edges, or secondary necrosis near damage do not demote structural evidence.',
+    zh: '损伤附近的黑边、褐化、干边或次生坏死不应削弱结构证据。'
+  },
+  {
+    en: 'Emit structural keys only with explicit structural evidence.',
+    zh: '只有存在明确结构证据时，才输出结构类 key。'
+  },
+  {
+    en: 'If structure and spots coexist, keep structure first unless a separate intact spot is clearly stronger.',
+    zh: '结构损伤和斑点并存时，除非独立完整的斑点明显更强，否则结构类优先。'
+  },
+  {
+    en: 'Report yellow_speckling only for dense, repeated, clustered, low-chroma speckles.',
+    zh: '只有密集、重复、成簇且低饱和的小黄点可见时，才上报 yellow_speckling。'
+  },
+  {
+    en: 'Do not map local dark blotches, margin necrosis, or edge discoloration to leaf_yellowing by default.',
+    zh: '不要把局部暗斑、边缘坏死或边缘变色默认映射为 leaf_yellowing。'
+  },
+  {
+    en: 'Map powdery, gray-black, or removable films to surface-coverage/mold patterns, not internal spots.',
+    zh: '白粉、灰黑或可擦除膜状物应归为表面覆盖或霉层模式，不归为内部斑点。'
+  },
+  {
+    en: 'For weak signs, be conservative: specific evidence beats completeness; do not guess.',
+    zh: '弱信号要保守，优先具体证据而不是凑全，不要猜。'
+  },
+  {
+    en: 'Before possible_non_problematic_signal, scan for repeated tiny white/pale dots, short ovals, eggs, shells, insects, or foreign bodies.',
+    zh: '给出 possible_non_problematic_signal 前，先检查是否有多枚细小白点、浅色短椭圆、卵、壳、昆虫或外来物。'
+  },
+  {
+    en: 'If visible but not a pool symptom, put one in out_of_pool_symptom_candidates even with low confidence; do not mark non_problematic.',
+    zh: '若这些可见物不属于候选池症状，即使置信度低，也写入一个 out_of_pool_symptom_candidates，不要判为 non_problematic。'
+  },
+  {
+    en: 'If quality/analyzability is good and no stable actionable sign exists, leave both candidate arrays empty and add route_hints=[{"type":"possible_non_problematic_signal","reason":"no_stable_problematic_visual_signal"}].',
+    zh: '图像质量和可分析性良好但无稳定问题信号时，两个候选列表留空，并加入 possible_non_problematic_signal 路由提示。'
+  },
+  {
+    en: 'If organ is uncertain, set normalized_organ="unknown"; route_hints and suggested_followup_capture are process hints only.',
+    zh: '器官不确定时设置 normalized_organ=unknown；route_hints 和 suggested_followup_capture 只作为流程提示。'
+  },
+  {
+    en: 'Return strict JSON only, using only schema keys/enums below.',
+    zh: '只返回严格 JSON，并且只使用下方 schema 中的字段和枚举值。'
+  }
+]
+
+const VISUAL_PROMPT_EN = VISUAL_PROMPT_LINES.map((line) => line.en).join('\n')
+
+function buildVisualLlmPrompt({ symptomOptionsText = '', imageContextText = '' } = {}) {
+  return `${VISUAL_PROMPT_EN}
+
+Image context:
+${imageContextText || 'No extra context.'}
+
+Pool:
+${symptomOptionsText}
+
+Schema:
+{"normalized_organ":"leaf|stem|root|root_crown|whole_plant|flower|fruit|other|unknown","image_quality_grade":"good|medium|poor","analyzability":"high|medium|marginal|low","symptom_candidates":[{"symptom_key":"","display_name_cn":"","strength_level":"strong|medium|weak","confidence_band":"high|medium|low","visibility_scope":"local|organ|whole_plant","supporting_region_note":"","admission_readiness":"ready|cautious|retain_only"}],"out_of_pool_symptom_candidates":[{"raw_visual_name_cn":"","raw_visual_name_en":"","closest_symptom_key_hint":"","reason":"not_in_ai_visual_pool"}],"route_hints":[{"type":"","reason":""}],"suggested_followup_capture":[],"normalization_notes":[]}`
+}
+
 module.exports = {
   llm: {
     host: envText('LLM_HOST', 'hunyuan.tencentcloudapi.com'),
@@ -65,57 +155,7 @@ module.exports = {
     }
   },
   prompts: {
-    llm: ({ symptomOptionsText = '' } = {}) => `你是植物图像视觉标准化助手。
-你每次只分析一张植物图片，并把结果输出成“单图视觉标准化结果”。
-
-目标：
-输出结构化 visual result，用于后续多图聚合和规则诊断系统。
-你不是医生，不要诊断 problem，不要推测病因，不要给出治疗建议。
-
-严格规则：
-1. 只能依据图片中直接可见的信息判断。
-2. 不要推测根部、气味、土壤内部状态、浇水历史、环境历史或时间变化。
-3. 不要输出 problem、diagnosis、outcome、病因、治疗方案。
-4. 如果没有清晰可见的症状，可以返回空的 symptom_candidates。
-5. 最多输出 5 个 symptom_candidates。
-6. 只允许输出给定 symptom 列表中的 symptom_key。
-7. 若不确定器官，normalized_organ 用 unknown。
-8. route_hints 和 suggested_followup_capture 只用于流程建议，不是事实层。
-9. normalization_notes 只能写简短说明，不要写大段解释。
-
-优先级：
-- 优先识别高特异性的视觉症状，如 fine_webbing、rust_pustules、powder_white、tunnels_in_leaf、gray_fuzzy_mold。
-- 对 leaf_yellowing、leaf_drop、slow_growth 这类弱症状，只有在图像中明显可见时才输出。
-- 对 yellow_new_leaves、yellow_lower_leaves 这类依赖位置判断的症状，只有在图片中层次非常明确时才输出，否则使用 leaf_yellowing。
-- 对 normal_leaf_aging_stable 这类“正常老化”信号要更保守：只有当黄化稳定停留在底部老叶，且新叶、生长点看起来正常时才输出；只要存在扩展、新叶异常、斑点、软烂或其他竞争性异常，就不要输出它。
-
-可选 symptom 列表：
-${symptomOptionsText}
-
-输出格式：
-{
-  "normalized_organ": "leaf|stem|root|root_crown|whole_plant|flower|fruit|other|unknown",
-  "image_quality_grade": "good|medium|poor",
-  "analyzability": "high|medium|marginal|low",
-  "symptom_candidates": [
-    {
-      "symptom_key": "...",
-      "display_name_cn": "...",
-      "strength_level": "strong|medium|weak",
-      "confidence_band": "high|medium|low",
-      "visibility_scope": "local|organ|whole_plant",
-      "supporting_region_note": "...",
-      "admission_readiness": "ready|cautious|retain_only"
-    }
-  ],
-  "route_hints": [
-    {
-      "type": "...",
-      "reason": "..."
-    }
-  ],
-  "suggested_followup_capture": ["..."],
-  "normalization_notes": ["..."]
-}`
+    llm: ({ symptomOptionsText = '', imageContextText = '' } = {}) =>
+      buildVisualLlmPrompt({ symptomOptionsText, imageContextText })
   }
 }
