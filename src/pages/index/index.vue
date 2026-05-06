@@ -96,6 +96,7 @@
 
                   <!-- 诊断按钮 -->
                   <view
+                    :id="`diagnose-entry-button-${plant.id}`"
                     class="ml-2 bg-primary px-3 py-1.5 rounded-lg flex items-center"
                     @click.stop="openDiagnose(plant)"
                   >
@@ -190,6 +191,7 @@
 
         <!-- #ifdef MP-WEIXIN -->
         <button
+          id="index-phone-login-button"
           class="w-full bg-primary text-white font-semibold py-3.5 rounded-2xl mb-3 flex items-center justify-center"
           open-type="getPhoneNumber"
           @getphonenumber="handleIndexPhoneLogin"
@@ -200,6 +202,7 @@
 
         <!-- #ifndef MP-WEIXIN -->
         <button
+          id="index-phone-login-unavailable-button"
           class="w-full bg-gray-100 text-gray-500 font-semibold py-3.5 rounded-2xl mb-3 flex items-center justify-center"
           @click="handlePhoneLoginUnavailable"
         >
@@ -208,6 +211,7 @@
         <!-- #endif -->
 
         <button
+          id="index-quick-login-button"
           class="w-full bg-[#EEF3EF] text-[#2D7A4F] font-semibold py-3.5 rounded-2xl flex items-center justify-center"
           @click="userLogin"
         >

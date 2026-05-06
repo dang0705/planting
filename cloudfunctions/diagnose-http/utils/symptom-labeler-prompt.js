@@ -49,6 +49,7 @@ const PROMPT_SYMPTOM_HINTS = {
   brown_spots_halo: '褐斑黄晕',
   irregular_blotches: '不规则暗斑'
 }
+const MAX_PROMPT_DISPLAY_TEXT_LENGTH = 18
 
 function normalizeText(value = '', fallback = '') {
   const normalized = String(value || '').trim()
@@ -65,11 +66,13 @@ function normalizeLocationKey(value = '', fallback = '') {
 }
 
 function compactDisplayText(value = '') {
-  return normalizeText(value, '')
+  const normalized = normalizeText(value, '')
     .replace(/[（(].*?[）)]/g, '')
-    .replace(/[，,。；;：:].*$/g, '')
     .replace(/\s+/g, '')
-    .slice(0, 8)
+  if (!normalized) return ''
+  return normalized.length > MAX_PROMPT_DISPLAY_TEXT_LENGTH
+    ? normalized.slice(0, MAX_PROMPT_DISPLAY_TEXT_LENGTH)
+    : normalized
 }
 
 function buildSymptomOptionText(symptom, index) {
@@ -157,27 +160,31 @@ function buildImageContextText(imageContext = {}, locationKeys = []) {
     '未指定槽位'
   const declaredOrganType = normalizeOrgan(imageContext?.userDeclaredOrganType, 'unknown')
   const caseSlotSummaryText = buildCaseSlotSummaryText(imageContext)
-  const locationLabels = locationKeys
+  const normalizedLocationKeys = Array.from(
+    new Set((Array.isArray(locationKeys) ? locationKeys : []).map(item => normalizeLocationKey(item)).filter(Boolean))
+  )
+  const locationLabels = normalizedLocationKeys
     .map(item => LOCATION_LABEL_MAP[normalizeLocationKey(item)] || item)
     .filter(Boolean)
 
-  const lines = ['这是多图病例中的单图视觉标准化，只分析当前图。']
-  lines.push(`当前图：第${slotOrder}/${Math.max(1, totalImageCount)}张；槽位=${slotLabel}。`)
-  lines.push(
-    `器官提示=${slotType === 'unknown' ? '未指定' : slotType}；用户声明=${declaredOrganType === 'unknown' ? '未指定' : declaredOrganType}。`
-  )
+  const lines = ['Normalize only the current image in this multi-image case.']
+  lines.push(`current_image=${slotOrder}/${Math.max(1, totalImageCount)}; slot=${slotLabel}.`)
+  lines.push(`slot_type=${slotType}; user_declared_organ=${declaredOrganType}.`)
 
-  if (locationLabels.length) {
-    lines.push(`本图 symptom_candidates 只允许从这些 location_key 池中选择：${locationLabels.join('、')}。`)
+  if (normalizedLocationKeys.length) {
+    lines.push(`allowed_location_keys=${normalizedLocationKeys.join(',')}; allowed_labels=${locationLabels.join(',')}.`)
+    lines.push('For symptom_candidates, use only entries under allowed_location_keys in the static Candidate Catalog.')
   } else {
-    lines.push('当前池没有器官级收窄，只按本图直接可见部位判断。')
+    lines.push('allowed_location_keys=none; do not force a formal symptom_candidate.')
   }
+
+  lines.push('Visible abnormalities outside allowed entries must go to out_of_pool_symptom_candidates.')
 
   if (caseSlotSummaryText) {
-    lines.push(`病例槽位概览：${caseSlotSummaryText}。`)
+    lines.push(`case_slot_summary=${caseSlotSummaryText}.`)
   }
 
-  lines.push('不要把其他图片可能出现的器官特征误投到当前图。')
+  lines.push('Do not project features from other images into this image.')
 
   return lines.join('\n')
 }
@@ -257,11 +264,18 @@ function buildPromptSymptomOptionsText(symptomRows = []) {
   return '当前 location_key 对应的正式 symptom 候选为空。不要跨器官硬选；若看到明确异常，只允许写入 out_of_pool_symptom_candidates。'
 }
 
+function buildCandidateCatalogText(symptomRows = []) {
+  const groupedText = buildGroupedSymptomOptionsText(symptomRows)
+  return groupedText || 'No formal candidate catalog.'
+}
+
 function buildPromptDebugMeta({
   imageContext = null,
   locationKeys = [],
   filteredSymptoms = [],
-  symptomOptionsText = ''
+  symptomOptionsText = '',
+  candidateCatalogText = '',
+  dynamicTaskText = ''
 } = {}) {
   const safeImageContext = imageContext && typeof imageContext === 'object' ? imageContext : {}
   const candidatePairs = (Array.isArray(filteredSymptoms) ? filteredSymptoms : [])
@@ -280,18 +294,32 @@ function buildPromptDebugMeta({
   const candidatePromptFragments = (Array.isArray(filteredSymptoms) ? filteredSymptoms : [])
     .map((item, index) => buildSymptomOptionText(item, index))
     .filter(Boolean)
+  const candidateDisplayFragments = candidatePairs
+    .map(item => `${item.symptomKey}=${item.displayText}`)
+    .filter(Boolean)
   const candidatePoolText = normalizeText(symptomOptionsText, '')
   const candidatePoolTextChecksum = crypto
     .createHash('sha1')
     .update(candidatePoolText)
     .digest('hex')
     .slice(0, 16)
+  const catalogText = normalizeText(candidateCatalogText, '')
+  const candidateCatalogTextChecksum = crypto
+    .createHash('sha1')
+    .update(catalogText)
+    .digest('hex')
+    .slice(0, 16)
+  const taskText = normalizeText(dynamicTaskText, '')
 
   return {
     promptPoolSource: 'symptoms.ai_visual_pool=yes',
-    tokenMeasureBasis: 'actual_full_promptLength_and_hunyuan_usage_promptTokens',
+    tokenMeasureBasis: 'actual_full_promptLength_and_model_usage_promptTokens',
+    promptLayout: 'static_rules_schema_catalog_then_dynamic_task',
     candidatePoolTextLength: candidatePoolText.length,
     candidatePoolTextChecksum,
+    staticCandidateCatalogLength: catalogText.length,
+    staticCandidateCatalogChecksum: candidateCatalogTextChecksum,
+    dynamicTaskLength: taskText.length,
     inputSlotType: normalizeOrgan(safeImageContext?.inputSlotType, 'unknown'),
     inputSlotLabel: normalizeText(safeImageContext?.inputSlotLabel || '', ''),
     userDeclaredOrganType: normalizeOrgan(safeImageContext?.userDeclaredOrganType, 'unknown'),
@@ -333,7 +361,7 @@ function buildPromptDebugMeta({
     candidateKeyDisplayPairsTail: candidatePairs.slice(-16),
     candidateKeyDisplayPairsAll: includeAllCandidateSymptomKeys ? candidatePairs : undefined,
     candidatePromptTextSample: candidatePromptFragments.slice(0, 10),
-    candidateDisplayTextSample: candidatePromptFragments.slice(0, 10)
+    candidateDisplayTextSample: candidateDisplayFragments.slice(0, 10)
   }
 }
 
@@ -343,19 +371,25 @@ async function buildSymptomLabelerPromptPayload({ imageContext = null } = {}) {
   const filteredSymptoms = filterPromptSymptomsByLocation(symptomDictionary, locationKeys)
   assertPromptPoolMatchesLocation(filteredSymptoms, locationKeys)
   const symptomOptionsText = buildPromptSymptomOptionsText(filteredSymptoms)
+  const candidateCatalogText = buildCandidateCatalogText(symptomDictionary)
   const imageContextText = buildImageContextText(imageContext, locationKeys)
+  const dynamicTaskText = imageContextText
   const debugMeta = buildPromptDebugMeta({
     imageContext,
     locationKeys,
     filteredSymptoms,
-    symptomOptionsText
+    symptomOptionsText,
+    candidateCatalogText,
+    dynamicTaskText
   })
   let promptText = ''
 
   if (typeof promptTemplate === 'function') {
     promptText = promptTemplate({
       symptomOptionsText,
-      imageContextText
+      imageContextText,
+      candidateCatalogText,
+      dynamicTaskText
     })
   } else {
     const basePrompt = String(promptTemplate || '').replace(
@@ -365,6 +399,13 @@ async function buildSymptomLabelerPromptPayload({ imageContext = null } = {}) {
 
     promptText = `${imageContextText}\n\n${basePrompt}`.trim()
   }
+  debugMeta.staticPrefixLength = Math.max(
+    0,
+    String(promptText || '').length -
+      String(candidateCatalogText || '').length -
+      String(dynamicTaskText || '').length
+  )
+  debugMeta.narrowedCandidatePoolTextLength = String(symptomOptionsText || '').length
 
   return {
     promptText,

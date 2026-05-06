@@ -13,8 +13,8 @@ const {
 const { findCanonicalPlantMatch } = require('/opt/utils/plant-knowledge')
 const { persistIdentifyRuntimeArtifacts } = require('/opt/utils/identify-runtime')
 
-const AK = process.env.BAIDU_AK || 'UGqylU0BgWoCLd8PfnH6pxpl'
-const SK = process.env.BAIDU_SK || 'NVCAG44tKAfXmVn0BrRHDVFnJDAQRt0x'
+const AK = process.env.BAIDU_AK
+const SK = process.env.BAIDU_SK
 
 function pickPlantMatchFields(plant) {
   if (!plant) return null

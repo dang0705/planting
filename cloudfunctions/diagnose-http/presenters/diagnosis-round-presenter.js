@@ -122,6 +122,206 @@ function buildPublicOutputEligibility(outputEligibility = null) {
   }
 }
 
+function toCompactString(...values) {
+  for (const value of values) {
+    const text = String(value || '').trim()
+    if (text) return text
+  }
+  return ''
+}
+
+function toCompactFlag(value, fallback = null) {
+  if (value === null || typeof value === 'undefined') {
+    return fallback
+  }
+  return Number(value) ? 1 : 0
+}
+
+function buildCompactVisualBatchTrace(visualBatchTrace = null) {
+  if (!visualBatchTrace || typeof visualBatchTrace !== 'object') {
+    return null
+  }
+
+  return {
+    currentVisualCallBatchId: toCompactString(
+      visualBatchTrace.currentVisualCallBatchId,
+      visualBatchTrace.current_visual_call_batch_id
+    ),
+    originVisualCallBatchId: toCompactString(
+      visualBatchTrace.originVisualCallBatchId,
+      visualBatchTrace.origin_visual_call_batch_id
+    ),
+    supersedeApplied: toCompactFlag(
+      visualBatchTrace.supersedeApplied ?? visualBatchTrace.supersede_applied,
+      0
+    )
+  }
+}
+
+function buildCompactSuggestedFollowupCapture(suggestedFollowupCapture = null) {
+  if (!suggestedFollowupCapture || typeof suggestedFollowupCapture !== 'object') {
+    return null
+  }
+
+  return {
+    needed: toCompactFlag(
+      suggestedFollowupCapture.needed ?? suggestedFollowupCapture.isNeeded,
+      0
+    ),
+    reason: toCompactString(suggestedFollowupCapture.reason),
+    slotKey: toCompactString(suggestedFollowupCapture.slotKey, suggestedFollowupCapture.slot_key),
+    locationKey: toCompactString(
+      suggestedFollowupCapture.locationKey,
+      suggestedFollowupCapture.location_key
+    ),
+    title: toCompactString(suggestedFollowupCapture.title, suggestedFollowupCapture.captureTitle),
+    instruction: toCompactString(
+      suggestedFollowupCapture.instruction,
+      suggestedFollowupCapture.captureInstruction
+    ),
+    helpText: toCompactString(suggestedFollowupCapture.helpText, suggestedFollowupCapture.help_text),
+    maxImages: Number(suggestedFollowupCapture.maxImages || suggestedFollowupCapture.max_images || 0)
+  }
+}
+
+function buildCompactVisualAggregateSummary(visualAggregateSummary = null) {
+  if (!visualAggregateSummary || typeof visualAggregateSummary !== 'object') {
+    return null
+  }
+
+  return {
+    visualCallBatchId: toCompactString(
+      visualAggregateSummary.visualCallBatchId,
+      visualAggregateSummary.visual_call_batch_id,
+      visualAggregateSummary.callBatchId,
+      visualAggregateSummary.call_batch_id
+    ),
+    routePrimaryAction: normalizeDiagnosisRoutePrimaryAction(
+      visualAggregateSummary.routePrimaryAction || visualAggregateSummary.route_primary_action,
+      ''
+    ),
+    admissionReadyFlag: toCompactFlag(
+      visualAggregateSummary.admissionReadyFlag ?? visualAggregateSummary.admission_ready_flag,
+      null
+    ),
+    suggestedFollowupCapture: buildCompactSuggestedFollowupCapture(
+      visualAggregateSummary.suggestedFollowupCapture ||
+        visualAggregateSummary.suggested_followup_capture ||
+        null
+    )
+  }
+}
+
+function buildCompactFinalResult(roundResult = {}) {
+  const finalResult = roundResult?.finalResult || {}
+
+  return {
+    resultId: finalResult.resultId || roundResult?.resultId || '',
+    problemId: finalResult.problemId || '',
+    displayName: finalResult.displayName || roundResult?.topProblem?.displayName || '',
+    summary: finalResult.summary || roundResult?.topProblem?.summary || '',
+    severity: finalResult.severity || roundResult?.topProblem?.severity || 'medium',
+    urgency: finalResult.urgency || roundResult?.topProblem?.urgency || 'medium'
+  }
+}
+
+function buildCompactAnswerRoundResponse(roundResult = {}, helpers = diagnosisRoundPresenterHelpers) {
+  const {
+    resolvePublicPlantRefs,
+    toPublicObservedSymptoms,
+    toPublicQuestions,
+    buildSummaryCard,
+    resolveFollowUpCanUploadMoreImages
+  } = helpers
+
+  const diagnosisSessionId = roundResult?.diagnosisSessionId || ''
+  const roundId = roundResult?.roundId || 'round_1'
+  const isFollowUp = Boolean(roundResult?.followUpRequired)
+  const plantRefs = resolvePublicPlantRefs(roundResult)
+  const observedSymptoms = toPublicObservedSymptoms(roundResult?.observedSymptoms || [])
+  const routePrimaryAction = normalizeDiagnosisRoutePrimaryAction(
+    roundResult?.routePrimaryAction,
+    isFollowUp ? 'ask_first' : 'standard_flow'
+  )
+  const stopReason = String(roundResult?.stopReason || '').trim()
+  const visualAggregateSource = roundResult?.visualAggregateSummary || roundResult?.visualAggregateResult || null
+  const compactVisualAggregateSummary = buildCompactVisualAggregateSummary(visualAggregateSource)
+  const compactVisualBatchTrace = buildCompactVisualBatchTrace(roundResult?.visualBatchTrace || null)
+
+  const response = {
+    diagnosisSessionId,
+    roundId,
+    userPlantId: plantRefs.userPlantId,
+    plantId: plantRefs.plantId,
+    plantCatalogId: plantRefs.plantCatalogId,
+    plantIdentityId: plantRefs.plantIdentityId,
+    latestVisualCallBatchId: plantRefs.latestVisualCallBatchId,
+    stage: isFollowUp ? 'followup' : 'final',
+    status: isFollowUp ? 'active' : 'closed',
+    routePrimaryAction,
+    stopReason,
+    outcomeType: normalizeOutcomeType(roundResult?.outcomeType, ''),
+    observedSymptoms,
+    visualBatchTrace: compactVisualBatchTrace,
+    visualAggregateSummary: compactVisualAggregateSummary,
+    identityResolutionStatus: roundResult?.identityResolutionStatus || '',
+    summaryCard: buildSummaryCard(roundResult),
+    explanation: roundResult?.explanation || roundResult?.resultExplanation || {},
+    nextSteps: Array.isArray(roundResult?.nextSteps) ? roundResult.nextSteps : [],
+    whatToAvoid: Array.isArray(roundResult?.whatToAvoid) ? roundResult.whatToAvoid : [],
+    confidenceLevel: roundResult?.confidenceLevel || 'normal',
+    confidenceReasons: Array.isArray(roundResult?.confidenceReasons)
+      ? roundResult.confidenceReasons
+      : [],
+    needHumanReview: Boolean(roundResult?.needHumanReview),
+    followUpRequired: isFollowUp
+  }
+
+  if (isFollowUp) {
+    const questionQueue = buildPublicQuestionQueue(roundResult?.questionQueue || null)
+    const questions = toPublicQuestions(
+      filterQuestionsByQuestionQueue(roundResult?.followUps || [], questionQueue, {
+        requireQueueAnchor: true
+      })
+    ).slice(0, 1)
+    const publicVisualAggregateSummary = buildPublicVisualAggregateSummary(visualAggregateSource)
+    const canUploadMoreImages = resolveFollowUpCanUploadMoreImages(
+      publicVisualAggregateSummary,
+      roundResult?.visualBatchTrace || null
+    )
+
+    return {
+      ...response,
+      questions,
+      uiHints: {
+        canUploadMoreImages,
+        maxQuestionsThisRound: questions.length ? 1 : 0,
+        questionDisplayMode: 'single',
+        answerSubmitMode: 'per_question',
+        optionLayout: 'vertical',
+        transition: 'swiper'
+      }
+    }
+  }
+
+  return {
+    ...response,
+    nonProblematicType: roundResult?.nonProblematicType || '',
+    nonProblematicLabel: roundResult?.nonProblematicLabel || '',
+    finalResult: buildCompactFinalResult(roundResult),
+    contributingFactors: Array.isArray(roundResult?.contributingFactors)
+      ? roundResult.contributingFactors
+      : [],
+    intermediateStates: Array.isArray(roundResult?.intermediateStates)
+      ? roundResult.intermediateStates
+      : [],
+    uiHints: {
+      canUploadMoreImages: false,
+      maxQuestionsThisRound: 0
+    }
+  }
+}
+
 function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPresenterHelpers) {
   const {
     resolvePublicPlantRefs,
@@ -154,7 +354,7 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
       filterQuestionsByQuestionQueue(roundResult?.followUps || [], questionQueue, {
         requireQueueAnchor: true
       })
-    )
+    ).slice(0, 1)
     const visualAggregateSummary = buildPublicVisualAggregateSummary(
       roundResult?.visualAggregateSummary || roundResult?.visualAggregateResult || null
     )
@@ -229,7 +429,11 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
       questions,
       uiHints: {
         canUploadMoreImages,
-        maxQuestionsThisRound: questions.length || 3
+        maxQuestionsThisRound: questions.length ? 1 : 0,
+        questionDisplayMode: 'single',
+        answerSubmitMode: 'per_question',
+        optionLayout: 'vertical',
+        transition: 'swiper'
       }
     }
   }
@@ -327,5 +531,6 @@ module.exports = {
   buildPublicQuestionQueue,
   buildPublicStopState,
   buildPublicOutputEligibility,
+  buildCompactAnswerRoundResponse,
   buildPublicRoundResponse
 }

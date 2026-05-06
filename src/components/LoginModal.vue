@@ -7,6 +7,7 @@
     <view class="relative bg-white rounded-3xl p-8 mx-6 w-full max-w-sm shadow-2xl">
       <!-- 关闭按钮 -->
       <view
+        id="login-modal-close-button"
         class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center"
         @click="handleCancel"
       >
@@ -30,6 +31,7 @@
       <!-- #ifdef MP-WEIXIN -->
       <button
         v-if="!isLoggingIn"
+        id="login-modal-phone-login-button"
         class="w-full bg-primary text-white font-semibold py-4 rounded-2xl mb-3 flex items-center justify-center"
         open-type="getPhoneNumber"
         @getphonenumber="handleGetPhoneNumber"
@@ -41,6 +43,7 @@
       <!-- #ifndef MP-WEIXIN -->
       <button
         v-if="!isLoggingIn"
+        id="login-modal-phone-login-unavailable-button"
         class="w-full bg-gray-100 text-gray-500 font-semibold py-4 rounded-2xl mb-3 flex items-center justify-center"
         @click="handlePhoneLoginUnavailable"
       >
@@ -51,6 +54,7 @@
       <!-- 快速登录按钮 -->
       <button
         v-if="!isLoggingIn"
+        id="login-modal-quick-login-button"
         class="w-full bg-gray-100 text-gray-700 font-semibold py-4 rounded-2xl flex items-center justify-center"
         @click="handleQuickLogin"
       >

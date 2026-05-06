@@ -6,6 +6,7 @@
   "dependencies": {
     "@cloudbase/functions-framework": "^1.18.0",
     "@cloudbase/node-sdk": "^3.16.0",
+    "fastest-levenshtein": "^1.0.16",
     "tencentcloud-sdk-nodejs-hunyuan": "^4.1.188"
   },
   "scripts": {

@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/vue-query'
-import { requestDiagnosisStart } from '@/http-functions/diagnose/client'
+import { requestDiagnosisStart, requestDiagnoseStream } from '@/http-functions/diagnose/client'
 import {
   buildDiagnosePayload,
   handleDiagnoseError,
@@ -31,22 +31,26 @@ export function useDiagnoseMutation() {
         onText?.('思考中...', '思考中...')
         validateDiagnoseInput({ plantId, userPlantId, image, images, observedSymptoms })
 
-        const normalizedResult = await requestDiagnosisStart(
-          buildDiagnosePayload({
-            plantId,
-            userPlantId,
-            plantCatalogId,
-            image,
-            images,
-            imageIds,
-            description,
-            observedSymptoms,
-            observedEvidenceSet,
-            latestVisualCallBatchId,
-            visualBatchTrace,
-            skipAuth
-          })
-        )
+        const requestPayload = buildDiagnosePayload({
+          plantId,
+          userPlantId,
+          plantCatalogId,
+          image,
+          images,
+          imageIds,
+          description,
+          observedSymptoms,
+          observedEvidenceSet,
+          latestVisualCallBatchId,
+          visualBatchTrace,
+          skipAuth
+        })
+        const normalizedResult =
+          typeof onText === 'function'
+            ? await requestDiagnoseStream(requestPayload, {
+                onProgress: fullText => onText?.(fullText, fullText)
+              })
+            : await requestDiagnosisStart(requestPayload)
 
         return runDiagnoseSuccessCallbacks(normalizedResult, { onText, onFinish })
       } catch (error) {

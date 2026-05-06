@@ -9,6 +9,12 @@ const {
   toOptionId,
   toResultId
 } = require('../mappers/public-id-mapper')
+const {
+  normalizeQuestionRole,
+  normalizeQuestionEffectMode,
+  inferQuestionRole,
+  inferQuestionEffectMode
+} = require('../utils/question-target-dimension')
 
 function roundValue(value, digits = 4) {
   return Number(Number(value || 0).toFixed(digits))
@@ -133,9 +139,44 @@ function isOutOfPoolNoMappingLowConfidence(lowConfidence = {}) {
       lowConfidence.reasons.some(item => normalizeText(item) === 'out_of_pool_no_mapping'))
 }
 
+function isOutOfPoolLowConfidence(lowConfidence = {}) {
+  const reasonSet = new Set(
+    (Array.isArray(lowConfidence?.reasons) ? lowConfidence.reasons : [])
+      .map(item => normalizeText(item))
+      .filter(Boolean)
+  )
+  const legalityReason = normalizeText(lowConfidence?.uncertainLegalityReason || '')
+  return (
+    isOutOfPoolNoMappingLowConfidence(lowConfidence) ||
+    legalityReason === 'out_of_pool_review_required' ||
+    legalityReason === 'out_of_pool_hint_unconfirmed' ||
+    reasonSet.has('weak_out_of_pool_proxy_only') ||
+    reasonSet.has('out_of_pool_hint_unconfirmed_after_followup')
+  )
+}
+
+function resolveOutOfPoolObservation(lowConfidence = {}) {
+  const observation = lowConfidence?.outOfPoolObservation &&
+    typeof lowConfidence.outOfPoolObservation === 'object'
+    ? lowConfidence.outOfPoolObservation
+    : null
+  const observationText = normalizeText(observation?.observationText || '')
+  const observationNames = Array.isArray(observation?.observationNames)
+    ? observation.observationNames.map(item => normalizeText(item)).filter(Boolean)
+    : []
+  if (!observationText && !observationNames.length) return null
+  return {
+    observationNames,
+    observationText: observationText || observationNames.join('；')
+  }
+}
+
 function buildUncertainSummary(lowConfidence = {}, symptomClassRuntime = null) {
-  if (isOutOfPoolNoMappingLowConfidence(lowConfidence)) {
-    return '图片中存在当前自动诊断范围外的可见异常。系统无法把它稳定归入现有诊断路径，因此本次不继续常规诊断，也不判断为“暂无明显问题”。由于该异常尚未纳入当前诊断池，系统暂不能给出针对性的处理建议；建议先保持观察，避免仅凭本次结果进行大幅养护调整。'
+  if (isOutOfPoolLowConfidence(lowConfidence)) {
+    const observation = resolveOutOfPoolObservation(lowConfidence)
+    return observation?.observationText
+      ? `图片中存在当前自动诊断范围外的可见异常。模型原始观察为：${observation.observationText}。这不是正式诊断结论，系统暂不能给出针对性处理建议；建议先保持观察，避免仅凭本次结果进行大幅养护调整。`
+      : '图片中存在当前自动诊断范围外的可见异常。系统无法把它稳定归入现有诊断路径，因此本次不继续常规诊断，也不判断为“暂无明显问题”。由于该异常尚未纳入当前诊断池，系统暂不能给出针对性的处理建议；建议先保持观察，避免仅凭本次结果进行大幅养护调整。'
   }
 
   const advice = Array.isArray(lowConfidence?.advice)
@@ -155,9 +196,12 @@ function buildUncertainSummary(lowConfidence = {}, symptomClassRuntime = null) {
 }
 
 function buildUncertainExplanation(lowConfidence = {}, symptomClassRuntime = null) {
-  if (isOutOfPoolNoMappingLowConfidence(lowConfidence)) {
+  if (isOutOfPoolLowConfidence(lowConfidence)) {
+    const observation = resolveOutOfPoolObservation(lowConfidence)
     return {
-      whyItHappens: '当前图片中有可见异常，但该异常超出当前自动诊断支持的症状范围，且没有已审计映射可以接入现有诊断路径。',
+      whyItHappens: observation?.observationText
+        ? `当前图片中有可见异常，但该异常未形成可确认的正式诊断证据。模型原始观察为：${observation.observationText}。`
+        : '当前图片中有可见异常，但该异常超出当前自动诊断支持的症状范围，或尚未形成可确认的正式诊断证据。',
       whatToCheckNext: '可继续观察该异常是否扩大、重复出现或影响整体状态；如变化明显，建议由人工或更完整资料进一步确认。',
       firstAid: '在没有稳定归类前，先保持养护条件相对稳定，不建议仅凭本次结果进行针对性处理。',
       avoid: '避免把该异常直接等同于某个具体问题，也避免在缺少确认时大幅调整养护或使用处理措施。',
@@ -193,14 +237,15 @@ function buildUncertainExplanation(lowConfidence = {}, symptomClassRuntime = nul
 }
 
 function buildUncertainFinalResult({ resultId, lowConfidence = {} } = {}) {
-  if (isOutOfPoolNoMappingLowConfidence(lowConfidence)) {
+  if (isOutOfPoolLowConfidence(lowConfidence)) {
     return {
       resultId,
       problemId: '',
       displayName: '发现诊断范围外的可见异常',
       summary: buildUncertainSummary(lowConfidence),
       severity: 'low',
-      urgency: 'low'
+      urgency: 'low',
+      outOfPoolObservation: resolveOutOfPoolObservation(lowConfidence)
     }
   }
 
@@ -436,22 +481,41 @@ function formatDiagnosisResponse({
     topProblem: topProblemPayload,
     finalResult: finalResultPayload,
     followUpRequired: Boolean(followUpRequired && followUps.length),
-    followUps: followUps.map(question => ({
-      questionId: toQuestionId(question.questionKey),
-      questionKey: question.questionKey,
-      targetSymptomKey: question.targetSymptomKey || '',
-      questionGroupKey: question.questionGroupKey,
-      targetDimension: question.targetDimension || '',
-      routingScope: question.routingScope || '',
-      type: 'single_choice',
-      text: question.questionText,
-      helpText: question.helpText,
-      options: question.options.map(option => ({
-        optionId: toOptionId(option.optionKey),
-        optionKey: option.optionKey,
-        text: option.text
-      }))
-    })),
+    followUps: followUps.map(question => {
+      const questionRole = normalizeQuestionRole(
+        question.questionRole || question.question_role || '',
+        inferQuestionRole(question.targetDimension || question.target_dimension || '', question.routingScope || question.routing_scope || '')
+      )
+      const effectMode = normalizeQuestionEffectMode(
+        question.effectMode || question.effect_mode || '',
+        inferQuestionEffectMode(questionRole, question.targetDimension || question.target_dimension || '')
+      )
+      return {
+        questionId: toQuestionId(question.questionKey),
+        questionKey: question.questionKey,
+        targetSymptomKey: question.targetSymptomKey || '',
+        questionGroupKey: question.questionGroupKey,
+        targetDimension: question.targetDimension || '',
+        routingScope: question.routingScope || '',
+        questionRole,
+        questionCategory: questionRole,
+        effectMode,
+        type: 'single_choice',
+        text: question.questionText,
+        helpText: question.helpText,
+        defaultOptionKey: question.defaultOptionKey || '',
+        defaultOptionId: question.defaultOptionKey ? toOptionId(question.defaultOptionKey) : '',
+        uiVariant: question.uiVariant || '',
+        renderMode: question.renderMode || '',
+        options: question.options.map(option => ({
+          optionId: toOptionId(option.optionKey),
+          optionKey: option.optionKey,
+          text: option.text,
+          description: option.description || option.desc || '',
+          isDefault: Boolean(option.isDefault)
+        }))
+      }
+    }),
     contributingFactors,
     intermediateStates,
     problemCausality: causality,

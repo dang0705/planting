@@ -18,7 +18,8 @@ const {
 const {
   appendFollowUpQuestions,
   markFollowUpAnswers,
-  validateFollowUpAnswerOwnership
+  validateFollowUpAnswerOwnership,
+  prepareAnswerRevision
 } = require('./session-follow-up-service')
 const {
   upsertVisualSupervisionRecords
@@ -42,6 +43,7 @@ module.exports = {
   appendFollowUpQuestions,
   markFollowUpAnswers,
   validateFollowUpAnswerOwnership,
+  prepareAnswerRevision,
   getSessionState,
   getObservedEvidenceSetBySession,
   getObservedSymptomsBySession,

@@ -210,7 +210,10 @@ export function buildFollowUpMutationPayload({
   images = [],
   imageIds = [],
   latestVisualCallBatchId = null,
-  visualBatchTrace = null
+  visualBatchTrace = null,
+  requestMode = '',
+  baseAnswerRevision = 0,
+  dirtyFromQuestionId = ''
 }) {
   if (!diagnosisSessionId) {
     throw new Error('缺少诊断会话ID，无法继续问诊')
@@ -230,6 +233,9 @@ export function buildFollowUpMutationPayload({
     diagnosisSessionId,
     roundId,
     answers,
+    ...(requestMode ? { requestMode } : {}),
+    ...(Number(baseAnswerRevision || 0) ? { baseAnswerRevision: Number(baseAnswerRevision || 0) } : {}),
+    ...(dirtyFromQuestionId ? { dirtyFromQuestionId } : {}),
     imageIds: resolvedImageIds.length ? resolvedImageIds : primaryImageRef ? [primaryImageRef] : [],
     ...(primaryImageRef ? { image: primaryImageRef } : {}),
     ...(normalizedImages.length ? { images: normalizedImages } : {}),

@@ -473,6 +473,14 @@ function buildRuntimeSnapshotPayload({
         ? String(clientContext?.reviewSourceType || '').trim()
         : '',
     routePrimaryAction: resolveSessionRoute(response),
+    answerRevision: Number(response?.answerRevision || 0),
+    uiPatch:
+      response?.uiPatch && typeof response.uiPatch === 'object'
+        ? {
+            keepUntilQuestionId: String(response.uiPatch.keepUntilQuestionId || '').trim(),
+            invalidatedFromQuestionId: String(response.uiPatch.invalidatedFromQuestionId || '').trim()
+          }
+        : null,
     identityResolutionStatus: resolveSessionIdentityStatus({ plantContext, response }),
     outcomeType: normalizeOutcomeType(response?.outcomeType, ''),
     nonProblematicType: response?.nonProblematicType || '',

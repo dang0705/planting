@@ -22,52 +22,64 @@ async function persistRoundRuntime({
   description,
   clientContext = null
 } = {}) {
-  await upsertDiagnosisSession({
-    sessionId,
-    openid,
-    plantContext,
-    response,
-    round,
-    reliabilityScore: response?.metrics?.reliabilityScore || 0,
-    mode: 'new_v13',
-    image,
-    description,
-    clientContext
-  })
-
-  await replaceObservedEvidenceSet(sessionId, openid, response?.observedEvidenceSet || [])
-  await replaceObservedSymptoms(sessionId, response?.observedSymptoms || [])
-  await replaceProblemRankings(sessionId, response?.rankings || [])
-  await upsertVisualSupervisionRecords({
-    sessionId,
-    openid,
-    response
-  })
-  await replaceQueueForRound({
-    sessionId,
-    openid,
-    questionQueue: response?.questionQueue || null
-  })
-  await upsertStopState({
-    sessionId,
-    openid,
-    stopState: response?.stopState || null,
-    outputEligibility: response?.outputEligibility || null
-  })
+  const isInitialRound = Number(round || 1) <= 1
+  const persistenceJobs = [
+    upsertDiagnosisSession({
+      sessionId,
+      openid,
+      plantContext,
+      response,
+      round,
+      reliabilityScore: response?.metrics?.reliabilityScore || 0,
+      mode: 'new_v13',
+      image,
+      description,
+      clientContext
+    }),
+    upsertVisualSupervisionRecords({
+      sessionId,
+      openid,
+      response
+    }),
+    replaceQueueForRound({
+      sessionId,
+      openid,
+      questionQueue: response?.questionQueue || null
+    }),
+    upsertStopState({
+      sessionId,
+      openid,
+      stopState: response?.stopState || null,
+      outputEligibility: response?.outputEligibility || null
+    })
+  ]
+  if (isInitialRound) {
+    persistenceJobs.push(
+      replaceObservedEvidenceSet(sessionId, openid, response?.observedEvidenceSet || []),
+      replaceObservedSymptoms(sessionId, response?.observedSymptoms || []),
+      replaceProblemRankings(sessionId, response?.rankings || [])
+    )
+  }
 
   if (response?.followUpRequired) {
-    await appendFollowUpQuestions(sessionId, round, response?.followUps || [], {
-      questionQueue: response?.questionQueue || null
-    })
+    persistenceJobs.push(
+      appendFollowUpQuestions(sessionId, round, response?.followUps || [], {
+        questionQueue: response?.questionQueue || null
+      })
+    )
+    await Promise.all(persistenceJobs)
     return
   }
 
-  await saveFinalDiagnosisSnapshot({
-    sessionId,
-    openid,
-    plantContext,
-    response
-  })
+  persistenceJobs.push(
+    saveFinalDiagnosisSnapshot({
+      sessionId,
+      openid,
+      plantContext,
+      response
+    })
+  )
+  await Promise.all(persistenceJobs)
 }
 
 module.exports = {

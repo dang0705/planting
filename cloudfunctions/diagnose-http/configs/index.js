@@ -1,6 +1,7 @@
-﻿const FAST_VISION_PROFILE = 'fast_vision'
+const FAST_VISION_PROFILE = 'fast_vision'
+const QWEN_VL_FAST_VISION_PROFILE = 'qwen_vl_fast_vision'
 const DEEP_THINKING_VISION_PROFILE = 'deep_thinking_vision'
-
+const DEFAULT_MODEL_PROFILE = QWEN_VL_FAST_VISION_PROFILE
 function envText(name, fallback = '') {
   const value = String(process.env[name] || '').trim()
   return value || fallback
@@ -25,6 +26,11 @@ const modelProfiles = {
     model: envText('LLM_FAST_MODEL', 'hunyuan-vision-1.5-instruct'),
     reasoningMode: 'fast'
   },
+  [QWEN_VL_FAST_VISION_PROFILE]: {
+    provider: envText('LLM_QWEN_VL_FAST_SERVICE', 'cloudbase_qwen_vl'),
+    model: envText('LLM_QWEN_VL_FAST_MODEL', 'qwen3-vl-plus'),
+    reasoningMode: 'fast'
+  },
   [DEEP_THINKING_VISION_PROFILE]: {
     provider: envText('LLM_DEEP_THINKING_SERVICE', 'hunyuan'),
     model: envText('LLM_DEEP_THINKING_MODEL', 'hunyuan-t1-vision-20250916'),
@@ -32,10 +38,10 @@ const modelProfiles = {
   }
 }
 
-const requestedModelProfile = envText('LLM_MODEL_PROFILE', FAST_VISION_PROFILE)
+const requestedModelProfile = envText('LLM_MODEL_PROFILE', DEFAULT_MODEL_PROFILE)
 const activeModelProfile = modelProfiles[requestedModelProfile]
   ? requestedModelProfile
-  : FAST_VISION_PROFILE
+  : DEFAULT_MODEL_PROFILE
 const activeModelProfileConfig = modelProfiles[activeModelProfile]
 
 const VISUAL_PROMPT_LINES = [
@@ -50,6 +56,10 @@ const VISUAL_PROMPT_LINES = [
   {
     en: 'Choose <=5 symptom_candidates, only from the narrowed candidate pool.',
     zh: 'symptom_candidates 最多 5 条，且只能来自已经缩窄后的候选池。'
+  },
+  {
+    en: 'Candidate Catalog is global; symptom_candidates must obey Dynamic Task allowed_location_keys.',
+    zh: 'Candidate Catalog 是全局全集；symptom_candidates 必须服从 Dynamic Task 中的 allowed_location_keys。'
   },
   {
     en: 'Do not force cross-organ or cross-slot matches.',
@@ -104,8 +114,16 @@ const VISUAL_PROMPT_LINES = [
     zh: '图像质量和可分析性良好但无稳定问题信号时，两个候选列表留空，并加入 possible_non_problematic_signal 路由提示。'
   },
   {
-    en: 'If organ is uncertain, set normalized_organ="unknown"; route_hints and suggested_followup_capture are process hints only.',
-    zh: '器官不确定时设置 normalized_organ=unknown；route_hints 和 suggested_followup_capture 只作为流程提示。'
+    en: 'If organ is uncertain, set normalized_organ="unknown"; route_hints are process hints only.',
+    zh: '器官不确定时设置 normalized_organ=unknown；route_hints 只作为流程提示。'
+  },
+  {
+    en: 'Keep JSON lean: no display names, region notes, follow-up descriptions, or normalization notes.',
+    zh: '保持 JSON 精简：不要输出显示名、区域描述、补图长文案或归一化备注。'
+  },
+  {
+    en: 'Forbidden legacy keys: display_name_cn, visibility_scope, supporting_region_note, admission_readiness, suggested_followup_capture, normalization_notes.',
+    zh: '禁止输出旧字段：display_name_cn、visibility_scope、supporting_region_note、admission_readiness、suggested_followup_capture、normalization_notes。'
   },
   {
     en: 'Return strict JSON only, using only schema keys/enums below.',
@@ -114,18 +132,40 @@ const VISUAL_PROMPT_LINES = [
 ]
 
 const VISUAL_PROMPT_EN = VISUAL_PROMPT_LINES.map((line) => line.en).join('\n')
+const VISUAL_PROMPT_SCHEMA_HEADER = {
+  en: '[Static Schema]',
+  zh: '静态 Schema 区。'
+}
+const VISUAL_PROMPT_CANDIDATE_CATALOG_HEADER = {
+  en: '[Static Candidate Catalog]',
+  zh: '静态候选池全集区。'
+}
+const VISUAL_PROMPT_DYNAMIC_TASK_HEADER = {
+  en: '[Dynamic Task]',
+  zh: '动态任务区。'
+}
+const VISUAL_RESPONSE_SCHEMA =
+  '{"normalized_organ":"leaf|stem|root|root_crown|whole_plant|flower|fruit|other|unknown","image_quality_grade":"good|medium|poor","analyzability":"high|medium|marginal|low","symptom_candidates":[{"symptom_key":"","strength_level":"strong|medium|weak","confidence_band":"high|medium|low"}],"out_of_pool_symptom_candidates":[{"raw_visual_name_cn":"","closest_symptom_key_hint":""}],"route_hints":["retake_image|request_specific_organ|possible_non_problematic_signal"]}'
 
-function buildVisualLlmPrompt({ symptomOptionsText = '', imageContextText = '' } = {}) {
+function buildVisualLlmPrompt({
+  symptomOptionsText = '',
+  imageContextText = '',
+  candidateCatalogText = '',
+  dynamicTaskText = ''
+} = {}) {
+  const catalogText = candidateCatalogText || symptomOptionsText || 'No formal candidate catalog.'
+  const taskText = dynamicTaskText || imageContextText || 'No extra context.'
+
   return `${VISUAL_PROMPT_EN}
 
-Image context:
-${imageContextText || 'No extra context.'}
+${VISUAL_PROMPT_SCHEMA_HEADER.en}
+${VISUAL_RESPONSE_SCHEMA}
 
-Pool:
-${symptomOptionsText}
+${VISUAL_PROMPT_CANDIDATE_CATALOG_HEADER.en}
+${catalogText}
 
-Schema:
-{"normalized_organ":"leaf|stem|root|root_crown|whole_plant|flower|fruit|other|unknown","image_quality_grade":"good|medium|poor","analyzability":"high|medium|marginal|low","symptom_candidates":[{"symptom_key":"","display_name_cn":"","strength_level":"strong|medium|weak","confidence_band":"high|medium|low","visibility_scope":"local|organ|whole_plant","supporting_region_note":"","admission_readiness":"ready|cautious|retain_only"}],"out_of_pool_symptom_candidates":[{"raw_visual_name_cn":"","raw_visual_name_en":"","closest_symptom_key_hint":"","reason":"not_in_ai_visual_pool"}],"route_hints":[{"type":"","reason":""}],"suggested_followup_capture":[],"normalization_notes":[]}`
+${VISUAL_PROMPT_DYNAMIC_TASK_HEADER.en}
+${taskText}`
 }
 
 module.exports = {
@@ -136,11 +176,28 @@ module.exports = {
     modelReasoningMode: activeModelProfileConfig.reasoningMode,
     model: envText('LLM_MODEL', activeModelProfileConfig.model),
     service: envText('LLM_SERVICE', activeModelProfileConfig.provider),
+    fallbackService: envText('LLM_FALLBACK_SERVICE', ''),
+    fallbackModel: envText('LLM_FALLBACK_MODEL', 'hunyuan-vision-1.5-instruct'),
     shadowService: envText('LLM_SHADOW_SERVICE', ''),
     shadowModel: envText('LLM_SHADOW_MODEL', ''),
     requestTimeoutSec: envNumber('LLM_REQUEST_TIMEOUT_SEC', 45),
     maxImages: 1,
     sse: envBoolean('LLM_SSE', true),
+    cloudbaseAi: {
+      envId: envText('CLOUDBASE_AI_ENV_ID', envText('CLOUDBASE_ENV_ID', envText('TCB_ENV', ''))),
+      provider: envText(
+        'LLM_PROVIDER_NAME',
+        envText('LLM_CLOUDBASE_AI_PROVIDER', 'aliyun-bailian-custom')
+      ),
+      apiKey: envText(
+        'LLM_API_KEY',
+        envText('CLOUDBASE_AI_API_KEY', envText('CLOUDBASE_AI_ACCESS_TOKEN', ''))
+      ),
+      baseUrl: envText('LLM_CLOUDBASE_AI_BASE_URL', ''),
+      endpointStyle: envText('LLM_CLOUDBASE_AI_ENDPOINT_STYLE', ''),
+      imageMaxPixels: envNumber('LLM_CLOUDBASE_AI_IMAGE_MAX_PIXELS', 1638400),
+      maxTokens: envNumber('LLM_CLOUDBASE_AI_MAX_TOKENS', 512)
+    },
     hfAutotrain: {
       endpoint: envText('HF_AUTOTRAIN_ENDPOINT', ''),
       apiKey: envText('HF_AUTOTRAIN_API_KEY', ''),
@@ -155,7 +212,17 @@ module.exports = {
     }
   },
   prompts: {
-    llm: ({ symptomOptionsText = '', imageContextText = '' } = {}) =>
-      buildVisualLlmPrompt({ symptomOptionsText, imageContextText })
+    llm: ({
+      symptomOptionsText = '',
+      imageContextText = '',
+      candidateCatalogText = '',
+      dynamicTaskText = ''
+    } = {}) =>
+      buildVisualLlmPrompt({
+        symptomOptionsText,
+        imageContextText,
+        candidateCatalogText,
+        dynamicTaskText
+      })
   }
 }

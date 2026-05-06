@@ -1,6 +1,12 @@
 'use strict'
 
 const crypto = require('crypto')
+const {
+  normalizeQuestionRole,
+  normalizeQuestionEffectMode,
+  inferQuestionRole,
+  inferQuestionEffectMode
+} = require('../../utils/question-target-dimension')
 
 function normalizeText(value = '', fallback = '') {
   const normalized = String(value || '').trim()
@@ -91,13 +97,21 @@ function planQuestionQueue(response = {}) {
     nonProblematicType: response?.nonProblematicType
   })
   const followUpRequired = Boolean(response?.followUpRequired)
-  const followUps = Array.isArray(response?.followUps) ? response.followUps : []
+  const followUps = Array.isArray(response?.followUps) ? response.followUps.slice(0, 1) : []
   const total = followUps.length
 
   const followUpItems = followUps.map((item, index) => {
     const currentPriority = Math.max(total - index, 1)
     const estimatedInformationGain =
       total > 0 ? roundValue((total - index) / total) : 0
+    const questionRole = normalizeQuestionRole(
+      item?.questionRole || item?.questionCategory || '',
+      inferQuestionRole(item?.targetDimension || '', item?.routingScope || '')
+    )
+    const effectMode = normalizeQuestionEffectMode(
+      item?.effectMode || '',
+      inferQuestionEffectMode(questionRole, item?.targetDimension || '')
+    )
 
     return {
       questionKey: normalizeText(item?.questionKey),
@@ -106,6 +120,9 @@ function planQuestionQueue(response = {}) {
       questionGroupKey: normalizeText(item?.questionGroupKey),
       targetDimension: normalizeText(item?.targetDimension),
       routingScope: normalizeText(item?.routingScope),
+      questionRole,
+      questionCategory: questionRole,
+      effectMode,
       questionText: normalizeText(item?.text || item?.questionText),
       helpText: normalizeText(item?.helpText),
       currentPriority,
@@ -118,7 +135,9 @@ function planQuestionQueue(response = {}) {
         questionGroupKey: normalizeText(item?.questionGroupKey),
         targetSymptomKey: normalizeText(item?.targetSymptomKey),
         targetDimension: normalizeText(item?.targetDimension),
-        routingScope: normalizeText(item?.routingScope)
+        routingScope: normalizeText(item?.routingScope),
+        questionRole,
+        effectMode
       },
       asked: true,
       answered: false,
@@ -128,9 +147,10 @@ function planQuestionQueue(response = {}) {
     }
   })
 
-  const questionItems = normalizeText(routePrimaryAction) === 'retake_first'
+  const questionItems = (normalizeText(routePrimaryAction) === 'retake_first'
     ? buildRetakeQuestionItems(response, serviceTarget)
     : followUpItems
+  ).slice(0, 1)
 
   const activeItemCount = questionItems.length
   const queueStatus = activeItemCount

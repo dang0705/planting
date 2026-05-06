@@ -4,6 +4,7 @@ const {
   llm: { service: configuredService = 'hunyuan' } = {}
 } = require('../../configs')
 const hunyuanVisualAdapter = require('./hunyuan-visual-adapter')
+const cloudbaseQwenVlVisualAdapter = require('./cloudbase-qwen-vl-visual-adapter')
 const hfAutotrainVisualAdapter = require('./hf-autotrain-visual-adapter')
 
 function normalizeService(value = '') {
@@ -17,6 +18,18 @@ function getVisualAdapter(service = configuredService) {
 
   if (normalizedService === 'hunyuan') {
     return hunyuanVisualAdapter
+  }
+
+  if (
+    [
+      'cloudbase_qwen_vl',
+      'cloudbase_ai_http_openai',
+      'qwen_vl',
+      'aliyun_bailian',
+      'aliyun-bailian-custom'
+    ].includes(normalizedService)
+  ) {
+    return cloudbaseQwenVlVisualAdapter
   }
 
   if (normalizedService === 'hf_autotrain') {

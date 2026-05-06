@@ -175,6 +175,7 @@ async function getDiagnosisSessionResultRow(openid = '', sessionId = '') {
         current_route_primary_action,
         current_identity_resolution_status,
         runtime_snapshot_json,
+        top_problem_key,
         final_problem_key,
         final_problem_cn,
         ai_summary,

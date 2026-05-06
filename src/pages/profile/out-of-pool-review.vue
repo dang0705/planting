@@ -29,8 +29,8 @@
         <strong class="summary-value">{{ summary.ignoredCount }}</strong>
       </article>
       <article class="summary-panel summary-panel-dark">
-        <span class="summary-label summary-label-dark">总候选</span>
-        <strong class="summary-value summary-value-dark">{{ summary.total }}</strong>
+          <span class="summary-label summary-label-dark">总类型</span>
+          <strong class="summary-value summary-value-dark">{{ summary.total }}</strong>
       </article>
     </section>
 
@@ -184,8 +184,10 @@
     <section class="desktop-table-shell">
       <div class="desktop-table-head">
         <div>
-          <h2 class="section-title">候选列表</h2>
-          <p class="section-copy">当前第 {{ page }} 页，共 {{ total }} 条。操作列固定，方便连续审核。</p>
+          <h2 class="section-title">候选类型列表</h2>
+          <p class="section-copy">
+            当前第 {{ page }} 页，共 {{ total }} 类；覆盖 {{ summary.occurrenceTotal }} 条原始池外候选。操作列固定，方便连续审核。
+          </p>
         </div>
       </div>
 
@@ -236,18 +238,25 @@
         <el-table-column label="池外描述" min-width="260" show-overflow-tooltip>
           <template #default="{ row }">
             <div class="cell-stack">
-              <strong class="cell-title">{{ row.rawVisualNameCn || '未命名候选' }}</strong>
+              <strong class="cell-title">{{ row.groupCanonicalText || row.rawVisualNameCn || '未命名候选' }}</strong>
               <span class="cell-meta">{{ row.rawVisualNameEn || 'no english label' }}</span>
               <span class="cell-copy">{{ row.reason || '未提供原因' }}</span>
+              <span class="cell-meta">aliases: {{ resolveAliasPreview(row) }}</span>
             </div>
           </template>
         </el-table-column>
 
-        <el-table-column label="接近症状" min-width="180">
+        <el-table-column label="聚合信息" min-width="220">
           <template #default="{ row }">
             <div class="cell-stack">
               <strong class="cell-title cell-mono">{{ row.closestSymptomKeyHint || '无 hint' }}</strong>
-              <span class="cell-meta">candidate #{{ row.candidateIndex }}</span>
+              <span class="cell-meta">{{ row.occurrenceCount || 1 }} 条原始候选 · candidate #{{ row.candidateIndex }}</span>
+              <span v-if="row.possibleDuplicateGroupId" class="cell-meta cell-mono">
+                possible duplicate {{ row.possibleDuplicateScore }}
+              </span>
+              <span v-if="row.proxyMappingId" class="cell-meta cell-mono">
+                mapping {{ row.proxyMappingStatus }} -> {{ row.proxyTargetSymptomKey }}
+              </span>
             </div>
           </template>
         </el-table-column>
@@ -315,9 +324,10 @@
               <el-button
                 size="small"
                 class="desktop-secondary-button"
+                :disabled="row.hasAuditedProxyMapping"
                 @click="seedProxyFormFromCandidate(row)"
               >
-                建映射
+                {{ row.hasAuditedProxyMapping ? '已映射' : '建映射' }}
               </el-button>
             </div>
           </template>
@@ -392,7 +402,8 @@ const summary = ref({
   total: 0,
   pendingCount: 0,
   approvedCount: 0,
-  ignoredCount: 0
+  ignoredCount: 0,
+  occurrenceTotal: 0
 })
 const proxySummary = ref({
   total: 0,
@@ -415,6 +426,7 @@ const filters = ref({
 })
 const proxyForm = ref({
   mappingId: '',
+  sourceGroupId: '',
   targetSymptomKey: '',
   matchTermsText: '',
   rationale: '',
@@ -445,6 +457,7 @@ onMounted(() => {
 })
 
 function buildItemKey(item) {
+  if (item?.groupId) return item.groupId
   return `${item.visualNormalizedImageResultId}_${item.candidateIndex}`
 }
 
@@ -480,7 +493,8 @@ async function loadList() {
       total: Number(data?.summary?.total || 0),
       pendingCount: Number(data?.summary?.pendingCount || 0),
       approvedCount: Number(data?.summary?.approvedCount || 0),
-      ignoredCount: Number(data?.summary?.ignoredCount || 0)
+      ignoredCount: Number(data?.summary?.ignoredCount || 0),
+      occurrenceTotal: Number(data?.summary?.occurrenceTotal || 0)
     }
   } catch (error) {
     showMessage(error?.message || '读取池外候选失败', 'error')
@@ -596,6 +610,7 @@ async function submitReview(item, reviewAction) {
   submittingKey.value = item.rowKey
   try {
     await requestOutOfPoolReviewAction({
+      groupId: item.groupId || '',
       visualNormalizedImageResultId: item.visualNormalizedImageResultId,
       candidateIndex: item.candidateIndex,
       reviewAction
@@ -631,6 +646,7 @@ async function submitReview(item, reviewAction) {
 function resetProxyForm() {
   proxyForm.value = {
     mappingId: '',
+    sourceGroupId: '',
     targetSymptomKey: '',
     matchTermsText: '',
     rationale: '',
@@ -643,6 +659,7 @@ function resetProxyForm() {
 function editProxyMapping(item) {
   proxyForm.value = {
     mappingId: item.mappingId || '',
+    sourceGroupId: item.sourceGroupId || '',
     targetSymptomKey: item.targetSymptomKey || '',
     matchTermsText: Array.isArray(item.matchTerms) ? item.matchTerms.join('\n') : '',
     rationale: item.rationale || '',
@@ -654,11 +671,13 @@ function editProxyMapping(item) {
 
 function seedProxyFormFromCandidate(item) {
   const terms = [
+    ...(Array.isArray(item.aliases) ? item.aliases : []),
     item.rawVisualNameCn,
     item.rawVisualNameEn
   ].filter(Boolean)
   proxyForm.value = {
     mappingId: '',
+    sourceGroupId: item.groupId || '',
     targetSymptomKey: item.closestSymptomKeyHint || '',
     matchTermsText: terms.join('\n'),
     rationale: item.reason
@@ -669,6 +688,12 @@ function seedProxyFormFromCandidate(item) {
     enabled: true
   }
   showMessage('已带入候选描述，请补充 target symptom 并审计后保存', 'success')
+}
+
+function resolveAliasPreview(item = {}) {
+  const aliases = Array.isArray(item.aliases) ? item.aliases : []
+  if (!aliases.length) return '无聚合别名'
+  return aliases.slice(0, 4).join(' / ')
 }
 
 async function submitProxyMapping() {
@@ -683,6 +708,7 @@ async function submitProxyMapping() {
   try {
     await requestOutOfPoolProxyMappingUpsert({
       mappingId: proxyForm.value.mappingId,
+      sourceGroupId: proxyForm.value.sourceGroupId,
       targetSymptomKey,
       matchTerms,
       rationale: proxyForm.value.rationale,

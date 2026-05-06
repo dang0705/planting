@@ -102,6 +102,28 @@
 
 之后才能进入快速收敛门。
 
+### 代码守门要求
+
+运行时代码不得用以下输入直接触发最终结论：
+
+- 视觉模型原始文本；
+- visual raw record；
+- normalized candidate 但尚未 admission 的候选；
+- `candidate_retained`；
+- route hint；
+- prompt 输出中的 problem-like 描述。
+
+快速收敛的唯一合法入口是：
+
+```text
+formally_admitted visual evidence
+→ observed_evidence_set
+→ high_specificity_fast_convergence_gate
+→ diagnosis outcome eligibility
+```
+
+如果某条视觉证据没有进入 `observed_evidence_set`，即使模型描述非常确定，也只能保留为候选、审计信息或追问依据，不能参与最终 problem 直出。
+
 ---
 
 ## 2.3 不得新增 route_primary_action 主枚举

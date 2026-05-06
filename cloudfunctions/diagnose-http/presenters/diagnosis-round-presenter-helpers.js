@@ -135,12 +135,22 @@ function toPublicQuestions(followUps = []) {
     questionGroupKey: item.questionGroupKey || '',
     targetDimension: item.targetDimension || '',
     routingScope: item.routingScope || '',
+    questionRole: item.questionRole || item.questionCategory || '',
+    questionCategory: item.questionCategory || item.questionRole || '',
+    effectMode: item.effectMode || '',
+    defaultOptionKey: item.defaultOptionKey || '',
+    defaultOptionId: item.defaultOptionId || '',
+    uiVariant: item.uiVariant || '',
+    renderMode: item.renderMode || '',
     type: item.type || 'single_choice',
     text: item.text || '',
     helpText: item.helpText || '',
     options: (Array.isArray(item.options) ? item.options : []).map(option => ({
       optionId: option.optionId,
-      text: option.text || ''
+      optionKey: option.optionKey || '',
+      text: option.text || '',
+      description: option.description || option.desc || '',
+      isDefault: Boolean(option.isDefault)
     }))
   }))
 }

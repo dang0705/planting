@@ -38,6 +38,14 @@
 			}
 		},
 		{
+			"path": "pages/diagnose/follow-up",
+			"style": {
+				"navigationBarTitleText": "继续问诊",
+				"navigationBarBackgroundColor": "#2D7A4F",
+				"navigationBarTextStyle": "white"
+			}
+		},
+		{
 			"path": "pages/calendar/calendar",
 			"style": {
 				"navigationStyle": "custom",

@@ -9,13 +9,29 @@ const {
   invalidateQuestionQueue
 } = require('../domain/question-queue/question-queue-invalidator')
 
-async function markQueueItemsAnswered(sessionId = '', openid = '', round = 1, answers = []) {
-  const questionQueue = await getQueueBySessionAndRound(sessionId, round)
-  if (!questionQueue) {
+async function markQueueItemsAnswered(
+  sessionId = '',
+  openid = '',
+  round = 1,
+  answers = [],
+  { questionQueue = null } = {}
+) {
+  const normalizedRound = Number(round || 1)
+  if (normalizedRound < 1) {
     return null
   }
 
-  const nextQueue = applyAnsweredQuestionKeys(questionQueue, answers)
+  const normalizedQuestionQueueRound = Number(questionQueue?.roundIndex || 0)
+  const canUseProvidedQueue = normalizedQuestionQueueRound === normalizedRound && questionQueue?.questionQueueId
+  const persistedQueue = canUseProvidedQueue
+    ? questionQueue
+    : await getQueueBySessionAndRound(sessionId, normalizedRound)
+
+  if (!persistedQueue) {
+    return null
+  }
+
+  const nextQueue = applyAnsweredQuestionKeys(persistedQueue, answers)
   await replaceQueueForRound({
     sessionId,
     openid: openid || questionQueue.openid || '',
@@ -24,13 +40,28 @@ async function markQueueItemsAnswered(sessionId = '', openid = '', round = 1, an
   return nextQueue
 }
 
-async function invalidateQueueForRound(sessionId = '', openid = '', round = 1, reason = 'stale') {
-  const questionQueue = await getQueueBySessionAndRound(sessionId, round)
-  if (!questionQueue) {
+async function invalidateQueueForRound(
+  sessionId = '',
+  openid = '',
+  round = 1,
+  reason = 'stale',
+  { questionQueue = null } = {}
+) {
+  const normalizedRound = Number(round || 1)
+  if (normalizedRound < 1) {
     return null
   }
 
-  const nextQueue = invalidateQuestionQueue(questionQueue, reason)
+  const normalizedQuestionQueueRound = Number(questionQueue?.roundIndex || 0)
+  const canUseProvidedQueue = normalizedQuestionQueueRound === normalizedRound && questionQueue?.questionQueueId
+  const persistedQueue = canUseProvidedQueue
+    ? questionQueue
+    : await getQueueBySessionAndRound(sessionId, normalizedRound)
+  if (!persistedQueue) {
+    return null
+  }
+
+  const nextQueue = invalidateQuestionQueue(persistedQueue, reason)
   await replaceQueueForRound({
     sessionId,
     openid: openid || questionQueue.openid || '',

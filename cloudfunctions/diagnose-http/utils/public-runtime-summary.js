@@ -60,6 +60,9 @@ function buildPublicVisualAggregateSummary(summary = null) {
     aggregatedSymptomCandidates: Array.isArray(summary?.aggregatedSymptomCandidates || summary?.aggregated_symptom_candidates)
       ? (summary.aggregatedSymptomCandidates || summary.aggregated_symptom_candidates)
       : [],
+    outOfPoolSymptomHints: Array.isArray(summary?.outOfPoolSymptomHints || summary?.out_of_pool_symptom_hints)
+      ? (summary.outOfPoolSymptomHints || summary.out_of_pool_symptom_hints)
+      : [],
     admissionRecords: Array.isArray(summary?.admissionRecords || summary?.admission_records)
       ? (summary.admissionRecords || summary.admission_records)
       : [],

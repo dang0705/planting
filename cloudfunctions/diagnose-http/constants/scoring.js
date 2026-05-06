@@ -23,9 +23,9 @@ module.exports = {
   ranking: {
     followUpTopScoreThreshold: 0.62,
     followUpGapThreshold: 0.15,
-    maxQuestionsPerRound: 3,
+    maxQuestionsPerRound: 1,
     maxRounds: 4,
-    maxFollowUpRounds: 2,
+    maxFollowUpRounds: 0,
     supportRolesAsTop1: ['root_cause', 'secondary_issue'],
     contributingRoles: ['predisposing_factor'],
     intermediateRoles: ['result_state', 'aggregate_cluster']

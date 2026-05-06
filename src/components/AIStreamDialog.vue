@@ -7,7 +7,12 @@
           <text class="text-xl mr-2">{{ icon }}</text>
           <text class="text-base font-semibold text-gray-800">{{ title }}</text>
         </view>
-        <view v-if="!loading && canClose" class="w-8 h-8 flex items-center justify-center" @click="handleClose">
+        <view
+          v-if="!loading && canClose"
+          id="ai-stream-close-button"
+          class="w-8 h-8 flex items-center justify-center"
+          @click="handleClose"
+        >
           <text class="text-gray-400 text-xl">×</text>
         </view>
       </view>
@@ -31,11 +36,19 @@
       <view v-if="showActions" class="px-5 py-4 border-t border-gray-100 flex gap-3">
         <button
           v-if="showRetry && error"
+          id="ai-stream-retry-button"
           class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm"
           @click="handleRetry"
         >重试</button>
         <button
+          v-if="!loading && showCancel && !error"
+          id="ai-stream-cancel-button"
+          class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm"
+          @click="handleCancel"
+        >{{ cancelText }}</button>
+        <button
           v-if="!loading"
+          id="ai-stream-confirm-button"
           class="flex-1 py-3 text-white rounded-xl text-sm"
           style="background: linear-gradient(135deg, #2D7A4F 0%, #52B788 100%)"
           @click="handleConfirm"
@@ -69,6 +82,14 @@ const props = defineProps({
     type: String,
     default: '确定'
   },
+  cancelText: {
+    type: String,
+    default: '取消'
+  },
+  showCancel: {
+    type: Boolean,
+    default: false
+  },
   showRetry: {
     type: Boolean,
     default: true
@@ -79,7 +100,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['close', 'confirm', 'retry'])
+const emit = defineEmits(['close', 'confirm', 'cancel', 'retry'])
 
 const loading = ref(false)
 const streamText = ref('')
@@ -123,6 +144,10 @@ function handleClose() {
 
 function handleConfirm() {
   emit('confirm', result.value)
+}
+
+function handleCancel() {
+  emit('cancel', result.value)
 }
 
 function handleRetry() {

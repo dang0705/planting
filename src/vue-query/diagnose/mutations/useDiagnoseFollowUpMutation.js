@@ -18,6 +18,9 @@ export function useDiagnoseFollowUpMutation() {
       imageIds = [],
       latestVisualCallBatchId = null,
       visualBatchTrace = null,
+      requestMode = '',
+      baseAnswerRevision = 0,
+      dirtyFromQuestionId = '',
       onFinish,
       onError
     } = {}) => {
@@ -31,7 +34,10 @@ export function useDiagnoseFollowUpMutation() {
             images,
             imageIds,
             latestVisualCallBatchId,
-            visualBatchTrace
+            visualBatchTrace,
+            requestMode,
+            baseAnswerRevision,
+            dirtyFromQuestionId
           })
         )
 

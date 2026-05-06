@@ -3,9 +3,20 @@
 const { clamp01 } = require('../repositories/sql')
 const { evidence: evidenceConfig } = require('../constants/scoring')
 const {
+  QUESTION_TARGET_DIMENSIONS,
+  normalizeQuestionTargetDimension,
+  inferQuestionTargetDimension,
+  isGenericObservedProbeDirectEvidenceDimension
+} = require('../utils/question-target-dimension')
+const {
+  parseSyntheticObservedProbeQuestionKey
+} = require('../utils/synthetic-follow-up')
+const {
   projectObservedSymptomsFromEvidence,
   projectVisualObservedSymptomsFromEvidence
 } = require('./observed-evidence')
+
+const GENERIC_OBSERVED_PROBE_POSITIVE_SCORE_CAP = 0.04
 
 function round(value, digits = 6) {
   return Number(Number(value || 0).toFixed(digits))
@@ -97,8 +108,70 @@ function normalizeDirectProblemAdjustments(adjustments = []) {
     .filter(item => item.problemKey && Number(item.scoreDelta || 0) !== 0)
 }
 
+function buildQuestionIndex(questions = []) {
+  const map = new Map()
+  for (const question of Array.isArray(questions) ? questions : []) {
+    const questionKey = String(question?.questionKey || question?.question_key || '').trim()
+    if (!questionKey) continue
+    map.set(questionKey, question)
+  }
+  return map
+}
+
+function resolveQuestionTargetDimension({
+  questionKey = '',
+  answer = null,
+  question = null
+} = {}) {
+  const parsed = parseSyntheticObservedProbeQuestionKey(questionKey)
+  const parsedDimension = normalizeQuestionTargetDimension(parsed?.targetDimension, '')
+  if (parsedDimension) return parsedDimension
+
+  const explicitDimension = normalizeQuestionTargetDimension(
+    answer?.targetDimension ||
+      answer?.target_dimension ||
+      question?.targetDimension ||
+      question?.target_dimension ||
+      '',
+    ''
+  )
+  if (explicitDimension) return explicitDimension
+
+  return inferQuestionTargetDimension(
+    questionKey,
+    answer?.targetSymptomKey ||
+      answer?.target_symptom_key ||
+      question?.targetSymptomKey ||
+      question?.target_symptom_key ||
+      ''
+  )
+}
+
+function normalizeDirectProblemScoreDeltaForQuestion(
+  questionKey = '',
+  scoreDelta = 0,
+  targetDimensionOverride = ''
+) {
+  const normalizedScoreDelta = Number(scoreDelta || 0)
+  if (normalizedScoreDelta <= 0) {
+    return normalizedScoreDelta
+  }
+
+  const { targetDimension } = parseSyntheticObservedProbeQuestionKey(questionKey)
+  const normalizedTargetDimension =
+    normalizeQuestionTargetDimension(targetDimensionOverride, '') ||
+    normalizeQuestionTargetDimension(targetDimension, '') ||
+    inferQuestionTargetDimension(questionKey)
+  if (!isGenericObservedProbeDirectEvidenceDimension(normalizedTargetDimension)) {
+    return normalizedScoreDelta
+  }
+
+  return Math.min(normalizedScoreDelta, GENERIC_OBSERVED_PROBE_POSITIVE_SCORE_CAP)
+}
+
 function computeQuestionEvidenceAndPenalty({
   answers = [],
+  questions = [],
   optionMappings = [],
   candidateProblemKeys = [],
   symptomDictionary = [],
@@ -116,6 +189,7 @@ function computeQuestionEvidenceAndPenalty({
   }
 
   const mappingIndex = indexOptionMappings(optionMappings)
+  const questionIndex = buildQuestionIndex(questions)
   const symptomMap = buildSymptomIndex(symptomDictionary)
   const edgeMap = buildEdgeIndex(evidenceEdges)
   const answerEffects = []
@@ -127,6 +201,12 @@ function computeQuestionEvidenceAndPenalty({
 
     const mapping = mappingIndex.get(`${questionKey}::${optionKey}`)
     if (!mapping) continue
+    const question = questionIndex.get(questionKey) || null
+    const targetDimension = resolveQuestionTargetDimension({
+      questionKey,
+      answer,
+      question
+    })
 
     const answerValue = Number(mapping.value || 0)
     const directProblemAdjustments = normalizeDirectProblemAdjustments(
@@ -137,18 +217,29 @@ function computeQuestionEvidenceAndPenalty({
       for (const adjustment of directProblemAdjustments) {
         if (!candidateProblemKeys.includes(adjustment.problemKey)) continue
 
-        if (adjustment.scoreDelta > 0) {
-          questionScores[adjustment.problemKey] += adjustment.scoreDelta
+        const effectiveScoreDelta = normalizeDirectProblemScoreDeltaForQuestion(
+          questionKey,
+          adjustment.scoreDelta,
+          targetDimension
+        )
+
+        if (effectiveScoreDelta > 0) {
+          questionScores[adjustment.problemKey] += effectiveScoreDelta
         } else {
-          penalties[adjustment.problemKey] += Math.abs(adjustment.scoreDelta)
+          penalties[adjustment.problemKey] += Math.abs(effectiveScoreDelta)
         }
 
         answerEffects.push({
           questionKey,
           optionKey,
           problemKey: adjustment.problemKey,
-          value: round(adjustment.scoreDelta),
-          effectType: adjustment.scoreDelta > 0 ? 'direct_problem_positive' : 'direct_problem_negative'
+          value: round(effectiveScoreDelta),
+          rawValue: round(adjustment.scoreDelta),
+          targetDimension,
+          isGenericObservedProbeDirectPositive:
+            effectiveScoreDelta > 0 &&
+            isGenericObservedProbeDirectEvidenceDimension(targetDimension),
+          effectType: effectiveScoreDelta > 0 ? 'direct_problem_positive' : 'direct_problem_negative'
         })
       }
     }
@@ -159,6 +250,7 @@ function computeQuestionEvidenceAndPenalty({
           questionKey,
           optionKey,
           value: 0,
+          targetDimension,
           effectType: 'neutral'
         })
       }
@@ -195,6 +287,7 @@ function computeQuestionEvidenceAndPenalty({
       optionKey,
       mappedSymptomKey,
       value: answerValue,
+      targetDimension,
       effectType: answerValue > 0 ? 'positive' : 'negative'
     })
   }

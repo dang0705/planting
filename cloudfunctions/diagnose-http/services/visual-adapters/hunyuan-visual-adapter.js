@@ -28,6 +28,7 @@ const {
 
 const PROMPT_VERSION = 'visual_structured_v1'
 const ADAPTER_NAME = 'hunyuan_visual_adapter'
+const QWEN_ADAPTER_NAME = 'qwen_vl_visual_adapter'
 const STRUCTURAL_DAMAGE_CUE_RULES = {
   holes_in_leaf: {
     hard: ['真洞', '洞口', '穿孔', '背景', '透过', '孔洞'],
@@ -67,6 +68,10 @@ function hasExplicitStructuralDamageCue(symptomKey = '', supportingRegionNote = 
     .map(item => normalizeText(item || '', ''))
     .filter(Boolean)
     .join(' ')
+
+  if (!evidenceText) {
+    return true
+  }
 
   const rule = STRUCTURAL_DAMAGE_CUE_RULES[normalizedSymptomKey]
   if (Array.isArray(rule)) {
@@ -167,14 +172,26 @@ function getAdapterMeta(overrides = {}) {
     overrides?.source_model_reasoning_mode || overrides?.sourceModelReasoningMode || '',
     ''
   )
+  const overrideAdapterName = normalizeText(
+    overrides?.adapter_name || overrides?.adapterName || '',
+    ''
+  )
+  const providerForAdapterName =
+    overrideProvider || normalizeText(sourceModelProvider || 'hunyuan', 'hunyuan')
 
   return {
-    source_model_provider: overrideProvider || normalizeText(sourceModelProvider || 'hunyuan', 'hunyuan'),
+    source_model_provider: providerForAdapterName,
     source_model_name: overrideName || normalizeText(sourceModelName || '', ''),
     source_model_profile: overrideProfile || normalizeText(sourceModelProfile || '', ''),
     source_model_reasoning_mode:
       overrideReasoningMode || normalizeText(sourceModelReasoningMode || '', ''),
-    adapter_name: ADAPTER_NAME,
+    adapter_name:
+      overrideAdapterName ||
+      (providerForAdapterName.includes('qwen') ||
+      providerForAdapterName.includes('aliyun') ||
+      providerForAdapterName.includes('bailian')
+        ? QWEN_ADAPTER_NAME
+        : ADAPTER_NAME),
     prompt_version: overridePromptVersion || PROMPT_VERSION
   }
 }
@@ -278,21 +295,31 @@ function normalizeModelVisualResult(
 
 async function analyzeImage(
   imageRuntimeInput,
-  { visualCallBatchId, onText, adapterMetaOverride = {} } = {}
+  { visualCallBatchId, onText, adapterMetaOverride = {}, llmOptions = {} } = {}
 ) {
-  const adapterMeta = getAdapterMeta(adapterMetaOverride)
-  const llmResult = await callLLMDiagnose([imageRuntimeInput], { onText })
+  const startedAt = Date.now()
+  const llmStartedAt = Date.now()
+  const llmResult = await callLLMDiagnose([imageRuntimeInput], { onText, ...llmOptions })
+  const llmMs = Math.max(0, Date.now() - llmStartedAt)
+  const adapterMeta = getAdapterMeta({
+    ...adapterMetaOverride,
+    ...(llmResult && typeof llmResult === 'object' ? llmResult.adapterMetaOverride || {} : {})
+  })
   const rawTextOutput =
     typeof llmResult === 'string'
       ? llmResult
       : String(llmResult?.text || '')
+  const parseStartedAt = Date.now()
   const rawStructuredOutput = parseLLMVisualResult(rawTextOutput)
+  const parseMs = Math.max(0, Date.now() - parseStartedAt)
+  const normalizeStartedAt = Date.now()
   const normalizedResult = normalizeModelVisualResult(
     rawStructuredOutput,
     imageRuntimeInput,
     visualCallBatchId,
     adapterMeta
   )
+  const normalizeMs = Math.max(0, Date.now() - normalizeStartedAt)
 
   return {
     ...imageRuntimeInput,
@@ -304,12 +331,23 @@ async function analyzeImage(
     llmPromptAudit:
       llmResult && typeof llmResult === 'object' ? llmResult.promptAudit || null : null,
     llmUsage:
-      llmResult && typeof llmResult === 'object' ? llmResult.usage || null : null
+      llmResult && typeof llmResult === 'object' ? llmResult.usage || null : null,
+    llmTiming:
+      llmResult && typeof llmResult === 'object'
+        ? llmResult.llmTiming || { totalMs: llmMs }
+        : { totalMs: llmMs },
+    adapterTiming: {
+      llmMs,
+      parseMs,
+      normalizeMs,
+      totalMs: Math.max(0, Date.now() - startedAt)
+    }
   }
 }
 
 module.exports = {
   ADAPTER_NAME,
+  QWEN_ADAPTER_NAME,
   getAdapterMeta,
   analyzeImage
 }

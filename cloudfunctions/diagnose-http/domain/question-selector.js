@@ -750,7 +750,7 @@ function selectDiversifiedCandidateItems(candidateItems = [], maxQuestions = ran
   const deferred = []
   const usedGroups = new Set()
   const usedDimensionsByBucket = new Map()
-  const safeMaxQuestions = Math.max(1, Number(maxQuestions || 3))
+  const safeMaxQuestions = Math.max(1, Math.min(1, Number(maxQuestions || 1)))
   const sorted = Array.from(candidateItems || []).sort((a, b) => b.candidateScore - a.candidateScore)
 
   for (const item of sorted) {
@@ -1032,6 +1032,9 @@ function selectFollowUpQuestions({
     questionText: item.questionTextUserCn || item.questionTextCn,
     helpText: item.helpTextCn || '',
     questionGroupKey: item.questionGroupKey,
+    defaultOptionKey: item.defaultOptionKey || '',
+    uiVariant: item.uiVariant || '',
+    renderMode: item.renderMode || '',
     targetDimension: normalizeQuestionTargetDimension(
       item.targetDimension,
       QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
@@ -1040,7 +1043,9 @@ function selectFollowUpQuestions({
     questionType: item.questionType || 'single_choice',
     options: ensureUnknownOption(optionMap.get(item.questionKey) || []).map(opt => ({
       optionKey: opt.optionKey,
-      text: opt.optionTextUserCn || opt.optionTextCn || opt.optionKey
+      text: opt.optionTextUserCn || opt.optionTextCn || opt.optionKey,
+      description: opt.optionDescriptionUserCn || '',
+      isDefault: Boolean(opt.isDefault)
     })),
     whyThisQuestion: item.whyThisQuestionCn || ''
   }))

@@ -465,6 +465,9 @@ function normalizeQuestionQueue(questionQueue = null) {
       questionGroupKey: String(item?.questionGroupKey || '').trim(),
       targetDimension: String(item?.targetDimension || '').trim(),
       routingScope: String(item?.routingScope || '').trim(),
+      questionRole: String(item?.questionRole || item?.questionCategory || '').trim(),
+      questionCategory: String(item?.questionCategory || item?.questionRole || '').trim(),
+      effectMode: String(item?.effectMode || '').trim(),
       questionText: String(item?.questionText || item?.text || '').trim(),
       helpText: String(item?.helpText || '').trim(),
       currentPriority: Number(item?.currentPriority || 0),
@@ -648,6 +651,41 @@ function normalizeCoreProcess(coreProcess = null, fallback = {}) {
   }
 }
 
+function normalizeHistoryAdviceSteps(detail = {}, explanation = {}) {
+  const directSteps = Array.isArray(detail.nextSteps) ? detail.nextSteps : []
+  const texts = normalizeStringList([
+    ...directSteps.map(item =>
+      typeof item === 'string'
+        ? item
+        : item?.text || item?.title || item?.label || ''
+    ),
+    detail.treatmentText,
+    detail.treatment,
+    explanation?.firstAid
+  ])
+
+  return texts.map((text, index) => ({
+    stepId: directSteps[index]?.stepId || `advice_${index + 1}`,
+    text,
+    type: directSteps[index]?.type || ''
+  }))
+}
+
+function normalizeHistoryAvoidAdvice(detail = {}, explanation = {}) {
+  return normalizeStringList([
+    ...(Array.isArray(detail.whatToAvoid)
+      ? detail.whatToAvoid.map(item =>
+          typeof item === 'string'
+            ? item
+            : item?.text || item?.title || item?.label || ''
+        )
+      : []),
+    detail.preventionText,
+    detail.prevention,
+    explanation?.avoid
+  ])
+}
+
 function normalizeHistoryDetail(detail) {
   if (!detail || typeof detail !== 'object') {
     return null
@@ -667,6 +705,9 @@ function normalizeHistoryDetail(detail) {
     const diagnosticTrace = normalizeDiagnosticTrace(detail.diagnosticTrace)
     const visualBatchTrace = normalizeVisualBatchTrace(detail.visualBatchTrace)
     const visualAggregateSummary = normalizeVisualAggregateSummary(detail.visualAggregateSummary)
+    const explanation = detail.explanation || detail.resultExplanation || {}
+    const nextSteps = normalizeHistoryAdviceSteps(detail, explanation)
+    const whatToAvoid = normalizeHistoryAvoidAdvice(detail, explanation)
     const shadowCompareSummary =
       normalizeShadowCompareSummary(detail.shadowCompareSummary) ||
       normalizeVisualAggregateSummary(detail.visualAggregateSummary)?.shadowCompareSummary ||
@@ -708,7 +749,7 @@ function normalizeHistoryDetail(detail) {
       nonProblematicLabel: detail.nonProblematicLabel || '',
       routePrimaryAction: detail.routePrimaryAction || '',
       identityResolutionStatus: detail.identityResolutionStatus || '',
-      explanation: detail.explanation || {},
+      explanation,
       observedSymptoms: Array.isArray(detail.observedSymptoms) ? detail.observedSymptoms : [],
       observedEvidenceSet,
       derivedEvidenceSet,
@@ -721,8 +762,18 @@ function normalizeHistoryDetail(detail) {
       followUps,
       contributingFactors: Array.isArray(detail.contributingFactors) ? detail.contributingFactors : [],
       intermediateStates: Array.isArray(detail.intermediateStates) ? detail.intermediateStates : [],
-      nextSteps: Array.isArray(detail.nextSteps) ? detail.nextSteps : [],
-      whatToAvoid: Array.isArray(detail.whatToAvoid) ? detail.whatToAvoid : [],
+      nextSteps,
+      whatToAvoid,
+      treatmentText:
+        detail.treatmentText ||
+        detail.treatment ||
+        explanation?.firstAid ||
+        nextSteps.map(item => item?.text).filter(Boolean).join('\n'),
+      preventionText:
+        detail.preventionText ||
+        detail.prevention ||
+        explanation?.avoid ||
+        whatToAvoid.join('\n'),
       questionQueue,
       stopState,
       outputEligibility,
@@ -801,6 +852,8 @@ function normalizeHistoryDetail(detail) {
       ? [{ stepId: 'step_1', text: detail.treatment }]
       : [],
     whatToAvoid: detail.prevention ? [detail.prevention] : [],
+    treatmentText: detail.treatment || '',
+    preventionText: detail.prevention || '',
     questionQueue: null,
     stopState: null,
     outputEligibility: null,
@@ -845,7 +898,7 @@ const startDiagnosisRequester = httpRequest({
 })
 
 const streamDiagnoseRequester = httpRequest({
-  functionPath: 'diagnose-http/stream/diagnose',
+  functionPath: 'diagnose-http/diagnosis/start',
   method: 'POST',
   enableChunked: true,
   responseType: 'text',
@@ -924,10 +977,135 @@ export async function requestDiagnoseSync(payload) {
   return requestDiagnosisStart(payload)
 }
 
+function normalizeVisualDecisionEvent(payloadItem = {}) {
+  const decision = payloadItem?.decision || {}
+  const counts = decision?.counts || {}
+  const symptomCandidates = Array.isArray(decision?.symptomCandidates)
+    ? decision.symptomCandidates
+    : Array.isArray(decision?.aggregatedSymptomCandidates)
+      ? decision.aggregatedSymptomCandidates
+      : Array.isArray(decision?.aggregated_symptom_candidates)
+        ? decision.aggregated_symptom_candidates
+        : Array.isArray(payloadItem?.aggregated_symptom_candidates)
+          ? payloadItem.aggregated_symptom_candidates
+          : Array.isArray(payloadItem?.symptom_candidates)
+            ? payloadItem.symptom_candidates
+            : []
+  const outOfPoolSymptomCandidates = Array.isArray(decision?.outOfPoolSymptomCandidates)
+    ? decision.outOfPoolSymptomCandidates
+    : Array.isArray(decision?.out_of_pool_symptom_candidates)
+      ? decision.out_of_pool_symptom_candidates
+      : Array.isArray(decision?.outOfPoolSymptomHints)
+        ? decision.outOfPoolSymptomHints
+        : Array.isArray(decision?.out_of_pool_symptom_hints)
+          ? decision.out_of_pool_symptom_hints
+          : Array.isArray(payloadItem?.out_of_pool_symptom_hints)
+            ? payloadItem.out_of_pool_symptom_hints
+            : Array.isArray(payloadItem?.out_of_pool_symptom_candidates)
+              ? payloadItem.out_of_pool_symptom_candidates
+              : []
+  const observedSymptoms = Array.isArray(decision?.observedSymptoms)
+    ? decision.observedSymptoms
+    : Array.isArray(decision?.observed_symptoms)
+      ? decision.observed_symptoms
+      : Array.isArray(payloadItem?.observed_symptoms)
+        ? payloadItem.observed_symptoms
+        : []
+  const routeHints = Array.isArray(decision?.routeHints)
+    ? decision.routeHints
+    : Array.isArray(decision?.aggregateRouteHints)
+      ? decision.aggregateRouteHints
+      : Array.isArray(decision?.aggregate_route_hints)
+        ? decision.aggregate_route_hints
+        : []
+  const primaryCandidate =
+    symptomCandidates[0] || observedSymptoms[0] || outOfPoolSymptomCandidates[0] || null
+
+  return {
+    contractVersion: String(decision?.contractVersion || '').trim(),
+    counts: {
+      observedSymptoms: Number(counts.observedSymptoms || observedSymptoms.length || 0),
+      symptomCandidates: Number(counts.symptomCandidates || symptomCandidates.length || 0),
+      outOfPoolSymptomCandidates: Number(
+        counts.outOfPoolSymptomCandidates || outOfPoolSymptomCandidates.length || 0
+      ),
+      routeHints: Number(counts.routeHints || routeHints.length || 0)
+    },
+    primaryLabel: String(
+      primaryCandidate?.symptomCn ||
+        primaryCandidate?.symptom_cn ||
+        primaryCandidate?.rawVisualNameCn ||
+        primaryCandidate?.raw_visual_name_cn ||
+        primaryCandidate?.symptomKey ||
+        primaryCandidate?.symptom_key ||
+        primaryCandidate?.rawVisualNameEn ||
+        primaryCandidate?.raw_visual_name_en ||
+        ''
+    ).trim()
+  }
+}
+
+function buildVisualProgressText(eventName, payloadItem = {}) {
+  const normalizedEventName = String(eventName || payloadItem?.phase || payloadItem?.type || '').trim()
+  const explicitContent = String(payloadItem?.content || '').trim()
+  if (explicitContent) return explicitContent
+
+  if (normalizedEventName === 'visual_session_created') {
+    return '已建立诊断会话，准备分析图片。'
+  }
+  if (normalizedEventName === 'visual_input_ready') {
+    const imageCount = Number(payloadItem?.imageCount || 0)
+    return imageCount > 1
+      ? `已接收 ${imageCount} 张图片，开始逐张视觉分析。`
+      : '已接收图片，开始视觉分析。'
+  }
+  if (normalizedEventName === 'visual_model_started') {
+    return '视觉模型正在读取图片证据。'
+  }
+  if (normalizedEventName === 'visual_model_complete') {
+    return '视觉模型已完成图片读取，正在结构化裁决证据。'
+  }
+  if (normalizedEventName === 'visual_decision_ready') {
+    const decision = normalizeVisualDecisionEvent(payloadItem)
+    const inPoolCount = Math.max(
+      decision.counts.symptomCandidates,
+      decision.counts.observedSymptoms
+    )
+    const outOfPoolCount = decision.counts.outOfPoolSymptomCandidates
+    const suffix = decision.primaryLabel ? `，主要证据：${decision.primaryLabel}` : ''
+    if (inPoolCount > 0 && outOfPoolCount > 0) {
+      return `视觉裁决完成：发现 ${inPoolCount} 个池内候选，并记录 ${outOfPoolCount} 个池外可见异常${suffix}。`
+    }
+    if (inPoolCount > 0) {
+      return `视觉裁决完成：发现 ${inPoolCount} 个池内候选证据${suffix}。`
+    }
+    if (outOfPoolCount > 0) {
+      return `视觉裁决完成：记录 ${outOfPoolCount} 个池外可见异常${suffix}。`
+    }
+    return '视觉裁决完成：未形成稳定的池内候选证据。'
+  }
+  if (normalizedEventName === 'visual_persisted') {
+    return '视觉裁决已记录，正在进入问诊决策。'
+  }
+  if (normalizedEventName === 'visual_extraction_complete') {
+    return '视觉证据裁决完成，正在生成下一步问诊或结果。'
+  }
+  return ''
+}
+
 function buildStreamDiagnosisPromise(payload, { onProgress } = {}) {
   return new Promise((resolve, reject) => {
     let settled = false
     let latestFullText = ''
+    let latestProgressText = ''
+
+    const pushProgress = text => {
+      const normalizedText = String(text || '').trim()
+      if (!normalizedText || normalizedText === latestProgressText) return
+      latestProgressText = normalizedText
+      latestFullText = normalizedText
+      onProgress?.(normalizedText)
+    }
 
     const settleResolve = data => {
       if (settled) return
@@ -945,6 +1123,18 @@ function buildStreamDiagnosisPromise(payload, { onProgress } = {}) {
       const normalizedEventName = String(
         payloadItem?.event || eventName || payloadItem?.type || 'message'
       ).trim()
+
+      if (normalizedEventName === 'visual_progress') {
+        pushProgress(buildVisualProgressText(normalizedEventName, payloadItem))
+        return
+      }
+      if (normalizedEventName.startsWith('visual_')) {
+        const explicitContent = String(payloadItem?.content || '').trim()
+        if (explicitContent) {
+          pushProgress(explicitContent)
+        }
+        return
+      }
 
       if (normalizedEventName === 'reply') {
         const fullText = String(payloadItem?.fullText || '').trim()
@@ -986,13 +1176,25 @@ function buildStreamDiagnosisPromise(payload, { onProgress } = {}) {
       }
     })
       .then(response => {
+        const responseText = typeof response?.data === 'string' ? response.data.trim() : ''
+        if (responseText) {
+          parser.push(responseText)
+        }
         parser.flush()
         if (settled) return
 
         const envelope =
           response?.data && typeof response.data === 'object'
             ? response.data
-            : null
+            : responseText
+              ? (() => {
+                  try {
+                    return JSON.parse(responseText)
+                  } catch {
+                    return null
+                  }
+                })()
+              : null
 
         if (envelope?.data && typeof envelope.data === 'object') {
           settleResolve(envelope.data)
@@ -1015,10 +1217,28 @@ function buildStreamDiagnosisPromise(payload, { onProgress } = {}) {
 // 兼容旧调用名：保留真实 SSE 调用入口，供灰度或脚本验证使用。
 export async function requestDiagnoseStream(payload, { onProgress } = {}) {
   onProgress?.('正在分析图片并生成问诊...')
-  return requestWithRetry(
-    () => buildStreamDiagnosisPromise(payload, { onProgress }),
-    { retries: 0, fallbackMessage: '发起流式诊断失败' }
-  )
+  const streamPayload = {
+    ...payload,
+    streamVisualDecision: true
+  }
+
+  try {
+    return await requestWithRetry(
+      () => buildStreamDiagnosisPromise(streamPayload, { onProgress }),
+      { retries: 0, fallbackMessage: '发起流式诊断失败' }
+    )
+  } catch (error) {
+    const message = String(error?.message || error || '')
+    if (
+      /流式诊断响应为空|流式诊断未返回有效结果|流式诊断已结束，但未返回结构化结果|当前请求不支持 SSE/i.test(
+        message
+      )
+    ) {
+      onProgress?.('流式视觉裁决通道不可用，已切换普通诊断。')
+      return requestDiagnosisStart(payload)
+    }
+    throw error
+  }
 }
 
 // 兼容旧调用名：follow-up 即提交问诊答案。

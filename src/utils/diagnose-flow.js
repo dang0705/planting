@@ -527,15 +527,31 @@ function normalizeProblemCausality(items = []) {
 function normalizeQuestions(questions = []) {
   return (Array.isArray(questions) ? questions : [])
     .filter(item => item?.questionId)
+    .slice(0, 1)
     .map(item => ({
       questionId: item.questionId,
+      questionKey: item.questionKey || item.questionId,
+      targetSymptomKey: item.targetSymptomKey || '',
+      targetDimension: item.targetDimension || '',
+      questionGroupKey: item.questionGroupKey || '',
+      routingScope: item.routingScope || '',
+      questionRole: item.questionRole || item.questionCategory || '',
+      questionCategory: item.questionCategory || item.questionRole || '',
+      effectMode: item.effectMode || '',
       text: item.text || '',
       helpText: item.helpText || '',
+      defaultOptionKey: item.defaultOptionKey || '',
+      defaultOptionId: item.defaultOptionId || '',
+      uiVariant: item.uiVariant || '',
+      renderMode: item.renderMode || '',
       options: (Array.isArray(item.options) ? item.options : [])
         .filter(option => option?.optionId)
         .map(option => ({
           optionId: option.optionId,
-          text: option.text || ''
+          optionKey: option.optionKey || '',
+          text: option.text || '',
+          description: option.description || option.desc || '',
+          isDefault: Boolean(option.isDefault)
         }))
     }))
 }
@@ -610,19 +626,60 @@ function resolveSummaryText({
   return explanation?.whyItHappens || ''
 }
 
+function normalizeDiagnosisAdviceSteps(diagnosis = {}, explanation = {}) {
+  const directSteps = Array.isArray(diagnosis.nextSteps) ? diagnosis.nextSteps : []
+  const texts = normalizeStringList([
+    ...directSteps.map(item =>
+      typeof item === 'string'
+        ? item
+        : item?.text || item?.title || item?.label || ''
+    ),
+    diagnosis.treatmentText,
+    diagnosis.treatment,
+    explanation?.firstAid
+  ])
+
+  return texts.map((text, index) => ({
+    stepId: directSteps[index]?.stepId || `advice_${index + 1}`,
+    text,
+    type: directSteps[index]?.type || ''
+  }))
+}
+
+function normalizeDiagnosisAvoidAdvice(diagnosis = {}, explanation = {}) {
+  return normalizeStringList([
+    ...(Array.isArray(diagnosis.whatToAvoid)
+      ? diagnosis.whatToAvoid.map(item =>
+          typeof item === 'string'
+            ? item
+            : item?.text || item?.title || item?.label || ''
+        )
+      : []),
+    diagnosis.preventionText,
+    diagnosis.prevention,
+    explanation?.avoid
+  ])
+}
+
 export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantName = '植物' } = {}) {
   const diagnosis = diagnosisResult || {}
   const stage = diagnosis.stage || 'followup'
   const followUps = normalizeQuestions(diagnosis.questions || diagnosis.followUps)
   const finalResult = diagnosis.finalResult || null
   const explanation = diagnosis.explanation || diagnosis.resultExplanation || {}
+  const normalizedNextSteps = normalizeDiagnosisAdviceSteps(diagnosis, explanation)
+  const normalizedWhatToAvoid = normalizeDiagnosisAvoidAdvice(diagnosis, explanation)
   const followUpRequired = Boolean(diagnosis.followUpRequired) || (stage === 'followup' && followUps.length > 0)
   const observedSymptoms = normalizeObservedSymptoms(
     diagnosis.observedSymptoms || diagnosis.symptoms
   )
   const rankings = normalizeRankings(diagnosis.rankings)
   const problemCausality = normalizeProblemCausality(diagnosis.problemCausality)
-  const outcomeType = normalizeOutcomeType(diagnosis.outcomeType)
+  const outcomeType = normalizeOutcomeType(
+    diagnosis.outcomeType ||
+      finalResult?.outcomeType ||
+      diagnosis.summaryCard?.outcomeType
+  )
   const summaryCard = diagnosis.summaryCard || null
   const observedEvidenceSet = normalizeObservedEvidenceSet(diagnosis.observedEvidenceSet)
   const derivedEvidenceSet = normalizeDerivedEvidenceSet(diagnosis.derivedEvidenceSet)
@@ -687,6 +744,14 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
     summaryText: resolveSummaryText({ finalResult, summaryCard, explanation, outcomeType }),
     followUps,
     followUpRequired,
+    answerRevision: Number(diagnosis.answerRevision || 0),
+    uiPatch:
+      diagnosis.uiPatch && typeof diagnosis.uiPatch === 'object'
+        ? {
+            keepUntilQuestionId: String(diagnosis.uiPatch.keepUntilQuestionId || '').trim(),
+            invalidatedFromQuestionId: String(diagnosis.uiPatch.invalidatedFromQuestionId || '').trim()
+          }
+        : null,
     finalResult,
     contributingFactors: Array.isArray(diagnosis.contributingFactors)
       ? diagnosis.contributingFactors
@@ -694,8 +759,8 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
     intermediateStates: Array.isArray(diagnosis.intermediateStates)
       ? diagnosis.intermediateStates
       : [],
-    nextSteps: Array.isArray(diagnosis.nextSteps) ? diagnosis.nextSteps : [],
-    whatToAvoid: Array.isArray(diagnosis.whatToAvoid) ? diagnosis.whatToAvoid : [],
+    nextSteps: normalizedNextSteps,
+    whatToAvoid: normalizedWhatToAvoid,
     problemCausality,
     rankings,
     observedSymptoms,
@@ -716,21 +781,23 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
     shadowCompareSummary,
     uiHints: {
       canUploadMoreImages: Boolean(diagnosis?.uiHints?.canUploadMoreImages),
-      maxQuestionsThisRound: Number(diagnosis?.uiHints?.maxQuestionsThisRound || followUps.length || 0)
+      maxQuestionsThisRound: followUps.length ? 1 : 0,
+      questionDisplayMode: diagnosis?.uiHints?.questionDisplayMode || 'single',
+      answerSubmitMode: diagnosis?.uiHints?.answerSubmitMode || 'per_question',
+      optionLayout: diagnosis?.uiHints?.optionLayout || 'vertical',
+      transition: diagnosis?.uiHints?.transition || 'swiper'
     },
     confidenceLevel: diagnosis.confidenceLevel || 'normal',
     confidenceReasons: normalizeStringList(diagnosis.confidenceReasons),
     needHumanReview: Boolean(diagnosis.needHumanReview),
     treatmentText:
+      diagnosis.treatmentText ||
       explanation?.firstAid ||
-      (Array.isArray(diagnosis.nextSteps)
-        ? diagnosis.nextSteps.map(item => item?.text).filter(Boolean).join('\n')
-        : ''),
+      normalizedNextSteps.map(item => item?.text).filter(Boolean).join('\n'),
     preventionText:
+      diagnosis.preventionText ||
       explanation?.avoid ||
-      (Array.isArray(diagnosis.whatToAvoid)
-        ? diagnosis.whatToAvoid.filter(Boolean).join('\n')
-        : ''),
+      normalizedWhatToAvoid.filter(Boolean).join('\n'),
     images
   }
 }
@@ -739,7 +806,15 @@ export function createFollowUpAnswerMap(followUps = []) {
   const entries = {}
   for (const item of followUps || []) {
     if (!item?.questionId) continue
-    entries[item.questionId] = ''
+    const defaultOptionId =
+      item.defaultOptionId ||
+      (Array.isArray(item.options)
+        ? item.options.find(option =>
+            (item.defaultOptionKey && option.optionKey === item.defaultOptionKey) ||
+            option.isDefault
+          )?.optionId
+        : '')
+    entries[item.questionId] = defaultOptionId || ''
   }
   return entries
 }
@@ -750,21 +825,27 @@ export function isFollowUpAnswerComplete(followUps = [], answerMap = {}) {
   return activeFollowUps.every(item => Boolean(answerMap[item.questionId]))
 }
 
-export function buildFollowUpPayload(result, answerMap = {}) {
-  const followUps = Array.isArray(result?.followUps)
+export function buildFollowUpPayload(result, answerMap = {}, options = {}) {
+  const followUps = Array.isArray(options?.questionStack)
+    ? options.questionStack
+    : Array.isArray(result?.followUps)
     ? result.followUps
     : Array.isArray(result?.questions)
       ? result.questions
       : []
+  const answers = followUps
+    .filter(item => item?.questionId && answerMap[item.questionId])
+    .map(item => ({
+      questionId: item.questionId,
+      optionId: answerMap[item.questionId]
+    }))
 
   return {
     diagnosisSessionId: result?.diagnosisSessionId || '',
     roundId: result?.roundId || '',
-    answers: followUps
-      .filter(item => item?.questionId && answerMap[item.questionId])
-      .map(item => ({
-        questionId: item.questionId,
-        optionId: answerMap[item.questionId]
-      }))
+    answers,
+    requestMode: options?.requestMode || (answers.length > 1 ? 'answer_revision' : 'answer_submit'),
+    baseAnswerRevision: Number(options?.baseAnswerRevision || result?.answerRevision || 0),
+    dirtyFromQuestionId: String(options?.dirtyFromQuestionId || '').trim()
   }
 }

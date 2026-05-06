@@ -8,6 +8,92 @@ const {
 const { sqlInList, clamp01 } = require('./sql')
 const { table } = require('../db/table-helper')
 
+const STATIC_REPOSITORY_CACHE_TTL_MS = Math.max(
+  0,
+  Number(process.env.DIAGNOSE_STATIC_CACHE_TTL_MS || 60000)
+)
+const priorCache = {
+  genusCareProfileByGenusFamily: new Map(),
+  linkedCandidatePriorsByPlantIdentity: new Map(),
+  candidateProblemPriorsByPlantId: new Map(),
+  genusCandidatePriorsByGenus: new Map(),
+  hostCandidatePriorsByHostKey: new Map(),
+  genusCompatibilityByGenusAndProblemSet: new Map(),
+  hostCompatibilityByHostContextAndProblemSet: new Map()
+}
+const pendingPriorCache = {
+  genusCareProfileByGenusFamily: new Map(),
+  linkedDiagnosisTargetsByIdentity: new Map(),
+  linkedCandidatePriorsByPlantIdentity: new Map(),
+  candidateProblemPriorsByPlantId: new Map(),
+  genusCandidatePriorsByGenus: new Map(),
+  hostCandidatePriorsByHostKey: new Map(),
+  genusCompatibilityByGenusAndProblemSet: new Map(),
+  hostCompatibilityByHostContextAndProblemSet: new Map()
+}
+
+function getCacheEntry(cache, key = '') {
+  if (!STATIC_REPOSITORY_CACHE_TTL_MS) return null
+  const normalizedKey = String(key || '').trim()
+  const entry = cache.get(normalizedKey)
+  if (!entry) return null
+  if (Date.now() - Number(entry.cachedAt || 0) > STATIC_REPOSITORY_CACHE_TTL_MS) {
+    cache.delete(normalizedKey)
+    return null
+  }
+  return entry.value
+}
+
+function setCacheEntry(cache, key = '', value) {
+  if (!STATIC_REPOSITORY_CACHE_TTL_MS) return
+  cache.set(String(key || '').trim(), {
+    cachedAt: Date.now(),
+    value
+  })
+}
+
+function normalizeCacheSignature(items = []) {
+  return Array.from(new Set((items || []).map(item => String(item || '').trim()).filter(Boolean)))
+    .sort()
+    .join('|')
+}
+
+function withPending(cache, key = '', queryFn) {
+  const normalizedKey = String(key || '').trim()
+  const pending = cache.get(normalizedKey)
+  if (pending) return pending
+
+  const promise = Promise.resolve()
+    .then(queryFn)
+    .finally(() => {
+      cache.delete(normalizedKey)
+    })
+  cache.set(normalizedKey, promise)
+  return promise
+}
+
+function buildPlantIdentityCacheKey(plantContext = {}) {
+  return normalizeCacheSignature([
+    String(plantContext?.plantIdentityId || '').trim(),
+    String(plantContext?.identityResolutionStatus || '').trim(),
+    String(plantContext?.genus || '').trim(),
+    String(plantContext?.family || '').trim(),
+    String(plantContext?.category || '').trim()
+  ])
+}
+
+function buildHostContextCacheKey({ genus = '', family = '', category = '' } = {}) {
+  return normalizeCacheSignature([
+    String(genus || '').trim(),
+    String(family || '').trim(),
+    String(category || '').trim()
+  ])
+}
+
+function buildProblemSetCacheKey(problemKeys = []) {
+  return normalizeCacheSignature((problemKeys || []).map(item => String(item || '').trim()).filter(Boolean))
+}
+
 function parseJsonField(value, fallback = null) {
   if (value === null || value === undefined || value === '') {
     return fallback
@@ -38,59 +124,73 @@ async function getGenusCareProfile(genusName = '', familyName = '') {
   if (!safeGenusName) {
     return null
   }
-
-  const conditions = ['genus_name = {{genusName}}', 'is_active = 1']
-  const params = { genusName: safeGenusName }
-
-  if (String(familyName || '').trim()) {
-    conditions.push('family_name_canonical = {{familyName}}')
-    params.familyName = String(familyName || '').trim()
+  const cacheKey = `${safeGenusName}::${String(familyName || '').trim()}`
+  const cached = getCacheEntry(priorCache.genusCareProfileByGenusFamily, cacheKey)
+  if (cached) {
+    return cached
   }
 
-  const result = await models.$runSQL(
-    `
-      SELECT
-        CAST(watering_strategy_json AS CHAR) AS watering_strategy_json_text,
-        CAST(fertilizing_strategy_json AS CHAR) AS fertilizing_strategy_json_text,
-        CAST(light_strategy_json AS CHAR) AS light_strategy_json_text,
-        CAST(airflow_strategy_json AS CHAR) AS airflow_strategy_json_text,
-        temp_min_c,
-        temp_max_c,
-        humidity_min,
-        humidity_max,
-        review_status,
-        evidence_level
-      FROM ${table('genus_care_profiles')}
-      WHERE ${conditions.join(' AND ')}
-      ORDER BY
-        FIELD(review_status, 'audited', 'reviewed', 'pending'),
-        updated_at DESC
-      LIMIT 1
-    `,
-    params
-  )
+  return withPending(pendingPriorCache.genusCareProfileByGenusFamily, cacheKey, async () => {
+    const cachedAfterWait = getCacheEntry(priorCache.genusCareProfileByGenusFamily, cacheKey)
+    if (cachedAfterWait) {
+      return cachedAfterWait
+    }
 
-  const row = result?.data?.executeResultList?.[0] || null
-  if (!row) {
-    return null
-  }
+    const conditions = ['genus_name = {{genusName}}', 'is_active = 1']
+    const params = { genusName: safeGenusName }
 
-  return {
-    watering: normalizeCareStrategy(row.watering_strategy_json_text),
-    fertilization: normalizeCareStrategy(row.fertilizing_strategy_json_text),
-    sunning: normalizeCareStrategy(row.light_strategy_json_text),
-    ventilation: normalizeCareStrategy(row.airflow_strategy_json_text),
-    temperatureMin:
-      row.temp_min_c === null || row.temp_min_c === undefined ? null : Number(row.temp_min_c),
-    temperatureMax:
-      row.temp_max_c === null || row.temp_max_c === undefined ? null : Number(row.temp_max_c),
-    humidityMin:
-      row.humidity_min === null || row.humidity_min === undefined ? null : Number(row.humidity_min),
-    humidityMax:
-      row.humidity_max === null || row.humidity_max === undefined ? null : Number(row.humidity_max),
-    careAuditStatus: row.review_status || '',
-    varianceLevel: row.evidence_level || ''
-  }
+    if (String(familyName || '').trim()) {
+      conditions.push('family_name_canonical = {{familyName}}')
+      params.familyName = String(familyName || '').trim()
+    }
+
+    const result = await models.$runSQL(
+      `
+        SELECT
+          CAST(watering_strategy_json AS CHAR) AS watering_strategy_json_text,
+          CAST(fertilizing_strategy_json AS CHAR) AS fertilizing_strategy_json_text,
+          CAST(light_strategy_json AS CHAR) AS light_strategy_json_text,
+          CAST(airflow_strategy_json AS CHAR) AS airflow_strategy_json_text,
+          temp_min_c,
+          temp_max_c,
+          humidity_min,
+          humidity_max,
+          review_status,
+          evidence_level
+        FROM ${table('genus_care_profiles')}
+        WHERE ${conditions.join(' AND ')}
+        ORDER BY
+          FIELD(review_status, 'audited', 'reviewed', 'pending'),
+          updated_at DESC
+        LIMIT 1
+      `,
+      params
+    )
+
+    const row = result?.data?.executeResultList?.[0] || null
+    if (!row) {
+      return null
+    }
+
+    const careProfile = {
+      watering: normalizeCareStrategy(row.watering_strategy_json_text),
+      fertilization: normalizeCareStrategy(row.fertilizing_strategy_json_text),
+      sunning: normalizeCareStrategy(row.light_strategy_json_text),
+      ventilation: normalizeCareStrategy(row.airflow_strategy_json_text),
+      temperatureMin:
+        row.temp_min_c === null || row.temp_min_c === undefined ? null : Number(row.temp_min_c),
+      temperatureMax:
+        row.temp_max_c === null || row.temp_max_c === undefined ? null : Number(row.temp_max_c),
+      humidityMin:
+        row.humidity_min === null || row.humidity_min === undefined ? null : Number(row.humidity_min),
+      humidityMax:
+        row.humidity_max === null || row.humidity_max === undefined ? null : Number(row.humidity_max),
+      careAuditStatus: row.review_status || '',
+      varianceLevel: row.evidence_level || ''
+    }
+    setCacheEntry(priorCache.genusCareProfileByGenusFamily, cacheKey, careProfile)
+    return careProfile
+  })
 }
 
 function buildResolvedPlantContext({
@@ -295,42 +395,58 @@ async function getLinkedDiagnosisTargets(plantIdentityId = '') {
     return []
   }
 
-  const result = await models.$runSQL(
-    `
-      SELECT
-        plant_identity_id,
-        link_level,
-        target_profile_key,
-        target_table_name,
-        target_record_key,
-        link_strength,
-        review_status
-      FROM ${table('plant_identity_diagnosis_links')}
-      WHERE plant_identity_id = {{plantIdentityId}}
-        AND is_active = 1
-      ORDER BY
-        FIELD(link_level, 'identity', 'genus', 'family'),
-        FIELD(review_status, 'reviewed', 'audited', 'review_pending', 'pending'),
-        FIELD(link_strength, 'exact', 'downgraded', 'weak_background'),
-        target_table_name ASC,
-        target_record_key ASC
-    `,
-    { plantIdentityId: safePlantIdentityId }
-  )
+  return withPending(pendingPriorCache.linkedDiagnosisTargetsByIdentity, safePlantIdentityId, async () => {
+    const result = await models.$runSQL(
+      `
+        SELECT
+          plant_identity_id,
+          link_level,
+          target_profile_key,
+          target_table_name,
+          target_record_key,
+          link_strength,
+          review_status
+        FROM ${table('plant_identity_diagnosis_links')}
+        WHERE plant_identity_id = {{plantIdentityId}}
+          AND is_active = 1
+        ORDER BY
+          FIELD(link_level, 'identity', 'genus', 'family'),
+          FIELD(review_status, 'reviewed', 'audited', 'review_pending', 'pending'),
+          FIELD(link_strength, 'exact', 'downgraded', 'weak_background'),
+          target_table_name ASC,
+          target_record_key ASC
+      `,
+      { plantIdentityId: safePlantIdentityId }
+    )
 
-  return result?.data?.executeResultList || []
+    return result?.data?.executeResultList || []
+  })
 }
 
 async function getLinkedCandidatePriors(plantContext = {}) {
+  const cacheKey = buildPlantIdentityCacheKey(plantContext)
+  const cached = getCacheEntry(priorCache.linkedCandidatePriorsByPlantIdentity, cacheKey)
+  if (cached) {
+    return cached
+  }
+
+  return withPending(pendingPriorCache.linkedCandidatePriorsByPlantIdentity, cacheKey, async () => {
+  const cachedAfterWait = getCacheEntry(priorCache.linkedCandidatePriorsByPlantIdentity, cacheKey)
+  if (cachedAfterWait) {
+    return cachedAfterWait
+  }
+
   const links = await getLinkedDiagnosisTargets(plantContext?.plantIdentityId)
   if (!links.length) {
-    return {
+    const fallbackResult = {
       hasAnyLinks: false,
       hasReviewedLinks: false,
       selectedLevel: '',
       weakBackgroundOnly: false,
       priors: []
     }
+    setCacheEntry(priorCache.linkedCandidatePriorsByPlantIdentity, cacheKey, fallbackResult)
+    return fallbackResult
   }
 
   const bridge = resolveLinkedDiagnosisBridge(links, plantContext)
@@ -425,59 +541,100 @@ async function getLinkedCandidatePriors(plantContext = {}) {
       (left, right) => Number(right.finalPriorScore || 0) - Number(left.finalPriorScore || 0)
     )
   }
+  })
 }
 
 async function getCandidateProblemPriors(plantContext) {
   if (!plantContext?.plantId) {
     return []
   }
+  const cacheKey = String(plantContext.plantId || '').trim()
+  const cached = getCacheEntry(priorCache.candidateProblemPriorsByPlantId, cacheKey)
+  if (cached) {
+    return cached
+  }
 
-  const result = await models.$runSQL(
-    `
-      SELECT
-        problem_key,
-        genus_compatibility,
-        host_compatibility,
-        final_prior_score,
-        matched_host_level,
-        source_layer,
-        data_status
-      FROM ${table('plant_problem_profiles')}
-      WHERE plant_id = {{plantId}}
-        AND data_status IN ('audited', 'partial', 'derived_audited')
-      ORDER BY final_prior_score DESC, problem_key ASC
-    `,
-    { plantId: plantContext.plantId }
-  )
+  return withPending(pendingPriorCache.candidateProblemPriorsByPlantId, cacheKey, async () => {
+    const cachedAfterWait = getCacheEntry(priorCache.candidateProblemPriorsByPlantId, cacheKey)
+    if (cachedAfterWait) {
+      return cachedAfterWait
+    }
 
-  return (result?.data?.executeResultList || []).map(mapCandidateRow)
+    const result = await models.$runSQL(
+      `
+        SELECT
+          problem_key,
+          genus_compatibility,
+          host_compatibility,
+          final_prior_score,
+          matched_host_level,
+          source_layer,
+          data_status
+        FROM ${table('plant_problem_profiles')}
+        WHERE plant_id = {{plantId}}
+          AND data_status IN ('audited', 'partial', 'derived_audited')
+        ORDER BY final_prior_score DESC, problem_key ASC
+      `,
+      { plantId: plantContext.plantId }
+    )
+
+    const priors = (result?.data?.executeResultList || []).map(mapCandidateRow)
+    setCacheEntry(priorCache.candidateProblemPriorsByPlantId, cacheKey, priors)
+    return priors
+  })
 }
 
 async function getGenusCandidatePriors(genus = '') {
   if (!genus) return []
+  const cacheKey = String(genus || '').trim()
+  const cached = getCacheEntry(priorCache.genusCandidatePriorsByGenus, cacheKey)
+  if (cached) {
+    return cached
+  }
 
-  const result = await models.$runSQL(
-    `
-      SELECT
-        problem_key,
-        genus_compatibility,
-        1 AS host_compatibility,
-        genus_compatibility AS final_prior_score,
-        'genus' AS matched_host_level,
-        'derived_from_genus_profile' AS source_layer,
-        data_status
-      FROM ${table('genus_problem_profiles')}
-      WHERE genus = {{genus}}
-        AND data_status IN ('audited', 'partial')
-      ORDER BY genus_compatibility DESC, problem_key ASC
-    `,
-    { genus }
-  )
+  return withPending(pendingPriorCache.genusCandidatePriorsByGenus, cacheKey, async () => {
+    const cachedAfterWait = getCacheEntry(priorCache.genusCandidatePriorsByGenus, cacheKey)
+    if (cachedAfterWait) {
+      return cachedAfterWait
+    }
 
-  return (result?.data?.executeResultList || []).map(mapCandidateRow)
+    const result = await models.$runSQL(
+      `
+        SELECT
+          problem_key,
+          genus_compatibility,
+          1 AS host_compatibility,
+          genus_compatibility AS final_prior_score,
+          'genus' AS matched_host_level,
+          'derived_from_genus_profile' AS source_layer,
+          data_status
+        FROM ${table('genus_problem_profiles')}
+        WHERE genus = {{genus}}
+          AND data_status IN ('audited', 'partial')
+        ORDER BY genus_compatibility DESC, problem_key ASC
+      `,
+      { genus }
+    )
+
+    const priors = (result?.data?.executeResultList || []).map(mapCandidateRow)
+    setCacheEntry(priorCache.genusCandidatePriorsByGenus, cacheKey, priors)
+    return priors
+  })
 }
 
 async function getHostCandidatePriors({ genus = '', family = '', category = '' } = {}) {
+  const cacheKey = buildHostContextCacheKey({ genus, family, category })
+  const cached = getCacheEntry(priorCache.hostCandidatePriorsByHostKey, cacheKey)
+  if (cached) {
+    return cached
+  }
+
+  return withPending(pendingPriorCache.hostCandidatePriorsByHostKey, cacheKey, async () => {
+  const cachedAfterWait = getCacheEntry(priorCache.hostCandidatePriorsByHostKey, cacheKey)
+  if (cachedAfterWait) {
+    return cachedAfterWait
+  }
+
   const tasks = []
 
   if (genus) {
@@ -561,34 +718,91 @@ async function getHostCandidatePriors({ genus = '', family = '', category = '' }
     }
   }
 
-  return Array.from(merged.values())
+  const priors = Array.from(merged.values())
+  setCacheEntry(priorCache.hostCandidatePriorsByHostKey, cacheKey, priors)
+  return priors
+  })
 }
 
 async function getGenusCompatibilityMap(genus, problemKeys = []) {
   const safeKeys = Array.from(new Set((problemKeys || []).map(item => String(item || '').trim()).filter(Boolean)))
   if (!genus || !safeKeys.length) return {}
-
-  const result = await models.$runSQL(
-    `
-      SELECT problem_key, genus_compatibility
-      FROM ${table('genus_problem_profiles')}
-      WHERE genus = {{genus}}
-        AND problem_key IN ${sqlInList(safeKeys)}
-        AND data_status IN ('audited', 'partial')
-    `,
-    { genus }
-  )
-
-  const map = {}
-  for (const row of result?.data?.executeResultList || []) {
-    map[row.problem_key] = clamp01(row.genus_compatibility)
+  const cacheKey = `${String(genus || '').trim()}::${buildProblemSetCacheKey(safeKeys)}`
+  const cached = getCacheEntry(priorCache.genusCompatibilityByGenusAndProblemSet, cacheKey)
+  if (cached) {
+    return cached
   }
-  return map
+  const cachedGenusPriors = getCacheEntry(priorCache.genusCandidatePriorsByGenus, String(genus || '').trim())
+  if (cachedGenusPriors) {
+    const safeKeySet = new Set(safeKeys)
+    const map = {}
+    for (const row of cachedGenusPriors) {
+      if (!safeKeySet.has(row.problemKey)) continue
+      map[row.problemKey] = clamp01(row.genusCompatibility)
+    }
+    setCacheEntry(priorCache.genusCompatibilityByGenusAndProblemSet, cacheKey, map)
+    return map
+  }
+
+  return withPending(pendingPriorCache.genusCompatibilityByGenusAndProblemSet, cacheKey, async () => {
+    const cachedAfterWait = getCacheEntry(priorCache.genusCompatibilityByGenusAndProblemSet, cacheKey)
+    if (cachedAfterWait) {
+      return cachedAfterWait
+    }
+
+    const result = await models.$runSQL(
+      `
+        SELECT problem_key, genus_compatibility
+        FROM ${table('genus_problem_profiles')}
+        WHERE genus = {{genus}}
+          AND problem_key IN ${sqlInList(safeKeys)}
+          AND data_status IN ('audited', 'partial')
+      `,
+      { genus }
+    )
+
+    const map = {}
+    for (const row of result?.data?.executeResultList || []) {
+      map[row.problem_key] = clamp01(row.genus_compatibility)
+    }
+    setCacheEntry(priorCache.genusCompatibilityByGenusAndProblemSet, cacheKey, map)
+    return map
+  })
 }
 
 async function getHostCompatibilityMap({ genus = '', family = '', category = '' } = {}, problemKeys = []) {
   const safeKeys = Array.from(new Set((problemKeys || []).map(item => String(item || '').trim()).filter(Boolean)))
   if (!safeKeys.length) return {}
+  const cacheKey = `${buildHostContextCacheKey({ genus, family, category })}::${buildProblemSetCacheKey(safeKeys)}`
+  const cached = getCacheEntry(priorCache.hostCompatibilityByHostContextAndProblemSet, cacheKey)
+  if (cached) {
+    return cached
+  }
+  const hostContextCacheKey = buildHostContextCacheKey({ genus, family, category })
+  const cachedHostPriors = getCacheEntry(priorCache.hostCandidatePriorsByHostKey, hostContextCacheKey)
+  if (cachedHostPriors) {
+    const safeKeySet = new Set(safeKeys)
+    const map = {}
+    for (const row of cachedHostPriors) {
+      if (!safeKeySet.has(row.problemKey)) continue
+      const score = clamp01(row.hostCompatibility)
+      const existing = map[row.problemKey]
+      if (!existing || score > existing.hostCompatibility) {
+        map[row.problemKey] = {
+          hostCompatibility: score,
+          hostLevel: row.matchedHostLevel || ''
+        }
+      }
+    }
+    setCacheEntry(priorCache.hostCompatibilityByHostContextAndProblemSet, cacheKey, map)
+    return map
+  }
+
+  return withPending(pendingPriorCache.hostCompatibilityByHostContextAndProblemSet, cacheKey, async () => {
+  const cachedAfterWait = getCacheEntry(priorCache.hostCompatibilityByHostContextAndProblemSet, cacheKey)
+  if (cachedAfterWait) {
+    return cachedAfterWait
+  }
 
   const tasks = []
   if (genus) {
@@ -658,7 +872,9 @@ async function getHostCompatibilityMap({ genus = '', family = '', category = '' 
     }
   }
 
+  setCacheEntry(priorCache.hostCompatibilityByHostContextAndProblemSet, cacheKey, map)
   return map
+  })
 }
 
 module.exports = {

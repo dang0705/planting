@@ -274,24 +274,136 @@ symptom_class + top_problem_key 双层选题
 
 新增 `symptom_class` 后，follow-up 去重规则必须进一步加强：
 
-- 高置信 visual symptom 不得直接触发同义重复确认题排第一
+- 高置信正式 visual symptom 不得进入同义重复确认题；只能追问区分题、排异题、上下文题等隐藏属性
+- 低置信或未准入 visual candidate 可以先做存在确认，但确认题每轮也只能输出 1 个
 - follow-up 必须优先问：
   - 区分题
   - 排异题
   - 上下文题
-- 只有在当前 class 下没有更高价值问题时，才允许重复确认题前置
+- 不允许因为当前 class 下缺少更高价值问题，就把高置信正式视觉事实重新拿出来问“是否看到”
 
 也就是：
 
 ```text
-区分题 > 排异题 > 上下文题 > 重复确认题
+区分题 > 排异题 > 上下文题 > 低置信候选存在确认题
 ```
 
 该规则在各 class 内分别执行，而不是全局散问。
 
+### 3.1.6.1 视觉事实到问诊的分流边界
+
+当 visual symptom 已作为正式 evidence 进入运行时，follow-up 不得把首题用于否定该视觉事实。
+
+必须执行：
+
+- 已确认 `tissue_integrity` 的结构损伤，不再问“是否真的破洞/缺损”
+- 已确认 `surface_residue` 或粉层事实，不再问“能否擦掉”
+- 已确认斑点/斑块事实，不再问“是不是脏层”
+- 首题应改问病因分流、排异线索或养护上下文
+
+结构损伤类的首题必须保持中性：
+
+```text
+叶片孔洞 / 叶片边缘缺口 / 叶片网状缺损
+→ 虫害活动痕迹 vs 病斑干枯脱落 vs 机械/旧伤 vs 不确定
+```
+
+不得写成：
+
+```text
+虫咬孔洞 / 被咬缺口 / 虫害造成的网状缺损
+```
+
+斑点类首题优先级：
+
+```text
+水渍感 / 黄晕 / 湿软干硬 / 进展速度 / 分布范围
+```
+
+粉层类首题优先级：
+
+```text
+扩散趋势 / 分布范围 / 通风湿度背景
+```
+
+黄叶类首题优先级：
+
+```text
+最明显线索 gate / 养护方向 gate / 虫害线索 gate / 病斑霉层线索 gate / 新老叶分流 / 发黄分布模式
+```
+
+黄叶类题型约束：
+
+```text
+不得用 yes/no 表达“新叶还是老叶”“偏湿还是偏干”“强光还是弱光”。
+必须使用多选项分流，并保持 option_key 与用户看到的选项同义。
+```
+
+黄叶最小分流维度：
+
+```text
+yellowing_primary_clue_gate
+yellowing_care_area_gate
+yellowing_disease_trace_gate
+pest_trace_type
+yellowing_leaf_age_pattern
+yellowing_distribution_pattern
+watering_frequency_context
+light_change_context
+fertilization_growth_context
+yellowing_progression_speed
+```
+
 ### 3.1.7 黄叶类的特别规则
 
 黄叶类必须单独走 `yellowing_mode`，不能把所有黄叶 symptom 当普通 symptom 处理。
+
+黄叶类采用“一页一题”后，不再使用旧的“最多 2 轮”作为停止条件；轮次上限不得成为黄叶分流未完成时提前输出 outcome 的理由。
+
+黄叶类必须先完成分流，再进入该方向的上下文问题：
+
+- 所有 gate 类问题必须在题干开头说明提问目的；例如黄叶题需先说明“黄叶原因较复杂，先确认最明显线索，后面少问无关问题”。
+- 问诊问题必须在表结构中持久标记 `question_role` 与 `effect_mode`，不得只靠运行时猜测类别。当前合法角色为 `gate / differential_probe / context_metric / symptom_confirmation / visual_fact_review`，合法影响方式为 `route_gate / score_adjustment / evidence_admission / context_feature / visual_fact_review`。
+- `gate` 类问题必须硬前置；同一 symptom mode 内，普通 `context_metric` 或 `score_adjustment` 问题不得排在未完成的 `gate` 前面。
+- 先问 `yellowing_primary_clue_gate`，让用户选择养护/环境变化、虫子活动线索、斑点烂斑霉层线索、只有黄叶或不确定；不得让用户直接判断真菌、细菌、虫害或缺素。
+- 若进入养护方向，先问 `yellowing_care_area_gate`，其选项必须采用短标题 + 描述承载基线信息；再按答案追问 `watering_frequency_context / light_change_context / fertilization_growth_context / yellowing_progression_speed`。其中浇水相关描述必须结合 `genus_care_profiles.watering_strategy_json.freq` 与新鲜 `weather_cache.humidity` 对属级基线做轻量修正，给出具体天数范围。
+- 若进入虫害方向，问 `pest_trace_type`，只使用“小虫、细网、黑点、发黏”等用户可观察线索。
+- 若进入病害方向，问 `yellowing_disease_trace_gate`，只使用黄晕、水渍感、粉霉层等可观察线索，不要求用户区分真菌或细菌。
+- 若只有黄叶或不确定，再回退到 `yellowing_leaf_age_pattern` 与 `yellowing_distribution_pattern`，确认新老叶、脉间/整片/斑驳/灼伤样等分流线索。
+- 在黄叶分流 gate 未满足前，即使 ranking top1 分数和 gap 达标，也不得直接输出 `low_light / sunburn / overwatering / underwatering / iron_deficiency / nitrogen_deficiency / nutrient_deficiency / root_stress` 等具体 outcome。
+- 已回答的黄叶分流等价维度必须全链路去重；例如 `watering_frequency_context` 已答后，不得再问旧静态 `watering_context`，`light_change_context` 已答后，不得再问旧静态 `light_exposure`。
+
+### 3.1.8 收益驱动停止策略
+
+取消硬性轮数上限后，诊断流必须采用收益驱动停止策略，而不是恢复旧的“最多 2 轮”限制。
+
+一页一题模式下，每次回答后必须重算：
+
+- 必答 gate 层
+- output eligibility
+- 下一题高价值收益
+- stop_state
+
+只有以下问题可以阻塞 final：
+
+- 模式入口 gate
+- 输出资格 gate
+- top 与 runner-up 区分 gate
+- 合法 uncertain gate
+- 安全 / 动作边界 gate
+
+结论门槛已满足后，下一题只有在能够补齐 context guard、改变 output eligibility、区分 top 与 runner-up，或触发合法 uncertain 时，才允许继续追问。
+
+以下问题默认不得阻塞 final：
+
+- `progression`
+- `distribution_scope`
+- `host_confirmation`
+- `underside_presence`
+- 无 `directProblemAdjustments` 的问题
+- 只影响解释、严重程度、护理建议的问题
+
+edema / overwatering 已有正式形态正证据且满足输出资格时，不得继续被光照、分布、叶背、宿主确认等低增益题拖住；除非问题能补齐过湿相关 context guard、改变输出资格、区分 runner-up，或触发合法 uncertain。
 
 至少要优先区分：
 
@@ -303,7 +415,7 @@ symptom_class + top_problem_key 双层选题
 
 否则 follow-up 必然发散。
 
-### 3.1.8 对算法的影响
+### 3.1.9 对算法的影响
 
 `symptom_class` 本身不直接替代 problem score，但它会影响：
 
@@ -324,7 +436,7 @@ problems allowed by symptom_class
 
 从而让 follow-up 和 ranking 都更聚焦。
 
-### 3.1.9 对目录/文件的落地要求
+### 3.1.10 对目录/文件的落地要求
 
 建议新增：
 
@@ -342,7 +454,7 @@ problems allowed by symptom_class
 - 读取 `symptom_class_mapping`
 - 向 question selector / diagnosis-engine 输出标准结构
 
-### 3.1.10 最终硬约束
+### 3.1.11 最终硬约束
 
 任何 visual symptom 都**不得直接跳过症状模式层**去驱动 follow-up。  
 最终链路必须收敛为：
@@ -1747,7 +1859,11 @@ Review 时新增检查：
   ],
   "uiHints": {
     "canUploadMoreImages": true,
-    "maxQuestionsThisRound": 3
+    "maxQuestionsThisRound": 1,
+    "questionDisplayMode": "single",
+    "answerSubmitMode": "per_question",
+    "optionLayout": "vertical",
+    "transition": "swiper"
   }
 }
 ```
@@ -2463,6 +2579,10 @@ DiagnosePopup
 问诊系统必须满足：
 
 - 所有正式问题支持 `yes / no / unknown`
+- 视觉症状进入问诊题干时必须使用中性事实名，不得把尚未确认的成因写进症状名；例如 `holes_in_leaf` 应写成“叶片孔洞”，不得写成“叶子被咬出了洞”，除非已由直接虫害线索确认虫害路径
+- `yes` 必须表示对题干正向事实的确认，`no` 必须表示否定该事实；选项文案、`option_key`、`value`、症状映射、评分增减和 review 展示不得发生语义取反
+- 对“是否真的破洞/缺损”这类结构完整性问题，`yes` 只能表示真实破洞/缺损存在，`no` 只能表示不存在真实破洞/缺损
+- 问诊题生成时必须留存当时下发的选项文本快照，review 优先展示快照，避免历史答案被当前映射重新解释
 - `unknown = 0`
 - 同组连续 `unknown >= 2` 自动切组
 - 前端不参与 question selector 策略

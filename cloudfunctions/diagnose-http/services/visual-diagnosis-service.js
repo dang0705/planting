@@ -45,6 +45,9 @@ const {
   listAuditedOutOfPoolProxyMappings
 } = require('../repositories/out-of-pool-proxy-mapping-repository')
 const {
+  getPromptSymptomDictionary
+} = require('../repositories/symptom-repository')
+const {
   buildOutOfPoolSymptomHintsFromCandidates
 } = require('../utils/out-of-pool-proxy')
 
@@ -71,6 +74,80 @@ function extractOutOfPoolSymptomCandidates(payload = null) {
     ? payload.out_of_pool_symptom_candidates
     : []
   ).filter(item => item && typeof item === 'object')
+}
+
+function buildSymptomDisplayNameMap(symptomRows = []) {
+  return new Map(
+    (Array.isArray(symptomRows) ? symptomRows : [])
+      .map(item => {
+        const symptomKey = normalizeText(item?.symptomKey || '')
+        const displayName = normalizeText(
+          item?.displayTextCn || item?.symptomCn || symptomKey,
+          symptomKey
+        )
+        return symptomKey && displayName ? [symptomKey, displayName] : null
+      })
+      .filter(Boolean)
+  )
+}
+
+async function loadSymptomDisplayNameMap() {
+  try {
+    return buildSymptomDisplayNameMap(await getPromptSymptomDictionary())
+  } catch (error) {
+    console.warn('diagnose-http visual canonical symptom names degraded:', error?.message || error)
+    return new Map()
+  }
+}
+
+function canonicalizeSymptomCandidate(candidate = null, displayNameMap = new Map()) {
+  if (!candidate || typeof candidate !== 'object') {
+    return candidate
+  }
+
+  const symptomKey = normalizeText(candidate?.symptom_key || candidate?.symptomKey || '')
+  const canonicalDisplayName = symptomKey ? normalizeText(displayNameMap.get(symptomKey) || '') : ''
+  if (!symptomKey || !canonicalDisplayName) {
+    return candidate
+  }
+
+  return {
+    ...candidate,
+    symptom_key: symptomKey,
+    display_name_cn: canonicalDisplayName
+  }
+}
+
+function canonicalizeVisualPayload(payload = null, displayNameMap = new Map()) {
+  if (!payload || typeof payload !== 'object' || !displayNameMap.size) {
+    return payload
+  }
+
+  const next = { ...payload }
+  if (Array.isArray(next.symptom_candidates)) {
+    next.symptom_candidates = next.symptom_candidates.map(candidate =>
+      canonicalizeSymptomCandidate(candidate, displayNameMap)
+    )
+  }
+  if (next.parsed_result && typeof next.parsed_result === 'object') {
+    next.parsed_result = canonicalizeVisualPayload(next.parsed_result, displayNameMap)
+  }
+  if (next.parsedResult && typeof next.parsedResult === 'object') {
+    next.parsedResult = canonicalizeVisualPayload(next.parsedResult, displayNameMap)
+  }
+  return next
+}
+
+function canonicalizeVisualResult(result = null, displayNameMap = new Map()) {
+  if (!result || typeof result !== 'object' || !displayNameMap.size) {
+    return result
+  }
+
+  return {
+    ...result,
+    normalizedResult: canonicalizeVisualPayload(result.normalizedResult, displayNameMap),
+    rawStructuredOutput: canonicalizeVisualPayload(result.rawStructuredOutput, displayNameMap)
+  }
 }
 
 function isDataImageUrl(value = '') {
@@ -419,16 +496,144 @@ function buildCaseSlotSummary(imageInputs = []) {
   }))
 }
 
-async function analyzeSingleImage(imageRuntimeInput, { visualCallBatchId, onText } = {}) {
+function emitVisualStreamEvent(onVisualEvent, eventName, payload = {}) {
+  if (typeof onVisualEvent !== 'function') return
+  try {
+    onVisualEvent(eventName, payload)
+  } catch (error) {
+    console.warn('diagnose-http visual stream event ignored:', error?.message || error)
+  }
+}
+
+function normalizeVisualStreamList(value) {
+  return Array.isArray(value) ? value.filter(Boolean) : []
+}
+
+function pickVisualStreamText(...values) {
+  for (const value of values) {
+    const text = normalizeText(value, '')
+    if (text) return text
+  }
+  return ''
+}
+
+function pickVisualStreamNumber(...values) {
+  for (const value of values) {
+    const number = Number(value)
+    if (Number.isFinite(number)) return number
+  }
+  return null
+}
+
+function pickVisualStreamCandidate(item = {}) {
+  if (!item || typeof item !== 'object') return null
+  return {
+    symptomKey: pickVisualStreamText(item.symptomKey, item.symptom_key, item.objectKey, item.object_key),
+    symptomCn: pickVisualStreamText(
+      item.symptomCn,
+      item.symptom_cn,
+      item.displayTextCn,
+      item.display_text_cn,
+      item.displayName,
+      item.display_name,
+      item.rawVisualNameCn,
+      item.raw_visual_name_cn
+    ),
+    rawVisualNameCn: pickVisualStreamText(item.rawVisualNameCn, item.raw_visual_name_cn),
+    rawVisualNameEn: pickVisualStreamText(item.rawVisualNameEn, item.raw_visual_name_en),
+    confidence: pickVisualStreamNumber(item.confidence, item.score),
+    targetLayer: pickVisualStreamText(item.targetLayer, item.target_layer),
+    evidenceRole: pickVisualStreamText(item.evidenceRole, item.evidence_role),
+    reason: pickVisualStreamText(item.reason, item.admissionReason, item.admission_reason),
+    closestSymptomKeyHint: pickVisualStreamText(
+      item.closestSymptomKeyHint,
+      item.closest_symptom_key_hint
+    ),
+    admissionResult: pickVisualStreamText(item.admissionResult, item.admission_result)
+  }
+}
+
+function compactVisualStreamCandidates(items = [], limit = 8) {
+  return normalizeVisualStreamList(items)
+    .map(pickVisualStreamCandidate)
+    .filter(Boolean)
+    .slice(0, limit)
+}
+
+function buildVisualDecisionStreamSummary(aggregateResult = {}) {
+  const observedSymptoms = compactVisualStreamCandidates(
+    aggregateResult.observed_symptoms || aggregateResult.observedSymptoms || [],
+    12
+  )
+  const symptomCandidates = compactVisualStreamCandidates(
+    aggregateResult.aggregated_symptom_candidates ||
+      aggregateResult.aggregatedSymptomCandidates ||
+      aggregateResult.symptom_candidates ||
+      aggregateResult.symptomCandidates ||
+      aggregateResult.in_pool_symptom_candidates ||
+      aggregateResult.inPoolSymptomCandidates ||
+      [],
+    12
+  )
+  const outOfPoolSymptomCandidates = compactVisualStreamCandidates(
+    aggregateResult.out_of_pool_symptom_candidates ||
+      aggregateResult.outOfPoolSymptomCandidates ||
+      aggregateResult.out_of_pool_symptom_hints ||
+      aggregateResult.outOfPoolSymptomHints ||
+      [],
+    12
+  )
+  const routeHints = normalizeVisualStreamList(
+    aggregateResult.aggregate_route_hints ||
+      aggregateResult.aggregateRouteHints ||
+      aggregateResult.route_hints ||
+      aggregateResult.routeHints ||
+      []
+  )
+    .map(item => pickVisualStreamText(item?.type, item?.key, item?.route, item))
+    .filter(Boolean)
+    .slice(0, 8)
+
+  return {
+    contractVersion: 'visual_decision_stream_v2',
+    observedSymptoms,
+    symptomCandidates,
+    aggregatedSymptomCandidates: symptomCandidates,
+    outOfPoolSymptomCandidates,
+    routeHints,
+    counts: {
+      observedSymptoms: observedSymptoms.length,
+      symptomCandidates: symptomCandidates.length,
+      outOfPoolSymptomCandidates: outOfPoolSymptomCandidates.length,
+      routeHints: routeHints.length
+    },
+    visualBatchTrace: aggregateResult.visual_batch_trace || aggregateResult.visualBatchTrace || null
+  }
+}
+
+async function analyzeSingleImage(
+  imageRuntimeInput,
+  { visualCallBatchId, onText, llmOptions = {} } = {}
+) {
+  const startedAt = Date.now()
+  const primaryStartedAt = Date.now()
   const primaryResult = await primaryVisualAdapter.analyzeImage(imageRuntimeInput, {
     visualCallBatchId,
     onText,
-    adapterMetaOverride: primaryAdapterMetaOverride
+    adapterMetaOverride: primaryAdapterMetaOverride,
+    llmOptions
   })
+  const primaryMs = Math.max(0, Date.now() - primaryStartedAt)
 
   if (!shadowVisualAdapter) {
     return {
       ...primaryResult,
+      visualAdapterTiming: {
+        primaryMs,
+        shadowMs: 0,
+        shadowStatus: 'disabled',
+        totalMs: Math.max(0, Date.now() - startedAt)
+      },
       shadowCompare: {
         enabled: 0,
         compare_status: 'disabled',
@@ -439,6 +644,7 @@ async function analyzeSingleImage(imageRuntimeInput, { visualCallBatchId, onText
   }
 
   try {
+    const shadowStartedAt = Date.now()
     const shadowResult = await shadowVisualAdapter.analyzeImage(
       {
         ...imageRuntimeInput,
@@ -454,9 +660,16 @@ async function analyzeSingleImage(imageRuntimeInput, { visualCallBatchId, onText
         adapterMetaOverride: shadowAdapterMetaOverride
       }
     )
+    const shadowMs = Math.max(0, Date.now() - shadowStartedAt)
 
     return {
       ...primaryResult,
+      visualAdapterTiming: {
+        primaryMs,
+        shadowMs,
+        shadowStatus: 'succeeded',
+        totalMs: Math.max(0, Date.now() - startedAt)
+      },
       shadowCompare: {
         enabled: 1,
         compare_status: 'succeeded',
@@ -470,6 +683,12 @@ async function analyzeSingleImage(imageRuntimeInput, { visualCallBatchId, onText
   } catch (error) {
     return {
       ...primaryResult,
+      visualAdapterTiming: {
+        primaryMs,
+        shadowMs: Math.max(0, Date.now() - startedAt - primaryMs),
+        shadowStatus: 'failed',
+        totalMs: Math.max(0, Date.now() - startedAt)
+      },
       shadowCompare: {
         enabled: 1,
         compare_status: 'failed',
@@ -1061,6 +1280,9 @@ async function persistVisualBatchArtifacts({
       out_of_pool_replay_image_ref: outOfPoolAuditImageRef || null,
       upload_compression: input.uploadCompression || null,
       shadow_compare: shadowCompare,
+      llm_timing: result?.llmTiming || null,
+      adapter_timing: result?.adapterTiming || null,
+      visual_adapter_timing: result?.visualAdapterTiming || null,
       llm_prompt: result?.llmPromptAudit || null,
       llm_usage: result?.llmUsage || null,
       parsed_result: parsedStructuredOutput
@@ -1111,7 +1333,12 @@ async function persistVisualBatchArtifacts({
         rawTextOutput: success ? result?.rawTextOutput || '' : '',
         rawStructuredOutput: stringifyJson(rawStructuredOutput),
         callStatus: success ? 'succeeded' : 'failed',
-        latencyMs: 0,
+        latencyMs: Number(
+          result?.visualAdapterTiming?.primaryMs ||
+            result?.adapterTiming?.llmMs ||
+            result?.llmTiming?.totalMs ||
+            0
+        ),
         errorCode: success ? '' : 'visual_adapter_failed'
         }
       })()
@@ -1323,8 +1550,11 @@ async function analyzeAndPersistVisualBatch({
   imageInputs = [],
   originVisualCallBatchId = '',
   supersedeSource = 'diagnosis_start',
-  onText
+  onText,
+  onVisualEvent,
+  llmOptions = {}
 } = {}) {
+  const batchStartedAt = Date.now()
   const baseNormalizedInputs = (Array.isArray(imageInputs) ? imageInputs : [])
     .map(buildImageRuntimeInput)
     .filter(Boolean)
@@ -1344,22 +1574,67 @@ async function analyzeAndPersistVisualBatch({
       aggregateResult: null
     }
   }
+  const inputNormalizeMs = Math.max(0, Date.now() - batchStartedAt)
 
   const visualCallBatchId = buildRuntimeId('visbatch')
+  emitVisualStreamEvent(onVisualEvent, 'visual_input_ready', {
+    sessionId,
+    visualCallBatchId,
+    imageCount: normalizedInputs.length,
+    caseSlotSummary
+  })
+
+  const modelFanoutStartedAt = Date.now()
+  emitVisualStreamEvent(onVisualEvent, 'visual_model_started', {
+    sessionId,
+    visualCallBatchId,
+    imageCount: normalizedInputs.length
+  })
   const settledResults = await Promise.allSettled(
     normalizedInputs.map((imageRuntimeInput, index) =>
       analyzeSingleImage(imageRuntimeInput, {
         visualCallBatchId,
-        onText: normalizedInputs.length === 1 && index === 0 ? onText : undefined
+        onText:
+          normalizedInputs.length === 1 && index === 0
+            ? (chunk, fullText) => {
+                if (typeof onText === 'function') {
+                  onText(chunk, fullText)
+                }
+              }
+            : undefined,
+        llmOptions
       })
     )
   )
+  const modelFanoutMs = Math.max(0, Date.now() - modelFanoutStartedAt)
+  emitVisualStreamEvent(onVisualEvent, 'visual_model_complete', {
+    sessionId,
+    visualCallBatchId,
+    imageCount: normalizedInputs.length,
+    fulfilledCount: settledResults.filter(item => item.status === 'fulfilled').length,
+    rejectedCount: settledResults.filter(item => item.status === 'rejected').length,
+    elapsedMs: modelFanoutMs
+  })
 
-  const successfulResults = settledResults
+  const canonicalizeStartedAt = Date.now()
+  const symptomDisplayNameMap = await loadSymptomDisplayNameMap()
+  const canonicalizedSettledResults = settledResults.map(item => {
+    if (item?.status !== 'fulfilled' || !item?.value) {
+      return item
+    }
+    return {
+      ...item,
+      value: canonicalizeVisualResult(item.value, symptomDisplayNameMap)
+    }
+  })
+  const canonicalizeMs = Math.max(0, Date.now() - canonicalizeStartedAt)
+
+  const successfulResults = canonicalizedSettledResults
     .filter(item => item.status === 'fulfilled' && item?.value?.normalizedResult)
     .map(item => item.value)
-  const visualFailureSummary = buildVisualFailureSummary(settledResults, normalizedInputs)
+  const visualFailureSummary = buildVisualFailureSummary(canonicalizedSettledResults, normalizedInputs)
 
+  const aggregateStartedAt = Date.now()
   const aggregateResult = await buildAggregateResult({
     sessionId,
     visualCallBatchId,
@@ -1368,24 +1643,61 @@ async function analyzeAndPersistVisualBatch({
     imageInputs: normalizedInputs,
     successfulResults
   })
+  const aggregateMs = Math.max(0, Date.now() - aggregateStartedAt)
+  emitVisualStreamEvent(onVisualEvent, 'visual_decision_ready', {
+    sessionId,
+    visualCallBatchId,
+    imageCount: normalizedInputs.length,
+    successCount: successfulResults.length,
+    failedCount: Math.max(0, canonicalizedSettledResults.length - successfulResults.length),
+    elapsedMs: aggregateMs,
+    decision: buildVisualDecisionStreamSummary(aggregateResult)
+  })
 
   let persistedVisualCallBatchId = null
+  let persistMs = 0
+  let persistStatus = 'skipped'
   try {
+    const persistStartedAt = Date.now()
     await persistVisualBatchArtifacts({
       sessionId,
       openid,
       visualCallBatchId,
       imageInputs: normalizedInputs,
-      settledResults: settledResults.map((item, index) => ({
+      settledResults: canonicalizedSettledResults.map((item, index) => ({
         ...item,
         imageRuntimeInput: normalizedInputs[index]
       })),
       aggregateResult
     })
+    persistMs = Math.max(0, Date.now() - persistStartedAt)
+    persistStatus = 'succeeded'
     persistedVisualCallBatchId = visualCallBatchId
   } catch (error) {
+    persistMs = Math.max(0, Date.now() - (batchStartedAt + inputNormalizeMs + modelFanoutMs + canonicalizeMs + aggregateMs))
+    persistStatus = 'degraded'
     console.warn('diagnose-http visual batch persistence degraded:', error?.message || error)
   }
+  emitVisualStreamEvent(onVisualEvent, 'visual_persisted', {
+    sessionId,
+    visualCallBatchId: persistedVisualCallBatchId || visualCallBatchId,
+    persistStatus,
+    elapsedMs: persistMs
+  })
+  console.log('diagnose-http visual batch timing:', {
+    sessionId,
+    visualCallBatchId,
+    imageCount: normalizedInputs.length,
+    successCount: successfulResults.length,
+    failedCount: Math.max(0, canonicalizedSettledResults.length - successfulResults.length),
+    inputNormalizeMs,
+    modelFanoutMs,
+    canonicalizeMs,
+    aggregateMs,
+    persistMs,
+    persistStatus,
+    totalMs: Math.max(0, Date.now() - batchStartedAt)
+  })
 
   if (!successfulResults.length) {
     console.error('diagnose-http visual batch final failure:', {

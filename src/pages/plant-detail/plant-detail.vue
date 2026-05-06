@@ -38,6 +38,7 @@
       <!-- 快速操作 -->
       <view class="flex gap-2 px-4 mb-3">
         <button
+          id="plant-detail-diagnose-button"
           class="flex-1 border border-gray-300 rounded-2xl p-3.5 px-2 flex flex-col items-center gap-1.5 border-none"
           style="background: linear-gradient(135deg, #2d7a4f 0%, #52b788 100%)"
           @click="startDiagnosis"

@@ -41,6 +41,20 @@ function normalizeNullableSqlDateTime(value) {
   return normalized || null
 }
 
+function normalizeAdviceText(value = '') {
+  return String(value || '').trim()
+}
+
+function pickAdviceTextFromSteps(items = []) {
+  for (const item of Array.isArray(items) ? items : []) {
+    const text = typeof item === 'string'
+      ? normalizeAdviceText(item)
+      : normalizeAdviceText(item?.text || item?.title || item?.label || '')
+    if (text) return text
+  }
+  return ''
+}
+
 async function upsertDiagnosisSession({
   sessionId,
   openid,
@@ -67,6 +81,19 @@ async function upsertDiagnosisSession({
   const isProblematicOutcome = outcomeType === 'problematic'
   const shouldMarkEnded = sessionStatus === 'completed'
   const outcomePayloadJson = buildOutcomePayload(response)
+  const explanation = response?.resultExplanation || response?.explanation || {}
+  const persistedTreatment = normalizeAdviceText(
+    response?.treatmentText ||
+      response?.treatment ||
+      explanation?.firstAid ||
+      pickAdviceTextFromSteps(response?.nextSteps)
+  )
+  const persistedPrevention = normalizeAdviceText(
+    response?.preventionText ||
+      response?.prevention ||
+      explanation?.avoid ||
+      pickAdviceTextFromSteps(response?.whatToAvoid)
+  )
   const normalizedTopProblemScore = normalizeNullableSqlNumber(
     topProblemRanking?.finalScore ?? topRanking?.finalScore
   )
@@ -128,8 +155,8 @@ async function upsertDiagnosisSession({
         ? (finalResult?.displayName || topProblem?.displayName)
         : null
     ),
-    treatment: response?.resultExplanation?.firstAid || '',
-    prevention: response?.resultExplanation?.avoid || '',
+    treatment: persistedTreatment,
+    prevention: persistedPrevention,
     endedAtFlag: shouldMarkEnded ? 1 : 0
   })
 }

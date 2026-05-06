@@ -18,7 +18,7 @@ const {
 const {
   getVisualAggregateResultByBatchId
 } = require('../repositories/visual-aggregate-repository')
-const { getProblemsByKeys } = require('../repositories/problem-repository')
+const { getProblemsByKeys, getExplanationsByProblemKeys } = require('../repositories/problem-repository')
 const { getLatestQueueBySession } = require('../repositories/question-queue-repository')
 const { listFollowUpRows } = require('../repositories/session-follow-up-repository')
 const { getLatestStopStateBySession } = require('../repositories/stop-state-repository')
@@ -61,6 +61,89 @@ function toPublicProblemId(problemValue = '') {
   if (!value) return ''
   if (value.startsWith('p_')) return value
   return toProblemId(value)
+}
+
+function toInternalProblemKey(problemValue = '') {
+  const value = normalizeStoredNullableText(problemValue, '')
+  if (!value) return ''
+  return fromProblemId(value) || value
+}
+
+function buildGovernedExplanation(problem = null, explanationRow = null) {
+  if (!problem) return null
+
+  return {
+    whyItHappens:
+      explanationRow?.whyItHappensCn ||
+      problem?.userDefinitionCn ||
+      problem?.definition ||
+      '',
+    whatToCheckNext: explanationRow?.whatToCheckNextCn || '',
+    firstAid:
+      explanationRow?.firstAidCn ||
+      problem?.userActionCn ||
+      problem?.defaultAction ||
+      '',
+    avoid:
+      explanationRow?.avoidCn ||
+      problem?.userPreventionCn ||
+      problem?.defaultPrevention ||
+      '',
+    reassurance: explanationRow?.reassuranceCn || ''
+  }
+}
+
+async function resolveGovernedProblemAdvice(problemValue = '') {
+  const problemKey = toInternalProblemKey(problemValue)
+  if (!problemKey) return null
+
+  const [problems, explanations] = await Promise.all([
+    getProblemsByKeys([problemKey]),
+    getExplanationsByProblemKeys([problemKey])
+  ])
+  const problem = problems.find(item => item.problemKey === problemKey) || null
+  if (!problem) return null
+
+  const explanationRow = explanations.find(item => item.problemKey === problemKey) || null
+  const explanation = buildGovernedExplanation(problem, explanationRow)
+  const nextSteps = explanation?.firstAid
+    ? [{ stepId: 'advice_1', text: explanation.firstAid, type: explanationRow ? 'explanation' : 'problem_fallback' }]
+    : []
+  const whatToAvoid = explanation?.avoid ? [explanation.avoid] : []
+
+  return {
+    problemKey,
+    explanation,
+    nextSteps,
+    whatToAvoid
+  }
+}
+
+function buildProblematicAdviceGovernanceFallback(problemValue = '') {
+  const problemKey = toInternalProblemKey(problemValue)
+  const firstAid = '当前结果暂未匹配到已审核的处理建议。建议先保持养护条件稳定，观察问题是否扩大或重复出现，再结合人工复核结果决定具体处理。'
+  const avoid = '不要在缺少已审核处理建议时直接大幅调整浇水、施肥、修剪或用药。'
+
+  return {
+    problemKey,
+    explanation: {
+      whyItHappens: problemKey
+        ? `当前问题 ${problemKey} 缺少可用于用户端展示的已审核解释。`
+        : '当前问题缺少可用于用户端展示的已审核解释。',
+      whatToCheckNext: '请优先核对该结果是否已有 audited explanation 或 audited problem action 字段。',
+      firstAid,
+      avoid,
+      reassurance: '这是治理兜底文案，用于避免把未审核旧建议当作正式处理建议展示。'
+    },
+    nextSteps: [
+      {
+        stepId: 'advice_governance_fallback',
+        text: firstAid,
+        type: 'governance_fallback'
+      }
+    ],
+    whatToAvoid: [avoid]
+  }
 }
 
 async function getObservedSymptomsBySession(sessionId) {
@@ -150,17 +233,34 @@ async function getSessionState(openid, sessionId) {
     session.latest_visual_call_batch_id,
     runtimeSnapshot
   )
-  const persistedObservedEvidenceSet = await getObservedEvidenceSetBySession(sessionId, openid)
+  const hasSnapshotQuestionQueue =
+    runtimeSnapshot && Number(runtimeSnapshot?.questionQueue?.roundIndex || 0) > 0
+  const hasSnapshotStopState = Boolean(
+    runtimeSnapshot && (runtimeSnapshot?.stopState || runtimeSnapshot?.outputEligibility)
+  )
+  const snapshotObservedEvidenceSet = normalizePublicObservedEvidenceSet(runtimeSnapshot?.observedEvidenceSet || [])
+  const snapshotHasObservedEvidenceSet = Array.isArray(runtimeSnapshot?.observedEvidenceSet)
+  const snapshotVisualAggregateSummary = runtimeSnapshot?.visualAggregateSummary || null
+  const shouldLoadObservedEvidenceSet = !snapshotHasObservedEvidenceSet
+  const shouldLoadVisualAggregateResult = !snapshotVisualAggregateSummary && Boolean(
+    latestVisualCallBatchId
+  )
   const [
     persistedQuestionQueue,
     persistedStopStateBundle,
     followUpRows,
+    persistedObservedEvidenceSet,
     persistedVisualAggregateResult
   ] = await Promise.all([
-    getLatestQueueBySession(sessionId, openid),
-    getLatestStopStateBySession(sessionId, openid),
+    hasSnapshotQuestionQueue ? Promise.resolve(null) : getLatestQueueBySession(sessionId, openid),
+    hasSnapshotStopState ? Promise.resolve(null) : getLatestStopStateBySession(sessionId, openid),
     listFollowUpRows(sessionId),
-    getVisualAggregateResultByBatchId(latestVisualCallBatchId)
+    shouldLoadObservedEvidenceSet
+      ? getObservedEvidenceSetBySession(sessionId, openid)
+      : Promise.resolve(snapshotObservedEvidenceSet),
+    shouldLoadVisualAggregateResult
+      ? getVisualAggregateResultByBatchId(latestVisualCallBatchId)
+      : Promise.resolve(snapshotVisualAggregateSummary)
   ])
   const mergedQuestionQueue = mergeRuntimeQueue(
     persistedQuestionQueue,
@@ -246,10 +346,7 @@ async function getSessionState(openid, sessionId) {
     diagnosticTrace: Array.isArray(runtimeSnapshot?.diagnosticTrace)
       ? runtimeSnapshot.diagnosticTrace
       : [],
-    observedEvidenceSet:
-      persistedObservedEvidenceSet.length
-        ? persistedObservedEvidenceSet
-        : normalizePublicObservedEvidenceSet(runtimeSnapshot?.observedEvidenceSet),
+    observedEvidenceSet: persistedObservedEvidenceSet,
     derivedEvidenceSet: normalizePublicDerivedEvidenceSet(runtimeSnapshot?.derivedEvidenceSet),
     diagnosisDirections: normalizePublicDiagnosisDirectionSet(runtimeSnapshot?.diagnosisDirections),
     symptomClassRuntime: normalizePublicSymptomClassRuntime(runtimeSnapshot?.symptomClassRuntime),
@@ -266,6 +363,7 @@ async function getSessionState(openid, sessionId) {
     currentRoundId: normalizeStoredNullableText(session.current_round_id, ''),
     currentRoundIndex: Number(session.current_round_index || 0),
     latestVisualCallBatchId,
+    followUpRows,
     outcomeType: normalizeOutcomeType(session.outcome_type, ''),
     sessionStatus: normalizeStoredNullableText(session.session_status, ''),
     askedQuestionKeys: Array.from(new Set(askedQuestionKeys)),
@@ -446,6 +544,24 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
     const diagnosticTrace = Array.isArray(snapshot?.diagnosticTrace)
       ? snapshot.diagnosticTrace
       : []
+    const governedAdvice = normalizedSnapshotOutcomeType === 'problematic'
+      ? await resolveGovernedProblemAdvice(
+          snapshot?.finalResult?.problemId ||
+            snapshot?.finalResult?.problemKey ||
+            snapshot?.topProblem?.problemId ||
+            snapshot?.topProblem?.problemKey ||
+            ''
+        )
+      : null
+    const effectiveGovernedAdvice = normalizedSnapshotOutcomeType === 'problematic'
+      ? governedAdvice || buildProblematicAdviceGovernanceFallback(
+          snapshot?.finalResult?.problemId ||
+            snapshot?.finalResult?.problemKey ||
+            snapshot?.topProblem?.problemId ||
+            snapshot?.topProblem?.problemKey ||
+            ''
+        )
+      : null
     const coreProcess = buildPublicCoreProcess({
       latestVisualCallBatchId,
       visualBatchTrace: snapshot?.visualBatchTrace || null,
@@ -500,13 +616,23 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
       diagnosticTrace,
       coreProcess,
       finalResult: snapshot.finalResult || null,
-      explanation: snapshot.explanation || {},
+      explanation: effectiveGovernedAdvice?.explanation || snapshot.explanation || {},
       contributingFactors: Array.isArray(snapshot.contributingFactors) ? snapshot.contributingFactors : [],
       intermediateStates: Array.isArray(snapshot.intermediateStates) ? snapshot.intermediateStates : [],
       confidenceLevel: snapshot.confidenceLevel || 'normal',
       needHumanReview: Boolean(snapshot.needHumanReview),
-      nextSteps: Array.isArray(snapshot.nextSteps) ? snapshot.nextSteps : [],
-      whatToAvoid: Array.isArray(snapshot.whatToAvoid) ? snapshot.whatToAvoid : [],
+      nextSteps:
+        effectiveGovernedAdvice?.nextSteps?.length
+          ? effectiveGovernedAdvice.nextSteps
+          : Array.isArray(snapshot.nextSteps)
+            ? snapshot.nextSteps
+            : [],
+      whatToAvoid:
+        effectiveGovernedAdvice?.whatToAvoid?.length
+          ? effectiveGovernedAdvice.whatToAvoid
+          : Array.isArray(snapshot.whatToAvoid)
+            ? snapshot.whatToAvoid
+            : [],
       followUps: Array.isArray(snapshot.askedQuestions) ? snapshot.askedQuestions : [],
       versionMetadata: snapshot.versionMetadata || {},
       timeline: {
@@ -523,6 +649,12 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
     row.current_route_primary_action,
     ''
   )
+  const governedAdvice = normalizedOutcomeType === 'problematic'
+    ? await resolveGovernedProblemAdvice(row.final_problem_key || row.top_problem_key || '')
+    : null
+  const effectiveGovernedAdvice = normalizedOutcomeType === 'problematic'
+    ? governedAdvice || buildProblematicAdviceGovernanceFallback(row.final_problem_key || row.top_problem_key || '')
+    : null
   const observedEvidenceSet =
     persistedObservedEvidenceSet.length
       ? persistedObservedEvidenceSet
@@ -634,11 +766,14 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
           : 'medium'
     },
     explanation: {
-      whyItHappens: row.ai_summary || '',
-      whatToCheckNext: '',
-      firstAid: row.treatment || '',
-      avoid: row.prevention || ''
+      whyItHappens: effectiveGovernedAdvice?.explanation?.whyItHappens || row.ai_summary || '',
+      whatToCheckNext: effectiveGovernedAdvice?.explanation?.whatToCheckNext || '',
+      firstAid: effectiveGovernedAdvice?.explanation?.firstAid || row.treatment || '',
+      avoid: effectiveGovernedAdvice?.explanation?.avoid || row.prevention || '',
+      reassurance: effectiveGovernedAdvice?.explanation?.reassurance || ''
     },
+    nextSteps: effectiveGovernedAdvice?.nextSteps || [],
+    whatToAvoid: effectiveGovernedAdvice?.whatToAvoid || [],
     contributingFactors: [],
     intermediateStates: [],
     versionMetadata: {},

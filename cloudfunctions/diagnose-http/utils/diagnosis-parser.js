@@ -45,6 +45,137 @@ function safeJsonParse(value) {
   }
 }
 
+function escapeRegExp(value = '') {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function extractJsonStringField(source = '', fieldName = '') {
+  const pattern = new RegExp(`"${escapeRegExp(fieldName)}"\\s*:\\s*"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"`, 'i')
+  const match = String(source || '').match(pattern)
+  if (!match?.[1]) return ''
+
+  try {
+    return JSON.parse(`"${match[1]}"`)
+  } catch {
+    return match[1]
+  }
+}
+
+function extractJsonArrayBlock(source = '', fieldName = '') {
+  const text = String(source || '')
+  const keyPattern = new RegExp(`"${escapeRegExp(fieldName)}"\\s*:`, 'i')
+  const keyMatch = keyPattern.exec(text)
+  if (!keyMatch) return null
+
+  const arrayStart = text.indexOf('[', keyMatch.index + keyMatch[0].length)
+  if (arrayStart < 0) return null
+
+  let depth = 0
+  let inString = false
+  let escaped = false
+  for (let i = arrayStart; i < text.length; i += 1) {
+    const char = text[i]
+
+    if (inString) {
+      if (escaped) {
+        escaped = false
+      } else if (char === '\\') {
+        escaped = true
+      } else if (char === '"') {
+        inString = false
+      }
+      continue
+    }
+
+    if (char === '"') {
+      inString = true
+      continue
+    }
+
+    if (char === '[') {
+      depth += 1
+      continue
+    }
+
+    if (char === ']') {
+      depth -= 1
+      if (depth === 0) {
+        return text.slice(arrayStart, i + 1)
+      }
+    }
+  }
+
+  return null
+}
+
+function safeJsonParseArrayField(source = '', fieldName = '') {
+  const arrayBlock = extractJsonArrayBlock(source, fieldName)
+  const parsed = safeJsonParse(arrayBlock)
+  return Array.isArray(parsed) ? parsed : []
+}
+
+function parsePartialStructuredVisualResult(text) {
+  const source = String(text || '').trim()
+  if (!source) return null
+
+  const symptomCandidates = safeJsonParseArrayField(source, 'symptom_candidates')
+    .map(normalizeSymptomCandidate)
+    .filter(Boolean)
+    .slice(0, 8)
+  const legacyCandidates = symptomCandidates.length
+    ? []
+    : buildLegacyCandidates({ symptoms: safeJsonParseArrayField(source, 'symptoms') }).slice(0, 8)
+  const outOfPoolCandidates = safeJsonParseArrayField(source, 'out_of_pool_symptom_candidates')
+    .map(normalizeOutOfPoolSymptomCandidate)
+    .filter(Boolean)
+    .slice(0, 5)
+
+  const normalizedOrgan = extractJsonStringField(source, 'normalized_organ')
+  const qualityGrade = normalizeQualityGrade(
+    extractJsonStringField(source, 'image_quality_grade') ||
+      extractJsonStringField(source, 'image_quality'),
+    'medium'
+  )
+  const analyzability = normalizeAnalyzability(
+    extractJsonStringField(source, 'analyzability'),
+    qualityGrade === 'good' ? 'high' : qualityGrade === 'poor' ? 'low' : 'medium'
+  )
+  const routeHints = normalizeRouteHints(safeJsonParseArrayField(source, 'route_hints'))
+  const suggestedFollowupCapture = normalizeSuggestedFollowupCapture(
+    safeJsonParseArrayField(source, 'suggested_followup_capture')
+  )
+  const normalizationNotes = normalizeNotes(safeJsonParseArrayField(source, 'normalization_notes'))
+  const uncertainSymptoms = safeJsonParseArrayField(source, 'uncertain_symptoms')
+    .map(item => String(item?.symptom_key || item?.symptomKey || item || '').trim())
+    .filter(Boolean)
+    .slice(0, 5)
+
+  if (
+    !symptomCandidates.length &&
+    !legacyCandidates.length &&
+    !outOfPoolCandidates.length &&
+    !normalizedOrgan &&
+    !routeHints.length
+  ) {
+    return null
+  }
+
+  return {
+    normalized_organ: normalizeOrgan(normalizedOrgan, 'unknown'),
+    image_quality_grade: qualityGrade,
+    analyzability,
+    symptom_candidates: symptomCandidates.length ? symptomCandidates : legacyCandidates,
+    out_of_pool_symptom_candidates: outOfPoolCandidates,
+    route_hints: routeHints,
+    suggested_followup_capture: suggestedFollowupCapture,
+    normalization_notes: Array.from(new Set([
+      ...normalizationNotes,
+      'partial_model_output_salvaged'
+    ])),
+    uncertain_symptoms: uncertainSymptoms
+  }
+}
+
 function normalizeSentence(text) {
   return String(text || '')
     .replace(/\r/g, '')
@@ -121,12 +252,12 @@ function buildLegacyCandidates(payload = {}) {
 function parseStructuredVisualResult(text) {
   const jsonBlock = extractJsonBlock(text)
   if (!jsonBlock) {
-    return null
+    return parsePartialStructuredVisualResult(text)
   }
 
   const payload = safeJsonParse(jsonBlock)
   if (!payload || typeof payload !== 'object') {
-    return null
+    return parsePartialStructuredVisualResult(text)
   }
 
   const symptomCandidates = Array.isArray(payload?.symptom_candidates)

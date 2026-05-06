@@ -906,3 +906,96 @@ taxonomy 命中后可形成：
 - 退役原因
 - 治理动作
 都不相同。
+
+---
+
+# 附录 E：收益驱动停止策略硬约束（本次新增，不替换原文与既有附录）
+
+## E-1. 不得恢复硬性 2 轮停止
+
+新增系统级硬规则：
+
+# **一页一题模式下不得恢复“最多 2 轮”作为常规 final 停止条件。**
+
+轮次只能用于：
+
+- 审计
+- 用户体验保护
+- 系统资源保护
+- 异常兜底
+
+轮次不得替代：
+
+- 必答 gate 判定
+- output eligibility 判定
+- 下一题高价值收益判定
+- stop_state 判定
+
+## E-2. 只有必答 gate 可以阻塞 final
+
+新增系统级硬规则：
+
+# **只有进入 `gate_required_layer` 的问题或守卫，才允许阻塞 final。**
+
+必答 gate 只能来自：
+
+1. 模式入口 gate
+2. 输出资格 gate
+3. top 与 runner-up 区分 gate
+4. 合法 uncertain gate
+5. 安全 / 动作边界 gate
+
+禁止把普通背景题、解释题、严重程度题、护理建议题包装成 gate。
+
+## E-3. 结论门槛满足后必须执行下一题收益判定
+
+新增系统级硬规则：
+
+# **当 top outcome 已满足输出资格时，系统必须先证明下一题仍有高价值收益，才能继续 follow-up。**
+
+下一题高价值必须至少满足一项：
+
+- 能补齐 context guard
+- 能改变 output eligibility
+- 能区分 top 与 runner-up
+- 能触发合法 uncertain
+
+并且必须具备可审计影响：
+
+- 非空有效 `directProblemAdjustments`
+- 或显式 `context_guard`
+- 或显式 `output_eligibility`
+- 或显式 `uncertain_legality`
+- 或显式安全 / 动作边界影响
+
+## E-4. 低价值题不得阻塞 final
+
+新增系统级硬规则：
+
+# **低价值题不得作为继续阻塞 final 的理由。**
+
+以下问题在结论门槛满足后默认属于低价值题：
+
+- `progression`
+- `distribution_scope`
+- `host_confirmation`
+- `underside_presence`
+- 无 `directProblemAdjustments` 且没有显式 gate / eligibility / uncertain 影响的问题
+- 只影响解释、严重程度、护理建议、观察提示的问题
+
+这些问题可以进入 final 后建议或 trace，不得延长 follow-up。
+
+## E-5. edema / overwatering 形态正证据不得被低增益题拖住
+
+新增系统级硬规则：
+
+# **edema / overwatering 已有正式形态正证据且满足输出资格时，不得继续被光照、分布、叶背、宿主确认等低增益题拖住。**
+
+允许继续追问的例外仅限于：
+
+- 补齐该 outcome 必需的浇水、土壤湿度、排水、盆土状态 context guard
+- 实质区分 edema / overwatering 与当前 runner-up
+- 确认关键反证并改变 output eligibility
+- 触发合法 uncertain
+
+否则必须进入 stop_state 与 final。
