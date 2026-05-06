@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <view class="min-h-screen bg-[#F8F6F0]">
     <!-- 用户信息卡片 -->
     <view class="bg-gradient-to-br from-primary to-[#52B788] px-4 pt-12 pb-8">
@@ -79,7 +79,7 @@
     <view class="px-4 pb-6">
       <view class="bg-white rounded-3xl overflow-hidden shadow-sm">
         <view
-          v-for="(item, index) in menuItems"
+          v-for="(item, index) in visibleMenuItems"
           :key="item.id"
           class="flex items-center justify-between px-4 py-4"
           :class="{ 'border-t border-gray-100': index > 0 }"
@@ -139,6 +139,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/user.js'
+import { getDiagnosisHistory } from '@/api/plants-http.js'
+import { isDevelopmentAppEnv } from '@/utils/runtime-env.js'
 
 const userStore = useUserStore()
 
@@ -210,8 +212,29 @@ const menuItems = ref([
     icon: '❓',
     title: '帮助与反馈',
     action: 'help'
+  },
+  {
+    id: 5,
+    icon: '🧾',
+    title: '池外视觉审核',
+    action: 'outOfPoolReview',
+    devOnly: true
+  },
+  {
+    id: 6,
+    icon: '诊',
+    title: '诊断记录管理',
+    action: 'diagnosisReview',
+    devOnly: true
   }
 ])
+
+const visibleMenuItems = computed(() =>
+  menuItems.value.filter(item => {
+    if (!item?.devOnly) return true
+    return isDevelopmentAppEnv()
+  })
+)
 
 // 加载诊断历史
 onMounted(() => {
@@ -223,20 +246,19 @@ async function loadDiagnoseHistory() {
 
   loadingHistory.value = true
   try {
-    const result = await wx.cloud.callFunction({
-      name: 'getDiagnoseHistory',
-      data: {
-        action: 'getList',
-        data: {
-          page: 1,
-          pageSize: 5 // 只显示最近5条
-        }
-      }
+    const result = await getDiagnosisHistory({
+      page: 1,
+      pageSize: 5
     })
 
-    if (result.result.code === 200) {
-      diagnoseHistory.value = result.result.data.list
-    }
+    diagnoseHistory.value = (result?.items || []).map(item => ({
+      _id: item.resultId || item.historyId || '',
+      plantName: '植物',
+      mainIssue: item?.summary?.displayName || '诊断记录',
+      createdAt: item.createdAt,
+      imageUrl: '',
+      severity: item?.summary?.severity || 'medium'
+    }))
   } catch (error) {
     console.error('加载诊断历史失败:', error)
   } finally {
@@ -276,18 +298,28 @@ function handleMenuClick(item) {
         icon: 'none'
       })
       break
+    case 'outOfPoolReview':
+      uni.navigateTo({
+        url: '/pages/profile/out-of-pool-review'
+      })
+      break
+    case 'diagnosisReview':
+      uni.navigateTo({
+        url: '/pages/profile/diagnosis-review'
+      })
+      break
   }
 }
 
 function viewAllHistory() {
   uni.navigateTo({
-    url: '/pages/diagnose-history/diagnose-history'
+    url: '/pages/diagnose/diagnose'
   })
 }
 
 function viewDiagnoseDetail(item) {
   uni.navigateTo({
-    url: `/pages/diagnose-detail/diagnose-detail?id=${item._id}`
+    url: `/pages/diagnose/diagnose?id=${item._id}`
   })
 }
 

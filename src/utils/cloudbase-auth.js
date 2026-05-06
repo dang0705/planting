@@ -1,7 +1,7 @@
 import cloudbase from '@cloudbase/js-sdk'
 import { registerAuth } from '@cloudbase/js-sdk/miniprogram_dist/auth'
+import { CLOUDBASE_ENV_ID } from '@/utils/runtime-env'
 registerAuth(cloudbase)
-export const CLOUDBASE_ENV_ID = 'cloud1-2grufevs395a9d5e'
 
 let cloudbaseApp = null
 let authInstance = null
@@ -48,6 +48,62 @@ export function getCloudbaseAuth() {
   return authInstance
 }
 
+export async function getWechatCloudIdentity() {
+  assertMiniProgramEnv()
+
+  return new Promise((resolve, reject) => {
+    wx.cloud.callFunction({
+      name: 'wechat-identity',
+      data: {},
+      success: res => {
+        const result = res?.result || {}
+        resolve({
+          openid: result.openid || '',
+          appid: result.appid || '',
+          unionid: result.unionid || ''
+        })
+      },
+      fail: reject
+    })
+  })
+}
+
+export async function getWechatPhoneProfile({ code = '', cloudId = '' } = {}) {
+  assertMiniProgramEnv()
+
+  const data = {}
+  if (cloudId && typeof wx.cloud.CloudID === 'function') {
+    data.weRunData = wx.cloud.CloudID(cloudId)
+  }
+  if (code) {
+    data.code = code
+  }
+
+  return new Promise((resolve, reject) => {
+    wx.cloud.callFunction({
+      name: 'wechat-phone',
+      data,
+      success: res => {
+        const result = res?.result || {}
+        if (!result.phoneNumber) {
+          reject(new Error(result.message || 'wechat-phone 未返回有效手机号'))
+          return
+        }
+
+        resolve({
+          openid: result.openid || '',
+          appid: result.appid || '',
+          unionid: result.unionid || '',
+          phoneNumber: result.phoneNumber || '',
+          purePhoneNumber: result.purePhoneNumber || '',
+          countryCode: result.countryCode || '+86'
+        })
+      },
+      fail: reject
+    })
+  })
+}
+
 export async function ensureCloudbaseLogin({ force = false } = {}) {
   const auth = getCloudbaseAuth()
 
@@ -91,6 +147,21 @@ export async function getCloudbaseAccessToken({ forceRefresh = false } = {}) {
     }
 
     throw error
+  }
+}
+
+export async function getCloudbaseUserIdentity() {
+  const wechatIdentity = await getWechatCloudIdentity()
+  if (!wechatIdentity?.openid) {
+    throw new Error('wechat-identity 未返回有效 openid')
+  }
+
+  return {
+    openid: wechatIdentity.openid,
+    uid: '',
+    customUserId: '',
+    appid: wechatIdentity.appid || '',
+    unionid: wechatIdentity.unionid || ''
   }
 }
 

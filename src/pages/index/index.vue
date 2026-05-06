@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <view class="min-h-screen bg-[#F8F6F0]">
     <!-- 自定义导航栏 -->
     <CustomNavbar title="植伴" />
@@ -44,7 +44,7 @@
             <uni-collapse-item
               v-for="plant in plantStore.userPlants"
               :key="plant.id"
-              :title="plant.name"
+              :title="plant.displayName"
               :name="plant.id"
               :open="false"
               :border="false"
@@ -77,7 +77,7 @@
                     <view class="flex-1">
                       <view class="flex items-center mb-1">
                         <text class="text-base font-semibold text-gray-800 mr-2">{{
-                          plant.name
+                          plant.displayName
                         }}</text>
                         <view
                           :class="getHealthBadgeClass(plant.healthStatus)"
@@ -96,6 +96,7 @@
 
                   <!-- 诊断按钮 -->
                   <view
+                    :id="`diagnose-entry-button-${plant.id}`"
                     class="ml-2 bg-primary px-3 py-1.5 rounded-lg flex items-center"
                     @click.stop="openDiagnose(plant)"
                   >
@@ -162,7 +163,10 @@
                 </view>
 
                 <!-- 查看详情按钮 -->
-                <view class="mt-2 py-2.5 text-center bg-primary rounded-xl" @click="viewPlantDetail(plant)">
+                <view
+                  class="mt-2 py-2.5 text-center bg-primary rounded-xl"
+                  @click="viewPlantDetail(plant)"
+                >
                   <text class="text-sm text-white font-semibold">查看详情</text>
                 </view>
               </view>
@@ -179,7 +183,41 @@
           </view>
         </view>
       </template>
-      <button v-else @click="userLogin">登录</button>
+      <view v-else class="mx-4 mt-6 bg-white rounded-[24px] p-5 shadow-sm">
+        <text class="block text-lg font-semibold text-gray-800 mb-2">登录后开始记录植物</text>
+        <text class="block text-sm text-gray-500 mb-5">
+          登录后可使用植物识别、AI 诊断、养护记录和历史同步能力。
+        </text>
+
+        <!-- #ifdef MP-WEIXIN -->
+        <button
+          id="index-phone-login-button"
+          class="w-full bg-primary text-white font-semibold py-3.5 rounded-2xl mb-3 flex items-center justify-center"
+          open-type="getPhoneNumber"
+          @getphonenumber="handleIndexPhoneLogin"
+        >
+          <text class="text-base">📱 微信手机号登录</text>
+        </button>
+        <!-- #endif -->
+
+        <!-- #ifndef MP-WEIXIN -->
+        <button
+          id="index-phone-login-unavailable-button"
+          class="w-full bg-gray-100 text-gray-500 font-semibold py-3.5 rounded-2xl mb-3 flex items-center justify-center"
+          @click="handlePhoneLoginUnavailable"
+        >
+          <text class="text-base">📱 手机号登录接入中</text>
+        </button>
+        <!-- #endif -->
+
+        <button
+          id="index-quick-login-button"
+          class="w-full bg-[#EEF3EF] text-[#2D7A4F] font-semibold py-3.5 rounded-2xl flex items-center justify-center"
+          @click="userLogin"
+        >
+          <text class="text-base">⚡ 快速登录</text>
+        </button>
+      </view>
 
       <!-- 养护知识 -->
       <view v-if="plantStore.hasPlants" class="px-4 pb-4">
@@ -204,7 +242,7 @@
       :plant-id="currentPlantId"
       :plant-name="currentPlantName"
       @success="handleDiagnoseSuccess"
-      @close="currentPlantId = ''; currentPlantName = ''"
+      @close="handleDiagnosePopupClose"
     />
   </view>
 </template>
@@ -213,9 +251,10 @@
 import { onMounted, ref, reactive } from 'vue'
 import CustomNavbar from '@/components/CustomNavbar'
 import DiagnosePopup from '@/components/DiagnosePopup.vue'
-import { usePlantStore } from '@/store/plant.js'
+import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
 import { getCityNameByLocation } from '@/api/weather.js'
+import { getDiagnosisHistory } from '@/api/plants-http.js'
 import loading from '@/assets/icons/loading.svg'
 
 const plantStore = usePlantStore()
@@ -261,22 +300,27 @@ function handleCollapseChange(e) {
 async function loadPlantDiagnoseHistory(plantId) {
   loadingHistory[plantId] = true
   try {
-    const result = await wx.cloud.callFunction({
-      name: 'getDiagnoseHistory',
-      data: {
-        action: 'getList',
-        data: {
-          page: 1,
-          pageSize: 3 // 只显示最近3条
-        }
-      }
+    const result = await getDiagnosisHistory({
+      plantId,
+      page: 1,
+      pageSize: 3
     })
 
-    if (result.result.code === 200) {
-      // 过滤出该植物的诊断记录
-      const allRecords = result.result.data.list
-      plantDiagnoseHistory[plantId] = allRecords.filter(r => r.plantId == plantId)
-    }
+    plantDiagnoseHistory[plantId] = (result?.items || []).map(item => ({
+      _id: item.resultId || item.historyId || '',
+      mainIssue: item?.summary?.displayName || '诊断记录',
+      healthStatus:
+        !item?.outcomeType
+          ? 'unknown'
+          : item?.outcomeType === 'non_problematic'
+          ? 'healthy'
+          : item?.outcomeType === 'uncertain'
+            ? 'unknown'
+            : item?.summary?.severity === 'high'
+              ? 'danger'
+              : 'warning',
+      createdAt: item.createdAt
+    }))
   } catch (error) {
     console.error('加载诊断历史失败:', error)
   } finally {
@@ -286,7 +330,7 @@ async function loadPlantDiagnoseHistory(plantId) {
 
 function openDiagnose(plant) {
   currentPlantId.value = plant.id
-  currentPlantName.value = plant.plantName || plant.name || '未知植物'
+  currentPlantName.value = plant.canonicalName || plant.displayName || '未知植物'
   diagnosePopupRef.value?.open()
 }
 
@@ -297,9 +341,14 @@ function handleDiagnoseSuccess(result) {
   }
 }
 
+function handleDiagnosePopupClose() {
+  currentPlantId.value = ''
+  currentPlantName.value = ''
+}
+
 function viewDiagnoseDetail(recordId) {
   uni.navigateTo({
-    url: `/pages/diagnose-detail/diagnose-detail?id=${recordId}`
+    url: `/pages/diagnose/diagnose?id=${recordId}`
   })
 }
 
@@ -320,6 +369,41 @@ async function userLogin() {
   await userStore.wechatLogin()
   loadUserPlants()
 }
+
+async function handleIndexPhoneLogin(e) {
+  const phonePayload = {
+    code: e?.detail?.code || '',
+    cloudId: e?.detail?.cloudID || e?.detail?.cloudId || ''
+  }
+
+  if (!phonePayload.code && !phonePayload.cloudId) {
+    console.log('首页手机号授权未返回有效桥接参数:', e?.detail)
+    return
+  }
+
+  try {
+    await userStore.phoneLogin(phonePayload)
+    await loadUserPlants()
+    uni.showToast({
+      title: '登录成功',
+      icon: 'success'
+    })
+  } catch (error) {
+    console.error('首页手机号登录失败:', error)
+    uni.showToast({
+      title: error.message || '登录失败',
+      icon: 'none'
+    })
+  }
+}
+
+function handlePhoneLoginUnavailable() {
+  uni.showToast({
+    title: '当前平台手机号登录接入中',
+    icon: 'none'
+  })
+}
+
 async function loadUserPlants() {
   if (loaded.value) return
   loaded.value = false
@@ -343,10 +427,10 @@ async function getUserLocation() {
         fail: reject
       })
     })
-    
+
     // 根据经纬度获取真实城市名称
     const cityInfo = await getCityNameByLocation(res.latitude, res.longitude)
-    
+
     userStore.setLocation({
       latitude: res.latitude,
       longitude: res.longitude,
@@ -378,10 +462,6 @@ function viewPlantDetail(plant) {
   })
 }
 
-/*function getLatestDiagnosis(plantId) {
-  return plantStore.getLatestDiagnosis(plantId)
-}*/
-
 function needsCareToday(plantId) {
   return plantStore.plantsNeedWater.some(p => p.id === plantId)
 }
@@ -391,6 +471,7 @@ function getHealthBadgeClass(status) {
     healthy: 'bg-green-500/90',
     warning: 'bg-orange-500/90',
     danger: 'bg-red-500/90',
+    sick: 'bg-red-500/90',
     unknown: 'bg-gray-400/90'
   }
   return statusClass[status] || statusClass.unknown
@@ -401,9 +482,10 @@ function getHealthText(status) {
     healthy: '健康',
     warning: '注意',
     danger: '异常',
-    unknown: '未知'
+    sick: '异常',
+    unknown: '待确认'
   }
-  return textMap[status] || '未知'
+  return textMap[status] || '待确认'
 }
 
 function getDaysAgo(date) {

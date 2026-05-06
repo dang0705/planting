@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { loginWithCode, loginWithPhone, getAccessToken } from '@/api/wechat'
+import { loginWithCode, loginWithPhone, getAccessToken, getUserById } from '@/api/wechat'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -129,8 +129,8 @@ export const useUserStore = defineStore('user', {
       const user = loginData.user || {}
 
       this.userId = user._id || user.id || loginData.userId || ''
-      this.openid = user._openid || loginData.openid || ''
-      this.union_id = user.union_id || ''
+      this.openid = user.wechat_openid || user._openid || loginData.openid || ''
+      this.union_id = user.wechat_unionid || user.union_id || ''
       this.username = user.username || ''
       this.nickname = user.profile_wechatNickname || user.nickname || user.username || '植物爱好者'
       this.avatar = user.profile_wechatAvatar || user.avatar || user.profile_avatar || ''
@@ -166,8 +166,8 @@ export const useUserStore = defineStore('user', {
      * 设置用户信息
      */
     setUserInfo(userInfo) {
-      this.openid = userInfo.openid || this.openid
-      this.union_id = userInfo.union_id || this.union_id
+      this.openid = userInfo.wechat_openid || userInfo.openid || this.openid
+      this.union_id = userInfo.wechat_unionid || userInfo.union_id || this.union_id
       this.username = userInfo.username || this.username
       this.nickname = userInfo.nickname || this.nickname
       this.avatar = userInfo.avatar || this.avatar
@@ -254,16 +254,8 @@ export const useUserStore = defineStore('user', {
       }
 
       try {
-        const result = await wx.cloud.callFunction({
-          name: 'auth-user',
-          data: {
-            action: 'getUserByOpenid',
-            data: { openid: this.openid }
-          }
-        })
-
-        if (result.result.code === 200) {
-          const user = result.result.data
+        const user = await getUserById(this.openid)
+        if (user) {
 
           // 更新会员信息
           this.membership = {
@@ -301,10 +293,6 @@ export const useUserStore = defineStore('user', {
 
   // Pinia 持久化配置
   persist: {
-    storage: {
-      getItem: key => uni.getStorageSync(key),
-      setItem: (key, value) => uni.setStorageSync(key, value)
-    },
     pick: [
       'userId',
       'openid',

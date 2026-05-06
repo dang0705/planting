@@ -22,10 +22,18 @@ export const useDiagnoseStore = defineStore('diagnose', {
     },
 
     addToHistory(diagnosis) {
+      const stableId =
+        diagnosis?.diagnosisId ||
+        diagnosis?.diagnosisSessionId ||
+        diagnosis?.resultId ||
+        diagnosis?.id ||
+        Date.now()
+
+      this.history = this.history.filter(item => item.id !== stableId)
       this.history.unshift({
         ...diagnosis,
-        id: Date.now(),
-        createTime: new Date().toISOString()
+        id: stableId,
+        createTime: diagnosis?.createTime || new Date().toISOString()
       })
 
       // 只保留最近 50 条记录

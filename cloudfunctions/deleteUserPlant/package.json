@@ -1,9 +1,0 @@
-{
-  "name": "deleteUserPlant",
-  "version": "2.0.0",
-  "description": "AI代理云函数 - 使用CloudBase AI SDK调用模型",
-  "main": "index.js",
-  "dependencies": {
-    "@cloudbase/node-sdk": "^3.16.0"
-  }
-}

@@ -1,0 +1,296 @@
+
+digraph DiagnoseFlowUltimateCN {
+  graph [
+    charset="UTF-8",
+    rankdir=TB,
+    splines=ortho,
+    nodesep=0.34,
+    ranksep=0.52,
+    pad=0.28,
+    bgcolor="white",
+    fontname="Noto Sans CJK SC",
+    labelloc="t",
+    label="绿植诊断系统完整流程图（终极版，中文主导）"
+  ];
+  node [
+    shape=box,
+    style="rounded,filled",
+    fillcolor="#F8FAFC",
+    color="#CBD5E1",
+    fontname="Noto Sans CJK SC",
+    fontsize=11,
+    margin="0.09,0.06"
+  ];
+  edge [
+    color="#94A3B8",
+    penwidth=1.15,
+    arrowsize=0.62,
+    fontname="Noto Sans CJK SC",
+    fontsize=10
+  ];
+
+  start [shape=ellipse, fillcolor="#DBEAFE", color="#60A5FA", penwidth=2, fontsize=16, label="开始\n用户发起诊断"];
+  end [shape=ellipse, fillcolor="#DCFCE7", color="#22C55E", penwidth=2, fontsize=16, label="结束\n输出最终诊断结果"];
+
+  subgraph cluster_input {
+    label="一、用户输入阶段";
+    color="#BFDBFE";
+    style="rounded";
+    in1 [label="用户拍摄 / 上传图片\n支持结构化槽位：\n图1 叶片图\n图2 茎图\n图3 根 / 根颈图\n图4 全株图\n图5 花 / 果 / 其他图"];
+    in2 [label="创建诊断会话\nsession（会话）"];
+    in3 [label="生成视觉调用批次\n字段：visual_call_batch_id\n中文：视觉调用批次ID"];
+  }
+
+  subgraph cluster_identity {
+    label="二、植物身份主链路";
+    color="#C7F9CC";
+    style="rounded";
+    id0 [label="说明：身份链与症状链属于\n“上游并行可独立完成的链路”\n实现上可并行、可异步完成\n最终统一汇入“上游结果汇合点”"];
+    id1 [label="调用百度植物识别"];
+    id2 [shape=diamond, fillcolor="#FEF3C7", color="#F59E0B", label="百度是否返回植物名称？"];
+    id3 [label="进入 Taxonomy 匹配\n中文：植物分类与身份主数据匹配\n按主名 / 别名 / 学名 / 清洗后命中规则匹配"];
+    id4 [shape=diamond, fillcolor="#FEF3C7", color="#F59E0B", label="是否稳定命中 Taxonomy？"];
+    id5 [label="稳定命中\nmatched（稳定命中）\n取出：植物身份对象 / 主身份主名\n科 / 属 / 种"];
+    id6 [label="弱命中\nweak_matched（弱命中）\n仅形成弱身份候选\n可用于解释 / 追问辅助\n不得精细挂接诊断基线"];
+    id7 [label="未命中\nunresolved（未解析）\n字段：identity_resolution_status\n中文：身份解析状态 = 未解析\n不得伪造植物身份对象"];
+    id8 [label="裁定当前会话主身份结果\n优先级：\n稳定命中 > 弱命中 > 未解析\n人工确认优先级最高"];
+    id9 [shape=diamond, fillcolor="#FEF3C7", color="#F59E0B", label="是否形成稳定主身份结果？"];
+    id10 [label="允许进入精细挂接准备\n按植物身份对象ID精确挂接"];
+    id11 [label="仅保留弱宿主背景\n或等待补图 / 追问"];
+  }
+
+  subgraph cluster_visual {
+    label="三、AI视觉症状主链路（混元）";
+    color="#FDE68A";
+    style="rounded";
+    vis1 [label="为每张图生成原始视觉记录\n字段：visual_raw_image_record\n中文：单图视觉原始记录"];
+    vis2 [label="图像质量分析\n判断：可分析等级 / 清晰度 / 主体完整性\n关键部位可见性 / 是否建议补图"];
+    vis3 [label="器官 / 部位识别\n优先参考产品槽位提示"];
+    vis4 [label="提取前K个视觉症状候选\nTopK 视觉症状候选"];
+    vis5 [label="规范症状映射\n将视觉候选映射为规范症状"];
+    vis6 [label="生成模式候选\npattern candidate（模式候选）"];
+    vis7 [label="生成路由建议\nroute hint（路由建议）\n主动作可能为：\n优先补图 / 优先提问 / 不确定预备 / 标准流程"];
+    vis8 [label="生成标准化视觉结果\n字段：visual_normalized_image_results\n中文：单图视觉标准化结果"];
+    vis9 [label="多图聚合\n字段：visual_call_aggregate_results\n中文：视觉调用聚合结果"];
+  }
+
+  subgraph cluster_admission {
+    label="四、视觉接纳判定链";
+    color="#FBCFE8";
+    style="rounded";
+    ad1 [label="对以下对象逐项判定：\n图像质量 / 身份候选 / 症状候选\n模式候选 / 路由建议"];
+    ad2 [shape=diamond, fillcolor="#FEF3C7", color="#F59E0B", label="图像质量是否足以支撑正式接纳？"];
+    ad3 [label="质量足够\n允许正式接纳部分候选"];
+    ad4 [label="质量不足\n提高补图优先级\n降低正式接纳权限"];
+    ad5 [shape=diamond, fillcolor="#FEF3C7", color="#F59E0B", label="症状候选是否满足：\n器官明确 + 图像可分析 + 稳定性足够？"];
+    ad6 [label="正式接纳\nformally_admitted\n中文：正式进入证据层"];
+    ad7 [label="候选保留\ncandidate_retained\n中文：仅保留候选，不算正式证据"];
+    ad8 [label="仅解释保留\nexplanation_retained\n中文：只供解释参考"];
+    ad9 [label="直接拒绝\ndirect_reject\n中文：仅保留原始留痕"];
+    ad10 [label="生成接纳判定记录\n字段：visual_admission_records\n中文：视觉接纳判定记录"];
+  }
+
+  subgraph cluster_merge_runtime {
+    label="五、上游结果汇合、输入归一与运行时前置";
+    color="#C4B5FD";
+    style="rounded";
+    mg1 [label="上游结果汇合点\n说明：身份链与症状链可并行、可异步完成\n在此统一汇合"];
+    rt1 [label="输入归一处理\n合并：用户原始输入 + 身份链结果\n视觉标准化结果 + 接纳判定"];
+    rt2 [shape=diamond, fillcolor="#FEF3C7", color="#F59E0B", label="路由主动作是什么？\n字段：route_primary_action\n中文：路由建议主动作"];
+    rt3 [label="优先补图\nretake_first"];
+    rt4 [label="优先提问\nask_first"];
+    rt5 [label="进入不确定预备\nuncertain_prepare"];
+    rt6 [label="进入标准诊断流\nstandard_flow"];
+    rt7 [label="建立正式观察证据集\n字段：observed_evidence_set\n中文：已观察证据集合\n仅接收“正式接纳”条目"];
+    rt8 [label="建立候选层\n保留：候选保留 / 仅解释保留"];
+  }
+
+  subgraph cluster_linkage {
+    label="六、Taxonomy 到 Diagnosis 挂接";
+    color="#A7F3D0";
+    style="rounded";
+    lk1 [shape=diamond, fillcolor="#FEF3C7", color="#F59E0B", label="主身份结果是否为稳定命中？"];
+    lk2 [label="植物身份级精确挂接\n按 plant_identity_id\n中文：植物身份对象ID\n精确挂接诊断基线"];
+    lk3 [shape=diamond, fillcolor="#FEF3C7", color="#F59E0B", label="身份不稳但属级稳定？"];
+    lk4 [label="属级降级挂接\n使用 genus（属）背景"];
+    lk5 [shape=diamond, fillcolor="#FEF3C7", color="#F59E0B", label="属级不稳但科级可用？"];
+    lk6 [label="科级弱背景挂接\n仅用于弱背景与解释"];
+    lk7 [label="未解析 / 弱命中\n不得进入精细诊断挂接"];
+    lk8 [label="形成宿主先验输入\n但不得推翻高置信症状"];
+  }
+
+  subgraph cluster_competition {
+    label="七、问题候选生成与竞争";
+    color="#DDD6FE";
+    style="rounded";
+    cp1 [label="生成问题候选池\n来源：正式症状 + 宿主背景 + 模式候选 + 规则"];
+    cp2 [label="形成问题竞争池\nhypothesis / problem pool\n中文：问题假设与问题候选竞争池"];
+    cp3 [shape=diamond, fillcolor="#FEF3C7", color="#F59E0B", label="证据是否足以形成较稳定问题排序？"];
+    cp4 [label="进入问题竞争\n上升高相关问题"];
+    cp5 [label="证据不足 / 冲突较高\n保守进入追问或不确定预备"];
+  }
+
+  subgraph cluster_question {
+    label="八、追问、补图与回流";
+    color="#FDE68A";
+    style="rounded";
+    q1 [label="生成问题队列\n字段：question_queue\n中文：追问队列"];
+    q2 [label="典型优先问题：\n稳定性 / 扩展性 / 分布 / 可去除性\n环境触发 / 宿主确认 / 补图"];
+    q3 [shape=diamond, fillcolor="#FEF3C7", color="#F59E0B", label="用户是否补图？"];
+    q4 [label="补图后生成新的视觉调用批次\n重新进入视觉解析阶段"];
+    q5 [shape=diamond, fillcolor="#FEF3C7", color="#F59E0B", label="用户是否回答追问？"];
+    q6 [label="问题回流纠正\n可纠正：器官 / 规范症状 / 模式候选\n路由建议 / 接纳结果\n不得伪造 Taxonomy 主对象"];
+    q7 [label="生成监督记录\n字段：visual_supervision_records\n中文：视觉监督记录\n记录后续被追问修正 / 否定情况"];
+    q8 [label="重算证据 / 假设 / 问题排序 / 路由"];
+  }
+
+  subgraph cluster_outcome {
+    label="九、结论收敛与输出";
+    color="#FBCFE8";
+    style="rounded";
+    o1 [shape=diamond, fillcolor="#FEF3C7", color="#F59E0B", label="是否满足停止条件？\n中文：是否应停止继续提问 / 补图 / 重算"];
+    o2 [label="不满足停止条件\n继续追问 / 补图 / 重算"];
+    o3 [shape=diamond, fillcolor="#FEF3C7", color="#F59E0B", label="停止后是否满足输出资格？\n中文：当前结论是否可对外输出"];
+    o4 [shape=diamond, fillcolor="#FEF3C7", color="#F59E0B", label="最终属于哪类结论？"];
+
+    o5 [label="问题性结论对象\n例如：暴晒应激 / 浇水失衡 / 肥害 / 病理问题"];
+    o6 [label="非问题性结论对象\n例如：稳定正常斑纹 / 长期正常形态 / 正常老叶老化"];
+    o7 [label="不确定结论对象\n例如：输入不足 / 证据冲突 / 继续提问收益低"];
+
+    o8 [label="生成最终解释\nexplanation\n中文：结论理由 / 证据 / 不确定性说明"];
+    o9 [label="生成动作建议\n后续可结合属级养护基线\n形成养护与行动建议"];
+    o10 [label="生成停止状态与输出资格记录\nstop_state / output eligibility\n中文：停止状态 / 输出资格"];
+  }
+
+  subgraph cluster_care {
+    label="十、属级养护基线的合法位置";
+    color="#E9D5FF";
+    style="rounded,dashed";
+    care1 [label="属级养护基线\n主表：genus_care_profiles\n中文：属级养护基线表"];
+    care2 [label="它属于 Taxonomy 侧主数据\n不是 Diagnosis 问题表"];
+    care3 [label="第一阶段挂接键：\ngenus_name + family_name\n中文：属名 + 科名"];
+    care4 [label="它只在：\n解释组织 / 环境偏离判断 / 动作建议阶段被消费"];
+    care5 [label="它不进入：\n问题主竞争链 / outcome 主竞争链"];
+  }
+
+  subgraph cluster_constraints {
+    label="十一、全流程硬边界";
+    color="#E5E7EB";
+    style="rounded,dashed";
+    k1 [label="植物身份结果不是最终结论"];
+    k2 [label="路由建议不是最终结论"];
+    k3 [label="图像质量结果不是最终结论"];
+    k4 [label="AI症状候选 / 规范症状 不是问题分类对象"];
+    k5 [label="Taxonomy / 宿主先验 不是问题分类对象"];
+    k6 [label="宿主先验不得推翻高置信症状"];
+    k7 [label="候选保留 ≠ 正式证据"];
+    k8 [label="属级养护基线不进入问题主竞争链\n只在解释 / 动作建议阶段消费"];
+  }
+
+  start -> in1 -> in2 -> in3;
+  in3 -> id0;
+  id0 -> id1;
+  id0 -> vis1;
+
+  id1 -> id2;
+  id2 -> id3 [label="有"];
+  id2 -> id7 [label="无"];
+  id3 -> id4;
+  id4 -> id5 [label="是"];
+  id4 -> id6 [label="弱命中"];
+  id4 -> id7 [label="否"];
+  id5 -> id8;
+  id6 -> id8;
+  id7 -> id8;
+  id8 -> id9;
+  id9 -> id10 [label="是"];
+  id9 -> id11 [label="否"];
+
+  vis1 -> vis2 -> vis3 -> vis4 -> vis5 -> vis6 -> vis7 -> vis8 -> vis9;
+
+  vis9 -> ad1;
+  ad1 -> ad2;
+  ad2 -> ad3 [label="足够"];
+  ad2 -> ad4 [label="不足"];
+  ad3 -> ad5;
+  ad4 -> ad5;
+  ad5 -> ad6 [label="满足正式接纳"];
+  ad5 -> ad7 [label="稳定性不足"];
+  ad5 -> ad8 [label="仅解释可用"];
+  ad5 -> ad9 [label="不合法 / 噪声高"];
+  ad6 -> ad10;
+  ad7 -> ad10;
+  ad8 -> ad10;
+  ad9 -> ad10;
+
+  id10 -> mg1;
+  id11 -> mg1;
+  ad10 -> mg1;
+  mg1 -> rt1 -> rt2;
+  rt2 -> rt3 [label="优先补图"];
+  rt2 -> rt4 [label="优先提问"];
+  rt2 -> rt5 [label="不确定预备"];
+  rt2 -> rt6 [label="标准流程"];
+
+  rt3 -> q1;
+  rt4 -> q1;
+  rt5 -> q1;
+  rt6 -> rt7;
+  rt7 -> rt8 -> lk1;
+
+  lk1 -> lk2 [label="是"];
+  lk1 -> lk3 [label="否"];
+  lk3 -> lk4 [label="是"];
+  lk3 -> lk5 [label="否"];
+  lk5 -> lk6 [label="是"];
+  lk5 -> lk7 [label="否"];
+  lk2 -> lk8;
+  lk4 -> lk8;
+  lk6 -> lk8;
+  lk7 -> lk8;
+
+  lk8 -> cp1 -> cp2 -> cp3;
+  cp3 -> cp4 [label="是"];
+  cp3 -> cp5 [label="否"];
+  cp4 -> q1;
+  cp5 -> q1;
+
+  q1 -> q2;
+  q2 -> q3;
+  q3 -> q4 [label="是"];
+  q3 -> q5 [label="否"];
+  q4 -> vis1;
+  q5 -> q6 [label="是"];
+  q5 -> o1 [label="否"];
+  q6 -> q7 -> q8 -> cp1;
+
+  q1 -> o1 [style=dashed];
+  o1 -> o2 [label="否"];
+  o2 -> q1;
+  o1 -> o3 [label="是"];
+  o3 -> q1 [label="否"];
+  o3 -> o4 [label="是"];
+
+  o4 -> o5 [label="问题性"];
+  o4 -> o6 [label="非问题性"];
+  o4 -> o7 [label="不确定"];
+  o5 -> o8;
+  o6 -> o8;
+  o7 -> o8;
+  o8 -> o9 -> o10 -> end;
+
+  start -> care1 [style=dotted, arrowhead=none];
+  care1 -> care2 [style=dotted, arrowhead=none];
+  care2 -> care3 [style=dotted, arrowhead=none];
+  care3 -> care4 [style=dotted, arrowhead=none];
+  care4 -> care5 [style=dotted, arrowhead=none];
+
+  start -> k1 [style=dotted, arrowhead=none];
+  start -> k2 [style=dotted, arrowhead=none];
+  start -> k3 [style=dotted, arrowhead=none];
+  start -> k4 [style=dotted, arrowhead=none];
+  start -> k5 [style=dotted, arrowhead=none];
+  start -> k6 [style=dotted, arrowhead=none];
+  start -> k7 [style=dotted, arrowhead=none];
+  start -> k8 [style=dotted, arrowhead=none];
+}

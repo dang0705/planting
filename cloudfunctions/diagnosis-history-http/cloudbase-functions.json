@@ -1,0 +1,15 @@
+{
+  "functionsRoot": ".",
+  "functions": [
+    {
+      "name": "diagnosis-history-http",
+      "directory": "."
+    }
+  ],
+  "routes": [
+    {
+      "functionName": "diagnosis-history-http",
+      "path": "/diagnosis/history/health"
+    }
+  ]
+}

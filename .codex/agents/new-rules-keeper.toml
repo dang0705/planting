@@ -1,0 +1,6 @@
+name = "new-rules-keeper"
+description = "严格遵循 docs/new-rules目录中文档的定义"
+sandbox_mode = "read-only"
+developer_instructions = """
+主流程的开发推进必须严格遵循 docs/new-rules 目录中文档中的定义
+"""

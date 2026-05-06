@@ -1,0 +1,19 @@
+{
+  "functionsRoot": ".",
+  "functions": [
+    {
+      "name": "plant-user-http",
+      "directory": "."
+    }
+  ],
+  "routes": [
+    {
+      "functionName": "plant-user-http",
+      "path": "/user-plants"
+    },
+    {
+      "functionName": "plant-user-http",
+      "path": "/user-plants/health"
+    }
+  ]
+}

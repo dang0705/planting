@@ -31,6 +31,70 @@ const QUOTA_CONFIG = {
   }
 };
 
+function isDevAnonymousOpenId(openid) {
+  return /^anon_dev_[A-Za-z0-9_-]{1,96}$/.test(String(openid || '').trim());
+}
+
+function buildDevAnonymousUserId(openid) {
+  const suffix = String(openid || '')
+    .replace(/^anon_dev_/, '')
+    .replace(/[^A-Za-z0-9_-]/g, '_')
+    .slice(0, 96);
+
+  return suffix ? `dev_user_${suffix}` : '';
+}
+
+async function ensureDevAnonymousUser(openid) {
+  if (!isDevAnonymousOpenId(openid)) {
+    return null;
+  }
+
+  const now = Date.now();
+  const userId = buildDevAnonymousUserId(openid);
+  const usernameSuffix = String(openid).replace(/^anon_dev_/, '').slice(0, 12);
+
+  if (!userId) {
+    return null;
+  }
+
+  await cloudbase.models.$runSQL(
+    `INSERT INTO users (
+      _id, _openid, principal_platform, principal_openid, wechat_openid, wechat_unionid, union_id,
+      username, email, phoneNumber, phone_country_code, phone_verified_at, phone_bind_platform, phone_bind_source, password,
+      subscription_plan, subscription_status, subscription_startDate, subscription_endDate,
+      usage_diagnoseToday, usage_diagnoseTotal, usage_identifyToday, usage_identifyTotal, usage_lastResetDate,
+      profile_avatar, profile_bio, profile_wechatNickname, profile_wechatAvatar, profile_createdAt, profile_lastLoginAt,
+      isActive, createdAt, updatedAt, usage_chatToday, usage_chatTotal, usage_diagnoseMonth, usage_lastMonthReset, quota
+    ) VALUES (
+      {{userId}}, {{openid}}, 'terminal_dev_anonymous', {{openid}}, NULL, NULL, NULL,
+      {{username}}, NULL, NULL, '+86', NULL, '', '', '',
+      'free', 'active', {{now}}, NULL,
+      0, 0, 0, 0, {{now}},
+      NULL, 'development terminal synthetic user', NULL, NULL, {{now}}, {{now}},
+      1, {{now}}, {{now}}, 0, 0, 0, {{now}}, 0
+    )
+    ON DUPLICATE KEY UPDATE
+      principal_platform = VALUES(principal_platform),
+      principal_openid = VALUES(principal_openid),
+      username = VALUES(username),
+      subscription_plan = 'free',
+      subscription_status = 'active',
+      profile_lastLoginAt = VALUES(profile_lastLoginAt),
+      updatedAt = VALUES(updatedAt)`,
+    {
+      userId,
+      openid,
+      username: `开发验收用户_${usernameSuffix || 'anon'}`,
+      now
+    }
+  );
+
+  return {
+    _id: userId,
+    _openid: openid
+  };
+}
+
 /**
  * 获取用户信息和配额状态
  */
@@ -45,7 +109,13 @@ async function getUserWithQuota(openid) {
   const users = result?.data?.executeResultList || [];
 
   if (users.length === 0) {
-    return null;
+    await ensureDevAnonymousUser(openid);
+    const retryResult = await cloudbase.models.$runSQL(sql, { openid });
+    const retryUsers = retryResult?.data?.executeResultList || [];
+    if (retryUsers.length === 0) {
+      return null;
+    }
+    return retryUsers[0];
   }
 
   const user = users[0];

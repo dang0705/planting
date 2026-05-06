@@ -217,14 +217,12 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display+SC:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Source+Sans+Pro:wght@400;600&display=swap');
-
 .font-serif {
-  font-family: 'Crimson Text', serif;
+  font-family: 'Songti SC', 'STSong', 'Noto Serif SC', Georgia, serif;
 }
 
 .font-serif.text-5xl {
-  font-family: 'Playfair Display SC', serif;
+  font-family: 'Songti SC', 'STSong', 'Noto Serif SC', Georgia, serif;
 }
 
 .shadow-2xl {

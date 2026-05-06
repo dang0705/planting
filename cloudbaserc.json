@@ -14,15 +14,31 @@
       }
     },
     {
+      "name": "auth-user-http",
+      "dir": "./cloudfunctions/auth-user-http",
+      "timeout": 30,
+      "runtime": "Nodejs18.15",
+      "memorySize": 256,
+      "envVariables": {
+        "TCB_ENV": "cloud1-2grufevs395a9d5e",
+        "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
+        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
+        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
+        "DEBUG_LOG": "false"
+      }
+    },
+    {
       "name": "diagnose-http",
       "dir": "./cloudfunctions/diagnose-http",
       "timeout": 30,
       "runtime": "Nodejs18.15",
       "memorySize": 256,
       "envVariables": {
+        "TCB_ENV": "cloud1-2grufevs395a9d5e",
         "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
         "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
-        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG"
+        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
+        "DEBUG_LOG": "false"
       }
     },
     {
@@ -35,6 +51,106 @@
         "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
         "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
         "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG"
+      }
+    },
+    {
+      "name": "identify-http",
+      "dir": "./cloudfunctions/identify-http",
+      "timeout": 30,
+      "runtime": "Nodejs18.15",
+      "memorySize": 256,
+      "envVariables": {
+        "TCB_ENV": "cloud1-2grufevs395a9d5e",
+        "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
+        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
+        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
+        "BAIDU_AK": "UGqylU0BgWoCLd8PfnH6pxpl",
+        "BAIDU_SK": "NVCAG44tKAfXmVn0BrRHDVFnJDAQRt0x",
+        "DEBUG_LOG": "false"
+      }
+    },
+    {
+      "name": "plant-user-http",
+      "dir": "./cloudfunctions/plant-user-http",
+      "timeout": 30,
+      "runtime": "Nodejs18.15",
+      "memorySize": 256,
+      "envVariables": {
+        "TCB_ENV": "cloud1-2grufevs395a9d5e",
+        "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
+        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
+        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
+        "DEBUG_LOG": "false"
+      }
+    },
+    {
+      "name": "plant-catalog-http",
+      "dir": "./cloudfunctions/plant-catalog-http",
+      "timeout": 30,
+      "runtime": "Nodejs18.15",
+      "memorySize": 256,
+      "envVariables": {
+        "TCB_ENV": "cloud1-2grufevs395a9d5e",
+        "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
+        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
+        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
+        "DEBUG_LOG": "false"
+      }
+    },
+    {
+      "name": "diagnosis-history-http",
+      "dir": "./cloudfunctions/diagnosis-history-http",
+      "timeout": 30,
+      "runtime": "Nodejs18.15",
+      "memorySize": 256,
+      "envVariables": {
+        "TCB_ENV": "cloud1-2grufevs395a9d5e",
+        "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
+        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
+        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
+        "DEBUG_LOG": "false"
+      }
+    },
+    {
+      "name": "storage-http",
+      "dir": "./cloudfunctions/storage-http",
+      "timeout": 30,
+      "runtime": "Nodejs18.15",
+      "memorySize": 256,
+      "envVariables": {
+        "TCB_ENV": "cloud1-2grufevs395a9d5e",
+        "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
+        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
+        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
+        "DEBUG_LOG": "false"
+      }
+    },
+    {
+      "name": "weather-http",
+      "dir": "./cloudfunctions/weather-http",
+      "timeout": 30,
+      "runtime": "Nodejs18.15",
+      "memorySize": 256,
+      "envVariables": {
+        "TCB_ENV": "cloud1-2grufevs395a9d5e",
+        "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
+        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
+        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
+        "QWEATHER_API_KEY": "",
+        "DEBUG_LOG": "false"
+      }
+    },
+    {
+      "name": "wechat-phone",
+      "dir": "./cloudfunctions/wechat-phone",
+      "timeout": 30,
+      "runtime": "Nodejs18.15",
+      "memorySize": 256,
+      "envVariables": {
+        "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
+        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
+        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
+        "DEBUG_LOG": "false"
       }
     }
   ]

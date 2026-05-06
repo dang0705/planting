@@ -1,0 +1,493 @@
+# 第一版 SQL 表结构草案 v1（完整最终版）
+
+> 说明：
+> 
+> -   本文档是基于当前全部正式基线文档收束出来的**第一版 SQL 表结构草案**。
+>     
+> -   目标不是一次性给出最终生产级 schema，而是给出：
+>     
+>     -   可进入 dev 验证的正式建表草案
+>     -   可支撑第一轮数据导入 / 映射 / 联调的表结构基础
+> -   本文档遵循：
+>     
+> 
+> # **中文是一等公民**
+> 
+> # **完整最终文件优先**
+> 
+> # **当前以 dev 落地为第一目标**
+
+---
+
+# 一、当前建表分层
+
+## 1. Taxonomy 主数据层
+
+-   `plant_identity_entities`
+-   `plant_identity_aliases`
+-   `plant_identity_match_rules`
+-   `plant_identity_merge_history`
+-   `genus_care_profiles`
+
+## 2. Diagnosis 静态业务层
+
+-   `problems`
+-   `symptoms`
+-   `question_templates`
+-   `question_option_sets`
+-   `diagnosis_result_explanations`
+-   `plant_problem_profiles`
+
+## 3. Taxonomy 到 Diagnosis 挂接层
+
+-   `plant_identity_diagnosis_links`
+
+## 4. 运行时与监督层
+
+-   `plant_identity_resolution_records`
+-   `visual_raw_image_records`
+-   `visual_normalized_image_results`
+-   `visual_admission_records`
+-   `visual_call_aggregate_results`（建议落）
+-   `visual_supervision_records`（建议落）
+
+---
+
+# 二、Taxonomy 主数据层表结构草案
+
+## 2.1 `plant_identity_entities`（植物身份主表）
+
+```sql
+CREATE TABLE plant_identity_entities (
+  plant_identity_id            VARCHAR(64) PRIMARY KEY COMMENT '植物身份对象ID',
+  legacy_plant_id             VARCHAR(64) NULL COMMENT '历史植物ID',
+  canonical_identity_name     VARCHAR(255) NOT NULL COMMENT '主身份主名',
+  canonical_identity_name_cn  VARCHAR(255) NULL COMMENT '中文主身份主名',
+  canonical_identity_name_en  VARCHAR(255) NULL COMMENT '英文主身份主名',
+  primary_display_name        VARCHAR(255) NOT NULL COMMENT '主展示名',
+  identity_level              VARCHAR(64) NOT NULL COMMENT '身份层级：genus/species/horticultural_variant/unknown',
+  family_name_cn              VARCHAR(255) NULL COMMENT '科中文名',
+  family_name_en              VARCHAR(255) NULL COMMENT '科英文名',
+  genus_name                  VARCHAR(255) NULL COMMENT '属名',
+  species_name                VARCHAR(255) NULL COMMENT '种名',
+  scientific_name             VARCHAR(255) NULL COMMENT '学名',
+  category_name_cn            VARCHAR(255) NULL COMMENT '分类中文名',
+  category_name_en            VARCHAR(255) NULL COMMENT '分类英文名',
+  basic_description           TEXT NULL COMMENT '基础描述',
+  cover_image_ref             TEXT NULL COMMENT '封面图引用',
+  is_active                   TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
+  review_status               VARCHAR(64) NOT NULL COMMENT '审核状态',
+  data_source                 VARCHAR(128) NOT NULL COMMENT '数据来源',
+  version                     VARCHAR(64) NULL COMMENT '版本',
+  created_at                  DATETIME NULL COMMENT '创建时间',
+  updated_at                  DATETIME NULL COMMENT '更新时间',
+  retired_at                  DATETIME NULL COMMENT '退役时间',
+  replacement_identity_id     VARCHAR(64) NULL COMMENT '替代对象ID',
+  UNIQUE KEY uk_identity_name_level (canonical_identity_name, identity_level)
+) COMMENT='植物身份主表';
+```
+
+---
+
+## 2.2 `plant_identity_aliases`（植物身份别名表）
+
+```sql
+CREATE TABLE plant_identity_aliases (
+  alias_id                    VARCHAR(64) PRIMARY KEY COMMENT '别名ID',
+  plant_identity_id           VARCHAR(64) NOT NULL COMMENT '植物身份对象ID',
+  alias_name                  VARCHAR(255) NOT NULL COMMENT '别名内容',
+  alias_type                  VARCHAR(64) NOT NULL COMMENT '别名类型',
+  is_preferred_search_alias   TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否优先搜索别名',
+  source_name                 VARCHAR(128) NULL COMMENT '来源',
+  is_active                   TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
+  created_at                  DATETIME NULL COMMENT '创建时间',
+  UNIQUE KEY uk_identity_alias_type (plant_identity_id, alias_name, alias_type),
+  KEY idx_alias_name (alias_name),
+  CONSTRAINT fk_alias_identity
+    FOREIGN KEY (plant_identity_id) REFERENCES plant_identity_entities(plant_identity_id)
+) COMMENT='植物身份别名表';
+```
+
+---
+
+## 2.3 `plant_identity_match_rules`（植物身份命中规则表）
+
+```sql
+CREATE TABLE plant_identity_match_rules (
+  match_rule_id               VARCHAR(64) PRIMARY KEY COMMENT '命中规则ID',
+  plant_identity_id           VARCHAR(64) NOT NULL COMMENT '植物身份对象ID',
+  match_key                   VARCHAR(255) NOT NULL COMMENT '命中键',
+  match_rule_type             VARCHAR(64) NOT NULL COMMENT '命中规则类型',
+  match_strength              VARCHAR(32) NOT NULL COMMENT '命中强度',
+  source_name                 VARCHAR(128) NULL COMMENT '来源',
+  is_active                   TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
+  UNIQUE KEY uk_identity_match (plant_identity_id, match_key, match_rule_type),
+  KEY idx_match_key (match_key),
+  CONSTRAINT fk_match_identity
+    FOREIGN KEY (plant_identity_id) REFERENCES plant_identity_entities(plant_identity_id)
+) COMMENT='植物身份命中规则表';
+```
+
+---
+
+## 2.4 `plant_identity_merge_history`（植物身份合并历史表）
+
+```sql
+CREATE TABLE plant_identity_merge_history (
+  merge_history_id            VARCHAR(64) PRIMARY KEY COMMENT '合并历史ID',
+  source_identity_id          VARCHAR(64) NOT NULL COMMENT '源身份对象ID',
+  target_identity_id          VARCHAR(64) NOT NULL COMMENT '目标身份对象ID',
+  merge_reason                TEXT NULL COMMENT '合并原因',
+  merged_at                   DATETIME NULL COMMENT '合并时间'
+) COMMENT='植物身份合并历史表';
+```
+
+---
+
+## 2.5 `genus_care_profiles`（属级养护基线表）
+
+```sql
+CREATE TABLE genus_care_profiles (
+  genus_care_profile_id       VARCHAR(64) PRIMARY KEY COMMENT '属级养护基线ID',
+  genus_name                  VARCHAR(255) NOT NULL COMMENT '属名',
+  family_name                 VARCHAR(255) NOT NULL COMMENT '科名',
+  genus_id                    VARCHAR(64) NULL COMMENT '属ID（预留升级位）',
+  genus_identity_id           VARCHAR(64) NULL COMMENT '属级身份对象ID（预留升级位）',
+  plant_category              VARCHAR(64) NOT NULL COMMENT '植物类别',
+  watering_strategy_json      JSON NOT NULL COMMENT '浇水策略JSON',
+  fertilizing_strategy_json   JSON NOT NULL COMMENT '施肥策略JSON',
+  light_strategy_json         JSON NOT NULL COMMENT '光照策略JSON',
+  airflow_strategy_json       JSON NOT NULL COMMENT '通风策略JSON',
+  temp_min_c                  DECIMAL(5,2) NULL COMMENT '最低适宜温度（℃）',
+  temp_max_c                  DECIMAL(5,2) NULL COMMENT '最高适宜温度（℃）',
+  humidity_min                DECIMAL(5,2) NULL COMMENT '最低适宜湿度',
+  humidity_max                DECIMAL(5,2) NULL COMMENT '最高适宜湿度',
+  toxicity_level              VARCHAR(64) NOT NULL COMMENT '毒性等级',
+  review_status               VARCHAR(64) NOT NULL COMMENT '审核状态',
+  source_evidence             TEXT NULL COMMENT '证据来源',
+  baseline_note               TEXT NULL COMMENT '基线说明',
+  evidence_level              VARCHAR(64) NOT NULL COMMENT '证据层级',
+  evidence_strategy           VARCHAR(64) NOT NULL COMMENT '证据策略',
+  data_source                 VARCHAR(128) NOT NULL COMMENT '数据来源',
+  version                     VARCHAR(64) NULL COMMENT '版本',
+  is_active                   TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
+  created_at                  DATETIME NULL COMMENT '创建时间',
+  updated_at                  DATETIME NULL COMMENT '更新时间',
+  retired_at                  DATETIME NULL COMMENT '退役时间',
+  replacement_profile_id      VARCHAR(64) NULL COMMENT '替代基线ID',
+  UNIQUE KEY uk_genus_family (genus_name, family_name),
+  KEY idx_genus_name (genus_name)
+) COMMENT='属级养护基线表';
+```
+
+---
+
+# 三、Diagnosis 静态业务层表结构草案
+
+## 3.1 `problems`（问题主表）
+
+```sql
+CREATE TABLE problems (
+  problem_id                  VARCHAR(64) PRIMARY KEY COMMENT '问题ID',
+  problem_key                 VARCHAR(128) NOT NULL COMMENT '问题键',
+  problem_name_cn             VARCHAR(255) NOT NULL COMMENT '问题中文名',
+  problem_name_en             VARCHAR(255) NULL COMMENT '问题英文名',
+  problem_category            VARCHAR(64) NULL COMMENT '问题类别',
+  severity_default            VARCHAR(64) NULL COMMENT '默认严重度',
+  review_status               VARCHAR(64) NOT NULL COMMENT '审核状态',
+  data_source                 VARCHAR(128) NOT NULL COMMENT '数据来源',
+  version                     VARCHAR(64) NULL COMMENT '版本',
+  is_active                   TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
+  created_at                  DATETIME NULL COMMENT '创建时间',
+  updated_at                  DATETIME NULL COMMENT '更新时间',
+  UNIQUE KEY uk_problem_key (problem_key)
+) COMMENT='问题主表';
+```
+
+---
+
+## 3.2 `symptoms`（症状主表）
+
+```sql
+CREATE TABLE symptoms (
+  symptom_id                  VARCHAR(64) PRIMARY KEY COMMENT '症状ID',
+  symptom_key                 VARCHAR(128) NOT NULL COMMENT '症状键',
+  symptom_name_cn             VARCHAR(255) NOT NULL COMMENT '症状中文名',
+  symptom_name_en             VARCHAR(255) NULL COMMENT '症状英文名',
+  symptom_type                VARCHAR(64) NULL COMMENT '症状类型',
+  evidence_reliability        DECIMAL(5,2) NULL COMMENT '证据可靠性',
+  review_status               VARCHAR(64) NOT NULL COMMENT '审核状态',
+  data_source                 VARCHAR(128) NOT NULL COMMENT '数据来源',
+  version                     VARCHAR(64) NULL COMMENT '版本',
+  is_active                   TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
+  created_at                  DATETIME NULL COMMENT '创建时间',
+  updated_at                  DATETIME NULL COMMENT '更新时间',
+  UNIQUE KEY uk_symptom_key (symptom_key)
+) COMMENT='症状主表';
+```
+
+---
+
+## 3.3 `question_templates`（问题模板表）
+
+```sql
+CREATE TABLE question_templates (
+  question_template_id        VARCHAR(64) PRIMARY KEY COMMENT '问题模板ID',
+  question_key                VARCHAR(128) NOT NULL COMMENT '问题键',
+  question_text_cn            TEXT NOT NULL COMMENT '问题中文文本',
+  question_type               VARCHAR(64) NULL COMMENT '问题类型',
+  review_status               VARCHAR(64) NOT NULL COMMENT '审核状态',
+  data_source                 VARCHAR(128) NOT NULL COMMENT '数据来源',
+  version                     VARCHAR(64) NULL COMMENT '版本',
+  is_active                   TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
+  created_at                  DATETIME NULL COMMENT '创建时间',
+  updated_at                  DATETIME NULL COMMENT '更新时间',
+  UNIQUE KEY uk_question_key (question_key)
+) COMMENT='问题模板表';
+```
+
+---
+
+## 3.4 `question_option_sets`（问题选项集表）
+
+```sql
+CREATE TABLE question_option_sets (
+  question_option_id          VARCHAR(64) PRIMARY KEY COMMENT '问题选项ID',
+  question_key                VARCHAR(128) NOT NULL COMMENT '问题键',
+  option_key                  VARCHAR(128) NOT NULL COMMENT '选项键',
+  option_text_cn              VARCHAR(255) NOT NULL COMMENT '选项中文文本',
+  option_order                INT NULL COMMENT '选项顺序',
+  is_active                   TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
+  UNIQUE KEY uk_question_option (question_key, option_key)
+) COMMENT='问题选项集表';
+```
+
+---
+
+## 3.5 `diagnosis_result_explanations`（诊断结果解释表）
+
+```sql
+CREATE TABLE diagnosis_result_explanations (
+  explanation_id              VARCHAR(64) PRIMARY KEY COMMENT '解释ID',
+  target_type                 VARCHAR(64) NOT NULL COMMENT '目标类型',
+  target_key                  VARCHAR(128) NOT NULL COMMENT '目标键',
+  explanation_text_cn         TEXT NOT NULL COMMENT '解释中文文本',
+  review_status               VARCHAR(64) NOT NULL COMMENT '审核状态',
+  data_source                 VARCHAR(128) NOT NULL COMMENT '数据来源',
+  version                     VARCHAR(64) NULL COMMENT '版本',
+  is_active                   TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
+  UNIQUE KEY uk_target_expl (target_type, target_key)
+) COMMENT='诊断结果解释表';
+```
+
+---
+
+## 3.6 `plant_problem_profiles`（植物问题画像表）
+
+```sql
+CREATE TABLE plant_problem_profiles (
+  plant_problem_profile_id    VARCHAR(64) PRIMARY KEY COMMENT '植物问题画像ID',
+  profile_key                 VARCHAR(128) NOT NULL COMMENT '画像键',
+  plant_identity_id           VARCHAR(64) NULL COMMENT '植物身份对象ID',
+  genus_name                  VARCHAR(255) NULL COMMENT '属名',
+  family_name                 VARCHAR(255) NULL COMMENT '科名',
+  problem_key                 VARCHAR(128) NOT NULL COMMENT '问题键',
+  prior_score                 DECIMAL(6,3) NULL COMMENT '先验分数',
+  review_status               VARCHAR(64) NOT NULL COMMENT '审核状态',
+  data_source                 VARCHAR(128) NOT NULL COMMENT '数据来源',
+  version                     VARCHAR(64) NULL COMMENT '版本',
+  is_active                   TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
+  KEY idx_profile_problem (profile_key, problem_key)
+) COMMENT='植物问题画像表';
+```
+
+---
+
+# 四、Taxonomy 到 Diagnosis 挂接层表结构草案
+
+## 4.1 `plant_identity_diagnosis_links`（植物身份到诊断挂接表）
+
+```sql
+CREATE TABLE plant_identity_diagnosis_links (
+  link_id                     VARCHAR(64) PRIMARY KEY COMMENT '挂接ID',
+  plant_identity_id           VARCHAR(64) NOT NULL COMMENT '植物身份对象ID',
+  link_level                  VARCHAR(32) NOT NULL COMMENT '挂接层级：identity/genus/family',
+  target_table_name           VARCHAR(128) NOT NULL COMMENT '目标表名',
+  target_record_key           VARCHAR(128) NOT NULL COMMENT '目标记录键',
+  link_strength               VARCHAR(32) NOT NULL COMMENT '挂接强度：exact/downgraded/weak_background',
+  review_status               VARCHAR(64) NOT NULL COMMENT '审核状态',
+  is_active                   TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
+  UNIQUE KEY uk_identity_link (plant_identity_id, link_level, target_table_name, target_record_key)
+) COMMENT='植物身份到诊断挂接表';
+```
+
+---
+
+# 五、运行时与监督层表结构草案
+
+## 5.1 `plant_identity_resolution_records`（植物身份解析记录表）
+
+```sql
+CREATE TABLE plant_identity_resolution_records (
+  identity_resolution_record_id VARCHAR(64) PRIMARY KEY COMMENT '身份解析记录ID',
+  session_id                    VARCHAR(64) NOT NULL COMMENT '会话ID',
+  visual_call_batch_id          VARCHAR(64) NULL COMMENT '视觉调用批次ID',
+  raw_recognition_name          VARCHAR(255) NULL COMMENT '原始识别名',
+  taxonomy_match_status         VARCHAR(64) NOT NULL COMMENT 'Taxonomy匹配状态',
+  identity_resolution_status    VARCHAR(64) NOT NULL COMMENT '身份解析状态',
+  matched_plant_identity_id     VARCHAR(64) NULL COMMENT '命中植物身份对象ID',
+  is_current_primary_identity   TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否当前主身份结果',
+  match_rule                    VARCHAR(64) NULL COMMENT '命中规则',
+  match_score                   DECIMAL(6,3) NULL COMMENT '命中分数',
+  match_reason                  TEXT NULL COMMENT '命中原因',
+  superseded_by_resolution_id   VARCHAR(64) NULL COMMENT '被哪个解析记录覆盖',
+  superseded_reason             TEXT NULL COMMENT '覆盖原因',
+  superseded_at                 DATETIME NULL COMMENT '覆盖时间',
+  created_at                    DATETIME NULL COMMENT '创建时间',
+  updated_at                    DATETIME NULL COMMENT '更新时间'
+) COMMENT='植物身份解析记录表';
+```
+
+---
+
+## 5.2 `visual_raw_image_records`（单图视觉原始记录表）
+
+```sql
+CREATE TABLE visual_raw_image_records (
+  visual_raw_image_record_id  VARCHAR(64) PRIMARY KEY COMMENT '单图视觉原始记录ID',
+  session_id                  VARCHAR(64) NOT NULL COMMENT '会话ID',
+  visual_call_batch_id        VARCHAR(64) NOT NULL COMMENT '视觉调用批次ID',
+  image_ref                   TEXT NULL COMMENT '图片引用',
+  input_slot_type             VARCHAR(64) NULL COMMENT '输入槽位类型',
+  model_name                  VARCHAR(128) NULL COMMENT '模型名称',
+  model_version               VARCHAR(128) NULL COMMENT '模型版本',
+  prompt_version              VARCHAR(128) NULL COMMENT '提示词版本',
+  raw_text_output             LONGTEXT NULL COMMENT '原始文本输出',
+  raw_structured_output       LONGTEXT NULL COMMENT '原始结构化输出',
+  call_status                 VARCHAR(64) NULL COMMENT '调用状态',
+  latency_ms                  INT NULL COMMENT '延迟毫秒数',
+  error_code                  VARCHAR(64) NULL COMMENT '错误码',
+  created_at                  DATETIME NULL COMMENT '创建时间'
+) COMMENT='单图视觉原始记录表';
+```
+
+---
+
+## 5.3 `visual_normalized_image_results`（单图视觉标准化结果表）
+
+```sql
+CREATE TABLE visual_normalized_image_results (
+  visual_normalized_image_result_id VARCHAR(64) PRIMARY KEY COMMENT '单图视觉标准化结果ID',
+  session_id                        VARCHAR(64) NOT NULL COMMENT '会话ID',
+  visual_call_batch_id              VARCHAR(64) NOT NULL COMMENT '视觉调用批次ID',
+  visual_raw_image_record_id        VARCHAR(64) NOT NULL COMMENT '单图视觉原始记录ID',
+  analyzability_level               VARCHAR(64) NULL COMMENT '可分析等级',
+  clarity_level                     VARCHAR(64) NULL COMMENT '清晰度等级',
+  subject_completeness_level        VARCHAR(64) NULL COMMENT '主体完整性等级',
+  primary_organ_type                VARCHAR(64) NULL COMMENT '主器官类型',
+  organ_source                      VARCHAR(64) NULL COMMENT '器官来源',
+  topk_symptoms_json                JSON NULL COMMENT '前K症状JSON',
+  pattern_candidates_json           JSON NULL COMMENT '模式候选JSON',
+  route_hints_json                  JSON NULL COMMENT '路由建议JSON',
+  top1_stability_score              DECIMAL(6,3) NULL COMMENT 'Top1稳定性分数',
+  top3_stability_score              DECIMAL(6,3) NULL COMMENT 'Top3稳定性分数',
+  long_tail_noise_flag              TINYINT(1) NULL COMMENT '长尾噪声标记',
+  created_at                        DATETIME NULL COMMENT '创建时间'
+) COMMENT='单图视觉标准化结果表';
+```
+
+---
+
+## 5.4 `visual_admission_records`（视觉接纳判定记录表）
+
+```sql
+CREATE TABLE visual_admission_records (
+  visual_admission_record_id   VARCHAR(64) PRIMARY KEY COMMENT '视觉接纳判定记录ID',
+  session_id                   VARCHAR(64) NOT NULL COMMENT '会话ID',
+  visual_call_batch_id         VARCHAR(64) NOT NULL COMMENT '视觉调用批次ID',
+  visual_normalized_image_result_id VARCHAR(64) NOT NULL COMMENT '单图视觉标准化结果ID',
+  object_type                  VARCHAR(64) NOT NULL COMMENT '对象类型',
+  object_key                   VARCHAR(255) NULL COMMENT '对象键',
+  admission_result             VARCHAR(64) NOT NULL COMMENT '接纳结果',
+  admission_reason             TEXT NULL COMMENT '接纳理由',
+  entered_runtime              TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否进入运行时正式层',
+  target_layer                 VARCHAR(64) NULL COMMENT '进入目标层级',
+  created_at                   DATETIME NULL COMMENT '创建时间'
+) COMMENT='视觉接纳判定记录表';
+```
+
+---
+
+## 5.5 `visual_call_aggregate_results`（视觉调用聚合结果表，建议落）
+
+```sql
+CREATE TABLE visual_call_aggregate_results (
+  visual_call_aggregate_result_id VARCHAR(64) PRIMARY KEY COMMENT '视觉调用聚合结果ID',
+  session_id                      VARCHAR(64) NOT NULL COMMENT '会话ID',
+  visual_call_batch_id            VARCHAR(64) NOT NULL COMMENT '视觉调用批次ID',
+  aggregate_analyzability_level   VARCHAR(64) NULL COMMENT '聚合可分析等级',
+  aggregate_summary_json          JSON NULL COMMENT '聚合摘要JSON',
+  created_at                      DATETIME NULL COMMENT '创建时间'
+) COMMENT='视觉调用聚合结果表';
+```
+
+---
+
+## 5.6 `visual_supervision_records`（视觉监督记录表，建议落）
+
+```sql
+CREATE TABLE visual_supervision_records (
+  visual_supervision_record_id      VARCHAR(64) PRIMARY KEY COMMENT '视觉监督记录ID',
+  session_id                        VARCHAR(64) NOT NULL COMMENT '会话ID',
+  visual_call_batch_id              VARCHAR(64) NOT NULL COMMENT '视觉调用批次ID',
+  visual_admission_record_id        VARCHAR(64) NOT NULL COMMENT '视觉接纳判定记录ID',
+  adopted_by_evidence               TINYINT(1) NULL COMMENT '后续是否被正式证据采纳',
+  corrected_by_question             TINYINT(1) NULL COMMENT '后续是否被追问修正',
+  denied_by_runtime                 TINYINT(1) NULL COMMENT '后续是否被运行时否定',
+  denied_by_outcome_competition     TINYINT(1) NULL COMMENT '后续是否被结论竞争否定',
+  question_correction_scope         VARCHAR(64) NULL COMMENT '问题回流纠正作用域',
+  final_outcome_type                VARCHAR(64) NULL COMMENT '最终结论类型',
+  final_stop_reason                 VARCHAR(128) NULL COMMENT '最终停止原因',
+  updated_at                        DATETIME NULL COMMENT '更新时间'
+) COMMENT='视觉监督记录表';
+```
+
+---
+
+# 六、当前建表顺序建议
+
+## 第一阶段：先建主数据与 diagnosis 静态表
+
+1.  `plant_identity_entities`
+2.  `plant_identity_aliases`
+3.  `plant_identity_match_rules`
+4.  `plant_identity_merge_history`
+5.  `genus_care_profiles`
+6.  `problems`
+7.  `symptoms`
+8.  `question_templates`
+9.  `question_option_sets`
+10.  `diagnosis_result_explanations`
+11.  `plant_problem_profiles`
+
+## 第二阶段：再建挂接表
+
+12.  `plant_identity_diagnosis_links`
+
+## 第三阶段：再建运行时骨架表
+
+13.  `plant_identity_resolution_records`
+14.  `visual_raw_image_records`
+15.  `visual_normalized_image_results`
+16.  `visual_admission_records`
+
+## 第四阶段：补建议落表
+
+17.  `visual_call_aggregate_results`
+18.  `visual_supervision_records`
+
+---
+
+# 七、一句话总裁决
+
+**这份第一版 SQL 表结构草案 v1，已经足以支撑进入 dev 建表与联调阶段。**

@@ -16,11 +16,11 @@
         </view>
 
         <view class="flex flex-col">
-          <text class="text-2xl font-semibold text-gray-800 mb-1">{{ plant?.name }}</text>
+          <text class="text-2xl font-semibold text-gray-800 mb-1">{{ plant?.displayName }}</text>
           <text
-            v-if="plant?.aiRecognizedName && plant.aiRecognizedName !== plant.name"
+            v-if="plant?.recognizedName && plant.recognizedName !== plant.displayName"
             class="text-[13px] text-gray-400 italic mb-3"
-            >{{ plant.aiRecognizedName }}</text
+            >{{ plant.recognizedName }}</text
           >
           <view class="flex flex-wrap gap-3">
             <view class="flex items-center px-3 py-1.5 bg-gray-100 rounded-xl">
@@ -38,6 +38,7 @@
       <!-- 快速操作 -->
       <view class="flex gap-2 px-4 mb-3">
         <button
+          id="plant-detail-diagnose-button"
           class="flex-1 border border-gray-300 rounded-2xl p-3.5 px-2 flex flex-col items-center gap-1.5 border-none"
           style="background: linear-gradient(135deg, #2d7a4f 0%, #52b788 100%)"
           @click="startDiagnosis"
@@ -62,7 +63,7 @@
       </view>
 
       <!-- 浇水信息 -->
-      <view v-if="plant?.lastWatered || plant?.nextWater" class="bg-white p-4 mb-3">
+      <view v-if="plant?.watering || plant?.lastWatered || plant?.nextWater" class="bg-white p-4 mb-3">
         <text class="text-base font-semibold text-gray-800 block mb-4">💧 浇水记录</text>
         <view class="flex flex-col gap-3">
           <view
@@ -73,7 +74,7 @@
               <text class="text-2xl mr-3">💧</text>
               <view class="flex flex-col">
                 <text class="text-sm font-semibold text-gray-800 mb-0.5">浇水</text>
-                <text class="text-xs text-gray-400">{{ waterFreqText }}</text>
+                <text class="text-xs text-gray-400">{{ wateringText }}</text>
               </view>
             </view>
             <view class="flex flex-col items-end gap-1">
@@ -88,11 +89,35 @@
         </view>
       </view>
 
-      <!-- 光照信息 -->
       <view v-if="plant?.sunning" class="bg-white p-4 mb-3">
         <text class="text-base font-semibold text-gray-800 block mb-4">☀️ 光照需求</text>
         <view class="p-3 bg-[#F8F6F0] rounded-xl">
           <text class="text-sm text-gray-600 leading-relaxed">{{ sunningText }}</text>
+        </view>
+      </view>
+
+      <view v-if="plant?.fertilization" class="bg-white p-4 mb-3">
+        <text class="text-base font-semibold text-gray-800 block mb-4">🧪 施肥建议</text>
+        <view class="p-3 bg-[#F8F6F0] rounded-xl">
+          <text class="text-sm text-gray-600 leading-relaxed">{{ fertilizationText }}</text>
+        </view>
+      </view>
+
+      <view
+        v-if="plant?.temperatureMin !== null || plant?.humidityMin !== null || plant?.ventilation"
+        class="bg-white p-4 mb-3"
+      >
+        <text class="text-base font-semibold text-gray-800 block mb-4">🌡️ 环境建议</text>
+        <view class="flex flex-col gap-2">
+          <view v-if="temperatureText" class="p-3 bg-[#F8F6F0] rounded-xl">
+            <text class="text-sm text-gray-600">{{ temperatureText }}</text>
+          </view>
+          <view v-if="humidityText" class="p-3 bg-[#F8F6F0] rounded-xl">
+            <text class="text-sm text-gray-600">{{ humidityText }}</text>
+          </view>
+          <view v-if="ventilationText" class="p-3 bg-[#F8F6F0] rounded-xl">
+            <text class="text-sm text-gray-600">{{ ventilationText }}</text>
+          </view>
         </view>
       </view>
 
@@ -107,20 +132,28 @@
         </button>
       </view>
     </view>
+    <DiagnosePopup
+      ref="diagnosePopupRef"
+      :plant-id="plantId"
+      :plant-name="plant?.displayName || '植物'"
+      @success="handleDiagnoseSuccess"
+    />
   </view>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { usePlantStore } from '@/store/plant.js'
+import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
+import DiagnosePopup from '@/components/DiagnosePopup.vue'
 
 const plantStore = usePlantStore()
 const userStore = useUserStore()
 
 const navbarHeight = ref(88)
 const plantId = ref(null)
+const diagnosePopupRef = ref(null)
 
 const plant = computed(() => {
   return plantStore.userPlants.find(p => p.id === plantId.value)
@@ -132,24 +165,49 @@ const isWaterOverdue = computed(() => {
   return new Date(plant.value.nextWater) <= new Date()
 })
 
-// 浇水频率文字
-const waterFreqText = computed(() => {
-  const freq = plant.value?.wateringFreq
-  if (!freq) return ''
-  if (freq.summer && freq.winter) {
-    return `夏季${freq.summer}天/次 · 冬季${freq.winter}天/次`
-  }
-  if (freq.summer) return `${freq.summer}天/次`
-  return ''
+const wateringText = computed(() => {
+  const watering = plant.value?.watering
+  if (!watering) return '按实际养护情况手动记录'
+  const freqText = Array.isArray(watering.freq) && watering.freq.length
+    ? `${watering.freq[0]}${watering.freq[1] ? `-${watering.freq[1]}` : ''}${watering.unit || '天'}`
+    : ''
+  return [watering.way, freqText].filter(Boolean).join(' · ')
 })
 
-// 光照需求文字
 const sunningText = computed(() => {
-  const s = plant.value?.sunning
-  if (!s) return ''
-  if (typeof s === 'string') return s
-  if (s.level) return `${s.level}${s.hours ? ` · 每天${s.hours}小时` : ''}`
-  return JSON.stringify(s)
+  const sunning = plant.value?.sunning
+  if (!sunning) return ''
+  const freqText = Array.isArray(sunning.freq) && sunning.freq.length
+    ? `${sunning.freq[0]}${sunning.freq[1] ? `-${sunning.freq[1]}` : ''}${sunning.unit || ''}`
+    : ''
+  return [sunning.way, freqText, sunning.other].filter(Boolean).join(' · ')
+})
+
+const fertilizationText = computed(() => {
+  const fertilization = plant.value?.fertilization
+  if (!fertilization) return ''
+  const freqText = Array.isArray(fertilization.freq) && fertilization.freq.length
+    ? `${fertilization.freq[0]}${fertilization.freq[1] ? `-${fertilization.freq[1]}` : ''}${fertilization.unit || '天'}`
+    : ''
+  return [fertilization.type, freqText, fertilization.other].filter(Boolean).join(' · ')
+})
+
+const temperatureText = computed(() => {
+  if (plant.value?.temperatureMin === null || plant.value?.temperatureMax === null) return ''
+  return `建议温度 ${plant.value.temperatureMin}-${plant.value.temperatureMax}°C`
+})
+
+const humidityText = computed(() => {
+  if (plant.value?.humidityMin === null || plant.value?.humidityMax === null) return ''
+  return `建议湿度 ${plant.value.humidityMin}-${plant.value.humidityMax}%`
+})
+
+const ventilationText = computed(() => {
+  const ventilation = plant.value?.ventilation
+  if (!ventilation) return ''
+  return [`通风 ${ventilation.level || ''}`, ventilation.sensitivity ? `敏感度 ${ventilation.sensitivity}` : '']
+    .filter(Boolean)
+    .join(' · ')
 })
 
 onLoad(options => {
@@ -177,11 +235,13 @@ function startDiagnosis() {
     })
     return
   }
-  uni.navigateTo({ url: `/pages/diagnose/diagnose?plantId=${plantId.value}` })
+  diagnosePopupRef.value?.open()
 }
 
+function handleDiagnoseSuccess() {}
+
 async function doWatering() {
-  const result = await plantStore.completeWatering(plantId.value, plant.value?.wateringFreq)
+  const result = await plantStore.completeWatering(plantId.value)
   if (result.success) {
     uni.showToast({ title: '浇水完成', icon: 'success' })
   } else {
@@ -204,11 +264,11 @@ function editNickName() {
     title: '修改名称',
     editable: true,
     placeholderText: '请输入植物名称',
-    content: plant.value?.name || '',
+    content: plant.value?.displayName || '',
     success: async res => {
       if (res.confirm && res.content) {
         const result = await plantStore.updateUserPlant(plantId.value, {
-          nickName: res.content
+          nickname: res.content
         })
         if (result.success) {
           uni.showToast({ title: '修改成功', icon: 'success' })

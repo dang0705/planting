@@ -38,6 +38,14 @@
 			}
 		},
 		{
+			"path": "pages/diagnose/follow-up",
+			"style": {
+				"navigationBarTitleText": "继续问诊",
+				"navigationBarBackgroundColor": "#2D7A4F",
+				"navigationBarTextStyle": "white"
+			}
+		},
+		{
 			"path": "pages/calendar/calendar",
 			"style": {
 				"navigationStyle": "custom",
@@ -52,18 +60,18 @@
 			}
 		},
 		{
-			"path": "pages/diagnose-history/diagnose-history",
+			"path": "pages/profile/out-of-pool-review",
 			"style": {
-				"navigationBarTitleText": "诊断历史",
-				"navigationBarBackgroundColor": "#2D7A4F",
+				"navigationBarTitleText": "池外视觉审核",
+				"navigationBarBackgroundColor": "#2F5D50",
 				"navigationBarTextStyle": "white"
 			}
 		},
 		{
-			"path": "pages/diagnose-detail/diagnose-detail",
+			"path": "pages/profile/diagnosis-review",
 			"style": {
-				"navigationBarTitleText": "诊断详情",
-				"navigationBarBackgroundColor": "#2D7A4F",
+				"navigationBarTitleText": "诊断记录管理",
+				"navigationBarBackgroundColor": "#2F5D50",
 				"navigationBarTextStyle": "white"
 			}
 		}
