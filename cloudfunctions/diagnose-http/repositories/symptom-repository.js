@@ -27,10 +27,10 @@ const pendingRuntimeCache = {
 const DICTIONARY_TTL_MS = 5 * 60 * 1000
 
 function getCacheEntry(cache, key = '') {
-  if (!STATIC_REPOSITORY_CACHE_TTL_MS) return null
+  if (!STATIC_REPOSITORY_CACHE_TTL_MS) {return null}
   const normalizedKey = String(key || '').trim()
   const entry = cache.get(normalizedKey)
-  if (!entry) return null
+  if (!entry) {return null}
   if (Date.now() - Number(entry.cachedAt || 0) > STATIC_REPOSITORY_CACHE_TTL_MS) {
     cache.delete(normalizedKey)
     return null
@@ -39,7 +39,7 @@ function getCacheEntry(cache, key = '') {
 }
 
 function setCacheEntry(cache, key = '', value) {
-  if (!STATIC_REPOSITORY_CACHE_TTL_MS) return
+  if (!STATIC_REPOSITORY_CACHE_TTL_MS) {return}
   cache.set(String(key || '').trim(), {
     cachedAt: Date.now(),
     value
@@ -59,7 +59,7 @@ function buildEvidenceEdgesSignature(safeSymptomKeys = [], safeProblemKeys = [])
 function withPending(cache, key = '', queryFn) {
   const normalizedKey = String(key || '').trim()
   const pending = cache.get(normalizedKey)
-  if (pending) return pending
+  if (pending) {return pending}
 
   const promise = Promise.resolve()
     .then(queryFn)
@@ -71,8 +71,8 @@ function withPending(cache, key = '', queryFn) {
 }
 
 function safeJsonParse(value) {
-  if (value === null || value === undefined) return null
-  if (typeof value === 'object') return value
+  if (value === null || value === undefined) {return null}
+  if (typeof value === 'object') {return value}
 
   try {
     return JSON.parse(String(value))
@@ -236,7 +236,7 @@ async function getPromptSymptomDictionary() {
 
 async function getSymptomsByKeys(symptomKeys = []) {
   const keys = Array.from(new Set((symptomKeys || []).map(item => String(item || '').trim()).filter(Boolean)))
-  if (!keys.length) return []
+  if (!keys.length) {return []}
 
   const cachedSymptomMap = new Map()
   const missKeys = []
@@ -276,7 +276,7 @@ async function getSymptomsByKeys(symptomKeys = []) {
 
     for (const row of (result?.data?.executeResultList || []).map(mapSymptomRow)) {
       const key = String(row?.symptomKey || '').trim()
-      if (!key) continue
+      if (!key) {continue}
       setCacheEntry(runtimeCache.symptomsByKeys, key, row)
       cachedSymptomMap.set(key, row)
     }
@@ -287,7 +287,7 @@ async function getSymptomsByKeys(symptomKeys = []) {
 
 async function getEvidenceEdges({ symptomKeys = [], problemKeys = [] } = {}) {
   const safeSymptomKeys = Array.from(new Set((symptomKeys || []).map(item => String(item || '').trim()).filter(Boolean)))
-  if (!safeSymptomKeys.length) return []
+  if (!safeSymptomKeys.length) {return []}
 
   const whereProblem = problemKeys.length
     ? `AND problem_key IN ${sqlInList(problemKeys)}`

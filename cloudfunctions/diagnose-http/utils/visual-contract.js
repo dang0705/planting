@@ -33,7 +33,7 @@ function buildRuntimeId(prefix) {
 }
 
 function stringifyJson(value) {
-  if (value === null || value === undefined) return null
+  if (value === null || value === undefined) {return null}
   return JSON.stringify(value)
 }
 
@@ -80,22 +80,22 @@ function normalizeRoutePrimaryAction(value, fallback = 'ask_first') {
 
 function confidenceBandToScore(value) {
   const band = normalizeConfidenceBand(value, 'medium')
-  if (band === 'high') return 0.9
-  if (band === 'low') return 0.58
+  if (band === 'high') {return 0.9}
+  if (band === 'low') {return 0.58}
   return 0.75
 }
 
 function strengthLevelToWeight(value) {
   const level = normalizeStrengthLevel(value, 'medium')
-  if (level === 'strong') return 1
-  if (level === 'weak') return 0.68
+  if (level === 'strong') {return 1}
+  if (level === 'weak') {return 0.68}
   return 0.82
 }
 
 function readinessRank(value) {
   const normalized = normalizeAdmissionReadiness(value, 'cautious')
-  if (normalized === 'ready') return 3
-  if (normalized === 'cautious') return 2
+  if (normalized === 'ready') {return 3}
+  if (normalized === 'cautious') {return 2}
   return 1
 }
 
@@ -125,15 +125,15 @@ function pickHigherReadiness(a, b) {
 
 function qualityGradeToClarityLevel(value) {
   const quality = normalizeQualityGrade(value, 'medium')
-  if (quality === 'good') return 'high'
-  if (quality === 'poor') return 'low'
+  if (quality === 'good') {return 'high'}
+  if (quality === 'poor') {return 'low'}
   return 'medium'
 }
 
 function qualityGradeToAnalyzability(value) {
   const quality = normalizeQualityGrade(value, 'medium')
-  if (quality === 'good') return 'high'
-  if (quality === 'poor') return 'low'
+  if (quality === 'good') {return 'high'}
+  if (quality === 'poor') {return 'low'}
   return 'medium'
 }
 
@@ -142,14 +142,14 @@ function resolveSubjectCompletenessLevel(inputSlotType = 'unknown', analyzabilit
   const normalizedAnalyzability = normalizeAnalyzability(analyzability, 'medium')
 
   if (slot === 'whole_plant') {
-    if (normalizedAnalyzability === 'high') return 'high'
-    if (normalizedAnalyzability === 'low') return 'low'
+    if (normalizedAnalyzability === 'high') {return 'high'}
+    if (normalizedAnalyzability === 'low') {return 'low'}
     return 'medium'
   }
 
-  if (normalizedAnalyzability === 'high') return 'medium'
-  if (normalizedAnalyzability === 'low') return 'low'
-  if (normalizedAnalyzability === 'marginal') return 'low'
+  if (normalizedAnalyzability === 'high') {return 'medium'}
+  if (normalizedAnalyzability === 'low') {return 'low'}
+  if (normalizedAnalyzability === 'marginal') {return 'low'}
   return 'unknown'
 }
 
@@ -171,7 +171,7 @@ function normalizeStringList(values = []) {
 function normalizeRouteHints(list = []) {
   return (Array.isArray(list) ? list : [])
     .map(item => {
-      if (!item) return null
+      if (!item) {return null}
       if (typeof item === 'string') {
         const normalized = normalizeText(item)
         return normalized
@@ -183,7 +183,7 @@ function normalizeRouteHints(list = []) {
       }
 
       const type = normalizeText(item.type || item.key || item.route_type || '')
-      if (!type) return null
+      if (!type) {return null}
 
       return {
         type,
@@ -209,9 +209,9 @@ function resolveAggregateRoutePrimaryAction({
   const analyzability = normalizeAnalyzability(aggregateAnalyzability, 'medium')
   const followupCount = Array.isArray(suggestedFollowupCapture) ? suggestedFollowupCapture.length : 0
 
-  if (analyzability === 'low') return 'retake_first'
-  if (observedSymptomCount > 0) return 'standard_flow'
-  if (followupCount > 0 || analyzability === 'marginal') return 'ask_first'
+  if (analyzability === 'low') {return 'retake_first'}
+  if (observedSymptomCount > 0) {return 'standard_flow'}
+  if (followupCount > 0 || analyzability === 'marginal') {return 'ask_first'}
   return 'uncertain_prepare'
 }
 

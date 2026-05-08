@@ -10,7 +10,7 @@ function buildQueryString(query = {}) {
   const entries = Object.entries(query).filter(
     ([, value]) => value !== undefined && value !== null && value !== ''
   )
-  if (!entries.length) return ''
+  if (!entries.length) {return ''}
 
   const search = entries
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)

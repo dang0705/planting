@@ -307,7 +307,7 @@ const loadUserData = async () => {
 }
 
 const generatePoetry = async () => {
-  if (!poetryInput.value.trim()) return
+  if (!poetryInput.value.trim()) {return}
   
   generating.value = true
   generatedPoetry.value = ''
@@ -387,7 +387,7 @@ const getPlanName = (plan) => {
 }
 
 const formatDate = (dateStr) => {
-  if (!dateStr) return '永久'
+  if (!dateStr) {return '永久'}
   return new Date(dateStr).toLocaleDateString('zh-CN')
 }
 </script>

@@ -67,7 +67,7 @@ async function getCachedWeather(openid) {
       { openid }
     )
     const rows = result?.data?.executeResultList || []
-    if (!rows.length) return null
+    if (!rows.length) {return null}
 
     const cache = rows[0]
     const expiresAt = new Date(cache.expires_at.replace(' ', 'T') + 'Z')

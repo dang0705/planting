@@ -125,7 +125,7 @@ function buildPublicOutputEligibility(outputEligibility = null) {
 function toCompactString(...values) {
   for (const value of values) {
     const text = String(value || '').trim()
-    if (text) return text
+    if (text) {return text}
   }
   return ''
 }

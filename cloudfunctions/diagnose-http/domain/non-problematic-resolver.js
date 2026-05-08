@@ -39,7 +39,7 @@ function hasAllKeys(observedSymptomSet, requiredKeys = []) {
 }
 
 function isRuleContextCompatible(item = {}, observedSymptomSet = new Set()) {
-  if (!item?.requiresIsolatedSeed) return true
+  if (!item?.requiresIsolatedSeed) {return true}
 
   const allowedContextKeys = normalizeKeyList(
     Array.isArray(item?.requiredSymptomKeys) && item.requiredSymptomKeys.length
@@ -47,7 +47,7 @@ function isRuleContextCompatible(item = {}, observedSymptomSet = new Set()) {
       : item?.seedSymptomKeys || []
   )
 
-  if (!allowedContextKeys.length) return true
+  if (!allowedContextKeys.length) {return true}
   const allowedSet = new Set(allowedContextKeys)
 
   for (const symptomKey of observedSymptomSet) {
@@ -69,7 +69,7 @@ function buildDirectionMap(diagnosisDirections = []) {
 
 function hasRequiredDirections(item = {}, directionMap = new Map()) {
   const requiredDirectionKeys = normalizeKeyList(item?.requiredDirectionKeys || [])
-  if (!requiredDirectionKeys.length) return true
+  if (!requiredDirectionKeys.length) {return true}
 
   const minimumDirectionConfidence = Number(item?.minimumDirectionConfidence || 0)
 
@@ -86,8 +86,8 @@ function hasBlockingProblemDirection(item = {}, directionMap = new Map()) {
   )
 
   for (const [directionKey, direction] of directionMap.entries()) {
-    if (requiredDirectionKeys.has(directionKey)) continue
-    if (!String(direction?.categoryKey || '').trim()) continue
+    if (requiredDirectionKeys.has(directionKey)) {continue}
+    if (!String(direction?.categoryKey || '').trim()) {continue}
     if (Number(direction?.confidence || 0) > maxCompetingProblemDirectionConfidence) {
       return true
     }
@@ -106,8 +106,8 @@ function isDirectionDrivenRuleSatisfied(
   } = {}
 ) {
   const directionMap = buildDirectionMap(diagnosisDirections)
-  if (!hasRequiredDirections(item, directionMap)) return false
-  if (hasBlockingProblemDirection(item, directionMap)) return false
+  if (!hasRequiredDirections(item, directionMap)) {return false}
+  if (hasBlockingProblemDirection(item, directionMap)) {return false}
   if (item?.requiresNoObservedSymptoms && Array.isArray(observedSymptoms) && observedSymptoms.length) {
     return false
   }
@@ -173,16 +173,16 @@ function resolveNonProblematicFollowUpCandidate({
       ? projectObservedSymptomsFromEvidence(observedEvidenceSet)
       : observedSymptoms
   const observedSymptomSet = buildObservedSymptomSet(effectiveObservedSymptoms)
-  if (!observedSymptomSet.size) return null
+  if (!observedSymptomSet.size) {return null}
 
   for (const item of whitelist) {
     const seedSymptomKeys = normalizeKeyList(item?.seedSymptomKeys || [])
-    if (!seedSymptomKeys.length) continue
-    if (!hasAllKeys(observedSymptomSet, seedSymptomKeys)) continue
+    if (!seedSymptomKeys.length) {continue}
+    if (!hasAllKeys(observedSymptomSet, seedSymptomKeys)) {continue}
 
     const requiredSymptomKeys = normalizeKeyList(item?.requiredSymptomKeys || [])
-    if (hasAllKeys(observedSymptomSet, requiredSymptomKeys)) continue
-    if (!isRuleContextCompatible(item, observedSymptomSet)) continue
+    if (hasAllKeys(observedSymptomSet, requiredSymptomKeys)) {continue}
+    if (!isRuleContextCompatible(item, observedSymptomSet)) {continue}
 
     return item
   }

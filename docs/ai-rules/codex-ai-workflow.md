@@ -1,43 +1,56 @@
-# Codex AI Workflow / Codex AI 工作流
+# Codex / Subagent 工作流规则
 
-## Core Principle
+## 1. 定位
 
-The goal is not to simulate a human company structure. The goal is to create a recoverable, auditable, low-noise engineering workflow.
+本文件是 `AGENTS.md` 中主代理调度协议的细化版本。
+
+目标：
+
+1. Main agent 先分类、再派发、再汇总。
+2. Subagent 只读取与任务相关的最小必要规则。
+3. 避免 subagent 重复读取完整 `AGENTS.md`。
+4. 避免多个可写 agent 并行修改同一批文件。
+5. 让复杂任务可中断、可恢复、可审计。
+
+## 2. Dispatch Plan
 
 ```text
-main agent / owner
-  -> task_planner
-  -> code_explorer
-  -> architect_reviewer
-  -> implementer
-  -> qa_reviewer
-  -> docs_keeper / release_ops when needed
+Dispatch Plan:
+- 任务类型:
+- 选择的 subagent:
+- 选择原因:
+- 需要读取的规则文件:
+- 是否需要读取 AGENTS.md: 默认否；仅在缺少派发上下文、规则冲突、线程恢复或角色边界不清时为是
+- 预期输出:
+- 写入权限:
 ```
 
-## Main Agent Responsibilities
+## 3. 推荐流程
 
-1. Confirm task goal and non-goals.
-2. Select relevant subagents.
-3. Merge conclusions from subagents.
-4. Decide whether implementation should proceed.
-5. Decide whether changes are ready for user review, PR, or release.
+复杂实现任务优先：
 
-Subagents must not make final merge or release decisions.
+1. `task_planner`
+2. `code_explorer`
+3. `architect_reviewer`
+4. `implementer_fast` 或 `implementer_deep`
+5. `qa_reviewer`
+6. `docs_keeper`
+7. `release_ops`
 
-## Subagent Usage Rules
+## 4. 派发边界
 
-- Use `task_planner` when requirements are unclear or scope must be controlled.
-- Use `code_explorer` before implementation when impacted files or call chains are unknown.
-- Use `architect_reviewer` before non-trivial implementation.
-- Use `implementer` only after scope is explicit.
-- Use `qa_reviewer` after code changes.
-- Use `docs_keeper` when changes affect docs, domain concepts, public behavior, API contracts, or diagnosis rules.
-- Use `release_ops` before deployment, release, CI/CD changes, CloudBase changes, or environment variable changes.
+1. 规划：`task_planner`
+2. 代码探索与 `docs/code-logics/` 对照：`code_explorer`
+3. 架构、模块边界、`docs/new-rules/` 一致性：`architect_reviewer`
+4. 低风险局部实现：`implementer_fast`
+5. 高风险、多文件、诊断流、CloudBase、数据结构实现：`implementer_deep`
+6. QA、diff、模块化回归、规则一致性：`qa_reviewer`
+7. 文档、术语、`docs/code-logics/`、`docs/new-rules/`：`docs_keeper`
+8. 发布、部署、CloudBase、replay、回滚：`release_ops`
 
-## Anti-patterns
+## 5. 并发限制
 
-- Do not let many agents freely debate without a task file.
-- Do not let multiple implementers modify the same worktree at the same time.
-- Do not let implementer invent architecture.
-- Do not rely on hidden thread context as the only memory.
-- Do not use subagents as a substitute for tests, diff review, or release checks.
+1. 允许多个只读 subagent 并行探索。
+2. 不允许多个可写 subagent 同时修改同一批文件。
+3. 高风险任务必须先只读分析，再进入实现。
+4. 可写实现任务必须明确由 `implementer_fast` 或 `implementer_deep` 之一执行。

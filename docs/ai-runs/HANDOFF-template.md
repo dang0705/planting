@@ -1,17 +1,72 @@
-# Agent: <agent name>
+# Handoff：<任务名>
 
-## Conclusion / 结论
+## 任务信息
 
-## Evidence / 证据
+- 任务名：
+- 创建时间：
+- 当前阶段：
+- 当前结论：
 
-## Relevant or Changed Files / 相关或已修改文件
+## Main Agent Dispatch Plan
 
-## Decisions / 已做决策
+```text
+Dispatch Plan:
+- 任务类型:
+- 选择的 subagent:
+- 选择原因:
+- 需要读取的规则文件:
+- 是否需要读取 AGENTS.md:
+- 预期输出:
+- 写入权限:
+```
 
-## Risks / 风险
+## 已读取规则
 
-## Verification Status / 验证状态
+- ...
 
-## Open Questions / 未解决问题
+## 相关文件
 
-## Next-step Recommendation / 下一步建议
+- ...
+
+## 相关知识库
+
+- `docs/code-logics/`：
+- `docs/new-rules/`：
+- 其他：
+
+## 结论
+
+...
+
+## 证据
+
+...
+
+## 已完成
+
+...
+
+## 未完成
+
+...
+
+## 风险
+
+...
+
+## 验证状态
+
+- `pnpm lint`：
+- `pnpm test`：
+- `pnpm build`：
+- 类型检查：
+
+## 文档同步状态
+
+- `docs/code-logics/`：
+- `docs/new-rules/`：
+- 其他文档：
+
+## 下一步建议
+
+...

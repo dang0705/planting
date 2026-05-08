@@ -8,7 +8,7 @@ function normalizeEvidenceSourceType(value = '') {
 
 function isEnglishLikeSymptomLabel(value = '') {
   const normalized = String(value || '').trim()
-  if (!normalized) return false
+  if (!normalized) {return false}
   return /[A-Za-z]/.test(normalized) && !/[\u4e00-\u9fff]/.test(normalized)
 }
 
@@ -38,8 +38,8 @@ function resolvePublicSymptomCn(item = {}, fallback = '') {
 
 function isVisualEvidenceItem(item = {}) {
   const sourceType = normalizeEvidenceSourceType(item?.sourceType || item?.source_type || '')
-  if (!sourceType) return false
-  if (sourceType === 'legacy_observed_symptom') return true
+  if (!sourceType) {return false}
+  if (sourceType === 'legacy_observed_symptom') {return true}
   return sourceType.includes('visual')
 }
 

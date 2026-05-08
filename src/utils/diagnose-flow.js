@@ -4,7 +4,7 @@ function normalizeOutcomeType(outcomeType = '') {
 
 function isEnglishLikeSymptomLabel(value = '') {
   const normalized = String(value || '').trim()
-  if (!normalized) return false
+  if (!normalized) {return false}
   return /[A-Za-z]/.test(normalized) && !/[\u4e00-\u9fff]/.test(normalized)
 }
 
@@ -23,14 +23,14 @@ function resolveDisplaySymptomCn(...candidates) {
 function mapSeverityToHealthText({ severity = 'medium', outcomeType = '', followUpRequired = false } = {}) {
   const normalizedOutcomeType = normalizeOutcomeType(outcomeType)
 
-  if (followUpRequired) return '待进一步确认'
-  if (normalizedOutcomeType === 'non_problematic') return '暂未见明显问题'
-  if (normalizedOutcomeType === 'uncertain') return '待进一步确认'
+  if (followUpRequired) {return '待进一步确认'}
+  if (normalizedOutcomeType === 'non_problematic') {return '暂未见明显问题'}
+  if (normalizedOutcomeType === 'uncertain') {return '待进一步确认'}
 
   const key = String(severity || '').toLowerCase()
-  if (key === 'critical') return '严重问题'
-  if (key === 'high') return '需要治疗'
-  if (key === 'low') return '轻微问题'
+  if (key === 'critical') {return '严重问题'}
+  if (key === 'high') {return '需要治疗'}
+  if (key === 'low') {return '轻微问题'}
   return '需要治疗'
 }
 
@@ -47,7 +47,7 @@ export function getHealthClass(status) {
 }
 
 export function formatCausalityItem(item) {
-  if (!item) return ''
+  if (!item) {return ''}
   return `${item?.causeProblemKey || 'unknown'} → ${item?.effectProblemKey || 'unknown'}`
 }
 
@@ -586,9 +586,9 @@ function resolveMainIssueText({
   }
 
   const normalizedOutcomeType = normalizeOutcomeType(outcomeType)
-  if (followUpRequired) return '待进一步确认'
-  if (normalizedOutcomeType === 'non_problematic') return '暂未见明显问题'
-  if (normalizedOutcomeType === 'uncertain') return '暂不能稳定判断'
+  if (followUpRequired) {return '待进一步确认'}
+  if (normalizedOutcomeType === 'non_problematic') {return '暂未见明显问题'}
+  if (normalizedOutcomeType === 'uncertain') {return '暂不能稳定判断'}
   return '待进一步确认'
 }
 
@@ -805,7 +805,7 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
 export function createFollowUpAnswerMap(followUps = []) {
   const entries = {}
   for (const item of followUps || []) {
-    if (!item?.questionId) continue
+    if (!item?.questionId) {continue}
     const defaultOptionId =
       item.defaultOptionId ||
       (Array.isArray(item.options)
@@ -821,7 +821,7 @@ export function createFollowUpAnswerMap(followUps = []) {
 
 export function isFollowUpAnswerComplete(followUps = [], answerMap = {}) {
   const activeFollowUps = (followUps || []).filter(item => item?.questionId)
-  if (!activeFollowUps.length) return false
+  if (!activeFollowUps.length) {return false}
   return activeFollowUps.every(item => Boolean(answerMap[item.questionId]))
 }
 

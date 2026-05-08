@@ -19,7 +19,7 @@
 - **样式框架**: Tailwind CSS
 - **构建工具**: Vite
 - **云服务**: 腾讯云 CloudBase
-- **AI 能力**: 混元 Vision 模型
+- **AI 能力**: Qwen/混元 Vision 模型
 
 
 # Codex AI Team Configuration / Codex AI 团队配置包

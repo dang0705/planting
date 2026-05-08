@@ -66,7 +66,7 @@ function parseCareJson(value) {
 
 function normalizeNullableString(value) {
   const normalized = String(value ?? '').trim()
-  if (!normalized) return null
+  if (!normalized) {return null}
 
   const lowered = normalized.toLowerCase()
   if (lowered === 'null' || lowered === 'undefined') {
@@ -304,7 +304,7 @@ async function getPlantCatalogById(plantId) {
 
 async function findCanonicalPlantMatch(name, limit = 5) {
   const normalized = normalizePlantKeyword(name)
-  if (!normalized) return []
+  if (!normalized) {return []}
 
   const sql = `
     ${CATALOG_SELECT_SQL},
@@ -604,7 +604,7 @@ async function getUserPlantInstanceById(openid, id) {
   `
   const result = await models.$runSQL(sql, { openid, id: Number(id) })
   const row = result?.data?.executeResultList?.[0]
-  if (!row) return null
+  if (!row) {return null}
 
   const plantLookupId = resolveUserPlantCatalogLookupId(row)
   const plant = plantLookupId ? await getPlantCatalogById(plantLookupId) : null
@@ -863,7 +863,7 @@ async function getDiagnosisSessionDetail(openid, diagnosisId) {
   `
   const result = await models.$runSQL(sql, { diagnosisId, openid })
   const row = result?.data?.executeResultList?.[0]
-  if (!row) return null
+  if (!row) {return null}
 
   const symptomResult = await models.$runSQL(
     `
@@ -1132,8 +1132,8 @@ async function buildDiagnosisDecision({
     .filter(item => item.symptomKey && item.confidence > 0)
   const symptomKeys = symptomInputs.map(item => item.symptomKey)
 
-  let evidenceByProblem = new Map()
-  let symptomsByKey = new Map()
+  const evidenceByProblem = new Map()
+  const symptomsByKey = new Map()
 
   if (symptomKeys.length) {
     const [symptomResult, evidenceResult] = await Promise.all([
@@ -1183,7 +1183,7 @@ async function buildDiagnosisDecision({
       for (const symptomInput of symptomInputs) {
         const symptomMeta = symptomsByKey.get(symptomInput.symptomKey)
         const evidence = evidenceRows.find(item => item.symptom_key === symptomInput.symptomKey)
-        if (!symptomMeta || !evidence) continue
+        if (!symptomMeta || !evidence) {continue}
 
         const contribution =
           Number(evidence.association_strength || 0) *
@@ -1289,9 +1289,9 @@ async function buildDiagnosisDecision({
     const candidateMetaMap = new Map(rankings.map(item => [item.problemKey, item]))
     const questionMap = new Map()
     for (const row of evidenceResult?.data?.executeResultList || []) {
-      if (observedSet.has(row.symptom_key) || excludedSet.has(row.symptom_key)) continue
+      if (observedSet.has(row.symptom_key) || excludedSet.has(row.symptom_key)) {continue}
       const candidateMeta = candidateMetaMap.get(row.problem_key)
-      if (!candidateMeta) continue
+      if (!candidateMeta) {continue}
       const item = questionMap.get(row.symptom_key) || {
         symptomKey: row.symptom_key,
         symptomCn: row.symptom_cn,

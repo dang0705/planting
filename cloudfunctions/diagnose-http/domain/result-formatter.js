@@ -36,7 +36,7 @@ function uniqList(values = []) {
 }
 
 function resolvePrimarySymptomClass(symptomClassRuntime = null) {
-  if (!symptomClassRuntime || typeof symptomClassRuntime !== 'object') return null
+  if (!symptomClassRuntime || typeof symptomClassRuntime !== 'object') {return null}
 
   const primaryClass = symptomClassRuntime?.primaryClass
   if (primaryClass && typeof primaryClass === 'object') {
@@ -53,7 +53,7 @@ function resolvePrimarySymptomClass(symptomClassRuntime = null) {
   }
 
   const currentClassKey = normalizeText(symptomClassRuntime?.currentClassKey)
-  if (!currentClassKey) return null
+  if (!currentClassKey) {return null}
 
   return {
     classKey: currentClassKey,
@@ -64,10 +64,10 @@ function resolvePrimarySymptomClass(symptomClassRuntime = null) {
 
 function buildSymptomClassUncertainPrefix(symptomClassRuntime = null) {
   const primaryClass = resolvePrimarySymptomClass(symptomClassRuntime)
-  if (!primaryClass) return ''
+  if (!primaryClass) {return ''}
 
   const classLabel = normalizeText(primaryClass.classNameCn || primaryClass.classKey)
-  if (!classLabel) return ''
+  if (!classLabel) {return ''}
 
   return `当前已收敛到“${classLabel}”，但还缺少足够的补充事实，暂时不能安全定位到具体原因。`
 }
@@ -77,7 +77,7 @@ function pickPrimaryRanking(rankings = [], problemMap = new Map()) {
   for (const item of rankings || []) {
     const problem = problemMap.get(item.problemKey)
     const role = problem?.problemRole || ''
-    if (allowedRoles.has(role)) return item
+    if (allowedRoles.has(role)) {return item}
   }
   return null
 }
@@ -164,7 +164,7 @@ function resolveOutOfPoolObservation(lowConfidence = {}) {
   const observationNames = Array.isArray(observation?.observationNames)
     ? observation.observationNames.map(item => normalizeText(item)).filter(Boolean)
     : []
-  if (!observationText && !observationNames.length) return null
+  if (!observationText && !observationNames.length) {return null}
   return {
     observationNames,
     observationText: observationText || observationNames.join('；')
@@ -264,7 +264,7 @@ function resolveOutcomeType({
   lowConfidence = {},
   stopDecision = null
 } = {}) {
-  if (followUpRequired) return null
+  if (followUpRequired) {return null}
 
   const lockedOutcomeType = normalizeText(stopDecision?.outcomeLocked || '', '')
   if (lockedOutcomeType === 'uncertain' && lowConfidence?.uncertainLegalityReason) {
@@ -282,14 +282,14 @@ function resolveRoutePrimaryAction({
   outcomeType = null,
   preferredRoutePrimaryAction = ''
 } = {}) {
-  if (preferredRoutePrimaryAction === 'retake_first') return 'retake_first'
-  if (followUpRequired) return 'ask_first'
-  if (outcomeType === 'uncertain') return 'uncertain_prepare'
+  if (preferredRoutePrimaryAction === 'retake_first') {return 'retake_first'}
+  if (followUpRequired) {return 'ask_first'}
+  if (outcomeType === 'uncertain') {return 'uncertain_prepare'}
   return 'standard_flow'
 }
 
 function resolveStopReason({ followUpRequired = false, stopDecision = null } = {}) {
-  if (followUpRequired) return 'await_follow_up'
+  if (followUpRequired) {return 'await_follow_up'}
   return normalizeText(stopDecision?.stopReason || '', '')
 }
 

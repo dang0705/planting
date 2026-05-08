@@ -12,7 +12,7 @@ export function buildAuthUserByOpenidQueryOptions(openid) {
           data: { openid }
         }
       }),
-    enabled: !!openid
+    enabled: Boolean(openid)
   }
 }
 

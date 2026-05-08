@@ -9,7 +9,7 @@ function sqlInList(values = []) {
     new Set(
       (values || [])
         .map(value => String(value || '').trim())
-        .filter(value => /^[a-z0-9_:\-]+$/i.test(value))
+        .filter(value => /^[a-z0-9_:-]+$/i.test(value))
     )
   )
 
@@ -22,8 +22,8 @@ function sqlInList(values = []) {
 
 function clamp01(value) {
   const num = Number(value || 0)
-  if (num < 0) return 0
-  if (num > 1) return 1
+  if (num < 0) {return 0}
+  if (num > 1) {return 1}
   return num
 }
 

@@ -120,14 +120,14 @@ function buildSlotMetadata(slotType = 'unknown', index = 0) {
 
 function inferFollowUpSlotTypeFromSuggestion(suggestion = '', fallback = 'whole_plant') {
   const normalized = String(suggestion || '').trim()
-  if (!normalized) return fallback
-  if (normalized.includes('根颈')) return 'root_crown'
-  if (normalized.includes('根')) return 'root'
-  if (normalized.includes('茎')) return 'stem'
-  if (normalized.includes('全株') || normalized.includes('整株')) return 'whole_plant'
-  if (normalized.includes('花')) return 'flower'
-  if (normalized.includes('果')) return 'fruit'
-  if (normalized.includes('叶')) return 'leaf'
+  if (!normalized) {return fallback}
+  if (normalized.includes('根颈')) {return 'root_crown'}
+  if (normalized.includes('根')) {return 'root'}
+  if (normalized.includes('茎')) {return 'stem'}
+  if (normalized.includes('全株') || normalized.includes('整株')) {return 'whole_plant'}
+  if (normalized.includes('花')) {return 'flower'}
+  if (normalized.includes('果')) {return 'fruit'}
+  if (normalized.includes('叶')) {return 'leaf'}
   return fallback
 }
 

@@ -15,7 +15,7 @@ function normalizeText(value = '', fallback = '') {
 
 function normalizeRoundIndex(roundId = '', fallback = 1) {
   const match = String(roundId || '').match(/round_(\d+)/i)
-  if (!match) return Number(fallback || 1) || 1
+  if (!match) {return Number(fallback || 1) || 1}
   return Number(match[1] || fallback || 1) || 1
 }
 

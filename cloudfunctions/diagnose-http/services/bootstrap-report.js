@@ -91,7 +91,7 @@ async function loadRuntimeSchema(schemaName = '') {
         row.Column_Name ||
         ''
     ).trim()
-    if (!tableName || !columnName) continue
+    if (!tableName || !columnName) {continue}
     if (!runtimeSchema[tableName]) {
       runtimeSchema[tableName] = []
     }

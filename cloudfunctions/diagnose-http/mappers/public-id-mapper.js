@@ -23,15 +23,15 @@ function buildPublicId(prefix, internalKey) {
 function parsePublicId(prefix, publicId) {
   const full = String(publicId || '')
   const marker = `${prefix}_`
-  if (!full.startsWith(marker)) return ''
+  if (!full.startsWith(marker)) {return ''}
   const encoded = full.slice(marker.length)
-  if (!encoded || !/^[A-Za-z0-9_-]+$/.test(encoded)) return ''
+  if (!encoded || !/^[A-Za-z0-9_-]+$/.test(encoded)) {return ''}
 
   const decoded = fromBase64Url(encoded)
-  if (!decoded) return ''
+  if (!decoded) {return ''}
 
   // 防止把非 base64url 的外部 id（如 opt_unknown）误解析成乱码。
-  if (toBase64Url(decoded) !== encoded) return ''
+  if (toBase64Url(decoded) !== encoded) {return ''}
   return decoded
 }
 
@@ -65,7 +65,7 @@ function fromOptionId(optionId) {
 
 function fromResultId(resultId) {
   const value = parsePublicId(prefixes.result, resultId)
-  if (!value) return { sessionId: '', round: null }
+  if (!value) {return { sessionId: '', round: null }}
   const [sessionId, roundText] = value.split(':')
   return {
     sessionId: sessionId || '',

@@ -70,7 +70,7 @@ export function useDefaultPlants() {
   }
 
   async function loadNextPage() {
-    if (!hasMore.value || loadingMore.value) return
+    if (!hasMore.value || loadingMore.value) {return}
     loadingMore.value = true
     try {
       const nextList = await fetchCatalogPage(page.value + 1)

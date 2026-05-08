@@ -110,6 +110,10 @@ const {
 const {
   buildCareGuidance
 } = require('../utils/care-baseline-guidance')
+const {
+  buildRouteEvidenceContext,
+  planOutcomeRoutes
+} = require('./outcome-route-planner')
 
 const SYNTHETIC_VISUAL_CANDIDATE_PROBLEM_KEY = '__visual_candidate_seed__'
 const SYNTHETIC_OBSERVED_SYMPTOM_QUESTION_SEED_PROBLEM_KEY = '__observed_symptom_seed__'
@@ -164,6 +168,17 @@ function normalizeDecisionCause(decisionCause = null) {
   }
 }
 
+function isRoutePlanningObservationEnabled() {
+  const raw = String(
+    process.env.ROUTE_PLANNING_OBSERVATION_ENABLED ||
+      process.env.ROUTE_MODE_ENABLED ||
+      '0'
+  )
+    .trim()
+    .toLowerCase()
+  return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on'
+}
+
 function hasActiveObservedEvidenceEntries(observedEvidenceSet = []) {
   return (Array.isArray(observedEvidenceSet) ? observedEvidenceSet : []).some(
     item => normalizeKey(item?.currentStatus || item?.current_status || 'active') === 'active'
@@ -207,7 +222,7 @@ function hasBroadVisualDifferentialInput({
 function hasAnsweredQuestionOption(answers = [], questionKey = '', optionKey = '') {
   const normalizedQuestionKey = normalizeKey(questionKey)
   const normalizedOptionKey = normalizeKey(optionKey)
-  if (!normalizedQuestionKey || !normalizedOptionKey) return false
+  if (!normalizedQuestionKey || !normalizedOptionKey) {return false}
 
   return (Array.isArray(answers) ? answers : []).some(item =>
     normalizeKey(item?.questionKey || item?.question_key || '') === normalizedQuestionKey &&
@@ -221,7 +236,7 @@ function hasAnsweredAnyQuestion(answers = [], questionKeys = []) {
       .map(item => normalizeKey(item))
       .filter(Boolean)
   )
-  if (!questionKeySet.size) return false
+  if (!questionKeySet.size) {return false}
 
   return (Array.isArray(answers) ? answers : []).some(item =>
     questionKeySet.has(normalizeKey(item?.questionKey || item?.question_key || ''))
@@ -238,7 +253,7 @@ function hasUnresolvedEdemaFlatSpotDifferential({
     'q_observed_probe__edema__edema_bump_stage',
     'flat_spot'
   )
-  if (!edemaShapeDenied) return false
+  if (!edemaShapeDenied) {return false}
 
   return !hasAnsweredAnyQuestion(answers, [
     'q_black_spots_surface_layer_check',
@@ -299,7 +314,7 @@ function shouldSuppressCrossDirectionVisualCandidate(
   diagnosisDirections = [],
   symptomClassRuntime = null
 ) {
-  if (!symptomClassRuntime?.enabled) return false
+  if (!symptomClassRuntime?.enabled) {return false}
 
   const anchoredDirectionKeys = new Set(
     (Array.isArray(diagnosisDirections) ? diagnosisDirections : [])
@@ -316,16 +331,16 @@ function shouldSuppressCrossDirectionVisualCandidate(
       .map(direction => normalizeKey(direction?.directionKey || ''))
       .filter(Boolean)
   )
-  if (!anchoredDirectionKeys.size) return false
+  if (!anchoredDirectionKeys.size) {return false}
 
   const candidateSymptomKey = normalizeKey(candidate?.symptomKey || '')
   const candidatePatternKey = normalizeKey(candidate?.patternKey || '')
-  if (!candidateSymptomKey && !candidatePatternKey) return false
+  if (!candidateSymptomKey && !candidatePatternKey) {return false}
 
   const candidateDirectionKeys = new Set()
   for (const direction of Array.isArray(diagnosisDirections) ? diagnosisDirections : []) {
     const directionKey = normalizeKey(direction?.directionKey || '')
-    if (!directionKey) continue
+    if (!directionKey) {continue}
 
     const matchedByCandidateSymptom =
       candidateSymptomKey &&
@@ -341,7 +356,7 @@ function shouldSuppressCrossDirectionVisualCandidate(
     }
   }
 
-  if (!candidateDirectionKeys.size) return false
+  if (!candidateDirectionKeys.size) {return false}
   return Array.from(candidateDirectionKeys).every(directionKey => !anchoredDirectionKeys.has(directionKey))
 }
 
@@ -364,10 +379,10 @@ function buildClassGatedStrategies({
 
   for (const strategy of Array.isArray(problemStrategies) ? problemStrategies : []) {
     const groupStrategy = groupStrategyMap.get(normalizeKey(strategy?.questionGroupKey))
-    if (!groupStrategy) continue
+    if (!groupStrategy) {continue}
 
     const questionKey = normalizeKey(strategy?.questionKey)
-    if (!questionKey) continue
+    if (!questionKey) {continue}
 
     const priorityBoost =
       Number(groupStrategy.basePriority || 0) +
@@ -392,7 +407,7 @@ function buildClassGatedStrategies({
   for (const question of groupQuestions) {
     const questionKey = normalizeKey(question?.questionKey)
     const groupStrategy = groupStrategyMap.get(normalizeKey(question?.questionGroupKey))
-    if (!questionKey || !groupStrategy || seenQuestionKeys.has(questionKey)) continue
+    if (!questionKey || !groupStrategy || seenQuestionKeys.has(questionKey)) {continue}
 
     const priorityBoost =
       Number(groupStrategy.basePriority || 0) +
@@ -475,20 +490,20 @@ function shouldBlockMorphologySiblingQuestion(
   symptomMetaMap = new Map()
 ) {
   const normalizedTargetSymptomKey = String(targetSymptomKey || '').trim()
-  if (!normalizedTargetSymptomKey) return false
+  if (!normalizedTargetSymptomKey) {return false}
 
   const targetMeta = symptomMetaMap.get(normalizedTargetSymptomKey) || {}
   const targetLocationKey = String(targetMeta?.locationKey || '').trim()
   const targetPatternKey = String(targetMeta?.patternKey || '').trim()
   const targetDistributionKey = String(targetMeta?.distributionKey || '').trim()
 
-  if (!targetLocationKey || !targetPatternKey) return false
+  if (!targetLocationKey || !targetPatternKey) {return false}
 
   for (const seededTargetSymptomKey of Array.isArray(seededTargetSymptomKeys)
     ? seededTargetSymptomKeys
     : []) {
     const normalizedSeededTargetSymptomKey = String(seededTargetSymptomKey || '').trim()
-    if (!normalizedSeededTargetSymptomKey) continue
+    if (!normalizedSeededTargetSymptomKey) {continue}
     if (normalizedSeededTargetSymptomKey === normalizedTargetSymptomKey) {
       return true
     }
@@ -517,7 +532,7 @@ function mapByKey(list = [], key = 'problemKey') {
   const map = new Map()
   for (const item of list || []) {
     const id = item?.[key]
-    if (!id) continue
+    if (!id) {continue}
     map.set(id, item)
   }
   return map
@@ -536,7 +551,7 @@ function buildObservedSymptomIndex(observedSymptoms = []) {
 
   for (const item of Array.isArray(observedSymptoms) ? observedSymptoms : []) {
     const symptomKey = String(item?.symptomKey || '').trim()
-    if (!symptomKey) continue
+    if (!symptomKey) {continue}
 
     map.set(symptomKey, {
       confidence: Number(item?.confidence || 0),
@@ -590,7 +605,7 @@ function mergeObservedSymptoms(primary = [], extra = []) {
   const merged = [...(primary || []), ...(extra || [])]
   for (const item of merged) {
     const key = String(item?.symptomKey || '').trim()
-    if (!key) continue
+    if (!key) {continue}
     const current = map.get(key)
     if (!current || Number(item.confidence || 0) > Number(current.confidence || 0)) {
       map.set(key, {
@@ -607,7 +622,7 @@ function mergeObservedSymptoms(primary = [], extra = []) {
 function resolveReliabilityScore(rankings = []) {
   const top = rankings[0]
   const second = rankings[1] || { finalScore: 0 }
-  if (!top) return 0
+  if (!top) {return 0}
 
   const scoreGap = Math.max(Number(top.finalScore || 0) - Number(second.finalScore || 0), 0)
   const base = 1 - Math.exp(-Math.max(Number(top.finalScore || 0), 0))
@@ -620,7 +635,7 @@ function mergeCandidatePriors(...groups) {
 
   for (const group of groups) {
     for (const item of group || []) {
-      if (!item?.problemKey) continue
+      if (!item?.problemKey) {continue}
       const existing = merged.get(item.problemKey) || {
         problemKey: item.problemKey,
         genusCompatibility: null,
@@ -697,7 +712,7 @@ function buildDirectionCandidatePriors(diagnosisDirections = [], existingProblem
 
     for (const rawProblemKey of allowedProblemKeys) {
       const problemKey = normalizeKey(rawProblemKey)
-      if (!problemKey || existingProblemKeySet.has(problemKey)) continue
+      if (!problemKey || existingProblemKeySet.has(problemKey)) {continue}
 
       priors.push({
         problemKey,
@@ -774,13 +789,13 @@ function collectAllowedProblemKeysFromDiagnosisDirections(diagnosisDirections = 
 
 function hasDirectPositiveProblemAnswer(answerEffects = [], problemKey = '') {
   const normalizedProblemKey = normalizeKey(problemKey)
-  if (!normalizedProblemKey) return false
+  if (!normalizedProblemKey) {return false}
 
   return (Array.isArray(answerEffects) ? answerEffects : []).some(item =>
   {
-    if (normalizeKey(item?.effectType || '') !== 'direct_problem_positive') return false
-    if (normalizeKey(item?.problemKey || '') !== normalizedProblemKey) return false
-    if (Number(item?.value || 0) <= 0) return false
+    if (normalizeKey(item?.effectType || '') !== 'direct_problem_positive') {return false}
+    if (normalizeKey(item?.problemKey || '') !== normalizedProblemKey) {return false}
+    if (Number(item?.value || 0) <= 0) {return false}
 
     const { targetDimension } = parseSyntheticObservedProbeQuestionKey(item?.questionKey || '')
     const normalizedTargetDimension =
@@ -801,9 +816,9 @@ function shouldBlockUnscopedClassProblemOutput({
   fastConvergencePlan = null
 } = {}) {
   const topProblemKey = normalizeKey(rankings?.[0]?.problemKey || '')
-  if (!topProblemKey) return false
-  if (fastConvergencePlan?.applied) return false
-  if (hasDirectPositiveProblemAnswer(answerEffects, topProblemKey)) return false
+  if (!topProblemKey) {return false}
+  if (fastConvergencePlan?.applied) {return false}
+  if (hasDirectPositiveProblemAnswer(answerEffects, topProblemKey)) {return false}
 
   const allowedProblemKeySet = collectAllowedProblemKeysFromDiagnosisDirections(diagnosisDirections)
   if (allowedProblemKeySet.size) {
@@ -825,7 +840,7 @@ const LOW_YIELD_FOLLOW_UP_DIMENSIONS = new Set([
 
 function getOptionMappingsForQuestion(optionMappings = [], questionKey = '') {
   const normalizedQuestionKey = normalizeKey(questionKey)
-  if (!normalizedQuestionKey) return []
+  if (!normalizedQuestionKey) {return []}
   return (Array.isArray(optionMappings) ? optionMappings : []).filter(
     item => normalizeKey(item?.questionKey || item?.question_key || '') === normalizedQuestionKey
   )
@@ -970,10 +985,10 @@ function hasFollowUpHistory({
   askedQuestionKeys = [],
   answeredQuestionGroupKeys = []
 } = {}) {
-  if (Number(round || 1) > 1) return true
-  if (Array.isArray(answers) && answers.length > 0) return true
-  if (Array.isArray(askedQuestionKeys) && askedQuestionKeys.length > 0) return true
-  if (Array.isArray(answeredQuestionGroupKeys) && answeredQuestionGroupKeys.length > 0) return true
+  if (Number(round || 1) > 1) {return true}
+  if (Array.isArray(answers) && answers.length > 0) {return true}
+  if (Array.isArray(askedQuestionKeys) && askedQuestionKeys.length > 0) {return true}
+  if (Array.isArray(answeredQuestionGroupKeys) && answeredQuestionGroupKeys.length > 0) {return true}
   return false
 }
 
@@ -1120,7 +1135,7 @@ const YELLOWING_GATE_DIMENSION_EQUIVALENTS = {
 
 function resolveYellowingEquivalentDimensions(targetDimension = '') {
   const normalizedTargetDimension = normalizeQuestionTargetDimension(targetDimension, '')
-  if (!normalizedTargetDimension) return []
+  if (!normalizedTargetDimension) {return []}
 
   const equivalents = new Set([
     normalizedTargetDimension,
@@ -1235,18 +1250,18 @@ function findAnsweredOptionByTargetDimension(askedQuestions = [], targetDimensio
     const itemDimension =
       normalizeQuestionTargetDimension(item?.targetDimension || item?.target_dimension || '', '') ||
       normalizeQuestionTargetDimension(parsedSyntheticObservedProbe?.targetDimension || '', '')
-    if (!itemDimension || !equivalents.has(itemDimension)) continue
+    if (!itemDimension || !equivalents.has(itemDimension)) {continue}
     const optionKey = normalizeKey(item?.optionKey || item?.answerValue || item?.answer_value || '').toLowerCase()
-    if (optionKey) return optionKey
+    if (optionKey) {return optionKey}
   }
   return ''
 }
 
 function hasAnsweredOptionForTargetDimension(askedQuestions = [], targetDimension = '', optionKey = '') {
   const expectedOptionKey = normalizeKey(optionKey)
-  if (!expectedOptionKey) return false
+  if (!expectedOptionKey) {return false}
   const equivalents = new Set(resolveYellowingEquivalentDimensions(targetDimension))
-  if (!equivalents.size) return false
+  if (!equivalents.size) {return false}
 
   return (Array.isArray(askedQuestions) ? askedQuestions : []).some(item => {
     const questionKey = normalizeKey(item?.questionKey || item?.question_key || item?.symptom_key || '')
@@ -1254,7 +1269,7 @@ function hasAnsweredOptionForTargetDimension(askedQuestions = [], targetDimensio
     const itemDimension =
       normalizeQuestionTargetDimension(item?.targetDimension || item?.target_dimension || '', '') ||
       normalizeQuestionTargetDimension(parsedSyntheticObservedProbe?.targetDimension || '', '')
-    if (!itemDimension || !equivalents.has(itemDimension)) return false
+    if (!itemDimension || !equivalents.has(itemDimension)) {return false}
     return normalizeKey(item?.optionKey || item?.option_key || item?.answerValue || item?.answer_value || '') ===
       expectedOptionKey
   })
@@ -1262,8 +1277,8 @@ function hasAnsweredOptionForTargetDimension(askedQuestions = [], targetDimensio
 
 function isQuestionDimensionEquivalentToAllowed(allowedDimensions = new Set(), targetDimension = '') {
   const normalizedTargetDimension = normalizeQuestionTargetDimension(targetDimension, '')
-  if (!normalizedTargetDimension) return true
-  if (allowedDimensions.has(normalizedTargetDimension)) return true
+  if (!normalizedTargetDimension) {return true}
+  if (allowedDimensions.has(normalizedTargetDimension)) {return true}
   for (const allowedDimension of allowedDimensions) {
     const equivalents = resolveYellowingEquivalentDimensions(allowedDimension)
     if (equivalents.includes(normalizedTargetDimension)) {
@@ -1278,7 +1293,7 @@ function collectYellowingAllowedDimensionsForAnsweredBranch(askedQuestions = [])
     askedQuestions,
     QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE
   )
-  if (!primaryClue) return null
+  if (!primaryClue) {return null}
 
   const allowed = new Set([QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE])
   if (primaryClue === 'care_context') {
@@ -1340,7 +1355,7 @@ function isYellowingFollowUpAllowedByAnsweredBranch(askedQuestions = [], questio
 
 function getAnsweredOptionKey(answerLikeRecords = [], questionKey = '') {
   const normalizedQuestionKey = normalizeKey(questionKey)
-  if (!normalizedQuestionKey) return ''
+  if (!normalizedQuestionKey) {return ''}
   const found = (Array.isArray(answerLikeRecords) ? answerLikeRecords : [])
     .slice()
     .reverse()
@@ -1352,7 +1367,7 @@ function countAnsweredQuestions(answerLikeRecords = [], questionKeys = new Set()
   const normalizedQuestionKeys = new Set(
     Array.from(questionKeys || []).map(item => normalizeKey(item)).filter(Boolean)
   )
-  if (!normalizedQuestionKeys.size) return 0
+  if (!normalizedQuestionKeys.size) {return 0}
   return (Array.isArray(answerLikeRecords) ? answerLikeRecords : [])
     .filter(item => normalizedQuestionKeys.has(normalizeKey(item?.questionKey || item?.question_key || '')))
     .length
@@ -1413,7 +1428,7 @@ function shouldBlockFollowUpByRouteConstraint(question = {}, {
   symptomClassRuntime = null
 } = {}) {
   const questionKey = normalizeKey(question?.questionKey || question?.question_key || '')
-  if (!questionKey) return false
+  if (!questionKey) {return false}
 
   const runtimeClassKey = resolveRuntimeClassKey(symptomClassRuntime)
   const answerRouteRecords = collectAnswerRouteRecords(answers, askedQuestionRows)
@@ -1946,10 +1961,10 @@ async function buildFollowUps({
     ...visualCandidateSeedFollowUps,
     ...strategyFollowUps.filter(item => {
       const groupKey = String(item?.questionGroupKey || '').trim()
-      if (selectedSeedQuestionKeys.includes(item?.questionKey)) return false
-      if (groupKey && selectedSeedGroupKeys.has(groupKey)) return false
-      if (selectedVisualCandidateQuestionKeys.includes(item?.questionKey)) return false
-      if (groupKey && selectedVisualCandidateGroupKeys.has(groupKey)) return false
+      if (selectedSeedQuestionKeys.includes(item?.questionKey)) {return false}
+      if (groupKey && selectedSeedGroupKeys.has(groupKey)) {return false}
+      if (selectedVisualCandidateQuestionKeys.includes(item?.questionKey)) {return false}
+      if (groupKey && selectedVisualCandidateGroupKeys.has(groupKey)) {return false}
       if (
         shouldBlockMorphologySiblingQuestion(
           item?.targetSymptomKey,
@@ -1983,10 +1998,10 @@ async function buildProblemScopedFollowUps({
   maxQuestions = rankingConfig.maxQuestionsPerRound
 } = {}) {
   const safeProblemKey = String(problemKey || '').trim()
-  if (!safeProblemKey) return []
+  if (!safeProblemKey) {return []}
 
   const strategies = await getQuestionStrategies([safeProblemKey])
-  if (!strategies.length) return []
+  if (!strategies.length) {return []}
 
   const questionKeys = Array.from(new Set(strategies.map(item => item.questionKey).filter(Boolean)))
   const questions = await getQuestionsByKeys(questionKeys)
@@ -2034,7 +2049,7 @@ async function buildProblemScopedFollowUps({
     const preferredStrategies = strategies
       .filter(strategy => {
         const question = questionMap.get(strategy.questionKey)
-        if (!question) return false
+        if (!question) {return false}
         if (preferredQuestionKeySet.has(question.questionKey)) {
           return true
         }
@@ -2044,8 +2059,8 @@ async function buildProblemScopedFollowUps({
 
     for (const strategy of preferredStrategies) {
       const question = questionMap.get(strategy.questionKey)
-      if (!question) continue
-      if (askedQuestionSet.has(question.questionKey)) continue
+      if (!question) {continue}
+      if (askedQuestionSet.has(question.questionKey)) {continue}
       const answeredYellowingPrimaryClue = findAnsweredOptionByTargetDimension(
         effectiveAskedQuestions,
         QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE
@@ -2134,7 +2149,7 @@ function parseFollowUpRationaleMeta(rationale = '') {
   }
 
   const raw = String(rationale || '').trim()
-  if (!raw) return {}
+  if (!raw) {return {}}
 
   try {
     const parsed = JSON.parse(raw)
@@ -2171,7 +2186,7 @@ function mergeAskedQuestionRows(...groups) {
 
   for (const item of groups.flat()) {
     const questionKey = normalizeKey(item?.questionKey || item?.question_key || item?.symptom_key || '')
-    if (!questionKey) continue
+    if (!questionKey) {continue}
 
     const existing = map.get(questionKey) || {}
     const parsedSyntheticObservedProbe = parseSyntheticObservedProbeQuestionKey(questionKey)
@@ -2235,7 +2250,7 @@ function collectNegativeTargetSymptomKeysFromAnswers({
   for (const answer of Array.isArray(answers) ? answers : []) {
     const questionKey = String(answer?.questionKey || '').trim()
     const optionKey = String(answer?.optionKey || '').trim()
-    if (!questionKey || !optionKey) continue
+    if (!questionKey || !optionKey) {continue}
 
     const question = questionByKey.get(questionKey) || null
     const option =
@@ -2291,12 +2306,12 @@ function collectPositiveMappedObservedSymptomsFromAnswers(answers = [], optionMa
   const observedMap = new Map()
 
   for (const item of optionMappings || []) {
-    if (!answerKeySet.has(`${item.questionKey}::${item.optionKey}`)) continue
+    if (!answerKeySet.has(`${item.questionKey}::${item.optionKey}`)) {continue}
 
     const mappedSymptomKey = String(item.mapsToSymptomKey || '').trim()
     const answerValue = Number(item.value || 0)
     const associationStrength = clamp01(item.associationStrength)
-    if (!mappedSymptomKey || answerValue <= 0 || associationStrength <= 0) continue
+    if (!mappedSymptomKey || answerValue <= 0 || associationStrength <= 0) {continue}
 
     const confidence = clamp01(Math.max(answerValue, associationStrength))
     const current = observedMap.get(mappedSymptomKey)
@@ -2427,7 +2442,7 @@ function buildStrongVisualPresenceSymptomKeys(observedEvidenceSet = []) {
 
   for (const item of Array.isArray(observedEvidenceSet) ? observedEvidenceSet : []) {
     const symptomKey = String(item?.symptomKey || '').trim()
-    if (!symptomKey) continue
+    if (!symptomKey) {continue}
 
     const sourceType = String(item?.sourceType || item?.source_type || '').trim()
     const currentStatus = String(item?.currentStatus || item?.current_status || 'active').trim()
@@ -2468,7 +2483,7 @@ function filterFinalVisualPresenceFollowUps(
 
   return (Array.isArray(followUps) ? followUps : []).filter(item => {
     const targetSymptomKey = String(item?.targetSymptomKey || '').trim()
-    if (!targetSymptomKey) return true
+    if (!targetSymptomKey) {return true}
 
     const targetDimension = normalizeQuestionTargetDimension(
       item?.targetDimension,
@@ -2491,7 +2506,7 @@ function filterFinalVisualPresenceFollowUps(
 
     for (const askedQuestion of effectiveAskedQuestions) {
       const askedTargetSymptomKey = String(askedQuestion?.targetSymptomKey || '').trim()
-      if (!askedTargetSymptomKey) continue
+      if (!askedTargetSymptomKey) {continue}
 
       const askedTargetDimension = normalizeQuestionTargetDimension(
         askedQuestion?.targetDimension,
@@ -2903,7 +2918,7 @@ function collectVisualCandidateSymptoms(visualAggregateResult = null, symptomDic
         item?.candidate?.symptomKey ||
         ''
     ).trim()
-    if (!symptomKey) continue
+    if (!symptomKey) {continue}
 
     const candidate = item?.candidate || aggregatedCandidateMap.get(symptomKey) || {}
     const symptomMeta = symptomMap.get(symptomKey) || {}
@@ -2968,10 +2983,10 @@ function collectVisualCandidateSymptoms(visualAggregateResult = null, symptomDic
         item?.closestSymptomKeyHint ||
         ''
     )
-    if (!symptomKey) continue
+    if (!symptomKey) {continue}
 
     const symptomMeta = symptomMap.get(symptomKey) || {}
-    if (!normalizeKey(symptomMeta?.symptomKey || '')) continue
+    if (!normalizeKey(symptomMeta?.symptomKey || '')) {continue}
 
     const hintCount = Math.max(1, Number(
       item?.support_count ||
@@ -3062,7 +3077,7 @@ function normalizeOutOfPoolMappingComparableText(value = '') {
   return String(value || '')
     .trim()
     .toLowerCase()
-    .replace(/[\s_\-]+/g, ' ')
+    .replace(/[\s_-]+/g, ' ')
     .replace(/[^a-z0-9\u4e00-\u9fff\s]+/g, '')
     .replace(/\s+/g, ' ')
     .trim()
@@ -3085,8 +3100,8 @@ function hasOutOfPoolMappingMatch(rawNames = [], mappingTerms = []) {
 
   return mappingTerms.some(term => {
     const normalizedTerm = normalizeOutOfPoolMappingComparableText(term)
-    if (!normalizedTerm) return false
-    if (rawSet.has(normalizedTerm)) return true
+    if (!normalizedTerm) {return false}
+    if (rawSet.has(normalizedTerm)) {return true}
 
     return normalizedRawNames.some(rawName =>
       rawName.includes(normalizedTerm) || normalizedTerm.includes(rawName)
@@ -3201,7 +3216,7 @@ function buildOutOfPoolObservationFallback(decisionCause = null) {
 
 function buildSyntheticVisualCandidateQuestion(item = {}) {
   const symptomKey = String(item?.symptomKey || '').trim()
-  if (!symptomKey) return null
+  if (!symptomKey) {return null}
 
   const symptomLabel = String(item?.symptomCn || symptomKey).trim() || symptomKey
   const helpText =
@@ -3270,7 +3285,7 @@ function groupQuestionOptionMappings(optionMappings = []) {
   const map = new Map()
   for (const row of Array.isArray(optionMappings) ? optionMappings : []) {
     const questionKey = String(row?.questionKey || '').trim()
-    if (!questionKey) continue
+    if (!questionKey) {continue}
     const list = map.get(questionKey) || []
     list.push(row)
     map.set(questionKey, list)
@@ -3345,7 +3360,7 @@ function isControlledFallbackRoutingScopeAllowed(routingScope = '', {
   allowDifferentialProbe = true
 } = {}) {
   const normalizedRoutingScope = String(routingScope || '').trim()
-  if (!normalizedRoutingScope) return false
+  if (!normalizedRoutingScope) {return false}
   if (allowSymptomConfirmation && normalizedRoutingScope === QUESTION_ROUTING_SCOPES.SYMPTOM_CONFIRMATION) {
     return true
   }
@@ -3387,7 +3402,7 @@ function resolveContextualLesionCopy(questionKey = '', candidateSymptomKey = '')
   const normalizedQuestionKey = String(questionKey || '').trim()
   const normalizedCandidateSymptomKey = String(candidateSymptomKey || '').trim()
 
-  if (!normalizedQuestionKey || !normalizedCandidateSymptomKey) return null
+  if (!normalizedQuestionKey || !normalizedCandidateSymptomKey) {return null}
 
   if (normalizedQuestionKey === 'q_black_spots_surface_layer_check') {
     if (normalizedCandidateSymptomKey === 'brown_spots_halo') {
@@ -3450,7 +3465,7 @@ function contextualizeVisualCandidateStaticQuestions(
     }
 
     const contextualCopy = resolveContextualLesionCopy(questionKey, dominantLesionCandidateSymptomKey)
-    if (!contextualCopy) return question
+    if (!contextualCopy) {return question}
 
     return {
       ...question,
@@ -3477,7 +3492,7 @@ async function buildObservedSymptomSeedFollowUps({
   blockedTargetSymptomKeys = [],
   maxQuestions = rankingConfig.maxQuestionsPerRound
 } = {}) {
-  if (Number(maxQuestions || 0) <= 0) return []
+  if (Number(maxQuestions || 0) <= 0) {return []}
 
   const restrictToControlledFallback =
     shouldRestrictToControlledFallback(symptomClassRuntime) ||
@@ -3505,12 +3520,12 @@ async function buildObservedSymptomSeedFollowUps({
         .filter(Boolean)
     )
   )
-  if (!observedSymptomKeys.length) return []
+  if (!observedSymptomKeys.length) {return []}
 
   const observedCoveredDimensionBySymptomKey = new Map()
   for (const symptom of effectiveObservedSymptoms) {
     const symptomKey = String(symptom?.symptomKey || '').trim()
-    if (!symptomKey) continue
+    if (!symptomKey) {continue}
     observedCoveredDimensionBySymptomKey.set(
       symptomKey,
       new Set(inferObservedVisualCoveredDimensions({
@@ -3693,13 +3708,13 @@ async function buildObservedSymptomSeedFollowUps({
     }
 
     const symptomKey = String(symptom?.symptomKey || '').trim()
-    if (!symptomKey) continue
+    if (!symptomKey) {continue}
     const isPreviouslyProbedSymptom = previouslyProbedNonVisualSymptomKeys.has(symptomKey)
-    if (blockedTargetSymptomSet.has(symptomKey) && !isPreviouslyProbedSymptom) continue
+    if (blockedTargetSymptomSet.has(symptomKey) && !isPreviouslyProbedSymptom) {continue}
     const canUseObservedProbeSeed =
       strongVisualSymptomKeySet.has(symptomKey) || explicitObservedSymptomKeySet.has(symptomKey)
-    if (!canUseObservedProbeSeed) continue
-    if (selectedNonVisualSymptomKeys.has(symptomKey)) continue
+    if (!canUseObservedProbeSeed) {continue}
+    if (selectedNonVisualSymptomKeys.has(symptomKey)) {continue}
     if (
       previouslyProbedNonVisualSymptomKeys.size > 0 &&
       !shouldAllowSecondaryObservedSymptomProbe(symptomKey, {
@@ -3733,9 +3748,9 @@ async function buildObservedSymptomSeedFollowUps({
       if (selectedQuestions.length >= Math.max(1, Math.min(1, Number(maxQuestions || 1)))) {
         break
       }
-      if (askedSet.has(syntheticQuestion.questionKey)) continue
-      if (answeredGroupSet.has(syntheticQuestion.questionGroupKey)) continue
-      if (usedGroupKeys.has(syntheticQuestion.questionGroupKey)) continue
+      if (askedSet.has(syntheticQuestion.questionKey)) {continue}
+      if (answeredGroupSet.has(syntheticQuestion.questionGroupKey)) {continue}
+      if (usedGroupKeys.has(syntheticQuestion.questionGroupKey)) {continue}
 
       selectedQuestions.push({
         ...syntheticQuestion,
@@ -3778,7 +3793,7 @@ async function buildVisualCandidateSeedFollowUps({
         ? await getQuestionsByKeys(askedQuestionKeys)
         : []
   const candidateSymptoms = collectVisualCandidateSymptoms(visualAggregateResult, symptomDictionary)
-  if (!candidateSymptoms.length) return []
+  if (!candidateSymptoms.length) {return []}
   const yellowingCandidateGateFollowUps = await buildYellowingGateFollowUps({
     rankings: [],
     diagnosisDirections,
@@ -3813,8 +3828,8 @@ async function buildVisualCandidateSeedFollowUps({
   const observedSymptomMap = buildObservedSymptomIndex(effectiveObservedSymptoms)
   const effectiveCandidateSymptoms = candidateSymptoms.filter(candidate => {
     const symptomKey = String(candidate?.symptomKey || '').trim()
-    if (!symptomKey) return false
-    if (blockedTargetSymptomSet.has(symptomKey)) return false
+    if (!symptomKey) {return false}
+    if (blockedTargetSymptomSet.has(symptomKey)) {return false}
 
     if (!effectiveObservedSymptoms.length) {
       return true
@@ -3836,7 +3851,7 @@ async function buildVisualCandidateSeedFollowUps({
 
     return shouldUseVisualCandidateSeedQuestion(candidate)
   })
-  if (!effectiveCandidateSymptoms.length) return []
+  if (!effectiveCandidateSymptoms.length) {return []}
 
   const effectiveCandidateSymptomKeys = effectiveCandidateSymptoms
     .map(item => item.symptomKey)
@@ -3944,7 +3959,7 @@ async function buildVisualCandidateSeedFollowUps({
     const dedupeKey =
       questionGroupKey ||
       `${String(question?.targetSymptomKey || '').trim()}::${String(question?.targetDimension || '').trim()}`
-    if (forcedConfirmGroupKeys.has(dedupeKey)) continue
+    if (forcedConfirmGroupKeys.has(dedupeKey)) {continue}
     forcedConfirmGroupKeys.add(dedupeKey)
     dedupedForcedStaticConfirmQuestions.push(question)
   }
@@ -4121,9 +4136,9 @@ async function buildVisualCandidateSeedFollowUps({
         if (selectedQuestions.length >= Math.max(1, Number(maxQuestions || 3))) {
           break
         }
-        if (askedSet.has(syntheticQuestion.questionKey)) continue
-        if (answeredGroupSet.has(syntheticQuestion.questionGroupKey)) continue
-        if (usedGroupKeys.has(syntheticQuestion.questionGroupKey)) continue
+        if (askedSet.has(syntheticQuestion.questionKey)) {continue}
+        if (answeredGroupSet.has(syntheticQuestion.questionGroupKey)) {continue}
+        if (usedGroupKeys.has(syntheticQuestion.questionGroupKey)) {continue}
 
         selectedQuestions.push({
           ...syntheticQuestion,
@@ -4164,9 +4179,9 @@ async function buildVisualCandidateSeedFollowUps({
             if (selectedQuestions.length >= Math.max(1, Number(maxQuestions || 3))) {
               break
             }
-            if (askedSet.has(syntheticQuestion.questionKey)) continue
-            if (answeredGroupSet.has(syntheticQuestion.questionGroupKey)) continue
-            if (usedGroupKeys.has(syntheticQuestion.questionGroupKey)) continue
+            if (askedSet.has(syntheticQuestion.questionKey)) {continue}
+            if (answeredGroupSet.has(syntheticQuestion.questionGroupKey)) {continue}
+            if (usedGroupKeys.has(syntheticQuestion.questionGroupKey)) {continue}
 
             selectedQuestions.push({
               ...syntheticQuestion,
@@ -4184,9 +4199,9 @@ async function buildVisualCandidateSeedFollowUps({
       if (selectedQuestions.length >= Math.max(1, Number(maxQuestions || 3))) {
         break
       }
-      if (askedSet.has(syntheticQuestion.questionKey)) continue
-      if (answeredGroupSet.has(syntheticQuestion.questionGroupKey)) continue
-      if (usedGroupKeys.has(syntheticQuestion.questionGroupKey)) continue
+      if (askedSet.has(syntheticQuestion.questionKey)) {continue}
+      if (answeredGroupSet.has(syntheticQuestion.questionGroupKey)) {continue}
+      if (usedGroupKeys.has(syntheticQuestion.questionGroupKey)) {continue}
 
       selectedQuestions.push({
         ...syntheticQuestion,
@@ -4461,7 +4476,7 @@ async function runDiagnosisRound({
   stage = 'preliminary',
   answerOptionMappings: rawAnswerOptionMappings = [],
   storedFollowUpRows: preloadedStoredFollowUpRows = null,
-  preloadedAskedQuestionRows: preloadedAskedQuestionRows = null,
+  preloadedAskedQuestionRows = null,
   sessionId
 }) {
   const plantContext = lockedPlantContext
@@ -4523,8 +4538,8 @@ async function runDiagnosisRound({
   const preloadedAskedQuestionRowMap = new Map()
   for (const item of Array.isArray(preloadedAskedQuestionRows) ? preloadedAskedQuestionRows : []) {
     const questionKey = normalizeKey(item?.questionKey || item?.question_key || '')
-    if (!questionKey) continue
-    if (preloadedAskedQuestionRowMap.has(questionKey)) continue
+    if (!questionKey) {continue}
+    if (preloadedAskedQuestionRowMap.has(questionKey)) {continue}
     preloadedAskedQuestionRowMap.set(questionKey, item)
   }
   const askedQuestionKeysMissingFromCache = askedQuestionKeyList.filter(key =>
@@ -4567,8 +4582,8 @@ async function runDiagnosisRound({
     ...buildSyntheticFollowUpOptionMappings(questionKeys)
   ]) {
     const dedupeKey = buildOptionMappingKey(item)
-    if (!dedupeKey) continue
-    if (dedupeAnswerOptionMapping.has(dedupeKey)) continue
+    if (!dedupeKey) {continue}
+    if (dedupeAnswerOptionMapping.has(dedupeKey)) {continue}
     dedupeAnswerOptionMapping.set(dedupeKey, item)
   }
   const answerOptionMappings = Array.from(dedupeAnswerOptionMapping.values())
@@ -5248,6 +5263,28 @@ async function runDiagnosisRound({
     answeredQuestionGroupKeys
   })
   const canAskAnotherFollowUpRound = canOpenNextFollowUpRound(round)
+  const routeDecision = await planOutcomeRoutes({
+    candidateOutcomeKeys: candidateProblemKeys,
+    routeEvidenceContext: buildRouteEvidenceContext({
+      plantContext,
+      observedEvidenceSet: labeledObservedEvidenceForResolution,
+      derivedEvidenceSet,
+      diagnosisDirections,
+      symptomClassRuntime,
+      answerEffects,
+      answers,
+      askedQuestionKeys,
+      visualAggregateResult,
+      routeHints: visualRouteContext.routeHints,
+      rankings
+    }),
+    canAskAnotherFollowUpRound,
+    maxVisibleOutcomes: 3,
+    maxQuestionCount: 1,
+    featureFlags: {
+      routePlanningEnabled: isRoutePlanningObservationEnabled()
+    }
+  })
   const weakOutOfPoolHintOnly = isWeakOutOfPoolHintOnlyVisualAggregate(visualAggregateResult)
   const effectiveOutOfPoolOnlyNoMapping =
     outOfPoolOnlyNoMapping && !outOfPoolRuntimeMappingAvailable
@@ -5346,8 +5383,8 @@ async function runDiagnosisRound({
   const shouldForceBroadVisualDifferentialFollowUp =
     (broadVisualDifferentialActive || edemaFlatSpotDifferentialActive) &&
     canAskAnotherFollowUpRound &&
-    !Boolean(fastConvergencePlan?.applied) &&
-    !Boolean(fastConvergencePlan?.shouldBypassFollowUp)
+    !fastConvergencePlan?.applied &&
+    !fastConvergencePlan?.shouldBypassFollowUp
   const yellowingGateRuntimeActive =
     canAskAnotherFollowUpRound &&
     hasYellowingModeRuntime({
@@ -5384,7 +5421,7 @@ async function runDiagnosisRound({
       shouldForceBroadVisualDifferentialFollowUp ||
       shouldForceWeakOutOfPoolHintFollowUp
     ) &&
-    !Boolean(fastConvergencePlan?.shouldBypassFollowUp)
+    !fastConvergencePlan?.shouldBypassFollowUp
   const forcedContextFollowUps =
     shouldAskFollowUp && !shouldForceYellowingGateFollowUp && shouldForceContextFollowUp
       ? await buildProblemScopedFollowUps({
@@ -5444,7 +5481,7 @@ async function runDiagnosisRound({
     : [...forcedContextFollowUps, ...genericFollowUps]
   for (const item of followUpCandidates) {
     const questionKey = String(item?.questionKey || '').trim()
-    if (!questionKey || seenFollowUpQuestionKeys.has(questionKey)) continue
+    if (!questionKey || seenFollowUpQuestionKeys.has(questionKey)) {continue}
     if (
       !isYellowingFollowUpAllowedByAnsweredBranch(askedQuestionRows, item) ||
       (
@@ -5744,7 +5781,7 @@ async function runDiagnosisRound({
     !hasActiveObservedEvidence
   const broadVisualDifferentialUnresolved =
     !followUpRequired &&
-    !Boolean(fastConvergencePlan?.applied) &&
+    !fastConvergencePlan?.applied &&
     (
       edemaFlatSpotDifferentialActive ||
       (
@@ -6175,8 +6212,10 @@ async function runDiagnosisRound({
     ...enrichedResponse,
     metrics: {
       reliabilityScore: roundNum(reliabilityScore),
-      topScoreGap: roundNum(scoreGap)
+      topScoreGap: roundNum(scoreGap),
+      routeDecision
     },
+    routeDecision,
     answerEffects,
     followUpStopPolicy,
     plantContext,

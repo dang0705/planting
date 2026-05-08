@@ -17,7 +17,7 @@ const AK = process.env.BAIDU_AK
 const SK = process.env.BAIDU_SK
 
 function pickPlantMatchFields(plant) {
-  if (!plant) return null
+  if (!plant) {return null}
   return {
     id: plant.id || '',
     plantIdentityId: plant.plantIdentityId || '',

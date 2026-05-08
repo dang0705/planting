@@ -24,7 +24,7 @@ const {
 
 function isEnglishLikeSymptomLabel(value = '') {
   const normalized = String(value || '').trim()
-  if (!normalized) return false
+  if (!normalized) {return false}
   return /[A-Za-z]/.test(normalized) && !/[\u4e00-\u9fff]/.test(normalized)
 }
 
@@ -400,7 +400,7 @@ function resolveSessionStatus(response = {}) {
 
 function buildOutcomePayload(response = {}) {
   const normalizedOutcomeType = normalizeOutcomeType(response?.outcomeType, '')
-  if (!normalizedOutcomeType) return null
+  if (!normalizedOutcomeType) {return null}
 
   return JSON.stringify({
     outcomeType: normalizedOutcomeType,

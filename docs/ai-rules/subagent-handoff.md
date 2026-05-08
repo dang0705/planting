@@ -1,56 +1,43 @@
-# Subagent Handoff and Context Persistence / Subagent 交接与上下文持久化
+# Subagent 交接与任务持久化规则
 
-## Core Principle
+## 1. 定位
 
-Agent threads may stop. Task state must survive.
+本文件用于保证多 agent 任务可中断、可恢复、可审计。
 
-Store durable context in repository files, not only in chat.
+## 2. 持久化位置
 
-## Task Notes
+非简单任务必须创建或更新：
 
-Use `docs/ai-tasks/` for non-trivial tasks.
+1. 任务说明：`docs/ai-tasks/`
+2. 运行交接：`docs/ai-runs/`
+3. 架构决策：`docs/adr/`，仅在存在长期架构取舍时使用
 
-```text
-docs/ai-tasks/TASK-YYYY-MM-DD-short-name.md
-```
+## 3. Subagent 输出要求
 
-```md
-# TASK: <task name>
+每个 subagent 结果必须包含：
 
-## Goal / 目标
-## Non-goals / 非目标
-## Current Decisions / 当前已确认决策
-## Constraints / 约束
-## Relevant Files / 涉及文件
-## Acceptance Criteria / 验收标准
-## Verification Plan / 验证计划
-```
+1. 结论。
+2. 证据。
+3. 相关文件。
+4. 已读取规则。
+5. 风险。
+6. 验证状态。
+7. 下一步建议。
 
-## Run Handoff Notes
+## 4. 线程恢复
 
-Use `docs/ai-runs/` for multi-agent or multi-step work.
-
-```text
-docs/ai-runs/YYYY-MM-DD-short-name/
-  task-planner.md
-  code-explorer.md
-  architect-reviewer.md
-  implementer.md
-  qa-reviewer.md
-  docs-keeper.md
-  release-ops.md
-  final-summary.md
-```
-
-Every handoff must include conclusion, evidence, relevant/changed files, decisions, risks, verification status, open questions, and next-step recommendation.
-
-## Resume Rule
-
-When resuming interrupted work, read in this order:
+Main agent 接手时优先读取：
 
 1. `AGENTS.md`
-2. Relevant files in `docs/ai-rules/`
-3. Current `docs/ai-tasks/TASK-*.md`
-4. Latest `docs/ai-runs/.../*.md`
-5. Current git diff
-6. Relevant source files
+2. 对应 `docs/ai-rules/`
+3. 对应 `docs/ai-tasks/`
+4. 最新 `docs/ai-runs/`
+5. 当前 git diff 与验证结果
+
+Subagent 接手时默认只读取：
+
+1. Main agent 提供的 Dispatch Plan
+2. Dispatch Plan 指定的 `docs/ai-rules/`
+3. 对应 `docs/ai-tasks/`
+4. 最新 `docs/ai-runs/`
+5. 当前 git diff 与验证结果

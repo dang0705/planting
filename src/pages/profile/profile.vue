@@ -231,7 +231,7 @@ const menuItems = ref([
 
 const visibleMenuItems = computed(() =>
   menuItems.value.filter(item => {
-    if (!item?.devOnly) return true
+    if (!item?.devOnly) {return true}
     return isDevelopmentAppEnv()
   })
 )
@@ -242,7 +242,7 @@ onMounted(() => {
 })
 
 async function loadDiagnoseHistory() {
-  if (!userStore.isAuthenticated) return
+  if (!userStore.isAuthenticated) {return}
 
   loadingHistory.value = true
   try {
@@ -328,9 +328,9 @@ function formatTime(time) {
   const now = new Date()
   const diff = now - date
 
-  if (diff < 60000) return '刚刚'
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
+  if (diff < 60000) {return '刚刚'}
+  if (diff < 3600000) {return `${Math.floor(diff / 60000)}分钟前`}
+  if (diff < 86400000) {return `${Math.floor(diff / 3600000)}小时前`}
   return `${Math.floor(diff / 86400000)}天前`
 }
 </script>

@@ -29,12 +29,12 @@ function computeCausalityBoosts(rankings = [], edges = []) {
   for (const edge of edges || []) {
     const cause = edge?.causeProblemKey
     const effect = edge?.effectProblemKey
-    if (!cause || !effect) continue
-    if (!topScoreMap.has(cause)) continue
-    if (!(effect in boostMap)) continue
+    if (!cause || !effect) {continue}
+    if (!topScoreMap.has(cause)) {continue}
+    if (!(effect in boostMap)) {continue}
 
     const relationFactor = resolveRelationFactor(edge.relationType)
-    if (relationFactor <= 0) continue
+    if (relationFactor <= 0) {continue}
 
     const parentScore = Number(topScoreMap.get(cause) || 0)
     const relationStrength = clamp01(edge.relationStrength)

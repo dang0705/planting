@@ -117,7 +117,7 @@ function normalizeOutOfPoolReviewMatchTerm(value = '') {
   return String(value || '')
     .trim()
     .toLowerCase()
-    .replace(/[\s_\-]+/g, ' ')
+    .replace(/[\s_-]+/g, ' ')
     .replace(/\s+/g, ' ')
     .split(' ')
     .filter(Boolean)
@@ -142,7 +142,7 @@ function parseFollowUpRationale(value = '') {
   }
 
   const raw = String(value || '').trim()
-  if (!raw) return {}
+  if (!raw) {return {}}
 
   try {
     const parsed = JSON.parse(raw)
@@ -219,7 +219,7 @@ function buildRuntimeAnswersFromFollowUpUpdates(previousAnswers = [], updatedFol
 
   for (const item of Array.isArray(previousAnswers) ? previousAnswers : []) {
     const key = normalizeAnswerQuestionKey(item?.questionKey || '')
-    if (!key) continue
+    if (!key) {continue}
     answerMap.set(key, {
       questionKey: key,
       optionKey: String(item?.optionKey || '').trim()
@@ -229,7 +229,7 @@ function buildRuntimeAnswersFromFollowUpUpdates(previousAnswers = [], updatedFol
   for (const item of Array.isArray(updatedFollowUpAnswers) ? updatedFollowUpAnswers : []) {
     const key = normalizeAnswerQuestionKey(item?.questionKey || '')
     const optionKey = String(item?.optionKey || '').trim()
-    if (!key || !optionKey) continue
+    if (!key || !optionKey) {continue}
     answerMap.set(key, {
       questionKey: key,
       optionKey: optionKey.toLowerCase()
@@ -241,7 +241,7 @@ function buildRuntimeAnswersFromFollowUpUpdates(previousAnswers = [], updatedFol
 
 function buildRuntimeUnknownCountByGroup(previousUnknownCountByGroup = {}, updatedFollowUpAnswers = []) {
   const nextUnknownCountByGroup = {
-    ...(previousUnknownCountByGroup || {})
+    ...previousUnknownCountByGroup
   }
 
   for (const item of Array.isArray(updatedFollowUpAnswers) ? updatedFollowUpAnswers : []) {
@@ -275,7 +275,7 @@ function buildOutOfPoolReviewMatchTerms(candidate = {}) {
   reasonTerms.forEach(item => normalized.add(item))
   if (closestHint) {
     normalized.add(closestHint)
-    normalized.add(closestHint.replace(/[_\-]+/g, ' '))
+    normalized.add(closestHint.replace(/[_-]+/g, ' '))
     normalized.add(closestHint.replace(/[_]/g, ''))
   }
 
@@ -295,7 +295,7 @@ function resolveVisualImageInputs(payload = {}) {
     const imageRef = String(
       item?.imageRef || item?.imageUrl || item?.image || item?.url || item?.imageId || ''
     ).trim()
-    if (!imageRef) continue
+    if (!imageRef) {continue}
 
     const normalizedOrderIndex = Number(item?.orderIndex ?? index)
     const normalizedInputSlotOrder = Number(item?.inputSlotOrder ?? item?.orderIndex ?? index)
@@ -375,8 +375,8 @@ function normalizeEvidenceSourceType(value = '') {
 
 function isVisualEvidenceItem(item = {}) {
   const sourceType = normalizeEvidenceSourceType(item?.sourceType || item?.source_type || '')
-  if (!sourceType) return false
-  if (sourceType === 'legacy_observed_symptom') return true
+  if (!sourceType) {return false}
+  if (sourceType === 'legacy_observed_symptom') {return true}
   return sourceType.includes('visual')
 }
 
@@ -388,14 +388,14 @@ function stripVisualEvidenceItems(observedEvidenceSet = []) {
 
 function normalizeRoundFromRoundId(roundId) {
   const match = String(roundId || '').match(/round_(\d+)/i)
-  if (!match) return null
+  if (!match) {return null}
   return Number(match[1] || 0) || null
 }
 
 function normalizePublicAnswers(answers = []) {
   const normalized = (Array.isArray(answers) ? answers : [])
     .map(item => {
-      if (!item) return null
+      if (!item) {return null}
 
       const questionKey =
         fromQuestionId(item.questionId || '') ||
@@ -404,7 +404,7 @@ function normalizePublicAnswers(answers = []) {
         fromOptionId(item.optionId || '') ||
         normalizeOptionKey(item.optionKey || item.option_key || item.answerValue || item.optionId || '')
 
-      if (!questionKey || !optionKey) return null
+      if (!questionKey || !optionKey) {return null}
 
       return {
         questionKey,
@@ -435,7 +435,7 @@ function mergeClientContextFields(primary = null, fallback = null) {
   const base = fallback && typeof fallback === 'object' ? fallback : {}
   const pickText = key => {
     const first = String(source?.[key] || '').trim()
-    if (first) return first
+    if (first) {return first}
     const second = String(base?.[key] || '').trim()
     return second || ''
   }
@@ -479,7 +479,7 @@ function resolveRequestClientContext(payload = {}, fallback = null) {
 }
 
 function emitStartVisualEvent(onVisualEvent, eventName, payload = {}) {
-  if (typeof onVisualEvent !== 'function') return
+  if (typeof onVisualEvent !== 'function') {return}
   try {
     onVisualEvent(eventName, payload)
   } catch (error) {
@@ -564,7 +564,7 @@ async function persistRoundResult({
   awaitPersistence = true,
   clientContext = null
 }) {
-  if (skipPersistence) return
+  if (skipPersistence) {return}
 
   const persistencePromise = persistRoundRuntime({
     sessionId,
@@ -619,7 +619,7 @@ async function runStartDiagnosis({
     payload.visualBatchTrace?.current_visual_call_batch_id ||
     payload.visualBatchTrace?.currentVisualCallBatchId ||
     null
-  let observedEvidenceSet = Array.isArray(payload.observedEvidenceSet)
+  const observedEvidenceSet = Array.isArray(payload.observedEvidenceSet)
     ? payload.observedEvidenceSet
     : []
   let observedSymptoms = observedEvidenceSet.length
@@ -1193,7 +1193,7 @@ function buildMinimalAvoidAdvice(publicResponse = {}, explanation = null) {
 }
 
 function pickMinimalFinalResult(finalResult = null) {
-  if (!finalResult || typeof finalResult !== 'object') return null
+  if (!finalResult || typeof finalResult !== 'object') {return null}
   return {
     resultId: String(finalResult?.resultId || '').trim(),
     problemId: String(finalResult?.problemId || '').trim(),
@@ -1209,7 +1209,7 @@ function pickMinimalFinalResult(finalResult = null) {
 }
 
 function pickMinimalSummaryCard(summaryCard = null) {
-  if (!summaryCard || typeof summaryCard !== 'object') return null
+  if (!summaryCard || typeof summaryCard !== 'object') {return null}
   return {
     title: String(summaryCard?.title || '').trim(),
     subtitle: String(summaryCard?.subtitle || '').trim(),
@@ -1219,7 +1219,7 @@ function pickMinimalSummaryCard(summaryCard = null) {
 }
 
 function pickMinimalVisualBatchTrace(trace = null) {
-  if (!trace || typeof trace !== 'object') return null
+  if (!trace || typeof trace !== 'object') {return null}
   return {
     currentVisualCallBatchId:
       trace?.currentVisualCallBatchId || trace?.current_visual_call_batch_id || null,
@@ -1235,7 +1235,7 @@ function pickMinimalVisualBatchTrace(trace = null) {
 }
 
 function pickMinimalVisualAggregateSummary(summary = null) {
-  if (!summary || typeof summary !== 'object') return null
+  if (!summary || typeof summary !== 'object') {return null}
   return {
     visualCallBatchId: summary?.visualCallBatchId || summary?.visual_call_batch_id || null,
     effectiveImageCount: Number(summary?.effectiveImageCount ?? summary?.effective_image_count ?? 0),
@@ -1253,7 +1253,7 @@ function pickMinimalVisualAggregateSummary(summary = null) {
 }
 
 function pickMinimalOutputEligibility(outputEligibility = null) {
-  if (!outputEligibility || typeof outputEligibility !== 'object') return null
+  if (!outputEligibility || typeof outputEligibility !== 'object') {return null}
   return {
     eligible: Number(outputEligibility?.eligible || 0) ? 1 : 0,
     judgment: String(outputEligibility?.judgment || '').trim(),
@@ -1722,7 +1722,7 @@ function createSseEmitter(sse) {
 
   return {
     send(eventName, payload) {
-      if (closed || sse.closed) return
+      if (closed || sse.closed) {return}
       eventId += 1
       sse.send({
         event: eventName,
@@ -1826,7 +1826,7 @@ function createVisualStreamBridge(emitter, { emitRawReply = false } = {}) {
 
   function sendProgress(eventName, payload = {}) {
     const content = buildVisualProgressContent(eventName, payload)
-    if (!content || content === lastProgressContent) return
+    if (!content || content === lastProgressContent) {return}
     lastProgressContent = content
     emitter.send('visual_progress', {
       type: 'visual_progress',
@@ -1837,7 +1837,7 @@ function createVisualStreamBridge(emitter, { emitRawReply = false } = {}) {
 
   return {
     onText: (chunk, fullText) => {
-      if (!emitRawReply) return
+      if (!emitRawReply) {return}
       emitter.send('reply', {
         type: 'reply',
         role: 'assistant',
@@ -1993,7 +1993,7 @@ async function main(event, context) {
     }
 
     if (path.includes('/diagnosis/start')) {
-      if (method !== 'POST') return methodNotAllowed(method)
+      if (method !== 'POST') {return methodNotAllowed(method)}
       if (requestWantsDiagnosisStartSse(request, payload)) {
         return handleDiagnosisStartStream(event, context, request, payload)
       }
@@ -2001,27 +2001,27 @@ async function main(event, context) {
     }
 
     if (path.includes('/diagnosis/answer')) {
-      if (method !== 'POST') return methodNotAllowed(method)
+      if (method !== 'POST') {return methodNotAllowed(method)}
       return handleDiagnosisAnswer(request, context, payload)
     }
 
     if (path.includes('/diagnosis/result')) {
-      if (method !== 'GET') return methodNotAllowed(method)
+      if (method !== 'GET') {return methodNotAllowed(method)}
       return handleDiagnosisResult(request, context, request.query)
     }
 
     if (path.includes('/diagnosis/history')) {
-      if (method !== 'GET') return methodNotAllowed(method)
+      if (method !== 'GET') {return methodNotAllowed(method)}
       return handleDiagnosisHistory(request, context, request.query)
     }
 
     if (path.includes('/diagnosis/review/list')) {
-      if (method !== 'GET') return methodNotAllowed(method)
+      if (method !== 'GET') {return methodNotAllowed(method)}
       return handleDiagnosisReviewList(request, context, request.query)
     }
 
     if (path.includes('/diagnosis/review/images')) {
-      if (method !== 'GET') return methodNotAllowed(method)
+      if (method !== 'GET') {return methodNotAllowed(method)}
       return handleDiagnosisReviewImages(request, context, request.query)
     }
 
@@ -2032,17 +2032,17 @@ async function main(event, context) {
       ) {
         return handleDiagnosisReviewImportBatch(request, context, payload)
       }
-      if (method !== 'GET') return methodNotAllowed(method)
+      if (method !== 'GET') {return methodNotAllowed(method)}
       return handleDiagnosisReviewDetail(request, context, request.query)
     }
 
     if (path.includes('/diagnosis/review/import')) {
-      if (method !== 'POST') return methodNotAllowed(method)
+      if (method !== 'POST') {return methodNotAllowed(method)}
       return handleDiagnosisReviewImportBatch(request, context, payload)
     }
 
     if (path.includes('/diagnosis/feedback')) {
-      if (method !== 'POST') return methodNotAllowed(method)
+      if (method !== 'POST') {return methodNotAllowed(method)}
       if (
         String(payload?.action || request.query?.action || '').trim() === 'importBatch'
       ) {
@@ -2052,42 +2052,42 @@ async function main(event, context) {
     }
 
     if (path.includes('/visual/out-of-pool/list')) {
-      if (method !== 'GET') return methodNotAllowed(method)
+      if (method !== 'GET') {return methodNotAllowed(method)}
       return handleOutOfPoolCandidateList(request, context, request.query)
     }
 
     if (path.includes('/visual/out-of-pool/image')) {
-      if (method !== 'GET') return methodNotAllowed(method)
+      if (method !== 'GET') {return methodNotAllowed(method)}
       return handleOutOfPoolCandidateImage(request, context, request.query)
     }
 
     if (path.includes('/visual/out-of-pool/review')) {
-      if (method !== 'POST') return methodNotAllowed(method)
+      if (method !== 'POST') {return methodNotAllowed(method)}
       return handleOutOfPoolCandidateReview(request, context, payload)
     }
 
     if (path.includes('/visual/out-of-pool/proxy-mappings/list')) {
-      if (method !== 'GET') return methodNotAllowed(method)
+      if (method !== 'GET') {return methodNotAllowed(method)}
       return handleOutOfPoolProxyMappingList(request, context, request.query)
     }
 
     if (path.includes('/visual/out-of-pool/proxy-mappings/upsert')) {
-      if (method !== 'POST') return methodNotAllowed(method)
+      if (method !== 'POST') {return methodNotAllowed(method)}
       return handleOutOfPoolProxyMappingUpsert(request, context, payload)
     }
 
     if (path.includes('/visual/out-of-pool/proxy-mappings/disable')) {
-      if (method !== 'POST') return methodNotAllowed(method)
+      if (method !== 'POST') {return methodNotAllowed(method)}
       return handleOutOfPoolProxyMappingDisable(request, context, payload)
     }
 
     if (path.includes('/stream/diagnose')) {
-      if (method !== 'POST') return methodNotAllowed(method)
+      if (method !== 'POST') {return methodNotAllowed(method)}
       return handleLegacyDiagnoseStream(event, context, request, payload)
     }
 
     if (path.includes('/diagnose')) {
-      if (method !== 'POST') return methodNotAllowed(method)
+      if (method !== 'POST') {return methodNotAllowed(method)}
       return handleLegacyDiagnose(request, context, payload)
     }
 

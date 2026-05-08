@@ -15,9 +15,9 @@ const {
 } = require('./session-runtime-snapshot-codec')
 
 function toNullableDateTimeString(value) {
-  if (value === null || value === undefined || value === '') return ''
+  if (value === null || value === undefined || value === '') {return ''}
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return ''
+  if (Number.isNaN(date.getTime())) {return ''}
   return date.toISOString().slice(0, 19).replace('T', ' ')
 }
 
@@ -26,7 +26,7 @@ function normalizeNullableSqlText(value) {
 }
 
 function normalizeNullableSqlNumber(value) {
-  if (value === null || value === undefined || value === '') return null
+  if (value === null || value === undefined || value === '') {return null}
   const num = Number(value)
   return Number.isFinite(num) ? num : null
 }
@@ -50,7 +50,7 @@ function pickAdviceTextFromSteps(items = []) {
     const text = typeof item === 'string'
       ? normalizeAdviceText(item)
       : normalizeAdviceText(item?.text || item?.title || item?.label || '')
-    if (text) return text
+    if (text) {return text}
   }
   return ''
 }

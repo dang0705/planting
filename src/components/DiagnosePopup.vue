@@ -771,14 +771,14 @@ const hasDirtyFollowUpAnswers = computed(() => dirtyFollowUpFromIndex.value >= 0
 const currentFollowUpAccordionValue = computed({
   get() {
     const question = currentFollowUpQuestion.value
-    if (!isAccordionFollowUpQuestion(question)) return ''
+    if (!isAccordionFollowUpQuestion(question)) {return ''}
     return getExpandedFollowUpOptionId(question)
   },
   set(value) {
     const question = currentFollowUpQuestion.value
-    if (!isAccordionFollowUpQuestion(question)) return
+    if (!isAccordionFollowUpQuestion(question)) {return}
     const optionId = normalizeCollapseOptionValue(value)
-    if (!optionId) return
+    if (!optionId) {return}
     setExpandedFollowUpOption(question, optionId)
     setFollowUpAnswer(getFollowUpQuestionId(question), optionId)
   }
@@ -881,7 +881,7 @@ function getFollowUpOptionId(option) {
 
 function getExpandedFollowUpOptionId(question) {
   const questionId = getFollowUpQuestionId(question)
-  if (!questionId) return ''
+  if (!questionId) {return ''}
   return String(
     expandedFollowUpOptionByQuestion.value[questionId] ||
     followUpAnswers.value[questionId] ||
@@ -903,7 +903,7 @@ function normalizeCollapseOptionValue(value) {
 function setExpandedFollowUpOption(question, optionId) {
   const questionId = getFollowUpQuestionId(question)
   const normalizedOptionId = String(optionId || '').trim()
-  if (!questionId || !normalizedOptionId) return
+  if (!questionId || !normalizedOptionId) {return}
   expandedFollowUpOptionByQuestion.value = {
     ...expandedFollowUpOptionByQuestion.value,
     [questionId]: normalizedOptionId
@@ -912,13 +912,13 @@ function setExpandedFollowUpOption(question, optionId) {
 
 function handleFollowUpAccordionChange(question, value) {
   const optionId = normalizeCollapseOptionValue(value)
-  if (!optionId) return
+  if (!optionId) {return}
   setExpandedFollowUpOption(question, optionId)
   setFollowUpAnswer(getFollowUpQuestionId(question), optionId)
 }
 
 function isFollowUpOptionExpanded(question, option) {
-  if (!isAccordionFollowUpQuestion(question)) return true
+  if (!isAccordionFollowUpQuestion(question)) {return true}
   const optionId = getFollowUpOptionId(option)
   return Boolean(optionId && getExpandedFollowUpOptionId(question) === optionId)
 }
@@ -926,7 +926,7 @@ function isFollowUpOptionExpanded(question, option) {
 function isSelectedFollowUpOption(question, option) {
   const questionId = getFollowUpQuestionId(question)
   const optionId = getFollowUpOptionId(option)
-  if (!questionId || !optionId) return false
+  if (!questionId || !optionId) {return false}
   const selectedOptionId = String(
     followUpAnswers.value[questionId] ||
     question?.defaultOptionId ||
@@ -938,7 +938,7 @@ function isSelectedFollowUpOption(question, option) {
 function selectFollowUpOption(question, option) {
   const questionId = getFollowUpQuestionId(question)
   const optionId = getFollowUpOptionId(option)
-  if (!questionId || !optionId) return
+  if (!questionId || !optionId) {return}
   setFollowUpAnswer(questionId, optionId)
   if (isAccordionFollowUpQuestion(question)) {
     setExpandedFollowUpOption(question, optionId)
@@ -947,13 +947,13 @@ function selectFollowUpOption(question, option) {
 
 function findFollowUpQuestionIndex(questionId = '') {
   const normalizedQuestionId = String(questionId || '').trim()
-  if (!normalizedQuestionId) return -1
+  if (!normalizedQuestionId) {return -1}
   return followUpQuestionStack.value.findIndex(item => getFollowUpQuestionId(item) === normalizedQuestionId)
 }
 
 function updateDirtyFollowUpIndex(questionId = '', optionId = '') {
   const questionIndex = findFollowUpQuestionIndex(questionId)
-  if (questionIndex < 0) return
+  if (questionIndex < 0) {return}
 
   const committedOptionId = String(
     committedFollowUpAnswers.value?.[questionId]?.optionId || ''
@@ -991,8 +991,8 @@ function goNextFollowUpQuestion() {
 function canProceedFollowUpQuestion() {
   const question = currentFollowUpQuestion.value
   const questionId = getFollowUpQuestionId(question)
-  if (!questionId) return false
-  if (isSubmittingAnyFollowUp.value) return false
+  if (!questionId) {return false}
+  if (isSubmittingAnyFollowUp.value) {return false}
   if (followUpImageFiles.value.length > 0 || hasPendingFollowUpUploads.value || hasFollowUpUploadErrors.value) {
     return false
   }
@@ -1123,7 +1123,7 @@ function clearDevSymptomClass() {
 
 function buildDevVisualObservedSymptoms() {
   const option = selectedDevSymptomClassOption.value
-  if (!automationEnabled || !option) return []
+  if (!automationEnabled || !option) {return []}
 
   return [
     {
@@ -1140,7 +1140,7 @@ function buildDevVisualObservedSymptoms() {
 
 function buildDevVisualObservedEvidenceSet() {
   const option = selectedDevSymptomClassOption.value
-  if (!automationEnabled || !option) return []
+  if (!automationEnabled || !option) {return []}
 
   return [
     {

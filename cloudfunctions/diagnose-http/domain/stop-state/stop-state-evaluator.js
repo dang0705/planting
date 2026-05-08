@@ -16,7 +16,7 @@ function normalizeText(value = '', fallback = '') {
 
 function normalizeRoundIndex(roundId = '', fallback = 1) {
   const match = String(roundId || '').match(/round_(\d+)/i)
-  if (!match) return Number(fallback || 1) || 1
+  if (!match) {return Number(fallback || 1) || 1}
   return Number(match[1] || fallback || 1) || 1
 }
 
@@ -36,21 +36,21 @@ function resolveStopReasonType({
   stopReason = '',
   decisionCauseKey = ''
 } = {}) {
-  if (followUpRequired) return 'pending_follow_up'
+  if (followUpRequired) {return 'pending_follow_up'}
 
   const normalizedOutcomeType = normalizeText(outcomeType)
   const normalizedDecisionCauseKey = normalizeText(decisionCauseKey)
   if (normalizedOutcomeType === 'uncertain' && normalizedDecisionCauseKey) {
     return `uncertain_${normalizedDecisionCauseKey}`
   }
-  if (normalizedOutcomeType === 'non_problematic') return 'non_problematic_converged'
-  if (normalizedOutcomeType === 'uncertain') return 'uncertain_converged'
-  if (normalizedOutcomeType === 'problematic') return 'problematic_converged'
+  if (normalizedOutcomeType === 'non_problematic') {return 'non_problematic_converged'}
+  if (normalizedOutcomeType === 'uncertain') {return 'uncertain_converged'}
+  if (normalizedOutcomeType === 'problematic') {return 'problematic_converged'}
 
   const normalizedStopReason = normalizeText(stopReason)
-  if (normalizedStopReason.includes('uncertain')) return 'uncertain_converged'
-  if (normalizedStopReason.includes('non_problematic')) return 'non_problematic_converged'
-  if (normalizedStopReason.includes('problematic')) return 'problematic_converged'
+  if (normalizedStopReason.includes('uncertain')) {return 'uncertain_converged'}
+  if (normalizedStopReason.includes('non_problematic')) {return 'non_problematic_converged'}
+  if (normalizedStopReason.includes('problematic')) {return 'problematic_converged'}
 
   return followUpRequired ? 'pending_follow_up' : 'system_limited'
 }

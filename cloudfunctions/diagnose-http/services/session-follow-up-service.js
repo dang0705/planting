@@ -45,7 +45,7 @@ function buildAnswerRevisionEvents({
   answerMap = new Map(),
   dirtyQuestionKey = ''
 } = {}) {
-  if (!dirtyEntry) return []
+  if (!dirtyEntry) {return []}
 
   const events = []
   for (const item of rowEntries) {
@@ -55,9 +55,9 @@ function buildAnswerRevisionEvents({
 
     if (item.index <= dirtyEntry.index) {
       const submittedAnswer = answerMap.get(item.questionKey)
-      if (!submittedAnswer) continue
+      if (!submittedAnswer) {continue}
       const newOptionKey = String(submittedAnswer.optionKey || '').trim().toLowerCase()
-      if (!newOptionKey || previousOptionKey === newOptionKey) continue
+      if (!newOptionKey || previousOptionKey === newOptionKey) {continue}
       events.push({
         eventType: previousOptionKey ? 'answer_changed' : 'historical_answer_added',
         questionRowId: item.row?.id,
@@ -176,7 +176,7 @@ async function markFollowUpAnswers(
   for (const option of Array.isArray(optionMappings) ? optionMappings : []) {
     const questionKey = String(option?.questionKey || '').trim()
     const optionKey = String(option?.optionKey || '').trim().toLowerCase()
-    if (!questionKey || !optionKey) continue
+    if (!questionKey || !optionKey) {continue}
       optionMetaByQuestionOption.set(`${questionKey}::${optionKey}`, option)
   }
 
@@ -185,7 +185,7 @@ async function markFollowUpAnswers(
   for (const row of followUpRows) {
     const questionKey = readQuestionKeyFromRationale(row.rationale) || String(row?.symptom_key || '').trim()
     const round = readRoundFromRationale(row.rationale)
-    if (!questionKey) continue
+    if (!questionKey) {continue}
     const roundQuestionKey = `${Number(round || 1)}::${questionKey}`
     if (!followUpRowsByQuestionAndRound.has(roundQuestionKey)) {
       followUpRowsByQuestionAndRound.set(roundQuestionKey, row)

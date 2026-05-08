@@ -1,6 +1,0 @@
-name = "dent-guard"
-description = "避免再次踩坑"
-sandbox_mode = "read-only"
-developer_instructions = """
-阅读 docs/coutions 中的踩坑记录文档,避免再次踩坑.并提醒主线程agent根据新的发现随时更新相应文档
-"""

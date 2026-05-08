@@ -12,10 +12,10 @@ const causalityCache = new Map()
 const pendingCausalityCache = new Map()
 
 function getCacheEntry(key = '') {
-  if (!STATIC_REPOSITORY_CACHE_TTL_MS) return null
+  if (!STATIC_REPOSITORY_CACHE_TTL_MS) {return null}
   const normalizedKey = String(key || '').trim()
   const entry = causalityCache.get(normalizedKey)
-  if (!entry) return null
+  if (!entry) {return null}
   if (Date.now() - Number(entry.cachedAt || 0) > STATIC_REPOSITORY_CACHE_TTL_MS) {
     causalityCache.delete(normalizedKey)
     return null
@@ -24,7 +24,7 @@ function getCacheEntry(key = '') {
 }
 
 function setCacheEntry(key = '', value) {
-  if (!STATIC_REPOSITORY_CACHE_TTL_MS) return
+  if (!STATIC_REPOSITORY_CACHE_TTL_MS) {return}
   causalityCache.set(String(key || '').trim(), {
     cachedAt: Date.now(),
     value
@@ -40,7 +40,7 @@ function normalizeCacheSignature(items = []) {
 function withPending(key = '', queryFn) {
   const normalizedKey = String(key || '').trim()
   const pending = pendingCausalityCache.get(normalizedKey)
-  if (pending) return pending
+  if (pending) {return pending}
 
   const promise = Promise.resolve()
     .then(queryFn)
@@ -64,7 +64,7 @@ function mapCausalityRow(row = {}) {
 
 async function getCausalityEdges(problemKeys = []) {
   const safeKeys = Array.from(new Set((problemKeys || []).map(item => String(item || '').trim()).filter(Boolean)))
-  if (!safeKeys.length) return []
+  if (!safeKeys.length) {return []}
   const cacheSignature = `causality:${normalizeCacheSignature(safeKeys)}`
   const cached = getCacheEntry(cacheSignature)
   if (cached) {

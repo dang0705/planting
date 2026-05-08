@@ -13,14 +13,14 @@ const { DEV_SCHEMA, getPool, listTableColumns } = require('../db/mysql')
 
 function resolveSourceKey(source = '', filePath = '') {
   const normalizedSource = String(source || '').trim().toLowerCase()
-  if (normalizedSource === 'genuscare') return 'genus-care'
-  if (normalizedSource === 'all') return 'all'
-  if (DATA_SOURCE_CONFIGS[normalizedSource]) return normalizedSource
+  if (normalizedSource === 'genuscare') {return 'genus-care'}
+  if (normalizedSource === 'all') {return 'all'}
+  if (DATA_SOURCE_CONFIGS[normalizedSource]) {return normalizedSource}
 
   const normalizedPath = String(filePath || '').trim().toLowerCase()
-  if (normalizedPath.includes('plant_catalog')) return 'taxonomy'
-  if (normalizedPath.includes('genus_care_profile')) return 'genus-care'
-  if (normalizedPath.endsWith('.xlsx')) return 'diagnosis'
+  if (normalizedPath.includes('plant_catalog')) {return 'taxonomy'}
+  if (normalizedPath.includes('genus_care_profile')) {return 'genus-care'}
+  if (normalizedPath.endsWith('.xlsx')) {return 'diagnosis'}
 
   return 'diagnosis'
 }
@@ -37,14 +37,14 @@ function pickTableConfigs(tables = [], sourceKey = 'diagnosis') {
   const defaultConfigs = TABLE_CONFIGS.filter(config => config.enabledByDefault !== false)
 
   if (!Array.isArray(tables) || !tables.length) {
-    if (sourceKey === 'all') return defaultConfigs
+    if (sourceKey === 'all') {return defaultConfigs}
     return defaultConfigs.filter(config => config.source === sourceKey)
   }
 
   const picked = []
   for (const table of tables) {
     const config = TABLE_CONFIG_MAP[table]
-    if (config) picked.push(config)
+    if (config) {picked.push(config)}
   }
   return picked
 }
@@ -54,7 +54,7 @@ function groupTableConfigsBySource(tableConfigs = []) {
 
   for (const tableConfig of tableConfigs) {
     const source = tableConfig.source || 'diagnosis'
-    if (!groups.has(source)) groups.set(source, [])
+    if (!groups.has(source)) {groups.set(source, [])}
     groups.get(source).push(tableConfig)
   }
 
@@ -158,17 +158,17 @@ function extractRepositorySelects() {
       const fields = new Set(result[table] || [])
       for (const line of selectBody.split('\n')) {
         let token = line.trim()
-        if (!token) continue
+        if (!token) {continue}
         token = token.replace(/,$/, '').trim()
-        if (!token || token === '*') continue
-        if (/^\d+\s+AS\s+/i.test(token)) continue
-        if (/^'.*'\s+AS\s+/i.test(token)) continue
+        if (!token || token === '*') {continue}
+        if (/^\d+\s+AS\s+/i.test(token)) {continue}
+        if (/^'.*'\s+AS\s+/i.test(token)) {continue}
 
         const asSplit = token.split(/\s+AS\s+/i)
         token = asSplit[0].trim()
 
-        if (!token || token.includes('(') || token.includes(')')) continue
-        if (token.includes('.')) token = token.split('.').pop().trim()
+        if (!token || token.includes('(') || token.includes(')')) {continue}
+        if (token.includes('.')) {token = token.split('.').pop().trim()}
         token = token.replace(/`/g, '')
 
         if (/^[a-zA-Z0-9_]+$/.test(token)) {
@@ -210,9 +210,9 @@ function validateSchemaDiff({ tableConfigs = [], sourceSchema = {}, dbSchema = {
     const extraInSource = actualSourceColumns.filter(column => !expectedSourceColumns.includes(column))
     const missingInDb = config.columns.filter(column => !dbColumns.includes(column))
     const extraInDb = dbColumns.filter(column => {
-      if (config.columns.includes(column)) return false
-      if (metadataSet.has(column)) return false
-      if (column === 'id' && !config.columns.includes('id')) return false
+      if (config.columns.includes(column)) {return false}
+      if (metadataSet.has(column)) {return false}
+      if (column === 'id' && !config.columns.includes('id')) {return false}
       return true
     })
     const missingInRepoDb = repoColumns.filter(column => !dbColumns.includes(column))

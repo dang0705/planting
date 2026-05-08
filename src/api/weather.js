@@ -273,7 +273,7 @@ export async function getWeatherInfo(options = {}) {
 export function formatWeatherDisplay(weatherData) {
   console.log('formatWeatherDisplay 接收的数据:', weatherData)
 
-  if (!weatherData) return '🌤️ --°C 湿度: --%'
+  if (!weatherData) {return '🌤️ --°C 湿度: --%'}
 
   const temperature =
     weatherData.temperature ||

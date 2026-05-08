@@ -43,11 +43,11 @@ export const useUserStore = defineStore('user', {
   getters: {
     isPremium: state => state.membership.type === 'premium',
     canDiagnose: state => {
-      if (state.membership.type === 'premium') return true
+      if (state.membership.type === 'premium') {return true}
       return state.membership.freeQuota > 0
     },
     displayName: state => state.nickname || state.username || '植物爱好者',
-    isAuthenticated: state => !!state.openid
+    isAuthenticated: state => Boolean(state.openid)
   },
 
   actions: {

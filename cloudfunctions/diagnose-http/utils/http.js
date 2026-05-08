@@ -35,21 +35,21 @@ function decodeCloudbaseContext(value) {
 function parseQueryString(rawValue) {
   const raw = String(rawValue || '')
   const queryIndex = raw.indexOf('?')
-  if (queryIndex === -1) return {}
+  if (queryIndex === -1) {return {}}
 
   const queryString = raw.slice(queryIndex + 1)
   return queryString.split('&').reduce((result, pair) => {
-    if (!pair) return result
+    if (!pair) {return result}
     const [rawKey, rawVal = ''] = pair.split('=')
     const key = decodeURIComponent(rawKey || '').trim()
-    if (!key) return result
+    if (!key) {return result}
     result[key] = decodeURIComponent(rawVal)
     return result
   }, {})
 }
 
 function parseEventBody(event) {
-  if (!event) return {}
+  if (!event) {return {}}
 
   if (typeof event === 'string') {
     try {
@@ -105,18 +105,18 @@ function resolveHttpAction(event, requestData) {
   const accept = String(headers.accept || '')
   const path = String(requestData.path || '')
 
-  if (event.action) return event.action
-  if (requestData.query.action) return requestData.query.action
-  if (requestData.body.action) return requestData.body.action
-  if (path.includes('/stream/diagnose')) return 'streamDiagnose'
-  if (path.includes('/diagnose')) return 'syncDiagnose'
-  if (path.includes('/health')) return 'health'
-  if (accept.includes('text/event-stream')) return 'streamDiagnose'
+  if (event.action) {return event.action}
+  if (requestData.query.action) {return requestData.query.action}
+  if (requestData.body.action) {return requestData.body.action}
+  if (path.includes('/stream/diagnose')) {return 'streamDiagnose'}
+  if (path.includes('/diagnose')) {return 'syncDiagnose'}
+  if (path.includes('/health')) {return 'health'}
+  if (accept.includes('text/event-stream')) {return 'streamDiagnose'}
   return ''
 }
 
 function getOpenIdFromUserInfo(userInfo) {
-  if (!userInfo) return ''
+  if (!userInfo) {return ''}
 
   return (
     userInfo.OPENID ||

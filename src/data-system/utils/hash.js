@@ -3,7 +3,7 @@
 const crypto = require('crypto')
 
 function stableJson(value) {
-  if (value === null || value === undefined) return null
+  if (value === null || value === undefined) {return null}
 
   if (Array.isArray(value)) {
     return value.map(stableJson)

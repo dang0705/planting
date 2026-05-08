@@ -48,20 +48,20 @@ function normalizeText(value = '') {
 
 function normalizeReviewSourceType(value = '', fallback = 'legacy') {
   const normalized = String(value || '').trim().toLowerCase()
-  if (normalized === 'all') return 'all'
-  if (normalized === 'batch') return 'batch'
-  if (normalized === 'manual') return 'manual'
-  if (normalized === 'legacy') return 'legacy'
-  if (normalized === 'web') return 'web'
-  if (fallback === 'all') return 'all'
+  if (normalized === 'all') {return 'all'}
+  if (normalized === 'batch') {return 'batch'}
+  if (normalized === 'manual') {return 'manual'}
+  if (normalized === 'legacy') {return 'legacy'}
+  if (normalized === 'web') {return 'web'}
+  if (fallback === 'all') {return 'all'}
   return fallback
 }
 
 function normalizeReviewSourceEvidence(value = '', reviewSourceType = 'legacy', clientPlatform = '') {
   const normalized = normalizeText(value)
-  if (normalized) return normalized
-  if (reviewSourceType === 'batch') return 'batch_table'
-  if (reviewSourceType === 'web') return 'web_tagged'
+  if (normalized) {return normalized}
+  if (reviewSourceType === 'batch') {return 'batch_table'}
+  if (reviewSourceType === 'web') {return 'web_tagged'}
   if (miniProgramClientPlatforms.has(normalizeText(clientPlatform).toLowerCase())) {
     return 'platform_tagged'
   }
@@ -172,17 +172,17 @@ function resolveNormalizedReviewSourceType({
 
 function normalizePreviewImageRef(value = '') {
   const normalized = normalizeText(value)
-  if (!normalized) return ''
-  if (normalized === '[inline_data_url]') return ''
+  if (!normalized) {return ''}
+  if (normalized === '[inline_data_url]') {return ''}
   return normalized
 }
 
 function guessImageContentType(filePath = '') {
   const extension = extname(String(filePath || '').trim()).toLowerCase()
-  if (extension === '.png') return 'image/png'
-  if (extension === '.webp') return 'image/webp'
-  if (extension === '.gif') return 'image/gif'
-  if (extension === '.heic') return 'image/heic'
+  if (extension === '.png') {return 'image/png'}
+  if (extension === '.webp') {return 'image/webp'}
+  if (extension === '.gif') {return 'image/gif'}
+  if (extension === '.heic') {return 'image/heic'}
   return 'image/jpeg'
 }
 
@@ -257,7 +257,7 @@ function queuePersistDiagnosisReviewAuditStore() {
   diagnosisReviewAuditPersistQueue = diagnosisReviewAuditPersistQueue
     .catch(() => {})
     .then(async () => {
-      if (!diagnosisReviewAuditStore) return
+      if (!diagnosisReviewAuditStore) {return}
       await mkdir(resolve(__dirname, 'tmp'), { recursive: true })
       await writeFile(
         localDiagnosisReviewStorePath,
@@ -273,7 +273,7 @@ function buildQueryString(query = {}) {
   const entries = Object.entries(query).filter(
     ([, value]) => value !== undefined && value !== null && value !== ''
   )
-  if (!entries.length) return ''
+  if (!entries.length) {return ''}
 
   return `?${entries
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
@@ -512,7 +512,7 @@ function normalizeReviewListEnvelopeData(data = {}, fallbackSourceType = 'all') 
   })
   const requestedSourceType = normalizeReviewSourceType(fallbackSourceType, 'all')
   const items = normalizedItems.filter(item => {
-    if (requestedSourceType === 'all') return item.reviewSourceType !== 'legacy'
+    if (requestedSourceType === 'all') {return item.reviewSourceType !== 'legacy'}
     return item.reviewSourceType === requestedSourceType
   })
 
@@ -605,12 +605,12 @@ async function recordDiagnosisAuditEvent({ relativePath = '', requestBody = unde
   const detail = envelope?.code === 200 && envelope?.data && typeof envelope.data === 'object'
     ? envelope.data
     : null
-  if (!detail) return
+  if (!detail) {return}
 
   const diagnosisSessionId = normalizeText(
     detail?.diagnosisSessionId || detail?.sessionId || detail?.resultId || ''
   )
-  if (!diagnosisSessionId) return
+  if (!diagnosisSessionId) {return}
 
   const requestPayload = requestBody
     ? safeJsonParse(Buffer.isBuffer(requestBody) ? requestBody.toString('utf8') : String(requestBody), {})
@@ -873,10 +873,10 @@ function parseCurlHttpResponse(rawOutput = '') {
 
   headerLines.forEach(line => {
     const separator = line.indexOf(':')
-    if (separator <= 0) return
+    if (separator <= 0) {return}
     const key = line.slice(0, separator).trim().toLowerCase()
     const value = line.slice(separator + 1).trim()
-    if (!key || !value) return
+    if (!key || !value) {return}
     headers[key] = value
   })
 
@@ -1000,7 +1000,7 @@ function createCloudbaseDevProxyPlugin() {
     }
 
     Object.entries(req.headers || {}).forEach(([key, value]) => {
-      if (!value) return
+      if (!value) {return}
       if (['host', 'connection', 'content-length'].includes(String(key || '').toLowerCase())) {
         return
       }

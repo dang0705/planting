@@ -45,10 +45,10 @@ function callAgentDiagnose(content, visitorId, { onText } = {}) {
         const promptText = content
 
         const handleEventText = eventText => {
-          if (!eventText.trim()) return
+          if (!eventText.trim()) {return}
 
           const parsedEvent = parseSSEEvent(eventText)
-          if (!parsedEvent.data) return
+          if (!parsedEvent.data) {return}
 
           try {
             const data = JSON.parse(parsedEvent.data)
@@ -56,7 +56,7 @@ function callAgentDiagnose(content, visitorId, { onText } = {}) {
 
             if (eventType === 'reply' && data.payload?.content) {
               const cleanDelta = sanitizeReplyDelta(data.payload.content, promptText, fullResponse)
-              if (!cleanDelta) return
+              if (!cleanDelta) {return}
 
               fullResponse += cleanDelta
               onText?.(cleanDelta, fullResponse)

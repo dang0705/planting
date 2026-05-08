@@ -8,7 +8,7 @@ async function replaceObservedSymptomsRows(sessionId, list = []) {
     { diagnosisId: sessionId }
   )
 
-  if (!list.length) return
+  if (!list.length) {return}
 
   const values = list.map((item, index) => `(
     {{diagnosisId}},
@@ -48,7 +48,7 @@ async function replaceObservedEvidenceSetRows({ sessionId, openid, list = [] } =
     { sessionId, openid: String(openid || '') }
   )
 
-  if (!list.length) return
+  if (!list.length) {return}
 
   const values = list.map((item, index) => `(
     {{observedEvidenceSetId_${index}}},
@@ -153,7 +153,7 @@ async function replaceProblemRankingsRows(sessionId, list = []) {
     { diagnosisId: sessionId }
   )
 
-  if (!list.length) return
+  if (!list.length) {return}
 
   const values = list.map((item, index) => `(
     {{diagnosisId}},

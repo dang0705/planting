@@ -64,8 +64,8 @@ onLoad(options => {
 
 const localRecord = computed(() => {
   const list = diagnoseStore.history || []
-  if (!list.length) return null
-  if (!routeId.value) return list[0]
+  if (!list.length) {return null}
+  if (!routeId.value) {return list[0]}
   return (
     list.find(item => {
       const diagnosis = item?.diagnosis || item
@@ -97,7 +97,7 @@ const viewModel = computed(() => {
   }
 
   const local = localRecord.value
-  if (!local) return null
+  if (!local) {return null}
 
   const diagnosis = local.diagnosis || local
   return {

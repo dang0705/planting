@@ -70,7 +70,7 @@ const GENUS_CARE_FAMILY_OVERRIDES = {
 }
 
 function normalizePrimitive(value) {
-  if (value === undefined || value === null) return null
+  if (value === undefined || value === null) {return null}
 
   const normalized = String(value).trim()
   if (!normalized || normalized.toLowerCase() === 'null') {
@@ -88,7 +88,7 @@ function buildStableId(prefix, values = []) {
 
 function normalizeMatchKey(value) {
   const normalized = normalizePrimitive(value)
-  if (!normalized) return null
+  if (!normalized) {return null}
 
   return normalized
     .toLowerCase()
@@ -101,23 +101,23 @@ function inferIdentityLevel(scientificName, genusName) {
   const normalizedScientificName = normalizePrimitive(scientificName)
   const normalizedGenusName = normalizePrimitive(genusName)
 
-  if (!normalizedScientificName) return 'unknown'
-  if (!normalizedGenusName) return 'unknown'
-  if (normalizedScientificName === normalizedGenusName) return 'genus'
-  if (/\bspp\.?$/i.test(normalizedScientificName)) return 'genus'
-  if (!/\s/.test(normalizedScientificName)) return 'genus'
+  if (!normalizedScientificName) {return 'unknown'}
+  if (!normalizedGenusName) {return 'unknown'}
+  if (normalizedScientificName === normalizedGenusName) {return 'genus'}
+  if (/\bspp\.?$/i.test(normalizedScientificName)) {return 'genus'}
+  if (!/\s/.test(normalizedScientificName)) {return 'genus'}
   return 'species'
 }
 
 function extractSpeciesName(scientificName, genusName, identityLevel) {
-  if (identityLevel !== 'species') return null
+  if (identityLevel !== 'species') {return null}
 
   const normalizedScientificName = normalizePrimitive(scientificName)
   const normalizedGenusName = normalizePrimitive(genusName)
-  if (!normalizedScientificName || !normalizedGenusName) return null
+  if (!normalizedScientificName || !normalizedGenusName) {return null}
 
   const prefix = `${normalizedGenusName} `
-  if (!normalizedScientificName.startsWith(prefix)) return null
+  if (!normalizedScientificName.startsWith(prefix)) {return null}
 
   return normalizedScientificName.slice(prefix.length).trim() || null
 }
@@ -204,9 +204,9 @@ function mapPlantIdentityAliases(rawRow = {}) {
   const deduped = new Map()
   for (const aliasSpec of aliasSpecs) {
     const aliasName = normalizePrimitive(aliasSpec.alias_name)
-    if (!aliasName) continue
+    if (!aliasName) {continue}
     const key = `${aliasSpec.alias_type}::${aliasName}`
-    if (deduped.has(key)) continue
+    if (deduped.has(key)) {continue}
 
     deduped.set(key, {
       alias_id: buildStableId('alias', [
@@ -245,9 +245,9 @@ function mapPlantIdentityMatchRules(rawRow = {}) {
   const deduped = new Map()
   for (const matchSpec of matchSpecs) {
     const matchKey = normalizeMatchKey(matchSpec.raw_value)
-    if (!matchKey) continue
+    if (!matchKey) {continue}
     const dedupeKey = `${matchSpec.match_rule_type}::${matchKey}`
-    if (deduped.has(dedupeKey)) continue
+    if (deduped.has(dedupeKey)) {continue}
 
     deduped.set(dedupeKey, {
       match_rule_id: buildStableId('match_rule', [
@@ -785,6 +785,316 @@ const TABLE_CONFIGS = [
       'reassurance_cn'
     ],
     numericColumns: [],
+    jsonColumns: [],
+    rowMapper: identityRowMapper
+  },
+  {
+    table: 'outcome_route_groups',
+    source: 'diagnosis',
+    sheet: 'outcome_route_groups',
+    enabledByDefault: false,
+    keys: ['route_group_key'],
+    inputColumns: [
+      'route_group_key',
+      'route_group_name_cn',
+      'entry_scene_cn',
+      'entry_symptom_keys_json',
+      'candidate_outcome_keys_json',
+      'default_split_question_key',
+      'max_visible_outcomes',
+      'visible_question_purpose_cn',
+      'enabled',
+      'review_status',
+      'data_status'
+    ],
+    columns: [
+      'route_group_key',
+      'route_group_name_cn',
+      'entry_scene_cn',
+      'entry_symptom_keys_json',
+      'candidate_outcome_keys_json',
+      'default_split_question_key',
+      'max_visible_outcomes',
+      'visible_question_purpose_cn',
+      'enabled',
+      'review_status',
+      'data_status'
+    ],
+    numericColumns: ['max_visible_outcomes', 'enabled'],
+    jsonColumns: ['entry_symptom_keys_json', 'candidate_outcome_keys_json'],
+    rowMapper: identityRowMapper
+  },
+  {
+    table: 'outcome_routes',
+    source: 'diagnosis',
+    sheet: 'outcome_routes',
+    enabledByDefault: false,
+    keys: ['route_key'],
+    inputColumns: [
+      'route_key',
+      'route_group_key',
+      'outcome_key',
+      'route_name_cn',
+      'route_entry_type',
+      'entry_symptom_keys_json',
+      'entry_direction_keys_json',
+      'entry_symptom_class_keys_json',
+      'host_profile_condition_json',
+      'entry_priority',
+      'max_questions',
+      'fallback_policy',
+      'action_profile_key',
+      'action_conflict_group',
+      'enabled',
+      'review_status',
+      'data_status'
+    ],
+    columns: [
+      'route_key',
+      'route_group_key',
+      'outcome_key',
+      'route_name_cn',
+      'route_entry_type',
+      'entry_symptom_keys_json',
+      'entry_direction_keys_json',
+      'entry_symptom_class_keys_json',
+      'host_profile_condition_json',
+      'entry_priority',
+      'max_questions',
+      'fallback_policy',
+      'action_profile_key',
+      'action_conflict_group',
+      'enabled',
+      'review_status',
+      'data_status'
+    ],
+    numericColumns: ['entry_priority', 'max_questions', 'enabled'],
+    jsonColumns: [
+      'entry_symptom_keys_json',
+      'entry_direction_keys_json',
+      'entry_symptom_class_keys_json',
+      'host_profile_condition_json'
+    ],
+    rowMapper: identityRowMapper
+  },
+  {
+    table: 'outcome_route_gates',
+    source: 'diagnosis',
+    sheet: 'outcome_route_gates',
+    enabledByDefault: false,
+    keys: ['gate_key'],
+    inputColumns: [
+      'gate_key',
+      'route_key',
+      'gate_role',
+      'required_evidence_json',
+      'required_answer_effects_json',
+      'blocker_evidence_json',
+      'conflict_outcome_keys_json',
+      'closure_level',
+      'on_pass',
+      'on_fail',
+      'on_unknown',
+      'decision_cause_key',
+      'decision_cause_text_cn',
+      'gate_priority',
+      'enabled',
+      'review_status',
+      'data_status'
+    ],
+    columns: [
+      'gate_key',
+      'route_key',
+      'gate_role',
+      'required_evidence_json',
+      'required_answer_effects_json',
+      'blocker_evidence_json',
+      'conflict_outcome_keys_json',
+      'closure_level',
+      'on_pass',
+      'on_fail',
+      'on_unknown',
+      'decision_cause_key',
+      'decision_cause_text_cn',
+      'gate_priority',
+      'enabled',
+      'review_status',
+      'data_status'
+    ],
+    numericColumns: ['gate_priority', 'enabled'],
+    jsonColumns: [
+      'required_evidence_json',
+      'required_answer_effects_json',
+      'blocker_evidence_json',
+      'conflict_outcome_keys_json'
+    ],
+    rowMapper: identityRowMapper
+  },
+  {
+    table: 'outcome_route_questions',
+    source: 'diagnosis',
+    sheet: 'outcome_route_questions',
+    enabledByDefault: false,
+    keys: ['route_key', 'step_no', 'question_key'],
+    inputColumns: [
+      'route_key',
+      'step_no',
+      'question_key',
+      'gate_key',
+      'question_role',
+      'required_for_closure',
+      'ask_priority',
+      'skip_if_evidence_json',
+      'repeat_policy',
+      'enabled',
+      'review_status',
+      'data_status'
+    ],
+    columns: [
+      'route_key',
+      'step_no',
+      'question_key',
+      'gate_key',
+      'question_role',
+      'required_for_closure',
+      'ask_priority',
+      'skip_if_evidence_json',
+      'repeat_policy',
+      'enabled',
+      'review_status',
+      'data_status'
+    ],
+    numericColumns: ['step_no', 'required_for_closure', 'ask_priority', 'enabled'],
+    jsonColumns: ['skip_if_evidence_json'],
+    rowMapper: identityRowMapper
+  },
+  {
+    table: 'outcome_answer_effects',
+    source: 'diagnosis',
+    sheet: 'outcome_answer_effects',
+    enabledByDefault: false,
+    keys: ['question_key', 'option_key', 'outcome_key', 'route_key'],
+    inputColumns: [
+      'question_key',
+      'option_key',
+      'outcome_key',
+      'route_key',
+      'effect_type',
+      'effect_strength',
+      'redirect_outcome_key',
+      'evidence_dimension',
+      'effect_note_cn',
+      'enabled',
+      'review_status',
+      'data_status'
+    ],
+    columns: [
+      'question_key',
+      'option_key',
+      'outcome_key',
+      'route_key',
+      'effect_type',
+      'effect_strength',
+      'redirect_outcome_key',
+      'evidence_dimension',
+      'effect_note_cn',
+      'enabled',
+      'review_status',
+      'data_status'
+    ],
+    numericColumns: ['effect_strength', 'enabled'],
+    jsonColumns: [],
+    rowMapper: identityRowMapper
+  },
+  {
+    table: 'outcome_action_profiles',
+    source: 'diagnosis',
+    sheet: 'outcome_action_profiles',
+    enabledByDefault: false,
+    keys: ['action_profile_key'],
+    inputColumns: [
+      'action_profile_key',
+      'title_cn',
+      'today_actions_json',
+      'three_day_actions_json',
+      'seven_day_observe_json',
+      'avoid_actions_json',
+      'retake_or_escalate_json',
+      'plant_baseline_merge_policy',
+      'review_status',
+      'data_status'
+    ],
+    columns: [
+      'action_profile_key',
+      'title_cn',
+      'today_actions_json',
+      'three_day_actions_json',
+      'seven_day_observe_json',
+      'avoid_actions_json',
+      'retake_or_escalate_json',
+      'plant_baseline_merge_policy',
+      'review_status',
+      'data_status'
+    ],
+    numericColumns: [],
+    jsonColumns: [
+      'today_actions_json',
+      'three_day_actions_json',
+      'seven_day_observe_json',
+      'avoid_actions_json',
+      'retake_or_escalate_json'
+    ],
+    rowMapper: identityRowMapper
+  },
+  {
+    table: 'diagnosis_outcomes',
+    source: 'diagnosis',
+    sheet: 'diagnosis_outcomes',
+    enabledByDefault: false,
+    keys: ['outcome_key'],
+    inputColumns: [
+      'outcome_key',
+      'legacy_problem_key',
+      'outcome_name_cn',
+      'outcome_type',
+      'outcome_category',
+      'display_name_cn',
+      'user_definition_cn',
+      'action_profile_key',
+      'risk_level',
+      'is_final_output',
+      'is_intermediate_node',
+      'allow_direct_close',
+      'allow_uncertain_close',
+      'priority',
+      'review_status',
+      'data_status'
+    ],
+    columns: [
+      'outcome_key',
+      'legacy_problem_key',
+      'outcome_name_cn',
+      'outcome_type',
+      'outcome_category',
+      'display_name_cn',
+      'user_definition_cn',
+      'action_profile_key',
+      'risk_level',
+      'is_final_output',
+      'is_intermediate_node',
+      'allow_direct_close',
+      'allow_uncertain_close',
+      'priority',
+      'review_status',
+      'data_status'
+    ],
+    numericColumns: [
+      'is_final_output',
+      'is_intermediate_node',
+      'allow_direct_close',
+      'allow_uncertain_close',
+      'priority'
+    ],
     jsonColumns: [],
     rowMapper: identityRowMapper
   },

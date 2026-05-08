@@ -1,8 +1,45 @@
-# OpenAI Codex CLI Configuration for CloudBase AI ToolKit
-# This configuration enables MCP (Model Context Protocol) support for CloudBase tools
+profile = "normal"
 
+model = "gpt-5.4"
+model_reasoning_effort = "medium"
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+
+[profiles.inspect]
+# 只读探索：文件定位、调用链、文档代码比对。
+model = "gpt-5.3-codex-spark"
+model_reasoning_effort = "low"
+approval_policy = "never"
+sandbox_mode = "read-only"
+
+[profiles.simple]
+# 低风险小改：文案、格式、简单类型修复、局部组件改动。
+model = "gpt-5.3-codex-spark"
+model_reasoning_effort = "low"
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+
+[profiles.normal]
+# 日常开发。
+model = "gpt-5.4"
+model_reasoning_effort = "medium"
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+
+[profiles.complex]
+# 复杂任务：诊断流、ranking -> route、outcome 瘦身、架构、replay 设计。
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+
+[profiles.deploy]
+# 高风险发布：CloudBase、diagnose-http、schema、smoke、回滚。
+model = "gpt-5.4"
+model_reasoning_effort = "high"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"
+
 [mcp_servers.cloudbase]
 command = "npx"
 args = ["npm-global-exec@latest", "@cloudbase/cloudbase-mcp@latest"]
@@ -20,3 +57,13 @@ approval_mode = "approve"
 
 [mcp_servers.cloudbase.tools.callCloudApi]
 approval_mode = "approve"
+
+[agents]
+# Allow parallel exploration/review without opening too many expensive threads.
+max_threads = 4
+
+# Keep delegation one level deep. Do not allow subagents to recursively spawn more subagents.
+max_depth = 1
+
+# Default timeout for CSV/batch-style worker jobs.
+job_max_runtime_seconds = 1800

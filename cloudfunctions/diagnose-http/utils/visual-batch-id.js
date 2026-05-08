@@ -1,7 +1,7 @@
 'use strict'
 
 function normalizeNullableBatchId(value = null) {
-  if (value === null || value === undefined) return null
+  if (value === null || value === undefined) {return null}
   const normalized = String(value).trim()
   if (!normalized || normalized.toLowerCase() === 'null' || normalized.toLowerCase() === 'undefined') {
     return null

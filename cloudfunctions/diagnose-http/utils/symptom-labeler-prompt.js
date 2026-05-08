@@ -69,7 +69,7 @@ function compactDisplayText(value = '') {
   const normalized = normalizeText(value, '')
     .replace(/[（(].*?[）)]/g, '')
     .replace(/\s+/g, '')
-  if (!normalized) return ''
+  if (!normalized) {return ''}
   return normalized.length > MAX_PROMPT_DISPLAY_TEXT_LENGTH
     ? normalized.slice(0, MAX_PROMPT_DISPLAY_TEXT_LENGTH)
     : normalized
@@ -130,7 +130,7 @@ function buildCaseSlotSummaryText(imageContext = {}) {
   const slotSummary = Array.isArray(imageContext?.caseSlotSummary)
     ? imageContext.caseSlotSummary
     : []
-  if (!slotSummary.length) return ''
+  if (!slotSummary.length) {return ''}
 
   const lines = slotSummary.map(item => {
     const slotOrder = Number.isFinite(Number(item?.inputSlotOrder))
@@ -236,7 +236,7 @@ function buildGroupedSymptomOptionsText(symptomRows = []) {
   return orderedLocationKeys
     .map(locationKey => {
       const list = groupedMap.get(locationKey) || []
-      if (!list.length) return ''
+      if (!list.length) {return ''}
 
       const title = LOCATION_LABEL_MAP[locationKey] || locationKey || '未分组'
       const leadHint =

@@ -21,17 +21,17 @@ function parseSSEEvent(eventText) {
 
   for (const rawLine of lines) {
     const line = rawLine.trimEnd()
-    if (!line || line.startsWith(':')) continue
+    if (!line || line.startsWith(':')) {continue}
 
     const separatorIndex = line.indexOf(':')
     const field = separatorIndex === -1 ? line : line.slice(0, separatorIndex)
     const rawValue = separatorIndex === -1 ? '' : line.slice(separatorIndex + 1)
     const value = rawValue.startsWith(' ') ? rawValue.slice(1) : rawValue
 
-    if (field === 'event') event.event = value
-    else if (field === 'data') event.dataLines.push(value)
-    else if (field === 'id') event.id = value
-    else if (field === 'retry') event.retry = value
+    if (field === 'event') {event.event = value}
+    else if (field === 'data') {event.dataLines.push(value)}
+    else if (field === 'id') {event.id = value}
+    else if (field === 'retry') {event.retry = value}
   }
 
   return {
@@ -61,7 +61,7 @@ function stripPromptEcho(deltaText, promptText, currentReplyText) {
   const prompt = String(promptText || '')
   const reply = String(currentReplyText || '')
 
-  if (!delta) return ''
+  if (!delta) {return ''}
 
   if (!reply && prompt) {
     if (delta.startsWith(prompt)) {
@@ -81,7 +81,7 @@ function stripPromptEcho(deltaText, promptText, currentReplyText) {
 
 function sanitizeReplyDelta(deltaText, promptText, currentReplyText) {
   let delta = stripPromptEcho(deltaText, promptText, currentReplyText)
-  if (!delta) return ''
+  if (!delta) {return ''}
 
   const overlap = findOverlapSuffixPrefix(currentReplyText, delta)
   if (overlap > 0) {

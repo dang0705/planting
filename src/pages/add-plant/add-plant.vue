@@ -237,13 +237,13 @@ watch(recognizedName, newName => {
 })
 
 onMounted(async () => {
-  if (!(await userStore.ensureLogin())) showLogin.value = true
+  if (!(await userStore.ensureLogin())) {showLogin.value = true}
   await loadPlants()
 })
 
 function handleLoginSuccess() {
   showLogin.value = false
-  if (loginMsg.value.includes('AI')) useAIIdentify()
+  if (loginMsg.value.includes('AI')) {useAIIdentify()}
 }
 
 function handleLoginClose() {
@@ -260,7 +260,7 @@ function handleLoginClose() {
 // 搜索处理（防抖）
 function handleSearch(e) {
   const keyword = e.detail.value
-  if (searchTimer) clearTimeout(searchTimer)
+  if (searchTimer) {clearTimeout(searchTimer)}
   searchTimer = setTimeout(() => {
     loadPlants(keyword)
   }, 500)
@@ -268,7 +268,7 @@ function handleSearch(e) {
 
 // 搜索确认
 function handleSearchConfirm() {
-  if (searchTimer) clearTimeout(searchTimer)
+  if (searchTimer) {clearTimeout(searchTimer)}
   loadPlants(searchKeyword.value)
 }
 
@@ -292,7 +292,7 @@ function handlePlantScrollToLower() {
 }
 
 function normalizeIdentifyPlantCandidate(candidate) {
-  if (!candidate || typeof candidate !== 'object') return null
+  if (!candidate || typeof candidate !== 'object') {return null}
 
   const normalizedId = String(candidate.id || '').trim()
   const plantIdentityId = String(candidate.plantIdentityId || '').trim()
@@ -313,7 +313,7 @@ function normalizeIdentifyPlantCandidate(candidate) {
     return matchedDefaultPlant
   }
 
-  if (!canonicalName) return null
+  if (!canonicalName) {return null}
 
   return {
     id: normalizedId || legacyPlantId || plantIdentityId || canonicalName,
@@ -536,7 +536,7 @@ function handleAIConfirm(result) {
 }
 
 function handleAIRetry() {
-  if (!pendingImage.value.url) return
+  if (!pendingImage.value.url) {return}
   uni.showLoading({ title: 'AI 识别中...', mask: true })
   identifyPlantByImageWithRetry(pendingImage.value.url)
     .then(response => {

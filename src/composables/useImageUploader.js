@@ -13,14 +13,14 @@ function normalizeSuffixes(suffix = []) {
 
 function normalizeCompressionQuality(compressionRate = 80) {
   const value = Number(compressionRate || 0)
-  if (!Number.isFinite(value) || value <= 0) return 80
-  if (value <= 1) return Math.max(1, Math.min(100, Math.round(value * 100)))
+  if (!Number.isFinite(value) || value <= 0) {return 80}
+  if (value <= 1) {return Math.max(1, Math.min(100, Math.round(value * 100)))}
   return Math.max(1, Math.min(100, Math.round(value)))
 }
 
 function normalizeMaxSizeBytes(size = 5) {
   const value = Number(size || 0)
-  if (!Number.isFinite(value) || value <= 0) return 0
+  if (!Number.isFinite(value) || value <= 0) {return 0}
   if (value <= 100) {
     return Math.round(value * 1024 * 1024)
   }
@@ -321,7 +321,7 @@ export function useImageUploader({
 
   function patchFile(entryId, updater) {
     const index = files.value.findIndex(item => item.id === entryId)
-    if (index < 0) return
+    if (index < 0) {return}
     const current = files.value[index]
     files.value.splice(index, 1, {
       ...current,
@@ -351,7 +351,7 @@ export function useImageUploader({
     })
 
     const current = files.value.find(item => item.id === entryId)
-    if (!current) return
+    if (!current) {return}
 
     try {
       const compressed = await compressLocalImage(current.localPath, {
@@ -452,7 +452,7 @@ export function useImageUploader({
 
   async function removeAt(index) {
     const target = files.value[index]
-    if (!target) return
+    if (!target) {return}
 
     files.value.splice(index, 1)
 

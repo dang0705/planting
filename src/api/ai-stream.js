@@ -2,10 +2,10 @@ function guessMimeType(path = '') {
   const lower = String(path || '')
     .trim()
     .toLowerCase()
-  if (lower.endsWith('.png')) return 'image/png'
-  if (lower.endsWith('.webp')) return 'image/webp'
-  if (lower.endsWith('.gif')) return 'image/gif'
-  if (lower.endsWith('.heic')) return 'image/heic'
+  if (lower.endsWith('.png')) {return 'image/png'}
+  if (lower.endsWith('.webp')) {return 'image/webp'}
+  if (lower.endsWith('.gif')) {return 'image/gif'}
+  if (lower.endsWith('.heic')) {return 'image/heic'}
   return 'image/jpeg'
 }
 
@@ -66,8 +66,8 @@ function compressDiagnoseImage(filePath) {
           const maxSide = Math.max(Number(imageInfo.width || 0), Number(imageInfo.height || 0))
 
           let quality = 70
-          if (originalSize > 3 * 1024 * 1024) quality = 50
-          else if (originalSize > 1 * 1024 * 1024) quality = 60
+          if (originalSize > 3 * 1024 * 1024) {quality = 50}
+          else if (originalSize > 1 * 1024 * 1024) {quality = 60}
 
           if (maxSide <= 1280 && originalSize > 0 && originalSize <= 180 * 1024) {
             resolve({

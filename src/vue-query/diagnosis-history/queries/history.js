@@ -21,7 +21,7 @@ export function buildDiagnosisDetailQueryOptions(id) {
   return {
     queryKey: ['http-function', 'diagnose-http', 'history-detail', id],
     queryFn: async () => requestDiagnosisResult({ id }),
-    enabled: !!id
+    enabled: Boolean(id)
   }
 }
 

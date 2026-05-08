@@ -437,7 +437,7 @@ const proxyForm = ref({
 const isH5Runtime = typeof window !== 'undefined'
 
 const totalPages = computed(() => {
-  if (!total.value) return 1
+  if (!total.value) {return 1}
   return Math.max(1, Math.ceil(total.value / pageSize.value))
 })
 
@@ -457,7 +457,7 @@ onMounted(() => {
 })
 
 function buildItemKey(item) {
-  if (item?.groupId) return item.groupId
+  if (item?.groupId) {return item.groupId}
   return `${item.visualNormalizedImageResultId}_${item.candidateIndex}`
 }
 
@@ -692,7 +692,7 @@ function seedProxyFormFromCandidate(item) {
 
 function resolveAliasPreview(item = {}) {
   const aliases = Array.isArray(item.aliases) ? item.aliases : []
-  if (!aliases.length) return '无聚合别名'
+  if (!aliases.length) {return '无聚合别名'}
   return aliases.slice(0, 4).join(' / ')
 }
 
@@ -727,7 +727,7 @@ async function submitProxyMapping() {
 }
 
 async function disableProxyMapping(item) {
-  if (!item?.mappingId) return
+  if (!item?.mappingId) {return}
   proxySubmitting.value = true
   try {
     await requestOutOfPoolProxyMappingDisable({
@@ -767,9 +767,9 @@ function resolveBatchSourcePath(item = {}) {
 }
 
 function formatTime(value) {
-  if (!value) return ''
+  if (!value) {return ''}
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return ''
+  if (Number.isNaN(date.getTime())) {return ''}
   const year = date.getFullYear()
   const month = `${date.getMonth() + 1}`.padStart(2, '0')
   const day = `${date.getDate()}`.padStart(2, '0')

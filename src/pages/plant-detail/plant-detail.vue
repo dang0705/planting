@@ -161,13 +161,13 @@ const plant = computed(() => {
 
 // 是否需要浇水（已过期）
 const isWaterOverdue = computed(() => {
-  if (!plant.value?.nextWater) return false
+  if (!plant.value?.nextWater) {return false}
   return new Date(plant.value.nextWater) <= new Date()
 })
 
 const wateringText = computed(() => {
   const watering = plant.value?.watering
-  if (!watering) return '按实际养护情况手动记录'
+  if (!watering) {return '按实际养护情况手动记录'}
   const freqText = Array.isArray(watering.freq) && watering.freq.length
     ? `${watering.freq[0]}${watering.freq[1] ? `-${watering.freq[1]}` : ''}${watering.unit || '天'}`
     : ''
@@ -176,7 +176,7 @@ const wateringText = computed(() => {
 
 const sunningText = computed(() => {
   const sunning = plant.value?.sunning
-  if (!sunning) return ''
+  if (!sunning) {return ''}
   const freqText = Array.isArray(sunning.freq) && sunning.freq.length
     ? `${sunning.freq[0]}${sunning.freq[1] ? `-${sunning.freq[1]}` : ''}${sunning.unit || ''}`
     : ''
@@ -185,7 +185,7 @@ const sunningText = computed(() => {
 
 const fertilizationText = computed(() => {
   const fertilization = plant.value?.fertilization
-  if (!fertilization) return ''
+  if (!fertilization) {return ''}
   const freqText = Array.isArray(fertilization.freq) && fertilization.freq.length
     ? `${fertilization.freq[0]}${fertilization.freq[1] ? `-${fertilization.freq[1]}` : ''}${fertilization.unit || '天'}`
     : ''
@@ -193,18 +193,18 @@ const fertilizationText = computed(() => {
 })
 
 const temperatureText = computed(() => {
-  if (plant.value?.temperatureMin === null || plant.value?.temperatureMax === null) return ''
+  if (plant.value?.temperatureMin === null || plant.value?.temperatureMax === null) {return ''}
   return `建议温度 ${plant.value.temperatureMin}-${plant.value.temperatureMax}°C`
 })
 
 const humidityText = computed(() => {
-  if (plant.value?.humidityMin === null || plant.value?.humidityMax === null) return ''
+  if (plant.value?.humidityMin === null || plant.value?.humidityMax === null) {return ''}
   return `建议湿度 ${plant.value.humidityMin}-${plant.value.humidityMax}%`
 })
 
 const ventilationText = computed(() => {
   const ventilation = plant.value?.ventilation
-  if (!ventilation) return ''
+  if (!ventilation) {return ''}
   return [`通风 ${ventilation.level || ''}`, ventilation.sensitivity ? `敏感度 ${ventilation.sensitivity}` : '']
     .filter(Boolean)
     .join(' · ')
@@ -253,8 +253,8 @@ function editPlant() {
   uni.showActionSheet({
     itemList: ['修改名称', '修改位置'],
     success: res => {
-      if (res.tapIndex === 0) editNickName()
-      else if (res.tapIndex === 1) editLocation()
+      if (res.tapIndex === 0) {editNickName()}
+      else if (res.tapIndex === 1) {editLocation()}
     }
   })
 }
@@ -319,30 +319,30 @@ function confirmDelete() {
 }
 
 function getDaysAgo(date) {
-  if (!date) return '未知'
+  if (!date) {return '未知'}
   const d = new Date(date)
   const days = Math.floor((new Date() - d) / (1000 * 60 * 60 * 24))
-  if (days === 0) return '今天添加'
+  if (days === 0) {return '今天添加'}
   return `添加 ${days} 天`
 }
 
 function formatNextTime(time) {
-  if (!time) return ''
+  if (!time) {return ''}
   const date = new Date(time)
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
   const diffDays = Math.floor((targetDate - today) / (1000 * 60 * 60 * 24))
 
-  if (diffDays === 0) return '今天'
-  if (diffDays === 1) return '明天'
-  if (diffDays === -1) return '昨天'
-  if (diffDays > 0) return `${diffDays}天后`
+  if (diffDays === 0) {return '今天'}
+  if (diffDays === 1) {return '明天'}
+  if (diffDays === -1) {return '昨天'}
+  if (diffDays > 0) {return `${diffDays}天后`}
   return `已过${Math.abs(diffDays)}天`
 }
 
 function formatDate(dateString) {
-  if (!dateString) return ''
+  if (!dateString) {return ''}
   const date = new Date(dateString)
   const now = new Date()
   const diffMs = now - date
@@ -350,10 +350,10 @@ function formatDate(dateString) {
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
-  if (diffMins < 1) return '刚刚'
-  if (diffMins < 60) return `${diffMins}分钟前`
-  if (diffHours < 24) return `${diffHours}小时前`
-  if (diffDays < 7) return `${diffDays}天前`
+  if (diffMins < 1) {return '刚刚'}
+  if (diffMins < 60) {return `${diffMins}分钟前`}
+  if (diffHours < 24) {return `${diffHours}小时前`}
+  if (diffDays < 7) {return `${diffDays}天前`}
 
   return `${date.getMonth() + 1}月${date.getDate()}日`
 }

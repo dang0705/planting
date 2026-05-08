@@ -33,10 +33,10 @@ const pendingPriorCache = {
 }
 
 function getCacheEntry(cache, key = '') {
-  if (!STATIC_REPOSITORY_CACHE_TTL_MS) return null
+  if (!STATIC_REPOSITORY_CACHE_TTL_MS) {return null}
   const normalizedKey = String(key || '').trim()
   const entry = cache.get(normalizedKey)
-  if (!entry) return null
+  if (!entry) {return null}
   if (Date.now() - Number(entry.cachedAt || 0) > STATIC_REPOSITORY_CACHE_TTL_MS) {
     cache.delete(normalizedKey)
     return null
@@ -45,7 +45,7 @@ function getCacheEntry(cache, key = '') {
 }
 
 function setCacheEntry(cache, key = '', value) {
-  if (!STATIC_REPOSITORY_CACHE_TTL_MS) return
+  if (!STATIC_REPOSITORY_CACHE_TTL_MS) {return}
   cache.set(String(key || '').trim(), {
     cachedAt: Date.now(),
     value
@@ -61,7 +61,7 @@ function normalizeCacheSignature(items = []) {
 function withPending(cache, key = '', queryFn) {
   const normalizedKey = String(key || '').trim()
   const pending = cache.get(normalizedKey)
-  if (pending) return pending
+  if (pending) {return pending}
 
   const promise = Promise.resolve()
     .then(queryFn)
@@ -585,7 +585,7 @@ async function getCandidateProblemPriors(plantContext) {
 }
 
 async function getGenusCandidatePriors(genus = '') {
-  if (!genus) return []
+  if (!genus) {return []}
   const cacheKey = String(genus || '').trim()
   const cached = getCacheEntry(priorCache.genusCandidatePriorsByGenus, cacheKey)
   if (cached) {
@@ -726,7 +726,7 @@ async function getHostCandidatePriors({ genus = '', family = '', category = '' }
 
 async function getGenusCompatibilityMap(genus, problemKeys = []) {
   const safeKeys = Array.from(new Set((problemKeys || []).map(item => String(item || '').trim()).filter(Boolean)))
-  if (!genus || !safeKeys.length) return {}
+  if (!genus || !safeKeys.length) {return {}}
   const cacheKey = `${String(genus || '').trim()}::${buildProblemSetCacheKey(safeKeys)}`
   const cached = getCacheEntry(priorCache.genusCompatibilityByGenusAndProblemSet, cacheKey)
   if (cached) {
@@ -737,7 +737,7 @@ async function getGenusCompatibilityMap(genus, problemKeys = []) {
     const safeKeySet = new Set(safeKeys)
     const map = {}
     for (const row of cachedGenusPriors) {
-      if (!safeKeySet.has(row.problemKey)) continue
+      if (!safeKeySet.has(row.problemKey)) {continue}
       map[row.problemKey] = clamp01(row.genusCompatibility)
     }
     setCacheEntry(priorCache.genusCompatibilityByGenusAndProblemSet, cacheKey, map)
@@ -772,7 +772,7 @@ async function getGenusCompatibilityMap(genus, problemKeys = []) {
 
 async function getHostCompatibilityMap({ genus = '', family = '', category = '' } = {}, problemKeys = []) {
   const safeKeys = Array.from(new Set((problemKeys || []).map(item => String(item || '').trim()).filter(Boolean)))
-  if (!safeKeys.length) return {}
+  if (!safeKeys.length) {return {}}
   const cacheKey = `${buildHostContextCacheKey({ genus, family, category })}::${buildProblemSetCacheKey(safeKeys)}`
   const cached = getCacheEntry(priorCache.hostCompatibilityByHostContextAndProblemSet, cacheKey)
   if (cached) {
@@ -784,7 +784,7 @@ async function getHostCompatibilityMap({ genus = '', family = '', category = '' 
     const safeKeySet = new Set(safeKeys)
     const map = {}
     for (const row of cachedHostPriors) {
-      if (!safeKeySet.has(row.problemKey)) continue
+      if (!safeKeySet.has(row.problemKey)) {continue}
       const score = clamp01(row.hostCompatibility)
       const existing = map[row.problemKey]
       if (!existing || score > existing.hostCompatibility) {

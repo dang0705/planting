@@ -9,7 +9,7 @@ function debugLog(...args) {
 }
 
 function isSkipAuthEnabled(value) {
-  if (value === true) return true
+  if (value === true) {return true}
   const normalized = String(value || '').trim().toLowerCase()
   return normalized === 'true' || normalized === '1'
 }

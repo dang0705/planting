@@ -58,19 +58,19 @@ const {
 
 function toPublicProblemId(problemValue = '') {
   const value = String(problemValue || '').trim()
-  if (!value) return ''
-  if (value.startsWith('p_')) return value
+  if (!value) {return ''}
+  if (value.startsWith('p_')) {return value}
   return toProblemId(value)
 }
 
 function toInternalProblemKey(problemValue = '') {
   const value = normalizeStoredNullableText(problemValue, '')
-  if (!value) return ''
+  if (!value) {return ''}
   return fromProblemId(value) || value
 }
 
 function buildGovernedExplanation(problem = null, explanationRow = null) {
-  if (!problem) return null
+  if (!problem) {return null}
 
   return {
     whyItHappens:
@@ -95,14 +95,14 @@ function buildGovernedExplanation(problem = null, explanationRow = null) {
 
 async function resolveGovernedProblemAdvice(problemValue = '') {
   const problemKey = toInternalProblemKey(problemValue)
-  if (!problemKey) return null
+  if (!problemKey) {return null}
 
   const [problems, explanations] = await Promise.all([
     getProblemsByKeys([problemKey]),
     getExplanationsByProblemKeys([problemKey])
   ])
   const problem = problems.find(item => item.problemKey === problemKey) || null
-  if (!problem) return null
+  if (!problem) {return null}
 
   const explanationRow = explanations.find(item => item.problemKey === problemKey) || null
   const explanation = buildGovernedExplanation(problem, explanationRow)
@@ -227,7 +227,7 @@ function mergeRuntimeQueue(persisted = null, snapshot = null) {
 
 async function getSessionState(openid, sessionId) {
   const session = await getDiagnosisSessionStateRow(openid, sessionId)
-  if (!session) return null
+  if (!session) {return null}
   const runtimeSnapshot = safeJsonParse(session.runtime_snapshot_json, {}) || {}
   const latestVisualCallBatchId = resolveLatestVisualCallBatchId(
     session.latest_visual_call_batch_id,
@@ -288,10 +288,10 @@ async function getSessionState(openid, sessionId) {
       askedQuestionKeys.push(questionKey)
     }
     const round = readRoundFromRationale(row.rationale)
-    if (round > maxRound) maxRound = round
+    if (round > maxRound) {maxRound = round}
 
     const answered = Number(row.asked || 0) === 1
-    if (!answered) continue
+    if (!answered) {continue}
 
     const answerValue = String(row.answer_value || '').trim().toLowerCase()
     if (questionKey && answerValue) {
@@ -493,7 +493,7 @@ async function listDiagnosisHistory(openid, { userPlantId = null, plantId = null
 async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
   const parsed = resultId ? fromResultId(resultId) : { sessionId: '', round: null }
   const finalSessionId = sessionId || parsed.sessionId || resultId
-  if (!finalSessionId) return null
+  if (!finalSessionId) {return null}
 
   const snapshot = await getFinalDiagnosisSnapshot(openid, finalSessionId)
   const persistedObservedEvidenceSet = await getObservedEvidenceSetBySession(finalSessionId, openid)
@@ -642,7 +642,7 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
   }
 
   const row = await getDiagnosisSessionResultRow(openid, finalSessionId)
-  if (!row) return null
+  if (!row) {return null}
   const runtimeSnapshot = safeJsonParse(row.runtime_snapshot_json, {}) || {}
   const normalizedOutcomeType = normalizeOutcomeType(row.outcome_type, '')
   const normalizedRoutePrimaryAction = normalizeDiagnosisRoutePrimaryAction(

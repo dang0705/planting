@@ -10,7 +10,7 @@ const { runSchemaValidator } = require('./data-system/validator/schema-validator
 function parseArgs(argv = []) {
   const args = {}
   for (const item of argv) {
-    if (!item.startsWith('--')) continue
+    if (!item.startsWith('--')) {continue}
     const [key, ...rest] = item.slice(2).split('=')
     args[key] = rest.length ? rest.join('=') : 'true'
   }

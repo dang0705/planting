@@ -60,8 +60,8 @@ async function requestWithRetry(task, { retries = 1, fallbackMessage = '请求�
 }
 
 function decodeChunkToText(chunk) {
-  if (!chunk) return ''
-  if (typeof chunk === 'string') return chunk
+  if (!chunk) {return ''}
+  if (typeof chunk === 'string') {return chunk}
 
   const arrayBuffer =
     chunk instanceof ArrayBuffer
@@ -100,7 +100,7 @@ function createSseParser(onEvent) {
 
   function emitBlock(rawBlock) {
     const block = String(rawBlock || '').trim()
-    if (!block) return
+    if (!block) {return}
 
     let eventName = 'message'
     const dataLines = []
@@ -121,7 +121,7 @@ function createSseParser(onEvent) {
       }
     })
 
-    if (!dataLines.length) return
+    if (!dataLines.length) {return}
 
     const dataText = dataLines.join('\n')
     let payload = { raw: dataText }
@@ -148,7 +148,7 @@ function createSseParser(onEvent) {
       }
     },
     flush() {
-      if (!buffer.trim()) return
+      if (!buffer.trim()) {return}
       emitBlock(buffer)
       buffer = ''
     }
@@ -1048,7 +1048,7 @@ function normalizeVisualDecisionEvent(payloadItem = {}) {
 function buildVisualProgressText(eventName, payloadItem = {}) {
   const normalizedEventName = String(eventName || payloadItem?.phase || payloadItem?.type || '').trim()
   const explicitContent = String(payloadItem?.content || '').trim()
-  if (explicitContent) return explicitContent
+  if (explicitContent) {return explicitContent}
 
   if (normalizedEventName === 'visual_session_created') {
     return '已建立诊断会话，准备分析图片。'
@@ -1101,20 +1101,20 @@ function buildStreamDiagnosisPromise(payload, { onProgress } = {}) {
 
     const pushProgress = text => {
       const normalizedText = String(text || '').trim()
-      if (!normalizedText || normalizedText === latestProgressText) return
+      if (!normalizedText || normalizedText === latestProgressText) {return}
       latestProgressText = normalizedText
       latestFullText = normalizedText
       onProgress?.(normalizedText)
     }
 
     const settleResolve = data => {
-      if (settled) return
+      if (settled) {return}
       settled = true
       resolve(data)
     }
 
     const settleReject = error => {
-      if (settled) return
+      if (settled) {return}
       settled = true
       reject(error)
     }
@@ -1171,7 +1171,7 @@ function buildStreamDiagnosisPromise(payload, { onProgress } = {}) {
       timeout: 65000,
       onChunkReceived: chunk => {
         const chunkText = decodeChunkToText(chunk?.data ?? chunk)
-        if (!chunkText) return
+        if (!chunkText) {return}
         parser.push(chunkText)
       }
     })
@@ -1181,7 +1181,7 @@ function buildStreamDiagnosisPromise(payload, { onProgress } = {}) {
           parser.push(responseText)
         }
         parser.flush()
-        if (settled) return
+        if (settled) {return}
 
         const envelope =
           response?.data && typeof response.data === 'object'

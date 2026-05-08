@@ -25,7 +25,7 @@ function round(value, digits = 6) {
 function buildEdgeIndex(edges = []) {
   const map = new Map()
   for (const edge of edges || []) {
-    if (!edge?.problemKey || !edge?.symptomKey) continue
+    if (!edge?.problemKey || !edge?.symptomKey) {continue}
     map.set(`${edge.problemKey}::${edge.symptomKey}`, edge)
   }
   return map
@@ -34,7 +34,7 @@ function buildEdgeIndex(edges = []) {
 function buildSymptomIndex(symptoms = []) {
   const map = new Map()
   for (const item of symptoms || []) {
-    if (!item?.symptomKey) continue
+    if (!item?.symptomKey) {continue}
     map.set(item.symptomKey, item)
   }
   return map
@@ -65,7 +65,7 @@ function computeVisualEvidenceScores({
 
   for (const observed of effectiveObservedSymptoms.slice(0, evidenceConfig.maxVisualSymptoms)) {
     const symptomKey = String(observed?.symptomKey || '').trim()
-    if (!symptomKey) continue
+    if (!symptomKey) {continue}
 
     const symptomMeta = symptomMap.get(symptomKey)
     const visualConfidence = clamp01(observed?.confidence ?? 0.75)
@@ -73,7 +73,7 @@ function computeVisualEvidenceScores({
 
     for (const problemKey of candidateProblemKeys) {
       const edge = edgeMap.get(`${problemKey}::${symptomKey}`)
-      if (!edge) continue
+      if (!edge) {continue}
 
       const contribution =
         visualConfidence *
@@ -93,7 +93,7 @@ function computeVisualEvidenceScores({
 function indexOptionMappings(optionMappings = []) {
   const map = new Map()
   for (const row of optionMappings || []) {
-    if (!row?.questionKey || !row?.optionKey) continue
+    if (!row?.questionKey || !row?.optionKey) {continue}
     map.set(`${row.questionKey}::${row.optionKey}`, row)
   }
   return map
@@ -112,7 +112,7 @@ function buildQuestionIndex(questions = []) {
   const map = new Map()
   for (const question of Array.isArray(questions) ? questions : []) {
     const questionKey = String(question?.questionKey || question?.question_key || '').trim()
-    if (!questionKey) continue
+    if (!questionKey) {continue}
     map.set(questionKey, question)
   }
   return map
@@ -125,7 +125,7 @@ function resolveQuestionTargetDimension({
 } = {}) {
   const parsed = parseSyntheticObservedProbeQuestionKey(questionKey)
   const parsedDimension = normalizeQuestionTargetDimension(parsed?.targetDimension, '')
-  if (parsedDimension) return parsedDimension
+  if (parsedDimension) {return parsedDimension}
 
   const explicitDimension = normalizeQuestionTargetDimension(
     answer?.targetDimension ||
@@ -135,7 +135,7 @@ function resolveQuestionTargetDimension({
       '',
     ''
   )
-  if (explicitDimension) return explicitDimension
+  if (explicitDimension) {return explicitDimension}
 
   return inferQuestionTargetDimension(
     questionKey,
@@ -197,10 +197,10 @@ function computeQuestionEvidenceAndPenalty({
   for (const answer of answers) {
     const questionKey = String(answer?.questionKey || '').trim()
     const optionKey = String(answer?.optionKey || '').trim()
-    if (!questionKey || !optionKey) continue
+    if (!questionKey || !optionKey) {continue}
 
     const mapping = mappingIndex.get(`${questionKey}::${optionKey}`)
-    if (!mapping) continue
+    if (!mapping) {continue}
     const question = questionIndex.get(questionKey) || null
     const targetDimension = resolveQuestionTargetDimension({
       questionKey,
@@ -215,7 +215,7 @@ function computeQuestionEvidenceAndPenalty({
 
     if (directProblemAdjustments.length) {
       for (const adjustment of directProblemAdjustments) {
-        if (!candidateProblemKeys.includes(adjustment.problemKey)) continue
+        if (!candidateProblemKeys.includes(adjustment.problemKey)) {continue}
 
         const effectiveScoreDelta = normalizeDirectProblemScoreDeltaForQuestion(
           questionKey,
@@ -258,7 +258,7 @@ function computeQuestionEvidenceAndPenalty({
     }
 
     const mappedSymptomKey = String(mapping.mapsToSymptomKey || '').trim()
-    if (!mappedSymptomKey) continue
+    if (!mappedSymptomKey) {continue}
 
     const symptomMeta = symptomMap.get(mappedSymptomKey)
     const signalReliability = clamp01(symptomMeta?.signalReliability ?? 0.6)
@@ -266,7 +266,7 @@ function computeQuestionEvidenceAndPenalty({
 
     for (const problemKey of candidateProblemKeys) {
       const edge = edgeMap.get(`${problemKey}::${mappedSymptomKey}`)
-      if (!edge) continue
+      if (!edge) {continue}
 
       const contribution =
         Math.abs(answerValue) *

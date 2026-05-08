@@ -30,7 +30,7 @@ function buildRecordMap(rows = [], keyColumns = [], table = '', side = '') {
     const recordKey = stableRecordKey(row, keyColumns)
     if (map.has(recordKey)) {
       duplicateCount += 1
-      if (!sampleKey) sampleKey = recordKey
+      if (!sampleKey) {sampleKey = recordKey}
       continue
     }
     map.set(recordKey, row)
@@ -61,7 +61,7 @@ function pickCompareColumns(tableConfig = {}, columns = []) {
     column => dbColumnSet.has(column) && !tableConfig.keys.includes(column)
   )
 
-  if (dbColumnSet.has('row_hash')) return ['row_hash']
+  if (dbColumnSet.has('row_hash')) {return ['row_hash']}
   return businessColumns.filter(column => column !== 'id' && !METADATA_COLUMNS.includes(column))
 }
 
@@ -79,14 +79,14 @@ function normalizeJsonRow(row = {}) {
 
 function isActiveRow(row = {}) {
   const value = row?.is_active
-  if (value === 0 || value === false) return false
-  if (typeof value === 'string' && value.trim() === '0') return false
+  if (value === 0 || value === false) {return false}
+  if (typeof value === 'string' && value.trim() === '0') {return false}
   return true
 }
 
 function buildWhereByRecordKey(recordKeyPayload = {}) {
   const keys = Object.keys(recordKeyPayload)
-  if (!keys.length) return { sql: '1 = 0', params: [] }
+  if (!keys.length) {return { sql: '1 = 0', params: [] }}
 
   const whereSql = keys.map(key => `${quoteIdentifier(key)} <=> ?`).join(' AND ')
   return {
@@ -96,7 +96,7 @@ function buildWhereByRecordKey(recordKeyPayload = {}) {
 }
 
 async function insertDiffRows(connection, rows = []) {
-  if (!rows.length) return
+  if (!rows.length) {return}
 
   const columns = await listTableColumns(connection, DEV_SCHEMA, 'publish_diffs')
   if (!columns.length) {
@@ -105,19 +105,19 @@ async function insertDiffRows(connection, rows = []) {
 
   for (const row of rows) {
     const payload = {}
-    if (columns.includes('batch_id')) payload.batch_id = row.batch_id
-    if (columns.includes('table_name')) payload.table_name = row.table_name
-    if (columns.includes('record_key')) payload.record_key = row.record_key
-    if (columns.includes('change_type')) payload.change_type = row.change_type
-    if (columns.includes('old_row_json')) payload.old_row_json = row.old_row_json
-    if (columns.includes('new_row_json')) payload.new_row_json = row.new_row_json
-    if (columns.includes('old_hash')) payload.old_hash = row.old_hash
-    if (columns.includes('new_hash')) payload.new_hash = row.new_hash
-    if (columns.includes('status')) payload.status = 'pending'
-    if (columns.includes('created_at')) payload.created_at = new Date()
+    if (columns.includes('batch_id')) {payload.batch_id = row.batch_id}
+    if (columns.includes('table_name')) {payload.table_name = row.table_name}
+    if (columns.includes('record_key')) {payload.record_key = row.record_key}
+    if (columns.includes('change_type')) {payload.change_type = row.change_type}
+    if (columns.includes('old_row_json')) {payload.old_row_json = row.old_row_json}
+    if (columns.includes('new_row_json')) {payload.new_row_json = row.new_row_json}
+    if (columns.includes('old_hash')) {payload.old_hash = row.old_hash}
+    if (columns.includes('new_hash')) {payload.new_hash = row.new_hash}
+    if (columns.includes('status')) {payload.status = 'pending'}
+    if (columns.includes('created_at')) {payload.created_at = new Date()}
 
     const payloadColumns = Object.keys(payload)
-    if (!payloadColumns.length) continue
+    if (!payloadColumns.length) {continue}
 
     const sql = `
       INSERT INTO ${tableName(DEV_SCHEMA, 'publish_diffs')}
@@ -198,7 +198,7 @@ async function runDiffEngine({ batchId, tables = [] } = {}) {
         }
 
         const changed = isRowDifferent(devRow, prodRow, compareColumns)
-        if (!changed) continue
+        if (!changed) {continue}
 
         updated += 1
         diffRows.push({
@@ -214,7 +214,7 @@ async function runDiffEngine({ batchId, tables = [] } = {}) {
       }
 
       for (const [recordKey, prodRow] of prodMap.entries()) {
-        if (devMap.has(recordKey)) continue
+        if (devMap.has(recordKey)) {continue}
         removed += 1
         diffRows.push({
           batch_id: batchId,

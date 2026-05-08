@@ -76,7 +76,7 @@ function applyAnsweredQuestionKeys(questionQueue = {}, answers = []) {
   nextQueue.invalidatedItemCount = summary.invalidatedItemCount
   nextQueue.queueStatus = summary.activeItemCount > 0 ? 'active' : 'exhausted'
   nextQueue.queueDecision = {
-    ...(nextQueue.queueDecision || {}),
+    ...nextQueue.queueDecision,
     hasActionableItems: summary.activeItemCount > 0 ? 1 : 0,
     exhaustedReason: summary.activeItemCount > 0 ? '' : 'answered_current_round'
   }
@@ -107,7 +107,7 @@ function invalidateQuestionQueue(questionQueue = {}, reason = 'stale') {
   nextQueue.invalidatedItemCount = summary.invalidatedItemCount
   nextQueue.queueStatus = 'invalidated'
   nextQueue.queueDecision = {
-    ...(nextQueue.queueDecision || {}),
+    ...nextQueue.queueDecision,
     hasActionableItems: 0,
     exhaustedReason: normalizeText(reason, 'stale')
   }

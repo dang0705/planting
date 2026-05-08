@@ -30,8 +30,8 @@ function normalizeEvidenceSourceType(value, fallback = '') {
 
 function isVisualEvidenceSourceType(value = '') {
   const normalized = normalizeEvidenceSourceType(value)
-  if (!normalized) return false
-  if (normalized === 'legacy_observed_symptom') return true
+  if (!normalized) {return false}
+  if (normalized === 'legacy_observed_symptom') {return true}
   return normalized.includes('visual')
 }
 
@@ -53,7 +53,7 @@ function buildObservedEvidenceSetId({
 
 function normalizeObservedEvidenceItem(item = {}, defaults = {}) {
   const symptomKey = normalizeText(item?.symptomKey || item?.symptom_key || '', '')
-  if (!symptomKey) return null
+  if (!symptomKey) {return null}
 
   const sourceType = normalizeText(
     item?.sourceType || item?.source_type || defaults.sourceType || 'legacy_observed_symptom',
@@ -244,7 +244,7 @@ function buildObservedEvidenceSetFromVisualAggregateResult(visualAggregateResult
     .map(item => {
       const candidate = item?.candidate || {}
       const symptomKey = normalizeText(item?.object_key || candidate?.symptom_key || '', '')
-      if (!symptomKey) return null
+      if (!symptomKey) {return null}
 
       const projectedSymptom = observedSymptomMap.get(symptomKey) || {}
       return normalizeObservedEvidenceItem(
@@ -369,9 +369,9 @@ function projectObservedSymptomsFromEvidence(observedEvidenceSet = []) {
   const symptomMap = new Map()
 
   for (const item of normalizeObservedEvidenceSetItems(observedEvidenceSet)) {
-    if (item.evidenceType !== 'symptom') continue
-    if (item.enteredRuntime !== 1) continue
-    if (item.currentStatus === 'superseded') continue
+    if (item.evidenceType !== 'symptom') {continue}
+    if (item.enteredRuntime !== 1) {continue}
+    if (item.currentStatus === 'superseded') {continue}
 
     const current = symptomMap.get(item.symptomKey)
     if (!current || Number(item.confidence || 0) > Number(current.confidence || 0)) {

@@ -1,35 +1,65 @@
-# Project Hard Rules / 项目硬规则
+# 项目私有硬规则
 
-## Highest Priority / 最高优先级
+## 1. 定位
 
-- Treat repository files as the source of truth.
-- Do not rely on hidden chat context for project-critical decisions.
-- Do not perform unrelated refactors.
-- Do not add production dependencies unless explicitly required.
-- Do not bypass type errors, lint errors, tests, or build failures.
-- Do not delete valid business logic merely to make checks pass.
-- Prefer existing project wrappers and npm scripts over ad-hoc commands.
-- Keep diffs small and reviewable.
-- For Chinese-facing product, documentation, and diagnosis-domain concepts, Chinese must be treated as first-class language.
-- Do not output patch-only documents when the user asks for complete deliverables.
-- Domestic services and China-accessible solutions are preferred for production choices.
+本文件只保存所有 agent 都必须遵守的项目级底线和规则优先级。不承载详细术语、部署、replay 或 subagent 工作流。
 
-## Project Context / 项目上下文
+## 2. 事实源优先级
 
-- Frontend: Taro, React, TypeScript
-- State/data: Zustand, React Query
-- Styling: Tailwind CSS
-- Platform: WeChat Mini Program first
-- Backend/cloud: Tencent CloudBase, Cloud Functions, MySQL / TDSQL-C related workflows
-- Package manager: prefer `pnpm` when available
+1. 当前仓库文件。
+2. `AGENTS.md` 中的根规则摘要；默认由 main agent 在 Dispatch Plan 中传递给 subagent，subagent 不因本条主动读取完整 `AGENTS.md`。
+3. `docs/ai-rules/` 分类规则。
+4. `docs/ai-tasks/` 当前任务说明。
+5. `docs/ai-runs/` 最新 handoff。
+6. `docs/adr/` 架构决策记录。
+7. 当前 git diff 与验证结果。
+8. 聊天上下文。
 
-## Verification / 验证
+冲突处理：
+
+1. 文档与实际代码不一致时，必须同时报告“代码现状”和“文档要求”。
+2. 分类规则缺失或路径不存在时，必须说明缺失文件，不得假装已读取。
+3. 当前任务说明与长期规则冲突时，必须停止并交给 main agent 裁决。
+4. 用户给出最新裁决时，建议沉淀到 `docs/ai-rules/`、`docs/ai-tasks/`、`docs/ai-runs/` 或 `docs/adr/`。
+
+## 3. 修改边界
+
+1. 不允许无关重构。
+2. 不允许无任务依据地扩大范围。
+3. 除非任务明确要求，不允许新增生产依赖。
+4. 不允许删除有效业务逻辑来让检查通过。
+5. 不允许为了通过测试而削弱真实业务约束。
+6. 不允许绕过类型错误、Lint 错误、测试失败或构建失败。
+7. diff 必须小、可审查，并严格贴合已批准范围。
+8. 可写 agent 修改范围必须来自 Dispatch Plan 或 `architect_reviewer` 的实现边界。
+9. 如果实现过程中发现任务范围不足，必须停止并回报 main agent。
+
+## 4. 验证要求
+
+1. 优先执行聚焦验证。
+2. 若脚本不存在，必须明确说明，不得伪造验证结果。
+3. 优先使用项目已有 wrapper、npm scripts 和固定脚本。
+4. 若因环境、依赖、权限、网络等原因无法验证，必须明确写入“未验证项”和原因。
+5. 不允许把“命令已执行”直接等同于“业务正确”，高风险任务还必须有对应业务证据。
+
+标准优先验证命令：
 
 ```bash
-pnpm typecheck
-pnpm lint
-pnpm test
-pnpm build
+npm lint
+npm test
+npm build
 ```
 
-If a script is unavailable, state that explicitly instead of pretending it ran.
+## 5. 文档与语言底线
+
+1. 中文是一等公民。
+2. 用户要求完整交付文档时，不允许只给补丁段落。
+3. 超过 2000 字的长文档应生成 markdown 下载文件，不直接堆在会话中。
+4. 具体术语、表达、引用、文档交付细则见 `docs/ai-rules/language-policy.md`。
+
+## 6. 国内优先
+
+1. 生产方案优先选择国内服务或中国大陆可稳定访问的方案。
+2. 若使用海外服务，必须说明稳定访问、成本和替代方案。
+3. 不允许把中国大陆不可稳定访问的服务作为唯一生产依赖。
+

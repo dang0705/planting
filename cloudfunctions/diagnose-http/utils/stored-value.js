@@ -1,8 +1,8 @@
 'use strict'
 
 function safeJsonParse(value, fallback = null) {
-  if (value === null || value === undefined || value === '') return fallback
-  if (typeof value === 'object') return value
+  if (value === null || value === undefined || value === '') {return fallback}
+  if (typeof value === 'object') {return value}
 
   try {
     return JSON.parse(value)
@@ -12,7 +12,7 @@ function safeJsonParse(value, fallback = null) {
 }
 
 function normalizeStoredNullableText(value, fallback = null) {
-  if (value === null || value === undefined) return fallback
+  if (value === null || value === undefined) {return fallback}
 
   const normalized = String(value).trim()
   if (!normalized || normalized.toLowerCase() === 'null' || normalized.toLowerCase() === 'undefined') {

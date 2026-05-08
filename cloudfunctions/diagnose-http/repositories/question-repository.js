@@ -174,9 +174,9 @@ const AUDITED_DIRECT_PROBLEM_ADJUSTMENTS = {
 
 function resolveAuditedDirectProblemAdjustments(questionKey = '', optionKey = '') {
   const questionAdjustments = AUDITED_DIRECT_PROBLEM_ADJUSTMENTS[String(questionKey || '').trim()]
-  if (!questionAdjustments) return []
+  if (!questionAdjustments) {return []}
   const optionAdjustments = questionAdjustments[String(optionKey || '').trim()]
-  if (!Array.isArray(optionAdjustments)) return []
+  if (!Array.isArray(optionAdjustments)) {return []}
 
   return optionAdjustments.map(item => ({
     problemKey: String(item?.problemKey || '').trim(),
@@ -199,9 +199,9 @@ const staticCache = {
 const pendingStaticCache = new Map()
 
 function getCached(cache, key = '') {
-  if (!STATIC_REPOSITORY_CACHE_TTL_MS) return null
+  if (!STATIC_REPOSITORY_CACHE_TTL_MS) {return null}
   const entry = cache.get(String(key || '').trim())
-  if (!entry) return null
+  if (!entry) {return null}
   if (Date.now() - Number(entry.cachedAt || 0) > STATIC_REPOSITORY_CACHE_TTL_MS) {
     cache.delete(String(key || '').trim())
     return null
@@ -210,7 +210,7 @@ function getCached(cache, key = '') {
 }
 
 function setCached(cache, key = '', value) {
-  if (!STATIC_REPOSITORY_CACHE_TTL_MS) return
+  if (!STATIC_REPOSITORY_CACHE_TTL_MS) {return}
   cache.set(String(key || '').trim(), {
     cachedAt: Date.now(),
     value
@@ -235,13 +235,13 @@ function withPendingStaticQuery(key = '', loader) {
 }
 
 async function preloadQuestionRepositoryCache() {
-  if (!STATIC_REPOSITORY_CACHE_TTL_MS) return
+  if (!STATIC_REPOSITORY_CACHE_TTL_MS) {return}
   const now = Date.now()
-  if (staticCache.preloadExpiresAt > now) return
+  if (staticCache.preloadExpiresAt > now) {return}
 
   await withPendingStaticQuery('preloadQuestionRepositoryCache:all', async () => {
     const refreshedNow = Date.now()
-    if (staticCache.preloadExpiresAt > refreshedNow) return
+    if (staticCache.preloadExpiresAt > refreshedNow) {return}
 
     const [strategyResult, questionResult, optionResult] = await Promise.all([
       models.$runSQL(
@@ -322,8 +322,8 @@ async function preloadQuestionRepositoryCache() {
     const strategiesByProblem = new Map()
     for (const row of (strategyResult?.data?.executeResultList || []).map(mapStrategyRow)) {
       const key = String(row.problemKey || '').trim()
-      if (!key) continue
-      if (!strategiesByProblem.has(key)) strategiesByProblem.set(key, [])
+      if (!key) {continue}
+      if (!strategiesByProblem.has(key)) {strategiesByProblem.set(key, [])}
       strategiesByProblem.get(key).push(row)
     }
     for (const [key, rows] of strategiesByProblem.entries()) {
@@ -342,11 +342,11 @@ async function preloadQuestionRepositoryCache() {
         setCached(staticCache.questionsByKey, questionKey, row)
       }
       if (groupKey) {
-        if (!questionsByGroup.has(groupKey)) questionsByGroup.set(groupKey, [])
+        if (!questionsByGroup.has(groupKey)) {questionsByGroup.set(groupKey, [])}
         questionsByGroup.get(groupKey).push(row)
       }
       if (targetSymptomKey && isFullyAudited) {
-        if (!questionsByTargetSymptom.has(targetSymptomKey)) questionsByTargetSymptom.set(targetSymptomKey, [])
+        if (!questionsByTargetSymptom.has(targetSymptomKey)) {questionsByTargetSymptom.set(targetSymptomKey, [])}
         questionsByTargetSymptom.get(targetSymptomKey).push({
           question_key: row.questionKey,
           target_symptom_key: row.targetSymptomKey,
@@ -365,8 +365,8 @@ async function preloadQuestionRepositoryCache() {
     const optionRowsByQuestion = new Map()
     for (const row of (optionResult?.data?.executeResultList || []).map(mapOptionRow)) {
       const key = String(row.questionKey || '').trim()
-      if (!key) continue
-      if (!optionRowsByQuestion.has(key)) optionRowsByQuestion.set(key, [])
+      if (!key) {continue}
+      if (!optionRowsByQuestion.has(key)) {optionRowsByQuestion.set(key, [])}
       optionRowsByQuestion.get(key).push(row)
     }
     for (const [key, rows] of optionRowsByQuestion.entries()) {
@@ -392,7 +392,7 @@ function mapStrategyRow(row = {}) {
 
 async function getQuestionStrategies(problemKeys = []) {
   const safeKeys = Array.from(new Set((problemKeys || []).map(item => String(item || '').trim()).filter(Boolean)))
-  if (!safeKeys.length) return []
+  if (!safeKeys.length) {return []}
   const cachedRows = []
   const missingKeys = []
   for (const key of safeKeys) {
@@ -403,7 +403,7 @@ async function getQuestionStrategies(problemKeys = []) {
       missingKeys.push(key)
     }
   }
-  if (!missingKeys.length) return cachedRows
+  if (!missingKeys.length) {return cachedRows}
 
   const result = await withPendingStaticQuery(
     `strategiesByProblemKey:${missingKeys.slice().sort().join('|')}`,
@@ -432,7 +432,7 @@ async function getQuestionStrategies(problemKeys = []) {
   const rowsByKey = new Map()
   for (const row of rows) {
     const key = String(row.problemKey || '').trim()
-    if (!rowsByKey.has(key)) rowsByKey.set(key, [])
+    if (!rowsByKey.has(key)) {rowsByKey.set(key, [])}
     rowsByKey.get(key).push(row)
   }
   for (const key of missingKeys) {
@@ -446,7 +446,7 @@ async function getQuestionStrategies(problemKeys = []) {
 
 async function getQuestionsByKeys(questionKeys = []) {
   const safeKeys = Array.from(new Set((questionKeys || []).map(item => String(item || '').trim()).filter(Boolean)))
-  if (!safeKeys.length) return []
+  if (!safeKeys.length) {return []}
   const cachedRows = []
   const missingKeys = []
   for (const key of safeKeys) {
@@ -457,7 +457,7 @@ async function getQuestionsByKeys(questionKeys = []) {
       missingKeys.push(key)
     }
   }
-  if (!missingKeys.length) return cachedRows
+  if (!missingKeys.length) {return cachedRows}
 
   const result = await withPendingStaticQuery(
     `questionsByKey:${missingKeys.slice().sort().join('|')}`,
@@ -508,7 +508,7 @@ async function getQuestionsByKeys(questionKeys = []) {
 
 async function getQuestionsByGroupKeys(groupKeys = []) {
   const safeKeys = Array.from(new Set((groupKeys || []).map(item => String(item || '').trim()).filter(Boolean)))
-  if (!safeKeys.length) return []
+  if (!safeKeys.length) {return []}
   const cachedRows = []
   const missingKeys = []
   for (const key of safeKeys) {
@@ -519,7 +519,7 @@ async function getQuestionsByGroupKeys(groupKeys = []) {
       missingKeys.push(key)
     }
   }
-  if (!missingKeys.length) return cachedRows
+  if (!missingKeys.length) {return cachedRows}
 
   const result = await withPendingStaticQuery(
     `questionsByGroupKey:${missingKeys.slice().sort().join('|')}`,
@@ -562,7 +562,7 @@ async function getQuestionsByGroupKeys(groupKeys = []) {
   const rowsByKey = new Map()
   for (const row of rows) {
     const key = String(row.questionGroupKey || '').trim()
-    if (!rowsByKey.has(key)) rowsByKey.set(key, [])
+    if (!rowsByKey.has(key)) {rowsByKey.set(key, [])}
     rowsByKey.get(key).push(row)
   }
   for (const key of missingKeys) {
@@ -576,7 +576,7 @@ async function getQuestionsByGroupKeys(groupKeys = []) {
 
 async function getQuestionOptionMappings(questionKeys = []) {
   const safeKeys = Array.from(new Set((questionKeys || []).map(item => String(item || '').trim()).filter(Boolean)))
-  if (!safeKeys.length) return []
+  if (!safeKeys.length) {return []}
   const cachedRows = []
   const missingKeys = []
   for (const key of safeKeys) {
@@ -587,7 +587,7 @@ async function getQuestionOptionMappings(questionKeys = []) {
       missingKeys.push(key)
     }
   }
-  if (!missingKeys.length) return cachedRows
+  if (!missingKeys.length) {return cachedRows}
 
   const result = await withPendingStaticQuery(
     `optionMappingsByQuestionKey:${missingKeys.slice().sort().join('|')}`,
@@ -621,7 +621,7 @@ async function getQuestionOptionMappings(questionKeys = []) {
   const rowsByKey = new Map()
   for (const row of rows) {
     const key = String(row.questionKey || '').trim()
-    if (!rowsByKey.has(key)) rowsByKey.set(key, [])
+    if (!rowsByKey.has(key)) {rowsByKey.set(key, [])}
     rowsByKey.get(key).push(row)
   }
   for (const key of missingKeys) {
@@ -635,7 +635,7 @@ async function getQuestionOptionMappings(questionKeys = []) {
 
 async function findQuestionKeysByTargetSymptoms(symptomKeys = []) {
   const safeKeys = Array.from(new Set((symptomKeys || []).map(item => String(item || '').trim()).filter(Boolean)))
-  if (!safeKeys.length) return []
+  if (!safeKeys.length) {return []}
   const cachedRows = []
   const missingKeys = []
   for (const key of safeKeys) {
@@ -646,7 +646,7 @@ async function findQuestionKeysByTargetSymptoms(symptomKeys = []) {
       missingKeys.push(key)
     }
   }
-  if (!missingKeys.length) return cachedRows
+  if (!missingKeys.length) {return cachedRows}
 
   const result = await withPendingStaticQuery(
     `questionKeysByTargetSymptomKey:${missingKeys.slice().sort().join('|')}`,
@@ -667,7 +667,7 @@ async function findQuestionKeysByTargetSymptoms(symptomKeys = []) {
   const rowsByKey = new Map()
   for (const row of rows) {
     const key = String(row.target_symptom_key || '').trim()
-    if (!rowsByKey.has(key)) rowsByKey.set(key, [])
+    if (!rowsByKey.has(key)) {rowsByKey.set(key, [])}
     rowsByKey.get(key).push(row)
   }
   for (const key of missingKeys) {

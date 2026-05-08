@@ -60,7 +60,7 @@ export const questions = [
 
 export function diagnose(userSymptoms, userConditions) {
   const allConditions = { ...userConditions }
-  let candidates = []
+  const candidates = []
 
   for (const rule of diagnosisRules) {
     let symptomTotal = 0
@@ -81,7 +81,7 @@ export function diagnose(userSymptoms, userConditions) {
       conditionScore += weightMap?.[allConditions[key]] || 0
     }
 
-    let finalScore = Math.max(0, Math.min(1, symptomScore * 0.65 + (conditionScore / 12) * 0.35))
+    const finalScore = Math.max(0, Math.min(1, symptomScore * 0.65 + (conditionScore / 12) * 0.35))
 
     if (finalScore > 0.25) {
       candidates.push({ rule, score: finalScore, priorityAdjusted: finalScore * rule.priority })

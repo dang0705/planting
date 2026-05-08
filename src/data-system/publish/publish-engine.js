@@ -12,8 +12,8 @@ const {
 const { parseRecordKey, buildWhereByRecordKey } = require('../diff/diff-engine')
 
 function parseJsonPayload(value, fallback = null) {
-  if (!value) return fallback
-  if (typeof value === 'object') return value
+  if (!value) {return fallback}
+  if (typeof value === 'object') {return value}
   try {
     return JSON.parse(value)
   } catch (error) {
@@ -22,10 +22,10 @@ function parseJsonPayload(value, fallback = null) {
 }
 
 function normalizeJsonColumnValue(value) {
-  if (value === null || value === undefined || value === '') return null
+  if (value === null || value === undefined || value === '') {return null}
   if (typeof value === 'string') {
     const trimmed = value.trim()
-    if (!trimmed) return null
+    if (!trimmed) {return null}
     try {
       JSON.parse(trimmed)
       return trimmed
@@ -67,20 +67,20 @@ function buildUpsertStatement(schema, table, row = {}, keyColumns = []) {
 
 async function writePublishBatch(connection, { batchId, versionTag, status, summary = null, rollbackOfBatchId = null }) {
   const columns = await listTableColumns(connection, DEV_SCHEMA, 'publish_batches').catch(() => [])
-  if (!columns.length) return
+  if (!columns.length) {return}
 
   const payload = {}
-  if (columns.includes('batch_id')) payload.batch_id = batchId
-  if (columns.includes('version_tag')) payload.version_tag = versionTag || null
-  if (columns.includes('source_batch_id')) payload.source_batch_id = batchId
-  if (columns.includes('status')) payload.status = status
-  if (columns.includes('summary_json')) payload.summary_json = summary ? JSON.stringify(summary) : null
-  if (columns.includes('created_at')) payload.created_at = new Date()
-  if (columns.includes('published_at') && status === 'published') payload.published_at = new Date()
-  if (columns.includes('rollback_of_batch_id')) payload.rollback_of_batch_id = rollbackOfBatchId
+  if (columns.includes('batch_id')) {payload.batch_id = batchId}
+  if (columns.includes('version_tag')) {payload.version_tag = versionTag || null}
+  if (columns.includes('source_batch_id')) {payload.source_batch_id = batchId}
+  if (columns.includes('status')) {payload.status = status}
+  if (columns.includes('summary_json')) {payload.summary_json = summary ? JSON.stringify(summary) : null}
+  if (columns.includes('created_at')) {payload.created_at = new Date()}
+  if (columns.includes('published_at') && status === 'published') {payload.published_at = new Date()}
+  if (columns.includes('rollback_of_batch_id')) {payload.rollback_of_batch_id = rollbackOfBatchId}
 
   const payloadColumns = Object.keys(payload)
-  if (!payloadColumns.length) return
+  if (!payloadColumns.length) {return}
 
   const sql = `
     INSERT INTO ${tableName(DEV_SCHEMA, 'publish_batches')}
@@ -134,7 +134,7 @@ async function loadDevRowByRecordKey(connection, table, recordKeyPayload = {}) {
 }
 
 async function markDiffStatus(connection, diffId, status, hasStatus, diffColumns = []) {
-  if (!hasStatus) return
+  if (!hasStatus) {return}
 
   const updates = ['status = ?']
   const params = [status]
@@ -232,11 +232,11 @@ async function runPublishEngine({ batchId, versionTag = null, allowPending = fal
       const payload = {}
       for (const column of candidateColumns) {
         // Do not publish surrogate/internal id across schemas.
-        if (column === 'id') continue
+        if (column === 'id') {continue}
         payload[column] = devRow[column]
       }
       for (const jsonColumn of tableConfig.jsonColumns || []) {
-        if (!Object.prototype.hasOwnProperty.call(payload, jsonColumn)) continue
+        if (!Object.prototype.hasOwnProperty.call(payload, jsonColumn)) {continue}
         payload[jsonColumn] = normalizeJsonColumnValue(payload[jsonColumn])
       }
       if (prodColumnSet.has('updated_at')) {
@@ -255,8 +255,8 @@ async function runPublishEngine({ batchId, versionTag = null, allowPending = fal
       const upsert = buildUpsertStatement(PROD_SCHEMA, table, payload, tableConfig.keys)
       await connection.query(upsert.sql, upsert.params)
 
-      if (diff.change_type === 'added') summary.added += 1
-      if (diff.change_type === 'updated') summary.updated += 1
+      if (diff.change_type === 'added') {summary.added += 1}
+      if (diff.change_type === 'updated') {summary.updated += 1}
       await markDiffStatus(connection, diff.id, 'published', hasStatus, diffColumns)
     }
 

@@ -4,7 +4,7 @@ const { normalizeStoredNullableText } = require('../utils/stored-value')
 
 function normalizePersistedImageUrl(value = '') {
   const normalized = String(value || '').trim()
-  if (!normalized) return ''
+  if (!normalized) {return ''}
   if (/^data:image\//i.test(normalized)) {
     return '[inline_data_url]'
   }
@@ -13,9 +13,9 @@ function normalizePersistedImageUrl(value = '') {
 
 function mapSeverityHintToLevel(severityHint = '') {
   const normalized = String(severityHint || '').trim()
-  if (!normalized) return ''
-  if (normalized.includes('高') || normalized.toLowerCase() === 'high') return 'high'
-  if (normalized.includes('低') || normalized.toLowerCase() === 'low') return 'low'
+  if (!normalized) {return ''}
+  if (normalized.includes('高') || normalized.toLowerCase() === 'high') {return 'high'}
+  if (normalized.includes('低') || normalized.toLowerCase() === 'low') {return 'low'}
   return 'medium'
 }
 

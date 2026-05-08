@@ -20,7 +20,7 @@ export const usePlantStore = defineStore('plants', {
     plantsNeedWater: state => {
       const now = new Date()
       return state.userPlants.filter(p => {
-        if (!p.nextWater) return false
+        if (!p.nextWater) {return false}
         return new Date(p.nextWater) <= now
       })
     }

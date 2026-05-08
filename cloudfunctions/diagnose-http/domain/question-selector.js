@@ -44,7 +44,7 @@ function ensureUnknownOption(options = []) {
 function groupByQuestion(optionMappings = []) {
   const map = new Map()
   for (const row of optionMappings || []) {
-    if (!row?.questionKey) continue
+    if (!row?.questionKey) {continue}
     const list = map.get(row.questionKey) || []
     list.push(row)
     map.set(row.questionKey, list)
@@ -61,7 +61,7 @@ function buildObservedSymptomIndex(observedSymptoms = []) {
   const map = new Map()
   for (const item of observedSymptoms || []) {
     const symptomKey = String(item?.symptomKey || '').trim()
-    if (!symptomKey) continue
+    if (!symptomKey) {continue}
     map.set(symptomKey, {
       confidence: Number(item?.confidence || 0),
       signalReliability: Number(item?.signalReliability || 0),
@@ -109,9 +109,9 @@ function buildObservedMetaSets(observedSymptomMap = new Map()) {
   const distributionKeys = new Set()
 
   for (const item of observedSymptomMap.values()) {
-    if (item?.locationKey) locationKeys.add(String(item.locationKey || '').trim())
-    if (item?.patternKey) patternKeys.add(String(item.patternKey || '').trim())
-    if (item?.distributionKey) distributionKeys.add(String(item.distributionKey || '').trim())
+    if (item?.locationKey) {locationKeys.add(String(item.locationKey || '').trim())}
+    if (item?.patternKey) {patternKeys.add(String(item.patternKey || '').trim())}
+    if (item?.distributionKey) {distributionKeys.add(String(item.distributionKey || '').trim())}
   }
 
   return {
@@ -217,7 +217,7 @@ function computeRouteHintQuestionBoost(
     .filter(Boolean)
     .join(' ')
 
-  if (!haystack) return boost
+  if (!haystack) {return boost}
 
   for (const keyword of routeHintKeywords) {
     if (haystack.includes(keyword)) {
@@ -248,7 +248,7 @@ function computeObservedContextDimensionBoost(
   for (const observedSymptomKey of observedSymptomMap.keys()) {
     const preferredDimensions =
       OBSERVED_CONTEXT_DIMENSION_PRIORITY_BY_SYMPTOM[observedSymptomKey] || []
-    if (!preferredDimensions.length) continue
+    if (!preferredDimensions.length) {continue}
 
     const bridgeTargets = OBSERVED_SYMPTOM_BRIDGE_TARGETS[observedSymptomKey] || []
     if (
@@ -259,7 +259,7 @@ function computeObservedContextDimensionBoost(
     }
 
     const dimensionIndex = preferredDimensions.indexOf(targetDimension)
-    if (dimensionIndex < 0) continue
+    if (dimensionIndex < 0) {continue}
 
     const bridgeHostBonus =
       observedSymptomKey !== targetSymptomKey &&
@@ -277,10 +277,10 @@ function computeObservedContextDimensionBoost(
 }
 
 function computeQuestionTargetRelevance(question = {}, { observedSymptomMap = new Map(), symptomMetaMap = new Map() } = {}) {
-  if (!observedSymptomMap.size) return 0
+  if (!observedSymptomMap.size) {return 0}
 
   const targetSymptomKey = normalizeText(question?.targetSymptomKey || '', '')
-  if (!targetSymptomKey) return 0
+  if (!targetSymptomKey) {return 0}
 
   if (observedSymptomMap.has(targetSymptomKey)) {
     return 120
@@ -300,9 +300,9 @@ function computeQuestionTargetRelevance(question = {}, { observedSymptomMap = ne
     targetDistributionKey && observedMetaSets.distributionKeys.has(targetDistributionKey)
 
   let score = 0
-  if (hasLocationMatch) score += 10
-  if (hasPatternMatch) score += 24
-  if (hasDistributionMatch) score += 6
+  if (hasLocationMatch) {score += 10}
+  if (hasPatternMatch) {score += 24}
+  if (hasDistributionMatch) {score += 6}
 
   if (targetLocationKey && observedMetaSets.locationKeys.size && !hasLocationMatch) {
     score -= 18
@@ -340,9 +340,9 @@ function shouldAllowSecondaryObservedSymptomProbe(
   } = {}
 ) {
   const normalizedSymptomKey = normalizeText(symptomKey || '', '')
-  if (!normalizedSymptomKey) return false
-  if (!previouslyProbedNonVisualSymptomKeys.size) return true
-  if (previouslyProbedNonVisualSymptomKeys.has(normalizedSymptomKey)) return true
+  if (!normalizedSymptomKey) {return false}
+  if (!previouslyProbedNonVisualSymptomKeys.size) {return true}
+  if (previouslyProbedNonVisualSymptomKeys.has(normalizedSymptomKey)) {return true}
 
   const observed = observedSymptomMap.get(normalizedSymptomKey)
   if (
@@ -404,7 +404,7 @@ function buildObservedEvidenceCoverageIndex(observedEvidenceSet = [], symptomMet
 
   for (const item of Array.isArray(observedEvidenceSet) ? observedEvidenceSet : []) {
     const symptomKey = normalizeText(item?.symptomKey || '', '')
-    if (!symptomKey) continue
+    if (!symptomKey) {continue}
 
     const symptomMeta = symptomMetaMap.get(symptomKey) || {}
     const current = map.get(symptomKey) || {
@@ -475,7 +475,7 @@ function buildVisualCandidateCoverageIndex(visualCandidateSymptoms = [], symptom
 
   for (const item of Array.isArray(visualCandidateSymptoms) ? visualCandidateSymptoms : []) {
     const symptomKey = normalizeText(item?.symptomKey || '', '')
-    if (!symptomKey) continue
+    if (!symptomKey) {continue}
 
     const symptomMeta = symptomMetaMap.get(symptomKey) || {}
     const locationKey = normalizeText(item?.locationKey || symptomMeta?.locationKey || '', '')
@@ -531,7 +531,7 @@ function shouldBlockCoveredDimensionQuestion(
   } = {}
 ) {
   const targetSymptomKey = normalizeText(question?.targetSymptomKey || '', '')
-  if (!targetSymptomKey) return false
+  if (!targetSymptomKey) {return false}
 
   const targetDimension = normalizeQuestionTargetDimension(
     question?.targetDimension,
@@ -550,9 +550,9 @@ function shouldBlockCoveredDimensionQuestion(
   }
 
   for (const [observedSymptomKey, observedCoverage] of observedEvidenceCoverageMap.entries()) {
-    if (!observedCoverage?.strongVisualPresenceCovered) continue
-    if (observedSymptomKey === targetSymptomKey) continue
-    if (!observedSymptomMap.has(observedSymptomKey)) continue
+    if (!observedCoverage?.strongVisualPresenceCovered) {continue}
+    if (observedSymptomKey === targetSymptomKey) {continue}
+    if (!observedSymptomMap.has(observedSymptomKey)) {continue}
     if (
       observedCoverage?.coveredDimensions?.has(targetDimension) &&
       isSameMorphologyFamily(observedSymptomKey, targetSymptomKey, symptomMetaMap)
@@ -562,8 +562,8 @@ function shouldBlockCoveredDimensionQuestion(
   }
 
   for (const [candidateSymptomKey, candidateCoverage] of visualCandidateCoverageMap.entries()) {
-    if (!candidateCoverage?.strongVisualPresenceCovered) continue
-    if (candidateSymptomKey === targetSymptomKey) continue
+    if (!candidateCoverage?.strongVisualPresenceCovered) {continue}
+    if (candidateSymptomKey === targetSymptomKey) {continue}
     if (
       candidateCoverage?.coveredDimensions?.has(targetDimension) &&
       isSameMorphologyFamily(candidateSymptomKey, targetSymptomKey, symptomMetaMap)
@@ -585,7 +585,7 @@ function computeObservedFactCoverageBoost(
   } = {}
 ) {
   const targetSymptomKey = normalizeText(question?.targetSymptomKey || '', '')
-  if (!targetSymptomKey) return 0
+  if (!targetSymptomKey) {return 0}
 
   const targetDimension = normalizeQuestionTargetDimension(
     question?.targetDimension,
@@ -611,15 +611,15 @@ function computeObservedFactCoverageBoost(
   }
 
   for (const [observedSymptomKey, observedCoverage] of observedEvidenceCoverageMap.entries()) {
-    if (!observedCoverage?.strongVisualPresenceCovered) continue
-    if (!observedSymptomMap.has(observedSymptomKey)) continue
+    if (!observedCoverage?.strongVisualPresenceCovered) {continue}
+    if (!observedSymptomMap.has(observedSymptomKey)) {continue}
     if (isSameMorphologyFamily(observedSymptomKey, targetSymptomKey, symptomMetaMap)) {
       return 22
     }
   }
 
   for (const [candidateSymptomKey, candidateCoverage] of visualCandidateCoverageMap.entries()) {
-    if (!candidateCoverage?.strongVisualPresenceCovered) continue
+    if (!candidateCoverage?.strongVisualPresenceCovered) {continue}
     if (isSameMorphologyFamily(candidateSymptomKey, targetSymptomKey, symptomMetaMap)) {
       return 22
     }
@@ -636,7 +636,7 @@ function shouldBlockReturnToVisualPresenceQuestion(
   } = {}
 ) {
   const targetSymptomKey = normalizeText(question?.targetSymptomKey || '', '')
-  if (!targetSymptomKey) return false
+  if (!targetSymptomKey) {return false}
 
   const targetDimension = normalizeQuestionTargetDimension(
     question?.targetDimension,
@@ -648,7 +648,7 @@ function shouldBlockReturnToVisualPresenceQuestion(
 
   for (const askedQuestion of Array.isArray(askedQuestions) ? askedQuestions : []) {
     const askedTargetSymptomKey = normalizeText(askedQuestion?.targetSymptomKey || '', '')
-    if (!askedTargetSymptomKey) continue
+    if (!askedTargetSymptomKey) {continue}
 
     const askedTargetDimension = normalizeQuestionTargetDimension(
       askedQuestion?.targetDimension,
@@ -675,7 +675,7 @@ function shouldBlockDirectionManagedVisualPresenceQuestion(
   { diagnosisDirections = [] } = {}
 ) {
   const targetSymptomKey = normalizeText(question?.targetSymptomKey || '', '')
-  if (!targetSymptomKey) return false
+  if (!targetSymptomKey) {return false}
 
   const targetDimension = normalizeQuestionTargetDimension(
     question?.targetDimension,
@@ -726,7 +726,7 @@ function buildAskedDimensionsByTargetSymptom(askedQuestions = []) {
 
   for (const askedQuestion of Array.isArray(askedQuestions) ? askedQuestions : []) {
     const targetSymptomKey = normalizeText(askedQuestion?.targetSymptomKey || '', '')
-    if (!targetSymptomKey) continue
+    if (!targetSymptomKey) {continue}
 
     const targetDimension = normalizeQuestionTargetDimension(
       askedQuestion?.targetDimension,
@@ -915,11 +915,11 @@ function selectFollowUpQuestions({
     }
 
     const question = questionMap.get(strategy.questionKey)
-    if (!question) continue
+    if (!question) {continue}
     if (normalizeText(question?.reviewStatus || '', 'audited') !== 'audited') {
       continue
     }
-    if (askedSet.has(question.questionKey)) continue
+    if (askedSet.has(question.questionKey)) {continue}
 
     const targetSymptomKey = normalizeText(question.targetSymptomKey || '', '')
     const targetDimension = normalizeQuestionTargetDimension(

@@ -17,7 +17,7 @@ const {
 
 function extractJsonBlock(text) {
   const source = String(text || '').trim()
-  if (!source) return null
+  if (!source) {return null}
 
   const fencedMatch =
     source.match(/```json\s*([\s\S]*?)```/i) || source.match(/```\s*([\s\S]*?)```/i)
@@ -35,8 +35,8 @@ function extractJsonBlock(text) {
 }
 
 function safeJsonParse(value) {
-  if (value === null || value === undefined) return null
-  if (typeof value === 'object') return value
+  if (value === null || value === undefined) {return null}
+  if (typeof value === 'object') {return value}
 
   try {
     return JSON.parse(String(value))
@@ -52,7 +52,7 @@ function escapeRegExp(value = '') {
 function extractJsonStringField(source = '', fieldName = '') {
   const pattern = new RegExp(`"${escapeRegExp(fieldName)}"\\s*:\\s*"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"`, 'i')
   const match = String(source || '').match(pattern)
-  if (!match?.[1]) return ''
+  if (!match?.[1]) {return ''}
 
   try {
     return JSON.parse(`"${match[1]}"`)
@@ -65,10 +65,10 @@ function extractJsonArrayBlock(source = '', fieldName = '') {
   const text = String(source || '')
   const keyPattern = new RegExp(`"${escapeRegExp(fieldName)}"\\s*:`, 'i')
   const keyMatch = keyPattern.exec(text)
-  if (!keyMatch) return null
+  if (!keyMatch) {return null}
 
   const arrayStart = text.indexOf('[', keyMatch.index + keyMatch[0].length)
-  if (arrayStart < 0) return null
+  if (arrayStart < 0) {return null}
 
   let depth = 0
   let inString = false
@@ -116,7 +116,7 @@ function safeJsonParseArrayField(source = '', fieldName = '') {
 
 function parsePartialStructuredVisualResult(text) {
   const source = String(text || '').trim()
-  if (!source) return null
+  if (!source) {return null}
 
   const symptomCandidates = safeJsonParseArrayField(source, 'symptom_candidates')
     .map(normalizeSymptomCandidate)
@@ -185,7 +185,7 @@ function normalizeSentence(text) {
 
 function normalizeSymptomCandidate(item) {
   const symptomKey = String(item?.symptom_key || item?.symptomKey || '').trim()
-  if (!symptomKey) return null
+  if (!symptomKey) {return null}
 
   return {
     symptom_key: symptomKey,
@@ -229,12 +229,12 @@ function buildLegacyCandidates(payload = {}) {
   return (Array.isArray(payload?.symptoms) ? payload.symptoms : [])
     .map(item => {
       const symptomKey = String(item?.symptom_key || item?.symptomKey || '').trim()
-      if (!symptomKey) return null
+      if (!symptomKey) {return null}
 
       const confidence = clampConfidence(Number(item?.confidence || 0) || 0.75)
       let confidenceBand = 'medium'
-      if (confidence >= 0.85) confidenceBand = 'high'
-      if (confidence < 0.6) confidenceBand = 'low'
+      if (confidence >= 0.85) {confidenceBand = 'high'}
+      if (confidence < 0.6) {confidenceBand = 'low'}
 
       return normalizeSymptomCandidate({
         symptom_key: symptomKey,

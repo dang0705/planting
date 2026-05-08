@@ -62,7 +62,7 @@ exports.main = async function(event, context) {
   // 构建用户消息
   const userMessage = buildUserMessage(action, image, description, plantName);
 
-  console.log('SSE 流式请求:', { action, hasImage: !!image, visitorId });
+  console.log('SSE 流式请求:', { action, hasImage: Boolean(image), visitorId });
 
   // 返回 SSE 流式响应
   return new Promise((resolve) => {
@@ -135,14 +135,14 @@ function buildUserMessage(action, image, description, plantName) {
 
   if (action === 'identify') {
     userMessage = '请识别这张植物图片';
-    if (image) userMessage += `\n\n![](${image})`;
-    if (description) userMessage += `\n\n补充描述：${description}`;
+    if (image) {userMessage += `\n\n![](${image})`;}
+    if (description) {userMessage += `\n\n补充描述：${description}`;}
     userMessage += '\n\n请告诉我这是什么植物，包括中文名、学名、分类，以及养护建议。';
   } else if (action === 'diagnose') {
     userMessage = '请诊断这张植物图片的健康状况';
-    if (image) userMessage += `\n\n![](${image})`;
-    if (plantName) userMessage += `\n\n植物名称：${plantName}`;
-    if (description) userMessage += `\n\n症状描述：${description}`;
+    if (image) {userMessage += `\n\n![](${image})`;}
+    if (plantName) {userMessage += `\n\n植物名称：${plantName}`;}
+    if (description) {userMessage += `\n\n症状描述：${description}`;}
     userMessage += '\n\n请直接告诉我植物可能存在什么问题，以及如何治疗和预防。';
   }
 
@@ -184,7 +184,7 @@ function callAgentSSE(content, visitorId, { onTokenStat, onText, onFinish, onErr
       buffer = events.pop() || '';
 
       for (const event of events) {
-        if (!event.trim()) continue;
+        if (!event.trim()) {continue;}
 
         const lines = event.split('\n');
         let eventType = '';
@@ -312,13 +312,13 @@ function parseDiagnoseResult(text) {
   }
 
   let mainIssue = '需要进一步观察';
-  if (/浇水过多|积水/.test(cleanText)) mainIssue = '浇水过多';
-  else if (/缺水|干燥/.test(cleanText)) mainIssue = '缺水';
-  else if (/光照不足/.test(cleanText)) mainIssue = '光照不足';
-  else if (/光照过强|晒伤/.test(cleanText)) mainIssue = '光照过强';
-  else if (/缺肥|营养/.test(cleanText)) mainIssue = '营养不足';
-  else if (/病虫害|虫/.test(cleanText)) mainIssue = '病虫害';
-  else if (/空调|干燥/.test(cleanText)) mainIssue = '环境过于干燥';
+  if (/浇水过多|积水/.test(cleanText)) {mainIssue = '浇水过多';}
+  else if (/缺水|干燥/.test(cleanText)) {mainIssue = '缺水';}
+  else if (/光照不足/.test(cleanText)) {mainIssue = '光照不足';}
+  else if (/光照过强|晒伤/.test(cleanText)) {mainIssue = '光照过强';}
+  else if (/缺肥|营养/.test(cleanText)) {mainIssue = '营养不足';}
+  else if (/病虫害|虫/.test(cleanText)) {mainIssue = '病虫害';}
+  else if (/空调|干燥/.test(cleanText)) {mainIssue = '环境过于干燥';}
 
   return { healthScore, healthStatus, mainIssue, summary: cleanText.substring(0, 200) };
 }

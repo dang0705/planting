@@ -12,7 +12,7 @@ export function buildPlantImagesQueryOptions(plantId, limit = 10, offset = 0) {
           offset
         }
       }),
-    enabled: !!plantId
+    enabled: Boolean(plantId)
   }
 }
 
