@@ -79,7 +79,7 @@ async function toImageDataUrl(filePath) {
  * @returns {Promise} 返回压缩后的图片路径和大小信息
  */
 function compressImage(imagePath) {
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     // 先获取原始文件大小
     wx.getFileSystemManager().stat({
       path: imagePath,

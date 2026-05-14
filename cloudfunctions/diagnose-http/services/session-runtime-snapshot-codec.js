@@ -436,6 +436,18 @@ function buildRuntimeSnapshotPayload({
   const derivedEvidenceSet = normalizePublicDerivedEvidenceSet(response?.derivedEvidenceSet || [])
   const diagnosisDirections = normalizePublicDiagnosisDirectionSet(response?.diagnosisDirections || [])
   const symptomClassRuntime = resolvePrivateSymptomClassRuntime(response)
+  const runtimeRouteDecision =
+    response?.__runtimeRouteDecision && typeof response.__runtimeRouteDecision === 'object'
+      ? response.__runtimeRouteDecision
+      : null
+  const persistedMetrics = response?.metrics && typeof response.metrics === 'object'
+    ? {
+        ...response.metrics,
+        routeDecision: runtimeRouteDecision || response.metrics.routeDecision || null
+      }
+    : {
+        routeDecision: runtimeRouteDecision || null
+      }
 
   return JSON.stringify({
     diagnosisSessionId: sessionId,
@@ -525,7 +537,8 @@ function buildRuntimeSnapshotPayload({
     confidenceReasons: Array.isArray(response?.confidenceReasons)
       ? response.confidenceReasons
       : [],
-    metrics: response?.metrics || null
+    routeDecision: runtimeRouteDecision,
+    metrics: persistedMetrics
   })
 }
 

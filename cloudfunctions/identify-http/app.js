@@ -139,7 +139,7 @@ function getAccessToken() {
             return
           }
           reject(new Error('获取百度 access token 失败'))
-        } catch (error) {
+        } catch {
           reject(new Error('解析百度 access token 失败'))
         }
       })
@@ -180,7 +180,7 @@ function recognizePlant(imageUrl, accessToken) {
             return
           }
           resolve(result)
-        } catch (error) {
+        } catch {
           reject(new Error('解析百度识别响应失败'))
         }
       })

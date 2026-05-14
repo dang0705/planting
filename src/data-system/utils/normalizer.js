@@ -37,7 +37,7 @@ function normalizeRow(row = {}, config = {}) {
         try {
           JSON.parse(value)
           result[column] = value
-        } catch (error) {
+        } catch {
           result[column] = JSON.stringify(value)
         }
       } else {
@@ -55,4 +55,3 @@ function normalizeRow(row = {}, config = {}) {
 module.exports = {
   normalizeRow
 }
-

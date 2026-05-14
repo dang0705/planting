@@ -108,7 +108,7 @@ export const usePlantStore = defineStore('plants', {
     },
 
     async deleteUserPlant(id) {
-      const plantId = parseInt(id)
+      const plantId = parseInt(id, 10)
       if (!plantId || plantId < 1) {
         return { success: false, message: '无效的植物ID' }
       }

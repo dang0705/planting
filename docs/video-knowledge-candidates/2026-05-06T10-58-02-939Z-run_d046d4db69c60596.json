@@ -1,0 +1,459 @@
+{
+  "run_id": "run_d046d4db69c60596",
+  "created_at": "2026-05-06T10:58:02.939Z",
+  "queue_type": "manual_review",
+  "retention_policy": {
+    "saves_original_video": false,
+    "saves_original_audio": false,
+    "saves_full_transcript": false,
+    "saves_comments": false,
+    "saves_account_profile": false,
+    "saves_complete_subtitles": false
+  },
+  "prohibited_actions": [
+    "reverse_engineer_douyin_api",
+    "handle_captcha",
+    "use_proxy_pool",
+    "crawl_comments",
+    "crawl_account_homepage",
+    "save_full_subtitles"
+  ],
+  "tasks": [
+    {
+      "id": "task_f63b28c53680895d",
+      "input_type": "url",
+      "source_url": "https://www.douyin.com/video/7634864243489951345",
+      "local_file_path": "",
+      "text_file_path": "",
+      "source_platform": "manual",
+      "manual_topic": "植物养护",
+      "manual_note": "",
+      "manual_text_digest": "",
+      "status": "processed",
+      "risk_level": "low",
+      "error_message": "",
+      "validation": {
+        "ok": true,
+        "url": "https://www.douyin.com/video/7634864243489951345"
+      },
+      "created_at": "2026-05-06T10:57:51.654Z",
+      "updated_at": "2026-05-06T10:58:02.900Z",
+      "processed_at": "2026-05-06T10:58:02.900Z"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "candidate_c8820db0be9f0af1",
+      "task_id": "task_f63b28c53680895d",
+      "input_type": "url",
+      "source_url": "https://www.douyin.com/video/7634864243489951345",
+      "source_platform": "manual",
+      "manual_topic": "植物养护",
+      "knowledge_candidate": {
+        "plant_names": [],
+        "problem_clusters": [],
+        "observable_evidence": [],
+        "possible_causes": [],
+        "candidate_questions": [],
+        "candidate_actions": [],
+        "contraindications": [],
+        "key_takeaways": [],
+        "care_principles": [],
+        "common_mistakes": [],
+        "applicable_contexts": [],
+        "source_timeline": [],
+        "review_checklist": [],
+        "uncertainty_points": [
+          "当前结果只基于临时短片段，尚未经过人工审核。"
+        ],
+        "risk_flags": [
+          "pending_human_review",
+          "no_original_video_saved",
+          "no_full_transcript_saved"
+        ]
+      },
+      "source_knowledge_layer": {
+        "source_digest": "4f8495a278b33bde",
+        "source_fragment_count": 18,
+        "source_channels": [
+          "url_visible_text"
+        ],
+        "key_points_for_review": [
+          "植物养护",
+          "别把植物当孩子，要当室友",
+          "别把植物当孩子，要当室友 - 抖音",
+          "成功的植物养护者将植物视为室友，尊重它们的需求，不过分干预",
+          "他们不过分关注湿度、温度，不频繁检查根系，而是利用自然的光温水来调整植物状态",
+          "这种尊重和适度的管理方式有助于植物健康生长",
+          "引言",
+          "不查岗",
+          "不过分关注植物的湿度、温度，不频繁扒拉土看根，避免增加彼此焦虑",
+          "不包办",
+          "用自然的光温水调整植物状态，避免过度干预",
+          "尊重隐私",
+          "尊重植物的隐私，不要频繁拔根检查，保持适当距离"
+        ],
+        "detail_cards_for_review": [
+          {
+            "card_id": "detail_01",
+            "abstract_point": "植物养护",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "general_care_principle"
+            ],
+            "candidate_questions_for_review": [
+              "这个经验适用于哪些植物、环境和生长阶段？"
+            ],
+            "review_focus": [
+              "核对该要点是否足够具体，是否需要人工补充适用植物、季节或环境前提。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_02",
+            "abstract_point": "别把植物当孩子，要当室友",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "care_mindset"
+            ],
+            "candidate_questions_for_review": [
+              "这个经验适用于哪些植物、环境和生长阶段？"
+            ],
+            "review_focus": [
+              "核对是否适合作为通用养护心态，不应直接替代具体诊断结论。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_03",
+            "abstract_point": "别把植物当孩子，要当室友 - 抖音",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "care_mindset"
+            ],
+            "candidate_questions_for_review": [
+              "这个经验适用于哪些植物、环境和生长阶段？"
+            ],
+            "review_focus": [
+              "核对是否适合作为通用养护心态，不应直接替代具体诊断结论。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_04",
+            "abstract_point": "成功的植物养护者将植物视为室友，尊重它们的需求，不过分干预",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "over_intervention",
+              "care_mindset"
+            ],
+            "candidate_questions_for_review": [
+              "你是否每天频繁检查或调整植物状态？"
+            ],
+            "review_focus": [
+              "核对是否表达为减少不必要干预，而不是放任不管。",
+              "核对是否适合作为通用养护心态，不应直接替代具体诊断结论。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_05",
+            "abstract_point": "他们不过分关注湿度、温度，不频繁检查根系，而是利用自然的光温水来调整植物状态",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "water_management",
+              "environment_management",
+              "root_disturbance_risk",
+              "over_intervention"
+            ],
+            "candidate_questions_for_review": [
+              "最近一次浇水是什么时候，盆土表层和深层分别是否仍潮湿？",
+              "植株当前的光照、温度和通风是否近期发生过变化？",
+              "近期是否翻动盆土、检查根系、换盆或拔出植株观察？",
+              "你是否每天频繁检查或调整植物状态？"
+            ],
+            "review_focus": [
+              "核对是否可转化为浇水频率、土壤干湿观察或控水相关问诊点。",
+              "核对是否涉及光照、温度、水分联动，而不是单一处理建议。",
+              "核对是否应加入避免频繁翻土、拔根、查根的反面提醒。",
+              "核对是否表达为减少不必要干预，而不是放任不管。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_06",
+            "abstract_point": "这种尊重和适度的管理方式有助于植物健康生长",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "care_mindset"
+            ],
+            "candidate_questions_for_review": [
+              "这个经验适用于哪些植物、环境和生长阶段？"
+            ],
+            "review_focus": [
+              "核对是否适合作为通用养护心态，不应直接替代具体诊断结论。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_07",
+            "abstract_point": "引言",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "general_care_principle"
+            ],
+            "candidate_questions_for_review": [
+              "这个经验适用于哪些植物、环境和生长阶段？"
+            ],
+            "review_focus": [
+              "核对该要点是否足够具体，是否需要人工补充适用植物、季节或环境前提。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_08",
+            "abstract_point": "不查岗",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "over_intervention"
+            ],
+            "candidate_questions_for_review": [
+              "你是否每天频繁检查或调整植物状态？"
+            ],
+            "review_focus": [
+              "核对是否表达为减少不必要干预，而不是放任不管。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_09",
+            "abstract_point": "不过分关注植物的湿度、温度，不频繁扒拉土看根，避免增加彼此焦虑",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "water_management",
+              "environment_management",
+              "root_disturbance_risk",
+              "over_intervention"
+            ],
+            "candidate_questions_for_review": [
+              "最近一次浇水是什么时候，盆土表层和深层分别是否仍潮湿？",
+              "植株当前的光照、温度和通风是否近期发生过变化？",
+              "近期是否翻动盆土、检查根系、换盆或拔出植株观察？",
+              "你是否每天频繁检查或调整植物状态？"
+            ],
+            "review_focus": [
+              "核对是否可转化为浇水频率、土壤干湿观察或控水相关问诊点。",
+              "核对是否涉及光照、温度、水分联动，而不是单一处理建议。",
+              "核对是否应加入避免频繁翻土、拔根、查根的反面提醒。",
+              "核对是否表达为减少不必要干预，而不是放任不管。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_10",
+            "abstract_point": "不包办",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "over_intervention"
+            ],
+            "candidate_questions_for_review": [
+              "你是否每天频繁检查或调整植物状态？"
+            ],
+            "review_focus": [
+              "核对是否表达为减少不必要干预，而不是放任不管。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_11",
+            "abstract_point": "用自然的光温水调整植物状态，避免过度干预",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "environment_management",
+              "over_intervention"
+            ],
+            "candidate_questions_for_review": [
+              "植株当前的光照、温度和通风是否近期发生过变化？",
+              "你是否每天频繁检查或调整植物状态？"
+            ],
+            "review_focus": [
+              "核对是否涉及光照、温度、水分联动，而不是单一处理建议。",
+              "核对是否表达为减少不必要干预，而不是放任不管。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_12",
+            "abstract_point": "尊重隐私",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "care_mindset"
+            ],
+            "candidate_questions_for_review": [
+              "这个经验适用于哪些植物、环境和生长阶段？"
+            ],
+            "review_focus": [
+              "核对是否适合作为通用养护心态，不应直接替代具体诊断结论。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_13",
+            "abstract_point": "尊重植物的隐私，不要频繁拔根检查，保持适当距离",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "root_disturbance_risk",
+              "over_intervention",
+              "care_mindset"
+            ],
+            "candidate_questions_for_review": [
+              "近期是否翻动盆土、检查根系、换盆或拔出植株观察？",
+              "你是否每天频繁检查或调整植物状态？"
+            ],
+            "review_focus": [
+              "核对是否应加入避免频繁翻土、拔根、查根的反面提醒。",
+              "核对是否表达为减少不必要干预，而不是放任不管。",
+              "核对是否适合作为通用养护心态，不应直接替代具体诊断结论。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          }
+        ],
+        "timeline_for_review": [
+          {
+            "time_label": "00:01",
+            "abstract_point": "引言"
+          },
+          {
+            "time_label": "00:21",
+            "abstract_point": "不查岗：不过分关注植物的湿度、温度，不频繁扒拉土看根，避免增加彼此焦虑"
+          },
+          {
+            "time_label": "00:38",
+            "abstract_point": "不包办：用自然的光温水调整植物状态，避免过度干预"
+          },
+          {
+            "time_label": "01:05",
+            "abstract_point": "尊重隐私：尊重植物的隐私，不要频繁拔根检查，保持适当距离"
+          }
+        ],
+        "coverage_hints": {
+          "has_asr": false,
+          "has_ocr": false,
+          "has_manual_text": false,
+          "has_url_visible_text": true,
+          "likely_undercovered": false,
+          "note": "已形成多条可审核抽象要点，仍需人工确认后入库。"
+        }
+      },
+      "llm_status": "not_configured_or_failed",
+      "review_status": "pending",
+      "review_notes": "",
+      "extraction_input_digest": "4f8495a278b33bde",
+      "source_fragment_count": 18,
+      "created_at": "2026-05-06T10:58:02.900Z",
+      "updated_at": "2026-05-06T10:58:02.900Z",
+      "audit_summary": [
+        {
+          "event_type": "url_accessibility_attempted",
+          "event_detail": "visible_text_digest=cb553c7adebbba85"
+        },
+        {
+          "event_type": "llm_skipped",
+          "event_detail": "VIDEO_KNOWLEDGE_LLM_COMMAND_not_configured"
+        },
+        {
+          "event_type": "task_processed",
+          "event_detail": "source_fragment_count=18"
+        }
+      ]
+    }
+  ],
+  "audit_logs": [
+    {
+      "id": "audit_791076709866b28b",
+      "task_id": "task_f63b28c53680895d",
+      "event_type": "url_accessibility_attempted",
+      "event_detail": "visible_text_digest=cb553c7adebbba85",
+      "created_at": "2026-05-06T10:58:02.900Z"
+    },
+    {
+      "id": "audit_feb99bbca0b1a140",
+      "task_id": "task_f63b28c53680895d",
+      "event_type": "llm_skipped",
+      "event_detail": "VIDEO_KNOWLEDGE_LLM_COMMAND_not_configured",
+      "created_at": "2026-05-06T10:58:02.900Z"
+    },
+    {
+      "id": "audit_f45fa34c64301d95",
+      "task_id": "task_f63b28c53680895d",
+      "event_type": "task_processed",
+      "event_detail": "source_fragment_count=18",
+      "created_at": "2026-05-06T10:58:02.900Z"
+    }
+  ]
+}

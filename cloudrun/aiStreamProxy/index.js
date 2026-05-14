@@ -13,8 +13,8 @@ const AGENT_CONFIG = {
  * AI 流式代理 - 函数型云托管
  * 支持真正的 SSE 流式返回
  */
-exports.main = async function(event, context) {
-  const { method, body, headers } = event;
+exports.main = async function(event, _context) {
+  const { method, body, headers: _headers } = event;
 
   // 处理 CORS 预检请求
   if (method === 'OPTIONS') {
@@ -38,7 +38,7 @@ exports.main = async function(event, context) {
   let params = {};
   try {
     params = typeof body === 'string' ? JSON.parse(body) : body;
-  } catch (e) {
+  } catch {
     return {
       statusCode: 400,
       headers: { ...getCorsHeaders(), 'Content-Type': 'application/json' },
@@ -210,7 +210,7 @@ function callAgentSSE(content, visitorId, { onTokenStat, onText, onFinish, onErr
               onError(new Error(data.error?.message || '智能体返回错误'));
               return;
             }
-          } catch (e) {
+          } catch {
             // 忽略解析错误
           }
         }
@@ -268,7 +268,7 @@ function parseIdentifyResult(text) {
   let confidence = 0.75;
   const confMatch = cleanText.match(/置信度[大概约]*(\d+)[成%]?|(\d+)%/);
   if (confMatch) {
-    const num = parseInt(confMatch[1] || confMatch[2]);
+    const num = parseInt(confMatch[1] || confMatch[2], 10);
     confidence = num > 1 ? num / 100 : num / 10;
   }
 

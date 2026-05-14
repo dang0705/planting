@@ -214,6 +214,20 @@ function buildCompactVisualAggregateSummary(visualAggregateSummary = null) {
 
 function buildCompactFinalResult(roundResult = {}) {
   const finalResult = roundResult?.finalResult || {}
+  const outcomeType = normalizeOutcomeType(roundResult?.outcomeType, '')
+
+  if (outcomeType === 'uncertain') {
+    return {
+      resultId: finalResult.resultId || roundResult?.resultId || '',
+      problemId: '',
+      displayName:
+        (finalResult.problemId ? '' : finalResult.displayName) ||
+        '暂不能稳定判断',
+      summary: finalResult.summary || '',
+      severity: finalResult.severity || 'low',
+      urgency: finalResult.urgency || 'medium'
+    }
+  }
 
   return {
     resultId: finalResult.resultId || roundResult?.resultId || '',
@@ -221,7 +235,15 @@ function buildCompactFinalResult(roundResult = {}) {
     displayName: finalResult.displayName || roundResult?.topProblem?.displayName || '',
     summary: finalResult.summary || roundResult?.topProblem?.summary || '',
     severity: finalResult.severity || roundResult?.topProblem?.severity || 'medium',
-    urgency: finalResult.urgency || roundResult?.topProblem?.urgency || 'medium'
+    urgency: finalResult.urgency || roundResult?.topProblem?.urgency || 'medium',
+    nonProblematicType:
+      outcomeType === 'non_problematic'
+        ? finalResult.nonProblematicType || roundResult?.nonProblematicType || ''
+        : '',
+    nonProblematicLabel:
+      outcomeType === 'non_problematic'
+        ? finalResult.nonProblematicLabel || roundResult?.nonProblematicLabel || ''
+        : ''
   }
 }
 
@@ -438,7 +460,6 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
     }
   }
 
-  const finalResult = roundResult?.finalResult || {}
   const visualAggregateSummary = buildPublicVisualAggregateSummary(
     roundResult?.visualAggregateSummary || roundResult?.visualAggregateResult || null
   )
@@ -496,14 +517,7 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
     outputEligibility,
     diagnosticTrace,
     coreProcess,
-    finalResult: {
-      resultId: finalResult.resultId || roundResult?.resultId || '',
-      problemId: finalResult.problemId || '',
-      displayName: finalResult.displayName || roundResult?.topProblem?.displayName || '',
-      summary: finalResult.summary || roundResult?.topProblem?.summary || '',
-      severity: finalResult.severity || roundResult?.topProblem?.severity || 'medium',
-      urgency: finalResult.urgency || roundResult?.topProblem?.urgency || 'medium'
-    },
+    finalResult: buildCompactFinalResult(roundResult),
     contributingFactors: Array.isArray(roundResult?.contributingFactors)
       ? roundResult.contributingFactors
       : [],

@@ -1,0 +1,123 @@
+{
+  "generatedAt": "2026-03-28T13:07:15.974Z",
+  "excelPath": "docs/plants_v13_user_friendly_full_v7.xlsx",
+  "schema": "cloud1_dev",
+  "summary": {
+    "ok": true,
+    "errorCount": 0
+  },
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "details": [
+      {
+        "table": "problems",
+        "excelColumns": 22,
+        "dbColumns": 25,
+        "repositoryColumns": 15,
+        "missingInDb": [],
+        "extraInDb": [],
+        "missingInRepoDb": []
+      },
+      {
+        "table": "symptoms",
+        "excelColumns": 15,
+        "dbColumns": 18,
+        "repositoryColumns": 11,
+        "missingInDb": [],
+        "extraInDb": [],
+        "missingInRepoDb": []
+      },
+      {
+        "table": "symptom_problem_evidence",
+        "excelColumns": 12,
+        "dbColumns": 13,
+        "repositoryColumns": 6,
+        "missingInDb": [],
+        "extraInDb": [],
+        "missingInRepoDb": []
+      },
+      {
+        "table": "genus_problem_profiles",
+        "excelColumns": 8,
+        "dbColumns": 19,
+        "repositoryColumns": 3,
+        "missingInDb": [],
+        "extraInDb": [],
+        "missingInRepoDb": []
+      },
+      {
+        "table": "problem_host_profiles",
+        "excelColumns": 9,
+        "dbColumns": 10,
+        "repositoryColumns": 0,
+        "missingInDb": [],
+        "extraInDb": [],
+        "missingInRepoDb": []
+      },
+      {
+        "table": "plant_problem_profiles",
+        "excelColumns": 12,
+        "dbColumns": 13,
+        "repositoryColumns": 7,
+        "missingInDb": [],
+        "extraInDb": [],
+        "missingInRepoDb": []
+      },
+      {
+        "table": "problem_causality",
+        "excelColumns": 10,
+        "dbColumns": 11,
+        "repositoryColumns": 6,
+        "missingInDb": [],
+        "extraInDb": [],
+        "missingInRepoDb": []
+      },
+      {
+        "table": "question_library_v5_real",
+        "excelColumns": 15,
+        "dbColumns": 27,
+        "repositoryColumns": 13,
+        "missingInDb": [],
+        "extraInDb": [],
+        "missingInRepoDb": []
+      },
+      {
+        "table": "question_option_mapping_v5_real",
+        "excelColumns": 11,
+        "dbColumns": 23,
+        "repositoryColumns": 9,
+        "missingInDb": [],
+        "extraInDb": [],
+        "missingInRepoDb": []
+      },
+      {
+        "table": "question_strategy_v5_real",
+        "excelColumns": 9,
+        "dbColumns": 21,
+        "repositoryColumns": 7,
+        "missingInDb": [],
+        "extraInDb": [],
+        "missingInRepoDb": []
+      },
+      {
+        "table": "question_generation_engine",
+        "excelColumns": 10,
+        "dbColumns": 22,
+        "repositoryColumns": 0,
+        "missingInDb": [],
+        "extraInDb": [],
+        "missingInRepoDb": []
+      },
+      {
+        "table": "diagnosis_result_explanations",
+        "excelColumns": 8,
+        "dbColumns": 20,
+        "repositoryColumns": 8,
+        "missingInDb": [],
+        "extraInDb": [],
+        "missingInRepoDb": []
+      }
+    ]
+  }
+}

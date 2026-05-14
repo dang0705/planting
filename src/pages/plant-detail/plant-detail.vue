@@ -212,7 +212,7 @@ const ventilationText = computed(() => {
 
 onLoad(options => {
   if (options.id) {
-    plantId.value = parseInt(options.id)
+    plantId.value = parseInt(options.id, 10)
   }
 })
 

@@ -201,6 +201,42 @@ function normalizeNotes(list = []) {
   return normalizeStringList(list).slice(0, 8)
 }
 
+function normalizeVisualDiscriminators(list = []) {
+  return (Array.isArray(list) ? list : [])
+    .map(item => {
+      const dimensionKey = normalizeText(item?.dimension_key || item?.dimensionKey || '')
+      const valueKey = normalizeText(item?.value_key || item?.valueKey || '')
+      if (!dimensionKey || !valueKey) {return null}
+
+      return {
+        dimension_key: dimensionKey,
+        value_key: valueKey,
+        confidence_band: normalizeConfidenceBand(
+          item?.confidence_band || item?.confidenceBand,
+          'medium'
+        ),
+        visible_basis_cn: normalizeText(item?.visible_basis_cn || item?.visibleBasisCn || '')
+      }
+    })
+    .filter(Boolean)
+    .slice(0, 12)
+}
+
+function normalizeMissingInfoForPath(list = []) {
+  return (Array.isArray(list) ? list : [])
+    .map(item => {
+      const dimensionKey = normalizeText(item?.dimension_key || item?.dimensionKey || '')
+      if (!dimensionKey) {return null}
+
+      return {
+        dimension_key: dimensionKey,
+        reason_cn: normalizeText(item?.reason_cn || item?.reasonCn || item?.reason || '')
+      }
+    })
+    .filter(item => item && item.reason_cn)
+    .slice(0, 12)
+}
+
 function resolveAggregateRoutePrimaryAction({
   aggregateAnalyzability = 'medium',
   observedSymptomCount = 0,
@@ -236,6 +272,8 @@ module.exports = {
   normalizeRouteHints,
   normalizeSuggestedFollowupCapture,
   normalizeNotes,
+  normalizeVisualDiscriminators,
+  normalizeMissingInfoForPath,
   confidenceBandToScore,
   strengthLevelToWeight,
   pickStrongerBand,

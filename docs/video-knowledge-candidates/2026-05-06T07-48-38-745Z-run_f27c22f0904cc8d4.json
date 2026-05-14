@@ -1,0 +1,118 @@
+{
+  "run_id": "run_f27c22f0904cc8d4",
+  "created_at": "2026-05-06T07:48:38.746Z",
+  "queue_type": "manual_review",
+  "retention_policy": {
+    "saves_original_video": false,
+    "saves_original_audio": false,
+    "saves_full_transcript": false,
+    "saves_comments": false,
+    "saves_account_profile": false,
+    "saves_complete_subtitles": false
+  },
+  "prohibited_actions": [
+    "reverse_engineer_douyin_api",
+    "handle_captcha",
+    "use_proxy_pool",
+    "crawl_comments",
+    "crawl_account_homepage",
+    "save_full_subtitles"
+  ],
+  "tasks": [
+    {
+      "id": "task_4b47462fc998b9f9",
+      "input_type": "url",
+      "source_url": "https://www.douyin.com/video/7634864243489951345",
+      "local_file_path": "",
+      "text_file_path": "",
+      "source_platform": "manual",
+      "manual_topic": "植物养护",
+      "manual_note": "",
+      "manual_text": "",
+      "status": "processed",
+      "risk_level": "low",
+      "error_message": "",
+      "validation": {
+        "ok": true,
+        "url": "https://www.douyin.com/video/7634864243489951345"
+      },
+      "created_at": "2026-05-06T07:48:29.073Z",
+      "updated_at": "2026-05-06T07:48:38.710Z",
+      "processed_at": "2026-05-06T07:48:38.710Z"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "candidate_bec7bfb258f1b327",
+      "task_id": "task_4b47462fc998b9f9",
+      "input_type": "url",
+      "source_url": "https://www.douyin.com/video/7634864243489951345",
+      "source_platform": "manual",
+      "manual_topic": "植物养护",
+      "knowledge_candidate": {
+        "plant_names": [],
+        "problem_clusters": [],
+        "observable_evidence": [],
+        "possible_causes": [],
+        "candidate_questions": [],
+        "candidate_actions": [],
+        "contraindications": [],
+        "uncertainty_points": [
+          "当前结果只基于短片段摘要，尚未经过人工审核。"
+        ],
+        "risk_flags": [
+          "pending_human_review",
+          "no_original_video_saved",
+          "no_full_transcript_saved"
+        ]
+      },
+      "llm_structuring_prompt": "你是绿植诊断知识结构化助手。\n\n任务：从输入的短片段摘要中提炼抽象养护知识。不要复述原文，不要保留完整逐字稿，不要生成文章，不要模仿博主表达。\n\n请输出结构化 JSON，字段包括：\n1. plant_names：涉及植物\n2. problem_clusters：问题簇\n3. observable_evidence：用户可观察证据\n4. possible_causes：可能原因，包含证据和置信等级\n5. candidate_questions：可转化为问诊的问题\n6. candidate_actions：候选行动建议\n7. contraindications：不适用条件或反证条件\n8. uncertainty_points：不确定点\n9. risk_flags：风险提示\n10. review_suggestion：人工审核建议\n\n要求：\n- 不输出原始句子；\n- 不输出完整字幕；\n- 不保留博主口吻；\n- 不生成可直接发布的文章；\n- 不将经验性内容当成确定事实；\n- 若信息不足，必须标记不确定；\n- 若涉及药剂、修根、强剪、换盆等高风险动作，必须标记需要人工复核。\n\n来源类型：\nurl\n\n来源 URL：\nhttps://www.douyin.com/video/7634864243489951345\n\n人工主题：\n植物养护\n\n短片段摘要，仅用于抽象提炼，不得逐句复述：\n[\n  \"植物养护\",\n  \"别把植物当孩子，要当室友 #植物养护#庭院养护#种菜 #施肥#浇水\",\n  \"别把植物当孩子，要当室友 #植物养护#庭院养护#种菜 #施肥#浇水 - 抖音\",\n  \"章节要点\",\n  \"成功的植物养护者将植物视为室友，尊重它们的需求，不过分干预\",\n  \"他们不过分关注湿度、温度，不频繁检查根系，而是利用自然的光温水来调整植物状态\",\n  \"这种尊重和适度的管理方式有助于植物健康生长\",\n  \"00:01\",\n  \"00:21\",\n  \"不过分关注植物的湿度、温度，不频繁扒拉土看根，避免增加彼此焦虑\",\n  \"00:38\",\n  \"用自然的光温水调整植物状态，避免过度干预\"\n]",
+      "review_status": "pending",
+      "review_notes": "",
+      "extraction_input_digest": "2b6d7cb4debf92f1",
+      "retained_snippet_count": 12,
+      "retained_short_evidence_summaries": [
+        "植物养护",
+        "别把植物当孩子，要当室友 #植物养护#庭院养护#种菜 #施肥#浇水",
+        "别把植物当孩子，要当室友 #植物养护#庭院养护#种菜 #施肥#浇水 - 抖音",
+        "章节要点",
+        "成功的植物养护者将植物视为室友，尊重它们的需求，不过分干预",
+        "他们不过分关注湿度、温度，不频繁检查根系，而是利用自然的光温水来调整植物状态",
+        "这种尊重和适度的管理方式有助于植物健康生长",
+        "00:01",
+        "00:21",
+        "不过分关注植物的湿度、温度，不频繁扒拉土看根，避免增加彼此焦虑",
+        "00:38",
+        "用自然的光温水调整植物状态，避免过度干预"
+      ],
+      "created_at": "2026-05-06T07:48:38.710Z",
+      "updated_at": "2026-05-06T07:48:38.710Z",
+      "audit_summary": [
+        {
+          "event_type": "url_accessibility_attempted",
+          "event_detail": "visible_text_digest=cb553c7adebbba85"
+        },
+        {
+          "event_type": "task_processed",
+          "event_detail": "retained_snippet_count=12"
+        }
+      ]
+    }
+  ],
+  "audit_logs": [
+    {
+      "id": "audit_8b2bd09c0132d431",
+      "task_id": "task_4b47462fc998b9f9",
+      "event_type": "url_accessibility_attempted",
+      "event_detail": "visible_text_digest=cb553c7adebbba85",
+      "created_at": "2026-05-06T07:48:38.710Z"
+    },
+    {
+      "id": "audit_4cf09cc80602e038",
+      "task_id": "task_4b47462fc998b9f9",
+      "event_type": "task_processed",
+      "event_detail": "retained_snippet_count=12",
+      "created_at": "2026-05-06T07:48:38.710Z"
+    }
+  ]
+}

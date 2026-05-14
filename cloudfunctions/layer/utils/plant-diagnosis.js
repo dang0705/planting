@@ -325,8 +325,8 @@ async function buildStructuredDiagnosis({
   openid,
   plantId = null,
   userPlantId = null,
-  diagnosisText = '',
-  description = '',
+  diagnosisText: _diagnosisText = '',
+  description: _description = '',
   baseResult = {},
   mode = 'quick',
   observedSymptomsInput = [],
@@ -337,7 +337,7 @@ async function buildStructuredDiagnosis({
   const parsedObservedSymptoms = normalizeObservedSymptomsInput(baseResult?.observedSymptoms, symptomDictionary)
   const normalizedObservedSymptoms = normalizeObservedSymptomsInput(observedSymptomsInput, symptomDictionary)
   const normalizedFollowUpAnswers = normalizeFollowUpAnswers(followUpAnswers, symptomDictionary)
-  const shouldSkipAIExtraction =
+  const _shouldSkipAIExtraction =
     Boolean(skipAIExtraction) ||
     parsedObservedSymptoms.length > 0 ||
     normalizedObservedSymptoms.length > 0 ||

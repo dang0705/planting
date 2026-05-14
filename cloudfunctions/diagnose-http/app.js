@@ -147,7 +147,7 @@ function parseFollowUpRationale(value = '') {
   try {
     const parsed = JSON.parse(raw)
     return parsed && typeof parsed === 'object' ? parsed : {}
-  } catch (error) {
+  } catch {
     return {}
   }
 }
@@ -365,7 +365,7 @@ function resolveVisualImageInputs(payload = {}) {
   return []
 }
 
-function resolveImagesFromPayload(payload = {}) {
+function _resolveImagesFromPayload(payload = {}) {
   return resolveVisualImageInputs(payload).map(item => item.imageRef).filter(Boolean)
 }
 
@@ -577,7 +577,7 @@ async function persistRoundResult({
     clientContext
   })
   if (!awaitPersistence) {
-    void persistencePromise.catch(error => {
+    persistencePromise.catch(error => {
       console.error('diagnosis-http persist round result failed:', {
         sessionId,
         round,
@@ -2110,3 +2110,7 @@ module.exports.main = (event, context) => {
     runWithSchemaEnv(schemaEnv, () => main(event, context))
   )
 }
+
+module.exports.runStartDiagnosis = runStartDiagnosis
+module.exports.runAnswerDiagnosis = runAnswerDiagnosis
+module.exports.buildFrontendDiagnosisResponse = buildFrontendDiagnosisResponse

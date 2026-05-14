@@ -1,0 +1,195 @@
+{
+  "run_id": "run_b4db6641c268605e",
+  "created_at": "2026-05-06T13:41:33.868Z",
+  "queue_type": "manual_review",
+  "retention_policy": {
+    "saves_original_video": false,
+    "saves_original_audio": false,
+    "saves_full_transcript": false,
+    "saves_comments": false,
+    "saves_account_profile": false,
+    "saves_complete_subtitles": false
+  },
+  "prohibited_actions": [
+    "reverse_engineer_douyin_api",
+    "handle_captcha",
+    "use_proxy_pool",
+    "crawl_comments",
+    "crawl_account_homepage",
+    "save_full_subtitles"
+  ],
+  "tasks": [
+    {
+      "id": "task_eba131b5f200c105",
+      "input_type": "url",
+      "source_url": "https://www.douyin.com/video/7634093601581085937",
+      "local_file_path": "",
+      "text_file_path": "",
+      "source_platform": "manual",
+      "manual_topic": "植物缺素",
+      "manual_note": "",
+      "manual_text_digest": "",
+      "status": "processed",
+      "risk_level": "low",
+      "error_message": "",
+      "validation": {
+        "ok": true,
+        "url": "https://www.douyin.com/video/7634093601581085937"
+      },
+      "created_at": "2026-05-06T13:41:27.997Z",
+      "updated_at": "2026-05-06T13:41:33.830Z",
+      "processed_at": "2026-05-06T13:41:33.830Z"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "candidate_b8c0b1ae9fa56111",
+      "task_id": "task_eba131b5f200c105",
+      "input_type": "url",
+      "source_url": "https://www.douyin.com/video/7634093601581085937",
+      "source_platform": "manual",
+      "manual_topic": "植物缺素",
+      "knowledge_candidate": {
+        "plant_names": [],
+        "problem_clusters": [],
+        "observable_evidence": [],
+        "possible_causes": [],
+        "candidate_questions": [],
+        "candidate_actions": [],
+        "contraindications": [],
+        "key_takeaways": [],
+        "care_principles": [],
+        "common_mistakes": [],
+        "applicable_contexts": [],
+        "source_timeline": [],
+        "review_checklist": [],
+        "uncertainty_points": [
+          "当前结果只基于临时短片段，尚未经过人工审核。"
+        ],
+        "risk_flags": [
+          "pending_human_review",
+          "no_original_video_saved",
+          "no_full_transcript_saved"
+        ]
+      },
+      "source_knowledge_layer": {
+        "source_digest": "f1e2581c23979369",
+        "source_fragment_count": 2,
+        "source_channels": [
+          "url_visible_text"
+        ],
+        "key_points_for_review": [
+          "植物缺素",
+          "在抖音记录美好生活20260506 - 抖音"
+        ],
+        "timeline_for_review": [],
+        "coverage_hints": {
+          "has_asr": false,
+          "has_ocr": false,
+          "has_manual_text": false,
+          "has_url_visible_text": true,
+          "likely_undercovered": true,
+          "note": "当前可审核要点偏少，建议补充本地视频/音频或手动文案后重跑。"
+        },
+        "detail_cards_for_review": [
+          {
+            "card_id": "detail_01",
+            "abstract_point": "植物缺素",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "nutrient_deficiency"
+            ],
+            "candidate_questions_for_review": [
+              "叶片缺素表现是老叶先出现、新叶先出现，还是全株同步变淡？"
+            ],
+            "review_focus": [
+              "核对是否能区分真实缺肥、根系失效导致的缺素表现和环境诱发黄化。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_02",
+            "abstract_point": "在抖音记录美好生活20260506 - 抖音",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "general_care_principle"
+            ],
+            "candidate_questions_for_review": [
+              "这个经验适用于哪些植物、环境和生长阶段？"
+            ],
+            "review_focus": [
+              "核对该要点是否足够具体，是否需要人工补充适用植物、季节或环境前提。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          }
+        ],
+        "review_enrichment": {
+          "enriched_at": "2026-05-06T13:41:46.906Z",
+          "rules_file": "scripts/video-knowledge/review-dimension-rules.json",
+          "rules_digest": "e8fb943b6790be21"
+        }
+      },
+      "llm_status": "not_configured_or_failed",
+      "review_status": "pending",
+      "review_notes": "",
+      "extraction_input_digest": "f1e2581c23979369",
+      "source_fragment_count": 2,
+      "created_at": "2026-05-06T13:41:33.830Z",
+      "updated_at": "2026-05-06T13:41:46.906Z",
+      "audit_summary": [
+        {
+          "event_type": "url_accessibility_attempted",
+          "event_detail": "visible_text_digest=fcc6bb690e27fc32"
+        },
+        {
+          "event_type": "llm_skipped",
+          "event_detail": "VIDEO_KNOWLEDGE_LLM_COMMAND_not_configured"
+        },
+        {
+          "event_type": "task_processed",
+          "event_detail": "source_fragment_count=2"
+        }
+      ]
+    }
+  ],
+  "audit_logs": [
+    {
+      "id": "audit_07f3bc5f16d970f8",
+      "task_id": "task_eba131b5f200c105",
+      "event_type": "url_accessibility_attempted",
+      "event_detail": "visible_text_digest=fcc6bb690e27fc32",
+      "created_at": "2026-05-06T13:41:33.830Z"
+    },
+    {
+      "id": "audit_e5eb2648a0e8e5bf",
+      "task_id": "task_eba131b5f200c105",
+      "event_type": "llm_skipped",
+      "event_detail": "VIDEO_KNOWLEDGE_LLM_COMMAND_not_configured",
+      "created_at": "2026-05-06T13:41:33.830Z"
+    },
+    {
+      "id": "audit_d96eb6152e51384d",
+      "task_id": "task_eba131b5f200c105",
+      "event_type": "task_processed",
+      "event_detail": "source_fragment_count=2",
+      "created_at": "2026-05-06T13:41:33.830Z"
+    }
+  ],
+  "review_enrichment_summary": {
+    "enriched_at": "2026-05-06T13:41:46.906Z",
+    "rules_file": "scripts/video-knowledge/review-dimension-rules.json",
+    "rules_digest": "e8fb943b6790be21",
+    "candidate_count": 1,
+    "purpose": "append_review_dimension_cards_only"
+  }
+}

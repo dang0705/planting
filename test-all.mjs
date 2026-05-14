@@ -36,7 +36,10 @@ function runTest(command, testName) {
 async function runAllTests() {
   const tests = [
     { command: 'test-pinia.mjs', name: 'Pinia 状态管理' },
-    { command: 'test-tailwind.mjs', name: 'Tailwind CSS' }
+    { command: 'test-tailwind.mjs', name: 'Tailwind CSS' },
+    { command: 'test-route-planning.mjs', name: 'Route Planning' },
+    { command: 'test-route-sql.mjs', name: 'Route SQL' },
+    { command: 'verify-route-golden-manifest.mjs', name: 'Route Golden Manifest' }
   ]
   
   let passedTests = 0
@@ -46,7 +49,7 @@ async function runAllTests() {
     try {
       await runTest(test.command, test.name)
       passedTests++
-    } catch (error) {
+    } catch {
       failedTests++
     }
   }

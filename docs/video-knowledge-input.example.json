@@ -1,0 +1,24 @@
+{
+  "tasks": [
+    {
+      "input_type": "manual_text",
+      "manual_topic": "植物养护",
+      "manual_text": "这里粘贴人工整理的字幕、文案或笔记。"
+    },
+    {
+      "input_type": "local_video",
+      "manual_topic": "黄叶",
+      "local_file": "/path/to/video.mp4"
+    },
+    {
+      "input_type": "local_audio",
+      "manual_topic": "浇水",
+      "local_file": "/path/to/audio.m4a"
+    },
+    {
+      "input_type": "url",
+      "manual_topic": "植物养护",
+      "source_url": "https://www.douyin.com/video/1234567890123456789"
+    }
+  ]
+}

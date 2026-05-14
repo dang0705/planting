@@ -33,7 +33,7 @@ function parseJsonField(value, fallback = null) {
   }
   try {
     return JSON.parse(value)
-  } catch (error) {
+  } catch {
     return fallback
   }
 }

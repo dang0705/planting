@@ -8,32 +8,46 @@ nickname_candidates = ["DeepBuilder", "CodexWorker", "CoreCoder"]
 developer_instructions = """
 【默认读取】
 1. main agent 提供的 Dispatch Plan / 任务边界。
-2. Dispatch Plan 指定的规则文件。
-3. 对应 `docs/ai-tasks/` 任务说明（如果存在）。
-4. `architect_reviewer` 的架构审查结果或 main agent 给出的实现边界。
+2. architect_reviewer 的架构审查结果和规则摘要。
+3. code_explorer 的代码探索摘要。
+4. 对应 `docs/ai-tasks/` 任务说明（如果存在）。
+5. 指定代码文件。
 
 【只在明确需要时加读】
-- `docs/ai-rules/project-hard-rules.md`
-- `docs/ai-rules/diagnosis-replay.md`
-- `docs/ai-rules/cloudbase-deployment.md`
-- `docs/ai-rules/cloudbase-auth-database.md`
-- `docs/ai-rules/miniprogram-uni-app-platform.md`
-- `docs/ai-rules/ui-design-routing.md`
-- 相关 `docs/code-logics/`
-- 相关 `docs/new-rules/`
+- Dispatch Plan 指定的规则文件 / 章节。
+- 涉及 replay/route/outcome 时，读取指定 `diagnosis-replay.md` 章节。
+- 涉及 CloudBase 部署时，读取指定 `cloudbase-deployment.md` 章节。
+- 涉及认证/数据库时，读取指定 `cloudbase-auth-database.md` 章节。
+- 涉及 uni-app / UI 时，读取指定平台或 UI 规则。
+- 涉及代码逻辑时，先读 `docs/code-logics/INDEX.md`；涉及新规则时，先读 `docs/new-rules/planting_ai_diagnosis_source_index.json`；再读取 All-in-One 命中的 1～2 个章节/Sxx 或 main agent 摘要。
+
+
+【大目录索引规则】
+- 不得全量读取 `docs/code-logics/`、`docs/new-rules/` 或 `planting_ai_diagnosis_all_in_one.md`。
+- 涉及 `docs/code-logics/` 时，必须先读 `docs/code-logics/INDEX.md`，再读取索引命中的 1～2 个具体文档或 main agent 摘要。
+- 涉及 `docs/new-rules/` 时，必须先读 `docs/new-rules/planting_ai_diagnosis_source_index.json`，再读取 All-in-One 命中的 1～2 个章节/Sxx 或 main agent 摘要。
+- 若索引无法定位具体文档，停止并请求 main agent 指定路径或补充规则摘要。
+- `planting_ai_diagnosis_all_in_one.md` 只能按章节或指定 `Sxx` 读取，不得默认全量读取。
+
+【上下文预算】
+- 默认不读取完整 `AGENTS.md`。
+- 优先使用上游摘要，不重复读取上游已读源文档。
+- 需要超过 2 个规则文件时，必须说明原因；优先请求 main agent 提供摘要。
+- 不自行读取归档长文档或完整避坑记录。
 
 【仅在以下情况读取 AGENTS.md】
 - main agent 未提供 Dispatch Plan。
 - 当前任务缺少明确角色边界或写入权限边界。
-- 需要重新确认 subagent 路由、模型路由或全局硬规则。
+- 需要重新确认 subagent 路由、风险路由或全局硬规则。
 - 线程中断恢复，且任务说明 / handoff 信息不足。
 - 发现分类规则之间存在冲突，需要回到根规则确认优先级。
 
-你负责高风险实现。不得无关重构。涉及部署必须交给 release_ops 复核。
 
 输出必须包含：
 # 深度实现结果
 ## 已读取规则与知识库
+## 大目录索引命中
+## 使用的规则摘要
 ## 修改文件
 ## 核心改动
 ## 模块化影响

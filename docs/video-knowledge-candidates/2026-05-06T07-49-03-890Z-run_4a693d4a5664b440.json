@@ -1,0 +1,109 @@
+{
+  "run_id": "run_4a693d4a5664b440",
+  "created_at": "2026-05-06T07:49:03.890Z",
+  "queue_type": "manual_review",
+  "retention_policy": {
+    "saves_original_video": false,
+    "saves_original_audio": false,
+    "saves_full_transcript": false,
+    "saves_comments": false,
+    "saves_account_profile": false,
+    "saves_complete_subtitles": false
+  },
+  "prohibited_actions": [
+    "reverse_engineer_douyin_api",
+    "handle_captcha",
+    "use_proxy_pool",
+    "crawl_comments",
+    "crawl_account_homepage",
+    "save_full_subtitles"
+  ],
+  "tasks": [
+    {
+      "id": "task_36cad238a6d1fc42",
+      "input_type": "manual_text",
+      "source_url": "",
+      "local_file_path": "",
+      "text_file_path": "",
+      "source_platform": "manual",
+      "manual_topic": "植物养护",
+      "manual_note": "",
+      "manual_text_digest": "dc3a6cfc66ebec86",
+      "status": "processed",
+      "risk_level": "low",
+      "error_message": "",
+      "validation": {
+        "ok": true
+      },
+      "created_at": "2026-05-06T07:49:03.888Z",
+      "updated_at": "2026-05-06T07:49:03.890Z",
+      "processed_at": "2026-05-06T07:49:03.890Z"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "candidate_4e98c9b32c680b0b",
+      "task_id": "task_36cad238a6d1fc42",
+      "input_type": "manual_text",
+      "source_url": "",
+      "source_platform": "manual",
+      "manual_topic": "植物养护",
+      "knowledge_candidate": {
+        "plant_names": [],
+        "problem_clusters": [],
+        "observable_evidence": [],
+        "possible_causes": [],
+        "candidate_questions": [],
+        "candidate_actions": [],
+        "contraindications": [],
+        "uncertainty_points": [
+          "当前结果只基于短片段摘要，尚未经过人工审核。"
+        ],
+        "risk_flags": [
+          "pending_human_review",
+          "no_original_video_saved",
+          "no_full_transcript_saved"
+        ]
+      },
+      "llm_structuring_prompt": "你是绿植诊断知识结构化助手。\n\n任务：从输入的短片段摘要中提炼抽象养护知识。不要复述原文，不要保留完整逐字稿，不要生成文章，不要模仿博主表达。\n\n请输出结构化 JSON，字段包括：\n1. plant_names：涉及植物\n2. problem_clusters：问题簇\n3. observable_evidence：用户可观察证据\n4. possible_causes：可能原因，包含证据和置信等级\n5. candidate_questions：可转化为问诊的问题\n6. candidate_actions：候选行动建议\n7. contraindications：不适用条件或反证条件\n8. uncertainty_points：不确定点\n9. risk_flags：风险提示\n10. review_suggestion：人工审核建议\n\n要求：\n- 不输出原始句子；\n- 不输出完整字幕；\n- 不保留博主口吻；\n- 不生成可直接发布的文章；\n- 不将经验性内容当成确定事实；\n- 若信息不足，必须标记不确定；\n- 若涉及药剂、修根、强剪、换盆等高风险动作，必须标记需要人工复核。\n\n来源类型：\nmanual_text\n\n来源 URL：\n未填写\n\n人工主题：\n植物养护\n\n短片段摘要，仅用于抽象提炼，不得逐句复述：\n[\n  \"植物养护\",\n  \"植物不要过度照顾\",\n  \"不要频繁拔出来看根，也不要每天检查湿度温度\",\n  \"更稳妥的方式是观察光照、温度和水分变化，给植物稳定环境\"\n]",
+      "review_status": "pending",
+      "review_notes": "",
+      "extraction_input_digest": "df4f6a56fd9a65b1",
+      "retained_snippet_count": 4,
+      "retained_short_evidence_summaries": [
+        "植物养护",
+        "植物不要过度照顾",
+        "不要频繁拔出来看根，也不要每天检查湿度温度",
+        "更稳妥的方式是观察光照、温度和水分变化，给植物稳定环境"
+      ],
+      "created_at": "2026-05-06T07:49:03.890Z",
+      "updated_at": "2026-05-06T07:49:03.890Z",
+      "audit_summary": [
+        {
+          "event_type": "manual_text_loaded",
+          "event_detail": "input_digest=dc3a6cfc66ebec86"
+        },
+        {
+          "event_type": "task_processed",
+          "event_detail": "retained_snippet_count=4"
+        }
+      ]
+    }
+  ],
+  "audit_logs": [
+    {
+      "id": "audit_49721b89e3807af0",
+      "task_id": "task_36cad238a6d1fc42",
+      "event_type": "manual_text_loaded",
+      "event_detail": "input_digest=dc3a6cfc66ebec86",
+      "created_at": "2026-05-06T07:49:03.889Z"
+    },
+    {
+      "id": "audit_ee285be6ce90fa94",
+      "task_id": "task_36cad238a6d1fc42",
+      "event_type": "task_processed",
+      "event_detail": "retained_snippet_count=4",
+      "created_at": "2026-05-06T07:49:03.890Z"
+    }
+  ]
+}

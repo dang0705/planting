@@ -16,7 +16,7 @@ function parseJson(value, fallback = null) {
   if (typeof value === 'object') {return value}
   try {
     return JSON.parse(value)
-  } catch (error) {
+  } catch {
     return fallback
   }
 }
@@ -55,14 +55,14 @@ function normalizeJsonColumnValue(value) {
     try {
       JSON.parse(trimmed)
       return trimmed
-    } catch (error) {
+    } catch {
       return JSON.stringify(trimmed)
     }
   }
 
   try {
     return JSON.stringify(value)
-  } catch (error) {
+  } catch {
     return null
   }
 }

@@ -179,6 +179,16 @@ function normalizeVisualAggregateSummary(summary = null) {
       summary?.aggregateQualityGrade || summary?.aggregate_quality_grade || '',
     aggregateAnalyzability:
       summary?.aggregateAnalyzability || summary?.aggregate_analyzability || '',
+    aggregateVisualDiscriminators: Array.isArray(
+      summary?.aggregateVisualDiscriminators || summary?.aggregate_visual_discriminators
+    )
+      ? (summary.aggregateVisualDiscriminators || summary.aggregate_visual_discriminators)
+      : [],
+    aggregateMissingInfoForPath: Array.isArray(
+      summary?.aggregateMissingInfoForPath || summary?.aggregate_missing_info_for_path
+    )
+      ? (summary.aggregateMissingInfoForPath || summary.aggregate_missing_info_for_path)
+      : [],
     suggestedFollowupCapture: normalizeStringList(
       summary?.suggestedFollowupCapture || summary?.suggested_followup_capture
     ),
@@ -308,6 +318,9 @@ function normalizeQuestionQueue(questionQueue = null) {
     questionItems: (Array.isArray(questionQueue?.questionItems) ? questionQueue.questionItems : []).map(item => ({
       questionKey: String(item?.questionKey || '').trim(),
       questionId: String(item?.questionId || '').trim(),
+      routeKey: String(item?.routeKey || '').trim(),
+      gateKey: String(item?.gateKey || '').trim(),
+      outcomeKey: String(item?.outcomeKey || '').trim(),
       targetSymptomKey: String(item?.targetSymptomKey || '').trim(),
       questionGroupKey: String(item?.questionGroupKey || '').trim(),
       targetDimension: String(item?.targetDimension || '').trim(),
@@ -364,6 +377,90 @@ function normalizeOutputEligibility(outputEligibility = null) {
     keyEvidenceSummary: String(outputEligibility?.keyEvidenceSummary || '').trim(),
     unresolvedRisks: normalizeStringList(outputEligibility?.unresolvedRisks),
     nextStepHints: normalizeStringList(outputEligibility?.nextStepHints)
+  }
+}
+
+function normalizeRouteDecisionCause(routeDecisionCause = null) {
+  if (!routeDecisionCause || typeof routeDecisionCause !== 'object') {
+    return null
+  }
+
+  return {
+    decisionCauseKey: String(
+      routeDecisionCause?.decisionCauseKey || routeDecisionCause?.key || ''
+    ).trim(),
+    decisionCauseCategory: String(
+      routeDecisionCause?.decisionCauseCategory || routeDecisionCause?.category || ''
+    ).trim(),
+    decisionCauseText: String(
+      routeDecisionCause?.decisionCauseText || routeDecisionCause?.text || ''
+    ).trim(),
+    decisionCauseDetails:
+      routeDecisionCause?.decisionCauseDetails &&
+      typeof routeDecisionCause.decisionCauseDetails === 'object'
+        ? routeDecisionCause.decisionCauseDetails
+        : null
+  }
+}
+
+function normalizeOutcomeEntry(outcome = null) {
+  if (!outcome || typeof outcome !== 'object') {
+    return null
+  }
+
+  const outcomeKey = String(outcome?.outcomeKey || outcome?.problemKey || '').trim()
+  if (!outcomeKey) {
+    return null
+  }
+
+  return {
+    outcomeKey,
+    problemKey: String(outcome?.problemKey || outcomeKey).trim(),
+    displayNameCn: String(
+      outcome?.displayNameCn || outcome?.displayName || outcome?.title || outcomeKey
+    ).trim(),
+    summary: String(outcome?.summary || '').trim(),
+    severity: String(outcome?.severity || '').trim(),
+    urgency: String(outcome?.urgency || '').trim(),
+    firstAid: String(outcome?.firstAid || '').trim(),
+    avoid: String(outcome?.avoid || '').trim(),
+    reassurance: String(outcome?.reassurance || '').trim()
+  }
+}
+
+function normalizeOutcomeList(outcomes = []) {
+  return (Array.isArray(outcomes) ? outcomes : []).map(normalizeOutcomeEntry).filter(Boolean)
+}
+
+function normalizeActionAdvice(actionAdvice = null) {
+  if (!actionAdvice || typeof actionAdvice !== 'object') {
+    return null
+  }
+
+  return {
+    todayActions: normalizeStringList(actionAdvice?.todayActions),
+    threeDayActions: normalizeStringList(actionAdvice?.threeDayActions),
+    sevenDayObserve: normalizeStringList(actionAdvice?.sevenDayObserve),
+    avoidActions: normalizeStringList(actionAdvice?.avoidActions),
+    retakeOrEscalate: normalizeStringList(actionAdvice?.retakeOrEscalate),
+    conflictDetected: Boolean(actionAdvice?.conflictDetected)
+  }
+}
+
+function normalizeRouteDecision(routeDecision = null) {
+  if (!routeDecision || typeof routeDecision !== 'object') {
+    return null
+  }
+
+  return {
+    mode: String(routeDecision?.mode || '').trim(),
+    visibleOutcomeKeys: normalizeStringList(routeDecision?.visibleOutcomeKeys),
+    primaryOutcomeKey: String(routeDecision?.primaryOutcomeKey || '').trim(),
+    secondaryOutcomeKeys: normalizeStringList(routeDecision?.secondaryOutcomeKeys),
+    activeRouteGroupKeys: normalizeStringList(routeDecision?.activeRouteGroupKeys),
+    nextQuestionKeys: normalizeStringList(routeDecision?.nextQuestionKeys),
+    decisionCause: normalizeRouteDecisionCause(routeDecision?.decisionCause),
+    fallbackPolicy: String(routeDecision?.fallbackPolicy || '').trim()
   }
 }
 
@@ -577,6 +674,10 @@ function resolveMainIssueText({
   outcomeType = '',
   followUpRequired = false
 } = {}) {
+  if (finalResult?.displayNameCn) {
+    return finalResult.displayNameCn
+  }
+
   if (finalResult?.displayName) {
     return finalResult.displayName
   }
@@ -694,6 +795,24 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
     normalizeShadowCompareSummary(diagnosis.shadowCompareSummary) ||
     visualAggregateSummary?.shadowCompareSummary ||
     null
+  const primaryOutcome = normalizeOutcomeEntry(
+    diagnosis.primaryOutcome || finalResult?.primaryOutcome
+  )
+  const secondaryOutcomes = normalizeOutcomeList(
+    diagnosis.secondaryOutcomes || finalResult?.secondaryOutcomes
+  )
+  const visibleOutcomes = normalizeOutcomeList(
+    diagnosis.visibleOutcomes || finalResult?.visibleOutcomes
+  )
+  const routeDecisionCause = normalizeRouteDecisionCause(
+    diagnosis.routeDecisionCause ||
+      diagnosis.routeDecision?.decisionCause ||
+      diagnosis.stopDecision?.decisionCause
+  )
+  const actionAdvice = normalizeActionAdvice(
+    diagnosis.actionAdvice || finalResult?.actionAdvice
+  )
+  const routeDecision = normalizeRouteDecision(diagnosis.routeDecision)
   const coreProcess = normalizeCoreProcess(diagnosis.coreProcess, {
     latestVisualCallBatchId: diagnosis.latestVisualCallBatchId || null,
     observedSymptoms,
@@ -753,6 +872,13 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
           }
         : null,
     finalResult,
+    primaryOutcome,
+    secondaryOutcomes,
+    visibleOutcomes,
+    outcomeMode: String(diagnosis.outcomeMode || '').trim(),
+    routeDecisionCause,
+    actionAdvice,
+    routeDecision,
     contributingFactors: Array.isArray(diagnosis.contributingFactors)
       ? diagnosis.contributingFactors
       : [],

@@ -1,0 +1,143 @@
+{
+  "run_id": "run_b1399c59cb56f249",
+  "created_at": "2026-05-06T08:29:00.677Z",
+  "queue_type": "manual_review",
+  "retention_policy": {
+    "saves_original_video": false,
+    "saves_original_audio": false,
+    "saves_full_transcript": false,
+    "saves_comments": false,
+    "saves_account_profile": false,
+    "saves_complete_subtitles": false
+  },
+  "prohibited_actions": [
+    "reverse_engineer_douyin_api",
+    "handle_captcha",
+    "use_proxy_pool",
+    "crawl_comments",
+    "crawl_account_homepage",
+    "save_full_subtitles"
+  ],
+  "tasks": [
+    {
+      "id": "task_08c838c6019e7e67",
+      "input_type": "local_video",
+      "source_url": "",
+      "local_file_path": "tmp/video-knowledge-smoke/smoke.mp4",
+      "text_file_path": "",
+      "source_platform": "manual",
+      "manual_topic": "植物养护",
+      "manual_note": "",
+      "manual_text_digest": "",
+      "status": "processed",
+      "risk_level": "low",
+      "error_message": "",
+      "validation": {
+        "ok": true
+      },
+      "created_at": "2026-05-06T08:28:59.516Z",
+      "updated_at": "2026-05-06T08:29:00.676Z",
+      "processed_at": "2026-05-06T08:29:00.676Z"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "candidate_08ae0a88eaa1f34e",
+      "task_id": "task_08c838c6019e7e67",
+      "input_type": "local_video",
+      "source_url": "",
+      "source_platform": "manual",
+      "manual_topic": "植物养护",
+      "knowledge_candidate": {
+        "plant_names": [],
+        "problem_clusters": [
+          "过度浇水"
+        ],
+        "observable_evidence": [
+          "本地视频 smoke 片段"
+        ],
+        "possible_causes": [],
+        "candidate_questions": [],
+        "candidate_actions": [
+          "减少过度浇水"
+        ],
+        "contraindications": [],
+        "uncertainty_points": [
+          "本地 smoke 输出,需人工审核"
+        ],
+        "risk_flags": [
+          "pending_human_review",
+          "no_original_video_saved",
+          "no_full_transcript_saved",
+          "local_smoke"
+        ]
+      },
+      "llm_status": "completed",
+      "review_status": "pending",
+      "review_notes": "",
+      "extraction_input_digest": "7aa76279cdab9b32",
+      "source_fragment_count": 2,
+      "created_at": "2026-05-06T08:29:00.676Z",
+      "updated_at": "2026-05-06T08:29:00.676Z",
+      "audit_summary": [
+        {
+          "event_type": "local_audio_extracted",
+          "event_detail": "temporary_audio_digest=f884a9ce4a943b2f"
+        },
+        {
+          "event_type": "asr_completed",
+          "event_detail": "stdout_digest=798655bd636e6492"
+        },
+        {
+          "event_type": "ocr_frame_extract_failed",
+          "event_detail": "[mjpeg @ 0xb16c4d500] Non full-range YUV is non-standard, set strict_std_compliance to at most unofficial to use it. [vost#0:0/mjpeg @ 0xb17058000] [enc:mjpeg @ 0xb16c201c0] Error while opening encoder - maybe incorrect parameters such as b..."
+        },
+        {
+          "event_type": "llm_completed",
+          "event_detail": "output_digest=af3bed5e738af671"
+        },
+        {
+          "event_type": "task_processed",
+          "event_detail": "source_fragment_count=2"
+        }
+      ]
+    }
+  ],
+  "audit_logs": [
+    {
+      "id": "audit_1d2dc18734bcf4af",
+      "task_id": "task_08c838c6019e7e67",
+      "event_type": "local_audio_extracted",
+      "event_detail": "temporary_audio_digest=f884a9ce4a943b2f",
+      "created_at": "2026-05-06T08:28:59.548Z"
+    },
+    {
+      "id": "audit_2b2899e24e4c859d",
+      "task_id": "task_08c838c6019e7e67",
+      "event_type": "asr_completed",
+      "event_detail": "stdout_digest=798655bd636e6492",
+      "created_at": "2026-05-06T08:29:00.603Z"
+    },
+    {
+      "id": "audit_2e6d536bcac6641e",
+      "task_id": "task_08c838c6019e7e67",
+      "event_type": "ocr_frame_extract_failed",
+      "event_detail": "[mjpeg @ 0xb16c4d500] Non full-range YUV is non-standard, set strict_std_compliance to at most unofficial to use it. [vost#0:0/mjpeg @ 0xb17058000] [enc:mjpeg @ 0xb16c201c0] Error while opening encoder - maybe incorrect parameters such as b...",
+      "created_at": "2026-05-06T08:29:00.639Z"
+    },
+    {
+      "id": "audit_5e03b9b681ea124e",
+      "task_id": "task_08c838c6019e7e67",
+      "event_type": "llm_completed",
+      "event_detail": "output_digest=af3bed5e738af671",
+      "created_at": "2026-05-06T08:29:00.676Z"
+    },
+    {
+      "id": "audit_c019bb9ab3fee106",
+      "task_id": "task_08c838c6019e7e67",
+      "event_type": "task_processed",
+      "event_detail": "source_fragment_count=2",
+      "created_at": "2026-05-06T08:29:00.676Z"
+    }
+  ]
+}

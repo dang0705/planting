@@ -6,7 +6,7 @@ const { isRowDifferent } = require('../utils/compare-row')
 const {
   DEV_SCHEMA,
   PROD_SCHEMA,
-  getPool,
+  getPool: _getPool,
   withTransaction,
   tableName,
   quoteIdentifier,
@@ -50,7 +50,7 @@ function parseRecordKey(recordKey = '{}') {
   try {
     const parsed = JSON.parse(recordKey)
     return parsed && typeof parsed === 'object' ? parsed : {}
-  } catch (error) {
+  } catch {
     return {}
   }
 }

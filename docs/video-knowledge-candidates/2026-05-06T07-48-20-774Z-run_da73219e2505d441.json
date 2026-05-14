@@ -1,0 +1,54 @@
+{
+  "run_id": "run_da73219e2505d441",
+  "created_at": "2026-05-06T07:48:20.774Z",
+  "queue_type": "manual_review",
+  "retention_policy": {
+    "saves_original_video": false,
+    "saves_original_audio": false,
+    "saves_full_transcript": false,
+    "saves_comments": false,
+    "saves_account_profile": false,
+    "saves_complete_subtitles": false
+  },
+  "prohibited_actions": [
+    "reverse_engineer_douyin_api",
+    "handle_captcha",
+    "use_proxy_pool",
+    "crawl_comments",
+    "crawl_account_homepage",
+    "save_full_subtitles"
+  ],
+  "tasks": [
+    {
+      "id": "task_d8b63cc6cfdf2a0c",
+      "input_type": "url",
+      "source_url": "https://www.douyin.com/user/MS4wLjABAAAAtI0m2JdSkIOwg9jxqq_EIPOkH-lnW6pZUzsB0ak61mZLR4pmgbykJ5mR638Lb38P?from_tab_name=main&modal_id=7634864243489951345",
+      "local_file_path": "",
+      "text_file_path": "",
+      "source_platform": "manual",
+      "manual_topic": "",
+      "manual_note": "",
+      "manual_text": "",
+      "status": "rejected",
+      "risk_level": "high",
+      "error_message": "collection_or_profile_url_disallowed",
+      "validation": {
+        "ok": false,
+        "reason": "collection_or_profile_url_disallowed"
+      },
+      "created_at": "2026-05-06T07:48:20.772Z",
+      "updated_at": "2026-05-06T07:48:20.773Z",
+      "processed_at": null
+    }
+  ],
+  "candidates": [],
+  "audit_logs": [
+    {
+      "id": "audit_d0fa3f3a4d20df39",
+      "task_id": "task_d8b63cc6cfdf2a0c",
+      "event_type": "task_rejected",
+      "event_detail": "collection_or_profile_url_disallowed",
+      "created_at": "2026-05-06T07:48:20.773Z"
+    }
+  ]
+}

@@ -1,0 +1,451 @@
+{
+  "run_id": "run_3590b87eac4c56ee",
+  "created_at": "2026-05-06T13:35:13.996Z",
+  "queue_type": "manual_review",
+  "retention_policy": {
+    "saves_original_video": false,
+    "saves_original_audio": false,
+    "saves_full_transcript": false,
+    "saves_comments": false,
+    "saves_account_profile": false,
+    "saves_complete_subtitles": false
+  },
+  "prohibited_actions": [
+    "reverse_engineer_douyin_api",
+    "handle_captcha",
+    "use_proxy_pool",
+    "crawl_comments",
+    "crawl_account_homepage",
+    "save_full_subtitles"
+  ],
+  "tasks": [
+    {
+      "id": "task_3e4c24cd5d27c4a5",
+      "input_type": "url",
+      "source_url": "https://www.douyin.com/video/7634093601581085937",
+      "local_file_path": "",
+      "text_file_path": "",
+      "source_platform": "manual",
+      "manual_topic": "植物养护",
+      "manual_note": "",
+      "manual_text_digest": "",
+      "status": "processed",
+      "risk_level": "low",
+      "error_message": "",
+      "validation": {
+        "ok": true,
+        "url": "https://www.douyin.com/video/7634093601581085937"
+      },
+      "created_at": "2026-05-06T13:35:06.996Z",
+      "updated_at": "2026-05-06T13:35:13.966Z",
+      "processed_at": "2026-05-06T13:35:13.966Z"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "candidate_c37f3acb009d168c",
+      "task_id": "task_3e4c24cd5d27c4a5",
+      "input_type": "url",
+      "source_url": "https://www.douyin.com/video/7634093601581085937",
+      "source_platform": "manual",
+      "manual_topic": "植物养护",
+      "knowledge_candidate": {
+        "plant_names": [],
+        "problem_clusters": [],
+        "observable_evidence": [],
+        "possible_causes": [],
+        "candidate_questions": [],
+        "candidate_actions": [],
+        "contraindications": [],
+        "key_takeaways": [],
+        "care_principles": [],
+        "common_mistakes": [],
+        "applicable_contexts": [],
+        "source_timeline": [],
+        "review_checklist": [],
+        "uncertainty_points": [
+          "当前结果只基于临时短片段，尚未经过人工审核。"
+        ],
+        "risk_flags": [
+          "pending_human_review",
+          "no_original_video_saved",
+          "no_full_transcript_saved"
+        ]
+      },
+      "source_knowledge_layer": {
+        "source_digest": "6fc411e4c7094a96",
+        "source_fragment_count": 21,
+        "source_channels": [
+          "url_visible_text"
+        ],
+        "key_points_for_review": [
+          "植物养护",
+          "植物缺素",
+          "多半是因为断网了",
+          "多半是因为断网了 - 抖音",
+          "植物缺素的原因在于根系问题，而非仅仅是缺乏某种元素",
+          "要解决缺素问题，需关注根系健康、盆面是否有积盐以及土壤pH值",
+          "先养好根系，避免过度施肥，才能从根本上解决植物缺素问题",
+          "引言",
+          "植物缺素的原因",
+          "植物缺素是因为根系问题，根系无法传递元素到叶片，导致叶片断网",
+          "解决方法",
+          "解决植物缺素问题需关注根系、盆面积盐和pH值，先养好根系，避免使用过多肥料"
+        ],
+        "detail_cards_for_review": [
+          {
+            "card_id": "detail_01",
+            "abstract_point": "植物养护",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "general_care_principle"
+            ],
+            "candidate_questions_for_review": [
+              "这个经验适用于哪些植物、环境和生长阶段？"
+            ],
+            "review_focus": [
+              "核对该要点是否足够具体，是否需要人工补充适用植物、季节或环境前提。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_02",
+            "abstract_point": "植物缺素",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "nutrient_deficiency"
+            ],
+            "candidate_questions_for_review": [
+              "叶片缺素表现是老叶先出现、新叶先出现，还是全株同步变淡？"
+            ],
+            "review_focus": [
+              "核对是否能区分真实缺肥、根系失效导致的缺素表现和环境诱发黄化。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_03",
+            "abstract_point": "多半是因为断网了",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "general_care_principle"
+            ],
+            "candidate_questions_for_review": [
+              "这个经验适用于哪些植物、环境和生长阶段？"
+            ],
+            "review_focus": [
+              "核对该要点是否足够具体，是否需要人工补充适用植物、季节或环境前提。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_04",
+            "abstract_point": "多半是因为断网了 - 抖音",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "general_care_principle"
+            ],
+            "candidate_questions_for_review": [
+              "这个经验适用于哪些植物、环境和生长阶段？"
+            ],
+            "review_focus": [
+              "核对该要点是否足够具体，是否需要人工补充适用植物、季节或环境前提。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_05",
+            "abstract_point": "植物缺素的原因在于根系问题，而非仅仅是缺乏某种元素",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "root_disturbance_risk",
+              "root_health",
+              "nutrient_deficiency"
+            ],
+            "candidate_questions_for_review": [
+              "近期是否翻动盆土、检查根系、换盆或拔出植株观察？",
+              "根系是否有腐烂、干枯、闷根、伤根或长期不长新根的迹象？",
+              "叶片缺素表现是老叶先出现、新叶先出现，还是全株同步变淡？"
+            ],
+            "review_focus": [
+              "核对是否应加入避免频繁翻土、拔根、查根的反面提醒。",
+              "核对缺素是否应先排查根系吸收和运输问题。",
+              "核对是否能区分真实缺肥、根系失效导致的缺素表现和环境诱发黄化。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_06",
+            "abstract_point": "要解决缺素问题，需关注根系健康、盆面是否有积盐以及土壤pH值",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "root_disturbance_risk",
+              "root_health",
+              "nutrient_deficiency",
+              "substrate_chemistry"
+            ],
+            "candidate_questions_for_review": [
+              "近期是否翻动盆土、检查根系、换盆或拔出植株观察？",
+              "根系是否有腐烂、干枯、闷根、伤根或长期不长新根的迹象？",
+              "叶片缺素表现是老叶先出现、新叶先出现，还是全株同步变淡？",
+              "盆面是否有白色盐渍，是否长期使用硬水或高频施肥？"
+            ],
+            "review_focus": [
+              "核对是否应加入避免频繁翻土、拔根、查根的反面提醒。",
+              "核对缺素是否应先排查根系吸收和运输问题。",
+              "核对是否能区分真实缺肥、根系失效导致的缺素表现和环境诱发黄化。",
+              "核对盆面积盐、基质 pH 和水肥累积是否应进入问诊维度。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_07",
+            "abstract_point": "先养好根系，避免过度施肥，才能从根本上解决植物缺素问题",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "root_disturbance_risk",
+              "root_health",
+              "nutrient_deficiency",
+              "fertilization_risk",
+              "over_intervention"
+            ],
+            "candidate_questions_for_review": [
+              "近期是否翻动盆土、检查根系、换盆或拔出植株观察？",
+              "根系是否有腐烂、干枯、闷根、伤根或长期不长新根的迹象？",
+              "叶片缺素表现是老叶先出现、新叶先出现，还是全株同步变淡？",
+              "最近是否施肥，肥料类型、浓度和频率分别是什么？",
+              "你是否每天频繁检查或调整植物状态？"
+            ],
+            "review_focus": [
+              "核对是否应加入避免频繁翻土、拔根、查根的反面提醒。",
+              "核对缺素是否应先排查根系吸收和运输问题。",
+              "核对是否能区分真实缺肥、根系失效导致的缺素表现和环境诱发黄化。",
+              "核对是否需要提示避免看到缺素就直接重肥补肥。",
+              "核对是否表达为减少不必要干预，而不是放任不管。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_08",
+            "abstract_point": "引言",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "general_care_principle"
+            ],
+            "candidate_questions_for_review": [
+              "这个经验适用于哪些植物、环境和生长阶段？"
+            ],
+            "review_focus": [
+              "核对该要点是否足够具体，是否需要人工补充适用植物、季节或环境前提。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_09",
+            "abstract_point": "植物缺素的原因",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "nutrient_deficiency"
+            ],
+            "candidate_questions_for_review": [
+              "叶片缺素表现是老叶先出现、新叶先出现，还是全株同步变淡？"
+            ],
+            "review_focus": [
+              "核对是否能区分真实缺肥、根系失效导致的缺素表现和环境诱发黄化。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_10",
+            "abstract_point": "植物缺素是因为根系问题，根系无法传递元素到叶片，导致叶片断网",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "root_disturbance_risk",
+              "root_health",
+              "nutrient_deficiency"
+            ],
+            "candidate_questions_for_review": [
+              "近期是否翻动盆土、检查根系、换盆或拔出植株观察？",
+              "根系是否有腐烂、干枯、闷根、伤根或长期不长新根的迹象？",
+              "叶片缺素表现是老叶先出现、新叶先出现，还是全株同步变淡？"
+            ],
+            "review_focus": [
+              "核对是否应加入避免频繁翻土、拔根、查根的反面提醒。",
+              "核对缺素是否应先排查根系吸收和运输问题。",
+              "核对是否能区分真实缺肥、根系失效导致的缺素表现和环境诱发黄化。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_11",
+            "abstract_point": "解决方法",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "general_care_principle"
+            ],
+            "candidate_questions_for_review": [
+              "这个经验适用于哪些植物、环境和生长阶段？"
+            ],
+            "review_focus": [
+              "核对该要点是否足够具体，是否需要人工补充适用植物、季节或环境前提。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          },
+          {
+            "card_id": "detail_12",
+            "abstract_point": "解决植物缺素问题需关注根系、盆面积盐和pH值，先养好根系，避免使用过多肥料",
+            "source_channels": [
+              "url_visible_text"
+            ],
+            "dimensions": [
+              "root_disturbance_risk",
+              "root_health",
+              "nutrient_deficiency",
+              "substrate_chemistry",
+              "fertilization_risk"
+            ],
+            "candidate_questions_for_review": [
+              "近期是否翻动盆土、检查根系、换盆或拔出植株观察？",
+              "根系是否有腐烂、干枯、闷根、伤根或长期不长新根的迹象？",
+              "叶片缺素表现是老叶先出现、新叶先出现，还是全株同步变淡？",
+              "盆面是否有白色盐渍，是否长期使用硬水或高频施肥？",
+              "最近是否施肥，肥料类型、浓度和频率分别是什么？"
+            ],
+            "review_focus": [
+              "核对是否应加入避免频繁翻土、拔根、查根的反面提醒。",
+              "核对缺素是否应先排查根系吸收和运输问题。",
+              "核对是否能区分真实缺肥、根系失效导致的缺素表现和环境诱发黄化。",
+              "核对盆面积盐、基质 pH 和水肥累积是否应进入问诊维度。",
+              "核对是否需要提示避免看到缺素就直接重肥补肥。"
+            ],
+            "risk_notes": [
+              "这是候选知识，需要人工审核后才能入库。",
+              "不得直接复述为原文，也不得替代具体诊断结论。"
+            ]
+          }
+        ],
+        "timeline_for_review": [
+          {
+            "time_label": "00:01",
+            "abstract_point": "引言"
+          },
+          {
+            "time_label": "00:15",
+            "abstract_point": "植物缺素的原因：植物缺素是因为根系问题，根系无法传递元素到叶片，导致叶片断网"
+          },
+          {
+            "time_label": "01:16",
+            "abstract_point": "解决方法：解决植物缺素问题需关注根系、盆面积盐和pH值，先养好根系，避免使用过多肥料"
+          }
+        ],
+        "coverage_hints": {
+          "has_asr": false,
+          "has_ocr": false,
+          "has_manual_text": false,
+          "has_url_visible_text": true,
+          "likely_undercovered": false,
+          "note": "已形成多条可审核抽象要点，仍需人工确认后入库。"
+        }
+      },
+      "llm_status": "not_configured_or_failed",
+      "review_status": "pending",
+      "review_notes": "",
+      "extraction_input_digest": "6fc411e4c7094a96",
+      "source_fragment_count": 21,
+      "created_at": "2026-05-06T13:35:13.966Z",
+      "updated_at": "2026-05-06T13:35:13.966Z",
+      "audit_summary": [
+        {
+          "event_type": "url_accessibility_attempted",
+          "event_detail": "visible_text_digest=cde1e83601c78d05"
+        },
+        {
+          "event_type": "llm_skipped",
+          "event_detail": "VIDEO_KNOWLEDGE_LLM_COMMAND_not_configured"
+        },
+        {
+          "event_type": "task_processed",
+          "event_detail": "source_fragment_count=21"
+        }
+      ]
+    }
+  ],
+  "audit_logs": [
+    {
+      "id": "audit_7008baac07e8bd07",
+      "task_id": "task_3e4c24cd5d27c4a5",
+      "event_type": "url_accessibility_attempted",
+      "event_detail": "visible_text_digest=cde1e83601c78d05",
+      "created_at": "2026-05-06T13:35:13.966Z"
+    },
+    {
+      "id": "audit_d1bb2bc62b68fef4",
+      "task_id": "task_3e4c24cd5d27c4a5",
+      "event_type": "llm_skipped",
+      "event_detail": "VIDEO_KNOWLEDGE_LLM_COMMAND_not_configured",
+      "created_at": "2026-05-06T13:35:13.966Z"
+    },
+    {
+      "id": "audit_c70ab5c398fd2eac",
+      "task_id": "task_3e4c24cd5d27c4a5",
+      "event_type": "task_processed",
+      "event_detail": "source_fragment_count=21",
+      "created_at": "2026-05-06T13:35:13.966Z"
+    }
+  ]
+}

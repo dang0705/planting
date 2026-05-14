@@ -54,7 +54,7 @@ function parseEventBody(event) {
   if (typeof event === 'string') {
     try {
       return JSON.parse(event)
-    } catch (error) {
+    } catch {
       return {}
     }
   }
@@ -62,7 +62,7 @@ function parseEventBody(event) {
   if (typeof event.body === 'string') {
     try {
       return JSON.parse(event.body)
-    } catch (error) {
+    } catch {
       return {}
     }
   }
@@ -166,4 +166,3 @@ module.exports = {
   resolveHttpAction,
   resolveHttpUserInfo
 }
-

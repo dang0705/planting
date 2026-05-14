@@ -250,7 +250,9 @@ function buildNonProblematicRoundResult({
       displayName: rule?.finalDisplayName || '暂未见明显问题',
       summary: rule?.summary || '当前暂未见明显问题，建议继续观察。',
       severity: 'low',
-      urgency: 'low'
+      urgency: 'low',
+      nonProblematicType: rule?.key || '',
+      nonProblematicLabel: rule?.label || ''
     },
     followUpRequired: false,
     followUps: [],

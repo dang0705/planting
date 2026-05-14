@@ -1,0 +1,143 @@
+{
+  "run_id": "run_b2d812a1d98ef521",
+  "created_at": "2026-05-06T08:29:55.923Z",
+  "queue_type": "manual_review",
+  "retention_policy": {
+    "saves_original_video": false,
+    "saves_original_audio": false,
+    "saves_full_transcript": false,
+    "saves_comments": false,
+    "saves_account_profile": false,
+    "saves_complete_subtitles": false
+  },
+  "prohibited_actions": [
+    "reverse_engineer_douyin_api",
+    "handle_captcha",
+    "use_proxy_pool",
+    "crawl_comments",
+    "crawl_account_homepage",
+    "save_full_subtitles"
+  ],
+  "tasks": [
+    {
+      "id": "task_d0d84f2f0c2f74ec",
+      "input_type": "local_video",
+      "source_url": "",
+      "local_file_path": "tmp/video-knowledge-smoke/smoke.mp4",
+      "text_file_path": "",
+      "source_platform": "manual",
+      "manual_topic": "植物养护",
+      "manual_note": "",
+      "manual_text_digest": "",
+      "status": "processed",
+      "risk_level": "low",
+      "error_message": "",
+      "validation": {
+        "ok": true
+      },
+      "created_at": "2026-05-06T08:29:54.890Z",
+      "updated_at": "2026-05-06T08:29:55.923Z",
+      "processed_at": "2026-05-06T08:29:55.923Z"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "candidate_5d47550bb638d7b8",
+      "task_id": "task_d0d84f2f0c2f74ec",
+      "input_type": "local_video",
+      "source_url": "",
+      "source_platform": "manual",
+      "manual_topic": "植物养护",
+      "knowledge_candidate": {
+        "plant_names": [],
+        "problem_clusters": [
+          "过度浇水"
+        ],
+        "observable_evidence": [
+          "本地视频 smoke 片段"
+        ],
+        "possible_causes": [],
+        "candidate_questions": [],
+        "candidate_actions": [
+          "减少过度浇水"
+        ],
+        "contraindications": [],
+        "uncertainty_points": [
+          "本地 smoke 输出,需人工审核"
+        ],
+        "risk_flags": [
+          "pending_human_review",
+          "no_original_video_saved",
+          "no_full_transcript_saved",
+          "local_smoke"
+        ]
+      },
+      "llm_status": "completed",
+      "review_status": "pending",
+      "review_notes": "",
+      "extraction_input_digest": "7aa76279cdab9b32",
+      "source_fragment_count": 2,
+      "created_at": "2026-05-06T08:29:55.923Z",
+      "updated_at": "2026-05-06T08:29:55.923Z",
+      "audit_summary": [
+        {
+          "event_type": "local_audio_extracted",
+          "event_detail": "temporary_audio_digest=569c10438d4b1505"
+        },
+        {
+          "event_type": "asr_completed",
+          "event_detail": "stdout_digest=798655bd636e6492"
+        },
+        {
+          "event_type": "ocr_completed",
+          "event_detail": "frame_count=4; output_digest=e3b0c44298fc1c14"
+        },
+        {
+          "event_type": "llm_completed",
+          "event_detail": "output_digest=af3bed5e738af671"
+        },
+        {
+          "event_type": "task_processed",
+          "event_detail": "source_fragment_count=2"
+        }
+      ]
+    }
+  ],
+  "audit_logs": [
+    {
+      "id": "audit_0c5ccd3b551ac87e",
+      "task_id": "task_d0d84f2f0c2f74ec",
+      "event_type": "local_audio_extracted",
+      "event_detail": "temporary_audio_digest=569c10438d4b1505",
+      "created_at": "2026-05-06T08:29:54.926Z"
+    },
+    {
+      "id": "audit_ec1d35ad5179b9e4",
+      "task_id": "task_d0d84f2f0c2f74ec",
+      "event_type": "asr_completed",
+      "event_detail": "stdout_digest=798655bd636e6492",
+      "created_at": "2026-05-06T08:29:55.480Z"
+    },
+    {
+      "id": "audit_9dd7ddc7de8b6249",
+      "task_id": "task_d0d84f2f0c2f74ec",
+      "event_type": "ocr_completed",
+      "event_detail": "frame_count=4; output_digest=e3b0c44298fc1c14",
+      "created_at": "2026-05-06T08:29:55.890Z"
+    },
+    {
+      "id": "audit_89994ad705673e69",
+      "task_id": "task_d0d84f2f0c2f74ec",
+      "event_type": "llm_completed",
+      "event_detail": "output_digest=af3bed5e738af671",
+      "created_at": "2026-05-06T08:29:55.923Z"
+    },
+    {
+      "id": "audit_a125da323bcbf0ee",
+      "task_id": "task_d0d84f2f0c2f74ec",
+      "event_type": "task_processed",
+      "event_detail": "source_fragment_count=2",
+      "created_at": "2026-05-06T08:29:55.923Z"
+    }
+  ]
+}

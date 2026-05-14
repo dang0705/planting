@@ -3,7 +3,7 @@
 const { clamp01 } = require('../repositories/sql')
 const { evidence: evidenceConfig } = require('../constants/scoring')
 const {
-  QUESTION_TARGET_DIMENSIONS,
+  QUESTION_TARGET_DIMENSIONS: _QUESTION_TARGET_DIMENSIONS,
   normalizeQuestionTargetDimension,
   inferQuestionTargetDimension,
   isGenericObservedProbeDirectEvidenceDimension
@@ -12,7 +12,7 @@ const {
   parseSyntheticObservedProbeQuestionKey
 } = require('../utils/synthetic-follow-up')
 const {
-  projectObservedSymptomsFromEvidence,
+  projectObservedSymptomsFromEvidence: _projectObservedSymptomsFromEvidence,
   projectVisualObservedSymptomsFromEvidence
 } = require('./observed-evidence')
 

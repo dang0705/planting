@@ -1,0 +1,114 @@
+{
+  "run_id": "run_fc1680ee889e5b1e",
+  "created_at": "2026-05-06T07:50:15.980Z",
+  "queue_type": "manual_review",
+  "retention_policy": {
+    "saves_original_video": false,
+    "saves_original_audio": false,
+    "saves_full_transcript": false,
+    "saves_comments": false,
+    "saves_account_profile": false,
+    "saves_complete_subtitles": false
+  },
+  "prohibited_actions": [
+    "reverse_engineer_douyin_api",
+    "handle_captcha",
+    "use_proxy_pool",
+    "crawl_comments",
+    "crawl_account_homepage",
+    "save_full_subtitles"
+  ],
+  "tasks": [
+    {
+      "id": "task_a403f19396c8511a",
+      "input_type": "manual_text",
+      "source_url": "",
+      "local_file_path": "",
+      "text_file_path": "",
+      "source_platform": "manual",
+      "manual_topic": "植物养护",
+      "manual_note": "",
+      "manual_text_digest": "dc3a6cfc66ebec86",
+      "status": "processed",
+      "risk_level": "low",
+      "error_message": "",
+      "validation": {
+        "ok": true
+      },
+      "created_at": "2026-05-06T07:50:15.978Z",
+      "updated_at": "2026-05-06T07:50:15.979Z",
+      "processed_at": "2026-05-06T07:50:15.979Z"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "candidate_ed5e4aea7cf83151",
+      "task_id": "task_a403f19396c8511a",
+      "input_type": "manual_text",
+      "source_url": "",
+      "source_platform": "manual",
+      "manual_topic": "植物养护",
+      "knowledge_candidate": {
+        "plant_names": [],
+        "problem_clusters": [],
+        "observable_evidence": [],
+        "possible_causes": [],
+        "candidate_questions": [],
+        "candidate_actions": [],
+        "contraindications": [],
+        "uncertainty_points": [
+          "当前结果只基于临时短片段，尚未经过人工审核。"
+        ],
+        "risk_flags": [
+          "pending_human_review",
+          "no_original_video_saved",
+          "no_full_transcript_saved"
+        ]
+      },
+      "llm_status": "not_configured_or_failed",
+      "review_status": "pending",
+      "review_notes": "",
+      "extraction_input_digest": "df4f6a56fd9a65b1",
+      "source_fragment_count": 4,
+      "created_at": "2026-05-06T07:50:15.979Z",
+      "updated_at": "2026-05-06T07:50:15.979Z",
+      "audit_summary": [
+        {
+          "event_type": "manual_text_loaded",
+          "event_detail": "input_digest=dc3a6cfc66ebec86"
+        },
+        {
+          "event_type": "llm_skipped",
+          "event_detail": "VIDEO_KNOWLEDGE_LLM_COMMAND_not_configured"
+        },
+        {
+          "event_type": "task_processed",
+          "event_detail": "source_fragment_count=4"
+        }
+      ]
+    }
+  ],
+  "audit_logs": [
+    {
+      "id": "audit_2771708e1763e9a9",
+      "task_id": "task_a403f19396c8511a",
+      "event_type": "manual_text_loaded",
+      "event_detail": "input_digest=dc3a6cfc66ebec86",
+      "created_at": "2026-05-06T07:50:15.979Z"
+    },
+    {
+      "id": "audit_0aefbaf7d700d5fd",
+      "task_id": "task_a403f19396c8511a",
+      "event_type": "llm_skipped",
+      "event_detail": "VIDEO_KNOWLEDGE_LLM_COMMAND_not_configured",
+      "created_at": "2026-05-06T07:50:15.979Z"
+    },
+    {
+      "id": "audit_35d874a5e0f3e384",
+      "task_id": "task_a403f19396c8511a",
+      "event_type": "task_processed",
+      "event_detail": "source_fragment_count=4",
+      "created_at": "2026-05-06T07:50:15.979Z"
+    }
+  ]
+}

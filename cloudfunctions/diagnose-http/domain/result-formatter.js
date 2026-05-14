@@ -2,7 +2,7 @@
 
 const { ranking: rankingConfig } = require('../constants/scoring')
 const { buildRuntimeArtifacts } = require('./runtime-artifacts')
-const { buildCareGuidance } = require('../utils/care-baseline-guidance')
+const { resolveRouteOutcomePayload } = require('./outcome-action-resolver')
 const {
   toProblemId,
   toQuestionId,
@@ -267,7 +267,7 @@ function resolveOutcomeType({
   if (followUpRequired) {return null}
 
   const lockedOutcomeType = normalizeText(stopDecision?.outcomeLocked || '', '')
-  if (lockedOutcomeType === 'uncertain' && lowConfidence?.uncertainLegalityReason) {
+  if (lockedOutcomeType === 'uncertain') {
     return 'uncertain'
   }
   if (lockedOutcomeType === 'problematic' || lockedOutcomeType === 'non_problematic') {
@@ -305,6 +305,7 @@ function formatDiagnosisResponse({
   followUps = [],
   problems = [],
   explanations = [],
+  routeOutcomes = [],
   causality = [],
   plantContext = {},
   plantId,
@@ -313,7 +314,11 @@ function formatDiagnosisResponse({
   symptomClassRuntime = null,
   highSpecificityFastConvergence = null,
   stopDecision = null,
-  preferredRoutePrimaryAction = ''
+  preferredRoutePrimaryAction = '',
+  routeDecision = null,
+  routeOutputEnabled = true,
+  actionProfiles = [],
+  hideRankings = false
 }) {
   const problemMap = new Map((problems || []).map(item => [item.problemKey, item]))
   const explanationMap = new Map((explanations || []).map(item => [item.problemKey, item]))
@@ -375,12 +380,35 @@ function formatDiagnosisResponse({
   const explanationPayload = outcomeType === 'uncertain'
     ? buildUncertainExplanation(lowConfidence, symptomClassRuntime)
     : buildExplanation(primaryProblem, primaryExplanation)
-  const careGuidance = buildCareGuidance({
+  const routeOutcomePayload = resolveRouteOutcomePayload({
+    routeDecision: routeOutputEnabled ? routeDecision : null,
+    rankings,
+    problems,
+    explanations,
+    routeOutcomes,
+    actionProfiles,
     plantContext,
     observedEvidenceSet,
-    primaryProblemKey: primary?.problemKey || '',
-    outcomeType
+    outcomeType,
+    followUpRequired
   })
+  const {
+    authoritativeRouteDecision,
+    primaryOutcome: routePrimaryOutcome,
+    secondaryOutcomes: routeSecondaryOutcomes,
+    visibleOutcomes: routeVisibleOutcomes,
+    outcomeMode: rawRouteOutcomeMode,
+    routeDecisionCause: rawRouteDecisionCause,
+    routeSafeSummary,
+    careGuidance,
+    actionAdvice: rawActionAdvice
+  } = routeOutcomePayload
+  const primaryOutcome = routeOutputEnabled ? routePrimaryOutcome : null
+  const secondaryOutcomes = routeOutputEnabled ? routeSecondaryOutcomes : []
+  const visibleOutcomes = routeOutputEnabled ? routeVisibleOutcomes : []
+  const outcomeMode = routeOutputEnabled ? rawRouteOutcomeMode : ''
+  const routeDecisionCause = routeOutputEnabled ? rawRouteDecisionCause : null
+  const actionAdvice = routeOutputEnabled ? rawActionAdvice : null
   if (careGuidance.environmentDeviationHints.length) {
     explanationPayload.whatToCheckNext = uniqList([
       explanationPayload.whatToCheckNext,
@@ -410,14 +438,15 @@ function formatDiagnosisResponse({
           urgency: mapUrgency(primaryProblem)
         }
       : null
+  const lowConfidenceAdviceSteps = outcomeType === 'uncertain' && Array.isArray(lowConfidence?.advice)
+    ? lowConfidence.advice.map((text, index) => ({
+        stepId: `low_conf_${index + 1}`,
+        text
+      }))
+    : []
   const nextSteps = outcomeType === 'uncertain'
     ? [
-        ...(Array.isArray(lowConfidence?.advice)
-          ? lowConfidence.advice.map((text, index) => ({
-              stepId: `low_conf_${index + 1}`,
-              text
-            }))
-          : []),
+        ...lowConfidenceAdviceSteps,
         ...careGuidance.nextSteps,
         {
           stepId: 'step_1',
@@ -427,12 +456,6 @@ function formatDiagnosisResponse({
         }
       ]
     : [
-        ...(Array.isArray(lowConfidence?.advice)
-          ? lowConfidence.advice.map((text, index) => ({
-              stepId: `low_conf_${index + 1}`,
-              text
-            }))
-          : []),
         ...careGuidance.nextSteps,
         {
           stepId: 'step_1',
@@ -457,29 +480,80 @@ function formatDiagnosisResponse({
         urgency: mapUrgency(primaryProblem)
       }
 
+  const routeBackedTopProblemPayload =
+    shouldSuppressProblemLikePresentation || !primaryOutcome || outcomeType !== 'problematic'
+      ? null
+      : {
+          problemId: toProblemId(primaryOutcome.problemKey),
+          problemKey: primaryOutcome.problemKey,
+          displayName: primaryOutcome.displayNameCn,
+          summary: primaryOutcome.summary || routeSafeSummary,
+          severity: primaryOutcome.severity || mapSeverity(primaryProblem),
+          urgency: primaryOutcome.urgency || mapUrgency(primaryProblem)
+        }
+
+  const routeBackedFinalResultPayload =
+    primaryOutcome &&
+    !followUpRequired &&
+    !shouldSuppressProblemLikePresentation &&
+    outcomeType === 'problematic'
+      ? {
+          resultId,
+          problemId: toProblemId(primaryOutcome.problemKey),
+          displayName: primaryOutcome.displayNameCn,
+          summary: primaryOutcome.summary || routeSafeSummary,
+          severity: primaryOutcome.severity || mapSeverity(primaryProblem),
+          urgency: primaryOutcome.urgency || mapUrgency(primaryProblem),
+          primaryOutcome,
+          secondaryOutcomes,
+          visibleOutcomes,
+          outcomeMode,
+          actionAdvice
+        }
+      : primaryOutcome &&
+        !followUpRequired &&
+        outcomeType === 'non_problematic'
+        ? {
+            resultId,
+            problemId: '',
+            displayName: primaryOutcome.displayNameCn,
+            summary: primaryOutcome.summary || routeSafeSummary,
+            severity: 'low',
+            urgency: 'low',
+            nonProblematicType: primaryOutcome.outcomeKey,
+            primaryOutcome,
+            secondaryOutcomes,
+            visibleOutcomes,
+            outcomeMode,
+            actionAdvice
+          }
+      : finalResultPayload
+
   const response = {
     diagnosisSessionId: sessionId,
     roundId: `round_${round}`,
     stage,
     observedSymptoms,
-    rankings: rankings.map(item => ({
-      problemId: toProblemId(item.problemKey),
-      problemKey: item.problemKey,
-      problemCn: item.problemCn,
-      role: problemMap.get(item.problemKey)?.problemRole || '',
-      visualEvidence: roundValue(item.visualEvidence),
-      questionEvidence: roundValue(item.questionEvidence),
-      totalEvidence: roundValue(item.totalEvidence),
-      penalty: roundValue(item.penalty),
-      hostCompatibility: roundValue(item.hostCompatibility),
-      genusCompatibility: roundValue(item.genusCompatibility),
-      evidenceCount: Number(item.evidenceCount || 0),
-      finalScore: roundValue(item.finalScore),
-      baseScore: roundValue(item.baseScore),
-      rankNo: item.rankNo
-    })),
-    topProblem: topProblemPayload,
-    finalResult: finalResultPayload,
+    rankings: hideRankings
+      ? []
+      : rankings.map(item => ({
+        problemId: toProblemId(item.problemKey),
+        problemKey: item.problemKey,
+        problemCn: item.problemCn,
+        role: problemMap.get(item.problemKey)?.problemRole || '',
+        visualEvidence: roundValue(item.visualEvidence),
+        questionEvidence: roundValue(item.questionEvidence),
+        totalEvidence: roundValue(item.totalEvidence),
+        penalty: roundValue(item.penalty),
+        hostCompatibility: roundValue(item.hostCompatibility),
+        genusCompatibility: roundValue(item.genusCompatibility),
+        evidenceCount: Number(item.evidenceCount || 0),
+        finalScore: roundValue(item.finalScore),
+        baseScore: roundValue(item.baseScore),
+        rankNo: item.rankNo
+      })),
+    topProblem: authoritativeRouteDecision ? routeBackedTopProblemPayload : topProblemPayload,
+    finalResult: authoritativeRouteDecision ? routeBackedFinalResultPayload : finalResultPayload,
     followUpRequired: Boolean(followUpRequired && followUps.length),
     followUps: followUps.map(question => {
       const questionRole = normalizeQuestionRole(
@@ -532,6 +606,12 @@ function formatDiagnosisResponse({
     highSpecificityFastConvergence: highSpecificityFastConvergence?.applied
       ? highSpecificityFastConvergence
       : null,
+    actionAdvice,
+    primaryOutcome,
+    secondaryOutcomes,
+    visibleOutcomes,
+    outcomeMode,
+    routeDecisionCause,
     outcomeType,
     outcomeLocked: normalizeText(stopDecision?.outcomeLocked || '', ''),
     uncertainLegalityReason: normalizeText(

@@ -87,7 +87,7 @@ const viewModel = computed(() => {
     return {
       plantName: localDiagnosis?.plantName || '植物',
       stage: remoteResult.value?.stage || 'final',
-      mainIssue: remoteResult.value?.finalResult?.displayName || '待进一步确认',
+      mainIssue: remoteResult.value?.finalResult?.displayNameCn || remoteResult.value?.finalResult?.displayName || '待进一步确认',
       summary:
         remoteResult.value?.finalResult?.summary ||
         remoteResult.value?.explanation?.whatToCheckNext ||
@@ -103,7 +103,7 @@ const viewModel = computed(() => {
   return {
     plantName: diagnosis?.plantName || '植物',
     stage: diagnosis?.stage || 'unknown',
-    mainIssue: diagnosis?.mainIssueText || diagnosis?.finalResult?.displayName || '待进一步确认',
+    mainIssue: diagnosis?.mainIssueText || diagnosis?.finalResult?.displayNameCn || diagnosis?.finalResult?.displayName || '待进一步确认',
     summary: diagnosis?.summaryText || diagnosis?.finalResult?.summary || ''
   }
 })

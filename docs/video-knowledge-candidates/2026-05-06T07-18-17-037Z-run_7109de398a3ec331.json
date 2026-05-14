@@ -1,0 +1,75 @@
+{
+  "run_id": "run_7109de398a3ec331",
+  "created_at": "2026-05-06T07:18:17.037Z",
+  "tasks": [
+    {
+      "id": "task_854d7ff34426b20e",
+      "source_url": "https://www.douyin.com/video/7634864243489951345",
+      "source_platform": "douyin",
+      "manual_topic": "植物养护",
+      "manual_note": "",
+      "status": "processed",
+      "risk_level": "low",
+      "error_message": "",
+      "validation": {
+        "ok": true,
+        "url": "https://www.douyin.com/video/7634864243489951345"
+      },
+      "created_at": "2026-05-06T07:18:07.900Z",
+      "updated_at": "2026-05-06T07:18:17.009Z",
+      "processed_at": "2026-05-06T07:18:17.009Z"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "candidate_3934160547c681c7",
+      "task_id": "task_854d7ff34426b20e",
+      "source_url": "https://www.douyin.com/video/7634864243489951345",
+      "source_platform": "douyin",
+      "manual_topic": "植物养护",
+      "plant_names": [],
+      "problem_clusters": [],
+      "observable_evidence": [],
+      "possible_causes": [],
+      "candidate_questions": [],
+      "candidate_actions": [],
+      "contraindications": [],
+      "uncertainty_points": [
+        "当前结果只基于临时解析片段，尚未经过人工审核。"
+      ],
+      "risk_flags": [
+        "pending_human_review",
+        "source_is_public_video",
+        "no_full_transcript_saved"
+      ],
+      "review_status": "pending",
+      "review_notes": "",
+      "extraction_input_digest": "a883999b5006eb59",
+      "retained_snippet_count": 11,
+      "retained_snippets_for_review": [
+        "植物养护",
+        "别把植物当孩子，要当室友",
+        "别把植物当孩子，要当室友 #植物养护#庭院养护#种菜 #施肥#浇水",
+        "成功的植物养护者将植物视为室友，尊重它们的需求，不过分干预",
+        "他们不过分关注湿度、温度，不频繁检查根系，而是利用自然的光温水来调整植物状态",
+        "这种尊重和适度的管理方式有助于植物健康生长",
+        "00:01 引言",
+        "00:21 不查岗：不过分关注植物的湿度、温度，不频繁扒拉土看根，避免增加彼此焦虑",
+        "00:38 不包办：用自然的光温水调整植物状态，避免过度干预",
+        "01:05 尊重隐私：尊重植物的隐私，不要频繁拔根检查，保持适当距离",
+        "别把植物当孩子，要当室友 #植物养护#庭院养护#种菜 #施肥#浇水 - 抖音"
+      ],
+      "created_at": "2026-05-06T07:18:17.008Z",
+      "updated_at": "2026-05-06T07:18:17.008Z"
+    }
+  ],
+  "audit_logs": [
+    {
+      "id": "audit_502c618bde8a7a69",
+      "task_id": "task_854d7ff34426b20e",
+      "event_type": "task_processed",
+      "event_detail": "retained_snippet_count=11",
+      "created_at": "2026-05-06T07:18:17.009Z"
+    }
+  ]
+}

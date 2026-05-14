@@ -11,6 +11,7 @@ const {
   inferQuestionEffectMode
 } = require('../utils/question-target-dimension')
 const { getQuestionsByKeys } = require('../repositories/question-repository')
+const { getSymptomsByKeys } = require('../repositories/symptom-repository')
 const {
   insertFollowUpQuestionsRows,
   listFollowUpRows,
@@ -100,10 +101,34 @@ async function appendFollowUpQuestions(sessionId, round, questions = [], { quest
   const list = filterQuestionsByQuestionQueue(questions, questionQueue, {
     requireQueueAnchor: true
   })
+  const rawTargetSymptomKeys = Array.from(
+    new Set(
+      list
+        .map(item => String(item?.targetSymptomKey || '').trim())
+        .filter(Boolean)
+    )
+  )
   const questionMetaMap = new Map(
     (await getQuestionsByKeys(list.map(item => item?.questionKey)))
       .map(item => [String(item?.questionKey || '').trim(), item])
       .filter(([questionKey]) => Boolean(questionKey))
+  )
+  const questionMetaTargetSymptomKeys = Array.from(
+    new Set(
+      Array.from(questionMetaMap.values())
+        .map(item => String(item?.targetSymptomKey || '').trim())
+        .filter(Boolean)
+    )
+  )
+  const validPersistedTargetSymptomKeySet = new Set(
+    (
+      await getSymptomsByKeys([
+        ...rawTargetSymptomKeys,
+        ...questionMetaTargetSymptomKeys
+      ])
+    )
+      .map(item => String(item?.symptomKey || '').trim())
+      .filter(Boolean)
   )
   await insertFollowUpQuestionsRows(
     sessionId,
@@ -111,6 +136,9 @@ async function appendFollowUpQuestions(sessionId, round, questions = [], { quest
       const questionKey = String(item?.questionKey || '').trim()
       const questionMeta = questionMetaMap.get(questionKey) || {}
       const targetSymptomKey = String(item?.targetSymptomKey || questionMeta?.targetSymptomKey || '').trim()
+      const persistedTargetSymptomKey = validPersistedTargetSymptomKeySet.has(targetSymptomKey)
+        ? targetSymptomKey
+        : null
       const targetDimension = normalizeQuestionTargetDimension(
         item?.targetDimension || questionMeta?.targetDimension || '',
         QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
@@ -129,7 +157,7 @@ async function appendFollowUpQuestions(sessionId, round, questions = [], { quest
       )
       return {
         questionOrder: Number(index + 1),
-        questionKey,
+        questionKey: persistedTargetSymptomKey || questionKey,
         questionText: item.text || item.questionText || '',
         rationale: JSON.stringify({
           qk: questionKey,

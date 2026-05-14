@@ -24,6 +24,12 @@ function resolveOutputConservatism(response = {}) {
 function resolveConclusionStatus(response = {}, stopState = null) {
   if (response?.followUpRequired) {return 'pending_follow_up'}
   if (stopState?.isStopped !== 1) {return 'pending_stop_judgment'}
+  if (normalizeText(stopState?.stopReason) === 'route_visible_outcomes_ready') {
+    return 'route_visible_outcomes_ready'
+  }
+  if (normalizeText(stopState?.stopReason) === 'route_uncertain_with_candidates') {
+    return 'route_uncertain_with_candidates'
+  }
 
   const outcomeType = normalizeText(response?.outcomeType)
   if (outcomeType === 'problematic') {return 'problematic_ready'}

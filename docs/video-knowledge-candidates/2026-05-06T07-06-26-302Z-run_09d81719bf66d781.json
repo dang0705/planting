@@ -1,0 +1,63 @@
+{
+  "run_id": "run_09d81719bf66d781",
+  "created_at": "2026-05-06T07:06:26.302Z",
+  "tasks": [
+    {
+      "id": "task_0ecfee076f983187",
+      "source_url": "https://www.douyin.com/video/7634864243489951345",
+      "source_platform": "douyin",
+      "manual_topic": "",
+      "manual_note": "",
+      "status": "processed",
+      "risk_level": "low",
+      "error_message": "",
+      "validation": {
+        "ok": true,
+        "url": "https://www.douyin.com/video/7634864243489951345"
+      },
+      "created_at": "2026-05-06T07:06:26.301Z",
+      "updated_at": "2026-05-06T07:06:26.302Z",
+      "processed_at": "2026-05-06T07:06:26.302Z"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "candidate_22a1471e8827374a",
+      "task_id": "task_0ecfee076f983187",
+      "source_url": "https://www.douyin.com/video/7634864243489951345",
+      "source_platform": "douyin",
+      "manual_topic": "",
+      "plant_names": [],
+      "problem_clusters": [],
+      "observable_evidence": [],
+      "possible_causes": [],
+      "candidate_questions": [],
+      "candidate_actions": [],
+      "contraindications": [],
+      "uncertainty_points": [
+        "未获得足够可解析片段，需要人工判断是否重试或废弃。"
+      ],
+      "risk_flags": [
+        "pending_human_review",
+        "source_is_public_video",
+        "no_full_transcript_saved"
+      ],
+      "review_status": "pending",
+      "review_notes": "",
+      "extraction_input_digest": "e3b0c44298fc1c14",
+      "retained_snippet_count": 0,
+      "retained_snippets_for_review": [],
+      "created_at": "2026-05-06T07:06:26.302Z",
+      "updated_at": "2026-05-06T07:06:26.302Z"
+    }
+  ],
+  "audit_logs": [
+    {
+      "id": "audit_c73e5c46dd9fea3d",
+      "task_id": "task_0ecfee076f983187",
+      "event_type": "task_processed",
+      "event_detail": "retained_snippet_count=0",
+      "created_at": "2026-05-06T07:06:26.302Z"
+    }
+  ]
+}

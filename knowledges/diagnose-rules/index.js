@@ -103,7 +103,7 @@ export function diagnose(userSymptoms, userConditions) {
   return candidates.slice(0, 3)
 }
 
-const SYMPTOMS = {
+const _SYMPTOMS = {
   yellow_leaves: '叶片发黄',
   brown_tips: '叶尖发褐',
   leaf_spots: '叶片斑点',
@@ -118,7 +118,7 @@ const SYMPTOMS = {
   dropping_leaves: '掉叶'
 }
 
-const ENVIRONMENTAL_QUESTIONS = {
+const _ENVIRONMENTAL_QUESTIONS = {
   soil_moisture: ['dry', 'normal', 'wet'],
   light: ['low', 'medium', 'direct'],
   watering_frequency: ['daily', 'weekly', 'rare'],

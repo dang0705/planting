@@ -269,7 +269,7 @@ function queuePersistDiagnosisReviewAuditStore() {
   return diagnosisReviewAuditPersistQueue
 }
 
-function buildQueryString(query = {}) {
+function _buildQueryString(query = {}) {
   const entries = Object.entries(query).filter(
     ([, value]) => value !== undefined && value !== null && value !== ''
   )

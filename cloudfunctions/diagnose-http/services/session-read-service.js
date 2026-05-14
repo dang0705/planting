@@ -644,6 +644,7 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
   const row = await getDiagnosisSessionResultRow(openid, finalSessionId)
   if (!row) {return null}
   const runtimeSnapshot = safeJsonParse(row.runtime_snapshot_json, {}) || {}
+  const outcomePayload = safeJsonParse(row.outcome_payload_json, {}) || {}
   const normalizedOutcomeType = normalizeOutcomeType(row.outcome_type, '')
   const normalizedRoutePrimaryAction = normalizeDiagnosisRoutePrimaryAction(
     row.current_route_primary_action,
@@ -724,6 +725,15 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
     plantIdentityId: normalizeStoredNullableText(row.current_plant_identity_id, ''),
     latestVisualCallBatchId,
     outcomeType: normalizedOutcomeType,
+    nonProblematicType:
+      normalizedOutcomeType === 'non_problematic'
+        ? normalizeStoredNullableText(
+            outcomePayload?.nonProblematicType ||
+              runtimeSnapshot?.nonProblematicType ||
+              '',
+            ''
+          )
+        : '',
     stopReason: closedStageRecord.stopReason,
     observedEvidenceSet,
     derivedEvidenceSet,

@@ -6,7 +6,9 @@ const { summarizeQuestionQueue } = require('../question-queue/question-queue-inv
 const FINAL_STOP_REASONS = new Set([
   'problematic_output_ready',
   'non_problematic_output_ready',
-  'uncertain_output_ready'
+  'uncertain_output_ready',
+  'route_visible_outcomes_ready',
+  'route_uncertain_with_candidates'
 ])
 
 function normalizeText(value = '', fallback = '') {
@@ -48,6 +50,8 @@ function resolveStopReasonType({
   if (normalizedOutcomeType === 'problematic') {return 'problematic_converged'}
 
   const normalizedStopReason = normalizeText(stopReason)
+  if (normalizedStopReason === 'route_visible_outcomes_ready') {return 'route_visible_outcomes_ready'}
+  if (normalizedStopReason === 'route_uncertain_with_candidates') {return 'route_uncertain_with_candidates'}
   if (normalizedStopReason.includes('uncertain')) {return 'uncertain_converged'}
   if (normalizedStopReason.includes('non_problematic')) {return 'non_problematic_converged'}
   if (normalizedStopReason.includes('problematic')) {return 'problematic_converged'}

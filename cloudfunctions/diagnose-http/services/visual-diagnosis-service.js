@@ -22,9 +22,6 @@ const {
   normalizeConfidenceBand,
   normalizeVisibilityScope,
   normalizeAdmissionReadiness,
-  normalizeRouteHints,
-  normalizeSuggestedFollowupCapture,
-  normalizeNotes,
   normalizeText,
   normalizeStringList,
   confidenceBandToScore,
@@ -560,6 +557,40 @@ function compactVisualStreamCandidates(items = [], limit = 8) {
     .slice(0, limit)
 }
 
+function compactVisualDiscriminators(items = [], limit = 8) {
+  return normalizeVisualStreamList(items)
+    .map(item => {
+      const dimensionKey = pickVisualStreamText(item?.dimensionKey, item?.dimension_key)
+      const valueKey = pickVisualStreamText(item?.valueKey, item?.value_key)
+      if (!dimensionKey || !valueKey) {return null}
+
+      return {
+        dimensionKey,
+        valueKey,
+        confidenceBand: pickVisualStreamText(item?.confidenceBand, item?.confidence_band, 'medium'),
+        visibleBasisCn: pickVisualStreamText(item?.visibleBasisCn, item?.visible_basis_cn)
+      }
+    })
+    .filter(Boolean)
+    .slice(0, limit)
+}
+
+function compactMissingInfoForPath(items = [], limit = 8) {
+  return normalizeVisualStreamList(items)
+    .map(item => {
+      const dimensionKey = pickVisualStreamText(item?.dimensionKey, item?.dimension_key)
+      const reasonCn = pickVisualStreamText(item?.reasonCn, item?.reason_cn, item?.reason)
+      if (!dimensionKey || !reasonCn) {return null}
+
+      return {
+        dimensionKey,
+        reasonCn
+      }
+    })
+    .filter(Boolean)
+    .slice(0, limit)
+}
+
 function buildVisualDecisionStreamSummary(aggregateResult = {}) {
   const observedSymptoms = compactVisualStreamCandidates(
     aggregateResult.observed_symptoms || aggregateResult.observedSymptoms || [],
@@ -593,6 +624,22 @@ function buildVisualDecisionStreamSummary(aggregateResult = {}) {
     .map(item => pickVisualStreamText(item?.type, item?.key, item?.route, item))
     .filter(Boolean)
     .slice(0, 8)
+  const visualDiscriminators = compactVisualDiscriminators(
+    aggregateResult.aggregate_visual_discriminators ||
+      aggregateResult.aggregateVisualDiscriminators ||
+      aggregateResult.visual_discriminators ||
+      aggregateResult.visualDiscriminators ||
+      [],
+    10
+  )
+  const missingInfoForPath = compactMissingInfoForPath(
+    aggregateResult.aggregate_missing_info_for_path ||
+      aggregateResult.aggregateMissingInfoForPath ||
+      aggregateResult.missing_info_for_path ||
+      aggregateResult.missingInfoForPath ||
+      [],
+    10
+  )
 
   return {
     contractVersion: 'visual_decision_stream_v2',
@@ -601,11 +648,15 @@ function buildVisualDecisionStreamSummary(aggregateResult = {}) {
     aggregatedSymptomCandidates: symptomCandidates,
     outOfPoolSymptomCandidates,
     routeHints,
+    visualDiscriminators,
+    missingInfoForPath,
     counts: {
       observedSymptoms: observedSymptoms.length,
       symptomCandidates: symptomCandidates.length,
       outOfPoolSymptomCandidates: outOfPoolSymptomCandidates.length,
-      routeHints: routeHints.length
+      routeHints: routeHints.length,
+      visualDiscriminators: visualDiscriminators.length,
+      missingInfoForPath: missingInfoForPath.length
     },
     visualBatchTrace: aggregateResult.visual_batch_trace || aggregateResult.visualBatchTrace || null
   }
@@ -981,6 +1032,56 @@ function buildAggregateRouteHints({
   return Array.from(routeHintMap.values())
 }
 
+function buildAggregateVisualDiscriminators(successfulResults = []) {
+  const seen = new Set()
+  const output = []
+
+  for (const result of Array.isArray(successfulResults) ? successfulResults : []) {
+    for (const item of Array.isArray(result?.normalizedResult?.visual_discriminators)
+      ? result.normalizedResult.visual_discriminators
+      : []) {
+      const dimensionKey = normalizeText(item?.dimension_key || '')
+      const valueKey = normalizeText(item?.value_key || '')
+      if (!dimensionKey || !valueKey) {continue}
+      const dedupeKey = `${dimensionKey}::${valueKey}`
+      if (seen.has(dedupeKey)) {continue}
+      seen.add(dedupeKey)
+      output.push({
+        dimension_key: dimensionKey,
+        value_key: valueKey,
+        confidence_band: normalizeConfidenceBand(item?.confidence_band, 'medium'),
+        visible_basis_cn: normalizeText(item?.visible_basis_cn || '')
+      })
+    }
+  }
+
+  return output.slice(0, 12)
+}
+
+function buildAggregateMissingInfoForPath(successfulResults = []) {
+  const seen = new Set()
+  const output = []
+
+  for (const result of Array.isArray(successfulResults) ? successfulResults : []) {
+    for (const item of Array.isArray(result?.normalizedResult?.missing_info_for_path)
+      ? result.normalizedResult.missing_info_for_path
+      : []) {
+      const dimensionKey = normalizeText(item?.dimension_key || '')
+      const reasonCn = normalizeText(item?.reason_cn || '')
+      if (!dimensionKey || !reasonCn) {continue}
+      const dedupeKey = `${dimensionKey}::${reasonCn}`
+      if (seen.has(dedupeKey)) {continue}
+      seen.add(dedupeKey)
+      output.push({
+        dimension_key: dimensionKey,
+        reason_cn: reasonCn
+      })
+    }
+  }
+
+  return output.slice(0, 12)
+}
+
 function buildShadowCompareSummary(successfulResults = []) {
   const compareResults = (Array.isArray(successfulResults) ? successfulResults : [])
     .map(item => item?.shadowCompare || null)
@@ -1105,6 +1206,8 @@ async function buildAggregateResult({
     observedSymptoms,
     suggestedFollowupCapture
   })
+  const aggregateVisualDiscriminators = buildAggregateVisualDiscriminators(successfulResults)
+  const aggregateMissingInfoForPath = buildAggregateMissingInfoForPath(successfulResults)
   const shadowCompareSummary = buildShadowCompareSummary(successfulResults)
   const visualBatchTrace = buildVisualBatchTrace({
     visualCallBatchId,
@@ -1129,6 +1232,8 @@ async function buildAggregateResult({
       aggregatedSymptomCandidates.length > 0 && aggregateAnalyzability !== 'low',
     admission_records: admissionRecords,
     aggregate_route_hints: aggregateRouteHints,
+    aggregate_visual_discriminators: aggregateVisualDiscriminators,
+    aggregate_missing_info_for_path: aggregateMissingInfoForPath,
     shadow_compare_summary: shadowCompareSummary,
     route_primary_action: resolveAggregateRoutePrimaryAction({
       aggregateAnalyzability,
@@ -1162,6 +1267,8 @@ function buildAggregateSummaryForStorage(aggregateResult = {}) {
       target_layer: item.target_layer
     })),
     aggregate_route_hints: aggregateResult.aggregate_route_hints,
+    aggregate_visual_discriminators: aggregateResult.aggregate_visual_discriminators || [],
+    aggregate_missing_info_for_path: aggregateResult.aggregate_missing_info_for_path || [],
     shadow_compare_summary: aggregateResult.shadow_compare_summary || null,
     route_primary_action: aggregateResult.route_primary_action,
     observed_symptoms: aggregateResult.observed_symptoms
