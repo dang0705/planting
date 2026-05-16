@@ -24,6 +24,8 @@ const {
   filterQuestionsByQuestionQueue
 } = require('../utils/follow-up-contract')
 const { getQueueBySessionAndRound } = require('../repositories/question-queue-repository')
+const { buildQuestionTextCandidateKeys } = require('../utils/question-text-resolver')
+const { resolveQuestionText } = require('../utils/question-text-resolver')
 
 function readQuestionKeyFromRationale(rationale) {
   const parsed = safeJsonParse(rationale, {}) || {}
@@ -38,6 +40,10 @@ function readQuestionGroupKeyFromRationale(rationale) {
 function readRoundFromRationale(rationale) {
   const parsed = safeJsonParse(rationale, {}) || {}
   return Number(parsed.round || parsed.r || 1) || 1
+}
+
+function resolveQuestionKey(item = {}) {
+  return buildQuestionTextCandidateKeys(item)[0] || String(item?.questionKey || item?.question_key || '').trim()
 }
 
 function buildAnswerRevisionEvents({
@@ -109,7 +115,7 @@ async function appendFollowUpQuestions(sessionId, round, questions = [], { quest
     )
   )
   const questionMetaMap = new Map(
-    (await getQuestionsByKeys(list.map(item => item?.questionKey)))
+    (await getQuestionsByKeys(list.map(item => resolveQuestionKey(item))))
       .map(item => [String(item?.questionKey || '').trim(), item])
       .filter(([questionKey]) => Boolean(questionKey))
   )
@@ -133,7 +139,7 @@ async function appendFollowUpQuestions(sessionId, round, questions = [], { quest
   await insertFollowUpQuestionsRows(
     sessionId,
     list.map((item, index) => {
-      const questionKey = String(item?.questionKey || '').trim()
+      const questionKey = resolveQuestionKey(item)
       const questionMeta = questionMetaMap.get(questionKey) || {}
       const targetSymptomKey = String(item?.targetSymptomKey || questionMeta?.targetSymptomKey || '').trim()
       const persistedTargetSymptomKey = validPersistedTargetSymptomKeySet.has(targetSymptomKey)
@@ -158,7 +164,7 @@ async function appendFollowUpQuestions(sessionId, round, questions = [], { quest
       return {
         questionOrder: Number(index + 1),
         questionKey: persistedTargetSymptomKey || questionKey,
-        questionText: item.text || item.questionText || '',
+        questionText: resolveQuestionText(item, questionMeta),
         rationale: JSON.stringify({
           qk: questionKey,
           qg: item.questionGroupKey || '',

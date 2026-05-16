@@ -80,7 +80,11 @@ function matchesRequiredAnswerEffects(requiredAnswerEffects = {}, routeEvidenceC
   const anyQuestionKeys = normalizeStringArray(requiredAnswerEffects.anyQuestionKeys)
   const optionKeys = normalizeStringArray(requiredAnswerEffects.optionKeys)
   const anyOptionKeys = normalizeStringArray(requiredAnswerEffects.anyOptionKeys)
-  const questionOptionPairs = normalizeStringArray(requiredAnswerEffects.questionOptionPairs)
+  const questionOptionPairs = normalizeStringArray(
+    Array.isArray(requiredAnswerEffects)
+      ? requiredAnswerEffects
+      : requiredAnswerEffects.questionOptionPairs
+  )
   const anyQuestionOptionPairs = normalizeStringArray(requiredAnswerEffects.anyQuestionOptionPairs)
   const effectTypes = normalizeStringArray(requiredAnswerEffects.effectTypes).map(item =>
     item.toLowerCase()
@@ -101,6 +105,9 @@ function matchesRequiredAnswerEffects(requiredAnswerEffects = {}, routeEvidenceC
     answeredQuestionOptionPairSet.has(pair)
   )
   const requiredQuestionOptionPairCount = questionOptionPairs.length
+  const hasQuestionOptionConstraint = Boolean(
+    questionOptionPairs.length || anyQuestionOptionPairs.length
+  )
   const questionOptionPairSatisfied = (() => {
     if (!requiredQuestionOptionPairCount) {return true}
     if (setHasAll(answeredQuestionOptionPairSet, questionOptionPairs)) {return true}
@@ -117,6 +124,9 @@ function matchesRequiredAnswerEffects(requiredAnswerEffects = {}, routeEvidenceC
   if (!setHasAll(answerEffectTypeSet, effectTypes)) {return false}
   if (anyEffectTypes.length && !setHasAny(answerEffectTypeSet, anyEffectTypes)) {
     return false
+  }
+  if (hasQuestionOptionConstraint) {
+    return true
   }
   if (!setHasAll(routeAnswerEffectOutcomeKeySet, outcomeKeys)) {return false}
   if (anyOutcomeKeys.length && !setHasAny(routeAnswerEffectOutcomeKeySet, anyOutcomeKeys)) {
@@ -160,6 +170,19 @@ function matchesBlockerEvidence(blockerEvidence = {}, routeEvidenceContext = {})
   return hasEvidenceBlocker && hasAnswerBlocker
 }
 
+function summarizeRequiredAnswerEffects(requiredAnswerEffects = {}) {
+  return {
+    questionOptionPairs: normalizeStringArray(
+      Array.isArray(requiredAnswerEffects)
+        ? requiredAnswerEffects
+        : requiredAnswerEffects.questionOptionPairs
+    ),
+    anyQuestionOptionPairs: normalizeStringArray(requiredAnswerEffects.anyQuestionOptionPairs),
+    routeKeys: normalizeStringArray(requiredAnswerEffects.routeKeys),
+    outcomeKeys: normalizeStringArray(requiredAnswerEffects.outcomeKeys)
+  }
+}
+
 function evaluateOutcomeRouteGate({
   gate = {},
   routeEvidenceContext = {},
@@ -176,6 +199,7 @@ function evaluateOutcomeRouteGate({
       decisionCauseText: gate.decisionCauseTextCn || '',
       requiredEvidenceMatched: false,
       requiredAnswerEffectsMatched: false,
+      requiredAnswerEffectsSummary: summarizeRequiredAnswerEffects(gate.requiredAnswerEffects),
       blockerMatched: true
     }
   }
@@ -199,6 +223,7 @@ function evaluateOutcomeRouteGate({
       decisionCauseText: gate.decisionCauseTextCn || '',
       requiredEvidenceMatched: true,
       requiredAnswerEffectsMatched: true,
+      requiredAnswerEffectsSummary: summarizeRequiredAnswerEffects(gate.requiredAnswerEffects),
       blockerMatched: false
     }
   }
@@ -213,6 +238,7 @@ function evaluateOutcomeRouteGate({
     decisionCauseText: gate.decisionCauseTextCn || '',
     requiredEvidenceMatched,
     requiredAnswerEffectsMatched,
+    requiredAnswerEffectsSummary: summarizeRequiredAnswerEffects(gate.requiredAnswerEffects),
     blockerMatched: false
   }
 }
@@ -221,5 +247,6 @@ module.exports = {
   matchesRequiredEvidence,
   matchesRequiredAnswerEffects,
   matchesBlockerEvidence,
+  summarizeRequiredAnswerEffects,
   evaluateOutcomeRouteGate
 }

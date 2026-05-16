@@ -143,6 +143,5 @@ async function getRefactorArtifacts({ forceRefresh = false } = {}) {
 }
 
 module.exports = {
-  buildRefactorArtifacts,
   getRefactorArtifacts
 }

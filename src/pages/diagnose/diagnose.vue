@@ -25,6 +25,22 @@
             {{ viewModel.mainIssue }}
           </text>
         </view>
+        <view
+          v-if="viewModel.outcomeItems.length"
+          class="rounded-2xl bg-[#F7FAF5] p-4 space-y-2"
+        >
+          <text class="block text-xs text-gray-500">诊断方向</text>
+          <view class="space-y-2">
+            <view
+              v-for="item in viewModel.outcomeItems"
+              :key="item.key"
+              class="rounded-xl bg-white px-3 py-2 border border-gray-200"
+            >
+              <text class="block text-xs text-gray-500">{{ item.roleLabel }}</text>
+              <text class="block text-sm text-gray-900">{{ item.label }}</text>
+            </view>
+          </view>
+        </view>
         <view v-if="viewModel.summary">
           <text class="block text-xs text-gray-500">摘要</text>
           <text class="block text-sm text-gray-700 whitespace-pre-line">
@@ -49,6 +65,7 @@ import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useDiagnoseStore } from '@/store/diagnose.js'
 import { getDiagnosisResult } from '@/api/plants-http.js'
+import { normalizeDiagnosisResult } from '@/utils/diagnose-flow.js'
 
 const diagnoseStore = useDiagnoseStore()
 const routeId = ref('')
@@ -80,31 +97,140 @@ const localRecord = computed(() => {
   )
 })
 
-const viewModel = computed(() => {
-  if (remoteResult.value) {
-    const local = localRecord.value
-    const localDiagnosis = local?.diagnosis || local
-    return {
-      plantName: localDiagnosis?.plantName || '植物',
-      stage: remoteResult.value?.stage || 'final',
-      mainIssue: remoteResult.value?.finalResult?.displayNameCn || remoteResult.value?.finalResult?.displayName || '待进一步确认',
-      summary:
-        remoteResult.value?.finalResult?.summary ||
-        remoteResult.value?.explanation?.whatToCheckNext ||
-        remoteResult.value?.explanation?.whyItHappens ||
-        ''
-    }
+function normalizeOutcomeDisplayLabel(outcome = null) {
+  if (typeof outcome === 'string') {
+    return outcome.trim()
   }
 
-  const local = localRecord.value
-  if (!local) {return null}
+  if (!outcome || typeof outcome !== 'object') {
+    return ''
+  }
 
-  const diagnosis = local.diagnosis || local
+  return String(
+    outcome.displayNameCn ||
+      outcome.displayName ||
+      outcome.title ||
+      outcome.problemKey ||
+      outcome.outcomeKey ||
+      ''
+  ).trim()
+}
+
+function normalizeOutcomeDisplayKey(outcome = null, index = 0) {
+  if (!outcome || typeof outcome !== 'object') {
+    return String(normalizeOutcomeDisplayLabel(outcome) || `outcome_${index}`).trim()
+  }
+
+  return String(
+    outcome.outcomeKey ||
+      outcome.problemKey ||
+      outcome.problemId ||
+      normalizeOutcomeDisplayLabel(outcome) ||
+      `outcome_${index}`
+  ).trim()
+}
+
+function buildOutcomeDisplayItems(diagnosis = {}) {
+  const primaryOutcome = diagnosis.primaryOutcome || diagnosis.finalResult?.primaryOutcome || null
+  const primaryKey = normalizeOutcomeDisplayKey(primaryOutcome)
+  const visibleOutcomes = Array.isArray(diagnosis.visibleOutcomes) && diagnosis.visibleOutcomes.length
+    ? diagnosis.visibleOutcomes
+    : Array.isArray(diagnosis.finalResult?.visibleOutcomes) && diagnosis.finalResult.visibleOutcomes.length
+      ? diagnosis.finalResult.visibleOutcomes
+      : [
+          primaryOutcome,
+          ...(
+            Array.isArray(diagnosis.secondaryOutcomes)
+              ? diagnosis.secondaryOutcomes
+              : Array.isArray(diagnosis.finalResult?.secondaryOutcomes)
+                ? diagnosis.finalResult.secondaryOutcomes
+                : []
+          )
+        ]
+
+  const seen = new Set()
+  return visibleOutcomes
+    .map((outcome, index) => {
+      const label = normalizeOutcomeDisplayLabel(outcome)
+      if (!label) {
+        return null
+      }
+
+      const key = normalizeOutcomeDisplayKey(outcome, index)
+      const dedupeKey = key || label
+      if (seen.has(dedupeKey)) {
+        return null
+      }
+      seen.add(dedupeKey)
+
+      return {
+        key: dedupeKey,
+        label,
+        roleLabel: key && key === primaryKey ? '主要判断' : '伴随方向'
+      }
+    })
+    .filter(Boolean)
+}
+
+const resolvedPlantName = computed(() => {
+  const local = localRecord.value
+  const localDiagnosis = local?.diagnosis || local
+  return String(
+    localDiagnosis?.plantName ||
+      remoteResult.value?.plantName ||
+      '植物'
+  ).trim()
+})
+
+const normalizedRemoteResult = computed(() => {
+  if (!remoteResult.value) {
+    return null
+  }
+
+  return normalizeDiagnosisResult(remoteResult.value, {
+    plantName: resolvedPlantName.value
+  })
+})
+
+const normalizedLocalResult = computed(() => {
+  const local = localRecord.value
+  if (!local) {
+    return null
+  }
+
+  return normalizeDiagnosisResult(local.diagnosis || local, {
+    plantName: resolvedPlantName.value
+  })
+})
+
+const viewModel = computed(() => {
+  const diagnosis = normalizedRemoteResult.value || normalizedLocalResult.value
+  if (!diagnosis) {
+    return null
+  }
+
+  const outcomeItems = buildOutcomeDisplayItems(diagnosis)
+  const primaryOutcomeDisplay =
+    outcomeItems.find(item => item.roleLabel === '主要判断')?.label ||
+    normalizeOutcomeDisplayLabel(diagnosis.primaryOutcome || diagnosis.finalResult?.primaryOutcome)
+
   return {
-    plantName: diagnosis?.plantName || '植物',
-    stage: diagnosis?.stage || 'unknown',
-    mainIssue: diagnosis?.mainIssueText || diagnosis?.finalResult?.displayNameCn || diagnosis?.finalResult?.displayName || '待进一步确认',
-    summary: diagnosis?.summaryText || diagnosis?.finalResult?.summary || ''
+    plantName: diagnosis.plantName || '植物',
+    stage: diagnosis.stage || 'unknown',
+    mainIssue:
+      primaryOutcomeDisplay ||
+      outcomeItems[0]?.label ||
+      diagnosis.mainIssueText ||
+      diagnosis.finalResult?.displayNameCn ||
+      diagnosis.finalResult?.displayName ||
+      '待进一步确认',
+    summary:
+      diagnosis.summaryText ||
+      diagnosis.explanation?.whatToCheckNext ||
+      diagnosis.explanation?.whyItHappens ||
+      diagnosis.finalResult?.summary ||
+      '',
+    outcomeItems
   }
 })
 

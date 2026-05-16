@@ -1,0 +1,49 @@
+﻿source_id,filename,title,category,role,keywords,status,chars,lines,headings,sha256_16
+S01,当前正式基线文档清单_v1_2_修正版.md,当前正式基线文档清单 v1.2（修正版，完整最终版）,版本/来源治理,当前唯一正式基线索引；定义 A/B 类与 Codex 直接使用规则,"基线清单, A类, B类, Codex, 文件优先级",A类正式基线,2526,130,18,4bf3c6ecc221565e
+S02,开发前阻断问题一次性收口裁决_v1.md,开发前阻断问题一次性收口裁决 v1（完整最终版）,版本/来源治理,开发前阻断项一次性裁决；非阻断项降级,"开发收口, 阻断问题, identity_resolution_status, family_name_canonical",A类正式基线,3702,245,44,39b8429d83bf32cd
+S03,AI_DIAGNOSIS_MASTER_SPEC_v2.md,AI 诊断系统总规范入口文档（重构规范 + 最小交互协议）,总入口/Codex,系统重构总规范；前端/后端唯一入口、评分公式、目录建议,"DiagnosePopup, diagnose-http, 新体系真源, 评分公式, adapter",非A类/补充或过程文件,40705,2715,232,7d701cc0d4cc05a7
+S04,AI_DIAGNOSIS_CODEX_MINIMAL_EXEC_SUMMARY_v2.md,AI Diagnosis Codex 极简执行摘要,总入口/Codex,给 Codex 的极简执行摘要；锁定唯一入口、真源、symptom_class 与迁移顺序,"Codex, 唯一入口, symptom_class, data-diff, backfill",非A类/补充或过程文件,8266,468,62,48661bf05ef0c23c
+S05,diagnosis_hard_constraints_v2_4_20260404_121000.md,诊断系统硬约束清单 v2.4（完整最终版，基于可用前版只增不减）,宪法/硬约束,诊断系统最高硬约束；证据-假设-结论主轴，P0/P1/P2 约束,"P0, evidence, hypothesis, outcome, 三态, 概率禁用",A类正式基线,12923,1001,118,16ad2fe0055d6e98
+S06,当前全部文档最高规格联动一致性总审查报告.md,当前全部文档最高规格联动一致性总审查报告（完整最终版）,审查/一致性,全体系联动审查；识别 P0 问题与文档一致性缺口,"一致性审查, P0, 主链闭环, Taxonomy/Diagnosis 分家",A类正式基线,6082,480,60,f90e8a3db70b25a6
+S07,新增属级养护基线联动后文档体系最高规格一致性总审查报告_重新生成版.md,第一版 SQL 表结构草案 v1（完整最终版）,异常/SQL源,文件名像总审查报告，但正文标题为“第一版 SQL 表结构草案 v1”；需作为命名异常处理,"文件名标题不一致, SQL 草案, 建表分层",A类正式基线,19458,493,34,4596cbd46af10328
+S08,problem_taxonomy_v1_4_full_final.md,诊断目标分层 v1.4（完整最终版，基于可用前版只增不减）,诊断主链,诊断问题层；只定义问题性诊断对象，不覆盖最终输出全集,"problem taxonomy, 问题性结论, 问题簇, 诊断问题",A类正式基线,9474,785,85,cebcb16e41883a5f
+S09,diagnosis_outcome_layer_v1_2_full_final.md,诊断结论层 v1.2（完整最终版，基于 v1.1 只增不减）,诊断主链,诊断结论层；定义问题性/非问题性/不确定三类最终结果空间,"outcome_layer, problematic, non_problematic, uncertain",A类正式基线,12168,1125,111,e6056fdbc6c9d610
+S10,核心数据结构_v1_6_完整最终版_标题版本已统一.md,核心数据结构 v1.6（完整最终版）,诊断主链,七大静态核心对象：问题、证据、派生、规则、提问、行动、结论,"核心数据结构, evidence_catalog, action_policy, outcome_layer",A类正式基线,9177,753,83,3d7c7035107ad42c
+S11,运行时模型_v1_5_完整最终版_标题版本已统一.md,运行时模型 v1.5（完整最终版）,诊断主链,一次真实诊断会话的运行时对象、状态与可回放轨迹,"diagnostic_session, observed_evidence_set, hypothesis_pool, question_queue, trace",A类正式基线,27049,2429,241,2c687832fd3b675f
+S12,决策流_v1_4_完整最终版_标题版本已统一.md,决策流 v1.4（完整最终版）,诊断主链,九阶段决策流；输入→证据→解释竞争→结论收敛→动作输出,"决策流, 停止判定, final, uncertain, 证据优先",A类正式基线,23078,2143,318,42c89a37b150b957
+S13,统一术语表_v1_4_完整最终版_标题版本已统一.md,统一术语表 v1.4（完整最终版）,术语/受控词,受控词汇基线；中文主名优先，英文作为辅助键名,"术语, controlled vocabulary, 中文一等公民, 禁止混用",A类正式基线,13619,1407,343,b98c73bc5980caba
+S14,最小可用知识库_v1_3_完整最终版_标题版本已统一.md,最小可用知识库 v1.3（完整最终版）,知识库/MVP,第一版知识库闭环边界；不追求全覆盖，追求高价值闭环,"最小知识库, MVP, v1, 覆盖范围",A类正式基线,9219,880,117,db32bf4b539fd646
+S15,准入与退役规则_v1_3_完整最终版_标题版本已统一.md,准入与退役规则 v1.3（完整最终版）,治理/准入退役,对象是否进入或退出系统的治理规则；默认拒绝，证据驱动,"准入, 退役, 默认拒绝, evidence, 审查状态",A类正式基线,12107,1124,133,89bc4cc46957890c
+S16,收益驱动停止策略_v1.md,收益驱动停止策略 v1,追问/停止,取消固定轮数后的收益驱动停止规则；gate、输出资格、边际收益,"一页一题, gate_required_layer, output eligibility, low gain question",A类正式基线,5515,286,26,66e4fdd84a56861e
+S17,具体问题结论正向证据门槛规则_v1.md,具体问题结论正向证据门槛规则 v1,追问/停止,具体 problem 输出必须有问题级正向证据或高特异视觉事实,"正向证据门槛, 泛化症状, 黄叶, 红蜘蛛, uncertain",非A类/补充或过程文件,6129,290,24,b78470e0a38a9a8d
+S18,diagnosis_batch_report_state_labeling_rule_20260429.md,诊断 batch / report 状态字段标注规则 2026-04-29,状态/字段治理,batch/report 状态字段标注；await_follow_up 语义与审计,"await_follow_up, batch, report, 状态字段",非A类/补充或过程文件,1357,69,8,853a4a12bb9afa86
+S19,question_copy_data_layer_governance_20260429.md,问诊文案数据层治理规则 2026-04-29,问诊/文案治理,问诊文案来源、运行时职责、黄叶 gate 与必备字段,"question copy, question_library, 黄叶 gate, 文案治理",非A类/补充或过程文件,1187,58,7,e5d0f876445bd9dd
+S20,ai_visual_entry_data_structure_and_retention_spec_v1_4_full_consolidated.md,AI视觉诊断入口层数据结构与留存规范 v1.4（器官识别与产品辅助输入增补版）,AI视觉入口,视觉入口层数据结构与留存；器官槽位、AI symptom/canonical symptom 边界,"AI visual, organ slot, inputSlot, direct_admit, followup_required",A类正式基线,11572,870,140,a0a7451d898f585b
+S21,视觉多图业务融合改造计划_v1.md,视觉多图业务融合改造计划 v1,AI视觉入口,多图业务融合改造目标、范围、聚合与留痕,"多图, 业务融合, image batch, 证据聚合",非A类/补充或过程文件,7744,428,54,9009324dfce9af40
+S22,视觉prompt与追问关联守卫规则_v1.md,视觉 prompt 与追问关联守卫规则 v1,AI视觉入口/追问,多图 prompt、location_key 池收窄、追问承接、单题问诊守卫,"prompt, location_key, out_of_pool, question_queue, 一页一题",非A类/补充或过程文件,4897,189,20,c75a158e521a5beb
+S23,视觉候选症状追问承接与兜底确认规则_v1.md,视觉候选症状追问承接与兜底确认规则 v1,AI视觉入口/追问,candidate_retained 与兜底确认问题；question_queue 优先于 no_visual_symptoms_detected,"candidate_retained, 兜底确认, no_visual_symptoms_detected",非A类/补充或过程文件,1592,77,11,d1f4f98235bc911b
+S24,视觉症状池外候选留痕与证据隔离规范_v1.md,视觉症状池外候选留痕与代理证据规范 v2,AI视觉入口/审计,池外视觉候选的留痕与证据隔离；formal/proxy 角色,"out_of_pool_symptom_candidates, proxy evidence, evidence isolation",非A类/补充或过程文件,4064,214,12,97c0201bcf77d36e
+S25,高特异性视觉证据快速收敛规则_v1_1_review增补修正版_给Codex.md,高特异性视觉证据快速收敛规则 v1（完整最终版，给 Codex）,AI视觉入口/快路径,高特异视觉证据可快速收敛但不得视觉层越级直出,"fast convergence, formally_admitted, observed_evidence_set, zero_follow_up",非A类/补充或过程文件,11800,1031,192,35dcc9d1dd091b6d
+S26,ai_visual_pool直出例外与formal_question_coverage边界_v1.md,ai_visual_pool 直出例外与 formal question coverage 边界 v1,AI视觉入口/例外,ai_visual_pool 直出例外与 formal_question_coverage 边界,"direct-output audited exception, formal_question_coverage",非A类/补充或过程文件,1540,72,6,7dd04756734d3765
+S27,视觉模型适配层与双模型多图融合代码落地审查_v1.md,视觉模型适配层与双模型多图融合代码落地审查_v1,AI视觉/代码落地,双模型适配、多图融合、origin/supersede、observed_evidence_set 代码审查,"dual model, adapter, multi-image, observed_evidence_set",非A类/补充或过程文件,8354,396,23,d4d398d5576608d2
+S28,ai_visual_to_diagnosis_runtime_linkage_example_v1_1_full_reviewed_final_标题版本已统一.md,AI视觉入口层到 Diagnosis 运行时挂接示例 v1.1（分支场景增补版，完整最终版）,AI视觉/运行时示例,AI视觉入口到 Diagnosis 运行时挂接示例,"visual runtime linkage, identity, evidence, outcome",非A类/补充或过程文件,7434,693,102,532dd5078b18910e
+S29,HF_AutoTrain真实推理接入与标签映射规范_v1.md,HF_AutoTrain真实推理接入与标签映射规范_v1,模型/HF,HF AutoTrain 真实推理入口、标签空间与映射,"HF AutoTrain, health, predict, label mapping",非A类/补充或过程文件,4758,304,18,6adfd30d3dae94a8
+S30,shadow_compare数据留痕与HF灰度接入边界_v1.md,shadow_compare数据留痕与HF灰度接入边界_v1,模型/HF/灰度,shadow_compare 数据留痕与 HF 灰度接入边界；主链与对照链隔离,"shadow_compare, HF, 灰度, 主链隔离",非A类/补充或过程文件,4213,284,17,b0d1b9141983c015
+S31,症状模式分流机制与运行时流程规范_最终完整版.md,症状模式分流机制与运行时流程规范（最终完整版）,症状模式,symptom_class 分流机制最终版；知识入库、策略运行时,"symptom_class, location_key, pattern_key, distribution_key, class gate",非A类/补充或过程文件,16469,1211,139,c848ab0538092e8c
+S32,SYMPTOM_CLASS_REVIEW_AND_UPDATE.md,症状模式（symptom_class）更新专项 Review,症状模式/审查,symptom_class 更新专项 review；缺口与修正要求,"symptom_class, pattern_key, parent_class_key, review",非A类/补充或过程文件,6158,407,51,bcfa25c1dec62ec9
+S33,症状模式落代码前提条件审查结论_v1.md,症状模式落代码前提条件审查结论 v1,症状模式/开发前置,症状模式落代码前必须满足的条件与硬缺口,"落代码, pseudo-symptom, class_question_group_strategy",非A类/补充或过程文件,8411,384,30,71fd66adca1ebf1e
+S34,症状模式配套数据_final_candidate说明.md,症状模式配套数据 final_candidate 说明,症状模式/数据,症状模式配套 final_candidate 数据说明,"final_candidate, class_question_group_strategy, symptom_class_row_review",非A类/补充或过程文件,1168,59,6,0702590575bcb9bb
+S35,症状模式剩余block收口说明_v3.md,症状模式剩余 block 收口说明（v3）,症状模式/收口,症状模式剩余 block 收口说明,"context_only, parent_class_key, block 收口",非A类/补充或过程文件,847,51,6,5e247da6fc9002a6
+S36,parent_class_key_schema_decision_v1.md,parent_class_key schema 决策说明（v1）,症状模式/schema,parent_class_key schema 裁决,"parent_class_key, schema, symptom_class",非A类/补充或过程文件,621,40,5,46b7b20bb0410665
+S37,plant_identity_master_and_name_normalization_rules_v1.md,植物身份主表与命名归一规则 v1（完整最终版）,Taxonomy/身份,植物身份主表与命名归一规则,"plant_identity_entities, aliases, canonical_identity_name",A类正式基线,3285,336,58,b6887c7f78efd31d
+S38,植物_Taxonomy_体系定义_v1_3_完整最终版_开发收口版.md,植物 Taxonomy 体系定义 v1.3（完整最终版，开发收口版）,Taxonomy/身份,Taxonomy 静态层与运行时身份解析边界,"Taxonomy, identity_resolution_status, family_name_canonical",A类正式基线,2122,158,19,6e6f713940cdc384
+S39,taxonomy_diagnosis_linkage_rules_v1.md,Taxonomy 与 Diagnosis 挂接规则 v1（完整最终版）,Taxonomy/Diagnosis桥接,Taxonomy 到 Diagnosis 的受限挂接规则与优先级,"plant_identity_diagnosis_links, identity/genus/family linkage",A类正式基线,2982,251,39,0d2fc40f845b358a
+S40,Taxonomy_Diagnosis_SQL_字段映射表_v1_1_完整最终版_标题版本已统一.md,Taxonomy / Diagnosis SQL 字段映射表 v1.1（完整最终版）,SQL/字段映射,Taxonomy/Diagnosis SQL 字段映射与素材源职责,"字段映射, plant_catalog, plants_v13, genus_care_profile",A类正式基线,11134,520,75,3be6cde3202808d3
+S41,最终_SQL_制表方案_v1_3_完整最终版_开发收口版.md,最终 SQL 制表方案 v1.3（完整最终版，开发收口版）,SQL/开发收口,最终 SQL 制表方案 v1.3；分层、字段裁决、枚举与落表边界,"最终SQL, 开发收口, visual_call_batches, route_primary_action",A类正式基线,3174,198,37,c5cc94a8f92b2dd1
+S42,第一版_SQL_表结构草案_v1_1_开发收口版.md,第一版 SQL 表结构草案 v1.1（完整最终版，开发收口版）,SQL/开发收口,第一版 SQL 表结构草案 v1.1 开发收口版,"CREATE TABLE, plant_identity_entities, visual_admission_records",A类正式基线,10509,266,20,beaaa96e28a76ee5
+S43,第一版_SQL_表结构草案_v1.md,第一版 SQL 表结构草案 v1（完整最终版）,SQL/旧草案,第一版 SQL 表结构草案 v1；被 v1.1/最终方案覆盖时不应优先使用,"SQL v1, 草案, 历史追溯",非A类/补充或过程文件,19459,493,34,d3424f57c380422c
+S44,第一版_数据映射_导入脚本方案_v1.md,第一版数据映射 / 导入脚本方案 v1（完整最终版）,SQL/导入,三份素材源的数据映射与导入脚本方案,"导入脚本, plant_catalog, diagnosis_v7, genus_care_profiles",A类正式基线,5788,387,56,b326db6208398e77
+S45,属级养护基线表设计_v1_1_full_reviewed_final_标题版本已统一.md,属级养护基线表设计 v1.1（review 增补修正版，完整最终版）,属级养护基线,genus_care_profiles 表设计、字段、JSON 策略与枚举,"genus_care_profiles, watering_strategy_json, toxicity_level",A类正式基线,9981,738,121,915ed67cc7be8780
+S46,属级养护基线概念联动分析与文档增补建议_v1_重新生成版.md,属级养护基线概念联动分析与文档增补建议 v1,属级养护基线/联动,属级养护基线与 Taxonomy、SQL、运行时、行动建议的联动分析,"genus care, Taxonomy, action policy, 联动",A类正式基线,2941,222,40,62b7f4ee73b79594
+S47,genus_care_profile_review_report.md,《genus_care_profile.csv》最高规格审查报告（属级养护策略数据）,属级养护基线/审查,genus_care_profile.csv 审查报告与正式定位判断,"genus_care_profile.csv, 主数据候选表, 审查",A类正式基线,5112,450,52,c62a67501be6b518
+S48,绿植诊断系统完整流程图说明_终极版_中文主导_v1_1_开发收口版.md,绿植诊断系统完整流程图说明（终极版，中文主导，v1.1 开发收口版）,流程图说明,完整流程图文字说明；上游并行链、停止与输出资格、route hint 落位,"流程图, route hint, 停止条件, observed_evidence_set",A类正式基线,1250,108,15,3f017f1344decadc

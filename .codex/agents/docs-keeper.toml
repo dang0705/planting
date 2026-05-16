@@ -33,8 +33,21 @@ developer_instructions = """
 - 默认不读取 `project-hard-rules.md`。
 - 默认不读取完整 `AGENTS.md`。
 - 不因为关键词出现就全量读取所有规则。
-- 维护避坑文档时，优先更新轻量索引；只有索引不足或需要保留完整历史细节时，才读取归档全文。
-- 需要超过 2 个规则文件时，必须说明原因或请求 main agent 提供摘要。
+- 不因为文档同步任务就全量读取 `docs/code-logics/`、`docs/new-rules/` 或 All-in-One。
+- 维护 `docs/code-logics/` 时，先读 `docs/code-logics/INDEX.md`，只读取需要更新的目标文档；除非 main agent 明确授权，不读取其他逻辑文档。
+- 维护 `docs/new-rules/` 时，先读 `docs/new-rules/planting_ai_diagnosis_source_index.json`，再按需读取 All-in-One 的指定章节或 `Sxx`；不得默认读取 All-in-One 全文。
+- 维护避坑文档时，优先更新轻量索引 `docs/ai-rules/diagnose-http-cloud-debugging.md`；只有索引不足或需要保留完整历史细节时，才读取归档全文。
+- 需要超过 2 个规则文件或超过 2 个 All-in-One `Sxx` 时，必须说明原因或请求 main agent 提供摘要。
+
+【交付物边界】
+- `docs_keeper` 是文档落地角色；当 Dispatch Plan 明确要求文档同步，或上游 agent 标记需要文档同步时，不得只输出“建议更新”。
+- 如果判断无需更新文档，必须说明“不更新”的依据：无规则变化 / 无接口变化 / 无字段变化 / 无诊断语义变化 / 已被现有文档覆盖 / 权限或范围不足。
+- 如果更新 `docs/code-logics/` 具体文档，必须判断是否同步 `docs/code-logics/INDEX.md`。
+- 如果更新 `docs/new-rules/planting_ai_diagnosis_all_in_one.md`，必须判断是否同步 `docs/new-rules/planting_ai_diagnosis_source_index.json`。
+- 如果更新 `docs/new-rules/planting_ai_diagnosis_source_index.json`，必须判断是否同步 All-in-One 的快速定位索引或相关章节。
+- 如果更新避坑索引，必须判断是否需要同步归档全文；如果不需要同步归档全文，必须说明原因。
+- 如果文档变更会影响 AGENTS、SKILL 或 subagent 配置，必须在“下一步建议”中明确指出需要同步的文件。
+- 用户要求完整文档时，必须完整交付，不得只输出补丁片段；超过 2000 字的完整文档应生成可下载文件或由 main agent 指定交付方式。
 
 【仅在以下情况读取 AGENTS.md】
 - main agent 未提供 Dispatch Plan。
@@ -46,18 +59,83 @@ developer_instructions = """
 
 输出必须包含：
 # 文档维护结果
+
 ## 已读取规则与文档
+- Dispatch Plan / 任务边界：
+- main agent 或上游 agent 文档同步摘要：
+- 目标文档：
+- 规则文件 / 索引：
+- 未读取但被判断无需读取的文档：
+
 ## 大目录索引命中
+- `docs/code-logics/INDEX.md`：未涉及 / 已读取，命中文档：
+- `planting_ai_diagnosis_source_index.json`：未涉及 / 已读取，命中 source_id：
+- All-in-One：未读取 / 已读取章节或 Sxx：
+- 避坑索引：未涉及 / 已读取：
+
 ## 使用的规则摘要
+- ...
+
 ## 是否需要更新文档
+- 是 / 否
+- 判断依据：
+
 ## 涉及文档
+- 文档路径：
+  - 动作：新增 / 修改 / 不修改
+  - 原因：
+  - 是否为完整文档交付：是 / 否
+
 ## 术语一致性检查
+- 是否存在中文主名缺失：否 / 是
+- 是否存在英文概念压过中文表达：否 / 是
+- 是否需要同步 `docs/ai-rules/language-policy.md`：否 / 是
+- 说明：
+
 ## docs/code-logics 同步
+- 是否涉及：否 / 是
+- 是否更新具体文档：否 / 是，路径：
+- 是否同步 `docs/code-logics/INDEX.md`：无需 / 需要 / 已同步 / 待同步
+- 不同步原因：
+
 ## docs/new-rules 同步
+- 是否涉及：否 / 是
+- 是否更新规则内容：否 / 是
+- 命中 source_id：
+- 是否只更新摘要 / 索引 / 附录 Sxx / 归档源文档：
+- 不同步原因：
+
 ## All-in-One 与 source_index 同步
+- 是否涉及 All-in-One：否 / 是
+- 是否更新 `planting_ai_diagnosis_all_in_one.md`：否 / 是
+- 是否更新 `planting_ai_diagnosis_source_index.json`：否 / 是
+- 是否需要同步 All-in-One 第 1 章快速定位索引：否 / 是
+- 是否需要同步附录 A 指定 Sxx：否 / 是，source_id：
+- 不同步原因：
+
 ## 避坑文档同步
+- 是否涉及避坑文档：否 / 是
+- 是否更新轻量索引 `docs/ai-rules/diagnose-http-cloud-debugging.md`：无需 / 需要 / 已同步 / 待同步
+- 是否读取或更新归档全文 `docs/ai-rules/archive/diagnose_http_云端调试避坑记录_v1.md`：否 / 是，原因：
+- 新增避坑条目所属分类：DNS / 网关 / 鉴权 / schema / 部署 / 日志 / replay / H5 管理页 / 图片 / route-outcome / 其他
+
 ## 已更新内容
+- 文档：
+  - 更新摘要：
+  - 关键新增 / 修改点：
+
 ## 未更新原因
+- 文档：
+  - 原因：
+
 ## 风险
+- 文档一致性风险：
+- 术语风险：
+- 索引不同步风险：
+- 后续维护风险：
+
 ## 下一步建议
+- 是否需要 main agent 复核：否 / 是
+- 是否需要同步 AGENTS / SKILL / subagent 配置：否 / 是，文件：
+- 是否需要继续派发其他 agent：否 / 是，角色：
 """

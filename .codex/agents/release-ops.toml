@@ -13,6 +13,7 @@ developer_instructions = """
 4. CloudBase的所有增删改优先使用CloudBase Mcp方案.
 
 【只在明确需要时加读】
+- `docs/ai-rules/project-hard-rules.md`
 - Dispatch Plan 指定的规则文件 / 章节。
 - 涉及 CloudBase 部署时，读取指定 `cloudbase-deployment.md` 章节。
 - 涉及 replay / route / outcome live 验收时，读取指定 `diagnosis-replay.md` 章节。

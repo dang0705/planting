@@ -41,14 +41,6 @@
                       {{ isSelectedFollowUpOption(question, option) ? '已选' : '单选' }}
                     </text>
                   </view>
-                  <view
-                    v-if="isSelectedFollowUpOption(question, option)"
-                    class="followup-accordion-body"
-                  >
-                    <text class="followup-option-description">
-                      {{ getOptionDescription(option) }}
-                    </text>
-                  </view>
                 </view>
               </view>
 
@@ -79,7 +71,7 @@
     </swiper>
 
     <scroll-view
-      v-else-if="result && !result.followUpRequired"
+      v-else-if="result && !result.followUpRequired && !hasRouteConvergenceDetails"
       scroll-y
       class="followup-outcome-scroll"
     >
@@ -294,6 +286,13 @@ const currentFollowUpQuestion = computed(() => followUpQuestionStack.value[activ
 const hasDirtyFollowUpAnswers = computed(() => dirtyFollowUpFromIndex.value >= 0)
 const followUpSwiperStyle = computed(() => ({ height: `${estimateFollowUpSwiperHeight(currentFollowUpQuestion.value)}px` }))
 const hasCompletedDiagnosis = computed(() => Boolean(result.value) && !result.value.followUpRequired)
+const hasRouteConvergenceDetails = computed(() =>
+  Boolean(
+    primaryOutcomeDisplay.value ||
+    secondaryOutcomeDisplays.value.length ||
+    visibleOutcomeDisplays.value.length
+  )
+)
 const finalOutcome = computed(() => result.value?.finalResult || {})
 const outcomeDisplayTitle = computed(() => String(
   finalOutcome.value?.displayNameCn ||
@@ -330,21 +329,30 @@ const confidenceLevelText = computed(() => {
   }
   return labels[level] || level || '一般'
 })
-const primaryOutcomeDisplay = computed(() => String(
-  result.value?.primaryOutcome?.displayNameCn ||
-    result.value?.finalResult?.primaryOutcome?.displayNameCn ||
-    ''
-).trim())
+const primaryOutcome = computed(() => result.value?.primaryOutcome || result.value?.finalResult?.primaryOutcome || null)
+const secondaryOutcomeSource = computed(() =>
+  Array.isArray(result.value?.secondaryOutcomes) && result.value.secondaryOutcomes.length
+    ? result.value.secondaryOutcomes
+    : Array.isArray(result.value?.finalResult?.secondaryOutcomes)
+      ? result.value.finalResult.secondaryOutcomes
+      : []
+)
+const visibleOutcomeSource = computed(() =>
+  Array.isArray(result.value?.visibleOutcomes) && result.value.visibleOutcomes.length
+    ? result.value.visibleOutcomes
+    : Array.isArray(result.value?.finalResult?.visibleOutcomes)
+      ? result.value.finalResult.visibleOutcomes
+      : []
+)
+const primaryOutcomeDisplay = computed(() => formatOutcomeDisplayLabel(primaryOutcome.value))
 const secondaryOutcomeDisplays = computed(() =>
   uniqueStrings(
-    (Array.isArray(result.value?.secondaryOutcomes) ? result.value.secondaryOutcomes : [])
-      .map(item => String(item?.displayNameCn || '').trim())
+    secondaryOutcomeSource.value.map(formatOutcomeDisplayLabel)
   )
 )
 const visibleOutcomeDisplays = computed(() =>
   uniqueStrings(
-    (Array.isArray(result.value?.visibleOutcomes) ? result.value.visibleOutcomes : [])
-      .map(item => String(item?.displayNameCn || '').trim())
+    visibleOutcomeSource.value.map(formatOutcomeDisplayLabel)
   )
 )
 const routeDebugDecision = computed(() => result.value?.routeDecision || null)
@@ -419,12 +427,15 @@ const actionAdviceTexts = computed(() => {
     ? result.value.nextSteps.map(item => String(item?.text || '').trim()).filter(Boolean)
     : []
   const treatmentText = String(result.value?.treatmentText || explanation?.firstAid || '').trim()
-  return uniqueStrings([
+  const structuredAdvice = [
     ...normalizeArrayText(actionAdvice?.todayActions),
     ...normalizeArrayText(actionAdvice?.threeDayActions),
     ...normalizeArrayText(actionAdvice?.sevenDayObserve),
-    ...nextSteps,
-    ...(treatmentText ? [treatmentText] : [])
+    ...nextSteps
+  ]
+  return uniqueStrings([
+    ...structuredAdvice,
+    ...(!structuredAdvice.length && treatmentText ? [treatmentText] : [])
   ])
 })
 
@@ -435,11 +446,14 @@ const avoidAdviceTexts = computed(() => {
     ? result.value.whatToAvoid.map(item => String(item || '').trim()).filter(Boolean)
     : []
   const preventionText = String(result.value?.preventionText || explanation?.avoid || '').trim()
-  return uniqueStrings([
+  const structuredAdvice = [
     ...normalizeArrayText(actionAdvice?.avoidActions),
     ...(actionAdvice?.conflictDetected ? normalizeArrayText(actionAdvice?.retakeOrEscalate) : []),
-    ...whatToAvoid,
-    ...(preventionText ? [preventionText] : [])
+    ...whatToAvoid
+  ]
+  return uniqueStrings([
+    ...structuredAdvice,
+    ...(!structuredAdvice.length && preventionText ? [preventionText] : [])
   ])
 })
 
@@ -493,6 +507,24 @@ function uniqueStrings(values = []) {
   return Array.from(new Set((Array.isArray(values) ? values : []).map(item => String(item || '').trim()).filter(Boolean)))
 }
 
+function formatOutcomeDisplayLabel(outcome = null) {
+  if (typeof outcome === 'string') {
+    return outcome.trim()
+  }
+  if (!outcome || typeof outcome !== 'object') {
+    return ''
+  }
+  return String(
+    outcome.displayNameCn ||
+      outcome.displayName ||
+      outcome.title ||
+      outcome.problemName ||
+      outcome.problemKey ||
+      outcome.outcomeKey ||
+      ''
+  ).trim()
+}
+
 function normalizeArrayText(values = []) {
   return (Array.isArray(values) ? values : []).map(item => String(item || '').trim()).filter(Boolean)
 }
@@ -500,18 +532,15 @@ function normalizeArrayText(values = []) {
 function estimateFollowUpSwiperHeight(question) {
   if (!question) {return 260}
   const options = Array.isArray(question.options) ? question.options : []
-  const questionText = sanitizeTemplateText(question.text || question.helpText || question.questionText || '')
-  const questionHelpText = sanitizeTemplateText(question.helpText || '')
+  const questionText = getQuestionTitle(question)
+  const questionHelpText = getQuestionHelpText(question)
   const questionExtraRows = Math.ceil(Math.max(questionText.length - 26, 0) / 22)
   const helpExtraRows = questionHelpText ? Math.ceil(questionHelpText.length / 34) : 0
   const baseHeight = 118 + questionExtraRows * 18 + helpExtraRows * 16
   const optionHeight = options.reduce((sum, option) => {
-    const optionTitle = sanitizeTemplateText(option?.text || '')
-    const optionDescription = sanitizeTemplateText(option?.description || '')
+    const optionTitle = getOptionText(option)
     const titleRows = Math.max(1, Math.ceil(String(optionTitle || '').length / 18))
-    const descriptionRows = optionDescription ? Math.max(1, Math.ceil(String(optionDescription || '').length / 28)) : 1
-    const accordionBodyHeight = isAccordionFollowUpQuestion(question) ? 28 + descriptionRows * 16 : 0
-    return sum + 52 + Math.max(0, titleRows - 1) * 18 + accordionBodyHeight
+    return sum + 52 + Math.max(0, titleRows - 1) * 18
   }, 0)
   return Math.max(280, Math.min(820, baseHeight + optionHeight + 72))
 }
@@ -522,16 +551,15 @@ function sanitizeTemplateText(value = '') {
     .replace(/\{\{[^}]+\}\}/g, '')
     .replace(/[\r\n]+/g, ' ')
     .replace(/\s+/g, ' ')
-    .replace(/\s*-\s*/g, ' ')
     .trim()
 }
 
 function getQuestionTitle(question = {}) {
   return sanitizeTemplateText(
+    question?.questionTextUserCn ||
     question?.questionTextCn ||
-    question?.text ||
     question?.questionText ||
-    question?.title ||
+    question?.text ||
     ''
   )
 }
@@ -551,6 +579,7 @@ function getQuestionHelpText(question = {}) {
 
 function getOptionText(option = {}) {
   return sanitizeTemplateText(
+    option?.optionTextUserCn ||
     option?.optionTextCn ||
     option?.text ||
     option?.optionText ||
@@ -868,10 +897,6 @@ async function submitFollowUps() {
 
 .followup-accordion-option--active .followup-accordion-badge {
   color: #2d7a4f;
-}
-
-.followup-accordion-body {
-  padding: 0 14px 13px;
 }
 
 .followup-dirty-hint {

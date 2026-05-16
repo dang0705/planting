@@ -254,13 +254,13 @@
                       当前问题 {{ activeFollowUpQuestionIndex + 1 }} / {{ followUpQuestionStack.length || 1 }}
                     </text>
                     <text class="block text-xs font-semibold text-gray-900 leading-relaxed mb-1">
-                      {{ question.text }}
+                      {{ getQuestionTitle(question) }}
                     </text>
                     <text
-                      v-if="question.helpText"
+                      v-if="getQuestionHelpText(question)"
                       class="block text-[10px] text-gray-500 leading-relaxed mb-3"
                     >
-                      {{ question.helpText }}
+                      {{ getQuestionHelpText(question) }}
                     </text>
                     <view
                       class="followup-option-stack"
@@ -278,7 +278,7 @@
                           v-for="option in question.options"
                           :key="option.optionId"
                           :name="option.optionId"
-                          :title="option.text"
+                          :title="getOptionText(option)"
                           :border="false"
                           :title-border="false"
                           class="followup-option-collapse-item"
@@ -292,7 +292,7 @@
                                 : 'followup-option-accordion-title--idle'
                             "
                           >
-                            <text class="followup-option-accordion-text">{{ option.text }}</text>
+                            <text class="followup-option-accordion-text">{{ getOptionText(option) }}</text>
                             <text class="followup-option-accordion-badge">
                               {{ isSelectedFollowUpOption(question, option) ? '已选' : '单选' }}
                             </text>
@@ -309,7 +309,7 @@
                           @click.stop="selectFollowUpOption(question, option)"
                         >
                             <text class="followup-option-description">
-                              {{ option.description || '选择这一项后继续下一步排查。' }}
+                              {{ getOptionDescription(option) || '选择这一项后继续下一步排查。' }}
                             </text>
                           </view>
                         </uni-collapse-item>
@@ -330,13 +330,13 @@
                         >
                           <view class="followup-option-content">
                             <view class="followup-option-title-row">
-                              <text class="followup-option-text">{{ option.text }}</text>
+                              <text class="followup-option-text">{{ getOptionText(option) }}</text>
                             </view>
                             <text
-                              v-if="option.description"
+                              v-if="getOptionDescription(option)"
                               class="followup-option-description"
                             >
-                              {{ option.description }}
+                              {{ getOptionDescription(option) }}
                             </text>
                           </view>
                         </view>
@@ -869,6 +869,57 @@ function refreshViewportHeight() {
 
 function isAccordionFollowUpQuestion(question) {
   return String(question?.uiVariant || '').trim() === 'single_select_accordion'
+}
+
+function sanitizeTemplateText(value = '') {
+  return String(value || '')
+    .replace(/\{\{[^}]+\}/g, '')
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function getQuestionTitle(question = {}) {
+  return sanitizeTemplateText(
+    question?.questionTextUserCn ||
+      question?.questionTextCn ||
+      question?.text ||
+      question?.questionText ||
+      question?.title ||
+      ''
+  )
+}
+
+function getQuestionHelpText(question = {}) {
+  return sanitizeTemplateText(
+    question?.helpTextCn ||
+      question?.helpText ||
+      question?.questionHelpText ||
+      ''
+  )
+}
+
+function getOptionText(option = {}) {
+  return sanitizeTemplateText(
+    option?.optionTextUserCn ||
+      option?.optionTextCn ||
+      option?.text ||
+      option?.optionText ||
+      option?.label ||
+      option?.desc ||
+      ''
+  )
+}
+
+function getOptionDescription(option = {}) {
+  return sanitizeTemplateText(
+    option?.optionDescriptionUserCn ||
+      option?.descriptionCn ||
+      option?.optionDescription ||
+      option?.description ||
+      option?.desc ||
+      ''
+  )
 }
 
 function getFollowUpQuestionId(question) {

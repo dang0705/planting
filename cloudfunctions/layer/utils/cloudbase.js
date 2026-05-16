@@ -59,7 +59,6 @@ const SQL_TABLES = [
   'visual_supervision_records',
   'observed_evidence_set',
   'diagnosis_symptom_observations',
-  'diagnosis_problem_rankings',
   'diagnosis_follow_ups',
   'question_queue',
   'stop_state',

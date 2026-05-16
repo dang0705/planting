@@ -45,6 +45,7 @@ docs/ai-rules/diagnose-http-cloud-debugging.md
 12. `skipAuth`、匿名登录、Bearer token、`x-terminal-e2e`。
 13. 云函数部署、layer、bundled ZIP、COS deploy。
 14. ranking → route、outcome 瘦身、gate、问诊路径、runtime 的 live 验收。
+15. 历史 session 暴露的客户端最终展示异常，例如 review/list 可见但真实 bug 在 result/read 或前端消费链路。
 
 ---
 
@@ -79,8 +80,10 @@ docs/ai-rules/diagnose-http-cloud-debugging.md
 8. replay / batch runner 协议。
 9. H5 本地代理。
 10. diagnose 业务逻辑。
+11. 前端 normalize / 页面消费链路。
 
 不要把外层现象直接判断为 diagnose 业务逻辑错误。
+不要把 `review/list`、replay、DB payload 或 routeDecision 中间态直接判断为客户端最终展示正确。
 
 ### 4.2 先拿锚点，再做判断
 
@@ -93,6 +96,7 @@ docs/ai-rules/diagnose-http-cloud-debugging.md
 5. 请求使用的 CloudBase envId
 6. 请求落入的 SQL schema
 7. 函数 `modTime` / 发布版本
+8. 用户可见验收字段，例如 `visibleOutcomes`、`primaryOutcome`、`secondaryOutcomes`、页面最终展示来源
 
 ---
 
@@ -178,6 +182,7 @@ dev_terminal_*
 - 42. 新增审核表的 collation 必须跟现有诊断表对齐
 - 46. diagnose SQL 表不要靠想当然查字段
 - 56. review list 若只在 live 报 `Illegal mix of collations`
+- 64. `--app-env=development` 的 smoke 若只写 prod schema，再回读 `cloud1_dev` 会读到旧 gate JSON：本次 `diag_1778900911740_co24xnlm` 验证已确认需按读写同 schema 执行
 - 58. 以后所有本地测试先统一 schema，再开始调试
 - 61. diagnosis-review 合并回访数据时，先补表，再统一 schema helper
 - 62. 诊断函数不能因为 `NODE_ENV=production` 就强制锁死 prod schema
@@ -199,6 +204,7 @@ utf8mb4_0900_ai_ci
 utf8mb4_unicode_ci
 IS NULL
 <=> NULL
+TERMINAL_E2E_FUNCTION_BASE_URL
 ```
 
 排查原则：
@@ -211,6 +217,36 @@ IS NULL
 6. `models.$runSQL` 预编译 SQL 不支持 `IS NULL`，改用 `<=> NULL`。
 7. 新表 collation 必须与主链表对齐。
 8. 显式 request env 优先，不得被 `NODE_ENV=production` 强行覆盖。
+9. `TERMINAL_E2E_FUNCTION_BASE_URL` 优先于默认网关地址时，必须配合正确的函数路径前缀（见 5.10）。
+10. 同一 smoke 验收要强制“写库 schema 与读库 schema 一致”：`diag_1778900911740_co24xnlm`（0 模型）曾在 `--app-env=development` 下写入 `cloud1`/prod，但读取走 `cloud1_dev` 时仍拿到了旧黄叶 JSON；问题复现后修订为读写同 schema 后通过。
+
+### 5.3.1 e2e 路径与 service base 的兼容说明（补充）
+
+对应原文重点章节：
+
+- 13. 追问后最终输出不能靠空候选或纯先验硬判（本小节为部署脚本路径兼容补充）
+- 20. CloudBase MCP 函数服务的参数形态别猜（本小节为执行入口参数与 URL 约束补充）
+- 26. `scripts/deploy-function.js` 不是闭环验收路径（本小节为 smoke 运行方式补充）
+
+关键词：
+
+```text
+TERMINAL_E2E_FUNCTION_BASE_URL
+TERMINAL_E2E_USE_CURL_FALLBACK
+TERMINAL_E2E_CURL_RESOLVE_IP
+/v1/functions/
+/diagnose-http/health
+/diagnose-http
+webfn=true
+```
+
+排查原则：
+
+1. 不再适用：`https://<envId>.service.tcloudbase.com/diagnose` 这类旧写法。服务域名下诊断入口为 `.../diagnose-http/...`。
+2. 不再适用：用服务域名时继续拼 `webfn=true`。
+3. 诊断函数健康检查与 smoke 在服务域名下应使用 ` /diagnose-http/health`。
+4. 若使用 `TERMINAL_E2E_FUNCTION_BASE_URL`，建议明确写 `--app-env=development`、`--skip-auth=true`、`--terminal-e2e=true`。
+5. `TERMINAL_E2E_FUNCTION_BASE_URL` 与默认网关入口仅作环境切换，不应混用 URL 形态。
 
 ---
 
@@ -340,6 +376,45 @@ sips
    - 或 `npm run run:with-cloudbase-env`
 5. 默认 replay 看“接下来会怎样”；带 `--replay-round/--replay-stage` 才是看“当时为什么那样判”。
 6. 大图不能原样 inline，先模拟前端压缩。
+
+### 5.6.1 历史 session 的 0 模型 result/read 与前端可见验收
+
+适用场景：
+
+- 用户给出 `diag_*` session，问题发生在客户端运行时、最终展示、follow-up、diagnose 结果页或 review/list 回放中。
+- 任务目标是确认 route / outcome / gate / runtime 的用户可见结果，而不是重新调用模型。
+
+关键词：
+
+```text
+0 模型
+zero-model
+result/read
+visibleOutcomes
+primaryOutcome
+secondaryOutcomes
+finalResult
+review/list
+follow-up.vue
+diagnose.vue
+normalizeDiagnosisResult
+```
+
+验收原则：
+
+1. 历史 session 验收优先使用 0 模型 smoke，不应重新触发视觉模型或文本模型。
+2. `review/list` 只能说明问题可观察，不能作为修复位置；客户端运行时问题必须验证 `result/read` 与前端消费链路。
+3. 多 outcome 类目标必须断言 API 顶层字段，而不是只看 DB payload 或 `routeDecision`：
+   - `visibleOutcomes.length` 满足目标要求。
+   - `primaryOutcome` 与 `secondaryOutcomes` 同时存在且语义一致。
+   - 不得只取最后一次 `finalResult` 作为最终输出。
+4. 前端验收必须覆盖 normalize 与页面消费面：
+   - `src/utils/diagnose-flow.js`
+   - `src/pages/diagnose/follow-up.vue`
+   - `src/pages/diagnose/diagnose.vue`
+5. 如果旧 snapshot 单结果、新 payload 多结果并存，验收要确认前端最终展示使用最新多 outcome 契约。
+6. 如果 DNS 或网关抖动导致重复 smoke 失败，必须记录最近一次成功的 HTTP 证据、函数部署证据、DB / 日志证据，并把后续失败标为网络层风险，不能反向证明业务验收通过。
+7. goal 完成标准必须按目标验收契约逐项全绿；DB、replay、日志、命令成功或 review 回放任一单项通过都不等于完成。
 
 ---
 

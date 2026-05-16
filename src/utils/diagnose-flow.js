@@ -635,8 +635,8 @@ function normalizeQuestions(questions = []) {
       questionRole: item.questionRole || item.questionCategory || '',
       questionCategory: item.questionCategory || item.questionRole || '',
       effectMode: item.effectMode || '',
-      text: item.text || '',
-      helpText: item.helpText || '',
+      text: item.questionTextUserCn || item.questionTextCn || item.text || item.questionText || item.title || '',
+      helpText: item.helpTextCn || item.helpText || item.questionHelpText || '',
       defaultOptionKey: item.defaultOptionKey || '',
       defaultOptionId: item.defaultOptionId || '',
       uiVariant: item.uiVariant || '',
@@ -646,8 +646,14 @@ function normalizeQuestions(questions = []) {
         .map(option => ({
           optionId: option.optionId,
           optionKey: option.optionKey || '',
-          text: option.text || '',
-          description: option.description || option.desc || '',
+          text: option.optionTextUserCn || option.optionTextCn || option.text || option.optionText || option.label || option.desc || '',
+          description:
+            option.optionDescriptionUserCn ||
+            option.descriptionCn ||
+            option.optionDescription ||
+            option.description ||
+            option.desc ||
+            '',
           isDefault: Boolean(option.isDefault)
         }))
     }))
@@ -729,7 +735,14 @@ function resolveSummaryText({
 
 function normalizeDiagnosisAdviceSteps(diagnosis = {}, explanation = {}) {
   const directSteps = Array.isArray(diagnosis.nextSteps) ? diagnosis.nextSteps : []
+  const actionAdvice = diagnosis.actionAdvice || diagnosis.finalResult?.actionAdvice || {}
+  const actionStepTexts = normalizeStringList([
+    ...(Array.isArray(actionAdvice?.todayActions) ? actionAdvice.todayActions : []),
+    ...(Array.isArray(actionAdvice?.threeDayActions) ? actionAdvice.threeDayActions : []),
+    ...(Array.isArray(actionAdvice?.sevenDayObserve) ? actionAdvice.sevenDayObserve : [])
+  ])
   const texts = normalizeStringList([
+    ...actionStepTexts,
     ...directSteps.map(item =>
       typeof item === 'string'
         ? item
@@ -748,7 +761,15 @@ function normalizeDiagnosisAdviceSteps(diagnosis = {}, explanation = {}) {
 }
 
 function normalizeDiagnosisAvoidAdvice(diagnosis = {}, explanation = {}) {
+  const actionAdvice = diagnosis.actionAdvice || diagnosis.finalResult?.actionAdvice || {}
+  const actionAvoidTexts = normalizeStringList([
+    ...(Array.isArray(actionAdvice?.avoidActions) ? actionAdvice.avoidActions : []),
+    ...(actionAdvice?.conflictDetected && Array.isArray(actionAdvice?.retakeOrEscalate)
+      ? actionAdvice.retakeOrEscalate
+      : [])
+  ])
   return normalizeStringList([
+    ...actionAvoidTexts,
     ...(Array.isArray(diagnosis.whatToAvoid)
       ? diagnosis.whatToAvoid.map(item =>
           typeof item === 'string'
@@ -806,6 +827,7 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
   )
   const routeDecisionCause = normalizeRouteDecisionCause(
     diagnosis.routeDecisionCause ||
+      finalResult?.routeDecisionCause ||
       diagnosis.routeDecision?.decisionCause ||
       diagnosis.stopDecision?.decisionCause
   )
@@ -875,7 +897,7 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
     primaryOutcome,
     secondaryOutcomes,
     visibleOutcomes,
-    outcomeMode: String(diagnosis.outcomeMode || '').trim(),
+    outcomeMode: String(diagnosis.outcomeMode || finalResult?.outcomeMode || routeDecision?.mode || '').trim(),
     routeDecisionCause,
     actionAdvice,
     routeDecision,
@@ -918,12 +940,12 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
     needHumanReview: Boolean(diagnosis.needHumanReview),
     treatmentText:
       diagnosis.treatmentText ||
-      explanation?.firstAid ||
-      normalizedNextSteps.map(item => item?.text).filter(Boolean).join('\n'),
+      normalizedNextSteps.map(item => item?.text).filter(Boolean).join('\n') ||
+      explanation?.firstAid,
     preventionText:
       diagnosis.preventionText ||
-      explanation?.avoid ||
-      normalizedWhatToAvoid.filter(Boolean).join('\n'),
+      normalizedWhatToAvoid.filter(Boolean).join('\n') ||
+      explanation?.avoid,
     images
   }
 }

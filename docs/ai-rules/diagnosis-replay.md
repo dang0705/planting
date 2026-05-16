@@ -13,6 +13,7 @@
 5. 不要把默认 replay 误当成历史决策点复盘。
 6. 不要把 replay 命令成功误当成诊断规则正确。
 7. 不要把 replay 产物中的中间字段直接视为前端可见 outcome，必须区分运行时中间态和前端展示态。
+8. 不要把 `review/list`、历史 session replay 或 DB 中间态当成客户端运行时最终展示验收；它们只能作为复现入口或辅助证据。
 
 ## 3. 标准执行入口
 
@@ -85,3 +86,4 @@ canonical batch results 只保留 replay audit 核心字段：
 5. 瘦身发生在哪一层：候选生成、路径规划、前端展示、文档输出或日志产物。
 6. replay 产物是否足以解释 route 决策过程。
 7. batch artifact 是否保持精简，不把无关字段重新膨胀回来。
+8. 历史 session 复盘必须区分观察入口和 bug 发生位置：如果用户报告的是客户端运行时或最终展示，replay 通过后仍需验证 result/read 顶层字段与前端消费路径。

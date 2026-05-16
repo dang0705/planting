@@ -13,6 +13,7 @@ developer_instructions = """
 4. 指定代码文件、目录或搜索目标。
 
 【只在明确需要时加读】
+- `docs/ai-rules/project-hard-rules.md`
 - Dispatch Plan 指定的规则文件 / 章节。
 - 相关 `docs/code-logics/INDEX.md`；仅在索引命中后读取具体 `docs/code-logics/` 文档或 main agent 摘要。
 - 相关 `docs/new-rules/planting_ai_diagnosis_source_index.json`；仅在索引命中后读取 All-in-One 指定章节/Sxx 或 main agent 摘要。

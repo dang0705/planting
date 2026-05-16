@@ -5,7 +5,6 @@ const {
   replaceObservedEvidenceSet,
   replaceObservedSymptoms,
   upsertVisualSupervisionRecords,
-  replaceProblemRankings,
   appendFollowUpQuestions,
   saveFinalDiagnosisSnapshot
 } = require('./session-service')
@@ -23,19 +22,20 @@ async function persistRoundRuntime({
   clientContext = null
 } = {}) {
   const isInitialRound = Number(round || 1) <= 1
+  await upsertDiagnosisSession({
+    sessionId,
+    openid,
+    plantContext,
+    response,
+    round,
+    reliabilityScore: response?.metrics?.reliabilityScore || 0,
+    mode: 'new_v13',
+    image,
+    description,
+    clientContext
+  })
+
   const persistenceJobs = [
-    upsertDiagnosisSession({
-      sessionId,
-      openid,
-      plantContext,
-      response,
-      round,
-      reliabilityScore: response?.metrics?.reliabilityScore || 0,
-      mode: 'new_v13',
-      image,
-      description,
-      clientContext
-    }),
     upsertVisualSupervisionRecords({
       sessionId,
       openid,
@@ -56,8 +56,7 @@ async function persistRoundRuntime({
   if (isInitialRound) {
     persistenceJobs.push(
       replaceObservedEvidenceSet(sessionId, openid, response?.observedEvidenceSet || []),
-      replaceObservedSymptoms(sessionId, response?.observedSymptoms || []),
-      replaceProblemRankings(sessionId, response?.rankings || [])
+      replaceObservedSymptoms(sessionId, response?.observedSymptoms || [])
     )
   }
 

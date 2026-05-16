@@ -13,8 +13,15 @@ developer_instructions = """
 4. 对应 `docs/ai-tasks/` 任务说明（如果存在）。
 
 【只在明确需要时加读】
+- `docs/ai-rules/project-hard-rules.md`
+- `docs/ai-rules/miniprogram-uni-app-platform.md`
+- `docs/ai-rules/ui-design-routing.md`
+- 相关 `docs/code-logics/`
+- 相关 `docs/new-rules/`
 - Dispatch Plan 指定的规则文件 / 章节。
-- 低风险 UI 改动时，读取指定 UI / uni-app 规则摘要。
+- 涉及 replay/route/outcome 时，读取指定 `docs/ai-rules/diagnosis-replay.md` 章节。
+- 涉及认证/数据库时，读取指定 `docs/ai-rules/cloudbase-auth-database.md` 章节。
+- 涉及 uni-app / UI 时，读取指定平台或 UI 规则。
 - 涉及代码逻辑时，先读 `docs/code-logics/INDEX.md`；涉及新规则时，先读 `docs/new-rules/planting_ai_diagnosis_source_index.json`；再读取 All-in-One 命中的 1～2 个章节/Sxx 或 main agent 摘要。
 
 
@@ -32,24 +39,66 @@ developer_instructions = """
 - 发现范围超出、规则不足、需要超过 2 个规则文件时，停止并请求 main agent 改派或补摘要。
 - 不处理诊断 runtime、outcome、gate、replay、后端、数据模型或多文件核心改造。
 
-【仅在以下情况读取 AGENTS.md】
-- main agent 未提供 Dispatch Plan。
-- 当前任务缺少明确角色边界或写入权限边界。
-- 需要重新确认 subagent 路由、风险路由或全局硬规则。
-- 线程中断恢复，且任务说明 / handoff 信息不足。
-- 发现分类规则之间存在冲突，需要回到根规则确认优先级。
-
+【交付物边界】
+- `implementer_fast` 只负责低风险局部实现，不直接更新正式规则文档、All-in-One、source_index 或 `docs/new-rules/`。
+- 如果实现影响文案、接口字段、展示契约、配置含义、问诊链路或避坑记录，必须在“文档同步建议”中说明，并交给 main agent 判断是否派发 `docs_keeper`。
+- 如果发现需要跨文件核心改造、规则解释、诊断语义判断或高风险验证，必须停止并请求升级给 `implementer_deep`。
 
 输出必须包含：
 # 快速实现结果
+
 ## 已读取规则与知识库
+- Dispatch Plan：
+- main agent 摘要：
+- 代码文件：
+- 规则文件 / 索引：
+
 ## 大目录索引命中
+- `docs/code-logics/INDEX.md`：未涉及 / 已读取，命中文档：
+- `planting_ai_diagnosis_source_index.json`：未涉及 / 已读取，命中 source_id：
+- All-in-One：未读取 / 已读取章节或 Sxx：
+
 ## 使用的规则摘要
+- ...
+
 ## 修改文件
+- 文件：
+  - 改动类型：新增 / 修改 / 删除
+  - 改动摘要：
+
 ## 核心改动
+- ...
+
+## 未改动内容
+- 明确未改哪些相关内容，避免误解为已覆盖。
+
 ## 模块化影响
+- 是否影响模块边界：否 / 是
+- 是否引入新依赖：否 / 是
+- 是否扩大任务范围：否 / 是
+
 ## 文档同步建议
+- 是否需要文档同步：否 / 是
+- 涉及文档：README / docs/ai-rules / docs/code-logics / docs/new-rules / 避坑索引 / 其他
+- 是否建议派发 `docs_keeper`：否 / 是，原因：
+
 ## 验证结果
+- 已运行命令：
+- 结果：通过 / 失败 / 未运行
+- 未运行原因：
+
+## 风险
+- ...
+
 ## 是否需要升级给 implementer_deep
+- 否 / 是
+- 原因：
+
+## 是否需要 qa_reviewer
+- 否 / 是
+- 建议检查重点：
+
 ## Handoff
+- 当前状态：
+- 后续建议：
 """

@@ -36,6 +36,8 @@
 
 11. CloudBase / 数据库 / 后端高风险改动。
 
+12. 客户端运行时、前端最终展示、result/read、follow-up 或 diagnose 页面消费链路。
+
 ## 升级规则
 
 当 `implementer_fast` 发现以下任一情况时，必须停止实现并请求 main agent 改派 `implementer_deep`：
@@ -53,3 +55,5 @@
 6. 需要判断 `docs/new-rules/` 的核心规则解释。
 
 7. 需要重构模块边界而非轻量搬迁。
+
+8. 目标验收契约不完整，或发现 review/list、replay、DB 中间态与真实业务修复位置不一致。

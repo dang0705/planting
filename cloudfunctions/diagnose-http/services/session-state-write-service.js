@@ -55,6 +55,47 @@ function pickAdviceTextFromSteps(items = []) {
   return ''
 }
 
+function pickAdviceTextFromStrings(items = []) {
+  for (const item of Array.isArray(items) ? items : []) {
+    const text = normalizeAdviceText(item)
+    if (text) {return text}
+  }
+  return ''
+}
+
+function resolvePersistedAdviceTexts(response = {}) {
+  const explanation = response?.resultExplanation || response?.explanation || {}
+  const actionAdvice = response?.actionAdvice || response?.finalResult?.actionAdvice || {}
+  const actionTreatment = pickAdviceTextFromStrings([
+    ...(Array.isArray(actionAdvice?.todayActions) ? actionAdvice.todayActions : []),
+    ...(Array.isArray(actionAdvice?.threeDayActions) ? actionAdvice.threeDayActions : []),
+    ...(Array.isArray(actionAdvice?.sevenDayObserve) ? actionAdvice.sevenDayObserve : [])
+  ])
+  const actionPrevention = pickAdviceTextFromStrings([
+    ...(Array.isArray(actionAdvice?.avoidActions) ? actionAdvice.avoidActions : []),
+    ...(actionAdvice?.conflictDetected && Array.isArray(actionAdvice?.retakeOrEscalate)
+      ? actionAdvice.retakeOrEscalate
+      : [])
+  ])
+
+  return {
+    treatment: normalizeAdviceText(
+      response?.treatmentText ||
+        response?.treatment ||
+        actionTreatment ||
+        pickAdviceTextFromSteps(response?.nextSteps) ||
+        explanation?.firstAid
+    ),
+    prevention: normalizeAdviceText(
+      response?.preventionText ||
+        response?.prevention ||
+        actionPrevention ||
+        pickAdviceTextFromSteps(response?.whatToAvoid) ||
+        explanation?.avoid
+    )
+  }
+}
+
 async function upsertDiagnosisSession({
   sessionId,
   openid,
@@ -81,19 +122,7 @@ async function upsertDiagnosisSession({
   const isProblematicOutcome = outcomeType === 'problematic'
   const shouldMarkEnded = sessionStatus === 'completed'
   const outcomePayloadJson = buildOutcomePayload(response)
-  const explanation = response?.resultExplanation || response?.explanation || {}
-  const persistedTreatment = normalizeAdviceText(
-    response?.treatmentText ||
-      response?.treatment ||
-      explanation?.firstAid ||
-      pickAdviceTextFromSteps(response?.nextSteps)
-  )
-  const persistedPrevention = normalizeAdviceText(
-    response?.preventionText ||
-      response?.prevention ||
-      explanation?.avoid ||
-      pickAdviceTextFromSteps(response?.whatToAvoid)
-  )
+  const persistedAdvice = resolvePersistedAdviceTexts(response)
   const normalizedTopProblemScore = normalizeNullableSqlNumber(
     topProblemRanking?.finalScore ?? topRanking?.finalScore
   )
@@ -155,8 +184,8 @@ async function upsertDiagnosisSession({
         ? (finalResult?.displayName || topProblem?.displayName)
         : null
     ),
-    treatment: persistedTreatment,
-    prevention: persistedPrevention,
+    treatment: persistedAdvice.treatment,
+    prevention: persistedAdvice.prevention,
     endedAtFlag: shouldMarkEnded ? 1 : 0
   })
 }
@@ -165,5 +194,8 @@ module.exports = {
   upsertDiagnosisSession,
   normalizeNullableSqlNumber,
   normalizeNullableSqlText,
-  normalizeNullableSqlDateTime
+  normalizeNullableSqlDateTime,
+  _test: {
+    resolvePersistedAdviceTexts
+  }
 }

@@ -143,6 +143,23 @@ function normalizeKey(value = '') {
   return String(value || '').trim()
 }
 
+function resolveVisibleRouteActionProfileKeys(routeDecision = null, routeOutcomes = []) {
+  const visibleOutcomeKeySet = new Set(
+    Array.isArray(routeDecision?.visibleOutcomeKeys)
+      ? routeDecision.visibleOutcomeKeys.map(item => normalizeKey(item)).filter(Boolean)
+      : []
+  )
+  const decisionProfileKeys = Array.isArray(routeDecision?.visibleActionProfileKeys)
+    ? routeDecision.visibleActionProfileKeys.map(item => normalizeKey(item)).filter(Boolean)
+    : []
+  const routeOutcomeProfileKeys = (Array.isArray(routeOutcomes) ? routeOutcomes : [])
+    .filter(item => visibleOutcomeKeySet.has(normalizeKey(item?.outcomeKey || '')))
+    .map(item => normalizeKey(item?.actionProfileKey || ''))
+    .filter(Boolean)
+
+  return Array.from(new Set([...decisionProfileKeys, ...routeOutcomeProfileKeys]))
+}
+
 function normalizeGroupRolePriorityBoost(groupRole = '') {
   return Number(classSwitchRules.groupRolePriorityBoost[String(groupRole || '').trim()] || 0)
 }
@@ -1033,8 +1050,8 @@ function hasFollowUpHistory({
   return false
 }
 
-function canOpenNextFollowUpRound(_round = 1) {
-  return Number(_round || 1) <= 2
+function canOpenNextFollowUpRound() {
+  return true
 }
 
 const YELLOWING_GATE_SYMPTOM_KEYS = new Set([
@@ -1057,8 +1074,6 @@ const YELLOWING_GATE_CLASS_KEYS = new Set([
 
 const YELLOWING_PRIMARY_CLUE_GATE_QUESTION_KEY =
   'q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate'
-const YELLOWING_CARE_AREA_GATE_QUESTION_KEY =
-  'q_observed_probe__leaf_yellowing__yellowing_care_area_gate'
 const YELLOWING_LEAF_AGE_PATTERN_QUESTION_KEY =
   'q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern'
 const LEAF_YELLOWING_FERTILIZATION_BACKGROUND_QUESTION_KEY =
@@ -1093,24 +1108,12 @@ const YELLOWING_GATE_ALL_DIMENSIONS = [
   QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED
 ]
 
-const YELLOWING_GATE_BRANCH_DIMENSIONS = [
-  QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE,
-  QUESTION_TARGET_DIMENSIONS.YELLOWING_LEAF_AGE_PATTERN,
-  QUESTION_TARGET_DIMENSIONS.YELLOWING_DISTRIBUTION_PATTERN
+const YELLOWING_REQUIRED_GROUP_DIMENSIONS = [
+  QUESTION_TARGET_DIMENSIONS.WATERING_FREQUENCY_CONTEXT,
+  QUESTION_TARGET_DIMENSIONS.LIGHT_CHANGE_CONTEXT,
+  QUESTION_TARGET_DIMENSIONS.FERTILIZATION_GROWTH_CONTEXT,
+  QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED
 ]
-
-const YELLOWING_PRIMARY_CLUE_NEXT_DIMENSIONS = {
-  care_context: QUESTION_TARGET_DIMENSIONS.YELLOWING_CARE_AREA_GATE,
-  pest_trace: QUESTION_TARGET_DIMENSIONS.PEST_TRACE_TYPE,
-  disease_trace: QUESTION_TARGET_DIMENSIONS.YELLOWING_DISEASE_TRACE_GATE
-}
-
-const YELLOWING_CARE_AREA_NEXT_DIMENSIONS = {
-  watering_area: QUESTION_TARGET_DIMENSIONS.WATERING_FREQUENCY_CONTEXT,
-  light_area: QUESTION_TARGET_DIMENSIONS.LIGHT_CHANGE_CONTEXT,
-  fertilization_area: QUESTION_TARGET_DIMENSIONS.FERTILIZATION_GROWTH_CONTEXT,
-  airflow_humidity_area: QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED
-}
 
 const YELLOWING_GATE_CONTEXT_DIMENSIONS_BY_PROBLEM = {
   low_light: [QUESTION_TARGET_DIMENSIONS.LIGHT_CHANGE_CONTEXT],
@@ -1260,6 +1263,17 @@ function hasAnsweredYellowingGateDimension(answeredDimensions = new Set(), targe
   return equivalents.some(dimension => answeredDimensions.has(dimension))
 }
 
+function resolveNextMissingYellowingGroupDimension(answeredDimensions = new Set()) {
+  return YELLOWING_REQUIRED_GROUP_DIMENSIONS.find(
+    dimension => !hasAnsweredYellowingGateDimension(answeredDimensions, dimension)
+  ) || ''
+}
+
+function isYellowingRequiredGroupComplete(askedQuestions = []) {
+  const answeredDimensions = collectAnsweredTargetDimensions(askedQuestions)
+  return !resolveNextMissingYellowingGroupDimension(answeredDimensions)
+}
+
 function isYellowingEquivalentDimensionAnswered(askedQuestions = [], question = {}) {
   const targetSymptomKey = normalizeKey(question?.targetSymptomKey || question?.target_symptom_key || '')
   if (!isYellowingGateSymptomKey(targetSymptomKey)) {
@@ -1327,70 +1341,17 @@ function isQuestionDimensionEquivalentToAllowed(allowedDimensions = new Set(), t
 }
 
 function collectYellowingAllowedDimensionsForAnsweredBranch(askedQuestions = []) {
-  const primaryClue = findAnsweredOptionByTargetDimension(
-    askedQuestions,
-    QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE
+  const answeredDimensions = collectAnsweredTargetDimensions(askedQuestions)
+  const allowed = new Set(
+    YELLOWING_REQUIRED_GROUP_DIMENSIONS.filter(dimension =>
+      hasAnsweredYellowingGateDimension(answeredDimensions, dimension)
+    )
   )
-  if (!primaryClue) {
-    const careArea = findAnsweredOptionByTargetDimension(
-      askedQuestions,
-      QUESTION_TARGET_DIMENSIONS.YELLOWING_CARE_AREA_GATE
-    )
-    if (!careArea) {return null}
-    const allowed = new Set([QUESTION_TARGET_DIMENSIONS.YELLOWING_CARE_AREA_GATE])
-    const careNextDimension = YELLOWING_CARE_AREA_NEXT_DIMENSIONS[careArea]
-    if (careNextDimension) {
-      allowed.add(careNextDimension)
-      if (
-        [
-          'watering_area',
-          'light_area',
-          'airflow_humidity_area'
-        ].includes(careArea)
-      ) {
-        allowed.add(QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED)
-      }
-    }
-    return allowed
+  const nextMissingDimension = resolveNextMissingYellowingGroupDimension(answeredDimensions)
+  if (nextMissingDimension) {
+    allowed.add(nextMissingDimension)
   }
-
-  const allowed = new Set([QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE])
-  if (primaryClue === 'care_context') {
-    allowed.add(QUESTION_TARGET_DIMENSIONS.YELLOWING_CARE_AREA_GATE)
-    const careArea = findAnsweredOptionByTargetDimension(
-      askedQuestions,
-      QUESTION_TARGET_DIMENSIONS.YELLOWING_CARE_AREA_GATE
-    )
-    const careNextDimension = YELLOWING_CARE_AREA_NEXT_DIMENSIONS[careArea]
-    if (careNextDimension) {
-      allowed.add(careNextDimension)
-      if (
-        [
-          'watering_area',
-          'light_area',
-          'airflow_humidity_area'
-        ].includes(careArea)
-      ) {
-        allowed.add(QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED)
-      }
-    }
-    return allowed
-  }
-  if (primaryClue === 'pest_trace') {
-    allowed.add(QUESTION_TARGET_DIMENSIONS.PEST_TRACE_TYPE)
-    return allowed
-  }
-  if (primaryClue === 'disease_trace') {
-    allowed.add(QUESTION_TARGET_DIMENSIONS.YELLOWING_DISEASE_TRACE_GATE)
-    allowed.add(QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED)
-    return allowed
-  }
-  if (primaryClue === 'yellowing_only' || primaryClue === 'unknown') {
-    allowed.add(QUESTION_TARGET_DIMENSIONS.YELLOWING_LEAF_AGE_PATTERN)
-    allowed.add(QUESTION_TARGET_DIMENSIONS.YELLOWING_DISTRIBUTION_PATTERN)
-    return allowed
-  }
-  return null
+  return allowed.size ? allowed : null
 }
 
 function isYellowingFollowUpAllowedByAnsweredBranch(askedQuestions = [], question = {}) {
@@ -1463,6 +1424,34 @@ function collectAnswerRouteRecords(answers = [], askedQuestionRows = []) {
     .filter(item => item.questionKey)
 }
 
+function collectRouteAnswerRecordsForDecision({
+  answers = [],
+  answeredFollowUpAnswerRecords = []
+} = {}) {
+  const recordsByQuestionKey = new Map()
+  for (const item of Array.isArray(answeredFollowUpAnswerRecords) ? answeredFollowUpAnswerRecords : []) {
+    const questionKey = normalizeKey(item?.questionKey || item?.question_key || '')
+    const optionKey = normalizeKey(item?.optionKey || item?.option_key || item?.answerValue || item?.answer_value || '')
+    if (!questionKey || !optionKey) {continue}
+    recordsByQuestionKey.set(questionKey, {
+      ...item,
+      questionKey,
+      optionKey
+    })
+  }
+  for (const item of Array.isArray(answers) ? answers : []) {
+    const questionKey = normalizeKey(item?.questionKey || item?.question_key || '')
+    const optionKey = normalizeKey(item?.optionKey || item?.option_key || item?.answerValue || item?.answer_value || '')
+    if (!questionKey || !optionKey) {continue}
+    recordsByQuestionKey.set(questionKey, {
+      ...item,
+      questionKey,
+      optionKey
+    })
+  }
+  return Array.from(recordsByQuestionKey.values())
+}
+
 function resolveRuntimeClassKey(symptomClassRuntime = null) {
   return normalizeKey(
     symptomClassRuntime?.currentClassKey ||
@@ -1488,6 +1477,10 @@ function shouldBlockFollowUpByRouteConstraint(question = {}, {
 } = {}) {
   const questionKey = normalizeKey(question?.questionKey || question?.question_key || '')
   if (!questionKey) {return false}
+  const questionTargetDimension = normalizeQuestionTargetDimension(
+    question?.targetDimension || question?.target_dimension || '',
+    ''
+  )
 
   const runtimeClassKey = resolveRuntimeClassKey(symptomClassRuntime)
   const answerRouteRecords = collectAnswerRouteRecords(answers, askedQuestionRows)
@@ -1495,17 +1488,11 @@ function shouldBlockFollowUpByRouteConstraint(question = {}, {
     answerRouteRecords,
     YELLOWING_PRIMARY_CLUE_GATE_QUESTION_KEY
   )
-  const yellowingCareArea = getAnsweredOptionKey(
-    answerRouteRecords,
-    YELLOWING_CARE_AREA_GATE_QUESTION_KEY
-  )
 
   if (
     YELLOWING_GATE_CLASS_KEYS.has(runtimeClassKey) &&
     !yellowingPrimaryClue &&
-    !yellowingCareArea &&
-    questionKey !== YELLOWING_PRIMARY_CLUE_GATE_QUESTION_KEY &&
-    questionKey !== YELLOWING_CARE_AREA_GATE_QUESTION_KEY
+    !YELLOWING_REQUIRED_GROUP_DIMENSIONS.includes(questionTargetDimension)
   ) {
     return true
   }
@@ -1617,6 +1604,7 @@ async function buildYellowingGateDimensionQuestion({
   return buildSyntheticObservedProbeQuestions(representativeSymptom, {
     maxQuestions: 1,
     excludedDimensions,
+    preferredDimensions: [targetDimension],
     plantContext,
     weatherContext,
     questionTemplates,
@@ -1649,12 +1637,10 @@ async function buildYellowingGateFollowUps({
 
   const answeredDimensions = collectAnsweredTargetDimensions(askedQuestions)
 
-  if (!hasAnsweredYellowingGateDimension(
-    answeredDimensions,
-    QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE
-  )) {
+  const missingGroupDimension = resolveNextMissingYellowingGroupDimension(answeredDimensions)
+  if (missingGroupDimension) {
     return buildYellowingGateDimensionQuestion({
-      targetDimension: QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE,
+      targetDimension: missingGroupDimension,
       observedSymptoms,
       observedEvidenceSet,
       visualCandidateSymptoms,
@@ -1662,65 +1648,6 @@ async function buildYellowingGateFollowUps({
       plantContext,
       weatherContext
     })
-  }
-
-  const primaryClue = findAnsweredOptionByTargetDimension(
-    askedQuestions,
-    QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE
-  )
-  const primaryNextDimension = YELLOWING_PRIMARY_CLUE_NEXT_DIMENSIONS[primaryClue]
-  if (
-    primaryNextDimension &&
-    !hasAnsweredYellowingGateDimension(answeredDimensions, primaryNextDimension)
-  ) {
-    return buildYellowingGateDimensionQuestion({
-      targetDimension: primaryNextDimension,
-      observedSymptoms,
-      observedEvidenceSet,
-      visualCandidateSymptoms,
-      answeredDimensions,
-      plantContext,
-      weatherContext
-    })
-  }
-
-  if (primaryClue === 'care_context') {
-    const careArea = findAnsweredOptionByTargetDimension(
-      askedQuestions,
-      QUESTION_TARGET_DIMENSIONS.YELLOWING_CARE_AREA_GATE
-    )
-    const careNextDimension = YELLOWING_CARE_AREA_NEXT_DIMENSIONS[careArea]
-    if (
-      careNextDimension &&
-      !hasAnsweredYellowingGateDimension(answeredDimensions, careNextDimension)
-    ) {
-      return buildYellowingGateDimensionQuestion({
-        targetDimension: careNextDimension,
-        observedSymptoms,
-        observedEvidenceSet,
-        visualCandidateSymptoms,
-        answeredDimensions,
-        plantContext,
-        weatherContext
-      })
-    }
-  }
-
-  if (['yellowing_only', 'unknown', ''].includes(primaryClue)) {
-    const missingBranchDimension = YELLOWING_GATE_BRANCH_DIMENSIONS
-      .filter(dimension => dimension !== QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE)
-      .find(dimension => !hasAnsweredYellowingGateDimension(answeredDimensions, dimension))
-    if (missingBranchDimension) {
-      return buildYellowingGateDimensionQuestion({
-        targetDimension: missingBranchDimension,
-        observedSymptoms,
-        observedEvidenceSet,
-        visualCandidateSymptoms,
-        answeredDimensions,
-        plantContext,
-        weatherContext
-      })
-    }
   }
 
   const topProblemKey = normalizeKey(rankings?.[0]?.problemKey || '')
@@ -4577,48 +4504,6 @@ function buildVisualCandidateFollowUpRoundResult({
   }
 }
 
-function toLegacyCompatiblePayload(publicResponse = {}) {
-  const topProblem = publicResponse.topProblem || null
-  const finalResult = publicResponse.finalResult || null
-  const legacyFinalDisplayName = (
-    finalResult?.displayNameCn ||
-    finalResult?.displayName ||
-    topProblem?.displayNameCn ||
-    topProblem?.displayName ||
-    ''
-  )
-  const isProblematicOutcome = String(publicResponse.outcomeType || '') === 'problematic'
-  return {
-    diagnosisId: publicResponse.diagnosisSessionId,
-    healthScore: null,
-    healthStatus: isProblematicOutcome && topProblem ? 'warning' : 'unknown',
-    mainIssue: legacyFinalDisplayName,
-    finalProblemKey: isProblematicOutcome ? (topProblem?.problemKey || finalResult?.problemKey || null) : null,
-    finalProblemCn: legacyFinalDisplayName,
-    summary: finalResult?.summary || topProblem?.summary || '',
-    observedSymptoms: publicResponse.observedSymptoms || [],
-    rankings: (publicResponse.rankings || []).map((item, index) => ({
-      problemKey: item.problemKey,
-      problemCn: item.problemCn || item.problemKey,
-      weightedScore: item.finalScore,
-      rankNo: index + 1,
-      finalScore: item.finalScore
-    })),
-    needsFollowUp: Boolean(publicResponse.followUpRequired),
-    followUps: (publicResponse.followUps || []).map(item => ({
-      questionKey: item.questionKey,
-      questionText: item.text,
-      questionGroupKey: item.questionGroupKey,
-      options: item.options || []
-    })),
-    problemCausality: publicResponse.problemCausality || [],
-    reliabilityScore: 0,
-    resultExplanation: publicResponse.resultExplanation || {},
-    outcomeType: publicResponse.outcomeType || '',
-    routePrimaryAction: publicResponse.routePrimaryAction || ''
-  }
-}
-
 async function runDiagnosisRound({
   openid,
   plantId = null,
@@ -4843,7 +4728,10 @@ async function runDiagnosisRound({
           observedSymptoms: observedSymptomsForResolution,
           observedEvidenceSet: labeledObservedEvidenceForResolution,
           visualCandidateSymptoms: visualCandidateSymptomsForResolution,
-          askedQuestions: askedQuestionRows,
+          askedQuestions: [
+            ...(Array.isArray(askedQuestionRows) ? askedQuestionRows : []),
+            ...(Array.isArray(answers) ? answers : [])
+          ],
           symptomClassRuntime,
           plantContext,
           weatherContext: preliminaryVisualCandidateYellowingWeatherContext
@@ -4912,7 +4800,6 @@ async function runDiagnosisRound({
 
     const result = {
       ...enrichedResponse,
-      legacyDiagnosis: toLegacyCompatiblePayload(enrichedResponse),
       metrics: {
         reliabilityScore: 0
       },
@@ -4956,7 +4843,6 @@ async function runDiagnosisRound({
 
     const result = {
       ...enrichedResponse,
-      legacyDiagnosis: toLegacyCompatiblePayload(enrichedResponse),
       metrics: {
         reliabilityScore: 1
       },
@@ -4994,7 +4880,6 @@ async function runDiagnosisRound({
 
       const result = {
         ...enrichedResponse,
-        legacyDiagnosis: toLegacyCompatiblePayload(enrichedResponse),
         metrics: {
           reliabilityScore: 0
         },
@@ -5043,7 +4928,6 @@ async function runDiagnosisRound({
 
       const result = {
         ...enrichedResponse,
-        legacyDiagnosis: toLegacyCompatiblePayload(enrichedResponse),
         metrics: {
           reliabilityScore: 0
         },
@@ -5106,7 +4990,6 @@ async function runDiagnosisRound({
 
       const result = {
         ...enrichedResponse,
-        legacyDiagnosis: toLegacyCompatiblePayload(enrichedResponse),
         metrics: {
           reliabilityScore: 0
         },
@@ -5184,7 +5067,6 @@ async function runDiagnosisRound({
 
     const result = {
       ...enrichedResponse,
-      legacyDiagnosis: toLegacyCompatiblePayload(enrichedResponse),
       metrics: {
         reliabilityScore: 0
       },
@@ -5418,31 +5300,36 @@ async function runDiagnosisRound({
     answeredQuestionGroupKeys
   })
   const canAskAnotherFollowUpRound = canOpenNextFollowUpRound(round)
+  const routeAnswerRecordsForDecision = collectRouteAnswerRecordsForDecision({
+    answers,
+    answeredFollowUpAnswerRecords
+  })
   const routeAnswerEffectQuestionKeys = Array.from(
     new Set([
-      ...answers.map(item => normalizeKey(item?.questionKey || item?.question_key || '')),
+      ...routeAnswerRecordsForDecision.map(item => normalizeKey(item?.questionKey || item?.question_key || '')),
       ...askedQuestionKeys.map(item => normalizeKey(item))
     ].filter(Boolean))
   )
   const routeAnswerEffects = routeAnswerEffectQuestionKeys.length
     ? await outcomeRouteRepository.getOutcomeAnswerEffects(routeAnswerEffectQuestionKeys)
     : []
+  const routeEvidenceContextForDecision = buildRouteEvidenceContext({
+    plantContext,
+    observedEvidenceSet: labeledObservedEvidenceForResolution,
+    derivedEvidenceSet: derivedEvidenceForResolution,
+    diagnosisDirections: diagnosisDirectionsForResolution,
+    symptomClassRuntime,
+    answerEffects,
+    routeAnswerEffects,
+    answers: routeAnswerRecordsForDecision,
+    askedQuestionKeys,
+    visualAggregateResult,
+    routeHints: visualRouteContext.routeHints,
+    rankings
+  })
   const routeDecision = await planOutcomeRoutes({
     candidateOutcomeKeys: candidateProblemKeys,
-    routeEvidenceContext: buildRouteEvidenceContext({
-      plantContext,
-      observedEvidenceSet: labeledObservedEvidenceForResolution,
-      derivedEvidenceSet: derivedEvidenceForResolution,
-      diagnosisDirections: diagnosisDirectionsForResolution,
-      symptomClassRuntime,
-      answerEffects,
-      routeAnswerEffects,
-      answers,
-      askedQuestionKeys,
-      visualAggregateResult,
-      routeHints: visualRouteContext.routeHints,
-      rankings
-    }),
+    routeEvidenceContext: routeEvidenceContextForDecision,
     canAskAnotherFollowUpRound,
     maxVisibleOutcomes: 3,
     maxQuestionCount: 1,
@@ -5465,10 +5352,12 @@ async function runDiagnosisRound({
   const shouldUseRouteOutputDecision = routeOutputEnabled && hasAuthoritativeRouteDecision
   const hasRouteVisibleResult = shouldUseRouteOutputDecision && Array.isArray(routeDecision?.visibleOutcomeKeys) &&
     routeDecision.visibleOutcomeKeys.length > 0
+  const routeOutputNoVisibleOutcome = Array.isArray(routeDecision?.visibleOutcomeKeys) &&
+    routeDecision.visibleOutcomeKeys.length === 0
   const hasUsableRouteOutputDecision =
-    shouldUseRouteOutputDecision && hasRouteVisibleResult &&
-    (!Array.isArray(routeDecision?.visibleActionConflictGroups) ||
-      routeDecision.visibleActionConflictGroups.length <= 1)
+    shouldUseRouteOutputDecision &&
+    hasRouteVisibleResult &&
+    Boolean(normalizeKey(routeDecision?.primaryOutcomeKey || ''))
 
   const fallbackAskByRanking =
     !routeModeEnabled &&
@@ -5568,9 +5457,11 @@ async function runDiagnosisRound({
     canAskAnotherFollowUpRound &&
     !fastConvergencePlan?.applied &&
     !fastConvergencePlan?.shouldBypassFollowUp
+  const yellowingAnswerRecords = [
+    ...(Array.isArray(askedQuestionRows) ? askedQuestionRows : []),
+    ...(Array.isArray(answers) ? answers : [])
+  ]
   const yellowingGateRuntimeActive =
-    legacyFollowUpAllowed &&
-    canAskAnotherFollowUpRound &&
     hasYellowingModeRuntime({
       diagnosisDirections,
       observedSymptoms: mergedObservedSymptoms,
@@ -5578,23 +5469,33 @@ async function runDiagnosisRound({
       visualCandidateSymptoms: visualCandidateSymptomsForRuntime,
       symptomClassRuntime: mergedSymptomClassRuntime
     })
+  const yellowingRequiredGroupComplete = yellowingGateRuntimeActive
+    ? isYellowingRequiredGroupComplete(yellowingAnswerRecords)
+    : true
   const yellowingGateWeatherContext = yellowingGateRuntimeActive
     ? await getFreshCachedWeatherContext(openid)
     : null
-  const forcedYellowingGateFollowUps = yellowingGateRuntimeActive
+  const forcedYellowingGateFollowUps = yellowingGateRuntimeActive && !yellowingRequiredGroupComplete
     ? await buildYellowingGateFollowUps({
         rankings,
         diagnosisDirections,
         observedSymptoms: mergedObservedSymptoms,
         observedEvidenceSet: labeledMergedObservedEvidence,
         visualCandidateSymptoms: visualCandidateSymptomsForRuntime,
-        askedQuestions: askedQuestionRows,
+        askedQuestions: yellowingAnswerRecords,
         symptomClassRuntime: mergedSymptomClassRuntime,
         plantContext,
         weatherContext: yellowingGateWeatherContext
       })
     : []
   const shouldForceYellowingGateFollowUp = forcedYellowingGateFollowUps.length > 0
+  const shouldHoldYellowingRouteOutput = Boolean(
+    yellowingGateRuntimeActive && !yellowingRequiredGroupComplete
+  )
+  const effectiveHasUsableRouteOutputDecision =
+    hasUsableRouteOutputDecision && !shouldHoldYellowingRouteOutput
+  const effectiveShouldUseRouteOutputDecision =
+    shouldUseRouteOutputDecision && !shouldHoldYellowingRouteOutput
   const shouldAskFollowUp =
     (
       (
@@ -5687,7 +5588,8 @@ async function runDiagnosisRound({
       : []
   const shouldPreferRoutePlannedFollowUps = Boolean(
     shouldUseRouteQuestionDecision &&
-    routePlannedFollowUps.length > 0
+    routePlannedFollowUps.length > 0 &&
+    !shouldForceYellowingGateFollowUp
   )
   const answeredBranchRecordsForFollowUpFilter = [
     ...(Array.isArray(askedQuestionRows) ? askedQuestionRows : []),
@@ -5948,7 +5850,7 @@ async function runDiagnosisRound({
   const yellowingOnlyRuntimeEvidenceAfterFollowUp =
     !followUpRequired &&
     followUpHistory &&
-    !hasUsableRouteOutputDecision &&
+    !effectiveHasUsableRouteOutputDecision &&
     activeRuntimeSymptomKeysForOutput.length > 0 &&
     activeRuntimeSymptomKeysForOutput.every(symptomKey =>
       [
@@ -6380,7 +6282,7 @@ async function runDiagnosisRound({
     ? await getExplanationsByProblemKeys(explanationProblemKeys)
     : []
   const routeOutcomeKeys =
-    shouldUseRouteOutputDecision
+    effectiveShouldUseRouteOutputDecision
       ? Array.from(
           new Set(
             [
@@ -6398,7 +6300,7 @@ async function runDiagnosisRound({
         )
       : []
   const routeOutcomes =
-    shouldUseRouteOutputDecision && routeOutcomeKeys.length
+    effectiveShouldUseRouteOutputDecision && routeOutcomeKeys.length
       ? await outcomeRouteRepository.getDiagnosisOutcomesByKeys(routeOutcomeKeys)
       : []
   const primaryRouteOutcome = routeOutcomes.find(
@@ -6412,7 +6314,7 @@ async function runDiagnosisRound({
         : 'uncertain'
   const stopDecision = followUpRequired
     ? null
-    : hasUsableRouteOutputDecision
+    : effectiveHasUsableRouteOutputDecision
       ? {
           outcomeLocked: routeLockedOutcomeType,
           stopReason: routeDecision?.primaryOutcomeKey
@@ -6423,25 +6325,44 @@ async function runDiagnosisRound({
           decisionCause: normalizeDecisionCause(routeDecision?.decisionCause)
         }
       : routeModeEnabled
-        ? {
-            outcomeLocked: 'uncertain',
-            stopReason: hasAuthoritativeRouteDecision
-              ? 'route_uncertain_with_candidates'
-              : 'route_fallback_uncertain',
-            uncertainLegalityReason: 'route_fallback',
-            stopReasonDetail:
-              routeDecision?.decisionCause?.decisionCauseKey ||
-              decisionCause?.decisionCauseKey ||
-              'route_fallback_uncertain',
-            decisionCause:
-              normalizeDecisionCause(routeDecision?.decisionCause) ||
-              decisionCause || {
-                decisionCauseKey: 'route_fallback_uncertain',
-                decisionCauseCategory: 'route_fallback',
-                decisionCauseText: 'route 未形成权威闭合，按保守不确定输出。',
-                decisionCauseDetails: {}
-              }
-          }
+        ? routeOutputNoVisibleOutcome
+          ? {
+              outcomeLocked: 'uncertain',
+              stopReason: 'uncertain_output_ready',
+              uncertainLegalityReason:
+                effectiveLowConfidence?.uncertainLegalityReason || 'route_output_no_visible_outcome',
+              stopReasonDetail:
+                normalizeDecisionCause(routeDecision?.decisionCause)?.decisionCauseKey ||
+                decisionCause?.decisionCauseKey ||
+                'route_no_visible_outcome',
+              decisionCause:
+                normalizeDecisionCause(routeDecision?.decisionCause) ||
+                decisionCause || {
+                  decisionCauseKey: 'route_no_visible_outcome',
+                  decisionCauseCategory: 'route_fallback',
+                  decisionCauseText: 'route 未形成可展示 outcome，按保守不确定输出。',
+                  decisionCauseDetails: {}
+                }
+            }
+          : {
+              outcomeLocked: 'uncertain',
+              stopReason: hasAuthoritativeRouteDecision
+                ? 'route_uncertain_with_candidates'
+                : 'route_fallback_uncertain',
+              uncertainLegalityReason: 'route_fallback',
+              stopReasonDetail:
+                routeDecision?.decisionCause?.decisionCauseKey ||
+                decisionCause?.decisionCauseKey ||
+                'route_fallback_uncertain',
+              decisionCause:
+                normalizeDecisionCause(routeDecision?.decisionCause) ||
+                decisionCause || {
+                  decisionCauseKey: 'route_fallback_uncertain',
+                  decisionCauseCategory: 'route_fallback',
+                  decisionCauseText: 'route 未形成权威闭合，按保守不确定输出。',
+                  decisionCauseDetails: {}
+                }
+            }
       : {
           outcomeLocked:
             shouldForceRankedOutcomeAfterFollowUp
@@ -6467,21 +6388,9 @@ async function runDiagnosisRound({
           stopReasonDetail: decisionCause?.decisionCauseKey || '',
           decisionCause
         }
-  const routeActionProfileKeys = routeOutcomes
-    .map(item => String(item?.actionProfileKey || '').trim())
-    .filter(Boolean)
-  const allActionProfileKeys = Array.from(
-    new Set(
-      [
-        ...(Array.isArray(routeDecision?.visibleActionProfileKeys)
-          ? routeDecision.visibleActionProfileKeys.map(item => String(item || '').trim())
-          : []),
-        ...routeActionProfileKeys
-      ].filter(Boolean)
-    )
-  )
+  const allActionProfileKeys = resolveVisibleRouteActionProfileKeys(routeDecision, routeOutcomes)
   const actionProfiles =
-    shouldUseRouteOutputDecision &&
+    effectiveShouldUseRouteOutputDecision &&
     allActionProfileKeys.length
       ? await outcomeRouteRepository.getOutcomeActionProfiles(allActionProfileKeys)
       : []
@@ -6511,8 +6420,8 @@ async function runDiagnosisRound({
     stopDecision,
     preferredRoutePrimaryAction:
       preferredVisualRouteAction === 'retake_first' ? 'retake_first' : '',
-    routeDecision: shouldUseRouteOutputDecision ? routeDecision : null,
-    routeOutputEnabled: shouldUseRouteOutputDecision,
+    routeDecision: effectiveShouldUseRouteOutputDecision ? routeDecision : null,
+    routeOutputEnabled: effectiveShouldUseRouteOutputDecision,
     actionProfiles,
     hideRankings: routeModeEnabled
   })
@@ -6547,8 +6456,7 @@ async function runDiagnosisRound({
     __runtimeRouteDecision: routeDecision,
     answerEffects,
     followUpStopPolicy,
-    plantContext,
-    legacyDiagnosis: toLegacyCompatiblePayload(enrichedResponse)
+    plantContext
   }
   attachPrivateSymptomClassRuntime(result, mergedSymptomClassRuntime)
   return result
@@ -6566,10 +6474,12 @@ module.exports = {
   shouldForceVisualCandidateOrthogonalFollowUp,
   _test: {
     buildYellowingGateFollowUps,
+    resolveVisibleRouteActionProfileKeys,
     filterFollowUpsByAnsweredRouteConstraints,
     isYellowingEquivalentDimensionAnswered,
     isYellowingFollowUpAllowedByAnsweredBranch,
     collectAnswerLikeRecordsFromFollowUpRows,
+    collectRouteAnswerRecordsForDecision,
     mergeAskedQuestionRows
   }
 }

@@ -10,8 +10,7 @@ const {
 } = require('./session-state-write-service')
 const {
   replaceObservedSymptomsRows,
-  replaceObservedEvidenceSetRows,
-  replaceProblemRankingsRows
+  replaceObservedEvidenceSetRows
 } = require('../repositories/session-runtime-write-repository')
 
 async function replaceObservedSymptoms(sessionId, observedSymptoms = []) {
@@ -59,29 +58,7 @@ async function replaceObservedEvidenceSet(sessionId, openid, observedEvidenceSet
   })
 }
 
-async function replaceProblemRankings(sessionId, rankings = []) {
-  const list = (Array.isArray(rankings) ? rankings : []).filter(item => item?.problemKey)
-  await replaceProblemRankingsRows(
-    sessionId,
-    list.map((item, index) => ({
-      problemKey: item.problemKey,
-      problemCn: item.problemCn || item.problemKey,
-      hostCompatibility: Number(item.hostCompatibility || 0),
-      supportScore: Number(item.totalEvidence || item.supportScore || 0),
-      evidenceCount:
-        Number(item.evidenceCount || 0) ||
-        [
-          Number(item.visualEvidence || 0) > 0,
-          Number(item.questionEvidence || 0) > 0
-        ].filter(Boolean).length,
-      weightedScore: Number(item.finalScore || 0),
-      rankNo: Number(item.rankNo || index + 1)
-    }))
-  )
-}
-
 module.exports = {
   replaceObservedSymptoms,
-  replaceObservedEvidenceSet,
-  replaceProblemRankings
+  replaceObservedEvidenceSet
 }

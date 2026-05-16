@@ -14,6 +14,7 @@ developer_instructions = """
 5. 验收标准。
 
 【只在明确需要时加读】
+- `docs/ai-rules/project-hard-rules.md`
 - Dispatch Plan 指定的规则文件 / 章节。
 - 高风险诊断流时，读取指定 `diagnosis-replay.md` 章节。
 - 涉及 UI/小程序时，读取指定 UI 或 uni-app 规则。

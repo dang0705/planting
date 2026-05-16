@@ -6,9 +6,9 @@
 
 ## 2. 禁止事项
 
-1. 不要把 `npx @cloudbase/cloudbase-mcp@latest updateFunctionCode ...` 当作 CLI 部署命令。
-2. 该包不是可靠的 CloudBase CLI 入口；历史上曾出现返回成功但 `diagnose-http` 代码未实际更新的情况。
-3. 不要把不可靠 MCP 部署命令当作部署事实来源。
+1. 不要把 `npx @cloudbase/cloudbase-mcp@latest updateFunctionCode ...` 当作 CLI 部署命令；CloudBase MCP 应通过当前会话可用的 MCP 工具执行。
+2. 不要把 MCP / CLI / wrapper 的返回成功当作部署事实来源。
+3. 不要把不可靠的一次性命令当作发布入口。
 4. 不要用临时部署命令覆盖项目 wrapper。
 5. 对既有函数，不能随意使用会覆盖 runtime config、timeout、envVariables 的部署方式。
 6. 不要用命令返回成功代替真实部署验证。
@@ -16,13 +16,15 @@
 
 ## 3. 标准部署入口
 
-部署既有 CloudBase 函数时，优先使用项目部署 wrapper：
+部署、SQL、查诊断 session 等 CloudBase 相关任务，优先使用当前会话可用的 CloudBase MCP 工具。项目 wrapper 仅作为 MCP 不可用、用户明确允许或需要本地打包兼容时的 fallback / convenience path，不能单独作为发布通过证据。
+
+fallback wrapper：
 
 ```bash
 node scripts/deploy-function.js diagnose-http
 ```
 
-wrapper 必须使用 CloudBase CLI code update：
+wrapper 内部应使用 CloudBase CLI code update：
 
 ```bash
 npx --package @cloudbase/cli@3.2.2 tcb fn code update <functionName> --dir cloudfunctions/<functionName> -e <envId> --json
@@ -40,7 +42,7 @@ npx --package @cloudbase/cli@3.2.2 tcb fn code update <functionName> --dir cloud
 tcb fn detail <functionName> -e <envId>
 ```
 
-必须验证：
+使用 MCP 时必须以对应的函数详情 / 状态查询结果替代或补充上述 CLI detail。必须验证：
 
 1. `Modification time` 已变化。
 2. `Code size` 已变化。

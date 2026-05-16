@@ -12,12 +12,19 @@
 4. Subagent 默认不自行扩展读取长文档。
 5. 只在 Dispatch Plan 指定时读取规则原文；归档长文档必须指定章节、关键词或问题域。
 6. 多个可写 agent 不得并行修改同一批文件。
+7. 诊断 runtime / outcome / CloudBase / 前端展示类任务必须先写目标验收契约，再进入实现或发布验证。
 
 ## 3. Dispatch Plan 格式
 
 ```text
 Dispatch Plan:
 - 任务类型:
+- 目标验收契约:
+  - bug 发生位置:
+  - 观察入口:
+  - 用户可见成功标准:
+  - 必须验证字段 / 证据:
+  - 非目标:
 - 选择的 subagent:
 - 选择原因:
 - 规则摘要:
@@ -67,6 +74,7 @@ Dispatch Plan:
 2. 不允许多个可写 subagent 同时修改同一批文件。
 3. 高风险任务必须先只读分析，再进入实现。
 4. 可写实现任务必须明确由 `implementer_fast` 或 `implementer_deep` 之一执行。
+5. Main agent 若要接管某个可写 agent 正在处理的同一批文件，必须先中断或关闭该 agent，并在最终汇总中说明接管原因。
 
 
 ## 大目录读取预算

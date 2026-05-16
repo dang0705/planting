@@ -160,15 +160,16 @@ function buildCareGuidance({
     activeSymptomKeys.has('low_light_context') ||
     normalizedPrimaryProblemKey === 'low_light'
 
-  const fertilizationContext =
-    activeSymptomKeys.has('fertilization_gap') ||
+  const nutrientProblemKeys = ['iron_deficiency', 'nitrogen_deficiency', 'nutrient_deficiency']
+  const hasYellowingEvidence =
     activeSymptomKeys.has('leaf_yellowing') ||
     activeSymptomKeys.has('yellow_new_leaves') ||
     activeSymptomKeys.has('yellow_lower_leaves') ||
-    activeSymptomKeys.has('uniform_yellowing') ||
-    ['iron_deficiency', 'nitrogen_deficiency', 'nutrient_deficiency'].includes(
-      normalizedPrimaryProblemKey
-    )
+    activeSymptomKeys.has('uniform_yellowing')
+  const fertilizationContext =
+    activeSymptomKeys.has('fertilization_gap') ||
+    nutrientProblemKeys.includes(normalizedPrimaryProblemKey) ||
+    (!normalizedPrimaryProblemKey && normalizedOutcomeType === 'uncertain' && hasYellowingEvidence)
 
   if (wetContext && (careBaselineSummary.watering || careBaselineSummary.ventilation)) {
     environmentDeviationHints.push(

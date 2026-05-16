@@ -17,6 +17,7 @@ developer_instructions = """
 3. 对应 `docs/ai-tasks/` 任务说明（如果存在）。
 
 【只在明确需要时加读】
+- `docs/ai-rules/project-hard-rules.md`
 - Dispatch Plan 指定的规则文件 / 章节。
 - 任务规划缺少流程依据时，读取 `docs/ai-rules/codex-ai-workflow.md`。
 - 需要判断 fast/deep 边界时，读取 `docs/ai-rules/subagent-risk-routing.md`。
