@@ -1,6 +1,6 @@
 'use strict'
 
-const { ranking: rankingConfig } = require('../constants/scoring')
+const { routeSelection: outcomeSelectionConfig } = require('../constants/scoring')
 const { buildRuntimeArtifacts } = require('./runtime-artifacts')
 const { resolveRouteOutcomePayload } = require('./outcome-action-resolver')
 const {
@@ -27,11 +27,10 @@ const {
   mapSeverity,
   mapUrgency,
   normalizeText,
-  pickPrimaryRanking,
+  pickPrimaryOutcome,
   resolveOutcomeType,
   resolveRoutePrimaryAction,
   resolveStopReason,
-  roundValue,
   uniqList
 } = require('./result-formatter-helpers')
 
@@ -74,7 +73,7 @@ function formatDiagnosisResponse({
   observedEvidenceSet = [],
   derivedEvidenceSet = [],
   diagnosisDirections = [],
-  rankings = [],
+  candidateOutcomes = [],
   followUps = [],
   problems = [],
   explanations = [],
@@ -90,20 +89,19 @@ function formatDiagnosisResponse({
   preferredRoutePrimaryAction = '',
   routeDecision = null,
   routeOutputEnabled = true,
-  actionProfiles = [],
-  hideRankings = false
+  actionProfiles = []
 }) {
   const problemMap = new Map((problems || []).map(item => [item.problemKey, item]))
   const explanationMap = new Map((explanations || []).map(item => [item.problemKey, item]))
 
-  const primary = pickPrimaryRanking(rankings, problemMap)
+  const primary = pickPrimaryOutcome(candidateOutcomes, problemMap)
   const primaryProblem = primary ? problemMap.get(primary.problemKey) : null
   const primaryExplanation = primary ? explanationMap.get(primary.problemKey) : null
 
-  const contributingRoles = new Set(rankingConfig.contributingRoles)
-  const intermediateRoles = new Set(rankingConfig.intermediateRoles)
+  const contributingRoles = new Set(outcomeSelectionConfig.contributingRoles)
+  const intermediateRoles = new Set(outcomeSelectionConfig.intermediateRoles)
 
-  const rawContributingFactors = rankings
+  const rawContributingFactors = candidateOutcomes
     .filter(item => {
       const role = problemMap.get(item.problemKey)?.problemRole || ''
       return contributingRoles.has(role)
@@ -114,7 +112,7 @@ function formatDiagnosisResponse({
       label: problemMap.get(item.problemKey)?.displayNameCn || item.problemCn || item.problemKey
     }))
 
-  const rawIntermediateStates = rankings
+  const rawIntermediateStates = candidateOutcomes
     .filter(item => {
       const role = problemMap.get(item.problemKey)?.problemRole || ''
       return intermediateRoles.has(role)
@@ -155,7 +153,6 @@ function formatDiagnosisResponse({
     : buildExplanation(primaryProblem, primaryExplanation)
   const routeOutcomePayload = resolveRouteOutcomePayload({
     routeDecision: routeOutputEnabled ? routeDecision : null,
-    rankings,
     problems,
     explanations,
     routeOutcomes,
@@ -333,24 +330,6 @@ function formatDiagnosisResponse({
     roundId: `round_${round}`,
     stage,
     observedSymptoms,
-    rankings: hideRankings
-      ? []
-      : rankings.map(item => ({
-        problemId: toProblemId(item.problemKey),
-        problemKey: item.problemKey,
-        problemCn: item.problemCn,
-        role: problemMap.get(item.problemKey)?.problemRole || '',
-        visualEvidence: roundValue(item.visualEvidence),
-        questionEvidence: roundValue(item.questionEvidence),
-        totalEvidence: roundValue(item.totalEvidence),
-        penalty: roundValue(item.penalty),
-        hostCompatibility: roundValue(item.hostCompatibility),
-        genusCompatibility: roundValue(item.genusCompatibility),
-        evidenceCount: Number(item.evidenceCount || 0),
-        finalScore: roundValue(item.finalScore),
-        baseScore: roundValue(item.baseScore),
-        rankNo: item.rankNo
-      })),
     topProblem: authoritativeRouteDecision ? routeBackedTopProblemPayload : topProblemPayload,
     finalResult: authoritativeRouteDecision ? routeBackedFinalResultPayload : finalResultPayload,
     followUpRequired: Boolean(followUpRequired && followUps.length),

@@ -1,8 +1,12 @@
-# Subagent 复用规则（单线程约束）
+# Subagent 复用规则（历史记录）
 
 更新时间：2026-04-22
 
-## 规则
+## 当前规则入口
+
+当前正式规则已迁移到 `docs/ai-rules/subagent-thread-reuse.md`。本文件只保留历史执行记录和旧规则来源，不作为主工作流入口。
+
+## 历史规则
 
 1. 同一角色（包括 `new-rules-keeper`、`modulize-keeper`、`dent-guard`、`review` 等）在同一会话内必须复用同一个 subagent 线程。
 2. 不允许并行启动同角色的多个线程。

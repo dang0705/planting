@@ -2,7 +2,7 @@
 
 const { lowConfidence: lowConfidenceConfig } = require('../constants/scoring')
 const {
-  getOutputEligibleProblemRankings
+  getOutputEligibleCandidateOutcomes
 } = require('../utils/output-eligibility')
 
 const FORMAL_UNCERTAIN_LEGALITY_REASONS = new Set([
@@ -45,20 +45,16 @@ function buildLowConfidenceAdvice({
 }
 
 function pickCorroboratedPrimaryCandidate({
-  rankings = [],
+  candidateOutcomes = [],
   problemRoleByKey = {},
   observedEvidenceSet = [],
   symptomClassRuntime = null
 } = {}) {
-  const corroboratedScoreFloor = Math.max(
-    Number(lowConfidenceConfig.topScoreThreshold || 0) - 0.17,
-    0.45
-  )
   const corroboratedVisualFloor = 0.25
   const corroboratedQuestionFloor = 0.18
 
-  for (const item of getOutputEligibleProblemRankings(
-    rankings,
+  for (const item of getOutputEligibleCandidateOutcomes(
+    candidateOutcomes,
     observedEvidenceSet,
     problemRoleByKey instanceof Map ? problemRoleByKey : new Map(Object.entries(problemRoleByKey || {})),
     {
@@ -69,8 +65,7 @@ function pickCorroboratedPrimaryCandidate({
 
     if (
       Number(item.visualEvidence || 0) >= corroboratedVisualFloor &&
-      Number(item.questionEvidence || 0) >= corroboratedQuestionFloor &&
-      Number(item.finalScore || 0) >= corroboratedScoreFloor
+      Number(item.questionEvidence || 0) >= corroboratedQuestionFloor
     ) {
       return item
     }
@@ -80,7 +75,7 @@ function pickCorroboratedPrimaryCandidate({
 }
 
 function resolveLowConfidenceState({
-  rankings = [],
+  candidateOutcomes = [],
   observedSymptoms = [],
   observedEvidenceSet = [],
   unknownCountByGroup = {},
@@ -88,20 +83,6 @@ function resolveLowConfidenceState({
   problemRoleByKey = {},
   symptomClassRuntime = null
 } = {}) {
-  const outputEligibleRankings = getOutputEligibleProblemRankings(
-    rankings,
-    observedEvidenceSet,
-    problemRoleByKey instanceof Map ? problemRoleByKey : new Map(Object.entries(problemRoleByKey || {})),
-    {
-      symptomClassRuntime
-    }
-  )
-  const scoringRankings = outputEligibleRankings.length
-    ? outputEligibleRankings
-    : (Array.isArray(rankings) ? rankings : [])
-  const topScore = Number(scoringRankings[0]?.finalScore || 0)
-  const secondScore = Number(scoringRankings[1]?.finalScore || 0)
-  const scoreGap = Math.max(topScore - secondScore, 0)
   const maxVisualConfidence = Math.max(
     0,
     ...(observedSymptoms || []).map(item => Number(item?.confidence || 0))
@@ -113,22 +94,13 @@ function resolveLowConfidenceState({
     noHighValueQuestion &&
     unknownGroupCount === 0 &&
     Boolean(pickCorroboratedPrimaryCandidate({
-      rankings,
+      candidateOutcomes,
       problemRoleByKey,
       observedEvidenceSet,
       symptomClassRuntime
     }))
 
   const reasons = []
-  if (topScore < lowConfidenceConfig.topScoreThreshold && !corroboratedTopProblem) {
-    reasons.push('top_score_low')
-  }
-  if (
-    scoreGap < lowConfidenceConfig.scoreGapThreshold &&
-    !corroboratedTopProblem
-  ) {
-    reasons.push('score_gap_small')
-  }
   if (unknownGroupCount > 0) {reasons.push('too_many_unknowns')}
   if (
     (observedSymptoms || []).length > 0 &&

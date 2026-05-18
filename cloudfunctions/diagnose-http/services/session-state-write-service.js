@@ -108,12 +108,7 @@ async function upsertDiagnosisSession({
   description = '',
   clientContext = null
 }) {
-  const topRanking = Array.isArray(response?.rankings) ? response.rankings[0] : null
   const topProblem = response?.topProblem || null
-  const topProblemRanking = (Array.isArray(response?.rankings) ? response.rankings : []).find(
-    item => String(item?.problemId || '').trim() === String(topProblem?.problemId || '').trim() ||
-      String(item?.problemKey || '').trim() === String(topProblem?.problemKey || '').trim()
-  ) || null
   const finalResult = response?.finalResult || null
   const routePrimaryAction = resolveSessionRoute(response)
   const identityResolutionStatus = resolveSessionIdentityStatus({ plantContext, response })
@@ -123,9 +118,7 @@ async function upsertDiagnosisSession({
   const shouldMarkEnded = sessionStatus === 'completed'
   const outcomePayloadJson = buildOutcomePayload(response)
   const persistedAdvice = resolvePersistedAdviceTexts(response)
-  const normalizedTopProblemScore = normalizeNullableSqlNumber(
-    topProblemRanking?.finalScore ?? topRanking?.finalScore
-  )
+  const normalizedTopProblemScore = null
   const normalizedUserPlantId = normalizeNullableSqlInteger(plantContext?.userPlantId)
   const resolvedLatestVisualCallBatchId = resolveLatestVisualCallBatchId(response, plantContext)
   const runtimeSnapshotJson = buildRuntimeSnapshotPayload({

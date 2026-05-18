@@ -62,8 +62,7 @@ async function handleDiagnosisAnswer(request, context, payload) {
     })
     const hydratedResponse = await withQuestionTextFallback(executed.response)
     const publicResponse = presentDiagnosisAnswerResponse(hydratedResponse)
-    const hydratedPublicResponse = await withQuestionTextFallback(publicResponse)
-    const data = buildFrontendDiagnosisResponse(hydratedPublicResponse)
+    const data = buildFrontendDiagnosisResponse(publicResponse)
     if (executed.answerRevision) {
       data.answerRevision = executed.answerRevision
     }

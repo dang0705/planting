@@ -28,11 +28,13 @@ async function planOutcomeRoutes({
 } = {}) {
   const effectiveRouteRepository = routeRepository || require('../repositories/outcome-route-repository')
   const normalizedCandidateOutcomeKeys = dedupeKeys(candidateOutcomeKeys)
-  const rankingIndex = routeEvidenceContext?.rankingIndex || {}
+  const candidateOutcomeOrderMap = new Map(
+    normalizedCandidateOutcomeKeys.map((outcomeKey, index) => [outcomeKey, index])
+  )
   if (!normalizedCandidateOutcomeKeys.length) {
     return buildFallbackDecision({
       candidateOutcomeKeys: [],
-      rankings: [],
+      candidateOutcomes: [],
       decisionCauseKey: 'route_fallback_no_candidates',
       decisionCauseText: '缺少候选 outcome，转保守不确定输出'
     })
@@ -42,9 +44,7 @@ async function planOutcomeRoutes({
   if (!routePlanningEnabled) {
     return buildFallbackDecision({
       candidateOutcomeKeys: normalizedCandidateOutcomeKeys,
-      rankings: Object.entries(rankingIndex)
-        .sort((a, b) => Number(a[1] || 0) - Number(b[1] || 0))
-        .map(([problemKey]) => ({ problemKey })),
+      candidateOutcomes: normalizedCandidateOutcomeKeys.map(problemKey => ({ problemKey })),
       decisionCauseKey: 'route_planning_disabled',
       decisionCauseText: 'route 规划未启用，转保守不确定输出'
     })
@@ -52,13 +52,17 @@ async function planOutcomeRoutes({
 
   try {
     const activeSymptomKeySet = routeEvidenceContext?.activeSymptomKeySet || new Set()
-    const routeGroupCandidates = typeof effectiveRouteRepository.getAllActiveOutcomeRouteGroups === 'function'
+    const skipRouteGroupExpansion = featureFlags.skipRouteGroupExpansion === true
+    const routeGroupCandidates = !skipRouteGroupExpansion &&
+      typeof effectiveRouteRepository.getAllActiveOutcomeRouteGroups === 'function'
       ? await effectiveRouteRepository.getAllActiveOutcomeRouteGroups()
       : []
-    const symptomMatchedRouteGroups = routeGroupCandidates.filter(group =>
-      Array.isArray(group?.entrySymptomKeys) &&
-      group.entrySymptomKeys.some(symptomKey => activeSymptomKeySet.has(symptomKey))
-    )
+    const symptomMatchedRouteGroups = skipRouteGroupExpansion
+      ? []
+      : routeGroupCandidates.filter(group =>
+        Array.isArray(group?.entrySymptomKeys) &&
+        group.entrySymptomKeys.some(symptomKey => activeSymptomKeySet.has(symptomKey))
+      )
     const symptomMatchedOutcomeKeys = dedupeKeys(
       symptomMatchedRouteGroups.flatMap(group => group?.candidateOutcomeKeys || [])
     )
@@ -69,9 +73,7 @@ async function planOutcomeRoutes({
     if (!routes.length) {
       return buildFallbackDecision({
         candidateOutcomeKeys: expandedCandidateOutcomeKeys,
-        rankings: Object.entries(rankingIndex)
-          .sort((a, b) => Number(a[1] || 0) - Number(b[1] || 0))
-          .map(([problemKey]) => ({ problemKey })),
+        candidateOutcomes: expandedCandidateOutcomeKeys.map(problemKey => ({ problemKey })),
         decisionCauseKey: 'route_fallback_no_routes',
         decisionCauseText: '未命中可用 route，转保守不确定输出'
       })
@@ -254,9 +256,9 @@ async function planOutcomeRoutes({
         const stepA = Number(a.stepNo || 0)
         const stepB = Number(b.stepNo || 0)
         if (stepA !== stepB) {return stepA - stepB}
-        const rankA = Number(rankingIndex[a.outcomeKey] || Number.MAX_SAFE_INTEGER)
-        const rankB = Number(rankingIndex[b.outcomeKey] || Number.MAX_SAFE_INTEGER)
-        if (rankA !== rankB) {return rankA - rankB}
+        const orderA = Number(candidateOutcomeOrderMap.get(a.outcomeKey) ?? Number.MAX_SAFE_INTEGER)
+        const orderB = Number(candidateOutcomeOrderMap.get(b.outcomeKey) ?? Number.MAX_SAFE_INTEGER)
+        if (orderA !== orderB) {return orderA - orderB}
         return String(a.questionKey || '').localeCompare(String(b.questionKey || ''))
       })
       .filter((item, index, list) =>
@@ -267,11 +269,11 @@ async function planOutcomeRoutes({
       0,
       Math.max(0, Number(maxQuestionCount || 1))
     )
-    const sortedStates = sortCandidateStates(candidateOutcomeStates, rankingIndex)
+    const sortedStates = sortCandidateStates(candidateOutcomeStates, candidateOutcomeOrderMap)
     const sortedVisibleOutcomeKeys = dedupeKeys(visibleOutcomeKeys).sort((a, b) => {
-      const rankA = Number(rankingIndex[a] || Number.MAX_SAFE_INTEGER)
-      const rankB = Number(rankingIndex[b] || Number.MAX_SAFE_INTEGER)
-      if (rankA !== rankB) {return rankA - rankB}
+      const orderA = Number(candidateOutcomeOrderMap.get(a) ?? Number.MAX_SAFE_INTEGER)
+      const orderB = Number(candidateOutcomeOrderMap.get(b) ?? Number.MAX_SAFE_INTEGER)
+      if (orderA !== orderB) {return orderA - orderB}
       return a.localeCompare(b)
     })
     const activeRouteGroupVisibleLimits = routeGroups
@@ -357,9 +359,7 @@ async function planOutcomeRoutes({
   } catch {
     return buildFallbackDecision({
       candidateOutcomeKeys: normalizedCandidateOutcomeKeys,
-      rankings: Object.entries(rankingIndex)
-        .sort((a, b) => Number(a[1] || 0) - Number(b[1] || 0))
-        .map(([problemKey]) => ({ problemKey })),
+      candidateOutcomes: normalizedCandidateOutcomeKeys.map(problemKey => ({ problemKey })),
       decisionCauseKey: 'route_query_error_fallback',
       decisionCauseText: 'route 查询失败，转保守不确定输出'
     })

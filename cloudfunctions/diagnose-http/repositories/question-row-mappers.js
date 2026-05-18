@@ -15,88 +15,88 @@ const {
 const AUDITED_DIRECT_PROBLEM_ADJUSTMENTS = {
   q_gnat_soil_stays_wet: {
     yes: [
-      { problemKey: 'overwatering', scoreDelta: 0.18 }
+      { problemKey: 'overwatering', effectValue: 0.18 }
     ]
   },
   q_stem_collapse_poor_drainage: {
     yes: [
-      { problemKey: 'soft_rot', scoreDelta: 0.16 },
-      { problemKey: 'crown_rot', scoreDelta: 0.12 },
-      { problemKey: 'root_rot', scoreDelta: 0.1 },
-      { problemKey: 'overwatering', scoreDelta: 0.1 }
+      { problemKey: 'soft_rot', effectValue: 0.16 },
+      { problemKey: 'crown_rot', effectValue: 0.12 },
+      { problemKey: 'root_rot', effectValue: 0.1 },
+      { problemKey: 'overwatering', effectValue: 0.1 }
     ],
     no: [
-      { problemKey: 'soft_rot', scoreDelta: -0.08 },
-      { problemKey: 'crown_rot', scoreDelta: -0.08 },
-      { problemKey: 'root_rot', scoreDelta: -0.06 }
+      { problemKey: 'soft_rot', effectValue: -0.08 },
+      { problemKey: 'crown_rot', effectValue: -0.08 },
+      { problemKey: 'root_rot', effectValue: -0.06 }
     ]
   },
   q_root_rot_bad_smell: {
     yes: [
-      { problemKey: 'root_rot', scoreDelta: 0.28 },
-      { problemKey: 'soft_rot', scoreDelta: 0.22 },
-      { problemKey: 'crown_rot', scoreDelta: 0.2 }
+      { problemKey: 'root_rot', effectValue: 0.28 },
+      { problemKey: 'soft_rot', effectValue: 0.22 },
+      { problemKey: 'crown_rot', effectValue: 0.2 }
     ],
     no: [
-      { problemKey: 'root_rot', scoreDelta: -0.08 },
-      { problemKey: 'soft_rot', scoreDelta: -0.08 },
-      { problemKey: 'crown_rot', scoreDelta: -0.06 }
+      { problemKey: 'root_rot', effectValue: -0.08 },
+      { problemKey: 'soft_rot', effectValue: -0.08 },
+      { problemKey: 'crown_rot', effectValue: -0.06 }
     ]
   },
   q_root_rot_black_roots: {
     yes: [
-      { problemKey: 'root_rot', scoreDelta: 0.24 },
-      { problemKey: 'root_stress', scoreDelta: 0.14 },
-      { problemKey: 'soft_rot', scoreDelta: 0.08 }
+      { problemKey: 'root_rot', effectValue: 0.24 },
+      { problemKey: 'root_stress', effectValue: 0.14 },
+      { problemKey: 'soft_rot', effectValue: 0.08 }
     ],
     no: [
-      { problemKey: 'root_rot', scoreDelta: -0.08 }
+      { problemKey: 'root_rot', effectValue: -0.08 }
     ]
   },
   q_root_rot_mushy_roots: {
     yes: [
-      { problemKey: 'root_rot', scoreDelta: 0.28 },
-      { problemKey: 'soft_rot', scoreDelta: 0.18 },
-      { problemKey: 'crown_rot', scoreDelta: 0.1 }
+      { problemKey: 'root_rot', effectValue: 0.28 },
+      { problemKey: 'soft_rot', effectValue: 0.18 },
+      { problemKey: 'crown_rot', effectValue: 0.1 }
     ],
     no: [
-      { problemKey: 'root_rot', scoreDelta: -0.08 },
-      { problemKey: 'soft_rot', scoreDelta: -0.06 }
+      { problemKey: 'root_rot', effectValue: -0.08 },
+      { problemKey: 'soft_rot', effectValue: -0.06 }
     ]
   },
   q_black_spots_surface_layer_check: {
     embedded: [
-      { problemKey: 'fungal_leaf_spot', scoreDelta: 0.2 },
-      { problemKey: 'bacterial_leaf_spot', scoreDelta: 0.18 },
-      { problemKey: 'sooty_mold_associated_pests', scoreDelta: -0.2 }
+      { problemKey: 'fungal_leaf_spot', effectValue: 0.2 },
+      { problemKey: 'bacterial_leaf_spot', effectValue: 0.18 },
+      { problemKey: 'sooty_mold_associated_pests', effectValue: -0.2 }
     ],
     surface: [
-      { problemKey: 'sooty_mold_associated_pests', scoreDelta: 0.22 },
-      { problemKey: 'fungal_leaf_spot', scoreDelta: -0.16 },
-      { problemKey: 'bacterial_leaf_spot', scoreDelta: -0.14 }
+      { problemKey: 'sooty_mold_associated_pests', effectValue: 0.22 },
+      { problemKey: 'fungal_leaf_spot', effectValue: -0.16 },
+      { problemKey: 'bacterial_leaf_spot', effectValue: -0.14 }
     ]
   },
   q_black_spots_tissue_moisture_check: {
     dry_firm: [
-      { problemKey: 'fungal_leaf_spot', scoreDelta: 0.18 },
-      { problemKey: 'bacterial_leaf_spot', scoreDelta: 0.12 },
-      { problemKey: 'edema', scoreDelta: -0.08 },
-      { problemKey: 'fungus_gnat', scoreDelta: -0.1 }
+      { problemKey: 'fungal_leaf_spot', effectValue: 0.18 },
+      { problemKey: 'bacterial_leaf_spot', effectValue: 0.12 },
+      { problemKey: 'edema', effectValue: -0.08 },
+      { problemKey: 'fungus_gnat', effectValue: -0.1 }
     ],
     soft_wet: [
-      { problemKey: 'bacterial_leaf_spot', scoreDelta: 0.24 },
-      { problemKey: 'edema', scoreDelta: 0.18 },
-      { problemKey: 'fungal_leaf_spot', scoreDelta: -0.14 }
+      { problemKey: 'bacterial_leaf_spot', effectValue: 0.24 },
+      { problemKey: 'edema', effectValue: 0.18 },
+      { problemKey: 'fungal_leaf_spot', effectValue: -0.14 }
     ]
   },
   q_brown_spots_halo_confirm: {
     yes: [
-      { problemKey: 'bacterial_leaf_spot', scoreDelta: 0.2 },
-      { problemKey: 'fungal_leaf_spot', scoreDelta: 0.1 }
+      { problemKey: 'bacterial_leaf_spot', effectValue: 0.2 },
+      { problemKey: 'fungal_leaf_spot', effectValue: 0.1 }
     ],
     no: [
-      { problemKey: 'fungal_leaf_spot', scoreDelta: 0.12 },
-      { problemKey: 'bacterial_leaf_spot', scoreDelta: -0.14 }
+      { problemKey: 'fungal_leaf_spot', effectValue: 0.12 },
+      { problemKey: 'bacterial_leaf_spot', effectValue: -0.14 }
     ]
   }
 }
@@ -109,8 +109,8 @@ function resolveAuditedDirectProblemAdjustments(questionKey = '', optionKey = ''
 
   return optionAdjustments.map(item => ({
     problemKey: String(item?.problemKey || '').trim(),
-    scoreDelta: Number(item?.scoreDelta || 0)
-  })).filter(item => item.problemKey && Number.isFinite(item.scoreDelta) && item.scoreDelta !== 0)
+    effectValue: Number(item?.effectValue || 0)
+  })).filter(item => item.problemKey && Number.isFinite(item.effectValue) && item.effectValue !== 0)
 }
 
 function mapQuestionRow(row = {}) {

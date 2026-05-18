@@ -204,7 +204,12 @@ utf8mb4_0900_ai_ci
 utf8mb4_unicode_ci
 IS NULL
 <=> NULL
+idx_diagnosis_sessions_created_at
+idx_diagnosis_sessions_outcome_created
+idx_visual_raw_session_order
 TERMINAL_E2E_FUNCTION_BASE_URL
+DEPLOY_BUST
+SQL_TIMEOUT
 ```
 
 排查原则：
@@ -219,6 +224,9 @@ TERMINAL_E2E_FUNCTION_BASE_URL
 8. 显式 request env 优先，不得被 `NODE_ENV=production` 强行覆盖。
 9. `TERMINAL_E2E_FUNCTION_BASE_URL` 优先于默认网关地址时，必须配合正确的函数路径前缀（见 5.10）。
 10. 同一 smoke 验收要强制“写库 schema 与读库 schema 一致”：`diag_1778900911740_co24xnlm`（0 模型）曾在 `--app-env=development` 下写入 `cloud1`/prod，但读取走 `cloud1_dev` 时仍拿到了旧黄叶 JSON；问题复现后修订为读写同 schema 后通过。
+11. `visual_raw_image_records` 禁止对 `session_id` 强制 `COLLATE`；无历史兼容依赖时可改依赖 `idx_visual_raw_session_order(session_id,input_slot_order,created_at)`。
+12. `diagnosis_sessions` 相关查询需补齐 `idx_diagnosis_sessions_created_at` 与 `idx_diagnosis_sessions_outcome_created`，用于 list 的排序与筛选。
+13. review list 主查询应统一使用 `diagnosis_sessions LEFT JOIN batch` 的 compact 模式，配合 `SQL_TIMEOUT`（建议 5s）与降级返回（partial/degraded），避免 >5s 长挂。
 
 ### 5.3.1 e2e 路径与 service base 的兼容说明（补充）
 
@@ -292,6 +300,7 @@ layer
    - 函数 `modTime/status` 更新
    - 下载云端 zip 对比关键文件
    - 真链路 smoke / 日志核验
+   - 热容器刷新生效确认（`DEPLOY_BUST`）
 3. MCP 方法参数形态不能猜，要看实现或最小探针。
 4. bundled 部署前确认 `node_modules/@cloudbase/functions-framework/bin/tcb-ff.js` 存在。
 5. ZIP 超过 1.5MB 直接切 COS。
@@ -301,6 +310,12 @@ layer
    - `utils/`
    - `configs/`
    - `node_modules/`
+7. `updateFunctionCode` 成功后仍需用 `DEPLOY_BUST` 强制刷新热容器；未刷新前不可把代码更新当成已生效。
+8. 部署验收默认必须区分并逐条确认：
+   - updateFunctionCode 成功
+   - DB index 落库（如本轮新增索引）
+   - 热容器刷新
+   - 真实 HTTP smoke 成功且 requestId 可回溯
 
 ---
 
@@ -321,6 +336,8 @@ requestId
 FUNCTION_EXECUTE_FAIL
 SYS_ERR
 GetFunctionLogs
+queryLogs
+CLS
 RetMsg
 LogJson
 cloudbase-functions.json
@@ -334,6 +351,7 @@ Not Found
 3. 以函数日志中的 `RetMsg` 和 `LogJson` 作为最终事实。
 4. `Not Found` 优先检查 `cloudbase-functions.json` route 清单。
 5. 新增 review / audit / admin 路由后，必须同步 `cloudbase-functions.json`。
+6. 若 `getFunctionLogDetail` 失败/空值/滞后，改用 CLS `queryLogs` 按 `request_id` + `function_name` fallback 核验。
 
 ---
 
@@ -465,6 +483,7 @@ legacy
 6. `history` 是 owner-scoped，不适合内部审核页查全量。
 7. 内部审核页走 `diagnosis/review/list/detail/images`。
 8. `manual` 不只靠 platform tag，旧真人小程序会话可按 openid 形态推断。
+9. review 图片预取应按分页和并发上限限流，不在列表页一次性拉齐所有 replay 图。
 
 ---
 
@@ -533,6 +552,10 @@ question_queue
 question governance
 candidate_retained
 observed_evidence_set
+fast path
+warm path
+early return
+yellowing_required_groups_incomplete
 root_rot
 spider_mites
 yellow_speckling
@@ -553,6 +576,22 @@ outcome
 6. output eligibility 与 uncertain gate 必须使用同一套 guard。
 7. regression manifest 可能固化旧 bug，规则修复后必须重新审计。
 8. forced static confirm 必须走 payload builder，不能直接返回 raw question row。
+9. `diagnose-http` 的 route / high-specificity / fast path 只能加速路径规划，不得绕过主链 follow-up / final 输出守卫；黄叶首个浇水频率题命中 `often_wet` 或 `often_dry` 后仍必须等待光照、施肥、整体状态等必答分组，不能直接 final。
+10. 修改快捷路径时必须同时补两类证据：负向 smoke（应继续追问而非 final）和正向 smoke（必答分组完成后仍能 final）；只跑完整 happy path 不足以证明未复发。
+
+---
+
+### 5.10 本轮修复验收锚点（本地化记录）
+
+- Deploy code：
+  - `f97d717c-4032-43e8-bcd4-5ff71ff27d2c`
+  - `1f3e3839-0cb4-4d73-aa9d-feff1bbee731`
+- 热容器刷新配置：
+  - `ae13d562-dfe6-4b79-a159-ff93aef017ce`（`DEPLOY_BUST`）
+- review/list：`requestId= b8527293-ee50-4acd-a5d8-743fc2cd114d`，function Duration `1096ms`，rowCount `20`，`complete` `1030ms`，client `1370ms`
+- review/detail：`requestId=0099690b-96cd-497e-91ee-899ea438c44f`，function Duration `488ms`，`partial false`，`degradedSections []`
+- answer：`requestId=6d9ff19e-62a5-480b-aa19-d6459c2aeaa0`，function Duration `808ms`，`complete 806ms`
+- 约定复核：`updateFunctionCode` 成功 ≠ 热容器已刷新；仍需用 requestId + 真实 smoke + 日志证据闭环。
 
 ---
 

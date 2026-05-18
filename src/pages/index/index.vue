@@ -1,5 +1,5 @@
 ﻿<template>
-  <view class="min-h-screen bg-[#F8F6F0]">
+  <view id="index-page" class="min-h-screen bg-[#F8F6F0]">
     <!-- 自定义导航栏 -->
     <CustomNavbar title="植伴" />
 
@@ -39,7 +39,7 @@
           </button>
         </view>
         <!-- 植物卡片列表 -->
-        <view v-else class="p-4">
+        <view v-else id="index-plant-list" class="p-4">
           <uni-collapse @change="handleCollapseChange">
             <uni-collapse-item
               v-for="plant in plantStore.userPlants"
@@ -108,19 +108,20 @@
               <!-- 折叠面板内容 -->
               <view class="px-3 py-2">
                 <!-- 诊断历史 -->
-                <view class="mb-3">
+                <view :id="`index-diagnose-history-section-${plant.id}`" class="mb-3">
                   <text class="block text-sm font-semibold text-gray-800 mb-2">📋 诊断历史</text>
 
                   <!-- 加载中 -->
-                  <view v-if="loadingHistory[plant.id]" class="text-center py-4">
+                  <view v-if="loadingHistory[plant.id]" :id="`index-diagnose-history-loading-${plant.id}`" class="text-center py-4">
                     <text class="text-xs text-gray-400">加载中...</text>
                   </view>
 
                   <!-- 历史记录列表 -->
-                  <view v-else-if="plantDiagnoseHistory[plant.id]?.length > 0">
+                  <view v-else-if="plantDiagnoseHistory[plant.id]?.length > 0" :id="`index-diagnose-history-list-${plant.id}`">
                     <view
                       v-for="record in plantDiagnoseHistory[plant.id]"
                       :key="record._id"
+                      :id="`index-diagnose-record-${record._id}`"
                       class="bg-gray-50 rounded-xl p-2.5 mb-2"
                       @click="viewDiagnoseDetail(record._id)"
                     >
@@ -149,7 +150,7 @@
                   </view>
 
                   <!-- 空状态 -->
-                  <view v-else class="bg-gray-50 rounded-xl p-3 text-center">
+                  <view v-else :id="`index-diagnose-history-empty-${plant.id}`" class="bg-gray-50 rounded-xl p-3 text-center">
                     <text class="text-xs text-gray-400">暂无诊断记录</text>
                   </view>
                 </view>

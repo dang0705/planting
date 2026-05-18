@@ -9,13 +9,25 @@ const {
 const { buildSnapshotPayload } = require('./session-runtime-snapshot-codec')
 const { getFollowUpSnapshotRows } = require('./session-follow-up-service')
 
+function normalizeFollowUpSnapshotRows(rows = []) {
+  return (Array.isArray(rows) ? rows : []).map(row => ({
+    questionOrder: Number(row?.questionOrder ?? row?.question_order ?? 0),
+    questionText: row?.questionText || row?.question_text || '',
+    answerValue: row?.answerValue || row?.answer_value || '',
+    status: row?.status || 'pending'
+  }))
+}
+
 async function saveFinalDiagnosisSnapshot({
   sessionId,
   openid,
   plantContext,
-  response
+  response,
+  followUpRows = null
 } = {}) {
-  const followUps = await getFollowUpSnapshotRows(sessionId)
+  const followUps = Array.isArray(followUpRows)
+    ? normalizeFollowUpSnapshotRows(followUpRows)
+    : await getFollowUpSnapshotRows(sessionId)
   const snapshot = buildSnapshotPayload({
     sessionId,
     plantContext,

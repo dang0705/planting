@@ -1,47 +1,47 @@
 <template>
-  <view class="min-h-screen bg-[#F8F6F0] px-4 py-6">
-    <view class="bg-white rounded-3xl p-5 shadow-sm">
+  <view id="diagnosis-result-page" class="min-h-screen bg-[#F8F6F0] px-4 py-6">
+    <view id="diagnosis-result-page-main-card" class="bg-white rounded-3xl p-5 shadow-sm">
       <text class="block text-lg font-bold text-gray-900 mb-1">诊断结果承接页</text>
       <text class="block text-xs text-gray-500 mb-4">
         主诊断流程已收敛到首页弹窗 DiagnosePopup，本页仅展示只读结果。
       </text>
 
-      <view v-if="loading" class="py-4">
+      <view v-if="loading" id="diagnosis-result-page-loading" class="py-4">
         <text class="block text-sm text-gray-500">加载中...</text>
       </view>
 
-      <view v-else-if="viewModel" class="space-y-3">
-        <view>
+      <view v-else-if="viewModel" id="diagnosis-result-page-result" class="space-y-3">
+        <view id="diagnosis-result-page-plant">
           <text class="block text-xs text-gray-500">植物</text>
           <text class="block text-sm text-gray-900">{{ viewModel.plantName }}</text>
         </view>
-        <view>
+        <view id="diagnosis-result-page-stage">
           <text class="block text-xs text-gray-500">当前阶段</text>
           <text class="block text-sm text-gray-900">{{ viewModel.stage }}</text>
         </view>
-        <view>
-          <text class="block text-xs text-gray-500">主结论</text>
+        <view id="diagnosis-result-page-main-issue">
+          <text class="block text-xs text-gray-500">诊断结论</text>
           <text class="block text-sm text-gray-900">
             {{ viewModel.mainIssue }}
           </text>
         </view>
         <view
           v-if="viewModel.outcomeItems.length"
+          id="diagnosis-result-page-outcome-list"
           class="rounded-2xl bg-[#F7FAF5] p-4 space-y-2"
         >
-          <text class="block text-xs text-gray-500">诊断方向</text>
+          <text class="block text-xs text-gray-500">诊断结论</text>
           <view class="space-y-2">
             <view
               v-for="item in viewModel.outcomeItems"
               :key="item.key"
               class="rounded-xl bg-white px-3 py-2 border border-gray-200"
             >
-              <text class="block text-xs text-gray-500">{{ item.roleLabel }}</text>
               <text class="block text-sm text-gray-900">{{ item.label }}</text>
             </view>
           </view>
         </view>
-        <view v-if="viewModel.summary">
+        <view v-if="viewModel.summary" id="diagnosis-result-page-summary">
           <text class="block text-xs text-gray-500">摘要</text>
           <text class="block text-sm text-gray-700 whitespace-pre-line">
             {{ viewModel.summary }}
@@ -49,12 +49,12 @@
         </view>
       </view>
 
-      <view v-else>
+      <view v-else id="diagnosis-result-page-empty">
         <text class="block text-sm text-gray-600">暂无可展示的诊断记录。</text>
       </view>
     </view>
 
-    <button class="w-full mt-4 bg-primary text-white font-semibold py-3 rounded-2xl" @click="goHome">
+    <button id="diagnosis-result-page-home-button" class="w-full mt-4 bg-primary text-white font-semibold py-3 rounded-2xl" @click="goHome">
       返回首页继续诊断
     </button>
   </view>
@@ -166,7 +166,7 @@ function buildOutcomeDisplayItems(diagnosis = {}) {
       return {
         key: dedupeKey,
         label,
-        roleLabel: key && key === primaryKey ? '主要判断' : '伴随方向'
+        isPrimary: key && key === primaryKey
       }
     })
     .filter(Boolean)
@@ -211,7 +211,7 @@ const viewModel = computed(() => {
 
   const outcomeItems = buildOutcomeDisplayItems(diagnosis)
   const primaryOutcomeDisplay =
-    outcomeItems.find(item => item.roleLabel === '主要判断')?.label ||
+    outcomeItems.find(item => item.isPrimary)?.label ||
     normalizeOutcomeDisplayLabel(diagnosis.primaryOutcome || diagnosis.finalResult?.primaryOutcome)
 
   return {

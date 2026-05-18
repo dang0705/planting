@@ -242,7 +242,6 @@ function buildNonProblematicRoundResult({
     roundId: `round_${round}`,
     stage,
     observedSymptoms,
-    rankings: [],
     topProblem: null,
     finalResult: {
       resultId,
@@ -316,7 +315,6 @@ function buildNonProblematicFollowUpRoundResult({
     roundId: `round_${round}`,
     stage: 'followup',
     observedSymptoms,
-    rankings: [],
     topProblem: null,
     finalResult: null,
     followUpRequired: true,

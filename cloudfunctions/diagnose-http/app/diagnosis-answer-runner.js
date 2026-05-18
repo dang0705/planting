@@ -32,6 +32,10 @@ const {
   resolveRequestClientContext
 } = require('./request-normalizers')
 const { extractVisualSymptomsSafely, persistRoundResult } = require('./visual-runtime')
+const outcomeRouteRepository = require('../repositories/outcome-route-repository')
+const {
+  createReviewTimingLogger
+} = require('../repositories/diagnosis-review/review-performance')
 
 async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } = {}) {
   payload = payload || {}
@@ -39,11 +43,19 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   if (!sessionId) {
     throw Object.assign(new Error('缺少 diagnosisSessionId'), { statusCode: 400 })
   }
+  const timing = createReviewTimingLogger('diagnosis-answer', {
+    sessionId,
+    skipPersistence: Boolean(skipPersistence)
+  })
 
   const sessionState = await getSessionState(openid, sessionId)
   if (!sessionState) {
     throw Object.assign(new Error('诊断会话不存在或已失效'), { statusCode: 404 })
   }
+  timing.mark('session-state-loaded', {
+    hasAnswers: Array.isArray(sessionState?.answeredAnswers) && sessionState.answeredAnswers.length > 0,
+    hasFollowUpRows: Array.isArray(sessionState?.followUpRows) && sessionState.followUpRows.length > 0
+  })
 
   const answers = normalizePublicAnswers(payload.answers || payload.followUpAnswers || [])
   const imageInputs = resolveVisualImageInputs(payload)
@@ -78,6 +90,11 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     sessionState.observedEvidenceSet.length
     ? []
     : await getObservedSymptomsBySession(sessionId)
+  if (observedSymptoms.length) {
+    timing.mark('observed-symptoms-loaded', {
+      count: observedSymptoms.length
+    })
+  }
   const roundFromClient = normalizeRoundFromRoundId(payload.roundId)
   const expectedRound = Math.max(1, Number(sessionState.nextRound || 2) - 1)
   const clientContext = resolveRequestClientContext(
@@ -102,13 +119,18 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     : []
   const currentQuestionQueue = refreshedSessionState.questionQueue || null
   let runtimeAnswerOptionMappings = []
+  let runtimeRouteAnswerEffects = []
   let runtimeFollowUpRowsForRound = runtimeSessionFollowUpRows
   let runtimeAskedQuestionRows = buildAskedQuestionRowsFromFollowUpRows(runtimeSessionFollowUpRows)
+  const answerPersistenceTasks = []
 
   if (hasAnswers) {
     const questionKeys = Array.from(new Set(answers.map(item => item.questionKey).filter(Boolean)))
     const optionMappingPromise = questionKeys.length
       ? getQuestionOptionMappings(questionKeys)
+      : Promise.resolve([])
+    const routeAnswerEffectsPromise = questionKeys.length
+      ? outcomeRouteRepository.getOutcomeAnswerEffects(questionKeys)
       : Promise.resolve([])
     const questionQueueKeysForValidation = Number(answerRound || 1) === Number(sessionState?.questionQueue?.roundIndex || 0)
       ? pickQuestionKeysFromQuestionQueue(sessionState.questionQueue)
@@ -134,11 +156,19 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
         }),
         optionMappingPromise
       ])
+    const routeAnswerEffectsFromStore = await routeAnswerEffectsPromise
+    runtimeRouteAnswerEffects = Array.isArray(routeAnswerEffectsFromStore)
+      ? routeAnswerEffectsFromStore
+      : []
     if (!isAnswerRevision) {
       if (!ownership.ok) {
         throw Object.assign(new Error('问诊题目不属于当前会话轮次'), { statusCode: 400 })
       }
     }
+    timing.mark('answer-ownership-ready', {
+      answerCount: answers.length,
+      answerRound
+    })
 
     const optionMappings = [
       ...questionOptionMappingsFromStore,
@@ -229,13 +259,13 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
         : runtimeFollowUpRowsForRound
       runtimeAskedQuestionRows = buildAskedQuestionRowsFromFollowUpRows(runtimeFollowUpRowsForRound)
     } else {
-      const markResult = await markFollowUpAnswers(sessionId, answers, {
+      const markResultPromise = markFollowUpAnswers(sessionId, answers, {
         optionMappings,
         answerRound,
         followUpRows: runtimeFollowUpRowsForRound,
-        awaitPersistence: true
+        awaitPersistence: false
       })
-      await markQueueItemsAnswered(
+      const queueMarkPromise = markQueueItemsAnswered(
           sessionId,
           openid,
           answerRound,
@@ -247,6 +277,19 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
                 : null
           }
       )
+      answerPersistenceTasks.push(queueMarkPromise)
+      const markResult = await markResultPromise
+      if (Array.isArray(markResult?.pendingWrites)) {
+        answerPersistenceTasks.push(...markResult.pendingWrites)
+      }
+      timing.mark('follow-up-answers-marked', {
+        updatedAnswerCount: Array.isArray(markResult?.updatedAnswers)
+          ? markResult.updatedAnswers.length
+          : 0
+      })
+      timing.mark('question-queue-marked', {
+        answerRound
+      })
       const updatedFollowUpAnswers = Array.isArray(markResult?.updatedAnswers)
         ? markResult.updatedAnswers
         : []
@@ -311,6 +354,12 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
 
   const round = answerRound + 1
 
+  timing.mark('round-starting', {
+    round,
+    hasImageInputs: Boolean(hasImageInputs),
+    answerCount: Array.isArray(runtimeAnswers) ? runtimeAnswers.length : 0,
+    askedQuestionCount: Array.isArray(runtimeAskedQuestionKeys) ? runtimeAskedQuestionKeys.length : 0
+  })
   const roundResult = await runDiagnosisRound({
     openid,
     userPlantId: refreshedSessionState.userPlantId,
@@ -332,7 +381,9 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     sessionId,
     answerOptionMappings: runtimeAnswerOptionMappings,
     storedFollowUpRows: runtimeFollowUpRowsForRound,
-    preloadedAskedQuestionRows: runtimeAskedQuestionRows
+    preloadedAskedQuestionRows: runtimeAskedQuestionRows,
+    preloadedRouteAnswerEffects: runtimeRouteAnswerEffects,
+    perfLogger: timing
   })
 
   if (visualExtraction?.visualCallBatchId) {
@@ -361,7 +412,12 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   if (!roundResult.shadowCompareSummary && refreshedSessionState.shadowCompareSummary) {
     roundResult.shadowCompareSummary = refreshedSessionState.shadowCompareSummary
   }
+  timing.mark('round-result-ready', {
+    answerRevision: Boolean(answerRevision),
+    hasImageInputs: Boolean(hasImageInputs)
+  })
 
+  await Promise.all(answerPersistenceTasks)
   await persistRoundResult({
     sessionId,
     openid,
@@ -372,10 +428,11 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     description: '',
     skipPersistence,
     awaitPersistence: true,
-    clientContext
+    clientContext,
+    followUpRows: runtimeFollowUpRowsForRound
   })
 
-  return {
+  const answerResult = {
     sessionId,
     userPlantId: refreshedSessionState.userPlantId || null,
     plantId: refreshedSessionState.userPlantId || refreshedSessionState.plantId,
@@ -393,6 +450,11 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     answerRevision,
     uiPatch
   }
+  timing.finish({
+    answerRevision: Boolean(answerRevision),
+    hasImageInputs: Boolean(hasImageInputs)
+  })
+  return answerResult
 }
 
 module.exports = {

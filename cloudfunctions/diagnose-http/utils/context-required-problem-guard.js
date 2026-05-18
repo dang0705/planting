@@ -341,11 +341,12 @@ function collectDirectNegativeAnswerContextKeys(answerEffects = [], problemKey =
 }
 
 function evaluateContextRequiredProblemGuard({
-  rankings = [],
+  candidateOutcomes = [],
   observedEvidenceSet = [],
   answerEffects = []
 } = {}) {
-  const topProblemKey = normalizeText(rankings?.[0]?.problemKey || '')
+  const sourceCandidateOutcomes = Array.isArray(candidateOutcomes) ? candidateOutcomes : []
+  const topProblemKey = normalizeText(sourceCandidateOutcomes?.[0]?.problemKey || '')
   const guard = getContextRequiredProblemGuard(topProblemKey)
   if (!guard) {
     return {

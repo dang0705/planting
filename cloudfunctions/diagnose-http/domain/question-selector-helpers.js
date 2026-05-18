@@ -1,7 +1,7 @@
 'use strict'
 
 const {
-  ranking: rankingConfig,
+  routeSelection: questionSelectionConfig,
   followUpSelection
 } = require('../constants/scoring')
 const {
@@ -345,7 +345,7 @@ function buildQuestionDimensionBucketKey(question = {}) {
   return targetSymptomKey || '__global__'
 }
 
-function selectDiversifiedCandidateItems(candidateItems = [], maxQuestions = rankingConfig.maxQuestionsPerRound) {
+function selectDiversifiedCandidateItems(candidateItems = [], maxQuestions = questionSelectionConfig.maxQuestionsPerRound) {
   const selected = []
   const deferred = []
   const usedGroups = new Set()

@@ -21,6 +21,34 @@ function uniqKeys(values = []) {
   )
 }
 
+function buildActionProfileMap(actionProfiles = []) {
+  const map = new Map()
+  for (const profile of Array.isArray(actionProfiles) ? actionProfiles : []) {
+    const key = normalizeKey(profile?.actionProfileKey || '')
+    if (key) {
+      map.set(key, profile)
+    }
+  }
+  return map
+}
+
+function buildActionAdviceItems(actionProfile = null) {
+  if (!actionProfile || typeof actionProfile !== 'object') {return []}
+  return uniqKeys([
+    ...(Array.isArray(actionProfile.todayActions) ? actionProfile.todayActions : []),
+    ...(Array.isArray(actionProfile.threeDayActions) ? actionProfile.threeDayActions : []),
+    ...(Array.isArray(actionProfile.sevenDayObserve) ? actionProfile.sevenDayObserve : [])
+  ])
+}
+
+function buildAvoidAdviceItems(actionProfile = null) {
+  if (!actionProfile || typeof actionProfile !== 'object') {return []}
+  return uniqKeys([
+    ...(Array.isArray(actionProfile.avoidActions) ? actionProfile.avoidActions : []),
+    ...(Array.isArray(actionProfile.retakeOrEscalate) ? actionProfile.retakeOrEscalate : [])
+  ])
+}
+
 function mapSeverity(problem = null) {
   return (problem?.severityHintCn || '中').includes('高') ? 'high' : 'medium'
 }
@@ -68,7 +96,8 @@ function buildOutcomeEntry({
   outcomeKey = '',
   routeOutcome = null,
   problem = null,
-  explanation = null
+  explanation = null,
+  actionProfile = null
 } = {}) {
   const normalizedOutcomeKey = normalizeKey(outcomeKey)
   if (!normalizedOutcomeKey) {
@@ -82,9 +111,13 @@ function buildOutcomeEntry({
     normalizedOutcomeKey
   )
 
+  const actionAdviceItems = buildActionAdviceItems(actionProfile)
+  const avoidAdviceItems = buildAvoidAdviceItems(actionProfile)
+
   return {
     outcomeKey: normalizedOutcomeKey,
     problemKey: normalizedOutcomeKey,
+    actionProfileKey: normalizeText(routeOutcome?.actionProfileKey || actionProfile?.actionProfileKey || ''),
     outcomeType: normalizeText(routeOutcome?.outcomeType || ''),
     outcomeCategory: normalizeText(routeOutcome?.outcomeCategory || ''),
     displayNameCn: normalizeText(fallbackDisplayName),
@@ -97,6 +130,8 @@ function buildOutcomeEntry({
     avoid: normalizeText(
       explanation?.avoidCn || problem?.userPreventionCn || problem?.defaultPrevention || ''
     ),
+    actionAdviceItems,
+    avoidAdviceItems,
     reassurance: normalizeText(explanation?.reassuranceCn || '')
   }
 }
@@ -180,35 +215,28 @@ function resolveRouteOutcomePayload({
     : []
   const visibleOutcomeKeys = routeVisibleOutcomeKeys
   const primaryKey = primaryOutcomeKey
-  const primaryOutcome = buildOutcomeEntry({
-    outcomeKey: primaryKey,
-    routeOutcome: routeOutcomeMap.get(primaryKey),
-    problem: problemMap.get(primaryKey),
-    explanation: explanationMap.get(primaryKey)
-  })
+  const safeActionProfiles = Array.isArray(actionProfiles) ? actionProfiles : []
+  const actionProfileMap = buildActionProfileMap(safeActionProfiles)
+  const buildOutcomeEntryWithProfile = outcomeKey => {
+    const routeOutcome = routeOutcomeMap.get(outcomeKey)
+    return buildOutcomeEntry({
+      outcomeKey,
+      routeOutcome,
+      problem: problemMap.get(outcomeKey),
+      explanation: explanationMap.get(outcomeKey),
+      actionProfile: actionProfileMap.get(normalizeKey(routeOutcome?.actionProfileKey || '')) || null
+    })
+  }
+
+  const primaryOutcome = buildOutcomeEntryWithProfile(primaryKey)
   const secondaryOutcomes = secondaryOutcomeKeys
-    .map(outcomeKey =>
-      buildOutcomeEntry({
-        outcomeKey,
-        routeOutcome: routeOutcomeMap.get(outcomeKey),
-        problem: problemMap.get(outcomeKey),
-        explanation: explanationMap.get(outcomeKey)
-      })
-    )
+    .map(outcomeKey => buildOutcomeEntryWithProfile(outcomeKey))
     .filter(Boolean)
     .slice(0, 2)
   const visibleOutcomes = visibleOutcomeKeys
-    .map(outcomeKey =>
-      buildOutcomeEntry({
-        outcomeKey,
-        routeOutcome: routeOutcomeMap.get(outcomeKey),
-        problem: problemMap.get(outcomeKey),
-        explanation: explanationMap.get(outcomeKey)
-      })
-    )
+    .map(outcomeKey => buildOutcomeEntryWithProfile(outcomeKey))
     .filter(Boolean)
     .slice(0, 3)
-  const safeActionProfiles = Array.isArray(actionProfiles) ? actionProfiles : []
   const visibleActionConflictGroups = uniqKeys(routeDecision?.visibleActionConflictGroups)
   const hasActionConflict = visibleActionConflictGroups.length > 1
   const careGuidance = buildCareGuidance({
@@ -284,5 +312,7 @@ function resolveRouteOutcomePayload({
 }
 
 module.exports = {
-  resolveRouteOutcomePayload
+  resolveRouteOutcomePayload,
+  buildOutcomeEntry,
+  buildRouteSafeSummary
 }

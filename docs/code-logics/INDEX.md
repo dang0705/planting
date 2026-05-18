@@ -25,7 +25,7 @@
 | 诊断 runtime 主链 | `03_诊断运行时主链路_逐步执行逻辑.md` | `06_问题排序_证据计分_输出守卫.md` | runtime、outcome、gate、route、执行逻辑 |
 | 视觉证据接入 | `04_视觉证据接入_正式证据_诊断方向.md` | `09_植物识别_图片存储_天气_用户植物模块.md` | visual、视觉证据、正式证据、诊断方向 |
 | 问诊系统 | `05_问诊系统_问题生成_过滤_停止策略.md` | `06_问题排序_证据计分_输出守卫.md` | 问诊、追问、question、过滤、停止策略 |
-| 排序 / 计分 / 输出守卫 | `06_问题排序_证据计分_输出守卫.md` | `03_诊断运行时主链路_逐步执行逻辑.md` | ranking、score、证据计分、guard、输出资格 |
+| 候选 outcome / 回答影响值 / 输出守卫 | `06_问题排序_证据计分_输出守卫.md` | `03_诊断运行时主链路_逐步执行逻辑.md` | candidate outcome、effectValue、guard、输出资格 |
 | 结果格式 / 前端契约 | `07_结果格式化_公开响应_前端接入契约.md` | `02_诊断HTTP接口_请求响应与路由.md` | result、format、response、前端展示、contract |
 | 会话持久化 / 历史 | `08_会话持久化_历史_运行时快照.md` | `03_诊断运行时主链路_逐步执行逻辑.md` | session、history、snapshot、运行时快照 |
 | 植物识别 / 图片 / 天气 / 用户植物 | `09_植物识别_图片存储_天气_用户植物模块.md` | `04_视觉证据接入_正式证据_诊断方向.md` | plant、identity、image、storage、weather、user plant |
@@ -39,10 +39,10 @@
 | `docs/code-logics/00_文档总索引_与阅读顺序.md` | 总索引 | 不确定该读哪个逻辑文档、建立阅读顺序 | index, 阅读顺序, 总览 | 只读索引和阅读顺序 | 低 |
 | `docs/code-logics/01_后端云函数总览_与服务边界.md` | 后端云函数与服务边界 | CloudBase 函数职责、服务边界、后端入口 | cloudfunctions, service boundary, diagnose-http | 先读服务边界小节 | 中 |
 | `docs/code-logics/02_诊断HTTP接口_请求响应与路由.md` | HTTP 接口与路由 | 调试 diagnose-http 接口、请求响应、路由分发 | API, route, request, response, endpoint | 读请求/响应/路由小节 | 中 |
-| `docs/code-logics/03_诊断运行时主链路_逐步执行逻辑.md` | 诊断运行时主链 | ranking → route、outcome、gate、runtime、主流程改造 | runtime, outcome, gate, route, decision flow | 只读相关小节；优先由 architect 摘要 | 高 |
+| `docs/code-logics/03_诊断运行时主链路_逐步执行逻辑.md` | 诊断运行时主链 | route 路径规划、outcome、gate、runtime、主流程改造 | runtime, outcome, gate, route, decision flow | 只读相关小节；优先由 architect 摘要 | 高 |
 | `docs/code-logics/04_视觉证据接入_正式证据_诊断方向.md` | 视觉证据接入 | AI 视觉证据如何进入诊断方向、正式证据边界 | visual evidence, formal evidence, symptom | 读证据边界与诊断方向小节 | 高 |
 | `docs/code-logics/05_问诊系统_问题生成_过滤_停止策略.md` | 问诊系统 | 追问生成、过滤、停止条件、问诊路径 | question, follow-up, stop strategy, filter | 读问题生成/停止策略小节 | 高 |
-| `docs/code-logics/06_问题排序_证据计分_输出守卫.md` | 排序、证据计分、输出守卫 | ranking、score、guard、output eligibility、低置信输出 | ranking, score, guard, output eligibility | 读计分和守卫小节；与 `03` 联动 | 高 |
+| `docs/code-logics/06_问题排序_证据计分_输出守卫.md` | 候选 outcome、回答影响值、输出守卫 | candidate outcome、effectValue、guard、output eligibility、低置信输出 | candidate outcome, effectValue, guard, output eligibility | 读候选与守卫小节；与 `03` 联动 | 高 |
 | `docs/code-logics/07_结果格式化_公开响应_前端接入契约.md` | 结果格式与前端契约 | 前端可见 outcome、响应字段、展示层 contract | response, frontend, output format, contract | 读公开响应和字段契约小节 | 中 |
 | `docs/code-logics/08_会话持久化_历史_运行时快照.md` | 会话持久化 | session、history、snapshot、replay 证据来源 | session, history, snapshot, persistence | 读快照/历史小节 | 中 |
 | `docs/code-logics/09_植物识别_图片存储_天气_用户植物模块.md` | 植物识别与图片链路 | plant identity、图片存储、天气、用户植物 | plant identity, image, storage, weather | 读目标模块小节 | 中 |

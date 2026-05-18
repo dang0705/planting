@@ -87,7 +87,8 @@ async function persistRoundResult({
   description,
   skipPersistence = false,
   awaitPersistence = true,
-  clientContext = null
+  clientContext = null,
+  followUpRows = null
 }) {
   if (skipPersistence) {return}
 
@@ -99,7 +100,8 @@ async function persistRoundResult({
     round,
     image,
     description,
-    clientContext
+    clientContext,
+    followUpRows
   })
   if (!awaitPersistence) {
     persistencePromise.catch(error => {

@@ -1,6 +1,6 @@
 'use strict'
 
-const { ranking: rankingConfig } = require('../constants/scoring')
+const { routeSelection: questionSelectionConfig } = require('../constants/scoring')
 const {
   normalizeQuestionRole,
   inferQuestionRole,
@@ -104,7 +104,7 @@ async function buildRoutePlannedFollowUps({
   routeDecision = null,
   askedQuestions = [],
   askedQuestionKeys = [],
-  maxQuestions = rankingConfig.maxQuestionsPerRound,
+  maxQuestions = questionSelectionConfig.maxQuestionsPerRound,
   questionRepository = null,
   plantContext = {},
   weatherContext = null

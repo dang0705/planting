@@ -3,7 +3,24 @@
 const { models } = require('/opt/utils/cloudbase')
 const { sqlInList, clamp01 } = require('./sql')
 const { table } = require('../db/table-helper')
+const { resolveSchema } = require('../db/schema-resolver')
 const { OUTCOME_EFFECT_TYPE } = require('../constants/outcome-route')
+
+const STATIC_REPOSITORY_CACHE_TTL_MS = Math.max(
+  0,
+  Number(process.env.DIAGNOSE_STATIC_CACHE_TTL_MS || 60000)
+)
+const staticCache = {
+  allRouteGroupsBySchema: new Map(),
+  routeGroupsBySignature: new Map(),
+  routesByOutcomeSignature: new Map(),
+  gatesByRouteSignature: new Map(),
+  questionsByRouteSignature: new Map(),
+  answerEffectsByQuestionSignature: new Map(),
+  actionProfilesBySignature: new Map(),
+  outcomesBySignature: new Map()
+}
+const pendingStaticCache = new Map()
 
 function normalizeKey(value = '') {
   return String(value || '').trim()
@@ -13,6 +30,54 @@ function normalizeKeys(values = []) {
   return Array.from(
     new Set((Array.isArray(values) ? values : []).map(item => normalizeKey(item)).filter(Boolean))
   )
+}
+
+function normalizeCacheSignature(values = []) {
+  return normalizeKeys(values).sort().join('|')
+}
+
+function buildSchemaCacheKey(parts = []) {
+  return [
+    resolveSchema(),
+    ...parts.map(item => String(item || '').trim())
+  ].join('::')
+}
+
+function getCached(cache, key = '') {
+  if (!STATIC_REPOSITORY_CACHE_TTL_MS) {return undefined}
+  const normalizedKey = String(key || '').trim()
+  const entry = cache.get(normalizedKey)
+  if (!entry) {return undefined}
+  if (Date.now() - Number(entry.cachedAt || 0) > STATIC_REPOSITORY_CACHE_TTL_MS) {
+    cache.delete(normalizedKey)
+    return undefined
+  }
+  return entry.value
+}
+
+function setCached(cache, key = '', value) {
+  if (!STATIC_REPOSITORY_CACHE_TTL_MS) {return}
+  cache.set(String(key || '').trim(), {
+    cachedAt: Date.now(),
+    value
+  })
+}
+
+function withPendingStaticQuery(key = '', loader) {
+  const normalizedKey = String(key || '').trim()
+  if (!normalizedKey) {
+    return loader()
+  }
+  if (pendingStaticCache.has(normalizedKey)) {
+    return pendingStaticCache.get(normalizedKey)
+  }
+  const promise = Promise.resolve()
+    .then(loader)
+    .finally(() => {
+      pendingStaticCache.delete(normalizedKey)
+    })
+  pendingStaticCache.set(normalizedKey, promise)
+  return promise
 }
 
 function safeJsonParse(value, fallback) {
@@ -194,7 +259,15 @@ function buildReviewedStatusClause(fieldName) {
 async function getOutcomeRouteGroupsByKeys(routeGroupKeys = []) {
   const safeKeys = normalizeKeys(routeGroupKeys)
   if (!safeKeys.length) {return []}
-  const rows = await runSql(
+  const cacheKey = buildSchemaCacheKey(['routeGroups', normalizeCacheSignature(safeKeys)])
+  const cached = getCached(staticCache.routeGroupsBySignature, cacheKey)
+  if (cached !== undefined) {return cached}
+
+  return withPendingStaticQuery(cacheKey, async () => {
+    const cachedAfterWait = getCached(staticCache.routeGroupsBySignature, cacheKey)
+    if (cachedAfterWait !== undefined) {return cachedAfterWait}
+
+    const rows = await runSql(
     `
       SELECT
         route_group_key,
@@ -215,12 +288,23 @@ async function getOutcomeRouteGroupsByKeys(routeGroupKeys = []) {
         AND ${buildReviewedStatusClause('review_status')}
       ORDER BY route_group_key ASC
     `
-  )
-  return rows.map(mapRouteGroupRow)
+    )
+    const mappedRows = rows.map(mapRouteGroupRow)
+    setCached(staticCache.routeGroupsBySignature, cacheKey, mappedRows)
+    return mappedRows
+  })
 }
 
 async function getAllActiveOutcomeRouteGroups() {
-  const rows = await runSql(
+  const cacheKey = buildSchemaCacheKey(['allRouteGroups'])
+  const cached = getCached(staticCache.allRouteGroupsBySchema, cacheKey)
+  if (cached !== undefined) {return cached}
+
+  return withPendingStaticQuery(cacheKey, async () => {
+    const cachedAfterWait = getCached(staticCache.allRouteGroupsBySchema, cacheKey)
+    if (cachedAfterWait !== undefined) {return cachedAfterWait}
+
+    const rows = await runSql(
     `
       SELECT
         route_group_key,
@@ -240,14 +324,25 @@ async function getAllActiveOutcomeRouteGroups() {
         AND ${buildReviewedStatusClause('review_status')}
       ORDER BY route_group_key ASC
     `
-  )
-  return rows.map(mapRouteGroupRow)
+    )
+    const mappedRows = rows.map(mapRouteGroupRow)
+    setCached(staticCache.allRouteGroupsBySchema, cacheKey, mappedRows)
+    return mappedRows
+  })
 }
 
 async function getOutcomeRoutesByOutcomeKeys(outcomeKeys = []) {
   const safeKeys = normalizeKeys(outcomeKeys)
   if (!safeKeys.length) {return []}
-  const rows = await runSql(
+  const cacheKey = buildSchemaCacheKey(['routesByOutcome', normalizeCacheSignature(safeKeys)])
+  const cached = getCached(staticCache.routesByOutcomeSignature, cacheKey)
+  if (cached !== undefined) {return cached}
+
+  return withPendingStaticQuery(cacheKey, async () => {
+    const cachedAfterWait = getCached(staticCache.routesByOutcomeSignature, cacheKey)
+    if (cachedAfterWait !== undefined) {return cachedAfterWait}
+
+    const rows = await runSql(
     `
       SELECT
         route_key,
@@ -274,14 +369,25 @@ async function getOutcomeRoutesByOutcomeKeys(outcomeKeys = []) {
         AND ${buildReviewedStatusClause('review_status')}
       ORDER BY entry_priority DESC, route_key ASC
     `
-  )
-  return rows.map(mapRouteRow)
+    )
+    const mappedRows = rows.map(mapRouteRow)
+    setCached(staticCache.routesByOutcomeSignature, cacheKey, mappedRows)
+    return mappedRows
+  })
 }
 
 async function getOutcomeRouteGates(routeKeys = []) {
   const safeKeys = normalizeKeys(routeKeys)
   if (!safeKeys.length) {return []}
-  const rows = await runSql(
+  const cacheKey = buildSchemaCacheKey(['gatesByRoute', normalizeCacheSignature(safeKeys)])
+  const cached = getCached(staticCache.gatesByRouteSignature, cacheKey)
+  if (cached !== undefined) {return cached}
+
+  return withPendingStaticQuery(cacheKey, async () => {
+    const cachedAfterWait = getCached(staticCache.gatesByRouteSignature, cacheKey)
+    if (cachedAfterWait !== undefined) {return cachedAfterWait}
+
+    const rows = await runSql(
     `
       SELECT
         gate_key,
@@ -308,14 +414,25 @@ async function getOutcomeRouteGates(routeKeys = []) {
         AND ${buildReviewedStatusClause('review_status')}
       ORDER BY gate_priority DESC, gate_key ASC
     `
-  )
-  return rows.map(mapGateRow)
+    )
+    const mappedRows = rows.map(mapGateRow)
+    setCached(staticCache.gatesByRouteSignature, cacheKey, mappedRows)
+    return mappedRows
+  })
 }
 
 async function getOutcomeRouteQuestions(routeKeys = []) {
   const safeKeys = normalizeKeys(routeKeys)
   if (!safeKeys.length) {return []}
-  const rows = await runSql(
+  const cacheKey = buildSchemaCacheKey(['questionsByRoute', normalizeCacheSignature(safeKeys)])
+  const cached = getCached(staticCache.questionsByRouteSignature, cacheKey)
+  if (cached !== undefined) {return cached}
+
+  return withPendingStaticQuery(cacheKey, async () => {
+    const cachedAfterWait = getCached(staticCache.questionsByRouteSignature, cacheKey)
+    if (cachedAfterWait !== undefined) {return cachedAfterWait}
+
+    const rows = await runSql(
     `
       SELECT
         route_key,
@@ -337,14 +454,25 @@ async function getOutcomeRouteQuestions(routeKeys = []) {
         AND ${buildReviewedStatusClause('review_status')}
       ORDER BY ask_priority DESC, step_no ASC, question_key ASC
     `
-  )
-  return rows.map(mapRouteQuestionRow)
+    )
+    const mappedRows = rows.map(mapRouteQuestionRow)
+    setCached(staticCache.questionsByRouteSignature, cacheKey, mappedRows)
+    return mappedRows
+  })
 }
 
 async function getOutcomeAnswerEffects(questionKeys = []) {
   const safeKeys = normalizeKeys(questionKeys)
   if (!safeKeys.length) {return []}
-  const rows = await runSql(
+  const cacheKey = buildSchemaCacheKey(['answerEffectsByQuestion', normalizeCacheSignature(safeKeys)])
+  const cached = getCached(staticCache.answerEffectsByQuestionSignature, cacheKey)
+  if (cached !== undefined) {return cached}
+
+  return withPendingStaticQuery(cacheKey, async () => {
+    const cachedAfterWait = getCached(staticCache.answerEffectsByQuestionSignature, cacheKey)
+    if (cachedAfterWait !== undefined) {return cachedAfterWait}
+
+    const rows = await runSql(
     `
       SELECT
         question_key,
@@ -366,14 +494,25 @@ async function getOutcomeAnswerEffects(questionKeys = []) {
         AND ${buildReviewedStatusClause('review_status')}
       ORDER BY question_key ASC, option_key ASC
     `
-  )
-  return rows.map(mapAnswerEffectRow)
+    )
+    const mappedRows = rows.map(mapAnswerEffectRow)
+    setCached(staticCache.answerEffectsByQuestionSignature, cacheKey, mappedRows)
+    return mappedRows
+  })
 }
 
 async function getOutcomeActionProfiles(actionProfileKeys = []) {
   const safeKeys = normalizeKeys(actionProfileKeys)
   if (!safeKeys.length) {return []}
-  const rows = await runSql(
+  const cacheKey = buildSchemaCacheKey(['actionProfiles', normalizeCacheSignature(safeKeys)])
+  const cached = getCached(staticCache.actionProfilesBySignature, cacheKey)
+  if (cached !== undefined) {return cached}
+
+  return withPendingStaticQuery(cacheKey, async () => {
+    const cachedAfterWait = getCached(staticCache.actionProfilesBySignature, cacheKey)
+    if (cachedAfterWait !== undefined) {return cachedAfterWait}
+
+    const rows = await runSql(
     `
       SELECT
         action_profile_key,
@@ -392,14 +531,25 @@ async function getOutcomeActionProfiles(actionProfileKeys = []) {
         AND ${buildReviewedStatusClause('review_status')}
       ORDER BY action_profile_key ASC
     `
-  )
-  return rows.map(mapActionProfileRow)
+    )
+    const mappedRows = rows.map(mapActionProfileRow)
+    setCached(staticCache.actionProfilesBySignature, cacheKey, mappedRows)
+    return mappedRows
+  })
 }
 
 async function getDiagnosisOutcomesByKeys(outcomeKeys = []) {
   const safeKeys = normalizeKeys(outcomeKeys)
   if (!safeKeys.length) {return []}
-  const rows = await runSql(
+  const cacheKey = buildSchemaCacheKey(['diagnosisOutcomes', normalizeCacheSignature(safeKeys)])
+  const cached = getCached(staticCache.outcomesBySignature, cacheKey)
+  if (cached !== undefined) {return cached}
+
+  return withPendingStaticQuery(cacheKey, async () => {
+    const cachedAfterWait = getCached(staticCache.outcomesBySignature, cacheKey)
+    if (cachedAfterWait !== undefined) {return cachedAfterWait}
+
+    const rows = await runSql(
     `
       SELECT
         outcome_key,
@@ -424,8 +574,11 @@ async function getDiagnosisOutcomesByKeys(outcomeKeys = []) {
         AND ${buildReviewedStatusClause('review_status')}
       ORDER BY priority DESC, outcome_key ASC
     `
-  )
-  return rows.map(mapDiagnosisOutcomeRow)
+    )
+    const mappedRows = rows.map(mapDiagnosisOutcomeRow)
+    setCached(staticCache.outcomesBySignature, cacheKey, mappedRows)
+    return mappedRows
+  })
 }
 
 module.exports = {

@@ -42,13 +42,14 @@
 4. 若因环境、依赖、权限、网络等原因无法验证，必须明确写入“未验证项”和原因。
 5. 不允许把“命令已执行”直接等同于“业务正确”，高风险任务还必须有对应业务证据。
 6. 诊断 runtime / outcome / replay / CloudBase / 前端展示任务必须按目标验收契约逐项给证据；review、replay、DB 中间态或日志只能作为证据之一，不能替代真实业务消费链路。
+7. 诊断 `fast path` / `warm path` / `early return` / 缓存命中 / 性能优化路径不得绕过主链输出守卫；凡修改这些路径，必须证明它与主链共享同一套 follow-up / final / output eligibility guard，并补充“应继续追问而非 final”的负向回归。
 
 标准优先验证命令：
 
 ```bash
-npm lint
+npm run lint
 npm test
-npm build
+npm run build
 ```
 
 ## 5. 文档与语言底线

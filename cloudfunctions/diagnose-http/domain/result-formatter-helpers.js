@@ -1,6 +1,6 @@
 'use strict'
 
-const { ranking: rankingConfig } = require('../constants/scoring')
+const { routeSelection: outcomeSelectionConfig } = require('../constants/scoring')
 
 function roundValue(value, digits = 4) {
   return Number(Number(value || 0).toFixed(digits))
@@ -94,9 +94,9 @@ function buildSymptomClassUncertainPrefix(symptomClassRuntime = null) {
   return `当前已收敛到“${classLabel}”，但还缺少足够的补充事实，暂时不能安全定位到具体原因。`
 }
 
-function pickPrimaryRanking(rankings = [], problemMap = new Map()) {
-  const allowedRoles = new Set(rankingConfig.supportRolesAsTop1)
-  for (const item of rankings || []) {
+function pickPrimaryOutcome(candidateOutcomes = [], problemMap = new Map()) {
+  const allowedRoles = new Set(outcomeSelectionConfig.supportRolesAsTop1)
+  for (const item of candidateOutcomes || []) {
     const problem = problemMap.get(item.problemKey)
     const role = problem?.problemRole || ''
     if (allowedRoles.has(role)) {return item}
@@ -327,7 +327,7 @@ module.exports = {
   mapSeverity,
   mapUrgency,
   normalizeText,
-  pickPrimaryRanking,
+  pickPrimaryOutcome,
   resolveOutcomeType,
   resolveRoutePrimaryAction,
   resolveStopReason,

@@ -9,6 +9,49 @@ function toPublicProblemId(problemKey = '') {
   return toProblemId(normalized)
 }
 
+function hasChineseText(value = '') {
+  return /[\u4e00-\u9fff]/.test(String(value || ''))
+}
+
+function looksLikeOutcomeKey(value = '') {
+  const normalized = String(value || '').trim()
+  if (!normalized) {return false}
+  return !hasChineseText(normalized) && /[A-Za-z]/.test(normalized)
+}
+
+function resolveOutcomeDisplayFromPayload(outcomePayload = {}, finalProblemKey = '') {
+  const payload = outcomePayload && typeof outcomePayload === 'object' ? outcomePayload : null
+  if (!payload) {return ''}
+
+  const finalResult = payload?.finalResult
+  if (finalResult) {
+    const finalDisplay = String(finalResult.displayNameCn || finalResult.displayName || '').trim()
+    if (hasChineseText(finalDisplay) && finalDisplay) {
+      return finalDisplay
+    }
+  }
+
+  const entries = []
+  if (payload?.primaryOutcome) {entries.push(payload.primaryOutcome)}
+  if (Array.isArray(payload?.secondaryOutcomes)) {entries.push(...payload.secondaryOutcomes)}
+  if (Array.isArray(payload?.visibleOutcomes)) {entries.push(...payload.visibleOutcomes)}
+
+  const normalizedFinalProblemKey = String(finalProblemKey || '').trim()
+  if (normalizedFinalProblemKey) {
+    for (const item of entries) {
+      if (!item || typeof item !== 'object') {continue}
+      const itemKey = String(item?.outcomeKey || item?.problemKey || '').trim()
+      if (!itemKey || itemKey !== normalizedFinalProblemKey) {continue}
+      const itemDisplay = String(item?.displayNameCn || item?.displayName || item?.outcomeNameCn || '').trim()
+      if (itemDisplay) {
+        return itemDisplay
+      }
+    }
+  }
+
+  return ''
+}
+
 function resolveDisplayName({
   outcomeType = '',
   finalProblemCn = '',
@@ -44,7 +87,23 @@ function resolveDisplayName({
   }
 
   return (
-    normalizeStoredNullableText(finalProblemCn, '') ||
+    normalizeStoredNullableText(
+      (() => {
+        const normalizedDisplayName = normalizeStoredNullableText(finalProblemCn, '').trim()
+        if (normalizedDisplayName && !looksLikeOutcomeKey(normalizedDisplayName)) {
+          return normalizedDisplayName
+        }
+
+        const payloadDisplayName = resolveOutcomeDisplayFromPayload(
+          outcomePayload,
+          finalProblemKey
+        )
+        if (payloadDisplayName) {return payloadDisplayName}
+
+        return ''
+      })(),
+      ''
+    ) ||
     normalizeStoredNullableText(finalProblemKey, '') ||
     '待进一步确认'
   )

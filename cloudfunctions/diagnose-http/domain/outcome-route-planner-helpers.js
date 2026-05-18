@@ -96,12 +96,17 @@ function collectVisualRouteSymptomKeys(visualAggregateResult = null) {
 
 function buildFallbackDecision({
   candidateOutcomeKeys = [],
-  rankings = [],
+  candidateOutcomes = [],
   decisionCauseKey = 'route_fallback',
   decisionCauseText = 'route 未形成权威闭合，转保守不确定输出'
 } = {}) {
-  const rankedOutcomeKeys = dedupeKeys((Array.isArray(rankings) ? rankings : []).map(item => item.problemKey))
-  const outcomeKeys = rankedOutcomeKeys.length ? rankedOutcomeKeys : candidateOutcomeKeys
+  const legacyOutcomeKeys = dedupeKeys(
+    (Array.isArray(candidateOutcomes) ? candidateOutcomes : [])
+      .map(item => normalizeKey(item?.problemKey || item?.outcomeKey || item?.candidateOutcomeKey || ''))
+  )
+  const outcomeKeys = dedupeKeys(candidateOutcomeKeys).length
+    ? dedupeKeys(candidateOutcomeKeys)
+    : legacyOutcomeKeys
 
   return {
     mode: ROUTE_MODE.MULTI_OUTCOME_ROUTE,
@@ -147,8 +152,7 @@ function buildRouteEvidenceContext({
   answers = [],
   askedQuestionKeys = [],
   visualAggregateResult = null,
-  routeHints = [],
-  rankings = []
+  routeHints = []
 } = {}) {
   const safeObservedEvidenceSet = Array.isArray(observedEvidenceSet) ? observedEvidenceSet : []
   const safeDerivedEvidenceSet = Array.isArray(derivedEvidenceSet) ? derivedEvidenceSet : []
@@ -211,12 +215,6 @@ function buildRouteEvidenceContext({
       ...matchedRouteAnswerEffects.map(item => normalizeKey(item?.effectType || '').toLowerCase())
     ])
   )
-  const rankingIndex = Object.fromEntries(
-    (Array.isArray(rankings) ? rankings : [])
-      .map((item, index) => [normalizeKey(item?.problemKey || ''), index + 1])
-      .filter(([key]) => Boolean(key))
-  )
-
   return {
     plantContext,
     activeSymptomKeys,
@@ -249,8 +247,7 @@ function buildRouteEvidenceContext({
     ),
     visualRouteHints: Array.isArray(routeHints) ? routeHints : [],
     visualRouteSymptomKeys,
-    visualAggregateResult,
-    rankingIndex
+    visualAggregateResult
   }
 }
 
@@ -299,12 +296,21 @@ function isGateContradictedByAnsweredSplit(gate = {}, routeEvidenceContext = {})
   })
 }
 
-function sortCandidateStates(states = [], rankingIndex = {}) {
+function sortCandidateStates(states = [], candidateOutcomeOrderMap = new Map()) {
   const safeStates = Array.isArray(states) ? states : []
+  const statePriority = {
+    [ROUTE_STATUS.DISPLAY_ELIGIBLE]: 0,
+    [ROUTE_STATUS.NEEDS_QUESTION]: 1,
+    [ROUTE_STATUS.CANDIDATE]: 2,
+    [ROUTE_STATUS.BLOCKED]: 3
+  }
   return safeStates.sort((a, b) => {
-    const rankA = Number(rankingIndex[a.outcomeKey] || Number.MAX_SAFE_INTEGER)
-    const rankB = Number(rankingIndex[b.outcomeKey] || Number.MAX_SAFE_INTEGER)
-    if (rankA !== rankB) {return rankA - rankB}
+    const stateA = Number(statePriority[a.state] ?? Number.MAX_SAFE_INTEGER)
+    const stateB = Number(statePriority[b.state] ?? Number.MAX_SAFE_INTEGER)
+    if (stateA !== stateB) {return stateA - stateB}
+    const orderA = Number(candidateOutcomeOrderMap.get(a.outcomeKey) ?? Number.MAX_SAFE_INTEGER)
+    const orderB = Number(candidateOutcomeOrderMap.get(b.outcomeKey) ?? Number.MAX_SAFE_INTEGER)
+    if (orderA !== orderB) {return orderA - orderB}
     return String(a.outcomeKey || '').localeCompare(String(b.outcomeKey || ''))
   })
 }

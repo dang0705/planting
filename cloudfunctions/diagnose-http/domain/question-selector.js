@@ -1,7 +1,7 @@
 'use strict'
 
 const {
-  ranking: rankingConfig,
+  routeSelection: questionSelectionConfig,
   unknownFlow,
   followUpSelection
 } = require('../constants/scoring')
@@ -42,7 +42,7 @@ function ensureUnknownOption(options = []) {
       mapsToSymptomKey: '',
       value: 0,
       associationStrength: 0,
-      answerEffectCn: '不加分不减分',
+      answerEffectCn: '不改变候选路径',
       dataStatus: 'partial',
       reviewStatus: 'synthetic'
     })
@@ -113,7 +113,7 @@ function mergeObservedSymptomContext(projectedObservedSymptoms = [], providedObs
 }
 
 function selectFollowUpQuestions({
-  rankings = [],
+  candidateOutcomes = [],
   strategies = [],
   questions = [],
   optionMappings = [],
@@ -131,8 +131,9 @@ function selectFollowUpQuestions({
   diagnosisDirections = [],
   blockedTargetSymptomKeys = [],
   symptomClassRuntime = null,
-  maxQuestions = rankingConfig.maxQuestionsPerRound
+  maxQuestions = questionSelectionConfig.maxQuestionsPerRound
 } = {}) {
+  const effectiveCandidateOutcomes = Array.isArray(candidateOutcomes) ? candidateOutcomes : []
   const projectedObservedSymptoms =
     Array.isArray(observedEvidenceSet) && observedEvidenceSet.length
       ? projectObservedSymptomsFromEvidence(observedEvidenceSet)
@@ -144,7 +145,9 @@ function selectFollowUpQuestions({
   const askedSet = new Set((askedQuestionKeys || []).map(item => String(item || '').trim()).filter(Boolean))
   const questionMap = new Map((questions || []).map(item => [item.questionKey, item]))
   const optionMap = groupByQuestion(optionMappings)
-  const scoreMap = new Map((rankings || []).map(item => [item.problemKey, Number(item.finalScore || item.baseScore || 0)]))
+  const candidateOutcomePresenceSet = new Set(
+    (effectiveCandidateOutcomes || []).map(item => String(item?.problemKey || '').trim()).filter(Boolean)
+  )
   const observedSymptomMap = buildObservedSymptomIndex(effectiveObservedSymptoms)
   const symptomMetaMap = buildSymptomMetaMap(symptomDictionary)
   const observedEvidenceCoverageMap = buildObservedEvidenceCoverageIndex(
@@ -257,7 +260,7 @@ function selectFollowUpQuestions({
     const candidateScore =
       (
         Number(strategy.priorityScore || 0) +
-        Number(scoreMap.get(strategy.problemKey) || 0) * 100
+        (candidateOutcomePresenceSet.has(String(strategy.problemKey || '').trim()) ? 100 : 0)
       ) * nonRedundancyFactor +
       computeObservedFactCoverageBoost(question, {
         observedSymptomMap,

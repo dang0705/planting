@@ -154,9 +154,9 @@ function buildSyntheticDirectProblemAdjustments(item = {}, targetDimension = '',
   return (Array.isArray(optionEffects) ? optionEffects : [])
     .map(item => ({
       problemKey: normalizeText(item?.problemKey),
-      scoreDelta: Number(item?.scoreDelta || 0)
+      effectValue: Number(item?.effectValue || 0)
     }))
-    .filter(item => item.problemKey && Number(item.scoreDelta || 0) !== 0)
+    .filter(item => item.problemKey && Number(item.effectValue || 0) !== 0)
 }
 
 module.exports = {

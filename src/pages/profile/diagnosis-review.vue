@@ -60,11 +60,11 @@
         <strong class="summary-value">{{ summary.pendingCount }}</strong>
       </article>
       <article class="summary-panel">
-        <span class="summary-label">问题性</span>
+        <span class="summary-label">有问题</span>
         <strong class="summary-value">{{ summary.problematicCount }}</strong>
       </article>
       <article class="summary-panel">
-        <span class="summary-label">非问题性</span>
+        <span class="summary-label">未见明确问题</span>
         <strong class="summary-value">{{ summary.nonProblematicCount }}</strong>
       </article>
       <article class="summary-panel summary-panel-dark">
@@ -191,7 +191,7 @@
           <template #default="{ row }">
             <div class="cell-stack">
               <strong class="cell-title">{{ formatRouteText(row.routePrimaryAction) }}</strong>
-              <span class="cell-meta">stop: {{ row.stopReason || 'none' }}</span>
+              <span class="cell-meta">停止原因: {{ row.stopReason || '未记录' }}</span>
               <span class="cell-meta">
                 问题 {{ row.questionCountSummary.totalItems }} / 已答
                 {{ row.questionCountSummary.answeredItems }}
@@ -263,9 +263,9 @@
               <strong class="cell-title">
                 obs {{ row.observedEvidenceCount }} / derived {{ row.derivedEvidenceCount }}
               </strong>
-              <span class="cell-meta">dir {{ row.diagnosisDirectionCount }}</span>
+              <span class="cell-meta">诊断维度 {{ row.diagnosisDirectionCount }}</span>
               <span class="cell-copy">{{
-                row.diagnosisDirectionLabels.join(' / ') || '无方向对象'
+                row.diagnosisDirectionLabels.join(' / ') || '未识别诊断维度'
               }}</span>
             </div>
           </template>
@@ -346,7 +346,7 @@
         <div class="drawer-shell">
           <header class="drawer-head">
             <div>
-              <div class="hero-kicker">Session Review</div>
+              <div class="hero-kicker">会话复盘</div>
               <h3 class="drawer-title">{{ currentRow.displayName }}</h3>
               <p class="drawer-copy">{{ currentRow.diagnosisSessionId }}</p>
             </div>
@@ -359,41 +359,41 @@
 
           <section class="drawer-summary-grid">
             <article class="drawer-summary-card">
-              <span class="summary-label">outcome</span>
+              <span class="summary-label">诊断结论</span>
               <strong class="summary-value-small">{{
                 formatOutcomeLabel(currentRow.outcomeType)
               }}</strong>
             </article>
             <article class="drawer-summary-card">
-              <span class="summary-label">route</span>
+              <span class="summary-label">决策方向</span>
               <strong class="summary-value-small">{{
-                currentRow.routePrimaryAction || 'standard_flow'
+                formatRouteText(currentRow.routePrimaryAction)
               }}</strong>
             </article>
             <article class="drawer-summary-card">
-              <span class="summary-label">stop</span>
-              <strong class="summary-value-small">{{ currentRow.stopReason || 'none' }}</strong>
+              <span class="summary-label">终止原因</span>
+              <strong class="summary-value-small">{{ currentRow.stopReason || '未记录' }}</strong>
             </article>
             <article class="drawer-summary-card">
-              <span class="summary-label">evidence</span>
+              <span class="summary-label">证据</span>
               <strong class="summary-value-small">
                 {{ currentRow.observedEvidenceCount }} / {{ currentRow.derivedEvidenceCount }}
               </strong>
             </article>
             <article class="drawer-summary-card">
-              <span class="summary-label">source</span>
+              <span class="summary-label">来源</span>
               <strong class="summary-value-small">{{
                 formatSourceLabel(currentRow.reviewSourceType)
               }}</strong>
             </article>
             <article class="drawer-summary-card">
-              <span class="summary-label">feedback</span>
+              <span class="summary-label">回访</span>
               <strong class="summary-value-small">
                 {{ currentRow.feedbackSummary?.feedbackCount || 0 }}
               </strong>
             </article>
             <article class="drawer-summary-card">
-              <span class="summary-label">symptom class</span>
+              <span class="summary-label">症状分类</span>
               <strong class="summary-value-small">{{
                 formatSymptomClassSummary(currentRow.symptomClass)
               }}</strong>
@@ -430,7 +430,7 @@
                     }}
                   </p>
                   <p class="drawer-detail-copy">
-                    answer path:
+                    答题链路:
                     {{
                       currentDetail?.batchReviewMeta?.answerPathSignature ||
                       currentRow.batchReviewMeta?.answerPathSignature ||
@@ -557,7 +557,7 @@
             </section>
 
             <section class="drawer-panel">
-              <h4 class="drawer-panel-title">Route 路径</h4>
+              <h4 class="drawer-panel-title">诊断链路</h4>
               <div v-if="getRouteDecision(currentDetail)" class="route-path-shell">
                 <div class="drawer-detail-grid">
                   <article
@@ -586,7 +586,7 @@
                 <pre class="raw-json-preview">{{ stringifyCompact(getRouteDecision(currentDetail)) }}</pre>
               </div>
               <div v-else class="drawer-empty-box">
-                当前详情未返回 routeDecision
+                当前详情未返回诊断决策信息
               </div>
             </section>
 
@@ -851,8 +851,8 @@ const hunyuanVisionPricingNotice = LLM_PRICING_NOTICE
 
 const outcomeOptions = [
   { label: '全部', value: 'all' },
-  { label: '问题性', value: 'problematic' },
-  { label: '非问题性', value: 'non_problematic' },
+  { label: '有问题', value: 'problematic' },
+  { label: '未见明确问题', value: 'non_problematic' },
   { label: '不确定', value: 'uncertain' }
 ]
 const sourceOptions = [
@@ -906,6 +906,7 @@ const filters = ref({
 const isH5Runtime = typeof window !== 'undefined'
 const imageIntersectionRootMargin = '240px 0px'
 const imageIntersectionThreshold = 0.01
+const imagePrefetchBatchSize = 2
 const tableSectionRefs = ref({})
 const imageCellNodes = new Map()
 const imageIntersectionObservers = new Map()
@@ -1241,11 +1242,11 @@ const compareRows = computed(() => [
   },
   {
     key: 'decision.route_stop',
-    label: '路由 / 停止',
+    label: '决策 / 停止',
     resolve: detail =>
       [
-        detail?.routePrimaryAction || detail?.coreProcess?.followUp?.routePrimaryAction || 'n/a',
-        detail?.stopReason || detail?.coreProcess?.decision?.stopReason || 'n/a',
+        detail?.routePrimaryAction || detail?.coreProcess?.followUp?.routePrimaryAction || '未返回',
+        detail?.stopReason || detail?.coreProcess?.decision?.stopReason || '未返回',
         getRouteDecision(detail)?.decisionCause?.decisionCauseKey || ''
       ].filter(Boolean).join(' / ')
   },
@@ -1271,7 +1272,7 @@ const compareRows = computed(() => [
   },
   {
     key: 'visual.route_hints',
-    label: '视觉路由提示',
+    label: '视觉链路提示',
     resolve: detail => formatVisualRouteHints(detail)
   },
   {
@@ -1434,9 +1435,9 @@ async function autoLoadVisiblePreviewImages(sourceType = 'manual') {
     if (imageLoadingMap.value[sessionId]) {return false}
     return true
   })
-  await Promise.allSettled(
-    candidates.slice(0, 8).map(row => ensurePreviewImages(row, { silent: true }))
-  )
+  for (const row of candidates.slice(0, imagePrefetchBatchSize)) {
+    await ensurePreviewImages(row, { silent: true })
+  }
 }
 
 let previewLazyScanTimer = null
@@ -1481,7 +1482,7 @@ function schedulePreviewLazyScan() {
 
 async function scanVisiblePreviewImageCells() {
   if (!isH5Runtime || typeof window === 'undefined') {return}
-  const tasks = []
+  const rowsToPrefetch = []
   for (const [key, node] of imageCellNodes.entries()) {
     if (!isPreviewImageCellVisible(node)) {continue}
     const { sessionId, sectionKey } = resolveImageCellIdentity(key, node)
@@ -1489,10 +1490,13 @@ async function scanVisiblePreviewImageCells() {
     const row = findPreviewImageRow(sessionId, sectionKey)
     if (!row || resolveRowPreviewImage(row) || imageLoadingMap.value[sessionId]) {continue}
     imageIntersectionAttempted.add(sessionId)
-    tasks.push(ensurePreviewImages(row, { silent: true }))
+    rowsToPrefetch.push(row)
+    if (rowsToPrefetch.length >= imagePrefetchBatchSize) {
+      break
+    }
   }
-  if (tasks.length) {
-    await Promise.allSettled(tasks)
+  for (const row of rowsToPrefetch) {
+    await ensurePreviewImages(row, { silent: true })
   }
 }
 
@@ -1910,14 +1914,29 @@ function copySessionId(item) {
 }
 
 function formatOutcomeLabel(outcomeType = '') {
-  if (outcomeType === 'problematic') {return '问题性'}
-  if (outcomeType === 'non_problematic') {return '非问题性'}
+  if (outcomeType === 'problematic') {return '有问题'}
+  if (outcomeType === 'non_problematic') {return '未见明确问题'}
   if (outcomeType === 'uncertain') {return '不确定'}
   return '未知'
 }
 
 function formatRouteText(routePrimaryAction = '') {
-  return routePrimaryAction || 'standard_flow'
+  const key = String(routePrimaryAction || '').trim()
+  if (!key || key === 'standard_flow') {
+    return '标准流程'
+  }
+  const routeLabelMap = {
+    overwatering_root_pressure_route: '根部状态评估',
+    overwatering_root_pressure: '根部状态评估',
+    watering_root_pressure_route: '浇水评估',
+    watering_route: '浇水评估',
+    yellowing_route: '黄叶评估',
+    yellowing_airflow_leaf_spot_route: '黄叶与叶斑联合排查',
+    leaf_spot_problem_route: '叶斑排查',
+    fertilization_route: '施肥评估',
+    fertilizer_route: '施肥评估'
+  }
+  return routeLabelMap[key] || key
 }
 
 function formatSourceLabel(sourceType = '') {
@@ -2109,21 +2128,21 @@ function getRouteDecisionFieldRows(detail = null) {
     {
       key: 'mode',
       label: '模式',
-      value: routeDecision.mode || 'n/a'
+      value: routeDecision.mode || '未返回'
     },
     {
       key: 'activeRouteGroupKeys',
-      label: '命中路径组',
+      label: '命中流程组',
       value: formatDetailLines(routeDecision.activeRouteGroupKeys, '无')
     },
     {
       key: 'visibleOutcomeKeys',
-      label: '可展示 outcome',
+      label: '可展示结论',
       value: formatDetailLines(routeDecision.visibleOutcomeKeys, '无')
     },
     {
       key: 'primaryOutcomeKey',
-      label: '主 outcome',
+      label: '核心结果',
       value: routeDecision.primaryOutcomeKey || '无'
     },
     {
@@ -2149,42 +2168,44 @@ function getRoutePathRows(detail = null) {
     ? routeDecision.candidateOutcomeStates
     : []
   ).map(item => ({
-    key: `candidate:${item.outcomeKey}`,
-    title: item.outcomeKey || 'unknown_outcome',
+    key: item.outcomeKey ? `候选:${item.outcomeKey}` : '候选:未知',
+    title: item.outcomeKey || '未知结果',
     meta: [
-      `state=${item.state || 'n/a'}`,
-      item.missingGateKeys?.length ? `missing=${item.missingGateKeys.join(', ')}` : '',
-      item.nextQuestionKeys?.length ? `next=${item.nextQuestionKeys.join(', ')}` : ''
+      item.state ? `状态=${item.state}` : '',
+      item.missingGateKeys?.length ? `缺少门禁=${item.missingGateKeys.join(', ')}` : '',
+      item.nextQuestionKeys?.length ? `下一题=${item.nextQuestionKeys.join(', ')}` : ''
     ].filter(Boolean).join(' / '),
-    value: formatDetailLines(item.routeKeys, '无 route')
+      value: formatDetailLines(item.routeKeys, '无')
   }))
   const traceRows = (Array.isArray(routeDecision.routeTrace) ? routeDecision.routeTrace : []).map(item => ({
-    key: `trace:${item.outcomeKey}`,
-    title: `trace: ${item.outcomeKey || 'unknown_outcome'}`,
-    meta: formatDetailLines(item.routeKeys, '无 route'),
+    key: item.outcomeKey ? `流程回看:${item.outcomeKey}` : '流程回看:未知结果',
+    title: `流程回看 ${item.outcomeKey || '未知结果'}`,
+    meta: formatDetailLines(item.routeKeys, '无'),
     value: formatDetailLines(
       (Array.isArray(item.gateResults) ? item.gateResults : []).map(result =>
         [
-          result.gateKey || 'unknown_gate',
+          result.gateKey || '未知门禁',
           result.gateRole || '',
           result.result || ''
         ].filter(Boolean).join(':')
       ),
-      '无 gate'
+      '无门禁'
     )
   }))
   const gateRows = (Array.isArray(routeDecision.gateResults) ? routeDecision.gateResults : []).map(item => ({
-    key: `gate:${item.routeKey}:${item.gateKey}`,
-    title: item.gateKey || 'unknown_gate',
+    key: item.routeKey && item.gateKey
+      ? `${item.routeKey} / 门禁:${item.gateKey}`
+      : '门禁:未知',
+    title: item.gateKey || '未知门禁',
     meta: [
       item.routeKey,
       item.gateRole,
       item.result
     ].filter(Boolean).join(' / '),
     value: [
-      `evidence=${Boolean(item.requiredEvidenceMatched)}`,
-      `answer=${Boolean(item.requiredAnswerEffectsMatched)}`,
-      `blocker=${Boolean(item.blockerMatched)}`
+      `证据满足=${Boolean(item.requiredEvidenceMatched)}`,
+      `答题满足=${Boolean(item.requiredAnswerEffectsMatched)}`,
+      `阻断=${Boolean(item.blockerMatched)}`
     ].join(' / ')
   }))
   return [...candidateRows, ...traceRows, ...gateRows]
@@ -2455,18 +2476,11 @@ function formatQuestionAnswer(question = {}) {
   return [answerText, status ? `状态：${status}` : '', effect].filter(Boolean).join('；')
 }
 
-function formatSignedScore(value) {
-  const numberValue = Number(value)
-  if (!Number.isFinite(numberValue) || numberValue === 0) {return ''}
-  return `${numberValue > 0 ? '+' : ''}${numberValue.toFixed(2)}`
-}
-
 function formatResolvedDirectProblemAdjustments(adjustments = []) {
   return (Array.isArray(adjustments) ? adjustments : [])
     .map(item => {
       const problemKey = String(item?.problemKey || item?.problem_key || '').trim()
-      const score = formatSignedScore(item?.scoreDelta ?? item?.score_delta)
-      return problemKey && score ? `${problemKey} ${score}` : ''
+      return problemKey
     })
     .filter(Boolean)
 }
@@ -2476,7 +2490,6 @@ function formatResolvedAnswerEffect(question = {}) {
   const resolvedEffectSource = String(question?.resolvedEffectSource || '').trim()
   const resolvedAnswerEffect = String(question?.resolvedAnswerEffect || '').trim()
   const mapsToSymptomKey = String(question?.resolvedMapsToSymptomKey || '').trim()
-  const optionValue = Number(question?.resolvedOptionValue)
   const associationStrength = Number(question?.resolvedAssociationStrength)
   const directEffects = formatResolvedDirectProblemAdjustments(question?.resolvedDirectProblemAdjustments)
 
@@ -2484,14 +2497,13 @@ function formatResolvedAnswerEffect(question = {}) {
     parts.push(resolvedAnswerEffect)
   }
   if (mapsToSymptomKey) {
-    const scoreText = Number.isFinite(optionValue) && optionValue !== 0 ? `value ${formatSignedScore(optionValue)}` : ''
     const strengthText = Number.isFinite(associationStrength) && associationStrength > 0
       ? `strength ${associationStrength.toFixed(2)}`
       : ''
-    parts.push(`症状映射 ${mapsToSymptomKey}${[scoreText, strengthText].filter(Boolean).length ? `（${[scoreText, strengthText].filter(Boolean).join(' / ')}）` : ''}`)
+    parts.push(`症状映射 ${mapsToSymptomKey}${strengthText ? `（${strengthText}）` : ''}`)
   }
   if (directEffects.length) {
-    parts.push(`问题评分 ${directEffects.join('，')}`)
+    parts.push(`影响 outcome ${directEffects.join('，')}`)
   }
   if (resolvedEffectSource && parts.length) {
     parts.push(`来源 ${resolvedEffectSource}`)

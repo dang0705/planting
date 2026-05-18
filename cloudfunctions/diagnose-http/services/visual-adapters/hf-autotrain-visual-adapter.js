@@ -152,13 +152,13 @@ async function callInferenceService(imageRuntimeInput = {}) {
 function capReadiness(value = 'cautious', cap = 'ready') {
   const normalizedValue = normalizeAdmissionReadiness(value, 'cautious')
   const normalizedCap = normalizeAdmissionReadiness(cap, 'ready')
-  const ranking = {
+  const readinessOrder = {
     retain_only: 1,
     cautious: 2,
     ready: 3
   }
 
-  return ranking[normalizedValue] <= ranking[normalizedCap] ? normalizedValue : normalizedCap
+  return readinessOrder[normalizedValue] <= readinessOrder[normalizedCap] ? normalizedValue : normalizedCap
 }
 
 function buildMappedCandidates(predictions = [], notes = [], routeHints = []) {

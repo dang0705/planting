@@ -236,7 +236,7 @@ function resolveHighSpecificityConvergencePlan({
   visualRouteContext = {},
   observedEvidenceSet = [],
   symptomDictionary = [],
-  rankings = [],
+  candidateOutcomes = [],
   problems = [],
   round = 1,
   stage = 'preliminary'
@@ -254,13 +254,15 @@ function resolveHighSpecificityConvergencePlan({
     return null
   }
 
-  const topRanking = Array.isArray(rankings) && rankings.length ? rankings[0] : null
-  if (!topRanking?.problemKey) {
+  const primaryCandidateOutcome = Array.isArray(candidateOutcomes) && candidateOutcomes.length
+    ? candidateOutcomes[0]
+    : null
+  if (!primaryCandidateOutcome?.problemKey) {
     return null
   }
 
   const problemMap = buildProblemMap(problems)
-  const targetProblem = problemMap.get(topRanking.problemKey)
+  const targetProblem = problemMap.get(primaryCandidateOutcome.problemKey)
   if (!targetProblem || normalizeText(targetProblem?.problemRole || '', '') !== 'root_cause') {
     return null
   }
@@ -277,7 +279,7 @@ function resolveHighSpecificityConvergencePlan({
   const matchedRules = HIGH_SPECIFICITY_FAST_CONVERGENCE_RULES
     .map(rule => buildMatchedRule(rule, evidenceMap))
     .filter(Boolean)
-    .filter(rule => normalizeText(rule.problemKey || '', '') === normalizeText(topRanking.problemKey || '', ''))
+    .filter(rule => normalizeText(rule.problemKey || '', '') === normalizeText(primaryCandidateOutcome.problemKey || '', ''))
 
   if (matchedRules.length !== 1) {
     return null

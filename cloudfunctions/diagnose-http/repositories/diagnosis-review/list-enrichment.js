@@ -4,21 +4,128 @@ const { models } = require('/opt/utils/cloudbase')
 const { table } = require('../../db/table-helper')
 const {
   SESSION_ID_COLLATION,
+  normalizeKeyword,
+  normalizeOutcomeFilter,
   normalizeSourceFilter,
   normalizePageBounds
 } = require('./normalizers')
 const {
   EMPTY_REVIEW_SUMMARY,
   buildDiagnosisReviewQuery,
+  buildDiagnosisReviewBaseColumns,
+  buildDiagnosisReviewImageSummaryProjection,
+  buildDiagnosisReviewQuestionCountDefaults,
+  buildHumanManualSourceClause,
+  buildManualListPlatformGuardClause,
+  buildManualPlatformGuardClause,
+  buildClientPlatformSql,
   buildManualDiagnosisReviewSelectLite,
   buildBatchDiagnosisReviewSelectLite,
   buildLegacyDiagnosisReviewSelectLite,
   buildManualDiagnosisReviewSummarySelect,
   buildBatchDiagnosisReviewSummarySelect,
   buildLegacyDiagnosisReviewSummarySelect,
-  buildCollatedInClause
+  buildCollatedInClause,
+  buildInClause
 } = require('./sql-builders')
 const { mapDiagnosisReviewRow } = require('./row-mapper')
+const {
+  createReviewTimingLogger,
+  settleOptionalReviewSection,
+  stripDiagnosisReviewListPayload,
+  withTimeout
+} = require('./review-performance')
+
+const LIST_QUERY_TIMEOUT_MS = 2800
+const LIST_SUMMARY_TIMEOUT_MS = 1200
+const LIST_ENRICHMENT_TIMEOUT_MS = 1200
+
+function buildUnifiedDiagnosisReviewListQuery({
+  outcomeType = 'all',
+  keyword = '',
+  sourceType = 'all'
+} = {}) {
+  const safeOutcomeType = normalizeOutcomeFilter(outcomeType)
+  const safeKeyword = normalizeKeyword(keyword)
+  const safeSourceType = normalizeSourceFilter(sourceType)
+  const conditions = []
+  const params = {}
+  const humanManualSourceClause = buildHumanManualSourceClause('sessions')
+  const manualListPlatformGuardClause = buildManualListPlatformGuardClause('sessions')
+  const legacyPlatformGuardClause = buildManualPlatformGuardClause('sessions')
+  const clientPlatformSql = buildClientPlatformSql('sessions')
+
+  if (safeOutcomeType !== 'all') {
+    conditions.push('sessions.outcome_type = {{outcomeType}}')
+    params.outcomeType = safeOutcomeType
+  }
+
+  if (safeKeyword) {
+    conditions.push(`(
+      sessions.diagnosis_id LIKE {{keywordLike}}
+      OR sessions.latest_visual_call_batch_id LIKE {{keywordLike}}
+      OR sessions.final_problem_cn LIKE {{keywordLike}}
+      OR sessions.final_problem_key LIKE {{keywordLike}}
+      OR sessions.ai_summary LIKE {{keywordLike}}
+      OR batch.sample_label LIKE {{keywordLike}}
+      OR batch.sample_file_name LIKE {{keywordLike}}
+      OR batch.answer_path_signature LIKE {{keywordLike}}
+    )`)
+    params.keywordLike = `%${safeKeyword}%`
+  }
+
+  if (safeSourceType === 'batch') {
+    conditions.push('!(batch.diagnosis_id <=> NULL)')
+  } else if (safeSourceType === 'manual') {
+    conditions.push(`batch.diagnosis_id <=> NULL AND ${humanManualSourceClause} AND ${manualListPlatformGuardClause}`)
+  } else if (safeSourceType === 'legacy') {
+    conditions.push(`batch.diagnosis_id <=> NULL AND ${humanManualSourceClause} AND NOT ${legacyPlatformGuardClause}`)
+  } else {
+    conditions.push(`(!(batch.diagnosis_id <=> NULL) OR (${humanManualSourceClause}))`)
+  }
+
+  const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+  return {
+    params: {
+      ...params,
+      internalReviewPrefix_0: 'dev_terminal_%',
+      internalReviewPrefix_1: 'anon_dev_%',
+      likelyMiniProgramOpenIdPattern: '^o[A-Za-z0-9_-]{10,}$'
+    },
+    sql: `
+      SELECT
+        ${buildDiagnosisReviewBaseColumns({ alias: 'sessions' })},
+        ${buildDiagnosisReviewImageSummaryProjection()},
+        ${buildDiagnosisReviewQuestionCountDefaults()},
+        0 AS feedback_count,
+        NULL AS latest_feedback_is_helpful,
+        NULL AS latest_feedback_is_accurate,
+        '' AS latest_feedback_note,
+        NULL AS latest_feedback_created_at,
+        CASE
+          WHEN !(batch.diagnosis_id <=> NULL) THEN 'batch'
+          WHEN ${manualListPlatformGuardClause} THEN 'manual'
+          ELSE 'legacy'
+        END AS review_source_type,
+        ${clientPlatformSql} AS client_platform,
+        CASE
+          WHEN !(batch.diagnosis_id <=> NULL) THEN 'batch_table'
+          WHEN ${manualListPlatformGuardClause} THEN 'openid_inferred_manual'
+          ELSE 'openid_inferred_legacy'
+        END AS review_source_evidence,
+        COALESCE(batch.batch_source, '') AS batch_source,
+        COALESCE(batch.sample_label, '') AS batch_sample_label,
+        COALESCE(batch.sample_file_name, '') AS batch_sample_file_name,
+        COALESCE(batch.sample_absolute_path, '') AS batch_sample_absolute_path,
+        COALESCE(batch.answer_path_signature, '') AS batch_answer_path_signature,
+        batch.batch_generated_at AS batch_generated_at
+      FROM ${table('diagnosis_sessions')} AS sessions
+      LEFT JOIN ${table('diagnosis_batch_reviews')} AS batch
+        ON batch.diagnosis_id COLLATE ${SESSION_ID_COLLATION} = sessions.diagnosis_id COLLATE ${SESSION_ID_COLLATION}
+      ${whereClause}
+    `
+  }
+}
 
 function buildReviewListQuestionCountDefault() {
   return {
@@ -88,7 +195,7 @@ function buildReviewListVisualDefault() {
 }
 
 async function loadDiagnosisReviewListVisualRows(sessionIds = []) {
-  const inClause = buildCollatedInClause(sessionIds)
+  const inClause = buildInClause(sessionIds)
   if (!inClause) {return new Map()}
 
   const result = await models.$runSQL(
@@ -108,7 +215,7 @@ async function loadDiagnosisReviewListVisualRows(sessionIds = []) {
         NULL AS llm_prompt_image_context_json,
         NULL AS llm_usage_json
       FROM ${table('visual_raw_image_records')}
-      WHERE session_id COLLATE ${SESSION_ID_COLLATION} IN (${inClause})
+      WHERE session_id IN (${inClause})
       ORDER BY session_id ASC, input_slot_order ASC, created_at ASC
     `,
     {}
@@ -156,18 +263,34 @@ async function enrichDiagnosisReviewListRows(rows = []) {
   const sessionIds = rows.map(row => String(row?.diagnosis_id || '').trim()).filter(Boolean)
   if (!sessionIds.length) {return rows}
 
-  const [visualMap, questionMap] = await Promise.all([
-    loadDiagnosisReviewListVisualRows(sessionIds).catch(error => {
-      console.error('diagnosis review list visual enrichment failed:', error)
-      return new Map()
+  const timing = createReviewTimingLogger('diagnosis-review list', {
+    sessionCount: sessionIds.length
+  })
+  const degradedSections = []
+  const [visualResult, questionResult] = await Promise.all([
+    settleOptionalReviewSection({
+      scope: 'diagnosis-review list',
+      sectionName: 'visualMap',
+      loader: () => loadDiagnosisReviewListVisualRows(sessionIds),
+      fallbackValue: new Map(),
+      degradedSections,
+      timing,
+      timeoutMs: LIST_ENRICHMENT_TIMEOUT_MS
     }),
-    loadDiagnosisReviewListQuestionCounts(sessionIds).catch(error => {
-      console.error('diagnosis review list question enrichment failed:', error)
-      return new Map()
+    settleOptionalReviewSection({
+      scope: 'diagnosis-review list',
+      sectionName: 'questionCounts',
+      loader: () => loadDiagnosisReviewListQuestionCounts(sessionIds),
+      fallbackValue: new Map(),
+      degradedSections,
+      timing,
+      timeoutMs: LIST_ENRICHMENT_TIMEOUT_MS
     })
   ])
+  const visualMap = visualResult.value || new Map()
+  const questionMap = questionResult.value || new Map()
 
-  return rows.map(row => {
+  const mappedRows = rows.map(row => {
     const sessionId = String(row?.diagnosis_id || '').trim()
     return {
       ...row,
@@ -177,6 +300,12 @@ async function enrichDiagnosisReviewListRows(rows = []) {
       ...(questionMap.get(sessionId) || null)
     }
   })
+
+  timing.finish({
+    degradedSections
+  })
+
+  return mappedRows
 }
 
 async function summarizeDiagnosisReviewSessions({
@@ -265,8 +394,16 @@ async function listDiagnosisReviewSessions({
 } = {}) {
   const { safePage, safePageSize, offset } = normalizePageBounds({ page, pageSize })
   const safeSourceType = normalizeSourceFilter(sourceType)
-  const { manualWhereClause, batchWhereClause, params } = buildDiagnosisReviewQuery({ outcomeType, keyword })
+  const { manualWhereClause, batchWhereClause } = buildDiagnosisReviewQuery({ outcomeType, keyword })
+  const unifiedListQuery = buildUnifiedDiagnosisReviewListQuery({ outcomeType, keyword, sourceType })
   const unionParts = []
+  const timing = createReviewTimingLogger('diagnosis-review list', {
+    page: safePage,
+    pageSize: safePageSize,
+    outcomeType,
+    keyword: String(keyword || '').trim(),
+    sourceType: safeSourceType
+  })
 
   if (safeSourceType === 'all' || safeSourceType === 'manual') {
     unionParts.push(buildManualDiagnosisReviewSelectLite({ manualWhereClause }))
@@ -310,14 +447,12 @@ async function listDiagnosisReviewSessions({
   const listTask = models.$runSQL(
     `
       SELECT *
-      FROM (
-        ${unionParts.join('\nUNION ALL\n')}
-      ) AS review_rows
+      FROM (${unifiedListQuery.sql}) AS review_rows
       ORDER BY created_at DESC
       LIMIT {{limit}} OFFSET {{offset}}
     `,
     {
-      ...params,
+      ...unifiedListQuery.params,
       limit: safePageSize,
       offset
     }
@@ -326,8 +461,20 @@ async function listDiagnosisReviewSessions({
     return null
   })
 
-  const [result, summary] = await Promise.all([listTask, summaryTask])
+  const [listResult, summaryResult] = await Promise.all([
+    withTimeout(() => listTask, LIST_QUERY_TIMEOUT_MS, null),
+    withTimeout(() => summaryTask, LIST_SUMMARY_TIMEOUT_MS, EMPTY_REVIEW_SUMMARY)
+  ])
+  const result = listResult.value || null
+  const summary = summaryResult.value || EMPTY_REVIEW_SUMMARY
+  timing.mark('list-query-complete', {
+    status: listResult.timedOut ? 'timeout' : (result ? 'ok' : 'error'),
+    rowCount: Number(result?.data?.executeResultList?.length || 0)
+  })
   if (!result) {
+    timing.finish({
+      degradedSections: ['listQuery']
+    })
     return {
       items: [],
       page: safePage,
@@ -339,8 +486,12 @@ async function listDiagnosisReviewSessions({
   }
 
   const rawItems = await enrichDiagnosisReviewListRows(result?.data?.executeResultList || [])
-  const items = rawItems.map(item => mapDiagnosisReviewRow(item))
+  const items = rawItems.map(item => stripDiagnosisReviewListPayload(mapDiagnosisReviewRow(item)))
   const total = Number(summary.total || 0)
+  timing.finish({
+    total,
+    itemCount: items.length
+  })
 
   return {
     items,

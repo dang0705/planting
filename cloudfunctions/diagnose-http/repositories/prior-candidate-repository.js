@@ -197,10 +197,12 @@ async function getLinkedCandidatePriors(plantContext = {}) {
     }
 
     if (!queries.length) {
-      return {
+      const emptyBridgeResult = {
         ...bridge,
         priors: []
       }
+      setCacheEntry(priorCache.linkedCandidatePriorsByPlantIdentity, cacheKey, emptyBridgeResult)
+      return emptyBridgeResult
     }
 
     const settled = await Promise.all(queries)
@@ -214,12 +216,14 @@ async function getLinkedCandidatePriors(plantContext = {}) {
       }
     }
 
-    return {
+    const resolvedPriorBundle = {
       ...bridge,
       priors: Array.from(merged.values()).sort(
         (left, right) => Number(right.finalPriorScore || 0) - Number(left.finalPriorScore || 0)
       )
     }
+    setCacheEntry(priorCache.linkedCandidatePriorsByPlantIdentity, cacheKey, resolvedPriorBundle)
+    return resolvedPriorBundle
   })
 }
 

@@ -35,6 +35,7 @@ description: "调度决策 skill：按 AGENTS.md 判断任务是否进入 subage
 - “先判断任务复杂度”
 - “先只读分析”
 - 涉及架构、诊断流、outcome、gate、replay、CloudBase、部署、测试、文档、多文件改造、规则落地、代码逻辑比对
+- 涉及诊断 `fast path`、`warm path`、`early return`、缓存命中、性能优化路径，或任何可能提前输出 follow-up / final / outcome 的分支
 
 如果用户没有显式调用 `$dispatch`，但任务明显属于非简单或高风险任务，main agent 也应按 `AGENTS.md` 的任务分级与最小调度规则处理。
 
@@ -50,6 +51,7 @@ description: "调度决策 skill：按 AGENTS.md 判断任务是否进入 subage
    - `docs/code-logics/INDEX.md`
    - `docs/new-rules/planting_ai_diagnosis_source_index.json`
 6. 如任务需要读取 `planting_ai_diagnosis_all_in_one.md`，必须指定章节或 `Sxx`，不得默认全量读取全文。
+7. 如果本轮开启或继续 subagent，必须遵守 `docs/ai-rules/subagent-thread-reuse.md` 的同角色线程复用规则。
 
 ---
 
@@ -60,7 +62,7 @@ description: "调度决策 skill：按 AGENTS.md 判断任务是否进入 subage
 满足以下条件时，可降级为简单任务：
 
 1. 单文件或极少量文件的小改动。
-2. 不涉及诊断流、outcome、gate、replay、CloudBase 发布、数据库结构、API 协议、复杂规则解释或源文档回溯。
+2. 不涉及诊断流、outcome、gate、replay、CloudBase 发布、数据库结构、API 协议、复杂规则解释、源文档回溯、诊断 `fast path` / `early return` / 性能优化路径。
 3. 不需要跨文档推理。
 4. 不需要架构裁决。
 5. 风险边界清楚，且 main agent 可以直接验证或明确说明未验证原因。
@@ -99,6 +101,7 @@ description: "调度决策 skill：按 AGENTS.md 判断任务是否进入 subage
 15. 多文件状态管理改造。
 16. `docs/new-rules/` 规则解释或落地。
 17. `docs/code-logics/` 与实际代码不一致的修正。
+18. 诊断 `fast path`、`warm path`、`early return`、缓存命中、性能优化路径，或任何可能提前输出 follow-up / final / outcome 的分支。
 
 ---
 
@@ -108,11 +111,22 @@ description: "调度决策 skill：按 AGENTS.md 判断任务是否进入 subage
 2. 如果判断为简单任务，只输出“简单任务降级判断”，不派发 subagent。
 3. 如果判断为非简单任务或高风险任务，输出完整 Dispatch Plan。
 
+非简单实现任务最小闭环：
+
+- planning：由 main agent 在 Dispatch Plan 中完成；如果需求、非目标、验收标准或写入边界不清，必须派发 `task_planner` 输出规划草案。
+- 架构分析：默认派发 `architect_reviewer`；只有纯只读、纯文档、已知单点低风险改动，且 Dispatch Plan 写明裁剪理由时才可由 main agent 直接承担。
+- 代码执行：由 `implementer_fast` / `implementer_deep` 或 main agent 在明确写入边界内完成；高风险实现默认 `implementer_deep`。
+- QA：实现后必须有 `qa_reviewer` 或 main agent 的明确复核；高风险、跨模块、用户可见路径或规则一致性任务默认派发 `qa_reviewer`。
+- 文档同步：若涉及规则、流程、接口、字段、状态、问诊链路、展示契约、避坑记录、All-in-One 或 source_index，必须派发 `docs_keeper`；若不需要同步，最终汇总必须说明理由。
+
+纯只读分析、纯文档整理、纯配置检查等无法自然包含“代码执行”的任务，必须在 Dispatch Plan 中把实现闭环标记为“无代码实现”并说明原因，不能默默跳过。
+
 高风险硬约束：
 
 - 一旦任务被判定为高风险，不得以“用户未显式要求开启 subagent”为理由跳过 subagent workflow。
 - 高风险任务必须至少派发 `code_explorer` 做只读定位。
 - 涉及架构、规则边界、诊断流、outcome、gate、route 或 runtime 时，必须派发 `architect_reviewer`。
+- 涉及诊断快捷路径时，`code_explorer` 必须单列主链与快捷路径，`architect_reviewer` 必须审查共享 guard 和负向回归。
 - 高风险任务若需要实现，默认派发 `implementer_deep`；只有 `architect_reviewer` 明确裁定为低风险局部展示 / 文案修复时，才允许降级为 `implementer_fast`。
 - 高风险任务若不派发 subagent，必须说明合法例外：用户明确禁止派发、当前环境不支持 subagent、任务仅做只读解释且不改文件，或 main agent 已明确将任务范围降级为普通 / 简单任务并说明依据。
 
@@ -149,6 +163,7 @@ description: "调度决策 skill：按 AGENTS.md 判断任务是否进入 subage
 7. `planting_ai_diagnosis_all_in_one.md` 不得默认全量读取；只允许读取指定章节或指定 `Sxx`。
 8. release / ops 类任务默认不得直接读取 `docs/code-logics/`、`docs/new-rules/` 或 All-in-One；如需规则约束，由 main agent、architect 或 QA 摘录最小发布验收摘要后交给 `release_ops`。
 9. 如果 subagent 认为摘要不足，应请求 main agent 补充摘要或授权读取指定章节，不得自行扩展到全量目录。
+10. 同一会话中同一角色的 subagent 必须复用同一线程；继续同角色任务时优先 `send_input` 复用，只有旧线程失效或职责边界改变时才允许重开，并记录原因。
 
 ---
 
@@ -160,7 +175,7 @@ description: "调度决策 skill：按 AGENTS.md 判断任务是否进入 subage
 | 找文件、调用链、依赖来源、代码逻辑解释、`docs/code-logics/` 对照 | `code_explorer` | 只读 |
 | 架构、状态/API/数据边界、诊断流、outcome、gate、模块边界、`docs/new-rules/` 一致性 | `architect_reviewer` | 只读 |
 | 局部、低风险、边界明确的小改动 | `implementer_fast` | workspace-write |
-| 多文件、诊断流、replay、CloudBase、数据结构、后端高风险实现 | `implementer_deep` | workspace-write |
+| 多文件、诊断流、route / outcome / gate / runtime、诊断快捷路径、replay、CloudBase、数据结构、后端高风险实现 | `implementer_deep` | workspace-write |
 | diff、测试、回归、边界、模块化回归、规则一致性 | `qa_reviewer` | 只读 |
 | 文档、术语、`docs/code-logics/`、`docs/new-rules/`、避坑索引、All-in-One、source_index 同步 | `docs_keeper` | workspace-write |
 | 发布、部署、CloudBase、replay、回滚、成本 | `release_ops` | 默认只读；执行发布需 main agent 明确授权 |
@@ -210,6 +225,7 @@ description: "调度决策 skill：按 AGENTS.md 判断任务是否进入 subage
 1. 是否触及高风险边界。
 2. 是否改变诊断语义、route / outcome / gate / runtime 行为。
 3. 是否需要 replay、smoke、DB 证据或发布审查。
+4. 是否触及 `fast path` / `warm path` / `early return` / 缓存命中；若触及，必须列出共享 guard、负向回归和正向闭合样本。
 
 ### 8.3 docs_keeper
 
@@ -253,10 +269,13 @@ description: "调度决策 skill：按 AGENTS.md 判断任务是否进入 subage
 ```text
 用户任务
 → 输出 Dispatch Plan
+→ planning 闭环：main agent 已完成；若需求 / 非目标 / 验收标准 / 写入边界不清，先派发 task_planner
 → code_explorer 只读定位
+→ architect_reviewer 审查架构、边界和规则一致性
 → implementer_fast 或 implementer_deep 实现
 → qa_reviewer 审查
-→ docs_keeper 按需同步文档
+→ main agent 判断是否需要文档同步
+→ 如涉及规则、流程、接口、字段、状态、问诊链路、展示契约、避坑记录、All-in-One 或 source_index，派发 docs_keeper
 ```
 
 ### 9.3 高风险任务
@@ -302,6 +321,13 @@ Dispatch Plan:
 - 是否高风险: 否 / 是
 - 高风险是否派发 subagent: 否 / 是
 - 如高风险但不派发，合法例外: 用户明确禁止 / 环境不支持 / 只读解释且不改文件 / 已降级任务范围
+- 目标验收契约:
+  - bug 发生位置:
+  - 观察入口:
+  - 用户可见成功标准:
+  - 必须验证字段 / 证据:
+  - 快捷路径 / 主链守卫一致性:
+  - 非目标:
 - 选择的 subagent:
 - 选择原因:
 - 是否降级为简单任务: 否
@@ -314,7 +340,11 @@ Dispatch Plan:
 - 预期输出:
 - 写入权限:
 - 首部规划闭环: 需求 / 非目标 / 验收标准 / 写入边界是否已清楚；是否需要 task_planner
+- 架构分析闭环: 是否需要 architect_reviewer；若不需要，裁剪理由：
+- 实现闭环: implementer_fast / implementer_deep / main agent 直接执行 / 无代码实现，原因：
+- QA 闭环: qa_reviewer / main agent 直接复核 / 合法裁剪，原因：
 - 尾部文档闭环: 是否需要文档同步判断；是否可能需要 docs_keeper
+- Subagent 线程复用: 本轮是否已有同角色线程；复用 / 新开 / 未开启：
 - 验证计划:
 - 文档同步计划:
 ```
@@ -324,6 +354,7 @@ Dispatch Plan:
 ```text
 Subagent Summary:
 - 已调用 subagent:
+- Subagent 线程复用: 复用 / 新开 / 未开启；如新开同角色线程，原因：
 - 关键结论:
 - 证据:
 - 冲突点:
@@ -348,3 +379,5 @@ Subagent Summary:
 7. 禁止 release_ops 直接读取诊断规则大目录或 All-in-One 原文。
 8. 禁止 task_planner 直接创建或修改正式 `docs/ai-tasks/` 文档；它只输出规划草案。
 9. 禁止把工具命令成功等同于业务验收通过。
+10. 禁止在同一会话中并行启动同一角色的多个 subagent 线程；同角色后续任务必须优先复用已有线程。
+11. 禁止诊断快捷路径只验证完整 happy path；涉及提前输出分支时必须有“应继续追问而非 final”的负向回归。

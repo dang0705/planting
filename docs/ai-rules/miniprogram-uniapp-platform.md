@@ -25,3 +25,9 @@
 1. 滚动、吸顶、IntersectionObserver、骨架屏、远程字体、OSS 静态资源等小程序端能力需按项目既有方案处理。
 2. 不要引入依赖浏览器 DOM 的实现。
 3. 涉及构建产物和 uni-app vite 逻辑时，优先让 `code_explorer` 定位现有插件并探索npm/github上成熟的第三方插件。
+
+## 5. 前端自动化定位入口
+
+涉及诊断流、小程序页面可见验收、微信开发者工具自动化或稳定选择器时，读取 `docs/ai-rules/frontend-automation-id-policy.md`。
+
+该文档负责维护诊断流关键 `id`、操作映射、禁止暴露字段和 `wechat-dev-tools` MCP 最小验收流程；本文件不重复展开细则。

@@ -35,10 +35,19 @@ const {
   resolveSymptomClassFromVisualCandidates
 } = require('./detail-data-loaders')
 const { listDiagnosisReviewFollowUps, listDiagnosisReviewAnswerEvents } = require('./follow-up-detail-loaders')
+const {
+  createReviewTimingLogger,
+  settleOptionalReviewSection
+} = require('./review-performance')
 
 async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _sourceType = 'all' } = {}) {
   const safeSessionId = String(diagnosisSessionId || '').trim()
   if (!safeSessionId) {return null}
+  const timing = createReviewTimingLogger('diagnosis-review detail', {
+    diagnosisSessionId: safeSessionId,
+    sourceType: _sourceType
+  })
+  const degradedSections = []
 
   const result = await models.$runSQL(
     `
@@ -108,30 +117,102 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
       likelyMiniProgramOpenIdPattern: LIKELY_MINI_PROGRAM_OPENID_PATTERN
     }
   )
+  timing.mark('base-row-loaded', {
+    hasRow: Boolean(result?.data?.executeResultList?.[0])
+  })
 
   const row = result?.data?.executeResultList?.[0]
-  if (!row) {return null}
+  if (!row) {
+    timing.finish({
+      found: false,
+      degradedSections
+    })
+    return null
+  }
 
   const [
-    batchRecord,
-    visualRawRecords,
-    followUpRecords,
-    answerRevisionEvents,
-    visualAggregateSummary,
-    visualListEnrichment,
-    questionCountEnrichment
+    batchRecordResult,
+    visualRawRecordsResult,
+    followUpRecordsResult,
+    answerRevisionEventsResult,
+    visualAggregateSummaryResult,
+    visualListEnrichmentResult,
+    questionCountEnrichmentResult
   ] = await Promise.all([
-    getDiagnosisBatchReviewRecord(safeSessionId),
-    listDiagnosisReviewVisualRawRecords(safeSessionId),
-    listDiagnosisReviewFollowUps(safeSessionId),
-    listDiagnosisReviewAnswerEvents(safeSessionId),
-    getLatestVisualAggregateSummary({
-      diagnosisSessionId: safeSessionId,
-      visualCallBatchId: row.latest_visual_call_batch_id || ''
+    settleOptionalReviewSection({
+      scope: 'diagnosis-review detail',
+      sectionName: 'batchRecord',
+      loader: () => getDiagnosisBatchReviewRecord(safeSessionId),
+      fallbackValue: null,
+      degradedSections,
+      timing,
+      timeoutMs: 1200
     }),
-    loadDiagnosisReviewListVisualRows([safeSessionId]),
-    loadDiagnosisReviewListQuestionCounts([safeSessionId])
+    settleOptionalReviewSection({
+      scope: 'diagnosis-review detail',
+      sectionName: 'visualRawRecords',
+      loader: () => listDiagnosisReviewVisualRawRecords(safeSessionId),
+      fallbackValue: [],
+      degradedSections,
+      timing,
+      timeoutMs: 1200
+    }),
+    settleOptionalReviewSection({
+      scope: 'diagnosis-review detail',
+      sectionName: 'followUpRecords',
+      loader: () => listDiagnosisReviewFollowUps(safeSessionId),
+      fallbackValue: [],
+      degradedSections,
+      timing,
+      timeoutMs: 1200
+    }),
+    settleOptionalReviewSection({
+      scope: 'diagnosis-review detail',
+      sectionName: 'answerRevisionEvents',
+      loader: () => listDiagnosisReviewAnswerEvents(safeSessionId),
+      fallbackValue: [],
+      degradedSections,
+      timing,
+      timeoutMs: 1200
+    }),
+    settleOptionalReviewSection({
+      scope: 'diagnosis-review detail',
+      sectionName: 'visualAggregateSummary',
+      loader: () => getLatestVisualAggregateSummary({
+        diagnosisSessionId: safeSessionId,
+        visualCallBatchId: row.latest_visual_call_batch_id || ''
+      }),
+      fallbackValue: null,
+      degradedSections,
+      timing,
+      timeoutMs: 1200
+    }),
+    settleOptionalReviewSection({
+      scope: 'diagnosis-review detail',
+      sectionName: 'visualListEnrichment',
+      loader: () => loadDiagnosisReviewListVisualRows([safeSessionId]),
+      fallbackValue: new Map(),
+      degradedSections,
+      timing,
+      timeoutMs: 1200
+    }),
+    settleOptionalReviewSection({
+      scope: 'diagnosis-review detail',
+      sectionName: 'questionCountEnrichment',
+      loader: () => loadDiagnosisReviewListQuestionCounts([safeSessionId]),
+      fallbackValue: new Map(),
+      degradedSections,
+      timing,
+      timeoutMs: 1200
+    })
   ])
+  const batchRecord = batchRecordResult.value
+  const visualRawRecords = visualRawRecordsResult.value || []
+  const followUpRecords = followUpRecordsResult.value || []
+  const answerRevisionEvents = answerRevisionEventsResult.value || []
+  const visualAggregateSummary = visualAggregateSummaryResult.value
+  const visualListEnrichment = visualListEnrichmentResult.value || new Map()
+  const questionCountEnrichment = questionCountEnrichmentResult.value || new Map()
   const enrichedRow = {
     ...row,
     ...buildReviewListVisualDefault(),
@@ -147,9 +228,19 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
     { promptAudit: primaryVisualPromptAudit }
   )
   const runtimeSnapshot = safeJsonParse(enrichedRow.runtime_snapshot_json, {}) || {}
-  const symptomClassRuntime =
-    runtimeSnapshot?.symptomClassRuntime ||
-    await resolveSymptomClassFromVisualCandidates(visualAggregateSummary)
+  let symptomClassRuntime = runtimeSnapshot?.symptomClassRuntime || null
+  if (!symptomClassRuntime && visualAggregateSummary) {
+    const symptomClassResult = await settleOptionalReviewSection({
+      scope: 'diagnosis-review detail',
+      sectionName: 'symptomClassRuntime',
+      loader: () => resolveSymptomClassFromVisualCandidates(visualAggregateSummary),
+      fallbackValue: null,
+      degradedSections,
+      timing,
+      timeoutMs: 1200
+    })
+    symptomClassRuntime = symptomClassResult.value
+  }
   const storedReviewSourceType = String(
     runtimeSnapshot?.reviewSourceType ||
       runtimeSnapshot?.clientContext?.reviewSourceType ||
@@ -194,11 +285,20 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
     batch_answer_path_signature: batchRecord?.answer_path_signature || '',
     batch_generated_at: batchRecord?.batch_generated_at || ''
   })
-  const actionAdviceGovernance = await resolveDiagnosisReviewActionAdviceGovernance({
-    row: enrichedRow,
-    runtimeSnapshot,
-    mapped
+  const actionAdviceGovernanceResult = await settleOptionalReviewSection({
+    scope: 'diagnosis-review detail',
+    sectionName: 'actionAdviceGovernance',
+    loader: () => resolveDiagnosisReviewActionAdviceGovernance({
+      row: enrichedRow,
+      runtimeSnapshot,
+      mapped
+    }),
+    fallbackValue: null,
+    degradedSections,
+    timing,
+    timeoutMs: 1200
   })
+  const actionAdviceGovernance = actionAdviceGovernanceResult.value
   const coreProcess = buildPublicCoreProcess({
     latestVisualCallBatchId:
       normalizeStoredNullableText(row.latest_visual_call_batch_id, null) ||
@@ -240,8 +340,10 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
       : []
   })
 
-  return {
+  const detail = {
     ...mapped,
+    partial: degradedSections.length > 0,
+    degradedSections,
     symptomClass: buildSymptomClassRuntimeReviewPayload(symptomClassRuntime),
     coreProcess,
     actionAdviceGovernance,
@@ -267,6 +369,11 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
       }
         : null
   }
+  timing.finish({
+    partial: degradedSections.length > 0,
+    degradedSections
+  })
+  return detail
 }
 
 module.exports = {

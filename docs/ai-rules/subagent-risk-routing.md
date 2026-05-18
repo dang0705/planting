@@ -12,6 +12,8 @@
 
 5. 不涉及诊断核心逻辑、数据结构、部署或 replay。
 
+6. 不涉及诊断 `fast path`、`warm path`、`early return`、缓存命中或性能优化路径。
+
 使用 `implementer_deep` 的条件：
 
 1. 多文件实现。
@@ -38,6 +40,8 @@
 
 12. 客户端运行时、前端最终展示、result/read、follow-up 或 diagnose 页面消费链路。
 
+13. 诊断 `fast path`、`warm path`、`early return`、缓存命中或性能优化路径，尤其是可能提前输出 follow-up / final / outcome 的分支。
+
 ## 升级规则
 
 当 `implementer_fast` 发现以下任一情况时，必须停止实现并请求 main agent 改派 `implementer_deep`：
@@ -57,3 +61,5 @@
 7. 需要重构模块边界而非轻量搬迁。
 
 8. 目标验收契约不完整，或发现 review/list、replay、DB 中间态与真实业务修复位置不一致。
+
+9. 发现任何诊断快捷路径可能绕过主链 guard，或需要判断“继续追问还是 final”。

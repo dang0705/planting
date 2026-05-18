@@ -758,7 +758,6 @@ function normalizeHistoryDetail(detail) {
       environmentDeviationHints: Array.isArray(detail.environmentDeviationHints)
         ? detail.environmentDeviationHints
         : [],
-      rankings: Array.isArray(detail.rankings) ? detail.rankings : [],
       followUps,
       contributingFactors: Array.isArray(detail.contributingFactors) ? detail.contributingFactors : [],
       intermediateStates: Array.isArray(detail.intermediateStates) ? detail.intermediateStates : [],
@@ -828,15 +827,6 @@ function normalizeHistoryDetail(detail) {
     diagnosisDirections: [],
     careBaselineSummary: null,
     environmentDeviationHints: [],
-    rankings: Array.isArray(detail.rankings)
-      ? detail.rankings.map(item => ({
-          problemKey: item?.problemKey || '',
-          problemCn: item?.problemCn || item?.problemKey || '',
-          weightedScore: Number(item?.weightedScore || 0),
-          finalScore: Number(item?.weightedScore || 0),
-          rankNo: Number(item?.rankNo || 0)
-        }))
-      : [],
     followUps: Array.isArray(detail.followUps)
       ? detail.followUps.map(item => ({
           questionId: item?.symptomKey || '',

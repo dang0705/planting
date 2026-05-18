@@ -19,7 +19,8 @@ async function persistRoundRuntime({
   round,
   image,
   description,
-  clientContext = null
+  clientContext = null,
+  followUpRows = null
 } = {}) {
   const isInitialRound = Number(round || 1) <= 1
   await upsertDiagnosisSession({
@@ -75,7 +76,8 @@ async function persistRoundRuntime({
       sessionId,
       openid,
       plantContext,
-      response
+      response,
+      followUpRows
     })
   )
   await Promise.all(persistenceJobs)

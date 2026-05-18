@@ -1,6 +1,6 @@
 'use strict'
 
-const { ranking: rankingConfig } = require('../constants/scoring')
+const { routeSelection: outputEligibilityConfig } = require('../constants/scoring')
 const {
   evaluateContextRequiredProblemGuard,
   getContextRequiredProblemGuard: _getContextRequiredProblemGuard
@@ -138,9 +138,11 @@ const PROBLEM_PRIORITY_BIASES_BY_GROUP = {
   }
 }
 
-function resolveProblemRole(ranking = {}, problemRoleByKey = new Map()) {
+function resolveCandidateOutcomeRole(candidateOutcome = {}, problemRoleByKey = new Map()) {
   return normalizeText(
-    ranking?.problemRole || problemRoleByKey.get(String(ranking?.problemKey || '').trim()) || '',
+    candidateOutcome?.problemRole ||
+      problemRoleByKey.get(String(candidateOutcome?.problemKey || '').trim()) ||
+      '',
     ''
   )
 }
@@ -276,17 +278,17 @@ function getProblemPriorityBias({
   return bias
 }
 
-function isProblemRankingOutputEligible(
-  ranking = {},
+function isCandidateOutcomeOutputEligible(
+  candidateOutcome = {},
   observedEvidenceSet = [],
   problemRoleByKey = new Map(),
   options = {}
 ) {
-  const problemKey = normalizeText(ranking?.problemKey || '', '')
+  const problemKey = normalizeText(candidateOutcome?.problemKey || '', '')
   if (!problemKey) {return false}
 
-  const problemRole = resolveProblemRole(ranking, problemRoleByKey)
-  if (!rankingConfig.supportRolesAsTop1.includes(problemRole)) {
+  const problemRole = resolveCandidateOutcomeRole(candidateOutcome, problemRoleByKey)
+  if (!outputEligibilityConfig.supportRolesAsTop1.includes(problemRole)) {
     return false
   }
 
@@ -302,7 +304,7 @@ function isProblemRankingOutputEligible(
   }
 
   const contextGuard = evaluateContextRequiredProblemGuard({
-    rankings: [{ problemKey }],
+    candidateOutcomes: [{ problemKey }],
     observedEvidenceSet,
     answerEffects: options?.answerEffects || []
   })
@@ -310,30 +312,30 @@ function isProblemRankingOutputEligible(
   return !contextGuard.applies || contextGuard.hasRequiredContext
 }
 
-function getOutputEligibleProblemRankings(
-  rankings = [],
+function getOutputEligibleCandidateOutcomes(
+  candidateOutcomes = [],
   observedEvidenceSet = [],
   problemRoleByKey = new Map(),
   options = {}
 ) {
-  return (Array.isArray(rankings) ? rankings : []).filter(item =>
-    isProblemRankingOutputEligible(item, observedEvidenceSet, problemRoleByKey, options)
+  return (Array.isArray(candidateOutcomes) ? candidateOutcomes : []).filter(item =>
+    isCandidateOutcomeOutputEligible(item, observedEvidenceSet, problemRoleByKey, options)
   )
 }
 
-function prioritizeOutputEligibleProblemRankings(
-  rankings = [],
+function prioritizeOutputEligibleCandidateOutcomes(
+  candidateOutcomes = [],
   observedEvidenceSet = [],
   problemRoleByKey = new Map(),
   options = {}
 ) {
   const activeObservedSymptomKeys = collectActiveObservedSymptomKeys(observedEvidenceSet)
 
-  return (Array.isArray(rankings) ? rankings : [])
+  return (Array.isArray(candidateOutcomes) ? candidateOutcomes : [])
     .map((item, index) => ({
       item,
       index,
-      isEligible: isProblemRankingOutputEligible(
+      isEligible: isCandidateOutcomeOutputEligible(
         item,
         observedEvidenceSet,
         problemRoleByKey,
@@ -357,28 +359,28 @@ function prioritizeOutputEligibleProblemRankings(
     .map(entry => entry.item)
 }
 
-function hasOutputEligibleProblemRanking(
-  rankings = [],
+function hasOutputEligibleCandidateOutcome(
+  candidateOutcomes = [],
   observedEvidenceSet = [],
   problemRoleByKey = new Map(),
   options = {}
 ) {
-  return getOutputEligibleProblemRankings(
-    rankings,
+  return getOutputEligibleCandidateOutcomes(
+    candidateOutcomes,
     observedEvidenceSet,
     problemRoleByKey,
     options
   ).length > 0
 }
 
-function hasForceableOutputProblemRanking(
-  rankings = [],
+function hasForceableOutputCandidateOutcome(
+  candidateOutcomes = [],
   observedEvidenceSet = [],
   problemRoleByKey = new Map(),
   options = {}
 ) {
-  return getOutputEligibleProblemRankings(
-    rankings,
+  return getOutputEligibleCandidateOutcomes(
+    candidateOutcomes,
     observedEvidenceSet,
     problemRoleByKey,
     options
@@ -390,9 +392,10 @@ function hasForceableOutputProblemRanking(
 }
 
 module.exports = {
-  isProblemRankingOutputEligible,
-  getOutputEligibleProblemRankings,
-  prioritizeOutputEligibleProblemRankings,
-  hasOutputEligibleProblemRanking,
-  hasForceableOutputProblemRanking
+  resolveCandidateOutcomeRole,
+  isCandidateOutcomeOutputEligible,
+  getOutputEligibleCandidateOutcomes,
+  prioritizeOutputEligibleCandidateOutcomes,
+  hasOutputEligibleCandidateOutcome,
+  hasForceableOutputCandidateOutcome
 }

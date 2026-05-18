@@ -1,7 +1,8 @@
 <template>
-  <view class="follow-up-page">
+  <view id="diagnose-followup-page" class="follow-up-page">
     <swiper
       v-if="result?.followUpRequired && followUpQuestionStack.length"
+      id="diagnose-followup-page-swiper"
       class="followup-page-swiper"
       :current="activeFollowUpQuestionIndex"
       :duration="260"
@@ -12,11 +13,12 @@
       <swiper-item
         v-for="(question, questionIndex) in followUpQuestionStack"
         :key="question.questionId || question.questionKey || questionIndex"
+        :id="`diagnose-followup-page-item-${question.questionId || questionIndex}`"
         class="followup-page-swiper-item"
       >
-        <scroll-view scroll-y class="followup-question-scroll">
-          <view class="followup-question-shell">
-            <view class="followup-question-card followup-question-card--animated">
+        <scroll-view :id="`diagnose-followup-page-question-scroll-${question.questionId || questionIndex}`" scroll-y class="followup-question-scroll">
+          <view :id="`diagnose-followup-page-question-shell-${question.questionId || questionIndex}`" class="followup-question-shell">
+            <view :id="`diagnose-followup-page-question-card-${question.questionId || questionIndex}`" class="followup-question-card followup-question-card--animated">
               <text class="followup-question-count">
                 问题 {{ questionIndex + 1 }} / {{ followUpQuestionStack.length || 1 }}
               </text>
@@ -27,16 +29,17 @@
                 {{ getQuestionHelpText(question) }}
               </text>
 
-              <view class="followup-option-stack followup-option-stack--accordion">
+              <view :id="`diagnose-followup-page-option-stack-${question.questionId || questionIndex}`" class="followup-option-stack followup-option-stack--accordion">
                 <view
-                  v-for="option in question.options || []"
+                  v-for="(option, optionIndex) in question.options || []"
                   :key="option.optionId || option.optionKey || option.text"
+                  :id="`diagnose-followup-page-option-${question.questionId || questionIndex}-${option.optionId || option.optionKey || optionIndex}`"
                   class="followup-accordion-option"
                   :class="isSelectedFollowUpOption(question, option) ? 'followup-accordion-option--active' : ''"
                   @click="selectFollowUpOption(question, option)"
                 >
                   <view class="followup-accordion-title">
-                    <text class="followup-accordion-text">{{ getOptionText(option) }}</text>
+                    <text class="followup-accordion-text">{{ getOptionText(question, option) }}</text>
                     <text class="followup-accordion-badge">
                       {{ isSelectedFollowUpOption(question, option) ? '已选' : '单选' }}
                     </text>
@@ -46,14 +49,14 @@
 
               <view class="followup-nav-row">
                 <button
-                  id="diagnose-followup-prev-button"
+                  id="diagnose-followup-page-prev-button"
                   class="followup-nav-button"
                   :class="{ 'followup-nav-button--disabled': isSubmittingFollowUp || activeFollowUpQuestionIndex <= 0 }"
                   :disabled="isSubmittingFollowUp || activeFollowUpQuestionIndex <= 0"
                   @click="goPreviousFollowUpQuestion"
                 >上一题</button>
                 <button
-                  id="diagnose-followup-next-button"
+                  id="diagnose-followup-page-next-button"
                   class="followup-nav-button followup-nav-button--primary"
                   :class="{ 'followup-nav-button--disabled': !canProceedFollowUpQuestion() }"
                   :disabled="!canProceedFollowUpQuestion()"
@@ -75,8 +78,8 @@
       scroll-y
       class="followup-outcome-scroll"
     >
-      <view class="followup-outcome-shell">
-        <view class="followup-outcome-card">
+      <view id="diagnose-followup-outcome-shell" class="followup-outcome-shell">
+        <view id="diagnose-followup-outcome-card" class="followup-outcome-card">
           <text class="followup-outcome-kicker">问诊已完成</text>
           <text class="followup-outcome-title">{{ outcomeDisplayTitle || '已形成诊断结论' }}</text>
           <text
@@ -92,36 +95,48 @@
           </view>
         </view>
 
-        <view v-if="actionAdviceTexts.length" class="followup-advice-card followup-advice-card--action">
+        <view v-if="actionAdviceGroups.length" id="diagnose-followup-outcome-action-advice" class="followup-advice-card followup-advice-card--action">
           <text class="followup-advice-title">处理建议</text>
-          <text
-            v-for="(item, index) in actionAdviceTexts"
-            :key="`action_${index}`"
-            class="followup-advice-text"
+          <view
+            v-for="group in actionAdviceGroups"
+            :key="group.key"
+            class="mb-3 last:mb-0"
           >
-            {{ item }}
-          </text>
+            <text class="followup-advice-subtitle">{{ group.outcomeLabel }}：</text>
+            <text
+              v-for="(item, index) in group.items"
+              :key="`action_${group.key}_${index}`"
+              class="followup-advice-text"
+            >
+              {{ index + 1 }}. {{ item }}
+            </text>
+          </view>
         </view>
 
-        <view v-if="avoidAdviceTexts.length" class="followup-advice-card followup-advice-card--avoid">
+        <view v-if="avoidAdviceGroups.length" id="diagnose-followup-outcome-avoid-advice" class="followup-advice-card followup-advice-card--avoid">
           <text class="followup-advice-title">暂时不要做</text>
-          <text
-            v-for="(item, index) in avoidAdviceTexts"
-            :key="`avoid_${index}`"
-            class="followup-advice-text"
+          <view
+            v-for="group in avoidAdviceGroups"
+            :key="group.key"
+            class="mb-3 last:mb-0"
           >
-            {{ item }}
-          </text>
+            <text class="followup-advice-subtitle">{{ group.outcomeLabel }}：</text>
+            <text
+              v-for="(item, index) in group.items"
+              :key="`avoid_${group.key}_${index}`"
+              class="followup-advice-text"
+            >
+              {{ index + 1 }}. {{ item }}
+            </text>
+          </view>
         </view>
       </view>
     </scroll-view>
 
     <scroll-view v-else-if="hasCompletedDiagnosis" scroll-y class="followup-result-scroll">
-      <view class="followup-result-shell">
-        <view class="followup-result-card">
+      <view id="diagnose-followup-result-shell" class="followup-result-shell">
+        <view id="diagnose-followup-result-card" class="followup-result-card">
           <text class="followup-result-kicker">问诊已完成</text>
-          <text class="followup-result-title">{{ outcomeDisplayTitle }}</text>
-          <text class="followup-result-summary">{{ outcomeSummaryText }}</text>
 
           <view class="followup-result-meta">
             <view class="followup-result-meta-item">
@@ -135,28 +150,18 @@
           </view>
         </view>
 
-        <view v-if="primaryOutcomeDisplay || secondaryOutcomeDisplays.length || visibleOutcomeDisplays.length" class="followup-result-section">
-          <text class="followup-result-section-title">路径收敛结果</text>
-          <view v-if="primaryOutcomeDisplay" class="followup-result-list">
-            <text class="followup-result-list-item">主要判断：{{ primaryOutcomeDisplay }}</text>
-          </view>
-          <view v-if="secondaryOutcomeDisplays.length" class="followup-result-list">
+        <view v-if="allOutcomeDisplays.length" id="diagnose-followup-result-outcomes" class="followup-result-section">
+          <text class="followup-result-section-title">诊断结论</text>
+          <view class="followup-result-list">
             <text
-              v-for="(item, index) in secondaryOutcomeDisplays"
-              :key="`secondary_${index}`"
+              v-for="(item, index) in allOutcomeDisplays"
+              :key="`outcome_${index}`"
               class="followup-result-list-item"
-            >伴随方向：{{ item }}</text>
-          </view>
-          <view v-if="visibleOutcomeDisplays.length" class="followup-result-chip-row">
-            <text
-              v-for="(item, index) in visibleOutcomeDisplays"
-              :key="`visible_${index}`"
-              class="followup-result-chip"
             >{{ item }}</text>
           </view>
         </view>
 
-        <view v-if="observedItems.length" class="followup-result-section">
+        <view v-if="observedItems.length" id="diagnose-followup-result-observed" class="followup-result-section">
           <text class="followup-result-section-title">视觉证据</text>
           <view class="followup-result-chip-row">
             <text
@@ -167,46 +172,64 @@
           </view>
         </view>
 
-        <view class="followup-result-section">
+        <view id="diagnose-followup-result-action-advice" class="followup-result-section">
           <text class="followup-result-section-title">建议先这样做</text>
-          <view v-if="actionAdviceTexts.length" class="followup-result-list">
-            <text
-              v-for="(item, index) in actionAdviceTexts"
-              :key="`action_${index}`"
-              class="followup-result-list-item"
-            >{{ index + 1 }}. {{ item }}</text>
+        <view v-if="actionAdviceGroups.length" class="followup-result-list">
+            <view
+              v-for="group in actionAdviceGroups"
+              :key="`action_group_${group.key}`"
+              class="mb-2 last:mb-0"
+            >
+              <text class="followup-result-list-subtitle">{{ group.outcomeLabel }}：</text>
+              <text
+                v-for="(item, index) in group.items"
+                :key="`action_group_${group.key}_${index}`"
+                class="followup-result-list-item"
+              >
+                {{ index + 1 }}. {{ item }}
+              </text>
+            </view>
           </view>
           <text v-else class="followup-result-muted">暂时没有更具体的行动建议，建议先保持观察并避免过度处理。</text>
         </view>
 
-        <view v-if="avoidAdviceTexts.length" class="followup-result-section">
+        <view v-if="avoidAdviceGroups.length" id="diagnose-followup-result-avoid-advice" class="followup-result-section">
           <text class="followup-result-section-title">暂时避免</text>
           <view class="followup-result-list">
-            <text
-              v-for="(item, index) in avoidAdviceTexts"
-              :key="`avoid_${index}`"
-              class="followup-result-list-item"
-            >{{ index + 1 }}. {{ item }}</text>
+            <view
+              v-for="group in avoidAdviceGroups"
+              :key="`avoid_group_${group.key}`"
+              class="mb-2 last:mb-0"
+            >
+              <text class="followup-result-list-subtitle">{{ group.outcomeLabel }}：</text>
+              <text
+                v-for="(item, index) in group.items"
+                :key="`avoid_group_${group.key}_${index}`"
+                class="followup-result-list-item"
+              >
+                {{ index + 1 }}. {{ item }}
+              </text>
+            </view>
           </view>
         </view>
 
-        <view v-if="showRouteDebugPanel" class="followup-result-section">
-          <text class="followup-result-section-title">Route Debug</text>
+        <view v-if="showRouteDebugPanel" id="diagnose-followup-debug-panel" class="followup-result-section">
+          <text class="followup-result-section-title">决策详情</text>
           <view class="followup-result-list">
             <text v-if="routeDebugSummaryText" class="followup-result-list-item">决策原因：{{ routeDebugSummaryText }}</text>
             <text v-if="routeDebugModeText" class="followup-result-list-item">模式：{{ routeDebugModeText }}</text>
-            <text v-if="routeDebugPrimaryOutcomeKey" class="followup-result-list-item">主方向 Key：{{ routeDebugPrimaryOutcomeKey }}</text>
-            <text v-if="routeDebugVisibleOutcomeText" class="followup-result-list-item">可见方向 Keys：{{ routeDebugVisibleOutcomeText }}</text>
-            <text v-if="routeDebugSecondaryOutcomeText" class="followup-result-list-item">伴随方向 Keys：{{ routeDebugSecondaryOutcomeText }}</text>
-            <text v-if="routeDebugNextQuestionText" class="followup-result-list-item">下一题 Keys：{{ routeDebugNextQuestionText }}</text>
-            <text v-if="routeDebugGroupText" class="followup-result-list-item">激活 Route Group：{{ routeDebugGroupText }}</text>
-            <text v-if="routeDebugFallbackPolicy" class="followup-result-list-item">Fallback：{{ routeDebugFallbackPolicy }}</text>
+            <text v-if="routeDebugPrimaryOutcomeKey" class="followup-result-list-item">核心结果：{{ routeDebugPrimaryOutcomeKey }}</text>
+            <text v-if="routeDebugVisibleOutcomeText" class="followup-result-list-item">展示结果：{{ routeDebugVisibleOutcomeText }}</text>
+            <text v-if="routeDebugSecondaryOutcomeText" class="followup-result-list-item">备选结果：{{ routeDebugSecondaryOutcomeText }}</text>
+            <text v-if="routeDebugNextQuestionText" class="followup-result-list-item">下一步问题：{{ routeDebugNextQuestionText }}</text>
+            <text v-if="routeDebugGroupText" class="followup-result-list-item">命中流程组：{{ routeDebugGroupText }}</text>
+            <text v-if="routeDebugFallbackPolicy" class="followup-result-list-item">回退策略：{{ routeDebugFallbackPolicy }}</text>
           </view>
         </view>
       </view>
     </scroll-view>
 
-    <view v-else class="followup-empty-state">
+    <view v-else id="diagnose-followup-empty-state" class="followup-empty-state">
       <text class="followup-empty-title">暂时没有需要继续回答的问题</text>
       <text class="followup-empty-text">如果刚完成视觉诊断，请返回上一页重新进入问诊。</text>
     </view>
@@ -295,25 +318,24 @@ const hasRouteConvergenceDetails = computed(() =>
 )
 const finalOutcome = computed(() => result.value?.finalResult || {})
 const outcomeDisplayTitle = computed(() => String(
-  finalOutcome.value?.displayNameCn ||
-  finalOutcome.value?.displayName ||
-    finalOutcome.value?.problemName ||
-    result.value?.mainIssueText ||
-    result.value?.summaryCard?.title ||
-    '诊断已完成'
+  formatOutcomeDisplayLabel(finalOutcome.value) ||
+  formatOutcomeDisplayLabel(result.value?.mainIssueText) ||
+  formatOutcomeDisplayLabel(result.value?.summaryCard?.title) ||
+  '诊断已完成'
 ).trim())
 const outcomeSummaryText = computed(() => String(
-  finalOutcome.value?.summaryCn ||
-  finalOutcome.value?.summary ||
-    result.value?.summaryText ||
-    result.value?.summaryCard?.subtitle ||
-    '系统已根据视觉证据和补充问诊整理出当前结论。'
+  formatOutcomeDisplayLabel(finalOutcome.value?.summaryCn) ||
+  formatOutcomeDisplayLabel(finalOutcome.value?.summary) ||
+  formatOutcomeDisplayLabel(result.value?.summaryText) ||
+  formatOutcomeDisplayLabel(result.value?.summaryCard?.subtitle) ||
+  formatOutcomeDisplayLabel('系统已根据视觉证据和补充问诊整理出当前结论。')
 ).trim())
 const outcomeTypeText = computed(() => {
   const type = String(result.value?.outcomeType || finalOutcome.value?.outcomeType || '').trim()
   const labels = {
+    problematic: '有问题',
     problem: '可能存在问题',
-    non_problematic: '暂未发现明确问题',
+    non_problematic: '未见明确问题',
     uncertain: '仍需谨慎观察',
     out_of_pool_no_mapping: '诊断范围外的可见异常'
   }
@@ -354,6 +376,13 @@ const visibleOutcomeDisplays = computed(() =>
   uniqueStrings(
     visibleOutcomeSource.value.map(formatOutcomeDisplayLabel)
   )
+)
+const allOutcomeDisplays = computed(() =>
+  uniqueStrings([
+    ...[primaryOutcomeDisplay.value],
+    ...secondaryOutcomeDisplays.value,
+    ...visibleOutcomeDisplays.value
+  ].filter(Boolean))
 )
 const routeDebugDecision = computed(() => result.value?.routeDecision || null)
 const showRouteDebugPanel = computed(() => routeDebugEnabled && Boolean(routeDebugDecision.value))
@@ -457,6 +486,30 @@ const avoidAdviceTexts = computed(() => {
   ])
 })
 
+const outcomeAdviceSources = computed(() => buildUniqueOutcomesForAdvice([
+  primaryOutcome.value,
+  ...secondaryOutcomeSource.value,
+  ...visibleOutcomeSource.value
+]))
+
+const actionAdviceGroups = computed(() =>
+  buildOutcomeAdviceGroups({
+    outcomeSources: outcomeAdviceSources.value,
+    getOutcomeItems: buildOutcomeActionAdviceItems,
+    fallbackItems: actionAdviceTexts.value,
+    fallbackLabel: '通用建议'
+  })
+)
+
+const avoidAdviceGroups = computed(() =>
+  buildOutcomeAdviceGroups({
+    outcomeSources: outcomeAdviceSources.value,
+    getOutcomeItems: buildOutcomeAvoidAdviceItems,
+    fallbackItems: avoidAdviceTexts.value,
+    fallbackLabel: '通用建议'
+  })
+)
+
 function resolveInitialDiagnosisResult(value = {}) {
   if (value?.normalizedResult) {return value.normalizedResult}
   const rawResult = value?.diagnosisResult || value?.result || value?.visualDiagnosisResult || value
@@ -509,7 +562,11 @@ function uniqueStrings(values = []) {
 
 function formatOutcomeDisplayLabel(outcome = null) {
   if (typeof outcome === 'string') {
-    return outcome.trim()
+    return outcome
+      .replace(/根区压力/g, '根部状态不佳')
+      .replace(/根部压力/g, '根部状态不佳')
+      .replace(/压力/g, '受影响')
+      .trim()
   }
   if (!outcome || typeof outcome !== 'object') {
     return ''
@@ -523,10 +580,94 @@ function formatOutcomeDisplayLabel(outcome = null) {
       outcome.outcomeKey ||
       ''
   ).trim()
+    .replace(/根区压力/g, '根部状态不佳')
+    .replace(/根部压力/g, '根部状态不佳')
+    .replace(/压力/g, '受影响')
+    .trim()
 }
 
 function normalizeArrayText(values = []) {
   return (Array.isArray(values) ? values : []).map(item => String(item || '').trim()).filter(Boolean)
+}
+
+function normalizeTextList(values = []) {
+  return (Array.isArray(values) ? values : [values]).map(item => normalizeText(item)).filter(Boolean)
+}
+
+function normalizeOutcomeDisplayKey(outcome = {}, index = 0) {
+  return String(
+    outcome?.outcomeKey ||
+      outcome?.problemKey ||
+      outcome?.problemId ||
+      outcome?.displayNameCn ||
+      outcome?.displayName ||
+      outcome?.title ||
+      `outcome_${index}`
+  ).trim()
+}
+
+function buildUniqueOutcomesForAdvice(outcomes = []) {
+  const seen = new Set()
+  return (Array.isArray(outcomes) ? outcomes : [])
+    .map((outcome, index) => ({ outcome, index }))
+    .filter(item => item.outcome && typeof item.outcome === 'object')
+    .filter(item => {
+      const key = normalizeOutcomeDisplayKey(item.outcome, item.index)
+      if (seen.has(key)) {
+        return false
+      }
+      seen.add(key)
+      return true
+    })
+    .map(item => item.outcome)
+}
+
+function buildOutcomeAdviceGroups({
+  outcomeSources = [],
+  getOutcomeItems,
+  fallbackItems = [],
+  fallbackLabel = '通用建议'
+} = {}) {
+  const sourceGroups = buildUniqueOutcomesForAdvice(outcomeSources)
+    .map((outcome, index) => ({
+      key: normalizeOutcomeDisplayKey(outcome, index),
+      outcomeLabel: formatOutcomeDisplayLabel(outcome),
+      items: uniqueStrings(getOutcomeItems ? getOutcomeItems(outcome) : [])
+    }))
+    .filter(group => group.outcomeLabel && group.items.length)
+
+  if (sourceGroups.length || !fallbackItems.length) {
+    return sourceGroups
+  }
+
+  return [{
+    key: '__fallback__',
+    outcomeLabel: fallbackLabel,
+    items: uniqueStrings(fallbackItems)
+  }]
+}
+
+function buildOutcomeActionAdviceItems(outcome = {}) {
+  return uniqueStrings([
+    ...normalizeTextList(outcome?.actionAdviceItems),
+    ...normalizeTextList(outcome?.todayActions),
+    ...normalizeTextList(outcome?.threeDayActions),
+    ...normalizeTextList(outcome?.sevenDayObserve),
+    ...normalizeTextList([outcome?.firstAid]),
+    ...normalizeTextList([outcome?.recommendation]),
+    ...normalizeTextList([outcome?.actionAdvice])
+  ])
+}
+
+function buildOutcomeAvoidAdviceItems(outcome = {}) {
+  return uniqueStrings([
+    ...normalizeTextList(outcome?.avoidAdviceItems),
+    ...normalizeTextList(outcome?.avoidActions),
+    ...normalizeTextList(outcome?.retakeOrEscalate),
+    ...normalizeTextList([outcome?.avoid]),
+    ...normalizeTextList([outcome?.reassurance]),
+    ...normalizeTextList([outcome?.preventionAdvice])
+  ])
 }
 
 function estimateFollowUpSwiperHeight(question) {
@@ -538,7 +679,7 @@ function estimateFollowUpSwiperHeight(question) {
   const helpExtraRows = questionHelpText ? Math.ceil(questionHelpText.length / 34) : 0
   const baseHeight = 118 + questionExtraRows * 18 + helpExtraRows * 16
   const optionHeight = options.reduce((sum, option) => {
-    const optionTitle = getOptionText(option)
+    const optionTitle = getOptionText(question, option)
     const titleRows = Math.max(1, Math.ceil(String(optionTitle || '').length / 18))
     return sum + 52 + Math.max(0, titleRows - 1) * 18
   }, 0)
@@ -552,6 +693,10 @@ function sanitizeTemplateText(value = '') {
     .replace(/[\r\n]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+function normalizeText(value = '') {
+  return String(value || '').trim()
 }
 
 function getQuestionTitle(question = {}) {
@@ -577,8 +722,8 @@ function getQuestionHelpText(question = {}) {
   )
 }
 
-function getOptionText(option = {}) {
-  return sanitizeTemplateText(
+function getOptionText(question = {}, option = {}) {
+  const text = sanitizeTemplateText(
     option?.optionTextUserCn ||
     option?.optionTextCn ||
     option?.text ||
@@ -587,6 +732,124 @@ function getOptionText(option = {}) {
     option?.desc ||
     ''
   )
+  const mappedText = resolveYellowingFollowUpOptionText(question, option)
+  return mappedText || text
+}
+
+function resolveYellowingFollowUpOptionText(question = {}, option = {}) {
+  if (!isYellowingFollowUpQuestion(question)) {
+    return ''
+  }
+
+  const optionKey = normalizeText(option?.optionKey || option?.value || option?.optionId || option?.id || '')
+  const optionText = normalizeText(
+    option?.optionTextUserCn ||
+    option?.optionTextCn ||
+    option?.text ||
+    option?.optionText ||
+    option?.label ||
+    ''
+  )
+  const questionKey = normalizeText(question?.questionKey)
+  const targetDimension = normalizeText(question?.targetDimension)
+
+  if (isYellowingWateringQuestion(questionKey, targetDimension)) {
+    if (isFrequencyOption(optionKey, optionText, [
+      'often_wet',
+      'more_wet',
+      'too_wet',
+      'over_wet',
+      'yes'
+    ])) {
+      return '近2周 2 次以上'
+    }
+    if (isFrequencyOption(optionKey, optionText, [
+      'normal_or_stable',
+      'no_change',
+      'normal',
+      'stable'
+    ])) {
+      return '近2周 1-2 次'
+    }
+    if (isFrequencyOption(optionKey, optionText, [
+      'often_dry',
+      'more_dry',
+      'not_enough',
+      'dry',
+      'lack'
+    ])) {
+      return '近2周 0 次'
+    }
+    return ''
+  }
+
+  if (isYellowingFertilizationQuestion(questionKey, targetDimension)) {
+    if (isFrequencyOption(optionKey, optionText, [
+      'low_or_no_fertilizer',
+      'no',
+      'none',
+      'not_fertilized'
+    ])) {
+      return '近1个月 0 次'
+    }
+    if (isFrequencyOption(optionKey, optionText, [
+      'normal_light_fertilizer',
+      'normal',
+      'appropriate'
+    ])) {
+      return '近1个月 1-2 次'
+    }
+    if (isFrequencyOption(optionKey, optionText, [
+      'recent_heavy_fertilizer_or_repot',
+      'heavy_fertilizer',
+      'heavy',
+      'repot',
+      'fertilize'
+    ])) {
+      return '近1个月 2 次以上'
+    }
+    return ''
+  }
+
+  return ''
+}
+
+function isFrequencyOption(optionKey = '', optionText = '', optionKeys = []) {
+  if (optionKeys.includes(optionKey)) {
+    return true
+  }
+
+  if (!optionText) {
+    return false
+  }
+
+  return optionKeys.some(item => optionText.includes(item.replaceAll('_', '')))
+}
+
+function isYellowingFollowUpQuestion(question = {}) {
+  const questionKey = normalizeText(question?.questionKey)
+  const questionText = normalizeText(
+    question?.questionTextCn ||
+    question?.questionTextUserCn ||
+    question?.questionText ||
+    ''
+  )
+  return questionKey.includes('yellowing') || questionText.includes('黄叶')
+}
+
+function isYellowingWateringQuestion(questionKey = '', targetDimension = '') {
+  return questionKey.includes('watering_frequency_context') ||
+    questionKey.includes('watering_context') ||
+    questionKey.includes('watering') ||
+    targetDimension.includes('watering')
+}
+
+function isYellowingFertilizationQuestion(questionKey = '', targetDimension = '') {
+  return questionKey.includes('fertilization_growth_context') ||
+    questionKey.includes('fertilization_context') ||
+    questionKey.includes('fertilization_reference') ||
+    questionKey.includes('fertilization') ||
+    targetDimension.includes('fertilization')
 }
 
 function getOptionDescription(option = {}) {
@@ -709,7 +972,7 @@ async function handleNextFollowUpQuestion() {
 }
 
 function resetFollowUpQuestionState(followUps = [], { answerRevision = 0 } = {}) {
-  const nextFollowUps = Array.isArray(followUps) ? followUps.filter(item => item?.questionId) : []
+  const nextFollowUps = dedupeFollowUpQuestionsById(Array.isArray(followUps) ? followUps.filter(item => item?.questionId) : [])
   followUpQuestionStack.value = nextFollowUps
   activeFollowUpQuestionIndex.value = 0
   followUpAnswers.value = createFollowUpAnswerMap(nextFollowUps)
@@ -720,7 +983,7 @@ function resetFollowUpQuestionState(followUps = [], { answerRevision = 0 } = {})
 }
 
 function mergeFollowUpQuestionState(nextResult = null, submittedPayload = null) {
-  const nextFollowUps = Array.isArray(nextResult?.followUps) ? nextResult.followUps.filter(item => item?.questionId) : []
+  const nextFollowUps = dedupeFollowUpQuestionsById(Array.isArray(nextResult?.followUps) ? nextResult.followUps.filter(item => item?.questionId) : [])
   const submittedAnswers = Array.isArray(submittedPayload?.answers) ? submittedPayload.answers : []
   const submittedAnswerMap = submittedAnswers.reduce((entries, item) => {
     const questionId = String(item?.questionId || '').trim()
@@ -751,6 +1014,18 @@ function mergeFollowUpQuestionState(nextResult = null, submittedPayload = null) 
   followUpAnswerRevision.value = Number(nextResult?.answerRevision || followUpAnswerRevision.value || 0)
   activeFollowUpQuestionIndex.value = nextStack.length ? nextStack.length - 1 : 0
   expandedFollowUpOptionByQuestion.value = {}
+}
+
+function dedupeFollowUpQuestionsById(questions = []) {
+  const seen = new Set()
+  return (Array.isArray(questions) ? questions : [])
+    .map(item => item || {})
+    .filter(item => {
+      const questionId = String(item?.questionId || '').trim()
+      if (!questionId || seen.has(questionId)) {return false}
+      seen.add(questionId)
+      return true
+    })
 }
 
 async function submitFollowUps() {
@@ -1001,6 +1276,15 @@ async function submitFollowUps() {
   margin-bottom: 9px;
 }
 
+.followup-advice-subtitle {
+  display: block;
+  color: #1f2937;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.4;
+  margin-bottom: 5px;
+}
+
 .followup-advice-text {
   display: block;
   color: #4b5563;
@@ -1111,6 +1395,13 @@ async function submitFollowUps() {
   color: #111827;
   font-size: 15px;
   font-weight: 900;
+}
+
+.followup-result-list-subtitle {
+  color: #1f2937;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.4;
 }
 
 .followup-result-chip-row {

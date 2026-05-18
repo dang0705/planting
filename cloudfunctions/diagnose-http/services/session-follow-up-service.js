@@ -11,7 +11,6 @@ const {
   inferQuestionEffectMode
 } = require('../utils/question-target-dimension')
 const { getQuestionsByKeys } = require('../repositories/question-repository')
-const { getSymptomsByKeys } = require('../repositories/symptom-repository')
 const {
   insertFollowUpQuestionsRows,
   listFollowUpRows,
@@ -107,44 +106,40 @@ async function appendFollowUpQuestions(sessionId, round, questions = [], { quest
   const list = filterQuestionsByQuestionQueue(questions, questionQueue, {
     requireQueueAnchor: true
   })
-  const rawTargetSymptomKeys = Array.from(
-    new Set(
-      list
-        .map(item => String(item?.targetSymptomKey || '').trim())
-        .filter(Boolean)
-    )
+  if (!list.length) {return}
+
+  const followUpRows = await listFollowUpRows(sessionId)
+  const existingQuestionKeys = new Set(
+    (Array.isArray(followUpRows) ? followUpRows : [])
+      .map(row => readQuestionKeyFromRationale(row?.rationale || '') || String(row?.symptom_key || '').trim())
+      .filter(Boolean)
   )
+  const deDupedQuestionRows = []
+  const pendingInPayloadKeys = new Set()
+
+  for (const item of list) {
+    const questionKey = resolveQuestionKey(item)
+    if (!questionKey || existingQuestionKeys.has(questionKey) || pendingInPayloadKeys.has(questionKey)) {
+      continue
+    }
+
+    pendingInPayloadKeys.add(questionKey)
+    deDupedQuestionRows.push(item)
+  }
+
+  if (!deDupedQuestionRows.length) {return}
+
   const questionMetaMap = new Map(
-    (await getQuestionsByKeys(list.map(item => resolveQuestionKey(item))))
+    (await getQuestionsByKeys(deDupedQuestionRows.map(item => resolveQuestionKey(item))))
       .map(item => [String(item?.questionKey || '').trim(), item])
       .filter(([questionKey]) => Boolean(questionKey))
   )
-  const questionMetaTargetSymptomKeys = Array.from(
-    new Set(
-      Array.from(questionMetaMap.values())
-        .map(item => String(item?.targetSymptomKey || '').trim())
-        .filter(Boolean)
-    )
-  )
-  const validPersistedTargetSymptomKeySet = new Set(
-    (
-      await getSymptomsByKeys([
-        ...rawTargetSymptomKeys,
-        ...questionMetaTargetSymptomKeys
-      ])
-    )
-      .map(item => String(item?.symptomKey || '').trim())
-      .filter(Boolean)
-  )
   await insertFollowUpQuestionsRows(
     sessionId,
-    list.map((item, index) => {
+    deDupedQuestionRows.map((item, index) => {
       const questionKey = resolveQuestionKey(item)
       const questionMeta = questionMetaMap.get(questionKey) || {}
       const targetSymptomKey = String(item?.targetSymptomKey || questionMeta?.targetSymptomKey || '').trim()
-      const persistedTargetSymptomKey = validPersistedTargetSymptomKeySet.has(targetSymptomKey)
-        ? targetSymptomKey
-        : null
       const targetDimension = normalizeQuestionTargetDimension(
         item?.targetDimension || questionMeta?.targetDimension || '',
         QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
@@ -163,7 +158,7 @@ async function appendFollowUpQuestions(sessionId, round, questions = [], { quest
       )
       return {
         questionOrder: Number(index + 1),
-        questionKey: persistedTargetSymptomKey || questionKey,
+        questionKey,
         questionText: resolveQuestionText(item, questionMeta),
         rationale: JSON.stringify({
           qk: questionKey,
@@ -230,6 +225,7 @@ async function markFollowUpAnswers(
   }
 
   const updatedAnswers = []
+  const updatedRowsById = new Map()
   const markTasks = []
 
   for (const answer of list) {
@@ -285,6 +281,14 @@ async function markFollowUpAnswers(
       status,
       questionGroupKey: targetQuestionGroup || '__default__'
     })
+    updatedRowsById.set(Number(matchedRow.id || 0), {
+      asked: 1,
+      answer_value: optionKey || 'unknown',
+      answerValue: optionKey || 'unknown',
+      answer_confidence: isUnknownOption ? 0 : Math.max(0, associationStrength || 1),
+      answerConfidence: isUnknownOption ? 0 : Math.max(0, associationStrength || 1),
+      status
+    })
   }
 
   if (awaitPersistence) {
@@ -292,7 +296,10 @@ async function markFollowUpAnswers(
   }
 
   return {
-    followUpRows,
+    followUpRows: followUpRows.map(row => ({
+      ...row,
+      ...(updatedRowsById.get(Number(row?.id || 0)) || {})
+    })),
     updatedAnswers,
     pendingWrites: awaitPersistence ? null : markTasks
   }

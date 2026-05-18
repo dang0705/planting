@@ -13,6 +13,7 @@
     "test:route-planning": "node test-route-planning.mjs",
     "test:route-sql": "node test-route-sql.mjs",
     "test:route-golden": "node verify-route-golden-manifest.mjs",
+    "test:diagnosis-review-perf": "node test-diagnosis-review-perf.mjs",
     "test:all": "node test-all.mjs",
     "import-data": "node src/cli.js import-data",
     "diff-data": "node src/cli.js diff-data",

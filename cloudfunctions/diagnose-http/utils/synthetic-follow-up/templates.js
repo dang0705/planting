@@ -62,12 +62,12 @@ function buildTemplateVariables(item = {}, _context = {}) {
   return {
     symptom_label: symptomLabel,
     watering_reference: '浇水：按最近两周的实际频率选择',
-    watering_help: '不需要先判断对错，只按实际频率和盆土干湿选择。',
+    watering_help: '只按你近期实际浇水频率回答即可。',
     watering_too_often: CARE_CONTEXT_OPTION_COPY.wateringFrequency.often_wet,
     watering_normal: CARE_CONTEXT_OPTION_COPY.wateringFrequency.normal_or_stable,
     watering_too_rare: CARE_CONTEXT_OPTION_COPY.wateringFrequency.often_dry,
-    light_reference: '光照：按最近摆放位置选择全日光、散光或全阴',
-    fertilization_reference: '施肥和换盆：按近 1 个月补肥、重肥或换盆换土情况选择',
+    light_reference: '光照：按最近摆放位置选择更清晰的光照状态',
+    fertilization_reference: '施肥和换盆：按近期补肥、重肥或换盆换土情况选择',
     humidity_reference: '通风和空气湿度：以窗户为参照，选择靠近或远离窗户的变化'
   }
 }

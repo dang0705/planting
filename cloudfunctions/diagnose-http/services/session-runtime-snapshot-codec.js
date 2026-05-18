@@ -292,20 +292,6 @@ function buildRuntimeSnapshotPayload({
     derivedEvidenceSet,
     diagnosisDirections,
     symptomClassRuntime,
-    rankings: Array.isArray(response?.rankings)
-      ? response.rankings.map(item => ({
-          problemKey: item?.problemKey || '',
-          problemCn: item?.problemCn || '',
-          baseScore: Number(item?.baseScore || 0),
-          finalScore: Number(item?.finalScore || 0),
-          visualEvidence: Number(item?.visualEvidence || 0),
-          questionEvidence: Number(item?.questionEvidence || 0),
-          totalEvidence: Number(item?.totalEvidence || item?.supportScore || 0),
-          penalty: Number(item?.penalty || 0),
-          evidenceCount: Number(item?.evidenceCount || 0),
-          rankNo: Number(item?.rankNo || 0)
-        }))
-      : [],
     followUpCount: Array.isArray(response?.followUps) ? response.followUps.length : 0,
     questionQueue: response?.questionQueue || null,
     stopState: response?.stopState || null,

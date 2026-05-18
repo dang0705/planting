@@ -47,10 +47,12 @@ function normalizeReviewDirectProblemAdjustments(value = []) {
   return value
     .map(item => ({
       problemKey: String(item?.problemKey || item?.problem_key || '').trim(),
-      scoreDelta: normalizeReviewNullableNumber(item?.scoreDelta ?? item?.score_delta),
+      effectValue: normalizeReviewNullableNumber(
+        item?.effectValue ?? item?.effect_value ?? item?.effectValue ?? item?.score_delta
+      ),
       reason: String(item?.reason || item?.reasonCn || item?.reason_cn || '').trim()
     }))
-    .filter(item => item.problemKey && item.scoreDelta !== null && item.scoreDelta !== 0)
+    .filter(item => item.problemKey && item.effectValue !== null && item.effectValue !== 0)
 }
 
 function pickReviewUsageNumber(...values) {

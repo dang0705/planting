@@ -95,13 +95,13 @@
     </view>
 
     <!-- 诊断历史 -->
-    <view class="px-4 pb-20">
+    <view id="profile-diagnose-history-section" class="px-4 pb-20">
       <view class="flex items-center justify-between mb-3">
         <text class="block text-lg font-bold text-gray-900">📋 诊断历史</text>
-        <text class="text-sm text-primary" @click="viewAllHistory">查看全部</text>
+        <text id="profile-diagnose-history-view-all" class="text-sm text-primary" @click="viewAllHistory">查看全部</text>
       </view>
 
-      <view v-if="diagnoseHistory.length === 0 && !loadingHistory" class="bg-white rounded-2xl p-6 text-center">
+      <view v-if="diagnoseHistory.length === 0 && !loadingHistory" id="profile-diagnose-history-empty" class="bg-white rounded-2xl p-6 text-center">
         <text class="block text-4xl mb-2">🔍</text>
         <text class="block text-sm text-gray-600">还没有诊断记录</text>
       </view>
@@ -109,6 +109,7 @@
       <view
         v-for="item in diagnoseHistory"
         :key="item._id"
+        :id="`profile-diagnose-record-${item._id}`"
         class="bg-white rounded-2xl p-4 mb-3 shadow-sm"
         @click="viewDiagnoseDetail(item)"
       >

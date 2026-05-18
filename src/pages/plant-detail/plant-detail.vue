@@ -1,5 +1,5 @@
 <template>
-  <view class="min-h-screen bg-[#F8F6F0]">
+  <view id="plant-detail-page" class="min-h-screen bg-[#F8F6F0]">
     <!-- 内容区域 -->
     <view class="pb-5">
       <!-- 植物头部信息 -->
@@ -36,7 +36,7 @@
       </view>
 
       <!-- 快速操作 -->
-      <view class="flex gap-2 px-4 mb-3">
+      <view id="plant-detail-quick-actions" class="flex gap-2 px-4 mb-3">
         <button
           id="plant-detail-diagnose-button"
           class="flex-1 border border-gray-300 rounded-2xl p-3.5 px-2 flex flex-col items-center gap-1.5 border-none"

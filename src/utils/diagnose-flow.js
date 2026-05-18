@@ -424,6 +424,8 @@ function normalizeOutcomeEntry(outcome = null) {
     urgency: String(outcome?.urgency || '').trim(),
     firstAid: String(outcome?.firstAid || '').trim(),
     avoid: String(outcome?.avoid || '').trim(),
+    actionAdviceItems: normalizeStringList(outcome?.actionAdviceItems),
+    avoidAdviceItems: normalizeStringList(outcome?.avoidAdviceItems),
     reassurance: String(outcome?.reassurance || '').trim()
   }
 }
@@ -589,26 +591,6 @@ function normalizeCoreProcess(coreProcess = null, fallback = {}) {
         : normalizedDiagnosticTrace
     }
   }
-}
-
-function normalizeRankings(rankings = []) {
-  return (Array.isArray(rankings) ? rankings : [])
-    .filter(item => item?.problemKey)
-    .map((item, index) => {
-      const weightedScore = Number(item.weightedScore ?? item.finalScore ?? 0)
-      const baseScore = Number(item.baseScore ?? item.weightedScore ?? item.finalScore ?? 0)
-
-      return {
-        problemId: item.problemId || '',
-        problemKey: item.problemKey,
-        problemCn: item.problemCn || item.displayName || item.problemKey,
-        role: item.role || item.problemRole || '',
-        rankNo: Number(item.rankNo || index + 1),
-        weightedScore,
-        finalScore: Number(item.finalScore ?? weightedScore),
-        baseScore
-      }
-    })
 }
 
 function normalizeProblemCausality(items = []) {
@@ -795,7 +777,6 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
   const observedSymptoms = normalizeObservedSymptoms(
     diagnosis.observedSymptoms || diagnosis.symptoms
   )
-  const rankings = normalizeRankings(diagnosis.rankings)
   const problemCausality = normalizeProblemCausality(diagnosis.problemCausality)
   const outcomeType = normalizeOutcomeType(
     diagnosis.outcomeType ||
@@ -910,7 +891,6 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
     nextSteps: normalizedNextSteps,
     whatToAvoid: normalizedWhatToAvoid,
     problemCausality,
-    rankings,
     observedSymptoms,
     observedEvidenceSet,
     derivedEvidenceSet,

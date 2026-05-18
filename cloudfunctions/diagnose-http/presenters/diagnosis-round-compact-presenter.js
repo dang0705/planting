@@ -152,7 +152,9 @@ function buildCompactOutcomeEntry(outcome = null) {
     displayNameCn: String(outcome?.displayNameCn || outcome?.displayName || '').trim(),
     summary: String(outcome?.summary || '').trim(),
     severity: String(outcome?.severity || '').trim(),
-    urgency: String(outcome?.urgency || '').trim()
+    urgency: String(outcome?.urgency || '').trim(),
+    actionAdviceItems: compactStringList(outcome?.actionAdviceItems),
+    avoidAdviceItems: compactStringList(outcome?.avoidAdviceItems)
   }
 }
 

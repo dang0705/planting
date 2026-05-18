@@ -7,9 +7,9 @@ const SYNTHETIC_OBSERVED_PROBE_GROUP_PREFIX = 'observed_probe__'
 
 const CARE_CONTEXT_OPTION_COPY = {
   wateringFrequency: {
-    often_wet: '每 1-2 天就浇一次，或土没干就浇',
-    normal_or_stable: '每周 1-2 次，基本等土表干了再浇',
-    often_dry: '常常干很久才浇，或两周几乎没浇几次',
+    often_wet: '近 2 周 2 次以上（偏多）',
+    normal_or_stable: '近 2 周 1-2 次（相对稳定）',
+    often_dry: '近 2 周 0 次（偏少）',
     unknown: '说不清/没留意'
   },
   lightContext: {
@@ -19,9 +19,9 @@ const CARE_CONTEXT_OPTION_COPY = {
     unknown: '说不清/没留意'
   },
   fertilizationGrowth: {
-    low_or_no_fertilizer: '近 2 周 0 次，或已经很久没补肥',
-    normal_light_fertilizer: '每 2 周 1 次左右薄肥',
-    recent_heavy_fertilizer_or_repot: '每周 1-2 次、重肥，或刚换盆/换土',
+    low_or_no_fertilizer: '近 1 个月 0 次（很少施肥）',
+    normal_light_fertilizer: '近 1 个月 1-2 次（偏稳）',
+    recent_heavy_fertilizer_or_repot: '近 1 个月 2 次以上（重肥/换盆换土）',
     unknown: '说不清/没留意'
   }
 }

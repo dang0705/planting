@@ -1,28 +1,28 @@
 <template>
-  <uni-popup ref="popup" type="bottom" :safe-area="false" @change="handleChange">
-    <view class="bg-white rounded-t-3xl popup-panel" :style="popupPanelStyle">
+  <uni-popup ref="popup" id="diagnose-popup" type="bottom" :safe-area="false" @change="handleChange">
+    <view id="diagnose-popup-panel" class="bg-white rounded-t-3xl popup-panel" :style="popupPanelStyle">
       <view
         v-if="automationEnabled"
         id="diagnose-automation-inject-button"
         class="diagnose-automation-trigger"
         @click="injectAutomationDiagnoseImagesFromStorage"
       />
-      <view class="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
+      <view id="diagnose-popup-header" class="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
         <text class="text-lg font-semibold text-gray-900">AI 诊断</text>
         <view id="diagnose-popup-close-button" class="w-8 h-8 flex items-center justify-center" @click="close">
           <text class="text-gray-400 text-2xl">×</text>
         </view>
       </view>
 
-      <view class="popup-content-wrap">
-        <scroll-view scroll-y class="popup-scroll">
-          <view class="px-4 py-4">
-        <view v-if="!result">
-          <view class="mb-4">
+      <view id="diagnose-popup-content-wrap" class="popup-content-wrap">
+        <scroll-view id="diagnose-popup-scroll" scroll-y class="popup-scroll">
+          <view id="diagnose-popup-content" class="px-4 py-4">
+        <view v-if="!result" id="diagnose-upload-stage">
+          <view id="diagnose-upload-section" class="mb-4">
             <text class="block text-base font-semibold text-gray-900 mb-2">拍摄植物照片</text>
             <text class="block text-xs text-gray-500 mb-3">请直接在槽位中上传。单槽最多 2 张，总计最多 3 张。</text>
 
-            <view v-if="automationEnabled" class="dev-visual-evidence-panel">
+            <view v-if="automationEnabled" id="diagnose-dev-visual-evidence-panel" class="dev-visual-evidence-panel">
               <view class="flex items-start justify-between gap-2 mb-2">
                 <view class="min-w-0 flex-1">
                   <text class="block text-xs font-semibold text-[#1F5A42]">开发调试：模拟视觉证据</text>
@@ -34,6 +34,7 @@
               </view>
 
               <picker
+                id="diagnose-dev-symptom-class-picker-control"
                 mode="selector"
                 :range="devVisualSymptomClassPickerLabels"
                 :value="selectedDevSymptomClassIndex"
@@ -58,7 +59,20 @@
                 </view>
               </picker>
 
-              <view v-if="selectedDevSymptomClassOption" class="dev-visual-evidence-status">
+              <view id="diagnose-dev-symptom-class-quick-select" class="dev-visual-evidence-quick-select">
+                <view
+                  v-for="item in DEV_VISUAL_SYMPTOM_CLASS_OPTIONS"
+                  :key="item.classKey"
+                  :id="`diagnose-dev-symptom-class-option-${item.classKey}`"
+                  class="dev-visual-evidence-quick-option"
+                  :class="selectedDevSymptomClassKey === item.classKey ? 'dev-visual-evidence-quick-option--active' : ''"
+                  @click="selectDevSymptomClass(item.classKey)"
+                >
+                  <text>{{ item.classNameCn }}</text>
+                </view>
+              </view>
+
+              <view v-if="selectedDevSymptomClassOption" id="diagnose-dev-symptom-class-status" class="dev-visual-evidence-status">
                 <text class="flex-1 text-[10px] text-[#1F5A42] leading-relaxed">
                   将模拟：{{ selectedDevSymptomClassOption.symptomCn }}（{{ selectedDevSymptomClassOption.classNameCn }}）
                 </text>
@@ -72,10 +86,11 @@
               </view>
             </view>
 
-            <view class="slot-grid">
+            <view id="diagnose-upload-slot-grid" class="slot-grid">
               <view
                 v-for="slot in primarySlotGroups"
                 :key="slot.slotType"
+                :id="`diagnose-upload-slot-${slot.slotType}`"
                 class="slot-card bg-[#F8F6F0] border border-white/80"
               >
                 <view class="flex items-start justify-between gap-2 mb-2">
@@ -134,18 +149,18 @@
               </view>
             </view>
 
-            <text class="block text-[10px] text-gray-400 text-center mt-2">
+            <text id="diagnose-upload-count" class="block text-[10px] text-gray-400 text-center mt-2">
               {{ imageFiles.length }}/{{ PRIMARY_IMAGE_LIMIT }} 张
             </text>
-            <text v-if="hasPendingUploads" class="block text-[10px] text-[#2D6A4F] text-center mt-1">
+            <text v-if="hasPendingUploads" id="diagnose-upload-pending-status" class="block text-[10px] text-[#2D6A4F] text-center mt-1">
               图片上传中，全部处理完成后可开始诊断
             </text>
-            <text v-else-if="hasUploadErrors" class="block text-[10px] text-red-500 text-center mt-1">
+            <text v-else-if="hasUploadErrors" id="diagnose-upload-error-status" class="block text-[10px] text-red-500 text-center mt-1">
               存在上传失败的图片，请删除后重新添加
             </text>
           </view>
 
-          <view class="mt-3 bg-[#D8F3DC] rounded-xl p-3">
+          <view id="diagnose-capture-guidance" class="mt-3 bg-[#D8F3DC] rounded-xl p-3">
             <text class="block text-xs font-semibold text-primary mb-1">拍摄建议</text>
             <text class="block text-[10px] text-gray-700 leading-relaxed">
               • 光线充足，避免逆光
@@ -159,8 +174,8 @@
           </view>
         </view>
 
-        <view v-if="result">
-          <view class="bg-gray-50 rounded-xl p-3 mb-3">
+        <view v-if="result" id="diagnose-result-stage">
+          <view id="diagnose-result-plant-card" class="bg-gray-50 rounded-xl p-3 mb-3">
             <view class="flex items-center mb-2">
               <text class="text-2xl mr-2">🌿</text>
               <view class="flex-1">
@@ -177,7 +192,7 @@
             </view>
           </view>
 
-          <view v-if="result.observedSymptoms?.length" class="mb-3">
+          <view v-if="result.observedSymptoms?.length" id="diagnose-result-observed-symptoms" class="mb-3">
             <text class="block text-sm font-semibold text-gray-900 mb-2">观察到的症状</text>
             <view class="bg-gray-50 rounded-xl p-3 flex flex-wrap gap-2">
               <view
@@ -190,50 +205,64 @@
             </view>
           </view>
 
-          <view v-if="result.mainIssueText || result.summaryText" class="mb-3">
-            <text class="block text-sm font-semibold text-gray-900 mb-2">当前结论</text>
+          <view v-if="allOutcomeDisplays.length || resultMainIssueText || resultSummaryText" id="diagnose-result-current-conclusion" class="mb-3">
+            <text class="block text-sm font-semibold text-gray-900 mb-2">诊断结论</text>
             <view class="bg-gray-50 rounded-xl p-3">
-              <text class="block text-xs text-gray-800 mb-2">{{ result.mainIssueText }}</text>
-              <text class="block text-xs text-gray-600 leading-relaxed whitespace-pre-line">{{
-                result.summaryText
-              }}</text>
+              <view v-if="allOutcomeDisplays.length" class="mb-2">
+                <text
+                  v-for="(item, index) in allOutcomeDisplays"
+                  :key="`result_outcome_${index}`"
+                  class="block text-xs text-gray-800 font-semibold leading-relaxed mb-1 last:mb-0"
+                >
+                  {{ item }}
+                </text>
+              </view>
+              <text v-else class="block text-xs text-gray-800 mb-2">{{ resultMainIssueText }}</text>
+              <text class="block text-xs text-gray-600 leading-relaxed whitespace-pre-line">{{ resultSummaryText }}</text>
             </view>
           </view>
 
-          <view v-if="actionAdviceTexts.length" class="mb-3">
+          <view v-if="actionAdviceGroups.length" id="diagnose-result-action-advice" class="mb-3">
             <text class="block text-sm font-semibold text-gray-900 mb-2">处理建议</text>
             <view class="bg-[#F3FAF5] rounded-xl p-3">
-              <text
-                v-for="(item, index) in actionAdviceTexts"
-                :key="`action_${index}`"
-                class="block text-xs text-gray-700 leading-relaxed mb-2 last:mb-0"
-              >
-                • {{ item }}
-              </text>
+              <view v-for="group in actionAdviceGroups" :key="`action_${group.key}`" class="mb-2 last:mb-0">
+                <text class="block text-[11px] text-gray-800 font-semibold mb-1">{{ group.outcomeLabel }}：</text>
+                <text
+                  v-for="(item, index) in group.items"
+                  :key="`action_${group.key}_${index}`"
+                  class="block text-xs text-gray-700 leading-relaxed mb-2 last:mb-0"
+                >
+                  {{ index + 1 }}. {{ item }}
+                </text>
+              </view>
             </view>
           </view>
 
-          <view v-if="avoidAdviceTexts.length" class="mb-3">
+          <view v-if="avoidAdviceGroups.length" id="diagnose-result-avoid-advice" class="mb-3">
             <text class="block text-sm font-semibold text-gray-900 mb-2">暂时不要做</text>
             <view class="bg-[#FFF6F3] rounded-xl p-3">
-              <text
-                v-for="(item, index) in avoidAdviceTexts"
-                :key="`avoid_${index}`"
-                class="block text-xs text-gray-700 leading-relaxed mb-2 last:mb-0"
-              >
-                • {{ item }}
-              </text>
+              <view v-for="group in avoidAdviceGroups" :key="`avoid_${group.key}`" class="mb-2 last:mb-0">
+                <text class="block text-[11px] text-gray-800 font-semibold mb-1">{{ group.outcomeLabel }}：</text>
+                <text
+                  v-for="(item, index) in group.items"
+                  :key="`avoid_${group.key}_${index}`"
+                  class="block text-xs text-gray-700 leading-relaxed mb-2 last:mb-0"
+                >
+                  {{ index + 1 }}. {{ item }}
+                </text>
+              </view>
             </view>
           </view>
 
-          <view v-if="result.followUpRequired" class="mb-3">
+          <view v-if="result.followUpRequired" id="diagnose-result-followup-required" class="mb-3">
             <text class="block text-sm font-semibold text-gray-900 mb-2">继续问诊</text>
             <view class="bg-gray-50 rounded-xl p-3">
               <text class="block text-[10px] text-gray-500 mb-3">
-                每次只回答一个关键问题。答题与补图是两条正式路径，需要分开提交。
+                每次只回答一个关键问题。答题与补图是两种正式方式，需要分开提交。
               </text>
               <swiper
                 v-if="currentFollowUpQuestion"
+                id="diagnose-followup-swiper"
                 class="followup-swiper"
                 :current="followUpSwiperCurrent"
                 :duration="260"
@@ -248,6 +277,7 @@
                   <view
                     v-if="question"
                     :key="question.questionId"
+                    :id="`diagnose-followup-question-${question.questionId}`"
                     class="followup-question-card followup-question-card--animated"
                   >
                     <text class="block text-[10px] text-[#8B7355] mb-1">
@@ -263,6 +293,7 @@
                       {{ getQuestionHelpText(question) }}
                     </text>
                     <view
+                      :id="`diagnose-followup-option-stack-${question.questionId}`"
                       class="followup-option-stack"
                       :class="question.uiVariant === 'single_select_accordion' ? 'followup-option-stack--accordion' : ''"
                     >
@@ -278,7 +309,7 @@
                           v-for="option in question.options"
                           :key="option.optionId"
                           :name="option.optionId"
-                          :title="getOptionText(option)"
+                          :title="getOptionText(question, option)"
                           :border="false"
                           :title-border="false"
                           class="followup-option-collapse-item"
@@ -292,7 +323,7 @@
                                 : 'followup-option-accordion-title--idle'
                             "
                           >
-                            <text class="followup-option-accordion-text">{{ getOptionText(option) }}</text>
+                            <text class="followup-option-accordion-text">{{ getOptionText(question, option) }}</text>
                             <text class="followup-option-accordion-badge">
                               {{ isSelectedFollowUpOption(question, option) ? '已选' : '单选' }}
                             </text>
@@ -330,7 +361,7 @@
                         >
                           <view class="followup-option-content">
                             <view class="followup-option-title-row">
-                              <text class="followup-option-text">{{ getOptionText(option) }}</text>
+                              <text class="followup-option-text">{{ getOptionText(question, option) }}</text>
                             </view>
                             <text
                               v-if="getOptionDescription(option)"
@@ -371,7 +402,7 @@
                   </view>
                 </swiper-item>
               </swiper>
-              <view v-else class="px-3 py-2 rounded-xl bg-white border border-gray-100">
+              <view v-else id="diagnose-followup-empty-question" class="px-3 py-2 rounded-xl bg-white border border-gray-100">
                 <text class="block text-[10px] text-gray-500">
                   当前没有可继续回答的问题。
                 </text>
@@ -385,14 +416,14 @@
             </view>
           </view>
 
-          <view v-if="result.followUpRequired" class="mb-3">
+          <view v-if="result.followUpRequired" id="diagnose-followup-image-section" class="mb-3">
             <text class="block text-sm font-semibold text-gray-900 mb-2">补充图片</text>
             <view class="bg-[#F8F6F0] rounded-xl p-3 border border-[#D8F3DC]">
               <text class="block text-[10px] text-gray-500 mb-2">
                 当前阶段最多补图 1 次。若补图，将生成新的视觉调用批次并重建视觉证据。
               </text>
 
-              <view v-if="followUpCaptureSuggestions.length" class="mb-3">
+              <view v-if="followUpCaptureSuggestions.length" id="diagnose-followup-capture-suggestions" class="mb-3">
                 <text class="block text-[11px] font-semibold text-gray-800 mb-1">建议优先补拍</text>
                 <view
                   v-for="item in followUpCaptureSuggestions"
@@ -404,10 +435,11 @@
               </view>
 
               <view v-if="canShowFollowUpUploader">
-                <view class="slot-grid">
+                <view id="diagnose-followup-upload-slot-grid" class="slot-grid">
                   <view
                     v-for="slot in followUpSlotGroups"
                     :key="slot.slotType"
+                    :id="`diagnose-followup-upload-slot-${slot.slotType}`"
                     class="slot-card bg-white border border-[#E7E0D1]"
                   >
                     <view class="flex items-start justify-between gap-2 mb-2">
@@ -483,7 +515,7 @@
 
               </view>
 
-              <view v-else class="px-3 py-2.5 rounded-xl bg-white">
+              <view v-else id="diagnose-followup-upload-blocked" class="px-3 py-2.5 rounded-xl bg-white">
                 <text class="block text-[11px] text-gray-600">
                   {{ followUpUploadBlockedReason }}
                 </text>
@@ -496,8 +528,8 @@
         </scroll-view>
       </view>
 
-      <view class="popup-footer">
-        <view v-if="!result">
+      <view id="diagnose-popup-footer" class="popup-footer">
+        <view v-if="!result" id="diagnose-popup-footer-start">
           <button
             id="diagnose-submit-button"
             class="w-full bg-primary text-white font-semibold py-3 rounded-xl"
@@ -509,7 +541,7 @@
           </button>
         </view>
 
-        <view v-else class="space-y-2">
+        <view v-else id="diagnose-popup-footer-result-actions" class="space-y-2">
           <button
             v-if="result.followUpRequired && canShowFollowUpUploader"
             id="diagnose-followup-image-submit-button"
@@ -827,6 +859,8 @@ const actionAdviceTexts = computed(() => {
   const treatmentText = String(result.value?.treatmentText || explanation?.firstAid || '').trim()
   return uniqueStrings([...nextSteps, ...(treatmentText ? [treatmentText] : [])])
 })
+const resultMainIssueText = computed(() => formatOutcomeDisplayLabel(result.value?.mainIssueText))
+const resultSummaryText = computed(() => formatOutcomeDisplayLabel(result.value?.summaryText))
 const avoidAdviceTexts = computed(() => {
   const explanation = result.value?.explanation || result.value?.resultExplanation || {}
   const whatToAvoid = Array.isArray(result.value?.whatToAvoid)
@@ -835,6 +869,52 @@ const avoidAdviceTexts = computed(() => {
   const preventionText = String(result.value?.preventionText || explanation?.avoid || '').trim()
   return uniqueStrings([...whatToAvoid, ...(preventionText ? [preventionText] : [])])
 })
+const primaryOutcome = computed(() => result.value?.primaryOutcome || result.value?.finalResult?.primaryOutcome || null)
+const secondaryOutcomeSource = computed(() =>
+  Array.isArray(result.value?.secondaryOutcomes) && result.value.secondaryOutcomes.length
+    ? result.value.secondaryOutcomes
+    : Array.isArray(result.value?.finalResult?.secondaryOutcomes)
+      ? result.value.finalResult.secondaryOutcomes
+      : []
+)
+const visibleOutcomeSource = computed(() =>
+  Array.isArray(result.value?.visibleOutcomes) && result.value.visibleOutcomes.length
+    ? result.value.visibleOutcomes
+    : Array.isArray(result.value?.finalResult?.visibleOutcomes)
+      ? result.value.finalResult.visibleOutcomes
+      : []
+)
+const primaryOutcomeDisplay = computed(() => formatOutcomeDisplayLabel(primaryOutcome.value))
+const secondaryOutcomeDisplays = computed(() => uniqueStrings(secondaryOutcomeSource.value.map(formatOutcomeDisplayLabel)))
+const visibleOutcomeDisplays = computed(() => uniqueStrings(visibleOutcomeSource.value.map(formatOutcomeDisplayLabel)))
+const allOutcomeDisplays = computed(() =>
+  uniqueStrings([
+    primaryOutcomeDisplay.value,
+    ...secondaryOutcomeDisplays.value,
+    ...visibleOutcomeDisplays.value
+  ].filter(Boolean))
+)
+const outcomeAdviceSources = computed(() => buildUniqueOutcomesForAdvice([
+  primaryOutcome.value,
+  ...secondaryOutcomeSource.value,
+  ...visibleOutcomeSource.value
+]))
+const actionAdviceGroups = computed(() =>
+  buildOutcomeAdviceGroups({
+    outcomeSources: outcomeAdviceSources.value,
+    getOutcomeItems: buildOutcomeActionAdviceItems,
+    fallbackItems: actionAdviceTexts.value,
+    fallbackLabel: '通用建议'
+  })
+)
+const avoidAdviceGroups = computed(() =>
+  buildOutcomeAdviceGroups({
+    outcomeSources: outcomeAdviceSources.value,
+    getOutcomeItems: buildOutcomeAvoidAdviceItems,
+    fallbackItems: avoidAdviceTexts.value,
+    fallbackLabel: '通用建议'
+  })
+)
 const popupHeight = computed(() => {
   const totalHeight = Number(viewportHeight.value || 0)
   const navbarHeight = Number(userStore.navbarHeight || 0)
@@ -879,6 +959,124 @@ function sanitizeTemplateText(value = '') {
     .trim()
 }
 
+function normalizeText(value = '') {
+  return String(value || '').trim()
+}
+
+function normalizeArrayText(values = []) {
+  return (Array.isArray(values) ? values : [])
+    .map(item => String(item || '').trim())
+    .filter(Boolean)
+}
+
+function normalizeTextList(values = []) {
+  return (Array.isArray(values) ? values : [values]).map(item => normalizeText(item)).filter(Boolean)
+}
+
+function normalizeUserFriendlyOutcomeLabel(value = '') {
+  return String(value || '')
+    .replace(/根区压力/g, '根部状态不佳')
+    .replace(/根部压力/g, '根部状态不佳')
+    .replace(/压力/g, '受影响')
+    .trim()
+}
+
+function formatOutcomeDisplayLabel(outcome = null) {
+  if (typeof outcome === 'string') {
+    return normalizeUserFriendlyOutcomeLabel(String(outcome || '').trim())
+  }
+  if (!outcome || typeof outcome !== 'object') {
+    return ''
+  }
+  return normalizeUserFriendlyOutcomeLabel(
+    String(
+      outcome.displayNameCn ||
+        outcome.displayName ||
+        outcome.title ||
+        outcome.problemName ||
+        outcome.problemKey ||
+        outcome.outcomeKey ||
+        ''
+    ).trim()
+  )
+}
+
+function normalizeOutcomeDisplayKey(outcome = {}, index = 0) {
+  return String(
+    outcome?.outcomeKey ||
+      outcome?.problemKey ||
+      outcome?.problemId ||
+      outcome?.displayNameCn ||
+      outcome?.displayName ||
+      outcome?.title ||
+      `outcome_${index}`
+  ).trim()
+}
+
+function buildUniqueOutcomesForAdvice(outcomes = []) {
+  const seen = new Set()
+  return (Array.isArray(outcomes) ? outcomes : [])
+    .map((outcome, index) => ({ outcome, index }))
+    .filter(item => item.outcome && typeof item.outcome === 'object')
+    .filter(item => {
+      const key = normalizeOutcomeDisplayKey(item.outcome, item.index)
+      if (seen.has(key)) {
+        return false
+      }
+      seen.add(key)
+      return true
+    })
+    .map(item => item.outcome)
+}
+
+function buildOutcomeAdviceGroups({
+  outcomeSources = [],
+  getOutcomeItems,
+  fallbackItems = [],
+  fallbackLabel = '通用建议'
+} = {}) {
+  const sourceGroups = buildUniqueOutcomesForAdvice(outcomeSources)
+    .map((outcome, index) => ({
+      key: normalizeOutcomeDisplayKey(outcome, index),
+      outcomeLabel: formatOutcomeDisplayLabel(outcome),
+      items: uniqueStrings(getOutcomeItems ? getOutcomeItems(outcome) : [])
+    }))
+    .filter(group => group.outcomeLabel && group.items.length)
+
+  if (sourceGroups.length || !fallbackItems.length) {
+    return sourceGroups
+  }
+
+  return [{
+    key: '__fallback__',
+    outcomeLabel: fallbackLabel,
+    items: uniqueStrings(fallbackItems)
+  }]
+}
+
+function buildOutcomeActionAdviceItems(outcome = {}) {
+  return uniqueStrings([
+    ...normalizeTextList(outcome?.actionAdviceItems),
+    ...normalizeTextList(outcome?.todayActions),
+    ...normalizeTextList(outcome?.threeDayActions),
+    ...normalizeTextList(outcome?.sevenDayObserve),
+    ...normalizeTextList([outcome?.firstAid]),
+    ...normalizeTextList([outcome?.recommendation]),
+    ...normalizeTextList([outcome?.actionAdvice])
+  ])
+}
+
+function buildOutcomeAvoidAdviceItems(outcome = {}) {
+  return uniqueStrings([
+    ...normalizeTextList(outcome?.avoidAdviceItems),
+    ...normalizeTextList(outcome?.avoidActions),
+    ...normalizeTextList(outcome?.retakeOrEscalate),
+    ...normalizeTextList([outcome?.avoid]),
+    ...normalizeTextList([outcome?.reassurance]),
+    ...normalizeTextList([outcome?.preventionAdvice])
+  ])
+}
+
 function getQuestionTitle(question = {}) {
   return sanitizeTemplateText(
     question?.questionTextUserCn ||
@@ -899,8 +1097,8 @@ function getQuestionHelpText(question = {}) {
   )
 }
 
-function getOptionText(option = {}) {
-  return sanitizeTemplateText(
+function getOptionText(question = {}, option = {}) {
+  const text = sanitizeTemplateText(
     option?.optionTextUserCn ||
       option?.optionTextCn ||
       option?.text ||
@@ -909,6 +1107,86 @@ function getOptionText(option = {}) {
       option?.desc ||
       ''
   )
+  const mappedText = resolveYellowingFollowUpOptionText(question, option)
+  return mappedText || text
+}
+
+function resolveYellowingFollowUpOptionText(question = {}, option = {}) {
+  if (!isYellowingFollowUpQuestion(question)) {
+    return ''
+  }
+
+  const optionKey = normalizeText(option?.optionKey || option?.value || option?.optionId || option?.id || '')
+  const optionText = normalizeText(
+    option?.optionTextUserCn ||
+      option?.optionTextCn ||
+      option?.text ||
+      option?.optionText ||
+      option?.label ||
+      ''
+  )
+  const questionKey = normalizeText(question?.questionKey)
+  const targetDimension = normalizeText(question?.targetDimension)
+
+  if (isYellowingWateringQuestion(questionKey, targetDimension)) {
+    if (isFrequencyOption(optionKey, optionText, [
+      'often_wet',
+      'more_wet',
+      'too_wet',
+      'over_wet',
+      'yes'
+    ])) {
+      return '近2周 2 次以上'
+    }
+    if (isFrequencyOption(optionKey, optionText, [
+      'normal_or_stable',
+      'no_change',
+      'normal',
+      'stable'
+    ])) {
+      return '近2周 1-2 次'
+    }
+    if (isFrequencyOption(optionKey, optionText, [
+      'often_dry',
+      'more_dry',
+      'not_enough',
+      'dry',
+      'lack'
+    ])) {
+      return '近2周 0 次'
+    }
+    return ''
+  }
+
+  if (isYellowingFertilizationQuestion(questionKey, targetDimension)) {
+    if (isFrequencyOption(optionKey, optionText, [
+      'low_or_no_fertilizer',
+      'no',
+      'none',
+      'not_fertilized'
+    ])) {
+      return '近1个月 0 次'
+    }
+    if (isFrequencyOption(optionKey, optionText, [
+      'normal_light_fertilizer',
+      'normal',
+      'appropriate'
+    ])) {
+      return '近1个月 1-2 次'
+    }
+    if (isFrequencyOption(optionKey, optionText, [
+      'recent_heavy_fertilizer_or_repot',
+      'heavy_fertilizer',
+      'heavy',
+      'repot',
+      'fertilize'
+    ])) {
+      return '近1个月 2 次以上'
+    }
+    return ''
+  }
+
+  return ''
 }
 
 function getOptionDescription(option = {}) {
@@ -920,6 +1198,45 @@ function getOptionDescription(option = {}) {
       option?.desc ||
       ''
   )
+}
+
+function isYellowingFollowUpQuestion(question = {}) {
+  const questionKey = normalizeText(question?.questionKey)
+  const questionText = normalizeText(
+    question?.questionTextCn ||
+      question?.questionTextUserCn ||
+      question?.questionText ||
+      ''
+  )
+  return questionKey.includes('yellowing') || questionText.includes('黄叶')
+}
+
+function isYellowingWateringQuestion(questionKey = '', targetDimension = '') {
+  return questionKey.includes('watering_frequency_context') ||
+    questionKey.includes('watering_context') ||
+    questionKey.includes('watering') ||
+    targetDimension.includes('watering')
+}
+
+function isYellowingFertilizationQuestion(questionKey = '', targetDimension = '') {
+  return questionKey.includes('fertilization_growth_context') ||
+    questionKey.includes('fertilization_context') ||
+    questionKey.includes('fertilization_reference') ||
+    questionKey.includes('fertilization') ||
+    targetDimension.includes('fertilization')
+}
+
+function isFrequencyOption(optionKey = '', optionText = '', optionKeys = []) {
+  if (optionKeys.includes(optionKey)) {
+    return true
+  }
+
+  if (!optionText) {
+    return false
+  }
+
+  const compactText = normalizeText(optionText).replace(/\s+/g, '')
+  return optionKeys.some(item => compactText.includes(item.replaceAll('_', '')))
 }
 
 function getFollowUpQuestionId(question) {
@@ -1166,6 +1483,10 @@ function handleDevSymptomClassChange(event) {
   const index = Number(event?.detail?.value ?? 0)
   const nextOption = devVisualSymptomClassPickerOptions.value[index] || devVisualSymptomClassPickerOptions.value[0]
   selectedDevSymptomClassKey.value = String(nextOption?.classKey || '').trim()
+}
+
+function selectDevSymptomClass(classKey = '') {
+  selectedDevSymptomClassKey.value = String(classKey || '').trim()
 }
 
 function clearDevSymptomClass() {
@@ -1887,6 +2208,31 @@ defineExpose({
   color: #2d6a4f;
   font-size: 11px;
   font-weight: 700;
+}
+
+.dev-visual-evidence-quick-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 116px;
+  margin-top: 8px;
+  overflow-y: auto;
+}
+
+.dev-visual-evidence-quick-option {
+  padding: 5px 8px;
+  border: 1px solid rgba(45, 106, 79, 0.16);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #456052;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.dev-visual-evidence-quick-option--active {
+  border-color: #2d6a4f;
+  background: #d8f3dc;
+  color: #1f5a42;
 }
 
 .dev-visual-evidence-status {

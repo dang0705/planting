@@ -87,3 +87,13 @@ canonical batch results 只保留 replay audit 核心字段：
 6. replay 产物是否足以解释 route 决策过程。
 7. batch artifact 是否保持精简，不把无关字段重新膨胀回来。
 8. 历史 session 复盘必须区分观察入口和 bug 发生位置：如果用户报告的是客户端运行时或最终展示，replay 通过后仍需验证 result/read 顶层字段与前端消费路径。
+
+## 8. 诊断 fast path / guard parity 回归
+
+涉及 `diagnose-http`、route、outcome、gate、runtime、`fast path`、`warm path`、`early return`、缓存命中或性能优化路径时，replay / smoke 不能只跑完整闭合路径，必须补充快捷路径负向回归：
+
+1. 明确列出主链路径与快捷路径各自的 follow-up / final / outcome 输出点。
+2. 证明快捷路径复用了主链输出守卫；不得只因为单个 gate 命中就提前 final。
+3. 黄叶路径必须覆盖首个浇水分组题的两个负向样本：`often_wet` 与 `often_dry` 首答后都应保持 follow-up / awaiting_follow_up，不能返回 final 或写入最终 outcome。
+4. 同一组变更还必须保留一个完整路径正向样本，证明必答分组完成后仍能进入最终结果。
+5. 真实 HTTP smoke 后需要核对 DB：`diagnosis_sessions.session_status`、`diagnosis_sessions.needs_follow_up`、最终 problem / outcome 字段，以及必要的 `diagnosis_follow_ups` 追问记录。
