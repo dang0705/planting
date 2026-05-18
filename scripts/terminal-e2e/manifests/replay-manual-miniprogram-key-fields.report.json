@@ -1,0 +1,274 @@
+{
+  "generatedAt": "2026-04-22T11:52:58.652Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "total": 4,
+  "success": 4,
+  "failed": 0,
+  "results": [
+    {
+      "ok": true,
+      "sessionId": "diag_1776497216908_nloxmvtp",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776497216909_9ykt5imd",
+        "currentRoundIndex": 2,
+        "observedEvidenceSetCount": 4,
+        "symptomClassRuntime": null,
+        "visualConclusion": {
+          "symptomCandidates": [
+            {
+              "symptomKey": "leaf_yellowing",
+              "displayNameCn": "叶子明显发黄",
+              "confidenceBand": "high",
+              "supportingRegionNote": "图中部分叶片呈现明显的黄色，与绿色叶片形成对比，黄化现象较为显著"
+            },
+            {
+              "symptomKey": "normal_leaf_aging_stable",
+              "displayNameCn": "底部老叶稳定黄化",
+              "confidenceBand": "medium",
+              "supportingRegionNote": "部分叶片黄化可能符合老叶自然老化的稳定黄化特征"
+            }
+          ],
+          "outOfPoolCandidates": [],
+          "routeHints": [
+            {
+              "type": "possible_problematic_signal",
+              "reason": "detected leaf yellowing which may indicate potential issues"
+            },
+            {
+              "type": "possible_non_problematic_signal",
+              "reason": "some yellowing could be due to natural leaf aging"
+            }
+          ]
+        }
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "symptomClassRuntime": {
+          "enabled": true,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "light_stress_mode",
+          "currentClassNameCn": "",
+          "currentGroupKey": "leaf_bleaching_confirm_group",
+          "currentGroupLabel": "",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": true,
+            "gateMode": "soft",
+            "sourceMode": "soft",
+            "primaryClassKey": "light_stress_mode",
+            "primaryClassRuntimeScore": 0.595,
+            "unknownLockCount": 3,
+            "currentClassKey": "light_stress_mode",
+            "hasEnabledGroups": true,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "",
+            "reviewedAtRound": 3
+          }
+        },
+        "followUps": []
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776509556300_t80mp3tg",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776509556301_7u6ejva6",
+        "currentRoundIndex": 2,
+        "observedEvidenceSetCount": 1,
+        "symptomClassRuntime": null,
+        "visualConclusion": {
+          "symptomCandidates": [
+            {
+              "symptomKey": "irregular_blotches",
+              "displayNameCn": "不规则斑块",
+              "confidenceBand": "high",
+              "supportingRegionNote": "叶片上存在多处深色不规则斑块，组织看起来相对完整，主要是表面颜色异常形成的斑块"
+            }
+          ],
+          "outOfPoolCandidates": [],
+          "routeHints": [
+            {
+              "type": "problematic_signal",
+              "reason": "存在不规则斑块的异常视觉信号"
+            }
+          ]
+        }
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentClassNameCn": "",
+          "currentGroupKey": "",
+          "currentGroupLabel": "",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "soft",
+            "sourceMode": "soft",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 3,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "class_group_pool_empty",
+            "reviewedAtRound": 3
+          }
+        },
+        "followUps": []
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776521814145_3n9ak1w5",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776521814146_5y0ce6nw",
+        "currentRoundIndex": 2,
+        "observedEvidenceSetCount": 2,
+        "symptomClassRuntime": null,
+        "visualConclusion": {
+          "symptomCandidates": [
+            {
+              "symptomKey": "leaf_yellowing",
+              "displayNameCn": "叶片黄化",
+              "confidenceBand": "high",
+              "supportingRegionNote": "图中存在多片明显发黄的叶片"
+            },
+            {
+              "symptomKey": "holes_in_leaf",
+              "displayNameCn": "叶片有洞",
+              "confidenceBand": "high",
+              "supportingRegionNote": "部分叶片存在真洞口或缺损情况"
+            }
+          ],
+          "outOfPoolCandidates": [],
+          "routeHints": [
+            {
+              "type": "possible_problematic_signal",
+              "reason": "存在叶片黄化和叶片有洞的异常视觉信号"
+            }
+          ]
+        }
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "symptomClassRuntime": {
+          "enabled": true,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "yellowing_mode",
+          "currentClassNameCn": "",
+          "currentGroupKey": "iron_group",
+          "currentGroupLabel": "",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": true,
+            "gateMode": "soft",
+            "sourceMode": "soft",
+            "primaryClassKey": "yellowing_mode",
+            "primaryClassRuntimeScore": 0.7905,
+            "unknownLockCount": 3,
+            "currentClassKey": "yellowing_mode",
+            "hasEnabledGroups": true,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "",
+            "reviewedAtRound": 3
+          }
+        },
+        "followUps": []
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776524906841_9gzq2dil",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776524906842_5mi3kaa5",
+        "currentRoundIndex": 2,
+        "observedEvidenceSetCount": 1,
+        "symptomClassRuntime": null,
+        "visualConclusion": {
+          "symptomCandidates": [
+            {
+              "symptomKey": "leaf_yellowing",
+              "displayNameCn": "叶片发黄",
+              "confidenceBand": "high",
+              "supportingRegionNote": "图中有多片叶片呈现明显的黄色，与正常绿色叶片形成对比"
+            }
+          ],
+          "outOfPoolCandidates": [],
+          "routeHints": [
+            {
+              "type": "possible_problematic_signal",
+              "reason": "observed significant leaf yellowing in multiple leaves"
+            }
+          ]
+        }
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "symptomClassRuntime": {
+          "enabled": true,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "yellowing_mode",
+          "currentClassNameCn": "",
+          "currentGroupKey": "iron_group",
+          "currentGroupLabel": "",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": true,
+            "gateMode": "soft",
+            "sourceMode": "soft",
+            "primaryClassKey": "yellowing_mode",
+            "primaryClassRuntimeScore": 0.7905,
+            "unknownLockCount": 3,
+            "currentClassKey": "yellowing_mode",
+            "hasEnabledGroups": true,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "",
+            "reviewedAtRound": 3
+          }
+        },
+        "followUps": []
+      }
+    }
+  ]
+}

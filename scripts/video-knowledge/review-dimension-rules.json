@@ -1,0 +1,63 @@
+{
+  "dimensions": [
+    {
+      "key": "water_management",
+      "patterns": ["浇水", "水分", "湿度"],
+      "candidate_questions": ["最近一次浇水是什么时候，盆土表层和深层分别是否仍潮湿？"],
+      "review_focus": ["核对是否可转化为浇水频率、土壤干湿观察或控水相关问诊点。"]
+    },
+    {
+      "key": "environment_management",
+      "patterns": ["温度", "光照", "光温水", "自然"],
+      "candidate_questions": ["植株当前的光照、温度和通风是否近期发生过变化？"],
+      "review_focus": ["核对是否涉及光照、温度、水分联动，而不是单一处理建议。"]
+    },
+    {
+      "key": "root_disturbance_risk",
+      "patterns": ["根", "扒土", "拔根"],
+      "candidate_questions": ["近期是否翻动盆土、检查根系、换盆或拔出植株观察？"],
+      "review_focus": ["核对是否应加入避免频繁翻土、拔根、查根的反面提醒。"]
+    },
+    {
+      "key": "root_health",
+      "patterns": ["根系", "养好根"],
+      "candidate_questions": ["根系是否有腐烂、干枯、闷根、伤根或长期不长新根的迹象？"],
+      "review_focus": ["核对缺素是否应先排查根系吸收和运输问题。"]
+    },
+    {
+      "key": "nutrient_deficiency",
+      "patterns": ["缺素", "元素", "叶片"],
+      "candidate_questions": ["叶片缺素表现是老叶先出现、新叶先出现，还是全株同步变淡？"],
+      "review_focus": ["核对是否能区分真实缺肥、根系失效导致的缺素表现和环境诱发黄化。"]
+    },
+    {
+      "key": "substrate_chemistry",
+      "patterns": ["积盐", "pH", "ph", "PH", "酸碱"],
+      "candidate_questions": ["盆面是否有白色盐渍，是否长期使用硬水或高频施肥？"],
+      "review_focus": ["核对盆面积盐、基质 pH 和水肥累积是否应进入问诊维度。"]
+    },
+    {
+      "key": "fertilization_risk",
+      "patterns": ["肥", "施肥", "肥料"],
+      "candidate_questions": ["最近是否施肥，肥料类型、浓度和频率分别是什么？"],
+      "review_focus": ["核对是否需要提示避免看到缺素就直接重肥补肥。"]
+    },
+    {
+      "key": "over_intervention",
+      "patterns": ["频繁", "过度", "干预", "包办", "查岗"],
+      "candidate_questions": ["你是否每天频繁检查或调整植物状态？"],
+      "review_focus": ["核对是否表达为减少不必要干预，而不是放任不管。"]
+    },
+    {
+      "key": "care_mindset",
+      "patterns": ["尊重", "距离", "隐私", "室友"],
+      "candidate_questions": ["这个经验适用于哪些植物、环境和生长阶段？"],
+      "review_focus": ["核对是否适合作为通用养护心态，不应直接替代具体诊断结论。"]
+    }
+  ],
+  "fallback": {
+    "key": "general_care_principle",
+    "candidate_questions": ["这个经验适用于哪些植物、环境和生长阶段？"],
+    "review_focus": ["核对该要点是否足够具体，是否需要人工补充适用植物、季节或环境前提。"]
+  }
+}

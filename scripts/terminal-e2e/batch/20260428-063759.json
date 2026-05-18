@@ -1,0 +1,218 @@
+{
+  "generatedAt": "2026-04-27T22:37:59.046Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "artifactSplit": {
+    "rootBaseName": "20260428-063759",
+    "partIndex": 1,
+    "partCount": 1,
+    "maxResultsPerFile": 100
+  },
+  "collectionProfile": {
+    "source": "all",
+    "manualVisualOnly": false,
+    "manualVisualOnlyProvided": false
+  },
+  "visualFinalEvidenceSummary": {
+    "total": 1,
+    "available": 1,
+    "missingRawRecords": 0,
+    "emptyConclusion": 0
+  },
+  "total": 1,
+  "success": 1,
+  "failed": 0,
+  "progress": {
+    "processed": 1,
+    "targetTotal": 1,
+    "complete": true
+  },
+  "results": [
+    {
+      "sessionId": "diag_1777328013769_r62fwvy2",
+      "visualFinalEvidence": [],
+      "symptomClassReplay": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_sticky_honeydew_confirm",
+            "questionText": "叶面或周围表面有明显发黏的蜜露吗？",
+            "targetDimension": "visual_presence",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_observed_probe__sticky_honeydew__distribution_scope",
+            "questionText": "这种“叶子摸起来发黏”主要集中在个别叶片/局部，还是多片叶子都能看到？",
+            "targetDimension": "distribution_scope",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "outcome": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "topProblem": {
+          "problemId": "p_bWVhbHlidWdz",
+          "problemKey": "mealybugs",
+          "displayName": "粉蚧",
+          "summary": "当前更像 粉蚧，但还不够确定。 当前最像的问题是：粉蚧。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "finalResult": {
+          "problemId": "p_bWVhbHlidWdz",
+          "problemKey": "",
+          "displayName": "粉蚧",
+          "summary": "当前更像 粉蚧，但还不够确定。 当前最像的问题是：粉蚧。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "roundIndex": 2
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1777328013769_r62fwvy2",
+        "easySummary": "本条没有进入正式证据层的视觉证据。本条没有形成可用的 symptom class 路由结果。第1轮共 1 题：问“叶面或周围表面有明显发黏的蜜露吗？”，答“看不出/不确定”。第2轮共 1 题：问“这种“叶子摸起来发黏”主要集中在个别叶片/局部，还是多片叶子都能看到？”，答“看不出/不确定”。最终收敛到“问题性结论”。当前可输出的最高候选是“粉蚧”，最终分 0。它压过了第二名“真菌蚊”(最终分 0)。 stopReason=await_follow_up。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "本条没有进入正式证据层的视觉证据。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "本条没有形成可用的 symptom class 路由结果。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 1 题：问“叶面或周围表面有明显发黏的蜜露吗？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮共 1 题：问“这种“叶子摸起来发黏”主要集中在个别叶片/局部，还是多片叶子都能看到？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统先按“总证据 = 视觉证据 + 1.25 × 问诊证据”计算总证据，再按“基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分”计算基础分，最后按“最终分 = 基础分 + 因果增强”做最终排序。本条当前第一名是“粉蚧”，最终分 0，其中视觉证据 0，问诊证据 0，扣分 0。第二名是“真菌蚊”，最终分 0。 当前可靠度 0，第一二名分差 0。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前可输出的最高候选是“粉蚧”，最终分 0。它压过了第二名“真菌蚊”(最终分 0)。 stopReason=await_follow_up。"
+          }
+        ],
+        "competitionTopCandidates": [
+          {
+            "rankNo": 1,
+            "problemKey": "mealybugs",
+            "displayName": "粉蚧",
+            "role": "root_cause",
+            "visualEvidence": 0,
+            "questionEvidence": 0,
+            "totalEvidence": 0,
+            "penalty": 0,
+            "genusCompatibility": 0.82,
+            "hostCompatibility": 0.82,
+            "baseScore": 0,
+            "finalScore": 0
+          },
+          {
+            "rankNo": 2,
+            "problemKey": "fungus_gnat",
+            "displayName": "真菌蚊",
+            "role": "root_cause",
+            "visualEvidence": 0,
+            "questionEvidence": 0,
+            "totalEvidence": 0,
+            "penalty": 0,
+            "genusCompatibility": 0.76,
+            "hostCompatibility": 0.76,
+            "baseScore": 0,
+            "finalScore": 0
+          },
+          {
+            "rankNo": 3,
+            "problemKey": "fungal_leaf_spot",
+            "displayName": "真菌叶斑",
+            "role": "root_cause",
+            "visualEvidence": 0,
+            "questionEvidence": 0,
+            "totalEvidence": 0,
+            "penalty": 0,
+            "genusCompatibility": 0.76,
+            "hostCompatibility": 0.7,
+            "baseScore": 0,
+            "finalScore": 0
+          }
+        ],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前可输出的最高候选是“粉蚧”，最终分 0。它压过了第二名“真菌蚊”(最终分 0)。 stopReason=await_follow_up。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "await_follow_up",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    }
+  ]
+}

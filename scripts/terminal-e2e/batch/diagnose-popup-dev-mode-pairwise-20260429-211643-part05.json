@@ -1,0 +1,1090 @@
+{
+  "batchSource": "diagnose-popup-dev-mode-pairwise",
+  "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+  "generatedAt": "2026-04-29T13:16:43.109Z",
+  "summary": {
+    "modeCount": 28,
+    "directFinalCount": 6,
+    "discoveredQuestionCount": 123,
+    "scheduledPairCount": 408,
+    "coveredPairCount": 408,
+    "reviewRecordCount": 414,
+    "failureCount": 0
+  },
+  "splitMeta": {
+    "rootBaseName": "diagnose-popup-dev-mode-pairwise-20260429-211643",
+    "partIndex": 5,
+    "partCount": 5,
+    "maxResultsPerFile": 100
+  },
+  "results": [
+    {
+      "sessionId": "diag_1777469261714_c3wmp9ib",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "water_soaked_spots",
+          "symptomCn": "水渍斑",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "bacterial_leaf_spot_mode",
+        "classKey": "bacterial_leaf_spot_mode",
+        "symptomKey": "water_soaked_spots"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__water_soaked_spots__lesion_water_soaking",
+        "optionKey": "yes",
+        "questionText": "斑点边缘有没有像被水浸过一样，发暗、半透明或偏软？",
+        "optionText": "是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__water_soaked_spots__lesion_halo",
+          "optionKey": "yes",
+          "questionText": "这些斑点周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__water_soaked_spots__tissue_moisture",
+          "optionKey": "yes",
+          "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
+          "optionText": "更像干硬坏死"
+        },
+        {
+          "questionKey": "q_observed_probe__water_soaked_spots__progression",
+          "optionKey": "yes",
+          "questionText": "最近 7 天内，这类“水渍斑”有没有明显变多、变大或加重？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__water_soaked_spots__distribution_scope",
+          "optionKey": "yes",
+          "questionText": "这类异常现在主要出现在少数叶片/局部，还是多片叶子、多个位置都能看到？",
+          "optionText": "主要集中在个别叶片/局部"
+        },
+        {
+          "questionKey": "q_observed_probe__water_soaked_spots__host_confirmation",
+          "optionKey": "yes",
+          "questionText": "这种“水渍斑”主要先出现在老叶，还是新叶也很明显？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__water_soaked_spots__underside_presence",
+          "optionKey": "no",
+          "questionText": "翻看叶背、叶脉附近或更隐蔽的位置，这种“水渍斑”在背面是否更明显？",
+          "optionText": "不是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "更像是细菌叶斑",
+        "pendingTopTitle": "",
+        "currentTopTitle": "更像是细菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "bacterial_leaf_spot_mode/water_soaked_spots > q_observed_probe__water_soaked_spots__lesion_water_soaking=yes > q_observed_probe__water_soaked_spots__lesion_halo=yes > q_observed_probe__water_soaked_spots__tissue_moisture=yes > q_observed_probe__water_soaked_spots__progression=yes > q_observed_probe__water_soaked_spots__distribution_scope=yes > q_observed_probe__water_soaked_spots__host_confirmation=yes > q_observed_probe__water_soaked_spots__underside_presence=no",
+        "roundsUsed": 7,
+        "questionCount": 7,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777469262536_bwgzla41",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "water_soaked_spots",
+          "symptomCn": "水渍斑",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "bacterial_leaf_spot_mode",
+        "classKey": "bacterial_leaf_spot_mode",
+        "symptomKey": "water_soaked_spots"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__water_soaked_spots__lesion_water_soaking",
+        "optionKey": "yes",
+        "questionText": "斑点边缘有没有像被水浸过一样，发暗、半透明或偏软？",
+        "optionText": "是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__water_soaked_spots__lesion_halo",
+          "optionKey": "yes",
+          "questionText": "这些斑点周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__water_soaked_spots__tissue_moisture",
+          "optionKey": "yes",
+          "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
+          "optionText": "更像干硬坏死"
+        },
+        {
+          "questionKey": "q_observed_probe__water_soaked_spots__progression",
+          "optionKey": "yes",
+          "questionText": "最近 7 天内，这类“水渍斑”有没有明显变多、变大或加重？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__water_soaked_spots__distribution_scope",
+          "optionKey": "yes",
+          "questionText": "这类异常现在主要出现在少数叶片/局部，还是多片叶子、多个位置都能看到？",
+          "optionText": "主要集中在个别叶片/局部"
+        },
+        {
+          "questionKey": "q_observed_probe__water_soaked_spots__host_confirmation",
+          "optionKey": "yes",
+          "questionText": "这种“水渍斑”主要先出现在老叶，还是新叶也很明显？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__water_soaked_spots__underside_presence",
+          "optionKey": "unknown",
+          "questionText": "翻看叶背、叶脉附近或更隐蔽的位置，这种“水渍斑”在背面是否更明显？",
+          "optionText": "还没看叶背/看不出"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "更像是细菌叶斑",
+        "pendingTopTitle": "",
+        "currentTopTitle": "更像是细菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "bacterial_leaf_spot_mode/water_soaked_spots > q_observed_probe__water_soaked_spots__lesion_water_soaking=yes > q_observed_probe__water_soaked_spots__lesion_halo=yes > q_observed_probe__water_soaked_spots__tissue_moisture=yes > q_observed_probe__water_soaked_spots__progression=yes > q_observed_probe__water_soaked_spots__distribution_scope=yes > q_observed_probe__water_soaked_spots__host_confirmation=yes > q_observed_probe__water_soaked_spots__underside_presence=unknown",
+        "roundsUsed": 7,
+        "questionCount": 7,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777469267097_j1ov74so",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_margin_necrosis",
+          "symptomCn": "叶缘坏死",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_edge_necrosis_mode",
+        "classKey": "leaf_edge_necrosis_mode",
+        "symptomKey": "leaf_margin_necrosis"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_margin_necrosis__watering_frequency_context",
+        "optionKey": "often_wet",
+        "questionText": "黄叶和浇水有关时，重点不是“浇没浇”，而是最近是否明显偏多或偏少。浇水：参考暂时不完整，先看最近两周是否明显比平时更勤或更少。最近 2 周，你的浇水更接近哪一种？",
+        "optionText": "偏勤：比平时更勤，或土还没明显变干就又浇"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_margin_necrosis__light_change_context",
+          "optionKey": "stronger_direct_light",
+          "questionText": "黄叶和光照有关时，关键是直射太阳是否明显偏多或偏少。最近 1-2 周，这盆植物每天大概能晒到多久的直射太阳？",
+          "optionText": "每天直射 3 小时以上，或最近突然晒得更多"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_margin_necrosis__fertilization_growth_context",
+          "optionKey": "low_or_no_fertilizer",
+          "questionText": "黄叶和营养有关时，既可能是长期没补肥，也可能是近期重肥或换盆刺激。最近 1 个月，你大概施肥几次？",
+          "optionText": "近 2 个月 0 次，或明显少于平时"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_margin_necrosis__progression",
+          "optionKey": "no",
+          "questionText": "最近 7 天内，这类“叶缘坏死”有没有明显变多、变大或加重？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_margin_necrosis__distribution_scope",
+          "optionKey": "yes",
+          "questionText": "这类异常现在主要出现在少数叶片/局部，还是多片叶子、多个位置都能看到？",
+          "optionText": "主要集中在个别叶片/局部"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_margin_necrosis__host_confirmation",
+          "optionKey": "yes",
+          "questionText": "这种“叶缘坏死”主要先出现在老叶，还是新叶也很明显？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_margin_necrosis__underside_presence",
+          "optionKey": "yes",
+          "questionText": "翻看叶背、叶脉附近或更隐蔽的位置，这种“叶缘坏死”在背面是否更明显？",
+          "optionText": "是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_edge_necrosis_mode/leaf_margin_necrosis > q_observed_probe__leaf_margin_necrosis__watering_frequency_context=often_wet > q_observed_probe__leaf_margin_necrosis__light_change_context=stronger_direct_light > q_observed_probe__leaf_margin_necrosis__fertilization_growth_context=low_or_no_fertilizer > q_observed_probe__leaf_margin_necrosis__progression=no > q_observed_probe__leaf_margin_necrosis__distribution_scope=yes > q_observed_probe__leaf_margin_necrosis__host_confirmation=yes > q_observed_probe__leaf_margin_necrosis__underside_presence=yes",
+        "roundsUsed": 7,
+        "questionCount": 7,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777469271115_cfsegdiw",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_margin_necrosis",
+          "symptomCn": "叶缘坏死",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_edge_necrosis_mode",
+        "classKey": "leaf_edge_necrosis_mode",
+        "symptomKey": "leaf_margin_necrosis"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_margin_necrosis__watering_frequency_context",
+        "optionKey": "often_wet",
+        "questionText": "黄叶和浇水有关时，重点不是“浇没浇”，而是最近是否明显偏多或偏少。浇水：参考暂时不完整，先看最近两周是否明显比平时更勤或更少。最近 2 周，你的浇水更接近哪一种？",
+        "optionText": "偏勤：比平时更勤，或土还没明显变干就又浇"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_margin_necrosis__light_change_context",
+          "optionKey": "stronger_direct_light",
+          "questionText": "黄叶和光照有关时，关键是直射太阳是否明显偏多或偏少。最近 1-2 周，这盆植物每天大概能晒到多久的直射太阳？",
+          "optionText": "每天直射 3 小时以上，或最近突然晒得更多"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_margin_necrosis__fertilization_growth_context",
+          "optionKey": "low_or_no_fertilizer",
+          "questionText": "黄叶和营养有关时，既可能是长期没补肥，也可能是近期重肥或换盆刺激。最近 1 个月，你大概施肥几次？",
+          "optionText": "近 2 个月 0 次，或明显少于平时"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_margin_necrosis__progression",
+          "optionKey": "no",
+          "questionText": "最近 7 天内，这类“叶缘坏死”有没有明显变多、变大或加重？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_margin_necrosis__distribution_scope",
+          "optionKey": "yes",
+          "questionText": "这类异常现在主要出现在少数叶片/局部，还是多片叶子、多个位置都能看到？",
+          "optionText": "主要集中在个别叶片/局部"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_margin_necrosis__host_confirmation",
+          "optionKey": "yes",
+          "questionText": "这种“叶缘坏死”主要先出现在老叶，还是新叶也很明显？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_margin_necrosis__underside_presence",
+          "optionKey": "no",
+          "questionText": "翻看叶背、叶脉附近或更隐蔽的位置，这种“叶缘坏死”在背面是否更明显？",
+          "optionText": "不是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_edge_necrosis_mode/leaf_margin_necrosis > q_observed_probe__leaf_margin_necrosis__watering_frequency_context=often_wet > q_observed_probe__leaf_margin_necrosis__light_change_context=stronger_direct_light > q_observed_probe__leaf_margin_necrosis__fertilization_growth_context=low_or_no_fertilizer > q_observed_probe__leaf_margin_necrosis__progression=no > q_observed_probe__leaf_margin_necrosis__distribution_scope=yes > q_observed_probe__leaf_margin_necrosis__host_confirmation=yes > q_observed_probe__leaf_margin_necrosis__underside_presence=no",
+        "roundsUsed": 7,
+        "questionCount": 7,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777469274437_zceocca2",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_margin_necrosis",
+          "symptomCn": "叶缘坏死",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_edge_necrosis_mode",
+        "classKey": "leaf_edge_necrosis_mode",
+        "symptomKey": "leaf_margin_necrosis"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_margin_necrosis__watering_frequency_context",
+        "optionKey": "often_wet",
+        "questionText": "黄叶和浇水有关时，重点不是“浇没浇”，而是最近是否明显偏多或偏少。浇水：参考暂时不完整，先看最近两周是否明显比平时更勤或更少。最近 2 周，你的浇水更接近哪一种？",
+        "optionText": "偏勤：比平时更勤，或土还没明显变干就又浇"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_margin_necrosis__light_change_context",
+          "optionKey": "stronger_direct_light",
+          "questionText": "黄叶和光照有关时，关键是直射太阳是否明显偏多或偏少。最近 1-2 周，这盆植物每天大概能晒到多久的直射太阳？",
+          "optionText": "每天直射 3 小时以上，或最近突然晒得更多"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_margin_necrosis__fertilization_growth_context",
+          "optionKey": "low_or_no_fertilizer",
+          "questionText": "黄叶和营养有关时，既可能是长期没补肥，也可能是近期重肥或换盆刺激。最近 1 个月，你大概施肥几次？",
+          "optionText": "近 2 个月 0 次，或明显少于平时"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_margin_necrosis__progression",
+          "optionKey": "no",
+          "questionText": "最近 7 天内，这类“叶缘坏死”有没有明显变多、变大或加重？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_margin_necrosis__distribution_scope",
+          "optionKey": "yes",
+          "questionText": "这类异常现在主要出现在少数叶片/局部，还是多片叶子、多个位置都能看到？",
+          "optionText": "主要集中在个别叶片/局部"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_margin_necrosis__host_confirmation",
+          "optionKey": "yes",
+          "questionText": "这种“叶缘坏死”主要先出现在老叶，还是新叶也很明显？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_margin_necrosis__underside_presence",
+          "optionKey": "unknown",
+          "questionText": "翻看叶背、叶脉附近或更隐蔽的位置，这种“叶缘坏死”在背面是否更明显？",
+          "optionText": "还没看叶背/看不出"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_edge_necrosis_mode/leaf_margin_necrosis > q_observed_probe__leaf_margin_necrosis__watering_frequency_context=often_wet > q_observed_probe__leaf_margin_necrosis__light_change_context=stronger_direct_light > q_observed_probe__leaf_margin_necrosis__fertilization_growth_context=low_or_no_fertilizer > q_observed_probe__leaf_margin_necrosis__progression=no > q_observed_probe__leaf_margin_necrosis__distribution_scope=yes > q_observed_probe__leaf_margin_necrosis__host_confirmation=yes > q_observed_probe__leaf_margin_necrosis__underside_presence=unknown",
+        "roundsUsed": 7,
+        "questionCount": 7,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777469283305_1lo88exe",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_spot_complex_mode",
+        "classKey": "leaf_spot_complex_mode",
+        "symptomKey": "irregular_blotches"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__irregular_blotches__lesion_water_soaking",
+        "optionKey": "yes",
+        "questionText": "斑点边缘有没有像被水浸过一样，发暗、半透明或偏软？",
+        "optionText": "是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
+          "optionKey": "yes",
+          "questionText": "这些斑点周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
+          "optionKey": "yes",
+          "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
+          "optionText": "更像干硬坏死"
+        },
+        {
+          "questionKey": "q_observed_probe__irregular_blotches__progression",
+          "optionKey": "no",
+          "questionText": "最近 7 天内，这类“不规则斑块”有没有明显变多、变大或加重？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_observed_probe__irregular_blotches__distribution_scope",
+          "optionKey": "yes",
+          "questionText": "这类异常现在主要出现在少数叶片/局部，还是多片叶子、多个位置都能看到？",
+          "optionText": "主要集中在个别叶片/局部"
+        },
+        {
+          "questionKey": "q_observed_probe__irregular_blotches__host_confirmation",
+          "optionKey": "yes",
+          "questionText": "这种“不规则斑块”主要先出现在老叶，还是新叶也很明显？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__irregular_blotches__underside_presence",
+          "optionKey": "yes",
+          "questionText": "翻看叶背、叶脉附近或更隐蔽的位置，这种“不规则斑块”在背面是否更明显？",
+          "optionText": "是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "更像是真菌叶斑",
+        "pendingTopTitle": "",
+        "currentTopTitle": "更像是真菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_spot_complex_mode/irregular_blotches > q_observed_probe__irregular_blotches__lesion_water_soaking=yes > q_observed_probe__irregular_blotches__lesion_halo=yes > q_observed_probe__irregular_blotches__tissue_moisture=yes > q_observed_probe__irregular_blotches__progression=no > q_observed_probe__irregular_blotches__distribution_scope=yes > q_observed_probe__irregular_blotches__host_confirmation=yes > q_observed_probe__irregular_blotches__underside_presence=yes",
+        "roundsUsed": 7,
+        "questionCount": 7,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777469283624_9ngvugxc",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_spot_complex_mode",
+        "classKey": "leaf_spot_complex_mode",
+        "symptomKey": "irregular_blotches"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__irregular_blotches__lesion_water_soaking",
+        "optionKey": "yes",
+        "questionText": "斑点边缘有没有像被水浸过一样，发暗、半透明或偏软？",
+        "optionText": "是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
+          "optionKey": "yes",
+          "questionText": "这些斑点周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
+          "optionKey": "yes",
+          "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
+          "optionText": "更像干硬坏死"
+        },
+        {
+          "questionKey": "q_observed_probe__irregular_blotches__progression",
+          "optionKey": "no",
+          "questionText": "最近 7 天内，这类“不规则斑块”有没有明显变多、变大或加重？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_observed_probe__irregular_blotches__distribution_scope",
+          "optionKey": "yes",
+          "questionText": "这类异常现在主要出现在少数叶片/局部，还是多片叶子、多个位置都能看到？",
+          "optionText": "主要集中在个别叶片/局部"
+        },
+        {
+          "questionKey": "q_observed_probe__irregular_blotches__host_confirmation",
+          "optionKey": "yes",
+          "questionText": "这种“不规则斑块”主要先出现在老叶，还是新叶也很明显？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__irregular_blotches__underside_presence",
+          "optionKey": "no",
+          "questionText": "翻看叶背、叶脉附近或更隐蔽的位置，这种“不规则斑块”在背面是否更明显？",
+          "optionText": "不是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "更像是真菌叶斑",
+        "pendingTopTitle": "",
+        "currentTopTitle": "更像是真菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_spot_complex_mode/irregular_blotches > q_observed_probe__irregular_blotches__lesion_water_soaking=yes > q_observed_probe__irregular_blotches__lesion_halo=yes > q_observed_probe__irregular_blotches__tissue_moisture=yes > q_observed_probe__irregular_blotches__progression=no > q_observed_probe__irregular_blotches__distribution_scope=yes > q_observed_probe__irregular_blotches__host_confirmation=yes > q_observed_probe__irregular_blotches__underside_presence=no",
+        "roundsUsed": 7,
+        "questionCount": 7,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777469284463_96f06vi7",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_spot_complex_mode",
+        "classKey": "leaf_spot_complex_mode",
+        "symptomKey": "irregular_blotches"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__irregular_blotches__lesion_water_soaking",
+        "optionKey": "yes",
+        "questionText": "斑点边缘有没有像被水浸过一样，发暗、半透明或偏软？",
+        "optionText": "是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
+          "optionKey": "yes",
+          "questionText": "这些斑点周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
+          "optionKey": "yes",
+          "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
+          "optionText": "更像干硬坏死"
+        },
+        {
+          "questionKey": "q_observed_probe__irregular_blotches__progression",
+          "optionKey": "no",
+          "questionText": "最近 7 天内，这类“不规则斑块”有没有明显变多、变大或加重？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_observed_probe__irregular_blotches__distribution_scope",
+          "optionKey": "yes",
+          "questionText": "这类异常现在主要出现在少数叶片/局部，还是多片叶子、多个位置都能看到？",
+          "optionText": "主要集中在个别叶片/局部"
+        },
+        {
+          "questionKey": "q_observed_probe__irregular_blotches__host_confirmation",
+          "optionKey": "yes",
+          "questionText": "这种“不规则斑块”主要先出现在老叶，还是新叶也很明显？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__irregular_blotches__underside_presence",
+          "optionKey": "unknown",
+          "questionText": "翻看叶背、叶脉附近或更隐蔽的位置，这种“不规则斑块”在背面是否更明显？",
+          "optionText": "还没看叶背/看不出"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "更像是真菌叶斑",
+        "pendingTopTitle": "",
+        "currentTopTitle": "更像是真菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_spot_complex_mode/irregular_blotches > q_observed_probe__irregular_blotches__lesion_water_soaking=yes > q_observed_probe__irregular_blotches__lesion_halo=yes > q_observed_probe__irregular_blotches__tissue_moisture=yes > q_observed_probe__irregular_blotches__progression=no > q_observed_probe__irregular_blotches__distribution_scope=yes > q_observed_probe__irregular_blotches__host_confirmation=yes > q_observed_probe__irregular_blotches__underside_presence=unknown",
+        "roundsUsed": 7,
+        "questionCount": 7,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777469289151_7e9f8oe5",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_bleaching",
+          "symptomCn": "叶片漂白",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "light_stress_mode",
+        "classKey": "light_stress_mode",
+        "symptomKey": "leaf_bleaching"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_bleaching__light_change_context",
+        "optionKey": "stronger_direct_light",
+        "questionText": "黄叶和光照有关时，关键是直射太阳是否明显偏多或偏少。最近 1-2 周，这盆植物每天大概能晒到多久的直射太阳？",
+        "optionText": "每天直射 3 小时以上，或最近突然晒得更多"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_bleaching__watering_frequency_context",
+          "optionKey": "often_wet",
+          "questionText": "黄叶和浇水有关时，重点不是“浇没浇”，而是最近是否明显偏多或偏少。浇水：参考暂时不完整，先看最近两周是否明显比平时更勤或更少。最近 2 周，你的浇水更接近哪一种？",
+          "optionText": "偏勤：比平时更勤，或土还没明显变干就又浇"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_bleaching__fertilization_growth_context",
+          "optionKey": "low_or_no_fertilizer",
+          "questionText": "黄叶和营养有关时，既可能是长期没补肥，也可能是近期重肥或换盆刺激。最近 1 个月，你大概施肥几次？",
+          "optionText": "近 2 个月 0 次，或明显少于平时"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_bleaching__progression",
+          "optionKey": "yes",
+          "questionText": "最近 7 天内，这类“叶片漂白”有没有明显变多、变大或加重？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_bleaching__distribution_scope",
+          "optionKey": "no",
+          "questionText": "这类异常现在主要出现在少数叶片/局部，还是多片叶子、多个位置都能看到？",
+          "optionText": "多片叶子都能看到"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_bleaching__host_confirmation",
+          "optionKey": "yes",
+          "questionText": "这种“叶片漂白”主要先出现在老叶，还是新叶也很明显？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_bleaching__underside_presence",
+          "optionKey": "yes",
+          "questionText": "翻看叶背、叶脉附近或更隐蔽的位置，这种“叶片漂白”在背面是否更明显？",
+          "optionText": "是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "light_stress_mode/leaf_bleaching > q_observed_probe__leaf_bleaching__light_change_context=stronger_direct_light > q_observed_probe__leaf_bleaching__watering_frequency_context=often_wet > q_observed_probe__leaf_bleaching__fertilization_growth_context=low_or_no_fertilizer > q_observed_probe__leaf_bleaching__progression=yes > q_observed_probe__leaf_bleaching__distribution_scope=no > q_observed_probe__leaf_bleaching__host_confirmation=yes > q_observed_probe__leaf_bleaching__underside_presence=yes",
+        "roundsUsed": 7,
+        "questionCount": 7,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777469293993_gsv2qx6t",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_bleaching",
+          "symptomCn": "叶片漂白",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "light_stress_mode",
+        "classKey": "light_stress_mode",
+        "symptomKey": "leaf_bleaching"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_bleaching__light_change_context",
+        "optionKey": "stronger_direct_light",
+        "questionText": "黄叶和光照有关时，关键是直射太阳是否明显偏多或偏少。最近 1-2 周，这盆植物每天大概能晒到多久的直射太阳？",
+        "optionText": "每天直射 3 小时以上，或最近突然晒得更多"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_bleaching__watering_frequency_context",
+          "optionKey": "often_wet",
+          "questionText": "黄叶和浇水有关时，重点不是“浇没浇”，而是最近是否明显偏多或偏少。浇水：参考暂时不完整，先看最近两周是否明显比平时更勤或更少。最近 2 周，你的浇水更接近哪一种？",
+          "optionText": "偏勤：比平时更勤，或土还没明显变干就又浇"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_bleaching__fertilization_growth_context",
+          "optionKey": "low_or_no_fertilizer",
+          "questionText": "黄叶和营养有关时，既可能是长期没补肥，也可能是近期重肥或换盆刺激。最近 1 个月，你大概施肥几次？",
+          "optionText": "近 2 个月 0 次，或明显少于平时"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_bleaching__progression",
+          "optionKey": "yes",
+          "questionText": "最近 7 天内，这类“叶片漂白”有没有明显变多、变大或加重？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_bleaching__distribution_scope",
+          "optionKey": "no",
+          "questionText": "这类异常现在主要出现在少数叶片/局部，还是多片叶子、多个位置都能看到？",
+          "optionText": "多片叶子都能看到"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_bleaching__host_confirmation",
+          "optionKey": "yes",
+          "questionText": "这种“叶片漂白”主要先出现在老叶，还是新叶也很明显？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_bleaching__underside_presence",
+          "optionKey": "no",
+          "questionText": "翻看叶背、叶脉附近或更隐蔽的位置，这种“叶片漂白”在背面是否更明显？",
+          "optionText": "不是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "light_stress_mode/leaf_bleaching > q_observed_probe__leaf_bleaching__light_change_context=stronger_direct_light > q_observed_probe__leaf_bleaching__watering_frequency_context=often_wet > q_observed_probe__leaf_bleaching__fertilization_growth_context=low_or_no_fertilizer > q_observed_probe__leaf_bleaching__progression=yes > q_observed_probe__leaf_bleaching__distribution_scope=no > q_observed_probe__leaf_bleaching__host_confirmation=yes > q_observed_probe__leaf_bleaching__underside_presence=no",
+        "roundsUsed": 7,
+        "questionCount": 7,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777469297364_xzf0ucos",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_bleaching",
+          "symptomCn": "叶片漂白",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "light_stress_mode",
+        "classKey": "light_stress_mode",
+        "symptomKey": "leaf_bleaching"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_bleaching__light_change_context",
+        "optionKey": "stronger_direct_light",
+        "questionText": "黄叶和光照有关时，关键是直射太阳是否明显偏多或偏少。最近 1-2 周，这盆植物每天大概能晒到多久的直射太阳？",
+        "optionText": "每天直射 3 小时以上，或最近突然晒得更多"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_bleaching__watering_frequency_context",
+          "optionKey": "often_wet",
+          "questionText": "黄叶和浇水有关时，重点不是“浇没浇”，而是最近是否明显偏多或偏少。浇水：参考暂时不完整，先看最近两周是否明显比平时更勤或更少。最近 2 周，你的浇水更接近哪一种？",
+          "optionText": "偏勤：比平时更勤，或土还没明显变干就又浇"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_bleaching__fertilization_growth_context",
+          "optionKey": "low_or_no_fertilizer",
+          "questionText": "黄叶和营养有关时，既可能是长期没补肥，也可能是近期重肥或换盆刺激。最近 1 个月，你大概施肥几次？",
+          "optionText": "近 2 个月 0 次，或明显少于平时"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_bleaching__progression",
+          "optionKey": "yes",
+          "questionText": "最近 7 天内，这类“叶片漂白”有没有明显变多、变大或加重？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_bleaching__distribution_scope",
+          "optionKey": "no",
+          "questionText": "这类异常现在主要出现在少数叶片/局部，还是多片叶子、多个位置都能看到？",
+          "optionText": "多片叶子都能看到"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_bleaching__host_confirmation",
+          "optionKey": "yes",
+          "questionText": "这种“叶片漂白”主要先出现在老叶，还是新叶也很明显？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_bleaching__underside_presence",
+          "optionKey": "unknown",
+          "questionText": "翻看叶背、叶脉附近或更隐蔽的位置，这种“叶片漂白”在背面是否更明显？",
+          "optionText": "还没看叶背/看不出"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "light_stress_mode/leaf_bleaching > q_observed_probe__leaf_bleaching__light_change_context=stronger_direct_light > q_observed_probe__leaf_bleaching__watering_frequency_context=often_wet > q_observed_probe__leaf_bleaching__fertilization_growth_context=low_or_no_fertilizer > q_observed_probe__leaf_bleaching__progression=yes > q_observed_probe__leaf_bleaching__distribution_scope=no > q_observed_probe__leaf_bleaching__host_confirmation=yes > q_observed_probe__leaf_bleaching__underside_presence=unknown",
+        "roundsUsed": 7,
+        "questionCount": 7,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777469306490_zxx929hl",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "edema",
+          "symptomCn": "水肿",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "edema_overwater_mode",
+        "classKey": "edema_overwater_mode",
+        "symptomKey": "edema"
+      },
+      "round1": {
+        "questionKey": "q_gnat_soil_stays_wet",
+        "optionKey": "no",
+        "questionText": "盆土经常长时间偏湿、久不干吗？",
+        "optionText": "不是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__edema__edema_bump_stage",
+          "optionKey": "watery_blister",
+          "questionText": "鼓包或水泡可能来自水肿、后期结痂，也可能只是普通斑点。先确认变化阶段，后面才能少问无关问题。这些鼓包或水泡更接近哪种变化？",
+          "optionText": "像透明或半透明小水泡，常在叶背更明显"
+        },
+        {
+          "questionKey": "q_observed_probe__edema__substrate_moisture",
+          "optionKey": "yes",
+          "questionText": "关于“水肿”，最近有没有变多、变大，或出现在其他位置？",
+          "optionText": "是，更符合前面描述的情况"
+        },
+        {
+          "questionKey": "q_observed_probe__edema__light_change_context",
+          "optionKey": "stronger_direct_light",
+          "questionText": "黄叶和光照有关时，关键是直射太阳是否明显偏多或偏少。最近 1-2 周，这盆植物每天大概能晒到多久的直射太阳？",
+          "optionText": "每天直射 3 小时以上，或最近突然晒得更多"
+        },
+        {
+          "questionKey": "q_observed_probe__edema__progression",
+          "optionKey": "yes",
+          "questionText": "最近 7 天内，这类“水肿”有没有明显变多、变大或加重？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__edema__distribution_scope",
+          "optionKey": "yes",
+          "questionText": "这类异常现在主要出现在少数叶片/局部，还是多片叶子、多个位置都能看到？",
+          "optionText": "主要集中在个别叶片/局部"
+        },
+        {
+          "questionKey": "q_observed_probe__edema__host_confirmation",
+          "optionKey": "yes",
+          "questionText": "这种“水肿”主要先出现在老叶，还是新叶也很明显？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__edema__underside_presence",
+          "optionKey": "no",
+          "questionText": "翻看叶背、叶脉附近或更隐蔽的位置，这种“水肿”在背面是否更明显？",
+          "optionText": "不是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "更像是浇水过多",
+        "pendingTopTitle": "",
+        "currentTopTitle": "更像是浇水过多"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no > q_observed_probe__edema__edema_bump_stage=watery_blister > q_observed_probe__edema__substrate_moisture=yes > q_observed_probe__edema__light_change_context=stronger_direct_light > q_observed_probe__edema__progression=yes > q_observed_probe__edema__distribution_scope=yes > q_observed_probe__edema__host_confirmation=yes > q_observed_probe__edema__underside_presence=no",
+        "roundsUsed": 8,
+        "questionCount": 8,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777469306281_g8a0g4h8",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "edema",
+          "symptomCn": "水肿",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "edema_overwater_mode",
+        "classKey": "edema_overwater_mode",
+        "symptomKey": "edema"
+      },
+      "round1": {
+        "questionKey": "q_gnat_soil_stays_wet",
+        "optionKey": "no",
+        "questionText": "盆土经常长时间偏湿、久不干吗？",
+        "optionText": "不是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__edema__edema_bump_stage",
+          "optionKey": "watery_blister",
+          "questionText": "鼓包或水泡可能来自水肿、后期结痂，也可能只是普通斑点。先确认变化阶段，后面才能少问无关问题。这些鼓包或水泡更接近哪种变化？",
+          "optionText": "像透明或半透明小水泡，常在叶背更明显"
+        },
+        {
+          "questionKey": "q_observed_probe__edema__substrate_moisture",
+          "optionKey": "yes",
+          "questionText": "关于“水肿”，最近有没有变多、变大，或出现在其他位置？",
+          "optionText": "是，更符合前面描述的情况"
+        },
+        {
+          "questionKey": "q_observed_probe__edema__light_change_context",
+          "optionKey": "stronger_direct_light",
+          "questionText": "黄叶和光照有关时，关键是直射太阳是否明显偏多或偏少。最近 1-2 周，这盆植物每天大概能晒到多久的直射太阳？",
+          "optionText": "每天直射 3 小时以上，或最近突然晒得更多"
+        },
+        {
+          "questionKey": "q_observed_probe__edema__progression",
+          "optionKey": "yes",
+          "questionText": "最近 7 天内，这类“水肿”有没有明显变多、变大或加重？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__edema__distribution_scope",
+          "optionKey": "yes",
+          "questionText": "这类异常现在主要出现在少数叶片/局部，还是多片叶子、多个位置都能看到？",
+          "optionText": "主要集中在个别叶片/局部"
+        },
+        {
+          "questionKey": "q_observed_probe__edema__host_confirmation",
+          "optionKey": "yes",
+          "questionText": "这种“水肿”主要先出现在老叶，还是新叶也很明显？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__edema__underside_presence",
+          "optionKey": "yes",
+          "questionText": "翻看叶背、叶脉附近或更隐蔽的位置，这种“水肿”在背面是否更明显？",
+          "optionText": "是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "更像是浇水过多",
+        "pendingTopTitle": "",
+        "currentTopTitle": "更像是浇水过多"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no > q_observed_probe__edema__edema_bump_stage=watery_blister > q_observed_probe__edema__substrate_moisture=yes > q_observed_probe__edema__light_change_context=stronger_direct_light > q_observed_probe__edema__progression=yes > q_observed_probe__edema__distribution_scope=yes > q_observed_probe__edema__host_confirmation=yes > q_observed_probe__edema__underside_presence=yes",
+        "roundsUsed": 8,
+        "questionCount": 8,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777469307208_eod1p8gm",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "edema",
+          "symptomCn": "水肿",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "edema_overwater_mode",
+        "classKey": "edema_overwater_mode",
+        "symptomKey": "edema"
+      },
+      "round1": {
+        "questionKey": "q_gnat_soil_stays_wet",
+        "optionKey": "no",
+        "questionText": "盆土经常长时间偏湿、久不干吗？",
+        "optionText": "不是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__edema__edema_bump_stage",
+          "optionKey": "watery_blister",
+          "questionText": "鼓包或水泡可能来自水肿、后期结痂，也可能只是普通斑点。先确认变化阶段，后面才能少问无关问题。这些鼓包或水泡更接近哪种变化？",
+          "optionText": "像透明或半透明小水泡，常在叶背更明显"
+        },
+        {
+          "questionKey": "q_observed_probe__edema__substrate_moisture",
+          "optionKey": "yes",
+          "questionText": "关于“水肿”，最近有没有变多、变大，或出现在其他位置？",
+          "optionText": "是，更符合前面描述的情况"
+        },
+        {
+          "questionKey": "q_observed_probe__edema__light_change_context",
+          "optionKey": "stronger_direct_light",
+          "questionText": "黄叶和光照有关时，关键是直射太阳是否明显偏多或偏少。最近 1-2 周，这盆植物每天大概能晒到多久的直射太阳？",
+          "optionText": "每天直射 3 小时以上，或最近突然晒得更多"
+        },
+        {
+          "questionKey": "q_observed_probe__edema__progression",
+          "optionKey": "yes",
+          "questionText": "最近 7 天内，这类“水肿”有没有明显变多、变大或加重？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__edema__distribution_scope",
+          "optionKey": "yes",
+          "questionText": "这类异常现在主要出现在少数叶片/局部，还是多片叶子、多个位置都能看到？",
+          "optionText": "主要集中在个别叶片/局部"
+        },
+        {
+          "questionKey": "q_observed_probe__edema__host_confirmation",
+          "optionKey": "yes",
+          "questionText": "这种“水肿”主要先出现在老叶，还是新叶也很明显？",
+          "optionText": "是的"
+        },
+        {
+          "questionKey": "q_observed_probe__edema__underside_presence",
+          "optionKey": "unknown",
+          "questionText": "翻看叶背、叶脉附近或更隐蔽的位置，这种“水肿”在背面是否更明显？",
+          "optionText": "还没看叶背/看不出"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "更像是浇水过多",
+        "pendingTopTitle": "",
+        "currentTopTitle": "更像是浇水过多"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no > q_observed_probe__edema__edema_bump_stage=watery_blister > q_observed_probe__edema__substrate_moisture=yes > q_observed_probe__edema__light_change_context=stronger_direct_light > q_observed_probe__edema__progression=yes > q_observed_probe__edema__distribution_scope=yes > q_observed_probe__edema__host_confirmation=yes > q_observed_probe__edema__underside_presence=unknown",
+        "roundsUsed": 8,
+        "questionCount": 8,
+        "isFinal": true
+      }
+    }
+  ]
+}

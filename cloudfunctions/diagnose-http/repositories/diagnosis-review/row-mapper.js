@@ -41,8 +41,6 @@ function buildRouteDecisionReviewSummary(routeDecision = null, stopReason = '') 
       activeRouteGroupKeys: [],
       visibleOutcomeKeys: [],
       visibleOutcomeCount: 0,
-      primaryOutcomeKey: '',
-      secondaryOutcomeKeys: [],
       nextQuestionKeys: [],
       visibleActionConflictGroups: [],
       visibleActionProfileKeys: [],
@@ -107,10 +105,6 @@ function buildRouteDecisionReviewSummary(routeDecision = null, stopReason = '') 
       : [],
     visibleOutcomeKeys,
     visibleOutcomeCount: visibleOutcomeKeys.length,
-    primaryOutcomeKey: String(safeDecision.primaryOutcomeKey || '').trim(),
-    secondaryOutcomeKeys: Array.isArray(safeDecision.secondaryOutcomeKeys)
-      ? safeDecision.secondaryOutcomeKeys.map(item => String(item || '').trim()).filter(Boolean)
-      : [],
     nextQuestionKeys,
     visibleActionConflictGroups,
     visibleActionProfileKeys: Array.isArray(safeDecision.visibleActionProfileKeys)

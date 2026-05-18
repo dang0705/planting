@@ -1,0 +1,23 @@
+{
+  "ok": false,
+  "batchSource": "diagnose-popup-dev-mode-pairwise",
+  "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+  "batchReportFile": "scripts/terminal-e2e/batch/diagnose-popup-dev-mode-pairwise-20260430-215526.json",
+  "generatedAt": "2026-04-30T13:55:26.464Z",
+  "splitMeta": {
+    "rootBaseName": "diagnose-popup-dev-mode-pairwise-20260430-215526",
+    "partIndex": 1,
+    "partCount": 1,
+    "maxResultsPerFile": 100
+  },
+  "summary": {
+    "modeCount": 28,
+    "directFinalCount": 2,
+    "discoveredQuestionCount": 0,
+    "scheduledPairCount": 0,
+    "coveredPairCount": 0,
+    "reviewRecordCount": 2,
+    "failureCount": 26
+  },
+  "conclusion": "零模型 DiagnosePopup 开发态下拉模式批跑完成：本分片 2 条，覆盖 question-option 对 0 个。"
+}

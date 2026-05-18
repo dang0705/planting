@@ -1,0 +1,23 @@
+{
+  "ok": true,
+  "batchSource": "diagnose-popup-dev-mode-pairwise",
+  "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+  "batchReportFile": "scripts/terminal-e2e/batch/diagnose-popup-dev-mode-pairwise-20260430-223142.json",
+  "generatedAt": "2026-04-30T14:31:42.198Z",
+  "splitMeta": {
+    "rootBaseName": "diagnose-popup-dev-mode-pairwise-20260430-223142",
+    "partIndex": 1,
+    "partCount": 1,
+    "maxResultsPerFile": 100
+  },
+  "summary": {
+    "modeCount": 1,
+    "directFinalCount": 0,
+    "discoveredQuestionCount": 10,
+    "scheduledPairCount": 45,
+    "coveredPairCount": 45,
+    "reviewRecordCount": 45,
+    "failureCount": 0
+  },
+  "conclusion": "零模型 DiagnosePopup 开发态下拉模式批跑完成：本分片 45 条，覆盖 question-option 对 45 个。"
+}

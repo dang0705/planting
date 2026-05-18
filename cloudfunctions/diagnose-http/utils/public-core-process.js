@@ -173,10 +173,6 @@ function buildPublicRouteDecisionForReview(routeDecision = null) {
     visibleOutcomeKeys: Array.isArray(routeDecision?.visibleOutcomeKeys)
       ? routeDecision.visibleOutcomeKeys.map(item => String(item || '').trim()).filter(Boolean)
       : [],
-    primaryOutcomeKey: String(routeDecision?.primaryOutcomeKey || '').trim(),
-    secondaryOutcomeKeys: Array.isArray(routeDecision?.secondaryOutcomeKeys)
-      ? routeDecision.secondaryOutcomeKeys.map(item => String(item || '').trim()).filter(Boolean)
-      : [],
     requiresFollowUp: Boolean(routeDecision?.requiresFollowUp),
     nextQuestionKeys: Array.isArray(routeDecision?.nextQuestionKeys)
       ? routeDecision.nextQuestionKeys.map(item => String(item || '').trim()).filter(Boolean)

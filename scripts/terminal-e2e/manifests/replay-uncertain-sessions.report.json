@@ -1,0 +1,522 @@
+{
+  "generatedAt": "2026-04-22T09:22:07.673Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "total": 10,
+  "success": 10,
+  "failed": 0,
+  "results": [
+    {
+      "ok": true,
+      "sessionId": "diag_1776524906841_9gzq2dil",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776524906842_5mi3kaa5",
+        "currentRoundIndex": 2,
+        "nextRound": 3,
+        "hasPendingFollowUp": false,
+        "storedOutcomeType": "uncertain",
+        "askedQuestionKeys": [
+          "q_leaf_yellowing_light_background",
+          "q_leaf_yellowing_watering_background",
+          "q_leaf_yellowing_fertilization_background"
+        ],
+        "answeredQuestionGroupKeys": [
+          "yellowing_light_background_group",
+          "yellowing_watering_background_group",
+          "yellowing_fertilization_background_group"
+        ],
+        "answeredAnswers": [
+          {
+            "questionKey": "q_leaf_yellowing_light_background",
+            "optionKey": "no_change"
+          },
+          {
+            "questionKey": "q_leaf_yellowing_watering_background",
+            "optionKey": "no_change"
+          },
+          {
+            "questionKey": "q_leaf_yellowing_fertilization_background",
+            "optionKey": "unknown"
+          }
+        ],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 1
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "followUps": [],
+        "symptomClassRuntime": {
+          "enabled": true,
+          "primaryClassKey": "yellowing_mode",
+          "primaryFollowupModeV1": "full",
+          "currentClassKey": "yellowing_mode",
+          "currentGroupKey": "iron_group",
+          "questionGroupPoolSize": 4,
+          "classGateDecision": {
+            "enabled": true,
+            "gateMode": "soft",
+            "sourceMode": "soft",
+            "primaryClassKey": "yellowing_mode",
+            "primaryClassRuntimeScore": 0.7905,
+            "unknownLockCount": 3,
+            "currentClassKey": "yellowing_mode",
+            "hasEnabledGroups": true,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "",
+            "reviewedAtRound": 3
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776524274656_5pdu1vck",
+      "openid": "dev_terminal_yellowing-no-context-1776524272",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776524274657_2oc6a5rn",
+        "currentRoundIndex": 2,
+        "nextRound": 3,
+        "hasPendingFollowUp": false,
+        "storedOutcomeType": "uncertain",
+        "askedQuestionKeys": [
+          "q_leaf_yellowing_light_background",
+          "q_leaf_yellowing_watering_background",
+          "q_holes_in_leaf_confirm"
+        ],
+        "answeredQuestionGroupKeys": [
+          "yellowing_light_background_group",
+          "yellowing_watering_background_group",
+          "holes_in_leaf_confirm_group"
+        ],
+        "answeredAnswers": [
+          {
+            "questionKey": "q_leaf_yellowing_light_background",
+            "optionKey": "no_change"
+          },
+          {
+            "questionKey": "q_leaf_yellowing_watering_background",
+            "optionKey": "no_change"
+          },
+          {
+            "questionKey": "q_holes_in_leaf_confirm",
+            "optionKey": "no"
+          }
+        ],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 1
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "followUps": [],
+        "symptomClassRuntime": {
+          "enabled": true,
+          "primaryClassKey": "yellowing_mode",
+          "primaryFollowupModeV1": "full",
+          "currentClassKey": "yellowing_mode",
+          "currentGroupKey": "iron_group",
+          "questionGroupPoolSize": 5,
+          "classGateDecision": {
+            "enabled": true,
+            "gateMode": "soft",
+            "sourceMode": "soft",
+            "primaryClassKey": "yellowing_mode",
+            "primaryClassRuntimeScore": 0.7905,
+            "unknownLockCount": 3,
+            "currentClassKey": "yellowing_mode",
+            "hasEnabledGroups": true,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "",
+            "reviewedAtRound": 3
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776513633812_px2gsg5z",
+      "openid": "dev_terminal_combo_d292315a35a3055e8f98",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776513633812_z3pmzoz5",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": false,
+        "storedOutcomeType": "uncertain",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "followUps": [],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 2
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776513620515_keumo5o1",
+      "openid": "dev_terminal_combo_9d4d273b97f839af59ac",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776513620515_n1fqinm9",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": false,
+        "storedOutcomeType": "uncertain",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "followUps": [],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 2
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776513410133_maoshxq5",
+      "openid": "dev_terminal_combo_d6db0473b7352fed6c86",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776513410133_zm5uqq3h",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": false,
+        "storedOutcomeType": "uncertain",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "followUps": [],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 2
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776513073461_aj3mrc1a",
+      "openid": "dev_terminal_combo_e60a06ca6fff11395625",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776513073462_24wx03q8",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": false,
+        "storedOutcomeType": "uncertain",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "followUps": [],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 2
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776512965574_lbzwaek0",
+      "openid": "dev_terminal_combo_1e54733b866543d1478a",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776512965574_ug2ibygz",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": false,
+        "storedOutcomeType": "uncertain",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "followUps": [],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 2
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776512936362_iv6tvnmd",
+      "openid": "dev_terminal_combo_bc98310a113234ff371f",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776512936362_o5oi7c1p",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": false,
+        "storedOutcomeType": "uncertain",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "followUps": [],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 2
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776512669278_o0vywiqi",
+      "openid": "dev_terminal_combo_be312819d952793f6eb0",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776512669278_2oqjdioj",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": false,
+        "storedOutcomeType": "uncertain",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "followUps": [],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 2
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776512479974_vplj0plk",
+      "openid": "dev_terminal_combo_eb7a176f9cd09f7bdba0",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776512479974_bykhymrk",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": false,
+        "storedOutcomeType": "uncertain",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "followUps": [],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 2
+          }
+        }
+      }
+    }
+  ]
+}

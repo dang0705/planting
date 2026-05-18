@@ -1,0 +1,149 @@
+{
+  "generatedAt": "2026-04-23T09:45:21.992Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "collectionProfile": {
+    "source": "all",
+    "manualVisualOnly": false,
+    "manualVisualOnlyProvided": false
+  },
+  "visualEvidenceSummary": {
+    "total": 1,
+    "available": 1,
+    "missingRawRecords": 0,
+    "emptyConclusion": 0
+  },
+  "total": 1,
+  "success": 1,
+  "failed": 0,
+  "progress": {
+    "processed": 1,
+    "targetTotal": 1,
+    "complete": true
+  },
+  "results": [
+    {
+      "sessionId": "diag_1776509307092_d5yoq6gm",
+      "openid": "dev_terminal_combo_d4ec4d21aa28e9d97b37",
+      "visualEvidence": {
+        "symptomCandidates": [
+          {
+            "symptomKey": "irregular_blotches",
+            "displayNameCn": "不规则斑块",
+            "confidenceBand": "medium",
+            "supportingRegionNote": "叶片上存在两处深色的不规则斑块，组织相对完整"
+          }
+        ],
+        "outOfPoolCandidates": [],
+        "routeHints": [
+          {
+            "type": "possible_problematic_signal",
+            "reason": "观察到叶片上存在不规则斑块类视觉特征"
+          }
+        ]
+      },
+      "visualEvidenceMeta": {
+        "status": "available",
+        "reason": "",
+        "visualRawRecordCount": 1,
+        "symptomCandidateCount": 1,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 1,
+        "hasVisualConclusion": true
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 2
+        }
+      },
+      "symptomClassSource": null,
+      "symptomClassReplay": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_irregular_blotches_confirm",
+            "questionText": "病斑呈不规则斑块状，而不是规则圆斑吗？",
+            "targetDimension": "visual_presence",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "final",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 2
+      }
+    }
+  ]
+}

@@ -1,0 +1,811 @@
+{
+  "generatedAt": "2026-04-26T14:32:52.908Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "collectionProfile": {
+    "source": "all",
+    "manualVisualOnly": false,
+    "manualVisualOnlyProvided": false
+  },
+  "visualEvidenceSummary": {
+    "total": 1,
+    "available": 1,
+    "missingRawRecords": 0,
+    "emptyConclusion": 0
+  },
+  "total": 1,
+  "success": 1,
+  "failed": 0,
+  "progress": {
+    "processed": 1,
+    "targetTotal": 1,
+    "complete": true
+  },
+  "results": [
+    {
+      "ok": true,
+      "sessionId": "diag_1777126627714_vm6x83hi",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1777126627715_sg5nq6l7",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": false,
+        "storedOutcomeType": "non_problematic",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "followUpHistory": {
+          "hasPendingFollowUp": false,
+          "nextRound": 2,
+          "storedOutcomeType": "non_problematic",
+          "askedQuestionKeys": [],
+          "askedQuestions": [],
+          "answeredQuestionGroupKeys": [],
+          "answeredAnswers": []
+        },
+        "actualRounds": [],
+        "replayTarget": {
+          "round": 0,
+          "stage": "",
+          "mode": "visual_origin"
+        },
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentClassNameCn": "",
+          "currentGroupKey": "",
+          "currentGroupLabel": "",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1,
+            "disabledGroupKeys": []
+          }
+        },
+        "visualFinalEvidence": [],
+        "observedEvidenceSetCount": 0,
+        "visualConclusion": {
+          "symptomCandidates": [],
+          "outOfPoolCandidates": [
+            {
+              "rawVisualNameCn": "白粉虱（推测为虫体）",
+              "rawVisualNameEn": "Whiteflies (presumed as insects)",
+              "closestSymptomKeyHint": "",
+              "reason": "not_in_ai_visual_pool"
+            }
+          ],
+          "routeHints": [
+            {
+              "type": "possible_non_problematic_signal",
+              "reason": "no_stable_problematic_visual_signal"
+            }
+          ]
+        },
+        "visualRawRecordCount": 1,
+        "visualRawRecords": [
+          {
+            "visualRawImageRecordId": "visraw_1777126627715_mn7xsqoi",
+            "visualCallBatchId": "visbatch_1777126627715_sg5nq6l7",
+            "inputSlotType": "leaf",
+            "inputSlotOrder": 0,
+            "inputSlotLabel": "图1 叶片图",
+            "sourceModelProvider": "hunyuan",
+            "sourceModelName": "hunyuan-vision-1.5-instruct",
+            "promptVersion": "visual_structured_v1",
+            "rawTextOutput": "{\n    \"normalized_organ\": \"leaf\",\n    \"image_quality_grade\": \"good\",\n    \"analyzability\": \"high\",\n    \"symptom_candidates\": [],\n    \"out_of_pool_symptom_candidates\": [\n        {\n            \"raw_visual_name_cn\": \"白粉虱（推测为虫体）\",\n            \"raw_visual_name_en\": \"Whiteflies (presumed as insects)\",\n            \"closest_symptom_key_hint\": \"\",\n            \"reason\": \"not_in_ai_visual_pool\"\n        }\n    ],\n    \"route_hints\": [\n        {\n            \"type\": \"possible_non_problematic_signal\",\n            \"reason\": \"no_stable_problematic_visual_signal\"\n        }\n    ],\n    \"suggested_followup_capture\": [],\n    \"normalization_notes\": []\n}",
+            "rawStructuredOutput": {
+              "source_model_provider": "hunyuan",
+              "source_model_name": "hunyuan-vision-1.5-instruct",
+              "adapter_name": "hunyuan_visual_adapter",
+              "input_slot_type": "leaf",
+              "input_slot_order": 0,
+              "input_slot_label": "图1 叶片图",
+              "user_declared_organ_type": "leaf",
+              "user_declared_organ_confidence": 0.95,
+              "out_of_pool_candidate_count": 1,
+              "out_of_pool_replay_image_available": 1,
+              "out_of_pool_replay_image_ref": "[data_image_omitted]",
+              "upload_compression": {
+                "source": "client_upload_before_cloud_storage",
+                "compressed": true,
+                "doubleConfirmedForHunyuan": true,
+                "originalSizeBytes": 663177,
+                "uploadedSizeBytes": 140722,
+                "compressionRatio": 0.212,
+                "quality": 62,
+                "width": 1080,
+                "height": 2340,
+                "targetSizeBytes": 307200,
+                "minimumQuality": 60
+              },
+              "shadow_compare": {
+                "enabled": 0,
+                "compare_status": "disabled",
+                "source_model_provider": null,
+                "source_model_name": null
+              },
+              "llm_prompt": {
+                "model": "hunyuan-vision-1.5-instruct",
+                "modelProfile": "fast_vision",
+                "modelReasoningMode": "fast",
+                "promptText": "You are PlantSight-Visual; normalize one plant image for diagnosis.\nUse only visible evidence in this image; infer no cause, cure, diagnosis, smell, hidden soil, history, or progression.\nChoose <=5 symptom_candidates, only from the narrowed candidate pool.\nDo not force cross-organ or cross-slot matches.\nVisible insects, eggs, dots, or foreign bodies outside the pool go to out_of_pool_symptom_candidates, not non_problematic.\nPrefer structural damage for true holes, chewed edges, missing tissue, see-through gaps, tunnels, or skeletonized leaves.\nDark rims, browning, dry edges, or secondary necrosis near damage do not demote structural evidence.\nEmit structural keys only with explicit structural evidence.\nIf structure and spots coexist, keep structure first unless a separate intact spot is clearly stronger.\nReport yellow_speckling only for dense, repeated, clustered, low-chroma speckles.\nDo not map local dark blotches, margin necrosis, or edge discoloration to leaf_yellowing by default.\nMap powdery, gray-black, or removable films to surface-coverage/mold patterns, not internal spots.\nFor weak signs, be conservative: specific evidence beats completeness; do not guess.\nIf quality/analyzability is good and no stable actionable sign exists, leave both candidate arrays empty and add route_hints=[{\"type\":\"possible_non_problematic_signal\",\"reason\":\"no_stable_problematic_visual_signal\"}].\nIf organ is uncertain, set normalized_organ=\"unknown\"; route_hints and suggested_followup_capture are process hints only.\nReturn strict JSON only, using only schema keys/enums below.\n\nImage context:\n这是多图病例中的单图视觉标准化，只分析当前图。\n当前图：第1/1张；槽位=图1 叶片图。\n器官提示=leaf；用户声明=leaf。\n本图 symptom_candidates 只允许从这些 location_key 池中选择：叶片。\n病例槽位概览：图1:图1 叶片图。\n不要把其他图片可能出现的器官特征误投到当前图。\n\nPool:\n【叶片】先判结构损伤再看spots。tunnels_in_leaf=蛇形潜道、skeletonized_leaves=只剩叶脉、chewed_edges=叶缘缺口、holes_in_leaf=穿透洞/缺损、concentric_rings=同心轮纹、fine_webbing=叶子上有很细的丝、powder_white=叶子上有一层白粉、rust_pustules=锈孢子堆、silver_streaks=叶面有银色划痕或、water_soaked_spots=水渍斑、leaf_mosaic_mottling=叶子上有深浅不一、normal_leaf_aging_stable=底部老叶稳定黄化、sooty_mold=叶子表面有黑灰一、sticky_honeydew=叶子摸起来发黏、yellow_speckling=叶子上有密密麻麻、black_mold_growth=黑霉层、black_spots_spreading=完整组织黑斑、blister_like_bumps=泡状突起、brown_spots_halo=褐斑黄晕、edema=水肿、irregular_blotches=不规则暗斑、leaf_bleaching=叶片漂白、leaf_curl=叶片卷曲、leaf_margin_burn=叶缘灼伤、leaf_margin_necrosis=叶缘坏死、leaf_twist=叶片扭曲、leaf_yellowing=叶子明显发黄、orange_spots=橙色斑、patchy_browning=局部褐变、sunburn_patch=叶子上有发白或焦、sunken_lesions=凹陷病斑、uniform_browning=整叶褐化、white_fuzz=白色菌丝、wind_damage=风伤、yellowing_patchy=局部黄化、stable_natural_marking_pattern=长期稳定斑驳模式、stippling=叶子上有很多细小\n\nSchema:\n{\"normalized_organ\":\"leaf|stem|root|root_crown|whole_plant|flower|fruit|other|unknown\",\"image_quality_grade\":\"good|medium|poor\",\"analyzability\":\"high|medium|marginal|low\",\"symptom_candidates\":[{\"symptom_key\":\"\",\"display_name_cn\":\"\",\"strength_level\":\"strong|medium|weak\",\"confidence_band\":\"high|medium|low\",\"visibility_scope\":\"local|organ|whole_plant\",\"supporting_region_note\":\"\",\"admission_readiness\":\"ready|cautious|retain_only\"}],\"out_of_pool_symptom_candidates\":[{\"raw_visual_name_cn\":\"\",\"raw_visual_name_en\":\"\",\"closest_symptom_key_hint\":\"\",\"reason\":\"not_in_ai_visual_pool\"}],\"route_hints\":[{\"type\":\"\",\"reason\":\"\"}],\"suggested_followup_capture\":[],\"normalization_notes\":[]}",
+                "promptLength": 3288,
+                "promptPreview": "You are PlantSight-Visual; normalize one plant image for diagnosis. | Use only visible evidence in this image; infer no cause, cure, diagnosis, smell, hidden soil, history, or progression. | Choose <=5 symptom_candidates, only from the narrowed candidate pool. | Do not force cross-organ or cross-slot matches. | Visible insects, eggs, dots, or foreign bodies outside the pool go to out_of_pool_symptom_candidates, not non_problematic. | Prefer structural damage for true holes, chewed edges, missing tissue, see-through gaps, tunnels, or skeletonized leaves. | Dark rims, browning, dry edges, or secondary necrosis near damage do not demote structural evidence. | Emit structural keys only with explicit structural evidence.",
+                "promptDebugMeta": {
+                  "promptPoolSource": "symptoms.ai_visual_pool=yes",
+                  "tokenMeasureBasis": "actual_full_promptLength_and_hunyuan_usage_promptTokens",
+                  "candidatePoolTextLength": 835,
+                  "candidatePoolTextChecksum": "3fd1d44fd910452d",
+                  "inputSlotType": "leaf",
+                  "inputSlotLabel": "图1 叶片图",
+                  "userDeclaredOrganType": "leaf",
+                  "inputSlotOrder": 0,
+                  "totalImageCount": 1,
+                  "caseSlotSummary": [
+                    {
+                      "inputSlotOrder": 0,
+                      "inputSlotType": "leaf",
+                      "inputSlotLabel": "图1 叶片图"
+                    }
+                  ],
+                  "locationKeys": [
+                    "leaf"
+                  ],
+                  "locationLabels": [
+                    "叶片"
+                  ],
+                  "candidateCount": 37,
+                  "candidateLocationCounts": {
+                    "leaf": 37
+                  },
+                  "candidateSymptomKeysHead": [
+                    "concentric_rings",
+                    "fine_webbing",
+                    "powder_white",
+                    "rust_pustules",
+                    "silver_streaks",
+                    "tunnels_in_leaf",
+                    "water_soaked_spots",
+                    "leaf_mosaic_mottling",
+                    "normal_leaf_aging_stable",
+                    "skeletonized_leaves",
+                    "sooty_mold",
+                    "sticky_honeydew",
+                    "yellow_speckling",
+                    "black_mold_growth",
+                    "black_spots_spreading",
+                    "blister_like_bumps"
+                  ],
+                  "candidateSymptomKeysTail": [
+                    "leaf_bleaching",
+                    "leaf_curl",
+                    "leaf_margin_burn",
+                    "leaf_margin_necrosis",
+                    "leaf_twist",
+                    "leaf_yellowing",
+                    "orange_spots",
+                    "patchy_browning",
+                    "sunburn_patch",
+                    "sunken_lesions",
+                    "uniform_browning",
+                    "white_fuzz",
+                    "wind_damage",
+                    "yellowing_patchy",
+                    "stable_natural_marking_pattern",
+                    "stippling"
+                  ],
+                  "candidateSymptomKeysChecksum": "d487d72d487c050c",
+                  "candidateSymptomKeysAll": [
+                    "concentric_rings",
+                    "fine_webbing",
+                    "powder_white",
+                    "rust_pustules",
+                    "silver_streaks",
+                    "tunnels_in_leaf",
+                    "water_soaked_spots",
+                    "leaf_mosaic_mottling",
+                    "normal_leaf_aging_stable",
+                    "skeletonized_leaves",
+                    "sooty_mold",
+                    "sticky_honeydew",
+                    "yellow_speckling",
+                    "black_mold_growth",
+                    "black_spots_spreading",
+                    "blister_like_bumps",
+                    "brown_spots_halo",
+                    "chewed_edges",
+                    "edema",
+                    "holes_in_leaf",
+                    "irregular_blotches",
+                    "leaf_bleaching",
+                    "leaf_curl",
+                    "leaf_margin_burn",
+                    "leaf_margin_necrosis",
+                    "leaf_twist",
+                    "leaf_yellowing",
+                    "orange_spots",
+                    "patchy_browning",
+                    "sunburn_patch",
+                    "sunken_lesions",
+                    "uniform_browning",
+                    "white_fuzz",
+                    "wind_damage",
+                    "yellowing_patchy",
+                    "stable_natural_marking_pattern",
+                    "stippling"
+                  ],
+                  "candidateKeyDisplayPairsHead": [
+                    {
+                      "symptomKey": "concentric_rings",
+                      "displayText": "同心轮纹"
+                    },
+                    {
+                      "symptomKey": "fine_webbing",
+                      "displayText": "叶子上有很细的丝网"
+                    },
+                    {
+                      "symptomKey": "powder_white",
+                      "displayText": "叶子上有一层白粉"
+                    },
+                    {
+                      "symptomKey": "rust_pustules",
+                      "displayText": "锈孢子堆"
+                    },
+                    {
+                      "symptomKey": "silver_streaks",
+                      "displayText": "叶面有银色划痕或银斑"
+                    },
+                    {
+                      "symptomKey": "tunnels_in_leaf",
+                      "displayText": "叶子里面有弯弯的白线"
+                    },
+                    {
+                      "symptomKey": "water_soaked_spots",
+                      "displayText": "水渍斑"
+                    },
+                    {
+                      "symptomKey": "leaf_mosaic_mottling",
+                      "displayText": "叶子上有深浅不一、花花绿绿的斑驳花纹"
+                    },
+                    {
+                      "symptomKey": "normal_leaf_aging_stable",
+                      "displayText": "底部老叶稳定黄化"
+                    },
+                    {
+                      "symptomKey": "skeletonized_leaves",
+                      "displayText": "叶子被吃得只剩叶脉骨架"
+                    },
+                    {
+                      "symptomKey": "sooty_mold",
+                      "displayText": "叶子表面有黑灰一样的脏层"
+                    },
+                    {
+                      "symptomKey": "sticky_honeydew",
+                      "displayText": "叶子摸起来发黏"
+                    },
+                    {
+                      "symptomKey": "yellow_speckling",
+                      "displayText": "叶子上有密密麻麻的小黄点"
+                    },
+                    {
+                      "symptomKey": "black_mold_growth",
+                      "displayText": "黑霉层"
+                    },
+                    {
+                      "symptomKey": "black_spots_spreading",
+                      "displayText": "黑斑扩散"
+                    },
+                    {
+                      "symptomKey": "blister_like_bumps",
+                      "displayText": "泡状突起"
+                    }
+                  ],
+                  "candidateKeyDisplayPairsTail": [
+                    {
+                      "symptomKey": "leaf_bleaching",
+                      "displayText": "叶片漂白"
+                    },
+                    {
+                      "symptomKey": "leaf_curl",
+                      "displayText": "叶片卷曲"
+                    },
+                    {
+                      "symptomKey": "leaf_margin_burn",
+                      "displayText": "叶缘灼伤"
+                    },
+                    {
+                      "symptomKey": "leaf_margin_necrosis",
+                      "displayText": "叶缘坏死"
+                    },
+                    {
+                      "symptomKey": "leaf_twist",
+                      "displayText": "叶片扭曲"
+                    },
+                    {
+                      "symptomKey": "leaf_yellowing",
+                      "displayText": "叶子明显发黄"
+                    },
+                    {
+                      "symptomKey": "orange_spots",
+                      "displayText": "橙色斑"
+                    },
+                    {
+                      "symptomKey": "patchy_browning",
+                      "displayText": "局部褐变"
+                    },
+                    {
+                      "symptomKey": "sunburn_patch",
+                      "displayText": "叶子上有发白或焦黄的晒伤斑"
+                    },
+                    {
+                      "symptomKey": "sunken_lesions",
+                      "displayText": "凹陷病斑"
+                    },
+                    {
+                      "symptomKey": "uniform_browning",
+                      "displayText": "整叶褐化"
+                    },
+                    {
+                      "symptomKey": "white_fuzz",
+                      "displayText": "白色菌丝"
+                    },
+                    {
+                      "symptomKey": "wind_damage",
+                      "displayText": "风伤"
+                    },
+                    {
+                      "symptomKey": "yellowing_patchy",
+                      "displayText": "局部黄化"
+                    },
+                    {
+                      "symptomKey": "stable_natural_marking_pattern",
+                      "displayText": "长期稳定斑驳模式"
+                    },
+                    {
+                      "symptomKey": "stippling",
+                      "displayText": "叶子上有很多细小的褪色点"
+                    }
+                  ],
+                  "candidateKeyDisplayPairsAll": [
+                    {
+                      "symptomKey": "concentric_rings",
+                      "displayText": "同心轮纹"
+                    },
+                    {
+                      "symptomKey": "fine_webbing",
+                      "displayText": "叶子上有很细的丝网"
+                    },
+                    {
+                      "symptomKey": "powder_white",
+                      "displayText": "叶子上有一层白粉"
+                    },
+                    {
+                      "symptomKey": "rust_pustules",
+                      "displayText": "锈孢子堆"
+                    },
+                    {
+                      "symptomKey": "silver_streaks",
+                      "displayText": "叶面有银色划痕或银斑"
+                    },
+                    {
+                      "symptomKey": "tunnels_in_leaf",
+                      "displayText": "叶子里面有弯弯的白线"
+                    },
+                    {
+                      "symptomKey": "water_soaked_spots",
+                      "displayText": "水渍斑"
+                    },
+                    {
+                      "symptomKey": "leaf_mosaic_mottling",
+                      "displayText": "叶子上有深浅不一、花花绿绿的斑驳花纹"
+                    },
+                    {
+                      "symptomKey": "normal_leaf_aging_stable",
+                      "displayText": "底部老叶稳定黄化"
+                    },
+                    {
+                      "symptomKey": "skeletonized_leaves",
+                      "displayText": "叶子被吃得只剩叶脉骨架"
+                    },
+                    {
+                      "symptomKey": "sooty_mold",
+                      "displayText": "叶子表面有黑灰一样的脏层"
+                    },
+                    {
+                      "symptomKey": "sticky_honeydew",
+                      "displayText": "叶子摸起来发黏"
+                    },
+                    {
+                      "symptomKey": "yellow_speckling",
+                      "displayText": "叶子上有密密麻麻的小黄点"
+                    },
+                    {
+                      "symptomKey": "black_mold_growth",
+                      "displayText": "黑霉层"
+                    },
+                    {
+                      "symptomKey": "black_spots_spreading",
+                      "displayText": "黑斑扩散"
+                    },
+                    {
+                      "symptomKey": "blister_like_bumps",
+                      "displayText": "泡状突起"
+                    },
+                    {
+                      "symptomKey": "brown_spots_halo",
+                      "displayText": "褐斑带黄晕"
+                    },
+                    {
+                      "symptomKey": "chewed_edges",
+                      "displayText": "叶子边缘像被啃过"
+                    },
+                    {
+                      "symptomKey": "edema",
+                      "displayText": "水肿"
+                    },
+                    {
+                      "symptomKey": "holes_in_leaf",
+                      "displayText": "叶子被咬出了洞"
+                    },
+                    {
+                      "symptomKey": "irregular_blotches",
+                      "displayText": "不规则斑块"
+                    },
+                    {
+                      "symptomKey": "leaf_bleaching",
+                      "displayText": "叶片漂白"
+                    },
+                    {
+                      "symptomKey": "leaf_curl",
+                      "displayText": "叶片卷曲"
+                    },
+                    {
+                      "symptomKey": "leaf_margin_burn",
+                      "displayText": "叶缘灼伤"
+                    },
+                    {
+                      "symptomKey": "leaf_margin_necrosis",
+                      "displayText": "叶缘坏死"
+                    },
+                    {
+                      "symptomKey": "leaf_twist",
+                      "displayText": "叶片扭曲"
+                    },
+                    {
+                      "symptomKey": "leaf_yellowing",
+                      "displayText": "叶子明显发黄"
+                    },
+                    {
+                      "symptomKey": "orange_spots",
+                      "displayText": "橙色斑"
+                    },
+                    {
+                      "symptomKey": "patchy_browning",
+                      "displayText": "局部褐变"
+                    },
+                    {
+                      "symptomKey": "sunburn_patch",
+                      "displayText": "叶子上有发白或焦黄的晒伤斑"
+                    },
+                    {
+                      "symptomKey": "sunken_lesions",
+                      "displayText": "凹陷病斑"
+                    },
+                    {
+                      "symptomKey": "uniform_browning",
+                      "displayText": "整叶褐化"
+                    },
+                    {
+                      "symptomKey": "white_fuzz",
+                      "displayText": "白色菌丝"
+                    },
+                    {
+                      "symptomKey": "wind_damage",
+                      "displayText": "风伤"
+                    },
+                    {
+                      "symptomKey": "yellowing_patchy",
+                      "displayText": "局部黄化"
+                    },
+                    {
+                      "symptomKey": "stable_natural_marking_pattern",
+                      "displayText": "长期稳定斑驳模式"
+                    },
+                    {
+                      "symptomKey": "stippling",
+                      "displayText": "叶子上有很多细小的褪色点"
+                    }
+                  ],
+                  "candidatePromptTextSample": [
+                    "concentric_rings=同心轮纹",
+                    "fine_webbing=叶子上有很细的丝",
+                    "powder_white=叶子上有一层白粉",
+                    "rust_pustules=锈孢子堆",
+                    "silver_streaks=叶面有银色划痕或",
+                    "tunnels_in_leaf=蛇形潜道",
+                    "water_soaked_spots=水渍斑",
+                    "leaf_mosaic_mottling=叶子上有深浅不一",
+                    "normal_leaf_aging_stable=底部老叶稳定黄化",
+                    "skeletonized_leaves=只剩叶脉"
+                  ],
+                  "candidateDisplayTextSample": [
+                    "concentric_rings=同心轮纹",
+                    "fine_webbing=叶子上有很细的丝",
+                    "powder_white=叶子上有一层白粉",
+                    "rust_pustules=锈孢子堆",
+                    "silver_streaks=叶面有银色划痕或",
+                    "tunnels_in_leaf=蛇形潜道",
+                    "water_soaked_spots=水渍斑",
+                    "leaf_mosaic_mottling=叶子上有深浅不一",
+                    "normal_leaf_aging_stable=底部老叶稳定黄化",
+                    "skeletonized_leaves=只剩叶脉"
+                  ]
+                },
+                "imageContext": {
+                  "imageCount": 1,
+                  "totalInputImages": 1,
+                  "selectedImageContexts": [
+                    {
+                      "inputSlotType": "leaf",
+                      "inputSlotLabel": "图1 叶片图",
+                      "userDeclaredOrganType": "leaf",
+                      "inputSlotOrder": 0,
+                      "totalImageCount": 1,
+                      "uploadCompression": {
+                        "source": "client_upload_before_cloud_storage",
+                        "compressed": true,
+                        "doubleConfirmedForHunyuan": true,
+                        "originalSizeBytes": 663177,
+                        "uploadedSizeBytes": 140722,
+                        "compressionRatio": 0.212,
+                        "quality": 62,
+                        "width": 1080,
+                        "height": 2340,
+                        "targetSizeBytes": 307200,
+                        "minimumQuality": 60
+                      },
+                      "caseSlotSummary": [
+                        {
+                          "inputSlotOrder": 0,
+                          "inputSlotType": "leaf",
+                          "inputSlotLabel": "图1 叶片图"
+                        }
+                      ]
+                    }
+                  ],
+                  "imageLengths": [
+                    179
+                  ],
+                  "imagePrefixes": [
+                    "https://636c-cloud1-2grufevs395a"
+                  ],
+                  "imageUploadCompression": [
+                    {
+                      "source": "client_upload_before_cloud_storage",
+                      "compressed": true,
+                      "doubleConfirmedForHunyuan": true,
+                      "originalSizeBytes": 663177,
+                      "uploadedSizeBytes": 140722,
+                      "compressionRatio": 0.212,
+                      "quality": 62,
+                      "width": 1080,
+                      "height": 2340,
+                      "targetSizeBytes": 307200,
+                      "minimumQuality": 60
+                    }
+                  ],
+                  "slotTypes": [
+                    "leaf"
+                  ],
+                  "slotLabels": [
+                    "图1 叶片图"
+                  ],
+                  "declaredOrgans": [
+                    "leaf"
+                  ]
+                }
+              },
+              "llm_usage": {
+                "promptTokens": 3548,
+                "completionTokens": 168,
+                "totalTokens": 3716
+              },
+              "parsed_result": {
+                "normalized_organ": "leaf",
+                "image_quality_grade": "good",
+                "analyzability": "high",
+                "symptom_candidates": [],
+                "out_of_pool_symptom_candidates": [
+                  {
+                    "raw_visual_name_cn": "白粉虱（推测为虫体）",
+                    "raw_visual_name_en": "Whiteflies (presumed as insects)",
+                    "closest_symptom_key_hint": "",
+                    "reason": "not_in_ai_visual_pool"
+                  }
+                ],
+                "route_hints": [
+                  {
+                    "type": "possible_non_problematic_signal",
+                    "reason": "no_stable_problematic_visual_signal"
+                  }
+                ],
+                "suggested_followup_capture": [],
+                "normalization_notes": [],
+                "uncertain_symptoms": []
+              }
+            },
+            "modelParsedResult": {
+              "normalized_organ": "leaf",
+              "image_quality_grade": "good",
+              "analyzability": "high",
+              "symptom_candidates": [],
+              "out_of_pool_symptom_candidates": [
+                {
+                  "raw_visual_name_cn": "白粉虱（推测为虫体）",
+                  "raw_visual_name_en": "Whiteflies (presumed as insects)",
+                  "closest_symptom_key_hint": "",
+                  "reason": "not_in_ai_visual_pool"
+                }
+              ],
+              "route_hints": [
+                {
+                  "type": "possible_non_problematic_signal",
+                  "reason": "no_stable_problematic_visual_signal"
+                }
+              ],
+              "suggested_followup_capture": [],
+              "normalization_notes": [],
+              "uncertain_symptoms": []
+            },
+            "normalizedTopkSymptoms": [],
+            "normalizedPatternCandidates": {
+              "adapter_name": "hunyuan_visual_adapter",
+              "organ_source": "merged",
+              "input_organ_hint": "leaf",
+              "input_slot_label": "图1 叶片图",
+              "input_slot_order": 0,
+              "source_model_name": "hunyuan-vision-1.5-instruct",
+              "normalization_notes": [
+                "out_of_pool_symptom_candidates:1"
+              ],
+              "organ_conflict_flag": 0,
+              "model_detected_organ": "leaf",
+              "multi_organ_detected": 0,
+              "shadow_compare_status": "disabled",
+              "source_model_provider": "hunyuan",
+              "shadow_compare_enabled": 0,
+              "organ_resolution_reason": "ui_hint_confirmed_by_model",
+              "shadow_compare_provider": "",
+              "user_declared_organ_type": "leaf",
+              "shadow_compare_model_name": "",
+              "suggested_followup_capture": [],
+              "shadow_compare_adapter_name": "",
+              "out_of_pool_symptom_candidates": [
+                {
+                  "reason": "not_in_ai_visual_pool",
+                  "raw_visual_name_cn": "白粉虱（推测为虫体）",
+                  "raw_visual_name_en": "Whiteflies (presumed as insects)",
+                  "closest_symptom_key_hint": ""
+                }
+              ],
+              "user_declared_organ_confidence": 0.95
+            },
+            "normalizedRouteHints": [
+              {
+                "type": "possible_non_problematic_signal",
+                "reason": "no_stable_problematic_visual_signal"
+              }
+            ],
+            "primaryOrganType": "leaf",
+            "organSource": "merged"
+          }
+        ]
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "out_of_pool_no_mapping",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "followUps": [],
+        "decisionCause": {
+          "decisionCauseKey": "out_of_pool_no_mapping",
+          "decisionCauseCategory": "visual_scope_gap",
+          "decisionCauseText": "当前存在诊断范围外的可见异常，但没有已审计 proxy mapping，因此跳过常规诊断并输出保守池外结果。",
+          "decisionCauseDetails": {
+            "formalSymptomCandidateCount": 0,
+            "outOfPoolHintCount": 1,
+            "outOfPoolHintKeys": [],
+            "outOfPoolRawNames": [
+              "白粉虱（推测为虫体）",
+              "Whiteflies (presumed as insects)"
+            ]
+          }
+        },
+        "lowConfidence": null,
+        "rankingSnapshot": [],
+        "metrics": {
+          "reliabilityScore": 0,
+          "topScoreGap": 0
+        },
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "发现诊断范围外的可见异常",
+          "summary": "图片中存在当前自动诊断范围外的可见异常。系统无法把它稳定归入现有诊断路径，因此本次不继续常规诊断，也不判断为“暂无明显问题”。由于该异常尚未纳入当前诊断池，系统暂不能给出针对性的处理建议；建议先保持观察，避免仅凭本次结果进行大幅养护调整。",
+          "severity": "low",
+          "urgency": "low"
+        },
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentClassNameCn": "",
+          "currentGroupKey": "",
+          "currentGroupLabel": "",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        },
+        "simulationRounds": [
+          {
+            "roundIndex": 1,
+            "inputStage": "preliminary",
+            "outputStage": "final",
+            "questions": [],
+            "answers": [],
+            "questionAnswerPairs": [],
+            "outcome": {
+              "stage": "final",
+              "followUpRequired": false,
+              "stopReason": "uncertain_output_ready",
+              "stopReasonDetail": "out_of_pool_no_mapping",
+              "routePrimaryAction": "uncertain_prepare",
+              "topProblem": null,
+              "finalResult": {
+                "problemId": "",
+                "problemKey": "",
+                "displayName": "发现诊断范围外的可见异常",
+                "summary": "图片中存在当前自动诊断范围外的可见异常。系统无法把它稳定归入现有诊断路径，因此本次不继续常规诊断，也不判断为“暂无明显问题”。由于该异常尚未纳入当前诊断池，系统暂不能给出针对性的处理建议；建议先保持观察，避免仅凭本次结果进行大幅养护调整。",
+                "severity": "low",
+                "urgency": "low"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

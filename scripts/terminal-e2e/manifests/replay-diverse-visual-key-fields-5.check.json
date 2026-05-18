@@ -1,0 +1,439 @@
+{
+  "generatedAt": "2026-04-22T10:43:43.855Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "total": 5,
+  "success": 5,
+  "failed": 0,
+  "results": [
+    {
+      "ok": true,
+      "sessionId": "diag_1776513275010_p5wvccqu",
+      "openid": "dev_terminal_combo_0e0de59fd8bfc60fa22c",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776513275010_tauvnrh0",
+        "currentRoundIndex": 1,
+        "observedEvidenceSetCount": 0,
+        "symptomClassRuntime": null,
+        "visualConclusion": {
+          "symptomCandidates": [
+            {
+              "symptomKey": "brown_spots_halo",
+              "displayNameCn": "褐斑带黄晕",
+              "confidenceBand": "medium",
+              "supportingRegionNote": "叶片上存在带有黄晕的褐斑区域"
+            },
+            {
+              "symptomKey": "irregular_blotches",
+              "displayNameCn": "不规则斑块",
+              "confidenceBand": "medium",
+              "supportingRegionNote": "叶片上存在不规则的深色斑块区域"
+            }
+          ],
+          "outOfPoolCandidates": [
+            {
+              "rawVisualNameCn": "叶片局部组织坏死（底部）",
+              "closestSymptomKeyHint": "brown_spots_halo",
+              "reason": "叶片底部存在组织坏死区域，与候选池中褐斑带黄晕或不规则斑块有一定相似性但不完全重合"
+            }
+          ],
+          "routeHints": [
+            {
+              "type": "possible_problematic_signal",
+              "reason": "叶片上存在褐斑带黄晕、不规则斑块等异常视觉信号"
+            }
+          ]
+        }
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentClassNameCn": "",
+          "currentGroupKey": "",
+          "currentGroupLabel": "",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        },
+        "followUps": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
+          }
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776512365852_d25nijxh",
+      "openid": "dev_terminal_combo_5c7128ccc2fe79da8f14",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776512365852_7qtgwesz",
+        "currentRoundIndex": 1,
+        "observedEvidenceSetCount": 0,
+        "symptomClassRuntime": null,
+        "visualConclusion": {
+          "symptomCandidates": [
+            {
+              "symptomKey": "irregular_blotches",
+              "displayNameCn": "不规则斑块",
+              "confidenceBand": "medium",
+              "supportingRegionNote": "叶片上存在几处颜色较浅、形状不规则的斑块区域"
+            },
+            {
+              "symptomKey": "yellow_speckling",
+              "displayNameCn": "小黄点",
+              "confidenceBand": "low",
+              "supportingRegionNote": "叶片上有少量零散的小黄点，视觉特征不够稳定"
+            }
+          ],
+          "outOfPoolCandidates": [
+            {
+              "rawVisualNameCn": "叶片底部的枯萎区域",
+              "closestSymptomKeyHint": "necrotic_patch",
+              "reason": "该区域呈现枯萎坏死状态，但与候选池中现有症状定义不完全重合"
+            },
+            {
+              "rawVisualNameCn": "叶片上的浅色斑纹（类似同心环但非典型）",
+              "closestSymptomKeyHint": "concentric_rings",
+              "reason": "该斑纹有类似同心环的特征但不够典型，与候选池中现有症状定义不完全重合"
+            }
+          ],
+          "routeHints": [
+            {
+              "type": "possible_problematic_signal",
+              "reason": "存在一些可能的问题性视觉信号，如不规则斑块、小黄点及特殊区域"
+            }
+          ]
+        }
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentClassNameCn": "",
+          "currentGroupKey": "",
+          "currentGroupLabel": "",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        },
+        "followUps": [
+          {
+            "questionKey": "q_irregular_blotches_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "irregular_blotches",
+            "text": "病斑呈不规则斑块状，而不是规则圆斑吗？"
+          },
+          {
+            "questionKey": "q_anthracnose_concentric",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "concentric_rings",
+            "text": "病斑上有明显同心轮纹吗？"
+          }
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776510966199_kc4w3xd3",
+      "openid": "dev_terminal_combo_b6fd50ed2b8ee5c4691b",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776510966199_5hio8b21",
+        "currentRoundIndex": 2,
+        "observedEvidenceSetCount": 0,
+        "symptomClassRuntime": null,
+        "visualConclusion": {
+          "symptomCandidates": [
+            {
+              "symptomKey": "black_spots_spreading",
+              "displayNameCn": "黑斑扩散",
+              "confidenceBand": "medium",
+              "supportingRegionNote": "叶片上存在多处深色斑点，呈现扩散趋势，叶组织整体完整但有色素异常区域"
+            },
+            {
+              "symptomKey": "irregular_blotches",
+              "displayNameCn": "不规则斑块",
+              "confidenceBand": "medium",
+              "supportingRegionNote": "叶片上有不规则的深色斑块，组织整体完整但存在色素异常区域"
+            }
+          ],
+          "outOfPoolCandidates": [],
+          "routeHints": [
+            {
+              "type": "possible_problematic_signal",
+              "reason": "存在黑斑扩散和不规则斑块等异常视觉信号"
+            }
+          ]
+        }
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentClassNameCn": "",
+          "currentGroupKey": "",
+          "currentGroupLabel": "",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 3
+          }
+        },
+        "followUps": []
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776511759639_70rd6nkz",
+      "openid": "dev_terminal_combo_8cfd69c091e3038269de",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776511759639_1qdy8bq6",
+        "currentRoundIndex": 1,
+        "observedEvidenceSetCount": 0,
+        "symptomClassRuntime": null,
+        "visualConclusion": {
+          "symptomCandidates": [
+            {
+              "symptomKey": "brown_spots_halo",
+              "displayNameCn": "褐斑带黄晕",
+              "confidenceBand": "medium",
+              "supportingRegionNote": "叶片上存在带有黄晕的褐斑区域"
+            },
+            {
+              "symptomKey": "irregular_blotches",
+              "displayNameCn": "不规则斑块",
+              "confidenceBand": "medium",
+              "supportingRegionNote": "叶片上有不规则的深色斑块区域"
+            }
+          ],
+          "outOfPoolCandidates": [
+            {
+              "rawVisualNameCn": "叶片边缘干枯坏死",
+              "closestSymptomKeyHint": "leaf_margin_necrosis",
+              "reason": "当前候选池无完全匹配的叶片边缘干枯坏死症状，最接近的是leaf_margin_necrosis但未在候选池中"
+            }
+          ],
+          "routeHints": [
+            {
+              "type": "possible_problematic_signal",
+              "reason": "存在褐斑带黄晕、不规则斑块等异常视觉信号"
+            }
+          ]
+        }
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentClassNameCn": "",
+          "currentGroupKey": "",
+          "currentGroupLabel": "",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        },
+        "followUps": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
+          },
+          {
+            "questionKey": "q_leaf_margin_necrosis_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "leaf_margin_necrosis",
+            "text": "叶缘已经形成连续的褐黑坏死带了吗？"
+          }
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776512443506_27k1lcw4",
+      "openid": "dev_terminal_combo_d9a73c4a41ac3feb66a6",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776512443506_32a90o8a",
+        "currentRoundIndex": 1,
+        "observedEvidenceSetCount": 0,
+        "symptomClassRuntime": null,
+        "visualConclusion": {
+          "symptomCandidates": [
+            {
+              "symptomKey": "brown_spots_halo",
+              "displayNameCn": "褐斑带黄晕",
+              "confidenceBand": "medium",
+              "supportingRegionNote": "叶片上存在带有黄晕的褐斑区域"
+            },
+            {
+              "symptomKey": "yellow_speckling",
+              "displayNameCn": "小黄点",
+              "confidenceBand": "low",
+              "supportingRegionNote": "叶片上有少量疑似小黄点的特征"
+            }
+          ],
+          "outOfPoolCandidates": [
+            {
+              "rawVisualNameCn": "叶片底部组织坏死",
+              "closestSymptomKeyHint": "leaf_margin_necrosis",
+              "reason": "观察到叶片底部有组织坏死情况，但候选池中无完全匹配的症状项"
+            }
+          ],
+          "routeHints": [
+            {
+              "type": "possible_problematic_signal",
+              "reason": "存在褐斑带黄晕、疑似小黄点及叶片底部组织坏死等视觉特征"
+            }
+          ]
+        }
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentClassNameCn": "",
+          "currentGroupKey": "",
+          "currentGroupLabel": "",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        },
+        "followUps": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
+          },
+          {
+            "questionKey": "q_leaf_margin_necrosis_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "leaf_margin_necrosis",
+            "text": "叶缘已经形成连续的褐黑坏死带了吗？"
+          }
+        ]
+      }
+    }
+  ]
+}

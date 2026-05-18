@@ -1,0 +1,819 @@
+{
+  "batchSource": "diagnose-popup-dev-mode-pairwise",
+  "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+  "generatedAt": "2026-04-30T14:04:55.328Z",
+  "summary": {
+    "modeCount": 1,
+    "directFinalCount": 0,
+    "discoveredQuestionCount": 5,
+    "scheduledPairCount": 19,
+    "coveredPairCount": 15,
+    "reviewRecordCount": 15,
+    "failureCount": 2
+  },
+  "splitMeta": {
+    "rootBaseName": "diagnose-popup-dev-mode-pairwise-20260430-220455",
+    "partIndex": 1,
+    "partCount": 1,
+    "maxResultsPerFile": 100
+  },
+  "results": [
+    {
+      "sessionId": "engine_1777557900329_ntoeqjjr",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "pest_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "看到虫子或虫害痕迹"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "缺氮",
+        "currentTopTitle": "缺氮",
+        "topProblemKey": "nitrogen_deficiency",
+        "topProblemDisplayName": "缺氮",
+        "topProblemScore": 0.4775,
+        "topScoreGap": 0.1684,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777557903187_3mkc5jbn",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "disease_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "还有斑点、烂斑或霉粉"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "缺氮",
+        "currentTopTitle": "缺氮",
+        "topProblemKey": "nitrogen_deficiency",
+        "topProblemDisplayName": "缺氮",
+        "topProblemScore": 0.4775,
+        "topScoreGap": 0.1684,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777557907447_2k8ncuy5",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "yellowing_only",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "只是发黄，没看到其他异常"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "缺氮",
+        "currentTopTitle": "缺氮",
+        "topProblemKey": "nitrogen_deficiency",
+        "topProblemDisplayName": "缺氮",
+        "topProblemScore": 0.4775,
+        "topScoreGap": 0.1684,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777557910042_0exxnd8k",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "unknown",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "不确定，继续帮我排查"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "缺氮",
+        "currentTopTitle": "缺氮",
+        "topProblemKey": "nitrogen_deficiency",
+        "topProblemDisplayName": "缺氮",
+        "topProblemScore": 0.4775,
+        "topScoreGap": 0.1684,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777557910604_rhgy3pde",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "pest_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "看到虫子或虫害痕迹"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__pest_trace_type",
+          "optionKey": "mite_webbing",
+          "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
+          "optionText": "叶背或叶柄附近有细网、蜕皮，或极小活动点"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=mite_webbing",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777557915412_4hrr1ecz",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "pest_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "看到虫子或虫害痕迹"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__pest_trace_type",
+          "optionKey": "thrips_silver_black",
+          "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
+          "optionText": "有银白擦伤样痕迹，并伴很小的黑色排泄点"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=thrips_silver_black",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777557915943_n8gr6hqv",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "pest_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "看到虫子或虫害痕迹"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__pest_trace_type",
+          "optionKey": "sticky_honeydew",
+          "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
+          "optionText": "表面发黏，或附近有蜜露/煤灰样黑层"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=sticky_honeydew",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777557917442_e27pbev6",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "pest_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "看到虫子或虫害痕迹"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__pest_trace_type",
+          "optionKey": "no_pest_trace",
+          "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
+          "optionText": "没有这些虫害痕迹，更像晒伤、肥害、旧伤或普通变色"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0.02,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=no_pest_trace",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777557917960_y6f16f50",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "pest_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "看到虫子或虫害痕迹"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__pest_trace_type",
+          "optionKey": "unknown",
+          "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
+          "optionText": "看不出/不确定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=unknown",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777557918481_g8vb3jeg",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "disease_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "还有斑点、烂斑或霉粉"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate",
+          "optionKey": "halo_spots",
+          "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
+          "optionText": "有褐色或黑色斑点，周围还有一圈发黄"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=halo_spots",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777557922790_kxxegbw5",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "disease_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "还有斑点、烂斑或霉粉"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate",
+          "optionKey": "water_soaked_soft",
+          "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
+          "optionText": "斑点像被水浸过，发暗、半透明或偏软"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=water_soaked_soft",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777557923338_27jh8z7m",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "disease_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "还有斑点、烂斑或霉粉"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate",
+          "optionKey": "powder_mold_surface",
+          "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
+          "optionText": "表面像有粉、霉、灰尘或脏层"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=powder_mold_surface",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777557923915_wqnornhr",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "disease_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "还有斑点、烂斑或霉粉"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate",
+          "optionKey": "yellowing_only_no_lesion",
+          "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
+          "optionText": "只是颜色发黄，没有明显斑点或烂斑"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=yellowing_only_no_lesion",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777557924571_sipalgh9",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "disease_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "还有斑点、烂斑或霉粉"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate",
+          "optionKey": "unknown",
+          "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
+          "optionText": "不确定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=unknown",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777557925619_yjcq7oss",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "yellowing_only",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "只是发黄，没看到其他异常"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+          "optionKey": "new_leaves_first",
+          "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
+          "optionText": "新叶更明显"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "缺铁",
+        "currentTopTitle": "缺铁",
+        "topProblemKey": "iron_deficiency",
+        "topProblemDisplayName": "缺铁",
+        "topProblemScore": 0.4718,
+        "topScoreGap": 0.2118,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    }
+  ]
+}

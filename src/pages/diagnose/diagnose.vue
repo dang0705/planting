@@ -131,22 +131,11 @@ function normalizeOutcomeDisplayKey(outcome = null, index = 0) {
 }
 
 function buildOutcomeDisplayItems(diagnosis = {}) {
-  const primaryOutcome = diagnosis.primaryOutcome || diagnosis.finalResult?.primaryOutcome || null
-  const primaryKey = normalizeOutcomeDisplayKey(primaryOutcome)
   const visibleOutcomes = Array.isArray(diagnosis.visibleOutcomes) && diagnosis.visibleOutcomes.length
     ? diagnosis.visibleOutcomes
     : Array.isArray(diagnosis.finalResult?.visibleOutcomes) && diagnosis.finalResult.visibleOutcomes.length
       ? diagnosis.finalResult.visibleOutcomes
-      : [
-          primaryOutcome,
-          ...(
-            Array.isArray(diagnosis.secondaryOutcomes)
-              ? diagnosis.secondaryOutcomes
-              : Array.isArray(diagnosis.finalResult?.secondaryOutcomes)
-                ? diagnosis.finalResult.secondaryOutcomes
-                : []
-          )
-        ]
+      : []
 
   const seen = new Set()
   return visibleOutcomes
@@ -165,8 +154,7 @@ function buildOutcomeDisplayItems(diagnosis = {}) {
 
       return {
         key: dedupeKey,
-        label,
-        isPrimary: key && key === primaryKey
+        label
       }
     })
     .filter(Boolean)
@@ -210,16 +198,13 @@ const viewModel = computed(() => {
   }
 
   const outcomeItems = buildOutcomeDisplayItems(diagnosis)
-  const primaryOutcomeDisplay =
-    outcomeItems.find(item => item.isPrimary)?.label ||
-    normalizeOutcomeDisplayLabel(diagnosis.primaryOutcome || diagnosis.finalResult?.primaryOutcome)
+  const leadingOutcomeDisplay = outcomeItems[0]?.label || ''
 
   return {
     plantName: diagnosis.plantName || '植物',
     stage: diagnosis.stage || 'unknown',
     mainIssue:
-      primaryOutcomeDisplay ||
-      outcomeItems[0]?.label ||
+      leadingOutcomeDisplay ||
       diagnosis.mainIssueText ||
       diagnosis.finalResult?.displayNameCn ||
       diagnosis.finalResult?.displayName ||

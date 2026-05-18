@@ -1,0 +1,45 @@
+{
+  "total": 647,
+  "resolvedCount": 589,
+  "remainingUncertainCount": 58,
+  "resolvedRate": 91.04,
+  "byStopReason": [
+    {
+      "key": "problematic_output_ready",
+      "count": 589
+    },
+    {
+      "key": "uncertain_output_ready",
+      "count": 58
+    }
+  ],
+  "byOutcomeType": [
+    {
+      "key": "problematic",
+      "count": 589
+    },
+    {
+      "key": "uncertain",
+      "count": 58
+    }
+  ],
+  "uncertainDecisionCauses": [
+    {
+      "key": "no_observed_symptoms",
+      "count": 58
+    }
+  ],
+  "uncertainSummaries": [
+    {
+      "key": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+      "count": 58
+    }
+  ],
+  "buckets": {
+    "retakeFirstNoVisual": 58,
+    "twoRoundNoObserved": 0,
+    "yellowingBlocked": 0,
+    "noForceable": 0,
+    "other": 0
+  }
+}

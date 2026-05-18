@@ -32,9 +32,12 @@ function resolveOutcomeDisplayFromPayload(outcomePayload = {}, finalProblemKey =
   }
 
   const entries = []
+  if (Array.isArray(finalResult?.visibleOutcomes)) {entries.push(...finalResult.visibleOutcomes)}
+  if (Array.isArray(payload?.visibleOutcomes)) {entries.push(...payload.visibleOutcomes)}
+  if (finalResult?.primaryOutcome) {entries.push(finalResult.primaryOutcome)}
+  if (Array.isArray(finalResult?.secondaryOutcomes)) {entries.push(...finalResult.secondaryOutcomes)}
   if (payload?.primaryOutcome) {entries.push(payload.primaryOutcome)}
   if (Array.isArray(payload?.secondaryOutcomes)) {entries.push(...payload.secondaryOutcomes)}
-  if (Array.isArray(payload?.visibleOutcomes)) {entries.push(...payload.visibleOutcomes)}
 
   const normalizedFinalProblemKey = String(finalProblemKey || '').trim()
   if (normalizedFinalProblemKey) {

@@ -24,7 +24,7 @@ developer_instructions = """
 
 
 【大目录禁止读取规则】
-- 默认禁止读取 `docs/code-logics/` 目录及其 `INDEX.md`。release_ops 不负责代码逻辑解释，代码逻辑由 `code_explorer` / `architect_reviewer` / `qa_reviewer` 处理。
+- 默认禁止读取 `docs/code-logics/` 目录及其 `INDEX.md`。release_ops 不负责代码逻辑解释；代码定位由 `code_explorer` 处理，代码 review 由 `architect_reviewer` 处理，`qa_reviewer` 只提供测试、回归和验收证据摘要。
 - 默认禁止读取 `docs/new-rules/` 目录及其 `INDEX.md`。release_ops 只消费 main agent、`architect_reviewer` 或 `qa_reviewer` 提供的发布/验收相关规则摘要。
 - 默认禁止读取 `docs/new-rules/planting_ai_diagnosis_source_index.json`。
 - 默认禁止读取 `docs/new-rules/planting_ai_diagnosis_all_in_one.md`，包括摘要区和附录 A 原文。

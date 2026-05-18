@@ -1,0 +1,62 @@
+{
+  "ok": true,
+  "env": "cloud1-2grufevs395a9d5e",
+  "visual": {
+    "reportFile": "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/manifests/diagnose-visual-regression.report.recheck.json",
+    "summary": {
+      "total": 4,
+      "success": 4,
+      "failed": 0,
+      "skipped": 0,
+      "byLabel": {
+        "root_rot_single_leaf": {
+          "total": 1,
+          "success": 1,
+          "failed": 0,
+          "skipped": 0
+        },
+        "root_rot_single_whole_plant": {
+          "total": 1,
+          "success": 1,
+          "failed": 0,
+          "skipped": 0
+        },
+        "root_rot_pair": {
+          "total": 1,
+          "success": 1,
+          "failed": 0,
+          "skipped": 0
+        },
+        "healthy_uncertain_single": {
+          "total": 1,
+          "success": 1,
+          "failed": 0,
+          "skipped": 0
+        }
+      }
+    }
+  },
+  "outcome": {
+    "reportFile": "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/manifests/diagnose-outcome-regression.report.recheck.json",
+    "summary": {
+      "total": 2,
+      "success": 2,
+      "failed": 0,
+      "skipped": 0,
+      "byLabel": {
+        "non_problematic_normal_leaf_aging": {
+          "total": 1,
+          "success": 1,
+          "failed": 0,
+          "skipped": 0
+        },
+        "uncertain_unknown_answers": {
+          "total": 1,
+          "success": 1,
+          "failed": 0,
+          "skipped": 0
+        }
+      }
+    }
+  }
+}

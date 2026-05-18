@@ -1,0 +1,1249 @@
+{
+  "batchSource": "diagnose-popup-dev-mode-pairwise",
+  "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+  "generatedAt": "2026-04-30T14:11:19.290Z",
+  "summary": {
+    "modeCount": 28,
+    "directFinalCount": 17,
+    "discoveredQuestionCount": 30,
+    "scheduledPairCount": 123,
+    "coveredPairCount": 103,
+    "reviewRecordCount": 120,
+    "failureCount": 20
+  },
+  "splitMeta": {
+    "rootBaseName": "diagnose-popup-dev-mode-pairwise-20260430-221119",
+    "partIndex": 2,
+    "partCount": 2,
+    "maxResultsPerFile": 100
+  },
+  "results": [
+    {
+      "sessionId": "engine_1777558297682_t1chc56a",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "care_context",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "先看日常养护"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+          "optionKey": "light_area",
+          "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
+          "optionText": "光照变化明显"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__light_change_context",
+          "optionKey": "no_clear_change",
+          "questionText": "最近 1-2 周，这盆植物每天大概能晒到多久的直射太阳？",
+          "optionText": "每天直射约 1-3 小时，且最近基本没变"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.4865,
+        "topScoreGap": 0.4865,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=light_area > q_observed_probe__leaf_yellowing__light_change_context=no_clear_change",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777558297682_2k8ig6nb",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "care_context",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "先看日常养护"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+          "optionKey": "light_area",
+          "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
+          "optionText": "光照变化明显"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__light_change_context",
+          "optionKey": "weaker_light",
+          "questionText": "最近 1-2 周，这盆植物每天大概能晒到多久的直射太阳？",
+          "optionText": "每天直射 0-1 小时，或最近明显更阴"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.4865,
+        "topScoreGap": 0.4865,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=light_area > q_observed_probe__leaf_yellowing__light_change_context=weaker_light",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777558297682_uwujhkfq",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "care_context",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "先看日常养护"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+          "optionKey": "light_area",
+          "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
+          "optionText": "光照变化明显"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__light_change_context",
+          "optionKey": "unknown",
+          "questionText": "最近 1-2 周，这盆植物每天大概能晒到多久的直射太阳？",
+          "optionText": "不确定 / 没留意"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.4865,
+        "topScoreGap": 0.4865,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=light_area > q_observed_probe__leaf_yellowing__light_change_context=unknown",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777558297693_w80za2j8",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "vein_darkening",
+          "symptomCn": "叶脉变深",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "nutrient_stress_mode",
+        "classKey": "nutrient_stress_mode",
+        "symptomKey": "vein_darkening"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "care_context",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "先看日常养护"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+          "optionKey": "airflow_humidity_area",
+          "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
+          "optionText": "通风或空气湿度变化"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_progression_speed",
+          "optionKey": "rapid_spreading",
+          "questionText": "如果前面的线索还不够明确，黄叶变化速度能帮助判断是否存在根区或急性环境压力。发黄最近变化速度如何？",
+          "optionText": "几天到一两周内明显变多/变重"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=rapid_spreading",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777558297693_nyekpubr",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "vein_darkening",
+          "symptomCn": "叶脉变深",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "nutrient_stress_mode",
+        "classKey": "nutrient_stress_mode",
+        "symptomKey": "vein_darkening"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "care_context",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "先看日常养护"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+          "optionKey": "airflow_humidity_area",
+          "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
+          "optionText": "通风或空气湿度变化"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_progression_speed",
+          "optionKey": "slow_stable",
+          "questionText": "如果前面的线索还不够明确，黄叶变化速度能帮助判断是否存在根区或急性环境压力。发黄最近变化速度如何？",
+          "optionText": "变化较慢，基本稳定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=slow_stable",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777558297693_t21wqvzd",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "vein_darkening",
+          "symptomCn": "叶脉变深",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "nutrient_stress_mode",
+        "classKey": "nutrient_stress_mode",
+        "symptomKey": "vein_darkening"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "care_context",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "先看日常养护"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+          "optionKey": "airflow_humidity_area",
+          "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
+          "optionText": "通风或空气湿度变化"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_progression_speed",
+          "optionKey": "with_wilting_or_drop",
+          "questionText": "如果前面的线索还不够明确，黄叶变化速度能帮助判断是否存在根区或急性环境压力。发黄最近变化速度如何？",
+          "optionText": "同时明显萎蔫、掉叶或软塌"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=with_wilting_or_drop",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777558297693_f03dvr2m",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "vein_darkening",
+          "symptomCn": "叶脉变深",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "nutrient_stress_mode",
+        "classKey": "nutrient_stress_mode",
+        "symptomKey": "vein_darkening"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "care_context",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "先看日常养护"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+          "optionKey": "airflow_humidity_area",
+          "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
+          "optionText": "通风或空气湿度变化"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_progression_speed",
+          "optionKey": "unknown",
+          "questionText": "如果前面的线索还不够明确，黄叶变化速度能帮助判断是否存在根区或急性环境压力。发黄最近变化速度如何？",
+          "optionText": "不确定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=unknown",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777558297694_e62dxg0w",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "care_context",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "先看日常养护"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+          "optionKey": "airflow_humidity_area",
+          "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
+          "optionText": "通风或空气湿度变化"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_progression_speed",
+          "optionKey": "rapid_spreading",
+          "questionText": "如果前面的线索还不够明确，黄叶变化速度能帮助判断是否存在根区或急性环境压力。发黄最近变化速度如何？",
+          "optionText": "几天到一两周内明显变多/变重"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.4865,
+        "topScoreGap": 0.4865,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=rapid_spreading",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777558297694_x4r99lkp",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "care_context",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "先看日常养护"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+          "optionKey": "airflow_humidity_area",
+          "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
+          "optionText": "通风或空气湿度变化"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_progression_speed",
+          "optionKey": "slow_stable",
+          "questionText": "如果前面的线索还不够明确，黄叶变化速度能帮助判断是否存在根区或急性环境压力。发黄最近变化速度如何？",
+          "optionText": "变化较慢，基本稳定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.4865,
+        "topScoreGap": 0.4865,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=slow_stable",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777558297694_o11nahga",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "care_context",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "先看日常养护"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+          "optionKey": "airflow_humidity_area",
+          "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
+          "optionText": "通风或空气湿度变化"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_progression_speed",
+          "optionKey": "with_wilting_or_drop",
+          "questionText": "如果前面的线索还不够明确，黄叶变化速度能帮助判断是否存在根区或急性环境压力。发黄最近变化速度如何？",
+          "optionText": "同时明显萎蔫、掉叶或软塌"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.4865,
+        "topScoreGap": 0.4865,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=with_wilting_or_drop",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777558297694_ghljiq9s",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "care_context",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "先看日常养护"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+          "optionKey": "airflow_humidity_area",
+          "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
+          "optionText": "通风或空气湿度变化"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_progression_speed",
+          "optionKey": "unknown",
+          "questionText": "如果前面的线索还不够明确，黄叶变化速度能帮助判断是否存在根区或急性环境压力。发黄最近变化速度如何？",
+          "optionText": "不确定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.4865,
+        "topScoreGap": 0.4865,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=unknown",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777558294193_qy2wwl0m",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "vein_darkening",
+          "symptomCn": "叶脉变深",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "nutrient_stress_mode",
+        "classKey": "nutrient_stress_mode",
+        "symptomKey": "vein_darkening"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "yellowing_only",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "只是发黄，没看到其他异常"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+          "optionKey": "new_leaves_first",
+          "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
+          "optionText": "新叶更明显"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_distribution_pattern",
+          "optionKey": "edge_or_scorch_patch",
+          "questionText": "黄叶的分布方式会影响后续方向。发黄的样子更接近哪一种？",
+          "optionText": "主要是叶边或局部一块发黄发浅，像晒后留下的伤斑"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first > q_observed_probe__leaf_yellowing__yellowing_distribution_pattern=edge_or_scorch_patch",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777558297701_wqwbyr0r",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "yellowing_only",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "只是发黄，没看到其他异常"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+          "optionKey": "new_leaves_first",
+          "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
+          "optionText": "新叶更明显"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_distribution_pattern",
+          "optionKey": "uniform_whole_leaf",
+          "questionText": "黄叶的分布方式会影响后续方向。发黄的样子更接近哪一种？",
+          "optionText": "整片叶比较均匀地发黄"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "红蜘蛛",
+        "currentTopTitle": "红蜘蛛",
+        "topProblemKey": "spider_mites",
+        "topProblemDisplayName": "红蜘蛛",
+        "topProblemScore": 0.4865,
+        "topScoreGap": 0.22649999999999998,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first > q_observed_probe__leaf_yellowing__yellowing_distribution_pattern=uniform_whole_leaf",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777558297701_7yqbf5zc",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "yellowing_only",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "只是发黄，没看到其他异常"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+          "optionKey": "new_leaves_first",
+          "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
+          "optionText": "新叶更明显"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_distribution_pattern",
+          "optionKey": "interveinal",
+          "questionText": "黄叶的分布方式会影响后续方向。发黄的样子更接近哪一种？",
+          "optionText": "叶脉附近还绿，叶脉之间更黄"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "红蜘蛛",
+        "currentTopTitle": "红蜘蛛",
+        "topProblemKey": "spider_mites",
+        "topProblemDisplayName": "红蜘蛛",
+        "topProblemScore": 0.4865,
+        "topScoreGap": 0.1865,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first > q_observed_probe__leaf_yellowing__yellowing_distribution_pattern=interveinal",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777558297701_susfunut",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "yellowing_only",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "只是发黄，没看到其他异常"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+          "optionKey": "new_leaves_first",
+          "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
+          "optionText": "新叶更明显"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_distribution_pattern",
+          "optionKey": "patchy_or_speckled",
+          "questionText": "黄叶的分布方式会影响后续方向。发黄的样子更接近哪一种？",
+          "optionText": "一块块、斑驳，或很多小黄点"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "红蜘蛛",
+        "currentTopTitle": "红蜘蛛",
+        "topProblemKey": "spider_mites",
+        "topProblemDisplayName": "红蜘蛛",
+        "topProblemScore": 0.5249,
+        "topScoreGap": 0.2649,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first > q_observed_probe__leaf_yellowing__yellowing_distribution_pattern=patchy_or_speckled",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777558297703_hs2lir8p",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "yellowing_only",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "只是发黄，没看到其他异常"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+          "optionKey": "new_leaves_first",
+          "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
+          "optionText": "新叶更明显"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_distribution_pattern",
+          "optionKey": "edge_or_scorch_patch",
+          "questionText": "黄叶的分布方式会影响后续方向。发黄的样子更接近哪一种？",
+          "optionText": "主要是叶边或局部一块发黄发浅，像晒后留下的伤斑"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "红蜘蛛",
+        "currentTopTitle": "红蜘蛛",
+        "topProblemKey": "spider_mites",
+        "topProblemDisplayName": "红蜘蛛",
+        "topProblemScore": 0.4865,
+        "topScoreGap": 0.22649999999999998,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first > q_observed_probe__leaf_yellowing__yellowing_distribution_pattern=edge_or_scorch_patch",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777558297704_owi3ufxk",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "yellowing_only",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "只是发黄，没看到其他异常"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+          "optionKey": "new_leaves_first",
+          "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
+          "optionText": "新叶更明显"
+        },
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_distribution_pattern",
+          "optionKey": "unknown",
+          "questionText": "黄叶的分布方式会影响后续方向。发黄的样子更接近哪一种？",
+          "optionText": "不确定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "红蜘蛛",
+        "currentTopTitle": "红蜘蛛",
+        "topProblemKey": "spider_mites",
+        "topProblemDisplayName": "红蜘蛛",
+        "topProblemScore": 0.4865,
+        "topScoreGap": 0.22649999999999998,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first > q_observed_probe__leaf_yellowing__yellowing_distribution_pattern=unknown",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777558297694_x6f0evr9",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "pest_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "看到虫子或虫害痕迹"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__pest_trace_type",
+          "optionKey": "thrips_silver_black",
+          "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
+          "optionText": "有银白擦伤样痕迹，并伴很小的黑色排泄点"
+        },
+        {
+          "questionKey": "q_spider_webbing_visible",
+          "optionKey": "unknown",
+          "questionText": "叶片、叶柄或枝叶连接处，能看到很细的网状丝吗？",
+          "optionText": "看不出/不确定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "蓟马",
+        "pendingTopTitle": "",
+        "currentTopTitle": "蓟马",
+        "topProblemKey": "thrips",
+        "topProblemDisplayName": "蓟马",
+        "topProblemScore": 0.242,
+        "topScoreGap": -0.16449999999999998,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=thrips_silver_black > q_spider_webbing_visible=unknown",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777558297694_4awp6nd7",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "pest_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "看到虫子或虫害痕迹"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__pest_trace_type",
+          "optionKey": "thrips_silver_black",
+          "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
+          "optionText": "有银白擦伤样痕迹，并伴很小的黑色排泄点"
+        },
+        {
+          "questionKey": "q_spider_webbing_visible",
+          "optionKey": "no",
+          "questionText": "叶片、叶柄或枝叶连接处，能看到很细的网状丝吗？",
+          "optionText": "不是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "蓟马",
+        "pendingTopTitle": "",
+        "currentTopTitle": "蓟马",
+        "topProblemKey": "thrips",
+        "topProblemDisplayName": "蓟马",
+        "topProblemScore": 0.242,
+        "topScoreGap": 0.242,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=thrips_silver_black > q_spider_webbing_visible=no",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777558297701_oephi2ca",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "pest_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "看到虫子或虫害痕迹"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__pest_trace_type",
+          "optionKey": "thrips_silver_black",
+          "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
+          "optionText": "有银白擦伤样痕迹，并伴很小的黑色排泄点"
+        },
+        {
+          "questionKey": "q_spider_webbing_visible",
+          "optionKey": "yes",
+          "questionText": "叶片、叶柄或枝叶连接处，能看到很细的网状丝吗？",
+          "optionText": "是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "蓟马",
+        "pendingTopTitle": "",
+        "currentTopTitle": "蓟马",
+        "topProblemKey": "thrips",
+        "topProblemDisplayName": "蓟马",
+        "topProblemScore": 0.242,
+        "topScoreGap": -1.1245,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=thrips_silver_black > q_spider_webbing_visible=yes",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "next_question_low_yield_no_output_gain",
+          "details": {
+            "topProblemKey": "spider_mites",
+            "contextSatisfied": false,
+            "hasProblemLevelPositiveEvidence": false,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__fine_webbing__underside_presence"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

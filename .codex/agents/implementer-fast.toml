@@ -53,6 +53,8 @@ developer_instructions = """
 - `implementer_fast` 只负责低风险局部实现，不直接更新正式规则文档、All-in-One、source_index 或 `docs/new-rules/`。
 - 如果实现影响文案、接口字段、展示契约、配置含义、问诊链路或避坑记录，必须在“文档同步建议”中说明，并交给 main agent 判断是否派发 `docs_keeper`。
 - 如果发现需要跨文件核心改造、规则解释、诊断语义判断或高风险验证，必须停止并请求升级给 `implementer_deep`。
+- 非简单代码实现完成后，必须提供可落地到 `docs/ai-runs/` 的 handoff 摘要，并明确 handoff 文件路径；如果 Dispatch Plan 授权你写 handoff，应直接创建或更新该文件。
+- 实现完成后必须先交给同一 `architect_reviewer` 线程做代码 review，再进入 `qa_reviewer`；不得把 QA 当作代码 review。
 
 输出必须包含：
 # 快速实现结果
@@ -118,11 +120,18 @@ developer_instructions = """
 - 否 / 是
 - 原因：
 
+## 给 architect_reviewer 的实现后代码 review 重点
+- 是否需要：是 / 否
+- 重点：
+
 ## 是否需要 qa_reviewer
 - 否 / 是
 - 建议检查重点：
 
 ## Handoff
+- docs/ai-runs handoff 路径：
+- 是否已创建或更新 handoff：是 / 否
+- 未创建原因：
 - 当前状态：
 - 后续建议：
 """

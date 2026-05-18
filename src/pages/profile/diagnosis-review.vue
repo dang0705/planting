@@ -2141,11 +2141,6 @@ function getRouteDecisionFieldRows(detail = null) {
       value: formatDetailLines(routeDecision.visibleOutcomeKeys, '无')
     },
     {
-      key: 'primaryOutcomeKey',
-      label: '核心结果',
-      value: routeDecision.primaryOutcomeKey || '无'
-    },
-    {
       key: 'nextQuestionKeys',
       label: '下一题',
       value: formatDetailLines(routeDecision.nextQuestionKeys, '无')

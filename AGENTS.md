@@ -189,20 +189,23 @@ Dispatch Plan:
 - 是否需要读取 AGENTS.md: 默认否；仅在缺少派发上下文、规则冲突、线程恢复或角色边界不清时为是
 - 预期输出:
 - 写入权限:
-- 首部规划闭环: main agent 已完成 / 派发 task_planner / 合法裁剪，原因：
-- 架构分析闭环: 派发 architect_reviewer / main agent 明确裁剪，原因：
+- 首部规划闭环: 派发/复用 task_planner / 合法裁剪，原因：
+- 架构分析闭环: 实现前派发/复用 architect_reviewer / main agent 明确裁剪，原因：
 - 实现闭环: implementer_fast / implementer_deep / main agent 直接执行 / 无代码实现，原因：
+- 代码 review 闭环: 实现后派发/复用 architect_reviewer / 无代码 review，原因：
 - QA 闭环: 派发 qa_reviewer / main agent 直接复核 / 合法裁剪，原因：
 - 文档同步计划: 不需要 / 需要 docs_keeper，触发依据：
 ```
 
 非简单实现任务进入 workflow 后，至少必须具备以下闭环，不得只做定位或只改代码：
 
-1. planning：由 main agent 在 Dispatch Plan 中完成，或在需求、非目标、验收标准、写入边界不清时派发 `task_planner`。
-2. 架构分析：默认派发 `architect_reviewer`；只有纯只读、纯文档、已知单点低风险改动，且 Dispatch Plan 写明裁剪理由时才可由 main agent 直接承担。
+1. planning：默认派发或复用 `task_planner` 输出规划草案；只有纯只读解释、纯配置检查、用户明确禁止 subagent 或当前环境不支持 subagent 时，才允许由 main agent 在 Dispatch Plan 中裁剪并写明原因。
+2. 实现前架构分析：默认派发或复用 `architect_reviewer` 定边界；只有纯只读、纯文档、已知单点低风险改动，且 Dispatch Plan 写明裁剪理由时才可由 main agent 直接承担。
 3. 代码执行：由 `implementer_fast` / `implementer_deep` 或 main agent 在明确写入边界内完成；高风险实现默认 `implementer_deep`。
-4. QA：实现后必须有 `qa_reviewer` 或 main agent 的明确复核；高风险、跨模块、用户可见路径或规则一致性任务默认派发 `qa_reviewer`。
-5. 文档同步：若涉及规则、流程、接口、字段、状态、问诊链路、展示契约、避坑记录、All-in-One 或 source_index，必须派发 `docs_keeper`；若不需要同步，最终汇总必须说明理由。
+4. 实现后代码 review：凡涉及代码 diff、代码逻辑、模块边界、规则一致性、数据/API/状态边界或删减判断，必须由同一角色线程的 `architect_reviewer` 执行代码 review；`qa_reviewer` 不得替代代码 review。
+5. QA：代码 review 之后再由 `qa_reviewer` 检查测试、回归、验收证据、自动化与未验证项；QA 可以指出“缺少 architect 代码 review”，但不得把自身结论当作代码 review。
+6. handoff：非简单代码实现完成后，必须创建或更新 `docs/ai-runs/` handoff；只有无代码实现或用户明确不要落文档时可裁剪并写明原因。
+7. 文档同步：若涉及规则、流程、接口、字段、状态、问诊链路、展示契约、避坑记录、All-in-One 或 source_index，必须派发 `docs_keeper`；若不需要同步，最终汇总必须说明理由。
 
 纯只读分析、纯文档整理、纯配置检查等无法自然包含“代码执行”的任务，必须在 Dispatch Plan 中把实现闭环标记为“无代码实现”并说明原因，不能默默跳过。
 
@@ -211,12 +214,14 @@ Dispatch Plan:
 高风险任务不得以“用户未显式要求开启 subagent”为理由跳过 subagent workflow。
 一旦任务被判定为高风险，main agent 必须主动派发至少一个只读 subagent：
 
-1. 默认先派发 `code_explorer` 做只读定位。
-2. 涉及诊断流、outcome、gate、route、runtime、规则边界或架构判断时，必须再派发 `architect_reviewer`。
-3. 涉及实现时，默认派发 `implementer_deep`；只有 `architect_reviewer` 明确裁定为低风险局部展示 / 文案修复时，才允许降级为 `implementer_fast`。
-4. 实现后必须派发 `qa_reviewer`。
-5. 涉及文档、规则、索引或 All-in-One 时，必须派发 `docs_keeper`。
-6. 涉及部署、CloudBase、smoke、DB 证据或回滚时，必须派发 `release_ops`。
+1. 默认先派发或复用 `task_planner` 输出规划草案；合法裁剪必须写明原因。
+2. 再派发 `code_explorer` 做只读定位。
+3. 涉及诊断流、outcome、gate、route、runtime、规则边界或架构判断时，必须再派发 `architect_reviewer` 做实现前架构分析。
+4. 涉及实现时，默认派发 `implementer_deep`；只有 `architect_reviewer` 明确裁定为低风险局部展示 / 文案修复时，才允许降级为 `implementer_fast`。
+5. 代码实现后必须复用 `architect_reviewer` 做代码 review。
+6. architect 代码 review 后必须派发 `qa_reviewer` 做测试、回归和验收证据审查。
+7. 涉及文档、规则、索引或 All-in-One 时，必须派发 `docs_keeper`。
+8. 涉及部署、CloudBase、smoke、DB 证据或回滚时，必须派发 `release_ops`。
 
 高风险任务只有在以下情况下可以不派发 subagent：
 
@@ -231,13 +236,14 @@ Dispatch Plan:
 
 默认流程：
 
-1. planning 闭环：main agent Dispatch Plan；若目标 / 非目标 / 验收标准 / 写入边界不清，先派发 `task_planner`
+1. `task_planner`
 2. `code_explorer`
-3. `architect_reviewer`
+3. `architect_reviewer` 实现前架构分析
 4. `implementer_deep`
-5. `qa_reviewer`
-6. `docs_keeper`，如果涉及文档
-7. `release_ops`，如果涉及部署、CloudBase、replay 或线上验证
+5. `architect_reviewer` 实现后代码 review，复用同一 architect 线程
+6. `qa_reviewer`
+7. `docs_keeper`，如果涉及文档
+8. `release_ops`，如果涉及部署、CloudBase、replay 或线上验证
 
 ---
 
@@ -245,12 +251,12 @@ Dispatch Plan:
 
 | 任务意图 | 派发角色 |
 |---|---|
-| 需求不清、拆任务、计划、验收标准 | `task_planner` |
+| 非简单 workflow planning、需求不清、拆任务、计划、验收标准 | `task_planner` |
 | 找文件、调用链、依赖来源、代码逻辑解释、`docs/code-logics/` 对照 | `code_explorer` |
 | 架构、状态 / API / 数据边界、诊断流、outcome、gate、模块边界、`docs/new-rules/` 一致性 | `architect_reviewer` |
 | 局部、低风险、边界明确的小改动 | `implementer_fast` |
 | 多文件、诊断流、route / outcome / gate / runtime、诊断快捷路径、replay、CloudBase、数据结构、后端高风险实现 | `implementer_deep` |
-| diff、测试、回归、边界、模块化回归、规则一致性 | `qa_reviewer` |
+| 测试、回归、验收证据、前端自动化、未验证项、发布前质量缺口 | `qa_reviewer` |
 | 文档、术语、`docs/code-logics/`、`docs/new-rules/`、避坑索引同步 | `docs_keeper` |
 | 发布、部署、CloudBase、replay、回滚、成本 | `release_ops` |
 
@@ -258,10 +264,10 @@ Dispatch Plan:
 
 1. `task_planner` 只输出规划草案，不直接创建或修改正式 `docs/ai-tasks/` 文档；是否落文档由 main agent 确认，必要时派发 `docs_keeper`。
 2. `code_explorer` 只读定位，不改代码。
-3. `architect_reviewer` 只做架构和规则边界审查，不改代码。
+3. `architect_reviewer` 负责实现前架构审查和实现后代码 review，不改代码；代码相关 review 不得交给 `qa_reviewer` 替代。
 4. `implementer_fast` 只处理低风险局部实现；一旦发现范围扩大，必须请求升级到 `implementer_deep`。
 5. `implementer_deep` 处理高风险实现；涉及部署时必须交给 `release_ops` 复核。
-6. `qa_reviewer` 只审查，不改代码。
+6. `qa_reviewer` 只审查测试、回归、验收证据和质量缺口，不改代码；不得替代 `architect_reviewer` 做代码逻辑、模块边界或规则一致性 review。
 7. `docs_keeper` 负责文档持久化、索引同步、术语一致性和完整文档交付。
 8. `release_ops` 默认不读取大规则目录，只消费发布 / 验收相关摘要和部署证据。
 9. 同一会话内同一角色只能保留一个活跃 subagent 线程；继续同角色任务时必须复用已有线程，重开时记录原因。

@@ -14,6 +14,8 @@
 
 如果是一次性只读分析、纯配置检查或 main agent 可在当前会话内闭环的轻量非简单任务，可以不落正式文件，但必须在最终汇总中说明“不创建 handoff / task”的理由。
 
+非简单代码实现任务完成后，必须创建或更新 `docs/ai-runs/` handoff。不得只在实现 agent 输出里写一段 `Handoff` 摘要而不落文件；如果用户明确要求不落文档或本轮无代码实现，必须在最终汇总中说明裁剪理由。
+
 ## 3. Handoff 必须包含
 
 1. 结论。
@@ -27,7 +29,7 @@
 9. 下一步建议。
 10. 目标验收契约：bug 发生位置、观察入口、用户可见成功标准、必须验证字段 / 证据、快捷路径 / 主链守卫一致性、非目标。
 11. 若涉及客户端运行时或最终展示，必须记录前端消费面是否已检查，例如 result/read、normalize、follow-up、diagnose 页面。
-12. 非简单实现最小闭环：planning、架构分析、实现、QA、文档同步判断的完成状态或裁剪理由。
+12. 非简单实现最小闭环：task_planner planning、实现前 architect 架构分析、实现、实现后 architect 代码 review、QA、handoff、文档同步判断的完成状态或裁剪理由。
 13. Subagent 线程复用表：`role -> agent_id/thread_id -> 状态 -> 最近任务 -> 复用/重开说明`。
 14. 若涉及 `diagnose-http`、route、outcome、gate、runtime、问诊路径、`fast path`、`warm path`、`early return`、缓存命中或性能优化路径，必须记录主链输出点、快捷路径输出点、共享 guard、负向回归样本、正向闭合样本、真实 smoke / DB 证据要求。
 

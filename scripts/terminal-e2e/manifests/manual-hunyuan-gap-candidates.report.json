@@ -1,0 +1,102 @@
+{
+  "generatedAt": "2026-04-23T02:05:03.286Z",
+  "selectionMode": "explicit_hunyuan_output_then_non_short_term_gap",
+  "gapMinutes": 5,
+  "excludeOpenidPrefixes": [
+    "dev_terminal_",
+    "anon_dev_",
+    "debug_"
+  ],
+  "modelName": "hunyuan-vision-1.5-instruct",
+  "counts": {
+    "latestHunyuanSessionCount": 4944,
+    "humanLikeSessionCount": 4,
+    "selectedSessionCount": 4
+  },
+  "referenceReport": {
+    "path": "scripts/terminal-e2e/manifests/replay-manual-full-key-summary-visual-only-current.report.json",
+    "sessionCount": 4,
+    "overlapCount": 4,
+    "onlyInSelectedCount": 0,
+    "onlyInReferenceCount": 0
+  },
+  "selectedSessionIds": [
+    "diag_1776524906841_9gzq2dil",
+    "diag_1776521814145_3n9ak1w5",
+    "diag_1776509556300_t80mp3tg",
+    "diag_1776497216908_nloxmvtp"
+  ],
+  "overlapWithReference": [
+    "diag_1776524906841_9gzq2dil",
+    "diag_1776521814145_3n9ak1w5",
+    "diag_1776509556300_t80mp3tg",
+    "diag_1776497216908_nloxmvtp"
+  ],
+  "onlyInSelected": [],
+  "onlyInReference": [],
+  "humanLikeSessions": [
+    {
+      "sessionId": "diag_1776524906841_9gzq2dil",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-04-18T23:08:37",
+      "visualRawImageRecordId": "visraw_1776524906842_dzmme9pq"
+    },
+    {
+      "sessionId": "diag_1776521814145_3n9ak1w5",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-04-18T22:17:10",
+      "visualRawImageRecordId": "visraw_1776521814146_4vtmdens"
+    },
+    {
+      "sessionId": "diag_1776509556300_t80mp3tg",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-04-18T18:52:44",
+      "visualRawImageRecordId": "visraw_1776509556301_r12quxlv"
+    },
+    {
+      "sessionId": "diag_1776497216908_nloxmvtp",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-04-18T15:27:10",
+      "visualRawImageRecordId": "visraw_1776497216909_9nc0bw5d"
+    }
+  ],
+  "selected": [
+    {
+      "sessionId": "diag_1776524906841_9gzq2dil",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-04-18T23:08:37",
+      "visualRawImageRecordId": "visraw_1776524906842_dzmme9pq",
+      "selectionReason": "latest_human_like_hunyuan_session"
+    },
+    {
+      "sessionId": "diag_1776521814145_3n9ak1w5",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-04-18T22:17:10",
+      "visualRawImageRecordId": "visraw_1776521814146_4vtmdens",
+      "selectionReason": "non_short_term_contiguous_gap",
+      "gapMinutesFromPrevious": 51.45,
+      "previousSessionId": "diag_1776524906841_9gzq2dil",
+      "previousCreatedAt": "2026-04-18T23:08:37"
+    },
+    {
+      "sessionId": "diag_1776509556300_t80mp3tg",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-04-18T18:52:44",
+      "visualRawImageRecordId": "visraw_1776509556301_r12quxlv",
+      "selectionReason": "non_short_term_contiguous_gap",
+      "gapMinutesFromPrevious": 204.43,
+      "previousSessionId": "diag_1776521814145_3n9ak1w5",
+      "previousCreatedAt": "2026-04-18T22:17:10"
+    },
+    {
+      "sessionId": "diag_1776497216908_nloxmvtp",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-04-18T15:27:10",
+      "visualRawImageRecordId": "visraw_1776497216909_9nc0bw5d",
+      "selectionReason": "non_short_term_contiguous_gap",
+      "gapMinutesFromPrevious": 205.57,
+      "previousSessionId": "diag_1776509556300_t80mp3tg",
+      "previousCreatedAt": "2026-04-18T18:52:44"
+    }
+  ]
+}

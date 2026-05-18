@@ -1,0 +1,342 @@
+{
+  "batchSource": "diagnose-popup-dev-mode-pairwise",
+  "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+  "generatedAt": "2026-04-29T09:06:04.813Z",
+  "summary": {
+    "modeCount": 28,
+    "directFinalCount": 6,
+    "discoveredQuestionCount": 122,
+    "scheduledPairCount": 405,
+    "coveredPairCount": 405,
+    "reviewRecordCount": 411,
+    "reviewUpsertedCount": 411,
+    "failureCount": 0
+  },
+  "splitMeta": {
+    "rootBaseName": "diagnose-popup-dev-mode-pairwise-20260429-170604",
+    "partIndex": 5,
+    "partCount": 5,
+    "maxResultsPerFile": 100
+  },
+  "results": [
+    {
+      "sessionId": "diag_1777454294125_1vivqx2u",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_spot_complex_mode",
+        "classKey": "leaf_spot_complex_mode",
+        "symptomKey": "irregular_blotches"
+      },
+      "round1": {
+        "answerPathSignature": "leaf_spot_complex_mode/irregular_blotches > q_observed_probe__irregular_blotches__lesion_water_soaking=yes > q_observed_probe__irregular_blotches__lesion_halo=yes > q_observed_probe__irregular_blotches__tissue_moisture=yes > q_observed_probe__irregular_blotches__progression=yes > q_observed_probe__irregular_blotches__distribution_scope=yes > q_observed_probe__irregular_blotches__host_confirmation=yes > q_observed_probe__irregular_blotches__underside_presence=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是真菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_spot_complex_mode/irregular_blotches > q_observed_probe__irregular_blotches__lesion_water_soaking=yes > q_observed_probe__irregular_blotches__lesion_halo=yes > q_observed_probe__irregular_blotches__tissue_moisture=yes > q_observed_probe__irregular_blotches__progression=yes > q_observed_probe__irregular_blotches__distribution_scope=yes > q_observed_probe__irregular_blotches__host_confirmation=yes > q_observed_probe__irregular_blotches__underside_presence=no",
+        "roundsUsed": 7
+      }
+    },
+    {
+      "sessionId": "diag_1777454296621_4la9nnsz",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_spot_complex_mode",
+        "classKey": "leaf_spot_complex_mode",
+        "symptomKey": "irregular_blotches"
+      },
+      "round1": {
+        "answerPathSignature": "leaf_spot_complex_mode/irregular_blotches > q_observed_probe__irregular_blotches__lesion_water_soaking=yes > q_observed_probe__irregular_blotches__lesion_halo=yes > q_observed_probe__irregular_blotches__tissue_moisture=yes > q_observed_probe__irregular_blotches__progression=yes > q_observed_probe__irregular_blotches__distribution_scope=yes > q_observed_probe__irregular_blotches__host_confirmation=yes > q_observed_probe__irregular_blotches__underside_presence=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是真菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_spot_complex_mode/irregular_blotches > q_observed_probe__irregular_blotches__lesion_water_soaking=yes > q_observed_probe__irregular_blotches__lesion_halo=yes > q_observed_probe__irregular_blotches__tissue_moisture=yes > q_observed_probe__irregular_blotches__progression=yes > q_observed_probe__irregular_blotches__distribution_scope=yes > q_observed_probe__irregular_blotches__host_confirmation=yes > q_observed_probe__irregular_blotches__underside_presence=unknown",
+        "roundsUsed": 7
+      }
+    },
+    {
+      "sessionId": "diag_1777454306161_tq34rwzs",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_margin_necrosis",
+          "symptomCn": "叶缘坏死",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_edge_necrosis_mode",
+        "classKey": "leaf_edge_necrosis_mode",
+        "symptomKey": "leaf_margin_necrosis"
+      },
+      "round1": {
+        "answerPathSignature": "leaf_edge_necrosis_mode/leaf_margin_necrosis > q_observed_probe__leaf_margin_necrosis__watering_frequency_context=often_dry > q_observed_probe__leaf_margin_necrosis__light_change_context=stronger_direct_light > q_observed_probe__leaf_margin_necrosis__fertilization_growth_context=low_or_no_fertilizer > q_observed_probe__leaf_margin_necrosis__progression=yes > q_observed_probe__leaf_margin_necrosis__distribution_scope=yes > q_observed_probe__leaf_margin_necrosis__host_confirmation=yes > q_observed_probe__leaf_margin_necrosis__underside_presence=yes"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是黑腐病"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_edge_necrosis_mode/leaf_margin_necrosis > q_observed_probe__leaf_margin_necrosis__watering_frequency_context=often_dry > q_observed_probe__leaf_margin_necrosis__light_change_context=stronger_direct_light > q_observed_probe__leaf_margin_necrosis__fertilization_growth_context=low_or_no_fertilizer > q_observed_probe__leaf_margin_necrosis__progression=yes > q_observed_probe__leaf_margin_necrosis__distribution_scope=yes > q_observed_probe__leaf_margin_necrosis__host_confirmation=yes > q_observed_probe__leaf_margin_necrosis__underside_presence=yes",
+        "roundsUsed": 7
+      }
+    },
+    {
+      "sessionId": "diag_1777454307531_eyzqdpk0",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_margin_necrosis",
+          "symptomCn": "叶缘坏死",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_edge_necrosis_mode",
+        "classKey": "leaf_edge_necrosis_mode",
+        "symptomKey": "leaf_margin_necrosis"
+      },
+      "round1": {
+        "answerPathSignature": "leaf_edge_necrosis_mode/leaf_margin_necrosis > q_observed_probe__leaf_margin_necrosis__watering_frequency_context=often_dry > q_observed_probe__leaf_margin_necrosis__light_change_context=stronger_direct_light > q_observed_probe__leaf_margin_necrosis__fertilization_growth_context=low_or_no_fertilizer > q_observed_probe__leaf_margin_necrosis__progression=yes > q_observed_probe__leaf_margin_necrosis__distribution_scope=yes > q_observed_probe__leaf_margin_necrosis__host_confirmation=yes > q_observed_probe__leaf_margin_necrosis__underside_presence=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是黑腐病"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_edge_necrosis_mode/leaf_margin_necrosis > q_observed_probe__leaf_margin_necrosis__watering_frequency_context=often_dry > q_observed_probe__leaf_margin_necrosis__light_change_context=stronger_direct_light > q_observed_probe__leaf_margin_necrosis__fertilization_growth_context=low_or_no_fertilizer > q_observed_probe__leaf_margin_necrosis__progression=yes > q_observed_probe__leaf_margin_necrosis__distribution_scope=yes > q_observed_probe__leaf_margin_necrosis__host_confirmation=yes > q_observed_probe__leaf_margin_necrosis__underside_presence=no",
+        "roundsUsed": 7
+      }
+    },
+    {
+      "sessionId": "diag_1777454309940_tpz7p7v4",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_margin_necrosis",
+          "symptomCn": "叶缘坏死",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_edge_necrosis_mode",
+        "classKey": "leaf_edge_necrosis_mode",
+        "symptomKey": "leaf_margin_necrosis"
+      },
+      "round1": {
+        "answerPathSignature": "leaf_edge_necrosis_mode/leaf_margin_necrosis > q_observed_probe__leaf_margin_necrosis__watering_frequency_context=often_dry > q_observed_probe__leaf_margin_necrosis__light_change_context=stronger_direct_light > q_observed_probe__leaf_margin_necrosis__fertilization_growth_context=low_or_no_fertilizer > q_observed_probe__leaf_margin_necrosis__progression=yes > q_observed_probe__leaf_margin_necrosis__distribution_scope=yes > q_observed_probe__leaf_margin_necrosis__host_confirmation=yes > q_observed_probe__leaf_margin_necrosis__underside_presence=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是黑腐病"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_edge_necrosis_mode/leaf_margin_necrosis > q_observed_probe__leaf_margin_necrosis__watering_frequency_context=often_dry > q_observed_probe__leaf_margin_necrosis__light_change_context=stronger_direct_light > q_observed_probe__leaf_margin_necrosis__fertilization_growth_context=low_or_no_fertilizer > q_observed_probe__leaf_margin_necrosis__progression=yes > q_observed_probe__leaf_margin_necrosis__distribution_scope=yes > q_observed_probe__leaf_margin_necrosis__host_confirmation=yes > q_observed_probe__leaf_margin_necrosis__underside_presence=unknown",
+        "roundsUsed": 7
+      }
+    },
+    {
+      "sessionId": "diag_1777454316744_wyhidwch",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_bleaching",
+          "symptomCn": "叶片漂白",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "light_stress_mode",
+        "classKey": "light_stress_mode",
+        "symptomKey": "leaf_bleaching"
+      },
+      "round1": {
+        "answerPathSignature": "light_stress_mode/leaf_bleaching > q_observed_probe__leaf_bleaching__light_change_context=stronger_direct_light > q_observed_probe__leaf_bleaching__watering_frequency_context=often_wet > q_observed_probe__leaf_bleaching__fertilization_growth_context=low_or_no_fertilizer > q_observed_probe__leaf_bleaching__progression=yes > q_observed_probe__leaf_bleaching__distribution_scope=yes > q_observed_probe__leaf_bleaching__host_confirmation=yes > q_observed_probe__leaf_bleaching__underside_presence=yes"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是晒伤/日灼"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "light_stress_mode/leaf_bleaching > q_observed_probe__leaf_bleaching__light_change_context=stronger_direct_light > q_observed_probe__leaf_bleaching__watering_frequency_context=often_wet > q_observed_probe__leaf_bleaching__fertilization_growth_context=low_or_no_fertilizer > q_observed_probe__leaf_bleaching__progression=yes > q_observed_probe__leaf_bleaching__distribution_scope=yes > q_observed_probe__leaf_bleaching__host_confirmation=yes > q_observed_probe__leaf_bleaching__underside_presence=yes",
+        "roundsUsed": 7
+      }
+    },
+    {
+      "sessionId": "diag_1777454318858_pbykjqwr",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_bleaching",
+          "symptomCn": "叶片漂白",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "light_stress_mode",
+        "classKey": "light_stress_mode",
+        "symptomKey": "leaf_bleaching"
+      },
+      "round1": {
+        "answerPathSignature": "light_stress_mode/leaf_bleaching > q_observed_probe__leaf_bleaching__light_change_context=stronger_direct_light > q_observed_probe__leaf_bleaching__watering_frequency_context=often_wet > q_observed_probe__leaf_bleaching__fertilization_growth_context=low_or_no_fertilizer > q_observed_probe__leaf_bleaching__progression=yes > q_observed_probe__leaf_bleaching__distribution_scope=yes > q_observed_probe__leaf_bleaching__host_confirmation=yes > q_observed_probe__leaf_bleaching__underside_presence=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是晒伤/日灼"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "light_stress_mode/leaf_bleaching > q_observed_probe__leaf_bleaching__light_change_context=stronger_direct_light > q_observed_probe__leaf_bleaching__watering_frequency_context=often_wet > q_observed_probe__leaf_bleaching__fertilization_growth_context=low_or_no_fertilizer > q_observed_probe__leaf_bleaching__progression=yes > q_observed_probe__leaf_bleaching__distribution_scope=yes > q_observed_probe__leaf_bleaching__host_confirmation=yes > q_observed_probe__leaf_bleaching__underside_presence=no",
+        "roundsUsed": 7
+      }
+    },
+    {
+      "sessionId": "diag_1777454321137_ao50q2uo",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_bleaching",
+          "symptomCn": "叶片漂白",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "light_stress_mode",
+        "classKey": "light_stress_mode",
+        "symptomKey": "leaf_bleaching"
+      },
+      "round1": {
+        "answerPathSignature": "light_stress_mode/leaf_bleaching > q_observed_probe__leaf_bleaching__light_change_context=stronger_direct_light > q_observed_probe__leaf_bleaching__watering_frequency_context=often_wet > q_observed_probe__leaf_bleaching__fertilization_growth_context=low_or_no_fertilizer > q_observed_probe__leaf_bleaching__progression=yes > q_observed_probe__leaf_bleaching__distribution_scope=yes > q_observed_probe__leaf_bleaching__host_confirmation=yes > q_observed_probe__leaf_bleaching__underside_presence=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是晒伤/日灼"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "light_stress_mode/leaf_bleaching > q_observed_probe__leaf_bleaching__light_change_context=stronger_direct_light > q_observed_probe__leaf_bleaching__watering_frequency_context=often_wet > q_observed_probe__leaf_bleaching__fertilization_growth_context=low_or_no_fertilizer > q_observed_probe__leaf_bleaching__progression=yes > q_observed_probe__leaf_bleaching__distribution_scope=yes > q_observed_probe__leaf_bleaching__host_confirmation=yes > q_observed_probe__leaf_bleaching__underside_presence=unknown",
+        "roundsUsed": 7
+      }
+    },
+    {
+      "sessionId": "diag_1777454331068_fbjmxad1",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "edema",
+          "symptomCn": "水肿",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "edema_overwater_mode",
+        "classKey": "edema_overwater_mode",
+        "symptomKey": "edema"
+      },
+      "round1": {
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no > q_observed_probe__edema__edema_bump_stage=watery_blister > q_observed_probe__edema__substrate_moisture=yes > q_observed_probe__edema__light_change_context=stronger_direct_light > q_observed_probe__edema__progression=yes > q_observed_probe__edema__distribution_scope=yes > q_observed_probe__edema__host_confirmation=yes > q_observed_probe__edema__underside_presence=yes"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是浇水过多"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no > q_observed_probe__edema__edema_bump_stage=watery_blister > q_observed_probe__edema__substrate_moisture=yes > q_observed_probe__edema__light_change_context=stronger_direct_light > q_observed_probe__edema__progression=yes > q_observed_probe__edema__distribution_scope=yes > q_observed_probe__edema__host_confirmation=yes > q_observed_probe__edema__underside_presence=yes",
+        "roundsUsed": 8
+      }
+    },
+    {
+      "sessionId": "diag_1777454332284_tmbya2il",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "edema",
+          "symptomCn": "水肿",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "edema_overwater_mode",
+        "classKey": "edema_overwater_mode",
+        "symptomKey": "edema"
+      },
+      "round1": {
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no > q_observed_probe__edema__edema_bump_stage=watery_blister > q_observed_probe__edema__substrate_moisture=yes > q_observed_probe__edema__light_change_context=stronger_direct_light > q_observed_probe__edema__progression=yes > q_observed_probe__edema__distribution_scope=yes > q_observed_probe__edema__host_confirmation=yes > q_observed_probe__edema__underside_presence=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是浇水过多"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no > q_observed_probe__edema__edema_bump_stage=watery_blister > q_observed_probe__edema__substrate_moisture=yes > q_observed_probe__edema__light_change_context=stronger_direct_light > q_observed_probe__edema__progression=yes > q_observed_probe__edema__distribution_scope=yes > q_observed_probe__edema__host_confirmation=yes > q_observed_probe__edema__underside_presence=no",
+        "roundsUsed": 8
+      }
+    },
+    {
+      "sessionId": "diag_1777454334722_l3appyfr",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "edema",
+          "symptomCn": "水肿",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "edema_overwater_mode",
+        "classKey": "edema_overwater_mode",
+        "symptomKey": "edema"
+      },
+      "round1": {
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no > q_observed_probe__edema__edema_bump_stage=watery_blister > q_observed_probe__edema__substrate_moisture=yes > q_observed_probe__edema__light_change_context=stronger_direct_light > q_observed_probe__edema__progression=yes > q_observed_probe__edema__distribution_scope=yes > q_observed_probe__edema__host_confirmation=yes > q_observed_probe__edema__underside_presence=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是浇水过多"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no > q_observed_probe__edema__edema_bump_stage=watery_blister > q_observed_probe__edema__substrate_moisture=yes > q_observed_probe__edema__light_change_context=stronger_direct_light > q_observed_probe__edema__progression=yes > q_observed_probe__edema__distribution_scope=yes > q_observed_probe__edema__host_confirmation=yes > q_observed_probe__edema__underside_presence=unknown",
+        "roundsUsed": 8
+      }
+    }
+  ]
+}

@@ -1,0 +1,235 @@
+{
+  "generatedAt": "2026-04-28T08:49:45.762Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "collectionProfile": {
+    "source": "all",
+    "manualVisualOnly": false,
+    "manualVisualOnlyProvided": false
+  },
+  "visualEvidenceSummary": {
+    "total": 1,
+    "available": 1,
+    "missingRawRecords": 0,
+    "emptyConclusion": 0
+  },
+  "total": 1,
+  "success": 1,
+  "failed": 0,
+  "progress": {
+    "processed": 1,
+    "targetTotal": 1,
+    "complete": true
+  },
+  "results": [
+    {
+      "sessionId": "diag_1777357072677_3zgkkeop",
+      "visualFinalEvidence": [
+        {
+          "visualAdmissionRecordId": "visadmit_1777357082825_w576zlwh",
+          "visualNormalizedImageResultId": "visnorm_1777357072677_ddyof7q9",
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶子被咬出了洞",
+          "confidence": 0.93,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        },
+        {
+          "visualAdmissionRecordId": "visadmit_1777357082825_a36vs64y",
+          "visualNormalizedImageResultId": "visnorm_1777357072677_ddyof7q9",
+          "symptomKey": "chewed_edges",
+          "symptomCn": "叶子边缘像被啃过",
+          "confidence": 0.876,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        }
+      ],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "chewing_pest_mode",
+        "currentClassNameCn": "咀嚼损伤虫害模式",
+        "currentGroupKey": "skeletonized_leaves_confirm_group",
+        "currentGroupLabel": "skeletonized_leaves_confirm_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "chewing_pest_mode",
+          "primaryClassRuntimeScore": 1.5351,
+          "unknownLockCount": 1,
+          "currentClassKey": "chewing_pest_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_observed_probe__holes_in_leaf__tissue_integrity",
+            "questionText": "这些“叶子被咬出了洞”更接近哪种情况：表面变色/斑点但叶片还完整，还是已经形成穿孔、缺口或组织缺损？",
+            "targetDimension": "tissue_integrity",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_observed_probe__chewed_edges__tissue_integrity",
+            "questionText": "这些“叶子边缘像被啃过”更接近哪种情况：表面变色/斑点但叶片还完整，还是已经形成穿孔、缺口或组织缺损？",
+            "targetDimension": "tissue_integrity",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "outcome": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "topProblem": {
+          "problemId": "p_Y2F0ZXJwaWxsYXJz",
+          "problemKey": "caterpillars",
+          "displayName": "毛虫",
+          "summary": "当前更像 毛虫，但还不够确定。 毛虫是蝶蛾类幼虫，以咀嚼方式取食叶片、花、芽和嫩梢，常造成不规则孔洞、缺刻或整片被吃掉。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "finalResult": {
+          "problemId": "p_Y2F0ZXJwaWxsYXJz",
+          "problemKey": "",
+          "displayName": "毛虫",
+          "summary": "当前更像 毛虫，但还不够确定。 毛虫是蝶蛾类幼虫，以咀嚼方式取食叶片、花、芽和嫩梢，常造成不规则孔洞、缺刻或整片被吃掉。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "roundIndex": 2
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1777357072677_3zgkkeop",
+        "easySummary": "正式进入证据层的视觉证据有 “叶子被咬出了洞”(置信度 0.93)、“叶子边缘像被啃过”(置信度 0.88)。症状模式收敛到“咀嚼损伤虫害模式”，当前题组落在“skeletonized_leaves_confirm_group”。第1轮共 1 题：问“这些“叶子被咬出了洞”更接近哪种情况：表面变色/斑点但叶片还完整，还是已经形成穿孔、缺口或组织缺损？”，答“看不出/不确定”。第2轮共 1 题：问“这些“叶子边缘像被啃过”更接近哪种情况：表面变色/斑点但叶片还完整，还是已经形成穿孔、缺口或组织缺损？”，答“看不出/不确定”。最终收敛到“问题性结论”。当前可输出的最高候选是“毛虫”，最终分 0.835。它压过了第二名“咀嚼害虫”(最终分 0.835)。 stopReason=await_follow_up。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "正式进入证据层的视觉证据有 “叶子被咬出了洞”(置信度 0.93)、“叶子边缘像被啃过”(置信度 0.88)。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“咀嚼损伤虫害模式”，当前题组落在“skeletonized_leaves_confirm_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 1 题：问“这些“叶子被咬出了洞”更接近哪种情况：表面变色/斑点但叶片还完整，还是已经形成穿孔、缺口或组织缺损？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮共 1 题：问“这些“叶子边缘像被啃过”更接近哪种情况：表面变色/斑点但叶片还完整，还是已经形成穿孔、缺口或组织缺损？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统先按“总证据 = 视觉证据 + 1.25 × 问诊证据”计算总证据，再按“基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分”计算基础分，最后按“最终分 = 基础分 + 因果增强”做最终排序。本条当前第一名是“毛虫”，最终分 0.835，其中视觉证据 1.044，问诊证据 0，扣分 0。第二名是“咀嚼害虫”，最终分 0.835。 当前可靠度 0.396，第一二名分差 0。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前可输出的最高候选是“毛虫”，最终分 0.835。它压过了第二名“咀嚼害虫”(最终分 0.835)。 stopReason=await_follow_up。"
+          }
+        ],
+        "competitionTopCandidates": [
+          {
+            "rankNo": 1,
+            "problemKey": "caterpillars",
+            "displayName": "毛虫",
+            "role": "root_cause",
+            "visualEvidence": 1.0439,
+            "questionEvidence": 0,
+            "totalEvidence": 1.0439,
+            "penalty": 0,
+            "genusCompatibility": 0.5,
+            "hostCompatibility": 1,
+            "baseScore": 0.8351,
+            "finalScore": 0.8351
+          },
+          {
+            "rankNo": 2,
+            "problemKey": "chewing_insects",
+            "displayName": "咀嚼害虫",
+            "role": "aggregate_cluster",
+            "visualEvidence": 1.0439,
+            "questionEvidence": 0,
+            "totalEvidence": 1.0439,
+            "penalty": 0,
+            "genusCompatibility": 0.5,
+            "hostCompatibility": 1,
+            "baseScore": 0.8351,
+            "finalScore": 0.8351
+          },
+          {
+            "rankNo": 3,
+            "problemKey": "snails_slugs",
+            "displayName": "蜗牛和蛞蝓",
+            "role": "root_cause",
+            "visualEvidence": 1.0275,
+            "questionEvidence": 0,
+            "totalEvidence": 1.0275,
+            "penalty": 0,
+            "genusCompatibility": 0.5,
+            "hostCompatibility": 1,
+            "baseScore": 0.822,
+            "finalScore": 0.822
+          }
+        ],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前可输出的最高候选是“毛虫”，最终分 0.835。它压过了第二名“咀嚼害虫”(最终分 0.835)。 stopReason=await_follow_up。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "await_follow_up",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    }
+  ]
+}

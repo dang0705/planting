@@ -1,0 +1,206 @@
+{
+  "generatedAt": "2026-04-27T22:39:37.090Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "artifactSplit": {
+    "rootBaseName": "20260428-063937",
+    "partIndex": 1,
+    "partCount": 1,
+    "maxResultsPerFile": 100
+  },
+  "collectionProfile": {
+    "source": "all",
+    "manualVisualOnly": false,
+    "manualVisualOnlyProvided": false
+  },
+  "visualFinalEvidenceSummary": {
+    "total": 1,
+    "available": 1,
+    "missingRawRecords": 0,
+    "emptyConclusion": 0
+  },
+  "total": 1,
+  "success": 1,
+  "failed": 0,
+  "progress": {
+    "processed": 1,
+    "targetTotal": 1,
+    "complete": true
+  },
+  "results": [
+    {
+      "sessionId": "diag_1777328013769_r62fwvy2",
+      "visualFinalEvidence": [],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "sap_sucking_honeydew_pest_mode",
+        "currentClassNameCn": "刺吸蜜露型虫害模式",
+        "currentGroupKey": "aphids_group",
+        "currentGroupLabel": "aphids_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "sap_sucking_honeydew_pest_mode",
+          "primaryClassRuntimeScore": 0.9,
+          "unknownLockCount": 1,
+          "currentClassKey": "sap_sucking_honeydew_pest_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_sticky_honeydew_confirm",
+            "questionText": "叶面或周围表面有明显发黏的蜜露吗？",
+            "targetDimension": "visual_presence",
+            "answer": {
+              "optionKey": "yes",
+              "optionText": "是，比较确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "final",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_YXBoaWRz",
+          "problemKey": "aphids",
+          "displayName": "蚜虫",
+          "summary": "当前更像 蚜虫，但还不够确定。 当前最像的问题是：蚜虫。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "finalResult": {
+          "problemId": "p_YXBoaWRz",
+          "problemKey": "",
+          "displayName": "蚜虫",
+          "summary": "当前更像 蚜虫，但还不够确定。 当前最像的问题是：蚜虫。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "roundIndex": 2
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1777328013769_r62fwvy2",
+        "easySummary": "本条没有进入正式证据层的视觉证据。症状模式收敛到“刺吸蜜露型虫害模式”，当前题组落在“aphids_group”。第1轮共 1 题：问“叶面或周围表面有明显发黏的蜜露吗？”，答“是，比较确定”。第2轮没有触发问诊。最终收敛到“问题性结论”。当前可输出的最高候选是“蚜虫”，最终分 0.72。它压过了第二名“白粉虱”(最终分 0.648)。 stopReason=problematic_output_ready。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "本条没有进入正式证据层的视觉证据。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“刺吸蜜露型虫害模式”，当前题组落在“aphids_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 1 题：问“叶面或周围表面有明显发黏的蜜露吗？”，答“是，比较确定”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮没有触发问诊。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统先按“总证据 = 视觉证据 + 1.25 × 问诊证据”计算总证据，再按“基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分”计算基础分，最后按“最终分 = 基础分 + 因果增强”做最终排序。本条当前第一名是“蚜虫”，最终分 0.72，其中视觉证据 0，问诊证据 0.729，扣分 0。第二名是“白粉虱”，最终分 0.648。 当前可靠度 0.384，第一二名分差 0.072。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前可输出的最高候选是“蚜虫”，最终分 0.72。它压过了第二名“白粉虱”(最终分 0.648)。 stopReason=problematic_output_ready。"
+          }
+        ],
+        "competitionTopCandidates": [
+          {
+            "rankNo": 1,
+            "problemKey": "aphids",
+            "displayName": "蚜虫",
+            "role": "root_cause",
+            "visualEvidence": 0,
+            "questionEvidence": 0.729,
+            "totalEvidence": 0.9113,
+            "penalty": 0,
+            "genusCompatibility": 0.6,
+            "hostCompatibility": 0.7,
+            "baseScore": 0.7195,
+            "finalScore": 0.7195
+          },
+          {
+            "rankNo": 2,
+            "problemKey": "whiteflies",
+            "displayName": "白粉虱",
+            "role": "root_cause",
+            "visualEvidence": 0,
+            "questionEvidence": 0.648,
+            "totalEvidence": 0.81,
+            "penalty": 0,
+            "genusCompatibility": 0.5,
+            "hostCompatibility": 1,
+            "baseScore": 0.648,
+            "finalScore": 0.648
+          },
+          {
+            "rankNo": 3,
+            "problemKey": "scale_insects",
+            "displayName": "介壳虫",
+            "role": "root_cause",
+            "visualEvidence": 0,
+            "questionEvidence": 0.6885,
+            "totalEvidence": 0.8606,
+            "penalty": 0,
+            "genusCompatibility": 0.55,
+            "hostCompatibility": 0.55,
+            "baseScore": 0.6422,
+            "finalScore": 0.6422
+          }
+        ],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前可输出的最高候选是“蚜虫”，最终分 0.72。它压过了第二名“白粉虱”(最终分 0.648)。 stopReason=problematic_output_ready。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    }
+  ]
+}

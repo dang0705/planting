@@ -869,14 +869,6 @@ const avoidAdviceTexts = computed(() => {
   const preventionText = String(result.value?.preventionText || explanation?.avoid || '').trim()
   return uniqueStrings([...whatToAvoid, ...(preventionText ? [preventionText] : [])])
 })
-const primaryOutcome = computed(() => result.value?.primaryOutcome || result.value?.finalResult?.primaryOutcome || null)
-const secondaryOutcomeSource = computed(() =>
-  Array.isArray(result.value?.secondaryOutcomes) && result.value.secondaryOutcomes.length
-    ? result.value.secondaryOutcomes
-    : Array.isArray(result.value?.finalResult?.secondaryOutcomes)
-      ? result.value.finalResult.secondaryOutcomes
-      : []
-)
 const visibleOutcomeSource = computed(() =>
   Array.isArray(result.value?.visibleOutcomes) && result.value.visibleOutcomes.length
     ? result.value.visibleOutcomes
@@ -884,21 +876,9 @@ const visibleOutcomeSource = computed(() =>
       ? result.value.finalResult.visibleOutcomes
       : []
 )
-const primaryOutcomeDisplay = computed(() => formatOutcomeDisplayLabel(primaryOutcome.value))
-const secondaryOutcomeDisplays = computed(() => uniqueStrings(secondaryOutcomeSource.value.map(formatOutcomeDisplayLabel)))
 const visibleOutcomeDisplays = computed(() => uniqueStrings(visibleOutcomeSource.value.map(formatOutcomeDisplayLabel)))
-const allOutcomeDisplays = computed(() =>
-  uniqueStrings([
-    primaryOutcomeDisplay.value,
-    ...secondaryOutcomeDisplays.value,
-    ...visibleOutcomeDisplays.value
-  ].filter(Boolean))
-)
-const outcomeAdviceSources = computed(() => buildUniqueOutcomesForAdvice([
-  primaryOutcome.value,
-  ...secondaryOutcomeSource.value,
-  ...visibleOutcomeSource.value
-]))
+const allOutcomeDisplays = computed(() => visibleOutcomeDisplays.value)
+const outcomeAdviceSources = computed(() => buildUniqueOutcomesForAdvice(visibleOutcomeSource.value))
 const actionAdviceGroups = computed(() =>
   buildOutcomeAdviceGroups({
     outcomeSources: outcomeAdviceSources.value,

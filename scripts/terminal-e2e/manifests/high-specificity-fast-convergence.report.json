@@ -1,0 +1,197 @@
+{
+  "ok": true,
+  "manifestFile": "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/manifests/high-specificity-fast-convergence.manifest.json",
+  "summary": {
+    "total": 5,
+    "success": 5,
+    "failed": 0,
+    "byLabel": {
+      "spider_mites_single_confirmation": {
+        "total": 1,
+        "success": 1,
+        "failed": 0
+      },
+      "spider_mites_alias_single_confirmation": {
+        "total": 1,
+        "success": 1,
+        "failed": 0
+      },
+      "fungus_gnat_single_confirmation": {
+        "total": 1,
+        "success": 1,
+        "failed": 0
+      },
+      "retake_first_fallback": {
+        "total": 1,
+        "success": 1,
+        "failed": 0
+      },
+      "top_problem_mismatch_fallback": {
+        "total": 1,
+        "success": 1,
+        "failed": 0
+      }
+    }
+  },
+  "results": [
+    {
+      "ok": true,
+      "label": "spider_mites_single_confirmation",
+      "caseKey": "spider_mites_single_confirmation",
+      "expected": {
+        "applied": true,
+        "problemKey": "spider_mites",
+        "policy": "single_confirmation",
+        "shouldBypassFollowUp": false,
+        "maxQuestions": 1,
+        "matchedSymptomKeys": [
+          "fine_webbing"
+        ]
+      },
+      "actual": {
+        "applied": true,
+        "directionKey": "spider_mite_webbing_direction",
+        "problemKey": "spider_mites",
+        "policy": "single_confirmation",
+        "shouldBypassFollowUp": false,
+        "maxQuestions": 1,
+        "audit": {
+          "round": 1,
+          "stage": "preliminary",
+          "routePrimaryAction": "ask_first",
+          "aggregateAnalyzability": "medium",
+          "matchedSymptomKeys": [
+            "fine_webbing"
+          ],
+          "matchedEvidence": [
+            {
+              "symptomKey": "fine_webbing",
+              "confidence": 0.95,
+              "signalReliability": 1,
+              "confidenceBand": "high",
+              "strengthLevel": "strong",
+              "supportCount": 1,
+              "supportOrgans": [
+                "leaf"
+              ],
+              "supportingRegionNote": "叶背细密蛛网",
+              "isKeyEvidence": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "spider_mites_alias_single_confirmation",
+      "caseKey": "spider_mites_alias_single_confirmation",
+      "expected": {
+        "applied": true,
+        "problemKey": "spider_mites",
+        "policy": "single_confirmation",
+        "shouldBypassFollowUp": false,
+        "maxQuestions": 1,
+        "matchedSymptomKeys": [
+          "fine_webbing"
+        ]
+      },
+      "actual": {
+        "applied": true,
+        "directionKey": "spider_mite_webbing_direction",
+        "problemKey": "spider_mites",
+        "policy": "single_confirmation",
+        "shouldBypassFollowUp": false,
+        "maxQuestions": 1,
+        "audit": {
+          "round": 1,
+          "stage": "preliminary",
+          "routePrimaryAction": "ask_first",
+          "aggregateAnalyzability": "medium",
+          "matchedSymptomKeys": [
+            "fine_webbing"
+          ],
+          "matchedEvidence": [
+            {
+              "symptomKey": "fine_webbing",
+              "confidence": 0.95,
+              "signalReliability": 1,
+              "confidenceBand": "high",
+              "strengthLevel": "strong",
+              "supportCount": 1,
+              "supportOrgans": [
+                "leaf"
+              ],
+              "supportingRegionNote": "叶背细密蛛网",
+              "isKeyEvidence": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "fungus_gnat_single_confirmation",
+      "caseKey": "fungus_gnat_single_confirmation",
+      "expected": {
+        "applied": true,
+        "problemKey": "fungus_gnat",
+        "policy": "single_confirmation",
+        "shouldBypassFollowUp": false,
+        "maxQuestions": 1,
+        "matchedSymptomKeys": [
+          "small_flies_soil"
+        ]
+      },
+      "actual": {
+        "applied": true,
+        "directionKey": "fungus_gnat_direction",
+        "problemKey": "fungus_gnat",
+        "policy": "single_confirmation",
+        "shouldBypassFollowUp": false,
+        "maxQuestions": 1,
+        "audit": {
+          "round": 1,
+          "stage": "preliminary",
+          "routePrimaryAction": "ask_first",
+          "aggregateAnalyzability": "medium",
+          "matchedSymptomKeys": [
+            "small_flies_soil"
+          ],
+          "matchedEvidence": [
+            {
+              "symptomKey": "small_flies_soil",
+              "confidence": 0.94,
+              "signalReliability": 0.95,
+              "confidenceBand": "high",
+              "strengthLevel": "medium",
+              "supportCount": 1,
+              "supportOrgans": [
+                "whole_plant"
+              ],
+              "supportingRegionNote": "盆土表面有小飞虫",
+              "isKeyEvidence": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "retake_first_fallback",
+      "caseKey": "retake_first_fallback",
+      "expected": {
+        "applied": false
+      },
+      "actual": null
+    },
+    {
+      "ok": true,
+      "label": "top_problem_mismatch_fallback",
+      "caseKey": "top_problem_mismatch_fallback",
+      "expected": {
+        "applied": false
+      },
+      "actual": null
+    }
+  ]
+}

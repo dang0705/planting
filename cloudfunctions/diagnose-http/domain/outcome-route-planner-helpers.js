@@ -119,8 +119,6 @@ function buildFallbackDecision({
     })),
     activeRouteGroupKeys: [],
     visibleOutcomeKeys: [],
-    primaryOutcomeKey: null,
-    secondaryOutcomeKeys: [],
     requiresFollowUp: false,
     nextQuestionKeys: [],
     nextQuestions: [],

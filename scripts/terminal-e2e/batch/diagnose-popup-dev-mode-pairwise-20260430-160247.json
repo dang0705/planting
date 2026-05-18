@@ -1,0 +1,3296 @@
+{
+  "batchSource": "diagnose-popup-dev-mode-pairwise",
+  "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+  "generatedAt": "2026-04-30T08:02:47.894Z",
+  "summary": {
+    "modeCount": 28,
+    "directFinalCount": 16,
+    "discoveredQuestionCount": 13,
+    "scheduledPairCount": 49,
+    "coveredPairCount": 49,
+    "reviewRecordCount": 65,
+    "failureCount": 3
+  },
+  "splitMeta": {
+    "rootBaseName": "diagnose-popup-dev-mode-pairwise-20260430-160247",
+    "partIndex": 1,
+    "partCount": 1,
+    "maxResultsPerFile": 100
+  },
+  "results": [
+    {
+      "sessionId": "engine_1777536167904_t424jpo6",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "distorted_growth",
+          "symptomCn": "整体畸形",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "general_stress_mode",
+        "classKey": "general_stress_mode",
+        "symptomKey": "distorted_growth"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.366,
+        "topScoreGap": 0.12639999999999998,
+        "stopReasonDetail": "broad_visual_differential_unresolved"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "general_stress_mode/distorted_growth > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "next_question_low_yield_no_output_gain",
+          "details": {
+            "topProblemKey": "virus_mosaic",
+            "contextSatisfied": true,
+            "hasProblemLevelPositiveEvidence": false,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__distorted_growth__distribution_scope"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536167903_nc7mhcik",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "water_soaked_spots",
+          "symptomCn": "水渍斑",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "bacterial_leaf_spot_mode",
+        "classKey": "bacterial_leaf_spot_mode",
+        "symptomKey": "water_soaked_spots"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "细菌叶斑",
+        "pendingTopTitle": "",
+        "currentTopTitle": "细菌叶斑",
+        "topProblemKey": "bacterial_leaf_spot",
+        "topProblemDisplayName": "细菌叶斑",
+        "topProblemScore": 0.5741,
+        "topScoreGap": 0.5741,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "bacterial_leaf_spot_mode/water_soaked_spots > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "next_question_low_yield_no_output_gain",
+          "details": {
+            "topProblemKey": "bacterial_leaf_spot",
+            "contextSatisfied": true,
+            "hasProblemLevelPositiveEvidence": false,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__water_soaked_spots__lesion_water_soaking"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536187044_enbdpkue",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "tunnels_in_leaf",
+          "symptomCn": "叶内潜道",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leafminer_mode",
+        "classKey": "leafminer_mode",
+        "symptomKey": "tunnels_in_leaf"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "潜叶虫",
+        "pendingTopTitle": "",
+        "currentTopTitle": "潜叶虫",
+        "topProblemKey": "leaf_miners",
+        "topProblemDisplayName": "潜叶虫",
+        "topProblemScore": 0.736,
+        "topScoreGap": 0.736,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leafminer_mode/tunnels_in_leaf > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536183668_8lek3ia7",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "low_humidity_damage",
+          "symptomCn": "低湿伤害",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "humidity_stress_mode",
+        "classKey": "humidity_stress_mode",
+        "symptomKey": "low_humidity_damage"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "no_forceable_output_problem_without_followup"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "humidity_stress_mode/low_humidity_damage > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "next_question_low_yield_no_output_gain",
+          "details": {
+            "topProblemKey": "low_humidity_stress",
+            "contextSatisfied": true,
+            "hasProblemLevelPositiveEvidence": false,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__low_humidity_damage__distribution_scope"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536186986_uihz9dgu",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_spot_complex_mode",
+        "classKey": "leaf_spot_complex_mode",
+        "symptomKey": "irregular_blotches"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.3363,
+        "topScoreGap": 0.0771,
+        "stopReasonDetail": "broad_visual_differential_unresolved"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_spot_complex_mode/irregular_blotches > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "next_question_low_yield_no_output_gain",
+          "details": {
+            "topProblemKey": "fungal_leaf_spot",
+            "contextSatisfied": true,
+            "hasProblemLevelPositiveEvidence": false,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__irregular_blotches__lesion_water_soaking"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536186565_5fug82iv",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_margin_necrosis",
+          "symptomCn": "叶缘坏死",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_edge_necrosis_mode",
+        "classKey": "leaf_edge_necrosis_mode",
+        "symptomKey": "leaf_margin_necrosis"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.305,
+        "topScoreGap": 0.04580000000000001,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_edge_necrosis_mode/leaf_margin_necrosis > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "next_question_low_yield_no_output_gain",
+          "details": {
+            "topProblemKey": "salt_stress",
+            "contextSatisfied": true,
+            "hasProblemLevelPositiveEvidence": false,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__leaf_margin_necrosis__watering_frequency_context"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536189660_0xswcpgq",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_bleaching",
+          "symptomCn": "叶片漂白",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "light_stress_mode",
+        "classKey": "light_stress_mode",
+        "symptomKey": "leaf_bleaching"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.3914,
+        "topScoreGap": 0.3914,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "light_stress_mode/leaf_bleaching > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "next_question_low_yield_no_output_gain",
+          "details": {
+            "topProblemKey": "sunburn",
+            "contextSatisfied": true,
+            "hasProblemLevelPositiveEvidence": false,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__leaf_bleaching__light_change_context"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536197140_swf7cdhn",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "normal_leaf_aging_stable",
+          "symptomCn": "底部老叶稳定黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "natural_aging_mode",
+        "classKey": "natural_aging_mode",
+        "symptomKey": "normal_leaf_aging_stable"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "non_problematic",
+        "stopReason": "non_problematic_output_ready",
+        "title": "暂未见明显问题",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂未见明显问题",
+        "topProblemKey": "",
+        "topProblemDisplayName": "暂未见明显问题",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "natural_aging_mode/normal_leaf_aging_stable > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true,
+        "followUpStopPolicy": null
+      }
+    },
+    {
+      "sessionId": "engine_1777536196133_eem4k77l",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "fine_webbing",
+          "symptomCn": "细密蛛网",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "mite_damage_mode",
+        "classKey": "mite_damage_mode",
+        "symptomKey": "fine_webbing"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "红蜘蛛",
+        "pendingTopTitle": "",
+        "currentTopTitle": "红蜘蛛",
+        "topProblemKey": "spider_mites",
+        "topProblemDisplayName": "红蜘蛛",
+        "topProblemScore": 0.7066,
+        "topScoreGap": 0.7066,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "mite_damage_mode/fine_webbing > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536200368_piq0stxv",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "rust_pustules",
+          "symptomCn": "锈孢子堆",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "rust_mode",
+        "classKey": "rust_mode",
+        "symptomKey": "rust_pustules"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.7286,
+        "topScoreGap": 0.7286,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "rust_mode/rust_pustules > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536201231_uawqdjzm",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "tip_burn",
+          "symptomCn": "叶尖焦枯",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "salt_dry_edge_mode",
+        "classKey": "salt_dry_edge_mode",
+        "symptomKey": "tip_burn"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "salt_dry_edge_mode/tip_burn > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "next_question_low_yield_no_output_gain",
+          "details": {
+            "topProblemKey": "salt_stress",
+            "contextSatisfied": true,
+            "hasProblemLevelPositiveEvidence": false,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__tip_burn__distribution_scope"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536206920_gyq6el59",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "small_flies_soil",
+          "symptomCn": "土壤小飞虫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "soil_moisture_pest_mode",
+        "classKey": "soil_moisture_pest_mode",
+        "symptomKey": "small_flies_soil"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "真菌蚊",
+        "pendingTopTitle": "",
+        "currentTopTitle": "真菌蚊",
+        "topProblemKey": "fungus_gnat",
+        "topProblemDisplayName": "真菌蚊",
+        "topProblemScore": 0.7131,
+        "topScoreGap": 0.7131,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "soil_moisture_pest_mode/small_flies_soil > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536213001_g9gw7vch",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_mosaic_mottling",
+          "symptomCn": "叶子上有深浅不一、花花绿绿的斑驳花纹",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "virus_mosaic_mode",
+        "classKey": "virus_mosaic_mode",
+        "symptomKey": "leaf_mosaic_mottling"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.651,
+        "topScoreGap": 0.651,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "virus_mosaic_mode/leaf_mosaic_mottling > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536208193_cqkrxoka",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "heat_stress",
+          "symptomCn": "高温胁迫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "temperature_stress_mode",
+        "classKey": "temperature_stress_mode",
+        "symptomKey": "heat_stress"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "高温伤害",
+        "pendingTopTitle": "",
+        "currentTopTitle": "高温伤害",
+        "topProblemKey": "heat_stress",
+        "topProblemDisplayName": "高温伤害",
+        "topProblemScore": 0.2263,
+        "topScoreGap": 0.2263,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "temperature_stress_mode/heat_stress > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "next_question_low_yield_no_output_gain",
+          "details": {
+            "topProblemKey": "heat_stress",
+            "contextSatisfied": true,
+            "hasProblemLevelPositiveEvidence": false,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__heat_stress__distribution_scope"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536206056_6rpownx3",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "white_flies",
+          "symptomCn": "有白色小飞虫，一碰会飞起来",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "sap_sucking_honeydew_pest_mode",
+        "classKey": "sap_sucking_honeydew_pest_mode",
+        "symptomKey": "white_flies"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "白粉虱",
+        "pendingTopTitle": "",
+        "currentTopTitle": "白粉虱",
+        "topProblemKey": "whiteflies",
+        "topProblemDisplayName": "白粉虱",
+        "topProblemScore": 0.3825,
+        "topScoreGap": 0.3825,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "sap_sucking_honeydew_pest_mode/white_flies > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "next_question_low_yield_no_output_gain",
+          "details": {
+            "topProblemKey": "whiteflies",
+            "contextSatisfied": true,
+            "hasProblemLevelPositiveEvidence": false,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__white_flies__distribution_scope"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536219960_jhbds0uf",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "unknown",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "不确定，继续帮我排查"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "缺氮",
+        "currentTopTitle": "缺氮",
+        "topProblemKey": "nitrogen_deficiency",
+        "topProblemDisplayName": "缺氮",
+        "topProblemScore": 0.4775,
+        "topScoreGap": 0.1684,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536215870_29p0zv1v",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "pest_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "看到虫子或虫害痕迹"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": -0.08,
+        "topScoreGap": -0.08,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536216696_gssmmq0i",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "disease_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "还有斑点、烂斑或霉粉"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": -0.06,
+        "topScoreGap": -0.06,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536219264_rok88avi",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "yellowing_only",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "只是发黄，没看到其他异常"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "缺氮",
+        "currentTopTitle": "缺氮",
+        "topProblemKey": "nitrogen_deficiency",
+        "topProblemDisplayName": "缺氮",
+        "topProblemScore": 0.4819,
+        "topScoreGap": 0.13279999999999997,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536215731_jo06tdho",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "care_context",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "先看日常养护"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "缺氮",
+        "pendingTopTitle": "",
+        "currentTopTitle": "缺氮",
+        "topProblemKey": "nitrogen_deficiency",
+        "topProblemDisplayName": "缺氮",
+        "topProblemScore": 0.3091,
+        "topScoreGap": 0.3091,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536221290_3zv4cs3r",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
+        "optionKey": "pest_trace",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "有小虫、黑色颗粒、黏液痕或新鲜不规则缺口"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "毛虫",
+        "currentTopTitle": "毛虫",
+        "topProblemKey": "caterpillars",
+        "topProblemDisplayName": "毛虫",
+        "topProblemScore": 0.7054,
+        "topScoreGap": 0.09999999999999998,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=pest_trace",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536222812_ak4q0sgg",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
+        "optionKey": "lesion_dropout",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "先有褐斑、黑斑或黄边，后来中间干枯脱落"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "蜗牛/蛞蝓",
+        "currentTopTitle": "蜗牛/蛞蝓",
+        "topProblemKey": "snails_slugs",
+        "topProblemDisplayName": "蜗牛/蛞蝓",
+        "topProblemScore": 0.356,
+        "topScoreGap": 0.03059999999999996,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=lesion_dropout",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536225745_tr147x8g",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "gray_fuzzy_mold",
+          "symptomCn": "灰色绒霉",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "gray_mold_mode",
+        "classKey": "gray_mold_mode",
+        "symptomKey": "gray_fuzzy_mold"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__gray_fuzzy_mold__surface_stickiness",
+        "optionKey": "unknown",
+        "questionText": "这些“表面长了灰色绒毛霉”的位置摸起来发黏吗？",
+        "optionText": "看不出/不确定"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "no_forceable_output_problem_after_followup"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "gray_mold_mode/gray_fuzzy_mold > q_observed_probe__gray_fuzzy_mold__surface_stickiness=unknown",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536224019_hirnqzfu",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "gray_fuzzy_mold",
+          "symptomCn": "灰色绒霉",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "gray_mold_mode",
+        "classKey": "gray_mold_mode",
+        "symptomKey": "gray_fuzzy_mold"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__gray_fuzzy_mold__surface_stickiness",
+        "optionKey": "no",
+        "questionText": "这些“表面长了灰色绒毛霉”的位置摸起来发黏吗？",
+        "optionText": "不是的"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "no_forceable_output_problem_after_followup"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "gray_mold_mode/gray_fuzzy_mold > q_observed_probe__gray_fuzzy_mold__surface_stickiness=no",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536223729_zsad59fz",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "gray_fuzzy_mold",
+          "symptomCn": "灰色绒霉",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "gray_mold_mode",
+        "classKey": "gray_mold_mode",
+        "symptomKey": "gray_fuzzy_mold"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__gray_fuzzy_mold__surface_stickiness",
+        "optionKey": "yes",
+        "questionText": "这些“表面长了灰色绒毛霉”的位置摸起来发黏吗？",
+        "optionText": "是的"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "no_forceable_output_problem_after_followup"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "gray_mold_mode/gray_fuzzy_mold > q_observed_probe__gray_fuzzy_mold__surface_stickiness=yes",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536223484_ty63ak3w",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
+        "optionKey": "mechanical_old",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "更像折伤、摩擦、旧伤或焦边裂开"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "蜗牛/蛞蝓",
+        "currentTopTitle": "蜗牛/蛞蝓",
+        "topProblemKey": "snails_slugs",
+        "topProblemDisplayName": "蜗牛/蛞蝓",
+        "topProblemScore": 0.436,
+        "topScoreGap": 0.010599999999999998,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=mechanical_old",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536223588_764u99yh",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
+        "optionKey": "unknown",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "看不出/不确定"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "蜗牛/蛞蝓",
+        "currentTopTitle": "蜗牛/蛞蝓",
+        "topProblemKey": "snails_slugs",
+        "topProblemDisplayName": "蜗牛/蛞蝓",
+        "topProblemScore": 0.436,
+        "topScoreGap": 0.010599999999999998,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=unknown",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536229114_skkajrwg",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "vein_darkening",
+          "symptomCn": "叶脉变深",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "nutrient_stress_mode",
+        "classKey": "nutrient_stress_mode",
+        "symptomKey": "vein_darkening"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "disease_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "还有斑点、烂斑或霉粉"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.039,
+        "topScoreGap": 0.001800000000000003,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536227804_zoftd6bf",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "vein_darkening",
+          "symptomCn": "叶脉变深",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "nutrient_stress_mode",
+        "classKey": "nutrient_stress_mode",
+        "symptomKey": "vein_darkening"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "care_context",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "先看日常养护"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536228829_dntydx7r",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "vein_darkening",
+          "symptomCn": "叶脉变深",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "nutrient_stress_mode",
+        "classKey": "nutrient_stress_mode",
+        "symptomKey": "vein_darkening"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "pest_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "看到虫子或虫害痕迹"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536229552_2zden9h4",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "vein_darkening",
+          "symptomCn": "叶脉变深",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "nutrient_stress_mode",
+        "classKey": "nutrient_stress_mode",
+        "symptomKey": "vein_darkening"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "unknown",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "不确定，继续帮我排查"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "根腐",
+        "currentTopTitle": "根腐",
+        "topProblemKey": "root_rot",
+        "topProblemDisplayName": "根腐",
+        "topProblemScore": 0.255,
+        "topScoreGap": 0.08499999999999999,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536232569_3r65gulh",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_wet_soil",
+          "symptomCn": "湿土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "root_rot_wet_wilt_mode",
+        "classKey": "root_rot_wet_wilt_mode",
+        "symptomKey": "wilting_wet_soil"
+      },
+      "round1": {
+        "questionKey": "q_root_rot_wet_soil_wilt",
+        "optionKey": "yes",
+        "questionText": "盆土还湿着时，叶子仍然发蔫吗？",
+        "optionText": "是的"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.875,
+        "topScoreGap": 0.7861,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "root_rot_wet_wilt_mode/wilting_wet_soil > q_root_rot_wet_soil_wilt=yes",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536195351_2432w4tr",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wind_damage",
+          "symptomCn": "风伤",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "mechanical_damage_mode",
+        "classKey": "mechanical_damage_mode",
+        "symptomKey": "wind_damage"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "no_forceable_output_problem_without_followup"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "mechanical_damage_mode/wind_damage > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "next_question_low_yield_no_output_gain",
+          "details": {
+            "topProblemKey": "mechanical_damage",
+            "contextSatisfied": true,
+            "hasProblemLevelPositiveEvidence": false,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__wind_damage__distribution_scope"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536229366_msqhp688",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "vein_darkening",
+          "symptomCn": "叶脉变深",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "nutrient_stress_mode",
+        "classKey": "nutrient_stress_mode",
+        "symptomKey": "vein_darkening"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "yellowing_only",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "只是发黄，没看到其他异常"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "缺氮",
+        "currentTopTitle": "缺氮",
+        "topProblemKey": "nitrogen_deficiency",
+        "topProblemDisplayName": "缺氮",
+        "topProblemScore": 0.255,
+        "topScoreGap": 0.08499999999999999,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536230167_47fj11kv",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_wet_soil",
+          "symptomCn": "湿土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "root_rot_wet_wilt_mode",
+        "classKey": "root_rot_wet_wilt_mode",
+        "symptomKey": "wilting_wet_soil"
+      },
+      "round1": {
+        "questionKey": "q_root_rot_wet_soil_wilt",
+        "optionKey": "unknown",
+        "questionText": "盆土还湿着时，叶子仍然发蔫吗？",
+        "optionText": "看不出/不确定"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.371,
+        "topScoreGap": 0.3333,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "root_rot_wet_wilt_mode/wilting_wet_soil > q_root_rot_wet_soil_wilt=unknown",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "next_question_low_yield_no_output_gain",
+          "details": {
+            "topProblemKey": "root_rot",
+            "contextSatisfied": true,
+            "hasProblemLevelPositiveEvidence": false,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__wilting_wet_soil__distribution_scope"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536229913_f6dd7vr3",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_wet_soil",
+          "symptomCn": "湿土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "root_rot_wet_wilt_mode",
+        "classKey": "root_rot_wet_wilt_mode",
+        "symptomKey": "wilting_wet_soil"
+      },
+      "round1": {
+        "questionKey": "q_root_rot_wet_soil_wilt",
+        "optionKey": "no",
+        "questionText": "盆土还湿着时，叶子仍然发蔫吗？",
+        "optionText": "不是的"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": -0.1281,
+        "topScoreGap": -0.1281,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "root_rot_wet_wilt_mode/wilting_wet_soil > q_root_rot_wet_soil_wilt=no",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "next_question_low_yield_no_output_gain",
+          "details": {
+            "topProblemKey": "mealybugs",
+            "contextSatisfied": false,
+            "hasProblemLevelPositiveEvidence": false,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__wilting_wet_soil__distribution_scope"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536234702_wca0yu90",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "pest_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "看到虫子或虫害痕迹"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.5249,
+        "topScoreGap": 0.48090000000000005,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536235647_v4z24fsu",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "unknown",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "不确定，继续帮我排查"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "红蜘蛛",
+        "currentTopTitle": "红蜘蛛",
+        "topProblemKey": "spider_mites",
+        "topProblemDisplayName": "红蜘蛛",
+        "topProblemScore": 0.4865,
+        "topScoreGap": 0.4421,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536235149_l5nuq56x",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "yellowing_only",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "只是发黄，没看到其他异常"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "红蜘蛛",
+        "currentTopTitle": "红蜘蛛",
+        "topProblemKey": "spider_mites",
+        "topProblemDisplayName": "红蜘蛛",
+        "topProblemScore": 0.4865,
+        "topScoreGap": 0.4421,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536234159_9znw5fb3",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "care_context",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "先看日常养护"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.4865,
+        "topScoreGap": 0.4865,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536235130_lsllwzg5",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "disease_trace",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "还有斑点、烂斑或霉粉"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.4865,
+        "topScoreGap": 0.4865,
+        "stopReasonDetail": "class_converged_context_guard_blocked"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536233224_gqrk2c9b",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "soft_stem",
+          "symptomCn": "茎变软",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "soft_rot_mode",
+        "classKey": "soft_rot_mode",
+        "symptomKey": "soft_stem"
+      },
+      "round1": {
+        "questionKey": "q_stem_collapse_poor_drainage",
+        "optionKey": "unknown",
+        "questionText": "倒伏前盆土长期偏湿、浇水后很久都不干吗？",
+        "optionText": "看不出/不确定"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.3403,
+        "topScoreGap": 0.3403,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "soft_rot_mode/soft_stem > q_stem_collapse_poor_drainage=unknown",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "next_question_low_yield_no_output_gain",
+          "details": {
+            "topProblemKey": "soft_rot",
+            "contextSatisfied": false,
+            "hasProblemLevelPositiveEvidence": false,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__soft_stem__tissue_moisture"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536232724_i0vw00ti",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "soft_stem",
+          "symptomCn": "茎变软",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "soft_rot_mode",
+        "classKey": "soft_rot_mode",
+        "symptomKey": "soft_stem"
+      },
+      "round1": {
+        "questionKey": "q_stem_collapse_poor_drainage",
+        "optionKey": "no",
+        "questionText": "倒伏前盆土长期偏湿、浇水后很久都不干吗？",
+        "optionText": "不是的"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.3403,
+        "topScoreGap": 0.3403,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "soft_rot_mode/soft_stem > q_stem_collapse_poor_drainage=no",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "next_question_low_yield_no_output_gain",
+          "details": {
+            "topProblemKey": "soft_rot",
+            "contextSatisfied": false,
+            "hasProblemLevelPositiveEvidence": false,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__soft_stem__tissue_moisture"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536240365_shs3mho3",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "unknown",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "不确定，继续帮我排查"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+          "optionKey": "new_leaves_first",
+          "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
+          "optionText": "新叶更明显"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "缺铁",
+        "currentTopTitle": "缺铁",
+        "topProblemKey": "iron_deficiency",
+        "topProblemDisplayName": "缺铁",
+        "topProblemScore": 0.4718,
+        "topScoreGap": 0.2118,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536241767_itr4wnkc",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "unknown",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "不确定，继续帮我排查"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+          "optionKey": "unknown",
+          "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
+          "optionText": "不确定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "缺氮",
+        "currentTopTitle": "缺氮",
+        "topProblemKey": "nitrogen_deficiency",
+        "topProblemDisplayName": "缺氮",
+        "topProblemScore": 0.4775,
+        "topScoreGap": 0.1684,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=unknown",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536233550_5v5r8d1c",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "soft_stem",
+          "symptomCn": "茎变软",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "soft_rot_mode",
+        "classKey": "soft_rot_mode",
+        "symptomKey": "soft_stem"
+      },
+      "round1": {
+        "questionKey": "q_stem_collapse_poor_drainage",
+        "optionKey": "yes",
+        "questionText": "倒伏前盆土长期偏湿、浇水后很久都不干吗？",
+        "optionText": "是的"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "根腐",
+        "pendingTopTitle": "",
+        "currentTopTitle": "根腐",
+        "topProblemKey": "root_rot",
+        "topProblemDisplayName": "根腐",
+        "topProblemScore": 0.6678,
+        "topScoreGap": 0.08239999999999992,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "soft_rot_mode/soft_stem > q_stem_collapse_poor_drainage=yes",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "conclusion_gate_satisfied_next_question_low_yield",
+          "details": {
+            "topProblemKey": "root_rot",
+            "contextSatisfied": true,
+            "hasProblemLevelPositiveEvidence": true,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__poor_drainage__distribution_scope"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536240486_krtg94yv",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "unknown",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "不确定，继续帮我排查"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+          "optionKey": "old_lower_leaves_first",
+          "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
+          "optionText": "老叶或下部叶更明显"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "缺氮",
+        "currentTopTitle": "缺氮",
+        "topProblemKey": "nitrogen_deficiency",
+        "topProblemDisplayName": "缺氮",
+        "topProblemScore": 0.5691,
+        "topScoreGap": 0.06290000000000007,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=old_lower_leaves_first",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536241651_44mva30v",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "unknown",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "不确定，继续帮我排查"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+          "optionKey": "no_clear_age_bias",
+          "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
+          "optionText": "新老叶差不多，或看不出先后"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "缺氮",
+        "currentTopTitle": "缺氮",
+        "topProblemKey": "nitrogen_deficiency",
+        "topProblemDisplayName": "缺氮",
+        "topProblemScore": 0.4775,
+        "topScoreGap": 0.1684,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=no_clear_age_bias",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536242499_wrgb4li0",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_dry_soil",
+          "symptomCn": "干土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "water_stress_mode",
+        "classKey": "water_stress_mode",
+        "symptomKey": "wilting_dry_soil"
+      },
+      "round1": {
+        "questionKey": "q_underwater_dry_wilt",
+        "optionKey": "no",
+        "questionText": "盆土干透时，叶子会明显发蔫吗？",
+        "optionText": "不是的"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "water_stress_mode/wilting_dry_soil > q_underwater_dry_wilt=no",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536243512_ln6oy6m4",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_dry_soil",
+          "symptomCn": "干土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "water_stress_mode",
+        "classKey": "water_stress_mode",
+        "symptomKey": "wilting_dry_soil"
+      },
+      "round1": {
+        "questionKey": "q_underwater_dry_wilt",
+        "optionKey": "unknown",
+        "questionText": "盆土干透时，叶子会明显发蔫吗？",
+        "optionText": "看不出/不确定"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.302,
+        "topScoreGap": 0.302,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "water_stress_mode/wilting_dry_soil > q_underwater_dry_wilt=unknown",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "next_question_low_yield_no_output_gain",
+          "details": {
+            "topProblemKey": "underwatering",
+            "contextSatisfied": true,
+            "hasProblemLevelPositiveEvidence": false,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__wilting_dry_soil__distribution_scope"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536243513_9c54zmi9",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_dry_soil",
+          "symptomCn": "干土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "water_stress_mode",
+        "classKey": "water_stress_mode",
+        "symptomKey": "wilting_dry_soil"
+      },
+      "round1": {
+        "questionKey": "q_underwater_dry_wilt",
+        "optionKey": "yes",
+        "questionText": "盆土干透时，叶子会明显发蔫吗？",
+        "optionText": "是的"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0.7123,
+        "topScoreGap": 0.7123,
+        "stopReasonDetail": "symptom_class_problem_family_unscoped"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "water_stress_mode/wilting_dry_soil > q_underwater_dry_wilt=yes",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536238997_w86ij0r7",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "white_fuzz",
+          "symptomCn": "白色菌丝",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "powdery_mildew_mode",
+        "classKey": "powdery_mildew_mode",
+        "symptomKey": "white_fuzz"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__white_fuzz__surface_stickiness",
+        "optionKey": "unknown",
+        "questionText": "这些“白色菌丝”的位置摸起来发黏吗？",
+        "optionText": "看不出/不确定"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "no_forceable_output_problem_after_followup"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "powdery_mildew_mode/white_fuzz > q_observed_probe__white_fuzz__surface_stickiness=unknown",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536238355_4j54ykje",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "white_fuzz",
+          "symptomCn": "白色菌丝",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "powdery_mildew_mode",
+        "classKey": "powdery_mildew_mode",
+        "symptomKey": "white_fuzz"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__white_fuzz__surface_stickiness",
+        "optionKey": "no",
+        "questionText": "这些“白色菌丝”的位置摸起来发黏吗？",
+        "optionText": "不是的"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "no_forceable_output_problem_after_followup"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "powdery_mildew_mode/white_fuzz > q_observed_probe__white_fuzz__surface_stickiness=no",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536246291_12k2tbu0",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "vein_darkening",
+          "symptomCn": "叶脉变深",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "nutrient_stress_mode",
+        "classKey": "nutrient_stress_mode",
+        "symptomKey": "vein_darkening"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "unknown",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "不确定，继续帮我排查"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+          "optionKey": "new_leaves_first",
+          "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
+          "optionText": "新叶更明显"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "缺铁",
+        "currentTopTitle": "缺铁",
+        "topProblemKey": "iron_deficiency",
+        "topProblemDisplayName": "缺铁",
+        "topProblemScore": 0.375,
+        "topScoreGap": 0.11499999999999999,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536245630_wcgpjq8g",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
+        "optionKey": "pest_trace",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "有小虫、黑色颗粒、黏液痕或新鲜不规则缺口"
+      },
+      "round2": [
+        {
+          "questionKey": "q_holes_in_leaf_confirm",
+          "optionKey": "yes",
+          "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
+          "optionText": "是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "毛虫",
+        "pendingTopTitle": "",
+        "currentTopTitle": "毛虫",
+        "topProblemKey": "caterpillars",
+        "topProblemDisplayName": "毛虫",
+        "topProblemScore": 1.1834,
+        "topScoreGap": 0.014899999999999913,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=pest_trace > q_holes_in_leaf_confirm=yes",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "conclusion_gate_satisfied_next_question_low_yield",
+          "details": {
+            "topProblemKey": "chewing_insects",
+            "contextSatisfied": true,
+            "hasProblemLevelPositiveEvidence": true,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__holes_in_leaf__underside_presence"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536237517_k18wf6nc",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "white_fuzz",
+          "symptomCn": "白色菌丝",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "powdery_mildew_mode",
+        "classKey": "powdery_mildew_mode",
+        "symptomKey": "white_fuzz"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__white_fuzz__surface_stickiness",
+        "optionKey": "yes",
+        "questionText": "这些“白色菌丝”的位置摸起来发黏吗？",
+        "optionText": "是的"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断",
+        "topProblemKey": "",
+        "topProblemDisplayName": "",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": "no_forceable_output_problem_after_followup"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "powdery_mildew_mode/white_fuzz > q_observed_probe__white_fuzz__surface_stickiness=yes",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536246873_c3og6roe",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "vein_darkening",
+          "symptomCn": "叶脉变深",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "nutrient_stress_mode",
+        "classKey": "nutrient_stress_mode",
+        "symptomKey": "vein_darkening"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "unknown",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "不确定，继续帮我排查"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+          "optionKey": "old_lower_leaves_first",
+          "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
+          "optionText": "老叶或下部叶更明显"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "缺氮",
+        "currentTopTitle": "缺氮",
+        "topProblemKey": "nitrogen_deficiency",
+        "topProblemDisplayName": "缺氮",
+        "topProblemScore": 0.26,
+        "topScoreGap": 0.0050000000000000044,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=old_lower_leaves_first",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536244075_c2z74p67",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
+        "optionKey": "pest_trace",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "有小虫、黑色颗粒、黏液痕或新鲜不规则缺口"
+      },
+      "round2": [
+        {
+          "questionKey": "q_holes_in_leaf_confirm",
+          "optionKey": "no",
+          "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
+          "optionText": "不是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "毛虫",
+        "pendingTopTitle": "",
+        "currentTopTitle": "毛虫",
+        "topProblemKey": "caterpillars",
+        "topProblemDisplayName": "毛虫",
+        "topProblemScore": 0.0274,
+        "topScoreGap": 0.020900000000000002,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=pest_trace > q_holes_in_leaf_confirm=no",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "conclusion_gate_satisfied_next_question_low_yield",
+          "details": {
+            "topProblemKey": "chewing_insects",
+            "contextSatisfied": true,
+            "hasProblemLevelPositiveEvidence": true,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__holes_in_leaf__underside_presence"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536244558_n8rwoed7",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
+        "optionKey": "pest_trace",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "有小虫、黑色颗粒、黏液痕或新鲜不规则缺口"
+      },
+      "round2": [
+        {
+          "questionKey": "q_holes_in_leaf_confirm",
+          "optionKey": "unknown",
+          "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
+          "optionText": "看不出/不确定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "毛虫",
+        "pendingTopTitle": "",
+        "currentTopTitle": "毛虫",
+        "topProblemKey": "caterpillars",
+        "topProblemDisplayName": "毛虫",
+        "topProblemScore": 0.6054,
+        "topScoreGap": 0.029400000000000093,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=pest_trace > q_holes_in_leaf_confirm=unknown",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": true,
+          "reason": "conclusion_gate_satisfied_next_question_low_yield",
+          "details": {
+            "topProblemKey": "chewing_insects",
+            "contextSatisfied": true,
+            "hasProblemLevelPositiveEvidence": true,
+            "lowYieldQuestionKeys": [
+              "q_observed_probe__holes_in_leaf__underside_presence"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536248936_s930fby7",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "vein_darkening",
+          "symptomCn": "叶脉变深",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "nutrient_stress_mode",
+        "classKey": "nutrient_stress_mode",
+        "symptomKey": "vein_darkening"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "unknown",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "不确定，继续帮我排查"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+          "optionKey": "unknown",
+          "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
+          "optionText": "不确定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "根腐",
+        "currentTopTitle": "根腐",
+        "topProblemKey": "root_rot",
+        "topProblemDisplayName": "根腐",
+        "topProblemScore": 0.255,
+        "topScoreGap": 0.08499999999999999,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=unknown",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536249923_f141tnf3",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "unknown",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "不确定，继续帮我排查"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+          "optionKey": "unknown",
+          "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
+          "optionText": "不确定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "红蜘蛛",
+        "currentTopTitle": "红蜘蛛",
+        "topProblemKey": "spider_mites",
+        "topProblemDisplayName": "红蜘蛛",
+        "topProblemScore": 0.4865,
+        "topScoreGap": 0.4421,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=unknown",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536249252_669wa0fq",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "unknown",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "不确定，继续帮我排查"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+          "optionKey": "new_leaves_first",
+          "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
+          "optionText": "新叶更明显"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "红蜘蛛",
+        "currentTopTitle": "红蜘蛛",
+        "topProblemKey": "spider_mites",
+        "topProblemDisplayName": "红蜘蛛",
+        "topProblemScore": 0.4865,
+        "topScoreGap": 0.22649999999999998,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536249297_6kbvlzpe",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "unknown",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "不确定，继续帮我排查"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+          "optionKey": "old_lower_leaves_first",
+          "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
+          "optionText": "老叶或下部叶更明显"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "红蜘蛛",
+        "currentTopTitle": "红蜘蛛",
+        "topProblemKey": "spider_mites",
+        "topProblemDisplayName": "红蜘蛛",
+        "topProblemScore": 0.4865,
+        "topScoreGap": 0.22649999999999998,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=old_lower_leaves_first",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536249381_34rlndcc",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "unknown",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "不确定，继续帮我排查"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+          "optionKey": "no_clear_age_bias",
+          "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
+          "optionText": "新老叶差不多，或看不出先后"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "红蜘蛛",
+        "currentTopTitle": "红蜘蛛",
+        "topProblemKey": "spider_mites",
+        "topProblemDisplayName": "红蜘蛛",
+        "topProblemScore": 0.4865,
+        "topScoreGap": 0.3737,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=no_clear_age_bias",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    },
+    {
+      "sessionId": "engine_1777536248853_8zgiw8m8",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "vein_darkening",
+          "symptomCn": "叶脉变深",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "nutrient_stress_mode",
+        "classKey": "nutrient_stress_mode",
+        "symptomKey": "vein_darkening"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "optionKey": "unknown",
+        "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
+        "optionText": "不确定，继续帮我排查"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+          "optionKey": "no_clear_age_bias",
+          "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
+          "optionText": "新老叶差不多，或看不出先后"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "光照不足",
+        "currentTopTitle": "光照不足",
+        "topProblemKey": "low_light",
+        "topProblemDisplayName": "光照不足",
+        "topProblemScore": 0.335,
+        "topScoreGap": 0.165,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=no_clear_age_bias",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": false,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    }
+  ]
+}

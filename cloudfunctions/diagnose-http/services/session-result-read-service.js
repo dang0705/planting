@@ -215,38 +215,106 @@ function firstOutcomeList(...values) {
   return []
 }
 
+function resolveOutcomeIdentityKey(outcome = null, index = 0) {
+  const safeOutcome = asPlainObject(outcome)
+  if (!safeOutcome) {return `outcome_${index}`}
+  return normalizeStoredNullableText(
+    safeOutcome.outcomeKey ||
+      safeOutcome.problemKey ||
+      safeOutcome.problemId ||
+      '',
+    `outcome_${index}`
+  )
+}
+
+function mergeVisibleOutcomeEntries({
+  visibleOutcomes = [],
+  legacyPrimaryOutcome = null,
+  legacySecondaryOutcomes = []
+} = {}) {
+  const merged = []
+  const seen = new Set()
+  for (const outcome of [
+    ...normalizeOutcomeList(visibleOutcomes),
+    ...[normalizeOutcomeEntry(legacyPrimaryOutcome)].filter(Boolean),
+    ...normalizeOutcomeList(legacySecondaryOutcomes)
+  ]) {
+    const identityKey = resolveOutcomeIdentityKey(outcome, merged.length)
+    if (seen.has(identityKey)) {continue}
+    seen.add(identityKey)
+    merged.push(outcome)
+  }
+  return merged
+}
+
+function normalizeRouteOutcomeMode(value = '', visibleOutcomes = []) {
+  const normalized = normalizeStoredNullableText(value, '')
+  if (['primary_with_secondary', 'primary_only'].includes(normalized)) {
+    return Array.isArray(visibleOutcomes) && visibleOutcomes.length ? 'visible_outcomes' : ''
+  }
+  return normalized
+}
+
+function buildPublicRouteFinalResult(finalResult = null, { visibleOutcomes = [], outcomeMode = '', actionAdvice = null } = {}) {
+  const safeFinalResult = asPlainObject(finalResult)
+  if (!safeFinalResult) {return null}
+
+  const publicFinalResult = { ...safeFinalResult }
+  delete publicFinalResult.primaryOutcome
+  delete publicFinalResult.secondaryOutcomes
+  publicFinalResult.visibleOutcomes = mergeVisibleOutcomeEntries({
+    visibleOutcomes:
+      publicFinalResult.visibleOutcomes ||
+      visibleOutcomes,
+    legacyPrimaryOutcome: safeFinalResult.primaryOutcome,
+    legacySecondaryOutcomes: safeFinalResult.secondaryOutcomes
+  })
+  publicFinalResult.outcomeMode = normalizeRouteOutcomeMode(
+    publicFinalResult.outcomeMode || outcomeMode || '',
+    publicFinalResult.visibleOutcomes
+  )
+  publicFinalResult.actionAdvice = firstPlainObject(publicFinalResult.actionAdvice, actionAdvice)
+  return publicFinalResult
+}
+
 function resolveRouteOutcomeFields({ snapshot = null, outcomePayload = null } = {}) {
   const snapshotObject = asPlainObject(snapshot) || {}
   const outcomePayloadObject = asPlainObject(outcomePayload) || {}
   const payloadFinalResult = asPlainObject(outcomePayloadObject.finalResult)
   const snapshotFinalResult = asPlainObject(snapshotObject.finalResult)
   const finalResult = mergePlainObjects(snapshotFinalResult, payloadFinalResult)
-  const primaryOutcome = normalizeOutcomeEntry(firstPlainObject(
+  const legacyPrimaryOutcome = normalizeOutcomeEntry(firstPlainObject(
     outcomePayloadObject.primaryOutcome ||
       payloadFinalResult?.primaryOutcome,
     snapshotObject.primaryOutcome,
     snapshotFinalResult?.primaryOutcome
   ))
-  const secondaryOutcomes = firstOutcomeList(
+  const legacySecondaryOutcomes = firstOutcomeList(
     outcomePayloadObject.secondaryOutcomes ||
       payloadFinalResult?.secondaryOutcomes,
     snapshotObject.secondaryOutcomes,
     snapshotFinalResult?.secondaryOutcomes
   )
-  const visibleOutcomes = firstOutcomeList(
+  const rawVisibleOutcomes = firstOutcomeList(
     outcomePayloadObject.visibleOutcomes ||
       payloadFinalResult?.visibleOutcomes,
     snapshotObject.visibleOutcomes,
     snapshotFinalResult?.visibleOutcomes
   )
-  const outcomeMode = normalizeStoredNullableText(
+  const visibleOutcomes = mergeVisibleOutcomeEntries({
+    visibleOutcomes: rawVisibleOutcomes,
+    legacyPrimaryOutcome,
+    legacySecondaryOutcomes
+  })
+  const rawOutcomeMode = normalizeStoredNullableText(
     outcomePayloadObject.outcomeMode ||
       payloadFinalResult?.outcomeMode ||
       snapshotObject.outcomeMode ||
       snapshotFinalResult?.outcomeMode ||
-      '',
+    '',
     ''
   )
+  const outcomeMode = normalizeRouteOutcomeMode(rawOutcomeMode, visibleOutcomes)
   const actionAdvice = firstPlainObject(
     outcomePayloadObject.actionAdvice ||
       payloadFinalResult?.actionAdvice,
@@ -262,9 +330,11 @@ function resolveRouteOutcomeFields({ snapshot = null, outcomePayload = null } = 
   )
 
   return {
-    finalResult,
-    primaryOutcome,
-    secondaryOutcomes,
+    finalResult: buildPublicRouteFinalResult(finalResult, {
+      visibleOutcomes,
+      outcomeMode,
+      actionAdvice
+    }),
     visibleOutcomes,
     outcomeMode,
     actionAdvice,
@@ -399,8 +469,6 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
       diagnosticTrace,
       coreProcess,
       finalResult: routeOutcomeFields.finalResult || null,
-      primaryOutcome: routeOutcomeFields.primaryOutcome,
-      secondaryOutcomes: routeOutcomeFields.secondaryOutcomes,
       visibleOutcomes: routeOutcomeFields.visibleOutcomes,
       outcomeMode: routeOutcomeFields.outcomeMode,
       actionAdvice: routeOutcomeFields.actionAdvice,
@@ -568,8 +636,6 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
     diagnosticTrace,
     coreProcess,
     finalResult,
-    primaryOutcome: routeOutcomeFields.primaryOutcome,
-    secondaryOutcomes: routeOutcomeFields.secondaryOutcomes,
     visibleOutcomes: routeOutcomeFields.visibleOutcomes,
     outcomeMode: routeOutcomeFields.outcomeMode,
     actionAdvice: routeOutcomeFields.actionAdvice,

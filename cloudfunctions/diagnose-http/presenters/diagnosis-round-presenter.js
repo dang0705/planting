@@ -78,10 +78,6 @@ function buildCompactAnswerRoundResponse(roundResult = {}, helpers = diagnosisRo
     nextSteps: Array.isArray(roundResult?.nextSteps) ? roundResult.nextSteps : [],
     whatToAvoid: Array.isArray(roundResult?.whatToAvoid) ? roundResult.whatToAvoid : [],
     actionAdvice: buildCompactActionAdvice(roundResult?.actionAdvice),
-    primaryOutcome: buildCompactOutcomeEntry(roundResult?.primaryOutcome),
-    secondaryOutcomes: (Array.isArray(roundResult?.secondaryOutcomes) ? roundResult.secondaryOutcomes : [])
-      .map(buildCompactOutcomeEntry)
-      .filter(Boolean),
     visibleOutcomes: (Array.isArray(roundResult?.visibleOutcomes) ? roundResult.visibleOutcomes : [])
       .map(buildCompactOutcomeEntry)
       .filter(Boolean),
@@ -239,10 +235,6 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
       nextSteps: Array.isArray(roundResult?.nextSteps) ? roundResult.nextSteps : [],
       whatToAvoid: Array.isArray(roundResult?.whatToAvoid) ? roundResult.whatToAvoid : [],
       actionAdvice: buildCompactActionAdvice(roundResult?.actionAdvice),
-      primaryOutcome: buildCompactOutcomeEntry(roundResult?.primaryOutcome),
-      secondaryOutcomes: (Array.isArray(roundResult?.secondaryOutcomes) ? roundResult.secondaryOutcomes : [])
-        .map(buildCompactOutcomeEntry)
-        .filter(Boolean),
       visibleOutcomes: (Array.isArray(roundResult?.visibleOutcomes) ? roundResult.visibleOutcomes : [])
         .map(buildCompactOutcomeEntry)
         .filter(Boolean),
@@ -340,10 +332,6 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
     nextSteps: Array.isArray(roundResult?.nextSteps) ? roundResult.nextSteps : [],
     whatToAvoid: Array.isArray(roundResult?.whatToAvoid) ? roundResult.whatToAvoid : [],
     actionAdvice: buildCompactActionAdvice(roundResult?.actionAdvice),
-    primaryOutcome: buildCompactOutcomeEntry(roundResult?.primaryOutcome),
-    secondaryOutcomes: (Array.isArray(roundResult?.secondaryOutcomes) ? roundResult.secondaryOutcomes : [])
-      .map(buildCompactOutcomeEntry)
-      .filter(Boolean),
     visibleOutcomes: (Array.isArray(roundResult?.visibleOutcomes) ? roundResult.visibleOutcomes : [])
       .map(buildCompactOutcomeEntry)
       .filter(Boolean),

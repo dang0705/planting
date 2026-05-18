@@ -1,0 +1,224 @@
+{
+  "generatedAt": "2026-04-23T10:19:56.116Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "collectionProfile": {
+    "source": "all",
+    "manualVisualOnly": false,
+    "manualVisualOnlyProvided": false
+  },
+  "visualEvidenceSummary": {
+    "total": 1,
+    "available": 1,
+    "missingRawRecords": 0,
+    "emptyConclusion": 0
+  },
+  "total": 1,
+  "success": 1,
+  "failed": 0,
+  "progress": {
+    "processed": 1,
+    "targetTotal": 1,
+    "complete": true
+  },
+  "results": [
+    {
+      "sessionId": "diag_1776454830991_bn8i1dft",
+      "openid": "dev_terminal_combo_456714a8d9eac7b395bd",
+      "visualEvidence": {
+        "symptomCandidates": [
+          {
+            "symptomKey": "leaf_yellowing",
+            "displayNameCn": "叶子明显发黄",
+            "confidenceBand": "high",
+            "supportingRegionNote": "图中部分叶片呈现黄色，存在明显发黄现象"
+          },
+          {
+            "symptomKey": "brown_spots_halo",
+            "displayNameCn": "褐斑带黄晕",
+            "confidenceBand": "medium",
+            "supportingRegionNote": "图中部分叶片有褐色斑块并伴随类似黄晕的表现"
+          },
+          {
+            "symptomKey": "skeletonized_leaves",
+            "displayNameCn": "叶子被吃得只剩叶脉骨架",
+            "confidenceBand": "low",
+            "supportingRegionNote": "图中未清晰呈现典型只剩叶脉骨架的情况，仅为弱怀疑"
+          }
+        ],
+        "outOfPoolCandidates": [],
+        "routeHints": [
+          {
+            "type": "possible_problematic_signal",
+            "reason": "存在叶片发黄、褐斑等异常视觉信号"
+          }
+        ]
+      },
+      "visualEvidenceMeta": {
+        "status": "available",
+        "reason": "",
+        "visualRawRecordCount": 1,
+        "symptomCandidateCount": 3,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 1,
+        "hasVisualConclusion": true
+      },
+      "symptomClass": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "yellowing_mode",
+        "currentClassNameCn": "黄叶模式",
+        "currentGroupKey": "yellowing_patchy_confirm_group",
+        "currentGroupLabel": "yellowing_patchy_confirm_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "yellowing_mode",
+          "primaryClassRuntimeScore": 1.6905,
+          "unknownLockCount": 6,
+          "currentClassKey": "yellowing_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 3
+        }
+      },
+      "symptomClassSource": null,
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "yellowing_mode",
+        "currentClassNameCn": "黄叶模式",
+        "currentGroupKey": "yellowing_patchy_confirm_group",
+        "currentGroupLabel": "yellowing_patchy_confirm_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "yellowing_mode",
+          "primaryClassRuntimeScore": 1.6905,
+          "unknownLockCount": 6,
+          "currentClassKey": "yellowing_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 3
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_leaf_yellowing_light_background",
+            "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+            "targetDimension": "light_exposure",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_leaf_yellowing_watering_background",
+            "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+            "targetDimension": "watering_context",
+            "answer": {
+              "optionKey": "no_change",
+              "optionText": "浇水节奏没有明显变化",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_leaf_yellowing_fertilization_background",
+            "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+            "targetDimension": "fertilization_context",
+            "answer": {
+              "optionKey": "no",
+              "optionText": "否，近期并非长期缺肥背景",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_iron_new_leaves_yellow",
+            "questionText": "发黄主要出现在新叶?",
+            "targetDimension": "host_confirmation",
+            "answer": {
+              "optionKey": "new",
+              "optionText": "新叶为主",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_nitrogen_old_leaves_yellow",
+            "questionText": "发黄先从老叶开始?",
+            "targetDimension": "host_confirmation",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_underwater_dry_wilt",
+            "questionText": "盆土干透时明显萎蔫?",
+            "targetDimension": "watering_context",
+            "answer": {
+              "optionKey": "yes",
+              "optionText": "是，比较确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_dW5kZXJ3YXRlcmluZw",
+          "problemKey": "underwatering",
+          "displayName": "缺水",
+          "summary": "当前更像 缺水，但还不够确定。 当前最像的问题是：缺水。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "finalResult": {
+          "problemId": "p_dW5kZXJ3YXRlcmluZw",
+          "problemKey": "",
+          "displayName": "缺水",
+          "summary": "当前更像 缺水，但还不够确定。 当前最像的问题是：缺水。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "roundIndex": 3
+      }
+    }
+  ]
+}

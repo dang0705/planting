@@ -1,0 +1,1406 @@
+{
+  "totalSessions": 5210,
+  "totalNonBatchSessions": 4957,
+  "manualLikeNonBatchCount": 50,
+  "manualLikeNonBatchPercent": 1.01,
+  "nonContinuousGapMinutesThreshold": 5,
+  "nonContinuousCount": 112,
+  "manualNonContinuousCount": 18,
+  "manualNonContinuousPercentOfNonContinuous": 16.07,
+  "sampleManualSessions": [
+    {
+      "diagnosisId": "diag_1776524906841_9gzq2dil",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-04-18T23:08:40",
+      "outcomeType": "uncertain",
+      "latestVisualBatch": "visbatch_1776524906842_5mi3kaa5"
+    },
+    {
+      "diagnosisId": "diag_1776521814145_3n9ak1w5",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-04-18T22:17:16",
+      "outcomeType": "problematic",
+      "latestVisualBatch": "visbatch_1776521814146_5y0ce6nw"
+    },
+    {
+      "diagnosisId": "diag_1776509556300_t80mp3tg",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-04-18T18:52:46",
+      "outcomeType": "problematic",
+      "latestVisualBatch": "visbatch_1776509556301_7u6ejva6"
+    },
+    {
+      "diagnosisId": "diag_1776497216908_nloxmvtp",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-04-18T15:27:11",
+      "outcomeType": "problematic",
+      "latestVisualBatch": "visbatch_1776497216909_9ykt5imd"
+    },
+    {
+      "diagnosisId": "diagnose_1774528251142_okjop1wc8",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T20:30:51",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774485949786_emko1qim0",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:45:49",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774485936830_dfiva3c9i",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:45:36",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774485920227_in6g30trs",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:45:20",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774485884615_n34xd6ho0",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:44:44",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774485795769_50a2p8uxv",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:43:15",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774485475215_0jkprrovr",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:37:55",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774485425541_bisdfu0es",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:37:05",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774485412943_lu2rliur8",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:36:53",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774485318933_e0376xe3p",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:35:19",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774485273512_6cfg00ffk",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:34:33",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774485068566_m3675hp7d",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:31:08",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774484943574_4k21pn1hz",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:29:03",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774484752240_7m3uqlt5b",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:25:52",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774484491066_wteznzumd",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:21:31",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774483822585_a1aktk22p",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:10:22",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774483760555_dltm8bw2w",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:09:20",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774483732229_ohvs1mn5v",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:08:52",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774483630195_z1dysdr0u",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:07:10",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774483603557_jm5mx4ggo",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:06:43",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774483556269_ls6sc8nep",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:05:56",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774483483883_mfoyn1c55",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:04:43",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774445520826_c0bbm0qrs",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-25T21:32:00",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774398180920_qei79ahaa",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-25T08:23:01",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774398162288_g57eesovn",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-25T08:22:42",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774398121883_o53hzok56",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-25T08:22:02",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774365739897_l04lr8e57",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T23:22:19",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774365001221_9at3h04wm",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T23:10:01",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774364853663_nap96hejt",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T23:07:33",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774362271478_wp3f6vs1u",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T22:24:31",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774361733642_ohu0qxns6",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T22:15:33",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774361677138_ul2ykn5b5",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T22:14:37",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774361537657_3kyexp61m",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T22:12:17",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774361137794_un5w60ege",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T22:05:37",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774360435084_su009rzq9",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T21:53:55",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774359253709_68kzicfj6",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T21:34:13",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774314558087_96sjrnk9o",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T09:09:18",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774314369725_ohk5gcxbp",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T09:06:09",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774314340093_j155ve388",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T09:05:40",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774313994625_gtbfhmdbr",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T08:59:54",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774313973603_l2w2g7bjc",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T08:59:33",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774313186537_nvue00dm8",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T08:46:26",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774313154387_pup3cfiyv",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T08:45:54",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774278531431_vp7ab7fiw",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-23T23:08:51",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774278504923_bwvt8de3r",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-23T23:08:25",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    },
+    {
+      "diagnosisId": "diagnose_1774278458177_df5iesism",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-23T23:07:38",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null
+    }
+  ],
+  "sampleNonContinuous": [
+    {
+      "diagnosisId": "diag_1776524419665_gstrtkff",
+      "createdAt": "2026-04-18T23:00:35",
+      "openid": "dev_terminal_structural-hole-confirmed-1776524417",
+      "prevDiagnosisId": "diag_1776524906841_9gzq2dil",
+      "prevCreatedAt": "2026-04-18T23:08:40",
+      "gapMinutes": 8.08
+    },
+    {
+      "diagnosisId": "diag_1776523732979_y4j59si7",
+      "createdAt": "2026-04-18T22:49:07",
+      "openid": "dev_terminal_structural-broad-negative-1776523724",
+      "prevDiagnosisId": "diag_1776524274656_5pdu1vck",
+      "prevCreatedAt": "2026-04-18T22:58:11",
+      "gapMinutes": 9.07
+    },
+    {
+      "diagnosisId": "diag_1776521814145_3n9ak1w5",
+      "createdAt": "2026-04-18T22:17:16",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diag_1776523732979_y4j59si7",
+      "prevCreatedAt": "2026-04-18T22:49:07",
+      "gapMinutes": 31.85
+    },
+    {
+      "diagnosisId": "diag_1776514404791_tfotfxxk",
+      "createdAt": "2026-04-18T20:13:40",
+      "openid": "dev_terminal_combo_4ab16db6403179cf9524",
+      "prevDiagnosisId": "diag_1776521814145_3n9ak1w5",
+      "prevCreatedAt": "2026-04-18T22:17:16",
+      "gapMinutes": 123.6
+    },
+    {
+      "diagnosisId": "diag_1776507975058_bugac0zm",
+      "createdAt": "2026-04-18T18:26:25",
+      "openid": "dev_terminal_brown_direct_6",
+      "prevDiagnosisId": "diag_1776508607368_qopvhpdw",
+      "prevCreatedAt": "2026-04-18T18:36:57",
+      "gapMinutes": 10.53
+    },
+    {
+      "diagnosisId": "diag_1776506519845_oy4445at",
+      "createdAt": "2026-04-18T18:02:16",
+      "openid": "dev_terminal_combo_d6adf43b5c641f7ad88c",
+      "prevDiagnosisId": "diag_1776507231749_7no6mksh",
+      "prevCreatedAt": "2026-04-18T18:14:01",
+      "gapMinutes": 11.75
+    },
+    {
+      "diagnosisId": "diag_1776488478987_2q0mhflz",
+      "createdAt": "2026-04-18T13:01:28",
+      "openid": "dev_terminal_combo_ba547a0df3faf754d0f9",
+      "prevDiagnosisId": "diag_1776497216908_nloxmvtp",
+      "prevCreatedAt": "2026-04-18T15:27:11",
+      "gapMinutes": 145.72
+    },
+    {
+      "diagnosisId": "diag_1776481683794_y5jorkwx",
+      "createdAt": "2026-04-18T11:08:17",
+      "openid": "dev_terminal_brown_spots_probe",
+      "prevDiagnosisId": "diag_1776487522329_1roaw83u",
+      "prevCreatedAt": "2026-04-18T12:45:36",
+      "gapMinutes": 97.32
+    },
+    {
+      "diagnosisId": "diag_1776455457671_qn52zrin",
+      "createdAt": "2026-04-18T03:51:14",
+      "openid": "dev_terminal_combo_b5c0e59195087e53f382",
+      "prevDiagnosisId": "diag_1776481683794_y5jorkwx",
+      "prevCreatedAt": "2026-04-18T11:08:17",
+      "gapMinutes": 437.05
+    },
+    {
+      "diagnosisId": "diag_1776452205602_qfr87ug0",
+      "createdAt": "2026-04-18T02:56:55",
+      "openid": "dev_terminal_combo_6fa15dd5cdf4cc7a244f",
+      "prevDiagnosisId": "diag_1776452826401_37o0d5lg",
+      "prevCreatedAt": "2026-04-18T03:07:19",
+      "gapMinutes": 10.4
+    },
+    {
+      "diagnosisId": "diag_1776451516845_1rn6wgex",
+      "createdAt": "2026-04-18T02:45:24",
+      "openid": "dev_terminal_combo_5496e6f7f0b3a007e5cb",
+      "prevDiagnosisId": "diag_1776451863816_3sqrwwnc",
+      "prevCreatedAt": "2026-04-18T02:51:13",
+      "gapMinutes": 5.82
+    },
+    {
+      "diagnosisId": "diag_1776398686735_z19hsm1q",
+      "createdAt": "2026-04-17T12:04:51",
+      "openid": "dev_terminal_codex-dev-e2e-healthy-monstera1",
+      "prevDiagnosisId": "diag_1776434642374_q2ma5wnq",
+      "prevCreatedAt": "2026-04-17T22:04:14",
+      "gapMinutes": 599.38
+    },
+    {
+      "diagnosisId": "diag_1776397867139_cergyjkk",
+      "createdAt": "2026-04-17T11:51:24",
+      "openid": "dev_terminal_terminal",
+      "prevDiagnosisId": "diag_1776398508158_a8ypxluo",
+      "prevCreatedAt": "2026-04-17T12:02:05",
+      "gapMinutes": 10.68
+    },
+    {
+      "diagnosisId": "diag_1776394476800_p6xh7q51",
+      "createdAt": "2026-04-17T10:54:52",
+      "openid": "anon_dev_visual_batch_brown_spots_brown_spots_8caf_73d48e837021",
+      "prevDiagnosisId": "diag_1776397192714_o0lly7qp",
+      "prevCreatedAt": "2026-04-17T11:39:58",
+      "gapMinutes": 45.1
+    },
+    {
+      "diagnosisId": "diag_1776392280919_m9ch95g2",
+      "createdAt": "2026-04-17T10:18:12",
+      "openid": "anon_dev_visual_batch_brown_spots_brown_spots_efd8_cf1491916cc0",
+      "prevDiagnosisId": "diag_1776394457771_tqdkghup",
+      "prevCreatedAt": "2026-04-17T10:54:28",
+      "gapMinutes": 36.27
+    },
+    {
+      "diagnosisId": "diag_1776388704310_a6vi533f",
+      "createdAt": "2026-04-17T09:18:40",
+      "openid": "anon_dev_visual_batch_chewing_damage_chewing_damage_e_751b9bba1c",
+      "prevDiagnosisId": "diag_1776391819345_1mwm1k0q",
+      "prevCreatedAt": "2026-04-17T10:10:39",
+      "gapMinutes": 51.98
+    },
+    {
+      "diagnosisId": "diag_1776388145059_hkxih4p7",
+      "createdAt": "2026-04-17T09:09:14",
+      "openid": "anon_dev_visual_batch_brown_spots_brown_spots_efd8_cf1491916cc0",
+      "prevDiagnosisId": "diag_1776388677224_b2savtht",
+      "prevCreatedAt": "2026-04-17T09:18:09",
+      "gapMinutes": 8.92
+    },
+    {
+      "diagnosisId": "diag_1776335772065_y0mao94i",
+      "createdAt": "2026-04-16T18:36:27",
+      "openid": "dev_terminal_codex-pest-synthetic-fix-auth",
+      "prevDiagnosisId": "diag_1776387904792_6m58781b",
+      "prevCreatedAt": "2026-04-17T09:05:12",
+      "gapMinutes": 868.75
+    },
+    {
+      "diagnosisId": "diag_1776318234357_dm6n7pda",
+      "createdAt": "2026-04-16T13:44:04",
+      "openid": "dev_terminal_codex-hard-metric-yellowing-3",
+      "prevDiagnosisId": "diag_1776335772065_y0mao94i",
+      "prevCreatedAt": "2026-04-16T18:36:27",
+      "gapMinutes": 292.38
+    },
+    {
+      "diagnosisId": "diag_1776317859405_w4x4zepo",
+      "createdAt": "2026-04-16T13:37:49",
+      "openid": "dev_terminal_codex-hard-metric-yellowing",
+      "prevDiagnosisId": "diag_1776318234357_dm6n7pda",
+      "prevCreatedAt": "2026-04-16T13:44:04",
+      "gapMinutes": 6.25
+    },
+    {
+      "diagnosisId": "diag_1776316416074_cxpbeybn",
+      "createdAt": "2026-04-16T13:13:47",
+      "openid": "dev_terminal_codex-yellowing-formal-e2e",
+      "prevDiagnosisId": "diag_1776317859405_w4x4zepo",
+      "prevCreatedAt": "2026-04-16T13:37:49",
+      "gapMinutes": 24.03
+    },
+    {
+      "diagnosisId": "diag_1776314365883_y8ppho3m",
+      "createdAt": "2026-04-16T12:39:33",
+      "openid": "dev_terminal_codex-formal-care-debug-1",
+      "prevDiagnosisId": "diag_1776316356726_0kv8xdrl",
+      "prevCreatedAt": "2026-04-16T13:12:44",
+      "gapMinutes": 33.18
+    },
+    {
+      "diagnosisId": "diag_1776313509373_7fi7z718",
+      "createdAt": "2026-04-16T12:25:17",
+      "openid": "dev_terminal_codex-formal-closure-yellowing",
+      "prevDiagnosisId": "diag_1776313862705_l54wputo",
+      "prevCreatedAt": "2026-04-16T12:31:10",
+      "gapMinutes": 5.88
+    },
+    {
+      "diagnosisId": "diag_1776312968898_owwq2ups",
+      "createdAt": "2026-04-16T12:16:16",
+      "openid": "dev_terminal_codex-formal-closure-yellowing",
+      "prevDiagnosisId": "diag_1776313509373_7fi7z718",
+      "prevCreatedAt": "2026-04-16T12:25:17",
+      "gapMinutes": 9.02
+    },
+    {
+      "diagnosisId": "diag_1776306425307_tkqep66u",
+      "createdAt": "2026-04-16T10:27:06",
+      "openid": "dev_terminal_explicit_leaf_yellowing",
+      "prevDiagnosisId": "diag_1776312923138_axomaesg",
+      "prevCreatedAt": "2026-04-16T12:15:31",
+      "gapMinutes": 108.42
+    },
+    {
+      "diagnosisId": "diag_1776298190801_1w3exglo",
+      "createdAt": "2026-04-16T08:09:52",
+      "openid": "dev_terminal_leaf_yellowing_manual_2",
+      "prevDiagnosisId": "diag_1776305673772_6uelifrd",
+      "prevCreatedAt": "2026-04-16T10:14:35",
+      "gapMinutes": 124.72
+    },
+    {
+      "diagnosisId": "diag_1776264226735_bnwrw4gv",
+      "createdAt": "2026-04-15T22:43:48",
+      "openid": "dev_terminal_manual_leaf_yellowing_fix",
+      "prevDiagnosisId": "diag_1776298190801_1w3exglo",
+      "prevCreatedAt": "2026-04-16T08:09:52",
+      "gapMinutes": 566.07
+    },
+    {
+      "diagnosisId": "diag_1776235470625_0zmv6lc9",
+      "createdAt": "2026-04-15T14:44:31",
+      "openid": "dev_terminal_codex-dev-e2e-leaf-yellowing-systemic-2",
+      "prevDiagnosisId": "diag_1776264226735_bnwrw4gv",
+      "prevCreatedAt": "2026-04-15T22:43:48",
+      "gapMinutes": 479.28
+    },
+    {
+      "diagnosisId": "diag_1776233419658_33niqxth",
+      "createdAt": "2026-04-15T14:10:21",
+      "openid": "anon_dev_hFYTlzldT3fD8RBuY2iH9Q",
+      "prevDiagnosisId": "diag_1776235441296_5a32znhs",
+      "prevCreatedAt": "2026-04-15T14:44:02",
+      "gapMinutes": 33.68
+    },
+    {
+      "diagnosisId": "diag_1776227806915_hckqfnaf",
+      "createdAt": "2026-04-15T12:36:59",
+      "openid": "anon_dev_cgG71mOrVCccJJEs5Tvqsg",
+      "prevDiagnosisId": "diag_1776233378129_2hmqtibf",
+      "prevCreatedAt": "2026-04-15T14:09:48",
+      "gapMinutes": 92.82
+    },
+    {
+      "diagnosisId": "diag_1776227050964_48om5qtw",
+      "createdAt": "2026-04-15T12:24:19",
+      "openid": "anon_dev_cTwpusksuTysEDu88aitbw",
+      "prevDiagnosisId": "diag_1776227753296_i8cnm4hk",
+      "prevCreatedAt": "2026-04-15T12:36:07",
+      "gapMinutes": 11.8
+    },
+    {
+      "diagnosisId": "diag_1776215245746_v2d5hghl",
+      "createdAt": "2026-04-15T09:07:39",
+      "openid": "dev_terminal_codex-dev-e2e-closure-confirm",
+      "prevDiagnosisId": "diag_1776227050964_48om5qtw",
+      "prevCreatedAt": "2026-04-15T12:24:19",
+      "gapMinutes": 196.67
+    },
+    {
+      "diagnosisId": "diag_1776214326933_fzato122",
+      "createdAt": "2026-04-15T08:52:14",
+      "openid": "dev_terminal_codex-dev-e2e-closure-final",
+      "prevDiagnosisId": "diag_1776215245746_v2d5hghl",
+      "prevCreatedAt": "2026-04-15T09:07:39",
+      "gapMinutes": 15.42
+    },
+    {
+      "diagnosisId": "diag_1776213863225_vo9q15xd",
+      "createdAt": "2026-04-15T08:44:30",
+      "openid": "dev_terminal_codex-dev-e2e-closure-yes",
+      "prevDiagnosisId": "diag_1776214326933_fzato122",
+      "prevCreatedAt": "2026-04-15T08:52:14",
+      "gapMinutes": 7.73
+    },
+    {
+      "diagnosisId": "diag_1776175218726_jv0ckjf6",
+      "createdAt": "2026-04-14T22:00:30",
+      "openid": "dev_terminal_codex-multiround-no-1776175214668",
+      "prevDiagnosisId": "diag_1776213782371_6b9tx0sv",
+      "prevCreatedAt": "2026-04-15T08:43:16",
+      "gapMinutes": 642.77
+    },
+    {
+      "diagnosisId": "diag_1776173832664_czklme8g",
+      "createdAt": "2026-04-14T21:37:27",
+      "openid": "dev_terminal_codex-repro-1776172069477",
+      "prevDiagnosisId": "diag_1776174641234_al21pcf2",
+      "prevCreatedAt": "2026-04-14T21:50:51",
+      "gapMinutes": 13.4
+    },
+    {
+      "diagnosisId": "diag_1776171462410_j33jwhfd",
+      "createdAt": "2026-04-14T20:57:50",
+      "openid": "dev_terminal_codex_followup_persist",
+      "prevDiagnosisId": "diag_1776173832664_czklme8g",
+      "prevCreatedAt": "2026-04-14T21:37:27",
+      "gapMinutes": 39.62
+    },
+    {
+      "diagnosisId": "diag_1776170179100_swrmbfpc",
+      "createdAt": "2026-04-14T20:36:30",
+      "openid": "dev_terminal_terminal",
+      "prevDiagnosisId": "diag_1776170778888_7ckeoy0k",
+      "prevCreatedAt": "2026-04-14T20:46:29",
+      "gapMinutes": 9.98
+    },
+    {
+      "diagnosisId": "diag_1776168054194_k6m9o368",
+      "createdAt": "2026-04-14T20:01:03",
+      "openid": "dev_terminal_terminal",
+      "prevDiagnosisId": "diag_1776170076781_uffu23gj",
+      "prevCreatedAt": "2026-04-14T20:34:46",
+      "gapMinutes": 33.72
+    },
+    {
+      "diagnosisId": "diag_1776167742842_6akcjho2",
+      "createdAt": "2026-04-14T19:55:53",
+      "openid": "dev_terminal_terminal",
+      "prevDiagnosisId": "diag_1776168054194_k6m9o368",
+      "prevCreatedAt": "2026-04-14T20:01:03",
+      "gapMinutes": 5.17
+    },
+    {
+      "diagnosisId": "diag_1776125403748_50i20c9c",
+      "createdAt": "2026-04-14T08:10:14",
+      "openid": "dev_terminal_terminal",
+      "prevDiagnosisId": "diag_1776167505983_nvuysv9g",
+      "prevCreatedAt": "2026-04-14T19:51:59",
+      "gapMinutes": 701.75
+    },
+    {
+      "diagnosisId": "diag_1776125073381_vaftiqeq",
+      "createdAt": "2026-04-14T08:04:43",
+      "openid": "dev_terminal_terminal",
+      "prevDiagnosisId": "diag_1776125403748_50i20c9c",
+      "prevCreatedAt": "2026-04-14T08:10:14",
+      "gapMinutes": 5.52
+    },
+    {
+      "diagnosisId": "diag_1776124670900_0imqr6sc",
+      "createdAt": "2026-04-14T07:57:59",
+      "openid": "dev_terminal_terminal",
+      "prevDiagnosisId": "diag_1776124993563_n9j7ncs2",
+      "prevCreatedAt": "2026-04-14T08:03:20",
+      "gapMinutes": 5.35
+    },
+    {
+      "diagnosisId": "diag_1776124361609_nc0eo91p",
+      "createdAt": "2026-04-14T07:52:48",
+      "openid": "dev_terminal_terminal",
+      "prevDiagnosisId": "diag_1776124670900_0imqr6sc",
+      "prevCreatedAt": "2026-04-14T07:57:59",
+      "gapMinutes": 5.18
+    },
+    {
+      "diagnosisId": "diag_1776096492748_9zfrp93v",
+      "createdAt": "2026-04-14T00:08:21",
+      "openid": "dev_terminal_terminal",
+      "prevDiagnosisId": "diag_1776124361609_nc0eo91p",
+      "prevCreatedAt": "2026-04-14T07:52:48",
+      "gapMinutes": 464.45
+    },
+    {
+      "diagnosisId": "diag_1776095159505_pbtbg9q3",
+      "createdAt": "2026-04-13T23:46:08",
+      "openid": "dev_terminal_terminal",
+      "prevDiagnosisId": "diag_1776095545446_nbhyhfsl",
+      "prevCreatedAt": "2026-04-13T23:52:34",
+      "gapMinutes": 6.43
+    },
+    {
+      "diagnosisId": "diag_1776092316508_8k0nkti7",
+      "createdAt": "2026-04-13T22:58:43",
+      "openid": "dev_terminal_codex-token-check-20260413-rerun",
+      "prevDiagnosisId": "diag_1776095159505_pbtbg9q3",
+      "prevCreatedAt": "2026-04-13T23:46:08",
+      "gapMinutes": 47.42
+    },
+    {
+      "diagnosisId": "diag_1776090522170_oecv0ggy",
+      "createdAt": "2026-04-13T22:28:49",
+      "openid": "dev_terminal_codex-prompt-log-check-20260413-fix2",
+      "prevDiagnosisId": "diag_1776092265806_ro794skz",
+      "prevCreatedAt": "2026-04-13T22:57:57",
+      "gapMinutes": 29.13
+    },
+    {
+      "diagnosisId": "diag_1776089277086_929a4f5j",
+      "createdAt": "2026-04-13T22:08:06",
+      "openid": "anon_dev_visual_batch_healthy_uncertain_single_healthy_golden_p_",
+      "prevDiagnosisId": "diag_1776090388377_onuvalod",
+      "prevCreatedAt": "2026-04-13T22:26:37",
+      "gapMinutes": 18.52
+    },
+    {
+      "diagnosisId": "diag_1776088053180_78ihy2gx",
+      "createdAt": "2026-04-13T21:47:42",
+      "openid": "anon_dev_visual_batch_healthy_uncertain_single_healthy_golden_p_",
+      "prevDiagnosisId": "diag_1776088561131_q53r5l01",
+      "prevCreatedAt": "2026-04-13T21:56:13",
+      "gapMinutes": 8.52
+    },
+    {
+      "diagnosisId": "diag_1776063707045_6rj7jbtx",
+      "createdAt": "2026-04-13T15:01:47",
+      "openid": "dev_terminal_codex-dev-e2e-non-problematic",
+      "prevDiagnosisId": "diag_1776087937426_4iu8eo6r",
+      "prevCreatedAt": "2026-04-13T21:45:48",
+      "gapMinutes": 404.02
+    },
+    {
+      "diagnosisId": "diag_1776041336732_5n3hrfjo",
+      "createdAt": "2026-04-13T08:49:09",
+      "openid": "dev_terminal_dev_terminal_visual_candidate_fix",
+      "prevDiagnosisId": "diag_1776063700957_6x91qqbj",
+      "prevCreatedAt": "2026-04-13T15:01:41",
+      "gapMinutes": 372.53
+    },
+    {
+      "diagnosisId": "diag_1775997789326_rcqs4py9",
+      "createdAt": "2026-04-12T20:43:10",
+      "openid": "anon_dev_diagnose_outcome_batch_problematic_leaf_yellowing_follo",
+      "prevDiagnosisId": "diag_1776041336732_5n3hrfjo",
+      "prevCreatedAt": "2026-04-13T08:49:09",
+      "gapMinutes": 725.98
+    },
+    {
+      "diagnosisId": "diag_1775994679099_ahhy2kvv",
+      "createdAt": "2026-04-12T19:51:20",
+      "openid": "anon_dev_diagnose_outcome_batch_problematic_leaf_yellowing_follo",
+      "prevDiagnosisId": "diag_1775997272326_mgt69vdk",
+      "prevCreatedAt": "2026-04-12T20:34:54",
+      "gapMinutes": 43.57
+    },
+    {
+      "diagnosisId": "diag_1775990870916_owngmdno",
+      "createdAt": "2026-04-12T18:47:51",
+      "openid": "anon_dev_diagnose_outcome_batch_problematic_leaf_yellowing_follo",
+      "prevDiagnosisId": "diag_1775993539178_f3ver4wz",
+      "prevCreatedAt": "2026-04-12T19:32:36",
+      "gapMinutes": 44.75
+    },
+    {
+      "diagnosisId": "diag_1775989094936_slmgidix",
+      "createdAt": "2026-04-12T18:18:26",
+      "openid": "anon_dev_visual_batch_healthy_uncertain_single_healthy_golden_p_",
+      "prevDiagnosisId": "diag_1775990195707_f28urfmo",
+      "prevCreatedAt": "2026-04-12T18:36:52",
+      "gapMinutes": 18.43
+    },
+    {
+      "diagnosisId": "diag_1775987810314_e93b2vwa",
+      "createdAt": "2026-04-12T17:56:50",
+      "openid": "anon_dev_diagnose_outcome_batch_uncertain_unknown_answers_uncert",
+      "prevDiagnosisId": "diag_1775988489553_areblv7l",
+      "prevCreatedAt": "2026-04-12T18:08:25",
+      "gapMinutes": 11.58
+    },
+    {
+      "diagnosisId": "diag_1775979817821_q6onkzsw",
+      "createdAt": "2026-04-12T15:43:38",
+      "openid": "anon_dev_diagnose_outcome_batch_uncertain_unknown_answers_uncert",
+      "prevDiagnosisId": "diag_1775987691400_mcvqtgrg",
+      "prevCreatedAt": "2026-04-12T17:55:07",
+      "gapMinutes": 131.48
+    },
+    {
+      "diagnosisId": "diag_1775973827704_co6xhi8k",
+      "createdAt": "2026-04-12T14:04:01",
+      "openid": "anon_dev_visual_batch_spider_mite_pair_93_99",
+      "prevDiagnosisId": "diag_1775979464991_odvgoiex",
+      "prevCreatedAt": "2026-04-12T15:38:02",
+      "gapMinutes": 94.02
+    },
+    {
+      "diagnosisId": "diag_1775973363947_dc90yrk8",
+      "createdAt": "2026-04-12T13:56:36",
+      "openid": "anon_dev_visual_batch_spider_mite_pair_93_99",
+      "prevDiagnosisId": "diag_1775973827704_co6xhi8k",
+      "prevCreatedAt": "2026-04-12T14:04:01",
+      "gapMinutes": 7.42
+    },
+    {
+      "diagnosisId": "diag_1775972512463_pdu1cgyi",
+      "createdAt": "2026-04-12T13:41:52",
+      "openid": "anon_dev_diagnose_outcome_batch_uncertain_unknown_answers_uncert",
+      "prevDiagnosisId": "diag_1775973151865_2jr8ax8n",
+      "prevCreatedAt": "2026-04-12T13:52:50",
+      "gapMinutes": 10.97
+    },
+    {
+      "diagnosisId": "diag_1775965108296_980usjtp",
+      "createdAt": "2026-04-12T11:38:39",
+      "openid": "anon_dev_visual_batch_healthy_uncertain_single_healthy_golden_p_",
+      "prevDiagnosisId": "diag_1775972408971_7y60i57d",
+      "prevCreatedAt": "2026-04-12T13:40:18",
+      "gapMinutes": 121.65
+    },
+    {
+      "diagnosisId": "diag_1775956575236_u2dce0si",
+      "createdAt": "2026-04-12T09:16:24",
+      "openid": "anon_dev_visual_batch_root_rot_single_leaf_root_rot_single__1f79",
+      "prevDiagnosisId": "diag_1775964244556_llj62ubz",
+      "prevCreatedAt": "2026-04-12T11:24:13",
+      "gapMinutes": 127.82
+    },
+    {
+      "diagnosisId": "diag_1775956257124_mmtxp0ch",
+      "createdAt": "2026-04-12T09:11:05",
+      "openid": "anon_dev_visual_batch_healthy_uncertain_single_healthy_golden_p_",
+      "prevDiagnosisId": "diag_1775956575236_u2dce0si",
+      "prevCreatedAt": "2026-04-12T09:16:24",
+      "gapMinutes": 5.32
+    },
+    {
+      "diagnosisId": "diag_1775954928535_d3tjajz3",
+      "createdAt": "2026-04-12T08:48:59",
+      "openid": "anon_dev_visual_batch_healthy_uncertain_single_healthy_golden_p_",
+      "prevDiagnosisId": "diag_1775955449378_xk4u6wxn",
+      "prevCreatedAt": "2026-04-12T08:57:39",
+      "gapMinutes": 8.67
+    },
+    {
+      "diagnosisId": "diag_1775954111130_19x71hlz",
+      "createdAt": "2026-04-12T08:35:11",
+      "openid": "anon_dev_diagnose_outcome_batch_uncertain_unknown_answers_uncert",
+      "prevDiagnosisId": "diag_1775954749947_jgr9aobj",
+      "prevCreatedAt": "2026-04-12T08:46:01",
+      "gapMinutes": 10.83
+    },
+    {
+      "diagnosisId": "diag_1775911635373_idsdyc6g",
+      "createdAt": "2026-04-11T20:47:41",
+      "openid": "anon_dev_visual_batch_healthy_uncertain_single_healthy_golden_p_",
+      "prevDiagnosisId": "diag_1775953538649_ok9q13yi",
+      "prevCreatedAt": "2026-04-12T08:25:47",
+      "gapMinutes": 698.1
+    },
+    {
+      "diagnosisId": "diag_1775910818030_gx6vass3",
+      "createdAt": "2026-04-11T20:33:38",
+      "openid": "anon_dev_diagnose_outcome_batch_uncertain_unknown_answers_uncert",
+      "prevDiagnosisId": "diag_1775911320784_742voxwo",
+      "prevCreatedAt": "2026-04-11T20:42:22",
+      "gapMinutes": 8.73
+    },
+    {
+      "diagnosisId": "diag_1775910017741_i8vmdofb",
+      "createdAt": "2026-04-11T20:20:42",
+      "openid": "anon_dev_visual_batch_healthy_uncertain_single_healthy_golden_p_",
+      "prevDiagnosisId": "diag_1775910402234_fy5o6ov5",
+      "prevCreatedAt": "2026-04-11T20:26:59",
+      "gapMinutes": 6.28
+    },
+    {
+      "diagnosisId": "diag_1775909394418_5mc5pzpd",
+      "createdAt": "2026-04-11T20:09:54",
+      "openid": "anon_dev_diagnose_outcome_batch_uncertain_unknown_answers_uncert",
+      "prevDiagnosisId": "diag_1775909878932_qz67wm1p",
+      "prevCreatedAt": "2026-04-11T20:18:26",
+      "gapMinutes": 8.53
+    },
+    {
+      "diagnosisId": "diag_1775908064395_pg4zfsa0",
+      "createdAt": "2026-04-11T19:48:11",
+      "openid": "anon_dev_visual_batch_healthy_uncertain_single_healthy_golden_p_",
+      "prevDiagnosisId": "diag_1775909384873_zarh6jh6",
+      "prevCreatedAt": "2026-04-11T20:09:45",
+      "gapMinutes": 21.57
+    },
+    {
+      "diagnosisId": "diag_1775907368246_0gck6bix",
+      "createdAt": "2026-04-11T19:36:31",
+      "openid": "anon_dev_visual_batch_root_rot_pair_root_rot_pair_le_c7e76af7f82",
+      "prevDiagnosisId": "diag_1775907912160_0m3v9mf1",
+      "prevCreatedAt": "2026-04-11T19:45:57",
+      "gapMinutes": 9.43
+    },
+    {
+      "diagnosisId": "diag_1775899637330_6orr0in8",
+      "createdAt": "2026-04-11T17:27:54",
+      "openid": "anon_dev_visual_batch_root_rot_pair_root_rot_pair_le_c7e76af7f82",
+      "prevDiagnosisId": "diag_1775907099458_o20gq31o",
+      "prevCreatedAt": "2026-04-11T19:32:05",
+      "gapMinutes": 124.18
+    },
+    {
+      "diagnosisId": "diag_1775898185790_i6cmqr69",
+      "createdAt": "2026-04-11T17:03:33",
+      "openid": "anon_dev_visual_batch_root_rot_pair_rr_pair_1_c7e76af7f82d",
+      "prevDiagnosisId": "diag_1775899537486_m8k4y4za",
+      "prevCreatedAt": "2026-04-11T17:26:03",
+      "gapMinutes": 22.5
+    },
+    {
+      "diagnosisId": "diag_1775897065388_3nflgbri",
+      "createdAt": "2026-04-11T16:44:47",
+      "openid": "dev_terminal_terminal",
+      "prevDiagnosisId": "diag_1775898185790_i6cmqr69",
+      "prevCreatedAt": "2026-04-11T17:03:33",
+      "gapMinutes": 18.77
+    },
+    {
+      "diagnosisId": "diag_1775893888105_zx20tl0c",
+      "createdAt": "2026-04-11T15:52:36",
+      "openid": "dev_terminal_terminal",
+      "prevDiagnosisId": "diag_1775896853559_wx3xm5x8",
+      "prevCreatedAt": "2026-04-11T16:42:09",
+      "gapMinutes": 49.55
+    },
+    {
+      "diagnosisId": "diag_1775881557868_jqxfeikq",
+      "createdAt": "2026-04-11T12:26:08",
+      "openid": "",
+      "prevDiagnosisId": "diag_1775893888105_zx20tl0c",
+      "prevCreatedAt": "2026-04-11T15:52:36",
+      "gapMinutes": 206.47
+    },
+    {
+      "diagnosisId": "diag_1775830083668_spmznz37",
+      "createdAt": "2026-04-10T22:08:44",
+      "openid": "anon_dev_visual_suite_brown_spots_efd8d8ed-e1a6-44_cf1491916cc0",
+      "prevDiagnosisId": "diag_1775881557868_jqxfeikq",
+      "prevCreatedAt": "2026-04-11T12:26:08",
+      "gapMinutes": 857.4
+    },
+    {
+      "diagnosisId": "diag_1775825834017_lqgnwcvr",
+      "createdAt": "2026-04-10T20:57:54",
+      "openid": "anon_dev_visual_suite_healthy_monstera_5",
+      "prevDiagnosisId": "diag_1775829392429_v8ab26xz",
+      "prevCreatedAt": "2026-04-10T21:57:13",
+      "gapMinutes": 59.32
+    },
+    {
+      "diagnosisId": "diag_1775825002644_w6ztlohg",
+      "createdAt": "2026-04-10T20:43:58",
+      "openid": "anon_dev_visual_batch_yellowing_monstera_yellowing_1",
+      "prevDiagnosisId": "diag_1775825626565_rtk9k75c",
+      "prevCreatedAt": "2026-04-10T20:54:27",
+      "gapMinutes": 10.48
+    },
+    {
+      "diagnosisId": "diag_1775824471462_knhlc15c",
+      "createdAt": "2026-04-10T20:35:12",
+      "openid": "anon_dev_visual_batch_yellowing_20260407091816_65_30",
+      "prevDiagnosisId": "diag_1775824969025_kn35o0i5",
+      "prevCreatedAt": "2026-04-10T20:43:01",
+      "gapMinutes": 7.82
+    },
+    {
+      "diagnosisId": "diag_1775823646101_iwd3yzl8",
+      "createdAt": "2026-04-10T20:21:06",
+      "openid": "anon_dev_visual_batch_healthy_monstera_5",
+      "prevDiagnosisId": "diag_1775824471462_knhlc15c",
+      "prevCreatedAt": "2026-04-10T20:35:12",
+      "gapMinutes": 14.1
+    },
+    {
+      "diagnosisId": "diag_1775816103048_f90xdyup",
+      "createdAt": "2026-04-10T18:15:43",
+      "openid": "anon_dev_visual_batch_healthy_golden_pothos_1",
+      "prevDiagnosisId": "diag_1775823182467_5f6z7o6q",
+      "prevCreatedAt": "2026-04-10T20:13:45",
+      "gapMinutes": 118.03
+    },
+    {
+      "diagnosisId": "diag_1775795937189_a9y2ibbw",
+      "createdAt": "2026-04-10T12:38:58",
+      "openid": "dev_terminal_codex-dev-e2e-visual-brown-guardrail",
+      "prevDiagnosisId": "diag_1775814943548_zbn21dfd",
+      "prevCreatedAt": "2026-04-10T17:56:25",
+      "gapMinutes": 317.45
+    },
+    {
+      "diagnosisId": "diag_1775795451371_46xjmy81",
+      "createdAt": "2026-04-10T12:30:52",
+      "openid": "dev_terminal_codex-dev-e2e-visual-chewing-2",
+      "prevDiagnosisId": "diag_1775795759457_vk6hg74e",
+      "prevCreatedAt": "2026-04-10T12:36:00",
+      "gapMinutes": 5.13
+    },
+    {
+      "diagnosisId": "diag_1775794786001_60yif7dk",
+      "createdAt": "2026-04-10T12:19:47",
+      "openid": "dev_terminal_codex-dev-e2e-visual-yellowing-2",
+      "prevDiagnosisId": "diag_1775795422217_vwggwrhb",
+      "prevCreatedAt": "2026-04-10T12:30:23",
+      "gapMinutes": 10.6
+    },
+    {
+      "diagnosisId": "diag_1775773781860_3g432vwm",
+      "createdAt": "2026-04-10T06:29:42",
+      "openid": "anon_dev_URXm12mlJgzzKIz8olFoSA",
+      "prevDiagnosisId": "diag_1775794668510_p70etkim",
+      "prevCreatedAt": "2026-04-10T12:17:50",
+      "gapMinutes": 348.13
+    },
+    {
+      "diagnosisId": "diag_1775772515774_tioelj34",
+      "createdAt": "2026-04-10T06:08:38",
+      "openid": "anon_dev_UNvtgIz-oUSxwP0deiPRIw",
+      "prevDiagnosisId": "diag_1775773161188_6j9f30lt",
+      "prevCreatedAt": "2026-04-10T06:19:22",
+      "gapMinutes": 10.73
+    },
+    {
+      "diagnosisId": "diag_1775749535231_mvz7zo4x",
+      "createdAt": "2026-04-09T23:45:36",
+      "openid": "anon_dev_AEFTmktZw-Tjtv2-43WGJA",
+      "prevDiagnosisId": "diag_1775772515774_tioelj34",
+      "prevCreatedAt": "2026-04-10T06:08:38",
+      "gapMinutes": 383.03
+    },
+    {
+      "diagnosisId": "diag_1775747999215_50ppm8na",
+      "createdAt": "2026-04-09T23:19:59",
+      "openid": "anon_dev_BL-RSEcdEcK6_IU0xLNNRg",
+      "prevDiagnosisId": "diag_1775749520102_tqtnixe1",
+      "prevCreatedAt": "2026-04-09T23:45:20",
+      "gapMinutes": 25.35
+    },
+    {
+      "diagnosisId": "diag_1775746794404_08x6wtdf",
+      "createdAt": "2026-04-09T22:59:54",
+      "openid": "anon_dev_BL-RSEcdEcK6_IU0xLNNRg",
+      "prevDiagnosisId": "diag_1775747999215_50ppm8na",
+      "prevCreatedAt": "2026-04-09T23:19:59",
+      "gapMinutes": 20.08
+    },
+    {
+      "diagnosisId": "diag_1775745871120_2b8jhgl7",
+      "createdAt": "2026-04-09T22:44:31",
+      "openid": "anon_dev_BL-RSEcdEcK6_IU0xLNNRg",
+      "prevDiagnosisId": "diag_1775746794404_08x6wtdf",
+      "prevCreatedAt": "2026-04-09T22:59:54",
+      "gapMinutes": 15.38
+    },
+    {
+      "diagnosisId": "diag_1775745281371_h38w61wf",
+      "createdAt": "2026-04-09T22:34:42",
+      "openid": "anon_dev_COhdPSBRS4lkIg_6NhYyhg",
+      "prevDiagnosisId": "diag_1775745815248_xv5xsi5q",
+      "prevCreatedAt": "2026-04-09T22:43:36",
+      "gapMinutes": 8.9
+    },
+    {
+      "diagnosisId": "diag_1775657015576_jegtcf8m",
+      "createdAt": "2026-04-08T22:03:37",
+      "openid": "anon_dev_2H0nz74a9FdOjHfLHx0bDw",
+      "prevDiagnosisId": "diag_1775744997558_vez6o1kd",
+      "prevCreatedAt": "2026-04-09T22:29:59",
+      "gapMinutes": 1466.37
+    },
+    {
+      "diagnosisId": "diag_1775651995624_tgj454uc",
+      "createdAt": "2026-04-08T20:39:56",
+      "openid": "anon_dev_SrRedQkkhk1UeMuzf-8Tag",
+      "prevDiagnosisId": "diag_1775657015576_jegtcf8m",
+      "prevCreatedAt": "2026-04-08T22:03:37",
+      "gapMinutes": 83.68
+    },
+    {
+      "diagnosisId": "diagnose_1774528251142_okjop1wc8",
+      "createdAt": "2026-03-26T20:30:51",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diag_1775651845882_n9tcyjkd",
+      "prevCreatedAt": "2026-04-08T20:37:26",
+      "gapMinutes": 18726.58
+    },
+    {
+      "diagnosisId": "diagnose_1774485949786_emko1qim0",
+      "createdAt": "2026-03-26T08:45:49",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774528251142_okjop1wc8",
+      "prevCreatedAt": "2026-03-26T20:30:51",
+      "gapMinutes": 705.03
+    },
+    {
+      "diagnosisId": "diagnose_1774485475215_0jkprrovr",
+      "createdAt": "2026-03-26T08:37:55",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774485795769_50a2p8uxv",
+      "prevCreatedAt": "2026-03-26T08:43:15",
+      "gapMinutes": 5.33
+    },
+    {
+      "diagnosisId": "diagnose_1774483822585_a1aktk22p",
+      "createdAt": "2026-03-26T08:10:22",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774484491066_wteznzumd",
+      "prevCreatedAt": "2026-03-26T08:21:31",
+      "gapMinutes": 11.15
+    },
+    {
+      "diagnosisId": "diagnose_1774445520826_c0bbm0qrs",
+      "createdAt": "2026-03-25T21:32:00",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774483483883_mfoyn1c55",
+      "prevCreatedAt": "2026-03-26T08:04:43",
+      "gapMinutes": 632.72
+    },
+    {
+      "diagnosisId": "diagnose_1774398180920_qei79ahaa",
+      "createdAt": "2026-03-25T08:23:01",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774445520826_c0bbm0qrs",
+      "prevCreatedAt": "2026-03-25T21:32:00",
+      "gapMinutes": 788.98
+    },
+    {
+      "diagnosisId": "diagnose_1774365739897_l04lr8e57",
+      "createdAt": "2026-03-24T23:22:19",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774398121883_o53hzok56",
+      "prevCreatedAt": "2026-03-25T08:22:02",
+      "gapMinutes": 539.72
+    },
+    {
+      "diagnosisId": "diagnose_1774365001221_9at3h04wm",
+      "createdAt": "2026-03-24T23:10:01",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774365739897_l04lr8e57",
+      "prevCreatedAt": "2026-03-24T23:22:19",
+      "gapMinutes": 12.3
+    },
+    {
+      "diagnosisId": "diagnose_1774362271478_wp3f6vs1u",
+      "createdAt": "2026-03-24T22:24:31",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774364853663_nap96hejt",
+      "prevCreatedAt": "2026-03-24T23:07:33",
+      "gapMinutes": 43.03
+    },
+    {
+      "diagnosisId": "diagnose_1774361733642_ohu0qxns6",
+      "createdAt": "2026-03-24T22:15:33",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774362271478_wp3f6vs1u",
+      "prevCreatedAt": "2026-03-24T22:24:31",
+      "gapMinutes": 8.97
+    },
+    {
+      "diagnosisId": "diagnose_1774361137794_un5w60ege",
+      "createdAt": "2026-03-24T22:05:37",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774361537657_3kyexp61m",
+      "prevCreatedAt": "2026-03-24T22:12:17",
+      "gapMinutes": 6.67
+    },
+    {
+      "diagnosisId": "diagnose_1774360435084_su009rzq9",
+      "createdAt": "2026-03-24T21:53:55",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774361137794_un5w60ege",
+      "prevCreatedAt": "2026-03-24T22:05:37",
+      "gapMinutes": 11.7
+    },
+    {
+      "diagnosisId": "diagnose_1774359253709_68kzicfj6",
+      "createdAt": "2026-03-24T21:34:13",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774360435084_su009rzq9",
+      "prevCreatedAt": "2026-03-24T21:53:55",
+      "gapMinutes": 19.7
+    },
+    {
+      "diagnosisId": "diagnose_1774314558087_96sjrnk9o",
+      "createdAt": "2026-03-24T09:09:18",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774359253709_68kzicfj6",
+      "prevCreatedAt": "2026-03-24T21:34:13",
+      "gapMinutes": 744.92
+    },
+    {
+      "diagnosisId": "diagnose_1774313994625_gtbfhmdbr",
+      "createdAt": "2026-03-24T08:59:54",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774314340093_j155ve388",
+      "prevCreatedAt": "2026-03-24T09:05:40",
+      "gapMinutes": 5.77
+    },
+    {
+      "diagnosisId": "diagnose_1774313186537_nvue00dm8",
+      "createdAt": "2026-03-24T08:46:26",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774313973603_l2w2g7bjc",
+      "prevCreatedAt": "2026-03-24T08:59:33",
+      "gapMinutes": 13.12
+    },
+    {
+      "diagnosisId": "diagnose_1774278531431_vp7ab7fiw",
+      "createdAt": "2026-03-23T23:08:51",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774313154387_pup3cfiyv",
+      "prevCreatedAt": "2026-03-24T08:45:54",
+      "gapMinutes": 577.05
+    }
+  ],
+  "sampleManualNonContinuous": [
+    {
+      "diagnosisId": "diag_1776521814145_3n9ak1w5",
+      "createdAt": "2026-04-18T22:17:16",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diag_1776523732979_y4j59si7",
+      "prevCreatedAt": "2026-04-18T22:49:07",
+      "gapMinutes": 31.85
+    },
+    {
+      "diagnosisId": "diagnose_1774528251142_okjop1wc8",
+      "createdAt": "2026-03-26T20:30:51",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diag_1775651845882_n9tcyjkd",
+      "prevCreatedAt": "2026-04-08T20:37:26",
+      "gapMinutes": 18726.58
+    },
+    {
+      "diagnosisId": "diagnose_1774485949786_emko1qim0",
+      "createdAt": "2026-03-26T08:45:49",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774528251142_okjop1wc8",
+      "prevCreatedAt": "2026-03-26T20:30:51",
+      "gapMinutes": 705.03
+    },
+    {
+      "diagnosisId": "diagnose_1774485475215_0jkprrovr",
+      "createdAt": "2026-03-26T08:37:55",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774485795769_50a2p8uxv",
+      "prevCreatedAt": "2026-03-26T08:43:15",
+      "gapMinutes": 5.33
+    },
+    {
+      "diagnosisId": "diagnose_1774483822585_a1aktk22p",
+      "createdAt": "2026-03-26T08:10:22",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774484491066_wteznzumd",
+      "prevCreatedAt": "2026-03-26T08:21:31",
+      "gapMinutes": 11.15
+    },
+    {
+      "diagnosisId": "diagnose_1774445520826_c0bbm0qrs",
+      "createdAt": "2026-03-25T21:32:00",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774483483883_mfoyn1c55",
+      "prevCreatedAt": "2026-03-26T08:04:43",
+      "gapMinutes": 632.72
+    },
+    {
+      "diagnosisId": "diagnose_1774398180920_qei79ahaa",
+      "createdAt": "2026-03-25T08:23:01",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774445520826_c0bbm0qrs",
+      "prevCreatedAt": "2026-03-25T21:32:00",
+      "gapMinutes": 788.98
+    },
+    {
+      "diagnosisId": "diagnose_1774365739897_l04lr8e57",
+      "createdAt": "2026-03-24T23:22:19",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774398121883_o53hzok56",
+      "prevCreatedAt": "2026-03-25T08:22:02",
+      "gapMinutes": 539.72
+    },
+    {
+      "diagnosisId": "diagnose_1774365001221_9at3h04wm",
+      "createdAt": "2026-03-24T23:10:01",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774365739897_l04lr8e57",
+      "prevCreatedAt": "2026-03-24T23:22:19",
+      "gapMinutes": 12.3
+    },
+    {
+      "diagnosisId": "diagnose_1774362271478_wp3f6vs1u",
+      "createdAt": "2026-03-24T22:24:31",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774364853663_nap96hejt",
+      "prevCreatedAt": "2026-03-24T23:07:33",
+      "gapMinutes": 43.03
+    },
+    {
+      "diagnosisId": "diagnose_1774361733642_ohu0qxns6",
+      "createdAt": "2026-03-24T22:15:33",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774362271478_wp3f6vs1u",
+      "prevCreatedAt": "2026-03-24T22:24:31",
+      "gapMinutes": 8.97
+    },
+    {
+      "diagnosisId": "diagnose_1774361137794_un5w60ege",
+      "createdAt": "2026-03-24T22:05:37",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774361537657_3kyexp61m",
+      "prevCreatedAt": "2026-03-24T22:12:17",
+      "gapMinutes": 6.67
+    },
+    {
+      "diagnosisId": "diagnose_1774360435084_su009rzq9",
+      "createdAt": "2026-03-24T21:53:55",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774361137794_un5w60ege",
+      "prevCreatedAt": "2026-03-24T22:05:37",
+      "gapMinutes": 11.7
+    },
+    {
+      "diagnosisId": "diagnose_1774359253709_68kzicfj6",
+      "createdAt": "2026-03-24T21:34:13",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774360435084_su009rzq9",
+      "prevCreatedAt": "2026-03-24T21:53:55",
+      "gapMinutes": 19.7
+    },
+    {
+      "diagnosisId": "diagnose_1774314558087_96sjrnk9o",
+      "createdAt": "2026-03-24T09:09:18",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774359253709_68kzicfj6",
+      "prevCreatedAt": "2026-03-24T21:34:13",
+      "gapMinutes": 744.92
+    },
+    {
+      "diagnosisId": "diagnose_1774313994625_gtbfhmdbr",
+      "createdAt": "2026-03-24T08:59:54",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774314340093_j155ve388",
+      "prevCreatedAt": "2026-03-24T09:05:40",
+      "gapMinutes": 5.77
+    },
+    {
+      "diagnosisId": "diagnose_1774313186537_nvue00dm8",
+      "createdAt": "2026-03-24T08:46:26",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774313973603_l2w2g7bjc",
+      "prevCreatedAt": "2026-03-24T08:59:33",
+      "gapMinutes": 13.12
+    },
+    {
+      "diagnosisId": "diagnose_1774278531431_vp7ab7fiw",
+      "createdAt": "2026-03-23T23:08:51",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "prevDiagnosisId": "diagnose_1774313154387_pup3cfiyv",
+      "prevCreatedAt": "2026-03-24T08:45:54",
+      "gapMinutes": 577.05
+    }
+  ]
+}

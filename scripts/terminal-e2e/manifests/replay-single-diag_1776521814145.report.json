@@ -1,0 +1,158 @@
+{
+  "generatedAt": "2026-04-22T13:23:22.711Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "total": 1,
+  "success": 1,
+  "failed": 0,
+  "progress": {
+    "processed": 1,
+    "targetTotal": 1,
+    "complete": true
+  },
+  "results": [
+    {
+      "ok": true,
+      "sessionId": "diag_1776521814145_3n9ak1w5",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776521814146_5y0ce6nw",
+        "currentRoundIndex": 2,
+        "observedEvidenceSetCount": 2,
+        "followUpHistory": {
+          "hasPendingFollowUp": false,
+          "nextRound": 3,
+          "storedOutcomeType": "problematic",
+          "askedQuestionKeys": [
+            "q_leaf_yellowing_light_background",
+            "q_leaf_yellowing_watering_background",
+            "q_leaf_yellowing_fertilization_background"
+          ],
+          "askedQuestions": [
+            {
+              "questionKey": "q_leaf_yellowing_light_background",
+              "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+              "questionGroupKey": "yellowing_light_background_group",
+              "targetDimension": "light_exposure"
+            },
+            {
+              "questionKey": "q_leaf_yellowing_watering_background",
+              "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+              "questionGroupKey": "yellowing_watering_background_group",
+              "targetDimension": "watering_context"
+            },
+            {
+              "questionKey": "q_leaf_yellowing_fertilization_background",
+              "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+              "questionGroupKey": "yellowing_fertilization_background_group",
+              "targetDimension": "fertilization_context"
+            }
+          ],
+          "answeredQuestionGroupKeys": [
+            "yellowing_light_background_group",
+            "yellowing_watering_background_group",
+            "yellowing_fertilization_background_group"
+          ],
+          "answeredAnswers": [
+            {
+              "questionKey": "q_leaf_yellowing_light_background",
+              "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+              "questionGroupKey": "yellowing_light_background_group",
+              "targetDimension": "light_exposure",
+              "optionKey": "no_change",
+              "optionText": "没有明显变化"
+            },
+            {
+              "questionKey": "q_leaf_yellowing_watering_background",
+              "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+              "questionGroupKey": "yellowing_watering_background_group",
+              "targetDimension": "watering_context",
+              "optionKey": "no_change",
+              "optionText": "浇水节奏没有明显变化"
+            },
+            {
+              "questionKey": "q_leaf_yellowing_fertilization_background",
+              "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+              "questionGroupKey": "yellowing_fertilization_background_group",
+              "targetDimension": "fertilization_context",
+              "optionKey": "no",
+              "optionText": "否，近期并非长期缺肥背景"
+            }
+          ]
+        },
+        "symptomClassRuntime": null,
+        "visualConclusion": {
+          "symptomCandidates": [
+            {
+              "symptomKey": "leaf_yellowing",
+              "displayNameCn": "叶片黄化",
+              "confidenceBand": "",
+              "supportingRegionNote": ""
+            },
+            {
+              "symptomKey": "holes_in_leaf",
+              "displayNameCn": "叶片有洞",
+              "confidenceBand": "",
+              "supportingRegionNote": ""
+            }
+          ],
+          "outOfPoolCandidates": [],
+          "routeHints": []
+        }
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "decisionCause": null,
+        "topProblem": {
+          "problemId": "p_c25haWxzX3NsdWdz",
+          "problemKey": "snails_slugs",
+          "displayName": "蜗牛/蛞蝓",
+          "summary": "当前更像 蜗牛/蛞蝓，但还不够确定。 当前最像的问题是：蜗牛/蛞蝓。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "finalResult": {
+          "problemId": "p_c25haWxzX3NsdWdz",
+          "problemKey": "",
+          "displayName": "蜗牛/蛞蝓",
+          "summary": "当前更像 蜗牛/蛞蝓，但还不够确定。 当前最像的问题是：蜗牛/蛞蝓。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "symptomClassRuntime": {
+          "enabled": true,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "yellowing_mode",
+          "currentClassNameCn": "黄叶模式",
+          "currentGroupKey": "iron_group",
+          "currentGroupLabel": "iron_group",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": true,
+            "gateMode": "soft",
+            "sourceMode": "soft",
+            "primaryClassKey": "yellowing_mode",
+            "primaryClassRuntimeScore": 0.7905,
+            "unknownLockCount": 3,
+            "currentClassKey": "yellowing_mode",
+            "hasEnabledGroups": true,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "",
+            "reviewedAtRound": 3
+          }
+        },
+        "pendingFollowUps": [],
+        "followUps": []
+      }
+    }
+  ]
+}

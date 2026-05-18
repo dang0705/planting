@@ -25,10 +25,12 @@ Dispatch Plan:
 - 是否需要读取 AGENTS.md:
 - 预期输出:
 - 写入权限:
-- 首部规划闭环:
-- 架构分析闭环:
+- 首部规划闭环: task_planner 已派发 / 已复用 / 合法裁剪
+- 实现前架构闭环: architect_reviewer 已派发 / 已复用 / 合法裁剪
 - 实现闭环:
+- 实现后代码 review 闭环: architect_reviewer 已复用 / 无代码 review
 - QA 闭环:
+- Handoff 闭环:
 - 文档同步计划:
 - Subagent 线程复用:
 ```
@@ -48,10 +50,12 @@ Dispatch Plan:
 
 ## 非简单实现闭环
 
-- planning：
-- 架构分析：
+- task_planner planning：
+- 实现前 architect 架构分析：
 - 实现：
+- 实现后 architect 代码 review：
 - QA：
+- handoff：
 - 文档同步判断：
 - 裁剪项与理由：
 

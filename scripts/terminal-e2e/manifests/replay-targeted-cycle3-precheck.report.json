@@ -1,0 +1,1065 @@
+{
+  "generatedAt": "2026-04-22T13:23:41.535Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "total": 7,
+  "success": 7,
+  "failed": 0,
+  "progress": {
+    "processed": 7,
+    "targetTotal": 7,
+    "complete": true
+  },
+  "results": [
+    {
+      "ok": true,
+      "sessionId": "diag_1775824969025_kn35o0i5",
+      "openid": "anon_dev_visual_batch_yellowing_golden_pothos_yellowing_1",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1775824969026_6kodp6mb",
+        "currentRoundIndex": 3,
+        "observedEvidenceSetCount": 0,
+        "followUpHistory": {
+          "hasPendingFollowUp": false,
+          "nextRound": 4,
+          "storedOutcomeType": "uncertain",
+          "askedQuestionKeys": [
+            "q_nitrogen_old_leaves_yellow",
+            "q_root_rot_bad_smell",
+            "q_root_rot_black_roots",
+            "q_nitrogen_uniform_yellow",
+            "q_nitrogen_spindly",
+            "q_nitrogen_slow_growth"
+          ],
+          "askedQuestions": [
+            {
+              "questionKey": "q_nitrogen_old_leaves_yellow",
+              "questionText": "发黄先从老叶开始?",
+              "questionGroupKey": "nitrogen_group",
+              "targetDimension": "host_confirmation"
+            },
+            {
+              "questionKey": "q_root_rot_bad_smell",
+              "questionText": "根部或根团有明显腐烂异味?",
+              "questionGroupKey": "root_rot_group",
+              "targetDimension": "root_zone_context"
+            },
+            {
+              "questionKey": "q_root_rot_black_roots",
+              "questionText": "根系发黑而不是健康的浅色?",
+              "questionGroupKey": "root_rot_group",
+              "targetDimension": "root_zone_context"
+            },
+            {
+              "questionKey": "q_nitrogen_uniform_yellow",
+              "questionText": "老叶更偏整片均匀变黄?",
+              "questionGroupKey": "nitrogen_group",
+              "targetDimension": "distribution_scope"
+            },
+            {
+              "questionKey": "q_nitrogen_spindly",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": ""
+            },
+            {
+              "questionKey": "q_nitrogen_slow_growth",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": ""
+            }
+          ],
+          "answeredQuestionGroupKeys": [
+            "nitrogen_group",
+            "root_rot_group"
+          ],
+          "answeredAnswers": [
+            {
+              "questionKey": "q_nitrogen_old_leaves_yellow",
+              "questionText": "发黄先从老叶开始?",
+              "questionGroupKey": "nitrogen_group",
+              "targetDimension": "host_confirmation",
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定"
+            },
+            {
+              "questionKey": "q_root_rot_bad_smell",
+              "questionText": "根部或根团有明显腐烂异味?",
+              "questionGroupKey": "root_rot_group",
+              "targetDimension": "root_zone_context",
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定"
+            },
+            {
+              "questionKey": "q_root_rot_black_roots",
+              "questionText": "根系发黑而不是健康的浅色?",
+              "questionGroupKey": "root_rot_group",
+              "targetDimension": "root_zone_context",
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定"
+            },
+            {
+              "questionKey": "q_nitrogen_uniform_yellow",
+              "questionText": "老叶更偏整片均匀变黄?",
+              "questionGroupKey": "nitrogen_group",
+              "targetDimension": "distribution_scope",
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定"
+            },
+            {
+              "questionKey": "q_nitrogen_spindly",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": "",
+              "optionKey": "unknown",
+              "optionText": ""
+            },
+            {
+              "questionKey": "q_nitrogen_slow_growth",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": "",
+              "optionKey": "unknown",
+              "optionText": ""
+            }
+          ]
+        },
+        "symptomClassRuntime": null,
+        "visualConclusion": {
+          "symptomCandidates": [
+            {
+              "symptomKey": "leaf_yellowing",
+              "displayNameCn": "叶子明显发黄",
+              "confidenceBand": "",
+              "supportingRegionNote": ""
+            }
+          ],
+          "outOfPoolCandidates": [],
+          "routeHints": []
+        }
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "class_converged_context_guard_blocked",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "decisionCause": {
+          "decisionCauseKey": "class_converged_context_guard_blocked",
+          "decisionCauseCategory": "context_guard_block",
+          "decisionCauseText": "铁缺乏不能只凭泛黄叶直出，至少需要补齐“新叶更黄/叶脉间失绿/长期缺肥或介质问题”等营养背景事实。",
+          "decisionCauseDetails": {
+            "problemKey": "iron_deficiency",
+            "currentClassKey": "yellowing_mode",
+            "currentGroupKey": "iron_group",
+            "hasEnabledGroups": true,
+            "preferredQuestionKeys": [
+              "q_leaf_yellowing_fertilization_background",
+              "q_leaf_yellowing_new_growth_bias"
+            ],
+            "matchedSymptomKeys": []
+          }
+        },
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前已收敛到“黄叶模式”，但还缺少足够的补充事实，暂时不能安全定位到具体原因。 已有多个关键问题无法确认，建议重点检查叶背、根部、盆土表面或虫体。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "symptomClassRuntime": {
+          "enabled": true,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "yellowing_mode",
+          "currentClassNameCn": "黄叶模式",
+          "currentGroupKey": "iron_group",
+          "currentGroupLabel": "iron_group",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": true,
+            "gateMode": "soft",
+            "sourceMode": "soft",
+            "primaryClassKey": "yellowing_mode",
+            "primaryClassRuntimeScore": 0.7905,
+            "unknownLockCount": 2,
+            "currentClassKey": "yellowing_mode",
+            "hasEnabledGroups": true,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "",
+            "reviewedAtRound": 4
+          }
+        },
+        "pendingFollowUps": [],
+        "followUps": []
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1775825002644_w6ztlohg",
+      "openid": "anon_dev_visual_batch_yellowing_monstera_yellowing_1",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1775825002644_3nxrazi9",
+        "currentRoundIndex": 3,
+        "observedEvidenceSetCount": 0,
+        "followUpHistory": {
+          "hasPendingFollowUp": false,
+          "nextRound": 4,
+          "storedOutcomeType": "uncertain",
+          "askedQuestionKeys": [
+            "q_nitrogen_old_leaves_yellow",
+            "q_root_rot_bad_smell",
+            "q_root_rot_black_roots",
+            "q_nitrogen_uniform_yellow",
+            "q_nitrogen_spindly",
+            "q_nitrogen_slow_growth"
+          ],
+          "askedQuestions": [
+            {
+              "questionKey": "q_nitrogen_old_leaves_yellow",
+              "questionText": "发黄先从老叶开始?",
+              "questionGroupKey": "nitrogen_group",
+              "targetDimension": "host_confirmation"
+            },
+            {
+              "questionKey": "q_root_rot_bad_smell",
+              "questionText": "根部或根团有明显腐烂异味?",
+              "questionGroupKey": "root_rot_group",
+              "targetDimension": "root_zone_context"
+            },
+            {
+              "questionKey": "q_root_rot_black_roots",
+              "questionText": "根系发黑而不是健康的浅色?",
+              "questionGroupKey": "root_rot_group",
+              "targetDimension": "root_zone_context"
+            },
+            {
+              "questionKey": "q_nitrogen_uniform_yellow",
+              "questionText": "老叶更偏整片均匀变黄?",
+              "questionGroupKey": "nitrogen_group",
+              "targetDimension": "distribution_scope"
+            },
+            {
+              "questionKey": "q_nitrogen_spindly",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": ""
+            },
+            {
+              "questionKey": "q_nitrogen_slow_growth",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": ""
+            }
+          ],
+          "answeredQuestionGroupKeys": [
+            "nitrogen_group",
+            "root_rot_group"
+          ],
+          "answeredAnswers": [
+            {
+              "questionKey": "q_nitrogen_old_leaves_yellow",
+              "questionText": "发黄先从老叶开始?",
+              "questionGroupKey": "nitrogen_group",
+              "targetDimension": "host_confirmation",
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定"
+            },
+            {
+              "questionKey": "q_root_rot_bad_smell",
+              "questionText": "根部或根团有明显腐烂异味?",
+              "questionGroupKey": "root_rot_group",
+              "targetDimension": "root_zone_context",
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定"
+            },
+            {
+              "questionKey": "q_root_rot_black_roots",
+              "questionText": "根系发黑而不是健康的浅色?",
+              "questionGroupKey": "root_rot_group",
+              "targetDimension": "root_zone_context",
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定"
+            },
+            {
+              "questionKey": "q_nitrogen_uniform_yellow",
+              "questionText": "老叶更偏整片均匀变黄?",
+              "questionGroupKey": "nitrogen_group",
+              "targetDimension": "distribution_scope",
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定"
+            },
+            {
+              "questionKey": "q_nitrogen_spindly",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": "",
+              "optionKey": "unknown",
+              "optionText": ""
+            },
+            {
+              "questionKey": "q_nitrogen_slow_growth",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": "",
+              "optionKey": "unknown",
+              "optionText": ""
+            }
+          ]
+        },
+        "symptomClassRuntime": null,
+        "visualConclusion": {
+          "symptomCandidates": [
+            {
+              "symptomKey": "leaf_yellowing",
+              "displayNameCn": "叶子明显发黄",
+              "confidenceBand": "",
+              "supportingRegionNote": ""
+            }
+          ],
+          "outOfPoolCandidates": [],
+          "routeHints": []
+        }
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "class_converged_context_guard_blocked",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "decisionCause": {
+          "decisionCauseKey": "class_converged_context_guard_blocked",
+          "decisionCauseCategory": "context_guard_block",
+          "decisionCauseText": "铁缺乏不能只凭泛黄叶直出，至少需要补齐“新叶更黄/叶脉间失绿/长期缺肥或介质问题”等营养背景事实。",
+          "decisionCauseDetails": {
+            "problemKey": "iron_deficiency",
+            "currentClassKey": "yellowing_mode",
+            "currentGroupKey": "iron_group",
+            "hasEnabledGroups": true,
+            "preferredQuestionKeys": [
+              "q_leaf_yellowing_fertilization_background",
+              "q_leaf_yellowing_new_growth_bias"
+            ],
+            "matchedSymptomKeys": []
+          }
+        },
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前已收敛到“黄叶模式”，但还缺少足够的补充事实，暂时不能安全定位到具体原因。 已有多个关键问题无法确认，建议重点检查叶背、根部、盆土表面或虫体。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "symptomClassRuntime": {
+          "enabled": true,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "yellowing_mode",
+          "currentClassNameCn": "黄叶模式",
+          "currentGroupKey": "iron_group",
+          "currentGroupLabel": "iron_group",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": true,
+            "gateMode": "soft",
+            "sourceMode": "soft",
+            "primaryClassKey": "yellowing_mode",
+            "primaryClassRuntimeScore": 0.7905,
+            "unknownLockCount": 2,
+            "currentClassKey": "yellowing_mode",
+            "hasEnabledGroups": true,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "",
+            "reviewedAtRound": 4
+          }
+        },
+        "pendingFollowUps": [],
+        "followUps": []
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776088053180_78ihy2gx",
+      "openid": "anon_dev_visual_batch_healthy_uncertain_single_healthy_golden_p_",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776088053180_09nvvfna",
+        "currentRoundIndex": 2,
+        "observedEvidenceSetCount": 4,
+        "followUpHistory": {
+          "hasPendingFollowUp": false,
+          "nextRound": 3,
+          "storedOutcomeType": "problematic",
+          "askedQuestionKeys": [
+            "q_leaf_yellowing_confirm",
+            "q_root_rot_yellow_decline",
+            "q_aphids_general_yellowing"
+          ],
+          "askedQuestions": [
+            {
+              "questionKey": "q_leaf_yellowing_confirm",
+              "questionText": "植株有比较明确的发黄叶片，而不是轻微失绿或反光吗？",
+              "questionGroupKey": "leaf_yellowing_group",
+              "targetDimension": "visual_presence"
+            },
+            {
+              "questionKey": "q_root_rot_yellow_decline",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": ""
+            },
+            {
+              "questionKey": "q_aphids_general_yellowing",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": ""
+            }
+          ],
+          "answeredQuestionGroupKeys": [
+            "leaf_yellowing_group",
+            "root_rot_group",
+            "aphids_group"
+          ],
+          "answeredAnswers": [
+            {
+              "questionKey": "q_leaf_yellowing_confirm",
+              "questionText": "植株有比较明确的发黄叶片，而不是轻微失绿或反光吗？",
+              "questionGroupKey": "leaf_yellowing_group",
+              "targetDimension": "visual_presence",
+              "optionKey": "yes",
+              "optionText": "是，比较确定"
+            },
+            {
+              "questionKey": "q_root_rot_yellow_decline",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": "",
+              "optionKey": "yes",
+              "optionText": ""
+            },
+            {
+              "questionKey": "q_aphids_general_yellowing",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": "",
+              "optionKey": "yes",
+              "optionText": ""
+            }
+          ]
+        },
+        "symptomClassRuntime": null,
+        "visualConclusion": {
+          "symptomCandidates": [],
+          "outOfPoolCandidates": [],
+          "routeHints": []
+        }
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "class_converged_context_guard_blocked",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "decisionCause": {
+          "decisionCauseKey": "class_converged_context_guard_blocked",
+          "decisionCauseCategory": "context_guard_block",
+          "decisionCauseText": "铁缺乏不能只凭泛黄叶直出，至少需要补齐“新叶更黄/叶脉间失绿/长期缺肥或介质问题”等营养背景事实。",
+          "decisionCauseDetails": {
+            "problemKey": "iron_deficiency",
+            "currentClassKey": "yellowing_mode",
+            "currentGroupKey": "iron_group",
+            "hasEnabledGroups": true,
+            "preferredQuestionKeys": [
+              "q_leaf_yellowing_fertilization_background",
+              "q_leaf_yellowing_new_growth_bias"
+            ],
+            "matchedSymptomKeys": []
+          }
+        },
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前已收敛到“黄叶模式”，但还缺少足够的补充事实，暂时不能安全定位到具体原因。 当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "symptomClassRuntime": {
+          "enabled": true,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "yellowing_mode",
+          "currentClassNameCn": "黄叶模式",
+          "currentGroupKey": "iron_group",
+          "currentGroupLabel": "iron_group",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": true,
+            "gateMode": "soft",
+            "sourceMode": "soft",
+            "primaryClassKey": "yellowing_mode",
+            "primaryClassRuntimeScore": 0.85,
+            "unknownLockCount": 3,
+            "currentClassKey": "yellowing_mode",
+            "hasEnabledGroups": true,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "",
+            "reviewedAtRound": 3
+          }
+        },
+        "pendingFollowUps": [],
+        "followUps": []
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776089016584_tdt9tjd5",
+      "openid": "anon_dev_visual_batch_healthy_uncertain_single_healthy_golden_p_",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776089016584_4i7n9fj0",
+        "currentRoundIndex": 2,
+        "observedEvidenceSetCount": 4,
+        "followUpHistory": {
+          "hasPendingFollowUp": false,
+          "nextRound": 3,
+          "storedOutcomeType": "problematic",
+          "askedQuestionKeys": [
+            "q_leaf_yellowing_confirm",
+            "q_root_rot_yellow_decline",
+            "q_aphids_general_yellowing"
+          ],
+          "askedQuestions": [
+            {
+              "questionKey": "q_leaf_yellowing_confirm",
+              "questionText": "植株有比较明确的发黄叶片，而不是轻微失绿或反光吗？",
+              "questionGroupKey": "leaf_yellowing_group",
+              "targetDimension": "visual_presence"
+            },
+            {
+              "questionKey": "q_root_rot_yellow_decline",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": ""
+            },
+            {
+              "questionKey": "q_aphids_general_yellowing",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": ""
+            }
+          ],
+          "answeredQuestionGroupKeys": [
+            "leaf_yellowing_group",
+            "root_rot_group",
+            "aphids_group"
+          ],
+          "answeredAnswers": [
+            {
+              "questionKey": "q_leaf_yellowing_confirm",
+              "questionText": "植株有比较明确的发黄叶片，而不是轻微失绿或反光吗？",
+              "questionGroupKey": "leaf_yellowing_group",
+              "targetDimension": "visual_presence",
+              "optionKey": "yes",
+              "optionText": "是，比较确定"
+            },
+            {
+              "questionKey": "q_root_rot_yellow_decline",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": "",
+              "optionKey": "yes",
+              "optionText": ""
+            },
+            {
+              "questionKey": "q_aphids_general_yellowing",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": "",
+              "optionKey": "yes",
+              "optionText": ""
+            }
+          ]
+        },
+        "symptomClassRuntime": null,
+        "visualConclusion": {
+          "symptomCandidates": [],
+          "outOfPoolCandidates": [],
+          "routeHints": []
+        }
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "class_converged_context_guard_blocked",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "decisionCause": {
+          "decisionCauseKey": "class_converged_context_guard_blocked",
+          "decisionCauseCategory": "context_guard_block",
+          "decisionCauseText": "铁缺乏不能只凭泛黄叶直出，至少需要补齐“新叶更黄/叶脉间失绿/长期缺肥或介质问题”等营养背景事实。",
+          "decisionCauseDetails": {
+            "problemKey": "iron_deficiency",
+            "currentClassKey": "yellowing_mode",
+            "currentGroupKey": "iron_group",
+            "hasEnabledGroups": true,
+            "preferredQuestionKeys": [
+              "q_leaf_yellowing_fertilization_background",
+              "q_leaf_yellowing_new_growth_bias"
+            ],
+            "matchedSymptomKeys": []
+          }
+        },
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前已收敛到“黄叶模式”，但还缺少足够的补充事实，暂时不能安全定位到具体原因。 当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "symptomClassRuntime": {
+          "enabled": true,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "yellowing_mode",
+          "currentClassNameCn": "黄叶模式",
+          "currentGroupKey": "iron_group",
+          "currentGroupLabel": "iron_group",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": true,
+            "gateMode": "soft",
+            "sourceMode": "soft",
+            "primaryClassKey": "yellowing_mode",
+            "primaryClassRuntimeScore": 0.85,
+            "unknownLockCount": 3,
+            "currentClassKey": "yellowing_mode",
+            "hasEnabledGroups": true,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "",
+            "reviewedAtRound": 3
+          }
+        },
+        "pendingFollowUps": [],
+        "followUps": []
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776397666928_ju9jqrun",
+      "openid": "anon_dev_visual_batch_healthy_golden_pothos_1_402a2c8f4ab1",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776397666928_a8m0sgnm",
+        "currentRoundIndex": 2,
+        "observedEvidenceSetCount": 2,
+        "followUpHistory": {
+          "hasPendingFollowUp": false,
+          "nextRound": 3,
+          "storedOutcomeType": "problematic",
+          "askedQuestionKeys": [
+            "q_observed_probe__yellow_speckling__underside_presence",
+            "q_visual_candidate_confirm__irregular_blotches"
+          ],
+          "askedQuestions": [
+            {
+              "questionKey": "q_observed_probe__yellow_speckling__underside_presence",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": ""
+            },
+            {
+              "questionKey": "q_visual_candidate_confirm__irregular_blotches",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": ""
+            }
+          ],
+          "answeredQuestionGroupKeys": [
+            "observed_probe__yellow_speckling__underside_presence",
+            "visual_candidate_confirm__irregular_blotches"
+          ],
+          "answeredAnswers": [
+            {
+              "questionKey": "q_observed_probe__yellow_speckling__underside_presence",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": "",
+              "optionKey": "yes",
+              "optionText": ""
+            },
+            {
+              "questionKey": "q_visual_candidate_confirm__irregular_blotches",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": "",
+              "optionKey": "yes",
+              "optionText": ""
+            }
+          ]
+        },
+        "symptomClassRuntime": null,
+        "visualConclusion": {
+          "symptomCandidates": [],
+          "outOfPoolCandidates": [],
+          "routeHints": []
+        }
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "decisionCause": null,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "symptomClassRuntime": {
+          "enabled": true,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "currentClassNameCn": "",
+          "currentGroupKey": "fungal_spot_group",
+          "currentGroupLabel": "fungal_spot_group",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": true,
+            "gateMode": "soft",
+            "sourceMode": "soft",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 2,
+            "currentClassKey": "fungal_leaf_spot_mode",
+            "hasEnabledGroups": true,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "",
+            "reviewedAtRound": 3
+          }
+        },
+        "pendingFollowUps": [],
+        "followUps": []
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776509556300_t80mp3tg",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776509556301_7u6ejva6",
+        "currentRoundIndex": 2,
+        "observedEvidenceSetCount": 1,
+        "followUpHistory": {
+          "hasPendingFollowUp": false,
+          "nextRound": 3,
+          "storedOutcomeType": "problematic",
+          "askedQuestionKeys": [
+            "q_observed_probe__irregular_blotches__surface_residue",
+            "q_observed_probe__irregular_blotches__tissue_moisture",
+            "q_observed_probe__irregular_blotches__lesion_halo"
+          ],
+          "askedQuestions": [
+            {
+              "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": ""
+            },
+            {
+              "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": ""
+            },
+            {
+              "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": ""
+            }
+          ],
+          "answeredQuestionGroupKeys": [
+            "observed_probe__irregular_blotches__surface_residue",
+            "observed_probe__irregular_blotches__tissue_moisture",
+            "observed_probe__irregular_blotches__lesion_halo"
+          ],
+          "answeredAnswers": [
+            {
+              "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": "",
+              "optionKey": "yes",
+              "optionText": ""
+            },
+            {
+              "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": "",
+              "optionKey": "yes",
+              "optionText": ""
+            },
+            {
+              "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
+              "questionText": "",
+              "questionGroupKey": "",
+              "targetDimension": "",
+              "optionKey": "no",
+              "optionText": ""
+            }
+          ]
+        },
+        "symptomClassRuntime": null,
+        "visualConclusion": {
+          "symptomCandidates": [
+            {
+              "symptomKey": "irregular_blotches",
+              "displayNameCn": "不规则斑块",
+              "confidenceBand": "",
+              "supportingRegionNote": ""
+            }
+          ],
+          "outOfPoolCandidates": [],
+          "routeHints": []
+        }
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "decisionCause": null,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "symptomClassRuntime": {
+          "enabled": true,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "currentClassNameCn": "",
+          "currentGroupKey": "fungal_spot_group",
+          "currentGroupLabel": "fungal_spot_group",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": true,
+            "gateMode": "soft",
+            "sourceMode": "soft",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 3,
+            "currentClassKey": "fungal_leaf_spot_mode",
+            "hasEnabledGroups": true,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "",
+            "reviewedAtRound": 3
+          }
+        },
+        "pendingFollowUps": [],
+        "followUps": []
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776524906841_9gzq2dil",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776524906842_5mi3kaa5",
+        "currentRoundIndex": 2,
+        "observedEvidenceSetCount": 1,
+        "followUpHistory": {
+          "hasPendingFollowUp": false,
+          "nextRound": 3,
+          "storedOutcomeType": "uncertain",
+          "askedQuestionKeys": [
+            "q_leaf_yellowing_light_background",
+            "q_leaf_yellowing_watering_background",
+            "q_leaf_yellowing_fertilization_background"
+          ],
+          "askedQuestions": [
+            {
+              "questionKey": "q_leaf_yellowing_light_background",
+              "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+              "questionGroupKey": "yellowing_light_background_group",
+              "targetDimension": "light_exposure"
+            },
+            {
+              "questionKey": "q_leaf_yellowing_watering_background",
+              "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+              "questionGroupKey": "yellowing_watering_background_group",
+              "targetDimension": "watering_context"
+            },
+            {
+              "questionKey": "q_leaf_yellowing_fertilization_background",
+              "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+              "questionGroupKey": "yellowing_fertilization_background_group",
+              "targetDimension": "fertilization_context"
+            }
+          ],
+          "answeredQuestionGroupKeys": [
+            "yellowing_light_background_group",
+            "yellowing_watering_background_group",
+            "yellowing_fertilization_background_group"
+          ],
+          "answeredAnswers": [
+            {
+              "questionKey": "q_leaf_yellowing_light_background",
+              "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+              "questionGroupKey": "yellowing_light_background_group",
+              "targetDimension": "light_exposure",
+              "optionKey": "no_change",
+              "optionText": "没有明显变化"
+            },
+            {
+              "questionKey": "q_leaf_yellowing_watering_background",
+              "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+              "questionGroupKey": "yellowing_watering_background_group",
+              "targetDimension": "watering_context",
+              "optionKey": "no_change",
+              "optionText": "浇水节奏没有明显变化"
+            },
+            {
+              "questionKey": "q_leaf_yellowing_fertilization_background",
+              "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+              "questionGroupKey": "yellowing_fertilization_background_group",
+              "targetDimension": "fertilization_context",
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定"
+            }
+          ]
+        },
+        "symptomClassRuntime": null,
+        "visualConclusion": {
+          "symptomCandidates": [
+            {
+              "symptomKey": "leaf_yellowing",
+              "displayNameCn": "叶片发黄",
+              "confidenceBand": "",
+              "supportingRegionNote": ""
+            }
+          ],
+          "outOfPoolCandidates": [],
+          "routeHints": []
+        }
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "class_converged_context_guard_blocked",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "decisionCause": {
+          "decisionCauseKey": "class_converged_context_guard_blocked",
+          "decisionCauseCategory": "context_guard_block",
+          "decisionCauseText": "铁缺乏不能只凭泛黄叶直出，至少需要补齐“新叶更黄/叶脉间失绿/长期缺肥或介质问题”等营养背景事实。",
+          "decisionCauseDetails": {
+            "problemKey": "iron_deficiency",
+            "currentClassKey": "yellowing_mode",
+            "currentGroupKey": "iron_group",
+            "hasEnabledGroups": true,
+            "preferredQuestionKeys": [
+              "q_leaf_yellowing_fertilization_background",
+              "q_leaf_yellowing_new_growth_bias"
+            ],
+            "matchedSymptomKeys": []
+          }
+        },
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前已收敛到“黄叶模式”，但还缺少足够的补充事实，暂时不能安全定位到具体原因。 当前证据仍不够稳定，建议补查叶背、根部、盆土状态，必要时重新开始诊断。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "symptomClassRuntime": {
+          "enabled": true,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "yellowing_mode",
+          "currentClassNameCn": "黄叶模式",
+          "currentGroupKey": "iron_group",
+          "currentGroupLabel": "iron_group",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": true,
+            "gateMode": "soft",
+            "sourceMode": "soft",
+            "primaryClassKey": "yellowing_mode",
+            "primaryClassRuntimeScore": 0.7905,
+            "unknownLockCount": 3,
+            "currentClassKey": "yellowing_mode",
+            "hasEnabledGroups": true,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "",
+            "reviewedAtRound": 3
+          }
+        },
+        "pendingFollowUps": [],
+        "followUps": []
+      }
+    }
+  ]
+}

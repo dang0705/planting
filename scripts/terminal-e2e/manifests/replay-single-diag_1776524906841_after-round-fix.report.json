@@ -1,0 +1,165 @@
+{
+  "generatedAt": "2026-04-22T13:59:17.772Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "total": 1,
+  "success": 1,
+  "failed": 0,
+  "progress": {
+    "processed": 1,
+    "targetTotal": 1,
+    "complete": true
+  },
+  "results": [
+    {
+      "ok": true,
+      "sessionId": "diag_1776524906841_9gzq2dil",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776524906842_5mi3kaa5",
+        "currentRoundIndex": 2,
+        "observedEvidenceSetCount": 1,
+        "followUpHistory": {
+          "hasPendingFollowUp": false,
+          "nextRound": 3,
+          "storedOutcomeType": "uncertain",
+          "askedQuestionKeys": [
+            "q_leaf_yellowing_light_background",
+            "q_leaf_yellowing_watering_background",
+            "q_leaf_yellowing_fertilization_background"
+          ],
+          "askedQuestions": [
+            {
+              "questionKey": "q_leaf_yellowing_light_background",
+              "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+              "questionGroupKey": "yellowing_light_background_group",
+              "targetDimension": "light_exposure"
+            },
+            {
+              "questionKey": "q_leaf_yellowing_watering_background",
+              "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+              "questionGroupKey": "yellowing_watering_background_group",
+              "targetDimension": "watering_context"
+            },
+            {
+              "questionKey": "q_leaf_yellowing_fertilization_background",
+              "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+              "questionGroupKey": "yellowing_fertilization_background_group",
+              "targetDimension": "fertilization_context"
+            }
+          ],
+          "answeredQuestionGroupKeys": [
+            "yellowing_light_background_group",
+            "yellowing_watering_background_group",
+            "yellowing_fertilization_background_group"
+          ],
+          "answeredAnswers": [
+            {
+              "questionKey": "q_leaf_yellowing_light_background",
+              "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+              "questionGroupKey": "yellowing_light_background_group",
+              "targetDimension": "light_exposure",
+              "optionKey": "no_change",
+              "optionText": "没有明显变化"
+            },
+            {
+              "questionKey": "q_leaf_yellowing_watering_background",
+              "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+              "questionGroupKey": "yellowing_watering_background_group",
+              "targetDimension": "watering_context",
+              "optionKey": "no_change",
+              "optionText": "浇水节奏没有明显变化"
+            },
+            {
+              "questionKey": "q_leaf_yellowing_fertilization_background",
+              "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+              "questionGroupKey": "yellowing_fertilization_background_group",
+              "targetDimension": "fertilization_context",
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定"
+            }
+          ]
+        },
+        "symptomClassRuntime": null,
+        "visualConclusion": {
+          "symptomCandidates": [
+            {
+              "symptomKey": "leaf_yellowing",
+              "displayNameCn": "叶片发黄",
+              "confidenceBand": "high",
+              "supportingRegionNote": "图中有多片叶片呈现明显的黄色，与正常绿色叶片形成对比"
+            }
+          ],
+          "outOfPoolCandidates": [],
+          "routeHints": [
+            {
+              "type": "possible_problematic_signal",
+              "reason": "observed significant leaf yellowing in multiple leaves"
+            }
+          ]
+        }
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "class_converged_context_guard_blocked",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "decisionCause": {
+          "decisionCauseKey": "class_converged_context_guard_blocked",
+          "decisionCauseCategory": "context_guard_block",
+          "decisionCauseText": "铁缺乏不能只凭泛黄叶直出，至少需要补齐“新叶更黄/叶脉间失绿/长期缺肥或介质问题”等营养背景事实。",
+          "decisionCauseDetails": {
+            "problemKey": "iron_deficiency",
+            "currentClassKey": "yellowing_mode",
+            "currentGroupKey": "iron_group",
+            "hasEnabledGroups": true,
+            "preferredQuestionKeys": [
+              "q_leaf_yellowing_fertilization_background",
+              "q_leaf_yellowing_new_growth_bias"
+            ],
+            "matchedSymptomKeys": []
+          }
+        },
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前已收敛到“黄叶模式”，但还缺少足够的补充事实，暂时不能安全定位到具体原因。 当前证据仍不够稳定，建议补查叶背、根部、盆土状态，必要时重新开始诊断。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "symptomClassRuntime": {
+          "enabled": true,
+          "primaryClassKey": "",
+          "primaryClassNameCn": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "yellowing_mode",
+          "currentClassNameCn": "黄叶模式",
+          "currentGroupKey": "iron_group",
+          "currentGroupLabel": "iron_group",
+          "questionGroupPoolSize": 0,
+          "questionGroupPoolKeys": [],
+          "classGateDecision": {
+            "enabled": true,
+            "gateMode": "soft",
+            "sourceMode": "soft",
+            "primaryClassKey": "yellowing_mode",
+            "primaryClassRuntimeScore": 0.7905,
+            "unknownLockCount": 3,
+            "currentClassKey": "yellowing_mode",
+            "hasEnabledGroups": true,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "",
+            "reviewedAtRound": 3
+          }
+        },
+        "pendingFollowUps": [],
+        "followUps": []
+      }
+    }
+  ]
+}

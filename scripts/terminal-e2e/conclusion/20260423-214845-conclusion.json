@@ -1,0 +1,59 @@
+{
+  "generatedAt": "2026-04-23T13:48:45.374Z",
+  "batchReportFile": "scripts/terminal-e2e/batch/20260423-214845.json",
+  "total": 818,
+  "success": 818,
+  "failed": 0,
+  "visualFinalEvidenceSummary": {
+    "total": 818,
+    "available": 818,
+    "missingRawRecords": 0,
+    "emptyConclusion": 0
+  },
+  "derivedSummary": {
+    "noVisualEvidenceCount": 0,
+    "outOfPoolOnlyCount": 0
+  },
+  "outcomeTypeCounts": [
+    {
+      "key": "problematic",
+      "count": 818
+    }
+  ],
+  "stopReasonCounts": [
+    {
+      "key": "problematic_output_ready",
+      "count": 818
+    }
+  ],
+  "topSymptomClassReplayCounts": [
+    {
+      "key": "yellowing_mode",
+      "count": 416
+    },
+    {
+      "key": "fungal_leaf_spot_mode",
+      "count": 370
+    },
+    {
+      "key": "mite_damage_mode",
+      "count": 26
+    },
+    {
+      "key": "chewing_pest_mode",
+      "count": 3
+    },
+    {
+      "key": "salt_dry_edge_mode",
+      "count": 1
+    },
+    {
+      "key": "sap_sucking_honeydew_pest_mode",
+      "count": 1
+    },
+    {
+      "key": "thrips_damage_mode",
+      "count": 1
+    }
+  ]
+}

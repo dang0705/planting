@@ -1,0 +1,1627 @@
+{
+  "batchSource": "diagnose-popup-dev-mode-pairwise",
+  "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+  "generatedAt": "2026-04-30T07:20:06.749Z",
+  "summary": {
+    "modeCount": 28,
+    "directFinalCount": 17,
+    "discoveredQuestionCount": 33,
+    "scheduledPairCount": 110,
+    "coveredPairCount": 110,
+    "reviewRecordCount": 127,
+    "failureCount": 0
+  },
+  "splitMeta": {
+    "rootBaseName": "diagnose-popup-dev-mode-pairwise-20260430-152006",
+    "partIndex": 2,
+    "partCount": 2,
+    "maxResultsPerFile": 100
+  },
+  "results": [
+    {
+      "sessionId": "engine_1777533686958_fy1c2su5",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "soft_stem",
+          "symptomCn": "茎变软",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "soft_rot_mode",
+        "classKey": "soft_rot_mode",
+        "symptomKey": "soft_stem"
+      },
+      "round1": {
+        "questionKey": "q_stem_collapse_poor_drainage",
+        "optionKey": "yes",
+        "questionText": "倒伏前盆土长期偏湿、浇水后很久都不干吗？",
+        "optionText": "是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "yes",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "uncertain",
+        "pendingTopTitle": "",
+        "currentTopTitle": "uncertain"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "soft_rot_mode/soft_stem > q_stem_collapse_poor_drainage=yes > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=yes",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533695204_d9am6qed",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
+        "optionKey": "unknown",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "看不出/不确定"
+      },
+      "round2": [
+        {
+          "questionKey": "q_holes_in_leaf_confirm",
+          "optionKey": "no",
+          "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "unknown",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "看不出/不确定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "await_follow_up",
+        "currentTopTitle": "await_follow_up"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=unknown > q_holes_in_leaf_confirm=no > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=unknown",
+        "roundsUsed": 4,
+        "questionCount": 4,
+        "isFinal": false
+      }
+    },
+    {
+      "sessionId": "engine_1777533683743_uv3s159m",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
+        "optionKey": "unknown",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "看不出/不确定"
+      },
+      "round2": [
+        {
+          "questionKey": "q_holes_in_leaf_confirm",
+          "optionKey": "no",
+          "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "yes",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "problematic",
+        "pendingTopTitle": "",
+        "currentTopTitle": "problematic"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=unknown > q_holes_in_leaf_confirm=no > q_root_rot_bad_smell=yes",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533688743_lz1zm7la",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_dry_soil",
+          "symptomCn": "干土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "water_stress_mode",
+        "classKey": "water_stress_mode",
+        "symptomKey": "wilting_dry_soil"
+      },
+      "round1": {
+        "questionKey": "q_underwater_dry_wilt",
+        "optionKey": "no",
+        "questionText": "盆土干透时，叶子会明显发蔫吗？",
+        "optionText": "不是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "yes",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "uncertain",
+        "pendingTopTitle": "",
+        "currentTopTitle": "uncertain"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "water_stress_mode/wilting_dry_soil > q_underwater_dry_wilt=no > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=yes",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533697147_6s9y1vr3",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "soft_stem",
+          "symptomCn": "茎变软",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "soft_rot_mode",
+        "classKey": "soft_rot_mode",
+        "symptomKey": "soft_stem"
+      },
+      "round1": {
+        "questionKey": "q_stem_collapse_poor_drainage",
+        "optionKey": "yes",
+        "questionText": "倒伏前盆土长期偏湿、浇水后很久都不干吗？",
+        "optionText": "是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "unknown",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_mushy_roots",
+          "optionKey": "unknown",
+          "questionText": "根系是否发软、发糊，轻轻一碰就断？",
+          "optionText": "看不出/不确定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "await_follow_up",
+        "currentTopTitle": "await_follow_up"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "soft_rot_mode/soft_stem > q_stem_collapse_poor_drainage=yes > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=unknown > q_root_rot_mushy_roots=unknown",
+        "roundsUsed": 4,
+        "questionCount": 4,
+        "isFinal": false
+      }
+    },
+    {
+      "sessionId": "engine_1777533696214_egvh5xi3",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
+        "optionKey": "unknown",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "看不出/不确定"
+      },
+      "round2": [
+        {
+          "questionKey": "q_holes_in_leaf_confirm",
+          "optionKey": "no",
+          "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "yes",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "problematic",
+        "pendingTopTitle": "",
+        "currentTopTitle": "problematic"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=unknown > q_holes_in_leaf_confirm=no > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=yes",
+        "roundsUsed": 4,
+        "questionCount": 4,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533696254_mktf8j6l",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
+        "optionKey": "unknown",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "看不出/不确定"
+      },
+      "round2": [
+        {
+          "questionKey": "q_holes_in_leaf_confirm",
+          "optionKey": "no",
+          "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "no",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_gnat_soil_stays_wet",
+          "optionKey": "no",
+          "questionText": "盆土经常长时间偏湿、久不干吗？",
+          "optionText": "不是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "uncertain",
+        "pendingTopTitle": "",
+        "currentTopTitle": "uncertain"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=unknown > q_holes_in_leaf_confirm=no > q_root_rot_bad_smell=no > q_gnat_soil_stays_wet=no",
+        "roundsUsed": 4,
+        "questionCount": 4,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533696851_y98e3xtr",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "soft_stem",
+          "symptomCn": "茎变软",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "soft_rot_mode",
+        "classKey": "soft_rot_mode",
+        "symptomKey": "soft_stem"
+      },
+      "round1": {
+        "questionKey": "q_stem_collapse_poor_drainage",
+        "optionKey": "yes",
+        "questionText": "倒伏前盆土长期偏湿、浇水后很久都不干吗？",
+        "optionText": "是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "unknown",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_mushy_roots",
+          "optionKey": "no",
+          "questionText": "根系是否发软、发糊，轻轻一碰就断？",
+          "optionText": "不是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "uncertain",
+        "pendingTopTitle": "",
+        "currentTopTitle": "uncertain"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "soft_rot_mode/soft_stem > q_stem_collapse_poor_drainage=yes > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=unknown > q_root_rot_mushy_roots=no",
+        "roundsUsed": 4,
+        "questionCount": 4,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533696444_l8ma4mwl",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
+        "optionKey": "unknown",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "看不出/不确定"
+      },
+      "round2": [
+        {
+          "questionKey": "q_holes_in_leaf_confirm",
+          "optionKey": "no",
+          "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "no",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_gnat_soil_stays_wet",
+          "optionKey": "unknown",
+          "questionText": "盆土经常长时间偏湿、久不干吗？",
+          "optionText": "看不出/不确定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "uncertain",
+        "pendingTopTitle": "",
+        "currentTopTitle": "uncertain"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=unknown > q_holes_in_leaf_confirm=no > q_root_rot_bad_smell=no > q_gnat_soil_stays_wet=unknown",
+        "roundsUsed": 4,
+        "questionCount": 4,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533693964_3grj78g2",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_dry_soil",
+          "symptomCn": "干土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "water_stress_mode",
+        "classKey": "water_stress_mode",
+        "symptomKey": "wilting_dry_soil"
+      },
+      "round1": {
+        "questionKey": "q_underwater_dry_wilt",
+        "optionKey": "no",
+        "questionText": "盆土干透时，叶子会明显发蔫吗？",
+        "optionText": "不是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "no",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_gnat_soil_stays_wet",
+          "optionKey": "yes",
+          "questionText": "盆土经常长时间偏湿、久不干吗？",
+          "optionText": "是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "problematic",
+        "pendingTopTitle": "",
+        "currentTopTitle": "problematic"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "water_stress_mode/wilting_dry_soil > q_underwater_dry_wilt=no > q_root_rot_bad_smell=no > q_gnat_soil_stays_wet=yes",
+        "roundsUsed": 3,
+        "questionCount": 3,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533699102_fbrl9y1o",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_dry_soil",
+          "symptomCn": "干土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "water_stress_mode",
+        "classKey": "water_stress_mode",
+        "symptomKey": "wilting_dry_soil"
+      },
+      "round1": {
+        "questionKey": "q_underwater_dry_wilt",
+        "optionKey": "no",
+        "questionText": "盆土干透时，叶子会明显发蔫吗？",
+        "optionText": "不是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "unknown",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_mushy_roots",
+          "optionKey": "unknown",
+          "questionText": "根系是否发软、发糊，轻轻一碰就断？",
+          "optionText": "看不出/不确定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "await_follow_up",
+        "currentTopTitle": "await_follow_up"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "water_stress_mode/wilting_dry_soil > q_underwater_dry_wilt=no > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=unknown > q_root_rot_mushy_roots=unknown",
+        "roundsUsed": 4,
+        "questionCount": 4,
+        "isFinal": false
+      }
+    },
+    {
+      "sessionId": "engine_1777533699097_o9r8dmkw",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_dry_soil",
+          "symptomCn": "干土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "water_stress_mode",
+        "classKey": "water_stress_mode",
+        "symptomKey": "wilting_dry_soil"
+      },
+      "round1": {
+        "questionKey": "q_underwater_dry_wilt",
+        "optionKey": "no",
+        "questionText": "盆土干透时，叶子会明显发蔫吗？",
+        "optionText": "不是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "unknown",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_mushy_roots",
+          "optionKey": "no",
+          "questionText": "根系是否发软、发糊，轻轻一碰就断？",
+          "optionText": "不是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "await_follow_up",
+        "currentTopTitle": "await_follow_up"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "water_stress_mode/wilting_dry_soil > q_underwater_dry_wilt=no > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=unknown > q_root_rot_mushy_roots=no",
+        "roundsUsed": 4,
+        "questionCount": 4,
+        "isFinal": false
+      }
+    },
+    {
+      "sessionId": "engine_1777533698274_gu5ysgmc",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "soft_stem",
+          "symptomCn": "茎变软",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "soft_rot_mode",
+        "classKey": "soft_rot_mode",
+        "symptomKey": "soft_stem"
+      },
+      "round1": {
+        "questionKey": "q_stem_collapse_poor_drainage",
+        "optionKey": "yes",
+        "questionText": "倒伏前盆土长期偏湿、浇水后很久都不干吗？",
+        "optionText": "是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "unknown",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_mushy_roots",
+          "optionKey": "yes",
+          "questionText": "根系是否发软、发糊，轻轻一碰就断？",
+          "optionText": "是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "uncertain",
+        "pendingTopTitle": "",
+        "currentTopTitle": "uncertain"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "soft_rot_mode/soft_stem > q_stem_collapse_poor_drainage=yes > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=unknown > q_root_rot_mushy_roots=yes",
+        "roundsUsed": 4,
+        "questionCount": 4,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533699384_76zq30ed",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
+        "optionKey": "unknown",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "看不出/不确定"
+      },
+      "round2": [
+        {
+          "questionKey": "q_holes_in_leaf_confirm",
+          "optionKey": "no",
+          "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "unknown",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_mushy_roots",
+          "optionKey": "no",
+          "questionText": "根系是否发软、发糊，轻轻一碰就断？",
+          "optionText": "不是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "await_follow_up",
+        "currentTopTitle": "await_follow_up"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=unknown > q_holes_in_leaf_confirm=no > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=unknown > q_root_rot_mushy_roots=no",
+        "roundsUsed": 5,
+        "questionCount": 5,
+        "isFinal": false
+      }
+    },
+    {
+      "sessionId": "engine_1777533699481_xfra6pcf",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
+        "optionKey": "unknown",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "看不出/不确定"
+      },
+      "round2": [
+        {
+          "questionKey": "q_holes_in_leaf_confirm",
+          "optionKey": "no",
+          "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "unknown",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_mushy_roots",
+          "optionKey": "unknown",
+          "questionText": "根系是否发软、发糊，轻轻一碰就断？",
+          "optionText": "看不出/不确定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "await_follow_up",
+        "currentTopTitle": "await_follow_up"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=unknown > q_holes_in_leaf_confirm=no > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=unknown > q_root_rot_mushy_roots=unknown",
+        "roundsUsed": 5,
+        "questionCount": 5,
+        "isFinal": false
+      }
+    },
+    {
+      "sessionId": "engine_1777533696850_6clarcjw",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
+        "optionKey": "unknown",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "看不出/不确定"
+      },
+      "round2": [
+        {
+          "questionKey": "q_holes_in_leaf_confirm",
+          "optionKey": "no",
+          "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "no",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_gnat_soil_stays_wet",
+          "optionKey": "yes",
+          "questionText": "盆土经常长时间偏湿、久不干吗？",
+          "optionText": "是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "problematic",
+        "pendingTopTitle": "",
+        "currentTopTitle": "problematic"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=unknown > q_holes_in_leaf_confirm=no > q_root_rot_bad_smell=no > q_gnat_soil_stays_wet=yes",
+        "roundsUsed": 4,
+        "questionCount": 4,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533699170_rwcle4jh",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_dry_soil",
+          "symptomCn": "干土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "water_stress_mode",
+        "classKey": "water_stress_mode",
+        "symptomKey": "wilting_dry_soil"
+      },
+      "round1": {
+        "questionKey": "q_underwater_dry_wilt",
+        "optionKey": "no",
+        "questionText": "盆土干透时，叶子会明显发蔫吗？",
+        "optionText": "不是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "unknown",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_mushy_roots",
+          "optionKey": "yes",
+          "questionText": "根系是否发软、发糊，轻轻一碰就断？",
+          "optionText": "是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "uncertain",
+        "pendingTopTitle": "",
+        "currentTopTitle": "uncertain"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "water_stress_mode/wilting_dry_soil > q_underwater_dry_wilt=no > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=unknown > q_root_rot_mushy_roots=yes",
+        "roundsUsed": 4,
+        "questionCount": 4,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533702095_y2w1u1it",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_dry_soil",
+          "symptomCn": "干土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "water_stress_mode",
+        "classKey": "water_stress_mode",
+        "symptomKey": "wilting_dry_soil"
+      },
+      "round1": {
+        "questionKey": "q_underwater_dry_wilt",
+        "optionKey": "no",
+        "questionText": "盆土干透时，叶子会明显发蔫吗？",
+        "optionText": "不是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "unknown",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_mushy_roots",
+          "optionKey": "unknown",
+          "questionText": "根系是否发软、发糊，轻轻一碰就断？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_wet_soil_wilt",
+          "optionKey": "unknown",
+          "questionText": "盆土还湿着时，叶子仍然发蔫吗？",
+          "optionText": "看不出/不确定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "uncertain",
+        "pendingTopTitle": "",
+        "currentTopTitle": "uncertain"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "water_stress_mode/wilting_dry_soil > q_underwater_dry_wilt=no > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=unknown > q_root_rot_mushy_roots=unknown > q_root_rot_wet_soil_wilt=unknown",
+        "roundsUsed": 5,
+        "questionCount": 5,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533701275_0nkl800t",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "soft_stem",
+          "symptomCn": "茎变软",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "soft_rot_mode",
+        "classKey": "soft_rot_mode",
+        "symptomKey": "soft_stem"
+      },
+      "round1": {
+        "questionKey": "q_stem_collapse_poor_drainage",
+        "optionKey": "yes",
+        "questionText": "倒伏前盆土长期偏湿、浇水后很久都不干吗？",
+        "optionText": "是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "unknown",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_mushy_roots",
+          "optionKey": "unknown",
+          "questionText": "根系是否发软、发糊，轻轻一碰就断？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_wet_soil_wilt",
+          "optionKey": "unknown",
+          "questionText": "盆土还湿着时，叶子仍然发蔫吗？",
+          "optionText": "看不出/不确定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "uncertain",
+        "pendingTopTitle": "",
+        "currentTopTitle": "uncertain"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "soft_rot_mode/soft_stem > q_stem_collapse_poor_drainage=yes > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=unknown > q_root_rot_mushy_roots=unknown > q_root_rot_wet_soil_wilt=unknown",
+        "roundsUsed": 5,
+        "questionCount": 5,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533701260_kxb1rzgr",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "soft_stem",
+          "symptomCn": "茎变软",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "soft_rot_mode",
+        "classKey": "soft_rot_mode",
+        "symptomKey": "soft_stem"
+      },
+      "round1": {
+        "questionKey": "q_stem_collapse_poor_drainage",
+        "optionKey": "yes",
+        "questionText": "倒伏前盆土长期偏湿、浇水后很久都不干吗？",
+        "optionText": "是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "unknown",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_mushy_roots",
+          "optionKey": "unknown",
+          "questionText": "根系是否发软、发糊，轻轻一碰就断？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_wet_soil_wilt",
+          "optionKey": "no",
+          "questionText": "盆土还湿着时，叶子仍然发蔫吗？",
+          "optionText": "不是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "uncertain",
+        "pendingTopTitle": "",
+        "currentTopTitle": "uncertain"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "soft_rot_mode/soft_stem > q_stem_collapse_poor_drainage=yes > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=unknown > q_root_rot_mushy_roots=unknown > q_root_rot_wet_soil_wilt=no",
+        "roundsUsed": 5,
+        "questionCount": 5,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533702005_6qus4mkg",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_dry_soil",
+          "symptomCn": "干土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "water_stress_mode",
+        "classKey": "water_stress_mode",
+        "symptomKey": "wilting_dry_soil"
+      },
+      "round1": {
+        "questionKey": "q_underwater_dry_wilt",
+        "optionKey": "no",
+        "questionText": "盆土干透时，叶子会明显发蔫吗？",
+        "optionText": "不是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "unknown",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_mushy_roots",
+          "optionKey": "unknown",
+          "questionText": "根系是否发软、发糊，轻轻一碰就断？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_wet_soil_wilt",
+          "optionKey": "no",
+          "questionText": "盆土还湿着时，叶子仍然发蔫吗？",
+          "optionText": "不是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "uncertain",
+        "pendingTopTitle": "",
+        "currentTopTitle": "uncertain"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "water_stress_mode/wilting_dry_soil > q_underwater_dry_wilt=no > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=unknown > q_root_rot_mushy_roots=unknown > q_root_rot_wet_soil_wilt=no",
+        "roundsUsed": 5,
+        "questionCount": 5,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533703938_d09eugfc",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
+        "optionKey": "unknown",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "看不出/不确定"
+      },
+      "round2": [
+        {
+          "questionKey": "q_holes_in_leaf_confirm",
+          "optionKey": "no",
+          "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "unknown",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_mushy_roots",
+          "optionKey": "unknown",
+          "questionText": "根系是否发软、发糊，轻轻一碰就断？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_wet_soil_wilt",
+          "optionKey": "no",
+          "questionText": "盆土还湿着时，叶子仍然发蔫吗？",
+          "optionText": "不是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "uncertain",
+        "pendingTopTitle": "",
+        "currentTopTitle": "uncertain"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=unknown > q_holes_in_leaf_confirm=no > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=unknown > q_root_rot_mushy_roots=unknown > q_root_rot_wet_soil_wilt=no",
+        "roundsUsed": 6,
+        "questionCount": 6,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533700673_9rsgxzpd",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
+        "optionKey": "unknown",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "看不出/不确定"
+      },
+      "round2": [
+        {
+          "questionKey": "q_holes_in_leaf_confirm",
+          "optionKey": "no",
+          "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "unknown",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_mushy_roots",
+          "optionKey": "yes",
+          "questionText": "根系是否发软、发糊，轻轻一碰就断？",
+          "optionText": "是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "problematic",
+        "pendingTopTitle": "",
+        "currentTopTitle": "problematic"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=unknown > q_holes_in_leaf_confirm=no > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=unknown > q_root_rot_mushy_roots=yes",
+        "roundsUsed": 5,
+        "questionCount": 5,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533702621_g02llg6o",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_dry_soil",
+          "symptomCn": "干土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "water_stress_mode",
+        "classKey": "water_stress_mode",
+        "symptomKey": "wilting_dry_soil"
+      },
+      "round1": {
+        "questionKey": "q_underwater_dry_wilt",
+        "optionKey": "no",
+        "questionText": "盆土干透时，叶子会明显发蔫吗？",
+        "optionText": "不是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "unknown",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_mushy_roots",
+          "optionKey": "unknown",
+          "questionText": "根系是否发软、发糊，轻轻一碰就断？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_wet_soil_wilt",
+          "optionKey": "yes",
+          "questionText": "盆土还湿着时，叶子仍然发蔫吗？",
+          "optionText": "是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "uncertain",
+        "pendingTopTitle": "",
+        "currentTopTitle": "uncertain"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "water_stress_mode/wilting_dry_soil > q_underwater_dry_wilt=no > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=unknown > q_root_rot_mushy_roots=unknown > q_root_rot_wet_soil_wilt=yes",
+        "roundsUsed": 5,
+        "questionCount": 5,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533701871_lhyycb6z",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "soft_stem",
+          "symptomCn": "茎变软",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "soft_rot_mode",
+        "classKey": "soft_rot_mode",
+        "symptomKey": "soft_stem"
+      },
+      "round1": {
+        "questionKey": "q_stem_collapse_poor_drainage",
+        "optionKey": "yes",
+        "questionText": "倒伏前盆土长期偏湿、浇水后很久都不干吗？",
+        "optionText": "是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "unknown",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_mushy_roots",
+          "optionKey": "unknown",
+          "questionText": "根系是否发软、发糊，轻轻一碰就断？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_wet_soil_wilt",
+          "optionKey": "yes",
+          "questionText": "盆土还湿着时，叶子仍然发蔫吗？",
+          "optionText": "是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "uncertain",
+        "pendingTopTitle": "",
+        "currentTopTitle": "uncertain"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "soft_rot_mode/soft_stem > q_stem_collapse_poor_drainage=yes > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=unknown > q_root_rot_mushy_roots=unknown > q_root_rot_wet_soil_wilt=yes",
+        "roundsUsed": 5,
+        "questionCount": 5,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533704248_g76pqfgg",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
+        "optionKey": "unknown",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "看不出/不确定"
+      },
+      "round2": [
+        {
+          "questionKey": "q_holes_in_leaf_confirm",
+          "optionKey": "no",
+          "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "unknown",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_mushy_roots",
+          "optionKey": "unknown",
+          "questionText": "根系是否发软、发糊，轻轻一碰就断？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_wet_soil_wilt",
+          "optionKey": "unknown",
+          "questionText": "盆土还湿着时，叶子仍然发蔫吗？",
+          "optionText": "看不出/不确定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "uncertain",
+        "pendingTopTitle": "",
+        "currentTopTitle": "uncertain"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=unknown > q_holes_in_leaf_confirm=no > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=unknown > q_root_rot_mushy_roots=unknown > q_root_rot_wet_soil_wilt=unknown",
+        "roundsUsed": 6,
+        "questionCount": 6,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533704410_o09v1dst",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
+        "optionKey": "unknown",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "看不出/不确定"
+      },
+      "round2": [
+        {
+          "questionKey": "q_holes_in_leaf_confirm",
+          "optionKey": "no",
+          "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
+          "optionText": "不是的"
+        },
+        {
+          "questionKey": "q_root_rot_bad_smell",
+          "optionKey": "unknown",
+          "questionText": "根部或根团有明显烂味、臭味吗？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_black_roots",
+          "optionKey": "unknown",
+          "questionText": "根系有没有明显发黑？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_mushy_roots",
+          "optionKey": "unknown",
+          "questionText": "根系是否发软、发糊，轻轻一碰就断？",
+          "optionText": "看不出/不确定"
+        },
+        {
+          "questionKey": "q_root_rot_wet_soil_wilt",
+          "optionKey": "yes",
+          "questionText": "盆土还湿着时，叶子仍然发蔫吗？",
+          "optionText": "是的"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "problematic",
+        "pendingTopTitle": "",
+        "currentTopTitle": "problematic"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=unknown > q_holes_in_leaf_confirm=no > q_root_rot_bad_smell=unknown > q_root_rot_black_roots=unknown > q_root_rot_mushy_roots=unknown > q_root_rot_wet_soil_wilt=yes",
+        "roundsUsed": 6,
+        "questionCount": 6,
+        "isFinal": true
+      }
+    }
+  ]
+}

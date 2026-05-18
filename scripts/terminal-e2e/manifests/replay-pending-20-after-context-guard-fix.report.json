@@ -1,0 +1,1450 @@
+{
+  "generatedAt": "2026-04-22T10:00:40.325Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "total": 20,
+  "success": 20,
+  "failed": 0,
+  "results": [
+    {
+      "ok": true,
+      "sessionId": "diag_1776514404791_tfotfxxk",
+      "openid": "dev_terminal_combo_4ab16db6403179cf9524",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514404791_2mhlqvvy",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
+          },
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "这些褐色病斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？"
+          },
+          {
+            "questionKey": "q_sooty_mold_confirm",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "sooty_mold",
+            "text": "叶片表面有黑灰色、像煤污一样的覆盖层吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776514386463_njwurymg",
+      "openid": "dev_terminal_combo_39f760ca8375facc17aa",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514386463_n5j2fj7r",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
+          },
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "这些褐色病斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？"
+          },
+          {
+            "questionKey": "q_sooty_mold_confirm",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "sooty_mold",
+            "text": "叶片表面有黑灰色、像煤污一样的覆盖层吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776514368627_j9pbop2v",
+      "openid": "dev_terminal_combo_a37d85dd3ff3943a00c3",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514368627_3ntlydgb",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
+          },
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "这些褐色病斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？"
+          },
+          {
+            "questionKey": "q_gnat_small_flies",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "small_flies_soil",
+            "text": "盆土表面或花盆周围有很小的蚊状飞虫吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776514349325_cww3c9iy",
+      "openid": "dev_terminal_combo_4fd895004426eae44911",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514349325_643bmf78",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
+          },
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "这些褐色病斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？"
+          },
+          {
+            "questionKey": "q_gnat_small_flies",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "small_flies_soil",
+            "text": "盆土表面或花盆周围有很小的蚊状飞虫吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776514329794_4mgty46u",
+      "openid": "dev_terminal_combo_ae512e55763caf86d954",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514329795_ezc2xdn6",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
+          },
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "这些褐色病斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？"
+          },
+          {
+            "questionKey": "q_sooty_mold_confirm",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "sooty_mold",
+            "text": "叶片表面有黑灰色、像煤污一样的覆盖层吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776514310231_dy17glxx",
+      "openid": "dev_terminal_combo_b94c263c1b3e998af742",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514310231_0o8zgbk5",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
+          },
+          {
+            "questionKey": "q_leaf_margin_necrosis_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "leaf_margin_necrosis",
+            "text": "叶缘已经形成连续的褐黑坏死带了吗？"
+          },
+          {
+            "questionKey": "q_gnat_small_flies",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "small_flies_soil",
+            "text": "盆土表面或花盆周围有很小的蚊状飞虫吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776514296883_i5weamk5",
+      "openid": "dev_terminal_combo_d4ebfca6950f3293d8db",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514296883_rqyahd97",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_irregular_blotches_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "irregular_blotches",
+            "text": "病斑呈不规则斑块状，而不是规则圆斑吗？"
+          },
+          {
+            "questionKey": "q_gnat_small_flies",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "small_flies_soil",
+            "text": "盆土表面或花盆周围有很小的蚊状飞虫吗？"
+          },
+          {
+            "questionKey": "q_sooty_mold_confirm",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "sooty_mold",
+            "text": "叶片表面有黑灰色、像煤污一样的覆盖层吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776514277488_yb2qvq8j",
+      "openid": "dev_terminal_combo_8d309d7312d8fac3ee7f",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514277488_kb0cjnbm",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
+          },
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "这些褐色病斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？"
+          },
+          {
+            "questionKey": "q_sooty_mold_confirm",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "sooty_mold",
+            "text": "叶片表面有黑灰色、像煤污一样的覆盖层吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776514261369_plao9zbx",
+      "openid": "dev_terminal_combo_84d46453c37dd3ab35f3",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514261369_nnetkju9",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_black_spots_spreading_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "black_spots_spreading",
+            "text": "是否有逐渐扩大的黑斑或暗色斑块？"
+          },
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "black_spots_spreading",
+            "text": "这些斑点/斑块更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？"
+          },
+          {
+            "questionKey": "q_gnat_small_flies",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "small_flies_soil",
+            "text": "盆土表面或花盆周围有很小的蚊状飞虫吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776514245326_749xzj9w",
+      "openid": "dev_terminal_combo_48a3397234befa65293d",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514245326_ifb49229",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
+          },
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "这些褐色病斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？"
+          },
+          {
+            "questionKey": "q_sooty_mold_confirm",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "sooty_mold",
+            "text": "叶片表面有黑灰色、像煤污一样的覆盖层吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776514223434_o46tzhox",
+      "openid": "dev_terminal_combo_09f5002263ad9beee24f",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514223434_8u0drqni",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_holes_in_leaf_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "holes_in_leaf",
+            "text": "叶片上有被咬穿的洞，而不是病斑干掉后的穿孔吗？"
+          },
+          {
+            "questionKey": "q_leaf_margin_necrosis_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "leaf_margin_necrosis",
+            "text": "叶缘已经形成连续的褐黑坏死带了吗？"
+          },
+          {
+            "questionKey": "q_gnat_small_flies",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "small_flies_soil",
+            "text": "盆土表面或花盆周围有很小的蚊状飞虫吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776514205474_lc8ori42",
+      "openid": "dev_terminal_combo_5a86d166f01ecf83664a",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514205474_huyq5om2",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_irregular_blotches_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "irregular_blotches",
+            "text": "病斑呈不规则斑块状，而不是规则圆斑吗？"
+          },
+          {
+            "questionKey": "q_gnat_small_flies",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "small_flies_soil",
+            "text": "盆土表面或花盆周围有很小的蚊状飞虫吗？"
+          },
+          {
+            "questionKey": "q_sooty_mold_confirm",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "sooty_mold",
+            "text": "叶片表面有黑灰色、像煤污一样的覆盖层吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776514187040_51pyr1rn",
+      "openid": "dev_terminal_combo_73174e7604888fe9fcb0",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514187040_n16agvm6",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
+          },
+          {
+            "questionKey": "q_leaf_margin_necrosis_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "leaf_margin_necrosis",
+            "text": "叶缘已经形成连续的褐黑坏死带了吗？"
+          },
+          {
+            "questionKey": "q_sooty_mold_confirm",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "sooty_mold",
+            "text": "叶片表面有黑灰色、像煤污一样的覆盖层吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776514168600_4ettp2cc",
+      "openid": "dev_terminal_combo_61f88f2662a890bffab8",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514168600_mx9hqmnz",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_skeletonized_leaves_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "skeletonized_leaves",
+            "text": "叶片被吃到只剩叶脉骨架或半透明网状残留了吗？"
+          },
+          {
+            "questionKey": "q_sooty_mold_confirm",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "sooty_mold",
+            "text": "叶片表面有黑灰色、像煤污一样的覆盖层吗？"
+          },
+          {
+            "questionKey": "q_gnat_small_flies",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "small_flies_soil",
+            "text": "盆土表面或花盆周围有很小的蚊状飞虫吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776514151724_myqaiesp",
+      "openid": "dev_terminal_combo_5de71cbb4e8602f655fb",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514151724_ije0hp9z",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
+          },
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "这些褐色病斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？"
+          },
+          {
+            "questionKey": "q_gnat_small_flies",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "small_flies_soil",
+            "text": "盆土表面或花盆周围有很小的蚊状飞虫吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776514133205_04emfdvg",
+      "openid": "dev_terminal_combo_1c965fbc359e5478b5e0",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514133205_k4csbh4n",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
+          },
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "这些褐色病斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？"
+          },
+          {
+            "questionKey": "q_gnat_small_flies",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "small_flies_soil",
+            "text": "盆土表面或花盆周围有很小的蚊状飞虫吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776514114780_hi7b9edt",
+      "openid": "dev_terminal_combo_60dbc20b1f91adf1d617",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514114780_2fgfmf16",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
+          },
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "这些褐色病斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？"
+          },
+          {
+            "questionKey": "q_sooty_mold_confirm",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "sooty_mold",
+            "text": "叶片表面有黑灰色、像煤污一样的覆盖层吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776514097027_hm12frpm",
+      "openid": "dev_terminal_combo_2fce319a9c24a4811a69",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514097027_072vsjha",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
+          },
+          {
+            "questionKey": "q_leaf_margin_necrosis_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "leaf_margin_necrosis",
+            "text": "叶缘已经形成连续的褐黑坏死带了吗？"
+          },
+          {
+            "questionKey": "q_sooty_mold_confirm",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "sooty_mold",
+            "text": "叶片表面有黑灰色、像煤污一样的覆盖层吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776514078308_j9f9tkjs",
+      "openid": "dev_terminal_combo_5d084bbb8e39d9057960",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514078308_rksm9wov",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
+          },
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "brown_spots_halo",
+            "text": "这些褐色病斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？"
+          },
+          {
+            "questionKey": "q_sooty_mold_confirm",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "sooty_mold",
+            "text": "叶片表面有黑灰色、像煤污一样的覆盖层吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776514058526_plrwlblz",
+      "openid": "dev_terminal_combo_e40f8bc5ad8013df594b",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776514058526_uhv2vof0",
+        "currentRoundIndex": 1,
+        "nextRound": 2,
+        "hasPendingFollowUp": true,
+        "storedOutcomeType": "",
+        "askedQuestionKeys": [],
+        "answeredQuestionGroupKeys": [],
+        "answeredAnswers": [],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 0
+      },
+      "replay": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "followUps": [
+          {
+            "questionKey": "q_skeletonized_leaves_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "skeletonized_leaves",
+            "text": "叶片被吃到只剩叶脉骨架或半透明网状残留了吗？"
+          },
+          {
+            "questionKey": "q_chewed_edges_confirm",
+            "selectionSource": "",
+            "routingScope": "symptom_confirmation",
+            "targetDimension": "visual_presence",
+            "targetSymptomKey": "chewed_edges",
+            "text": "叶缘像被一口一口啃掉，而不是焦边或病斑吗？"
+          },
+          {
+            "questionKey": "q_sooty_mold_confirm",
+            "selectionSource": "",
+            "routingScope": "differential_probe",
+            "targetDimension": "surface_residue",
+            "targetSymptomKey": "sooty_mold",
+            "text": "叶片表面有黑灰色、像煤污一样的覆盖层吗？"
+          }
+        ],
+        "symptomClassRuntime": {
+          "enabled": false,
+          "primaryClassKey": "",
+          "primaryFollowupModeV1": "",
+          "currentClassKey": "",
+          "currentGroupKey": "",
+          "questionGroupPoolSize": 0,
+          "classGateDecision": {
+            "enabled": false,
+            "gateMode": "disabled",
+            "sourceMode": "disabled",
+            "primaryClassKey": "",
+            "primaryClassRuntimeScore": 0,
+            "unknownLockCount": 0,
+            "currentClassKey": "",
+            "hasEnabledGroups": false,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "no_observed_symptoms",
+            "reviewedAtRound": 1
+          }
+        }
+      }
+    }
+  ]
+}

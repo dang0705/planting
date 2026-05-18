@@ -1,0 +1,2923 @@
+{
+  "batchSource": "diagnose-popup-dev-mode-pairwise",
+  "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+  "generatedAt": "2026-04-29T09:06:04.813Z",
+  "summary": {
+    "modeCount": 28,
+    "directFinalCount": 6,
+    "discoveredQuestionCount": 122,
+    "scheduledPairCount": 405,
+    "coveredPairCount": 405,
+    "reviewRecordCount": 411,
+    "reviewUpsertedCount": 411,
+    "failureCount": 0
+  },
+  "splitMeta": {
+    "rootBaseName": "diagnose-popup-dev-mode-pairwise-20260429-170604",
+    "partIndex": 1,
+    "partCount": 5,
+    "maxResultsPerFile": 100
+  },
+  "results": [
+    {
+      "sessionId": "diag_1777453567995_81u037d9",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "tunnels_in_leaf",
+          "symptomCn": "叶内潜道",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leafminer_mode",
+        "classKey": "leafminer_mode",
+        "symptomKey": "tunnels_in_leaf"
+      },
+      "round1": {
+        "answerPathSignature": "leafminer_mode/tunnels_in_leaf > direct"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是潜叶虫"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leafminer_mode/tunnels_in_leaf > direct",
+        "roundsUsed": 0
+      }
+    },
+    {
+      "sessionId": "diag_1777453570341_i4u6bwpf",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "normal_leaf_aging_stable",
+          "symptomCn": "底部老叶稳定黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "natural_aging_mode",
+        "classKey": "natural_aging_mode",
+        "symptomKey": "normal_leaf_aging_stable"
+      },
+      "round1": {
+        "answerPathSignature": "natural_aging_mode/normal_leaf_aging_stable > direct"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是暂未见明显问题"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "natural_aging_mode/normal_leaf_aging_stable > direct",
+        "roundsUsed": 0
+      }
+    },
+    {
+      "sessionId": "diag_1777453570235_h2pd0ev0",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "fine_webbing",
+          "symptomCn": "细密蛛网",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "mite_damage_mode",
+        "classKey": "mite_damage_mode",
+        "symptomKey": "fine_webbing"
+      },
+      "round1": {
+        "answerPathSignature": "mite_damage_mode/fine_webbing > direct"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是红蜘蛛"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "mite_damage_mode/fine_webbing > direct",
+        "roundsUsed": 0
+      }
+    },
+    {
+      "sessionId": "diag_1777453572276_6oy2xmsq",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "rust_pustules",
+          "symptomCn": "锈孢子堆",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "rust_mode",
+        "classKey": "rust_mode",
+        "symptomKey": "rust_pustules"
+      },
+      "round1": {
+        "answerPathSignature": "rust_mode/rust_pustules > direct"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是锈病"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "rust_mode/rust_pustules > direct",
+        "roundsUsed": 0
+      }
+    },
+    {
+      "sessionId": "diag_1777453572782_b3u2vyvl",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "small_flies_soil",
+          "symptomCn": "土壤小飞虫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "soil_moisture_pest_mode",
+        "classKey": "soil_moisture_pest_mode",
+        "symptomKey": "small_flies_soil"
+      },
+      "round1": {
+        "answerPathSignature": "soil_moisture_pest_mode/small_flies_soil > direct"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是真菌蚊"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "soil_moisture_pest_mode/small_flies_soil > direct",
+        "roundsUsed": 0
+      }
+    },
+    {
+      "sessionId": "diag_1777453574654_n1ebv66z",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_mosaic_mottling",
+          "symptomCn": "叶子上有深浅不一、花花绿绿的斑驳花纹",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "virus_mosaic_mode",
+        "classKey": "virus_mosaic_mode",
+        "symptomKey": "leaf_mosaic_mottling"
+      },
+      "round1": {
+        "answerPathSignature": "virus_mosaic_mode/leaf_mosaic_mottling > direct"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是病毒花叶"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "virus_mosaic_mode/leaf_mosaic_mottling > direct",
+        "roundsUsed": 0
+      }
+    },
+    {
+      "sessionId": "diag_1777453574715_7cj6lman",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是根腐"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453574815_tix9vcol",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是根腐"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453575993_kqk5cyx9",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是根腐"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453576453_f4h6b5df",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺氮"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453576669_uw1gq8ua",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺氮"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453576925_uwc8mffd",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "edema",
+          "symptomCn": "水肿",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "edema_overwater_mode",
+        "classKey": "edema_overwater_mode",
+        "symptomKey": "edema"
+      },
+      "round1": {
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是浇水过多"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453579962_a39mmm1h",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "edema",
+          "symptomCn": "水肿",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "edema_overwater_mode",
+        "classKey": "edema_overwater_mode",
+        "symptomKey": "edema"
+      },
+      "round1": {
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=yes"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是浇水过多"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=yes",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453579898_q7u86l1y",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "edema",
+          "symptomCn": "水肿",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "edema_overwater_mode",
+        "classKey": "edema_overwater_mode",
+        "symptomKey": "edema"
+      },
+      "round1": {
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是浇水过多"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453581116_gxoyidlp",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "bud_drop",
+          "symptomCn": "掉花苞",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "flower_stress_mode",
+        "classKey": "flower_stress_mode",
+        "symptomKey": "bud_drop"
+      },
+      "round1": {
+        "answerPathSignature": "flower_stress_mode/bud_drop > q_observed_probe__bud_drop__distribution_scope=yes"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺水"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "flower_stress_mode/bud_drop > q_observed_probe__bud_drop__distribution_scope=yes",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453581533_rp9lxgx5",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "bud_drop",
+          "symptomCn": "掉花苞",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "flower_stress_mode",
+        "classKey": "flower_stress_mode",
+        "symptomKey": "bud_drop"
+      },
+      "round1": {
+        "answerPathSignature": "flower_stress_mode/bud_drop > q_observed_probe__bud_drop__distribution_scope=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺水"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "flower_stress_mode/bud_drop > q_observed_probe__bud_drop__distribution_scope=no",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453581706_kx1bke7e",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "bud_drop",
+          "symptomCn": "掉花苞",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "flower_stress_mode",
+        "classKey": "flower_stress_mode",
+        "symptomKey": "bud_drop"
+      },
+      "round1": {
+        "answerPathSignature": "flower_stress_mode/bud_drop > q_observed_probe__bud_drop__distribution_scope=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺水"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "flower_stress_mode/bud_drop > q_observed_probe__bud_drop__distribution_scope=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453582383_rxssxa4i",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "water_soaked_spots",
+          "symptomCn": "水渍斑",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "bacterial_leaf_spot_mode",
+        "classKey": "bacterial_leaf_spot_mode",
+        "symptomKey": "water_soaked_spots"
+      },
+      "round1": {
+        "answerPathSignature": "bacterial_leaf_spot_mode/water_soaked_spots > q_observed_probe__water_soaked_spots__lesion_water_soaking=yes"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是细菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "bacterial_leaf_spot_mode/water_soaked_spots > q_observed_probe__water_soaked_spots__lesion_water_soaking=yes",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453584806_stom4w70",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "water_soaked_spots",
+          "symptomCn": "水渍斑",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "bacterial_leaf_spot_mode",
+        "classKey": "bacterial_leaf_spot_mode",
+        "symptomKey": "water_soaked_spots"
+      },
+      "round1": {
+        "answerPathSignature": "bacterial_leaf_spot_mode/water_soaked_spots > q_observed_probe__water_soaked_spots__lesion_water_soaking=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是细菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "bacterial_leaf_spot_mode/water_soaked_spots > q_observed_probe__water_soaked_spots__lesion_water_soaking=no",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453585312_in5y680w",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "water_soaked_spots",
+          "symptomCn": "水渍斑",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "bacterial_leaf_spot_mode",
+        "classKey": "bacterial_leaf_spot_mode",
+        "symptomKey": "water_soaked_spots"
+      },
+      "round1": {
+        "answerPathSignature": "bacterial_leaf_spot_mode/water_soaked_spots > q_observed_probe__water_soaked_spots__lesion_water_soaking=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是细菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "bacterial_leaf_spot_mode/water_soaked_spots > q_observed_probe__water_soaked_spots__lesion_water_soaking=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453586347_uj4h4utd",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "brown_spots_halo",
+          "symptomCn": "褐斑带黄晕",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "fungal_leaf_spot_mode",
+        "classKey": "fungal_leaf_spot_mode",
+        "symptomKey": "brown_spots_halo"
+      },
+      "round1": {
+        "answerPathSignature": "fungal_leaf_spot_mode/brown_spots_halo > q_black_spots_surface_layer_check=embedded"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是真菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "fungal_leaf_spot_mode/brown_spots_halo > q_black_spots_surface_layer_check=embedded",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453586594_zxjnqmlj",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "brown_spots_halo",
+          "symptomCn": "褐斑带黄晕",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "fungal_leaf_spot_mode",
+        "classKey": "fungal_leaf_spot_mode",
+        "symptomKey": "brown_spots_halo"
+      },
+      "round1": {
+        "answerPathSignature": "fungal_leaf_spot_mode/brown_spots_halo > q_black_spots_surface_layer_check=surface"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是细菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "fungal_leaf_spot_mode/brown_spots_halo > q_black_spots_surface_layer_check=surface",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453586723_o7jmgxx3",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "brown_spots_halo",
+          "symptomCn": "褐斑带黄晕",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "fungal_leaf_spot_mode",
+        "classKey": "fungal_leaf_spot_mode",
+        "symptomKey": "brown_spots_halo"
+      },
+      "round1": {
+        "answerPathSignature": "fungal_leaf_spot_mode/brown_spots_halo > q_black_spots_surface_layer_check=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是真菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "fungal_leaf_spot_mode/brown_spots_halo > q_black_spots_surface_layer_check=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453587804_vpav0gn7",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=pest_trace"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是毛虫"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=pest_trace",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453590214_fox5l6ck",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=lesion_dropout"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是蜗牛/蛞蝓"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=lesion_dropout",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453590753_gz0rxu96",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=mechanical_old"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是蜗牛/蛞蝓"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=mechanical_old",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453591493_36sbzlaq",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "holes_in_leaf",
+          "symptomCn": "叶片穿孔",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "chewing_pest_mode",
+        "classKey": "chewing_pest_mode",
+        "symptomKey": "holes_in_leaf"
+      },
+      "round1": {
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是蜗牛/蛞蝓"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "chewing_pest_mode/holes_in_leaf > q_observed_probe__holes_in_leaf__structural_cause=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453592021_tyr2se8x",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "distorted_growth",
+          "symptomCn": "整体畸形",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "general_stress_mode",
+        "classKey": "general_stress_mode",
+        "symptomKey": "distorted_growth"
+      },
+      "round1": {
+        "answerPathSignature": "general_stress_mode/distorted_growth > q_observed_probe__distorted_growth__distribution_scope=yes"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是病毒花叶"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "general_stress_mode/distorted_growth > q_observed_probe__distorted_growth__distribution_scope=yes",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453592606_9r5kljeu",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "distorted_growth",
+          "symptomCn": "整体畸形",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "general_stress_mode",
+        "classKey": "general_stress_mode",
+        "symptomKey": "distorted_growth"
+      },
+      "round1": {
+        "answerPathSignature": "general_stress_mode/distorted_growth > q_observed_probe__distorted_growth__distribution_scope=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是病毒花叶"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "general_stress_mode/distorted_growth > q_observed_probe__distorted_growth__distribution_scope=no",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453593271_rbl071zl",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "distorted_growth",
+          "symptomCn": "整体畸形",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "general_stress_mode",
+        "classKey": "general_stress_mode",
+        "symptomKey": "distorted_growth"
+      },
+      "round1": {
+        "answerPathSignature": "general_stress_mode/distorted_growth > q_observed_probe__distorted_growth__distribution_scope=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是病毒花叶"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "general_stress_mode/distorted_growth > q_observed_probe__distorted_growth__distribution_scope=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453595528_cg4nm8yx",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "low_humidity_damage",
+          "symptomCn": "低湿伤害",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "humidity_stress_mode",
+        "classKey": "humidity_stress_mode",
+        "symptomKey": "low_humidity_damage"
+      },
+      "round1": {
+        "answerPathSignature": "humidity_stress_mode/low_humidity_damage > q_observed_probe__low_humidity_damage__distribution_scope=yes"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺水"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "humidity_stress_mode/low_humidity_damage > q_observed_probe__low_humidity_damage__distribution_scope=yes",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453596031_4kbgc1dh",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "low_humidity_damage",
+          "symptomCn": "低湿伤害",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "humidity_stress_mode",
+        "classKey": "humidity_stress_mode",
+        "symptomKey": "low_humidity_damage"
+      },
+      "round1": {
+        "answerPathSignature": "humidity_stress_mode/low_humidity_damage > q_observed_probe__low_humidity_damage__distribution_scope=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺水"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "humidity_stress_mode/low_humidity_damage > q_observed_probe__low_humidity_damage__distribution_scope=no",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453596903_qlnz02lo",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "low_humidity_damage",
+          "symptomCn": "低湿伤害",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "humidity_stress_mode",
+        "classKey": "humidity_stress_mode",
+        "symptomKey": "low_humidity_damage"
+      },
+      "round1": {
+        "answerPathSignature": "humidity_stress_mode/low_humidity_damage > q_observed_probe__low_humidity_damage__distribution_scope=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺水"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "humidity_stress_mode/low_humidity_damage > q_observed_probe__low_humidity_damage__distribution_scope=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453597238_3lx9m8f5",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "gray_fuzzy_mold",
+          "symptomCn": "灰色绒霉",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "gray_mold_mode",
+        "classKey": "gray_mold_mode",
+        "symptomKey": "gray_fuzzy_mold"
+      },
+      "round1": {
+        "answerPathSignature": "gray_mold_mode/gray_fuzzy_mold > q_observed_probe__gray_fuzzy_mold__surface_stickiness=yes"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是灰霉病"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "gray_mold_mode/gray_fuzzy_mold > q_observed_probe__gray_fuzzy_mold__surface_stickiness=yes",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453597720_ltazjw79",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "gray_fuzzy_mold",
+          "symptomCn": "灰色绒霉",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "gray_mold_mode",
+        "classKey": "gray_mold_mode",
+        "symptomKey": "gray_fuzzy_mold"
+      },
+      "round1": {
+        "answerPathSignature": "gray_mold_mode/gray_fuzzy_mold > q_observed_probe__gray_fuzzy_mold__surface_stickiness=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是真菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "gray_mold_mode/gray_fuzzy_mold > q_observed_probe__gray_fuzzy_mold__surface_stickiness=no",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453598310_sp2qjd9r",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "gray_fuzzy_mold",
+          "symptomCn": "灰色绒霉",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "gray_mold_mode",
+        "classKey": "gray_mold_mode",
+        "symptomKey": "gray_fuzzy_mold"
+      },
+      "round1": {
+        "answerPathSignature": "gray_mold_mode/gray_fuzzy_mold > q_observed_probe__gray_fuzzy_mold__surface_stickiness=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是灰霉病"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "gray_mold_mode/gray_fuzzy_mold > q_observed_probe__gray_fuzzy_mold__surface_stickiness=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453600517_zczo3nn7",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_spot_complex_mode",
+        "classKey": "leaf_spot_complex_mode",
+        "symptomKey": "irregular_blotches"
+      },
+      "round1": {
+        "answerPathSignature": "leaf_spot_complex_mode/irregular_blotches > q_observed_probe__irregular_blotches__lesion_water_soaking=yes"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是真菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_spot_complex_mode/irregular_blotches > q_observed_probe__irregular_blotches__lesion_water_soaking=yes",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453601033_wjqzqqag",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_spot_complex_mode",
+        "classKey": "leaf_spot_complex_mode",
+        "symptomKey": "irregular_blotches"
+      },
+      "round1": {
+        "answerPathSignature": "leaf_spot_complex_mode/irregular_blotches > q_observed_probe__irregular_blotches__lesion_water_soaking=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是真菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_spot_complex_mode/irregular_blotches > q_observed_probe__irregular_blotches__lesion_water_soaking=no",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453602034_hpja6huw",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_spot_complex_mode",
+        "classKey": "leaf_spot_complex_mode",
+        "symptomKey": "irregular_blotches"
+      },
+      "round1": {
+        "answerPathSignature": "leaf_spot_complex_mode/irregular_blotches > q_observed_probe__irregular_blotches__lesion_water_soaking=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是真菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_spot_complex_mode/irregular_blotches > q_observed_probe__irregular_blotches__lesion_water_soaking=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453602871_93cncenl",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_margin_necrosis",
+          "symptomCn": "叶缘坏死",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_edge_necrosis_mode",
+        "classKey": "leaf_edge_necrosis_mode",
+        "symptomKey": "leaf_margin_necrosis"
+      },
+      "round1": {
+        "answerPathSignature": "leaf_edge_necrosis_mode/leaf_margin_necrosis > q_observed_probe__leaf_margin_necrosis__watering_frequency_context=often_dry"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是晒伤/日灼"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_edge_necrosis_mode/leaf_margin_necrosis > q_observed_probe__leaf_margin_necrosis__watering_frequency_context=often_dry",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453602607_z83cfd8a",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_margin_necrosis",
+          "symptomCn": "叶缘坏死",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_edge_necrosis_mode",
+        "classKey": "leaf_edge_necrosis_mode",
+        "symptomKey": "leaf_margin_necrosis"
+      },
+      "round1": {
+        "answerPathSignature": "leaf_edge_necrosis_mode/leaf_margin_necrosis > q_observed_probe__leaf_margin_necrosis__watering_frequency_context=often_wet"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是晒伤/日灼"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_edge_necrosis_mode/leaf_margin_necrosis > q_observed_probe__leaf_margin_necrosis__watering_frequency_context=often_wet",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453603719_hpik12zk",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_margin_necrosis",
+          "symptomCn": "叶缘坏死",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_edge_necrosis_mode",
+        "classKey": "leaf_edge_necrosis_mode",
+        "symptomKey": "leaf_margin_necrosis"
+      },
+      "round1": {
+        "answerPathSignature": "leaf_edge_necrosis_mode/leaf_margin_necrosis > q_observed_probe__leaf_margin_necrosis__watering_frequency_context=normal_or_stable"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是晒伤/日灼"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_edge_necrosis_mode/leaf_margin_necrosis > q_observed_probe__leaf_margin_necrosis__watering_frequency_context=normal_or_stable",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453606164_rto6ystj",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_margin_necrosis",
+          "symptomCn": "叶缘坏死",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_edge_necrosis_mode",
+        "classKey": "leaf_edge_necrosis_mode",
+        "symptomKey": "leaf_margin_necrosis"
+      },
+      "round1": {
+        "answerPathSignature": "leaf_edge_necrosis_mode/leaf_margin_necrosis > q_observed_probe__leaf_margin_necrosis__watering_frequency_context=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是晒伤/日灼"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_edge_necrosis_mode/leaf_margin_necrosis > q_observed_probe__leaf_margin_necrosis__watering_frequency_context=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453606464_gqcftrz7",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_bleaching",
+          "symptomCn": "叶片漂白",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "light_stress_mode",
+        "classKey": "light_stress_mode",
+        "symptomKey": "leaf_bleaching"
+      },
+      "round1": {
+        "answerPathSignature": "light_stress_mode/leaf_bleaching > q_observed_probe__leaf_bleaching__light_change_context=stronger_direct_light"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是晒伤/日灼"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "light_stress_mode/leaf_bleaching > q_observed_probe__leaf_bleaching__light_change_context=stronger_direct_light",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453607559_70xe0hgx",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_bleaching",
+          "symptomCn": "叶片漂白",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "light_stress_mode",
+        "classKey": "light_stress_mode",
+        "symptomKey": "leaf_bleaching"
+      },
+      "round1": {
+        "answerPathSignature": "light_stress_mode/leaf_bleaching > q_observed_probe__leaf_bleaching__light_change_context=weaker_light"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是晒伤/日灼"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "light_stress_mode/leaf_bleaching > q_observed_probe__leaf_bleaching__light_change_context=weaker_light",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453608101_7plyvo4q",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_bleaching",
+          "symptomCn": "叶片漂白",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "light_stress_mode",
+        "classKey": "light_stress_mode",
+        "symptomKey": "leaf_bleaching"
+      },
+      "round1": {
+        "answerPathSignature": "light_stress_mode/leaf_bleaching > q_observed_probe__leaf_bleaching__light_change_context=no_clear_change"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是晒伤/日灼"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "light_stress_mode/leaf_bleaching > q_observed_probe__leaf_bleaching__light_change_context=no_clear_change",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453608117_eu32kns6",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_bleaching",
+          "symptomCn": "叶片漂白",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "light_stress_mode",
+        "classKey": "light_stress_mode",
+        "symptomKey": "leaf_bleaching"
+      },
+      "round1": {
+        "answerPathSignature": "light_stress_mode/leaf_bleaching > q_observed_probe__leaf_bleaching__light_change_context=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是晒伤/日灼"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "light_stress_mode/leaf_bleaching > q_observed_probe__leaf_bleaching__light_change_context=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453609253_2k2t94z4",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wind_damage",
+          "symptomCn": "风伤",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "mechanical_damage_mode",
+        "classKey": "mechanical_damage_mode",
+        "symptomKey": "wind_damage"
+      },
+      "round1": {
+        "answerPathSignature": "mechanical_damage_mode/wind_damage > q_observed_probe__wind_damage__distribution_scope=yes"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是粉蚧"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "mechanical_damage_mode/wind_damage > q_observed_probe__wind_damage__distribution_scope=yes",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453611463_vftoqyr0",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wind_damage",
+          "symptomCn": "风伤",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "mechanical_damage_mode",
+        "classKey": "mechanical_damage_mode",
+        "symptomKey": "wind_damage"
+      },
+      "round1": {
+        "answerPathSignature": "mechanical_damage_mode/wind_damage > q_observed_probe__wind_damage__distribution_scope=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是粉蚧"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "mechanical_damage_mode/wind_damage > q_observed_probe__wind_damage__distribution_scope=no",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453611876_yucyz9qe",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wind_damage",
+          "symptomCn": "风伤",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "mechanical_damage_mode",
+        "classKey": "mechanical_damage_mode",
+        "symptomKey": "wind_damage"
+      },
+      "round1": {
+        "answerPathSignature": "mechanical_damage_mode/wind_damage > q_observed_probe__wind_damage__distribution_scope=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是粉蚧"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "mechanical_damage_mode/wind_damage > q_observed_probe__wind_damage__distribution_scope=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453613151_s2za5yq8",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "vein_darkening",
+          "symptomCn": "叶脉变深",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "nutrient_stress_mode",
+        "classKey": "nutrient_stress_mode",
+        "symptomKey": "vein_darkening"
+      },
+      "round1": {
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_leaf_yellowing_fertilization_background=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是粉蚧"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_leaf_yellowing_fertilization_background=no",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453613555_l5hrrpxd",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "vein_darkening",
+          "symptomCn": "叶脉变深",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "nutrient_stress_mode",
+        "classKey": "nutrient_stress_mode",
+        "symptomKey": "vein_darkening"
+      },
+      "round1": {
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_leaf_yellowing_fertilization_background=yes"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是细菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_leaf_yellowing_fertilization_background=yes",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453613452_1qak3pe4",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "vein_darkening",
+          "symptomCn": "叶脉变深",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "nutrient_stress_mode",
+        "classKey": "nutrient_stress_mode",
+        "symptomKey": "vein_darkening"
+      },
+      "round1": {
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_leaf_yellowing_fertilization_background=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是粉蚧"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_leaf_yellowing_fertilization_background=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453614495_ckpuaws1",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "white_fuzz",
+          "symptomCn": "白色菌丝",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "powdery_mildew_mode",
+        "classKey": "powdery_mildew_mode",
+        "symptomKey": "white_fuzz"
+      },
+      "round1": {
+        "answerPathSignature": "powdery_mildew_mode/white_fuzz > q_observed_probe__white_fuzz__surface_stickiness=yes"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是灰霉病"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "powdery_mildew_mode/white_fuzz > q_observed_probe__white_fuzz__surface_stickiness=yes",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453616979_pi61vzt1",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "white_fuzz",
+          "symptomCn": "白色菌丝",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "powdery_mildew_mode",
+        "classKey": "powdery_mildew_mode",
+        "symptomKey": "white_fuzz"
+      },
+      "round1": {
+        "answerPathSignature": "powdery_mildew_mode/white_fuzz > q_observed_probe__white_fuzz__surface_stickiness=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是灰霉病"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "powdery_mildew_mode/white_fuzz > q_observed_probe__white_fuzz__surface_stickiness=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453618595_x4695a1v",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_wet_soil",
+          "symptomCn": "湿土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "root_rot_wet_wilt_mode",
+        "classKey": "root_rot_wet_wilt_mode",
+        "symptomKey": "wilting_wet_soil"
+      },
+      "round1": {
+        "answerPathSignature": "root_rot_wet_wilt_mode/wilting_wet_soil > q_root_rot_wet_soil_wilt=yes"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是根腐"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "root_rot_wet_wilt_mode/wilting_wet_soil > q_root_rot_wet_soil_wilt=yes",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453616704_1wdsb4tp",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "white_fuzz",
+          "symptomCn": "白色菌丝",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "powdery_mildew_mode",
+        "classKey": "powdery_mildew_mode",
+        "symptomKey": "white_fuzz"
+      },
+      "round1": {
+        "answerPathSignature": "powdery_mildew_mode/white_fuzz > q_observed_probe__white_fuzz__surface_stickiness=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是灰霉病"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "powdery_mildew_mode/white_fuzz > q_observed_probe__white_fuzz__surface_stickiness=no",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453618288_1f1y60dy",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_wet_soil",
+          "symptomCn": "湿土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "root_rot_wet_wilt_mode",
+        "classKey": "root_rot_wet_wilt_mode",
+        "symptomKey": "wilting_wet_soil"
+      },
+      "round1": {
+        "answerPathSignature": "root_rot_wet_wilt_mode/wilting_wet_soil > q_root_rot_wet_soil_wilt=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是粉蚧"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "root_rot_wet_wilt_mode/wilting_wet_soil > q_root_rot_wet_soil_wilt=no",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453620632_0dwl14hv",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "tip_burn",
+          "symptomCn": "叶尖焦枯",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "salt_dry_edge_mode",
+        "classKey": "salt_dry_edge_mode",
+        "symptomKey": "tip_burn"
+      },
+      "round1": {
+        "answerPathSignature": "salt_dry_edge_mode/tip_burn > q_observed_probe__tip_burn__distribution_scope=yes"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺水"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "salt_dry_edge_mode/tip_burn > q_observed_probe__tip_burn__distribution_scope=yes",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453618556_fjy01tod",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_wet_soil",
+          "symptomCn": "湿土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "root_rot_wet_wilt_mode",
+        "classKey": "root_rot_wet_wilt_mode",
+        "symptomKey": "wilting_wet_soil"
+      },
+      "round1": {
+        "answerPathSignature": "root_rot_wet_wilt_mode/wilting_wet_soil > q_root_rot_wet_soil_wilt=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是根腐"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "root_rot_wet_wilt_mode/wilting_wet_soil > q_root_rot_wet_soil_wilt=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453623805_k7h8uug7",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "tip_burn",
+          "symptomCn": "叶尖焦枯",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "salt_dry_edge_mode",
+        "classKey": "salt_dry_edge_mode",
+        "symptomKey": "tip_burn"
+      },
+      "round1": {
+        "answerPathSignature": "salt_dry_edge_mode/tip_burn > q_observed_probe__tip_burn__distribution_scope=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺水"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "salt_dry_edge_mode/tip_burn > q_observed_probe__tip_burn__distribution_scope=no",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453624122_07h015n1",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "tip_burn",
+          "symptomCn": "叶尖焦枯",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "salt_dry_edge_mode",
+        "classKey": "salt_dry_edge_mode",
+        "symptomKey": "tip_burn"
+      },
+      "round1": {
+        "answerPathSignature": "salt_dry_edge_mode/tip_burn > q_observed_probe__tip_burn__distribution_scope=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺水"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "salt_dry_edge_mode/tip_burn > q_observed_probe__tip_burn__distribution_scope=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453625117_e3fxiyn3",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "white_flies",
+          "symptomCn": "有白色小飞虫，一碰会飞起来",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "sap_sucking_honeydew_pest_mode",
+        "classKey": "sap_sucking_honeydew_pest_mode",
+        "symptomKey": "white_flies"
+      },
+      "round1": {
+        "answerPathSignature": "sap_sucking_honeydew_pest_mode/white_flies > q_observed_probe__white_flies__distribution_scope=yes"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是白粉虱"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "sap_sucking_honeydew_pest_mode/white_flies > q_observed_probe__white_flies__distribution_scope=yes",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453625664_u246wc3o",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "white_flies",
+          "symptomCn": "有白色小飞虫，一碰会飞起来",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "sap_sucking_honeydew_pest_mode",
+        "classKey": "sap_sucking_honeydew_pest_mode",
+        "symptomKey": "white_flies"
+      },
+      "round1": {
+        "answerPathSignature": "sap_sucking_honeydew_pest_mode/white_flies > q_observed_probe__white_flies__distribution_scope=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是白粉虱"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "sap_sucking_honeydew_pest_mode/white_flies > q_observed_probe__white_flies__distribution_scope=no",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453626138_yt4ueb20",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "white_flies",
+          "symptomCn": "有白色小飞虫，一碰会飞起来",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "sap_sucking_honeydew_pest_mode",
+        "classKey": "sap_sucking_honeydew_pest_mode",
+        "symptomKey": "white_flies"
+      },
+      "round1": {
+        "answerPathSignature": "sap_sucking_honeydew_pest_mode/white_flies > q_observed_probe__white_flies__distribution_scope=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是白粉虱"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "sap_sucking_honeydew_pest_mode/white_flies > q_observed_probe__white_flies__distribution_scope=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453626214_027xvewz",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "soft_stem",
+          "symptomCn": "茎变软",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "soft_rot_mode",
+        "classKey": "soft_rot_mode",
+        "symptomKey": "soft_stem"
+      },
+      "round1": {
+        "answerPathSignature": "soft_rot_mode/soft_stem > q_stem_collapse_poor_drainage=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是软腐"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "soft_rot_mode/soft_stem > q_stem_collapse_poor_drainage=no",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453629275_tq5yttcx",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "soft_stem",
+          "symptomCn": "茎变软",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "soft_rot_mode",
+        "classKey": "soft_rot_mode",
+        "symptomKey": "soft_stem"
+      },
+      "round1": {
+        "answerPathSignature": "soft_rot_mode/soft_stem > q_stem_collapse_poor_drainage=yes"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是根腐"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "soft_rot_mode/soft_stem > q_stem_collapse_poor_drainage=yes",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453628996_hp14vi1u",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "soft_stem",
+          "symptomCn": "茎变软",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "soft_rot_mode",
+        "classKey": "soft_rot_mode",
+        "symptomKey": "soft_stem"
+      },
+      "round1": {
+        "answerPathSignature": "soft_rot_mode/soft_stem > q_stem_collapse_poor_drainage=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是软腐"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "soft_rot_mode/soft_stem > q_stem_collapse_poor_drainage=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453630120_ev1gn0yd",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "heat_stress",
+          "symptomCn": "高温胁迫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "temperature_stress_mode",
+        "classKey": "temperature_stress_mode",
+        "symptomKey": "heat_stress"
+      },
+      "round1": {
+        "answerPathSignature": "temperature_stress_mode/heat_stress > q_observed_probe__heat_stress__distribution_scope=yes"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是高温伤害"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "temperature_stress_mode/heat_stress > q_observed_probe__heat_stress__distribution_scope=yes",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453630599_r009pg4b",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "heat_stress",
+          "symptomCn": "高温胁迫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "temperature_stress_mode",
+        "classKey": "temperature_stress_mode",
+        "symptomKey": "heat_stress"
+      },
+      "round1": {
+        "answerPathSignature": "temperature_stress_mode/heat_stress > q_observed_probe__heat_stress__distribution_scope=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是高温伤害"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "temperature_stress_mode/heat_stress > q_observed_probe__heat_stress__distribution_scope=no",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453631204_3mr19dbz",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "heat_stress",
+          "symptomCn": "高温胁迫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "temperature_stress_mode",
+        "classKey": "temperature_stress_mode",
+        "symptomKey": "heat_stress"
+      },
+      "round1": {
+        "answerPathSignature": "temperature_stress_mode/heat_stress > q_observed_probe__heat_stress__distribution_scope=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是高温伤害"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "temperature_stress_mode/heat_stress > q_observed_probe__heat_stress__distribution_scope=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453631637_8wfsrw2k",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是红蜘蛛"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453634424_j9jwbl94",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是红蜘蛛"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453634532_6mhcbbz1",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是红蜘蛛"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453635167_rlspqn5o",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是红蜘蛛"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453635685_splyvz90",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "yellow_speckling",
+          "symptomCn": "点刺状黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "thrips_damage_mode",
+        "classKey": "thrips_damage_mode",
+        "symptomKey": "yellow_speckling"
+      },
+      "round1": {
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是红蜘蛛"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453636215_yymg5jol",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_dry_soil",
+          "symptomCn": "干土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "water_stress_mode",
+        "classKey": "water_stress_mode",
+        "symptomKey": "wilting_dry_soil"
+      },
+      "round1": {
+        "answerPathSignature": "water_stress_mode/wilting_dry_soil > q_underwater_dry_wilt=no"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是粉蚧"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "water_stress_mode/wilting_dry_soil > q_underwater_dry_wilt=no",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453636872_19xc6gqx",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_dry_soil",
+          "symptomCn": "干土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "water_stress_mode",
+        "classKey": "water_stress_mode",
+        "symptomKey": "wilting_dry_soil"
+      },
+      "round1": {
+        "answerPathSignature": "water_stress_mode/wilting_dry_soil > q_underwater_dry_wilt=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺水"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "water_stress_mode/wilting_dry_soil > q_underwater_dry_wilt=unknown",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453639347_yf5a3lms",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wilting_dry_soil",
+          "symptomCn": "干土萎蔫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "water_stress_mode",
+        "classKey": "water_stress_mode",
+        "symptomKey": "wilting_dry_soil"
+      },
+      "round1": {
+        "answerPathSignature": "water_stress_mode/wilting_dry_soil > q_underwater_dry_wilt=yes"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺水"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "water_stress_mode/wilting_dry_soil > q_underwater_dry_wilt=yes",
+        "roundsUsed": 1
+      }
+    },
+    {
+      "sessionId": "diag_1777453639386_xryof2xe",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=watering_area"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是浇水过多"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=watering_area",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453640090_al3gbk0m",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=light_area"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是根腐"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=light_area",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453640642_67jjodun",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=fertilization_area"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺氮"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=fertilization_area",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453641665_8psd55y3",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是浇水过多"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453642179_uyfudb1j",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是浇水过多"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=unknown",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453644610_rq62had7",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=mite_webbing"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺氮"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=mite_webbing",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453647688_bcyjg122",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=thrips_silver_black"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺氮"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=thrips_silver_black",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453648465_v9kbbtnu",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=sticky_honeydew"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺氮"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=sticky_honeydew",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453649019_ws7imj0p",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=no_pest_trace"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是光照不足"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=no_pest_trace",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453650065_oa867cn9",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺氮"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=unknown",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453650520_uuzea2ti",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=halo_spots"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺氮"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=halo_spots",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453652549_n1pms25i",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=water_soaked_soft"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺氮"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=water_soaked_soft",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453655616_6vr0lm5s",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=powder_mold_surface"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺氮"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=powder_mold_surface",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453656232_kczsub1r",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=yellowing_only_no_lesion"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是光照不足"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=yellowing_only_no_lesion",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453656868_jcgzhgt8",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺氮"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=unknown",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453658136_sth49vlm",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺铁"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453658466_vetzovvi",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=old_lower_leaves_first"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺氮"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=old_lower_leaves_first",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453660546_jvgwjo02",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=no_clear_age_bias"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺氮"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=no_clear_age_bias",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453663527_wp2vilsu",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "uniform_yellowing",
+          "symptomCn": "整叶黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "yellowing_mode",
+        "classKey": "yellowing_mode",
+        "symptomKey": "uniform_yellowing"
+      },
+      "round1": {
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=unknown"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是缺氮"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=unknown",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453664441_72qpmr1f",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "edema",
+          "symptomCn": "水肿",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "edema_overwater_mode",
+        "classKey": "edema_overwater_mode",
+        "symptomKey": "edema"
+      },
+      "round1": {
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no > q_observed_probe__edema__edema_bump_stage=watery_blister"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是浇水过多"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no > q_observed_probe__edema__edema_bump_stage=watery_blister",
+        "roundsUsed": 2
+      }
+    },
+    {
+      "sessionId": "diag_1777453664925_2yysbgao",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "edema",
+          "symptomCn": "水肿",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "edema_overwater_mode",
+        "classKey": "edema_overwater_mode",
+        "symptomKey": "edema"
+      },
+      "round1": {
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no > q_observed_probe__edema__edema_bump_stage=corky_scab"
+      },
+      "round2": [],
+      "outcome": {
+        "title": "更像是水肿"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no > q_observed_probe__edema__edema_bump_stage=corky_scab",
+        "roundsUsed": 2
+      }
+    }
+  ]
+}

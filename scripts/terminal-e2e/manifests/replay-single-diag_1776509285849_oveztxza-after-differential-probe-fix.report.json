@@ -1,0 +1,183 @@
+{
+  "generatedAt": "2026-04-23T09:47:10.848Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "collectionProfile": {
+    "source": "all",
+    "manualVisualOnly": false,
+    "manualVisualOnlyProvided": false
+  },
+  "visualEvidenceSummary": {
+    "total": 1,
+    "available": 1,
+    "missingRawRecords": 0,
+    "emptyConclusion": 0
+  },
+  "total": 1,
+  "success": 1,
+  "failed": 0,
+  "progress": {
+    "processed": 1,
+    "targetTotal": 1,
+    "complete": true
+  },
+  "results": [
+    {
+      "sessionId": "diag_1776509285849_oveztxza",
+      "openid": "dev_terminal_combo_5456556b27f7dacf9dc1",
+      "visualEvidence": {
+        "symptomCandidates": [
+          {
+            "symptomKey": "black_spots_spreading",
+            "displayNameCn": "黑斑扩散",
+            "confidenceBand": "medium",
+            "supportingRegionNote": "叶片上可见局部深色斑块，符合黑斑扩散的特征但强度较弱"
+          }
+        ],
+        "outOfPoolCandidates": [],
+        "routeHints": [
+          {
+            "type": "possible_problematic_signal",
+            "reason": "detected weak visual evidence of black_spots_spreading"
+          }
+        ]
+      },
+      "visualEvidenceMeta": {
+        "status": "available",
+        "reason": "",
+        "visualRawRecordCount": 1,
+        "symptomCandidateCount": 1,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 1,
+        "hasVisualConclusion": true
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 3
+        }
+      },
+      "symptomClassSource": null,
+      "symptomClassReplay": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 3
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_black_spots_spreading_confirm",
+            "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
+            "targetDimension": "visual_presence",
+            "answer": {
+              "optionKey": "no",
+              "optionText": "否，基本没有",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "questionText": "这些斑点/斑块更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_bacterial_water_soaked",
+            "questionText": "病斑有水渍感、湿润半透明吗？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "no",
+              "optionText": "否，基本没有",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_black_spots_tissue_moisture_check",
+            "questionText": "这些斑点/斑块摸起来更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 3
+      }
+    }
+  ]
+}

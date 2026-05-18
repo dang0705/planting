@@ -1,0 +1,3136 @@
+{
+  "generatedAt": "2026-04-23T14:26:45.308Z",
+  "schema": "cloud1_dev",
+  "mode": "materialized_from_existing_replay_reports",
+  "artifactSplit": {
+    "rootBaseName": "20260423-manual-generated-from-current",
+    "partIndex": 9,
+    "partCount": 9,
+    "maxResultsPerFile": 100
+  },
+  "sourceFiles": [
+    "scripts/terminal-e2e/manifests/replay-all-visual-final-evidence-current.report.json"
+  ],
+  "visualFinalEvidenceSummary": {
+    "total": 18,
+    "available": 18,
+    "missingRawRecords": 0,
+    "emptyConclusion": 0
+  },
+  "total": 18,
+  "success": 18,
+  "failed": 0,
+  "progress": {
+    "processed": 18,
+    "targetTotal": 18,
+    "complete": true
+  },
+  "results": [
+    {
+      "sessionId": "diag_1776436254162_lpjxfcpz",
+      "visualFinalEvidence": [
+        {
+          "visualAdmissionRecordId": "visadmit_1776436261598_fbv4k67b",
+          "visualNormalizedImageResultId": "visnorm_1776436254162_vpv97zw7",
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.93,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        }
+      ],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 3,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
+            "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
+            "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
+            "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+            "targetDimension": "lesion_halo",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "final",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 2
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1776436254162_lpjxfcpz",
+        "easySummary": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。第2轮没有触发问诊。最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮没有触发问诊。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统仍按固定公式完成了问题竞争，但当前产物里没有保留可展开的分数明细。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。"
+          }
+        ],
+        "competitionTopCandidates": [],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776436305594_3rwd1t1c",
+      "visualFinalEvidence": [
+        {
+          "visualAdmissionRecordId": "visadmit_1776436314238_dyumzjub",
+          "visualNormalizedImageResultId": "visnorm_1776436305594_bv15zz3b",
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.93,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        }
+      ],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 3,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
+            "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
+            "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
+            "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+            "targetDimension": "lesion_halo",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "final",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 2
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1776436305594_3rwd1t1c",
+        "easySummary": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。第2轮没有触发问诊。最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮没有触发问诊。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统仍按固定公式完成了问题竞争，但当前产物里没有保留可展开的分数明细。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。"
+          }
+        ],
+        "competitionTopCandidates": [],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776436344246_e41ye9tk",
+      "visualFinalEvidence": [
+        {
+          "visualAdmissionRecordId": "visadmit_1776436352257_levaqo17",
+          "visualNormalizedImageResultId": "visnorm_1776436344246_jcgo7jlk",
+          "symptomKey": "black_spots_spreading",
+          "symptomCn": "黑斑扩散",
+          "confidence": 0.93,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        }
+      ],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "真菌性叶斑模式",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "fungal_leaf_spot_mode",
+          "primaryClassRuntimeScore": 0.85,
+          "unknownLockCount": 6,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 3
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "surface",
+              "optionText": "更像浮在表面，轻擦会蹭开",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_black_spots_tissue_moisture_check",
+            "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "dry_firm",
+              "optionText": "更像干硬坏死，不发软",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_bacterial_water_soaked",
+            "questionText": "病斑有水渍感、湿润半透明吗？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "no",
+              "optionText": "否，基本没有",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
+            "targetDimension": "visual_presence",
+            "answer": {
+              "optionKey": "no",
+              "optionText": "否，基本没有",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
+            "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+            "targetDimension": "lesion_halo",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
+            "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
+            "targetDimension": "lesion_water_soaking",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 3
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1776436344246_e41ye9tk",
+        "easySummary": "正式进入证据层的视觉证据有 “黑斑扩散”(置信度 0.93)。症状模式收敛到“真菌性叶斑模式”，当前题组落在“fungal_spot_group”。第1轮共 3 题：问“这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“更像浮在表面，轻擦会蹭开”；问“斑点附近叶组织更像干硬坏死，还是发软、带水渍感？”，答“更像干硬坏死，不发软”；问“病斑有水渍感、湿润半透明吗？”，答“否，基本没有”。第2轮共 3 题：问“叶片有褐色病斑，并在周围伴随黄色晕圈吗？”，答“否，基本没有”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”；问“黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？”，答“看不出/不确定”。最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "正式进入证据层的视觉证据有 “黑斑扩散”(置信度 0.93)。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“真菌性叶斑模式”，当前题组落在“fungal_spot_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 3 题：问“这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“更像浮在表面，轻擦会蹭开”；问“斑点附近叶组织更像干硬坏死，还是发软、带水渍感？”，答“更像干硬坏死，不发软”；问“病斑有水渍感、湿润半透明吗？”，答“否，基本没有”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮共 3 题：问“叶片有褐色病斑，并在周围伴随黄色晕圈吗？”，答“否，基本没有”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”；问“黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统仍按固定公式完成了问题竞争，但当前产物里没有保留可展开的分数明细。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。"
+          }
+        ],
+        "competitionTopCandidates": [],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776436510188_r60o1m10",
+      "visualFinalEvidence": [
+        {
+          "visualAdmissionRecordId": "visadmit_1776436517586_u78xlwhx",
+          "visualNormalizedImageResultId": "visnorm_1776436510188_wus6a2ft",
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.93,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        }
+      ],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 3,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
+            "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
+            "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
+            "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+            "targetDimension": "lesion_halo",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "final",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 2
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1776436510188_r60o1m10",
+        "easySummary": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。第2轮没有触发问诊。最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮没有触发问诊。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统仍按固定公式完成了问题竞争，但当前产物里没有保留可展开的分数明细。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。"
+          }
+        ],
+        "competitionTopCandidates": [],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776436547315_9yuz05tt",
+      "visualFinalEvidence": [
+        {
+          "visualAdmissionRecordId": "visadmit_1776436555224_ej4dclrw",
+          "visualNormalizedImageResultId": "visnorm_1776436547315_t76z8oap",
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.93,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        }
+      ],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 3,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
+            "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
+            "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
+            "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+            "targetDimension": "lesion_halo",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "final",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 2
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1776436547315_9yuz05tt",
+        "easySummary": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。第2轮没有触发问诊。最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮没有触发问诊。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统仍按固定公式完成了问题竞争，但当前产物里没有保留可展开的分数明细。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。"
+          }
+        ],
+        "competitionTopCandidates": [],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776436587128_33kfojld",
+      "visualFinalEvidence": [
+        {
+          "visualAdmissionRecordId": "visadmit_1776436594663_o3q2xjh9",
+          "visualNormalizedImageResultId": "visnorm_1776436587129_pdncm76t",
+          "symptomKey": "black_spots_spreading",
+          "symptomCn": "黑斑扩散",
+          "confidence": 0.93,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        }
+      ],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "真菌性叶斑模式",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "fungal_leaf_spot_mode",
+          "primaryClassRuntimeScore": 0.85,
+          "unknownLockCount": 6,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 3
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "embedded",
+              "optionText": "像长在叶子里面，擦不掉",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_black_spots_tissue_moisture_check",
+            "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "soft_wet",
+              "optionText": "发软、湿润或带水渍感",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_bacterial_water_soaked",
+            "questionText": "病斑有水渍感、湿润半透明吗？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "no",
+              "optionText": "否，基本没有",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
+            "targetDimension": "visual_presence",
+            "answer": {
+              "optionKey": "no",
+              "optionText": "否，基本没有",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
+            "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+            "targetDimension": "lesion_halo",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
+            "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
+            "targetDimension": "lesion_water_soaking",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 3
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1776436587128_33kfojld",
+        "easySummary": "正式进入证据层的视觉证据有 “黑斑扩散”(置信度 0.93)。症状模式收敛到“真菌性叶斑模式”，当前题组落在“fungal_spot_group”。第1轮共 3 题：问“这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“像长在叶子里面，擦不掉”；问“斑点附近叶组织更像干硬坏死，还是发软、带水渍感？”，答“发软、湿润或带水渍感”；问“病斑有水渍感、湿润半透明吗？”，答“否，基本没有”。第2轮共 3 题：问“叶片有褐色病斑，并在周围伴随黄色晕圈吗？”，答“否，基本没有”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”；问“黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？”，答“看不出/不确定”。最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "正式进入证据层的视觉证据有 “黑斑扩散”(置信度 0.93)。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“真菌性叶斑模式”，当前题组落在“fungal_spot_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 3 题：问“这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“像长在叶子里面，擦不掉”；问“斑点附近叶组织更像干硬坏死，还是发软、带水渍感？”，答“发软、湿润或带水渍感”；问“病斑有水渍感、湿润半透明吗？”，答“否，基本没有”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮共 3 题：问“叶片有褐色病斑，并在周围伴随黄色晕圈吗？”，答“否，基本没有”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”；问“黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统仍按固定公式完成了问题竞争，但当前产物里没有保留可展开的分数明细。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。"
+          }
+        ],
+        "competitionTopCandidates": [],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776436720145_84xp016g",
+      "visualFinalEvidence": [
+        {
+          "visualAdmissionRecordId": "visadmit_1776436727676_t0x5ruf9",
+          "visualNormalizedImageResultId": "visnorm_1776436720145_qzioxnyh",
+          "symptomKey": "black_spots_spreading",
+          "symptomCn": "黑斑扩散",
+          "confidence": 0.93,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        }
+      ],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "真菌性叶斑模式",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "fungal_leaf_spot_mode",
+          "primaryClassRuntimeScore": 0.85,
+          "unknownLockCount": 3,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_black_spots_tissue_moisture_check",
+            "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "dry_firm",
+              "optionText": "更像干硬坏死，不发软",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_bacterial_water_soaked",
+            "questionText": "病斑有水渍感、湿润半透明吗？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "no",
+              "optionText": "否，基本没有",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "final",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 2
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1776436720145_84xp016g",
+        "easySummary": "正式进入证据层的视觉证据有 “黑斑扩散”(置信度 0.93)。症状模式收敛到“真菌性叶斑模式”，当前题组落在“fungal_spot_group”。第1轮共 3 题：问“这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“斑点附近叶组织更像干硬坏死，还是发软、带水渍感？”，答“更像干硬坏死，不发软”；问“病斑有水渍感、湿润半透明吗？”，答“否，基本没有”。第2轮没有触发问诊。最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "正式进入证据层的视觉证据有 “黑斑扩散”(置信度 0.93)。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“真菌性叶斑模式”，当前题组落在“fungal_spot_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 3 题：问“这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“斑点附近叶组织更像干硬坏死，还是发软、带水渍感？”，答“更像干硬坏死，不发软”；问“病斑有水渍感、湿润半透明吗？”，答“否，基本没有”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮没有触发问诊。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统仍按固定公式完成了问题竞争，但当前产物里没有保留可展开的分数明细。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。"
+          }
+        ],
+        "competitionTopCandidates": [],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776436758241_ja2hvnyp",
+      "visualFinalEvidence": [
+        {
+          "visualAdmissionRecordId": "visadmit_1776436765616_ns1dj8ck",
+          "visualNormalizedImageResultId": "visnorm_1776436758241_9jrywqmz",
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.93,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        }
+      ],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 3,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
+            "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
+            "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
+            "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+            "targetDimension": "lesion_halo",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "final",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 2
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1776436758241_ja2hvnyp",
+        "easySummary": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。第2轮没有触发问诊。最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮没有触发问诊。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统仍按固定公式完成了问题竞争，但当前产物里没有保留可展开的分数明细。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。"
+          }
+        ],
+        "competitionTopCandidates": [],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776436814578_41j68a54",
+      "visualFinalEvidence": [
+        {
+          "visualAdmissionRecordId": "visadmit_1776436822226_zmr5kqx4",
+          "visualNormalizedImageResultId": "visnorm_1776436814578_r6wtxl5b",
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.93,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        }
+      ],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 3,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
+            "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
+            "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
+            "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+            "targetDimension": "lesion_halo",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "final",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 2
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1776436814578_41j68a54",
+        "easySummary": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。第2轮没有触发问诊。最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮没有触发问诊。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统仍按固定公式完成了问题竞争，但当前产物里没有保留可展开的分数明细。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。"
+          }
+        ],
+        "competitionTopCandidates": [],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776437130230_m0bhgwdt",
+      "visualFinalEvidence": [
+        {
+          "visualAdmissionRecordId": "visadmit_1776437139320_kv7y87e7",
+          "visualNormalizedImageResultId": "visnorm_1776437130230_qu5dcdbh",
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.93,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        }
+      ],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 3,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
+            "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
+            "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
+            "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+            "targetDimension": "lesion_halo",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "final",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 2
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1776437130230_m0bhgwdt",
+        "easySummary": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。第2轮没有触发问诊。最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮没有触发问诊。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统仍按固定公式完成了问题竞争，但当前产物里没有保留可展开的分数明细。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。"
+          }
+        ],
+        "competitionTopCandidates": [],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776437272213_3kd5h8fb",
+      "visualFinalEvidence": [
+        {
+          "visualAdmissionRecordId": "visadmit_1776437280321_5n23dz5y",
+          "visualNormalizedImageResultId": "visnorm_1776437272213_8i8jk5u4",
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.93,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        }
+      ],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 3,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
+            "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
+            "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
+            "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+            "targetDimension": "lesion_halo",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "final",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 2
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1776437272213_3kd5h8fb",
+        "easySummary": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。第2轮没有触发问诊。最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮没有触发问诊。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统仍按固定公式完成了问题竞争，但当前产物里没有保留可展开的分数明细。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。"
+          }
+        ],
+        "competitionTopCandidates": [],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776438251263_jqmcpnsj",
+      "visualFinalEvidence": [
+        {
+          "visualAdmissionRecordId": "visadmit_1776438258612_2aj7krro",
+          "visualNormalizedImageResultId": "visnorm_1776438251263_et6c8r8k",
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.93,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        }
+      ],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 3,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
+            "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
+            "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
+            "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+            "targetDimension": "lesion_halo",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "final",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 2
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1776438251263_jqmcpnsj",
+        "easySummary": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。第2轮没有触发问诊。最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮没有触发问诊。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统仍按固定公式完成了问题竞争，但当前产物里没有保留可展开的分数明细。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。"
+          }
+        ],
+        "competitionTopCandidates": [],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776438718980_7x20cs7c",
+      "visualFinalEvidence": [
+        {
+          "visualAdmissionRecordId": "visadmit_1776438726590_4oaau1vm",
+          "visualNormalizedImageResultId": "visnorm_1776438718980_cl9wuf5t",
+          "symptomKey": "black_spots_spreading",
+          "symptomCn": "黑斑扩散",
+          "confidence": 0.93,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        }
+      ],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "真菌性叶斑模式",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "bacterial_leaf_spot_mode",
+          "primaryClassRuntimeScore": 1,
+          "unknownLockCount": 6,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 3
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "surface",
+              "optionText": "更像浮在表面，轻擦会蹭开",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_black_spots_tissue_moisture_check",
+            "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "dry_firm",
+              "optionText": "更像干硬坏死，不发软",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_bacterial_water_soaked",
+            "questionText": "病斑有水渍感、湿润半透明吗？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "yes",
+              "optionText": "是，比较确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
+            "targetDimension": "visual_presence",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__water_soaked_spots__tissue_integrity",
+            "questionText": "这些“水渍斑”所在位置，叶组织本身是完整但变色，还是已经被咬掉/破掉，形成缺口、真洞或缺损边缘？",
+            "targetDimension": "tissue_integrity",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__water_soaked_spots__surface_residue",
+            "questionText": "这些“水渍斑”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 3
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1776438718980_7x20cs7c",
+        "easySummary": "正式进入证据层的视觉证据有 “黑斑扩散”(置信度 0.93)。症状模式收敛到“真菌性叶斑模式”，当前题组落在“fungal_spot_group”。第1轮共 3 题：问“这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“更像浮在表面，轻擦会蹭开”；问“斑点附近叶组织更像干硬坏死，还是发软、带水渍感？”，答“更像干硬坏死，不发软”；问“病斑有水渍感、湿润半透明吗？”，答“是，比较确定”。第2轮共 3 题：问“叶片有褐色病斑，并在周围伴随黄色晕圈吗？”，答“看不出/不确定”；问“这些“水渍斑”所在位置，叶组织本身是完整但变色，还是已经被咬掉/破掉，形成缺口、真洞或缺损边缘？”，答“看不出/不确定”；问“这些“水渍斑”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”。最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "正式进入证据层的视觉证据有 “黑斑扩散”(置信度 0.93)。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“真菌性叶斑模式”，当前题组落在“fungal_spot_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 3 题：问“这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“更像浮在表面，轻擦会蹭开”；问“斑点附近叶组织更像干硬坏死，还是发软、带水渍感？”，答“更像干硬坏死，不发软”；问“病斑有水渍感、湿润半透明吗？”，答“是，比较确定”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮共 3 题：问“叶片有褐色病斑，并在周围伴随黄色晕圈吗？”，答“看不出/不确定”；问“这些“水渍斑”所在位置，叶组织本身是完整但变色，还是已经被咬掉/破掉，形成缺口、真洞或缺损边缘？”，答“看不出/不确定”；问“这些“水渍斑”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统仍按固定公式完成了问题竞争，但当前产物里没有保留可展开的分数明细。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。"
+          }
+        ],
+        "competitionTopCandidates": [],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776439523616_54aswlmr",
+      "visualFinalEvidence": [
+        {
+          "visualAdmissionRecordId": "visadmit_1776439531374_6ib2cxqk",
+          "visualNormalizedImageResultId": "visnorm_1776439523616_s2bm1ppq",
+          "symptomKey": "black_spots_spreading",
+          "symptomCn": "黑斑扩散",
+          "confidence": 0.93,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        }
+      ],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "真菌性叶斑模式",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "fungal_leaf_spot_mode",
+          "primaryClassRuntimeScore": 0.7905,
+          "unknownLockCount": 6,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 3
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "surface",
+              "optionText": "更像浮在表面，轻擦会蹭开",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_black_spots_tissue_moisture_check",
+            "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_bacterial_water_soaked",
+            "questionText": "病斑有水渍感、湿润半透明吗？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "no",
+              "optionText": "否，基本没有",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
+            "targetDimension": "visual_presence",
+            "answer": {
+              "optionKey": "no",
+              "optionText": "否，基本没有",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
+            "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+            "targetDimension": "lesion_halo",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
+            "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
+            "targetDimension": "lesion_water_soaking",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 3
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1776439523616_54aswlmr",
+        "easySummary": "正式进入证据层的视觉证据有 “黑斑扩散”(置信度 0.93)。症状模式收敛到“真菌性叶斑模式”，当前题组落在“fungal_spot_group”。第1轮共 3 题：问“这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“更像浮在表面，轻擦会蹭开”；问“斑点附近叶组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“病斑有水渍感、湿润半透明吗？”，答“否，基本没有”。第2轮共 3 题：问“叶片有褐色病斑，并在周围伴随黄色晕圈吗？”，答“否，基本没有”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”；问“黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？”，答“看不出/不确定”。最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "正式进入证据层的视觉证据有 “黑斑扩散”(置信度 0.93)。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“真菌性叶斑模式”，当前题组落在“fungal_spot_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 3 题：问“这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“更像浮在表面，轻擦会蹭开”；问“斑点附近叶组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“病斑有水渍感、湿润半透明吗？”，答“否，基本没有”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮共 3 题：问“叶片有褐色病斑，并在周围伴随黄色晕圈吗？”，答“否，基本没有”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”；问“黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统仍按固定公式完成了问题竞争，但当前产物里没有保留可展开的分数明细。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。"
+          }
+        ],
+        "competitionTopCandidates": [],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776439688964_bp37ubda",
+      "visualFinalEvidence": [
+        {
+          "visualAdmissionRecordId": "visadmit_1776439696078_fuwdofw3",
+          "visualNormalizedImageResultId": "visnorm_1776439688964_hkuklz8b",
+          "symptomKey": "black_spots_spreading",
+          "symptomCn": "黑斑扩散",
+          "confidence": 0.93,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        }
+      ],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "真菌性叶斑模式",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "fungal_leaf_spot_mode",
+          "primaryClassRuntimeScore": 0.85,
+          "unknownLockCount": 3,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "embedded",
+              "optionText": "像长在叶子里面，擦不掉",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_black_spots_tissue_moisture_check",
+            "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "dry_firm",
+              "optionText": "更像干硬坏死，不发软",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_bacterial_water_soaked",
+            "questionText": "病斑有水渍感、湿润半透明吗？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "final",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 2
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1776439688964_bp37ubda",
+        "easySummary": "正式进入证据层的视觉证据有 “黑斑扩散”(置信度 0.93)。症状模式收敛到“真菌性叶斑模式”，当前题组落在“fungal_spot_group”。第1轮共 3 题：问“这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“像长在叶子里面，擦不掉”；问“斑点附近叶组织更像干硬坏死，还是发软、带水渍感？”，答“更像干硬坏死，不发软”；问“病斑有水渍感、湿润半透明吗？”，答“看不出/不确定”。第2轮没有触发问诊。最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "正式进入证据层的视觉证据有 “黑斑扩散”(置信度 0.93)。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“真菌性叶斑模式”，当前题组落在“fungal_spot_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 3 题：问“这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“像长在叶子里面，擦不掉”；问“斑点附近叶组织更像干硬坏死，还是发软、带水渍感？”，答“更像干硬坏死，不发软”；问“病斑有水渍感、湿润半透明吗？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮没有触发问诊。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统仍按固定公式完成了问题竞争，但当前产物里没有保留可展开的分数明细。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。"
+          }
+        ],
+        "competitionTopCandidates": [],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776441282025_6pziuvct",
+      "visualFinalEvidence": [
+        {
+          "visualAdmissionRecordId": "visadmit_1776441288659_4yp3bjv6",
+          "visualNormalizedImageResultId": "visnorm_1776441282025_8if1reme",
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.93,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        }
+      ],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 3,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
+            "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
+            "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
+            "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+            "targetDimension": "lesion_halo",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "final",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 2
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1776441282025_6pziuvct",
+        "easySummary": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。第2轮没有触发问诊。最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮没有触发问诊。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统仍按固定公式完成了问题竞争，但当前产物里没有保留可展开的分数明细。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。"
+          }
+        ],
+        "competitionTopCandidates": [],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776441296948_jli3mjbh",
+      "visualFinalEvidence": [
+        {
+          "visualAdmissionRecordId": "visadmit_1776441303509_8i9x4ovj",
+          "visualNormalizedImageResultId": "visnorm_1776441296948_w0ry80lq",
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.93,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        }
+      ],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 3,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
+            "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
+            "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
+            "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+            "targetDimension": "lesion_halo",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "final",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 2
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1776441296948_jli3mjbh",
+        "easySummary": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。第2轮没有触发问诊。最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮没有触发问诊。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统仍按固定公式完成了问题竞争，但当前产物里没有保留可展开的分数明细。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。"
+          }
+        ],
+        "competitionTopCandidates": [],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776441420839_e8tuvlqe",
+      "visualFinalEvidence": [
+        {
+          "visualAdmissionRecordId": "visadmit_1776441428957_q5fvplu9",
+          "visualNormalizedImageResultId": "visnorm_1776441420839_gzdi0pvs",
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.93,
+          "admissionReason": "formal_gate_passed",
+          "targetLayer": "observed_evidence_set",
+          "enteredRuntime": 1,
+          "source": "visual_formally_admitted"
+        }
+      ],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 3,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
+            "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
+            "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
+            "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+            "targetDimension": "lesion_halo",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "final",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 2
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1776441420839_e8tuvlqe",
+        "easySummary": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。第2轮没有触发问诊。最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "正式进入证据层的视觉证据有 “不规则斑块”(置信度 0.93)。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“fungal_leaf_spot_mode”，当前题组落在“fungal_spot_group”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 3 题：问“这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？”，答“看不出/不确定”；问“异常附近组织更像干硬坏死，还是发软、带水渍感？”，答“看不出/不确定”；问“这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮没有触发问诊。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统仍按固定公式完成了问题竞争，但当前产物里没有保留可展开的分数明细。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。"
+          }
+        ],
+        "competitionTopCandidates": [],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“问题性结论”。当前已形成问题性输出，但源数据里没有保留最终排名明细。 stopReason=problematic_output_ready。",
+          "whyNotOtherOutcomes": [
+            "不是非问题性结论，因为系统没有命中非问题性规则。",
+            "不是不确定结论，因为当前已经满足问题性输出的停止条件。"
+          ],
+          "raw": {
+            "stopReason": "problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    }
+  ]
+}

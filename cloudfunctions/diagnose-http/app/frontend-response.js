@@ -155,6 +155,7 @@ function buildMinimalAvoidAdvice(publicResponse = {}, explanation = null) {
 
 function pickMinimalFinalResult(finalResult = null) {
   if (!finalResult || typeof finalResult !== 'object') {return null}
+  const visibleOutcomes = buildVisibleOutcomeEntries(finalResult)
   return {
     resultId: String(finalResult?.resultId || '').trim(),
     problemId: String(finalResult?.problemId || '').trim(),
@@ -165,7 +166,10 @@ function pickMinimalFinalResult(finalResult = null) {
     severity: String(finalResult?.severity || '').trim(),
     confidenceLevel: String(finalResult?.confidenceLevel || '').trim(),
     outcomeType: String(finalResult?.outcomeType || '').trim(),
-    nonProblematicType: String(finalResult?.nonProblematicType || '').trim()
+    nonProblematicType: String(finalResult?.nonProblematicType || '').trim(),
+    visibleOutcomes,
+    outcomeMode: normalizeOutcomeMode(finalResult?.outcomeMode || '', visibleOutcomes),
+    actionAdvice: pickMinimalActionAdvice(finalResult?.actionAdvice)
   }
 }
 
@@ -183,6 +187,51 @@ function pickMinimalOutcomeEntry(outcome = null) {
     actionAdviceItems: normalizeStringList(outcome?.actionAdviceItems),
     avoidAdviceItems: normalizeStringList(outcome?.avoidAdviceItems)
   }
+}
+
+function resolveOutcomeIdentityKey(outcome = null, index = 0) {
+  if (!outcome || typeof outcome !== 'object') {
+    return `outcome_${index}`
+  }
+  return normalizeText(
+    outcome.outcomeKey ||
+      outcome.problemKey ||
+      outcome.problemId ||
+      ''
+  ) || `outcome_${index}`
+}
+
+function buildVisibleOutcomeEntries(source = {}) {
+  const directVisibleOutcomes = Array.isArray(source.visibleOutcomes || source.finalResult?.visibleOutcomes)
+    ? (source.visibleOutcomes || source.finalResult?.visibleOutcomes)
+    : []
+  const legacyPrimaryOutcome = source.primaryOutcome || source.finalResult?.primaryOutcome || null
+  const legacySecondaryOutcomes = Array.isArray(source.secondaryOutcomes || source.finalResult?.secondaryOutcomes)
+    ? (source.secondaryOutcomes || source.finalResult?.secondaryOutcomes)
+    : []
+  const merged = []
+  const seen = new Set()
+  for (const outcome of [
+    ...directVisibleOutcomes,
+    ...[legacyPrimaryOutcome].filter(Boolean),
+    ...legacySecondaryOutcomes
+  ]) {
+    const minimalOutcome = pickMinimalOutcomeEntry(outcome)
+    if (!minimalOutcome) {continue}
+    const identityKey = resolveOutcomeIdentityKey(minimalOutcome, merged.length)
+    if (seen.has(identityKey)) {continue}
+    seen.add(identityKey)
+    merged.push(minimalOutcome)
+  }
+  return merged
+}
+
+function normalizeOutcomeMode(value = '', visibleOutcomes = []) {
+  const normalized = normalizeText(value)
+  if (['primary_with_secondary', 'primary_only'].includes(normalized)) {
+    return Array.isArray(visibleOutcomes) && visibleOutcomes.length ? 'visible_outcomes' : ''
+  }
+  return normalized
 }
 
 function pickMinimalSummaryCard(summaryCard = null) {
@@ -247,6 +296,12 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
   const actionAdvice = pickMinimalActionAdvice(
     publicResponse.actionAdvice || publicResponse.finalResult?.actionAdvice
   )
+  const visibleOutcomes = buildVisibleOutcomeEntries(publicResponse)
+  const finalResult = pickMinimalFinalResult(publicResponse.finalResult)
+  const outcomeMode = normalizeOutcomeMode(
+    publicResponse.outcomeMode || publicResponse.finalResult?.outcomeMode || '',
+    visibleOutcomes
+  )
   const treatmentText = normalizeText(
     publicResponse.treatmentText ||
       publicResponse.treatment ||
@@ -278,19 +333,9 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
     stopReason: publicResponse.stopReason || '',
     followUpRequired: Boolean(publicResponse.followUpRequired),
     questions,
-    finalResult: pickMinimalFinalResult(publicResponse.finalResult),
-    primaryOutcome: pickMinimalOutcomeEntry(publicResponse.primaryOutcome || publicResponse.finalResult?.primaryOutcome),
-    secondaryOutcomes: (Array.isArray(publicResponse.secondaryOutcomes || publicResponse.finalResult?.secondaryOutcomes)
-      ? (publicResponse.secondaryOutcomes || publicResponse.finalResult?.secondaryOutcomes)
-      : [])
-      .map(pickMinimalOutcomeEntry)
-      .filter(Boolean),
-    visibleOutcomes: (Array.isArray(publicResponse.visibleOutcomes || publicResponse.finalResult?.visibleOutcomes)
-      ? (publicResponse.visibleOutcomes || publicResponse.finalResult?.visibleOutcomes)
-      : [])
-      .map(pickMinimalOutcomeEntry)
-      .filter(Boolean),
-    outcomeMode: String(publicResponse.outcomeMode || publicResponse.finalResult?.outcomeMode || '').trim(),
+    finalResult,
+    visibleOutcomes,
+    outcomeMode,
     routeDecisionCause: publicResponse.routeDecisionCause || null,
     summaryCard: pickMinimalSummaryCard(publicResponse.summaryCard),
     explanation,

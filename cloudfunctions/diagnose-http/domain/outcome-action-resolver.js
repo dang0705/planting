@@ -84,8 +84,8 @@ function resolveOutcomeSummary(routeOutcome, problem, explanation) {
   return buildOutcomeSummary(routeOutcome, problem, explanation)
 }
 
-function buildRouteSafeSummary(primaryOutcome = null) {
-  const displayNameCn = normalizeText(primaryOutcome?.displayNameCn || '')
+function buildRouteSafeSummary(leadingVisibleOutcome = null) {
+  const displayNameCn = normalizeText(leadingVisibleOutcome?.displayNameCn || '')
   if (!displayNameCn) {
     return '当前路径已收敛到单一方向，建议按该方向处理并持续观察变化。'
   }
@@ -139,7 +139,7 @@ function buildOutcomeEntry({
 function buildActionAdviceFallback({
   actionProfiles = [],
   careGuidance = {},
-  primaryOutcome = null
+  leadingVisibleOutcome = null
 } = {}) {
   const hasProfileAdvice = Array.isArray(actionProfiles) && actionProfiles.some(profile => {
     return (
@@ -157,8 +157,8 @@ function buildActionAdviceFallback({
     return null
   }
 
-  const firstAid = normalizeText(primaryOutcome?.firstAid || '')
-  const avoid = normalizeText(primaryOutcome?.avoid || '')
+  const firstAid = normalizeText(leadingVisibleOutcome?.firstAid || '')
+  const avoid = normalizeText(leadingVisibleOutcome?.avoid || '')
 
   return {
     todayActions: uniqKeys(firstAid ? [firstAid] : ['先保持当前浇水和光照节奏，避免同时调整多项参数。']),
@@ -173,15 +173,11 @@ function buildActionAdviceFallback({
 function resolveOutcomeMode({
   authoritativeRouteDecision = false,
   followUpRequired = false,
-  primaryOutcome = null,
-  secondaryOutcomes = [],
   visibleOutcomes = []
 } = {}) {
   if (followUpRequired) {return 'follow_up_required'}
   if (!authoritativeRouteDecision) {return 'route_fallback_uncertain'}
-  if (!primaryOutcome && visibleOutcomes.length) {return 'uncertain_visible'}
-  if (primaryOutcome && secondaryOutcomes.length) {return 'primary_with_secondary'}
-  if (primaryOutcome) {return 'primary_only'}
+  if (visibleOutcomes.length) {return 'visible_outcomes'}
   return 'uncertain_only'
 }
 
@@ -204,17 +200,9 @@ function resolveRouteOutcomePayload({
     (Array.isArray(routeOutcomes) ? routeOutcomes : []).map(item => [item.outcomeKey, item])
   )
   const authoritativeRouteDecision = isAuthoritativeRouteDecision(routeDecision)
-  const routeVisibleOutcomeKeys = authoritativeRouteDecision
+  const visibleOutcomeKeys = authoritativeRouteDecision
     ? uniqKeys(routeDecision?.visibleOutcomeKeys)
     : []
-  const primaryOutcomeKey = authoritativeRouteDecision
-    ? normalizeKey(routeDecision?.primaryOutcomeKey)
-    : ''
-  const secondaryOutcomeKeys = authoritativeRouteDecision
-    ? uniqKeys(routeDecision?.secondaryOutcomeKeys)
-    : []
-  const visibleOutcomeKeys = routeVisibleOutcomeKeys
-  const primaryKey = primaryOutcomeKey
   const safeActionProfiles = Array.isArray(actionProfiles) ? actionProfiles : []
   const actionProfileMap = buildActionProfileMap(safeActionProfiles)
   const buildOutcomeEntryWithProfile = outcomeKey => {
@@ -228,21 +216,17 @@ function resolveRouteOutcomePayload({
     })
   }
 
-  const primaryOutcome = buildOutcomeEntryWithProfile(primaryKey)
-  const secondaryOutcomes = secondaryOutcomeKeys
-    .map(outcomeKey => buildOutcomeEntryWithProfile(outcomeKey))
-    .filter(Boolean)
-    .slice(0, 2)
   const visibleOutcomes = visibleOutcomeKeys
     .map(outcomeKey => buildOutcomeEntryWithProfile(outcomeKey))
     .filter(Boolean)
     .slice(0, 3)
+  const leadingVisibleOutcome = visibleOutcomes[0] || null
   const visibleActionConflictGroups = uniqKeys(routeDecision?.visibleActionConflictGroups)
   const hasActionConflict = visibleActionConflictGroups.length > 1
   const careGuidance = buildCareGuidance({
     plantContext,
     observedEvidenceSet,
-    primaryProblemKey: primaryOutcome?.problemKey || '',
+    primaryProblemKey: leadingVisibleOutcome?.problemKey || '',
     outcomeType
   })
   const mergedActionAdvice = hasActionConflict
@@ -282,7 +266,7 @@ function resolveRouteOutcomePayload({
   const actionAdviceFallback = buildActionAdviceFallback({
     actionProfiles: safeActionProfiles,
     careGuidance,
-    primaryOutcome
+    leadingVisibleOutcome
   })
 
   const actionAdvice = hasActionConflict || !actionAdviceFallback
@@ -294,18 +278,15 @@ function resolveRouteOutcomePayload({
 
   return {
     authoritativeRouteDecision,
-    primaryOutcome,
-    secondaryOutcomes,
+    leadingVisibleOutcome,
     visibleOutcomes,
     outcomeMode: resolveOutcomeMode({
       authoritativeRouteDecision,
       followUpRequired,
-      primaryOutcome,
-      secondaryOutcomes,
       visibleOutcomes
     }),
     routeDecisionCause: normalizeRouteDecisionCause(routeDecision?.decisionCause),
-    routeSafeSummary: buildRouteSafeSummary(primaryOutcome),
+    routeSafeSummary: buildRouteSafeSummary(leadingVisibleOutcome),
     careGuidance,
     actionAdvice
   }

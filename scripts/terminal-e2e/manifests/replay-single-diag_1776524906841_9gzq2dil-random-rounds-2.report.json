@@ -1,0 +1,701 @@
+{
+  "generatedAt": "2026-04-22T14:42:30.658Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "total": 1,
+  "success": 1,
+  "failed": 0,
+  "progress": {
+    "processed": 1,
+    "targetTotal": 1,
+    "complete": true
+  },
+  "results": [
+    {
+      "ok": true,
+      "sessionId": "diag_1776524906841_9gzq2dil",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776524906842_5mi3kaa5",
+        "currentRoundIndex": 2,
+        "nextRound": 3,
+        "hasPendingFollowUp": false,
+        "storedOutcomeType": "uncertain",
+        "askedQuestionKeys": [
+          "q_leaf_yellowing_light_background",
+          "q_leaf_yellowing_watering_background",
+          "q_leaf_yellowing_fertilization_background"
+        ],
+        "answeredQuestionGroupKeys": [
+          "yellowing_light_background_group",
+          "yellowing_watering_background_group",
+          "yellowing_fertilization_background_group"
+        ],
+        "answeredAnswers": [
+          {
+            "questionKey": "q_leaf_yellowing_light_background",
+            "optionKey": "no_change"
+          },
+          {
+            "questionKey": "q_leaf_yellowing_watering_background",
+            "optionKey": "no_change"
+          },
+          {
+            "questionKey": "q_leaf_yellowing_fertilization_background",
+            "optionKey": "unknown"
+          }
+        ],
+        "followUpHistory": {
+          "hasPendingFollowUp": false,
+          "nextRound": 3,
+          "storedOutcomeType": "uncertain",
+          "askedQuestionKeys": [
+            "q_leaf_yellowing_light_background",
+            "q_leaf_yellowing_watering_background",
+            "q_leaf_yellowing_fertilization_background"
+          ],
+          "askedQuestions": [
+            {
+              "questionKey": "q_leaf_yellowing_light_background",
+              "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+              "questionGroupKey": "yellowing_light_background_group",
+              "targetDimension": "light_exposure"
+            },
+            {
+              "questionKey": "q_leaf_yellowing_watering_background",
+              "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+              "questionGroupKey": "yellowing_watering_background_group",
+              "targetDimension": "watering_context"
+            },
+            {
+              "questionKey": "q_leaf_yellowing_fertilization_background",
+              "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+              "questionGroupKey": "yellowing_fertilization_background_group",
+              "targetDimension": "fertilization_context"
+            }
+          ],
+          "answeredQuestionGroupKeys": [
+            "yellowing_light_background_group",
+            "yellowing_watering_background_group",
+            "yellowing_fertilization_background_group"
+          ],
+          "answeredAnswers": [
+            {
+              "questionKey": "q_leaf_yellowing_light_background",
+              "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+              "questionGroupKey": "yellowing_light_background_group",
+              "targetDimension": "light_exposure",
+              "optionKey": "no_change",
+              "optionText": "没有明显变化",
+              "status": "",
+              "answerSource": ""
+            },
+            {
+              "questionKey": "q_leaf_yellowing_watering_background",
+              "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+              "questionGroupKey": "yellowing_watering_background_group",
+              "targetDimension": "watering_context",
+              "optionKey": "no_change",
+              "optionText": "浇水节奏没有明显变化",
+              "status": "",
+              "answerSource": ""
+            },
+            {
+              "questionKey": "q_leaf_yellowing_fertilization_background",
+              "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+              "questionGroupKey": "yellowing_fertilization_background_group",
+              "targetDimension": "fertilization_context",
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "",
+              "answerSource": ""
+            }
+          ]
+        },
+        "actualRounds": [
+          {
+            "roundIndex": 1,
+            "questions": [
+              {
+                "questionKey": "q_leaf_yellowing_light_background",
+                "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+                "questionGroupKey": "yellowing_light_background_group",
+                "targetDimension": "light_exposure"
+              },
+              {
+                "questionKey": "q_leaf_yellowing_watering_background",
+                "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+                "questionGroupKey": "yellowing_watering_background_group",
+                "targetDimension": "watering_context"
+              },
+              {
+                "questionKey": "q_leaf_yellowing_fertilization_background",
+                "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+                "questionGroupKey": "yellowing_fertilization_background_group",
+                "targetDimension": "fertilization_context"
+              }
+            ],
+            "answers": [
+              {
+                "questionKey": "q_leaf_yellowing_light_background",
+                "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+                "questionGroupKey": "yellowing_light_background_group",
+                "targetDimension": "light_exposure",
+                "optionKey": "no_change",
+                "optionText": "没有明显变化",
+                "status": "answered"
+              },
+              {
+                "questionKey": "q_leaf_yellowing_watering_background",
+                "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+                "questionGroupKey": "yellowing_watering_background_group",
+                "targetDimension": "watering_context",
+                "optionKey": "no_change",
+                "optionText": "浇水节奏没有明显变化",
+                "status": "answered"
+              },
+              {
+                "questionKey": "q_leaf_yellowing_fertilization_background",
+                "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+                "questionGroupKey": "yellowing_fertilization_background_group",
+                "targetDimension": "fertilization_context",
+                "optionKey": "unknown",
+                "optionText": "看不出/不确定",
+                "status": "skipped"
+              }
+            ],
+            "questionAnswerPairs": [
+              {
+                "questionKey": "q_leaf_yellowing_light_background",
+                "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+                "questionGroupKey": "yellowing_light_background_group",
+                "targetDimension": "light_exposure",
+                "answer": {
+                  "optionKey": "no_change",
+                  "optionText": "没有明显变化",
+                  "status": "answered",
+                  "answerSource": ""
+                }
+              },
+              {
+                "questionKey": "q_leaf_yellowing_watering_background",
+                "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+                "questionGroupKey": "yellowing_watering_background_group",
+                "targetDimension": "watering_context",
+                "answer": {
+                  "optionKey": "no_change",
+                  "optionText": "浇水节奏没有明显变化",
+                  "status": "answered",
+                  "answerSource": ""
+                }
+              },
+              {
+                "questionKey": "q_leaf_yellowing_fertilization_background",
+                "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+                "questionGroupKey": "yellowing_fertilization_background_group",
+                "targetDimension": "fertilization_context",
+                "answer": {
+                  "optionKey": "unknown",
+                  "optionText": "看不出/不确定",
+                  "status": "skipped",
+                  "answerSource": ""
+                }
+              }
+            ]
+          }
+        ],
+        "replayTarget": {
+          "round": 0,
+          "stage": "",
+          "mode": "visual_origin"
+        },
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 1,
+        "visualConclusion": {
+          "symptomCandidates": [
+            {
+              "symptomKey": "leaf_yellowing",
+              "displayNameCn": "叶片发黄",
+              "confidenceBand": "high",
+              "strengthLevel": "strong",
+              "visibilityScope": "organ",
+              "supportingRegionNote": "图中有多片叶片呈现明显的黄色，与正常绿色叶片形成对比",
+              "admissionReadiness": "ready"
+            }
+          ],
+          "outOfPoolCandidates": [],
+          "routeHints": [
+            {
+              "type": "possible_problematic_signal",
+              "reason": "observed significant leaf yellowing in multiple leaves"
+            }
+          ]
+        },
+        "visualRawRecordCount": 1,
+        "visualRawRecords": [
+          {
+            "visualRawImageRecordId": "visraw_1776524906842_dzmme9pq",
+            "visualCallBatchId": "visbatch_1776524906842_5mi3kaa5",
+            "inputSlotType": "whole_plant",
+            "inputSlotOrder": 0,
+            "inputSlotLabel": "图1 全株图",
+            "sourceModelProvider": "hunyuan",
+            "sourceModelName": "hunyuan-vision-1.5-instruct",
+            "promptVersion": "visual_structured_v1",
+            "rawTextOutput": "{\"normalized_organ\":\"leaf\",\"image_quality_grade\":\"good\",\"analyzability\":\"high\",\"symptom_candidates\":[{\"symptom_key\":\"leaf_yellowing\",\"display_name_cn\":\"叶片发黄\",\"strength_level\":\"strong\",\"confidence_band\":\"high\",\"visibility_scope\":\"organ\",\"supporting_region_note\":\"图中有多片叶片呈现明显的黄色，与正常绿色叶片形成对比\",\"admission_readiness\":\"ready\"}],\"out_of_pool_symptom_candidates\":[],\"route_hints\":[{\"type\":\"possible_problematic_signal\",\"reason\":\"observed significant leaf yellowing in multiple leaves\"}],\"suggested_followup_capture\":[\"Focus on the yellowed leaves to check for any associated symptoms or progression\"],\"normalization_notes\":[\"图像清晰，存在多片叶片明显发黄的视觉信号。\"]}",
+            "rawStructuredOutput": {
+              "source_model_provider": "hunyuan",
+              "source_model_name": "hunyuan-vision-1.5-instruct",
+              "adapter_name": "hunyuan_visual_adapter",
+              "input_slot_type": "whole_plant",
+              "input_slot_order": 0,
+              "input_slot_label": "图1 全株图",
+              "user_declared_organ_type": "whole_plant",
+              "user_declared_organ_confidence": 0.95,
+              "out_of_pool_candidate_count": 0,
+              "out_of_pool_replay_image_available": 0,
+              "out_of_pool_replay_image_ref": null,
+              "shadow_compare": {
+                "enabled": 0,
+                "compare_status": "disabled",
+                "source_model_provider": null,
+                "source_model_name": null
+              },
+              "parsed_result": {
+                "normalized_organ": "leaf",
+                "image_quality_grade": "good",
+                "analyzability": "high",
+                "symptom_candidates": [
+                  {
+                    "symptom_key": "leaf_yellowing",
+                    "display_name_cn": "叶片发黄",
+                    "strength_level": "strong",
+                    "confidence_band": "high",
+                    "visibility_scope": "organ",
+                    "supporting_region_note": "图中有多片叶片呈现明显的黄色，与正常绿色叶片形成对比",
+                    "admission_readiness": "ready"
+                  }
+                ],
+                "out_of_pool_symptom_candidates": [],
+                "route_hints": [
+                  {
+                    "type": "possible_problematic_signal",
+                    "reason": "observed significant leaf yellowing in multiple leaves"
+                  }
+                ],
+                "suggested_followup_capture": [
+                  "Focus on the yellowed leaves to check for any associated symptoms or progression"
+                ],
+                "normalization_notes": [
+                  "图像清晰，存在多片叶片明显发黄的视觉信号。"
+                ],
+                "uncertain_symptoms": []
+              }
+            },
+            "modelParsedResult": {
+              "normalized_organ": "leaf",
+              "image_quality_grade": "good",
+              "analyzability": "high",
+              "symptom_candidates": [
+                {
+                  "symptom_key": "leaf_yellowing",
+                  "display_name_cn": "叶片发黄",
+                  "strength_level": "strong",
+                  "confidence_band": "high",
+                  "visibility_scope": "organ",
+                  "supporting_region_note": "图中有多片叶片呈现明显的黄色，与正常绿色叶片形成对比",
+                  "admission_readiness": "ready"
+                }
+              ],
+              "out_of_pool_symptom_candidates": [],
+              "route_hints": [
+                {
+                  "type": "possible_problematic_signal",
+                  "reason": "observed significant leaf yellowing in multiple leaves"
+                }
+              ],
+              "suggested_followup_capture": [
+                "Focus on the yellowed leaves to check for any associated symptoms or progression"
+              ],
+              "normalization_notes": [
+                "图像清晰，存在多片叶片明显发黄的视觉信号。"
+              ],
+              "uncertain_symptoms": []
+            },
+            "normalizedTopkSymptoms": [
+              {
+                "symptom_key": "leaf_yellowing",
+                "strength_level": "strong",
+                "confidence_band": "high",
+                "display_name_cn": "叶片发黄",
+                "visibility_scope": "organ",
+                "admission_readiness": "ready",
+                "supporting_region_note": "图中有多片叶片呈现明显的黄色，与正常绿色叶片形成对比"
+              }
+            ],
+            "normalizedPatternCandidates": {
+              "adapter_name": "hunyuan_visual_adapter",
+              "organ_source": "merged",
+              "input_organ_hint": "whole_plant",
+              "input_slot_label": "图1 全株图",
+              "input_slot_order": 0,
+              "source_model_name": "hunyuan-vision-1.5-instruct",
+              "normalization_notes": [
+                "图像清晰，存在多片叶片明显发黄的视觉信号。",
+                "organ_conflict:ui_hint_priority_over_model:leaf"
+              ],
+              "organ_conflict_flag": 1,
+              "model_detected_organ": "leaf",
+              "multi_organ_detected": 1,
+              "shadow_compare_status": "disabled",
+              "source_model_provider": "hunyuan",
+              "shadow_compare_enabled": 0,
+              "organ_resolution_reason": "ui_hint_priority_over_model:leaf",
+              "shadow_compare_provider": "",
+              "user_declared_organ_type": "whole_plant",
+              "shadow_compare_model_name": "",
+              "suggested_followup_capture": [
+                "Focus on the yellowed leaves to check for any associated symptoms or progression"
+              ],
+              "shadow_compare_adapter_name": "",
+              "out_of_pool_symptom_candidates": [],
+              "user_declared_organ_confidence": 0.95
+            },
+            "normalizedRouteHints": [
+              {
+                "type": "possible_problematic_signal",
+                "reason": "observed significant leaf yellowing in multiple leaves"
+              }
+            ],
+            "primaryOrganType": "whole_plant",
+            "organSource": "merged"
+          }
+        ]
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "followUps": [],
+        "decisionCause": null,
+        "topProblem": {
+          "problemId": "p_b3ZlcndhdGVyaW5n",
+          "problemKey": "overwatering",
+          "displayName": "浇水过多",
+          "summary": "当前最像的问题是：浇水过多。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "finalResult": {
+          "problemId": "p_b3ZlcndhdGVyaW5n",
+          "problemKey": "",
+          "displayName": "浇水过多",
+          "summary": "当前最像的问题是：浇水过多。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "symptomClassRuntime": {
+          "enabled": true,
+          "primaryClassKey": "yellowing_mode",
+          "primaryClassNameCn": "黄叶模式",
+          "primaryFollowupModeV1": "full",
+          "currentClassKey": "yellowing_mode",
+          "currentClassNameCn": "黄叶模式",
+          "currentGroupKey": "yellowing_patchy_confirm_group",
+          "currentGroupLabel": "yellowing_patchy_confirm_group",
+          "questionGroupPoolSize": 2,
+          "questionGroupPoolKeys": [
+            "yellowing_patchy_confirm_group",
+            "leaf_yellowing_group"
+          ],
+          "classGateDecision": {
+            "enabled": true,
+            "gateMode": "soft",
+            "sourceMode": "soft",
+            "primaryClassKey": "yellowing_mode",
+            "primaryClassRuntimeScore": 1.6905,
+            "unknownLockCount": 6,
+            "currentClassKey": "yellowing_mode",
+            "hasEnabledGroups": true,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "",
+            "reviewedAtRound": 3
+          }
+        },
+        "simulationRounds": [
+          {
+            "roundIndex": 1,
+            "inputStage": "preliminary",
+            "outputStage": "followup",
+            "questions": [
+              {
+                "questionKey": "q_leaf_yellowing_light_background",
+                "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+                "questionGroupKey": "yellowing_light_background_group",
+                "targetDimension": "light_exposure"
+              },
+              {
+                "questionKey": "q_leaf_yellowing_watering_background",
+                "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+                "questionGroupKey": "yellowing_watering_background_group",
+                "targetDimension": "watering_context"
+              },
+              {
+                "questionKey": "q_leaf_yellowing_fertilization_background",
+                "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+                "questionGroupKey": "yellowing_fertilization_background_group",
+                "targetDimension": "fertilization_context"
+              }
+            ],
+            "answers": [
+              {
+                "questionKey": "q_leaf_yellowing_light_background",
+                "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+                "questionGroupKey": "yellowing_light_background_group",
+                "targetDimension": "light_exposure",
+                "optionKey": "unknown",
+                "optionText": "看不出/不确定",
+                "status": "simulated",
+                "answerSource": "simulated"
+              },
+              {
+                "questionKey": "q_leaf_yellowing_watering_background",
+                "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+                "questionGroupKey": "yellowing_watering_background_group",
+                "targetDimension": "watering_context",
+                "optionKey": "more_wet",
+                "optionText": "更像长期偏湿、久不干",
+                "status": "simulated",
+                "answerSource": "simulated"
+              },
+              {
+                "questionKey": "q_leaf_yellowing_fertilization_background",
+                "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+                "questionGroupKey": "yellowing_fertilization_background_group",
+                "targetDimension": "fertilization_context",
+                "optionKey": "unknown",
+                "optionText": "看不出/不确定",
+                "status": "simulated",
+                "answerSource": "simulated"
+              }
+            ],
+            "questionAnswerPairs": [
+              {
+                "questionKey": "q_leaf_yellowing_light_background",
+                "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+                "questionGroupKey": "yellowing_light_background_group",
+                "targetDimension": "light_exposure",
+                "answer": {
+                  "optionKey": "unknown",
+                  "optionText": "看不出/不确定",
+                  "status": "simulated",
+                  "answerSource": "simulated"
+                }
+              },
+              {
+                "questionKey": "q_leaf_yellowing_watering_background",
+                "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+                "questionGroupKey": "yellowing_watering_background_group",
+                "targetDimension": "watering_context",
+                "answer": {
+                  "optionKey": "more_wet",
+                  "optionText": "更像长期偏湿、久不干",
+                  "status": "simulated",
+                  "answerSource": "simulated"
+                }
+              },
+              {
+                "questionKey": "q_leaf_yellowing_fertilization_background",
+                "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+                "questionGroupKey": "yellowing_fertilization_background_group",
+                "targetDimension": "fertilization_context",
+                "answer": {
+                  "optionKey": "unknown",
+                  "optionText": "看不出/不确定",
+                  "status": "simulated",
+                  "answerSource": "simulated"
+                }
+              }
+            ],
+            "outcome": {
+              "stage": "followup",
+              "followUpRequired": true,
+              "stopReason": "await_follow_up",
+              "stopReasonDetail": "",
+              "routePrimaryAction": "ask_first",
+              "topProblem": {
+                "problemId": "p_bml0cm9nZW5fZGVmaWNpZW5jeQ",
+                "problemKey": "nitrogen_deficiency",
+                "displayName": "缺氮",
+                "summary": "当前更像 缺氮，但还不够确定。 当前最像的问题是：缺氮。",
+                "severity": "medium",
+                "urgency": "medium"
+              },
+              "finalResult": {
+                "problemId": "p_bml0cm9nZW5fZGVmaWNpZW5jeQ",
+                "problemKey": "",
+                "displayName": "缺氮",
+                "summary": "当前更像 缺氮，但还不够确定。 当前最像的问题是：缺氮。",
+                "severity": "medium",
+                "urgency": "medium"
+              }
+            }
+          },
+          {
+            "roundIndex": 2,
+            "inputStage": "followup",
+            "outputStage": "followup",
+            "questions": [
+              {
+                "questionKey": "q_root_rot_bad_smell",
+                "questionText": "根部或根团有明显腐烂异味?",
+                "questionGroupKey": "root_rot_group",
+                "targetDimension": "root_zone_context"
+              },
+              {
+                "questionKey": "q_iron_new_leaves_yellow",
+                "questionText": "发黄主要出现在新叶?",
+                "questionGroupKey": "iron_group",
+                "targetDimension": "host_confirmation"
+              },
+              {
+                "questionKey": "q_nitrogen_old_leaves_yellow",
+                "questionText": "发黄先从老叶开始?",
+                "questionGroupKey": "nitrogen_group",
+                "targetDimension": "host_confirmation"
+              }
+            ],
+            "answers": [
+              {
+                "questionKey": "q_root_rot_bad_smell",
+                "questionText": "根部或根团有明显腐烂异味?",
+                "questionGroupKey": "root_rot_group",
+                "targetDimension": "root_zone_context",
+                "optionKey": "no",
+                "optionText": "否，基本没有",
+                "status": "simulated",
+                "answerSource": "simulated"
+              },
+              {
+                "questionKey": "q_iron_new_leaves_yellow",
+                "questionText": "发黄主要出现在新叶?",
+                "questionGroupKey": "iron_group",
+                "targetDimension": "host_confirmation",
+                "optionKey": "old",
+                "optionText": "老叶为主",
+                "status": "simulated",
+                "answerSource": "simulated"
+              },
+              {
+                "questionKey": "q_nitrogen_old_leaves_yellow",
+                "questionText": "发黄先从老叶开始?",
+                "questionGroupKey": "nitrogen_group",
+                "targetDimension": "host_confirmation",
+                "optionKey": "unknown",
+                "optionText": "看不出/不确定",
+                "status": "simulated",
+                "answerSource": "simulated"
+              }
+            ],
+            "questionAnswerPairs": [
+              {
+                "questionKey": "q_root_rot_bad_smell",
+                "questionText": "根部或根团有明显腐烂异味?",
+                "questionGroupKey": "root_rot_group",
+                "targetDimension": "root_zone_context",
+                "answer": {
+                  "optionKey": "no",
+                  "optionText": "否，基本没有",
+                  "status": "simulated",
+                  "answerSource": "simulated"
+                }
+              },
+              {
+                "questionKey": "q_iron_new_leaves_yellow",
+                "questionText": "发黄主要出现在新叶?",
+                "questionGroupKey": "iron_group",
+                "targetDimension": "host_confirmation",
+                "answer": {
+                  "optionKey": "old",
+                  "optionText": "老叶为主",
+                  "status": "simulated",
+                  "answerSource": "simulated"
+                }
+              },
+              {
+                "questionKey": "q_nitrogen_old_leaves_yellow",
+                "questionText": "发黄先从老叶开始?",
+                "questionGroupKey": "nitrogen_group",
+                "targetDimension": "host_confirmation",
+                "answer": {
+                  "optionKey": "unknown",
+                  "optionText": "看不出/不确定",
+                  "status": "simulated",
+                  "answerSource": "simulated"
+                }
+              }
+            ],
+            "outcome": {
+              "stage": "followup",
+              "followUpRequired": true,
+              "stopReason": "await_follow_up",
+              "stopReasonDetail": "",
+              "routePrimaryAction": "ask_first",
+              "topProblem": {
+                "problemId": "p_cm9vdF9yb3Q",
+                "problemKey": "root_rot",
+                "displayName": "根腐",
+                "summary": "当前更像 根腐，但还不够确定。 当前最像的问题是：根腐。",
+                "severity": "high",
+                "urgency": "high"
+              },
+              "finalResult": {
+                "problemId": "p_cm9vdF9yb3Q",
+                "problemKey": "",
+                "displayName": "根腐",
+                "summary": "当前更像 根腐，但还不够确定。 当前最像的问题是：根腐。",
+                "severity": "high",
+                "urgency": "high"
+              }
+            }
+          },
+          {
+            "roundIndex": 3,
+            "inputStage": "followup",
+            "outputStage": "final",
+            "questions": [],
+            "answers": [],
+            "questionAnswerPairs": [],
+            "outcome": {
+              "stage": "final",
+              "followUpRequired": false,
+              "stopReason": "problematic_output_ready",
+              "stopReasonDetail": "",
+              "routePrimaryAction": "standard_flow",
+              "topProblem": {
+                "problemId": "p_b3ZlcndhdGVyaW5n",
+                "problemKey": "overwatering",
+                "displayName": "浇水过多",
+                "summary": "当前最像的问题是：浇水过多。",
+                "severity": "medium",
+                "urgency": "medium"
+              },
+              "finalResult": {
+                "problemId": "p_b3ZlcndhdGVyaW5n",
+                "problemKey": "",
+                "displayName": "浇水过多",
+                "summary": "当前最像的问题是：浇水过多。",
+                "severity": "medium",
+                "urgency": "medium"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

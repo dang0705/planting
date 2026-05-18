@@ -291,8 +291,6 @@ async function planOutcomeRoutes({
       .map(outcomeKey => visibleActionConflictGroupByOutcome.get(outcomeKey))
       .filter(Boolean)
     const hasActionConflict = dedupeKeys(limitedActionConflictGroups).length > 1
-    const primaryOutcomeKey = limitedVisibleOutcomeKeys[0] || null
-    const secondaryOutcomeKeys = limitedVisibleOutcomeKeys.slice(1, 3)
     const limitedVisibleOutcomeCount = limitedVisibleOutcomeKeys.length
     const hasRequiredNextQuestion = nextQuestions.some(item => Boolean(item?.requiredForClosure))
     const requiresFollowUp = Boolean(
@@ -312,8 +310,6 @@ async function planOutcomeRoutes({
       candidateOutcomeStates: sortedStates,
       activeRouteGroupKeys,
       visibleOutcomeKeys: limitedVisibleOutcomeKeys,
-      primaryOutcomeKey,
-      secondaryOutcomeKeys,
       requiresFollowUp,
       nextQuestionKeys: requiresFollowUp ? nextQuestionKeys : [],
       nextQuestions: requiresFollowUp ? nextQuestions : [],

@@ -1,0 +1,109 @@
+{
+  "ok": true,
+  "env": "cloud1-2grufevs395a9d5e",
+  "visual": {
+    "reportFile": "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/manifests/diagnose-visual-regression.report.json",
+    "summary": {
+      "total": 5,
+      "success": 5,
+      "failed": 0,
+      "skipped": 0,
+      "byLabel": {
+        "spider_mites_pair_from_pest_samples": {
+          "total": 1,
+          "success": 1,
+          "failed": 0,
+          "skipped": 0
+        },
+        "root_rot_single_leaf": {
+          "total": 1,
+          "success": 1,
+          "failed": 0,
+          "skipped": 0
+        },
+        "root_rot_single_whole_plant": {
+          "total": 1,
+          "success": 1,
+          "failed": 0,
+          "skipped": 0
+        },
+        "root_rot_pair": {
+          "total": 1,
+          "success": 1,
+          "failed": 0,
+          "skipped": 0
+        },
+        "healthy_uncertain_single": {
+          "total": 1,
+          "success": 1,
+          "failed": 0,
+          "skipped": 0
+        }
+      }
+    }
+  },
+  "outcome": {
+    "reportFile": "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/manifests/diagnose-outcome-regression.report.json",
+    "summary": {
+      "total": 3,
+      "success": 3,
+      "failed": 0,
+      "skipped": 0,
+      "byLabel": {
+        "non_problematic_normal_leaf_aging": {
+          "total": 1,
+          "success": 1,
+          "failed": 0,
+          "skipped": 0
+        },
+        "uncertain_unknown_answers": {
+          "total": 1,
+          "success": 1,
+          "failed": 0,
+          "skipped": 0
+        },
+        "problematic_leaf_yellowing_followup_root_rot": {
+          "total": 1,
+          "success": 1,
+          "failed": 0,
+          "skipped": 0
+        }
+      }
+    }
+  },
+  "fastConvergence": {
+    "reportFile": "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/manifests/high-specificity-fast-convergence.report.json",
+    "summary": {
+      "total": 5,
+      "success": 5,
+      "failed": 0,
+      "byLabel": {
+        "spider_mites_zero_follow_up": {
+          "total": 1,
+          "success": 1,
+          "failed": 0
+        },
+        "spider_mites_alias_zero_follow_up": {
+          "total": 1,
+          "success": 1,
+          "failed": 0
+        },
+        "fungus_gnat_single_confirmation": {
+          "total": 1,
+          "success": 1,
+          "failed": 0
+        },
+        "retake_first_fallback": {
+          "total": 1,
+          "success": 1,
+          "failed": 0
+        },
+        "top_problem_mismatch_fallback": {
+          "total": 1,
+          "success": 1,
+          "failed": 0
+        }
+      }
+    }
+  }
+}

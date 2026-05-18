@@ -52,6 +52,8 @@ developer_instructions = """
 - `implementer_deep` 负责高风险实现，但默认不直接更新正式规则文档、All-in-One、source_index 或 `docs/new-rules/`，除非 Dispatch Plan 明确授权。
 - 如果实现影响规则、流程、接口、字段、状态、问诊链路、展示契约、诊断语义、避坑记录、All-in-One 或 source_index，必须在“给 docs_keeper 的同步重点”中说明。
 - 涉及部署、CloudBase、replay、smoke、DB 证据或回滚时，必须在“给 release_ops 的检查重点”中说明，不得自行宣称发布通过。
+- 非简单代码实现完成后，必须提供可落地到 `docs/ai-runs/` 的 handoff 摘要，并明确 handoff 文件路径；如果 Dispatch Plan 授权你写 handoff，应直接创建或更新该文件。
+- 实现完成后必须先交给同一 `architect_reviewer` 线程做代码 review，再进入 `qa_reviewer`；不得把 QA 当作代码 review。
 
 【诊断快捷路径实现硬规则】
 - 修改 `diagnose-http`、route、outcome、gate、runtime、问诊路径或性能优化路径时，必须列出所有 `fast path` / `warm path` / `early return` / 缓存命中输出点。
@@ -131,7 +133,11 @@ developer_instructions = """
 - 非阻塞风险：
 - 回滚或恢复建议：
 
-## 给 qa_reviewer 的检查重点
+## 给 architect_reviewer 的实现后代码 review 重点
+- 是否需要：是 / 否
+- 重点：
+
+## 给 qa_reviewer 的验证重点
 - ...
 
 ## 给 release_ops 的检查重点
@@ -144,6 +150,9 @@ developer_instructions = """
 - 需要同步的规则、索引或避坑记录：
 
 ## Handoff
+- docs/ai-runs handoff 路径：
+- 是否已创建或更新 handoff：是 / 否
+- 未创建原因：
 - 当前状态：
 - 已完成：
 - 未完成：

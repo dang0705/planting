@@ -457,13 +457,51 @@ function normalizeRouteDecision(routeDecision = null) {
   return {
     mode: String(routeDecision?.mode || '').trim(),
     visibleOutcomeKeys: normalizeStringList(routeDecision?.visibleOutcomeKeys),
-    primaryOutcomeKey: String(routeDecision?.primaryOutcomeKey || '').trim(),
-    secondaryOutcomeKeys: normalizeStringList(routeDecision?.secondaryOutcomeKeys),
     activeRouteGroupKeys: normalizeStringList(routeDecision?.activeRouteGroupKeys),
     nextQuestionKeys: normalizeStringList(routeDecision?.nextQuestionKeys),
     decisionCause: normalizeRouteDecisionCause(routeDecision?.decisionCause),
     fallbackPolicy: String(routeDecision?.fallbackPolicy || '').trim()
   }
+}
+
+function resolveOutcomeIdentityKey(outcome = null, index = 0) {
+  if (!outcome || typeof outcome !== 'object') {
+    return `outcome_${index}`
+  }
+  return String(
+    outcome.outcomeKey ||
+      outcome.problemKey ||
+      outcome.problemId ||
+      `outcome_${index}`
+  ).trim()
+}
+
+function synthesizeVisibleOutcomes({
+  visibleOutcomes = [],
+  legacyPrimaryOutcome = null,
+  legacySecondaryOutcomes = []
+} = {}) {
+  const merged = []
+  const seen = new Set()
+  for (const outcome of [
+    ...normalizeOutcomeList(visibleOutcomes),
+    ...[normalizeOutcomeEntry(legacyPrimaryOutcome)].filter(Boolean),
+    ...normalizeOutcomeList(legacySecondaryOutcomes)
+  ]) {
+    const identityKey = resolveOutcomeIdentityKey(outcome, merged.length)
+    if (seen.has(identityKey)) {continue}
+    seen.add(identityKey)
+    merged.push(outcome)
+  }
+  return merged
+}
+
+function normalizeOutcomeModeText(value = '', visibleOutcomes = []) {
+  const normalized = String(value || '').trim()
+  if (['primary_with_secondary', 'primary_only'].includes(normalized)) {
+    return Array.isArray(visibleOutcomes) && visibleOutcomes.length ? 'visible_outcomes' : ''
+  }
+  return normalized
 }
 
 function normalizeDiagnosticTrace(trace = []) {
@@ -797,15 +835,19 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
     normalizeShadowCompareSummary(diagnosis.shadowCompareSummary) ||
     visualAggregateSummary?.shadowCompareSummary ||
     null
-  const primaryOutcome = normalizeOutcomeEntry(
+  const legacyPrimaryOutcome = normalizeOutcomeEntry(
     diagnosis.primaryOutcome || finalResult?.primaryOutcome
   )
-  const secondaryOutcomes = normalizeOutcomeList(
+  const legacySecondaryOutcomes = normalizeOutcomeList(
     diagnosis.secondaryOutcomes || finalResult?.secondaryOutcomes
   )
-  const visibleOutcomes = normalizeOutcomeList(
-    diagnosis.visibleOutcomes || finalResult?.visibleOutcomes
-  )
+  const visibleOutcomes = synthesizeVisibleOutcomes({
+    visibleOutcomes: normalizeOutcomeList(
+      diagnosis.visibleOutcomes || finalResult?.visibleOutcomes
+    ),
+    legacyPrimaryOutcome,
+    legacySecondaryOutcomes
+  })
   const routeDecisionCause = normalizeRouteDecisionCause(
     diagnosis.routeDecisionCause ||
       finalResult?.routeDecisionCause ||
@@ -875,10 +917,11 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
           }
         : null,
     finalResult,
-    primaryOutcome,
-    secondaryOutcomes,
     visibleOutcomes,
-    outcomeMode: String(diagnosis.outcomeMode || finalResult?.outcomeMode || routeDecision?.mode || '').trim(),
+    outcomeMode: normalizeOutcomeModeText(
+      diagnosis.outcomeMode || finalResult?.outcomeMode || routeDecision?.mode || '',
+      visibleOutcomes
+    ),
     routeDecisionCause,
     actionAdvice,
     routeDecision,

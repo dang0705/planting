@@ -164,8 +164,7 @@ function formatDiagnosisResponse({
   })
   const {
     authoritativeRouteDecision,
-    primaryOutcome: routePrimaryOutcome,
-    secondaryOutcomes: routeSecondaryOutcomes,
+    leadingVisibleOutcome,
     visibleOutcomes: routeVisibleOutcomes,
     outcomeMode: rawRouteOutcomeMode,
     routeDecisionCause: rawRouteDecisionCause,
@@ -173,22 +172,21 @@ function formatDiagnosisResponse({
     careGuidance,
     actionAdvice: rawActionAdvice
   } = routeOutcomePayload
-  const primaryOutcome = routeOutputEnabled ? routePrimaryOutcome : null
-  const secondaryOutcomes = routeOutputEnabled ? routeSecondaryOutcomes : []
+  const routeLeadingVisibleOutcome = routeOutputEnabled ? leadingVisibleOutcome : null
   const visibleOutcomes = routeOutputEnabled ? routeVisibleOutcomes : []
   const outcomeMode = routeOutputEnabled ? rawRouteOutcomeMode : ''
   const routeDecisionCause = routeOutputEnabled ? rawRouteDecisionCause : null
   const actionAdvice = routeOutputEnabled ? rawActionAdvice : null
   const shouldUseRouteExplanation = Boolean(
     authoritativeRouteDecision &&
-    primaryOutcome &&
+    routeLeadingVisibleOutcome &&
     outcomeType !== 'uncertain'
   )
   const explanationPayload = shouldUseRouteExplanation
     ? buildRouteExplanationPayload({
-        routePrimaryOutcome: primaryOutcome,
-        routePrimaryProblem: problemMap.get(primaryOutcome.problemKey) || null,
-        routePrimaryExplanation: explanationMap.get(primaryOutcome.problemKey) || null,
+        routePrimaryOutcome: routeLeadingVisibleOutcome,
+        routePrimaryProblem: problemMap.get(routeLeadingVisibleOutcome.problemKey) || null,
+        routePrimaryExplanation: explanationMap.get(routeLeadingVisibleOutcome.problemKey) || null,
         routeSafeSummary
       })
     : legacyExplanationPayload
@@ -277,48 +275,44 @@ function formatDiagnosisResponse({
       }
 
   const routeBackedTopProblemPayload =
-    shouldSuppressProblemLikePresentation || !primaryOutcome || outcomeType !== 'problematic'
+    shouldSuppressProblemLikePresentation || !routeLeadingVisibleOutcome || outcomeType !== 'problematic'
       ? null
       : {
-          problemId: toProblemId(primaryOutcome.problemKey),
-          problemKey: primaryOutcome.problemKey,
-          displayName: primaryOutcome.displayNameCn,
-          summary: primaryOutcome.summary || routeSafeSummary,
-          severity: primaryOutcome.severity || mapSeverity(primaryProblem),
-          urgency: primaryOutcome.urgency || mapUrgency(primaryProblem)
+          problemId: toProblemId(routeLeadingVisibleOutcome.problemKey),
+          problemKey: routeLeadingVisibleOutcome.problemKey,
+          displayName: routeLeadingVisibleOutcome.displayNameCn,
+          summary: routeLeadingVisibleOutcome.summary || routeSafeSummary,
+          severity: routeLeadingVisibleOutcome.severity || mapSeverity(primaryProblem),
+          urgency: routeLeadingVisibleOutcome.urgency || mapUrgency(primaryProblem)
         }
 
   const routeBackedFinalResultPayload =
-    primaryOutcome &&
+    routeLeadingVisibleOutcome &&
     !followUpRequired &&
     !shouldSuppressProblemLikePresentation &&
     outcomeType === 'problematic'
       ? {
           resultId,
-          problemId: toProblemId(primaryOutcome.problemKey),
-          displayName: primaryOutcome.displayNameCn,
-          summary: primaryOutcome.summary || routeSafeSummary,
-          severity: primaryOutcome.severity || mapSeverity(primaryProblem),
-          urgency: primaryOutcome.urgency || mapUrgency(primaryProblem),
-          primaryOutcome,
-          secondaryOutcomes,
+          problemId: toProblemId(routeLeadingVisibleOutcome.problemKey),
+          displayName: routeLeadingVisibleOutcome.displayNameCn,
+          summary: routeLeadingVisibleOutcome.summary || routeSafeSummary,
+          severity: routeLeadingVisibleOutcome.severity || mapSeverity(primaryProblem),
+          urgency: routeLeadingVisibleOutcome.urgency || mapUrgency(primaryProblem),
           visibleOutcomes,
           outcomeMode,
           actionAdvice
         }
-      : primaryOutcome &&
+      : routeLeadingVisibleOutcome &&
         !followUpRequired &&
         outcomeType === 'non_problematic'
         ? {
             resultId,
             problemId: '',
-            displayName: primaryOutcome.displayNameCn,
-            summary: primaryOutcome.summary || routeSafeSummary,
+            displayName: routeLeadingVisibleOutcome.displayNameCn,
+            summary: routeLeadingVisibleOutcome.summary || routeSafeSummary,
             severity: 'low',
             urgency: 'low',
-            nonProblematicType: primaryOutcome.outcomeKey,
-            primaryOutcome,
-            secondaryOutcomes,
+            nonProblematicType: routeLeadingVisibleOutcome.outcomeKey,
             visibleOutcomes,
             outcomeMode,
             actionAdvice
@@ -396,8 +390,6 @@ function formatDiagnosisResponse({
       ? highSpecificityFastConvergence
       : null,
     actionAdvice,
-    primaryOutcome,
-    secondaryOutcomes,
     visibleOutcomes,
     outcomeMode,
     routeDecisionCause,

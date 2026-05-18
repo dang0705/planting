@@ -205,10 +205,6 @@ function sanitizeRouteDecisionForPublic(routeDecision = null) {
     visibleOutcomeKeys: Array.isArray(routeDecision.visibleOutcomeKeys)
       ? routeDecision.visibleOutcomeKeys.map(item => normalizeKey(item)).filter(Boolean)
       : [],
-    primaryOutcomeKey: normalizeKey(routeDecision.primaryOutcomeKey || ''),
-    secondaryOutcomeKeys: Array.isArray(routeDecision.secondaryOutcomeKeys)
-      ? routeDecision.secondaryOutcomeKeys.map(item => normalizeKey(item)).filter(Boolean)
-      : [],
     activeRouteGroupKeys: Array.isArray(routeDecision.activeRouteGroupKeys)
       ? routeDecision.activeRouteGroupKeys.map(item => normalizeKey(item)).filter(Boolean)
       : [],
@@ -218,6 +214,12 @@ function sanitizeRouteDecisionForPublic(routeDecision = null) {
     fallbackPolicy: normalizeKey(routeDecision.fallbackPolicy || ''),
     decisionCause: normalizeDecisionCause(routeDecision.decisionCause)
   }
+}
+
+function resolveLeadingVisibleOutcomeKey(routeDecision = null) {
+  return Array.isArray(routeDecision?.visibleOutcomeKeys)
+    ? normalizeKey(routeDecision.visibleOutcomeKeys[0] || '')
+    : ''
 }
 
 function isRoutePlanningObservationEnabled() {
@@ -4778,10 +4780,11 @@ async function tryBuildRouteAnswerFastPath({
       skipRouteGroupExpansion: true
     }
   })
+  const leadingVisibleOutcomeKey = resolveLeadingVisibleOutcomeKey(routeDecision)
   markFastPath('route-fastpath-route-planned', {
     mode: normalizeKey(routeDecision?.mode || ''),
     fallbackPolicy: normalizeKey(routeDecision?.fallbackPolicy || ''),
-    primaryOutcomeKey: normalizeKey(routeDecision?.primaryOutcomeKey || ''),
+    leadingVisibleOutcomeKey,
     visibleOutcomeCount: Array.isArray(routeDecision?.visibleOutcomeKeys)
       ? routeDecision.visibleOutcomeKeys.length
       : 0
@@ -4789,14 +4792,13 @@ async function tryBuildRouteAnswerFastPath({
   if (
     !isAuthoritativeRouteDecision(routeDecision) ||
     !Array.isArray(routeDecision?.visibleOutcomeKeys) ||
-    !routeDecision.visibleOutcomeKeys.length ||
-    !normalizeKey(routeDecision?.primaryOutcomeKey || '')
+    !routeDecision.visibleOutcomeKeys.length
   ) {
     markFastPath('route-fastpath-skip', {
       reason: 'route_not_authoritative_or_visible',
       mode: normalizeKey(routeDecision?.mode || ''),
       fallbackPolicy: normalizeKey(routeDecision?.fallbackPolicy || ''),
-      primaryOutcomeKey: normalizeKey(routeDecision?.primaryOutcomeKey || ''),
+      leadingVisibleOutcomeKey,
       visibleOutcomeCount: Array.isArray(routeDecision?.visibleOutcomeKeys)
         ? routeDecision.visibleOutcomeKeys.length
         : 0
@@ -4806,8 +4808,6 @@ async function tryBuildRouteAnswerFastPath({
 
   const routeOutcomeKeys = Array.from(
     new Set([
-      routeDecision.primaryOutcomeKey,
-      ...(Array.isArray(routeDecision.secondaryOutcomeKeys) ? routeDecision.secondaryOutcomeKeys : []),
       ...(Array.isArray(routeDecision.visibleOutcomeKeys) ? routeDecision.visibleOutcomeKeys : [])
     ].map(item => normalizeKey(item)).filter(Boolean))
   )
@@ -4818,7 +4818,7 @@ async function tryBuildRouteAnswerFastPath({
     routeOutcomeCount: Array.isArray(routeOutcomes) ? routeOutcomes.length : 0
   })
   const primaryRouteOutcome = routeOutcomes.find(
-    item => normalizeKey(item?.outcomeKey || '') === normalizeKey(routeDecision.primaryOutcomeKey || '')
+    item => normalizeKey(item?.outcomeKey || '') === leadingVisibleOutcomeKey
   )
   const allActionProfileKeys = resolveVisibleRouteActionProfileKeys(routeDecision, routeOutcomes)
   const actionProfiles = allActionProfileKeys.length
@@ -4829,7 +4829,7 @@ async function tryBuildRouteAnswerFastPath({
   const outputDerivedEvidenceSet = derivedEvidenceForResolution
   const outputDiagnosisDirections = diagnosisDirectionsForResolution
   markFastPath('route-fastpath-hit', {
-    primaryOutcomeKey: normalizeKey(routeDecision.primaryOutcomeKey || ''),
+    leadingVisibleOutcomeKey,
     visibleOutcomeCount: Array.isArray(routeDecision.visibleOutcomeKeys)
       ? routeDecision.visibleOutcomeKeys.length
       : 0,
@@ -5834,8 +5834,7 @@ async function runDiagnosisRound({
     routeDecision.visibleOutcomeKeys.length === 0
   const hasUsableRouteOutputDecision =
     shouldUseRouteOutputDecision &&
-    hasRouteVisibleResult &&
-    Boolean(normalizeKey(routeDecision?.primaryOutcomeKey || ''))
+    hasRouteVisibleResult
 
   const mergedObservedEvidence = mergeObservedEvidenceSet(
     labeledObservedEvidenceForResolution,
@@ -6758,10 +6757,6 @@ async function runDiagnosisRound({
       ? Array.from(
           new Set(
             [
-              routeDecision?.primaryOutcomeKey || '',
-              ...(Array.isArray(routeDecision?.secondaryOutcomeKeys)
-                ? routeDecision.secondaryOutcomeKeys
-                : []),
               ...(Array.isArray(routeDecision?.visibleOutcomeKeys)
                 ? routeDecision.visibleOutcomeKeys
                 : [])
@@ -6775,13 +6770,14 @@ async function runDiagnosisRound({
     effectiveShouldUseRouteOutputDecision && routeOutcomeKeys.length
       ? await outcomeRouteRepository.getDiagnosisOutcomesByKeys(routeOutcomeKeys)
       : []
+  const leadingVisibleOutcomeKey = resolveLeadingVisibleOutcomeKey(routeDecision)
   const primaryRouteOutcome = routeOutcomes.find(
-    item => String(item?.outcomeKey || '').trim() === String(routeDecision?.primaryOutcomeKey || '').trim()
+    item => String(item?.outcomeKey || '').trim() === leadingVisibleOutcomeKey
   )
   const routeLockedOutcomeType =
     String(primaryRouteOutcome?.outcomeType || '').trim() === 'non_problematic'
       ? 'non_problematic'
-      : routeDecision?.primaryOutcomeKey
+      : leadingVisibleOutcomeKey
         ? 'problematic'
         : 'uncertain'
   const stopDecision = followUpRequired
@@ -6789,10 +6785,10 @@ async function runDiagnosisRound({
     : effectiveHasUsableRouteOutputDecision
       ? {
           outcomeLocked: routeLockedOutcomeType,
-          stopReason: routeDecision?.primaryOutcomeKey
+          stopReason: leadingVisibleOutcomeKey
             ? 'route_visible_outcomes_ready'
             : 'route_uncertain_with_candidates',
-          uncertainLegalityReason: routeDecision?.primaryOutcomeKey ? '' : 'route_uncertain',
+          uncertainLegalityReason: leadingVisibleOutcomeKey ? '' : 'route_uncertain',
           stopReasonDetail: routeDecision?.decisionCause?.decisionCauseKey || '',
           decisionCause: normalizeDecisionCause(routeDecision?.decisionCause)
         }

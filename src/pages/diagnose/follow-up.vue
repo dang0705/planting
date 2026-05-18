@@ -135,12 +135,22 @@
 
     <scroll-view v-else-if="hasCompletedDiagnosis" scroll-y class="followup-result-scroll">
       <view id="diagnose-followup-result-shell" class="followup-result-shell">
-        <view id="diagnose-followup-result-card" class="followup-result-card">
+        <view
+          v-if="showNonProblemOutcomeResultCard"
+          id="diagnose-followup-result-card"
+          class="followup-result-card"
+        >
           <text class="followup-result-kicker">问诊已完成</text>
+          <text
+            v-if="nonProblemOutcomeSummaryText"
+            class="followup-result-summary"
+          >
+            {{ nonProblemOutcomeSummaryText }}
+          </text>
 
           <view class="followup-result-meta">
             <view class="followup-result-meta-item">
-              <text class="followup-result-meta-label">结论类型</text>
+              <text class="followup-result-meta-label">当前状态</text>
               <text class="followup-result-meta-value">{{ outcomeTypeText }}</text>
             </view>
             <view class="followup-result-meta-item">
@@ -150,13 +160,13 @@
           </view>
         </view>
 
-        <view v-if="allOutcomeDisplays.length" id="diagnose-followup-result-outcomes" class="followup-result-section">
+        <view v-if="isProblematicOutcome && allOutcomeDisplays.length" id="diagnose-followup-result-outcomes" class="followup-result-section">
           <text class="followup-result-section-title">诊断结论</text>
-          <view class="followup-result-list">
+          <view class="followup-result-chip-row">
             <text
               v-for="(item, index) in allOutcomeDisplays"
               :key="`outcome_${index}`"
-              class="followup-result-list-item"
+              class="followup-result-chip"
             >{{ item }}</text>
           </view>
         </view>
@@ -218,9 +228,7 @@
           <view class="followup-result-list">
             <text v-if="routeDebugSummaryText" class="followup-result-list-item">决策原因：{{ routeDebugSummaryText }}</text>
             <text v-if="routeDebugModeText" class="followup-result-list-item">模式：{{ routeDebugModeText }}</text>
-            <text v-if="routeDebugPrimaryOutcomeKey" class="followup-result-list-item">核心结果：{{ routeDebugPrimaryOutcomeKey }}</text>
             <text v-if="routeDebugVisibleOutcomeText" class="followup-result-list-item">展示结果：{{ routeDebugVisibleOutcomeText }}</text>
-            <text v-if="routeDebugSecondaryOutcomeText" class="followup-result-list-item">备选结果：{{ routeDebugSecondaryOutcomeText }}</text>
             <text v-if="routeDebugNextQuestionText" class="followup-result-list-item">下一步问题：{{ routeDebugNextQuestionText }}</text>
             <text v-if="routeDebugGroupText" class="followup-result-list-item">命中流程组：{{ routeDebugGroupText }}</text>
             <text v-if="routeDebugFallbackPolicy" class="followup-result-list-item">回退策略：{{ routeDebugFallbackPolicy }}</text>
@@ -311,12 +319,11 @@ const followUpSwiperStyle = computed(() => ({ height: `${estimateFollowUpSwiperH
 const hasCompletedDiagnosis = computed(() => Boolean(result.value) && !result.value.followUpRequired)
 const hasRouteConvergenceDetails = computed(() =>
   Boolean(
-    primaryOutcomeDisplay.value ||
-    secondaryOutcomeDisplays.value.length ||
     visibleOutcomeDisplays.value.length
   )
 )
 const finalOutcome = computed(() => result.value?.finalResult || {})
+const outcomeTypeValue = computed(() => String(result.value?.outcomeType || finalOutcome.value?.outcomeType || '').trim())
 const outcomeDisplayTitle = computed(() => String(
   formatOutcomeDisplayLabel(finalOutcome.value) ||
   formatOutcomeDisplayLabel(result.value?.mainIssueText) ||
@@ -331,7 +338,7 @@ const outcomeSummaryText = computed(() => String(
   formatOutcomeDisplayLabel('系统已根据视觉证据和补充问诊整理出当前结论。')
 ).trim())
 const outcomeTypeText = computed(() => {
-  const type = String(result.value?.outcomeType || finalOutcome.value?.outcomeType || '').trim()
+  const type = outcomeTypeValue.value
   const labels = {
     problematic: '有问题',
     problem: '可能存在问题',
@@ -341,6 +348,14 @@ const outcomeTypeText = computed(() => {
   }
   return labels[type] || type || '已生成结论'
 })
+const isProblematicOutcome = computed(() => ['problematic', 'problem'].includes(outcomeTypeValue.value))
+const isNonProblemOrUncertainOutcome = computed(() => ['non_problematic', 'uncertain', 'out_of_pool_no_mapping'].includes(outcomeTypeValue.value))
+const showNonProblemOutcomeResultCard = computed(() => !isProblematicOutcome.value && isNonProblemOrUncertainOutcome.value)
+const nonProblemOutcomeSummaryText = computed(() => String(
+  outcomeSummaryText.value ||
+  outcomeTypeText.value ||
+  '当前尚未见到明确问题，建议继续观察。'
+).trim())
 const confidenceLevelText = computed(() => {
   const level = String(result.value?.confidenceLevel || finalOutcome.value?.confidenceLevel || '').trim()
   const labels = {
@@ -351,14 +366,6 @@ const confidenceLevelText = computed(() => {
   }
   return labels[level] || level || '一般'
 })
-const primaryOutcome = computed(() => result.value?.primaryOutcome || result.value?.finalResult?.primaryOutcome || null)
-const secondaryOutcomeSource = computed(() =>
-  Array.isArray(result.value?.secondaryOutcomes) && result.value.secondaryOutcomes.length
-    ? result.value.secondaryOutcomes
-    : Array.isArray(result.value?.finalResult?.secondaryOutcomes)
-      ? result.value.finalResult.secondaryOutcomes
-      : []
-)
 const visibleOutcomeSource = computed(() =>
   Array.isArray(result.value?.visibleOutcomes) && result.value.visibleOutcomes.length
     ? result.value.visibleOutcomes
@@ -366,24 +373,12 @@ const visibleOutcomeSource = computed(() =>
       ? result.value.finalResult.visibleOutcomes
       : []
 )
-const primaryOutcomeDisplay = computed(() => formatOutcomeDisplayLabel(primaryOutcome.value))
-const secondaryOutcomeDisplays = computed(() =>
-  uniqueStrings(
-    secondaryOutcomeSource.value.map(formatOutcomeDisplayLabel)
-  )
-)
 const visibleOutcomeDisplays = computed(() =>
   uniqueStrings(
     visibleOutcomeSource.value.map(formatOutcomeDisplayLabel)
   )
 )
-const allOutcomeDisplays = computed(() =>
-  uniqueStrings([
-    ...[primaryOutcomeDisplay.value],
-    ...secondaryOutcomeDisplays.value,
-    ...visibleOutcomeDisplays.value
-  ].filter(Boolean))
-)
+const allOutcomeDisplays = computed(() => visibleOutcomeDisplays.value)
 const routeDebugDecision = computed(() => result.value?.routeDecision || null)
 const showRouteDebugPanel = computed(() => routeDebugEnabled && Boolean(routeDebugDecision.value))
 const routeDebugSummaryText = computed(() => String(
@@ -392,12 +387,8 @@ const routeDebugSummaryText = computed(() => String(
     ''
 ).trim())
 const routeDebugModeText = computed(() => String(routeDebugDecision.value?.mode || '').trim())
-const routeDebugPrimaryOutcomeKey = computed(() => String(routeDebugDecision.value?.primaryOutcomeKey || '').trim())
 const routeDebugVisibleOutcomeText = computed(() =>
   normalizeArrayText(routeDebugDecision.value?.visibleOutcomeKeys).join(' / ')
-)
-const routeDebugSecondaryOutcomeText = computed(() =>
-  normalizeArrayText(routeDebugDecision.value?.secondaryOutcomeKeys).join(' / ')
 )
 const routeDebugNextQuestionText = computed(() =>
   normalizeArrayText(routeDebugDecision.value?.nextQuestionKeys).join(' / ')
@@ -486,11 +477,7 @@ const avoidAdviceTexts = computed(() => {
   ])
 })
 
-const outcomeAdviceSources = computed(() => buildUniqueOutcomesForAdvice([
-  primaryOutcome.value,
-  ...secondaryOutcomeSource.value,
-  ...visibleOutcomeSource.value
-]))
+const outcomeAdviceSources = computed(() => buildUniqueOutcomesForAdvice(visibleOutcomeSource.value))
 
 const actionAdviceGroups = computed(() =>
   buildOutcomeAdviceGroups({
@@ -1419,6 +1406,10 @@ async function submitFollowUps() {
   font-weight: 800;
   line-height: 1;
   padding: 8px 10px;
+}
+
+#diagnose-followup-result-outcomes {
+  margin-top: 0;
 }
 
 .followup-result-list {

@@ -1,0 +1,82 @@
+-- Round 1: converge yes/no answer labels for boolean follow-up questions.
+-- Intentionally does not change question text, non-boolean multi-choice options, mappings, or scoring semantics.
+
+UPDATE `question_option_mapping_v5_real`
+SET `option_text_user_cn` = CASE `option_key`
+  WHEN 'yes' THEN '是的'
+  WHEN 'no' THEN '不是的'
+  ELSE `option_text_user_cn`
+END
+WHERE `data_status` = 'audited'
+  AND `review_status` = 'audited'
+  AND `option_key` IN ('yes', 'no')
+  AND `question_key` IN (
+    'q_anthracnose_concentric',
+    'q_anthracnose_sunken',
+    'q_bacterial_water_soaked',
+    'q_black_mold_growth_confirm',
+    'q_blackened_stem_base_confirm',
+    'q_blackened_stem_base_bad_root_smell',
+    'q_bud_drop_confirm',
+    'q_bud_drop_low_humidity_damage',
+    'q_underwater_dry_wilt',
+    'q_chewed_edges_confirm',
+    'q_edema_blisters',
+    'q_edema_warty',
+    'q_flower_abort_confirm',
+    'q_flower_abort_low_humidity_damage',
+    'q_gnat_soil_stays_wet',
+    'q_gnat_small_flies',
+    'q_gnat_mold_on_soil',
+    'q_gray_mold_visible',
+    'q_gray_mold_white_fuzz',
+    'q_holes_in_leaf_confirm',
+    'q_sticky_honeydew_confirm',
+    'q_sooty_mold_confirm',
+    'q_iron_not_old_first',
+    'q_leaf_bleaching_confirm',
+    'q_leaf_bleaching_sunburn_patch',
+    'q_leaf_curl_confirm',
+    'q_leaf_margin_burn_confirm',
+    'q_leaf_margin_burn_crispy_edges',
+    'q_leaf_margin_necrosis_confirm',
+    'q_leaf_margin_necrosis_v_shaped_lesions',
+    'q_leaf_mosaic_mottling_confirm',
+    'q_leaf_mosaic_mottling_distorted_growth',
+    'q_brown_spots_halo_confirm',
+    'q_black_spots_spreading_confirm',
+    'q_irregular_blotches_confirm',
+    'q_patchy_browning_confirm',
+    'q_leaf_twist_confirm',
+    'q_leaf_twist_distorted_new_growth',
+    'q_leaf_yellowing_confirm',
+    'q_leaf_yellowing_new_growth_bias',
+    'q_nitrogen_uniform_yellow',
+    'q_stippling_confirm',
+    'q_powder_white_visible',
+    'q_powder_on_stems_or_buds',
+    'q_root_rot_bad_smell',
+    'q_root_rot_black_roots',
+    'q_root_rot_mushy_roots',
+    'q_root_rot_wet_soil_wilt',
+    'q_rust_pustules_visible',
+    'q_rust_orange_spots',
+    'q_skeletonized_leaves_confirm',
+    'q_soft_stem_confirm',
+    'q_soft_stem_mushy_tissue',
+    'q_spider_webbing_visible',
+    'q_stable_marking_new_growth_consistent',
+    'q_stable_marking_no_recent_expansion',
+    'q_stable_marking_pattern_confirm',
+    'q_stem_collapse_confirm',
+    'q_stem_collapse_poor_drainage',
+    'q_thrips_silver_streaks',
+    'q_tunnels_in_leaf_confirm',
+    'q_uniform_browning_confirm',
+    'q_uniform_browning_crispy_edges',
+    'q_water_soaked_stem_confirm',
+    'q_wind_damage_confirm',
+    'q_wind_damage_crispy_edges',
+    'q_yellowing_patchy_confirm',
+    'q_yellowing_patchy_yellow_speckling'
+  );

@@ -48,11 +48,13 @@ Dispatch Plan:
 
 非简单实现任务进入 workflow 后，至少必须具备以下闭环：
 
-1. planning：由 main agent 在 Dispatch Plan 中完成；需求、非目标、验收标准或写入边界不清时派发 `task_planner`。
-2. 架构分析：默认派发 `architect_reviewer`；只有纯只读、纯文档、已知单点低风险改动，且 Dispatch Plan 写明裁剪理由时才可由 main agent 直接承担。
+1. planning：默认派发或复用 `task_planner` 输出规划草案；只有纯只读解释、纯配置检查、用户明确禁止 subagent 或当前环境不支持 subagent 时，才允许由 main agent 在 Dispatch Plan 中裁剪并写明原因。
+2. 实现前架构分析：默认派发或复用 `architect_reviewer` 定边界；只有纯只读、纯文档、已知单点低风险改动，且 Dispatch Plan 写明裁剪理由时才可由 main agent 直接承担。
 3. 代码执行：由 `implementer_fast` / `implementer_deep` 或 main agent 在明确写入边界内完成；高风险实现默认 `implementer_deep`。
-4. QA：实现后必须有 `qa_reviewer` 或 main agent 的明确复核；高风险、跨模块、用户可见路径或规则一致性任务默认派发 `qa_reviewer`。
-5. 文档同步：涉及规则、流程、接口、字段、状态、问诊链路、展示契约、避坑记录、All-in-One 或 source_index 时派发 `docs_keeper`。
+4. 实现后代码 review：凡涉及代码 diff、代码逻辑、模块边界、规则一致性、数据/API/状态边界或删减判断，必须复用同一 `architect_reviewer` 线程做代码 review；`qa_reviewer` 不得替代代码 review。
+5. QA：代码 review 之后再由 `qa_reviewer` 检查测试、回归、验收证据、自动化与未验证项；QA 可以指出“缺少 architect 代码 review”，但不得把自身结论当作代码 review。
+6. handoff：非简单代码实现完成后，必须创建或更新 `docs/ai-runs/` handoff；只有无代码实现或用户明确不要落文档时可裁剪并写明原因。
+7. 文档同步：涉及规则、流程、接口、字段、状态、问诊链路、展示契约、避坑记录、All-in-One 或 source_index 时派发 `docs_keeper`。
 
 涉及诊断 `fast path`、route、outcome、gate、runtime 或 `diagnose-http` 的实现，QA 闭环必须覆盖快捷路径与主链路径的差异；至少包含一个“应继续追问而非 final”的负向用例，并在需要发布时交给 `release_ops` 做真实 HTTP smoke 与 DB 证据复核。
 
@@ -74,20 +76,21 @@ Dispatch Plan:
 
 1. `task_planner`
 2. `code_explorer`
-3. `architect_reviewer`
+3. `architect_reviewer` 实现前架构分析
 4. `implementer_fast` 或 `implementer_deep`
-5. `qa_reviewer`
-6. `docs_keeper`
-7. `release_ops`
+5. `architect_reviewer` 实现后代码 review，复用同一线程
+6. `qa_reviewer`
+7. `docs_keeper`
+8. `release_ops`
 
 ## 7. 派发边界
 
 1. 规划：`task_planner`
 2. 代码探索与 `docs/code-logics/` 对照：`code_explorer`
-3. 架构、模块边界、`docs/new-rules/` 一致性：`architect_reviewer`
+3. 实现前架构、实现后代码 review、模块边界、`docs/new-rules` 一致性：`architect_reviewer`
 4. 低风险局部实现：`implementer_fast`
 5. 高风险、多文件、诊断流、route / outcome / gate / runtime、诊断快捷路径、CloudBase、数据结构实现：`implementer_deep`
-6. QA、diff、模块化回归、规则一致性：`qa_reviewer`
+6. 测试、回归、验收证据、自动化与未验证项：`qa_reviewer`
 7. 文档、术语、`docs/code-logics/`、`docs/new-rules/`、避坑索引：`docs_keeper`
 8. 发布、部署、CloudBase、replay、回滚：`release_ops`
 

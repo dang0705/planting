@@ -1,0 +1,1531 @@
+{
+  "total": 647,
+  "resolvedCount": 566,
+  "remainingUncertainCount": 81,
+  "resolvedRate": 87.48,
+  "byStopReason": [
+    {
+      "key": "problematic_output_ready",
+      "count": 566
+    },
+    {
+      "key": "uncertain_output_ready",
+      "count": 81
+    }
+  ],
+  "byOutcomeType": [
+    {
+      "key": "problematic",
+      "count": 566
+    },
+    {
+      "key": "uncertain",
+      "count": 81
+    }
+  ],
+  "uncertainDecisionCauses": [
+    {
+      "key": "no_observed_symptoms",
+      "count": 78
+    },
+    {
+      "key": "no_forceable_output_problem_after_followup",
+      "count": 2
+    },
+    {
+      "key": "class_converged_context_guard_blocked",
+      "count": 1
+    }
+  ],
+  "uncertainSummaries": [
+    {
+      "key": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+      "count": 58
+    },
+    {
+      "key": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+      "count": 20
+    },
+    {
+      "key": "当前已收敛到“黄叶模式”，但还缺少足够的补充事实，暂时不能安全定位到具体原因。 当前证据仍不够稳定，建议补查叶背、根部、盆土状态，必要时重新开始诊断。",
+      "count": 3
+    }
+  ],
+  "examples": [
+    {
+      "sessionId": "diag_1776504498738_5ce6dtmj",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776504520682_uq8461pi",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776504716159_lvmsaixt",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776504783515_azvky6ra",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776505031230_twahzzq8",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776505040002_gugnf7zi",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776505262966_5b5hjcck",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776505305956_ef31zebu",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776505368688_loeict2e",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_black_spots_spreading_confirm",
+            "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
+            "targetDimension": "visual_presence",
+            "answer": {
+              "optionKey": "no",
+              "optionText": "否，基本没有",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "questionText": "这些斑点/斑块更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_bacterial_water_soaked",
+            "questionText": "病斑有水渍感、湿润半透明吗？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "no",
+              "optionText": "否，基本没有",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_black_spots_tissue_moisture_check",
+            "questionText": "这些斑点/斑块摸起来更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 3
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 3
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776505537190_nmwouueo",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776505609293_7vec4g2n",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776505710728_h8nq8ys4",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776505731708_q71n4p4t",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776505777449_kztpay4j",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776506038747_dawj2vdh",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776506295071_2o66ugsm",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776506440151_3amwkeo9",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "retake_first",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776508681282_yj7uloly",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
+            "targetDimension": "visual_presence",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "questionText": "这些褐色病斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_bacterial_water_soaked",
+            "questionText": "病斑有水渍感、湿润半透明吗？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_black_spots_tissue_moisture_check",
+            "questionText": "这些褐色病斑摸起来更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__brown_spots_halo__surface_residue",
+            "questionText": "这些“褐斑带黄晕”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 3
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 3
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776509843283_jyeiinh1",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_black_spots_spreading_confirm",
+            "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
+            "targetDimension": "visual_presence",
+            "answer": {
+              "optionKey": "no",
+              "optionText": "否，基本没有",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "questionText": "这些斑点/斑块更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "surface",
+              "optionText": "更像浮在表面，轻擦会蹭开",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_bacterial_water_soaked",
+            "questionText": "病斑有水渍感、湿润半透明吗？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_black_spots_tissue_moisture_check",
+            "questionText": "这些斑点/斑块摸起来更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 3
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 3
+        }
+      }
+    },
+    {
+      "sessionId": "diag_1776510087231_6eshq4o9",
+      "stopReasonDetail": "no_observed_symptoms",
+      "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_black_spots_spreading_confirm",
+            "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
+            "targetDimension": "visual_presence",
+            "answer": {
+              "optionKey": "no",
+              "optionText": "否，基本没有",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "questionText": "这些斑点/斑块更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "surface",
+              "optionText": "更像浮在表面，轻擦会蹭开",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_bacterial_water_soaked",
+            "questionText": "病斑有水渍感、湿润半透明吗？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_black_spots_tissue_moisture_check",
+            "questionText": "这些斑点/斑块摸起来更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 3
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 3
+        }
+      }
+    }
+  ]
+}

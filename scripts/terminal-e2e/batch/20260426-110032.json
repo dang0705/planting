@@ -1,0 +1,144 @@
+{
+  "generatedAt": "2026-04-26T03:00:32.982Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "artifactSplit": {
+    "rootBaseName": "20260426-110032",
+    "partIndex": 1,
+    "partCount": 1,
+    "maxResultsPerFile": 100
+  },
+  "collectionProfile": {
+    "source": "all",
+    "manualVisualOnly": false,
+    "manualVisualOnlyProvided": false
+  },
+  "visualFinalEvidenceSummary": {
+    "total": 1,
+    "available": 1,
+    "missingRawRecords": 0,
+    "emptyConclusion": 0
+  },
+  "total": 1,
+  "success": 1,
+  "failed": 0,
+  "progress": {
+    "processed": 1,
+    "targetTotal": 1,
+    "complete": true
+  },
+  "results": [
+    {
+      "sessionId": "diag_1777126627714_vm6x83hi",
+      "visualFinalEvidence": [],
+      "symptomClassReplay": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "non_problematic",
+        "stopReason": "non_problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "p_Y3VycmVudF9ub19vYnZpb3VzX3Byb2JsZW0",
+          "problemKey": "",
+          "displayName": "暂未见明显问题",
+          "summary": "当前图片里暂未见到足够稳定的问题性视觉证据，整体更像当前未见明显问题。若后续出现扩展、新发斑点、虫体、霉层或持续恶化，再重新诊断更稳妥。",
+          "severity": "low",
+          "urgency": "low"
+        },
+        "roundIndex": 1
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1777126627714_vm6x83hi",
+        "easySummary": "本条没有进入正式证据层的视觉证据。本条没有形成可用的 symptom class 路由结果。第1轮没有触发问诊。第二轮没有触发问诊。最终收敛到“非问题性结论”，说明系统在问题竞争前就命中了非问题性规则，不再需要继续把异常硬解释成病害或养护问题。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "本条没有进入正式证据层的视觉证据。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "本条没有形成可用的 symptom class 路由结果。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮没有触发问诊。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第二轮没有触发问诊。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统仍按固定公式完成了问题竞争，但当前产物里没有保留可展开的分数明细。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“非问题性结论”，说明系统在问题竞争前就命中了非问题性规则，不再需要继续把异常硬解释成病害或养护问题。"
+          }
+        ],
+        "competitionTopCandidates": [],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“非问题性结论”，说明系统在问题竞争前就命中了非问题性规则，不再需要继续把异常硬解释成病害或养护问题。",
+          "whyNotOtherOutcomes": [
+            "不是问题性结论，因为系统已经判定当前观察更符合“暂未见明显问题/正常变化”一侧。",
+            "不是不确定结论，因为当前已有足够规则支持安全输出非问题性结果。"
+          ],
+          "raw": {
+            "stopReason": "non_problematic_output_ready",
+            "decisionCauseKey": "",
+            "decisionCauseText": ""
+          }
+        }
+      }
+    }
+  ]
+}
