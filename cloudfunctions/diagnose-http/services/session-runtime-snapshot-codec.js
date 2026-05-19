@@ -198,6 +198,44 @@ function buildOutcomePayload(response = {}) {
   })
 }
 
+function normalizeRuntimeStringList(items = []) {
+  return (Array.isArray(items) ? items : [])
+    .map(item => String(item || '').trim())
+    .filter(Boolean)
+}
+
+function buildCompactRouteDecision(routeDecision = null) {
+  if (!routeDecision || typeof routeDecision !== 'object') {return null}
+  const decisionCause = routeDecision.decisionCause && typeof routeDecision.decisionCause === 'object'
+    ? {
+        decisionCauseKey: String(routeDecision.decisionCause.decisionCauseKey || '').trim(),
+        decisionCauseText: String(routeDecision.decisionCause.decisionCauseText || '').trim(),
+        decisionCauseCategory: String(routeDecision.decisionCause.decisionCauseCategory || '').trim()
+      }
+    : null
+  return {
+    stopReason: String(routeDecision.stopReason || '').trim(),
+    activeRouteGroupKeys: normalizeRuntimeStringList(routeDecision.activeRouteGroupKeys),
+    visibleOutcomeKeys: normalizeRuntimeStringList(routeDecision.visibleOutcomeKeys),
+    nextQuestionKeys: normalizeRuntimeStringList(routeDecision.nextQuestionKeys),
+    visibleActionConflictGroups: normalizeRuntimeStringList(routeDecision.visibleActionConflictGroups),
+    visibleActionProfileKeys: normalizeRuntimeStringList(routeDecision.visibleActionProfileKeys),
+    requiresFollowUp: Boolean(routeDecision.requiresFollowUp),
+    ...(decisionCause ? { decisionCause } : {}),
+    candidateOutcomeStates: (Array.isArray(routeDecision.candidateOutcomeStates)
+      ? routeDecision.candidateOutcomeStates
+      : [])
+      .map(state => ({
+        outcomeKey: String(state?.outcomeKey || '').trim(),
+        state: String(state?.state || '').trim(),
+        routeKeys: normalizeRuntimeStringList(state?.routeKeys),
+        missingGateKeys: normalizeRuntimeStringList(state?.missingGateKeys),
+        nextQuestionKeys: normalizeRuntimeStringList(state?.nextQuestionKeys)
+      }))
+      .filter(state => state.outcomeKey || state.state)
+  }
+}
+
 function buildRuntimeSnapshotPayload({
   sessionId,
   plantContext,
@@ -222,14 +260,13 @@ function buildRuntimeSnapshotPayload({
     response?.__runtimeRouteDecision && typeof response.__runtimeRouteDecision === 'object'
       ? response.__runtimeRouteDecision
       : null
-  const persistedMetrics = response?.metrics && typeof response.metrics === 'object'
-    ? {
-        ...response.metrics,
-        routeDecision: runtimeRouteDecision || response.metrics.routeDecision || null
-      }
-    : {
-        routeDecision: runtimeRouteDecision || null
-      }
+  const compactRouteDecision = buildCompactRouteDecision(
+    runtimeRouteDecision ||
+      (response?.metrics && typeof response.metrics === 'object'
+        ? response.metrics.routeDecision
+        : null)
+  )
+  const isFollowUpRuntimeSnapshot = Boolean(response?.followUpRequired)
 
   return JSON.stringify({
     diagnosisSessionId: sessionId,
@@ -289,15 +326,17 @@ function buildRuntimeSnapshotPayload({
       : 0,
     observedEvidenceSet,
     observedEvidenceSetCount: observedEvidenceSet.length,
-    derivedEvidenceSet,
-    diagnosisDirections,
+    derivedEvidenceSet: isFollowUpRuntimeSnapshot ? [] : derivedEvidenceSet,
+    diagnosisDirections: isFollowUpRuntimeSnapshot ? [] : diagnosisDirections,
     symptomClassRuntime,
     followUpCount: Array.isArray(response?.followUps) ? response.followUps.length : 0,
     questionQueue: response?.questionQueue || null,
     stopState: response?.stopState || null,
     outputEligibility: response?.outputEligibility || null,
-    diagnosticTrace: Array.isArray(response?.diagnosticTrace) ? response.diagnosticTrace : [],
-    careBaselineSummary: response?.careBaselineSummary || null,
+    diagnosticTrace: isFollowUpRuntimeSnapshot
+      ? []
+      : (Array.isArray(response?.diagnosticTrace) ? response.diagnosticTrace : []),
+    careBaselineSummary: isFollowUpRuntimeSnapshot ? null : (response?.careBaselineSummary || null),
     environmentDeviationHints: Array.isArray(response?.environmentDeviationHints)
       ? response.environmentDeviationHints
       : [],
@@ -305,8 +344,8 @@ function buildRuntimeSnapshotPayload({
     confidenceReasons: Array.isArray(response?.confidenceReasons)
       ? response.confidenceReasons
       : [],
-    routeDecision: runtimeRouteDecision,
-    metrics: persistedMetrics
+    routeDecision: compactRouteDecision,
+    metrics: null
   })
 }
 
@@ -320,5 +359,6 @@ module.exports = {
   resolveSessionRoute,
   resolveSessionStatus,
   buildOutcomePayload,
+  buildCompactRouteDecision,
   buildRuntimeSnapshotPayload
 }

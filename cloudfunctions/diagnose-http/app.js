@@ -10,6 +10,14 @@ const { main } = require('./app/http-router')
 const { runStartDiagnosis } = require('./app/diagnosis-start-runner')
 const { runAnswerDiagnosis } = require('./app/diagnosis-answer-runner')
 const { buildFrontendDiagnosisResponse } = require('./app/frontend-response')
+const {
+  triggerStaticRepositoryCachePreloadForSchemaEnvs
+} = require('./app/static-cache-preloader')
+
+triggerStaticRepositoryCachePreloadForSchemaEnvs(['production', 'development'], {
+  scope: 'diagnose-http-startup',
+  source: 'app_module'
+})
 
 module.exports.main = (event, context) => {
   const request = getHttpRequestData(event, context)

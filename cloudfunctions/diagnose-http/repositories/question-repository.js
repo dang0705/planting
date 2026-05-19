@@ -3,6 +3,7 @@
 const { models } = require('/opt/utils/cloudbase')
 const { sqlInList } = require('./sql')
 const { table } = require('../db/table-helper')
+const { resolveSchema } = require('../db/schema-resolver')
 const {
   mapQuestionRow,
   mapOptionRow,
@@ -19,16 +20,21 @@ const staticCache = {
   questionsByGroupKey: new Map(),
   optionMappingsByQuestionKey: new Map(),
   questionKeysByTargetSymptomKey: new Map(),
-  preloadExpiresAt: 0
+  preloadExpiresAtBySchema: new Map()
 }
 const pendingStaticCache = new Map()
 
+function buildSchemaCacheKey(key = '') {
+  return `${resolveSchema()}::${String(key || '').trim()}`
+}
+
 function getCached(cache, key = '') {
   if (!STATIC_REPOSITORY_CACHE_TTL_MS) {return null}
-  const entry = cache.get(String(key || '').trim())
+  const cacheKey = buildSchemaCacheKey(key)
+  const entry = cache.get(cacheKey)
   if (!entry) {return null}
   if (Date.now() - Number(entry.cachedAt || 0) > STATIC_REPOSITORY_CACHE_TTL_MS) {
-    cache.delete(String(key || '').trim())
+    cache.delete(cacheKey)
     return null
   }
   return entry.value
@@ -36,14 +42,14 @@ function getCached(cache, key = '') {
 
 function setCached(cache, key = '', value) {
   if (!STATIC_REPOSITORY_CACHE_TTL_MS) {return}
-  cache.set(String(key || '').trim(), {
+  cache.set(buildSchemaCacheKey(key), {
     cachedAt: Date.now(),
     value
   })
 }
 
 function withPendingStaticQuery(key = '', loader) {
-  const normalizedKey = String(key || '').trim()
+  const normalizedKey = buildSchemaCacheKey(key)
   if (!normalizedKey) {
     return loader()
   }
@@ -62,11 +68,12 @@ function withPendingStaticQuery(key = '', loader) {
 async function preloadQuestionRepositoryCache() {
   if (!STATIC_REPOSITORY_CACHE_TTL_MS) {return}
   const now = Date.now()
-  if (staticCache.preloadExpiresAt > now) {return}
+  const schema = resolveSchema()
+  if (Number(staticCache.preloadExpiresAtBySchema.get(schema) || 0) > now) {return}
 
   await withPendingStaticQuery('preloadQuestionRepositoryCache:all', async () => {
     const refreshedNow = Date.now()
-    if (staticCache.preloadExpiresAt > refreshedNow) {return}
+    if (Number(staticCache.preloadExpiresAtBySchema.get(schema) || 0) > refreshedNow) {return}
 
     const [strategyResult, questionResult, optionResult] = await Promise.all([
       models.$runSQL(
@@ -199,7 +206,10 @@ async function preloadQuestionRepositoryCache() {
       setCached(staticCache.optionMappingsByQuestionKey, key, rows)
     }
 
-    staticCache.preloadExpiresAt = refreshedNow + STATIC_REPOSITORY_CACHE_TTL_MS
+    staticCache.preloadExpiresAtBySchema.set(
+      schema,
+      refreshedNow + STATIC_REPOSITORY_CACHE_TTL_MS
+    )
   })
 }
 

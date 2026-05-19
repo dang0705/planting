@@ -102,13 +102,21 @@ function buildAnswerRevisionEvents({
   return events
 }
 
-async function appendFollowUpQuestions(sessionId, round, questions = [], { questionQueue = null } = {}) {
+async function appendFollowUpQuestions(
+  sessionId,
+  round,
+  questions = [],
+  {
+    questionQueue = null,
+    assumeNoExisting = false
+  } = {}
+) {
   const list = filterQuestionsByQuestionQueue(questions, questionQueue, {
     requireQueueAnchor: true
   })
   if (!list.length) {return}
 
-  const followUpRows = await listFollowUpRows(sessionId)
+  const followUpRows = assumeNoExisting ? [] : await listFollowUpRows(sessionId)
   const existingQuestionKeys = new Set(
     (Array.isArray(followUpRows) ? followUpRows : [])
       .map(row => readQuestionKeyFromRationale(row?.rationale || '') || String(row?.symptom_key || '').trim())
@@ -129,11 +137,18 @@ async function appendFollowUpQuestions(sessionId, round, questions = [], { quest
 
   if (!deDupedQuestionRows.length) {return}
 
-  const questionMetaMap = new Map(
-    (await getQuestionsByKeys(deDupedQuestionRows.map(item => resolveQuestionKey(item))))
-      .map(item => [String(item?.questionKey || '').trim(), item])
-      .filter(([questionKey]) => Boolean(questionKey))
+  const needsQuestionMetaLookup = deDupedQuestionRows.some(item =>
+    !resolveQuestionText(item, {}) ||
+    !String(item?.targetDimension || '').trim() ||
+    !String(item?.targetSymptomKey || '').trim()
   )
+  const questionMetaMap = needsQuestionMetaLookup
+    ? new Map(
+      (await getQuestionsByKeys(deDupedQuestionRows.map(item => resolveQuestionKey(item))))
+        .map(item => [String(item?.questionKey || '').trim(), item])
+        .filter(([questionKey]) => Boolean(questionKey))
+    )
+    : new Map()
   await insertFollowUpQuestionsRows(
     sessionId,
     deDupedQuestionRows.map((item, index) => {

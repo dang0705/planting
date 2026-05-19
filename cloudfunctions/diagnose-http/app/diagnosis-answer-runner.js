@@ -36,6 +36,21 @@ const outcomeRouteRepository = require('../repositories/outcome-route-repository
 const {
   createReviewTimingLogger
 } = require('../repositories/diagnosis-review/review-performance')
+const { triggerStaticRepositoryCachePreload } = require('./static-cache-preloader')
+
+function runDeferredAnswerPersistence(sessionId = '', jobs = []) {
+  for (const job of jobs) {
+    if (typeof job !== 'function') {continue}
+    void Promise.resolve()
+      .then(job)
+      .catch(error => {
+        console.error('diagnosis-answer deferred persistence failed:', {
+          sessionId,
+          message: String(error?.message || error || '')
+        })
+      })
+  }
+}
 
 function collectAnsweredQuestionKeysFromFollowUpRows(rows = []) {
   const answeredRows = Array.isArray(rows) ? rows : []
@@ -74,6 +89,13 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     hasAnswers: Array.isArray(sessionState?.answeredAnswers) && sessionState.answeredAnswers.length > 0,
     hasFollowUpRows: Array.isArray(sessionState?.followUpRows) && sessionState.followUpRows.length > 0
   })
+  triggerStaticRepositoryCachePreload({
+    scope: 'diagnosis-answer',
+    sessionId,
+    openid,
+    source: 'answer_runner'
+  })
+  timing.mark('static-cache-preload-triggered')
 
   const answers = normalizePublicAnswers(payload.answers || payload.followUpAnswers || [])
   const imageInputs = resolveVisualImageInputs(payload)
@@ -143,7 +165,8 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   let runtimeRouteAnswerEffects = []
   let runtimeFollowUpRowsForRound = runtimeSessionFollowUpRows
   let runtimeAskedQuestionRows = buildAskedQuestionRowsFromFollowUpRows(runtimeSessionFollowUpRows)
-  const answerPersistenceTasks = []
+  const requiredAnswerPersistenceTasks = []
+  const deferredAnswerPersistenceJobs = []
 
   if (hasAnswers) {
     const questionKeys = Array.from(new Set(answers.map(item => item.questionKey).filter(Boolean)))
@@ -295,7 +318,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
         followUpRows: runtimeFollowUpRowsForRound,
         awaitPersistence: false
       })
-      const queueMarkPromise = markQueueItemsAnswered(
+      deferredAnswerPersistenceJobs.push(() => markQueueItemsAnswered(
           sessionId,
           openid,
           answerRound,
@@ -306,11 +329,10 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
                 ? currentQuestionQueue
                 : null
           }
-      )
-      answerPersistenceTasks.push(queueMarkPromise)
+      ))
       const markResult = await markResultPromise
       if (Array.isArray(markResult?.pendingWrites)) {
-        answerPersistenceTasks.push(...markResult.pendingWrites)
+        requiredAnswerPersistenceTasks.push(...markResult.pendingWrites)
       }
       timing.mark('follow-up-answers-marked', {
         updatedAnswerCount: Array.isArray(markResult?.updatedAnswers)
@@ -447,7 +469,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     hasImageInputs: Boolean(hasImageInputs)
   })
 
-  await Promise.all(answerPersistenceTasks)
+  await Promise.all(requiredAnswerPersistenceTasks)
   await persistRoundResult({
     sessionId,
     openid,
@@ -461,6 +483,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     clientContext,
     followUpRows: runtimeFollowUpRowsForRound
   })
+  runDeferredAnswerPersistence(sessionId, deferredAnswerPersistenceJobs)
 
   const answerResult = {
     sessionId,
@@ -488,5 +511,8 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
 }
 
 module.exports = {
-  runAnswerDiagnosis
+  runAnswerDiagnosis,
+  _test: {
+    runDeferredAnswerPersistence
+  }
 }

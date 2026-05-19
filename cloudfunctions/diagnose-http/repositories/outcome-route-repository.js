@@ -12,7 +12,7 @@ const STATIC_REPOSITORY_CACHE_TTL_MS = Math.max(
 )
 const staticCache = {
   allRouteGroupsBySchema: new Map(),
-  preloadExpiresAt: 0,
+  preloadExpiresAtBySchema: new Map(),
   routeGroupsBySignature: new Map(),
   routesByOutcomeSignature: new Map(),
   gatesByRouteSignature: new Map(),
@@ -62,6 +62,21 @@ function setCached(cache, key = '', value) {
     cachedAt: Date.now(),
     value
   })
+}
+
+function getComposedCachedAnswerEffects(safeKeys = []) {
+  if (!STATIC_REPOSITORY_CACHE_TTL_MS || safeKeys.length <= 1) {return undefined}
+  const rows = []
+  for (const key of safeKeys.slice().sort()) {
+    const singleKey = buildSchemaCacheKey([
+      'answerEffectsByQuestion',
+      normalizeCacheSignature([key])
+    ])
+    const cached = getCached(staticCache.answerEffectsByQuestionSignature, singleKey)
+    if (cached === undefined) {return undefined}
+    rows.push(...cached)
+  }
+  return rows
 }
 
 function withPendingStaticQuery(key = '', loader) {
@@ -338,11 +353,14 @@ async function getAllActiveOutcomeRouteGroups() {
 async function preloadOutcomeRouteRepositoryCache() {
   if (!STATIC_REPOSITORY_CACHE_TTL_MS) {return}
   const now = Date.now()
-  if (staticCache.preloadExpiresAt > now) {return}
+  const schema = resolveSchema()
+  if (Number(staticCache.preloadExpiresAtBySchema.get(schema) || 0) > now) {return}
 
-  await withPendingStaticQuery('preloadOutcomeRouteRepositoryCache:all', async () => {
+  await withPendingStaticQuery(
+    buildSchemaCacheKey(['preloadOutcomeRouteRepositoryCache', 'all']),
+    async () => {
     const refreshedNow = Date.now()
-    if (staticCache.preloadExpiresAt > refreshedNow) {return}
+    if (Number(staticCache.preloadExpiresAtBySchema.get(schema) || 0) > refreshedNow) {return}
 
     const [
       allRouteGroupsRaw,
@@ -631,7 +649,10 @@ async function preloadOutcomeRouteRepositoryCache() {
       setCached(staticCache.actionProfilesBySignature, cacheKey, [row])
     }
 
-    staticCache.preloadExpiresAt = refreshedNow + STATIC_REPOSITORY_CACHE_TTL_MS
+    staticCache.preloadExpiresAtBySchema.set(
+      schema,
+      refreshedNow + STATIC_REPOSITORY_CACHE_TTL_MS
+    )
   })
 }
 
@@ -779,10 +800,20 @@ async function getOutcomeAnswerEffects(questionKeys = []) {
   const cacheKey = buildSchemaCacheKey(['answerEffectsByQuestion', normalizeCacheSignature(safeKeys)])
   const cached = getCached(staticCache.answerEffectsByQuestionSignature, cacheKey)
   if (cached !== undefined) {return cached}
+  const composedCached = getComposedCachedAnswerEffects(safeKeys)
+  if (composedCached !== undefined) {
+    setCached(staticCache.answerEffectsByQuestionSignature, cacheKey, composedCached)
+    return composedCached
+  }
 
   return withPendingStaticQuery(cacheKey, async () => {
     const cachedAfterWait = getCached(staticCache.answerEffectsByQuestionSignature, cacheKey)
     if (cachedAfterWait !== undefined) {return cachedAfterWait}
+    const composedAfterWait = getComposedCachedAnswerEffects(safeKeys)
+    if (composedAfterWait !== undefined) {
+      setCached(staticCache.answerEffectsByQuestionSignature, cacheKey, composedAfterWait)
+      return composedAfterWait
+    }
 
     const rows = await runSql(
     `

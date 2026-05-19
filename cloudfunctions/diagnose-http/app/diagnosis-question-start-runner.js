@@ -4,6 +4,8 @@ const { runDiagnosisRound } = require('../domain/diagnosis-engine')
 const { buildSessionId } = require('../services/session-service')
 const { resolveRequestClientContext } = require('./request-normalizers')
 const { persistRoundResult } = require('./visual-runtime')
+const { createReviewTimingLogger } = require('../repositories/diagnosis-review/review-performance')
+const { triggerStaticRepositoryCachePreload } = require('./static-cache-preloader')
 
 const MANUAL_SYMPTOM_MODE_OPTIONS = [
   { classKey: 'yellowing_mode', classNameCn: '黄叶模式', symptomKey: 'uniform_yellowing', symptomCn: '整叶黄化' },
@@ -111,6 +113,9 @@ async function runQuestionStartDiagnosis({
   skipPersistence = false
 } = {}) {
   payload = payload || {}
+  const timing = createReviewTimingLogger('diagnosis-question-start', {
+    skipPersistence: Boolean(skipPersistence)
+  })
   const clientContext = resolveRequestClientContext(
     {
       ...payload,
@@ -134,6 +139,17 @@ async function runQuestionStartDiagnosis({
 
   const option = resolveManualSymptomMode(payload)
   const sessionId = buildSessionId()
+  timing.mark('request-ready', {
+    hasPlantId: Boolean(plantId),
+    hasUserPlantId: Boolean(userPlantId)
+  })
+  triggerStaticRepositoryCachePreload({
+    scope: 'diagnosis-question-start',
+    sessionId,
+    openid,
+    source: 'question_start_runner'
+  })
+  timing.mark('static-cache-preload-triggered')
   const observedSymptoms = buildManualObservedSymptoms(option)
   const observedEvidenceSet = buildManualObservedEvidenceSet(option)
 
@@ -148,9 +164,14 @@ async function runQuestionStartDiagnosis({
     askedQuestionKeys: [],
     unknownCountByGroup: {},
     symptomClassState: null,
+    preferCatalogPlantId: Boolean(plantCatalogId && !userPlantId),
     round: 1,
     stage: 'preliminary',
-    sessionId
+    sessionId,
+    perfLogger: timing
+  })
+  timing.mark('round-result-ready', {
+    followUpCount: Array.isArray(roundResult?.followUps) ? roundResult.followUps.length : 0
   })
 
   await persistRoundResult({
@@ -165,6 +186,10 @@ async function runQuestionStartDiagnosis({
       `无图症状模式：${option.symptomCn}（${option.classNameCn}）`,
     skipPersistence,
     clientContext
+  })
+  timing.finish({
+    hasFollowUps: Array.isArray(roundResult?.followUps) && roundResult.followUps.length > 0,
+    hasFinalResult: Boolean(roundResult?.topProblem || roundResult?.finalResult)
   })
 
   return {

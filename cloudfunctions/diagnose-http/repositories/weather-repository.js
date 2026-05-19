@@ -25,7 +25,7 @@ async function getFreshCachedWeatherContext(openid = '') {
         SELECT weather_data, updated_at, expires_at
         FROM ${table('weather_cache')}
         WHERE _openid = {{openid}}
-          AND (cache_scope = 'user' OR cache_scope IS NULL)
+          AND (cache_scope = 'user' OR cache_scope <=> NULL)
           AND expires_at > CURRENT_TIMESTAMP
         ORDER BY updated_at DESC
         LIMIT 1

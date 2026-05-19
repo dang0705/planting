@@ -14,6 +14,7 @@ const {
   withPending,
   normalizeCareStrategy
 } = require('./prior-cache')
+const { debugLog } = require('../utils/common')
 
 async function getGenusCareProfile(genusName = '', familyName = '') {
   const safeGenusName = String(genusName || '').trim()
@@ -144,8 +145,13 @@ function buildResolvedPlantContext({
   }
 }
 
-async function resolvePlantContext({ openid, plantId = null, userPlantId = null } = {}) {
-  const candidateUserPlantId = userPlantId || plantId
+async function resolvePlantContext({
+  openid,
+  plantId = null,
+  userPlantId = null,
+  preferCatalogPlantId = false
+} = {}) {
+  const candidateUserPlantId = preferCatalogPlantId ? userPlantId : (userPlantId || plantId)
 
   if (candidateUserPlantId !== null && candidateUserPlantId !== undefined && candidateUserPlantId !== '') {
     const userPlant = await getUserPlantInstanceById(openid, Number(candidateUserPlantId))
@@ -153,7 +159,7 @@ async function resolvePlantContext({ openid, plantId = null, userPlantId = null 
       const catalogLookupId = userPlant.plantIdentityId || userPlant.legacyPlantId || userPlant.plantId || ''
       const plant = catalogLookupId ? await getPlantCatalogById(String(catalogLookupId)) : null
       const careProfile = await getGenusCareProfile(plant?.genus || userPlant?.genus || '', plant?.familyEn || userPlant?.familyEn || '')
-      console.log('diagnose-http plant-context resolved from userPlant:', {
+      debugLog('diagnose-http plant-context resolved from userPlant:', {
         catalogLookupId,
         genus: plant?.genus || userPlant?.genus || '',
         family: plant?.familyEn || userPlant?.familyEn || '',
@@ -175,7 +181,7 @@ async function resolvePlantContext({ openid, plantId = null, userPlantId = null 
   }
 
   const careProfile = await getGenusCareProfile(plant?.genus || '', plant?.familyEn || '')
-  console.log('diagnose-http plant-context resolved from catalog:', {
+  debugLog('diagnose-http plant-context resolved from catalog:', {
     plantId: String(plantId),
     genus: plant?.genus || '',
     family: plant?.familyEn || '',

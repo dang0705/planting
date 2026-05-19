@@ -18,6 +18,7 @@ const {
   computeDirectionConfidence,
   clamp01
 } = require('./diagnosis-direction-indexes')
+const { debugLog } = require('./common')
 
 function normalizeText(value = '', fallback = '') {
   const normalized = String(value || '').trim()
@@ -237,7 +238,7 @@ function buildDiagnosisDirections({
       observedSymptomKeys: Array.from(symptomConfidenceMap.keys())
     })
 
-    console.log('diagnose-http direction resolution:', {
+    debugLog('diagnose-http direction resolution:', {
       directionKey: definition.directionKey,
       matchedSymptomKeys,
       matchedPatternKeys,

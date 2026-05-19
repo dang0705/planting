@@ -26,11 +26,41 @@ function buildVisualSupervisionRecordId(sessionId = '', visualAdmissionRecordId 
   return `vissup_${hash}`
 }
 
+function hasVisualSupervisionSignal(response = {}) {
+  if (!response || typeof response !== 'object') {
+    return false
+  }
+
+  if (
+    normalizeStoredNullableText(response?.latestVisualCallBatchId || '', '') ||
+    normalizeStoredNullableText(response?.visualBatchTrace?.current_visual_call_batch_id || '', '') ||
+    normalizeStoredNullableText(response?.visualBatchTrace?.currentVisualCallBatchId || '', '')
+  ) {
+    return true
+  }
+
+  const observedEvidenceSet = normalizePublicObservedEvidenceSet(response?.observedEvidenceSet || [])
+  return observedEvidenceSet.some(item => {
+    const sourceType = normalizeStoredNullableText(item?.sourceType || item?.evidenceSource || '', '')
+    const parentEvidenceKey = normalizeStoredNullableText(item?.parentEvidenceKey || '', '')
+    const sourceRecordId = normalizeStoredNullableText(item?.sourceRecordId || '', '')
+    return (
+      sourceType === 'visual_admission' ||
+      parentEvidenceKey.startsWith('visual_admission:') ||
+      sourceRecordId.startsWith('visadmit_')
+    )
+  })
+}
+
 async function upsertVisualSupervisionRecords({
   sessionId,
   openid,
   response
 } = {}) {
+  if (!hasVisualSupervisionSignal(response)) {
+    return
+  }
+
   const admissionRows = await listVisualAdmissionRowsBySession(sessionId)
   if (!admissionRows.length) {
     return

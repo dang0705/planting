@@ -2,6 +2,7 @@
 
 const { jsonResponse, notFound, methodNotAllowed, getHttpRequestData } = require('/opt/utils/http')
 const { getRefactorArtifacts } = require('../services/bootstrap-report')
+const { debugLog } = require('../utils/common')
 const {
   handleDiagnosisStart,
   handleDiagnosisQuestionStart,
@@ -10,26 +11,31 @@ const {
   handleDiagnosisHistory,
   handleDiagnosisFeedback
 } = require('../handlers/diagnosis-handlers')
-const {
-  handleDiagnosisReviewList,
-  handleDiagnosisReviewImages,
-  handleDiagnosisReviewDetail,
-  handleDiagnosisReviewImportBatch
-} = require('../handlers/review-handlers')
-const {
-  handleOutOfPoolCandidateList,
-  handleOutOfPoolCandidateImage,
-  handleOutOfPoolCandidateReview,
-  handleOutOfPoolProxyMappingList,
-  handleOutOfPoolProxyMappingUpsert,
-  handleOutOfPoolProxyMappingDisable
-} = require('../handlers/out-of-pool-handlers')
-const {
-  handleLegacyDiagnose,
-  handleLegacyDiagnoseStream,
-  handleDiagnosisStartStream,
-  requestWantsDiagnosisStartSse
-} = require('../handlers/legacy-handlers')
+
+let reviewHandlers = null
+let outOfPoolHandlers = null
+let legacyHandlers = null
+
+function getReviewHandlers() {
+  if (!reviewHandlers) {
+    reviewHandlers = require('../handlers/review-handlers')
+  }
+  return reviewHandlers
+}
+
+function getOutOfPoolHandlers() {
+  if (!outOfPoolHandlers) {
+    outOfPoolHandlers = require('../handlers/out-of-pool-handlers')
+  }
+  return outOfPoolHandlers
+}
+
+function getLegacyHandlers() {
+  if (!legacyHandlers) {
+    legacyHandlers = require('../handlers/legacy-handlers')
+  }
+  return legacyHandlers
+}
 
 function normalizeHttpPayload(payload) {
   if (!payload) {
@@ -63,7 +69,7 @@ async function main(event, context) {
   const path = String(request.path || '')
   const method = request.method || 'GET'
   const payload = normalizeHttpPayload(method === 'GET' ? request.query : request.body)
-  console.log('diagnose-http request routing:', {
+  debugLog('diagnose-http request routing:', {
     method,
     path
   })
@@ -93,6 +99,10 @@ async function main(event, context) {
 
     if (path.includes('/diagnosis/start')) {
       if (method !== 'POST') {return methodNotAllowed(method)}
+      const {
+        handleDiagnosisStartStream,
+        requestWantsDiagnosisStartSse
+      } = getLegacyHandlers()
       if (requestWantsDiagnosisStartSse(request, payload)) {
         return handleDiagnosisStartStream(event, context, request, payload)
       }
@@ -121,11 +131,13 @@ async function main(event, context) {
 
     if (path.includes('/diagnosis/review/list')) {
       if (method !== 'GET') {return methodNotAllowed(method)}
+      const { handleDiagnosisReviewList } = getReviewHandlers()
       return handleDiagnosisReviewList(request, context, request.query)
     }
 
     if (path.includes('/diagnosis/review/images')) {
       if (method !== 'GET') {return methodNotAllowed(method)}
+      const { handleDiagnosisReviewImages } = getReviewHandlers()
       return handleDiagnosisReviewImages(request, context, request.query)
     }
 
@@ -134,14 +146,17 @@ async function main(event, context) {
         method === 'POST' &&
         String(payload?.action || request.query?.action || '').trim() === 'importBatch'
       ) {
+        const { handleDiagnosisReviewImportBatch } = getReviewHandlers()
         return handleDiagnosisReviewImportBatch(request, context, payload)
       }
       if (method !== 'GET') {return methodNotAllowed(method)}
+      const { handleDiagnosisReviewDetail } = getReviewHandlers()
       return handleDiagnosisReviewDetail(request, context, request.query)
     }
 
     if (path.includes('/diagnosis/review/import')) {
       if (method !== 'POST') {return methodNotAllowed(method)}
+      const { handleDiagnosisReviewImportBatch } = getReviewHandlers()
       return handleDiagnosisReviewImportBatch(request, context, payload)
     }
 
@@ -150,6 +165,7 @@ async function main(event, context) {
       if (
         String(payload?.action || request.query?.action || '').trim() === 'importBatch'
       ) {
+        const { handleDiagnosisReviewImportBatch } = getReviewHandlers()
         return handleDiagnosisReviewImportBatch(request, context, payload)
       }
       return handleDiagnosisFeedback(request, context, payload)
@@ -157,41 +173,49 @@ async function main(event, context) {
 
     if (path.includes('/visual/out-of-pool/list')) {
       if (method !== 'GET') {return methodNotAllowed(method)}
+      const { handleOutOfPoolCandidateList } = getOutOfPoolHandlers()
       return handleOutOfPoolCandidateList(request, context, request.query)
     }
 
     if (path.includes('/visual/out-of-pool/image')) {
       if (method !== 'GET') {return methodNotAllowed(method)}
+      const { handleOutOfPoolCandidateImage } = getOutOfPoolHandlers()
       return handleOutOfPoolCandidateImage(request, context, request.query)
     }
 
     if (path.includes('/visual/out-of-pool/review')) {
       if (method !== 'POST') {return methodNotAllowed(method)}
+      const { handleOutOfPoolCandidateReview } = getOutOfPoolHandlers()
       return handleOutOfPoolCandidateReview(request, context, payload)
     }
 
     if (path.includes('/visual/out-of-pool/proxy-mappings/list')) {
       if (method !== 'GET') {return methodNotAllowed(method)}
+      const { handleOutOfPoolProxyMappingList } = getOutOfPoolHandlers()
       return handleOutOfPoolProxyMappingList(request, context, request.query)
     }
 
     if (path.includes('/visual/out-of-pool/proxy-mappings/upsert')) {
       if (method !== 'POST') {return methodNotAllowed(method)}
+      const { handleOutOfPoolProxyMappingUpsert } = getOutOfPoolHandlers()
       return handleOutOfPoolProxyMappingUpsert(request, context, payload)
     }
 
     if (path.includes('/visual/out-of-pool/proxy-mappings/disable')) {
       if (method !== 'POST') {return methodNotAllowed(method)}
+      const { handleOutOfPoolProxyMappingDisable } = getOutOfPoolHandlers()
       return handleOutOfPoolProxyMappingDisable(request, context, payload)
     }
 
     if (path.includes('/stream/diagnose')) {
       if (method !== 'POST') {return methodNotAllowed(method)}
+      const { handleLegacyDiagnoseStream } = getLegacyHandlers()
       return handleLegacyDiagnoseStream(event, context, request, payload)
     }
 
     if (path.includes('/diagnose')) {
       if (method !== 'POST') {return methodNotAllowed(method)}
+      const { handleLegacyDiagnose } = getLegacyHandlers()
       return handleLegacyDiagnose(request, context, payload)
     }
 

@@ -4939,6 +4939,7 @@ async function runDiagnosisRound({
   openid,
   plantId = null,
   userPlantId = null,
+  preferCatalogPlantId = false,
   lockedPlantContext = null,
   observedSymptoms = [],
   observedEvidenceSet = [],
@@ -4991,7 +4992,7 @@ async function runDiagnosisRound({
         careAuditStatus: lockedPlantContext.careAuditStatus || '',
         varianceLevel: lockedPlantContext.varianceLevel || ''
       }
-    : await resolvePlantContext({ openid, plantId, userPlantId })
+    : await resolvePlantContext({ openid, plantId, userPlantId, preferCatalogPlantId })
   const visualRouteContext = resolveVisualRouteContext(visualAggregateResult)
   const routeDebugTraceEnabled = isRouteDebugTraceEnabled()
   const preferredVisualRouteAction = visualRouteContext.routePrimaryAction

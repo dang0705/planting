@@ -45,6 +45,36 @@ function pickMinimalQuestions(items = []) {
     })
 }
 
+function pickMinimalFollowUpQuestions(items = []) {
+  return (Array.isArray(items) ? items : [])
+    .filter(item => item?.questionId || item?.questionKey)
+    .slice(0, 1)
+    .map(item => {
+      const questionText = String(
+        item?.text || item?.questionText || item?.questionTextUserCn || item?.questionTextCn || ''
+      ).trim()
+
+      return {
+        questionId: String(item?.questionId || item?.questionKey || '').trim(),
+        questionKey: String(item?.questionKey || item?.questionId || '').trim(),
+        targetDimension: String(item?.targetDimension || '').trim(),
+        defaultOptionKey: String(item?.defaultOptionKey || '').trim(),
+        defaultOptionId: String(item?.defaultOptionId || '').trim(),
+        uiVariant: String(item?.uiVariant || '').trim(),
+        text: questionText,
+        helpText: String(item?.helpText || '').trim(),
+        options: (Array.isArray(item?.options) ? item.options : [])
+          .filter(option => option?.optionId || option?.optionKey)
+          .map(option => ({
+            optionId: String(option?.optionId || option?.optionKey || '').trim(),
+            optionKey: String(option?.optionKey || option?.optionId || '').trim(),
+            text: String(option?.text || option?.label || '').trim(),
+            isDefault: Boolean(option?.isDefault)
+          }))
+      }
+    })
+}
+
 function pickMinimalNextSteps(items = []) {
   return (Array.isArray(items) ? items : [])
     .map(item => {
@@ -288,8 +318,65 @@ function pickMinimalOutputEligibility(outputEligibility = null) {
   }
 }
 
+function buildFollowUpSummaryCard(questions = []) {
+  return {
+    title: '继续问诊',
+    subtitle: questions.length ? '还需要再确认 1 个关键信息' : '还需要继续确认',
+    severity: 'low',
+    statusText: ''
+  }
+}
+
 function buildFrontendDiagnosisResponse(publicResponse = {}) {
-  const questions = pickMinimalQuestions(publicResponse.questions || publicResponse.followUps)
+  const isFollowUp = Boolean(publicResponse.followUpRequired)
+  const questions = isFollowUp
+    ? pickMinimalFollowUpQuestions(publicResponse.questions || publicResponse.followUps)
+    : pickMinimalQuestions(publicResponse.questions || publicResponse.followUps)
+  if (isFollowUp) {
+    const resultId = String(publicResponse.resultId || '').trim()
+    const userPlantId = publicResponse.userPlantId || null
+    const plantId = publicResponse.plantId || publicResponse.userPlantId || publicResponse.plantCatalogId || ''
+    const plantCatalogId = publicResponse.plantCatalogId || null
+    const plantIdentityId = String(publicResponse.plantIdentityId || '').trim()
+    const latestVisualCallBatchId = publicResponse.latestVisualCallBatchId || null
+    const answerRevision = Number(publicResponse.answerRevision || 0)
+    const visualBatchTrace = pickMinimalVisualBatchTrace(publicResponse.visualBatchTrace)
+    const visualAggregateSummary = pickMinimalVisualAggregateSummary(publicResponse.visualAggregateSummary)
+    const uiPatch =
+      publicResponse.uiPatch && typeof publicResponse.uiPatch === 'object'
+        ? publicResponse.uiPatch
+        : null
+
+    return {
+      diagnosisSessionId: publicResponse.diagnosisSessionId || '',
+      ...(resultId ? { resultId } : {}),
+      roundId: publicResponse.roundId || 'round_1',
+      ...(userPlantId ? { userPlantId } : {}),
+      ...(plantId ? { plantId } : {}),
+      ...(plantCatalogId ? { plantCatalogId } : {}),
+      ...(plantIdentityId ? { plantIdentityId } : {}),
+      ...(latestVisualCallBatchId ? { latestVisualCallBatchId } : {}),
+      stage: publicResponse.stage || 'followup',
+      status: publicResponse.status || publicResponse.sessionStatus || 'active',
+      stopReason: publicResponse.stopReason || '',
+      followUpRequired: true,
+      questions,
+      summaryCard: buildFollowUpSummaryCard(questions),
+      ...(visualBatchTrace ? { visualBatchTrace } : {}),
+      ...(visualAggregateSummary ? { visualAggregateSummary } : {}),
+      ...(answerRevision ? { answerRevision } : {}),
+      ...(uiPatch ? { uiPatch } : {}),
+      uiHints: {
+        canUploadMoreImages: Boolean(publicResponse?.uiHints?.canUploadMoreImages),
+        maxQuestionsThisRound: questions.length ? 1 : 0,
+        questionDisplayMode: 'single',
+        answerSubmitMode: 'per_question',
+        optionLayout: 'vertical',
+        transition: 'swiper'
+      }
+    }
+  }
+
   const explanation = publicResponse.explanation || publicResponse.resultExplanation || null
   const nextSteps = buildMinimalAdviceSteps(publicResponse, explanation)
   const whatToAvoid = buildMinimalAvoidAdvice(publicResponse, explanation)
@@ -383,5 +470,7 @@ module.exports = {
   pickMinimalVisualBatchTrace,
   pickMinimalVisualAggregateSummary,
   pickMinimalOutputEligibility,
+  pickMinimalFollowUpQuestions,
+  buildFollowUpSummaryCard,
   buildFrontendDiagnosisResponse
 }

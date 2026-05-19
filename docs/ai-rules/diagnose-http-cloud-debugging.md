@@ -578,6 +578,14 @@ outcome
 8. forced static confirm 必须走 payload builder，不能直接返回 raw question row。
 9. `diagnose-http` 的 route / high-specificity / fast path 只能加速路径规划，不得绕过主链 follow-up / final 输出守卫；黄叶首个浇水频率题命中 `often_wet` 或 `often_dry` 后仍必须等待光照、施肥、整体状态等必答分组，不能直接 final。
 10. 修改快捷路径时必须同时补两类证据：负向 smoke（应继续追问而非 final）和正向 smoke（必答分组完成后仍能 final）；只跑完整 happy path 不足以证明未复发。
+11. 性能优化不得把 `diagnosis_sessions.runtime_snapshot_json`、当前 round 的 `diagnosis_follow_ups`、当前答案 mark / answer row、final snapshot 改成无协议的后台异步写；这些是 answer 下一轮恢复状态的同步边界。
+12. 允许后台补写的仅限 review / audit / 可兜底状态，例如 `question_queue`、`stop_state`、`observed_evidence_set`、`diagnosis_symptom_observations`、`visual_supervision`；补写失败必须打日志，不能影响主响应。
+13. `question/start` 在显式传 `plantCatalogId` 且无 `userPlantId` 时，不应再把 catalog id 当 user plant id 做兼容探测；否则会引入无意义 SQL 查询并拖慢首题。
+14. route 静态缓存必须按 SQL schema 隔离；不得让 `cloud1_dev` 与 production 共享题库、route、gate 或 outcome 缓存。
+15. 未证明等价前，禁止组合缓存 `outcome_routes`、`outcome_route_gates`、`diagnosis_outcomes` 或 route planner 输出；历史 v6 曾因此导致黄叶完整路径缺 `fertilizer_repot_stress` 并混入 `root_stress`。仅 answer effect 行可以做单题缓存精确拼接，且必须跑负样本和完整路径正样本。
+16. active follow-up 响应可瘦身，但必须保留下一题展示所需字段：`diagnosisSessionId`、`roundId`、`stage`、`status`、`stopReason`、`followUpRequired`、`questions[*].questionId/questionKey/options[*].optionId/optionKey/text`。不得在 follow-up 响应里返回误导前端的 `finalResult` / `visibleOutcomes`。
+17. active runtime snapshot 可裁剪 review-only 重字段，但 `routeDecision` 只能降为 compact 权威结构，不能删除；`metrics.routeDecision` 不再作为权威出口。
+18. 每次压 `question/start` / `diagnosis/answer` 延迟后，至少记录：负样本 `often_wet`、负样本 `often_dry`、完整正样本 `often_wet -> stronger_direct_light -> recent_heavy_fertilizer_or_repot -> with_wilting_or_drop`、warm benchmark 的 avg / min / max / p50 / p95 / p99、函数 alias 与预置并发状态。
 
 ---
 
