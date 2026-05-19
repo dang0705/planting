@@ -8,6 +8,9 @@ const {
   normalizeQuestionTargetDimension,
   isGenericObservedProbeDirectEvidenceDimension
 } = require('./question-target-dimension')
+const {
+  isDisabledYellowingFlowQuestion
+} = require('./yellowing-question-policy')
 
 function normalizeText(value = '', fallback = '') {
   const normalized = String(value || '').trim()
@@ -107,44 +110,38 @@ const CONTEXT_REQUIRED_PROBLEM_GUARDS = {
   },
   nitrogen_deficiency: {
     preferredQuestionKeys: [
-      'q_leaf_yellowing_fertilization_background',
-      'q_leaf_yellowing_new_growth_bias'
+      'q_leaf_yellowing_fertilization_background'
     ],
     corroboratingSymptomKeys: [
-      'fertilization_gap',
-      'yellow_lower_leaves'
+      'fertilization_gap'
     ],
     maxForcedQuestions: 1,
     advice:
-      '氮缺乏不能只凭泛黄叶直出，至少需要补齐“长期缺肥/老叶先黄/整体均匀黄化”等营养背景事实。'
+      '氮缺乏不能只凭泛黄叶直出，至少需要补齐“长期缺肥/生长变弱/整体均匀黄化”等营养背景事实。'
   },
   iron_deficiency: {
     preferredQuestionKeys: [
-      'q_leaf_yellowing_fertilization_background',
-      'q_leaf_yellowing_new_growth_bias'
+      'q_leaf_yellowing_fertilization_background'
     ],
     corroboratingSymptomKeys: [
       'fertilization_gap',
-      'yellow_new_leaves',
       'interveinal_chlorosis'
     ],
     maxForcedQuestions: 1,
     advice:
-      '铁缺乏不能只凭泛黄叶直出，至少需要补齐“新叶更黄/叶脉间失绿/长期缺肥或介质问题”等营养背景事实。'
+      '铁缺乏不能只凭泛黄叶直出，至少需要补齐“叶脉间失绿/长期缺肥或介质问题”等营养背景事实。'
   },
   nutrient_deficiency: {
     preferredQuestionKeys: [
-      'q_leaf_yellowing_fertilization_background',
-      'q_leaf_yellowing_new_growth_bias'
+      'q_leaf_yellowing_fertilization_background'
     ],
     corroboratingSymptomKeys: [
       'fertilization_gap',
-      'yellow_new_leaves',
-      'yellow_lower_leaves'
+      'interveinal_chlorosis'
     ],
     maxForcedQuestions: 1,
     advice:
-      '营养不足不能只凭泛黄叶直出，至少需要补齐“长期缺肥/新叶或老叶黄化模式/整体均匀黄化”等营养背景事实。'
+      '营养不足不能只凭泛黄叶直出，至少需要补齐“长期缺肥/生长变弱/整体均匀黄化”等营养背景事实。'
   },
   root_stress: {
     preferredQuestionKeys: [
@@ -317,6 +314,7 @@ function collectDirectPositiveAnswerContextKeys(answerEffects = [], problemKey =
       normalizeText(item?.effectType) === 'direct_problem_positive' &&
       normalizeText(item?.problemKey) === normalizedProblemKey &&
       Number(item?.value || 0) > 0 &&
+      !isDisabledYellowingFlowQuestion(item) &&
       !isGenericObservedProbeDirectEvidenceDimension(
         normalizeQuestionTargetDimension(item?.targetDimension || '', '')
       ) &&
@@ -334,7 +332,8 @@ function collectDirectNegativeAnswerContextKeys(answerEffects = [], problemKey =
     .filter(item =>
       normalizeText(item?.effectType) === 'direct_problem_negative' &&
       normalizeText(item?.problemKey) === normalizedProblemKey &&
-      Number(item?.value || 0) < 0
+      Number(item?.value || 0) < 0 &&
+      !isDisabledYellowingFlowQuestion(item)
     )
     .map(item => `answer:${normalizeText(item?.questionKey)}:${normalizeText(item?.optionKey)}`)
     .filter(item => item !== 'answer::')

@@ -14,6 +14,7 @@
 |---|---|---|
 | `/health` | 健康检查 | 返回服务可用状态和重构准备状态 |
 | `/diagnosis/start` | `handleDiagnosisStart()` | 开始一次诊断，通常包含图片、植物上下文、客户端上下文 |
+| `/diagnosis/question/start` | `handleDiagnosisQuestionStart()` | 无图症状模式直接创建问诊，不调用视觉模型 |
 | `/diagnosis/answer` | `handleDiagnosisAnswer()` | 提交某一轮追问答案，进入下一轮诊断 |
 | `/diagnosis/result` | `handleDiagnosisResult()` | 读取指定诊断结果 |
 | `/diagnosis/history` | `handleDiagnosisHistory()` | 读取用户诊断历史 |
@@ -43,6 +44,16 @@
 6. 通过 presenter 返回公开响应。
 
 图片输入归一函数包括 `normalizeUploadCompression()`、`resolveVisualImageInputs()`、`resolveImagesFromPayload()`。
+
+### 3.1 无图症状模式直接问诊入口
+
+`POST /diagnosis/question/start` 是正式无图症状模式直接诊断入口，前端正式入口为 quick select `id="3ef72261--diagnose-dev-symptom-class-quick-select"`。该接口用于用户主动选择症状模式后直接进入问诊：
+
+1. 不调用 `/diagnosis/start`。
+2. 不走 `/stream/diagnose`、SSE 进度弹窗或视觉模型。
+3. 初始证据来源写为 `sourceType=manual_symptom_mode`，表示用户选择的症状证据，不是视觉证据。
+4. 接口返回首轮问诊或可公开结果；后续用户答案继续走 `/diagnosis/answer`。
+5. QA 验收必须覆盖：点击 quick select 后进入问诊、没有 AI/SSE 过程、会话证据中存在 `manual_symptom_mode`、后续回答链路仍由 `/diagnosis/answer` 推进。
 
 ## 四、回答追问主流程
 

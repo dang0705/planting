@@ -50,12 +50,14 @@
       ]
     },
     {
-      "scenarioKey": "yellowing_old_leaf",
-      "label": "黄叶 + 自然老叶",
+      "scenarioKey": "yellowing_leaf_age_disabled",
+      "label": "黄叶 + 新老叶旧答案禁用",
       "count": 8,
-      "expectedOutcomeKey": "normal_leaf_aging",
-      "expectedRouteKey": "yellowing_old_leaf_route",
-      "expectedActionConflictGroup": "observe_only",
+      "expectedPrimaryOutcomeKey": null,
+      "expectedDecisionCauseKeys": [
+        "route_no_visible_outcomes_for_route"
+      ],
+      "expectedFollowUpQuestionKeys": [],
       "symptomVariants": [["leaf_yellowing"], ["yellow_lower_leaves"], ["old_lower_leaf_yellowing"]],
       "answerVariants": [
         [

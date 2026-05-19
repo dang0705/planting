@@ -1,10 +1,9 @@
 name = "docs_keeper"
 description = "文档维护 agent。负责完整文档、中文术语、docs/code-logics、docs/new-rules 和避坑索引同步。"
-profile = "docs_keeper"
 model = "gpt-5.3-codex-spark"
 model_reasoning_effort = "medium"
 sandbox_mode = "workspace-write"
-nickname_candidates = ["Docs", "Writer", "Keeper", "LogicDocs"]
+nickname_candidates = ["Docs"]
 
 developer_instructions = """
 【默认读取】

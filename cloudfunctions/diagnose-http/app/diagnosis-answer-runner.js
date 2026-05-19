@@ -37,6 +37,24 @@ const {
   createReviewTimingLogger
 } = require('../repositories/diagnosis-review/review-performance')
 
+function collectAnsweredQuestionKeysFromFollowUpRows(rows = []) {
+  const answeredRows = Array.isArray(rows) ? rows : []
+  const keys = new Set()
+  for (const row of answeredRows) {
+    if (Number(row?.asked || 0) !== 1) {
+      continue
+    }
+
+    const questionKey = readQuestionKeyFromRationale(row?.rationale || '') ||
+      String(row?.symptom_key || '').trim()
+    if (questionKey) {
+      keys.add(questionKey)
+    }
+  }
+
+  return Array.from(keys)
+}
+
 async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } = {}) {
   payload = payload || {}
   const sessionId = payload.diagnosisSessionId || payload.diagnosisId
@@ -117,6 +135,9 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   const runtimeSessionFollowUpRows = Array.isArray(refreshedSessionState.followUpRows)
     ? refreshedSessionState.followUpRows
     : []
+  const sessionAnsweredFollowUpQuestionKeys = collectAnsweredQuestionKeysFromFollowUpRows(
+    runtimeSessionFollowUpRows
+  )
   const currentQuestionQueue = refreshedSessionState.questionQueue || null
   let runtimeAnswerOptionMappings = []
   let runtimeRouteAnswerEffects = []
@@ -126,11 +147,20 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
 
   if (hasAnswers) {
     const questionKeys = Array.from(new Set(answers.map(item => item.questionKey).filter(Boolean)))
+    const routeAnswerEffectQuestionKeys = Array.from(new Set([
+      ...questionKeys,
+      ...sessionAnsweredFollowUpQuestionKeys,
+      ...(Array.isArray(refreshedSessionState.answeredAnswers)
+        ? refreshedSessionState.answeredAnswers
+          .map(item => String(item?.questionKey || '').trim())
+          .filter(Boolean)
+        : [])
+    ]))
     const optionMappingPromise = questionKeys.length
       ? getQuestionOptionMappings(questionKeys)
       : Promise.resolve([])
-    const routeAnswerEffectsPromise = questionKeys.length
-      ? outcomeRouteRepository.getOutcomeAnswerEffects(questionKeys)
+    const routeAnswerEffectsPromise = routeAnswerEffectQuestionKeys.length
+      ? outcomeRouteRepository.getOutcomeAnswerEffects(routeAnswerEffectQuestionKeys)
       : Promise.resolve([])
     const questionQueueKeysForValidation = Number(answerRound || 1) === Number(sessionState?.questionQueue?.roundIndex || 0)
       ? pickQuestionKeysFromQuestionQueue(sessionState.questionQueue)
@@ -147,16 +177,16 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
             String(row?.symptom_key || '').trim()
           )
       )
-    const [ownership, questionOptionMappingsFromStore] = isAnswerRevision
-      ? [null, await optionMappingPromise]
+    const [ownership, questionOptionMappingsFromStore, routeAnswerEffectsFromStore] = isAnswerRevision
+      ? await Promise.all([Promise.resolve(null), optionMappingPromise, routeAnswerEffectsPromise])
       : await Promise.all([
         validateFollowUpAnswerOwnership(sessionId, answers, answerRound, {
           followUpRows: runtimeSessionFollowUpRows,
           queuedQuestionKeys: questionQueueKeysForValidation
         }),
-        optionMappingPromise
+        optionMappingPromise,
+        routeAnswerEffectsPromise
       ])
-    const routeAnswerEffectsFromStore = await routeAnswerEffectsPromise
     runtimeRouteAnswerEffects = Array.isArray(routeAnswerEffectsFromStore)
       ? routeAnswerEffectsFromStore
       : []

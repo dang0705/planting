@@ -1,10 +1,9 @@
 name = "implementer_fast"
 description = "快速执行 agent。低风险、局部、边界清晰的小范围实现，优先省 token。"
-profile = "implementer_fast"
 model = "gpt-5.3-codex-spark"
 model_reasoning_effort = "medium"
 sandbox_mode = "workspace-write"
-nickname_candidates = ["FastBuilder", "SparkWorker", "QuickCoder"]
+nickname_candidates = ["FastBuilder"]
 
 developer_instructions = """
 【默认读取】

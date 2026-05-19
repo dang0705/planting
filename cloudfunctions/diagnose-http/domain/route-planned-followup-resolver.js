@@ -14,6 +14,10 @@ const {
   buildTemplateVariables,
   renderQuestionTemplate
 } = require('../utils/synthetic-follow-up')
+const {
+  isDisabledYellowingFlowQuestion,
+  filterDisabledYellowingFlowQuestions
+} = require('../utils/yellowing-question-policy')
 
 function sanitizeQuestionCopy(value = '', variables = {}) {
   const rendered = renderQuestionTemplate(value, variables)
@@ -119,7 +123,7 @@ async function buildRoutePlannedFollowUps({
   const fallbackQuestionKeys = Array.isArray(routeDecision?.nextQuestionKeys)
     ? routeDecision.nextQuestionKeys
     : []
-  const effectiveRoutePlannedQuestions = routePlannedQuestions.length
+  const rawRoutePlannedQuestions = routePlannedQuestions.length
     ? routePlannedQuestions
     : fallbackQuestionKeys.map(questionKey => ({
         questionKey: String(questionKey || '').trim(),
@@ -128,6 +132,7 @@ async function buildRoutePlannedFollowUps({
         outcomeKey: '',
         questionRole: ''
       }))
+  const effectiveRoutePlannedQuestions = filterDisabledYellowingFlowQuestions(rawRoutePlannedQuestions)
   const questionKeys = Array.from(
     new Set(
       effectiveRoutePlannedQuestions
@@ -154,7 +159,7 @@ async function buildRoutePlannedFollowUps({
     questionRepository.getQuestionsByKeys(unresolvedQuestionKeys),
     questionRepository.getQuestionOptionMappings(unresolvedQuestionKeys)
   ])
-  const questions = storedQuestions
+  const questions = filterDisabledYellowingFlowQuestions(storedQuestions)
   const optionMappings = optionMappingsFromStore
   if (!questions.length) {return []}
 
@@ -165,6 +170,9 @@ async function buildRoutePlannedFollowUps({
 
   return questions
     .map(question => {
+      if (isDisabledYellowingFlowQuestion(question)) {
+        return null
+      }
       const questionKey = String(question?.questionKey || '').trim()
       const payload = buildStaticFollowUpQuestionPayload(question, optionMap.get(questionKey) || [], {
         plantContext,

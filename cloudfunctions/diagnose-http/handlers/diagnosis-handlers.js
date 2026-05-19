@@ -9,6 +9,7 @@ const { listDiagnosisHistory, getResultById, saveDiagnosisFeedback } = require('
 const { resolveRequestPrincipal, assertAuthenticatedUser, runWithQuotaGuard } = require('../services/request-guard')
 const { ensureRefactorReady } = require('../app/refactor-readiness')
 const { runStartDiagnosis } = require('../app/diagnosis-start-runner')
+const { runQuestionStartDiagnosis } = require('../app/diagnosis-question-start-runner')
 const { runAnswerDiagnosis } = require('../app/diagnosis-answer-runner')
 const { withQuestionTextFallback } = require('../app/request-normalizers')
 const { buildFrontendDiagnosisResponse } = require('../app/frontend-response')
@@ -43,6 +44,41 @@ async function handleDiagnosisStart(request, context, payload) {
     return jsonResponse(error.statusCode || 500, {
       code: error.statusCode || 500,
       message: error.message || '诊断开始失败',
+      data: null
+    })
+  }
+}
+
+async function handleDiagnosisQuestionStart(request, context, payload) {
+  payload = payload || {}
+  const principal = await resolveRequestPrincipal({ request, context, payload })
+
+  try {
+    assertAuthenticatedUser({ ...principal, message: '请先登录' })
+    await ensureRefactorReady()
+    const executed = await runWithQuotaGuard({
+      request,
+      openid: principal.userInfo?.openid || '',
+      skipAuth: principal.skipAuth,
+      task: async () => runQuestionStartDiagnosis({
+        payload,
+        openid: principal.userInfo?.openid || '',
+        skipPersistence: principal.skipPersistence
+      })
+    })
+    const hydratedResponse = await withQuestionTextFallback(executed.response)
+    const publicResponse = presentDiagnosisRoundResponse(hydratedResponse)
+    const hydratedPublicResponse = await withQuestionTextFallback(publicResponse)
+
+    return jsonResponse(200, {
+      code: 200,
+      message: '问诊初始化成功',
+      data: buildFrontendDiagnosisResponse(hydratedPublicResponse)
+    })
+  } catch (error) {
+    return jsonResponse(error.statusCode || 500, {
+      code: error.statusCode || 500,
+      message: error.message || '问诊初始化失败',
       data: null
     })
   }
@@ -140,6 +176,7 @@ async function handleDiagnosisFeedback(request, context, payload) {
 
 module.exports = {
   handleDiagnosisStart,
+  handleDiagnosisQuestionStart,
   handleDiagnosisAnswer,
   handleDiagnosisResult,
   handleDiagnosisHistory,

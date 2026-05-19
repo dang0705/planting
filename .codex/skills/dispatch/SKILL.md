@@ -172,6 +172,30 @@ description: "调度决策 skill：按 AGENTS.md 判断任务是否进入 subage
 
 ---
 
+## 6.1 专用角色可用性与 fallback 规则
+
+1. `.codex/agents/*.toml` 是本仓库的角色规范、模型期望和输出模板，不等于当前 Codex runtime 已经把这些角色注册为可调用的 `spawn_agent.agent_type`。
+2. `.codex/config.toml` 的 `[agents]` 当前只控制线程数量、深度和超时；若没有明确的 runtime 注册字段，不得声称它已经加载 `.codex/agents/*.toml`。
+3. `~/.codex/config.toml` 中的 `profiles.*` 只是主会话或 CLI profile 配置，不等于自定义 subagent 注册表。
+4. 本 skill 和 `docs/ai-rules/codex-ai-workflow.md` 的角色表属于工作流路由层；它定义“应该派什么角色”，不证明 `spawn_agent` 工具当前支持该 `agent_type`。
+5. 每个逻辑角色本轮首次派发时，main agent 必须先尝试对应专用 `agent_type`，并把 `spawn_agent` 的实际结果作为可用性事实源。
+6. 如果专用角色返回 `agent type is currently not available` 或等价错误，必须记录为“专用角色未注册 / 当前环境不支持”，不得写成该角色已成功开启，也不得把该失败静默吞掉。
+7. 专用角色不可用时，只有在任务仍可通过替代线程安全推进时，才允许使用 `default` 作为“逻辑角色替代线程”。替代线程必须显式记录：
+   - `logical_role`
+   - `requested_agent_type`
+   - `actual_agent_type`
+   - `agent_id/thread_id`
+   - `fallback_reason`
+   - `expected_model/reasoning/profile/sandbox`
+   - `observed_or_requested_model/reasoning/profile/sandbox`
+   - `config_match=false`
+8. 使用 `default` 替代专用角色时，应优先按 `.codex/agents/<role>.toml` 的期望模型与 reasoning 显式设置 `model` / `reasoning_effort`；若当前工具不允许、模型不可用或用户要求节省成本，必须记录原因。
+9. 不得把继承主会话模型的 `default` 替代线程冒充为低成本专用角色。例如 `code_explorer` 期望 `gpt-5.3-codex-spark`，若实际 default 继承 `gpt-5.5`，必须写成“default 替代，模型不匹配”，不能写成原生 `code_explorer`。
+10. 同一会话的线程复用按 `logical_role` 计算，不按 `actual_agent_type=default` 计算。一个 default 替代线程一旦绑定某个逻辑角色，不得再混用为另一个逻辑角色。
+11. 若用户要求“不允许跳过 code_explorer / architect_reviewer / qa_reviewer / docs_keeper / release_ops”等专用职责，而专用角色不可用，main agent 必须在 Dispatch Plan、handoff 和最终汇总中说明 fallback 是否满足该职责；不满足时必须停下请求用户裁决或记录为未完成项。
+
+---
+
 ## 7. subagent 路由规则
 
 | 任务意图 | 推荐 subagent | 写入权限 |
@@ -348,6 +372,12 @@ Dispatch Plan:
 - 是否涉及 docs/code-logics: 否 / 是；如果是，先读 docs/code-logics/INDEX.md，命中文档：
 - 是否涉及 docs/new-rules: 否 / 是；如果是，先读 docs/new-rules/planting_ai_diagnosis_source_index.json，命中 source_id / All-in-One 章节：
 - 是否需要读取 AGENTS.md: 默认否；仅在缺少派发上下文、规则冲突、线程恢复或角色边界不清时为是
+- Subagent runtime 可用性:
+  - `.codex/agents/*.toml` 是否等于可调用 `agent_type`: 否，仅为本地角色规范；以 `spawn_agent` 实际结果为准
+  - 本轮需预检的 `agent_type`:
+  - 专用角色 spawn 结果:
+  - fallback 是否启用:
+  - fallback 记录字段: `logical_role` / `requested_agent_type` / `actual_agent_type` / `agent_id` / `fallback_reason` / `expected_model` / `observed_or_requested_model` / `config_match`
 - 预期输出:
 - 写入权限:
 - 首部规划闭环: 已派发/复用 task_planner；若未派发，合法裁剪理由：
@@ -367,6 +397,14 @@ Dispatch Plan:
 ```text
 Subagent Summary:
 - 已调用 subagent:
+- 专用角色可用性:
+  - requested_agent_type:
+  - spawn_result:
+  - actual_agent_type:
+  - fallback_reason:
+  - expected_model/reasoning/profile/sandbox:
+  - observed_or_requested_model/reasoning/profile/sandbox:
+  - config_match:
 - Subagent 线程复用: 复用 / 新开 / 未开启；如新开同角色线程，原因：
 - 关键结论:
 - 证据:

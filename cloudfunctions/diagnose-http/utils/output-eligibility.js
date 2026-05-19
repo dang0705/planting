@@ -49,15 +49,18 @@ const GENERIC_NUTRIENT_BACKGROUND_SYMPTOM_KEYS = new Set([
   'fertilization_gap'
 ])
 
+const WEAK_YELLOWING_NUTRIENT_SYMPTOM_KEYS = new Set([
+  'yellow_new_leaves',
+  'yellow_lower_leaves',
+  'uniform_yellowing'
+])
+
 const NUTRIENT_SUBTYPE_SPECIFIC_SYMPTOMS = {
-  iron_deficiency: ['yellow_new_leaves', 'interveinal_chlorosis'],
-  chlorosis: ['yellow_new_leaves', 'interveinal_chlorosis'],
-  nitrogen_deficiency: ['yellow_lower_leaves', 'uniform_yellowing'],
+  iron_deficiency: ['interveinal_chlorosis', 'fertilization_gap'],
+  chlorosis: ['interveinal_chlorosis', 'fertilization_gap'],
+  nitrogen_deficiency: ['fertilization_gap'],
   nutrient_deficiency: [
-    'yellow_new_leaves',
     'interveinal_chlorosis',
-    'yellow_lower_leaves',
-    'uniform_yellowing',
     'fertilization_gap'
   ]
 }
@@ -177,7 +180,7 @@ function hasIndependentNutrientEvidence(problemKey = '', activeObservedSymptomKe
   const hasSubtypeSpecificEvidence = hasAnyObservedSymptom(
     activeObservedSymptomKeys,
     subtypeSpecificSymptomKeys.filter(
-      symptomKey => !GENERIC_NUTRIENT_BACKGROUND_SYMPTOM_KEYS.has(symptomKey)
+      symptomKey => !WEAK_YELLOWING_NUTRIENT_SYMPTOM_KEYS.has(symptomKey)
     )
   )
 

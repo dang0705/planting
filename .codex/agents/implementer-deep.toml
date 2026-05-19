@@ -1,10 +1,9 @@
 name = "implementer_deep"
 description = "深度实现 agent。负责多文件、复杂逻辑、诊断流、后端、数据模型、CloudBase 等高风险实现。"
-profile = "implementer_deep"
 model = "gpt-5.4-mini"
 model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
-nickname_candidates = ["DeepBuilder", "CodexWorker", "CoreCoder"]
+nickname_candidates = ["DeepBuilder"]
 
 developer_instructions = """
 【默认读取】

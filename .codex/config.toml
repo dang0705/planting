@@ -1,7 +1,7 @@
-model = "gpt-5.4"
-model_reasoning_effort = "medium"
+model = "gpt-5.5"
+model_reasoning_effort = "xhigh"
 approval_policy = "never"
-sandbox_mode = "workspace-write"
+sandbox_mode = "danger-full-access"
 
 [mcp_servers.cloudbase]
 command = "npx"
@@ -27,6 +27,10 @@ approval_mode = "approve"
 goals = true
 
 [agents]
+# This section only controls delegation limits for the current Codex runtime.
+# It does not register `.codex/agents/*.toml` as callable `spawn_agent.agent_type` values.
+# Treat `.codex/agents/*.toml` as local role specifications unless the runtime explicitly
+# exposes those names through `spawn_agent`; see `docs/ai-rules/codex-ai-workflow.md`.
 # Allow parallel exploration/review without opening too many expensive threads.
 max_threads = 8
 
@@ -35,3 +39,6 @@ max_depth = 1
 
 # Default timeout for CSV/batch-style worker jobs.
 job_max_runtime_seconds = 1800
+
+[sandbox_workspace_write]
+network_access = true

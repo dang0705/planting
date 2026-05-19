@@ -21,6 +21,72 @@ function uniqKeys(values = []) {
   )
 }
 
+const YELLOWING_REVIEW_ADVICE =
+  '黄叶原因通常不止一种。当前先按本次结论处理，同时请检查叶背、叶柄和叶面是否有小虫、细网、黑点、发黏、斑点或霉粉；如果主要是底部老叶缓慢变黄，新叶和生长点基本正常，也可能是老叶自然代谢，先观察是否继续扩散。'
+
+const YELLOWING_EVIDENCE_KEYS = new Set([
+  'leaf_yellowing',
+  'uniform_yellowing',
+  'yellow_lower_leaves',
+  'yellow_new_leaves',
+  'interveinal_chlorosis',
+  'pale_new_leaves',
+  'yellowing_patchy',
+  'yellow_speckling',
+  'vein_darkening'
+])
+
+const YELLOWING_REVIEW_OUTCOME_KEYS = new Set([
+  'low_light',
+  'low_light_growth_weakness',
+  'sunburn',
+  'heat_stress',
+  'overwatering',
+  'overwatering_root_pressure',
+  'underwatering',
+  'root_stress',
+  'root_rot',
+  'iron_deficiency',
+  'nitrogen_deficiency',
+  'nutrient_deficiency',
+  'chlorosis',
+  'fertilizer_repot_stress'
+])
+
+function hasYellowingEvidence(observedEvidenceSet = []) {
+  return (Array.isArray(observedEvidenceSet) ? observedEvidenceSet : []).some(item =>
+    YELLOWING_EVIDENCE_KEYS.has(normalizeKey(item?.symptomKey || item?.symptom_key || item?.evidenceKey || item?.evidence_key || ''))
+  )
+}
+
+function appendYellowingReviewAdviceToOutcome(outcome = null, enabled = false) {
+  if (!enabled || !outcome) {return outcome}
+  return {
+    ...outcome,
+    actionAdviceItems: uniqKeys([
+      ...(Array.isArray(outcome.actionAdviceItems) ? outcome.actionAdviceItems : []),
+      YELLOWING_REVIEW_ADVICE
+    ])
+  }
+}
+
+function appendYellowingReviewAdvice(actionAdvice = null, enabled = false) {
+  if (!enabled || !actionAdvice || typeof actionAdvice !== 'object') {return actionAdvice}
+  return {
+    ...actionAdvice,
+    threeDayActions: uniqKeys([
+      ...(Array.isArray(actionAdvice.threeDayActions) ? actionAdvice.threeDayActions : []),
+      YELLOWING_REVIEW_ADVICE
+    ])
+  }
+}
+
+function hasYellowingReviewOutcome(outcomes = []) {
+  return (Array.isArray(outcomes) ? outcomes : []).some(outcome =>
+    YELLOWING_REVIEW_OUTCOME_KEYS.has(normalizeKey(outcome?.outcomeKey || outcome?.problemKey || ''))
+  )
+}
+
 function buildActionProfileMap(actionProfiles = []) {
   const map = new Map()
   for (const profile of Array.isArray(actionProfiles) ? actionProfiles : []) {
@@ -216,10 +282,16 @@ function resolveRouteOutcomePayload({
     })
   }
 
-  const visibleOutcomes = visibleOutcomeKeys
+  const rawVisibleOutcomes = visibleOutcomeKeys
     .map(outcomeKey => buildOutcomeEntryWithProfile(outcomeKey))
     .filter(Boolean)
     .slice(0, 3)
+  const shouldAppendYellowingReviewAdvice =
+    hasYellowingEvidence(observedEvidenceSet) &&
+    hasYellowingReviewOutcome(rawVisibleOutcomes)
+  const visibleOutcomes = rawVisibleOutcomes
+    .map(outcome => appendYellowingReviewAdviceToOutcome(outcome, shouldAppendYellowingReviewAdvice))
+    .filter(Boolean)
   const leadingVisibleOutcome = visibleOutcomes[0] || null
   const visibleActionConflictGroups = uniqKeys(routeDecision?.visibleActionConflictGroups)
   const hasActionConflict = visibleActionConflictGroups.length > 1
@@ -269,12 +341,12 @@ function resolveRouteOutcomePayload({
     leadingVisibleOutcome
   })
 
-  const actionAdvice = hasActionConflict || !actionAdviceFallback
+  const actionAdvice = appendYellowingReviewAdvice(hasActionConflict || !actionAdviceFallback
     ? mergedActionAdvice
     : {
         ...mergedActionAdvice,
         ...actionAdviceFallback
-      }
+      }, shouldAppendYellowingReviewAdvice)
 
   return {
     authoritativeRouteDecision,

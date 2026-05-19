@@ -4,6 +4,7 @@ const { jsonResponse, notFound, methodNotAllowed, getHttpRequestData } = require
 const { getRefactorArtifacts } = require('../services/bootstrap-report')
 const {
   handleDiagnosisStart,
+  handleDiagnosisQuestionStart,
   handleDiagnosisAnswer,
   handleDiagnosisResult,
   handleDiagnosisHistory,
@@ -96,6 +97,11 @@ async function main(event, context) {
         return handleDiagnosisStartStream(event, context, request, payload)
       }
       return handleDiagnosisStart(request, context, payload)
+    }
+
+    if (path.includes('/diagnosis/question/start')) {
+      if (method !== 'POST') {return methodNotAllowed(method)}
+      return handleDiagnosisQuestionStart(request, context, payload)
     }
 
     if (path.includes('/diagnosis/answer')) {

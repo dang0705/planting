@@ -23,6 +23,11 @@ Dispatch Plan:
 - 选择原因:
 - 需要读取的规则文件:
 - 是否需要读取 AGENTS.md:
+- Subagent runtime 可用性:
+  - `.codex/agents/*.toml` 是否已由 runtime 注册为 `agent_type`: 未确认 / 是 / 否
+  - 本轮需预检的 `agent_type`:
+  - 专用角色 spawn 结果:
+  - fallback 策略:
 - 预期输出:
 - 写入权限:
 - 首部规划闭环: task_planner 已派发 / 已复用 / 合法裁剪
@@ -37,16 +42,29 @@ Dispatch Plan:
 
 ## Subagent 线程复用表
 
-| role | agent_id/thread_id | 状态 | 最近任务 | 复用/重开说明 |
-|---|---|---|---|---|
-| task_planner |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |  |
-| code_explorer |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |  |
-| architect_reviewer |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |  |
-| implementer_fast |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |  |
-| implementer_deep |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |  |
-| qa_reviewer |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |  |
-| docs_keeper |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |  |
-| release_ops |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |  |
+| logical_role | requested_agent_type | actual_agent_type | agent_id/thread_id | 状态 | fallback_reason / 复用说明 |
+|---|---|---|---|---|---|
+| task_planner | task_planner |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
+| code_explorer | code_explorer |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
+| architect_reviewer | architect_reviewer |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
+| implementer_fast | implementer_fast |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
+| implementer_deep | implementer_deep |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
+| qa_reviewer | qa_reviewer |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
+| docs_keeper | docs_keeper |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
+| release_ops | release_ops |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
+
+## 专用角色可用性与 fallback
+
+| logical_role | requested_agent_type | spawn_result | actual_agent_type | expected_model/reasoning/profile/sandbox | observed_or_requested_model/reasoning/profile/sandbox | config_match |
+|---|---|---|---|---|---|---|
+| task_planner | task_planner | 未尝试 / 成功 / 不可用 |  |  |  |  |
+| code_explorer | code_explorer | 未尝试 / 成功 / 不可用 |  |  |  |  |
+| architect_reviewer | architect_reviewer | 未尝试 / 成功 / 不可用 |  |  |  |  |
+| implementer_fast | implementer_fast | 未尝试 / 成功 / 不可用 |  |  |  |  |
+| implementer_deep | implementer_deep | 未尝试 / 成功 / 不可用 |  |  |  |  |
+| qa_reviewer | qa_reviewer | 未尝试 / 成功 / 不可用 |  |  |  |  |
+| docs_keeper | docs_keeper | 未尝试 / 成功 / 不可用 |  |  |  |  |
+| release_ops | release_ops | 未尝试 / 成功 / 不可用 |  |  |  |  |
 
 ## 非简单实现闭环
 

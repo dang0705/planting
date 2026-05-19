@@ -887,6 +887,11 @@ const startDiagnosisRequester = httpRequest({
   method: 'POST'
 })
 
+const questionStartDiagnosisRequester = httpRequest({
+  functionPath: 'diagnose-http/diagnosis/question/start',
+  method: 'POST'
+})
+
 const streamDiagnoseRequester = httpRequest({
   functionPath: 'diagnose-http/diagnosis/start',
   method: 'POST',
@@ -923,6 +928,14 @@ export async function requestDiagnosisStart(payload) {
     { retries: 1, fallbackMessage: '发起诊断失败' }
   )
   return unwrapResponseEnvelope(response?.data, '发起诊断失败')
+}
+
+export async function requestDiagnosisQuestionStart(payload) {
+  const response = await requestWithRetry(
+    () => questionStartDiagnosisRequester({ payload, timeout: 25000 }),
+    { retries: 1, fallbackMessage: '初始化问诊失败' }
+  )
+  return unwrapResponseEnvelope(response?.data, '初始化问诊失败')
 }
 
 export async function requestDiagnosisAnswer(payload) {

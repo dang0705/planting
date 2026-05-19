@@ -12,6 +12,7 @@ const STATIC_REPOSITORY_CACHE_TTL_MS = Math.max(
 )
 const staticCache = {
   allRouteGroupsBySchema: new Map(),
+  preloadExpiresAt: 0,
   routeGroupsBySignature: new Map(),
   routesByOutcomeSignature: new Map(),
   gatesByRouteSignature: new Map(),
@@ -178,6 +179,9 @@ function mapRouteQuestionRow(row = {}) {
     routeKey: row.route_key || '',
     stepNo: Number(row.step_no || 0),
     questionKey: row.question_key || '',
+    targetDimension: row.target_dimension || '',
+    targetSymptomKey: row.target_symptom_key || '',
+    questionTextUserCn: row.question_text_user_cn || '',
     gateKey: row.gate_key || '',
     questionRole: row.question_role || '',
     requiredForClosure: Number(row.required_for_closure || 0) === 1,
@@ -331,6 +335,306 @@ async function getAllActiveOutcomeRouteGroups() {
   })
 }
 
+async function preloadOutcomeRouteRepositoryCache() {
+  if (!STATIC_REPOSITORY_CACHE_TTL_MS) {return}
+  const now = Date.now()
+  if (staticCache.preloadExpiresAt > now) {return}
+
+  await withPendingStaticQuery('preloadOutcomeRouteRepositoryCache:all', async () => {
+    const refreshedNow = Date.now()
+    if (staticCache.preloadExpiresAt > refreshedNow) {return}
+
+    const [
+      allRouteGroupsRaw,
+      allRoutesRaw,
+      allQuestionsRaw,
+      allGatesRaw,
+      allAnswerEffectsRaw,
+      allActionProfilesRaw,
+      allOutcomesRaw
+    ] = await Promise.all([
+      runSql(
+        `
+          SELECT
+            route_group_key,
+            route_group_name_cn,
+            entry_scene_cn,
+            entry_symptom_keys_json,
+            candidate_outcome_keys_json,
+            default_split_question_key,
+            max_visible_outcomes,
+            visible_question_purpose_cn,
+            enabled,
+            review_status,
+            data_status
+          FROM ${table('outcome_route_groups')}
+          WHERE enabled = 1
+            AND ${buildAuditedStatusClause('data_status')}
+            AND ${buildReviewedStatusClause('review_status')}
+          ORDER BY route_group_key ASC
+        `
+      ),
+      runSql(
+        `
+          SELECT
+            route_key,
+            route_group_key,
+            outcome_key,
+            route_name_cn,
+            route_entry_type,
+            entry_symptom_keys_json,
+            entry_direction_keys_json,
+            entry_symptom_class_keys_json,
+            host_profile_condition_json,
+            entry_priority,
+            max_questions,
+            fallback_policy,
+            action_profile_key,
+            action_conflict_group,
+            enabled,
+            review_status,
+            data_status
+          FROM ${table('outcome_routes')}
+          WHERE enabled = 1
+            AND ${buildAuditedStatusClause('data_status')}
+            AND ${buildReviewedStatusClause('review_status')}
+          ORDER BY entry_priority DESC, route_key ASC
+        `
+      ),
+      runSql(
+        `
+          SELECT
+            route_questions.route_key,
+            route_questions.step_no,
+            route_questions.question_key,
+            questions.target_dimension,
+            questions.target_symptom_key,
+            questions.question_text_user_cn,
+            route_questions.gate_key,
+            route_questions.question_role,
+            route_questions.required_for_closure,
+            route_questions.ask_priority,
+            route_questions.skip_if_evidence_json,
+            route_questions.repeat_policy,
+            route_questions.enabled,
+            route_questions.review_status,
+            route_questions.data_status
+          FROM ${table('outcome_route_questions')} route_questions
+          LEFT JOIN ${table('question_library_v5_real')} questions
+            ON questions.question_key COLLATE utf8mb4_0900_ai_ci =
+              route_questions.question_key COLLATE utf8mb4_0900_ai_ci
+            AND questions.data_status IN ('audited', 'partial')
+            AND questions.review_status IN ('audited', 'partial')
+          WHERE route_questions.enabled = 1
+            AND ${buildAuditedStatusClause('route_questions.data_status')}
+            AND ${buildReviewedStatusClause('route_questions.review_status')}
+          ORDER BY route_questions.ask_priority DESC, route_questions.step_no ASC, route_questions.question_key ASC
+        `
+      ),
+      runSql(
+        `
+          SELECT
+            gate_key,
+            route_key,
+            gate_role,
+            required_evidence_json,
+            required_answer_effects_json,
+            blocker_evidence_json,
+            conflict_outcome_keys_json,
+            closure_level,
+            on_pass,
+            on_fail,
+            on_unknown,
+            decision_cause_key,
+            decision_cause_text_cn,
+            gate_priority,
+            enabled,
+            review_status,
+            data_status
+          FROM ${table('outcome_route_gates')}
+          WHERE route_key IN (
+            SELECT route_key FROM ${table('outcome_routes')}
+            WHERE enabled = 1
+              AND ${buildAuditedStatusClause('data_status')}
+              AND ${buildReviewedStatusClause('review_status')}
+          )
+            AND enabled = 1
+            AND ${buildAuditedStatusClause('data_status')}
+            AND ${buildReviewedStatusClause('review_status')}
+          ORDER BY gate_priority DESC, gate_key ASC
+        `
+      ),
+      runSql(
+        `
+          SELECT
+            question_key,
+            option_key,
+            outcome_key,
+            route_key,
+            effect_type,
+            effect_strength,
+            redirect_outcome_key,
+            evidence_dimension,
+            effect_note_cn,
+            enabled,
+            review_status,
+            data_status
+          FROM ${table('outcome_answer_effects')}
+          WHERE enabled = 1
+            AND ${buildAuditedStatusClause('data_status')}
+            AND ${buildReviewedStatusClause('review_status')}
+          ORDER BY question_key ASC, option_key ASC
+        `
+      ),
+      runSql(
+        `
+          SELECT
+            action_profile_key,
+            title_cn,
+            today_actions_json,
+            three_day_actions_json,
+            seven_day_observe_json,
+            avoid_actions_json,
+            retake_or_escalate_json,
+            plant_baseline_merge_policy,
+            review_status,
+            data_status
+          FROM ${table('outcome_action_profiles')}
+          WHERE ${buildAuditedStatusClause('data_status')}
+            AND ${buildReviewedStatusClause('review_status')}
+          ORDER BY action_profile_key ASC
+        `
+      ),
+      runSql(
+        `
+          SELECT
+            outcome_key,
+            legacy_problem_key,
+            outcome_name_cn,
+            outcome_type,
+            outcome_category,
+            display_name_cn,
+            user_definition_cn,
+            action_profile_key,
+            risk_level,
+            is_final_output,
+            is_intermediate_node,
+            allow_direct_close,
+            allow_uncertain_close,
+            priority,
+            review_status,
+            data_status
+          FROM ${table('diagnosis_outcomes')}
+          WHERE ${buildAuditedStatusClause('data_status')}
+            AND ${buildReviewedStatusClause('review_status')}
+          ORDER BY priority DESC, outcome_key ASC
+        `
+      )
+    ])
+
+    const mappedRouteGroups = allRouteGroupsRaw.map(mapRouteGroupRow)
+    const mappedRoutes = allRoutesRaw.map(mapRouteRow)
+    const mappedQuestions = allQuestionsRaw.map(mapRouteQuestionRow)
+    const mappedGates = allGatesRaw.map(mapGateRow)
+    const mappedAnswerEffects = allAnswerEffectsRaw.map(mapAnswerEffectRow)
+    const mappedActionProfiles = allActionProfilesRaw.map(mapActionProfileRow)
+    const mappedOutcomes = allOutcomesRaw.map(mapDiagnosisOutcomeRow)
+
+    const allGroupsKey = buildSchemaCacheKey(['allRouteGroups'])
+    setCached(staticCache.allRouteGroupsBySchema, allGroupsKey, mappedRouteGroups)
+
+    const routeGroupsByKey = new Map()
+    for (const row of mappedRouteGroups) {
+      const key = normalizeKey(row.routeGroupKey)
+      if (!key) {continue}
+      routeGroupsByKey.set(key, row)
+      const cacheKey = buildSchemaCacheKey(['routeGroups', normalizeCacheSignature([key])])
+      setCached(staticCache.routeGroupsBySignature, cacheKey, [row])
+    }
+
+    const routesByOutcome = new Map()
+    for (const row of mappedRoutes) {
+      const key = normalizeKey(row.outcomeKey)
+      if (!key) {continue}
+      if (!routesByOutcome.has(key)) {routesByOutcome.set(key, [])}
+      routesByOutcome.get(key).push(row)
+    }
+    for (const [outcomeKey, rows] of routesByOutcome.entries()) {
+      const cacheKey = buildSchemaCacheKey([
+        'routesByOutcome',
+        normalizeCacheSignature([outcomeKey])
+      ])
+      setCached(staticCache.routesByOutcomeSignature, cacheKey, rows)
+    }
+
+    const routeKeys = new Set()
+    for (const row of mappedRoutes) {
+      const key = normalizeKey(row.routeKey)
+      if (key) {routeKeys.add(key)}
+    }
+    const questionsByRoute = new Map()
+    for (const row of mappedQuestions) {
+      const key = normalizeKey(row.routeKey)
+      if (!key) {continue}
+      const list = questionsByRoute.get(key) || []
+      list.push(row)
+      questionsByRoute.set(key, list)
+    }
+    const gatesByRoute = new Map()
+    for (const row of mappedGates) {
+      const key = normalizeKey(row.routeKey)
+      if (!key) {continue}
+      const list = gatesByRoute.get(key) || []
+      list.push(row)
+      gatesByRoute.set(key, list)
+    }
+    const effectsByQuestion = new Map()
+    for (const row of mappedAnswerEffects) {
+      const key = normalizeKey(row.questionKey)
+      if (!key) {continue}
+      const list = effectsByQuestion.get(key) || []
+      list.push(row)
+      effectsByQuestion.set(key, list)
+    }
+    const outcomesByKey = new Map()
+    for (const row of mappedOutcomes) {
+      const key = normalizeKey(row.outcomeKey)
+      if (!key) {continue}
+      outcomesByKey.set(key, row)
+    }
+    const actionProfilesByKey = new Map()
+    for (const row of mappedActionProfiles) {
+      const key = normalizeKey(row.actionProfileKey)
+      if (!key) {continue}
+      actionProfilesByKey.set(key, row)
+    }
+
+    for (const routeKey of Array.from(routeKeys)) {
+      const questionsCacheKey = buildSchemaCacheKey(['questionsByRoute', normalizeCacheSignature([routeKey])])
+      const gatesCacheKey = buildSchemaCacheKey(['gatesByRoute', normalizeCacheSignature([routeKey])])
+      setCached(staticCache.questionsByRouteSignature, questionsCacheKey, questionsByRoute.get(routeKey) || [])
+      setCached(staticCache.gatesByRouteSignature, gatesCacheKey, gatesByRoute.get(routeKey) || [])
+    }
+    for (const [questionKey, rows] of effectsByQuestion.entries()) {
+      const cacheKey = buildSchemaCacheKey([
+        'answerEffectsByQuestion',
+        normalizeCacheSignature([questionKey])
+      ])
+      setCached(staticCache.answerEffectsByQuestionSignature, cacheKey, rows)
+    }
+    for (const [outcomeKey, row] of outcomesByKey.entries()) {
+      const cacheKey = buildSchemaCacheKey(['diagnosisOutcomes', normalizeCacheSignature([outcomeKey])])
+      setCached(staticCache.outcomesBySignature, cacheKey, [row])
+    }
+    for (const [actionProfileKey, row] of actionProfilesByKey.entries()) {
+      const cacheKey = buildSchemaCacheKey(['actionProfiles', normalizeCacheSignature([actionProfileKey])])
+      setCached(staticCache.actionProfilesBySignature, cacheKey, [row])
+    }
+
+    staticCache.preloadExpiresAt = refreshedNow + STATIC_REPOSITORY_CACHE_TTL_MS
+  })
+}
+
 async function getOutcomeRoutesByOutcomeKeys(outcomeKeys = []) {
   const safeKeys = normalizeKeys(outcomeKeys)
   if (!safeKeys.length) {return []}
@@ -435,24 +739,32 @@ async function getOutcomeRouteQuestions(routeKeys = []) {
     const rows = await runSql(
     `
       SELECT
-        route_key,
-        step_no,
-        question_key,
-        gate_key,
-        question_role,
-        required_for_closure,
-        ask_priority,
-        skip_if_evidence_json,
-        repeat_policy,
-        enabled,
-        review_status,
-        data_status
-      FROM ${table('outcome_route_questions')}
-      WHERE route_key IN ${sqlInList(safeKeys)}
-        AND enabled = 1
-        AND ${buildAuditedStatusClause('data_status')}
-        AND ${buildReviewedStatusClause('review_status')}
-      ORDER BY ask_priority DESC, step_no ASC, question_key ASC
+        route_questions.route_key,
+        route_questions.step_no,
+        route_questions.question_key,
+        questions.target_dimension,
+        questions.target_symptom_key,
+        questions.question_text_user_cn,
+        route_questions.gate_key,
+        route_questions.question_role,
+        route_questions.required_for_closure,
+        route_questions.ask_priority,
+        route_questions.skip_if_evidence_json,
+        route_questions.repeat_policy,
+        route_questions.enabled,
+        route_questions.review_status,
+        route_questions.data_status
+      FROM ${table('outcome_route_questions')} route_questions
+      LEFT JOIN ${table('question_library_v5_real')} questions
+        ON questions.question_key COLLATE utf8mb4_0900_ai_ci =
+          route_questions.question_key COLLATE utf8mb4_0900_ai_ci
+        AND questions.data_status IN ('audited', 'partial')
+        AND questions.review_status IN ('audited', 'partial')
+      WHERE route_questions.route_key IN ${sqlInList(safeKeys)}
+        AND route_questions.enabled = 1
+        AND ${buildAuditedStatusClause('route_questions.data_status')}
+        AND ${buildReviewedStatusClause('route_questions.review_status')}
+      ORDER BY route_questions.ask_priority DESC, route_questions.step_no ASC, route_questions.question_key ASC
     `
     )
     const mappedRows = rows.map(mapRouteQuestionRow)
@@ -589,5 +901,6 @@ module.exports = {
   getOutcomeRouteQuestions,
   getOutcomeAnswerEffects,
   getOutcomeActionProfiles,
-  getDiagnosisOutcomesByKeys
+  getDiagnosisOutcomesByKeys,
+  preloadOutcomeRouteRepositoryCache
 }

@@ -16,6 +16,9 @@ const {
   normalizeKey,
   sortCandidateStates
 } = require('./outcome-route-planner-helpers')
+const {
+  isDisabledYellowingFlowQuestion
+} = require('../utils/yellowing-question-policy')
 
 async function planOutcomeRoutes({
   candidateOutcomeKeys = [],
@@ -169,6 +172,9 @@ async function planOutcomeRoutes({
         const rowsToUse = relevantRows.length ? relevantRows : routeQuestionRows
         return rowsToUse.map(item => ({
           questionKey: normalizeKey(item.questionKey),
+          targetDimension: normalizeKey(item.targetDimension || item.target_dimension),
+          targetSymptomKey: normalizeKey(item.targetSymptomKey || item.target_symptom_key),
+          questionTextUserCn: normalizeKey(item.questionTextUserCn || item.question_text_user_cn),
           routeKey,
           gateKey: normalizeKey(item.gateKey),
           outcomeKey,
@@ -176,7 +182,11 @@ async function planOutcomeRoutes({
           askPriority: Number(item.askPriority || 0),
           stepNo: Number(item.stepNo || 0),
           requiredForClosure: Boolean(item.requiredForClosure)
-        })).filter(item => item.questionKey && !answeredQuestionKeySet.has(item.questionKey))
+        })).filter(item =>
+          item.questionKey &&
+          !answeredQuestionKeySet.has(item.questionKey) &&
+          !isDisabledYellowingFlowQuestion(item)
+        )
       })
 
       if (hasNeedMoreInfo && !hasBlocker) {
@@ -352,7 +362,12 @@ async function planOutcomeRoutes({
       }),
       lowConfidenceOverride: null
     }
-  } catch {
+  } catch (error) {
+    console.error('diagnose-http outcome route planning failed:', {
+      candidateOutcomeKeys: normalizedCandidateOutcomeKeys,
+      message: String(error?.message || error || ''),
+      stack: String(error?.stack || '')
+    })
     return buildFallbackDecision({
       candidateOutcomeKeys: normalizedCandidateOutcomeKeys,
       candidateOutcomes: normalizedCandidateOutcomeKeys.map(problemKey => ({ problemKey })),

@@ -254,7 +254,6 @@ import CustomNavbar from '@/components/CustomNavbar'
 import DiagnosePopup from '@/components/DiagnosePopup.vue'
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
-import { getCityNameByLocation } from '@/api/weather.js'
 import { getDiagnosisHistory } from '@/api/plants-http.js'
 import loading from '@/assets/icons/loading.svg'
 
@@ -278,8 +277,6 @@ const careTips = ref([
 onMounted(async () => {
   const systemInfo = uni.getSystemInfoSync()
   userStore.setNavbarHeight((systemInfo.statusBarHeight || 0) + 44)
-
-  getUserLocation()
 
   // 登录状态下加载用户植物
   if (await userStore.ensureLogin()) {
@@ -416,37 +413,6 @@ async function loadUserPlants() {
   } finally {
     loaded.value = true
     console.log(loaded, 'loaded')
-  }
-}
-
-async function getUserLocation() {
-  try {
-    const res = await new Promise((resolve, reject) => {
-      uni.getLocation({
-        type: 'gcj02',
-        success: resolve,
-        fail: reject
-      })
-    })
-
-    // 根据经纬度获取真实城市名称
-    const cityInfo = await getCityNameByLocation(res.latitude, res.longitude)
-
-    userStore.setLocation({
-      latitude: res.latitude,
-      longitude: res.longitude,
-      city: cityInfo.city || '当前位置',
-      province: cityInfo.province || ''
-    })
-  } catch (error) {
-    console.error('获取位置信息失败:', error)
-    // 如果获取位置失败，使用默认城市或保持为空
-    userStore.setLocation({
-      latitude: null,
-      longitude: null,
-      city: '当前位置',
-      province: ''
-    })
   }
 }
 

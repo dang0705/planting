@@ -6,6 +6,54 @@
 import { WEATHER_CONFIG } from '@/config/weather'
 import { fetchCurrentWeatherQuery } from '@/vue-query/weather/queries/current-weather.js'
 
+const CITY_LOOKUP_CACHE_TTL_MS = 5 * 60 * 1000
+const CITY_LOOKUP_COORDINATE_PRECISION = 5
+const cityLookupInflight = new Map()
+const cityLookupCache = new Map()
+
+function buildCityLookupKey(latitude, longitude) {
+  const normalizedLat = Number(latitude)
+  const normalizedLng = Number(longitude)
+  if (!Number.isFinite(normalizedLat) || !Number.isFinite(normalizedLng)) {
+    return ''
+  }
+  return [
+    normalizedLat.toFixed(CITY_LOOKUP_COORDINATE_PRECISION),
+    normalizedLng.toFixed(CITY_LOOKUP_COORDINATE_PRECISION)
+  ].join(',')
+}
+
+function buildFallbackCityInfo() {
+  return {
+    province: '',
+    city: '当前位置',
+    district: ''
+  }
+}
+
+function isResolvedCityName(city = '') {
+  const normalizedCity = String(city || '').trim()
+  return Boolean(normalizedCity && normalizedCity !== '当前位置')
+}
+
+function getCachedCityLookup(cacheKey = '') {
+  const cached = cityLookupCache.get(cacheKey)
+  if (!cached) {return null}
+  if (Date.now() - Number(cached.cachedAt || 0) > CITY_LOOKUP_CACHE_TTL_MS) {
+    cityLookupCache.delete(cacheKey)
+    return null
+  }
+  return cached.value
+}
+
+function setCachedCityLookup(cacheKey = '', value = null) {
+  if (!cacheKey || !value || !isResolvedCityName(value.city)) {return}
+  cityLookupCache.set(cacheKey, {
+    cachedAt: Date.now(),
+    value
+  })
+}
+
 export async function checkLocationPermission() {
   return new Promise(resolve => {
     uni.getSetting({
@@ -187,7 +235,22 @@ export async function getCurrentLocation() {
 }
 
 export function getCityNameByLocation(latitude, longitude) {
-  return new Promise(resolve => {
+  const cacheKey = buildCityLookupKey(latitude, longitude)
+  if (!cacheKey) {
+    return Promise.resolve(buildFallbackCityInfo())
+  }
+
+  const cached = getCachedCityLookup(cacheKey)
+  if (cached) {
+    return Promise.resolve(cached)
+  }
+
+  const inflight = cityLookupInflight.get(cacheKey)
+  if (inflight) {
+    return inflight
+  }
+
+  const lookupPromise = new Promise(resolve => {
     wx.request({
       url: 'https://apis.map.qq.com/ws/geocoder/v1/',
       data: {
@@ -199,33 +262,32 @@ export function getCityNameByLocation(latitude, longitude) {
         const data = res.data
         if (data.status === 0 && data.result) {
           const addressComponent = data.result.address_component
-          resolve({
+          const cityInfo = {
             province: addressComponent.province || '',
             city: addressComponent.city || addressComponent.district || '当前位置',
             district: addressComponent.district || ''
-          })
+          }
+          setCachedCityLookup(cacheKey, cityInfo)
+          resolve(cityInfo)
         } else {
-          resolve({
-            province: '',
-            city: '当前位置',
-            district: ''
-          })
+          resolve(buildFallbackCityInfo())
         }
       },
       fail: () => {
-        resolve({
-          province: '',
-          city: '当前位置',
-          district: ''
-        })
+        resolve(buildFallbackCityInfo())
       }
     })
+  }).finally(() => {
+    cityLookupInflight.delete(cacheKey)
   })
+
+  cityLookupInflight.set(cacheKey, lookupPromise)
+  return lookupPromise
 }
 
 export async function getWeatherInfo(options = {}) {
   try {
-    const { lat, lng, useCache = WEATHER_CONFIG.USE_CACHE } = options
+    const { lat, lng, city = '', province = '', useCache = WEATHER_CONFIG.USE_CACHE } = options
     const hasLat = lat !== undefined && lat !== null && lat !== ''
     const hasLng = lng !== undefined && lng !== null && lng !== ''
     const normalizedLat = hasLat ? Number(lat) : NaN
@@ -246,6 +308,8 @@ export async function getWeatherInfo(options = {}) {
     const result = await fetchCurrentWeatherQuery({
       lat: normalizedLat,
       lng: normalizedLng,
+      city,
+      province,
       useCache
     })
 

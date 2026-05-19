@@ -22,51 +22,25 @@
             <text class="block text-base font-semibold text-gray-900 mb-2">拍摄植物照片</text>
             <text class="block text-xs text-gray-500 mb-3">请直接在槽位中上传。单槽最多 2 张，总计最多 3 张。</text>
 
-            <view v-if="automationEnabled" id="diagnose-dev-visual-evidence-panel" class="dev-visual-evidence-panel">
+            <view id="diagnose-dev-visual-evidence-panel" class="dev-visual-evidence-panel">
               <view class="flex items-start justify-between gap-2 mb-2">
                 <view class="min-w-0 flex-1">
-                  <text class="block text-xs font-semibold text-[#1F5A42]">开发调试：模拟视觉证据</text>
+                  <text class="block text-xs font-semibold text-[#1F5A42]">无图症状模式</text>
                   <text class="block text-[10px] text-gray-500 mt-0.5">
-                    选择后可不上传图片，直接用该症状类启动诊断，不调用视觉模型。
+                    没有照片时可直接选择症状模式，进入问诊；已上传照片时仍走图片诊断。
                   </text>
                 </view>
-                <text class="dev-visual-evidence-tag">DEV</text>
+                <text class="dev-visual-evidence-tag">问诊</text>
               </view>
 
-              <picker
-                id="diagnose-dev-symptom-class-picker-control"
-                mode="selector"
-                :range="devVisualSymptomClassPickerLabels"
-                :value="selectedDevSymptomClassIndex"
-                @change="handleDevSymptomClassChange"
-              >
-                <view id="diagnose-dev-symptom-class-picker" class="dev-visual-evidence-picker">
-                  <view class="min-w-0 flex-1">
-                    <text class="block text-xs font-semibold text-gray-900">
-                      {{ selectedDevSymptomClassOption?.classNameCn || '不模拟，走真实图片/AI视觉' }}
-                    </text>
-                    <text
-                      v-if="selectedDevSymptomClassOption"
-                      class="block text-[10px] text-gray-500 mt-0.5"
-                    >
-                      {{ selectedDevSymptomClassOption.symptomCn }} · {{ selectedDevSymptomClassOption.classKey }}
-                    </text>
-                    <text v-else class="block text-[10px] text-gray-500 mt-0.5">
-                      下拉选择当前 symptom class
-                    </text>
-                  </view>
-                  <text class="dev-visual-evidence-picker-action">选择</text>
-                </view>
-              </picker>
-
-              <view id="diagnose-dev-symptom-class-quick-select" class="dev-visual-evidence-quick-select">
+              <view id="3ef72261--diagnose-dev-symptom-class-quick-select" class="dev-visual-evidence-quick-select">
                 <view
-                  v-for="item in DEV_VISUAL_SYMPTOM_CLASS_OPTIONS"
+                  v-for="item in SYMPTOM_CLASS_QUICK_SELECT_OPTIONS"
                   :key="item.classKey"
                   :id="`diagnose-dev-symptom-class-option-${item.classKey}`"
                   class="dev-visual-evidence-quick-option"
                   :class="selectedDevSymptomClassKey === item.classKey ? 'dev-visual-evidence-quick-option--active' : ''"
-                  @click="selectDevSymptomClass(item.classKey)"
+                  @click="handleSymptomClassQuickSelect(item)"
                 >
                   <text>{{ item.classNameCn }}</text>
                 </view>
@@ -74,7 +48,7 @@
 
               <view v-if="selectedDevSymptomClassOption" id="diagnose-dev-symptom-class-status" class="dev-visual-evidence-status">
                 <text class="flex-1 text-[10px] text-[#1F5A42] leading-relaxed">
-                  将模拟：{{ selectedDevSymptomClassOption.symptomCn }}（{{ selectedDevSymptomClassOption.classNameCn }}）
+                  将以无图症状模式开始问诊：{{ selectedDevSymptomClassOption.symptomCn }}（{{ selectedDevSymptomClassOption.classNameCn }}）
                 </text>
                 <text
                   id="diagnose-dev-symptom-class-clear-button"
@@ -596,6 +570,7 @@ import { useUserStore } from '@/store/user.js'
 import { useDiagnoseStore } from '@/store/diagnose.js'
 import { useCloudImageUploader } from '@/composables/useCloudImageUploader'
 import { useDiagnoseMutation } from '@/vue-query/diagnose/mutations/useDiagnoseMutation.js'
+import { useDiagnosisQuestionStartMutation } from '@/vue-query/diagnose/mutations/useDiagnosisQuestionStartMutation.js'
 import { useDiagnoseFollowUpMutation } from '@/vue-query/diagnose/mutations/useDiagnoseFollowUpMutation.js'
 import {
   normalizeDiagnosisResult,
@@ -659,6 +634,7 @@ const followUpSwiperCurrent = ref(0)
 const followUpSwiperPages = ref([null, null])
 
 const diagnoseMutation = useDiagnoseMutation()
+const questionStartMutation = useDiagnosisQuestionStartMutation()
 const followUpMutation = useDiagnoseFollowUpMutation()
 
 const uploader = useCloudImageUploader({
@@ -700,7 +676,7 @@ automationEnabled =
 // #endif
 const AUTOMATION_DIAGNOSE_IMAGES_STORAGE_KEY = '__plantsight_diagnose_automation_images__'
 const DIAGNOSIS_FOLLOW_UP_STORAGE_KEY_PREFIX = '__plantsight_diagnose_follow_up__'
-const DEV_VISUAL_SYMPTOM_CLASS_OPTIONS = [
+const SYMPTOM_CLASS_QUICK_SELECT_OPTIONS = [
   { classKey: 'yellowing_mode', classNameCn: '黄叶模式', symptomKey: 'uniform_yellowing', symptomCn: '整叶黄化' },
   { classKey: 'bacterial_leaf_spot_mode', classNameCn: '细菌性叶斑模式', symptomKey: 'water_soaked_spots', symptomCn: '水渍斑' },
   { classKey: 'chewing_pest_mode', classNameCn: '咀嚼损伤虫害模式', symptomKey: 'holes_in_leaf', symptomCn: '叶片穿孔' },
@@ -735,26 +711,10 @@ const selectedDevSymptomClassKey = ref('')
 
 const primaryStructuredImages = computed(() => buildStructuredImageInputs(imageFiles.value))
 const followUpStructuredImages = computed(() => buildStructuredImageInputs(followUpImageFiles.value))
-const devVisualSymptomClassPickerOptions = computed(() => [
-  { classKey: '', pickerLabel: '不模拟，走真实图片/AI视觉' },
-  ...DEV_VISUAL_SYMPTOM_CLASS_OPTIONS.map(item => ({
-    ...item,
-    pickerLabel: `${item.classNameCn} / ${item.symptomCn}`
-  }))
-])
-const devVisualSymptomClassPickerLabels = computed(() =>
-  devVisualSymptomClassPickerOptions.value.map(item => item.pickerLabel)
-)
 const selectedDevSymptomClassOption = computed(() =>
-  DEV_VISUAL_SYMPTOM_CLASS_OPTIONS.find(item => item.classKey === selectedDevSymptomClassKey.value) || null
+  SYMPTOM_CLASS_QUICK_SELECT_OPTIONS.find(item => item.classKey === selectedDevSymptomClassKey.value) || null
 )
-const selectedDevSymptomClassIndex = computed(() => {
-  const index = devVisualSymptomClassPickerOptions.value.findIndex(
-    item => item.classKey === selectedDevSymptomClassKey.value
-  )
-  return index >= 0 ? index : 0
-})
-const hasDevVisualEvidence = computed(() => automationEnabled && Boolean(selectedDevSymptomClassOption.value))
+const hasSelectedSymptomMode = computed(() => Boolean(selectedDevSymptomClassOption.value))
 const followUpCaptureSuggestions = computed(() =>
   Array.isArray(result.value?.visualAggregateSummary?.suggestedFollowupCapture)
     ? result.value.visualAggregateSummary.suggestedFollowupCapture
@@ -1459,12 +1419,6 @@ function uniqueStrings(values = []) {
   )
 }
 
-function handleDevSymptomClassChange(event) {
-  const index = Number(event?.detail?.value ?? 0)
-  const nextOption = devVisualSymptomClassPickerOptions.value[index] || devVisualSymptomClassPickerOptions.value[0]
-  selectedDevSymptomClassKey.value = String(nextOption?.classKey || '').trim()
-}
-
 function selectDevSymptomClass(classKey = '') {
   selectedDevSymptomClassKey.value = String(classKey || '').trim()
 }
@@ -1473,52 +1427,74 @@ function clearDevSymptomClass() {
   selectedDevSymptomClassKey.value = ''
 }
 
-function buildDevVisualObservedSymptoms() {
-  const option = selectedDevSymptomClassOption.value
-  if (!automationEnabled || !option) {return []}
-
-  return [
-    {
-      symptomKey: option.symptomKey,
-      symptomCn: option.symptomCn,
-      confidence: 0.99,
-      source: 'visual_admitted',
-      evidenceSource: 'visual_admitted',
-      classKey: option.classKey,
-      classNameCn: option.classNameCn
-    }
-  ]
+function isQuestionStartSubmitting() {
+  return Boolean(questionStartMutation.isPending?.value || questionStartMutation.isLoading?.value)
 }
 
-function buildDevVisualObservedEvidenceSet() {
-  const option = selectedDevSymptomClassOption.value
-  if (!automationEnabled || !option) {return []}
+async function handleSymptomClassQuickSelect(option = null) {
+  selectDevSymptomClass(option?.classKey || '')
+  if (imageFiles.value.length || primaryStructuredImages.value.length) {
+    return
+  }
 
-  return [
-    {
-      observedEvidenceSetId: `dev_visual::${option.classKey}::${option.symptomKey}`,
-      evidenceKey: option.symptomKey,
-      evidenceType: 'symptom',
+  await startQuestionDiagnosisFromSymptomClass()
+}
+
+async function startQuestionDiagnosisFromSymptomClass() {
+  const option = selectedDevSymptomClassOption.value
+  if (!option) {
+    uni.showToast({ title: '请选择症状模式', icon: 'none' })
+    return
+  }
+
+  if (isQuestionStartSubmitting()) {
+    return
+  }
+
+  if (hasPendingUploads.value) {
+    uni.showToast({ title: '请等待图片上传完成', icon: 'none' })
+    return
+  }
+
+  if (hasUploadErrors.value) {
+    uni.showToast({ title: '请先删除上传失败的图片', icon: 'none' })
+    return
+  }
+
+  if (!userStore.canDiagnose) {
+    uni.showModal({
+      title: '提示',
+      content: '免费诊断次数已用完，升级会员享受无限次诊断',
+      confirmText: '升级会员',
+      success: res => {
+        if (res.confirm) {
+          close()
+          uni.switchTab({ url: '/pages/profile/profile' })
+        }
+      }
+    })
+    return
+  }
+
+  uni.showLoading({ title: '正在生成问诊...' })
+  try {
+    await questionStartMutation.mutateAsync({
+      plantId: props.plantId,
+      userPlantId: props.plantId,
+      plantName: props.plantName,
+      symptomClassKey: option.classKey,
       symptomKey: option.symptomKey,
-      symptomCn: option.symptomCn,
-      confidence: 0.99,
-      sourceType: 'visual_admitted',
-      currentStatus: 'active',
-      targetLayer: 'observed_evidence_set',
-      sourceRecordId: option.classKey,
-      firstSeenStage: 'visual_precheck',
-      enteredRuntime: 1,
-      enteredExplanation: 1,
-      isKeyEvidence: 1,
-      visualStructuralEvidenceStatus: 'present',
-      visualSupportOrgans: ['leaf'],
-      visualSupportCount: 1,
-      visualSupportingRegionNote: `开发环境模拟：${option.classNameCn}`,
-      visualConfidenceBand: 'high',
-      visualStrengthLevel: 'strong',
-      visualAdmissionReason: 'development-only symptom class simulator'
-    }
-  ]
+      description: `无图症状模式：${option.symptomCn}（${option.classNameCn}）`,
+      onFinish: diagnosisResult => {
+        userStore.useAIQuota()
+        navigateToDiagnosisFollowUpPage(diagnosisResult)
+      }
+    })
+  } catch (error) {
+    uni.showToast({ title: error?.message || '问诊初始化失败，请重试', icon: 'none' })
+  } finally {
+    uni.hideLoading()
+  }
 }
 
 function buildStructuredImageInputs(files = []) {
@@ -1714,14 +1690,17 @@ async function resetFollowUpUploads() {
 }
 
 async function startDiagnose() {
-  const devObservedSymptoms = buildDevVisualObservedSymptoms()
-  const devObservedEvidenceSet = buildDevVisualObservedEvidenceSet()
   const propObservedSymptoms = Array.isArray(props.observedSymptoms) ? props.observedSymptoms : []
-  const effectiveObservedSymptoms = devObservedSymptoms.length ? devObservedSymptoms : propObservedSymptoms
-  const effectiveObservedEvidenceSet = devObservedEvidenceSet.length ? devObservedEvidenceSet : []
+  const effectiveObservedSymptoms = propObservedSymptoms
+  const effectiveObservedEvidenceSet = []
   const hasObservedSymptoms = effectiveObservedSymptoms.length > 0
   const structuredImages = primaryStructuredImages.value
   const uploadedImageUrls = structuredImages.map(item => item.imageRef)
+
+  if (imageFiles.value.length === 0 && !uploadedImageUrls.length && hasSelectedSymptomMode.value) {
+    await startQuestionDiagnosisFromSymptomClass()
+    return
+  }
 
   if (imageFiles.value.length === 0 && !hasObservedSymptoms) {
     uni.showToast({ title: '请先添加照片', icon: 'none' })
@@ -1769,9 +1748,7 @@ async function startDiagnose() {
       plantName: props.plantName,
       observedSymptoms: hasObservedSymptoms ? effectiveObservedSymptoms : [],
       observedEvidenceSet: effectiveObservedEvidenceSet,
-      description: hasDevVisualEvidence.value
-        ? `开发调试模拟视觉证据：${selectedDevSymptomClassOption.value.symptomCn}（${selectedDevSymptomClassOption.value.classNameCn}）`
-        : `共上传 ${imageUrls.length} 张照片`
+      description: `共上传 ${imageUrls.length} 张照片`
     }
 
     pendingDiagnosePayload.value = diagnosePayload
@@ -1877,8 +1854,12 @@ function setFollowUpAnswer(questionId, answerValue) {
 
 function canStartDiagnose() {
   const hasObservedSymptoms =
-    hasDevVisualEvidence.value ||
+    hasSelectedSymptomMode.value ||
     (Array.isArray(props.observedSymptoms) && props.observedSymptoms.length > 0)
+
+  if (isQuestionStartSubmitting()) {
+    return false
+  }
 
   if (!hasObservedSymptoms && primaryStructuredImages.value.length === 0) {
     return false
@@ -2042,6 +2023,7 @@ async function resetDiagnose() {
   followUpAnswerRevision.value = 0
   expandedFollowUpOptionByQuestion.value = {}
   submittingFollowUpMode.value = ''
+  selectedDevSymptomClassKey.value = ''
 }
 
 function parseAutomationDiagnosePayload(rawInput = {}) {
@@ -2170,23 +2152,6 @@ defineExpose({
   background: #d8f3dc;
   color: #1f5a42;
   font-size: 10px;
-  font-weight: 700;
-}
-
-.dev-visual-evidence-picker {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid rgba(45, 106, 79, 0.16);
-  border-radius: 14px;
-  background: #ffffff;
-}
-
-.dev-visual-evidence-picker-action {
-  flex-shrink: 0;
-  color: #2d6a4f;
-  font-size: 11px;
   font-weight: 700;
 }
 

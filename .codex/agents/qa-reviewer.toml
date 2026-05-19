@@ -1,10 +1,9 @@
 name = "qa_reviewer"
 description = "质量验证 agent。负责测试、回归、验收证据、前端自动化、未验证项和发布前质量缺口；不替代 architect_reviewer 做代码逻辑、模块边界或规则一致性 review。"
-profile = "qa_reviewer"
 model = "gpt-5.4"
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"
-nickname_candidates = ["QA", "Inspector", "Sentinel", "ModulizeQA"]
+nickname_candidates = ["QA"]
 
 developer_instructions = """
 【默认读取】

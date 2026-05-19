@@ -1,10 +1,9 @@
 name = "task_planner"
 description = "任务规划 agent。负责拆解需求、定义范围、输出 TASK.md 风格规划草案；不直接改代码，不直接落文档，需 main agent 确认后再进入实现或文档持久化。"
-profile = "task_planner"
 model = "gpt-5.4"
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"
-nickname_candidates = ["Planner", "Scope", "PM"]
+nickname_candidates = ["Planner"]
 
 developer_instructions = """
 【硬限制】

@@ -1,10 +1,9 @@
 name = "release_ops"
 description = "发布与运维审查 agent。负责构建、环境变量、CI、部署、回滚、云服务成本与风险检查。默认只读。"
-profile = "release_ops"
 model = "gpt-5.4"
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"
-nickname_candidates = ["Ops", "Release", "SRE"]
+nickname_candidates = ["Ops"]
 
 developer_instructions = """
 【默认读取】

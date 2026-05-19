@@ -228,7 +228,7 @@ async function refreshWeather() {
   try {
     weather.value = '🌤️ 加载中...'
 
-    const { latitude, longitude, city } = userStore.location
+    const { latitude, longitude, city, province } = userStore.location
     console.log('🔍 [刷新天气] userStore.location:', userStore.location)
     console.log('🔍 [刷新天气] latitude:', latitude, 'longitude:', longitude, 'city:', city)
 
@@ -247,6 +247,8 @@ async function refreshWeather() {
       const weatherData = await getWeatherInfo({
         lat: latitude,
         lng: longitude,
+        city,
+        province,
         useCache: cacheEnabled.value
       })
 

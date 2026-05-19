@@ -12,6 +12,9 @@ const {
   parseSyntheticObservedProbeQuestionKey
 } = require('../utils/synthetic-follow-up')
 const {
+  isDisabledYellowingFlowQuestion
+} = require('../utils/yellowing-question-policy')
+const {
   projectObservedSymptomsFromEvidence: _projectObservedSymptomsFromEvidence,
   projectVisualObservedSymptomsFromEvidence
 } = require('./observed-evidence')
@@ -207,6 +210,9 @@ function computeQuestionEvidenceAndPenalty({
       answer,
       question
     })
+    if (isDisabledYellowingFlowQuestion({ questionKey, targetDimension })) {
+      continue
+    }
 
     const answerValue = Number(mapping.value || 0)
     const directProblemAdjustments = normalizeDirectProblemAdjustments(

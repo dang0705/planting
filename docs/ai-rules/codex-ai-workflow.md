@@ -15,6 +15,18 @@
 7. 诊断 runtime / outcome / CloudBase / 前端展示类任务必须先写目标验收契约，再进入实现或发布验证。
 8. 同一会话中同一角色的 subagent 必须复用同一线程；继续同角色任务时优先追加到已有线程。
 9. 诊断 `fast path` / `warm path` / `early return` / 性能优化路径改动必须在 Dispatch Plan 中单列“快捷路径与主链守卫一致性”验收，不得只验证完整 happy path。
+10. `.codex/agents/*.toml` 只代表本仓库角色规范，不自动等同于当前 runtime 已注册的 `spawn_agent.agent_type`。角色表是工作流路由层，专用角色是否可用必须以 `spawn_agent` 实际结果为准。
+
+### 2.1 专用角色可用性与 fallback
+
+1. `.codex/config.toml` 的 `[agents]` 当前只控制线程数量、深度和超时；没有明确 runtime 注册字段时，不得声称它已加载 `.codex/agents/*.toml`。
+2. `~/.codex/config.toml` 中的 `profiles.*` 是主会话或 CLI profile 配置，不是自定义 subagent 注册表。
+3. 每个逻辑角色本轮首次派发时，main agent 必须先尝试对应专用 `agent_type`，并记录 `spawn_agent` 的实际结果。
+4. 专用角色不可用时，允许使用 `default` 作为逻辑角色替代线程，但必须显式记录为 fallback，不得冒充原生专用角色。
+5. fallback 记录必须包含：`logical_role`、`requested_agent_type`、`actual_agent_type`、`agent_id/thread_id`、`fallback_reason`、`expected_model/reasoning/profile/sandbox`、`observed_or_requested_model/reasoning/profile/sandbox`、`config_match=false`。
+6. 使用 `default` 替代时，应优先按 `.codex/agents/<role>.toml` 的期望模型与 reasoning 显式设置 `model` / `reasoning_effort`；若无法设置或选择不设置，必须说明原因。
+7. 线程复用按 `logical_role` 管理。一个 `default` 替代线程绑定某个逻辑角色后，不得混用为另一个逻辑角色。
+8. 用户明确要求某专用职责不可跳过时，fallback 只能作为“职责替代尝试”；若替代线程无法满足该职责，必须记录未完成项或请求用户裁决。
 
 ## 3. Dispatch Plan 格式
 
@@ -34,6 +46,12 @@ Dispatch Plan:
 - 需要读取的规则文件/章节:
 - 规则文件数量是否超过 2 个: 否 / 是，原因：
 - 是否需要读取 AGENTS.md: 默认否；仅在缺少派发上下文、规则冲突、线程恢复或角色边界不清时为是
+- Subagent runtime 可用性:
+  - `.codex/agents/*.toml` 是否已由 runtime 注册为 `agent_type`: 未确认 / 是 / 否
+  - 本轮需预检的 `agent_type`:
+  - 专用角色 spawn 结果:
+  - fallback 策略:
+  - fallback 记录字段:
 - 预期输出:
 - 写入权限:
 - 首部规划闭环:

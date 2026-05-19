@@ -5,6 +5,9 @@ const {
   ROUTE_STATUS,
   ROUTE_FALLBACK_POLICY
 } = require('../constants/outcome-route')
+const {
+  isDisabledYellowingFlowQuestion
+} = require('../utils/yellowing-question-policy')
 
 function normalizeKey(value = '') {
   return String(value || '').trim()
@@ -156,7 +159,14 @@ function buildRouteEvidenceContext({
   const safeDerivedEvidenceSet = Array.isArray(derivedEvidenceSet) ? derivedEvidenceSet : []
   const safeDiagnosisDirections = Array.isArray(diagnosisDirections) ? diagnosisDirections : []
   const safeAnswerEffects = Array.isArray(answerEffects) ? answerEffects : []
-  const safeAnswers = Array.isArray(answers) ? answers : []
+  const routeEligibleAnswerEffects = safeAnswerEffects.filter(
+    item => !isDisabledYellowingFlowQuestion(item)
+  )
+  const safeAnswers = (Array.isArray(answers) ? answers : []).filter(
+    item => !isDisabledYellowingFlowQuestion(item)
+  )
+  const safeAskedQuestionKeys = (Array.isArray(askedQuestionKeys) ? askedQuestionKeys : [])
+    .filter(questionKey => !isDisabledYellowingFlowQuestion({ questionKey }))
 
   const visualRouteSymptomKeys = collectVisualRouteSymptomKeys(visualAggregateResult)
   const activeSymptomKeys = dedupeKeys([
@@ -176,7 +186,7 @@ function buildRouteEvidenceContext({
   )
   const answeredQuestionKeys = dedupeKeys([
     ...safeAnswers.map(item => item?.questionKey || item?.question_key || ''),
-    ...(Array.isArray(askedQuestionKeys) ? askedQuestionKeys : [])
+    ...safeAskedQuestionKeys
   ])
   const answeredOptionKeys = dedupeKeys(
     safeAnswers.map(item => item?.optionKey || item?.option_key || '')
@@ -192,6 +202,7 @@ function buildRouteEvidenceContext({
   const matchedRouteAnswerEffects = dedupeKeys(
     (Array.isArray(routeAnswerEffects) ? routeAnswerEffects : [])
       .filter(item => {
+        if (isDisabledYellowingFlowQuestion(item)) {return false}
         const questionKey = normalizeKey(item?.questionKey || item?.question_key || '')
         const optionKey = normalizeKey(item?.optionKey || item?.option_key || '')
         if (!questionKey || !optionKey) {return false}
@@ -209,7 +220,7 @@ function buildRouteEvidenceContext({
   ).map(item => JSON.parse(item))
   const answerEffectTypeSet = new Set(
     dedupeKeys([
-      ...safeAnswerEffects.map(item => normalizeKey(item?.effectType || '').toLowerCase()),
+      ...routeEligibleAnswerEffects.map(item => normalizeKey(item?.effectType || '').toLowerCase()),
       ...matchedRouteAnswerEffects.map(item => normalizeKey(item?.effectType || '').toLowerCase())
     ])
   )
@@ -228,7 +239,7 @@ function buildRouteEvidenceContext({
         symptomClassRuntime?.classGateDecision?.currentClassKey
       ])
     ),
-    answerEffects: safeAnswerEffects,
+    answerEffects: routeEligibleAnswerEffects,
     routeAnswerEffects: matchedRouteAnswerEffects,
     answeredQuestionKeys,
     answeredQuestionKeySet: new Set(answeredQuestionKeys),

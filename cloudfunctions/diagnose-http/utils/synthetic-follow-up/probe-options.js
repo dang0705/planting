@@ -29,7 +29,7 @@ function buildSyntheticObservedProbeOptionTexts(item = {}, targetDimension = '',
         },
         unknown: {
           text: '不确定，继续帮我排查',
-          description: '如果看不出最明显的方向，选这个，系统会继续从黄叶分布和新老叶位置排查。'
+          description: '如果看不出最明显的方向，选这个，系统会继续从黄叶分布、养护背景和变化速度排查。'
         }
       }
     case QUESTION_TARGET_DIMENSIONS.YELLOWING_DISEASE_TRACE_GATE:

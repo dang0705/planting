@@ -23,6 +23,7 @@ const {
 const { buildOrthogonalProbeDimensionOrder } = require('./rules')
 const { buildOrthogonalProbeText } = require('./probe-text')
 const { buildSyntheticObservedProbeOptionTexts } = require('./probe-options')
+const { isDisabledYellowingFlowQuestion } = require('../yellowing-question-policy')
 
 function buildSyntheticObservedProbeQuestions(
   item = {},
@@ -55,6 +56,11 @@ function buildSyntheticObservedProbeQuestions(
 
   return dimensionOrder
     .filter(targetDimension => Boolean(targetDimension) && !excludedDimensionSet.has(targetDimension))
+    .filter(targetDimension => !isDisabledYellowingFlowQuestion({
+      questionKey: buildSyntheticObservedProbeQuestionKey(symptomKey, targetDimension),
+      targetDimension,
+      targetSymptomKey: symptomKey
+    }))
     .slice(0, Math.max(1, Math.min(1, Number(maxQuestions || 1))))
     .map(targetDimension => {
       const context = { plantContext, weatherContext }
