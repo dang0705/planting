@@ -17,8 +17,26 @@ const {
   sortCandidateStates
 } = require('./outcome-route-planner-helpers')
 const {
-  isDisabledYellowingFlowQuestion
+  filterYellowingCareEnvironmentCandidateOutcomeKeys,
+  isDisallowedYellowingCareEnvironmentQuestion,
+  isDisabledYellowingFlowQuestion,
+  isYellowingFlowSymptomKey
 } = require('../utils/yellowing-question-policy')
+
+function shouldApplyYellowingCareOutcomeGuard(routeEvidenceContext = {}) {
+  const symptomClassKeySet = routeEvidenceContext?.symptomClassKeySet || new Set()
+  if (symptomClassKeySet.has('yellowing_mode')) {
+    return true
+  }
+
+  const activeSymptomKeys = Array.isArray(routeEvidenceContext?.activeSymptomKeys)
+    ? routeEvidenceContext.activeSymptomKeys
+    : []
+  return Boolean(
+    activeSymptomKeys.length &&
+    activeSymptomKeys.every(isYellowingFlowSymptomKey)
+  )
+}
 
 async function planOutcomeRoutes({
   candidateOutcomeKeys = [],
@@ -30,7 +48,10 @@ async function planOutcomeRoutes({
   featureFlags = {}
 } = {}) {
   const effectiveRouteRepository = routeRepository || require('../repositories/outcome-route-repository')
-  const normalizedCandidateOutcomeKeys = dedupeKeys(candidateOutcomeKeys)
+  const rawCandidateOutcomeKeys = dedupeKeys(candidateOutcomeKeys)
+  const normalizedCandidateOutcomeKeys = shouldApplyYellowingCareOutcomeGuard(routeEvidenceContext)
+    ? filterYellowingCareEnvironmentCandidateOutcomeKeys(rawCandidateOutcomeKeys)
+    : rawCandidateOutcomeKeys
   const candidateOutcomeOrderMap = new Map(
     normalizedCandidateOutcomeKeys.map((outcomeKey, index) => [outcomeKey, index])
   )
@@ -185,7 +206,8 @@ async function planOutcomeRoutes({
         })).filter(item =>
           item.questionKey &&
           !answeredQuestionKeySet.has(item.questionKey) &&
-          !isDisabledYellowingFlowQuestion(item)
+          !isDisabledYellowingFlowQuestion(item) &&
+          !isDisallowedYellowingCareEnvironmentQuestion(item)
         )
       })
 

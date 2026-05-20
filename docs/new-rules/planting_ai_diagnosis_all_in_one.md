@@ -1156,23 +1156,19 @@ symptom_class + top_problem_key 双层选题
 必须使用多选项分流，并保持 option_key 与用户看到的选项同义。
 ```
 
-黄叶最小分流维度：
+纯黄叶入口最小前置维度：
 
 ```text
-yellowing_primary_clue_gate
-yellowing_care_area_gate
-yellowing_disease_trace_gate
-pest_trace_type
-yellowing_distribution_pattern
 watering_frequency_context
 light_change_context
 fertilization_growth_context
+airflow_humidity_context
 yellowing_progression_speed
 ```
 
 ##### 3.1.7 黄叶类的特别规则
 
-黄叶类必须单独走 `yellowing_mode`，不能把所有黄叶 symptom 当普通 symptom 处理。
+黄叶类必须单独走 `yellowing_mode`，不能把所有黄叶 symptom 当普通 symptom 处理。纯黄叶入口只允许先围绕浇水、光照、施肥、通风/湿度和变化速度展开，不得把叶斑、病斑、虫害、病毒花叶或斑纹问题混入黄叶首轮链路。
 
 `新叶黄/老叶黄`问题当前不进入黄叶问诊流程，也不得作为黄叶首题、默认分流题或具体 outcome 的直接前置条件。现阶段新老叶信息只允许在 outcome 建议中作为观察提示表达，不驱动黄叶问诊路径闭合。
 
@@ -1180,16 +1176,13 @@ yellowing_progression_speed
 
 黄叶类采用“一页一题”后，不再使用旧的“最多 2 轮”作为停止条件；轮次上限不得成为黄叶分流未完成时提前输出 outcome 的理由。
 
-黄叶类必须先完成分流，再进入该方向的上下文问题：
+黄叶类必须先完成真实养护/环境前置问题，再进入收敛判断：
 
-- 所有 gate 类问题必须在题干开头说明提问目的；例如黄叶题需先说明“黄叶原因较复杂，先确认最明显线索，后面少问无关问题”。
 - 问诊问题必须在表结构中持久标记 `question_role` 与 `effect_mode`，不得只靠运行时猜测类别。当前合法角色为 `gate / differential_probe / context_metric / symptom_confirmation / visual_fact_review`，合法影响方式为 `route_gate / score_adjustment / evidence_admission / context_feature / visual_fact_review`。
-- `gate` 类问题必须硬前置；同一 symptom mode 内，普通 `context_metric` 或 `score_adjustment` 问题不得排在未完成的 `gate` 前面。
-- 先问 `yellowing_primary_clue_gate`，让用户选择养护/环境变化、虫子活动线索、斑点烂斑霉层线索、只有黄叶或不确定；不得让用户直接判断真菌、细菌、虫害或缺素。
-- 若进入养护方向，先问 `yellowing_care_area_gate`，其选项必须采用短标题 + 描述承载基线信息；再按答案追问 `watering_frequency_context / light_change_context / fertilization_growth_context / yellowing_progression_speed`。其中浇水相关描述必须结合 `genus_care_profiles.watering_strategy_json.freq` 与新鲜 `weather_cache.humidity` 对属级基线做轻量修正，给出具体天数范围。
-- 若进入虫害方向，问 `pest_trace_type`，只使用“小虫、细网、黑点、发黏”等用户可观察线索。
-- 若进入病害方向，问 `yellowing_disease_trace_gate`，只使用黄晕、水渍感、粉霉层等可观察线索，不要求用户区分真菌或细菌。
-- 若只有黄叶或不确定，只能回退到 `yellowing_distribution_pattern`、养护背景、病虫害线索、病斑霉层线索或进展速度等非新老叶分流线索。
+- 纯黄叶入口不再以 `yellowing_primary_clue_gate` 或 `yellowing_care_area_gate` 作为首题；`question/start` 必须直接前置 `watering_frequency_context / light_change_context / fertilization_growth_context / airflow_humidity_context` 等真实养护/环境问题，之后才可根据证据补问 `yellowing_progression_speed`。
+- 黄叶首轮题只能围绕用户可观察、可回答的养护/环境事实；浇水相关描述必须结合 `genus_care_profiles.watering_strategy_json.freq` 与新鲜 `weather_cache.humidity` 对属级基线做轻量修正，给出具体天数范围。
+- 纯黄叶入口不得推进到 `yellowing_disease_trace_gate`、`pest_trace_type`、叶斑、病斑、斑纹、mosaic、虫害类题；只有用户主动选择其他独立症状或视觉证据明确不是纯黄叶时，才可进入对应非黄叶问题链路。
+- 若只有黄叶或不确定，只能回退到浇水、光照、施肥、通风/湿度、进展速度等养护环境线索。
 - 当前黄叶问诊不进入新叶/老叶分流。未来若经二选一 gate 或补拍视觉确认恢复该分流，它也只能作为上下文补充；若仍缺少高特异环境、病虫害或养护证据，不能直接下发具体养护/病害/虫害 outcome。
 - 在黄叶分流 gate 未满足前，即使 ranking top1 分数和 gap 达标，也不得直接输出 `low_light / sunburn / overwatering / underwatering / iron_deficiency / nitrogen_deficiency / nutrient_deficiency / root_stress` 等具体 outcome。
 - 已回答的黄叶分流等价维度必须全链路去重；例如 `watering_frequency_context` 已答后，不得再问旧静态 `watering_context`，`light_change_context` 已答后，不得再问旧静态 `light_exposure`。
@@ -17023,16 +17016,17 @@ taxonomy 对象不是普通展示数据，而是：
 
 收益驱动停止必须同时尊重用户已经给出的分支答案。候选问题出队前必须先经过路径约束过滤。
 
-#### 9.1 黄叶 gate 约束
+#### 9.1 纯黄叶养护/环境路径约束
 
-黄叶、黄斑、黄化营养相关模式必须先问 primary clue gate。
+纯黄叶、黄斑、黄化营养相关模式不得再先问 primary clue gate 或聚合型养护/环境 gate。候选问题出队前必须优先保留浇水、光照、施肥、通风/湿度、变化速度等养护/环境事实题，并过滤叶斑、病斑、斑纹、mosaic、虫害类问题。
 
 若用户已选择：
 
-- `pest_trace`：后续只能进入虫害痕迹细分，不得继续问叶龄黄化分布。
-- `disease_trace`：后续只能进入斑点、烂斑、霉粉、水渍等病害细分，不得继续问叶龄黄化分布。
-- `care_context`：后续只能进入养护维度分流，不得直接跳到虫害或病斑细分。
-- `yellowing_only` 或 `unknown`：只允许继续问分布范围、养护背景、病虫害线索、病斑霉层线索或进展速度等非新老叶泛黄化题。
+- `watering_frequency_context`：后续按浇水背景收敛或补齐其他养护/环境维度，不得跳到病虫害细分。
+- `light_change_context`：后续按光照背景收敛或补齐其他养护/环境维度，不得跳到病虫害细分。
+- `fertilization_growth_context`：后续按施肥/换盆背景收敛或补齐其他养护/环境维度，不得跳到病虫害细分。
+- `airflow_humidity_context`：后续按通风/湿度背景收敛或补问进展速度，不得跳到叶斑或虫害细分。
+- `yellowing_progression_speed`：只能作为养护/环境证据不足时的变化速度补充，不得反向打开叶龄、叶斑、病斑、斑纹、mosaic 或虫害链路。
 
 #### 9.2 孔洞 / 结构缺损约束
 

@@ -22,6 +22,10 @@ const {
   collectQueuedQuestionKeys,
   filterQuestionsByQuestionQueue
 } = require('../utils/follow-up-contract')
+const {
+  isSyntheticObservedProbeQuestionKey,
+  isSyntheticVisualCandidateQuestionKey
+} = require('../utils/synthetic-follow-up')
 const { getQueueBySessionAndRound } = require('../repositories/question-queue-repository')
 const { buildQuestionTextCandidateKeys } = require('../utils/question-text-resolver')
 const { resolveQuestionText } = require('../utils/question-text-resolver')
@@ -43,6 +47,21 @@ function readRoundFromRationale(rationale) {
 
 function resolveQuestionKey(item = {}) {
   return buildQuestionTextCandidateKeys(item)[0] || String(item?.questionKey || item?.question_key || '').trim()
+}
+
+function resolveFollowUpStorageSymptomKey(questionKey = '', targetSymptomKey = '') {
+  const normalizedQuestionKey = String(questionKey || '').trim()
+  const normalizedTargetSymptomKey = String(targetSymptomKey || '').trim()
+  if (
+    normalizedTargetSymptomKey &&
+    (
+      isSyntheticObservedProbeQuestionKey(normalizedQuestionKey) ||
+      isSyntheticVisualCandidateQuestionKey(normalizedQuestionKey)
+    )
+  ) {
+    return normalizedTargetSymptomKey
+  }
+  return normalizedQuestionKey
 }
 
 function buildAnswerRevisionEvents({
@@ -173,6 +192,7 @@ async function appendFollowUpQuestions(
       )
       return {
         questionOrder: Number(index + 1),
+        storageSymptomKey: resolveFollowUpStorageSymptomKey(questionKey, targetSymptomKey),
         questionKey,
         questionText: resolveQuestionText(item, questionMeta),
         rationale: JSON.stringify({

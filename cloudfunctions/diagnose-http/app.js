@@ -7,17 +7,6 @@ const {
 } = require('/opt/utils/http')
 const { resolveSchemaEnv, runWithSchemaEnv } = require('./db/schema-resolver')
 const { main } = require('./app/http-router')
-const { runStartDiagnosis } = require('./app/diagnosis-start-runner')
-const { runAnswerDiagnosis } = require('./app/diagnosis-answer-runner')
-const { buildFrontendDiagnosisResponse } = require('./app/frontend-response')
-const {
-  triggerStaticRepositoryCachePreloadForSchemaEnvs
-} = require('./app/static-cache-preloader')
-
-triggerStaticRepositoryCachePreloadForSchemaEnvs(['production', 'development'], {
-  scope: 'diagnose-http-startup',
-  source: 'app_module'
-})
 
 module.exports.main = (event, context) => {
   const request = getHttpRequestData(event, context)
@@ -28,6 +17,9 @@ module.exports.main = (event, context) => {
   )
 }
 
-module.exports.runStartDiagnosis = runStartDiagnosis
-module.exports.runAnswerDiagnosis = runAnswerDiagnosis
-module.exports.buildFrontendDiagnosisResponse = buildFrontendDiagnosisResponse
+module.exports.runStartDiagnosis = (...args) =>
+  require('./app/diagnosis-start-runner').runStartDiagnosis(...args)
+module.exports.runAnswerDiagnosis = (...args) =>
+  require('./app/diagnosis-answer-runner').runAnswerDiagnosis(...args)
+module.exports.buildFrontendDiagnosisResponse = (...args) =>
+  require('./app/frontend-response').buildFrontendDiagnosisResponse(...args)

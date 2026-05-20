@@ -236,7 +236,8 @@ function buildRouteEvidenceContext({
       dedupeKeys([
         symptomClassRuntime?.currentClassKey,
         symptomClassRuntime?.primaryClass?.classKey,
-        symptomClassRuntime?.classGateDecision?.currentClassKey
+        symptomClassRuntime?.classGateDecision?.currentClassKey,
+        ...safeObservedEvidenceSet.map(item => item?.symptomClassKey || item?.symptom_class_key || '')
       ])
     ),
     answerEffects: routeEligibleAnswerEffects,

@@ -1,11 +1,15 @@
 'use strict'
 
-const { runDiagnosisRound } = require('../domain/diagnosis-engine')
+const {
+  resolvePlantContext
+} = require('../repositories/prior-repository')
+const {
+  buildManualQuestionStartRoundResult,
+  _test: manualQuestionStartFastPathTest
+} = require('./manual-symptom-question-start-fast-path')
 const { buildSessionId } = require('../services/session-service')
 const { resolveRequestClientContext } = require('./request-normalizers')
-const { persistRoundResult } = require('./visual-runtime')
 const { createReviewTimingLogger } = require('../repositories/diagnosis-review/review-performance')
-const { triggerStaticRepositoryCachePreload } = require('./static-cache-preloader')
 
 const MANUAL_SYMPTOM_MODE_OPTIONS = [
   { classKey: 'yellowing_mode', classNameCn: '黄叶模式', symptomKey: 'uniform_yellowing', symptomCn: '整叶黄化' },
@@ -107,6 +111,31 @@ function buildManualObservedEvidenceSet(option = {}) {
   ]
 }
 
+async function persistQuestionStartRoundResult({
+  sessionId,
+  openid,
+  plantContext,
+  response,
+  round,
+  image,
+  description,
+  skipPersistence = false,
+  clientContext = null
+}) {
+  if (skipPersistence) {return}
+  const { persistRoundRuntime } = require('../services/round-runtime-persistence-service')
+  await persistRoundRuntime({
+    sessionId,
+    openid,
+    plantContext,
+    response,
+    round,
+    image,
+    description,
+    clientContext
+  })
+}
+
 async function runQuestionStartDiagnosis({
   payload,
   openid,
@@ -143,38 +172,61 @@ async function runQuestionStartDiagnosis({
     hasPlantId: Boolean(plantId),
     hasUserPlantId: Boolean(userPlantId)
   })
-  triggerStaticRepositoryCachePreload({
-    scope: 'diagnosis-question-start',
-    sessionId,
-    openid,
-    source: 'question_start_runner'
-  })
-  timing.mark('static-cache-preload-triggered')
   const observedSymptoms = buildManualObservedSymptoms(option)
   const observedEvidenceSet = buildManualObservedEvidenceSet(option)
 
-  const roundResult = await runDiagnosisRound({
+  const plantContext = await resolvePlantContext({
     openid,
     plantId,
     userPlantId,
-    observedSymptoms,
-    observedEvidenceSet,
-    visualAggregateResult: null,
-    answers: [],
-    askedQuestionKeys: [],
-    unknownCountByGroup: {},
-    symptomClassState: null,
-    preferCatalogPlantId: Boolean(plantCatalogId && !userPlantId),
-    round: 1,
-    stage: 'preliminary',
-    sessionId,
-    perfLogger: timing
+    preferCatalogPlantId: Boolean(plantCatalogId && !userPlantId)
   })
+  timing.mark('plant-context-ready')
+
+  let roundResult = null
+  try {
+    roundResult = await buildManualQuestionStartRoundResult({
+      sessionId,
+      plantContext,
+      observedSymptoms,
+      observedEvidenceSet,
+      round: 1
+    })
+  } catch (error) {
+    console.warn('diagnosis-question-start manual fast path failed, fallback to full round:', {
+      sessionId,
+      message: String(error?.message || error || '')
+    })
+    timing.mark('manual-fast-path-error-fallback')
+  }
+  if (!roundResult) {
+    timing.mark('manual-fast-path-empty-fallback')
+    const { runDiagnosisRound } = require('../domain/diagnosis-engine')
+    roundResult = await runDiagnosisRound({
+      openid,
+      plantId,
+      userPlantId,
+      observedSymptoms,
+      observedEvidenceSet,
+      visualAggregateResult: null,
+      answers: [],
+      askedQuestionKeys: [],
+      unknownCountByGroup: {},
+      symptomClassState: null,
+      preferCatalogPlantId: Boolean(plantCatalogId && !userPlantId),
+      round: 1,
+      stage: 'preliminary',
+      sessionId,
+      perfLogger: timing
+    })
+  } else {
+    timing.mark('manual-fast-path-ready')
+  }
   timing.mark('round-result-ready', {
     followUpCount: Array.isArray(roundResult?.followUps) ? roundResult.followUps.length : 0
   })
 
-  await persistRoundResult({
+  await persistQuestionStartRoundResult({
     sessionId,
     openid,
     plantContext: roundResult.plantContext,
@@ -211,5 +263,6 @@ async function runQuestionStartDiagnosis({
 module.exports = {
   MANUAL_SYMPTOM_MODE_OPTIONS,
   resolveManualSymptomMode,
-  runQuestionStartDiagnosis
+  runQuestionStartDiagnosis,
+  _test: manualQuestionStartFastPathTest
 }

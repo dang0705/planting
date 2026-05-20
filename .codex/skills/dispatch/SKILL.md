@@ -262,6 +262,8 @@ description: "调度决策 skill：按 AGENTS.md 判断任务是否进入 subage
 
 `docs_keeper` 被派发后必须交付文档维护产物。若 Dispatch Plan 明确要求文档同步，或上游 agent 标记需要文档同步，`docs_keeper` 不得只输出“建议更新”；若不实际更新，必须说明权限、范围、证据或裁决原因。
 
+`docs_keeper` 的默认职责不是创建 handoff 手册。非简单实现的 `docs/ai-runs/` handoff 由 main agent 或实现 agent 按 handoff 闭环创建；只有 Dispatch Plan 明确把 handoff 文档本身列为文档维护目标时，才允许派给 `docs_keeper`，并必须和规则/代码逻辑/All-in-One 同步任务分开说明。
+
 文档维护产物必须至少包含：
 
 1. 已读取文档。

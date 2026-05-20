@@ -142,6 +142,19 @@ async function getRefactorArtifacts({ forceRefresh = false } = {}) {
   return artifacts
 }
 
+function getCachedRefactorArtifacts({ allowExpired = false } = {}) {
+  const schemaName = resolveSchema()
+  const cache = getSchemaCache(schemaName)
+  if (!cache.artifacts) {
+    return null
+  }
+  if (!allowExpired && cache.expiresAt <= Date.now()) {
+    return null
+  }
+  return cache.artifacts
+}
+
 module.exports = {
-  getRefactorArtifacts
+  getRefactorArtifacts,
+  getCachedRefactorArtifacts
 }

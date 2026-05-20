@@ -40,8 +40,9 @@ developer_instructions = """
 - 本 agent 的期望运行配置为：`role=code_explorer`、`profile=code_explorer`、`model=gpt-5.3-codex-spark`、`model_reasoning_effort=medium`、`sandbox_mode=read-only`。
 - 每次由 main agent 派发、线程恢复、手动切入、旧线程复用或长任务中断后继续执行时，必须先核对当前 turn 的实际运行态配置。
 - handoff / 输出摘要中必须记录：`role`、`agent_id/thread_id`、`expected_model`、`expected_reasoning`、`expected_profile`、`observed_model`、`observed_reasoning`、`observed_profile`、`config_match`。
-- 如果 `observed_model`、`observed_reasoning`、`observed_profile` 与期望配置不一致，不得继续按 code_explorer 身份执行；必须标记为“模型能力/成本路由不匹配”，请求 main agent 废弃当前线程并重新派发新的 code_explorer。
-- 发现当前线程已漂移到主会话 profile、高阶模型或更高 reasoning effort 时，不得自行降级、不得继续复用、不得把该线程结果视为低成本探索产物。
+- 当前 runtime 未暴露的字段必须记录为“不可观测”，不可观测字段不参与 `config_match` 判定。
+- 只有可观测字段明确显示 `model`、`reasoning`、`profile` 与期望配置不一致，或 spawn 明确返回角色不可用时，才允许标记 `config_match=false` 并请求 main agent 废弃当前线程。
+- 发现当前线程已可证实漂移到主会话 profile、高阶模型或更高 reasoning effort 时，不得自行降级、不得继续复用、不得把该线程结果视为低成本探索产物。
 - AGENTS.md / Dispatch Plan 只能约束派发与记录，不得假设 Codex runtime 在恢复旧 subagent 线程时一定重新套用本文件配置。
 
 【仅在以下情况读取 AGENTS.md】

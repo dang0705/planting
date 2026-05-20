@@ -1,20 +1,19 @@
 'use strict'
 
 const { jsonResponse, notFound, methodNotAllowed, getHttpRequestData } = require('/opt/utils/http')
-const { getRefactorArtifacts } = require('../services/bootstrap-report')
 const { debugLog } = require('../utils/common')
-const {
-  handleDiagnosisStart,
-  handleDiagnosisQuestionStart,
-  handleDiagnosisAnswer,
-  handleDiagnosisResult,
-  handleDiagnosisHistory,
-  handleDiagnosisFeedback
-} = require('../handlers/diagnosis-handlers')
 
+let diagnosisHandlers = null
 let reviewHandlers = null
 let outOfPoolHandlers = null
 let legacyHandlers = null
+
+function getDiagnosisHandlers() {
+  if (!diagnosisHandlers) {
+    diagnosisHandlers = require('../handlers/diagnosis-handlers')
+  }
+  return diagnosisHandlers
+}
 
 function getReviewHandlers() {
   if (!reviewHandlers) {
@@ -76,6 +75,7 @@ async function main(event, context) {
 
   try {
     if (path.includes('/health')) {
+      const { getRefactorArtifacts } = require('../services/bootstrap-report')
       const refactorArtifacts = await getRefactorArtifacts()
       return jsonResponse(200, {
         code: 200,
@@ -106,26 +106,31 @@ async function main(event, context) {
       if (requestWantsDiagnosisStartSse(request, payload)) {
         return handleDiagnosisStartStream(event, context, request, payload)
       }
+      const { handleDiagnosisStart } = getDiagnosisHandlers()
       return handleDiagnosisStart(request, context, payload)
     }
 
     if (path.includes('/diagnosis/question/start')) {
       if (method !== 'POST') {return methodNotAllowed(method)}
+      const { handleDiagnosisQuestionStart } = getDiagnosisHandlers()
       return handleDiagnosisQuestionStart(request, context, payload)
     }
 
     if (path.includes('/diagnosis/answer')) {
       if (method !== 'POST') {return methodNotAllowed(method)}
+      const { handleDiagnosisAnswer } = getDiagnosisHandlers()
       return handleDiagnosisAnswer(request, context, payload)
     }
 
     if (path.includes('/diagnosis/result')) {
       if (method !== 'GET') {return methodNotAllowed(method)}
+      const { handleDiagnosisResult } = getDiagnosisHandlers()
       return handleDiagnosisResult(request, context, request.query)
     }
 
     if (path.includes('/diagnosis/history')) {
       if (method !== 'GET') {return methodNotAllowed(method)}
+      const { handleDiagnosisHistory } = getDiagnosisHandlers()
       return handleDiagnosisHistory(request, context, request.query)
     }
 
@@ -168,6 +173,7 @@ async function main(event, context) {
         const { handleDiagnosisReviewImportBatch } = getReviewHandlers()
         return handleDiagnosisReviewImportBatch(request, context, payload)
       }
+      const { handleDiagnosisFeedback } = getDiagnosisHandlers()
       return handleDiagnosisFeedback(request, context, payload)
     }
 

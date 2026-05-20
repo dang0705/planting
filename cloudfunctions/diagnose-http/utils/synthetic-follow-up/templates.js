@@ -68,7 +68,7 @@ function buildTemplateVariables(item = {}, _context = {}) {
     watering_too_rare: CARE_CONTEXT_OPTION_COPY.wateringFrequency.often_dry,
     light_reference: '光照：按最近摆放位置选择更清晰的光照状态',
     fertilization_reference: '施肥和换盆：按近期补肥、重肥或换盆换土情况选择',
-    humidity_reference: '通风和空气湿度：以窗户为参照，选择靠近或远离窗户的变化'
+    humidity_reference: '通风和空气湿度：按偏闷偏潮、偏干直吹或稳定状态选择'
   }
 }
 

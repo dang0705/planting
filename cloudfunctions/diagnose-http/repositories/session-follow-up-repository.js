@@ -38,7 +38,7 @@ async function insertFollowUpQuestionsRows(sessionId, list = []) {
   const params = { diagnosisId: sessionId }
   list.forEach((item, index) => {
     params[`questionOrder_${index}`] = item.questionOrder
-    params[`questionKey_${index}`] = item.questionKey
+    params[`questionKey_${index}`] = item.storageSymptomKey || item.questionKey
     params[`questionText_${index}`] = item.questionText
     params[`rationale_${index}`] = item.rationale
   })

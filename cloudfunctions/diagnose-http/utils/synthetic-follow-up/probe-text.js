@@ -20,6 +20,12 @@ function buildOrthogonalProbeText(item = {}, targetDimension = '', _context = {}
         helpText: '这里只选最明显的一类线索；如果没有其他异常或看不准，可以选“只是发黄”或“不确定”。',
         routingScope: QUESTION_ROUTING_SCOPES.DIFFERENTIAL_PROBE
       }
+    case QUESTION_TARGET_DIMENSIONS.YELLOWING_CARE_AREA_GATE:
+      return {
+        questionText: '最近 2 周，哪项养护或环境变化最接近这盆植物？',
+        helpText: '先按浇水、光照、施肥、通风/湿度这几类养护环境线索分流，避免把黄叶误带入叶斑或斑纹问题。',
+        routingScope: QUESTION_ROUTING_SCOPES.CONTEXT_PROBE
+      }
     case QUESTION_TARGET_DIMENSIONS.YELLOWING_DISEASE_TRACE_GATE:
       return {
         questionText: '黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？',
@@ -54,6 +60,12 @@ function buildOrthogonalProbeText(item = {}, targetDimension = '', _context = {}
       return {
         questionText: '黄叶和营养有关时，既可能是长期没补肥，也可能是近期重肥或换盆刺激。最近 1 个月，施肥情况更接近哪一种？',
         helpText: '用施肥次数和近期换盆/重肥记录营养背景，不直接把黄叶等同于缺肥。',
+        routingScope: QUESTION_ROUTING_SCOPES.CONTEXT_PROBE
+      }
+    case QUESTION_TARGET_DIMENSIONS.AIRFLOW_HUMIDITY_CONTEXT:
+      return {
+        questionText: '黄叶和环境有关时，通风、湿度和直吹风都会影响叶片状态。最近 1-2 周，这盆植物周围环境更接近哪一种？',
+        helpText: '只按摆放环境选择，不需要判断对错；这题用于补齐通风和空气湿度背景。',
         routingScope: QUESTION_ROUTING_SCOPES.CONTEXT_PROBE
       }
     case QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED:

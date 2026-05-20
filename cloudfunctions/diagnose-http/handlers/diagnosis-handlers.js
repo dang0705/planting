@@ -7,12 +7,27 @@ const {
 } = require('../presenters/diagnosis-round-presenter')
 const { listDiagnosisHistory, getResultById, saveDiagnosisFeedback } = require('../services/session-service')
 const { resolveRequestPrincipal, assertAuthenticatedUser, runWithQuotaGuard } = require('../services/request-guard')
-const { ensureRefactorReady } = require('../app/refactor-readiness')
-const { runStartDiagnosis } = require('../app/diagnosis-start-runner')
-const { runQuestionStartDiagnosis } = require('../app/diagnosis-question-start-runner')
-const { runAnswerDiagnosis } = require('../app/diagnosis-answer-runner')
 const { withQuestionTextFallback } = require('../app/request-normalizers')
-const { buildFrontendDiagnosisResponse } = require('../app/frontend-response')
+
+function getRefactorReadiness() {
+  return require('../app/refactor-readiness')
+}
+
+function getStartRunner() {
+  return require('../app/diagnosis-start-runner')
+}
+
+function getQuestionStartRunner() {
+  return require('../app/diagnosis-question-start-runner')
+}
+
+function getAnswerRunner() {
+  return require('../app/diagnosis-answer-runner')
+}
+
+function buildFrontendResponse(payload) {
+  return require('../app/frontend-response').buildFrontendDiagnosisResponse(payload)
+}
 
 async function handleDiagnosisStart(request, context, payload) {
   payload = payload || {}
@@ -20,12 +35,12 @@ async function handleDiagnosisStart(request, context, payload) {
 
   try {
     assertAuthenticatedUser({ ...principal, message: '请先登录' })
-    await ensureRefactorReady()
+    await getRefactorReadiness().ensureRefactorReady()
     const executed = await runWithQuotaGuard({
       request,
       openid: principal.userInfo?.openid || '',
       skipAuth: principal.skipAuth,
-      task: async () => runStartDiagnosis({
+      task: async () => getStartRunner().runStartDiagnosis({
         payload,
         openid: principal.userInfo?.openid || '',
         skipPersistence: principal.skipPersistence
@@ -38,7 +53,7 @@ async function handleDiagnosisStart(request, context, payload) {
     return jsonResponse(200, {
       code: 200,
       message: '诊断开始成功',
-      data: buildFrontendDiagnosisResponse(hydratedPublicResponse)
+      data: buildFrontendResponse(hydratedPublicResponse)
     })
   } catch (error) {
     return jsonResponse(error.statusCode || 500, {
@@ -55,12 +70,17 @@ async function handleDiagnosisQuestionStart(request, context, payload) {
 
   try {
     assertAuthenticatedUser({ ...principal, message: '请先登录' })
-    await ensureRefactorReady()
+    await getRefactorReadiness().ensureRefactorReady({
+      strict: false,
+      allowStale: true,
+      refreshTimeoutMs: 0,
+      source: 'diagnosis-question-start'
+    })
     const executed = await runWithQuotaGuard({
       request,
       openid: principal.userInfo?.openid || '',
       skipAuth: principal.skipAuth,
-      task: async () => runQuestionStartDiagnosis({
+      task: async () => getQuestionStartRunner().runQuestionStartDiagnosis({
         payload,
         openid: principal.userInfo?.openid || '',
         skipPersistence: principal.skipPersistence
@@ -73,7 +93,7 @@ async function handleDiagnosisQuestionStart(request, context, payload) {
     return jsonResponse(200, {
       code: 200,
       message: '问诊初始化成功',
-      data: buildFrontendDiagnosisResponse(hydratedPublicResponse)
+      data: buildFrontendResponse(hydratedPublicResponse)
     })
   } catch (error) {
     return jsonResponse(error.statusCode || 500, {
@@ -90,15 +110,15 @@ async function handleDiagnosisAnswer(request, context, payload) {
 
   try {
     assertAuthenticatedUser({ ...principal, message: '请先登录' })
-    await ensureRefactorReady()
-    const executed = await runAnswerDiagnosis({
+    await getRefactorReadiness().ensureRefactorReady()
+    const executed = await getAnswerRunner().runAnswerDiagnosis({
       payload,
       openid: principal.userInfo?.openid || '',
       skipPersistence: principal.skipPersistence
     })
     const hydratedResponse = await withQuestionTextFallback(executed.response)
     const publicResponse = presentDiagnosisAnswerResponse(hydratedResponse)
-    const data = buildFrontendDiagnosisResponse(publicResponse)
+    const data = buildFrontendResponse(publicResponse)
     if (executed.answerRevision) {
       data.answerRevision = executed.answerRevision
     }

@@ -224,6 +224,22 @@ module.exports = {
           { problemKey: 'nutrient_deficiency', effectValue: -0.08 }
         ]
       },
+      [QUESTION_TARGET_DIMENSIONS.AIRFLOW_HUMIDITY_CONTEXT]: {
+        stagnant_humid: [
+          { problemKey: 'root_stress', effectValue: 0.12 },
+          { problemKey: 'overwatering', effectValue: 0.08 },
+          { problemKey: 'root_rot', effectValue: 0.06 }
+        ],
+        dry_or_drafty: [
+          { problemKey: 'underwatering', effectValue: 0.1 },
+          { problemKey: 'temperature_stress', effectValue: 0.08 },
+          { problemKey: 'root_rot', effectValue: -0.06 }
+        ],
+        stable_airflow: [
+          { problemKey: 'root_stress', effectValue: -0.06 },
+          { problemKey: 'temperature_stress', effectValue: -0.06 }
+        ]
+      },
       [QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED]: {
         rapid_spreading: [
           { problemKey: 'root_stress', effectValue: 0.16 },

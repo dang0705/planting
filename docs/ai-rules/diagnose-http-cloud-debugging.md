@@ -98,6 +98,28 @@ docs/ai-rules/diagnose-http-cloud-debugging.md
 7. 函数 `modTime` / 发布版本
 8. 用户可见验收字段，例如 `visibleOutcomes`、`primaryOutcome`、`secondaryOutcomes`、页面最终展示来源
 
+### 4.3 `question/start` 首屏性能验收边界
+
+`/diagnosis/question/start` 属于 latency-sensitive 首屏路径。排查或改造该路径时，必须优先区分业务 handler 耗时、CloudBase 网关/认证耗时和 SCF 平台 Init coldstart，不能只用单一客户端耗时或单条函数日志下结论。
+
+实现约束：
+
+1. `question/start` 不得在顶层加载完整 `diagnosis-engine`、视觉链路、LLM 或其他重依赖；router、handler、runner 应保持 lazy load。
+2. 不得通过 startup preload 或 post-response preload 阻塞 `question/start` 首屏返回；预热逻辑不能成为请求关键路径。
+3. `start/answer` 主链仍必须保持严格 readiness，避免在依赖未就绪时进入真实诊断推进。
+4. `question/start` 可使用非严格 readiness，但只能接受 cached/deferred readiness；不能因为非严格 readiness 绕过后续 follow-up/final/output eligibility guard。
+5. `fast path`、`warm path`、`early return` 只允许缩短首题生成链路，不得改变 route、gate、outcome、final 资格判断。
+
+CloudBase 配置约束：
+
+1. HTTP 函数应开启请求多并发，例如 `InstanceConcurrencyConfig={DynamicEnabled:'FALSE', MaxConcurrency:5, Type:'Request-Based'}`，用于降低并发冷启动放大。
+2. 关键版本应配合版本预置并发（Provisioned Concurrency），并记录 allocated、available、status 与 traffic route。
+3. 验收必须同时记录 route 百分比、函数版本、PC 状态、客户端耗时、函数日志 `Report Duration`；如出现 `Init Report` / `Coldstart`，需单独标记为平台 Init coldstart。
+4. 文档结论必须明确区分：
+   - 业务 handler / user-visible path：用户可见首题链路与函数业务代码耗时。
+   - 平台 Init coldstart：SCF 实例初始化耗时，通常需要 PC + 请求多并发缓解或屏蔽。
+   - 客户端认证 / 网关耗时：匿名登录、Bearer、CloudBase 网关与网络链路耗时。
+
 ---
 
 ## 5. 索引目录

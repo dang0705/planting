@@ -50,7 +50,11 @@ async function replaceObservedEvidenceSetRows({ sessionId, openid, list = [] } =
 
   if (!list.length) {return}
 
-  const values = list.map((item, index) => `(
+  const values = list.map((item, index) => {
+    const lastUpdatedAtValue = item.lastUpdatedAt
+      ? `{{lastUpdatedAt_${index}}}`
+      : 'CURRENT_TIMESTAMP'
+    return `(
     {{observedEvidenceSetId_${index}}},
     {{openid}},
     {{sessionId}},
@@ -72,13 +76,14 @@ async function replaceObservedEvidenceSetRows({ sessionId, openid, list = [] } =
     {{conflictLevel_${index}}},
     {{conflictResolved_${index}}},
     {{firstSeenStage_${index}}},
-    COALESCE({{lastUpdatedAt_${index}}}, CURRENT_TIMESTAMP),
+    ${lastUpdatedAtValue},
     {{enteredRuntime_${index}}},
     {{isKeyEvidence_${index}}},
     {{enteredExplanation_${index}}},
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
-  )`)
+  )`
+  })
 
   const params = {
     openid: String(openid || ''),

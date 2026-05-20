@@ -23,6 +23,12 @@ const CARE_CONTEXT_OPTION_COPY = {
     normal_light_fertilizer: '近 1 个月 1-2 次（偏稳）',
     recent_heavy_fertilizer_or_repot: '近 1 个月 2 次以上（重肥/换盆换土）',
     unknown: '说不清/没留意'
+  },
+  airflowHumidity: {
+    stagnant_humid: '通风弱，环境偏闷或偏潮',
+    dry_or_drafty: '空气偏干，或风口/空调直吹',
+    stable_airflow: '通风和湿度基本稳定',
+    unknown: '说不清/没留意'
   }
 }
 

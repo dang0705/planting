@@ -32,6 +32,29 @@ function buildSyntheticObservedProbeOptionTexts(item = {}, targetDimension = '',
           description: '如果看不出最明显的方向，选这个，系统会继续从黄叶分布、养护背景和变化速度排查。'
         }
       }
+    case QUESTION_TARGET_DIMENSIONS.YELLOWING_CARE_AREA_GATE:
+      return {
+        watering_area: {
+          text: '浇水或盆土干湿',
+          description: '最近浇水频率、盆土干湿或排水状态变化最明显。'
+        },
+        light_area: {
+          text: '光照变化',
+          description: '最近直射、遮阴、摆放位置或离窗距离变化最明显。'
+        },
+        fertilization_area: {
+          text: '施肥或换盆',
+          description: '最近长期没补肥、施肥偏多，或刚换盆换土。'
+        },
+        airflow_humidity_area: {
+          text: '通风或空气湿度',
+          description: '最近环境更闷、更潮、更干燥，或空气流动变化较大。'
+        },
+        unknown: {
+          text: '说不清 / 没留意',
+          description: '暂时看不出哪项变化最明显，继续按养护环境排查。'
+        }
+      }
     case QUESTION_TARGET_DIMENSIONS.YELLOWING_DISEASE_TRACE_GATE:
       return {
         halo_spots: '有褐色或黑色斑点，周围还有一圈发黄',
@@ -66,6 +89,10 @@ function buildSyntheticObservedProbeOptionTexts(item = {}, targetDimension = '',
     case QUESTION_TARGET_DIMENSIONS.FERTILIZATION_GROWTH_CONTEXT:
       return {
         ...CARE_CONTEXT_OPTION_COPY.fertilizationGrowth
+      }
+    case QUESTION_TARGET_DIMENSIONS.AIRFLOW_HUMIDITY_CONTEXT:
+      return {
+        ...CARE_CONTEXT_OPTION_COPY.airflowHumidity
       }
     case QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED:
       return {
