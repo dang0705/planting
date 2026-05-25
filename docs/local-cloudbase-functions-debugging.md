@@ -87,7 +87,13 @@ npm run dev:functions
 npm run dev:mp-weixin:local-functions
 ```
 
-该脚本会先请求 `VITE_API_BASE_URL/__local_functions__/health`。如果端口被其他项目占用，或本地函数 gateway 未启动，会直接失败并提示检查端口；不要忽略这一步，否则微信开发者工具里会看到所有本地接口 404。
+该脚本会先请求 `VITE_API_BASE_URL/__local_functions__/health`，并默认要求 gateway 已启动完整 HTTP 云函数集：
+
+```text
+diagnose-http, plant-catalog-http, plant-user-http, identify-http, diagnosis-history-http, auth-user-http, weather-http, storage-http
+```
+
+如果端口被其他项目占用、本地函数 gateway 未启动，或只运行了 `npm run dev:functions:diagnose` 这类单函数模式，小程序构建会直接失败并提示缺少哪些函数；不要忽略这一步，否则微信开发者工具里会看到未启动函数对应接口 404。
 
 该脚本会设置：
 
