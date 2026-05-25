@@ -31,7 +31,7 @@ npm run dev:functions
 默认 gateway：
 
 ```text
-http://127.0.0.1:3000
+http://127.0.0.1:3010
 ```
 
 gateway 会把以下路径转发到对应本地函数：
@@ -60,10 +60,10 @@ weather-http=9006
 storage-http=9007
 ```
 
-如 3000 被占用：
+如 3010 被占用：
 
 ```bash
-CLOUDBASE_LOCAL_FUNCTIONS_PORT=3010 npm run dev:functions
+CLOUDBASE_LOCAL_FUNCTIONS_PORT=3011 npm run dev:functions
 ```
 
 只启动指定函数时可使用：
@@ -87,11 +87,13 @@ npm run dev:functions
 npm run dev:mp-weixin:local-functions
 ```
 
+该脚本会先请求 `VITE_API_BASE_URL/__local_functions__/health`。如果端口被其他项目占用，或本地函数 gateway 未启动，会直接失败并提示检查端口；不要忽略这一步，否则微信开发者工具里会看到所有本地接口 404。
+
 该脚本会设置：
 
 ```text
 VITE_APP_ENV=development
-VITE_API_BASE_URL=http://127.0.0.1:3000
+VITE_API_BASE_URL=http://127.0.0.1:3010
 VITE_DEV_OPENID=dev_terminal_mp_local
 ```
 
@@ -113,6 +115,13 @@ npm run dev:mp-weixin:local-functions:lan
 
 ```bash
 CLOUDBASE_LOCAL_FUNCTIONS_HOST_IP=192.168.1.10 npm run dev:mp-weixin:local-functions:lan
+```
+
+如果函数 gateway 使用了非默认端口，前端也必须使用同一个端口：
+
+```bash
+CLOUDBASE_LOCAL_FUNCTIONS_PORT=3011 npm run dev:functions
+CLOUDBASE_LOCAL_FUNCTIONS_PORT=3011 npm run dev:mp-weixin:local-functions
 ```
 
 真机调试需要手机和电脑在同一局域网，并确认 macOS 防火墙允许 Node.js 入站连接。正式版/体验版不应使用本地 HTTP 私网地址。
@@ -141,13 +150,13 @@ npm run dev:mp-weixin:cloud-dev
 本地函数 gateway：
 
 ```bash
-curl http://127.0.0.1:3000/__local_functions__/health
-curl http://127.0.0.1:3000/diagnose-http/health
+curl http://127.0.0.1:3010/__local_functions__/health
+curl http://127.0.0.1:3010/diagnose-http/health
 ```
 
 小程序验证重点：
 
-- Network 请求 URL 应为 `http://127.0.0.1:3000/<functionName>/...` 或 `http://<LAN_IP>:3000/<functionName>/...`。
+- Network 请求 URL 应为 `http://127.0.0.1:3010/<functionName>/...` 或 `http://<LAN_IP>:3010/<functionName>/...`。
 - 请求头应包含 `x-app-env=development`、`x-env=development` 和开发 openid。
 - 本地模式不应依赖 CloudBase gateway token。
 - 修改本地 `cloudfunctions` 后不部署 CloudBase，保存后重新请求应看到本地代码变化。

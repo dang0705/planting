@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const projectRoot = path.resolve(__dirname, '..', '..')
-const DEFAULT_GATEWAY_PORT = 3000
+const DEFAULT_GATEWAY_PORT = 3010
 const DEFAULT_CLOUDBASE_ENV_ID = 'cloud1-2grufevs395a9d5e'
 const DEFAULT_SQL_DATABASE = 'cloud1_dev'
 

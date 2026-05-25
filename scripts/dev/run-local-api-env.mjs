@@ -3,7 +3,7 @@
 import { spawn } from 'node:child_process'
 import os from 'node:os'
 
-const DEFAULT_PORT = 3000
+const DEFAULT_PORT = 3010
 const DEFAULT_OPENID = 'dev_terminal_mp_local'
 
 function getFirstLanAddress() {
@@ -20,7 +20,8 @@ function parseArgs(argv = []) {
     mode: 'loopback',
     port: Number(process.env.CLOUDBASE_LOCAL_FUNCTIONS_PORT || DEFAULT_PORT),
     baseUrl: process.env.VITE_API_BASE_URL || '',
-    openid: process.env.VITE_DEV_OPENID || DEFAULT_OPENID
+    openid: process.env.VITE_DEV_OPENID || DEFAULT_OPENID,
+    skipHealthCheck: false
   }
 
   optionArgs.forEach(arg => {
@@ -37,6 +38,9 @@ function parseArgs(argv = []) {
     }
     if (key === '--openid' && value) {
       options.openid = value
+    }
+    if (key === '--skip-health-check') {
+      options.skipHealthCheck = true
     }
   })
 
@@ -59,6 +63,43 @@ function resolveApiBaseUrl(options = {}) {
   return `http://127.0.0.1:${options.port}`
 }
 
+async function assertLocalFunctionsGatewayReady(apiBaseUrl = '') {
+  const healthUrl = `${String(apiBaseUrl || '').replace(/\/+$/, '')}/__local_functions__/health`
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 3000)
+
+  try {
+    const response = await fetch(healthUrl, { signal: controller.signal })
+    const bodyText = await response.text()
+    let body = null
+    try {
+      body = JSON.parse(bodyText)
+    } catch {
+      body = null
+    }
+
+    if (!response.ok || body?.data?.status !== 'ok') {
+      const poweredBy = response.headers.get('x-powered-by') || response.headers.get('server') || ''
+      throw new Error(
+        `本地 CloudBase 函数 gateway 未就绪: ${response.status} ${response.statusText}\n` +
+        `检查地址: ${healthUrl}\n` +
+        `${poweredBy ? `当前端口响应服务: ${poweredBy}\n` : ''}` +
+        '请先运行 `npm run dev:functions`，或让 `CLOUDBASE_LOCAL_FUNCTIONS_PORT` 与函数 gateway 端口保持一致。'
+      )
+    }
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      throw new Error(
+        `本地 CloudBase 函数 gateway 健康检查超时: ${healthUrl}\n` +
+        '请先运行 `npm run dev:functions`，或检查端口是否被其他服务占用。'
+      )
+    }
+    throw error
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
 async function main() {
   const { options, command } = parseArgs(process.argv.slice(2))
   if (!command.length) {
@@ -67,6 +108,9 @@ async function main() {
 
   const apiBaseUrl = resolveApiBaseUrl(options)
   process.stdout.write(`VITE_API_BASE_URL=${apiBaseUrl}\n`)
+  if (!options.skipHealthCheck) {
+    await assertLocalFunctionsGatewayReady(apiBaseUrl)
+  }
 
   const child = spawn(command[0], command.slice(1), {
     env: {
