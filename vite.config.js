@@ -13,6 +13,8 @@ const isH5 = process.env.UNI_PLATFORM === 'h5'
 const isApp = process.env.UNI_PLATFORM === 'app'
 const WeappTailwindcssDisabled = isH5 || isApp
 const cloudbaseEnvId = process.env.VITE_CLOUDBASE_ENV_ID || 'cloud1-2grufevs395a9d5e'
+const explicitApiBaseUrl = String(process.env.VITE_API_BASE_URL || '').trim().replace(/\/+$/, '')
+const viteAppEnv = String(process.env.VITE_APP_ENV || '').trim().toLowerCase()
 const cloudbaseFunctionProxyPrefix = '/__tcb_functions__'
 const cloudbaseFunctionProxyTarget = `https://${cloudbaseEnvId}.api.tcloudbasegateway.com`
 const localDiagnosisReviewPrefix = '/__local_diagnosis_review__'
@@ -25,6 +27,48 @@ if (publicDnsResolver) {
 const cloudbaseDnsCache = new Map()
 let diagnosisReviewAuditStore = null
 let diagnosisReviewAuditPersistQueue = Promise.resolve()
+
+function isPrivateLocalHostname(hostname = '') {
+  const normalized = String(hostname || '').trim().toLowerCase()
+  if (!normalized) {return false}
+  if (['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]'].includes(normalized)) {
+    return true
+  }
+  if (normalized.startsWith('192.168.')) {return true}
+  if (normalized.startsWith('10.')) {return true}
+
+  const match = normalized.match(/^172\.(\d+)\./)
+  if (!match) {return false}
+  const second = Number(match[1])
+  return second >= 16 && second <= 31
+}
+
+function getApiBaseUrlHostname(value = '') {
+  const normalized = String(value || '').trim().replace(/\/+$/, '')
+  if (!normalized || normalized.startsWith('/')) {return ''}
+
+  const withoutProtocol = normalized.replace(/^[a-z][a-z\d+.-]*:\/\//i, '')
+  const withoutPath = withoutProtocol.split(/[/?#]/)[0] || ''
+  if (withoutPath.startsWith('[')) {
+    const closingIndex = withoutPath.indexOf(']')
+    return closingIndex >= 0 ? withoutPath.slice(0, closingIndex + 1) : withoutPath
+  }
+
+  return withoutPath.split(':')[0] || ''
+}
+
+function isLocalOrInsecureApiBaseUrl(value = '') {
+  if (!value || value.startsWith('/')) {return false}
+  return /^http:\/\//i.test(value) || isPrivateLocalHostname(getApiBaseUrlHostname(value))
+}
+
+if (
+  explicitApiBaseUrl &&
+  ['prod', 'production'].includes(viteAppEnv) &&
+  isLocalOrInsecureApiBaseUrl(explicitApiBaseUrl)
+) {
+  throw new Error('生产环境不允许使用本地或非 HTTPS 的 VITE_API_BASE_URL')
+}
 
 function safeJsonParse(text = '', fallback = null) {
   if (text === null || text === undefined || text === '') {

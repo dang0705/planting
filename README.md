@@ -21,6 +21,24 @@
 - **云服务**: 腾讯云 CloudBase
 - **AI 能力**: Qwen/混元 Vision 模型
 
+## 本地云函数调试
+
+微信小程序本地开发可以直连本机 CloudBase HTTP 云函数，无需先部署到云端：
+
+```bash
+npm run dev:functions:install
+npm run dev:functions
+npm run dev:mp-weixin:local-functions
+```
+
+用微信开发者工具打开 `dist/dev/mp-weixin`。如需真机或局域网访问，可使用：
+
+```bash
+npm run dev:mp-weixin:local-functions:lan
+```
+
+未设置 `VITE_API_BASE_URL` 时仍走原有 CloudBase gateway；线上/生产构建不允许使用本地或非 HTTPS 的 API Base URL。完整说明见 [docs/local-cloudbase-functions-debugging.md](docs/local-cloudbase-functions-debugging.md)。
+
 
 # Codex AI Team Configuration / Codex AI 团队配置包
 
