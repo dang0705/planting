@@ -19,7 +19,7 @@
 5. 新增 `scripts/deploy-miniprogram-ci.mjs`，微信 CI 私钥只写入临时目录，结束后删除；正式上传默认关闭 source map。
 6. 新增跨平台 `build:mp-weixin:ci`，由 workflow env 注入环境变量，不依赖 Windows shell。
 7. `deploy-cloudbase-functions.mjs` 捕获 `fn detail` 输出并只打印白名单字段，避免环境变量进入日志。
-8. 在 `.github/workflows/deploy.yml` 增加 PR `release preflight` job，并在 GitHub master 保护规则里把 `Deploy CloudBase and Weixin Mini Program / release preflight` 配成 required check。
+8. 在 `.github/workflows/pr-check.yml` 增加依赖普通 PR 检查的 `release preflight` job，并在 GitHub master 保护规则里同时把 `Code and mini program build`、`Deploy CloudBase and Weixin Mini Program / release preflight` 配成 required checks；`.github/workflows/deploy.yml` 只保留手动真实发布。
 
 ## 必须注意
 
@@ -29,5 +29,5 @@
 - CloudBase 发布成功不等于验收通过，必须结合 `fn detail`、业务 smoke、必要 DB 证据。
 - 生产 CloudBase 部署必须显式配置 `CLOUDBASE_DEPLOY_FUNCTIONS`，禁止漏配后默认全量发布。
 - `npm test` 当前依赖本地未跟踪 route 测试文件；发布 workflow 暂用 `test:ci`，待这些测试文件正式入库后再恢复完整测试闸门。
-- PR 前置闸门只允许 dry-run 和构建验证，不得读取微信小程序私钥、腾讯云 Secret，也不得执行 CloudBase 真部署或 `miniprogram-ci` preview/upload。
+- PR 前置闸门先跑普通代码和小程序构建检查，再跑 release preflight；release preflight 只允许 dry-run，不得读取微信小程序私钥、腾讯云 Secret，也不得执行 CloudBase 真部署或 `miniprogram-ci` preview/upload。
 - 如果 `actions/checkout` 在公开仓库中因 `Your account is suspended` 或 token 侧权限问题失败，PR 闸门会在真正验证前被阻断；可改用无 token 的只读 `git fetch` checkout step，避免把 GITHUB_TOKEN 作为拉代码依赖。

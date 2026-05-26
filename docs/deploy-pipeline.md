@@ -4,8 +4,9 @@
 
 ## 入口
 
-- Workflow：`.github/workflows/deploy.yml`
-- PR 触发：`pull_request` 到 `master`
+- PR Workflow：`.github/workflows/pr-check.yml`
+- 发布 Workflow：`.github/workflows/deploy.yml`
+- PR 触发：`pull_request` 到 `master`，先运行 `Code and mini program build`，通过后再运行 `Deploy CloudBase and Weixin Mini Program / release preflight`
 - 手动触发：GitHub Actions -> `Deploy CloudBase and Weixin Mini Program` -> `Run workflow`
 - 运行参数：
   - `target_env`：`dev` / `prod`
@@ -16,7 +17,7 @@
 
 `prod` 应绑定 GitHub Environment 审批。正式小程序上传前必须先跑 `prod + preview + deploy_cloudbase=false`，只验证小程序预览包，不改生产后端；确认二维码、日志和配置后，再执行需要后端变更的发布。
 
-PR 合并闸门必须使用 `Deploy CloudBase and Weixin Mini Program / release preflight` 这个 required check。该 check 只做发布前置验证，不读取微信私钥、不读取腾讯云密钥、不部署 CloudBase、不执行 `miniprogram-ci` preview/upload。真实发布仍只能通过 `workflow_dispatch` 手动触发。
+PR 合并闸门必须同时要求 `Code and mini program build` 和 `Deploy CloudBase and Weixin Mini Program / release preflight`。后者在 `.github/workflows/pr-check.yml` 中通过 `needs: check` 串在普通 PR 检查之后，只做发布前置验证，不读取微信私钥、不读取腾讯云密钥、不部署 CloudBase、不执行 `miniprogram-ci` preview/upload。真实发布仍只能通过 `.github/workflows/deploy.yml` 的 `workflow_dispatch` 手动触发。
 
 ## GitHub Environment 配置
 
@@ -43,19 +44,24 @@ PR 合并闸门必须使用 `Deploy CloudBase and Weixin Mini Program / release 
 
 ### PR release preflight
 
-1. `npm ci --legacy-peer-deps`
+PR workflow 分为两个 job：
+
+1. `Code and mini program build`
+   - `npm ci --legacy-peer-deps`
    - 当前依赖树存在历史 peer 冲突，CI 安装显式使用 legacy peer 解析。
-2. `npm run check:secrets`
+   - `npm run check:secrets`
    - 扫描当前已跟踪文件，阻止 `.env`、私钥文件、CloudBase/微信/第三方明文密钥进入仓库。
-3. `npm run lint`
-4. `npm run test:ci`
+   - `npm run lint`
+   - `npm run test:ci`
    - 当前 CI 只运行已跟踪的 `test:pinia` 和 `test:tailwind`。
    - 现有 `npm test` 依赖若干本地未跟踪 route 测试文件，不能直接作为干净 runner 的发布闸门。
-5. `npm run build:mp-weixin:ci`
+   - `npm run build:mp-weixin:ci`
    - 通过 workflow env 注入 `VITE_APP_ENV` 和 `VITE_CLOUDBASE_ENV_ID`，不复用 Windows `set VAR=...&&` 脚本。
-6. `node scripts/deploy-cloudbase-functions.mjs --dry-run --functions=diagnose-http --env-id=<dev-env-id>`
+2. `Deploy CloudBase and Weixin Mini Program / release preflight`
+   - 依赖 `Code and mini program build` 成功后才运行。
+   - `node scripts/deploy-cloudbase-functions.mjs --dry-run --functions=diagnose-http --env-id=<dev-env-id>`
    - 只验证目标函数目录、函数列表和发布参数，不登录 CloudBase，不读取腾讯云 Secret。
-7. `node scripts/deploy-miniprogram-ci.mjs --dry-run --action=preview --appid=<appid>`
+   - `node scripts/deploy-miniprogram-ci.mjs --dry-run --action=preview --appid=<appid>`
    - 只验证小程序 CI 参数和构建目录，不读取微信私钥，不调用 `miniprogram-ci`。
 
 ### 手动 release
@@ -91,7 +97,7 @@ node scripts/deploy-miniprogram-ci.mjs --dry-run --action=preview --appid=<appid
 
 ## 环境快速切换
 
-- PR：固定使用 dev 非敏感默认值，只做 release preflight，不消费 GitHub Secrets。
+- PR：固定使用 dev 非敏感默认值，先做普通代码和小程序构建检查，再做 release preflight，不消费 GitHub Secrets。
 - GitHub：通过 `target_env` 选择 `cloudbase-dev` / `cloudbase-prod`，同名 Variables/Secrets 自动切换。
 - 小程序构建：workflow 注入 `VITE_APP_ENV`、`VITE_CLOUDBASE_ENV_ID`，Linux/macOS/Windows runner 都不依赖平台专属 `set` 语法。
 - CloudBase 脚本：环境变量优先于 `cloudbaserc.json`，支持 `--env-id` 覆盖。
@@ -121,7 +127,7 @@ node scripts/deploy-miniprogram-ci.mjs --dry-run --action=preview --appid=<appid
 
 失败重跑时只重跑同一 commit 的 workflow。若需要改代码或改配置，重新提交后用新 commit 发布，避免本地工作区状态和 GitHub runner 状态不一致。
 
-如果 `Deploy CloudBase and Weixin Mini Program` 只在 merge 后的 `workflow_dispatch` 失败，不能证明 PR 闸门有效。必须确认 PR 页面上 `Deploy CloudBase and Weixin Mini Program / release preflight` 是 required check，且失败时 GitHub 显示 blocked / not mergeable。
+如果 `Deploy CloudBase and Weixin Mini Program` 只在 merge 后的 `workflow_dispatch` 失败，不能证明 PR 闸门有效。必须确认 PR 页面上 `Code and mini program build` 和 `Deploy CloudBase and Weixin Mini Program / release preflight` 都是 required check，且任一失败时 GitHub 显示 blocked / not mergeable。
 
 ## 仍需人工处理
 

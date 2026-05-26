@@ -7,13 +7,13 @@
 ## 主要改动
 
 - 新增 `.github/workflows/deploy.yml`
-  - `pull_request` 到 `master`：运行 `Deploy CloudBase and Weixin Mini Program / release preflight`
+  - 仅保留 `workflow_dispatch` 真实发布入口
   - `workflow_dispatch` 输入：`target_env`、`miniprogram_action`、`deploy_cloudbase`
   - GitHub Environment：`cloudbase-dev` / `cloudbase-prod`
   - 最小权限：`contents: read`
   - 生产 preview-only 必须设置 `deploy_cloudbase=false`
   - 生产 CloudBase 部署必须显式配置 `CLOUDBASE_DEPLOY_FUNCTIONS`
-  - master 保护规则必须把 `Deploy CloudBase and Weixin Mini Program / release preflight` 设为 required check；post-merge 手动发布失败不能阻止已完成的 PR merge
+  - post-merge 手动发布失败不能阻止已完成的 PR merge；PR 闸门必须在 `.github/workflows/pr-check.yml` 中完成
 - 新增 `scripts/deploy-cloudbase-functions.mjs`
   - 支持 `--dry-run`、`--env-id`、`--functions`
   - CI 中执行 `tcb login`
@@ -54,6 +54,12 @@
 - 修复：在同一个 workflow 中新增 PR-only `release-preflight` job，固定使用 dev 非敏感默认值，只运行依赖安装、密钥扫描、lint、`test:ci`、mp-weixin 构建、CloudBase dry-run、小程序 CI dry-run。
 - 安全边界：PR 阶段不读取 `WECHAT_MINIPROGRAM_PRIVATE_KEY`、不读取腾讯云 Secret、不部署 CloudBase、不调用 `miniprogram-ci` preview/upload。
 - Required check：`Deploy CloudBase and Weixin Mini Program / release preflight`。
+
+## 2026-05-26 追加：PR 检查顺序化
+
+- 问题：`PR Check` 与 `Deploy CloudBase and Weixin Mini Program / release preflight` 分属两个 workflow 时只能并行触发，不能表达“先普通 PR 检查，再发布前置验证”。
+- 修复：把 `release-preflight` 移入 `.github/workflows/pr-check.yml`，通过 `needs: check` 依赖 `Code and mini program build`；`.github/workflows/deploy.yml` 删除 `pull_request` 触发，只保留 `workflow_dispatch` 的真实发布。
+- Required checks：`Code and mini program build`、`Deploy CloudBase and Weixin Mini Program / release preflight`。
 
 ## 未完成 / 生产前置
 
