@@ -12,6 +12,25 @@ const projectRoot = path.resolve(__dirname, '..', '..')
 const DEFAULT_GATEWAY_PORT = 3010
 const DEFAULT_CLOUDBASE_ENV_ID = 'cloud1-2grufevs395a9d5e'
 const DEFAULT_SQL_DATABASE = 'cloud1_dev'
+const LOCAL_CREDENTIAL_SECRET_ID_KEYS = [
+  'CLOUDBASE_SECRET_ID',
+  'TENCENT_SECRET_ID',
+  'TENCENTCLOUD_SECRETID'
+]
+const LOCAL_CREDENTIAL_SECRET_KEY_KEYS = [
+  'CLOUDBASE_SECRET_KEY',
+  'TENCENT_SECRET_KEY',
+  'TENCENTCLOUD_SECRETKEY'
+]
+const FUNCTIONS_REQUIRING_CLOUDBASE_CREDENTIALS = new Set([
+  'auth-user-http',
+  'diagnose-http',
+  'identify-http',
+  'plant-catalog-http',
+  'plant-user-http',
+  'storage-http',
+  'weather-http'
+])
 
 const HTTP_FUNCTIONS = [
   { name: 'diagnose-http', port: 9000 },
@@ -111,6 +130,97 @@ function readFunctionEnv(functionName) {
   }
 }
 
+function readFirstEnvValue(env = {}, keys = []) {
+  for (const key of keys) {
+    const value = String(env[key] || '').trim()
+    if (value) {
+      return value
+    }
+  }
+  return ''
+}
+
+function resolveLocalCloudbaseCredentials(env = {}) {
+  return {
+    secretId: readFirstEnvValue(env, LOCAL_CREDENTIAL_SECRET_ID_KEYS),
+    secretKey: readFirstEnvValue(env, LOCAL_CREDENTIAL_SECRET_KEY_KEYS)
+  }
+}
+
+function withCloudbaseCredentialAliases(env = {}) {
+  const credentials = resolveLocalCloudbaseCredentials(env)
+  if (!credentials.secretId && !credentials.secretKey) {
+    return env
+  }
+
+  const secretIdAliases = credentials.secretId
+    ? Object.fromEntries(
+        LOCAL_CREDENTIAL_SECRET_ID_KEYS.map(key => [key, env[key] || credentials.secretId])
+      )
+    : {}
+  const secretKeyAliases = credentials.secretKey
+    ? Object.fromEntries(
+        LOCAL_CREDENTIAL_SECRET_KEY_KEYS.map(key => [key, env[key] || credentials.secretKey])
+      )
+    : {}
+
+  return {
+    ...env,
+    ...secretIdAliases,
+    ...secretKeyAliases
+  }
+}
+
+function isTruthyFlag(value) {
+  return value === true || value === 'true' || value === '1' || value === 1
+}
+
+function createLocalSetupError(code, message) {
+  const error = new Error(message)
+  error.code = code
+  return error
+}
+
+function assertLocalCloudbaseCredentials(functions = [], localEnv = {}) {
+  if (isTruthyFlag(process.env.CLOUDBASE_LOCAL_SKIP_CREDENTIAL_CHECK)) {
+    return
+  }
+
+  const functionsNeedingCredentials = functions
+    .map(item => item.name)
+    .filter(name => FUNCTIONS_REQUIRING_CLOUDBASE_CREDENTIALS.has(name))
+  if (!functionsNeedingCredentials.length) {
+    return
+  }
+
+  const mergedEnv = {
+    ...localEnv,
+    ...process.env
+  }
+  const credentials = resolveLocalCloudbaseCredentials(mergedEnv)
+  if (credentials.secretId && credentials.secretKey) {
+    return
+  }
+
+  const missing = [
+    credentials.secretId ? '' : 'SecretId',
+    credentials.secretKey ? '' : 'SecretKey'
+  ].filter(Boolean)
+
+  throw createLocalSetupError(
+    'LOCAL_CLOUDBASE_CREDENTIALS_MISSING',
+    '本地 CloudBase HTTP 函数需要云端 SQL/Auth/Storage 凭据，但当前 shell 与 .env.local 未提供完整凭据。\n' +
+      `需要凭据的函数: ${functionsNeedingCredentials.join(', ')}\n` +
+      `缺少: ${missing.join(', ')}\n` +
+      '修复方式：复制 .env.local.example 为 .env.local，并填写以下任一组未提交变量：\n' +
+      '- CLOUDBASE_SECRET_ID + CLOUDBASE_SECRET_KEY\n' +
+      '- TENCENT_SECRET_ID + TENCENT_SECRET_KEY\n' +
+      '- TENCENTCLOUD_SECRETID + TENCENTCLOUD_SECRETKEY\n' +
+      '不要把真实密钥写回 cloudbaserc.json、workflow 或任何已跟踪文件。\n' +
+      '如只想验证 gateway/health，可临时设置 CLOUDBASE_LOCAL_SKIP_CREDENTIAL_CHECK=true；业务接口仍会因为缺少凭据而失败。'
+  )
+}
+
 function buildRuntimeEnv() {
   return {
     APP_ENV: 'development',
@@ -191,14 +301,14 @@ function spawnFunctionRuntime(definition, localEnv) {
   const nodeOptions = [`--require=${optAlias}`, process.env.NODE_OPTIONS || '']
     .filter(Boolean)
     .join(' ')
-  const env = {
+  const env = withCloudbaseCredentialAliases({
     ...readFunctionEnv(definition.name),
     ...localEnv,
     ...process.env,
     ...buildRuntimeEnv(),
     PORT: String(definition.port),
     NODE_OPTIONS: nodeOptions
-  }
+  })
 
   const child = spawn(
     process.execPath,
@@ -328,6 +438,7 @@ async function main() {
   ensureTcbFfInstalled(functions)
 
   const localEnv = readEnvFile(path.join(projectRoot, '.env.local'))
+  assertLocalCloudbaseCredentials(functions, localEnv)
   const server = createGatewayServer(functions)
   const children = []
   let shuttingDown = false
@@ -380,6 +491,11 @@ main().catch(error => {
       `本地 CloudBase 函数 gateway 端口已被占用: ${port}\n` +
       `请关闭占用进程，或使用 CLOUDBASE_LOCAL_FUNCTIONS_PORT=${Number(port) + 1} npm run dev:functions\n`
     )
+    process.exit(1)
+  }
+
+  if (String(error?.code || '').startsWith('LOCAL_')) {
+    process.stderr.write(`${error.message}\n`)
     process.exit(1)
   }
 

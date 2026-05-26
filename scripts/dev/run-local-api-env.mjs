@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 
 import { spawn } from 'node:child_process'
+import fs from 'node:fs'
 import os from 'node:os'
+import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const DEFAULT_PORT = 3010
 const DEFAULT_OPENID = 'dev_terminal_mp_local'
 const LOCAL_FUNCTIONS_GATEWAY_SCRIPT = fileURLToPath(new URL('./local-functions-gateway.mjs', import.meta.url))
+const PROJECT_ROOT = path.resolve(path.dirname(LOCAL_FUNCTIONS_GATEWAY_SCRIPT), '..', '..')
 const DEFAULT_REQUIRED_FUNCTIONS = [
   'diagnose-http',
   'plant-catalog-http',
@@ -29,6 +32,41 @@ const FUNCTION_HEALTH_PATHS = {
 }
 const GATEWAY_READY_TIMEOUT_MS = 60000
 const HEALTH_REQUEST_TIMEOUT_MS = 3000
+const LOCAL_CREDENTIAL_SECRET_ID_KEYS = [
+  'CLOUDBASE_SECRET_ID',
+  'TENCENT_SECRET_ID',
+  'TENCENTCLOUD_SECRETID'
+]
+const LOCAL_CREDENTIAL_SECRET_KEY_KEYS = [
+  'CLOUDBASE_SECRET_KEY',
+  'TENCENT_SECRET_KEY',
+  'TENCENTCLOUD_SECRETKEY'
+]
+const FUNCTIONS_REQUIRING_CLOUDBASE_CREDENTIALS = new Set([
+  'auth-user-http',
+  'diagnose-http',
+  'identify-http',
+  'plant-catalog-http',
+  'plant-user-http',
+  'storage-http',
+  'weather-http'
+])
+const FUNCTION_BUSINESS_PROBES = {
+  'plant-user-http': {
+    path: 'plant-user-http/user-plants?page=1&pageSize=1&skipAuth=true'
+  },
+  'weather-http': {
+    path: 'weather-http/weather/current',
+    method: 'POST',
+    body: {
+      lat: 31.22352,
+      lng: 121.45591,
+      city: '上海市',
+      province: '上海市',
+      useCache: true
+    }
+  }
+}
 
 function getFirstLanAddress() {
   return Object.values(os.networkInterfaces())
@@ -52,7 +90,8 @@ function parseArgs(argv = []) {
       .map(item => item.trim())
       .filter(Boolean),
     startFunctions: process.env.CLOUDBASE_LOCAL_AUTO_START_FUNCTIONS !== 'false',
-    skipHealthCheck: false
+    skipHealthCheck: false,
+    skipBusinessCheck: process.env.CLOUDBASE_LOCAL_SKIP_BUSINESS_CHECK === 'true'
   }
 
   optionArgs.forEach(arg => {
@@ -84,6 +123,9 @@ function parseArgs(argv = []) {
     if (key === '--skip-health-check') {
       options.skipHealthCheck = true
     }
+    if (key === '--skip-business-check') {
+      options.skipBusinessCheck = true
+    }
   })
 
   return { options, command }
@@ -103,6 +145,102 @@ function resolveApiBaseUrl(options = {}) {
   }
 
   return `http://127.0.0.1:${options.port}`
+}
+
+function readFirstEnvValue(env = {}, keys = []) {
+  for (const key of keys) {
+    const value = String(env[key] || '').trim()
+    if (value) {
+      return value
+    }
+  }
+  return ''
+}
+
+function parseEnvValue(value = '') {
+  const trimmed = String(value || '').trim()
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1)
+  }
+  return trimmed
+}
+
+function readEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) {
+    return {}
+  }
+
+  return fs.readFileSync(filePath, 'utf8')
+    .split(/\r?\n/)
+    .reduce((env, line) => {
+      const trimmed = line.trim()
+      if (!trimmed || trimmed.startsWith('#')) {
+        return env
+      }
+
+      const separator = trimmed.indexOf('=')
+      if (separator <= 0) {
+        return env
+      }
+
+      const key = trimmed.slice(0, separator).trim()
+      if (key) {
+        env[key] = parseEnvValue(trimmed.slice(separator + 1))
+      }
+      return env
+    }, {})
+}
+
+function resolveLocalCloudbaseCredentials(env = {}) {
+  return {
+    secretId: readFirstEnvValue(env, LOCAL_CREDENTIAL_SECRET_ID_KEYS),
+    secretKey: readFirstEnvValue(env, LOCAL_CREDENTIAL_SECRET_KEY_KEYS)
+  }
+}
+
+function isTruthyFlag(value) {
+  return value === true || value === 'true' || value === '1' || value === 1
+}
+
+function assertLocalCloudbaseCredentials(requiredFunctions = []) {
+  if (isTruthyFlag(process.env.CLOUDBASE_LOCAL_SKIP_CREDENTIAL_CHECK)) {
+    return
+  }
+
+  const functionsNeedingCredentials = requiredFunctions
+    .filter(name => FUNCTIONS_REQUIRING_CLOUDBASE_CREDENTIALS.has(name))
+  if (!functionsNeedingCredentials.length) {
+    return
+  }
+
+  const localEnv = readEnvFile(path.join(PROJECT_ROOT, '.env.local'))
+  const credentials = resolveLocalCloudbaseCredentials({
+    ...localEnv,
+    ...process.env
+  })
+  if (credentials.secretId && credentials.secretKey) {
+    return
+  }
+
+  const missing = [
+    credentials.secretId ? '' : 'SecretId',
+    credentials.secretKey ? '' : 'SecretKey'
+  ].filter(Boolean)
+
+  throw createLocalGatewayError(
+    'LOCAL_CLOUDBASE_CREDENTIALS_MISSING',
+    '本地 CloudBase HTTP 函数需要云端 SQL/Auth/Storage 凭据，但当前 shell 与 .env.local 未提供完整凭据。\n' +
+      `需要凭据的函数: ${functionsNeedingCredentials.join(', ')}\n` +
+      `缺少: ${missing.join(', ')}\n` +
+      '修复方式：复制 .env.local.example 为 .env.local，并填写以下任一组未提交变量：\n' +
+      '- CLOUDBASE_SECRET_ID + CLOUDBASE_SECRET_KEY\n' +
+      '- TENCENT_SECRET_ID + TENCENT_SECRET_KEY\n' +
+      '- TENCENTCLOUD_SECRETID + TENCENTCLOUD_SECRETKEY\n' +
+      '不要把真实密钥写回 cloudbaserc.json、workflow 或任何已跟踪文件。'
+  )
 }
 
 function createLocalGatewayError(code, message) {
@@ -225,9 +363,77 @@ async function assertLocalFunctionRoutesReady(apiBaseUrl = '', requiredFunctions
   }
 }
 
-async function assertLocalRuntimeReady(apiBaseUrl = '', requiredFunctions = []) {
-  await assertLocalFunctionsGatewayReady(apiBaseUrl, requiredFunctions)
-  await assertLocalFunctionRoutesReady(apiBaseUrl, requiredFunctions)
+async function assertLocalBusinessRoutesReady(apiBaseUrl = '', options = {}) {
+  if (options.skipBusinessCheck) {
+    return
+  }
+
+  const baseUrl = String(apiBaseUrl || '').replace(/\/+$/, '')
+  const unavailable = []
+
+  for (const functionName of options.requiredFunctions || []) {
+    const probe = FUNCTION_BUSINESS_PROBES[functionName]
+    if (!probe?.path) {
+      continue
+    }
+
+    const url = `${baseUrl}/${probe.path}`
+    try {
+      const { response, body } = await fetchJsonWithTimeout(url, {
+        method: probe.method || 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-app-env': 'development',
+          'x-env': 'development',
+          'x-wx-openid': options.openid || DEFAULT_OPENID,
+          'x-openid': options.openid || DEFAULT_OPENID,
+          'x-terminal-e2e': 'true'
+        },
+        body: probe.body ? JSON.stringify(probe.body) : undefined
+      })
+      if (!response.ok || body?.code !== 200) {
+        unavailable.push(`${functionName}: ${response.status} ${body?.message || response.statusText}`)
+      }
+    } catch (error) {
+      unavailable.push(`${functionName}: ${error?.message || error}`)
+    }
+  }
+
+  if (unavailable.length) {
+    throw createLocalGatewayError(
+      'LOCAL_FUNCTION_BUSINESS_ROUTES_NOT_READY',
+      '本地 CloudBase 函数业务探针未通过。\n' +
+        unavailable.map(item => `- ${item}`).join('\n') +
+        buildLocalBusinessRouteHint(unavailable)
+    )
+  }
+}
+
+function buildLocalBusinessRouteHint(unavailable = []) {
+  const message = unavailable.join('\n').toLowerCase()
+  if (message.includes('secret id error') || message.includes('sign_param_invalid')) {
+    return '\n请检查 .env.local 中的 CloudBase SecretId/SecretKey 是否存在、已轮换且有目标环境 SQL 权限。'
+  }
+  if (
+    message.includes('database connection failed') ||
+    message.includes('run query failed') ||
+    message.includes('please check the corresponding database connection configuration')
+  ) {
+    return (
+      '\nCloudBase 密钥已进入 SQL 调用，但数据库连接配置未通过。请检查：\n' +
+      '- 当前 shell 是否用旧的 CLOUDBASE_* / TENCENT_* 覆盖了 .env.local。\n' +
+      '- CloudBase 关系型数据库实例是否 READY，且密钥账号有该环境 SQL 权限。\n' +
+      '- 如控制台使用非默认数据库连接名，在 .env.local 设置 CLOUDBASE_SQL_DBLINK_NAME。'
+    )
+  }
+  return '\n请检查本地 gateway 日志和 .env.local 中的 CloudBase / 业务环境配置。'
+}
+
+async function assertLocalRuntimeReady(apiBaseUrl = '', options = {}) {
+  assertLocalCloudbaseCredentials(options.requiredFunctions)
+  await assertLocalFunctionsGatewayReady(apiBaseUrl, options.requiredFunctions)
+  await assertLocalFunctionRoutesReady(apiBaseUrl, options.requiredFunctions)
+  await assertLocalBusinessRoutesReady(apiBaseUrl, options)
 }
 
 function spawnLocalFunctionsGateway(options = {}) {
@@ -267,7 +473,7 @@ async function waitForLocalRuntime(apiBaseUrl = '', options = {}, gatewayChild =
     }
 
     try {
-      await assertLocalRuntimeReady(apiBaseUrl, options.requiredFunctions)
+      await assertLocalRuntimeReady(apiBaseUrl, options)
       return
     } catch (error) {
       lastError = error
@@ -284,7 +490,7 @@ async function waitForLocalRuntime(apiBaseUrl = '', options = {}, gatewayChild =
 
 async function ensureLocalRuntimeReady(apiBaseUrl = '', options = {}) {
   try {
-    await assertLocalRuntimeReady(apiBaseUrl, options.requiredFunctions)
+    await assertLocalRuntimeReady(apiBaseUrl, options)
     return null
   } catch (error) {
     if (!options.startFunctions) {
@@ -376,6 +582,11 @@ async function main() {
 }
 
 main().catch(error => {
+  if (String(error?.code || '').startsWith('LOCAL_')) {
+    process.stderr.write(`${error.message}\n`)
+    process.exit(1)
+  }
+
   process.stderr.write(`${String(error?.stack || error)}\n`)
   process.exit(1)
 })
