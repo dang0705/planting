@@ -11,6 +11,10 @@ node_modules
 .DS_Store
 dist
 *.local
+*.pem
+*.key
+private.*.key
+miniprogram-ci-qrcode.*
 
 # Editor directories and files
 .idea
@@ -25,3 +29,6 @@ dist
 
 # Environment variables
 .env.local
+.env
+.env.*
+!.env.local.example

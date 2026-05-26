@@ -41,7 +41,7 @@ const { triggerStaticRepositoryCachePreload } = require('./static-cache-preloade
 function runDeferredAnswerPersistence(sessionId = '', jobs = []) {
   for (const job of jobs) {
     if (typeof job !== 'function') {continue}
-    void Promise.resolve()
+    Promise.resolve()
       .then(job)
       .catch(error => {
         console.error('diagnosis-answer deferred persistence failed:', {

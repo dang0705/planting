@@ -6,7 +6,7 @@ const {
 } = require('../services/bootstrap-report')
 
 function triggerReadinessRefresh(source = '') {
-  void Promise.resolve()
+  Promise.resolve()
     .then(() => getRefactorArtifacts({ forceRefresh: true }))
     .catch(error => {
       console.warn('diagnose-http refactor readiness background refresh failed:', {

@@ -29,7 +29,7 @@ function preloadStaticRepositoryCacheForCurrentSchema() {
 function triggerStaticRepositoryCachePreload(context = {}) {
   const { scope, logContext } = buildLogContext(context)
 
-  void Promise.resolve()
+  Promise.resolve()
     .then(preloadStaticRepositoryCacheForCurrentSchema)
     .catch(error => {
       console.warn(`${scope} static cache preload failed`, {
@@ -52,7 +52,7 @@ function triggerStaticRepositoryCachePreloadForSchemaEnvs(schemaEnvs = DEFAULT_P
       schemaEnv
     })
 
-    void Promise.resolve()
+    Promise.resolve()
       .then(() => runWithSchemaEnv(schemaEnv, preloadStaticRepositoryCacheForCurrentSchema))
       .catch(error => {
         console.warn(`${scope} static cache preload failed`, {

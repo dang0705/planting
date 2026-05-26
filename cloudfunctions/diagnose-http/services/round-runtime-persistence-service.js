@@ -14,7 +14,7 @@ const { upsertStopState } = require('../repositories/stop-state-repository')
 function runDeferredPersistenceJobs(sessionId = '', jobs = []) {
   for (const job of jobs) {
     if (typeof job !== 'function') {continue}
-    void Promise.resolve()
+    Promise.resolve()
       .then(job)
       .catch(error => {
         console.error('diagnosis-http deferred persistence failed:', {

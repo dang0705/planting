@@ -2,18 +2,6 @@
   "envId": "cloud1-2grufevs395a9d5e",
   "functions": [
     {
-      "name": "auth-user",
-      "dir": "./cloudfunctions/auth-user",
-      "timeout": 30,
-      "runtime": "Nodejs18.15",
-      "memorySize": 256,
-      "envVariables": {
-        "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
-        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
-        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG"
-      }
-    },
-    {
       "name": "auth-user-http",
       "dir": "./cloudfunctions/auth-user-http",
       "timeout": 30,
@@ -22,8 +10,6 @@
       "envVariables": {
         "TCB_ENV": "cloud1-2grufevs395a9d5e",
         "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
-        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
-        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
         "DEBUG_LOG": "false"
       }
     },
@@ -36,21 +22,7 @@
       "envVariables": {
         "TCB_ENV": "cloud1-2grufevs395a9d5e",
         "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
-        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
-        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
         "DEBUG_LOG": "false"
-      }
-    },
-    {
-      "name": "identify",
-      "dir": "./cloudfunctions/identify",
-      "timeout": 30,
-      "runtime": "Nodejs18.15",
-      "memorySize": 256,
-      "envVariables": {
-        "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
-        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
-        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG"
       }
     },
     {
@@ -62,10 +34,6 @@
       "envVariables": {
         "TCB_ENV": "cloud1-2grufevs395a9d5e",
         "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
-        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
-        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
-        "BAIDU_AK": "UGqylU0BgWoCLd8PfnH6pxpl",
-        "BAIDU_SK": "NVCAG44tKAfXmVn0BrRHDVFnJDAQRt0x",
         "DEBUG_LOG": "false"
       }
     },
@@ -78,8 +46,6 @@
       "envVariables": {
         "TCB_ENV": "cloud1-2grufevs395a9d5e",
         "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
-        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
-        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
         "DEBUG_LOG": "false"
       }
     },
@@ -92,8 +58,6 @@
       "envVariables": {
         "TCB_ENV": "cloud1-2grufevs395a9d5e",
         "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
-        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
-        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
         "DEBUG_LOG": "false"
       }
     },
@@ -106,8 +70,6 @@
       "envVariables": {
         "TCB_ENV": "cloud1-2grufevs395a9d5e",
         "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
-        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
-        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
         "DEBUG_LOG": "false"
       }
     },
@@ -120,8 +82,6 @@
       "envVariables": {
         "TCB_ENV": "cloud1-2grufevs395a9d5e",
         "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
-        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
-        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
         "DEBUG_LOG": "false"
       }
     },
@@ -134,9 +94,6 @@
       "envVariables": {
         "TCB_ENV": "cloud1-2grufevs395a9d5e",
         "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
-        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
-        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
-        "QWEATHER_API_KEY": "",
         "DEBUG_LOG": "false"
       }
     },
@@ -148,8 +105,17 @@
       "memorySize": 256,
       "envVariables": {
         "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
-        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
-        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
+        "DEBUG_LOG": "false"
+      }
+    },
+    {
+      "name": "wechat-identity",
+      "dir": "./cloudfunctions/wechat-identity",
+      "timeout": 30,
+      "runtime": "Nodejs18.15",
+      "memorySize": 256,
+      "envVariables": {
+        "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
         "DEBUG_LOG": "false"
       }
     }

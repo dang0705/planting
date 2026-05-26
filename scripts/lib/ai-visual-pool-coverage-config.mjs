@@ -1,3 +1,16 @@
+const cloudbaseSecretId = String(
+  process.env.CLOUDBASE_SECRET_ID ||
+  process.env.TENCENT_SECRET_ID ||
+  process.env.TENCENTCLOUD_SECRETID ||
+  ''
+).trim()
+const cloudbaseSecretKey = String(
+  process.env.CLOUDBASE_SECRET_KEY ||
+  process.env.TENCENT_SECRET_KEY ||
+  process.env.TENCENTCLOUD_SECRETKEY ||
+  ''
+).trim()
+
 export const aiVisualPoolCoverageConfig = {
   verifiedAt: '2026-04-13',
   verifiedEnvId: 'cloud1-2grufevs395a9d5e',
@@ -5,8 +18,8 @@ export const aiVisualPoolCoverageConfig = {
     prod: 'cloud1-2grufevs395a9d5e',
     dev: 'cloud1_dev'
   },
-  secretId: 'AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU',
-  secretKey: 'CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG',
+  secretId: cloudbaseSecretId,
+  secretKey: cloudbaseSecretKey,
   batchIds: {
     auditedGapClosure: 'batch_20260413_ai_visual_pool_gap_closure',
     legacyGapClosure: 'batch_20260413_ai_visual_pool_legacy_gap_closure',
@@ -77,4 +90,3 @@ export const aiVisualPoolCoverageConfig = {
     }
   }
 }
-
