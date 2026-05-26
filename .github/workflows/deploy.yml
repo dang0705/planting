@@ -57,7 +57,7 @@ jobs:
       TCB_ENV: cloud1-2grufevs395a9d5e
       VITE_CLOUDBASE_ENV_ID: cloud1-2grufevs395a9d5e
       WECHAT_MINIPROGRAM_APPID: wx85bb3976301f75fb
-      CLOUDBASE_DEPLOY_FUNCTIONS: diagnose-http
+      CLOUDBASE_DEPLOY_FUNCTIONS: diagnose-httpx
       MINIPROGRAM_CI_ACTION: preview
       DEPLOY_CLOUDBASE: 'false'
       MINIPROGRAM_CI_ROBOT: '1'
