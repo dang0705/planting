@@ -50,7 +50,7 @@ jobs:
       CLOUDBASE_DEPLOY_FUNCTIONS: ${{ vars.CLOUDBASE_DEPLOY_FUNCTIONS }}
       MINIPROGRAM_CI_ACTION: ${{ inputs.miniprogram_action }}
       DEPLOY_CLOUDBASE: ${{ inputs.deploy_cloudbase && 'true' || 'false' }}
-      MINIPROGRAM_CI_QRCODE_OUTPUT: ${{ runner.temp }}/miniprogram-ci-qrcode.jpg
+#      MINIPROGRAM_CI_QRCODE_OUTPUT: ${{ runner.temp }}/miniprogram-ci-qrcode.jpg
       MINIPROGRAM_CI_ROBOT: ${{ vars.MINIPROGRAM_CI_ROBOT || '1' }}
 
     steps:
