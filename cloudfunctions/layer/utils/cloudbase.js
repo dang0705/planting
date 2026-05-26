@@ -89,15 +89,47 @@ function qualifySqlTableNames(sql, databaseName) {
 }
 
 /**
+ * 解析 CloudBase 管理端凭据。
+ *
+ * 线上云函数通常可以使用运行时身份；本地 tcb-ff 调试则需要显式凭据。
+ * 本仓库的 GitHub Actions 使用 TENCENT_* 命名，历史本地脚本使用 CLOUDBASE_*，
+ * 这里统一兼容，避免本地只配置 TENCENT_* 时仍报 secret id error。
+ */
+function resolveCloudbaseCredentials(env = process.env) {
+  const secretId = String(
+    env.CLOUDBASE_SECRET_ID ||
+      env.TENCENT_SECRET_ID ||
+      env.TENCENTCLOUD_SECRETID ||
+      ''
+  ).trim()
+  const secretKey = String(
+    env.CLOUDBASE_SECRET_KEY ||
+      env.TENCENT_SECRET_KEY ||
+      env.TENCENTCLOUD_SECRETKEY ||
+      ''
+  ).trim()
+
+  return { secretId, secretKey }
+}
+
+function buildCloudbaseInitOptions(context) {
+  const options = {
+    env: resolveCloudbaseEnvId(context)
+  }
+  const credentials = resolveCloudbaseCredentials()
+  if (credentials.secretId && credentials.secretKey) {
+    options.secretId = credentials.secretId
+    options.secretKey = credentials.secretKey
+  }
+  return options
+}
+
+/**
  * 获取 CloudBase 实例（单例模式）
  */
 function getCloudBase() {
   if (!cloudbaseApp) {
-    cloudbaseApp = cloudbaseSDK.init({
-      env: resolveCloudbaseEnvId(),
-      secretId: process.env.CLOUDBASE_SECRET_ID,
-      secretKey: process.env.CLOUDBASE_SECRET_KEY
-    })
+    cloudbaseApp = cloudbaseSDK.init(buildCloudbaseInitOptions())
   }
   return cloudbaseApp
 }
@@ -144,9 +176,7 @@ function getUserInfo(context) {
     }
   }
 
-  const app = cloudbaseSDK.init({
-    env: resolveCloudbaseEnvId(context)
-  })
+  const app = cloudbaseSDK.init(buildCloudbaseInitOptions(context))
   const auth = app.auth()
   const userInfo = auth.getUserInfo()
 
@@ -226,5 +256,6 @@ module.exports = {
   models,
   ai,
   storage,
-  getUserInfo
+  getUserInfo,
+  resolveCloudbaseCredentials
 }

@@ -22,6 +22,38 @@ npm run dev:functions:install
 npm run dev:functions:install -- --function=diagnose-http
 ```
 
+## 本地凭据
+
+本地 `tcb-ff` 进程不具备线上云函数运行时身份。凡是会访问 CloudBase SQL、Auth、Storage 或 AI 的 HTTP 函数，都需要从未提交的本地环境读取 CloudBase 凭据，否则业务接口会在 `models.$runSQL` 等调用处报：
+
+```text
+SIGN_PARAM_INVALID / secret id error
+```
+
+安全做法：
+
+```bash
+cp .env.local.example .env.local
+```
+
+然后只在 `.env.local` 或当前 shell 中填写任一组完整变量：
+
+```text
+CLOUDBASE_SECRET_ID + CLOUDBASE_SECRET_KEY
+TENCENT_SECRET_ID + TENCENT_SECRET_KEY
+TENCENTCLOUD_SECRETID + TENCENTCLOUD_SECRETKEY
+```
+
+`CLOUDBASE_*`、`TENCENT_*`、`TENCENTCLOUD_*` 三套命名在本地 gateway 和云函数 SDK 初始化时会自动兼容。不要把真实密钥写回 `cloudbaserc.json`、workflow、文档或任何已跟踪文件；已经暴露过的旧密钥必须在控制台轮换。
+
+如果只想验证 gateway 和 health route，可临时跳过启动前凭据检查：
+
+```bash
+CLOUDBASE_LOCAL_SKIP_CREDENTIAL_CHECK=true npm run dev:functions
+```
+
+但这种情况下 `/user-plants`、天气缓存、存储、诊断读写等业务接口仍会因为没有真实凭据而失败，不能作为小程序本地业务验收。
+
 ## 启动本地云函数服务
 
 ```bash
@@ -81,13 +113,15 @@ npm run dev:functions -- --functions=diagnose-http,plant-user-http
 npm run dev:mp-weixin:local-functions
 ```
 
-该脚本会先请求 `VITE_API_BASE_URL/__local_functions__/health`。如果本地函数 gateway 没有运行，会自动启动完整 HTTP 云函数集，并等待 gateway health 和各函数 health route 都返回就绪：
+该脚本会先请求 `VITE_API_BASE_URL/__local_functions__/health`。如果本地函数 gateway 没有运行，会自动启动完整 HTTP 云函数集，并等待 gateway health、各函数 health route 和关键业务探针都返回就绪：
 
 ```text
 diagnose-http, plant-catalog-http, plant-user-http, identify-http, diagnosis-history-http, auth-user-http, weather-http, storage-http
 ```
 
 如果端口被其他项目占用，或该端口已经跑着不完整的函数 gateway，小程序构建会直接失败并提示缺少哪些函数；不要忽略这一步，否则微信开发者工具里会看到未启动函数对应接口 404。
+
+如果 `.env.local` 或 shell 没有提供 CloudBase 凭据，脚本会在启动本地业务函数前失败并提示缺少 `SecretId` / `SecretKey`。如果 3010 上已经跑着旧 gateway，但业务探针仍返回 `secret id error`，脚本也会失败并提示检查本地凭据。不要用空值、旧泄漏值或已提交文件兜底；应在未提交的 `.env.local` 中配置已轮换的最小权限密钥。
 
 该脚本会设置：
 
@@ -138,6 +172,14 @@ CLOUDBASE_LOCAL_REQUIRED_FUNCTIONS=diagnose-http \
 npm run dev:mp-weixin:local-functions
 ```
 
+如果只需要看编译产物、暂时不验证业务接口，可临时跳过业务探针：
+
+```bash
+CLOUDBASE_LOCAL_SKIP_BUSINESS_CHECK=true npm run dev:mp-weixin:local-functions
+```
+
+跳过后不能作为首页业务接口验收结论。
+
 真机调试需要手机和电脑在同一局域网，并确认 macOS 防火墙允许 Node.js 入站连接。正式版/体验版不应使用本地 HTTP 私网地址。
 
 ## H5 本地调试
@@ -179,5 +221,6 @@ curl http://127.0.0.1:3010/diagnose-http/health
 
 - 不提交 `.env.local`、密钥、个人配置或临时调试输出。
 - 本地函数默认使用 `APP_ENV=development`、`SCHEMA_ENV=development`、`SQL_DATABASE=cloud1_dev`。
+- 本地业务函数访问 CloudBase SQL/Auth/Storage 时必须从 `.env.local` 或 shell 获得凭据；启动前检查只验证变量存在，不会打印真实值。
 - 生产环境设置本地或非 HTTPS `VITE_API_BASE_URL` 会直接失败。
 - 本地 `/opt` 兼容只通过 `scripts/dev/cloudfunctions-local-opt-alias.cjs` 注入，不修改线上函数源码或生产 layer。
