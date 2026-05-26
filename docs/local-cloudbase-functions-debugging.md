@@ -75,25 +75,19 @@ npm run dev:functions -- --functions=diagnose-http,plant-user-http
 
 ## 微信小程序本地调试
 
-1. 启动本地函数：
-
-```bash
-npm run dev:functions
-```
-
-2. 启动小程序本地构建：
+默认使用一条命令启动完整本地函数 gateway 和小程序构建：
 
 ```bash
 npm run dev:mp-weixin:local-functions
 ```
 
-该脚本会先请求 `VITE_API_BASE_URL/__local_functions__/health`，并默认要求 gateway 已启动完整 HTTP 云函数集：
+该脚本会先请求 `VITE_API_BASE_URL/__local_functions__/health`。如果本地函数 gateway 没有运行，会自动启动完整 HTTP 云函数集，并等待 gateway health 和各函数 health route 都返回就绪：
 
 ```text
 diagnose-http, plant-catalog-http, plant-user-http, identify-http, diagnosis-history-http, auth-user-http, weather-http, storage-http
 ```
 
-如果端口被其他项目占用、本地函数 gateway 未启动，或只运行了 `npm run dev:functions:diagnose` 这类单函数模式，小程序构建会直接失败并提示缺少哪些函数；不要忽略这一步，否则微信开发者工具里会看到未启动函数对应接口 404。
+如果端口被其他项目占用，或该端口已经跑着不完整的函数 gateway，小程序构建会直接失败并提示缺少哪些函数；不要忽略这一步，否则微信开发者工具里会看到未启动函数对应接口 404。
 
 该脚本会设置：
 
@@ -103,7 +97,7 @@ VITE_API_BASE_URL=http://127.0.0.1:3010
 VITE_DEV_OPENID=dev_terminal_mp_local
 ```
 
-3. 用微信开发者工具打开：
+用微信开发者工具打开：
 
 ```text
 dist/dev/mp-weixin
@@ -126,8 +120,22 @@ CLOUDBASE_LOCAL_FUNCTIONS_HOST_IP=192.168.1.10 npm run dev:mp-weixin:local-funct
 如果函数 gateway 使用了非默认端口，前端也必须使用同一个端口：
 
 ```bash
-CLOUDBASE_LOCAL_FUNCTIONS_PORT=3011 npm run dev:functions
 CLOUDBASE_LOCAL_FUNCTIONS_PORT=3011 npm run dev:mp-weixin:local-functions
+```
+
+仍然可以使用双终端高级模式手动管理函数 gateway：
+
+```bash
+npm run dev:functions
+CLOUDBASE_LOCAL_AUTO_START_FUNCTIONS=false npm run dev:mp-weixin:local-functions
+```
+
+如果只是做单函数专项验证，可同时关闭自动启动并缩小检查范围：
+
+```bash
+CLOUDBASE_LOCAL_AUTO_START_FUNCTIONS=false \
+CLOUDBASE_LOCAL_REQUIRED_FUNCTIONS=diagnose-http \
+npm run dev:mp-weixin:local-functions
 ```
 
 真机调试需要手机和电脑在同一局域网，并确认 macOS 防火墙允许 Node.js 入站连接。正式版/体验版不应使用本地 HTTP 私网地址。

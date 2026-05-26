@@ -120,6 +120,24 @@ function formatWeatherData(apiData) {
   }
 }
 
+function buildLocalDevWeatherData() {
+  return {
+    temperature: 20,
+    humidity: 60,
+    weather: '多云',
+    feelsLike: 20,
+    windDir: '',
+    windScale: '',
+    windSpeed: '',
+    pressure: '',
+    visibility: '',
+    updateTime: new Date().toISOString(),
+    raw: {},
+    isFallback: true,
+    fallbackSource: 'local_dev_missing_qweather_api_key'
+  }
+}
+
 function getNextMidnight() {
   const tomorrow = new Date()
   tomorrow.setHours(24, 0, 0, 0)
@@ -292,6 +310,7 @@ async function main(event, context) {
   const request = getHttpRequestData(event, context)
   const path = String(request.path || '')
   const method = request.method || 'GET'
+  const appEnv = resolveRequestAppEnv(request.headers, request.query, request.body)
 
   try {
     if (path.includes('/weather/health')) {
@@ -369,16 +388,25 @@ async function main(event, context) {
     }
 
     if (!weatherData) {
-      weatherData = formatWeatherData(await fetchWeather(lat, lng))
+      if (!QWEATHER_CONFIG.apiKey && appEnv === 'development') {
+        weatherData = buildLocalDevWeatherData()
+        cacheScope = 'local_dev_fallback'
+      } else {
+        weatherData = formatWeatherData(await fetchWeather(lat, lng))
+      }
       if (useCache) {
-        const cityCacheMeta = await saveCachedWeatherForCity(cityCacheContext, weatherData)
-        await saveCachedWeatherForOpenid(
-          openid,
-          weatherData,
-          cityCacheMeta?.expiresAt ? parseDbDate(cityCacheMeta.expiresAt) : getNextMidnight()
-        )
-        cacheScope = cityCacheMeta ? 'city_refresh' : 'user_refresh'
-        cacheMeta = cityCacheMeta || null
+        if (weatherData.isFallback) {
+          cacheMeta = null
+        } else {
+          const cityCacheMeta = await saveCachedWeatherForCity(cityCacheContext, weatherData)
+          await saveCachedWeatherForOpenid(
+            openid,
+            weatherData,
+            cityCacheMeta?.expiresAt ? parseDbDate(cityCacheMeta.expiresAt) : getNextMidnight()
+          )
+          cacheScope = cityCacheMeta ? 'city_refresh' : 'user_refresh'
+          cacheMeta = cityCacheMeta || null
+        }
       }
     }
 
