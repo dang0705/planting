@@ -1,6 +1,9 @@
 name: Deploy CloudBase and Weixin Mini Program
 
 on:
+  pull_request:
+    branches:
+      - master
   workflow_dispatch:
     inputs:
       target_env:
@@ -41,8 +44,58 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  release-preflight:
+    name: Deploy CloudBase and Weixin Mini Program / release preflight
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TARGET_ENV: dev
+      VITE_APP_ENV: development
+      APP_ENV: development
+      CLOUDBASE_ENV_ID: cloud1-2grufevs395a9d5e
+      TCB_ENV: cloud1-2grufevs395a9d5e
+      VITE_CLOUDBASE_ENV_ID: cloud1-2grufevs395a9d5e
+      WECHAT_MINIPROGRAM_APPID: wx85bb3976301f75fb
+      CLOUDBASE_DEPLOY_FUNCTIONS: diagnose-http
+      MINIPROGRAM_CI_ACTION: preview
+      DEPLOY_CLOUDBASE: 'false'
+      MINIPROGRAM_CI_ROBOT: '1'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Check tracked secrets
+        run: npm run check:secrets
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test tracked CI suite
+        run: npm run test:ci
+
+      - name: Build Weixin mini program
+        run: npm run build:mp-weixin:ci
+
+      - name: CloudBase deploy dry run
+        run: node scripts/deploy-cloudbase-functions.mjs --dry-run --functions="${CLOUDBASE_DEPLOY_FUNCTIONS}" --env-id="${CLOUDBASE_ENV_ID}"
+
+      - name: miniprogram-ci dry run
+        run: node scripts/deploy-miniprogram-ci.mjs --dry-run --action="${MINIPROGRAM_CI_ACTION}" --appid="${WECHAT_MINIPROGRAM_APPID}"
+
   deploy:
     name: CloudBase + Weixin release
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     environment:

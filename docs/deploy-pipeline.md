@@ -5,6 +5,7 @@
 ## 入口
 
 - Workflow：`.github/workflows/deploy.yml`
+- PR 触发：`pull_request` 到 `master`
 - 手动触发：GitHub Actions -> `Deploy CloudBase and Weixin Mini Program` -> `Run workflow`
 - 运行参数：
   - `target_env`：`dev` / `prod`
@@ -14,6 +15,8 @@
   - `wechat_miniprogram_appid`：可选，非敏感小程序 appid 覆盖；留空时优先使用 GitHub Environment Variable，再回退到项目配置中的 appid
 
 `prod` 应绑定 GitHub Environment 审批。正式小程序上传前必须先跑 `prod + preview + deploy_cloudbase=false`，只验证小程序预览包，不改生产后端；确认二维码、日志和配置后，再执行需要后端变更的发布。
+
+PR 合并闸门必须使用 `Deploy CloudBase and Weixin Mini Program / release preflight` 这个 required check。该 check 只做发布前置验证，不读取微信私钥、不读取腾讯云密钥、不部署 CloudBase、不执行 `miniprogram-ci` preview/upload。真实发布仍只能通过 `workflow_dispatch` 手动触发。
 
 ## GitHub Environment 配置
 
@@ -38,6 +41,8 @@
 
 ## 流程
 
+### PR release preflight
+
 1. `npm ci --legacy-peer-deps`
    - 当前依赖树存在历史 peer 冲突，CI 安装显式使用 legacy peer 解析。
 2. `npm run check:secrets`
@@ -48,6 +53,18 @@
    - 现有 `npm test` 依赖若干本地未跟踪 route 测试文件，不能直接作为干净 runner 的发布闸门。
 5. `npm run build:mp-weixin:ci`
    - 通过 workflow env 注入 `VITE_APP_ENV` 和 `VITE_CLOUDBASE_ENV_ID`，不复用 Windows `set VAR=...&&` 脚本。
+6. `node scripts/deploy-cloudbase-functions.mjs --dry-run --functions=diagnose-http --env-id=<dev-env-id>`
+   - 只验证目标函数目录、函数列表和发布参数，不登录 CloudBase，不读取腾讯云 Secret。
+7. `node scripts/deploy-miniprogram-ci.mjs --dry-run --action=preview --appid=<appid>`
+   - 只验证小程序 CI 参数和构建目录，不读取微信私钥，不调用 `miniprogram-ci`。
+
+### 手动 release
+
+1. `npm ci --legacy-peer-deps`
+2. `npm run check:secrets`
+3. `npm run lint`
+4. `npm run test:ci`
+5. `npm run build:mp-weixin:ci`
 6. `npm run deploy:functions:ci`
    - 仅当 `deploy_cloudbase=true` 时执行。
    - 生产环境必须显式配置 `CLOUDBASE_DEPLOY_FUNCTIONS`，禁止默认全量发布。
@@ -74,6 +91,7 @@ node scripts/deploy-miniprogram-ci.mjs --dry-run --action=preview --appid=<appid
 
 ## 环境快速切换
 
+- PR：固定使用 dev 非敏感默认值，只做 release preflight，不消费 GitHub Secrets。
 - GitHub：通过 `target_env` 选择 `cloudbase-dev` / `cloudbase-prod`，同名 Variables/Secrets 自动切换。
 - 小程序构建：workflow 注入 `VITE_APP_ENV`、`VITE_CLOUDBASE_ENV_ID`，Linux/macOS/Windows runner 都不依赖平台专属 `set` 语法。
 - CloudBase 脚本：环境变量优先于 `cloudbaserc.json`，支持 `--env-id` 覆盖。
@@ -102,6 +120,8 @@ node scripts/deploy-miniprogram-ci.mjs --dry-run --action=preview --appid=<appid
 | `deploy:miniprogram:ci` | appid、私钥、IP 白名单、构建目录 | 先跑 `preview`，确认二维码 artifact；`upload` 失败时不要把私钥或完整环境变量写入日志 |
 
 失败重跑时只重跑同一 commit 的 workflow。若需要改代码或改配置，重新提交后用新 commit 发布，避免本地工作区状态和 GitHub runner 状态不一致。
+
+如果 `Deploy CloudBase and Weixin Mini Program` 只在 merge 后的 `workflow_dispatch` 失败，不能证明 PR 闸门有效。必须确认 PR 页面上 `Deploy CloudBase and Weixin Mini Program / release preflight` 是 required check，且失败时 GitHub 显示 blocked / not mergeable。
 
 ## 仍需人工处理
 
