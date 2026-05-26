@@ -1,0 +1,644 @@
+{
+  "generatedAt": "2026-04-22T17:05:09.543Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "collectionProfile": {
+    "source": "manual",
+    "manualVisualOnly": true,
+    "manualVisualOnlyProvided": true
+  },
+  "visualEvidenceSummary": {
+    "total": 4,
+    "available": 4,
+    "missingRawRecords": 0,
+    "emptyConclusion": 0
+  },
+  "total": 4,
+  "success": 4,
+  "failed": 0,
+  "progress": {
+    "processed": 4,
+    "targetTotal": 4,
+    "complete": true
+  },
+  "results": [
+    {
+      "sessionId": "diag_1776524906841_9gzq2dil",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [
+          {
+            "symptomKey": "leaf_yellowing",
+            "displayNameCn": "叶片发黄",
+            "confidenceBand": "high",
+            "supportingRegionNote": "图中有多片叶片呈现明显的黄色，与正常绿色叶片形成对比"
+          }
+        ],
+        "outOfPoolCandidates": [],
+        "routeHints": [
+          {
+            "type": "possible_problematic_signal",
+            "reason": "observed significant leaf yellowing in multiple leaves"
+          }
+        ]
+      },
+      "visualEvidenceMeta": {
+        "status": "available",
+        "reason": "",
+        "visualRawRecordCount": 1,
+        "symptomCandidateCount": 1,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 1,
+        "hasVisualConclusion": true
+      },
+      "symptomClass": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "yellowing_mode",
+        "currentClassNameCn": "黄叶模式",
+        "currentGroupKey": "iron_group",
+        "currentGroupLabel": "iron_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "yellowing_mode",
+          "primaryClassRuntimeScore": 0.7905,
+          "unknownLockCount": 3,
+          "currentClassKey": "yellowing_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_leaf_yellowing_light_background",
+            "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+            "targetDimension": "light_exposure",
+            "answer": {
+              "optionKey": "less_light",
+              "optionText": "是，最近更弱光或更阴",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_leaf_yellowing_watering_background",
+            "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+            "targetDimension": "watering_context",
+            "answer": {
+              "optionKey": "more_wet",
+              "optionText": "更像长期偏湿、久不干",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_leaf_yellowing_fertilization_background",
+            "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+            "targetDimension": "fertilization_context",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_root_rot_bad_smell",
+            "questionText": "根部或根团有明显腐烂异味?",
+            "targetDimension": "root_zone_context",
+            "answer": {
+              "optionKey": "no",
+              "optionText": "否，基本没有",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_iron_new_leaves_yellow",
+            "questionText": "发黄主要出现在新叶?",
+            "targetDimension": "host_confirmation",
+            "answer": {
+              "optionKey": "uniform",
+              "optionText": "新老叶都黄",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_nitrogen_old_leaves_yellow",
+            "questionText": "发黄先从老叶开始?",
+            "targetDimension": "host_confirmation",
+            "answer": {
+              "optionKey": "old",
+              "optionText": "老叶为主",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "outcome": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "topProblem": {
+          "problemId": "p_cm9vdF9yb3Q",
+          "problemKey": "root_rot",
+          "displayName": "根腐",
+          "summary": "当前更像 根腐，但还不够确定。 当前最像的问题是：根腐。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_cm9vdF9yb3Q",
+          "problemKey": "",
+          "displayName": "根腐",
+          "summary": "当前更像 根腐，但还不够确定。 当前最像的问题是：根腐。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 2
+      }
+    },
+    {
+      "sessionId": "diag_1776521814145_3n9ak1w5",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [
+          {
+            "symptomKey": "leaf_yellowing",
+            "displayNameCn": "叶片黄化",
+            "confidenceBand": "high",
+            "supportingRegionNote": "图中存在多片明显发黄的叶片"
+          },
+          {
+            "symptomKey": "holes_in_leaf",
+            "displayNameCn": "叶片有洞",
+            "confidenceBand": "high",
+            "supportingRegionNote": "部分叶片存在真洞口或缺损情况"
+          }
+        ],
+        "outOfPoolCandidates": [],
+        "routeHints": [
+          {
+            "type": "possible_problematic_signal",
+            "reason": "存在叶片黄化和叶片有洞的异常视觉信号"
+          }
+        ]
+      },
+      "visualEvidenceMeta": {
+        "status": "available",
+        "reason": "",
+        "visualRawRecordCount": 1,
+        "symptomCandidateCount": 2,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 1,
+        "hasVisualConclusion": true
+      },
+      "symptomClass": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "yellowing_mode",
+        "currentClassNameCn": "黄叶模式",
+        "currentGroupKey": "iron_group",
+        "currentGroupLabel": "iron_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "yellowing_mode",
+          "primaryClassRuntimeScore": 1.088,
+          "unknownLockCount": 3,
+          "currentClassKey": "yellowing_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_leaf_yellowing_light_background",
+            "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+            "targetDimension": "light_exposure",
+            "answer": {
+              "optionKey": "no_change",
+              "optionText": "没有明显变化",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_leaf_yellowing_watering_background",
+            "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+            "targetDimension": "watering_context",
+            "answer": {
+              "optionKey": "more_wet",
+              "optionText": "更像长期偏湿、久不干",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_leaf_yellowing_fertilization_background",
+            "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+            "targetDimension": "fertilization_context",
+            "answer": {
+              "optionKey": "yes",
+              "optionText": "是，最近长期停肥或明显缺少供肥",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_root_rot_bad_smell",
+            "questionText": "根部或根团有明显腐烂异味?",
+            "targetDimension": "root_zone_context",
+            "answer": {
+              "optionKey": "yes",
+              "optionText": "是，比较确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_iron_new_leaves_yellow",
+            "questionText": "发黄主要出现在新叶?",
+            "targetDimension": "host_confirmation",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_nitrogen_old_leaves_yellow",
+            "questionText": "发黄先从老叶开始?",
+            "targetDimension": "host_confirmation",
+            "answer": {
+              "optionKey": "old",
+              "optionText": "老叶为主",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "outcome": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "topProblem": {
+          "problemId": "p_cm9vdF9yb3Q",
+          "problemKey": "root_rot",
+          "displayName": "根腐",
+          "summary": "当前更像 根腐，但还不够确定。 当前最像的问题是：根腐。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_cm9vdF9yb3Q",
+          "problemKey": "",
+          "displayName": "根腐",
+          "summary": "当前更像 根腐，但还不够确定。 当前最像的问题是：根腐。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 2
+      }
+    },
+    {
+      "sessionId": "diag_1776509556300_t80mp3tg",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [
+          {
+            "symptomKey": "irregular_blotches",
+            "displayNameCn": "不规则斑块",
+            "confidenceBand": "high",
+            "supportingRegionNote": "叶片上存在多处深色不规则斑块，组织看起来相对完整，主要是表面颜色异常形成的斑块"
+          }
+        ],
+        "outOfPoolCandidates": [],
+        "routeHints": [
+          {
+            "type": "problematic_signal",
+            "reason": "存在不规则斑块的异常视觉信号"
+          }
+        ]
+      },
+      "visualEvidenceMeta": {
+        "status": "available",
+        "reason": "",
+        "visualRawRecordCount": 1,
+        "symptomCandidateCount": 1,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 1,
+        "hasVisualConclusion": true
+      },
+      "symptomClass": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 3,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
+            "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
+            "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
+            "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+            "targetDimension": "lesion_halo",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "final",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 2
+      }
+    },
+    {
+      "sessionId": "diag_1776497216908_nloxmvtp",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [
+          {
+            "symptomKey": "leaf_yellowing",
+            "displayNameCn": "叶子明显发黄",
+            "confidenceBand": "high",
+            "supportingRegionNote": "图中部分叶片呈现明显的黄色，与绿色叶片形成对比，黄化现象较为显著"
+          },
+          {
+            "symptomKey": "normal_leaf_aging_stable",
+            "displayNameCn": "底部老叶稳定黄化",
+            "confidenceBand": "medium",
+            "supportingRegionNote": "部分叶片黄化可能符合老叶自然老化的稳定黄化特征"
+          }
+        ],
+        "outOfPoolCandidates": [],
+        "routeHints": [
+          {
+            "type": "possible_problematic_signal",
+            "reason": "detected leaf yellowing which may indicate potential issues"
+          },
+          {
+            "type": "possible_non_problematic_signal",
+            "reason": "some yellowing could be due to natural leaf aging"
+          }
+        ]
+      },
+      "visualEvidenceMeta": {
+        "status": "available",
+        "reason": "",
+        "visualRawRecordCount": 1,
+        "symptomCandidateCount": 2,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 2,
+        "hasVisualConclusion": true
+      },
+      "symptomClass": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "light_stress_mode",
+        "currentClassNameCn": "光照胁迫模式",
+        "currentGroupKey": "leaf_bleaching_confirm_group",
+        "currentGroupLabel": "leaf_bleaching_confirm_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "light_stress_mode",
+          "primaryClassRuntimeScore": 0.595,
+          "unknownLockCount": 3,
+          "currentClassKey": "light_stress_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_leaf_yellowing_confirm",
+            "questionText": "植株有比较明确的发黄叶片，而不是轻微失绿或反光吗？",
+            "targetDimension": "visual_presence",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_leaf_yellowing_light_background",
+            "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+            "targetDimension": "light_exposure",
+            "answer": {
+              "optionKey": "more_sun",
+              "optionText": "是，最近更强光或更直晒",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_leaf_yellowing_watering_background",
+            "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+            "targetDimension": "watering_context",
+            "answer": {
+              "optionKey": "more_dry",
+              "optionText": "更像经常干透后才浇",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_observed_probe__recent_direct_sun_increase__distribution_scope",
+            "questionText": "这种异常主要集中在局部，还是已经扩到更大范围？",
+            "targetDimension": "distribution_scope",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__recent_direct_sun_increase__progression",
+            "questionText": "这种“最近更靠近直晒或强光位”是最近几天明显扩展，还是已经存在较久且基本稳定？",
+            "targetDimension": "progression",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__recent_direct_sun_increase__host_confirmation",
+            "questionText": "这种“最近更靠近直晒或强光位”是否主要集中在老叶，而不是新叶也差不多都有？",
+            "targetDimension": "host_confirmation",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "outcome": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "topProblem": {
+          "problemId": "p_dW5kZXJ3YXRlcmluZw",
+          "problemKey": "underwatering",
+          "displayName": "缺水",
+          "summary": "当前更像 缺水，但还不够确定。 当前最像的问题是：缺水。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "finalResult": {
+          "problemId": "p_dW5kZXJ3YXRlcmluZw",
+          "problemKey": "",
+          "displayName": "缺水",
+          "summary": "当前更像 缺水，但还不够确定。 当前最像的问题是：缺水。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "roundIndex": 2
+      }
+    }
+  ]
+}

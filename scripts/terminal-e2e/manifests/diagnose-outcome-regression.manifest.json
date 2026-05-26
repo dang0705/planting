@@ -1,0 +1,65 @@
+[
+  {
+    "label": "non_problematic_normal_leaf_aging",
+    "caseKey": "normal_leaf_aging_from_observed_evidence",
+    "plantCatalogId": "1",
+    "observedEvidenceSet": [
+      {
+        "observedEvidenceSetId": "normal_leaf_aging_from_observed_evidence::normal_leaf_aging_stable",
+        "evidenceKey": "normal_leaf_aging_stable",
+        "evidenceType": "symptom",
+        "symptomKey": "normal_leaf_aging_stable",
+        "symptomCn": "底部老叶稳定黄化",
+        "confidence": 0.99,
+        "sourceType": "user_answer",
+        "currentStatus": "active",
+        "targetLayer": "observed_evidence_set"
+      }
+    ],
+    "expected": {
+      "outcome": "non_problematic",
+      "nonProblematicType": "normal_leaf_aging",
+      "routePrimaryAction": "standard_flow",
+      "identityResolutionStatus": "matched"
+    }
+  },
+  {
+    "label": "uncertain_unknown_answers",
+    "caseKey": "uncertain_from_unknown_answers",
+    "plantCatalogId": "1",
+    "observedEvidenceSet": [],
+    "answerPattern": "unknown,unknown,unknown",
+    "expected": {
+      "outcome": "uncertain",
+      "routePrimaryAction": "uncertain_prepare",
+      "identityResolutionStatus": "matched"
+    }
+  },
+  {
+    "label": "problematic_leaf_yellowing_followup_overwatering",
+    "caseKey": "overwatering_leaf_yellowing_followup",
+    "plantCatalogId": "1",
+    "observedEvidenceSet": [
+      {
+        "observedEvidenceSetId": "overwatering_leaf_yellowing_followup::leaf_yellowing",
+        "evidenceKey": "leaf_yellowing",
+        "evidenceType": "symptom",
+        "symptomKey": "leaf_yellowing",
+        "symptomCn": "叶片黄化",
+        "confidence": 0.9,
+        "sourceType": "user_answer",
+        "currentStatus": "active",
+        "targetLayer": "observed_evidence_set"
+      }
+    ],
+    "answerPattern": "yes,yes,yes",
+    "expected": {
+      "outcome": "problematic",
+      "problemKey": "overwatering_root_pressure",
+      "routePrimaryAction": "standard_flow",
+      "identityResolutionStatus": "matched",
+      "startStage": "followup",
+      "minStartQuestionCount": 1
+    }
+  }
+]

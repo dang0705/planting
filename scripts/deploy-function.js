@@ -43,7 +43,7 @@ console.log(`🚀 开始部署云函数: ${functionName}`);
 console.warn('⚠️ 该脚本仅用于便捷触发部署，不作为闭环验收依据');
 
 try {
-  const envId = String(cloudbaserc.envId || process.env.CLOUDBASE_ENV_ID || process.env.TCB_ENV || '').trim();
+  const envId = String(process.env.CLOUDBASE_ENV_ID || process.env.TCB_ENV || cloudbaserc.envId || '').trim();
   if (!envId) {
     throw new Error('缺少 CloudBase envId，请在 cloudbaserc.json 或环境变量 CLOUDBASE_ENV_ID/TCB_ENV 中配置');
   }

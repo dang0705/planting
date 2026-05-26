@@ -4,7 +4,7 @@ const { clamp01 } = require('../repositories/sql')
 const { toOptionId, toQuestionId, toResultId } = require('../mappers/public-id-mapper')
 const {
   evidence: evidenceConfig,
-  ranking: rankingConfig,
+  routeSelection: questionSelectionConfig,
   followUpSelection
 } = require('../constants/scoring')
 const classSwitchRules = require('../constants/class-switch-rules')
@@ -35,6 +35,7 @@ const {
   getQuestionOptionMappings,
   findQuestionKeysByTargetSymptoms
 } = require('../repositories/question-repository')
+const outcomeRouteRepository = require('../repositories/outcome-route-repository')
 const { listFollowUpRows } = require('../repositories/session-follow-up-repository')
 const { getCausalityEdges } = require('../repositories/causality-repository')
 const {
@@ -42,7 +43,6 @@ const {
   computeQuestionEvidenceAndPenalty
 } = require('./evidence-scoring')
 const { computeGenusFactor, computeHostFactor } = require('./prior-scorers')
-const { computeCausalityBoosts } = require('./causality-scorer')
 const { resolveSymptomClassRuntime } = require('./symptom-classifier')
 const {
   selectFollowUpQuestions,
@@ -72,12 +72,18 @@ const {
 const {
   buildVisualCandidateQuestionGroupKey,
   buildSyntheticVisualCandidateQuestionKey,
-  buildObservedProbeQuestionGroupKey,
   buildSyntheticObservedProbeQuestionKey,
   parseSyntheticObservedProbeQuestionKey,
   buildSyntheticObservedProbeQuestions,
-  buildSyntheticFollowUpOptionMappings
+  buildSyntheticFollowUpOptionMappings,
+  buildTemplateVariables,
+  renderQuestionTemplate
 } = require('../utils/synthetic-follow-up')
+const {
+  YELLOWING_LEAF_AGE_PATTERN_QUESTION_KEY,
+  isDisabledYellowingFlowQuestion,
+  filterDisabledYellowingFlowQuestions
+} = require('../utils/yellowing-question-policy')
 const {
   buildObservedEvidenceSetFromSymptoms,
   buildObservedEvidenceSetFromVisualAggregateResult,
@@ -97,9 +103,9 @@ const {
   evaluateContextRequiredProblemGuard
 } = require('../utils/context-required-problem-guard')
 const {
-  prioritizeOutputEligibleProblemRankings,
-  hasOutputEligibleProblemRanking,
-  hasForceableOutputProblemRanking
+  prioritizeOutputEligibleCandidateOutcomes,
+  hasOutputEligibleCandidateOutcome,
+  hasForceableOutputCandidateOutcome
 } = require('../utils/output-eligibility')
 const {
   buildDerivedEvidenceSet
@@ -110,6 +116,12 @@ const {
 const {
   buildCareGuidance
 } = require('../utils/care-baseline-guidance')
+const {
+  buildRouteEvidenceContext,
+  planOutcomeRoutes
+} = require('./outcome-route-planner')
+const { isAuthoritativeRouteDecision } = require('../utils/outcome-route-contract')
+const { buildRoutePlannedFollowUps } = require('./route-planned-followup-resolver')
 
 const SYNTHETIC_VISUAL_CANDIDATE_PROBLEM_KEY = '__visual_candidate_seed__'
 const SYNTHETIC_OBSERVED_SYMPTOM_QUESTION_SEED_PROBLEM_KEY = '__observed_symptom_seed__'
@@ -126,6 +138,13 @@ const BROAD_VISUAL_DIFFERENTIAL_SYMPTOM_KEYS = new Set([
   'distorted_growth',
   'irregular_blotches'
 ])
+const DIAGNOSIS_RUNTIME_DEBUG_LOG_ENABLED =
+  String(process.env.DIAGNOSIS_RUNTIME_DEBUG_LOG || '').toLowerCase() === 'true'
+
+function logDiagnosisRuntime(message, payload = {}) {
+  if (!DIAGNOSIS_RUNTIME_DEBUG_LOG_ENABLED) {return}
+  console.log(message, payload)
+}
 
 function roundNum(value, digits = 6) {
   return Number(Number(value || 0).toFixed(digits))
@@ -133,6 +152,23 @@ function roundNum(value, digits = 6) {
 
 function normalizeKey(value = '') {
   return String(value || '').trim()
+}
+
+function resolveVisibleRouteActionProfileKeys(routeDecision = null, routeOutcomes = []) {
+  const visibleOutcomeKeySet = new Set(
+    Array.isArray(routeDecision?.visibleOutcomeKeys)
+      ? routeDecision.visibleOutcomeKeys.map(item => normalizeKey(item)).filter(Boolean)
+      : []
+  )
+  const decisionProfileKeys = Array.isArray(routeDecision?.visibleActionProfileKeys)
+    ? routeDecision.visibleActionProfileKeys.map(item => normalizeKey(item)).filter(Boolean)
+    : []
+  const routeOutcomeProfileKeys = (Array.isArray(routeOutcomes) ? routeOutcomes : [])
+    .filter(item => visibleOutcomeKeySet.has(normalizeKey(item?.outcomeKey || '')))
+    .map(item => normalizeKey(item?.actionProfileKey || ''))
+    .filter(Boolean)
+
+  return Array.from(new Set([...decisionProfileKeys, ...routeOutcomeProfileKeys]))
 }
 
 function normalizeGroupRolePriorityBoost(groupRole = '') {
@@ -162,6 +198,75 @@ function normalizeDecisionCause(decisionCause = null) {
         ? decisionCause.decisionCauseDetails
         : {}
   }
+}
+
+function sanitizeRouteDecisionForPublic(routeDecision = null) {
+  if (!routeDecision || typeof routeDecision !== 'object') {
+    return null
+  }
+
+  return {
+    mode: normalizeKey(routeDecision.mode || ''),
+    visibleOutcomeKeys: Array.isArray(routeDecision.visibleOutcomeKeys)
+      ? routeDecision.visibleOutcomeKeys.map(item => normalizeKey(item)).filter(Boolean)
+      : [],
+    activeRouteGroupKeys: Array.isArray(routeDecision.activeRouteGroupKeys)
+      ? routeDecision.activeRouteGroupKeys.map(item => normalizeKey(item)).filter(Boolean)
+      : [],
+    nextQuestionKeys: Array.isArray(routeDecision.nextQuestionKeys)
+      ? routeDecision.nextQuestionKeys.map(item => normalizeKey(item)).filter(Boolean)
+      : [],
+    fallbackPolicy: normalizeKey(routeDecision.fallbackPolicy || ''),
+    decisionCause: normalizeDecisionCause(routeDecision.decisionCause)
+  }
+}
+
+function resolveLeadingVisibleOutcomeKey(routeDecision = null) {
+  return Array.isArray(routeDecision?.visibleOutcomeKeys)
+    ? normalizeKey(routeDecision.visibleOutcomeKeys[0] || '')
+    : ''
+}
+
+function isRoutePlanningObservationEnabled() {
+  return isEnabledFeatureFlag(
+    'ROUTE_PLANNING_OBSERVATION_ENABLED',
+    'ROUTE_MODE_ENABLED',
+    { defaultEnabled: true }
+  )
+}
+
+function isRouteQuestionEnabled() {
+  return isEnabledFeatureFlag(
+    'ROUTE_QUESTION_ENABLED',
+    'ROUTE_MODE_ENABLED',
+    { defaultEnabled: true }
+  )
+}
+
+function isRouteOutputEnabled() {
+  return isEnabledFeatureFlag(
+    'ROUTE_OUTPUT_ENABLED',
+    'ROUTE_MODE_ENABLED',
+    { defaultEnabled: true }
+  )
+}
+
+function isRouteDebugTraceEnabled() {
+  return isEnabledFeatureFlag('ROUTE_DEBUG_TRACE_ENABLED', 'ROUTE_MODE_ENABLED')
+}
+
+function isEnabledFeatureFlag(primaryEnvKey = '', fallbackEnvKey = '', options = {}) {
+  const primaryRaw = String(process.env[primaryEnvKey] || '').trim()
+  const fallbackRaw = String(process.env[fallbackEnvKey] || '').trim()
+  const defaultEnabled = Boolean(options?.defaultEnabled)
+  const raw = String(
+    primaryRaw ||
+      fallbackRaw ||
+      (defaultEnabled ? '1' : '0')
+  )
+    .trim()
+    .toLowerCase()
+  return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on'
 }
 
 function hasActiveObservedEvidenceEntries(observedEvidenceSet = []) {
@@ -207,7 +312,7 @@ function hasBroadVisualDifferentialInput({
 function hasAnsweredQuestionOption(answers = [], questionKey = '', optionKey = '') {
   const normalizedQuestionKey = normalizeKey(questionKey)
   const normalizedOptionKey = normalizeKey(optionKey)
-  if (!normalizedQuestionKey || !normalizedOptionKey) return false
+  if (!normalizedQuestionKey || !normalizedOptionKey) {return false}
 
   return (Array.isArray(answers) ? answers : []).some(item =>
     normalizeKey(item?.questionKey || item?.question_key || '') === normalizedQuestionKey &&
@@ -221,7 +326,7 @@ function hasAnsweredAnyQuestion(answers = [], questionKeys = []) {
       .map(item => normalizeKey(item))
       .filter(Boolean)
   )
-  if (!questionKeySet.size) return false
+  if (!questionKeySet.size) {return false}
 
   return (Array.isArray(answers) ? answers : []).some(item =>
     questionKeySet.has(normalizeKey(item?.questionKey || item?.question_key || ''))
@@ -230,15 +335,15 @@ function hasAnsweredAnyQuestion(answers = [], questionKeys = []) {
 
 function hasUnresolvedEdemaFlatSpotDifferential({
   answers = [],
-  symptomClassRuntime = null,
-  observedEvidenceSet = []
+  symptomClassRuntime: _symptomClassRuntime = null,
+  observedEvidenceSet: _observedEvidenceSet = []
 } = {}) {
   const edemaShapeDenied = hasAnsweredQuestionOption(
     answers,
     'q_observed_probe__edema__edema_bump_stage',
     'flat_spot'
   )
-  if (!edemaShapeDenied) return false
+  if (!edemaShapeDenied) {return false}
 
   return !hasAnsweredAnyQuestion(answers, [
     'q_black_spots_surface_layer_check',
@@ -299,7 +404,7 @@ function shouldSuppressCrossDirectionVisualCandidate(
   diagnosisDirections = [],
   symptomClassRuntime = null
 ) {
-  if (!symptomClassRuntime?.enabled) return false
+  if (!symptomClassRuntime?.enabled) {return false}
 
   const anchoredDirectionKeys = new Set(
     (Array.isArray(diagnosisDirections) ? diagnosisDirections : [])
@@ -316,16 +421,16 @@ function shouldSuppressCrossDirectionVisualCandidate(
       .map(direction => normalizeKey(direction?.directionKey || ''))
       .filter(Boolean)
   )
-  if (!anchoredDirectionKeys.size) return false
+  if (!anchoredDirectionKeys.size) {return false}
 
   const candidateSymptomKey = normalizeKey(candidate?.symptomKey || '')
   const candidatePatternKey = normalizeKey(candidate?.patternKey || '')
-  if (!candidateSymptomKey && !candidatePatternKey) return false
+  if (!candidateSymptomKey && !candidatePatternKey) {return false}
 
   const candidateDirectionKeys = new Set()
   for (const direction of Array.isArray(diagnosisDirections) ? diagnosisDirections : []) {
     const directionKey = normalizeKey(direction?.directionKey || '')
-    if (!directionKey) continue
+    if (!directionKey) {continue}
 
     const matchedByCandidateSymptom =
       candidateSymptomKey &&
@@ -341,7 +446,7 @@ function shouldSuppressCrossDirectionVisualCandidate(
     }
   }
 
-  if (!candidateDirectionKeys.size) return false
+  if (!candidateDirectionKeys.size) {return false}
   return Array.from(candidateDirectionKeys).every(directionKey => !anchoredDirectionKeys.has(directionKey))
 }
 
@@ -349,7 +454,7 @@ function buildClassGatedStrategies({
   symptomClassRuntime = null,
   problemStrategies = [],
   groupQuestions = [],
-  rankings = []
+  candidateOutcomes = []
 } = {}) {
   const groupStrategies = normalizeClassGatedGroupStrategies(symptomClassRuntime)
   if (!groupStrategies.length || !Array.isArray(groupQuestions) || !groupQuestions.length) {
@@ -358,16 +463,16 @@ function buildClassGatedStrategies({
 
   const groupStrategyMap = new Map(groupStrategies.map(item => [item.groupKey, item]))
   const currentGroupKey = normalizeKey(symptomClassRuntime?.currentGroupKey)
-  const baseProblemKey = normalizeKey(rankings?.[0]?.problemKey || '__symptom_class__')
+  const baseProblemKey = normalizeKey(candidateOutcomes?.[0]?.problemKey || '__symptom_class__')
   const strategies = []
   const seenQuestionKeys = new Set()
 
   for (const strategy of Array.isArray(problemStrategies) ? problemStrategies : []) {
     const groupStrategy = groupStrategyMap.get(normalizeKey(strategy?.questionGroupKey))
-    if (!groupStrategy) continue
+    if (!groupStrategy) {continue}
 
     const questionKey = normalizeKey(strategy?.questionKey)
-    if (!questionKey) continue
+    if (!questionKey) {continue}
 
     const priorityBoost =
       Number(groupStrategy.basePriority || 0) +
@@ -392,7 +497,7 @@ function buildClassGatedStrategies({
   for (const question of groupQuestions) {
     const questionKey = normalizeKey(question?.questionKey)
     const groupStrategy = groupStrategyMap.get(normalizeKey(question?.questionGroupKey))
-    if (!questionKey || !groupStrategy || seenQuestionKeys.has(questionKey)) continue
+    if (!questionKey || !groupStrategy || seenQuestionKeys.has(questionKey)) {continue}
 
     const priorityBoost =
       Number(groupStrategy.basePriority || 0) +
@@ -475,20 +580,20 @@ function shouldBlockMorphologySiblingQuestion(
   symptomMetaMap = new Map()
 ) {
   const normalizedTargetSymptomKey = String(targetSymptomKey || '').trim()
-  if (!normalizedTargetSymptomKey) return false
+  if (!normalizedTargetSymptomKey) {return false}
 
   const targetMeta = symptomMetaMap.get(normalizedTargetSymptomKey) || {}
   const targetLocationKey = String(targetMeta?.locationKey || '').trim()
   const targetPatternKey = String(targetMeta?.patternKey || '').trim()
   const targetDistributionKey = String(targetMeta?.distributionKey || '').trim()
 
-  if (!targetLocationKey || !targetPatternKey) return false
+  if (!targetLocationKey || !targetPatternKey) {return false}
 
   for (const seededTargetSymptomKey of Array.isArray(seededTargetSymptomKeys)
     ? seededTargetSymptomKeys
     : []) {
     const normalizedSeededTargetSymptomKey = String(seededTargetSymptomKey || '').trim()
-    if (!normalizedSeededTargetSymptomKey) continue
+    if (!normalizedSeededTargetSymptomKey) {continue}
     if (normalizedSeededTargetSymptomKey === normalizedTargetSymptomKey) {
       return true
     }
@@ -517,7 +622,7 @@ function mapByKey(list = [], key = 'problemKey') {
   const map = new Map()
   for (const item of list || []) {
     const id = item?.[key]
-    if (!id) continue
+    if (!id) {continue}
     map.set(id, item)
   }
   return map
@@ -536,7 +641,7 @@ function buildObservedSymptomIndex(observedSymptoms = []) {
 
   for (const item of Array.isArray(observedSymptoms) ? observedSymptoms : []) {
     const symptomKey = String(item?.symptomKey || '').trim()
-    if (!symptomKey) continue
+    if (!symptomKey) {continue}
 
     map.set(symptomKey, {
       confidence: Number(item?.confidence || 0),
@@ -585,42 +690,12 @@ function isSameMorphologyFamily(
   return baseDistributionKey === candidateDistributionKey
 }
 
-function mergeObservedSymptoms(primary = [], extra = []) {
-  const map = new Map()
-  const merged = [...(primary || []), ...(extra || [])]
-  for (const item of merged) {
-    const key = String(item?.symptomKey || '').trim()
-    if (!key) continue
-    const current = map.get(key)
-    if (!current || Number(item.confidence || 0) > Number(current.confidence || 0)) {
-      map.set(key, {
-        symptomKey: key,
-        symptomCn: item.symptomCn || current?.symptomCn || key,
-        confidence: clamp01(item.confidence ?? current?.confidence ?? 0.7),
-        source: item.source || current?.source || 'visual_ai'
-      })
-    }
-  }
-  return Array.from(map.values())
-}
-
-function resolveReliabilityScore(rankings = []) {
-  const top = rankings[0]
-  const second = rankings[1] || { finalScore: 0 }
-  if (!top) return 0
-
-  const scoreGap = Math.max(Number(top.finalScore || 0) - Number(second.finalScore || 0), 0)
-  const base = 1 - Math.exp(-Math.max(Number(top.finalScore || 0), 0))
-  const gapBonus = Math.min(scoreGap, 1) * 0.35
-  return clamp01(base * 0.7 + gapBonus)
-}
-
 function mergeCandidatePriors(...groups) {
   const merged = new Map()
 
   for (const group of groups) {
     for (const item of group || []) {
-      if (!item?.problemKey) continue
+      if (!item?.problemKey) {continue}
       const existing = merged.get(item.problemKey) || {
         problemKey: item.problemKey,
         genusCompatibility: null,
@@ -683,12 +758,12 @@ function buildDirectionCandidatePriors(diagnosisDirections = [], existingProblem
   for (const direction of Array.isArray(diagnosisDirections) ? diagnosisDirections : []) {
     const status = normalizeKey(direction?.status || '')
     const confidence = clamp01(direction?.confidence || 0)
-    const statusBaseScore = {
+    const statusBaseWeight = {
       leading: 0.38,
       candidate: 0.3,
       hint: 0.22
     }[status] || 0.22
-    const finalPriorScore = roundNum(statusBaseScore + confidence * 0.12)
+    const finalPriorScore = roundNum(statusBaseWeight + confidence * 0.12)
     const allowedProblemKeys = Array.isArray(direction?.allowedProblemKeys)
       ? direction.allowedProblemKeys
       : Array.isArray(direction?.candidateProblemKeys)
@@ -697,7 +772,7 @@ function buildDirectionCandidatePriors(diagnosisDirections = [], existingProblem
 
     for (const rawProblemKey of allowedProblemKeys) {
       const problemKey = normalizeKey(rawProblemKey)
-      if (!problemKey || existingProblemKeySet.has(problemKey)) continue
+      if (!problemKey || existingProblemKeySet.has(problemKey)) {continue}
 
       priors.push({
         problemKey,
@@ -715,10 +790,10 @@ function buildDirectionCandidatePriors(diagnosisDirections = [], existingProblem
   return priors
 }
 
-function scopeRankingsToDiagnosisDirections(
-  rankings = [],
+function scopeCandidateOutcomesToDiagnosisDirections(
+  candidateOutcomes = [],
   diagnosisDirections = [],
-  problemRoleByKey = new Map()
+  _problemRoleByKey = new Map()
 ) {
   const allowedProblemKeySet = new Set()
 
@@ -738,17 +813,17 @@ function scopeRankingsToDiagnosisDirections(
   }
 
   if (!allowedProblemKeySet.size) {
-    return Array.isArray(rankings) ? rankings : []
+    return Array.isArray(candidateOutcomes) ? candidateOutcomes : []
   }
 
-  const scopedRankings = (Array.isArray(rankings) ? rankings : []).filter(item =>
+  const scopedCandidateOutcomes = (Array.isArray(candidateOutcomes) ? candidateOutcomes : []).filter(item =>
     allowedProblemKeySet.has(normalizeKey(item?.problemKey || ''))
   )
 
-  if (!scopedRankings.length) {
-    return Array.isArray(rankings) ? rankings : []
+  if (!scopedCandidateOutcomes.length) {
+    return Array.isArray(candidateOutcomes) ? candidateOutcomes : []
   }
-  return scopedRankings
+  return scopedCandidateOutcomes
 }
 
 function collectAllowedProblemKeysFromDiagnosisDirections(diagnosisDirections = []) {
@@ -774,13 +849,14 @@ function collectAllowedProblemKeysFromDiagnosisDirections(diagnosisDirections = 
 
 function hasDirectPositiveProblemAnswer(answerEffects = [], problemKey = '') {
   const normalizedProblemKey = normalizeKey(problemKey)
-  if (!normalizedProblemKey) return false
+  if (!normalizedProblemKey) {return false}
 
   return (Array.isArray(answerEffects) ? answerEffects : []).some(item =>
   {
-    if (normalizeKey(item?.effectType || '') !== 'direct_problem_positive') return false
-    if (normalizeKey(item?.problemKey || '') !== normalizedProblemKey) return false
-    if (Number(item?.value || 0) <= 0) return false
+    if (normalizeKey(item?.effectType || '') !== 'direct_problem_positive') {return false}
+    if (normalizeKey(item?.problemKey || '') !== normalizedProblemKey) {return false}
+    if (Number(item?.value || 0) <= 0) {return false}
+    if (isDisabledYellowingFlowQuestion(item)) {return false}
 
     const { targetDimension } = parseSyntheticObservedProbeQuestionKey(item?.questionKey || '')
     const normalizedTargetDimension =
@@ -794,16 +870,16 @@ function hasDirectPositiveProblemAnswer(answerEffects = [], problemKey = '') {
 }
 
 function shouldBlockUnscopedClassProblemOutput({
-  rankings = [],
+  candidateOutcomes = [],
   diagnosisDirections = [],
   symptomClassRuntime = null,
   answerEffects = [],
   fastConvergencePlan = null
 } = {}) {
-  const topProblemKey = normalizeKey(rankings?.[0]?.problemKey || '')
-  if (!topProblemKey) return false
-  if (fastConvergencePlan?.applied) return false
-  if (hasDirectPositiveProblemAnswer(answerEffects, topProblemKey)) return false
+  const topProblemKey = normalizeKey(candidateOutcomes?.[0]?.problemKey || '')
+  if (!topProblemKey) {return false}
+  if (fastConvergencePlan?.applied) {return false}
+  if (hasDirectPositiveProblemAnswer(answerEffects, topProblemKey)) {return false}
 
   const allowedProblemKeySet = collectAllowedProblemKeysFromDiagnosisDirections(diagnosisDirections)
   if (allowedProblemKeySet.size) {
@@ -825,13 +901,13 @@ const LOW_YIELD_FOLLOW_UP_DIMENSIONS = new Set([
 
 function getOptionMappingsForQuestion(optionMappings = [], questionKey = '') {
   const normalizedQuestionKey = normalizeKey(questionKey)
-  if (!normalizedQuestionKey) return []
+  if (!normalizedQuestionKey) {return []}
   return (Array.isArray(optionMappings) ? optionMappings : []).filter(
     item => normalizeKey(item?.questionKey || item?.question_key || '') === normalizedQuestionKey
   )
 }
 
-function optionMappingHasScoreChangingEffect(mapping = {}) {
+function optionMappingHasEvidenceEffect(mapping = {}) {
   if (
     normalizeKey(mapping?.mapsToSymptomKey || mapping?.maps_to_symptom_key || '') &&
     Number(mapping?.value || 0) !== 0
@@ -842,7 +918,7 @@ function optionMappingHasScoreChangingEffect(mapping = {}) {
   return (Array.isArray(mapping?.directProblemAdjustments)
     ? mapping.directProblemAdjustments
     : []
-  ).some(item => normalizeKey(item?.problemKey || '') && Number(item?.scoreDelta || 0) !== 0)
+  ).some(item => normalizeKey(item?.problemKey || '') && Number(item?.effectValue || 0) !== 0)
 }
 
 function isLowYieldFollowUpQuestion(question = {}, optionMappings = []) {
@@ -857,13 +933,13 @@ function isLowYieldFollowUpQuestion(question = {}, optionMappings = []) {
     return false
   }
 
-  return !mappings.some(optionMappingHasScoreChangingEffect)
+  return !mappings.some(optionMappingHasEvidenceEffect)
 }
 
 function evaluateFollowUpStopPolicy({
   shouldAskFollowUp = false,
   filteredFollowUps = [],
-  rankings = [],
+  candidateOutcomes = [],
   contextProblemGuard = null,
   answerEffects = [],
   optionMappings = [],
@@ -882,7 +958,7 @@ function evaluateFollowUpStopPolicy({
     return { shouldStop: false, reason: '', details: {} }
   }
 
-  const topProblemKey = normalizeKey(rankings?.[0]?.problemKey || '')
+  const topProblemKey = normalizeKey(candidateOutcomes?.[0]?.problemKey || '')
   const contextSatisfied = !contextProblemGuard?.applies || Boolean(contextProblemGuard?.hasRequiredContext)
   const hasProblemLevelPositiveEvidence =
     Boolean(topProblemKey) && hasDirectPositiveProblemAnswer(answerEffects, topProblemKey)
@@ -904,8 +980,8 @@ function evaluateFollowUpStopPolicy({
   }
 }
 
-function stabilizeOutputRankingsAgainstConfirmedGuardShift(
-  rankings = [],
+function stabilizeOutputCandidateOutcomesAgainstConfirmedGuardShift(
+  candidateOutcomes = [],
   contextProblemGuard = null,
   problemRoleByKey = new Map()
 ) {
@@ -915,32 +991,32 @@ function stabilizeOutputRankingsAgainstConfirmedGuardShift(
     !contextProblemGuard?.applies ||
     !contextProblemGuard?.hasRequiredContext
   ) {
-    return Array.isArray(rankings) ? rankings : []
+    return Array.isArray(candidateOutcomes) ? candidateOutcomes : []
   }
 
-  const sourceRankings = Array.isArray(rankings) ? rankings : []
+  const sourceCandidateOutcomes = Array.isArray(candidateOutcomes) ? candidateOutcomes : []
   if (OUTPUT_SHIFT_LOCK_EXCLUDED_PROBLEM_KEYS.has(startProblemKey)) {
-    return sourceRankings
+    return sourceCandidateOutcomes
   }
-  const startRankingIndex = sourceRankings.findIndex(
+  const startCandidateIndex = sourceCandidateOutcomes.findIndex(
     item => normalizeKey(item?.problemKey || '') === startProblemKey
   )
-  if (startRankingIndex <= 0) {
-    return sourceRankings
+  if (startCandidateIndex <= 0) {
+    return sourceCandidateOutcomes
   }
 
-  const startRanking = sourceRankings[startRankingIndex]
+  const startCandidateOutcome = sourceCandidateOutcomes[startCandidateIndex]
   const startProblemRole = normalizeKey(
-    startRanking?.problemRole || problemRoleByKey.get(startProblemKey) || ''
+    startCandidateOutcome?.problemRole || problemRoleByKey.get(startProblemKey) || ''
   )
-  if (!rankingConfig.supportRolesAsTop1.includes(startProblemRole)) {
-    return sourceRankings
+  if (!questionSelectionConfig.supportRolesAsTop1.includes(startProblemRole)) {
+    return sourceCandidateOutcomes
   }
 
   return [
-    startRanking,
-    ...sourceRankings.slice(0, startRankingIndex),
-    ...sourceRankings.slice(startRankingIndex + 1)
+    startCandidateOutcome,
+    ...sourceCandidateOutcomes.slice(0, startCandidateIndex),
+    ...sourceCandidateOutcomes.slice(startCandidateIndex + 1)
   ]
 }
 
@@ -970,14 +1046,14 @@ function hasFollowUpHistory({
   askedQuestionKeys = [],
   answeredQuestionGroupKeys = []
 } = {}) {
-  if (Number(round || 1) > 1) return true
-  if (Array.isArray(answers) && answers.length > 0) return true
-  if (Array.isArray(askedQuestionKeys) && askedQuestionKeys.length > 0) return true
-  if (Array.isArray(answeredQuestionGroupKeys) && answeredQuestionGroupKeys.length > 0) return true
+  if (Number(round || 1) > 1) {return true}
+  if (Array.isArray(answers) && answers.length > 0) {return true}
+  if (Array.isArray(askedQuestionKeys) && askedQuestionKeys.length > 0) {return true}
+  if (Array.isArray(answeredQuestionGroupKeys) && answeredQuestionGroupKeys.length > 0) {return true}
   return false
 }
 
-function canOpenNextFollowUpRound(round = 1) {
+function canOpenNextFollowUpRound() {
   return true
 }
 
@@ -1001,18 +1077,11 @@ const YELLOWING_GATE_CLASS_KEYS = new Set([
 
 const YELLOWING_PRIMARY_CLUE_GATE_QUESTION_KEY =
   'q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate'
-const YELLOWING_LEAF_AGE_PATTERN_QUESTION_KEY =
-  'q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern'
 const LEAF_YELLOWING_FERTILIZATION_BACKGROUND_QUESTION_KEY =
   'q_leaf_yellowing_fertilization_background'
 
 const STRUCTURAL_DAMAGE_CLASS_KEYS = new Set([
   'chewing_pest_mode'
-])
-
-const STRUCTURAL_DAMAGE_GATE_QUESTION_KEYS = new Set([
-  'q_observed_probe__holes_in_leaf__structural_cause',
-  'q_holes_in_leaf_confirm'
 ])
 
 const ROOT_ZONE_DETAIL_QUESTION_KEYS = new Set([
@@ -1037,27 +1106,17 @@ const YELLOWING_GATE_ALL_DIMENSIONS = [
   QUESTION_TARGET_DIMENSIONS.WATERING_FREQUENCY_CONTEXT,
   QUESTION_TARGET_DIMENSIONS.LIGHT_CHANGE_CONTEXT,
   QUESTION_TARGET_DIMENSIONS.FERTILIZATION_GROWTH_CONTEXT,
+  QUESTION_TARGET_DIMENSIONS.AIRFLOW_HUMIDITY_CONTEXT,
   QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED
 ]
 
-const YELLOWING_GATE_BRANCH_DIMENSIONS = [
-  QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE,
-  QUESTION_TARGET_DIMENSIONS.YELLOWING_LEAF_AGE_PATTERN,
-  QUESTION_TARGET_DIMENSIONS.YELLOWING_DISTRIBUTION_PATTERN
+const YELLOWING_REQUIRED_GROUP_DIMENSIONS = [
+  QUESTION_TARGET_DIMENSIONS.WATERING_FREQUENCY_CONTEXT,
+  QUESTION_TARGET_DIMENSIONS.LIGHT_CHANGE_CONTEXT,
+  QUESTION_TARGET_DIMENSIONS.FERTILIZATION_GROWTH_CONTEXT,
+  QUESTION_TARGET_DIMENSIONS.AIRFLOW_HUMIDITY_CONTEXT,
+  QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED
 ]
-
-const YELLOWING_PRIMARY_CLUE_NEXT_DIMENSIONS = {
-  care_context: QUESTION_TARGET_DIMENSIONS.YELLOWING_CARE_AREA_GATE,
-  pest_trace: QUESTION_TARGET_DIMENSIONS.PEST_TRACE_TYPE,
-  disease_trace: QUESTION_TARGET_DIMENSIONS.YELLOWING_DISEASE_TRACE_GATE
-}
-
-const YELLOWING_CARE_AREA_NEXT_DIMENSIONS = {
-  watering_area: QUESTION_TARGET_DIMENSIONS.WATERING_FREQUENCY_CONTEXT,
-  light_area: QUESTION_TARGET_DIMENSIONS.LIGHT_CHANGE_CONTEXT,
-  fertilization_area: QUESTION_TARGET_DIMENSIONS.FERTILIZATION_GROWTH_CONTEXT,
-  airflow_humidity_area: QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED
-}
 
 const YELLOWING_GATE_CONTEXT_DIMENSIONS_BY_PROBLEM = {
   low_light: [QUESTION_TARGET_DIMENSIONS.LIGHT_CHANGE_CONTEXT],
@@ -1067,10 +1126,12 @@ const YELLOWING_GATE_CONTEXT_DIMENSIONS_BY_PROBLEM = {
   underwatering: [QUESTION_TARGET_DIMENSIONS.WATERING_FREQUENCY_CONTEXT],
   root_stress: [
     QUESTION_TARGET_DIMENSIONS.WATERING_FREQUENCY_CONTEXT,
+    QUESTION_TARGET_DIMENSIONS.AIRFLOW_HUMIDITY_CONTEXT,
     QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED
   ],
   root_rot: [
     QUESTION_TARGET_DIMENSIONS.WATERING_FREQUENCY_CONTEXT,
+    QUESTION_TARGET_DIMENSIONS.AIRFLOW_HUMIDITY_CONTEXT,
     QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED
   ],
   iron_deficiency: [QUESTION_TARGET_DIMENSIONS.FERTILIZATION_GROWTH_CONTEXT],
@@ -1112,6 +1173,9 @@ const YELLOWING_GATE_DIMENSION_EQUIVALENTS = {
     QUESTION_TARGET_DIMENSIONS.FERTILIZATION_GROWTH_CONTEXT,
     QUESTION_TARGET_DIMENSIONS.FERTILIZATION_CONTEXT
   ],
+  [QUESTION_TARGET_DIMENSIONS.AIRFLOW_HUMIDITY_CONTEXT]: [
+    QUESTION_TARGET_DIMENSIONS.AIRFLOW_HUMIDITY_CONTEXT
+  ],
   [QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED]: [
     QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED,
     QUESTION_TARGET_DIMENSIONS.PROGRESSION
@@ -1120,7 +1184,7 @@ const YELLOWING_GATE_DIMENSION_EQUIVALENTS = {
 
 function resolveYellowingEquivalentDimensions(targetDimension = '') {
   const normalizedTargetDimension = normalizeQuestionTargetDimension(targetDimension, '')
-  if (!normalizedTargetDimension) return []
+  if (!normalizedTargetDimension) {return []}
 
   const equivalents = new Set([
     normalizedTargetDimension,
@@ -1207,6 +1271,38 @@ function hasAnsweredYellowingGateDimension(answeredDimensions = new Set(), targe
   return equivalents.some(dimension => answeredDimensions.has(dimension))
 }
 
+function resolveNextMissingYellowingGroupDimension(answeredDimensions = new Set()) {
+  return YELLOWING_REQUIRED_GROUP_DIMENSIONS.find(
+    dimension => !hasAnsweredYellowingGateDimension(answeredDimensions, dimension)
+  ) || ''
+}
+
+function isYellowingRequiredGroupComplete(askedQuestions = []) {
+  const answeredDimensions = collectAnsweredTargetDimensions(askedQuestions)
+  return !resolveNextMissingYellowingGroupDimension(answeredDimensions)
+}
+
+function shouldHoldYellowingRouteOutputForRequiredGroups({
+  diagnosisDirections = [],
+  observedSymptoms = [],
+  observedEvidenceSet = [],
+  visualCandidateSymptoms = [],
+  symptomClassRuntime = null,
+  answerRecords = []
+} = {}) {
+  const yellowingGateRuntimeActive = hasYellowingModeRuntime({
+    diagnosisDirections,
+    observedSymptoms,
+    observedEvidenceSet,
+    visualCandidateSymptoms,
+    symptomClassRuntime
+  })
+  return Boolean(
+    yellowingGateRuntimeActive &&
+    !isYellowingRequiredGroupComplete(answerRecords)
+  )
+}
+
 function isYellowingEquivalentDimensionAnswered(askedQuestions = [], question = {}) {
   const targetSymptomKey = normalizeKey(question?.targetSymptomKey || question?.target_symptom_key || '')
   if (!isYellowingGateSymptomKey(targetSymptomKey)) {
@@ -1235,18 +1331,18 @@ function findAnsweredOptionByTargetDimension(askedQuestions = [], targetDimensio
     const itemDimension =
       normalizeQuestionTargetDimension(item?.targetDimension || item?.target_dimension || '', '') ||
       normalizeQuestionTargetDimension(parsedSyntheticObservedProbe?.targetDimension || '', '')
-    if (!itemDimension || !equivalents.has(itemDimension)) continue
+    if (!itemDimension || !equivalents.has(itemDimension)) {continue}
     const optionKey = normalizeKey(item?.optionKey || item?.answerValue || item?.answer_value || '').toLowerCase()
-    if (optionKey) return optionKey
+    if (optionKey) {return optionKey}
   }
   return ''
 }
 
 function hasAnsweredOptionForTargetDimension(askedQuestions = [], targetDimension = '', optionKey = '') {
   const expectedOptionKey = normalizeKey(optionKey)
-  if (!expectedOptionKey) return false
+  if (!expectedOptionKey) {return false}
   const equivalents = new Set(resolveYellowingEquivalentDimensions(targetDimension))
-  if (!equivalents.size) return false
+  if (!equivalents.size) {return false}
 
   return (Array.isArray(askedQuestions) ? askedQuestions : []).some(item => {
     const questionKey = normalizeKey(item?.questionKey || item?.question_key || item?.symptom_key || '')
@@ -1254,7 +1350,7 @@ function hasAnsweredOptionForTargetDimension(askedQuestions = [], targetDimensio
     const itemDimension =
       normalizeQuestionTargetDimension(item?.targetDimension || item?.target_dimension || '', '') ||
       normalizeQuestionTargetDimension(parsedSyntheticObservedProbe?.targetDimension || '', '')
-    if (!itemDimension || !equivalents.has(itemDimension)) return false
+    if (!itemDimension || !equivalents.has(itemDimension)) {return false}
     return normalizeKey(item?.optionKey || item?.option_key || item?.answerValue || item?.answer_value || '') ===
       expectedOptionKey
   })
@@ -1262,8 +1358,8 @@ function hasAnsweredOptionForTargetDimension(askedQuestions = [], targetDimensio
 
 function isQuestionDimensionEquivalentToAllowed(allowedDimensions = new Set(), targetDimension = '') {
   const normalizedTargetDimension = normalizeQuestionTargetDimension(targetDimension, '')
-  if (!normalizedTargetDimension) return true
-  if (allowedDimensions.has(normalizedTargetDimension)) return true
+  if (!normalizedTargetDimension) {return true}
+  if (allowedDimensions.has(normalizedTargetDimension)) {return true}
   for (const allowedDimension of allowedDimensions) {
     const equivalents = resolveYellowingEquivalentDimensions(allowedDimension)
     if (equivalents.includes(normalizedTargetDimension)) {
@@ -1273,55 +1369,46 @@ function isQuestionDimensionEquivalentToAllowed(allowedDimensions = new Set(), t
   return false
 }
 
-function collectYellowingAllowedDimensionsForAnsweredBranch(askedQuestions = []) {
-  const primaryClue = findAnsweredOptionByTargetDimension(
-    askedQuestions,
-    QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE
+function isTargetDimensionInYellowingRequiredGroups(targetDimension = '') {
+  const normalizedTargetDimension = normalizeQuestionTargetDimension(targetDimension, '')
+  if (!normalizedTargetDimension) {return false}
+  if (YELLOWING_REQUIRED_GROUP_DIMENSIONS.includes(normalizedTargetDimension)) {return true}
+  return YELLOWING_REQUIRED_GROUP_DIMENSIONS.some(requiredDimension =>
+    resolveYellowingEquivalentDimensions(requiredDimension).includes(normalizedTargetDimension)
   )
-  if (!primaryClue) return null
-
-  const allowed = new Set([QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE])
-  if (primaryClue === 'care_context') {
-    allowed.add(QUESTION_TARGET_DIMENSIONS.YELLOWING_CARE_AREA_GATE)
-    const careArea = findAnsweredOptionByTargetDimension(
-      askedQuestions,
-      QUESTION_TARGET_DIMENSIONS.YELLOWING_CARE_AREA_GATE
-    )
-    const careNextDimension = YELLOWING_CARE_AREA_NEXT_DIMENSIONS[careArea]
-    if (careNextDimension) {
-      allowed.add(careNextDimension)
-      if (
-        [
-          'watering_area',
-          'light_area',
-          'airflow_humidity_area'
-        ].includes(careArea)
-      ) {
-        allowed.add(QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED)
-      }
-    }
-    return allowed
-  }
-  if (primaryClue === 'pest_trace') {
-    allowed.add(QUESTION_TARGET_DIMENSIONS.PEST_TRACE_TYPE)
-    return allowed
-  }
-  if (primaryClue === 'disease_trace') {
-    allowed.add(QUESTION_TARGET_DIMENSIONS.YELLOWING_DISEASE_TRACE_GATE)
-    allowed.add(QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED)
-    return allowed
-  }
-  if (primaryClue === 'yellowing_only' || primaryClue === 'unknown') {
-    allowed.add(QUESTION_TARGET_DIMENSIONS.YELLOWING_LEAF_AGE_PATTERN)
-    allowed.add(QUESTION_TARGET_DIMENSIONS.YELLOWING_DISTRIBUTION_PATTERN)
-    return allowed
-  }
-  return null
 }
 
-function isYellowingFollowUpAllowedByAnsweredBranch(askedQuestions = [], question = {}) {
+function collectYellowingAllowedDimensionsForAnsweredBranch(askedQuestions = []) {
+  const answeredDimensions = collectAnsweredTargetDimensions(askedQuestions)
+  const allowed = new Set(
+    YELLOWING_REQUIRED_GROUP_DIMENSIONS.filter(dimension =>
+      hasAnsweredYellowingGateDimension(answeredDimensions, dimension)
+    )
+  )
+  const nextMissingDimension = resolveNextMissingYellowingGroupDimension(answeredDimensions)
+  if (nextMissingDimension) {
+    allowed.add(nextMissingDimension)
+  }
+  return allowed.size ? allowed : null
+}
+
+function isYellowingFollowUpAllowedByAnsweredBranch(askedQuestions = [], question = {}, options = {}) {
+  const { yellowingGateMode = false } = options || {}
+  if (yellowingGateMode) {
+    const targetDimension = normalizeQuestionTargetDimension(
+      question?.targetDimension || question?.target_dimension || '',
+      ''
+    )
+    if (!isTargetDimensionInYellowingRequiredGroups(targetDimension)) {
+      return false
+    }
+  }
   const targetSymptomKey = normalizeKey(question?.targetSymptomKey || question?.target_symptom_key || '')
-  if (!isYellowingGateSymptomKey(targetSymptomKey)) {
+  if (!isYellowingGateSymptomKey(targetSymptomKey) && !yellowingGateMode) {
+    return true
+  }
+  const allowedDimensions = collectYellowingAllowedDimensionsForAnsweredBranch(askedQuestions)
+  if (!allowedDimensions) {
     return true
   }
   const targetDimension = normalizeQuestionTargetDimension(
@@ -1329,18 +1416,14 @@ function isYellowingFollowUpAllowedByAnsweredBranch(askedQuestions = [], questio
     ''
   )
   if (!targetDimension) {
-    return true
-  }
-  const allowedDimensions = collectYellowingAllowedDimensionsForAnsweredBranch(askedQuestions)
-  if (!allowedDimensions) {
-    return true
+    return false
   }
   return isQuestionDimensionEquivalentToAllowed(allowedDimensions, targetDimension)
 }
 
 function getAnsweredOptionKey(answerLikeRecords = [], questionKey = '') {
   const normalizedQuestionKey = normalizeKey(questionKey)
-  if (!normalizedQuestionKey) return ''
+  if (!normalizedQuestionKey) {return ''}
   const found = (Array.isArray(answerLikeRecords) ? answerLikeRecords : [])
     .slice()
     .reverse()
@@ -1352,7 +1435,7 @@ function countAnsweredQuestions(answerLikeRecords = [], questionKeys = new Set()
   const normalizedQuestionKeys = new Set(
     Array.from(questionKeys || []).map(item => normalizeKey(item)).filter(Boolean)
   )
-  if (!normalizedQuestionKeys.size) return 0
+  if (!normalizedQuestionKeys.size) {return 0}
   return (Array.isArray(answerLikeRecords) ? answerLikeRecords : [])
     .filter(item => normalizedQuestionKeys.has(normalizeKey(item?.questionKey || item?.question_key || '')))
     .length
@@ -1389,6 +1472,175 @@ function collectAnswerRouteRecords(answers = [], askedQuestionRows = []) {
     .filter(item => item.questionKey)
 }
 
+function collectRouteAnswerRecordsForDecision({
+  answers = [],
+  answeredFollowUpAnswerRecords = []
+} = {}) {
+  const recordsByQuestionKey = new Map()
+  for (const item of Array.isArray(answeredFollowUpAnswerRecords) ? answeredFollowUpAnswerRecords : []) {
+    const questionKey = normalizeKey(item?.questionKey || item?.question_key || '')
+    const optionKey = normalizeKey(item?.optionKey || item?.option_key || item?.answerValue || item?.answer_value || '')
+    if (!questionKey || !optionKey) {continue}
+    if (isDisabledYellowingFlowQuestion(item)) {continue}
+    recordsByQuestionKey.set(questionKey, {
+      ...item,
+      questionKey,
+      optionKey
+    })
+  }
+  for (const item of Array.isArray(answers) ? answers : []) {
+    const questionKey = normalizeKey(item?.questionKey || item?.question_key || '')
+    const optionKey = normalizeKey(item?.optionKey || item?.option_key || item?.answerValue || item?.answer_value || '')
+    if (!questionKey || !optionKey) {continue}
+    if (isDisabledYellowingFlowQuestion(item)) {continue}
+    recordsByQuestionKey.set(questionKey, {
+      ...item,
+      questionKey,
+      optionKey
+    })
+  }
+  return Array.from(recordsByQuestionKey.values())
+}
+
+function collectMatchedRouteEffectOutcomeKeys(routeAnswerEffects = [], answers = []) {
+  const answeredPairSet = new Set(
+    (Array.isArray(answers) ? answers : [])
+      .filter(item => !isDisabledYellowingFlowQuestion(item))
+      .map(item => {
+        const questionKey = normalizeKey(item?.questionKey || item?.question_key || '')
+        const optionKey = normalizeKey(item?.optionKey || item?.option_key || item?.answerValue || item?.answer_value || '')
+        return questionKey && optionKey ? `${questionKey}:${optionKey}` : ''
+      })
+      .filter(Boolean)
+  )
+
+  return Array.from(
+    new Set(
+      (Array.isArray(routeAnswerEffects) ? routeAnswerEffects : [])
+        .filter(item => {
+          if (isDisabledYellowingFlowQuestion(item)) {return false}
+          const questionKey = normalizeKey(item?.questionKey || item?.question_key || '')
+          const optionKey = normalizeKey(item?.optionKey || item?.option_key || '')
+          return questionKey && optionKey && answeredPairSet.has(`${questionKey}:${optionKey}`)
+        })
+        .flatMap(item => [
+          item?.outcomeKey || item?.outcome_key || '',
+          item?.redirectOutcomeKey || item?.redirect_outcome_key || ''
+        ])
+        .map(item => normalizeKey(item))
+        .filter(Boolean)
+    )
+  )
+}
+
+function buildRouteAnswerEffectDedupKey(effect = {}) {
+  return [
+    effect?.questionKey || effect?.question_key || '',
+    effect?.optionKey || effect?.option_key || '',
+    effect?.outcomeKey || effect?.outcome_key || '',
+    effect?.redirectOutcomeKey || effect?.redirect_outcome_key || '',
+    effect?.routeKey || effect?.route_key || '',
+    effect?.effectType || effect?.effect_type || ''
+  ]
+    .map(item => normalizeKey(item))
+    .join('::')
+}
+
+function collectRouteAnswerEffectQuestionKeySet(routeAnswerEffects = []) {
+  return new Set(
+    (Array.isArray(routeAnswerEffects) ? routeAnswerEffects : [])
+      .filter(item => !isDisabledYellowingFlowQuestion(item))
+      .map(item => normalizeKey(item?.questionKey || item?.question_key || ''))
+      .filter(Boolean)
+  )
+}
+
+function mergeRouteAnswerEffects(preloadedRouteAnswerEffects = [], fetchedRouteAnswerEffects = []) {
+  const mergedEffects = new Map()
+  for (const effect of [
+    ...(Array.isArray(preloadedRouteAnswerEffects) ? preloadedRouteAnswerEffects : []),
+    ...(Array.isArray(fetchedRouteAnswerEffects) ? fetchedRouteAnswerEffects : [])
+  ]) {
+    if (isDisabledYellowingFlowQuestion(effect)) {continue}
+    const dedupKey = buildRouteAnswerEffectDedupKey(effect)
+    if (!dedupKey || mergedEffects.has(dedupKey)) {continue}
+    mergedEffects.set(dedupKey, effect)
+  }
+  return Array.from(mergedEffects.values())
+}
+
+async function resolveRouteAnswerEffectsForFastPath({
+  routeAnswerEffectQuestionKeys = [],
+  preloadedRouteAnswerEffects = null,
+  routeAnswerEffectsFetcher = null
+} = {}) {
+  const normalizedQuestionKeys = Array.from(
+    new Set(
+      (Array.isArray(routeAnswerEffectQuestionKeys) ? routeAnswerEffectQuestionKeys : [])
+        .map(item => normalizeKey(item))
+        .filter(Boolean)
+    )
+  )
+  const safePreloadedRouteAnswerEffects = Array.isArray(preloadedRouteAnswerEffects)
+    ? preloadedRouteAnswerEffects
+    : null
+  const preloadedQuestionKeySet = safePreloadedRouteAnswerEffects
+    ? collectRouteAnswerEffectQuestionKeySet(safePreloadedRouteAnswerEffects)
+    : new Set()
+  const missingQuestionKeys = normalizedQuestionKeys.filter(
+    questionKey => !preloadedQuestionKeySet.has(questionKey)
+  )
+
+  if (!normalizedQuestionKeys.length) {
+    return {
+      ok: true,
+      routeAnswerEffects: [],
+      missingQuestionKeys: [],
+      fetchedQuestionKeys: []
+    }
+  }
+
+  if (safePreloadedRouteAnswerEffects && !missingQuestionKeys.length) {
+    return {
+      ok: true,
+      routeAnswerEffects: mergeRouteAnswerEffects(safePreloadedRouteAnswerEffects, []),
+      missingQuestionKeys: [],
+      fetchedQuestionKeys: [],
+      usedPreloadedOnly: true
+    }
+  }
+
+  if (typeof routeAnswerEffectsFetcher !== 'function') {
+    throw new Error('routeAnswerEffectsFetcher is required')
+  }
+
+  const fetchQuestionKeys = missingQuestionKeys.length
+    ? missingQuestionKeys
+    : normalizedQuestionKeys
+  try {
+    const fetchedRouteAnswerEffects = await routeAnswerEffectsFetcher(fetchQuestionKeys)
+    return {
+      ok: true,
+      routeAnswerEffects: mergeRouteAnswerEffects(
+        safePreloadedRouteAnswerEffects || [],
+        fetchedRouteAnswerEffects
+      ),
+      missingQuestionKeys,
+      fetchedQuestionKeys: fetchQuestionKeys,
+      usedPreloadedOnly: false
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      error,
+      routeAnswerEffects: [],
+      missingQuestionKeys,
+      fetchedQuestionKeys: fetchQuestionKeys,
+      usedPreloadedOnly: false
+    }
+  }
+}
+
 function resolveRuntimeClassKey(symptomClassRuntime = null) {
   return normalizeKey(
     symptomClassRuntime?.currentClassKey ||
@@ -1413,10 +1665,20 @@ function shouldBlockFollowUpByRouteConstraint(question = {}, {
   symptomClassRuntime = null
 } = {}) {
   const questionKey = normalizeKey(question?.questionKey || question?.question_key || '')
-  if (!questionKey) return false
+  if (!questionKey) {return false}
+  const questionTargetDimension = normalizeQuestionTargetDimension(
+    question?.targetDimension || question?.target_dimension || '',
+    ''
+  )
 
   const runtimeClassKey = resolveRuntimeClassKey(symptomClassRuntime)
   const answerRouteRecords = collectAnswerRouteRecords(answers, askedQuestionRows)
+  if (
+    YELLOWING_GATE_CLASS_KEYS.has(runtimeClassKey) &&
+    isDisabledYellowingFlowQuestion(question)
+  ) {
+    return true
+  }
   const yellowingPrimaryClue = getAnsweredOptionKey(
     answerRouteRecords,
     YELLOWING_PRIMARY_CLUE_GATE_QUESTION_KEY
@@ -1425,7 +1687,7 @@ function shouldBlockFollowUpByRouteConstraint(question = {}, {
   if (
     YELLOWING_GATE_CLASS_KEYS.has(runtimeClassKey) &&
     !yellowingPrimaryClue &&
-    questionKey !== YELLOWING_PRIMARY_CLUE_GATE_QUESTION_KEY
+    !YELLOWING_REQUIRED_GROUP_DIMENSIONS.includes(questionTargetDimension)
   ) {
     return true
   }
@@ -1523,6 +1785,14 @@ async function buildYellowingGateDimensionQuestion({
   plantContext = {},
   weatherContext = null
 } = {}) {
+  const questionKey = buildSyntheticObservedProbeQuestionKey('leaf_yellowing', targetDimension)
+  if (isDisabledYellowingFlowQuestion({
+    questionKey,
+    targetSymptomKey: 'leaf_yellowing',
+    targetDimension
+  })) {
+    return []
+  }
   const representativeSymptom = buildYellowingGateRepresentativeSymptom({
     observedSymptoms,
     observedEvidenceSet,
@@ -1531,12 +1801,12 @@ async function buildYellowingGateDimensionQuestion({
   const excludedDimensions = YELLOWING_GATE_ALL_DIMENSIONS
     .filter(dimension => dimension !== targetDimension)
     .concat(Array.from(answeredDimensions))
-  const questionKey = buildSyntheticObservedProbeQuestionKey('leaf_yellowing', targetDimension)
   const questionTemplates = await getQuestionsByKeys([questionKey])
   const optionTemplates = await getQuestionOptionMappings([questionKey])
   return buildSyntheticObservedProbeQuestions(representativeSymptom, {
     maxQuestions: 1,
     excludedDimensions,
+    preferredDimensions: [targetDimension],
     plantContext,
     weatherContext,
     questionTemplates,
@@ -1545,7 +1815,7 @@ async function buildYellowingGateDimensionQuestion({
 }
 
 async function buildYellowingGateFollowUps({
-  rankings = [],
+  candidateOutcomes = [],
   diagnosisDirections = [],
   observedSymptoms = [],
   observedEvidenceSet = [],
@@ -1555,6 +1825,7 @@ async function buildYellowingGateFollowUps({
   plantContext = {},
   weatherContext = null
 } = {}) {
+  const effectiveCandidateOutcomes = Array.isArray(candidateOutcomes) ? candidateOutcomes : []
   if (
     !hasYellowingModeRuntime({
       diagnosisDirections,
@@ -1569,12 +1840,10 @@ async function buildYellowingGateFollowUps({
 
   const answeredDimensions = collectAnsweredTargetDimensions(askedQuestions)
 
-  if (!hasAnsweredYellowingGateDimension(
-    answeredDimensions,
-    QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE
-  )) {
+  const missingGroupDimension = resolveNextMissingYellowingGroupDimension(answeredDimensions)
+  if (missingGroupDimension) {
     return buildYellowingGateDimensionQuestion({
-      targetDimension: QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE,
+      targetDimension: missingGroupDimension,
       observedSymptoms,
       observedEvidenceSet,
       visualCandidateSymptoms,
@@ -1584,66 +1853,7 @@ async function buildYellowingGateFollowUps({
     })
   }
 
-  const primaryClue = findAnsweredOptionByTargetDimension(
-    askedQuestions,
-    QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE
-  )
-  const primaryNextDimension = YELLOWING_PRIMARY_CLUE_NEXT_DIMENSIONS[primaryClue]
-  if (
-    primaryNextDimension &&
-    !hasAnsweredYellowingGateDimension(answeredDimensions, primaryNextDimension)
-  ) {
-    return buildYellowingGateDimensionQuestion({
-      targetDimension: primaryNextDimension,
-      observedSymptoms,
-      observedEvidenceSet,
-      visualCandidateSymptoms,
-      answeredDimensions,
-      plantContext,
-      weatherContext
-    })
-  }
-
-  if (primaryClue === 'care_context') {
-    const careArea = findAnsweredOptionByTargetDimension(
-      askedQuestions,
-      QUESTION_TARGET_DIMENSIONS.YELLOWING_CARE_AREA_GATE
-    )
-    const careNextDimension = YELLOWING_CARE_AREA_NEXT_DIMENSIONS[careArea]
-    if (
-      careNextDimension &&
-      !hasAnsweredYellowingGateDimension(answeredDimensions, careNextDimension)
-    ) {
-      return buildYellowingGateDimensionQuestion({
-        targetDimension: careNextDimension,
-        observedSymptoms,
-        observedEvidenceSet,
-        visualCandidateSymptoms,
-        answeredDimensions,
-        plantContext,
-        weatherContext
-      })
-    }
-  }
-
-  if (['yellowing_only', 'unknown', ''].includes(primaryClue)) {
-    const missingBranchDimension = YELLOWING_GATE_BRANCH_DIMENSIONS
-      .filter(dimension => dimension !== QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE)
-      .find(dimension => !hasAnsweredYellowingGateDimension(answeredDimensions, dimension))
-    if (missingBranchDimension) {
-      return buildYellowingGateDimensionQuestion({
-        targetDimension: missingBranchDimension,
-        observedSymptoms,
-        observedEvidenceSet,
-        visualCandidateSymptoms,
-        answeredDimensions,
-        plantContext,
-        weatherContext
-      })
-    }
-  }
-
-  const topProblemKey = normalizeKey(rankings?.[0]?.problemKey || '')
+  const topProblemKey = normalizeKey(effectiveCandidateOutcomes?.[0]?.problemKey || '')
   const requiredContextDimensions =
     YELLOWING_GATE_CONTEXT_DIMENSIONS_BY_PROBLEM[topProblemKey] || []
   const missingContextDimension = requiredContextDimensions.find(
@@ -1752,7 +1962,7 @@ async function buildCandidatePriors(
 }
 
 async function buildFollowUps({
-  rankings = [],
+  candidateOutcomes = [],
   observedSymptoms = [],
   observedEvidenceSet = [],
   visualAggregateResult = null,
@@ -1767,9 +1977,10 @@ async function buildFollowUps({
   suggestedFollowupCapture = [],
   visualRoutePrimaryAction = '',
   blockedTargetSymptomKeys = [],
-  maxQuestions = rankingConfig.maxQuestionsPerRound
+  maxQuestions = questionSelectionConfig.maxQuestionsPerRound
 } = {}) {
-  const topProblemKeys = rankings.slice(0, 3).map(item => item.problemKey)
+  const effectiveCandidateOutcomes = Array.isArray(candidateOutcomes) ? candidateOutcomes : []
+  const topProblemKeys = effectiveCandidateOutcomes.slice(0, 3).map(item => item.problemKey)
   const classGatedGroupStrategies = normalizeClassGatedGroupStrategies(symptomClassRuntime)
   const restrictToControlledFallback =
     shouldRestrictToControlledFallback(symptomClassRuntime) ||
@@ -1798,7 +2009,7 @@ async function buildFollowUps({
       symptomClassRuntime,
       problemStrategies,
       groupQuestions: classGroupQuestions,
-      rankings
+      candidateOutcomes: effectiveCandidateOutcomes
     })
 
     if (classGatedStrategies.length && classGroupQuestions.length) {
@@ -1916,7 +2127,7 @@ async function buildFollowUps({
   )
   const strategyFollowUps = remainingQuestionBudget > 0
     ? selectFollowUpQuestions({
-        rankings,
+        candidateOutcomes: effectiveCandidateOutcomes,
         strategies,
         questions,
         optionMappings,
@@ -1946,10 +2157,10 @@ async function buildFollowUps({
     ...visualCandidateSeedFollowUps,
     ...strategyFollowUps.filter(item => {
       const groupKey = String(item?.questionGroupKey || '').trim()
-      if (selectedSeedQuestionKeys.includes(item?.questionKey)) return false
-      if (groupKey && selectedSeedGroupKeys.has(groupKey)) return false
-      if (selectedVisualCandidateQuestionKeys.includes(item?.questionKey)) return false
-      if (groupKey && selectedVisualCandidateGroupKeys.has(groupKey)) return false
+      if (selectedSeedQuestionKeys.includes(item?.questionKey)) {return false}
+      if (groupKey && selectedSeedGroupKeys.has(groupKey)) {return false}
+      if (selectedVisualCandidateQuestionKeys.includes(item?.questionKey)) {return false}
+      if (groupKey && selectedVisualCandidateGroupKeys.has(groupKey)) {return false}
       if (
         shouldBlockMorphologySiblingQuestion(
           item?.targetSymptomKey,
@@ -1980,13 +2191,15 @@ async function buildProblemScopedFollowUps({
   preferredQuestionKeys = [],
   preferredTargetSymptomKeys = [],
   restrictToPreferred = false,
-  maxQuestions = rankingConfig.maxQuestionsPerRound
+  plantContext = {},
+  weatherContext = null,
+  maxQuestions = questionSelectionConfig.maxQuestionsPerRound
 } = {}) {
   const safeProblemKey = String(problemKey || '').trim()
-  if (!safeProblemKey) return []
+  if (!safeProblemKey) {return []}
 
   const strategies = await getQuestionStrategies([safeProblemKey])
-  if (!strategies.length) return []
+  if (!strategies.length) {return []}
 
   const questionKeys = Array.from(new Set(strategies.map(item => item.questionKey).filter(Boolean)))
   const questions = await getQuestionsByKeys(questionKeys)
@@ -2003,7 +2216,7 @@ async function buildProblemScopedFollowUps({
   const filteredQuestions = filterReturnToVisualPresenceQuestions(
     questions,
     effectiveAskedQuestions
-  )
+  ).filter(question => !isDisabledYellowingFlowQuestion(question))
   const filteredQuestionKeySet = new Set(filteredQuestions.map(item => item.questionKey))
   const preferredQuestionKeySet = new Set(
     (Array.isArray(preferredQuestionKeys) ? preferredQuestionKeys : [])
@@ -2034,7 +2247,7 @@ async function buildProblemScopedFollowUps({
     const preferredStrategies = strategies
       .filter(strategy => {
         const question = questionMap.get(strategy.questionKey)
-        if (!question) return false
+        if (!question) {return false}
         if (preferredQuestionKeySet.has(question.questionKey)) {
           return true
         }
@@ -2044,8 +2257,8 @@ async function buildProblemScopedFollowUps({
 
     for (const strategy of preferredStrategies) {
       const question = questionMap.get(strategy.questionKey)
-      if (!question) continue
-      if (askedQuestionSet.has(question.questionKey)) continue
+      if (!question) {continue}
+      if (askedQuestionSet.has(question.questionKey)) {continue}
       const answeredYellowingPrimaryClue = findAnsweredOptionByTargetDimension(
         effectiveAskedQuestions,
         QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE
@@ -2079,7 +2292,11 @@ async function buildProblemScopedFollowUps({
       }
 
       selectedPreferredQuestions.push(
-        buildStaticFollowUpQuestionPayload(question, optionMap.get(question.questionKey) || [])
+        buildStaticFollowUpQuestionPayload(
+          question,
+          optionMap.get(question.questionKey) || [],
+          { plantContext, weatherContext }
+        )
       )
       if (groupKey !== '__default__') {
         usedGroups.add(groupKey)
@@ -2094,11 +2311,10 @@ async function buildProblemScopedFollowUps({
     }
   }
 
-  return selectFollowUpQuestions({
-    rankings: [{
+  const selectedStrategyQuestions = await selectFollowUpQuestions({
+    candidateOutcomes: [{
       problemKey: safeProblemKey,
-      finalScore: 1,
-      baseScore: 1
+      evidenceWeight: 1
     }],
     strategies: strategies.filter(item => filteredQuestionKeySet.has(item.questionKey)),
     questions: filteredQuestions,
@@ -2116,6 +2332,14 @@ async function buildProblemScopedFollowUps({
     diagnosisDirections,
     maxQuestions
   })
+
+  return selectedStrategyQuestions.map(item =>
+    buildStaticFollowUpQuestionPayload(
+      item,
+      optionMap.get(item.questionKey) || [],
+      { plantContext, weatherContext }
+    )
+  )
 }
 
 function collectMappedSymptomKeysFromAnswers(answers = [], optionMappings = []) {
@@ -2134,12 +2358,12 @@ function parseFollowUpRationaleMeta(rationale = '') {
   }
 
   const raw = String(rationale || '').trim()
-  if (!raw) return {}
+  if (!raw) {return {}}
 
   try {
     const parsed = JSON.parse(raw)
     return parsed && typeof parsed === 'object' ? parsed : {}
-  } catch (error) {
+  } catch {
     return {}
   }
 }
@@ -2171,7 +2395,7 @@ function mergeAskedQuestionRows(...groups) {
 
   for (const item of groups.flat()) {
     const questionKey = normalizeKey(item?.questionKey || item?.question_key || item?.symptom_key || '')
-    if (!questionKey) continue
+    if (!questionKey) {continue}
 
     const existing = map.get(questionKey) || {}
     const parsedSyntheticObservedProbe = parseSyntheticObservedProbeQuestionKey(questionKey)
@@ -2235,7 +2459,7 @@ function collectNegativeTargetSymptomKeysFromAnswers({
   for (const answer of Array.isArray(answers) ? answers : []) {
     const questionKey = String(answer?.questionKey || '').trim()
     const optionKey = String(answer?.optionKey || '').trim()
-    if (!questionKey || !optionKey) continue
+    if (!questionKey || !optionKey) {continue}
 
     const question = questionByKey.get(questionKey) || null
     const option =
@@ -2291,12 +2515,12 @@ function collectPositiveMappedObservedSymptomsFromAnswers(answers = [], optionMa
   const observedMap = new Map()
 
   for (const item of optionMappings || []) {
-    if (!answerKeySet.has(`${item.questionKey}::${item.optionKey}`)) continue
+    if (!answerKeySet.has(`${item.questionKey}::${item.optionKey}`)) {continue}
 
     const mappedSymptomKey = String(item.mapsToSymptomKey || '').trim()
     const answerValue = Number(item.value || 0)
     const associationStrength = clamp01(item.associationStrength)
-    if (!mappedSymptomKey || answerValue <= 0 || associationStrength <= 0) continue
+    if (!mappedSymptomKey || answerValue <= 0 || associationStrength <= 0) {continue}
 
     const confidence = clamp01(Math.max(answerValue, associationStrength))
     const current = observedMap.get(mappedSymptomKey)
@@ -2427,7 +2651,7 @@ function buildStrongVisualPresenceSymptomKeys(observedEvidenceSet = []) {
 
   for (const item of Array.isArray(observedEvidenceSet) ? observedEvidenceSet : []) {
     const symptomKey = String(item?.symptomKey || '').trim()
-    if (!symptomKey) continue
+    if (!symptomKey) {continue}
 
     const sourceType = String(item?.sourceType || item?.source_type || '').trim()
     const currentStatus = String(item?.currentStatus || item?.current_status || 'active').trim()
@@ -2468,7 +2692,7 @@ function filterFinalVisualPresenceFollowUps(
 
   return (Array.isArray(followUps) ? followUps : []).filter(item => {
     const targetSymptomKey = String(item?.targetSymptomKey || '').trim()
-    if (!targetSymptomKey) return true
+    if (!targetSymptomKey) {return true}
 
     const targetDimension = normalizeQuestionTargetDimension(
       item?.targetDimension,
@@ -2491,7 +2715,7 @@ function filterFinalVisualPresenceFollowUps(
 
     for (const askedQuestion of effectiveAskedQuestions) {
       const askedTargetSymptomKey = String(askedQuestion?.targetSymptomKey || '').trim()
-      if (!askedTargetSymptomKey) continue
+      if (!askedTargetSymptomKey) {continue}
 
       const askedTargetDimension = normalizeQuestionTargetDimension(
         askedQuestion?.targetDimension,
@@ -2903,7 +3127,7 @@ function collectVisualCandidateSymptoms(visualAggregateResult = null, symptomDic
         item?.candidate?.symptomKey ||
         ''
     ).trim()
-    if (!symptomKey) continue
+    if (!symptomKey) {continue}
 
     const candidate = item?.candidate || aggregatedCandidateMap.get(symptomKey) || {}
     const symptomMeta = symptomMap.get(symptomKey) || {}
@@ -2968,10 +3192,10 @@ function collectVisualCandidateSymptoms(visualAggregateResult = null, symptomDic
         item?.closestSymptomKeyHint ||
         ''
     )
-    if (!symptomKey) continue
+    if (!symptomKey) {continue}
 
     const symptomMeta = symptomMap.get(symptomKey) || {}
-    if (!normalizeKey(symptomMeta?.symptomKey || '')) continue
+    if (!normalizeKey(symptomMeta?.symptomKey || '')) {continue}
 
     const hintCount = Math.max(1, Number(
       item?.support_count ||
@@ -3062,7 +3286,7 @@ function normalizeOutOfPoolMappingComparableText(value = '') {
   return String(value || '')
     .trim()
     .toLowerCase()
-    .replace(/[\s_\-]+/g, ' ')
+    .replace(/[\s_-]+/g, ' ')
     .replace(/[^a-z0-9\u4e00-\u9fff\s]+/g, '')
     .replace(/\s+/g, ' ')
     .trim()
@@ -3085,8 +3309,8 @@ function hasOutOfPoolMappingMatch(rawNames = [], mappingTerms = []) {
 
   return mappingTerms.some(term => {
     const normalizedTerm = normalizeOutOfPoolMappingComparableText(term)
-    if (!normalizedTerm) return false
-    if (rawSet.has(normalizedTerm)) return true
+    if (!normalizedTerm) {return false}
+    if (rawSet.has(normalizedTerm)) {return true}
 
     return normalizedRawNames.some(rawName =>
       rawName.includes(normalizedTerm) || normalizedTerm.includes(rawName)
@@ -3201,7 +3425,7 @@ function buildOutOfPoolObservationFallback(decisionCause = null) {
 
 function buildSyntheticVisualCandidateQuestion(item = {}) {
   const symptomKey = String(item?.symptomKey || '').trim()
-  if (!symptomKey) return null
+  if (!symptomKey) {return null}
 
   const symptomLabel = String(item?.symptomCn || symptomKey).trim() || symptomKey
   const helpText =
@@ -3238,6 +3462,25 @@ function buildFollowUpPayload(question = {}) {
     question.effectMode || question.effect_mode || '',
     inferQuestionEffectMode(questionRole, question.targetDimension || question.target_dimension || '')
   )
+  const templateVariables = buildTemplateVariables(question, {
+    plantContext:
+      question?.plantContext ||
+      (Object.prototype.hasOwnProperty.call(question, 'plantContext')
+        ? question.plantContext
+        : null) ||
+      {},
+    weatherContext:
+      Object.prototype.hasOwnProperty.call(question, 'weatherContext')
+        ? question.weatherContext
+        : null
+  })
+  const render = text => renderQuestionTemplate(text, templateVariables)
+  const normalizeRendered = value => String(value || '')
+    .replace(/\{\{\s*[a-zA-Z0-9_.-]+\s*\}\}/g, '')
+    .replace(/\s+([\u3002\uFF0C\uFF1B\uFF1F\uFF01])/g, '$1')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+
   return {
     questionId: toQuestionId(question.questionKey),
     questionKey: question.questionKey,
@@ -3254,13 +3497,29 @@ function buildFollowUpPayload(question = {}) {
     questionCategory: questionRole,
     effectMode,
     type: question.questionType || 'single_choice',
-    text: question.questionText || '',
-    helpText: question.helpText || '',
+    text: normalizeRendered(
+      render(question.questionTextUserCn || question.questionTextCn || question.questionText || '')
+    ),
+    helpText: normalizeRendered(
+      render(question.helpTextUserCn || question.helpTextCn || question.helpText || '')
+    ),
     options: (Array.isArray(question.options) ? question.options : []).map(option => ({
       optionId: toOptionId(option.optionKey),
       optionKey: option.optionKey,
-      text: option.text || '',
-      description: option.description || option.desc || '',
+      text: normalizeRendered(
+        render(
+          option.textUserCn ||
+            option.textCn ||
+            option.text ||
+            option.optionTextUserCn ||
+            option.optionTextCn ||
+            option.optionText ||
+            ''
+        )
+      ),
+      description: normalizeRendered(
+        render(option.description || option.desc || option.optionDescriptionUserCn || '')
+      ),
       isDefault: Boolean(option.isDefault)
     }))
   }
@@ -3270,7 +3529,7 @@ function groupQuestionOptionMappings(optionMappings = []) {
   const map = new Map()
   for (const row of Array.isArray(optionMappings) ? optionMappings : []) {
     const questionKey = String(row?.questionKey || '').trim()
-    if (!questionKey) continue
+    if (!questionKey) {continue}
     const list = map.get(questionKey) || []
     list.push(row)
     map.set(questionKey, list)
@@ -3292,7 +3551,7 @@ function ensureUnknownOptionMappingRows(questionKey = '', optionRows = []) {
     mapsToSymptomKey: '',
     value: 0,
     associationStrength: 0,
-    answerEffectCn: '不加分不减分',
+    answerEffectCn: '不改变候选路径',
     dataStatus: 'synthetic',
     reviewStatus: 'synthetic'
   })
@@ -3300,13 +3559,36 @@ function ensureUnknownOptionMappingRows(questionKey = '', optionRows = []) {
   return rows
 }
 
-function buildStaticFollowUpQuestionPayload(question = {}, optionRows = []) {
+function buildStaticFollowUpQuestionPayload(question = {}, optionRows = [], followupContext = {}) {
+  const normalizedFollowupContext = followupContext || {}
+  const templateVariables = buildTemplateVariables(question, {
+    plantContext:
+      normalizedFollowupContext?.plantContext ||
+      question?.plantContext ||
+      {},
+    weatherContext:
+      Object.prototype.hasOwnProperty.call(normalizedFollowupContext, 'weatherContext')
+        ? normalizedFollowupContext.weatherContext
+        : (question?.weatherContext ?? null)
+  })
+
+  const render = (text = '') => renderQuestionTemplate(text, templateVariables)
+  const normalizeRendered = value => String(value || '')
+    .replace(/\{\{\s*[a-zA-Z0-9_.-]+\s*\}\}/g, '')
+    .replace(/\s+([\u3002\uFF0C\uFF1B\uFF1F\uFF01])/g, '$1')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+
+  const questionText = question.questionTextUserCn || question.questionTextCn || ''
+  const helpText = question.helpTextCn || ''
+  const whyThisQuestion = question.whyThisQuestionCn || ''
+
   return {
     questionKey: question.questionKey,
     selectionSource: question.selectionSource || '',
     targetSymptomKey: question.targetSymptomKey || '',
-    questionText: question.questionTextUserCn || question.questionTextCn || '',
-    helpText: question.helpTextCn || '',
+    questionText: normalizeRendered(render(questionText)),
+    helpText: normalizeRendered(render(helpText)),
     questionGroupKey: question.questionGroupKey || '',
     targetDimension: normalizeQuestionTargetDimension(
       question?.targetDimension,
@@ -3319,11 +3601,11 @@ function buildStaticFollowUpQuestionPayload(question = {}, optionRows = []) {
     questionType: question.questionType || 'single_choice',
     options: ensureUnknownOptionMappingRows(question.questionKey, optionRows).map(item => ({
       optionKey: item.optionKey,
-      text: item.optionTextUserCn || item.optionTextCn || item.optionKey,
-      description: item.optionDescriptionUserCn || '',
+      text: normalizeRendered(render(item.optionTextUserCn || item.optionTextCn || item.optionKey)),
+      description: normalizeRendered(render(item.optionDescriptionUserCn || '')),
       isDefault: Boolean(item.isDefault)
     })),
-    whyThisQuestion: question.whyThisQuestionCn || ''
+    whyThisQuestion: normalizeRendered(render(whyThisQuestion))
   }
 }
 
@@ -3345,7 +3627,7 @@ function isControlledFallbackRoutingScopeAllowed(routingScope = '', {
   allowDifferentialProbe = true
 } = {}) {
   const normalizedRoutingScope = String(routingScope || '').trim()
-  if (!normalizedRoutingScope) return false
+  if (!normalizedRoutingScope) {return false}
   if (allowSymptomConfirmation && normalizedRoutingScope === QUESTION_ROUTING_SCOPES.SYMPTOM_CONFIRMATION) {
     return true
   }
@@ -3387,7 +3669,7 @@ function resolveContextualLesionCopy(questionKey = '', candidateSymptomKey = '')
   const normalizedQuestionKey = String(questionKey || '').trim()
   const normalizedCandidateSymptomKey = String(candidateSymptomKey || '').trim()
 
-  if (!normalizedQuestionKey || !normalizedCandidateSymptomKey) return null
+  if (!normalizedQuestionKey || !normalizedCandidateSymptomKey) {return null}
 
   if (normalizedQuestionKey === 'q_black_spots_surface_layer_check') {
     if (normalizedCandidateSymptomKey === 'brown_spots_halo') {
@@ -3450,7 +3732,7 @@ function contextualizeVisualCandidateStaticQuestions(
     }
 
     const contextualCopy = resolveContextualLesionCopy(questionKey, dominantLesionCandidateSymptomKey)
-    if (!contextualCopy) return question
+    if (!contextualCopy) {return question}
 
     return {
       ...question,
@@ -3475,9 +3757,9 @@ async function buildObservedSymptomSeedFollowUps({
   suggestedFollowupCapture = [],
   visualRoutePrimaryAction = '',
   blockedTargetSymptomKeys = [],
-  maxQuestions = rankingConfig.maxQuestionsPerRound
+  maxQuestions = questionSelectionConfig.maxQuestionsPerRound
 } = {}) {
-  if (Number(maxQuestions || 0) <= 0) return []
+  if (Number(maxQuestions || 0) <= 0) {return []}
 
   const restrictToControlledFallback =
     shouldRestrictToControlledFallback(symptomClassRuntime) ||
@@ -3505,12 +3787,12 @@ async function buildObservedSymptomSeedFollowUps({
         .filter(Boolean)
     )
   )
-  if (!observedSymptomKeys.length) return []
+  if (!observedSymptomKeys.length) {return []}
 
   const observedCoveredDimensionBySymptomKey = new Map()
   for (const symptom of effectiveObservedSymptoms) {
     const symptomKey = String(symptom?.symptomKey || '').trim()
-    if (!symptomKey) continue
+    if (!symptomKey) {continue}
     observedCoveredDimensionBySymptomKey.set(
       symptomKey,
       new Set(inferObservedVisualCoveredDimensions({
@@ -3601,6 +3883,7 @@ async function buildObservedSymptomSeedFollowUps({
         filteredQuestionKeySet.has(item.questionKey)
       )
     : []
+  const optionMap = groupQuestionOptionMappings(optionMappings)
   const strategies = questionKeys.map(questionKey => ({
     problemKey: SYNTHETIC_OBSERVED_SYMPTOM_QUESTION_SEED_PROBLEM_KEY,
     questionGroupKey: '',
@@ -3613,10 +3896,9 @@ async function buildObservedSymptomSeedFollowUps({
   })).filter(item => filteredQuestionKeySet.has(item.questionKey))
 
   const selectedStaticQuestions = await selectFollowUpQuestions({
-    rankings: [{
+    candidateOutcomes: [{
       problemKey: SYNTHETIC_OBSERVED_SYMPTOM_QUESTION_SEED_PROBLEM_KEY,
-      finalScore: 1,
-      baseScore: 1
+      evidenceWeight: 1
     }],
     strategies,
     questions: controlledFallbackQuestions,
@@ -3636,9 +3918,16 @@ async function buildObservedSymptomSeedFollowUps({
     maxQuestions
   })
 
-  const selectedQuestions = restrictToControlledFallback
+  const selectedQuestions = (restrictToControlledFallback
     ? markQuestionsAsControlledFallback(selectedStaticQuestions)
     : [...selectedStaticQuestions]
+  ).map(item =>
+    buildStaticFollowUpQuestionPayload(
+      item,
+      optionMap.get(item.questionKey) || [],
+      {}
+    )
+  )
   const observedSymptomMap = mapByKey(effectiveObservedSymptoms, 'symptomKey')
   const symptomMetaMap = mapByKey(symptomDictionary, 'symptomKey')
   const strongVisualSymptomKeySet = buildStrongVisualPresenceSymptomKeys(observedEvidenceSet)
@@ -3693,13 +3982,13 @@ async function buildObservedSymptomSeedFollowUps({
     }
 
     const symptomKey = String(symptom?.symptomKey || '').trim()
-    if (!symptomKey) continue
+    if (!symptomKey) {continue}
     const isPreviouslyProbedSymptom = previouslyProbedNonVisualSymptomKeys.has(symptomKey)
-    if (blockedTargetSymptomSet.has(symptomKey) && !isPreviouslyProbedSymptom) continue
+    if (blockedTargetSymptomSet.has(symptomKey) && !isPreviouslyProbedSymptom) {continue}
     const canUseObservedProbeSeed =
       strongVisualSymptomKeySet.has(symptomKey) || explicitObservedSymptomKeySet.has(symptomKey)
-    if (!canUseObservedProbeSeed) continue
-    if (selectedNonVisualSymptomKeys.has(symptomKey)) continue
+    if (!canUseObservedProbeSeed) {continue}
+    if (selectedNonVisualSymptomKeys.has(symptomKey)) {continue}
     if (
       previouslyProbedNonVisualSymptomKeys.size > 0 &&
       !shouldAllowSecondaryObservedSymptomProbe(symptomKey, {
@@ -3733,9 +4022,9 @@ async function buildObservedSymptomSeedFollowUps({
       if (selectedQuestions.length >= Math.max(1, Math.min(1, Number(maxQuestions || 1)))) {
         break
       }
-      if (askedSet.has(syntheticQuestion.questionKey)) continue
-      if (answeredGroupSet.has(syntheticQuestion.questionGroupKey)) continue
-      if (usedGroupKeys.has(syntheticQuestion.questionGroupKey)) continue
+      if (askedSet.has(syntheticQuestion.questionKey)) {continue}
+      if (answeredGroupSet.has(syntheticQuestion.questionGroupKey)) {continue}
+      if (usedGroupKeys.has(syntheticQuestion.questionGroupKey)) {continue}
 
       selectedQuestions.push({
         ...syntheticQuestion,
@@ -3763,7 +4052,7 @@ async function buildVisualCandidateSeedFollowUps({
   suggestedFollowupCapture = [],
   visualRoutePrimaryAction = '',
   blockedTargetSymptomKeys = [],
-  maxQuestions = rankingConfig.maxQuestionsPerRound
+  maxQuestions = questionSelectionConfig.maxQuestionsPerRound
 } = {}) {
   const restrictToControlledFallback =
     shouldRestrictToControlledFallback(symptomClassRuntime) ||
@@ -3778,9 +4067,9 @@ async function buildVisualCandidateSeedFollowUps({
         ? await getQuestionsByKeys(askedQuestionKeys)
         : []
   const candidateSymptoms = collectVisualCandidateSymptoms(visualAggregateResult, symptomDictionary)
-  if (!candidateSymptoms.length) return []
+  if (!candidateSymptoms.length) {return []}
   const yellowingCandidateGateFollowUps = await buildYellowingGateFollowUps({
-    rankings: [],
+    candidateOutcomes: [],
     diagnosisDirections,
     observedSymptoms: [],
     observedEvidenceSet,
@@ -3813,8 +4102,8 @@ async function buildVisualCandidateSeedFollowUps({
   const observedSymptomMap = buildObservedSymptomIndex(effectiveObservedSymptoms)
   const effectiveCandidateSymptoms = candidateSymptoms.filter(candidate => {
     const symptomKey = String(candidate?.symptomKey || '').trim()
-    if (!symptomKey) return false
-    if (blockedTargetSymptomSet.has(symptomKey)) return false
+    if (!symptomKey) {return false}
+    if (blockedTargetSymptomSet.has(symptomKey)) {return false}
 
     if (!effectiveObservedSymptoms.length) {
       return true
@@ -3836,7 +4125,7 @@ async function buildVisualCandidateSeedFollowUps({
 
     return shouldUseVisualCandidateSeedQuestion(candidate)
   })
-  if (!effectiveCandidateSymptoms.length) return []
+  if (!effectiveCandidateSymptoms.length) {return []}
 
   const effectiveCandidateSymptomKeys = effectiveCandidateSymptoms
     .map(item => item.symptomKey)
@@ -3944,7 +4233,7 @@ async function buildVisualCandidateSeedFollowUps({
     const dedupeKey =
       questionGroupKey ||
       `${String(question?.targetSymptomKey || '').trim()}::${String(question?.targetDimension || '').trim()}`
-    if (forcedConfirmGroupKeys.has(dedupeKey)) continue
+    if (forcedConfirmGroupKeys.has(dedupeKey)) {continue}
     forcedConfirmGroupKeys.add(dedupeKey)
     dedupedForcedStaticConfirmQuestions.push(question)
   }
@@ -3997,11 +4286,10 @@ async function buildVisualCandidateSeedFollowUps({
   )
   const selectedStrategyQuestions = strategies.length
     ? selectFollowUpQuestions({
-        rankings: [
+        candidateOutcomes: [
           {
             problemKey: SYNTHETIC_VISUAL_CANDIDATE_PROBLEM_KEY,
-            finalScore: 1,
-            baseScore: 1
+            evidenceWeight: 1
           }
         ],
         strategies,
@@ -4027,20 +4315,28 @@ async function buildVisualCandidateSeedFollowUps({
         return !questionGroupKey || !usedForcedStaticGroupKeys.has(questionGroupKey)
       })
     : []
+  const selectedStrategyQuestionPayloads = selectedStrategyQuestions.map(item =>
+    buildStaticFollowUpQuestionPayload(
+      restrictToControlledFallback
+        ? { ...item, selectionSource: 'controlled_fallback' }
+        : item,
+      optionMap.get(item.questionKey) || []
+    )
+  )
   const selectedStaticQuestions = contextualizeVisualCandidateStaticQuestions(
     filterStructuralPriorityStaticQuestions(
     [
       ...forcedStaticQuestionPayloads,
       ...(restrictToControlledFallback
-        ? markQuestionsAsControlledFallback(selectedStrategyQuestions)
-        : selectedStrategyQuestions)
+        ? markQuestionsAsControlledFallback(selectedStrategyQuestionPayloads)
+        : selectedStrategyQuestionPayloads)
     ],
     effectiveCandidateSymptoms,
     symptomMetaMap
     ),
     effectiveCandidateSymptoms
   )
-  console.log('diagnose-http visual candidate static followups:', {
+  logDiagnosisRuntime('diagnose-http visual candidate static followups:', {
     candidateSymptomKeys: effectiveCandidateSymptomKeys,
     questionKeys,
     staticQuestionKeys: questions.map(item => item?.questionKey),
@@ -4121,9 +4417,9 @@ async function buildVisualCandidateSeedFollowUps({
         if (selectedQuestions.length >= Math.max(1, Number(maxQuestions || 3))) {
           break
         }
-        if (askedSet.has(syntheticQuestion.questionKey)) continue
-        if (answeredGroupSet.has(syntheticQuestion.questionGroupKey)) continue
-        if (usedGroupKeys.has(syntheticQuestion.questionGroupKey)) continue
+        if (askedSet.has(syntheticQuestion.questionKey)) {continue}
+        if (answeredGroupSet.has(syntheticQuestion.questionGroupKey)) {continue}
+        if (usedGroupKeys.has(syntheticQuestion.questionGroupKey)) {continue}
 
         selectedQuestions.push({
           ...syntheticQuestion,
@@ -4164,9 +4460,9 @@ async function buildVisualCandidateSeedFollowUps({
             if (selectedQuestions.length >= Math.max(1, Number(maxQuestions || 3))) {
               break
             }
-            if (askedSet.has(syntheticQuestion.questionKey)) continue
-            if (answeredGroupSet.has(syntheticQuestion.questionGroupKey)) continue
-            if (usedGroupKeys.has(syntheticQuestion.questionGroupKey)) continue
+            if (askedSet.has(syntheticQuestion.questionKey)) {continue}
+            if (answeredGroupSet.has(syntheticQuestion.questionGroupKey)) {continue}
+            if (usedGroupKeys.has(syntheticQuestion.questionGroupKey)) {continue}
 
             selectedQuestions.push({
               ...syntheticQuestion,
@@ -4184,9 +4480,9 @@ async function buildVisualCandidateSeedFollowUps({
       if (selectedQuestions.length >= Math.max(1, Number(maxQuestions || 3))) {
         break
       }
-      if (askedSet.has(syntheticQuestion.questionKey)) continue
-      if (answeredGroupSet.has(syntheticQuestion.questionGroupKey)) continue
-      if (usedGroupKeys.has(syntheticQuestion.questionGroupKey)) continue
+      if (askedSet.has(syntheticQuestion.questionKey)) {continue}
+      if (answeredGroupSet.has(syntheticQuestion.questionGroupKey)) {continue}
+      if (usedGroupKeys.has(syntheticQuestion.questionGroupKey)) {continue}
 
       selectedQuestions.push({
         ...syntheticQuestion,
@@ -4280,7 +4576,6 @@ function buildUncertainRoundResult({
     roundId: `round_${round}`,
     stage,
     observedSymptoms,
-    rankings: [],
     topProblem: null,
     finalResult: {
       resultId,
@@ -4370,7 +4665,6 @@ function buildVisualCandidateFollowUpRoundResult({
     roundId: `round_${round}`,
     stage: 'followup',
     observedSymptoms: [],
-    rankings: [],
     topProblem: null,
     finalResult: null,
     followUpRequired: true,
@@ -4409,45 +4703,250 @@ function buildVisualCandidateFollowUpRoundResult({
   }
 }
 
-function toLegacyCompatiblePayload(publicResponse = {}) {
-  const topProblem = publicResponse.topProblem || null
-  const finalResult = publicResponse.finalResult || null
-  const isProblematicOutcome = String(publicResponse.outcomeType || '') === 'problematic'
-  return {
-    diagnosisId: publicResponse.diagnosisSessionId,
-    healthScore: null,
-    healthStatus: isProblematicOutcome && topProblem ? 'warning' : 'unknown',
-    mainIssue: finalResult?.displayName || topProblem?.displayName || '',
-    finalProblemKey: isProblematicOutcome ? (topProblem?.problemKey || finalResult?.problemKey || null) : null,
-    finalProblemCn: finalResult?.displayName || topProblem?.displayName || '',
-    summary: finalResult?.summary || topProblem?.summary || '',
-    observedSymptoms: publicResponse.observedSymptoms || [],
-    rankings: (publicResponse.rankings || []).map((item, index) => ({
-      problemKey: item.problemKey,
-      problemCn: item.problemCn || item.problemKey,
-      weightedScore: item.finalScore,
-      rankNo: index + 1,
-      finalScore: item.finalScore
-    })),
-    needsFollowUp: Boolean(publicResponse.followUpRequired),
-    followUps: (publicResponse.followUps || []).map(item => ({
-      questionKey: item.questionKey,
-      questionText: item.text,
-      questionGroupKey: item.questionGroupKey,
-      options: item.options || []
-    })),
-    problemCausality: publicResponse.problemCausality || [],
-    reliabilityScore: 0,
-    resultExplanation: publicResponse.resultExplanation || {},
-    outcomeType: publicResponse.outcomeType || '',
-    routePrimaryAction: publicResponse.routePrimaryAction || ''
+async function tryBuildRouteAnswerFastPath({
+  sessionId,
+  round,
+  stage,
+  plantContext,
+  observedSymptomsForResolution,
+  labeledObservedEvidenceForResolution,
+  derivedEvidenceForResolution,
+  diagnosisDirectionsForResolution,
+  symptomClassRuntime,
+  answers,
+  askedQuestionKeys,
+  answeredFollowUpAnswerRecords,
+  preloadedRouteAnswerEffects,
+  visualAggregateResult,
+  visualRouteContext,
+  routeDebugTraceEnabled = false,
+  perfLogger = null
+} = {}) {
+  const markFastPath = (stageName, details = {}) => {
+    if (!perfLogger || typeof perfLogger.mark !== 'function') {return}
+    perfLogger.mark(stageName, {
+      round,
+      ...details
+    })
   }
+  if (
+    stage !== 'followup' ||
+    !isRouteOutputEnabled() ||
+    !isRoutePlanningObservationEnabled() ||
+    !Array.isArray(answers) ||
+    !answers.length
+  ) {
+    markFastPath('route-fastpath-skip', {
+      reason: 'precondition',
+      stage,
+      answerCount: Array.isArray(answers) ? answers.length : 0
+    })
+    return null
+  }
+
+  const routeAnswerRecordsForDecision = collectRouteAnswerRecordsForDecision({
+    answers,
+    answeredFollowUpAnswerRecords
+  })
+  if (shouldHoldYellowingRouteOutputForRequiredGroups({
+    diagnosisDirections: diagnosisDirectionsForResolution,
+    observedSymptoms: observedSymptomsForResolution,
+    observedEvidenceSet: labeledObservedEvidenceForResolution,
+    symptomClassRuntime,
+    answerRecords: routeAnswerRecordsForDecision
+  })) {
+    markFastPath('route-fastpath-skip', {
+      reason: 'yellowing_required_groups_incomplete'
+    })
+    return null
+  }
+  const routeAnswerEffectQuestionKeys = Array.from(
+    new Set(
+      routeAnswerRecordsForDecision
+        .map(item => normalizeKey(item?.questionKey || item?.question_key || ''))
+      .filter(Boolean)
+    )
+  )
+  if (!routeAnswerEffectQuestionKeys.length) {
+    markFastPath('route-fastpath-skip', { reason: 'no_route_answer_question_keys' })
+    return null
+  }
+
+  const routeAnswerEffectsResolution = await resolveRouteAnswerEffectsForFastPath({
+    routeAnswerEffectQuestionKeys,
+    preloadedRouteAnswerEffects,
+    routeAnswerEffectsFetcher: questionKeys =>
+      outcomeRouteRepository.getOutcomeAnswerEffects(questionKeys),
+    markFastPath,
+    round
+  })
+  if (!routeAnswerEffectsResolution.ok) {
+    markFastPath('route-fastpath-skip', {
+      reason: 'route_answer_effects_fetch_failed',
+      missingQuestionCount: routeAnswerEffectsResolution.missingQuestionKeys.length,
+      fetchedQuestionCount: routeAnswerEffectsResolution.fetchedQuestionKeys.length
+    })
+    return null
+  }
+  const routeAnswerEffects = routeAnswerEffectsResolution.routeAnswerEffects
+  const candidateOutcomeKeys = collectMatchedRouteEffectOutcomeKeys(
+    routeAnswerEffects,
+    routeAnswerRecordsForDecision
+  )
+  markFastPath('route-fastpath-effects-loaded', {
+    questionCount: routeAnswerEffectQuestionKeys.length,
+    effectCount: Array.isArray(routeAnswerEffects) ? routeAnswerEffects.length : 0,
+    preloadedOnly: Boolean(routeAnswerEffectsResolution.usedPreloadedOnly),
+    missingQuestionCount: routeAnswerEffectsResolution.missingQuestionKeys.length,
+    candidateOutcomeCount: candidateOutcomeKeys.length
+  })
+  if (!candidateOutcomeKeys.length) {
+    markFastPath('route-fastpath-skip', { reason: 'no_matched_route_effect_outcomes' })
+    return null
+  }
+
+  const routeEvidenceContextForDecision = buildRouteEvidenceContext({
+    plantContext,
+    observedEvidenceSet: labeledObservedEvidenceForResolution,
+    derivedEvidenceSet: derivedEvidenceForResolution,
+    diagnosisDirections: diagnosisDirectionsForResolution,
+    symptomClassRuntime,
+    answerEffects: [],
+    routeAnswerEffects,
+    answers: routeAnswerRecordsForDecision,
+    askedQuestionKeys,
+    visualAggregateResult,
+    routeHints: visualRouteContext?.routeHints || []
+  })
+  const routeDecision = await planOutcomeRoutes({
+    candidateOutcomeKeys,
+    routeEvidenceContext: routeEvidenceContextForDecision,
+    canAskAnotherFollowUpRound: canOpenNextFollowUpRound(round),
+    maxVisibleOutcomes: 3,
+    maxQuestionCount: 1,
+    featureFlags: {
+      routePlanningEnabled: true,
+      skipRouteGroupExpansion: true
+    }
+  })
+  const leadingVisibleOutcomeKey = resolveLeadingVisibleOutcomeKey(routeDecision)
+  markFastPath('route-fastpath-route-planned', {
+    mode: normalizeKey(routeDecision?.mode || ''),
+    fallbackPolicy: normalizeKey(routeDecision?.fallbackPolicy || ''),
+    leadingVisibleOutcomeKey,
+    visibleOutcomeCount: Array.isArray(routeDecision?.visibleOutcomeKeys)
+      ? routeDecision.visibleOutcomeKeys.length
+      : 0
+  })
+  if (
+    !isAuthoritativeRouteDecision(routeDecision) ||
+    !Array.isArray(routeDecision?.visibleOutcomeKeys) ||
+    !routeDecision.visibleOutcomeKeys.length
+  ) {
+    markFastPath('route-fastpath-skip', {
+      reason: 'route_not_authoritative_or_visible',
+      mode: normalizeKey(routeDecision?.mode || ''),
+      fallbackPolicy: normalizeKey(routeDecision?.fallbackPolicy || ''),
+      leadingVisibleOutcomeKey,
+      visibleOutcomeCount: Array.isArray(routeDecision?.visibleOutcomeKeys)
+        ? routeDecision.visibleOutcomeKeys.length
+        : 0
+    })
+    return null
+  }
+
+  const routeOutcomeKeys = Array.from(
+    new Set([
+      ...(Array.isArray(routeDecision.visibleOutcomeKeys) ? routeDecision.visibleOutcomeKeys : [])
+    ].map(item => normalizeKey(item)).filter(Boolean))
+  )
+  const routeOutcomes = routeOutcomeKeys.length
+    ? await outcomeRouteRepository.getDiagnosisOutcomesByKeys(routeOutcomeKeys)
+    : []
+  markFastPath('route-fastpath-outcomes-loaded', {
+    routeOutcomeCount: Array.isArray(routeOutcomes) ? routeOutcomes.length : 0
+  })
+  const primaryRouteOutcome = routeOutcomes.find(
+    item => normalizeKey(item?.outcomeKey || '') === leadingVisibleOutcomeKey
+  )
+  const allActionProfileKeys = resolveVisibleRouteActionProfileKeys(routeDecision, routeOutcomes)
+  const actionProfiles = allActionProfileKeys.length
+    ? await outcomeRouteRepository.getOutcomeActionProfiles(allActionProfileKeys)
+    : []
+  const outputObservedEvidenceSet = labeledObservedEvidenceForResolution
+  const outputObservedSymptoms = observedSymptomsForResolution
+  const outputDerivedEvidenceSet = derivedEvidenceForResolution
+  const outputDiagnosisDirections = diagnosisDirectionsForResolution
+  markFastPath('route-fastpath-hit', {
+    leadingVisibleOutcomeKey,
+    visibleOutcomeCount: Array.isArray(routeDecision.visibleOutcomeKeys)
+      ? routeDecision.visibleOutcomeKeys.length
+      : 0,
+    actionProfileCount: Array.isArray(actionProfiles) ? actionProfiles.length : 0
+  })
+  const routeLockedOutcomeType =
+    normalizeKey(primaryRouteOutcome?.outcomeType || '') === 'non_problematic'
+      ? 'non_problematic'
+      : 'problematic'
+  const stopDecision = {
+    outcomeLocked: routeLockedOutcomeType,
+    stopReason: 'route_visible_outcomes_ready',
+    uncertainLegalityReason: '',
+    stopReasonDetail: routeDecision?.decisionCause?.decisionCauseKey || '',
+    decisionCause: normalizeDecisionCause(routeDecision?.decisionCause)
+  }
+  const publicResponse = formatDiagnosisResponse({
+    sessionId,
+    round,
+    stage: 'final',
+    observedSymptoms: outputObservedSymptoms,
+    observedEvidenceSet: outputObservedEvidenceSet,
+    derivedEvidenceSet: outputDerivedEvidenceSet,
+    diagnosisDirections: outputDiagnosisDirections,
+    candidateOutcomes: [],
+    followUps: [],
+    problems: [],
+    explanations: [],
+    routeOutcomes,
+    causality: [],
+    plantContext,
+    plantId: plantContext?.userPlantId || plantContext?.plantId,
+    followUpRequired: false,
+    lowConfidence: { isLowConfidence: false, reasons: [], advice: [] },
+    symptomClassRuntime,
+    highSpecificityFastConvergence: null,
+    stopDecision,
+    routeDecision,
+    routeOutputEnabled: true,
+    actionProfiles
+  })
+  const enrichedResponse = {
+    ...publicResponse,
+    observedEvidenceSet: outputObservedEvidenceSet,
+    plantIdentityId: plantContext?.plantIdentityId || '',
+    identityResolutionStatus: resolveIdentityResolutionStatus(plantContext),
+    latestVisualCallBatchId: plantContext?.latestVisualCallBatchId || '',
+    highSpecificityFastConvergence: null,
+    currentRoundIndex: round,
+    currentRoundId: publicResponse.roundId
+  }
+  const result = {
+    ...enrichedResponse,
+    metrics: {
+      routeDecision
+    },
+    routeDecision: routeDebugTraceEnabled ? sanitizeRouteDecisionForPublic(routeDecision) : null,
+    plantContext
+  }
+  attachPrivateSymptomClassRuntime(result, symptomClassRuntime)
+  return result
 }
 
 async function runDiagnosisRound({
   openid,
   plantId = null,
   userPlantId = null,
+  preferCatalogPlantId = false,
   lockedPlantContext = null,
   observedSymptoms = [],
   observedEvidenceSet = [],
@@ -4461,8 +4960,10 @@ async function runDiagnosisRound({
   stage = 'preliminary',
   answerOptionMappings: rawAnswerOptionMappings = [],
   storedFollowUpRows: preloadedStoredFollowUpRows = null,
-  preloadedAskedQuestionRows: preloadedAskedQuestionRows = null,
-  sessionId
+  preloadedAskedQuestionRows = null,
+  preloadedRouteAnswerEffects = null,
+  sessionId,
+  perfLogger = null
 }) {
   const plantContext = lockedPlantContext
     ? {
@@ -4498,8 +4999,9 @@ async function runDiagnosisRound({
         careAuditStatus: lockedPlantContext.careAuditStatus || '',
         varianceLevel: lockedPlantContext.varianceLevel || ''
       }
-    : await resolvePlantContext({ openid, plantId, userPlantId })
+    : await resolvePlantContext({ openid, plantId, userPlantId, preferCatalogPlantId })
   const visualRouteContext = resolveVisualRouteContext(visualAggregateResult)
+  const routeDebugTraceEnabled = isRouteDebugTraceEnabled()
   const preferredVisualRouteAction = visualRouteContext.routePrimaryAction
   const runtimeOriginVisualCallBatchId =
     visualAggregateResult?.visual_batch_trace?.origin_visual_call_batch_id ||
@@ -4523,25 +5025,97 @@ async function runDiagnosisRound({
   const preloadedAskedQuestionRowMap = new Map()
   for (const item of Array.isArray(preloadedAskedQuestionRows) ? preloadedAskedQuestionRows : []) {
     const questionKey = normalizeKey(item?.questionKey || item?.question_key || '')
-    if (!questionKey) continue
-    if (preloadedAskedQuestionRowMap.has(questionKey)) continue
+    if (!questionKey) {continue}
+    if (preloadedAskedQuestionRowMap.has(questionKey)) {continue}
     preloadedAskedQuestionRowMap.set(questionKey, item)
   }
   const askedQuestionKeysMissingFromCache = askedQuestionKeyList.filter(key =>
     !preloadedAskedQuestionRowMap.has(normalizeKey(key))
   )
+  const routeFastPathAnswerOptionMappings = [
+    ...normalizedProvidedAnswerOptionMappings,
+    ...buildSyntheticFollowUpOptionMappings(questionKeys)
+  ]
+  const routeFastPathAnswerDerivedSymptoms = collectPositiveMappedObservedSymptomsFromAnswers(
+    answers,
+    routeFastPathAnswerOptionMappings
+  )
+  const routeFastPathObservedEvidenceForResolution = mergeObservedEvidenceSet(
+    normalizeObservedEvidenceSetItems(observedEvidenceSet),
+    buildObservedEvidenceSetFromSymptoms(observedSymptoms, {
+      sourceType: 'legacy_observed_symptom',
+      firstSeenStage: stage,
+      originVisualCallBatchId: runtimeOriginVisualCallBatchId,
+      enteredRuntime: 1
+    }),
+    buildObservedEvidenceSetFromVisualAggregateResult(visualAggregateResult, {
+      firstSeenStage: stage
+    }),
+    buildObservedEvidenceSetFromSymptoms(routeFastPathAnswerDerivedSymptoms, {
+      sourceType: 'follow_up_seed',
+      firstSeenStage: stage,
+      originVisualCallBatchId: runtimeOriginVisualCallBatchId,
+      enteredRuntime: 1
+    })
+  )
+  const routeFastPathDerivedEvidenceForResolution = []
+  const shouldAttemptRouteFastPath = stage === 'followup' && Boolean(Array.isArray(answers) && answers.length)
+  let routeFastPathResultBeforeHydration = null
+  if (shouldAttemptRouteFastPath) {
+    routeFastPathResultBeforeHydration = await tryBuildRouteAnswerFastPath({
+      sessionId,
+      round,
+      stage,
+      plantContext,
+      observedSymptomsForResolution: projectObservedSymptomsFromEvidence(
+        routeFastPathObservedEvidenceForResolution
+      ),
+      labeledObservedEvidenceForResolution: routeFastPathObservedEvidenceForResolution,
+      derivedEvidenceForResolution: routeFastPathDerivedEvidenceForResolution,
+      diagnosisDirectionsForResolution: buildDiagnosisDirections({
+        observedEvidenceSet: routeFastPathObservedEvidenceForResolution,
+        derivedEvidenceSet: routeFastPathDerivedEvidenceForResolution,
+        visualCandidateSymptoms: [],
+        routeHints: visualRouteContext.routeHints,
+        round
+      }),
+      symptomClassRuntime: symptomClassState,
+      answers,
+      askedQuestionKeys,
+      answeredFollowUpAnswerRecords: Array.isArray(preloadedStoredFollowUpRows)
+        ? collectAnswerLikeRecordsFromFollowUpRows(preloadedStoredFollowUpRows)
+        : [],
+      preloadedRouteAnswerEffects,
+      visualAggregateResult,
+      visualRouteContext,
+      routeDebugTraceEnabled,
+      perfLogger
+    })
+  }
+  if (routeFastPathResultBeforeHydration) {
+    return routeFastPathResultBeforeHydration
+  }
+  const shouldSkipStoredFollowUpLookup = (
+    !shouldAttemptRouteFastPath &&
+    Number(round || 1) <= 1 &&
+    stage === 'preliminary' &&
+    !askedQuestionKeyList.length
+  )
+  const resolvedStoredFollowUpRowsCache = Array.isArray(preloadedStoredFollowUpRows)
+    ? preloadedStoredFollowUpRows
+    : shouldSkipStoredFollowUpLookup
+      ? []
+      : null
   const [
     answerOptionMappingsFromStore,
-    fullSymptomDictionary,
     resolvedStoredFollowUpRows,
     askedQuestionRowsFromRepository
   ] = await Promise.all([
     missingQuestionKeys.length
       ? getQuestionOptionMappings(missingQuestionKeys)
       : Promise.resolve([]),
-    getSymptomDictionary(),
-    Array.isArray(preloadedStoredFollowUpRows)
-      ? Promise.resolve(preloadedStoredFollowUpRows)
+    resolvedStoredFollowUpRowsCache !== null
+      ? Promise.resolve(resolvedStoredFollowUpRowsCache)
       : sessionId
         ? listFollowUpRows(sessionId).catch(error => {
           console.warn('diagnose-http failed to load follow-up rows:', {
@@ -4567,8 +5141,8 @@ async function runDiagnosisRound({
     ...buildSyntheticFollowUpOptionMappings(questionKeys)
   ]) {
     const dedupeKey = buildOptionMappingKey(item)
-    if (!dedupeKey) continue
-    if (dedupeAnswerOptionMapping.has(dedupeKey)) continue
+    if (!dedupeKey) {continue}
+    if (dedupeAnswerOptionMapping.has(dedupeKey)) {continue}
     dedupeAnswerOptionMapping.set(dedupeKey, item)
   }
   const answerOptionMappings = Array.from(dedupeAnswerOptionMapping.values())
@@ -4601,9 +5175,56 @@ async function runDiagnosisRound({
         .filter(Boolean)
     )
   )
-  const resolutionSymptomRows = resolutionSymptomKeys.length
-    ? await getSymptomsByKeys(resolutionSymptomKeys)
-    : []
+  const resolutionSymptomRowsPromise = resolutionSymptomKeys.length
+    ? getSymptomsByKeys(resolutionSymptomKeys)
+    : Promise.resolve([])
+  const fastPathObservedSymptomsForResolution = projectObservedSymptomsFromEvidence(
+    observedEvidenceForResolution
+  )
+  const fastPathDerivedEvidenceForResolution = []
+  const diagnosisDirectionsForFastPath = buildDiagnosisDirections({
+    observedEvidenceSet: observedEvidenceForResolution,
+    derivedEvidenceSet: fastPathDerivedEvidenceForResolution,
+    visualCandidateSymptoms: [],
+    routeHints: visualRouteContext.routeHints,
+    round
+  })
+  const askedQuestionRows = mergeAskedQuestionRows(
+    Array.from(preloadedAskedQuestionRowMap.values()),
+    askedQuestionRowsFromRepository,
+    collectAnswerLikeRecordsFromFollowUpRows(resolvedStoredFollowUpRows),
+    answers
+  )
+  const answeredFollowUpAnswerRecordsForRoute =
+    sessionId && askedQuestionKeys.length
+      ? collectAnswerLikeRecordsFromFollowUpRows(resolvedStoredFollowUpRows)
+      : []
+  if (shouldAttemptRouteFastPath) {
+    const routeFastPathResult = await tryBuildRouteAnswerFastPath({
+      sessionId,
+      round,
+      stage,
+      plantContext,
+      observedSymptomsForResolution: fastPathObservedSymptomsForResolution,
+      labeledObservedEvidenceForResolution: observedEvidenceForResolution,
+      derivedEvidenceForResolution: fastPathDerivedEvidenceForResolution,
+      diagnosisDirectionsForResolution: diagnosisDirectionsForFastPath,
+      symptomClassRuntime: symptomClassState,
+      answers,
+      askedQuestionKeys,
+      answeredFollowUpAnswerRecords: answeredFollowUpAnswerRecordsForRoute,
+      preloadedRouteAnswerEffects,
+      visualAggregateResult,
+      visualRouteContext,
+      routeDebugTraceEnabled,
+      perfLogger
+    })
+    if (routeFastPathResult) {
+      return routeFastPathResult
+    }
+  }
+
+  const resolutionSymptomRows = await resolutionSymptomRowsPromise
   const labeledObservedEvidenceForResolution = applySymptomDictionaryToEvidenceSet(
     observedEvidenceForResolution,
     resolutionSymptomRows
@@ -4616,6 +5237,14 @@ async function runDiagnosisRound({
     observedEvidenceSet: labeledObservedEvidenceForResolution,
     symptomDictionary: resolutionSymptomRows
   })
+  const symptomClassRuntime = await resolveSymptomClassRuntime({
+    observedSymptoms: observedSymptomsForResolution,
+    round,
+    answeredQuestionGroupKeys,
+    unknownCountByGroup,
+    previousState: symptomClassState
+  })
+  const fullSymptomDictionary = await getSymptomDictionary()
   const visualCandidateSymptomsForResolution = collectVisualCandidateSymptoms(
     visualAggregateResult,
     fullSymptomDictionary
@@ -4627,19 +5256,7 @@ async function runDiagnosisRound({
     routeHints: visualRouteContext.routeHints,
     round
   })
-  const symptomClassRuntime = await resolveSymptomClassRuntime({
-    observedSymptoms: observedSymptomsForResolution,
-    round,
-    answeredQuestionGroupKeys,
-    unknownCountByGroup,
-    previousState: symptomClassState
-  })
-  const askedQuestionRows = mergeAskedQuestionRows(
-    Array.from(preloadedAskedQuestionRowMap.values()),
-    askedQuestionRowsFromRepository,
-    collectAnswerLikeRecordsFromFollowUpRows(resolvedStoredFollowUpRows),
-    answers
-  )
+
   const outOfPoolOnlyNoMapping = isOutOfPoolOnlyNoMappingVisualAggregate(visualAggregateResult)
   const outOfPoolRuntimeMappingAvailable = outOfPoolOnlyNoMapping
     ? await hasAuditedOutOfPoolProxyMappingForAggregate(visualAggregateResult)
@@ -4663,12 +5280,15 @@ async function runDiagnosisRound({
   const preliminaryVisualCandidateYellowingGateFollowUps =
     preliminaryVisualCandidateYellowingGateActive
       ? await buildYellowingGateFollowUps({
-          rankings: [],
+          candidateOutcomes: [],
           diagnosisDirections: diagnosisDirectionsForResolution,
           observedSymptoms: observedSymptomsForResolution,
           observedEvidenceSet: labeledObservedEvidenceForResolution,
           visualCandidateSymptoms: visualCandidateSymptomsForResolution,
-          askedQuestions: askedQuestionRows,
+          askedQuestions: [
+            ...(Array.isArray(askedQuestionRows) ? askedQuestionRows : []),
+            ...(Array.isArray(answers) ? answers : [])
+          ],
           symptomClassRuntime,
           plantContext,
           weatherContext: preliminaryVisualCandidateYellowingWeatherContext
@@ -4691,7 +5311,7 @@ async function runDiagnosisRound({
             visualRouteHints: visualRouteContext.routeHints,
             suggestedFollowupCapture: visualRouteContext.suggestedFollowupCapture,
             visualRoutePrimaryAction: preferredVisualRouteAction,
-            maxQuestions: rankingConfig.maxQuestionsPerRound
+            maxQuestions: questionSelectionConfig.maxQuestionsPerRound
           })
       : []
   if (
@@ -4737,7 +5357,6 @@ async function runDiagnosisRound({
 
     const result = {
       ...enrichedResponse,
-      legacyDiagnosis: toLegacyCompatiblePayload(enrichedResponse),
       metrics: {
         reliabilityScore: 0
       },
@@ -4748,11 +5367,6 @@ async function runDiagnosisRound({
   }
   const outOfPoolHintOnlyBlocksNonProblematic =
     isWeakOutOfPoolHintOnlyVisualAggregate(visualAggregateResult)
-  const weakOutOfPoolHintOnlyPreliminary =
-    Number(round || 1) <= 1 &&
-    stage === 'preliminary' &&
-    observedSymptomsForResolution.length === 0 &&
-    outOfPoolHintOnlyBlocksNonProblematic
   const nonProblematicRule = outOfPoolHintOnlyBlocksNonProblematic
     ? null
     : resolveNonProblematicRule({
@@ -4786,7 +5400,6 @@ async function runDiagnosisRound({
 
     const result = {
       ...enrichedResponse,
-      legacyDiagnosis: toLegacyCompatiblePayload(enrichedResponse),
       metrics: {
         reliabilityScore: 1
       },
@@ -4824,7 +5437,6 @@ async function runDiagnosisRound({
 
       const result = {
         ...enrichedResponse,
-        legacyDiagnosis: toLegacyCompatiblePayload(enrichedResponse),
         metrics: {
           reliabilityScore: 0
         },
@@ -4873,7 +5485,6 @@ async function runDiagnosisRound({
 
       const result = {
         ...enrichedResponse,
-        legacyDiagnosis: toLegacyCompatiblePayload(enrichedResponse),
         metrics: {
           reliabilityScore: 0
         },
@@ -4936,7 +5547,6 @@ async function runDiagnosisRound({
 
       const result = {
         ...enrichedResponse,
-        legacyDiagnosis: toLegacyCompatiblePayload(enrichedResponse),
         metrics: {
           reliabilityScore: 0
         },
@@ -5014,7 +5624,6 @@ async function runDiagnosisRound({
 
     const result = {
       ...enrichedResponse,
-      legacyDiagnosis: toLegacyCompatiblePayload(enrichedResponse),
       metrics: {
         reliabilityScore: 0
       },
@@ -5094,7 +5703,7 @@ async function runDiagnosisRound({
     evidenceEdges
   })
 
-  let rankings = candidateProblemKeys.map(problemKey => {
+  const candidateOutcomes = candidateProblemKeys.map(problemKey => {
     const prior = priorMap.get(problemKey) || {}
     const genusCompatibility =
       Number(prior.genusCompatibility ?? fallbackGenusMap[problemKey] ?? 0.5)
@@ -5110,7 +5719,7 @@ async function runDiagnosisRound({
       visualEvidence > 0,
       questionEvidence > 0
     ].filter(Boolean).length
-    const baseScore =
+    const evidenceWeight =
       totalEvidence *
         computeGenusFactor(genusCompatibility) *
         computeHostFactor(hostCompatibility) -
@@ -5129,37 +5738,16 @@ async function runDiagnosisRound({
       evidenceCount,
       genusCompatibility: roundNum(genusCompatibility),
       hostCompatibility: roundNum(hostCompatibility),
-      baseScore: roundNum(baseScore),
-      finalScore: roundNum(baseScore)
+      evidenceWeight: roundNum(evidenceWeight)
     }
   })
-
-  rankings = rankings.sort((a, b) => b.baseScore - a.baseScore)
 
   const allowCausalityBoost = Number(round || 1) > 1 || stage === 'followup'
   const causalityEdges = allowCausalityBoost
     ? candidatePriorsCausalityEdges && candidatePriorsCausalityEdges.length
       ? candidatePriorsCausalityEdges
-      : await getCausalityEdges(rankings.slice(0, 3).map(item => item.problemKey))
+      : await getCausalityEdges(candidateProblemKeys.slice(0, 3))
     : []
-  const causalityBoosts = allowCausalityBoost
-    ? computeCausalityBoosts(rankings, causalityEdges)
-    : {}
-
-  rankings = rankings
-    .map(item => {
-      const causalityBoost = roundNum(causalityBoosts[item.problemKey] || 0)
-      return {
-        ...item,
-        causalityBoost,
-        finalScore: roundNum(item.baseScore + causalityBoost)
-      }
-    })
-    .sort((a, b) => b.finalScore - a.finalScore)
-    .map((item, index) => ({ ...item, rankNo: index + 1 }))
-
-  const reliabilityScore = resolveReliabilityScore(rankings)
-  const scoreGap = rankings.length > 1 ? rankings[0].finalScore - rankings[1].finalScore : rankings[0]?.finalScore || 0
   const activeObservedSymptomKeys = new Set(
     labeledObservedEvidenceForResolution
       .filter(
@@ -5204,7 +5792,7 @@ async function runDiagnosisRound({
     visualRouteContext,
     observedEvidenceSet: labeledObservedEvidenceForResolution,
     symptomDictionary: symptomRows,
-    rankings,
+    candidateOutcomes,
     problems,
     round,
     stage
@@ -5221,7 +5809,7 @@ async function runDiagnosisRound({
         : [])
     ])
   )
-  console.log('diagnose-http followup guard context:', {
+  logDiagnosisRuntime('diagnose-http followup guard context:', {
     sessionId,
     round,
     stage,
@@ -5232,15 +5820,6 @@ async function runDiagnosisRound({
     activeObservedSymptomKeys: Array.from(activeObservedSymptomKeys)
   })
 
-  const hasEligibleTop1 = hasOutputEligibleProblemRanking(
-    rankings,
-    labeledObservedEvidenceForResolution,
-    problemRoleByKey,
-    {
-      symptomClassRuntime,
-      answerEffects
-    }
-  )
   const followUpHistory = hasFollowUpHistory({
     round,
     answers,
@@ -5248,21 +5827,81 @@ async function runDiagnosisRound({
     answeredQuestionGroupKeys
   })
   const canAskAnotherFollowUpRound = canOpenNextFollowUpRound(round)
+  const routeAnswerRecordsForDecision = collectRouteAnswerRecordsForDecision({
+    answers,
+    answeredFollowUpAnswerRecords
+  })
+  const routeAnswerEffectQuestionKeys = Array.from(
+    new Set([
+      ...routeAnswerRecordsForDecision.map(item => normalizeKey(item?.questionKey || item?.question_key || '')),
+      ...askedQuestionKeys.map(item => normalizeKey(item))
+    ].filter(Boolean))
+  )
+  const routeAnswerEffectsResolution = routeAnswerEffectQuestionKeys.length
+    ? await resolveRouteAnswerEffectsForFastPath({
+        routeAnswerEffectQuestionKeys,
+        preloadedRouteAnswerEffects,
+        routeAnswerEffectsFetcher: questionKeys =>
+          outcomeRouteRepository.getOutcomeAnswerEffects(questionKeys)
+      })
+    : {
+        ok: true,
+        routeAnswerEffects: []
+      }
+  const routeAnswerEffects = routeAnswerEffectsResolution.ok
+    ? routeAnswerEffectsResolution.routeAnswerEffects
+    : []
+  if (!routeAnswerEffectsResolution.ok) {
+    logDiagnosisRuntime('diagnose-http route answer effects fallback for complete path', {
+      sessionId,
+      round,
+      stage,
+      reason: 'route_answer_effects_fetch_failed',
+      questionCount: routeAnswerEffectQuestionKeys.length
+    })
+  }
+  const routeEvidenceContextForDecision = buildRouteEvidenceContext({
+    plantContext,
+    observedEvidenceSet: labeledObservedEvidenceForResolution,
+    derivedEvidenceSet: derivedEvidenceForResolution,
+    diagnosisDirections: diagnosisDirectionsForResolution,
+    symptomClassRuntime,
+    answerEffects,
+    routeAnswerEffects,
+    answers: routeAnswerRecordsForDecision,
+    askedQuestionKeys,
+    visualAggregateResult,
+    routeHints: visualRouteContext.routeHints
+  })
+  const routeDecision = await planOutcomeRoutes({
+    candidateOutcomeKeys: candidateProblemKeys,
+    routeEvidenceContext: routeEvidenceContextForDecision,
+    canAskAnotherFollowUpRound,
+    maxVisibleOutcomes: 3,
+    maxQuestionCount: 1,
+    featureFlags: {
+      routePlanningEnabled: isRoutePlanningObservationEnabled()
+    }
+  })
   const weakOutOfPoolHintOnly = isWeakOutOfPoolHintOnlyVisualAggregate(visualAggregateResult)
   const effectiveOutOfPoolOnlyNoMapping =
     outOfPoolOnlyNoMapping && !outOfPoolRuntimeMappingAvailable
   const effectiveWeakOutOfPoolHintOnly =
     weakOutOfPoolHintOnly && !outOfPoolRuntimeMappingAvailable
-
-  const shouldAskFollowUpByRanking =
-    preferredVisualRouteAction !== 'retake_first' &&
-    canAskAnotherFollowUpRound &&
-    (
-      preferredVisualRouteAction === 'ask_first' ||
-      !hasEligibleTop1 ||
-      Number(rankings[0]?.finalScore || 0) < rankingConfig.followUpTopScoreThreshold ||
-      Number(scoreGap || 0) < rankingConfig.followUpGapThreshold
-    )
+  const hasAuthoritativeRouteDecision = isAuthoritativeRouteDecision(routeDecision)
+  const routeQuestionEnabled = isRouteQuestionEnabled()
+  const routeOutputEnabled = isRouteOutputEnabled()
+  const routeModeEnabled = routeQuestionEnabled || routeOutputEnabled
+  const legacyFollowUpAllowed = false
+  const shouldUseRouteQuestionDecision = routeQuestionEnabled && hasAuthoritativeRouteDecision
+  const shouldUseRouteOutputDecision = routeOutputEnabled && hasAuthoritativeRouteDecision
+  const hasRouteVisibleResult = shouldUseRouteOutputDecision && Array.isArray(routeDecision?.visibleOutcomeKeys) &&
+    routeDecision.visibleOutcomeKeys.length > 0
+  const routeOutputNoVisibleOutcome = Array.isArray(routeDecision?.visibleOutcomeKeys) &&
+    routeDecision.visibleOutcomeKeys.length === 0
+  const hasUsableRouteOutputDecision =
+    shouldUseRouteOutputDecision &&
+    hasRouteVisibleResult
 
   const mergedObservedEvidence = mergeObservedEvidenceSet(
     labeledObservedEvidenceForResolution,
@@ -5302,15 +5941,16 @@ async function runDiagnosisRound({
     round
   })
   const contextProblemGuard = evaluateContextRequiredProblemGuard({
-    rankings,
+    candidateOutcomes,
     observedEvidenceSet: labeledMergedObservedEvidence,
     answerEffects
   })
   const followUpQuestionBudget =
     Number(fastConvergencePlan?.maxQuestions || 0) > 0
       ? Number(fastConvergencePlan.maxQuestions)
-      : rankingConfig.maxQuestionsPerRound
+      : questionSelectionConfig.maxQuestionsPerRound
   const shouldForceContextFollowUp =
+    legacyFollowUpAllowed &&
     shouldAllowForcedContextProblemFollowUp({
       contextProblemGuard,
       observedEvidenceSet: labeledMergedObservedEvidence
@@ -5319,7 +5959,7 @@ async function runDiagnosisRound({
   const shouldForceMoldDirectionFollowUp = shouldForceMoldDirectionFirstRoundFollowUp({
     diagnosisDirections,
     followUpHistory,
-    canAskAnotherFollowUpRound
+    canAskAnotherFollowUpRound: legacyFollowUpAllowed && canAskAnotherFollowUpRound
   })
   const shouldForceVisualCandidateFollowUp = shouldForceVisualCandidateOrthogonalFollowUp({
     visualAggregateResult,
@@ -5327,9 +5967,10 @@ async function runDiagnosisRound({
     observedEvidenceSet: labeledMergedObservedEvidence,
     askedQuestionRows,
     askedQuestionKeys,
-    canAskAnotherFollowUpRound
+    canAskAnotherFollowUpRound: legacyFollowUpAllowed && canAskAnotherFollowUpRound
   })
   const shouldForceWeakOutOfPoolHintFollowUp =
+    legacyFollowUpAllowed &&
     effectiveWeakOutOfPoolHintOnly &&
     !effectiveOutOfPoolOnlyNoMapping &&
     canAskAnotherFollowUpRound &&
@@ -5344,12 +5985,16 @@ async function runDiagnosisRound({
     observedEvidenceSet: labeledMergedObservedEvidence
   })
   const shouldForceBroadVisualDifferentialFollowUp =
+    legacyFollowUpAllowed &&
     (broadVisualDifferentialActive || edemaFlatSpotDifferentialActive) &&
     canAskAnotherFollowUpRound &&
-    !Boolean(fastConvergencePlan?.applied) &&
-    !Boolean(fastConvergencePlan?.shouldBypassFollowUp)
+    !fastConvergencePlan?.applied &&
+    !fastConvergencePlan?.shouldBypassFollowUp
+  const yellowingAnswerRecords = [
+    ...(Array.isArray(askedQuestionRows) ? askedQuestionRows : []),
+    ...(Array.isArray(answers) ? answers : [])
+  ]
   const yellowingGateRuntimeActive =
-    canAskAnotherFollowUpRound &&
     hasYellowingModeRuntime({
       diagnosisDirections,
       observedSymptoms: mergedObservedSymptoms,
@@ -5357,26 +6002,47 @@ async function runDiagnosisRound({
       visualCandidateSymptoms: visualCandidateSymptomsForRuntime,
       symptomClassRuntime: mergedSymptomClassRuntime
     })
+  const yellowingRequiredGroupComplete = yellowingGateRuntimeActive
+    ? isYellowingRequiredGroupComplete(yellowingAnswerRecords)
+    : true
   const yellowingGateWeatherContext = yellowingGateRuntimeActive
     ? await getFreshCachedWeatherContext(openid)
     : null
-  const forcedYellowingGateFollowUps = yellowingGateRuntimeActive
+  const forcedYellowingGateFollowUps = yellowingGateRuntimeActive && !yellowingRequiredGroupComplete
     ? await buildYellowingGateFollowUps({
-        rankings,
+        candidateOutcomes,
         diagnosisDirections,
         observedSymptoms: mergedObservedSymptoms,
         observedEvidenceSet: labeledMergedObservedEvidence,
         visualCandidateSymptoms: visualCandidateSymptomsForRuntime,
-        askedQuestions: askedQuestionRows,
+        askedQuestions: yellowingAnswerRecords,
         symptomClassRuntime: mergedSymptomClassRuntime,
         plantContext,
         weatherContext: yellowingGateWeatherContext
       })
     : []
-  const shouldForceYellowingGateFollowUp = forcedYellowingGateFollowUps.length > 0
+  const allowedForcedYellowingGateFollowUps =
+    filterDisabledYellowingFlowQuestions(forcedYellowingGateFollowUps)
+  const shouldForceYellowingGateFollowUp = allowedForcedYellowingGateFollowUps.length > 0
+  const shouldHoldYellowingRouteOutput = shouldHoldYellowingRouteOutputForRequiredGroups({
+    diagnosisDirections,
+    observedSymptoms: mergedObservedSymptoms,
+    observedEvidenceSet: labeledMergedObservedEvidence,
+    visualCandidateSymptoms: visualCandidateSymptomsForRuntime,
+    symptomClassRuntime: mergedSymptomClassRuntime,
+    answerRecords: yellowingAnswerRecords
+  })
+  const effectiveHasUsableRouteOutputDecision =
+    hasUsableRouteOutputDecision && !shouldHoldYellowingRouteOutput
+  const effectiveShouldUseRouteOutputDecision =
+    shouldUseRouteOutputDecision && !shouldHoldYellowingRouteOutput
   const shouldAskFollowUp =
     (
-      shouldAskFollowUpByRanking ||
+      (
+        shouldUseRouteQuestionDecision
+          ? Boolean(routeDecision?.requiresFollowUp)
+          : false
+      ) ||
       shouldForceContextFollowUp ||
       shouldForceMoldDirectionFollowUp ||
       shouldForceVisualCandidateFollowUp ||
@@ -5384,7 +6050,7 @@ async function runDiagnosisRound({
       shouldForceBroadVisualDifferentialFollowUp ||
       shouldForceWeakOutOfPoolHintFollowUp
     ) &&
-    !Boolean(fastConvergencePlan?.shouldBypassFollowUp)
+    !fastConvergencePlan?.shouldBypassFollowUp
   const forcedContextFollowUps =
     shouldAskFollowUp && !shouldForceYellowingGateFollowUp && shouldForceContextFollowUp
       ? await buildProblemScopedFollowUps({
@@ -5405,7 +6071,7 @@ async function runDiagnosisRound({
           restrictToPreferred: true,
           maxQuestions: Math.min(
             contextProblemGuard.maxForcedQuestions,
-            Math.max(1, Number(followUpQuestionBudget || rankingConfig.maxQuestionsPerRound))
+            Math.max(1, Number(followUpQuestionBudget || questionSelectionConfig.maxQuestionsPerRound))
           )
         })
       : []
@@ -5413,13 +6079,13 @@ async function runDiagnosisRound({
     ? 0
     : Math.max(
         0,
-        Math.max(1, Number(followUpQuestionBudget || rankingConfig.maxQuestionsPerRound)) -
+        Math.max(1, Number(followUpQuestionBudget || questionSelectionConfig.maxQuestionsPerRound)) -
           forcedContextFollowUps.length
       )
   const genericFollowUps =
-    shouldAskFollowUp && remainingGeneralQuestionBudget > 0
+    legacyFollowUpAllowed && shouldAskFollowUp && remainingGeneralQuestionBudget > 0
       ? await buildFollowUps({
-          rankings,
+          candidateOutcomes,
           observedSymptoms: mergedObservedSymptoms,
           observedEvidenceSet: labeledMergedObservedEvidence,
           visualAggregateResult,
@@ -5437,19 +6103,71 @@ async function runDiagnosisRound({
           maxQuestions: remainingGeneralQuestionBudget
         })
       : []
+  const routePlannedFollowUps =
+    shouldAskFollowUp && shouldUseRouteQuestionDecision
+      ? await buildRoutePlannedFollowUps({
+          routeDecision,
+          askedQuestions: askedQuestionRows,
+          askedQuestionKeys,
+          maxQuestions: 1,
+          plantContext,
+          weatherContext: yellowingGateWeatherContext,
+          questionRepository: {
+            getQuestionsByKeys,
+            getQuestionOptionMappings
+          }
+        })
+      : []
   const followUps = []
   const seenFollowUpQuestionKeys = new Set()
-  const followUpCandidates = shouldForceYellowingGateFollowUp
-    ? forcedYellowingGateFollowUps
-    : [...forcedContextFollowUps, ...genericFollowUps]
+  const routePlannedQuestionKeys =
+    shouldUseRouteQuestionDecision && Array.isArray(routeDecision?.nextQuestionKeys)
+      ? routeDecision.nextQuestionKeys
+          .map(item => String(item || '').trim())
+          .filter(Boolean)
+      : []
+  const shouldPreferRoutePlannedFollowUps = Boolean(
+    shouldUseRouteQuestionDecision &&
+    routePlannedFollowUps.length > 0 &&
+    !shouldForceYellowingGateFollowUp
+  )
+  const answeredBranchRecordsForFollowUpFilter = [
+    ...(Array.isArray(askedQuestionRows) ? askedQuestionRows : []),
+    ...(Array.isArray(answers) ? answers : [])
+  ]
+  const followUpCandidates = (
+    shouldForceYellowingGateFollowUp && !shouldPreferRoutePlannedFollowUps
+      ? allowedForcedYellowingGateFollowUps
+      : [
+          ...routePlannedFollowUps,
+          ...forcedContextFollowUps,
+          ...genericFollowUps
+        ]
+  ).sort((a, b) => {
+    const questionKeyA = String(a?.questionKey || '').trim()
+    const questionKeyB = String(b?.questionKey || '').trim()
+    const routeIndexA = routePlannedQuestionKeys.indexOf(questionKeyA)
+    const routeIndexB = routePlannedQuestionKeys.indexOf(questionKeyB)
+    const normalizedRouteIndexA = routeIndexA >= 0 ? routeIndexA : Number.MAX_SAFE_INTEGER
+    const normalizedRouteIndexB = routeIndexB >= 0 ? routeIndexB : Number.MAX_SAFE_INTEGER
+    if (normalizedRouteIndexA !== normalizedRouteIndexB) {
+      return normalizedRouteIndexA - normalizedRouteIndexB
+    }
+    return Number(b?.priority || 0) - Number(a?.priority || 0)
+  })
   for (const item of followUpCandidates) {
     const questionKey = String(item?.questionKey || '').trim()
-    if (!questionKey || seenFollowUpQuestionKeys.has(questionKey)) continue
+    if (!questionKey || seenFollowUpQuestionKeys.has(questionKey)) {continue}
+    if (isDisabledYellowingFlowQuestion(item)) {continue}
+    const isRoutePlannedQuestion = routePlannedQuestionKeys.includes(questionKey)
     if (
-      !isYellowingFollowUpAllowedByAnsweredBranch(askedQuestionRows, item) ||
+      (!isYellowingFollowUpAllowedByAnsweredBranch(answeredBranchRecordsForFollowUpFilter, item, {
+        yellowingGateMode: yellowingGateRuntimeActive
+      })) ||
       (
+      !isRoutePlannedQuestion &&
       !shouldForceYellowingGateFollowUp &&
-      isYellowingEquivalentDimensionAnswered(askedQuestionRows, item)
+      isYellowingEquivalentDimensionAnswered(answeredBranchRecordsForFollowUpFilter, item)
       )
     ) {
       continue
@@ -5487,7 +6205,7 @@ async function runDiagnosisRound({
   const followUpStopPolicy = evaluateFollowUpStopPolicy({
     shouldAskFollowUp,
     filteredFollowUps: candidateFilteredFollowUps,
-    rankings,
+    candidateOutcomes,
     contextProblemGuard,
     answerEffects,
     optionMappings: [
@@ -5502,7 +6220,7 @@ async function runDiagnosisRound({
   const effectiveShouldAskFollowUp = Boolean(shouldAskFollowUp && hasAvailableFollowUpQuestions)
   const exhaustedFollowUpQuestionPool = Boolean(shouldAskFollowUp && !hasAvailableFollowUpQuestions)
   if (filteredFollowUps.length !== followUps.length) {
-    console.log('diagnose-http final followup visual-filter:', {
+    logDiagnosisRuntime('diagnose-http final followup visual-filter:', {
       sessionId,
       round,
       removedQuestionKeys: followUps
@@ -5514,7 +6232,7 @@ async function runDiagnosisRound({
       keptQuestionKeys: filteredFollowUps.map(item => item?.questionKey)
     })
   }
-  console.log('diagnose-http followup selection result:', {
+  logDiagnosisRuntime('diagnose-http followup selection result:', {
     sessionId,
     round,
     stage,
@@ -5548,7 +6266,7 @@ async function runDiagnosisRound({
   )
 
   const lowConfidenceBase = resolveLowConfidenceState({
-    rankings,
+    candidateOutcomes,
     observedSymptoms: visualObservedSymptomsForConfidence,
     observedEvidenceSet: labeledMergedObservedEvidence,
     unknownCountByGroup,
@@ -5557,10 +6275,10 @@ async function runDiagnosisRound({
     symptomClassRuntime: mergedSymptomClassRuntime
   })
   const followUpRequired = effectiveShouldAskFollowUp
-  const prioritizedOutputRankings =
+  const prioritizedOutputCandidateOutcomes =
     !followUpRequired
-      ? prioritizeOutputEligibleProblemRankings(
-        rankings,
+      ? prioritizeOutputEligibleCandidateOutcomes(
+        candidateOutcomes,
         labeledMergedObservedEvidence,
         problemRoleByKey,
         {
@@ -5568,24 +6286,24 @@ async function runDiagnosisRound({
           answerEffects
         }
       )
-      : rankings
-  const outputRankings =
+      : candidateOutcomes
+  const outputCandidateOutcomes =
     !followUpRequired
-      ? scopeRankingsToDiagnosisDirections(
-          prioritizedOutputRankings,
+      ? scopeCandidateOutcomesToDiagnosisDirections(
+          prioritizedOutputCandidateOutcomes,
           diagnosisDirections,
           problemRoleByKey
         )
-      : prioritizedOutputRankings
-  const stabilizedOutputRankings = !followUpRequired
-    ? stabilizeOutputRankingsAgainstConfirmedGuardShift(
-        outputRankings,
+      : prioritizedOutputCandidateOutcomes
+  const stabilizedOutputCandidateOutcomes = !followUpRequired
+    ? stabilizeOutputCandidateOutcomesAgainstConfirmedGuardShift(
+        outputCandidateOutcomes,
         contextProblemGuard,
         problemRoleByKey
       )
-    : outputRankings
+    : outputCandidateOutcomes
   const outputContextProblemGuard = evaluateContextRequiredProblemGuard({
-    rankings: stabilizedOutputRankings,
+    candidateOutcomes: stabilizedOutputCandidateOutcomes,
     observedEvidenceSet: labeledMergedObservedEvidence,
     answerEffects
   })
@@ -5634,7 +6352,7 @@ async function runDiagnosisRound({
     outputContextProblemGuard.applies &&
     outputContextProblemGuard.problemKey !== contextProblemGuard.problemKey
   ) {
-    console.log('diagnose-http output context guard shifted:', {
+    logDiagnosisRuntime('diagnose-http output context guard shifted:', {
       sessionId,
       round,
       startProblemKey: contextProblemGuard.problemKey,
@@ -5642,8 +6360,8 @@ async function runDiagnosisRound({
       outputHasRequiredContext: outputContextProblemGuard.hasRequiredContext
     })
   }
-  const hasEligibleOutputProblem = hasOutputEligibleProblemRanking(
-    stabilizedOutputRankings,
+  const hasEligibleOutputProblem = hasOutputEligibleCandidateOutcome(
+    stabilizedOutputCandidateOutcomes,
     labeledMergedObservedEvidence,
     problemRoleByKey,
     {
@@ -5651,8 +6369,8 @@ async function runDiagnosisRound({
       answerEffects
     }
   )
-  const hasForceableOutputProblem = hasForceableOutputProblemRanking(
-    stabilizedOutputRankings,
+  const hasForceableOutputProblem = hasForceableOutputCandidateOutcome(
+    stabilizedOutputCandidateOutcomes,
     labeledMergedObservedEvidence,
     problemRoleByKey,
     {
@@ -5675,6 +6393,7 @@ async function runDiagnosisRound({
   const yellowingOnlyRuntimeEvidenceAfterFollowUp =
     !followUpRequired &&
     followUpHistory &&
+    !effectiveHasUsableRouteOutputDecision &&
     activeRuntimeSymptomKeysForOutput.length > 0 &&
     activeRuntimeSymptomKeysForOutput.every(symptomKey =>
       [
@@ -5707,8 +6426,8 @@ async function runDiagnosisRound({
       'beetles',
       'snails_slugs',
       'leaf_miners'
-    ].includes(String(stabilizedOutputRankings?.[0]?.problemKey || '').trim()) &&
-    Number(stabilizedOutputRankings?.[0]?.questionEvidence || 0) <= 0
+    ].includes(String(stabilizedOutputCandidateOutcomes?.[0]?.problemKey || '').trim()) &&
+    Number(stabilizedOutputCandidateOutcomes?.[0]?.questionEvidence || 0) <= 0
   const hasLeafSpotBridgeRoutingGap =
     !followUpRequired &&
     String(mergedSymptomClassRuntime?.classGateDecision?.blockedReason || '').trim() === 'class_group_pool_empty' &&
@@ -5716,12 +6435,10 @@ async function runDiagnosisRound({
     mergedSymptomClassRuntime.classScores.some(
       item => String(item?.classKey || '').trim() === 'leaf_spot_complex_mode'
     )
-  const hasAnyRankedOutputProblem = Array.isArray(stabilizedOutputRankings)
-    && stabilizedOutputRankings.some(item => String(item?.problemKey || '').trim())
   const shouldBlockUnscopedClassOutput =
     !followUpRequired &&
     shouldBlockUnscopedClassProblemOutput({
-      rankings: stabilizedOutputRankings,
+      candidateOutcomes: stabilizedOutputCandidateOutcomes,
       diagnosisDirections,
       symptomClassRuntime: mergedSymptomClassRuntime,
       answerEffects,
@@ -5744,14 +6461,14 @@ async function runDiagnosisRound({
     !hasActiveObservedEvidence
   const broadVisualDifferentialUnresolved =
     !followUpRequired &&
-    !Boolean(fastConvergencePlan?.applied) &&
+    !fastConvergencePlan?.applied &&
     (
       edemaFlatSpotDifferentialActive ||
       (
         broadVisualDifferentialActive &&
         !hasDirectPositiveProblemAnswer(
           answerEffects,
-          normalizeKey(stabilizedOutputRankings?.[0]?.problemKey || '')
+          normalizeKey(stabilizedOutputCandidateOutcomes?.[0]?.problemKey || '')
         )
       )
     )
@@ -5852,7 +6569,7 @@ async function runDiagnosisRound({
         advice: Array.from(
           new Set([
             ...(Array.isArray(lowConfidence?.advice) ? lowConfidence.advice : []),
-            '当前只有黄叶事实，追问没有形成新老叶、分布、水分、光照或施肥方面的明确分流证据，不能直接输出缺铁、缺氮、缺水或弱光等具体问题。'
+            '当前只有黄叶事实，追问没有形成分布、水分、光照、施肥、病虫害或进展速度方面的明确分流证据，不能直接输出缺铁、缺氮、缺水或弱光等具体问题。'
           ])
         ),
         uncertainLegalityReason:
@@ -5937,7 +6654,7 @@ async function runDiagnosisRound({
           lowConfidence?.uncertainLegalityReason || 'input_unfillable'
       }
     : lowConfidence
-  const shouldForceRankedOutcomeAfterFollowUp =
+  const shouldForceOutputAfterFollowUp =
     !followUpRequired &&
     followUpHistory &&
     !hasLeafSpotBridgeRoutingGap &&
@@ -6046,8 +6763,8 @@ async function runDiagnosisRound({
             decisionCauseText: '当前只有结构损伤事实，追问没有形成明确病因分流证据，因此不能安全输出具体虫害。',
             decisionCauseDetails: {
               activeRuntimeSymptomKeys: activeRuntimeSymptomKeysForOutput,
-              topProblemKey: String(stabilizedOutputRankings?.[0]?.problemKey || '').trim(),
-              topQuestionEvidence: Number(stabilizedOutputRankings?.[0]?.questionEvidence || 0)
+              topProblemKey: String(stabilizedOutputCandidateOutcomes?.[0]?.problemKey || '').trim(),
+              topQuestionEvidence: Number(stabilizedOutputCandidateOutcomes?.[0]?.questionEvidence || 0)
             }
           }
       : broadVisualDifferentialUnresolved
@@ -6060,7 +6777,7 @@ async function runDiagnosisRound({
               primaryClassKey: mergedSymptomClassRuntime?.primaryClass?.classKey || '',
               activeRuntimeSymptomKeys: activeRuntimeSymptomKeysForOutput,
               edemaFlatSpotDifferentialActive,
-              topProblemKey: String(stabilizedOutputRankings?.[0]?.problemKey || '').trim()
+              topProblemKey: String(stabilizedOutputCandidateOutcomes?.[0]?.problemKey || '').trim()
             }
           }
       : shouldBlockUnscopedClassOutput
@@ -6071,7 +6788,7 @@ async function runDiagnosisRound({
             decisionCauseDetails: {
               currentClassKey: mergedSymptomClassRuntime?.currentClassKey || '',
               primaryClassKey: mergedSymptomClassRuntime?.primaryClass?.classKey || '',
-              topProblemKey: String(stabilizedOutputRankings?.[0]?.problemKey || '').trim(),
+              topProblemKey: String(stabilizedOutputCandidateOutcomes?.[0]?.problemKey || '').trim(),
               diagnosisDirectionKeys: Array.isArray(diagnosisDirections)
                 ? diagnosisDirections.map(item => item?.directionKey).filter(Boolean)
                 : [],
@@ -6095,45 +6812,128 @@ async function runDiagnosisRound({
             }
           }
         : null
-  const effectiveLowConfidence = shouldForceRankedOutcomeAfterFollowUp
+  const effectiveLowConfidence = shouldForceOutputAfterFollowUp
     ? {
         ...governedLowConfidence,
         uncertainLegalityReason: ''
       }
     : governedLowConfidence
-  const stopDecision = followUpRequired
-    ? null
-    : {
-        outcomeLocked:
-          shouldForceRankedOutcomeAfterFollowUp
-            ? 'problematic'
-            : effectiveLowConfidence?.uncertainLegalityReason ||
-                (outputContextProblemGuard.applies && !outputContextProblemGuard.hasRequiredContext)
-              ? 'uncertain'
-              : 'problematic',
-        stopReason:
-          shouldForceRankedOutcomeAfterFollowUp
-            ? 'problematic_output_ready'
-            : effectiveLowConfidence?.uncertainLegalityReason ||
-                (outputContextProblemGuard.applies && !outputContextProblemGuard.hasRequiredContext)
-              ? 'uncertain_output_ready'
-              : 'problematic_output_ready',
-        uncertainLegalityReason:
-          shouldForceRankedOutcomeAfterFollowUp
-            ? ''
-            : effectiveLowConfidence?.uncertainLegalityReason ||
-              (outputContextProblemGuard.applies && !outputContextProblemGuard.hasRequiredContext
-                ? 'input_unfillable'
-                : ''),
-        stopReasonDetail: decisionCause?.decisionCauseKey || '',
-        decisionCause
-      }
   const explanationProblemKeys = !followUpRequired
-    ? stabilizedOutputRankings.slice(0, 5).map(item => item.problemKey).filter(Boolean)
+    ? stabilizedOutputCandidateOutcomes.slice(0, 5).map(item => item.problemKey).filter(Boolean)
     : []
   const explanations = explanationProblemKeys.length
     ? await getExplanationsByProblemKeys(explanationProblemKeys)
     : []
+  const routeOutcomeKeys =
+    effectiveShouldUseRouteOutputDecision
+      ? Array.from(
+          new Set(
+            [
+              ...(Array.isArray(routeDecision?.visibleOutcomeKeys)
+                ? routeDecision.visibleOutcomeKeys
+                : [])
+            ]
+              .map(item => String(item || '').trim())
+              .filter(Boolean)
+          )
+        )
+      : []
+  const routeOutcomes =
+    effectiveShouldUseRouteOutputDecision && routeOutcomeKeys.length
+      ? await outcomeRouteRepository.getDiagnosisOutcomesByKeys(routeOutcomeKeys)
+      : []
+  const leadingVisibleOutcomeKey = resolveLeadingVisibleOutcomeKey(routeDecision)
+  const primaryRouteOutcome = routeOutcomes.find(
+    item => String(item?.outcomeKey || '').trim() === leadingVisibleOutcomeKey
+  )
+  const routeLockedOutcomeType =
+    String(primaryRouteOutcome?.outcomeType || '').trim() === 'non_problematic'
+      ? 'non_problematic'
+      : leadingVisibleOutcomeKey
+        ? 'problematic'
+        : 'uncertain'
+  const stopDecision = followUpRequired
+    ? null
+    : effectiveHasUsableRouteOutputDecision
+      ? {
+          outcomeLocked: routeLockedOutcomeType,
+          stopReason: leadingVisibleOutcomeKey
+            ? 'route_visible_outcomes_ready'
+            : 'route_uncertain_with_candidates',
+          uncertainLegalityReason: leadingVisibleOutcomeKey ? '' : 'route_uncertain',
+          stopReasonDetail: routeDecision?.decisionCause?.decisionCauseKey || '',
+          decisionCause: normalizeDecisionCause(routeDecision?.decisionCause)
+        }
+      : routeModeEnabled
+        ? routeOutputNoVisibleOutcome
+          ? {
+              outcomeLocked: 'uncertain',
+              stopReason: 'uncertain_output_ready',
+              uncertainLegalityReason:
+                effectiveLowConfidence?.uncertainLegalityReason || 'route_output_no_visible_outcome',
+              stopReasonDetail:
+                normalizeDecisionCause(routeDecision?.decisionCause)?.decisionCauseKey ||
+                decisionCause?.decisionCauseKey ||
+                'route_no_visible_outcome',
+              decisionCause:
+                normalizeDecisionCause(routeDecision?.decisionCause) ||
+                decisionCause || {
+                  decisionCauseKey: 'route_no_visible_outcome',
+                  decisionCauseCategory: 'route_fallback',
+                  decisionCauseText: 'route 未形成可展示 outcome，按保守不确定输出。',
+                  decisionCauseDetails: {}
+                }
+            }
+          : {
+              outcomeLocked: 'uncertain',
+              stopReason: hasAuthoritativeRouteDecision
+                ? 'route_uncertain_with_candidates'
+                : 'route_fallback_uncertain',
+              uncertainLegalityReason: 'route_fallback',
+              stopReasonDetail:
+                routeDecision?.decisionCause?.decisionCauseKey ||
+                decisionCause?.decisionCauseKey ||
+                'route_fallback_uncertain',
+              decisionCause:
+                normalizeDecisionCause(routeDecision?.decisionCause) ||
+                decisionCause || {
+                  decisionCauseKey: 'route_fallback_uncertain',
+                  decisionCauseCategory: 'route_fallback',
+                  decisionCauseText: 'route 未形成权威闭合，按保守不确定输出。',
+                  decisionCauseDetails: {}
+                }
+            }
+      : {
+          outcomeLocked:
+            shouldForceOutputAfterFollowUp
+              ? 'problematic'
+              : effectiveLowConfidence?.uncertainLegalityReason ||
+                  (outputContextProblemGuard.applies && !outputContextProblemGuard.hasRequiredContext)
+                ? 'uncertain'
+                : 'problematic',
+          stopReason:
+            shouldForceOutputAfterFollowUp
+              ? 'problematic_output_ready'
+              : effectiveLowConfidence?.uncertainLegalityReason ||
+                  (outputContextProblemGuard.applies && !outputContextProblemGuard.hasRequiredContext)
+                ? 'uncertain_output_ready'
+                : 'problematic_output_ready',
+          uncertainLegalityReason:
+            shouldForceOutputAfterFollowUp
+              ? ''
+              : effectiveLowConfidence?.uncertainLegalityReason ||
+                (outputContextProblemGuard.applies && !outputContextProblemGuard.hasRequiredContext
+                  ? 'input_unfillable'
+                  : ''),
+          stopReasonDetail: decisionCause?.decisionCauseKey || '',
+          decisionCause
+        }
+  const allActionProfileKeys = resolveVisibleRouteActionProfileKeys(routeDecision, routeOutcomes)
+  const actionProfiles =
+    effectiveShouldUseRouteOutputDecision &&
+    allActionProfileKeys.length
+      ? await outcomeRouteRepository.getOutcomeActionProfiles(allActionProfileKeys)
+      : []
 
   const stageFinal = followUpRequired ? 'followup' : 'final'
 
@@ -6145,10 +6945,11 @@ async function runDiagnosisRound({
     observedEvidenceSet: labeledMergedObservedEvidence,
     derivedEvidenceSet: mergedDerivedEvidenceSet,
     diagnosisDirections,
-    rankings: stabilizedOutputRankings,
+    candidateOutcomes: stabilizedOutputCandidateOutcomes,
     followUps: filteredFollowUps,
     problems,
     explanations,
+    routeOutcomes,
     causality: causalityEdges,
     plantContext,
     plantId: plantContext.userPlantId || plantContext.plantId,
@@ -6158,7 +6959,10 @@ async function runDiagnosisRound({
     highSpecificityFastConvergence: fastConvergencePlan,
     stopDecision,
     preferredRoutePrimaryAction:
-      preferredVisualRouteAction === 'retake_first' ? 'retake_first' : ''
+      preferredVisualRouteAction === 'retake_first' ? 'retake_first' : '',
+    routeDecision: effectiveShouldUseRouteOutputDecision ? routeDecision : null,
+    routeOutputEnabled: effectiveShouldUseRouteOutputDecision,
+    actionProfiles
   })
   const enrichedResponse = {
     ...publicResponse,
@@ -6174,13 +6978,13 @@ async function runDiagnosisRound({
   const result = {
     ...enrichedResponse,
     metrics: {
-      reliabilityScore: roundNum(reliabilityScore),
-      topScoreGap: roundNum(scoreGap)
+      routeDecision
     },
+    routeDecision: routeDebugTraceEnabled ? sanitizeRouteDecisionForPublic(routeDecision) : null,
+    __runtimeRouteDecision: routeDecision,
     answerEffects,
     followUpStopPolicy,
-    plantContext,
-    legacyDiagnosis: toLegacyCompatiblePayload(enrichedResponse)
+    plantContext
   }
   attachPrivateSymptomClassRuntime(result, mergedSymptomClassRuntime)
   return result
@@ -6198,9 +7002,18 @@ module.exports = {
   shouldForceVisualCandidateOrthogonalFollowUp,
   _test: {
     buildYellowingGateFollowUps,
+    shouldHoldYellowingRouteOutputForRequiredGroups,
+    resolveVisibleRouteActionProfileKeys,
+    filterFollowUpsByAnsweredRouteConstraints,
     isYellowingEquivalentDimensionAnswered,
     isYellowingFollowUpAllowedByAnsweredBranch,
     collectAnswerLikeRecordsFromFollowUpRows,
-    mergeAskedQuestionRows
+    collectRouteAnswerRecordsForDecision,
+    mergeAskedQuestionRows,
+    collectMatchedRouteEffectOutcomeKeys,
+    buildRouteAnswerEffectDedupKey,
+    collectRouteAnswerEffectQuestionKeySet,
+    mergeRouteAnswerEffects,
+    resolveRouteAnswerEffectsForFastPath
   }
 }

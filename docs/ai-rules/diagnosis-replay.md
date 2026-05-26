@@ -1,32 +1,99 @@
-# CloudBase Replay and Zero-Model Diagnose Rules / CloudBase 回放与零模型诊断规则
+# 诊断 Replay / Zero-Model 脚本规则
 
-## CloudBase Replay / Zero-Model Diagnose Scripts
+## 1. 适用范围
 
-- Do NOT describe local replay failure as "shell 缺 CloudBase secret" unless you have already verified the project wrapper path is being used.
-- For `diagnose-http` zero-model replay, DB-backed replay, or other local scripts that need CloudBase credentials plus SQL schema alignment, do NOT run scripts bare.
-- Always use the project wrapper or the npm alias:
-  - `npm run replay:diagnosis-sessions -- --session-ids=<diag_id> ...`
-  - `npm run run:with-cloudbase-env -- --function=diagnose-http -- node <script> ...`
-- The canonical wrapper is `scripts/terminal-e2e/run-with-cloudbase-env.mjs`.
-- That wrapper is responsible for injecting:
-  - `CLOUDBASE_ENV_ID / TCB_ENV / CLOUDBASE_SECRET_ID / CLOUDBASE_SECRET_KEY`
-  - `TENCENTCLOUD_SECRETID / TENCENTCLOUD_SECRETKEY`
-  - `APP_ENV / SCHEMA_ENV / SQL_DATABASE_*`
-- Default local replay target must stay aligned to `development -> cloud1_dev`.
-- When debugging a historical diagnosis decision point, default replay semantics are not enough:
-  - default replay means "replay next action from current session state"
-  - if you need to inspect "why that round made that decision", explicitly pass `--replay-round` and `--replay-stage`
-- When replaying from `--session-id-file` for visual-diagnosis analysis, do not trust the filename. If the task requires formal visual evidence, the source file itself must carry verified `visualFinalEvidence`, and the replay command must pass `--require-visual-final-evidence=true`; otherwise the script should refuse to run.
-- Every diagnosis replay batch must emit a canonical batch artifact under `scripts/terminal-e2e/batch/` and a paired conclusion artifact under `scripts/terminal-e2e/conclusion/`.
-  - File naming uses local completion time `YYYYMMDD-HHmmss` as the base name.
-  - The conclusion file uses the same base name plus `-conclusion`.
-  - One canonical batch file may contain at most `100` results. If a replay/materialize run exceeds `100`, it must split into multiple files using the same base name plus `-part01`, `-part02`, etc., and each part must have its own paired conclusion file.
-  - Canonical batch results must stay trimmed to the replay audit core fields:
-    - `sessionId` for traceability
-    - `visualFinalEvidence`
-    - `symptomClassReplay`
-    - `round1`
-    - `round2`
-    - `outcome`
-    - `calculationProcess`
-  - Do not put `openid`, `visualEvidenceMeta`, `symptomClass`, `symptomClassSource`, or other low-value bulk fields into the canonical batch artifact unless the user explicitly asks for them.
+本文件适用于 `diagnose-http` zero-model replay、DB-backed replay、诊断历史会话复盘、batch artifact / conclusion artifact 生成、需要 CloudBase 凭证与 SQL schema 对齐的本地脚本、视觉诊断证据正式分析，以及 ranking → route、outcome 瘦身、路径规划、问诊路径、gate、runtime 等诊断流改造后的回放验证。
+
+## 2. 禁止事项
+
+1. 不要裸跑依赖 CloudBase 凭证的本地脚本。
+2. 不要在未验证项目 wrapper 路径前，把本地 replay 失败描述成“shell 缺 CloudBase secret”。
+3. 不要信任 `--session-id-file` 的文件名来判断是否包含正式视觉证据。
+4. 不要把低价值大字段塞进 canonical batch artifact，除非用户明确要求。
+5. 不要把默认 replay 误当成历史决策点复盘。
+6. 不要把 replay 命令成功误当成诊断规则正确。
+7. 不要把 replay 产物中的中间字段直接视为前端可见 outcome，必须区分运行时中间态和前端展示态。
+8. 不要把 `review/list`、历史 session replay 或 DB 中间态当成客户端运行时最终展示验收；它们只能作为复现入口或辅助证据。
+
+## 3. 标准执行入口
+
+必须使用项目 wrapper 或 npm alias。
+
+```bash
+npm run replay:diagnosis-sessions -- --session-ids=<diag_id> ...
+npm run run:with-cloudbase-env -- --function=diagnose-http -- node <script> ...
+```
+
+标准 wrapper：
+
+```text
+scripts/terminal-e2e/run-with-cloudbase-env.mjs
+```
+
+## 4. 历史诊断决策点复盘
+
+默认 replay 是“从当前 session state replay 下一步动作”。
+
+如果需要检查“为什么那一轮做出那个决策”，必须显式传入：
+
+```bash
+--replay-round
+--replay-stage
+```
+
+## 5. 视觉证据要求
+
+从 `--session-id-file` replay 并用于视觉诊断分析时：
+
+1. 不得信任文件名。
+2. 源文件本身必须携带已验证的 `visualFinalEvidence`。
+3. replay 命令必须传入 `--require-visual-final-evidence=true`。
+4. 如果缺少正式视觉证据，脚本应拒绝运行。
+5. 视觉证据、问诊事实、上下文事实、规则推断必须区分，不得混为同一层。
+
+## 6. Batch Artifact 规范
+
+每个 diagnosis replay batch 必须输出 canonical batch artifact：
+
+```text
+scripts/terminal-e2e/batch/
+```
+
+并输出成对 conclusion artifact：
+
+```text
+scripts/terminal-e2e/conclusion/
+```
+
+canonical batch results 只保留 replay audit 核心字段：
+
+1. `sessionId`
+2. `visualFinalEvidence`
+3. `symptomClassReplay`
+4. `round1`
+5. `round2`
+6. `outcome`
+7. `calculationProcess`
+
+## 7. Ranking → Route / Outcome 瘦身验证要求
+
+涉及 ranking → route、outcome 瘦身、路径规划时，replay 审计必须额外关注：
+
+1. 当前代码是否仍存在 ranking 作为最终决策的残留路径。
+2. route 是否承接了用户处理路径、问诊推进和 outcome 收敛职责。
+3. outcome 是否从运行时中间态与前端可见态分层。
+4. 是否允许多 outcome 经路径推进逐步收窄到 1～3 个前端可见结果。
+5. 瘦身发生在哪一层：候选生成、路径规划、前端展示、文档输出或日志产物。
+6. replay 产物是否足以解释 route 决策过程。
+7. batch artifact 是否保持精简，不把无关字段重新膨胀回来。
+8. 历史 session 复盘必须区分观察入口和 bug 发生位置：如果用户报告的是客户端运行时或最终展示，replay 通过后仍需验证 result/read 顶层字段与前端消费路径。
+
+## 8. 诊断 fast path / guard parity 回归
+
+涉及 `diagnose-http`、route、outcome、gate、runtime、`fast path`、`warm path`、`early return`、缓存命中或性能优化路径时，replay / smoke 不能只跑完整闭合路径，必须补充快捷路径负向回归：
+
+1. 明确列出主链路径与快捷路径各自的 follow-up / final / outcome 输出点。
+2. 证明快捷路径复用了主链输出守卫；不得只因为单个 gate 命中就提前 final。
+3. 黄叶路径必须覆盖首个浇水分组题的两个负向样本：`often_wet` 与 `often_dry` 首答后都应保持 follow-up / awaiting_follow_up，不能返回 final 或写入最终 outcome。
+4. 同一组变更还必须保留一个完整路径正向样本，证明必答分组完成后仍能进入最终结果。
+5. 真实 HTTP smoke 后需要核对 DB：`diagnosis_sessions.session_status`、`diagnosis_sessions.needs_follow_up`、最终 problem / outcome 字段，以及必要的 `diagnosis_follow_ups` 追问记录。

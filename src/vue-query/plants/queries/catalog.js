@@ -28,7 +28,7 @@ export function buildPlantCatalogMapQueryOptions(keyword) {
         query: { keyword },
         auth: true
       }),
-    enabled: !!keyword
+    enabled: Boolean(keyword)
   }
 }
 

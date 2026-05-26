@@ -176,6 +176,18 @@ const registerForm = ref({
   password: ''
 })
 
+function showToast(title = '', icon = 'none') {
+  if (typeof uni !== 'undefined' && typeof uni.showToast === 'function') {
+    uni.showToast({
+      title: String(title || ''),
+      icon,
+      duration: 2000
+    })
+    return
+  }
+  console.info(String(title || ''))
+}
+
 const handleLogin = async () => {
   loading.value = true
   try {
@@ -190,7 +202,7 @@ const handleLogin = async () => {
     // 跳转到AI生成页面
     router.push('/ai-poetry')
   } catch (error) {
-    alert(error.message || '登录失败')
+    showToast(error?.message || '登录失败')
   } finally {
     loading.value = false
   }
@@ -199,17 +211,17 @@ const handleLogin = async () => {
 const handleRegister = async () => {
   registerLoading.value = true
   try {
-    const response = await authAPI.register({
+    await authAPI.register({
       email: registerForm.value.email,
       username: registerForm.value.username,
       password: registerForm.value.password
     })
     
-    alert('注册成功！欢迎加入我们')
+    showToast('注册成功！欢迎加入我们', 'success')
     showRegister.value = false
     loginForm.value.email = registerForm.value.email
   } catch (error) {
-    alert(error.message || '注册失败')
+    showToast(error?.message || '注册失败')
   } finally {
     registerLoading.value = false
   }

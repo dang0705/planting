@@ -7,13 +7,13 @@ function buildRuntimeId(prefix) {
 }
 
 function stringifyJson(value) {
-  if (value === null || value === undefined) return null
+  if (value === null || value === undefined) {return null}
   return JSON.stringify(value)
 }
 
 function normalizePersistedImageRef(value = '') {
   const normalized = String(value || '').trim()
-  if (!normalized) return ''
+  if (!normalized) {return ''}
   if (/^data:image\//i.test(normalized)) {
     return '[inline_data_url]'
   }
@@ -22,27 +22,27 @@ function normalizePersistedImageRef(value = '') {
 
 function normalizeConfidence(value) {
   const score = Number(value || 0)
-  if (!Number.isFinite(score)) return 0
-  if (score < 0) return 0
-  if (score > 1) return 1
+  if (!Number.isFinite(score)) {return 0}
+  if (score < 0) {return 0}
+  if (score > 1) {return 1}
   return score
 }
 
 function resolveQualityLevel(score) {
-  if (score >= 0.85) return 'high'
-  if (score >= 0.65) return 'medium'
-  if (score >= 0.45) return 'marginal'
+  if (score >= 0.85) {return 'high'}
+  if (score >= 0.65) {return 'medium'}
+  if (score >= 0.45) {return 'marginal'}
   return 'low'
 }
 
 function resolveCompletenessLevel(score, inputSlotType) {
   if (inputSlotType === 'whole_plant') {
-    if (score >= 0.75) return 'high'
-    if (score >= 0.5) return 'medium'
+    if (score >= 0.75) {return 'high'}
+    if (score >= 0.5) {return 'medium'}
     return 'low'
   }
-  if (score >= 0.7) return 'medium'
-  if (score >= 0.45) return 'low'
+  if (score >= 0.7) {return 'medium'}
+  if (score >= 0.45) {return 'low'}
   return 'unknown'
 }
 
@@ -86,26 +86,26 @@ function buildRouteHints({ taxonomyMatchStatus, confidence, candidateCount }) {
 }
 
 function resolveAdmissionResult(taxonomyMatchStatus) {
-  if (taxonomyMatchStatus === 'matched') return 'formally_admitted'
-  if (taxonomyMatchStatus === 'weak_matched') return 'candidate_retained'
+  if (taxonomyMatchStatus === 'matched') {return 'formally_admitted'}
+  if (taxonomyMatchStatus === 'weak_matched') {return 'candidate_retained'}
   return 'explanation_retained'
 }
 
 function resolveTargetLayer(taxonomyMatchStatus) {
-  if (taxonomyMatchStatus === 'matched') return 'identity_resolution'
-  if (taxonomyMatchStatus === 'weak_matched') return 'identity_candidate'
+  if (taxonomyMatchStatus === 'matched') {return 'identity_resolution'}
+  if (taxonomyMatchStatus === 'weak_matched') {return 'identity_candidate'}
   return 'explanation_only'
 }
 
 function buildMatchRule(candidate) {
-  if (!candidate) return null
+  if (!candidate) {return null}
   const score = Number(candidate.matchScore || 0)
   const aliasType = String(candidate.matchType || '').trim()
 
-  if (score >= 4) return `alias_exact:${aliasType || 'alias'}`
-  if (score >= 3) return aliasType ? `field_exact:${aliasType}` : 'field_exact'
-  if (score >= 2) return `alias_fuzzy:${aliasType || 'alias'}`
-  if (score >= 1) return aliasType ? `field_fuzzy:${aliasType}` : 'field_fuzzy'
+  if (score >= 4) {return `alias_exact:${aliasType || 'alias'}`}
+  if (score >= 3) {return aliasType ? `field_exact:${aliasType}` : 'field_exact'}
+  if (score >= 2) {return `alias_fuzzy:${aliasType || 'alias'}`}
+  if (score >= 1) {return aliasType ? `field_fuzzy:${aliasType}` : 'field_fuzzy'}
   return null
 }
 

@@ -1,0 +1,212 @@
+{
+  "generatedAt": "2026-04-23T09:36:04.660Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "collectionProfile": {
+    "source": "all",
+    "manualVisualOnly": false,
+    "manualVisualOnlyProvided": false
+  },
+  "visualEvidenceSummary": {
+    "total": 1,
+    "available": 1,
+    "missingRawRecords": 0,
+    "emptyConclusion": 0
+  },
+  "total": 1,
+  "success": 1,
+  "failed": 0,
+  "progress": {
+    "processed": 1,
+    "targetTotal": 1,
+    "complete": true
+  },
+  "results": [
+    {
+      "sessionId": "diag_1776524906841_9gzq2dil",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [
+          {
+            "symptomKey": "leaf_yellowing",
+            "displayNameCn": "叶片发黄",
+            "confidenceBand": "high",
+            "supportingRegionNote": "图中有多片叶片呈现明显的黄色，与正常绿色叶片形成对比"
+          }
+        ],
+        "outOfPoolCandidates": [],
+        "routeHints": [
+          {
+            "type": "possible_problematic_signal",
+            "reason": "observed significant leaf yellowing in multiple leaves"
+          }
+        ]
+      },
+      "visualEvidenceMeta": {
+        "status": "available",
+        "reason": "",
+        "visualRawRecordCount": 1,
+        "symptomCandidateCount": 1,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 1,
+        "hasVisualConclusion": true
+      },
+      "symptomClass": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "yellowing_mode",
+        "currentClassNameCn": "黄叶模式",
+        "currentGroupKey": "yellowing_patchy_confirm_group",
+        "currentGroupLabel": "yellowing_patchy_confirm_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "yellowing_mode",
+          "primaryClassRuntimeScore": 1.6905,
+          "unknownLockCount": 6,
+          "currentClassKey": "yellowing_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 3
+        }
+      },
+      "symptomClassSource": null,
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "yellowing_mode",
+        "currentClassNameCn": "黄叶模式",
+        "currentGroupKey": "yellowing_patchy_confirm_group",
+        "currentGroupLabel": "yellowing_patchy_confirm_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "yellowing_mode",
+          "primaryClassRuntimeScore": 1.6905,
+          "unknownLockCount": 6,
+          "currentClassKey": "yellowing_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 3
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_leaf_yellowing_light_background",
+            "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+            "targetDimension": "light_exposure",
+            "answer": {
+              "optionKey": "no_change",
+              "optionText": "没有明显变化",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_leaf_yellowing_watering_background",
+            "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+            "targetDimension": "watering_context",
+            "answer": {
+              "optionKey": "more_wet",
+              "optionText": "更像长期偏湿、久不干",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_leaf_yellowing_fertilization_background",
+            "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+            "targetDimension": "fertilization_context",
+            "answer": {
+              "optionKey": "no",
+              "optionText": "否，近期并非长期缺肥背景",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_root_rot_bad_smell",
+            "questionText": "根部或根团有明显腐烂异味?",
+            "targetDimension": "root_zone_context",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_iron_new_leaves_yellow",
+            "questionText": "发黄主要出现在新叶?",
+            "targetDimension": "host_confirmation",
+            "answer": {
+              "optionKey": "new",
+              "optionText": "新叶为主",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_nitrogen_old_leaves_yellow",
+            "questionText": "发黄先从老叶开始?",
+            "targetDimension": "host_confirmation",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_aXJvbl9kZWZpY2llbmN5",
+          "problemKey": "iron_deficiency",
+          "displayName": "缺铁",
+          "summary": "当前最像的问题是：缺铁。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "finalResult": {
+          "problemId": "p_aXJvbl9kZWZpY2llbmN5",
+          "problemKey": "",
+          "displayName": "缺铁",
+          "summary": "当前最像的问题是：缺铁。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "roundIndex": 3
+      }
+    }
+  ]
+}

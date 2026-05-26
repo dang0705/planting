@@ -1,0 +1,172 @@
+{
+  "run_id": "run_4d15a1f26de57624",
+  "created_at": "2026-05-06T09:07:23.945Z",
+  "queue_type": "manual_review",
+  "retention_policy": {
+    "saves_original_video": false,
+    "saves_original_audio": false,
+    "saves_full_transcript": false,
+    "saves_comments": false,
+    "saves_account_profile": false,
+    "saves_complete_subtitles": false
+  },
+  "prohibited_actions": [
+    "reverse_engineer_douyin_api",
+    "handle_captcha",
+    "use_proxy_pool",
+    "crawl_comments",
+    "crawl_account_homepage",
+    "save_full_subtitles"
+  ],
+  "tasks": [
+    {
+      "id": "task_7e1eb4ac456d6d0c",
+      "input_type": "local_video",
+      "source_url": "",
+      "local_file_path": "tmp/video-knowledge-smoke/smoke.mp4",
+      "text_file_path": "",
+      "source_platform": "manual",
+      "manual_topic": "植物养护",
+      "manual_note": "",
+      "manual_text_digest": "",
+      "status": "processed",
+      "risk_level": "low",
+      "error_message": "",
+      "validation": {
+        "ok": true
+      },
+      "created_at": "2026-05-06T09:07:22.933Z",
+      "updated_at": "2026-05-06T09:07:23.944Z",
+      "processed_at": "2026-05-06T09:07:23.944Z"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "candidate_0d23cce0af66a750",
+      "task_id": "task_7e1eb4ac456d6d0c",
+      "input_type": "local_video",
+      "source_url": "",
+      "source_platform": "manual",
+      "manual_topic": "植物养护",
+      "knowledge_candidate": {
+        "plant_names": [],
+        "problem_clusters": [
+          "过度浇水"
+        ],
+        "observable_evidence": [
+          "本地视频 smoke 片段"
+        ],
+        "possible_causes": [],
+        "candidate_questions": [],
+        "candidate_actions": [
+          "减少过度浇水"
+        ],
+        "contraindications": [],
+        "key_takeaways": [
+          "测试默认10秒抽帧"
+        ],
+        "care_principles": [],
+        "common_mistakes": [],
+        "applicable_contexts": [],
+        "source_timeline": [],
+        "review_checklist": [],
+        "uncertainty_points": [
+          "本地 smoke 输出,需人工审核"
+        ],
+        "risk_flags": [
+          "pending_human_review",
+          "no_original_video_saved",
+          "no_full_transcript_saved",
+          "local_smoke"
+        ]
+      },
+      "source_knowledge_layer": {
+        "source_digest": "7aa76279cdab9b32",
+        "source_fragment_count": 2,
+        "source_channels": [
+          "asr",
+          "ocr"
+        ],
+        "key_points_for_review": [
+          "植物养护",
+          "植物養戶不要過度焦水"
+        ],
+        "timeline_for_review": [],
+        "coverage_hints": {
+          "has_asr": true,
+          "has_ocr": true,
+          "has_manual_text": false,
+          "has_url_visible_text": false,
+          "likely_undercovered": true,
+          "note": "当前可审核要点偏少，建议补充本地视频/音频或手动文案后重跑。"
+        }
+      },
+      "llm_status": "completed",
+      "review_status": "pending",
+      "review_notes": "",
+      "extraction_input_digest": "7aa76279cdab9b32",
+      "source_fragment_count": 2,
+      "created_at": "2026-05-06T09:07:23.944Z",
+      "updated_at": "2026-05-06T09:07:23.944Z",
+      "audit_summary": [
+        {
+          "event_type": "local_audio_extracted",
+          "event_detail": "temporary_audio_digest=064433f1c2e7867d"
+        },
+        {
+          "event_type": "asr_completed",
+          "event_detail": "stdout_digest=798655bd636e6492"
+        },
+        {
+          "event_type": "ocr_completed",
+          "event_detail": "frame_count=3; output_digest=e3b0c44298fc1c14"
+        },
+        {
+          "event_type": "llm_completed",
+          "event_detail": "output_digest=23029decf7dd1569"
+        },
+        {
+          "event_type": "task_processed",
+          "event_detail": "source_fragment_count=2"
+        }
+      ]
+    }
+  ],
+  "audit_logs": [
+    {
+      "id": "audit_0e087b9b0cbbccd3",
+      "task_id": "task_7e1eb4ac456d6d0c",
+      "event_type": "local_audio_extracted",
+      "event_detail": "temporary_audio_digest=064433f1c2e7867d",
+      "created_at": "2026-05-06T09:07:23.007Z"
+    },
+    {
+      "id": "audit_40f2855a0dee8d1b",
+      "task_id": "task_7e1eb4ac456d6d0c",
+      "event_type": "asr_completed",
+      "event_detail": "stdout_digest=798655bd636e6492",
+      "created_at": "2026-05-06T09:07:23.583Z"
+    },
+    {
+      "id": "audit_fc4984143d5b2993",
+      "task_id": "task_7e1eb4ac456d6d0c",
+      "event_type": "ocr_completed",
+      "event_detail": "frame_count=3; output_digest=e3b0c44298fc1c14",
+      "created_at": "2026-05-06T09:07:23.915Z"
+    },
+    {
+      "id": "audit_79ed7afbb5252fbf",
+      "task_id": "task_7e1eb4ac456d6d0c",
+      "event_type": "llm_completed",
+      "event_detail": "output_digest=23029decf7dd1569",
+      "created_at": "2026-05-06T09:07:23.944Z"
+    },
+    {
+      "id": "audit_459ae4640302ea3f",
+      "task_id": "task_7e1eb4ac456d6d0c",
+      "event_type": "task_processed",
+      "event_detail": "source_fragment_count=2",
+      "created_at": "2026-05-06T09:07:23.944Z"
+    }
+  ]
+}

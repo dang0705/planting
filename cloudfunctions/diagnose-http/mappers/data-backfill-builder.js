@@ -3,8 +3,8 @@
 const { expectedColumns } = require('./data-diff-builder')
 
 function classifyPriority(tableName) {
-  if (['problems', 'symptoms'].includes(tableName)) return 'P1_PRIMARY_KEYSPACE'
-  if (['symptom_problem_evidence'].includes(tableName)) return 'P2_EVIDENCE_CLOSURE'
+  if (['problems', 'symptoms'].includes(tableName)) {return 'P1_PRIMARY_KEYSPACE'}
+  if (['symptom_problem_evidence'].includes(tableName)) {return 'P2_EVIDENCE_CLOSURE'}
   if (['genus_problem_profiles', 'problem_host_profiles', 'plant_problem_profiles'].includes(tableName)) {
     return 'P3_PRIOR_LAYER'
   }

@@ -4,7 +4,7 @@ function normalizeOutcomeType(outcomeType = '') {
 
 function isEnglishLikeSymptomLabel(value = '') {
   const normalized = String(value || '').trim()
-  if (!normalized) return false
+  if (!normalized) {return false}
   return /[A-Za-z]/.test(normalized) && !/[\u4e00-\u9fff]/.test(normalized)
 }
 
@@ -23,14 +23,14 @@ function resolveDisplaySymptomCn(...candidates) {
 function mapSeverityToHealthText({ severity = 'medium', outcomeType = '', followUpRequired = false } = {}) {
   const normalizedOutcomeType = normalizeOutcomeType(outcomeType)
 
-  if (followUpRequired) return '待进一步确认'
-  if (normalizedOutcomeType === 'non_problematic') return '暂未见明显问题'
-  if (normalizedOutcomeType === 'uncertain') return '待进一步确认'
+  if (followUpRequired) {return '待进一步确认'}
+  if (normalizedOutcomeType === 'non_problematic') {return '暂未见明显问题'}
+  if (normalizedOutcomeType === 'uncertain') {return '待进一步确认'}
 
   const key = String(severity || '').toLowerCase()
-  if (key === 'critical') return '严重问题'
-  if (key === 'high') return '需要治疗'
-  if (key === 'low') return '轻微问题'
+  if (key === 'critical') {return '严重问题'}
+  if (key === 'high') {return '需要治疗'}
+  if (key === 'low') {return '轻微问题'}
   return '需要治疗'
 }
 
@@ -47,7 +47,7 @@ export function getHealthClass(status) {
 }
 
 export function formatCausalityItem(item) {
-  if (!item) return ''
+  if (!item) {return ''}
   return `${item?.causeProblemKey || 'unknown'} → ${item?.effectProblemKey || 'unknown'}`
 }
 
@@ -179,6 +179,16 @@ function normalizeVisualAggregateSummary(summary = null) {
       summary?.aggregateQualityGrade || summary?.aggregate_quality_grade || '',
     aggregateAnalyzability:
       summary?.aggregateAnalyzability || summary?.aggregate_analyzability || '',
+    aggregateVisualDiscriminators: Array.isArray(
+      summary?.aggregateVisualDiscriminators || summary?.aggregate_visual_discriminators
+    )
+      ? (summary.aggregateVisualDiscriminators || summary.aggregate_visual_discriminators)
+      : [],
+    aggregateMissingInfoForPath: Array.isArray(
+      summary?.aggregateMissingInfoForPath || summary?.aggregate_missing_info_for_path
+    )
+      ? (summary.aggregateMissingInfoForPath || summary.aggregate_missing_info_for_path)
+      : [],
     suggestedFollowupCapture: normalizeStringList(
       summary?.suggestedFollowupCapture || summary?.suggested_followup_capture
     ),
@@ -308,6 +318,9 @@ function normalizeQuestionQueue(questionQueue = null) {
     questionItems: (Array.isArray(questionQueue?.questionItems) ? questionQueue.questionItems : []).map(item => ({
       questionKey: String(item?.questionKey || '').trim(),
       questionId: String(item?.questionId || '').trim(),
+      routeKey: String(item?.routeKey || '').trim(),
+      gateKey: String(item?.gateKey || '').trim(),
+      outcomeKey: String(item?.outcomeKey || '').trim(),
       targetSymptomKey: String(item?.targetSymptomKey || '').trim(),
       questionGroupKey: String(item?.questionGroupKey || '').trim(),
       targetDimension: String(item?.targetDimension || '').trim(),
@@ -365,6 +378,130 @@ function normalizeOutputEligibility(outputEligibility = null) {
     unresolvedRisks: normalizeStringList(outputEligibility?.unresolvedRisks),
     nextStepHints: normalizeStringList(outputEligibility?.nextStepHints)
   }
+}
+
+function normalizeRouteDecisionCause(routeDecisionCause = null) {
+  if (!routeDecisionCause || typeof routeDecisionCause !== 'object') {
+    return null
+  }
+
+  return {
+    decisionCauseKey: String(
+      routeDecisionCause?.decisionCauseKey || routeDecisionCause?.key || ''
+    ).trim(),
+    decisionCauseCategory: String(
+      routeDecisionCause?.decisionCauseCategory || routeDecisionCause?.category || ''
+    ).trim(),
+    decisionCauseText: String(
+      routeDecisionCause?.decisionCauseText || routeDecisionCause?.text || ''
+    ).trim(),
+    decisionCauseDetails:
+      routeDecisionCause?.decisionCauseDetails &&
+      typeof routeDecisionCause.decisionCauseDetails === 'object'
+        ? routeDecisionCause.decisionCauseDetails
+        : null
+  }
+}
+
+function normalizeOutcomeEntry(outcome = null) {
+  if (!outcome || typeof outcome !== 'object') {
+    return null
+  }
+
+  const outcomeKey = String(outcome?.outcomeKey || outcome?.problemKey || '').trim()
+  if (!outcomeKey) {
+    return null
+  }
+
+  return {
+    outcomeKey,
+    problemKey: String(outcome?.problemKey || outcomeKey).trim(),
+    displayNameCn: String(
+      outcome?.displayNameCn || outcome?.displayName || outcome?.title || outcomeKey
+    ).trim(),
+    summary: String(outcome?.summary || '').trim(),
+    severity: String(outcome?.severity || '').trim(),
+    urgency: String(outcome?.urgency || '').trim(),
+    firstAid: String(outcome?.firstAid || '').trim(),
+    avoid: String(outcome?.avoid || '').trim(),
+    actionAdviceItems: normalizeStringList(outcome?.actionAdviceItems),
+    avoidAdviceItems: normalizeStringList(outcome?.avoidAdviceItems),
+    reassurance: String(outcome?.reassurance || '').trim()
+  }
+}
+
+function normalizeOutcomeList(outcomes = []) {
+  return (Array.isArray(outcomes) ? outcomes : []).map(normalizeOutcomeEntry).filter(Boolean)
+}
+
+function normalizeActionAdvice(actionAdvice = null) {
+  if (!actionAdvice || typeof actionAdvice !== 'object') {
+    return null
+  }
+
+  return {
+    todayActions: normalizeStringList(actionAdvice?.todayActions),
+    threeDayActions: normalizeStringList(actionAdvice?.threeDayActions),
+    sevenDayObserve: normalizeStringList(actionAdvice?.sevenDayObserve),
+    avoidActions: normalizeStringList(actionAdvice?.avoidActions),
+    retakeOrEscalate: normalizeStringList(actionAdvice?.retakeOrEscalate),
+    conflictDetected: Boolean(actionAdvice?.conflictDetected)
+  }
+}
+
+function normalizeRouteDecision(routeDecision = null) {
+  if (!routeDecision || typeof routeDecision !== 'object') {
+    return null
+  }
+
+  return {
+    mode: String(routeDecision?.mode || '').trim(),
+    visibleOutcomeKeys: normalizeStringList(routeDecision?.visibleOutcomeKeys),
+    activeRouteGroupKeys: normalizeStringList(routeDecision?.activeRouteGroupKeys),
+    nextQuestionKeys: normalizeStringList(routeDecision?.nextQuestionKeys),
+    decisionCause: normalizeRouteDecisionCause(routeDecision?.decisionCause),
+    fallbackPolicy: String(routeDecision?.fallbackPolicy || '').trim()
+  }
+}
+
+function resolveOutcomeIdentityKey(outcome = null, index = 0) {
+  if (!outcome || typeof outcome !== 'object') {
+    return `outcome_${index}`
+  }
+  return String(
+    outcome.outcomeKey ||
+      outcome.problemKey ||
+      outcome.problemId ||
+      `outcome_${index}`
+  ).trim()
+}
+
+function synthesizeVisibleOutcomes({
+  visibleOutcomes = [],
+  legacyPrimaryOutcome = null,
+  legacySecondaryOutcomes = []
+} = {}) {
+  const merged = []
+  const seen = new Set()
+  for (const outcome of [
+    ...normalizeOutcomeList(visibleOutcomes),
+    ...[normalizeOutcomeEntry(legacyPrimaryOutcome)].filter(Boolean),
+    ...normalizeOutcomeList(legacySecondaryOutcomes)
+  ]) {
+    const identityKey = resolveOutcomeIdentityKey(outcome, merged.length)
+    if (seen.has(identityKey)) {continue}
+    seen.add(identityKey)
+    merged.push(outcome)
+  }
+  return merged
+}
+
+function normalizeOutcomeModeText(value = '', visibleOutcomes = []) {
+  const normalized = String(value || '').trim()
+  if (['primary_with_secondary', 'primary_only'].includes(normalized)) {
+    return Array.isArray(visibleOutcomes) && visibleOutcomes.length ? 'visible_outcomes' : ''
+  }
+  return normalized
 }
 
 function normalizeDiagnosticTrace(trace = []) {
@@ -494,26 +631,6 @@ function normalizeCoreProcess(coreProcess = null, fallback = {}) {
   }
 }
 
-function normalizeRankings(rankings = []) {
-  return (Array.isArray(rankings) ? rankings : [])
-    .filter(item => item?.problemKey)
-    .map((item, index) => {
-      const weightedScore = Number(item.weightedScore ?? item.finalScore ?? 0)
-      const baseScore = Number(item.baseScore ?? item.weightedScore ?? item.finalScore ?? 0)
-
-      return {
-        problemId: item.problemId || '',
-        problemKey: item.problemKey,
-        problemCn: item.problemCn || item.displayName || item.problemKey,
-        role: item.role || item.problemRole || '',
-        rankNo: Number(item.rankNo || index + 1),
-        weightedScore,
-        finalScore: Number(item.finalScore ?? weightedScore),
-        baseScore
-      }
-    })
-}
-
 function normalizeProblemCausality(items = []) {
   return (Array.isArray(items) ? items : []).map(item => ({
     causeProblemKey: item?.causeProblemKey || item?.cause_problem_key || '',
@@ -538,8 +655,8 @@ function normalizeQuestions(questions = []) {
       questionRole: item.questionRole || item.questionCategory || '',
       questionCategory: item.questionCategory || item.questionRole || '',
       effectMode: item.effectMode || '',
-      text: item.text || '',
-      helpText: item.helpText || '',
+      text: item.questionTextUserCn || item.questionTextCn || item.text || item.questionText || item.title || '',
+      helpText: item.helpTextCn || item.helpText || item.questionHelpText || '',
       defaultOptionKey: item.defaultOptionKey || '',
       defaultOptionId: item.defaultOptionId || '',
       uiVariant: item.uiVariant || '',
@@ -549,8 +666,14 @@ function normalizeQuestions(questions = []) {
         .map(option => ({
           optionId: option.optionId,
           optionKey: option.optionKey || '',
-          text: option.text || '',
-          description: option.description || option.desc || '',
+          text: option.optionTextUserCn || option.optionTextCn || option.text || option.optionText || option.label || option.desc || '',
+          description:
+            option.optionDescriptionUserCn ||
+            option.descriptionCn ||
+            option.optionDescription ||
+            option.description ||
+            option.desc ||
+            '',
           isDefault: Boolean(option.isDefault)
         }))
     }))
@@ -577,6 +700,10 @@ function resolveMainIssueText({
   outcomeType = '',
   followUpRequired = false
 } = {}) {
+  if (finalResult?.displayNameCn) {
+    return finalResult.displayNameCn
+  }
+
   if (finalResult?.displayName) {
     return finalResult.displayName
   }
@@ -586,9 +713,9 @@ function resolveMainIssueText({
   }
 
   const normalizedOutcomeType = normalizeOutcomeType(outcomeType)
-  if (followUpRequired) return '待进一步确认'
-  if (normalizedOutcomeType === 'non_problematic') return '暂未见明显问题'
-  if (normalizedOutcomeType === 'uncertain') return '暂不能稳定判断'
+  if (followUpRequired) {return '待进一步确认'}
+  if (normalizedOutcomeType === 'non_problematic') {return '暂未见明显问题'}
+  if (normalizedOutcomeType === 'uncertain') {return '暂不能稳定判断'}
   return '待进一步确认'
 }
 
@@ -628,7 +755,14 @@ function resolveSummaryText({
 
 function normalizeDiagnosisAdviceSteps(diagnosis = {}, explanation = {}) {
   const directSteps = Array.isArray(diagnosis.nextSteps) ? diagnosis.nextSteps : []
+  const actionAdvice = diagnosis.actionAdvice || diagnosis.finalResult?.actionAdvice || {}
+  const actionStepTexts = normalizeStringList([
+    ...(Array.isArray(actionAdvice?.todayActions) ? actionAdvice.todayActions : []),
+    ...(Array.isArray(actionAdvice?.threeDayActions) ? actionAdvice.threeDayActions : []),
+    ...(Array.isArray(actionAdvice?.sevenDayObserve) ? actionAdvice.sevenDayObserve : [])
+  ])
   const texts = normalizeStringList([
+    ...actionStepTexts,
     ...directSteps.map(item =>
       typeof item === 'string'
         ? item
@@ -647,7 +781,15 @@ function normalizeDiagnosisAdviceSteps(diagnosis = {}, explanation = {}) {
 }
 
 function normalizeDiagnosisAvoidAdvice(diagnosis = {}, explanation = {}) {
+  const actionAdvice = diagnosis.actionAdvice || diagnosis.finalResult?.actionAdvice || {}
+  const actionAvoidTexts = normalizeStringList([
+    ...(Array.isArray(actionAdvice?.avoidActions) ? actionAdvice.avoidActions : []),
+    ...(actionAdvice?.conflictDetected && Array.isArray(actionAdvice?.retakeOrEscalate)
+      ? actionAdvice.retakeOrEscalate
+      : [])
+  ])
   return normalizeStringList([
+    ...actionAvoidTexts,
     ...(Array.isArray(diagnosis.whatToAvoid)
       ? diagnosis.whatToAvoid.map(item =>
           typeof item === 'string'
@@ -673,7 +815,6 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
   const observedSymptoms = normalizeObservedSymptoms(
     diagnosis.observedSymptoms || diagnosis.symptoms
   )
-  const rankings = normalizeRankings(diagnosis.rankings)
   const problemCausality = normalizeProblemCausality(diagnosis.problemCausality)
   const outcomeType = normalizeOutcomeType(
     diagnosis.outcomeType ||
@@ -694,6 +835,29 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
     normalizeShadowCompareSummary(diagnosis.shadowCompareSummary) ||
     visualAggregateSummary?.shadowCompareSummary ||
     null
+  const legacyPrimaryOutcome = normalizeOutcomeEntry(
+    diagnosis.primaryOutcome || finalResult?.primaryOutcome
+  )
+  const legacySecondaryOutcomes = normalizeOutcomeList(
+    diagnosis.secondaryOutcomes || finalResult?.secondaryOutcomes
+  )
+  const visibleOutcomes = synthesizeVisibleOutcomes({
+    visibleOutcomes: normalizeOutcomeList(
+      diagnosis.visibleOutcomes || finalResult?.visibleOutcomes
+    ),
+    legacyPrimaryOutcome,
+    legacySecondaryOutcomes
+  })
+  const routeDecisionCause = normalizeRouteDecisionCause(
+    diagnosis.routeDecisionCause ||
+      finalResult?.routeDecisionCause ||
+      diagnosis.routeDecision?.decisionCause ||
+      diagnosis.stopDecision?.decisionCause
+  )
+  const actionAdvice = normalizeActionAdvice(
+    diagnosis.actionAdvice || finalResult?.actionAdvice
+  )
+  const routeDecision = normalizeRouteDecision(diagnosis.routeDecision)
   const coreProcess = normalizeCoreProcess(diagnosis.coreProcess, {
     latestVisualCallBatchId: diagnosis.latestVisualCallBatchId || null,
     observedSymptoms,
@@ -753,6 +917,14 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
           }
         : null,
     finalResult,
+    visibleOutcomes,
+    outcomeMode: normalizeOutcomeModeText(
+      diagnosis.outcomeMode || finalResult?.outcomeMode || routeDecision?.mode || '',
+      visibleOutcomes
+    ),
+    routeDecisionCause,
+    actionAdvice,
+    routeDecision,
     contributingFactors: Array.isArray(diagnosis.contributingFactors)
       ? diagnosis.contributingFactors
       : [],
@@ -762,7 +934,6 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
     nextSteps: normalizedNextSteps,
     whatToAvoid: normalizedWhatToAvoid,
     problemCausality,
-    rankings,
     observedSymptoms,
     observedEvidenceSet,
     derivedEvidenceSet,
@@ -792,12 +963,12 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
     needHumanReview: Boolean(diagnosis.needHumanReview),
     treatmentText:
       diagnosis.treatmentText ||
-      explanation?.firstAid ||
-      normalizedNextSteps.map(item => item?.text).filter(Boolean).join('\n'),
+      normalizedNextSteps.map(item => item?.text).filter(Boolean).join('\n') ||
+      explanation?.firstAid,
     preventionText:
       diagnosis.preventionText ||
-      explanation?.avoid ||
-      normalizedWhatToAvoid.filter(Boolean).join('\n'),
+      normalizedWhatToAvoid.filter(Boolean).join('\n') ||
+      explanation?.avoid,
     images
   }
 }
@@ -805,7 +976,7 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
 export function createFollowUpAnswerMap(followUps = []) {
   const entries = {}
   for (const item of followUps || []) {
-    if (!item?.questionId) continue
+    if (!item?.questionId) {continue}
     const defaultOptionId =
       item.defaultOptionId ||
       (Array.isArray(item.options)
@@ -821,7 +992,7 @@ export function createFollowUpAnswerMap(followUps = []) {
 
 export function isFollowUpAnswerComplete(followUps = [], answerMap = {}) {
   const activeFollowUps = (followUps || []).filter(item => item?.questionId)
-  if (!activeFollowUps.length) return false
+  if (!activeFollowUps.length) {return false}
   return activeFollowUps.every(item => Boolean(answerMap[item.questionId]))
 }
 

@@ -1,0 +1,200 @@
+{
+  "generatedAt": "2026-04-27T08:56:43.402Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "artifactSplit": {
+    "rootBaseName": "20260427-165643",
+    "partIndex": 1,
+    "partCount": 1,
+    "maxResultsPerFile": 100
+  },
+  "collectionProfile": {
+    "source": "all",
+    "manualVisualOnly": false,
+    "manualVisualOnlyProvided": false
+  },
+  "visualFinalEvidenceSummary": {
+    "total": 1,
+    "available": 1,
+    "missingRawRecords": 0,
+    "emptyConclusion": 0
+  },
+  "total": 1,
+  "success": 1,
+  "failed": 0,
+  "progress": {
+    "processed": 1,
+    "targetTotal": 1,
+    "complete": true
+  },
+  "results": [
+    {
+      "sessionId": "diag_1777278548692_riwky22x",
+      "visualFinalEvidence": [],
+      "symptomClassReplay": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 2
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_stippling_confirm",
+            "questionText": "叶片上有密集、细小的褪色点或斑驳吗？",
+            "targetDimension": "visual_presence",
+            "answer": {
+              "optionKey": "no",
+              "optionText": "否，基本没有",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "final",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "out_of_pool_hint_unconfirmed_after_followup",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 2
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1777278548692_riwky22x",
+        "easySummary": "本条没有进入正式证据层的视觉证据。本条没有形成可用的 symptom class 路由结果。第1轮共 1 题：问“叶片上有密集、细小的褪色点或斑驳吗？”，答“否，基本没有”。第2轮没有触发问诊。最终收敛到“不确定结论”，核心原因是：图片里存在池外可见异常提示，但后续问诊没有形成可确认的正式证据，因此不能输出非问题结论。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "本条没有进入正式证据层的视觉证据。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "本条没有形成可用的 symptom class 路由结果。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 1 题：问“叶片上有密集、细小的褪色点或斑驳吗？”，答“否，基本没有”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮没有触发问诊。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统先按“总证据 = 视觉证据 + 1.25 × 问诊证据”计算总证据，再按“基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分”计算基础分，最后按“最终分 = 基础分 + 因果增强”做最终排序。本条当前第一名是“真菌蚊”，最终分 0，其中视觉证据 0，问诊证据 0，扣分 0。第二名是“真菌叶斑”，最终分 0。 当前可靠度 0，第一二名分差 0。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“不确定结论”，核心原因是：图片里存在池外可见异常提示，但后续问诊没有形成可确认的正式证据，因此不能输出非问题结论。"
+          }
+        ],
+        "competitionTopCandidates": [
+          {
+            "rankNo": 2,
+            "problemKey": "fungus_gnat",
+            "displayName": "真菌蚊",
+            "role": "root_cause",
+            "visualEvidence": 0,
+            "questionEvidence": 0,
+            "totalEvidence": 0,
+            "penalty": 0,
+            "genusCompatibility": 0.76,
+            "hostCompatibility": 0.76,
+            "baseScore": 0,
+            "finalScore": 0
+          },
+          {
+            "rankNo": 3,
+            "problemKey": "fungal_leaf_spot",
+            "displayName": "真菌叶斑",
+            "role": "root_cause",
+            "visualEvidence": 0,
+            "questionEvidence": 0,
+            "totalEvidence": 0,
+            "penalty": 0,
+            "genusCompatibility": 0.76,
+            "hostCompatibility": 0.7,
+            "baseScore": 0,
+            "finalScore": 0
+          },
+          {
+            "rankNo": 13,
+            "problemKey": "bacterial_leaf_spot",
+            "displayName": "细菌叶斑",
+            "role": "root_cause",
+            "visualEvidence": 0,
+            "questionEvidence": 0,
+            "totalEvidence": 0,
+            "penalty": 0,
+            "genusCompatibility": 0.45,
+            "hostCompatibility": 0.45,
+            "baseScore": 0,
+            "finalScore": 0
+          }
+        ],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“不确定结论”，核心原因是：图片里存在池外可见异常提示，但后续问诊没有形成可确认的正式证据，因此不能输出非问题结论。",
+          "whyNotOtherOutcomes": [
+            "不是问题性结论，因为当前缺少把某个具体问题安全输出为 final outcome 的条件。",
+            "不是非问题性结论，因为系统没有命中非问题性规则。"
+          ],
+          "raw": {
+            "stopReason": "uncertain_output_ready",
+            "decisionCauseKey": "out_of_pool_hint_unconfirmed_after_followup",
+            "decisionCauseText": "图片里存在池外可见异常提示，但后续问诊没有形成可确认的正式证据，因此不能输出非问题结论。",
+            "uncertainLegalityReason": ""
+          }
+        }
+      }
+    }
+  ]
+}

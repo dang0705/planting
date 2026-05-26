@@ -1,0 +1,316 @@
+{
+  "batchSource": "diagnose-popup-dev-mode-pairwise",
+  "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+  "generatedAt": "2026-04-30T07:13:56.478Z",
+  "summary": {
+    "modeCount": 1,
+    "directFinalCount": 0,
+    "discoveredQuestionCount": 2,
+    "scheduledPairCount": 7,
+    "coveredPairCount": 7,
+    "reviewRecordCount": 7,
+    "failureCount": 0
+  },
+  "splitMeta": {
+    "rootBaseName": "diagnose-popup-dev-mode-pairwise-20260430-151356",
+    "partIndex": 1,
+    "partCount": 1,
+    "maxResultsPerFile": 100
+  },
+  "results": [
+    {
+      "sessionId": "engine_1777533259256_4c558ho4",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "edema",
+          "symptomCn": "水肿",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "edema_overwater_mode",
+        "classKey": "edema_overwater_mode",
+        "symptomKey": "edema"
+      },
+      "round1": {
+        "questionKey": "q_gnat_soil_stays_wet",
+        "optionKey": "no",
+        "questionText": "盆土经常长时间偏湿、久不干吗？",
+        "optionText": "不是的"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "await_follow_up",
+        "currentTopTitle": "await_follow_up"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": false
+      }
+    },
+    {
+      "sessionId": "engine_1777533273843_l71jdvzv",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "edema",
+          "symptomCn": "水肿",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "edema_overwater_mode",
+        "classKey": "edema_overwater_mode",
+        "symptomKey": "edema"
+      },
+      "round1": {
+        "questionKey": "q_gnat_soil_stays_wet",
+        "optionKey": "unknown",
+        "questionText": "盆土经常长时间偏湿、久不干吗？",
+        "optionText": "看不出/不确定"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "title": "",
+        "pendingTopTitle": "await_follow_up",
+        "currentTopTitle": "await_follow_up"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=unknown",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": false
+      }
+    },
+    {
+      "sessionId": "engine_1777533277488_toowepbd",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "edema",
+          "symptomCn": "水肿",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "edema_overwater_mode",
+        "classKey": "edema_overwater_mode",
+        "symptomKey": "edema"
+      },
+      "round1": {
+        "questionKey": "q_gnat_soil_stays_wet",
+        "optionKey": "yes",
+        "questionText": "盆土经常长时间偏湿、久不干吗？",
+        "optionText": "是的"
+      },
+      "round2": [],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "problematic",
+        "pendingTopTitle": "",
+        "currentTopTitle": "problematic"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=yes",
+        "roundsUsed": 1,
+        "questionCount": 1,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533283638_2mjn9nkl",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "edema",
+          "symptomCn": "水肿",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "edema_overwater_mode",
+        "classKey": "edema_overwater_mode",
+        "symptomKey": "edema"
+      },
+      "round1": {
+        "questionKey": "q_gnat_soil_stays_wet",
+        "optionKey": "no",
+        "questionText": "盆土经常长时间偏湿、久不干吗？",
+        "optionText": "不是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__edema__edema_bump_stage",
+          "optionKey": "watery_blister",
+          "questionText": "鼓包或水泡可能来自水肿、后期结痂，也可能只是普通斑点。先确认变化阶段，后面才能少问无关问题。这些鼓包或水泡更接近哪种变化？",
+          "optionText": "像透明或半透明小水泡，常在叶背更明显"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "problematic",
+        "pendingTopTitle": "",
+        "currentTopTitle": "problematic"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no > q_observed_probe__edema__edema_bump_stage=watery_blister",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533288134_1wam6sec",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "edema",
+          "symptomCn": "水肿",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "edema_overwater_mode",
+        "classKey": "edema_overwater_mode",
+        "symptomKey": "edema"
+      },
+      "round1": {
+        "questionKey": "q_gnat_soil_stays_wet",
+        "optionKey": "no",
+        "questionText": "盆土经常长时间偏湿、久不干吗？",
+        "optionText": "不是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__edema__edema_bump_stage",
+          "optionKey": "corky_scab",
+          "questionText": "鼓包或水泡可能来自水肿、后期结痂，也可能只是普通斑点。先确认变化阶段，后面才能少问无关问题。这些鼓包或水泡更接近哪种变化？",
+          "optionText": "已经变褐、粗糙、结痂或像小疙瘩"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "problematic",
+        "pendingTopTitle": "",
+        "currentTopTitle": "problematic"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no > q_observed_probe__edema__edema_bump_stage=corky_scab",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533290443_alv31oqz",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "edema",
+          "symptomCn": "水肿",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "edema_overwater_mode",
+        "classKey": "edema_overwater_mode",
+        "symptomKey": "edema"
+      },
+      "round1": {
+        "questionKey": "q_gnat_soil_stays_wet",
+        "optionKey": "no",
+        "questionText": "盆土经常长时间偏湿、久不干吗？",
+        "optionText": "不是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__edema__edema_bump_stage",
+          "optionKey": "flat_spot",
+          "questionText": "鼓包或水泡可能来自水肿、后期结痂，也可能只是普通斑点。先确认变化阶段，后面才能少问无关问题。这些鼓包或水泡更接近哪种变化？",
+          "optionText": "更像平的斑点或表面痕迹，不像鼓包"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "problematic",
+        "pendingTopTitle": "",
+        "currentTopTitle": "problematic"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no > q_observed_probe__edema__edema_bump_stage=flat_spot",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "engine_1777533293349_6rg0jj1o",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "edema",
+          "symptomCn": "水肿",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "edema_overwater_mode",
+        "classKey": "edema_overwater_mode",
+        "symptomKey": "edema"
+      },
+      "round1": {
+        "questionKey": "q_gnat_soil_stays_wet",
+        "optionKey": "no",
+        "questionText": "盆土经常长时间偏湿、久不干吗？",
+        "optionText": "不是的"
+      },
+      "round2": [
+        {
+          "questionKey": "q_observed_probe__edema__edema_bump_stage",
+          "optionKey": "unknown",
+          "questionText": "鼓包或水泡可能来自水肿、后期结痂，也可能只是普通斑点。先确认变化阶段，后面才能少问无关问题。这些鼓包或水泡更接近哪种变化？",
+          "optionText": "看不出/不确定"
+        }
+      ],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "uncertain",
+        "pendingTopTitle": "",
+        "currentTopTitle": "uncertain"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "edema_overwater_mode/edema > q_gnat_soil_stays_wet=no > q_observed_probe__edema__edema_bump_stage=unknown",
+        "roundsUsed": 2,
+        "questionCount": 2,
+        "isFinal": true
+      }
+    }
+  ]
+}

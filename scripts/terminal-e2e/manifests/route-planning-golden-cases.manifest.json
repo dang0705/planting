@@ -1,0 +1,261 @@
+{
+  "schemaVersion": 1,
+  "sourceDoc": "docs/route规划及outcome瘦身计划/04_主动瘦身计划_养护类问题主轴.md",
+  "totalExpectedCases": 112,
+  "acceptedCaseRange": {
+    "min": 80,
+    "max": 120
+  },
+  "scenarioGroups": [
+    {
+      "scenarioKey": "yellowing_overwatering",
+      "label": "黄叶 + 积水",
+      "count": 10,
+      "expectedOutcomeKey": "overwatering_root_pressure",
+      "expectedRouteKey": "yellowing_wet_soil_route",
+      "expectedActionConflictGroup": "watering_stop",
+      "symptomVariants": [["leaf_yellowing"], ["uniform_yellowing"], ["yellow_lower_leaves"]],
+      "answerVariants": [
+        [
+          {
+            "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+            "optionKey": "watering_area"
+          },
+          {
+            "questionKey": "q_observed_probe__leaf_yellowing__watering_frequency_context",
+            "optionKey": "often_wet"
+          }
+        ]
+      ]
+    },
+    {
+      "scenarioKey": "yellowing_underwatering",
+      "label": "黄叶 + 缺水",
+      "count": 10,
+      "expectedOutcomeKey": "underwatering",
+      "expectedRouteKey": "yellowing_dry_soil_route",
+      "expectedActionConflictGroup": "watering_add",
+      "symptomVariants": [["leaf_yellowing"], ["uniform_yellowing"], ["yellow_lower_leaves"]],
+      "answerVariants": [
+        [
+          {
+            "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+            "optionKey": "watering_area"
+          },
+          {
+            "questionKey": "q_observed_probe__leaf_yellowing__watering_frequency_context",
+            "optionKey": "often_dry"
+          }
+        ]
+      ]
+    },
+    {
+      "scenarioKey": "yellowing_leaf_age_disabled",
+      "label": "黄叶 + 新老叶旧答案禁用",
+      "count": 8,
+      "expectedPrimaryOutcomeKey": null,
+      "expectedDecisionCauseKeys": [
+        "route_no_visible_outcomes_for_route"
+      ],
+      "expectedFollowUpQuestionKeys": [],
+      "symptomVariants": [["leaf_yellowing"], ["yellow_lower_leaves"], ["old_lower_leaf_yellowing"]],
+      "answerVariants": [
+        [
+          {
+            "questionKey": "q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern",
+            "optionKey": "old_lower_leaves_first"
+          }
+        ]
+      ]
+    },
+    {
+      "scenarioKey": "wilting_wet_soil",
+      "label": "萎蔫 + 土湿",
+      "count": 8,
+      "expectedOutcomeKey": "overwatering_root_pressure",
+      "expectedRouteKey": "wilting_wet_soil_route",
+      "expectedActionConflictGroup": "watering_stop",
+      "symptomVariants": [["leaf_wilting"], ["soft_wilting"], ["wilting_with_wet_soil"]],
+      "answerVariants": [
+        [
+          {
+            "questionKey": "q_observed_probe__wilting__soil_moisture_context",
+            "optionKey": "soil_wet"
+          }
+        ]
+      ]
+    },
+    {
+      "scenarioKey": "wilting_dry_soil",
+      "label": "萎蔫 + 土干",
+      "count": 8,
+      "expectedOutcomeKey": "underwatering",
+      "expectedRouteKey": "wilting_dry_soil_route",
+      "expectedActionConflictGroup": "watering_add",
+      "symptomVariants": [["leaf_wilting"], ["soft_wilting"], ["wilting_with_dry_soil"]],
+      "answerVariants": [
+        [
+          {
+            "questionKey": "q_observed_probe__wilting__soil_moisture_context",
+            "optionKey": "soil_dry"
+          }
+        ]
+      ]
+    },
+    {
+      "scenarioKey": "low_light_leggy",
+      "label": "光照不足/徒长",
+      "count": 8,
+      "expectedOutcomeKey": "low_light_growth_weakness",
+      "expectedRouteKey": "leggy_low_light_route",
+      "expectedActionConflictGroup": "increase_light",
+      "symptomVariants": [["leggy_growth"], ["weak_new_growth"], ["pale_new_growth"]],
+      "answerVariants": [
+        [
+          {
+            "questionKey": "q_observed_probe__light__recent_light_change",
+            "optionKey": "weaker_light"
+          }
+        ]
+      ]
+    },
+    {
+      "scenarioKey": "sunburn_strong_light",
+      "label": "晒伤/强光",
+      "count": 8,
+      "expectedOutcomeKey": "sunburn",
+      "expectedRouteKey": "sunburn_recent_exposure_route",
+      "expectedActionConflictGroup": "reduce_light",
+      "symptomVariants": [["sunburn_patch"], ["bleached_leaf_patch"], ["scorched_leaf_patch"]],
+      "answerVariants": [
+        [
+          {
+            "questionKey": "q_observed_probe__light__recent_light_change",
+            "optionKey": "stronger_direct_light"
+          }
+        ]
+      ]
+    },
+    {
+      "scenarioKey": "dry_air_leaf_edge",
+      "label": "叶尖焦枯",
+      "count": 8,
+      "expectedOutcomeKey": "dry_air_stress",
+      "expectedRouteKey": "dry_air_leaf_edge_route",
+      "expectedActionConflictGroup": "increase_humidity",
+      "symptomVariants": [["leaf_tip_browning"], ["crispy_leaf_edge"], ["brown_leaf_edge"]],
+      "answerVariants": [
+        [
+          {
+            "questionKey": "q_observed_probe__leaf_edge__air_humidity_context",
+            "optionKey": "dry_air_low_humidity"
+          }
+        ]
+      ]
+    },
+    {
+      "scenarioKey": "leaf_spot_problem",
+      "label": "叶斑类",
+      "count": 10,
+      "expectedOutcomeKey": "leaf_spot_problem",
+      "expectedRouteKey": "leaf_spot_humid_route",
+      "expectedActionConflictGroup": "isolate_and_reduce_leaf_wetness",
+      "symptomVariants": [["leaf_spot"], ["spreading_leaf_spots"], ["brown_leaf_spot"]],
+      "answerVariants": [
+        [
+          {
+            "questionKey": "q_observed_probe__leaf_spot__spread_and_humidity",
+            "optionKey": "spreading_or_humid"
+          }
+        ]
+      ]
+    },
+    {
+      "scenarioKey": "chewing_pest_damage",
+      "label": "疑似虫害",
+      "count": 8,
+      "expectedOutcomeKey": "chewing_pest_damage",
+      "expectedRouteKey": "holes_chewing_pest_route",
+      "expectedActionConflictGroup": "inspect_and_remove_pests",
+      "symptomVariants": [["leaf_holes"], ["fresh_chewed_edge"], ["new_leaf_holes"]],
+      "answerVariants": [
+        [
+          {
+            "questionKey": "q_observed_probe__leaf_holes__fresh_or_old",
+            "optionKey": "fresh_chewing_or_frass"
+          }
+        ]
+      ]
+    },
+    {
+      "scenarioKey": "structural_damage_old_injury",
+      "label": "结构损伤/旧伤",
+      "count": 8,
+      "expectedOutcomeKey": "structural_damage_old_injury",
+      "expectedRouteKey": "holes_old_injury_route",
+      "expectedActionConflictGroup": "observe_only",
+      "symptomVariants": [["leaf_holes"], ["old_leaf_tear"], ["stable_leaf_damage"]],
+      "answerVariants": [
+        [
+          {
+            "questionKey": "q_observed_probe__leaf_holes__fresh_or_old",
+            "optionKey": "old_stable_damage"
+          }
+        ]
+      ]
+    },
+    {
+      "scenarioKey": "stable_natural_marking",
+      "label": "正常斑纹/非问题",
+      "count": 8,
+      "expectedOutcomeKey": "stable_natural_marking",
+      "expectedRouteKey": "stable_natural_marking_route",
+      "expectedActionConflictGroup": "observe_only",
+      "symptomVariants": [["stable_natural_marking_pattern"], ["stable_variegation"], ["long_term_stable_marking"]],
+      "answerVariants": [
+        [
+          {
+            "questionKey": "q_observed_probe__stable_marking__change_context",
+            "optionKey": "stable_long_term_pattern"
+          }
+        ]
+      ]
+    },
+    {
+      "scenarioKey": "uncertain_or_conflict",
+      "label": "不确定/冲突",
+      "count": 10,
+      "expectedPrimaryOutcomeKey": null,
+      "expectedDecisionCauseKeys": [
+        "route_no_visible_outcomes_for_route",
+        "route_action_conflict_unresolved"
+      ],
+      "expectedFollowUpQuestionKeys": [
+        "q_observed_probe__leaf_yellowing__watering_frequency_context"
+      ],
+      "symptomVariants": [["leaf_yellowing"], ["ambiguous_leaf_discoloration"], ["mixed_stress_signs"]],
+      "answerVariants": [
+        [
+          {
+            "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+            "optionKey": "watering_area"
+          }
+        ],
+        [
+          {
+            "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+            "optionKey": "watering_area"
+          },
+          {
+            "questionKey": "q_observed_probe__leaf_yellowing__watering_frequency_context",
+            "optionKey": "often_wet"
+          },
+          {
+            "questionKey": "q_observed_probe__leaf_yellowing__watering_frequency_context",
+            "optionKey": "often_dry"
+          }
+        ]
+      ]
+    }
+  ]
+}

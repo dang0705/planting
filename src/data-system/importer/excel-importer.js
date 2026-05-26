@@ -22,14 +22,14 @@ const {
 
 function resolveSourceKey(source = '', filePath = '') {
   const normalizedSource = String(source || '').trim().toLowerCase()
-  if (normalizedSource === 'genuscare') return 'genus-care'
-  if (normalizedSource === 'all') return 'all'
-  if (DATA_SOURCE_CONFIGS[normalizedSource]) return normalizedSource
+  if (normalizedSource === 'genuscare') {return 'genus-care'}
+  if (normalizedSource === 'all') {return 'all'}
+  if (DATA_SOURCE_CONFIGS[normalizedSource]) {return normalizedSource}
 
   const normalizedPath = String(filePath || '').trim().toLowerCase()
-  if (normalizedPath.includes('plant_catalog')) return 'taxonomy'
-  if (normalizedPath.includes('genus_care_profile')) return 'genus-care'
-  if (normalizedPath.endsWith('.xlsx')) return 'diagnosis'
+  if (normalizedPath.includes('plant_catalog')) {return 'taxonomy'}
+  if (normalizedPath.includes('genus_care_profile')) {return 'genus-care'}
+  if (normalizedPath.endsWith('.xlsx')) {return 'diagnosis'}
 
   return 'diagnosis'
 }
@@ -57,14 +57,14 @@ function createBatchId(prefix = 'batch') {
 function pickTableConfigs(tables = [], sourceKey = 'diagnosis') {
   if (!Array.isArray(tables) || !tables.length) {
     const defaultConfigs = TABLE_CONFIGS.filter(config => config.enabledByDefault !== false)
-    if (sourceKey === 'all') return defaultConfigs
+    if (sourceKey === 'all') {return defaultConfigs}
     return defaultConfigs.filter(config => config.source === sourceKey)
   }
 
   const picked = []
   for (const table of tables) {
     const config = TABLE_CONFIG_MAP[table]
-    if (config) picked.push(config)
+    if (config) {picked.push(config)}
   }
   return picked
 }
@@ -134,7 +134,7 @@ function loadCsvRows(filePath, tableConfig = {}) {
     raw: true
   })
   const firstSheetName = workbook.SheetNames[0]
-  if (!firstSheetName) return []
+  if (!firstSheetName) {return []}
 
   const inputColumns = tableConfig.inputColumns || tableConfig.columns
   return XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName], {
@@ -188,24 +188,24 @@ function materializePayloadRows(rawRow = {}, tableConfig = {}) {
 
 async function upsertImportJob(connection, { batchId, sourceType, fileName, status, detail = null }) {
   const columns = await listTableColumns(connection, DEV_SCHEMA, 'import_jobs').catch(() => [])
-  if (!columns.length) return
+  if (!columns.length) {return}
 
   const payload = {}
-  if (columns.includes('batch_id')) payload.batch_id = batchId
-  if (columns.includes('source_type')) payload.source_type = sourceType
-  if (columns.includes('file_name')) payload.file_name = fileName
-  if (columns.includes('status')) payload.status = status
-  if (columns.includes('sheet_summary_json')) payload.sheet_summary_json = detail ? JSON.stringify(detail) : null
+  if (columns.includes('batch_id')) {payload.batch_id = batchId}
+  if (columns.includes('source_type')) {payload.source_type = sourceType}
+  if (columns.includes('file_name')) {payload.file_name = fileName}
+  if (columns.includes('status')) {payload.status = status}
+  if (columns.includes('sheet_summary_json')) {payload.sheet_summary_json = detail ? JSON.stringify(detail) : null}
   if (columns.includes('error_summary_json')) {
     payload.error_summary_json = status === 'failed' ? JSON.stringify(detail || {}) : null
   }
-  if (columns.includes('created_at')) payload.created_at = new Date()
+  if (columns.includes('created_at')) {payload.created_at = new Date()}
   if (columns.includes('finished_at')) {
     payload.finished_at = status === 'finished' || status === 'failed' ? new Date() : null
   }
 
   const payloadColumns = Object.keys(payload)
-  if (!payloadColumns.length) return
+  if (!payloadColumns.length) {return}
 
   const sql = `
     INSERT INTO ${tableName(DEV_SCHEMA, 'import_jobs')}
@@ -322,24 +322,24 @@ async function runExcelImport(options = {}) {
                 payload[column] = normalized[column] ?? null
               }
 
-              if (dbColumnSet.has('source_type')) payload.source_type = currentSourceKey
-              if (dbColumnSet.has('source_batch_id')) payload.source_batch_id = batchId
-              if (dbColumnSet.has('version_tag') && options.versionTag) payload.version_tag = options.versionTag
+              if (dbColumnSet.has('source_type')) {payload.source_type = currentSourceKey}
+              if (dbColumnSet.has('source_batch_id')) {payload.source_batch_id = batchId}
+              if (dbColumnSet.has('version_tag') && options.versionTag) {payload.version_tag = options.versionTag}
               if (dbColumnSet.has('version') && !payload.version && options.versionTag) {
                 payload.version = options.versionTag
               }
               if (dbColumnSet.has('data_source') && !payload.data_source) {
                 payload.data_source = path.basename(filePath)
               }
-              if (dbColumnSet.has('review_status') && !payload.review_status) payload.review_status = 'pending'
+              if (dbColumnSet.has('review_status') && !payload.review_status) {payload.review_status = 'pending'}
               if (dbColumnSet.has('is_active')) {
                 payload.is_active =
                   payload.is_active === null || payload.is_active === undefined
                     ? 1
                     : payload.is_active
               }
-              if (dbColumnSet.has('updated_at')) payload.updated_at = payload.updated_at || now
-              if (dbColumnSet.has('created_at') && !payload.created_at) payload.created_at = now
+              if (dbColumnSet.has('updated_at')) {payload.updated_at = payload.updated_at || now}
+              if (dbColumnSet.has('created_at') && !payload.created_at) {payload.created_at = now}
 
               if (dbColumnSet.has('row_hash')) {
                 payload.row_hash = computeRowHash(payload, businessColumns)

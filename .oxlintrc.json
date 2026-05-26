@@ -26,10 +26,6 @@
     "defineSlots": "readonly",
     "defineModel": "readonly"
   },
-  "parserOptions": {
-    "ecmaVersion": "latest",
-    "sourceType": "module"
-  },
   "rules": {
     "no-alert": "error",
     "no-array-constructor": "error",
@@ -66,9 +62,6 @@
       "files": [
         "**/*.vue"
       ],
-      "parserOptions": {
-        "sourceType": "module"
-      },
       "rules": {
         "no-undef": "error",
         "no-unused-vars": "error"
@@ -79,15 +72,9 @@
         "**/*.js",
         "**/*.cjs",
         "**/*.mjs"
-      ],
-      "parserOptions": {
-        "sourceType": "module"
-      }
+      ]
     }
   ],
-  "linterOptions": {
-    "reportUnusedDisableDirectives": true
-  },
   "ignorePatterns": [
     ".github",
     "uni_modules",

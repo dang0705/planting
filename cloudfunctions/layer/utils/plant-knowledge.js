@@ -33,7 +33,7 @@ function parseJsonField(value, fallback = null) {
   }
   try {
     return JSON.parse(value)
-  } catch (error) {
+  } catch {
     return fallback
   }
 }
@@ -66,7 +66,7 @@ function parseCareJson(value) {
 
 function normalizeNullableString(value) {
   const normalized = String(value ?? '').trim()
-  if (!normalized) return null
+  if (!normalized) {return null}
 
   const lowered = normalized.toLowerCase()
   if (lowered === 'null' || lowered === 'undefined') {
@@ -304,7 +304,7 @@ async function getPlantCatalogById(plantId) {
 
 async function findCanonicalPlantMatch(name, limit = 5) {
   const normalized = normalizePlantKeyword(name)
-  if (!normalized) return []
+  if (!normalized) {return []}
 
   const sql = `
     ${CATALOG_SELECT_SQL},
@@ -604,7 +604,7 @@ async function getUserPlantInstanceById(openid, id) {
   `
   const result = await models.$runSQL(sql, { openid, id: Number(id) })
   const row = result?.data?.executeResultList?.[0]
-  if (!row) return null
+  if (!row) {return null}
 
   const plantLookupId = resolveUserPlantCatalogLookupId(row)
   const plant = plantLookupId ? await getPlantCatalogById(plantLookupId) : null
@@ -849,112 +849,6 @@ async function listDiagnosisSessions(openid, { page = 1, pageSize = 10, userPlan
   }
 }
 
-async function getDiagnosisSessionDetail(openid, diagnosisId) {
-  const sql = `
-    SELECT
-      ds.*,
-      up.nickname AS plant_nickname,
-      up.canonical_name AS canonical_name,
-      up.location AS plant_location
-    FROM diagnosis_sessions ds
-    LEFT JOIN user_plant_instances up ON up.id = ds.user_plant_id
-    WHERE ds.diagnosis_id = {{diagnosisId}} AND ds._openid = {{openid}}
-    LIMIT 1
-  `
-  const result = await models.$runSQL(sql, { diagnosisId, openid })
-  const row = result?.data?.executeResultList?.[0]
-  if (!row) return null
-
-  const symptomResult = await models.$runSQL(
-    `
-      SELECT symptom_key, symptom_cn, evidence_source, observed, confidence
-      FROM diagnosis_symptom_observations
-      WHERE diagnosis_id = {{diagnosisId}}
-      ORDER BY confidence DESC, symptom_key ASC
-    `,
-    { diagnosisId }
-  )
-  const rankingResult = await models.$runSQL(
-    `
-      SELECT problem_key, problem_cn, problem_type, host_compatibility, symptom_support_score,
-             evidence_count, weighted_score, rank_no, is_decisive
-      FROM diagnosis_problem_rankings
-      WHERE diagnosis_id = {{diagnosisId}}
-      ORDER BY rank_no ASC, weighted_score DESC
-    `,
-    { diagnosisId }
-  )
-  const followUpResult = await models.$runSQL(
-    `
-      SELECT question_order, symptom_key, question_text, rationale, information_gain,
-             asked, answer_value, answer_confidence, status, created_at, answered_at
-      FROM diagnosis_follow_ups
-      WHERE diagnosis_id = {{diagnosisId}}
-      ORDER BY question_order ASC, id ASC
-    `,
-    { diagnosisId }
-  )
-
-  return {
-    _id: row.diagnosis_id,
-    plantId: row.user_plant_id,
-    plantCatalogId: row.plant_id,
-    plantName: row.plant_nickname || row.canonical_name || '未知植物',
-    imageUrl: row.image_url || '',
-    healthScore: row.health_score === null || row.health_score === undefined ? null : Number(row.health_score),
-    healthStatus: row.health_status || 'unknown',
-    topProblemKey: row.top_problem_key || '',
-    topProblemScore:
-      row.top_problem_score === null || row.top_problem_score === undefined
-        ? null
-        : clampProbability(row.top_problem_score),
-    reliabilityScore:
-      row.reliability_score === null || row.reliability_score === undefined
-        ? null
-        : clampProbability(row.reliability_score),
-    needsFollowUp: Boolean(Number(row.needs_follow_up || 0)),
-    summary: normalizeReliabilitySummary(row.ai_summary || '', row.reliability_score),
-    finalProblemCn: row.final_problem_cn || '',
-    treatment: row.treatment || '',
-    prevention: row.prevention || '',
-    createdAt: row.created_at,
-    symptoms: (symptomResult?.data?.executeResultList || []).map(item => ({
-      symptomKey: item.symptom_key,
-      symptomCn: item.symptom_cn,
-      evidenceSource: item.evidence_source,
-      observed: Boolean(Number(item.observed || 0)),
-      confidence: Number(item.confidence || 0)
-    })),
-    rankings: (rankingResult?.data?.executeResultList || []).map(item => ({
-      problemKey: item.problem_key,
-      problemCn: item.problem_cn,
-      problemType: item.problem_type,
-      hostCompatibility: Number(item.host_compatibility || 0),
-      symptomSupportScore: Number(item.symptom_support_score || 0),
-      evidenceCount: Number(item.evidence_count || 0),
-      weightedScore: clampProbability(item.weighted_score),
-      rankNo: Number(item.rank_no || 0),
-      isDecisive: Boolean(Number(item.is_decisive || 0))
-    })),
-    followUps: (followUpResult?.data?.executeResultList || []).map(item => ({
-      questionOrder: Number(item.question_order || 0),
-      symptomKey: item.symptom_key || '',
-      questionText: item.question_text,
-      rationale: item.rationale || '',
-      informationGain: Number(item.information_gain || 0),
-      asked: Boolean(Number(item.asked || 0)),
-      answerValue: item.answer_value || '',
-      answerConfidence:
-        item.answer_confidence === null || item.answer_confidence === undefined
-          ? null
-          : Number(item.answer_confidence),
-      status: item.status || 'pending',
-      createdAt: item.created_at,
-      answeredAt: item.answered_at
-    }))
-  }
-}
-
 async function resolvePlantContext({ openid, plantId = null, userPlantId = null }) {
   if (userPlantId) {
     const userPlant = await getUserPlantInstanceById(openid, userPlantId)
@@ -1132,8 +1026,8 @@ async function buildDiagnosisDecision({
     .filter(item => item.symptomKey && item.confidence > 0)
   const symptomKeys = symptomInputs.map(item => item.symptomKey)
 
-  let evidenceByProblem = new Map()
-  let symptomsByKey = new Map()
+  const evidenceByProblem = new Map()
+  const symptomsByKey = new Map()
 
   if (symptomKeys.length) {
     const [symptomResult, evidenceResult] = await Promise.all([
@@ -1183,7 +1077,7 @@ async function buildDiagnosisDecision({
       for (const symptomInput of symptomInputs) {
         const symptomMeta = symptomsByKey.get(symptomInput.symptomKey)
         const evidence = evidenceRows.find(item => item.symptom_key === symptomInput.symptomKey)
-        if (!symptomMeta || !evidence) continue
+        if (!symptomMeta || !evidence) {continue}
 
         const contribution =
           Number(evidence.association_strength || 0) *
@@ -1289,9 +1183,9 @@ async function buildDiagnosisDecision({
     const candidateMetaMap = new Map(rankings.map(item => [item.problemKey, item]))
     const questionMap = new Map()
     for (const row of evidenceResult?.data?.executeResultList || []) {
-      if (observedSet.has(row.symptom_key) || excludedSet.has(row.symptom_key)) continue
+      if (observedSet.has(row.symptom_key) || excludedSet.has(row.symptom_key)) {continue}
       const candidateMeta = candidateMetaMap.get(row.problem_key)
-      if (!candidateMeta) continue
+      if (!candidateMeta) {continue}
       const item = questionMap.get(row.symptom_key) || {
         symptomKey: row.symptom_key,
         symptomCn: row.symptom_cn,
@@ -1368,6 +1262,5 @@ module.exports = {
   deleteUserPlantInstance,
   recordIdentifySession,
   listDiagnosisSessions,
-  getDiagnosisSessionDetail,
   buildDiagnosisDecision
 }

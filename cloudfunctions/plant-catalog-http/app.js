@@ -25,14 +25,14 @@ async function main(event, context) {
     }
 
     if (path.includes('/catalog/map')) {
-      if (method !== 'GET') return methodNotAllowed(method)
+      if (method !== 'GET') {return methodNotAllowed(method)}
       const keyword = request.query.keyword || ''
       const matches = await findCanonicalPlantMatch(keyword)
       return jsonResponse(200, { code: 200, data: { keyword, matches } })
     }
 
     if (path.includes('/catalog/plants')) {
-      if (method !== 'GET') return methodNotAllowed(method)
+      if (method !== 'GET') {return methodNotAllowed(method)}
       if (request.query.plantId) {
         const plant = await getPlantCatalogById(request.query.plantId)
         if (!plant) {

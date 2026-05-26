@@ -1,0 +1,51 @@
+{
+  "generatedAt": "2026-04-23T13:14:11.553Z",
+  "batchReportFile": "scripts/terminal-e2e/batch/20260423-203310.json",
+  "total": 647,
+  "success": 647,
+  "failed": 0,
+  "visualFinalEvidenceSummary": {
+    "total": 647,
+    "available": 19,
+    "missingRawRecords": 628,
+    "emptyConclusion": 0
+  },
+  "derivedSummary": {
+    "noVisualEvidenceCount": 628,
+    "outOfPoolOnlyCount": 0
+  },
+  "outcomeTypeCounts": [
+    {
+      "key": "problematic",
+      "count": 589
+    },
+    {
+      "key": "uncertain",
+      "count": 58
+    }
+  ],
+  "stopReasonCounts": [
+    {
+      "key": "problematic_output_ready",
+      "count": 589
+    },
+    {
+      "key": "uncertain_output_ready",
+      "count": 58
+    }
+  ],
+  "topSymptomClassReplayCounts": [
+    {
+      "key": "fungal_leaf_spot_mode",
+      "count": 298
+    },
+    {
+      "key": "bacterial_leaf_spot_mode",
+      "count": 84
+    },
+    {
+      "key": "yellowing_mode",
+      "count": 19
+    }
+  ]
+}

@@ -99,7 +99,7 @@ function assertAuthenticatedUser({ skipAuth = false, userInfo = null, message = 
 }
 
 async function ensureQuota(openid, { skipQuota = false } = {}) {
-  if (skipQuota || !openid) return
+  if (skipQuota || !openid) {return}
 
   const quota = await checkAIQuota(openid, 'diagnose')
   if (!quota.allowed) {
@@ -108,7 +108,7 @@ async function ensureQuota(openid, { skipQuota = false } = {}) {
 }
 
 async function consumeQuota(openid, { skipQuota = false } = {}) {
-  if (skipQuota || !openid) return
+  if (skipQuota || !openid) {return}
 
   try {
     await deductQuota(openid, 'diagnose')

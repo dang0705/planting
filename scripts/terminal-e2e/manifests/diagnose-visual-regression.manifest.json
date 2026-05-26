@@ -1,0 +1,85 @@
+[
+  {
+    "label": "root_rot_single_leaf",
+    "caseKey": "root_rot_single_leaf_1",
+    "images": [
+      "AI-training/images/1.jpeg"
+    ],
+    "inputSlotTypes": [
+      "leaf"
+    ],
+    "plantCatalogId": "1",
+    "expected": {
+      "outcome": "problematic",
+      "problemKey": "root_rot",
+      "routePrimaryAction": "standard_flow",
+      "identityResolutionStatus": "matched",
+      "observedEvidenceSymptomKeys": [
+        "leaf_yellowing"
+      ],
+      "minObservedEvidenceCount": 1
+    }
+  },
+  {
+    "label": "root_rot_single_whole_plant",
+    "caseKey": "root_rot_single_whole_plant_2",
+    "images": [
+      "AI-training/images/2.jpeg"
+    ],
+    "inputSlotTypes": [
+      "whole_plant"
+    ],
+    "plantCatalogId": "1",
+    "expected": {
+      "outcome": "problematic",
+      "problemKey": "root_rot",
+      "routePrimaryAction": "standard_flow",
+      "identityResolutionStatus": "matched",
+      "observedEvidenceSymptomKeys": [
+        "yellow_new_leaves",
+        "leaf_yellowing"
+      ],
+      "minObservedEvidenceCount": 2
+    }
+  },
+  {
+    "label": "root_rot_pair",
+    "caseKey": "root_rot_pair_leaf_whole",
+    "images": [
+      "AI-training/images/1.jpeg",
+      "AI-training/images/2.jpeg"
+    ],
+    "inputSlotTypes": [
+      "leaf",
+      "whole_plant"
+    ],
+    "plantCatalogId": "1",
+    "expected": {
+      "outcome": "problematic",
+      "problemKey": "root_rot",
+      "routePrimaryAction": "standard_flow",
+      "identityResolutionStatus": "matched",
+      "observedEvidenceSymptomKeys": [
+        "yellow_new_leaves",
+        "leaf_yellowing"
+      ],
+      "minObservedEvidenceCount": 2
+    }
+  },
+  {
+    "label": "healthy_uncertain_single",
+    "caseKey": "healthy_golden_pothos_uncertain_1",
+    "images": [
+      "plant-sample/symptoms/healthy/golden_pothos_1.jpg"
+    ],
+    "inputSlotTypes": [
+      "whole_plant"
+    ],
+    "plantCatalogId": "1",
+    "expected": {
+      "outcome": "uncertain",
+      "routePrimaryAction": "uncertain_prepare",
+      "identityResolutionStatus": "matched"
+    }
+  }
+]

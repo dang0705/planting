@@ -15,7 +15,7 @@ function normalizeText(value = '', fallback = '') {
 
 function normalizeRoundIndex(roundId = '', fallback = 1) {
   const match = String(roundId || '').match(/round_(\d+)/i)
-  if (!match) return Number(fallback || 1) || 1
+  if (!match) {return Number(fallback || 1) || 1}
   return Number(match[1] || fallback || 1) || 1
 }
 
@@ -123,6 +123,9 @@ function planQuestionQueue(response = {}) {
       questionRole,
       questionCategory: questionRole,
       effectMode,
+      routeKey: normalizeText(item?.routeKey),
+      gateKey: normalizeText(item?.gateKey),
+      outcomeKey: normalizeText(item?.outcomeKey),
       questionText: normalizeText(item?.text || item?.questionText),
       helpText: normalizeText(item?.helpText),
       currentPriority,

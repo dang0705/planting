@@ -8,7 +8,7 @@ async function replaceObservedSymptomsRows(sessionId, list = []) {
     { diagnosisId: sessionId }
   )
 
-  if (!list.length) return
+  if (!list.length) {return}
 
   const values = list.map((item, index) => `(
     {{diagnosisId}},
@@ -48,9 +48,13 @@ async function replaceObservedEvidenceSetRows({ sessionId, openid, list = [] } =
     { sessionId, openid: String(openid || '') }
   )
 
-  if (!list.length) return
+  if (!list.length) {return}
 
-  const values = list.map((item, index) => `(
+  const values = list.map((item, index) => {
+    const lastUpdatedAtValue = item.lastUpdatedAt
+      ? `{{lastUpdatedAt_${index}}}`
+      : 'CURRENT_TIMESTAMP'
+    return `(
     {{observedEvidenceSetId_${index}}},
     {{openid}},
     {{sessionId}},
@@ -72,13 +76,14 @@ async function replaceObservedEvidenceSetRows({ sessionId, openid, list = [] } =
     {{conflictLevel_${index}}},
     {{conflictResolved_${index}}},
     {{firstSeenStage_${index}}},
-    COALESCE({{lastUpdatedAt_${index}}}, CURRENT_TIMESTAMP),
+    ${lastUpdatedAtValue},
     {{enteredRuntime_${index}}},
     {{isKeyEvidence_${index}}},
     {{enteredExplanation_${index}}},
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
-  )`)
+  )`
+  })
 
   const params = {
     openid: String(openid || ''),
@@ -147,59 +152,7 @@ async function replaceObservedEvidenceSetRows({ sessionId, openid, list = [] } =
   )
 }
 
-async function replaceProblemRankingsRows(sessionId, list = []) {
-  await models.$runSQL(
-    'DELETE FROM diagnosis_problem_rankings WHERE diagnosis_id = {{diagnosisId}}',
-    { diagnosisId: sessionId }
-  )
-
-  if (!list.length) return
-
-  const values = list.map((item, index) => `(
-    {{diagnosisId}},
-    {{problemKey_${index}}},
-    {{problemCn_${index}}},
-    '',
-    {{hostCompatibility_${index}}},
-    {{supportScore_${index}}},
-    {{evidenceCount_${index}}},
-    {{weightedScore_${index}}},
-    {{rankNo_${index}}},
-    0
-  )`)
-
-  const params = { diagnosisId: sessionId }
-  list.forEach((item, index) => {
-    params[`problemKey_${index}`] = item.problemKey
-    params[`problemCn_${index}`] = item.problemCn
-    params[`hostCompatibility_${index}`] = item.hostCompatibility
-    params[`supportScore_${index}`] = item.supportScore
-    params[`evidenceCount_${index}`] = item.evidenceCount
-    params[`weightedScore_${index}`] = item.weightedScore
-    params[`rankNo_${index}`] = item.rankNo
-  })
-
-  await models.$runSQL(
-    `
-      INSERT INTO diagnosis_problem_rankings (
-        diagnosis_id,
-        problem_key,
-        problem_cn,
-        problem_type,
-        host_compatibility,
-        symptom_support_score,
-        evidence_count,
-        weighted_score,
-        rank_no,
-        is_decisive
-      ) VALUES ${values.join(', ')}
-    `,
-    params
-  )
-}
-
 module.exports = {
   replaceObservedSymptomsRows,
-  replaceObservedEvidenceSetRows,
-  replaceProblemRankingsRows
+  replaceObservedEvidenceSetRows
 }

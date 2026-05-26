@@ -13,6 +13,8 @@ const isH5 = process.env.UNI_PLATFORM === 'h5'
 const isApp = process.env.UNI_PLATFORM === 'app'
 const WeappTailwindcssDisabled = isH5 || isApp
 const cloudbaseEnvId = process.env.VITE_CLOUDBASE_ENV_ID || 'cloud1-2grufevs395a9d5e'
+const explicitApiBaseUrl = String(process.env.VITE_API_BASE_URL || '').trim().replace(/\/+$/, '')
+const viteAppEnv = String(process.env.VITE_APP_ENV || '').trim().toLowerCase()
 const cloudbaseFunctionProxyPrefix = '/__tcb_functions__'
 const cloudbaseFunctionProxyTarget = `https://${cloudbaseEnvId}.api.tcloudbasegateway.com`
 const localDiagnosisReviewPrefix = '/__local_diagnosis_review__'
@@ -25,6 +27,48 @@ if (publicDnsResolver) {
 const cloudbaseDnsCache = new Map()
 let diagnosisReviewAuditStore = null
 let diagnosisReviewAuditPersistQueue = Promise.resolve()
+
+function isPrivateLocalHostname(hostname = '') {
+  const normalized = String(hostname || '').trim().toLowerCase()
+  if (!normalized) {return false}
+  if (['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]'].includes(normalized)) {
+    return true
+  }
+  if (normalized.startsWith('192.168.')) {return true}
+  if (normalized.startsWith('10.')) {return true}
+
+  const match = normalized.match(/^172\.(\d+)\./)
+  if (!match) {return false}
+  const second = Number(match[1])
+  return second >= 16 && second <= 31
+}
+
+function getApiBaseUrlHostname(value = '') {
+  const normalized = String(value || '').trim().replace(/\/+$/, '')
+  if (!normalized || normalized.startsWith('/')) {return ''}
+
+  const withoutProtocol = normalized.replace(/^[a-z][a-z\d+.-]*:\/\//i, '')
+  const withoutPath = withoutProtocol.split(/[/?#]/)[0] || ''
+  if (withoutPath.startsWith('[')) {
+    const closingIndex = withoutPath.indexOf(']')
+    return closingIndex >= 0 ? withoutPath.slice(0, closingIndex + 1) : withoutPath
+  }
+
+  return withoutPath.split(':')[0] || ''
+}
+
+function isLocalOrInsecureApiBaseUrl(value = '') {
+  if (!value || value.startsWith('/')) {return false}
+  return /^http:\/\//i.test(value) || isPrivateLocalHostname(getApiBaseUrlHostname(value))
+}
+
+if (
+  explicitApiBaseUrl &&
+  ['prod', 'production'].includes(viteAppEnv) &&
+  isLocalOrInsecureApiBaseUrl(explicitApiBaseUrl)
+) {
+  throw new Error('生产环境不允许使用本地或非 HTTPS 的 VITE_API_BASE_URL')
+}
 
 function safeJsonParse(text = '', fallback = null) {
   if (text === null || text === undefined || text === '') {
@@ -48,20 +92,20 @@ function normalizeText(value = '') {
 
 function normalizeReviewSourceType(value = '', fallback = 'legacy') {
   const normalized = String(value || '').trim().toLowerCase()
-  if (normalized === 'all') return 'all'
-  if (normalized === 'batch') return 'batch'
-  if (normalized === 'manual') return 'manual'
-  if (normalized === 'legacy') return 'legacy'
-  if (normalized === 'web') return 'web'
-  if (fallback === 'all') return 'all'
+  if (normalized === 'all') {return 'all'}
+  if (normalized === 'batch') {return 'batch'}
+  if (normalized === 'manual') {return 'manual'}
+  if (normalized === 'legacy') {return 'legacy'}
+  if (normalized === 'web') {return 'web'}
+  if (fallback === 'all') {return 'all'}
   return fallback
 }
 
 function normalizeReviewSourceEvidence(value = '', reviewSourceType = 'legacy', clientPlatform = '') {
   const normalized = normalizeText(value)
-  if (normalized) return normalized
-  if (reviewSourceType === 'batch') return 'batch_table'
-  if (reviewSourceType === 'web') return 'web_tagged'
+  if (normalized) {return normalized}
+  if (reviewSourceType === 'batch') {return 'batch_table'}
+  if (reviewSourceType === 'web') {return 'web_tagged'}
   if (miniProgramClientPlatforms.has(normalizeText(clientPlatform).toLowerCase())) {
     return 'platform_tagged'
   }
@@ -172,17 +216,17 @@ function resolveNormalizedReviewSourceType({
 
 function normalizePreviewImageRef(value = '') {
   const normalized = normalizeText(value)
-  if (!normalized) return ''
-  if (normalized === '[inline_data_url]') return ''
+  if (!normalized) {return ''}
+  if (normalized === '[inline_data_url]') {return ''}
   return normalized
 }
 
 function guessImageContentType(filePath = '') {
   const extension = extname(String(filePath || '').trim()).toLowerCase()
-  if (extension === '.png') return 'image/png'
-  if (extension === '.webp') return 'image/webp'
-  if (extension === '.gif') return 'image/gif'
-  if (extension === '.heic') return 'image/heic'
+  if (extension === '.png') {return 'image/png'}
+  if (extension === '.webp') {return 'image/webp'}
+  if (extension === '.gif') {return 'image/gif'}
+  if (extension === '.heic') {return 'image/heic'}
   return 'image/jpeg'
 }
 
@@ -257,7 +301,7 @@ function queuePersistDiagnosisReviewAuditStore() {
   diagnosisReviewAuditPersistQueue = diagnosisReviewAuditPersistQueue
     .catch(() => {})
     .then(async () => {
-      if (!diagnosisReviewAuditStore) return
+      if (!diagnosisReviewAuditStore) {return}
       await mkdir(resolve(__dirname, 'tmp'), { recursive: true })
       await writeFile(
         localDiagnosisReviewStorePath,
@@ -269,11 +313,11 @@ function queuePersistDiagnosisReviewAuditStore() {
   return diagnosisReviewAuditPersistQueue
 }
 
-function buildQueryString(query = {}) {
+function _buildQueryString(query = {}) {
   const entries = Object.entries(query).filter(
     ([, value]) => value !== undefined && value !== null && value !== ''
   )
-  if (!entries.length) return ''
+  if (!entries.length) {return ''}
 
   return `?${entries
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
@@ -512,7 +556,7 @@ function normalizeReviewListEnvelopeData(data = {}, fallbackSourceType = 'all') 
   })
   const requestedSourceType = normalizeReviewSourceType(fallbackSourceType, 'all')
   const items = normalizedItems.filter(item => {
-    if (requestedSourceType === 'all') return item.reviewSourceType !== 'legacy'
+    if (requestedSourceType === 'all') {return item.reviewSourceType !== 'legacy'}
     return item.reviewSourceType === requestedSourceType
   })
 
@@ -605,12 +649,12 @@ async function recordDiagnosisAuditEvent({ relativePath = '', requestBody = unde
   const detail = envelope?.code === 200 && envelope?.data && typeof envelope.data === 'object'
     ? envelope.data
     : null
-  if (!detail) return
+  if (!detail) {return}
 
   const diagnosisSessionId = normalizeText(
     detail?.diagnosisSessionId || detail?.sessionId || detail?.resultId || ''
   )
-  if (!diagnosisSessionId) return
+  if (!diagnosisSessionId) {return}
 
   const requestPayload = requestBody
     ? safeJsonParse(Buffer.isBuffer(requestBody) ? requestBody.toString('utf8') : String(requestBody), {})
@@ -873,10 +917,10 @@ function parseCurlHttpResponse(rawOutput = '') {
 
   headerLines.forEach(line => {
     const separator = line.indexOf(':')
-    if (separator <= 0) return
+    if (separator <= 0) {return}
     const key = line.slice(0, separator).trim().toLowerCase()
     const value = line.slice(separator + 1).trim()
-    if (!key || !value) return
+    if (!key || !value) {return}
     headers[key] = value
   })
 
@@ -1000,7 +1044,7 @@ function createCloudbaseDevProxyPlugin() {
     }
 
     Object.entries(req.headers || {}).forEach(([key, value]) => {
-      if (!value) return
+      if (!value) {return}
       if (['host', 'connection', 'content-length'].includes(String(key || '').toLowerCase())) {
         return
       }

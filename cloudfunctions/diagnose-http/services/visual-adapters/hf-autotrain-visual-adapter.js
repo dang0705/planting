@@ -40,22 +40,22 @@ function pickSourceModelName() {
 
 function scoreToBand(score = 0) {
   const numeric = Number(score || 0)
-  if (numeric >= 0.8) return 'high'
-  if (numeric >= 0.5) return 'medium'
+  if (numeric >= 0.8) {return 'high'}
+  if (numeric >= 0.5) {return 'medium'}
   return 'low'
 }
 
 function scoreToStrength(score = 0) {
   const numeric = Number(score || 0)
-  if (numeric >= 0.8) return 'strong'
-  if (numeric >= 0.5) return 'medium'
+  if (numeric >= 0.8) {return 'strong'}
+  if (numeric >= 0.5) {return 'medium'}
   return 'weak'
 }
 
 function scoreToReadiness(score = 0) {
   const numeric = Number(score || 0)
-  if (numeric >= 0.8) return 'ready'
-  if (numeric >= 0.5) return 'cautious'
+  if (numeric >= 0.8) {return 'ready'}
+  if (numeric >= 0.5) {return 'cautious'}
   return 'retain_only'
 }
 
@@ -88,7 +88,7 @@ function getAdapterMeta(overrides = {}) {
 function parseDataUri(imageRef = '') {
   const normalized = normalizeText(imageRef, '')
   const match = normalized.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/)
-  if (!match) return null
+  if (!match) {return null}
   return {
     mimeType: match[1],
     base64: match[2]
@@ -152,13 +152,13 @@ async function callInferenceService(imageRuntimeInput = {}) {
 function capReadiness(value = 'cautious', cap = 'ready') {
   const normalizedValue = normalizeAdmissionReadiness(value, 'cautious')
   const normalizedCap = normalizeAdmissionReadiness(cap, 'ready')
-  const ranking = {
+  const readinessOrder = {
     retain_only: 1,
     cautious: 2,
     ready: 3
   }
 
-  return ranking[normalizedValue] <= ranking[normalizedCap] ? normalizedValue : normalizedCap
+  return readinessOrder[normalizedValue] <= readinessOrder[normalizedCap] ? normalizedValue : normalizedCap
 }
 
 function buildMappedCandidates(predictions = [], notes = [], routeHints = []) {
@@ -167,7 +167,7 @@ function buildMappedCandidates(predictions = [], notes = [], routeHints = []) {
   for (const item of Array.isArray(predictions) ? predictions : []) {
     const rawLabel = normalizeText(item?.label || item?.className || item?.class_name || '', '')
       .toLowerCase()
-    if (!rawLabel) continue
+    if (!rawLabel) {continue}
 
     const rawScore = Number(item?.score ?? item?.confidence ?? item?.probability ?? 0)
     const mapping = labelMap[rawLabel]
@@ -196,7 +196,7 @@ function buildMappedCandidates(predictions = [], notes = [], routeHints = []) {
 
     const adjustedScore = clampConfidence(rawScore + Number(mapping.confidence_adjustment || 0))
     const symptomKey = normalizeText(mapping.symptom_key, '')
-    if (!symptomKey) continue
+    if (!symptomKey) {continue}
 
     const candidate = {
       symptom_key: symptomKey,
@@ -234,7 +234,7 @@ function buildMappedCandidates(predictions = [], notes = [], routeHints = []) {
 
 function resolveNormalizedOrgan(imageRuntimeInput = {}, mappedCandidates = [], predictions = []) {
   const inputHint = normalizeOrgan(imageRuntimeInput?.inputSlotType, 'unknown')
-  if (inputHint !== 'unknown') return inputHint
+  if (inputHint !== 'unknown') {return inputHint}
 
   const firstCandidate = mappedCandidates[0]
   if (firstCandidate?.symptom_key) {

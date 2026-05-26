@@ -14,21 +14,27 @@ function normalizeStringList(values = []) {
 }
 
 function resolveOutputConservatism(response = {}) {
-  if (response?.followUpRequired) return 'blocked'
-  if (normalizeText(response?.outcomeType) === 'uncertain') return 'high'
-  if (normalizeText(response?.outcomeType) === 'non_problematic') return 'guarded'
-  if (response?.highSpecificityFastConvergence?.applied) return 'guarded'
+  if (response?.followUpRequired) {return 'blocked'}
+  if (normalizeText(response?.outcomeType) === 'uncertain') {return 'high'}
+  if (normalizeText(response?.outcomeType) === 'non_problematic') {return 'guarded'}
+  if (response?.highSpecificityFastConvergence?.applied) {return 'guarded'}
   return 'standard'
 }
 
 function resolveConclusionStatus(response = {}, stopState = null) {
-  if (response?.followUpRequired) return 'pending_follow_up'
-  if (stopState?.isStopped !== 1) return 'pending_stop_judgment'
+  if (response?.followUpRequired) {return 'pending_follow_up'}
+  if (stopState?.isStopped !== 1) {return 'pending_stop_judgment'}
+  if (normalizeText(stopState?.stopReason) === 'route_visible_outcomes_ready') {
+    return 'route_visible_outcomes_ready'
+  }
+  if (normalizeText(stopState?.stopReason) === 'route_uncertain_with_candidates') {
+    return 'route_uncertain_with_candidates'
+  }
 
   const outcomeType = normalizeText(response?.outcomeType)
-  if (outcomeType === 'problematic') return 'problematic_ready'
-  if (outcomeType === 'non_problematic') return 'non_problematic_ready'
-  if (outcomeType === 'uncertain') return 'uncertain_ready'
+  if (outcomeType === 'problematic') {return 'problematic_ready'}
+  if (outcomeType === 'non_problematic') {return 'non_problematic_ready'}
+  if (outcomeType === 'uncertain') {return 'uncertain_ready'}
   return 'pending'
 }
 
@@ -57,7 +63,7 @@ function resolveNextStepHints(response = {}) {
   const hints = []
   for (const item of Array.isArray(response?.nextSteps) ? response.nextSteps : []) {
     const text = normalizeText(item?.text || item)
-    if (text) hints.push(text)
+    if (text) {hints.push(text)}
   }
 
   const whatToCheckNext = normalizeText(

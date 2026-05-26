@@ -1,0 +1,168 @@
+{
+  "generatedAt": "2026-04-23T09:42:36.038Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "collectionProfile": {
+    "source": "all",
+    "manualVisualOnly": false,
+    "manualVisualOnlyProvided": false
+  },
+  "visualEvidenceSummary": {
+    "total": 1,
+    "available": 1,
+    "missingRawRecords": 0,
+    "emptyConclusion": 0
+  },
+  "total": 1,
+  "success": 1,
+  "failed": 0,
+  "progress": {
+    "processed": 1,
+    "targetTotal": 1,
+    "complete": true
+  },
+  "results": [
+    {
+      "sessionId": "diag_1776511237174_6paes434",
+      "openid": "dev_terminal_combo_6d163258172098cbb39c",
+      "visualEvidence": {
+        "symptomCandidates": [
+          {
+            "symptomKey": "irregular_blotches",
+            "displayNameCn": "不规则斑块",
+            "confidenceBand": "medium",
+            "supportingRegionNote": "叶片上存在局部深色不规则斑块"
+          }
+        ],
+        "outOfPoolCandidates": [],
+        "routeHints": [
+          {
+            "type": "possible_problematic_signal",
+            "reason": "detected potential abnormal visual signals on the leaf"
+          }
+        ]
+      },
+      "visualEvidenceMeta": {
+        "status": "available",
+        "reason": "",
+        "visualRawRecordCount": 1,
+        "symptomCandidateCount": 1,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 1,
+        "hasVisualConclusion": true
+      },
+      "symptomClass": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 1,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 3
+        }
+      },
+      "symptomClassSource": null,
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 1,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 3
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_irregular_blotches_confirm",
+            "questionText": "病斑呈不规则斑块状，而不是规则圆斑吗？",
+            "targetDimension": "visual_presence",
+            "answer": {
+              "optionKey": "no",
+              "optionText": "否，基本没有",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_irregular_blotches_confirm",
+            "questionText": "病斑呈不规则斑块状，而不是规则圆斑吗？",
+            "targetDimension": "visual_presence",
+            "answer": {
+              "optionKey": "yes",
+              "optionText": "是，比较确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 3
+      }
+    }
+  ]
+}

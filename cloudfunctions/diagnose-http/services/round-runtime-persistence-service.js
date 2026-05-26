@@ -5,12 +5,25 @@ const {
   replaceObservedEvidenceSet,
   replaceObservedSymptoms,
   upsertVisualSupervisionRecords,
-  replaceProblemRankings,
   appendFollowUpQuestions,
   saveFinalDiagnosisSnapshot
 } = require('./session-service')
 const { replaceQueueForRound } = require('../repositories/question-queue-repository')
 const { upsertStopState } = require('../repositories/stop-state-repository')
+
+function runDeferredPersistenceJobs(sessionId = '', jobs = []) {
+  for (const job of jobs) {
+    if (typeof job !== 'function') {continue}
+    Promise.resolve()
+      .then(job)
+      .catch(error => {
+        console.error('diagnosis-http deferred persistence failed:', {
+          sessionId,
+          message: String(error?.message || error || '')
+        })
+      })
+  }
+}
 
 async function persistRoundRuntime({
   sessionId,
@@ -20,33 +33,35 @@ async function persistRoundRuntime({
   round,
   image,
   description,
-  clientContext = null
+  clientContext = null,
+  followUpRows = null
 } = {}) {
   const isInitialRound = Number(round || 1) <= 1
-  const persistenceJobs = [
-    upsertDiagnosisSession({
-      sessionId,
-      openid,
-      plantContext,
-      response,
-      round,
-      reliabilityScore: response?.metrics?.reliabilityScore || 0,
-      mode: 'new_v13',
-      image,
-      description,
-      clientContext
-    }),
-    upsertVisualSupervisionRecords({
+  await upsertDiagnosisSession({
+    sessionId,
+    openid,
+    plantContext,
+    response,
+    round,
+    reliabilityScore: response?.metrics?.reliabilityScore || 0,
+    mode: 'new_v13',
+    image,
+    description,
+    clientContext
+  })
+
+  const deferredPersistenceJobs = [
+    () => upsertVisualSupervisionRecords({
       sessionId,
       openid,
       response
     }),
-    replaceQueueForRound({
+    () => replaceQueueForRound({
       sessionId,
       openid,
       questionQueue: response?.questionQueue || null
     }),
-    upsertStopState({
+    () => upsertStopState({
       sessionId,
       openid,
       stopState: response?.stopState || null,
@@ -54,34 +69,34 @@ async function persistRoundRuntime({
     })
   ]
   if (isInitialRound) {
-    persistenceJobs.push(
-      replaceObservedEvidenceSet(sessionId, openid, response?.observedEvidenceSet || []),
-      replaceObservedSymptoms(sessionId, response?.observedSymptoms || []),
-      replaceProblemRankings(sessionId, response?.rankings || [])
+    deferredPersistenceJobs.push(
+      () => replaceObservedEvidenceSet(sessionId, openid, response?.observedEvidenceSet || []),
+      () => replaceObservedSymptoms(sessionId, response?.observedSymptoms || [])
     )
   }
 
   if (response?.followUpRequired) {
-    persistenceJobs.push(
-      appendFollowUpQuestions(sessionId, round, response?.followUps || [], {
-        questionQueue: response?.questionQueue || null
-      })
-    )
-    await Promise.all(persistenceJobs)
+    await appendFollowUpQuestions(sessionId, round, response?.followUps || [], {
+      questionQueue: response?.questionQueue || null,
+      assumeNoExisting: isInitialRound
+    })
+    runDeferredPersistenceJobs(sessionId, deferredPersistenceJobs)
     return
   }
 
-  persistenceJobs.push(
-    saveFinalDiagnosisSnapshot({
-      sessionId,
-      openid,
-      plantContext,
-      response
-    })
-  )
-  await Promise.all(persistenceJobs)
+  await saveFinalDiagnosisSnapshot({
+    sessionId,
+    openid,
+    plantContext,
+    response,
+    followUpRows
+  })
+  runDeferredPersistenceJobs(sessionId, deferredPersistenceJobs)
 }
 
 module.exports = {
-  persistRoundRuntime
+  persistRoundRuntime,
+  _test: {
+    runDeferredPersistenceJobs
+  }
 }

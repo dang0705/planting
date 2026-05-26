@@ -1,0 +1,53 @@
+{
+  "total": 647,
+  "resolvedCount": 587,
+  "remainingUncertainCount": 60,
+  "resolvedRate": 90.73,
+  "byStopReason": [
+    {
+      "key": "problematic_output_ready",
+      "count": 587
+    },
+    {
+      "key": "uncertain_output_ready",
+      "count": 60
+    }
+  ],
+  "byOutcomeType": [
+    {
+      "key": "problematic",
+      "count": 587
+    },
+    {
+      "key": "uncertain",
+      "count": 60
+    }
+  ],
+  "uncertainDecisionCauses": [
+    {
+      "key": "no_observed_symptoms",
+      "count": 58
+    },
+    {
+      "key": "no_forceable_output_problem_after_followup",
+      "count": 2
+    }
+  ],
+  "uncertainSummaries": [
+    {
+      "key": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+      "count": 58
+    },
+    {
+      "key": "当前已收敛到“黄叶模式”，但还缺少足够的补充事实，暂时不能安全定位到具体原因。 当前证据仍不够稳定，建议补查叶背、根部、盆土状态，必要时重新开始诊断。",
+      "count": 2
+    }
+  ],
+  "buckets": {
+    "retakeFirstNoVisual": 58,
+    "twoRoundNoObserved": 0,
+    "yellowingBlocked": 0,
+    "noForceable": 2,
+    "other": 0
+  }
+}

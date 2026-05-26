@@ -15,7 +15,7 @@ const {
 function parseArgs(argv = []) {
   const args = {}
   for (const item of argv) {
-    if (!item.startsWith('--')) continue
+    if (!item.startsWith('--')) {continue}
     const [key, ...rest] = item.slice(2).split('=')
     args[key] = rest.length ? rest.join('=') : 'true'
   }
@@ -31,14 +31,14 @@ function parseTableArg(value = '') {
 
 function resolveSourceKey(source = '', filePath = '') {
   const normalizedSource = String(source || '').trim().toLowerCase()
-  if (normalizedSource === 'genuscare') return 'genus-care'
-  if (normalizedSource === 'all') return 'all'
-  if (DATA_SOURCE_CONFIGS[normalizedSource]) return normalizedSource
+  if (normalizedSource === 'genuscare') {return 'genus-care'}
+  if (normalizedSource === 'all') {return 'all'}
+  if (DATA_SOURCE_CONFIGS[normalizedSource]) {return normalizedSource}
 
   const normalizedPath = String(filePath || '').trim().toLowerCase()
-  if (normalizedPath.includes('plant_catalog')) return 'taxonomy'
-  if (normalizedPath.includes('genus_care_profile')) return 'genus-care'
-  if (normalizedPath.endsWith('.xlsx')) return 'diagnosis'
+  if (normalizedPath.includes('plant_catalog')) {return 'taxonomy'}
+  if (normalizedPath.includes('genus_care_profile')) {return 'genus-care'}
+  if (normalizedPath.endsWith('.xlsx')) {return 'diagnosis'}
 
   return 'diagnosis'
 }
@@ -56,14 +56,14 @@ function pickTableConfigs(tables = [], sourceKey = 'diagnosis') {
   const defaultConfigs = TABLE_CONFIGS.filter(config => config.enabledByDefault !== false)
 
   if (!Array.isArray(tables) || !tables.length) {
-    if (sourceKey === 'all') return defaultConfigs
+    if (sourceKey === 'all') {return defaultConfigs}
     return defaultConfigs.filter(config => config.source === sourceKey)
   }
 
   const picked = []
   for (const table of tables) {
     const config = TABLE_CONFIG_MAP[table]
-    if (config) picked.push(config)
+    if (config) {picked.push(config)}
   }
   return picked
 }
@@ -99,7 +99,7 @@ function loadCsvRows(filePath, tableConfig = {}) {
     raw: true
   })
   const firstSheetName = workbook.SheetNames[0]
-  if (!firstSheetName) return []
+  if (!firstSheetName) {return []}
 
   const inputColumns = tableConfig.inputColumns || tableConfig.columns
   return XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName], {

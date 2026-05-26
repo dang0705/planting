@@ -1,0 +1,234 @@
+{
+  "generatedAt": "2026-04-27T08:44:00.800Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "artifactSplit": {
+    "rootBaseName": "20260427-164400",
+    "partIndex": 1,
+    "partCount": 1,
+    "maxResultsPerFile": 100
+  },
+  "collectionProfile": {
+    "source": "all",
+    "manualVisualOnly": false,
+    "manualVisualOnlyProvided": false
+  },
+  "visualFinalEvidenceSummary": {
+    "total": 1,
+    "available": 1,
+    "missingRawRecords": 0,
+    "emptyConclusion": 0
+  },
+  "total": 1,
+  "success": 1,
+  "failed": 0,
+  "progress": {
+    "processed": 1,
+    "targetTotal": 1,
+    "complete": true
+  },
+  "results": [
+    {
+      "sessionId": "diag_1777278548692_riwky22x",
+      "visualFinalEvidence": [],
+      "symptomClassReplay": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "mite_damage_mode",
+        "currentClassNameCn": "螨害模式",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "mite_damage_mode",
+          "primaryClassRuntimeScore": 0.85,
+          "unknownLockCount": 4,
+          "currentClassKey": "mite_damage_mode",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "class_group_pool_empty",
+          "reviewedAtRound": 3
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_stippling_confirm",
+            "questionText": "叶片上有密集、细小的褪色点或斑驳吗？",
+            "targetDimension": "visual_presence",
+            "answer": {
+              "optionKey": "yes",
+              "optionText": "是，比较确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 2,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_spider_webbing_visible",
+            "questionText": "叶片、叶柄或节间能看到细密蛛网吗？",
+            "targetDimension": "visual_presence",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__stippling__distribution_scope",
+            "questionText": "这种“叶子上有很多细小的褪色点”主要集中在个别叶片/局部，还是多片叶子都能看到？",
+            "targetDimension": "distribution_scope",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__stippling__progression",
+            "questionText": "这种“叶子上有很多细小的褪色点”是最近几天明显扩展，还是已经存在较久且基本稳定？",
+            "targetDimension": "progression",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "out_of_pool_no_mapping",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "发现诊断范围外的可见异常",
+          "summary": "图片中存在当前自动诊断范围外的可见异常。系统无法把它稳定归入现有诊断路径，因此本次不继续常规诊断，也不判断为“暂无明显问题”。由于该异常尚未纳入当前诊断池，系统暂不能给出针对性的处理建议；建议先保持观察，避免仅凭本次结果进行大幅养护调整。",
+          "severity": "low",
+          "urgency": "low"
+        },
+        "roundIndex": 3
+      },
+      "calculationProcess": {
+        "sessionId": "diag_1777278548692_riwky22x",
+        "easySummary": "本条没有进入正式证据层的视觉证据。症状模式收敛到“螨害模式”。第1轮共 1 题：问“叶片上有密集、细小的褪色点或斑驳吗？”，答“是，比较确定”。第2轮共 3 题：问“叶片、叶柄或节间能看到细密蛛网吗？”，答“看不出/不确定”；问“这种“叶子上有很多细小的褪色点”主要集中在个别叶片/局部，还是多片叶子都能看到？”，答“看不出/不确定”；问“这种“叶子上有很多细小的褪色点”是最近几天明显扩展，还是已经存在较久且基本稳定？”，答“看不出/不确定”。最终收敛到“不确定结论”，核心原因是：当前存在诊断范围外的可见异常，但没有已审计 proxy mapping，因此跳过常规诊断并输出保守池外结果。",
+        "formulaGuide": {
+          "totalEvidence": "总证据 = 视觉证据 + 1.25 × 问诊证据",
+          "baseScore": "基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分",
+          "finalScore": "最终分 = 基础分 + 因果增强"
+        },
+        "steps": [
+          {
+            "step": 1,
+            "title": "正式视觉证据",
+            "text": "本条没有进入正式证据层的视觉证据。"
+          },
+          {
+            "step": 2,
+            "title": "症状模式与题组路由",
+            "text": "症状模式收敛到“螨害模式”。"
+          },
+          {
+            "step": 3,
+            "title": "第1轮问诊",
+            "text": "第1轮共 1 题：问“叶片上有密集、细小的褪色点或斑驳吗？”，答“是，比较确定”。"
+          },
+          {
+            "step": 4,
+            "title": "第2轮问诊",
+            "text": "第2轮共 3 题：问“叶片、叶柄或节间能看到细密蛛网吗？”，答“看不出/不确定”；问“这种“叶子上有很多细小的褪色点”主要集中在个别叶片/局部，还是多片叶子都能看到？”，答“看不出/不确定”；问“这种“叶子上有很多细小的褪色点”是最近几天明显扩展，还是已经存在较久且基本稳定？”，答“看不出/不确定”。"
+          },
+          {
+            "step": 5,
+            "title": "问题竞争计算",
+            "text": "系统先按“总证据 = 视觉证据 + 1.25 × 问诊证据”计算总证据，再按“基础分 = 总证据 × 属级系数 × 宿主系数 - 扣分”计算基础分，最后按“最终分 = 基础分 + 因果增强”做最终排序。本条当前第一名是“真菌蚊”，最终分 0，其中视觉证据 0，问诊证据 0，扣分 0。第二名是“真菌叶斑”，最终分 0。 当前可靠度 0.284，第一二名分差 0.031。"
+          },
+          {
+            "step": 6,
+            "title": "outcome 收敛",
+            "text": "最终收敛到“不确定结论”，核心原因是：当前存在诊断范围外的可见异常，但没有已审计 proxy mapping，因此跳过常规诊断并输出保守池外结果。"
+          }
+        ],
+        "competitionTopCandidates": [
+          {
+            "rankNo": 5,
+            "problemKey": "fungus_gnat",
+            "displayName": "真菌蚊",
+            "role": "root_cause",
+            "visualEvidence": 0,
+            "questionEvidence": 0,
+            "totalEvidence": 0,
+            "penalty": 0,
+            "genusCompatibility": 0.76,
+            "hostCompatibility": 0.76,
+            "baseScore": 0,
+            "finalScore": 0
+          },
+          {
+            "rankNo": 6,
+            "problemKey": "fungal_leaf_spot",
+            "displayName": "真菌叶斑",
+            "role": "root_cause",
+            "visualEvidence": 0,
+            "questionEvidence": 0,
+            "totalEvidence": 0,
+            "penalty": 0,
+            "genusCompatibility": 0.76,
+            "hostCompatibility": 0.7,
+            "baseScore": 0,
+            "finalScore": 0
+          },
+          {
+            "rankNo": 16,
+            "problemKey": "bacterial_leaf_spot",
+            "displayName": "细菌叶斑",
+            "role": "root_cause",
+            "visualEvidence": 0,
+            "questionEvidence": 0,
+            "totalEvidence": 0,
+            "penalty": 0,
+            "genusCompatibility": 0.45,
+            "hostCompatibility": 0.45,
+            "baseScore": 0,
+            "finalScore": 0
+          }
+        ],
+        "outcomeReasoning": {
+          "whyThisOutcome": "最终收敛到“不确定结论”，核心原因是：当前存在诊断范围外的可见异常，但没有已审计 proxy mapping，因此跳过常规诊断并输出保守池外结果。",
+          "whyNotOtherOutcomes": [
+            "不是问题性结论，因为当前缺少把某个具体问题安全输出为 final outcome 的条件。",
+            "不是非问题性结论，因为系统没有命中非问题性规则。"
+          ],
+          "raw": {
+            "stopReason": "uncertain_output_ready",
+            "decisionCauseKey": "out_of_pool_no_mapping",
+            "decisionCauseText": "当前存在诊断范围外的可见异常，但没有已审计 proxy mapping，因此跳过常规诊断并输出保守池外结果。",
+            "uncertainLegalityReason": ""
+          }
+        }
+      }
+    }
+  ]
+}

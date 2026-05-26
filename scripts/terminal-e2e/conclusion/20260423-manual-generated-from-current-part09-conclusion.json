@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-04-23T14:26:45.391Z",
+  "batchReportFile": "scripts/terminal-e2e/batch/20260423-manual-generated-from-current-part09.json",
+  "artifactSplit": {
+    "rootBaseName": "20260423-manual-generated-from-current",
+    "partIndex": 9,
+    "partCount": 9,
+    "maxResultsPerFile": 100
+  },
+  "total": 18,
+  "success": 18,
+  "failed": 0,
+  "visualFinalEvidenceSummary": {
+    "total": 18,
+    "available": 18,
+    "missingRawRecords": 0,
+    "emptyConclusion": 0
+  },
+  "derivedSummary": {
+    "noVisualEvidenceCount": 0,
+    "outOfPoolOnlyCount": 0
+  },
+  "outcomeTypeCounts": [
+    {
+      "key": "problematic",
+      "count": 18
+    }
+  ],
+  "stopReasonCounts": [
+    {
+      "key": "problematic_output_ready",
+      "count": 18
+    }
+  ],
+  "topSymptomClassReplayCounts": [
+    {
+      "key": "fungal_leaf_spot_mode",
+      "count": 18
+    }
+  ]
+}

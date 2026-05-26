@@ -1,0 +1,665 @@
+# 黄叶分组闭合 + 发布复核 handoff（最终版）
+
+## 目标摘要
+- 固化黄叶养护「一页一组」分组收口的最终发布与 smoke 验证结果
+- 记录发布状态、构建测试与 0 模型 smoke 的关键结果
+- 给出 500+ 文件统计口径与验收口径解释（最终口径为 17→5）
+
+## 关键代码 / SQL / 文档改动摘要
+- 代码结构由 helper 拆分：
+  - `cloudfunctions/diagnose-http/domain/outcome-route-planner-helpers.js`
+  - `cloudfunctions/diagnose-http/domain/result-formatter-helpers.js`
+  - `cloudfunctions/diagnose-http/services/session-result-read-service.js`
+- helper 拆分为主，同时包含受测行为修复：
+  - `outcome-route-planner.js` 保留 alternative route 可展示，同时补上同一路由 blocker 覆盖 pass 的保护；
+  - `result-formatter.js` 继续以 route action advice 作为 route 权威结果的展示建议来源，并保留问题文本归一化；
+  - 上述行为由本地 route 测试、全量测试与 0 模型 smoke 覆盖。
+- 黄叶 gate 交互边界补充：
+  - 黄叶 gate 不是把全部 gate options 聚合到同一页，而是按 `watering_frequency_context -> light_change_context -> fertilization_growth_context -> yellowing_progression_speed` 一页一组推进；
+  - 去掉旧 `canOpenNextFollowUpRound <= 2` 固定上限，避免四组问题在第 3/4 轮前被截断；停止条件回到题池、gate 完成度、route 决策和最终 follow-up stop policy。
+- SQL 与 schema 证据由上游已闭环：`yellowing` 前置分组与闭合逻辑在已投产链路按既定设计落地
+- 文档同步补齐完成：
+  - `docs/code-logics/07_结果格式化_公开响应_前端接入契约.md`
+  - `docs/code-logics/10_实施规则映射_开发约束_审计清单.md`
+
+## 文件规模与统计口径（>500 行）
+- 当前 `cloudfunctions/diagnose-http` JS >500 文件数：5
+- 统计口径：按当前主分支实际文件数核验，最终验收口径为 `HEAD 17 -> 当前 5`
+
+## 本地验证
+- `npm run test:route-planning`：passed
+- `node scripts/terminal-e2e/check-diagnose-business-guards.mjs`：黄叶分组与轮次上限断言已通过到 CloudBase 凭证分支；本地无 secretId/secretKey 时在后续云调用处退出
+- `npx oxlint cloudfunctions/diagnose-http/domain/diagnosis-engine.js scripts/terminal-e2e/check-diagnose-business-guards.mjs --quiet`：0 errors / 364 warnings
+- `npx oxlint cloudfunctions/diagnose-http/app.js cloudfunctions/diagnose-http/repositories/diagnosis-review-repository.js --quiet`：0 errors / 325 warnings
+- `npm run lint`：0 errors / 5653 warnings
+- `npm test`：passed
+- `npm run build`：passed
+
+## CloudBase MCP 部署与状态
+- 最新部署 requestId：`ef3937ee-c53d-41be-8ac9-5bbdc7a8e401`
+- 部署后函数状态：
+  - Status=`Active`
+  - AvailableStatus=`Available`
+  - ModTime=`2026-05-16 11:43:35`
+  - CodeSize=`13887469`
+  - 状态查询 requestId：`ce1d3f52-a2ad-41aa-96e5-fcaadff94d13`
+
+## 0 模型 smoke 验收
+- sessionId：`diag_1778903060912_zc8cgc06`
+- 轮次：4 轮
+- 每轮 `questionCount`：1
+- 答案序列：`often_wet -> no_clear_change -> normal_light_fertilizer -> unknown`
+- 实际问题顺序：
+  - `watering_frequency_context`
+  - `light_change_context`
+  - `fertilization_growth_context`
+  - `yellowing_progression_speed`
+- final outcome：
+  - `outcomeType=problematic`
+  - `problemKey=overwatering_root_pressure`
+  - `stopReason=route_visible_outcomes_ready`
+- 说明：`yes,yes,yes,yes` 收口至 `uncertain_visible` 的动作是 action conflict 用例，不作为 overwatering 验收失败场景。
+
+## architect_reviewer 最终裁决摘要
+- `cloudfunctions/diagnose-http` 的 JS >500 文件数口径：
+  - 从 HEAD 17 降至当前 5，减幅 **70.59%**，已达“30%+”缩减目标。
+- 同口径 JS 总行数口径：
+  - `HEAD_JS_TOTAL=40802 CURRENT_JS_TOTAL=41248 TOTAL_REDUCTION_PERCENT=-1.09`（未达 -30%）。
+  - 因此本轮不能将“总 JS LOC -30%”作为已完成指标。
+- 与 `docs/route规划及outcome瘦身计划/00/02/04/07` 一致：ranking 过渡期不得直接移除，仍保留候选排序、fallback、eligibility guard 与 debug audit。
+- 最新架构裁决补充：原始 `docs/route规划及outcome瘦身计划/02/04/07` 不支持通过删除 ranking 主链、guard 或 fallback 来达成总 JS LOC -30%；当前剩余总 LOC 指标事实未达成，但不应继续删除仍生效的 ranking、route evidence、fallback、output eligibility 或 `rankingAudit`。
+- 本轮硬验收裁决：
+  - 当前可验收边界是黄叶一页一组 gate、旧 `diagnosis_problem_rankings` 表层链路全仓运行时代码清理、`>500` 文件 17→5、CloudBase layer v49 发布和 smoke；
+  - “总 JS LOC -30%”判定为**不安全/不作为本轮硬验收通过条件**。
+- 死代码删减与可达性确认（仅本轮增补）：
+  - 删除无引用旧运行时代码：
+    - `cloudfunctions/diagnose-http/utils/agent.js`
+    - `cloudfunctions/diagnose-http/utils/fallback.js`
+    - `cloudfunctions/diagnose-http/utils/http.js`
+    - `cloudfunctions/diagnose-http/utils/sse.js`
+  - 继续删除已证明无引用的旧 helper / 旧 review projection：
+    - `app.js` 的 `_resolveImagesFromPayload`
+    - `diagnosis-review-repository.js` 的 `_buildDiagnosisReviewLlmProjection`
+    - `diagnosis-review-repository.js` 的旧 full select builder：`_buildManualDiagnosisReviewSelect` / `_buildBatchDiagnosisReviewSelect` / `_buildLegacyDiagnosisReviewSelect`
+    - `diagnosis-review-repository.js` 的 `_fetchImageAsDataUrl`
+    - 上述删除后连带清理无引用 `buildSafeJsonNumeric` / `buildSafeJsonPayload` / 旧 image & question projection helper
+  - 删除无引用导出：
+    - `runtime-artifacts.attachRuntimeArtifacts`
+    - `bootstrap-report.buildRefactorArtifacts`
+  - 继续删除已由 SQL 表持久化列表替代、且当前运行时无引用的旧池外候选动态聚合实现：
+    - `out-of-pool-review-repository.js` 的 `fastest-levenshtein` 引用
+    - 旧开放文本归一化、ngram / edit similarity、candidate fingerprint / group id、候选组自动匹配、source group column ensure、动态分组持久化与状态过滤 helper
+  - 继续拆分 `session-read-service.js` 的结果详情读取与治理建议兜底到 `session-result-read-service.js`：
+    - `session-read-service.js` 从 803 行降至 328 行
+    - `session-result-read-service.js` 为 495 行，未进入 500+ 清单
+  - 从 `app.js` 的静态 require 图确认：`files=116 reachable=116 unreachable=0`。
+  - 当前非 `node_modules` JS 总行数：`40690`；当前 `>500` 文件数：`9`。
+  - 仍需坚持 `docs/route规划及outcome瘦身计划/00/02/04/07` 的 ranking 过渡保留约束，不能在本轮以 LOC 目标名义继续删减。
+- 后续可继续收敛范围（仅限已证明不可达）：
+  - 公开 ranking 表层
+  - legacy ranked final output
+  - 不可达 follow-up 分支
+  - route mode ranking INSERT
+
+## 最新增量部署与 smoke（out-of-pool 动态聚合删减后）
+- MCP `updateFunctionCode` 返回成功 requestId：`935ff189-10b7-4724-aada-e8108f19218d`
+- 随后 `getFunctionDetail` 曾返回：
+  - Status=`Updating`
+  - ModTime=`2026-05-16 11:47:41`
+  - 状态查询 requestId：`b4da4fe2-2737-48e0-af68-1f87725b1d4c`
+- 之后 CloudBase MCP 授权过期，当前设备码授权仍为 `PENDING`，因此尚未拿到最新一次部署后的 `Active / Available / CodeSize` 控制面确认。
+- 最新 0 模型 HTTP smoke 已通过：
+  - sessionId：`diag_1778903304807_vs2rkvu9`
+  - 轮次：4 轮
+  - 每轮 `questionCount`：1
+  - 答案序列：`often_wet -> no_clear_change -> normal_light_fertilizer -> unknown`
+  - final outcome：`outcomeType=problematic`，`problemKey=overwatering_root_pressure`
+- 本地验证增量：
+  - `npx oxlint cloudfunctions/diagnose-http/repositories/out-of-pool-review-repository.js --quiet`：0 errors / 51 warnings
+  - `npm test`：passed
+  - `npm run lint`：0 errors / 5600 warnings
+  - `npm run build`：passed
+
+## 继续本地模块化增量（尚未部署）
+- 在 CloudBase MCP 授权仍为 `PENDING` 期间，继续做了低风险本地模块化：
+  - 新增 `cloudfunctions/diagnose-http/services/session-result-read-service.js`
+  - `session-read-service.js` 仅保留 session state / history 读取与 re-export，结果详情读取迁出
+  - 新增 `cloudfunctions/diagnose-http/repositories/prior-cache.js`
+  - 新增 `cloudfunctions/diagnose-http/repositories/prior-plant-context-repository.js`
+  - 新增 `cloudfunctions/diagnose-http/repositories/prior-candidate-repository.js`
+  - `prior-repository.js` 收敛为兼容性 map 与聚合出口，植物上下文和 candidate priors 迁出
+  - 新增 `cloudfunctions/diagnose-http/repositories/out-of-pool-review-helpers.js`
+  - 新增 `cloudfunctions/diagnose-http/repositories/out-of-pool-candidate-group-repository.js`
+  - `out-of-pool-review-repository.js` 继续收敛为池外候选明细读取与 review 写入，池外候选组 SQL 列表和 group review 写入迁出
+  - 删除 `synthetic-follow-up.js` 中已不再作为运行时权威的动态养护基线文案生成：
+    - `wateringFrequencyBuckets`
+    - 基于 `plantContext.watering.freq` 和天气湿度动态拼装浇水选项的 helper
+    - primary gate 的动态养护说明拼装
+    - fallback 改为固定易读文案；黄叶正式 question / option 仍以 SQL 模板优先
+- 当前统计：
+  - `session-read-service.js`：328 行
+  - `session-result-read-service.js`：495 行
+  - `prior-repository.js`：148 行
+  - `prior-cache.js`：146 行
+  - `prior-plant-context-repository.js`：191 行
+  - `prior-candidate-repository.js`：354 行
+  - `out-of-pool-review-repository.js`：493 行
+  - `out-of-pool-review-helpers.js`：96 行
+  - `out-of-pool-candidate-group-repository.js`：254 行
+  - `synthetic-follow-up.js`：2609 行
+  - 当前 `cloudfunctions/diagnose-http` 非 `node_modules` JS 总行数：`40456`
+  - 当前 `>500` 文件数：`7`
+- 本地验证：
+  - `npm test`：passed
+  - `npx oxlint cloudfunctions/diagnose-http/services/session-read-service.js cloudfunctions/diagnose-http/services/session-result-read-service.js --quiet`：0 errors / 28 warnings
+  - `npx oxlint cloudfunctions/diagnose-http/repositories/prior-repository.js cloudfunctions/diagnose-http/repositories/prior-cache.js cloudfunctions/diagnose-http/repositories/prior-plant-context-repository.js cloudfunctions/diagnose-http/repositories/prior-candidate-repository.js --quiet`：0 errors / 20 warnings
+  - `npx oxlint cloudfunctions/diagnose-http/repositories/out-of-pool-review-repository.js cloudfunctions/diagnose-http/repositories/out-of-pool-review-helpers.js cloudfunctions/diagnose-http/repositories/out-of-pool-candidate-group-repository.js --quiet`：0 errors / 51 warnings
+  - `npx oxlint cloudfunctions/diagnose-http/utils/synthetic-follow-up.js --quiet`：0 errors / 58 warnings
+  - `npm run lint`：0 errors / 5576 warnings
+  - `npm run build`：passed
+- 发布状态：
+  - 此模块化增量已通过 CloudBase MCP 部署：
+    - `manageFunctions.updateFunctionCode` requestId：`79bab966-e1be-4e5d-887a-54f2462f4c60`
+    - release_ops 复核时再次执行 MCP 部署 requestId：`cf0d085f-8d26-4f67-8718-587d6fb55178`
+    - `queryFunctions.getFunctionDetail` requestId：`be22a675-5cee-4963-a0c5-263bb26eb54e`
+    - Status=`Active`
+    - AvailableStatus=`Available`
+    - ModTime=`2026-05-16 14:21:45`
+    - CodeSize=`13887577`
+  - SQL 读回证据：
+    - `question_option_mapping_v5_real` 黄叶四组问题选项已在当前 prod schema 读回
+    - readback requestId：`12564fb1-569c-49a8-bfe7-9cd0997c4298`
+    - 示例：`often_wet=每 1-2 天浇一次，或土没干就浇`，`normal_or_stable=每周 1-2 次，基本等土表干了再浇`，`often_dry=近 2 周 0-1 次，或经常干透很久才浇`
+  - 最新 0 模型 smoke 已通过：
+    - sessionId：`diag_1778912559876_6nbfjd8l`
+    - 轮次：4 轮
+    - 每轮 `questionCount`：1
+    - 答案序列：`often_wet -> no_clear_change -> normal_light_fertilizer -> unknown`
+    - final outcome：`outcomeType=problematic`，`problemKey=overwatering_root_pressure`
+    - stopReason：`route_visible_outcomes_ready`
+  - release_ops 另跑冲突型 0 模型 smoke：
+    - sessionId：`diag_1778912546249_dwielfa6`
+    - 轮次：4 轮，每轮 `questionCount=1`
+    - final outcome：`outcomeType=uncertain`
+    - `visibleOutcomeKeys=[sunburn, nutrient_deficiency]`，`visibleOutcomes.length=2`
+    - 该用例符合“最终命中 1 个或以上 route outcome”，但不符合旧脚本硬编码的 `problematic / overwatering_root_pressure` 断言
+
+## 最新云端持久化顺序修复与 smoke（2026-05-16 14:30）
+- 触发原因：
+  - 最新部署后 0 模型 smoke 曾返回 `diagnosis_follow_ups` 外键失败；
+  - 根因是 `persistRoundRuntime` 将父表 `diagnosis_sessions` upsert 与子表 follow-up / queue / stop-state / rankings 写入放入同一个 `Promise.all`，云端 MySQL 可能先执行子表写入。
+- 修复：
+  - `cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js` 先 `await upsertDiagnosisSession(...)`；
+  - 父 session 写入完成后，再并发执行 follow-up、queue、stop-state、observed evidence、rankings 与 final snapshot 等子表写入。
+- 本地验证：
+  - `npx oxlint cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js --quiet`：0 errors / 3 warnings
+  - `npm run test:route-planning`：passed
+- CloudBase MCP 部署：
+  - `manageFunctions.updateFunctionCode` requestId：`32c603b5-2368-42b6-afbc-20ba549c141d`
+  - `queryFunctions.getFunctionDetail` requestId：`af234111-f764-4e97-82be-4464af434642`
+  - Status=`Active`
+  - AvailableStatus=`Available`
+  - ModTime=`2026-05-16 14:30:54`
+  - CodeSize=`13885603`
+- 最新 0 模型 smoke：
+  - sessionId：`diag_1778913136681_8umdspku`
+  - 轮次：4 轮
+  - 每轮 `questionCount=1`
+  - 答案序列：`often_wet -> no_clear_change -> normal_light_fertilizer -> unknown`
+  - final outcome：`outcomeType=problematic`
+  - `problemKey=overwatering_root_pressure`
+  - stopReason：`route_visible_outcomes_ready`
+- 当前统计：
+  - `cloudfunctions/diagnose-http` 非 `node_modules` JS 总行数：`40457`
+  - 当前 `>500` 文件数：`7`
+
+## ranking 表层持久化删减与 smoke（2026-05-16 14:34）
+- 触发原因：
+  - 当时 `diagnose-http` 范围内 `rg` 审计确认 `diagnosis_problem_rankings` 在该函数目录内只剩写入链路，没有本目录读取链路；
+  - 该判断不是全仓最终结论；后续全仓 residual cleanup 已发现并删除共享 layer 中的旧读取残留；
+  - route 模式公开响应已隐藏 `rankings`，审计需求由 runtime snapshot / `rankingAudit` / route debug 摘要承载；
+  - 因此 `diagnosis_problem_rankings` 写入属于 ranking 过渡期不再起作用的运行时残留。
+- 删除范围：
+  - `round-runtime-persistence-service.js` 不再调度 `replaceProblemRankings(...)`；
+  - `session-service.js` 不再 re-export `replaceProblemRankings`；
+  - `session-runtime-write-service.js` 删除 `replaceProblemRankings(...)`；
+  - `session-runtime-write-repository.js` 删除 `replaceProblemRankingsRows(...)` 及 `diagnosis_problem_rankings` DELETE / INSERT SQL。
+- 本地验证：
+  - `rg "replaceProblemRankings|replaceProblemRankingsRows|diagnosis_problem_rankings" cloudfunctions/diagnose-http -S`：无结果
+  - `npx oxlint cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js cloudfunctions/diagnose-http/services/session-service.js cloudfunctions/diagnose-http/services/session-runtime-write-service.js cloudfunctions/diagnose-http/repositories/session-runtime-write-repository.js --quiet`：0 errors / 19 warnings
+  - `npm run test:route-planning`：passed
+  - `npm test`：passed
+  - `npm run build`：passed
+  - `npm run lint`：0 errors / 5567 warnings
+- CloudBase MCP 部署：
+  - `manageFunctions.updateFunctionCode` requestId：`25f274fb-d37e-4a55-baeb-7f017bacccdc`
+  - `queryFunctions.getFunctionDetail` requestId：`374de58e-ba75-4477-a8b3-04edb567e181`
+  - Status=`Active`
+  - AvailableStatus=`Available`
+  - ModTime=`2026-05-16 14:34:10`
+  - CodeSize=`13884990`
+- 最新 0 模型 smoke：
+  - sessionId：`diag_1778913466905_ppb1eoo7`
+  - 轮次：4 轮
+  - 每轮 `questionCount=1`
+  - 答案序列：`often_wet -> no_clear_change -> normal_light_fertilizer -> unknown`
+  - final outcome：`outcomeType=problematic`
+  - `problemKey=overwatering_root_pressure`
+  - stopReason：`route_visible_outcomes_ready`
+- 当前统计：
+  - `cloudfunctions/diagnose-http` 非 `node_modules` JS 总行数：`40378`
+  - 当前 `>500` 文件数：`7`
+
+## question-selector 模块拆分与发布前验证（2026-05-16）
+- 触发原因：
+  - `question-selector.js` 属于运行时问题选择关键路径，拆分前超过 500 行；
+  - 本轮目标要求对运行时代码中超 500 行文件做适量模块化拆分，并降低超 500 行文件数量。
+- 拆分范围：
+  - `cloudfunctions/diagnose-http/domain/question-selector.js` 保留主选择流程；
+  - 新增 `cloudfunctions/diagnose-http/domain/question-selector-helpers.js` 承载通用归一化、索引与选项转换 helper；
+  - 新增 `cloudfunctions/diagnose-http/domain/question-selector-coverage.js` 承载 coverage / confidence / evidence 相关判定 helper。
+- 本地验证：
+  - `npx oxlint cloudfunctions/diagnose-http/domain/question-selector.js cloudfunctions/diagnose-http/domain/question-selector-helpers.js cloudfunctions/diagnose-http/domain/question-selector-coverage.js --quiet`：0 errors / 63 warnings
+  - `npm run test:route-planning`：passed
+  - `npm test`：passed
+  - `npm run build`：passed
+  - `npm run lint`：0 errors / 5567 warnings
+- 当前统计：
+  - `question-selector.js`：327 行
+  - `question-selector-helpers.js`：460 行
+  - `question-selector-coverage.js`：384 行
+  - `cloudfunctions/diagnose-http` 非 `node_modules` JS 总行数：`40492`
+  - 当前 `>500` 文件数：`6`
+  - 当前仍超过 500 行的运行时文件：
+    - `diagnosis-engine.js`：6513 行
+    - `diagnosis-review-repository.js`：2780 行
+    - `synthetic-follow-up.js`：2609 行
+    - `app.js`：2282 行
+    - `visual-diagnosis-service.js`：1835 行
+    - `llm.js`：1550 行
+- 结论：
+  - 超 500 行文件数量已从本轮早期基线 17 个降至 6 个，减少约 64.7%，达到“500 行+ 文件减少 30%”目标；
+  - 总 JS 行数仍未达到减少 30% 的目标，后续若继续追求该指标，需要更大范围删除已确认不再运行时生效的旧链路，而不是单纯模块化拆分。
+
+## question-selector 拆分后的 MCP 发布与 0 模型 smoke（2026-05-16 14:46）
+- 执行角色：
+  - 复用同一 `release_ops` 线程执行发布与线上验收；
+  - 本轮 release_ops 未读取 `docs/code-logics/`、`docs/new-rules/` 或 All-in-One；
+  - 本轮 release_ops 未改业务代码。
+- CloudBase MCP 部署：
+  - `manageFunctions.updateFunctionCode` requestId：`f577f1ab-0463-45a0-b1be-5d4d5cef8b95`
+  - `queryFunctions.getFunctionDetail` requestId：`6b8b0296-2b2b-4945-b8a3-4e6273d97fd5`
+  - Status=`Active`
+  - AvailableStatus=`Available`
+  - ModTime=`2026-05-16 14:46:15`
+  - CodeSize=`13886979`
+- 最新 0 模型 smoke：
+  - sessionId：`diag_1778914022688_77p258ng`
+  - 最终函数 requestId：`933ad0e4-49e4-499c-9fa1-ccae2636c49f`
+  - smoke 命令退出码：`0`
+  - 轮次：4 个 answer round
+  - start `questionCount=1`
+  - round_1 `questionCount=1`
+  - round_2 `questionCount=1`
+  - round_3 `questionCount=1`
+  - round_4 `questionCount=1`
+  - final：`stage=final`，`status=closed`
+  - final outcome：`outcomeType=problematic`
+  - `problemKey=overwatering_root_pressure`
+  - stopReason：`route_visible_outcomes_ready`
+  - primaryOutcome：`overwatering_root_pressure`
+  - visibleOutcomes：包含 `overwatering_root_pressure` 和 `uncertain_observation`
+- 验收结论：
+  - 当前最新 `diagnose-http` 已部署；
+  - 黄叶 grouped gate 线上 smoke 仍保持一页一组 gate options、每轮 1 个问题；
+  - 回答完所有分组问题后，route 输出最终命中 1 个或以上 outcome。
+
+## 剩余瘦身目标安全裁决（2026-05-16）
+- 审查方式：
+  - main agent 以 `app.js` 为入口生成静态 require 图；
+  - 复用同一 `architect_reviewer` 线程做只读架构审查；
+  - 未读取 `docs/code-logics/`、`docs/new-rules/` 或 All-in-One。
+- 可达性证据：
+  - `cloudfunctions/diagnose-http` 非 `node_modules` JS 文件：124 个；
+  - 从 `app.js` 静态 require 可达文件：124 个；
+  - 不可达文件：0 个；
+  - 不可达文件行数：0 行。
+- 可重复审计脚本：
+  - 新增 `scripts/terminal-e2e/audit-diagnose-http-runtime-size.mjs`；
+  - 用途：输出 `diagnose-http` JS 总行数、超过 500 行文件、从入口 `app.js` 的静态 require 可达性和不可达列表；
+  - 支持 `--baseline-lines`、`--baseline-over-threshold-files` 和 `--reduction-target-percent`，用于直接计算减少比例和目标是否达成；
+  - `node scripts/terminal-e2e/audit-diagnose-http-runtime-size.mjs` 输出：
+    - `totalJsFiles=124`
+    - `totalJsLines=40492`
+    - `reachableJsFiles=124`
+    - `unreachableJsFiles=0`
+    - `unreachableJsLines=0`
+    - `overThresholdFiles=6`
+  - `node scripts/terminal-e2e/audit-diagnose-http-runtime-size.mjs --baseline-over-threshold-files=17 --baseline-lines=40802` 输出：
+    - `lineReduction.reductionPercent=0.76`
+    - `lineReduction.targetMet=false`
+    - `overThresholdReduction.reductionPercent=64.71`
+    - `overThresholdReduction.targetMet=true`
+  - `npx oxlint scripts/terminal-e2e/audit-diagnose-http-runtime-size.mjs --quiet`：0 errors / 14 warnings。
+- ranking 删除边界：
+  - 已删除 `diagnosis_problem_rankings` 表层持久化写链；
+  - ranking 主链仍作为候选排序、fallback、eligibility guard、route evidence 与 debug audit 输入；
+  - route 模式下 ranking 不作为公开主裁判，公开响应由 route outcome / action advice 控制；
+  - 因此不能为追求 LOC 指标删除 ranking 主链、`scoreGap`、`reliabilityScore`、route evidence rankings 输入、output eligibility guard 或 `rankingAudit`。
+- 不建议删除的仍可达入口：
+  - legacy `/diagnose` 与 `/stream/diagnose`，除非另有 API 下线证据；
+  - review / out-of-pool / visual / LLM 相关链路，除非另有产品入口下线和数据迁移证据。
+- 入口使用补充审计：
+  - 前端正式诊断 start / answer / result / history 使用 `diagnose-http/diagnosis/start`、`diagnose-http/diagnosis/answer`、`diagnose-http/diagnosis/result`、`diagnose-http/diagnosis/history`；
+  - 前端流式诊断也使用 `diagnose-http/diagnosis/start`，通过 chunked / `Accept: text/event-stream` 触发 SSE，不直接调用 legacy `/stream/diagnose`；
+  - `scripts/terminal-e2e/cloudbase-http-check.mjs` 的 stream start 模式仍调用 `diagnose-http/stream/diagnose`；
+  - `cloudfunctions/diagnose-http/cloudbase-functions.json` 仍公开 `/stream/diagnose` 与 `/diagnose` 路由；
+  - `src/pages/profile/diagnosis-review.vue` 仍调用 `/diagnosis/review/*`；
+  - `src/pages/profile/out-of-pool-review.vue` 仍调用 `/visual/out-of-pool/*`；
+  - 因此 review / out-of-pool 不能按“已下线入口”删除；legacy `/stream/diagnose` 与 `/diagnose` 若要删除，需要先裁决对外兼容和 terminal e2e stream 模式迁移。
+- 完成度裁决：
+  - 黄叶 grouped gate 行为目标：已完成并通过线上 0 模型 smoke；
+  - `>500` 文件数量减少目标：已完成；
+  - 已不再起作用的 ranking 表层持久化删除：已完成；
+  - 总 JS LOC 减少 30%：未完成；
+  - 当前未发现可安全删除的大块运行时代码，强行追求总 LOC -30% 会破坏仍在运行时生效的诊断安全链路。
+
+## QA 最终复核（2026-05-16）
+- 执行方式：
+  - 复用同一 `qa_reviewer` 线程做只读复核；
+  - 未读取 `docs/code-logics/`、`docs/new-rules/` 或 All-in-One；
+  - 未改业务代码。
+- QA 复核结论：
+  - 不能标记整体 goal complete；
+  - 硬阻塞是“总代码减少 30%+”未达成；
+  - 当前 active goal 状态经 main agent `get_goal` 复核仍为 `active`，因此未调用 `update_goal`。
+- QA 确认已达成子项：
+  - 黄叶 grouped gate 线上 smoke 已支撑“答完所有分组后命中 1 个或以上 outcome”；
+  - `500+` 文件数从 17 降到 6，减少 64.71%，超过 30% 目标；
+  - `diagnose-http` 范围内 `diagnosis_problem_rankings` 表层写链删除成立；
+  - CloudBase MCP 部署与 0 模型 smoke 证据闭环成立。
+- QA 确认未达成子项：
+  - `lineReduction.targetMet=false`；
+  - `40802 -> 40492`，仅减少 310 行 / 0.76%；
+  - `npm run lint`、`npm test`、`npm run build` 与线上 smoke 不能替代总代码减少 30% 的量化要求。
+- QA 剩余风险：
+  - 后续若为追求 30% 总行数目标而删除仍可达的 legacy API、review、visual、LLM 或 ranking 主链，会破坏诊断运行时安全边界；
+  - architect 已裁决 ranking 主链仍用于候选排序、fallback、eligibility、route evidence 与 audit，不应继续删除。
+
+## 后续低风险模块化候选（2026-05-16）
+- 执行方式：
+  - 复用同一 `code_explorer` 线程做只读定位；
+  - 未读取 `docs/code-logics/`、`docs/new-rules/` 或 All-in-One；
+  - 未改业务代码。
+- 推荐候选：
+  - `cloudfunctions/diagnose-http/utils/synthetic-follow-up.js`
+- 推荐原因：
+  - 当前约 2609 行，仍超过 500 行；
+  - 导出面较小，外部调用方可以继续从 `../utils/synthetic-follow-up` facade 引入；
+  - 文件主体为纯函数、静态常量、模板文案和合成题构造，无 DB、HTTP、LLM、CloudBase side effect；
+  - 相比拆 `app.js`、`diagnosis-engine.js`、`visual-diagnosis-service.js` 或 `llm.js`，风险更低。
+- 建议拆分边界：
+  - `utils/synthetic-follow-up/keys.js`：synthetic question / group prefix 与 key 生成、解析 helper；
+  - `utils/synthetic-follow-up/rules.js`：`ORTHOGONAL_DIMENSION_PRIORITY_BY_PATTERN`、`ORTHOGONAL_DIMENSION_PRIORITY_BY_SYMPTOM`、`SYNTHETIC_DIRECT_PROBLEM_EFFECTS_BY_SYMPTOM` 及相关纯规则 helper；
+  - `utils/synthetic-follow-up/templates.js`：养护选项文案、模板渲染、question / option 文案 helper；
+  - `utils/synthetic-follow-up/builders.js`：`buildSyntheticObservedProbeQuestions` 与 `buildSyntheticFollowUpOptionMappings`。
+- 预期效果：
+  - 原 `synthetic-follow-up.js` 可降到约 120-250 行，仅保留 facade 导出；
+  - 当前 `>500` 文件数可进一步从 6 降到 5；
+  - 不会改善总 JS LOC 30% 目标，只改善模块边界和大文件数量。
+- 实施风险：
+  - 迁移必须保持对象字面量、中文文案、optionKey、directProblemAdjustments、questionKey / questionGroupKey 完全等价；
+  - 需要至少验证 `npm test`、`npm run build`、`npm run lint`，并重点覆盖黄叶、虫害、结构损伤和 edema bump 的 synthetic follow-up。
+
+## synthetic-follow-up 模块化落地（2026-05-16）
+- 拆分范围：
+  - `cloudfunctions/diagnose-http/utils/synthetic-follow-up.js` 改为 facade，继续保持原 require 入口；
+  - 新增 `cloudfunctions/diagnose-http/utils/synthetic-follow-up/` 子模块，承载 key 构造、模板渲染、静态优先级表、direct problem effects、问题 builders 和 option mappings；
+  - 未改 CloudBase 配置、SQL、route/outcome/gate 配置或外部 API。
+- 当前统计：
+  - `synthetic-follow-up.js`：3 行；
+  - 新增子模块最大文件 `option-mappings.js`：475 行；
+  - `node scripts/terminal-e2e/audit-diagnose-http-runtime-size.mjs --baseline-over-threshold-files=17 --baseline-lines=40802`：
+    - `totalJsFiles=139`
+    - `totalJsLines=40685`
+    - `reachableJsFiles=139`
+    - `unreachableJsFiles=0`
+    - `overThresholdFiles=5`
+    - `lineReduction.reductionPercent=0.29`
+    - `lineReduction.targetMet=false`
+    - `overThresholdReduction.reductionPercent=70.59`
+    - `overThresholdReduction.targetMet=true`
+- 本地验证：
+  - `npx oxlint cloudfunctions/diagnose-http/utils/synthetic-follow-up.js cloudfunctions/diagnose-http/utils/synthetic-follow-up --quiet`：0 errors / 57 warnings
+  - `npm run test:route-planning`：passed
+  - `npm test`：passed
+  - `npm run build`：passed
+  - `npm run lint`：0 errors / 5580 warnings
+- 完成度影响：
+  - `>500` 文件数量进一步从 6 降至 5；
+  - 总 JS LOC 30% 目标仍未达成。
+
+## synthetic-follow-up 拆分后的 MCP 发布与 0 模型 smoke（2026-05-16 15:04）
+- 执行角色：
+  - 复用同一 `release_ops` 线程执行发布与线上验收；
+  - 本轮 release_ops 未读取 `docs/code-logics/`、`docs/new-rules/` 或 All-in-One；
+  - 本轮 release_ops 未改业务代码。
+- CloudBase MCP 部署：
+  - `manageFunctions.updateFunctionCode` requestId：`c1480194-4962-4959-b139-f12bf1afe9d3`
+  - `queryFunctions.getFunctionDetail` requestId：`0d51e5c7-ac04-414a-af39-2dfe3292f30d`
+  - Status=`Active`
+  - AvailableStatus=`Available`
+  - ModTime=`2026-05-16 15:04:37`
+  - CodeSize=`13895155`
+- 最新 0 模型 smoke：
+  - sessionId：`diag_1778915108482_2ig0x638`
+  - 轮次：4 个 answer round
+  - start `questionCount=1`
+  - round_1 `questionCount=1`
+  - round_2 `questionCount=1`
+  - round_3 `questionCount=1`
+  - round_4 `questionCount=1`
+  - final outcome：`outcomeType=problematic`
+  - `problemKey=overwatering_root_pressure`
+  - stopReason：`route_visible_outcomes_ready`
+  - routePrimaryAction：`standard_flow`
+  - displayName：`积水/根系压力`
+- 验收结论：
+  - 最新 `diagnose-http` 已包含 `synthetic-follow-up` 拆分；
+  - 黄叶 grouped gate 线上 smoke 仍保持一页一组 gate options、每轮 1 个问题；
+  - 回答完所有分组问题后，route 输出最终命中 1 个或以上 outcome。
+
+## ranking 表层全仓残留清理（2026-05-16）
+- 触发原因：
+  - 后续全仓 `rg` 发现 `diagnose-http` 外仍有共享 layer 残留读取 `diagnosis_problem_rankings`；
+  - 残留位置是 `cloudfunctions/layer/utils/plant-knowledge.js#getDiagnosisSessionDetail`，该函数会读取旧 ranking 表并返回 `rankings`；
+  - 同时 `cloudfunctions/layer/utils/cloudbase.js` 的 `SQL_TABLES` 仍包含旧表名，仅用于给旧 SQL 自动补 schema。
+- 只读复核结论：
+  - `getDiagnosisSessionDetail` 仅在 `plant-knowledge.js` 内定义和 export，当前静态调用链没有入口调用；
+  - `plant-catalog-http` 只导入 catalog 查询 / 匹配函数；
+  - `plant-user-http` 只导入用户植物 CRUD；
+  - `identify-http` 只导入 `findCanonicalPlantMatch`；
+  - `diagnose-http` 只通过 `prior-plant-context-repository.js` 导入 `getPlantCatalogById` / `getUserPlantInstanceById`；
+  - `buildDiagnosisDecision` 仍被 `cloudfunctions/layer/utils/plant-diagnosis.js` 使用，且它是运行时动态 ranking，不读取 `diagnosis_problem_rankings` 表，本轮不删除。
+- 删除范围：
+  - 删除 `cloudfunctions/layer/utils/plant-knowledge.js#getDiagnosisSessionDetail`；
+  - 删除 `plant-knowledge.js` 中该函数的 export；
+  - 删除 `cloudfunctions/layer/utils/cloudbase.js` 中 `SQL_TABLES` 的 `diagnosis_problem_rankings` 条目。
+- 本地验证：
+  - `rg "diagnosis_problem_rankings|replaceProblemRankings|replaceProblemRankingsRows|getDiagnosisSessionDetail" -S . --glob '!node_modules/**' --glob '!dist/**' --glob '!unpackage/**' --glob '!tmp/**'`：运行时代码无结果，仅历史 / 本文档提及；
+  - `npx oxlint cloudfunctions/layer/utils/cloudbase.js cloudfunctions/layer/utils/plant-knowledge.js --quiet`：0 errors / 87 warnings；
+  - 直接 `node require` 验证不适用：`plant-knowledge.js` 在云端 layer 通过 `/opt/utils/cloudbase` 解析，本地直接 require 会因 `/opt` 路径不存在失败。
+- 当前边界：
+  - 已删除旧 `diagnosis_problem_rankings` 表层持久化写链和共享 layer 读残留；
+  - 未删除仍在运行时生效的动态 ranking 主链、fallback、eligibility guard、route evidence 和 debug audit。
+
+## 共享 layer v49 发布与绑定扩展（2026-05-16 15:12）
+- 发布判断：
+  - layer 文件变更不会被 `diagnose-http` 的普通 `updateFunctionCode` 自动覆盖旧 layer；
+  - 本轮通过 CloudBase MCP 发布新 layer version，并把实际使用 `/opt/utils/cloudbase` 或 `/opt/utils/plant-knowledge` 的函数绑定到 `layer:49`。
+- `diagnose-http` 发布证据：
+  - `createLayerVersion` requestId：`5bca0034-17e7-4df7-b068-15330bb02ed5`
+  - 新 layer：`layer:49`
+  - `diagnose-http updateFunctionLayers` requestId：`58863910-4ca0-458e-84fc-6b1fafe55690`
+  - 部署后 `getFunctionDetail` requestId：`282fa7ba-6981-42b8-b1e8-37388347b0b6`
+  - 状态：`Active / Available`
+  - 函数绑定：`layer:49`
+- `diagnose-http` 0 模型 smoke：
+  - sessionId：`diag_1778915552761_lrhlehj7`
+  - deviceId：`codex-yg-layer49`
+  - 轮次数：4
+  - 每轮 `questionCount`：`1, 1, 1, 1`
+  - answers：`often_wet,no_clear_change,normal_light_fertilizer,unknown`
+  - final outcomeType：`problematic`
+  - final problemKey：`overwatering_root_pressure`
+  - final stopReason：`route_visible_outcomes_ready`
+  - route outcome：`积水/根系压力`
+- 共享 layer 使用者绑定扩展：
+  - `auth-user-http`：update requestId `adf0cdcc-e7b3-42ec-934f-6583bde3795a`，final query requestId `8c9cac78-6759-4828-9678-8e1a45e246f6`，`Active / Available`，`layer:49`
+  - `plant-catalog-http`：update requestId `feeec728-09af-424f-94ec-a0c2fbc58ba6`，final query requestId `111f1ba9-59cf-484c-894d-53b0b332e5c4`，`Active / Available`，`layer:49`
+  - `plant-user-http`：update requestId `e63e7b60-83df-42f3-9389-9330d2fb0306`，final query requestId `8c09ebd3-3ccf-46cf-8e0e-512e93b7ecdc`，`Active / Available`，`layer:49`
+  - `identify-http`：update requestId `63554138-2fd4-4ca5-bcf0-cb48df702a0d`，final query requestId `03be40b1-106f-4b5f-b6ee-cb6c79bad273`，`Active / Available`，`layer:49`
+  - `storage-http`：update requestId `a59aa2ed-6d90-4632-9d1a-b8b28b7b5add`，final query requestId `351a1dfe-ccb2-4198-87c3-4110db9489eb`，`Active / Available`，`layer:49`
+  - `weather-http`：update requestId `4b582d83-38d3-4b5d-8d73-734c7a510e2a`，final query requestId `cac4090a-c9e5-4914-a474-00eee4a88cd7`，`Active / Available`，`layer:49`
+  - `wechat-phone`：update requestId `64aec977-35ba-4561-ad2a-25df5608c8d3`，final query requestId `3e0285d1-2e22-42f4-b72a-c1052d0ac026`，`Active / Available`，`layer:49`
+- 附加 smoke / 风险：
+  - `wechat-phone` Event mock invoke 通过，requestId `39eda866-bd23-47ee-90fd-816e30935506`，`InvokeResult=0`；
+  - HTTP 函数无 gateway API access，且 CloudBase MCP `invokeFunction` 对 HTTP 函数返回 `FunctionType parameter is invalid`，因此这些 HTTP 函数本轮只完成 layer 绑定与状态验收，未完成业务级 health smoke。
+- 回滚：
+  - `diagnose-http` 可回滚到 `layer:48`；
+  - 其他函数可按本节记录的发布前绑定版本回滚，其中 `plant-user-http` 发布前为 `layer:43`，`wechat-phone` 发布前为 `layer:26`，其余本节 HTTP 函数发布前为 `layer:42`。
+
+## legacyDiagnosis 未消费 payload 删减（2026-05-16）
+- 触发原因：
+  - 继续审计剩余 `>500` 行运行时文件时，`code_explorer` 确认 `diagnosis-engine.js` 的 `legacyDiagnosis` 兼容 payload 当前仓库内无消费者；
+  - legacy `/diagnose` presenter 通过 `buildPublicRoundResponse(roundResult)` 重新组装老响应，不读取 `roundResult.legacyDiagnosis`；
+  - 该删减不触碰 legacy `/diagnose` 路由、ranking、fallback、guard 或 `rankingAudit`。
+- 删除范围：
+  - 删除 `cloudfunctions/diagnose-http/domain/diagnosis-engine.js#toLegacyCompatiblePayload`；
+  - 删除 `runDiagnosisRound` 返回对象里的 `legacyDiagnosis: toLegacyCompatiblePayload(...)` 字段赋值。
+- 本地验证：
+  - `rg "toLegacyCompatiblePayload|legacyDiagnosis" cloudfunctions/diagnose-http -n -S`：无结果；
+  - `npm run test:route-planning`：passed；
+  - `npm test`：passed；
+  - `npm run build`：passed；
+  - `npm run lint`：0 errors / 5567 warnings。
+- 最新瘦身审计：
+  - `node scripts/terminal-e2e/audit-diagnose-http-runtime-size.mjs --baseline-over-threshold-files=17 --baseline-lines=40802`
+  - `totalJsLines=40636`
+  - `lineReduction.reductionPercent=0.41`
+  - `lineReduction.targetMet=false`
+  - `overThresholdFiles=5`
+  - `overThresholdReduction.reductionPercent=70.59`
+  - `overThresholdReduction.targetMet=true`
+- 当前边界：
+  - 本轮额外清理了 49 行已确认未消费兼容 payload；
+  - 总 JS LOC 30% 仍未达成；
+  - 继续删除 legacy `/diagnose` 同步入口、review legacy 查询、visual shadow/out-of-pool 或 LLM fallback 需要单独 API / 运维裁决，不能按当前证据直接删除。
+
+## legacyDiagnosis 删减后的 MCP 发布与 0 模型 smoke（2026-05-16 15:26）
+- 执行角色：
+  - 复用同一 `release_ops` 线程执行发布与线上验收；
+  - 使用 CloudBase MCP 部署 / 查询；
+  - 未使用本地 deploy 命令；
+  - release_ops 未改工作区文件。
+- CloudBase MCP 部署：
+  - 部署前 `getFunctionDetail` requestId：`19d5e042-179f-4ae3-94f3-ae16d3730021`
+  - `updateFunctionCode` requestId：`2356ac6b-8fb6-45c9-88c2-8bc0085c2dd7`
+  - 部署中查询 requestId：`5643cbc2-f6d1-4466-9f38-79132f0fcea7`
+  - 部署中查询 requestId：`3d1822a1-e203-4278-a7f0-fc660f5c3298`
+  - 最终 `getFunctionDetail` requestId：`4263c807-c965-4fdd-90a7-b4642ac46b1f`
+  - 状态：`Active / Available`
+  - ModTime：`2026-05-16 15:26:30`
+  - CodeSize：`13894629`
+  - Layer：`layer:49`
+- 0 模型 smoke：
+  - sessionId：`diag_1778916438180_omq4qxul`
+  - 轮次数：4
+  - 每轮 `questionCount`：`1, 1, 1, 1`
+  - answerPattern：`often_wet,no_clear_change,normal_light_fertilizer,unknown`
+  - final outcomeType：`problematic`
+  - problemKey：`overwatering_root_pressure`
+  - stopReason：`route_visible_outcomes_ready`
+  - route outcome：`积水/根系压力`
+- 回滚建议：
+  - 如需回滚，仅回滚 `diagnose-http` 函数代码到上一版代码包；
+  - layer 仍保持 `layer:49`，因为本次代码发布未变更 layer 绑定，且 v49 已被共享 layer 使用者统一采用。
+
+## app.js 行为保持拆分后的发布与验收（2026-05-16 15:41）
+- 触发原因：
+  - `app.js` 仍超过 2000 行，混合入口包装、HTTP 路由、start/answer runtime、legacy、SSE、review 与池外审核 handler；
+  - 架构裁决禁止为了总 JS LOC 30% 删除仍可达的 legacy、stream、review、visual、LLM fallback 或 ranking guard；
+  - 因此本节只做行为保持型模块化拆分，不宣称总代码 30% 已完成。
+- 拆分结果：
+  - `cloudfunctions/diagnose-http/app.js`：`2282` 行降至 `25` 行；
+  - 新增 `cloudfunctions/diagnose-http/app/`：请求归一化、start/answer runner、frontend response、visual runtime、http router 等模块；
+  - 新增 `cloudfunctions/diagnose-http/handlers/`：diagnosis、legacy/SSE、review、out-of-pool handler；
+  - 保留兼容导出：`main`、`runStartDiagnosis`、`runAnswerDiagnosis`、`buildFrontendDiagnosisResponse`。
+- 本地验证：
+  - `npm run test:route-planning`：passed；
+  - `npm test`：passed；
+  - `npm run lint`：0 errors / 5567 warnings；
+  - `npm run build`：passed；
+  - `node scripts/terminal-e2e/audit-diagnose-http-runtime-size.mjs --baseline-over-threshold-files=17 --baseline-lines=40802`：
+    - `totalJsLines=41120`
+    - `lineReduction.reductionPercent=-0.78`
+    - `lineReduction.targetMet=false`
+    - `overThresholdFiles=3`
+    - `overThresholdReduction.reductionPercent=82.35`
+    - `overThresholdReduction.targetMet=true`
+- QA 审查结论：
+  - `app.js` 导出保持；
+  - `/stream/diagnose` 路由仍在 `/diagnose` 前；
+  - `/diagnosis/start` SSE 分流、`/diagnosis/answer`、legacy、review、out-of-pool handler 静态依赖未见明显漏导入；
+  - 总 JS LOC 30% 未达，不能关闭总目标。
+- CloudBase MCP 发布：
+  - 部署前 `getFunctionDetail` requestId：`d28df854-8392-4b4e-84fc-b1023326db25`
+  - `updateFunctionCode` requestId：`3ca4173b-3bb5-4f27-912b-cc0c91ca0c25`
+  - 部署中查询 requestId：`b97610a8-1186-49fd-8f08-ec73b543f8cd`
+  - 部署中查询 requestId：`94a2919e-5875-4292-b3d8-815ca52a3b83`
+  - 最终 `getFunctionDetail` requestId：`1a482312-2477-4250-987b-25f255624c69`
+  - 状态：`Active / Available`
+  - ModTime：`2026-05-16 15:41:39`
+  - CodeSize：`13909952`
+  - Layer：`layer:49`
+- 0 模型黄叶 grouped gate smoke：
+  - sessionId：`diag_1778917388318_5xx0unfn`
+  - answerPattern：`often_wet,no_clear_change,normal_light_fertilizer,unknown`
+  - 每轮 `questionCount`：`1, 1, 1, 1`
+  - final outcomeType：`problematic`
+  - problemKey：`overwatering_root_pressure`
+  - stopReason：`route_visible_outcomes_ready`
+  - route outcome：`积水/根系压力`
+- 入口级 smoke：
+  - `/diagnose` legacy start：HTTP 200，返回 `stage=followup` 且 `questions[0].questionKey=q_observed_probe__leaf_yellowing__watering_frequency_context`；
+  - `/diagnosis/review/list`：HTTP 200，返回 review items；
+  - `/diagnosis/review/detail`：HTTP 200，返回指定 session detail；
+  - `/visual/out-of-pool/list`：HTTP 200，返回池外候选列表；
+  - `/diagnosis/review/images`：本轮选用的 review session 无图片，返回业务 404 `诊断图片不存在`，不能算 images 入口通过。
+- 未完全覆盖：
+  - 直接 `curl` / `node fetch` 针对网关域名出现间歇性 DNS `ENOTFOUND`，因此 `/diagnosis/start` SSE 与 legacy `/stream/diagnose` 的真实 SSE smoke 未完成；
+  - `queryFunctions.listFunctionLogs` requestId：`4df67170-00b7-4160-b1c7-6da801028262`，最新日志 `RetCode=0`，只能作为补充运行证据，不能替代 SSE smoke。
+- 当前完成度裁决：
+  - 黄叶一页一组 gate options、回答完所有分组后 route 命中 outcome：已由线上 0 模型 smoke 验证；
+  - 旧 `diagnosis_problem_rankings` 表层运行时代码链路：已清理；
+  - `500+` 文件目标：`17 -> 3`，减少 `82.35%`，已达成；
+  - 总 JS LOC 30%：未达成，且架构 / code_explorer 均裁定当前不能为了该指标删除仍可达安全链路。
+
+## 最终 completion audit（2026-05-16）
+- 目标 1：黄叶每轮一组 gate options，4 轮后 route 命中 outcome。
+  证据：最新线上 0 模型黄叶 grouped gate smoke `diag_1778917388318_5xx0unfn`，答案序列 `often_wet,no_clear_change,normal_light_fertilizer,unknown`，每轮 `questionCount=1,1,1,1`，final `outcomeType=problematic`，`problemKey=overwatering_root_pressure`，`stopReason=route_visible_outcomes_ready`。
+- 目标 2：SQL / 运行时不再动态拼养护基线。
+  证据：黄叶前置问题与选项以 SQL 模板读回为准，`synthetic-follow-up` 已删除动态养护基线文案生成与基于植物上下文 / 天气湿度拼装浇水选项的逻辑，fallback 仅保留固定易读文案；黄叶正式 question / option 仍以 SQL 模板优先。
+- 目标 3：ranking 旧表与 legacy 残留清理。
+  证据：旧 `diagnosis_problem_rankings` 表层写链、共享 layer 旧读取残留、`SQL_TABLES` 旧表补 schema 条目均已清理；`legacyDiagnosis` 未消费兼容 payload 已删除；全仓运行时代码审计仅历史 / 本文档保留相关字样。
+- 目标 4：`>500` 文件数达标。
+  证据：`cloudfunctions/diagnose-http` JS `>500` 文件从 `17 -> 3`，减少 `82.35%`，达成 30%+。
+- 目标 5：总 JS LOC。
+  事实：`40802 -> 41120`，未达成总 JS LOC -30%；架构裁决为该指标不能通过删除仍可达的 legacy、stream、review、visual、LLM fallback、ranking guard、route evidence、output eligibility 或 `rankingAudit` 强行完成。
+- 目标 6：本地验证与发布 / smoke。
+  证据：本地 `npm run test:route-planning` passed，`npm test` passed，`npm run lint` 0 errors / 5567 warnings，`npm run build` passed；CloudBase MCP `updateFunctionCode` requestId `3ca4173b-3bb5-4f27-912b-cc0c91ca0c25`，最终 `getFunctionDetail` requestId `1a482312-2477-4250-987b-25f255624c69`，状态 `Active / Available`，Layer `layer:49`；线上 smoke `diag_1778917388318_5xx0unfn` 通过。
+- 未完成项与风险：
+  - 总 JS LOC -30% 未达成，不能标记为完成项；
+  - `/diagnosis/start` SSE 与 legacy `/stream/diagnose` 的真实 SSE smoke 因网关 DNS 间歇性 `ENOTFOUND` 未完成；
+  - `/diagnosis/review/images` 本轮样本无图片，返回业务 404，未作为 images 入口通过证据；
+  - 后续若继续追求 LOC 指标，必须先取得 API 下线、产品入口迁移或运行时不可达证据，不能删除仍生效的诊断安全链路。

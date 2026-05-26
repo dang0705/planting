@@ -1,0 +1,76 @@
+{
+  "run_id": "run_60a31b8618e5fbbe",
+  "created_at": "2026-05-06T07:09:54.571Z",
+  "tasks": [
+    {
+      "id": "task_cf35c14570ae799e",
+      "source_url": "https://www.douyin.com/video/7634864243489951345",
+      "source_platform": "douyin",
+      "manual_topic": "",
+      "manual_note": "",
+      "status": "processed",
+      "risk_level": "low",
+      "error_message": "",
+      "validation": {
+        "ok": true,
+        "url": "https://www.douyin.com/video/7634864243489951345"
+      },
+      "created_at": "2026-05-06T07:09:19.507Z",
+      "updated_at": "2026-05-06T07:09:54.537Z",
+      "processed_at": "2026-05-06T07:09:54.537Z"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "candidate_ac67ee5c0fc884ed",
+      "task_id": "task_cf35c14570ae799e",
+      "source_url": "https://www.douyin.com/video/7634864243489951345",
+      "source_platform": "douyin",
+      "manual_topic": "",
+      "plant_names": [],
+      "problem_clusters": [],
+      "observable_evidence": [],
+      "possible_causes": [],
+      "candidate_questions": [],
+      "candidate_actions": [],
+      "contraindications": [],
+      "uncertainty_points": [
+        "当前结果只基于临时解析片段，尚未经过人工审核。"
+      ],
+      "risk_flags": [
+        "pending_human_review",
+        "source_is_public_video",
+        "no_full_transcript_saved"
+      ],
+      "review_status": "pending",
+      "review_notes": "",
+      "extraction_input_digest": "a1173b25e3c1e65e",
+      "retained_snippet_count": 12,
+      "retained_snippets_for_review": [
+        "别把植物当孩子，要当室友 #植物养护#庭院养护#种菜 #施肥#浇水",
+        "别把植物当孩子，要当室友 #植物养护#庭院养护#种菜 #施肥#浇水 - 抖音",
+        "DOCTYPE html><html dark=\"true\"><head><link rel=\"dns-prefetch\" href=\"//v3-web.dou...",
+        "== undefined && window.p...",
+        "{\"status_code\":0,\"status_msg\":\"suc",
+        "\",\"link_data\":[{\"link_type\":5,\"count\":2,\"link_list\":[{\"url\":\"https://www.douyin....",
+        "#广东农工商职业技术学院 #创作者中心 #创作灵感#专插本投档线 #广东招生计划 #专插本最低分数线\"}]},{\"link_type\":761,\"count\":...",
+        "source=Baiduspider\",\"anchor\":\"2026年上半年征兵开始\"}]},{\"link_type\":900,\"count\":1,\"link_...",
+        "{\"tips\":null,\"appointment_live_list\":null,\"status_code\":0}",
+        "{\"set_info\":\"{\\\"landing_mode\\\":2}\",\"landing_reason\":\"new_user_landing_select_lib...",
+        "{\"notice_count\":[{\"group\":52,\"count\":0,\"insert_aweme_ids\":null,\"insert_room_ids\"...",
+        "{\"resource_list\":[],\"status_code\":0}"
+      ],
+      "created_at": "2026-05-06T07:09:54.536Z",
+      "updated_at": "2026-05-06T07:09:54.536Z"
+    }
+  ],
+  "audit_logs": [
+    {
+      "id": "audit_3372726490fd1631",
+      "task_id": "task_cf35c14570ae799e",
+      "event_type": "task_processed",
+      "event_detail": "retained_snippet_count=12",
+      "created_at": "2026-05-06T07:09:54.537Z"
+    }
+  ]
+}

@@ -26,7 +26,7 @@ function normalizeCacheSignature(items = []) {
 function withPending(cache, key = '', queryFn) {
   const normalizedKey = String(key || '').trim()
   const pending = cache.get(normalizedKey)
-  if (pending) return pending
+  if (pending) {return pending}
 
   const promise = Promise.resolve()
     .then(queryFn)
@@ -38,10 +38,10 @@ function withPending(cache, key = '', queryFn) {
 }
 
 function getCached(cache, key = '') {
-  if (!STATIC_REPOSITORY_CACHE_TTL_MS) return null
+  if (!STATIC_REPOSITORY_CACHE_TTL_MS) {return null}
   const normalizedKey = String(key || '').trim()
   const entry = cache.get(normalizedKey)
-  if (!entry) return null
+  if (!entry) {return null}
   if (Date.now() - Number(entry.cachedAt || 0) > STATIC_REPOSITORY_CACHE_TTL_MS) {
     cache.delete(normalizedKey)
     return null
@@ -50,7 +50,7 @@ function getCached(cache, key = '') {
 }
 
 function setCached(cache, key = '', value) {
-  if (!STATIC_REPOSITORY_CACHE_TTL_MS) return
+  if (!STATIC_REPOSITORY_CACHE_TTL_MS) {return}
   cache.set(String(key || '').trim(), {
     cachedAt: Date.now(),
     value
@@ -94,7 +94,7 @@ async function getProblemsByKeys(problemKeys = []) {
   const safeKeys = Array.from(
     new Set((problemKeys || []).map(item => String(item || '').trim()).filter(Boolean))
   )
-  if (!safeKeys.length) return []
+  if (!safeKeys.length) {return []}
   const cachedRows = []
   const missingKeys = []
   for (const key of safeKeys) {
@@ -105,7 +105,7 @@ async function getProblemsByKeys(problemKeys = []) {
       missingKeys.push(key)
     }
   }
-  if (!missingKeys.length) return cachedRows
+  if (!missingKeys.length) {return cachedRows}
 
   const result = await withPending(
     pendingStaticCache.problemsBySignature,
@@ -150,7 +150,7 @@ async function getExplanationsByProblemKeys(problemKeys = []) {
   const safeKeys = Array.from(
     new Set((problemKeys || []).map(item => String(item || '').trim()).filter(Boolean))
   )
-  if (!safeKeys.length) return []
+  if (!safeKeys.length) {return []}
   const cachedRows = []
   const missingKeys = []
   for (const key of safeKeys) {
@@ -161,7 +161,7 @@ async function getExplanationsByProblemKeys(problemKeys = []) {
       missingKeys.push(key)
     }
   }
-  if (!missingKeys.length) return cachedRows
+  if (!missingKeys.length) {return cachedRows}
 
   const result = await withPending(
     pendingStaticCache.explanationsBySignature,

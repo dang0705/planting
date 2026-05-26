@@ -50,6 +50,18 @@ const PROMPT_SYMPTOM_HINTS = {
   irregular_blotches: '不规则暗斑'
 }
 const MAX_PROMPT_DISPLAY_TEXT_LENGTH = 18
+const ROUTE_PATH_SCHEMA_APPENDIX = `
+额外输出要求：
+1. 只输出路径输入，不允许输出 final_outcome_key、diagnosis_key、treatment_plan。
+2. 结构化 JSON 中必须额外包含：
+{
+  "visual_discriminators": [],
+  "missing_info_for_path": []
+}
+3. visual_discriminators 用于描述图片里可见、可帮助路径分流的形态事实。
+4. missing_info_for_path 用于描述“图片看不出来、需要追问”的缺失信息。
+5. 如果当前图片无法提供这两类信息，字段保留空数组，不要省略。
+`.trim()
 
 function normalizeText(value = '', fallback = '') {
   const normalized = String(value || '').trim()
@@ -69,13 +81,13 @@ function compactDisplayText(value = '') {
   const normalized = normalizeText(value, '')
     .replace(/[（(].*?[）)]/g, '')
     .replace(/\s+/g, '')
-  if (!normalized) return ''
+  if (!normalized) {return ''}
   return normalized.length > MAX_PROMPT_DISPLAY_TEXT_LENGTH
     ? normalized.slice(0, MAX_PROMPT_DISPLAY_TEXT_LENGTH)
     : normalized
 }
 
-function buildSymptomOptionText(symptom, index) {
+function buildSymptomOptionText(symptom) {
   const symptomKey = normalizeText(symptom?.symptomKey, '')
   const discriminatorHint = PROMPT_SYMPTOM_HINTS[normalizeText(symptom?.symptomKey, '')]
   if (!symptomKey) {
@@ -130,7 +142,7 @@ function buildCaseSlotSummaryText(imageContext = {}) {
   const slotSummary = Array.isArray(imageContext?.caseSlotSummary)
     ? imageContext.caseSlotSummary
     : []
-  if (!slotSummary.length) return ''
+  if (!slotSummary.length) {return ''}
 
   const lines = slotSummary.map(item => {
     const slotOrder = Number.isFinite(Number(item?.inputSlotOrder))
@@ -236,7 +248,7 @@ function buildGroupedSymptomOptionsText(symptomRows = []) {
   return orderedLocationKeys
     .map(locationKey => {
       const list = groupedMap.get(locationKey) || []
-      if (!list.length) return ''
+      if (!list.length) {return ''}
 
       const title = LOCATION_LABEL_MAP[locationKey] || locationKey || '未分组'
       const leadHint =
@@ -373,7 +385,7 @@ async function buildSymptomLabelerPromptPayload({ imageContext = null } = {}) {
   const symptomOptionsText = buildPromptSymptomOptionsText(filteredSymptoms)
   const candidateCatalogText = buildCandidateCatalogText(symptomDictionary)
   const imageContextText = buildImageContextText(imageContext, locationKeys)
-  const dynamicTaskText = imageContextText
+  const dynamicTaskText = `${imageContextText}\n\n${ROUTE_PATH_SCHEMA_APPENDIX}`.trim()
   const debugMeta = buildPromptDebugMeta({
     imageContext,
     locationKeys,

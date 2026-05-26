@@ -4,8 +4,7 @@ const {
 } = require('./session-state-write-service')
 const {
   replaceObservedSymptoms,
-  replaceObservedEvidenceSet,
-  replaceProblemRankings
+  replaceObservedEvidenceSet
 } = require('./session-runtime-write-service')
 const {
   getSessionState,
@@ -39,7 +38,6 @@ module.exports = {
   replaceObservedEvidenceSet,
   replaceObservedSymptoms,
   upsertVisualSupervisionRecords,
-  replaceProblemRankings,
   appendFollowUpQuestions,
   markFollowUpAnswers,
   validateFollowUpAnswerOwnership,

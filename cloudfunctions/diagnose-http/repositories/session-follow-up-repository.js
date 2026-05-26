@@ -22,7 +22,7 @@ function buildAnswerEventId(sessionId = '', index = 0) {
 }
 
 async function insertFollowUpQuestionsRows(sessionId, list = []) {
-  if (!list.length) return
+  if (!list.length) {return}
 
   const values = list.map((_, index) => `(
     {{diagnosisId}},
@@ -38,7 +38,7 @@ async function insertFollowUpQuestionsRows(sessionId, list = []) {
   const params = { diagnosisId: sessionId }
   list.forEach((item, index) => {
     params[`questionOrder_${index}`] = item.questionOrder
-    params[`questionKey_${index}`] = item.questionKey
+    params[`questionKey_${index}`] = item.storageSymptomKey || item.questionKey
     params[`questionText_${index}`] = item.questionText
     params[`rationale_${index}`] = item.rationale
   })
@@ -201,7 +201,7 @@ async function insertFollowUpAnswerRevisionEvents({
     }))
     .filter(event => event.sessionId && event.eventType && event.questionKey)
 
-  if (!safeEvents.length) return { insertedCount: 0 }
+  if (!safeEvents.length) {return { insertedCount: 0 }}
 
   const params = {}
   const values = safeEvents.map((event, index) => {

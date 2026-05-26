@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-04-23T14:18:29.840Z",
+  "batchReportFile": "scripts/terminal-e2e/batch/20260423-visual-final-evidence-explained-fixed-part01.json",
+  "artifactSplit": {
+    "rootBaseName": "20260423-visual-final-evidence-explained-fixed",
+    "partIndex": 1,
+    "partCount": 9,
+    "maxResultsPerFile": 100
+  },
+  "total": 100,
+  "success": 100,
+  "failed": 0,
+  "visualFinalEvidenceSummary": {
+    "total": 100,
+    "available": 100,
+    "missingRawRecords": 0,
+    "emptyConclusion": 0
+  },
+  "derivedSummary": {
+    "noVisualEvidenceCount": 0,
+    "outOfPoolOnlyCount": 0
+  },
+  "outcomeTypeCounts": [
+    {
+      "key": "problematic",
+      "count": 100
+    }
+  ],
+  "stopReasonCounts": [
+    {
+      "key": "problematic_output_ready",
+      "count": 100
+    }
+  ],
+  "topSymptomClassReplayCounts": [
+    {
+      "key": "yellowing_mode",
+      "count": 100
+    }
+  ]
+}

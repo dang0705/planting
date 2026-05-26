@@ -1,21 +1,49 @@
-# Language Policy / 语言策略
+# 语言与术语策略
 
-## Core Policy
+## 1. 定位
 
-- Use English for execution-critical agent instructions, especially constraints, commands, permissions, file paths, and verification steps.
-- Use Chinese as the primary language for product terminology, diagnosis-domain concepts, user-facing content, and documentation.
-- Do not replace established Chinese business terms with English-only terms.
-- For long-form documentation requested by the user, produce complete deliverables and provide file downloads rather than only chat fragments.
+本文件规定中文优先、术语一致性和文档交付要求。
 
-## Chinese-first Domain Terms / 中文优先业务术语
+## 2. 总原则
 
-- 问题簇
-- 问诊路径
-- 行动建议
-- 属级养护基线
-- 视觉证据
-- gate 守卫
-- outcome
-- 症状模式
-- 运行时模型
-- 决策流
+1. 中文是一等公民。
+2. 面向用户、文档、诊断领域、产品表达时，中文优先。
+3. 英文保留在模型名、agent 名、代码标识符、命令、路径、协议字段和第三方平台原名中。
+4. 不允许用英文概念压过中文主名。
+5. 中文术语和英文术语同时存在时，优先写中文主名，英文可作为括注或代码标识。
+
+## 3. 诊断领域核心术语
+
+以下术语必须优先使用中文主名：
+
+1. 问题簇
+2. 问诊路径
+3. 行动建议
+4. 属级养护基线
+5. 视觉证据
+6. gate 守卫
+7. outcome
+8. 诊断流
+9. 症状模式
+10. 运行时模型
+11. 路径规划
+12. 青花值
+13. 证据链
+14. 前端可见结果
+15. 追问 / 问诊轮次
+
+## 4. 诊断系统表达规则
+
+1. 不要把 outcome 简化为“单一最终问题”。如果业务规则允许多 outcome 通过路径推进逐步收窄到 1～3 个前端可见结果，文档和实现说明必须保留这个语义。
+2. ranking 偏排序与分数比较；route 偏用户处理路径、问题收敛路径和下一步行动规划。两者必须区分。
+3. “瘦身”必须说明瘦的是 outcome 数量、字段、展示层信息、运行时中间态，还是文档表达。
+4. 视觉证据、问诊事实、上下文事实、规则推断必须分层表达，不得混写。
+5. 涉及 `docs/new-rules/` 的规则，必须保留原始规则术语，不得擅自改名。
+
+## 5. 文档交付
+
+1. 用户要求完整文档时，必须输出完整可交付文件，不允许只给补丁段落。
+2. 文档迭代必须完整保留前版有效内容，除非明确错误、冲突或废弃。
+3. 超过 2000 字的长文档应生成 markdown 下载文件，不直接堆在会话中。
+4. 文档引用代码实现时，必须写清楚文件路径、函数名、类型名或配置名。
+5. 文档引用规则来源时，必须写清楚来源文件，例如 `docs/new-rules/xxx.md` 或 `docs/code-logics/xxx.md`。

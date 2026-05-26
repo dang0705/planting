@@ -1,0 +1,148 @@
+name: Deploy CloudBase and Weixin Mini Program
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: GitHub Environment suffix and runtime target.
+        required: true
+        type: choice
+        default: dev
+        options:
+          - dev
+          - prod
+      miniprogram_action:
+        description: Run miniprogram-ci preview first; upload should be protected by Environment approval.
+        required: true
+        type: choice
+        default: preview
+        options:
+          - preview
+          - upload
+      deploy_cloudbase:
+        description: Deploy CloudBase functions in this run. Use false for prod miniprogram preview-only checks.
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.workflow }}-${{ inputs.target_env }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: CloudBase + Weixin release
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment:
+      name: cloudbase-${{ inputs.target_env }}
+    env:
+      TARGET_ENV: ${{ inputs.target_env }}
+      VITE_APP_ENV: ${{ inputs.target_env == 'prod' && 'production' || 'development' }}
+      APP_ENV: ${{ inputs.target_env == 'prod' && 'production' || 'development' }}
+      CLOUDBASE_ENV_ID: ${{ vars.CLOUDBASE_ENV_ID }}
+      TCB_ENV: ${{ vars.CLOUDBASE_ENV_ID }}
+      VITE_CLOUDBASE_ENV_ID: ${{ vars.CLOUDBASE_ENV_ID }}
+      WECHAT_MINIPROGRAM_APPID: ${{ vars.WECHAT_MINIPROGRAM_APPID }}
+      CLOUDBASE_DEPLOY_FUNCTIONS: ${{ vars.CLOUDBASE_DEPLOY_FUNCTIONS }}
+      MINIPROGRAM_CI_ACTION: ${{ inputs.miniprogram_action }}
+      DEPLOY_CLOUDBASE: ${{ inputs.deploy_cloudbase && 'true' || 'false' }}
+#      MINIPROGRAM_CI_QRCODE_OUTPUT: ${{ runner.temp }}/miniprogram-ci-qrcode.jpg
+      MINIPROGRAM_CI_ROBOT: ${{ vars.MINIPROGRAM_CI_ROBOT || '1' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Validate release inputs
+        shell: bash
+        env:
+          TENCENT_SECRET_ID: ${{ secrets.TENCENT_SECRET_ID }}
+          TENCENT_SECRET_KEY: ${{ secrets.TENCENT_SECRET_KEY }}
+          WECHAT_MINIPROGRAM_PRIVATE_KEY: ${{ secrets.WECHAT_MINIPROGRAM_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          required_vars=(
+            CLOUDBASE_ENV_ID
+            WECHAT_MINIPROGRAM_APPID
+            WECHAT_MINIPROGRAM_PRIVATE_KEY
+          )
+          if [[ "${DEPLOY_CLOUDBASE}" == "true" ]]; then
+            required_vars+=(TENCENT_SECRET_ID TENCENT_SECRET_KEY)
+          fi
+          for name in "${required_vars[@]}"; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "::error title=Missing release variable::${name} is required"
+              exit 1
+            fi
+          done
+          if [[ "${TARGET_ENV}" == "prod" && "${MINIPROGRAM_CI_ACTION}" == "preview" && "${DEPLOY_CLOUDBASE}" == "true" ]]; then
+            echo "::error title=Unsafe production preview::Set deploy_cloudbase=false for prod preview-only runs."
+            exit 1
+          fi
+          if [[ "${TARGET_ENV}" == "prod" && "${DEPLOY_CLOUDBASE}" == "true" && -z "${CLOUDBASE_DEPLOY_FUNCTIONS:-}" ]]; then
+            echo "::error title=Missing function allowlist::Production CloudBase deploy requires CLOUDBASE_DEPLOY_FUNCTIONS."
+            exit 1
+          fi
+
+      - name: Check tracked secrets
+        run: npm run check:secrets
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test tracked CI suite
+        run: npm run test:ci
+
+      - name: Build Weixin mini program
+        run: npm run build:mp-weixin:ci
+
+      - name: Deploy CloudBase functions
+        if: inputs.deploy_cloudbase
+        env:
+          TENCENT_SECRET_ID: ${{ secrets.TENCENT_SECRET_ID }}
+          TENCENT_SECRET_KEY: ${{ secrets.TENCENT_SECRET_KEY }}
+          CLOUDBASE_SECRET_ID: ${{ secrets.TENCENT_SECRET_ID }}
+          CLOUDBASE_SECRET_KEY: ${{ secrets.TENCENT_SECRET_KEY }}
+        run: npm run deploy:functions:ci
+
+      - name: Run diagnose smoke after CloudBase deploy
+        if: inputs.deploy_cloudbase && (contains(format(',{0},', env.CLOUDBASE_DEPLOY_FUNCTIONS), ',diagnose-http,') || env.CLOUDBASE_DEPLOY_FUNCTIONS == '')
+        env:
+          TENCENT_SECRET_ID: ${{ secrets.TENCENT_SECRET_ID }}
+          TENCENT_SECRET_KEY: ${{ secrets.TENCENT_SECRET_KEY }}
+          CLOUDBASE_SECRET_ID: ${{ secrets.TENCENT_SECRET_ID }}
+          CLOUDBASE_SECRET_KEY: ${{ secrets.TENCENT_SECRET_KEY }}
+        run: |
+          node scripts/terminal-e2e/cloudbase-http-check.mjs \
+            --smoke=diagnose \
+            --env="${CLOUDBASE_ENV_ID}" \
+            --app-env="${VITE_APP_ENV}" \
+            --terminal-e2e=true \
+            --device-id="github-actions-${TARGET_ENV}-${GITHUB_RUN_ID}"
+
+      - name: Run miniprogram-ci
+        env:
+          WECHAT_MINIPROGRAM_PRIVATE_KEY: ${{ secrets.WECHAT_MINIPROGRAM_PRIVATE_KEY }}
+        run: npm run deploy:miniprogram:ci
+
+      - name: Upload preview QR code
+        if: inputs.miniprogram_action == 'preview'
+        uses: actions/upload-artifact@v4
+        with:
+          name: miniprogram-preview-qrcode-${{ inputs.target_env }}-${{ github.run_number }}
+          path: ${{ runner.temp }}/miniprogram-ci-qrcode.jpg
+          if-no-files-found: error
+          retention-days: 7

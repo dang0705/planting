@@ -117,7 +117,7 @@ function normalizeLlmImageInput(item = {}, index = 0) {
     item?.imageRef || item?.imageUrl || item?.url || item?.image || '',
     ''
   )
-  if (!imageRef) return null
+  if (!imageRef) {return null}
 
   const inputSlotOrder = Number(item?.inputSlotOrder ?? item?.orderIndex ?? index)
   const totalImageCount = Number(item?.totalImageCount)
@@ -351,11 +351,11 @@ function isCloudBaseAiImageDownloadError(error) {
 }
 
 function safeJsonParse(data) {
-  if (data === null || data === undefined) return null
-  if (typeof data === 'object') return data
+  if (data === null || data === undefined) {return null}
+  if (typeof data === 'object') {return data}
 
   const text = String(data).trim()
-  if (!text) return null
+  if (!text) {return null}
 
   try {
     return JSON.parse(text)
@@ -371,7 +371,7 @@ function requestJsonHttp(url, { headers = {}, body = {}, timeoutMs = 10000 } = {
   return new Promise((resolve, reject) => {
     let settled = false
     const finish = (err, result = null) => {
-      if (settled) return
+      if (settled) {return}
       settled = true
       if (err) {
         reject(err)
@@ -675,7 +675,7 @@ async function buildDataUrlOpenAiMessages(messages = []) {
         content.push({
           ...item,
           image_url: {
-            ...(item.image_url || {}),
+            ...item.image_url,
             url: await fetchImageUrlAsDataUrl(item.image_url.url)
           }
         })
@@ -716,7 +716,7 @@ function fetchImageUrlAsDataUrl(imageUrl = '') {
     const chunks = []
     let totalBytes = 0
     const finish = (err, result = '') => {
-      if (settled) return
+      if (settled) {return}
       settled = true
       if (err) {
         reject(err)
@@ -809,7 +809,7 @@ function buildPayload(messages, stream, modelName = model) {
   return {
     Model: modelName,
     Messages: messages,
-    Stream: !!stream,
+    Stream: Boolean(stream),
     ...llmOptions
   }
 }
@@ -857,7 +857,7 @@ function buildCloudBaseAiPayload(messages, stream) {
   const payload = {
     model,
     messages,
-    stream: !!stream,
+    stream: Boolean(stream),
     ...normalizeOpenAiOptions(llmOptions)
   }
 
@@ -869,7 +869,7 @@ function buildCloudBaseAiPayload(messages, stream) {
   if (stream) {
     payload.stream_options = {
       include_usage: true,
-      ...(llmOptions.stream_options || llmOptions.StreamOptions || {})
+      ...llmOptions.stream_options || llmOptions.StreamOptions
     }
   }
 
@@ -884,9 +884,9 @@ function summarizeCloudBaseAiPayload(payload = {}, body = '') {
   for (const message of messages) {
     const content = Array.isArray(message?.content) ? message.content : []
     for (const part of content) {
-      if (part?.type !== 'image_url') continue
+      if (part?.type !== 'image_url') {continue}
       const imageUrl = String(part?.image_url?.url || '').trim()
-      if (!imageUrl) continue
+      if (!imageUrl) {continue}
       if (imageUrl.startsWith('data:')) {
         dataUrlImageCount += 1
       } else {
@@ -959,7 +959,7 @@ async function requestCloudBaseAiOpenAi(payload, { onText, timeoutMs = null } = 
     })
 
     const finish = (err, result = null) => {
-      if (finished) return
+      if (finished) {return}
       finished = true
       const httpTiming = buildHttpTiming({
         error: err ? String(err?.message || err || '') : '',
@@ -1182,13 +1182,13 @@ function callHunyuanVisionStream(messages, { onText, modelName = model } = {}) {
     let fullText = ''
     let usage = null
     const timeout = setTimeout(() => {
-      if (finished) return
+      if (finished) {return}
       finished = true
       reject(new Error('混元请求超时'))
     }, 45000)
 
     const finish = (err, text) => {
-      if (finished) return
+      if (finished) {return}
       finished = true
       clearTimeout(timeout)
 
@@ -1229,7 +1229,7 @@ function callHunyuanVisionStream(messages, { onText, modelName = model } = {}) {
             'diagnose-http hunyuan stream parsed message:',
             safeSerializeLogPayload(parsed)
           )
-          if (!parsed) return
+          if (!parsed) {return}
 
           const payloadError = extractPayloadError(parsed)
           if (payloadError) {

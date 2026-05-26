@@ -1,7 +1,7 @@
 'use strict'
 
 function serializeComparableValue(value) {
-  if (value === undefined || value === null) return null
+  if (value === undefined || value === null) {return null}
   if (Object.prototype.toString.call(value) === '[object Date]') {
     return new Date(value).toISOString()
   }

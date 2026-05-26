@@ -173,7 +173,7 @@ async function getUserWithQuota(openid) {
  * 获取用户等级
  */
 function getUserTier(user) {
-  if (!user) return 'free';
+  if (!user) {return 'free';}
 
   const plan = user.subscription_plan || 'free';
   const status = user.subscription_status || 'inactive';

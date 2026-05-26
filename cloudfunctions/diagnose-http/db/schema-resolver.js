@@ -15,11 +15,11 @@ function normalizeEnv(value = '') {
 }
 
 function pickHeader(headers = {}, key = '') {
-  if (!headers || typeof headers !== 'object') return ''
+  if (!headers || typeof headers !== 'object') {return ''}
   const lowered = String(key || '').toLowerCase()
 
   for (const [headerKey, headerValue] of Object.entries(headers)) {
-    if (String(headerKey || '').toLowerCase() !== lowered) continue
+    if (String(headerKey || '').toLowerCase() !== lowered) {continue}
     return String(headerValue || '')
   }
 

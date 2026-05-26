@@ -1,6 +1,0 @@
-name = "modulize-keeper"
-description = "模块化守门员"
-sandbox_mode = "read-only"
-developer_instructions = """
-严格遵循合理的代码/功能模块化拆分,避免单文件出现500行+的情况
-"""

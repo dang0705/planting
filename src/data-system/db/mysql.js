@@ -17,7 +17,7 @@ function tableName(schema, table) {
 }
 
 function getPool() {
-  if (sharedPool) return sharedPool
+  if (sharedPool) {return sharedPool}
 
   sharedPool = mysql.createPool({
     host: process.env.DB_HOST || '127.0.0.1',
@@ -88,7 +88,7 @@ async function listTablePrimaryOrUniqueColumns(connectionOrPool, schema, table) 
 }
 
 async function closePool() {
-  if (!sharedPool) return
+  if (!sharedPool) {return}
   await sharedPool.end()
   sharedPool = null
 }

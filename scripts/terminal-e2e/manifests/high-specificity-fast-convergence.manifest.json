@@ -1,0 +1,358 @@
+[
+  {
+    "label": "spider_mites_single_confirmation",
+    "caseKey": "spider_mites_single_confirmation",
+    "visualRouteContext": {
+      "routePrimaryAction": "ask_first"
+    },
+    "visualAggregateResult": {
+      "aggregate_analyzability": "medium",
+      "admission_records": [
+        {
+          "visual_admission_record_id": "visadmit_spider_webbing",
+          "object_key": "fine_webbing",
+          "admission_result": "formally_admitted",
+          "candidate": {
+            "symptom_key": "fine_webbing",
+            "support_count": 1,
+            "support_organs": ["leaf"],
+            "supporting_region_note": "叶背细密蛛网",
+            "confidence_band": "high",
+            "strength_level": "strong",
+            "admission_readiness": "ready"
+          }
+        },
+        {
+          "visual_admission_record_id": "visadmit_spider_speckling",
+          "object_key": "yellow_speckling",
+          "admission_result": "formally_admitted",
+          "candidate": {
+            "symptom_key": "yellow_speckling",
+            "support_count": 1,
+            "support_organs": ["leaf"],
+            "supporting_region_note": "叶面密集点刺黄化",
+            "confidence_band": "medium",
+            "strength_level": "medium",
+            "admission_readiness": "ready"
+          }
+        }
+      ]
+    },
+    "observedEvidenceSet": [
+      {
+        "observedEvidenceSetId": "obs_spider_webbing",
+        "symptomKey": "fine_webbing",
+        "confidence": 0.95,
+        "sourceType": "visual_admitted",
+        "sourceRecordId": "visadmit_spider_webbing",
+        "isKeyEvidence": 1
+      },
+      {
+        "observedEvidenceSetId": "obs_spider_speckling",
+        "symptomKey": "yellow_speckling",
+        "confidence": 0.9,
+        "sourceType": "visual_admitted",
+        "sourceRecordId": "visadmit_spider_speckling",
+        "isKeyEvidence": 1
+      }
+    ],
+    "symptomDictionary": [
+      {
+        "symptomKey": "fine_webbing",
+        "signalReliability": 1
+      },
+      {
+        "symptomKey": "yellow_speckling",
+        "signalReliability": 0.9
+      }
+    ],
+    "rankings": [
+      {
+        "problemKey": "spider_mites",
+        "finalScore": 0.88
+      }
+    ],
+    "problems": [
+      {
+        "problemKey": "spider_mites",
+        "problemRole": "root_cause"
+      }
+    ],
+    "expected": {
+      "applied": true,
+      "problemKey": "spider_mites",
+      "policy": "single_confirmation",
+      "shouldBypassFollowUp": false,
+      "maxQuestions": 1,
+      "matchedSymptomKeys": ["fine_webbing"]
+    }
+  },
+  {
+    "label": "spider_mites_alias_single_confirmation",
+    "caseKey": "spider_mites_alias_single_confirmation",
+    "visualRouteContext": {
+      "routePrimaryAction": "ask_first"
+    },
+    "visualAggregateResult": {
+      "aggregate_analyzability": "medium",
+      "admission_records": [
+        {
+          "visual_admission_record_id": "visadmit_spider_alias_webbing",
+          "object_key": "fine_webbing",
+          "admission_result": "formally_admitted",
+          "candidate": {
+            "symptom_key": "fine_webbing",
+            "support_count": 1,
+            "support_organs": ["leaf"],
+            "supporting_region_note": "叶背细密蛛网",
+            "confidence_band": "high",
+            "strength_level": "strong",
+            "admission_readiness": "ready"
+          }
+        },
+        {
+          "visual_admission_record_id": "visadmit_spider_alias_stippling",
+          "object_key": "stippling",
+          "admission_result": "formally_admitted",
+          "candidate": {
+            "symptom_key": "stippling",
+            "support_count": 1,
+            "support_organs": ["leaf"],
+            "supporting_region_note": "叶面点刺状失绿",
+            "confidence_band": "high",
+            "strength_level": "medium",
+            "admission_readiness": "ready"
+          }
+        }
+      ]
+    },
+    "observedEvidenceSet": [
+      {
+        "observedEvidenceSetId": "obs_spider_alias_webbing",
+        "symptomKey": "fine_webbing",
+        "confidence": 0.95,
+        "sourceType": "visual_admitted",
+        "sourceRecordId": "visadmit_spider_alias_webbing",
+        "isKeyEvidence": 1
+      },
+      {
+        "observedEvidenceSetId": "obs_spider_alias_stippling",
+        "symptomKey": "stippling",
+        "confidence": 0.91,
+        "sourceType": "visual_admitted",
+        "sourceRecordId": "visadmit_spider_alias_stippling",
+        "isKeyEvidence": 1
+      }
+    ],
+    "symptomDictionary": [
+      {
+        "symptomKey": "fine_webbing",
+        "signalReliability": 1
+      },
+      {
+        "symptomKey": "stippling",
+        "signalReliability": 0.9
+      }
+    ],
+    "rankings": [
+      {
+        "problemKey": "spider_mites",
+        "finalScore": 0.88
+      }
+    ],
+    "problems": [
+      {
+        "problemKey": "spider_mites",
+        "problemRole": "root_cause"
+      }
+    ],
+    "expected": {
+      "applied": true,
+      "problemKey": "spider_mites",
+      "policy": "single_confirmation",
+      "shouldBypassFollowUp": false,
+      "maxQuestions": 1,
+      "matchedSymptomKeys": ["fine_webbing"]
+    }
+  },
+  {
+    "label": "fungus_gnat_single_confirmation",
+    "caseKey": "fungus_gnat_single_confirmation",
+    "visualRouteContext": {
+      "routePrimaryAction": "ask_first"
+    },
+    "visualAggregateResult": {
+      "aggregate_analyzability": "medium",
+      "admission_records": [
+        {
+          "visual_admission_record_id": "visadmit_gnat",
+          "object_key": "small_flies_soil",
+          "admission_result": "formally_admitted",
+          "candidate": {
+            "symptom_key": "small_flies_soil",
+            "support_count": 1,
+            "support_organs": ["whole_plant"],
+            "supporting_region_note": "盆土表面有小飞虫",
+            "confidence_band": "high",
+            "strength_level": "medium",
+            "admission_readiness": "ready"
+          }
+        }
+      ]
+    },
+    "observedEvidenceSet": [
+      {
+        "observedEvidenceSetId": "obs_gnat",
+        "symptomKey": "small_flies_soil",
+        "confidence": 0.94,
+        "sourceType": "visual_admitted",
+        "sourceRecordId": "visadmit_gnat",
+        "isKeyEvidence": 1
+      }
+    ],
+    "symptomDictionary": [
+      {
+        "symptomKey": "small_flies_soil",
+        "signalReliability": 0.95
+      }
+    ],
+    "rankings": [
+      {
+        "problemKey": "fungus_gnat",
+        "finalScore": 0.71
+      }
+    ],
+    "problems": [
+      {
+        "problemKey": "fungus_gnat",
+        "problemRole": "root_cause"
+      }
+    ],
+    "expected": {
+      "applied": true,
+      "problemKey": "fungus_gnat",
+      "policy": "single_confirmation",
+      "shouldBypassFollowUp": false,
+      "maxQuestions": 1,
+      "matchedSymptomKeys": ["small_flies_soil"]
+    }
+  },
+  {
+    "label": "retake_first_fallback",
+    "caseKey": "retake_first_fallback",
+    "visualRouteContext": {
+      "routePrimaryAction": "retake_first"
+    },
+    "visualAggregateResult": {
+      "aggregate_analyzability": "medium",
+      "admission_records": [
+        {
+          "visual_admission_record_id": "visadmit_powder",
+          "object_key": "powder_white",
+          "admission_result": "formally_admitted",
+          "candidate": {
+            "symptom_key": "powder_white",
+            "support_count": 1,
+            "support_organs": ["leaf"],
+            "supporting_region_note": "叶面大片白粉",
+            "confidence_band": "high",
+            "strength_level": "strong",
+            "admission_readiness": "ready"
+          }
+        }
+      ]
+    },
+    "observedEvidenceSet": [
+      {
+        "observedEvidenceSetId": "obs_powder",
+        "symptomKey": "powder_white",
+        "confidence": 0.97,
+        "sourceType": "visual_admitted",
+        "sourceRecordId": "visadmit_powder",
+        "isKeyEvidence": 1
+      }
+    ],
+    "symptomDictionary": [
+      {
+        "symptomKey": "powder_white",
+        "signalReliability": 1
+      }
+    ],
+    "rankings": [
+      {
+        "problemKey": "powdery_mildew",
+        "finalScore": 0.9
+      }
+    ],
+    "problems": [
+      {
+        "problemKey": "powdery_mildew",
+        "problemRole": "root_cause"
+      }
+    ],
+    "expected": {
+      "applied": false
+    }
+  },
+  {
+    "label": "top_problem_mismatch_fallback",
+    "caseKey": "top_problem_mismatch_fallback",
+    "visualRouteContext": {
+      "routePrimaryAction": "standard_flow"
+    },
+    "visualAggregateResult": {
+      "aggregate_analyzability": "medium",
+      "admission_records": [
+        {
+          "visual_admission_record_id": "visadmit_powder_mismatch",
+          "object_key": "powder_white",
+          "admission_result": "formally_admitted",
+          "candidate": {
+            "symptom_key": "powder_white",
+            "support_count": 1,
+            "support_organs": ["leaf"],
+            "supporting_region_note": "叶面大片白粉",
+            "confidence_band": "high",
+            "strength_level": "strong",
+            "admission_readiness": "ready"
+          }
+        }
+      ]
+    },
+    "observedEvidenceSet": [
+      {
+        "observedEvidenceSetId": "obs_powder_mismatch",
+        "symptomKey": "powder_white",
+        "confidence": 0.97,
+        "sourceType": "visual_admitted",
+        "sourceRecordId": "visadmit_powder_mismatch",
+        "isKeyEvidence": 1
+      }
+    ],
+    "symptomDictionary": [
+      {
+        "symptomKey": "powder_white",
+        "signalReliability": 1
+      }
+    ],
+    "rankings": [
+      {
+        "problemKey": "downy_mildew",
+        "finalScore": 0.91
+      }
+    ],
+    "problems": [
+      {
+        "problemKey": "downy_mildew",
+        "problemRole": "root_cause"
+      },
+      {
+        "problemKey": "powdery_mildew",
+        "problemRole": "root_cause"
+      }
+    ],
+    "expected": {
+      "applied": false
+    }
+  }
+]

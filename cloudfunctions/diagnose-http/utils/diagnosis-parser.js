@@ -11,13 +11,15 @@ const {
   normalizeRouteHints,
   normalizeSuggestedFollowupCapture,
   normalizeNotes,
+  normalizeVisualDiscriminators,
+  normalizeMissingInfoForPath,
   confidenceBandToScore,
   clampConfidence
 } = require('./visual-contract')
 
 function extractJsonBlock(text) {
   const source = String(text || '').trim()
-  if (!source) return null
+  if (!source) {return null}
 
   const fencedMatch =
     source.match(/```json\s*([\s\S]*?)```/i) || source.match(/```\s*([\s\S]*?)```/i)
@@ -35,8 +37,8 @@ function extractJsonBlock(text) {
 }
 
 function safeJsonParse(value) {
-  if (value === null || value === undefined) return null
-  if (typeof value === 'object') return value
+  if (value === null || value === undefined) {return null}
+  if (typeof value === 'object') {return value}
 
   try {
     return JSON.parse(String(value))
@@ -52,7 +54,7 @@ function escapeRegExp(value = '') {
 function extractJsonStringField(source = '', fieldName = '') {
   const pattern = new RegExp(`"${escapeRegExp(fieldName)}"\\s*:\\s*"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"`, 'i')
   const match = String(source || '').match(pattern)
-  if (!match?.[1]) return ''
+  if (!match?.[1]) {return ''}
 
   try {
     return JSON.parse(`"${match[1]}"`)
@@ -65,10 +67,10 @@ function extractJsonArrayBlock(source = '', fieldName = '') {
   const text = String(source || '')
   const keyPattern = new RegExp(`"${escapeRegExp(fieldName)}"\\s*:`, 'i')
   const keyMatch = keyPattern.exec(text)
-  if (!keyMatch) return null
+  if (!keyMatch) {return null}
 
   const arrayStart = text.indexOf('[', keyMatch.index + keyMatch[0].length)
-  if (arrayStart < 0) return null
+  if (arrayStart < 0) {return null}
 
   let depth = 0
   let inString = false
@@ -116,7 +118,7 @@ function safeJsonParseArrayField(source = '', fieldName = '') {
 
 function parsePartialStructuredVisualResult(text) {
   const source = String(text || '').trim()
-  if (!source) return null
+  if (!source) {return null}
 
   const symptomCandidates = safeJsonParseArrayField(source, 'symptom_candidates')
     .map(normalizeSymptomCandidate)
@@ -141,6 +143,12 @@ function parsePartialStructuredVisualResult(text) {
     qualityGrade === 'good' ? 'high' : qualityGrade === 'poor' ? 'low' : 'medium'
   )
   const routeHints = normalizeRouteHints(safeJsonParseArrayField(source, 'route_hints'))
+  const visualDiscriminators = normalizeVisualDiscriminators(
+    safeJsonParseArrayField(source, 'visual_discriminators')
+  )
+  const missingInfoForPath = normalizeMissingInfoForPath(
+    safeJsonParseArrayField(source, 'missing_info_for_path')
+  )
   const suggestedFollowupCapture = normalizeSuggestedFollowupCapture(
     safeJsonParseArrayField(source, 'suggested_followup_capture')
   )
@@ -155,7 +163,9 @@ function parsePartialStructuredVisualResult(text) {
     !legacyCandidates.length &&
     !outOfPoolCandidates.length &&
     !normalizedOrgan &&
-    !routeHints.length
+    !routeHints.length &&
+    !visualDiscriminators.length &&
+    !missingInfoForPath.length
   ) {
     return null
   }
@@ -167,6 +177,8 @@ function parsePartialStructuredVisualResult(text) {
     symptom_candidates: symptomCandidates.length ? symptomCandidates : legacyCandidates,
     out_of_pool_symptom_candidates: outOfPoolCandidates,
     route_hints: routeHints,
+    visual_discriminators: visualDiscriminators,
+    missing_info_for_path: missingInfoForPath,
     suggested_followup_capture: suggestedFollowupCapture,
     normalization_notes: Array.from(new Set([
       ...normalizationNotes,
@@ -185,7 +197,7 @@ function normalizeSentence(text) {
 
 function normalizeSymptomCandidate(item) {
   const symptomKey = String(item?.symptom_key || item?.symptomKey || '').trim()
-  if (!symptomKey) return null
+  if (!symptomKey) {return null}
 
   return {
     symptom_key: symptomKey,
@@ -229,12 +241,12 @@ function buildLegacyCandidates(payload = {}) {
   return (Array.isArray(payload?.symptoms) ? payload.symptoms : [])
     .map(item => {
       const symptomKey = String(item?.symptom_key || item?.symptomKey || '').trim()
-      if (!symptomKey) return null
+      if (!symptomKey) {return null}
 
       const confidence = clampConfidence(Number(item?.confidence || 0) || 0.75)
       let confidenceBand = 'medium'
-      if (confidence >= 0.85) confidenceBand = 'high'
-      if (confidence < 0.6) confidenceBand = 'low'
+      if (confidence >= 0.85) {confidenceBand = 'high'}
+      if (confidence < 0.6) {confidenceBand = 'low'}
 
       return normalizeSymptomCandidate({
         symptom_key: symptomKey,
@@ -287,6 +299,8 @@ function parseStructuredVisualResult(text) {
       .filter(Boolean)
       .slice(0, 5),
     route_hints: normalizeRouteHints(payload?.route_hints || []),
+    visual_discriminators: normalizeVisualDiscriminators(payload?.visual_discriminators || []),
+    missing_info_for_path: normalizeMissingInfoForPath(payload?.missing_info_for_path || []),
     suggested_followup_capture: normalizeSuggestedFollowupCapture(
       payload?.suggested_followup_capture || []
     ),
@@ -328,6 +342,8 @@ function parseLLMVisualResult(text) {
         reason: 'model_output_unparseable'
       }
     ],
+    visual_discriminators: [],
+    missing_info_for_path: [],
     suggested_followup_capture: ['补拍更清晰的受损部位特写和整株图'],
     normalization_notes: ['模型输出无法稳定解析，已降级为空结果。'],
     uncertain_symptoms: []

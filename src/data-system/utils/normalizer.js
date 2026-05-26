@@ -1,8 +1,8 @@
 'use strict'
 
 function normalizePrimitive(value) {
-  if (value === undefined) return null
-  if (value === null) return null
+  if (value === undefined) {return null}
+  if (value === null) {return null}
 
   if (typeof value === 'string') {
     const trimmed = value.trim()
@@ -19,7 +19,7 @@ function normalizeRow(row = {}, config = {}) {
   const result = {}
 
   for (const column of columns) {
-    let value = normalizePrimitive(row[column])
+    const value = normalizePrimitive(row[column])
 
     if (value === null) {
       result[column] = null
@@ -37,7 +37,7 @@ function normalizeRow(row = {}, config = {}) {
         try {
           JSON.parse(value)
           result[column] = value
-        } catch (error) {
+        } catch {
           result[column] = JSON.stringify(value)
         }
       } else {
@@ -55,4 +55,3 @@ function normalizeRow(row = {}, config = {}) {
 module.exports = {
   normalizeRow
 }
-

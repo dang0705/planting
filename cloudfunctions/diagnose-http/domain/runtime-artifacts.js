@@ -102,15 +102,6 @@ function buildRuntimeArtifacts(
   }
 }
 
-function attachRuntimeArtifacts(response = {}) {
-  const runtimeArtifacts = buildRuntimeArtifacts(response)
-  return {
-    ...response,
-    ...runtimeArtifacts
-  }
-}
-
 module.exports = {
-  buildRuntimeArtifacts,
-  attachRuntimeArtifacts
+  buildRuntimeArtifacts
 }

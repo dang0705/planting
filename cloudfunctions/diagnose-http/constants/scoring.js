@@ -20,9 +20,7 @@ module.exports = {
       co_occurs: 0.08
     }
   },
-  ranking: {
-    followUpTopScoreThreshold: 0.62,
-    followUpGapThreshold: 0.15,
+  routeSelection: {
     maxQuestionsPerRound: 1,
     maxRounds: 4,
     maxFollowUpRounds: 0,
@@ -40,8 +38,6 @@ module.exports = {
     weakOverlapPenalty: 0.35
   },
   lowConfidence: {
-    topScoreThreshold: 0.62,
-    scoreGapThreshold: 0.15,
     unknownGroupThreshold: 2,
     visualConfidenceThreshold: 0.65
   }

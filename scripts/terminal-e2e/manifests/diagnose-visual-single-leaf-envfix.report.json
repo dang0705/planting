@@ -1,0 +1,88 @@
+{
+  "generatedAt": "2026-04-12T01:05:48.462Z",
+  "envId": "cloud1-2grufevs395a9d5e",
+  "samplesDir": "",
+  "caseGroupsCount": 1,
+  "label": "",
+  "limit": 0,
+  "summary": {
+    "total": 1,
+    "success": 1,
+    "failed": 0,
+    "skipped": 0,
+    "byLabel": {
+      "root_rot_single_leaf": {
+        "total": 1,
+        "success": 1,
+        "failed": 0,
+        "skipped": 0
+      }
+    }
+  },
+  "results": [
+    {
+      "ok": true,
+      "skipped": false,
+      "label": "root_rot_single_leaf",
+      "caseKey": "root_rot_single_leaf_envfix",
+      "fileName": "1.jpeg",
+      "absolutePath": "/Users/jay/WebstormProjects/planting/AI-training/images/1.jpeg",
+      "absolutePaths": [
+        "/Users/jay/WebstormProjects/planting/AI-training/images/1.jpeg"
+      ],
+      "imageCount": 1,
+      "inputSlotTypes": [
+        "leaf"
+      ],
+      "expected": {
+        "outcomeType": "problematic",
+        "nonProblematicType": "",
+        "problemKey": "root_rot",
+        "routePrimaryAction": "standard_flow",
+        "identityResolutionStatus": "matched",
+        "taxonomyMatchStatus": "",
+        "observedEvidenceSymptomKeys": [
+          "yellow_new_leaves",
+          "leaf_yellowing"
+        ],
+        "minObservedSymptoms": 0,
+        "minObservedEvidenceCount": 2
+      },
+      "plantCatalogId": "1",
+      "openid": "anon_dev_visual_batch_root_rot_single_leaf_root_rot_single__1f79",
+      "diagnosisSessionId": "diag_1775955931772_s7q3cvqc",
+      "historyId": "diag_1775955931772_s7q3cvqc",
+      "outcomeType": "problematic",
+      "nonProblematicType": "",
+      "problemId": "p_cm9vdF9yb3Q",
+      "problemKey": "root_rot",
+      "routePrimaryAction": "standard_flow",
+      "identityResolutionStatus": "matched",
+      "taxonomyMatchStatus": "",
+      "displayName": "根腐",
+      "severity": "high",
+      "startStage": "followup",
+      "startQuestionCount": 3,
+      "startObservedSymptomsCount": 1,
+      "resultObservedSymptomsCount": 4,
+      "resultObservedSymptomKeys": [
+        "yellow_new_leaves",
+        "bad_root_smell",
+        "roots_black",
+        "leaf_yellowing"
+      ],
+      "resultObservedEvidenceSetCount": 7,
+      "resultObservedEvidenceSymptomKeys": [
+        "bad_root_smell",
+        "roots_black",
+        "yellow_new_leaves",
+        "leaf_yellowing",
+        "bad_root_smell",
+        "roots_black",
+        "yellow_new_leaves"
+      ],
+      "cleanupDeleted": true,
+      "error": ""
+    }
+  ]
+}

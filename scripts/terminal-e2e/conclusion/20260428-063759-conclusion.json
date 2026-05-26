@@ -1,0 +1,31 @@
+{
+  "generatedAt": "2026-04-27T22:37:59.049Z",
+  "batchReportFile": "scripts/terminal-e2e/batch/20260428-063759.json",
+  "artifactSplit": {
+    "rootBaseName": "20260428-063759",
+    "partIndex": 1,
+    "partCount": 1,
+    "maxResultsPerFile": 100
+  },
+  "total": 1,
+  "success": 1,
+  "failed": 0,
+  "visualFinalEvidenceSummary": {
+    "total": 1,
+    "available": 1,
+    "missingRawRecords": 0,
+    "emptyConclusion": 0
+  },
+  "derivedSummary": {
+    "noVisualEvidenceCount": 1,
+    "outOfPoolOnlyCount": 0
+  },
+  "outcomeTypeCounts": [],
+  "stopReasonCounts": [
+    {
+      "key": "await_follow_up",
+      "count": 1
+    }
+  ],
+  "topSymptomClassReplayCounts": []
+}

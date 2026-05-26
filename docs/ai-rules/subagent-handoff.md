@@ -1,56 +1,85 @@
-# Subagent Handoff and Context Persistence / Subagent 交接与上下文持久化
+# Subagent 交接与任务持久化规则
 
-## Core Principle
+## 1. 定位
 
-Agent threads may stop. Task state must survive.
+本文件用于保证多 agent 任务可中断、可恢复、可审计，同时减少下游重复读取源文档。
 
-Store durable context in repository files, not only in chat.
+## 2. 持久化位置
 
-## Task Notes
+非简单任务默认创建或更新：
 
-Use `docs/ai-tasks/` for non-trivial tasks.
+1. 运行交接：`docs/ai-runs/`
+2. 任务说明：`docs/ai-tasks/`，仅在需要正式拆解、跨轮恢复或多 agent 协作时使用
+3. 架构决策：`docs/adr/`，仅在存在长期架构取舍时使用
 
-```text
-docs/ai-tasks/TASK-YYYY-MM-DD-short-name.md
-```
+如果是一次性只读分析、纯配置检查或 main agent 可在当前会话内闭环的轻量非简单任务，可以不落正式文件，但必须在最终汇总中说明“不创建 handoff / task”的理由。
 
-```md
-# TASK: <task name>
+非简单代码实现任务完成后，必须创建或更新 `docs/ai-runs/` handoff。不得只在实现 agent 输出里写一段 `Handoff` 摘要而不落文件；如果用户明确要求不落文档或本轮无代码实现，必须在最终汇总中说明裁剪理由。
 
-## Goal / 目标
-## Non-goals / 非目标
-## Current Decisions / 当前已确认决策
-## Constraints / 约束
-## Relevant Files / 涉及文件
-## Acceptance Criteria / 验收标准
-## Verification Plan / 验证计划
-```
+## 3. Handoff 必须包含
 
-## Run Handoff Notes
+1. 结论。
+2. 证据。
+3. 相关文件。
+4. 已读取规则。
+5. main agent 提供的规则摘要。
+6. 仍需读取的原文规则 / 章节。
+7. 风险。
+8. 验证状态。
+9. 下一步建议。
+10. 目标验收契约：bug 发生位置、观察入口、用户可见成功标准、必须验证字段 / 证据、快捷路径 / 主链守卫一致性、非目标。
+11. 若涉及客户端运行时或最终展示，必须记录前端消费面是否已检查，例如 result/read、normalize、follow-up、diagnose 页面。
+12. 非简单实现最小闭环：task_planner planning、实现前 architect 架构分析、实现、实现后 architect 代码 review、QA、handoff、文档同步判断的完成状态或裁剪理由。
+13. Subagent 线程复用表：`role -> agent_id/thread_id -> 状态 -> 最近任务 -> 复用/重开说明`。
+14. 若涉及 `diagnose-http`、route、outcome、gate、runtime、问诊路径、`fast path`、`warm path`、`early return`、缓存命中或性能优化路径，必须记录主链输出点、快捷路径输出点、共享 guard、负向回归样本、正向闭合样本、真实 smoke / DB 证据要求。
+15. 专用角色可用性与 fallback 记录：每个逻辑角色都必须记录 `requested_agent_type`、`spawn_result`、`actual_agent_type`、`fallback_reason`、`expected_model/reasoning/profile/sandbox`、`observed_or_requested_model/reasoning/profile/sandbox`、`config_match`。如果使用 `default` 替代，必须写明该线程不是原生专用角色。
 
-Use `docs/ai-runs/` for multi-agent or multi-step work.
+## 4. 线程恢复
 
-```text
-docs/ai-runs/YYYY-MM-DD-short-name/
-  task-planner.md
-  code-explorer.md
-  architect-reviewer.md
-  implementer.md
-  qa-reviewer.md
-  docs-keeper.md
-  release-ops.md
-  final-summary.md
-```
-
-Every handoff must include conclusion, evidence, relevant/changed files, decisions, risks, verification status, open questions, and next-step recommendation.
-
-## Resume Rule
-
-When resuming interrupted work, read in this order:
+Main agent 接手时优先读取：
 
 1. `AGENTS.md`
-2. Relevant files in `docs/ai-rules/`
-3. Current `docs/ai-tasks/TASK-*.md`
-4. Latest `docs/ai-runs/.../*.md`
-5. Current git diff
-6. Relevant source files
+2. 最新 `docs/ai-runs/` handoff
+3. 对应 `docs/ai-tasks/`
+4. 必要 `docs/ai-rules/`
+5. 当前 git diff 与验证结果
+
+Subagent 接手时默认只读取：
+
+1. Dispatch Plan
+2. main agent 规则摘要
+3. 最新 handoff 中与自身角色相关的部分
+4. 当前 diff 或指定文件
+5. Dispatch Plan 指定的少量规则文件 / 章节
+
+Subagent 不应因为 handoff 提到某个长文档路径就自行全量读取该文档。
+
+## 5. Subagent 线程复用表
+
+同一会话中同一角色必须复用同一线程。handoff 应记录：
+
+```text
+| logical_role | requested_agent_type | actual_agent_type | agent_id/thread_id | 状态 | fallback_reason / 复用说明 |
+|---|---|---|---|---|---|
+| task_planner | task_planner |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
+| code_explorer | code_explorer |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
+| architect_reviewer | architect_reviewer |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
+| implementer_fast | implementer_fast |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
+| implementer_deep | implementer_deep |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
+| qa_reviewer | qa_reviewer |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
+| docs_keeper | docs_keeper |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
+| release_ops | release_ops |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
+```
+
+如果未开启 subagent，记录“未开启 subagent，无需线程复用”。如果重开同角色线程，必须记录旧线程状态、重开原因和替换依据。如果 `actual_agent_type=default`，必须以 `logical_role` 作为复用主键，并写明 `requested_agent_type` 不可用的原因。
+
+
+## 6. 大目录索引命中记录
+
+涉及 `docs/code-logics/` 或 `docs/new-rules/` 时，handoff 必须记录：
+
+1. 已读取的 INDEX 文件。
+2. 命中的具体文档。
+3. 只读了哪些小节或摘要。
+4. 下游是否需要重复读取源文档，默认不需要。
+5. 如果索引无法定位，记录请求 main agent 补充摘要的原因。

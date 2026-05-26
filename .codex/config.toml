@@ -1,13 +1,12 @@
-# OpenAI Codex CLI Configuration for CloudBase AI ToolKit
-# This configuration enables MCP (Model Context Protocol) support for CloudBase tools
-
+model = "gpt-5.5"
+model_reasoning_effort = "xhigh"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"
+
 [mcp_servers.cloudbase]
 command = "npx"
 args = ["npm-global-exec@latest", "@cloudbase/cloudbase-mcp@latest"]
 env = { INTEGRATION_IDE = "CodeX" }
-suppress_unstable_features_warning = true
 
 [mcp_servers.cloudbase.tools.auth]
 approval_mode = "approve"
@@ -20,3 +19,26 @@ approval_mode = "approve"
 
 [mcp_servers.cloudbase.tools.callCloudApi]
 approval_mode = "approve"
+
+[mcp_servers.cloudbase.tools.manageGateway]
+approval_mode = "approve"
+
+[features]
+goals = true
+
+[agents]
+# This section only controls delegation limits for the current Codex runtime.
+# It does not register `.codex/agents/*.toml` as callable `spawn_agent.agent_type` values.
+# Treat `.codex/agents/*.toml` as local role specifications unless the runtime explicitly
+# exposes those names through `spawn_agent`; see `docs/ai-rules/codex-ai-workflow.md`.
+# Allow parallel exploration/review without opening too many expensive threads.
+max_threads = 8
+
+# Keep delegation one level deep. Do not allow subagents to recursively spawn more subagents.
+max_depth = 1
+
+# Default timeout for CSV/batch-style worker jobs.
+job_max_runtime_seconds = 1800
+
+[sandbox_workspace_write]
+network_access = true

@@ -60,8 +60,8 @@ async function requestWithRetry(task, { retries = 1, fallbackMessage = '请求�
 }
 
 function decodeChunkToText(chunk) {
-  if (!chunk) return ''
-  if (typeof chunk === 'string') return chunk
+  if (!chunk) {return ''}
+  if (typeof chunk === 'string') {return chunk}
 
   const arrayBuffer =
     chunk instanceof ArrayBuffer
@@ -100,7 +100,7 @@ function createSseParser(onEvent) {
 
   function emitBlock(rawBlock) {
     const block = String(rawBlock || '').trim()
-    if (!block) return
+    if (!block) {return}
 
     let eventName = 'message'
     const dataLines = []
@@ -121,7 +121,7 @@ function createSseParser(onEvent) {
       }
     })
 
-    if (!dataLines.length) return
+    if (!dataLines.length) {return}
 
     const dataText = dataLines.join('\n')
     let payload = { raw: dataText }
@@ -148,7 +148,7 @@ function createSseParser(onEvent) {
       }
     },
     flush() {
-      if (!buffer.trim()) return
+      if (!buffer.trim()) {return}
       emitBlock(buffer)
       buffer = ''
     }
@@ -758,7 +758,6 @@ function normalizeHistoryDetail(detail) {
       environmentDeviationHints: Array.isArray(detail.environmentDeviationHints)
         ? detail.environmentDeviationHints
         : [],
-      rankings: Array.isArray(detail.rankings) ? detail.rankings : [],
       followUps,
       contributingFactors: Array.isArray(detail.contributingFactors) ? detail.contributingFactors : [],
       intermediateStates: Array.isArray(detail.intermediateStates) ? detail.intermediateStates : [],
@@ -828,15 +827,6 @@ function normalizeHistoryDetail(detail) {
     diagnosisDirections: [],
     careBaselineSummary: null,
     environmentDeviationHints: [],
-    rankings: Array.isArray(detail.rankings)
-      ? detail.rankings.map(item => ({
-          problemKey: item?.problemKey || '',
-          problemCn: item?.problemCn || item?.problemKey || '',
-          weightedScore: Number(item?.weightedScore || 0),
-          finalScore: Number(item?.weightedScore || 0),
-          rankNo: Number(item?.rankNo || 0)
-        }))
-      : [],
     followUps: Array.isArray(detail.followUps)
       ? detail.followUps.map(item => ({
           questionId: item?.symptomKey || '',
@@ -897,6 +887,11 @@ const startDiagnosisRequester = httpRequest({
   method: 'POST'
 })
 
+const questionStartDiagnosisRequester = httpRequest({
+  functionPath: 'diagnose-http/diagnosis/question/start',
+  method: 'POST'
+})
+
 const streamDiagnoseRequester = httpRequest({
   functionPath: 'diagnose-http/diagnosis/start',
   method: 'POST',
@@ -933,6 +928,14 @@ export async function requestDiagnosisStart(payload) {
     { retries: 1, fallbackMessage: '发起诊断失败' }
   )
   return unwrapResponseEnvelope(response?.data, '发起诊断失败')
+}
+
+export async function requestDiagnosisQuestionStart(payload) {
+  const response = await requestWithRetry(
+    () => questionStartDiagnosisRequester({ payload, timeout: 25000 }),
+    { retries: 1, fallbackMessage: '初始化问诊失败' }
+  )
+  return unwrapResponseEnvelope(response?.data, '初始化问诊失败')
 }
 
 export async function requestDiagnosisAnswer(payload) {
@@ -1048,7 +1051,7 @@ function normalizeVisualDecisionEvent(payloadItem = {}) {
 function buildVisualProgressText(eventName, payloadItem = {}) {
   const normalizedEventName = String(eventName || payloadItem?.phase || payloadItem?.type || '').trim()
   const explicitContent = String(payloadItem?.content || '').trim()
-  if (explicitContent) return explicitContent
+  if (explicitContent) {return explicitContent}
 
   if (normalizedEventName === 'visual_session_created') {
     return '已建立诊断会话，准备分析图片。'
@@ -1101,20 +1104,20 @@ function buildStreamDiagnosisPromise(payload, { onProgress } = {}) {
 
     const pushProgress = text => {
       const normalizedText = String(text || '').trim()
-      if (!normalizedText || normalizedText === latestProgressText) return
+      if (!normalizedText || normalizedText === latestProgressText) {return}
       latestProgressText = normalizedText
       latestFullText = normalizedText
       onProgress?.(normalizedText)
     }
 
     const settleResolve = data => {
-      if (settled) return
+      if (settled) {return}
       settled = true
       resolve(data)
     }
 
     const settleReject = error => {
-      if (settled) return
+      if (settled) {return}
       settled = true
       reject(error)
     }
@@ -1171,7 +1174,7 @@ function buildStreamDiagnosisPromise(payload, { onProgress } = {}) {
       timeout: 65000,
       onChunkReceived: chunk => {
         const chunkText = decodeChunkToText(chunk?.data ?? chunk)
-        if (!chunkText) return
+        if (!chunkText) {return}
         parser.push(chunkText)
       }
     })
@@ -1181,7 +1184,7 @@ function buildStreamDiagnosisPromise(payload, { onProgress } = {}) {
           parser.push(responseText)
         }
         parser.flush()
-        if (settled) return
+        if (settled) {return}
 
         const envelope =
           response?.data && typeof response.data === 'object'

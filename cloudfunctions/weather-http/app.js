@@ -1,5 +1,6 @@
 'use strict'
 
+const crypto = require('crypto')
 const axios = require('axios')
 const { models } = require('/opt/utils/cloudbase')
 const {
@@ -15,6 +16,71 @@ const {
 const QWEATHER_CONFIG = {
   apiUrl: 'https://n773jqqeap.re.qweatherapi.com/v7/weather/now',
   apiKey: process.env.QWEATHER_API_KEY
+}
+const WEATHER_CITY_CACHE_TTL_MS = 24 * 60 * 60 * 1000
+const INVALID_CITY_CACHE_NAMES = new Set([
+  '',
+  '当前位置',
+  '定位失败',
+  '位置获取失败',
+  '位置权限未授权'
+])
+
+function normalizeText(value = '') {
+  return String(value || '')
+    .normalize('NFKC')
+    .trim()
+    .replace(/\s+/g, '')
+}
+
+function normalizeCityName(value = '') {
+  const city = normalizeText(value)
+  return INVALID_CITY_CACHE_NAMES.has(city) ? '' : city
+}
+
+function buildCityCacheContext({ city = '', province = '' } = {}) {
+  const normalizedCity = normalizeCityName(city)
+  if (!normalizedCity) {
+    return {
+      cacheKey: '',
+      city: '',
+      province: normalizeText(province)
+    }
+  }
+
+  return {
+    cacheKey: `weather:city:${normalizedCity}`,
+    city: normalizedCity,
+    province: normalizeText(province)
+  }
+}
+
+function buildCityCacheOpenid(cacheKey = '') {
+  const hash = crypto.createHash('sha1').update(String(cacheKey || '')).digest('hex')
+  return `city:${hash.slice(0, 40)}`
+}
+
+function formatDate(date) {
+  return date.toISOString().replace('T', ' ').replace(/\.\d{3}Z$/, '')
+}
+
+function parseDbDate(value = '') {
+  const raw = String(value || '').trim()
+  if (!raw) {return null}
+  return new Date(raw.includes('T') ? raw : `${raw.replace(' ', 'T')}Z`)
+}
+
+function getCityCacheExpiresAt() {
+  return new Date(Date.now() + WEATHER_CITY_CACHE_TTL_MS)
+}
+
+function isCityCacheSchemaError(error) {
+  const message = String(error?.message || error || '')
+  return (
+    message.includes('Unknown column') ||
+    message.includes('cache_key') ||
+    message.includes('cache_scope')
+  )
 }
 
 async function fetchWeather(lat, lng) {
@@ -54,25 +120,47 @@ function formatWeatherData(apiData) {
   }
 }
 
+function buildLocalDevWeatherData() {
+  return {
+    temperature: 20,
+    humidity: 60,
+    weather: '多云',
+    feelsLike: 20,
+    windDir: '',
+    windScale: '',
+    windSpeed: '',
+    pressure: '',
+    visibility: '',
+    updateTime: new Date().toISOString(),
+    raw: {},
+    isFallback: true,
+    fallbackSource: 'local_dev_missing_qweather_api_key'
+  }
+}
+
 function getNextMidnight() {
   const tomorrow = new Date()
   tomorrow.setHours(24, 0, 0, 0)
   return tomorrow
 }
 
-async function getCachedWeather(openid) {
+async function getCachedWeatherByOpenid(openid) {
   try {
     const result = await models.$runSQL(
-      'SELECT weather_data, expires_at FROM weather_cache WHERE _openid = {{openid}} LIMIT 1',
+      'SELECT weather_data, updated_at, expires_at FROM weather_cache WHERE _openid = {{openid}} ORDER BY updated_at DESC LIMIT 1',
       { openid }
     )
     const rows = result?.data?.executeResultList || []
-    if (!rows.length) return null
+    if (!rows.length) {return null}
 
     const cache = rows[0]
-    const expiresAt = new Date(cache.expires_at.replace(' ', 'T') + 'Z')
+    const expiresAt = parseDbDate(cache.expires_at)
     if (expiresAt > new Date()) {
-      return JSON.parse(cache.weather_data)
+      return {
+        weatherData: JSON.parse(cache.weather_data),
+        cachedAt: cache.updated_at || '',
+        expiresAt: cache.expires_at || ''
+      }
     }
     return null
   } catch (error) {
@@ -81,13 +169,48 @@ async function getCachedWeather(openid) {
   }
 }
 
-async function saveCachedWeather(openid, weatherData) {
+async function getCachedWeatherByCity(cacheKey = '') {
+  if (!cacheKey) {return null}
+
+  try {
+    const result = await models.$runSQL(
+      `
+        SELECT weather_data, updated_at, expires_at, city, province
+        FROM weather_cache
+        WHERE cache_scope = 'city'
+          AND cache_key = {{cacheKey}}
+          AND expires_at > CURRENT_TIMESTAMP
+        ORDER BY updated_at DESC
+        LIMIT 1
+      `,
+      { cacheKey }
+    )
+    const rows = result?.data?.executeResultList || []
+    if (!rows.length) {return null}
+
+    const cache = rows[0]
+    return {
+      weatherData: JSON.parse(cache.weather_data),
+      cachedAt: cache.updated_at || '',
+      expiresAt: cache.expires_at || '',
+      city: cache.city || '',
+      province: cache.province || ''
+    }
+  } catch (error) {
+    if (isCityCacheSchemaError(error)) {
+      console.warn('天气城市缓存字段未就绪，降级为用户缓存:', error.message)
+      return null
+    }
+    console.error('读取城市天气缓存失败:', error)
+    return null
+  }
+}
+
+async function saveCachedWeatherForOpenid(openid, weatherData, expiresAt = getNextMidnight()) {
   const now = new Date()
-  const expiresAt = getNextMidnight()
-  const formatDate = date => date.toISOString().replace('T', ' ').replace(/\.\d{3}Z$/, '')
 
   const checkResult = await models.$runSQL(
-    'SELECT _id FROM weather_cache WHERE _openid = {{openid}} LIMIT 1',
+    'SELECT _id FROM weather_cache WHERE _openid = {{openid}} ORDER BY updated_at DESC LIMIT 1',
     { openid }
   )
   const exists = (checkResult?.data?.executeResultList || []).length > 0
@@ -116,10 +239,78 @@ async function saveCachedWeather(openid, weatherData) {
   )
 }
 
+async function saveCachedWeatherForCity(cacheContext = {}, weatherData) {
+  const cacheKey = String(cacheContext.cacheKey || '').trim()
+  if (!cacheKey) {return null}
+
+  const now = new Date()
+  const expiresAt = getCityCacheExpiresAt()
+  const payload = {
+    cacheOpenid: buildCityCacheOpenid(cacheKey),
+    cacheKey,
+    cacheScope: 'city',
+    city: cacheContext.city || '',
+    province: cacheContext.province || '',
+    data: JSON.stringify(weatherData),
+    updatedAt: formatDate(now),
+    expiresAt: formatDate(expiresAt)
+  }
+
+  try {
+    const checkResult = await models.$runSQL(
+      "SELECT _id FROM weather_cache WHERE cache_scope = 'city' AND cache_key = {{cacheKey}} LIMIT 1",
+      { cacheKey }
+    )
+    const row = (checkResult?.data?.executeResultList || [])[0]
+
+    if (row?._id) {
+      await models.$runSQL(
+        `
+          UPDATE weather_cache
+          SET weather_data = {{data}},
+              updated_at = {{updatedAt}},
+              expires_at = {{expiresAt}},
+              city = {{city}},
+              province = {{province}}
+          WHERE _id = {{id}}
+        `,
+        { ...payload, id: row._id }
+      )
+      return {
+        cachedAt: payload.updatedAt,
+        expiresAt: payload.expiresAt
+      }
+    }
+
+    await models.$runSQL(
+      `
+        INSERT INTO weather_cache (
+          _openid, cache_scope, cache_key, city, province, weather_data, updated_at, expires_at
+        ) VALUES (
+          {{cacheOpenid}}, {{cacheScope}}, {{cacheKey}}, {{city}}, {{province}}, {{data}}, {{updatedAt}}, {{expiresAt}}
+        )
+      `,
+      payload
+    )
+    return {
+      cachedAt: payload.updatedAt,
+      expiresAt: payload.expiresAt
+    }
+  } catch (error) {
+    if (isCityCacheSchemaError(error)) {
+      console.warn('写入城市天气缓存失败，可能未执行 schema migration:', error.message)
+      return null
+    }
+    console.error('写入城市天气缓存失败:', error)
+    return null
+  }
+}
+
 async function main(event, context) {
   const request = getHttpRequestData(event, context)
   const path = String(request.path || '')
   const method = request.method || 'GET'
+  const appEnv = resolveRequestAppEnv(request.headers, request.query, request.body)
 
   try {
     if (path.includes('/weather/health')) {
@@ -139,7 +330,13 @@ async function main(event, context) {
     const openid = userInfo?.openid || 'anonymous'
     const lat = payload.lat
     const lng = payload.lng
+    const hasCityPayload =
+      Object.prototype.hasOwnProperty.call(payload, 'city') ||
+      Object.prototype.hasOwnProperty.call(payload, 'cityName')
+    const city = payload.city || payload.cityName || ''
+    const province = payload.province || ''
     const useCache = payload.useCache !== false && payload.useCache !== 'false'
+    const cityCacheContext = buildCityCacheContext({ city, province })
 
     console.log('weather-http payload:', {
       method,
@@ -149,6 +346,9 @@ async function main(event, context) {
       resolvedPayload: payload || {},
       lat,
       lng,
+      city: cityCacheContext.city,
+      province: cityCacheContext.province,
+      cityCacheEnabled: Boolean(cityCacheContext.cacheKey),
       openid
     })
 
@@ -158,15 +358,55 @@ async function main(event, context) {
 
     let weatherData = null
     let fromCache = false
+    let cacheScope = ''
+    let cacheMeta = null
     if (useCache) {
-      weatherData = await getCachedWeather(openid)
-      fromCache = Boolean(weatherData)
+      const cityCache = await getCachedWeatherByCity(cityCacheContext.cacheKey)
+      if (cityCache?.weatherData) {
+        weatherData = cityCache.weatherData
+        fromCache = true
+        cacheScope = 'city'
+        cacheMeta = {
+          cachedAt: cityCache.cachedAt,
+          expiresAt: cityCache.expiresAt
+        }
+        await saveCachedWeatherForOpenid(openid, weatherData, parseDbDate(cityCache.expiresAt) || getCityCacheExpiresAt())
+      }
+    }
+
+    if (!weatherData && useCache && !cityCacheContext.cacheKey && !hasCityPayload) {
+      const userCache = await getCachedWeatherByOpenid(openid)
+      if (userCache?.weatherData) {
+        weatherData = userCache.weatherData
+        fromCache = true
+        cacheScope = 'user'
+        cacheMeta = {
+          cachedAt: userCache.cachedAt,
+          expiresAt: userCache.expiresAt
+        }
+      }
     }
 
     if (!weatherData) {
-      weatherData = formatWeatherData(await fetchWeather(lat, lng))
+      if (!QWEATHER_CONFIG.apiKey && appEnv === 'development') {
+        weatherData = buildLocalDevWeatherData()
+        cacheScope = 'local_dev_fallback'
+      } else {
+        weatherData = formatWeatherData(await fetchWeather(lat, lng))
+      }
       if (useCache) {
-        await saveCachedWeather(openid, weatherData)
+        if (weatherData.isFallback) {
+          cacheMeta = null
+        } else {
+          const cityCacheMeta = await saveCachedWeatherForCity(cityCacheContext, weatherData)
+          await saveCachedWeatherForOpenid(
+            openid,
+            weatherData,
+            cityCacheMeta?.expiresAt ? parseDbDate(cityCacheMeta.expiresAt) : getNextMidnight()
+          )
+          cacheScope = cityCacheMeta ? 'city_refresh' : 'user_refresh'
+          cacheMeta = cityCacheMeta || null
+        }
       }
     }
 
@@ -177,6 +417,11 @@ async function main(event, context) {
         ...weatherData,
         cached: fromCache,
         cacheEnabled: useCache,
+        cacheScope,
+        city: cityCacheContext.city || String(city || '').trim(),
+        province: cityCacheContext.province,
+        cachedAt: cacheMeta?.cachedAt || '',
+        expiresAt: cacheMeta?.expiresAt || '',
         timestamp: new Date().toISOString()
       }
     })

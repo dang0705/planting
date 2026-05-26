@@ -91,7 +91,7 @@ async function loadRuntimeSchema(schemaName = '') {
         row.Column_Name ||
         ''
     ).trim()
-    if (!tableName || !columnName) continue
+    if (!tableName || !columnName) {continue}
     if (!runtimeSchema[tableName]) {
       runtimeSchema[tableName] = []
     }
@@ -142,7 +142,19 @@ async function getRefactorArtifacts({ forceRefresh = false } = {}) {
   return artifacts
 }
 
+function getCachedRefactorArtifacts({ allowExpired = false } = {}) {
+  const schemaName = resolveSchema()
+  const cache = getSchemaCache(schemaName)
+  if (!cache.artifacts) {
+    return null
+  }
+  if (!allowExpired && cache.expiresAt <= Date.now()) {
+    return null
+  }
+  return cache.artifacts
+}
+
 module.exports = {
-  buildRefactorArtifacts,
-  getRefactorArtifacts
+  getRefactorArtifacts,
+  getCachedRefactorArtifacts
 }

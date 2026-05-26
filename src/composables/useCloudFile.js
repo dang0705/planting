@@ -7,12 +7,12 @@ import { ref } from 'vue'
  */
 export async function getFileUrls(fileIds) {
   const ids = fileIds.filter(Boolean)
-  if (!ids.length) return {}
+  if (!ids.length) {return {}}
   try {
     const res = await wx.cloud.getTempFileURL({ fileList: ids })
     const map = {}
     res.fileList?.forEach(f => {
-      if (f.fileID && f.tempFileURL) map[f.fileID] = f.tempFileURL
+      if (f.fileID && f.tempFileURL) {map[f.fileID] = f.tempFileURL}
     })
     return map
   } catch (e) {
@@ -27,7 +27,7 @@ export async function getFileUrls(fileIds) {
  * @returns {Promise<string>}
  */
 export async function getFileUrl(fileId) {
-  if (!fileId) return ''
+  if (!fileId) {return ''}
   const map = await getFileUrls([fileId])
   return map[fileId] || ''
 }
@@ -58,7 +58,7 @@ export function useFileUrl(initialFileId = '') {
   const loading = ref(false)
 
   async function resolve(id) {
-    if (id) fileId.value = id
+    if (id) {fileId.value = id}
     if (!fileId.value) {
       url.value = ''
       return
@@ -68,7 +68,7 @@ export function useFileUrl(initialFileId = '') {
     loading.value = false
   }
 
-  if (initialFileId) resolve()
+  if (initialFileId) {resolve()}
 
   return { fileId, url, loading, resolve }
 }

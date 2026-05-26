@@ -6,7 +6,7 @@ const path = require('path')
 function parseArgs(argv = []) {
   const args = {}
   for (const item of argv) {
-    if (!item.startsWith('--')) continue
+    if (!item.startsWith('--')) {continue}
     const [key, ...rest] = item.slice(2).split('=')
     args[key] = rest.length ? rest.join('=') : 'true'
   }
@@ -50,7 +50,7 @@ async function main() {
 
   for (const filePath of sqlFiles) {
     const sql = fs.readFileSync(filePath, 'utf8').trim()
-    if (!sql) continue
+    if (!sql) {continue}
 
     const response = await models.$runSQL(sql)
     const executeResultList = response?.data?.executeResultList || []

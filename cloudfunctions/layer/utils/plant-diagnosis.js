@@ -101,7 +101,7 @@ function mergeObservedSymptoms(...groups) {
   const merged = new Map()
   for (const group of groups) {
     for (const item of group || []) {
-      if (!item?.symptomKey) continue
+      if (!item?.symptomKey) {continue}
       const current = merged.get(item.symptomKey)
       if (!current || Number(item.confidence || 0) > Number(current.confidence || 0)) {
         merged.set(item.symptomKey, {
@@ -129,8 +129,8 @@ function normalizeAnswerValue(value) {
     .trim()
     .toLowerCase()
 
-  if (['yes', 'y', 'true', '1', 'confirmed', 'present'].includes(normalized)) return 'yes'
-  if (['no', 'n', 'false', '0', 'absent', 'missing'].includes(normalized)) return 'no'
+  if (['yes', 'y', 'true', '1', 'confirmed', 'present'].includes(normalized)) {return 'yes'}
+  if (['no', 'n', 'false', '0', 'absent', 'missing'].includes(normalized)) {return 'no'}
   return 'unknown'
 }
 
@@ -148,10 +148,10 @@ function normalizeObservedSymptomsInput(inputs = [], symptomDictionary = []) {
           typeof item === 'string'
             ? String(item).trim()
             : String(item?.symptomKey || item?.symptom_key || '').trim()
-        if (!symptomKey) return null
+        if (!symptomKey) {return null}
 
         const symptomMeta = symptomMap.get(symptomKey)
-        if (!symptomMeta) return null
+        if (!symptomMeta) {return null}
         const confidence = clamp(
           Number(
             typeof item === 'string'
@@ -198,7 +198,7 @@ function normalizeFollowUpAnswers(answers = [], symptomDictionary = []) {
     answers
       .map(item => {
         const symptomKey = String(item?.symptomKey || item?.symptom_key || '').trim()
-        if (!symptomKey) return null
+        if (!symptomKey) {return null}
 
         const answerValue = normalizeAnswerValue(
           item?.answerValue ?? item?.answer_value ?? item?.observed ?? item?.value
@@ -233,8 +233,8 @@ function mapHealthScore(topScore, reliabilityScore, needsFollowUp) {
 }
 
 function mapHealthStatus(healthScore) {
-  if (healthScore >= DIAGNOSIS_RULES.healthScoreHealthyThreshold) return 'healthy'
-  if (healthScore >= DIAGNOSIS_RULES.healthScoreWarningThreshold) return 'warning'
+  if (healthScore >= DIAGNOSIS_RULES.healthScoreHealthyThreshold) {return 'healthy'}
+  if (healthScore >= DIAGNOSIS_RULES.healthScoreWarningThreshold) {return 'warning'}
   return 'sick'
 }
 
@@ -325,8 +325,8 @@ async function buildStructuredDiagnosis({
   openid,
   plantId = null,
   userPlantId = null,
-  diagnosisText = '',
-  description = '',
+  diagnosisText: _diagnosisText = '',
+  description: _description = '',
   baseResult = {},
   mode = 'quick',
   observedSymptomsInput = [],
@@ -337,7 +337,7 @@ async function buildStructuredDiagnosis({
   const parsedObservedSymptoms = normalizeObservedSymptomsInput(baseResult?.observedSymptoms, symptomDictionary)
   const normalizedObservedSymptoms = normalizeObservedSymptomsInput(observedSymptomsInput, symptomDictionary)
   const normalizedFollowUpAnswers = normalizeFollowUpAnswers(followUpAnswers, symptomDictionary)
-  const shouldSkipAIExtraction =
+  const _shouldSkipAIExtraction =
     Boolean(skipAIExtraction) ||
     parsedObservedSymptoms.length > 0 ||
     normalizedObservedSymptoms.length > 0 ||

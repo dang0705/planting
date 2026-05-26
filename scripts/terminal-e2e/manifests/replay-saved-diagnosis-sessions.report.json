@@ -1,0 +1,208 @@
+{
+  "generatedAt": "2026-04-22T09:12:21.527Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "total": 3,
+  "success": 3,
+  "failed": 0,
+  "results": [
+    {
+      "ok": true,
+      "sessionId": "diag_1776524906841_9gzq2dil",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776524906842_5mi3kaa5",
+        "currentRoundIndex": 2,
+        "nextRound": 3,
+        "hasPendingFollowUp": false,
+        "storedOutcomeType": "uncertain",
+        "askedQuestionKeys": [
+          "q_leaf_yellowing_light_background",
+          "q_leaf_yellowing_watering_background",
+          "q_leaf_yellowing_fertilization_background"
+        ],
+        "answeredQuestionGroupKeys": [
+          "yellowing_light_background_group",
+          "yellowing_watering_background_group",
+          "yellowing_fertilization_background_group"
+        ],
+        "answeredAnswers": [
+          {
+            "questionKey": "q_leaf_yellowing_light_background",
+            "optionKey": "no_change"
+          },
+          {
+            "questionKey": "q_leaf_yellowing_watering_background",
+            "optionKey": "no_change"
+          },
+          {
+            "questionKey": "q_leaf_yellowing_fertilization_background",
+            "optionKey": "unknown"
+          }
+        ],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 1
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "followUps": [],
+        "symptomClassRuntime": {
+          "enabled": true,
+          "primaryClassKey": "yellowing_mode",
+          "primaryFollowupModeV1": "full",
+          "currentClassKey": "yellowing_mode",
+          "currentGroupKey": "iron_group",
+          "questionGroupPoolSize": 4,
+          "classGateDecision": {
+            "enabled": true,
+            "gateMode": "soft",
+            "sourceMode": "soft",
+            "primaryClassKey": "yellowing_mode",
+            "primaryClassRuntimeScore": 0.7905,
+            "unknownLockCount": 3,
+            "currentClassKey": "yellowing_mode",
+            "hasEnabledGroups": true,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "",
+            "reviewedAtRound": 3
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776524419665_gstrtkff",
+      "openid": "dev_terminal_structural-hole-confirmed-1776524417",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776524419665_bwtuh2ko",
+        "currentRoundIndex": 2,
+        "nextRound": 3,
+        "hasPendingFollowUp": false,
+        "storedOutcomeType": "problematic",
+        "askedQuestionKeys": [
+          "q_leaf_yellowing_watering_background",
+          "q_leaf_yellowing_light_background",
+          "q_leaf_yellowing_fertilization_background"
+        ],
+        "answeredQuestionGroupKeys": [
+          "yellowing_watering_background_group",
+          "yellowing_light_background_group",
+          "yellowing_fertilization_background_group"
+        ],
+        "answeredAnswers": [
+          {
+            "questionKey": "q_leaf_yellowing_watering_background",
+            "optionKey": "no_change"
+          },
+          {
+            "questionKey": "q_leaf_yellowing_light_background",
+            "optionKey": "no_change"
+          },
+          {
+            "questionKey": "q_leaf_yellowing_fertilization_background",
+            "optionKey": "yes"
+          }
+        ],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 3
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "followUps": [],
+        "symptomClassRuntime": {
+          "enabled": true,
+          "primaryClassKey": "yellowing_mode",
+          "primaryFollowupModeV1": "full",
+          "currentClassKey": "yellowing_mode",
+          "currentGroupKey": "iron_group",
+          "questionGroupPoolSize": 4,
+          "classGateDecision": {
+            "enabled": true,
+            "gateMode": "soft",
+            "sourceMode": "soft",
+            "primaryClassKey": "yellowing_mode",
+            "primaryClassRuntimeScore": 1.088,
+            "unknownLockCount": 3,
+            "currentClassKey": "yellowing_mode",
+            "hasEnabledGroups": true,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "",
+            "reviewedAtRound": 3
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "sessionId": "diag_1776524391223_bcp3mpft",
+      "openid": "dev_terminal_brown-spots-positive-1776524390",
+      "source": {
+        "latestVisualCallBatchId": "visbatch_1776524391224_7ipvahz4",
+        "currentRoundIndex": 2,
+        "nextRound": 3,
+        "hasPendingFollowUp": false,
+        "storedOutcomeType": "problematic",
+        "askedQuestionKeys": [
+          "q_brown_spots_halo_confirm",
+          "q_black_spots_surface_layer_check"
+        ],
+        "answeredQuestionGroupKeys": [
+          "leaf_spot_group",
+          "leaf_surface_residue_group"
+        ],
+        "answeredAnswers": [
+          {
+            "questionKey": "q_brown_spots_halo_confirm",
+            "optionKey": "yes"
+          },
+          {
+            "questionKey": "q_black_spots_surface_layer_check",
+            "optionKey": "surface"
+          }
+        ],
+        "symptomClassRuntime": null,
+        "observedEvidenceSetCount": 2
+      },
+      "replay": {
+        "stage": "final",
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "routePrimaryAction": "standard_flow",
+        "followUpRequired": false,
+        "followUps": [],
+        "symptomClassRuntime": {
+          "enabled": true,
+          "primaryClassKey": "fungal_leaf_spot_mode",
+          "primaryFollowupModeV1": "full",
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "currentGroupKey": "fungal_spot_group",
+          "questionGroupPoolSize": 2,
+          "classGateDecision": {
+            "enabled": true,
+            "gateMode": "soft",
+            "sourceMode": "soft",
+            "primaryClassKey": "fungal_leaf_spot_mode",
+            "primaryClassRuntimeScore": 0.85,
+            "unknownLockCount": 2,
+            "currentClassKey": "fungal_leaf_spot_mode",
+            "hasEnabledGroups": true,
+            "isHardBlocked": false,
+            "classSwitchBlocked": false,
+            "blockedReason": "",
+            "reviewedAtRound": 3
+          }
+        }
+      }
+    }
+  ]
+}

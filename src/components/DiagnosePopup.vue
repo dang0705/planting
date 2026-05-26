@@ -1,66 +1,54 @@
 <template>
-  <uni-popup ref="popup" type="bottom" :safe-area="false" @change="handleChange">
-    <view class="bg-white rounded-t-3xl popup-panel" :style="popupPanelStyle">
+  <uni-popup ref="popup" id="diagnose-popup" type="bottom" :safe-area="false" @change="handleChange">
+    <view id="diagnose-popup-panel" class="bg-white rounded-t-3xl popup-panel" :style="popupPanelStyle">
       <view
         v-if="automationEnabled"
         id="diagnose-automation-inject-button"
         class="diagnose-automation-trigger"
         @click="injectAutomationDiagnoseImagesFromStorage"
       />
-      <view class="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
+      <view id="diagnose-popup-header" class="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
         <text class="text-lg font-semibold text-gray-900">AI 诊断</text>
         <view id="diagnose-popup-close-button" class="w-8 h-8 flex items-center justify-center" @click="close">
           <text class="text-gray-400 text-2xl">×</text>
         </view>
       </view>
 
-      <view class="popup-content-wrap">
-        <scroll-view scroll-y class="popup-scroll">
-          <view class="px-4 py-4">
-        <view v-if="!result">
-          <view class="mb-4">
+      <view id="diagnose-popup-content-wrap" class="popup-content-wrap">
+        <scroll-view id="diagnose-popup-scroll" scroll-y class="popup-scroll">
+          <view id="diagnose-popup-content" class="px-4 py-4">
+        <view v-if="!result" id="diagnose-upload-stage">
+          <view id="diagnose-upload-section" class="mb-4">
             <text class="block text-base font-semibold text-gray-900 mb-2">拍摄植物照片</text>
             <text class="block text-xs text-gray-500 mb-3">请直接在槽位中上传。单槽最多 2 张，总计最多 3 张。</text>
 
-            <view v-if="automationEnabled" class="dev-visual-evidence-panel">
+            <view id="diagnose-dev-visual-evidence-panel" class="dev-visual-evidence-panel">
               <view class="flex items-start justify-between gap-2 mb-2">
                 <view class="min-w-0 flex-1">
-                  <text class="block text-xs font-semibold text-[#1F5A42]">开发调试：模拟视觉证据</text>
+                  <text class="block text-xs font-semibold text-[#1F5A42]">无图症状模式</text>
                   <text class="block text-[10px] text-gray-500 mt-0.5">
-                    选择后可不上传图片，直接用该症状类启动诊断，不调用视觉模型。
+                    没有照片时可直接选择症状模式，进入问诊；已上传照片时仍走图片诊断。
                   </text>
                 </view>
-                <text class="dev-visual-evidence-tag">DEV</text>
+                <text class="dev-visual-evidence-tag">问诊</text>
               </view>
 
-              <picker
-                mode="selector"
-                :range="devVisualSymptomClassPickerLabels"
-                :value="selectedDevSymptomClassIndex"
-                @change="handleDevSymptomClassChange"
-              >
-                <view id="diagnose-dev-symptom-class-picker" class="dev-visual-evidence-picker">
-                  <view class="min-w-0 flex-1">
-                    <text class="block text-xs font-semibold text-gray-900">
-                      {{ selectedDevSymptomClassOption?.classNameCn || '不模拟，走真实图片/AI视觉' }}
-                    </text>
-                    <text
-                      v-if="selectedDevSymptomClassOption"
-                      class="block text-[10px] text-gray-500 mt-0.5"
-                    >
-                      {{ selectedDevSymptomClassOption.symptomCn }} · {{ selectedDevSymptomClassOption.classKey }}
-                    </text>
-                    <text v-else class="block text-[10px] text-gray-500 mt-0.5">
-                      下拉选择当前 symptom class
-                    </text>
-                  </view>
-                  <text class="dev-visual-evidence-picker-action">选择</text>
+              <view id="3ef72261--diagnose-dev-symptom-class-quick-select" class="dev-visual-evidence-quick-select">
+                <view
+                  v-for="item in SYMPTOM_CLASS_QUICK_SELECT_OPTIONS"
+                  :key="item.classKey"
+                  :id="`diagnose-dev-symptom-class-option-${item.classKey}`"
+                  class="dev-visual-evidence-quick-option"
+                  :class="selectedDevSymptomClassKey === item.classKey ? 'dev-visual-evidence-quick-option--active' : ''"
+                  @click="handleSymptomClassQuickSelect(item)"
+                >
+                  <text>{{ item.classNameCn }}</text>
                 </view>
-              </picker>
+              </view>
 
-              <view v-if="selectedDevSymptomClassOption" class="dev-visual-evidence-status">
+              <view v-if="selectedDevSymptomClassOption" id="diagnose-dev-symptom-class-status" class="dev-visual-evidence-status">
                 <text class="flex-1 text-[10px] text-[#1F5A42] leading-relaxed">
-                  将模拟：{{ selectedDevSymptomClassOption.symptomCn }}（{{ selectedDevSymptomClassOption.classNameCn }}）
+                  将以无图症状模式开始问诊：{{ selectedDevSymptomClassOption.symptomCn }}（{{ selectedDevSymptomClassOption.classNameCn }}）
                 </text>
                 <text
                   id="diagnose-dev-symptom-class-clear-button"
@@ -72,10 +60,11 @@
               </view>
             </view>
 
-            <view class="slot-grid">
+            <view id="diagnose-upload-slot-grid" class="slot-grid">
               <view
                 v-for="slot in primarySlotGroups"
                 :key="slot.slotType"
+                :id="`diagnose-upload-slot-${slot.slotType}`"
                 class="slot-card bg-[#F8F6F0] border border-white/80"
               >
                 <view class="flex items-start justify-between gap-2 mb-2">
@@ -134,18 +123,18 @@
               </view>
             </view>
 
-            <text class="block text-[10px] text-gray-400 text-center mt-2">
+            <text id="diagnose-upload-count" class="block text-[10px] text-gray-400 text-center mt-2">
               {{ imageFiles.length }}/{{ PRIMARY_IMAGE_LIMIT }} 张
             </text>
-            <text v-if="hasPendingUploads" class="block text-[10px] text-[#2D6A4F] text-center mt-1">
+            <text v-if="hasPendingUploads" id="diagnose-upload-pending-status" class="block text-[10px] text-[#2D6A4F] text-center mt-1">
               图片上传中，全部处理完成后可开始诊断
             </text>
-            <text v-else-if="hasUploadErrors" class="block text-[10px] text-red-500 text-center mt-1">
+            <text v-else-if="hasUploadErrors" id="diagnose-upload-error-status" class="block text-[10px] text-red-500 text-center mt-1">
               存在上传失败的图片，请删除后重新添加
             </text>
           </view>
 
-          <view class="mt-3 bg-[#D8F3DC] rounded-xl p-3">
+          <view id="diagnose-capture-guidance" class="mt-3 bg-[#D8F3DC] rounded-xl p-3">
             <text class="block text-xs font-semibold text-primary mb-1">拍摄建议</text>
             <text class="block text-[10px] text-gray-700 leading-relaxed">
               • 光线充足，避免逆光
@@ -159,8 +148,8 @@
           </view>
         </view>
 
-        <view v-if="result">
-          <view class="bg-gray-50 rounded-xl p-3 mb-3">
+        <view v-if="result" id="diagnose-result-stage">
+          <view id="diagnose-result-plant-card" class="bg-gray-50 rounded-xl p-3 mb-3">
             <view class="flex items-center mb-2">
               <text class="text-2xl mr-2">🌿</text>
               <view class="flex-1">
@@ -177,7 +166,7 @@
             </view>
           </view>
 
-          <view v-if="result.observedSymptoms?.length" class="mb-3">
+          <view v-if="result.observedSymptoms?.length" id="diagnose-result-observed-symptoms" class="mb-3">
             <text class="block text-sm font-semibold text-gray-900 mb-2">观察到的症状</text>
             <view class="bg-gray-50 rounded-xl p-3 flex flex-wrap gap-2">
               <view
@@ -190,50 +179,64 @@
             </view>
           </view>
 
-          <view v-if="result.mainIssueText || result.summaryText" class="mb-3">
-            <text class="block text-sm font-semibold text-gray-900 mb-2">当前结论</text>
+          <view v-if="allOutcomeDisplays.length || resultMainIssueText || resultSummaryText" id="diagnose-result-current-conclusion" class="mb-3">
+            <text class="block text-sm font-semibold text-gray-900 mb-2">诊断结论</text>
             <view class="bg-gray-50 rounded-xl p-3">
-              <text class="block text-xs text-gray-800 mb-2">{{ result.mainIssueText }}</text>
-              <text class="block text-xs text-gray-600 leading-relaxed whitespace-pre-line">{{
-                result.summaryText
-              }}</text>
+              <view v-if="allOutcomeDisplays.length" class="mb-2">
+                <text
+                  v-for="(item, index) in allOutcomeDisplays"
+                  :key="`result_outcome_${index}`"
+                  class="block text-xs text-gray-800 font-semibold leading-relaxed mb-1 last:mb-0"
+                >
+                  {{ item }}
+                </text>
+              </view>
+              <text v-else class="block text-xs text-gray-800 mb-2">{{ resultMainIssueText }}</text>
+              <text class="block text-xs text-gray-600 leading-relaxed whitespace-pre-line">{{ resultSummaryText }}</text>
             </view>
           </view>
 
-          <view v-if="actionAdviceTexts.length" class="mb-3">
+          <view v-if="actionAdviceGroups.length" id="diagnose-result-action-advice" class="mb-3">
             <text class="block text-sm font-semibold text-gray-900 mb-2">处理建议</text>
             <view class="bg-[#F3FAF5] rounded-xl p-3">
-              <text
-                v-for="(item, index) in actionAdviceTexts"
-                :key="`action_${index}`"
-                class="block text-xs text-gray-700 leading-relaxed mb-2 last:mb-0"
-              >
-                • {{ item }}
-              </text>
+              <view v-for="group in actionAdviceGroups" :key="`action_${group.key}`" class="mb-2 last:mb-0">
+                <text class="block text-[11px] text-gray-800 font-semibold mb-1">{{ group.outcomeLabel }}：</text>
+                <text
+                  v-for="(item, index) in group.items"
+                  :key="`action_${group.key}_${index}`"
+                  class="block text-xs text-gray-700 leading-relaxed mb-2 last:mb-0"
+                >
+                  {{ index + 1 }}. {{ item }}
+                </text>
+              </view>
             </view>
           </view>
 
-          <view v-if="avoidAdviceTexts.length" class="mb-3">
+          <view v-if="avoidAdviceGroups.length" id="diagnose-result-avoid-advice" class="mb-3">
             <text class="block text-sm font-semibold text-gray-900 mb-2">暂时不要做</text>
             <view class="bg-[#FFF6F3] rounded-xl p-3">
-              <text
-                v-for="(item, index) in avoidAdviceTexts"
-                :key="`avoid_${index}`"
-                class="block text-xs text-gray-700 leading-relaxed mb-2 last:mb-0"
-              >
-                • {{ item }}
-              </text>
+              <view v-for="group in avoidAdviceGroups" :key="`avoid_${group.key}`" class="mb-2 last:mb-0">
+                <text class="block text-[11px] text-gray-800 font-semibold mb-1">{{ group.outcomeLabel }}：</text>
+                <text
+                  v-for="(item, index) in group.items"
+                  :key="`avoid_${group.key}_${index}`"
+                  class="block text-xs text-gray-700 leading-relaxed mb-2 last:mb-0"
+                >
+                  {{ index + 1 }}. {{ item }}
+                </text>
+              </view>
             </view>
           </view>
 
-          <view v-if="result.followUpRequired" class="mb-3">
+          <view v-if="result.followUpRequired" id="diagnose-result-followup-required" class="mb-3">
             <text class="block text-sm font-semibold text-gray-900 mb-2">继续问诊</text>
             <view class="bg-gray-50 rounded-xl p-3">
               <text class="block text-[10px] text-gray-500 mb-3">
-                每次只回答一个关键问题。答题与补图是两条正式路径，需要分开提交。
+                每次只回答一个关键问题。答题与补图是两种正式方式，需要分开提交。
               </text>
               <swiper
                 v-if="currentFollowUpQuestion"
+                id="diagnose-followup-swiper"
                 class="followup-swiper"
                 :current="followUpSwiperCurrent"
                 :duration="260"
@@ -248,21 +251,23 @@
                   <view
                     v-if="question"
                     :key="question.questionId"
+                    :id="`diagnose-followup-question-${question.questionId}`"
                     class="followup-question-card followup-question-card--animated"
                   >
                     <text class="block text-[10px] text-[#8B7355] mb-1">
                       当前问题 {{ activeFollowUpQuestionIndex + 1 }} / {{ followUpQuestionStack.length || 1 }}
                     </text>
                     <text class="block text-xs font-semibold text-gray-900 leading-relaxed mb-1">
-                      {{ question.text }}
+                      {{ getQuestionTitle(question) }}
                     </text>
                     <text
-                      v-if="question.helpText"
+                      v-if="getQuestionHelpText(question)"
                       class="block text-[10px] text-gray-500 leading-relaxed mb-3"
                     >
-                      {{ question.helpText }}
+                      {{ getQuestionHelpText(question) }}
                     </text>
                     <view
+                      :id="`diagnose-followup-option-stack-${question.questionId}`"
                       class="followup-option-stack"
                       :class="question.uiVariant === 'single_select_accordion' ? 'followup-option-stack--accordion' : ''"
                     >
@@ -278,7 +283,7 @@
                           v-for="option in question.options"
                           :key="option.optionId"
                           :name="option.optionId"
-                          :title="option.text"
+                          :title="getOptionText(question, option)"
                           :border="false"
                           :title-border="false"
                           class="followup-option-collapse-item"
@@ -292,7 +297,7 @@
                                 : 'followup-option-accordion-title--idle'
                             "
                           >
-                            <text class="followup-option-accordion-text">{{ option.text }}</text>
+                            <text class="followup-option-accordion-text">{{ getOptionText(question, option) }}</text>
                             <text class="followup-option-accordion-badge">
                               {{ isSelectedFollowUpOption(question, option) ? '已选' : '单选' }}
                             </text>
@@ -309,7 +314,7 @@
                           @click.stop="selectFollowUpOption(question, option)"
                         >
                             <text class="followup-option-description">
-                              {{ option.description || '选择这一项后继续下一步排查。' }}
+                              {{ getOptionDescription(option) || '选择这一项后继续下一步排查。' }}
                             </text>
                           </view>
                         </uni-collapse-item>
@@ -330,13 +335,13 @@
                         >
                           <view class="followup-option-content">
                             <view class="followup-option-title-row">
-                              <text class="followup-option-text">{{ option.text }}</text>
+                              <text class="followup-option-text">{{ getOptionText(question, option) }}</text>
                             </view>
                             <text
-                              v-if="option.description"
+                              v-if="getOptionDescription(option)"
                               class="followup-option-description"
                             >
-                              {{ option.description }}
+                              {{ getOptionDescription(option) }}
                             </text>
                           </view>
                         </view>
@@ -371,7 +376,7 @@
                   </view>
                 </swiper-item>
               </swiper>
-              <view v-else class="px-3 py-2 rounded-xl bg-white border border-gray-100">
+              <view v-else id="diagnose-followup-empty-question" class="px-3 py-2 rounded-xl bg-white border border-gray-100">
                 <text class="block text-[10px] text-gray-500">
                   当前没有可继续回答的问题。
                 </text>
@@ -385,14 +390,14 @@
             </view>
           </view>
 
-          <view v-if="result.followUpRequired" class="mb-3">
+          <view v-if="result.followUpRequired" id="diagnose-followup-image-section" class="mb-3">
             <text class="block text-sm font-semibold text-gray-900 mb-2">补充图片</text>
             <view class="bg-[#F8F6F0] rounded-xl p-3 border border-[#D8F3DC]">
               <text class="block text-[10px] text-gray-500 mb-2">
                 当前阶段最多补图 1 次。若补图，将生成新的视觉调用批次并重建视觉证据。
               </text>
 
-              <view v-if="followUpCaptureSuggestions.length" class="mb-3">
+              <view v-if="followUpCaptureSuggestions.length" id="diagnose-followup-capture-suggestions" class="mb-3">
                 <text class="block text-[11px] font-semibold text-gray-800 mb-1">建议优先补拍</text>
                 <view
                   v-for="item in followUpCaptureSuggestions"
@@ -404,10 +409,11 @@
               </view>
 
               <view v-if="canShowFollowUpUploader">
-                <view class="slot-grid">
+                <view id="diagnose-followup-upload-slot-grid" class="slot-grid">
                   <view
                     v-for="slot in followUpSlotGroups"
                     :key="slot.slotType"
+                    :id="`diagnose-followup-upload-slot-${slot.slotType}`"
                     class="slot-card bg-white border border-[#E7E0D1]"
                   >
                     <view class="flex items-start justify-between gap-2 mb-2">
@@ -483,7 +489,7 @@
 
               </view>
 
-              <view v-else class="px-3 py-2.5 rounded-xl bg-white">
+              <view v-else id="diagnose-followup-upload-blocked" class="px-3 py-2.5 rounded-xl bg-white">
                 <text class="block text-[11px] text-gray-600">
                   {{ followUpUploadBlockedReason }}
                 </text>
@@ -496,8 +502,8 @@
         </scroll-view>
       </view>
 
-      <view class="popup-footer">
-        <view v-if="!result">
+      <view id="diagnose-popup-footer" class="popup-footer">
+        <view v-if="!result" id="diagnose-popup-footer-start">
           <button
             id="diagnose-submit-button"
             class="w-full bg-primary text-white font-semibold py-3 rounded-xl"
@@ -509,7 +515,7 @@
           </button>
         </view>
 
-        <view v-else class="space-y-2">
+        <view v-else id="diagnose-popup-footer-result-actions" class="space-y-2">
           <button
             v-if="result.followUpRequired && canShowFollowUpUploader"
             id="diagnose-followup-image-submit-button"
@@ -564,6 +570,7 @@ import { useUserStore } from '@/store/user.js'
 import { useDiagnoseStore } from '@/store/diagnose.js'
 import { useCloudImageUploader } from '@/composables/useCloudImageUploader'
 import { useDiagnoseMutation } from '@/vue-query/diagnose/mutations/useDiagnoseMutation.js'
+import { useDiagnosisQuestionStartMutation } from '@/vue-query/diagnose/mutations/useDiagnosisQuestionStartMutation.js'
 import { useDiagnoseFollowUpMutation } from '@/vue-query/diagnose/mutations/useDiagnoseFollowUpMutation.js'
 import {
   normalizeDiagnosisResult,
@@ -627,6 +634,7 @@ const followUpSwiperCurrent = ref(0)
 const followUpSwiperPages = ref([null, null])
 
 const diagnoseMutation = useDiagnoseMutation()
+const questionStartMutation = useDiagnosisQuestionStartMutation()
 const followUpMutation = useDiagnoseFollowUpMutation()
 
 const uploader = useCloudImageUploader({
@@ -668,7 +676,7 @@ automationEnabled =
 // #endif
 const AUTOMATION_DIAGNOSE_IMAGES_STORAGE_KEY = '__plantsight_diagnose_automation_images__'
 const DIAGNOSIS_FOLLOW_UP_STORAGE_KEY_PREFIX = '__plantsight_diagnose_follow_up__'
-const DEV_VISUAL_SYMPTOM_CLASS_OPTIONS = [
+const SYMPTOM_CLASS_QUICK_SELECT_OPTIONS = [
   { classKey: 'yellowing_mode', classNameCn: '黄叶模式', symptomKey: 'uniform_yellowing', symptomCn: '整叶黄化' },
   { classKey: 'bacterial_leaf_spot_mode', classNameCn: '细菌性叶斑模式', symptomKey: 'water_soaked_spots', symptomCn: '水渍斑' },
   { classKey: 'chewing_pest_mode', classNameCn: '咀嚼损伤虫害模式', symptomKey: 'holes_in_leaf', symptomCn: '叶片穿孔' },
@@ -703,26 +711,10 @@ const selectedDevSymptomClassKey = ref('')
 
 const primaryStructuredImages = computed(() => buildStructuredImageInputs(imageFiles.value))
 const followUpStructuredImages = computed(() => buildStructuredImageInputs(followUpImageFiles.value))
-const devVisualSymptomClassPickerOptions = computed(() => [
-  { classKey: '', pickerLabel: '不模拟，走真实图片/AI视觉' },
-  ...DEV_VISUAL_SYMPTOM_CLASS_OPTIONS.map(item => ({
-    ...item,
-    pickerLabel: `${item.classNameCn} / ${item.symptomCn}`
-  }))
-])
-const devVisualSymptomClassPickerLabels = computed(() =>
-  devVisualSymptomClassPickerOptions.value.map(item => item.pickerLabel)
-)
 const selectedDevSymptomClassOption = computed(() =>
-  DEV_VISUAL_SYMPTOM_CLASS_OPTIONS.find(item => item.classKey === selectedDevSymptomClassKey.value) || null
+  SYMPTOM_CLASS_QUICK_SELECT_OPTIONS.find(item => item.classKey === selectedDevSymptomClassKey.value) || null
 )
-const selectedDevSymptomClassIndex = computed(() => {
-  const index = devVisualSymptomClassPickerOptions.value.findIndex(
-    item => item.classKey === selectedDevSymptomClassKey.value
-  )
-  return index >= 0 ? index : 0
-})
-const hasDevVisualEvidence = computed(() => automationEnabled && Boolean(selectedDevSymptomClassOption.value))
+const hasSelectedSymptomMode = computed(() => Boolean(selectedDevSymptomClassOption.value))
 const followUpCaptureSuggestions = computed(() =>
   Array.isArray(result.value?.visualAggregateSummary?.suggestedFollowupCapture)
     ? result.value.visualAggregateSummary.suggestedFollowupCapture
@@ -771,14 +763,14 @@ const hasDirtyFollowUpAnswers = computed(() => dirtyFollowUpFromIndex.value >= 0
 const currentFollowUpAccordionValue = computed({
   get() {
     const question = currentFollowUpQuestion.value
-    if (!isAccordionFollowUpQuestion(question)) return ''
+    if (!isAccordionFollowUpQuestion(question)) {return ''}
     return getExpandedFollowUpOptionId(question)
   },
   set(value) {
     const question = currentFollowUpQuestion.value
-    if (!isAccordionFollowUpQuestion(question)) return
+    if (!isAccordionFollowUpQuestion(question)) {return}
     const optionId = normalizeCollapseOptionValue(value)
-    if (!optionId) return
+    if (!optionId) {return}
     setExpandedFollowUpOption(question, optionId)
     setFollowUpAnswer(getFollowUpQuestionId(question), optionId)
   }
@@ -827,6 +819,8 @@ const actionAdviceTexts = computed(() => {
   const treatmentText = String(result.value?.treatmentText || explanation?.firstAid || '').trim()
   return uniqueStrings([...nextSteps, ...(treatmentText ? [treatmentText] : [])])
 })
+const resultMainIssueText = computed(() => formatOutcomeDisplayLabel(result.value?.mainIssueText))
+const resultSummaryText = computed(() => formatOutcomeDisplayLabel(result.value?.summaryText))
 const avoidAdviceTexts = computed(() => {
   const explanation = result.value?.explanation || result.value?.resultExplanation || {}
   const whatToAvoid = Array.isArray(result.value?.whatToAvoid)
@@ -835,6 +829,32 @@ const avoidAdviceTexts = computed(() => {
   const preventionText = String(result.value?.preventionText || explanation?.avoid || '').trim()
   return uniqueStrings([...whatToAvoid, ...(preventionText ? [preventionText] : [])])
 })
+const visibleOutcomeSource = computed(() =>
+  Array.isArray(result.value?.visibleOutcomes) && result.value.visibleOutcomes.length
+    ? result.value.visibleOutcomes
+    : Array.isArray(result.value?.finalResult?.visibleOutcomes)
+      ? result.value.finalResult.visibleOutcomes
+      : []
+)
+const visibleOutcomeDisplays = computed(() => uniqueStrings(visibleOutcomeSource.value.map(formatOutcomeDisplayLabel)))
+const allOutcomeDisplays = computed(() => visibleOutcomeDisplays.value)
+const outcomeAdviceSources = computed(() => buildUniqueOutcomesForAdvice(visibleOutcomeSource.value))
+const actionAdviceGroups = computed(() =>
+  buildOutcomeAdviceGroups({
+    outcomeSources: outcomeAdviceSources.value,
+    getOutcomeItems: buildOutcomeActionAdviceItems,
+    fallbackItems: actionAdviceTexts.value,
+    fallbackLabel: '通用建议'
+  })
+)
+const avoidAdviceGroups = computed(() =>
+  buildOutcomeAdviceGroups({
+    outcomeSources: outcomeAdviceSources.value,
+    getOutcomeItems: buildOutcomeAvoidAdviceItems,
+    fallbackItems: avoidAdviceTexts.value,
+    fallbackLabel: '通用建议'
+  })
+)
 const popupHeight = computed(() => {
   const totalHeight = Number(viewportHeight.value || 0)
   const navbarHeight = Number(userStore.navbarHeight || 0)
@@ -871,6 +891,294 @@ function isAccordionFollowUpQuestion(question) {
   return String(question?.uiVariant || '').trim() === 'single_select_accordion'
 }
 
+function sanitizeTemplateText(value = '') {
+  return String(value || '')
+    .replace(/\{\{[^}]+\}/g, '')
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function normalizeText(value = '') {
+  return String(value || '').trim()
+}
+
+function normalizeArrayText(values = []) {
+  return (Array.isArray(values) ? values : [])
+    .map(item => String(item || '').trim())
+    .filter(Boolean)
+}
+
+function normalizeTextList(values = []) {
+  return (Array.isArray(values) ? values : [values]).map(item => normalizeText(item)).filter(Boolean)
+}
+
+function normalizeUserFriendlyOutcomeLabel(value = '') {
+  return String(value || '')
+    .replace(/根区压力/g, '根部状态不佳')
+    .replace(/根部压力/g, '根部状态不佳')
+    .replace(/压力/g, '受影响')
+    .trim()
+}
+
+function formatOutcomeDisplayLabel(outcome = null) {
+  if (typeof outcome === 'string') {
+    return normalizeUserFriendlyOutcomeLabel(String(outcome || '').trim())
+  }
+  if (!outcome || typeof outcome !== 'object') {
+    return ''
+  }
+  return normalizeUserFriendlyOutcomeLabel(
+    String(
+      outcome.displayNameCn ||
+        outcome.displayName ||
+        outcome.title ||
+        outcome.problemName ||
+        outcome.problemKey ||
+        outcome.outcomeKey ||
+        ''
+    ).trim()
+  )
+}
+
+function normalizeOutcomeDisplayKey(outcome = {}, index = 0) {
+  return String(
+    outcome?.outcomeKey ||
+      outcome?.problemKey ||
+      outcome?.problemId ||
+      outcome?.displayNameCn ||
+      outcome?.displayName ||
+      outcome?.title ||
+      `outcome_${index}`
+  ).trim()
+}
+
+function buildUniqueOutcomesForAdvice(outcomes = []) {
+  const seen = new Set()
+  return (Array.isArray(outcomes) ? outcomes : [])
+    .map((outcome, index) => ({ outcome, index }))
+    .filter(item => item.outcome && typeof item.outcome === 'object')
+    .filter(item => {
+      const key = normalizeOutcomeDisplayKey(item.outcome, item.index)
+      if (seen.has(key)) {
+        return false
+      }
+      seen.add(key)
+      return true
+    })
+    .map(item => item.outcome)
+}
+
+function buildOutcomeAdviceGroups({
+  outcomeSources = [],
+  getOutcomeItems,
+  fallbackItems = [],
+  fallbackLabel = '通用建议'
+} = {}) {
+  const sourceGroups = buildUniqueOutcomesForAdvice(outcomeSources)
+    .map((outcome, index) => ({
+      key: normalizeOutcomeDisplayKey(outcome, index),
+      outcomeLabel: formatOutcomeDisplayLabel(outcome),
+      items: uniqueStrings(getOutcomeItems ? getOutcomeItems(outcome) : [])
+    }))
+    .filter(group => group.outcomeLabel && group.items.length)
+
+  if (sourceGroups.length || !fallbackItems.length) {
+    return sourceGroups
+  }
+
+  return [{
+    key: '__fallback__',
+    outcomeLabel: fallbackLabel,
+    items: uniqueStrings(fallbackItems)
+  }]
+}
+
+function buildOutcomeActionAdviceItems(outcome = {}) {
+  return uniqueStrings([
+    ...normalizeTextList(outcome?.actionAdviceItems),
+    ...normalizeTextList(outcome?.todayActions),
+    ...normalizeTextList(outcome?.threeDayActions),
+    ...normalizeTextList(outcome?.sevenDayObserve),
+    ...normalizeTextList([outcome?.firstAid]),
+    ...normalizeTextList([outcome?.recommendation]),
+    ...normalizeTextList([outcome?.actionAdvice])
+  ])
+}
+
+function buildOutcomeAvoidAdviceItems(outcome = {}) {
+  return uniqueStrings([
+    ...normalizeTextList(outcome?.avoidAdviceItems),
+    ...normalizeTextList(outcome?.avoidActions),
+    ...normalizeTextList(outcome?.retakeOrEscalate),
+    ...normalizeTextList([outcome?.avoid]),
+    ...normalizeTextList([outcome?.reassurance]),
+    ...normalizeTextList([outcome?.preventionAdvice])
+  ])
+}
+
+function getQuestionTitle(question = {}) {
+  return sanitizeTemplateText(
+    question?.questionTextUserCn ||
+      question?.questionTextCn ||
+      question?.text ||
+      question?.questionText ||
+      question?.title ||
+      ''
+  )
+}
+
+function getQuestionHelpText(question = {}) {
+  return sanitizeTemplateText(
+    question?.helpTextCn ||
+      question?.helpText ||
+      question?.questionHelpText ||
+      ''
+  )
+}
+
+function getOptionText(question = {}, option = {}) {
+  const text = sanitizeTemplateText(
+    option?.optionTextUserCn ||
+      option?.optionTextCn ||
+      option?.text ||
+      option?.optionText ||
+      option?.label ||
+      option?.desc ||
+      ''
+  )
+  const mappedText = resolveYellowingFollowUpOptionText(question, option)
+  return mappedText || text
+}
+
+function resolveYellowingFollowUpOptionText(question = {}, option = {}) {
+  if (!isYellowingFollowUpQuestion(question)) {
+    return ''
+  }
+
+  const optionKey = normalizeText(option?.optionKey || option?.value || option?.optionId || option?.id || '')
+  const optionText = normalizeText(
+    option?.optionTextUserCn ||
+      option?.optionTextCn ||
+      option?.text ||
+      option?.optionText ||
+      option?.label ||
+      ''
+  )
+  const questionKey = normalizeText(question?.questionKey)
+  const targetDimension = normalizeText(question?.targetDimension)
+
+  if (isYellowingWateringQuestion(questionKey, targetDimension)) {
+    if (isFrequencyOption(optionKey, optionText, [
+      'often_wet',
+      'more_wet',
+      'too_wet',
+      'over_wet',
+      'yes'
+    ])) {
+      return '近2周 2 次以上'
+    }
+    if (isFrequencyOption(optionKey, optionText, [
+      'normal_or_stable',
+      'no_change',
+      'normal',
+      'stable'
+    ])) {
+      return '近2周 1-2 次'
+    }
+    if (isFrequencyOption(optionKey, optionText, [
+      'often_dry',
+      'more_dry',
+      'not_enough',
+      'dry',
+      'lack'
+    ])) {
+      return '近2周 0 次'
+    }
+    return ''
+  }
+
+  if (isYellowingFertilizationQuestion(questionKey, targetDimension)) {
+    if (isFrequencyOption(optionKey, optionText, [
+      'low_or_no_fertilizer',
+      'no',
+      'none',
+      'not_fertilized'
+    ])) {
+      return '近1个月 0 次'
+    }
+    if (isFrequencyOption(optionKey, optionText, [
+      'normal_light_fertilizer',
+      'normal',
+      'appropriate'
+    ])) {
+      return '近1个月 1-2 次'
+    }
+    if (isFrequencyOption(optionKey, optionText, [
+      'recent_heavy_fertilizer_or_repot',
+      'heavy_fertilizer',
+      'heavy',
+      'repot',
+      'fertilize'
+    ])) {
+      return '近1个月 2 次以上'
+    }
+    return ''
+  }
+
+  return ''
+}
+
+function getOptionDescription(option = {}) {
+  return sanitizeTemplateText(
+    option?.optionDescriptionUserCn ||
+      option?.descriptionCn ||
+      option?.optionDescription ||
+      option?.description ||
+      option?.desc ||
+      ''
+  )
+}
+
+function isYellowingFollowUpQuestion(question = {}) {
+  const questionKey = normalizeText(question?.questionKey)
+  const questionText = normalizeText(
+    question?.questionTextCn ||
+      question?.questionTextUserCn ||
+      question?.questionText ||
+      ''
+  )
+  return questionKey.includes('yellowing') || questionText.includes('黄叶')
+}
+
+function isYellowingWateringQuestion(questionKey = '', targetDimension = '') {
+  return questionKey.includes('watering_frequency_context') ||
+    questionKey.includes('watering_context') ||
+    questionKey.includes('watering') ||
+    targetDimension.includes('watering')
+}
+
+function isYellowingFertilizationQuestion(questionKey = '', targetDimension = '') {
+  return questionKey.includes('fertilization_growth_context') ||
+    questionKey.includes('fertilization_context') ||
+    questionKey.includes('fertilization_reference') ||
+    questionKey.includes('fertilization') ||
+    targetDimension.includes('fertilization')
+}
+
+function isFrequencyOption(optionKey = '', optionText = '', optionKeys = []) {
+  if (optionKeys.includes(optionKey)) {
+    return true
+  }
+
+  if (!optionText) {
+    return false
+  }
+
+  const compactText = normalizeText(optionText).replace(/\s+/g, '')
+  return optionKeys.some(item => compactText.includes(item.replaceAll('_', '')))
+}
+
 function getFollowUpQuestionId(question) {
   return String(question?.questionId || '').trim()
 }
@@ -881,7 +1189,7 @@ function getFollowUpOptionId(option) {
 
 function getExpandedFollowUpOptionId(question) {
   const questionId = getFollowUpQuestionId(question)
-  if (!questionId) return ''
+  if (!questionId) {return ''}
   return String(
     expandedFollowUpOptionByQuestion.value[questionId] ||
     followUpAnswers.value[questionId] ||
@@ -903,7 +1211,7 @@ function normalizeCollapseOptionValue(value) {
 function setExpandedFollowUpOption(question, optionId) {
   const questionId = getFollowUpQuestionId(question)
   const normalizedOptionId = String(optionId || '').trim()
-  if (!questionId || !normalizedOptionId) return
+  if (!questionId || !normalizedOptionId) {return}
   expandedFollowUpOptionByQuestion.value = {
     ...expandedFollowUpOptionByQuestion.value,
     [questionId]: normalizedOptionId
@@ -912,13 +1220,13 @@ function setExpandedFollowUpOption(question, optionId) {
 
 function handleFollowUpAccordionChange(question, value) {
   const optionId = normalizeCollapseOptionValue(value)
-  if (!optionId) return
+  if (!optionId) {return}
   setExpandedFollowUpOption(question, optionId)
   setFollowUpAnswer(getFollowUpQuestionId(question), optionId)
 }
 
 function isFollowUpOptionExpanded(question, option) {
-  if (!isAccordionFollowUpQuestion(question)) return true
+  if (!isAccordionFollowUpQuestion(question)) {return true}
   const optionId = getFollowUpOptionId(option)
   return Boolean(optionId && getExpandedFollowUpOptionId(question) === optionId)
 }
@@ -926,7 +1234,7 @@ function isFollowUpOptionExpanded(question, option) {
 function isSelectedFollowUpOption(question, option) {
   const questionId = getFollowUpQuestionId(question)
   const optionId = getFollowUpOptionId(option)
-  if (!questionId || !optionId) return false
+  if (!questionId || !optionId) {return false}
   const selectedOptionId = String(
     followUpAnswers.value[questionId] ||
     question?.defaultOptionId ||
@@ -938,7 +1246,7 @@ function isSelectedFollowUpOption(question, option) {
 function selectFollowUpOption(question, option) {
   const questionId = getFollowUpQuestionId(question)
   const optionId = getFollowUpOptionId(option)
-  if (!questionId || !optionId) return
+  if (!questionId || !optionId) {return}
   setFollowUpAnswer(questionId, optionId)
   if (isAccordionFollowUpQuestion(question)) {
     setExpandedFollowUpOption(question, optionId)
@@ -947,13 +1255,13 @@ function selectFollowUpOption(question, option) {
 
 function findFollowUpQuestionIndex(questionId = '') {
   const normalizedQuestionId = String(questionId || '').trim()
-  if (!normalizedQuestionId) return -1
+  if (!normalizedQuestionId) {return -1}
   return followUpQuestionStack.value.findIndex(item => getFollowUpQuestionId(item) === normalizedQuestionId)
 }
 
 function updateDirtyFollowUpIndex(questionId = '', optionId = '') {
   const questionIndex = findFollowUpQuestionIndex(questionId)
-  if (questionIndex < 0) return
+  if (questionIndex < 0) {return}
 
   const committedOptionId = String(
     committedFollowUpAnswers.value?.[questionId]?.optionId || ''
@@ -991,8 +1299,8 @@ function goNextFollowUpQuestion() {
 function canProceedFollowUpQuestion() {
   const question = currentFollowUpQuestion.value
   const questionId = getFollowUpQuestionId(question)
-  if (!questionId) return false
-  if (isSubmittingAnyFollowUp.value) return false
+  if (!questionId) {return false}
+  if (isSubmittingAnyFollowUp.value) {return false}
   if (followUpImageFiles.value.length > 0 || hasPendingFollowUpUploads.value || hasFollowUpUploadErrors.value) {
     return false
   }
@@ -1111,62 +1419,82 @@ function uniqueStrings(values = []) {
   )
 }
 
-function handleDevSymptomClassChange(event) {
-  const index = Number(event?.detail?.value ?? 0)
-  const nextOption = devVisualSymptomClassPickerOptions.value[index] || devVisualSymptomClassPickerOptions.value[0]
-  selectedDevSymptomClassKey.value = String(nextOption?.classKey || '').trim()
+function selectDevSymptomClass(classKey = '') {
+  selectedDevSymptomClassKey.value = String(classKey || '').trim()
 }
 
 function clearDevSymptomClass() {
   selectedDevSymptomClassKey.value = ''
 }
 
-function buildDevVisualObservedSymptoms() {
-  const option = selectedDevSymptomClassOption.value
-  if (!automationEnabled || !option) return []
-
-  return [
-    {
-      symptomKey: option.symptomKey,
-      symptomCn: option.symptomCn,
-      confidence: 0.99,
-      source: 'visual_admitted',
-      evidenceSource: 'visual_admitted',
-      classKey: option.classKey,
-      classNameCn: option.classNameCn
-    }
-  ]
+function isQuestionStartSubmitting() {
+  return Boolean(questionStartMutation.isPending?.value || questionStartMutation.isLoading?.value)
 }
 
-function buildDevVisualObservedEvidenceSet() {
-  const option = selectedDevSymptomClassOption.value
-  if (!automationEnabled || !option) return []
+async function handleSymptomClassQuickSelect(option = null) {
+  selectDevSymptomClass(option?.classKey || '')
+  if (imageFiles.value.length || primaryStructuredImages.value.length) {
+    return
+  }
 
-  return [
-    {
-      observedEvidenceSetId: `dev_visual::${option.classKey}::${option.symptomKey}`,
-      evidenceKey: option.symptomKey,
-      evidenceType: 'symptom',
+  await startQuestionDiagnosisFromSymptomClass()
+}
+
+async function startQuestionDiagnosisFromSymptomClass() {
+  const option = selectedDevSymptomClassOption.value
+  if (!option) {
+    uni.showToast({ title: '请选择症状模式', icon: 'none' })
+    return
+  }
+
+  if (isQuestionStartSubmitting()) {
+    return
+  }
+
+  if (hasPendingUploads.value) {
+    uni.showToast({ title: '请等待图片上传完成', icon: 'none' })
+    return
+  }
+
+  if (hasUploadErrors.value) {
+    uni.showToast({ title: '请先删除上传失败的图片', icon: 'none' })
+    return
+  }
+
+  if (!userStore.canDiagnose) {
+    uni.showModal({
+      title: '提示',
+      content: '免费诊断次数已用完，升级会员享受无限次诊断',
+      confirmText: '升级会员',
+      success: res => {
+        if (res.confirm) {
+          close()
+          uni.switchTab({ url: '/pages/profile/profile' })
+        }
+      }
+    })
+    return
+  }
+
+  uni.showLoading({ title: '正在生成问诊...' })
+  try {
+    await questionStartMutation.mutateAsync({
+      plantId: props.plantId,
+      userPlantId: props.plantId,
+      plantName: props.plantName,
+      symptomClassKey: option.classKey,
       symptomKey: option.symptomKey,
-      symptomCn: option.symptomCn,
-      confidence: 0.99,
-      sourceType: 'visual_admitted',
-      currentStatus: 'active',
-      targetLayer: 'observed_evidence_set',
-      sourceRecordId: option.classKey,
-      firstSeenStage: 'visual_precheck',
-      enteredRuntime: 1,
-      enteredExplanation: 1,
-      isKeyEvidence: 1,
-      visualStructuralEvidenceStatus: 'present',
-      visualSupportOrgans: ['leaf'],
-      visualSupportCount: 1,
-      visualSupportingRegionNote: `开发环境模拟：${option.classNameCn}`,
-      visualConfidenceBand: 'high',
-      visualStrengthLevel: 'strong',
-      visualAdmissionReason: 'development-only symptom class simulator'
-    }
-  ]
+      description: `无图症状模式：${option.symptomCn}（${option.classNameCn}）`,
+      onFinish: diagnosisResult => {
+        userStore.useAIQuota()
+        navigateToDiagnosisFollowUpPage(diagnosisResult)
+      }
+    })
+  } catch (error) {
+    uni.showToast({ title: error?.message || '问诊初始化失败，请重试', icon: 'none' })
+  } finally {
+    uni.hideLoading()
+  }
 }
 
 function buildStructuredImageInputs(files = []) {
@@ -1362,14 +1690,17 @@ async function resetFollowUpUploads() {
 }
 
 async function startDiagnose() {
-  const devObservedSymptoms = buildDevVisualObservedSymptoms()
-  const devObservedEvidenceSet = buildDevVisualObservedEvidenceSet()
   const propObservedSymptoms = Array.isArray(props.observedSymptoms) ? props.observedSymptoms : []
-  const effectiveObservedSymptoms = devObservedSymptoms.length ? devObservedSymptoms : propObservedSymptoms
-  const effectiveObservedEvidenceSet = devObservedEvidenceSet.length ? devObservedEvidenceSet : []
+  const effectiveObservedSymptoms = propObservedSymptoms
+  const effectiveObservedEvidenceSet = []
   const hasObservedSymptoms = effectiveObservedSymptoms.length > 0
   const structuredImages = primaryStructuredImages.value
   const uploadedImageUrls = structuredImages.map(item => item.imageRef)
+
+  if (imageFiles.value.length === 0 && !uploadedImageUrls.length && hasSelectedSymptomMode.value) {
+    await startQuestionDiagnosisFromSymptomClass()
+    return
+  }
 
   if (imageFiles.value.length === 0 && !hasObservedSymptoms) {
     uni.showToast({ title: '请先添加照片', icon: 'none' })
@@ -1417,9 +1748,7 @@ async function startDiagnose() {
       plantName: props.plantName,
       observedSymptoms: hasObservedSymptoms ? effectiveObservedSymptoms : [],
       observedEvidenceSet: effectiveObservedEvidenceSet,
-      description: hasDevVisualEvidence.value
-        ? `开发调试模拟视觉证据：${selectedDevSymptomClassOption.value.symptomCn}（${selectedDevSymptomClassOption.value.classNameCn}）`
-        : `共上传 ${imageUrls.length} 张照片`
+      description: `共上传 ${imageUrls.length} 张照片`
     }
 
     pendingDiagnosePayload.value = diagnosePayload
@@ -1525,8 +1854,12 @@ function setFollowUpAnswer(questionId, answerValue) {
 
 function canStartDiagnose() {
   const hasObservedSymptoms =
-    hasDevVisualEvidence.value ||
+    hasSelectedSymptomMode.value ||
     (Array.isArray(props.observedSymptoms) && props.observedSymptoms.length > 0)
+
+  if (isQuestionStartSubmitting()) {
+    return false
+  }
 
   if (!hasObservedSymptoms && primaryStructuredImages.value.length === 0) {
     return false
@@ -1690,6 +2023,7 @@ async function resetDiagnose() {
   followUpAnswerRevision.value = 0
   expandedFollowUpOptionByQuestion.value = {}
   submittingFollowUpMode.value = ''
+  selectedDevSymptomClassKey.value = ''
 }
 
 function parseAutomationDiagnosePayload(rawInput = {}) {
@@ -1821,21 +2155,29 @@ defineExpose({
   font-weight: 700;
 }
 
-.dev-visual-evidence-picker {
+.dev-visual-evidence-quick-select {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid rgba(45, 106, 79, 0.16);
-  border-radius: 14px;
-  background: #ffffff;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 116px;
+  margin-top: 8px;
+  overflow-y: auto;
 }
 
-.dev-visual-evidence-picker-action {
-  flex-shrink: 0;
-  color: #2d6a4f;
-  font-size: 11px;
-  font-weight: 700;
+.dev-visual-evidence-quick-option {
+  padding: 5px 8px;
+  border: 1px solid rgba(45, 106, 79, 0.16);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #456052;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.dev-visual-evidence-quick-option--active {
+  border-color: #2d6a4f;
+  background: #d8f3dc;
+  color: #1f5a42;
 }
 
 .dev-visual-evidence-status {

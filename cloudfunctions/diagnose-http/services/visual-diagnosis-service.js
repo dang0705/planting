@@ -22,9 +22,6 @@ const {
   normalizeConfidenceBand,
   normalizeVisibilityScope,
   normalizeAdmissionReadiness,
-  normalizeRouteHints,
-  normalizeSuggestedFollowupCapture,
-  normalizeNotes,
   normalizeText,
   normalizeStringList,
   confidenceBandToScore,
@@ -59,7 +56,7 @@ function normalizeServiceValue(value = '') {
 
 function normalizePersistedImageRef(value = '') {
   const normalized = normalizeText(value, '')
-  if (!normalized) return ''
+  if (!normalized) {return ''}
   if (/^data:image\//i.test(normalized)) {
     return '[inline_data_url]'
   }
@@ -209,7 +206,7 @@ async function buildOutOfPoolSymptomHints(successfulResults = []) {
 }
 
 function normalizeNullableSqlNumber(value) {
-  if (value === null || value === undefined || value === '') return null
+  if (value === null || value === undefined || value === '') {return null}
   const num = Number(value)
   return Number.isFinite(num) ? num : null
 }
@@ -280,29 +277,29 @@ const shadowAdapterMetaOverride = shadowVisualAdapter
 
 function scoreQuality(grade = 'medium') {
   const normalized = normalizeQualityGrade(grade, 'medium')
-  if (normalized === 'good') return 3
-  if (normalized === 'poor') return 1
+  if (normalized === 'good') {return 3}
+  if (normalized === 'poor') {return 1}
   return 2
 }
 
 function scoreAnalyzability(level = 'medium') {
   const normalized = normalizeAnalyzability(level, 'medium')
-  if (normalized === 'high') return 4
-  if (normalized === 'marginal') return 2
-  if (normalized === 'low') return 1
+  if (normalized === 'high') {return 4}
+  if (normalized === 'marginal') {return 2}
+  if (normalized === 'low') {return 1}
   return 3
 }
 
 function scoreToQuality(score = 0) {
-  if (score >= 2.5) return 'good'
-  if (score <= 1.5) return 'poor'
+  if (score >= 2.5) {return 'good'}
+  if (score <= 1.5) {return 'poor'}
   return 'medium'
 }
 
 function scoreToAnalyzability(score = 0) {
-  if (score >= 3.5) return 'high'
-  if (score >= 2.5) return 'medium'
-  if (score >= 1.5) return 'marginal'
+  if (score >= 3.5) {return 'high'}
+  if (score >= 2.5) {return 'medium'}
+  if (score >= 1.5) {return 'marginal'}
   return 'low'
 }
 
@@ -366,13 +363,13 @@ function buildSupportViewGroupDescriptor({
 
 function appendDistinctValue(target = [], value = '') {
   const normalized = normalizeText(value, '')
-  if (!normalized) return target
-  if (!target.includes(normalized)) target.push(normalized)
+  if (!normalized) {return target}
+  if (!target.includes(normalized)) {target.push(normalized)}
   return target
 }
 
 function appendSupportViewGroup(candidateRecord = {}, descriptor = {}) {
-  if (!descriptor?.group_key) return
+  if (!descriptor?.group_key) {return}
 
   if (!Array.isArray(candidateRecord.support_view_groups)) {
     candidateRecord.support_view_groups = []
@@ -421,9 +418,9 @@ function resolvePerImageRoutePrimaryAction({
     ? suggestedFollowupCapture.length
     : 0
 
-  if (normalizedAnalyzability === 'low') return 'retake_first'
-  if (candidateCount > 0) return 'standard_flow'
-  if (normalizedAnalyzability === 'marginal' || followupCount > 0) return 'ask_first'
+  if (normalizedAnalyzability === 'low') {return 'retake_first'}
+  if (candidateCount > 0) {return 'standard_flow'}
+  if (normalizedAnalyzability === 'marginal' || followupCount > 0) {return 'ask_first'}
   return 'uncertain_prepare'
 }
 
@@ -431,10 +428,10 @@ function resolveOrganSource(inputSlotType = 'unknown', normalizedOrgan = 'unknow
   const normalizedInput = normalizeOrgan(inputSlotType, 'unknown')
   const normalizedResult = normalizeOrgan(normalizedOrgan, 'unknown')
 
-  if (normalizedInput === 'unknown' && normalizedResult === 'unknown') return 'unknown'
-  if (normalizedInput === 'unknown') return 'model_detected'
-  if (normalizedResult === 'unknown') return 'ui_hint'
-  if (normalizedInput === normalizedResult) return 'merged'
+  if (normalizedInput === 'unknown' && normalizedResult === 'unknown') {return 'unknown'}
+  if (normalizedInput === 'unknown') {return 'model_detected'}
+  if (normalizedResult === 'unknown') {return 'ui_hint'}
+  if (normalizedInput === normalizedResult) {return 'merged'}
   return 'ui_hint'
 }
 
@@ -442,7 +439,7 @@ function buildImageRuntimeInput(input = {}, index = 0) {
   const imageRef = normalizeText(
     input.imageRef || input.imageUrl || input.url || input.image || ''
   )
-  if (!imageRef) return null
+  if (!imageRef) {return null}
 
   const normalizedOrderIndex = Number(input.orderIndex ?? index)
   const normalizedInputSlotOrder = Number(input.inputSlotOrder ?? input.orderIndex ?? index)
@@ -497,7 +494,7 @@ function buildCaseSlotSummary(imageInputs = []) {
 }
 
 function emitVisualStreamEvent(onVisualEvent, eventName, payload = {}) {
-  if (typeof onVisualEvent !== 'function') return
+  if (typeof onVisualEvent !== 'function') {return}
   try {
     onVisualEvent(eventName, payload)
   } catch (error) {
@@ -512,7 +509,7 @@ function normalizeVisualStreamList(value) {
 function pickVisualStreamText(...values) {
   for (const value of values) {
     const text = normalizeText(value, '')
-    if (text) return text
+    if (text) {return text}
   }
   return ''
 }
@@ -520,13 +517,13 @@ function pickVisualStreamText(...values) {
 function pickVisualStreamNumber(...values) {
   for (const value of values) {
     const number = Number(value)
-    if (Number.isFinite(number)) return number
+    if (Number.isFinite(number)) {return number}
   }
   return null
 }
 
 function pickVisualStreamCandidate(item = {}) {
-  if (!item || typeof item !== 'object') return null
+  if (!item || typeof item !== 'object') {return null}
   return {
     symptomKey: pickVisualStreamText(item.symptomKey, item.symptom_key, item.objectKey, item.object_key),
     symptomCn: pickVisualStreamText(
@@ -556,6 +553,40 @@ function pickVisualStreamCandidate(item = {}) {
 function compactVisualStreamCandidates(items = [], limit = 8) {
   return normalizeVisualStreamList(items)
     .map(pickVisualStreamCandidate)
+    .filter(Boolean)
+    .slice(0, limit)
+}
+
+function compactVisualDiscriminators(items = [], limit = 8) {
+  return normalizeVisualStreamList(items)
+    .map(item => {
+      const dimensionKey = pickVisualStreamText(item?.dimensionKey, item?.dimension_key)
+      const valueKey = pickVisualStreamText(item?.valueKey, item?.value_key)
+      if (!dimensionKey || !valueKey) {return null}
+
+      return {
+        dimensionKey,
+        valueKey,
+        confidenceBand: pickVisualStreamText(item?.confidenceBand, item?.confidence_band, 'medium'),
+        visibleBasisCn: pickVisualStreamText(item?.visibleBasisCn, item?.visible_basis_cn)
+      }
+    })
+    .filter(Boolean)
+    .slice(0, limit)
+}
+
+function compactMissingInfoForPath(items = [], limit = 8) {
+  return normalizeVisualStreamList(items)
+    .map(item => {
+      const dimensionKey = pickVisualStreamText(item?.dimensionKey, item?.dimension_key)
+      const reasonCn = pickVisualStreamText(item?.reasonCn, item?.reason_cn, item?.reason)
+      if (!dimensionKey || !reasonCn) {return null}
+
+      return {
+        dimensionKey,
+        reasonCn
+      }
+    })
     .filter(Boolean)
     .slice(0, limit)
 }
@@ -593,6 +624,22 @@ function buildVisualDecisionStreamSummary(aggregateResult = {}) {
     .map(item => pickVisualStreamText(item?.type, item?.key, item?.route, item))
     .filter(Boolean)
     .slice(0, 8)
+  const visualDiscriminators = compactVisualDiscriminators(
+    aggregateResult.aggregate_visual_discriminators ||
+      aggregateResult.aggregateVisualDiscriminators ||
+      aggregateResult.visual_discriminators ||
+      aggregateResult.visualDiscriminators ||
+      [],
+    10
+  )
+  const missingInfoForPath = compactMissingInfoForPath(
+    aggregateResult.aggregate_missing_info_for_path ||
+      aggregateResult.aggregateMissingInfoForPath ||
+      aggregateResult.missing_info_for_path ||
+      aggregateResult.missingInfoForPath ||
+      [],
+    10
+  )
 
   return {
     contractVersion: 'visual_decision_stream_v2',
@@ -601,11 +648,15 @@ function buildVisualDecisionStreamSummary(aggregateResult = {}) {
     aggregatedSymptomCandidates: symptomCandidates,
     outOfPoolSymptomCandidates,
     routeHints,
+    visualDiscriminators,
+    missingInfoForPath,
     counts: {
       observedSymptoms: observedSymptoms.length,
       symptomCandidates: symptomCandidates.length,
       outOfPoolSymptomCandidates: outOfPoolSymptomCandidates.length,
-      routeHints: routeHints.length
+      routeHints: routeHints.length,
+      visualDiscriminators: visualDiscriminators.length,
+      missingInfoForPath: missingInfoForPath.length
     },
     visualBatchTrace: aggregateResult.visual_batch_trace || aggregateResult.visualBatchTrace || null
   }
@@ -713,7 +764,7 @@ function buildAggregatedSymptomCandidates(successfulResults = []) {
 
     for (const candidate of result?.normalizedResult?.symptom_candidates || []) {
       const symptomKey = normalizeText(candidate?.symptom_key || '')
-      if (!symptomKey) continue
+      if (!symptomKey) {continue}
 
       const candidateScore = scoreCandidatePriority(candidate)
       let current = aggregatedMap.get(symptomKey)
@@ -754,7 +805,7 @@ function buildAggregatedSymptomCandidates(successfulResults = []) {
       appendDistinctValue(current.support_image_ids, imageId)
       appendDistinctValue(current.support_normalized_result_ids, visualNormalizedImageResultId)
       appendDistinctValue(current.support_raw_image_record_ids, visualRawImageRecordId)
-      if (normalizedOrgan !== 'unknown') appendDistinctValue(current.support_organs, normalizedOrgan)
+      if (normalizedOrgan !== 'unknown') {appendDistinctValue(current.support_organs, normalizedOrgan)}
       appendSupportViewGroup(
         current,
         buildSupportViewGroupDescriptor({
@@ -841,11 +892,11 @@ function resolveAdmissionDecision(candidate = {}, aggregateAnalyzability = 'medi
     }
   }
 
-  if (analyzability === 'low') reasons.push('aggregate_analyzability_low')
-  if (!organReady) reasons.push('organ_not_reliably_bound')
-  if (band === 'low') reasons.push('confidence_band_low')
-  if (strength === 'weak') reasons.push('strength_weak')
-  if (supportCount <= 1) reasons.push('single_support_group')
+  if (analyzability === 'low') {reasons.push('aggregate_analyzability_low')}
+  if (!organReady) {reasons.push('organ_not_reliably_bound')}
+  if (band === 'low') {reasons.push('confidence_band_low')}
+  if (strength === 'weak') {reasons.push('strength_weak')}
+  if (supportCount <= 1) {reasons.push('single_support_group')}
 
   const allowFormalAdmission =
     readiness === 'ready' &&
@@ -946,7 +997,7 @@ function buildAggregateRouteHints({
   for (const result of successfulResults) {
     for (const hint of result?.normalizedResult?.route_hints || []) {
       const key = `${normalizeText(hint?.type)}::${normalizeText(hint?.reason)}`
-      if (!key || routeHintMap.has(key)) continue
+      if (!key || routeHintMap.has(key)) {continue}
       routeHintMap.set(key, {
         type: normalizeText(hint?.type || ''),
         reason: normalizeText(hint?.reason || '')
@@ -979,6 +1030,56 @@ function buildAggregateRouteHints({
   }
 
   return Array.from(routeHintMap.values())
+}
+
+function buildAggregateVisualDiscriminators(successfulResults = []) {
+  const seen = new Set()
+  const output = []
+
+  for (const result of Array.isArray(successfulResults) ? successfulResults : []) {
+    for (const item of Array.isArray(result?.normalizedResult?.visual_discriminators)
+      ? result.normalizedResult.visual_discriminators
+      : []) {
+      const dimensionKey = normalizeText(item?.dimension_key || '')
+      const valueKey = normalizeText(item?.value_key || '')
+      if (!dimensionKey || !valueKey) {continue}
+      const dedupeKey = `${dimensionKey}::${valueKey}`
+      if (seen.has(dedupeKey)) {continue}
+      seen.add(dedupeKey)
+      output.push({
+        dimension_key: dimensionKey,
+        value_key: valueKey,
+        confidence_band: normalizeConfidenceBand(item?.confidence_band, 'medium'),
+        visible_basis_cn: normalizeText(item?.visible_basis_cn || '')
+      })
+    }
+  }
+
+  return output.slice(0, 12)
+}
+
+function buildAggregateMissingInfoForPath(successfulResults = []) {
+  const seen = new Set()
+  const output = []
+
+  for (const result of Array.isArray(successfulResults) ? successfulResults : []) {
+    for (const item of Array.isArray(result?.normalizedResult?.missing_info_for_path)
+      ? result.normalizedResult.missing_info_for_path
+      : []) {
+      const dimensionKey = normalizeText(item?.dimension_key || '')
+      const reasonCn = normalizeText(item?.reason_cn || '')
+      if (!dimensionKey || !reasonCn) {continue}
+      const dedupeKey = `${dimensionKey}::${reasonCn}`
+      if (seen.has(dedupeKey)) {continue}
+      seen.add(dedupeKey)
+      output.push({
+        dimension_key: dimensionKey,
+        reason_cn: reasonCn
+      })
+    }
+  }
+
+  return output.slice(0, 12)
 }
 
 function buildShadowCompareSummary(successfulResults = []) {
@@ -1105,6 +1206,8 @@ async function buildAggregateResult({
     observedSymptoms,
     suggestedFollowupCapture
   })
+  const aggregateVisualDiscriminators = buildAggregateVisualDiscriminators(successfulResults)
+  const aggregateMissingInfoForPath = buildAggregateMissingInfoForPath(successfulResults)
   const shadowCompareSummary = buildShadowCompareSummary(successfulResults)
   const visualBatchTrace = buildVisualBatchTrace({
     visualCallBatchId,
@@ -1129,6 +1232,8 @@ async function buildAggregateResult({
       aggregatedSymptomCandidates.length > 0 && aggregateAnalyzability !== 'low',
     admission_records: admissionRecords,
     aggregate_route_hints: aggregateRouteHints,
+    aggregate_visual_discriminators: aggregateVisualDiscriminators,
+    aggregate_missing_info_for_path: aggregateMissingInfoForPath,
     shadow_compare_summary: shadowCompareSummary,
     route_primary_action: resolveAggregateRoutePrimaryAction({
       aggregateAnalyzability,
@@ -1162,6 +1267,8 @@ function buildAggregateSummaryForStorage(aggregateResult = {}) {
       target_layer: item.target_layer
     })),
     aggregate_route_hints: aggregateResult.aggregate_route_hints,
+    aggregate_visual_discriminators: aggregateResult.aggregate_visual_discriminators || [],
+    aggregate_missing_info_for_path: aggregateResult.aggregate_missing_info_for_path || [],
     shadow_compare_summary: aggregateResult.shadow_compare_summary || null,
     route_primary_action: aggregateResult.route_primary_action,
     observed_symptoms: aggregateResult.observed_symptoms
@@ -1247,7 +1354,7 @@ async function persistVisualBatchArtifacts({
 
   for (const settled of settledResults) {
     const input = settled?.imageRuntimeInput || null
-    if (!input) continue
+    if (!input) {continue}
 
     const success = settled?.status === 'fulfilled'
     const result = success ? settled.value : null

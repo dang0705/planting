@@ -1,4 +1,4 @@
-import { BASE_URL } from '@/api/env'
+import { BASE_URL, IS_LOCAL_API_BASE_URL, shouldAppendWebFunctionFlag } from '@/api/env'
 import { getCloudbaseAccessToken, getCloudbaseUserIdentity } from '@/utils/cloudbase-auth'
 import { getRequestAppEnvHeader } from '@/utils/runtime-env'
 
@@ -10,7 +10,7 @@ function buildQueryString(query = {}) {
   const entries = Object.entries(query).filter(
     ([, value]) => value !== undefined && value !== null && value !== ''
   )
-  if (!entries.length) return ''
+  if (!entries.length) {return ''}
 
   const search = entries
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
@@ -38,6 +38,10 @@ function getStoredUserOpenId() {
   }
 }
 
+function getLocalDevOpenId() {
+  return String(import.meta.env.VITE_DEV_OPENID || 'dev_terminal_mp_local').trim()
+}
+
 async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}) {
   if (!auth) {
     return headers
@@ -46,7 +50,9 @@ async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}) {
   let openid = getStoredUserOpenId()
   let token = ''
 
-  if (isWechatMiniProgramRuntime()) {
+  if (IS_LOCAL_API_BASE_URL) {
+    openid = openid || getLocalDevOpenId()
+  } else if (isWechatMiniProgramRuntime()) {
     try {
       token = await getCloudbaseAccessToken()
     } catch (error) {
@@ -67,6 +73,7 @@ async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}) {
     ...headers,
     'x-app-env': getRequestAppEnvHeader(),
     'x-env': getRequestAppEnvHeader(),
+    ...(IS_LOCAL_API_BASE_URL ? { 'x-terminal-e2e': 'true', 'x-anonymous-dev-identity': 'true' } : {}),
     ...(openid ? { 'x-wx-openid': openid, 'x-openid': openid } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {})
   }
@@ -74,8 +81,19 @@ async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}) {
 
 function createUrl(functionPath, query) {
   const queryString = buildQueryString(query)
+  const baseUrl = String(BASE_URL || '').replace(/\/+$/, '')
+  const path = String(functionPath || '').replace(/^\/+/, '')
+
+  if (!shouldAppendWebFunctionFlag()) {
+    return `${baseUrl}/${path}${queryString}`
+  }
+
+  if (query && Object.prototype.hasOwnProperty.call(query, 'webfn')) {
+    return `${baseUrl}/${path}${queryString}`
+  }
+
   const joiner = queryString ? '&' : '?'
-  return `${BASE_URL}/${functionPath}${queryString}${joiner}webfn=true`
+  return `${baseUrl}/${path}${queryString}${joiner}webfn=true`
 }
 
 function resolveHttpMethodTransport(method = 'GET', query = {}, headers = {}) {

@@ -1,6 +1,7 @@
 'use strict'
 
 const { resolveLatestVisualCallBatchId } = require('../utils/visual-batch-id')
+const { resolveQuestionText } = require('../utils/question-text-resolver')
 
 function normalizeEvidenceSourceType(value = '') {
   return String(value || '').trim().toLowerCase()
@@ -8,7 +9,7 @@ function normalizeEvidenceSourceType(value = '') {
 
 function isEnglishLikeSymptomLabel(value = '') {
   const normalized = String(value || '').trim()
-  if (!normalized) return false
+  if (!normalized) {return false}
   return /[A-Za-z]/.test(normalized) && !/[\u4e00-\u9fff]/.test(normalized)
 }
 
@@ -38,8 +39,8 @@ function resolvePublicSymptomCn(item = {}, fallback = '') {
 
 function isVisualEvidenceItem(item = {}) {
   const sourceType = normalizeEvidenceSourceType(item?.sourceType || item?.source_type || '')
-  if (!sourceType) return false
-  if (sourceType === 'legacy_observed_symptom') return true
+  if (!sourceType) {return false}
+  if (sourceType === 'legacy_observed_symptom') {return true}
   return sourceType.includes('visual')
 }
 
@@ -127,32 +128,37 @@ function buildSummaryCard(roundResult = {}) {
 }
 
 function toPublicQuestions(followUps = []) {
-  return (Array.isArray(followUps) ? followUps : []).map(item => ({
-    questionId: item.questionId,
-    questionKey: item.questionKey || '',
-    selectionSource: item.selectionSource || '',
-    targetSymptomKey: item.targetSymptomKey || '',
-    questionGroupKey: item.questionGroupKey || '',
-    targetDimension: item.targetDimension || '',
-    routingScope: item.routingScope || '',
-    questionRole: item.questionRole || item.questionCategory || '',
-    questionCategory: item.questionCategory || item.questionRole || '',
-    effectMode: item.effectMode || '',
-    defaultOptionKey: item.defaultOptionKey || '',
-    defaultOptionId: item.defaultOptionId || '',
-    uiVariant: item.uiVariant || '',
-    renderMode: item.renderMode || '',
-    type: item.type || 'single_choice',
-    text: item.text || '',
-    helpText: item.helpText || '',
-    options: (Array.isArray(item.options) ? item.options : []).map(option => ({
-      optionId: option.optionId,
-      optionKey: option.optionKey || '',
-      text: option.text || '',
-      description: option.description || option.desc || '',
-      isDefault: Boolean(option.isDefault)
-    }))
-  }))
+  return (Array.isArray(followUps) ? followUps : []).map(item => {
+    const questionText = resolveQuestionText(item)
+
+    return {
+      questionId: item.questionId,
+      questionKey: item.questionKey || '',
+      selectionSource: item.selectionSource || '',
+      targetSymptomKey: item.targetSymptomKey || '',
+      questionGroupKey: item.questionGroupKey || '',
+      targetDimension: item.targetDimension || '',
+      routingScope: item.routingScope || '',
+      questionRole: item.questionRole || item.questionCategory || '',
+      questionCategory: item.questionCategory || item.questionRole || '',
+      effectMode: item.effectMode || '',
+      defaultOptionKey: item.defaultOptionKey || '',
+      defaultOptionId: item.defaultOptionId || '',
+      uiVariant: item.uiVariant || '',
+      renderMode: item.renderMode || '',
+      type: item.type || 'single_choice',
+      text: questionText,
+      questionText,
+      helpText: item.helpText || '',
+      options: (Array.isArray(item.options) ? item.options : []).map(option => ({
+        optionId: option.optionId,
+        optionKey: option.optionKey || '',
+        text: option.text || '',
+        description: option.description || option.desc || '',
+        isDefault: Boolean(option.isDefault)
+      }))
+    }
+  })
 }
 
 function toPublicObservedSymptoms(observedSymptoms = []) {

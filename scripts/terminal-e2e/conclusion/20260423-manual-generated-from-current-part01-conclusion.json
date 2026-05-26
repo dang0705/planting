@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-04-23T14:26:45.341Z",
+  "batchReportFile": "scripts/terminal-e2e/batch/20260423-manual-generated-from-current-part01.json",
+  "artifactSplit": {
+    "rootBaseName": "20260423-manual-generated-from-current",
+    "partIndex": 1,
+    "partCount": 9,
+    "maxResultsPerFile": 100
+  },
+  "total": 100,
+  "success": 100,
+  "failed": 0,
+  "visualFinalEvidenceSummary": {
+    "total": 100,
+    "available": 100,
+    "missingRawRecords": 0,
+    "emptyConclusion": 0
+  },
+  "derivedSummary": {
+    "noVisualEvidenceCount": 0,
+    "outOfPoolOnlyCount": 0
+  },
+  "outcomeTypeCounts": [
+    {
+      "key": "problematic",
+      "count": 100
+    }
+  ],
+  "stopReasonCounts": [
+    {
+      "key": "problematic_output_ready",
+      "count": 100
+    }
+  ],
+  "topSymptomClassReplayCounts": [
+    {
+      "key": "yellowing_mode",
+      "count": 100
+    }
+  ]
+}

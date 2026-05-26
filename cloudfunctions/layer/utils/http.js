@@ -78,26 +78,26 @@ function decodeJwtPayload(token) {
 function parseQueryString(rawValue) {
   const raw = String(rawValue || '')
   const queryIndex = raw.indexOf('?')
-  if (queryIndex === -1) return {}
+  if (queryIndex === -1) {return {}}
 
   const queryString = raw.slice(queryIndex + 1)
   return queryString.split('&').reduce((result, pair) => {
-    if (!pair) return result
+    if (!pair) {return result}
     const [rawKey, rawVal = ''] = pair.split('=')
     const key = decodeURIComponent(rawKey || '').trim()
-    if (!key) return result
+    if (!key) {return result}
     result[key] = decodeURIComponent(rawVal || '')
     return result
   }, {})
 }
 
 function parseEventBody(event) {
-  if (!event) return {}
+  if (!event) {return {}}
 
   if (typeof event === 'string') {
     try {
       return JSON.parse(event)
-    } catch (error) {
+    } catch {
       return {}
     }
   }
@@ -105,7 +105,7 @@ function parseEventBody(event) {
   if (typeof event.body === 'string') {
     try {
       return JSON.parse(event.body)
-    } catch (error) {
+    } catch {
       return {}
     }
   }
@@ -189,7 +189,7 @@ function getHttpRequestData(event, context) {
 }
 
 function getOpenIdFromUserInfo(userInfo) {
-  if (!userInfo) return ''
+  if (!userInfo) {return ''}
 
   return (
     userInfo.OPENID ||

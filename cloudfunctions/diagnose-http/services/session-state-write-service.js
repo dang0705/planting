@@ -15,9 +15,9 @@ const {
 } = require('./session-runtime-snapshot-codec')
 
 function toNullableDateTimeString(value) {
-  if (value === null || value === undefined || value === '') return ''
+  if (value === null || value === undefined || value === '') {return ''}
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return ''
+  if (Number.isNaN(date.getTime())) {return ''}
   return date.toISOString().slice(0, 19).replace('T', ' ')
 }
 
@@ -26,7 +26,7 @@ function normalizeNullableSqlText(value) {
 }
 
 function normalizeNullableSqlNumber(value) {
-  if (value === null || value === undefined || value === '') return null
+  if (value === null || value === undefined || value === '') {return null}
   const num = Number(value)
   return Number.isFinite(num) ? num : null
 }
@@ -50,9 +50,50 @@ function pickAdviceTextFromSteps(items = []) {
     const text = typeof item === 'string'
       ? normalizeAdviceText(item)
       : normalizeAdviceText(item?.text || item?.title || item?.label || '')
-    if (text) return text
+    if (text) {return text}
   }
   return ''
+}
+
+function pickAdviceTextFromStrings(items = []) {
+  for (const item of Array.isArray(items) ? items : []) {
+    const text = normalizeAdviceText(item)
+    if (text) {return text}
+  }
+  return ''
+}
+
+function resolvePersistedAdviceTexts(response = {}) {
+  const explanation = response?.resultExplanation || response?.explanation || {}
+  const actionAdvice = response?.actionAdvice || response?.finalResult?.actionAdvice || {}
+  const actionTreatment = pickAdviceTextFromStrings([
+    ...(Array.isArray(actionAdvice?.todayActions) ? actionAdvice.todayActions : []),
+    ...(Array.isArray(actionAdvice?.threeDayActions) ? actionAdvice.threeDayActions : []),
+    ...(Array.isArray(actionAdvice?.sevenDayObserve) ? actionAdvice.sevenDayObserve : [])
+  ])
+  const actionPrevention = pickAdviceTextFromStrings([
+    ...(Array.isArray(actionAdvice?.avoidActions) ? actionAdvice.avoidActions : []),
+    ...(actionAdvice?.conflictDetected && Array.isArray(actionAdvice?.retakeOrEscalate)
+      ? actionAdvice.retakeOrEscalate
+      : [])
+  ])
+
+  return {
+    treatment: normalizeAdviceText(
+      response?.treatmentText ||
+        response?.treatment ||
+        actionTreatment ||
+        pickAdviceTextFromSteps(response?.nextSteps) ||
+        explanation?.firstAid
+    ),
+    prevention: normalizeAdviceText(
+      response?.preventionText ||
+        response?.prevention ||
+        actionPrevention ||
+        pickAdviceTextFromSteps(response?.whatToAvoid) ||
+        explanation?.avoid
+    )
+  }
 }
 
 async function upsertDiagnosisSession({
@@ -67,12 +108,7 @@ async function upsertDiagnosisSession({
   description = '',
   clientContext = null
 }) {
-  const topRanking = Array.isArray(response?.rankings) ? response.rankings[0] : null
   const topProblem = response?.topProblem || null
-  const topProblemRanking = (Array.isArray(response?.rankings) ? response.rankings : []).find(
-    item => String(item?.problemId || '').trim() === String(topProblem?.problemId || '').trim() ||
-      String(item?.problemKey || '').trim() === String(topProblem?.problemKey || '').trim()
-  ) || null
   const finalResult = response?.finalResult || null
   const routePrimaryAction = resolveSessionRoute(response)
   const identityResolutionStatus = resolveSessionIdentityStatus({ plantContext, response })
@@ -81,22 +117,8 @@ async function upsertDiagnosisSession({
   const isProblematicOutcome = outcomeType === 'problematic'
   const shouldMarkEnded = sessionStatus === 'completed'
   const outcomePayloadJson = buildOutcomePayload(response)
-  const explanation = response?.resultExplanation || response?.explanation || {}
-  const persistedTreatment = normalizeAdviceText(
-    response?.treatmentText ||
-      response?.treatment ||
-      explanation?.firstAid ||
-      pickAdviceTextFromSteps(response?.nextSteps)
-  )
-  const persistedPrevention = normalizeAdviceText(
-    response?.preventionText ||
-      response?.prevention ||
-      explanation?.avoid ||
-      pickAdviceTextFromSteps(response?.whatToAvoid)
-  )
-  const normalizedTopProblemScore = normalizeNullableSqlNumber(
-    topProblemRanking?.finalScore ?? topRanking?.finalScore
-  )
+  const persistedAdvice = resolvePersistedAdviceTexts(response)
+  const normalizedTopProblemScore = null
   const normalizedUserPlantId = normalizeNullableSqlInteger(plantContext?.userPlantId)
   const resolvedLatestVisualCallBatchId = resolveLatestVisualCallBatchId(response, plantContext)
   const runtimeSnapshotJson = buildRuntimeSnapshotPayload({
@@ -155,8 +177,8 @@ async function upsertDiagnosisSession({
         ? (finalResult?.displayName || topProblem?.displayName)
         : null
     ),
-    treatment: persistedTreatment,
-    prevention: persistedPrevention,
+    treatment: persistedAdvice.treatment,
+    prevention: persistedAdvice.prevention,
     endedAtFlag: shouldMarkEnded ? 1 : 0
   })
 }
@@ -165,5 +187,8 @@ module.exports = {
   upsertDiagnosisSession,
   normalizeNullableSqlNumber,
   normalizeNullableSqlText,
-  normalizeNullableSqlDateTime
+  normalizeNullableSqlDateTime,
+  _test: {
+    resolvePersistedAdviceTexts
+  }
 }

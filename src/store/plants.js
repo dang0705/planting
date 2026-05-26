@@ -20,7 +20,7 @@ export const usePlantStore = defineStore('plants', {
     plantsNeedWater: state => {
       const now = new Date()
       return state.userPlants.filter(p => {
-        if (!p.nextWater) return false
+        if (!p.nextWater) {return false}
         return new Date(p.nextWater) <= now
       })
     }
@@ -108,7 +108,7 @@ export const usePlantStore = defineStore('plants', {
     },
 
     async deleteUserPlant(id) {
-      const plantId = parseInt(id)
+      const plantId = parseInt(id, 10)
       if (!plantId || plantId < 1) {
         return { success: false, message: '无效的植物ID' }
       }

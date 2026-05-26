@@ -62,7 +62,7 @@ function resolveCloudbaseEnvId(context) {
   )
 }
 
-function resolveSqlDatabaseName(context) {
+function resolveSqlDatabaseName(_context) {
   const appEnv =
     getRequestScopedAppEnv() ||
     normalizeAppEnv(process.env.APP_ENV || process.env.RUNTIME_ENV || process.env.NODE_ENV)

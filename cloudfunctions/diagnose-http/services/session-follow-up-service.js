@@ -22,7 +22,13 @@ const {
   collectQueuedQuestionKeys,
   filterQuestionsByQuestionQueue
 } = require('../utils/follow-up-contract')
+const {
+  isSyntheticObservedProbeQuestionKey,
+  isSyntheticVisualCandidateQuestionKey
+} = require('../utils/synthetic-follow-up')
 const { getQueueBySessionAndRound } = require('../repositories/question-queue-repository')
+const { buildQuestionTextCandidateKeys } = require('../utils/question-text-resolver')
+const { resolveQuestionText } = require('../utils/question-text-resolver')
 
 function readQuestionKeyFromRationale(rationale) {
   const parsed = safeJsonParse(rationale, {}) || {}
@@ -39,13 +45,32 @@ function readRoundFromRationale(rationale) {
   return Number(parsed.round || parsed.r || 1) || 1
 }
 
+function resolveQuestionKey(item = {}) {
+  return buildQuestionTextCandidateKeys(item)[0] || String(item?.questionKey || item?.question_key || '').trim()
+}
+
+function resolveFollowUpStorageSymptomKey(questionKey = '', targetSymptomKey = '') {
+  const normalizedQuestionKey = String(questionKey || '').trim()
+  const normalizedTargetSymptomKey = String(targetSymptomKey || '').trim()
+  if (
+    normalizedTargetSymptomKey &&
+    (
+      isSyntheticObservedProbeQuestionKey(normalizedQuestionKey) ||
+      isSyntheticVisualCandidateQuestionKey(normalizedQuestionKey)
+    )
+  ) {
+    return normalizedTargetSymptomKey
+  }
+  return normalizedQuestionKey
+}
+
 function buildAnswerRevisionEvents({
   rowEntries = [],
   dirtyEntry = null,
   answerMap = new Map(),
   dirtyQuestionKey = ''
 } = {}) {
-  if (!dirtyEntry) return []
+  if (!dirtyEntry) {return []}
 
   const events = []
   for (const item of rowEntries) {
@@ -55,9 +80,9 @@ function buildAnswerRevisionEvents({
 
     if (item.index <= dirtyEntry.index) {
       const submittedAnswer = answerMap.get(item.questionKey)
-      if (!submittedAnswer) continue
+      if (!submittedAnswer) {continue}
       const newOptionKey = String(submittedAnswer.optionKey || '').trim().toLowerCase()
-      if (!newOptionKey || previousOptionKey === newOptionKey) continue
+      if (!newOptionKey || previousOptionKey === newOptionKey) {continue}
       events.push({
         eventType: previousOptionKey ? 'answer_changed' : 'historical_answer_added',
         questionRowId: item.row?.id,
@@ -96,19 +121,57 @@ function buildAnswerRevisionEvents({
   return events
 }
 
-async function appendFollowUpQuestions(sessionId, round, questions = [], { questionQueue = null } = {}) {
+async function appendFollowUpQuestions(
+  sessionId,
+  round,
+  questions = [],
+  {
+    questionQueue = null,
+    assumeNoExisting = false
+  } = {}
+) {
   const list = filterQuestionsByQuestionQueue(questions, questionQueue, {
     requireQueueAnchor: true
   })
-  const questionMetaMap = new Map(
-    (await getQuestionsByKeys(list.map(item => item?.questionKey)))
-      .map(item => [String(item?.questionKey || '').trim(), item])
-      .filter(([questionKey]) => Boolean(questionKey))
+  if (!list.length) {return}
+
+  const followUpRows = assumeNoExisting ? [] : await listFollowUpRows(sessionId)
+  const existingQuestionKeys = new Set(
+    (Array.isArray(followUpRows) ? followUpRows : [])
+      .map(row => readQuestionKeyFromRationale(row?.rationale || '') || String(row?.symptom_key || '').trim())
+      .filter(Boolean)
   )
+  const deDupedQuestionRows = []
+  const pendingInPayloadKeys = new Set()
+
+  for (const item of list) {
+    const questionKey = resolveQuestionKey(item)
+    if (!questionKey || existingQuestionKeys.has(questionKey) || pendingInPayloadKeys.has(questionKey)) {
+      continue
+    }
+
+    pendingInPayloadKeys.add(questionKey)
+    deDupedQuestionRows.push(item)
+  }
+
+  if (!deDupedQuestionRows.length) {return}
+
+  const needsQuestionMetaLookup = deDupedQuestionRows.some(item =>
+    !resolveQuestionText(item, {}) ||
+    !String(item?.targetDimension || '').trim() ||
+    !String(item?.targetSymptomKey || '').trim()
+  )
+  const questionMetaMap = needsQuestionMetaLookup
+    ? new Map(
+      (await getQuestionsByKeys(deDupedQuestionRows.map(item => resolveQuestionKey(item))))
+        .map(item => [String(item?.questionKey || '').trim(), item])
+        .filter(([questionKey]) => Boolean(questionKey))
+    )
+    : new Map()
   await insertFollowUpQuestionsRows(
     sessionId,
-    list.map((item, index) => {
-      const questionKey = String(item?.questionKey || '').trim()
+    deDupedQuestionRows.map((item, index) => {
+      const questionKey = resolveQuestionKey(item)
       const questionMeta = questionMetaMap.get(questionKey) || {}
       const targetSymptomKey = String(item?.targetSymptomKey || questionMeta?.targetSymptomKey || '').trim()
       const targetDimension = normalizeQuestionTargetDimension(
@@ -129,8 +192,9 @@ async function appendFollowUpQuestions(sessionId, round, questions = [], { quest
       )
       return {
         questionOrder: Number(index + 1),
+        storageSymptomKey: resolveFollowUpStorageSymptomKey(questionKey, targetSymptomKey),
         questionKey,
-        questionText: item.text || item.questionText || '',
+        questionText: resolveQuestionText(item, questionMeta),
         rationale: JSON.stringify({
           qk: questionKey,
           qg: item.questionGroupKey || '',
@@ -176,7 +240,7 @@ async function markFollowUpAnswers(
   for (const option of Array.isArray(optionMappings) ? optionMappings : []) {
     const questionKey = String(option?.questionKey || '').trim()
     const optionKey = String(option?.optionKey || '').trim().toLowerCase()
-    if (!questionKey || !optionKey) continue
+    if (!questionKey || !optionKey) {continue}
       optionMetaByQuestionOption.set(`${questionKey}::${optionKey}`, option)
   }
 
@@ -185,7 +249,7 @@ async function markFollowUpAnswers(
   for (const row of followUpRows) {
     const questionKey = readQuestionKeyFromRationale(row.rationale) || String(row?.symptom_key || '').trim()
     const round = readRoundFromRationale(row.rationale)
-    if (!questionKey) continue
+    if (!questionKey) {continue}
     const roundQuestionKey = `${Number(round || 1)}::${questionKey}`
     if (!followUpRowsByQuestionAndRound.has(roundQuestionKey)) {
       followUpRowsByQuestionAndRound.set(roundQuestionKey, row)
@@ -196,6 +260,7 @@ async function markFollowUpAnswers(
   }
 
   const updatedAnswers = []
+  const updatedRowsById = new Map()
   const markTasks = []
 
   for (const answer of list) {
@@ -251,6 +316,14 @@ async function markFollowUpAnswers(
       status,
       questionGroupKey: targetQuestionGroup || '__default__'
     })
+    updatedRowsById.set(Number(matchedRow.id || 0), {
+      asked: 1,
+      answer_value: optionKey || 'unknown',
+      answerValue: optionKey || 'unknown',
+      answer_confidence: isUnknownOption ? 0 : Math.max(0, associationStrength || 1),
+      answerConfidence: isUnknownOption ? 0 : Math.max(0, associationStrength || 1),
+      status
+    })
   }
 
   if (awaitPersistence) {
@@ -258,7 +331,10 @@ async function markFollowUpAnswers(
   }
 
   return {
-    followUpRows,
+    followUpRows: followUpRows.map(row => ({
+      ...row,
+      ...(updatedRowsById.get(Number(row?.id || 0)) || {})
+    })),
     updatedAnswers,
     pendingWrites: awaitPersistence ? null : markTasks
   }

@@ -49,7 +49,7 @@ function buildProblemMap(problems = []) {
   const map = new Map()
   for (const item of Array.isArray(problems) ? problems : []) {
     const key = normalizeText(item?.problemKey || '', '')
-    if (!key) continue
+    if (!key) {continue}
     map.set(key, item)
   }
   return map
@@ -59,7 +59,7 @@ function buildSymptomMetaMap(symptomDictionary = []) {
   const map = new Map()
   for (const item of Array.isArray(symptomDictionary) ? symptomDictionary : []) {
     const key = normalizeText(item?.symptomKey || '', '')
-    if (!key) continue
+    if (!key) {continue}
     map.set(key, item)
   }
   return map
@@ -73,7 +73,7 @@ function buildCandidateIndex(visualAggregateResult = null) {
 
   for (const item of aggregatedCandidates) {
     const symptomKey = normalizeText(item?.symptom_key || '', '')
-    if (!symptomKey) continue
+    if (!symptomKey) {continue}
     candidateMap.set(symptomKey, item)
   }
 
@@ -126,7 +126,7 @@ function buildVisualEvidenceIndex({
     }
 
     const symptomKey = normalizeText(item?.symptomKey || item?.symptom_key || '', '')
-    if (!symptomKey) continue
+    if (!symptomKey) {continue}
 
     const sourceRecordId = normalizeText(item?.sourceRecordId || item?.source_record_id || '', '')
     const admissionRecord =
@@ -165,7 +165,7 @@ function buildVisualEvidenceIndex({
 }
 
 function matchesRuleEvidence(entry = {}, rule = {}) {
-  if (!entry) return false
+  if (!entry) {return false}
   if (rankBand(entry.confidenceBand) < rankBand(rule.minConfidenceBand || 'low')) {
     return false
   }
@@ -236,7 +236,7 @@ function resolveHighSpecificityConvergencePlan({
   visualRouteContext = {},
   observedEvidenceSet = [],
   symptomDictionary = [],
-  rankings = [],
+  candidateOutcomes = [],
   problems = [],
   round = 1,
   stage = 'preliminary'
@@ -254,13 +254,15 @@ function resolveHighSpecificityConvergencePlan({
     return null
   }
 
-  const topRanking = Array.isArray(rankings) && rankings.length ? rankings[0] : null
-  if (!topRanking?.problemKey) {
+  const primaryCandidateOutcome = Array.isArray(candidateOutcomes) && candidateOutcomes.length
+    ? candidateOutcomes[0]
+    : null
+  if (!primaryCandidateOutcome?.problemKey) {
     return null
   }
 
   const problemMap = buildProblemMap(problems)
-  const targetProblem = problemMap.get(topRanking.problemKey)
+  const targetProblem = problemMap.get(primaryCandidateOutcome.problemKey)
   if (!targetProblem || normalizeText(targetProblem?.problemRole || '', '') !== 'root_cause') {
     return null
   }
@@ -277,7 +279,7 @@ function resolveHighSpecificityConvergencePlan({
   const matchedRules = HIGH_SPECIFICITY_FAST_CONVERGENCE_RULES
     .map(rule => buildMatchedRule(rule, evidenceMap))
     .filter(Boolean)
-    .filter(rule => normalizeText(rule.problemKey || '', '') === normalizeText(topRanking.problemKey || '', ''))
+    .filter(rule => normalizeText(rule.problemKey || '', '') === normalizeText(primaryCandidateOutcome.problemKey || '', ''))
 
   if (matchedRules.length !== 1) {
     return null

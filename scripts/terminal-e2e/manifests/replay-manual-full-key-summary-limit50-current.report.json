@@ -1,0 +1,3840 @@
+{
+  "generatedAt": "2026-04-22T17:05:53.808Z",
+  "schema": "cloud1_dev",
+  "mode": "replay_saved_session_without_visual_model",
+  "collectionProfile": {
+    "source": "manual",
+    "manualVisualOnly": false,
+    "manualVisualOnlyProvided": false
+  },
+  "visualEvidenceSummary": {
+    "total": 50,
+    "available": 4,
+    "missingRawRecords": 46,
+    "emptyConclusion": 0
+  },
+  "total": 50,
+  "success": 50,
+  "failed": 0,
+  "progress": {
+    "processed": 50,
+    "targetTotal": 50,
+    "complete": true
+  },
+  "results": [
+    {
+      "sessionId": "diag_1776524906841_9gzq2dil",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [
+          {
+            "symptomKey": "leaf_yellowing",
+            "displayNameCn": "叶片发黄",
+            "confidenceBand": "high",
+            "supportingRegionNote": "图中有多片叶片呈现明显的黄色，与正常绿色叶片形成对比"
+          }
+        ],
+        "outOfPoolCandidates": [],
+        "routeHints": [
+          {
+            "type": "possible_problematic_signal",
+            "reason": "observed significant leaf yellowing in multiple leaves"
+          }
+        ]
+      },
+      "visualEvidenceMeta": {
+        "status": "available",
+        "reason": "",
+        "visualRawRecordCount": 1,
+        "symptomCandidateCount": 1,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 1,
+        "hasVisualConclusion": true
+      },
+      "symptomClass": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "yellowing_mode",
+        "currentClassNameCn": "黄叶模式",
+        "currentGroupKey": "iron_group",
+        "currentGroupLabel": "iron_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "yellowing_mode",
+          "primaryClassRuntimeScore": 0.7905,
+          "unknownLockCount": 0,
+          "currentClassKey": "yellowing_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_leaf_yellowing_light_background",
+            "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+            "targetDimension": "light_exposure",
+            "answer": {
+              "optionKey": "more_sun",
+              "optionText": "是，最近更强光或更直晒",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_leaf_yellowing_watering_background",
+            "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+            "targetDimension": "watering_context",
+            "answer": {
+              "optionKey": "no_change",
+              "optionText": "浇水节奏没有明显变化",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_leaf_yellowing_fertilization_background",
+            "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+            "targetDimension": "fertilization_context",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "topProblem": {
+          "problemId": "p_bml0cm9nZW5fZGVmaWNpZW5jeQ",
+          "problemKey": "nitrogen_deficiency",
+          "displayName": "缺氮",
+          "summary": "当前更像 缺氮，但还不够确定。 当前最像的问题是：缺氮。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "finalResult": {
+          "problemId": "p_bml0cm9nZW5fZGVmaWNpZW5jeQ",
+          "problemKey": "",
+          "displayName": "缺氮",
+          "summary": "当前更像 缺氮，但还不够确定。 当前最像的问题是：缺氮。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diag_1776521814145_3n9ak1w5",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [
+          {
+            "symptomKey": "leaf_yellowing",
+            "displayNameCn": "叶片黄化",
+            "confidenceBand": "high",
+            "supportingRegionNote": "图中存在多片明显发黄的叶片"
+          },
+          {
+            "symptomKey": "holes_in_leaf",
+            "displayNameCn": "叶片有洞",
+            "confidenceBand": "high",
+            "supportingRegionNote": "部分叶片存在真洞口或缺损情况"
+          }
+        ],
+        "outOfPoolCandidates": [],
+        "routeHints": [
+          {
+            "type": "possible_problematic_signal",
+            "reason": "存在叶片黄化和叶片有洞的异常视觉信号"
+          }
+        ]
+      },
+      "visualEvidenceMeta": {
+        "status": "available",
+        "reason": "",
+        "visualRawRecordCount": 1,
+        "symptomCandidateCount": 2,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 1,
+        "hasVisualConclusion": true
+      },
+      "symptomClass": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "yellowing_mode",
+        "currentClassNameCn": "黄叶模式",
+        "currentGroupKey": "iron_group",
+        "currentGroupLabel": "iron_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "yellowing_mode",
+          "primaryClassRuntimeScore": 0.7905,
+          "unknownLockCount": 0,
+          "currentClassKey": "yellowing_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_leaf_yellowing_light_background",
+            "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+            "targetDimension": "light_exposure",
+            "answer": {
+              "optionKey": "more_sun",
+              "optionText": "是，最近更强光或更直晒",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_leaf_yellowing_watering_background",
+            "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+            "targetDimension": "watering_context",
+            "answer": {
+              "optionKey": "more_dry",
+              "optionText": "更像经常干透后才浇",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_leaf_yellowing_fertilization_background",
+            "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
+            "targetDimension": "fertilization_context",
+            "answer": {
+              "optionKey": "yes",
+              "optionText": "是，最近长期停肥或明显缺少供肥",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "topProblem": {
+          "problemId": "p_c25haWxzX3NsdWdz",
+          "problemKey": "snails_slugs",
+          "displayName": "蜗牛/蛞蝓",
+          "summary": "当前更像 蜗牛/蛞蝓，但还不够确定。 当前最像的问题是：蜗牛/蛞蝓。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "finalResult": {
+          "problemId": "p_c25haWxzX3NsdWdz",
+          "problemKey": "",
+          "displayName": "蜗牛/蛞蝓",
+          "summary": "当前更像 蜗牛/蛞蝓，但还不够确定。 当前最像的问题是：蜗牛/蛞蝓。",
+          "severity": "medium",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diag_1776509556300_t80mp3tg",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [
+          {
+            "symptomKey": "irregular_blotches",
+            "displayNameCn": "不规则斑块",
+            "confidenceBand": "high",
+            "supportingRegionNote": "叶片上存在多处深色不规则斑块，组织看起来相对完整，主要是表面颜色异常形成的斑块"
+          }
+        ],
+        "outOfPoolCandidates": [],
+        "routeHints": [
+          {
+            "type": "problematic_signal",
+            "reason": "存在不规则斑块的异常视觉信号"
+          }
+        ]
+      },
+      "visualEvidenceMeta": {
+        "status": "available",
+        "reason": "",
+        "visualRawRecordCount": 1,
+        "symptomCandidateCount": 1,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 1,
+        "hasVisualConclusion": true
+      },
+      "symptomClass": {
+        "enabled": true,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "fungal_leaf_spot_mode",
+        "currentClassNameCn": "",
+        "currentGroupKey": "fungal_spot_group",
+        "currentGroupLabel": "fungal_spot_group",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": true,
+          "gateMode": "soft",
+          "sourceMode": "soft",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "fungal_leaf_spot_mode",
+          "hasEnabledGroups": true,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
+            "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
+            "targetDimension": "surface_residue",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
+            "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
+            "targetDimension": "tissue_moisture",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
+            "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
+            "targetDimension": "lesion_halo",
+            "answer": {
+              "optionKey": "unknown",
+              "optionText": "看不出/不确定",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "topProblem": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "fungal_leaf_spot",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "finalResult": {
+          "problemId": "p_ZnVuZ2FsX2xlYWZfc3BvdA",
+          "problemKey": "",
+          "displayName": "真菌叶斑",
+          "summary": "当前更像 真菌叶斑，但还不够确定。 当前最像的问题是：真菌叶斑。",
+          "severity": "high",
+          "urgency": "high"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diag_1776497216908_nloxmvtp",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [
+          {
+            "symptomKey": "leaf_yellowing",
+            "displayNameCn": "叶子明显发黄",
+            "confidenceBand": "high",
+            "supportingRegionNote": "图中部分叶片呈现明显的黄色，与绿色叶片形成对比，黄化现象较为显著"
+          },
+          {
+            "symptomKey": "normal_leaf_aging_stable",
+            "displayNameCn": "底部老叶稳定黄化",
+            "confidenceBand": "medium",
+            "supportingRegionNote": "部分叶片黄化可能符合老叶自然老化的稳定黄化特征"
+          }
+        ],
+        "outOfPoolCandidates": [],
+        "routeHints": [
+          {
+            "type": "possible_problematic_signal",
+            "reason": "detected leaf yellowing which may indicate potential issues"
+          },
+          {
+            "type": "possible_non_problematic_signal",
+            "reason": "some yellowing could be due to natural leaf aging"
+          }
+        ]
+      },
+      "visualEvidenceMeta": {
+        "status": "available",
+        "reason": "",
+        "visualRawRecordCount": 1,
+        "symptomCandidateCount": 2,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 2,
+        "hasVisualConclusion": true
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "followup",
+        "qas": [
+          {
+            "questionKey": "q_leaf_yellowing_confirm",
+            "questionText": "植株有比较明确的发黄叶片，而不是轻微失绿或反光吗？",
+            "targetDimension": "visual_presence",
+            "answer": {
+              "optionKey": "no",
+              "optionText": "否，基本没有",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_leaf_yellowing_light_background",
+            "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
+            "targetDimension": "light_exposure",
+            "answer": {
+              "optionKey": "less_light",
+              "optionText": "是，最近更弱光或更阴",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          },
+          {
+            "questionKey": "q_leaf_yellowing_watering_background",
+            "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
+            "targetDimension": "watering_context",
+            "answer": {
+              "optionKey": "more_wet",
+              "optionText": "更像长期偏湿、久不干",
+              "status": "simulated",
+              "answerSource": "simulated"
+            }
+          }
+        ]
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "followup",
+        "outcomeType": "",
+        "stopReason": "await_follow_up",
+        "stopReasonDetail": "",
+        "routePrimaryAction": "ask_first",
+        "followUpRequired": true,
+        "topProblem": null,
+        "finalResult": null,
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774445520826_c0bbm0qrs",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774528251142_okjop1wc8",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774483483883_mfoyn1c55",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774483556269_ls6sc8nep",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774483603557_jm5mx4ggo",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774483630195_z1dysdr0u",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774483732229_ohvs1mn5v",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774483760555_dltm8bw2w",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774483822585_a1aktk22p",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774484491066_wteznzumd",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774484752240_7m3uqlt5b",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774484943574_4k21pn1hz",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774485068566_m3675hp7d",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774485273512_6cfg00ffk",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774485318933_e0376xe3p",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774485412943_lu2rliur8",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774485425541_bisdfu0es",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774485475215_0jkprrovr",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774485795769_50a2p8uxv",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774485884615_n34xd6ho0",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774485920227_in6g30trs",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774485936830_dfiva3c9i",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774485949786_emko1qim0",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774398162288_g57eesovn",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774398121883_o53hzok56",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774365739897_l04lr8e57",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774365001221_9at3h04wm",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774364853663_nap96hejt",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774398180920_qei79ahaa",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774278458177_df5iesism",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774278504923_bwvt8de3r",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774278531431_vp7ab7fiw",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774313154387_pup3cfiyv",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774313186537_nvue00dm8",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774313973603_l2w2g7bjc",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774313994625_gtbfhmdbr",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774314340093_j155ve388",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774314369725_ohk5gcxbp",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774314558087_96sjrnk9o",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774359253709_68kzicfj6",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774360435084_su009rzq9",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774361137794_un5w60ege",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774361537657_3kyexp61m",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774361677138_ul2ykn5b5",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774361733642_ohu0qxns6",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    },
+    {
+      "sessionId": "diagnose_1774362271478_wp3f6vs1u",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "visualEvidence": {
+        "symptomCandidates": [],
+        "outOfPoolCandidates": [],
+        "routeHints": []
+      },
+      "visualEvidenceMeta": {
+        "status": "missing_raw_records",
+        "reason": "该会话没有 visual_raw_image_records 记录，无法重建有效视觉证据",
+        "visualRawRecordCount": 0,
+        "symptomCandidateCount": 0,
+        "outOfPoolCandidateCount": 0,
+        "routeHintCount": 0,
+        "hasVisualConclusion": false
+      },
+      "symptomClass": {
+        "enabled": false,
+        "primaryClassKey": "",
+        "primaryClassNameCn": "",
+        "primaryFollowupModeV1": "",
+        "currentClassKey": "",
+        "currentClassNameCn": "",
+        "currentGroupKey": "",
+        "currentGroupLabel": "",
+        "questionGroupPoolSize": 0,
+        "questionGroupPoolKeys": [],
+        "classGateDecision": {
+          "enabled": false,
+          "gateMode": "disabled",
+          "sourceMode": "disabled",
+          "primaryClassKey": "",
+          "primaryClassRuntimeScore": 0,
+          "unknownLockCount": 0,
+          "currentClassKey": "",
+          "hasEnabledGroups": false,
+          "isHardBlocked": false,
+          "classSwitchBlocked": false,
+          "blockedReason": "no_observed_symptoms",
+          "reviewedAtRound": 1
+        }
+      },
+      "round1": {
+        "roundIndex": 1,
+        "stage": "final",
+        "qas": []
+      },
+      "round2": {
+        "roundIndex": 0,
+        "stage": "",
+        "qas": []
+      },
+      "outcome": {
+        "stage": "final",
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "stopReasonDetail": "no_observed_symptoms",
+        "routePrimaryAction": "uncertain_prepare",
+        "followUpRequired": false,
+        "topProblem": null,
+        "finalResult": {
+          "problemId": "",
+          "problemKey": "",
+          "displayName": "暂不能稳定判断",
+          "summary": "当前图片里没有识别到足够稳定的可见症状，暂时不适合直接推断具体问题。",
+          "severity": "low",
+          "urgency": "medium"
+        },
+        "roundIndex": 1
+      }
+    }
+  ]
+}

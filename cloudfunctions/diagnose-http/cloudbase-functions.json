@@ -21,6 +21,10 @@
     },
     {
       "functionName": "diagnose-http",
+      "path": "/diagnosis/question/start"
+    },
+    {
+      "functionName": "diagnose-http",
       "path": "/diagnosis/answer"
     },
     {

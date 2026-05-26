@@ -17,7 +17,7 @@ const AK = process.env.BAIDU_AK
 const SK = process.env.BAIDU_SK
 
 function pickPlantMatchFields(plant) {
-  if (!plant) return null
+  if (!plant) {return null}
   return {
     id: plant.id || '',
     plantIdentityId: plant.plantIdentityId || '',
@@ -139,7 +139,7 @@ function getAccessToken() {
             return
           }
           reject(new Error('获取百度 access token 失败'))
-        } catch (error) {
+        } catch {
           reject(new Error('解析百度 access token 失败'))
         }
       })
@@ -180,7 +180,7 @@ function recognizePlant(imageUrl, accessToken) {
             return
           }
           resolve(result)
-        } catch (error) {
+        } catch {
           reject(new Error('解析百度识别响应失败'))
         }
       })

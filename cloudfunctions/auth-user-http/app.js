@@ -16,7 +16,7 @@ function generateId() {
 }
 
 function sanitizeUser(user) {
-  const { password, ...sanitized } = user
+  const { password: _password, ...sanitized } = user
   return sanitized
 }
 

@@ -265,6 +265,32 @@ const userStats = ref({})
 const recentPoems = ref([])
 const usageRemaining = ref(0)
 
+function showToast(title = '', icon = 'none') {
+  if (typeof uni !== 'undefined' && typeof uni.showToast === 'function') {
+    uni.showToast({
+      title: String(title || ''),
+      icon,
+      duration: 2000
+    })
+    return
+  }
+  console.info(String(title || ''))
+}
+
+function confirmAction(content = '') {
+  if (typeof uni !== 'undefined' && typeof uni.showModal === 'function') {
+    return new Promise(resolve => {
+      uni.showModal({
+        title: '提示',
+        content: String(content || ''),
+        success: result => resolve(Boolean(result?.confirm)),
+        fail: () => resolve(false)
+      })
+    })
+  }
+  return Promise.resolve(false)
+}
+
 const canGenerate = computed(() => {
   return userInfo.value && userInfo.value._id
 })
@@ -307,7 +333,7 @@ const loadUserData = async () => {
 }
 
 const generatePoetry = async () => {
-  if (!poetryInput.value.trim()) return
+  if (!poetryInput.value.trim()) {return}
   
   generating.value = true
   generatedPoetry.value = ''
@@ -328,7 +354,7 @@ const generatePoetry = async () => {
     await loadUserData()
     
   } catch (error) {
-    alert(error.message || '生成失败')
+    showToast(error?.message || '生成失败')
   } finally {
     generating.value = false
   }
@@ -336,11 +362,11 @@ const generatePoetry = async () => {
 
 const copyPoetry = () => {
   navigator.clipboard.writeText(generatedPoetry.value)
-  alert('诗歌已复制到剪贴板')
+  showToast('诗歌已复制到剪贴板', 'success')
 }
 
 const savePoetry = () => {
-  alert('诗歌已收藏到个人文库')
+  showToast('诗歌已收藏到个人文库', 'success')
 }
 
 const upgradeToBasic = () => {
@@ -348,12 +374,12 @@ const upgradeToBasic = () => {
   const paymentId = 'pay_' + Date.now()
   authAPI.upgradePlan(userInfo.value._id, 'basic', paymentId)
     .then(() => {
-      alert('升级成功！立即享受基础版特权')
+      showToast('升级成功！立即享受基础版特权', 'success')
       showUpgrade.value = false
       loadUserData()
     })
     .catch(error => {
-      alert('升级失败：' + error.message)
+      showToast(`升级失败：${error?.message || ''}`)
     })
 }
 
@@ -361,20 +387,21 @@ const upgradeToPremium = () => {
   const paymentId = 'pay_' + Date.now()
   authAPI.upgradePlan(userInfo.value._id, 'premium', paymentId)
     .then(() => {
-      alert('升级成功！立即享受高级版特权')
+      showToast('升级成功！立即享受高级版特权', 'success')
       showUpgrade.value = false
       loadUserData()
     })
     .catch(error => {
-      alert('升级失败：' + error.message)
+      showToast(`升级失败：${error?.message || ''}`)
     })
 }
 
-const downgradeToFree = () => {
-  if (confirm('确定要降级到免费版吗？每日创作次数将限制在5首。')) {
+const downgradeToFree = async () => {
+  const shouldDowngrade = await confirmAction('确定要降级到免费版吗？每日创作次数将限制在5首。')
+  if (shouldDowngrade) {
     authAPI.upgradePlan(userInfo.value._id, 'free', '')
       .then(() => {
-        alert('已切换到免费版')
+        showToast('已切换到免费版', 'success')
         showUpgrade.value = false
         loadUserData()
       })
@@ -387,7 +414,7 @@ const getPlanName = (plan) => {
 }
 
 const formatDate = (dateStr) => {
-  if (!dateStr) return '永久'
+  if (!dateStr) {return '永久'}
   return new Date(dateStr).toLocaleDateString('zh-CN')
 }
 </script>

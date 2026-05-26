@@ -1,5 +1,5 @@
 ﻿<template>
-  <view class="min-h-screen bg-[#F8F6F0]">
+  <view id="index-page" class="min-h-screen bg-[#F8F6F0]">
     <!-- 自定义导航栏 -->
     <CustomNavbar title="植伴" />
 
@@ -39,7 +39,7 @@
           </button>
         </view>
         <!-- 植物卡片列表 -->
-        <view v-else class="p-4">
+        <view v-else id="index-plant-list" class="p-4">
           <uni-collapse @change="handleCollapseChange">
             <uni-collapse-item
               v-for="plant in plantStore.userPlants"
@@ -108,19 +108,20 @@
               <!-- 折叠面板内容 -->
               <view class="px-3 py-2">
                 <!-- 诊断历史 -->
-                <view class="mb-3">
+                <view :id="`index-diagnose-history-section-${plant.id}`" class="mb-3">
                   <text class="block text-sm font-semibold text-gray-800 mb-2">📋 诊断历史</text>
 
                   <!-- 加载中 -->
-                  <view v-if="loadingHistory[plant.id]" class="text-center py-4">
+                  <view v-if="loadingHistory[plant.id]" :id="`index-diagnose-history-loading-${plant.id}`" class="text-center py-4">
                     <text class="text-xs text-gray-400">加载中...</text>
                   </view>
 
                   <!-- 历史记录列表 -->
-                  <view v-else-if="plantDiagnoseHistory[plant.id]?.length > 0">
+                  <view v-else-if="plantDiagnoseHistory[plant.id]?.length > 0" :id="`index-diagnose-history-list-${plant.id}`">
                     <view
                       v-for="record in plantDiagnoseHistory[plant.id]"
                       :key="record._id"
+                      :id="`index-diagnose-record-${record._id}`"
                       class="bg-gray-50 rounded-xl p-2.5 mb-2"
                       @click="viewDiagnoseDetail(record._id)"
                     >
@@ -149,7 +150,7 @@
                   </view>
 
                   <!-- 空状态 -->
-                  <view v-else class="bg-gray-50 rounded-xl p-3 text-center">
+                  <view v-else :id="`index-diagnose-history-empty-${plant.id}`" class="bg-gray-50 rounded-xl p-3 text-center">
                     <text class="text-xs text-gray-400">暂无诊断记录</text>
                   </view>
                 </view>
@@ -253,7 +254,6 @@ import CustomNavbar from '@/components/CustomNavbar'
 import DiagnosePopup from '@/components/DiagnosePopup.vue'
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
-import { getCityNameByLocation } from '@/api/weather.js'
 import { getDiagnosisHistory } from '@/api/plants-http.js'
 import loading from '@/assets/icons/loading.svg'
 
@@ -277,8 +277,6 @@ const careTips = ref([
 onMounted(async () => {
   const systemInfo = uni.getSystemInfoSync()
   userStore.setNavbarHeight((systemInfo.statusBarHeight || 0) + 44)
-
-  getUserLocation()
 
   // 登录状态下加载用户植物
   if (await userStore.ensureLogin()) {
@@ -357,10 +355,10 @@ function formatTime(time) {
   const now = new Date()
   const diff = now - date
 
-  if (diff < 60000) return '刚刚'
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
-  if (diff < 604800000) return `${Math.floor(diff / 86400000)}天前`
+  if (diff < 60000) {return '刚刚'}
+  if (diff < 3600000) {return `${Math.floor(diff / 60000)}分钟前`}
+  if (diff < 86400000) {return `${Math.floor(diff / 3600000)}小时前`}
+  if (diff < 604800000) {return `${Math.floor(diff / 86400000)}天前`}
 
   return `${date.getMonth() + 1}月${date.getDate()}日`
 }
@@ -405,7 +403,7 @@ function handlePhoneLoginUnavailable() {
 }
 
 async function loadUserPlants() {
-  if (loaded.value) return
+  if (loaded.value) {return}
   loaded.value = false
 
   try {
@@ -415,37 +413,6 @@ async function loadUserPlants() {
   } finally {
     loaded.value = true
     console.log(loaded, 'loaded')
-  }
-}
-
-async function getUserLocation() {
-  try {
-    const res = await new Promise((resolve, reject) => {
-      uni.getLocation({
-        type: 'gcj02',
-        success: resolve,
-        fail: reject
-      })
-    })
-
-    // 根据经纬度获取真实城市名称
-    const cityInfo = await getCityNameByLocation(res.latitude, res.longitude)
-
-    userStore.setLocation({
-      latitude: res.latitude,
-      longitude: res.longitude,
-      city: cityInfo.city || '当前位置',
-      province: cityInfo.province || ''
-    })
-  } catch (error) {
-    console.error('获取位置信息失败:', error)
-    // 如果获取位置失败，使用默认城市或保持为空
-    userStore.setLocation({
-      latitude: null,
-      longitude: null,
-      city: '当前位置',
-      province: ''
-    })
   }
 }
 
