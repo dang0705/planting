@@ -52,3 +52,43 @@ jobs:
 
       - name: Build Weixin mini program
         run: npm run build:mp-weixin:ci
+
+  release-preflight:
+    name: Deploy CloudBase and Weixin Mini Program / release preflight
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TARGET_ENV: dev
+      VITE_APP_ENV: development
+      APP_ENV: development
+      CLOUDBASE_ENV_ID: cloud1-2grufevs395a9d5e
+      TCB_ENV: cloud1-2grufevs395a9d5e
+      VITE_CLOUDBASE_ENV_ID: cloud1-2grufevs395a9d5e
+      WECHAT_MINIPROGRAM_APPID: wx85bb3976301f75fb
+      CLOUDBASE_DEPLOY_FUNCTIONS: diagnose-http
+      MINIPROGRAM_CI_ACTION: preview
+      DEPLOY_CLOUDBASE: 'false'
+      MINIPROGRAM_CI_ROBOT: '1'
+
+    steps:
+      - name: Checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+          git init "${GITHUB_WORKSPACE}"
+          git -C "${GITHUB_WORKSPACE}" remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          GIT_TERMINAL_PROMPT=0 git -C "${GITHUB_WORKSPACE}" fetch --no-tags --prune --depth=1 origin "${GITHUB_REF}"
+          git -C "${GITHUB_WORKSPACE}" checkout --force FETCH_HEAD
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: CloudBase deploy dry run
+        run: node scripts/deploy-cloudbase-functions.mjs --dry-run --functions="${CLOUDBASE_DEPLOY_FUNCTIONS}" --env-id="${CLOUDBASE_ENV_ID}"
+
+      - name: miniprogram-ci dry run
+        run: node scripts/deploy-miniprogram-ci.mjs --dry-run --action="${MINIPROGRAM_CI_ACTION}" --appid="${WECHAT_MINIPROGRAM_APPID}"
