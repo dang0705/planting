@@ -123,6 +123,14 @@ diagnose-http, plant-catalog-http, plant-user-http, identify-http, diagnosis-his
 
 如果 `.env.local` 或 shell 没有提供 CloudBase 凭据，脚本会在启动本地业务函数前失败并提示缺少 `SecretId` / `SecretKey`。如果 3010 上已经跑着旧 gateway，但业务探针仍返回 `secret id error`，脚本也会失败并提示检查本地凭据。不要用空值、旧泄漏值或已提交文件兜底；应在未提交的 `.env.local` 中配置已轮换的最小权限密钥。
 
+如果业务探针报：
+
+```text
+Database connection failed, please check the corresponding database connection configuration
+```
+
+说明密钥已经通过签名，但 SQL 连接配置或权限没有通过。先确认当前 shell 没有用旧的 `CLOUDBASE_*` / `TENCENT_*` 覆盖 `.env.local`，再确认 CloudBase 关系型数据库实例为 `READY` 且密钥账号有目标环境 SQL 权限。如 CloudBase 控制台使用了非默认数据库连接名，可在 `.env.local` 设置 `CLOUDBASE_SQL_DBLINK_NAME`；不确定时保持为空，默认使用内置 MySQL 连接。
+
 该脚本会设置：
 
 ```text

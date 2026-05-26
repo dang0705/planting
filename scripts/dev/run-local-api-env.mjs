@@ -52,7 +52,20 @@ const FUNCTIONS_REQUIRING_CLOUDBASE_CREDENTIALS = new Set([
   'weather-http'
 ])
 const FUNCTION_BUSINESS_PROBES = {
-  'plant-user-http': 'plant-user-http/user-plants?page=1&pageSize=1&skipAuth=true'
+  'plant-user-http': {
+    path: 'plant-user-http/user-plants?page=1&pageSize=1&skipAuth=true'
+  },
+  'weather-http': {
+    path: 'weather-http/weather/current',
+    method: 'POST',
+    body: {
+      lat: 31.22352,
+      lng: 121.45591,
+      city: '上海市',
+      province: '上海市',
+      useCache: true
+    }
+  }
 }
 
 function getFirstLanAddress() {
@@ -359,21 +372,24 @@ async function assertLocalBusinessRoutesReady(apiBaseUrl = '', options = {}) {
   const unavailable = []
 
   for (const functionName of options.requiredFunctions || []) {
-    const probePath = FUNCTION_BUSINESS_PROBES[functionName]
-    if (!probePath) {
+    const probe = FUNCTION_BUSINESS_PROBES[functionName]
+    if (!probe?.path) {
       continue
     }
 
-    const url = `${baseUrl}/${probePath}`
+    const url = `${baseUrl}/${probe.path}`
     try {
       const { response, body } = await fetchJsonWithTimeout(url, {
+        method: probe.method || 'GET',
         headers: {
+          'Content-Type': 'application/json',
           'x-app-env': 'development',
           'x-env': 'development',
           'x-wx-openid': options.openid || DEFAULT_OPENID,
           'x-openid': options.openid || DEFAULT_OPENID,
           'x-terminal-e2e': 'true'
-        }
+        },
+        body: probe.body ? JSON.stringify(probe.body) : undefined
       })
       if (!response.ok || body?.code !== 200) {
         unavailable.push(`${functionName}: ${response.status} ${body?.message || response.statusText}`)
@@ -388,9 +404,29 @@ async function assertLocalBusinessRoutesReady(apiBaseUrl = '', options = {}) {
       'LOCAL_FUNCTION_BUSINESS_ROUTES_NOT_READY',
       '本地 CloudBase 函数业务探针未通过。\n' +
         unavailable.map(item => `- ${item}`).join('\n') +
-        '\n请检查 .env.local 中的 CloudBase SecretId/SecretKey 是否存在、已轮换且有目标环境 SQL 权限。'
+        buildLocalBusinessRouteHint(unavailable)
     )
   }
+}
+
+function buildLocalBusinessRouteHint(unavailable = []) {
+  const message = unavailable.join('\n').toLowerCase()
+  if (message.includes('secret id error') || message.includes('sign_param_invalid')) {
+    return '\n请检查 .env.local 中的 CloudBase SecretId/SecretKey 是否存在、已轮换且有目标环境 SQL 权限。'
+  }
+  if (
+    message.includes('database connection failed') ||
+    message.includes('run query failed') ||
+    message.includes('please check the corresponding database connection configuration')
+  ) {
+    return (
+      '\nCloudBase 密钥已进入 SQL 调用，但数据库连接配置未通过。请检查：\n' +
+      '- 当前 shell 是否用旧的 CLOUDBASE_* / TENCENT_* 覆盖了 .env.local。\n' +
+      '- CloudBase 关系型数据库实例是否 READY，且密钥账号有该环境 SQL 权限。\n' +
+      '- 如控制台使用非默认数据库连接名，在 .env.local 设置 CLOUDBASE_SQL_DBLINK_NAME。'
+    )
+  }
+  return '\n请检查本地 gateway 日志和 .env.local 中的 CloudBase / 业务环境配置。'
 }
 
 async function assertLocalRuntimeReady(apiBaseUrl = '', options = {}) {

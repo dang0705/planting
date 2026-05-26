@@ -124,6 +124,38 @@ function buildCloudbaseInitOptions(context) {
   return options
 }
 
+function resolveSqlRunConfig(env = process.env) {
+  const dbLinkName = String(
+    env.CLOUDBASE_SQL_DBLINK_NAME ||
+      env.CLOUDBASE_SQL_DB_LINK_NAME ||
+      env.SQL_DBLINK_NAME ||
+      env.SQL_DB_LINK_NAME ||
+      ''
+  ).trim()
+  const timeout = Number(env.CLOUDBASE_SQL_TIMEOUT || env.SQL_TIMEOUT || '')
+  const config = {}
+
+  if (dbLinkName) {
+    config.dbLinkName = dbLinkName
+  }
+  if (Number.isFinite(timeout) && timeout > 0) {
+    config.timeout = Math.min(15, timeout)
+  }
+
+  return config
+}
+
+function hasSqlRunConfig(config = {}) {
+  return Object.keys(config).length > 0
+}
+
+function runCloudbaseSql(app, sql, params, config) {
+  if (hasSqlRunConfig(config)) {
+    return app.models.$runSQL(sql, params, config)
+  }
+  return app.models.$runSQL(sql, params)
+}
+
 /**
  * 获取 CloudBase 实例（单例模式）
  */
@@ -209,11 +241,12 @@ const models = {
   async $runSQL(sql, params = {}) {
     const app = getCloudBase()
     const normalizedSql = qualifySqlTableNames(sql, resolveSqlDatabaseName())
+    const sqlConfig = resolveSqlRunConfig()
     let lastError = null
 
     for (let attempt = 1; attempt <= RUN_SQL_RETRY_LIMIT; attempt += 1) {
       try {
-        return await app.models.$runSQL(normalizedSql, params)
+        return await runCloudbaseSql(app, normalizedSql, params, sqlConfig)
       } catch (error) {
         lastError = error
         if (!isRetryableRunSqlError(error) || attempt >= RUN_SQL_RETRY_LIMIT) {
@@ -257,5 +290,6 @@ module.exports = {
   ai,
   storage,
   getUserInfo,
-  resolveCloudbaseCredentials
+  resolveCloudbaseCredentials,
+  resolveSqlRunConfig
 }
