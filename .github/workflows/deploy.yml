@@ -64,7 +64,14 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+          git init "${GITHUB_WORKSPACE}"
+          git -C "${GITHUB_WORKSPACE}" remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          GIT_TERMINAL_PROMPT=0 git -C "${GITHUB_WORKSPACE}" fetch --no-tags --prune --depth=1 origin "${GITHUB_REF}"
+          git -C "${GITHUB_WORKSPACE}" checkout --force FETCH_HEAD
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -115,7 +122,14 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+          git init "${GITHUB_WORKSPACE}"
+          git -C "${GITHUB_WORKSPACE}" remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          GIT_TERMINAL_PROMPT=0 git -C "${GITHUB_WORKSPACE}" fetch --no-tags --prune --depth=1 origin "${GITHUB_REF}"
+          git -C "${GITHUB_WORKSPACE}" checkout --force FETCH_HEAD
 
       - name: Resolve non-secret release inputs
         shell: bash

@@ -30,3 +30,4 @@
 - 生产 CloudBase 部署必须显式配置 `CLOUDBASE_DEPLOY_FUNCTIONS`，禁止漏配后默认全量发布。
 - `npm test` 当前依赖本地未跟踪 route 测试文件；发布 workflow 暂用 `test:ci`，待这些测试文件正式入库后再恢复完整测试闸门。
 - PR 前置闸门只允许 dry-run 和构建验证，不得读取微信小程序私钥、腾讯云 Secret，也不得执行 CloudBase 真部署或 `miniprogram-ci` preview/upload。
+- 如果 `actions/checkout` 在公开仓库中因 `Your account is suspended` 或 token 侧权限问题失败，PR 闸门会在真正验证前被阻断；可改用无 token 的只读 `git fetch` checkout step，避免把 GITHUB_TOKEN 作为拉代码依赖。
