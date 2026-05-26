@@ -10,6 +10,8 @@
   - `target_env`：`dev` / `prod`
   - `miniprogram_action`：`preview` / `upload`
   - `deploy_cloudbase`：是否部署 CloudBase 函数
+  - `cloudbase_env_id`：可选，非敏感 CloudBase 环境 ID 覆盖；留空时优先使用 GitHub Environment Variable，`dev` 再回退到仓库默认开发环境 ID
+  - `wechat_miniprogram_appid`：可选，非敏感小程序 appid 覆盖；留空时优先使用 GitHub Environment Variable，再回退到项目配置中的 appid
 
 `prod` 应绑定 GitHub Environment 审批。正式小程序上传前必须先跑 `prod + preview + deploy_cloudbase=false`，只验证小程序预览包，不改生产后端；确认二维码、日志和配置后，再执行需要后端变更的发布。
 
@@ -32,7 +34,7 @@
 | Secrets | `TENCENT_SECRET_KEY` | CloudBase 发布专用子账号 SecretKey |
 | Secrets | `WECHAT_MINIPROGRAM_PRIVATE_KEY` | 微信小程序 CI 私钥内容 |
 
-生产环境必须使用最小权限子账号，不复用个人长期主账号密钥。
+`cloudbase_env_id` 和 `wechat_miniprogram_appid` 只是非敏感兜底输入。生产环境仍必须使用 Environment Variable/Secret 和最小权限子账号，不复用个人长期主账号密钥。
 
 ## 流程
 
@@ -94,7 +96,7 @@ node scripts/deploy-miniprogram-ci.mjs --dry-run --action=preview --appid=<appid
 | `npm ci --legacy-peer-deps` | lockfile 是否与 `package.json` 同步 | 本地重跑 `npm ci --legacy-peer-deps`，确认没有手工改 `node_modules` 后再提交 lockfile |
 | `npm run check:secrets` | 报错文件是否为已跟踪文件或新增待提交文件 | 移除明文值，改成环境变量或占位符；若已暴露，先轮换再继续 |
 | `npm run lint` | 是否为本次 diff 引入的新 error | 先修 error；warning 不作为当前发布阻断，但不要新增无意义 warning |
-| `build:mp-weixin:ci` | `VITE_APP_ENV`、`VITE_CLOUDBASE_ENV_ID` 是否来自目标 Environment | 不要回退到 Windows `set VAR=...&&` 脚本；在 workflow env 中修正 |
+| `build:mp-weixin:ci` | `VITE_APP_ENV`、`VITE_CLOUDBASE_ENV_ID` 是否来自目标 Environment 或手动非敏感输入 | 不要回退到 Windows `set VAR=...&&` 脚本；`prod` 不允许靠 dev 默认 envId 发布 |
 | `deploy:functions:ci` | CloudBase envId、函数列表、专用子账号权限 | 先用 `--dry-run` 确认函数列表，再查脱敏 `tcb fn detail` 摘要；生产 preview-only 必须设置 `deploy_cloudbase=false` |
 | 诊断 smoke | 目标 env、`diagnose-http` 是否已部署、匿名/测试登录是否可用 | 不要用部署成功代替 smoke；失败时保留请求 ID 和函数日志 |
 | `deploy:miniprogram:ci` | appid、私钥、IP 白名单、构建目录 | 先跑 `preview`，确认二维码 artifact；`upload` 失败时不要把私钥或完整环境变量写入日志 |
