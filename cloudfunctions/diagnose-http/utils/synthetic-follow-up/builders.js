@@ -25,6 +25,12 @@ const { buildOrthogonalProbeText } = require('./probe-text')
 const { buildSyntheticObservedProbeOptionTexts } = require('./probe-options')
 const { isDisabledYellowingFlowQuestion } = require('../yellowing-question-policy')
 
+function resolveSyntheticUiVariant(targetDimension = '', dataLayerQuestion = null) {
+  const explicitUiVariant = normalizeText(dataLayerQuestion?.uiVariant)
+  if (explicitUiVariant) {return explicitUiVariant}
+  return targetDimension === 'watering_frequency_context' ? 'care_behavior_timeline' : ''
+}
+
 function buildSyntheticObservedProbeQuestions(
   item = {},
   {
@@ -90,7 +96,7 @@ function buildSyntheticObservedProbeQuestions(
         questionRole,
         effectMode: inferQuestionEffectMode(questionRole, targetDimension),
         defaultOptionKey,
-        uiVariant: normalizeText(dataLayerQuestion?.uiVariant),
+        uiVariant: resolveSyntheticUiVariant(targetDimension, dataLayerQuestion),
         renderMode: normalizeText(dataLayerQuestion?.renderMode),
         questionText: renderQuestionTemplate(
           dataLayerQuestion?.questionTextUserCn || dataLayerQuestion?.questionTextCn || probeText.questionText,

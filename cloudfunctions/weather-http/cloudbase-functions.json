@@ -13,6 +13,10 @@
     },
     {
       "functionName": "weather-http",
+      "path": "/weather/environment-context"
+    },
+    {
+      "functionName": "weather-http",
       "path": "/weather/health"
     }
   ]

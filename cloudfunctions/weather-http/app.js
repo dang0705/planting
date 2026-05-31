@@ -12,9 +12,10 @@ const {
   runWithRequestAppEnv,
   resolveHttpUserInfo
 } = require('/opt/utils/http')
+const { buildEnvironmentWeatherWindow } = require('./services/weather-window-service')
 
 const QWEATHER_CONFIG = {
-  apiUrl: 'https://n773jqqeap.re.qweatherapi.com/v7/weather/now',
+  baseUrl: process.env.QWEATHER_API_BASE_URL || 'https://n773jqqeap.re.qweatherapi.com',
   apiKey: process.env.QWEATHER_API_KEY
 }
 const WEATHER_CITY_CACHE_TTL_MS = 24 * 60 * 60 * 1000
@@ -87,7 +88,7 @@ async function fetchWeather(lat, lng) {
   if (!QWEATHER_CONFIG.apiKey) {
     throw new Error('缺少环境变量 QWEATHER_API_KEY')
   }
-  const url = `${QWEATHER_CONFIG.apiUrl}?location=${lng},${lat}&key=${QWEATHER_CONFIG.apiKey}`
+  const url = `${QWEATHER_CONFIG.baseUrl}/v7/weather/now?location=${lng},${lat}&key=${QWEATHER_CONFIG.apiKey}`
   const response = await axios.get(url, {
     timeout: 10000,
     headers: {
@@ -315,6 +316,37 @@ async function main(event, context) {
   try {
     if (path.includes('/weather/health')) {
       return jsonResponse(200, { code: 200, data: { status: 'ok', timestamp: Date.now() } })
+    }
+
+    if (path.includes('/weather/environment-context') || path.includes('/weather/v7/environment-context')) {
+      if (!['GET', 'POST'].includes(method)) {
+        return methodNotAllowed(method)
+      }
+
+      const payload = method === 'GET' ? request.query : request.body
+      const lat = payload.lat
+      const lng = payload.lng
+      if (!lat || !lng) {
+        return jsonResponse(400, { code: 400, message: '缺少位置参数：lat 和 lng', data: null })
+      }
+
+      const weatherWindow = await buildEnvironmentWeatherWindow({
+        lat,
+        lng,
+        diagnosisDate: payload.diagnosisDate || payload.diagnosis_date || payload.date,
+        appEnv,
+        apiKey: QWEATHER_CONFIG.apiKey,
+        baseUrl: QWEATHER_CONFIG.baseUrl
+      })
+
+      return jsonResponse(200, {
+        code: 200,
+        message: '获取成功',
+        data: {
+          ...weatherWindow,
+          timestamp: new Date().toISOString()
+        }
+      })
     }
 
     if (!path.includes('/weather/current')) {
