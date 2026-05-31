@@ -580,6 +580,7 @@ import { useCloudImageUploader } from '@/composables/useCloudImageUploader'
 import { useDiagnoseMutation } from '@/vue-query/diagnose/mutations/useDiagnoseMutation.js'
 import { useDiagnosisQuestionStartMutation } from '@/vue-query/diagnose/mutations/useDiagnosisQuestionStartMutation.js'
 import { useDiagnoseFollowUpMutation } from '@/vue-query/diagnose/mutations/useDiagnoseFollowUpMutation.js'
+import { getEnvironmentWeatherWindow } from '@/api/weather.js'
 import CareBehaviorTimeline from '@/components/CareBehaviorTimeline.vue'
 import {
   normalizeDiagnosisResult,
@@ -595,8 +596,10 @@ import {
   isCareBehaviorTimelineSentinelAnswer,
   isLegacyWateringTimelineQuestion,
   isCareBehaviorWateringTimelineQuestion,
+  normalizeCareBehaviorTimeline,
   resolveCareBehaviorTimelineAutoAnswerOptionId
 } from '@/utils/care-behavior-timeline.js'
+import { mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline } from '@/utils/care-behavior-weather-window.js'
 import {
   PRIMARY_IMAGE_LIMIT,
   FOLLOW_UP_IMAGE_LIMIT,
@@ -640,6 +643,9 @@ const pendingDiagnosePayload = ref(null)
 const casePreviewImages = ref([])
 const followUpAnswers = ref({})
 const careBehaviorTimelineByQuestionId = ref({})
+const environmentWeatherWindow = ref(null)
+const environmentWeatherWindowRequestKey = ref('')
+const environmentWeatherWindowLoading = ref(false)
 const followUpQuestionStack = ref([])
 const activeFollowUpQuestionIndex = ref(0)
 const committedFollowUpAnswers = ref({})
@@ -1210,11 +1216,14 @@ function findFollowUpQuestionById(questionId = '') {
 
 function getCareBehaviorTimelineByQuestion(question = {}) {
   const questionId = getFollowUpQuestionId(question)
+  const fallbackTimeline = mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(
+    extractCareBehaviorTimelineFromQuestion(question),
+    environmentWeatherWindow.value
+  )
   if (!questionId) {
-    return extractCareBehaviorTimelineFromQuestion(question)
+    return fallbackTimeline
   }
-  return careBehaviorTimelineByQuestionId.value[questionId] ||
-    extractCareBehaviorTimelineFromQuestion(question)
+  return careBehaviorTimelineByQuestionId.value[questionId] || fallbackTimeline
 }
 
 function buildCareBehaviorTimelineByQuestionIdMap(questions = []) {
@@ -1223,8 +1232,12 @@ function buildCareBehaviorTimelineByQuestionIdMap(questions = []) {
     .reduce((acc, item) => {
       const questionId = getFollowUpQuestionId(item)
       if (!questionId) {return acc}
-      acc[questionId] = careBehaviorTimelineByQuestionId.value?.[questionId] ||
+      const sourceTimeline = careBehaviorTimelineByQuestionId.value?.[questionId] ||
         extractCareBehaviorTimelineFromQuestion(item)
+      acc[questionId] = mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(
+        sourceTimeline,
+        environmentWeatherWindow.value
+      )
       return acc
     }, {})
 }
@@ -1232,12 +1245,115 @@ function buildCareBehaviorTimelineByQuestionIdMap(questions = []) {
 function handleCareBehaviorTimelineChange(question, timeline = null) {
   const questionId = getFollowUpQuestionId(question)
   if (!questionId) {return}
-  const nextTimeline = timeline || {}
+  const currentTimeline = careBehaviorTimelineByQuestionId.value?.[questionId] || {}
+  const nextTimeline = mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(
+    timeline || {},
+    environmentWeatherWindow.value
+  )
+  if (getCareBehaviorTimelineChangeSignature(currentTimeline) === getCareBehaviorTimelineChangeSignature(nextTimeline)) {
+    syncCareBehaviorTimelineAnswer(question, Object.keys(currentTimeline).length ? currentTimeline : nextTimeline)
+    return
+  }
   careBehaviorTimelineByQuestionId.value = {
     ...careBehaviorTimelineByQuestionId.value,
     [questionId]: nextTimeline
   }
   syncCareBehaviorTimelineAnswer(question, nextTimeline)
+}
+
+function getCareBehaviorTimelineChangeSignature(timeline = null) {
+  const normalized = normalizeCareBehaviorTimeline(timeline || {})
+  return JSON.stringify({
+    reference_date: normalized.reference_date || '',
+    watering_events_10d: normalized.watering_events_10d || [],
+    fertilizing_events_10d: normalized.fertilizing_events_10d || [],
+    light_change_events_10d: normalized.light_change_events_10d || [],
+    last_fertilized_bucket: normalized.last_fertilized_bucket || 'unknown'
+  })
+}
+
+function resolveCareBehaviorReferenceDate(questions = []) {
+  const candidates = Array.isArray(questions) ? questions : []
+  for (const question of candidates) {
+    const timeline = extractCareBehaviorTimelineFromQuestion(question)
+    const referenceDate =
+      question?.referenceDate ||
+      question?.reference_date ||
+      question?.payload?.referenceDate ||
+      question?.payload?.reference_date ||
+      timeline?.reference_date ||
+      timeline?.referenceDate
+    if (referenceDate) {
+      return String(referenceDate).slice(0, 10)
+    }
+  }
+  return new Date().toISOString().slice(0, 10)
+}
+
+function resolveCareBehaviorWeatherLocation() {
+  const location = userStore.location || {}
+  const lat = Number(location.latitude ?? location.lat)
+  const lng = Number(location.longitude ?? location.lng)
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat === 0 || lng === 0) {
+    return null
+  }
+  return {
+    lat,
+    lng,
+    city: String(location.city || '').trim(),
+    province: String(location.province || '').trim()
+  }
+}
+
+function applyEnvironmentWeatherWindowToCareBehaviorTimelines() {
+  if (!environmentWeatherWindow.value) {return}
+  careBehaviorTimelineByQuestionId.value = Object.fromEntries(
+    Object.entries(careBehaviorTimelineByQuestionId.value || {}).map(([questionId, timeline]) => [
+      questionId,
+      mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(timeline, environmentWeatherWindow.value)
+    ])
+  )
+}
+
+async function refreshEnvironmentWeatherWindowForCareBehavior(questions = followUpQuestionStack.value) {
+  try {
+    const timelineQuestions = (Array.isArray(questions) ? questions : [])
+      .filter(item => isCareBehaviorWateringTimelineQuestion(item))
+    if (!timelineQuestions.length || environmentWeatherWindowLoading.value) {return}
+
+    const location = resolveCareBehaviorWeatherLocation()
+    if (!location) {return}
+
+    const diagnosisDate = resolveCareBehaviorReferenceDate(timelineQuestions)
+    const requestKey = [
+      location.lat.toFixed(5),
+      location.lng.toFixed(5),
+      location.city,
+      location.province,
+      diagnosisDate
+    ].join('|')
+    if (requestKey === environmentWeatherWindowRequestKey.value && environmentWeatherWindow.value) {
+      applyEnvironmentWeatherWindowToCareBehaviorTimelines()
+      return
+    }
+
+    environmentWeatherWindowLoading.value = true
+    const weatherWindow = await getEnvironmentWeatherWindow({
+      ...location,
+      diagnosisDate
+    })
+    if (weatherWindow) {
+      environmentWeatherWindow.value = weatherWindow
+      environmentWeatherWindowRequestKey.value = requestKey
+      applyEnvironmentWeatherWindowToCareBehaviorTimelines()
+    }
+  } catch (error) {
+    console.warn('获取养护时间线环境天气失败:', error)
+  } finally {
+    if (environmentWeatherWindowLoading.value) {
+      environmentWeatherWindowLoading.value = false
+    }
+  }
 }
 
 function syncCareBehaviorTimelineAnswer(question, timeline = null) {
@@ -1415,6 +1531,7 @@ function resetFollowUpQuestionState(followUps = [], { answerRevision = 0 } = {})
   dirtyFollowUpFromIndex.value = -1
   followUpAnswerRevision.value = Number(answerRevision || 0)
   expandedFollowUpOptionByQuestion.value = {}
+  refreshEnvironmentWeatherWindowForCareBehavior(nextFollowUps)
 }
 
 function mergeFollowUpQuestionState(nextResult = null, submittedPayload = null) {
@@ -1482,11 +1599,25 @@ function mergeFollowUpQuestionState(nextResult = null, submittedPayload = null) 
   followUpAnswerRevision.value = Number(nextResult?.answerRevision || followUpAnswerRevision.value || 0)
   activeFollowUpQuestionIndex.value = nextStack.length ? nextStack.length - 1 : 0
   expandedFollowUpOptionByQuestion.value = {}
+  refreshEnvironmentWeatherWindowForCareBehavior(nextStack)
 }
 
 onMounted(() => {
   refreshViewportHeight()
 })
+
+watch(
+  () => [
+    userStore.location?.latitude,
+    userStore.location?.longitude,
+    userStore.location?.city,
+    userStore.location?.province,
+    followUpQuestionStack.value.map(item => getFollowUpQuestionId(item)).join('|')
+  ],
+  () => {
+    refreshEnvironmentWeatherWindowForCareBehavior()
+  }
+)
 
 function open() {
   refreshViewportHeight()
@@ -2033,7 +2164,8 @@ async function submitFollowUps() {
         dirtyFollowUpFromIndex.value >= 0
           ? getFollowUpQuestionId(followUpQuestionStack.value[dirtyFollowUpFromIndex.value])
           : '',
-      careBehaviorTimelineByQuestionId: careBehaviorTimelineByQuestionId.value
+      careBehaviorTimelineByQuestionId: careBehaviorTimelineByQuestionId.value,
+      environmentWeatherWindow: environmentWeatherWindow.value
     })
     const rerunResult = await followUpMutation.mutateAsync(payload)
 

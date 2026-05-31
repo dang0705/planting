@@ -5,6 +5,7 @@
 
 import { WEATHER_CONFIG } from '@/config/weather'
 import { fetchCurrentWeatherQuery } from '@/vue-query/weather/queries/current-weather.js'
+import { fetchEnvironmentWeatherQuery } from '@/vue-query/weather/queries/environment-weather.js'
 
 const CITY_LOOKUP_CACHE_TTL_MS = 5 * 60 * 1000
 const CITY_LOOKUP_COORDINATE_PRECISION = 5
@@ -332,6 +333,36 @@ export async function getWeatherInfo(options = {}) {
       isFallback: true
     }
   }
+}
+
+export async function getEnvironmentWeatherWindow(options = {}) {
+  const {
+    lat,
+    lng,
+    diagnosisDate = '',
+    city = '',
+    province = ''
+  } = options
+  const normalizedLat = Number(lat)
+  const normalizedLng = Number(lng)
+
+  if (!Number.isFinite(normalizedLat) || !Number.isFinite(normalizedLng)) {
+    return null
+  }
+
+  const result = await fetchEnvironmentWeatherQuery({
+    lat: normalizedLat,
+    lng: normalizedLng,
+    diagnosisDate,
+    city,
+    province
+  })
+
+  if (result?.code === 200) {
+    return result.data || null
+  }
+
+  throw new Error(result?.message || '获取环境天气窗口失败')
 }
 
 export function formatWeatherDisplay(weatherData) {

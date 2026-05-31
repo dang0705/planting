@@ -221,6 +221,7 @@ export function buildFollowUpMutationPayload({
   baseAnswerRevision = 0,
   dirtyFromQuestionId = '',
   careBehaviorTimeline = null,
+  environmentWeatherWindow = null,
   ...careBehaviorSidecar
 }) {
   if (!diagnosisSessionId) {
@@ -255,6 +256,9 @@ export function buildFollowUpMutationPayload({
     ...(normalizedImages.length ? { images: normalizedImages } : {}),
     ...(latestVisualCallBatchId ? { latestVisualCallBatchId } : {}),
     ...(visualBatchTrace && typeof visualBatchTrace === 'object' ? { visualBatchTrace } : {}),
+    ...(environmentWeatherWindow && typeof environmentWeatherWindow === 'object'
+      ? { environmentWeatherWindow }
+      : {}),
     ...(hasSidecar
       ? { careBehaviorTimeline: normalizedSidecar }
       : {})

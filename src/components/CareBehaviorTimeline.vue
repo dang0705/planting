@@ -123,6 +123,7 @@ import {
   normalizeCareBehaviorTimeline
 } from '@/utils/care-behavior-timeline.js'
 import { formatWeatherText } from '@/utils/care-behavior-weather.js'
+import { buildWeatherByDateFromEnvironmentWeatherWindow } from '@/utils/care-behavior-weather-window.js'
 
 const weekLabels = ['日', '一', '二', '三', '四', '五', '六']
 const props = defineProps({
@@ -304,13 +305,12 @@ function normalizeWeatherInput(weatherInput = {}, fallbackDate = '') {
       return
     }
     if (candidate.environmentWeatherWindow && typeof candidate.environmentWeatherWindow === 'object') {
-      if (Array.isArray(candidate.environmentWeatherWindow)) {
-        candidate.environmentWeatherWindow.forEach(item => {
-          addMapEntry(getDate(item), item)
-        })
-      } else {
-        Object.entries(candidate.environmentWeatherWindow).forEach(([date, entry]) => addMapEntry(date, entry))
-      }
+      mergeFromObject(candidate.environmentWeatherWindow)
+      return
+    }
+    const environmentWindowWeatherByDate = buildWeatherByDateFromEnvironmentWeatherWindow(candidate)
+    if (Object.keys(environmentWindowWeatherByDate).length) {
+      Object.entries(environmentWindowWeatherByDate).forEach(([date, entry]) => addMapEntry(date, entry))
       return
     }
     if (candidate.timeline && typeof candidate.timeline === 'object') {

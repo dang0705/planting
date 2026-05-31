@@ -1073,7 +1073,10 @@ export function buildFollowUpPayload(result, answerMap = {}, options = {}) {
     answers,
     requestMode: options?.requestMode || (answers.length > 1 ? 'answer_revision' : 'answer_submit'),
     baseAnswerRevision: Number(options?.baseAnswerRevision || result?.answerRevision || 0),
-    dirtyFromQuestionId: String(options?.dirtyFromQuestionId || '').trim()
+    dirtyFromQuestionId: String(options?.dirtyFromQuestionId || '').trim(),
+    ...(options?.environmentWeatherWindow && typeof options.environmentWeatherWindow === 'object'
+      ? { environmentWeatherWindow: options.environmentWeatherWindow }
+      : {})
   }
 
   return appendCareBehaviorSidecar(basePayload, {

@@ -24,6 +24,7 @@ export function useDiagnoseFollowUpMutation() {
       onFinish,
       onError,
       careBehaviorTimeline = null,
+      environmentWeatherWindow = null,
       ...careBehaviorSidecar
     } = {}) => {
       try {
@@ -41,6 +42,7 @@ export function useDiagnoseFollowUpMutation() {
             baseAnswerRevision,
             dirtyFromQuestionId,
             careBehaviorTimeline,
+            environmentWeatherWindow,
             ...careBehaviorSidecar
           })
         )
