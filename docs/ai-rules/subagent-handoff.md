@@ -1,85 +1,168 @@
-# Subagent 交接与任务持久化规则
+# Subagent Handoff 规则
 
 ## 1. 定位
 
-本文件用于保证多 agent 任务可中断、可恢复、可审计，同时减少下游重复读取源文档。
+handoff 用于跨 subagent、跨回合、跨线程恢复任务状态。为控制 token，本文件采用“双层结构”：
 
-## 2. 持久化位置
+1. **轻量恢复摘要**：默认传给后续 agent，用于恢复上下文。
+2. **审计附录**：仅在排查、复盘、争议、失败归因或用户要求时读取。
 
-非简单任务默认创建或更新：
+默认只读取轻量恢复摘要，不读取审计附录。
 
-1. 运行交接：`docs/ai-runs/`
-2. 任务说明：`docs/ai-tasks/`，仅在需要正式拆解、跨轮恢复或多 agent 协作时使用
-3. 架构决策：`docs/adr/`，仅在存在长期架构取舍时使用
+---
 
-如果是一次性只读分析、纯配置检查或 main agent 可在当前会话内闭环的轻量非简单任务，可以不落正式文件，但必须在最终汇总中说明“不创建 handoff / task”的理由。
+## 2. 轻量恢复摘要
 
-非简单代码实现任务完成后，必须创建或更新 `docs/ai-runs/` handoff。不得只在实现 agent 输出里写一段 `Handoff` 摘要而不落文件；如果用户明确要求不落文档或本轮无代码实现，必须在最终汇总中说明裁剪理由。
-
-## 3. Handoff 必须包含
-
-1. 结论。
-2. 证据。
-3. 相关文件。
-4. 已读取规则。
-5. main agent 提供的规则摘要。
-6. 仍需读取的原文规则 / 章节。
-7. 风险。
-8. 验证状态。
-9. 下一步建议。
-10. 目标验收契约：bug 发生位置、观察入口、用户可见成功标准、必须验证字段 / 证据、快捷路径 / 主链守卫一致性、非目标。
-11. 若涉及客户端运行时或最终展示，必须记录前端消费面是否已检查，例如 result/read、normalize、follow-up、diagnose 页面。
-12. 非简单实现最小闭环：task_planner planning、实现前 architect 架构分析、实现、实现后 architect 代码 review、QA、handoff、文档同步判断的完成状态或裁剪理由。
-13. Subagent 线程复用表：`role -> agent_id/thread_id -> 状态 -> 最近任务 -> 复用/重开说明`。
-14. 若涉及 `diagnose-http`、route、outcome、gate、runtime、问诊路径、`fast path`、`warm path`、`early return`、缓存命中或性能优化路径，必须记录主链输出点、快捷路径输出点、共享 guard、负向回归样本、正向闭合样本、真实 smoke / DB 证据要求。
-15. 专用角色可用性与 fallback 记录：每个逻辑角色都必须记录 `requested_agent_type`、`spawn_result`、`actual_agent_type`、`fallback_reason`、`expected_model/reasoning/profile/sandbox`、`observed_or_requested_model/reasoning/profile/sandbox`、`config_match`。如果使用 `default` 替代，必须写明该线程不是原生专用角色。
-
-## 4. 线程恢复
-
-Main agent 接手时优先读取：
-
-1. `AGENTS.md`
-2. 最新 `docs/ai-runs/` handoff
-3. 对应 `docs/ai-tasks/`
-4. 必要 `docs/ai-rules/`
-5. 当前 git diff 与验证结果
-
-Subagent 接手时默认只读取：
-
-1. Dispatch Plan
-2. main agent 规则摘要
-3. 最新 handoff 中与自身角色相关的部分
-4. 当前 diff 或指定文件
-5. Dispatch Plan 指定的少量规则文件 / 章节
-
-Subagent 不应因为 handoff 提到某个长文档路径就自行全量读取该文档。
-
-## 5. Subagent 线程复用表
-
-同一会话中同一角色必须复用同一线程。handoff 应记录：
+轻量恢复摘要是默认 handoff。目标是让后续 agent 能继续工作，而不是复述所有过程。
 
 ```text
-| logical_role | requested_agent_type | actual_agent_type | agent_id/thread_id | 状态 | fallback_reason / 复用说明 |
-|---|---|---|---|---|---|
-| task_planner | task_planner |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
-| code_explorer | code_explorer |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
-| architect_reviewer | architect_reviewer |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
-| implementer_fast | implementer_fast |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
-| implementer_deep | implementer_deep |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
-| qa_reviewer | qa_reviewer |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
-| docs_keeper | docs_keeper |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
-| release_ops | release_ops |  |  | 未开启 / 活跃 / 已关闭 / 已废弃 |  |
+Handoff Resume Summary:
+- task_id / ticket_id:
+- ClickUp Comment Context:
+  - has_comment_target:
+  - comment_id:
+  - comment_read_status:
+  - comment_hard_constraints_ref:
+- logical_role:
+- current_status: pending / in_progress / blocked / done
+- 本轮目标:
+- 已完成:
+- 未完成:
+- 当前阻塞:
+- 下一步动作:
+- 涉及文件:
+- 允许修改范围:
+- 禁止修改范围:
+- 关键决策:
+- role_context_packet:
+  - architect:
+  - implementer:
+  - QA:
+  - docs:
+- 需要复用的结论:
+- 不需要重复读取:
+- 需要回查的审计附录: 否 / 是，条目：
+- Git Workspace / Commit:
+  - branch:
+  - dirty_level:
+  - pre_task_dirty_files:
+  - task_changed_files:
+  - commit_required: yes / no
+  - commit_hash:
 ```
 
-如果未开启 subagent，记录“未开启 subagent，无需线程复用”。如果重开同角色线程，必须记录旧线程状态、重开原因和替换依据。如果 `actual_agent_type=default`，必须以 `logical_role` 作为复用主键，并写明 `requested_agent_type` 不可用的原因。
+### 2.1 轻量摘要写法要求
 
+1. 控制在最小可恢复范围。
+2. 不粘贴完整日志、完整测试输出、完整 Figma Drilldown、完整 ClickUp 描述。
+3. 只保留后续 agent 必须知道的决定、边界、文件、状态。
+4. 已在 role_context_packet 中提供的信息，不重复写长段解释。
+5. 若需要长证据，用“证据路径 / 附录编号”引用，不直接展开。
 
-## 6. 大目录索引命中记录
+---
 
-涉及 `docs/code-logics/` 或 `docs/new-rules/` 时，handoff 必须记录：
+## 3. 审计附录
 
-1. 已读取的 INDEX 文件。
-2. 命中的具体文档。
-3. 只读了哪些小节或摘要。
-4. 下游是否需要重复读取源文档，默认不需要。
-5. 如果索引无法定位，记录请求 main agent 补充摘要的原因。
+审计附录仅在需要时读取。它用于追溯，不用于默认上下文广播。
+
+```text
+Handoff Audit Appendix:
+- audit_id:
+- 触发原因:
+- 原始命令:
+- 完整命令输出路径:
+- 完整日志路径:
+- 截图 / 录屏 / DevTools 证据路径:
+- Figma MCP 原始读取记录:
+- ClickUp 原始硬约束摘录:
+- Git Commit 记录:
+  - branch:
+  - staged_files:
+  - commit_hash:
+  - commit_message:
+  - excluded_dirty_files:
+- Dirty Workspace 记录:
+  - base_ref:
+  - pre_task_dirty_files:
+  - implementer_changed_files:
+  - excluded_dirty_files:
+- 失败归因详情:
+- 回滚 / 恢复建议:
+```
+
+### 3.1 审计附录读取条件
+
+只有以下情况才读取审计附录：
+
+1. 任务失败，需要排查原因。
+2. architect、QA、implementer 结论冲突。
+3. 用户要求复盘。
+4. 需要证明某条验证证据。
+5. 需要恢复长任务，但轻量摘要不足。
+6. 需要区分本轮改动和历史脏改动。
+
+---
+
+## 4. 角色 handoff 要求
+
+### 4.1 architect_reviewer
+
+必须输出：
+
+- Implementation Contract 摘要。
+- Test Contract 摘要。
+- Review Scope 摘要。
+- 技术方向裁决。
+- 给 implementer 的最小执行契约。
+- 给 QA 的测试契约摘要。
+
+不得默认输出完整代码 review 长文；长 findings 放审计附录。
+
+### 4.2 implementer_fast / implementer_deep
+
+必须输出：
+
+- Contract 执行情况。
+- 修改文件清单。
+- 偏离契约之处。
+- 已补测试代码。
+- 未完成项。
+- 给 architect / QA 的最小复核摘要。
+
+不得粘贴完整 diff。
+
+### 4.3 qa_reviewer
+
+必须输出：
+
+- Test Contract 覆盖情况。
+- 测试执行矩阵。
+- 失败归因分类。
+- 证据路径。
+- 是否需要 implementer 返工。
+- 是否需要发布 / CloudBase 证据复核流程。
+
+不得粘贴完整日志、完整 DevTools dump 或完整截图 OCR。
+
+### 4.4 docs_keeper
+
+必须输出：
+
+- 是否需要文档同步。
+- 已更新文档。
+- 未更新原因。
+- 是否同步索引。
+- 是否需要 main agent 复核。
+
+不得把完整文档正文放入 handoff；完整文档以文件路径引用。
+
+---
+
+## 5. 禁止事项
+
+1. 禁止把审计附录当默认 handoff 发送给所有 agent。
+2. 禁止在 handoff 中粘贴完整 ClickUp 描述。
+3. 禁止在 handoff 中粘贴完整 Figma Drilldown。
+4. 禁止在 handoff 中粘贴完整测试日志。
+5. 禁止重复写入已存在于 role_context_packets 的长内容。
+6. 禁止引用已删除角色。

@@ -29,9 +29,21 @@
                 {{ getQuestionHelpText(question) }}
               </text>
 
-              <view :id="`diagnose-followup-page-option-stack-${question.questionId || questionIndex}`" class="followup-option-stack followup-option-stack--accordion">
+              <CareBehaviorTimeline
+                v-if="isCareBehaviorWateringTimelineQuestion(question)"
+                :question-id="getFollowUpQuestionId(question)"
+                :question="question"
+                :timeline="getCareBehaviorTimelineByQuestion(question)"
+                @change="payload => handleCareBehaviorTimelineChange(question, payload)"
+              />
+
+              <view
+                v-if="getVisibleCareBehaviorOptions(question).length"
+                :id="`diagnose-followup-page-option-stack-${question.questionId || questionIndex}`"
+                class="followup-option-stack followup-option-stack--accordion"
+              >
                 <view
-                  v-for="(option, optionIndex) in question.options || []"
+                  v-for="(option, optionIndex) in getVisibleCareBehaviorOptions(question)"
                   :key="option.optionId || option.optionKey || option.text"
                   :id="`diagnose-followup-page-option-${question.questionId || questionIndex}-${option.optionId || option.optionKey || optionIndex}`"
                   class="followup-accordion-option"
@@ -248,12 +260,22 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useDiagnoseStore } from '@/store/diagnose.js'
+import CareBehaviorTimeline from '@/components/CareBehaviorTimeline.vue'
 import { useDiagnoseFollowUpMutation } from '@/vue-query/diagnose/mutations/useDiagnoseFollowUpMutation.js'
 import {
   normalizeDiagnosisResult,
   createFollowUpAnswerMap,
   buildFollowUpPayload
 } from '@/utils/diagnose-flow.js'
+import {
+  extractCareBehaviorTimelineFromQuestion,
+  getVisibleCareBehaviorOptions,
+  hasMeaningfulCareBehaviorTimeline,
+  isCareBehaviorTimelineSentinelAnswer,
+  isLegacyWateringTimelineQuestion,
+  isCareBehaviorWateringTimelineQuestion,
+  resolveCareBehaviorTimelineAutoAnswerOptionId
+} from '@/utils/care-behavior-timeline.js'
 
 const DEFAULT_CACHE_KEY = 'diagnose_follow_up_payload'
 
@@ -267,6 +289,7 @@ const images = ref([])
 const followUpQuestionStack = ref([])
 const activeFollowUpQuestionIndex = ref(0)
 const followUpAnswers = ref({})
+const careBehaviorTimelineByQuestionId = ref({})
 const committedFollowUpAnswers = ref({})
 const dirtyFollowUpFromIndex = ref(-1)
 const followUpAnswerRevision = ref(0)
@@ -664,13 +687,14 @@ function estimateFollowUpSwiperHeight(question) {
   const questionHelpText = getQuestionHelpText(question)
   const questionExtraRows = Math.ceil(Math.max(questionText.length - 26, 0) / 22)
   const helpExtraRows = questionHelpText ? Math.ceil(questionHelpText.length / 34) : 0
+  const timelineHeight = isCareBehaviorWateringTimelineQuestion(question) ? 220 : 0
   const baseHeight = 118 + questionExtraRows * 18 + helpExtraRows * 16
   const optionHeight = options.reduce((sum, option) => {
     const optionTitle = getOptionText(question, option)
     const titleRows = Math.max(1, Math.ceil(String(optionTitle || '').length / 18))
     return sum + 52 + Math.max(0, titleRows - 1) * 18
   }, 0)
-  return Math.max(280, Math.min(820, baseHeight + optionHeight + 72))
+  return Math.max(280, Math.min(1020, baseHeight + optionHeight + timelineHeight + 72))
 }
 
 function sanitizeTemplateText(value = '') {
@@ -853,6 +877,72 @@ function getFollowUpQuestionId(question) {
   return String(question?.questionId || '').trim()
 }
 
+function findFollowUpQuestionById(questionId = '') {
+  const normalizedQuestionId = String(questionId || '').trim()
+  if (!normalizedQuestionId) {return null}
+  return followUpQuestionStack.value.find(item => getFollowUpQuestionId(item) === normalizedQuestionId) || null
+}
+
+function getCareBehaviorTimelineByQuestion(question = {}) {
+  const questionId = getFollowUpQuestionId(question)
+  if (!questionId) {
+    return extractCareBehaviorTimelineFromQuestion(question)
+  }
+  return careBehaviorTimelineByQuestionId.value[questionId] ||
+    extractCareBehaviorTimelineFromQuestion(question)
+}
+
+function buildCareBehaviorTimelineByQuestionIdMap(questions = []) {
+  return (Array.isArray(questions) ? questions : [])
+    .filter(item => isCareBehaviorWateringTimelineQuestion(item))
+    .reduce((acc, item) => {
+      const questionId = getFollowUpQuestionId(item)
+      if (!questionId) {return acc}
+      acc[questionId] = careBehaviorTimelineByQuestionId.value?.[questionId] ||
+        extractCareBehaviorTimelineFromQuestion(item)
+      return acc
+    }, {})
+}
+
+function handleCareBehaviorTimelineChange(question, timeline = null) {
+  const questionId = getFollowUpQuestionId(question)
+  if (!questionId) {return}
+  const nextTimeline = timeline || {}
+  careBehaviorTimelineByQuestionId.value = {
+    ...careBehaviorTimelineByQuestionId.value,
+    [questionId]: nextTimeline
+  }
+  syncCareBehaviorTimelineAnswer(question, nextTimeline)
+}
+
+function syncCareBehaviorTimelineAnswer(question, timeline = null) {
+  const questionId = getFollowUpQuestionId(question)
+  if (!questionId) {return}
+
+  const currentOptionId = String(followUpAnswers.value[questionId] || '').trim()
+  const resolvedOptionId = resolveCareBehaviorTimelineAutoAnswerOptionId(question)
+  const meaningfulTimeline = hasMeaningfulCareBehaviorTimeline(timeline)
+  const visibleOptions = getVisibleCareBehaviorOptions(question)
+  const nextAnswerId = meaningfulTimeline
+    ? (isLegacyWateringTimelineQuestion(question) ? 'care_behavior_timeline' : resolvedOptionId)
+    : ''
+
+  if (nextAnswerId) {
+    if (currentOptionId !== nextAnswerId) {
+      setFollowUpAnswer(questionId, nextAnswerId)
+    }
+    return
+  }
+
+  if (!meaningfulTimeline && visibleOptions.some(option => String(option?.optionId || '').trim() === currentOptionId)) {
+    return
+  }
+
+  if (currentOptionId) {
+    setFollowUpAnswer(questionId, '')
+  }
+}
+
 function getFollowUpOptionId(option) {
   return String(option?.optionId || '').trim()
 }
@@ -931,6 +1021,21 @@ function setFollowUpAnswer(questionId, answerValue) {
     ...followUpAnswers.value,
     [questionId]: answerValue
   }
+
+  const question = findFollowUpQuestionById(questionId)
+  if (!question || !isCareBehaviorWateringTimelineQuestion(question)) {
+    return
+  }
+
+  const answerId = String(answerValue || '').trim()
+  const autoAnswerId = resolveCareBehaviorTimelineAutoAnswerOptionId(question)
+  if (isCareBehaviorTimelineSentinelAnswer(question, answerId) || answerId === autoAnswerId) {
+    return
+  }
+  careBehaviorTimelineByQuestionId.value = {
+    ...careBehaviorTimelineByQuestionId.value,
+    [questionId]: {}
+  }
 }
 
 function goPreviousFollowUpQuestion() {
@@ -963,6 +1068,7 @@ function resetFollowUpQuestionState(followUps = [], { answerRevision = 0 } = {})
   followUpQuestionStack.value = nextFollowUps
   activeFollowUpQuestionIndex.value = 0
   followUpAnswers.value = createFollowUpAnswerMap(nextFollowUps)
+  careBehaviorTimelineByQuestionId.value = buildCareBehaviorTimelineByQuestionIdMap(nextFollowUps)
   committedFollowUpAnswers.value = {}
   dirtyFollowUpFromIndex.value = -1
   followUpAnswerRevision.value = Number(answerRevision || 0)
@@ -992,6 +1098,12 @@ function mergeFollowUpQuestionState(nextResult = null, submittedPayload = null) 
   followUpAnswers.value = {
     ...Object.fromEntries(Object.entries(followUpAnswers.value || {}).filter(([questionId]) => nextStackQuestionIds.has(questionId))),
     ...createFollowUpAnswerMap(appendQuestions)
+  }
+  careBehaviorTimelineByQuestionId.value = {
+    ...Object.fromEntries(
+      Object.entries(careBehaviorTimelineByQuestionId.value || {}).filter(([questionId]) => nextStackQuestionIds.has(questionId))
+    ),
+    ...buildCareBehaviorTimelineByQuestionIdMap(nextStack)
   }
   committedFollowUpAnswers.value = {
     ...Object.fromEntries(Object.entries(committedFollowUpAnswers.value || {}).filter(([questionId]) => nextStackQuestionIds.has(questionId))),
@@ -1029,16 +1141,10 @@ async function submitFollowUps() {
       questionStack: submitQuestionStack,
       requestMode: isRevisionSubmit ? 'answer_revision' : 'answer_submit',
       baseAnswerRevision: followUpAnswerRevision.value,
-      dirtyFromQuestionId: dirtyFollowUpFromIndex.value >= 0 ? getFollowUpQuestionId(followUpQuestionStack.value[dirtyFollowUpFromIndex.value]) : ''
+      dirtyFromQuestionId: dirtyFollowUpFromIndex.value >= 0 ? getFollowUpQuestionId(followUpQuestionStack.value[dirtyFollowUpFromIndex.value]) : '',
+      careBehaviorTimelineByQuestionId: careBehaviorTimelineByQuestionId.value
     })
-    const rerunResult = await followUpMutation.mutateAsync({
-      diagnosisSessionId: payloadForSubmit.diagnosisSessionId,
-      roundId: payloadForSubmit.roundId,
-      answers: payloadForSubmit.answers,
-      requestMode: payloadForSubmit.requestMode,
-      baseAnswerRevision: payloadForSubmit.baseAnswerRevision,
-      dirtyFromQuestionId: payloadForSubmit.dirtyFromQuestionId
-    })
+    const rerunResult = await followUpMutation.mutateAsync(payloadForSubmit)
 
     result.value = normalizeDiagnosisResult(rerunResult, {
       images: images.value,

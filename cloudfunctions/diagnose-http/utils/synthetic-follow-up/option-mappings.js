@@ -18,6 +18,12 @@ const {
   buildSyntheticVisualCandidateOptionMappings
 } = require('./visual-candidate-option-mappings')
 
+function isLegacyWateringFollowUpQuestionKey(questionKey = '') {
+  const normalizedQuestionKey = normalizeText(questionKey)
+  return normalizedQuestionKey.includes('watering_frequency_context') ||
+    normalizedQuestionKey.includes('watering_context')
+}
+
 function buildSyntheticFollowUpOptionMappings(questionKeys = [], symptomDictionary = []) {
   const symptomMap = new Map(
     (Array.isArray(symptomDictionary) ? symptomDictionary : [])
@@ -45,6 +51,35 @@ function buildSyntheticFollowUpOptionMappings(questionKeys = [], symptomDictiona
       const optionTextByKey = Object.fromEntries(
         normalizeSyntheticOptionEntries(optionTexts).map(option => [option.optionKey, option.text])
       )
+
+      if (isLegacyWateringFollowUpQuestionKey(questionKey)) {
+        return [
+          {
+            questionKey,
+            optionKey: 'care_behavior_timeline',
+            optionTextCn: '记录已提供',
+            optionTextUserCn: '记录已提供',
+            mapsToSymptomKey: '',
+            value: 0,
+            associationStrength: 0,
+            directProblemAdjustments: [],
+            answerEffectCn: '记录“过去10天养护记录已提供”的中性线索。',
+            dataStatus: 'synthetic'
+          },
+          {
+            questionKey,
+            optionKey: 'unknown',
+            optionTextCn: optionTextByKey.unknown || '说不清/没留意',
+            optionTextUserCn: optionTextByKey.unknown || '说不清/没留意',
+            mapsToSymptomKey: '',
+            value: 0,
+            associationStrength: 0,
+            directProblemAdjustments: [],
+            answerEffectCn: `暂不记录“${dimensionLabel}”维度的明确结论。`,
+            dataStatus: 'synthetic'
+          }
+        ]
+      }
 
       if (targetDimension === QUESTION_TARGET_DIMENSIONS.SURFACE_STICKINESS) {
         return buildSurfaceStickyOptionMappings({

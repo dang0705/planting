@@ -53,6 +53,14 @@
 | 问诊容器 | `src/components/DiagnosePopup.vue` | `diagnose-result-followup-required` | 断言进入追问阶段 |
 | 问诊问题卡 | `src/components/DiagnosePopup.vue` | `diagnose-followup-question-{questionId}` | 断言当前问题可见 |
 | 问诊选项 | `src/components/DiagnosePopup.vue` | `diagnose-followup-option-{questionId}-{optionId}` | 点击回答选项 |
+| 问诊养护时间线卡片 | `src/components/CareBehaviorTimeline.vue` | `diagnose-care-behavior-timeline-{questionId}` | 断言最近 10 天养护行为时间线可见 |
+| 养护行为日期格 | `src/components/CareBehaviorTimeline.vue` | `diagnose-care-behavior-date-{yyyy-mm-dd}` | 断言时间线 21 格（D-10~D10）窗口渲染；超出窗口或未来置灰不可选 |
+| 浇水 marker | `src/components/CareBehaviorTimeline.vue` | `diagnose-care-behavior-water-{yyyy-mm-dd}` | 断言指定日期浇水 marker；展示型入口，非直接 toggle 入口 |
+| 施肥 marker | `src/components/CareBehaviorTimeline.vue` | `diagnose-care-behavior-fertilize-{yyyy-mm-dd}` | 断言指定日期施肥 marker；展示型入口，非直接 toggle 入口 |
+| 光照 marker | `src/components/CareBehaviorTimeline.vue` | `diagnose-care-behavior-light-{yyyy-mm-dd}` | 断言指定日期强光 marker；展示型入口，非直接 toggle 入口 |
+| 浇水 action chip | `src/components/CareBehaviorTimeline.vue` | `diagnose-care-behavior-action-water-{yyyy-mm-dd}` | 点击/断言指定日期浇水操作 chip |
+| 施肥 action chip | `src/components/CareBehaviorTimeline.vue` | `diagnose-care-behavior-action-fertilize-{yyyy-mm-dd}` | 点击/断言指定日期施肥操作 chip |
+| 光照 action chip | `src/components/CareBehaviorTimeline.vue` | `diagnose-care-behavior-action-light-{yyyy-mm-dd}` | 点击/断言指定日期光照操作 chip（toggle 入口） |
 | 上一题 / 下一题 | `src/components/DiagnosePopup.vue` | `diagnose-followup-prev-button` / `diagnose-followup-next-button` | 导航问诊步骤 |
 | 补图区域 | `src/components/DiagnosePopup.vue` | `diagnose-followup-image-section` | 断言补图入口可见 |
 | 补图上传槽位 | `src/components/DiagnosePopup.vue` | `diagnose-followup-upload-slot-{slotType}` | 断言补图槽位存在 |
@@ -111,6 +119,12 @@ MCP 连接成功、页面能打开、截图存在，都不是业务验收通过�
   5. 问诊选项 id 可命中，并且后续提交走 /diagnosis/answer
   6. 该会话证据 sourceType=manual_symptom_mode，可在 result/review/detail 或日志中确认
   7. diagnosis-result-page-outcome-list 或 diagnosis-result-page-empty 可命中
+  8. legacy `watering_frequency_context` / watering target 题不管是否带 `uiVariant=care_behavior_timeline`，都应验收 `diagnose-care-behavior-timeline-{questionId}`
+  9. 旧频次 options `often_wet / normal_or_stable / often_dry` 不应作为自动化点击目标；仅 `unknown` / `unclear` / “说不清” / “没留意” 可见/可见到
+  10. `care_behavior_timeline` 为隐藏技术 answer（非用户可见 option），仅用于 `answers[]` 合法占位；真实行为数据以 `careBehaviorTimeline` sidecar 作为准入依据
+  11. 问诊时间线题只保留“说不清/没留意” option；普通浇水选项不应可见
+  12. timeline marker 仅用于显示/断言（`diagnose-care-behavior-{water|fertilize|light}-{yyyy-mm-dd}`），用户可点击 toggle 统一由 action chip（`diagnose-care-behavior-action-{water|fertilize|light}-{yyyy-mm-dd}`）执行
+  13. 时间线日期格按 21 格窗口（D-10~D10）显示；仅 D-10~D-1 允许 toggle 并产生 events；D0 仅可打开详情不入 events；超窗口和未来置灰且不可选
 - 禁止：
   1. 不用中文文案或 Tailwind class 作为主选择器
   2. 不用 page_setData 替代真实用户路径，除非任务明确标记为辅助测试

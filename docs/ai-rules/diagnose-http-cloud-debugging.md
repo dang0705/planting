@@ -53,14 +53,12 @@ docs/ai-rules/diagnose-http-cloud-debugging.md
 
 | Agent | 是否建议读取 | 读取场景 |
 |---|---:|---|
-| `release_ops` | 高 | 部署、CloudBase 网关、MCP、函数日志、smoke、回滚、环境变量、schema 验证 |
 | `code_explorer` | 高 | 定位 `diagnose-http`、terminal-e2e、replay、H5 管理页、schema helper、部署脚本 |
 | `implementer_deep` | 中高 | 修改 diagnose-http、replay、CloudBase、schema、H5 代理、部署脚本 |
 | `qa_reviewer` | 中高 | 审查 live 验收是否有效、是否拿旧 session / 错 schema / 错 wrapper 当证据 |
 | `architect_reviewer` | 中 | 涉及 route、outcome、gate、replay、schema 边界设计 |
 | `docs_keeper` | 中 | 整理排障文档、同步规则、归档踩坑记录 |
 | `implementer_fast` | 低 | 仅当是小范围脚本修复且 Dispatch Plan 明确指定 |
-| `task_planner` | 低 | 只需知道本索引存在，并把读取任务派给对应角色 |
 
 ---
 

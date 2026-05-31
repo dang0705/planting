@@ -1,3 +1,34 @@
+import {
+  appendCareBehaviorSidecar,
+  isCareBehaviorTimelineQuestion,
+  isCareBehaviorWateringTimelineQuestion,
+  resolveCareBehaviorTimelineAutoAnswerOptionId,
+  shouldIncludeCareBehaviorTimelineQuestion
+} from './care-behavior-timeline.js'
+
+function resolveDefaultFollowUpOptionId(question = {}) {
+  const options = Array.isArray(question?.options) ? question.options : []
+  const defaultOptionId = String(question?.defaultOptionId || '').trim()
+  const defaultOptionKey = String(question?.defaultOptionKey || '').trim().toLowerCase()
+
+  if (defaultOptionId) {
+    const matchedById = options.find(option => String(option?.optionId || '').trim() === defaultOptionId)
+    if (matchedById?.optionId) {
+      return matchedById.optionId
+    }
+  }
+
+  if (defaultOptionKey) {
+    const matchedByKey = options.find(option => String(option?.optionKey || '').trim().toLowerCase() === defaultOptionKey)
+    if (matchedByKey?.optionId) {
+      return matchedByKey.optionId
+    }
+  }
+
+  const matchedDefaultOption = options.find(option => option?.isDefault)
+  return matchedDefaultOption?.optionId || ''
+}
+
 function normalizeOutcomeType(outcomeType = '') {
   return String(outcomeType || '').trim().toLowerCase()
 }
@@ -641,7 +672,7 @@ function normalizeProblemCausality(items = []) {
   }))
 }
 
-function normalizeQuestions(questions = []) {
+export function normalizeQuestions(questions = []) {
   return (Array.isArray(questions) ? questions : [])
     .filter(item => item?.questionId)
     .slice(0, 1)
@@ -661,6 +692,16 @@ function normalizeQuestions(questions = []) {
       defaultOptionId: item.defaultOptionId || '',
       uiVariant: item.uiVariant || '',
       renderMode: item.renderMode || '',
+
+      weather: item.weather,
+      weatherByDate: item.weatherByDate,
+      environmentWeatherWindow: item.environmentWeatherWindow,
+      environmentContext: item.environmentContext,
+      payload: item.payload,
+
+      careBehaviorTimeline: item.careBehaviorTimeline || item.care_behavior_timeline || item.timeline,
+      timeline: item.timeline,
+
       options: (Array.isArray(item.options) ? item.options : [])
         .filter(option => option?.optionId)
         .map(option => ({
@@ -977,15 +1018,9 @@ export function createFollowUpAnswerMap(followUps = []) {
   const entries = {}
   for (const item of followUps || []) {
     if (!item?.questionId) {continue}
-    const defaultOptionId =
-      item.defaultOptionId ||
-      (Array.isArray(item.options)
-        ? item.options.find(option =>
-            (item.defaultOptionKey && option.optionKey === item.defaultOptionKey) ||
-            option.isDefault
-          )?.optionId
-        : '')
-    entries[item.questionId] = defaultOptionId || ''
+    entries[item.questionId] = isCareBehaviorWateringTimelineQuestion(item)
+      ? resolveCareBehaviorTimelineAutoAnswerOptionId(item) || ''
+      : resolveDefaultFollowUpOptionId(item)
   }
   return entries
 }
@@ -1011,7 +1046,28 @@ export function buildFollowUpPayload(result, answerMap = {}, options = {}) {
       optionId: answerMap[item.questionId]
     }))
 
-  return {
+  const sanitizedCareBehaviorTimelineByQuestionId = Object.fromEntries(
+    Object.entries(options?.careBehaviorTimelineByQuestionId || {}).filter(([questionId]) => {
+      const question = followUps.find(entry => String(entry?.questionId || '').trim() === String(questionId || '').trim())
+      const answerId = String(answerMap[questionId] || '').trim()
+      if (!question) {
+        return true
+      }
+      return shouldIncludeCareBehaviorTimelineQuestion(question, answerId)
+    })
+  )
+  const excludedQuestionIds = followUps
+    .filter(item => {
+      const questionId = String(item?.questionId || '').trim()
+      if (!questionId) {
+        return false
+      }
+      const answerId = String(answerMap[questionId] || '').trim()
+      return isCareBehaviorTimelineQuestion(item) && !shouldIncludeCareBehaviorTimelineQuestion(item, answerId)
+    })
+    .map(item => String(item?.questionId || '').trim())
+
+  const basePayload = {
     diagnosisSessionId: result?.diagnosisSessionId || '',
     roundId: result?.roundId || '',
     answers,
@@ -1019,4 +1075,11 @@ export function buildFollowUpPayload(result, answerMap = {}, options = {}) {
     baseAnswerRevision: Number(options?.baseAnswerRevision || result?.answerRevision || 0),
     dirtyFromQuestionId: String(options?.dirtyFromQuestionId || '').trim()
   }
+
+  return appendCareBehaviorSidecar(basePayload, {
+    questionStack: followUps,
+    careBehaviorTimelineByQuestionId: sanitizedCareBehaviorTimelineByQuestionId,
+    careBehaviorTimeline: options?.careBehaviorTimeline,
+    excludedQuestionIds
+  })
 }

@@ -1,3 +1,9 @@
+import {
+  extractCareBehaviorSidecar,
+  hasMeaningfulCareBehaviorTimeline,
+  normalizeCareBehaviorTimeline
+} from '@/utils/care-behavior-timeline.js'
+
 export function buildDiagnosePayload({
   plantId,
   userPlantId,
@@ -213,7 +219,9 @@ export function buildFollowUpMutationPayload({
   visualBatchTrace = null,
   requestMode = '',
   baseAnswerRevision = 0,
-  dirtyFromQuestionId = ''
+  dirtyFromQuestionId = '',
+  careBehaviorTimeline = null,
+  ...careBehaviorSidecar
 }) {
   if (!diagnosisSessionId) {
     throw new Error('缺少诊断会话ID，无法继续问诊')
@@ -229,6 +237,12 @@ export function buildFollowUpMutationPayload({
     ? normalizedImageIds
     : normalizedImages.map(item => item.imageRef).filter(Boolean)
 
+  const sidecarFromPayload = careBehaviorTimeline || extractCareBehaviorSidecar(careBehaviorSidecar)
+  const normalizedSidecar = sidecarFromPayload
+    ? normalizeCareBehaviorTimeline(sidecarFromPayload)
+    : null
+  const hasSidecar = normalizedSidecar && hasMeaningfulCareBehaviorTimeline(normalizedSidecar)
+
   return {
     diagnosisSessionId,
     roundId,
@@ -240,6 +254,9 @@ export function buildFollowUpMutationPayload({
     ...(primaryImageRef ? { image: primaryImageRef } : {}),
     ...(normalizedImages.length ? { images: normalizedImages } : {}),
     ...(latestVisualCallBatchId ? { latestVisualCallBatchId } : {}),
-    ...(visualBatchTrace && typeof visualBatchTrace === 'object' ? { visualBatchTrace } : {})
+    ...(visualBatchTrace && typeof visualBatchTrace === 'object' ? { visualBatchTrace } : {}),
+    ...(hasSidecar
+      ? { careBehaviorTimeline: normalizedSidecar }
+      : {})
   }
 }

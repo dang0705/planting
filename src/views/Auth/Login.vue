@@ -7,10 +7,10 @@
       <div class="absolute top-1/2 left-1/4 w-16 h-16 bg-[#1B4332] opacity-10 rounded-full"></div>
     </div>
 
-    <div class="relative w-full max-w-4xl grid grid-cols-12 gap-8 items-center">
+    <div class="relative w-full max-w-4xl grid grid-cols-1 gap-6 md:grid-cols-12 md:gap-8 items-center">
       
       <!-- 左侧品牌区域 (非对称布局) -->
-      <div class="col-span-5 col-start-2">
+      <div class="md:col-span-5 md:col-start-2">
         <div class="text-center md:text-left">
           <h1 class="font-serif text-5xl font-bold text-[#2C1810] leading-tight mb-6">
             诗意<br>
@@ -41,8 +41,8 @@
       </div>
 
       <!-- 右侧登录表单 (对角线偏移) -->
-      <div class="col-span-4 col-start-8 bg-white/80 backdrop-blur-sm p-8 shadow-2xl" style="transform: rotate(-1deg);">
-        <div class="transform -rotate-[-1deg]">
+      <div class="bg-white/80 backdrop-blur-sm p-6 md:col-span-4 md:col-start-8 md:p-8 md:-rotate-1 shadow-2xl">
+        <div class="md:rotate-1">
           <h2 class="font-serif text-3xl font-bold text-[#2C1810] text-center mb-6">
             开始创作之旅
           </h2>
@@ -84,7 +84,7 @@
             <button
               type="submit"
               :disabled="loading"
-              class="w-full bg-[#2C1810] text-white py-3 font-serif text-lg hover:bg-[#1C1917] transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              class="box-border max-w-full w-full bg-[#2C1810] text-white py-3 font-serif text-lg hover:bg-[#1C1917] transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
               <i v-if="loading" class="fas fa-spinner animate-spin"></i>
               <span>{{ loading ? '登录中...' : '登录' }}</span>
@@ -103,7 +103,7 @@
             <p class="text-[#2C1810] mb-4">还没有账户？</p>
             <button
               @click="showRegister = true"
-              class="w-full border-2 border-[#D4A574] text-[#D4A574] py-3 font-serif text-lg hover:bg-[#D4A574] hover:text-white transition-all duration-300"
+              class="box-border max-w-full w-full border-2 border-[#D4A574] text-[#D4A574] py-3 font-serif text-lg hover:bg-[#D4A574] hover:text-white transition-all duration-300"
             >
               免费注册账户
             </button>

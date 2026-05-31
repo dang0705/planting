@@ -22,7 +22,9 @@ export function useDiagnoseFollowUpMutation() {
       baseAnswerRevision = 0,
       dirtyFromQuestionId = '',
       onFinish,
-      onError
+      onError,
+      careBehaviorTimeline = null,
+      ...careBehaviorSidecar
     } = {}) => {
       try {
         const normalizedResult = await requestDiagnoseFollowUp(
@@ -37,7 +39,9 @@ export function useDiagnoseFollowUpMutation() {
             visualBatchTrace,
             requestMode,
             baseAnswerRevision,
-            dirtyFromQuestionId
+            dirtyFromQuestionId,
+            careBehaviorTimeline,
+            ...careBehaviorSidecar
           })
         )
 
