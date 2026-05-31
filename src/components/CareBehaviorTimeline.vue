@@ -36,35 +36,32 @@
           <text v-if="item.isToday" class="care-behavior-day-mark">D0</text>
         </view>
 
-        <view class="care-behavior-metrics">
-          <view class="care-behavior-metric">
-            <text class="care-behavior-metric-icon care-behavior-metric-icon--temp">温</text>
-            <text class="care-behavior-metric-value">{{ item.temperatureText || '—' }}</text>
-          </view>
-          <view class="care-behavior-metric">
-            <text class="care-behavior-metric-icon care-behavior-metric-icon--humidity">湿</text>
-            <text class="care-behavior-metric-value">{{ item.humidityText || '—' }}</text>
-          </view>
+        <view class="care-behavior-metrics" :class="{ 'care-behavior-metrics--empty': !item.hasWeatherMetrics }">
+          <template v-if="item.hasWeatherMetrics">
+            <view v-if="item.temperatureText" class="care-behavior-metric">
+              <text class="care-behavior-metric-symbol care-behavior-metric-symbol--temp">温</text>
+              <text class="care-behavior-metric-value">{{ item.temperatureText }}</text>
+            </view>
+            <view v-if="item.humidityText" class="care-behavior-metric">
+              <text class="care-behavior-metric-symbol care-behavior-metric-symbol--humidity">湿</text>
+              <text class="care-behavior-metric-value">{{ item.humidityText }}</text>
+            </view>
+          </template>
+          <view v-else class="care-behavior-metrics-spacer" />
         </view>
 
         <view class="care-behavior-dot-row">
           <view
             :id="`diagnose-care-behavior-water-${item.date}`"
             class="care-behavior-marker care-behavior-marker--water"
-            :class="{ 'care-behavior-marker--active': item.watering }"
           >
-            <view class="care-behavior-dot care-behavior-dot--water" :class="{ 'care-behavior-dot--active': item.watering }">
-              <view class="care-behavior-dot-fill" />
-            </view>
+            <view v-if="item.watering" class="care-behavior-dot care-behavior-dot--water" />
           </view>
           <view
             :id="`diagnose-care-behavior-fertilize-${item.date}`"
             class="care-behavior-marker care-behavior-marker--fertilize"
-            :class="{ 'care-behavior-marker--active': item.fertilizing }"
           >
-            <view class="care-behavior-dot care-behavior-dot--fertilize" :class="{ 'care-behavior-dot--active': item.fertilizing }">
-              <view class="care-behavior-dot-fill" />
-            </view>
+            <view v-if="item.fertilizing" class="care-behavior-dot care-behavior-dot--fertilize" />
           </view>
         </view>
       </view>
@@ -73,7 +70,7 @@
     <view v-if="selectedDateState" class="care-behavior-detail-panel">
       <view class="care-behavior-detail-header">
         <text class="care-behavior-detail-date">{{ selectedDateLabel }}</text>
-        <text class="care-behavior-detail-weather">{{ selectedDateWeatherText || '暂无天气数据' }}</text>
+        <text class="care-behavior-detail-weather">{{ selectedDateWeatherText || '—' }}</text>
       </view>
       <view class="care-behavior-action-row">
         <view
@@ -388,7 +385,7 @@ const selectedDateWeatherText = computed(() => {
   }
   const state = selectedDateState.value
   const weather = weatherByDate.value[state.date] || {}
-  return weather.text || state.weatherText || ''
+  return weather.text || state.weatherText || '—'
 })
 
 const weatherByDate = computed(() => {
@@ -409,13 +406,14 @@ const displayedCellItems = computed(() => {
       ...item,
       isActive: true,
       isSelectable: Boolean(state.isSelectable),
-      canOpenDetail: Boolean(state.canOpenDetail),
+      canOpenDetail: Boolean(state.canOpenDetail && (item.isToday || item.isSelectable)),
       isSelected: selectedDate.value === item.date,
       isFuture: Boolean(item.isFuture),
       isHistoricalOutOfRange: Boolean(item.isHistoricalOutOfRange),
       watering: Boolean(state.watering),
       fertilizing: Boolean(state.fertilizing),
       lightChange: Boolean(state.lightChange),
+      hasWeatherMetrics: Boolean(state.temperatureText || state.humidityText),
       weatherText: state.weatherText || weatherByDate.value[item.date]?.text || '',
       temperatureText: state.temperatureText || weatherByDate.value[item.date]?.temperatureText || '',
       humidityText: state.humidityText || weatherByDate.value[item.date]?.humidityText || ''
@@ -474,7 +472,8 @@ function buildDateStates() {
       isFuture: item.isFuture,
       isHistoricalOutOfRange: item.isHistoricalOutOfRange,
       isSelectable: Boolean(item.isSelectable),
-      canOpenDetail: Boolean(item.canOpenDetail)
+      hasWeatherMetrics: Boolean(weather.temperatureText || weather.humidityText),
+      canOpenDetail: Boolean(item.canOpenDetail && (item.isToday || item.isSelectable))
     }
   }
   return state
@@ -495,7 +494,7 @@ function resolveDefaultSelectedDate() {
 }
 
 function selectDate(item = {}) {
-  if (!item?.date || item.canOpenDetail === false) {
+  if (!item?.date || item.canOpenDetail === false || item.isFuture || item.isHistoricalOutOfRange) {
     return
   }
   selectedDate.value = item.date
@@ -529,45 +528,41 @@ function toggleCareAction(date, action) {
 .care-behavior-weekday-header { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; margin: 0 0 2px; }
 .care-behavior-weekday-item { text-align: center; color: #64748b; font-size: 10px; }
 .care-behavior-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
-.care-behavior-cell { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 4px 3px 5px; height: 64px; border-radius: 12px; border: 1px solid #e5e7eb; background: #ffffff; overflow: hidden; }
-.care-behavior-cell--selected { border-color: #94a3b8; box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.12) inset; }
-.care-behavior-cell--today { border-color: #22c55e; background: #f0fdf4; }
+.care-behavior-cell { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 5px 2px 4px; height: 77px; border-radius: 12px; border: 1px solid rgba(45, 122, 79, 0.15); background: #ffffff; overflow: hidden; }
+.care-behavior-cell--selected { border-color: rgba(45, 122, 79, 0.32); background: rgba(45, 122, 79, 0.035); box-shadow: 0 0 0 1px rgba(45, 122, 79, 0.04) inset; }
+.care-behavior-cell--today { border: 2px solid #2d7a4f; background: rgba(45, 122, 79, 0.05); box-shadow: 0 0 0 1px rgba(45, 122, 79, 0.05) inset; }
+.care-behavior-cell--selected.care-behavior-cell--today { background: rgba(45, 122, 79, 0.05); }
 .care-behavior-cell--historical,
-.care-behavior-cell--future { background: #f8fafc; border-color: #e2e8f0; }
-.care-behavior-cell--historical { opacity: .72; }
-.care-behavior-cell--future { opacity: .55; }
+.care-behavior-cell--future { background: #f8fafc; border-color: #e2e8f0; opacity: .58; }
+.care-behavior-cell--selected.care-behavior-cell--historical,
+.care-behavior-cell--selected.care-behavior-cell--future { opacity: 1; border-color: rgba(45, 122, 79, 0.32); background: rgba(45, 122, 79, 0.035); }
 .care-behavior-cell--locked { cursor: default; }
 .care-behavior-cell--selectable { cursor: pointer; }
-.care-behavior-day-wrap { display: flex; align-items: center; justify-content: center; gap: 3px; min-height: 16px; }
-.care-behavior-day { font-size: 12px; color: #0f172a; font-weight: 700; line-height: 1.1; }
-.care-behavior-day-mark { font-size: 9px; color: #15803d; background: #dcfce7; padding: 1px 4px; border-radius: 999px; }
-.care-behavior-metrics { width: 100%; display: flex; flex-direction: column; gap: 2px; }
-.care-behavior-metric { display: flex; align-items: center; justify-content: center; gap: 3px; line-height: 1; }
-.care-behavior-metric-icon { width: 14px; height: 14px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; color: #ffffff; }
-.care-behavior-metric-icon--temp { background: #f97316; }
-.care-behavior-metric-icon--humidity { background: #38bdf8; }
-.care-behavior-metric-value { font-size: 9px; color: #334155; line-height: 1; }
-.care-behavior-dot-row { display: flex; align-items: center; justify-content: center; gap: 4px; }
-.care-behavior-dot-row--future { height: 12px; }
+.care-behavior-day-wrap { display: flex; align-items: center; justify-content: center; gap: 2px; min-height: 16px; }
+.care-behavior-day { font-size: 11px; color: #0f172a; font-weight: 700; line-height: 1.1; }
+.care-behavior-cell--today .care-behavior-day { color: #2d7a4f; }
+.care-behavior-day-mark { font-size: 8px; color: #15803d; background: rgba(21, 128, 61, 0.1); padding: 1px 3px; border-radius: 999px; }
+.care-behavior-metrics { width: 100%; display: flex; flex-direction: column; gap: 1px; min-height: 24px; }
+.care-behavior-metrics--empty { justify-content: center; }
+.care-behavior-metrics-spacer { width: 100%; height: 18px; }
+.care-behavior-metric { display: flex; align-items: center; justify-content: center; gap: 2px; line-height: 1; min-width: 0; }
+.care-behavior-metric-symbol { flex: 0 0 auto; font-size: 8px; line-height: 1; font-weight: 700; color: #64748b; }
+.care-behavior-metric-symbol--temp { color: #f97316; }
+.care-behavior-metric-symbol--humidity { color: #0ea5e9; }
+.care-behavior-metric-value { flex: 0 1 auto; min-width: 0; max-width: 26px; font-size: 8px; color: #334155; line-height: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .care-behavior-cell--historical .care-behavior-day,
 .care-behavior-cell--future .care-behavior-day,
 .care-behavior-cell--historical .care-behavior-metric-value,
 .care-behavior-cell--future .care-behavior-metric-value { color: #64748b; }
-.care-behavior-cell--historical .care-behavior-marker,
-.care-behavior-cell--future .care-behavior-marker { opacity: .55; }
-.care-behavior-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid rgba(148, 163, 184, 0.45); position: relative; display: inline-flex; align-items: center; justify-content: center; background: #fff; }
-.care-behavior-dot-fill { width: 6px; height: 6px; border-radius: 50%; opacity: 0; }
-.care-behavior-dot--active { border-width: 2px; }
-.care-behavior-dot--water { border-color: rgba(59, 130, 246, 0.55); }
-.care-behavior-dot--water.care-behavior-dot--active { border-color: #2563eb; }
-.care-behavior-dot--water.care-behavior-dot--active .care-behavior-dot-fill { opacity: 1; background: #2563eb; }
-.care-behavior-dot--fertilize { border-color: rgba(249, 115, 22, 0.55); }
-.care-behavior-dot--fertilize.care-behavior-dot--active { border-color: #ea580c; }
-.care-behavior-dot--fertilize.care-behavior-dot--active .care-behavior-dot-fill { opacity: 1; background: #ea580c; }
+.care-behavior-dot-row { display: flex; align-items: center; justify-content: center; gap: 4px; min-height: 10px; }
+.care-behavior-marker { width: 10px; height: 10px; display: flex; align-items: center; justify-content: center; }
+.care-behavior-dot { width: 6px; height: 6px; border-radius: 50%; background: #2563eb; }
+.care-behavior-dot--water { background: #2b7fff; }
+.care-behavior-dot--fertilize { background: #fe9a00; }
 .care-behavior-detail-panel { margin-top: 8px; padding: 8px 10px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; }
 .care-behavior-detail-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
 .care-behavior-detail-date { font-size: 12px; color: #0f172a; font-weight: 600; }
-.care-behavior-detail-weather { font-size: 10px; color: #64748b; text-align: right; }
+.care-behavior-detail-weather { max-width: 54%; font-size: 10px; color: #64748b; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .care-behavior-action-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .care-behavior-action-chip { display: inline-flex; align-items: center; justify-content: center; min-height: 28px; padding: 0 10px; border-radius: 999px; border: 1px solid #e2e8f0; background: #ffffff; color: #334155; font-size: 10px; line-height: 1; }
 .care-behavior-action-chip--water { border-color: rgba(59, 130, 246, 0.25); }
@@ -576,7 +571,10 @@ function toggleCareAction(date, action) {
 .care-behavior-action-chip--active.care-behavior-action-chip--water { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
 .care-behavior-action-chip--active.care-behavior-action-chip--fertilize { background: #fff7ed; border-color: #fdba74; color: #c2410c; }
 .care-behavior-action-chip--active.care-behavior-action-chip--light { background: #f0fdf4; border-color: #86efac; color: #15803d; }
+.care-behavior-action-chip--disabled { opacity: .45; pointer-events: none; }
 .care-behavior-legend { margin-top: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 .care-behavior-legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #64748b; }
-.care-behavior-legend-dot { width: 8px; height: 8px; border-radius: 50%; border: 2px solid rgba(148, 163, 184, 0.45); }
+.care-behavior-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+.care-behavior-legend-dot.care-behavior-dot--water { background: #2b7fff; }
+.care-behavior-legend-dot.care-behavior-dot--fertilize { background: #fe9a00; }
 </style>
