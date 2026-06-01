@@ -3,6 +3,7 @@
 const axios = require('axios')
 
 const DEFAULT_QWEATHER_BASE_URL = 'https://n773jqqeap.re.qweatherapi.com'
+const LOCATION_ID_CACHE = new Map()
 
 function normalizeBaseUrl(value = '') {
   return String(value || DEFAULT_QWEATHER_BASE_URL).replace(/\/+$/, '')
@@ -23,6 +24,19 @@ function normalizeLocation({ lat, lng } = {}) {
     throw new Error('缺少位置参数：lat 和 lng')
   }
   return `${lng},${lat}`
+}
+
+function formatQWeatherError(error, path) {
+  if (error.response) {
+    const status = error.response.status
+    const code = error.response.data && error.response.data.code
+    const details = [code ? `code=${code}` : null, `status=${status}`].filter(Boolean).join(' ')
+    return `和风天气API错误: ${details} path=${path}`
+  }
+  if (error.message) {
+    return `和风天气API错误: ${error.message}`
+  }
+  return '和风天气API错误'
 }
 
 function pruneUndefined(payload = {}) {
@@ -73,7 +87,8 @@ function normalizeCurrentWeather(data = {}) {
 function createQWeatherAdapter({
   apiKey = '',
   baseUrl = DEFAULT_QWEATHER_BASE_URL,
-  timeout = 10000
+  timeout = 10000,
+  httpClient = axios
 } = {}) {
   const normalizedBaseUrl = normalizeBaseUrl(baseUrl)
 
@@ -81,22 +96,54 @@ function createQWeatherAdapter({
     if (!apiKey) {
       throw new Error('缺少环境变量 QWEATHER_API_KEY')
     }
-    const response = await axios.get(`${normalizedBaseUrl}${path}`, {
-      timeout,
-      params: {
-        ...params,
-        key: apiKey
-      },
-      headers: {
-        'Accept-Encoding': 'gzip, deflate',
-        'User-Agent': 'CloudBase-Weather/1.0'
-      }
-    })
+    let response
+    try {
+      response = await httpClient.get(`${normalizedBaseUrl}${path}`, {
+        timeout,
+        params: {
+          ...params,
+          key: apiKey
+        },
+        headers: {
+          'Accept-Encoding': 'gzip, deflate',
+          'User-Agent': 'CloudBase-Weather/1.0'
+        }
+      })
+    } catch (error) {
+      throw new Error(formatQWeatherError(error, path))
+    }
+
     const data = response.data || {}
     if (data.code && data.code !== '200') {
-      throw new Error(`和风天气API错误: code=${data.code}`)
+      throw new Error(`和风天气API错误: code=${data.code} status=${response.status} path=${path}`)
     }
     return data
+  }
+
+  async function resolveLocationId(location) {
+    const cacheKey = normalizeLocation(location)
+    if (LOCATION_ID_CACHE.has(cacheKey)) {
+      return LOCATION_ID_CACHE.get(cacheKey)
+    }
+
+    const lookupPromise = (async () => {
+      const data = await request('/geo/v2/city/lookup', {
+        location: cacheKey
+      })
+      const locationId = data && Array.isArray(data.location) && data.location[0] && data.location[0].id
+      if (!locationId) {
+        throw new Error(`和风天气历史定位失败: code=${data.code || 'UNKNOWN'} status=200 path=/geo/v2/city/lookup`)
+      }
+      return String(locationId)
+    })()
+
+    LOCATION_ID_CACHE.set(cacheKey, lookupPromise)
+
+    lookupPromise.catch(() => {
+      LOCATION_ID_CACHE.delete(cacheKey)
+    })
+
+    return lookupPromise
   }
 
   return {
@@ -114,8 +161,9 @@ function createQWeatherAdapter({
     },
 
     async fetchHistoricalWeather({ lat, lng, date }) {
+      const locationId = await resolveLocationId({ lat, lng })
       const data = await request('/v7/historical/weather', {
-        location: normalizeLocation({ lat, lng }),
+        location: locationId,
         date: toDate8(date)
       })
       return normalizeHistoricalDaily(data.weatherDaily || data.daily || {}, date)
