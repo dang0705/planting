@@ -39,12 +39,17 @@
         <view class="care-behavior-metrics" :class="{ 'care-behavior-metrics--empty': !item.hasWeatherMetrics }">
           <template v-if="item.hasWeatherMetrics">
             <view v-if="item.temperatureText" class="care-behavior-metric">
-              <text class="care-behavior-metric-symbol care-behavior-metric-symbol--temp">温</text>
-              <text class="care-behavior-metric-value">{{ item.temperatureText }}</text>
+              <view class="care-behavior-metric-icon care-behavior-metric-icon--temp" aria-hidden="true">
+                <view class="care-behavior-metric-icon-stem" />
+                <view class="care-behavior-metric-icon-bulb" />
+              </view>
+              <text class="care-behavior-metric-value">{{ item.temperatureText }}°</text>
             </view>
             <view v-if="item.humidityText" class="care-behavior-metric">
-              <text class="care-behavior-metric-symbol care-behavior-metric-symbol--humidity">湿</text>
-              <text class="care-behavior-metric-value">{{ item.humidityText }}</text>
+              <view class="care-behavior-metric-icon care-behavior-metric-icon--humidity" aria-hidden="true">
+                <view class="care-behavior-metric-icon-drop" />
+              </view>
+              <text class="care-behavior-metric-value">{{ item.humidityText }}%</text>
             </view>
           </template>
           <view v-else class="care-behavior-metrics-spacer" />
@@ -62,6 +67,12 @@
             class="care-behavior-marker care-behavior-marker--fertilize"
           >
             <view v-if="item.fertilizing" class="care-behavior-dot care-behavior-dot--fertilize" />
+          </view>
+          <view
+            :id="`diagnose-care-behavior-light-${item.date}`"
+            class="care-behavior-marker care-behavior-marker--light"
+          >
+            <view v-if="item.lightChange" class="care-behavior-dot care-behavior-dot--light" />
           </view>
         </view>
       </view>
@@ -529,11 +540,11 @@ function toggleCareAction(date, action) {
 .care-behavior-weekday-item { text-align: center; color: #64748b; font-size: 10px; }
 .care-behavior-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .care-behavior-cell { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 5px 2px 4px; height: 77px; border-radius: 12px; border: 1px solid rgba(45, 122, 79, 0.15); background: #ffffff; overflow: hidden; }
-.care-behavior-cell--selected { border-color: rgba(45, 122, 79, 0.32); background: rgba(45, 122, 79, 0.035); box-shadow: 0 0 0 1px rgba(45, 122, 79, 0.04) inset; }
+.care-behavior-cell--selected { border-color: rgba(45, 122, 79, 0.3); background: #ffffff; box-shadow: 0 0 0 1px rgba(45, 122, 79, 0.04) inset; }
 .care-behavior-cell--today { border: 2px solid #2d7a4f; background: rgba(45, 122, 79, 0.05); box-shadow: 0 0 0 1px rgba(45, 122, 79, 0.05) inset; }
 .care-behavior-cell--selected.care-behavior-cell--today { background: rgba(45, 122, 79, 0.05); }
 .care-behavior-cell--historical,
-.care-behavior-cell--future { background: #f8fafc; border-color: #e2e8f0; opacity: .58; }
+.care-behavior-cell--future { background: rgba(236, 248, 240, 0.65); border-color: rgba(45, 122, 79, 0.08); opacity: .58; }
 .care-behavior-cell--selected.care-behavior-cell--historical,
 .care-behavior-cell--selected.care-behavior-cell--future { opacity: 1; border-color: rgba(45, 122, 79, 0.32); background: rgba(45, 122, 79, 0.035); }
 .care-behavior-cell--locked { cursor: default; }
@@ -546,19 +557,23 @@ function toggleCareAction(date, action) {
 .care-behavior-metrics--empty { justify-content: center; }
 .care-behavior-metrics-spacer { width: 100%; height: 18px; }
 .care-behavior-metric { display: flex; align-items: center; justify-content: center; gap: 2px; line-height: 1; min-width: 0; }
-.care-behavior-metric-symbol { flex: 0 0 auto; font-size: 8px; line-height: 1; font-weight: 700; color: #64748b; }
-.care-behavior-metric-symbol--temp { color: #f97316; }
-.care-behavior-metric-symbol--humidity { color: #0ea5e9; }
-.care-behavior-metric-value { flex: 0 1 auto; min-width: 0; max-width: 26px; font-size: 8px; color: #334155; line-height: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.care-behavior-metric-icon { position: relative; flex: 0 0 auto; width: 8px; height: 10px; color: #64748b; }
+.care-behavior-metric-icon--temp { color: #f97316; }
+.care-behavior-metric-icon--humidity { color: #0ea5e9; }
+.care-behavior-metric-icon-stem { position: absolute; left: 3px; top: 0; width: 2px; height: 7px; border-radius: 999px; background: currentColor; }
+.care-behavior-metric-icon-bulb { position: absolute; left: 1px; bottom: 0; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.78) inset; }
+.care-behavior-metric-icon-drop { position: absolute; left: 1px; top: 0; width: 6px; height: 8px; background: currentColor; border-radius: 60% 60% 60% 0; transform: rotate(45deg); transform-origin: center; }
+.care-behavior-metric-value { flex: 0 1 auto; min-width: 0; max-width: 27px; font-size: 8px; color: #334155; line-height: 1; overflow: hidden; text-overflow: clip; white-space: nowrap; }
 .care-behavior-cell--historical .care-behavior-day,
 .care-behavior-cell--future .care-behavior-day,
 .care-behavior-cell--historical .care-behavior-metric-value,
 .care-behavior-cell--future .care-behavior-metric-value { color: #64748b; }
-.care-behavior-dot-row { display: flex; align-items: center; justify-content: center; gap: 4px; min-height: 10px; }
-.care-behavior-marker { width: 10px; height: 10px; display: flex; align-items: center; justify-content: center; }
+.care-behavior-dot-row { display: flex; align-items: center; justify-content: center; gap: 3px; min-height: 10px; }
+.care-behavior-marker { width: 8px; height: 8px; display: flex; align-items: center; justify-content: center; }
 .care-behavior-dot { width: 6px; height: 6px; border-radius: 50%; background: #2563eb; }
 .care-behavior-dot--water { background: #2b7fff; }
 .care-behavior-dot--fertilize { background: #fe9a00; }
+.care-behavior-dot--light { background: #22c55e; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.74) inset; }
 .care-behavior-detail-panel { margin-top: 8px; padding: 8px 10px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; }
 .care-behavior-detail-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
 .care-behavior-detail-date { font-size: 12px; color: #0f172a; font-weight: 600; }

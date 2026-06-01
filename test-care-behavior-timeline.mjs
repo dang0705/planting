@@ -280,13 +280,13 @@ const componentSource = readFileSync('./src/components/CareBehaviorTimeline.vue'
 const compactComponentSource = componentSource.replace(/\s+/g, ' ')
 assert.ok(componentSource.includes('v-if="item.watering"'))
 assert.ok(componentSource.includes('v-if="item.fertilizing"'))
+assert.ok(componentSource.includes('v-if="item.lightChange"'))
 assert.ok(componentSource.includes("selectedDateWeatherText || '—'"))
-assert.ok(componentSource.includes('care-behavior-metric-symbol--temp'))
-assert.ok(componentSource.includes('care-behavior-metric-symbol--humidity'))
+assert.ok(componentSource.includes('care-behavior-metric-icon--temp'))
+assert.ok(componentSource.includes('care-behavior-metric-icon--humidity'))
 assert.ok(componentSource.includes('care-behavior-dot--water'))
 assert.ok(componentSource.includes('care-behavior-dot--fertilize'))
-assert.ok(!componentSource.includes('care-behavior-metric-icon--temp'))
-assert.ok(!componentSource.includes('care-behavior-dot-fill'))
+assert.ok(componentSource.includes('care-behavior-dot--light'))
 assert.ok(componentSource.includes('care-behavior-metrics--empty'))
 assert.ok(componentSource.includes('care-behavior-metrics-spacer'))
 assert.ok(compactComponentSource.includes('canOpenDetail: Boolean(state.canOpenDetail && (item.isToday || item.isSelectable))'))
@@ -297,7 +297,7 @@ assert.ok(compactComponentSource.includes('hasWeatherMetrics: Boolean(weather.te
 assert.ok(compactComponentSource.includes('v-if="item.hasWeatherMetrics"'))
 assert.ok(compactComponentSource.includes('v-if="item.temperatureText"'))
 assert.ok(compactComponentSource.includes('v-if="item.humidityText"'))
-assert.ok(!compactComponentSource.includes('letter-spacing: -0.02em'))
+assert.ok(compactComponentSource.includes('diagnose-care-behavior-light-'))
 
 const hiddenDefaultTimelineQuestion = {
   questionId: 'timeline-hidden-default',
