@@ -534,10 +534,10 @@ function toggleCareAction(date, action) {
 <style scoped>
 .care-behavior-timeline { margin: 0 0 10px; padding: 8px 0 0; }
 .care-behavior-timeline-header { margin-bottom: 8px; }
-.care-behavior-timeline-title { display: block; font-size: 15px; line-height: 1.35; color: #0f172a; font-weight: 700; margin-bottom: 3px; }
-.care-behavior-timeline-subtitle { display: block; font-size: 11px; line-height: 1.45; color: #64748b; }
+.care-behavior-timeline-title { display: block; font-size: 18px; line-height: 1.5; color: #0f172a; font-weight: 500; margin-bottom: 4px; }
+.care-behavior-timeline-subtitle { display: block; font-size: 12px; line-height: 1.45; color: #64748b; }
 .care-behavior-weekday-header { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; margin: 0 0 2px; }
-.care-behavior-weekday-item { text-align: center; color: #64748b; font-size: 10px; }
+.care-behavior-weekday-item { text-align: center; color: #64748b; font-size: 12px; }
 .care-behavior-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .care-behavior-cell { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 5px 2px 4px; height: 77px; border-radius: 12px; border: 1px solid rgba(45, 122, 79, 0.15); background: #ffffff; overflow: hidden; }
 .care-behavior-cell--selected { border-color: rgba(45, 122, 79, 0.3); background: #ffffff; box-shadow: 0 0 0 1px rgba(45, 122, 79, 0.04) inset; }
@@ -550,9 +550,9 @@ function toggleCareAction(date, action) {
 .care-behavior-cell--locked { cursor: default; }
 .care-behavior-cell--selectable { cursor: pointer; }
 .care-behavior-day-wrap { display: flex; align-items: center; justify-content: center; gap: 2px; min-height: 16px; }
-.care-behavior-day { font-size: 11px; color: #0f172a; font-weight: 700; line-height: 1.1; }
+.care-behavior-day { font-size: 14px; color: #0f172a; font-weight: 500; line-height: 1.1; }
 .care-behavior-cell--today .care-behavior-day { color: #2d7a4f; }
-.care-behavior-day-mark { font-size: 8px; color: #15803d; background: rgba(21, 128, 61, 0.1); padding: 1px 3px; border-radius: 999px; }
+.care-behavior-day-mark { font-size: 9px; color: #15803d; background: rgba(21, 128, 61, 0.1); padding: 1px 3px; border-radius: 999px; }
 .care-behavior-metrics { width: 100%; display: flex; flex-direction: column; gap: 1px; min-height: 24px; }
 .care-behavior-metrics--empty { justify-content: center; }
 .care-behavior-metrics-spacer { width: 100%; height: 18px; }
@@ -563,7 +563,7 @@ function toggleCareAction(date, action) {
 .care-behavior-metric-icon-stem { position: absolute; left: 3px; top: 0; width: 2px; height: 7px; border-radius: 999px; background: currentColor; }
 .care-behavior-metric-icon-bulb { position: absolute; left: 1px; bottom: 0; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.78) inset; }
 .care-behavior-metric-icon-drop { position: absolute; left: 1px; top: 0; width: 6px; height: 8px; background: currentColor; border-radius: 60% 60% 60% 0; transform: rotate(45deg); transform-origin: center; }
-.care-behavior-metric-value { flex: 0 1 auto; min-width: 0; max-width: 27px; font-size: 8px; color: #334155; line-height: 1; overflow: hidden; text-overflow: clip; white-space: nowrap; }
+.care-behavior-metric-value { flex: 0 1 auto; min-width: 0; max-width: 27px; font-size: 10px; color: #334155; line-height: 1; overflow: hidden; text-overflow: clip; white-space: nowrap; }
 .care-behavior-cell--historical .care-behavior-day,
 .care-behavior-cell--future .care-behavior-day,
 .care-behavior-cell--historical .care-behavior-metric-value,
