@@ -19,7 +19,7 @@
 | low | < 12k | 正常继续 |
 | medium | 12k-30k | 使用 receipt 和 role_context_packets |
 | high | 30k-60k | 必须压缩 facts、减少候选、推迟 Drilldown |
-| extreme | > 60k | 必须停止说明原因，请求用户确认是否继续重上下文 |
+| extreme | > 60k | 必须停止说明原因，自动执行任务前 dirty snapshot commit是否继续重上下文 |
 
 ## high / extreme 压缩动作
 

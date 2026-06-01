@@ -25,6 +25,7 @@
 | Phase 4.45 | pre-implementation token 预算保险丝 | `pre-implementation-budget-fuse.md` |
 | Phase 6 | QA 证据、日志、截图、失败归因 | `qa-evidence-policy.md` |
 | Phase 7 | Git 工作区、very_dirty、commit | `git-completion-policy.md` |
+| Completion | 最终完成 / Done / 停止门禁 | `completion-gate.md` |
 | Review | diff-first + dependency-context-limited、QA 不审 diff | `review-scope-policy.md` |
 
 ## 模板入口

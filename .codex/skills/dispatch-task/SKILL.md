@@ -243,3 +243,23 @@ assets/templates/qa-evidence.md
 7. 禁止用 emoji / 图标 / 评论 / 描述替代真实 checklist 勾选。
 8. 禁止把完整 Figma / ClickUp / 日志广播给所有 agent。
 9. 禁止在本 skill 或 references 中追加版本号章节；补丁必须整合进既有章节结构。
+
+
+## very_dirty 自动快照提交
+
+如果任务开始前 Git 工作区为 very_dirty，main agent 必须先创建任务前 dirty snapshot commit。无需用户确认。
+
+commit message 必须根据当前脏改动内容生成，精炼且不超过 50 个字符。任务完成后的最终 commit message 同样不超过 50 个字符。
+
+
+## Completion Gate
+
+任务停止 / Done / 完成前必须读取：
+
+```text
+references/completion-gate.md
+```
+
+只有 Completion Gate 通过，才允许停止。仅本地后端测试 PASS 或风险说明，不是完成条件。
+
+如果验收要求小程序实际交互，QA 必须执行 WeChat DevTools MCP 自动化或端上验证；不能只做 MCP 连接能力验证。

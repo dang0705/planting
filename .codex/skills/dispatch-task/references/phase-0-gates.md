@@ -23,7 +23,7 @@ Phase 0 是 `dispatch-task` 的第一阶段。未通过 Phase 0，不得进入�
 
 以下任一条件成立，必须停止：
 
-1. Git 工作区 `very_dirty`，但用户未确认是否继续。
+1. Git 工作区为 `very_dirty` 时，必须先执行任务前 dirty snapshot commit；提交失败则停止。
 2. 任务意图不清，且无法继续。
 3. Agent Assignment 未输出。
 4. role_context_packets 未生成。
@@ -50,3 +50,10 @@ prompt_only 模式跳过：
 5. ClickUp 状态 / 评论 / checklist 回写。
 
 prompt_only 仍必须执行通用 gate。
+
+
+## very_dirty 处理
+
+如果 Git Workspace Check 判定为 `very_dirty`，必须先执行任务前 dirty snapshot commit，无需用户确认。
+
+commit message 必须基于当前脏改动内容生成，精炼且不超过 50 个字符。

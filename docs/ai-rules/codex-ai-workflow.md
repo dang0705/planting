@@ -90,3 +90,15 @@ main agent 默认不得亲自写代码。
 4. QA does not review code diff.
 5. ClickUp markdown checklist writeback updates `markdown_description`.
 6. Skill and reference files must not contain version-number patch sections.
+
+
+## Git dirty workspace snapshot
+
+任务开始前如果 Git 工作区为 very_dirty，必须先自动创建任务前 dirty snapshot commit，无需用户确认。
+
+commit message 必须根据改动内容生成，精炼且不超过 50 个字符。最终任务 commit message 同样不超过 50 个字符。
+
+
+## Completion Gate
+
+任务不得因为部分测试通过而停止。所有 required acceptance items 必须完成验收，或存在明确 blocker 并已写回。小程序实际交互要求必须由 QA 执行自动化或端上验证。
