@@ -24,6 +24,7 @@
         :class="[
           'care-behavior-cell',
           item.isSelected ? 'care-behavior-cell--selected' : '',
+          item.isFocused ? 'care-behavior-cell--focused' : '',
           item.isToday ? 'care-behavior-cell--today' : '',
           item.isFuture ? 'care-behavior-cell--future' : '',
           item.isHistoricalOutOfRange ? 'care-behavior-cell--historical' : '',
@@ -43,13 +44,13 @@
                 <view class="care-behavior-metric-icon-stem" />
                 <view class="care-behavior-metric-icon-bulb" />
               </view>
-              <text class="care-behavior-metric-value">{{ item.temperatureText }}°</text>
+              <text class="care-behavior-metric-value">{{ item.temperatureDisplayText }}</text>
             </view>
             <view v-if="item.humidityText" class="care-behavior-metric">
               <view class="care-behavior-metric-icon care-behavior-metric-icon--humidity" aria-hidden="true">
                 <view class="care-behavior-metric-icon-drop" />
               </view>
-              <text class="care-behavior-metric-value">{{ item.humidityText }}%</text>
+              <text class="care-behavior-metric-value">{{ item.humidityDisplayText }}</text>
             </view>
           </template>
           <view v-else class="care-behavior-metrics-spacer" />
@@ -219,26 +220,41 @@ function normalizeWeatherMetricValue(value = '') {
   if (!raw) {
     return ''
   }
-  const numeric = Number(raw)
-  return Number.isFinite(numeric) ? `${Math.round(numeric)}` : raw
+  const cleaned = raw.replace(/[℃°℉%]/g, '').trim()
+  if (!cleaned) {
+    return ''
+  }
+  const numeric = Number(cleaned)
+  return Number.isFinite(numeric) ? `${Math.round(numeric)}` : cleaned
 }
 
 function getWeatherTemperatureText(entry = {}) {
-  const maxTemp = normalizeWeatherMetricValue(
-    entry.tempMaxC ?? entry.tempMax ?? entry.maxTemp ?? entry.maxTemperature ?? entry.tempMaxF ?? ''
+  return normalizeWeatherMetricValue(
+    entry.temp ??
+    entry.temperature ??
+    entry.tempC ??
+    entry.tempF ??
+    entry.tempMaxC ??
+    entry.tempMax ??
+    entry.maxTemp ??
+    entry.maxTemperature ??
+    entry.tempMinC ??
+    entry.tempMin ??
+    entry.minTemp ??
+    entry.minTemperature ??
+    entry.tempMaxF ??
+    entry.tempMinF ??
+    ''
   )
-  const minTemp = normalizeWeatherMetricValue(
-    entry.tempMinC ?? entry.tempMin ?? entry.minTemp ?? entry.minTemperature ?? entry.tempMinF ?? ''
-  )
-  const singleTemp = normalizeWeatherMetricValue(entry.temp ?? entry.temperature)
-  if (maxTemp && minTemp) {
-    return `${maxTemp}/${minTemp}`
-  }
-  return maxTemp || minTemp || singleTemp || ''
 }
 
 function getWeatherHumidityText(entry = {}) {
   return normalizeWeatherMetricValue(entry.humidity ?? entry.humi)
+}
+
+function formatCellMetricText(value = '', suffix = '') {
+  const normalized = normalizeWeatherMetricValue(value)
+  return normalized ? `${normalized}${suffix}` : ''
 }
 
 function normalizeDateValue(value = '') {
@@ -413,12 +429,21 @@ const displayWindow = computed(() => buildCareBehaviorDisplayWindow(referenceDat
 const displayedCellItems = computed(() => {
   return displayWindow.value.map(item => {
     const state = dateStates.value[item.date] || {}
+    const temperatureDisplayText = formatCellMetricText(
+      state.temperatureText || weatherByDate.value[item.date]?.temperatureText || '',
+      '°'
+    )
+    const humidityDisplayText = formatCellMetricText(
+      state.humidityText || weatherByDate.value[item.date]?.humidityText || '',
+      '%'
+    )
     return {
       ...item,
       isActive: true,
       isSelectable: Boolean(state.isSelectable),
       canOpenDetail: Boolean(state.canOpenDetail && (item.isToday || item.isSelectable)),
-      isSelected: selectedDate.value === item.date,
+      isFocused: selectedDate.value === item.date,
+      isSelected: Boolean(state.watering && item.isSelectable && !item.isToday && !item.isHistoricalOutOfRange && !item.isFuture),
       isFuture: Boolean(item.isFuture),
       isHistoricalOutOfRange: Boolean(item.isHistoricalOutOfRange),
       watering: Boolean(state.watering),
@@ -427,7 +452,9 @@ const displayedCellItems = computed(() => {
       hasWeatherMetrics: Boolean(state.temperatureText || state.humidityText),
       weatherText: state.weatherText || weatherByDate.value[item.date]?.text || '',
       temperatureText: state.temperatureText || weatherByDate.value[item.date]?.temperatureText || '',
-      humidityText: state.humidityText || weatherByDate.value[item.date]?.humidityText || ''
+      humidityText: state.humidityText || weatherByDate.value[item.date]?.humidityText || '',
+      temperatureDisplayText,
+      humidityDisplayText
     }
   })
 })
@@ -462,8 +489,9 @@ function initializeTimelineFromProps() {
   const sourceBucket = normalizeBucket(timelineSource.value.last_fertilized_bucket)
   baseBucketSelection.value = sourceBucket
   bucketSelection.value = sourceBucket
-  dateStates.value = buildDateStates()
-  selectedDate.value = resolveDefaultSelectedDate()
+  const nextDateStates = buildDateStates()
+  dateStates.value = nextDateStates
+  selectedDate.value = resolveSelectedDateAfterRebuild(nextDateStates)
 }
 
 function buildDateStates() {
@@ -504,11 +532,22 @@ function resolveDefaultSelectedDate() {
   return activeSelectableDate || selectableDates[selectableDates.length - 1] || ''
 }
 
+function resolveSelectedDateAfterRebuild(nextStates = {}) {
+  const currentState = selectedDate.value ? nextStates[selectedDate.value] : null
+  if (currentState?.canOpenDetail && !currentState.isFuture && !currentState.isHistoricalOutOfRange) {
+    return selectedDate.value
+  }
+  return resolveDefaultSelectedDate()
+}
+
 function selectDate(item = {}) {
   if (!item?.date || item.canOpenDetail === false || item.isFuture || item.isHistoricalOutOfRange) {
     return
   }
   selectedDate.value = item.date
+  if (item.isSelectable && !item.isToday) {
+    toggleCareAction(item.date, 'watering')
+  }
 }
 
 function syncBucketSelection(nextStates = {}) {
@@ -540,7 +579,8 @@ function toggleCareAction(date, action) {
 .care-behavior-weekday-item { text-align: center; color: #64748b; font-size: 12px; }
 .care-behavior-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .care-behavior-cell { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 5px 2px 4px; height: 77px; border-radius: 12px; border: 1px solid rgba(45, 122, 79, 0.15); background: #ffffff; overflow: hidden; }
-.care-behavior-cell--selected { border-color: rgba(45, 122, 79, 0.3); background: #ffffff; box-shadow: 0 0 0 1px rgba(45, 122, 79, 0.04) inset; }
+.care-behavior-cell--selected { border: 2px solid #2d7a4f; background: #ffffff; box-shadow: 0 0 0 1px rgba(45, 122, 79, 0.06) inset; }
+.care-behavior-cell--focused { box-shadow: 0 0 0 1px rgba(45, 122, 79, 0.04) inset; }
 .care-behavior-cell--today { border: 2px solid #2d7a4f; background: rgba(45, 122, 79, 0.05); box-shadow: 0 0 0 1px rgba(45, 122, 79, 0.05) inset; }
 .care-behavior-cell--selected.care-behavior-cell--today { background: rgba(45, 122, 79, 0.05); }
 .care-behavior-cell--historical,
@@ -557,17 +597,17 @@ function toggleCareAction(date, action) {
 .care-behavior-metrics--empty { justify-content: center; }
 .care-behavior-metrics-spacer { width: 100%; height: 18px; }
 .care-behavior-metric { display: flex; align-items: center; justify-content: center; gap: 2px; line-height: 1; min-width: 0; }
-.care-behavior-metric-icon { position: relative; flex: 0 0 auto; width: 8px; height: 10px; color: #64748b; }
-.care-behavior-metric-icon--temp { color: #f97316; }
-.care-behavior-metric-icon--humidity { color: #0ea5e9; }
+.care-behavior-metric-icon { position: relative; flex: 0 0 auto; width: 8px; height: 10px; color: #5a7a68; }
+.care-behavior-metric-icon--temp { color: #5a7a68; }
+.care-behavior-metric-icon--humidity { color: #5a7a68; }
 .care-behavior-metric-icon-stem { position: absolute; left: 3px; top: 0; width: 2px; height: 7px; border-radius: 999px; background: currentColor; }
 .care-behavior-metric-icon-bulb { position: absolute; left: 1px; bottom: 0; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.78) inset; }
 .care-behavior-metric-icon-drop { position: absolute; left: 1px; top: 0; width: 6px; height: 8px; background: currentColor; border-radius: 60% 60% 60% 0; transform: rotate(45deg); transform-origin: center; }
-.care-behavior-metric-value { flex: 0 1 auto; min-width: 0; max-width: 27px; font-size: 10px; color: #334155; line-height: 1; overflow: hidden; text-overflow: clip; white-space: nowrap; }
+.care-behavior-metric-value { flex: 0 1 auto; min-width: 0; max-width: 27px; font-size: 10px; color: #5a7a68; line-height: 1; overflow: hidden; text-overflow: clip; white-space: nowrap; }
 .care-behavior-cell--historical .care-behavior-day,
 .care-behavior-cell--future .care-behavior-day,
 .care-behavior-cell--historical .care-behavior-metric-value,
-.care-behavior-cell--future .care-behavior-metric-value { color: #64748b; }
+.care-behavior-cell--future .care-behavior-metric-value { color: #6b7f74; }
 .care-behavior-dot-row { display: flex; align-items: center; justify-content: center; gap: 3px; min-height: 10px; }
 .care-behavior-marker { width: 8px; height: 8px; display: flex; align-items: center; justify-content: center; }
 .care-behavior-dot { width: 6px; height: 6px; border-radius: 50%; background: #2563eb; }
