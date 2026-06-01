@@ -597,7 +597,8 @@ import {
   isLegacyWateringTimelineQuestion,
   isCareBehaviorWateringTimelineQuestion,
   normalizeCareBehaviorTimeline,
-  resolveCareBehaviorTimelineAutoAnswerOptionId
+  resolveCareBehaviorTimelineAutoAnswerOptionId,
+  resolveCareBehaviorTimelineRecordedAnswerOptionId
 } from '@/utils/care-behavior-timeline.js'
 import { mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline } from '@/utils/care-behavior-weather-window.js'
 import {
@@ -1361,11 +1362,11 @@ function syncCareBehaviorTimelineAnswer(question, timeline = null) {
   if (!questionId) {return}
 
   const currentOptionId = String(followUpAnswers.value[questionId] || '').trim()
-  const resolvedOptionId = resolveCareBehaviorTimelineAutoAnswerOptionId(question)
+  const recordedOptionId = resolveCareBehaviorTimelineRecordedAnswerOptionId(question)
   const meaningfulTimeline = hasMeaningfulCareBehaviorTimeline(timeline)
   const visibleOptions = getVisibleCareBehaviorOptions(question)
   const nextAnswerId = meaningfulTimeline
-    ? (isLegacyWateringTimelineQuestion(question) ? 'care_behavior_timeline' : resolvedOptionId)
+    ? (isLegacyWateringTimelineQuestion(question) ? 'care_behavior_timeline' : recordedOptionId)
     : ''
 
   if (nextAnswerId) {

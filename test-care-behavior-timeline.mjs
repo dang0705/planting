@@ -10,6 +10,7 @@ import {
   hasMeaningfulCareBehaviorTimeline,
   isLegacyWateringTimelineQuestion,
   isCareBehaviorWateringTimelineQuestion,
+  resolveCareBehaviorTimelineRecordedAnswerOptionId,
   normalizeCareBehaviorTimeline
 } from './src/utils/care-behavior-timeline.js'
 import {
@@ -275,6 +276,44 @@ assert.equal(visibleTimelineOptions[0].optionId, 'unclear')
 
 const resolvedDefaultTimelineAnswers = createFollowUpAnswerMap([timelineQuestion])
 assert.equal(resolvedDefaultTimelineAnswers[timelineQuestion.questionId], 'timeline_recorded')
+assert.equal(resolveCareBehaviorTimelineRecordedAnswerOptionId(timelineQuestion), 'timeline_recorded')
+
+const unclearDefaultButRecordedTimelineQuestion = {
+  questionId: 'timeline-unclear-default',
+  uiVariant: 'care_behavior_timeline',
+  targetDimension: 'watering',
+  defaultOptionId: 'unclear',
+  options: [
+    { optionId: 'timeline_provided', optionKey: 'timeline_provided', optionText: '记录已提供' },
+    { optionId: 'unclear', optionKey: 'unclear', optionText: '说不清/没留意' },
+    { optionId: 'often_wet', optionKey: 'often_wet', optionText: '近2周 2 次以上' },
+    { optionId: 'often_dry', optionKey: 'often_dry', optionText: '近2周 0 次' }
+  ]
+}
+const fallbackTimelineQuestion = {
+  questionId: 'timeline-fallback',
+  uiVariant: 'care_behavior_timeline',
+  targetDimension: 'watering',
+  defaultOptionId: 'unclear',
+  options: [
+    { optionId: 'care_behavior_timeline', optionText: '记录已提供' },
+    { optionId: 'unclear', optionText: '说不清/没留意' }
+  ]
+}
+const noSentinelTimelineQuestion = {
+  questionId: 'timeline-no-sentinel',
+  uiVariant: 'care_behavior_timeline',
+  targetDimension: 'watering',
+  defaultOptionId: 'unclear',
+  options: [
+    { optionId: 'unclear', optionText: '说不清/没留意' },
+    { optionId: 'often_wet', optionText: '近2周 2 次以上' }
+  ]
+}
+
+assert.equal(resolveCareBehaviorTimelineRecordedAnswerOptionId(unclearDefaultButRecordedTimelineQuestion), 'timeline_provided')
+assert.equal(resolveCareBehaviorTimelineRecordedAnswerOptionId(fallbackTimelineQuestion), 'care_behavior_timeline')
+assert.equal(resolveCareBehaviorTimelineRecordedAnswerOptionId(noSentinelTimelineQuestion), 'care_behavior_timeline')
 
 const componentSource = readFileSync('./src/components/CareBehaviorTimeline.vue', 'utf8')
 const compactComponentSource = componentSource.replace(/\s+/g, ' ')
@@ -304,6 +343,8 @@ assert.ok(compactComponentSource.includes('canOpenDetail: Boolean(item.canOpenDe
 assert.ok(compactComponentSource.includes('item.canOpenDetail === false || item.isFuture || item.isHistoricalOutOfRange'))
 assert.ok(compactComponentSource.includes('hasWeatherMetrics: Boolean(state.temperatureText || state.humidityText)'))
 assert.ok(compactComponentSource.includes('hasWeatherMetrics: Boolean(weather.temperatureText || weather.humidityText)'))
+assert.ok(compactComponentSource.includes('return Object.fromEntries('))
+assert.ok(compactComponentSource.includes('Object.entries(merged).filter(([date]) => dateWindowSet.value.has(normalizeDateValue(date)))'))
 assert.ok(compactComponentSource.includes('v-if="item.hasWeatherMetrics"'))
 assert.ok(compactComponentSource.includes('v-if="item.temperatureText"'))
 assert.ok(compactComponentSource.includes('v-if="item.humidityText"'))

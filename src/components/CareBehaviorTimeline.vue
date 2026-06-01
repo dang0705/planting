@@ -421,7 +421,9 @@ const weatherByDate = computed(() => {
   for (const source of collectWeatherSources(props.question, props.timeline)) {
     Object.assign(merged, normalizeWeatherInput(source, fallbackDate))
   }
-  return merged
+  return Object.fromEntries(
+    Object.entries(merged).filter(([date]) => dateWindowSet.value.has(normalizeDateValue(date)))
+  )
 })
 
 const displayWindow = computed(() => buildCareBehaviorDisplayWindow(referenceDate.value))

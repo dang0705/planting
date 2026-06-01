@@ -219,6 +219,20 @@ export function resolveCareBehaviorTimelineAutoAnswerOptionId(question = {}) {
   return isCareBehaviorTimelineSentinelOption(defaultOption) ? sentinelOption.optionId : ''
 }
 
+export function resolveCareBehaviorTimelineRecordedAnswerOptionId(question = {}) {
+  if (!isCareBehaviorWateringTimelineQuestion(question) || isLegacyWateringTimelineQuestion(question)) {
+    return ''
+  }
+
+  const options = Array.isArray(question?.options) ? question.options : []
+  const sentinelOption = options.find(option => isCareBehaviorTimelineSentinelOption(option)) || null
+  if (sentinelOption?.optionId) {
+    return sentinelOption.optionId
+  }
+
+  return 'care_behavior_timeline'
+}
+
 export function resolveCareBehaviorTimelineAnswerOptionId(question = {}) {
   return resolveCareBehaviorTimelineAutoAnswerOptionId(question)
 }

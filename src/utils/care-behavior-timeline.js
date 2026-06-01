@@ -19,6 +19,7 @@ export {
   isCareBehaviorWateringTimelineQuestion,
   getVisibleCareBehaviorOptions,
   resolveCareBehaviorTimelineAutoAnswerOptionId,
+  resolveCareBehaviorTimelineRecordedAnswerOptionId,
   resolveCareBehaviorTimelineAnswerOptionId,
   isCareBehaviorTimelineUnclearAnswer,
   isCareBehaviorTimelineSentinelAnswer,
