@@ -119,7 +119,7 @@ UI/Figma QA Result:
 ```
 
 
-## v54 显式触发规则
+## 显式触发规则
 
 本 skill 禁止隐式触发；该策略由同目录下 `agents/openai.yaml` 定义。只有当 `dispatch-task` 的 `role_context_packet` 明确写入：
 

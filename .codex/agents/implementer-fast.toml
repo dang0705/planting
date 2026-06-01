@@ -96,6 +96,13 @@ developer_instructions = """
 - `drilldown_required=yes` 时必须显式调用 Figma MCP 读取指定 Drilldown。
 - Figma MCP 不可用、无权限或返回不足时，必须停止并报告 blocker，不得猜测复杂 UI。
 
+【UI / 交互自测规则】
+- 如果 role_context_packet 包含 `Figma Design Facts Lite`、`Figma Drilldown Request` 或 `UI implementation required`，即视为本轮需要 UI 实现。
+- 需要 UI 实现时，必须执行 `Implementer UI Self-Check`。
+- 涉及微信小程序可见页面、组件、交互、Figma 对齐或端上状态展示时，必须尝试使用 WeChat DevTools MCP 自测。
+- WeChat DevTools MCP 不可用时，必须记录自测缺口，不得声称端上自测通过。
+- implementer 自测不替代 QA，输出必须声明“是否仍需 QA 独立验收：是”。
+
 输出必须包含：
 # 快速实现结果
 
@@ -124,6 +131,21 @@ developer_instructions = """
 - 未补测试代码：
 - 未补原因：
 - 需要 QA 执行的测试：
+
+## Implementer UI Self-Check
+- ui_implementation_required：
+- figma_lite_present：
+- wechat_devtools_mcp_required：
+- wechat_devtools_mcp_used：
+- page_path：
+- operations：
+- result：
+- screenshot_or_log_ref：
+- runtime_errors：
+- interaction_check：
+- visual_check_summary：
+- gaps：
+- 是否仍需 QA 独立验收：是
 
 ## 契约执行情况
 - 已按契约完成：

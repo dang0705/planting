@@ -122,7 +122,7 @@ UI Implementation Result:
 ```
 
 
-## v54 显式触发规则
+## 显式触发规则
 
 本 skill 禁止隐式触发；该策略由同目录下 `agents/openai.yaml` 定义。只有当 `dispatch-task` 的 `role_context_packet` 明确写入：
 
@@ -133,3 +133,73 @@ required_skill: $implementer-ui-execution-policy
 时，才允许读取和执行本 skill。
 
 非 UI / 非 Figma 任务不得读取本 skill。
+
+## Implementer UI Self-Check
+
+### 1. 触发条件
+
+只要 implementer 的 role_context_packet 中存在以下任一内容，即视为本轮需要 UI 实现：
+
+```text
+Figma Design Facts Lite
+Figma Drilldown Request
+UI implementation required
+Figma component / variant / state implementation required
+```
+
+存在上述内容时，implementer 必须做 UI 与交互自测。
+
+### 2. 自测工具
+
+涉及微信小程序可见页面、组件、交互、Figma 对齐或端上状态展示时，implementer 必须尝试使用 WeChat DevTools MCP 做自测。
+
+自测范围：
+
+1. 页面能否启动。
+2. 目标页面能否打开。
+3. 目标组件是否渲染。
+4. 关键交互是否可点击 / 输入 / 跳转。
+5. 是否存在明显运行时报错。
+6. UI 是否按 Figma Design Facts Lite / Implementation Packet / Drilldown Request 实现。
+7. 状态、props、Pinia、接口数据是否按 Contract 接上。
+
+### 3. 自测不是 QA
+
+implementer 自测只用于避免把明显坏的实现交给 QA。它不得替代 qa_reviewer 的独立验收。
+
+输出中必须固定写：
+
+```text
+是否仍需 QA 独立验收：是
+```
+
+### 4. WeChat DevTools MCP 不可用
+
+如果 WeChat DevTools MCP 不可用、无法连接、页面无法打开或工具异常，implementer 必须记录为自测缺口，不得声称端上自测通过。
+
+```text
+WeChat DevTools MCP Self-Check Blocker:
+- reason:
+- fallback_check:
+- risk:
+- QA_required: yes
+```
+
+### 5. 输出格式
+
+```text
+Implementer UI Self-Check:
+- ui_implementation_required: yes / no
+- figma_lite_present: yes / no
+- wechat_devtools_mcp_required: yes / no
+- wechat_devtools_mcp_used: yes / no
+- page_path:
+- operations:
+- result:
+- screenshot_or_log_ref:
+- runtime_errors:
+- interaction_check:
+- visual_check_summary:
+- gaps:
+- 是否仍需 QA 独立验收：是
+```

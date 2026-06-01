@@ -271,14 +271,14 @@ QA Acceptance Slice:
 5. 不得把 QA Acceptance Slice 当作 implementer 的实现事实源。
 
 
-## v49 role slice budget
+## Role slice budget
 
 - main agent 默认读取 Technical Scope Slice，不读取完整 Implementation Packet。
 - implementer 读取 Implementation Packet 和必要局部 Drilldown。
 - QA 读取 QA Acceptance Slice。
 - 所有 slice 超过预算时使用 evidence_ref / appendix_ref。
 
-## v50 QA Visual Baseline Slice
+## QA Visual Baseline Slice
 
 ### 定位
 
@@ -340,7 +340,7 @@ QA 不读取完整 Drilldown。QA 使用 baseline + 实际小程序截图 / 节�
 只有 UI 对齐失败、baseline 缺失、variant 不明确时，才请求局部 Drilldown。
 
 
-## v53 role-specific skill split
+## Role-specific skill split
 
 本 skill 只给 main agent 使用，用于生成角色切片：
 

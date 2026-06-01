@@ -297,7 +297,7 @@ Figma Node Drilldown:
 5. QA 默认只接收 `QA Acceptance Slice`，不得接收完整 Drilldown。
 
 
-## v49 main agent Figma budget
+## Main agent Figma budget
 
 main agent 默认只读取 `Figma Design Facts Lite`。
 
@@ -316,7 +316,7 @@ main agent 如需判断复用、拆分或技术方向，只能读取以下最小
 
 禁止把 get_design_context 返回的完整 React/Tailwind 参考代码传入默认上下文。
 
-## v50 Figma Drilldown Ownership
+## Figma Drilldown Ownership
 
 ### 默认所有权
 
@@ -396,7 +396,7 @@ QA 只有在以下情况才允许请求局部 Drilldown：
 请求时必须指定 target node、原因和最小 depth。
 
 
-## v53 explicit MCP contract
+## Explicit Drilldown MCP Contract
 
 `Figma Drilldown Request` 不是普通摘要，而是 implementer 的显式工具动作。
 
