@@ -19,6 +19,10 @@ const { hasConsumedFollowUpRetakeQuota } = require('../presenters/diagnosis-roun
 const { resolveLatestVisualCallBatchId } = require('../utils/visual-batch-id')
 const { readQuestionKeyFromRationale, readRoundFromRationale } = require('../services/session-follow-up-service')
 const {
+  resolveRuntimeEnvironmentCarePayload,
+  buildRouteAnswersFromRuntimeEnvironmentCarePayload
+} = require('./care-behavior-payload')
+const {
   pickQuestionKeysFromQuestionQueue,
   buildAskedQuestionRowsFromFollowUpRows,
   buildRuntimeAnswersFromFollowUpUpdates,
@@ -150,6 +154,11 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   let refreshedSessionState = sessionState
   let visualExtraction = null
   let runtimeAnswers = answers
+  const runtimeCarePayload = resolveRuntimeEnvironmentCarePayload({
+    payload,
+    sessionState: refreshedSessionState,
+    plantContext: refreshedSessionState.plantContext || sessionState.plantContext || {}
+  })
   let runtimeObservedEvidenceSet = refreshedSessionState.observedEvidenceSet || []
   let runtimeAskedQuestionKeys = refreshedSessionState.askedQuestionKeys
   let runtimeAnsweredQuestionGroupKeys = refreshedSessionState.answeredQuestionGroupKeys || []
@@ -404,12 +413,16 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     runtimeAskedQuestionRows = []
   }
 
+  const routeRuntimeAnswers = buildRouteAnswersFromRuntimeEnvironmentCarePayload({
+    answers: runtimeAnswers,
+    runtimeEnvironmentCarePayload: runtimeCarePayload
+  })
   const round = answerRound + 1
 
   timing.mark('round-starting', {
     round,
     hasImageInputs: Boolean(hasImageInputs),
-    answerCount: Array.isArray(runtimeAnswers) ? runtimeAnswers.length : 0,
+    answerCount: Array.isArray(routeRuntimeAnswers) ? routeRuntimeAnswers.length : 0,
     askedQuestionCount: Array.isArray(runtimeAskedQuestionKeys) ? runtimeAskedQuestionKeys.length : 0
   })
   const roundResult = await runDiagnosisRound({
@@ -423,7 +436,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
       visualExtraction?.aggregateResult ||
       refreshedSessionState.visualAggregateResult ||
       null,
-    answers: runtimeAnswers,
+    answers: routeRuntimeAnswers,
     askedQuestionKeys: runtimeAskedQuestionKeys,
     answeredQuestionGroupKeys: runtimeAnsweredQuestionGroupKeys,
     unknownCountByGroup: runtimeUnknownCountByGroup,
@@ -453,6 +466,12 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   }
   if (uiPatch) {
     roundResult.uiPatch = uiPatch
+  }
+  if (runtimeCarePayload.careBehaviorTimeline) {
+    roundResult.careBehaviorTimeline = runtimeCarePayload.careBehaviorTimeline
+  }
+  if (runtimeCarePayload.environmentCareContext) {
+    roundResult.environmentCareContext = runtimeCarePayload.environmentCareContext
   }
 
   if (!roundResult.visualBatchTrace && refreshedSessionState.visualBatchTrace) {

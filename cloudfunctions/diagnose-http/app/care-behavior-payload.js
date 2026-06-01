@@ -32,6 +32,72 @@ function resolveSnapshot(sessionState = {}) {
   return isPlainObject(sessionState.runtimeSnapshot) ? sessionState.runtimeSnapshot : {}
 }
 
+function normalizeRouteAnswerKey(value = '') {
+  return String(value || '').trim().toLowerCase()
+}
+
+function isWateringContextRouteQuestion(questionKey = '') {
+  const normalizedQuestionKey = normalizeRouteAnswerKey(questionKey)
+  return (
+    normalizedQuestionKey.includes('watering_frequency_context') ||
+    normalizedQuestionKey.includes('watering_context')
+  )
+}
+
+function resolveWateringRouteOptionKey(wateringContext = '') {
+  switch (normalizeRouteAnswerKey(wateringContext)) {
+    case 'likely_too_wet':
+      return 'often_wet'
+    case 'likely_too_dry':
+      return 'often_dry'
+    case 'keep_baseline_or_check_soil':
+      return 'normal_or_stable'
+    default:
+      return ''
+  }
+}
+
+function buildRouteAnswersFromRuntimeEnvironmentCarePayload({
+  answers = [],
+  runtimeEnvironmentCarePayload = null,
+  environmentCareContext = null
+} = {}) {
+  const safeAnswers = Array.isArray(answers) ? answers : []
+  const resolvedPayload = isPlainObject(runtimeEnvironmentCarePayload)
+    ? runtimeEnvironmentCarePayload
+    : {}
+  const resolvedContext = isPlainObject(resolvedPayload.environmentCareContext)
+    ? resolvedPayload.environmentCareContext
+    : (isPlainObject(environmentCareContext) ? environmentCareContext : null)
+  const wateringContext = String(resolvedContext?.outputs?.wateringContext || '').trim()
+  const routeOptionKey = resolveWateringRouteOptionKey(wateringContext)
+
+  if (!safeAnswers.length || !resolvedContext || !routeOptionKey) {
+    return safeAnswers
+  }
+
+  let changed = false
+  const bridgedAnswers = safeAnswers.map(answer => {
+    const questionKey = String(answer?.questionKey || '').trim()
+    const optionKey = String(answer?.optionKey || '').trim()
+    if (
+      !questionKey ||
+      optionKey !== 'care_behavior_timeline' ||
+      !isWateringContextRouteQuestion(questionKey)
+    ) {
+      return answer
+    }
+
+    changed = true
+    return {
+      ...answer,
+      optionKey: routeOptionKey
+    }
+  })
+
+  return changed ? bridgedAnswers : safeAnswers
+}
+
 function resolveRuntimeEnvironmentCarePayload({
   payload = {},
   sessionState = {},
@@ -108,5 +174,8 @@ function resolveRuntimeEnvironmentCarePayload({
 
 module.exports = {
   resolveRuntimeEnvironmentCarePayload,
-  hasMeaningfulTimeline
+  hasMeaningfulTimeline,
+  buildRouteAnswersFromRuntimeEnvironmentCarePayload,
+  isWateringContextRouteQuestion,
+  resolveWateringRouteOptionKey
 }

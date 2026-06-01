@@ -30,6 +30,52 @@ function resolvePrivateSymptomClassRuntime(response = {}) {
   )
 }
 
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function compactCareBehaviorTimelineForSnapshot(value = null) {
+  if (!isPlainObject(value)) {
+    return null
+  }
+
+  const dailyRecords = Array.isArray(value.dailyRecords)
+    ? value.dailyRecords.slice(0, 25)
+    : (Array.isArray(value.daily_records) ? value.daily_records.slice(0, 25) : [])
+
+  return {
+    ...value,
+    dailyRecords,
+    daily_records: dailyRecords
+  }
+}
+
+function compactEnvironmentCareContextForSnapshot(value = null) {
+  if (!isPlainObject(value)) {
+    return null
+  }
+
+  return {
+    version: String(value.version || '').trim() || 'v7',
+    outputs: isPlainObject(value.outputs) ? value.outputs : null,
+    behaviorSummary10d: isPlainObject(value.behaviorSummary10d)
+      ? value.behaviorSummary10d
+      : null,
+    historicalSummary10d: isPlainObject(value.historicalSummary10d)
+      ? value.historicalSummary10d
+      : null,
+    forecastSummary15d: isPlainObject(value.forecastSummary15d)
+      ? value.forecastSummary15d
+      : null,
+    watering: isPlainObject(value.watering) ? value.watering : null,
+    fertilizing: isPlainObject(value.fertilizing) ? value.fertilizing : null,
+    light: isPlainObject(value.light) ? value.light : null,
+    careBehaviorTimeline: compactCareBehaviorTimelineForSnapshot(
+      value.careBehaviorTimeline || value.care_behavior_timeline || null
+    )
+  }
+}
+
 function buildSnapshotPayload({
   sessionId,
   plantContext,
@@ -62,6 +108,12 @@ function buildSnapshotPayload({
     ''
   )
   const normalizedOutcomeType = normalizeOutcomeType(response?.outcomeType, '')
+  const careBehaviorTimeline = compactCareBehaviorTimelineForSnapshot(
+    response?.careBehaviorTimeline || null
+  )
+  const environmentCareContext = compactEnvironmentCareContextForSnapshot(
+    response?.environmentCareContext || null
+  )
 
   return {
     diagnosisSessionId: sessionId,
@@ -118,6 +170,8 @@ function buildSnapshotPayload({
     diagnosisDirections,
     symptomClassRuntime,
     careBaselineSummary: response?.careBaselineSummary || null,
+    careBehaviorTimeline,
+    environmentCareContext,
     environmentDeviationHints: Array.isArray(response?.environmentDeviationHints)
       ? response.environmentDeviationHints
       : [],
@@ -267,6 +321,12 @@ function buildRuntimeSnapshotPayload({
         : null)
   )
   const isFollowUpRuntimeSnapshot = Boolean(response?.followUpRequired)
+  const careBehaviorTimeline = compactCareBehaviorTimelineForSnapshot(
+    response?.careBehaviorTimeline || null
+  )
+  const environmentCareContext = compactEnvironmentCareContextForSnapshot(
+    response?.environmentCareContext || null
+  )
 
   return JSON.stringify({
     diagnosisSessionId: sessionId,
@@ -337,6 +397,8 @@ function buildRuntimeSnapshotPayload({
       ? []
       : (Array.isArray(response?.diagnosticTrace) ? response.diagnosticTrace : []),
     careBaselineSummary: isFollowUpRuntimeSnapshot ? null : (response?.careBaselineSummary || null),
+    careBehaviorTimeline,
+    environmentCareContext,
     environmentDeviationHints: Array.isArray(response?.environmentDeviationHints)
       ? response.environmentDeviationHints
       : [],
