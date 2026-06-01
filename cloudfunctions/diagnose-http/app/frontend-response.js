@@ -6,6 +6,11 @@ function normalizeStringList(items = []) {
     .filter(Boolean)
 }
 
+const {
+  compactCareBehaviorTimelineForPublic,
+  compactEnvironmentCareContextForPublic
+} = require('../presenters/diagnosis-round-presenter')
+
 function pickMinimalQuestions(items = []) {
   return (Array.isArray(items) ? items : [])
     .filter(item => item?.questionId || item?.questionKey)
@@ -342,6 +347,11 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
     const answerRevision = Number(publicResponse.answerRevision || 0)
     const visualBatchTrace = pickMinimalVisualBatchTrace(publicResponse.visualBatchTrace)
     const visualAggregateSummary = pickMinimalVisualAggregateSummary(publicResponse.visualAggregateSummary)
+    const careBehaviorTimeline = compactCareBehaviorTimelineForPublic(publicResponse.careBehaviorTimeline || null)
+    const environmentCareContext = compactEnvironmentCareContextForPublic(
+      publicResponse.environmentCareContext || null,
+      publicResponse.careBehaviorTimeline || null
+    )
     const uiPatch =
       publicResponse.uiPatch && typeof publicResponse.uiPatch === 'object'
         ? publicResponse.uiPatch
@@ -366,6 +376,8 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
       ...(visualAggregateSummary ? { visualAggregateSummary } : {}),
       ...(answerRevision ? { answerRevision } : {}),
       ...(uiPatch ? { uiPatch } : {}),
+      ...(careBehaviorTimeline ? { careBehaviorTimeline } : {}),
+      ...(environmentCareContext ? { environmentCareContext } : {}),
       uiHints: {
         canUploadMoreImages: Boolean(publicResponse?.uiHints?.canUploadMoreImages),
         maxQuestionsThisRound: questions.length ? 1 : 0,
@@ -400,6 +412,11 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
       publicResponse.prevention ||
       whatToAvoid.join('\n') ||
       explanation?.avoid
+  )
+  const careBehaviorTimeline = compactCareBehaviorTimelineForPublic(publicResponse.careBehaviorTimeline || null)
+  const environmentCareContext = compactEnvironmentCareContextForPublic(
+    publicResponse.environmentCareContext || null,
+    publicResponse.careBehaviorTimeline || null
   )
   return {
     diagnosisSessionId: publicResponse.diagnosisSessionId || '',
@@ -449,7 +466,9 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
     outputEligibility: pickMinimalOutputEligibility(publicResponse.outputEligibility),
     confidenceLevel: publicResponse.confidenceLevel || '',
     confidenceReasons: normalizeStringList(publicResponse.confidenceReasons),
-    needHumanReview: Boolean(publicResponse.needHumanReview)
+    needHumanReview: Boolean(publicResponse.needHumanReview),
+    ...(careBehaviorTimeline ? { careBehaviorTimeline } : {}),
+    ...(environmentCareContext ? { environmentCareContext } : {})
   }
 }
 

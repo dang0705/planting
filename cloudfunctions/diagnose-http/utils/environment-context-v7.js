@@ -392,6 +392,20 @@ function eventsFromDailyRecords(dailyRecords = [], referenceDate = '') {
   return { wateringEvents, fertilizingEvents, lightChangeEvents }
 }
 
+function dedupeNormalizedEvents(events = [], keyResolver = event => JSON.stringify(event)) {
+  const seen = new Set()
+  const deduped = []
+
+  for (const event of Array.isArray(events) ? events : []) {
+    const key = String(keyResolver(event) || '').trim()
+    if (!key || seen.has(key)) {continue}
+    seen.add(key)
+    deduped.push(event)
+  }
+
+  return deduped
+}
+
 function latestDaysAgo(referenceDate = '', events = []) {
   let latest = null
   for (const event of events) {
@@ -444,7 +458,10 @@ function normalizeCareBehaviorTimeline(input = {}) {
   ]
     .map(event => normalizeWateringEvent(event, referenceDate))
     .filter(Boolean)
-    .slice(0, 10)
+  const dedupedWateringEvents10d = dedupeNormalizedEvents(
+    wateringEvents10d,
+    event => normalizeDate(event.date)
+  ).slice(0, 10)
   const fertilizingEvents10d = [
     ...(Array.isArray(source.fertilizingEvents10d) ? source.fertilizingEvents10d : []),
     ...(Array.isArray(source.fertilizing_events_10d) ? source.fertilizing_events_10d : []),
@@ -452,7 +469,10 @@ function normalizeCareBehaviorTimeline(input = {}) {
   ]
     .map(event => normalizeFertilizingEvent(event, referenceDate))
     .filter(Boolean)
-    .slice(0, 10)
+  const dedupedFertilizingEvents10d = dedupeNormalizedEvents(
+    fertilizingEvents10d,
+    event => normalizeDate(event.date)
+  ).slice(0, 10)
   const lightChangeEvents10d = [
     ...(Array.isArray(source.lightChangeEvents10d) ? source.lightChangeEvents10d : []),
     ...(Array.isArray(source.light_change_events_10d) ? source.light_change_events_10d : []),
@@ -460,7 +480,10 @@ function normalizeCareBehaviorTimeline(input = {}) {
   ]
     .map(event => normalizeLightEvent(event, referenceDate))
     .filter(Boolean)
-    .slice(0, 10)
+  const dedupedLightChangeEvents10d = dedupeNormalizedEvents(
+    lightChangeEvents10d,
+    event => normalizeDate(event.date)
+  ).slice(0, 10)
   const lastFertilizedBucket = normalizeBucket(source.lastFertilizedBucket || source.last_fertilized_bucket)
   const normalizedDailyRecords = dailyRecords
     .filter(isPlainObject)
@@ -472,11 +495,11 @@ function normalizeCareBehaviorTimeline(input = {}) {
   const summary = buildBehaviorSummary(
     referenceDate,
     {
-      wateringEvents: wateringEvents10d,
-      fertilizingEvents: fertilizingEvents10d,
-      lightChangeEvents: lightChangeEvents10d
+      wateringEvents: dedupedWateringEvents10d,
+      fertilizingEvents: dedupedFertilizingEvents10d,
+      lightChangeEvents: dedupedLightChangeEvents10d
     },
-    fertilizingEvents10d.length > 0 ? 'within_10d' : lastFertilizedBucket
+    dedupedFertilizingEvents10d.length > 0 ? 'within_10d' : lastFertilizedBucket
   )
 
   return {
@@ -484,12 +507,12 @@ function normalizeCareBehaviorTimeline(input = {}) {
     reference_date: referenceDate,
     dailyRecords: normalizedDailyRecords,
     daily_records: normalizedDailyRecords,
-    wateringEvents10d,
-    watering_events_10d: wateringEvents10d,
-    fertilizingEvents10d,
-    fertilizing_events_10d: fertilizingEvents10d,
-    lightChangeEvents10d,
-    light_change_events_10d: lightChangeEvents10d,
+    wateringEvents10d: dedupedWateringEvents10d,
+    watering_events_10d: dedupedWateringEvents10d,
+    fertilizingEvents10d: dedupedFertilizingEvents10d,
+    fertilizing_events_10d: dedupedFertilizingEvents10d,
+    lightChangeEvents10d: dedupedLightChangeEvents10d,
+    light_change_events_10d: dedupedLightChangeEvents10d,
     lastFertilizedBucket: summary.lastFertilizedBucket,
     last_fertilized_bucket: summary.lastFertilizedBucket,
     summary
@@ -521,16 +544,24 @@ function buildWateringPlanner({
   const baseline = {
     intervalDays: resolveBaselineInterval(wateringStrategy)
   }
+  const minIntervalDays = Math.max(1, Number(baseline.intervalDays?.[0]) || 5)
+  const maxReasonableWaterings10d = Math.max(1, Math.ceil(10 / minIntervalDays))
+  const wetPressureScore =
+    (Number(historical.highHumidityDays || 0) >= 4 ? 1 : 0) +
+    (Number(historical.coldHumidDays || 0) >= 2 ? 1 : 0) +
+    (Number(historical.rainyDays || 0) >= 4 ? 1 : 0)
+  const effectiveWetWaterings10d = Math.max(1, maxReasonableWaterings10d - wetPressureScore)
 
   if (
-    (Number(historical.highHumidityDays || 0) >= 4 && wateringCount10d >= 3) ||
-    (Number(historical.coldHumidDays || 0) >= 2 && wateringCount10d >= 2)
+    wateringCount10d > effectiveWetWaterings10d
   ) {
     return {
       baseline,
       wateringContext: WATERING_CONTEXTS.WET,
       action: WATERING_ACTIONS.WET,
-      reasons: ['recent_watering_plus_wet_environment']
+      reasons: wetPressureScore > 0
+        ? ['recent_watering_plus_wet_environment']
+        : ['recent_watering_exceeds_baseline_window']
     }
   }
 

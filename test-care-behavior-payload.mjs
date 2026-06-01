@@ -81,6 +81,11 @@ const plantContext = {
   uvIndexMax: 6
 }
 
+const slowWateringPlantContext = {
+  ...plantContext,
+  watering: { freq: [7, 12] }
+}
+
 const result = resolveRuntimeEnvironmentCarePayload({
   payload,
   sessionState: {},
@@ -93,6 +98,429 @@ assert.equal(result.environmentCareContext.outputs.fertilizingAction, 'thin_afte
 assert.equal(result.environmentCareContext.historicalSummary10d.highHumidityDays, 5)
 assert.equal(result.environmentCareContext.forecastSummary15d.aboveGenusUvMaxDays, 3)
 
+const duplicatedAliasResult = resolveRuntimeEnvironmentCarePayload({
+  payload: {
+    careBehaviorTimeline: {
+      referenceDate: '2026-05-31',
+      dailyRecords: [
+        { date: '2026-05-22', watered: true, wateringAmount: 'normal' },
+        { date: '2026-05-27', watered: true, wateringAmount: 'normal' },
+        { date: '2026-05-31', watered: true, wateringAmount: 'normal' }
+      ],
+      wateringEvents10d: [
+        { date: '2026-05-22', watered: true, amount: 'normal' },
+        { date: '2026-05-27', watered: true, amount: 'normal' },
+        { date: '2026-05-31', watered: true, amount: 'normal' }
+      ],
+      watering_events_10d: [
+        { date: '2026-05-22', watered: true, amount: 'normal' },
+        { date: '2026-05-27', watered: true, amount: 'normal' },
+        { date: '2026-05-31', watered: true, amount: 'normal' }
+      ],
+      lastFertilizedBucket: '31_60d'
+    },
+    environmentWeatherWindow: {
+      meta: { diagnosisDate: '2026-05-31' },
+      historicalDays: Array.from({ length: 10 }, (_, index) => ({
+        date: `2026-05-${String(21 + index).padStart(2, '0')}`,
+        tempMaxC: 26,
+        tempMinC: 21,
+        humidity: 81,
+        precipMm: 0,
+        textDay: '多云'
+      })),
+      forecastDays: Array.from({ length: 15 }, (_, index) => ({
+        date: `2026-06-${String(1 + index).padStart(2, '0')}`,
+        tempMaxC: 29,
+        tempMinC: 21,
+        humidity: 60,
+        precipMm: 0,
+        uvIndex: 4,
+        textDay: '晴'
+      }))
+    }
+  },
+  sessionState: {},
+  plantContext
+})
+
+assert.equal(duplicatedAliasResult.environmentCareContext.behaviorSummary10d.wateringCount10d, 3)
+assert.equal(duplicatedAliasResult.environmentCareContext.watering.wateringContext, 'likely_too_wet')
+assert.equal(duplicatedAliasResult.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
+
+const sameDayDuplicateResult = resolveRuntimeEnvironmentCarePayload({
+  payload: {
+    careBehaviorTimeline: {
+      referenceDate: '2026-05-31',
+      dailyRecords: [
+        { date: '2026-05-31', watered: true, wateringAmount: '' }
+      ],
+      wateringEvents10d: [
+        { date: '2026-05-31', watered: true, amount: 'normal' }
+      ],
+      watering_events_10d: [
+        { date: '2026-05-31', watered: true, amount: 'heavy' }
+      ],
+      lastFertilizedBucket: '31_60d'
+    },
+    environmentWeatherWindow: {
+      meta: { diagnosisDate: '2026-05-31' },
+      historicalDays: Array.from({ length: 10 }, (_, index) => ({
+        date: `2026-05-${String(21 + index).padStart(2, '0')}`,
+        tempMaxC: 25,
+        tempMinC: 20,
+        humidity: 60,
+        precipMm: 0,
+        textDay: '多云'
+      })),
+      forecastDays: Array.from({ length: 15 }, (_, index) => ({
+        date: `2026-06-${String(1 + index).padStart(2, '0')}`,
+        tempMaxC: 28,
+        tempMinC: 21,
+        humidity: 55,
+        precipMm: 0,
+        uvIndex: 4,
+        textDay: '晴'
+      }))
+    }
+  },
+  sessionState: {},
+  plantContext: slowWateringPlantContext
+})
+
+assert.equal(sameDayDuplicateResult.environmentCareContext.behaviorSummary10d.wateringCount10d, 1)
+assert.equal(sameDayDuplicateResult.environmentCareContext.watering.wateringContext, 'keep_baseline_or_check_soil')
+
+const rainyWetResult = resolveRuntimeEnvironmentCarePayload({
+  payload: {
+    careBehaviorTimeline: {
+      referenceDate: '2026-05-31',
+      dailyRecords: [
+        { date: '2026-05-22', watered: true, wateringAmount: 'normal' },
+        { date: '2026-05-27', watered: true, wateringAmount: 'normal' },
+        { date: '2026-05-31', watered: true, wateringAmount: 'normal' }
+      ],
+      lastFertilizedBucket: '31_60d'
+    },
+    environmentWeatherWindow: {
+      meta: { diagnosisDate: '2026-05-31' },
+      historicalDays: Array.from({ length: 10 }, (_, index) => ({
+        date: `2026-05-${String(21 + index).padStart(2, '0')}`,
+        tempMaxC: 25,
+        tempMinC: 20,
+        humidity: 58,
+        precipMm: index < 4 ? 8 : 0,
+        textDay: index < 4 ? '小雨' : '多云'
+      })),
+      forecastDays: Array.from({ length: 15 }, (_, index) => ({
+        date: `2026-06-${String(1 + index).padStart(2, '0')}`,
+        tempMaxC: 28,
+        tempMinC: 21,
+        humidity: 55,
+        precipMm: 0,
+        uvIndex: 4,
+        textDay: '晴'
+      }))
+    }
+  },
+  sessionState: {},
+  plantContext
+})
+
+assert.equal(rainyWetResult.environmentCareContext.historicalSummary10d.rainyDays, 4)
+assert.equal(rainyWetResult.environmentCareContext.behaviorSummary10d.wateringCount10d, 3)
+assert.equal(rainyWetResult.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
+
+const wetRouteAnswerEffects = [
+  {
+    questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
+    optionKey: 'often_wet',
+    outcomeKey: 'overwatering_root_pressure',
+    routeKey: 'watering_root_pressure_route',
+    effectType: 'support'
+  }
+]
+
+const rainyWetAnswers = buildRouteAnswersFromRuntimeEnvironmentCarePayload({
+  answers: [
+    {
+      questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
+      optionKey: 'care_behavior_timeline'
+    }
+  ],
+  runtimeEnvironmentCarePayload: rainyWetResult
+})
+
+assert.equal(rainyWetAnswers[0].optionKey, 'often_wet')
+
+const rainyWetMatchedOutcomeKeys = diagnosisEngineTest.collectMatchedRouteEffectOutcomeKeys(
+  wetRouteAnswerEffects,
+  rainyWetAnswers
+)
+assert.deepEqual(rainyWetMatchedOutcomeKeys, ['overwatering_root_pressure'])
+
+const rainyWetRouteDecision = await planOutcomeRoutes({
+  candidateOutcomeKeys: rainyWetMatchedOutcomeKeys,
+  routeEvidenceContext: buildRouteEvidenceContext({
+    answers: rainyWetAnswers,
+    routeAnswerEffects: wetRouteAnswerEffects
+  }),
+  routeRepository: {
+    async getOutcomeRoutesByOutcomeKeys() {
+      return [
+        {
+          routeKey: 'watering_root_pressure_route',
+          routeGroupKey: 'watering_split',
+          outcomeKey: 'overwatering_root_pressure',
+          actionProfileKey: 'action_overwatering_root_pressure_basic',
+          actionConflictGroup: 'water_less'
+        }
+      ]
+    },
+    async getOutcomeRouteGates() {
+      return [
+        {
+          gateKey: 'gate_overwatering_root_pressure',
+          routeKey: 'watering_root_pressure_route',
+          gateRole: 'display_gate',
+          requiredEvidence: {},
+          requiredAnswerEffects: {
+            questionOptionPairs: [
+              'q_observed_probe__leaf_yellowing__watering_frequency_context:often_wet'
+            ]
+          },
+          blockerEvidence: {},
+          conflictOutcomeKeys: [],
+          closureLevel: '',
+          onPass: '',
+          onFail: '',
+          onUnknown: ''
+        }
+      ]
+    },
+    async getOutcomeRouteQuestions() {
+      return []
+    },
+    async getOutcomeRouteGroupsByKeys() {
+      return [
+        {
+          routeGroupKey: 'watering_split',
+          maxVisibleOutcomes: 3
+        }
+      ]
+    }
+  },
+  featureFlags: { routePlanningEnabled: true },
+  canAskAnotherFollowUpRound: false
+})
+
+assert.deepEqual(rainyWetRouteDecision.visibleOutcomeKeys, ['overwatering_root_pressure'])
+
+// AC 正样本：baseline [7,12] + 10 天 3 次 => likely_too_wet / often_wet / overwatering route
+const baselineWetResult = resolveRuntimeEnvironmentCarePayload({
+  payload: {
+    careBehaviorTimeline: {
+      referenceDate: '2026-05-31',
+      dailyRecords: [
+        { date: '2026-05-22', watered: true, wateringAmount: 'normal' },
+        { date: '2026-05-27', watered: true, wateringAmount: 'normal' },
+        { date: '2026-05-31', watered: true, wateringAmount: 'normal' }
+      ],
+      lastFertilizedBucket: '31_60d'
+    },
+    environmentWeatherWindow: {
+      meta: { diagnosisDate: '2026-05-31' },
+      historicalDays: Array.from({ length: 10 }, (_, index) => ({
+        date: `2026-05-${String(21 + index).padStart(2, '0')}`,
+        tempMaxC: 26,
+        tempMinC: 21,
+        humidity: 60,
+        precipMm: 0,
+        textDay: '多云'
+      })),
+      forecastDays: Array.from({ length: 15 }, (_, index) => ({
+        date: `2026-06-${String(1 + index).padStart(2, '0')}`,
+        tempMaxC: 28,
+        tempMinC: 21,
+        humidity: 55,
+        precipMm: 0,
+        uvIndex: 4,
+        textDay: '晴'
+      }))
+    }
+  },
+  sessionState: {},
+  plantContext: slowWateringPlantContext
+})
+
+assert.equal(baselineWetResult.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
+
+const baselineWetAnswers = buildRouteAnswersFromRuntimeEnvironmentCarePayload({
+  answers: [
+    {
+      questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
+      optionKey: 'care_behavior_timeline'
+    }
+  ],
+  runtimeEnvironmentCarePayload: baselineWetResult
+})
+
+assert.equal(baselineWetAnswers[0].optionKey, 'often_wet')
+assert.deepEqual(
+  diagnosisEngineTest.collectMatchedRouteEffectOutcomeKeys(wetRouteAnswerEffects, baselineWetAnswers),
+  ['overwatering_root_pressure']
+)
+
+const baselineWetRouteDecision = await planOutcomeRoutes({
+  candidateOutcomeKeys: ['overwatering_root_pressure'],
+  routeEvidenceContext: buildRouteEvidenceContext({
+    answers: baselineWetAnswers,
+    routeAnswerEffects: wetRouteAnswerEffects
+  }),
+  routeRepository: {
+    async getOutcomeRoutesByOutcomeKeys() {
+      return [
+        {
+          routeKey: 'watering_root_pressure_route',
+          routeGroupKey: 'watering_split',
+          outcomeKey: 'overwatering_root_pressure',
+          actionProfileKey: 'action_overwatering_root_pressure_basic',
+          actionConflictGroup: 'water_less'
+        }
+      ]
+    },
+    async getOutcomeRouteGates() {
+      return [
+        {
+          gateKey: 'gate_overwatering_root_pressure',
+          routeKey: 'watering_root_pressure_route',
+          gateRole: 'display_gate',
+          requiredEvidence: {},
+          requiredAnswerEffects: {
+            questionOptionPairs: [
+              'q_observed_probe__leaf_yellowing__watering_frequency_context:often_wet'
+            ]
+          },
+          blockerEvidence: {},
+          conflictOutcomeKeys: [],
+          closureLevel: '',
+          onPass: '',
+          onFail: '',
+          onUnknown: ''
+        }
+      ]
+    },
+    async getOutcomeRouteQuestions() {
+      return []
+    },
+    async getOutcomeRouteGroupsByKeys() {
+      return [
+        {
+          routeGroupKey: 'watering_split',
+          maxVisibleOutcomes: 3
+        }
+      ]
+    }
+  },
+  featureFlags: { routePlanningEnabled: true },
+  canAskAnotherFollowUpRound: false
+})
+
+assert.deepEqual(baselineWetRouteDecision.visibleOutcomeKeys, ['overwatering_root_pressure'])
+
+// 10 天 10 次强阳性对照：用于诊断链路补充，不替代 3 次正样本验收
+const extremeWetResult = resolveRuntimeEnvironmentCarePayload({
+  payload: {
+    careBehaviorTimeline: {
+      referenceDate: '2026-05-31',
+      dailyRecords: Array.from({ length: 10 }, (_, index) => ({
+        date: `2026-05-${String(22 + index).padStart(2, '0')}`,
+        watered: true,
+        wateringAmount: 'normal'
+      })),
+      lastFertilizedBucket: '31_60d'
+    },
+    environmentWeatherWindow: {
+      meta: { diagnosisDate: '2026-05-31' },
+      historicalDays: Array.from({ length: 10 }, (_, index) => ({
+        date: `2026-05-${String(21 + index).padStart(2, '0')}`,
+        tempMaxC: 26,
+        tempMinC: 21,
+        humidity: 60,
+        precipMm: 0,
+        textDay: '多云'
+      })),
+      forecastDays: Array.from({ length: 15 }, (_, index) => ({
+        date: `2026-06-${String(1 + index).padStart(2, '0')}`,
+        tempMaxC: 28,
+        tempMinC: 21,
+        humidity: 55,
+        precipMm: 0,
+        uvIndex: 4,
+        textDay: '晴'
+      }))
+    }
+  },
+  sessionState: {},
+  plantContext: slowWateringPlantContext
+})
+
+assert.equal(extremeWetResult.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
+assert.equal(extremeWetResult.environmentCareContext.behaviorSummary10d.wateringCount10d, 10)
+
+// 反例：baseline [7,12] + 10 天 1 次 + 多雨 => 不应命中过浇
+const sparseRainResult = resolveRuntimeEnvironmentCarePayload({
+  payload: {
+    careBehaviorTimeline: {
+      referenceDate: '2026-05-31',
+      dailyRecords: [
+        { date: '2026-05-31', watered: true, wateringAmount: 'normal' }
+      ],
+      lastFertilizedBucket: '31_60d'
+    },
+    environmentWeatherWindow: {
+      meta: { diagnosisDate: '2026-05-31' },
+      historicalDays: Array.from({ length: 10 }, (_, index) => ({
+        date: `2026-05-${String(21 + index).padStart(2, '0')}`,
+        tempMaxC: 25,
+        tempMinC: 20,
+        humidity: 58,
+        precipMm: index < 4 ? 8 : 0,
+        textDay: index < 4 ? '小雨' : '多云'
+      })),
+      forecastDays: Array.from({ length: 15 }, (_, index) => ({
+        date: `2026-06-${String(1 + index).padStart(2, '0')}`,
+        tempMaxC: 28,
+        tempMinC: 21,
+        humidity: 55,
+        precipMm: 0,
+        uvIndex: 4,
+        textDay: '晴'
+      }))
+    }
+  },
+  sessionState: {},
+  plantContext: slowWateringPlantContext
+})
+
+assert.equal(sparseRainResult.environmentCareContext.outputs.wateringContext, 'keep_baseline_or_check_soil')
+
+const sparseRainAnswers = buildRouteAnswersFromRuntimeEnvironmentCarePayload({
+  answers: [
+    {
+      questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
+      optionKey: 'care_behavior_timeline'
+    }
+  ],
+  runtimeEnvironmentCarePayload: sparseRainResult
+})
+
+assert.equal(sparseRainAnswers[0].optionKey, 'normal_or_stable')
+assert.deepEqual(
+  diagnosisEngineTest.collectMatchedRouteEffectOutcomeKeys(wetRouteAnswerEffects, sparseRainAnswers),
+  []
+)
+
 const bridgedWetAnswers = buildRouteAnswersFromRuntimeEnvironmentCarePayload({
   answers: [
     {
@@ -104,16 +532,6 @@ const bridgedWetAnswers = buildRouteAnswersFromRuntimeEnvironmentCarePayload({
 })
 
 assert.equal(bridgedWetAnswers[0].optionKey, 'often_wet')
-
-const wetRouteAnswerEffects = [
-  {
-    questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-    optionKey: 'often_wet',
-    outcomeKey: 'overwatering_root_pressure',
-    routeKey: 'watering_root_pressure_route',
-    effectType: 'support'
-  }
-]
 const wetRouteEvidenceContext = buildRouteEvidenceContext({
   answers: bridgedWetAnswers,
   routeAnswerEffects: wetRouteAnswerEffects

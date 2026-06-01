@@ -45,6 +45,12 @@ const {
   buildCompactAnswerRoundResponse
 } = require('./cloudfunctions/diagnose-http/presenters/diagnosis-round-presenter.js')
 const {
+  buildPublicRoundResponse
+} = require('./cloudfunctions/diagnose-http/presenters/diagnosis-round-presenter.js')
+const {
+  buildFrontendDiagnosisResponse
+} = require('./cloudfunctions/diagnose-http/app/frontend-response.js')
+const {
   buildSyntheticFollowUpOptionMappings
 } = require('./cloudfunctions/diagnose-http/utils/synthetic-follow-up.js')
 const {
@@ -3978,6 +3984,173 @@ function testPresenterSuppressesUncertainProblemLeak() {
   assert.equal(compact.finalResult.displayName, '暂不能稳定判断')
 }
 
+function testPresenterKeepsCareBehaviorEvidenceAndDropsWeatherWindow() {
+  const roundResult = {
+    diagnosisSessionId: 'diag_care_evidence_1',
+    roundId: 'round_2',
+    followUpRequired: true,
+    routePrimaryAction: 'ask_first',
+    stopReason: 'route_visible_outcomes_ready',
+    outcomeType: 'problematic',
+    careBehaviorTimeline: {
+      referenceDate: '2026-05-31',
+      dailyRecords: Array.from({ length: 12 }, (_, index) => ({
+        date: `2026-05-${String(20 + index).padStart(2, '0')}`,
+        watered: index === 2 || index === 7 || index === 11,
+        wateringAmount: index === 2 || index === 7 || index === 11 ? 'normal' : ''
+      })),
+      wateringEvents10d: [
+        { date: '2026-05-22', watered: true, amount: 'normal' },
+        { date: '2026-05-27', watered: true, amount: 'normal' },
+        { date: '2026-05-31', watered: true, amount: 'normal' }
+      ],
+      summary: {
+        wateringCount10d: 3,
+        lastWateredDaysAgo: 0,
+        userHasDirectSunExposure: false
+      }
+    },
+    environmentCareContext: {
+      version: 'v7',
+      outputs: {
+        wateringContext: 'likely_too_wet',
+        wateringAction: 'delay_and_check_soil',
+        fertilizingAction: 'pause',
+        lightContext: []
+      },
+      behaviorSummary10d: {
+        wateringCount10d: 3,
+        lastWateredDaysAgo: 0
+      },
+      watering: {
+        wateringContext: 'likely_too_wet',
+        action: 'delay_and_check_soil',
+        summary: {
+          wateringCount10d: 3,
+          lastWateredDaysAgo: 0
+        }
+      },
+      historicalSummary10d: {
+        windowDays: 10,
+        recordCount: 10,
+        highHumidityDays: 5,
+        lowHumidityDays: 0,
+        coldHumidDays: 2,
+        hotDryDays: 0,
+        hotHumidDays: 0,
+        rainyDays: 1
+      },
+      forecastSummary15d: {
+        windowDays: 15,
+        recordCount: 15,
+        highHumidityDays: 0,
+        lowHumidityDays: 0,
+        coldHumidDays: 0,
+        hotDryDays: 0,
+        hotHumidDays: 0,
+        rainyDays: 0,
+        aboveGenusUvMaxDays: 3
+      },
+      fertilizing: {
+        action: 'pause'
+      },
+      light: {
+        lightContext: []
+      },
+      careBehaviorTimeline: {
+        referenceDate: '2026-05-31',
+        wateringEvents10d: [
+          { date: '2026-05-22', watered: true, amount: 'normal' },
+          { date: '2026-05-27', watered: true, amount: 'normal' },
+          { date: '2026-05-31', watered: true, amount: 'normal' }
+        ],
+        dailyRecords: Array.from({ length: 12 }, (_, index) => ({
+          date: `2026-05-${String(20 + index).padStart(2, '0')}`,
+          watered: index === 2 || index === 7 || index === 11
+        }))
+      },
+      environmentWeatherWindow: {
+        meta: { diagnosisDate: '2026-05-31' },
+        historicalDays: Array.from({ length: 25 }, (_, index) => ({
+          date: `2026-05-${String(7 + index).padStart(2, '0')}`,
+          tempMaxC: 30,
+          tempMinC: 21,
+          humidity: 81,
+          textDay: '晴'
+        }))
+      }
+    },
+    environmentWeatherWindow: {
+      meta: { diagnosisDate: '2026-05-31' },
+      historicalDays: Array.from({ length: 25 }, (_, index) => ({
+        date: `2026-05-${String(7 + index).padStart(2, '0')}`,
+        tempMaxC: 30,
+        tempMinC: 21,
+        humidity: 81,
+        textDay: '晴'
+      }))
+    },
+    questions: [
+      {
+        questionId: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
+        questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
+        text: '最近 10 天浇水/盆土干湿背景',
+        uiVariant: 'care_behavior_timeline',
+        targetDimension: 'watering_frequency_context',
+        options: [
+          {
+            optionId: 'opt_dW5rbm93bg',
+            optionKey: 'unknown',
+            text: '说不清/没留意'
+          }
+        ]
+      }
+    ],
+    followUps: [
+      {
+        questionId: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
+        questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
+        text: '最近 10 天浇水/盆土干湿背景',
+        uiVariant: 'care_behavior_timeline',
+        targetDimension: 'watering_frequency_context',
+        options: [
+          {
+            optionId: 'opt_dW5rbm93bg',
+            optionKey: 'unknown',
+            text: '说不清/没留意'
+          }
+        ]
+      }
+    ]
+  }
+
+  const compact = buildCompactAnswerRoundResponse(roundResult)
+  const publicRound = buildPublicRoundResponse(roundResult)
+  const frontend = buildFrontendDiagnosisResponse(publicRound)
+
+  assert.equal(compact.careBehaviorTimeline.dailyRecords.length, 10)
+  assert.equal(compact.careBehaviorTimeline.watering_events_10d.length, 3)
+  assert.equal(compact.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
+  assert.equal(compact.environmentCareContext.historicalSummary10d.highHumidityDays, 5)
+  assert.equal(compact.environmentCareContext.forecastSummary15d.aboveGenusUvMaxDays, 3)
+  assert.equal(Object.prototype.hasOwnProperty.call(compact, 'environmentWeatherWindow'), false)
+  assert.equal(Object.prototype.hasOwnProperty.call(compact.environmentCareContext || {}, 'environmentWeatherWindow'), false)
+
+  assert.equal(publicRound.careBehaviorTimeline.dailyRecords.length, 10)
+  assert.equal(publicRound.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
+  assert.equal(publicRound.environmentCareContext.historicalSummary10d.highHumidityDays, 5)
+  assert.equal(publicRound.environmentCareContext.forecastSummary15d.aboveGenusUvMaxDays, 3)
+  assert.equal(Object.prototype.hasOwnProperty.call(publicRound, 'environmentWeatherWindow'), false)
+  assert.equal(Object.prototype.hasOwnProperty.call(publicRound.environmentCareContext || {}, 'environmentWeatherWindow'), false)
+
+  assert.equal(frontend.careBehaviorTimeline.dailyRecords.length, 10)
+  assert.equal(frontend.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
+  assert.equal(frontend.environmentCareContext.historicalSummary10d.highHumidityDays, 5)
+  assert.equal(frontend.environmentCareContext.forecastSummary15d.aboveGenusUvMaxDays, 3)
+  assert.equal(Object.prototype.hasOwnProperty.call(frontend, 'environmentWeatherWindow'), false)
+  assert.equal(Object.prototype.hasOwnProperty.call(frontend.environmentCareContext || {}, 'environmentWeatherWindow'), false)
+}
+
 function testNonProblematicHasNoTreatmentAdvice() {
   const response = buildNonProblematicRoundResult({
     sessionId: 'diag_4',
@@ -4794,6 +4967,8 @@ async function main() {
   console.log('✓ uncertain suppresses route final result problem')
   testPresenterSuppressesUncertainProblemLeak()
   console.log('✓ presenter suppresses uncertain problem leak')
+  testPresenterKeepsCareBehaviorEvidenceAndDropsWeatherWindow()
+  console.log('✓ presenter keeps care behavior evidence and drops weather window')
   testNonProblematicHasNoTreatmentAdvice()
   console.log('✓ non-problematic has no treatment advice')
   testRouteBackedNonProblematicOutcome()

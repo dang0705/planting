@@ -38,6 +38,8 @@ function buildLegacyHttpSuccess({ sessionId, plantId, roundResult, diagnosisText
       shadowCompareSummary: publicRound?.shadowCompareSummary || null,
       summaryCard: publicRound?.summaryCard || null,
       questions: Array.isArray(publicRound?.questions) ? publicRound.questions : [],
+      careBehaviorTimeline: publicRound?.careBehaviorTimeline || null,
+      environmentCareContext: publicRound?.environmentCareContext || null,
       finalResult: publicRound?.finalResult || null,
       contributingFactors: Array.isArray(publicRound?.contributingFactors) ? publicRound.contributingFactors : [],
       intermediateStates: Array.isArray(publicRound?.intermediateStates) ? publicRound.intermediateStates : [],
