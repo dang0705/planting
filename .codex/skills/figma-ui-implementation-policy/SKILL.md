@@ -9,7 +9,7 @@ description: "纯 Figma 读取与设计事实提取规范：调用方已确认�
 
 本 skill 只定义如何通过 Figma MCP 读取 Figma 设计，并产出结构化设计事实 `Figma Design Facts`。
 
-本 skill 不负责判断“是否应该读取 Figma”。是否需要读取 Figma、是否与 ClickUp ticket 有关、是否属于 UI 开发范围，必须由调用方决定，例如 `dispatch-task`、main agent 或其他上游 skill。
+本 skill 不负责判断“是否应该读取 Figma”。是否需要读取 Figma、是否与 ClickUp ticket 有关、是否属于 UI 开发范围，必须由调用方决定，例如 `clickup-task-dispatch`、main agent 或其他上游 skill。
 
 本 skill 不定义：
 
@@ -226,7 +226,7 @@ Figma Implementation Slice:
 
 ### 8.3 极少数情况：Figma Node Drilldown
 
-只有以下情况才允许输出局部 Drilldown：Implementation Slice 不足以实现、节点是复杂 component / symbol / instance 且属于实现范围、存在重复结构或状态变体、QA 对齐失败、architect 需要判断拆模块 / 组件复用冲突、用户或 main agent 明确要求。
+只有以下情况才允许输出局部 Drilldown：Implementation Slice 不足以实现、节点是复杂 component / symbol / instance 且属于实现范围、存在重复结构或状态变体、QA 对齐失败、main agent 需要判断拆模块 / 组件复用冲突、用户或 main agent 明确要求。
 
 Drilldown 必须限定目标节点，不得默认展开整棵树。
 
@@ -256,7 +256,7 @@ Figma Node Drilldown:
 
 1. 默认只输出 `Figma Design Facts Lite`。
 2. 只有任务明确涉及 UI 实现 / UI 还原 / UI QA 时，才输出 `Figma Implementation Slice`。
-3. 只有摘要不足、实现受阻、QA 对齐失败、复杂 component 需要拆解或 architect 明确要求时，才输出 `Figma Node Drilldown`。
+3. 只有摘要不足、实现受阻、QA 对齐失败、复杂 component 需要拆解或 main agent 明确要求时，才输出 `Figma Node Drilldown`。
 4. Drilldown 必须指定 `target_node_id`、`max_depth` 和原因。
 5. 重复结构只保留 1～2 个样本，不展开全部重复项。
 6. placeholder / ignore / hidden / annotation 节点默认不展开。
@@ -269,13 +269,13 @@ Figma Node Drilldown:
 |---|---|
 | `dispatch` | Lite + 是否存在 Slice / Drilldown 的摘要，不读完整 Drilldown |
 | `code_explorer` | Lite + Slice 中的 component_signals / code_search query |
-| `architect_reviewer` | Lite + Architecture Scope Slice，由 `ui-implementation-scope-policy` 基于 Slice 生成 |
+| `main agent` | Lite + Technical Scope Slice，由 `ui-implementation-scope-policy` 基于 Slice 生成 |
 | `implementer_fast/deep` | Lite + Implementation Packet + 必要的局部 Drilldown |
 | `qa_reviewer` | Lite + QA Acceptance Slice，不读完整 Implementation Slice / Drilldown |
 | `docs_keeper` | 默认不读 |
 | `发布 / CloudBase 证据复核流程` | 不读 |
 
-如果 QA 或 architect 需要回查 Drilldown，必须说明原因并限定节点。
+如果 QA 或 main agent 需要回查 Drilldown，必须说明原因并限定节点。
 
 ## 7. 禁止事项
 
@@ -295,3 +295,114 @@ Figma Node Drilldown:
 3. Drilldown 的 `max_depth`、`max_children`、`sample_nodes` 必须写入输出。
 4. 同一复杂组件若已生成 Drilldown，下游 agent 默认使用摘要，不重复读取 Figma。
 5. QA 默认只接收 `QA Acceptance Slice`，不得接收完整 Drilldown。
+
+
+## v49 main agent Figma budget
+
+main agent 默认只读取 `Figma Design Facts Lite`。
+
+`Figma Implementation Slice` 和 `Figma Node Drilldown` 默认不进入 main agent 长上下文；只通过 role_context_packet 传给 implementer 或 QA 的验收切片。
+
+main agent 如需判断复用、拆分或技术方向，只能读取以下最小字段：
+
+```text
+- component_signal
+- node_name
+- node_type
+- reusable_candidate
+- drilldown_reason
+- qa_critical_summary
+```
+
+禁止把 get_design_context 返回的完整 React/Tailwind 参考代码传入默认上下文。
+
+## v50 Figma Drilldown Ownership
+
+### 默认所有权
+
+完整 `Figma Node Drilldown` 的默认消费者是 implementer，不是 main agent。
+
+pre-implementation 阶段：
+
+- main agent 默认不得读取完整 `Figma Node Drilldown`。
+- main agent 只允许记录 Drilldown 请求元信息。
+- 完整 Drilldown 默认在 implementation 阶段由 implementer 按需读取。
+
+### main agent 在 pre-implementation 阶段允许读取的 Figma 信息
+
+main agent 默认只读取：
+
+```text
+Figma Design Facts Lite
+Technical Scope Slice
+QA Visual Baseline Slice
+Figma Drilldown Request
+```
+
+其中 `Figma Drilldown Request` 只能包含：
+
+```text
+Figma Drilldown Request:
+- drilldown_required: yes / no
+- target_node_id:
+- target_node_name:
+- reason:
+- max_depth:
+- sample_limit:
+- expected_consumer: implementer
+- allowed_reader: implementer by default
+```
+
+### main agent 读取完整 Drilldown 的例外
+
+只有以下情况，main agent 才允许读取局部 Drilldown：
+
+1. 技术方向无法裁决。
+2. 组件边界无法判断。
+3. 复用 / 手搓 / wrapper 冲突无法判断。
+4. UI 验收基准无法生成。
+5. 用户明确要求。
+
+读取时必须限定 `target_node_id`、`max_depth`、`sample_limit` 和原因。
+
+### implementer 读取 Drilldown
+
+implementer 在 implementation 阶段根据 `Figma Drilldown Request` 读取完整或局部 Drilldown。
+
+硬规则：
+
+1. 只读取指定 node / frame / component。
+2. 只读取指定 depth。
+3. 重复结构只取 1-2 个代表样本。
+4. 不读取整份 Figma 文件。
+5. 读取结果只进入 implementer 当前上下文和必要 handoff，不广播给所有角色。
+
+### QA 不读完整 Drilldown
+
+QA 默认不读取完整 `Figma Node Drilldown`。QA 读取：
+
+```text
+Figma Design Facts Lite
+QA Visual Baseline Slice
+```
+
+QA 只有在以下情况才允许请求局部 Drilldown：
+
+1. UI 对齐失败，需要定位具体节点。
+2. QA Visual Baseline Slice 缺失关键验收基准。
+3. variant / state 不明确。
+4. Figma reference screenshot 与实现截图差异无法归因。
+
+请求时必须指定 target node、原因和最小 depth。
+
+
+## v53 explicit MCP contract
+
+`Figma Drilldown Request` 不是普通摘要，而是 implementer 的显式工具动作。
+
+当 `drilldown_required=yes`：
+
+1. implementer 必须调用 Figma MCP。
+2. 不得依赖隐式 MCP 继承。
+3. Figma MCP 不可用时必须停止并报告 blocker。
+4. 不得猜测复杂 UI。

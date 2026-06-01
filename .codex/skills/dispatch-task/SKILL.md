@@ -1,723 +1,499 @@
 ---
 name: dispatch-task
-description: "统一任务调度 skill：根据输入是否包含 ClickUp ticket/comment 自动区分工单任务与普通自然语言任务；支持普通开发、bug 修复、需求变更；main agent 默认承担架构裁决与契约生成，按需调用独立架构复核。"
+description: "通用任务调度入口：支持 ClickUp ticket 模式和普通 prompt 模式；ClickUp 专属 gate 仅在存在 ticket 时启用，其余 Git、Agent Assignment、role_context_packets、实现/测试/QA/文档/commit 门禁始终生效。"
 ---
 
 # Dispatch Task Skill
 
+## 0. 外置规则读取策略
+
+`dispatch-task` 的外置规则集中放在：
+
+```text
+docs/ai-rules/dispatch-task/
+```
+
+读取顺序：
+
+1. 先读 `docs/ai-rules/dispatch-task/INDEX.md`。
+2. 当前 Phase 需要什么，只读对应规则文件。
+3. 禁止一次性读取整个 `docs/ai-rules/dispatch-task/` 目录。
+4. 禁止把所有 phase 规则放进 role_context_packets。
+5. 已读取规则必须压缩为当前 phase / 当前角色需要的最小摘要。
+
 ## 1. 定位
 
-本 skill 合并原 ClickUp 工单入口与普通 dispatch 执行入口。
+`dispatch-task` 是通用任务调度入口，不是 ClickUp 专用入口。
 
-它负责：
+它支持两种模式：
 
-1. 识别输入是否包含 ClickUp ticket / comment deeplink。
-2. 区分任务类型：普通开发 / bug 修复 / 需求变更 / 只读分析 / 文档同步。
-3. 对 ClickUp 任务读取 ticket、子任务、指定评论、外部链接和硬约束。
-4. 对 bug 修复 / 需求变更判断是否需要原始 ticket 上下文。
-5. 生成计划、role_context_packets、Implementation Contract、Test Contract。
-6. main agent 默认承担架构裁决与契约生成，按需调用独立架构复核。
-7. 协调 implementer / QA / docs。
-8. 控制 token，不广播完整 ClickUp、完整 Figma、完整日志、完整规则。
-9. 任务完成后按 Git 规则提交本轮变更。
+```text
+mode: clickup_ticket
+mode: prompt_only
+```
 
-main agent 默认承担 architect 职责：任务理解、技术方向裁决、Implementation Contract、Test Contract、role_context_packets 和最终汇总；但不越权实现、不越权写文档、不越权替 QA 测试。
+- 如果 prompt 包含有效 ClickUp ticket id / URL，则进入 `clickup_ticket` 模式，启用 ClickUp ticket、relationships、checklist、writeback 相关 gate。
+- 如果 prompt 不包含 ClickUp ticket，则进入 `prompt_only` 模式，跳过 ClickUp 专属 gate，但保留 Git、Agent Assignment、role_context_packets、Execution Gate、Implementation Contract、Test Contract、QA、docs、Git commit 等通用门禁。
+
+main agent 主导：
+
+1. 技术方向。
+2. Implementation Contract。
+3. Test Contract。
+4. Agent Assignment。
+5. code review。
+6. ClickUp checklist 回写（仅 clickup_ticket 模式且存在 checklist 时）。
+7. Git commit。
+
+代码实现、QA、文档落地必须交给对应 subagent。
 
 ---
 
-## 2. 输入类型识别
+## 2. Phase 0：通用必过硬门禁
 
-### 2.1 ClickUp 工单任务
+在执行任何实现、测试、文档、ClickUp 回写或 Git commit 前，必须先完成 Phase 0。
 
-如果 prompt 中包含 ClickUp task URL、task id、custom id 或 comment deeplink，进入 ClickUp 工单模式。
-
-可识别：
+Phase 0 必须先判断模式：
 
 ```text
-https://app.clickup.com/t/<workspace>/<task_id>
-https://app.clickup.com/t/<workspace>/<task_id>?comment=<comment_id>
-task id: ...
-clickup ticket: ...
+Dispatch Mode:
+- mode: clickup_ticket / prompt_only
+- clickup_ticket_id:
+- clickup_required: yes / no
+- clickup_reason:
 ```
 
-必须通过 ClickUp MCP 读取对应任务。不得猜测工单内容。
 
-### 2.2 普通任务
 
-如果 prompt 不包含有效 ClickUp ticket，则进入普通任务模式。
-
-普通任务允许任意自然语言输入，不要求用户显式提供“任务目标 / 任务类型 / 涉及文件 / 验收标准”等结构化字段。
-
-main agent 必须先从自然语言中提取：
+### 2.1 通用 gate，所有模式都必须完成
 
 ```text
-Ordinary Task Intent:
-- 用户想做什么:
-- 可能的任务类型:
-- 已知文件 / 模块:
-- 隐含验收标准:
-- 缺失但必须确认的信息:
-- 是否可直接进入计划:
+Common Phase 0 Gate:
+- Git Workspace Check completed: yes / no
+- task intent understood: yes / no
+- Agent Assignment completed: yes / no
+- role_context_packets completed: yes / no
+- Execution Gate passed: yes / no
 ```
 
-如果自然语言足以安全推进，则继续 workflow；如果缺少会影响安全边界、写入权限、外部事实或验收标准的关键信息，才提出最小澄清问题。不得因为 prompt 未结构化就直接拒绝。
+硬规则：
+
+1. 如果 Git 工作区 very_dirty，必须先征求用户确认。
+2. 如果 Agent Assignment 未输出，停止。
+3. 如果 role_context_packets 未生成，停止。
+4. 如果 `code_changes_required=yes` 但未分配 implementer，停止。
+5. 如果 Execution Gate 未通过，停止。
+
+### 2.2 ClickUp 专属 gate，仅 clickup_ticket 模式启用
+
+如果 prompt 包含 ClickUp ticket id / URL，必须完成：
+
+```text
+ClickUp Phase 0 Gate:
+- ClickUp ticket id present: yes
+- ClickUp ticket facts read: yes / no
+- relationships checked: yes / no
+- checklist / acceptance criteria checked: yes / no
+- checklist writeback plan ready: yes / no / not_applicable
+```
+
+ClickUp 专属停止条件：
+
+1. ClickUp MCP 不可用且无法读取 ticket。
+2. relationships 未检查。
+3. checklist / acceptance criteria 存在但未逐项映射。
+4. checklist 需要回写但没有 writeback plan。
+5. Figma / GitHub / 关系任务链接读取失败且影响验收。
+
+### 2.3 prompt_only 模式跳过项
+
+如果 prompt 不包含 ClickUp ticket：
+
+1. 不要求 ClickUp ticket id。
+2. 不读取 ClickUp ticket / relationships。
+3. 不要求 Acceptance Checklist Matrix。
+4. 不要求 ClickUp checklist writeback。
+5. 不做 ClickUp 状态、评论、checklist 回写。
+
+prompt_only 模式仍执行通用 gate。
+
+但仍必须根据用户 prompt 生成：
+
+```text
+Prompt Task Facts:
+- 原始需求:
+- 硬约束:
+- 非目标:
+- 验收标准:
+- 外部链接:
+- 需要确认的问题:
+```
 
 ---
 
-## 3. 任务类型
+## 3. Phase 1：事实读取
 
-### 3.1 普通开发
+### 3.1 clickup_ticket 模式
 
-适用：
-
-- 新功能。
-- 新页面 / 新组件。
-- 新接口 / 新数据结构。
-- 明确没有原始历史 ticket 依赖。
-
-要求：
-
-- 读取当前 ticket / prompt。
-- 构建目标验收契约。
-- 由 main agent 默认做技术方向裁决、Implementation Contract 和 Test Contract；只有高风险、争议、跨域复杂或需要第二视角时，才调用 architect_reviewer 独立复核。
-
-### 3.2 bug 修复 / 需求变更
-
-适用：
-
-- “修复之前开发的问题”。
-- “基于之前 ticket 做调整”。
-- “新需求变更原功能”。
-- “返工 / 补漏 / UI 未对齐 / 验收不通过”。
-
-如果 prompt / 当前 ticket 中没有包含 Relationships 链接或原始 ticket id 或原始需求链接，必须停止并给用户是 / 否选项：
+读取规则见：
 
 ```text
-这是 bug 修复 / 需求变更，但当前输入缺少 Relationships 链接或原始 ticket 上下文。
-
-是否可以提供原始 ticket id / 链接，用于读取原始开发要求并比较本次变更 gap？
-
-A. 是，我会在下一条 prompt 中贴出原始 ticket id / 链接。
-B. 否，无法提供；请仅基于当前描述继续，但需标记“缺少原始需求上下文风险”。
+docs/ai-rules/dispatch-task/clickup-ticket-read-policy.md
+docs/ai-rules/dispatch-task/checklist-writeback-policy.md
 ```
 
-若用户选择 A：等待原始 ticket，不继续 workflow。  
-若用户选择 B：继续但必须在计划、architect、QA 中标记缺口风险。
-
-如果拿到原始 ticket，必须读取原始任务上下文并生成：
+若任务包含 Figma 且明确涉及 UI 开发 / 还原 / QA，按需引用：
 
 ```text
-Requirement Gap Analysis:
-- original_ticket:
-- original_requirements:
-- current_bug_or_change:
-- gap:
-- unchanged_original_requirements:
-- newly_added_requirements:
-- removed_or_deprecated_requirements:
-- conflict:
-- required_fix_scope:
+.codex/skills/figma-ui-implementation-policy/SKILL.md
+.codex/skills/ui-implementation-scope-policy/SKILL.md
+```
+
+### 3.2 prompt_only 模式
+
+只读取 prompt 中明确给出的事实、文件、链接和约束。
+
+如果 prompt 中包含 Figma、GitHub、CloudBase、文档、截图或其他外部链接，仍必须按对应 MCP / 工具读取；不得因为没有 ClickUp ticket 就跳过外部事实。
+
+Phase 1 输出：
+
+```text
+Task Facts:
+- mode:
+- hard_constraints:
 - non_goals:
-- acceptance_delta:
-```
-
-本轮任务诉求应定义为：**填补 original requirements 与当前 bug / change 之间的 gap**。 
-
-#### Relationships / Linked Task 读取规则
-
-遇到 ticket 中存在 Relationships / Linked tasks / Blocking / Blocked by / Related / Parent / Duplicate 必须读取链接中的关联任务。
-
-关联任务读取要求与主 ticket 相同：
-
-1. 必须通过 ClickUp MCP 读取关联任务标题、状态、描述、子任务、附件、评论中明确补充需求的内容。
-2. 关联任务中的 Figma、GitHub、ClickUp 内部链接、附件、设计稿、文档链接，必须按本 skill 的链接与 MCP 读取规则处理。
-3. 关联任务中出现的硬约束句必须进入 `ClickUp 硬约束摘录`，不得被摘要压缩丢失。
-4. 如果关联任务读取失败，必须记录为阻塞项或待确认项，不得假装已读取。
-5. 如果关联任务过多，默认只读取与当前 ticket 关系最强的一跳关联任务；超过一跳或超过 3 个关联任务时，必须说明 token 风险并请求 main agent / 用户裁决。
-
-### 3.3 只读分析
-
-不改代码，不 commit。  
-但仍要输出分析边界、证据、风险和下一步建议。
-
-### 3.4 文档同步
-
-文档落地交给 docs_keeper。main agent 不直接写文档。
-
----
-
-## 4. ClickUp 读取规则
-
-### 4.1 主任务与子任务
-
-ClickUp 模式必须读取：
-
-1. 主任务标题。
-2. 主任务完整描述。
-3. 主任务状态、优先级、标签。
-4. 子任务列表。
-5. 子任务标题与完整描述。
-6. checklist / acceptance criteria，如 MCP 可用。
-7. 附件与链接。
-8. 作为需求补充的评论。
-
-### 4.2 评论 deeplink
-
-如果 URL 包含 `?comment=<comment_id>`：
-
-1. 必须读取 task comments。
-2. 必须定位目标 comment_id。
-3. 目标评论是一等事实源。
-4. 未定位到目标评论时，必须停止并提示用户补充评论正文或确认忽略该评论。
-5. 指定评论与主任务冲突时，必须标记冲突并请求裁决，不得自行合并。
-
-优先级：
-
-```text
-用户当前显式补充
-→ 指定 comment
-→ 当前 ticket 描述
-→ 原始 ticket 描述
-→ 子任务描述
-→ 其他评论 / 附件 / 链接
+- acceptance_criteria:
+- external_links:
+- blocking_gaps:
 ```
 
 ---
 
-## 5. ClickUp 内容保留与输出预算
+## 4. Phase 2：Agent Assignment Gate
 
-ClickUp 内容可能已经被人工压缩过，因此不得丢失明确约束。
-
-但也不得把完整长描述、完整评论线程、完整子任务正文广播给所有 agent。
-
-### 5.1 必须逐字保留的硬约束句
-
-出现以下词的句子必须进入 `ClickUp 硬约束摘录`：
+读取规则见：
 
 ```text
-必须 / 不得 / 禁止 / 优先考虑 / 验收 / 对齐 / 复用 / 不要 / 仅 / 兼容 / 非目标 / 文件路径 / 测试 / 截图 / 日志 / 证据 / Figma / GitHub / CloudBase / 微信开发者工具
+docs/ai-rules/dispatch-task/agent-assignment-gate.md
 ```
 
-### 5.2 不广播完整原文
+必须输出 `Agent Assignment`。
 
-完整 ClickUp 原文只作为审计证据，不作为默认上下文广播。默认只传：
+任何代码改动任务必须分配：
 
-- 硬约束句。
-- 需求摘要。
-- Requirement Gap Analysis。
-- 链接读取结果。
-- role_context_packets。
+```text
+implementer_fast
+```
+
+或：
+
+```text
+implementer_deep
+```
+
+main agent 默认不得亲自写代码。
 
 ---
 
-## 6. 外部链接与 MCP
+## 5. Phase 3：role_context_packets
 
-ClickUp、普通 prompt 或指定评论中出现链接时，必须优先判断是否可由 MCP 读取。
-
-处理顺序：
+读取规则见：
 
 ```text
-发现链接
-→ 判断是否有对应 MCP
-→ 优先通过 MCP 获取内容
-→ MCP 不可用 / 无权限 / 不支持时记录失败原因
-→ 降级为普通链接或待确认项
+docs/ai-rules/dispatch-task/role-context-packets.md
 ```
 
-不得直接跳过。
-
-### 6.1 Figma
-
-如果明确涉及 UI 开发 / 页面实现 / 组件实现 / 视觉还原 / Figma 对齐 / UI QA，必须触发：
-
-```text
-figma-layered-ui-contract
-```
-
-要求：
-
-- 人工压缩版 Figma 摘要不能替代 Figma Layered Contract。
-- 必须形成 Figma Design Facts / UI Implementation Scope Map / Implementation Packet / QA Acceptance Slice。
-- 如果上游已经提供完整 Figma Layered Contract，不得重复读取 Figma。
-- 如果缺失分层数据，必须补齐后再进入实现。
-
-### 6.2 GitHub
-
-GitHub issue / PR / commit / file / discussion 链接必须通过 GitHub MCP 获取。  
-无法读取时记录阻塞或待确认项。
-
-### 6.3 CloudBase / 微信开发者工具
-
-涉及部署、SQL、诊断 session、云函数、DB 证据、smoke、replay、小程序 UI 验收、e2e 时，必须在计划中标记对应 MCP / 工具调用计划。
-
----
-
-## 7. 计划输出
+不得把完整 ClickUp、完整 Figma、完整规则、完整日志广播给所有角色。
 
 必须输出：
 
 ```text
+role_context_packets:
+- code_explorer:
+- implementer:
+- QA:
+- docs:
+```
+
+---
+
+## 6. Phase 4：Implementation Contract 与 Test Contract
+
+读取规则见：
+
+```text
+docs/ai-rules/dispatch-task/implementation-test-contract.md
+```
+
+main agent 必须输出 Implementation Contract 和 Test Contract。
+
+在 `prompt_only` 模式下，Test Contract 基于用户 prompt 的验收标准和 task facts 生成；不要求 Acceptance Checklist Matrix。
+
+在 `clickup_ticket` 模式下，Test Contract 必须基于 Acceptance Checklist Matrix 和 Test Case Base 生成。
+
+---
+
+## 6.4 Phase 4.4：Solution Discovery Gate
+
+进入 Technical Direction Gate 前，main agent 必须完成 `Solution Discovery Gate`。
+
+细则见：
+
+```text
+docs/ai-rules/dispatch-task/solution-discovery-gate.md
+```
+
+硬规则：
+
+1. 复杂需求不得跳过需求复杂度评估。
+2. 复杂功能不得跳过现有代码复用评估。
+3. 明确有成熟方案可能时，不得跳过 uni-app 生态、微信小程序原生能力或稳定第三方方案评估。
+4. 未完成 Discovery，不得允许手搓复杂实现。
+5. Discovery 输出必须短，不得生成长篇调研报告。
+
+## 6.45 Phase 4.45：Pre-Implementation Budget Fuse
+
+进入 implementer 前，main agent 必须执行 pre-implementation 预算检查。
+
+细则见：
+
+```text
+docs/ai-rules/dispatch-task/pre-implementation-budget-fuse.md
+```
+
+如果估算为 high / extreme，必须先压缩 facts、减少候选、推迟 Figma Drilldown，并只输出 Gate Receipt。
+
+## 6.5 Phase 4.5：Main Agent Quality Gates
+
+在派发 implementer 前，main agent 必须通过：
+
+```text
+Technical Direction Gate
+Implementation Contract Completeness Gate
+```
+
+在 implementer 完成后、进入 QA 前，main agent 必须通过：
+
+```text
+Main Agent Code Review Gate
+```
+
+细则见：
+
+```text
+docs/ai-rules/dispatch-task/main-agent-quality-gates.md
+```
+
+硬规则：
+
+1. Technical Direction Gate 未通过，不得派发 implementer。
+2. Implementation Contract Completeness Gate 未通过，不得派发 implementer。
+3. Main Agent Code Review Gate 未通过，不得进入 QA。
+4. Main Agent Code Review Gate 发现 blocking findings 时，必须把 findings 转回同一 implementer 线程，main agent 不得亲自修复。
+
+## 7. Phase 5：Subagent 执行
+
+执行顺序：
+
+```text
+可选 code_explorer
+→ implementer_fast / implementer_deep
+→ main agent code review
+→ qa_reviewer
+→ docs_keeper（按需）
+```
+
+若 main agent code review 或 QA 不通过：
+
+1. main agent 不得亲自改代码。
+2. findings 必须转回同一 implementer 线程。
+3. implementer 修复后重新 review / QA。
+
+---
+
+## 8. Phase 6：QA 与证据
+
+读取规则见：
+
+```text
+docs/ai-rules/dispatch-task/qa-evidence-policy.md
+```
+
+QA 不审代码 diff，不做 code review。
+
+QA 输出必须摘要化，不贴完整日志、完整 DevTools dump 或完整截图 OCR。
+
+---
+
+## 9. Phase 7：ClickUp 回写与 Git commit
+
+### 9.1 ClickUp 回写，仅 clickup_ticket 模式
+
+ClickUp checklist 回写见：
+
+```text
+docs/ai-rules/dispatch-task/checklist-writeback-policy.md
+```
+
+只有 `clickup_ticket` 模式且存在原始 checklist item 时，才执行真实 checklist 勾选。
+
+如果 `prompt_only` 模式，不得尝试 ClickUp 回写。
+
+### 9.2 Git commit，所有修改文件的任务都适用
+
+Git 规则见：
+
+```text
+docs/ai-rules/dispatch-task/git-completion-policy.md
+```
+
+任务确认完成后必须做 Git commit，除非用户禁止提交、无文件变更、无法隔离本轮变更或存在阻塞验证。
+
+---
+
+## 10. 输出格式
+
+```text
 Dispatch Task Plan:
-- input_type: clickup_ticket / clickup_comment / ordinary_prompt
-- task_type: 普通开发 / bug修复 / 需求变更 / 只读分析 / 文档同步
-- ticket:
-- comment_context:
-- original_ticket_required: no / yes
-- original_ticket:
-- Requirement Gap Analysis:
-- ClickUp 硬约束摘录:
-- 外部链接读取记录:
-- Figma Layered Contract:
-- 复杂度: 简单 / 非简单 / 高风险
+- Dispatch Mode:
+- Phase 0 Gate:
+- Task Facts:
+- ClickUp Facts: not_applicable / ...
+- Acceptance Checklist Matrix: not_applicable / ...
+- Test Case Base: not_applicable / ...
+- Agent Assignment:
 - role_context_packets:
-  - main_architect:
-  - implementer:
-  - qa_reviewer:
-  - docs_keeper:
-- Git 工作区 / 提交计划:
-- 验收标准:
-- 最终交付标准:
-- 风险:
-- 阻塞项:
+- Figma Drilldown Request:
+- QA Visual Baseline Slice:
+- Technical Direction Gate:
+- Solution Discovery Gate:
+  - mode: Lite / Expanded
+- Pre-Implementation Budget Check:
+- Technical Direction Gate:
+- Implementation Contract:
+- Implementation Contract Completeness Gate:
+- Test Contract:
+- Git Workspace Check:
+- Execution order:
+- Token budget:
+- Final delivery standard:
+- Risks:
+- Blockers:
+```
+
+```text
+Dispatch Task Summary:
+- mode:
+- Phase gates:
+- Implementer status:
+- Main Agent Code Review Gate:
+- Main agent code review:
+- QA status:
+- Docs status:
+- ClickUp Checklist Writeback: not_applicable / ...
+- Git Commit:
+- Blockers:
+- Non-blocking risks:
+- Open items:
 ```
 
 ---
 
-## 8. role_context_packets
+## 11. 禁止事项
 
-必须按角色分发上下文，不得把完整 ClickUp、完整 Figma、完整规则摘要、完整日志广播给所有角色。
+1. 禁止跳过 Phase 0。
+2. 禁止把无 ClickUp ticket 的任务强行终止；应进入 prompt_only 模式。
+3. 禁止在 prompt_only 模式要求 ClickUp ticket / relationships / checklist writeback。
+4. 禁止未分配 implementer 就改代码。
+5. 禁止 main agent 默认亲自写代码。
+6. 禁止未生成 role_context_packets 就进入实现。
+7. 禁止 checklist 未映射 Test Case Base 就进入 QA 或回写（仅 clickup_ticket 模式）。
+8. 禁止用 emoji / 图标 / 评论 / 描述替代真实 checklist 勾选。
+9. 禁止把完整 Figma / ClickUp / 日志广播给所有 agent。
 
-```text
-role_context_packets:
-- main_architect:
-  - 技术方向约束:
-  - Requirement Gap Analysis:
-  - Figma Architecture Scope Slice:
-  - 冲突 / 边界:
-  - 需要裁决问题:
-- implementer:
-  - Implementation Contract:
-  - Implementation Packet:
-  - 允许修改文件:
-  - 禁止修改文件:
-  - 必要局部 Drilldown:
-- qa_reviewer:
-  - ClickUp 状态更新要求:
-  - Test Contract:
-  - QA Acceptance Slice:
-  - 用户路径:
-  - 测试证据要求:
-  - 失败归因要求:
-- docs_keeper:
-  - 文档同步触发依据:
-  - 目标文档:
-  - 术语 / 规则 / 索引同步点:
-```
+## v50 Figma Drilldown Ownership Gate
 
----
+如果任务涉及 Figma UI：
 
-## 9. code_explorer 成本路由
+1. main agent pre-implementation 阶段默认只读取 `Figma Design Facts Lite`、`Technical Scope Slice`、`QA Visual Baseline Slice` 和 `Figma Drilldown Request`。
+2. main agent 默认不得读取完整 `Figma Node Drilldown`。
+3. 完整 Drilldown 默认由 implementer 在 implementation 阶段按 request 读取。
+4. QA 默认读取 `QA Visual Baseline Slice`，不得读取完整 Drilldown。
+5. QA 只有在 UI 对齐失败、baseline 不足或 variant 不明确时，才请求局部 Drilldown。
+6. 缺少 `QA Visual Baseline Slice` 时，QA 不得判定 UI/Figma 对齐通过。
 
-不得把 code_explorer 固定为第一步。
 
-默认由 main agent 以 architect capacity 判断：
+## v53 role-specific UI skills
 
-```text
-自行 read-only 定位
-or
-请求低成本 code_explorer 定位
-```
+如果任务涉及 Figma UI：
 
-main agent / architect_reviewer 必须知道 code_explorer 参考配置：
+1. main agent 使用 `ui-implementation-scope-policy` 生成角色切片。
+2. implementer packet 必须引用 `implementer-ui-execution-policy`。
+3. QA packet 必须引用 `qa-ui-visual-baseline-policy`。
+4. `dispatch-task` 不把完整 UI 规则广播给多个 agent。
+5. `drilldown_required=yes` 时，implementer 必须显式调用 Figma MCP；不可用则停止。
+
+
+## v54 Explicit UI Skill Trigger
+
+UI/Figma 专用 skill 不再固定配置在 implementer / QA agent 中。`dispatch-task` 必须通过 `role_context_packets` 显式触发。
+
+### implementer packet
+
+当任务涉及 UI 实现、Figma Drilldown、Figma UI 还原或复杂小程序 UI 时：
 
 ```text
-model: gpt-5.3-codex-spark
-reasoning: low
-sandbox: read-only
-```
-
-只有入口文件、调用链、依赖来源或影响范围不清，且低成本定位比 main agent 自行探索更划算时，才派发 code_explorer。
-
----
-
-## 10. architect / implementer / QA 闭环
-
-1. main agent 默认输出技术方向、Requirement Coverage Matrix、Implementation Contract、Test Contract；如调用 architect_reviewer，则由其独立复核或补充。
-2. implementer 严格按 Contract 执行，不做技术方向裁决。
-3. 实现后 code review 默认由 main agent 以 architect capacity 完成；高风险、争议或用户要求时调用 architect_reviewer 独立复核。
-4. qa_reviewer 不审 diff，只按 Test Contract、用户路径和证据做 QA。
-5. QA 不通过时，main agent 原样转发最小返工指令给同一 implementer。
-6. 文档落地由 docs_keeper 执行。
-
----
-
-## 11. Git 工作区与最终提交
-
-1. 会修改文件的任务开始前必须检查 Git 工作区。
-2. 工作区 very_dirty 时必须先询问用户是否允许继续。
-3. 任务确认完成后必须做一次 Git commit。
-4. commit 只能包含本轮任务范围内变更。
-5. 禁止 `git add .`。
-6. 无法隔离本轮变更时必须停止并请求用户确认。
-
----
-
-## 12. 禁止事项
-
-1. 禁止无 ticket id 时假装进入 ClickUp 模式。
-2. 禁止 bug 修复 / 需求变更在缺少原始 ticket 且用户未确认的情况下继续。
-3. 禁止丢失 ClickUp / comment 硬约束句。
-4. 禁止在 Figma UI 任务中只传人工压缩版 Figma 摘要。
-5. 禁止 dispatch-task 已有完整 Figma Layered Contract 时重复读取 Figma。
-6. 禁止 main agent 越过 implementer 直接改代码。
-7. 禁止 main agent 直接写文档。
-8. 禁止 main agent 代替 QA 测试。
-9. 禁止 QA 做代码 review。
-10. 禁止把完整日志、完整 Figma Drilldown、完整 ClickUp 原文广播给所有角色。
-
-## Main-as-Architect Protocol
-
-本节是 main agent 默认承担 architect 职责的详细执行协议。完整 `architect-reviewer.toml` 不应被 main agent 默认读取；main agent 只执行本节压缩协议。
-
-### 1. 适用范围
-
-当任务进入 `dispatch-task`，且未触发独立 `architect_reviewer` 时，main agent 默认承担：
-
-1. 自然语言任务理解。
-2. 技术方向裁决。
-3. Requirement Coverage Matrix。
-4. Implementation Contract。
-5. Test Contract。
-6. Review Scope。
-7. role_context_packets。
-8. 实现后 code review。
-9. 是否需要独立 `architect_reviewer` 复核的升级判断。
-
-### 2. 普通自然语言意图提取
-
-普通任务允许任意自然语言输入。main agent 必须先提取：
-
-```text
-Ordinary Task Intent:
-- 用户想做什么:
-- 可能的任务类型: 普通开发 / bug修复 / 需求变更 / 只读分析 / 文档同步
-- 已知文件 / 模块:
-- 隐含验收标准:
-- 风险:
-- 缺失但必须确认的信息:
-- 是否可直接进入计划:
-```
-
-只有缺少安全边界、写入权限、外部事实、原始 ticket 或关键验收标准时，才提出最小澄清问题。
-
-### 3. 技术方向裁决
-
-main agent 必须判断当前实现方向：
-
-```text
-Technical Direction Decision:
-- 推荐方向: 复用 / wrapper / adapter / 插件 / 原生能力 / 轻量新增 / 手搓 / 删除旧逻辑
-- 项目已有实现:
-- uni-app 生态插件:
-- 微信小程序原生能力:
-- 成熟方案:
-- 手搓是否允许:
-- 裁决理由:
-```
-
-默认优先级：
-
-1. 删除或收敛不必要旧逻辑。
-2. 复用项目已有组件、composable、Pinia store、service、mapper、formatter、云函数模块或工具函数。
-3. 通过 wrapper、props、adapter、配置化扩展已有实现。
-4. 优先评估 uni-app 生态插件或微信小程序原生能力。
-5. 轻量新增独立模块。
-6. 最后才允许手搓复杂实现。
-
-直接手搓复杂功能必须说明为什么不能复用、不能 wrapper/adapter、不能使用插件或原生能力。
-
-### 4. Requirement Coverage Matrix
-
-涉及 bug 修复、需求变更、UI 替换、兼容投影、旧 UI 接管、旧数据兼容或 runtime 契约时，main agent 必须输出：
-
-```text
-Requirement Coverage Matrix:
-- 原始任务约束:
-- 当前 bug / change:
-- 目标用户路径:
-- 新契约字段 / 新触发条件:
-- legacy source / old UI / old options:
-- 新 UI / 新组件 / 新契约:
-- 接管范围:
-- 例外范围:
-- fallback 规则:
-- 真实运行时对象示例:
-- 必须验证的用户路径:
-- 是否存在触发条件过度收窄风险:
-```
-
-禁止为了避免误伤普通场景，把触发条件过度收窄到只匹配新字段、新 source、新 uiVariant 或理想路径，导致旧题、旧数据或真实 runtime object 漏接管。
-
-### 5. Implementation Contract
-
-非简单实现必须输出精简 Implementation Contract。不得输出完整 patch、完整规则、完整 Figma Drilldown 或完整 ClickUp 原文。
-
-```text
-Implementation Contract:
-- 实现目标:
-- 文件级改动计划:
-  - 文件:
-  - 动作: 新增 / 修改 / 删除
-  - 目标函数 / 组件 / store / service / 云函数模块:
-  - 改动说明:
-  - 禁止改动:
-- 数据流 / 调用链:
-  - 输入:
-  - 中间处理:
-  - 输出:
-  - 不得改变的契约:
-- 模块拆分要求:
-  - 必须拆出的模块:
-  - 不得继续膨胀的文件:
-  - 单文件行数风险:
-- 复用 / 插件 / 手搓裁决:
-- 删除 / 收敛旧逻辑:
-- 关键伪代码:
-  - 只写关键流程，不写完整代码
-- 给 implementer 的硬限制:
-```
-
-如果 Contract 无法明确到文件 / 函数 / 模块级，main agent 应先自行 read-only 定位；若范围仍不清，再按成本路由派发 `code_explorer`。
-
-### 6. Test Contract
-
-main agent 负责设计测试契约，但不执行测试。
-
-```text
-Test Contract:
-- unit-test:
-  - 必测点:
-  - 负向用例:
-  - 旧行为回归:
-- smoke-test:
-  - 入口:
-  - 关键断言:
-  - 必验字段 / 证据:
-- e2e-test:
-  - 用户路径:
-  - 断言点:
-  - 截图 / 日志证据:
-- UI / Figma:
-  - 必测状态:
-  - 允许偏差:
-  - 不允许偏差:
-- API / DB / runtime:
-  - 必验字段:
-  - 不允许破坏的契约:
-- 发布 / CloudBase 证据复核点:
-```
-
-QA 只执行和取证，不替 main agent 或 `architect_reviewer` 设计测试契约。
-
-### 7. Review Scope
-
-实现后 code review 默认由 main agent 以 architect capacity 完成。规则：
-
-```text
-Review Scope:
-- base_ref:
-- 本轮 diff 文件:
-- 允许扩展读取的依赖上下文:
-- 实际扩展读取文件与原因:
-- excluded dirty files:
-- 无法区分的脏改动:
-```
-
-代码 review 是 diff-first，但不是 diff-only。允许读取最小依赖上下文，包括直接调用方、直接被调用方、契约文件、类型/schema、mapper/formatter、store/service/composable、相关测试入口和必要规则摘要。不得默认 review 整个 dirty workspace。
-
-### 8. role_context_packets
-
-main agent 必须按角色分发上下文：
-
-```text
-role_context_packets:
-- main_architect:
-  - 技术方向裁决:
-  - Requirement Coverage Matrix:
-  - Review Scope:
-- implementer:
-  - Implementation Contract:
-  - Implementation Packet:
-  - 允许修改文件:
-  - 禁止修改文件:
-  - 必要局部 Drilldown:
-- qa_reviewer:
-  - ClickUp 状态更新要求:
-  - Test Contract:
-  - QA Acceptance Slice:
-  - 用户路径:
-  - 测试证据要求:
-  - 失败归因要求:
-- docs_keeper:
-  - 文档同步触发依据:
-  - 目标文档:
-  - 术语 / 规则 / 索引同步点:
-```
-
-不得把完整 ClickUp、完整 Figma、完整规则摘要、完整日志、完整 Drilldown 广播给所有角色。
-
-### 9. 独立 architect_reviewer 升级条件
-
-只有以下情况才调用 `architect_reviewer`：
-
-1. 高风险跨域复杂变更。
-2. main agent 对技术方向不确定。
-3. 需要独立第二视角。
-4. 实现后 diff 争议较大。
-5. Contract 与 QA 结果冲突。
-6. 返工后仍无法收敛。
-7. 用户明确要求独立架构复核。
-
-调用 `architect_reviewer` 时，只传递必要的 role_context_packet，不传完整历史上下文。
-
-### 10. 输出预算
-
-main agent 的 architect 输出必须精简：
-
-1. 不复制完整规则。
-2. 不复制完整 Figma Drilldown。
-3. 不复制完整 ClickUp 原文。
-4. 不输出完整 patch。
-5. 不把完整 Implementation Contract 转给 QA，只给 Test Contract 和风险摘要。
-6. 长日志、截图、DevTools dump、完整证据放入审计附录或证据路径。
-
-## QA 通过后的 ClickUp 状态更新规则
-
-当任务来自 ClickUp ticket / ClickUp comment deeplink，且 QA 已明确通过时，必须由 `qa_reviewer` 负责将当前任务状态更新为 `done`。
-
-### 1. 触发条件
-
-同时满足以下条件时触发：
-
-1. 当前 workflow 关联了 ClickUp task id。
-2. `qa_reviewer` 已完成 QA。
-3. QA 结论为通过，且不存在 blocking issue。
-4. 未验证项不存在，或用户已明确接受未验证项。
-5. 必要文档同步已完成，或已明确说明无需同步。
-6. Git commit 已完成，或本轮任务明确不需要 commit / 用户明确禁止 commit。
-
-### 2. 更新方式
-
-`qa_reviewer` 应通过 ClickUp MCP 更新任务状态：
-
-```text
-clickup_update_task:
-- task_id: <current_task_id>
-- status: done
-```
-
-不得由 implementer 更新任务状态。main agent 只负责传递 task_id、QA 结论和必要上下文，不替 QA 宣称通过。
-
-### 3. 更新失败处理
-
-如果 ClickUp MCP 不可用、权限不足、`done` 不是当前 list 的有效状态，或状态更新失败：
-
-1. `qa_reviewer` 必须记录失败原因。
-2. 不得伪造任务已完成。
-3. 最终汇总必须显示 `ClickUp status update: failed`。
-4. main agent 可请求用户确认有效 done 状态名称，或要求手动更新。
-
-### 4. QA 输出要求
-
-QA 最终输出必须包含：
-
-```text
-ClickUp Status Update:
-- task_id:
-- qa_passed: yes / no
-- should_update_done: yes / no
-- update_attempted: yes / no
-- target_status: done
-- update_result: success / failed / skipped
-- failure_reason:
-```
-
-### 5. 跳过条件
-
-以下情况不得更新为 done：
-
-1. QA 未通过。
-2. 存在 blocking issue。
-3. Test Contract 未覆盖关键路径。
-4. UI/Figma 验收未通过。
-5. DevTools / smoke / e2e 等必须验证项未执行且用户未接受。
-6. 当前不是 ClickUp 任务。
-7. 当前任务是只读分析或用户明确禁止状态更新。
-
-## Unit Test Ownership / 单元测试职责边界
-
-单元测试拆成三段，不允许 implementer 和 QA 重复做同一件事：
-
-```text
-main agent / architect capacity:
-- 设计 Test Contract
-- 定义必须测什么、负向用例、旧行为回归和是否需要 full unit
-
 implementer:
-- 按 Test Contract 新增 / 修改 unit test
-- 执行 focused unit self-check
-- 输出命令、退出码、关键失败和测试证据摘要
-
-qa_reviewer:
-- 不写 unit test
-- 默认复用 implementer 的 unit test 证据
-- 判断证据是否覆盖 Test Contract
-- 只有证据不足、高风险、范围错误、代码变更后或 Contract 要求 full unit 时才补跑
+- required_skill: $implementer-ui-execution-policy
+- trigger_condition:
+  - UI implementation required
+  - Figma Drilldown Request exists
+  - Figma component / variant / state implementation required
+- Implementation Packet:
+- Figma Drilldown Request:
 ```
 
-### 1. implementer 默认职责
+如果不满足 trigger_condition，不得要求 implementer 读取该 skill。
 
-implementer 必须：
+### QA packet
 
-1. 按 Test Contract 补充或修改必要 unit test。
-2. 执行与本次改动直接相关的 focused unit self-check。
-3. 不默认执行完整测试矩阵。
-4. 如果 Test Contract 不清楚，停止并请求 main agent 补测试契约。
-5. 不得为了测试通过削弱断言、绕过真实路径或删除有效测试。
-
-### 2. qa_reviewer 默认职责
-
-qa_reviewer 必须：
-
-1. 检查 implementer 是否按 Test Contract 补充 / 修改了 unit test。
-2. 默认复用 implementer 的 focused unit self-check 证据。
-3. 判断 unit test 证据是否覆盖 Test Contract。
-4. 不直接写 unit test。
-5. 缺少 unit test 时输出返工指令给 implementer。
-
-### 3. QA 何时补跑 unit test
-
-只有以下情况，QA 才补跑 focused 或 full unit test：
-
-1. implementer 没跑。
-2. implementer 跑错范围。
-3. implementer 证据不可信或缺少命令 / 退出码。
-4. 高风险任务。
-5. QA 之后发生代码改动。
-6. Test Contract 明确要求 full unit。
-7. smoke / e2e / UI 结果与 unit 证据冲突。
-
-### 4. 输出要求
-
-role_context_packets 必须传递：
+当任务涉及 UI/Figma 验收、小程序端 UI、Figma reference screenshot 或 QA Visual Baseline Slice 时：
 
 ```text
-unit_test_context:
-- Test Contract unit requirements:
-- implementer focused unit command:
-- implementer unit exit_code:
-- implementer unit evidence_summary:
-- QA should_reuse: yes / no
-- QA should_rerun: no / focused / full
-- rerun_reason:
+QA:
+- required_skill: $qa-ui-visual-baseline-policy
+- trigger_condition:
+  - QA Visual Baseline Slice exists
+  - Figma/UI QA required
+  - mini-program visual verification required
+- QA Visual Baseline Slice:
+- reference_screenshot:
+- actual_evidence_required:
 ```
+
+如果不满足 trigger_condition，不得要求 QA 读取该 skill。
+
+### 禁止事项
+
+1. 禁止在 agent 配置中长期固定挂载 UI skill。
+2. 禁止非 UI 任务触发 UI skill。
+3. 禁止依赖 UI skill 隐式触发。
+4. `drilldown_required=yes` 时，必须通过 `$implementer-ui-execution-policy` 显式要求 implementer 调用 Figma MCP。
+
+
+## v55 UI skill invocation policy location
+
+`$implementer-ui-execution-policy` 和 `$qa-ui-visual-baseline-policy` 的禁止隐式触发策略不写在 `SKILL.md` frontmatter 中，而写在各自 skill 目录的：
+
+```text
+agents/openai.yaml
+```
+
+对应内容：
+
+```yaml
+policy:
+  allow_implicit_invocation: false
+```
+
+`dispatch-task` 仍必须通过 `role_context_packets` 显式写入 `$skill` 才能触发这些 UI skill。

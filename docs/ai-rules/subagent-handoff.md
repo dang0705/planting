@@ -18,11 +18,6 @@ handoff 用于跨 subagent、跨回合、跨线程恢复任务状态。为控制
 ```text
 Handoff Resume Summary:
 - task_id / ticket_id:
-- ClickUp Comment Context:
-  - has_comment_target:
-  - comment_id:
-  - comment_read_status:
-  - comment_hard_constraints_ref:
 - logical_role:
 - current_status: pending / in_progress / blocked / done
 - 本轮目标:
@@ -35,13 +30,18 @@ Handoff Resume Summary:
 - 禁止修改范围:
 - 关键决策:
 - role_context_packet:
-  - architect:
+  - main agent:
   - implementer:
   - QA:
   - docs:
 - 需要复用的结论:
 - 不需要重复读取:
 - 需要回查的审计附录: 否 / 是，条目：
+- ClickUp Checklist Writeback:
+  - checked_items:
+  - unchecked_items:
+  - writeback_method:
+  - writeback_status:
 - Git Workspace / Commit:
   - branch:
   - dirty_level:
@@ -75,6 +75,11 @@ Handoff Audit Appendix:
 - 截图 / 录屏 / DevTools 证据路径:
 - Figma MCP 原始读取记录:
 - ClickUp 原始硬约束摘录:
+- ClickUp Checklist Writeback 记录:
+  - checked_items:
+  - unchecked_items:
+  - failed_items:
+  - forbidden_substitution_used:
 - Git Commit 记录:
   - branch:
   - staged_files:
@@ -95,7 +100,7 @@ Handoff Audit Appendix:
 只有以下情况才读取审计附录：
 
 1. 任务失败，需要排查原因。
-2. architect、QA、implementer 结论冲突。
+2. main agent、QA、implementer 结论冲突。
 3. 用户要求复盘。
 4. 需要证明某条验证证据。
 5. 需要恢复长任务，但轻量摘要不足。
@@ -105,7 +110,7 @@ Handoff Audit Appendix:
 
 ## 4. 角色 handoff 要求
 
-### 4.1 architect_reviewer
+### 4.1 main agent
 
 必须输出：
 
@@ -127,7 +132,7 @@ Handoff Audit Appendix:
 - 偏离契约之处。
 - 已补测试代码。
 - 未完成项。
-- 给 architect / QA 的最小复核摘要。
+- 给 main agent / QA 的最小复核摘要。
 
 不得粘贴完整 diff。
 

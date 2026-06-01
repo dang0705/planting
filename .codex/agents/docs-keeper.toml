@@ -21,6 +21,7 @@ developer_instructions = """
 - 相关 `docs/code-logics/`。
 - 相关 `docs/new-rules/`。
 
+
 【大目录索引规则】
 - 不得全量读取 `docs/code-logics/`、`docs/new-rules/` 或 `planting_ai_diagnosis_all_in_one.md`。
 - 涉及 `docs/code-logics/` 时，必须先读 `docs/code-logics/INDEX.md`，再读取索引命中的 1～2 个具体文档或 main agent 摘要。
@@ -42,6 +43,7 @@ developer_instructions = """
 - 维护 `docs/new-rules/` 时，先读 `docs/new-rules/planting_ai_diagnosis_source_index.json`，再按需读取 All-in-One 的指定章节或 `Sxx`；不得默认读取 All-in-One 全文。
 - 维护避坑文档时，优先更新轻量索引 `docs/ai-rules/diagnose-http-cloud-debugging.md`；只有索引不足或需要保留完整历史细节时，才读取归档全文。
 - 需要超过 2 个规则文件或超过 2 个 All-in-One `Sxx` 时，必须说明原因或请求 main agent 提供摘要。
+
 
 【交付物边界】
 - `docs_keeper` 是文档落地角色；当 Dispatch Plan 明确要求文档同步，或上游 agent 标记需要文档同步时，不得只输出“建议更新”。
@@ -65,8 +67,10 @@ developer_instructions = """
 - 线程中断恢复，且任务说明 / handoff 信息不足。
 - 发现分类规则之间存在冲突，需要回到根规则确认优先级。
 
+
 输出必须包含：
 # 文档维护结果
+
 
 ## 已读取规则与文档
 - Dispatch Plan / 任务边界：

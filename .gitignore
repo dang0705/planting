@@ -32,3 +32,5 @@ miniprogram-ci-qrcode.*
 .env
 .env.*
 !.env.local.example
+
+/tmp

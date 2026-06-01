@@ -15,7 +15,7 @@ description: "项目级 UI 实现范围规范：基于 ClickUp 硬约束和 Figm
 2. Figma Design Facts。
 3. 项目技术栈与目录上下文。
 4. 现有代码组件搜索结果。
-5. architect_reviewer 的裁决。
+5. main agent 的裁决。
 
 本 skill 不负责读取 Figma MCP；Figma 读取由 `figma-ui-implementation-policy` 完成。
 
@@ -76,7 +76,7 @@ UI Implementation Scope Map:
 2. 命中组件职责明显不符。
 3. 复用会引入更大改造或破坏旧用法。
 4. ClickUp / Figma 明确要求新建。
-5. `architect_reviewer` 明确裁定应新建。
+5. `main agent` 明确裁定应新建。
 
 未完成代码组件搜索前，不得把 `hand_code_component` 作为实现决策。
 
@@ -140,9 +140,9 @@ UI Implementation Scope Map:
 5. 如果无法 100% 还原，必须说明差异、平台限制和替代方案，不得自行降级。
 6. 不得把 Figma component 自动等同为“必须新写代码组件”。
 
-## 8. Main-as-Architect / architect_reviewer 约束
+## 8. main agent 约束
 
-1. main agent 默认审查是否优先匹配现有代码组件；如调用 `architect_reviewer`，则由其独立复核。
+1. 必须审查是否优先匹配现有代码组件。
 2. 必须审查是否重复造组件。
 3. 必须审查是否可以通过 wrapper / props 扩展复用旧组件。
 4. 必须审查是否应使用 uni-app 插件而非手搓。
@@ -187,12 +187,12 @@ UI Implementation Policy Applied:
 
 本 skill 必须把 Figma 分层事实转换为面向角色的切片，避免所有 agent 读取完整实现细节。
 
-### 11.1 Architecture Scope Slice
+### 11.1 Technical Scope Slice
 
-默认给 main agent；如调用 `architect_reviewer`，则给其独立复核。
+只给 `main agent`。
 
 ```text
-Architecture Scope Slice:
+Technical Scope Slice:
 - component_signals:
   - node_id:
   - name:
@@ -208,7 +208,7 @@ Architecture Scope Slice:
 - handcode_allowed:
 - handcode_reason:
 - placeholder_or_visual_only_boundaries:
-- architect_decision_needed:
+- main agent_decision_needed:
 ```
 
 ### 11.2 Implementation Packet
@@ -258,14 +258,101 @@ QA Acceptance Slice:
 - allowed_to_read_drilldown: false / true，条件：
 ```
 
-输出要求中必须包含 `Architecture Scope Slice`、`Implementation Packet`、`QA Acceptance Slice`。
+输出要求中必须包含 `Technical Scope Slice`、`Implementation Packet`、`QA Acceptance Slice`。
 
 ## 12. role_context_packets 对接
 
 本 skill 输出的角色切片应直接进入 dispatch 的 `role_context_packets`：
 
-1. `Architecture Scope Slice` 只进入 architect packet。
+1. `Technical Scope Slice` 只进入 main agent packet。
 2. `Implementation Packet` 只进入 implementer packet。
 3. `QA Acceptance Slice` 只进入 QA packet。
 4. 不得把完整 Implementation Packet 或 Drilldown 复制给 QA。
 5. 不得把 QA Acceptance Slice 当作 implementer 的实现事实源。
+
+
+## v49 role slice budget
+
+- main agent 默认读取 Technical Scope Slice，不读取完整 Implementation Packet。
+- implementer 读取 Implementation Packet 和必要局部 Drilldown。
+- QA 读取 QA Acceptance Slice。
+- 所有 slice 超过预算时使用 evidence_ref / appendix_ref。
+
+## v50 QA Visual Baseline Slice
+
+### 定位
+
+`QA Visual Baseline Slice` 是 QA 判断 UI/Figma 对齐的默认基准。它不是完整 Drilldown，也不是实现细节。
+
+如果任务涉及 Figma UI / UI 还原 / 小程序端 UI 验收，必须生成 `QA Visual Baseline Slice`。
+
+### 输出结构
+
+```text
+QA Visual Baseline Slice:
+- figma_node:
+  - root_node_id:
+  - node_name:
+  - reference_screenshot:
+  - screenshot_source:
+- required_visual_assertions:
+  - layout:
+  - text:
+  - spacing:
+  - colors:
+  - typography:
+  - component_states:
+  - interactions:
+  - mini_program_rendering:
+- required_variants:
+  - state_name:
+  - expected_visual:
+  - expected_behavior:
+- placeholder_visual_only_ignore:
+  - nodes:
+  - qa_rule:
+- allowed_deviation:
+  - none / explicit_reason_required
+- actual_evidence_required:
+  - wechat_devtools_screenshot:
+  - node_snapshot:
+  - manual_observation:
+- local_drilldown_allowed:
+  - allowed: yes / no
+  - condition:
+  - target_node_hint:
+```
+
+### QA 通过条件
+
+如果任务涉及 Figma UI，QA 通过前必须存在 `QA Visual Baseline Slice`。
+
+如果缺少该 slice，QA 不得判定 UI 通过，只能输出：
+
+```text
+UI QA blocked: missing QA Visual Baseline Slice
+```
+
+### 与 Drilldown 的关系
+
+QA 不读取完整 Drilldown。QA 使用 baseline + 实际小程序截图 / 节点状态 / 手工观察判断是否对齐。
+
+只有 UI 对齐失败、baseline 缺失、variant 不明确时，才请求局部 Drilldown。
+
+
+## v53 role-specific skill split
+
+本 skill 只给 main agent 使用，用于生成角色切片：
+
+1. Technical Scope Slice。
+2. Implementation Packet。
+3. Figma Drilldown Request。
+4. QA Visual Baseline Slice。
+5. QA Acceptance Slice。
+
+本 skill 不承载 implementer 的执行细节，也不承载 QA 的执行细节。
+
+- implementer 的 UI 执行细节见 `.codex/skills/implementer-ui-execution-policy/SKILL.md`。
+- QA 的 UI/Figma 验收细节见 `.codex/skills/qa-ui-visual-baseline-policy/SKILL.md`。
+
+main agent 只在 role_context_packets 中写明对应 skill 名和最小 packet，不广播本 skill 全文给各 subagent。
