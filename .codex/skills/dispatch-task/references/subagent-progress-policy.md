@@ -2,12 +2,12 @@
 
 ## 定位
 
-本文件定义 main agent 等待 subagent 时的低成本、低侵入进度观察方式，避免频繁中断 subagent 导致上下文膨胀和任务漂移。
+本文件定义 `main agent` 等待 subagent 时的低成本、低侵入进度观察方式，避免频繁中断 subagent 导致上下文膨胀和任务漂移。
 
 ## 默认原则
 
-1. main agent 不得频繁打断 subagent。
-2. main agent 不得为了“看看进度”反复向 subagent 发送长提示。
+1. `main agent` 不得频繁打断 subagent。
+2. `main agent` 不得为了“看看进度”反复向 subagent 发送长提示。
 3. 如果有非侵入式状态来源，优先读取状态来源。
 4. 只有超过等待阈值且没有任何输出或证据变化时，才允许请求简短 progress receipt。
 5. progress receipt 必须短，不得让 subagent 复述完整上下文。

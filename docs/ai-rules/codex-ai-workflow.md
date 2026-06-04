@@ -35,11 +35,11 @@ Phase 7: ClickUp markdown checklist 回写 + Git commit
 | `qa_reviewer` | 测试执行、smoke、e2e、UI/Figma、失败归因 |
 | `docs_keeper` | 文档落地、索引同步、术语一致性 |
 
-## 4. main agent 主导职责
+## 4. `main agent` 主导职责
 
-main agent 负责技术方向、Implementation Contract、Test Contract、Agent Assignment、code review、ClickUp 回写和 Git commit。
+`main agent` 负责技术方向、Implementation Contract、Test Contract、Agent Assignment、code review、ClickUp 回写和 Git commit。
 
-main agent 默认不得亲自写代码。
+`main agent` 默认不得亲自写代码。
 
 ## 5. 外置规则
 
@@ -106,4 +106,4 @@ commit message 必须根据改动内容生成，精炼且不超过 50 个字符�
 
 ## Stable automation and QA budget
 
-WeChat DevTools 自动化采用单一责任原则：main agent 默认不直接执行，implementer 只做最小自测，QA 负责正式验收。main agent 等待 subagent 时优先低成本观察，不频繁中断。QA 输出使用 QA Result。
+WeChat DevTools 自动化采用单一责任原则：`main agent` 默认不直接执行，implementer 只做最小自测，QA 负责正式验收。`main agent` 等待 subagent 时优先低成本观察，不频繁中断。QA 输出使用 QA Result。

@@ -2,11 +2,11 @@
 
 ## 定位
 
-Solution Discovery Gate 是 main agent 在技术方向裁决前必须完成的前置门禁。它证明 main agent 已以可控 token 成本评估过需求复杂度、现有代码复用、成熟方案、uni-app 生态、微信小程序原生能力和手搓必要性。
+Solution Discovery Gate 是 `main agent` 在技术方向裁决前必须完成的前置门禁。它证明 `main agent` 已以可控 token 成本评估过需求复杂度、现有代码复用、成熟方案、uni-app 生态、微信小程序原生能力和手搓必要性。
 
 ## Lite / Expanded
 
-默认使用 Lite。Expanded 只在复杂功能、明确需要插件搜索、Lite 发现阻塞 gap、或 main agent 无法判断是否手搓时启用。
+默认使用 Lite。Expanded 只在复杂功能、明确需要插件搜索、Lite 发现阻塞 gap、或 `main agent` 无法判断是否手搓时启用。
 
 ## 触发条件
 

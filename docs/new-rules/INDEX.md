@@ -21,9 +21,9 @@
 2. 再读取 `planting_ai_diagnosis_all_in_one.md` 的第 0～15 章整合摘要。
 3. 如需原文，只允许读取 All-in-One 附录 A 中指定的 `Sxx` 源文档段落。
 4. 每次默认最多回查 1～2 个 `Sxx`。
-5. 如果需要超过 2 个 `Sxx`，main agent 必须提供摘要或说明原因。
+5. 如果需要超过 2 个 `Sxx`，`main agent` 必须提供摘要或说明原因。
 6. 下游 subagent 优先读取上游 agent 摘要和 handoff，不重复读取 All-in-One 源文档原文。
-7. 如索引无法定位，subagent 应停止并请求 main agent 指定 `source_id`、章节或摘要，不得自行全量扫描。
+7. 如索引无法定位，subagent 应停止并请求 `main agent` 指定 `source_id`、章节或摘要，不得自行全量扫描。
 
 ## 3. 推荐读取顺序
 

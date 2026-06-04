@@ -10,7 +10,7 @@
 
 ## Implementation Contract
 
-非简单实现任务必须由 main agent 输出精简 Implementation Contract，再派发 implementer。
+非简单实现任务必须由 `main agent` 输出精简 Implementation Contract，再派发 implementer。
 
 必须包含：
 
@@ -27,7 +27,7 @@
 
 ## Test Contract
 
-main agent 必须基于 prompt 验收标准或 ClickUp Acceptance Checklist Matrix / Test Case Base 生成 Test Contract。
+`main agent` 必须基于 prompt 验收标准或 ClickUp Acceptance Checklist Matrix / Test Case Base 生成 Test Contract。
 
 QA 负责执行与取证，不负责设计测试契约。
 

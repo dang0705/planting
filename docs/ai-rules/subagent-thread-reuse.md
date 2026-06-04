@@ -10,7 +10,7 @@
 
 | logical_role | 用途 | 是否可重开 |
 |---|---|---|
-| `main agent` | 技术方向裁决、Implementation Contract、Test Contract、实现后代码 review | 默认复用；职责边界改变或线程失效才重开 |
+| ``main agent`` | 技术方向裁决、Implementation Contract、Test Contract、实现后代码 review | 默认复用；职责边界改变或线程失效才重开 |
 | `code_explorer` | 可选低成本代码定位、调用链 / 依赖来源 / 影响范围定位 | 默认复用；只在定位目标明显变化时重开 |
 | `implementer_fast` | 低风险局部契约执行 | 默认复用；同一批文件未完成前不得重开 |
 | `implementer_deep` | 高风险 / 多文件 / 诊断流 / CloudBase 等契约执行 | 默认复用；同一批文件未完成前不得重开 |
@@ -55,7 +55,7 @@ fallback_thread:
 
 ## 5. 线程复用输入规则
 
-继续复用同一角色线程时，main agent 应传递最小输入：
+继续复用同一角色线程时，`main agent` 应传递最小输入：
 
 ```text
 Thread Reuse Input:
@@ -75,7 +75,7 @@ Thread Reuse Input:
 
 线程复用时优先传递对应角色的 `role_context_packet`：
 
-- `main agent`：Technical Scope Slice、Implementation Contract、Test Contract、Review Scope。
+- ``main agent``：Technical Scope Slice、Implementation Contract、Test Contract、Review Scope。
 - `implementer_fast/deep`：Implementation Contract、Implementation Packet、允许/禁止修改文件。
 - `qa_reviewer`：Test Contract、QA Acceptance Slice、测试计划、证据路径。
 - `docs_keeper`：文档同步触发依据、目标文档、需同步索引。

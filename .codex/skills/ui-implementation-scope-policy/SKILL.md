@@ -15,7 +15,7 @@ description: "项目级 UI 实现范围规范：基于 ClickUp 硬约束和 Figm
 2. Figma Design Facts。
 3. 项目技术栈与目录上下文。
 4. 现有代码组件搜索结果。
-5. main agent 的裁决。
+5. `main agent` 的裁决。
 
 本 skill 不负责读取 Figma MCP；Figma 读取由 `figma-ui-implementation-policy` 完成。
 
@@ -76,7 +76,7 @@ UI Implementation Scope Map:
 2. 命中组件职责明显不符。
 3. 复用会引入更大改造或破坏旧用法。
 4. ClickUp / Figma 明确要求新建。
-5. `main agent` 明确裁定应新建。
+5. ``main agent`` 明确裁定应新建。
 
 未完成代码组件搜索前，不得把 `hand_code_component` 作为实现决策。
 
@@ -140,7 +140,7 @@ UI Implementation Scope Map:
 5. 如果无法 100% 还原，必须说明差异、平台限制和替代方案，不得自行降级。
 6. 不得把 Figma component 自动等同为“必须新写代码组件”。
 
-## 8. main agent 约束
+## 8. `main agent` 约束
 
 1. 必须审查是否优先匹配现有代码组件。
 2. 必须审查是否重复造组件。
@@ -189,7 +189,7 @@ UI Implementation Policy Applied:
 
 ### 11.1 Technical Scope Slice
 
-只给 `main agent`。
+只给 ``main agent``。
 
 ```text
 Technical Scope Slice:
@@ -264,7 +264,7 @@ QA Acceptance Slice:
 
 本 skill 输出的角色切片应直接进入 dispatch 的 `role_context_packets`：
 
-1. `Technical Scope Slice` 只进入 main agent packet。
+1. `Technical Scope Slice` 只进入 `main agent` packet。
 2. `Implementation Packet` 只进入 implementer packet。
 3. `QA Acceptance Slice` 只进入 QA packet。
 4. 不得把完整 Implementation Packet 或 Drilldown 复制给 QA。
@@ -273,7 +273,7 @@ QA Acceptance Slice:
 
 ## Role slice budget
 
-- main agent 默认读取 Technical Scope Slice，不读取完整 Implementation Packet。
+- `main agent` 默认读取 Technical Scope Slice，不读取完整 Implementation Packet。
 - implementer 读取 Implementation Packet 和必要局部 Drilldown。
 - QA 读取 QA Acceptance Slice。
 - 所有 slice 超过预算时使用 evidence_ref / appendix_ref。
@@ -342,7 +342,7 @@ QA 不读取完整 Drilldown。QA 使用 baseline + 实际小程序截图 / 节�
 
 ## Role-specific skill split
 
-本 skill 只给 main agent 使用，用于生成角色切片：
+本 skill 只给 `main agent` 使用，用于生成角色切片：
 
 1. Technical Scope Slice。
 2. Implementation Packet。
@@ -355,4 +355,4 @@ QA 不读取完整 Drilldown。QA 使用 baseline + 实际小程序截图 / 节�
 - implementer 的 UI 执行细节见 `.codex/skills/implementer-ui-execution-policy/SKILL.md`。
 - QA 的 UI/Figma 验收细节见 `.codex/skills/qa-ui-visual-baseline-policy/SKILL.md`。
 
-main agent 只在 role_context_packets 中写明对应 skill 名和最小 packet，不广播本 skill 全文给各 subagent。
+`main agent` 只在 role_context_packets 中写明对应 skill 名和最小 packet，不广播本 skill 全文给各 subagent。

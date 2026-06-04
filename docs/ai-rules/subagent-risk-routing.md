@@ -44,7 +44,7 @@
 
 ## 升级规则
 
-当 `implementer_fast` 发现以下任一情况时，必须停止实现并请求 main agent 改派 `implementer_deep`：
+当 `implementer_fast` 发现以下任一情况时，必须停止实现并请求 `main agent` 改派 `implementer_deep`：
 
 1. 修改范围超过原 Dispatch Plan。
 

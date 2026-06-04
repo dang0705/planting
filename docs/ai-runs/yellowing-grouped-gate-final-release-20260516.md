@@ -316,7 +316,7 @@
 
 ## 剩余瘦身目标安全裁决（2026-05-16）
 - 审查方式：
-  - main agent 以 `app.js` 为入口生成静态 require 图；
+  - `main agent` 以 `app.js` 为入口生成静态 require 图；
   - 复用同一 `architect_reviewer` 线程做只读架构审查；
   - 未读取 `docs/code-logics/`、`docs/new-rules/` 或 All-in-One。
 - 可达性证据：
@@ -372,7 +372,7 @@
 - QA 复核结论：
   - 不能标记整体 goal complete；
   - 硬阻塞是“总代码减少 30%+”未达成；
-  - 当前 active goal 状态经 main agent `get_goal` 复核仍为 `active`，因此未调用 `update_goal`。
+  - 当前 active goal 状态经 `main agent` `get_goal` 复核仍为 `active`，因此未调用 `update_goal`。
 - QA 确认已达成子项：
   - 黄叶 grouped gate 线上 smoke 已支撑“答完所有分组后命中 1 个或以上 outcome”；
   - `500+` 文件数从 17 降到 6，减少 64.71%，超过 30% 目标；

@@ -12,7 +12,7 @@
 
 ## 任务开始前
 
-任何可能修改文件的任务开始前，main agent 必须检查：
+任何可能修改文件的任务开始前，`main agent` 必须检查：
 
 ```bash
 git status --short
@@ -37,7 +37,7 @@ Git Workspace Check:
 
 ## very_dirty 自动任务前快照提交
 
-如果任务开始前工作区判断为 `very_dirty`，main agent 必须先执行一次 **pre-task dirty snapshot commit**。
+如果任务开始前工作区判断为 `very_dirty`，`main agent` 必须先执行一次 **pre-task dirty snapshot commit**。
 
 目的：
 

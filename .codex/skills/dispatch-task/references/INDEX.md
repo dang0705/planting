@@ -21,7 +21,7 @@
 | Phase 1 / 7 | ClickUp 模式下 markdown checklist、验收标准、Test Case Base、markdown_description 回写 | `checklist-writeback-policy.md` |
 | Phase 2 | Agent Assignment / Execution Gate | `agent-assignment-gate.md` |
 | Phase 3 | role_context_packets | `role-context-packets.md` |
-| Phase 4 | Solution Discovery、Implementation Contract、Test Contract、main agent 质量门禁 | `solution-discovery-gate.md` / `implementation-test-contract.md` / `main-agent-quality-gates.md` |
+| Phase 4 | Solution Discovery、Implementation Contract、Test Contract、`main agent` 质量门禁 | `solution-discovery-gate.md` / `implementation-test-contract.md` / `main-agent-quality-gates.md` |
 | Phase 4.45 | pre-implementation token 预算保险丝 | `pre-implementation-budget-fuse.md` |
 | Phase 6 | QA 证据、日志、截图、失败归因 | `qa-evidence-policy.md` |
 | Phase 6 | WeChat DevTools 自动化职责分配 | `wechat-devtools-automation-policy.md` |
@@ -84,4 +84,4 @@ Figma / UI 细则不在本目录内，仍由对应 skill 管理：
 
 ## Subagent 进度观察
 
-main agent 等待 subagent 时读取 `subagent-progress-policy.md`。默认低成本观察，不得频繁中断。
+`main agent` 等待 subagent 时读取 `subagent-progress-policy.md`。默认低成本观察，不得频繁中断。

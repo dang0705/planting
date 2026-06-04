@@ -10,7 +10,7 @@ description: "implementer 专用 UI 执行规则：只消费 Implementation Pack
 本 skill 只给 `implementer_fast` / `implementer_deep` 使用。
 
 它不负责生成 Figma Design Facts，不负责 UI 范围裁决，不负责 QA 验收。  
-它只负责把 main agent 已生成的 `Implementation Packet` 和 `Figma Drilldown Request` 落成代码实现。
+它只负责把 `main agent` 已生成的 `Implementation Packet` 和 `Figma Drilldown Request` 落成代码实现。
 
 ---
 
@@ -98,7 +98,7 @@ Figma Drilldown Blocker:
 1. 优先按 Implementation Packet 中的复用 / wrapper / adapter / 插件 / 原生能力 / 手搓裁决执行。
 2. 不得重新做技术方向裁决。
 3. 不得自行改变 allowed_paths / forbidden_paths。
-4. 如发现 Contract 不可执行，停止并请求 main agent 修订。
+4. 如发现 Contract 不可执行，停止并请求 `main agent` 修订。
 5. 复杂组件必须拆模块，避免单文件膨胀。
 6. 只把 QA 需要的实现映射摘要输出给 QA，不输出完整 Drilldown。
 

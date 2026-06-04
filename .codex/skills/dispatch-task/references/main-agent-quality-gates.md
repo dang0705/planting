@@ -2,9 +2,9 @@
 
 ## 定位
 
-本文件定义 main agent 在无独立架构角色的工作流中必须执行的质量门禁。
+本文件定义 `main agent` 在无独立架构角色的工作流中必须执行的质量门禁。
 
-main agent 必须通过以下硬门禁：
+`main agent` 必须通过以下硬门禁：
 
 1. Solution Discovery Gate。
 2. Technical Direction Gate。
@@ -25,7 +25,7 @@ main agent 必须通过以下硬门禁：
 
 ## Technical Direction Gate
 
-进入 implementer 执行前，main agent 必须输出并通过 Technical Direction Gate。
+进入 implementer 执行前，`main agent` 必须输出并通过 Technical Direction Gate。
 
 硬规则：
 
@@ -37,7 +37,7 @@ main agent 必须通过以下硬门禁：
 
 ## Implementation Contract Completeness Gate
 
-派发 implementer 前，main agent 必须检查 Implementation Contract 完整性。
+派发 implementer 前，`main agent` 必须检查 Implementation Contract 完整性。
 
 硬规则：
 
@@ -48,11 +48,11 @@ main agent 必须通过以下硬门禁：
 
 ## Main Agent Code Review Gate
 
-implementer 完成后，QA 之前，main agent 必须执行代码 review 并通过 Main Agent Code Review Gate。
+implementer 完成后，QA 之前，`main agent` 必须执行代码 review 并通过 Main Agent Code Review Gate。
 
 硬规则：
 
-1. 未完成 main agent code review，不得进入 QA。
+1. 未完成 `main agent` code review，不得进入 QA。
 2. code review 必须以本轮 diff 为主轴，但允许读取最小依赖上下文。
-3. 发现 blocking findings 时，main agent 不得亲自修复，必须把 findings 转回同一 implementer 线程。
+3. 发现 blocking findings 时，`main agent` 不得亲自修复，必须把 findings 转回同一 implementer 线程。
 4. QA 只能消费 code review 摘要做测试与验收，不得替代 code review。

@@ -1,8 +1,8 @@
 # Review Scope 与 QA 边界
 
-## 1. main agent code review
+## 1. `main agent` code review
 
-main agent 做实现后 code review，采用：
+`main agent` 做实现后 code review，采用：
 
 ```text
 diff-first + dependency-context-limited
@@ -33,7 +33,7 @@ QA 输入：
 
 1. 目标验收契约。
 2. Test Contract。
-3. main agent code review 摘要。
+3. `main agent` code review 摘要。
 4. implementer 变更摘要。
 5. changed_files_as_test_scope_hint。
 6. QA Acceptance Slice。

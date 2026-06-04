@@ -2,25 +2,25 @@
 
 ## 定位
 
-本文件定义微信开发者工具 MCP 自动化在 main agent、implementer、QA 之间的职责边界，避免同一轮任务中重复跑三次自动化导致 token 和时间消耗失控。
+本文件定义微信开发者工具 MCP 自动化在 `main agent`、implementer、QA 之间的职责边界，避免同一轮任务中重复跑三次自动化导致 token 和时间消耗失控。
 
 ## 单一责任原则
 
-同一个验收目标不得由 main agent、implementer、QA 重复完整执行。
+同一个验收目标不得由 `main agent`、implementer、QA 重复完整执行。
 
 默认分工：
 
 | 角色 | 是否直接执行 WeChat DevTools MCP | 责任 |
 |---|---|---|
-| main agent | 默认不执行 | 制定 Test Contract，指定 automation_owner，消费证据，判断 completion |
+| `main agent` | 默认不执行 | 制定 Test Contract，指定 automation_owner，消费证据，判断 completion |
 | implementer | 只做最小自测 | 提交 QA 前确认页面可打开、主交互可用、无明显运行时报错 |
 | qa_reviewer | 负责正式验收 | 按 Test Contract 执行端上自动化、UI/Figma 验收和失败归因 |
 
-## main agent 边界
+## `main agent` 边界
 
-main agent 不应直接执行 WeChat DevTools 自动化，除非没有可用 QA 线程、用户明确要求，或只读取已有证据。
+`main agent` 不应直接执行 WeChat DevTools 自动化，除非没有可用 QA 线程、用户明确要求，或只读取已有证据。
 
-main agent 应输出：
+`main agent` 应输出：
 
 ```text
 Automation Ownership:
@@ -96,7 +96,7 @@ tool_session_blocker
 
 在这种情况下：
 
-1. 允许 main agent 或 QA 在同一线程改走底层 `miniprogram-automator` 直连继续端上验收。
+1. 允许 `Implementer`/`QA` 在同一线程改走底层 `miniprogram-automator` 直连继续端上验收。
 2. 只要直连链路拿到的证据满足 Test Contract required item，该证据视为有效端上证据。
 3. 不得仅因内置 MCP transport 不可用而把任务长期 blocked。
 4. 输出中必须明确区分：

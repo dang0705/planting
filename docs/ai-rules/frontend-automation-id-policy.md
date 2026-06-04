@@ -91,7 +91,7 @@ QA 执行小程序前端自动化时按以下顺序：
 
 1. 连接微信开发者工具：先调用 `mp_ensureConnection`。
 2. 如果连接失败，只允许一次带 `reconnect=true` 的引导重试。
-3. 如果工具要求选择项目，调用 `mp_listProjects` 或使用 main agent 指定的 `projectSelection`。
+3. 如果工具要求选择项目，调用 `mp_listProjects` 或使用 `main agent` 指定的 `projectSelection`。
 4. 使用 `mp_navigate` 进入页面，或通过入口按钮从真实页面进入诊断流。
 5. 使用 `element_getInnerElement` / `element_getInnerElements` 按 `#id` 定位容器和控件。
 6. 使用点击、输入、等待、截图工具形成证据；优先记录命中的 `id`、页面路径和用户可见文本。

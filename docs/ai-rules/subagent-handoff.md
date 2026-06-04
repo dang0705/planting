@@ -30,7 +30,7 @@ Handoff Resume Summary:
 - 禁止修改范围:
 - 关键决策:
 - role_context_packet:
-  - main agent:
+  - `main agent`:
   - implementer:
   - QA:
   - docs:
@@ -100,7 +100,7 @@ Handoff Audit Appendix:
 只有以下情况才读取审计附录：
 
 1. 任务失败，需要排查原因。
-2. main agent、QA、implementer 结论冲突。
+2. `main agent`、QA、implementer 结论冲突。
 3. 用户要求复盘。
 4. 需要证明某条验证证据。
 5. 需要恢复长任务，但轻量摘要不足。
@@ -110,7 +110,7 @@ Handoff Audit Appendix:
 
 ## 4. 角色 handoff 要求
 
-### 4.1 main agent
+### 4.1 `main agent`
 
 必须输出：
 
@@ -132,7 +132,7 @@ Handoff Audit Appendix:
 - 偏离契约之处。
 - 已补测试代码。
 - 未完成项。
-- 给 main agent / QA 的最小复核摘要。
+- 给 `main agent` / QA 的最小复核摘要。
 
 不得粘贴完整 diff。
 
@@ -157,7 +157,7 @@ Handoff Audit Appendix:
 - 已更新文档。
 - 未更新原因。
 - 是否同步索引。
-- 是否需要 main agent 复核。
+- 是否需要 `main agent` 复核。
 
 不得把完整文档正文放入 handoff；完整文档以文件路径引用。
 

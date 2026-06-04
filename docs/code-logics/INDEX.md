@@ -2,7 +2,7 @@
 
 ## 1. 定位
 
-本文件是 `docs/code-logics/` 的轻量索引，用于让 main agent / subagent 精准定位代码逻辑文档，避免全量读取整个目录。
+本文件是 `docs/code-logics/` 的轻量索引，用于让 `main agent` / subagent 精准定位代码逻辑文档，避免全量读取整个目录。
 
 `docs/code-logics/` 是代码逻辑知识库，不是默认上下文。任何 agent 都不得因为任务中出现“诊断、运行时、问题、结果、视觉”等宽泛词，就全量读取本目录。
 
@@ -11,9 +11,9 @@
 1. 默认只读本索引。
 2. 不得全量读取 `docs/code-logics/`。
 3. 每次任务默认最多读取 1～2 个最相关逻辑文档。
-4. 如果需要读取超过 2 个逻辑文档，main agent 必须在 Dispatch Plan 中说明原因，并优先提供规则摘要。
+4. 如果需要读取超过 2 个逻辑文档，`main agent` 必须在 Dispatch Plan 中说明原因，并优先提供规则摘要。
 5. 下游 agent 优先读取上游 agent 摘要和 handoff，不重复读取源文档。
-6. 若索引无法定位具体文档，subagent 应请求 main agent 补充摘要或指定路径，不得自行扫描整个目录。
+6. 若索引无法定位具体文档，subagent 应请求 `main agent` 补充摘要或指定路径，不得自行扫描整个目录。
 
 ## 3. 快速路由
 

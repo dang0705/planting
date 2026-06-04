@@ -16,7 +16,7 @@ mode: clickup_ticket
 mode: prompt_only
 ```
 
-main agent 主导技术方向、Implementation Contract、Test Contract、Agent Assignment、code review、ClickUp 回写和 Git commit。  
+`main agent` 主导技术方向、Implementation Contract、Test Contract、Agent Assignment、code review、ClickUp 回写和 Git commit。  
 代码实现、QA、文档落地必须交给对应 subagent。
 
 ## 2. 规则读取策略
@@ -120,7 +120,7 @@ implementer_fast
 implementer_deep
 ```
 
-main agent 默认不得亲自写代码。
+`main agent` 默认不得亲自写代码。
 
 ## 7. Phase 3：role_context_packets
 
@@ -170,14 +170,14 @@ references/pre-implementation-budget-fuse.md
 ```text
 可选 code_explorer
 → implementer_fast / implementer_deep
-→ main agent code review
+→ `main agent` code review
 → qa_reviewer
 → docs_keeper（按需）
 ```
 
 如果 code review 或 QA 不通过：
 
-1. main agent 不得亲自改代码。
+1. `main agent` 不得亲自改代码。
 2. findings 必须转回同一 implementer 线程。
 3. implementer 修复后重新 review / QA。
 
@@ -212,7 +212,7 @@ ClickUp 描述区 markdown checklist 通过项必须通过 ClickUp MCP 整体更
 ## 13. Figma Drilldown 与 UI 自测
 
 Figma Drilldown 默认由 implementer 在 implementation 阶段按 request 读取。  
-main agent pre-implementation 阶段默认只保留 Drilldown Request 和 QA Visual Baseline Slice。
+`main agent` pre-implementation 阶段默认只保留 Drilldown Request 和 QA Visual Baseline Slice。
 
 如果 implementer packet 包含 `Figma Design Facts Lite`、`Figma Drilldown Request` 或 `UI implementation required`，implementer 必须做 UI / 交互自测；涉及微信小程序可见路径时必须尝试 WeChat DevTools MCP。  
 自测不替代 QA。
@@ -237,7 +237,7 @@ assets/templates/qa-evidence.md
 1. 禁止跳过 Phase 0。
 2. 禁止把无 ClickUp ticket 的任务强行终止；应进入 prompt_only 模式。
 3. 禁止未分配 implementer 就改代码。
-4. 禁止 main agent 默认亲自写代码。
+4. 禁止 `main agent` 默认亲自写代码。
 5. 禁止未生成 role_context_packets 就进入实现。
 6. 禁止 checklist 未映射 Test Case Base 就进入 QA 或回写（仅 clickup_ticket 模式）。
 7. 禁止用 emoji / 图标 / 评论 / 描述替代真实 checklist 勾选。
@@ -247,7 +247,7 @@ assets/templates/qa-evidence.md
 
 ## very_dirty 自动快照提交
 
-如果任务开始前 Git 工作区为 very_dirty，main agent 必须先创建任务前 dirty snapshot commit。无需用户确认。
+如果任务开始前 Git 工作区为 very_dirty，`main agent` 必须先创建任务前 dirty snapshot commit。无需用户确认。
 
 commit message 必须根据当前脏改动内容生成，精炼且不超过 50 个字符。任务完成后的最终 commit message 同样不超过 50 个字符。
 
@@ -267,7 +267,7 @@ references/completion-gate.md
 
 ## Subagent 进度观察
 
-main agent 等待 subagent 时，读取：
+`main agent` 等待 subagent 时，读取：
 
 ```text
 references/subagent-progress-policy.md
@@ -284,4 +284,4 @@ references/subagent-progress-policy.md
 references/wechat-devtools-automation-policy.md
 ```
 
-main agent 默认不直接执行 WeChat DevTools 自动化。implementer 只做最小自测，QA 负责正式验收，禁止重复完整自动化。
+`main agent` 默认不直接执行 WeChat DevTools 自动化。implementer 只做最小自测，QA 负责正式验收，禁止重复完整自动化。

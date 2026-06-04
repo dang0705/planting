@@ -6,7 +6,7 @@
 
 它不承载完整历史排障细节，只负责：
 
-1. 告诉 main agent 什么时候需要读取完整避坑文档。
+1. 告诉 `main agent` 什么时候需要读取完整避坑文档。
 2. 告诉 subagent 应优先查哪些问题域。
 3. 避免每次云端、replay、CloudBase、H5 管理页问题都从零排查。
 4. 避免把 DNS、网关、鉴权、schema、部署、replay、前端代理问题误判为 diagnose 业务逻辑问题。
@@ -27,7 +27,7 @@ docs/ai-rules/diagnose-http-cloud-debugging.md
 
 ## 2. 何时读取本文件
 
-当任务涉及以下内容之一时，main agent 应在 Dispatch Plan 中指定读取本文件：
+当任务涉及以下内容之一时，`main agent` 应在 Dispatch Plan 中指定读取本文件：
 
 1. `diagnose-http` 云端调试。
 2. CloudBase 网关 smoke。
@@ -625,7 +625,7 @@ outcome
 
 ## 6. Dispatch Plan 推荐写法
 
-当任务命中本索引时，main agent 推荐在 Dispatch Plan 中写：
+当任务命中本索引时，`main agent` 推荐在 Dispatch Plan 中写：
 
 ```text
 Dispatch Plan:
@@ -654,7 +654,7 @@ Dispatch Plan:
 
 正确策略：
 
-1. main agent 先读本索引。
+1. `main agent` 先读本索引。
 2. 根据任务命中类型，指定相关章节或归档文档路径。
 3. subagent 只读 Dispatch Plan 指定范围。
 4. 如果仍不足，再请求读取完整归档文档。
