@@ -1,89 +1,104 @@
 <template>
   <view id="diagnose-followup-page" class="follow-up-page">
-    <swiper
-      v-if="result?.followUpRequired && followUpQuestionStack.length"
-      id="diagnose-followup-page-swiper"
-      class="followup-page-swiper"
-      :current="activeFollowUpQuestionIndex"
-      :duration="260"
-      :indicator-dots="false"
-      :circular="false"
-      @change="activeFollowUpQuestionIndex = Number($event?.detail?.current || 0)"
-    >
-      <swiper-item
-        v-for="(question, questionIndex) in followUpQuestionStack"
-        :key="question.questionId || question.questionKey || questionIndex"
-        :id="`diagnose-followup-page-item-${question.questionId || questionIndex}`"
-        class="followup-page-swiper-item"
-      >
-        <scroll-view :id="`diagnose-followup-page-question-scroll-${question.questionId || questionIndex}`" scroll-y class="followup-question-scroll">
-          <view :id="`diagnose-followup-page-question-shell-${question.questionId || questionIndex}`" class="followup-question-shell">
-            <view :id="`diagnose-followup-page-question-card-${question.questionId || questionIndex}`" class="followup-question-card followup-question-card--animated">
-              <text class="followup-question-count">
-                问题 {{ questionIndex + 1 }} / {{ followUpQuestionStack.length || 1 }}
-              </text>
-              <text class="followup-question-title">
-                {{ getQuestionTitle(question) }}
-              </text>
-              <text v-if="hasQuestionHelpText(question)" class="followup-question-help">
-                {{ getQuestionHelpText(question) }}
-              </text>
+    <view class="followup-topbar">
+      <view class="followup-topbar-back" @click="goBack">
+        <text class="followup-topbar-back-icon">‹</text>
+      </view>
+      <text class="followup-topbar-title">继续诊断</text>
+      <view class="followup-topbar-back followup-topbar-back--placeholder" aria-hidden="true" />
+    </view>
 
-              <CareBehaviorTimeline
-                v-if="isCareBehaviorWateringTimelineQuestion(question)"
-                :question-id="getFollowUpQuestionId(question)"
-                :question="question"
-                :timeline="getCareBehaviorTimelineByQuestion(question)"
-                @change="payload => handleCareBehaviorTimelineChange(question, payload)"
-              />
+    <template v-if="result?.followUpRequired && followUpQuestionStack.length">
+      <view class="followup-page-body">
+        <view class="followup-fixed-context">
+          <text class="followup-fixed-context-title">{{ followUpDiagnosisContextText }}</text>
+          <text class="followup-fixed-context-progress">{{ followUpQuestionProgressText }}</text>
+        </view>
 
-              <view
-                v-if="getVisibleCareBehaviorOptions(question).length"
-                :id="`diagnose-followup-page-option-stack-${question.questionId || questionIndex}`"
-                class="followup-option-stack followup-option-stack--accordion"
-              >
-                <view
-                  v-for="(option, optionIndex) in getVisibleCareBehaviorOptions(question)"
-                  :key="option.optionId || option.optionKey || option.text"
-                  :id="`diagnose-followup-page-option-${question.questionId || questionIndex}-${option.optionId || option.optionKey || optionIndex}`"
-                  class="followup-accordion-option"
-                  :class="isSelectedFollowUpOption(question, option) ? 'followup-accordion-option--active' : ''"
-                  @click="selectFollowUpOption(question, option)"
-                >
-                  <view class="followup-accordion-title">
-                    <text class="followup-accordion-text">{{ getOptionText(question, option) }}</text>
-                    <text class="followup-accordion-badge">
-                      {{ isSelectedFollowUpOption(question, option) ? '已选' : '单选' }}
-                    </text>
+        <swiper
+          id="diagnose-followup-page-swiper"
+          class="followup-page-swiper"
+          :current="activeFollowUpQuestionIndex"
+          :duration="260"
+          :indicator-dots="false"
+          :circular="false"
+          @change="activeFollowUpQuestionIndex = Number($event?.detail?.current || 0)"
+        >
+          <swiper-item
+            v-for="(question, questionIndex) in followUpQuestionStack"
+            :key="question.questionId || question.questionKey || questionIndex"
+            :id="`diagnose-followup-page-item-${question.questionId || questionIndex}`"
+            class="followup-page-swiper-item"
+          >
+            <scroll-view :id="`diagnose-followup-page-question-scroll-${question.questionId || questionIndex}`" scroll-y class="followup-question-scroll">
+              <view :id="`diagnose-followup-page-question-shell-${question.questionId || questionIndex}`" class="followup-question-shell">
+                <view :id="`diagnose-followup-page-question-card-${question.questionId || questionIndex}`" class="followup-question-card followup-question-card--animated">
+                  <text class="followup-question-title">
+                    {{ getQuestionTitle(question) }}
+                  </text>
+                  <text v-if="hasQuestionHelpText(question)" class="followup-question-help">
+                    {{ getQuestionHelpText(question) }}
+                  </text>
+
+                  <CareBehaviorTimeline
+                    v-if="isCareBehaviorWateringTimelineQuestion(question)"
+                    :question-id="getFollowUpQuestionId(question)"
+                    :question="question"
+                    :timeline="getCareBehaviorTimelineByQuestion(question)"
+                    :loading="environmentWeatherWindowLoading"
+                    :error="environmentWeatherWindowError"
+                    @change="payload => handleCareBehaviorTimelineChange(question, payload)"
+                  />
+
+                  <view
+                    v-if="getVisibleCareBehaviorOptions(question).length"
+                    :id="`diagnose-followup-page-option-stack-${question.questionId || questionIndex}`"
+                    class="followup-option-stack followup-option-stack--accordion"
+                  >
+                    <view
+                      v-for="(option, optionIndex) in getVisibleCareBehaviorOptions(question)"
+                      :key="option.optionId || option.optionKey || option.text"
+                      :id="`diagnose-followup-page-option-${question.questionId || questionIndex}-${option.optionId || option.optionKey || optionIndex}`"
+                      class="followup-accordion-option"
+                      :class="isSelectedFollowUpOption(question, option) ? 'followup-accordion-option--active' : ''"
+                      @click="selectFollowUpOption(question, option)"
+                    >
+                      <view class="followup-accordion-title">
+                        <text class="followup-accordion-text">{{ getOptionText(question, option) }}</text>
+                        <text class="followup-accordion-badge">
+                          {{ isSelectedFollowUpOption(question, option) ? '已选' : '单选' }}
+                        </text>
+                      </view>
+                    </view>
                   </view>
+
+                  <view class="followup-nav-row">
+                    <button
+                      id="diagnose-followup-page-prev-button"
+                      class="followup-nav-button"
+                      :class="{ 'followup-nav-button--disabled': isSubmittingFollowUp || activeFollowUpQuestionIndex <= 0 }"
+                      :disabled="isSubmittingFollowUp || activeFollowUpQuestionIndex <= 0"
+                      @click="goPreviousFollowUpQuestion"
+                    >上一题</button>
+                    <button
+                      id="diagnose-followup-page-next-button"
+                      class="followup-nav-button followup-nav-button--primary"
+                      :class="{ 'followup-nav-button--disabled': !canProceedFollowUpQuestion() }"
+                      :disabled="!canProceedFollowUpQuestion()"
+                      @click="handleNextFollowUpQuestion"
+                    >{{ isSubmittingFollowUp ? '处理中...' : '下一题' }}</button>
+                  </view>
+
+                  <text v-if="hasDirtyFollowUpAnswers" class="followup-dirty-hint">
+                    你修改了之前的答案，继续后会重新整理后续问题。
+                  </text>
                 </view>
               </view>
-
-              <view class="followup-nav-row">
-                <button
-                  id="diagnose-followup-page-prev-button"
-                  class="followup-nav-button"
-                  :class="{ 'followup-nav-button--disabled': isSubmittingFollowUp || activeFollowUpQuestionIndex <= 0 }"
-                  :disabled="isSubmittingFollowUp || activeFollowUpQuestionIndex <= 0"
-                  @click="goPreviousFollowUpQuestion"
-                >上一题</button>
-                <button
-                  id="diagnose-followup-page-next-button"
-                  class="followup-nav-button followup-nav-button--primary"
-                  :class="{ 'followup-nav-button--disabled': !canProceedFollowUpQuestion() }"
-                  :disabled="!canProceedFollowUpQuestion()"
-                  @click="handleNextFollowUpQuestion"
-                >{{ isSubmittingFollowUp ? '处理中...' : '下一题' }}</button>
-              </view>
-
-              <text v-if="hasDirtyFollowUpAnswers" class="followup-dirty-hint">
-                你修改了之前的答案，继续后会重新整理后续问题。
-              </text>
-            </view>
-          </view>
-        </scroll-view>
-      </swiper-item>
-    </swiper>
+            </scroll-view>
+          </swiper-item>
+        </swiper>
+      </view>
+    </template>
 
     <scroll-view
       v-else-if="result && !result.followUpRequired && !hasRouteConvergenceDetails"
@@ -273,6 +288,7 @@ import {
   extractCareBehaviorTimelineFromQuestion,
   getVisibleCareBehaviorOptions,
   hasMeaningfulCareBehaviorTimeline,
+  isCareBehaviorTimelineUnclearAnswer,
   isCareBehaviorTimelineSentinelAnswer,
   isLegacyWateringTimelineQuestion,
   isCareBehaviorWateringTimelineQuestion,
@@ -299,6 +315,8 @@ const careBehaviorTimelineByQuestionId = ref({})
 const environmentWeatherWindow = ref(null)
 const environmentWeatherWindowRequestKey = ref('')
 const environmentWeatherWindowLoading = ref(false)
+const environmentWeatherWindowError = ref('')
+const careBehaviorTimelineAnswerSyncSuppressedByQuestionId = ref({})
 const committedFollowUpAnswers = ref({})
 const dirtyFollowUpFromIndex = ref(-1)
 const followUpAnswerRevision = ref(0)
@@ -349,6 +367,11 @@ const roundLabel = computed(() => roundId.value || '未提供 roundId')
 const currentFollowUpQuestion = computed(() => followUpQuestionStack.value[activeFollowUpQuestionIndex.value] || null)
 const hasDirtyFollowUpAnswers = computed(() => dirtyFollowUpFromIndex.value >= 0)
 const followUpSwiperStyle = computed(() => ({ height: `${estimateFollowUpSwiperHeight(currentFollowUpQuestion.value)}px` }))
+const followUpQuestionProgressText = computed(() => {
+  const currentIndex = Math.min(activeFollowUpQuestionIndex.value + 1, followUpQuestionStack.value.length || 1)
+  return `问题 ${currentIndex} / ${followUpQuestionStack.value.length || 1}`
+})
+const followUpDiagnosisContextText = computed(() => `针对${plantName.value || '植物'}的黄叶问诊`)
 const hasCompletedDiagnosis = computed(() => Boolean(result.value) && !result.value.followUpRequired)
 const hasRouteConvergenceDetails = computed(() =>
   Boolean(
@@ -721,6 +744,9 @@ function normalizeText(value = '') {
 }
 
 function getQuestionTitle(question = {}) {
+  if (isCareBehaviorWateringTimelineQuestion(question)) {
+    return '请您选择在过去的10天内，哪几天浇了水？'
+  }
   return sanitizeTemplateText(
     question?.questionTextUserCn ||
     question?.questionTextCn ||
@@ -887,6 +913,10 @@ function getFollowUpQuestionId(question) {
   return String(question?.questionId || '').trim()
 }
 
+function goBack() {
+  uni.navigateBack({ delta: 1 })
+}
+
 function findFollowUpQuestionById(questionId = '') {
   const normalizedQuestionId = String(questionId || '').trim()
   if (!normalizedQuestionId) {return null}
@@ -902,7 +932,11 @@ function getCareBehaviorTimelineByQuestion(question = {}) {
   if (!questionId) {
     return fallbackTimeline
   }
-  return careBehaviorTimelineByQuestionId.value[questionId] || fallbackTimeline
+  const storedTimeline = careBehaviorTimelineByQuestionId.value[questionId]
+  if (storedTimeline && Object.keys(storedTimeline).length) {
+    return mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(storedTimeline, environmentWeatherWindow.value)
+  }
+  return fallbackTimeline
 }
 
 function buildCareBehaviorTimelineByQuestionIdMap(questions = []) {
@@ -932,6 +966,7 @@ function handleCareBehaviorTimelineChange(question, timeline = null) {
     syncCareBehaviorTimelineAnswer(question, Object.keys(currentTimeline).length ? currentTimeline : nextTimeline)
     return
   }
+  clearCareBehaviorTimelineAnswerSyncSuppression(questionId)
   careBehaviorTimelineByQuestionId.value = {
     ...careBehaviorTimelineByQuestionId.value,
     [questionId]: nextTimeline
@@ -994,6 +1029,7 @@ function applyEnvironmentWeatherWindowToCareBehaviorTimelines() {
 }
 
 async function refreshEnvironmentWeatherWindowForCareBehavior(questions = followUpQuestionStack.value) {
+  environmentWeatherWindowError.value = ''
   try {
     const timelineQuestions = (Array.isArray(questions) ? questions : [])
       .filter(item => isCareBehaviorWateringTimelineQuestion(item))
@@ -1024,10 +1060,12 @@ async function refreshEnvironmentWeatherWindowForCareBehavior(questions = follow
     if (weatherWindow) {
       environmentWeatherWindow.value = weatherWindow
       environmentWeatherWindowRequestKey.value = requestKey
+      environmentWeatherWindowError.value = ''
       applyEnvironmentWeatherWindowToCareBehaviorTimelines()
     }
   } catch (error) {
     console.warn('获取养护时间线环境天气失败:', error)
+    environmentWeatherWindowError.value = String(error?.message || error?.msg || '养护时间线天气加载失败，请稍后重试。').trim()
   } finally {
     if (environmentWeatherWindowLoading.value) {
       environmentWeatherWindowLoading.value = false
@@ -1040,6 +1078,12 @@ function syncCareBehaviorTimelineAnswer(question, timeline = null) {
   if (!questionId) {return}
 
   const currentOptionId = String(followUpAnswers.value[questionId] || '').trim()
+  if (
+    isCareBehaviorTimelineUnclearAnswer(question, currentOptionId) &&
+    isCareBehaviorTimelineAnswerSyncSuppressed(questionId)
+  ) {
+    return
+  }
   const recordedOptionId = resolveCareBehaviorTimelineRecordedAnswerOptionId(question)
   const meaningfulTimeline = hasMeaningfulCareBehaviorTimeline(timeline)
   const visibleOptions = getVisibleCareBehaviorOptions(question)
@@ -1061,6 +1105,30 @@ function syncCareBehaviorTimelineAnswer(question, timeline = null) {
   if (currentOptionId) {
     setFollowUpAnswer(questionId, '')
   }
+}
+
+function setCareBehaviorTimelineAnswerSyncSuppression(questionId = '', suppressed = false) {
+  const normalizedQuestionId = String(questionId || '').trim()
+  if (!normalizedQuestionId) {return}
+  const nextState = {
+    ...careBehaviorTimelineAnswerSyncSuppressedByQuestionId.value
+  }
+  if (suppressed) {
+    nextState[normalizedQuestionId] = true
+  } else {
+    delete nextState[normalizedQuestionId]
+  }
+  careBehaviorTimelineAnswerSyncSuppressedByQuestionId.value = nextState
+}
+
+function clearCareBehaviorTimelineAnswerSyncSuppression(questionId = '') {
+  setCareBehaviorTimelineAnswerSyncSuppression(questionId, false)
+}
+
+function isCareBehaviorTimelineAnswerSyncSuppressed(questionId = '') {
+  const normalizedQuestionId = String(questionId || '').trim()
+  if (!normalizedQuestionId) {return false}
+  return Boolean(careBehaviorTimelineAnswerSyncSuppressedByQuestionId.value[normalizedQuestionId])
 }
 
 function getFollowUpOptionId(option) {
@@ -1113,6 +1181,11 @@ function selectFollowUpOption(question, option) {
   const questionId = getFollowUpQuestionId(question)
   const optionId = getFollowUpOptionId(option)
   if (!questionId || !optionId) {return}
+  if (isCareBehaviorWateringTimelineQuestion(question) && isCareBehaviorTimelineUnclearAnswer(question, optionId)) {
+    setCareBehaviorTimelineAnswerSyncSuppression(questionId, true)
+  } else {
+    clearCareBehaviorTimelineAnswerSyncSuppression(questionId)
+  }
   setFollowUpAnswer(questionId, optionId)
   if (isAccordionFollowUpQuestion(question)) {setExpandedFollowUpOption(question, optionId)}
 }
@@ -1149,9 +1222,17 @@ function setFollowUpAnswer(questionId, answerValue) {
 
   const answerId = String(answerValue || '').trim()
   const autoAnswerId = resolveCareBehaviorTimelineAutoAnswerOptionId(question)
-  if (isCareBehaviorTimelineSentinelAnswer(question, answerId) || answerId === autoAnswerId) {
+  if (
+    isCareBehaviorTimelineSentinelAnswer(question, answerId) ||
+    answerId === autoAnswerId ||
+    isCareBehaviorTimelineUnclearAnswer(question, answerId)
+  ) {
+    if (isCareBehaviorTimelineUnclearAnswer(question, answerId)) {
+      setCareBehaviorTimelineAnswerSyncSuppression(questionId, true)
+    }
     return
   }
+  clearCareBehaviorTimelineAnswerSyncSuppression(questionId)
   careBehaviorTimelineByQuestionId.value = {
     ...careBehaviorTimelineByQuestionId.value,
     [questionId]: {}
@@ -1168,9 +1249,14 @@ function goNextFollowUpQuestion() {
 }
 
 function canProceedFollowUpQuestion() {
-  const questionId = getFollowUpQuestionId(currentFollowUpQuestion.value)
+  const question = currentFollowUpQuestion.value
+  const questionId = getFollowUpQuestionId(question)
   if (!questionId) {return false}
   if (isSubmittingFollowUp.value) {return false}
+  if (isCareBehaviorWateringTimelineQuestion(question)) {
+    return Boolean(followUpAnswers.value[questionId]) ||
+      hasMeaningfulCareBehaviorTimeline(getCareBehaviorTimelineByQuestion(question))
+  }
   return Boolean(followUpAnswers.value[questionId])
 }
 
@@ -1306,47 +1392,116 @@ async function submitFollowUps() {
 
 <style scoped>
 .follow-up-page {
+  box-sizing: border-box;
   min-height: 100vh;
-  background: #f8f6f0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f8faf9;
+}
+
+.followup-topbar {
+  height: 56px;
+  box-sizing: border-box;
+  padding: 0 12px 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #2d7a4f;
+}
+
+.followup-topbar-back {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #ffffff;
+}
+
+.followup-topbar-back-icon {
+  display: block;
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 400;
+  margin-top: -1px;
+}
+
+.followup-topbar-back--placeholder {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.followup-topbar-title {
+  flex: 1;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 24px;
+  text-align: center;
+}
+
+.followup-page-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding-top: 24px;
+}
+
+.followup-fixed-context {
+  padding: 0 16px;
+  margin-bottom: 12px;
+}
+
+.followup-fixed-context-title {
+  display: block;
+  color: #111827;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.followup-fixed-context-progress {
+  display: block;
+  margin-top: 8px;
+  color: #5a7a68;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
 }
 
 .followup-page-swiper {
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  height: 100vh;
   overflow-x: hidden;
   overflow-y: visible;
 }
 
 .followup-page-swiper-item {
+  height: 100%;
   overflow-x: hidden;
   overflow-y: visible;
 }
 
 .followup-question-scroll {
-  height: 100vh;
+  height: 100%;
 }
 
 .followup-question-shell {
   box-sizing: border-box;
-  min-height: 100vh;
-  padding: 24px 16px 34px;
-}
-
-.followup-question-count {
-  display: block;
-  color: #8b7355;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1px;
+  min-height: 100%;
+  padding: 0 16px 34px;
 }
 
 .followup-question-title {
   display: block;
-  margin-top: 10px;
-  color: #111827;
-  font-size: 18px;
-  font-weight: 800;
-  line-height: 1.45;
+  color: #2d7a4f;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 27px;
 }
 
 .followup-question-help {
@@ -1357,16 +1512,39 @@ async function submitFollowUps() {
   line-height: 1.55;
 }
 
+.followup-question-card {
+  padding: 16px 16px 18px;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1px solid rgba(45, 122, 79, 0.12);
+  box-shadow: 0 10px 26px rgba(45, 122, 79, 0.05);
+}
+
+.followup-question-card--animated {
+  animation: followup-card-enter 240ms ease-out both;
+}
+
+.followup-option-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.followup-option-stack--accordion {
+  gap: 10px;
+}
+
 .followup-accordion-option {
   overflow: hidden;
-  border: 1px solid #e7e0d1;
+  border: 1px solid rgba(45, 122, 79, 0.12);
   border-radius: 16px;
   background: #ffffff;
 }
 
 .followup-accordion-option--active {
   border-color: #2d7a4f;
-  background: #eaf6ef;
+  background: rgba(45, 122, 79, 0.05);
 }
 
 .followup-accordion-title {
@@ -1381,7 +1559,7 @@ async function submitFollowUps() {
   flex: 1;
   color: #374151;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.45;
 }
 
@@ -1695,24 +1873,6 @@ async function submitFollowUps() {
   overflow: visible;
 }
 
-.followup-question-card {
-  padding: 14px;
-  border-radius: 20px;
-  background: #f8f6f0;
-  border: 1px solid #d8f3dc;
-}
-
-.followup-question-card--animated {
-  animation: followup-card-enter 240ms ease-out both;
-}
-
-.followup-option-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 12px;
-}
-
 .followup-option-button {
   width: 100%;
   display: flex;
@@ -1797,21 +1957,21 @@ async function submitFollowUps() {
 
 .followup-nav-row {
   display: flex;
-  gap: 10px;
-  margin-top: 14px;
+  gap: 12px;
+  margin-top: 18px;
 }
 
 .followup-nav-button {
   flex: 1;
-  height: 40px;
+  height: 52px;
   padding: 0;
-  border: 1px solid #b7dcc5;
-  border-radius: 14px;
+  border: 1px solid rgba(45, 122, 79, 0.18);
+  border-radius: 12px;
   background: #ffffff;
   color: #2d6a4f;
   font-size: 13px;
   font-weight: 700;
-  line-height: 40px;
+  line-height: 52px;
 }
 
 .followup-nav-button--primary {

@@ -34,6 +34,12 @@ developer_instructions = """
 - 如果验收要求小程序实际交互、页面点选、表单输入、按钮状态、控件状态、class、marker、selected state 或用户路径验证，必须执行 WeChat DevTools MCP 或端上验证。
 - MCP 能连接时，不得只做连接能力验证，必须执行真实交互步骤。
 - MCP 不可用时，记录 blocker 或 not_verified，不得判定通过。
+- 如 qa_reviewer 与 main agent 使用同一项目/页面时，若出现 `Transport closed` 等 MCP 会话层错误，可先尝试引用 main agent 的 WeChat MCP 证据进行判定；仅当主线程证据缺失或未覆盖 required item 时，再将阻塞归因定为 `QA tool/session blocker`。
+- 对于已有 `main_agent_wechat_mcp` 且覆盖 required item 的验收项，不得仅因 qa_reviewer 侧 MCP 失败而将该项标为 blocked；可在失败归因中记录会话问题并给出 completion 非阻塞结论。
+
+【失败归因边界】
+- `QA tool/session blocker` 仅在 WeChat MCP 会话层/transport 层问题成立（本线程连接失败、会话复用链路异常）。
+- 仅因本线程 MCP 失败，不得直接标注为 `product blocker`。
 
 【UI / Figma 验收】
 - 涉及 Figma UI / UI 还原 / 小程序端 UI 验收时，必须读取 QA Visual Baseline Slice。

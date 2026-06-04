@@ -33,6 +33,26 @@ QA scope 由 Test Contract / 验收标准决定，不由“是否有 UI diff”�
 
 如果 MCP 不可用，必须标记为 blocker 或未验证项，不得判定通过。
 
+当出现 `QA tool/session blocker`（如 `Transport closed`）时先做会话归因：
+
+1. 若 main 线程在本轮相同 `projectPath`、`pagePath`、测试链路链条下，提供了可复核的端上证据（截图、selector、日志）且包含 Test Contract required item：
+   - QA 可基于该证据做 pass/fail 判定，不能将该验收项直接标记为 blocked。
+   - 输出证据来源：`evidence_source=main_agent_wechat_mcp`（或等价中文表达）。
+   - 可在 `failures.attribution` 记录“QA 工具会话失败”；`completion` 不应因该条记录阻塞已充分覆盖的验收项。
+2. 若 main 线程未拿到上述证据，或 evidence 仅覆盖非关键链路：
+   - 该验收项保持 blocked。
+   - 若无法覆盖 required item，归因仍为 `QA tool/session blocker`，避免误报为产品功能 blocker。
+3. 若同一问题同时出现主线程与 QA 线程会话问题，必须在 `failures.attribution` 与 `completion` 字段中明确区分：
+   - `tool/session`（链路层）
+   - `product`（功能或行为缺陷）
+
+输出时请固定补齐：
+- `projectPath`
+- `pagePath`
+- `operation chain`
+- `screenshot/selector/log` 引用
+- blocker 分类（`QA tool/session blocker` 或 `product blocker`）
+
 ## 输出预算
 
 QA 输出必须合并为一个简洁结果，不拆成大量重复章节。

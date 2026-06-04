@@ -3,106 +3,144 @@
     :id="`diagnose-care-behavior-timeline-${questionId}`"
     class="care-behavior-timeline"
   >
-    <view class="care-behavior-weekday-header">
-      <text
-        v-for="day in weekLabels"
-        :key="day"
-        class="care-behavior-weekday-item"
-      >{{ day }}</text>
+    <view v-if="loadingErrorText" class="care-behavior-error-banner">
+      <text class="care-behavior-error-text">{{ loadingErrorText }}</text>
     </view>
 
-    <view class="care-behavior-grid">
-      <view
-        v-for="item in cellItems"
-        :key="item.date"
-        :id="`diagnose-care-behavior-date-${item.date}`"
-        :class="[
-          'care-behavior-cell',
-          item.isSelected ? 'care-behavior-cell--selected' : '',
-          item.isFocused ? 'care-behavior-cell--focused' : '',
-          item.isToday ? 'care-behavior-cell--today' : '',
-          item.isFuture ? 'care-behavior-cell--future' : '',
-          item.isHistoricalOutOfRange ? 'care-behavior-cell--historical' : '',
-          item.canOpenDetail ? 'care-behavior-cell--selectable' : 'care-behavior-cell--locked'
-        ]"
-        @click="selectDate(item)"
-      >
-        <view class="care-behavior-day-wrap">
-          <text class="care-behavior-day">{{ item.day }}</text>
-          <text v-if="item.isToday" class="care-behavior-day-mark">D0</text>
+    <view class="care-behavior-calendar-card">
+      <view class="care-behavior-weekday-header">
+        <text
+          v-for="day in weekLabels"
+          :key="day"
+          class="care-behavior-weekday-item"
+        >{{ day }}</text>
+      </view>
+
+      <view class="care-behavior-grid-stage">
+        <view v-if="showLoadingSkeleton" class="care-behavior-grid-skeleton" aria-hidden="true">
+          <view v-for="item in skeletonCellItems" :key="item" class="care-behavior-skeleton-cell">
+            <view class="care-behavior-skeleton-day" />
+            <view class="care-behavior-skeleton-metric care-behavior-skeleton-metric--one" />
+            <view class="care-behavior-skeleton-metric care-behavior-skeleton-metric--two" />
+            <view class="care-behavior-skeleton-dot-row">
+              <view class="care-behavior-skeleton-dot" />
+              <view class="care-behavior-skeleton-dot" />
+              <view class="care-behavior-skeleton-dot" />
+            </view>
+          </view>
         </view>
 
-        <view class="care-behavior-metrics" :class="{ 'care-behavior-metrics--empty': !item.hasWeatherMetrics }">
-          <template v-if="item.hasWeatherMetrics">
-            <view v-if="item.temperatureText" class="care-behavior-metric">
-              <view class="care-behavior-metric-icon care-behavior-metric-icon--temp" aria-hidden="true">
-                <view class="care-behavior-metric-icon-stem" />
-                <view class="care-behavior-metric-icon-bulb" />
-              </view>
-              <text class="care-behavior-metric-value">{{ item.temperatureDisplayText }}</text>
+        <view v-else class="care-behavior-grid">
+          <view
+            v-for="item in cellItems"
+            :key="item.date"
+            :id="`diagnose-care-behavior-date-${item.date}`"
+            :class="[
+              'care-behavior-cell',
+              item.isSelected ? 'care-behavior-cell--selected' : '',
+              item.isFocused ? 'care-behavior-cell--focused' : '',
+              item.isToday ? 'care-behavior-cell--today' : '',
+              item.isFuture ? 'care-behavior-cell--future' : '',
+              item.isHistoricalOutOfRange ? 'care-behavior-cell--historical' : '',
+              item.canOpenDetail ? 'care-behavior-cell--selectable' : 'care-behavior-cell--locked'
+            ]"
+            @click="selectDate(item)"
+          >
+            <view class="care-behavior-day-wrap">
+              <text class="care-behavior-day">{{ item.day }}</text>
+              <text v-if="item.isToday" class="care-behavior-day-mark">今天</text>
             </view>
-            <view v-if="item.humidityText" class="care-behavior-metric">
-              <view class="care-behavior-metric-icon care-behavior-metric-icon--humidity" aria-hidden="true">
-                <view class="care-behavior-metric-icon-drop" />
-              </view>
-              <text class="care-behavior-metric-value">{{ item.humidityDisplayText }}</text>
-            </view>
-          </template>
-          <view v-else class="care-behavior-metrics-spacer" />
-        </view>
 
-        <view class="care-behavior-dot-row">
-          <view
-            :id="`diagnose-care-behavior-water-${item.date}`"
-            class="care-behavior-marker care-behavior-marker--water"
-          >
-            <view v-if="item.watering" class="care-behavior-dot care-behavior-dot--water" />
-          </view>
-          <view
-            :id="`diagnose-care-behavior-fertilize-${item.date}`"
-            class="care-behavior-marker care-behavior-marker--fertilize"
-          >
-            <view v-if="item.fertilizing" class="care-behavior-dot care-behavior-dot--fertilize" />
-          </view>
-          <view
-            :id="`diagnose-care-behavior-light-${item.date}`"
-            class="care-behavior-marker care-behavior-marker--light"
-          >
-            <view v-if="item.lightChange" class="care-behavior-dot care-behavior-dot--light" />
+            <view class="care-behavior-metrics" :class="{ 'care-behavior-metrics--empty': !item.hasWeatherMetrics }">
+              <template v-if="item.hasWeatherMetrics">
+                <view v-if="item.temperatureText" class="care-behavior-metric">
+                  <view class="care-behavior-metric-icon care-behavior-metric-icon--temp" aria-hidden="true">
+                    <view class="care-behavior-metric-icon-stem" />
+                    <view class="care-behavior-metric-icon-bulb" />
+                  </view>
+                  <text class="care-behavior-metric-value">{{ item.temperatureDisplayText }}</text>
+                </view>
+                <view v-if="item.humidityText" class="care-behavior-metric">
+                  <view class="care-behavior-metric-icon care-behavior-metric-icon--humidity" aria-hidden="true">
+                    <view class="care-behavior-metric-icon-drop" />
+                  </view>
+                  <text class="care-behavior-metric-value">{{ item.humidityDisplayText }}</text>
+                </view>
+              </template>
+              <view v-else class="care-behavior-metrics-spacer" />
+            </view>
+
+            <view class="care-behavior-dot-row">
+              <view
+                :id="`diagnose-care-behavior-water-${item.date}`"
+                class="care-behavior-marker care-behavior-marker--water"
+              >
+                <view v-if="item.watering" class="care-behavior-dot care-behavior-dot--water" />
+              </view>
+              <view
+                :id="`diagnose-care-behavior-fertilize-${item.date}`"
+                class="care-behavior-marker care-behavior-marker--fertilize"
+              >
+                <view v-if="item.fertilizing" class="care-behavior-dot care-behavior-dot--fertilize" />
+              </view>
+              <view
+                :id="`diagnose-care-behavior-light-${item.date}`"
+                class="care-behavior-marker care-behavior-marker--light"
+              >
+                <view v-if="item.lightChange" class="care-behavior-dot care-behavior-dot--light" />
+              </view>
+            </view>
           </view>
         </view>
       </view>
-    </view>
 
-    <view v-if="selectedDateState" class="care-behavior-detail-panel">
-      <view class="care-behavior-detail-header">
-        <text class="care-behavior-detail-date">{{ selectedDateLabel }}</text>
-        <text class="care-behavior-detail-weather">{{ selectedDateWeatherText || '—' }}</text>
-      </view>
-      <view class="care-behavior-action-row">
-        <view
-          :id="`diagnose-care-behavior-action-water-${selectedDateState.date}`"
-          class="care-behavior-action-chip care-behavior-action-chip--water"
-          :class="{ 'care-behavior-action-chip--active': selectedDateState.watering, 'care-behavior-action-chip--disabled': !selectedDateState.isSelectable }"
-          @click="toggleCareAction(selectedDateState.date, 'watering')"
-        >
-          <text>浇水</text>
-        </view>
-        <view
-          :id="`diagnose-care-behavior-action-fertilize-${selectedDateState.date}`"
-          class="care-behavior-action-chip care-behavior-action-chip--fertilize"
-          :class="{ 'care-behavior-action-chip--active': selectedDateState.fertilizing, 'care-behavior-action-chip--disabled': !selectedDateState.isSelectable }"
-          @click="toggleCareAction(selectedDateState.date, 'fertilizing')"
-        >
-          <text>施肥</text>
-        </view>
-        <view
-          :id="`diagnose-care-behavior-action-light-${selectedDateState.date}`"
-          class="care-behavior-action-chip care-behavior-action-chip--light"
-          :class="{ 'care-behavior-action-chip--active': selectedDateState.lightChange, 'care-behavior-action-chip--disabled': !selectedDateState.isSelectable }"
-          @click="toggleCareAction(selectedDateState.date, 'lightChange')"
-        >
-          <text>强光/位置变化</text>
+      <view v-if="selectedDateState" class="care-behavior-detail-popover">
+        <view class="care-behavior-detail-popover-arrow" />
+        <view class="care-behavior-detail-popover-card">
+          <view class="care-behavior-detail-header">
+            <text class="care-behavior-detail-date">{{ selectedDateLabel }}</text>
+            <text class="care-behavior-detail-weather">{{ selectedDateWeatherText || '—' }}</text>
+          </view>
+          <view class="care-behavior-detail-body">
+            <view class="care-behavior-detail-row">
+              <text class="care-behavior-detail-row-label">温度</text>
+              <text class="care-behavior-detail-row-value">{{ selectedDateTemperatureText || '—' }}</text>
+            </view>
+            <view class="care-behavior-detail-row">
+              <text class="care-behavior-detail-row-label">湿度</text>
+              <text class="care-behavior-detail-row-value">{{ selectedDateHumidityText || '—' }}</text>
+            </view>
+            <view class="care-behavior-detail-row">
+              <text class="care-behavior-detail-row-label">行为</text>
+              <text class="care-behavior-detail-row-value care-behavior-detail-row-value--accent">{{ selectedDateBehaviorText }}</text>
+            </view>
+            <view class="care-behavior-action-row">
+              <view
+                :id="`diagnose-care-behavior-action-water-${selectedDateState.date}`"
+                class="care-behavior-action-chip care-behavior-action-chip--water"
+                :class="{ 'care-behavior-action-chip--active': selectedDateState.watering, 'care-behavior-action-chip--disabled': !selectedDateState.isSelectable }"
+                @click="toggleCareAction(selectedDateState.date, 'watering')"
+              >
+                <text>浇水</text>
+              </view>
+              <view
+                :id="`diagnose-care-behavior-action-fertilize-${selectedDateState.date}`"
+                class="care-behavior-action-chip care-behavior-action-chip--fertilize"
+                :class="{ 'care-behavior-action-chip--active': selectedDateState.fertilizing, 'care-behavior-action-chip--disabled': !selectedDateState.isSelectable }"
+                @click="toggleCareAction(selectedDateState.date, 'fertilizing')"
+              >
+                <text>施肥</text>
+              </view>
+              <view
+                :id="`diagnose-care-behavior-action-light-${selectedDateState.date}`"
+                class="care-behavior-action-chip care-behavior-action-chip--light"
+                :class="{ 'care-behavior-action-chip--active': selectedDateState.lightChange, 'care-behavior-action-chip--disabled': !selectedDateState.isSelectable }"
+                @click="toggleCareAction(selectedDateState.date, 'lightChange')"
+              >
+                <text>强光/位置变化</text>
+              </view>
+            </view>
+          </view>
         </view>
       </view>
     </view>
@@ -136,9 +174,12 @@ const weekLabels = ['日', '一', '二', '三', '四', '五', '六']
 const props = defineProps({
   questionId: { type: String, default: '' },
   timeline: { type: Object, default: () => ({}) },
-  question: { type: Object, default: () => ({}) }
+  question: { type: Object, default: () => ({}) },
+  loading: { type: Boolean, default: false },
+  error: { type: [String, Object], default: '' }
 })
 const emit = defineEmits(['change'])
+const skeletonCellItems = Array.from({ length: 21 }, (_, index) => index)
 
 const bucketSelection = ref('unknown')
 const baseBucketSelection = ref('unknown')
@@ -381,6 +422,31 @@ function normalizeBucket(value = 'unknown') {
     : 'unknown'
 }
 
+function formatDateLabel(date = '', isToday = false) {
+  const normalizedDate = normalizeDateValue(date)
+  if (!normalizedDate) {
+    return ''
+  }
+  if (isToday) {
+    return '今天'
+  }
+  const [, month, day] = normalizedDate.split('-')
+  return `${Number(month)}月${Number(day)}日`
+}
+
+function normalizeErrorText(error = '') {
+  if (!error) {
+    return ''
+  }
+  if (typeof error === 'string') {
+    return error.trim()
+  }
+  if (typeof error === 'object') {
+    return String(error.message || error.msg || error.errorMessage || '').trim()
+  }
+  return ''
+}
+
 function isDateInEvents(date, events = []) {
   return (events || []).some(item => String(item?.date || '').trim() === date)
 }
@@ -396,9 +462,7 @@ const selectedDateLabel = computed(() => {
   if (!selectedDateState.value) {
     return ''
   }
-  return selectedDateState.value.isToday
-    ? '今天'
-    : selectedDateState.value.date
+  return formatDateLabel(selectedDateState.value.date, selectedDateState.value.isToday)
 })
 
 const selectedDateWeatherText = computed(() => {
@@ -409,6 +473,33 @@ const selectedDateWeatherText = computed(() => {
   const weather = weatherByDate.value[state.date] || {}
   return weather.text || state.weatherText || '—'
 })
+
+const selectedDateTemperatureText = computed(() => {
+  if (!selectedDateState.value) {
+    return ''
+  }
+  return selectedDateState.value.temperatureDisplayText || formatCellMetricText(selectedDateState.value.temperatureText || '', '°')
+})
+
+const selectedDateHumidityText = computed(() => {
+  if (!selectedDateState.value) {
+    return ''
+  }
+  return selectedDateState.value.humidityDisplayText || formatCellMetricText(selectedDateState.value.humidityText || '', '%')
+})
+
+const selectedDateBehaviorText = computed(() => {
+  if (!selectedDateState.value) {
+    return ''
+  }
+  const items = []
+  if (selectedDateState.value.watering) { items.push('浇水') }
+  if (selectedDateState.value.fertilizing) { items.push('施肥') }
+  if (selectedDateState.value.lightChange) { items.push('强光/位置变化') }
+  return items.length ? items.join(' / ') : '未记录'
+})
+
+const loadingErrorText = computed(() => normalizeErrorText(props.error))
 
 const weatherByDate = computed(() => {
   const merged = {}
@@ -422,6 +513,8 @@ const weatherByDate = computed(() => {
 })
 
 const displayWindow = computed(() => buildCareBehaviorDisplayWindow(referenceDate.value))
+const hasWeatherData = computed(() => Object.keys(weatherByDate.value || {}).length > 0)
+const showLoadingSkeleton = computed(() => Boolean(props.loading) && !hasWeatherData.value)
 
 const displayedCellItems = computed(() => {
   return displayWindow.value.map(item => {
@@ -568,20 +661,31 @@ function toggleCareAction(date, action) {
 </script>
 
 <style scoped>
-.care-behavior-timeline { margin: 0 0 10px; padding: 8px 0 0; }
-.care-behavior-timeline-header { margin-bottom: 8px; }
-.care-behavior-timeline-title { display: block; font-size: 18px; line-height: 1.5; color: #0f172a; font-weight: 500; margin-bottom: 4px; }
-.care-behavior-timeline-subtitle { display: block; font-size: 12px; line-height: 1.45; color: #64748b; }
+.care-behavior-timeline { margin: 0 0 10px; padding: 0; }
+.care-behavior-error-banner { margin: 0 0 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(45, 122, 79, 0.15); background: rgba(248, 250, 249, 0.96); }
+.care-behavior-error-text { display: block; font-size: 12px; line-height: 18px; color: #5a7a68; }
+.care-behavior-calendar-card { position: relative; box-sizing: border-box; padding: 20px; border-radius: 12px; border: 1px solid rgba(45, 122, 79, 0.15); background: #ffffff; box-shadow: 0 1px 0 rgba(45, 122, 79, 0.02); }
 .care-behavior-weekday-header { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; margin: 0 0 2px; }
-.care-behavior-weekday-item { text-align: center; color: #64748b; font-size: 12px; }
+.care-behavior-weekday-item { text-align: center; color: #5a7a68; font-size: 12px; line-height: 16px; }
+.care-behavior-grid-stage { position: relative; }
 .care-behavior-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
-.care-behavior-cell { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 5px 2px 4px; height: 77px; border-radius: 12px; border: 1px solid rgba(45, 122, 79, 0.15); background: #ffffff; overflow: hidden; }
-.care-behavior-cell--selected { border: 2px solid #2d7a4f; background: #ffffff; box-shadow: 0 0 0 1px rgba(45, 122, 79, 0.06) inset; }
-.care-behavior-cell--focused { box-shadow: 0 0 0 1px rgba(45, 122, 79, 0.04) inset; }
+.care-behavior-grid-skeleton { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.care-behavior-skeleton-cell { box-sizing: border-box; height: 75px; border-radius: 12px; border: 1px solid rgba(45, 122, 79, 0.12); background: linear-gradient(90deg, rgba(241, 248, 244, 0.72), rgba(248, 250, 249, 0.92), rgba(241, 248, 244, 0.72)); padding: 6px 4px 5px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; overflow: hidden; animation: careBehaviorPulse 1.2s ease-in-out infinite; }
+.care-behavior-skeleton-day,
+.care-behavior-skeleton-metric,
+.care-behavior-skeleton-dot { background: rgba(90, 122, 104, 0.14); }
+.care-behavior-skeleton-day { width: 16px; height: 10px; border-radius: 999px; }
+.care-behavior-skeleton-metric { width: 26px; height: 7px; border-radius: 999px; }
+.care-behavior-skeleton-metric--two { width: 22px; }
+.care-behavior-skeleton-dot-row { display: flex; align-items: center; gap: 3px; padding: 0; background: transparent; }
+.care-behavior-skeleton-dot { width: 6px; height: 6px; border-radius: 50%; }
+.care-behavior-cell { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 6px 2px 5px; height: 75px; border-radius: 12px; border: 1px solid rgba(45, 122, 79, 0.15); background: #ffffff; overflow: hidden; }
+.care-behavior-cell--selected { border: 2px solid #2d7a4f; background: rgba(45, 122, 79, 0.05); box-shadow: 0 0 0 1px rgba(45, 122, 79, 0.06) inset; }
+.care-behavior-cell--focused { border: 2px solid #2d7a4f; background: rgba(45, 122, 79, 0.05); box-shadow: 0 0 0 1px rgba(45, 122, 79, 0.05) inset; }
 .care-behavior-cell--today { border: 2px solid #2d7a4f; background: rgba(45, 122, 79, 0.05); box-shadow: 0 0 0 1px rgba(45, 122, 79, 0.05) inset; }
 .care-behavior-cell--selected.care-behavior-cell--today { background: rgba(45, 122, 79, 0.05); }
 .care-behavior-cell--historical,
-.care-behavior-cell--future { background: rgba(236, 248, 240, 0.65); border-color: rgba(45, 122, 79, 0.08); opacity: .58; }
+.care-behavior-cell--future { background: rgba(241, 248, 244, 0.5); border-color: rgba(45, 122, 79, 0.08); opacity: .5; }
 .care-behavior-cell--selected.care-behavior-cell--historical,
 .care-behavior-cell--selected.care-behavior-cell--future { opacity: 1; border-color: rgba(45, 122, 79, 0.32); background: rgba(45, 122, 79, 0.035); }
 .care-behavior-cell--locked { cursor: default; }
@@ -589,18 +693,18 @@ function toggleCareAction(date, action) {
 .care-behavior-day-wrap { display: flex; align-items: center; justify-content: center; gap: 2px; min-height: 16px; }
 .care-behavior-day { font-size: 14px; color: #0f172a; font-weight: 500; line-height: 1.1; }
 .care-behavior-cell--today .care-behavior-day { color: #2d7a4f; }
-.care-behavior-day-mark { font-size: 9px; color: #15803d; background: rgba(21, 128, 61, 0.1); padding: 1px 3px; border-radius: 999px; }
+.care-behavior-day-mark { font-size: 9px; color: #5a7a68; background: rgba(90, 122, 104, 0.08); padding: 1px 3px; border-radius: 999px; line-height: 1.2; }
 .care-behavior-metrics { width: 100%; display: flex; flex-direction: column; gap: 1px; min-height: 24px; }
 .care-behavior-metrics--empty { justify-content: center; }
 .care-behavior-metrics-spacer { width: 100%; height: 18px; }
-.care-behavior-metric { display: flex; align-items: center; justify-content: center; gap: 2px; line-height: 1; min-width: 0; }
-.care-behavior-metric-icon { position: relative; flex: 0 0 auto; width: 8px; height: 10px; color: #5a7a68; }
+.care-behavior-metric { display: flex; align-items: center; justify-content: center; gap: 2px; line-height: 15px; min-width: 0; }
+.care-behavior-metric-icon { position: relative; flex: 0 0 auto; width: 10px; height: 10px; color: #5a7a68; }
 .care-behavior-metric-icon--temp { color: #5a7a68; }
 .care-behavior-metric-icon--humidity { color: #5a7a68; }
-.care-behavior-metric-icon-stem { position: absolute; left: 3px; top: 0; width: 2px; height: 7px; border-radius: 999px; background: currentColor; }
-.care-behavior-metric-icon-bulb { position: absolute; left: 1px; bottom: 0; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.78) inset; }
-.care-behavior-metric-icon-drop { position: absolute; left: 1px; top: 0; width: 6px; height: 8px; background: currentColor; border-radius: 60% 60% 60% 0; transform: rotate(45deg); transform-origin: center; }
-.care-behavior-metric-value { flex: 0 1 auto; min-width: 0; max-width: 27px; font-size: 10px; color: #5a7a68; line-height: 1; overflow: hidden; text-overflow: clip; white-space: nowrap; }
+.care-behavior-metric-icon-stem { position: absolute; left: 4px; top: 0; width: 2px; height: 7px; border-radius: 999px; background: currentColor; }
+.care-behavior-metric-icon-bulb { position: absolute; left: 1.5px; bottom: 0; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.78) inset; }
+.care-behavior-metric-icon-drop { position: absolute; left: 1.5px; top: 0; width: 7px; height: 9px; background: currentColor; border-radius: 60% 60% 60% 0; transform: rotate(45deg); transform-origin: center; }
+.care-behavior-metric-value { flex: 0 1 auto; min-width: 0; max-width: 27px; font-size: 10px; color: #5a7a68; line-height: 15px; overflow: hidden; text-overflow: clip; white-space: nowrap; }
 .care-behavior-cell--historical .care-behavior-day,
 .care-behavior-cell--future .care-behavior-day,
 .care-behavior-cell--historical .care-behavior-metric-value,
@@ -611,12 +715,19 @@ function toggleCareAction(date, action) {
 .care-behavior-dot--water { background: #2b7fff; }
 .care-behavior-dot--fertilize { background: #fe9a00; }
 .care-behavior-dot--light { background: #22c55e; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.74) inset; }
-.care-behavior-detail-panel { margin-top: 8px; padding: 8px 10px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; }
+.care-behavior-detail-popover { margin: 12px auto 0; width: calc(100% - 48px); max-width: 288px; position: relative; }
+.care-behavior-detail-popover-arrow { position: absolute; left: 50%; top: -5px; width: 10px; height: 10px; background: #ffffff; border-left: 1px solid rgba(45, 122, 79, 0.15); border-top: 1px solid rgba(45, 122, 79, 0.15); transform: translateX(-50%) rotate(45deg); box-shadow: -1px -1px 6px rgba(15, 23, 42, 0.03); }
+.care-behavior-detail-popover-card { position: relative; padding: 12px 12px 10px; border-radius: 12px; background: #ffffff; border: 1px solid rgba(45, 122, 79, 0.15); box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08); overflow: hidden; }
 .care-behavior-detail-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
-.care-behavior-detail-date { font-size: 12px; color: #0f172a; font-weight: 600; }
-.care-behavior-detail-weather { max-width: 54%; font-size: 10px; color: #64748b; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.care-behavior-action-row { display: flex; flex-wrap: wrap; gap: 6px; }
-.care-behavior-action-chip { display: inline-flex; align-items: center; justify-content: center; min-height: 28px; padding: 0 10px; border-radius: 999px; border: 1px solid #e2e8f0; background: #ffffff; color: #334155; font-size: 10px; line-height: 1; }
+.care-behavior-detail-date { font-size: 16px; color: #0f172a; font-weight: 500; line-height: 24px; }
+.care-behavior-detail-weather { max-width: 54%; font-size: 10px; color: #5a7a68; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.care-behavior-detail-body { display: flex; flex-direction: column; gap: 6px; }
+.care-behavior-detail-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; line-height: 20px; }
+.care-behavior-detail-row-label { color: #5a7a68; }
+.care-behavior-detail-row-value { color: #2d7a4f; text-align: right; }
+.care-behavior-detail-row-value--accent { color: #51a2ff; }
+.care-behavior-action-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.care-behavior-action-chip { display: inline-flex; align-items: center; justify-content: center; min-height: 28px; padding: 0 10px; border-radius: 999px; border: 1px solid rgba(45, 122, 79, 0.18); background: #ffffff; color: #334155; font-size: 10px; line-height: 1; }
 .care-behavior-action-chip--water { border-color: rgba(59, 130, 246, 0.25); }
 .care-behavior-action-chip--fertilize { border-color: rgba(249, 115, 22, 0.25); }
 .care-behavior-action-chip--light { border-color: rgba(34, 197, 94, 0.25); }
@@ -624,9 +735,15 @@ function toggleCareAction(date, action) {
 .care-behavior-action-chip--active.care-behavior-action-chip--fertilize { background: #fff7ed; border-color: #fdba74; color: #c2410c; }
 .care-behavior-action-chip--active.care-behavior-action-chip--light { background: #f0fdf4; border-color: #86efac; color: #15803d; }
 .care-behavior-action-chip--disabled { opacity: .45; pointer-events: none; }
-.care-behavior-legend { margin-top: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
-.care-behavior-legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #64748b; }
-.care-behavior-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+.care-behavior-legend { margin-top: 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 16px; justify-content: flex-end; }
+.care-behavior-legend-item { display: flex; align-items: center; gap: 2px; font-size: 12px; color: #5a7a68; line-height: 1.25; }
+.care-behavior-legend-dot { width: 6px; height: 6px; border-radius: 50%; }
 .care-behavior-legend-dot.care-behavior-dot--water { background: #2b7fff; }
 .care-behavior-legend-dot.care-behavior-dot--fertilize { background: #fe9a00; }
+
+@keyframes careBehaviorPulse {
+  0%,
+  100% { opacity: .72; }
+  50% { opacity: 1; }
+}
 </style>
