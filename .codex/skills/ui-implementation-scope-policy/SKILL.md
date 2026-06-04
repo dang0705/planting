@@ -36,6 +36,7 @@ UI Implementation Scope Map:
   - must_implement
   - reuse_existing_component
   - reuse_with_wrapper
+  - must_reuse_figma_asset
   - use_uniapp_plugin
   - hand_code_component
   - visual_only
@@ -52,6 +53,7 @@ UI Implementation Scope Map:
 - handcode_allowed: false / true
 - handcode_reason:
 - qa_scope:
+  - asset_fidelity_required: false / true
 ```
 
 ## 3. 组件复用优先规则
@@ -99,6 +101,7 @@ UI Implementation Scope Map:
 | `must_implement` | 本次必须开发 | 实现 UI + 交互 + 数据路径 | 测 UI、交互、数据路径 |
 | `reuse_existing_component` | 应复用已有代码组件 | 先查现有组件，不得手搓 | 测复用后视觉和旧用法 |
 | `reuse_with_wrapper` | 复用并做轻 wrapper | wrapper 必须小而清晰 | 测 wrapper 与原组件兼容 |
+| `must_reuse_figma_asset` | Figma 返回的 icon / image / vector asset | 必须复用或严格还原 asset 原文；不得手写近似 SVG / CSS 图形 | 测 asset source、端上渲染、视觉一致性 |
 | `use_uniapp_plugin` | 使用 uni-app 生态插件 | 评估兼容性、体积、样式可控性 | 测小程序端兼容性 |
 | `hand_code_component` | 允许新写组件 | 必须拆模块，禁止堆进页面 | 测 UI、状态、交互 |
 | `visual_only` | 只还原视觉 | 不新增业务逻辑/API/store/schema | 只测视觉 |
@@ -139,6 +142,7 @@ UI Implementation Scope Map:
 4. 未搜索前不得新建同名或近似组件。
 5. 如果无法 100% 还原，必须说明差异、平台限制和替代方案，不得自行降级。
 6. 不得把 Figma component 自动等同为“必须新写代码组件”。
+7. 对 `must_reuse_figma_asset` 节点，必须把 asset source、asset type、关键视觉字段和实现映射写入实现结果；不得用手写近似替代，除非 Contract 明确允许并记录差异。
 
 ## 8. `main agent` 约束
 
@@ -148,6 +152,7 @@ UI Implementation Scope Map:
 4. 必须审查是否应使用 uni-app 插件而非手搓。
 5. 必须审查 placeholder / visual_only / ignore 是否被错误扩大为真实功能。
 6. 必须审查单文件代码量、模块拆分和删减机会。
+7. 必须审查 Figma asset 节点是否被错误降级为手写 icon / CSS 图形 / 视觉近似。
 
 ## 9. QA 约束
 
@@ -157,11 +162,12 @@ QA 必须按 `implementation_type` 测试：
 2. `reuse_existing_component`：复用是否正确，旧组件其他使用处是否破坏。
 3. `reuse_with_wrapper`：wrapper 是否破坏原组件。
 4. `use_uniapp_plugin`：小程序端兼容性、性能、样式可控性。
-5. `hand_code_component`：新组件 UI、状态、交互、边界。
-6. `visual_only`：只测视觉，不测业务功能。
-7. `placeholder_do_not_expand`：只确认布局不破坏，不要求点击、接口、真实数据。
-8. `ignore`：不纳入 QA。
-9. `needs_confirmation`：不得放行。
+5. `must_reuse_figma_asset`：asset 是否来自 Figma 事实源、是否端上真实渲染、是否无手写近似残留。
+6. `hand_code_component`：新组件 UI、状态、交互、边界。
+7. `visual_only`：只测视觉，不测业务功能。
+8. `placeholder_do_not_expand`：只确认布局不破坏，不要求点击、接口、真实数据。
+9. `ignore`：不纳入 QA。
+10. `needs_confirmation`：不得放行。
 
 UI 目标还原度为 100%。若无法 100% 还原，必须列出差异、原因和是否需要产品/设计确认。
 
@@ -223,6 +229,12 @@ Implementation Packet:
 - selected_strategy:
 - selected_code_path:
 - must_match_visual:
+- figma_asset_requirements:
+  - node_id:
+  - asset_url:
+  - asset_type:
+  - exact_source_required:
+  - forbidden_substitutes:
 - must_not_expand:
 - component_reuse_decision:
 - handcode_boundaries:
@@ -246,6 +258,10 @@ QA Acceptance Slice:
   - states:
   - interactions:
   - small_program_rendering:
+  - asset_fidelity:
+    - expected_source:
+    - expected_visual:
+    - forbidden_substitutes:
 - component_variant_assertions:
   - variant:
   - expected_visual:
@@ -304,6 +320,11 @@ QA Visual Baseline Slice:
   - component_states:
   - interactions:
   - mini_program_rendering:
+  - asset_fidelity:
+    - asset_source:
+    - asset_type:
+    - exact_source_required:
+    - forbidden_substitutes:
 - required_variants:
   - state_name:
   - expected_visual:

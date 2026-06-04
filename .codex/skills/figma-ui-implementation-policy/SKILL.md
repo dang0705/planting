@@ -121,6 +121,11 @@ Figma Design Facts:
 - assets:
   - images:
   - icons:
+    - node_id:
+    - asset_url:
+    - asset_type: svg / png / jpg / unknown
+    - exact_source_required: true / false
+    - key_props: viewBox / stroke / fill / width / height / preserveAspectRatio
   - masks:
 - variables / tokens:
 - interactions:
@@ -218,6 +223,13 @@ Figma Implementation Slice:
   - node_id:
   - visual_difference:
 - asset_nodes:
+  - node_id:
+  - name:
+  - asset_url:
+  - asset_type:
+  - exact_source_required:
+  - key_visual_props:
+  - implementation_note:
 - qa_critical_nodes:
 - needs_drilldown:
   - node_id:
@@ -247,10 +259,30 @@ Figma Node Drilldown:
   - key_text:
   - qa_assertions:
 - assets:
+  - node_id:
+  - name:
+  - asset_url:
+  - asset_type:
+  - downloaded_or_inspected: yes / no
+  - key_props:
+  - exact_source_required:
 - interactions:
 - implementation_notes:
 - qa_notes:
 ```
+
+### Asset 事实源规则
+
+当 `get_design_context` 返回 `imgIcon` / `img*` / asset URL，或节点类型、名称、导出结果显示为 icon / image / vector asset 时，该 asset 是视觉事实源。
+
+必须记录：
+
+1. `asset_url` 或可复核的 source id。
+2. `asset_type`，如 `svg` / `png` / `jpg` / `unknown`。
+3. 若为 SVG，记录关键字段：`viewBox`、`stroke`、`fill`、`stroke-width`、`clipPath`、`preserveAspectRatio`。
+4. 是否需要 `exact_source_required=true`。
+
+对 icon / image / vector asset，不得把“视觉近似”“同样是线框”“手写 SVG / CSS 形状”当作等价设计事实。若无法获取或复用 asset 原文，必须在 `unknown_or_unread` / `notes` 中记录，并把后续实现标为需要确认或 blocker。
 
 ### 8.4 输出预算硬规则
 

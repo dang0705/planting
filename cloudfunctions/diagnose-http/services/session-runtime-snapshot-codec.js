@@ -67,9 +67,13 @@ function compactEnvironmentCareContextForSnapshot(value = null) {
     forecastSummary15d: isPlainObject(value.forecastSummary15d)
       ? value.forecastSummary15d
       : null,
+    thresholds: isPlainObject(value.thresholds) ? value.thresholds : null,
     watering: isPlainObject(value.watering) ? value.watering : null,
     fertilizing: isPlainObject(value.fertilizing) ? value.fertilizing : null,
     light: isPlainObject(value.light) ? value.light : null,
+    calculationTrace: isPlainObject(value.calculationTrace)
+      ? value.calculationTrace
+      : null,
     careBehaviorTimeline: compactCareBehaviorTimelineForSnapshot(
       value.careBehaviorTimeline || value.care_behavior_timeline || null
     )

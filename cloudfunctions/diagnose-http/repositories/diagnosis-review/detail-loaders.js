@@ -40,6 +40,79 @@ const {
   settleOptionalReviewSection
 } = require('./review-performance')
 
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function buildEnvironmentCareCalculationReviewPayload(environmentCareContext = null) {
+  if (!isPlainObject(environmentCareContext)) {
+    return null
+  }
+
+  const watering = isPlainObject(environmentCareContext.watering)
+    ? environmentCareContext.watering
+    : {}
+  const fertilizing = isPlainObject(environmentCareContext.fertilizing)
+    ? environmentCareContext.fertilizing
+    : {}
+  const light = isPlainObject(environmentCareContext.light)
+    ? environmentCareContext.light
+    : {}
+  const calculationTrace = isPlainObject(environmentCareContext.calculationTrace)
+    ? environmentCareContext.calculationTrace
+    : {}
+
+  return {
+    version: String(environmentCareContext.version || '').trim() || 'v7',
+    thresholds: isPlainObject(environmentCareContext.thresholds)
+      ? environmentCareContext.thresholds
+      : null,
+    inputs: {
+      behaviorSummary10d: isPlainObject(environmentCareContext.behaviorSummary10d)
+        ? environmentCareContext.behaviorSummary10d
+        : null,
+      historicalSummary10d: isPlainObject(environmentCareContext.historicalSummary10d)
+        ? environmentCareContext.historicalSummary10d
+        : null,
+      forecastSummary15d: isPlainObject(environmentCareContext.forecastSummary15d)
+        ? environmentCareContext.forecastSummary15d
+        : null
+    },
+    watering: {
+      baseline: isPlainObject(watering.baseline) ? watering.baseline : null,
+      wateringContext: String(watering.wateringContext || '').trim(),
+      action: String(watering.action || '').trim(),
+      reasons: Array.isArray(watering.reasons)
+        ? watering.reasons.map(item => String(item || '').trim()).filter(Boolean)
+        : [],
+      formula: isPlainObject(watering.calculation)
+        ? watering.calculation
+        : (isPlainObject(calculationTrace.watering) ? calculationTrace.watering : null)
+    },
+    fertilizing: {
+      baseline: isPlainObject(fertilizing.baseline) ? fertilizing.baseline : null,
+      action: String(fertilizing.action || '').trim(),
+      lastFertilizedBucket: String(fertilizing.lastFertilizedBucket || '').trim(),
+      reasons: Array.isArray(fertilizing.reasons)
+        ? fertilizing.reasons.map(item => String(item || '').trim()).filter(Boolean)
+        : [],
+      formula: isPlainObject(fertilizing.calculation)
+        ? fertilizing.calculation
+        : (isPlainObject(calculationTrace.fertilizing) ? calculationTrace.fertilizing : null)
+    },
+    light: {
+      lightContext: Array.isArray(light.lightContext)
+        ? light.lightContext.map(item => String(item || '').trim()).filter(Boolean)
+        : [],
+      realExposureScene: Boolean(light.realExposureScene),
+      formula: isPlainObject(calculationTrace.light) ? calculationTrace.light : null
+    },
+    result: isPlainObject(environmentCareContext.outputs)
+      ? environmentCareContext.outputs
+      : null
+  }
+}
+
 async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _sourceType = 'all' } = {}) {
   const safeSessionId = String(diagnosisSessionId || '').trim()
   if (!safeSessionId) {return null}
@@ -228,6 +301,10 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
     { promptAudit: primaryVisualPromptAudit }
   )
   const runtimeSnapshot = safeJsonParse(enrichedRow.runtime_snapshot_json, {}) || {}
+  const environmentCareContext = isPlainObject(runtimeSnapshot?.environmentCareContext)
+    ? runtimeSnapshot.environmentCareContext
+    : null
+  const environmentCareCalculation = buildEnvironmentCareCalculationReviewPayload(environmentCareContext)
   let symptomClassRuntime = runtimeSnapshot?.symptomClassRuntime || null
   if (!symptomClassRuntime && visualAggregateSummary) {
     const symptomClassResult = await settleOptionalReviewSection({
@@ -345,6 +422,8 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
     partial: degradedSections.length > 0,
     degradedSections,
     symptomClass: buildSymptomClassRuntimeReviewPayload(symptomClassRuntime),
+    environmentCareContext,
+    environmentCareCalculation,
     coreProcess,
     actionAdviceGovernance,
     visualRawRecords,

@@ -16,6 +16,7 @@ role_context_packets:
   - allowed_paths:
   - forbidden_paths:
   - Figma Drilldown Request:
+    - asset_nodes:
   - implementer_ui_self_check:
 - QA:
   - template_ref: assets/templates/qa-evidence.md
@@ -23,6 +24,7 @@ role_context_packets:
   - Test Contract:
   - QA Acceptance Slice:
   - QA Visual Baseline Slice:
+    - asset_fidelity_checks:
   - evidence_plan:
 - docs:
   - template_ref: assets/templates/docs-result.md

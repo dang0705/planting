@@ -1,5 +1,7 @@
 'use strict'
 
+const { resolveCarePlannerThresholds } = require('../configs/care-planner-thresholds')
+
 const WATERING_CONTEXTS = Object.freeze({
   WET: 'likely_too_wet',
   DRY: 'likely_too_dry',
@@ -25,8 +27,12 @@ const LIGHT_CONTEXTS = Object.freeze({
   LOW_LIGHT_BACKGROUND: 'low_light_background'
 })
 
+const DEFAULT_FERTILIZING_THRESHOLDS = resolveCarePlannerThresholds().fertilizing
 const FERTILIZING_BASELINE = Object.freeze({
-  intervalDays: [30, 45],
+  intervalDays: [
+    DEFAULT_FERTILIZING_THRESHOLDS.intervalMinDays,
+    DEFAULT_FERTILIZING_THRESHOLDS.intervalMaxDays
+  ],
   fertilizerType: 'thin_liquid_fertilizer'
 })
 
@@ -92,6 +98,21 @@ function firstNumber(...values) {
     if (number !== undefined) {return number}
   }
   return undefined
+}
+
+function clonePlain(value) {
+  if (!isPlainObject(value) && !Array.isArray(value)) {return value}
+  return JSON.parse(JSON.stringify(value))
+}
+
+function pickNumberFields(source = {}, fields = []) {
+  const picked = {}
+  for (const field of fields) {
+    if (source[field] !== undefined && source[field] !== null) {
+      picked[field] = Number(source[field])
+    }
+  }
+  return picked
 }
 
 function firstText(...values) {
@@ -228,17 +249,51 @@ function isRainyRecord(record = {}) {
   return /雨|雪|rain|shower|storm/i.test(record.weatherText || '')
 }
 
+function updateConsecutiveStreak(state = {}, key = '', active = false) {
+  const currentKey = `${key}Current`
+  const maxKey = `${key}Max`
+  state[currentKey] = active ? Number(state[currentKey] || 0) + 1 : 0
+  state[maxKey] = Math.max(Number(state[maxKey] || 0), Number(state[currentKey] || 0))
+}
+
+function buildPlannerFormulaStep({
+  key = '',
+  expression = '',
+  inputs = {},
+  thresholds = {},
+  result = null,
+  passed = null
+} = {}) {
+  return {
+    key,
+    expression,
+    inputs,
+    thresholds,
+    result,
+    ...(passed === null || passed === undefined ? {} : { passed: Boolean(passed) })
+  }
+}
+
 function buildEnvironmentSummary({
   dailyRecords = [],
   windowDays,
   userHasDirectSunExposure = false,
+  thresholds: rawThresholds = null,
   ...boundsInput
 } = {}) {
+  const thresholds = resolveCarePlannerThresholds(rawThresholds).environment
   const records = (Array.isArray(dailyRecords) ? dailyRecords : [])
     .slice(0, windowDays)
     .map(normalizeDailyEnvironmentRecord)
     .filter(Boolean)
   const bounds = resolveEnvironmentBounds(boundsInput)
+  const effectiveBounds = {
+    temperatureMin: firstNumber(bounds.temperatureMin, thresholds.fallbackTemperatureMinC),
+    temperatureMax: firstNumber(bounds.temperatureMax, thresholds.fallbackTemperatureMaxC),
+    humidityMin: firstNumber(bounds.humidityMin, thresholds.fallbackHumidityMinPercent),
+    humidityMax: firstNumber(bounds.humidityMax, thresholds.fallbackHumidityMaxPercent),
+    uvIndexMax: bounds.uvIndexMax
+  }
   const summary = {
     windowDays,
     recordCount: records.length,
@@ -247,8 +302,21 @@ function buildEnvironmentSummary({
     coldHumidDays: 0,
     hotDryDays: 0,
     hotHumidDays: 0,
-    rainyDays: 0
+    rainyDays: 0,
+    maxConsecutiveHighHumidityDays: 0,
+    maxConsecutiveLowHumidityDays: 0,
+    maxConsecutiveColdHumidDays: 0,
+    maxConsecutiveHotDryDays: 0,
+    maxConsecutiveRainyDays: 0,
+    thresholds: {
+      humidityMinPercent: effectiveBounds.humidityMin,
+      humidityMaxPercent: effectiveBounds.humidityMax,
+      temperatureMinC: effectiveBounds.temperatureMin,
+      temperatureMaxC: effectiveBounds.temperatureMax,
+      uvIndexMax: effectiveBounds.uvIndexMax
+    }
   }
+  const streaks = {}
   let maxUvIndex
   let aboveGenusUvMaxDays = 0
   let hasUv = false
@@ -256,40 +324,53 @@ function buildEnvironmentSummary({
   for (const record of records) {
     const highHumidity =
       record.humidity !== undefined &&
-      bounds.humidityMax !== undefined &&
-      record.humidity > bounds.humidityMax
+      effectiveBounds.humidityMax !== undefined &&
+      record.humidity > effectiveBounds.humidityMax
     const lowHumidity =
       record.humidity !== undefined &&
-      bounds.humidityMin !== undefined &&
-      record.humidity < bounds.humidityMin
+      effectiveBounds.humidityMin !== undefined &&
+      record.humidity < effectiveBounds.humidityMin
     const cold =
       record.tempMin !== undefined &&
-      bounds.temperatureMin !== undefined &&
-      record.tempMin < bounds.temperatureMin
+      effectiveBounds.temperatureMin !== undefined &&
+      record.tempMin < effectiveBounds.temperatureMin
     const hot =
       record.tempMax !== undefined &&
-      bounds.temperatureMax !== undefined &&
-      record.tempMax > bounds.temperatureMax
+      effectiveBounds.temperatureMax !== undefined &&
+      record.tempMax > effectiveBounds.temperatureMax
+    const rainy = isRainyRecord(record)
 
     if (highHumidity) {summary.highHumidityDays += 1}
     if (lowHumidity) {summary.lowHumidityDays += 1}
     if (cold && highHumidity) {summary.coldHumidDays += 1}
     if (hot && lowHumidity) {summary.hotDryDays += 1}
     if (hot && highHumidity) {summary.hotHumidDays += 1}
-    if (isRainyRecord(record)) {summary.rainyDays += 1}
+    if (rainy) {summary.rainyDays += 1}
+
+    updateConsecutiveStreak(streaks, 'highHumidity', highHumidity)
+    updateConsecutiveStreak(streaks, 'lowHumidity', lowHumidity)
+    updateConsecutiveStreak(streaks, 'coldHumid', cold && highHumidity)
+    updateConsecutiveStreak(streaks, 'hotDry', hot && lowHumidity)
+    updateConsecutiveStreak(streaks, 'rainy', rainy)
 
     if (record.uvIndex !== undefined) {
       hasUv = true
       maxUvIndex = maxUvIndex === undefined ? record.uvIndex : Math.max(maxUvIndex, record.uvIndex)
       if (
         userHasDirectSunExposure === true &&
-        bounds.uvIndexMax !== undefined &&
-        record.uvIndex > bounds.uvIndexMax
+        effectiveBounds.uvIndexMax !== undefined &&
+        record.uvIndex > effectiveBounds.uvIndexMax
       ) {
         aboveGenusUvMaxDays += 1
       }
     }
   }
+
+  summary.maxConsecutiveHighHumidityDays = Number(streaks.highHumidityMax || 0)
+  summary.maxConsecutiveLowHumidityDays = Number(streaks.lowHumidityMax || 0)
+  summary.maxConsecutiveColdHumidDays = Number(streaks.coldHumidMax || 0)
+  summary.maxConsecutiveHotDryDays = Number(streaks.hotDryMax || 0)
+  summary.maxConsecutiveRainyDays = Number(streaks.rainyMax || 0)
 
   if (hasUv) {
     summary.maxUvIndex = maxUvIndex
@@ -533,8 +614,10 @@ function buildWateringPlanner({
   wateringStrategy = {},
   historical = {},
   forecast = {},
-  behaviorTimeline = {}
+  behaviorTimeline = {},
+  thresholds: rawThresholds = null
 } = {}) {
+  const thresholds = resolveCarePlannerThresholds(rawThresholds).watering
   const timeline = behaviorTimeline?.summary
     ? behaviorTimeline
     : normalizeCareBehaviorTimeline(behaviorTimeline)
@@ -545,35 +628,136 @@ function buildWateringPlanner({
     intervalDays: resolveBaselineInterval(wateringStrategy)
   }
   const minIntervalDays = Math.max(1, Number(baseline.intervalDays?.[0]) || 5)
-  const maxReasonableWaterings10d = Math.max(1, Math.ceil(10 / minIntervalDays))
-  const wetPressureScore =
-    (Number(historical.highHumidityDays || 0) >= 4 ? 1 : 0) +
-    (Number(historical.coldHumidDays || 0) >= 2 ? 1 : 0) +
-    (Number(historical.rainyDays || 0) >= 4 ? 1 : 0)
+  const behaviorWindowDays = Math.max(1, Number(thresholds.behaviorWindowDays || 10))
+  const maxReasonableWaterings10d = Math.max(1, Math.ceil(behaviorWindowDays / minIntervalDays))
+  const highHumidityPressureHit =
+    Number(historical.highHumidityDays || 0) >= Number(thresholds.wetHighHumidityDaysMin || 0) ||
+    Number(historical.maxConsecutiveHighHumidityDays || 0) >= Number(thresholds.wetHighHumidityConsecutiveDaysMin || 0)
+  const coldHumidPressureHit =
+    Number(historical.coldHumidDays || 0) >= Number(thresholds.wetColdHumidDaysMin || 0) ||
+    Number(historical.maxConsecutiveColdHumidDays || 0) >= Number(thresholds.wetColdHumidConsecutiveDaysMin || 0)
+  const rainyPressureHit =
+    Number(historical.rainyDays || 0) >= Number(thresholds.wetRainyDaysMin || 0) ||
+    Number(historical.maxConsecutiveRainyDays || 0) >= Number(thresholds.wetRainyConsecutiveDaysMin || 0)
+  const wetPressureHitCount = [
+    highHumidityPressureHit,
+    coldHumidPressureHit,
+    rainyPressureHit
+  ].filter(Boolean).length
+  const wetPressureScore = wetPressureHitCount * Number(thresholds.wetPressureDeductionPerHit || 1)
   const effectiveWetWaterings10d = Math.max(1, maxReasonableWaterings10d - wetPressureScore)
+  const forecastHotDryHit =
+    Number(forecast.hotDryDays || 0) >= Number(thresholds.dryForecastHotDryDaysMin || 0) ||
+    Number(forecast.maxConsecutiveHotDryDays || 0) >= Number(thresholds.dryForecastHotDryConsecutiveDaysMin || 0)
+  const historicalHotDryHit =
+    Number(historical.hotDryDays || 0) >= Number(thresholds.dryHistoricalHotDryDaysMin || 0) ||
+    Number(historical.maxConsecutiveHotDryDays || 0) >= Number(thresholds.dryHistoricalHotDryConsecutiveDaysMin || 0)
+  const lastWateredTooLongAgo =
+    lastWateredDaysAgo === null ||
+    Number(lastWateredDaysAgo) >= Number(thresholds.dryLastWateredDaysAgoMin || 0)
+  const wetExceeded = wateringCount10d > effectiveWetWaterings10d
+  const dryExceeded =
+    (forecastHotDryHit && lastWateredTooLongAgo) ||
+    (historicalHotDryHit && wateringCount10d === 0)
+  const calculation = {
+    formulaVersion: 'watering_planner_v7_configurable',
+    inputs: {
+      wateringCount10d,
+      lastWateredDaysAgo,
+      baselineIntervalDays: baseline.intervalDays,
+      historical: pickNumberFields(historical, [
+        'highHumidityDays',
+        'coldHumidDays',
+        'rainyDays',
+        'hotDryDays',
+        'maxConsecutiveHighHumidityDays',
+        'maxConsecutiveColdHumidDays',
+        'maxConsecutiveRainyDays',
+        'maxConsecutiveHotDryDays'
+      ]),
+      forecast: pickNumberFields(forecast, [
+        'hotDryDays',
+        'maxConsecutiveHotDryDays'
+      ])
+    },
+    thresholds: clonePlain(thresholds),
+    formulas: [
+      buildPlannerFormulaStep({
+        key: 'max_reasonable_waterings_10d',
+        expression: 'ceil(behaviorWindowDays / minIntervalDays)',
+        inputs: { behaviorWindowDays, minIntervalDays },
+        result: maxReasonableWaterings10d
+      }),
+      buildPlannerFormulaStep({
+        key: 'wet_pressure_score',
+        expression: 'wetPressureHitCount * wetPressureDeductionPerHit',
+        inputs: {
+          wetPressureHitCount,
+          highHumidityPressureHit,
+          coldHumidPressureHit,
+          rainyPressureHit
+        },
+        thresholds: {
+          wetPressureDeductionPerHit: Number(thresholds.wetPressureDeductionPerHit || 1)
+        },
+        result: wetPressureScore
+      }),
+      buildPlannerFormulaStep({
+        key: 'effective_wet_waterings_10d',
+        expression: 'max(1, maxReasonableWaterings10d - wetPressureScore)',
+        inputs: { maxReasonableWaterings10d, wetPressureScore },
+        result: effectiveWetWaterings10d
+      }),
+      buildPlannerFormulaStep({
+        key: 'too_wet_gate',
+        expression: 'wateringCount10d > effectiveWetWaterings10d',
+        inputs: { wateringCount10d, effectiveWetWaterings10d },
+        result: wetExceeded,
+        passed: wetExceeded
+      }),
+      buildPlannerFormulaStep({
+        key: 'too_dry_gate',
+        expression: '(forecastHotDryHit && lastWateredTooLongAgo) || (historicalHotDryHit && wateringCount10d === 0)',
+        inputs: { forecastHotDryHit, lastWateredTooLongAgo, historicalHotDryHit, wateringCount10d },
+        result: dryExceeded,
+        passed: dryExceeded
+      })
+    ]
+  }
 
-  if (
-    wateringCount10d > effectiveWetWaterings10d
-  ) {
+  if (wetExceeded) {
     return {
       baseline,
       wateringContext: WATERING_CONTEXTS.WET,
       action: WATERING_ACTIONS.WET,
       reasons: wetPressureScore > 0
         ? ['recent_watering_plus_wet_environment']
-        : ['recent_watering_exceeds_baseline_window']
+        : ['recent_watering_exceeds_baseline_window'],
+      thresholds: clonePlain(thresholds),
+      calculation: {
+        ...calculation,
+        result: {
+          wateringContext: WATERING_CONTEXTS.WET,
+          action: WATERING_ACTIONS.WET
+        }
+      }
     }
   }
 
-  if (
-    (Number(forecast.hotDryDays || 0) >= 3 && (lastWateredDaysAgo === null || lastWateredDaysAgo >= 7)) ||
-    (Number(historical.hotDryDays || 0) >= 3 && wateringCount10d === 0)
-  ) {
+  if (dryExceeded) {
     return {
       baseline,
       wateringContext: WATERING_CONTEXTS.DRY,
       action: WATERING_ACTIONS.DRY,
-      reasons: ['hot_dry_window_plus_low_recent_watering']
+      reasons: ['hot_dry_window_plus_low_recent_watering'],
+      thresholds: clonePlain(thresholds),
+      calculation: {
+        ...calculation,
+        result: {
+          wateringContext: WATERING_CONTEXTS.DRY,
+          action: WATERING_ACTIONS.DRY
+        }
+      }
     }
   }
 
@@ -581,12 +765,21 @@ function buildWateringPlanner({
     baseline,
     wateringContext: WATERING_CONTEXTS.BASELINE,
     action: WATERING_ACTIONS.BASELINE,
-    reasons: ['baseline_or_manual_soil_check']
+    reasons: ['baseline_or_manual_soil_check'],
+    thresholds: clonePlain(thresholds),
+    calculation: {
+      ...calculation,
+      result: {
+        wateringContext: WATERING_CONTEXTS.BASELINE,
+        action: WATERING_ACTIONS.BASELINE
+      }
+    }
   }
 }
 
 function buildFertilizingPlanner(...args) {
   const options = args[0] || {}
+  const thresholds = resolveCarePlannerThresholds(options.thresholds || null).fertilizing
   const timeline = options.behaviorTimeline?.summary
     ? options.behaviorTimeline
     : normalizeCareBehaviorTimeline(options.behaviorTimeline || {})
@@ -605,40 +798,127 @@ function buildFertilizingPlanner(...args) {
   const weakGrowth = Boolean(options.plantShowsWeakGrowth || options.weakGrowth || options.hasWeakGrowth)
   const justRepotted = Boolean(options.justRepottedRecently || options.justRepotted || options.recentlyRepotted)
   const recentFertilizingCount = Number(summary.fertilizingCount10d || 0)
-  const concentrated = ['strong', 'concentrated', 'high', 'heavy', '浓肥', '浓'].includes(recentStrength)
+  const concentratedStrengths = Array.isArray(thresholds.concentratedStrengths)
+    ? thresholds.concentratedStrengths.map(item => normalizeText(item)).filter(Boolean)
+    : []
+  const concentrated = concentratedStrengths.includes(recentStrength)
+  const baseline = {
+    intervalDays: [
+      Number(thresholds.intervalMinDays || FERTILIZING_BASELINE.intervalDays[0]),
+      Number(thresholds.intervalMaxDays || FERTILIZING_BASELINE.intervalDays[1])
+    ],
+    fertilizerType: FERTILIZING_BASELINE.fertilizerType
+  }
+  const recentGateHit =
+    justRepotted ||
+    concentrated ||
+    recentFertilizingCount > 0 ||
+    lastFertilizedBucket === 'within_10d'
+  const deficiencyGapBuckets = Array.isArray(thresholds.deficiencyGapBuckets)
+    ? thresholds.deficiencyGapBuckets.map(item => normalizeBucket(item))
+    : []
+  const dueGapBuckets = Array.isArray(thresholds.dueGapBuckets)
+    ? thresholds.dueGapBuckets.map(item => normalizeBucket(item))
+    : []
+  const deficiencyGateHit = weakGrowth && deficiencyGapBuckets.includes(lastFertilizedBucket)
+  const dueGateHit = dueGapBuckets.includes(lastFertilizedBucket)
+  const calculation = {
+    formulaVersion: 'fertilizing_planner_v7_configurable',
+    inputs: {
+      lastFertilizedBucket,
+      recentStrength,
+      weakGrowth,
+      justRepotted,
+      recentFertilizingCount
+    },
+    thresholds: clonePlain(thresholds),
+    formulas: [
+      buildPlannerFormulaStep({
+        key: 'recent_or_high_risk_gate',
+        expression: 'justRepotted || concentrated || recentFertilizingCount > 0 || lastFertilizedBucket === "within_10d"',
+        inputs: { justRepotted, concentrated, recentFertilizingCount, lastFertilizedBucket },
+        result: recentGateHit,
+        passed: recentGateHit
+      }),
+      buildPlannerFormulaStep({
+        key: 'possible_deficiency_gate',
+        expression: 'weakGrowth && deficiencyGapBuckets.includes(lastFertilizedBucket)',
+        inputs: { weakGrowth, lastFertilizedBucket },
+        thresholds: { deficiencyGapBuckets },
+        result: deficiencyGateHit,
+        passed: deficiencyGateHit
+      }),
+      buildPlannerFormulaStep({
+        key: 'thin_after_due_gate',
+        expression: 'dueGapBuckets.includes(lastFertilizedBucket)',
+        inputs: { lastFertilizedBucket },
+        thresholds: { dueGapBuckets },
+        result: dueGateHit,
+        passed: dueGateHit
+      })
+    ]
+  }
 
-  if (justRepotted || concentrated || recentFertilizingCount > 0 || lastFertilizedBucket === 'within_10d') {
+  if (recentGateHit) {
     return {
-      baseline: { ...FERTILIZING_BASELINE },
+      baseline,
       action: FERTILIZING_ACTIONS.PAUSE,
       lastFertilizedBucket,
-      reasons: ['recent_or_high_risk_fertilizing_gate']
+      reasons: ['recent_or_high_risk_fertilizing_gate'],
+      thresholds: clonePlain(thresholds),
+      calculation: {
+        ...calculation,
+        result: {
+          action: FERTILIZING_ACTIONS.PAUSE
+        }
+      }
     }
   }
 
-  if (weakGrowth && ['over_60d', 'almost_never', 'unknown'].includes(lastFertilizedBucket)) {
+  if (deficiencyGateHit) {
     return {
-      baseline: { ...FERTILIZING_BASELINE },
+      baseline,
       action: FERTILIZING_ACTIONS.POSSIBLE_DEFICIENCY_CHECK,
       lastFertilizedBucket,
-      reasons: ['weak_growth_and_long_gap']
+      reasons: ['weak_growth_and_long_gap'],
+      thresholds: clonePlain(thresholds),
+      calculation: {
+        ...calculation,
+        result: {
+          action: FERTILIZING_ACTIONS.POSSIBLE_DEFICIENCY_CHECK
+        }
+      }
     }
   }
 
-  if (['31_60d', 'over_60d', 'almost_never'].includes(lastFertilizedBucket)) {
+  if (dueGateHit) {
     return {
-      baseline: { ...FERTILIZING_BASELINE },
+      baseline,
       action: FERTILIZING_ACTIONS.THIN_AFTER_DUE,
       lastFertilizedBucket,
-      reasons: ['fixed_30_45_day_baseline_due']
+      reasons: ['fixed_30_45_day_baseline_due'],
+      thresholds: clonePlain(thresholds),
+      calculation: {
+        ...calculation,
+        result: {
+          action: FERTILIZING_ACTIONS.THIN_AFTER_DUE
+        }
+      }
     }
   }
 
   return {
-    baseline: { ...FERTILIZING_BASELINE },
+    baseline,
     action: FERTILIZING_ACTIONS.NORMAL_BASELINE,
     lastFertilizedBucket,
-    reasons: ['not_due_by_fixed_baseline']
+    reasons: ['not_due_by_fixed_baseline'],
+    thresholds: clonePlain(thresholds),
+    calculation: {
+      ...calculation,
+      result: {
+        action: FERTILIZING_ACTIONS.NORMAL_BASELINE
+      }
+    }
   }
 }
 
@@ -699,8 +979,15 @@ function buildEnvironmentCareContextV7({
   diagnosisDate = '',
   plantContext = {},
   environmentWeatherWindow = {},
-  careBehaviorTimeline = {}
+  careBehaviorTimeline = {},
+  thresholds: rawThresholds = null
 } = {}) {
+  const thresholds = resolveCarePlannerThresholds(
+    rawThresholds ||
+      plantContext.carePlannerThresholds ||
+      plantContext.care_planner_thresholds ||
+      {}
+  )
   const timeline = normalizeCareBehaviorTimeline({
     referenceDate:
       diagnosisDate ||
@@ -726,24 +1013,28 @@ function buildEnvironmentCareContextV7({
   const historicalSummary10d = buildHistoricalEnvironmentSummary10d({
     dailyRecords: environmentWeatherWindow.historicalDays || environmentWeatherWindow.historical_days || [],
     userHasDirectSunExposure: directExposure,
+    thresholds,
     ...bounds
   })
   const forecastSummary15d = buildForecastEnvironmentSummary15d({
     dailyRecords: environmentWeatherWindow.forecastDays || environmentWeatherWindow.forecast_days || [],
     userHasDirectSunExposure: directExposure,
+    thresholds,
     ...bounds
   })
   const watering = buildWateringPlanner({
     wateringStrategy: plantContext.watering || plantContext.wateringStrategy || plantContext.watering_strategy_json || {},
     historical: historicalSummary10d,
     forecast: forecastSummary15d,
-    behaviorTimeline: timeline
+    behaviorTimeline: timeline,
+    thresholds
   })
   const fertilizing = buildFertilizingPlanner({
     behaviorTimeline: timeline,
     lastFertilizedBucket: timeline.lastFertilizedBucket,
     plantShowsWeakGrowth: Boolean(plantContext.plantShowsWeakGrowth || plantContext.weakGrowth),
-    justRepottedRecently: Boolean(plantContext.justRepottedRecently || plantContext.recentlyRepotted)
+    justRepottedRecently: Boolean(plantContext.justRepottedRecently || plantContext.recentlyRepotted),
+    thresholds
   })
   const light = buildLightPlanner({
     forecast: forecastSummary15d,
@@ -760,9 +1051,28 @@ function buildEnvironmentCareContextV7({
     historicalSummary10d,
     forecastSummary15d,
     behaviorSummary10d: timeline.summary,
+    thresholds: clonePlain(thresholds),
     watering,
     fertilizing,
     light,
+    calculationTrace: {
+      watering: watering.calculation || null,
+      fertilizing: fertilizing.calculation || null,
+      light: {
+        formulaVersion: 'light_planner_v7_contextual',
+        inputs: {
+          forecast: pickNumberFields(forecastSummary15d, [
+            'aboveGenusUvMaxDays'
+          ]),
+          userHasDirectSunExposure: directExposure,
+          plantRequiresBrightLight: resolvePlantRequiresBrightLight(plantContext)
+        },
+        result: {
+          lightContext: light.lightContext,
+          realExposureScene: light.realExposureScene
+        }
+      }
+    },
     outputs: {
       wateringContext: watering.wateringContext,
       wateringAction: watering.action,
@@ -784,5 +1094,6 @@ module.exports = {
   WATERING_ACTIONS,
   FERTILIZING_ACTIONS,
   LIGHT_CONTEXTS,
-  FERTILIZING_BASELINE
+  FERTILIZING_BASELINE,
+  resolveCarePlannerThresholds
 }

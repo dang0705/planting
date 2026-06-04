@@ -1,22 +1,19 @@
 <template>
-  <view
-    :id="`diagnose-care-behavior-timeline-${questionId}`"
-    class="care-behavior-timeline"
-  >
+  <view :id="`diagnose-care-behavior-timeline-${questionId}`" class="care-behavior-timeline">
     <view v-if="loadingErrorText" class="care-behavior-error-banner">
       <text class="care-behavior-error-text">{{ loadingErrorText }}</text>
     </view>
 
-    <view class="care-behavior-calendar-card relative box-border min-h-[363px] rounded-xl border border-[rgba(45,122,79,0.15)] bg-white p-5 shadow-[0_1px_0_rgba(45,122,79,0.02)]">
+    <view
+      class="care-behavior-calendar-card relative box-border rounded-xl border border-[rgba(45,122,79,0.15)] bg-white p-5 shadow-[0_1px_0_rgba(45,122,79,0.02)]"
+    >
       <view class="care-behavior-weekday-header">
-        <text
-          v-for="day in weekLabels"
-          :key="day"
-          class="care-behavior-weekday-item"
-        >{{ day }}</text>
+        <text v-for="day in weekLabels" :key="day" class="care-behavior-weekday-item">{{
+          day
+        }}</text>
       </view>
 
-      <view class="care-behavior-grid-stage relative overflow-visible pb-[116px]">
+      <view class="care-behavior-grid-stage relative overflow-visible">
         <view v-if="showLoadingSkeleton" class="care-behavior-grid-skeleton" aria-hidden="true">
           <view v-for="item in skeletonCellItems" :key="item" class="care-behavior-skeleton-cell">
             <view class="care-behavior-skeleton-day" />
@@ -38,33 +35,70 @@
             :class="[
               'care-behavior-cell',
               item.isSelected ? 'care-behavior-cell--selected' : '',
-              item.isFocused ? 'care-behavior-cell--focused' : '',
-              item.isToday ? 'care-behavior-cell--today' : '',
               item.isFuture ? 'care-behavior-cell--future' : '',
               item.isHistoricalOutOfRange ? 'care-behavior-cell--historical' : '',
+              item.isToday ? 'care-behavior-cell--today' : '',
               item.canOpenDetail ? 'care-behavior-cell--selectable' : 'care-behavior-cell--locked'
             ]"
             @click="selectDate(item)"
+            @touchstart="handleDatePressStart(item)"
+            @touchend="handleDatePressEnd"
+            @touchcancel="handleDatePressEnd"
+            @mousedown="handleDatePressStart(item)"
+            @mouseup="handleDatePressEnd"
+            @mouseleave="handleDatePressEnd"
           >
             <view class="care-behavior-day-wrap">
-              <text class="care-behavior-day">{{ item.day }}</text>
-              <text v-if="item.isToday" class="care-behavior-day-mark">今天</text>
+              <text
+                class="care-behavior-day"
+                :class="item.isToday ? 'care-behavior-day--today' : ''"
+                >{{ item.day }}</text
+              >
             </view>
 
-            <view class="care-behavior-metrics flex h-[30px] w-full flex-col justify-center gap-0 overflow-hidden">
+            <view
+              class="care-behavior-metrics flex h-[30px] w-full flex-col justify-center gap-0 overflow-hidden"
+            >
               <template v-if="item.hasWeatherMetrics">
-                <view v-if="item.temperatureText" class="care-behavior-metric flex h-[15px] min-w-0 items-center justify-center gap-0.5 overflow-hidden leading-[15px]">
-                  <view class="care-behavior-metric-icon care-behavior-metric-icon--temp relative h-[10px] w-[10px] shrink-0 text-[#5a7a68]" aria-hidden="true">
-                    <view class="care-behavior-metric-icon-stem" />
-                    <view class="care-behavior-metric-icon-bulb" />
+                <view
+                  v-if="item.temperatureText"
+                  class="care-behavior-metric flex h-[15px] min-w-0 items-center justify-center gap-0.5 overflow-hidden leading-[15px]"
+                >
+                  <view
+                    class="care-behavior-metric-icon care-behavior-metric-icon--temp relative h-[10px] w-[10px] shrink-0 text-[#5a7a68]"
+                    aria-hidden="true"
+                  >
+                    <image
+                      class="care-behavior-metric-icon-svg"
+                      :src="temperatureIconSrc"
+                      mode="aspectFit"
+                      aria-hidden="true"
+                    />
                   </view>
-                  <text class="care-behavior-metric-value min-w-0 max-w-[28px] shrink overflow-hidden whitespace-nowrap text-[10px] font-medium leading-[15px] text-[#5a7a68]">{{ item.temperatureDisplayText }}</text>
+                  <text
+                    class="care-behavior-metric-value min-w-0 max-w-[28px] shrink overflow-hidden whitespace-nowrap text-[10px] font-medium leading-[15px] text-[#5a7a68]"
+                    >{{ item.temperatureDisplayText }}</text
+                  >
                 </view>
-                <view v-if="item.humidityText" class="care-behavior-metric flex h-[15px] min-w-0 items-center justify-center gap-0.5 overflow-hidden leading-[15px]">
-                  <view class="care-behavior-metric-icon care-behavior-metric-icon--humidity relative h-[10px] w-[10px] shrink-0 text-[#5a7a68]" aria-hidden="true">
-                    <view class="care-behavior-metric-icon-drop" />
+                <view
+                  v-if="item.humidityText"
+                  class="care-behavior-metric flex h-[15px] min-w-0 items-center justify-center gap-0.5 overflow-hidden leading-[15px]"
+                >
+                  <view
+                    class="care-behavior-metric-icon care-behavior-metric-icon--humidity relative h-[10px] w-[10px] shrink-0 text-[#5a7a68]"
+                    aria-hidden="true"
+                  >
+                    <image
+                      class="care-behavior-metric-icon-svg"
+                      :src="humidityIconSrc"
+                      mode="aspectFit"
+                      aria-hidden="true"
+                    />
                   </view>
-                  <text class="care-behavior-metric-value min-w-0 max-w-[28px] shrink overflow-hidden whitespace-nowrap text-[10px] font-medium leading-[15px] text-[#5a7a68]">{{ item.humidityDisplayText }}</text>
+                  <text
+                    class="care-behavior-metric-value min-w-0 max-w-[28px] shrink overflow-hidden whitespace-nowrap text-[10px] font-medium leading-[15px] text-[#5a7a68]"
+                    >{{ item.humidityDisplayText }}</text
+                  >
                 </view>
               </template>
               <view v-else class="care-behavior-metrics-spacer h-[30px] w-full" />
@@ -81,7 +115,10 @@
                 :id="`diagnose-care-behavior-fertilize-${item.date}`"
                 class="care-behavior-marker care-behavior-marker--fertilize"
               >
-                <view v-if="item.fertilizing" class="care-behavior-dot care-behavior-dot--fertilize" />
+                <view
+                  v-if="item.fertilizing"
+                  class="care-behavior-dot care-behavior-dot--fertilize"
+                />
               </view>
               <view
                 :id="`diagnose-care-behavior-light-${item.date}`"
@@ -96,17 +133,29 @@
         <view
           v-if="selectedDateState"
           class="care-behavior-detail-popover absolute z-[5] w-[95px] max-w-[320px]"
+          @click="resetDatePopoverAutoHide"
           :style="selectedDatePopoverStyle"
         >
           <view
             class="care-behavior-detail-popover-arrow absolute top-[-5px] -translate-x-1/2"
             :style="selectedDatePopoverArrowStyle"
           />
-          <view class="care-behavior-detail-popover-card relative box-border w-[95px] overflow-hidden rounded-xl border border-[rgba(45,122,79,0.15)] bg-white px-[13px] py-[9px] shadow-[0_10px_24px_rgba(15,23,42,0.08)]">
-            <text class="care-behavior-detail-date block whitespace-nowrap text-base font-medium leading-6 text-[#0f172a]">{{ selectedDateLabel }}</text>
+          <view
+            class="care-behavior-detail-popover-card relative box-border w-[95px] overflow-hidden rounded-xl border border-[rgba(45,122,79,0.15)] bg-white px-[13px] py-[9px] shadow-[0_10px_24px_rgba(15,23,42,0.08)]"
+          >
+            <text
+              class="care-behavior-detail-date block whitespace-nowrap text-base font-medium leading-6 text-[#0f172a]"
+              >{{ selectedDateLabel }}</text
+            >
             <view class="care-behavior-detail-body flex flex-col pt-1">
-              <text class="care-behavior-detail-row block whitespace-nowrap pt-1 text-sm leading-5 text-[#0f172a]">温度: {{ selectedDateDialogTemperatureText }}</text>
-              <text class="care-behavior-detail-row block whitespace-nowrap pt-1 text-sm leading-5 text-[#0f172a]">湿度: {{ selectedDateDialogHumidityText }}</text>
+              <text
+                class="care-behavior-detail-row block whitespace-nowrap pt-1 text-sm leading-5 text-[#0f172a]"
+                >温度: {{ selectedDateDialogTemperatureText }}</text
+              >
+              <text
+                class="care-behavior-detail-row block whitespace-nowrap pt-1 text-sm leading-5 text-[#0f172a]"
+                >湿度: {{ selectedDateDialogHumidityText }}</text
+              >
               <text
                 :id="`diagnose-care-behavior-action-water-${selectedDateState.date}`"
                 class="care-behavior-detail-status block whitespace-nowrap pt-1 text-sm leading-5 text-slate-400"
@@ -115,7 +164,8 @@
                   'opacity-[0.58]': !selectedDateState.isSelectable
                 }"
                 @click="toggleCareAction(selectedDateState.date, 'watering')"
-              >{{ selectedDateBehaviorStatusText }}</text>
+                >{{ selectedDateBehaviorStatusText }}</text
+              >
             </view>
           </view>
         </view>
@@ -136,7 +186,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
   buildCareBehaviorTimelineFromDateEvents,
   buildCareBehaviorDisplayWindow,
@@ -148,6 +198,10 @@ import { formatWeatherText } from '@/utils/care-behavior-weather.js'
 import { buildWeatherByDateFromEnvironmentWeatherWindow } from '@/utils/care-behavior-weather-window.js'
 
 const weekLabels = ['日', '一', '二', '三', '四', '五', '六']
+const temperatureIconSrc =
+  'data:image/svg+xml;utf8,%3Csvg%20preserveAspectRatio%3D%22none%22%20width%3D%22100%25%22%20height%3D%22100%25%22%20overflow%3D%22visible%22%20style%3D%22display%3A%20block%3B%22%20viewBox%3D%220%200%209.9934%209.9934%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20id%3D%22Icon%22%20clip-path%3D%22url(%23clip0_0_7)%22%3E%3Cpath%20id%3D%22Vector%22%20d%3D%22M5.82948%201.66557V6.05433C6.14701%206.23766%206.39517%206.52063%206.53548%206.85937C6.67579%207.19811%206.70041%207.57368%206.60551%207.92784C6.51062%208.28199%206.30151%208.59494%206.01063%208.81814C5.71975%209.04134%205.36335%209.16232%204.9967%209.16232C4.63005%209.16232%204.27365%209.04134%203.98277%208.81814C3.69189%208.59494%203.48278%208.28199%203.38789%207.92784C3.29299%207.57368%203.31761%207.19811%203.45792%206.85937C3.59823%206.52063%203.84639%206.23766%204.16392%206.05433V1.66557C4.16392%201.4447%204.25166%201.23288%204.40783%201.0767C4.56401%200.920523%204.77583%200.832783%204.9967%200.832783C5.21757%200.832783%205.42939%200.920523%205.58557%201.0767C5.74174%201.23288%205.82948%201.4447%205.82948%201.66557Z%22%20stroke%3D%22%235A7A68%22%20stroke-width%3D%220.832783%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fg%3E%3Cdefs%3E%3CclipPath%20id%3D%22clip0_0_7%22%3E%3Crect%20width%3D%229.9934%22%20height%3D%229.9934%22%20fill%3D%22white%22%2F%3E%3C%2FclipPath%3E%3C%2Fdefs%3E%3C%2Fsvg%3E'
+const humidityIconSrc =
+  'data:image/svg+xml;utf8,%3Csvg%20preserveAspectRatio%3D%22none%22%20width%3D%22100%25%22%20height%3D%22100%25%22%20overflow%3D%22visible%22%20style%3D%22display%3A%20block%3B%22%20viewBox%3D%220%200%209.9934%209.9934%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20id%3D%22Icon%22%20clip-path%3D%22url(%23clip0_0_4)%22%3E%3Cpath%20id%3D%22Vector%22%20d%3D%22M2.91474%206.78718C3.8308%206.78718%204.58031%206.02519%204.58031%205.1008C4.58031%204.61778%204.34297%204.15975%203.86828%203.77251C3.39359%203.38526%203.0355%202.81064%202.91474%202.20688C2.79399%202.81064%202.44006%203.38943%201.9612%203.77251C1.48235%204.15559%201.24917%204.62195%201.24917%205.1008C1.24917%206.02519%201.99868%206.78718%202.91474%206.78718Z%22%20stroke%3D%22%235A7A68%22%20stroke-width%3D%220.832783%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20id%3D%22Vector_2%22%20d%3D%22M5.22988%202.74818C5.51626%202.29062%205.71926%201.78592%205.82948%201.2575C6.03768%202.29848%206.66227%203.29782%207.49505%203.96405C8.32783%204.63028%208.74423%205.42142%208.74423%206.2542C8.7466%206.82978%208.57803%207.3931%208.25988%207.87275C7.94172%208.35241%207.48831%208.7268%206.95713%208.94846C6.42594%209.17012%205.8409%209.22907%205.27617%209.11784C4.71144%209.00661%204.19245%208.73021%203.785%208.32367%22%20stroke%3D%22%235A7A68%22%20stroke-width%3D%220.832783%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fg%3E%3Cdefs%3E%3CclipPath%20id%3D%22clip0_0_4%22%3E%3Crect%20width%3D%229.9934%22%20height%3D%229.9934%22%20fill%3D%22white%22%2F%3E%3C%2FclipPath%3E%3C%2Fdefs%3E%3C%2Fsvg%3E'
 const gridColumnCount = 7
 const dateCellHeightPx = 75
 const dateCellWidthPx = 42
@@ -168,6 +222,14 @@ const bucketSelection = ref('unknown')
 const baseBucketSelection = ref('unknown')
 const dateStates = ref({})
 const selectedDate = ref('')
+const popoverDate = ref('')
+const longPressTimer = ref(null)
+const popoverAutoHideTimer = ref(null)
+const popoverOpenedAt = ref(0)
+const LONG_PRESS_DURATION_MS = 1000
+const POPOVER_AUTO_HIDE_MS = 5000
+const CLICK_SUPPRESS_AFTER_LONG_PRESS_MS = 450
+const longPressedDate = ref('')
 
 const referenceDate = computed(() => {
   const candidate =
@@ -182,16 +244,19 @@ const referenceDate = computed(() => {
 
 const dateWindow = computed(() => getCareBehaviorDateWindow(referenceDate.value))
 const dateWindowSet = computed(() => getCareBehaviorDateSet(referenceDate.value))
-const timelineSource = computed(() => normalizeCareBehaviorTimeline(props.timeline, {
-  dateWindow: dateWindowSet.value,
-  referenceDate: referenceDate.value
-}))
+const timelineSource = computed(() =>
+  normalizeCareBehaviorTimeline(props.timeline, {
+    dateWindow: dateWindowSet.value,
+    referenceDate: referenceDate.value
+  })
+)
 
 function collectWeatherSources(question = {}, timeline = {}) {
   const qTimeline = question?.careBehaviorTimeline || {}
   const environmentContext = question?.environmentContext || {}
   const payload = question?.payload || {}
-  const payloadTimeline = payload?.careBehaviorTimeline || payload?.care_behavior_timeline || payload?.timeline || {}
+  const payloadTimeline =
+    payload?.careBehaviorTimeline || payload?.care_behavior_timeline || payload?.timeline || {}
   const timelineEnvContext = payloadTimeline?.environmentContext || {}
   return [
     question?.weather,
@@ -250,20 +315,20 @@ function normalizeWeatherMetricValue(value = '') {
 function getWeatherTemperatureText(entry = {}) {
   return normalizeWeatherMetricValue(
     entry.temp ??
-    entry.temperature ??
-    entry.tempC ??
-    entry.tempF ??
-    entry.tempMaxC ??
-    entry.tempMax ??
-    entry.maxTemp ??
-    entry.maxTemperature ??
-    entry.tempMinC ??
-    entry.tempMin ??
-    entry.minTemp ??
-    entry.minTemperature ??
-    entry.tempMaxF ??
-    entry.tempMinF ??
-    ''
+      entry.temperature ??
+      entry.tempC ??
+      entry.tempF ??
+      entry.tempMaxC ??
+      entry.tempMax ??
+      entry.maxTemp ??
+      entry.maxTemperature ??
+      entry.tempMinC ??
+      entry.tempMin ??
+      entry.minTemp ??
+      entry.minTemperature ??
+      entry.tempMaxF ??
+      entry.tempMinF ??
+      ''
   )
 }
 
@@ -360,13 +425,18 @@ function normalizeWeatherInput(weatherInput = {}, fallbackDate = '') {
       Object.entries(candidate.weatherByDate).forEach(([date, entry]) => addMapEntry(date, entry))
       return
     }
-    if (candidate.environmentWeatherWindow && typeof candidate.environmentWeatherWindow === 'object') {
+    if (
+      candidate.environmentWeatherWindow &&
+      typeof candidate.environmentWeatherWindow === 'object'
+    ) {
       mergeFromObject(candidate.environmentWeatherWindow)
       return
     }
     const environmentWindowWeatherByDate = buildWeatherByDateFromEnvironmentWeatherWindow(candidate)
     if (Object.keys(environmentWindowWeatherByDate).length) {
-      Object.entries(environmentWindowWeatherByDate).forEach(([date, entry]) => addMapEntry(date, entry))
+      Object.entries(environmentWindowWeatherByDate).forEach(([date, entry]) =>
+        addMapEntry(date, entry)
+      )
       return
     }
     if (candidate.timeline && typeof candidate.timeline === 'object') {
@@ -381,15 +451,19 @@ function normalizeWeatherInput(weatherInput = {}, fallbackDate = '') {
       mergeFromObject(candidate.careBehaviorTimeline)
       return
     }
-    if (candidate.weather && typeof candidate.weather === 'object' && !Object.prototype.hasOwnProperty.call(candidate, 'weatherByDate')) {
+    if (
+      candidate.weather &&
+      typeof candidate.weather === 'object' &&
+      !Object.prototype.hasOwnProperty.call(candidate, 'weatherByDate')
+    ) {
       if (typeof candidate.weather === 'object' || Array.isArray(candidate.weather)) {
         mergeFromObject(candidate.weather)
       } else {
         addMapEntry(fallbackDate, candidate)
       }
     }
-    const isDateMap = Object.keys(candidate).every(key =>
-      /^\d{4}-\d{1,2}-\d{1,2}$/.test(key) || /^\d{4}\/\d{1,2}\/\d{1,2}$/.test(key)
+    const isDateMap = Object.keys(candidate).every(
+      key => /^\d{4}-\d{1,2}-\d{1,2}$/.test(key) || /^\d{4}\/\d{1,2}\/\d{1,2}$/.test(key)
     )
     if (isDateMap) {
       Object.entries(candidate).forEach(([date, entry]) => addMapEntry(date, entry))
@@ -410,18 +484,17 @@ function normalizeWeatherInput(weatherInput = {}, fallbackDate = '') {
 
 function normalizeBucket(value = 'unknown') {
   const normalized = String(value || '').trim()
-  return ['within_10d', '11_30d', '31_60d', 'over_60d', 'almost_never', 'unknown'].includes(normalized)
+  return ['within_10d', '11_30d', '31_60d', 'over_60d', 'almost_never', 'unknown'].includes(
+    normalized
+  )
     ? normalized
     : 'unknown'
 }
 
-function formatDateLabel(date = '', isToday = false) {
+function formatDateLabel(date = '') {
   const normalizedDate = normalizeDateValue(date)
   if (!normalizedDate) {
     return ''
-  }
-  if (isToday) {
-    return '今天'
   }
   const [, month, day] = normalizedDate.split('-')
   return `${Number(month)}月${Number(day)}日`
@@ -445,31 +518,37 @@ function isDateInEvents(date, events = []) {
 }
 
 const selectedDateState = computed(() => {
-  if (!selectedDate.value) {
+  if (!popoverDate.value) {
     return null
   }
-  return dateStates.value[selectedDate.value] || null
+  return dateStates.value[popoverDate.value] || null
 })
 
 const selectedDateLabel = computed(() => {
   if (!selectedDateState.value) {
     return ''
   }
-  return formatDateLabel(selectedDateState.value.date, selectedDateState.value.isToday)
+  return formatDateLabel(selectedDateState.value.date)
 })
 
 const selectedDateTemperatureText = computed(() => {
   if (!selectedDateState.value) {
     return ''
   }
-  return selectedDateState.value.temperatureDisplayText || formatCellMetricText(selectedDateState.value.temperatureText || '', '°')
+  return (
+    selectedDateState.value.temperatureDisplayText ||
+    formatCellMetricText(selectedDateState.value.temperatureText || '', '°')
+  )
 })
 
 const selectedDateHumidityText = computed(() => {
   if (!selectedDateState.value) {
     return ''
   }
-  return selectedDateState.value.humidityDisplayText || formatCellMetricText(selectedDateState.value.humidityText || '', '%')
+  return (
+    selectedDateState.value.humidityDisplayText ||
+    formatCellMetricText(selectedDateState.value.humidityText || '', '%')
+  )
 })
 
 const selectedDateDialogTemperatureText = computed(() =>
@@ -485,9 +564,15 @@ const selectedDateBehaviorText = computed(() => {
     return ''
   }
   const items = []
-  if (selectedDateState.value.watering) { items.push('浇水') }
-  if (selectedDateState.value.fertilizing) { items.push('施肥') }
-  if (selectedDateState.value.lightChange) { items.push('强光/位置变化') }
+  if (selectedDateState.value.watering) {
+    items.push('浇水')
+  }
+  if (selectedDateState.value.fertilizing) {
+    items.push('施肥')
+  }
+  if (selectedDateState.value.lightChange) {
+    items.push('强光/位置变化')
+  }
   return items.length ? items.join(' / ') : '未记录'
 })
 
@@ -496,9 +581,9 @@ const selectedDateHasBehavior = computed(() => {
   return Boolean(state?.watering || state?.fertilizing || state?.lightChange)
 })
 
-const selectedDateBehaviorStatusText = computed(() => (
+const selectedDateBehaviorStatusText = computed(() =>
   selectedDateHasBehavior.value ? `${selectedDateBehaviorText.value} 00:00` : '未记录'
-))
+)
 
 const selectedDateGridIndex = computed(() => {
   const date = selectedDateState.value?.date
@@ -577,8 +662,13 @@ const displayedCellItems = computed(() => {
       isActive: true,
       isSelectable: Boolean(state.isSelectable),
       canOpenDetail: Boolean(state.canOpenDetail && (item.isToday || item.isSelectable)),
-      isFocused: selectedDate.value === item.date,
-      isSelected: Boolean(state.watering && item.isSelectable && !item.isToday && !item.isHistoricalOutOfRange && !item.isFuture),
+      isSelected: Boolean(
+        state.watering &&
+        item.isSelectable &&
+        !item.isToday &&
+        !item.isHistoricalOutOfRange &&
+        !item.isFuture
+      ),
       isFuture: Boolean(item.isFuture),
       isHistoricalOutOfRange: Boolean(item.isHistoricalOutOfRange),
       watering: Boolean(state.watering),
@@ -586,7 +676,8 @@ const displayedCellItems = computed(() => {
       lightChange: Boolean(state.lightChange),
       hasWeatherMetrics: Boolean(state.temperatureText || state.humidityText),
       weatherText: state.weatherText || weatherByDate.value[item.date]?.text || '',
-      temperatureText: state.temperatureText || weatherByDate.value[item.date]?.temperatureText || '',
+      temperatureText:
+        state.temperatureText || weatherByDate.value[item.date]?.temperatureText || '',
       humidityText: state.humidityText || weatherByDate.value[item.date]?.humidityText || '',
       temperatureDisplayText,
       humidityDisplayText
@@ -610,13 +701,21 @@ const timelinePayload = computed(() => ({
   last_fertilized_bucket: bucketSelection.value
 }))
 
-watch(timelinePayload, value => {
-  emit('change', value)
-}, { deep: true, immediate: true })
+watch(
+  timelinePayload,
+  value => {
+    emit('change', value)
+  },
+  { deep: true, immediate: true }
+)
 
-watch(() => [props.timeline, props.question], () => {
-  initializeTimelineFromProps()
-}, { deep: true, immediate: true })
+watch(
+  () => [props.timeline, props.question],
+  () => {
+    initializeTimelineFromProps()
+  },
+  { deep: true, immediate: true }
+)
 
 onMounted(initializeTimelineFromProps)
 
@@ -627,6 +726,9 @@ function initializeTimelineFromProps() {
   const nextDateStates = buildDateStates()
   dateStates.value = nextDateStates
   selectedDate.value = resolveSelectedDateAfterRebuild(nextDateStates)
+  if (popoverDate.value && !nextDateStates[popoverDate.value]) {
+    popoverDate.value = ''
+  }
 }
 
 function buildDateStates() {
@@ -659,17 +761,26 @@ function resolveDefaultSelectedDate() {
     return todayItem.date
   }
 
-  const selectableDates = displayWindow.value.filter(item => item.isSelectable).map(item => item.date)
-  const activeSelectableDate = selectableDates.slice().reverse().find(date => {
-    const state = dateStates.value[date]
-    return Boolean(state?.watering || state?.fertilizing || state?.lightChange)
-  })
+  const selectableDates = displayWindow.value
+    .filter(item => item.isSelectable)
+    .map(item => item.date)
+  const activeSelectableDate = selectableDates
+    .slice()
+    .reverse()
+    .find(date => {
+      const state = dateStates.value[date]
+      return Boolean(state?.watering || state?.fertilizing || state?.lightChange)
+    })
   return activeSelectableDate || selectableDates[selectableDates.length - 1] || ''
 }
 
 function resolveSelectedDateAfterRebuild(nextStates = {}) {
   const currentState = selectedDate.value ? nextStates[selectedDate.value] : null
-  if (currentState?.canOpenDetail && !currentState.isFuture && !currentState.isHistoricalOutOfRange) {
+  if (
+    currentState?.canOpenDetail &&
+    !currentState.isFuture &&
+    !currentState.isHistoricalOutOfRange
+  ) {
     return selectedDate.value
   }
   return resolveDefaultSelectedDate()
@@ -679,10 +790,71 @@ function selectDate(item = {}) {
   if (!item?.date || item.canOpenDetail === false || item.isFuture || item.isHistoricalOutOfRange) {
     return
   }
+  if (
+    item.date === longPressedDate.value &&
+    Date.now() - popoverOpenedAt.value < CLICK_SUPPRESS_AFTER_LONG_PRESS_MS
+  ) {
+    longPressedDate.value = ''
+    return
+  }
   selectedDate.value = item.date
   if (item.isSelectable && !item.isToday) {
     toggleCareAction(item.date, 'watering')
   }
+}
+
+function hasLongPressTarget(item = {}) {
+  return Boolean(item?.date && item.canOpenDetail && !item.isFuture && !item.isHistoricalOutOfRange)
+}
+
+function clearLongPressTimer() {
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+  }
+  longPressTimer.value = null
+}
+
+function clearPopoverAutoHideTimer() {
+  if (popoverAutoHideTimer.value) {
+    clearTimeout(popoverAutoHideTimer.value)
+  }
+  popoverAutoHideTimer.value = null
+}
+
+function resetDatePopoverAutoHide() {
+  clearPopoverAutoHideTimer()
+  popoverAutoHideTimer.value = setTimeout(() => {
+    popoverDate.value = ''
+  }, POPOVER_AUTO_HIDE_MS)
+}
+
+function openDatePopoverByDate(date = '') {
+  if (!date || !dateStates.value[date]?.canOpenDetail) {
+    return
+  }
+  const now = Date.now()
+  if (popoverDate.value === date && now - popoverOpenedAt.value < 220) {
+    return
+  }
+  popoverDate.value = date
+  popoverOpenedAt.value = now
+  longPressedDate.value = date
+  selectedDate.value = date
+  resetDatePopoverAutoHide()
+}
+
+function handleDatePressStart(item = {}) {
+  if (!hasLongPressTarget(item)) {
+    return
+  }
+  clearLongPressTimer()
+  longPressTimer.value = setTimeout(() => {
+    openDatePopoverByDate(item.date)
+  }, LONG_PRESS_DURATION_MS)
+}
+
+function handleDatePressEnd() {
+  clearLongPressTimer()
 }
 
 function syncBucketSelection(nextStates = {}) {
@@ -692,7 +864,13 @@ function syncBucketSelection(nextStates = {}) {
 
 function toggleCareAction(date, action) {
   const state = dateStates.value[date]
-  if (!state || !state.isSelectable || state.isToday || state.isFuture || state.isHistoricalOutOfRange) {
+  if (
+    !state ||
+    !state.isSelectable ||
+    state.isToday ||
+    state.isFuture ||
+    state.isHistoricalOutOfRange
+  ) {
     return
   }
   const next = { ...state, [action]: !state[action] }
@@ -703,63 +881,242 @@ function toggleCareAction(date, action) {
   }
   syncBucketSelection(nextStates)
 }
+
+onUnmounted(() => {
+  clearLongPressTimer()
+  clearPopoverAutoHideTimer()
+})
 </script>
 
 <style scoped>
-.care-behavior-timeline { margin: 0 0 10px; padding: 0; }
-.care-behavior-error-banner { margin: 0 0 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(45, 122, 79, 0.15); background: rgba(248, 250, 249, 0.96); }
-.care-behavior-error-text { display: block; font-size: 12px; line-height: 18px; color: #5a7a68; }
-.care-behavior-weekday-header { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; margin: 0 0 2px; }
-.care-behavior-weekday-item { text-align: center; color: #5a7a68; font-size: 12px; line-height: 16px; }
-.care-behavior-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
-.care-behavior-grid-skeleton { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
-.care-behavior-skeleton-cell { box-sizing: border-box; height: 75px; border-radius: 12px; border: 1px solid rgba(45, 122, 79, 0.12); background: linear-gradient(90deg, rgba(241, 248, 244, 0.72), rgba(248, 250, 249, 0.92), rgba(241, 248, 244, 0.72)); padding: 6px 4px 5px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; overflow: hidden; animation: careBehaviorPulse 1.2s ease-in-out infinite; }
+.care-behavior-timeline {
+  margin: 0 0 10px;
+  padding: 0;
+}
+.care-behavior-error-banner {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(45, 122, 79, 0.15);
+  background: rgba(248, 250, 249, 0.96);
+}
+.care-behavior-error-text {
+  display: block;
+  font-size: 12px;
+  line-height: 18px;
+  color: #5a7a68;
+}
+.care-behavior-weekday-header {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+  margin: 0 0 2px;
+}
+.care-behavior-weekday-item {
+  text-align: center;
+  color: #5a7a68;
+  font-size: 12px;
+  line-height: 16px;
+}
+.care-behavior-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+.care-behavior-grid-skeleton {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+.care-behavior-skeleton-cell {
+  box-sizing: border-box;
+  height: 75px;
+  border-radius: 12px;
+  border: 1px solid rgba(45, 122, 79, 0.12);
+  background: linear-gradient(
+    90deg,
+    rgba(241, 248, 244, 0.72),
+    rgba(248, 250, 249, 0.92),
+    rgba(241, 248, 244, 0.72)
+  );
+  padding: 6px 4px 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
+  animation: careBehaviorPulse 1.2s ease-in-out infinite;
+}
 .care-behavior-skeleton-day,
 .care-behavior-skeleton-metric,
-.care-behavior-skeleton-dot { background: rgba(90, 122, 104, 0.14); }
-.care-behavior-skeleton-day { width: 16px; height: 10px; border-radius: 999px; }
-.care-behavior-skeleton-metric { width: 26px; height: 7px; border-radius: 999px; }
-.care-behavior-skeleton-metric--two { width: 22px; }
-.care-behavior-skeleton-dot-row { display: flex; align-items: center; gap: 3px; padding: 0; background: transparent; }
-.care-behavior-skeleton-dot { width: 6px; height: 6px; border-radius: 50%; }
-.care-behavior-cell { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 6px 2px 5px; height: 75px; border-radius: 12px; border: 1px solid rgba(45, 122, 79, 0.15); background: #ffffff; overflow: hidden; }
-.care-behavior-cell--selected { border: 2px solid #2d7a4f; background: rgba(45, 122, 79, 0.05); box-shadow: 0 0 0 1px rgba(45, 122, 79, 0.06) inset; }
-.care-behavior-cell--focused { border: 2px solid #2d7a4f; background: rgba(45, 122, 79, 0.05); box-shadow: 0 0 0 1px rgba(45, 122, 79, 0.05) inset; }
-.care-behavior-cell--today { border: 2px solid #2d7a4f; background: rgba(45, 122, 79, 0.05); box-shadow: 0 0 0 1px rgba(45, 122, 79, 0.05) inset; }
-.care-behavior-cell--selected.care-behavior-cell--today { background: rgba(45, 122, 79, 0.05); }
+.care-behavior-skeleton-dot {
+  background: rgba(90, 122, 104, 0.14);
+}
+.care-behavior-skeleton-day {
+  width: 16px;
+  height: 10px;
+  border-radius: 999px;
+}
+.care-behavior-skeleton-metric {
+  width: 26px;
+  height: 7px;
+  border-radius: 999px;
+}
+.care-behavior-skeleton-metric--two {
+  width: 22px;
+}
+.care-behavior-skeleton-dot-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  background: transparent;
+}
+.care-behavior-skeleton-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.care-behavior-cell {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 2px 5px;
+  height: 75px;
+  border-radius: 12px;
+  border: 1px solid rgba(45, 122, 79, 0.15);
+  background: #ffffff;
+  overflow: hidden;
+}
+.care-behavior-cell--selected {
+  border: 2px solid #2d7a4f;
+  background: rgba(45, 122, 79, 0.05);
+  box-shadow: 0 0 0 1px rgba(45, 122, 79, 0.06) inset;
+}
 .care-behavior-cell--historical,
-.care-behavior-cell--future { background: rgba(241, 248, 244, 0.5); border-color: rgba(45, 122, 79, 0.08); opacity: .5; }
+.care-behavior-cell--future {
+  background: rgba(241, 248, 244, 0.5);
+  border-color: rgba(45, 122, 79, 0.08);
+  opacity: 0.5;
+}
 .care-behavior-cell--selected.care-behavior-cell--historical,
-.care-behavior-cell--selected.care-behavior-cell--future { opacity: 1; border-color: rgba(45, 122, 79, 0.32); background: rgba(45, 122, 79, 0.035); }
-.care-behavior-cell--locked { cursor: default; }
-.care-behavior-cell--selectable { cursor: pointer; }
-.care-behavior-day-wrap { display: flex; align-items: center; justify-content: center; gap: 2px; min-height: 16px; }
-.care-behavior-day { font-size: 14px; color: #0f172a; font-weight: 500; line-height: 1.1; }
-.care-behavior-cell--today .care-behavior-day { color: #2d7a4f; }
-.care-behavior-day-mark { font-size: 9px; color: #5a7a68; background: rgba(90, 122, 104, 0.08); padding: 1px 3px; border-radius: 999px; line-height: 1.2; }
-.care-behavior-metric-icon-stem { position: absolute; left: 4px; top: 0; width: 2px; height: 7px; border-radius: 999px; background: currentColor; }
-.care-behavior-metric-icon-bulb { position: absolute; left: 1.5px; bottom: 0; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.78) inset; }
-.care-behavior-metric-icon-drop { position: absolute; left: 1.5px; top: 0; width: 7px; height: 9px; background: currentColor; border-radius: 60% 60% 60% 0; transform: rotate(45deg); transform-origin: center; }
+.care-behavior-cell--selected.care-behavior-cell--future {
+  opacity: 1;
+  border-color: rgba(45, 122, 79, 0.32);
+  background: rgba(45, 122, 79, 0.035);
+}
+.care-behavior-cell--locked {
+  cursor: default;
+}
+.care-behavior-cell--selectable {
+  cursor: pointer;
+}
+.care-behavior-day-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 16px;
+}
+.care-behavior-day {
+  font-size: 14px;
+  color: #0f172a;
+  font-weight: 500;
+  line-height: 1.1;
+}
+.care-behavior-day--today {
+  color: #ef4444;
+  font-weight: 700;
+}
+.care-behavior-metric-icon {
+  position: relative;
+}
+.care-behavior-metric-icon-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
 .care-behavior-cell--historical .care-behavior-day,
 .care-behavior-cell--future .care-behavior-day,
 .care-behavior-cell--historical .care-behavior-metric-value,
-.care-behavior-cell--future .care-behavior-metric-value { color: #6b7f74; }
-.care-behavior-dot-row { display: flex; align-items: center; justify-content: center; gap: 3px; min-height: 10px; }
-.care-behavior-marker { width: 8px; height: 8px; display: flex; align-items: center; justify-content: center; }
-.care-behavior-dot { width: 6px; height: 6px; border-radius: 50%; background: #2563eb; }
-.care-behavior-dot--water { background: #2b7fff; }
-.care-behavior-dot--fertilize { background: #fe9a00; }
-.care-behavior-dot--light { background: #22c55e; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.74) inset; }
-.care-behavior-detail-popover-arrow { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 5px solid #ffffff; filter: drop-shadow(0 -1px 1px rgba(45, 122, 79, 0.08)); }
-.care-behavior-legend { margin-top: 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 16px; justify-content: flex-end; }
-.care-behavior-legend-item { display: flex; align-items: center; gap: 2px; font-size: 12px; color: #5a7a68; line-height: 1.25; }
-.care-behavior-legend-dot { width: 6px; height: 6px; border-radius: 50%; }
-.care-behavior-legend-dot.care-behavior-dot--water { background: #2b7fff; }
-.care-behavior-legend-dot.care-behavior-dot--fertilize { background: #fe9a00; }
+.care-behavior-cell--future .care-behavior-metric-value {
+  color: #6b7f74;
+}
+.care-behavior-dot-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 10px;
+}
+.care-behavior-marker {
+  width: 8px;
+  height: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.care-behavior-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2563eb;
+}
+.care-behavior-dot--water {
+  background: #2b7fff;
+}
+.care-behavior-dot--fertilize {
+  background: #fe9a00;
+}
+.care-behavior-dot--light {
+  background: #22c55e;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.74) inset;
+}
+.care-behavior-detail-popover-arrow {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 5px solid #ffffff;
+  filter: drop-shadow(0 -1px 1px rgba(45, 122, 79, 0.08));
+}
+.care-behavior-legend {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: flex-end;
+}
+.care-behavior-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  color: #5a7a68;
+  line-height: 1.25;
+}
+.care-behavior-legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.care-behavior-legend-dot.care-behavior-dot--water {
+  background: #2b7fff;
+}
+.care-behavior-legend-dot.care-behavior-dot--fertilize {
+  background: #fe9a00;
+}
 
 @keyframes careBehaviorPulse {
   0%,
-  100% { opacity: .72; }
-  50% { opacity: 1; }
+  100% {
+    opacity: 0.72;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 </style>

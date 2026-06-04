@@ -8,6 +8,14 @@
 
 同一个验收目标不得由 `main agent`、implementer、QA 重复完整执行。
 
+若任一角色出现 `Transport closed` / `session` 异常，必须共享调用同一恢复手册：
+
+```text
+.codex/skills/wechat-mcp-transport-recovery/SKILL.md
+```
+
+无论是 implementer 还是 QA，`tool_session_blocker` 与 `recovered` 的判定语义必须一致。
+
 默认分工：
 
 | 角色 | 是否直接执行 WeChat DevTools MCP | 责任 |

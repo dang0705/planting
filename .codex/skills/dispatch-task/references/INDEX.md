@@ -23,6 +23,7 @@
 | Phase 3 | role_context_packets | `role-context-packets.md` |
 | Phase 4 | Solution Discovery、Implementation Contract、Test Contract、`main agent` 质量门禁 | `solution-discovery-gate.md` / `implementation-test-contract.md` / `main-agent-quality-gates.md` |
 | Phase 4.45 | pre-implementation token 预算保险丝 | `pre-implementation-budget-fuse.md` |
+| Phase 4.5 | `main agent` 硬质量门禁、文件大小阻断、gate receipt | `main-agent-quality-gates.md` / `../scripts/check-main-agent-quality-gates.mjs` |
 | Phase 6 | QA 证据、日志、截图、失败归因 | `qa-evidence-policy.md` |
 | Phase 6 | WeChat DevTools 自动化职责分配 | `wechat-devtools-automation-policy.md` |
 | Phase 6 / Recovery | WeChat MCP `Transport closed`、automator 恢复、fallback 直连 | `.codex/skills/wechat-mcp-transport-recovery/SKILL.md` |

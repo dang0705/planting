@@ -1,6 +1,6 @@
 ---
 name: dispatch-task
-description: "通用任务调度入口：按 phase 执行硬门禁、Agent Assignment、role_context_packets、Implementation/Test Contract、QA、ClickUp 回写和 Git commit；ClickUp ticket 可选。"
+description: '通用任务调度入口：按 phase 执行硬门禁、Agent Assignment、role_context_packets、Implementation/Test Contract、QA、ClickUp 回写和 Git commit；ClickUp ticket 可选。'
 ---
 
 # Dispatch Task Skill
@@ -100,6 +100,8 @@ $figma-ui-implementation-policy
 $ui-implementation-scope-policy
 ```
 
+`main agent` 与 `Code Explorer` 仅传递 `Figma Design Facts Lite`、`Technical Scope Slice`、`QA Visual Baseline Slice` 与 `Figma Drilldown Request`。不得默认注入完整 `get_design_context` 或完整 `Figma Node Drilldown` 结果给 implementer。
+
 ## 6. Phase 2：Agent Assignment
 
 读取：
@@ -163,7 +165,28 @@ references/pre-implementation-budget-fuse.md
 正式进入 implementation 前必须估算 pre-implementation token 风险。  
 风险为 high / extreme 时，必须压缩 facts、减少候选、推迟完整 Figma Drilldown，并使用 Gate Receipt。
 
-## 10. Phase 5：Subagent 执行
+## 10. Phase 4.5：Main Agent Quality Gates
+
+读取：
+
+```text
+references/main-agent-quality-gates.md
+```
+
+Main Agent Quality Gates 是硬门禁，不是建议项：
+
+1. 每个 gate 必须输出 receipt；缺 receipt 等同 fail。
+2. `continue_allowed` / `continueAllowed` 不是 true 时不得进入下一 phase。
+3. Technical Direction Gate 和 Main Agent Code Review Gate 必须运行：
+
+```js
+node .codex/skills/dispatch-task/scripts/check-main-agent-quality-gates.mjs --files=<implementation_contract_files_csv>
+node .codex/skills/dispatch-task/scripts/check-main-agent-quality-gates.mjs --changed
+```
+
+4. 单文件超过 500 行时必须 fail 并转为拆模块；不得继续派发普通实现或进入 QA。
+
+## 11. Phase 5：Subagent 执行
 
 执行顺序：
 
@@ -181,7 +204,7 @@ references/pre-implementation-budget-fuse.md
 2. findings 必须转回同一 implementer 线程。
 3. implementer 修复后重新 review / QA。
 
-## 11. Phase 6：QA 与证据
+## 12. Phase 6：QA 与证据
 
 读取：
 
@@ -192,7 +215,7 @@ references/qa-evidence-policy.md
 QA 不审代码 diff，不做 code review。  
 QA 输出必须摘要化，禁止粘贴完整日志、完整 DevTools dump、完整截图 OCR。
 
-## 12. Phase 7：ClickUp 回写与 Git commit
+## 13. Phase 7：ClickUp 回写与 Git commit
 
 ClickUp 模式下，读取：
 
@@ -209,15 +232,16 @@ references/git-completion-policy.md
 ClickUp 描述区 markdown checklist 通过项必须通过 ClickUp MCP 整体更新 markdown_description，将原始行 `[ ]` 改为 `[x]`；禁止用 emoji、图标、评论或新增文字替代。  
 任务完成后必须 commit 本轮范围内变更，除非存在明确阻塞原因。
 
-## 13. Figma Drilldown 与 UI 自测
+## 14. Figma Drilldown 与 UI 自测
 
 Figma Drilldown 默认由 implementer 在 implementation 阶段按 request 读取。  
-`main agent` pre-implementation 阶段默认只保留 Drilldown Request 和 QA Visual Baseline Slice。
+`main agent` pre-implementation 阶段默认只保留 Drilldown Request 和 QA Visual Baseline Slice。  
+默认不在 role_context_packet 中传递完整 Drilldown JSON；如需完整 Drilldown，必须由 implementer 触发执行并返回 scoped 摘要。
 
 如果 implementer packet 包含 `Figma Design Facts Lite`、`Figma Drilldown Request` 或 `UI implementation required`，implementer 必须做 UI / 交互自测；涉及微信小程序可见路径时必须尝试 WeChat DevTools MCP。  
 自测不替代 QA。
 
-## 14. 输出模板
+## 15. 输出模板
 
 本 skill 不内联完整模板。使用以下模板文件：
 
@@ -232,7 +256,7 @@ assets/templates/ui-self-check.md
 assets/templates/qa-evidence.md
 ```
 
-## 15. 禁止事项
+## 16. 禁止事项
 
 1. 禁止跳过 Phase 0。
 2. 禁止把无 ClickUp ticket 的任务强行终止；应进入 prompt_only 模式。
@@ -244,13 +268,11 @@ assets/templates/qa-evidence.md
 8. 禁止把完整 Figma / ClickUp / 日志广播给所有 agent。
 9. 禁止在本 skill 或 references 中追加版本号章节；补丁必须整合进既有章节结构。
 
-
 ## very_dirty 自动快照提交
 
 如果任务开始前 Git 工作区为 very_dirty，`main agent` 必须先创建任务前 dirty snapshot commit。无需用户确认。
 
 commit message 必须根据当前脏改动内容生成，精炼且不超过 50 个字符。任务完成后的最终 commit message 同样不超过 50 个字符。
-
 
 ## Completion Gate
 
@@ -264,7 +286,6 @@ references/completion-gate.md
 
 如果验收要求小程序实际交互，QA 必须执行 WeChat DevTools MCP 自动化或端上验证；不能只做 MCP 连接能力验证。
 
-
 ## Subagent 进度观察
 
 `main agent` 等待 subagent 时，读取：
@@ -274,7 +295,6 @@ references/subagent-progress-policy.md
 ```
 
 默认采用低成本观察，不得频繁中断 subagent。超过等待阈值后，只能请求简短 Progress Receipt。
-
 
 ## WeChat DevTools 自动化职责
 

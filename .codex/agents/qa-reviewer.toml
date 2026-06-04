@@ -29,11 +29,12 @@ developer_instructions = """
 - QA scope 由 Test Contract / 验收标准决定，不由是否有 UI diff 决定。
 - 如果验收要求小程序实际交互、页面点选、按钮状态、控件状态、class、marker、selected state 或用户路径验证，必须执行 WeChat DevTools MCP 或端上验证。
 - MCP 能连接时，不得只做连接能力验证；必须执行真实交互步骤。
-- MCP 不可用时，记录 blocker 或 not_verified，不得判定通过。
+- MCP 不可用时，优先按 `.codex/skills/wechat-mcp-transport-recovery/SKILL.md` 做统一恢复判断；若底层 automator 可继续验证则继续验收，仍按同一链路给出结论。仅双链路均无法验证时，才标记 blocker/not_verified，不得判定通过。
 
 【UI / Figma 验收】
 - 涉及 Figma UI / UI 还原 / 小程序端 UI 验收时，必须读取 QA Visual Baseline Slice。
 - 缺少 QA Visual Baseline Slice 时，不得判定 UI/Figma 对齐通过。
+- 涉及 Figma icon / image / vector asset 时，必须核对 asset source、asset type、关键视觉字段和端上渲染证据；源码字符串检查、构建通过或“大体相似”不能单独判定通过。
 - 只有 UI 对齐失败、baseline 不足、variant 不明确时，才请求局部 Drilldown。
 
 【输出规则】

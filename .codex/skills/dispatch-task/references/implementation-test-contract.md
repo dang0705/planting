@@ -25,6 +25,19 @@
 
 禁止输出完整 patch、完整规则长文、完整 Figma Drilldown。
 
+文件级改动计划必须可被 Main Agent Quality Gates 直接消费：
+
+```text
+file_size_gate_files:
+- path:
+- expected_operation: create / update / split / delete
+- current_line_count:
+- projected_line_risk: under_400 / over_400_warning / over_500_blocking / unknown
+- split_required: true / false
+```
+
+`projected_line_risk=over_500_blocking` 或既有文件 `current_line_count > 500` 时，Implementation Contract 不得进入普通实现；必须先把任务改成拆模块或收敛文件的实现计划。
+
 ## Test Contract
 
 `main agent` 必须基于 prompt 验收标准或 ClickUp Acceptance Checklist Matrix / Test Case Base 生成 Test Contract。
@@ -34,3 +47,9 @@ QA 负责执行与取证，不负责设计测试契约。
 ## Contract 完整性
 
 Implementation Contract 输出后，必须通过 `main-agent-quality-gates.md` 中的 Implementation Contract Completeness Gate，否则不得派发 implementer。
+
+Contract Completeness Gate 必须核对：
+
+1. `file_size_gate_files` 已覆盖所有计划修改文件。
+2. 已执行 `check-main-agent-quality-gates.mjs --files=<implementation_contract_files_csv>`。
+3. gate receipt 中 `continue_allowed=true`。

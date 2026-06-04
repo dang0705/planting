@@ -110,6 +110,9 @@ test('forecast summary computes UV risk counts from daily records', () => {
   assert.equal(withoutExposure.aboveGenusUvMaxDays, 0)
   assert.equal(summary.windowDays, 15)
   assert.equal(summary.hotDryDays, 3)
+  assert.equal(summary.maxConsecutiveHotDryDays, 3)
+  assert.equal(summary.thresholds.humidityMinPercent, 40)
+  assert.equal(summary.thresholds.temperatureMaxC, 29)
   assert.equal(summary.maxUvIndex, 9)
   assert.equal(summary.aboveGenusUvMaxDays, 3)
 })
@@ -171,6 +174,11 @@ test('watering planner returns wet, dry and baseline contexts', () => {
   assert.deepEqual(wetPlan.baseline.intervalDays, [4, 8])
   assert.equal(wetPlan.wateringContext, WATERING_CONTEXTS.WET)
   assert.equal(wetPlan.action, WATERING_ACTIONS.WET)
+  assert.equal(wetPlan.thresholds.wetHighHumidityDaysMin, 4)
+  assert.equal(
+    wetPlan.calculation.formulas.find(item => item.key === 'too_wet_gate').passed,
+    true
+  )
 
   const dryTimeline = normalizeCareBehaviorTimeline({
     referenceDate: '2026-05-27',
@@ -211,6 +219,53 @@ test('watering planner returns wet, dry and baseline contexts', () => {
   assert.equal(baselinePlan.action, WATERING_ACTIONS.BASELINE)
 })
 
+test('watering planner thresholds are configurable and included in formula trace', () => {
+  const timeline = normalizeCareBehaviorTimeline({
+    referenceDate: '2026-05-27',
+    wateringEvents10d: [
+      { date: '2026-05-26', watered: true, amount: 'normal' },
+      { date: '2026-05-24', watered: true, amount: 'normal' }
+    ]
+  })
+  const defaultPlan = buildWateringPlanner({
+    wateringStrategy: { freq: [5, 8] },
+    historical: {
+      highHumidityDays: 4,
+      maxConsecutiveHighHumidityDays: 4,
+      coldHumidDays: 0,
+      rainyDays: 0
+    },
+    forecast: {},
+    behaviorTimeline: timeline
+  })
+  const relaxedPlan = buildWateringPlanner({
+    wateringStrategy: { freq: [5, 8] },
+    historical: {
+      highHumidityDays: 4,
+      maxConsecutiveHighHumidityDays: 4,
+      coldHumidDays: 0,
+      rainyDays: 0
+    },
+    forecast: {},
+    behaviorTimeline: timeline,
+    thresholds: {
+      watering: {
+        wetHighHumidityDaysMin: 99,
+        wetHighHumidityConsecutiveDaysMin: 99
+      }
+    }
+  })
+
+  assert.equal(defaultPlan.wateringContext, WATERING_CONTEXTS.WET)
+  assert.equal(relaxedPlan.wateringContext, WATERING_CONTEXTS.BASELINE)
+  assert.equal(relaxedPlan.thresholds.wetHighHumidityDaysMin, 99)
+  assert.equal(relaxedPlan.calculation.formulaVersion, 'watering_planner_v7_configurable')
+  assert.equal(
+    relaxedPlan.calculation.formulas.find(item => item.key === 'wet_pressure_score').result,
+    0
+  )
+})
+
 test('fertilizing planner does not depend on weather inputs and keeps the fixed baseline', () => {
   assert.equal(buildFertilizingPlanner.length, 0)
 
@@ -241,6 +296,11 @@ test('fertilizing planner does not depend on weather inputs and keeps the fixed 
   assert.equal(plan.baseline.fertilizerType, 'thin_liquid_fertilizer')
   assert.equal(plan.action, FERTILIZING_ACTIONS.THIN_AFTER_DUE)
   assert.equal(plan.lastFertilizedBucket, '31_60d')
+  assert.equal(plan.calculation.formulaVersion, 'fertilizing_planner_v7_configurable')
+  assert.equal(
+    plan.calculation.formulas.find(item => item.key === 'thin_after_due_gate').passed,
+    true
+  )
 })
 
 test('light planner requires a real exposure scene and does not match UV-only input', () => {
@@ -341,6 +401,9 @@ test('environment builder preserves behavior summary and combines direct sun wit
 
   assert.equal(context.behaviorSummary10d.userHasDirectSunExposure, true)
   assert.equal(context.historicalSummary10d.aboveGenusUvMaxDays, 2)
+  assert.equal(context.thresholds.version, 'care_planner_thresholds_v1')
+  assert.equal(context.calculationTrace.watering.formulaVersion, 'watering_planner_v7_configurable')
+  assert.equal(context.calculationTrace.fertilizing.formulaVersion, 'fertilizing_planner_v7_configurable')
   assert.ok(context.outputs.lightContext.includes(LIGHT_CONTEXTS.EXCESS_LIGHT_OR_SUNBURN_RISK))
 })
 

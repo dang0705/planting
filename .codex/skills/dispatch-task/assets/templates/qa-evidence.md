@@ -17,6 +17,13 @@ QA Result:
   - ui_figma:
   - wechat_devtools:
   - manual:
+- asset_fidelity:
+  - asset_source:
+  - asset_type:
+  - expected_key_props:
+  - actual_render_evidence:
+  - forbidden_substitute_absent:
+  - result:
 - evidence:
   - commands:
   - screenshots:

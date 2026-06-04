@@ -43,7 +43,32 @@ required_skill: $qa-ui-visual-baseline-policy
 
 如果 Figma Drilldown 需要在开发阶段读取，implementer packet 只传 request，不传完整 Drilldown。
 
+如果 Figma Drilldown / Implementation Slice 中存在 icon / image / vector asset、`imgIcon` / `img*` 或 asset URL，implementer packet 必须包含：
+
+```text
+Figma Drilldown Request.asset_nodes:
+- node_id:
+- name:
+- asset_source:
+- asset_type:
+- exact_source_required: yes / no
+- key_props_to_verify:
+- forbidden_substitutes:
+```
+
 如果涉及 Figma UI 验收，QA packet 必须包含 QA Visual Baseline Slice 和 reference screenshot，不得包含完整 Figma Node Drilldown。
+
+如果涉及 Figma asset / icon / image 对齐，QA packet 必须包含：
+
+```text
+QA Visual Baseline Slice.asset_fidelity_checks:
+- asset_source:
+- asset_type:
+- expected_visual:
+- expected_key_props:
+- forbidden_substitutes:
+- actual_evidence_required:
+```
 
 
 ## 自动化职责切片
@@ -55,6 +80,8 @@ automation_owner:
 - formal_qa_owner: qa_reviewer
 - implementer_self_check_required: yes / no
 - duplicate_automation_forbidden: true
+- wechat_recovery_skill: $wechat-mcp-transport-recovery
+- wechat_recovery_required: yes / no
 ```
 
 implementer packet 只包含最小自测范围。QA packet 包含正式自动化范围。

@@ -17,6 +17,12 @@ Implementer Result:
   - wechat_devtools_used:
   - result:
   - evidence_ref:
+- figma_asset_mapping:
+  - asset_source:
+  - asset_type:
+  - key_props_checked:
+  - implementation_ref:
+  - substitution_used:
 - review_handoff:
   - focus:
   - risk:

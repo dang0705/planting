@@ -99,6 +99,12 @@ function compactEnvironmentSummary(summary = null) {
     hotDryDays: Number(summary.hotDryDays || 0),
     hotHumidDays: Number(summary.hotHumidDays || 0),
     rainyDays: Number(summary.rainyDays || 0),
+    maxConsecutiveHighHumidityDays: Number(summary.maxConsecutiveHighHumidityDays || 0),
+    maxConsecutiveLowHumidityDays: Number(summary.maxConsecutiveLowHumidityDays || 0),
+    maxConsecutiveColdHumidDays: Number(summary.maxConsecutiveColdHumidDays || 0),
+    maxConsecutiveHotDryDays: Number(summary.maxConsecutiveHotDryDays || 0),
+    maxConsecutiveRainyDays: Number(summary.maxConsecutiveRainyDays || 0),
+    thresholds: isPlainObject(summary.thresholds) ? summary.thresholds : null,
     ...(summary.maxUvIndex === null || summary.maxUvIndex === undefined
       ? {}
       : { maxUvIndex: Number(summary.maxUvIndex) }),
@@ -117,6 +123,8 @@ function compactWateringPlanner(value = null) {
     reasons: Array.isArray(value.reasons)
       ? value.reasons.map(item => String(item || '').trim()).filter(Boolean)
       : [],
+    thresholds: isPlainObject(value.thresholds) ? value.thresholds : null,
+    calculation: isPlainObject(value.calculation) ? value.calculation : null,
     summary: compactCareBehaviorSummary(value.summary)
   }
 }
@@ -129,7 +137,9 @@ function compactFertilizingPlanner(value = null) {
     lastFertilizedBucket: String(value.lastFertilizedBucket || '').trim(),
     reasons: Array.isArray(value.reasons)
       ? value.reasons.map(item => String(item || '').trim()).filter(Boolean)
-      : []
+      : [],
+    thresholds: isPlainObject(value.thresholds) ? value.thresholds : null,
+    calculation: isPlainObject(value.calculation) ? value.calculation : null
   }
 }
 
@@ -204,9 +214,11 @@ function compactEnvironmentCareContextForPublic(value = null, careBehaviorTimeli
     behaviorSummary10d: compactCareBehaviorSummary(value.behaviorSummary10d),
     historicalSummary10d: compactEnvironmentSummary(value.historicalSummary10d),
     forecastSummary15d: compactEnvironmentSummary(value.forecastSummary15d),
+    thresholds: isPlainObject(value.thresholds) ? value.thresholds : null,
     watering: compactWateringPlanner(value.watering),
     fertilizing: compactFertilizingPlanner(value.fertilizing),
     light: compactLightPlanner(value.light),
+    calculationTrace: isPlainObject(value.calculationTrace) ? value.calculationTrace : null,
     ...(compactTimeline ? { careBehaviorTimeline: compactTimeline } : {})
   }
 }

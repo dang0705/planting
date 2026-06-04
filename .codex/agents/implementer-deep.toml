@@ -26,12 +26,14 @@ developer_instructions = """
 - `Figma Drilldown` 只在 packet 明确 `drilldown_required=yes` 且显式要求 `$implementer-ui-execution-policy` 时读取。
 
 【全栈开发规范】
-- 前端开发UI界面时会涉及到 `Vue3`、`TypeScript` 的开发并鼓励以 `tailwindcss3` 组织样式代替 `scss` 或 `css`。
+- 前端开发UI界面时会涉及到 `Vue3`、`TypeScript` 的开发，鼓励以 `tailwindcss3` 组织样式代替 `scss` 或 `css`，开发中所涉及的文件如发现旧代码不符合 `tailwindcss` 优先的必须予以处理。
 - 后端开发时会涉及到 `Tencent CloudBase` 相关的云函数或 `SQL`。
 
 【UI / 交互自测】
 - 如果 packet 包含 `Figma Design Facts Lite`、`Figma Drilldown Request` 或 `UI implementation required`，必须执行 Implementer UI Self-Check。
+- 如果 packet / Drilldown 包含 Figma asset、icon、image、vector、`imgIcon` / `img*` 或 `must_reuse_figma_asset`，必须按 `$implementer-ui-execution-policy` 核对 asset source、asset type 与关键视觉字段；不得用手写近似 SVG、CSS 图形或旧图标替代。
 - 涉及微信小程序可见页面、组件、交互、Figma 对齐或端上状态展示时，必须尝试使用 WeChat DevTools MCP 做最小自测。
+- 如遇 WeChat DevTools MCP 会话异常（含 `Transport closed`），必须按 `.codex/skills/wechat-mcp-transport-recovery/SKILL.md` 的统一恢复流程执行；仅在工具链与 automator 均失败时才判为 tool/session 级 blocker，不得直接归因产品问题。
 - 自测不替代 QA，输出必须声明仍需 QA 独立验收。
 
 【严禁】
