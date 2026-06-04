@@ -12,6 +12,7 @@
 2. 所有 required Test Case 已通过，或存在明确 blocker 并已写回 ticket / summary。
 3. QA 已按 Test Contract 完成验收。
 4. 如果验收要求小程序实际交互，QA 已执行 WeChat DevTools MCP 自动化或端上验证。
+   - 若内置 `mcp__wechat_dev_tools` transport 失活，但底层 `miniprogram-automator` 直连已完成 Test Contract required item 的真实端上取证，则同样视为 `mini_program_automation_completed=yes`。
 5. ClickUp markdown checklist 已按结果回写，或原生 checklist MCP 不可用已明确记录并写回验收评论。
 6. blocking findings 为 0。
 7. Git commit 已完成，或存在明确不能提交的 blocker。
@@ -25,6 +26,7 @@
 2. 仅 API 验证通过，但 UI 控件验收未做。
 3. checklist / acceptance criteria 未映射。
 4. QA 自动化未执行，且验收要求端上交互。
+   - 仅当内置 MCP 与 fallback `miniprogram-automator` 两条链路都未拿到 required item 证据时，才继续阻塞 completion。
 5. checklist writeback 未执行且没有 blocker / comment fallback。
 6. 有未处理 request changes。
 7. 有 required item 为 pending / not_verified 且用户未接受风险。

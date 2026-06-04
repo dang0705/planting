@@ -78,6 +78,33 @@ QA 是正式自动化验收 owner。
 
 该规则适用于主线程与 QA 线程的连接能力不一致场景。
 
+## 内置 MCP transport 失活时的 fallback
+
+当内置 `mcp__wechat_dev_tools` transport 持续失活，但已满足以下条件时：
+
+1. `9420` 已监听。
+2. 原始 WebSocket 握手成功。
+3. `miniprogram-automator` 可直接连接并操作当前小程序项目。
+
+则必须将其归类为：
+
+```text
+tool_session_blocker
+```
+
+而不是产品 blocker。
+
+在这种情况下：
+
+1. 允许 main agent 或 QA 在同一线程改走底层 `miniprogram-automator` 直连继续端上验收。
+2. 只要直连链路拿到的证据满足 Test Contract required item，该证据视为有效端上证据。
+3. 不得仅因内置 MCP transport 不可用而把任务长期 blocked。
+4. 输出中必须明确区分：
+   - `built_in_mcp_transport=failed`
+   - `fallback_automator=used`
+   - `classification=tool_session_blocker` / `recovered`
+5. 若底层 automator 也无法连接，才升级为真正的 `devtools_automator_blocker`。
+
 ## 输出预算
 
 自动化输出不得粘贴完整 DevTools dump。只记录操作步骤摘要、关键断言、通过 / 失败状态、证据路径或截图引用、失败归因。

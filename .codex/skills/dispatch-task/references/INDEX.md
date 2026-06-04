@@ -25,6 +25,7 @@
 | Phase 4.45 | pre-implementation token 预算保险丝 | `pre-implementation-budget-fuse.md` |
 | Phase 6 | QA 证据、日志、截图、失败归因 | `qa-evidence-policy.md` |
 | Phase 6 | WeChat DevTools 自动化职责分配 | `wechat-devtools-automation-policy.md` |
+| Phase 6 / Recovery | WeChat MCP `Transport closed`、automator 恢复、fallback 直连 | `.codex/skills/wechat-mcp-transport-recovery/SKILL.md` |
 | Phase 7 | Git 工作区、very_dirty、commit | `git-completion-policy.md` |
 | Completion | 最终完成 / Done / 停止门禁 | `completion-gate.md` |
 | Review | diff-first + dependency-context-limited、QA 不审 diff | `review-scope-policy.md` |
@@ -66,6 +67,20 @@ Figma / UI 细则不在本目录内，仍由对应 skill 管理：
 .codex/skills/qa-ui-visual-baseline-policy/SKILL.md
 ```
 
+## WeChat MCP 恢复路由
+
+当 `dispatch-task` 自动化测试过程中任一阶段出现以下问题时，优先路由到：
+
+```text
+.codex/skills/wechat-mcp-transport-recovery/SKILL.md
+```
+
+触发信号：
+
+1. `mcp__wechat_dev_tools.*` 返回 `Transport closed`。
+2. main / QA 线程对同一 `projectPath` 的 WeChat MCP 连接能力不一致。
+3. 需要判断是 Codex 内置 MCP transport 失活、DevTools/automator 未启动，还是产品页面问题。
+4. 需要在不更换线程的前提下继续完成小程序端上验收。
 
 ## Subagent 进度观察
 

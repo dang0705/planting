@@ -1,13 +1,5 @@
 <template>
   <view id="diagnose-followup-page" class="follow-up-page">
-    <view class="followup-topbar">
-      <view class="followup-topbar-back" @click="goBack">
-        <text class="followup-topbar-back-icon">‹</text>
-      </view>
-      <text class="followup-topbar-title">继续诊断</text>
-      <view class="followup-topbar-back followup-topbar-back--placeholder" aria-hidden="true" />
-    </view>
-
     <template v-if="result?.followUpRequired && followUpQuestionStack.length">
       <view class="followup-page-body">
         <view class="followup-fixed-context">

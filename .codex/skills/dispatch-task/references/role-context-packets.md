@@ -58,3 +58,15 @@ automation_owner:
 ```
 
 implementer packet 只包含最小自测范围。QA packet 包含正式自动化范围。
+
+
+## 输出模板引用
+
+每个 role_context_packet 必须传递 `template_ref`。subagent 不在自身 agent 配置中定义大段输出模板。
+
+默认映射：
+
+- code_explorer：`assets/templates/code-explorer-result.md`
+- implementer：`assets/templates/implementer-result.md`
+- QA：`assets/templates/qa-evidence.md`
+- docs：`assets/templates/docs-result.md`
