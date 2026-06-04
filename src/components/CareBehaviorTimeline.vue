@@ -7,7 +7,7 @@
       <text class="care-behavior-error-text">{{ loadingErrorText }}</text>
     </view>
 
-    <view class="care-behavior-calendar-card">
+    <view class="care-behavior-calendar-card relative box-border min-h-[363px] rounded-xl border border-[rgba(45,122,79,0.15)] bg-white p-5 shadow-[0_1px_0_rgba(45,122,79,0.02)]">
       <view class="care-behavior-weekday-header">
         <text
           v-for="day in weekLabels"
@@ -16,7 +16,7 @@
         >{{ day }}</text>
       </view>
 
-      <view class="care-behavior-grid-stage">
+      <view class="care-behavior-grid-stage relative overflow-visible pb-[116px]">
         <view v-if="showLoadingSkeleton" class="care-behavior-grid-skeleton" aria-hidden="true">
           <view v-for="item in skeletonCellItems" :key="item" class="care-behavior-skeleton-cell">
             <view class="care-behavior-skeleton-day" />
@@ -51,23 +51,23 @@
               <text v-if="item.isToday" class="care-behavior-day-mark">今天</text>
             </view>
 
-            <view class="care-behavior-metrics" :class="{ 'care-behavior-metrics--empty': !item.hasWeatherMetrics }">
+            <view class="care-behavior-metrics flex h-[30px] w-full flex-col justify-center gap-0 overflow-hidden">
               <template v-if="item.hasWeatherMetrics">
-                <view v-if="item.temperatureText" class="care-behavior-metric">
-                  <view class="care-behavior-metric-icon care-behavior-metric-icon--temp" aria-hidden="true">
+                <view v-if="item.temperatureText" class="care-behavior-metric flex h-[15px] min-w-0 items-center justify-center gap-0.5 overflow-hidden leading-[15px]">
+                  <view class="care-behavior-metric-icon care-behavior-metric-icon--temp relative h-[10px] w-[10px] shrink-0 text-[#5a7a68]" aria-hidden="true">
                     <view class="care-behavior-metric-icon-stem" />
                     <view class="care-behavior-metric-icon-bulb" />
                   </view>
-                  <text class="care-behavior-metric-value">{{ item.temperatureDisplayText }}</text>
+                  <text class="care-behavior-metric-value min-w-0 max-w-[28px] shrink overflow-hidden whitespace-nowrap text-[10px] font-medium leading-[15px] text-[#5a7a68]">{{ item.temperatureDisplayText }}</text>
                 </view>
-                <view v-if="item.humidityText" class="care-behavior-metric">
-                  <view class="care-behavior-metric-icon care-behavior-metric-icon--humidity" aria-hidden="true">
+                <view v-if="item.humidityText" class="care-behavior-metric flex h-[15px] min-w-0 items-center justify-center gap-0.5 overflow-hidden leading-[15px]">
+                  <view class="care-behavior-metric-icon care-behavior-metric-icon--humidity relative h-[10px] w-[10px] shrink-0 text-[#5a7a68]" aria-hidden="true">
                     <view class="care-behavior-metric-icon-drop" />
                   </view>
-                  <text class="care-behavior-metric-value">{{ item.humidityDisplayText }}</text>
+                  <text class="care-behavior-metric-value min-w-0 max-w-[28px] shrink overflow-hidden whitespace-nowrap text-[10px] font-medium leading-[15px] text-[#5a7a68]">{{ item.humidityDisplayText }}</text>
                 </view>
               </template>
-              <view v-else class="care-behavior-metrics-spacer" />
+              <view v-else class="care-behavior-metrics-spacer h-[30px] w-full" />
             </view>
 
             <view class="care-behavior-dot-row">
@@ -92,53 +92,30 @@
             </view>
           </view>
         </view>
-      </view>
 
-      <view v-if="selectedDateState" class="care-behavior-detail-popover">
-        <view class="care-behavior-detail-popover-arrow" />
-        <view class="care-behavior-detail-popover-card">
-          <view class="care-behavior-detail-header">
-            <text class="care-behavior-detail-date">{{ selectedDateLabel }}</text>
-            <text class="care-behavior-detail-weather">{{ selectedDateWeatherText || '—' }}</text>
-          </view>
-          <view class="care-behavior-detail-body">
-            <view class="care-behavior-detail-row">
-              <text class="care-behavior-detail-row-label">温度</text>
-              <text class="care-behavior-detail-row-value">{{ selectedDateTemperatureText || '—' }}</text>
-            </view>
-            <view class="care-behavior-detail-row">
-              <text class="care-behavior-detail-row-label">湿度</text>
-              <text class="care-behavior-detail-row-value">{{ selectedDateHumidityText || '—' }}</text>
-            </view>
-            <view class="care-behavior-detail-row">
-              <text class="care-behavior-detail-row-label">行为</text>
-              <text class="care-behavior-detail-row-value care-behavior-detail-row-value--accent">{{ selectedDateBehaviorText }}</text>
-            </view>
-            <view class="care-behavior-action-row">
-              <view
+        <view
+          v-if="selectedDateState"
+          class="care-behavior-detail-popover absolute z-[5] w-[95px] max-w-[320px]"
+          :style="selectedDatePopoverStyle"
+        >
+          <view
+            class="care-behavior-detail-popover-arrow absolute top-[-5px] -translate-x-1/2"
+            :style="selectedDatePopoverArrowStyle"
+          />
+          <view class="care-behavior-detail-popover-card relative box-border w-[95px] overflow-hidden rounded-xl border border-[rgba(45,122,79,0.15)] bg-white px-[13px] py-[9px] shadow-[0_10px_24px_rgba(15,23,42,0.08)]">
+            <text class="care-behavior-detail-date block whitespace-nowrap text-base font-medium leading-6 text-[#0f172a]">{{ selectedDateLabel }}</text>
+            <view class="care-behavior-detail-body flex flex-col pt-1">
+              <text class="care-behavior-detail-row block whitespace-nowrap pt-1 text-sm leading-5 text-[#0f172a]">温度: {{ selectedDateDialogTemperatureText }}</text>
+              <text class="care-behavior-detail-row block whitespace-nowrap pt-1 text-sm leading-5 text-[#0f172a]">湿度: {{ selectedDateDialogHumidityText }}</text>
+              <text
                 :id="`diagnose-care-behavior-action-water-${selectedDateState.date}`"
-                class="care-behavior-action-chip care-behavior-action-chip--water"
-                :class="{ 'care-behavior-action-chip--active': selectedDateState.watering, 'care-behavior-action-chip--disabled': !selectedDateState.isSelectable }"
+                class="care-behavior-detail-status block whitespace-nowrap pt-1 text-sm leading-5 text-slate-400"
+                :class="{
+                  'text-[#51a2ff]': selectedDateHasBehavior,
+                  'opacity-[0.58]': !selectedDateState.isSelectable
+                }"
                 @click="toggleCareAction(selectedDateState.date, 'watering')"
-              >
-                <text>浇水</text>
-              </view>
-              <view
-                :id="`diagnose-care-behavior-action-fertilize-${selectedDateState.date}`"
-                class="care-behavior-action-chip care-behavior-action-chip--fertilize"
-                :class="{ 'care-behavior-action-chip--active': selectedDateState.fertilizing, 'care-behavior-action-chip--disabled': !selectedDateState.isSelectable }"
-                @click="toggleCareAction(selectedDateState.date, 'fertilizing')"
-              >
-                <text>施肥</text>
-              </view>
-              <view
-                :id="`diagnose-care-behavior-action-light-${selectedDateState.date}`"
-                class="care-behavior-action-chip care-behavior-action-chip--light"
-                :class="{ 'care-behavior-action-chip--active': selectedDateState.lightChange, 'care-behavior-action-chip--disabled': !selectedDateState.isSelectable }"
-                @click="toggleCareAction(selectedDateState.date, 'lightChange')"
-              >
-                <text>强光/位置变化</text>
-              </view>
+              >{{ selectedDateBehaviorStatusText }}</text>
             </view>
           </view>
         </view>
@@ -171,6 +148,12 @@ import { formatWeatherText } from '@/utils/care-behavior-weather.js'
 import { buildWeatherByDateFromEnvironmentWeatherWindow } from '@/utils/care-behavior-weather-window.js'
 
 const weekLabels = ['日', '一', '二', '三', '四', '五', '六']
+const gridColumnCount = 7
+const dateCellHeightPx = 75
+const dateCellWidthPx = 42
+const gridGapPx = 4
+const popoverOffsetPx = 8
+const popoverWidthPx = 95
 const props = defineProps({
   questionId: { type: String, default: '' },
   timeline: { type: Object, default: () => ({}) },
@@ -291,6 +274,16 @@ function getWeatherHumidityText(entry = {}) {
 function formatCellMetricText(value = '', suffix = '') {
   const normalized = normalizeWeatherMetricValue(value)
   return normalized ? `${normalized}${suffix}` : ''
+}
+
+function formatDialogTemperatureText(value = '') {
+  const normalized = normalizeWeatherMetricValue(value)
+  return normalized ? `${normalized}°C` : '—'
+}
+
+function formatDialogHumidityText(value = '') {
+  const normalized = normalizeWeatherMetricValue(value)
+  return normalized ? `${normalized}%` : '—'
 }
 
 function normalizeDateValue(value = '') {
@@ -465,15 +458,6 @@ const selectedDateLabel = computed(() => {
   return formatDateLabel(selectedDateState.value.date, selectedDateState.value.isToday)
 })
 
-const selectedDateWeatherText = computed(() => {
-  if (!selectedDateState.value) {
-    return ''
-  }
-  const state = selectedDateState.value
-  const weather = weatherByDate.value[state.date] || {}
-  return weather.text || state.weatherText || '—'
-})
-
 const selectedDateTemperatureText = computed(() => {
   if (!selectedDateState.value) {
     return ''
@@ -488,6 +472,14 @@ const selectedDateHumidityText = computed(() => {
   return selectedDateState.value.humidityDisplayText || formatCellMetricText(selectedDateState.value.humidityText || '', '%')
 })
 
+const selectedDateDialogTemperatureText = computed(() =>
+  formatDialogTemperatureText(selectedDateTemperatureText.value)
+)
+
+const selectedDateDialogHumidityText = computed(() =>
+  formatDialogHumidityText(selectedDateHumidityText.value)
+)
+
 const selectedDateBehaviorText = computed(() => {
   if (!selectedDateState.value) {
     return ''
@@ -497,6 +489,59 @@ const selectedDateBehaviorText = computed(() => {
   if (selectedDateState.value.fertilizing) { items.push('施肥') }
   if (selectedDateState.value.lightChange) { items.push('强光/位置变化') }
   return items.length ? items.join(' / ') : '未记录'
+})
+
+const selectedDateHasBehavior = computed(() => {
+  const state = selectedDateState.value
+  return Boolean(state?.watering || state?.fertilizing || state?.lightChange)
+})
+
+const selectedDateBehaviorStatusText = computed(() => (
+  selectedDateHasBehavior.value ? `${selectedDateBehaviorText.value} 00:00` : '未记录'
+))
+
+const selectedDateGridIndex = computed(() => {
+  const date = selectedDateState.value?.date
+  if (!date) {
+    return -1
+  }
+  return cellItems.value.findIndex(item => item.date === date)
+})
+
+const selectedDatePopoverStyle = computed(() => {
+  const index = selectedDateGridIndex.value
+  if (index < 0) {
+    return {}
+  }
+  const column = index % gridColumnCount
+  const row = Math.floor(index / gridColumnCount)
+  const top = `${row * (dateCellHeightPx + gridGapPx) + dateCellHeightPx + popoverOffsetPx}px`
+  if (column === 0) {
+    return { left: '0', top, transform: 'none' }
+  }
+  if (column === gridColumnCount - 1) {
+    return { left: '100%', top, transform: 'translateX(-100%)' }
+  }
+  return {
+    left: `${((column + 0.5) / gridColumnCount) * 100}%`,
+    top,
+    transform: 'translateX(-50%)'
+  }
+})
+
+const selectedDatePopoverArrowStyle = computed(() => {
+  const index = selectedDateGridIndex.value
+  if (index < 0) {
+    return {}
+  }
+  const column = index % gridColumnCount
+  if (column === 0) {
+    return { left: `${dateCellWidthPx / 2}px` }
+  }
+  if (column === gridColumnCount - 1) {
+    return { left: `${popoverWidthPx - dateCellWidthPx / 2}px` }
+  }
+  return { left: '50%' }
 })
 
 const loadingErrorText = computed(() => normalizeErrorText(props.error))
@@ -664,10 +709,8 @@ function toggleCareAction(date, action) {
 .care-behavior-timeline { margin: 0 0 10px; padding: 0; }
 .care-behavior-error-banner { margin: 0 0 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(45, 122, 79, 0.15); background: rgba(248, 250, 249, 0.96); }
 .care-behavior-error-text { display: block; font-size: 12px; line-height: 18px; color: #5a7a68; }
-.care-behavior-calendar-card { position: relative; box-sizing: border-box; padding: 20px; border-radius: 12px; border: 1px solid rgba(45, 122, 79, 0.15); background: #ffffff; box-shadow: 0 1px 0 rgba(45, 122, 79, 0.02); }
 .care-behavior-weekday-header { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; margin: 0 0 2px; }
 .care-behavior-weekday-item { text-align: center; color: #5a7a68; font-size: 12px; line-height: 16px; }
-.care-behavior-grid-stage { position: relative; }
 .care-behavior-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .care-behavior-grid-skeleton { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .care-behavior-skeleton-cell { box-sizing: border-box; height: 75px; border-radius: 12px; border: 1px solid rgba(45, 122, 79, 0.12); background: linear-gradient(90deg, rgba(241, 248, 244, 0.72), rgba(248, 250, 249, 0.92), rgba(241, 248, 244, 0.72)); padding: 6px 4px 5px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; overflow: hidden; animation: careBehaviorPulse 1.2s ease-in-out infinite; }
@@ -694,17 +737,9 @@ function toggleCareAction(date, action) {
 .care-behavior-day { font-size: 14px; color: #0f172a; font-weight: 500; line-height: 1.1; }
 .care-behavior-cell--today .care-behavior-day { color: #2d7a4f; }
 .care-behavior-day-mark { font-size: 9px; color: #5a7a68; background: rgba(90, 122, 104, 0.08); padding: 1px 3px; border-radius: 999px; line-height: 1.2; }
-.care-behavior-metrics { width: 100%; display: flex; flex-direction: column; gap: 1px; min-height: 24px; }
-.care-behavior-metrics--empty { justify-content: center; }
-.care-behavior-metrics-spacer { width: 100%; height: 18px; }
-.care-behavior-metric { display: flex; align-items: center; justify-content: center; gap: 2px; line-height: 15px; min-width: 0; }
-.care-behavior-metric-icon { position: relative; flex: 0 0 auto; width: 10px; height: 10px; color: #5a7a68; }
-.care-behavior-metric-icon--temp { color: #5a7a68; }
-.care-behavior-metric-icon--humidity { color: #5a7a68; }
 .care-behavior-metric-icon-stem { position: absolute; left: 4px; top: 0; width: 2px; height: 7px; border-radius: 999px; background: currentColor; }
 .care-behavior-metric-icon-bulb { position: absolute; left: 1.5px; bottom: 0; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.78) inset; }
 .care-behavior-metric-icon-drop { position: absolute; left: 1.5px; top: 0; width: 7px; height: 9px; background: currentColor; border-radius: 60% 60% 60% 0; transform: rotate(45deg); transform-origin: center; }
-.care-behavior-metric-value { flex: 0 1 auto; min-width: 0; max-width: 27px; font-size: 10px; color: #5a7a68; line-height: 15px; overflow: hidden; text-overflow: clip; white-space: nowrap; }
 .care-behavior-cell--historical .care-behavior-day,
 .care-behavior-cell--future .care-behavior-day,
 .care-behavior-cell--historical .care-behavior-metric-value,
@@ -715,26 +750,7 @@ function toggleCareAction(date, action) {
 .care-behavior-dot--water { background: #2b7fff; }
 .care-behavior-dot--fertilize { background: #fe9a00; }
 .care-behavior-dot--light { background: #22c55e; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.74) inset; }
-.care-behavior-detail-popover { margin: 12px auto 0; width: calc(100% - 48px); max-width: 288px; position: relative; }
-.care-behavior-detail-popover-arrow { position: absolute; left: 50%; top: -5px; width: 10px; height: 10px; background: #ffffff; border-left: 1px solid rgba(45, 122, 79, 0.15); border-top: 1px solid rgba(45, 122, 79, 0.15); transform: translateX(-50%) rotate(45deg); box-shadow: -1px -1px 6px rgba(15, 23, 42, 0.03); }
-.care-behavior-detail-popover-card { position: relative; padding: 12px 12px 10px; border-radius: 12px; background: #ffffff; border: 1px solid rgba(45, 122, 79, 0.15); box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08); overflow: hidden; }
-.care-behavior-detail-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
-.care-behavior-detail-date { font-size: 16px; color: #0f172a; font-weight: 500; line-height: 24px; }
-.care-behavior-detail-weather { max-width: 54%; font-size: 10px; color: #5a7a68; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.care-behavior-detail-body { display: flex; flex-direction: column; gap: 6px; }
-.care-behavior-detail-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; line-height: 20px; }
-.care-behavior-detail-row-label { color: #5a7a68; }
-.care-behavior-detail-row-value { color: #2d7a4f; text-align: right; }
-.care-behavior-detail-row-value--accent { color: #51a2ff; }
-.care-behavior-action-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
-.care-behavior-action-chip { display: inline-flex; align-items: center; justify-content: center; min-height: 28px; padding: 0 10px; border-radius: 999px; border: 1px solid rgba(45, 122, 79, 0.18); background: #ffffff; color: #334155; font-size: 10px; line-height: 1; }
-.care-behavior-action-chip--water { border-color: rgba(59, 130, 246, 0.25); }
-.care-behavior-action-chip--fertilize { border-color: rgba(249, 115, 22, 0.25); }
-.care-behavior-action-chip--light { border-color: rgba(34, 197, 94, 0.25); }
-.care-behavior-action-chip--active.care-behavior-action-chip--water { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
-.care-behavior-action-chip--active.care-behavior-action-chip--fertilize { background: #fff7ed; border-color: #fdba74; color: #c2410c; }
-.care-behavior-action-chip--active.care-behavior-action-chip--light { background: #f0fdf4; border-color: #86efac; color: #15803d; }
-.care-behavior-action-chip--disabled { opacity: .45; pointer-events: none; }
+.care-behavior-detail-popover-arrow { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 5px solid #ffffff; filter: drop-shadow(0 -1px 1px rgba(45, 122, 79, 0.08)); }
 .care-behavior-legend { margin-top: 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 16px; justify-content: flex-end; }
 .care-behavior-legend-item { display: flex; align-items: center; gap: 2px; font-size: 12px; color: #5a7a68; line-height: 1.25; }
 .care-behavior-legend-dot { width: 6px; height: 6px; border-radius: 50%; }
