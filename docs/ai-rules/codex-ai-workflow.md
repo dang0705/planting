@@ -102,3 +102,8 @@ commit message 必须根据改动内容生成，精炼且不超过 50 个字符�
 ## Completion Gate
 
 任务不得因为部分测试通过而停止。所有 required acceptance items 必须完成验收，或存在明确 blocker 并已写回。小程序实际交互要求必须由 QA 执行自动化或端上验证。
+
+
+## Stable automation and QA budget
+
+WeChat DevTools 自动化采用单一责任原则：main agent 默认不直接执行，implementer 只做最小自测，QA 负责正式验收。main agent 等待 subagent 时优先低成本观察，不频繁中断。QA 输出使用 QA Result。

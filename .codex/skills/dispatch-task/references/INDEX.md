@@ -24,6 +24,7 @@
 | Phase 4 | Solution Discovery、Implementation Contract、Test Contract、main agent 质量门禁 | `solution-discovery-gate.md` / `implementation-test-contract.md` / `main-agent-quality-gates.md` |
 | Phase 4.45 | pre-implementation token 预算保险丝 | `pre-implementation-budget-fuse.md` |
 | Phase 6 | QA 证据、日志、截图、失败归因 | `qa-evidence-policy.md` |
+| Phase 6 | WeChat DevTools 自动化职责分配 | `wechat-devtools-automation-policy.md` |
 | Phase 7 | Git 工作区、very_dirty、commit | `git-completion-policy.md` |
 | Completion | 最终完成 / Done / 停止门禁 | `completion-gate.md` |
 | Review | diff-first + dependency-context-limited、QA 不审 diff | `review-scope-policy.md` |
@@ -64,3 +65,8 @@ Figma / UI 细则不在本目录内，仍由对应 skill 管理：
 .codex/skills/implementer-ui-execution-policy/SKILL.md
 .codex/skills/qa-ui-visual-baseline-policy/SKILL.md
 ```
+
+
+## Subagent 进度观察
+
+main agent 等待 subagent 时读取 `subagent-progress-policy.md`。默认低成本观察，不得频繁中断。

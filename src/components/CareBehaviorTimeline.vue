@@ -3,11 +3,6 @@
     :id="`diagnose-care-behavior-timeline-${questionId}`"
     class="care-behavior-timeline"
   >
-    <view class="care-behavior-timeline-header">
-      <text class="care-behavior-timeline-title">请查看过去10天的养护记录</text>
-      <text class="care-behavior-timeline-subtitle">查看温湿度变化和浇水施肥记录，帮助我们更准确分析</text>
-    </view>
-
     <view class="care-behavior-weekday-header">
       <text
         v-for="day in weekLabels"

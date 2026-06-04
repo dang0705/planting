@@ -6,8 +6,6 @@
 
 任何 ClickUp 任务只要存在 checklist、验收标准、acceptance criteria、definition of done、request changes、评论中的验收要求，都必须进入验收映射流程。不得因为 ClickUp MCP 没有原生 checklist item 读写工具而跳过。
 
-真实勾选状态以任务可读到的 checklist 渲染状态为准：若 API 可读到 checklist 的 markdown 源文本，就以源文本为准；若仅有富文本可视化渲染，则以 UI rich markdown 渲染状态为准。
-
 模板引用：
 
 ```text
@@ -18,15 +16,12 @@
 
 按以下顺序识别验收项：
 
-1. 任务描述中的 `markdown_description` 原始 checklist 片段（按行级文本识别 `- [ ] / - [x]`）。
-2. ClickUp 描述区的富文本渲染 checklist（UI 可见列表）。
-3. 描述区 / 评论 / 子任务 / 关系任务中的 acceptance criteria、验收标准、definition of done。
+1. `markdown_description` 中的 Markdown checklist。
+2. 描述区 / 评论 / 子任务 / 关系任务中的 acceptance criteria、验收标准、definition of done。
 3. request changes / bug report 中的可验证要求。
 4. ClickUp 原生 checklist item（仅当 MCP 暴露原生 checklist 读写能力时使用）。
 
-识别失败处理：若 API 返回 `checklists=[]` 但页面描述中仍能看到 checklist，则按步骤 2 回退为 `clickup_ui_rich_markdown`。
-
-## Markdown checklist 回写与 UI 回读
+## Markdown checklist 回写
 
 ClickUp 描述区中的 slash / Markdown checklist 可以通过整体更新 task 的 `markdown_description` 来改变勾选状态。
 
@@ -44,10 +39,7 @@ ClickUp 描述区中的 slash / Markdown checklist 可以通过整体更新 task
 4. 不改 checklist 文案。
 5. 不改未通过、未验证、阻塞、不适用项。
 6. 整体提交更新后的 `markdown_description`。
-7. 回读顺序：
-   1. 重新读取 `markdown_description` 并按行统计 `- [x]`。
-   2. 若返回中看不到 `- [x]`，转为 `clickup_ui_rich_markdown` 回读（ClickUp 页面可见状态）。
-   3. 回读必须记录 `readback_source`。
+7. 更新后重新读取任务，确认目标行已变为 `[x]`。
 
 ## Markdown checklist 顺序号
 
@@ -70,7 +62,7 @@ checklist_ref = md-checklist:<source_ticket_id>:NO<checklist_order_no>
 3. 如果能从描述、评论、子任务或验收标准重建验收项，必须生成 Acceptance Checklist Matrix 和 Test Case Base。
 4. 原生 checklist item 无法真实勾选时，必须写明 blocker 或通过任务评论写回验收矩阵与结果。
 5. 不得声称原生 checklist 已勾选。
-6. 可在回读时使用 `clickup_ui_rich_markdown` 作为可验证来源，但回写动作仍以 ClickUp 可写接口（`markdown_description`）优先；若无可写接口则改为测试证据评论。
+6. 不得使用非 MCP 回写方式。
 
 ## 验收标准 fallback
 
@@ -134,16 +126,3 @@ Test Case Base 是 Test Contract 的基础。不得漏项，不得把后端接�
 3. QA 或 main agent 已给出证据。
 4. 该项不是 blocked / not_applicable / pending。
 5. 已确认该行来自原始 `markdown_description` checklist。
-
-## 计数与回写读数口径
-
-当任务未提供原生 checklist item id 时，按以下规则读取勾选计数：
-
-1. `checkbox_read_source=markdown_description`：从 API 返回的 `markdown_description` 文本里统计。
-   - `checked_count`: `- [x]` 的数量
-   - `unchecked_count`: `- [ ]` 的数量
-2. 若 `markdown_description` 读不到标记、但页面存在富文本 checklist：`checkbox_read_source=clickup_ui_rich_markdown`。
-   - 从 UI 中对每一项读取 `checked`/`unchecked` 的可见状态。
-   - 记录 `checked_count / unchecked_count / total_count`。
-
-结果字段要求：`readback_source`，`pre_checked_count`，`post_checked_count`，`post_unchecked_count`。

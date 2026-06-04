@@ -1,31 +1,42 @@
 # QA Evidence Template
 
 ```text
-QA Automation Scope:
-- mini_program_interaction_required: yes / no
-- reason:
-- wechat_devtools_mcp_available: yes / no
-- automation_required: yes / no
-- automation_status: passed / failed / blocked / not_applicable
-- tested_user_paths:
-- evidence_refs:
-```
-
-```text
-QA Failure Attribution:
-- 本轮验收失败:
-- 既有问题:
-- 无关脏改动干扰:
-- 环境问题:
-- 无法判断:
-```
-
-```text
-Checklist Evidence:
-- checklist_ref:
-- acceptance_ref:
-- test_case_id:
-- result: passed / failed / blocked / not_verified / not_applicable
+QA Result:
+- status: pass / fail / blocked / partial
+- summary:
+- coverage:
+  - required:
+  - passed:
+  - failed:
+  - blocked:
+  - not_verified:
+- checks:
+  - unit:
+  - smoke:
+  - e2e:
+  - ui_figma:
+  - wechat_devtools:
+  - manual:
 - evidence:
-- can_writeback: yes / no
+  - commands:
+  - screenshots:
+  - logs:
+  - tool_refs:
+- checklist_evidence:
+  - checklist_ref / acceptance_ref:
+  - result:
+  - evidence_ref:
+  - can_writeback:
+- failures:
+  - blocking:
+  - non_blocking:
+  - attribution:
+- gaps:
+  - test_gap:
+  - doc_gap:
+  - dirty_workspace_impact:
+- completion:
+  - blocks_completion: yes / no
+  - reason:
+- next_action:
 ```

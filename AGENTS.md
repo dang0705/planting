@@ -11,6 +11,7 @@ inclusion: always
 
 本文件只保留仓库级全局约束、项目基础上下文和读取边界。
 
+具体 skill 的 phase、gate、模板、MCP 读取、ClickUp 回写、Git 提交流程、Figma/UI 切片、QA 证据、role_context_packets 等细则，必须放在对应 skill 目录及其 `references/` / `assets/` 中，不得写入本全局文件。
 
 ## 2. 全局硬规则
 

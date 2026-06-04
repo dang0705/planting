@@ -203,3 +203,15 @@ Implementer UI Self-Check:
 - gaps:
 - 是否仍需 QA 独立验收：是
 ```
+
+
+## 最小自测范围
+
+Implementer UI Self-Check 只做提交 QA 前的最小自检：
+
+1. 页面可打开。
+2. 主组件可渲染。
+3. 一条关键交互路径可用。
+4. 无明显 runtime error。
+
+不得执行完整 QA Test Contract，不得重复 QA 的正式自动化矩阵。

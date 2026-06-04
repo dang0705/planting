@@ -263,3 +263,25 @@ references/completion-gate.md
 只有 Completion Gate 通过，才允许停止。仅本地后端测试 PASS 或风险说明，不是完成条件。
 
 如果验收要求小程序实际交互，QA 必须执行 WeChat DevTools MCP 自动化或端上验证；不能只做 MCP 连接能力验证。
+
+
+## Subagent 进度观察
+
+main agent 等待 subagent 时，读取：
+
+```text
+references/subagent-progress-policy.md
+```
+
+默认采用低成本观察，不得频繁中断 subagent。超过等待阈值后，只能请求简短 Progress Receipt。
+
+
+## WeChat DevTools 自动化职责
+
+涉及小程序端上验证时，读取：
+
+```text
+references/wechat-devtools-automation-policy.md
+```
+
+main agent 默认不直接执行 WeChat DevTools 自动化。implementer 只做最小自测，QA 负责正式验收，禁止重复完整自动化。

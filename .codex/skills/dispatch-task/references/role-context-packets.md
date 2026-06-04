@@ -44,3 +44,17 @@ required_skill: $qa-ui-visual-baseline-policy
 如果 Figma Drilldown 需要在开发阶段读取，implementer packet 只传 request，不传完整 Drilldown。
 
 如果涉及 Figma UI 验收，QA packet 必须包含 QA Visual Baseline Slice 和 reference screenshot，不得包含完整 Figma Node Drilldown。
+
+
+## 自动化职责切片
+
+如果任务需要 WeChat DevTools MCP 或端上验证，role_context_packets 必须写明：
+
+```text
+automation_owner:
+- formal_qa_owner: qa_reviewer
+- implementer_self_check_required: yes / no
+- duplicate_automation_forbidden: true
+```
+
+implementer packet 只包含最小自测范围。QA packet 包含正式自动化范围。
