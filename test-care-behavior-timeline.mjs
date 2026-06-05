@@ -347,23 +347,45 @@ assert.equal(
   'care_behavior_timeline'
 )
 
-const componentSource = readFileSync('./src/components/CareBehaviorTimeline.vue', 'utf8')
+const componentSourceFiles = [
+  './src/components/CareBehaviorTimeline.vue',
+  './src/components/care-behavior-timeline/CareBehaviorTimelineCell.vue',
+  './src/components/care-behavior-timeline/CareBehaviorTimelineGrid.vue',
+  './src/components/care-behavior-timeline/CareBehaviorTimelineLegend.vue',
+  './src/components/care-behavior-timeline/CareBehaviorTimelineMarker.vue',
+  './src/components/care-behavior-timeline/CareBehaviorTimelineMetric.vue',
+  './src/components/care-behavior-timeline/CareBehaviorTimelinePopover.vue',
+  './src/components/care-behavior-timeline/CareBehaviorTimelineSkeleton.vue',
+  './src/components/care-behavior-timeline/event-sources.js',
+  './src/components/care-behavior-timeline/icons.js',
+  './src/components/care-behavior-timeline/popover-position.js',
+  './src/components/care-behavior-timeline/useCareBehaviorTimeline.js',
+  './src/components/care-behavior-timeline/weather.js'
+]
+const componentSource = componentSourceFiles.map(file => readFileSync(file, 'utf8')).join('\n')
 const followUpPageSource = readFileSync('./src/pages/diagnose/follow-up.vue', 'utf8')
+const diagnosePopupSource = readFileSync('./src/components/DiagnosePopup.vue', 'utf8')
 const compactComponentSource = componentSource.replace(/\s+/g, ' ')
 const fixedContextMatches = followUpPageSource.match(/class="followup-fixed-context"/g) || []
-const swiperItemStart = followUpPageSource.indexOf('<swiper-item')
-const swiperEnd = followUpPageSource.indexOf('</swiper>', swiperItemStart)
-const swiperItemSource =
-  swiperItemStart >= 0 && swiperEnd > swiperItemStart
-    ? followUpPageSource.slice(swiperItemStart, swiperEnd)
-    : ''
-assert.ok(componentSource.includes('v-if="item.watering"'))
-assert.ok(componentSource.includes('v-if="item.fertilizing"'))
-assert.ok(componentSource.includes('v-if="item.lightChange"'))
+const followUpPageTrackStart = followUpPageSource.indexOf('followup-page-swiper-track')
+const followUpPageItemStart = followUpPageSource.indexOf('followup-page-swiper-item')
+assert.ok(componentSource.includes('v-if="item.watering"') || componentSource.includes(':active="item.watering"'))
+assert.ok(
+  componentSource.includes('v-if="item.fertilizing"') || componentSource.includes(':active="item.fertilizing"')
+)
+assert.ok(
+  componentSource.includes('v-if="item.lightChange"') || componentSource.includes(':active="item.lightChange"')
+)
 assert.ok(componentSource.includes('care-behavior-calendar-card'))
 assert.ok(componentSource.includes('care-behavior-detail-popover'))
-assert.ok(componentSource.includes(':style="selectedDatePopoverStyle"'))
-assert.ok(componentSource.includes(':style="selectedDatePopoverArrowStyle"'))
+assert.ok(
+  componentSource.includes(':style="selectedDatePopoverStyle"') ||
+    componentSource.includes(':popover-style="selectedDatePopoverStyle"')
+)
+assert.ok(
+  componentSource.includes(':style="selectedDatePopoverArrowStyle"') ||
+    componentSource.includes(':arrow-style="selectedDatePopoverArrowStyle"')
+)
 assert.ok(componentSource.includes('selectedDateGridIndex'))
 assert.ok(componentSource.includes('selectedDatePopoverStyle'))
 assert.ok(componentSource.includes('selectedDatePopoverArrowStyle'))
@@ -378,11 +400,20 @@ assert.ok(componentSource.includes('loadingErrorText'))
 assert.ok(componentSource.includes('care-behavior-day--today'))
 assert.ok(componentSource.includes('care-behavior-cell--today'))
 assert.equal(componentSource.includes('.care-behavior-cell--today {\n  border: 0;'), false)
+assert.ok(componentSource.includes('hover-class="none"'))
+assert.ok(componentSource.includes('hover-stop-propagation'))
+assert.ok(componentSource.includes('-webkit-tap-highlight-color: transparent'))
 assert.ok(compactComponentSource.includes('const LONG_PRESS_DURATION_MS = 1000'))
 assert.ok(compactComponentSource.includes('const POPOVER_AUTO_HIDE_MS = 5000'))
+assert.ok(compactComponentSource.includes('const LONG_PRESS_CLICK_SUPPRESS_MS = 450'))
+assert.ok(componentSource.includes('suppressSelectDateAfterLongPress'))
+assert.ok(componentSource.includes('scheduleLongPressSelectSuppressionClear'))
 assert.ok(componentSource.includes('handleDatePressStart'))
 assert.ok(componentSource.includes('handleDatePressEnd'))
-assert.ok(componentSource.includes('click=\"selectDate(item)\"'))
+assert.ok(
+  componentSource.includes('@select-date="selectDate"') ||
+    componentSource.includes("@click=\"$emit('select', item)\"")
+)
 assert.ok(componentSource.includes('@longpress') || componentSource.includes('popoverDate'))
 assert.equal(componentSource.includes('D0'), false)
 assert.equal(componentSource.includes('care-behavior-detail-panel'), false)
@@ -393,8 +424,14 @@ assert.ok(componentSource.includes('humidityIconSrc'))
 assert.ok(componentSource.includes('data:image/svg+xml;utf8'))
 assert.ok(componentSource.includes('viewBox%3D%220%200%209.9934%209.9934%22'))
 assert.ok(componentSource.includes('stroke%3D%22%235A7A68%22'))
-assert.ok(componentSource.includes(':src="temperatureIconSrc"'))
-assert.ok(componentSource.includes(':src="humidityIconSrc"'))
+assert.ok(
+  componentSource.includes(':src="temperatureIconSrc"') ||
+    componentSource.includes(':icon-src="temperatureIconSrc"')
+)
+assert.ok(
+  componentSource.includes(':src="humidityIconSrc"') ||
+    componentSource.includes(':icon-src="humidityIconSrc"')
+)
 assert.equal(componentSource.includes('stroke="currentColor"'), false)
 assert.ok(componentSource.includes('temperatureDisplayText'))
 assert.ok(componentSource.includes('humidityDisplayText'))
@@ -403,10 +440,15 @@ assert.ok(componentSource.includes('care-behavior-dot--fertilize'))
 assert.ok(componentSource.includes('care-behavior-dot--light'))
 assert.ok(componentSource.includes('care-behavior-metrics-spacer'))
 assert.ok(
-  /isSelected:\s*Boolean\(\s*state\.watering\s*&&\s*item\.isSelectable\s*&&\s*!item\.isToday\s*&&\s*!item\.isHistoricalOutOfRange\s*&&\s*!item\.isFuture\s*\)/.test(
+  /isSelected:\s*Boolean\(\s*state\.selectedWatering\s*&&\s*item\.isSelectable\s*&&\s*!item\.isToday\s*&&\s*!item\.isHistoricalOutOfRange\s*&&\s*!item\.isFuture\s*\)/.test(
     componentSource
   )
 )
+assert.ok(componentSource.includes('watering: Boolean(state.recordedWatering)'))
+assert.ok(componentSource.includes('fertilizing: Boolean(state.recordedFertilizing)'))
+assert.ok(componentSource.includes('lightChange: Boolean(state.recordedLightChange)'))
+assert.ok(componentSource.includes('selected_watering_events_10d: nextTimeline.watering_events_10d'))
+assert.ok(componentSource.includes('recorded_watering_events_10d: timelineEventSources.value.recordedWateringEvents'))
 assert.ok(componentSource.includes("toggleCareAction(item.date, 'watering')"))
 assert.ok(componentSource.includes('resolveSelectedDateAfterRebuild(nextDateStates)'))
 assert.ok(
@@ -417,7 +459,14 @@ assert.ok(
 assert.ok(componentSource.includes('selectedDateTemperatureText'))
 assert.ok(componentSource.includes('selectedDateHumidityText'))
 assert.ok(componentSource.includes('selectedDateBehaviorText'))
-assert.ok(componentSource.includes('diagnose-care-behavior-action-water-${selectedDateState.date}'))
+assert.ok(
+  componentSource.includes('diagnose-care-behavior-action-water-${selectedDateState.date}') ||
+    componentSource.includes('diagnose-care-behavior-action-water-${state.date}')
+)
+assert.equal(
+  componentSource.includes("@click=\"$emit('toggle-care-action', state.date, 'watering')\""),
+  false
+)
 assert.equal(
   componentSource.includes('diagnose-care-behavior-action-fertilize-${selectedDateState.date}'),
   false
@@ -478,7 +527,10 @@ assert.ok(compactComponentSource.includes("raw.replace(/[℃°℉%]/g, '').trim(
 assert.ok(
   compactComponentSource.includes('entry.temp ?? entry.temperature ?? entry.tempC ?? entry.tempF')
 )
-assert.ok(compactComponentSource.includes('border: 2px solid #2d7a4f'))
+assert.ok(
+  componentSource.includes('care-behavior-cell--selected border-2 border-[#2d7a4f]')
+)
+assert.ok(componentSource.includes('care-behavior-day--today font-bold text-red-500'))
 assert.ok(
   componentSource.includes('flex h-[30px] w-full flex-col justify-center gap-0 overflow-hidden')
 )
@@ -488,28 +540,28 @@ assert.ok(
   )
 )
 assert.ok(componentSource.includes('relative h-[10px] w-[10px] shrink-0 text-[#5a7a68]'))
-assert.ok(compactComponentSource.includes('background: rgba(241, 248, 244, 0.5)'))
+assert.ok(componentSource.includes('bg-[rgba(241,248,244,0.5)]'))
 assert.ok(componentSource.includes('text-[10px] font-medium leading-[15px] text-[#5a7a68]'))
 assert.ok(componentSource.includes('absolute z-[5] w-[95px] max-w-[320px]'))
 assert.ok(
   compactComponentSource.includes(
-    'const top = `${row * (dateCellHeightPx + gridGapPx) + dateCellHeightPx + popoverOffsetPx}px`'
+    'const top = `${row * (DATE_CELL_HEIGHT_PX + GRID_GAP_PX) + DATE_CELL_HEIGHT_PX + POPOVER_OFFSET_PX}px`'
   )
 )
 assert.ok(
   compactComponentSource.includes(
-    "if (column === 0) { return { left: '0', top, transform: 'none' } }"
+    "if (column === 0) {return { left: '0', top, transform: 'none' }}"
   )
 )
 assert.ok(
   compactComponentSource.includes(
-    "if (column === gridColumnCount - 1) { return { left: '100%', top, transform: 'translateX(-100%)' } }"
+    "if (column === GRID_COLUMN_COUNT - 1) { return { left: '100%', top, transform: 'translateX(-100%)' }"
   )
 )
 assert.ok(compactComponentSource.includes("transform: 'translateX(-50%)'"))
-assert.ok(compactComponentSource.includes('return { left: `${dateCellWidthPx / 2}px` }'))
+assert.ok(compactComponentSource.includes('return { left: `${DATE_CELL_WIDTH_PX / 2}px` }'))
 assert.ok(
-  compactComponentSource.includes('return { left: `${popoverWidthPx - dateCellWidthPx / 2}px` }')
+  compactComponentSource.includes('return { left: `${POPOVER_WIDTH_PX - DATE_CELL_WIDTH_PX / 2}px` }')
 )
 assert.ok(compactComponentSource.includes("return { left: '50%' }"))
 assert.ok(componentSource.includes('shadow-[0_10px_24px_rgba(15,23,42,0.08)]'))
@@ -523,6 +575,14 @@ assert.equal(fixedContextMatches.length, 1)
 assert.ok(followUpPageSource.includes('followUpDiagnosisContextText'))
 assert.ok(followUpPageSource.includes('followUpQuestionProgressText'))
 assert.ok(followUpPageSource.includes('followup-page-body'))
+assert.ok(followUpPageSource.includes('followup-page-swiper-track'))
+assert.ok(followUpPageSource.includes('followUpPageTrackStyle'))
+assert.ok(diagnosePopupSource.includes('followup-swiper-track'))
+assert.ok(diagnosePopupSource.includes('followUpSwiperTrackStyle'))
+assert.equal(followUpPageSource.includes('<swiper'), false)
+assert.equal(followUpPageSource.includes('<swiper-item'), false)
+assert.equal(diagnosePopupSource.includes('<swiper'), false)
+assert.equal(diagnosePopupSource.includes('<swiper-item'), false)
 assert.ok(followUpPageSource.includes('environmentWeatherWindowLoading'))
 assert.ok(followUpPageSource.includes('environmentWeatherWindowError'))
 assert.ok(
@@ -540,9 +600,9 @@ assert.ok(
   )
 )
 assert.ok(
-  followUpPageSource.indexOf('followup-fixed-context') < followUpPageSource.indexOf('swiper-item')
+  followUpPageSource.indexOf('followup-fixed-context') < followUpPageTrackStart
 )
-assert.equal(swiperItemSource.includes('followup-fixed-context'), false)
+assert.ok(followUpPageItemStart > followUpPageTrackStart)
 assert.equal(followUpPageSource.includes('followup-question-count'), false)
 assert.ok(followUpPageSource.includes('uni.navigateBack({ delta: 1 })'))
 

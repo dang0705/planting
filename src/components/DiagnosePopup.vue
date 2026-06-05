@@ -234,156 +234,154 @@
               <text class="block text-[10px] text-gray-500 mb-3">
                 每次只回答一个关键问题。答题与补图是两种正式方式，需要分开提交。
               </text>
-              <swiper
+              <view
                 v-if="currentFollowUpQuestion"
                 id="diagnose-followup-swiper"
                 class="followup-swiper"
-                :current="followUpSwiperCurrent"
-                :duration="260"
-                :indicator-dots="false"
-                :circular="false"
               >
-                <swiper-item
-                  v-for="(question, pageIndex) in followUpSwiperPages"
-                  :key="question?.questionId || `followup-placeholder-${pageIndex}`"
-                  class="followup-swiper-item"
-                >
+                <view class="followup-swiper-track" :style="followUpSwiperTrackStyle">
                   <view
-                    v-if="question"
-                    :key="question.questionId"
-                    :id="`diagnose-followup-question-${question.questionId}`"
-                    class="followup-question-card followup-question-card--animated"
+                    v-for="(question, pageIndex) in followUpSwiperPages"
+                    :key="question?.questionId || `followup-placeholder-${pageIndex}`"
+                    class="followup-swiper-item"
                   >
-                    <text class="block text-[10px] text-[#8B7355] mb-1">
-                      当前问题 {{ activeFollowUpQuestionIndex + 1 }} / {{ followUpQuestionStack.length || 1 }}
-                    </text>
-                    <text class="block text-xs font-semibold text-gray-900 leading-relaxed mb-1">
-                      {{ getQuestionTitle(question) }}
-                    </text>
-                    <text
-                      v-if="getQuestionHelpText(question)"
-                      class="block text-[10px] text-gray-500 leading-relaxed mb-3"
-                    >
-                      {{ getQuestionHelpText(question) }}
-                    </text>
-                    <CareBehaviorTimeline
-                      v-if="isCareBehaviorWateringTimelineQuestion(question)"
-                      :question-id="getFollowUpQuestionId(question)"
-                      :question="question"
-                      :timeline="getCareBehaviorTimelineByQuestion(question)"
-                      @change="payload => handleCareBehaviorTimelineChange(question, payload)"
-                    />
                     <view
-                      :id="`diagnose-followup-option-stack-${question.questionId}`"
-                      v-if="getVisibleCareBehaviorOptions(question).length"
-                      class="followup-option-stack"
-                      :class="question.uiVariant === 'single_select_accordion' ? 'followup-option-stack--accordion' : ''"
+                      v-if="question"
+                      :key="question.questionId"
+                      :id="`diagnose-followup-question-${question.questionId}`"
+                      class="followup-question-card followup-question-card--animated"
                     >
-                      <uni-collapse
-                        v-if="isAccordionFollowUpQuestion(question)"
-                        v-model="currentFollowUpAccordionValue"
-                        accordion
-                        :border="false"
-                        class="followup-option-collapse"
-                        @change="handleFollowUpAccordionChange(question, $event)"
+                      <text class="block text-[10px] text-[#8B7355] mb-1">
+                        当前问题 {{ activeFollowUpQuestionIndex + 1 }} / {{ followUpQuestionStack.length || 1 }}
+                      </text>
+                      <text class="block text-xs font-semibold text-gray-900 leading-relaxed mb-1">
+                        {{ getQuestionTitle(question) }}
+                      </text>
+                      <text
+                        v-if="getQuestionHelpText(question)"
+                        class="block text-[10px] text-gray-500 leading-relaxed mb-3"
                       >
-                        <uni-collapse-item
-                          v-for="option in getVisibleCareBehaviorOptions(question)"
-                          :key="option.optionId"
-                          :name="option.optionId"
-                          :title="getOptionText(question, option)"
+                        {{ getQuestionHelpText(question) }}
+                      </text>
+                      <CareBehaviorTimeline
+                        v-if="isCareBehaviorWateringTimelineQuestion(question)"
+                        :question-id="getFollowUpQuestionId(question)"
+                        :question="question"
+                        :timeline="getCareBehaviorTimelineByQuestion(question)"
+                        @change="payload => handleCareBehaviorTimelineChange(question, payload)"
+                      />
+                      <view
+                        :id="`diagnose-followup-option-stack-${question.questionId}`"
+                        v-if="getVisibleCareBehaviorOptions(question).length"
+                        class="followup-option-stack"
+                        :class="question.uiVariant === 'single_select_accordion' ? 'followup-option-stack--accordion' : ''"
+                      >
+                        <uni-collapse
+                          v-if="isAccordionFollowUpQuestion(question)"
+                          v-model="currentFollowUpAccordionValue"
+                          accordion
                           :border="false"
-                          :title-border="false"
-                          class="followup-option-collapse-item"
+                          class="followup-option-collapse"
+                          @change="handleFollowUpAccordionChange(question, $event)"
                         >
-                          <template #title>
-                            <view
-                              class="followup-option-accordion-title"
+                          <uni-collapse-item
+                            v-for="option in getVisibleCareBehaviorOptions(question)"
+                            :key="option.optionId"
+                            :name="option.optionId"
+                            :title="getOptionText(question, option)"
+                            :border="false"
+                            :title-border="false"
+                            class="followup-option-collapse-item"
+                          >
+                            <template #title>
+                              <view
+                                class="followup-option-accordion-title"
+                              :class="
+                                isSelectedFollowUpOption(question, option)
+                                  ? 'followup-option-accordion-title--active'
+                                  : 'followup-option-accordion-title--idle'
+                              "
+                            >
+                              <text class="followup-option-accordion-text">{{ getOptionText(question, option) }}</text>
+                              <text class="followup-option-accordion-badge">
+                                {{ isSelectedFollowUpOption(question, option) ? '已选' : '单选' }}
+                              </text>
+                            </view>
+                          </template>
+                          <view
+                            :id="`diagnose-followup-option-${question.questionId}-${option.optionId}`"
+                            class="followup-option-collapse-body"
                             :class="
                               isSelectedFollowUpOption(question, option)
-                                ? 'followup-option-accordion-title--active'
-                                : 'followup-option-accordion-title--idle'
+                                ? 'followup-option-collapse-body--active'
+                                : ''
                             "
+                            @click.stop="selectFollowUpOption(question, option)"
                           >
-                            <text class="followup-option-accordion-text">{{ getOptionText(question, option) }}</text>
-                            <text class="followup-option-accordion-badge">
-                              {{ isSelectedFollowUpOption(question, option) ? '已选' : '单选' }}
-                            </text>
+                              <text class="followup-option-description">
+                                {{ getOptionDescription(option) || '选择这一项后继续下一步排查。' }}
+                              </text>
+                            </view>
+                          </uni-collapse-item>
+                        </uni-collapse>
+                        <template v-else>
+                          <view
+                            v-for="option in getVisibleCareBehaviorOptions(question)"
+                            :key="option.optionId"
+                            :id="`diagnose-followup-option-${question.questionId}-${option.optionId}`"
+                            class="followup-option-button"
+                            style="width: 100%; display: flex; justify-content: flex-start; text-align: left;"
+                            :class="
+                              followUpAnswers[question.questionId] === option.optionId
+                                ? 'followup-option-button--active'
+                                : 'followup-option-button--idle'
+                            "
+                            @click="selectFollowUpOption(question, option)"
+                          >
+                            <view class="followup-option-content">
+                              <view class="followup-option-title-row">
+                                <text class="followup-option-text">{{ getOptionText(question, option) }}</text>
+                              </view>
+                              <text
+                                v-if="getOptionDescription(option)"
+                                class="followup-option-description"
+                              >
+                                {{ getOptionDescription(option) }}
+                              </text>
+                            </view>
                           </view>
                         </template>
-                        <view
-                          :id="`diagnose-followup-option-${question.questionId}-${option.optionId}`"
-                          class="followup-option-collapse-body"
-                          :class="
-                            isSelectedFollowUpOption(question, option)
-                              ? 'followup-option-collapse-body--active'
-                              : ''
-                          "
-                          @click.stop="selectFollowUpOption(question, option)"
+                      </view>
+                      <view class="followup-nav-row">
+                        <button
+                          id="diagnose-followup-prev-button"
+                          class="followup-nav-button"
+                          :class="{ 'followup-nav-button--disabled': isSubmittingAnyFollowUp || activeFollowUpQuestionIndex <= 0 }"
+                          :disabled="isSubmittingAnyFollowUp || activeFollowUpQuestionIndex <= 0"
+                          @click="goPreviousFollowUpQuestion"
                         >
-                            <text class="followup-option-description">
-                              {{ getOptionDescription(option) || '选择这一项后继续下一步排查。' }}
-                            </text>
-                          </view>
-                        </uni-collapse-item>
-                      </uni-collapse>
-                      <template v-else>
-                        <view
-                          v-for="option in getVisibleCareBehaviorOptions(question)"
-                          :key="option.optionId"
-                          :id="`diagnose-followup-option-${question.questionId}-${option.optionId}`"
-                          class="followup-option-button"
-                          style="width: 100%; display: flex; justify-content: flex-start; text-align: left;"
-                          :class="
-                            followUpAnswers[question.questionId] === option.optionId
-                              ? 'followup-option-button--active'
-                              : 'followup-option-button--idle'
-                          "
-                          @click="selectFollowUpOption(question, option)"
+                          上一题
+                        </button>
+                        <button
+                          id="diagnose-followup-next-button"
+                          class="followup-nav-button"
+                          :class="{ 'followup-nav-button--disabled': !canProceedFollowUpQuestion() }"
+                          :disabled="!canProceedFollowUpQuestion()"
+                          @click="handleNextFollowUpQuestion"
                         >
-                          <view class="followup-option-content">
-                            <view class="followup-option-title-row">
-                              <text class="followup-option-text">{{ getOptionText(question, option) }}</text>
-                            </view>
-                            <text
-                              v-if="getOptionDescription(option)"
-                              class="followup-option-description"
-                            >
-                              {{ getOptionDescription(option) }}
-                            </text>
-                          </view>
-                        </view>
-                      </template>
-                    </view>
-                    <view class="followup-nav-row">
-                      <button
-                        id="diagnose-followup-prev-button"
-                        class="followup-nav-button"
-                        :class="{ 'followup-nav-button--disabled': isSubmittingAnyFollowUp || activeFollowUpQuestionIndex <= 0 }"
-                        :disabled="isSubmittingAnyFollowUp || activeFollowUpQuestionIndex <= 0"
-                        @click="goPreviousFollowUpQuestion"
+                          下一题
+                        </button>
+                      </view>
+                      <text
+                        v-if="hasDirtyFollowUpAnswers"
+                        class="block text-[10px] text-[#8B7355] leading-relaxed mt-2"
                       >
-                        上一题
-                      </button>
-                      <button
-                        id="diagnose-followup-next-button"
-                        class="followup-nav-button"
-                        :class="{ 'followup-nav-button--disabled': !canProceedFollowUpQuestion() }"
-                        :disabled="!canProceedFollowUpQuestion()"
-                        @click="handleNextFollowUpQuestion"
-                      >
-                        下一题
-                      </button>
+                        你修改了之前的答案，点下一题后后续问题会交给后端重新判断。
+                      </text>
                     </view>
-                    <text
-                      v-if="hasDirtyFollowUpAnswers"
-                      class="block text-[10px] text-[#8B7355] leading-relaxed mt-2"
-                    >
-                      你修改了之前的答案，点下一题后后续问题会交给后端重新判断。
-                    </text>
                   </view>
-                </swiper-item>
-              </swiper>
+                </view>
+              </view>
               <view v-else id="diagnose-followup-empty-question" class="px-3 py-2 rounded-xl bg-white border border-gray-100">
                 <text class="block text-[10px] text-gray-500">
                   当前没有可继续回答的问题。
@@ -786,6 +784,9 @@ const currentFollowUpQuestion = computed(() => {
   return items[activeFollowUpQuestionIndex.value] || null
 })
 const hasDirtyFollowUpAnswers = computed(() => dirtyFollowUpFromIndex.value >= 0)
+const followUpSwiperTrackStyle = computed(() =>
+  `transform: translateX(-${followUpSwiperCurrent.value * 100}%);`
+)
 const currentFollowUpAccordionValue = computed({
   get() {
     const question = currentFollowUpQuestion.value
@@ -2515,16 +2516,20 @@ defineExpose({
   overflow-y: visible;
 }
 
-.followup-swiper-item {
-  overflow-x: hidden;
-  overflow-y: visible;
+.followup-swiper-track {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  transition: transform 260ms ease;
+  width: 100%;
+  will-change: transform;
 }
 
-.followup-swiper :deep(.uni-swiper-wrapper),
-.followup-swiper :deep(.uni-swiper-slides),
-.followup-swiper :deep(.uni-swiper-slide-frame) {
-  overflow-x: hidden !important;
-  overflow-y: visible !important;
+.followup-swiper-item {
+  flex: 0 0 100%;
+  overflow-x: hidden;
+  overflow-y: visible;
+  width: 100%;
 }
 
 .followup-question-card {

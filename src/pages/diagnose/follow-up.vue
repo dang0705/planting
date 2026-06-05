@@ -7,88 +7,86 @@
           <text class="followup-fixed-context-progress">{{ followUpQuestionProgressText }}</text>
         </view>
 
-        <swiper
+        <view
           id="diagnose-followup-page-swiper"
           class="followup-page-swiper"
-          :current="activeFollowUpQuestionIndex"
-          :duration="260"
-          :indicator-dots="false"
-          :circular="false"
-          @change="activeFollowUpQuestionIndex = Number($event?.detail?.current || 0)"
+          :style="followUpSwiperStyle"
         >
-          <swiper-item
-            v-for="(question, questionIndex) in followUpQuestionStack"
-            :key="question.questionId || question.questionKey || questionIndex"
-            :id="`diagnose-followup-page-item-${question.questionId || questionIndex}`"
-            class="followup-page-swiper-item"
-          >
-            <scroll-view :id="`diagnose-followup-page-question-scroll-${question.questionId || questionIndex}`" scroll-y class="followup-question-scroll">
-              <view :id="`diagnose-followup-page-question-shell-${question.questionId || questionIndex}`" class="followup-question-shell">
-                <view :id="`diagnose-followup-page-question-card-${question.questionId || questionIndex}`" class="followup-question-card followup-question-card--animated">
-                  <text class="followup-question-title">
-                    {{ getQuestionTitle(question) }}
-                  </text>
-                  <text v-if="hasQuestionHelpText(question)" class="followup-question-help">
-                    {{ getQuestionHelpText(question) }}
-                  </text>
+          <view class="followup-page-swiper-track" :style="followUpPageTrackStyle">
+            <view
+              v-for="(question, questionIndex) in followUpQuestionStack"
+              :key="question.questionId || question.questionKey || questionIndex"
+              :id="`diagnose-followup-page-item-${question.questionId || questionIndex}`"
+              class="followup-page-swiper-item"
+            >
+              <scroll-view :id="`diagnose-followup-page-question-scroll-${question.questionId || questionIndex}`" scroll-y class="followup-question-scroll">
+                <view :id="`diagnose-followup-page-question-shell-${question.questionId || questionIndex}`" class="followup-question-shell">
+                  <view :id="`diagnose-followup-page-question-card-${question.questionId || questionIndex}`" class="followup-question-card followup-question-card--animated">
+                    <text class="followup-question-title">
+                      {{ getQuestionTitle(question) }}
+                    </text>
+                    <text v-if="hasQuestionHelpText(question)" class="followup-question-help">
+                      {{ getQuestionHelpText(question) }}
+                    </text>
 
-                  <CareBehaviorTimeline
-                    v-if="isCareBehaviorWateringTimelineQuestion(question)"
-                    :question-id="getFollowUpQuestionId(question)"
-                    :question="question"
-                    :timeline="getCareBehaviorTimelineByQuestion(question)"
-                    :loading="environmentWeatherWindowLoading"
-                    :error="environmentWeatherWindowError"
-                    @change="payload => handleCareBehaviorTimelineChange(question, payload)"
-                  />
+                    <CareBehaviorTimeline
+                      v-if="isCareBehaviorWateringTimelineQuestion(question)"
+                      :question-id="getFollowUpQuestionId(question)"
+                      :question="question"
+                      :timeline="getCareBehaviorTimelineByQuestion(question)"
+                      :loading="environmentWeatherWindowLoading"
+                      :error="environmentWeatherWindowError"
+                      @change="payload => handleCareBehaviorTimelineChange(question, payload)"
+                    />
 
-                  <view
-                    v-if="getVisibleCareBehaviorOptions(question).length"
-                    :id="`diagnose-followup-page-option-stack-${question.questionId || questionIndex}`"
-                    class="followup-option-stack followup-option-stack--accordion"
-                  >
                     <view
-                      v-for="(option, optionIndex) in getVisibleCareBehaviorOptions(question)"
-                      :key="option.optionId || option.optionKey || option.text"
-                      :id="`diagnose-followup-page-option-${question.questionId || questionIndex}-${option.optionId || option.optionKey || optionIndex}`"
-                      class="followup-accordion-option"
-                      :class="isSelectedFollowUpOption(question, option) ? 'followup-accordion-option--active' : ''"
-                      @click="selectFollowUpOption(question, option)"
+                      v-if="getVisibleCareBehaviorOptions(question).length"
+                      :id="`diagnose-followup-page-option-stack-${question.questionId || questionIndex}`"
+                      class="followup-option-stack followup-option-stack--accordion"
                     >
-                      <view class="followup-accordion-title">
-                        <text class="followup-accordion-text">{{ getOptionText(question, option) }}</text>
-                        <text class="followup-accordion-badge">
-                          {{ isSelectedFollowUpOption(question, option) ? '已选' : '单选' }}
-                        </text>
+                      <view
+                        v-for="(option, optionIndex) in getVisibleCareBehaviorOptions(question)"
+                        :key="option.optionId || option.optionKey || option.text"
+                        :id="`diagnose-followup-page-option-${question.questionId || questionIndex}-${option.optionId || option.optionKey || optionIndex}`"
+                        class="followup-accordion-option"
+                        :class="isSelectedFollowUpOption(question, option) ? 'followup-accordion-option--active' : ''"
+                        @click="selectFollowUpOption(question, option)"
+                      >
+                        <view class="followup-accordion-title">
+                          <text class="followup-accordion-text">{{ getOptionText(question, option) }}</text>
+                          <text class="followup-accordion-badge">
+                            {{ isSelectedFollowUpOption(question, option) ? '已选' : '单选' }}
+                          </text>
+                        </view>
                       </view>
                     </view>
-                  </view>
 
-                  <view class="followup-nav-row">
-                    <button
-                      id="diagnose-followup-page-prev-button"
-                      class="followup-nav-button"
-                      :class="{ 'followup-nav-button--disabled': isSubmittingFollowUp || activeFollowUpQuestionIndex <= 0 }"
-                      :disabled="isSubmittingFollowUp || activeFollowUpQuestionIndex <= 0"
-                      @click="goPreviousFollowUpQuestion"
-                    >上一题</button>
-                    <button
-                      id="diagnose-followup-page-next-button"
-                      class="followup-nav-button followup-nav-button--primary"
-                      :class="{ 'followup-nav-button--disabled': !canProceedFollowUpQuestion() }"
-                      :disabled="!canProceedFollowUpQuestion()"
-                      @click="handleNextFollowUpQuestion"
-                    >{{ isSubmittingFollowUp ? '处理中...' : '下一题' }}</button>
-                  </view>
+                    <view class="followup-nav-row">
+                      <button
+                        id="diagnose-followup-page-prev-button"
+                        class="followup-nav-button"
+                        :class="{ 'followup-nav-button--disabled': isSubmittingFollowUp || activeFollowUpQuestionIndex <= 0 }"
+                        :disabled="isSubmittingFollowUp || activeFollowUpQuestionIndex <= 0"
+                        @click="goPreviousFollowUpQuestion"
+                      >上一题</button>
+                      <button
+                        id="diagnose-followup-page-next-button"
+                        class="followup-nav-button followup-nav-button--primary"
+                        :class="{ 'followup-nav-button--disabled': !canProceedFollowUpQuestion() }"
+                        :disabled="!canProceedFollowUpQuestion()"
+                        @click="handleNextFollowUpQuestion"
+                      >{{ isSubmittingFollowUp ? '处理中...' : '下一题' }}</button>
+                    </view>
 
-                  <text v-if="hasDirtyFollowUpAnswers" class="followup-dirty-hint">
-                    你修改了之前的答案，继续后会重新整理后续问题。
-                  </text>
+                    <text v-if="hasDirtyFollowUpAnswers" class="followup-dirty-hint">
+                      你修改了之前的答案，继续后会重新整理后续问题。
+                    </text>
+                  </view>
                 </view>
-              </view>
-            </scroll-view>
-          </swiper-item>
-        </swiper>
+              </scroll-view>
+            </view>
+          </view>
+        </view>
       </view>
     </template>
 
@@ -359,6 +357,9 @@ const roundLabel = computed(() => roundId.value || '未提供 roundId')
 const currentFollowUpQuestion = computed(() => followUpQuestionStack.value[activeFollowUpQuestionIndex.value] || null)
 const hasDirtyFollowUpAnswers = computed(() => dirtyFollowUpFromIndex.value >= 0)
 const followUpSwiperStyle = computed(() => ({ height: `${estimateFollowUpSwiperHeight(currentFollowUpQuestion.value)}px` }))
+const followUpPageTrackStyle = computed(() =>
+  `transform: translateX(-${activeFollowUpQuestionIndex.value * 100}%);`
+)
 const followUpQuestionProgressText = computed(() => {
   const currentIndex = Math.min(activeFollowUpQuestionIndex.value + 1, followUpQuestionStack.value.length || 1)
   return `问题 ${currentIndex} / ${followUpQuestionStack.value.length || 1}`
@@ -1472,10 +1473,21 @@ async function submitFollowUps() {
   overflow-y: visible;
 }
 
+.followup-page-swiper-track {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  transition: transform 260ms ease;
+  width: 100%;
+  will-change: transform;
+}
+
 .followup-page-swiper-item {
+  flex: 0 0 100%;
   height: 100%;
   overflow-x: hidden;
   overflow-y: visible;
+  width: 100%;
 }
 
 .followup-question-scroll {

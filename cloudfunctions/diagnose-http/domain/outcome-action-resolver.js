@@ -202,6 +202,20 @@ function buildOutcomeEntry({
   }
 }
 
+function isUncertainOutcome(outcome = null) {
+  const outcomeKey = normalizeKey(outcome?.outcomeKey || outcome?.problemKey || '')
+  const outcomeType = normalizeKey(outcome?.outcomeType || '')
+  return outcomeType === 'uncertain' || outcomeKey === 'uncertain_observation'
+}
+
+function suppressUncertainWhenConcreteOutcomeExists(outcomes = []) {
+  const safeOutcomes = Array.isArray(outcomes) ? outcomes.filter(Boolean) : []
+  const hasConcreteOutcome = safeOutcomes.some(outcome => !isUncertainOutcome(outcome))
+  return hasConcreteOutcome
+    ? safeOutcomes.filter(outcome => !isUncertainOutcome(outcome))
+    : safeOutcomes
+}
+
 function buildActionAdviceFallback({
   actionProfiles = [],
   careGuidance = {},
@@ -292,7 +306,8 @@ function resolveRouteOutcomePayload({
   const visibleOutcomes = rawVisibleOutcomes
     .map(outcome => appendYellowingReviewAdviceToOutcome(outcome, shouldAppendYellowingReviewAdvice))
     .filter(Boolean)
-  const leadingVisibleOutcome = visibleOutcomes[0] || null
+  const effectiveVisibleOutcomes = suppressUncertainWhenConcreteOutcomeExists(visibleOutcomes)
+  const leadingVisibleOutcome = effectiveVisibleOutcomes[0] || null
   const visibleActionConflictGroups = uniqKeys(routeDecision?.visibleActionConflictGroups)
   const hasActionConflict = visibleActionConflictGroups.length > 1
   const careGuidance = buildCareGuidance({
@@ -351,11 +366,11 @@ function resolveRouteOutcomePayload({
   return {
     authoritativeRouteDecision,
     leadingVisibleOutcome,
-    visibleOutcomes,
+    visibleOutcomes: effectiveVisibleOutcomes,
     outcomeMode: resolveOutcomeMode({
       authoritativeRouteDecision,
       followUpRequired,
-      visibleOutcomes
+      visibleOutcomes: effectiveVisibleOutcomes
     }),
     routeDecisionCause: normalizeRouteDecisionCause(routeDecision?.decisionCause),
     routeSafeSummary: buildRouteSafeSummary(leadingVisibleOutcome),
@@ -367,5 +382,6 @@ function resolveRouteOutcomePayload({
 module.exports = {
   resolveRouteOutcomePayload,
   buildOutcomeEntry,
-  buildRouteSafeSummary
+  buildRouteSafeSummary,
+  suppressUncertainWhenConcreteOutcomeExists
 }

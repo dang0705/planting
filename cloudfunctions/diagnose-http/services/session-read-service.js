@@ -157,6 +157,11 @@ async function getSessionState(openid, sessionId) {
       fertilization: runtimeSnapshot?.plantContext?.fertilization || null,
       sunning: runtimeSnapshot?.plantContext?.sunning || null,
       ventilation: runtimeSnapshot?.plantContext?.ventilation || null,
+      temperatureMin: runtimeSnapshot?.plantContext?.temperatureMin ?? null,
+      temperatureMax: runtimeSnapshot?.plantContext?.temperatureMax ?? null,
+      humidityMin: runtimeSnapshot?.plantContext?.humidityMin ?? null,
+      humidityMax: runtimeSnapshot?.plantContext?.humidityMax ?? null,
+      uvIndexMax: runtimeSnapshot?.plantContext?.uvIndexMax ?? null,
       careAuditStatus: runtimeSnapshot?.plantContext?.careAuditStatus || '',
       varianceLevel: runtimeSnapshot?.plantContext?.varianceLevel || ''
     },

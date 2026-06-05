@@ -1,8 +1,6 @@
 # 02 诊断 HTTP 接口、请求响应与路由
 
-> 文档口径：本组文档基于 `Archive 2.zip` 中可见的 CloudBase 云函数代码、`rules.zip` 中的实施规范、以及现有粗文档 `diagnosis-runtime-code-logic.md` 整理。中文概念优先，英文函数名、字段名、路径只用于定位代码。
->
-> 重要限制：压缩包内未发现 uni-app/小程序前端页面源码，因此前端实现只能按后端接口契约、返回结构和小程序接入规范反推，不写成“已确认源码行为”。
+> 文档口径：本组文档基于当前可确认的 CloudBase 云函数实现、项目实施规范和既有诊断运行时逻辑整理。中文概念优先，英文函数名、字段名、路径只用于定位代码。
 
 ## 一、诊断服务入口
 
@@ -10,27 +8,27 @@
 
 ## 二、主要路由
 
-| 路由片段 | 处理函数 | 说明 |
-|---|---|---|
-| `/health` | 健康检查 | 返回服务可用状态和重构准备状态 |
-| `/diagnosis/start` | `handleDiagnosisStart()` | 开始一次诊断，通常包含图片、植物上下文、客户端上下文 |
-| `/diagnosis/question/start` | `handleDiagnosisQuestionStart()` | 无图症状模式直接创建问诊，不调用视觉模型 |
-| `/diagnosis/answer` | `handleDiagnosisAnswer()` | 提交某一轮追问答案，进入下一轮诊断 |
-| `/diagnosis/result` | `handleDiagnosisResult()` | 读取指定诊断结果 |
-| `/diagnosis/history` | `handleDiagnosisHistory()` | 读取用户诊断历史 |
-| `/diagnosis/feedback` | `handleDiagnosisFeedback()` | 保存用户对结果的反馈 |
-| `/diagnosis/review/list` | `handleDiagnosisReviewList()` | 审计用诊断会话列表 |
-| `/diagnosis/review/images` | `handleDiagnosisReviewImages()` | 审计用图片列表 |
-| `/diagnosis/review/detail` | `handleDiagnosisReviewDetail()` | 审计用诊断详情 |
-| `/diagnosis/review/import` | `handleDiagnosisReviewImportBatch()` | 批量导入审计结果 |
-| `/visual/out-of-pool/list` | `handleOutOfPoolCandidateList()` | 池外视觉候选列表 |
-| `/visual/out-of-pool/image` | `handleOutOfPoolCandidateImage()` | 池外候选图片读取 |
-| `/visual/out-of-pool/review` | `handleOutOfPoolCandidateReview()` | 池外异常审核 |
-| `/visual/out-of-pool/proxy-mappings/list` | `handleOutOfPoolProxyMappingList()` | 池外 proxy 映射列表 |
-| `/visual/out-of-pool/proxy-mappings/upsert` | `handleOutOfPoolProxyMappingUpsert()` | 新增或更新池外 proxy 映射 |
-| `/visual/out-of-pool/proxy-mappings/disable` | `handleOutOfPoolProxyMappingDisable()` | 禁用池外 proxy 映射 |
-| `/stream/diagnose` | `handleDiagnosisStartStream()` | 流式诊断进度输出 |
-| `/diagnose` | `handleLegacyDiagnose()` / `handleLegacyDiagnoseStream()` | 旧诊断接口兼容 |
+| 路由片段                                     | 处理函数                                                  | 说明                                                 |
+| -------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------- |
+| `/health`                                    | 健康检查                                                  | 返回服务可用状态和重构准备状态                       |
+| `/diagnosis/start`                           | `handleDiagnosisStart()`                                  | 开始一次诊断，通常包含图片、植物上下文、客户端上下文 |
+| `/diagnosis/question/start`                  | `handleDiagnosisQuestionStart()`                          | 无图症状模式直接创建问诊，不调用视觉模型             |
+| `/diagnosis/answer`                          | `handleDiagnosisAnswer()`                                 | 提交某一轮追问答案，进入下一轮诊断                   |
+| `/diagnosis/result`                          | `handleDiagnosisResult()`                                 | 读取指定诊断结果                                     |
+| `/diagnosis/history`                         | `handleDiagnosisHistory()`                                | 读取用户诊断历史                                     |
+| `/diagnosis/feedback`                        | `handleDiagnosisFeedback()`                               | 保存用户对结果的反馈                                 |
+| `/diagnosis/review/list`                     | `handleDiagnosisReviewList()`                             | 审计用诊断会话列表                                   |
+| `/diagnosis/review/images`                   | `handleDiagnosisReviewImages()`                           | 审计用图片列表                                       |
+| `/diagnosis/review/detail`                   | `handleDiagnosisReviewDetail()`                           | 审计用诊断详情                                       |
+| `/diagnosis/review/import`                   | `handleDiagnosisReviewImportBatch()`                      | 批量导入审计结果                                     |
+| `/visual/out-of-pool/list`                   | `handleOutOfPoolCandidateList()`                          | 池外视觉候选列表                                     |
+| `/visual/out-of-pool/image`                  | `handleOutOfPoolCandidateImage()`                         | 池外候选图片读取                                     |
+| `/visual/out-of-pool/review`                 | `handleOutOfPoolCandidateReview()`                        | 池外异常审核                                         |
+| `/visual/out-of-pool/proxy-mappings/list`    | `handleOutOfPoolProxyMappingList()`                       | 池外 proxy 映射列表                                  |
+| `/visual/out-of-pool/proxy-mappings/upsert`  | `handleOutOfPoolProxyMappingUpsert()`                     | 新增或更新池外 proxy 映射                            |
+| `/visual/out-of-pool/proxy-mappings/disable` | `handleOutOfPoolProxyMappingDisable()`                    | 禁用池外 proxy 映射                                  |
+| `/stream/diagnose`                           | `handleDiagnosisStartStream()`                            | 流式诊断进度输出                                     |
+| `/diagnose`                                  | `handleLegacyDiagnose()` / `handleLegacyDiagnoseStream()` | 旧诊断接口兼容                                       |
 
 ## 三、开始诊断主流程
 

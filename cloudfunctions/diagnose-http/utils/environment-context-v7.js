@@ -689,6 +689,48 @@ function buildWateringPlanner({
         result: maxReasonableWaterings10d
       }),
       buildPlannerFormulaStep({
+        key: 'high_humidity_pressure_hit',
+        expression: 'highHumidityDays >= wetHighHumidityDaysMin || maxConsecutiveHighHumidityDays >= wetHighHumidityConsecutiveDaysMin',
+        inputs: {
+          highHumidityDays: Number(historical.highHumidityDays || 0),
+          maxConsecutiveHighHumidityDays: Number(historical.maxConsecutiveHighHumidityDays || 0)
+        },
+        thresholds: {
+          wetHighHumidityDaysMin: Number(thresholds.wetHighHumidityDaysMin || 0),
+          wetHighHumidityConsecutiveDaysMin: Number(thresholds.wetHighHumidityConsecutiveDaysMin || 0)
+        },
+        result: highHumidityPressureHit,
+        passed: highHumidityPressureHit
+      }),
+      buildPlannerFormulaStep({
+        key: 'cold_humid_pressure_hit',
+        expression: 'coldHumidDays >= wetColdHumidDaysMin || maxConsecutiveColdHumidDays >= wetColdHumidConsecutiveDaysMin',
+        inputs: {
+          coldHumidDays: Number(historical.coldHumidDays || 0),
+          maxConsecutiveColdHumidDays: Number(historical.maxConsecutiveColdHumidDays || 0)
+        },
+        thresholds: {
+          wetColdHumidDaysMin: Number(thresholds.wetColdHumidDaysMin || 0),
+          wetColdHumidConsecutiveDaysMin: Number(thresholds.wetColdHumidConsecutiveDaysMin || 0)
+        },
+        result: coldHumidPressureHit,
+        passed: coldHumidPressureHit
+      }),
+      buildPlannerFormulaStep({
+        key: 'rainy_pressure_hit',
+        expression: 'rainyDays >= wetRainyDaysMin || maxConsecutiveRainyDays >= wetRainyConsecutiveDaysMin',
+        inputs: {
+          rainyDays: Number(historical.rainyDays || 0),
+          maxConsecutiveRainyDays: Number(historical.maxConsecutiveRainyDays || 0)
+        },
+        thresholds: {
+          wetRainyDaysMin: Number(thresholds.wetRainyDaysMin || 0),
+          wetRainyConsecutiveDaysMin: Number(thresholds.wetRainyConsecutiveDaysMin || 0)
+        },
+        result: rainyPressureHit,
+        passed: rainyPressureHit
+      }),
+      buildPlannerFormulaStep({
         key: 'wet_pressure_score',
         expression: 'wetPressureHitCount * wetPressureDeductionPerHit',
         inputs: {

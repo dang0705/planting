@@ -227,6 +227,27 @@ function resolveOutcomeIdentityKey(outcome = null, index = 0) {
   )
 }
 
+function isUncertainOutcome(outcome = null) {
+  const safeOutcome = asPlainObject(outcome)
+  if (!safeOutcome) {return false}
+  const outcomeKey = normalizeStoredNullableText(
+    safeOutcome.outcomeKey ||
+      safeOutcome.problemKey ||
+      '',
+    ''
+  )
+  const outcomeType = normalizeStoredNullableText(safeOutcome.outcomeType || '', '')
+  return outcomeType === 'uncertain' || outcomeKey === 'uncertain_observation'
+}
+
+function suppressUncertainWhenConcreteOutcomeExists(outcomes = []) {
+  const safeOutcomes = (Array.isArray(outcomes) ? outcomes : []).filter(asPlainObject)
+  const hasConcreteOutcome = safeOutcomes.some(outcome => !isUncertainOutcome(outcome))
+  return hasConcreteOutcome
+    ? safeOutcomes.filter(outcome => !isUncertainOutcome(outcome))
+    : safeOutcomes
+}
+
 function mergeVisibleOutcomeEntries({
   visibleOutcomes = [],
   legacyPrimaryOutcome = null,
@@ -244,7 +265,7 @@ function mergeVisibleOutcomeEntries({
     seen.add(identityKey)
     merged.push(outcome)
   }
-  return merged
+  return suppressUncertainWhenConcreteOutcomeExists(merged)
 }
 
 function normalizeRouteOutcomeMode(value = '', visibleOutcomes = []) {
@@ -679,6 +700,7 @@ module.exports = {
     asPlainObject,
     normalizeOutcomeEntry,
     normalizeOutcomeList,
+    suppressUncertainWhenConcreteOutcomeExists,
     firstPlainObject,
     mergePlainObjects,
     firstOutcomeList,

@@ -257,8 +257,28 @@ test('watering planner thresholds are configurable and included in formula trace
   })
 
   assert.equal(defaultPlan.wateringContext, WATERING_CONTEXTS.WET)
+  assert.equal(
+    defaultPlan.calculation.formulas.find(item => item.key === 'high_humidity_pressure_hit').thresholds.wetHighHumidityDaysMin,
+    4
+  )
+  assert.equal(
+    defaultPlan.calculation.formulas.find(item => item.key === 'high_humidity_pressure_hit').thresholds.wetHighHumidityConsecutiveDaysMin,
+    4
+  )
+  assert.equal(
+    defaultPlan.calculation.formulas.find(item => item.key === 'high_humidity_pressure_hit').passed,
+    true
+  )
   assert.equal(relaxedPlan.wateringContext, WATERING_CONTEXTS.BASELINE)
   assert.equal(relaxedPlan.thresholds.wetHighHumidityDaysMin, 99)
+  assert.equal(
+    relaxedPlan.calculation.formulas.find(item => item.key === 'high_humidity_pressure_hit').thresholds.wetHighHumidityDaysMin,
+    99
+  )
+  assert.equal(
+    relaxedPlan.calculation.formulas.find(item => item.key === 'high_humidity_pressure_hit').passed,
+    false
+  )
   assert.equal(relaxedPlan.calculation.formulaVersion, 'watering_planner_v7_configurable')
   assert.equal(
     relaxedPlan.calculation.formulas.find(item => item.key === 'wet_pressure_score').result,

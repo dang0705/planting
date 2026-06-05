@@ -473,6 +473,75 @@ function testRouteFallbackPayloadNoCandidateOutcomeLeak() {
   assert.equal(Object.prototype.hasOwnProperty.call(payload, 'secondaryOutcomes'), false)
 }
 
+function testRouteVisibleOutcomesSuppressUncertainWhenConcreteExists() {
+  const payload = resolveRouteOutcomePayload({
+    routeDecision: {
+      visibleOutcomeKeys: ['overwatering_root_pressure', 'uncertain_observation'],
+      visibleActionConflictGroups: ['watering_stop']
+    },
+    routeOutcomes: [
+      {
+        outcomeKey: 'overwatering_root_pressure',
+        outcomeType: 'problem_cluster',
+        displayNameCn: '积水/根系压力',
+        userDefinitionCn: '当前更像积水或根系压力。',
+        actionProfileKey: 'action_overwatering_basic'
+      },
+      {
+        outcomeKey: 'uncertain_observation',
+        outcomeType: 'uncertain',
+        displayNameCn: '暂不能稳定判断',
+        userDefinitionCn: '当前证据仍不足以安全闭合到具体方向。',
+        actionProfileKey: 'action_uncertain_prepare'
+      }
+    ],
+    actionProfiles: [],
+    plantContext: {},
+    observedEvidenceSet: [],
+    outcomeType: 'problematic',
+    followUpRequired: false
+  })
+
+  assert.deepEqual(
+    payload.visibleOutcomes.map(item => item.outcomeKey),
+    ['overwatering_root_pressure']
+  )
+  assert.equal(payload.leadingVisibleOutcome.outcomeKey, 'overwatering_root_pressure')
+  assert.equal(payload.outcomeMode, 'visible_outcomes')
+}
+
+function testSessionResultReadSuppressesUncertainWhenConcreteExists() {
+  const fields = sessionResultReadServiceTest.resolveRouteOutcomeFields({
+    outcomePayload: {
+      outcomeMode: 'visible_outcomes',
+      visibleOutcomes: [
+        {
+          outcomeKey: 'overwatering_root_pressure',
+          outcomeType: 'problematic',
+          displayNameCn: '积水/根系压力'
+        },
+        {
+          outcomeKey: 'uncertain_observation',
+          outcomeType: 'uncertain',
+          displayNameCn: '暂不能稳定判断'
+        }
+      ],
+      finalResult: {
+        displayName: '积水/根系压力'
+      }
+    }
+  })
+
+  assert.deepEqual(
+    fields.visibleOutcomes.map(item => item.outcomeKey),
+    ['overwatering_root_pressure']
+  )
+  assert.deepEqual(
+    fields.finalResult.visibleOutcomes.map(item => item.outcomeKey),
+    ['overwatering_root_pressure']
+  )
+}
+
 function testGateQuestionOptionPairsDoNotRequireRouteEffectMirror() {
   const matched = matchesRequiredAnswerEffects(
     {
@@ -4768,6 +4837,77 @@ function testFrontendNormalizationCompatibility() {
   assert.equal(multiOutcomeResult.visibleOutcomes.length, 3)
   assert.equal(multiOutcomeResult.outcomeMode, 'multi_outcome_route')
   assert.equal(multiOutcomeResult.actionAdvice.todayActions[0], '先移离正午直射光。')
+
+  const mixedUncertainResult = normalizeDiagnosisResult({
+    diagnosisSessionId: 'route_mixed_uncertain_1',
+    roundId: 'round_2',
+    stage: 'final',
+    outcomeType: 'problematic',
+    visibleOutcomes: [
+      {
+        outcomeKey: 'overwatering_root_pressure',
+        outcomeType: 'problematic',
+        displayNameCn: '积水/根系压力'
+      },
+      {
+        outcomeKey: 'uncertain_observation',
+        outcomeType: 'uncertain',
+        displayNameCn: '暂不能稳定判断'
+      }
+    ],
+    finalResult: {
+      displayName: '积水/根系压力',
+      summary: '当前路径已收敛到积水/根系压力方向。'
+    },
+    followUpRequired: false,
+    followUps: []
+  })
+
+  assert.deepEqual(
+    mixedUncertainResult.visibleOutcomes.map(item => item.outcomeKey),
+    ['overwatering_root_pressure']
+  )
+}
+
+function testDiagnosisReviewDisplaysEnvironmentCareCalculation() {
+  const source = readFileSync('./src/pages/profile/diagnosis-review.vue', 'utf8')
+  const detailLoaderSource = readFileSync(
+    './cloudfunctions/diagnose-http/repositories/diagnosis-review/detail-loaders.js',
+    'utf8'
+  )
+  assert.ok(source.includes('环境与养护计算'))
+  assert.ok(source.includes('getEnvironmentCareCalculation(currentDetail)'))
+  assert.ok(source.includes('getEnvironmentCareCalculationSummaryRows(currentDetail)'))
+  assert.ok(source.includes('getEnvironmentCareCalculationRows(currentDetail)'))
+  assert.ok(source.includes('formatEnvironmentCareHighHumidityMetric'))
+  assert.ok(source.includes('formatEnvironmentCareThresholdFactors'))
+  assert.ok(source.includes('environmentCareCalculation.keyMetrics.highHumidityDays'))
+  assert.ok(source.includes('高湿命中：历史高湿天数 >= ${highHumidityDaysMin}'))
+  assert.ok(source.includes('历史高湿天数'))
+  assert.ok(source.includes('watering.formula'))
+  assert.ok(source.includes('fertilizing.formula'))
+  assert.ok(source.includes('light.formula'))
+  assert.ok(source.includes('formula-line-list'))
+  assert.ok(source.includes('formatPlannerFormulaLines'))
+  assert.ok(source.includes('substituteFormulaExpression'))
+  assert.ok(source.includes('formulaStepLabelMap'))
+  assert.ok(source.includes('formulaTermLabelMap'))
+  assert.ok(source.includes('公式：${formatFormulaTechnicalLabel(key)}'))
+  assert.ok(source.includes('代入：${formatFormulaTechnicalLabel(key)}'))
+  assert.ok(source.includes('；结果=${formatFormulaResult(step)}'))
+  assert.ok(source.includes('判定=${step.passed ?'))
+  assert.ok(source.includes('processLines: formatPlannerFormulaProcessLines'))
+  assert.ok(source.includes('high_humidity_pressure_hit'))
+  assert.ok(source.includes('计算过程：高湿命中 ='))
+  assert.ok(source.includes('计算过程：最近 10 天实际浇水次数 > 偏湿修正后的过浇阈值'))
+  assert.ok(source.includes('计算过程：未来干热分支'))
+  assert.ok(source.includes('计算过程：缺肥时间桶判断'))
+  assert.ok(detailLoaderSource.includes('keyMetrics'))
+  assert.ok(detailLoaderSource.includes('thresholdFactors'))
+  assert.ok(detailLoaderSource.includes('wetHighHumidityDaysMin'))
+  assert.ok(detailLoaderSource.includes('wetHighHumidityConsecutiveDaysMin'))
+  assert.ok(detailLoaderSource.includes('highHumidityDays'))
+  assert.ok(detailLoaderSource.includes('maxConsecutiveHighHumidityDays'))
 }
 
 function testReviewCoreProcessKeepsRoutePath() {
@@ -4871,6 +5011,10 @@ async function main() {
   console.log('✓ route planner 追问生成')
   testRouteFallbackPayloadNoCandidateOutcomeLeak()
   console.log('✓ route fallback payload 不回填 candidate_outcome')
+  testRouteVisibleOutcomesSuppressUncertainWhenConcreteExists()
+  console.log('✓ concrete route outcome suppresses uncertain visible outcome')
+  testSessionResultReadSuppressesUncertainWhenConcreteExists()
+  console.log('✓ session result read suppresses uncertain visible outcome')
   testGateQuestionOptionPairsDoNotRequireRouteEffectMirror()
   console.log('✓ gate question-option pairs do not require route effect mirror')
   await testRoutePlannerConsumesSqlAnswerEffects()
@@ -4981,6 +5125,8 @@ async function main() {
   console.log('✓ golden uncertain samples')
   testFrontendNormalizationCompatibility()
   console.log('✓ frontend normalization compatibility')
+  testDiagnosisReviewDisplaysEnvironmentCareCalculation()
+  console.log('✓ diagnosis review displays environment care calculation')
   testReviewCoreProcessKeepsRoutePath()
   console.log('✓ review core process keeps route path')
   await testReviewGovernancePrefersRouteActionAdvice()

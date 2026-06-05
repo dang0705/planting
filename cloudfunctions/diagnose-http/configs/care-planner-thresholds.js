@@ -5,6 +5,11 @@ function envNumber(name, fallback) {
   return Number.isFinite(value) ? value : fallback
 }
 
+function envText(name, fallback = '') {
+  const value = String(process.env[name] || '').trim()
+  return value || fallback
+}
+
 function envTextList(name, fallback = []) {
   const raw = String(process.env[name] || '').trim()
   if (!raw) {
@@ -14,6 +19,76 @@ function envTextList(name, fallback = []) {
     .split(',')
     .map(item => item.trim())
     .filter(Boolean)
+}
+
+function envJson(name, fallback = {}) {
+  const raw = String(process.env[name] || '').trim()
+  if (!raw) {
+    return fallback
+  }
+
+  try {
+    const parsed = JSON.parse(raw)
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed
+    }
+  } catch {
+    // ignore
+  }
+
+  return fallback
+}
+
+function buildConfigFromEnvOverrides(base = {}) {
+  const inline = envJson('CARE_PLANNER_THRESHOLDS_JSON', null)
+  if (inline) {
+    return inline
+  }
+
+  return {
+    version: envText('CARE_PLANNER_THRESHOLDS_VERSION', base.version || ''),
+    environment: {
+      fallbackHumidityMinPercent: envNumber('CARE_ENV_HUMIDITY_MIN_PERCENT', undefined),
+      fallbackHumidityMaxPercent: envNumber('CARE_ENV_HUMIDITY_MAX_PERCENT', undefined),
+      fallbackTemperatureMinC: envNumber('CARE_ENV_TEMPERATURE_MIN_C', undefined),
+      fallbackTemperatureMaxC: envNumber('CARE_ENV_TEMPERATURE_MAX_C', undefined)
+    },
+    watering: {
+      behaviorWindowDays: envNumber('CARE_WATERING_BEHAVIOR_WINDOW_DAYS', undefined),
+      wetHighHumidityDaysMin: envNumber('CARE_WATERING_WET_HIGH_HUMIDITY_DAYS_MIN', undefined),
+      wetHighHumidityConsecutiveDaysMin: envNumber(
+        'CARE_WATERING_WET_HIGH_HUMIDITY_CONSECUTIVE_DAYS_MIN',
+        undefined
+      ),
+      wetColdHumidDaysMin: envNumber('CARE_WATERING_WET_COLD_HUMID_DAYS_MIN', undefined),
+      wetColdHumidConsecutiveDaysMin: envNumber(
+        'CARE_WATERING_WET_COLD_HUMID_CONSECUTIVE_DAYS_MIN',
+        undefined
+      ),
+      wetRainyDaysMin: envNumber('CARE_WATERING_WET_RAINY_DAYS_MIN', undefined),
+      wetRainyConsecutiveDaysMin: envNumber('CARE_WATERING_WET_RAINY_CONSECUTIVE_DAYS_MIN', undefined),
+      wetPressureDeductionPerHit: envNumber('CARE_WATERING_WET_PRESSURE_DEDUCTION_PER_HIT', undefined),
+      dryForecastHotDryDaysMin: envNumber('CARE_WATERING_DRY_FORECAST_HOT_DRY_DAYS_MIN', undefined),
+      dryForecastHotDryConsecutiveDaysMin: envNumber(
+        'CARE_WATERING_DRY_FORECAST_HOT_DRY_CONSECUTIVE_DAYS_MIN',
+        undefined
+      ),
+      dryHistoricalHotDryDaysMin: envNumber('CARE_WATERING_DRY_HISTORY_HOT_DRY_DAYS_MIN', undefined),
+      dryHistoricalHotDryConsecutiveDaysMin: envNumber(
+        'CARE_WATERING_DRY_HISTORY_HOT_DRY_CONSECUTIVE_DAYS_MIN',
+        undefined
+      ),
+      dryLastWateredDaysAgoMin: envNumber('CARE_WATERING_DRY_LAST_WATERED_DAYS_AGO_MIN', undefined)
+    },
+    fertilizing: {
+      intervalMinDays: envNumber('CARE_FERTILIZING_INTERVAL_MIN_DAYS', undefined),
+      intervalMaxDays: envNumber('CARE_FERTILIZING_INTERVAL_MAX_DAYS', undefined),
+      recentWindowDays: envNumber('CARE_FERTILIZING_RECENT_WINDOW_DAYS', undefined),
+      concentratedStrengths: envTextList('CARE_FERTILIZING_CONCENTRATED_STRENGTHS', undefined),
+      deficiencyGapBuckets: envTextList('CARE_FERTILIZING_DEFICIENCY_GAP_BUCKETS', undefined),
+      dueGapBuckets: envTextList('CARE_FERTILIZING_DUE_GAP_BUCKETS', undefined)
+    }
+  }
 }
 
 function clone(value) {
@@ -41,7 +116,7 @@ function mergeConfig(base = {}, overrides = {}) {
   return merged
 }
 
-const DEFAULT_CARE_PLANNER_THRESHOLDS = Object.freeze({
+const CARE_PLANNER_THRESHOLDS_BASE = {
   version: 'care_planner_thresholds_v1',
   environment: {
     fallbackHumidityMinPercent: envNumber('CARE_ENV_HUMIDITY_MIN_PERCENT', 35),
@@ -99,7 +174,11 @@ const DEFAULT_CARE_PLANNER_THRESHOLDS = Object.freeze({
       'almost_never'
     ])
   }
-})
+}
+
+const DEFAULT_CARE_PLANNER_THRESHOLDS = Object.freeze(
+  mergeConfig(CARE_PLANNER_THRESHOLDS_BASE, buildConfigFromEnvOverrides(CARE_PLANNER_THRESHOLDS_BASE))
+)
 
 function resolveCarePlannerThresholds(overrides = {}) {
   return mergeConfig(DEFAULT_CARE_PLANNER_THRESHOLDS, overrides)

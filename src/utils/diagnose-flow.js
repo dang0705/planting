@@ -447,6 +447,8 @@ function normalizeOutcomeEntry(outcome = null) {
   return {
     outcomeKey,
     problemKey: String(outcome?.problemKey || outcomeKey).trim(),
+    outcomeType: String(outcome?.outcomeType || '').trim(),
+    outcomeCategory: String(outcome?.outcomeCategory || '').trim(),
     displayNameCn: String(
       outcome?.displayNameCn || outcome?.displayName || outcome?.title || outcomeKey
     ).trim(),
@@ -507,6 +509,23 @@ function resolveOutcomeIdentityKey(outcome = null, index = 0) {
   ).trim()
 }
 
+function isUncertainOutcome(outcome = null) {
+  if (!outcome || typeof outcome !== 'object') {
+    return false
+  }
+  const outcomeKey = String(outcome.outcomeKey || outcome.problemKey || '').trim()
+  const outcomeType = String(outcome.outcomeType || '').trim()
+  return outcomeType === 'uncertain' || outcomeKey === 'uncertain_observation'
+}
+
+function suppressUncertainWhenConcreteOutcomeExists(outcomes = []) {
+  const safeOutcomes = (Array.isArray(outcomes) ? outcomes : []).filter(Boolean)
+  const hasConcreteOutcome = safeOutcomes.some(outcome => !isUncertainOutcome(outcome))
+  return hasConcreteOutcome
+    ? safeOutcomes.filter(outcome => !isUncertainOutcome(outcome))
+    : safeOutcomes
+}
+
 function synthesizeVisibleOutcomes({
   visibleOutcomes = [],
   legacyPrimaryOutcome = null,
@@ -524,7 +543,7 @@ function synthesizeVisibleOutcomes({
     seen.add(identityKey)
     merged.push(outcome)
   }
-  return merged
+  return suppressUncertainWhenConcreteOutcomeExists(merged)
 }
 
 function normalizeOutcomeModeText(value = '', visibleOutcomes = []) {

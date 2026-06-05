@@ -22,6 +22,10 @@ const {
   normalizePublicSymptomClassRuntime
 } = require('./session-runtime-normalizers')
 
+const SNAPSHOT_CARE_DAILY_RECORD_LIMIT = 25
+const SNAPSHOT_HISTORICAL_DAYS_LIMIT = 10
+const SNAPSHOT_FORECAST_DAYS_LIMIT = 15
+
 function resolvePrivateSymptomClassRuntime(response = {}) {
   return normalizePublicSymptomClassRuntime(
     response?.__symptomClassRuntime ||
@@ -40,13 +44,77 @@ function compactCareBehaviorTimelineForSnapshot(value = null) {
   }
 
   const dailyRecords = Array.isArray(value.dailyRecords)
-    ? value.dailyRecords.slice(0, 25)
-    : (Array.isArray(value.daily_records) ? value.daily_records.slice(0, 25) : [])
+    ? value.dailyRecords.slice(0, SNAPSHOT_CARE_DAILY_RECORD_LIMIT)
+    : (Array.isArray(value.daily_records)
+        ? value.daily_records.slice(0, SNAPSHOT_CARE_DAILY_RECORD_LIMIT)
+        : [])
 
   return {
     ...value,
     dailyRecords,
     daily_records: dailyRecords
+  }
+}
+
+function normalizeSnapshotNumber(value) {
+  if (value === null || value === undefined || value === '') {
+    return null
+  }
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) ? numberValue : null
+}
+
+function compactPlantContextForSnapshot(plantContext = null) {
+  if (!isPlainObject(plantContext)) {
+    return null
+  }
+
+  return {
+    userPlantId: plantContext?.userPlantId || null,
+    plantId: plantContext?.plantId || null,
+    plantDisplayName: plantContext?.plantDisplayName || '',
+    plantIdentityId: plantContext?.plantIdentityId || null,
+    identityResolutionStatus: plantContext?.identityResolutionStatus || '',
+    latestVisualCallBatchId: plantContext?.latestVisualCallBatchId || '',
+    genus: plantContext?.genus || '',
+    family: plantContext?.family || '',
+    category: plantContext?.category || '',
+    watering: plantContext?.watering || null,
+    fertilization: plantContext?.fertilization || null,
+    sunning: plantContext?.sunning || null,
+    ventilation: plantContext?.ventilation || null,
+    temperatureMin: normalizeSnapshotNumber(plantContext?.temperatureMin),
+    temperatureMax: normalizeSnapshotNumber(plantContext?.temperatureMax),
+    humidityMin: normalizeSnapshotNumber(plantContext?.humidityMin),
+    humidityMax: normalizeSnapshotNumber(plantContext?.humidityMax),
+    uvIndexMax: normalizeSnapshotNumber(plantContext?.uvIndexMax),
+    careAuditStatus: plantContext?.careAuditStatus || '',
+    varianceLevel: plantContext?.varianceLevel || ''
+  }
+}
+
+function compactEnvironmentWeatherWindowForSnapshot(value = null) {
+  if (!isPlainObject(value)) {
+    return null
+  }
+
+  const historicalDays = Array.isArray(value.historicalDays)
+    ? value.historicalDays.slice(0, SNAPSHOT_HISTORICAL_DAYS_LIMIT)
+    : (Array.isArray(value.historical_days)
+        ? value.historical_days.slice(0, SNAPSHOT_HISTORICAL_DAYS_LIMIT)
+        : [])
+  const forecastDays = Array.isArray(value.forecastDays)
+    ? value.forecastDays.slice(0, SNAPSHOT_FORECAST_DAYS_LIMIT)
+    : (Array.isArray(value.forecast_days)
+        ? value.forecast_days.slice(0, SNAPSHOT_FORECAST_DAYS_LIMIT)
+        : [])
+
+  return {
+    ...value,
+    historicalDays,
+    historical_days: historicalDays,
+    forecastDays,
+    forecast_days: forecastDays
   }
 }
 
@@ -74,6 +142,9 @@ function compactEnvironmentCareContextForSnapshot(value = null) {
     calculationTrace: isPlainObject(value.calculationTrace)
       ? value.calculationTrace
       : null,
+    environmentWeatherWindow: compactEnvironmentWeatherWindowForSnapshot(
+      value.environmentWeatherWindow || value.environment_weather_window || null
+    ),
     careBehaviorTimeline: compactCareBehaviorTimelineForSnapshot(
       value.careBehaviorTimeline || value.care_behavior_timeline || null
     )
@@ -121,20 +192,7 @@ function buildSnapshotPayload({
 
   return {
     diagnosisSessionId: sessionId,
-    plantContext: {
-      userPlantId: plantContext?.userPlantId || null,
-      plantId: plantContext?.plantId || null,
-      plantIdentityId: plantContext?.plantIdentityId || null,
-      genus: plantContext?.genus || '',
-      family: plantContext?.family || '',
-      category: plantContext?.category || '',
-      watering: plantContext?.watering || null,
-      fertilization: plantContext?.fertilization || null,
-      sunning: plantContext?.sunning || null,
-      ventilation: plantContext?.ventilation || null,
-      careAuditStatus: plantContext?.careAuditStatus || '',
-      varianceLevel: plantContext?.varianceLevel || ''
-    },
+    plantContext: compactPlantContextForSnapshot(plantContext),
     clientContext: clientContext && typeof clientContext === 'object'
       ? {
           source: String(clientContext?.source || '').trim(),
@@ -336,20 +394,7 @@ function buildRuntimeSnapshotPayload({
     diagnosisSessionId: sessionId,
     roundId: response?.roundId || `round_${round}`,
     roundIndex: Number(round || 1),
-    plantContext: {
-      userPlantId: plantContext?.userPlantId || null,
-      plantId: plantContext?.plantId || null,
-      plantIdentityId: plantContext?.plantIdentityId || null,
-      genus: plantContext?.genus || '',
-      family: plantContext?.family || '',
-      category: plantContext?.category || '',
-      watering: plantContext?.watering || null,
-      fertilization: plantContext?.fertilization || null,
-      sunning: plantContext?.sunning || null,
-      ventilation: plantContext?.ventilation || null,
-      careAuditStatus: plantContext?.careAuditStatus || '',
-      varianceLevel: plantContext?.varianceLevel || ''
-    },
+    plantContext: compactPlantContextForSnapshot(plantContext),
     clientContext:
       clientContext && typeof clientContext === 'object'
         ? {
@@ -426,5 +471,7 @@ module.exports = {
   resolveSessionStatus,
   buildOutcomePayload,
   buildCompactRouteDecision,
+  compactPlantContextForSnapshot,
+  compactEnvironmentWeatherWindowForSnapshot,
   buildRuntimeSnapshotPayload
 }

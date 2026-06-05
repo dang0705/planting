@@ -32,6 +32,9 @@ const {
 const {
   _test: diagnosisEngineTest
 } = require('./cloudfunctions/diagnose-http/domain/diagnosis-engine.js')
+const {
+  buildRuntimeSnapshotPayload
+} = require('./cloudfunctions/diagnose-http/services/session-runtime-snapshot-codec.js')
 Module._load = originalModuleLoad
 
 const payload = {
@@ -748,6 +751,93 @@ const restoredWithEmptyIncomingTimeline = resolveRuntimeEnvironmentCarePayload({
 assert.equal(restoredWithEmptyIncomingTimeline.careBehaviorTimeline.dailyRecords.length, 3)
 assert.equal(restoredWithEmptyIncomingTimeline.careBehaviorTimeline.lastFertilizedBucket, '31_60d')
 assert.equal(restoredWithEmptyIncomingTimeline.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
+
+const chlorophytumPlantContext = {
+  genus: 'Chlorophytum',
+  watering: { freq: [5, 8] },
+  temperatureMin: 12,
+  temperatureMax: 30,
+  humidityMin: 35,
+  humidityMax: 70
+}
+const chlorophytumInitialPayload = {
+  careBehaviorTimeline: {
+    referenceDate: '2026-06-04',
+    dailyRecords: [
+      { date: '2026-05-29', watered: true, wateringAmount: 'normal' }
+    ]
+  },
+  environmentWeatherWindow: {
+    meta: { diagnosisDate: '2026-06-04' },
+    historicalDays: Array.from({ length: 10 }, (_, index) => ({
+      date: `2026-05-${String(25 + index).padStart(2, '0')}`,
+      tempMaxC: 28,
+      tempMinC: 18,
+      humidity: index < 5 ? 72 : 60,
+      precipMm: 0,
+      textDay: '多云'
+    })),
+    forecastDays: []
+  }
+}
+const chlorophytumInitialResult = resolveRuntimeEnvironmentCarePayload({
+  payload: chlorophytumInitialPayload,
+  sessionState: {},
+  plantContext: chlorophytumPlantContext
+})
+assert.equal(chlorophytumInitialResult.environmentCareContext.historicalSummary10d.highHumidityDays, 5)
+assert.equal(
+  chlorophytumInitialResult.environmentCareContext.historicalSummary10d.thresholds.humidityMaxPercent,
+  70
+)
+
+const chlorophytumRuntimeSnapshot = JSON.parse(buildRuntimeSnapshotPayload({
+  sessionId: 'diag_chlorophytum_high_humidity_snapshot',
+  plantContext: chlorophytumPlantContext,
+  response: {
+    roundId: 'round_1',
+    careBehaviorTimeline: chlorophytumInitialResult.careBehaviorTimeline,
+    environmentCareContext: chlorophytumInitialResult.environmentCareContext
+  },
+  round: 1
+}))
+assert.equal(chlorophytumRuntimeSnapshot.plantContext.humidityMax, 70)
+assert.equal(
+  chlorophytumRuntimeSnapshot.environmentCareContext.environmentWeatherWindow.historicalDays.length,
+  10
+)
+
+const chlorophytumRecalculatedFromSnapshot = resolveRuntimeEnvironmentCarePayload({
+  payload: {
+    careBehaviorTimeline: {
+      referenceDate: '2026-06-04',
+      dailyRecords: [
+        { date: '2026-05-26', watered: true, wateringAmount: 'normal' },
+        { date: '2026-05-30', watered: true, wateringAmount: 'normal' },
+        { date: '2026-06-03', watered: true, wateringAmount: 'normal' }
+      ]
+    }
+  },
+  sessionState: { runtimeSnapshot: chlorophytumRuntimeSnapshot },
+  plantContext: chlorophytumRuntimeSnapshot.plantContext
+})
+const chlorophytumWetPressureStep =
+  chlorophytumRecalculatedFromSnapshot.environmentCareContext.watering.calculation.formulas
+    .find(step => step.key === 'wet_pressure_score')
+const chlorophytumHighHumidityStep =
+  chlorophytumRecalculatedFromSnapshot.environmentCareContext.watering.calculation.formulas
+    .find(step => step.key === 'high_humidity_pressure_hit')
+assert.equal(chlorophytumRecalculatedFromSnapshot.environmentCareContext.historicalSummary10d.highHumidityDays, 5)
+assert.equal(
+  chlorophytumRecalculatedFromSnapshot.environmentCareContext.historicalSummary10d.thresholds.humidityMaxPercent,
+  70
+)
+assert.equal(chlorophytumHighHumidityStep.inputs.highHumidityDays, 5)
+assert.equal(chlorophytumHighHumidityStep.thresholds.wetHighHumidityDaysMin, 4)
+assert.equal(chlorophytumHighHumidityStep.thresholds.wetHighHumidityConsecutiveDaysMin, 4)
+assert.equal(chlorophytumHighHumidityStep.passed, true)
+assert.equal(chlorophytumWetPressureStep.inputs.highHumidityPressureHit, true)
+assert.equal(chlorophytumWetPressureStep.inputs.wetPressureHitCount, 1)
 
 assert.equal(baselineAnswers[0].optionKey, 'normal_or_stable')
 

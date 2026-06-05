@@ -61,18 +61,51 @@ function buildEnvironmentCareCalculationReviewPayload(environmentCareContext = n
   const calculationTrace = isPlainObject(environmentCareContext.calculationTrace)
     ? environmentCareContext.calculationTrace
     : {}
+  const thresholds = isPlainObject(environmentCareContext.thresholds)
+    ? environmentCareContext.thresholds
+    : {}
+  const wateringThresholds = isPlainObject(thresholds.watering)
+    ? thresholds.watering
+    : {}
+  const historicalSummary10d = isPlainObject(environmentCareContext.historicalSummary10d)
+    ? environmentCareContext.historicalSummary10d
+    : {}
+  const historicalThresholds = isPlainObject(historicalSummary10d.thresholds)
+    ? historicalSummary10d.thresholds
+    : {}
 
   return {
     version: String(environmentCareContext.version || '').trim() || 'v7',
-    thresholds: isPlainObject(environmentCareContext.thresholds)
-      ? environmentCareContext.thresholds
-      : null,
+    thresholds,
+    thresholdFactors: {
+      wetHighHumidityDaysMin: Number(wateringThresholds.wetHighHumidityDaysMin || 0),
+      wetHighHumidityConsecutiveDaysMin: Number(wateringThresholds.wetHighHumidityConsecutiveDaysMin || 0),
+      wetColdHumidDaysMin: Number(wateringThresholds.wetColdHumidDaysMin || 0),
+      wetColdHumidConsecutiveDaysMin: Number(wateringThresholds.wetColdHumidConsecutiveDaysMin || 0),
+      wetRainyDaysMin: Number(wateringThresholds.wetRainyDaysMin || 0),
+      wetRainyConsecutiveDaysMin: Number(wateringThresholds.wetRainyConsecutiveDaysMin || 0),
+      wetPressureDeductionPerHit: Number(wateringThresholds.wetPressureDeductionPerHit || 0),
+      dryForecastHotDryDaysMin: Number(wateringThresholds.dryForecastHotDryDaysMin || 0),
+      dryForecastHotDryConsecutiveDaysMin: Number(wateringThresholds.dryForecastHotDryConsecutiveDaysMin || 0),
+      dryHistoricalHotDryDaysMin: Number(wateringThresholds.dryHistoricalHotDryDaysMin || 0),
+      dryHistoricalHotDryConsecutiveDaysMin: Number(wateringThresholds.dryHistoricalHotDryConsecutiveDaysMin || 0),
+      dryLastWateredDaysAgoMin: Number(wateringThresholds.dryLastWateredDaysAgoMin || 0)
+    },
+    keyMetrics: {
+      highHumidityDays: Number(historicalSummary10d.highHumidityDays || 0),
+      maxConsecutiveHighHumidityDays: Number(historicalSummary10d.maxConsecutiveHighHumidityDays || 0),
+      humidityMaxPercent:
+        historicalThresholds.humidityMaxPercent === null ||
+        historicalThresholds.humidityMaxPercent === undefined
+          ? null
+          : Number(historicalThresholds.humidityMaxPercent)
+    },
     inputs: {
       behaviorSummary10d: isPlainObject(environmentCareContext.behaviorSummary10d)
         ? environmentCareContext.behaviorSummary10d
         : null,
-      historicalSummary10d: isPlainObject(environmentCareContext.historicalSummary10d)
-        ? environmentCareContext.historicalSummary10d
+      historicalSummary10d: isPlainObject(historicalSummary10d)
+        ? historicalSummary10d
         : null,
       forecastSummary15d: isPlainObject(environmentCareContext.forecastSummary15d)
         ? environmentCareContext.forecastSummary15d
