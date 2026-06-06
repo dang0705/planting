@@ -10,6 +10,11 @@ const {
   compactCareBehaviorTimelineForPublic,
   compactEnvironmentCareContextForPublic
 } = require('../presenters/diagnosis-round-presenter')
+const {
+  buildQuestionPackageUiHints,
+  buildYellowingQuestionPackage,
+  resolveResponseQuestions
+} = require('./question-package-response')
 
 function pickMinimalQuestions(items = []) {
   return (Array.isArray(items) ? items : [])
@@ -50,10 +55,11 @@ function pickMinimalQuestions(items = []) {
     })
 }
 
-function pickMinimalFollowUpQuestions(items = []) {
+function pickMinimalFollowUpQuestions(items = [], options = {}) {
+  const limit = Math.max(1, Number(options?.limit || 1))
   return (Array.isArray(items) ? items : [])
     .filter(item => item?.questionId || item?.questionKey)
-    .slice(0, 1)
+    .slice(0, limit)
     .map(item => {
       const questionText = String(
         item?.text || item?.questionText || item?.questionTextUserCn || item?.questionTextCn || ''
@@ -326,7 +332,7 @@ function pickMinimalOutputEligibility(outputEligibility = null) {
 function buildFollowUpSummaryCard(questions = []) {
   return {
     title: '继续问诊',
-    subtitle: questions.length ? '还需要再确认 1 个关键信息' : '还需要继续确认',
+    subtitle: questions.length > 1 ? `还需要确认 ${questions.length} 个关键信息` : questions.length ? '还需要再确认 1 个关键信息' : '还需要继续确认',
     severity: 'low',
     statusText: ''
   }
@@ -334,9 +340,11 @@ function buildFollowUpSummaryCard(questions = []) {
 
 function buildFrontendDiagnosisResponse(publicResponse = {}) {
   const isFollowUp = Boolean(publicResponse.followUpRequired)
+  const rawQuestions = resolveResponseQuestions(publicResponse)
+  const questionPackage = isFollowUp ? buildYellowingQuestionPackage(publicResponse, rawQuestions) : null
   const questions = isFollowUp
-    ? pickMinimalFollowUpQuestions(publicResponse.questions || publicResponse.followUps)
-    : pickMinimalQuestions(publicResponse.questions || publicResponse.followUps)
+    ? pickMinimalFollowUpQuestions(rawQuestions, { limit: questionPackage?.questionCount || 1 })
+    : pickMinimalQuestions(rawQuestions)
   if (isFollowUp) {
     const resultId = String(publicResponse.resultId || '').trim()
     const userPlantId = publicResponse.userPlantId || null
@@ -371,6 +379,7 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
       stopReason: publicResponse.stopReason || '',
       followUpRequired: true,
       questions,
+      ...(questionPackage ? { questionPackage } : {}),
       summaryCard: buildFollowUpSummaryCard(questions),
       ...(visualBatchTrace ? { visualBatchTrace } : {}),
       ...(visualAggregateSummary ? { visualAggregateSummary } : {}),
@@ -378,14 +387,7 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
       ...(uiPatch ? { uiPatch } : {}),
       ...(careBehaviorTimeline ? { careBehaviorTimeline } : {}),
       ...(environmentCareContext ? { environmentCareContext } : {}),
-      uiHints: {
-        canUploadMoreImages: Boolean(publicResponse?.uiHints?.canUploadMoreImages),
-        maxQuestionsThisRound: questions.length ? 1 : 0,
-        questionDisplayMode: 'single',
-        answerSubmitMode: 'per_question',
-        optionLayout: 'vertical',
-        transition: 'swiper'
-      }
+      uiHints: buildQuestionPackageUiHints(publicResponse?.uiHints, questionPackage, questions.length)
     }
   }
 

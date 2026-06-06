@@ -23,6 +23,9 @@ const {
   filterDisabledYellowingFlowQuestions,
   isYellowingFlowSymptomKey
 } = require('../utils/yellowing-question-policy')
+const {
+  YELLOWING_PACKAGE_QUESTION_COUNT
+} = require('./question-package-response')
 
 const YELLOWING_FRONTLOADED_CARE_CONTEXT_DIMENSIONS = [
   QUESTION_TARGET_DIMENSIONS.WATERING_FREQUENCY_CONTEXT,
@@ -256,7 +259,7 @@ async function buildManualQuestionStartRoundResult({
     const yellowingCareFollowUps = await buildManualYellowingCareStartFollowUps({
       plantContext
     })
-    if (yellowingCareFollowUps.length) {
+    if (yellowingCareFollowUps.length === YELLOWING_PACKAGE_QUESTION_COUNT) {
       const response = {
         diagnosisSessionId: sessionId,
         roundId: `round_${Number(round || 1)}`,
@@ -279,6 +282,20 @@ async function buildManualQuestionStartRoundResult({
         derivedEvidenceSet,
         diagnosisDirections,
         followUps: yellowingCareFollowUps,
+        questionPackage: {
+          mode: 'yellow_leaf',
+          sourceMode: 'manual_yellowing_care_environment_frontloaded',
+          questionCount: YELLOWING_PACKAGE_QUESTION_COUNT,
+          answerSubmitMode: 'package',
+          questionDisplayMode: 'package'
+        },
+        uiHints: {
+          maxQuestionsThisRound: YELLOWING_PACKAGE_QUESTION_COUNT,
+          questionDisplayMode: 'package',
+          answerSubmitMode: 'package',
+          optionLayout: 'vertical',
+          transition: 'swiper'
+        },
         metrics: {
           routeDecision: {
             mode: 'manual_yellowing_care_environment_frontloaded',

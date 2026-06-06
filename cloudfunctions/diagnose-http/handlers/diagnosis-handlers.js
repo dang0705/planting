@@ -87,8 +87,15 @@ async function handleDiagnosisQuestionStart(request, context, payload) {
       })
     })
     const hydratedResponse = await withQuestionTextFallback(executed.response)
-    const publicResponse = presentDiagnosisRoundResponse(hydratedResponse)
-    const hydratedPublicResponse = await withQuestionTextFallback(publicResponse)
+    const hydratedPublicResponse = await withQuestionTextFallback({
+      ...hydratedResponse,
+      userPlantId: executed.userPlantId || hydratedResponse.userPlantId || null,
+      plantId: executed.plantId || hydratedResponse.plantId || '',
+      plantCatalogId: executed.plantCatalogId || hydratedResponse.plantCatalogId || null,
+      plantIdentityId: executed.plantIdentityId || hydratedResponse.plantIdentityId || '',
+      latestVisualCallBatchId:
+        executed.latestVisualCallBatchId ?? hydratedResponse.latestVisualCallBatchId ?? null
+    })
 
     return jsonResponse(200, {
       code: 200,

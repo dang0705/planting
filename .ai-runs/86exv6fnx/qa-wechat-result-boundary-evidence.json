@@ -1,0 +1,131 @@
+{
+  "cacheKey": "qa_followup_86exv6fnx_result_boundary",
+  "pagePath": "pages/diagnose/follow-up",
+  "states": [
+    {
+      "label": "initial",
+      "path": "pages/diagnose/follow-up",
+      "query": {
+        "cacheKey": "qa_followup_86exv6fnx_result_boundary"
+      },
+      "progressText": "问题 1 / 4",
+      "nextButtonText": "下一题",
+      "nextDisabled": true,
+      "rootText": "针对绿萝QA的黄叶问诊\n问题 1 / 4\n黄叶主要出现在老叶还是新叶？\n主要是底部老叶\n单选\n上一题\n下一题\n最近盆土干湿状态更接近哪种？\n经常偏干\n单选\n上一题\n下一题\n黄叶前光照是否明显变化？\n没有明显变化\n单选\n上一题\n下一题\n黄叶是否在继续扩散？\n基本没有扩散\n单选\n上一题\n下一题",
+      "resultShellText": ""
+    },
+    {
+      "label": "#diagnose-followup-page-option-qa_q1-qa_q1_a_answered",
+      "path": "pages/diagnose/follow-up",
+      "query": {
+        "cacheKey": "qa_followup_86exv6fnx_result_boundary"
+      },
+      "progressText": "问题 1 / 4",
+      "nextButtonText": "下一题",
+      "nextDisabled": false,
+      "rootText": "针对绿萝QA的黄叶问诊\n问题 1 / 4\n黄叶主要出现在老叶还是新叶？\n主要是底部老叶\n已选\n上一题\n下一题\n最近盆土干湿状态更接近哪种？\n经常偏干\n单选\n上一题\n下一题\n黄叶前光照是否明显变化？\n没有明显变化\n单选\n上一题\n下一题\n黄叶是否在继续扩散？\n基本没有扩散\n单选\n上一题\n下一题",
+      "resultShellText": ""
+    },
+    {
+      "label": "#diagnose-followup-page-option-qa_q1-qa_q1_a_next",
+      "path": "pages/diagnose/follow-up",
+      "query": {
+        "cacheKey": "qa_followup_86exv6fnx_result_boundary"
+      },
+      "progressText": "问题 2 / 4",
+      "nextButtonText": "下一题",
+      "nextDisabled": true,
+      "rootText": "针对绿萝QA的黄叶问诊\n问题 2 / 4\n黄叶主要出现在老叶还是新叶？\n主要是底部老叶\n已选\n上一题\n下一题\n最近盆土干湿状态更接近哪种？\n经常偏干\n单选\n上一题\n下一题\n黄叶前光照是否明显变化？\n没有明显变化\n单选\n上一题\n下一题\n黄叶是否在继续扩散？\n基本没有扩散\n单选\n上一题\n下一题",
+      "resultShellText": ""
+    },
+    {
+      "label": "#diagnose-followup-page-option-qa_q2-qa_q2_a_answered",
+      "path": "pages/diagnose/follow-up",
+      "query": {
+        "cacheKey": "qa_followup_86exv6fnx_result_boundary"
+      },
+      "progressText": "问题 2 / 4",
+      "nextButtonText": "下一题",
+      "nextDisabled": false,
+      "rootText": "针对绿萝QA的黄叶问诊\n问题 2 / 4\n黄叶主要出现在老叶还是新叶？\n主要是底部老叶\n已选\n上一题\n下一题\n最近盆土干湿状态更接近哪种？\n经常偏干\n已选\n上一题\n下一题\n黄叶前光照是否明显变化？\n没有明显变化\n单选\n上一题\n下一题\n黄叶是否在继续扩散？\n基本没有扩散\n单选\n上一题\n下一题",
+      "resultShellText": ""
+    },
+    {
+      "label": "#diagnose-followup-page-option-qa_q2-qa_q2_a_next",
+      "path": "pages/diagnose/follow-up",
+      "query": {
+        "cacheKey": "qa_followup_86exv6fnx_result_boundary"
+      },
+      "progressText": "问题 3 / 4",
+      "nextButtonText": "下一题",
+      "nextDisabled": true,
+      "rootText": "针对绿萝QA的黄叶问诊\n问题 3 / 4\n黄叶主要出现在老叶还是新叶？\n主要是底部老叶\n已选\n上一题\n下一题\n最近盆土干湿状态更接近哪种？\n经常偏干\n已选\n上一题\n下一题\n黄叶前光照是否明显变化？\n没有明显变化\n单选\n上一题\n下一题\n黄叶是否在继续扩散？\n基本没有扩散\n单选\n上一题\n下一题",
+      "resultShellText": ""
+    },
+    {
+      "label": "#diagnose-followup-page-option-qa_q3-qa_q3_a_answered",
+      "path": "pages/diagnose/follow-up",
+      "query": {
+        "cacheKey": "qa_followup_86exv6fnx_result_boundary"
+      },
+      "progressText": "问题 3 / 4",
+      "nextButtonText": "下一题",
+      "nextDisabled": false,
+      "rootText": "针对绿萝QA的黄叶问诊\n问题 3 / 4\n黄叶主要出现在老叶还是新叶？\n主要是底部老叶\n已选\n上一题\n下一题\n最近盆土干湿状态更接近哪种？\n经常偏干\n已选\n上一题\n下一题\n黄叶前光照是否明显变化？\n没有明显变化\n已选\n上一题\n下一题\n黄叶是否在继续扩散？\n基本没有扩散\n单选\n上一题\n下一题",
+      "resultShellText": ""
+    },
+    {
+      "label": "#diagnose-followup-page-option-qa_q3-qa_q3_a_next",
+      "path": "pages/diagnose/follow-up",
+      "query": {
+        "cacheKey": "qa_followup_86exv6fnx_result_boundary"
+      },
+      "progressText": "问题 4 / 4",
+      "nextButtonText": "完成问诊",
+      "nextDisabled": true,
+      "rootText": "针对绿萝QA的黄叶问诊\n问题 4 / 4\n黄叶主要出现在老叶还是新叶？\n主要是底部老叶\n已选\n上一题\n完成问诊\n最近盆土干湿状态更接近哪种？\n经常偏干\n已选\n上一题\n完成问诊\n黄叶前光照是否明显变化？\n没有明显变化\n已选\n上一题\n完成问诊\n黄叶是否在继续扩散？\n基本没有扩散\n单选\n上一题\n完成问诊",
+      "resultShellText": ""
+    },
+    {
+      "label": "#diagnose-followup-page-option-qa_q4-qa_q4_a_answered",
+      "path": "pages/diagnose/follow-up",
+      "query": {
+        "cacheKey": "qa_followup_86exv6fnx_result_boundary"
+      },
+      "progressText": "问题 4 / 4",
+      "nextButtonText": "完成问诊",
+      "nextDisabled": false,
+      "rootText": "针对绿萝QA的黄叶问诊\n问题 4 / 4\n黄叶主要出现在老叶还是新叶？\n主要是底部老叶\n已选\n上一题\n完成问诊\n最近盆土干湿状态更接近哪种？\n经常偏干\n已选\n上一题\n完成问诊\n黄叶前光照是否明显变化？\n没有明显变化\n已选\n上一题\n完成问诊\n黄叶是否在继续扩散？\n基本没有扩散\n已选\n上一题\n完成问诊",
+      "resultShellText": ""
+    },
+    {
+      "label": "after_submit",
+      "path": "pages/diagnose/follow-up",
+      "query": {
+        "cacheKey": "qa_followup_86exv6fnx_result_boundary"
+      },
+      "progressText": "问题 4 / 4",
+      "nextButtonText": "处理中...",
+      "nextDisabled": null,
+      "rootText": "诊断结论\n黄叶养护环境需调整\n建议先这样做\n黄叶养护环境需调整：\n1. 先按回答调整浇水与施肥节奏\n暂时避免\n黄叶养护环境需调整：\n1. 避免一次性大幅处理",
+      "resultShellText": "诊断结论\n黄叶养护环境需调整\n建议先这样做\n黄叶养护环境需调整：\n1. 先按回答调整浇水与施肥节奏\n暂时避免\n黄叶养护环境需调整：\n1. 避免一次性大幅处理"
+    },
+    {
+      "label": "after_submit_wait",
+      "path": "pages/diagnose/follow-up",
+      "query": {
+        "cacheKey": "qa_followup_86exv6fnx_result_boundary"
+      },
+      "progressText": "问题 4 / 4",
+      "nextButtonText": "处理中...",
+      "nextDisabled": null,
+      "rootText": "诊断结论\n黄叶养护环境需调整\n建议先这样做\n黄叶养护环境需调整：\n1. 先按回答调整浇水与施肥节奏\n暂时避免\n黄叶养护环境需调整：\n1. 避免一次性大幅处理",
+      "resultShellText": "诊断结论\n黄叶养护环境需调整\n建议先这样做\n黄叶养护环境需调整：\n1. 先按回答调整浇水与施肥节奏\n暂时避免\n黄叶养护环境需调整：\n1. 避免一次性大幅处理"
+    }
+  ],
+  "events": {
+    "console": [],
+    "exception": []
+  },
+  "screenshotPath": "/Users/jay/WebstormProjects/planting/.ai-runs/86exv6fnx/qa-wechat-followup-result-boundary.png"
+}

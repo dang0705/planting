@@ -1,31 +1,31 @@
 <template>
-  <view id="diagnose-followup-page" class="follow-up-page">
+  <view id="diagnose-followup-page" class="box-border flex h-screen min-h-screen flex-col bg-[#f8faf9]">
     <template v-if="result?.followUpRequired && followUpQuestionStack.length">
-      <view class="followup-page-body">
-        <view class="followup-fixed-context">
-          <text class="followup-fixed-context-title">{{ followUpDiagnosisContextText }}</text>
-          <text class="followup-fixed-context-progress">{{ followUpQuestionProgressText }}</text>
+      <view class="flex min-h-0 flex-1 flex-col pt-6">
+        <view class="mb-3 px-4">
+          <text class="block text-xl font-extrabold leading-snug text-gray-900">{{ followUpDiagnosisContextText }}</text>
+          <text class="mt-2 block text-sm font-semibold leading-5 text-[#5a7a68]">{{ followUpQuestionProgressText }}</text>
         </view>
 
         <view
           id="diagnose-followup-page-swiper"
-          class="followup-page-swiper"
+          class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-visible"
           :style="followUpSwiperStyle"
         >
-          <view class="followup-page-swiper-track" :style="followUpPageTrackStyle">
+          <view class="flex h-full min-h-0 w-full transition-transform duration-[260ms] ease-in-out will-change-transform" :style="followUpPageTrackStyle">
             <view
               v-for="(question, questionIndex) in followUpQuestionStack"
               :key="question.questionId || question.questionKey || questionIndex"
               :id="`diagnose-followup-page-item-${question.questionId || questionIndex}`"
-              class="followup-page-swiper-item"
+              class="h-full w-full shrink-0 grow-0 basis-full overflow-x-hidden overflow-y-visible"
             >
-              <scroll-view :id="`diagnose-followup-page-question-scroll-${question.questionId || questionIndex}`" scroll-y class="followup-question-scroll">
-                <view :id="`diagnose-followup-page-question-shell-${question.questionId || questionIndex}`" class="followup-question-shell">
-                  <view :id="`diagnose-followup-page-question-card-${question.questionId || questionIndex}`" class="followup-question-card followup-question-card--animated">
-                    <text class="followup-question-title">
+              <scroll-view :id="`diagnose-followup-page-question-scroll-${question.questionId || questionIndex}`" scroll-y class="h-full">
+                <view :id="`diagnose-followup-page-question-shell-${question.questionId || questionIndex}`" class="box-border min-h-full px-4 pb-[34px]">
+                  <view :id="`diagnose-followup-page-question-card-${question.questionId || questionIndex}`" class="followup-card-enter rounded-[20px] border border-emerald-100 bg-white px-4 py-4 shadow-sm">
+                    <text class="block text-base font-semibold leading-7 text-[#2d7a4f]">
                       {{ getQuestionTitle(question) }}
                     </text>
-                    <text v-if="hasQuestionHelpText(question)" class="followup-question-help">
+                    <text v-if="getQuestionHelpText(question)" class="mt-2 block text-xs leading-relaxed text-gray-500">
                       {{ getQuestionHelpText(question) }}
                     </text>
 
@@ -42,45 +42,44 @@
                     <view
                       v-if="getVisibleCareBehaviorOptions(question).length"
                       :id="`diagnose-followup-page-option-stack-${question.questionId || questionIndex}`"
-                      class="followup-option-stack followup-option-stack--accordion"
+                      class="mt-4 flex flex-col gap-2.5"
                     >
                       <view
                         v-for="(option, optionIndex) in getVisibleCareBehaviorOptions(question)"
                         :key="option.optionId || option.optionKey || option.text"
                         :id="`diagnose-followup-page-option-${question.questionId || questionIndex}-${option.optionId || option.optionKey || optionIndex}`"
-                        class="followup-accordion-option"
-                        :class="isSelectedFollowUpOption(question, option) ? 'followup-accordion-option--active' : ''"
+                        class="overflow-hidden rounded-2xl border border-emerald-100 bg-white"
+                        :class="isSelectedFollowUpOption(question, option) ? 'border-[#2d7a4f] bg-emerald-50' : ''"
                         @click="selectFollowUpOption(question, option)"
                       >
-                        <view class="followup-accordion-title">
-                          <text class="followup-accordion-text">{{ getOptionText(question, option) }}</text>
-                          <text class="followup-accordion-badge">
+                        <view class="flex items-center justify-between gap-3 px-3.5 py-3">
+                          <text class="min-w-0 flex-1 text-[13px] font-bold leading-snug text-gray-700">{{ getOptionText(question, option) }}</text>
+                          <text class="shrink-0 rounded-full border border-current px-2 py-0.5 text-[10px] font-extrabold text-[#8b7355]">
                             {{ isSelectedFollowUpOption(question, option) ? '已选' : '单选' }}
                           </text>
                         </view>
+                        <text v-if="getOptionDescription(option)" class="block whitespace-pre-line px-3.5 pb-3 text-[11px] leading-relaxed text-gray-500">
+                          {{ getOptionDescription(option) }}
+                        </text>
                       </view>
                     </view>
 
-                    <view class="followup-nav-row">
+                    <view class="mt-[18px] flex gap-3">
                       <button
                         id="diagnose-followup-page-prev-button"
-                        class="followup-nav-button"
-                        :class="{ 'followup-nav-button--disabled': isSubmittingFollowUp || activeFollowUpQuestionIndex <= 0 }"
+                        class="h-[52px] flex-1 rounded-xl border border-emerald-100 bg-white p-0 text-[13px] font-bold leading-[52px] text-[#2d6a4f]"
+                        :class="{ 'opacity-[0.45]': isSubmittingFollowUp || activeFollowUpQuestionIndex <= 0 }"
                         :disabled="isSubmittingFollowUp || activeFollowUpQuestionIndex <= 0"
                         @click="goPreviousFollowUpQuestion"
                       >上一题</button>
                       <button
                         id="diagnose-followup-page-next-button"
-                        class="followup-nav-button followup-nav-button--primary"
-                        :class="{ 'followup-nav-button--disabled': !canProceedFollowUpQuestion() }"
+                        class="h-[52px] flex-1 rounded-xl border border-[#2d7a4f] bg-[#2d7a4f] p-0 text-[13px] font-bold leading-[52px] text-white"
+                        :class="{ 'opacity-[0.45]': !canProceedFollowUpQuestion() }"
                         :disabled="!canProceedFollowUpQuestion()"
                         @click="handleNextFollowUpQuestion"
-                      >{{ isSubmittingFollowUp ? '处理中...' : '下一题' }}</button>
+                      >{{ nextButtonText }}</button>
                     </view>
-
-                    <text v-if="hasDirtyFollowUpAnswers" class="followup-dirty-hint">
-                      你修改了之前的答案，继续后会重新整理后续问题。
-                    </text>
                   </view>
                 </view>
               </scroll-view>
@@ -93,55 +92,44 @@
     <scroll-view
       v-else-if="result && !result.followUpRequired && !hasRouteConvergenceDetails"
       scroll-y
-      class="followup-outcome-scroll"
+      class="h-screen"
     >
-      <view id="diagnose-followup-outcome-shell" class="followup-outcome-shell">
-        <view id="diagnose-followup-outcome-card" class="followup-outcome-card">
-          <text class="followup-outcome-kicker">问诊已完成</text>
-          <text class="followup-outcome-title">{{ outcomeDisplayTitle || '已形成诊断结论' }}</text>
-          <text
-            v-if="outcomeSummaryText"
-            class="followup-outcome-summary"
-          >
+      <view id="diagnose-followup-outcome-shell" class="box-border min-h-screen px-4 py-6 pb-9">
+        <view id="diagnose-followup-outcome-card" class="rounded-[22px] border border-[#e7e0d1] bg-[#fffdf8] p-[18px] shadow-sm">
+          <text class="block text-[11px] font-black tracking-wide text-[#2d7a4f]">问诊已完成</text>
+          <text class="mt-2 block text-[21px] font-black leading-snug text-gray-900">{{ outcomeDisplayTitle || '已形成诊断结论' }}</text>
+          <text v-if="outcomeSummaryText" class="mt-2.5 block whitespace-pre-line text-[13px] leading-relaxed text-gray-600">
             {{ outcomeSummaryText }}
           </text>
 
-          <view class="followup-outcome-status">
-            <text class="followup-outcome-status-label">当前状态</text>
-            <text class="followup-outcome-status-value">{{ result.healthStatusText || '待进一步确认' }}</text>
+          <view class="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-[#f8f6f0] px-3 py-3">
+            <text class="text-xs font-bold text-gray-500">当前状态</text>
+            <text class="text-xs font-black text-[#2d7a4f]">{{ result.healthStatusText || '待进一步确认' }}</text>
           </view>
         </view>
 
-        <view v-if="actionAdviceGroups.length" id="diagnose-followup-outcome-action-advice" class="followup-advice-card followup-advice-card--action">
-          <text class="followup-advice-title">处理建议</text>
-          <view
-            v-for="group in actionAdviceGroups"
-            :key="group.key"
-            class="mb-3 last:mb-0"
-          >
-            <text class="followup-advice-subtitle">{{ group.outcomeLabel }}：</text>
+        <view v-if="actionAdviceGroups.length" id="diagnose-followup-outcome-action-advice" class="mt-3.5 rounded-[22px] bg-emerald-50 p-4">
+          <text class="block text-[15px] font-black text-gray-900">处理建议</text>
+          <view v-for="group in actionAdviceGroups" :key="group.key" class="mb-3 last:mb-0">
+            <text class="mt-2.5 block text-xs font-extrabold leading-snug text-gray-800">{{ group.outcomeLabel }}：</text>
             <text
               v-for="(item, index) in group.items"
               :key="`action_${group.key}_${index}`"
-              class="followup-advice-text"
+              class="mt-1.5 block whitespace-pre-line text-xs leading-relaxed text-gray-600"
             >
               {{ index + 1 }}. {{ item }}
             </text>
           </view>
         </view>
 
-        <view v-if="avoidAdviceGroups.length" id="diagnose-followup-outcome-avoid-advice" class="followup-advice-card followup-advice-card--avoid">
-          <text class="followup-advice-title">暂时不要做</text>
-          <view
-            v-for="group in avoidAdviceGroups"
-            :key="group.key"
-            class="mb-3 last:mb-0"
-          >
-            <text class="followup-advice-subtitle">{{ group.outcomeLabel }}：</text>
+        <view v-if="avoidAdviceGroups.length" id="diagnose-followup-outcome-avoid-advice" class="mt-3.5 rounded-[22px] bg-orange-50 p-4">
+          <text class="block text-[15px] font-black text-gray-900">暂时不要做</text>
+          <view v-for="group in avoidAdviceGroups" :key="group.key" class="mb-3 last:mb-0">
+            <text class="mt-2.5 block text-xs font-extrabold leading-snug text-gray-800">{{ group.outcomeLabel }}：</text>
             <text
               v-for="(item, index) in group.items"
               :key="`avoid_${group.key}_${index}`"
-              class="followup-advice-text"
+              class="mt-1.5 block whitespace-pre-line text-xs leading-relaxed text-gray-600"
             >
               {{ index + 1 }}. {{ item }}
             </text>
@@ -150,89 +138,76 @@
       </view>
     </scroll-view>
 
-    <scroll-view v-else-if="hasCompletedDiagnosis" scroll-y class="followup-result-scroll">
-      <view id="diagnose-followup-result-shell" class="followup-result-shell">
+    <scroll-view v-else-if="hasCompletedDiagnosis" scroll-y class="h-screen">
+      <view id="diagnose-followup-result-shell" class="box-border min-h-screen px-4 py-6 pb-9">
         <view
           v-if="showNonProblemOutcomeResultCard"
           id="diagnose-followup-result-card"
-          class="followup-result-card"
+          class="rounded-[22px] border border-[#e7e0d1] bg-[#fffdf8] p-[18px] shadow-sm"
         >
-          <text class="followup-result-kicker">问诊已完成</text>
-          <text
-            v-if="nonProblemOutcomeSummaryText"
-            class="followup-result-summary"
-          >
+          <text class="block text-[11px] font-black tracking-wide text-[#2d7a4f]">问诊已完成</text>
+          <text v-if="nonProblemOutcomeSummaryText" class="mt-2.5 block text-[13px] leading-relaxed text-gray-600">
             {{ nonProblemOutcomeSummaryText }}
           </text>
 
-          <view class="followup-result-meta">
-            <view class="followup-result-meta-item">
-              <text class="followup-result-meta-label">当前状态</text>
-              <text class="followup-result-meta-value">{{ outcomeTypeText }}</text>
+          <view class="mt-4 flex gap-2.5">
+            <view class="flex-1 rounded-2xl bg-emerald-50 px-3 py-3">
+              <text class="block text-[10px] font-bold text-gray-500">当前状态</text>
+              <text class="mt-1 block text-[13px] font-black leading-snug text-[#184d39]">{{ outcomeTypeText }}</text>
             </view>
-            <view class="followup-result-meta-item">
-              <text class="followup-result-meta-label">可信度</text>
-              <text class="followup-result-meta-value">{{ confidenceLevelText }}</text>
+            <view class="flex-1 rounded-2xl bg-emerald-50 px-3 py-3">
+              <text class="block text-[10px] font-bold text-gray-500">可信度</text>
+              <text class="mt-1 block text-[13px] font-black leading-snug text-[#184d39]">{{ confidenceLevelText }}</text>
             </view>
           </view>
         </view>
 
-        <view v-if="isProblematicOutcome && allOutcomeDisplays.length" id="diagnose-followup-result-outcomes" class="followup-result-section">
-          <text class="followup-result-section-title">诊断结论</text>
-          <view class="followup-result-chip-row">
+        <view v-if="isProblematicOutcome && allOutcomeDisplays.length" id="diagnose-followup-result-outcomes" class="mt-3.5 rounded-[22px] border border-[#e7e0d1] bg-[#fffdf8] p-4 shadow-sm">
+          <text class="block text-[15px] font-black text-gray-900">诊断结论</text>
+          <view class="mt-3 flex flex-wrap gap-2">
             <text
               v-for="(item, index) in allOutcomeDisplays"
               :key="`outcome_${index}`"
-              class="followup-result-chip"
+              class="rounded-full bg-emerald-50 px-2.5 py-2 text-[11px] font-extrabold leading-none text-[#2d6a4f]"
             >{{ item }}</text>
           </view>
         </view>
 
-        <view v-if="observedItems.length" id="diagnose-followup-result-observed" class="followup-result-section">
-          <text class="followup-result-section-title">视觉证据</text>
-          <view class="followup-result-chip-row">
-            <text
-              v-for="item in observedItems"
-              :key="item.key"
-              class="followup-result-chip"
-            >{{ item.label }}</text>
+        <view v-if="observedItems.length" id="diagnose-followup-result-observed" class="mt-3.5 rounded-[22px] border border-[#e7e0d1] bg-[#fffdf8] p-4 shadow-sm">
+          <text class="block text-[15px] font-black text-gray-900">视觉证据</text>
+          <view class="mt-3 flex flex-wrap gap-2">
+            <text v-for="item in observedItems" :key="item.key" class="rounded-full bg-emerald-50 px-2.5 py-2 text-[11px] font-extrabold leading-none text-[#2d6a4f]">
+              {{ item.label }}
+            </text>
           </view>
         </view>
 
-        <view id="diagnose-followup-result-action-advice" class="followup-result-section">
-          <text class="followup-result-section-title">建议先这样做</text>
-        <view v-if="actionAdviceGroups.length" class="followup-result-list">
-            <view
-              v-for="group in actionAdviceGroups"
-              :key="`action_group_${group.key}`"
-              class="mb-2 last:mb-0"
-            >
-              <text class="followup-result-list-subtitle">{{ group.outcomeLabel }}：</text>
+        <view id="diagnose-followup-result-action-advice" class="mt-3.5 rounded-[22px] border border-[#e7e0d1] bg-[#fffdf8] p-4 shadow-sm">
+          <text class="block text-[15px] font-black text-gray-900">建议先这样做</text>
+          <view v-if="actionAdviceGroups.length" class="mt-3 flex flex-col gap-2">
+            <view v-for="group in actionAdviceGroups" :key="`action_group_${group.key}`" class="mb-2 last:mb-0">
+              <text class="block text-xs font-extrabold leading-snug text-gray-800">{{ group.outcomeLabel }}：</text>
               <text
                 v-for="(item, index) in group.items"
                 :key="`action_group_${group.key}_${index}`"
-                class="followup-result-list-item"
+                class="mt-1.5 block whitespace-pre-line text-xs leading-relaxed text-gray-600"
               >
                 {{ index + 1 }}. {{ item }}
               </text>
             </view>
           </view>
-          <text v-else class="followup-result-muted">暂时没有更具体的行动建议，建议先保持观察并避免过度处理。</text>
+          <text v-else class="mt-2.5 block text-xs leading-relaxed text-gray-600">暂时没有更具体的行动建议，建议先保持观察并避免过度处理。</text>
         </view>
 
-        <view v-if="avoidAdviceGroups.length" id="diagnose-followup-result-avoid-advice" class="followup-result-section">
-          <text class="followup-result-section-title">暂时避免</text>
-          <view class="followup-result-list">
-            <view
-              v-for="group in avoidAdviceGroups"
-              :key="`avoid_group_${group.key}`"
-              class="mb-2 last:mb-0"
-            >
-              <text class="followup-result-list-subtitle">{{ group.outcomeLabel }}：</text>
+        <view v-if="avoidAdviceGroups.length" id="diagnose-followup-result-avoid-advice" class="mt-3.5 rounded-[22px] border border-[#e7e0d1] bg-[#fffdf8] p-4 shadow-sm">
+          <text class="block text-[15px] font-black text-gray-900">暂时避免</text>
+          <view class="mt-3 flex flex-col gap-2">
+            <view v-for="group in avoidAdviceGroups" :key="`avoid_group_${group.key}`" class="mb-2 last:mb-0">
+              <text class="block text-xs font-extrabold leading-snug text-gray-800">{{ group.outcomeLabel }}：</text>
               <text
                 v-for="(item, index) in group.items"
                 :key="`avoid_group_${group.key}_${index}`"
-                class="followup-result-list-item"
+                class="mt-1.5 block whitespace-pre-line text-xs leading-relaxed text-gray-600"
               >
                 {{ index + 1 }}. {{ item }}
               </text>
@@ -240,55 +215,48 @@
           </view>
         </view>
 
-        <view v-if="showRouteDebugPanel" id="diagnose-followup-debug-panel" class="followup-result-section">
-          <text class="followup-result-section-title">决策详情</text>
-          <view class="followup-result-list">
-            <text v-if="routeDebugSummaryText" class="followup-result-list-item">决策原因：{{ routeDebugSummaryText }}</text>
-            <text v-if="routeDebugModeText" class="followup-result-list-item">模式：{{ routeDebugModeText }}</text>
-            <text v-if="routeDebugVisibleOutcomeText" class="followup-result-list-item">展示结果：{{ routeDebugVisibleOutcomeText }}</text>
-            <text v-if="routeDebugNextQuestionText" class="followup-result-list-item">下一步问题：{{ routeDebugNextQuestionText }}</text>
-            <text v-if="routeDebugGroupText" class="followup-result-list-item">命中流程组：{{ routeDebugGroupText }}</text>
-            <text v-if="routeDebugFallbackPolicy" class="followup-result-list-item">回退策略：{{ routeDebugFallbackPolicy }}</text>
+        <view v-if="showRouteDebugPanel" id="diagnose-followup-debug-panel" class="mt-3.5 rounded-[22px] border border-[#e7e0d1] bg-[#fffdf8] p-4 shadow-sm">
+          <text class="block text-[15px] font-black text-gray-900">决策详情</text>
+          <view class="mt-3 flex flex-col gap-2">
+            <text v-if="routeDebugSummaryText" class="block text-xs leading-relaxed text-gray-600">决策原因：{{ routeDebugSummaryText }}</text>
+            <text v-if="routeDebugModeText" class="block text-xs leading-relaxed text-gray-600">模式：{{ routeDebugModeText }}</text>
+            <text v-if="routeDebugVisibleOutcomeText" class="block text-xs leading-relaxed text-gray-600">展示结果：{{ routeDebugVisibleOutcomeText }}</text>
+            <text v-if="routeDebugNextQuestionText" class="block text-xs leading-relaxed text-gray-600">下一步问题：{{ routeDebugNextQuestionText }}</text>
+            <text v-if="routeDebugGroupText" class="block text-xs leading-relaxed text-gray-600">命中流程组：{{ routeDebugGroupText }}</text>
+            <text v-if="routeDebugFallbackPolicy" class="block text-xs leading-relaxed text-gray-600">回退策略：{{ routeDebugFallbackPolicy }}</text>
           </view>
         </view>
       </view>
     </scroll-view>
 
-    <view v-else id="diagnose-followup-empty-state" class="followup-empty-state">
-      <text class="followup-empty-title">暂时没有需要继续回答的问题</text>
-      <text class="followup-empty-text">如果刚完成视觉诊断，请返回上一页重新进入问诊。</text>
+    <view v-else id="diagnose-followup-empty-state" class="box-border min-h-screen px-4 py-7">
+      <text class="block text-[17px] font-extrabold text-gray-900">暂时没有需要继续回答的问题</text>
+      <text class="mt-2 block text-xs leading-relaxed text-gray-500">如果刚完成视觉诊断，请返回上一页重新进入问诊。</text>
     </view>
   </view>
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useDiagnoseStore } from '@/store/diagnose.js'
 import { useUserStore } from '@/store/user.js'
 import CareBehaviorTimeline from '@/components/CareBehaviorTimeline.vue'
 import { useDiagnoseFollowUpMutation } from '@/vue-query/diagnose/mutations/useDiagnoseFollowUpMutation.js'
-import { getEnvironmentWeatherWindow } from '@/api/weather.js'
 import {
-  normalizeDiagnosisResult,
-  createFollowUpAnswerMap,
-  buildFollowUpPayload
-} from '@/utils/diagnose-flow.js'
+  DEFAULT_CACHE_KEY,
+  resolveFollowUpPayload,
+  resolveInitialDiagnosisResult
+} from './follow-up/payload.js'
 import {
-  extractCareBehaviorTimelineFromQuestion,
-  getVisibleCareBehaviorOptions,
-  hasMeaningfulCareBehaviorTimeline,
-  isCareBehaviorTimelineUnclearAnswer,
-  isCareBehaviorTimelineSentinelAnswer,
-  isLegacyWateringTimelineQuestion,
-  isCareBehaviorWateringTimelineQuestion,
-  normalizeCareBehaviorTimeline,
-  resolveCareBehaviorTimelineAutoAnswerOptionId,
-  resolveCareBehaviorTimelineRecordedAnswerOptionId
-} from '@/utils/care-behavior-timeline.js'
-import { mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline } from '@/utils/care-behavior-weather-window.js'
-
-const DEFAULT_CACHE_KEY = 'diagnose_follow_up_payload'
+  getFollowUpQuestionId,
+  getOptionDescription,
+  getOptionText,
+  getQuestionHelpText,
+  getQuestionTitle,
+  useFollowUpQuestionFlow
+} from './follow-up/question-flow.js'
+import { useFollowUpResultView } from './follow-up/result-view.js'
 
 const diagnoseStore = useDiagnoseStore()
 const userStore = useUserStore()
@@ -298,44 +266,6 @@ const routeOptions = ref({})
 const payload = ref({})
 const result = ref(null)
 const images = ref([])
-const followUpQuestionStack = ref([])
-const activeFollowUpQuestionIndex = ref(0)
-const followUpAnswers = ref({})
-const careBehaviorTimelineByQuestionId = ref({})
-const environmentWeatherWindow = ref(null)
-const environmentWeatherWindowRequestKey = ref('')
-const environmentWeatherWindowLoading = ref(false)
-const environmentWeatherWindowError = ref('')
-const careBehaviorTimelineAnswerSyncSuppressedByQuestionId = ref({})
-const committedFollowUpAnswers = ref({})
-const dirtyFollowUpFromIndex = ref(-1)
-const followUpAnswerRevision = ref(0)
-const expandedFollowUpOptionByQuestion = ref({})
-const isSubmittingFollowUp = ref(false)
-const runtimeEnv = import.meta.env || {}
-const isLocalDevelopmentBuild = Boolean(runtimeEnv.DEV) || runtimeEnv.MODE === 'development'
-let routeDebugEnabled =
-  runtimeEnv.VITE_APP_ENV === 'development' ||
-  (isLocalDevelopmentBuild && runtimeEnv.VITE_APP_ENV !== 'production')
-// #ifdef MP-WEIXIN
-routeDebugEnabled =
-  runtimeEnv.VITE_APP_ENV === 'development' ||
-  (!runtimeEnv.PROD && runtimeEnv.VITE_APP_ENV !== 'production')
-// #endif
-
-onLoad(options => {
-  routeOptions.value = options || {}
-  const cacheKey = String(
-    options?.draftKey || options?.cacheKey || options?.payloadKey || DEFAULT_CACHE_KEY
-  ).trim() || DEFAULT_CACHE_KEY
-  payload.value = resolveFollowUpPayload(routeOptions.value, cacheKey)
-  images.value = Array.isArray(payload.value?.images) ? payload.value.images : []
-  result.value = resolveInitialDiagnosisResult(payload.value)
-  resetFollowUpQuestionState(result.value?.followUps || [], {
-    answerRevision: result.value?.answerRevision || 0
-  })
-  refreshEnvironmentWeatherWindowForCareBehavior()
-})
 
 const plantName = computed(() => {
   const plant = payload.value?.plant || payload.value?.plantInfo || {}
@@ -348,1653 +278,71 @@ const plantName = computed(() => {
       '植物'
   ).trim()
 })
-
-const plantSubtitle = computed(() => String(result.value?.scientificName || result.value?.identityResolutionStatus || '').trim())
-const sessionId = computed(() => String(result.value?.diagnosisSessionId || payload.value?.diagnosisSessionId || routeOptions.value?.sessionId || '').trim())
-const roundId = computed(() => String(result.value?.roundId || payload.value?.roundId || routeOptions.value?.roundId || '').trim())
-const sessionLabel = computed(() => sessionId.value || '未提供 sessionId')
-const roundLabel = computed(() => roundId.value || '未提供 roundId')
-const currentFollowUpQuestion = computed(() => followUpQuestionStack.value[activeFollowUpQuestionIndex.value] || null)
-const hasDirtyFollowUpAnswers = computed(() => dirtyFollowUpFromIndex.value >= 0)
-const followUpSwiperStyle = computed(() => ({ height: `${estimateFollowUpSwiperHeight(currentFollowUpQuestion.value)}px` }))
-const followUpPageTrackStyle = computed(() =>
-  `transform: translateX(-${activeFollowUpQuestionIndex.value * 100}%);`
-)
-const followUpQuestionProgressText = computed(() => {
-  const currentIndex = Math.min(activeFollowUpQuestionIndex.value + 1, followUpQuestionStack.value.length || 1)
-  return `问题 ${currentIndex} / ${followUpQuestionStack.value.length || 1}`
-})
 const followUpDiagnosisContextText = computed(() => `针对${plantName.value || '植物'}的黄叶问诊`)
-const hasCompletedDiagnosis = computed(() => Boolean(result.value) && !result.value.followUpRequired)
-const hasRouteConvergenceDetails = computed(() =>
-  Boolean(
-    visibleOutcomeDisplays.value.length
-  )
-)
-const finalOutcome = computed(() => result.value?.finalResult || {})
-const outcomeTypeValue = computed(() => String(result.value?.outcomeType || finalOutcome.value?.outcomeType || '').trim())
-const outcomeDisplayTitle = computed(() => String(
-  formatOutcomeDisplayLabel(finalOutcome.value) ||
-  formatOutcomeDisplayLabel(result.value?.mainIssueText) ||
-  formatOutcomeDisplayLabel(result.value?.summaryCard?.title) ||
-  '诊断已完成'
-).trim())
-const outcomeSummaryText = computed(() => String(
-  formatOutcomeDisplayLabel(finalOutcome.value?.summaryCn) ||
-  formatOutcomeDisplayLabel(finalOutcome.value?.summary) ||
-  formatOutcomeDisplayLabel(result.value?.summaryText) ||
-  formatOutcomeDisplayLabel(result.value?.summaryCard?.subtitle) ||
-  formatOutcomeDisplayLabel('系统已根据视觉证据和补充问诊整理出当前结论。')
-).trim())
-const outcomeTypeText = computed(() => {
-  const type = outcomeTypeValue.value
-  const labels = {
-    problematic: '有问题',
-    problem: '可能存在问题',
-    non_problematic: '未见明确问题',
-    uncertain: '仍需谨慎观察',
-    out_of_pool_no_mapping: '诊断范围外的可见异常'
-  }
-  return labels[type] || type || '已生成结论'
-})
-const isProblematicOutcome = computed(() => ['problematic', 'problem'].includes(outcomeTypeValue.value))
-const isNonProblemOrUncertainOutcome = computed(() => ['non_problematic', 'uncertain', 'out_of_pool_no_mapping'].includes(outcomeTypeValue.value))
-const showNonProblemOutcomeResultCard = computed(() => !isProblematicOutcome.value && isNonProblemOrUncertainOutcome.value)
-const nonProblemOutcomeSummaryText = computed(() => String(
-  outcomeSummaryText.value ||
-  outcomeTypeText.value ||
-  '当前尚未见到明确问题，建议继续观察。'
-).trim())
-const confidenceLevelText = computed(() => {
-  const level = String(result.value?.confidenceLevel || finalOutcome.value?.confidenceLevel || '').trim()
-  const labels = {
-    high: '较高',
-    normal: '一般',
-    medium: '一般',
-    low: '较低'
-  }
-  return labels[level] || level || '一般'
-})
-const visibleOutcomeSource = computed(() =>
-  Array.isArray(result.value?.visibleOutcomes) && result.value.visibleOutcomes.length
-    ? result.value.visibleOutcomes
-    : Array.isArray(result.value?.finalResult?.visibleOutcomes)
-      ? result.value.finalResult.visibleOutcomes
-      : []
-)
-const visibleOutcomeDisplays = computed(() =>
-  uniqueStrings(
-    visibleOutcomeSource.value.map(formatOutcomeDisplayLabel)
-  )
-)
-const allOutcomeDisplays = computed(() => visibleOutcomeDisplays.value)
-const routeDebugDecision = computed(() => result.value?.routeDecision || null)
-const showRouteDebugPanel = computed(() => routeDebugEnabled && Boolean(routeDebugDecision.value))
-const routeDebugSummaryText = computed(() => String(
-  routeDebugDecision.value?.decisionCause?.decisionCauseText ||
-    result.value?.routeDecisionCause?.decisionCauseText ||
-    ''
-).trim())
-const routeDebugModeText = computed(() => String(routeDebugDecision.value?.mode || '').trim())
-const routeDebugVisibleOutcomeText = computed(() =>
-  normalizeArrayText(routeDebugDecision.value?.visibleOutcomeKeys).join(' / ')
-)
-const routeDebugNextQuestionText = computed(() =>
-  normalizeArrayText(routeDebugDecision.value?.nextQuestionKeys).join(' / ')
-)
-const routeDebugGroupText = computed(() =>
-  normalizeArrayText(routeDebugDecision.value?.activeRouteGroupKeys).join(' / ')
-)
-const routeDebugFallbackPolicy = computed(() => String(routeDebugDecision.value?.fallbackPolicy || '').trim())
 
-const currentFollowUpAccordionValue = computed({
-  get() {
-    const question = currentFollowUpQuestion.value
-    if (!isAccordionFollowUpQuestion(question)) {return ''}
-    return getExpandedFollowUpOptionId(question)
-  },
-  set(value) {
-    const question = currentFollowUpQuestion.value
-    if (!isAccordionFollowUpQuestion(question)) {return}
-    const optionId = normalizeCollapseOptionValue(value)
-    if (!optionId) {return}
-    setExpandedFollowUpOption(question, optionId)
-    setFollowUpAnswer(getFollowUpQuestionId(question), optionId)
-  }
+const {
+  followUpQuestionStack,
+  activeFollowUpQuestionIndex,
+  followUpPageTrackStyle,
+  followUpSwiperStyle,
+  followUpQuestionProgressText,
+  nextButtonText,
+  isSubmittingFollowUp,
+  environmentWeatherWindowLoading,
+  environmentWeatherWindowError,
+  resetFollowUpQuestionState,
+  getCareBehaviorTimelineByQuestion,
+  handleCareBehaviorTimelineChange,
+  getVisibleCareBehaviorOptions,
+  isCareBehaviorWateringTimelineQuestion,
+  selectFollowUpOption,
+  isSelectedFollowUpOption,
+  canProceedFollowUpQuestion,
+  goPreviousFollowUpQuestion,
+  handleNextFollowUpQuestion
+} = useFollowUpQuestionFlow({
+  result,
+  images,
+  plantName,
+  userStore,
+  diagnoseStore,
+  followUpMutation
 })
 
-const observedItems = computed(() => {
-  const source = [
-    ...(Array.isArray(payload.value?.observedSymptoms) ? payload.value.observedSymptoms : []),
-    ...(Array.isArray(payload.value?.observedEvidenceSet) ? payload.value.observedEvidenceSet : []),
-    ...(Array.isArray(result.value?.observedSymptoms) ? result.value.observedSymptoms : []),
-    ...(Array.isArray(result.value?.observedEvidenceSet) ? result.value.observedEvidenceSet : [])
-  ]
-  const seen = new Set()
-  return source
-    .map((item, index) => {
-      const key = String(item?.symptomKey || item?.evidenceKey || item?.key || item?.id || `item_${index}`).trim()
-      const label = String(item?.symptomCn || item?.label || item?.displayName || item?.evidenceKey || item?.symptomKey || '').trim()
-      if (!key || !label || seen.has(key)) {return null}
-      seen.add(key)
-      return { key, label }
-    })
-    .filter(Boolean)
+const {
+  hasCompletedDiagnosis,
+  hasRouteConvergenceDetails: routeConvergenceDetailsVisible,
+  outcomeDisplayTitle,
+  outcomeSummaryText,
+  outcomeTypeText,
+  isProblematicOutcome,
+  showNonProblemOutcomeResultCard,
+  nonProblemOutcomeSummaryText,
+  confidenceLevelText,
+  allOutcomeDisplays,
+  observedItems,
+  actionAdviceGroups,
+  avoidAdviceGroups,
+  showRouteDebugPanel,
+  routeDebugSummaryText,
+  routeDebugModeText,
+  routeDebugVisibleOutcomeText,
+  routeDebugNextQuestionText,
+  routeDebugGroupText,
+  routeDebugFallbackPolicy
+} = useFollowUpResultView({ result, payload, routeOptions })
+const hasRouteConvergenceDetails = computed(() => routeConvergenceDetailsVisible.value)
+
+onLoad(options => {
+  routeOptions.value = options || {}
+  const cacheKey = String(
+    options?.draftKey || options?.cacheKey || options?.payloadKey || DEFAULT_CACHE_KEY
+  ).trim() || DEFAULT_CACHE_KEY
+  payload.value = resolveFollowUpPayload(routeOptions.value, cacheKey)
+  images.value = Array.isArray(payload.value?.images) ? payload.value.images : []
+  result.value = resolveInitialDiagnosisResult(payload.value)
+  resetFollowUpQuestionState(result.value?.followUps || [])
 })
-
-const visualSummaryText = computed(() => String(
-  payload.value?.visualSummary ||
-    result.value?.summaryText ||
-    result.value?.mainIssueText ||
-    '视觉诊断已完成。请继续回答下面的问题，以便系统补齐关键上下文。'
-).trim())
-
-const actionAdviceTexts = computed(() => {
-  const actionAdvice = result.value?.actionAdvice || {}
-  const explanation = result.value?.explanation || result.value?.resultExplanation || {}
-  const nextSteps = Array.isArray(result.value?.nextSteps)
-    ? result.value.nextSteps.map(item => String(item?.text || '').trim()).filter(Boolean)
-    : []
-  const treatmentText = String(result.value?.treatmentText || explanation?.firstAid || '').trim()
-  const structuredAdvice = [
-    ...normalizeArrayText(actionAdvice?.todayActions),
-    ...normalizeArrayText(actionAdvice?.threeDayActions),
-    ...normalizeArrayText(actionAdvice?.sevenDayObserve),
-    ...nextSteps
-  ]
-  return uniqueStrings([
-    ...structuredAdvice,
-    ...(!structuredAdvice.length && treatmentText ? [treatmentText] : [])
-  ])
-})
-
-const avoidAdviceTexts = computed(() => {
-  const actionAdvice = result.value?.actionAdvice || {}
-  const explanation = result.value?.explanation || result.value?.resultExplanation || {}
-  const whatToAvoid = Array.isArray(result.value?.whatToAvoid)
-    ? result.value.whatToAvoid.map(item => String(item || '').trim()).filter(Boolean)
-    : []
-  const preventionText = String(result.value?.preventionText || explanation?.avoid || '').trim()
-  const structuredAdvice = [
-    ...normalizeArrayText(actionAdvice?.avoidActions),
-    ...(actionAdvice?.conflictDetected ? normalizeArrayText(actionAdvice?.retakeOrEscalate) : []),
-    ...whatToAvoid
-  ]
-  return uniqueStrings([
-    ...structuredAdvice,
-    ...(!structuredAdvice.length && preventionText ? [preventionText] : [])
-  ])
-})
-
-const outcomeAdviceSources = computed(() => buildUniqueOutcomesForAdvice(visibleOutcomeSource.value))
-
-const actionAdviceGroups = computed(() =>
-  buildOutcomeAdviceGroups({
-    outcomeSources: outcomeAdviceSources.value,
-    getOutcomeItems: buildOutcomeActionAdviceItems,
-    fallbackItems: actionAdviceTexts.value,
-    fallbackLabel: '通用建议'
-  })
-)
-
-const avoidAdviceGroups = computed(() =>
-  buildOutcomeAdviceGroups({
-    outcomeSources: outcomeAdviceSources.value,
-    getOutcomeItems: buildOutcomeAvoidAdviceItems,
-    fallbackItems: avoidAdviceTexts.value,
-    fallbackLabel: '通用建议'
-  })
-)
-
-function resolveInitialDiagnosisResult(value = {}) {
-  if (value?.normalizedResult) {return value.normalizedResult}
-  const rawResult = value?.diagnosisResult || value?.result || value?.visualDiagnosisResult || value
-  return normalizeDiagnosisResult(rawResult, {
-    images: Array.isArray(value?.images) ? value.images : [],
-    plantName: value?.plantName || value?.plant?.displayName || '植物'
-  })
-}
-
-function resolveFollowUpPayload(options = {}, key = DEFAULT_CACHE_KEY) {
-  const inlinePayload = parseJsonLike(options?.payload || options?.data || '')
-  if (inlinePayload) {return inlinePayload}
-  const storedPayload = readStoragePayload(key)
-  if (storedPayload) {return storedPayload}
-  return {
-    diagnosisSessionId: options?.diagnosisSessionId || options?.sessionId || '',
-    roundId: options?.roundId || '',
-    plantName: options?.plantName || '',
-    followUps: []
-  }
-}
-
-function readStoragePayload(key = DEFAULT_CACHE_KEY) {
-  try {
-    const value = uni.getStorageSync(key)
-    if (!value) {return null}
-    if (typeof value === 'string') {return parseJsonLike(value)}
-    return typeof value === 'object' ? value : null
-  } catch (error) {
-    console.warn('读取问诊缓存失败:', error)
-    return null
-  }
-}
-
-function parseJsonLike(value = '') {
-  if (!value) {return null}
-  if (typeof value === 'object') {return value}
-  try {
-    const decoded = decodeURIComponent(String(value || ''))
-    const parsed = JSON.parse(decoded)
-    return parsed && typeof parsed === 'object' ? parsed : null
-  } catch {
-    return null
-  }
-}
-
-function uniqueStrings(values = []) {
-  return Array.from(new Set((Array.isArray(values) ? values : []).map(item => String(item || '').trim()).filter(Boolean)))
-}
-
-function formatOutcomeDisplayLabel(outcome = null) {
-  if (typeof outcome === 'string') {
-    return outcome
-      .replace(/根区压力/g, '根部状态不佳')
-      .replace(/根部压力/g, '根部状态不佳')
-      .replace(/压力/g, '受影响')
-      .trim()
-  }
-  if (!outcome || typeof outcome !== 'object') {
-    return ''
-  }
-  return String(
-    outcome.displayNameCn ||
-      outcome.displayName ||
-      outcome.title ||
-      outcome.problemName ||
-      outcome.problemKey ||
-      outcome.outcomeKey ||
-      ''
-  ).trim()
-    .replace(/根区压力/g, '根部状态不佳')
-    .replace(/根部压力/g, '根部状态不佳')
-    .replace(/压力/g, '受影响')
-    .trim()
-}
-
-function normalizeArrayText(values = []) {
-  return (Array.isArray(values) ? values : []).map(item => String(item || '').trim()).filter(Boolean)
-}
-
-function normalizeTextList(values = []) {
-  return (Array.isArray(values) ? values : [values]).map(item => normalizeText(item)).filter(Boolean)
-}
-
-function normalizeOutcomeDisplayKey(outcome = {}, index = 0) {
-  return String(
-    outcome?.outcomeKey ||
-      outcome?.problemKey ||
-      outcome?.problemId ||
-      outcome?.displayNameCn ||
-      outcome?.displayName ||
-      outcome?.title ||
-      `outcome_${index}`
-  ).trim()
-}
-
-function buildUniqueOutcomesForAdvice(outcomes = []) {
-  const seen = new Set()
-  return (Array.isArray(outcomes) ? outcomes : [])
-    .map((outcome, index) => ({ outcome, index }))
-    .filter(item => item.outcome && typeof item.outcome === 'object')
-    .filter(item => {
-      const key = normalizeOutcomeDisplayKey(item.outcome, item.index)
-      if (seen.has(key)) {
-        return false
-      }
-      seen.add(key)
-      return true
-    })
-    .map(item => item.outcome)
-}
-
-function buildOutcomeAdviceGroups({
-  outcomeSources = [],
-  getOutcomeItems,
-  fallbackItems = [],
-  fallbackLabel = '通用建议'
-} = {}) {
-  const sourceGroups = buildUniqueOutcomesForAdvice(outcomeSources)
-    .map((outcome, index) => ({
-      key: normalizeOutcomeDisplayKey(outcome, index),
-      outcomeLabel: formatOutcomeDisplayLabel(outcome),
-      items: uniqueStrings(getOutcomeItems ? getOutcomeItems(outcome) : [])
-    }))
-    .filter(group => group.outcomeLabel && group.items.length)
-
-  if (sourceGroups.length || !fallbackItems.length) {
-    return sourceGroups
-  }
-
-  return [{
-    key: '__fallback__',
-    outcomeLabel: fallbackLabel,
-    items: uniqueStrings(fallbackItems)
-  }]
-}
-
-function buildOutcomeActionAdviceItems(outcome = {}) {
-  return uniqueStrings([
-    ...normalizeTextList(outcome?.actionAdviceItems),
-    ...normalizeTextList(outcome?.todayActions),
-    ...normalizeTextList(outcome?.threeDayActions),
-    ...normalizeTextList(outcome?.sevenDayObserve),
-    ...normalizeTextList([outcome?.firstAid]),
-    ...normalizeTextList([outcome?.recommendation]),
-    ...normalizeTextList([outcome?.actionAdvice])
-  ])
-}
-
-function buildOutcomeAvoidAdviceItems(outcome = {}) {
-  return uniqueStrings([
-    ...normalizeTextList(outcome?.avoidAdviceItems),
-    ...normalizeTextList(outcome?.avoidActions),
-    ...normalizeTextList(outcome?.retakeOrEscalate),
-    ...normalizeTextList([outcome?.avoid]),
-    ...normalizeTextList([outcome?.reassurance]),
-    ...normalizeTextList([outcome?.preventionAdvice])
-  ])
-}
-
-function estimateFollowUpSwiperHeight(question) {
-  if (!question) {return 260}
-  const options = Array.isArray(question.options) ? question.options : []
-  const questionText = getQuestionTitle(question)
-  const questionHelpText = getQuestionHelpText(question)
-  const questionExtraRows = Math.ceil(Math.max(questionText.length - 26, 0) / 22)
-  const helpExtraRows = questionHelpText ? Math.ceil(questionHelpText.length / 34) : 0
-  const timelineHeight = isCareBehaviorWateringTimelineQuestion(question) ? 220 : 0
-  const baseHeight = 118 + questionExtraRows * 18 + helpExtraRows * 16
-  const optionHeight = options.reduce((sum, option) => {
-    const optionTitle = getOptionText(question, option)
-    const titleRows = Math.max(1, Math.ceil(String(optionTitle || '').length / 18))
-    return sum + 52 + Math.max(0, titleRows - 1) * 18
-  }, 0)
-  return Math.max(280, Math.min(1020, baseHeight + optionHeight + timelineHeight + 72))
-}
-
-function sanitizeTemplateText(value = '') {
-  const raw = String(value || '')
-  return raw
-    .replace(/\{\{[^}]+\}\}/g, '')
-    .replace(/[\r\n]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-function normalizeText(value = '') {
-  return String(value || '').trim()
-}
-
-function getQuestionTitle(question = {}) {
-  if (isCareBehaviorWateringTimelineQuestion(question)) {
-    return '请您选择在过去的10天内，哪几天浇了水？'
-  }
-  return sanitizeTemplateText(
-    question?.questionTextUserCn ||
-    question?.questionTextCn ||
-    question?.questionText ||
-    question?.text ||
-    ''
-  )
-}
-
-function hasQuestionHelpText(question = {}) {
-  return Boolean(getQuestionHelpText(question))
-}
-
-function getQuestionHelpText(question = {}) {
-  return sanitizeTemplateText(
-    question?.helpTextCn ||
-    question?.helpText ||
-    question?.questionHelpText ||
-    ''
-  )
-}
-
-function getOptionText(question = {}, option = {}) {
-  const text = sanitizeTemplateText(
-    option?.optionTextUserCn ||
-    option?.optionTextCn ||
-    option?.text ||
-    option?.optionText ||
-    option?.label ||
-    option?.desc ||
-    ''
-  )
-  const mappedText = resolveYellowingFollowUpOptionText(question, option)
-  return mappedText || text
-}
-
-function resolveYellowingFollowUpOptionText(question = {}, option = {}) {
-  if (!isYellowingFollowUpQuestion(question)) {
-    return ''
-  }
-
-  const optionKey = normalizeText(option?.optionKey || option?.value || option?.optionId || option?.id || '')
-  const optionText = normalizeText(
-    option?.optionTextUserCn ||
-    option?.optionTextCn ||
-    option?.text ||
-    option?.optionText ||
-    option?.label ||
-    ''
-  )
-  const questionKey = normalizeText(question?.questionKey)
-  const targetDimension = normalizeText(question?.targetDimension)
-
-  if (isYellowingWateringQuestion(questionKey, targetDimension)) {
-    if (isFrequencyOption(optionKey, optionText, [
-      'often_wet',
-      'more_wet',
-      'too_wet',
-      'over_wet',
-      'yes'
-    ])) {
-      return '近2周 2 次以上'
-    }
-    if (isFrequencyOption(optionKey, optionText, [
-      'normal_or_stable',
-      'no_change',
-      'normal',
-      'stable'
-    ])) {
-      return '近2周 1-2 次'
-    }
-    if (isFrequencyOption(optionKey, optionText, [
-      'often_dry',
-      'more_dry',
-      'not_enough',
-      'dry',
-      'lack'
-    ])) {
-      return '近2周 0 次'
-    }
-    return ''
-  }
-
-  if (isYellowingFertilizationQuestion(questionKey, targetDimension)) {
-    if (isFrequencyOption(optionKey, optionText, [
-      'low_or_no_fertilizer',
-      'no',
-      'none',
-      'not_fertilized'
-    ])) {
-      return '近1个月 0 次'
-    }
-    if (isFrequencyOption(optionKey, optionText, [
-      'normal_light_fertilizer',
-      'normal',
-      'appropriate'
-    ])) {
-      return '近1个月 1-2 次'
-    }
-    if (isFrequencyOption(optionKey, optionText, [
-      'recent_heavy_fertilizer_or_repot',
-      'heavy_fertilizer',
-      'heavy',
-      'repot',
-      'fertilize'
-    ])) {
-      return '近1个月 2 次以上'
-    }
-    return ''
-  }
-
-  return ''
-}
-
-function isFrequencyOption(optionKey = '', optionText = '', optionKeys = []) {
-  if (optionKeys.includes(optionKey)) {
-    return true
-  }
-
-  if (!optionText) {
-    return false
-  }
-
-  return optionKeys.some(item => optionText.includes(item.replaceAll('_', '')))
-}
-
-function isYellowingFollowUpQuestion(question = {}) {
-  const questionKey = normalizeText(question?.questionKey)
-  const questionText = normalizeText(
-    question?.questionTextCn ||
-    question?.questionTextUserCn ||
-    question?.questionText ||
-    ''
-  )
-  return questionKey.includes('yellowing') || questionText.includes('黄叶')
-}
-
-function isYellowingWateringQuestion(questionKey = '', targetDimension = '') {
-  return questionKey.includes('watering_frequency_context') ||
-    questionKey.includes('watering_context') ||
-    questionKey.includes('watering') ||
-    targetDimension.includes('watering')
-}
-
-function isYellowingFertilizationQuestion(questionKey = '', targetDimension = '') {
-  return questionKey.includes('fertilization_growth_context') ||
-    questionKey.includes('fertilization_context') ||
-    questionKey.includes('fertilization_reference') ||
-    questionKey.includes('fertilization') ||
-    targetDimension.includes('fertilization')
-}
-
-function getOptionDescription(option = {}) {
-  return sanitizeTemplateText(
-    option?.descriptionCn ||
-    option?.optionDescription ||
-    option?.description ||
-    option?.desc ||
-    ''
-  )
-}
-
-function getFollowUpQuestionId(question) {
-  return String(question?.questionId || '').trim()
-}
-
-function goBack() {
-  uni.navigateBack({ delta: 1 })
-}
-
-function findFollowUpQuestionById(questionId = '') {
-  const normalizedQuestionId = String(questionId || '').trim()
-  if (!normalizedQuestionId) {return null}
-  return followUpQuestionStack.value.find(item => getFollowUpQuestionId(item) === normalizedQuestionId) || null
-}
-
-function getCareBehaviorTimelineByQuestion(question = {}) {
-  const questionId = getFollowUpQuestionId(question)
-  const fallbackTimeline = mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(
-    extractCareBehaviorTimelineFromQuestion(question),
-    environmentWeatherWindow.value
-  )
-  if (!questionId) {
-    return fallbackTimeline
-  }
-  const storedTimeline = careBehaviorTimelineByQuestionId.value[questionId]
-  if (storedTimeline && Object.keys(storedTimeline).length) {
-    return mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(storedTimeline, environmentWeatherWindow.value)
-  }
-  return fallbackTimeline
-}
-
-function buildCareBehaviorTimelineByQuestionIdMap(questions = []) {
-  return (Array.isArray(questions) ? questions : [])
-    .filter(item => isCareBehaviorWateringTimelineQuestion(item))
-    .reduce((acc, item) => {
-      const questionId = getFollowUpQuestionId(item)
-      if (!questionId) {return acc}
-      acc[questionId] = mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(
-        careBehaviorTimelineByQuestionId.value?.[questionId] ||
-          extractCareBehaviorTimelineFromQuestion(item),
-        environmentWeatherWindow.value
-      )
-      return acc
-    }, {})
-}
-
-function handleCareBehaviorTimelineChange(question, timeline = null) {
-  const questionId = getFollowUpQuestionId(question)
-  if (!questionId) {return}
-  const currentTimeline = careBehaviorTimelineByQuestionId.value?.[questionId] || {}
-  const nextTimeline = mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(
-    timeline || {},
-    environmentWeatherWindow.value
-  )
-  if (getCareBehaviorTimelineChangeSignature(currentTimeline) === getCareBehaviorTimelineChangeSignature(nextTimeline)) {
-    syncCareBehaviorTimelineAnswer(question, Object.keys(currentTimeline).length ? currentTimeline : nextTimeline)
-    return
-  }
-  clearCareBehaviorTimelineAnswerSyncSuppression(questionId)
-  careBehaviorTimelineByQuestionId.value = {
-    ...careBehaviorTimelineByQuestionId.value,
-    [questionId]: nextTimeline
-  }
-  syncCareBehaviorTimelineAnswer(question, nextTimeline)
-}
-
-function getCareBehaviorTimelineChangeSignature(timeline = null) {
-  const normalized = normalizeCareBehaviorTimeline(timeline || {})
-  return JSON.stringify({
-    reference_date: normalized.reference_date || '',
-    watering_events_10d: normalized.watering_events_10d || [],
-    fertilizing_events_10d: normalized.fertilizing_events_10d || [],
-    light_change_events_10d: normalized.light_change_events_10d || [],
-    last_fertilized_bucket: normalized.last_fertilized_bucket || 'unknown'
-  })
-}
-
-function resolveCareBehaviorReferenceDate(questions = []) {
-  const candidates = Array.isArray(questions) ? questions : []
-  for (const question of candidates) {
-    const timeline = extractCareBehaviorTimelineFromQuestion(question)
-    const referenceDate =
-      question?.referenceDate ||
-      question?.reference_date ||
-      question?.payload?.referenceDate ||
-      question?.payload?.reference_date ||
-      timeline?.reference_date ||
-      timeline?.referenceDate
-    if (referenceDate) {
-      return String(referenceDate).slice(0, 10)
-    }
-  }
-  return new Date().toISOString().slice(0, 10)
-}
-
-function resolveCareBehaviorWeatherLocation() {
-  const location = userStore.location || {}
-  const lat = Number(location.latitude ?? location.lat)
-  const lng = Number(location.longitude ?? location.lng)
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat === 0 || lng === 0) {
-    return null
-  }
-  return {
-    lat,
-    lng,
-    city: String(location.city || '').trim(),
-    province: String(location.province || '').trim()
-  }
-}
-
-function applyEnvironmentWeatherWindowToCareBehaviorTimelines() {
-  if (!environmentWeatherWindow.value) {return}
-  careBehaviorTimelineByQuestionId.value = Object.fromEntries(
-    Object.entries(careBehaviorTimelineByQuestionId.value || {}).map(([questionId, timeline]) => [
-      questionId,
-      mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(timeline, environmentWeatherWindow.value)
-    ])
-  )
-}
-
-async function refreshEnvironmentWeatherWindowForCareBehavior(questions = followUpQuestionStack.value) {
-  environmentWeatherWindowError.value = ''
-  try {
-    const timelineQuestions = (Array.isArray(questions) ? questions : [])
-      .filter(item => isCareBehaviorWateringTimelineQuestion(item))
-    if (!timelineQuestions.length || environmentWeatherWindowLoading.value) {return}
-
-    const location = resolveCareBehaviorWeatherLocation()
-    if (!location) {return}
-
-    const diagnosisDate = resolveCareBehaviorReferenceDate(timelineQuestions)
-    const requestKey = [
-      location.lat.toFixed(5),
-      location.lng.toFixed(5),
-      location.city,
-      location.province,
-      diagnosisDate
-    ].join('|')
-
-    if (requestKey === environmentWeatherWindowRequestKey.value && environmentWeatherWindow.value) {
-      applyEnvironmentWeatherWindowToCareBehaviorTimelines()
-      return
-    }
-
-    environmentWeatherWindowLoading.value = true
-    const weatherWindow = await getEnvironmentWeatherWindow({
-      ...location,
-      diagnosisDate
-    })
-    if (weatherWindow) {
-      environmentWeatherWindow.value = weatherWindow
-      environmentWeatherWindowRequestKey.value = requestKey
-      environmentWeatherWindowError.value = ''
-      applyEnvironmentWeatherWindowToCareBehaviorTimelines()
-    }
-  } catch (error) {
-    console.warn('获取养护时间线环境天气失败:', error)
-    environmentWeatherWindowError.value = String(error?.message || error?.msg || '养护时间线天气加载失败，请稍后重试。').trim()
-  } finally {
-    if (environmentWeatherWindowLoading.value) {
-      environmentWeatherWindowLoading.value = false
-    }
-  }
-}
-
-function syncCareBehaviorTimelineAnswer(question, timeline = null) {
-  const questionId = getFollowUpQuestionId(question)
-  if (!questionId) {return}
-
-  const currentOptionId = String(followUpAnswers.value[questionId] || '').trim()
-  if (
-    isCareBehaviorTimelineUnclearAnswer(question, currentOptionId) &&
-    isCareBehaviorTimelineAnswerSyncSuppressed(questionId)
-  ) {
-    return
-  }
-  const recordedOptionId = resolveCareBehaviorTimelineRecordedAnswerOptionId(question)
-  const meaningfulTimeline = hasMeaningfulCareBehaviorTimeline(timeline)
-  const visibleOptions = getVisibleCareBehaviorOptions(question)
-  const nextAnswerId = meaningfulTimeline
-    ? (isLegacyWateringTimelineQuestion(question) ? 'care_behavior_timeline' : recordedOptionId)
-    : ''
-
-  if (nextAnswerId) {
-    if (currentOptionId !== nextAnswerId) {
-      setFollowUpAnswer(questionId, nextAnswerId)
-    }
-    return
-  }
-
-  if (!meaningfulTimeline && visibleOptions.some(option => String(option?.optionId || '').trim() === currentOptionId)) {
-    return
-  }
-
-  if (currentOptionId) {
-    setFollowUpAnswer(questionId, '')
-  }
-}
-
-function setCareBehaviorTimelineAnswerSyncSuppression(questionId = '', suppressed = false) {
-  const normalizedQuestionId = String(questionId || '').trim()
-  if (!normalizedQuestionId) {return}
-  const nextState = {
-    ...careBehaviorTimelineAnswerSyncSuppressedByQuestionId.value
-  }
-  if (suppressed) {
-    nextState[normalizedQuestionId] = true
-  } else {
-    delete nextState[normalizedQuestionId]
-  }
-  careBehaviorTimelineAnswerSyncSuppressedByQuestionId.value = nextState
-}
-
-function clearCareBehaviorTimelineAnswerSyncSuppression(questionId = '') {
-  setCareBehaviorTimelineAnswerSyncSuppression(questionId, false)
-}
-
-function isCareBehaviorTimelineAnswerSyncSuppressed(questionId = '') {
-  const normalizedQuestionId = String(questionId || '').trim()
-  if (!normalizedQuestionId) {return false}
-  return Boolean(careBehaviorTimelineAnswerSyncSuppressedByQuestionId.value[normalizedQuestionId])
-}
-
-function getFollowUpOptionId(option) {
-  return String(option?.optionId || '').trim()
-}
-
-function isAccordionFollowUpQuestion(question) {
-  return String(question?.uiVariant || '').trim() === 'single_select_accordion'
-}
-
-function normalizeCollapseOptionValue(value) {
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
-    return normalizeCollapseOptionValue(value.detail?.value ?? value.detail ?? value.value ?? '')
-  }
-  if (Array.isArray(value)) {return String(value[0] || '').trim()}
-  return String(value || '').trim()
-}
-
-function getExpandedFollowUpOptionId(question) {
-  const questionId = getFollowUpQuestionId(question)
-  if (!questionId) {return ''}
-  return String(expandedFollowUpOptionByQuestion.value[questionId] || followUpAnswers.value[questionId] || question?.defaultOptionId || '').trim()
-}
-
-function setExpandedFollowUpOption(question, optionId) {
-  const questionId = getFollowUpQuestionId(question)
-  const normalizedOptionId = String(optionId || '').trim()
-  if (!questionId || !normalizedOptionId) {return}
-  expandedFollowUpOptionByQuestion.value = {
-    ...expandedFollowUpOptionByQuestion.value,
-    [questionId]: normalizedOptionId
-  }
-}
-
-function handleFollowUpAccordionChange(question, value) {
-  const optionId = normalizeCollapseOptionValue(value)
-  if (!optionId) {return}
-  setExpandedFollowUpOption(question, optionId)
-  setFollowUpAnswer(getFollowUpQuestionId(question), optionId)
-}
-
-function isSelectedFollowUpOption(question, option) {
-  const questionId = getFollowUpQuestionId(question)
-  const optionId = getFollowUpOptionId(option)
-  if (!questionId || !optionId) {return false}
-  return String(followUpAnswers.value[questionId] || question?.defaultOptionId || '').trim() === optionId
-}
-
-function selectFollowUpOption(question, option) {
-  const questionId = getFollowUpQuestionId(question)
-  const optionId = getFollowUpOptionId(option)
-  if (!questionId || !optionId) {return}
-  if (isCareBehaviorWateringTimelineQuestion(question) && isCareBehaviorTimelineUnclearAnswer(question, optionId)) {
-    setCareBehaviorTimelineAnswerSyncSuppression(questionId, true)
-  } else {
-    clearCareBehaviorTimelineAnswerSyncSuppression(questionId)
-  }
-  setFollowUpAnswer(questionId, optionId)
-  if (isAccordionFollowUpQuestion(question)) {setExpandedFollowUpOption(question, optionId)}
-}
-
-function findFollowUpQuestionIndex(questionId = '') {
-  const normalizedQuestionId = String(questionId || '').trim()
-  if (!normalizedQuestionId) {return -1}
-  return followUpQuestionStack.value.findIndex(item => getFollowUpQuestionId(item) === normalizedQuestionId)
-}
-
-function updateDirtyFollowUpIndex(questionId = '', optionId = '') {
-  const questionIndex = findFollowUpQuestionIndex(questionId)
-  if (questionIndex < 0) {return}
-  const committedOptionId = String(committedFollowUpAnswers.value?.[questionId]?.optionId || '').trim()
-  const isHistoricalQuestion = questionIndex < followUpQuestionStack.value.length - 1
-  if (committedOptionId && committedOptionId === String(optionId || '').trim()) {return}
-  if (!committedOptionId && !isHistoricalQuestion) {return}
-  dirtyFollowUpFromIndex.value = dirtyFollowUpFromIndex.value >= 0
-    ? Math.min(dirtyFollowUpFromIndex.value, questionIndex)
-    : questionIndex
-}
-
-function setFollowUpAnswer(questionId, answerValue) {
-  updateDirtyFollowUpIndex(questionId, answerValue)
-  followUpAnswers.value = {
-    ...followUpAnswers.value,
-    [questionId]: answerValue
-  }
-
-  const question = findFollowUpQuestionById(questionId)
-  if (!question || !isCareBehaviorWateringTimelineQuestion(question)) {
-    return
-  }
-
-  const answerId = String(answerValue || '').trim()
-  const autoAnswerId = resolveCareBehaviorTimelineAutoAnswerOptionId(question)
-  if (
-    isCareBehaviorTimelineSentinelAnswer(question, answerId) ||
-    answerId === autoAnswerId ||
-    isCareBehaviorTimelineUnclearAnswer(question, answerId)
-  ) {
-    if (isCareBehaviorTimelineUnclearAnswer(question, answerId)) {
-      setCareBehaviorTimelineAnswerSyncSuppression(questionId, true)
-    }
-    return
-  }
-  clearCareBehaviorTimelineAnswerSyncSuppression(questionId)
-  careBehaviorTimelineByQuestionId.value = {
-    ...careBehaviorTimelineByQuestionId.value,
-    [questionId]: {}
-  }
-}
-
-function goPreviousFollowUpQuestion() {
-  activeFollowUpQuestionIndex.value = Math.max(0, activeFollowUpQuestionIndex.value - 1)
-}
-
-function goNextFollowUpQuestion() {
-  if (hasDirtyFollowUpAnswers.value && activeFollowUpQuestionIndex.value >= dirtyFollowUpFromIndex.value) {return}
-  activeFollowUpQuestionIndex.value = Math.min(Math.max(followUpQuestionStack.value.length - 1, 0), activeFollowUpQuestionIndex.value + 1)
-}
-
-function canProceedFollowUpQuestion() {
-  const question = currentFollowUpQuestion.value
-  const questionId = getFollowUpQuestionId(question)
-  if (!questionId) {return false}
-  if (isSubmittingFollowUp.value) {return false}
-  if (isCareBehaviorWateringTimelineQuestion(question)) {
-    return Boolean(followUpAnswers.value[questionId]) ||
-      hasMeaningfulCareBehaviorTimeline(getCareBehaviorTimelineByQuestion(question))
-  }
-  return Boolean(followUpAnswers.value[questionId])
-}
-
-async function handleNextFollowUpQuestion() {
-  if (!canProceedFollowUpQuestion()) {return}
-  if (!hasDirtyFollowUpAnswers.value && activeFollowUpQuestionIndex.value < followUpQuestionStack.value.length - 1) {
-    goNextFollowUpQuestion()
-    return
-  }
-  await submitFollowUps()
-}
-
-function resetFollowUpQuestionState(followUps = [], { answerRevision = 0 } = {}) {
-  const nextFollowUps = dedupeFollowUpQuestionsById(Array.isArray(followUps) ? followUps.filter(item => item?.questionId) : [])
-  followUpQuestionStack.value = nextFollowUps
-  activeFollowUpQuestionIndex.value = 0
-  followUpAnswers.value = createFollowUpAnswerMap(nextFollowUps)
-  careBehaviorTimelineByQuestionId.value = buildCareBehaviorTimelineByQuestionIdMap(nextFollowUps)
-  committedFollowUpAnswers.value = {}
-  dirtyFollowUpFromIndex.value = -1
-  followUpAnswerRevision.value = Number(answerRevision || 0)
-  expandedFollowUpOptionByQuestion.value = {}
-  refreshEnvironmentWeatherWindowForCareBehavior(nextFollowUps)
-}
-
-function mergeFollowUpQuestionState(nextResult = null, submittedPayload = null) {
-  const nextFollowUps = dedupeFollowUpQuestionsById(Array.isArray(nextResult?.followUps) ? nextResult.followUps.filter(item => item?.questionId) : [])
-  const submittedAnswers = Array.isArray(submittedPayload?.answers) ? submittedPayload.answers : []
-  const submittedAnswerMap = submittedAnswers.reduce((entries, item) => {
-    const questionId = String(item?.questionId || '').trim()
-    const optionId = String(item?.optionId || '').trim()
-    if (questionId && optionId) {entries[questionId] = { optionId, answerRevision: Number(nextResult?.answerRevision || submittedPayload?.baseAnswerRevision || 0) }}
-    return entries
-  }, {})
-  const dirtyIndex = dirtyFollowUpFromIndex.value
-  const patchKeepUntilQuestionId = String(nextResult?.uiPatch?.keepUntilQuestionId || '').trim()
-  const patchKeepIndex = patchKeepUntilQuestionId ? findFollowUpQuestionIndex(patchKeepUntilQuestionId) : -1
-  const keepEndIndex = patchKeepIndex >= 0 ? patchKeepIndex : dirtyIndex >= 0 ? dirtyIndex : followUpQuestionStack.value.length - 1
-  const keptQuestions = followUpQuestionStack.value.slice(0, Math.max(0, keepEndIndex + 1))
-  const keptQuestionIds = new Set(keptQuestions.map(item => getFollowUpQuestionId(item)).filter(Boolean))
-  const appendQuestions = nextFollowUps.filter(item => !keptQuestionIds.has(getFollowUpQuestionId(item)))
-  const nextStack = nextResult?.followUpRequired ? [...keptQuestions, ...appendQuestions] : []
-  const nextStackQuestionIds = new Set(nextStack.map(item => getFollowUpQuestionId(item)).filter(Boolean))
-
-  followUpQuestionStack.value = nextStack
-  followUpAnswers.value = {
-    ...Object.fromEntries(Object.entries(followUpAnswers.value || {}).filter(([questionId]) => nextStackQuestionIds.has(questionId))),
-    ...createFollowUpAnswerMap(appendQuestions)
-  }
-  careBehaviorTimelineByQuestionId.value = {
-    ...Object.fromEntries(
-      Object.entries(careBehaviorTimelineByQuestionId.value || {}).filter(([questionId]) => nextStackQuestionIds.has(questionId))
-    ),
-    ...buildCareBehaviorTimelineByQuestionIdMap(nextStack)
-  }
-  committedFollowUpAnswers.value = {
-    ...Object.fromEntries(Object.entries(committedFollowUpAnswers.value || {}).filter(([questionId]) => nextStackQuestionIds.has(questionId))),
-    ...Object.fromEntries(Object.entries(submittedAnswerMap).filter(([questionId]) => nextStackQuestionIds.has(questionId)))
-  }
-  dirtyFollowUpFromIndex.value = -1
-  followUpAnswerRevision.value = Number(nextResult?.answerRevision || followUpAnswerRevision.value || 0)
-  activeFollowUpQuestionIndex.value = nextStack.length ? nextStack.length - 1 : 0
-  expandedFollowUpOptionByQuestion.value = {}
-  refreshEnvironmentWeatherWindowForCareBehavior(nextStack)
-}
-
-watch(
-  () => [
-    userStore.location?.latitude,
-    userStore.location?.longitude,
-    userStore.location?.city,
-    userStore.location?.province,
-    followUpQuestionStack.value.map(item => getFollowUpQuestionId(item)).join('|')
-  ],
-  () => {
-    refreshEnvironmentWeatherWindowForCareBehavior()
-  }
-)
-
-function dedupeFollowUpQuestionsById(questions = []) {
-  const seen = new Set()
-  return (Array.isArray(questions) ? questions : [])
-    .map(item => item || {})
-    .filter(item => {
-      const questionId = String(item?.questionId || '').trim()
-      if (!questionId || seen.has(questionId)) {return false}
-      seen.add(questionId)
-      return true
-    })
-}
-
-async function submitFollowUps() {
-  if (!result.value || !canProceedFollowUpQuestion()) {return}
-  isSubmittingFollowUp.value = true
-  try {
-    const isRevisionSubmit = hasDirtyFollowUpAnswers.value
-    const submitQuestionStack = isRevisionSubmit
-      ? followUpQuestionStack.value.slice(0, activeFollowUpQuestionIndex.value + 1)
-      : currentFollowUpQuestion.value
-        ? [currentFollowUpQuestion.value]
-        : []
-    const payloadForSubmit = buildFollowUpPayload(result.value, followUpAnswers.value, {
-      questionStack: submitQuestionStack,
-      requestMode: isRevisionSubmit ? 'answer_revision' : 'answer_submit',
-      baseAnswerRevision: followUpAnswerRevision.value,
-      dirtyFromQuestionId: dirtyFollowUpFromIndex.value >= 0 ? getFollowUpQuestionId(followUpQuestionStack.value[dirtyFollowUpFromIndex.value]) : '',
-      careBehaviorTimelineByQuestionId: careBehaviorTimelineByQuestionId.value,
-      environmentWeatherWindow: environmentWeatherWindow.value
-    })
-    const rerunResult = await followUpMutation.mutateAsync(payloadForSubmit)
-
-    result.value = normalizeDiagnosisResult(rerunResult, {
-      images: images.value,
-      plantName: plantName.value || result.value.plantName || '植物'
-    })
-    mergeFollowUpQuestionState(result.value, payloadForSubmit)
-
-    diagnoseStore.addToHistory({
-      images: images.value,
-      diagnosis: result.value,
-      diagnosisId: result.value.diagnosisSessionId || ''
-    })
-
-    uni.showToast({ title: result.value.followUpRequired ? '问诊已更新' : '诊断已完成', icon: 'success' })
-  } catch (error) {
-    console.error('问诊处理失败:', error)
-    uni.showToast({ title: error.message || '问诊失败，请重试', icon: 'none' })
-  } finally {
-    isSubmittingFollowUp.value = false
-  }
-}
 </script>
 
-<style scoped>
-.follow-up-page {
-  box-sizing: border-box;
-  min-height: 100vh;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: #f8faf9;
-}
-
-.followup-topbar {
-  height: 56px;
-  box-sizing: border-box;
-  padding: 0 12px 0 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #2d7a4f;
-}
-
-.followup-topbar-back {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  color: #ffffff;
-}
-
-.followup-topbar-back-icon {
-  display: block;
-  font-size: 24px;
-  line-height: 1;
-  font-weight: 400;
-  margin-top: -1px;
-}
-
-.followup-topbar-back--placeholder {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.followup-topbar-title {
-  flex: 1;
-  color: #ffffff;
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 24px;
-  text-align: center;
-}
-
-.followup-page-body {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  padding-top: 24px;
-}
-
-.followup-fixed-context {
-  padding: 0 16px;
-  margin-bottom: 12px;
-}
-
-.followup-fixed-context-title {
-  display: block;
-  color: #111827;
-  font-size: 20px;
-  font-weight: 800;
-  line-height: 1.4;
-}
-
-.followup-fixed-context-progress {
-  display: block;
-  margin-top: 8px;
-  color: #5a7a68;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 20px;
-}
-
-.followup-page-swiper {
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  overflow-x: hidden;
-  overflow-y: visible;
-}
-
-.followup-page-swiper-track {
-  display: flex;
-  height: 100%;
-  min-height: 0;
-  transition: transform 260ms ease;
-  width: 100%;
-  will-change: transform;
-}
-
-.followup-page-swiper-item {
-  flex: 0 0 100%;
-  height: 100%;
-  overflow-x: hidden;
-  overflow-y: visible;
-  width: 100%;
-}
-
-.followup-question-scroll {
-  height: 100%;
-}
-
-.followup-question-shell {
-  box-sizing: border-box;
-  min-height: 100%;
-  padding: 0 16px 34px;
-}
-
-.followup-question-title {
-  display: block;
-  color: #2d7a4f;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 27px;
-}
-
-.followup-question-help {
-  display: block;
-  margin-top: 8px;
-  color: #6b7280;
-  font-size: 12px;
-  line-height: 1.55;
-}
-
-.followup-question-card {
-  padding: 16px 16px 18px;
-  border-radius: 20px;
-  background: #ffffff;
-  border: 1px solid rgba(45, 122, 79, 0.12);
-  box-shadow: 0 10px 26px rgba(45, 122, 79, 0.05);
-}
-
-.followup-question-card--animated {
-  animation: followup-card-enter 240ms ease-out both;
-}
-
-.followup-option-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.followup-option-stack--accordion {
-  gap: 10px;
-}
-
-.followup-accordion-option {
-  overflow: hidden;
-  border: 1px solid rgba(45, 122, 79, 0.12);
-  border-radius: 16px;
-  background: #ffffff;
-}
-
-.followup-accordion-option--active {
-  border-color: #2d7a4f;
-  background: rgba(45, 122, 79, 0.05);
-}
-
-.followup-accordion-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 13px 14px;
-}
-
-.followup-accordion-text {
-  flex: 1;
-  color: #374151;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.45;
-}
-
-.followup-accordion-option--active .followup-accordion-text {
-  color: #184d39;
-}
-
-.followup-accordion-badge {
-  flex-shrink: 0;
-  border: 1px solid currentColor;
-  border-radius: 999px;
-  color: #8b7355;
-  font-size: 10px;
-  font-weight: 800;
-  padding: 3px 8px;
-}
-
-.followup-accordion-option--active .followup-accordion-badge {
-  color: #2d7a4f;
-}
-
-.followup-dirty-hint {
-  display: block;
-  margin-top: 10px;
-  color: #8b7355;
-  font-size: 10px;
-  line-height: 1.5;
-}
-
-.followup-empty-state {
-  box-sizing: border-box;
-  min-height: 100vh;
-  padding: 28px 16px;
-}
-
-.followup-outcome-scroll {
-  height: 100vh;
-}
-
-.followup-outcome-shell {
-  box-sizing: border-box;
-  min-height: 100vh;
-  padding: 24px 16px 34px;
-}
-
-.followup-outcome-card {
-  border: 1px solid #d8f3dc;
-  border-radius: 28px;
-  background: #ffffff;
-  padding: 18px;
-}
-
-.followup-outcome-kicker {
-  display: block;
-  color: #8b7355;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1px;
-}
-
-.followup-outcome-title {
-  display: block;
-  margin-top: 10px;
-  color: #111827;
-  font-size: 20px;
-  font-weight: 900;
-  line-height: 1.35;
-}
-
-.followup-outcome-summary {
-  display: block;
-  margin-top: 10px;
-  color: #4b5563;
-  font-size: 13px;
-  line-height: 1.65;
-  white-space: pre-line;
-}
-
-.followup-outcome-status {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 16px;
-  border-radius: 16px;
-  background: #f8f6f0;
-  padding: 12px 13px;
-}
-
-.followup-outcome-status-label {
-  color: #6b7280;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.followup-outcome-status-value {
-  color: #2d7a4f;
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.followup-advice-card {
-  margin-top: 14px;
-  border-radius: 22px;
-  padding: 15px;
-}
-
-.followup-advice-card--action {
-  background: #f3faf5;
-}
-
-.followup-advice-card--avoid {
-  background: #fff6f3;
-}
-
-.followup-advice-title {
-  display: block;
-  color: #111827;
-  font-size: 15px;
-  font-weight: 900;
-  margin-bottom: 9px;
-}
-
-.followup-advice-subtitle {
-  display: block;
-  color: #1f2937;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1.4;
-  margin-bottom: 5px;
-}
-
-.followup-advice-text {
-  display: block;
-  color: #4b5563;
-  font-size: 12px;
-  line-height: 1.65;
-  margin-bottom: 8px;
-  white-space: pre-line;
-}
-
-.followup-empty-title {
-  display: block;
-  color: #111827;
-  font-size: 17px;
-  font-weight: 800;
-}
-
-.followup-empty-text {
-  display: block;
-  margin-top: 8px;
-  color: #6b7280;
-  font-size: 12px;
-  line-height: 1.55;
-}
-
-.followup-result-scroll {
-  height: 100vh;
-}
-
-.followup-result-shell {
-  box-sizing: border-box;
-  min-height: 100vh;
-  padding: 24px 16px 36px;
-}
-
-.followup-result-card,
-.followup-result-section {
-  border: 1px solid #e7e0d1;
-  border-radius: 22px;
-  background: #fffdf8;
-  box-shadow: 0 14px 34px rgba(45, 122, 79, 0.08);
-}
-
-.followup-result-card {
-  padding: 18px;
-}
-
-.followup-result-kicker {
-  display: block;
-  color: #2d7a4f;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 1px;
-}
-
-.followup-result-title {
-  display: block;
-  margin-top: 9px;
-  color: #111827;
-  font-size: 21px;
-  font-weight: 900;
-  line-height: 1.35;
-}
-
-.followup-result-summary {
-  display: block;
-  margin-top: 10px;
-  color: #4b5563;
-  font-size: 13px;
-  line-height: 1.65;
-}
-
-.followup-result-meta {
-  display: flex;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.followup-result-meta-item {
-  flex: 1;
-  border-radius: 16px;
-  background: #eef7f1;
-  padding: 11px 12px;
-}
-
-.followup-result-meta-label {
-  display: block;
-  color: #6b7280;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.followup-result-meta-value {
-  display: block;
-  margin-top: 5px;
-  color: #184d39;
-  font-size: 13px;
-  font-weight: 900;
-  line-height: 1.35;
-}
-
-.followup-result-section {
-  margin-top: 14px;
-  padding: 16px;
-}
-
-.followup-result-section-title {
-  display: block;
-  color: #111827;
-  font-size: 15px;
-  font-weight: 900;
-}
-
-.followup-result-list-subtitle {
-  color: #1f2937;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1.4;
-}
-
-.followup-result-chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.followup-result-chip {
-  border-radius: 999px;
-  background: #eaf6ef;
-  color: #2d6a4f;
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 1;
-  padding: 8px 10px;
-}
-
-#diagnose-followup-result-outcomes {
-  margin-top: 0;
-}
-
-.followup-result-list {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  margin-top: 12px;
-}
-
-.followup-result-list-item,
-.followup-result-muted {
-  display: block;
-  color: #4b5563;
-  font-size: 12px;
-  line-height: 1.65;
-}
-
-.followup-result-muted {
-  margin-top: 10px;
-}
-
-.follow-up-scroll {
-  height: 100vh;
-}
-
-.grid-gap {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.whitespace-pre-line {
-  white-space: pre-line;
-}
-
-.followup-swiper {
-  width: 100%;
-}
-
-.followup-swiper-item {
-  overflow: visible;
-}
-
-.followup-option-button {
-  width: 100%;
-  display: flex;
-  justify-content: flex-start;
-  text-align: left;
-  padding: 12px;
-  border-radius: 14px;
-  border: 1px solid #e7e0d1;
-  background: #ffffff;
-}
-
-.followup-option-button--active {
-  border-color: #2d7a4f;
-  background: #eaf6ef;
-}
-
-.followup-option-content {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.followup-option-text {
-  color: #1f2937;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.5;
-}
-
-.followup-option-description {
-  color: #6b7280;
-  font-size: 11px;
-  line-height: 1.55;
-  white-space: pre-line;
-}
-
-.followup-option-collapse {
-  overflow: visible;
-}
-
-.followup-option-accordion-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 12px;
-  border-radius: 14px;
-  border: 1px solid #e7e0d1;
-  background: #ffffff;
-}
-
-.followup-option-accordion-title--active {
-  border-color: #2d7a4f;
-  background: #eaf6ef;
-}
-
-.followup-option-accordion-text {
-  flex: 1;
-  color: #1f2937;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.45;
-}
-
-.followup-option-accordion-badge {
-  flex-shrink: 0;
-  color: #2d7a4f;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.followup-option-collapse-body {
-  margin: 8px 2px 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: #fffdf8;
-}
-
-.followup-option-collapse-body--active {
-  background: #f3faf5;
-}
-
-.followup-nav-row {
-  display: flex;
-  gap: 12px;
-  margin-top: 18px;
-}
-
-.followup-nav-button {
-  flex: 1;
-  height: 52px;
-  padding: 0;
-  border: 1px solid rgba(45, 122, 79, 0.18);
-  border-radius: 12px;
-  background: #ffffff;
-  color: #2d6a4f;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 52px;
-}
-
-.followup-nav-button--primary {
-  background: #2d7a4f;
-  color: #ffffff;
-}
-
-.followup-nav-button--disabled {
-  opacity: 0.45;
-}
-
-@keyframes followup-card-enter {
-  from {
-    opacity: 0;
-    transform: translateX(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-</style>
+<style scoped src="./follow-up.css"></style>
