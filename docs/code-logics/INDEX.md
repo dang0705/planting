@@ -10,7 +10,7 @@
 - 旧的“ranking / score gap / hypothesis pool 决定追问与停止”的说法不再作为当前事实使用。
 - 常规 route 追问每轮最多 1 题；`diagnosis-engine.js` 在 route complete path 中以 `maxQuestionCount: 1` 调用 route planner，并最终将候选追问 `.slice(0, 1)`。
 - 黄叶手动入口存在 4 题前置题包：`questionPackage.mode = yellow_leaf`，`answerSubmitMode = package`，`questionDisplayMode = package`。
-- 黄叶题包当前存在跨层边界：响应与前端支持 4 题包，但运行时 `questionQueue` 与追问持久化/归属校验仍按首题锚定。文档不得把它写成“后端完整 4 题持久化与校验已闭环”。
+- 黄叶题包已收敛为包级持久化与归属校验：有效 `yellow_leaf` package 会让包内 4 题按同一当前轮次落库并通过 ownership；legacy `questionQueue` 仍只作为兼容/选择锚点，不能拒绝 package sibling questions。非题包路径仍保持 queue-anchor 单题行为。
 - 停止与输出资格由 `stage === final`、`followUpRequired === false`、无 active queue、正式 outcome type、正式 stop decision 共同决定；不是“答满若干题就输出”。
 
 ## 阅读顺序

@@ -10,6 +10,7 @@ const {
 } = require('./session-service')
 const { replaceQueueForRound } = require('../repositories/question-queue-repository')
 const { upsertStopState } = require('../repositories/stop-state-repository')
+const { buildYellowingQuestionPackage } = require('../app/question-package-response')
 
 function runDeferredPersistenceJobs(sessionId = '', jobs = []) {
   for (const job of jobs) {
@@ -76,9 +77,13 @@ async function persistRoundRuntime({
   }
 
   if (response?.followUpRequired) {
+    const isQuestionPackagePersistence = Boolean(
+      buildYellowingQuestionPackage(response, response?.followUps || [])
+    )
     await appendFollowUpQuestions(sessionId, round, response?.followUps || [], {
       questionQueue: response?.questionQueue || null,
-      assumeNoExisting: isInitialRound
+      assumeNoExisting: isInitialRound,
+      allowUnqueuedQuestions: isQuestionPackagePersistence
     })
     runDeferredPersistenceJobs(sessionId, deferredPersistenceJobs)
     return

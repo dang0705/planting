@@ -14,6 +14,8 @@ stale_if_changed:
   - cloudfunctions/diagnose-http/app/manual-symptom-question-start-fast-path.js
   - cloudfunctions/diagnose-http/app/http-router.js
   - cloudfunctions/diagnose-http/app/frontend-response.js
+  - cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js
+  - cloudfunctions/diagnose-http/services/session-follow-up-service.js
   - src/pages/diagnose/follow-up/**
   - src/http-functions/diagnose/client.js
   - src/utils/diagnose-follow-up-payload.js
@@ -53,7 +55,7 @@ Do not load archived route-planning docs to answer this topic unless the task ex
 - Active docs should describe the current interaction as question-package driven.
 - `maxQuestionsPerRound: 1`, if still present in code/config/history, is not a UX/product contract.
 - Frontend can retain legacy names while presenting package-first behavior.
-- Backend implementation must not assume first-question-only ownership/queue/persistence semantics without source verification.
+- Backend implementation must persist and validate valid `yellow_leaf` package answers as a package in the same current round; legacy `questionQueue` remains an internal compatibility/selection artifact and must not reject package sibling questions. Non-package paths keep the old queue-anchor single-question behavior.
 
 ## Verification status
 

@@ -112,7 +112,7 @@ route planner 做四件事：
 
 ## 7. 黄叶题包的硬边界
 
-必须保留这个事实：黄叶 4 题题包当前不是完整后端包级闭环。
+必须保留这个事实：黄叶 4 题题包当前是 package 协议，不能再被 legacy queue 首题锚点拒绝 sibling questions。
 
 已成立：
 
@@ -120,14 +120,16 @@ route planner 做四件事：
 - `questionPackage` / `uiHints` 可进入前端。
 - 前端 normalizer 会按 `questionCount` 保留 4 题。
 - 前端 follow-up 页面支持 package 展示和整包提交。
+- 后端 package persistence 会让有效 `yellow_leaf` package 的 4 个问题按同一当前轮次落库。
+- answer ownership 会基于同轮持久化 rows 允许包内 4 个答案一起通过。
 
-未闭环：
+仍需区分：
 
 - `planQuestionQueue` 仍只取 `response.followUps.slice(0, 1)`。
-- `appendFollowUpQuestions` 仍按 queue anchor 过滤，实际落库受首题锚定影响。
-- `validateFollowUpAnswerOwnership` 仍依赖持久化 follow-up 与 queue keys。
+- legacy `questionQueue` 仍是兼容/选择 artifact，不是拒绝 package sibling questions 的依据。
+- 非 package 路径仍按 queue-anchor 单题语义工作。
 
-因此，文档和 AI 不能把“黄叶 4 题”写成“后端四题持久化与归属校验已完整支持”。
+因此，文档和 AI 不能把“questionQueue 只锚定首题”写成“黄叶 package 只能提交首题”。
 
 ## 8. 回答提交
 

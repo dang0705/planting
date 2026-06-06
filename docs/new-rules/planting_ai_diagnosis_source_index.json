@@ -7,7 +7,7 @@
     "do_not_use_as_current_facts": [
       "ranking / score gap controls follow-up",
       "fixed number of answers grants output eligibility",
-      "yellow leaf package has fully backend-persisted 4-question ownership",
+      "questionQueue first-anchor means yellow leaf package can only submit the first question",
       "question-start/start/answer response paths are equivalent"
     ]
   },
@@ -609,7 +609,7 @@
     {
       "file": "cloudfunctions/diagnose-http/services/session-follow-up-service.js",
       "lines": "124-136,343-395",
-      "fact": "follow-up persistence and answer ownership filter by queue anchors"
+      "fact": "package persistence can bypass queue-anchor filtering for valid yellow_leaf siblings; non-package persistence and ownership still use queue anchors"
     },
     {
       "file": "cloudfunctions/diagnose-http/domain/stop-state/stop-state-evaluator.js",

@@ -224,6 +224,7 @@ options[]
 - 前端可在题包内本地导航，并在收集完成后提交整包答案。
 - 禁止把 `maxQuestionsPerRound: 1` 或旧“常规 route 追问每轮 1 题”写成当前 UX/产品契约。
 - 旧“黄叶 4 题 package”只能作为历史上已知题包形态，不是当前题包长度上限，也不是唯一适用场景。
+- 有效 `yellow_leaf` 题包的包内答案按同一当前轮次整体持久化和归属校验；`questionQueue` 仍可作为 legacy 选择/兼容锚点，但不得拒绝同一题包内 sibling questions。非题包路径继续按 queue-anchor 单题语义处理。
 
 需求指针：`docs/tickets/86exv6fnx-diagnose-question-package.md`。
 
@@ -232,6 +233,8 @@ options[]
 ```text
 cloudfunctions/diagnose-http/app/question-package-response.js
 cloudfunctions/diagnose-http/app/manual-symptom-question-start-fast-path.js
+cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js
+cloudfunctions/diagnose-http/services/session-follow-up-service.js
 cloudfunctions/diagnose-http/constants/scoring.js
 src/pages/diagnose/follow-up/question-flow.js
 src/utils/diagnose-follow-up-payload.js

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
+import Module from 'node:module'
 
 const require = createRequire(import.meta.url)
 const { buildFrontendDiagnosisResponse } = require('./cloudfunctions/diagnose-http/app/frontend-response.js')
@@ -14,6 +15,7 @@ function buildQuestion(index) {
     questionId: `question_${index}`,
     questionKey: `q_observed_probe__leaf_yellowing__package_${index}`,
     targetDimension: `dimension_${index}`,
+    targetSymptomKey: `leaf_yellowing_package_${index}`,
     text: `黄叶题目 ${index}`,
     options: [
       {
@@ -165,6 +167,92 @@ function testFollowUpPageSizeAndSubmitPath() {
   assert.match(flow, /requestMode:\s*'answer_submit'/)
 }
 
+async function testPackagePersistenceAllowsAllQuestionOwnership() {
+  const originalLoad = Module._load
+  const servicePath = require.resolve('./cloudfunctions/diagnose-http/services/session-follow-up-service.js')
+  delete require.cache[servicePath]
+
+  const insertedRows = []
+  Module._load = function patchedLoad(request, parent, isMain) {
+    if (request.includes('session-follow-up-repository')) {
+      return {
+        insertFollowUpQuestionsRows: async (sessionId, list = []) => {
+          for (const item of list) {
+            insertedRows.push({
+              id: insertedRows.length + 1,
+              diagnosis_id: sessionId,
+              symptom_key: item.storageSymptomKey || item.questionKey,
+              question_order: item.questionOrder,
+              question_text: item.questionText,
+              rationale: item.rationale,
+              asked: 0,
+              answer_value: '',
+              status: 'pending'
+            })
+          }
+        },
+        listFollowUpRows: async () => insertedRows,
+        markFollowUpAnswerRow: async () => {},
+        invalidateFollowUpRowsAfterQuestion: async () => ({ invalidatedCount: 0 }),
+        insertFollowUpAnswerRevisionEvents: async () => ({ insertedCount: 0 })
+      }
+    }
+    if (request.includes('question-repository')) {
+      return { getQuestionsByKeys: async () => [] }
+    }
+    if (request.includes('question-queue-repository')) {
+      return { getQueueBySessionAndRound: async () => null }
+    }
+    return originalLoad.call(this, request, parent, isMain)
+  }
+
+  try {
+    const {
+      appendFollowUpQuestions,
+      validateFollowUpAnswerOwnership
+    } = require('./cloudfunctions/diagnose-http/services/session-follow-up-service.js')
+    const questions = [1, 2, 3, 4].map(buildQuestion)
+    const oneQuestionQueue = {
+      questionItems: [
+        { questionKey: questions[0].questionKey }
+      ]
+    }
+
+    await appendFollowUpQuestions('diag_package_persist', 1, questions, {
+      questionQueue: oneQuestionQueue,
+      assumeNoExisting: true,
+      allowUnqueuedQuestions: true
+    })
+    assert.equal(insertedRows.length, 4)
+
+    const ownership = await validateFollowUpAnswerOwnership(
+      'diag_package_persist',
+      questions.map(question => ({
+        questionKey: question.questionKey,
+        optionKey: question.options[0].optionKey
+      })),
+      1,
+      {
+        followUpRows: insertedRows,
+        queuedQuestionKeys: new Set([questions[0].questionKey])
+      }
+    )
+    assert.equal(ownership.ok, true)
+    assert.deepEqual(ownership.invalidQuestionKeys, [])
+
+    insertedRows.length = 0
+    await appendFollowUpQuestions('diag_single_persist', 1, questions, {
+      questionQueue: oneQuestionQueue,
+      assumeNoExisting: true
+    })
+    assert.equal(insertedRows.length, 1)
+    assert.equal(JSON.parse(insertedRows[0].rationale).qk, questions[0].questionKey)
+  } finally {
+    Module._load = originalLoad
+    delete require.cache[servicePath]
+  }
+}
+
 testYellowingPackageFrontendResponse()
 testYellowingPackageFromRouteMode()
 testEmptyQuestionsFallsBackToFollowUpsForPackage()
@@ -172,5 +260,6 @@ testNormalizeKeepsPackageAndPackageSubmitPayload()
 testNonPackageStillReturnsSingleQuestion()
 testYellowingSourceWithThreeQuestionsIsNotPackage()
 testFollowUpPageSizeAndSubmitPath()
+await testPackagePersistenceAllowsAllQuestionOwnership()
 
 console.log('question package tests passed')

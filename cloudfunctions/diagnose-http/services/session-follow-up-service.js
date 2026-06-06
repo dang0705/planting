@@ -127,12 +127,13 @@ async function appendFollowUpQuestions(
   questions = [],
   {
     questionQueue = null,
-    assumeNoExisting = false
+    assumeNoExisting = false,
+    allowUnqueuedQuestions = false
   } = {}
 ) {
-  const list = filterQuestionsByQuestionQueue(questions, questionQueue, {
-    requireQueueAnchor: true
-  })
+  const list = allowUnqueuedQuestions
+    ? filterQuestionsByQuestionQueue(questions, null, { requireQueueAnchor: false })
+    : filterQuestionsByQuestionQueue(questions, questionQueue, { requireQueueAnchor: true })
   if (!list.length) {return}
 
   const followUpRows = assumeNoExisting ? [] : await listFollowUpRows(sessionId)
