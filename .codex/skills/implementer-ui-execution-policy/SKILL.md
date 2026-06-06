@@ -10,7 +10,7 @@ description: "implementer 专用 UI 执行规则：只消费 Implementation Pack
 本 skill 只给 `implementer_fast` / `implementer_deep` 使用。
 
 它不负责生成 Figma Design Facts，不负责 UI 范围裁决，不负责 QA 验收。  
-它只负责把 `main agent` 已生成的 `Implementation Packet` 和 `Figma Drilldown Request` 落成代码实现。
+它只负责把 main agent 已生成的 `Implementation Packet` 和 `Figma Drilldown Request` 落成代码实现。
 
 ---
 
@@ -98,12 +98,9 @@ Figma Drilldown Blocker:
 1. 优先按 Implementation Packet 中的复用 / wrapper / adapter / 插件 / 原生能力 / 手搓裁决执行。
 2. 不得重新做技术方向裁决。
 3. 不得自行改变 allowed_paths / forbidden_paths。
-4. 如发现 Contract 不可执行，停止并请求 `main agent` 修订。
+4. 如发现 Contract 不可执行，停止并请求 main agent 修订。
 5. 复杂组件必须拆模块，避免单文件膨胀。
 6. 只把 QA 需要的实现映射摘要输出给 QA，不输出完整 Drilldown。
-7. 如果 Implementation Packet / Drilldown 包含 `asset_nodes`、`figma_asset_requirements`、`must_reuse_figma_asset`、`imgIcon` / `img*` 或 asset URL，必须把该 asset 作为视觉事实源。
-8. 对 icon / image / vector asset，必须读取或下载 asset，记录 `asset_source`、`asset_type`、关键字段（SVG 至少包含 `viewBox`、`stroke`、`fill`、`stroke-width`、`preserveAspectRatio`）。实现优先复用 asset 原文或等价编码输出。
-9. 禁止用手写近似 SVG、CSS 形状、icon font、emoji 或“同样是线框/同色”的视觉替代来冒充 Figma asset。若平台限制导致必须替代，必须停止并回报差异、风险和需要确认的替代方案。
 
 ---
 
@@ -120,13 +117,6 @@ UI Implementation Result:
 - handcoded_components:
 - module_split:
 - deviations_from_packet:
-- figma_asset_mapping:
-  - node_id:
-  - asset_source:
-  - asset_type:
-  - key_props_checked:
-  - implementation_path_or_expression:
-  - substitution_used: yes / no
 - qa_implementation_summary:
 - blockers:
 ```
@@ -171,8 +161,7 @@ Figma component / variant / state implementation required
 4. 关键交互是否可点击 / 输入 / 跳转。
 5. 是否存在明显运行时报错。
 6. UI 是否按 Figma Design Facts Lite / Implementation Packet / Drilldown Request 实现。
-7. Figma asset / icon / image 是否使用真实 asset source，且没有手写近似残留。
-8. 状态、props、Pinia、接口数据是否按 Contract 接上。
+7. 状态、props、Pinia、接口数据是否按 Contract 接上。
 
 ### 3. 自测不是 QA
 
@@ -186,13 +175,7 @@ implementer 自测只用于避免把明显坏的实现交给 QA。它不得替�
 
 ### 4. WeChat DevTools MCP 不可用
 
-如果 WeChat DevTools MCP 不可用、无法连接、页面无法打开或工具异常，implementer 必须：
-
-1. 按 `.codex/skills/wechat-mcp-transport-recovery/SKILL.md` 统一恢复流程执行；
-2. 先确认是否可降级到 automator 继续完成最小验证；
-3. 仅在 `devtools_automator_blocker` 时才判为自测阻断；若 `tool_session_blocker` 且可恢复，应以 `wechat_recovery: recovered` 继续自测或交由 QA 覆盖。
-
-如恢复失败，仍需记录自测缺口，不得声称端上自测通过。
+如果 WeChat DevTools MCP 不可用、无法连接、页面无法打开或工具异常，implementer 必须记录为自测缺口，不得声称端上自测通过。
 
 ```text
 WeChat DevTools MCP Self-Check Blocker:
@@ -217,10 +200,6 @@ Implementer UI Self-Check:
 - runtime_errors:
 - interaction_check:
 - visual_check_summary:
-- figma_asset_check:
-  - asset_source_verified: yes / no / not_applicable
-  - implementation_uses_exact_asset: yes / no / not_applicable
-  - forbidden_substitute_absent: yes / no / not_applicable
 - gaps:
 - 是否仍需 QA 独立验收：是
 ```
@@ -234,6 +213,5 @@ Implementer UI Self-Check 只做提交 QA 前的最小自检：
 2. 主组件可渲染。
 3. 一条关键交互路径可用。
 4. 无明显 runtime error。
-5. 如任务涉及 Figma asset / icon / image，确认实现中不存在手写近似替代或旧实心 CSS/SVG 残留。
 
 不得执行完整 QA Test Contract，不得重复 QA 的正式自动化矩阵。

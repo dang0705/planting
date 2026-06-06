@@ -16,15 +16,15 @@
 
 | Phase | 场景 | 读取文件 |
 |---|---|---|
-| Phase 0 | 硬门禁、mode 判断、是否允许继续 | `phase-0-gates.md` |
+| Main thread | main agent receipt-only 与预算边界 | `main-thread-budget-policy.md` |
+| Phase 0 | 硬门禁、mode 判断、Git baseline | `phase-0-gates.md` |
 | Phase 1 | ClickUp 模式下读取主任务、子任务、relationships、链接 | `clickup-ticket-read-policy.md` |
-| Phase 1.5 | BRV 记忆召回、docs/code 路由、subagent 记忆切片 | `brv-recall-gate.md` |
+| Phase 1.5 | BRV / ByteRover 项目事实召回 | `brv-recall-gate.md` |
 | Phase 1 / 7 | ClickUp 模式下 markdown checklist、验收标准、Test Case Base、markdown_description 回写 | `checklist-writeback-policy.md` |
-| Phase 2 | Agent Assignment / Execution Gate；必须消费 Phase 1.5 的 BRV Recall Receipt | `agent-assignment-gate.md` |
-| Phase 3 | role_context_packets；必须包含最小 `subagent_memory_context` | `role-context-packets.md` |
-| Phase 4 | Solution Discovery、Implementation Contract、Test Contract、`main agent` 质量门禁 | `solution-discovery-gate.md` / `implementation-test-contract.md` / `main-agent-quality-gates.md` |
+| Phase 2 | Agent Assignment / Execution Gate | `agent-assignment-gate.md` |
+| Phase 3 | role_context_packets | `role-context-packets.md` |
+| Phase 4 | Solution Discovery、Implementation Contract、Test Contract、main agent 质量门禁 | `solution-discovery-gate.md` / `implementation-test-contract.md` / `main-agent-quality-gates.md` |
 | Phase 4.45 | pre-implementation token 预算保险丝 | `pre-implementation-budget-fuse.md` |
-| Phase 4.5 | `main agent` 硬质量门禁、文件大小阻断、gate receipt | `main-agent-quality-gates.md` / `../scripts/check-main-agent-quality-gates.mjs` |
 | Phase 6 | QA 证据、日志、截图、失败归因 | `qa-evidence-policy.md` |
 | Phase 6 | WeChat DevTools 自动化职责分配 | `wechat-devtools-automation-policy.md` |
 | Phase 6 / Recovery | WeChat MCP `Transport closed`、automator 恢复、fallback 直连 | `.codex/skills/wechat-mcp-transport-recovery/SKILL.md` |
@@ -69,19 +69,9 @@ Figma / UI 细则不在本目录内，仍由对应 skill 管理：
 .codex/skills/qa-ui-visual-baseline-policy/SKILL.md
 ```
 
-## BRV Recall Gate 路由
-
-非简单任务在 Agent Assignment 前读取：
-
-```text
-references/brv-recall-gate.md
-```
-
-该 gate 只从 `.brv/context-tree/_manifest.json` 的 `active_context` 选择相关 context，生成 `BRV Recall Receipt`，并把最小 `subagent_memory_context` 注入 role_context_packets。不得全量读取 `.brv/context-tree` 或把完整 BRV 原文广播给 subagent。
-
 ## WeChat MCP 恢复路由
 
-当 `dispatch-task` 自动化测试过程中任一阶段出现以下问题时，优先路由到：
+当 `dispatch-task` 任一阶段出现以下问题时，优先路由到：
 
 ```text
 .codex/skills/wechat-mcp-transport-recovery/SKILL.md
@@ -96,4 +86,4 @@ references/brv-recall-gate.md
 
 ## Subagent 进度观察
 
-`main agent` 等待 subagent 时读取 `subagent-progress-policy.md`。默认低成本观察，不得频繁中断。
+main agent 等待 subagent 时读取 `subagent-progress-policy.md`。默认低成本观察，不得频繁中断。

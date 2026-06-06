@@ -1,0 +1,155 @@
+version: 1
+updated: 2026-06-06
+verified_at_commit: unknown-from-upload
+policy: "default-deny large/old docs; active docs are explicit allowlist"
+
+active_docs:
+  - path: docs/CURRENT.md
+    status: current
+    doc_type: map
+    default_ai_read: true
+    sync_policy: active
+  - path: docs/ACTIVE_CONTRACTS.md
+    status: current
+    doc_type: contract
+    default_ai_read: false
+    sync_policy: active
+  - path: docs/RUNBOOK.md
+    status: current
+    doc_type: runbook
+    default_ai_read: false
+    sync_policy: active
+  - path: docs/KNOWLEDGE_GOVERNANCE.md
+    status: current
+    doc_type: policy
+    default_ai_read: false
+    sync_policy: active
+  - path: docs/ARCHIVE_INDEX.md
+    status: current
+    doc_type: archive-index
+    default_ai_read: false
+    sync_policy: active
+  - path: docs/_sync-map.yml
+    status: current
+    doc_type: sync-map
+    default_ai_read: false
+    sync_policy: active
+  - path: docs/_doc-status.yml
+    status: current
+    doc_type: manifest
+    default_ai_read: false
+    sync_policy: active
+  - path: docs/tickets/86exv6fnx-diagnose-question-package.md
+    status: current
+    doc_type: requirement-pointer
+    default_ai_read: false
+    sync_policy: active-for-diagnose-question-package
+
+patterns:
+  - pattern: docs/code-logics/**
+    status: retrieval-only
+    doc_type: code-logic-reference
+    default_ai_read: false
+    sync_policy: no_bulk_sync
+    allowed_when: "specific module task needs historical code-logic notes after reading active docs and source files"
+
+  - pattern: docs/new-rules/**
+    status: archived
+    doc_type: blueprint-rule-pack
+    default_ai_read: false
+    sync_policy: archive_only
+    allowed_when: "explicit rule-mining task; read index before content"
+
+  - pattern: docs/planting_ai_diagnosis_all_in_one_package/**
+    status: archived
+    doc_type: blueprint-rule-pack
+    default_ai_read: false
+    sync_policy: archive_only
+    allowed_when: "explicit historical rule-package task"
+
+  - pattern: docs/route规划及outcome瘦身计划/**
+    status: superseded
+    doc_type: blueprint-plan
+    default_ai_read: false
+    sync_policy: archive_only
+    superseded_by:
+      - cloudfunctions/diagnose-http/constants/outcome-route.js
+      - cloudfunctions/diagnose-http/constants/scoring.js
+      - cloudfunctions/diagnose-http/domain/outcome-route-planner.js
+      - docs/ACTIVE_CONTRACTS.md
+
+  - pattern: docs/ai-runs/**
+    status: archived
+    doc_type: ai-run-handoff
+    default_ai_read: false
+    sync_policy: archive_only
+    allowed_when: "named historical run investigation only"
+
+  - pattern: docs/ai-tasks/**
+    status: archived
+    doc_type: ai-task-brief
+    default_ai_read: false
+    sync_policy: archive_only
+    allowed_when: "the task explicitly names this file"
+
+  - pattern: docs/data-base/**
+    status: retrieval-only
+    doc_type: database-spec
+    default_ai_read: false
+    sync_policy: verify_against_sql_and_code
+    allowed_when: "database schema, migration, publishing, SQL task"
+
+  - pattern: docs/deploy-pipeline.md
+    status: retrieval-only
+    doc_type: runbook-source
+    default_ai_read: false
+    sync_policy: condensed_into_runbook
+    superseded_by:
+      - docs/RUNBOOK.md
+
+  - pattern: docs/local-cloudbase-functions-debugging.md
+    status: retrieval-only
+    doc_type: runbook-source
+    default_ai_read: false
+    sync_policy: condensed_into_runbook
+    superseded_by:
+      - docs/RUNBOOK.md
+
+  - pattern: docs/cautions/**
+    status: retrieval-only
+    doc_type: caution-source
+    default_ai_read: false
+    sync_policy: condensed_into_runbook
+    superseded_by:
+      - docs/RUNBOOK.md
+
+  - pattern: docs/*架构设计*.md
+    status: archived
+    doc_type: blueprint
+    default_ai_read: false
+    sync_policy: archive_only
+
+  - pattern: docs/*规划*.md
+    status: archived
+    doc_type: blueprint
+    default_ai_read: false
+    sync_policy: archive_only
+
+  - pattern: .brv/review-backups/**
+    status: archived
+    doc_type: brv-backup
+    default_ai_read: false
+    sync_policy: archive_only
+
+  - pattern: .brv/dream-log/**
+    status: archived
+    doc_type: brv-dream-log
+    default_ai_read: false
+    sync_policy: archive_only
+
+rules:
+  default_status_for_unlisted_docs: review_required
+  default_ai_read_for_unlisted_docs: false
+  active_doc_patch_requires_source_verification: true
+  brv_current_fact_requires_source_path: true
+  old_blueprints_are_never_current_by_default: true

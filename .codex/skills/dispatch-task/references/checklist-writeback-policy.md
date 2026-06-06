@@ -123,6 +123,6 @@ Test Case Base 是 Test Contract 的基础。不得漏项，不得把后端接�
 
 1. checklist item 已映射到 Test Case Base。
 2. 对应测试 / 验收已通过，或用户明确接受该项未验证风险。
-3. QA 或 `main agent` 已给出证据。
+3. QA 或 main agent 已给出证据。
 4. 该项不是 blocked / not_applicable / pending。
 5. 已确认该行来自原始 `markdown_description` checklist。

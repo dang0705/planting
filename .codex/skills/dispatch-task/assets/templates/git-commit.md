@@ -1,13 +1,13 @@
 # Git Commit Template
 
 ```text
-Pre-task Dirty Snapshot Commit:
+Phase 0 Snapshot Commit:
 - branch:
-- dirty_level:
+- dirty_before_start: yes / no
 - committed: yes / no
 - commit_hash:
-- commit_message: <= 50 chars, based on dirty changes
-- staged_files:
+- commit_message: <= 50 chars
+- base_ref:
 - blocked_reason:
 ```
 
@@ -16,7 +16,7 @@ Git Commit:
 - branch:
 - committed: yes / no
 - commit_hash:
-- commit_message: <= 50 chars, based on task changes
+- commit_message: <= 50 chars
 - staged_files:
 - excluded_dirty_files:
 - 未提交原因:

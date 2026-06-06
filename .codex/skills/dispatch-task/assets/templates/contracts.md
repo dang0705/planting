@@ -2,12 +2,6 @@
 
 ```text
 Implementation Contract:
-- memory_context:
-  - brv_fact_ids:
-  - brv_rule_ids:
-  - brv_decision_ids:
-  - excluded_superseded_ids:
-  - authority_note:
 - 实现目标:
 - 文件级改动计划:
 - 数据流 / 调用链:
@@ -20,9 +14,6 @@ Implementation Contract:
 
 ```text
 Test Contract:
-- memory_context:
-  - brv_rule_ids:
-  - wechat_mcp_policy_context:
 - source:
 - unit-test:
 - smoke-test:

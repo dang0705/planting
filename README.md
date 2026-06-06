@@ -1,67 +1,61 @@
-# 青花植 - 智能植物养护助手
+## 2026-06-06 ticket update
 
-一个基于 UniApp 的微信小程序,通过 AI 图像识别帮助用户诊断植物问题,提供专业的养护建议。
+This revision supersedes the previous diagnosis facts that said regular route follow-up asks one question per round. Current diagnosis-question-package口径 is no-follow-up and not one-question-per-round. The active requirement pointer is `docs/tickets/86exv6fnx-diagnose-question-package.md`.
 
-## 🎯 产品定位
+# Governed Knowledge Pack
 
-**目标用户**: 阳台种菜人士、办公室绿植爱好者
+生成日期：2026-06-06
 
-**核心痛点**: 绿植生病无法马上得到可靠的解决方案
-
-**解决方案**: 拍照 + 混元 Vision AI 诊断,提供专业养护建议
-
-**变现模式**: 订阅制会员
-
-## 🚀 技术栈
-
-- **框架**: UniApp 3.0 + Vue 3
-- **状态管理**: Pinia
-- **样式框架**: Tailwind CSS
-- **构建工具**: Vite
-- **云服务**: 腾讯云 CloudBase
-- **AI 能力**: Qwen/混元 Vision 模型
-
-## 本地云函数调试
-
-微信小程序本地开发可以直连本机 CloudBase HTTP 云函数，无需先部署到云端：
-
-```bash
-npm run dev:functions:install
-npm run dev:functions
-npm run dev:mp-weixin:local-functions
-```
-
-用微信开发者工具打开 `dist/dev/mp-weixin`。如需真机或局域网访问，可使用：
-
-```bash
-npm run dev:mp-weixin:local-functions:lan
-```
-
-未设置 `VITE_API_BASE_URL` 时仍走原有 CloudBase gateway；线上/生产构建不允许使用本地或非 HTTPS 的 API Base URL。完整说明见 [docs/local-cloudbase-functions-debugging.md](docs/local-cloudbase-functions-debugging.md)。
-
-
-# Codex AI Team Configuration / Codex AI 团队配置包
-
-This package contains a complete repository-ready Codex configuration:
-
-- `AGENTS.md`: concise repository-level entrypoint.
-- `.codex/config.toml`: subagent runtime limits.
-- `.codex/agents/*.toml`: task planner, code explorer, architecture reviewer, implementer, QA reviewer, docs keeper, release ops.
-- `docs/ai-rules/*.md`: split rule files for project hard rules, language policy, CloudBase deployment, replay, subagent workflow, and the full original CloudBase guide.
-- `docs/ai-tasks/`: place task notes here.
-- `docs/ai-runs/`: place subagent handoff records here.
-
-## Installation / 使用方式
-
-Copy all files into your repository root.
-
-```bash
-git add AGENTS.md .codex docs/ai-rules docs/ai-tasks docs/ai-runs docs/adr
-git commit -m "chore: add codex ai team rules and subagents"
-```
-
-The original uploaded `AGENTS.md` is preserved as:
+本包不是把旧文档继续同步一遍，而是把知识体系治理成：
 
 ```text
-docs/ai-rules/AGENTS.original.md
+蓝图归档；
+活文档极简化；
+契约必须同步；
+BRV 只做索引；
+docs-keeper 从同步者变成清理者。
 ```
+
+## 建议落位
+
+把本包中的文件复制到仓库根目录，对应覆盖或新增：
+
+```text
+AGENTS.md
+.codex/config.toml
+.codex/context-packs.yml
+.codex/memory.md
+.codex/agents/docs-keeper.toml
+.codex/skills/dispatch-task/SKILL.md
+.codex/skills/dispatch-task/references/knowledge-hygiene-policy.md
+.brv/context-tree/_manifest.json
+.brv/context-tree/_index.md
+.brv/context-tree/facts-index.yml
+docs/CURRENT.md
+docs/ACTIVE_CONTRACTS.md
+docs/RUNBOOK.md
+docs/KNOWLEDGE_GOVERNANCE.md
+docs/ARCHIVE_INDEX.md
+docs/_doc-status.yml
+docs/_sync-map.yml
+scripts/knowledge_hygiene_check.py
+```
+
+## 治理后的默认 AI 读取口径
+
+默认只读：
+
+```text
+AGENTS.md
+.codex/memory.md
+.codex/context-packs.yml
+docs/CURRENT.md
+```
+
+只有触发具体任务域时，才读 `docs/ACTIVE_CONTRACTS.md`、`docs/RUNBOOK.md` 或命中的源码文件。旧的 `docs/code-logics/**`、`docs/new-rules/**`、`docs/route规划及outcome瘦身计划/**`、`docs/ai-runs/**` 默认不读。
+
+## 重要边界
+
+- 本包基于上传文件静态分析生成，未连接你的实际 Git commit。落地后应把 `verified_at_commit: unknown-from-upload` 改成当前 commit hash。
+- 如果上传包与真实工作区不一致，以真实工作区代码为准。
+- 旧文档不要直接删除；先按 `docs/ARCHIVE_INDEX.md` 和 `docs/_doc-status.yml` 标记为 archive-only / retrieval-only。

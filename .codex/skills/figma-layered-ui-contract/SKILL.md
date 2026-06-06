@@ -33,7 +33,7 @@ Figma Layered Contract:
 - Figma Implementation Slice:
 - Figma Node Drilldown: none / partial / required
 - UI Implementation Scope Map:
-- Architecture Scope Slice:
+- Technical Scope Slice:
 - Implementation Packet:
 - QA Acceptance Slice:
 ```
@@ -42,7 +42,7 @@ Figma Layered Contract:
 
 1. 是否有 Lite。
 2. 是否有 UI Implementation Scope Map。
-3. 是否有 Architecture Scope Slice。
+3. 是否有 Technical Scope Slice。
 4. 是否有 Implementation Packet。
 5. 是否有 QA Acceptance Slice。
 6. 若复杂 component / symbol / instance 属于实现范围，是否有局部 Drilldown 或明确“不需要 Drilldown”的理由。
@@ -57,7 +57,7 @@ Figma Layered Contract:
 figma-ui-implementation-policy
 → 生成 Figma Design Facts Lite / Implementation Slice / 必要局部 Node Drilldown
 → ui-implementation-scope-policy
-→ 生成 UI Implementation Scope Map / Architecture Scope Slice / Implementation Packet / QA Acceptance Slice
+→ 生成 UI Implementation Scope Map / Technical Scope Slice / Implementation Packet / QA Acceptance Slice
 ```
 
 不得把人工压缩版 Figma 摘要当作 1:1 design contract。
@@ -77,7 +77,7 @@ Figma Layered Contract:
   - implementation_slice: present / generated / not_needed / missing
   - node_drilldown: none / partial / required / missing
   - ui_scope_map: present / generated / missing
-  - architecture_scope_slice: present / generated / missing
+  - technical_scope_slice: present / generated / missing
   - implementation_packet: present / generated / missing
   - qa_acceptance_slice: present / generated / missing
 - missing_layers:

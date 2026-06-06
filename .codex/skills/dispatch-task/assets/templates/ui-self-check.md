@@ -13,10 +13,6 @@ Implementer UI Self-Check:
 - runtime_errors:
 - interaction_check:
 - visual_check_summary:
-- figma_asset_check:
-  - asset_source_verified:
-  - implementation_uses_exact_asset:
-  - forbidden_substitute_absent:
 - gaps:
 - 是否仍需 QA 独立验收：是
 ```

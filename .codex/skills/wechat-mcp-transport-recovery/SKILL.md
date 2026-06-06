@@ -33,7 +33,7 @@ launch mode failure
 当出现以下任一情况时使用：
 
 1. `mcp__wechat_dev_tools.*` 返回 `Transport closed`。
-2. `main agent` 或 QA 需要继续做小程序端上验证。
+2. main agent 或 QA 需要继续做小程序端上验证。
 3. 同一项目上 main 线程能连，当前线程不能连，需要判断是线程 transport 问题还是 DevTools 问题。
 
 ## 3. 先分清 MCP 实现来源

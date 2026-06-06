@@ -2,52 +2,38 @@
 
 ```text
 role_context_packets:
-- brv_recall:
-  - receipt_ref:
-  - matched_contexts:
-  - injected_memory:
-    - fact_ids:
-    - rule_ids:
-    - decision_ids:
-    - observation_ids:
-  - excluded_memory:
-    - superseded_or_deprecated:
-    - not_source_verified_fact:
-  - docs_to_read:
-  - code_to_verify:
+- brv_recall_packet:
+  - status:
+  - evidence_ref:
 - code_explorer:
+  - subagent_memory_context:
   - template_ref: assets/templates/code-explorer-result.md
   - search_goal:
   - keywords:
   - directories:
   - questions_to_answer:
-  - subagent_memory_context:
 - implementer:
+  - subagent_memory_context:
   - template_ref: assets/templates/implementer-result.md
   - required_skill:
-  - subagent_memory_context:
-  - wechat_mcp_policy_context:
   - Implementation Contract:
   - Implementation Packet:
   - allowed_paths:
   - forbidden_paths:
   - Figma Drilldown Request:
-    - asset_nodes:
   - implementer_ui_self_check:
 - QA:
+  - subagent_memory_context:
   - template_ref: assets/templates/qa-evidence.md
   - required_skill:
   - Test Contract:
   - QA Acceptance Slice:
   - QA Visual Baseline Slice:
-    - asset_fidelity_checks:
   - evidence_plan:
-  - subagent_memory_context:
-  - wechat_mcp_policy_context:
 - docs:
+  - subagent_memory_context:
   - template_ref: assets/templates/docs-result.md
   - 文档同步触发依据:
   - 目标文档:
-  - subagent_memory_context:
   - 索引同步点:
 ```

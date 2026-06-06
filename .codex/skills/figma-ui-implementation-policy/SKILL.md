@@ -9,7 +9,7 @@ description: "纯 Figma 读取与设计事实提取规范：调用方已确认�
 
 本 skill 只定义如何通过 Figma MCP 读取 Figma 设计，并产出结构化设计事实 `Figma Design Facts`。
 
-本 skill 不负责判断“是否应该读取 Figma”。是否需要读取 Figma、是否与 ClickUp ticket 有关、是否属于 UI 开发范围，必须由调用方决定，例如 `clickup-task-dispatch`、`main agent` 或其他上游 skill。
+本 skill 不负责判断“是否应该读取 Figma”。是否需要读取 Figma、是否与 ClickUp ticket 有关、是否属于 UI 开发范围，必须由调用方决定，例如 `clickup-task-dispatch`、main agent 或其他上游 skill。
 
 本 skill 不定义：
 
@@ -121,11 +121,6 @@ Figma Design Facts:
 - assets:
   - images:
   - icons:
-    - node_id:
-    - asset_url:
-    - asset_type: svg / png / jpg / unknown
-    - exact_source_required: true / false
-    - key_props: viewBox / stroke / fill / width / height / preserveAspectRatio
   - masks:
 - variables / tokens:
 - interactions:
@@ -150,7 +145,7 @@ Figma MCP 读取结果不得只停留在本 skill 的临时上下文中。读取
 
 1. 如果 plan conclusion 已包含完整 `Figma Design Facts`，后续 agent 默认不得重新读取同一个 Figma link。
 2. 后续 agent 必须优先使用 `Figma Design Facts` 作为设计事实源。
-3. 只有摘要缺失、冲突、需要更高分辨率截图、QA 缺少基准节点，或用户 / `main agent` 明确要求时，才允许回查 Figma MCP。
+3. 只有摘要缺失、冲突、需要更高分辨率截图、QA 缺少基准节点，或用户 / main agent 明确要求时，才允许回查 Figma MCP。
 4. 回查时必须说明原因，并只读取相关 node / frame，不得重新读取整份 Figma 文件。
 5. 不得把“可能有 MCP 缓存”当作默认重复读取的理由；缓存只能视为性能优化，不能作为工作流前提。
 
@@ -223,13 +218,6 @@ Figma Implementation Slice:
   - node_id:
   - visual_difference:
 - asset_nodes:
-  - node_id:
-  - name:
-  - asset_url:
-  - asset_type:
-  - exact_source_required:
-  - key_visual_props:
-  - implementation_note:
 - qa_critical_nodes:
 - needs_drilldown:
   - node_id:
@@ -238,7 +226,7 @@ Figma Implementation Slice:
 
 ### 8.3 极少数情况：Figma Node Drilldown
 
-只有以下情况才允许输出局部 Drilldown：Implementation Slice 不足以实现、节点是复杂 component / symbol / instance 且属于实现范围、存在重复结构或状态变体、QA 对齐失败、`main agent` 需要判断拆模块 / 组件复用冲突、用户或 `main agent` 明确要求。
+只有以下情况才允许输出局部 Drilldown：Implementation Slice 不足以实现、节点是复杂 component / symbol / instance 且属于实现范围、存在重复结构或状态变体、QA 对齐失败、main agent 需要判断拆模块 / 组件复用冲突、用户或 main agent 明确要求。
 
 Drilldown 必须限定目标节点，不得默认展开整棵树。
 
@@ -259,36 +247,16 @@ Figma Node Drilldown:
   - key_text:
   - qa_assertions:
 - assets:
-  - node_id:
-  - name:
-  - asset_url:
-  - asset_type:
-  - downloaded_or_inspected: yes / no
-  - key_props:
-  - exact_source_required:
 - interactions:
 - implementation_notes:
 - qa_notes:
 ```
 
-### Asset 事实源规则
-
-当 `get_design_context` 返回 `imgIcon` / `img*` / asset URL，或节点类型、名称、导出结果显示为 icon / image / vector asset 时，该 asset 是视觉事实源。
-
-必须记录：
-
-1. `asset_url` 或可复核的 source id。
-2. `asset_type`，如 `svg` / `png` / `jpg` / `unknown`。
-3. 若为 SVG，记录关键字段：`viewBox`、`stroke`、`fill`、`stroke-width`、`clipPath`、`preserveAspectRatio`。
-4. 是否需要 `exact_source_required=true`。
-
-对 icon / image / vector asset，不得把“视觉近似”“同样是线框”“手写 SVG / CSS 形状”当作等价设计事实。若无法获取或复用 asset 原文，必须在 `unknown_or_unread` / `notes` 中记录，并把后续实现标为需要确认或 blocker。
-
 ### 8.4 输出预算硬规则
 
 1. 默认只输出 `Figma Design Facts Lite`。
 2. 只有任务明确涉及 UI 实现 / UI 还原 / UI QA 时，才输出 `Figma Implementation Slice`。
-3. 只有摘要不足、实现受阻、QA 对齐失败、复杂 component 需要拆解或 `main agent` 明确要求时，才输出 `Figma Node Drilldown`。
+3. 只有摘要不足、实现受阻、QA 对齐失败、复杂 component 需要拆解或 main agent 明确要求时，才输出 `Figma Node Drilldown`。
 4. Drilldown 必须指定 `target_node_id`、`max_depth` 和原因。
 5. 重复结构只保留 1～2 个样本，不展开全部重复项。
 6. placeholder / ignore / hidden / annotation 节点默认不展开。
@@ -301,13 +269,13 @@ Figma Node Drilldown:
 |---|---|
 | `dispatch` | Lite + 是否存在 Slice / Drilldown 的摘要，不读完整 Drilldown |
 | `code_explorer` | Lite + Slice 中的 component_signals / code_search query |
-| ``main agent`` | Lite + Technical Scope Slice，由 `ui-implementation-scope-policy` 基于 Slice 生成 |
+| `main agent` | Lite + Technical Scope Slice，由 `ui-implementation-scope-policy` 基于 Slice 生成 |
 | `implementer_fast/deep` | Lite + Implementation Packet + 必要的局部 Drilldown |
 | `qa_reviewer` | Lite + QA Acceptance Slice，不读完整 Implementation Slice / Drilldown |
 | `docs_keeper` | 默认不读 |
 | `发布 / CloudBase 证据复核流程` | 不读 |
 
-如果 QA 或 `main agent` 需要回查 Drilldown，必须说明原因并限定节点。
+如果 QA 或 main agent 需要回查 Drilldown，必须说明原因并限定节点。
 
 ## 7. 禁止事项
 
@@ -331,11 +299,11 @@ Figma Node Drilldown:
 
 ## Main agent Figma budget
 
-`main agent` 默认只读取 `Figma Design Facts Lite`。
+main agent 默认只读取 `Figma Design Facts Lite`。
 
-`Figma Implementation Slice` 和 `Figma Node Drilldown` 默认不进入 `main agent` 长上下文；只通过 role_context_packet 传给 implementer 或 QA 的验收切片。
+`Figma Implementation Slice` 和 `Figma Node Drilldown` 默认不进入 main agent 长上下文；只通过 role_context_packet 传给 implementer 或 QA 的验收切片。
 
-`main agent` 如需判断复用、拆分或技术方向，只能读取以下最小字段：
+main agent 如需判断复用、拆分或技术方向，只能读取以下最小字段：
 
 ```text
 - component_signal
@@ -352,17 +320,17 @@ Figma Node Drilldown:
 
 ### 默认所有权
 
-完整 `Figma Node Drilldown` 的默认消费者是 implementer，不是 `main agent`。
+完整 `Figma Node Drilldown` 的默认消费者是 implementer，不是 main agent。
 
 pre-implementation 阶段：
 
-- `main agent` 默认不得读取完整 `Figma Node Drilldown`。
-- `main agent` 只允许记录 Drilldown 请求元信息。
+- main agent 默认不得读取完整 `Figma Node Drilldown`。
+- main agent 只允许记录 Drilldown 请求元信息。
 - 完整 Drilldown 默认在 implementation 阶段由 implementer 按需读取。
 
-### `main agent` 在 pre-implementation 阶段允许读取的 Figma 信息
+### main agent 在 pre-implementation 阶段允许读取的 Figma 信息
 
-`main agent` 默认只读取：
+main agent 默认只读取：
 
 ```text
 Figma Design Facts Lite
@@ -385,9 +353,9 @@ Figma Drilldown Request:
 - allowed_reader: implementer by default
 ```
 
-### `main agent` 读取完整 Drilldown 的例外
+### main agent 读取完整 Drilldown 的例外
 
-只有以下情况，`main agent` 才允许读取局部 Drilldown：
+只有以下情况，main agent 才允许读取局部 Drilldown：
 
 1. 技术方向无法裁决。
 2. 组件边界无法判断。

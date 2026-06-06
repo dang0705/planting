@@ -16,7 +16,7 @@ Acceptance Checklist Matrix:
 - required: true / false
 - mapped_test_case_id:
 - verification_type: unit / smoke / e2e / UI / Figma / API / DB / runtime / manual
-- owner: implementer / QA / `main agent` / docs
+- owner: implementer / QA / main agent / docs
 - status: pending / covered / blocked / not_applicable
 - evidence_required:
 - writeback_strategy: markdown_description_update / acceptance_comment / blocker

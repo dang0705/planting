@@ -43,75 +43,8 @@ required_skill: $qa-ui-visual-baseline-policy
 
 如果 Figma Drilldown 需要在开发阶段读取，implementer packet 只传 request，不传完整 Drilldown。
 
-如果 Figma Drilldown / Implementation Slice 中存在 icon / image / vector asset、`imgIcon` / `img*` 或 asset URL，implementer packet 必须包含：
-
-```text
-Figma Drilldown Request.asset_nodes:
-- node_id:
-- name:
-- asset_source:
-- asset_type:
-- exact_source_required: yes / no
-- key_props_to_verify:
-- forbidden_substitutes:
-```
-
 如果涉及 Figma UI 验收，QA packet 必须包含 QA Visual Baseline Slice 和 reference screenshot，不得包含完整 Figma Node Drilldown。
 
-如果涉及 Figma asset / icon / image 对齐，QA packet 必须包含：
-
-```text
-QA Visual Baseline Slice.asset_fidelity_checks:
-- asset_source:
-- asset_type:
-- expected_visual:
-- expected_key_props:
-- forbidden_substitutes:
-- actual_evidence_required:
-```
-
-
-
-## BRV 记忆切片
-
-Phase 1.5 的 `BRV Recall Receipt` 必须被压缩进 role_context_packets。不得把完整 BRV 原文广播给 subagent。
-
-每个 packet 如适用必须包含：
-
-```text
-subagent_memory_context:
-- brv_recall_receipt_ref:
-- recall_methods:
-  - brv_query:
-  - brv_swarm_query:
-- matched_context_ids:
-- relevant_fact_ids:
-- relevant_rule_ids:
-- relevant_decision_ids:
-- relevant_observation_ids:
-- excluded_superseded_ids:
-- docs_to_read:
-- code_to_verify:
-- test_entrypoints:
-- memory_constraints:
-- authority_note: BRV routes memory; docs define design boundary; code verifies runtime facts.
-```
-
-如果任务涉及 WeChat DevTools MCP / 小程序端上验证，implementer 与 QA packet 必须包含：
-
-```text
-wechat_mcp_policy_context:
-- formal_qa_owner: qa_reviewer
-- implementer_self_check_scope: minimal
-- duplicate_automation_forbidden: true
-- recovery_skill: $wechat-mcp-transport-recovery
-- transport_closed_is_not_product_failure: true
-- fallback_automator_allowed_when_9420_works: true
-```
-
-subagent 只能使用 packet 中的最小记忆切片。若不足，必须请求 `main agent` 补充最小 context id / source path，不得自行全量读取 `.brv`，也不得自行运行 `brv swarm query`。ByteRover swarm 不是 subagent 记忆继承机制；subagent 记忆继承只通过 `subagent_memory_context`。
-
-只有一句“BRV Recall 已做”不满足 packet 标准。packet 必须能让 subagent 在不重读 `.brv` 的前提下知道：本任务相关记忆 id、必须读的 docs、必须验证的源码、可执行测试入口、以及哪些旧记忆被排除。
 
 ## 自动化职责切片
 
@@ -122,8 +55,6 @@ automation_owner:
 - formal_qa_owner: qa_reviewer
 - implementer_self_check_required: yes / no
 - duplicate_automation_forbidden: true
-- wechat_recovery_skill: $wechat-mcp-transport-recovery
-- wechat_recovery_required: yes / no
 ```
 
 implementer packet 只包含最小自测范围。QA packet 包含正式自动化范围。
@@ -139,3 +70,34 @@ implementer packet 只包含最小自测范围。QA packet 包含正式自动化
 - implementer：`assets/templates/implementer-result.md`
 - QA：`assets/templates/qa-evidence.md`
 - docs：`assets/templates/docs-result.md`
+
+
+## BRV recall packet 分发
+
+如果 Phase 1.5 产生 BRV Recall Packet，main agent 必须将其压缩后分发到 role_context_packets。
+
+分发原则：
+
+1. 不广播完整 BRV 输出。
+2. 只给每个 subagent 对应的 `subagent_memory_context`。
+3. BRV 缺失时，在 packet 中记录 `brv_status` 和 fallback。
+4. 不输出 ByteRover / swarm 配置噪声。
+
+建议字段：
+
+```text
+brv_recall_packet:
+- status:
+- evidence_ref:
+- relevant_repo_facts:
+- risk_flags:
+- test_entry_refs:
+- mcp_usage_notes:
+
+subagent_memory_context:
+- relevant_repo_facts:
+- known_test_entries:
+- mcp_usage_notes:
+- forbidden_assumptions:
+- evidence_ref:
+```

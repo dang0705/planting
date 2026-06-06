@@ -1,0 +1,175 @@
+version: 1
+updated: 2026-06-06
+purpose: "Define minimal AI-consumed files by task type. Do not scan large docs by default."
+
+default_context:
+  read_first:
+    - AGENTS.md
+    - .codex/memory.md
+    - .codex/context-packs.yml
+    - docs/CURRENT.md
+  max_files_before_task_classification: 4
+  forbidden_default_reads:
+    - docs/new-rules/planting_ai_diagnosis_all_in_one.md
+    - docs/new-rules/planting_ai_diagnosis_source_index.json
+    - docs/route规划及outcome瘦身计划/**
+    - docs/ai-runs/**
+    - docs/ai-tasks/**
+    - docs/code-logics/**
+    - .brv/review-backups/**
+    - .brv/dream-log/**
+    - cloudfunctions/**/logs/**
+    - scripts/terminal-e2e/manifests/*.report.json
+
+packs:
+  ai-workflow:
+    trigger: "dispatch-task, subagent routing, docs_keeper, BRV, Codex rules"
+    read:
+      - AGENTS.md
+      - .codex/memory.md
+      - .codex/skills/dispatch-task/SKILL.md
+      - .codex/skills/dispatch-task/references/INDEX.md
+      - .codex/skills/dispatch-task/references/knowledge-hygiene-policy.md
+      - .codex/agents/docs-keeper.toml
+      - docs/KNOWLEDGE_GOVERNANCE.md
+      - docs/_sync-map.yml
+    max_additional_files: 3
+
+  docs-keeper-classify:
+    trigger: "any code change after implementation"
+    read:
+      - docs/_sync-map.yml
+      - docs/_doc-status.yml
+      - docs/KNOWLEDGE_GOVERNANCE.md
+    input_required:
+      - git diff --name-only
+      - git diff --stat
+      - Sync Packet from main agent
+    max_additional_files: 0
+
+  docs-keeper-patch:
+    trigger: "classify says active contract, runbook, current map, or BRV index is affected"
+    read:
+      - docs/CURRENT.md
+      - docs/ACTIVE_CONTRACTS.md
+      - docs/RUNBOOK.md
+      - docs/_sync-map.yml
+      - docs/_doc-status.yml
+      - .brv/context-tree/facts-index.yml
+    input_required:
+      - relevant diff hunks only
+      - changed source files listed by sync-map
+    max_additional_files: 5
+
+  diagnose-runtime:
+    trigger: "diagnosis engine, route, outcome, question, final result, output eligibility"
+    read:
+      - docs/CURRENT.md
+      - docs/ACTIVE_CONTRACTS.md
+      - cloudfunctions/diagnose-http/app.js
+      - cloudfunctions/diagnose-http/app/http-router.js
+      - cloudfunctions/diagnose-http/constants/scoring.js
+      - cloudfunctions/diagnose-http/constants/outcome-route.js
+      - cloudfunctions/diagnose-http/domain/diagnosis-engine.js
+      - cloudfunctions/diagnose-http/domain/outcome-route-planner.js
+      - cloudfunctions/diagnose-http/domain/result-formatter.js
+      - cloudfunctions/diagnose-http/app/frontend-response.js
+    max_additional_files: 6
+    avoid_unless_explicit:
+      - docs/route规划及outcome瘦身计划/**
+      - docs/code-logics/**
+      - docs/new-rules/**
+
+  diagnose-question-package:
+    trigger: "diagnosis question package, no-follow-up口径, package UI, batch/package answer submit, removal of one-question-per-round claims"
+    read:
+      - docs/tickets/86exv6fnx-diagnose-question-package.md
+      - docs/CURRENT.md
+      - docs/ACTIVE_CONTRACTS.md
+      - cloudfunctions/diagnose-http/app/question-package-response.js
+      - cloudfunctions/diagnose-http/app/manual-symptom-question-start-fast-path.js
+      - cloudfunctions/diagnose-http/app/frontend-response.js
+      - cloudfunctions/diagnose-http/app/http-router.js
+      - src/http-functions/diagnose/client.js
+      - src/pages/diagnose/follow-up/question-flow.js
+      - src/utils/diagnose-follow-up-payload.js
+      - src/utils/diagnose-result-normalizer.js
+    max_additional_files: 5
+    stale_guards:
+      - "Do not use old claims saying regular route follow-up has one question per round."
+      - "Do not infer current product口径 from follow-up file/function names alone."
+
+  frontend-diagnose:
+    trigger: "diagnosis page, result normalization, frontend API client, question-package UI, legacy follow-up UI names"
+    read:
+      - docs/CURRENT.md
+      - docs/ACTIVE_CONTRACTS.md
+      - src/http-functions/diagnose/client.js
+      - src/vue-query/diagnose/mutations/useDiagnoseMutation.js
+      - src/vue-query/diagnose/mutations/useDiagnosisQuestionStartMutation.js
+      - src/vue-query/diagnose/mutations/useDiagnoseFollowUpMutation.js
+      - src/utils/diagnose-result-normalizer.js
+      - src/pages/diagnose/diagnose.vue
+      - src/pages/diagnose/follow-up.vue
+    max_additional_files: 5
+
+  cloudbase-api:
+    trigger: "HTTP functions, env routing, auth headers, gateway/local API"
+    read:
+      - docs/ACTIVE_CONTRACTS.md
+      - docs/RUNBOOK.md
+      - src/api/env.js
+      - src/utils/runtime-env.js
+      - src/http-functions/core/httpRequest.js
+      - cloudfunctions/layer/utils/http.js
+      - cloudfunctions/diagnose-http/db/schema-resolver.js
+    max_additional_files: 6
+
+  storage-identify-weather-plants:
+    trigger: "storage, plant identify, weather, plant catalog/user profile"
+    read:
+      - docs/ACTIVE_CONTRACTS.md
+      - cloudfunctions/storage-http/app.js
+      - cloudfunctions/identify-http/app.js
+      - cloudfunctions/weather-http/app.js
+      - cloudfunctions/plant-catalog-http/app.js
+      - cloudfunctions/plant-user-http/app.js
+      - src/api/weather.js
+      - src/http-functions/storage/client.js
+    max_additional_files: 5
+
+  local-debug-deploy:
+    trigger: "local CloudBase gateway, deployment, GitHub Actions, miniprogram CI, smoke"
+    read:
+      - docs/RUNBOOK.md
+      - package.json
+      - scripts/dev/local-functions-gateway.mjs
+      - scripts/dev/run-local-api-env.mjs
+      - scripts/deploy-cloudbase-functions.mjs
+      - scripts/deploy-miniprogram-ci.mjs
+      - scripts/security/check-no-secrets.mjs
+    optional:
+      - docs/deploy-pipeline.md
+      - docs/local-cloudbase-functions-debugging.md
+      - docs/cautions/cloudfunctions_local_root_dependencies.md
+    max_additional_files: 4
+
+  database-schema:
+    trigger: "SQL schema, data publishing, migrations, table contract"
+    read:
+      - docs/ACTIVE_CONTRACTS.md
+      - docs/data-base/DATABASE_SCHEMA_SPEC_v2.md
+      - docs/data-base/DATA_PUBLISHING_SYSTEM_SPEC_v2.md
+      - cloudfunctions/diagnose-http/constants/tables.js
+      - cloudfunctions/diagnose-http/db/schema-resolver.js
+      - scripts/sql/ensure-outcome-route-tables.sql
+      - scripts/sql/ensure-formal-runtime-artifact-tables.sql
+    max_additional_files: 6
+
+brv_policy:
+  default_manifest: .brv/context-tree/_manifest.json
+  default_read_only:
+    - .brv/context-tree/_index.md
+    - .brv/context-tree/facts-index.yml
+  full_fact_files_require_trigger: true
+  invalidation_required: true

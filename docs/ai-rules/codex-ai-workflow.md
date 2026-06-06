@@ -61,6 +61,10 @@ Phase 7: ClickUp markdown checklist 回写 + Git commit
 4. 不得广播完整 ClickUp、完整 Figma、完整日志、完整规则。
 5. handoff 默认只读轻量恢复摘要。
 
+6. `docs_keeper` 触发规则：
+   - 涉及业务逻辑、流程约束、接口契约、规则语义变更时，默认需要同步 `docs/code-logics` 或 `docs/new-rules`。
+   - 仅在纯文档判读/无逻辑语义变化的场景才可不派发 `docs_keeper`。
+
 
 ## Dispatch-task 外置规则目录
 

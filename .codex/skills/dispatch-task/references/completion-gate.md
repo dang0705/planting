@@ -13,11 +13,10 @@
 3. QA 已按 Test Contract 完成验收。
 4. 如果验收要求小程序实际交互，QA 已执行 WeChat DevTools MCP 自动化或端上验证。
    - 若内置 `mcp__wechat_dev_tools` transport 失活，但底层 `miniprogram-automator` 直连已完成 Test Contract required item 的真实端上取证，则同样视为 `mini_program_automation_completed=yes`。
-5. 如果验收涉及 Figma icon / image / vector asset，QA 已提供 asset fidelity evidence，包含 asset source、asset type、关键视觉字段、端上或可复核渲染证据，且未发现禁用替代。
-6. ClickUp markdown checklist 已按结果回写，或原生 checklist MCP 不可用已明确记录并写回验收评论。
-7. blocking findings 为 0。
-8. Git commit 已完成，或存在明确不能提交的 blocker。
-9. 未验证项已明确分类并写回。
+5. ClickUp markdown checklist 已按结果回写，或原生 checklist MCP 不可用已明确记录并写回验收评论。
+6. blocking findings 为 0。
+7. Git commit 已完成，或存在明确不能提交的 blocker。
+8. 未验证项已明确分类并写回。
 
 ## 不允许停止的情况
 
@@ -28,10 +27,9 @@
 3. checklist / acceptance criteria 未映射。
 4. QA 自动化未执行，且验收要求端上交互。
    - 仅当内置 MCP 与 fallback `miniprogram-automator` 两条链路都未拿到 required item 证据时，才继续阻塞 completion。
-5. Figma icon / image / vector asset 只用源码字符串、构建通过、组件预览或“大体相似”判定通过。
-6. checklist writeback 未执行且没有 blocker / comment fallback。
-7. 有未处理 request changes。
-8. 有 required item 为 pending / not_verified 且用户未接受风险。
+5. checklist writeback 未执行且没有 blocker / comment fallback。
+6. 有未处理 request changes。
+7. 有 required item 为 pending / not_verified 且用户未接受风险。
 
 ## 输出模板
 
@@ -41,7 +39,6 @@ Completion Gate:
 - required_tests_passed: yes / no
 - qa_completed: yes / no
 - mini_program_automation_completed: yes / no / not_applicable
-- figma_asset_fidelity_completed: yes / no / not_applicable
 - checklist_writeback_completed: yes / no / not_applicable
 - blockers_written_back: yes / no
 - git_commit_completed: yes / no

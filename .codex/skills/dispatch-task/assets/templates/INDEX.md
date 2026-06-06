@@ -4,7 +4,7 @@
 
 | 场景 | 模板 |
 |---|---|
-| Phase Gate / Gate Receipt / BRV Recall Receipt | `phase-gates.md` |
+| Phase Gate / Gate Receipt | `phase-gates.md` |
 | Agent Assignment | `agent-assignment.md` |
 | role_context_packets | `role-context-packets.md` |
 | Implementation / Test Contract | `contracts.md` |
@@ -16,3 +16,7 @@
 | Implementer 结果 | `implementer-result.md` |
 | Code Explorer 结果 | `code-explorer-result.md` |
 | Docs Keeper 结果 | `docs-result.md` |
+
+| Main thread receipts | `main-thread-receipts.md` |
+
+| BRV Recall | `brv-recall.md` |

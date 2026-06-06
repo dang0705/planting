@@ -49,11 +49,6 @@ QA Visual Baseline Slice:
   - component_states:
   - interactions:
   - mini_program_rendering:
-  - asset_fidelity:
-    - asset_source:
-    - asset_type:
-    - expected_key_props:
-    - forbidden_substitutes:
 - required_variants:
   - state_name:
   - expected_visual:
@@ -76,15 +71,6 @@ QA 必须优先使用：
 4. QA Acceptance Slice。
 5. QA Visual Baseline Slice。
 
-涉及 icon / image / vector asset 时，QA 必须核对：
-
-1. QA Visual Baseline Slice 是否包含 `asset_fidelity` 或等价字段。
-2. 实现证据是否说明 asset source、asset type 和关键视觉字段。
-3. 小程序端是否实际渲染目标 asset 或有可复核截图 / selector / 构建产物证据。
-4. 是否不存在手写近似 SVG、CSS 形状、旧实心图标、emoji、icon font 等禁用替代。
-
-源码字符串检查、构建通过或“看起来像线框”不能单独判定 asset fidelity 通过。
-
 只在以下情况请求局部 Drilldown：
 
 1. UI 对齐失败，需要定位具体节点。
@@ -102,18 +88,7 @@ QA Local Drilldown Request:
 - specific_state_or_variant:
 ```
 
-## 5. WeChat 端上验证恢复（与 implementer 共用）
-
-出现 `Transport closed`、会话超时、无法连接等工具层异常时，不得将其直接判断为产品失败。必须先按 `.codex/skills/wechat-mcp-transport-recovery/SKILL.md` 进行恢复归因与降级：
-
-- `tool_session_blocker`：内置 MCP 会话失活，但 automator 可用；
-- `recovered`：恢复后完成要求的关键验收动作；
-- `devtools_automator_blocker`：automator 同样不可用；
-- `product blocker`：同一链路/页面下可验证到实际功能失败。
-
-恢复后若 `tool_session_blocker` 转为 `recovered`，验收结论按 recovered 结果继续评估，不得重复在另一路径阻塞同一项。
-
-## 6. 禁止事项
+## 5. 禁止事项
 
 1. 禁止读取完整 Figma Node Drilldown。
 2. 禁止读取完整 Implementation Packet。
@@ -121,11 +96,10 @@ QA Local Drilldown Request:
 4. 禁止用“页面大体相似”代替基准断言。
 5. 禁止在缺少 reference screenshot / baseline 时判定 UI 通过。
 6. 禁止粘贴完整截图 OCR 或完整 DevTools dump。
-7. 禁止在缺少 asset source / 端上渲染 / 可复核截图证据时判定 Figma icon / image 对齐通过。
 
 ---
 
-## 7. 输出
+## 6. 输出
 
 ```text
 UI/Figma QA Result:
@@ -137,10 +111,6 @@ UI/Figma QA Result:
   - passed:
   - failed:
   - not_verified:
-- asset_fidelity:
-  - source_verified:
-  - actual_render_verified:
-  - forbidden_substitute_absent:
 - variant_assertions:
 - allowed_deviation_used:
 - local_drilldown_requested: yes / no

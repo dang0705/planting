@@ -31,19 +31,7 @@ QA scope 由 Test Contract / 验收标准决定，不由“是否有 UI diff”�
 
 如果 WeChat DevTools MCP 可连接，QA 不得只做连接能力验证；必须执行 Test Contract 中的真实交互步骤。
 
-如果 MCP 不可用，必须先读取 `.codex/skills/wechat-mcp-transport-recovery/SKILL.md` 并按三层归因恢复；若底层 `miniprogram-automator` 可继续验证，则继续完成 Test Contract 所需端上证据。只有内置 MCP 与底层 automator 都不可用，才标记为 blocker 或未验证项，不得判定通过。
-
-## Figma asset fidelity evidence
-
-如果 Test Contract / QA Visual Baseline Slice / request changes 涉及 Figma icon、image、vector、`imgIcon` / `img*` 或 asset URL，QA evidence 必须包含：
-
-1. `asset_source`：Figma asset URL、source id、或可复核的构建产物引用。
-2. `asset_type`：如 `svg` / `png` / `jpg` / `unknown`。
-3. `expected_key_props`：SVG 至少记录 `viewBox`、`stroke`、`fill`、`stroke-width`、`preserveAspectRatio` 中可取得的字段。
-4. `actual_render_evidence`：小程序端截图、selector、构建产物、或端上可复核证据。
-5. `forbidden_substitute_absent`：确认不存在手写近似 SVG、CSS 形状、旧实心图标、emoji、icon font 等禁用替代。
-
-源码字符串检查、构建通过、组件预览或“大体相似”只能作为辅助证据，不能单独判定 Figma asset 对齐通过。
+如果 MCP 不可用，必须标记为 blocker 或未验证项，不得判定通过。
 
 当出现 `QA tool/session blocker`（如 `Transport closed`）时先做会话归因：
 
@@ -80,7 +68,6 @@ QA 输出必须合并为一个简洁结果，不拆成大量重复章节。
 5. 证据路径。
 6. 失败归因。
 7. completion 影响。
-8. Figma asset fidelity 证据（如适用）。
 
 禁止粘贴完整日志、完整测试输出、完整 DevTools dump、完整截图 OCR、完整运行时对象，禁止分散输出多个重复矩阵。
 

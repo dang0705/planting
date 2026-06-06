@@ -1,0 +1,219 @@
+---
+doc_id: runbook
+status: current
+doc_type: runbook
+owner: docs-keeper
+sync_policy: active
+last_verified_date: 2026-06-06
+last_verified_commit: unknown-from-upload
+source_of_truth:
+  - package.json
+  - scripts/dev/**
+  - scripts/deploy-*.mjs
+  - scripts/security/check-no-secrets.mjs
+  - scripts/terminal-e2e/**
+  - docs/deploy-pipeline.md
+  - docs/local-cloudbase-functions-debugging.md
+  - docs/cautions/cloudfunctions_local_root_dependencies.md
+stale_if_changed:
+  - package.json
+  - scripts/dev/**
+  - scripts/deploy-*.mjs
+  - scripts/security/**
+  - scripts/terminal-e2e/**
+  - cloudfunctions/**/package.json
+---
+
+# Runbook
+
+本文只保留当前常用运行、验证、调试、发布入口。一次性 handoff、旧排查记录和大文档不再作为默认操作手册。
+
+## 1. 安装
+
+```bash
+npm ci --legacy-peer-deps
+```
+
+如果 CloudBase 本地函数依赖缺失：
+
+```bash
+npm run dev:functions:install
+```
+
+## 2. 最小本地质量门
+
+常规代码任务优先使用：
+
+```bash
+npm run check:secrets
+npm run lint
+npm run test:ci
+npm run build:mp-weixin:ci
+```
+
+注意：上传包中的根目录未包含 `test-*.mjs` 文件；如果真实仓库也缺失，`npm run test:*` 可能是 package script 与源码包不同步，而不是业务测试失败。验证时必须记录实际命令输出。
+
+## 3. 本地 CloudBase HTTP 函数调试
+
+默认本地 gateway：
+
+```text
+http://127.0.0.1:3010
+```
+
+启动全部本地函数：
+
+```bash
+npm run dev:functions
+```
+
+只启动诊断函数：
+
+```bash
+npm run dev:functions:diagnose
+```
+
+让前端走本地函数：
+
+```bash
+npm run dev:mp-weixin:local-functions
+npm run dev:mp-weixin:local-functions:lan
+npm run dev:h5:local-functions
+```
+
+当前端口表：
+
+| 函数 | 端口 |
+|---|---:|
+| `diagnose-http` | 9000 |
+| `plant-catalog-http` | 9001 |
+| `plant-user-http` | 9002 |
+| `identify-http` | 9003 |
+| `diagnosis-history-http` | 9004 |
+| `auth-user-http` | 9005 |
+| `weather-http` | 9006 |
+| `storage-http` | 9007 |
+
+事实源：`scripts/dev/local-functions-gateway.mjs` 与 `scripts/dev/run-local-api-env.mjs`。
+
+## 4. 诊断 smoke / regression
+
+常用 smoke：
+
+```bash
+npm run check:diagnose-smoke
+npm run check:diagnose-smoke:uncertain
+npm run check:diagnose-smoke:non-problematic
+npm run check:diagnose-smoke:stable-marking
+npm run check:diagnose-visual-smoke
+```
+
+业务防线：
+
+```bash
+npm run check:diagnose-business-guards
+npm run check:synthetic-follow-up-effect-coverage
+npm run check:diagnose-popup-dev-mode-pairwise
+```
+
+回归：
+
+```bash
+npm run check:diagnose-visual-regression
+npm run check:diagnose-outcome-regression
+npm run check:diagnose-fast-convergence-regression
+npm run check:diagnose-regression:full
+```
+
+回放：
+
+```bash
+npm run replay:diagnosis-sessions
+```
+
+这些脚本可能访问 CloudBase 或使用终端 E2E 身份。没有明确要求时，不要默认跑生产或高成本回归。
+
+## 5. 构建
+
+小程序生产构建：
+
+```bash
+npm run build:mp-weixin:ci
+```
+
+开发环境构建：
+
+```bash
+npm run build:mp-weixin:cloud-dev
+```
+
+H5：
+
+```bash
+npm run build:h5
+```
+
+## 6. 发布
+
+云函数发布：
+
+```bash
+npm run deploy:functions:ci
+```
+
+小程序 CI 发布：
+
+```bash
+npm run deploy:miniprogram:ci
+```
+
+发布前至少确认：
+
+```text
+1. secrets check 通过。
+2. 构建命令通过。
+3. 本次变更命中的 smoke / regression 有实际输出。
+4. 生产 CloudBase/小程序凭证没有写入仓库。
+5. docs_keeper 已分类是否需要更新 active docs / BRV index。
+```
+
+## 7. 环境变量与安全
+
+- 本地 `.env.local`、CloudBase key、小程序上传密钥只允许存在于本地或 CI secret。
+- 不要把生产凭证、私钥、access token 写入文档、BRV 或 AI handoff。
+- `VITE_API_BASE_URL` 在生产环境必须是 HTTPS；不得指向 localhost/LAN。
+- 默认数据库 schema 为 `cloud1_dev`；只有用户明确要求生产验证时才接触生产 schema。
+
+## 8. 排查锚点
+
+诊断问题优先记录：
+
+```text
+requestId
+diagnosisSessionId
+roundId
+resultId
+visualBatchId / latestVisualCallBatchId
+appEnv / x-app-env / x-env
+resolved schema/env
+function name and deployed version/time
+visibleOutcomes
+routePrimaryAction
+outcomeType
+questionPackage / questions
+outputEligibility
+```
+
+如果文档、BRV、AI 记忆与这些运行锚点冲突，以运行锚点和源码为准。
+
+## 9. 不再默认使用的旧操作材料
+
+以下材料只可按需检索，不作为默认 runbook：
+
+```text
+docs/ai-runs/**
+docs/ai-tasks/**
+docs/route规划及outcome瘦身计划/**
+docs/new-rules/**
+旧 handoff 中的一次性命令
+```

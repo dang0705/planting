@@ -1,0 +1,38 @@
+# Optional CloudBase profile. Use only for live CloudBase / SQL / deployment / smoke tasks.
+# Keep this separate from the default config to avoid paying context cost on ordinary tasks.
+
+model = "gpt-5.4"
+model_reasoning_effort = "high"
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+
+[mcp_servers.cloudbase]
+command = "npx"
+args = ["npm-global-exec@latest", "@cloudbase/cloudbase-mcp@latest"]
+env = { INTEGRATION_IDE = "CodeX" }
+
+[mcp_servers.cloudbase.tools.auth]
+approval_mode = "approve"
+
+[mcp_servers.cloudbase.tools.manageFunctions]
+approval_mode = "approve"
+
+[mcp_servers.cloudbase.tools.manageSqlDatabase]
+approval_mode = "approve"
+
+[mcp_servers.cloudbase.tools.callCloudApi]
+approval_mode = "approve"
+
+[mcp_servers.cloudbase.tools.manageGateway]
+approval_mode = "approve"
+
+[features]
+goals = true
+
+[agents]
+max_threads = 4
+max_depth = 1
+job_max_runtime_seconds = 1800
+
+[sandbox_workspace_write]
+network_access = true

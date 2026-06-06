@@ -1,5 +1,7 @@
 <template>
-  <view class="care-behavior-calendar-card relative box-border rounded-xl border border-[rgba(45,122,79,0.15)] bg-white p-5 shadow-[0_1px_0_rgba(45,122,79,0.02)]">
+  <view
+    class="care-behavior-calendar-card relative box-border rounded-xl bg-white pt-5 shadow-[0_1px_0_rgba(45,122,79,0.02)]"
+  >
     <view class="care-behavior-weekday-header mb-0.5 grid grid-cols-7 gap-[3px]">
       <text
         v-for="day in weekLabels"
@@ -11,10 +13,7 @@
     </view>
 
     <view class="care-behavior-grid-stage relative overflow-visible">
-      <CareBehaviorTimelineSkeleton
-        v-if="showLoadingSkeleton"
-        :items="skeletonCellItems"
-      />
+      <CareBehaviorTimelineSkeleton v-if="showLoadingSkeleton" :items="skeletonCellItems" />
       <view v-else class="care-behavior-grid grid grid-cols-7 gap-1">
         <CareBehaviorTimelineCell
           v-for="item in cellItems"
