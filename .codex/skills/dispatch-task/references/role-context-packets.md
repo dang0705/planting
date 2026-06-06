@@ -81,6 +81,10 @@ Phase 1.5 的 `BRV Recall Receipt` 必须被压缩进 role_context_packets。不
 ```text
 subagent_memory_context:
 - brv_recall_receipt_ref:
+- recall_methods:
+  - brv_query:
+  - brv_swarm_query:
+- matched_context_ids:
 - relevant_fact_ids:
 - relevant_rule_ids:
 - relevant_decision_ids:
@@ -88,6 +92,8 @@ subagent_memory_context:
 - excluded_superseded_ids:
 - docs_to_read:
 - code_to_verify:
+- test_entrypoints:
+- memory_constraints:
 - authority_note: BRV routes memory; docs define design boundary; code verifies runtime facts.
 ```
 
@@ -103,7 +109,9 @@ wechat_mcp_policy_context:
 - fallback_automator_allowed_when_9420_works: true
 ```
 
-subagent 只能使用 packet 中的最小记忆切片。若不足，必须请求 `main agent` 补充最小 context id / source path，不得自行全量读取 `.brv`。
+subagent 只能使用 packet 中的最小记忆切片。若不足，必须请求 `main agent` 补充最小 context id / source path，不得自行全量读取 `.brv`，也不得自行运行 `brv swarm query`。ByteRover swarm 不是 subagent 记忆继承机制；subagent 记忆继承只通过 `subagent_memory_context`。
+
+只有一句“BRV Recall 已做”不满足 packet 标准。packet 必须能让 subagent 在不重读 `.brv` 的前提下知道：本任务相关记忆 id、必须读的 docs、必须验证的源码、可执行测试入口、以及哪些旧记忆被排除。
 
 ## 自动化职责切片
 

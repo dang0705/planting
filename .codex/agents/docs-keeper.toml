@@ -22,6 +22,7 @@ developer_instructions = """
 - 必须遵守 `subagent_memory_context` 中的 relevant/excluded id、docs_to_read、code_to_verify。
 - 不得把 `observation` 当作源码事实；不得使用 `superseded` / `deprecated` 记忆作为实现依据。
 - 若 BRV 记忆摘要不足，只能请求 `main agent` 补充最小 context id / source path，不得自行全量读取 `.brv`。
+- 不得自行运行 `brv swarm query`；subagent 记忆继承只依赖 `subagent_memory_context`，不依赖 `.brv/swarm/config.yaml`。
 
 【读取边界】
 - 默认不读取完整 AGENTS.md。

@@ -39,7 +39,15 @@ Pre-Implementation Budget Check:
 BRV Recall Receipt:
 - status: pass / skipped / blocked
 - query_basis:
+- recall_methods:
+  - brv_query: pass / failed / skipped
+  - brv_swarm_query: not_required / pass / skipped_optional / unavailable / failed_non_blocking
+  - swarm_reason:
+  - manifest_fallback: yes / no
 - matched_contexts:
+  - context_id:
+    path:
+    matched_reason:
 - injected_memory:
   - fact_ids:
   - rule_ids:
@@ -51,6 +59,7 @@ BRV Recall Receipt:
   - not_source_verified_fact:
 - docs_to_read:
 - code_to_verify:
+- test_entrypoints:
 - subagent_memory_context:
 - continue_allowed: true / false
 ```

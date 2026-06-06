@@ -34,6 +34,39 @@ Code = 最终运行事实
 
 只从 `_manifest.json` 的 `active_context` 中选择相关 context。默认不得全量读取 `.brv/context-tree`。默认不得读取 `.brv/review-backups`、`.brv/dream-log`、非 manifest legacy 文件或 abstract 之外的重复层。
 
+## ByteRover CLI 查询策略
+
+`brv query` 是本 gate 的默认召回动作。`brv swarm query` 只是可选增强能力，不是 dispatch-task、BRV Recall Gate 或 subagent 记忆传播的必需步骤。
+
+运行规则：
+
+1. 必须优先执行普通 `brv query`，或在 CLI 不可用时使用 manifest-scoped fallback。
+2. 默认不得执行 `brv swarm query`。
+3. 只有同时满足以下条件才允许运行 `brv swarm query`：
+   - `.brv/swarm/config.yaml` 存在；
+   - 当前环境的 `brv` CLI 支持 `swarm query`；
+   - 当前任务显式需要 ByteRover swarm 多 agent 记忆，或用户明确要求测试 / 配置 swarm。
+4. 如果 `.brv/swarm/config.yaml` 不存在，记录为：
+
+```text
+brv_swarm_query: skipped_optional
+swarm_reason: .brv/swarm/config.yaml not found
+product_blocker: false
+subagent_blocker: false
+```
+
+5. 缺少 swarm 配置不得阻塞 dispatch、不得归因为产品失败、不得要求 subagent 自行补跑 `brv swarm query`。
+6. 缺少 swarm 配置时，默认不得在用户可见总结里反复报告“降级”，除非用户正在调试 BRV / swarm 本身。
+7. subagent 生效依赖 Phase 3 的 `subagent_memory_context`，不依赖 ByteRover swarm。
+
+简化判断：
+
+```text
+brv query = required default recall
+brv swarm query = optional capability, only when configured and explicitly needed
+missing .brv/swarm/config.yaml = skipped_optional, not blocker
+```
+
 ## 召回过滤
 
 BRV 召回必须按以下顺序过滤：
@@ -54,7 +87,15 @@ BRV 召回必须按以下顺序过滤：
 BRV Recall Receipt:
 - status: pass / skipped / blocked
 - query_basis:
+- recall_methods:
+  - brv_query: pass / failed / skipped
+  - brv_swarm_query: not_required / pass / skipped_optional / unavailable / failed_non_blocking
+  - swarm_reason:
+  - manifest_fallback: yes / no
 - matched_contexts:
+  - context_id:
+    path:
+    matched_reason:
 - injected_memory:
   - fact_ids:
   - rule_ids:
@@ -66,9 +107,12 @@ BRV Recall Receipt:
   - not_source_verified_fact:
 - docs_to_read:
 - code_to_verify:
+- test_entrypoints:
 - subagent_memory_context:
 - continue_allowed:
 ```
+
+Gate 通过的最低可审计标准：不能只输出“BRV Recall 已做”。必须至少包含 `matched_contexts`、`docs_to_read`、`code_to_verify`、`test_entrypoints`、`subagent_memory_context` 和 `recall_methods`。
 
 ## 与 docs gate 的关系
 
@@ -90,7 +134,7 @@ BRV 只能决定“下一步应该精读哪些 docs / code”。
 - `qa_reviewer`：只接收 Test Contract 相关的规则、WeChat DevTools MCP / 端上验证职责、证据要求、失败归因规则。
 - `docs_keeper`：只接收需要同步的 docs 路由、ADR / rule / source fact id 与索引同步点。
 
-subagent 不应自行全量读取 `.brv`。如果 packet 中的 BRV 摘要不足，subagent 只能向 `main agent` 请求补充最小 context id 或 source path。
+subagent 不应自行全量读取 `.brv`，也不得自行运行 `brv swarm query`。如果 packet 中的 BRV 摘要不足，subagent 只能向 `main agent` 请求补充最小 context id 或 source path。
 
 ## WeChat DevTools MCP 记忆注入
 

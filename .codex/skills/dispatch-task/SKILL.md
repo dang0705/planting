@@ -115,6 +115,8 @@ references/brv-recall-gate.md
 
 BRV 召回必须输出 `BRV Recall Receipt`，并只从 `.brv/context-tree/_manifest.json` 的 `active_context` 中选择相关 context。默认不得全量读取 `.brv/context-tree`、`.brv/review-backups` 或 `.brv/dream-log`。
 
+`brv query` 是本 gate 的默认召回动作；`brv swarm query` 不是默认动作。只有在 `.brv/swarm/config.yaml` 存在且任务显式需要 ByteRover swarm 多 agent 记忆时，才允许运行 `brv swarm query`。缺少 `.brv/swarm/config.yaml` 时记为 `swarm_query: skipped_optional`，不得降级产品判断、不得阻塞 dispatch、不得要求 subagent 自行补跑 swarm。
+
 BRV Recall Gate 的输出必须进入 Phase 3 的 `role_context_packets`：
 
 ```text
