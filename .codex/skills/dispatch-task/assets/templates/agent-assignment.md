@@ -6,9 +6,19 @@ Agent Assignment:
   - code_changes_required:
   - implementer_required:
   - implementer_selected:
-  - implementer_missing_is_blocking:
-  - main_agent_write_code_allowed:
+  - implementer_missing_is_blocking: true
+  - main_agent_write_code_allowed: false
+  - fallback_default_thread_allowed: false
   - legal_exception_if_no_implementer:
+- Subagent Reuse Gate:
+  - existing_subagents_checked:
+  - dispatch_run_id:
+  - ticket_id:
+  - branch:
+  - scope:
+  - reuse_decision:
+  - existing_thread_ref:
+  - replacement_reason_if_new:
 - main_agent:
   - technical_direction:
   - Implementation Contract:
@@ -17,18 +27,29 @@ Agent Assignment:
   - Git commit:
 - code_explorer:
   - assigned:
+  - reuse_existing_thread:
+  - existing_thread_ref:
   - reason:
   - packet:
 - implementer:
   - selected:
+  - reuse_existing_thread:
+  - existing_thread_ref:
+  - replacement_reason_if_new:
   - reason:
   - packet:
 - qa_reviewer:
   - assigned:
+  - reuse_existing_thread:
+  - existing_thread_ref:
+  - replacement_reason_if_new:
   - reason:
   - packet:
 - docs_keeper:
   - assigned:
+  - reuse_existing_thread:
+  - existing_thread_ref:
+  - replacement_reason_if_new:
   - reason:
   - packet:
 ```

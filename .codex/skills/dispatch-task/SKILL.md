@@ -17,7 +17,7 @@ mode: prompt_only
 ```
 
 main agent 主导技术方向、Implementation Contract、Test Contract、Agent Assignment、code review、ClickUp 回写和 Git commit。  
-代码实现、QA、文档落地必须交给对应 subagent。
+代码实现、代码修复、测试代码改动、配置代码改动、云函数代码改动、页面组件代码改动必须交给 implementer subagent。QA 与文档落地必须交给对应 subagent。
 
 ## 2. 规则读取策略
 
@@ -53,14 +53,13 @@ main agent 默认只处理 receipt，不做二次实现、不做二次 QA、不�
 Phase 0: 硬门禁
 Phase 1: 事实读取
 Phase 1.5: BRV Recall Gate
-Phase 2: Agent Assignment
+Phase 2: Agent Assignment + Subagent Reuse Gate
 Phase 3: role_context_packets
 Phase 4: Solution Discovery + Implementation Contract + Test Contract
 Phase 4.45: Pre-Implementation Budget Fuse
 Phase 4.5: Main Agent Quality Gates
 Phase 5: Subagent 执行
 Phase 6: QA 与证据
-Phase 6.5: Knowledge Hygiene / docs_keeper
 Phase 7: ClickUp 回写与 Git commit
 ```
 
@@ -126,7 +125,7 @@ BRV 不可用时不得伪造召回结果；必须记录 miss / blocked / skipped
 
 BRV 输出只允许作为 receipt / packet，不展开完整历史。
 
-## 7. Phase 2：Agent Assignment
+## 7. Phase 2：Agent Assignment + Subagent Reuse Gate
 
 读取：
 
@@ -146,7 +145,7 @@ implementer_fast
 implementer_deep
 ```
 
-main agent 默认不得亲自写代码。
+main agent 绝对不得亲自写代码、修代码、改测试代码或改配置代码。缺少可用 implementer 时必须硬停止，不得用 main/default/fallback 线程代替。
 
 ## 8. Phase 3：role_context_packets
 
@@ -198,7 +197,7 @@ references/pre-implementation-budget-fuse.md
 → implementer_fast / implementer_deep
 → main agent code review
 → qa_reviewer
-→ docs_keeper（只在 Knowledge Hygiene 触发矩阵命中时）
+→ docs_keeper（按需）
 ```
 
 如果 code review 或 QA 不通过：
@@ -217,30 +216,6 @@ references/qa-evidence-policy.md
 
 QA 不审代码 diff，不做 code review。  
 QA 输出必须摘要化，禁止粘贴完整日志、完整 DevTools dump、完整截图 OCR。
-
-
-## 12.5 Phase 6.5：Knowledge Hygiene / docs_keeper
-
-读取：
-
-```text
-references/knowledge-hygiene-policy.md
-```
-
-实现、review、QA 后，main agent 必须生成 Sync Packet，并使用 `docs/_sync-map.yml` 判断是否触发 `docs_keeper`。
-
-`docs_keeper` 的职责不是继续同步旧蓝图，而是：
-
-```text
-1. 更新少量 active docs。
-2. 更新 BRV facts-index。
-3. 标记旧文档 archived / superseded / stale。
-4. 阻止旧 blueprints、AI handoff 和旧 BRV 污染当前事实。
-```
-
-默认禁止读取整个 `docs/`、`docs/code-logics/`、`docs/new-rules/`、`docs/route规划及outcome瘦身计划/`、`.brv/`。
-
-只有 explicit audit mode 才允许大范围文档审计。
 
 ## 13. Phase 7：ClickUp 回写与 Git commit
 
@@ -287,12 +262,14 @@ assets/templates/qa-evidence.md
 1. 禁止跳过 Phase 0。
 2. 禁止把无 ClickUp ticket 的任务强行终止；应进入 prompt_only 模式。
 3. 禁止未分配 implementer 就改代码。
-4. 禁止 main agent 默认亲自写代码。
-5. 禁止未生成 role_context_packets 就进入实现。
-6. 禁止 checklist 未映射 Test Case Base 就进入 QA 或回写（仅 clickup_ticket 模式）。
-7. 禁止用 emoji / 图标 / 评论 / 描述替代真实 checklist 勾选。
-8. 禁止把完整 Figma / ClickUp / 日志广播给所有 agent。
-9. 禁止在本 skill 或 references 中追加版本号章节；补丁必须整合进既有章节结构。
+4. 禁止 main agent 亲自写代码、修代码、改测试代码或改配置代码；没有“低风险小改”例外。
+5. 禁止用 main/default/fallback 线程代替 implementer。
+6. 禁止同一 dispatch_run_id / ticket / scope 下重复新开同角色 subagent；必须优先复用现成同角色线程。
+7. 禁止未生成 role_context_packets 就进入实现。
+8. 禁止 checklist 未映射 Test Case Base 就进入 QA 或回写（仅 clickup_ticket 模式）。
+9. 禁止用 emoji / 图标 / 评论 / 描述替代真实 checklist 勾选。
+10. 禁止把完整 Figma / ClickUp / 日志广播给所有 agent。
+11. 禁止在本 skill 或 references 中追加版本号章节；补丁必须整合进既有章节结构。
 
 
 ## very_dirty 自动快照提交

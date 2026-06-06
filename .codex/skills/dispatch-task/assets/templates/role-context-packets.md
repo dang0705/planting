@@ -6,6 +6,7 @@ role_context_packets:
   - status:
   - evidence_ref:
 - code_explorer:
+  - thread_reuse:
   - subagent_memory_context:
   - template_ref: assets/templates/code-explorer-result.md
   - search_goal:
@@ -13,6 +14,7 @@ role_context_packets:
   - directories:
   - questions_to_answer:
 - implementer:
+  - thread_reuse:
   - subagent_memory_context:
   - template_ref: assets/templates/implementer-result.md
   - required_skill:
@@ -23,6 +25,7 @@ role_context_packets:
   - Figma Drilldown Request:
   - implementer_ui_self_check:
 - QA:
+  - thread_reuse:
   - subagent_memory_context:
   - template_ref: assets/templates/qa-evidence.md
   - required_skill:
@@ -31,6 +34,7 @@ role_context_packets:
   - QA Visual Baseline Slice:
   - evidence_plan:
 - docs:
+  - thread_reuse:
   - subagent_memory_context:
   - template_ref: assets/templates/docs-result.md
   - 文档同步触发依据:

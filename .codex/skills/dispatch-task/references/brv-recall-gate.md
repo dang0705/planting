@@ -10,6 +10,7 @@ BRV 不是 task facts，也不是 ClickUp 的替代物：
 
 - task facts 负责描述“本次任务要做什么”。
 - BRV 负责补充“当前仓库里相关事实是什么”。
+- BRV 只做索引和召回，不是第二套文档。
 
 ## 执行时机
 
@@ -22,6 +23,68 @@ Phase 2: Agent Assignment
 ```
 
 必须先知道任务事实，再生成 BRV query。
+
+## 默认召回路径
+
+默认召回路径只允许使用非 swarm 路径：
+
+```text
+1. 读取 .brv/context-tree/_index.md
+2. 读取 .brv/context-tree/_manifest.json
+3. 只选择 manifest active_context 中与任务相关的条目
+4. 必要时使用 brv query / source-verified BRV index
+```
+
+不得默认执行：
+
+```text
+brv swarm query
+```
+
+不得默认检查：
+
+```text
+.brv/swarm/config.yaml
+```
+
+## ByteRover swarm 策略
+
+ByteRover swarm 是可选能力，不是 `$dispatch-task` 的默认依赖。
+
+只有同时满足以下条件时，才允许尝试 swarm：
+
+1. 用户任务或上游 task facts 明确要求 swarm / ByteRover swarm。
+2. `.brv/swarm/config.yaml` 确实存在。
+3. 当前 BRV CLI 明确支持 `brv swarm query`。
+4. 任务需要 swarm 的多代理记忆能力，而不是普通 `subagent_memory_context`。
+
+如果 `.brv/swarm/config.yaml` 不存在：
+
+```text
+swarm_status: not_configured_optional
+```
+
+该状态只能留在 main agent 内部诊断或最终技术备注中；默认不得写入：
+
+```text
+brv_status
+blockers
+risk_flags
+role_context_packets
+subagent_memory_context
+```
+
+缺少 swarm config 不是产品问题，不是 subagent 问题，也不是正常 BRV recall 失败。
+
+如果默认 BRV recall 过程中工具输出 `swarm config missing`，应判断为错误调用了 swarm 路径或工具噪声：
+
+```text
+brv_status: retry_non_swarm
+noise_suppressed: swarm_config_missing
+fallback: manifest-scoped BRV index / brv query
+```
+
+该噪声不得传播给 subagent。
 
 ## 查询输入
 
@@ -64,17 +127,35 @@ BRV 输出只能是短 packet，不得展开历史。
 ../assets/templates/brv-recall.md
 ```
 
-必须包含 status、queries、repo_facts、risk_flags、test_entry_refs、mcp_usage_notes、subagent_memory_context、blockers。
+必须包含 status、queries、repo_facts、risk_flags、test_entry_refs、mcp_usage_notes、subagent_memory_context、blockers、fallback。
+
+`status` 只描述 BRV recall 本身：
+
+```text
+hit / miss / blocked / skipped / retry_non_swarm
+```
+
+不得把 `swarm config missing` 写成 `blocked`。
 
 ## 不可用与降级
 
-如果 BRV 不可用、命令失败、权限不足、swarm 配置缺失或召回为空：
+如果 BRV 不可用、命令失败、权限不足或召回为空：
 
 1. 不得伪造召回结果。
 2. 必须记录 status。
 3. 必须说明 fallback。
-4. 不得把 swarm config 缺失当作产品问题，除非本任务依赖 swarm。
-5. 可以继续执行，但必须在 Agent Assignment 中说明 BRV recall 缺口是否影响任务。
+4. 可以继续执行，但必须在 Agent Assignment 中说明 BRV recall 缺口是否影响任务。
+
+降级优先级：
+
+```text
+1. manifest-scoped BRV index
+2. .codex/memory.md
+3. docs/CURRENT.md / docs/ACTIVE_CONTRACTS.md
+4. 相关源码 / tests / schema
+```
+
+如果只是 swarm config 缺失，默认不进入此降级分支；按“ByteRover swarm 策略”处理为 optional/noise。
 
 ## subagent_memory_context
 
@@ -90,3 +171,12 @@ subagent_memory_context:
 ```
 
 不同 subagent 只接收与自己相关的切片。不得把完整 BRV 输出广播给所有角色。
+
+禁止把以下内容放入 subagent packet：
+
+```text
+- swarm config missing
+- ByteRover CLI banner / warning
+- optional swarm capability status
+- unrelated BRV history
+```

@@ -54,5 +54,6 @@ implementer 完成后，QA 之前，main agent 必须执行代码 review 并通�
 
 1. 未完成 main agent code review，不得进入 QA。
 2. code review 必须以本轮 diff 为主轴，但允许读取最小依赖上下文。
-3. 发现 blocking findings 时，main agent 不得亲自修复，必须把 findings 转回同一 implementer 线程。
+3. 发现 blocking findings 时，main agent 不得亲自修复，必须把 findings 转回同一 implementer 线程。不得新开同角色 implementer，除非记录 replacement_reason。
 4. QA 只能消费 code review 摘要做测试与验收，不得替代 code review。
+5. 若 main agent 在 code review 后直接改代码，本 gate 失败并必须停止。

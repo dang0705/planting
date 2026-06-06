@@ -18,15 +18,22 @@
 
 ## main agent 禁止做
 
+0. 不亲自写代码、修代码、改测试代码或改配置代码；没有 fallback/default 线程例外。
 1. 不复述完整 ClickUp / task facts。
 2. 不复述完整 Figma / Drilldown。
 3. 不复述完整实现细节。
 4. 不复述完整 QA 证据。
 5. 不粘贴完整日志、DevTools dump、截图 OCR。
-6. 不进行二次实现。
+6. 不进行二次实现；code review findings 必须转回同一 implementer 线程。
 7. 不进行二次 QA。
 8. 不做长篇完成后复盘。
 9. 不逐条展开 checklist 全量对账；默认只输出聚合统计和 blocker refs。
+
+## Subagent 复用预算
+
+main agent 不得通过重复创建 subagent 来解决上下文不清问题。默认必须复用同一 dispatch_run_id / ticket / branch / scope 下的现成同角色线程。
+
+如果需要新开同角色 subagent，必须在 receipt 中记录 `replacement_reason`，并说明为什么不能复用。
 
 ## Receipt-only 默认模式
 

@@ -14,7 +14,7 @@
 
 ## 低成本观察顺序
 
-1. 查看当前已有 subagent 输出或最近 handoff。
+1. 查看当前已有 subagent 输出或最近 handoff，并优先复用现成同角色线程。
 2. 查看工作区文件变更摘要，例如 `git status --short`。
 3. 查看已产生的测试日志 / 证据文件路径。
 4. 查看进程 / 命令是否仍在运行（如果当前环境可见）。
@@ -64,3 +64,17 @@ Progress Receipt:
 6. 同一文件产生冲突风险。
 
 中断后必须记录原因。
+
+
+## 复用同一现成 subagent
+
+main agent 需要继续推进同一任务时，必须优先复用现成同角色 subagent 线程。不得为了“重新说清楚”或“换个干净线程”重复创建同角色 subagent。
+
+必须复用的继续动作：
+
+1. implementer 修复 code review findings。
+2. implementer 修复 QA failed 的产品代码问题。
+3. QA 复测同一 Test Contract。
+4. docs_keeper 继续处理同一 Sync Packet。
+
+只有原线程明确 blocked / unavailable / wrong-role / context-poisoned，才允许替换，并必须记录 `replacement_reason`。

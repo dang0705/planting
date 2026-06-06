@@ -60,6 +60,20 @@ automation_owner:
 implementer packet 只包含最小自测范围。QA packet 包含正式自动化范围。
 
 
+## 线程复用字段
+
+每个需要执行的 role_context_packet 必须包含线程复用字段：
+
+```text
+thread_reuse:
+- existing_thread_checked:
+- reuse_existing_thread:
+- existing_thread_ref:
+- replacement_reason_if_new:
+```
+
+如果同一 dispatch_run_id / ticket / branch / scope 下已有同角色线程且可用，必须复用，不得创建新线程。
+
 ## 输出模板引用
 
 每个 role_context_packet 必须传递 `template_ref`。subagent 不在自身 agent 配置中定义大段输出模板。
