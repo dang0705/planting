@@ -21,6 +21,7 @@
     "publish-data": "node src/cli.js publish-data",
     "rollback-data": "node src/cli.js rollback-data",
     "validate-schema": "node src/cli.js validate-schema",
+    "check:brv-context-lifecycle": "node scripts/validate-brv-context-lifecycle.mjs",
     "check:secrets": "node scripts/security/check-no-secrets.mjs",
     "check:cloudbase-http": "node scripts/terminal-e2e/cloudbase-http-check.mjs",
     "check:diagnose-smoke": "node scripts/terminal-e2e/cloudbase-http-check.mjs --smoke=diagnose --env=cloud1-2grufevs395a9d5e --app-env=development --terminal-e2e=true --device-id=codex-dev-e2e-smoke",
@@ -107,6 +108,8 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@cloudbase/functions-framework": "^1.18.2",
+    "@cloudbase/node-sdk": "^3.18.1",
     "@dcloudio/types": "^3.4.8",
     "@dcloudio/uni-automator": "3.0.0-4080720251210001",
     "@dcloudio/uni-cli-shared": "3.0.0-4080720251210001",
@@ -117,6 +120,7 @@
     "autoprefixer": "^10.4.24",
     "axios": "^1.13.5",
     "cursor-agent": "^1.0.3",
+    "fastest-levenshtein": "^1.0.16",
     "miniprogram-ci": "^2.1.31",
     "oxfmt": "^0.35.0",
     "oxlint": "^1.50.0",
@@ -124,6 +128,7 @@
     "postcss": "^8.5.6",
     "sass": "^1.97.3",
     "tailwindcss": "^3",
+    "tencentcloud-sdk-nodejs-hunyuan": "^4.1.188",
     "vite": "^5.2.8",
     "weapp-tailwindcss": "^4.9.8"
   },

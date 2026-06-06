@@ -42,6 +42,7 @@ assets/templates/INDEX.md
 ```text
 Phase 0: 硬门禁
 Phase 1: 事实读取
+Phase 1.5: BRV Recall Gate
 Phase 2: Agent Assignment
 Phase 3: role_context_packets
 Phase 4: Solution Discovery + Implementation Contract + Test Contract
@@ -102,7 +103,33 @@ $ui-implementation-scope-policy
 
 `main agent` 与 `Code Explorer` 仅传递 `Figma Design Facts Lite`、`Technical Scope Slice`、`QA Visual Baseline Slice` 与 `Figma Drilldown Request`。不得默认注入完整 `get_design_context` 或完整 `Figma Node Drilldown` 结果给 implementer。
 
-## 6. Phase 2：Agent Assignment
+## 6. Phase 1.5：BRV Recall Gate
+
+读取：
+
+```text
+references/brv-recall-gate.md
+```
+
+非简单任务必须在 Agent Assignment 前完成 BRV Recall Gate。BRV 只用于召回相关源码 facts、rules、decisions、observations、废弃链路和候选 docs/code 路由；不得替代 ClickUp 当前事实、docs 权威约束或源码验证。
+
+BRV 召回必须输出 `BRV Recall Receipt`，并只从 `.brv/context-tree/_manifest.json` 的 `active_context` 中选择相关 context。默认不得全量读取 `.brv/context-tree`、`.brv/review-backups` 或 `.brv/dream-log`。
+
+BRV Recall Gate 的输出必须进入 Phase 3 的 `role_context_packets`：
+
+```text
+subagent_memory_context:
+- relevant_fact_ids:
+- relevant_rule_ids:
+- relevant_decision_ids:
+- excluded_superseded_ids:
+- docs_to_read:
+- code_to_verify:
+```
+
+涉及 WeChat DevTools MCP / 小程序端上验证时，还必须注入 `wechat_mcp_policy_context`，确保 implementer 和 QA subagent 使用同一恢复与归因规则。
+
+## 7. Phase 2：Agent Assignment
 
 读取：
 
@@ -124,7 +151,7 @@ implementer_deep
 
 `main agent` 默认不得亲自写代码。
 
-## 7. Phase 3：role_context_packets
+## 8. Phase 3：role_context_packets
 
 读取：
 
@@ -132,7 +159,7 @@ implementer_deep
 references/role-context-packets.md
 ```
 
-不得把完整 ClickUp、完整 Figma、完整规则、完整日志广播给所有角色。
+不得把完整 ClickUp、完整 Figma、完整规则、完整日志、完整 BRV 原文广播给所有角色。BRV 只通过 `subagent_memory_context` 传递最小 id / source path / 约束摘要。
 
 UI/Figma 任务中，必须通过 role_context_packet 显式触发对应 skill：
 
@@ -141,7 +168,7 @@ required_skill: $implementer-ui-execution-policy
 required_skill: $qa-ui-visual-baseline-policy
 ```
 
-## 8. Phase 4：Solution Discovery、Implementation Contract、Test Contract
+## 9. Phase 4：Solution Discovery、Implementation Contract、Test Contract
 
 读取：
 
@@ -154,7 +181,7 @@ references/main-agent-quality-gates.md
 进入 Technical Direction Gate 前必须先完成 Solution Discovery Gate。  
 派发 implementer 前必须通过 Implementation Contract Completeness Gate。
 
-## 9. Phase 4.45：Pre-Implementation Budget Fuse
+## 10. Phase 4.45：Pre-Implementation Budget Fuse
 
 读取：
 
@@ -163,9 +190,9 @@ references/pre-implementation-budget-fuse.md
 ```
 
 正式进入 implementation 前必须估算 pre-implementation token 风险。  
-风险为 high / extreme 时，必须压缩 facts、减少候选、推迟完整 Figma Drilldown，并使用 Gate Receipt。
+风险为 high / extreme 时，必须优先用 BRV Recall Receipt 路由最小 docs/code，压缩 facts、减少候选、推迟完整 Figma Drilldown，并使用 Gate Receipt。
 
-## 10. Phase 4.5：Main Agent Quality Gates
+## 11. Phase 4.5：Main Agent Quality Gates
 
 读取：
 
@@ -186,7 +213,7 @@ node .codex/skills/dispatch-task/scripts/check-main-agent-quality-gates.mjs --ch
 
 4. 单文件超过 500 行时必须 fail 并转为拆模块；不得继续派发普通实现或进入 QA。
 
-## 11. Phase 5：Subagent 执行
+## 12. Phase 5：Subagent 执行
 
 执行顺序：
 
@@ -198,13 +225,15 @@ node .codex/skills/dispatch-task/scripts/check-main-agent-quality-gates.mjs --ch
 → docs_keeper（按需）
 ```
 
+所有 subagent 必须接收 Phase 1.5 产生的最小 `subagent_memory_context`。subagent 不得自行全量读取 `.brv`；若记忆摘要不足，只能请求 `main agent` 补充最小 context id、source path 或 source-verified fact。
+
 如果 code review 或 QA 不通过：
 
 1. `main agent` 不得亲自改代码。
 2. findings 必须转回同一 implementer 线程。
 3. implementer 修复后重新 review / QA。
 
-## 12. Phase 6：QA 与证据
+## 13. Phase 6：QA 与证据
 
 读取：
 
@@ -215,7 +244,7 @@ references/qa-evidence-policy.md
 QA 不审代码 diff，不做 code review。  
 QA 输出必须摘要化，禁止粘贴完整日志、完整 DevTools dump、完整截图 OCR。
 
-## 13. Phase 7：ClickUp 回写与 Git commit
+## 14. Phase 7：ClickUp 回写与 Git commit
 
 ClickUp 模式下，读取：
 
@@ -232,7 +261,7 @@ references/git-completion-policy.md
 ClickUp 描述区 markdown checklist 通过项必须通过 ClickUp MCP 整体更新 markdown_description，将原始行 `[ ]` 改为 `[x]`；禁止用 emoji、图标、评论或新增文字替代。  
 任务完成后必须 commit 本轮范围内变更，除非存在明确阻塞原因。
 
-## 14. Figma Drilldown 与 UI 自测
+## 15. Figma Drilldown 与 UI 自测
 
 Figma Drilldown 默认由 implementer 在 implementation 阶段按 request 读取。  
 `main agent` pre-implementation 阶段默认只保留 Drilldown Request 和 QA Visual Baseline Slice。  
@@ -241,7 +270,7 @@ Figma Drilldown 默认由 implementer 在 implementation 阶段按 request 读�
 如果 implementer packet 包含 `Figma Design Facts Lite`、`Figma Drilldown Request` 或 `UI implementation required`，implementer 必须做 UI / 交互自测；涉及微信小程序可见路径时必须尝试 WeChat DevTools MCP。  
 自测不替代 QA。
 
-## 15. 输出模板
+## 16. 输出模板
 
 本 skill 不内联完整模板。使用以下模板文件：
 
@@ -256,17 +285,19 @@ assets/templates/ui-self-check.md
 assets/templates/qa-evidence.md
 ```
 
-## 16. 禁止事项
+## 17. 禁止事项
 
 1. 禁止跳过 Phase 0。
 2. 禁止把无 ClickUp ticket 的任务强行终止；应进入 prompt_only 模式。
 3. 禁止未分配 implementer 就改代码。
 4. 禁止 `main agent` 默认亲自写代码。
 5. 禁止未生成 role_context_packets 就进入实现。
-6. 禁止 checklist 未映射 Test Case Base 就进入 QA 或回写（仅 clickup_ticket 模式）。
-7. 禁止用 emoji / 图标 / 评论 / 描述替代真实 checklist 勾选。
-8. 禁止把完整 Figma / ClickUp / 日志广播给所有 agent。
-9. 禁止在本 skill 或 references 中追加版本号章节；补丁必须整合进既有章节结构。
+6. 禁止非简单任务未通过 BRV Recall Gate 就进入 Agent Assignment / implementation。
+7. 禁止把完整 BRV 原文、superseded 记忆或 observation 当作 implementation 硬事实注入 subagent。
+8. 禁止 checklist 未映射 Test Case Base 就进入 QA 或回写（仅 clickup_ticket 模式）。
+9. 禁止用 emoji / 图标 / 评论 / 描述替代真实 checklist 勾选。
+10. 禁止把完整 Figma / ClickUp / BRV / 日志广播给所有 agent。
+11. 禁止在本 skill 或 references 中追加版本号章节；补丁必须整合进既有章节结构。
 
 ## very_dirty 自动快照提交
 

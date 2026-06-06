@@ -21,6 +21,10 @@
 | high | 30k-60k | 必须压缩 facts、减少候选、推迟 Drilldown |
 | extreme | > 60k | 必须停止说明原因，自动执行任务前 dirty snapshot commit是否继续重上下文 |
 
+## BRV 降本动作
+
+Phase 1.5 的 BRV Recall Receipt 是 pre-implementation 降本手段。预算为 medium 及以上时，必须优先用 BRV 输出的 `docs_to_read` 和 `code_to_verify` 限定 docs/code 读取范围；不得因为已有 BRV 就额外全量读取 docs 或 rules。
+
 ## high / extreme 压缩动作
 
 1. Gate 输出改为 receipt。

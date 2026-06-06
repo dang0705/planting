@@ -31,7 +31,7 @@ QA scope 由 Test Contract / 验收标准决定，不由“是否有 UI diff”�
 
 如果 WeChat DevTools MCP 可连接，QA 不得只做连接能力验证；必须执行 Test Contract 中的真实交互步骤。
 
-如果 MCP 不可用，必须标记为 blocker 或未验证项，不得判定通过。
+如果 MCP 不可用，必须先读取 `.codex/skills/wechat-mcp-transport-recovery/SKILL.md` 并按三层归因恢复；若底层 `miniprogram-automator` 可继续验证，则继续完成 Test Contract 所需端上证据。只有内置 MCP 与底层 automator 都不可用，才标记为 blocker 或未验证项，不得判定通过。
 
 ## Figma asset fidelity evidence
 

@@ -20,6 +20,10 @@
 | `qa_reviewer` | 测试执行、smoke、e2e、UI/Figma、小程序自动化、失败归因 |
 | `docs_keeper` | 文档落地、索引同步、术语一致性、完整文档交付 |
 
+## BRV 前置门禁
+
+非简单任务必须先通过 `references/brv-recall-gate.md`，并在 Agent Assignment 中引用 `BRV Recall Receipt`。如果任务需要 subagent，但缺少 `subagent_memory_context` 计划，Execution Gate 必须 fail。
+
 ## 实现闸门
 
 只要任务需要新增、修改或删除代码文件，包括业务代码、测试代码、配置代码、云函数代码、页面组件代码，必须分配 `implementer_fast` 或 `implementer_deep`。

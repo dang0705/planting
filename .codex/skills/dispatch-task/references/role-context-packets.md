@@ -71,6 +71,40 @@ QA Visual Baseline Slice.asset_fidelity_checks:
 ```
 
 
+
+## BRV 记忆切片
+
+Phase 1.5 的 `BRV Recall Receipt` 必须被压缩进 role_context_packets。不得把完整 BRV 原文广播给 subagent。
+
+每个 packet 如适用必须包含：
+
+```text
+subagent_memory_context:
+- brv_recall_receipt_ref:
+- relevant_fact_ids:
+- relevant_rule_ids:
+- relevant_decision_ids:
+- relevant_observation_ids:
+- excluded_superseded_ids:
+- docs_to_read:
+- code_to_verify:
+- authority_note: BRV routes memory; docs define design boundary; code verifies runtime facts.
+```
+
+如果任务涉及 WeChat DevTools MCP / 小程序端上验证，implementer 与 QA packet 必须包含：
+
+```text
+wechat_mcp_policy_context:
+- formal_qa_owner: qa_reviewer
+- implementer_self_check_scope: minimal
+- duplicate_automation_forbidden: true
+- recovery_skill: $wechat-mcp-transport-recovery
+- transport_closed_is_not_product_failure: true
+- fallback_automator_allowed_when_9420_works: true
+```
+
+subagent 只能使用 packet 中的最小记忆切片。若不足，必须请求 `main agent` 补充最小 context id / source path，不得自行全量读取 `.brv`。
+
 ## 自动化职责切片
 
 如果任务需要 WeChat DevTools MCP 或端上验证，role_context_packets 必须写明：

@@ -235,9 +235,9 @@ function buildRuntimeEnv() {
   }
 }
 
-function resolveTcbFfBin(functionDir) {
+function resolveTcbFfBin() {
   return path.join(
-    functionDir,
+    projectRoot,
     'node_modules',
     '@cloudbase',
     'functions-framework',
@@ -274,11 +274,12 @@ function getLanAddresses() {
 }
 
 function ensureTcbFfInstalled(functions) {
+  const tcbFfBin = resolveTcbFfBin()
   const missing = functions
     .map(item => ({
       ...item,
       dir: path.join(projectRoot, 'cloudfunctions', item.name),
-      tcbFfBin: resolveTcbFfBin(path.join(projectRoot, 'cloudfunctions', item.name))
+      tcbFfBin
     }))
     .filter(item => !fs.existsSync(item.tcbFfBin))
 
@@ -290,13 +291,13 @@ function ensureTcbFfInstalled(functions) {
   throw new Error(
     `缺少本地 tcb-ff 依赖: ${names}\n` +
     '请先运行: npm run dev:functions:install\n' +
-    '如只调试单个函数，可运行: npm run dev:functions:install -- --function=diagnose-http'
+    '本地云函数依赖统一安装在项目根目录 node_modules；线上部署仍使用各函数 package.json 自动安装。'
   )
 }
 
 function spawnFunctionRuntime(definition, localEnv) {
   const functionDir = path.join(projectRoot, 'cloudfunctions', definition.name)
-  const tcbFfBin = resolveTcbFfBin(functionDir)
+  const tcbFfBin = resolveTcbFfBin()
   const optAlias = path.join(projectRoot, 'scripts', 'dev', 'cloudfunctions-local-opt-alias.cjs')
   const nodeOptions = [`--require=${optAlias}`, process.env.NODE_OPTIONS || '']
     .filter(Boolean)

@@ -33,3 +33,24 @@ Pre-Implementation Budget Check:
 - compression_actions:
 - continue_allowed:
 ```
+
+
+```text
+BRV Recall Receipt:
+- status: pass / skipped / blocked
+- query_basis:
+- matched_contexts:
+- injected_memory:
+  - fact_ids:
+  - rule_ids:
+  - decision_ids:
+  - observation_ids:
+- excluded_memory:
+  - superseded_or_deprecated:
+  - low_confidence:
+  - not_source_verified_fact:
+- docs_to_read:
+- code_to_verify:
+- subagent_memory_context:
+- continue_allowed: true / false
+```

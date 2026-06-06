@@ -4,7 +4,7 @@
 
 | 场景 | 模板 |
 |---|---|
-| Phase Gate / Gate Receipt | `phase-gates.md` |
+| Phase Gate / Gate Receipt / BRV Recall Receipt | `phase-gates.md` |
 | Agent Assignment | `agent-assignment.md` |
 | role_context_packets | `role-context-packets.md` |
 | Implementation / Test Contract | `contracts.md` |
