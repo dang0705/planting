@@ -5,6 +5,10 @@ import Module from 'node:module'
 
 const require = createRequire(import.meta.url)
 const { buildFrontendDiagnosisResponse } = require('./cloudfunctions/diagnose-http/app/frontend-response.js')
+const { toQuestionId, toOptionId } = require('./cloudfunctions/diagnose-http/mappers/public-id-mapper.js')
+const {
+  isQuestionPackageAnswerSubmitPayload
+} = require('./cloudfunctions/diagnose-http/app/question-package-response.js')
 const {
   buildFollowUpPayload,
   normalizeDiagnosisResult
@@ -22,6 +26,25 @@ function buildQuestion(index) {
         optionId: `option_${index}_a`,
         optionKey: `option_${index}_a`,
         text: `选项 ${index}A`
+      }
+    ]
+  }
+}
+
+function buildYellowingPackageQuestion(targetDimension) {
+  const questionKey = `q_observed_probe__leaf_yellowing__${targetDimension}`
+  const optionKey = `${targetDimension}_normal`
+  return {
+    questionId: toQuestionId(questionKey),
+    questionKey,
+    targetDimension,
+    targetSymptomKey: 'leaf_yellowing',
+    text: `黄叶题目 ${targetDimension}`,
+    options: [
+      {
+        optionId: toOptionId(optionKey),
+        optionKey,
+        text: `选项 ${targetDimension}`
       }
     ]
   }
@@ -118,6 +141,101 @@ function testNormalizeKeepsPackageAndPackageSubmitPayload() {
   })
   assert.equal(payload.answers.length, 4)
   assert.equal(payload.requestMode, 'answer_submit')
+  assert.equal(payload.questionPackage.mode, 'yellow_leaf')
+  assert.equal(payload.uiHints.answerSubmitMode, 'package')
+}
+
+function testGenericPackageAnswerSubmitIsTerminalQuestioningPayload() {
+  for (const questionCount of [3, 5]) {
+    const answers = Array.from({ length: questionCount }, (_, index) => ({
+      questionKey: `q_observed_probe__leaf_spots__fixed_package_${index + 1}`,
+      optionKey: `option_${index + 1}`
+    }))
+    assert.equal(isQuestionPackageAnswerSubmitPayload({
+      payload: {
+        questionPackage: {
+          mode: 'leaf_spot',
+          sourceMode: 'manual_leaf_spot_environment_frontloaded',
+          questionCount,
+          answerSubmitMode: 'package',
+          questionDisplayMode: 'package'
+        },
+        uiHints: {
+          answerSubmitMode: 'package',
+          questionDisplayMode: 'package'
+        }
+      },
+      answers,
+      requestMode: 'answer_submit'
+    }), true)
+  }
+}
+
+function testYellowingPackageAnswerSubmitIsTerminalQuestioningPayload() {
+  const questions = [
+    'watering_frequency_context',
+    'light_change_context',
+    'fertilization_growth_context',
+    'airflow_humidity_context'
+  ].map(buildYellowingPackageQuestion)
+  const frontendResponse = buildFrontendDiagnosisResponse({
+    diagnosisSessionId: 'diag_package_terminal',
+    roundId: 'round_1',
+    stage: 'followup',
+    followUpRequired: true,
+    questionPackage: {
+      mode: 'yellow_leaf',
+      sourceMode: 'manual_yellowing_care_environment_frontloaded',
+      questionCount: 4,
+      answerSubmitMode: 'package',
+      questionDisplayMode: 'package'
+    },
+    followUps: questions
+  })
+  const normalized = normalizeDiagnosisResult(frontendResponse)
+  const answerMap = Object.fromEntries(
+    normalized.followUps.map(question => [question.questionId, question.options[0].optionId])
+  )
+  const payload = buildFollowUpPayload(normalized, answerMap, {
+    questionStack: normalized.followUps,
+    requestMode: 'answer_submit'
+  })
+
+  assert.equal(isQuestionPackageAnswerSubmitPayload({
+    payload,
+    answers: payload.answers,
+    requestMode: payload.requestMode
+  }), true)
+}
+
+function testYellowingPackageWithoutMetadataFallbackIsTerminalQuestioningPayload() {
+  const answers = [
+    'watering_frequency_context',
+    'light_change_context',
+    'fertilization_growth_context',
+    'airflow_humidity_context'
+  ].map(targetDimension => ({
+    questionKey: `q_observed_probe__leaf_yellowing__${targetDimension}`,
+    optionKey: `${targetDimension}_normal`
+  }))
+
+  assert.equal(isQuestionPackageAnswerSubmitPayload({
+    payload: {},
+    answers,
+    requestMode: 'answer_submit'
+  }), true)
+}
+
+function testNonPackageFourAnswerSubmitIsNotTerminalQuestioningPayload() {
+  const answers = [1, 2, 3, 4].map(index => ({
+    questionKey: `q_generic_${index}`,
+    optionKey: `option_${index}`
+  }))
+  assert.equal(isQuestionPackageAnswerSubmitPayload({
+    payload: {},
+    answers,
+    requestMode: 'answer_submit'
+  }), false)
 }
 
 function testNonPackageStillReturnsSingleQuestion() {
@@ -165,6 +283,16 @@ function testFollowUpPageSizeAndSubmitPath() {
   assert.ok(page.split('\n').length < 500)
   assert.match(flow, /isQuestionPackageMode\.value\s*\?\s*followUpQuestionStack\.value/)
   assert.match(flow, /requestMode:\s*'answer_submit'/)
+}
+
+function testPackageSubmitTerminalQuestioningRuntimeWiring() {
+  const runner = readFileSync('cloudfunctions/diagnose-http/app/diagnosis-answer-runner.js', 'utf8')
+  const engine = readFileSync('cloudfunctions/diagnose-http/domain/diagnosis-engine.js', 'utf8')
+  assert.match(runner, /isQuestionPackageAnswerSubmitPayload/)
+  assert.match(runner, /terminalQuestioningState:\s*isTerminalQuestionPackageSubmit/)
+  assert.match(engine, /canAskAnotherFollowUpRound:\s*canOpenNextFollowUpRound\(round,\s*\{\s*terminalQuestioningState\s*\}\)/)
+  assert.match(engine, /routeQuestionEnabled\s*&&\s*hasAuthoritativeRouteDecision\s*&&\s*!terminalQuestioningState/)
+  assert.match(engine, /const shouldAskFollowUp\s*=\s*!terminalQuestioningState\s*&&/)
 }
 
 async function testPackagePersistenceAllowsAllQuestionOwnership() {
@@ -257,9 +385,14 @@ testYellowingPackageFrontendResponse()
 testYellowingPackageFromRouteMode()
 testEmptyQuestionsFallsBackToFollowUpsForPackage()
 testNormalizeKeepsPackageAndPackageSubmitPayload()
+testGenericPackageAnswerSubmitIsTerminalQuestioningPayload()
+testYellowingPackageAnswerSubmitIsTerminalQuestioningPayload()
+testYellowingPackageWithoutMetadataFallbackIsTerminalQuestioningPayload()
+testNonPackageFourAnswerSubmitIsNotTerminalQuestioningPayload()
 testNonPackageStillReturnsSingleQuestion()
 testYellowingSourceWithThreeQuestionsIsNotPackage()
 testFollowUpPageSizeAndSubmitPath()
+testPackageSubmitTerminalQuestioningRuntimeWiring()
 await testPackagePersistenceAllowsAllQuestionOwnership()
 
 console.log('question package tests passed')

@@ -1053,8 +1053,8 @@ function hasFollowUpHistory({
   return false
 }
 
-function canOpenNextFollowUpRound() {
-  return true
+function canOpenNextFollowUpRound(_round = 1, options = {}) {
+  return !Boolean(options?.terminalQuestioningState)
 }
 
 const YELLOWING_GATE_SYMPTOM_KEYS = new Set([
@@ -4720,6 +4720,7 @@ async function tryBuildRouteAnswerFastPath({
   visualAggregateResult,
   visualRouteContext,
   routeDebugTraceEnabled = false,
+  terminalQuestioningState = false,
   perfLogger = null
 } = {}) {
   const markFastPath = (stageName, details = {}) => {
@@ -4821,7 +4822,7 @@ async function tryBuildRouteAnswerFastPath({
   const routeDecision = await planOutcomeRoutes({
     candidateOutcomeKeys,
     routeEvidenceContext: routeEvidenceContextForDecision,
-    canAskAnotherFollowUpRound: canOpenNextFollowUpRound(round),
+    canAskAnotherFollowUpRound: canOpenNextFollowUpRound(round, { terminalQuestioningState }),
     maxVisibleOutcomes: 3,
     maxQuestionCount: 1,
     featureFlags: {
@@ -4962,6 +4963,7 @@ async function runDiagnosisRound({
   storedFollowUpRows: preloadedStoredFollowUpRows = null,
   preloadedAskedQuestionRows = null,
   preloadedRouteAnswerEffects = null,
+  terminalQuestioningState = false,
   sessionId,
   perfLogger = null
 }) {
@@ -5089,6 +5091,7 @@ async function runDiagnosisRound({
       visualAggregateResult,
       visualRouteContext,
       routeDebugTraceEnabled,
+      terminalQuestioningState,
       perfLogger
     })
   }
@@ -5217,6 +5220,7 @@ async function runDiagnosisRound({
       visualAggregateResult,
       visualRouteContext,
       routeDebugTraceEnabled,
+      terminalQuestioningState,
       perfLogger
     })
     if (routeFastPathResult) {
@@ -5495,7 +5499,7 @@ async function runDiagnosisRound({
     }
   }
 
-  const nonProblematicFollowUpCandidate = canOpenNextFollowUpRound(round)
+  const nonProblematicFollowUpCandidate = canOpenNextFollowUpRound(round, { terminalQuestioningState })
     ? resolveNonProblematicFollowUpCandidate({
         observedSymptoms: observedSymptomsForResolution,
         observedEvidenceSet: labeledObservedEvidenceForResolution
@@ -5826,7 +5830,7 @@ async function runDiagnosisRound({
     askedQuestionKeys,
     answeredQuestionGroupKeys
   })
-  const canAskAnotherFollowUpRound = canOpenNextFollowUpRound(round)
+  const canAskAnotherFollowUpRound = canOpenNextFollowUpRound(round, { terminalQuestioningState })
   const routeAnswerRecordsForDecision = collectRouteAnswerRecordsForDecision({
     answers,
     answeredFollowUpAnswerRecords
@@ -5893,7 +5897,8 @@ async function runDiagnosisRound({
   const routeOutputEnabled = isRouteOutputEnabled()
   const routeModeEnabled = routeQuestionEnabled || routeOutputEnabled
   const legacyFollowUpAllowed = false
-  const shouldUseRouteQuestionDecision = routeQuestionEnabled && hasAuthoritativeRouteDecision
+  const shouldUseRouteQuestionDecision =
+    routeQuestionEnabled && hasAuthoritativeRouteDecision && !terminalQuestioningState
   const shouldUseRouteOutputDecision = routeOutputEnabled && hasAuthoritativeRouteDecision
   const hasRouteVisibleResult = shouldUseRouteOutputDecision && Array.isArray(routeDecision?.visibleOutcomeKeys) &&
     routeDecision.visibleOutcomeKeys.length > 0
@@ -6037,6 +6042,7 @@ async function runDiagnosisRound({
   const effectiveShouldUseRouteOutputDecision =
     shouldUseRouteOutputDecision && !shouldHoldYellowingRouteOutput
   const shouldAskFollowUp =
+    !terminalQuestioningState &&
     (
       (
         shouldUseRouteQuestionDecision

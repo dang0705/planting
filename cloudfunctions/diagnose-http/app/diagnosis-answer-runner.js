@@ -23,6 +23,9 @@ const {
   buildRouteAnswersFromRuntimeEnvironmentCarePayload
 } = require('./care-behavior-payload')
 const {
+  isQuestionPackageAnswerSubmitPayload
+} = require('./question-package-response')
+const {
   pickQuestionKeysFromQuestionQueue,
   buildAskedQuestionRowsFromFollowUpRows,
   buildRuntimeAnswersFromFollowUpUpdates,
@@ -107,6 +110,11 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   const hasImageInputs = imageInputs.length > 0
   const requestMode = normalizeRequestMode(payload.requestMode || payload.mode || '')
   const isAnswerRevision = requestMode === 'answer_revision'
+  const isTerminalQuestionPackageSubmit = isQuestionPackageAnswerSubmitPayload({
+    payload,
+    answers,
+    requestMode
+  })
   const dirtyQuestionKey = isAnswerRevision
     ? fromQuestionId(payload.dirtyFromQuestionId || '') ||
       String(payload.dirtyFromQuestionKey || payload.dirtyQuestionKey || payload.dirtyFromQuestionId || '').trim()
@@ -448,6 +456,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     storedFollowUpRows: runtimeFollowUpRowsForRound,
     preloadedAskedQuestionRows: runtimeAskedQuestionRows,
     preloadedRouteAnswerEffects: runtimeRouteAnswerEffects,
+    terminalQuestioningState: isTerminalQuestionPackageSubmit,
     perfLogger: timing
   })
 

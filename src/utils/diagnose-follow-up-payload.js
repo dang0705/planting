@@ -67,6 +67,12 @@ export function buildFollowUpPayload(result, answerMap = {}, options = {}) {
     requestMode: options?.requestMode || (answers.length > 1 ? 'answer_revision' : 'answer_submit'),
     baseAnswerRevision: Number(options?.baseAnswerRevision || result?.answerRevision || 0),
     dirtyFromQuestionId: String(options?.dirtyFromQuestionId || '').trim(),
+    ...(result?.questionPackage && typeof result.questionPackage === 'object'
+      ? { questionPackage: result.questionPackage }
+      : {}),
+    ...(result?.uiHints && typeof result.uiHints === 'object'
+      ? { uiHints: result.uiHints }
+      : {}),
     ...(options?.environmentWeatherWindow && typeof options.environmentWeatherWindow === 'object'
       ? { environmentWeatherWindow: options.environmentWeatherWindow }
       : {})

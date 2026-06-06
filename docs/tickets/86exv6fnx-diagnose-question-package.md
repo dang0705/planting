@@ -31,6 +31,7 @@ stale_if_changed:
 - 当前不存在“追问”。
 - 当前口径不再是“每轮最多 1 题”。
 - 问诊题包是当前任务口径。
+- 固定题包答案提交完成后必须进入 final/result 路径，不得再返回下一题或追问。
 - 旧代码路径、函数名或 UI 文件名中的 `follow-up` / `question start` / `answer` 只能视为兼容命名或实现路径，不能反推当前产品口径仍是追问。
 - 任何旧文档或 BRV 事实声称“常规 route 追问每轮 1 题”，均应标记为 `superseded`。
 
@@ -54,7 +55,8 @@ Do not load archived route-planning docs to answer this topic unless the task ex
 
 - Active docs should describe the current interaction as question-package driven.
 - `maxQuestionsPerRound: 1`, if still present in code/config/history, is not a UX/product contract.
-- Frontend can retain legacy names while presenting package-first behavior.
+- Frontend can retain legacy names while presenting package-first behavior, and answer payloads should preserve `questionPackage` / `uiHints` package metadata for backend terminal-state detection.
+- Backend implementation must treat complete fixed-package `answer_submit` as terminal questioning state and suppress any next-question/follow-up planning.
 - Backend implementation must persist and validate valid `yellow_leaf` package answers as a package in the same current round; legacy `questionQueue` remains an internal compatibility/selection artifact and must not reject package sibling questions. Non-package paths keep the old queue-anchor single-question behavior.
 
 ## Verification status

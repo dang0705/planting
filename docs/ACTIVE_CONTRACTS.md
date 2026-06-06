@@ -222,6 +222,8 @@ options[]
 - 后端可以输出 `questionPackage`；题包可包含多题，长度由当前题包生成逻辑/任务需求决定。
 - 前端题包模式可显示“问题 X/N”。
 - 前端可在题包内本地导航，并在收集完成后提交整包答案。
+- 前端提交题包答案时应把 `questionPackage` 和 `uiHints` 元数据随 answer payload 回传；这些字段用于后端识别 package 提交，不是展示专用临时字段。
+- 固定题包 `requestMode: answer_submit` 且答案数满足题包元数据时，后端将其视为终止问诊状态；完成后不得再产生下一题或追问规划，响应应进入 final/result 路径。
 - 禁止把 `maxQuestionsPerRound: 1` 或旧“常规 route 追问每轮 1 题”写成当前 UX/产品契约。
 - 旧“黄叶 4 题 package”只能作为历史上已知题包形态，不是当前题包长度上限，也不是唯一适用场景。
 - 有效 `yellow_leaf` 题包的包内答案按同一当前轮次整体持久化和归属校验；`questionQueue` 仍可作为 legacy 选择/兼容锚点，但不得拒绝同一题包内 sibling questions。非题包路径继续按 queue-anchor 单题语义处理。
@@ -232,6 +234,8 @@ options[]
 
 ```text
 cloudfunctions/diagnose-http/app/question-package-response.js
+cloudfunctions/diagnose-http/app/diagnosis-answer-runner.js
+cloudfunctions/diagnose-http/domain/diagnosis-engine.js
 cloudfunctions/diagnose-http/app/manual-symptom-question-start-fast-path.js
 cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js
 cloudfunctions/diagnose-http/services/session-follow-up-service.js

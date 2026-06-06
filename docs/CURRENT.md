@@ -129,6 +129,7 @@ POST /diagnose
 - 2026-06-06 最新题包口径：当前不存在“追问”，也不再以“每轮最多 1 题”作为产品/UX 契约。
 - `maxQuestionsPerRound: 1`、`maxFollowUpRounds`、`follow-up` 文件名或函数名如果仍存在，只能视为实现细节、历史命名或兼容路径，不能覆盖当前题包口径。
 - 问诊题包是当前任务口径；旧“黄叶 4 题 package”只能作为已知题包形态之一，不再作为题包长度或题包场景上限。
+- 固定题包 `answer_submit` 完成后是终止问诊状态；后端不得继续规划 route-planned、forced 或 generic 下一题，响应应进入 final/result 路径。
 - 有效 `yellow_leaf` 题包答案必须按同一当前轮次的 package 进行持久化和归属校验；legacy `questionQueue` 仍是兼容/选择锚点，不能拒绝同一题包内的 sibling questions。非题包路径仍保持旧 queue-anchor 单题语义。
 - 环境上下文当前以 v7 为准，使用 10 天历史窗口与 15 天天气预报窗口参与养护建议。
 - `diagnosis-history-http` 已下线；历史、结果、反馈通过 `diagnose-http`。
