@@ -185,8 +185,7 @@ function summarizeRequiredAnswerEffects(requiredAnswerEffects = {}) {
 
 function evaluateOutcomeRouteGate({
   gate = {},
-  routeEvidenceContext = {},
-  canAskAnotherFollowUpRound = false
+  routeEvidenceContext = {}
 } = {}) {
   const hasBlocker = matchesBlockerEvidence(gate.blockerEvidence, routeEvidenceContext)
   if (hasBlocker) {
@@ -228,12 +227,11 @@ function evaluateOutcomeRouteGate({
     }
   }
 
-  const result = canAskAnotherFollowUpRound ? GATE_RESULT.NEED_MORE_INFO : GATE_RESULT.FAIL
   return {
     gateKey: gate.gateKey || '',
     routeKey: gate.routeKey || '',
     gateRole: gate.gateRole || '',
-    result,
+    result: GATE_RESULT.FAIL,
     decisionCauseKey: gate.decisionCauseKey || '',
     decisionCauseText: gate.decisionCauseTextCn || '',
     requiredEvidenceMatched,

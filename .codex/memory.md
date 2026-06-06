@@ -18,6 +18,7 @@ This file is a compact AI-consumed memory pointer. It is not a source of truth.
 - Latest requirement pointer: `docs/tickets/86exv6fnx-diagnose-question-package.md`.
 - Old claims saying “regular route follow-up asks one question per round” are superseded.
 - Legacy code names such as `follow-up`, `QuestionStart`, or `FollowUpMutation` do not by themselves prove the current product口径.
+- Route planner must not emit dynamic question planning (`NEED_MORE_INFO`, `requiresFollowUp`, `nextQuestionKeys`) for missing evidence; the old route-planned follow-up resolver was removed.
 
 ## Default BRV files
 

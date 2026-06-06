@@ -44,7 +44,6 @@ async function planOutcomeRoutes({
   routeRepository = null,
   maxVisibleOutcomes = 3,
   maxQuestionCount = 1,
-  canAskAnotherFollowUpRound = false,
   featureFlags = {}
 } = {}) {
   const effectiveRouteRepository = routeRepository || require('../repositories/outcome-route-repository')
@@ -116,8 +115,7 @@ async function planOutcomeRoutes({
     const gateResults = gates.map(gate =>
       evaluateOutcomeRouteGate({
         gate,
-        routeEvidenceContext,
-        canAskAnotherFollowUpRound
+        routeEvidenceContext
       })
     )
     const gateResultsByRouteKey = new Map()
@@ -178,10 +176,9 @@ async function planOutcomeRoutes({
       const hasRawBlocker = routeGateStates.some(item => item.hasRawBlocker)
       const hasPass = passedRouteKeys.length > 0
       const hasBlocker = hasRawBlocker && !hasPass
-      const hasNeedMoreInfo = matchedGateResults.some(item => item.result === GATE_RESULT.NEED_MORE_INFO)
       const missingGateKeys = dedupeKeys(
         matchedGateResults
-          .filter(item => item.result === GATE_RESULT.NEED_MORE_INFO || item.result === GATE_RESULT.FAIL)
+          .filter(item => item.result === GATE_RESULT.FAIL)
           .map(item => item.gateKey)
       )
       const candidateQuestions = matchedRouteKeys.flatMap(routeKey => {
@@ -211,17 +208,15 @@ async function planOutcomeRoutes({
         )
       })
 
-      if (hasNeedMoreInfo && !hasBlocker) {
+      if (missingGateKeys.length && !hasBlocker) {
         nextQuestionCandidates.push(...candidateQuestions)
       }
 
       const state = hasBlocker
         ? ROUTE_STATUS.BLOCKED
-        : hasNeedMoreInfo
-          ? ROUTE_STATUS.NEEDS_QUESTION
-          : hasPass
-            ? ROUTE_STATUS.DISPLAY_ELIGIBLE
-            : ROUTE_STATUS.CANDIDATE
+        : hasPass
+          ? ROUTE_STATUS.DISPLAY_ELIGIBLE
+          : ROUTE_STATUS.CANDIDATE
 
       if (hasBlocker) {
         blockedOutcomeKeys.push(outcomeKey)
@@ -257,7 +252,8 @@ async function planOutcomeRoutes({
         state,
         routeKeys: matchedRouteKeys,
         missingGateKeys,
-        nextQuestionKeys: dedupeKeys(candidateQuestions.map(item => item.questionKey))
+        nextQuestionKeys: [],
+        questionEvidenceKeys: dedupeKeys(candidateQuestions.map(item => item.questionKey))
       })
 
       routeTrace.push({
@@ -277,7 +273,7 @@ async function planOutcomeRoutes({
       conflictingOutcomePairs.push(conflictOutcomeKeys.slice(0, 2))
     }
 
-    const nextQuestions = nextQuestionCandidates
+    const rankedQuestionEvidence = nextQuestionCandidates
       .sort((a, b) => {
         const priorityA = Number(a.askPriority || 0)
         const priorityB = Number(b.askPriority || 0)
@@ -297,10 +293,6 @@ async function planOutcomeRoutes({
         index === list.findIndex(candidate => candidate.questionKey === item.questionKey)
       )
       .slice(0, Math.max(0, Number(maxQuestionCount || 1)))
-    const nextQuestionKeys = dedupeKeys(nextQuestions.map(item => item.questionKey)).slice(
-      0,
-      Math.max(0, Number(maxQuestionCount || 1))
-    )
     const sortedStates = sortCandidateStates(candidateOutcomeStates, candidateOutcomeOrderMap)
     const sortedVisibleOutcomeKeys = dedupeKeys(visibleOutcomeKeys).sort((a, b) => {
       const orderA = Number(candidateOutcomeOrderMap.get(a) ?? Number.MAX_SAFE_INTEGER)
@@ -324,12 +316,7 @@ async function planOutcomeRoutes({
       .filter(Boolean)
     const hasActionConflict = dedupeKeys(limitedActionConflictGroups).length > 1
     const limitedVisibleOutcomeCount = limitedVisibleOutcomeKeys.length
-    const hasRequiredNextQuestion = nextQuestions.some(item => Boolean(item?.requiredForClosure))
-    const requiresFollowUp = Boolean(
-      canAskAnotherFollowUpRound &&
-      nextQuestionKeys.length &&
-      (hasRequiredNextQuestion || limitedVisibleOutcomeCount < 1 || hasActionConflict)
-    )
+    const requiresFollowUp = false
 
     const activeRouteGroupKeys = dedupeKeys(
       routes
@@ -343,8 +330,9 @@ async function planOutcomeRoutes({
       activeRouteGroupKeys,
       visibleOutcomeKeys: limitedVisibleOutcomeKeys,
       requiresFollowUp,
-      nextQuestionKeys: requiresFollowUp ? nextQuestionKeys : [],
-      nextQuestions: requiresFollowUp ? nextQuestions : [],
+      nextQuestionKeys: [],
+      nextQuestions: [],
+      questionEvidenceKeys: dedupeKeys(rankedQuestionEvidence.map(item => item.questionKey)),
       gateResults,
       blockedOutcomeKeys: dedupeKeys(blockedOutcomeKeys),
       conflictingOutcomePairs: dedupeKeys(conflictingOutcomePairs.map(item => item.join('::')))
@@ -365,12 +353,10 @@ async function planOutcomeRoutes({
             : 'route_visible_outcomes_ready',
         decisionCauseText: hasActionConflict
           ? (
-              requiresFollowUp
-                ? '候选方向的行动建议存在冲突，先继续追问分流。'
-                : '候选方向的行动建议存在冲突，当前改为不确定并给出保守建议。'
+              '候选方向的行动建议存在冲突，当前改为不确定并给出保守建议。'
             )
           : limitedVisibleOutcomeCount < 1
-            ? '当前未命中可展示候选 outcome，需继续追问以收窄范围。'
+            ? '当前未命中可展示候选 outcome，按保守不确定输出。'
             : 'route 已形成可展示 outcome。',
         details: {
           routeCount: routes.length,

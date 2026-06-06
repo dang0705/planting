@@ -14,7 +14,6 @@ function normalizeStringList(values = []) {
 }
 
 function resolveOutputConservatism(response = {}) {
-  if (response?.followUpRequired) {return 'blocked'}
   if (normalizeText(response?.outcomeType) === 'uncertain') {return 'high'}
   if (normalizeText(response?.outcomeType) === 'non_problematic') {return 'guarded'}
   if (response?.highSpecificityFastConvergence?.applied) {return 'guarded'}
@@ -22,7 +21,6 @@ function resolveOutputConservatism(response = {}) {
 }
 
 function resolveConclusionStatus(response = {}, stopState = null) {
-  if (response?.followUpRequired) {return 'pending_follow_up'}
   if (stopState?.isStopped !== 1) {return 'pending_stop_judgment'}
   if (normalizeText(stopState?.stopReason) === 'route_visible_outcomes_ready') {
     return 'route_visible_outcomes_ready'
@@ -40,11 +38,6 @@ function resolveConclusionStatus(response = {}, stopState = null) {
 
 function resolveUnresolvedRisks(response = {}, questionQueue = null) {
   const risks = []
-  const queueSummary = summarizeQuestionQueue(questionQueue || {})
-
-  if (response?.followUpRequired || queueSummary.activeItemCount > 0) {
-    risks.push('当前仍存在未完成的高价值 follow-up。')
-  }
 
   const confidenceReasons = normalizeStringList(response?.confidenceReasons)
   risks.push(...confidenceReasons)
@@ -96,7 +89,7 @@ function evaluateOutputEligibility({ response = {}, questionQueue = null, stopSt
 
   return {
     eligible,
-    judgment: eligible ? 'eligible' : 'blocked_pending_follow_up',
+    judgment: eligible ? 'eligible' : 'blocked_pending_output',
     conclusionType: outcomeType,
     conclusionStatus: resolveConclusionStatus(response, stopState),
     outputConservatism: resolveOutputConservatism(response),

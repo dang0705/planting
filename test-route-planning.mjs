@@ -27,9 +27,6 @@ const {
   matchesRequiredAnswerEffects
 } = require('./cloudfunctions/diagnose-http/domain/outcome-gate-evaluator.js')
 const {
-  buildRoutePlannedFollowUps
-} = require('./cloudfunctions/diagnose-http/domain/route-planned-followup-resolver.js')
-const {
   isCandidateOutcomeOutputEligible
 } = require('./cloudfunctions/diagnose-http/utils/output-eligibility.js')
 const {
@@ -224,7 +221,6 @@ async function testRoutePlannerConflict() {
     routeEvidenceContext,
     routeRepository,
     featureFlags: { routePlanningEnabled: true },
-    canAskAnotherFollowUpRound: false
   })
   assert.equal(decision.fallbackPolicy, '')
   assert.deepEqual(decision.visibleOutcomeKeys, ['underwatering', 'overwatering_root_pressure'])
@@ -344,7 +340,6 @@ async function testRoutePlannerKeepsThreeVisibleOutcomesAcrossMixedGroupLimits()
     routeRepository,
     featureFlags: { routePlanningEnabled: true },
     maxVisibleOutcomes: 3,
-    canAskAnotherFollowUpRound: false
   })
 
   assert.deepEqual(decision.visibleOutcomeKeys, [
@@ -357,7 +352,7 @@ async function testRoutePlannerKeepsThreeVisibleOutcomesAcrossMixedGroupLimits()
   assert.equal(decision.decisionCause.decisionCauseKey, 'route_action_conflict_unresolved')
 }
 
-async function testFollowUpRoundLimit() {
+async function testRoutePlannerDoesNotRequireFollowUpForMissingGate() {
   const routeEvidenceContext = buildRouteEvidenceContext({
     candidateOutcomes: [{ problemKey: 'overwatering_root_pressure' }]
   })
@@ -405,17 +400,18 @@ async function testFollowUpRoundLimit() {
     routeEvidenceContext,
     routeRepository,
     featureFlags: { routePlanningEnabled: true },
-    canAskAnotherFollowUpRound: true
   })
   const noBudget = await planOutcomeRoutes({
     candidateOutcomeKeys: ['overwatering_root_pressure'],
     routeEvidenceContext,
     routeRepository,
     featureFlags: { routePlanningEnabled: true },
-    canAskAnotherFollowUpRound: false
   })
 
-  assert.equal(withBudget.requiresFollowUp, true)
+  assert.equal(withBudget.requiresFollowUp, false)
+  assert.deepEqual(withBudget.nextQuestionKeys, [])
+  assert.deepEqual(withBudget.nextQuestions, [])
+  assert.deepEqual(withBudget.candidateOutcomeStates[0].questionEvidenceKeys, ['q_soil_moisture_recent'])
   assert.equal(noBudget.requiresFollowUp, false)
   assert.deepEqual(noBudget.nextQuestionKeys, [])
 }
@@ -436,7 +432,6 @@ async function testRoutePlannerFallbackIsConservative() {
       routeGroups: []
     }),
     featureFlags: { routePlanningEnabled: true },
-    canAskAnotherFollowUpRound: true
   })
 
   assert.equal(routeDecision.fallbackPolicy, 'uncertain')
@@ -643,12 +638,12 @@ async function testRoutePlannerNextQuestions() {
     routeEvidenceContext,
     routeRepository,
     featureFlags: { routePlanningEnabled: true },
-    canAskAnotherFollowUpRound: true
   })
 
-  assert.equal(decision.requiresFollowUp, true)
-  assert.deepEqual(decision.nextQuestionKeys, ['q_soil_moisture_recent'])
-  assert.equal(decision.nextQuestions[0].routeKey, 'wet_route')
+  assert.equal(decision.requiresFollowUp, false)
+  assert.deepEqual(decision.nextQuestionKeys, [])
+  assert.deepEqual(decision.nextQuestions, [])
+  assert.deepEqual(decision.candidateOutcomeStates[0].questionEvidenceKeys, ['q_soil_moisture_recent'])
 }
 
 async function testRoutePlannerConsumesSqlAnswerEffects() {
@@ -726,7 +721,6 @@ async function testRoutePlannerConsumesSqlAnswerEffects() {
     routeEvidenceContext,
     routeRepository,
     featureFlags: { routePlanningEnabled: true },
-    canAskAnotherFollowUpRound: false
   })
 
   assert.deepEqual(decision.visibleOutcomeKeys, ['overwatering_root_pressure'])
@@ -825,7 +819,6 @@ async function testWiltingWetSoilAnswerExpandsToWiltingRouteEvidence() {
     routeEvidenceContext,
     routeRepository,
     featureFlags: { routePlanningEnabled: true },
-    canAskAnotherFollowUpRound: false
   })
 
   assert.deepEqual(routeEvidenceContext.activeSymptomKeys, [
@@ -855,7 +848,6 @@ async function testWiltingWetSoilAnswerExpandsToWiltingRouteEvidence() {
     routeEvidenceContext: dryRouteEvidenceContext,
     routeRepository,
     featureFlags: { routePlanningEnabled: true },
-    canAskAnotherFollowUpRound: false
   })
 
   assert.deepEqual(dryRouteEvidenceContext.activeSymptomKeys, [
@@ -1022,7 +1014,6 @@ async function testRoutePlannerSameRouteBlockerOverridesPass() {
     routeEvidenceContext,
     routeRepository,
     featureFlags: { routePlanningEnabled: true },
-    canAskAnotherFollowUpRound: false
   })
 
   assert.deepEqual(decision.visibleOutcomeKeys, [])
@@ -1151,12 +1142,13 @@ async function testYellowingCareContextOnlyDoesNotCloseWaterConflict() {
     routeEvidenceContext,
     routeRepository,
     featureFlags: { routePlanningEnabled: true },
-    canAskAnotherFollowUpRound: true
   })
 
   assert.deepEqual(decision.visibleOutcomeKeys, [])
-  assert.equal(decision.requiresFollowUp, true)
-  assert.deepEqual(decision.nextQuestionKeys, [
+  assert.equal(decision.requiresFollowUp, false)
+  assert.deepEqual(decision.nextQuestionKeys, [])
+  assert.deepEqual(decision.nextQuestions, [])
+  assert.deepEqual(decision.candidateOutcomeStates[0].questionEvidenceKeys, [
     'q_observed_probe__leaf_yellowing__watering_frequency_context'
   ])
 }
@@ -1279,13 +1271,14 @@ async function testVisualCandidateYellowingExpandsRouteGroupAndPlansWateringCont
     routeEvidenceContext,
     routeRepository,
     featureFlags: { routePlanningEnabled: true },
-    canAskAnotherFollowUpRound: true
   })
 
   assert.deepEqual(decision.activeRouteGroupKeys, ['yellowing_care_split_group'])
   assert.equal(decision.decisionCause.decisionCauseDetails.symptomMatchedRouteGroupKeys[0], 'yellowing_care_split_group')
-  assert.equal(decision.requiresFollowUp, true)
-  assert.deepEqual(decision.nextQuestionKeys, [
+  assert.equal(decision.requiresFollowUp, false)
+  assert.deepEqual(decision.nextQuestionKeys, [])
+  assert.deepEqual(decision.nextQuestions, [])
+  assert.deepEqual(decision.candidateOutcomeStates[0].questionEvidenceKeys, [
     'q_observed_probe__leaf_yellowing__watering_frequency_context'
   ])
 }
@@ -1366,24 +1359,58 @@ async function testYellowingFrontloadedCareAdvancesAfterWateringQuestion() {
   )
 }
 
-function testYellowingRouteFastPathHeldUntilRequiredGroupsComplete() {
-  const afterWateringOnly = diagnosisEngineTest.collectRouteAnswerRecordsForDecision({
-    answers: [
+async function testYellowingRouteDoesNotHoldVisibleOutcomeForMissingPackageGroups() {
+  const routeRepository = createMockRouteRepository({
+    routeGroups: [
       {
-        questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-        optionKey: 'often_wet'
+        routeGroupKey: 'yellowing_care_split_group',
+        entrySymptomKeys: ['leaf_yellowing'],
+        candidateOutcomeKeys: ['overwatering_root_pressure', 'uncertain_observation'],
+        maxVisibleOutcomes: 2
+      }
+    ],
+    routes: [
+      {
+        routeKey: 'yellowing_wet_soil_route',
+        routeGroupKey: 'yellowing_care_split_group',
+        outcomeKey: 'overwatering_root_pressure'
+      },
+      {
+        routeKey: 'yellowing_uncertain_route',
+        routeGroupKey: 'yellowing_care_split_group',
+        outcomeKey: 'uncertain_observation'
+      }
+    ],
+    gates: [
+      {
+        gateKey: 'wet_soil_confirmation_gate',
+        routeKey: 'yellowing_wet_soil_route',
+        gateRole: 'display',
+        requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
+        requiredAnswerEffects: {
+          questionOptionPairs: [
+            'q_observed_probe__leaf_yellowing__watering_frequency_context:often_wet'
+          ],
+          routeKeys: ['yellowing_wet_soil_route']
+        },
+        blockerEvidence: {},
+        conflictOutcomeKeys: []
+      }
+    ],
+    questions: [
+      {
+        routeKey: 'yellowing_wet_soil_route',
+        stepNo: 2,
+        questionKey: 'q_observed_probe__leaf_yellowing__light_change_context',
+        gateKey: 'wet_soil_confirmation_gate',
+        questionRole: 'context_probe',
+        requiredForClosure: true,
+        askPriority: 240
       }
     ]
   })
-  const afterDryWateringOnly = diagnosisEngineTest.collectRouteAnswerRecordsForDecision({
-    answers: [
-      {
-        questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-        optionKey: 'often_dry'
-      }
-    ]
-  })
-  const afterAllRequiredGroups = diagnosisEngineTest.collectRouteAnswerRecordsForDecision({
+  const routeEvidenceContext = buildRouteEvidenceContext({
+    observedEvidenceSet: buildObservedEvidenceSet(['leaf_yellowing']),
     answers: [
       {
         questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
@@ -1391,47 +1418,39 @@ function testYellowingRouteFastPathHeldUntilRequiredGroupsComplete() {
       },
       {
         questionKey: 'q_observed_probe__leaf_yellowing__light_change_context',
-        optionKey: 'normal_or_stable'
+        optionKey: 'unknown'
       },
       {
         questionKey: 'q_observed_probe__leaf_yellowing__fertilization_growth_context',
-        optionKey: 'normal_light_fertilizer'
+        optionKey: 'unknown'
       },
       {
         questionKey: 'q_observed_probe__leaf_yellowing__airflow_humidity_context',
-        optionKey: 'stable_airflow'
-      },
+        optionKey: 'unknown'
+      }
+    ],
+    routeAnswerEffects: [
       {
-        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_progression_speed',
-        optionKey: 'slow_stable'
+        questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
+        optionKey: 'often_wet',
+        outcomeKey: 'overwatering_root_pressure',
+        routeKey: 'yellowing_wet_soil_route',
+        effectType: 'support'
       }
     ]
   })
-  const context = {
-    observedEvidenceSet: buildObservedEvidenceSet(['leaf_yellowing'])
-  }
 
-  assert.equal(
-    diagnosisEngineTest.shouldHoldYellowingRouteOutputForRequiredGroups({
-      ...context,
-      answerRecords: afterWateringOnly
-    }),
-    true
-  )
-  assert.equal(
-    diagnosisEngineTest.shouldHoldYellowingRouteOutputForRequiredGroups({
-      ...context,
-      answerRecords: afterDryWateringOnly
-    }),
-    true
-  )
-  assert.equal(
-    diagnosisEngineTest.shouldHoldYellowingRouteOutputForRequiredGroups({
-      ...context,
-      answerRecords: afterAllRequiredGroups
-    }),
-    false
-  )
+  const decision = await planOutcomeRoutes({
+    candidateOutcomeKeys: ['overwatering_root_pressure', 'uncertain_observation'],
+    routeEvidenceContext,
+    routeRepository,
+    featureFlags: { routePlanningEnabled: true },
+  })
+
+  assert.deepEqual(decision.visibleOutcomeKeys, ['overwatering_root_pressure'])
+  assert.equal(decision.requiresFollowUp, false)
+  assert.deepEqual(decision.nextQuestionKeys, [])
+  assert.equal(decision.decisionCause.decisionCauseKey, 'route_visible_outcomes_ready')
 }
 
 async function testYellowingRouteUsesHistoricalGroupedAnswersForClosure() {
@@ -1668,110 +1687,7 @@ async function testRouteFastPathBackfillsHistoricalRouteAnswerEffects() {
   )
 }
 
-async function testRoutePlannedFollowUpRendersTemplateVariables() {
-  const followUps = await buildRoutePlannedFollowUps({
-    routeDecision: {
-      nextQuestionKeys: [
-        'q_observed_probe__leaf_yellowing__watering_frequency_context'
-      ]
-    },
-    askedQuestions: [],
-    askedQuestionKeys: [],
-    maxQuestions: 1,
-    plantContext: {
-      watering: {
-        minDays: 7,
-        maxDays: 10
-      },
-      sunning: {
-        minHours: 1,
-        maxHours: 3
-      }
-    },
-    questionRepository: {
-      getQuestionsByKeys: async () => [
-        {
-          questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-          questionTextUserCn: '最近 2 周，你的浇水更接近哪一种？',
-          questionType: 'single_choice',
-          targetSymptomKey: 'leaf_yellowing',
-          targetDimension: 'watering_frequency_context',
-          routingScope: 'context_probe',
-          questionRole: 'context_metric',
-          defaultOptionKey: 'often_wet',
-          uiVariant: 'single_select_accordion'
-        }
-      ],
-      getQuestionOptionMappings: async () => [
-        {
-          questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-          optionKey: 'often_wet',
-          optionTextUserCn: '近 2 周 2 次以上',
-          optionDescriptionUserCn: '- {{watering_reference}}\n- 如果最近浇得更勤、更少，或土长期偏湿/偏干，先选这个。',
-          isDefault: true
-        },
-        {
-          questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-          optionKey: 'often_dry',
-          optionTextUserCn: '近 2 周 0 次',
-          optionDescriptionUserCn: '- {{watering_help}}\n- 如果最近很少浇水或盆土常偏干，先选这个。'
-        }
-      ]
-    }
-  })
-
-  assert.equal(followUps.length, 1)
-  const serialized = JSON.stringify(followUps)
-  assert.equal(serialized.includes('{{'), false)
-  assert.equal(serialized.includes('watering_reference'), false)
-  assert.equal(serialized.includes('watering_help'), false)
-  assert.equal(followUps[0].options[0].description.includes('浇水'), true)
-}
-
-async function testRoutePlannedFollowUpDoesNotAppendSyntheticOptionsWhenSqlOptionsExist() {
-  const followUps = await buildRoutePlannedFollowUps({
-    routeDecision: {
-      nextQuestionKeys: [
-        'q_observed_probe__leaf_yellowing__watering_frequency_context'
-      ]
-    },
-    askedQuestions: [],
-    askedQuestionKeys: [],
-    maxQuestions: 1,
-    questionRepository: {
-      getQuestionsByKeys: async () => [
-        {
-          questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-          questionTextUserCn: '最近 2 周，你的浇水更接近哪一种？',
-          questionType: 'single_choice',
-          targetSymptomKey: 'leaf_yellowing',
-          targetDimension: 'watering_frequency_context',
-          routingScope: 'context_probe',
-          questionRole: 'context_metric'
-        }
-      ],
-      getQuestionOptionMappings: async () => [
-        {
-          questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-          optionKey: 'often_wet',
-          optionTextUserCn: '近 2 周 2 次以上'
-        },
-        {
-          questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-          optionKey: 'often_dry',
-          optionTextUserCn: '近 2 周 0 次'
-        }
-      ]
-    }
-  })
-
-  const optionTexts = followUps[0].options.map(item => item.text)
-  assert.deepEqual(optionTexts, ['近 2 周 2 次以上', '近 2 周 0 次', '看不出/不确定'])
-  assert.equal(optionTexts.includes('浇水偏多或偏少'), false)
-  assert.equal(optionTexts.includes('光照突然变强或变弱'), false)
-}
-
-async function testYellowingCareContextAnswerNarrowsNextRouteQuestion() {
+async function testYellowingCareContextAnswerKeepsRouteQuestionEvidence() {
   const buildYellowingRouteRepository = () => createMockRouteRepository({
     routeGroups: [
       {
@@ -1903,10 +1819,11 @@ async function testYellowingCareContextAnswerNarrowsNextRouteQuestion() {
     }),
     routeRepository: buildYellowingRouteRepository(),
     featureFlags: { routePlanningEnabled: true },
-    canAskAnotherFollowUpRound: true
   })
 
-  assert.deepEqual(lightDecision.nextQuestionKeys, [
+  assert.equal(lightDecision.requiresFollowUp, false)
+  assert.deepEqual(lightDecision.nextQuestionKeys, [])
+  assert.deepEqual(lightDecision.candidateOutcomeStates[0].questionEvidenceKeys, [
     'q_observed_probe__leaf_yellowing__light_change_context'
   ])
 
@@ -1923,13 +1840,12 @@ async function testYellowingCareContextAnswerNarrowsNextRouteQuestion() {
     }),
     routeRepository: buildYellowingRouteRepository(),
     featureFlags: { routePlanningEnabled: true },
-    canAskAnotherFollowUpRound: true
   })
 
   assert.deepEqual(unknownDecision.nextQuestionKeys, [])
   assert.equal(
     unknownDecision.candidateOutcomeStates.some(state =>
-      (state.nextQuestionKeys || []).includes('q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern')
+      (state.questionEvidenceKeys || []).includes('q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern')
     ),
     false
   )
@@ -2018,7 +1934,6 @@ async function testYellowingLowLightRouteClosesWithActionAdvice() {
     routeEvidenceContext,
     routeRepository,
     featureFlags: { routePlanningEnabled: true },
-    canAskAnotherFollowUpRound: false
   })
 
   assert.equal(decision.fallbackPolicy, '')
@@ -2403,7 +2318,6 @@ async function testLegacyYellowingLeafAgeAnswerDoesNotCloseRoute() {
     routeEvidenceContext,
     routeRepository,
     featureFlags: { routePlanningEnabled: true },
-    canAskAnotherFollowUpRound: true
   })
 
   assert.deepEqual(decision.visibleOutcomeKeys, [])
@@ -2614,7 +2528,6 @@ async function testYellowingAirflowLeafSpotRequiresVisibleSpotEvidence() {
       candidateOutcomes: [{ problemKey: 'leaf_spot_problem', evidenceOrder: 1 }]
     }),
     routeRepository,
-    canAskAnotherFollowUpRound: false,
     featureFlags: { routePlanningEnabled: true }
   })
 
@@ -2635,7 +2548,6 @@ async function testYellowingAirflowLeafSpotRequiresVisibleSpotEvidence() {
       candidateOutcomes: [{ problemKey: 'leaf_spot_problem', evidenceOrder: 1 }]
     }),
     routeRepository,
-    canAskAnotherFollowUpRound: false,
     featureFlags: { routePlanningEnabled: true }
   })
 
@@ -2651,7 +2563,6 @@ async function testYellowingAirflowLeafSpotRequiresVisibleSpotEvidence() {
       candidateOutcomes: [{ problemKey: 'leaf_spot_problem', evidenceOrder: 1 }]
     }),
     routeRepository,
-    canAskAnotherFollowUpRound: false,
     featureFlags: { routePlanningEnabled: true }
   })
 
@@ -2785,7 +2696,6 @@ async function testYellowingStrongLightRouteClosesWithSunburnActionAdvice() {
     routeEvidenceContext,
     routeRepository,
     featureFlags: { routePlanningEnabled: true },
-    canAskAnotherFollowUpRound: false
   })
 
   assert.equal(decision.fallbackPolicy, '')
@@ -3048,94 +2958,6 @@ function testRuntimeSnapshotPersistsInternalRouteDecision() {
   assert.equal(snapshot.routeDecision.routeTrace, undefined)
 }
 
-async function testRoutePlannedFollowUps() {
-  const followUps = await buildRoutePlannedFollowUps({
-    routeDecision: {
-      nextQuestions: [
-        {
-          questionKey: 'q_soil_moisture_recent',
-          routeKey: 'wet_route',
-          gateKey: 'soil_gate',
-          outcomeKey: 'overwatering_root_pressure',
-          questionRole: 'path_split'
-        }
-      ]
-    },
-    questionRepository: {
-      async getQuestionsByKeys() {
-        return [
-          {
-            questionKey: 'q_soil_moisture_recent',
-            questionTextUserCn: '最近盆土是一直湿，还是能正常变干？',
-            questionGroupKey: 'watering_split',
-            targetDimension: 'soil_moisture',
-            routingScope: 'watering_split',
-            questionType: 'single_choice',
-            defaultOptionKey: 'unknown',
-            uiVariant: '',
-            renderMode: '',
-            helpTextCn: '这题用于区分缺水和积水。'
-          }
-        ]
-      },
-      async getQuestionOptionMappings() {
-        return [
-          {
-            questionKey: 'q_soil_moisture_recent',
-            optionKey: 'wet',
-            optionTextUserCn: '一直偏湿'
-          },
-          {
-            questionKey: 'q_soil_moisture_recent',
-            optionKey: 'dry',
-            optionTextUserCn: '能正常变干'
-          }
-        ]
-      }
-    }
-  })
-
-  assert.equal(followUps.length, 1)
-  assert.equal(followUps[0].selectionSource, 'route_planner')
-  assert.equal(followUps[0].routeKey, 'wet_route')
-  assert.equal(followUps[0].gateKey, 'soil_gate')
-  assert.equal(followUps[0].outcomeKey, 'overwatering_root_pressure')
-}
-
-async function testRoutePlannedFollowUpsFiltersYellowingLeafAgeQuestion() {
-  const followUps = await buildRoutePlannedFollowUps({
-    routeDecision: {
-      nextQuestionKeys: ['q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern']
-    },
-    questionRepository: {
-      async getQuestionsByKeys() {
-        return [
-          {
-            questionKey: 'q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern',
-            questionTextUserCn: '发黄主要先出现在新叶，还是老叶/下部叶？',
-            questionGroupKey: 'yellowing_leaf_age_pattern',
-            targetSymptomKey: 'leaf_yellowing',
-            targetDimension: 'yellowing_leaf_age_pattern',
-            routingScope: 'differential_probe',
-            questionType: 'single_choice'
-          }
-        ]
-      },
-      async getQuestionOptionMappings() {
-        return [
-          {
-            questionKey: 'q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern',
-            optionKey: 'old_lower_leaves_first',
-            optionTextUserCn: '老叶或下部叶更明显'
-          }
-        ]
-      }
-    }
-  })
-
-  assert.deepEqual(followUps, [])
-}
-
 function testManualQuestionStartRouteGroupBridge() {
   const activeSymptomKeys = questionStartRunnerTest.resolveManualStartActiveSymptomKeys(
     buildObservedEvidenceSet(['uniform_yellowing'])
@@ -3209,7 +3031,7 @@ async function testManualQuestionStartFastPathBuildsFollowUpRound() {
   }
   const questionRepository = {
     async findQuestionKeysByTargetSymptoms() {
-      throw new Error('route follow-up should be used before fallback')
+      throw new Error('route-backed package should be used before fallback')
     },
     async getQuestionsByKeys(questionKeys) {
       assert.deepEqual(questionKeys, ['q_observed_probe__leaf_yellowing__yellowing_care_area_gate'])
@@ -3899,17 +3721,17 @@ function testSessionResultReadServicePreservesRouteMultiOutcomeFields() {
   assert.equal(payloadWinsFields.outcomeMode, 'visible_outcomes')
 }
 
-function testRouteModeDoesNotAllowLegacyGenericFollowUpPool() {
+function testRouteModeDoesNotBuildLegacyFollowUpsAfterPackageAnswer() {
   const source = readFileSync(
     './cloudfunctions/diagnose-http/domain/diagnosis-engine.js',
     'utf8'
   )
 
-  assert.match(
-    source,
-    /const genericFollowUps =\s+legacyFollowUpAllowed && shouldAskFollowUp && remainingGeneralQuestionBudget > 0/
-  )
-  assert.match(source, /const legacyFollowUpAllowed = false/)
+  assert.doesNotMatch(source, /const genericFollowUps =/)
+  assert.doesNotMatch(source, /const routePlannedFollowUps =/)
+  assert.doesNotMatch(source, /shouldHoldYellowingRouteOutputForRequiredGroups/)
+  assert.doesNotMatch(source, /canAskAnotherFollowUpRound/)
+  assert.doesNotMatch(source, /const shouldAskFollowUp\s*=/)
 }
 
 function testUncertainSuppressesTopProblem() {
@@ -4554,7 +4376,6 @@ async function testGoldenRouteSamples() {
         }))
       }),
       routeRepository,
-      canAskAnotherFollowUpRound: false,
       featureFlags: { routePlanningEnabled: true }
     })
 
@@ -4648,7 +4469,6 @@ async function testGoldenUncertainSamples() {
       ]
     }),
     routeRepository: conflictRepository,
-    canAskAnotherFollowUpRound: false,
     featureFlags: { routePlanningEnabled: true }
   })
   assert.deepEqual(conflictDecision.visibleOutcomeKeys, ['underwatering', 'overwatering_root_pressure'])
@@ -4706,7 +4526,6 @@ async function testGoldenUncertainSamples() {
       ],
       routeGroups: [{ routeGroupKey: 'spot_split', maxVisibleOutcomes: 1 }]
     }),
-    canAskAnotherFollowUpRound: false,
     featureFlags: { routePlanningEnabled: true }
   })
   assert.deepEqual(visualStrongButNotAdmitted.visibleOutcomeKeys, [])
@@ -4999,8 +4818,8 @@ async function testReviewGovernancePrefersRouteActionAdvice() {
 
 async function main() {
   console.log('=== Route Planning 测试开始 ===\n')
-  await testFollowUpRoundLimit()
-  console.log('✓ follow-up 最多 2 轮')
+  await testRoutePlannerDoesNotRequireFollowUpForMissingGate()
+  console.log('✓ route planner missing evidence does not require another question')
   await testRoutePlannerConflict()
   console.log('✓ route planner 冲突保护')
   await testRoutePlannerKeepsThreeVisibleOutcomesAcrossMixedGroupLimits()
@@ -5008,7 +4827,7 @@ async function main() {
   await testRoutePlannerFallbackIsConservative()
   console.log('✓ route planner fallback 保守不确定')
   await testRoutePlannerNextQuestions()
-  console.log('✓ route planner 追问生成')
+  console.log('✓ route planner keeps question evidence without next question')
   testRouteFallbackPayloadNoCandidateOutcomeLeak()
   console.log('✓ route fallback payload 不回填 candidate_outcome')
   testRouteVisibleOutcomesSuppressUncertainWhenConcreteExists()
@@ -5033,18 +4852,14 @@ async function main() {
   console.log('✓ yellowing frontloaded care starts with watering question')
   await testYellowingFrontloadedCareAdvancesAfterWateringQuestion()
   console.log('✓ yellowing frontloaded care advances after watering question')
-  testYellowingRouteFastPathHeldUntilRequiredGroupsComplete()
-  console.log('✓ yellowing route fast path waits for required groups')
+  await testYellowingRouteDoesNotHoldVisibleOutcomeForMissingPackageGroups()
+  console.log('✓ yellowing route fast path does not wait for required groups')
   await testYellowingRouteUsesHistoricalGroupedAnswersForClosure()
   console.log('✓ yellowing route uses historical grouped answers for closure')
   await testRouteFastPathBackfillsHistoricalRouteAnswerEffects()
   console.log('✓ route fast path backfills historical route answer effects')
-  await testRoutePlannedFollowUpRendersTemplateVariables()
-  console.log('✓ route follow-up 模板变量不泄漏')
-  await testRoutePlannedFollowUpDoesNotAppendSyntheticOptionsWhenSqlOptionsExist()
-  console.log('✓ route follow-up SQL 选项不叠加 synthetic 选项')
-  await testYellowingCareContextAnswerNarrowsNextRouteQuestion()
-  console.log('✓ yellowing care context answer narrows next route question')
+  await testYellowingCareContextAnswerKeepsRouteQuestionEvidence()
+  console.log('✓ yellowing care context answer keeps route question evidence')
   await testYellowingLowLightRouteClosesWithActionAdvice()
   console.log('✓ yellowing low-light route closes with action advice')
   testRouteActionProfilesLimitedToVisibleOutcomes()
@@ -5071,14 +4886,10 @@ async function main() {
   console.log('✓ yellowing strong-light route closes with sunburn action advice')
   testRuntimeSnapshotPersistsInternalRouteDecision()
   console.log('✓ runtime snapshot persists internal route decision')
-  await testRoutePlannedFollowUps()
-  console.log('✓ route follow-up 直接接管')
-  await testRoutePlannedFollowUpsFiltersYellowingLeafAgeQuestion()
-  console.log('✓ route follow-up filters yellowing leaf-age question')
   testManualQuestionStartRouteGroupBridge()
   console.log('✓ manual question/start bridges symptom to route group')
   await testManualQuestionStartFastPathBuildsFollowUpRound()
-  console.log('✓ manual question/start fast path builds guarded follow-up round')
+  console.log('✓ manual question/start fast path builds guarded question package')
   testVisualParserFields()
   console.log('✓ 视觉新增字段解析')
   testPestSpecklingStickyNoGuard()
@@ -5090,7 +4901,7 @@ async function main() {
   testRouteExplanationFollowsRoutePrimaryOutcome()
   console.log('✓ route explanation follows route primary outcome')
   testFollowUpCompletedStateUsesRouteConvergenceBranch()
-  console.log('✓ follow-up completed state uses route convergence branch')
+  console.log('✓ package completed state uses route convergence branch')
   testDiagnosisResultPageUsesVisibleOutcomeList()
   console.log('✓ diagnosis result page uses visible outcome list')
   testRouteFinalStopStateCloses()
@@ -5103,8 +4914,8 @@ async function main() {
   console.log('✓ route conflict visible outcomes 仍输出 route-backed finalResult')
   testSessionResultReadServicePreservesRouteMultiOutcomeFields()
   console.log('✓ session result read service preserves route multi outcome fields')
-  testRouteModeDoesNotAllowLegacyGenericFollowUpPool()
-  console.log('✓ route mode 不允许 legacy generic follow-up 补位')
+  testRouteModeDoesNotBuildLegacyFollowUpsAfterPackageAnswer()
+  console.log('✓ route mode 不允许 legacy generic question 补位')
   testUncertainSuppressesTopProblem()
   console.log('✓ uncertain suppresses top problem')
   testUncertainSuppressesRouteFinalResultProblem()

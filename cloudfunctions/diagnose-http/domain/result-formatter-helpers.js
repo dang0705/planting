@@ -173,7 +173,7 @@ function isOutOfPoolLowConfidence(lowConfidence = {}) {
     legalityReason === 'out_of_pool_review_required' ||
     legalityReason === 'out_of_pool_hint_unconfirmed' ||
     reasonSet.has('weak_out_of_pool_proxy_only') ||
-    reasonSet.has('out_of_pool_hint_unconfirmed_after_followup')
+    reasonSet.has('out_of_pool_hint_unconfirmed_after_package')
   )
 }
 
@@ -238,7 +238,7 @@ function buildUncertainExplanation(lowConfidence = {}, symptomClassRuntime = nul
   const classLabel = normalizeText(primaryClass?.classNameCn || primaryClass?.classKey)
   const runtimeNotes = normalizeText(primaryClass?.runtimeNotes)
   const whyItHappens = classLabel
-    ? `当前视觉和追问更支持“${classLabel}”这一症状模式，但具体 root cause 仍缺少关键上下文，继续硬判风险较高。`
+    ? `当前视觉和题包答案更支持“${classLabel}”这一症状模式，但具体 root cause 仍缺少关键上下文，继续硬判风险较高。`
     : '当前证据不足或仍有冲突，继续硬判具体问题风险较高。'
   const whatToCheckNext = uniqList([
     advice[0],

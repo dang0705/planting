@@ -33,13 +33,10 @@ function buildStopStateId(sessionId = '', roundId = '') {
 }
 
 function resolveStopReasonType({
-  followUpRequired = false,
   outcomeType = '',
   stopReason = '',
   decisionCauseKey = ''
 } = {}) {
-  if (followUpRequired) {return 'pending_follow_up'}
-
   const normalizedOutcomeType = normalizeText(outcomeType)
   const normalizedDecisionCauseKey = normalizeText(decisionCauseKey)
   if (normalizedOutcomeType === 'uncertain' && normalizedDecisionCauseKey) {
@@ -56,19 +53,12 @@ function resolveStopReasonType({
   if (normalizedStopReason.includes('non_problematic')) {return 'non_problematic_converged'}
   if (normalizedStopReason.includes('problematic')) {return 'problematic_converged'}
 
-  return followUpRequired ? 'pending_follow_up' : 'system_limited'
+  return 'system_limited'
 }
 
 function resolveStopExplanation({
-  response = {},
-  questionQueueSummary = {}
+  response = {}
 } = {}) {
-  if (response?.followUpRequired) {
-    return questionQueueSummary.activeItemCount > 0
-      ? '当前轮次仍存在高价值问题可问，停止条件尚未成立。'
-      : '当前轮次仍需 follow-up，但高价值问题队列为空，需要保守阻断输出。'
-  }
-
   const summaryText =
     normalizeText(response?.finalResult?.summary) ||
     normalizeText(response?.topProblem?.summary) ||
@@ -85,7 +75,6 @@ function evaluateStopState({ response = {}, questionQueue = null } = {}) {
   const sessionId = normalizeText(response?.diagnosisSessionId)
   const roundId = normalizeText(response?.roundId, 'round_1')
   const questionQueueSummary = summarizeQuestionQueue(questionQueue || {})
-  const followUpRequired = Boolean(response?.followUpRequired)
   const hasActiveQueueItems = questionQueueSummary.activeItemCount > 0
   const outcomeType = normalizeText(response?.outcomeType)
   const outcomeLocked = normalizeText(response?.stopDecision?.outcomeLocked || response?.outcomeLocked)
@@ -114,7 +103,6 @@ function evaluateStopState({ response = {}, questionQueue = null } = {}) {
       : hasExplicitStopDecision
   const isStopped =
     stage === 'final' &&
-    !followUpRequired &&
     !hasActiveQueueItems &&
     hasFormalOutcome &&
     hasExplicitStopDecision &&
@@ -133,7 +121,6 @@ function evaluateStopState({ response = {}, questionQueue = null } = {}) {
     roundIndex: normalizeRoundIndex(roundId, response?.currentRoundIndex || 1),
     isStopped,
     stopReasonType: resolveStopReasonType({
-      followUpRequired: followUpRequired || hasActiveQueueItems,
       outcomeType,
       stopReason,
       decisionCauseKey
@@ -142,10 +129,10 @@ function evaluateStopState({ response = {}, questionQueue = null } = {}) {
     uncertainLegalityReason,
     stopReason: normalizeText(
       stopReason,
-      followUpRequired || hasActiveQueueItems ? 'pending_follow_up' : ''
+      hasActiveQueueItems ? 'question_queue_active' : ''
     ),
     stopReasonDetail: decisionCauseKey,
-    stopReasonText: resolveStopExplanation({ response, questionQueueSummary }),
+    stopReasonText: resolveStopExplanation({ response }),
     decisionCauseKey,
     decisionCauseCategory: normalizeText(decisionCause?.decisionCauseCategory),
     decisionCauseText: normalizeText(decisionCause?.decisionCauseText),
@@ -154,7 +141,7 @@ function evaluateStopState({ response = {}, questionQueue = null } = {}) {
         ? decisionCause.decisionCauseDetails
         : null,
     finalOutputRef,
-    allowMoreQuestions: followUpRequired || hasActiveQueueItems ? 1 : 0
+    allowMoreQuestions: 0
   }
 }
 

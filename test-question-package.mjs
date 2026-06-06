@@ -290,9 +290,10 @@ function testPackageSubmitTerminalQuestioningRuntimeWiring() {
   const engine = readFileSync('cloudfunctions/diagnose-http/domain/diagnosis-engine.js', 'utf8')
   assert.match(runner, /isQuestionPackageAnswerSubmitPayload/)
   assert.match(runner, /terminalQuestioningState:\s*isTerminalQuestionPackageSubmit/)
-  assert.match(engine, /canAskAnotherFollowUpRound:\s*canOpenNextFollowUpRound\(round,\s*\{\s*terminalQuestioningState\s*\}\)/)
-  assert.match(engine, /routeQuestionEnabled\s*&&\s*hasAuthoritativeRouteDecision\s*&&\s*!terminalQuestioningState/)
-  assert.match(engine, /const shouldAskFollowUp\s*=\s*!terminalQuestioningState\s*&&/)
+  assert.doesNotMatch(engine, /canAskAnotherFollowUpRound/)
+  assert.doesNotMatch(engine, /const shouldAskFollowUp\s*=/)
+  assert.doesNotMatch(engine, /const routePlannedFollowUps =/)
+  assert.doesNotMatch(engine, /const genericFollowUps =/)
 }
 
 async function testPackagePersistenceAllowsAllQuestionOwnership() {

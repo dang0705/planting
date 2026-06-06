@@ -11,7 +11,6 @@ const {
   planOutcomeRoutes,
   buildRouteEvidenceContext
 } = require('../domain/outcome-route-planner')
-const { buildRoutePlannedFollowUps } = require('../domain/route-planned-followup-resolver')
 const { buildRuntimeArtifacts } = require('../domain/runtime-artifacts')
 const { buildDiagnosisDirections } = require('../utils/diagnosis-directions')
 const { buildDerivedEvidenceSet } = require('../utils/derived-evidence')
@@ -178,7 +177,6 @@ async function buildManualStartRouteDecision({
       answers: [],
       askedQuestionKeys: []
     }),
-    canAskAnotherFollowUpRound: true,
     maxVisibleOutcomes: 3,
     maxQuestionCount: 1,
     routeRepository,
@@ -188,42 +186,6 @@ async function buildManualStartRouteDecision({
         'ROUTE_MODE_ENABLED',
         { defaultEnabled: true }
       )
-    }
-  })
-}
-
-async function buildManualStartFallbackFollowUps({
-  observedSymptoms = [],
-  observedEvidenceSet = [],
-  plantContext = {},
-  questionRepository = {
-    findQuestionKeysByTargetSymptoms,
-    getQuestionsByKeys,
-    getQuestionOptionMappings
-  }
-} = {}) {
-  const activeSymptomKeys = resolveManualStartActiveSymptomKeys(observedEvidenceSet, observedSymptoms)
-  if (!activeSymptomKeys.length) {return []}
-
-  const questionRows = await questionRepository.findQuestionKeysByTargetSymptoms(activeSymptomKeys)
-  const questionKeys = Array.from(new Set(
-    (Array.isArray(questionRows) ? questionRows : [])
-      .map(item => String(item?.question_key || item?.questionKey || '').trim())
-      .filter(Boolean)
-  ))
-  if (!questionKeys.length) {return []}
-
-  return buildRoutePlannedFollowUps({
-    routeDecision: {
-      nextQuestionKeys: questionKeys
-    },
-    askedQuestions: [],
-    askedQuestionKeys: [],
-    maxQuestions: 1,
-    plantContext,
-    questionRepository: {
-      getQuestionsByKeys: questionRepository.getQuestionsByKeys,
-      getQuestionOptionMappings: questionRepository.getQuestionOptionMappings
     }
   })
 }
@@ -297,13 +259,13 @@ async function buildManualQuestionStartRoundResult({
           transition: 'swiper'
         },
         metrics: {
-          routeDecision: {
-            mode: 'manual_yellowing_care_environment_frontloaded',
-            candidateOutcomeKeys: [],
-            visibleOutcomeKeys: [],
-            nextQuestionKeys: yellowingCareFollowUps.map(item => item.questionKey).filter(Boolean),
-            requiresFollowUp: true,
-            decisionCause: {
+            routeDecision: {
+              mode: 'manual_yellowing_care_environment_frontloaded',
+              candidateOutcomeKeys: [],
+              visibleOutcomeKeys: [],
+              nextQuestionKeys: [],
+              requiresFollowUp: false,
+              decisionCause: {
               decisionCauseKey: 'manual_yellowing_care_environment_guard',
               decisionCauseText: '黄叶手动入口直接前置养护/环境实题。'
             }
@@ -312,8 +274,8 @@ async function buildManualQuestionStartRoundResult({
         __runtimeRouteDecision: {
           mode: 'manual_yellowing_care_environment_frontloaded',
           visibleOutcomeKeys: [],
-          nextQuestionKeys: yellowingCareFollowUps.map(item => item.questionKey).filter(Boolean),
-          requiresFollowUp: true
+          nextQuestionKeys: [],
+          requiresFollowUp: false
         },
         plantContext
       }
@@ -328,77 +290,7 @@ async function buildManualQuestionStartRoundResult({
       }
     }
   }
-  const routeDecision = await buildManualStartRouteDecision({
-    plantContext,
-    observedEvidenceSet,
-    derivedEvidenceSet,
-    diagnosisDirections,
-    routeRepository,
-    routePlanner
-  })
-  const routeFollowUps = routeDecision
-    ? await buildRoutePlannedFollowUps({
-      routeDecision,
-      askedQuestions: [],
-      askedQuestionKeys: [],
-      maxQuestions: 1,
-      plantContext,
-      questionRepository: {
-        getQuestionsByKeys: questionRepository.getQuestionsByKeys,
-        getQuestionOptionMappings: questionRepository.getQuestionOptionMappings
-      }
-    })
-    : []
-  const followUps = routeFollowUps.length
-    ? routeFollowUps
-    : await buildManualStartFallbackFollowUps({
-      observedSymptoms,
-      observedEvidenceSet,
-      plantContext,
-      questionRepository
-    })
-  const filteredFollowUps = useYellowingCareEnvironmentGuard
-    ? filterDisabledYellowingFlowQuestions(followUps)
-    : followUps
-
-  if (!filteredFollowUps.length) {return null}
-
-  const effectiveRouteDecision = routeFollowUps.length ? routeDecision : null
-  const response = {
-    diagnosisSessionId: sessionId,
-    roundId: `round_${Number(round || 1)}`,
-    roundIndex: Number(round || 1),
-    currentRoundIndex: Number(round || 1),
-    currentRoundId: `round_${Number(round || 1)}`,
-    stage: 'followup',
-    status: 'active',
-    followUpRequired: true,
-    routePrimaryAction: 'ask_first',
-    stopReason: 'await_follow_up',
-    sessionStatus: 'awaiting_follow_up',
-    outcomeType: '',
-    plantId: plantContext?.userPlantId || plantContext?.plantId || '',
-    plantIdentityId: plantContext?.plantIdentityId || '',
-    identityResolutionStatus: plantContext?.identityResolutionStatus || '',
-    latestVisualCallBatchId: null,
-    observedSymptoms,
-    observedEvidenceSet,
-    derivedEvidenceSet,
-    diagnosisDirections,
-    followUps: filteredFollowUps,
-    metrics: effectiveRouteDecision ? { routeDecision: effectiveRouteDecision } : { reliabilityScore: 0 },
-    __runtimeRouteDecision: effectiveRouteDecision,
-    plantContext
-  }
-
-  return {
-    ...response,
-    ...buildRuntimeArtifacts(response, {
-      observedEvidenceSet,
-      derivedEvidenceSet,
-      diagnosisDirections
-    })
-  }
+  return null
 }
 
 module.exports = {
@@ -409,7 +301,6 @@ module.exports = {
     shouldUseYellowingCareEnvironmentGuard,
     buildManualYellowingCareStartFollowUps,
     buildManualStartRouteDecision,
-    buildManualStartFallbackFollowUps,
     buildManualQuestionStartRoundResult
   }
 }
