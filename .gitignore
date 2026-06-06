@@ -13,6 +13,7 @@ dist
 *.local
 *.pem
 *.key
+*.zip
 private.*.key
 miniprogram-ci-qrcode.*
 
