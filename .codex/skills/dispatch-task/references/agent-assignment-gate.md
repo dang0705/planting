@@ -20,6 +20,28 @@
 | `qa_reviewer` | 测试执行、smoke、e2e、UI/Figma、小程序自动化、失败归因 |
 | `docs_keeper` | 知识卫生、活文档维护、索引同步、术语一致性、旧文档归档；不维护旧蓝图为当前事实 |
 
+## docs_keeper 分配硬门禁
+
+main agent 必须在 Agent Assignment 中显式输出：
+
+```text
+docs_keeper_required: yes / no
+docs_keeper_reason:
+docs_keeper_assigned: yes / no / not_applicable
+docs_sync_scope:
+```
+
+以下任一条件成立，`docs_keeper_required` 必须为 `yes`：
+
+1. 修改诊断契约、问诊题包、route / outcome 公开契约、停止 / 输出资格、API 响应结构、schema、配置或 workflow 规则。
+2. BRV Recall Packet、task facts、ClickUp checklist、代码注释或活文档明确要求同步 docs / new-rules / source index / BRV source verification。
+3. 本轮代码删除、替换或降级旧概念，且该旧概念存在于 active docs、`docs/new-rules/`、`.brv/source-verification.json` 或 active `.brv/context-tree/` 中。
+4. 任务结果需要记录“当前入口在哪里、删除了哪些旧逻辑、扩展点如何预留”等长期可复用事实。
+
+如果 `docs_keeper_required=yes` 但未分配 `docs_keeper`，Agent Assignment Gate 不通过，必须停止或补派 `docs_keeper`。
+
+如果判断为 `no`，必须给出简短理由；不得仅因任务 facts 未显式写“更新文档”而判定不需要。
+
 ## 实现闸门
 
 只要任务需要新增、修改或删除代码文件，包括业务代码、测试代码、配置代码、云函数代码、页面组件代码，必须分配 `implementer_fast` 或 `implementer_deep`。

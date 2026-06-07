@@ -34,6 +34,7 @@ main agent 必须通过以下硬门禁：
 3. 未说明模块边界，不得进入 implementer。
 4. 未说明风险与回滚，不得进入高风险实现。
 5. 单文件可能超过 400 行必须预警；超过 500 行必须要求拆模块。
+6. 未输出 `line_count_gate` 或未检查候选改动文件行数，不得进入 implementer。
 
 ## Implementation Contract Completeness Gate
 
@@ -45,6 +46,8 @@ main agent 必须通过以下硬门禁：
 2. 禁止修改范围缺失，不得派发 implementer。
 3. Test Contract 缺失，不得派发 implementer。
 4. role_context_packet 缺失，不得派发 implementer。
+5. `line_count_gate` 缺失，不得派发 implementer。
+6. `over_500_line_touched_files` 非空且无 `decomposition_plan` / `approved_exception`，不得派发 implementer。
 
 ## Main Agent Code Review Gate
 
@@ -57,3 +60,18 @@ implementer 完成后，QA 之前，main agent 必须执行代码 review 并通�
 3. 发现 blocking findings 时，main agent 不得亲自修复，必须把 findings 转回同一 implementer 线程。不得新开同角色 implementer，除非记录 replacement_reason。
 4. QA 只能消费 code review 摘要做测试与验收，不得替代 code review。
 5. 若 main agent 在 code review 后直接改代码，本 gate 失败并必须停止。
+6. main agent 必须对本轮 touched code files 执行行数检查，输出 `line_count_review`。
+7. 任一 touched code file 修改后超过 500 行，且本轮没有实际拆分或明确 `approved_exception`，Main Agent Code Review Gate 失败，findings 必须转回同一 implementer 线程。
+8. 如果本轮在超过 500 行文件中只做删除，仍必须记录删除后行数；若删除后仍超过 500 行但未拆分，必须给出 `approved_exception` 或作为 blocker 进入 completion。
+
+`line_count_review` 输出形态：
+
+```text
+line_count_review:
+- checked: yes / no
+- command_ref:
+- over_500_touched_files:
+- decomposition_completed: yes / no / not_required
+- approved_exception: yes / no / not_applicable
+- blocking_findings:
+```

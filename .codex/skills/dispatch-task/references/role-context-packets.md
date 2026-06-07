@@ -85,6 +85,30 @@ thread_reuse:
 - QA：`assets/templates/qa-evidence.md`
 - docs：`assets/templates/docs-result.md`
 
+## docs_keeper packet 必填字段
+
+当 `docs_keeper_required=yes` 时，必须生成 docs_keeper role_context_packet，且不得把完整 task facts、完整代码 diff 或完整 BRV 输出广播给 docs_keeper。
+
+docs_keeper packet 必须包含：
+
+```text
+docs_sync_scope:
+- changed_contracts:
+- active_docs_candidates:
+- source_index_candidates:
+- brv_sync_required: yes / no
+- source_refs:
+- forbidden_doc_claims:
+- validation_commands:
+```
+
+规则：
+
+1. `active_docs_candidates` 只能列最小候选文件，优先从 `docs/code-logics/INDEX.md`、`docs/new-rules/planting_ai_diagnosis_source_index.json` 和 BRV Recall Packet 选择。
+2. `source_refs` 必须指向当前代码入口、测试入口或 config，而不是旧蓝图。
+3. 若 `brv_sync_required=yes`，packet 必须要求执行 `npm run check:brv-context-lifecycle` 或说明不可执行原因。
+4. docs_keeper receipt 必须明确 `docs_changed` 或 `docs_not_changed_reason`，不能只说“无需同步”。
+
 
 ## BRV recall packet 分发
 

@@ -17,6 +17,8 @@
 6. blocking findings 为 0。
 7. Git commit 已完成，或存在明确不能提交的 blocker。
 8. 未验证项已明确分类并写回。
+9. 如 `docs_keeper_required=yes`，docs_keeper 已完成同步或给出可审计的无需同步理由。
+10. 本轮 touched code files 已通过 500 行拆分硬指标检查。
 
 ## 不允许停止的情况
 
@@ -30,6 +32,8 @@
 5. checklist writeback 未执行且没有 blocker / comment fallback。
 6. 有未处理 request changes。
 7. 有 required item 为 pending / not_verified 且用户未接受风险。
+8. `docs_keeper_required=yes` 但未分配或未完成 docs_keeper。
+9. touched code file 超过 500 行且没有实际拆分、没有 approved exception、没有 blocker 写回。
 
 ## 输出模板
 
@@ -40,6 +44,12 @@ Completion Gate:
 - qa_completed: yes / no
 - mini_program_automation_completed: yes / no / not_applicable
 - checklist_writeback_completed: yes / no / not_applicable
+- docs_keeper_required: yes / no
+- docs_sync_completed: yes / no / not_applicable
+- docs_sync_evidence_ref:
+- line_count_gate_passed: yes / no
+- over_500_touched_files:
+- decomposition_completed_or_blocked: yes / no / not_applicable
 - blockers_written_back: yes / no
 - git_commit_completed: yes / no
 - open_required_items:

@@ -23,6 +23,31 @@
 7. 关键伪代码。
 8. 给 implementer 的硬限制。
 
+## 500 行拆分硬指标
+
+Implementation Contract 必须包含以下字段：
+
+```text
+line_count_gate:
+- touched_code_file_line_counts_before:
+- expected_line_counts_after:
+- over_400_line_touched_files:
+- over_500_line_touched_files:
+- decomposition_required: yes / no
+- decomposition_plan:
+- approved_exception: yes / no
+- exception_reason:
+```
+
+规则：
+
+1. main agent 必须在派发 implementer 前对候选 `task_allowed_paths` / 文件级改动计划中的代码文件执行行数检查，可用 `wc -l` 或等价命令。
+2. 修改后的单个业务代码、云函数代码、页面组件代码、配置代码或测试代码预计超过 400 行，必须在 Technical Direction Gate 中预警。
+3. 修改后的单个上述代码文件预计超过 500 行，`decomposition_required` 必须为 `yes`，并给出拆分模块计划。
+4. 如果本轮修改的是既有超过 500 行文件，不能用“历史遗留”跳过；只要本轮 touch，就必须要求拆分，除非存在明确 `approved_exception`。
+5. `approved_exception` 只能用于只读分析、纯删除且删除后仍无法合理拆分、或用户明确限定禁止拆分的场景；必须记录风险和后续 blocker。
+6. 缺少 `line_count_gate` 或超过 500 行但无拆分计划时，Implementation Contract Completeness Gate 不通过，不得派发 implementer。
+
 禁止输出完整 patch、完整规则长文、完整 Figma Drilldown。
 
 ## Test Contract
