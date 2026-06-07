@@ -5,6 +5,33 @@ const { fromQuestionId } = require('../mappers/public-id-mapper')
 const YELLOW_LEAF_PACKAGE_MODE = 'yellow_leaf'
 const YELLOWING_PACKAGE_SOURCE_MODE = 'manual_yellowing_care_environment_frontloaded'
 const YELLOWING_PACKAGE_QUESTION_COUNT = 4
+const QUESTION_PACKAGE_MODE_ALIASES = new Map([
+  [YELLOW_LEAF_PACKAGE_MODE, YELLOW_LEAF_PACKAGE_MODE],
+  [YELLOWING_PACKAGE_SOURCE_MODE, YELLOW_LEAF_PACKAGE_MODE],
+  ['yellowing_mode', YELLOW_LEAF_PACKAGE_MODE],
+  ['leaf_yellowing', YELLOW_LEAF_PACKAGE_MODE]
+])
+const QUESTION_PACKAGE_BY_MODE = {
+  [YELLOW_LEAF_PACKAGE_MODE]: {
+    mode: YELLOW_LEAF_PACKAGE_MODE,
+    route: 'yellow_leaf',
+    sourceMode: YELLOWING_PACKAGE_SOURCE_MODE,
+    questionCount: YELLOWING_PACKAGE_QUESTION_COUNT,
+    targetDimensions: [
+      'watering_frequency_context',
+      'light_change_context',
+      'fertilization_growth_context',
+      'airflow_humidity_context'
+    ],
+    answerSubmitMode: 'package',
+    questionDisplayMode: 'package',
+    fixedQuestionPackage: true,
+    outcomePolicy: {
+      allowMultipleOutcomes: true,
+      preferSingleOutcome: false
+    }
+  }
+}
 const YELLOWING_FRONTLOADED_CARE_CONTEXT_DIMENSIONS = new Set([
   'watering_frequency_context',
   'light_change_context',
@@ -14,6 +41,44 @@ const YELLOWING_FRONTLOADED_CARE_CONTEXT_DIMENSIONS = new Set([
 
 function normalizeText(value = '') {
   return String(value || '').trim()
+}
+
+function normalizeQuestionPackageMode(mode = '') {
+  const normalized = normalizeText(mode)
+  return QUESTION_PACKAGE_MODE_ALIASES.get(normalized) || normalized
+}
+
+function cloneOutcomePolicy(outcomePolicy = null) {
+  if (!outcomePolicy || typeof outcomePolicy !== 'object') {
+    return null
+  }
+  return {
+    allowMultipleOutcomes: Boolean(outcomePolicy.allowMultipleOutcomes),
+    preferSingleOutcome: Boolean(outcomePolicy.preferSingleOutcome)
+  }
+}
+
+function getQuestionPackageByMode(mode = '', options = {}) {
+  const normalizedMode = normalizeQuestionPackageMode(mode)
+  const packageConfig = QUESTION_PACKAGE_BY_MODE[normalizedMode]
+  if (!packageConfig) {
+    return null
+  }
+
+  const questionCount = Number(options.questionCount || packageConfig.questionCount || 0)
+  return {
+    mode: packageConfig.mode,
+    route: normalizeText(options.route || packageConfig.route),
+    sourceMode: normalizeText(options.sourceMode || packageConfig.sourceMode),
+    questionCount,
+    targetDimensions: Array.isArray(options.targetDimensions)
+      ? options.targetDimensions.map(item => normalizeText(item)).filter(Boolean)
+      : packageConfig.targetDimensions.slice(),
+    answerSubmitMode: packageConfig.answerSubmitMode,
+    questionDisplayMode: packageConfig.questionDisplayMode,
+    fixedQuestionPackage: Boolean(packageConfig.fixedQuestionPackage),
+    outcomePolicy: cloneOutcomePolicy(options.outcomePolicy || packageConfig.outcomePolicy)
+  }
 }
 
 function resolveSourceMode(response = {}) {
@@ -28,8 +93,12 @@ function resolveSourceMode(response = {}) {
 }
 
 function isYellowingQuestionPackage(response = {}) {
-  const mode = normalizeText(response?.questionPackage?.mode || response?.questionPackage?.diagnosisMode)
-  return mode === YELLOW_LEAF_PACKAGE_MODE || resolveSourceMode(response) === YELLOWING_PACKAGE_SOURCE_MODE
+  const mode = normalizeQuestionPackageMode(
+    response?.questionPackage?.mode ||
+      response?.questionPackage?.diagnosisMode ||
+      resolveSourceMode(response)
+  )
+  return mode === YELLOW_LEAF_PACKAGE_MODE
 }
 
 function normalizeAnswerQuestionKey(answer = {}) {
@@ -120,13 +189,10 @@ function isQuestionPackageAnswerSubmitPayload({ payload = {}, answers = [], requ
 function buildYellowingQuestionPackage(response = {}, questions = []) {
   const questionCount = Array.isArray(questions) ? questions.length : 0
   if (!isYellowingQuestionPackage(response) || questionCount !== YELLOWING_PACKAGE_QUESTION_COUNT) {return null}
-  return {
-    mode: YELLOW_LEAF_PACKAGE_MODE,
-    sourceMode: YELLOWING_PACKAGE_SOURCE_MODE,
-    questionCount: YELLOWING_PACKAGE_QUESTION_COUNT,
-    answerSubmitMode: 'package',
-    questionDisplayMode: 'package'
-  }
+  return getQuestionPackageByMode(YELLOW_LEAF_PACKAGE_MODE, {
+    questionCount,
+    sourceMode: resolveSourceMode(response) || YELLOWING_PACKAGE_SOURCE_MODE
+  })
 }
 
 function buildQuestionPackageUiHints(baseUiHints = {}, questionPackage = null, questionCount = 0) {
@@ -164,12 +230,14 @@ module.exports = {
   YELLOW_LEAF_PACKAGE_MODE,
   YELLOWING_PACKAGE_SOURCE_MODE,
   YELLOWING_PACKAGE_QUESTION_COUNT,
+  getQuestionPackageByMode,
   buildYellowingQuestionPackage,
   buildQuestionPackageUiHints,
   resolveResponseQuestions,
   isYellowingQuestionPackage,
   isQuestionPackageAnswerSubmitPayload,
   _test: {
+    normalizeQuestionPackageMode,
     resolveSourceMode,
     hasQuestionPackageSubmitMetadata,
     resolveQuestionPackageAnswerCount,

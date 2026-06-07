@@ -53,6 +53,26 @@ function roundValue(value, digits = 4) {
   return Number(Number(value || 0).toFixed(digits))
 }
 
+function isQuestionPackageResponse(response = {}) {
+  return Boolean(
+    response?.questionPackage &&
+      typeof response.questionPackage === 'object' &&
+      normalizeText(response.questionPackage.answerSubmitMode) === 'package' &&
+      normalizeText(response.questionPackage.questionDisplayMode) === 'package'
+  )
+}
+
+function resolveQuestionQueueLimit(response = {}) {
+  if (!isQuestionPackageResponse(response)) {
+    return 1
+  }
+  const declaredCount = Number(response?.questionPackage?.questionCount || 0)
+  if (Number.isFinite(declaredCount) && declaredCount > 0) {
+    return declaredCount
+  }
+  return Array.isArray(response?.followUps) ? response.followUps.length : 1
+}
+
 function buildRetakeQuestionItems(response = {}, serviceTarget = '') {
   const suggestions = Array.isArray(response?.visualAggregateSummary?.suggestedFollowupCapture)
     ? response.visualAggregateSummary.suggestedFollowupCapture
@@ -91,13 +111,14 @@ function planQuestionQueue(response = {}) {
   const roundId = normalizeText(response?.roundId, 'round_1')
   const roundIndex = normalizeRoundIndex(roundId, response?.currentRoundIndex || 1)
   const routePrimaryAction = normalizeText(response?.routePrimaryAction, 'standard_flow')
+  const questionLimit = resolveQuestionQueueLimit(response)
   const serviceTarget = resolveServiceTarget({
     routePrimaryAction,
     outcomeType: response?.outcomeType,
     nonProblematicType: response?.nonProblematicType
   })
   const followUpRequired = Boolean(response?.followUpRequired)
-  const followUps = Array.isArray(response?.followUps) ? response.followUps.slice(0, 1) : []
+  const followUps = Array.isArray(response?.followUps) ? response.followUps.slice(0, questionLimit) : []
   const total = followUps.length
 
   const followUpItems = followUps.map((item, index) => {
@@ -153,7 +174,7 @@ function planQuestionQueue(response = {}) {
   const questionItems = (normalizeText(routePrimaryAction) === 'retake_first'
     ? buildRetakeQuestionItems(response, serviceTarget)
     : followUpItems
-  ).slice(0, 1)
+  ).slice(0, questionLimit)
 
   const activeItemCount = questionItems.length
   const queueStatus = activeItemCount
@@ -199,5 +220,9 @@ function planQuestionQueue(response = {}) {
 }
 
 module.exports = {
-  planQuestionQueue
+  planQuestionQueue,
+  _test: {
+    isQuestionPackageResponse,
+    resolveQuestionQueueLimit
+  }
 }

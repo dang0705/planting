@@ -7,8 +7,10 @@ const require = createRequire(import.meta.url)
 const { buildFrontendDiagnosisResponse } = require('./cloudfunctions/diagnose-http/app/frontend-response.js')
 const { toQuestionId, toOptionId } = require('./cloudfunctions/diagnose-http/mappers/public-id-mapper.js')
 const {
+  getQuestionPackageByMode,
   isQuestionPackageAnswerSubmitPayload
 } = require('./cloudfunctions/diagnose-http/app/question-package-response.js')
+const { planQuestionQueue } = require('./cloudfunctions/diagnose-http/domain/question-queue/question-queue-planner.js')
 const {
   buildFollowUpPayload,
   normalizeDiagnosisResult
@@ -72,9 +74,35 @@ function testYellowingPackageFrontendResponse() {
   )
   assert.equal(response.questionPackage.mode, 'yellow_leaf')
   assert.equal(response.questionPackage.sourceMode, 'manual_yellowing_care_environment_frontloaded')
+  assert.deepEqual(response.questionPackage.outcomePolicy, {
+    allowMultipleOutcomes: true,
+    preferSingleOutcome: false
+  })
   assert.equal(response.uiHints.questionDisplayMode, 'package')
   assert.equal(response.uiHints.answerSubmitMode, 'package')
   assert.equal(response.uiHints.maxQuestionsThisRound, 4)
+}
+
+function testModeToQuestionPackageMapping() {
+  const questionPackage = getQuestionPackageByMode('yellow_leaf')
+  assert.equal(questionPackage.mode, 'yellow_leaf')
+  assert.equal(questionPackage.route, 'yellow_leaf')
+  assert.equal(questionPackage.questionCount, 4)
+  assert.deepEqual(questionPackage.targetDimensions, [
+    'watering_frequency_context',
+    'light_change_context',
+    'fertilization_growth_context',
+    'airflow_humidity_context'
+  ])
+  assert.equal(questionPackage.answerSubmitMode, 'package')
+  assert.equal(questionPackage.questionDisplayMode, 'package')
+  assert.equal(questionPackage.fixedQuestionPackage, true)
+  assert.deepEqual(questionPackage.outcomePolicy, {
+    allowMultipleOutcomes: true,
+    preferSingleOutcome: false
+  })
+  assert.equal(getQuestionPackageByMode('manual_yellowing_care_environment_frontloaded').mode, 'yellow_leaf')
+  assert.equal(getQuestionPackageByMode('unsupported_mode'), null)
 }
 
 function testYellowingPackageFromRouteMode() {
@@ -92,6 +120,35 @@ function testYellowingPackageFromRouteMode() {
   })
   assert.equal(response.questions.length, 4)
   assert.equal(response.questionPackage.answerSubmitMode, 'package')
+}
+
+function testQuestionPackageQueueKeepsAllQuestions() {
+  const questions = [1, 2, 3, 4].map(buildQuestion)
+  const questionQueue = planQuestionQueue({
+    diagnosisSessionId: 'diag_package_queue',
+    roundId: 'round_1',
+    stage: 'followup',
+    routePrimaryAction: 'ask_first',
+    followUpRequired: true,
+    questionPackage: getQuestionPackageByMode('yellow_leaf'),
+    followUps: questions
+  })
+
+  assert.equal(questionQueue.questionItems.length, 4)
+  assert.deepEqual(
+    questionQueue.questionItems.map(item => item.questionKey),
+    questions.map(item => item.questionKey)
+  )
+
+  const singleQuestionQueue = planQuestionQueue({
+    diagnosisSessionId: 'diag_single_queue',
+    roundId: 'round_1',
+    stage: 'followup',
+    routePrimaryAction: 'ask_first',
+    followUpRequired: true,
+    followUps: questions
+  })
+  assert.equal(singleQuestionQueue.questionItems.length, 1)
 }
 
 function testEmptyQuestionsFallsBackToFollowUpsForPackage() {
@@ -383,7 +440,9 @@ async function testPackagePersistenceAllowsAllQuestionOwnership() {
 }
 
 testYellowingPackageFrontendResponse()
+testModeToQuestionPackageMapping()
 testYellowingPackageFromRouteMode()
+testQuestionPackageQueueKeepsAllQuestions()
 testEmptyQuestionsFallsBackToFollowUpsForPackage()
 testNormalizeKeepsPackageAndPackageSubmitPayload()
 testGenericPackageAnswerSubmitIsTerminalQuestioningPayload()

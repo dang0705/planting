@@ -23,15 +23,19 @@ const {
   isYellowingFlowSymptomKey
 } = require('../utils/yellowing-question-policy')
 const {
-  YELLOWING_PACKAGE_QUESTION_COUNT
+  YELLOW_LEAF_PACKAGE_MODE,
+  YELLOWING_PACKAGE_QUESTION_COUNT,
+  getQuestionPackageByMode,
+  buildQuestionPackageUiHints
 } = require('./question-package-response')
-
-const YELLOWING_FRONTLOADED_CARE_CONTEXT_DIMENSIONS = [
-  QUESTION_TARGET_DIMENSIONS.WATERING_FREQUENCY_CONTEXT,
-  QUESTION_TARGET_DIMENSIONS.LIGHT_CHANGE_CONTEXT,
-  QUESTION_TARGET_DIMENSIONS.FERTILIZATION_GROWTH_CONTEXT,
-  QUESTION_TARGET_DIMENSIONS.AIRFLOW_HUMIDITY_CONTEXT
-]
+const YELLOW_LEAF_QUESTION_PACKAGE = getQuestionPackageByMode(YELLOW_LEAF_PACKAGE_MODE)
+const YELLOWING_FRONTLOADED_CARE_CONTEXT_DIMENSIONS =
+  YELLOW_LEAF_QUESTION_PACKAGE?.targetDimensions || [
+    QUESTION_TARGET_DIMENSIONS.WATERING_FREQUENCY_CONTEXT,
+    QUESTION_TARGET_DIMENSIONS.LIGHT_CHANGE_CONTEXT,
+    QUESTION_TARGET_DIMENSIONS.FERTILIZATION_GROWTH_CONTEXT,
+    QUESTION_TARGET_DIMENSIONS.AIRFLOW_HUMIDITY_CONTEXT
+  ]
 
 function isEnabledFeatureFlag(primaryEnvKey = '', fallbackEnvKey = '', options = {}) {
   const primaryRaw = String(process.env[primaryEnvKey] || '').trim()
@@ -196,13 +200,13 @@ async function buildManualQuestionStartRoundResult({
   observedSymptoms = [],
   observedEvidenceSet = [],
   round = 1,
-  routeRepository = outcomeRouteRepository,
-  questionRepository = {
+  routeRepository: _routeRepository = outcomeRouteRepository,
+  questionRepository: _questionRepository = {
     findQuestionKeysByTargetSymptoms,
     getQuestionsByKeys,
     getQuestionOptionMappings
   },
-  routePlanner = planOutcomeRoutes
+  routePlanner: _routePlanner = planOutcomeRoutes
 } = {}) {
   const derivedEvidenceSet = buildDerivedEvidenceSet({
     observedEvidenceSet,
@@ -222,6 +226,9 @@ async function buildManualQuestionStartRoundResult({
       plantContext
     })
     if (yellowingCareFollowUps.length === YELLOWING_PACKAGE_QUESTION_COUNT) {
+      const questionPackage = getQuestionPackageByMode(YELLOW_LEAF_PACKAGE_MODE, {
+        questionCount: yellowingCareFollowUps.length
+      })
       const response = {
         diagnosisSessionId: sessionId,
         roundId: `round_${Number(round || 1)}`,
@@ -244,20 +251,8 @@ async function buildManualQuestionStartRoundResult({
         derivedEvidenceSet,
         diagnosisDirections,
         followUps: yellowingCareFollowUps,
-        questionPackage: {
-          mode: 'yellow_leaf',
-          sourceMode: 'manual_yellowing_care_environment_frontloaded',
-          questionCount: YELLOWING_PACKAGE_QUESTION_COUNT,
-          answerSubmitMode: 'package',
-          questionDisplayMode: 'package'
-        },
-        uiHints: {
-          maxQuestionsThisRound: YELLOWING_PACKAGE_QUESTION_COUNT,
-          questionDisplayMode: 'package',
-          answerSubmitMode: 'package',
-          optionLayout: 'vertical',
-          transition: 'swiper'
-        },
+        questionPackage,
+        uiHints: buildQuestionPackageUiHints({}, questionPackage, yellowingCareFollowUps.length),
         metrics: {
             routeDecision: {
               mode: 'manual_yellowing_care_environment_frontloaded',

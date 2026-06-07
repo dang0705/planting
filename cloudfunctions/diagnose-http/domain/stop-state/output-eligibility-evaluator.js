@@ -36,7 +36,7 @@ function resolveConclusionStatus(response = {}, stopState = null) {
   return 'pending'
 }
 
-function resolveUnresolvedRisks(response = {}, questionQueue = null) {
+function resolveUnresolvedRisks(response = {}) {
   const risks = []
 
   const confidenceReasons = normalizeStringList(response?.confidenceReasons)
@@ -105,7 +105,7 @@ function evaluateOutputEligibility({ response = {}, questionQueue = null, stopSt
       response?.explanation?.whyItHappens ||
       response?.resultExplanation?.whyItHappens
     ),
-    unresolvedRisks: resolveUnresolvedRisks(response, questionQueue),
+    unresolvedRisks: resolveUnresolvedRisks(response),
     nextStepHints: resolveNextStepHints(response)
   }
 }
