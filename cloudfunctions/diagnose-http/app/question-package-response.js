@@ -102,8 +102,10 @@ function isYellowingQuestionPackage(response = {}) {
 }
 
 function normalizeAnswerQuestionKey(answer = {}) {
-  return fromQuestionId(answer?.questionId || '') ||
+  return (
+    fromQuestionId(answer?.questionId || '') ||
     normalizeText(answer?.questionKey || answer?.question_key || answer?.questionId || '')
+  )
 }
 
 function parseYellowingFrontloadedCareQuestionKey(questionKey = '') {
@@ -118,18 +120,16 @@ function parseYellowingFrontloadedCareQuestionKey(questionKey = '') {
 function hasQuestionPackageSubmitMetadata(payload = {}) {
   const questionPackage = payload?.questionPackage || {}
   const uiHints = payload?.uiHints || {}
-  return Boolean(questionPackage && Object.keys(questionPackage).length) ||
+  return (
+    Boolean(questionPackage && Object.keys(questionPackage).length) ||
     normalizeText(uiHints.answerSubmitMode || uiHints.answer_submit_mode) === 'package' ||
     normalizeText(uiHints.questionDisplayMode || uiHints.question_display_mode) === 'package'
+  )
 }
 
 function collectUniqueAnswerQuestionKeys(answers = []) {
   const questionKeys = Array.from(
-    new Set(
-      (Array.isArray(answers) ? answers : [])
-        .map(normalizeAnswerQuestionKey)
-        .filter(Boolean)
-    )
+    new Set((Array.isArray(answers) ? answers : []).map(normalizeAnswerQuestionKey).filter(Boolean))
   )
   return questionKeys
 }
@@ -139,15 +139,14 @@ function isCompleteYellowingFrontloadedCarePackage(questionKeys = []) {
     return false
   }
 
-  const dimensions = questionKeys
-    .map(parseYellowingFrontloadedCareQuestionKey)
-    .filter(Boolean)
+  const dimensions = questionKeys.map(parseYellowingFrontloadedCareQuestionKey).filter(Boolean)
   if (dimensions.length !== YELLOWING_PACKAGE_QUESTION_COUNT) {
     return false
   }
 
   const dimensionSet = new Set(dimensions)
-  const hasCompleteFrontloadedCarePackage = dimensionSet.size === YELLOWING_PACKAGE_QUESTION_COUNT &&
+  const hasCompleteFrontloadedCarePackage =
+    dimensionSet.size === YELLOWING_PACKAGE_QUESTION_COUNT &&
     Array.from(YELLOWING_FRONTLOADED_CARE_CONTEXT_DIMENSIONS).every(dimension =>
       dimensionSet.has(dimension)
     )
@@ -172,7 +171,11 @@ function resolveQuestionPackageAnswerCount(payload = {}, answerCount = 0) {
   return answerCount > 1 ? answerCount : 0
 }
 
-function isQuestionPackageAnswerSubmitPayload({ payload = {}, answers = [], requestMode = '' } = {}) {
+function isQuestionPackageAnswerSubmitPayload({
+  payload = {},
+  answers = [],
+  requestMode = ''
+} = {}) {
   if (normalizeText(requestMode).toLowerCase() !== 'answer_submit') {
     return false
   }
@@ -188,7 +191,9 @@ function isQuestionPackageAnswerSubmitPayload({ payload = {}, answers = [], requ
 
 function buildYellowingQuestionPackage(response = {}, questions = []) {
   const questionCount = Array.isArray(questions) ? questions.length : 0
-  if (!isYellowingQuestionPackage(response) || questionCount !== YELLOWING_PACKAGE_QUESTION_COUNT) {return null}
+  if (!isYellowingQuestionPackage(response) || questionCount !== YELLOWING_PACKAGE_QUESTION_COUNT) {
+    return null
+  }
   return getQuestionPackageByMode(YELLOW_LEAF_PACKAGE_MODE, {
     questionCount,
     sourceMode: resolveSourceMode(response) || YELLOWING_PACKAGE_SOURCE_MODE
@@ -220,10 +225,7 @@ function resolveResponseQuestions(publicResponse = {}) {
   if (Array.isArray(publicResponse.questions) && publicResponse.questions.length) {
     return publicResponse.questions
   }
-  if (Array.isArray(publicResponse.followUps) && publicResponse.followUps.length) {
-    return publicResponse.followUps
-  }
-  return Array.isArray(publicResponse.questions) ? publicResponse.questions : publicResponse.followUps
+  return Array.isArray(publicResponse.questions) ? publicResponse.questions : []
 }
 
 module.exports = {

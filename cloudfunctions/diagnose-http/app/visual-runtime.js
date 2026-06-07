@@ -4,7 +4,9 @@ const { analyzeAndPersistVisualBatch } = require('../services/visual-diagnosis-s
 const { persistRoundRuntime } = require('../services/round-runtime-persistence-service')
 
 function emitStartVisualEvent(onVisualEvent, eventName, payload = {}) {
-  if (typeof onVisualEvent !== 'function') {return}
+  if (typeof onVisualEvent !== 'function') {
+    return
+  }
   try {
     onVisualEvent(eventName, payload)
   } catch (error) {
@@ -88,9 +90,12 @@ async function persistRoundResult({
   skipPersistence = false,
   awaitPersistence = true,
   clientContext = null,
+  legacyQuestionRows = null,
   followUpRows = null
 }) {
-  if (skipPersistence) {return}
+  if (skipPersistence) {
+    return
+  }
 
   const persistencePromise = persistRoundRuntime({
     sessionId,
@@ -101,7 +106,7 @@ async function persistRoundResult({
     image,
     description,
     clientContext,
-    followUpRows
+    legacyQuestionRows: legacyQuestionRows || followUpRows
   })
   if (!awaitPersistence) {
     persistencePromise.catch(error => {

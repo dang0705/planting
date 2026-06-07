@@ -1,6 +1,6 @@
 # 02｜诊断 HTTP 接口、请求响应与路由
 
-更新时间：2026-06-06
+更新时间：2026-06-07
 
 ## 1. HTTP 入口总览
 
@@ -8,7 +8,7 @@
 
 - `/diagnosis/start`：从图片/既有上下文进入诊断主链。
 - `/diagnosis/question/start`：从手动症状模式进入问诊，当前黄叶 4 题题包由此入口产生。
-- `/diagnosis/answer`：提交 follow-up 回答后重跑诊断主链。
+- `/diagnosis/answer`：提交题包答案或非 package 兼容回答后重跑诊断主链。
 
 这些入口不是同一套响应包装路径，差异会影响题包是否能完整透出。
 
@@ -24,7 +24,7 @@
 
 代码来源：`cloudfunctions/diagnose-http/handlers/diagnosis-handlers.js` 67-104。
 
-这个差异是黄叶 4 题题包能从手动入口完整到前端的关键原因之一：`question-start` 的静态题包启动路径已经把 `followUps` 与 `questionPackage` 放进 result，handler 直接交给前端响应构造层。
+这个差异是黄叶 4 题题包能从手动入口完整到前端的关键原因之一：`question-start` 的静态题包启动路径已经把 `questions` 与 `questionPackage` 放进 result，handler 直接交给前端响应构造层。
 
 ## 4. `/diagnosis/answer`
 
@@ -32,18 +32,15 @@
 
 代码来源：`cloudfunctions/diagnose-http/handlers/diagnosis-handlers.js` 114-140。
 
-回答入口会做严格归属校验：必须有 `diagnosisSessionId`，必须加载 session，必须校验当前轮次、问题 key、option key 与 follow-up 归属。package answer submit 会作为当前题包轮次的终止提交状态传入诊断引擎；该入口不能被文档描述成“前端传什么答案都可进入 route 重算”。
+回答入口会做严格归属校验：必须有 `diagnosisSessionId`，必须加载 session，必须校验当前轮次、问题 key、option key 与题包 snapshot 或非 package 兼容行归属。package answer submit 会作为当前题包轮次的终止提交状态传入诊断引擎；该入口不能被文档描述成“前端传什么答案都可进入 route 重算”。
 
 ## 5. 手动症状模式入口
 
 `runQuestionStartDiagnosis` 的当前事实：
 
 1. `resolveManualSymptomMode` 从 `symptomClassKey` 解析固定手动症状模式，并校验可选 `symptomKey`。
-2. 若命中 `yellowing_mode`，先用 `static-question-package-start.js` 构造模块级静态 4 题 package，并在默认路径通过 `persistRoundRuntime` 持久化；该静态路径不加载 prior repository、manual fast path 或 `diagnosis-engine`。
-3. 非静态模式才构造 `manual_symptom_mode` 的 observed symptom 与 observed evidence，并解析 plant context。
-4. 非静态模式优先尝试 `buildManualQuestionStartRoundResult`。
-5. 若 manual fast path 未命中，则 fallback 到 `runDiagnosisRound`，stage 为 `preliminary`。
-6. 非静态路径最后同样持久化 round runtime。
+2. 若命中 `yellowing_mode`，固定用 `static-question-package-start.js` 构造模块级静态 4 题 package，并在默认路径通过 `persistRoundRuntime(..., { questionPackageSnapshotOnly: true })` 保存题包 snapshot；该静态路径不加载 prior repository、manual fast path 或 `diagnosis-engine`。
+3. 当前未配置固定题包的手动模式返回 501，不再把 start 主路径转入 `runDiagnosisRound`。
 
 代码来源：`cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js` 3-20、148-170、173-328；`cloudfunctions/diagnose-http/app/static-question-package-start.js` 82-119、159-233。
 
@@ -51,10 +48,10 @@
 
 `buildFrontendDiagnosisResponse` 的关键逻辑：
 
-- 当 `publicResponse.followUpRequired` 为 true 时，读取 `resolveResponseQuestions(publicResponse)`。
+- 读取 `resolveResponseQuestions(publicResponse)`；该 helper 只接受 `publicResponse.questions`。
 - 通过 `getQuestionPackageByMode(mode)` 尝试构造固定 `questionPackage`。
-- 有题包时按 `questionPackage.questionCount` 保留 follow-up；无题包时默认只保留 1 题。
-- 返回 `questions`、`followUpQuestions`、`questionPackage` 与 `uiHints`。
+- 有题包时按 `questionPackage.questionCount` 保留 `questions`；无题包时默认只保留 1 题。
+- package 响应返回 `questions`、`questionPackage` 与 `uiHints`。
 
 代码来源：`cloudfunctions/diagnose-http/app/frontend-response.js` 341-390；题包构造来源 `cloudfunctions/diagnose-http/app/question-package-response.js` 5-82。
 
@@ -63,9 +60,9 @@
 | 入口 | 是否经过 presenter | 常规题数 | 黄叶题包 |
 |---|---:|---:|---|
 | `/diagnosis/start` | 是 | 1 | 不作为黄叶题包主入口 |
-| `/diagnosis/question/start` | 否，直接 `buildFrontendResponse` | 1 或兼容路径 | 静态 package start 可一次性返回 4 题题包 |
-| `/diagnosis/answer` | 是 | 1 | 整包提交后重算；后端按 package queue/持久化/ownership 校验 |
+| `/diagnosis/question/start` | 否，直接 `buildFrontendResponse` | 非 package 当前不转入 start 兼容诊断 | 静态 package start 返回 active 4 题 `questions` |
+| `/diagnosis/answer` | 是 | 1 | 整包提交后重算；后端按 package snapshot ownership 校验 |
 
 ## 8. 风险边界
 
-文档必须明确：黄叶 4 题包已经是 `getQuestionPackageByMode('yellow_leaf')` 驱动的固定 package 协议，响应、前端展示/提交、package queue、持久化与归属校验均应允许包内 4 题。非 package 路径仍按单题 queue-anchor 语义工作，不能把 package 规则外推到所有模式。
+文档必须明确：黄叶 4 题包已经是 `getQuestionPackageByMode('yellow_leaf')` 驱动的固定 package 协议，响应、前端展示/提交、package snapshot 与归属校验均应允许包内 4 题。非 package 兼容路径仍按单题 queue-anchor 语义工作，不能把 package 规则外推到所有模式。

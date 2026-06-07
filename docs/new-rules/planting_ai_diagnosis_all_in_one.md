@@ -1,6 +1,6 @@
 # Planting AI 诊断运行规则 All-in-One（code-base 同步版）
 
-更新时间：2026-06-06
+更新时间：2026-06-07
 
 ## 0. 使用原则
 
@@ -30,7 +30,8 @@
 - `getQuestionPackageByMode(mode)`
 - `questionPackage`
 - `uiHints`
-- `questionQueue`
+- `questionPackageSnapshot`
+- `questionQueue`（仅非 package 兼容/运行时校验）
 - `stopState`
 - `outputEligibility`
 
@@ -62,7 +63,7 @@
 - `enteredRuntime: 1`。
 - `enteredExplanation: 1`。
 
-若模式是 `yellowing_mode`，之后优先走 `static-question-package-start.js` 的模块级静态题包启动路径；默认路径仍通过 `persistRoundRuntime` 持久化，但静态构造不加载 prior repository、manual fast path 或 `diagnosis-engine`。非静态/兼容模式才懒加载 manual fast path；未命中则 fallback 到 `runDiagnosisRound`。
+若模式是 `yellowing_mode`，之后固定走 `static-question-package-start.js` 的模块级静态题包启动路径；默认路径通过 `persistRoundRuntime(..., { questionPackageSnapshotOnly: true })` 保存题包 snapshot，但静态构造不加载 prior repository、manual fast path 或 `diagnosis-engine`。当前未配置固定题包的手动模式返回 501，不再把 start 主路径转入 `runDiagnosisRound`。
 
 ## 4. route planner
 
@@ -97,7 +98,7 @@ route planner 做四件事：
 3. 施肥/生长。
 4. 通风/湿度。
 
-当四题构造成功，响应包含：
+当四题构造成功，响应包含 active `questions` 和：
 
 ```json
 {
@@ -118,25 +119,24 @@ route planner 做四件事：
 
 前端可以据此展示 4 题套餐，并在最后一次提交整包答案。
 
-非静态/兼容模式才使用 `manual-symptom-question-start-fast-path.js` 或 route planner；不要再把 manual fast path 写成黄叶 question/start 固定题包的优先启动路径。
+不要再把 manual fast path、route planner 或 diagnosis-engine 兼容路径写成黄叶 question/start 固定题包的启动路径。
 
 ## 7. 黄叶题包的硬边界
 
-必须保留这个事实：黄叶 4 题题包当前是 package 协议，不能再被 legacy queue 首题锚点拒绝 sibling questions。
+必须保留这个事实：黄叶 4 题题包当前是 package 协议，回答归属以 package snapshot 为准，不能再被 legacy queue 首题锚点拒绝 sibling questions。
 
 已成立：
 
-- `question-start` 响应可一次性返回 4 个 follow-up。
+- `question-start` 响应可一次性返回 4 个 active `questions`。
 - `questionPackage` / `uiHints` 可进入前端。
 - 前端 normalizer 会按 `questionCount` 保留 4 题。
-- 前端 follow-up 页面支持 package 展示和整包提交。
-- package queue 会保留包内全部问题。
-- 后端 package persistence 会让有效 `yellow_leaf` package 的 4 个问题按同一当前轮次落库。
-- answer ownership 会基于同轮持久化 rows 允许包内 4 个答案一起通过。
+- 前端题包页面支持 package 展示和整包提交。
+- 后端 package persistence 会把有效 `yellow_leaf` package 的 4 个问题写入 `runtimeSnapshot.questionPackageSnapshot.packageQuestions`。
+- answer ownership 会基于 `questionPackageSnapshot.packageQuestions` 允许包内 4 个答案一起通过。
 
 仍需区分：
 
-- `questionQueue` 仍是兼容/校验 artifact，不是固定题包的题数权威。
+- `questionQueue` 仍是兼容/校验 artifact，不是固定题包的题数或归属权威。
 - 非 package 路径仍按 queue-anchor 单题语义工作。
 
 因此，文档和 AI 不能把“非 package 默认单题”写成“黄叶 package 只能提交首题”。
@@ -152,7 +152,7 @@ route planner 做四件事：
 - question key 是否属于当前 session 可回答集合。
 - option key 是否属于该 question 的合法映射。
 
-正常提交后，系统会标记 follow-up answer 和 question queue answered，并重跑 `runDiagnosisRound`。
+package 提交后，系统会用 snapshot 构造本轮 answered runtime，并重跑 `runDiagnosisRound`。非 package 兼容提交才继续标记 legacy question rows 和 question queue。
 
 ## 9. 停止规则
 
@@ -161,7 +161,6 @@ route planner 做四件事：
 停止要求：
 
 - `stage === final`
-- `followUpRequired === false`
 - 无 active question queue
 - outcome type 是正式值：`problematic`、`non_problematic` 或 `uncertain`
 - 有显式 stop decision
@@ -172,17 +171,17 @@ route planner 做四件事：
 
 输出资格由 `outputEligibility` 判定。只有 stop state 已停止、queue 清空、正式 outcome 与正式 stop decision 均存在时，才是 eligible。
 
-`followUpRequired === true` 时，输出保守级别是 blocked。
+固定题包阶段、stop state 未停止或仍有 active queue 时，输出保守级别是 blocked。
 
 ## 11. 公开响应与前端契约
 
 前端响应构造逻辑：
 
-- 有题包：按 `questionPackage.questionCount` 保留问题。
-- 无题包：follow-up 默认只保留 1 题。
-- 响应透出 `questionPackage` 和 `uiHints`。
+- 有题包：按 `questionPackage.questionCount` 保留 `questions`。
+- 无题包：兼容问题默认只保留 1 题。
+- package 响应透出 `questions`、`questionPackage` 和 `uiHints`。
 
-前端 normalizer 与 follow-up 页面支持：
+前端 normalizer 与题包页面支持：
 
 - 保留 `questionPackage`。
 - 按 `questionCount` 展示问题进度。
@@ -197,13 +196,12 @@ route planner 做四件事：
 - `cloudfunctions/diagnose-http/handlers/diagnosis-handlers.js`
 - `cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js`
 - `cloudfunctions/diagnose-http/app/static-question-package-start.js`
-- `cloudfunctions/diagnose-http/app/manual-symptom-question-start-fast-path.js`
 - `cloudfunctions/diagnose-http/app/question-package-response.js`
 - `cloudfunctions/diagnose-http/app/frontend-response.js`
+- `cloudfunctions/diagnose-http/app/package-answer-ownership-runtime.js`
+- `cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js`
 - `cloudfunctions/diagnose-http/domain/outcome-route-planner.js`
 - `cloudfunctions/diagnose-http/domain/diagnosis-engine.js`
-- `cloudfunctions/diagnose-http/domain/question-queue/question-queue-planner.js`
-- `cloudfunctions/diagnose-http/services/session-follow-up-service.js`
 - `cloudfunctions/diagnose-http/domain/stop-state/stop-state-evaluator.js`
 - `cloudfunctions/diagnose-http/domain/stop-state/output-eligibility-evaluator.js`
 - `src/utils/diagnose-result-normalizer.js`
@@ -219,7 +217,8 @@ route planner 做四件事：
 - [ ] 是否没有恢复旧 ranking/score-gap 追问规则。
 - [ ] 是否没有恢复旧 dynamic next-question helper 作为当前权威。
 - [ ] 固定题包是否仍通过 `getQuestionPackageByMode(mode)`。
-- [ ] package queue、持久化和归属校验是否覆盖包内所有题。
+- [ ] `/diagnosis/question/start` package 响应是否使用 `questions` 而不是旧数组字段。
+- [ ] package snapshot 和归属校验是否覆盖包内所有题。
 - [ ] stop state 是否仍能阻止未完成追问输出。
 - [ ] output eligibility 是否仍能阻止 active queue 输出。
 - [ ] 前端是否保留并使用 `questionPackage` / `uiHints`。

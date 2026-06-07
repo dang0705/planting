@@ -2,7 +2,7 @@
 
 const { toOptionId, toQuestionId } = require('../mappers/public-id-mapper')
 const { buildRuntimeArtifacts } = require('../domain/runtime-artifacts')
-const { buildSyntheticObservedProbeQuestions } = require('../utils/synthetic-follow-up')
+const { buildObservedProbePackageQuestions } = require('./static-package-question-builder')
 const { filterDisabledYellowingFlowQuestions } = require('../utils/yellowing-question-policy')
 const {
   YELLOW_LEAF_PACKAGE_MODE,
@@ -38,14 +38,12 @@ function clonePlain(value) {
     return value.map(clonePlain)
   }
   if (value && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, child]) => [key, clonePlain(child)])
-    )
+    return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, clonePlain(child)]))
   }
   return value
 }
 
-function mapStaticQuestionToFollowUp(question = {}) {
+function mapStaticQuestionToPackageQuestion(question = {}) {
   return {
     questionKey: question.questionKey,
     questionId: toQuestionId(question.questionKey),
@@ -83,7 +81,7 @@ function buildYellowingStaticQuestions() {
   const questionPackage = getQuestionPackageByMode(YELLOW_LEAF_PACKAGE_MODE)
   const targetDimensions = questionPackage?.targetDimensions || []
   const questions = targetDimensions.flatMap(targetDimension =>
-    buildSyntheticObservedProbeQuestions(YELLOWING_STATIC_ITEM, {
+    buildObservedProbePackageQuestions(YELLOWING_STATIC_ITEM, {
       maxQuestions: 1,
       preferredDimensions: [targetDimension],
       plantContext: {}
@@ -93,24 +91,22 @@ function buildYellowingStaticQuestions() {
   const seenQuestionKeys = new Set()
   for (const question of filterDisabledYellowingFlowQuestions(questions)) {
     const questionKey = String(question?.questionKey || '').trim()
-    if (!questionKey || seenQuestionKeys.has(questionKey)) {continue}
+    if (!questionKey || seenQuestionKeys.has(questionKey)) {
+      continue
+    }
     seenQuestionKeys.add(questionKey)
     uniqueQuestions.push(question)
   }
-  return deepFreeze(uniqueQuestions.map(mapStaticQuestionToFollowUp))
+  return deepFreeze(uniqueQuestions.map(mapStaticQuestionToPackageQuestion))
 }
 
-const STATIC_YELLOWING_FOLLOW_UPS = buildYellowingStaticQuestions()
+const STATIC_YELLOWING_PACKAGE_QUESTIONS = buildYellowingStaticQuestions()
 
 function isYellowingStaticQuestionStartMode(option = {}) {
   return String(option?.classKey || '').trim() === YELLOWING_CLASS_KEY
 }
 
-function buildMinimalPlantContext({
-  plantId = '',
-  userPlantId = '',
-  plantCatalogId = ''
-} = {}) {
+function buildMinimalPlantContext({ plantId = '', userPlantId = '', plantCatalogId = '' } = {}) {
   return {
     plantId: plantCatalogId || plantId || '',
     userPlantId: userPlantId || '',
@@ -165,15 +161,15 @@ function buildStaticQuestionPackageStartRoundResult({
   if (!isYellowingStaticQuestionStartMode(option)) {
     return null
   }
-  const followUps = clonePlain(STATIC_YELLOWING_FOLLOW_UPS)
-  if (followUps.length !== YELLOWING_PACKAGE_QUESTION_COUNT) {
+  const packageQuestions = clonePlain(STATIC_YELLOWING_PACKAGE_QUESTIONS)
+  if (packageQuestions.length !== YELLOWING_PACKAGE_QUESTION_COUNT) {
     throw Object.assign(new Error('黄叶固定题包数量异常'), { statusCode: 500 })
   }
 
   const observedSymptoms = buildStaticObservedSymptoms(option)
   const observedEvidenceSet = buildStaticObservedEvidenceSet(option)
   const questionPackage = getQuestionPackageByMode(YELLOW_LEAF_PACKAGE_MODE, {
-    questionCount: followUps.length,
+    questionCount: packageQuestions.length,
     sourceMode: YELLOWING_SOURCE_MODE
   })
   const response = {
@@ -182,12 +178,11 @@ function buildStaticQuestionPackageStartRoundResult({
     roundIndex: Number(round || 1),
     currentRoundIndex: Number(round || 1),
     currentRoundId: `round_${Number(round || 1)}`,
-    stage: 'followup',
+    stage: 'question_package',
     status: 'active',
-    followUpRequired: true,
     routePrimaryAction: 'ask_first',
-    stopReason: 'await_follow_up',
-    sessionStatus: 'awaiting_follow_up',
+    stopReason: 'await_package_answers',
+    sessionStatus: 'awaiting_package_answers',
     outcomeType: '',
     plantId: plantContext?.userPlantId || plantContext?.plantId || '',
     plantIdentityId: plantContext?.plantIdentityId || '',
@@ -197,9 +192,9 @@ function buildStaticQuestionPackageStartRoundResult({
     observedEvidenceSet,
     derivedEvidenceSet: [],
     diagnosisDirections: [],
-    followUps,
+    questions: packageQuestions,
     questionPackage,
-    uiHints: buildQuestionPackageUiHints({}, questionPackage, followUps.length),
+    uiHints: buildQuestionPackageUiHints({}, questionPackage, packageQuestions.length),
     metrics: {
       questionStartPath: 'static_question_package',
       routeDecision: {
@@ -207,7 +202,7 @@ function buildStaticQuestionPackageStartRoundResult({
         candidateOutcomeKeys: [],
         visibleOutcomeKeys: [],
         nextQuestionKeys: [],
-        requiresFollowUp: false,
+        requiresQuestionPackage: true,
         decisionCause: {
           decisionCauseKey: 'static_yellowing_question_package',
           decisionCauseText: '黄叶手动入口使用模块级静态固定题包。'
@@ -218,7 +213,7 @@ function buildStaticQuestionPackageStartRoundResult({
       mode: YELLOWING_SOURCE_MODE,
       visibleOutcomeKeys: [],
       nextQuestionKeys: [],
-      requiresFollowUp: false
+      requiresQuestionPackage: true
     },
     plantContext
   }
@@ -238,7 +233,7 @@ module.exports = {
   buildStaticQuestionPackageStartRoundResult,
   isYellowingStaticQuestionStartMode,
   _test: {
-    STATIC_YELLOWING_FOLLOW_UPS,
+    STATIC_YELLOWING_PACKAGE_QUESTIONS,
     buildYellowingStaticQuestions,
     buildStaticObservedSymptoms,
     buildStaticObservedEvidenceSet

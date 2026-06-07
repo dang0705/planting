@@ -10,13 +10,16 @@
       "questionQueue first-anchor means yellow leaf package can only submit the first question",
       "question-start/start/answer response paths are equivalent",
       "dynamic next-question helpers as current questioning authority",
-      "questionQueue as fixed package question-count authority"
+      "questionQueue as fixed package question-count authority",
+      "legacy array field as package primary response field",
+      "question-start routes unmatched fixed-package mode to diagnosis-engine",
+      "package answer ownership by legacy follow-up rows"
     ]
   },
   "docs_structure": [
     {
       "file": "docs/code-logics/INDEX.md",
-      "line_count": 34,
+      "line_count": 35,
       "headings": [
         {
           "title": "# code-logics 索引（以 code-base 为最高事实源）",
@@ -24,19 +27,19 @@
         },
         {
           "title": "## 当前诊断主链结论",
-          "lines": "7-15"
+          "lines": "7-16"
         },
         {
           "title": "## 阅读顺序",
-          "lines": "16-25"
+          "lines": "17-26"
         },
         {
           "title": "## 与 new-rules 的关系",
-          "lines": "26-29"
+          "lines": "27-30"
         },
         {
           "title": "## 维护规则",
-          "lines": "30-34"
+          "lines": "31-35"
         }
       ]
     },
@@ -80,7 +83,7 @@
     },
     {
       "file": "docs/code-logics/02_诊断HTTP接口_请求响应与路由.md",
-      "line_count": 70,
+      "line_count": 68,
       "headings": [
         {
           "title": "# 02｜诊断 HTTP 接口、请求响应与路由",
@@ -104,25 +107,25 @@
         },
         {
           "title": "## 5. 手动症状模式入口",
-          "lines": "37-48"
+          "lines": "37-46"
         },
         {
           "title": "## 6. 当前响应契约",
-          "lines": "49-59"
+          "lines": "47-57"
         },
         {
           "title": "## 7. 文档必须保留的接口差异",
-          "lines": "60-67"
+          "lines": "58-65"
         },
         {
           "title": "## 8. 风险边界",
-          "lines": "68-70"
+          "lines": "66-68"
         }
       ]
     },
     {
       "file": "docs/code-logics/03_诊断运行时主链路_逐步执行逻辑.md",
-      "line_count": 132,
+      "line_count": 129,
       "headings": [
         {
           "title": "# 03｜诊断运行时主链路：route-only 执行逻辑",
@@ -149,26 +152,26 @@
           "lines": "52-74"
         },
         {
-          "title": "## 6. 黄叶题包的 queue、持久化与 ownership 边界",
-          "lines": "75-96"
+          "title": "## 6. 黄叶题包的 snapshot、兼容 queue 与 ownership 边界",
+          "lines": "75-94"
         },
         {
           "title": "## 7. 停止决策",
-          "lines": "97-106"
+          "lines": "95-104"
         },
         {
           "title": "## 8. 输出资格",
-          "lines": "107-124"
+          "lines": "105-121"
         },
         {
           "title": "## 9. 文档修正原则",
-          "lines": "125-132"
+          "lines": "122-129"
         }
       ]
     },
     {
       "file": "docs/code-logics/05_问诊系统_问题生成_过滤_停止策略.md",
-      "line_count": 138,
+      "line_count": 137,
       "headings": [
         {
           "title": "# 05｜问诊系统：问题生成、过滤、停止策略",
@@ -191,7 +194,7 @@
           "lines": "29-34"
         },
         {
-          "title": "### 2.3 黄叶手动 4 题题包",
+          "title": "### 2.3 黄叶静态 4 题题包",
           "lines": "35-47"
         },
         {
@@ -207,7 +210,7 @@
           "lines": "67-74"
         },
         {
-          "title": "## 5. 追问持久化与归属校验",
+          "title": "## 5. package snapshot 与归属校验",
           "lines": "75-82"
         },
         {
@@ -224,11 +227,11 @@
         },
         {
           "title": "## 9. 输出资格",
-          "lines": "123-128"
+          "lines": "122-127"
         },
         {
           "title": "## 10. 开发检查点",
-          "lines": "129-138"
+          "lines": "128-137"
         }
       ]
     },
@@ -284,7 +287,7 @@
     },
     {
       "file": "docs/code-logics/07_结果格式化_公开响应_前端接入契约.md",
-      "line_count": 97,
+      "line_count": 96,
       "headings": [
         {
           "title": "# 07｜结果格式化、公开响应与前端接入契约",
@@ -296,39 +299,39 @@
         },
         {
           "title": "## 2. 前端响应构造",
-          "lines": "9-20"
+          "lines": "9-19"
         },
         {
           "title": "## 3. 黄叶题包响应契约",
-          "lines": "21-40"
+          "lines": "20-39"
         },
         {
           "title": "## 4. 前端 normalizer",
-          "lines": "41-51"
+          "lines": "40-50"
         },
         {
-          "title": "## 5. 前端 follow-up 页面",
-          "lines": "52-65"
+          "title": "## 5. 前端题包页面",
+          "lines": "51-64"
         },
         {
           "title": "## 6. 前端 payload",
-          "lines": "66-71"
+          "lines": "65-70"
         },
         {
           "title": "## 7. 必须暴露给前端的边界",
-          "lines": "72-77"
+          "lines": "71-76"
         },
         {
           "title": "## 8. 养护时间线环境上下文取数模式",
-          "lines": "78-85"
+          "lines": "77-84"
         },
         {
           "title": "## 9. final 结果读取",
-          "lines": "86-90"
+          "lines": "85-89"
         },
         {
           "title": "## 10. 前端不得做的事",
-          "lines": "91-97"
+          "lines": "90-96"
         }
       ]
     },
@@ -384,7 +387,7 @@
     },
     {
       "file": "docs/code-logics/10_实施规则映射_开发约束_审计清单.md",
-      "line_count": 87,
+      "line_count": 91,
       "headings": [
         {
           "title": "# 10｜实施规则映射、开发约束与审计清单",
@@ -396,31 +399,31 @@
         },
         {
           "title": "## 2. 问诊改动审计清单",
-          "lines": "18-34"
+          "lines": "18-35"
         },
         {
           "title": "## 3. 停止与输出资格审计清单",
-          "lines": "35-44"
+          "lines": "36-45"
         },
         {
           "title": "## 4. HTTP 接口审计清单",
-          "lines": "45-51"
+          "lines": "46-52"
         },
         {
           "title": "## 5. 文档禁用表述",
-          "lines": "52-62"
+          "lines": "53-66"
         },
         {
           "title": "## 6. 允许保留的历史概念",
-          "lines": "63-73"
+          "lines": "67-77"
         },
         {
           "title": "## 7. Codex / AI 执行规则",
-          "lines": "74-84"
+          "lines": "78-88"
         },
         {
           "title": "## 8. 本轮已确认的高风险边界",
-          "lines": "85-87"
+          "lines": "89-91"
         }
       ]
     },
@@ -506,7 +509,7 @@
     },
     {
       "file": "docs/new-rules/planting_ai_diagnosis_all_in_one.md",
-      "line_count": 237,
+      "line_count": 236,
       "headings": [
         {
           "title": "# Planting AI 诊断运行规则 All-in-One（code-base 同步版）",
@@ -518,31 +521,31 @@
         },
         {
           "title": "## 1. 当前诊断主链与问诊模式",
-          "lines": "11-36"
+          "lines": "11-37"
         },
         {
           "title": "## 2. 入口与 handler 差异",
-          "lines": "37-52"
+          "lines": "38-53"
         },
         {
           "title": "## 3. 手动症状模式",
-          "lines": "53-66"
+          "lines": "54-67"
         },
         {
           "title": "## 4. route planner",
-          "lines": "67-77"
+          "lines": "68-78"
         },
         {
           "title": "## 5. 题包与非 package 兼容路径",
-          "lines": "78-90"
+          "lines": "79-91"
         },
         {
           "title": "## 6. 黄叶 4 题题包",
-          "lines": "91-122"
+          "lines": "92-123"
         },
         {
           "title": "## 7. 黄叶题包的硬边界",
-          "lines": "123-143"
+          "lines": "124-143"
         },
         {
           "title": "## 8. 回答提交",
@@ -554,23 +557,23 @@
         },
         {
           "title": "## 10. 输出资格",
-          "lines": "171-176"
+          "lines": "170-175"
         },
         {
           "title": "## 11. 公开响应与前端契约",
-          "lines": "177-192"
+          "lines": "176-191"
         },
         {
           "title": "## 12. 当前代码源索引",
-          "lines": "193-213"
+          "lines": "192-211"
         },
         {
           "title": "## 13. 修改 checklist",
-          "lines": "214-227"
+          "lines": "212-226"
         },
         {
           "title": "## 14. 旧概念处置",
-          "lines": "228-237"
+          "lines": "227-236"
         }
       ]
     }
@@ -583,28 +586,23 @@
     },
     {
       "file": "cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js",
-      "lines": "3-20,148-170,173-328",
-      "fact": "manual symptom mode validation; yellowing_mode uses static package start before non-static manual fast path and diagnosis-engine fallback; default path persists round runtime"
+      "lines": "243-268,271-361",
+      "fact": "manual symptom mode validation; yellowing_mode uses static package start and snapshot-only persistence; unsupported fixed-package modes return 501 without routing to diagnosis-engine"
     },
     {
       "file": "cloudfunctions/diagnose-http/app/static-question-package-start.js",
-      "lines": "82-119,159-233",
-      "fact": "module-level static yellow_leaf question/start package construction without prior repository or diagnosis-engine runtime"
-    },
-    {
-      "file": "cloudfunctions/diagnose-http/app/manual-symptom-question-start-fast-path.js",
-      "lines": "25-38,224-285",
-      "fact": "non-static compatibility fast path for manual question/start when static package start does not apply"
+      "lines": "155-228",
+      "fact": "module-level static yellow_leaf question/start package construction returns active questions and questionPackage without prior repository or diagnosis-engine runtime"
     },
     {
       "file": "cloudfunctions/diagnose-http/app/question-package-response.js",
-      "lines": "5-82,167-173",
-      "fact": "explicit mode-to-question-package mapping, yellow_leaf outcomePolicy, package validation and ui hints"
+      "lines": "192-229",
+      "fact": "explicit yellow_leaf package validation, package ui hints, and questions-only response question resolution"
     },
     {
       "file": "cloudfunctions/diagnose-http/app/frontend-response.js",
       "lines": "341-390",
-      "fact": "question package controls follow-up limit; no package defaults to single question"
+      "fact": "active question package responses return questions, questionPackage, and uiHints"
     },
     {
       "file": "cloudfunctions/diagnose-http/domain/outcome-route-planner.js",
@@ -619,12 +617,17 @@
     {
       "file": "cloudfunctions/diagnose-http/domain/question-queue/question-queue-planner.js",
       "lines": "56-74,109-177",
-      "fact": "package queue keeps all package questions; non-package responses default to one question"
+      "fact": "questionQueue remains compatibility runtime state and is not the package answer ownership authority"
     },
     {
-      "file": "cloudfunctions/diagnose-http/services/session-follow-up-service.js",
-      "lines": "124-136,343-395",
-      "fact": "package persistence can bypass queue-anchor filtering for valid yellow_leaf siblings; non-package persistence and ownership still use queue anchors"
+      "file": "cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js",
+      "lines": "17-35,54-128",
+      "fact": "static package start persists runtimeSnapshot.questionPackageSnapshot.packageQuestions and skips legacy question row writes"
+    },
+    {
+      "file": "cloudfunctions/diagnose-http/app/package-answer-ownership-runtime.js",
+      "lines": "11-24,75-90,93-150",
+      "fact": "package answer ownership and answered runtime are derived from questionPackageSnapshot.packageQuestions"
     },
     {
       "file": "cloudfunctions/diagnose-http/domain/stop-state/stop-state-evaluator.js",

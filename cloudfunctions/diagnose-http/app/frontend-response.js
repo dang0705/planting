@@ -1,9 +1,7 @@
 'use strict'
 
 function normalizeStringList(items = []) {
-  return (Array.isArray(items) ? items : [])
-    .map(item => String(item || '').trim())
-    .filter(Boolean)
+  return (Array.isArray(items) ? items : []).map(item => String(item || '').trim()).filter(Boolean)
 }
 
 const {
@@ -15,6 +13,10 @@ const {
   buildYellowingQuestionPackage,
   resolveResponseQuestions
 } = require('./question-package-response')
+const {
+  pickMinimalPackageQuestions,
+  buildQuestionPackageSummaryCard
+} = require('./frontend-question-package-response')
 
 function pickMinimalQuestions(items = []) {
   return (Array.isArray(items) ? items : [])
@@ -55,37 +57,6 @@ function pickMinimalQuestions(items = []) {
     })
 }
 
-function pickMinimalFollowUpQuestions(items = [], options = {}) {
-  const limit = Math.max(1, Number(options?.limit || 1))
-  return (Array.isArray(items) ? items : [])
-    .filter(item => item?.questionId || item?.questionKey)
-    .slice(0, limit)
-    .map(item => {
-      const questionText = String(
-        item?.text || item?.questionText || item?.questionTextUserCn || item?.questionTextCn || ''
-      ).trim()
-
-      return {
-        questionId: String(item?.questionId || item?.questionKey || '').trim(),
-        questionKey: String(item?.questionKey || item?.questionId || '').trim(),
-        targetDimension: String(item?.targetDimension || '').trim(),
-        defaultOptionKey: String(item?.defaultOptionKey || '').trim(),
-        defaultOptionId: String(item?.defaultOptionId || '').trim(),
-        uiVariant: String(item?.uiVariant || '').trim(),
-        text: questionText,
-        helpText: String(item?.helpText || '').trim(),
-        options: (Array.isArray(item?.options) ? item.options : [])
-          .filter(option => option?.optionId || option?.optionKey)
-          .map(option => ({
-            optionId: String(option?.optionId || option?.optionKey || '').trim(),
-            optionKey: String(option?.optionKey || option?.optionId || '').trim(),
-            text: String(option?.text || option?.label || '').trim(),
-            isDefault: Boolean(option?.isDefault)
-          }))
-      }
-    })
-}
-
 function pickMinimalNextSteps(items = []) {
   return (Array.isArray(items) ? items : [])
     .map(item => {
@@ -109,15 +80,15 @@ function pickMinimalNextSteps(items = []) {
 function pickMinimalTextItems(items = []) {
   return normalizeStringList(
     (Array.isArray(items) ? items : []).map(item =>
-      typeof item === 'string'
-        ? item
-        : item?.text || item?.title || item?.label || ''
+      typeof item === 'string' ? item : item?.text || item?.title || item?.label || ''
     )
   )
 }
 
 function pickMinimalActionAdvice(actionAdvice = null) {
-  if (!actionAdvice || typeof actionAdvice !== 'object') {return null}
+  if (!actionAdvice || typeof actionAdvice !== 'object') {
+    return null
+  }
   const compact = {
     todayActions: normalizeStringList(actionAdvice.todayActions),
     threeDayActions: normalizeStringList(actionAdvice.threeDayActions),
@@ -137,7 +108,9 @@ function pickMinimalActionAdvice(actionAdvice = null) {
 
 function pickActionAdviceStepTexts(actionAdvice = null) {
   const compact = pickMinimalActionAdvice(actionAdvice)
-  if (!compact) {return []}
+  if (!compact) {
+    return []
+  }
   return normalizeStringList([
     ...compact.todayActions,
     ...compact.threeDayActions,
@@ -147,7 +120,9 @@ function pickActionAdviceStepTexts(actionAdvice = null) {
 
 function pickActionAdviceAvoidTexts(actionAdvice = null) {
   const compact = pickMinimalActionAdvice(actionAdvice)
-  if (!compact) {return []}
+  if (!compact) {
+    return []
+  }
   return normalizeStringList([
     ...compact.avoidActions,
     ...(compact.conflictDetected ? compact.retakeOrEscalate : [])
@@ -195,7 +170,9 @@ function buildMinimalAvoidAdvice(publicResponse = {}, explanation = null) {
 }
 
 function pickMinimalFinalResult(finalResult = null) {
-  if (!finalResult || typeof finalResult !== 'object') {return null}
+  if (!finalResult || typeof finalResult !== 'object') {
+    return null
+  }
   const visibleOutcomes = buildVisibleOutcomeEntries(finalResult)
   return {
     resultId: String(finalResult?.resultId || '').trim(),
@@ -215,7 +192,9 @@ function pickMinimalFinalResult(finalResult = null) {
 }
 
 function pickMinimalOutcomeEntry(outcome = null) {
-  if (!outcome || typeof outcome !== 'object') {return null}
+  if (!outcome || typeof outcome !== 'object') {
+    return null
+  }
   return {
     outcomeKey: String(outcome?.outcomeKey || outcome?.problemKey || '').trim(),
     problemKey: String(outcome?.problemKey || outcome?.outcomeKey || '').trim(),
@@ -234,21 +213,23 @@ function resolveOutcomeIdentityKey(outcome = null, index = 0) {
   if (!outcome || typeof outcome !== 'object') {
     return `outcome_${index}`
   }
-  return normalizeText(
-    outcome.outcomeKey ||
-      outcome.problemKey ||
-      outcome.problemId ||
-      ''
-  ) || `outcome_${index}`
+  return (
+    normalizeText(outcome.outcomeKey || outcome.problemKey || outcome.problemId || '') ||
+    `outcome_${index}`
+  )
 }
 
 function buildVisibleOutcomeEntries(source = {}) {
-  const directVisibleOutcomes = Array.isArray(source.visibleOutcomes || source.finalResult?.visibleOutcomes)
-    ? (source.visibleOutcomes || source.finalResult?.visibleOutcomes)
+  const directVisibleOutcomes = Array.isArray(
+    source.visibleOutcomes || source.finalResult?.visibleOutcomes
+  )
+    ? source.visibleOutcomes || source.finalResult?.visibleOutcomes
     : []
   const legacyPrimaryOutcome = source.primaryOutcome || source.finalResult?.primaryOutcome || null
-  const legacySecondaryOutcomes = Array.isArray(source.secondaryOutcomes || source.finalResult?.secondaryOutcomes)
-    ? (source.secondaryOutcomes || source.finalResult?.secondaryOutcomes)
+  const legacySecondaryOutcomes = Array.isArray(
+    source.secondaryOutcomes || source.finalResult?.secondaryOutcomes
+  )
+    ? source.secondaryOutcomes || source.finalResult?.secondaryOutcomes
     : []
   const merged = []
   const seen = new Set()
@@ -258,9 +239,13 @@ function buildVisibleOutcomeEntries(source = {}) {
     ...legacySecondaryOutcomes
   ]) {
     const minimalOutcome = pickMinimalOutcomeEntry(outcome)
-    if (!minimalOutcome) {continue}
+    if (!minimalOutcome) {
+      continue
+    }
     const identityKey = resolveOutcomeIdentityKey(minimalOutcome, merged.length)
-    if (seen.has(identityKey)) {continue}
+    if (seen.has(identityKey)) {
+      continue
+    }
     seen.add(identityKey)
     merged.push(minimalOutcome)
   }
@@ -276,7 +261,9 @@ function normalizeOutcomeMode(value = '', visibleOutcomes = []) {
 }
 
 function pickMinimalSummaryCard(summaryCard = null) {
-  if (!summaryCard || typeof summaryCard !== 'object') {return null}
+  if (!summaryCard || typeof summaryCard !== 'object') {
+    return null
+  }
   return {
     title: String(summaryCard?.title || '').trim(),
     subtitle: String(summaryCard?.subtitle || '').trim(),
@@ -286,7 +273,9 @@ function pickMinimalSummaryCard(summaryCard = null) {
 }
 
 function pickMinimalVisualBatchTrace(trace = null) {
-  if (!trace || typeof trace !== 'object') {return null}
+  if (!trace || typeof trace !== 'object') {
+    return null
+  }
   return {
     currentVisualCallBatchId:
       trace?.currentVisualCallBatchId || trace?.current_visual_call_batch_id || null,
@@ -294,33 +283,43 @@ function pickMinimalVisualBatchTrace(trace = null) {
       trace?.originVisualCallBatchId || trace?.origin_visual_call_batch_id || null,
     supersedeTargetBatchId:
       trace?.supersedeTargetBatchId || trace?.supersede_target_batch_id || null,
-    supersededByBatchId:
-      trace?.supersededByBatchId || trace?.superseded_by_batch_id || null,
+    supersededByBatchId: trace?.supersededByBatchId || trace?.superseded_by_batch_id || null,
     supersedeApplied: Number(trace?.supersedeApplied ?? trace?.supersede_applied ?? 0) ? 1 : 0,
     supersedeReason: String(trace?.supersedeReason || trace?.supersede_reason || '').trim()
   }
 }
 
 function pickMinimalVisualAggregateSummary(summary = null) {
-  if (!summary || typeof summary !== 'object') {return null}
+  if (!summary || typeof summary !== 'object') {
+    return null
+  }
   return {
     visualCallBatchId: summary?.visualCallBatchId || summary?.visual_call_batch_id || null,
-    effectiveImageCount: Number(summary?.effectiveImageCount ?? summary?.effective_image_count ?? 0),
-    aggregateQualityGrade:
-      String(summary?.aggregateQualityGrade || summary?.aggregate_quality_grade || '').trim(),
-    aggregateAnalyzability:
-      String(summary?.aggregateAnalyzability || summary?.aggregate_analyzability || '').trim(),
+    effectiveImageCount: Number(
+      summary?.effectiveImageCount ?? summary?.effective_image_count ?? 0
+    ),
+    aggregateQualityGrade: String(
+      summary?.aggregateQualityGrade || summary?.aggregate_quality_grade || ''
+    ).trim(),
+    aggregateAnalyzability: String(
+      summary?.aggregateAnalyzability || summary?.aggregate_analyzability || ''
+    ).trim(),
     suggestedFollowupCapture: normalizeStringList(
       summary?.suggestedFollowupCapture || summary?.suggested_followup_capture
     ),
-    admissionReadyFlag: Number(summary?.admissionReadyFlag ?? summary?.admission_ready_flag ?? 0) ? 1 : 0,
-    routePrimaryAction:
-      String(summary?.routePrimaryAction || summary?.route_primary_action || '').trim()
+    admissionReadyFlag: Number(summary?.admissionReadyFlag ?? summary?.admission_ready_flag ?? 0)
+      ? 1
+      : 0,
+    routePrimaryAction: String(
+      summary?.routePrimaryAction || summary?.route_primary_action || ''
+    ).trim()
   }
 }
 
 function pickMinimalOutputEligibility(outputEligibility = null) {
-  if (!outputEligibility || typeof outputEligibility !== 'object') {return null}
+  if (!outputEligibility || typeof outputEligibility !== 'object') {
+    return null
+  }
   return {
     eligible: Number(outputEligibility?.eligible || 0) ? 1 : 0,
     judgment: String(outputEligibility?.judgment || '').trim(),
@@ -329,33 +328,32 @@ function pickMinimalOutputEligibility(outputEligibility = null) {
   }
 }
 
-function buildFollowUpSummaryCard(questions = []) {
-  return {
-    title: '继续问诊',
-    subtitle: questions.length > 1 ? `还需要确认 ${questions.length} 个关键信息` : questions.length ? '还需要再确认 1 个关键信息' : '还需要继续确认',
-    severity: 'low',
-    statusText: ''
-  }
-}
-
 function buildFrontendDiagnosisResponse(publicResponse = {}) {
-  const isFollowUp = Boolean(publicResponse.followUpRequired)
   const rawQuestions = resolveResponseQuestions(publicResponse)
-  const questionPackage = isFollowUp ? buildYellowingQuestionPackage(publicResponse, rawQuestions) : null
-  const questions = isFollowUp
-    ? pickMinimalFollowUpQuestions(rawQuestions, { limit: questionPackage?.questionCount || 1 })
+  const hasActiveQuestionPackage =
+    Boolean(publicResponse?.questionPackage) && rawQuestions.length > 0
+  const questionPackage = hasActiveQuestionPackage
+    ? buildYellowingQuestionPackage(publicResponse, rawQuestions)
+    : null
+  const questions = hasActiveQuestionPackage
+    ? pickMinimalPackageQuestions(rawQuestions, { limit: questionPackage?.questionCount || 1 })
     : pickMinimalQuestions(rawQuestions)
-  if (isFollowUp) {
+  if (hasActiveQuestionPackage) {
     const resultId = String(publicResponse.resultId || '').trim()
     const userPlantId = publicResponse.userPlantId || null
-    const plantId = publicResponse.plantId || publicResponse.userPlantId || publicResponse.plantCatalogId || ''
+    const plantId =
+      publicResponse.plantId || publicResponse.userPlantId || publicResponse.plantCatalogId || ''
     const plantCatalogId = publicResponse.plantCatalogId || null
     const plantIdentityId = String(publicResponse.plantIdentityId || '').trim()
     const latestVisualCallBatchId = publicResponse.latestVisualCallBatchId || null
     const answerRevision = Number(publicResponse.answerRevision || 0)
     const visualBatchTrace = pickMinimalVisualBatchTrace(publicResponse.visualBatchTrace)
-    const visualAggregateSummary = pickMinimalVisualAggregateSummary(publicResponse.visualAggregateSummary)
-    const careBehaviorTimeline = compactCareBehaviorTimelineForPublic(publicResponse.careBehaviorTimeline || null)
+    const visualAggregateSummary = pickMinimalVisualAggregateSummary(
+      publicResponse.visualAggregateSummary
+    )
+    const careBehaviorTimeline = compactCareBehaviorTimelineForPublic(
+      publicResponse.careBehaviorTimeline || null
+    )
     const environmentCareContext = compactEnvironmentCareContextForPublic(
       publicResponse.environmentCareContext || null,
       publicResponse.careBehaviorTimeline || null
@@ -374,20 +372,23 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
       ...(plantCatalogId ? { plantCatalogId } : {}),
       ...(plantIdentityId ? { plantIdentityId } : {}),
       ...(latestVisualCallBatchId ? { latestVisualCallBatchId } : {}),
-      stage: publicResponse.stage || 'followup',
+      stage: publicResponse.stage || 'question_package',
       status: publicResponse.status || publicResponse.sessionStatus || 'active',
       stopReason: publicResponse.stopReason || '',
-      followUpRequired: true,
       questions,
       ...(questionPackage ? { questionPackage } : {}),
-      summaryCard: buildFollowUpSummaryCard(questions),
+      summaryCard: buildQuestionPackageSummaryCard(questions),
       ...(visualBatchTrace ? { visualBatchTrace } : {}),
       ...(visualAggregateSummary ? { visualAggregateSummary } : {}),
       ...(answerRevision ? { answerRevision } : {}),
       ...(uiPatch ? { uiPatch } : {}),
       ...(careBehaviorTimeline ? { careBehaviorTimeline } : {}),
       ...(environmentCareContext ? { environmentCareContext } : {}),
-      uiHints: buildQuestionPackageUiHints(publicResponse?.uiHints, questionPackage, questions.length)
+      uiHints: buildQuestionPackageUiHints(
+        publicResponse?.uiHints,
+        questionPackage,
+        questions.length
+      )
     }
   }
 
@@ -406,7 +407,10 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
   const treatmentText = normalizeText(
     publicResponse.treatmentText ||
       publicResponse.treatment ||
-      nextSteps.map(item => item.text).filter(Boolean).join('\n') ||
+      nextSteps
+        .map(item => item.text)
+        .filter(Boolean)
+        .join('\n') ||
       explanation?.firstAid
   )
   const preventionText = normalizeText(
@@ -415,7 +419,9 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
       whatToAvoid.join('\n') ||
       explanation?.avoid
   )
-  const careBehaviorTimeline = compactCareBehaviorTimelineForPublic(publicResponse.careBehaviorTimeline || null)
+  const careBehaviorTimeline = compactCareBehaviorTimelineForPublic(
+    publicResponse.careBehaviorTimeline || null
+  )
   const environmentCareContext = compactEnvironmentCareContextForPublic(
     publicResponse.environmentCareContext || null,
     publicResponse.careBehaviorTimeline || null
@@ -425,7 +431,8 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
     resultId: publicResponse.resultId || '',
     roundId: publicResponse.roundId || 'round_1',
     userPlantId: publicResponse.userPlantId || null,
-    plantId: publicResponse.plantId || publicResponse.userPlantId || publicResponse.plantCatalogId || '',
+    plantId:
+      publicResponse.plantId || publicResponse.userPlantId || publicResponse.plantCatalogId || '',
     plantCatalogId: publicResponse.plantCatalogId || null,
     plantIdentityId: publicResponse.plantIdentityId || '',
     latestVisualCallBatchId: publicResponse.latestVisualCallBatchId || null,
@@ -437,7 +444,6 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
     nonProblematicLabel: publicResponse.nonProblematicLabel || '',
     identityResolutionStatus: publicResponse.identityResolutionStatus || '',
     stopReason: publicResponse.stopReason || '',
-    followUpRequired: Boolean(publicResponse.followUpRequired),
     questions,
     finalResult,
     visibleOutcomes,
@@ -456,7 +462,9 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
       ? publicResponse.environmentDeviationHints
       : [],
     visualBatchTrace: pickMinimalVisualBatchTrace(publicResponse.visualBatchTrace),
-    visualAggregateSummary: pickMinimalVisualAggregateSummary(publicResponse.visualAggregateSummary),
+    visualAggregateSummary: pickMinimalVisualAggregateSummary(
+      publicResponse.visualAggregateSummary
+    ),
     uiHints: {
       canUploadMoreImages: Boolean(publicResponse?.uiHints?.canUploadMoreImages),
       maxQuestionsThisRound: questions.length ? 1 : 0,
@@ -488,10 +496,5 @@ module.exports = {
   pickMinimalFinalResult,
   pickMinimalOutcomeEntry,
   pickMinimalSummaryCard,
-  pickMinimalVisualBatchTrace,
-  pickMinimalVisualAggregateSummary,
-  pickMinimalOutputEligibility,
-  pickMinimalFollowUpQuestions,
-  buildFollowUpSummaryCard,
   buildFrontendDiagnosisResponse
 }

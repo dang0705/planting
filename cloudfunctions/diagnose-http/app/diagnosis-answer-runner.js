@@ -3,78 +3,46 @@
 const { fromQuestionId } = require('../mappers/public-id-mapper')
 const { runDiagnosisRound } = require('../domain/diagnosis-engine')
 const { getQuestionOptionMappings } = require('../repositories/question-repository')
-const { buildSyntheticFollowUpOptionMappings } = require('../utils/synthetic-follow-up')
-const {
-  markFollowUpAnswers,
-  validateFollowUpAnswerOwnership,
-  prepareAnswerRevision,
-  getSessionState,
-  getObservedSymptomsBySession
-} = require('../services/session-service')
-const {
-  markQueueItemsAnswered,
-  invalidateQueueForRound
-} = require('../services/question-queue-runtime-service')
-const { hasConsumedFollowUpRetakeQuota } = require('../presenters/diagnosis-round-presenter-helpers')
+const { getSessionState, getObservedSymptomsBySession } = require('../services/session-service')
 const { resolveLatestVisualCallBatchId } = require('../utils/visual-batch-id')
-const { readQuestionKeyFromRationale, readRoundFromRationale } = require('../services/session-follow-up-service')
 const {
   resolveRuntimeEnvironmentCarePayload,
   buildRouteAnswersFromRuntimeEnvironmentCarePayload
 } = require('./care-behavior-payload')
+const { isQuestionPackageAnswerSubmitPayload } = require('./question-package-response')
 const {
-  isQuestionPackageAnswerSubmitPayload
-} = require('./question-package-response')
+  resolveQuestionPackageSnapshot,
+  resolvePackageAnswerOwnership
+} = require('./package-answer-ownership-runtime')
+const { buildPackageAnswerRuntimeState } = require('./answer-runtime-state')
+const { runDeferredAnswerPersistence } = require('./answer-runner-helpers')
 const {
-  pickQuestionKeysFromQuestionQueue,
-  buildAskedQuestionRowsFromFollowUpRows,
-  buildRuntimeAnswersFromFollowUpUpdates,
-  buildRuntimeUnknownCountByGroup,
   resolveVisualImageInputs,
   stripVisualEvidenceItems,
   normalizeRoundFromRoundId,
   normalizePublicAnswers,
   normalizeRequestMode,
-  resolveNextAnswerRevision,
   resolveRequestClientContext
 } = require('./request-normalizers')
 const { extractVisualSymptomsSafely, persistRoundResult } = require('./visual-runtime')
 const outcomeRouteRepository = require('../repositories/outcome-route-repository')
-const {
-  createReviewTimingLogger
-} = require('../repositories/diagnosis-review/review-performance')
+const { createReviewTimingLogger } = require('../repositories/diagnosis-review/review-performance')
 const { triggerStaticRepositoryCachePreload } = require('./static-cache-preloader')
 
-function runDeferredAnswerPersistence(sessionId = '', jobs = []) {
-  for (const job of jobs) {
-    if (typeof job !== 'function') {continue}
-    Promise.resolve()
-      .then(job)
-      .catch(error => {
-        console.error('diagnosis-answer deferred persistence failed:', {
-          sessionId,
-          message: String(error?.message || error || '')
-        })
-      })
-  }
+function getLegacyQuestionRowRuntime() {
+  return require('./legacy-question-row-runtime')
 }
 
-function collectAnsweredQuestionKeysFromFollowUpRows(rows = []) {
-  const answeredRows = Array.isArray(rows) ? rows : []
-  const keys = new Set()
-  for (const row of answeredRows) {
-    if (Number(row?.asked || 0) !== 1) {
-      continue
-    }
+function getLegacyAnswerSubmitRuntime() {
+  return require('./legacy-answer-submit-runtime')
+}
 
-    const questionKey = readQuestionKeyFromRationale(row?.rationale || '') ||
-      String(row?.symptom_key || '').trim()
-    if (questionKey) {
-      keys.add(questionKey)
-    }
-  }
+function getAnswerRevisionRuntime() {
+  return require('./answer-revision-runtime')
+}
 
-  return Array.from(keys)
+function getLegacyImageInputRuntime() {
+  return require('./legacy-image-input-runtime')
 }
 
 async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } = {}) {
@@ -93,8 +61,8 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     throw Object.assign(new Error('诊断会话不存在或已失效'), { statusCode: 404 })
   }
   timing.mark('session-state-loaded', {
-    hasAnswers: Array.isArray(sessionState?.answeredAnswers) && sessionState.answeredAnswers.length > 0,
-    hasFollowUpRows: Array.isArray(sessionState?.followUpRows) && sessionState.followUpRows.length > 0
+    hasAnswers:
+      Array.isArray(sessionState?.answeredAnswers) && sessionState.answeredAnswers.length > 0
   })
   triggerStaticRepositoryCachePreload({
     scope: 'diagnosis-answer',
@@ -104,7 +72,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   })
   timing.mark('static-cache-preload-triggered')
 
-  const answers = normalizePublicAnswers(payload.answers || payload.followUpAnswers || [])
+  const answers = normalizePublicAnswers(payload.answers || [])
   const imageInputs = resolveVisualImageInputs(payload)
   const hasAnswers = answers.length > 0
   const hasImageInputs = imageInputs.length > 0
@@ -117,7 +85,12 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   })
   const dirtyQuestionKey = isAnswerRevision
     ? fromQuestionId(payload.dirtyFromQuestionId || '') ||
-      String(payload.dirtyFromQuestionKey || payload.dirtyQuestionKey || payload.dirtyFromQuestionId || '').trim()
+      String(
+        payload.dirtyFromQuestionKey ||
+          payload.dirtyQuestionKey ||
+          payload.dirtyFromQuestionId ||
+          ''
+      ).trim()
     : ''
   let answerRevision = null
   let uiPatch = null
@@ -135,13 +108,13 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   }
 
   if (hasAnswers && hasImageInputs) {
-    throw Object.assign(new Error('follow-up 阶段答题与补图必须分开提交'), { statusCode: 400 })
+    throw Object.assign(new Error('题包答案与补图必须分开提交'), { statusCode: 400 })
   }
 
-  const observedSymptoms = Array.isArray(sessionState.observedEvidenceSet) &&
-    sessionState.observedEvidenceSet.length
-    ? []
-    : await getObservedSymptomsBySession(sessionId)
+  const observedSymptoms =
+    Array.isArray(sessionState.observedEvidenceSet) && sessionState.observedEvidenceSet.length
+      ? []
+      : await getObservedSymptomsBySession(sessionId)
   if (observedSymptoms.length) {
     timing.mark('observed-symptoms-loaded', {
       count: observedSymptoms.length
@@ -171,62 +144,73 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   let runtimeAskedQuestionKeys = refreshedSessionState.askedQuestionKeys
   let runtimeAnsweredQuestionGroupKeys = refreshedSessionState.answeredQuestionGroupKeys || []
   let runtimeUnknownCountByGroup = refreshedSessionState.unknownCountByGroup
-  const runtimeSessionFollowUpRows = Array.isArray(refreshedSessionState.followUpRows)
-    ? refreshedSessionState.followUpRows
-    : []
-  const sessionAnsweredFollowUpQuestionKeys = collectAnsweredQuestionKeysFromFollowUpRows(
-    runtimeSessionFollowUpRows
-  )
-  const currentQuestionQueue = refreshedSessionState.questionQueue || null
+  const needsLegacyQuestionState = !isTerminalQuestionPackageSubmit || hasImageInputs
+  const legacyQuestionState = needsLegacyQuestionState
+    ? getLegacyQuestionRowRuntime().resolveLegacyQuestionState(refreshedSessionState)
+    : { rows: [], progress: null }
+  const legacyQuestionRowsForSession = legacyQuestionState.rows
+  const legacyQuestionProgress = legacyQuestionState.progress
+  const questionPackageSnapshot = resolveQuestionPackageSnapshot(refreshedSessionState)
   let runtimeAnswerOptionMappings = []
   let runtimeRouteAnswerEffects = []
-  let runtimeFollowUpRowsForRound = runtimeSessionFollowUpRows
-  let runtimeAskedQuestionRows = buildAskedQuestionRowsFromFollowUpRows(runtimeSessionFollowUpRows)
+  let legacyQuestionRowsForRound = legacyQuestionRowsForSession
+  let runtimeAskedQuestionRows = []
   const requiredAnswerPersistenceTasks = []
   const deferredAnswerPersistenceJobs = []
 
   if (hasAnswers) {
     const questionKeys = Array.from(new Set(answers.map(item => item.questionKey).filter(Boolean)))
-    const routeAnswerEffectQuestionKeys = Array.from(new Set([
-      ...questionKeys,
-      ...sessionAnsweredFollowUpQuestionKeys,
-      ...(Array.isArray(refreshedSessionState.answeredAnswers)
-        ? refreshedSessionState.answeredAnswers
-          .map(item => String(item?.questionKey || '').trim())
-          .filter(Boolean)
-        : [])
-    ]))
+    const sessionAnsweredLegacyQuestionKeys = isTerminalQuestionPackageSubmit
+      ? []
+      : getLegacyQuestionRowRuntime().collectAnsweredLegacyQuestionKeys(
+          legacyQuestionRowsForSession
+        )
+    const routeAnswerEffectQuestionKeys = Array.from(
+      new Set([
+        ...questionKeys,
+        ...(isTerminalQuestionPackageSubmit ? [] : sessionAnsweredLegacyQuestionKeys),
+        ...(Array.isArray(refreshedSessionState.answeredAnswers)
+          ? refreshedSessionState.answeredAnswers
+              .map(item => String(item?.questionKey || '').trim())
+              .filter(Boolean)
+          : [])
+      ])
+    )
     const optionMappingPromise = questionKeys.length
       ? getQuestionOptionMappings(questionKeys)
       : Promise.resolve([])
     const routeAnswerEffectsPromise = routeAnswerEffectQuestionKeys.length
       ? outcomeRouteRepository.getOutcomeAnswerEffects(routeAnswerEffectQuestionKeys)
       : Promise.resolve([])
-    const questionQueueKeysForValidation = Number(answerRound || 1) === Number(sessionState?.questionQueue?.roundIndex || 0)
-      ? pickQuestionKeysFromQuestionQueue(sessionState.questionQueue)
-      : new Set(
-        runtimeSessionFollowUpRows
-          .filter(row => {
-            const normalizedRound = Number(readRoundFromRationale(row?.rationale || '') || 1)
-            const asked = Number(row?.asked || 0) === 0
-            const questionKey = readQuestionKeyFromRationale(row?.rationale || '') || String(row?.symptom_key || '').trim()
-            return normalizedRound === Number(answerRound || 1) && asked && questionKey
-          })
-          .map(row =>
-            readQuestionKeyFromRationale(row?.rationale || '') ||
-            String(row?.symptom_key || '').trim()
-          )
-      )
-    const [ownership, questionOptionMappingsFromStore, routeAnswerEffectsFromStore] = isAnswerRevision
-      ? await Promise.all([Promise.resolve(null), optionMappingPromise, routeAnswerEffectsPromise])
-      : await Promise.all([
-        validateFollowUpAnswerOwnership(sessionId, answers, answerRound, {
-          followUpRows: runtimeSessionFollowUpRows,
-          queuedQuestionKeys: questionQueueKeysForValidation
-        }),
-        optionMappingPromise,
-        routeAnswerEffectsPromise
-      ])
+    const [ownership, questionOptionMappingsFromStore, routeAnswerEffectsFromStore] =
+      isAnswerRevision
+        ? await Promise.all([
+            Promise.resolve(null),
+            optionMappingPromise,
+            routeAnswerEffectsPromise
+          ])
+        : isTerminalQuestionPackageSubmit
+          ? await Promise.all([
+              Promise.resolve(
+                resolvePackageAnswerOwnership({
+                  questionPackageSnapshot,
+                  answers
+                })
+              ),
+              optionMappingPromise,
+              routeAnswerEffectsPromise
+            ])
+          : await Promise.all([
+              getLegacyAnswerSubmitRuntime().validateLegacyAnswerOwnership({
+                sessionId,
+                answers,
+                answerRound,
+                sessionState,
+                rows: legacyQuestionRowsForSession
+              }),
+              optionMappingPromise,
+              routeAnswerEffectsPromise
+            ])
     runtimeRouteAnswerEffects = Array.isArray(routeAnswerEffectsFromStore)
       ? routeAnswerEffectsFromStore
       : []
@@ -240,18 +224,21 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
       answerRound
     })
 
-    const optionMappings = [
-      ...questionOptionMappingsFromStore,
-      ...buildSyntheticFollowUpOptionMappings(questionKeys)
-    ]
+    const optionMappings = isTerminalQuestionPackageSubmit
+      ? questionOptionMappingsFromStore
+      : getLegacyAnswerSubmitRuntime().buildLegacyAnswerOptionMappings(
+          questionKeys,
+          questionOptionMappingsFromStore
+        )
     runtimeAnswerOptionMappings = optionMappings
-    runtimeFollowUpRowsForRound = Array.isArray(ownership?.followUpRows)
-      ? ownership.followUpRows
-      : runtimeSessionFollowUpRows
-    runtimeAskedQuestionRows = buildAskedQuestionRowsFromFollowUpRows(runtimeFollowUpRowsForRound)
-    const validPairs = new Set(
-      optionMappings.map(item => `${item.questionKey}::${item.optionKey}`)
+    legacyQuestionRowsForRound = getLegacyQuestionRowRuntime().resolveLegacyOwnershipRows(
+      ownership,
+      legacyQuestionRowsForSession
     )
+    runtimeAskedQuestionRows = isTerminalQuestionPackageSubmit
+      ? []
+      : getLegacyQuestionRowRuntime().buildAskedLegacyQuestionRows(legacyQuestionRowsForRound)
+    const validPairs = new Set(optionMappings.map(item => `${item.questionKey}::${item.optionKey}`))
     const invalidPairs = answers.filter(
       item => !validPairs.has(`${item.questionKey}::${item.optionKey}`)
     )
@@ -261,144 +248,75 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     }
 
     if (isAnswerRevision) {
-      const nextAnswerRevision = resolveNextAnswerRevision(sessionState, payload.baseAnswerRevision)
-      const answerRevisionBefore = Math.max(
-        Number(sessionState?.runtimeSnapshot?.answerRevision || 0),
-        Number(payload.baseAnswerRevision || 0)
-      )
-      const revision = await prepareAnswerRevision({
+      const revisionRuntime = await getAnswerRevisionRuntime().applyAnswerRevisionRuntime({
         sessionId,
         openid,
+        sessionState,
+        payload,
         answers,
         dirtyQuestionKey,
         optionMappings,
-        followUpRows: runtimeSessionFollowUpRows,
-        answerRevisionBefore,
-        answerRevisionAfter: nextAnswerRevision
+        legacyQuestionRows: legacyQuestionRowsForSession,
+        expectedRound,
+        legacyQuestionProgress
       })
-      if (!revision.ok) {
-        throw Object.assign(new Error('改写题目不属于当前会话'), { statusCode: 400 })
-      }
-
-      const invalidationStartRound = Number(revision.dirtyRound || 1)
-      const invalidationEndRound = Number(expectedRound || 1)
-      const staleRoundCount = Math.max(invalidationEndRound - invalidationStartRound + 1, 0)
-      await Promise.all(
-        Array.from({ length: staleRoundCount }, (_, index) => {
-          const staleRound = invalidationStartRound + index
-          return invalidateQueueForRound(sessionId, openid, staleRound, 'answer_revision', {
-            questionQueue:
-              Number(staleRound || 1) === Number(currentQuestionQueue?.roundIndex || 0)
-                ? currentQuestionQueue
-                : null
-          })
-        })
-      )
-      await markQueueItemsAnswered(
-        sessionId,
-        openid,
-        revision.dirtyRound,
-        revision.effectiveAnswers,
-        {
-          questionQueue:
-            Number(revision.dirtyRound || 1) === Number(currentQuestionQueue?.roundIndex || 0)
-              ? currentQuestionQueue
-              : null
-        }
-      )
-      answerRevision = nextAnswerRevision
-      uiPatch = {
-        keepUntilQuestionId: revision.keepUntilQuestionId,
-        invalidatedFromQuestionId: revision.invalidatedFromQuestionId
-      }
-      refreshedSessionState = await getSessionState(openid, sessionId)
-      if (!refreshedSessionState) {
-        throw Object.assign(new Error('诊断会话不存在或已失效'), { statusCode: 404 })
-      }
-
-      runtimeAnswers = Array.isArray(refreshedSessionState.answeredAnswers) &&
-        refreshedSessionState.answeredAnswers.length
-          ? refreshedSessionState.answeredAnswers
-          : answers
-      runtimeObservedEvidenceSet = refreshedSessionState.observedEvidenceSet || []
-      runtimeAskedQuestionKeys = refreshedSessionState.askedQuestionKeys
-      runtimeAnsweredQuestionGroupKeys = refreshedSessionState.answeredQuestionGroupKeys || []
-      runtimeUnknownCountByGroup = refreshedSessionState.unknownCountByGroup
-      runtimeFollowUpRowsForRound = Array.isArray(refreshedSessionState.followUpRows)
-        ? refreshedSessionState.followUpRows
-        : runtimeFollowUpRowsForRound
-      runtimeAskedQuestionRows = buildAskedQuestionRowsFromFollowUpRows(runtimeFollowUpRowsForRound)
+      answerRevision = revisionRuntime.answerRevision
+      uiPatch = revisionRuntime.uiPatch
+      refreshedSessionState = revisionRuntime.refreshedSessionState
+      runtimeAnswers = revisionRuntime.runtimeAnswers
+      runtimeObservedEvidenceSet = revisionRuntime.runtimeObservedEvidenceSet
+      runtimeAskedQuestionKeys = revisionRuntime.runtimeAskedQuestionKeys
+      runtimeAnsweredQuestionGroupKeys = revisionRuntime.runtimeAnsweredQuestionGroupKeys
+      runtimeUnknownCountByGroup = revisionRuntime.runtimeUnknownCountByGroup
+      legacyQuestionRowsForRound = revisionRuntime.legacyQuestionRowsForRound
+      runtimeAskedQuestionRows = revisionRuntime.runtimeAskedQuestionRows
+    } else if (isTerminalQuestionPackageSubmit) {
+      const packageRuntimeState = buildPackageAnswerRuntimeState({
+        sessionState: refreshedSessionState,
+        questionPackageSnapshot,
+        answers,
+        optionMappings
+      })
+      runtimeAnswers = packageRuntimeState.runtimeAnswers
+      runtimeAskedQuestionKeys = packageRuntimeState.runtimeAskedQuestionKeys
+      runtimeAnsweredQuestionGroupKeys = packageRuntimeState.runtimeAnsweredQuestionGroupKeys
+      runtimeUnknownCountByGroup = packageRuntimeState.runtimeUnknownCountByGroup
+      runtimeAskedQuestionRows = packageRuntimeState.runtimeAskedQuestionRows
     } else {
-      const markResultPromise = markFollowUpAnswers(sessionId, answers, {
-        optionMappings,
-        answerRound,
-        followUpRows: runtimeFollowUpRowsForRound,
-        awaitPersistence: false
-      })
-      deferredAnswerPersistenceJobs.push(() => markQueueItemsAnswered(
+      const legacySubmitRuntime =
+        await getLegacyAnswerSubmitRuntime().applyLegacyAnswerSubmitRuntime({
           sessionId,
           openid,
           answerRound,
           answers,
-          {
-            questionQueue:
-              Number(answerRound || 1) === Number(currentQuestionQueue?.roundIndex || 0)
-                ? currentQuestionQueue
-                : null
-          }
-      ))
-      const markResult = await markResultPromise
+          optionMappings,
+          legacyQuestionProgress,
+          sessionState: refreshedSessionState,
+          rows: legacyQuestionRowsForRound,
+          deferredJobs: deferredAnswerPersistenceJobs,
+          timing
+        })
+      const markResult = legacySubmitRuntime.markResult
       if (Array.isArray(markResult?.pendingWrites)) {
         requiredAnswerPersistenceTasks.push(...markResult.pendingWrites)
       }
-      timing.mark('follow-up-answers-marked', {
-        updatedAnswerCount: Array.isArray(markResult?.updatedAnswers)
-          ? markResult.updatedAnswers.length
-          : 0
-      })
-      timing.mark('question-queue-marked', {
-        answerRound
-      })
-      const updatedFollowUpAnswers = Array.isArray(markResult?.updatedAnswers)
-        ? markResult.updatedAnswers
-        : []
-      runtimeAnswers = buildRuntimeAnswersFromFollowUpUpdates(
-        refreshedSessionState.answeredAnswers || [],
-        updatedFollowUpAnswers
-      )
-      runtimeAskedQuestionKeys = Array.from(new Set([
-        ...(Array.isArray(refreshedSessionState.askedQuestionKeys)
-          ? refreshedSessionState.askedQuestionKeys
-          : []),
-        ...updatedFollowUpAnswers.map(item => String(item?.questionKey || '').trim()).filter(Boolean)
-      ]))
-      runtimeAnsweredQuestionGroupKeys = Array.from(new Set([
-        ...(Array.isArray(refreshedSessionState.answeredQuestionGroupKeys)
-          ? refreshedSessionState.answeredQuestionGroupKeys
-          : []),
-        ...updatedFollowUpAnswers
-          .map(item => String(item?.questionGroupKey || '').trim())
-          .filter(item => item && item !== '__default__')
-      ]))
-      runtimeUnknownCountByGroup = buildRuntimeUnknownCountByGroup(
-        refreshedSessionState.unknownCountByGroup,
-        updatedFollowUpAnswers
-      )
-      runtimeFollowUpRowsForRound = markResult?.followUpRows || runtimeFollowUpRowsForRound
-      runtimeAskedQuestionRows = buildAskedQuestionRowsFromFollowUpRows(runtimeFollowUpRowsForRound)
+      runtimeAnswers = legacySubmitRuntime.runtimeAnswers
+      runtimeAskedQuestionKeys = legacySubmitRuntime.runtimeAskedQuestionKeys
+      runtimeAnsweredQuestionGroupKeys = legacySubmitRuntime.runtimeAnsweredQuestionGroupKeys
+      runtimeUnknownCountByGroup = legacySubmitRuntime.runtimeUnknownCountByGroup
+      legacyQuestionRowsForRound = legacySubmitRuntime.rowSnapshot
+      runtimeAskedQuestionRows = legacySubmitRuntime.askedQuestionRows
     }
   }
 
   if (hasImageInputs) {
-    await invalidateQueueForRound(sessionId, openid, answerRound, 'retake_branch', {
-      questionQueue:
-        Number(answerRound || 1) === Number(currentQuestionQueue?.roundIndex || 0)
-          ? currentQuestionQueue
-          : null
+    await getLegacyImageInputRuntime().prepareLegacyImageInputRuntime({
+      sessionId,
+      openid,
+      answerRound,
+      legacyQuestionProgress,
+      visualBatchTrace: refreshedSessionState.visualBatchTrace || null
     })
-    if (hasConsumedFollowUpRetakeQuota(refreshedSessionState.visualBatchTrace || null)) {
-      throw Object.assign(new Error('follow-up 阶段补图次数已达上限'), { statusCode: 400 })
-    }
 
     visualExtraction = await extractVisualSymptomsSafely({
       sessionId,
@@ -408,7 +326,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
         refreshedSessionState.latestVisualCallBatchId ||
         refreshedSessionState?.plantContext?.latestVisualCallBatchId ||
         '',
-      supersedeSource: 'diagnosis_followup_image'
+      supersedeSource: 'diagnosis_package_image'
     })
 
     runtimeAnswers = []
@@ -431,7 +349,9 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     round,
     hasImageInputs: Boolean(hasImageInputs),
     answerCount: Array.isArray(routeRuntimeAnswers) ? routeRuntimeAnswers.length : 0,
-    askedQuestionCount: Array.isArray(runtimeAskedQuestionKeys) ? runtimeAskedQuestionKeys.length : 0
+    askedQuestionCount: Array.isArray(runtimeAskedQuestionKeys)
+      ? runtimeAskedQuestionKeys.length
+      : 0
   })
   const roundResult = await runDiagnosisRound({
     openid,
@@ -441,9 +361,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     observedSymptoms: hasImageInputs ? [] : observedSymptoms,
     observedEvidenceSet: runtimeObservedEvidenceSet,
     visualAggregateResult:
-      visualExtraction?.aggregateResult ||
-      refreshedSessionState.visualAggregateResult ||
-      null,
+      visualExtraction?.aggregateResult || refreshedSessionState.visualAggregateResult || null,
     answers: routeRuntimeAnswers,
     askedQuestionKeys: runtimeAskedQuestionKeys,
     answeredQuestionGroupKeys: runtimeAnsweredQuestionGroupKeys,
@@ -453,7 +371,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     stage: 'followup',
     sessionId,
     answerOptionMappings: runtimeAnswerOptionMappings,
-    storedFollowUpRows: runtimeFollowUpRowsForRound,
+    storedFollowUpRows: isTerminalQuestionPackageSubmit ? [] : legacyQuestionRowsForRound,
     preloadedAskedQuestionRows: runtimeAskedQuestionRows,
     preloadedRouteAnswerEffects: runtimeRouteAnswerEffects,
     terminalQuestioningState: isTerminalQuestionPackageSubmit,
@@ -509,7 +427,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     skipPersistence,
     awaitPersistence: true,
     clientContext,
-    followUpRows: runtimeFollowUpRowsForRound
+    legacyQuestionRows: isTerminalQuestionPackageSubmit ? null : legacyQuestionRowsForRound
   })
   runDeferredAnswerPersistence(sessionId, deferredAnswerPersistenceJobs)
 
@@ -522,10 +440,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
       refreshedSessionState?.plantContext?.plantIdentityId ||
       roundResult?.plantContext?.plantIdentityId ||
       '',
-    latestVisualCallBatchId: resolveLatestVisualCallBatchId(
-      roundResult,
-      refreshedSessionState
-    ),
+    latestVisualCallBatchId: resolveLatestVisualCallBatchId(roundResult, refreshedSessionState),
     diagnosisText: roundResult?.topProblem?.summary || '',
     response: roundResult,
     answerRevision,

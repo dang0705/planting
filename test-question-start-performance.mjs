@@ -33,7 +33,9 @@ Module._load = function loadWithQuestionStartPerfStubs(request, parent, isMain) 
   }
   if (
     request === '../repositories/prior-repository' &&
-    String(parent?.filename || '').endsWith('/cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js')
+    String(parent?.filename || '').endsWith(
+      '/cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js'
+    )
   ) {
     priorRepositoryLoadCount += 1
     return {
@@ -45,14 +47,18 @@ Module._load = function loadWithQuestionStartPerfStubs(request, parent, isMain) 
   }
   if (
     request === '../domain/diagnosis-engine' &&
-    String(parent?.filename || '').endsWith('/cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js')
+    String(parent?.filename || '').endsWith(
+      '/cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js'
+    )
   ) {
     diagnosisEngineLoadCount += 1
     throw new Error('static question/start should not load diagnosis-engine')
   }
   if (
     request === '../services/round-runtime-persistence-service' &&
-    String(parent?.filename || '').endsWith('/cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js')
+    String(parent?.filename || '').endsWith(
+      '/cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js'
+    )
   ) {
     persistenceServiceLoadCount += 1
     return {
@@ -61,7 +67,17 @@ Module._load = function loadWithQuestionStartPerfStubs(request, parent, isMain) 
         persistRoundRuntimeCallCount += 1
         assert.equal(input?.response?.metrics?.questionStartPath, 'static_question_package')
         assert.equal(input?.response?.questionPackage?.mode, 'yellow_leaf')
-        assert.equal(input?.response?.followUps?.length, 4)
+        assert.equal(input?.response?.questions?.length, 4)
+        assert.equal(Object.hasOwn(input?.response || {}, 'packageQuestions'), false)
+        assert.equal(
+          Object.hasOwn(input?.response?.questionPackage || {}, 'packageQuestions'),
+          false
+        )
+        assert.deepEqual(
+          Object.keys(input?.response || {}).filter(key => key.toLowerCase().includes('follow')),
+          []
+        )
+        assert.equal(input?.questionPackageSnapshotOnly, true)
         await Promise.resolve()
         persistenceStubMs += performance.now() - startedAt
       }
@@ -71,17 +87,27 @@ Module._load = function loadWithQuestionStartPerfStubs(request, parent, isMain) 
 }
 
 const loadStart = performance.now()
-const { runQuestionStartDiagnosis } = require('./cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js')
-const { buildFrontendDiagnosisResponse } = require('./cloudfunctions/diagnose-http/app/frontend-response.js')
+const {
+  runQuestionStartDiagnosis
+} = require('./cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js')
+const {
+  buildFrontendDiagnosisResponse
+} = require('./cloudfunctions/diagnose-http/app/frontend-response.js')
 const coldLoadMs = performance.now() - loadStart
 
 function assertStaticQuestionStartResult(result) {
   const response = result.response || {}
   assert.equal(response.metrics?.questionStartPath, 'static_question_package')
   assert.equal(response.questionPackage?.mode, 'yellow_leaf')
-  assert.equal(response.followUps?.length, 4)
+  assert.equal(response.questions?.length, 4)
+  assert.equal(Object.hasOwn(response, 'packageQuestions'), false)
+  assert.equal(Object.hasOwn(response.questionPackage || {}, 'packageQuestions'), false)
   assert.deepEqual(
-    response.followUps.map(item => item.questionKey),
+    Object.keys(response).filter(key => key.toLowerCase().includes('follow')),
+    []
+  )
+  assert.deepEqual(
+    response.questions.map(item => item.questionKey),
     [
       'q_observed_probe__leaf_yellowing__watering_frequency_context',
       'q_observed_probe__leaf_yellowing__light_change_context',
@@ -89,7 +115,10 @@ function assertStaticQuestionStartResult(result) {
       'q_observed_probe__leaf_yellowing__airflow_humidity_context'
     ]
   )
-  assert.equal(response.followUps.every(item => item.text && item.options?.length), true)
+  assert.equal(
+    response.questions.every(item => item.text && item.options?.length),
+    true
+  )
   return response
 }
 
@@ -97,7 +126,10 @@ function assertMinimalFrontendResponse(response) {
   const frontendResponse = buildFrontendDiagnosisResponse(response)
   assert.equal(frontendResponse.questions.length, 4)
   assert.equal(frontendResponse.questionPackage.mode, 'yellow_leaf')
-  assert.equal(Object.hasOwn(frontendResponse, 'followUps'), false)
+  assert.deepEqual(
+    Object.keys(frontendResponse).filter(key => key.toLowerCase().includes('follow')),
+    []
+  )
   assert.equal(Object.hasOwn(frontendResponse, 'observedEvidenceSet'), false)
   return frontendResponse
 }
@@ -122,7 +154,7 @@ async function measureRun(index, options = {}) {
     elapsedMs: Number(elapsedMs.toFixed(2)),
     staticBuildMs: Number(Math.max(0, elapsedMs - persistenceDeltaMs).toFixed(2)),
     persistenceStubMs: Number(persistenceDeltaMs.toFixed(2)),
-    questionCount: response.followUps.length,
+    questionCount: response.questions.length,
     responseBytes: Buffer.byteLength(JSON.stringify(response), 'utf8'),
     frontendResponseBytes: Buffer.byteLength(JSON.stringify(frontendResponse), 'utf8')
   }
@@ -147,21 +179,27 @@ const maxWarmMs = Math.max(...warmRuns.map(item => item.elapsedMs))
 const avgWarmMs = warmRuns.reduce((sum, item) => sum + item.elapsedMs, 0) / warmRuns.length
 assert.equal(maxWarmMs <= 500, true)
 
-console.log(JSON.stringify({
-  status: 'pass',
-  coldLoadMs: Number(coldLoadMs.toFixed(2)),
-  defaultPath: defaultRun,
-  firstRunMs: runs[0].elapsedMs,
-  maxWarmMs: Number(maxWarmMs.toFixed(2)),
-  avgWarmMs: Number(avgWarmMs.toFixed(2)),
-  plantContextCallCount,
-  priorRepositoryLoadCount,
-  diagnosisEngineLoadCount,
-  persistenceServiceLoadCount,
-  persistRoundRuntimeCallCount,
-  questionCount: runs[0].questionCount,
-  responseBytes: runs[0].responseBytes,
-  frontendResponseBytes: runs[0].frontendResponseBytes
-}, null, 2))
+console.log(
+  JSON.stringify(
+    {
+      status: 'pass',
+      coldLoadMs: Number(coldLoadMs.toFixed(2)),
+      defaultPath: defaultRun,
+      firstRunMs: runs[0].elapsedMs,
+      maxWarmMs: Number(maxWarmMs.toFixed(2)),
+      avgWarmMs: Number(avgWarmMs.toFixed(2)),
+      plantContextCallCount,
+      priorRepositoryLoadCount,
+      diagnosisEngineLoadCount,
+      persistenceServiceLoadCount,
+      persistRoundRuntimeCallCount,
+      questionCount: runs[0].questionCount,
+      responseBytes: runs[0].responseBytes,
+      frontendResponseBytes: runs[0].frontendResponseBytes
+    },
+    null,
+    2
+  )
+)
 
 Module._load = originalModuleLoad
