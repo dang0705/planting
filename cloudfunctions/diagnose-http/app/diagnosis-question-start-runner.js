@@ -1,15 +1,49 @@
 'use strict'
 
 const {
-  resolvePlantContext
-} = require('../repositories/prior-repository')
-const {
-  buildManualQuestionStartRoundResult,
-  _test: manualQuestionStartFastPathTest
-} = require('./manual-symptom-question-start-fast-path')
-const { buildSessionId } = require('../services/session-service')
-const { resolveRequestClientContext } = require('./request-normalizers')
+  buildMinimalPlantContext,
+  buildStaticQuestionPackageStartRoundResult,
+  isYellowingStaticQuestionStartMode,
+  _test: staticQuestionPackageStartTest
+} = require('./static-question-package-start')
 const { createReviewTimingLogger } = require('../repositories/diagnosis-review/review-performance')
+
+function getManualQuestionStartFastPath() {
+  return require('./manual-symptom-question-start-fast-path')
+}
+
+function getResolvePlantContext() {
+  return require('../repositories/prior-repository').resolvePlantContext
+}
+
+function getResolveRequestClientContext() {
+  return require('./request-normalizers').resolveRequestClientContext
+}
+
+function buildQuestionStartSessionId() {
+  return `diag_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+}
+
+const manualQuestionStartFastPathTest = {
+  resolveManualStartActiveSymptomKeys(...args) {
+    return getManualQuestionStartFastPath()._test.resolveManualStartActiveSymptomKeys(...args)
+  },
+  collectCandidateOutcomeKeysFromRouteGroups(...args) {
+    return getManualQuestionStartFastPath()._test.collectCandidateOutcomeKeysFromRouteGroups(...args)
+  },
+  shouldUseYellowingCareEnvironmentGuard(...args) {
+    return getManualQuestionStartFastPath()._test.shouldUseYellowingCareEnvironmentGuard(...args)
+  },
+  buildManualYellowingCareStartFollowUps(...args) {
+    return getManualQuestionStartFastPath()._test.buildManualYellowingCareStartFollowUps(...args)
+  },
+  buildManualStartRouteDecision(...args) {
+    return getManualQuestionStartFastPath()._test.buildManualStartRouteDecision(...args)
+  },
+  buildManualQuestionStartRoundResult(...args) {
+    return getManualQuestionStartFastPath()._test.buildManualQuestionStartRoundResult(...args)
+  }
+}
 
 const MANUAL_SYMPTOM_MODE_OPTIONS = [
   { classKey: 'yellowing_mode', classNameCn: '黄叶模式', symptomKey: 'uniform_yellowing', symptomCn: '整叶黄化' },
@@ -145,6 +179,7 @@ async function runQuestionStartDiagnosis({
   const timing = createReviewTimingLogger('diagnosis-question-start', {
     skipPersistence: Boolean(skipPersistence)
   })
+  const resolveRequestClientContext = getResolveRequestClientContext()
   const clientContext = resolveRequestClientContext(
     {
       ...payload,
@@ -167,14 +202,65 @@ async function runQuestionStartDiagnosis({
   }
 
   const option = resolveManualSymptomMode(payload)
-  const sessionId = buildSessionId()
+  const sessionId = buildQuestionStartSessionId()
   timing.mark('request-ready', {
     hasPlantId: Boolean(plantId),
     hasUserPlantId: Boolean(userPlantId)
   })
+
+  if (isYellowingStaticQuestionStartMode(option)) {
+    const plantContext = buildMinimalPlantContext({
+      plantId,
+      userPlantId,
+      plantCatalogId
+    })
+    const roundResult = buildStaticQuestionPackageStartRoundResult({
+      sessionId,
+      option,
+      plantContext,
+      round: 1
+    })
+    timing.mark('static-question-package-ready', {
+      followUpCount: Array.isArray(roundResult?.followUps) ? roundResult.followUps.length : 0
+    })
+    await persistQuestionStartRoundResult({
+      sessionId,
+      openid,
+      plantContext: roundResult.plantContext,
+      response: roundResult,
+      round: 1,
+      image: '',
+      description:
+        payload.description ||
+        `无图症状模式：${option.symptomCn}（${option.classNameCn}）`,
+      skipPersistence,
+      clientContext
+    })
+    timing.finish({
+      hasFollowUps: true,
+      hasFinalResult: false,
+      path: 'static_question_package'
+    })
+
+    return {
+      sessionId,
+      userPlantId: roundResult?.plantContext?.userPlantId || userPlantId || null,
+      plantId:
+        roundResult?.plantContext?.userPlantId ||
+        roundResult?.plantContext?.plantId ||
+        plantId ||
+        '',
+      plantCatalogId: roundResult?.plantContext?.plantId || plantId || null,
+      plantIdentityId: roundResult?.plantContext?.plantIdentityId || '',
+      latestVisualCallBatchId: null,
+      diagnosisText: '',
+      response: roundResult
+    }
+  }
+
   const observedSymptoms = buildManualObservedSymptoms(option)
   const observedEvidenceSet = buildManualObservedEvidenceSet(option)
-
+  const resolvePlantContext = getResolvePlantContext()
   const plantContext = await resolvePlantContext({
     openid,
     plantId,
@@ -185,6 +271,7 @@ async function runQuestionStartDiagnosis({
 
   let roundResult = null
   try {
+    const { buildManualQuestionStartRoundResult } = getManualQuestionStartFastPath()
     roundResult = await buildManualQuestionStartRoundResult({
       sessionId,
       plantContext,
@@ -264,5 +351,13 @@ module.exports = {
   MANUAL_SYMPTOM_MODE_OPTIONS,
   resolveManualSymptomMode,
   runQuestionStartDiagnosis,
-  _test: manualQuestionStartFastPathTest
+  _test: {
+    ...manualQuestionStartFastPathTest,
+    ...staticQuestionPackageStartTest,
+    buildQuestionStartSessionId,
+    getResolveRequestClientContext,
+    buildMinimalPlantContext,
+    buildStaticQuestionPackageStartRoundResult,
+    isYellowingStaticQuestionStartMode
+  }
 }

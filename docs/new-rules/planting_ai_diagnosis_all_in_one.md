@@ -62,7 +62,7 @@
 - `enteredRuntime: 1`。
 - `enteredExplanation: 1`。
 
-之后优先尝试 manual fast path；未命中则 fallback 到 `runDiagnosisRound`。
+若模式是 `yellowing_mode`，之后优先走 `static-question-package-start.js` 的模块级静态题包启动路径；默认路径仍通过 `persistRoundRuntime` 持久化，但静态构造不加载 prior repository、manual fast path 或 `diagnosis-engine`。非静态/兼容模式才懒加载 manual fast path；未命中则 fallback 到 `runDiagnosisRound`。
 
 ## 4. route planner
 
@@ -90,7 +90,7 @@ route planner 做四件事：
 
 ## 6. 黄叶 4 题题包
 
-黄叶手动入口存在特殊 fast path。它会前置四个护理上下文维度：
+黄叶手动入口的 `yellowing_mode` 存在模块级静态题包启动路径。它会前置四个护理上下文维度：
 
 1. 浇水频率。
 2. 光照变化。
@@ -117,6 +117,8 @@ route planner 做四件事：
 ```
 
 前端可以据此展示 4 题套餐，并在最后一次提交整包答案。
+
+非静态/兼容模式才使用 `manual-symptom-question-start-fast-path.js` 或 route planner；不要再把 manual fast path 写成黄叶 question/start 固定题包的优先启动路径。
 
 ## 7. 黄叶题包的硬边界
 
@@ -194,6 +196,7 @@ route planner 做四件事：
 
 - `cloudfunctions/diagnose-http/handlers/diagnosis-handlers.js`
 - `cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js`
+- `cloudfunctions/diagnose-http/app/static-question-package-start.js`
 - `cloudfunctions/diagnose-http/app/manual-symptom-question-start-fast-path.js`
 - `cloudfunctions/diagnose-http/app/question-package-response.js`
 - `cloudfunctions/diagnose-http/app/frontend-response.js`
@@ -206,6 +209,7 @@ route planner 做四件事：
 - `src/utils/diagnose-result-normalizer.js`
 - `src/pages/diagnose/follow-up/question-flow.js`
 - `src/utils/diagnose-follow-up-payload.js`
+- `test-question-start-performance.mjs`
 
 ## 13. 修改 checklist
 

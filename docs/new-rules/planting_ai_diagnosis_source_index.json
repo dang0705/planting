@@ -122,7 +122,7 @@
     },
     {
       "file": "docs/code-logics/03_诊断运行时主链路_逐步执行逻辑.md",
-      "line_count": 130,
+      "line_count": 132,
       "headings": [
         {
           "title": "# 03｜诊断运行时主链路：route-only 执行逻辑",
@@ -145,24 +145,24 @@
           "lines": "40-51"
         },
         {
-          "title": "## 5. 黄叶手动 fast path",
-          "lines": "52-72"
+          "title": "## 5. 黄叶静态题包启动路径",
+          "lines": "52-74"
         },
         {
           "title": "## 6. 黄叶题包的 queue、持久化与 ownership 边界",
-          "lines": "73-94"
+          "lines": "75-96"
         },
         {
           "title": "## 7. 停止决策",
-          "lines": "95-104"
+          "lines": "97-106"
         },
         {
           "title": "## 8. 输出资格",
-          "lines": "105-122"
+          "lines": "107-124"
         },
         {
           "title": "## 9. 文档修正原则",
-          "lines": "123-130"
+          "lines": "125-132"
         }
       ]
     },
@@ -506,7 +506,7 @@
     },
     {
       "file": "docs/new-rules/planting_ai_diagnosis_all_in_one.md",
-      "line_count": 233,
+      "line_count": 237,
       "headings": [
         {
           "title": "# Planting AI 诊断运行规则 All-in-One（code-base 同步版）",
@@ -538,39 +538,39 @@
         },
         {
           "title": "## 6. 黄叶 4 题题包",
-          "lines": "91-120"
+          "lines": "91-122"
         },
         {
           "title": "## 7. 黄叶题包的硬边界",
-          "lines": "121-141"
+          "lines": "123-143"
         },
         {
           "title": "## 8. 回答提交",
-          "lines": "142-154"
+          "lines": "144-156"
         },
         {
           "title": "## 9. 停止规则",
-          "lines": "155-168"
+          "lines": "157-170"
         },
         {
           "title": "## 10. 输出资格",
-          "lines": "169-174"
+          "lines": "171-176"
         },
         {
           "title": "## 11. 公开响应与前端契约",
-          "lines": "175-190"
+          "lines": "177-192"
         },
         {
           "title": "## 12. 当前代码源索引",
-          "lines": "191-209"
+          "lines": "193-213"
         },
         {
           "title": "## 13. 修改 checklist",
-          "lines": "210-223"
+          "lines": "214-227"
         },
         {
           "title": "## 14. 旧概念处置",
-          "lines": "224-233"
+          "lines": "228-237"
         }
       ]
     }
@@ -583,13 +583,18 @@
     },
     {
       "file": "cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js",
-      "lines": "14-112,139-260",
-      "fact": "manual symptom mode validation, observed evidence construction, fast path then fallback"
+      "lines": "3-20,148-170,173-328",
+      "fact": "manual symptom mode validation; yellowing_mode uses static package start before non-static manual fast path and diagnosis-engine fallback; default path persists round runtime"
+    },
+    {
+      "file": "cloudfunctions/diagnose-http/app/static-question-package-start.js",
+      "lines": "82-119,159-233",
+      "fact": "module-level static yellow_leaf question/start package construction without prior repository or diagnosis-engine runtime"
     },
     {
       "file": "cloudfunctions/diagnose-http/app/manual-symptom-question-start-fast-path.js",
       "lines": "25-38,224-285",
-      "fact": "yellowing fast path consumes getQuestionPackageByMode and returns 4-question package response"
+      "fact": "non-static compatibility fast path for manual question/start when static package start does not apply"
     },
     {
       "file": "cloudfunctions/diagnose-http/app/question-package-response.js",
@@ -630,6 +635,11 @@
       "file": "cloudfunctions/diagnose-http/domain/stop-state/output-eligibility-evaluator.js",
       "lines": "79-117",
       "fact": "formal output eligibility conditions"
+    },
+    {
+      "file": "test-question-start-performance.mjs",
+      "lines": "34-68,131-143",
+      "fact": "performance and contract guard that static yellowing question/start persists by default and does not load prior repository or diagnosis-engine"
     },
     {
       "file": "src/utils/diagnose-result-normalizer.js",

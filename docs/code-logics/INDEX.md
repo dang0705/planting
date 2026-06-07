@@ -9,6 +9,7 @@
 - 当前诊断仍以 **route 模式** 汇总证据和决定输出；当前问诊入口按 **mode question package** 收敛，固定题包由 `getQuestionPackageByMode(mode)` 作为显式入口。
 - 旧的“ranking / score gap / hypothesis pool 决定追问与停止”、旧 dynamic next-question helpers、旧 active follow-up residues 不再作为当前事实使用。
 - `yellow_leaf` 映射到固定 4 题前置题包：`answerSubmitMode = package`、`questionDisplayMode = package`、`fixedQuestionPackage = true`，并带有 `outcomePolicy`。
+- `/diagnosis/question/start` 的 `yellowing_mode` 会先走 `static-question-package-start.js` 的模块级静态题包启动路径；默认持久化仍使用 `persistRoundRuntime`，但静态构造不加载 prior repository、manual fast path 或 `diagnosis-engine`。
 - package 响应会让 `questionQueue` 保留包内全部问题；非 package 路径仍保持单题 queue-anchor 行为。
 - 有效 `yellow_leaf` package 会让包内 4 题按同一当前轮次落库并通过 ownership；`questionQueue` 是运行时兼容/校验结构，不是题包 sibling questions 的拒绝依据。
 - package answer submit 是终止当前问诊轮次的提交形态；停止与输出资格仍由 `stage === final`、`followUpRequired === false`、无 active queue、正式 outcome type、正式 stop decision 共同决定，不是“答满若干题就输出”。

@@ -24,7 +24,7 @@
 
 代码来源：`cloudfunctions/diagnose-http/handlers/diagnosis-handlers.js` 67-104。
 
-这个差异是黄叶 4 题题包能从手动入口完整到前端的关键原因之一：`question-start` fast path 已经把 `followUps` 与 `questionPackage` 放进 result，handler 直接交给前端响应构造层。
+这个差异是黄叶 4 题题包能从手动入口完整到前端的关键原因之一：`question-start` 的静态题包启动路径已经把 `followUps` 与 `questionPackage` 放进 result，handler 直接交给前端响应构造层。
 
 ## 4. `/diagnosis/answer`
 
@@ -39,12 +39,13 @@
 `runQuestionStartDiagnosis` 的当前事实：
 
 1. `resolveManualSymptomMode` 从 `symptomClassKey` 解析固定手动症状模式，并校验可选 `symptomKey`。
-2. 构造 `manual_symptom_mode` 的 observed symptom 与 observed evidence。
-3. 优先尝试 `buildManualQuestionStartRoundResult`。
-4. 若 fast path 未命中，则 fallback 到 `runDiagnosisRound`，stage 为 `preliminary`。
-5. 最后持久化 round runtime。
+2. 若命中 `yellowing_mode`，先用 `static-question-package-start.js` 构造模块级静态 4 题 package，并在默认路径通过 `persistRoundRuntime` 持久化；该静态路径不加载 prior repository、manual fast path 或 `diagnosis-engine`。
+3. 非静态模式才构造 `manual_symptom_mode` 的 observed symptom 与 observed evidence，并解析 plant context。
+4. 非静态模式优先尝试 `buildManualQuestionStartRoundResult`。
+5. 若 manual fast path 未命中，则 fallback 到 `runDiagnosisRound`，stage 为 `preliminary`。
+6. 非静态路径最后同样持久化 round runtime。
 
-代码来源：`cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js` 14-112、139-260。
+代码来源：`cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js` 3-20、148-170、173-328；`cloudfunctions/diagnose-http/app/static-question-package-start.js` 82-119、159-233。
 
 ## 6. 当前响应契约
 
@@ -62,7 +63,7 @@
 | 入口 | 是否经过 presenter | 常规题数 | 黄叶题包 |
 |---|---:|---:|---|
 | `/diagnosis/start` | 是 | 1 | 不作为黄叶题包主入口 |
-| `/diagnosis/question/start` | 否，直接 `buildFrontendResponse` | 1 或 fast path | 可一次性返回 4 题题包 |
+| `/diagnosis/question/start` | 否，直接 `buildFrontendResponse` | 1 或兼容路径 | 静态 package start 可一次性返回 4 题题包 |
 | `/diagnosis/answer` | 是 | 1 | 整包提交后重算；后端按 package queue/持久化/ownership 校验 |
 
 ## 8. 风险边界
