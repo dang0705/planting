@@ -6,11 +6,13 @@ export function buildEnvironmentWeatherQueryOptions({
   lng,
   diagnosisDate = '',
   city = '',
-  province = ''
+  province = '',
+  mode = ''
 } = {}) {
   const normalizedCity = String(city || '').trim()
   const normalizedProvince = String(province || '').trim()
   const normalizedDiagnosisDate = String(diagnosisDate || '').trim()
+  const normalizedMode = String(mode || '').trim().toLowerCase()
 
   return {
     queryKey: [
@@ -21,7 +23,8 @@ export function buildEnvironmentWeatherQueryOptions({
       lng,
       normalizedDiagnosisDate,
       normalizedCity,
-      normalizedProvince
+      normalizedProvince,
+      normalizedMode
     ],
     queryFn: async () =>
       requestHttpFunction('weather-http/weather/environment-context', {
@@ -31,7 +34,8 @@ export function buildEnvironmentWeatherQueryOptions({
           lng,
           diagnosisDate: normalizedDiagnosisDate,
           city: normalizedCity,
-          province: normalizedProvince
+          province: normalizedProvince,
+          mode: normalizedMode
         },
         auth: true
       }),

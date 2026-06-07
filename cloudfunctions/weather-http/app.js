@@ -145,6 +145,61 @@ function getNextMidnight() {
   return tomorrow
 }
 
+function asArray(value = []) {
+  return Array.isArray(value) ? value : []
+}
+
+function normalizeEnvironmentContextMode(value = '') {
+  return String(value || '').trim().toLowerCase()
+}
+
+function buildEnvironmentWeatherWindowByMode(weatherWindow = null, mode = '') {
+  const normalizedMode = normalizeEnvironmentContextMode(mode)
+  if (normalizedMode !== 'diagnosis') {return weatherWindow || {}}
+
+  const sourceWindow = (weatherWindow && typeof weatherWindow === 'object') ? weatherWindow : {}
+  const historicalDays = asArray(sourceWindow.historicalDays)
+  const historicalDaysLegacy = asArray(sourceWindow.historical_days)
+  const normalizedHistoricalDays = historicalDays.length ? historicalDays : historicalDaysLegacy
+  const omitFields = new Set([
+    'forecastDays',
+    'forecast_days',
+    'historical_days',
+    'currentWeather',
+    'daily',
+    'dailyRecords',
+    'daily_records'
+  ])
+  const responseWindow = {}
+
+  for (const [key, value] of Object.entries(sourceWindow)) {
+    if (!omitFields.has(key)) {
+      responseWindow[key] = value
+    }
+  }
+
+  return {
+    ...responseWindow,
+    historicalDays: normalizedHistoricalDays,
+    meta: sourceWindow.meta && typeof sourceWindow.meta === 'object'
+      ? {
+          ...sourceWindow.meta,
+          recordCounts: {
+            historicalDays: normalizedHistoricalDays.length,
+            forecastDays: 0,
+            totalDailyRecords: normalizedHistoricalDays.length
+          }
+        }
+      : {
+          recordCounts: {
+            historicalDays: normalizedHistoricalDays.length,
+            forecastDays: 0,
+            totalDailyRecords: normalizedHistoricalDays.length
+          }
+        }
+  }
+}
+
 async function getCachedWeatherByOpenid(openid) {
   try {
     const result = await models.$runSQL(
@@ -326,6 +381,7 @@ async function main(event, context) {
       const payload = method === 'GET' ? request.query : request.body
       const lat = payload.lat
       const lng = payload.lng
+      const environmentContextMode = payload.mode || payload.environmentContextMode
       if (!lat || !lng) {
         return jsonResponse(400, { code: 400, message: '缺少位置参数：lat 和 lng', data: null })
       }
@@ -338,12 +394,13 @@ async function main(event, context) {
         apiKey: QWEATHER_CONFIG.apiKey,
         baseUrl: QWEATHER_CONFIG.baseUrl
       })
+      const responseWindow = buildEnvironmentWeatherWindowByMode(weatherWindow, environmentContextMode)
 
       return jsonResponse(200, {
         code: 200,
         message: '获取成功',
         data: {
-          ...weatherWindow,
+          ...responseWindow,
           timestamp: new Date().toISOString()
         }
       })

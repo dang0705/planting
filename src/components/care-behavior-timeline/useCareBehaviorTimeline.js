@@ -25,6 +25,7 @@ import {
 const LONG_PRESS_DURATION_MS = 1000
 const POPOVER_AUTO_HIDE_MS = 5000
 const LONG_PRESS_CLICK_SUPPRESS_MS = 450
+const INITIAL_SKELETON_VISIBLE_MS = 800
 
 function normalizeBucket(value = 'unknown') {
   const normalized = String(value || '').trim()
@@ -64,6 +65,7 @@ export function useCareBehaviorTimeline(props, emit) {
   const popoverOpenedAt = ref(0)
   const longPressTriggeredDate = ref('')
   const suppressSelectDateAfterLongPress = ref('')
+  const initialSkeletonVisible = ref(true)
 
   const referenceDate = useReferenceDate(props)
   const dateWindowSet = computed(() => getCareBehaviorDateSet(referenceDate.value))
@@ -74,10 +76,17 @@ export function useCareBehaviorTimeline(props, emit) {
     })
   )
   const loadingErrorText = computed(() => normalizeErrorText(props.error))
+  const timelineWeatherSources = computed(() => {
+    const timeline = props?.timeline && typeof props.timeline === 'object' ? props.timeline : {}
+    if (props.loading) {
+      return []
+    }
+    return collectWeatherSources(props.question, timeline)
+  })
   const weatherByDate = computed(() => {
     const merged = {}
     const fallbackDate = normalizeDateValue(referenceDate.value)
-    for (const source of collectWeatherSources(props.question, props.timeline)) {
+    for (const source of timelineWeatherSources.value) {
       Object.assign(merged, normalizeWeatherInput(source, fallbackDate))
     }
     return Object.fromEntries(
@@ -86,7 +95,9 @@ export function useCareBehaviorTimeline(props, emit) {
   })
   const displayWindow = computed(() => buildCareBehaviorDisplayWindow(referenceDate.value))
   const hasWeatherData = computed(() => Object.keys(weatherByDate.value || {}).length > 0)
-  const showLoadingSkeleton = computed(() => Boolean(props.loading) && !hasWeatherData.value)
+  const showLoadingSkeleton = computed(() =>
+    Boolean(props.loading || (initialSkeletonVisible.value && !hasWeatherData.value))
+  )
   const timelineEventSources = computed(() => {
     return buildTimelineEventSources({
       dateWindow: dateWindowSet.value,
@@ -365,11 +376,18 @@ export function useCareBehaviorTimeline(props, emit) {
     if (longPressTriggeredDate.value) {scheduleLongPressSelectSuppressionClear()}
   }
 
+  function initializeSkeletonVisibility() {
+    setTimeout(() => {
+      initialSkeletonVisible.value = false
+    }, INITIAL_SKELETON_VISIBLE_MS)
+  }
+
   watch(timelinePayload, value => emit('change', value), { deep: true, immediate: true })
   watch(() => [props.timeline, props.question], initializeTimelineFromProps, {
     deep: true,
     immediate: true
   })
+  onMounted(initializeSkeletonVisibility)
   onMounted(initializeTimelineFromProps)
   onUnmounted(() => {
     clearLongPressTimer()

@@ -11,6 +11,7 @@ const CITY_LOOKUP_CACHE_TTL_MS = 5 * 60 * 1000
 const CITY_LOOKUP_COORDINATE_PRECISION = 5
 const cityLookupInflight = new Map()
 const cityLookupCache = new Map()
+const MAX_ARRAY_HISTORY_DAYS_TO_KEEP = 120
 
 function buildCityLookupKey(latitude, longitude) {
   const normalizedLat = Number(latitude)
@@ -29,6 +30,28 @@ function buildFallbackCityInfo() {
     province: '',
     city: '当前位置',
     district: ''
+  }
+}
+
+function normalizeEnvironmentWeatherWindowPayload(window = null) {
+  if (!window || typeof window !== 'object') {
+    return window
+  }
+
+  const asArray = value => Array.isArray(value) ? value : []
+  const {
+    historical_days: historicalDaysSnake,
+    historicalDays: historicalDaysCamel,
+    ...rest
+  } = window
+
+  const normalizedHistoricalDays = asArray(historicalDaysCamel).length
+    ? asArray(historicalDaysCamel)
+    : asArray(historicalDaysSnake)
+
+  return {
+    ...rest,
+    historicalDays: normalizedHistoricalDays.slice(0, MAX_ARRAY_HISTORY_DAYS_TO_KEEP)
   }
 }
 
@@ -341,7 +364,8 @@ export async function getEnvironmentWeatherWindow(options = {}) {
     lng,
     diagnosisDate = '',
     city = '',
-    province = ''
+    province = '',
+    mode = ''
   } = options
   const normalizedLat = Number(lat)
   const normalizedLng = Number(lng)
@@ -355,11 +379,12 @@ export async function getEnvironmentWeatherWindow(options = {}) {
     lng: normalizedLng,
     diagnosisDate,
     city,
-    province
+    province,
+    mode
   })
 
   if (result?.code === 200) {
-    return result.data || null
+    return normalizeEnvironmentWeatherWindowPayload(result.data) || null
   }
 
   throw new Error(result?.message || '获取环境天气窗口失败')

@@ -268,6 +268,8 @@
                         :question-id="getFollowUpQuestionId(question)"
                         :question="question"
                         :timeline="getCareBehaviorTimelineByQuestion(question)"
+                        :loading="environmentWeatherWindowLoading"
+                        :error="environmentWeatherWindowError"
                         @change="payload => handleCareBehaviorTimelineChange(question, payload)"
                       />
                       <view
@@ -1342,7 +1344,8 @@ async function refreshEnvironmentWeatherWindowForCareBehavior(questions = follow
     environmentWeatherWindowLoading.value = true
     const weatherWindow = await getEnvironmentWeatherWindow({
       ...location,
-      diagnosisDate
+      diagnosisDate,
+      mode: 'diagnosis'
     })
     if (weatherWindow) {
       environmentWeatherWindow.value = weatherWindow

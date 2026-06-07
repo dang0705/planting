@@ -386,7 +386,11 @@ export function useFollowUpQuestionFlow({ result, images, plantName, userStore, 
         return
       }
       environmentWeatherWindowLoading.value = true
-      const weatherWindow = await getEnvironmentWeatherWindow({ ...location, diagnosisDate })
+      const weatherWindow = await getEnvironmentWeatherWindow({
+        ...location,
+        diagnosisDate,
+        mode: 'diagnosis'
+      })
       if (weatherWindow) {
         environmentWeatherWindow.value = weatherWindow
         environmentWeatherWindowRequestKey.value = requestKey
