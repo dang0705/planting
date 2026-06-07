@@ -4,6 +4,7 @@ const {
   buildMinimalPlantContext,
   buildStaticQuestionPackageStartRoundResult,
   isYellowingStaticQuestionStartMode,
+  isWiltingDroopStaticQuestionStartMode,
   _test: staticQuestionPackageStartTest
 } = require('./static-question-package-start')
 const { createReviewTimingLogger } = require('../repositories/diagnosis-review/review-performance')
@@ -55,6 +56,12 @@ const manualQuestionStartFastPathTest = {
 }
 
 const MANUAL_SYMPTOM_MODE_OPTIONS = [
+  {
+    classKey: 'wilting_droop_mode',
+    classNameCn: '枯萎 / 发蔫模式',
+    symptomKey: 'wilting_droop',
+    symptomCn: '枯萎 / 发蔫'
+  },
   {
     classKey: 'yellowing_mode',
     classNameCn: '黄叶模式',
@@ -318,7 +325,7 @@ async function runQuestionStartDiagnosis({ payload, openid, skipPersistence = fa
     hasUserPlantId: Boolean(userPlantId)
   })
 
-  if (isYellowingStaticQuestionStartMode(option)) {
+  if (isYellowingStaticQuestionStartMode(option) || isWiltingDroopStaticQuestionStartMode(option)) {
     const plantContext = buildMinimalPlantContext({
       plantId,
       userPlantId,

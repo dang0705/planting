@@ -10,6 +10,14 @@ const {
   getQuestionPackageByMode,
   buildQuestionPackageUiHints
 } = require('./question-package-response')
+const {
+  WILTING_DROOP_PACKAGE_MODE,
+  WILTING_DROOP_PACKAGE_SOURCE_MODE,
+  WILTING_DROOP_PACKAGE_QUESTION_COUNT,
+  WILTING_DROOP_STATIC_ITEM,
+  buildWiltingDroopPackageQuestions,
+  isWiltingDroopStaticQuestionStartMode
+} = require('./wilting-droop-question-package')
 
 const YELLOWING_SOURCE_MODE = 'manual_yellowing_care_environment_frontloaded'
 const YELLOWING_SYMPTOM_KEY = 'leaf_yellowing'
@@ -158,19 +166,33 @@ function buildStaticQuestionPackageStartRoundResult({
   plantContext,
   round = 1
 } = {}) {
-  if (!isYellowingStaticQuestionStartMode(option)) {
+  if (
+    !isYellowingStaticQuestionStartMode(option) &&
+    !isWiltingDroopStaticQuestionStartMode(option)
+  ) {
     return null
   }
-  const packageQuestions = clonePlain(STATIC_YELLOWING_PACKAGE_QUESTIONS)
-  if (packageQuestions.length !== YELLOWING_PACKAGE_QUESTION_COUNT) {
-    throw Object.assign(new Error('黄叶固定题包数量异常'), { statusCode: 500 })
+  const isWiltingDroopPackage = isWiltingDroopStaticQuestionStartMode(option)
+  const expectedQuestionCount = isWiltingDroopPackage
+    ? WILTING_DROOP_PACKAGE_QUESTION_COUNT
+    : YELLOWING_PACKAGE_QUESTION_COUNT
+  const packageQuestions = isWiltingDroopPackage
+    ? buildWiltingDroopPackageQuestions()
+    : clonePlain(STATIC_YELLOWING_PACKAGE_QUESTIONS)
+  if (packageQuestions.length !== expectedQuestionCount) {
+    throw Object.assign(new Error('固定题包数量异常'), { statusCode: 500 })
   }
 
-  const observedSymptoms = buildStaticObservedSymptoms(option)
-  const observedEvidenceSet = buildStaticObservedEvidenceSet(option)
-  const questionPackage = getQuestionPackageByMode(YELLOW_LEAF_PACKAGE_MODE, {
+  const packageOption = isWiltingDroopPackage ? { ...option, ...WILTING_DROOP_STATIC_ITEM } : option
+  const observedSymptoms = buildStaticObservedSymptoms(packageOption)
+  const observedEvidenceSet = buildStaticObservedEvidenceSet(packageOption)
+  const packageMode = isWiltingDroopPackage ? WILTING_DROOP_PACKAGE_MODE : YELLOW_LEAF_PACKAGE_MODE
+  const sourceMode = isWiltingDroopPackage
+    ? WILTING_DROOP_PACKAGE_SOURCE_MODE
+    : YELLOWING_SOURCE_MODE
+  const questionPackage = getQuestionPackageByMode(packageMode, {
     questionCount: packageQuestions.length,
-    sourceMode: YELLOWING_SOURCE_MODE
+    sourceMode
   })
   const response = {
     diagnosisSessionId: sessionId,
@@ -198,19 +220,23 @@ function buildStaticQuestionPackageStartRoundResult({
     metrics: {
       questionStartPath: 'static_question_package',
       routeDecision: {
-        mode: YELLOWING_SOURCE_MODE,
+        mode: sourceMode,
         candidateOutcomeKeys: [],
         visibleOutcomeKeys: [],
         nextQuestionKeys: [],
         requiresQuestionPackage: true,
         decisionCause: {
-          decisionCauseKey: 'static_yellowing_question_package',
-          decisionCauseText: '黄叶手动入口使用模块级静态固定题包。'
+          decisionCauseKey: isWiltingDroopPackage
+            ? 'static_wilting_droop_question_package'
+            : 'static_yellowing_question_package',
+          decisionCauseText: isWiltingDroopPackage
+            ? '枯萎 / 发蔫手动入口使用模块级静态固定题包。'
+            : '黄叶手动入口使用模块级静态固定题包。'
         }
       }
     },
     __runtimeRouteDecision: {
-      mode: YELLOWING_SOURCE_MODE,
+      mode: sourceMode,
       visibleOutcomeKeys: [],
       nextQuestionKeys: [],
       requiresQuestionPackage: true
@@ -232,8 +258,10 @@ module.exports = {
   buildMinimalPlantContext,
   buildStaticQuestionPackageStartRoundResult,
   isYellowingStaticQuestionStartMode,
+  isWiltingDroopStaticQuestionStartMode,
   _test: {
     STATIC_YELLOWING_PACKAGE_QUESTIONS,
+    buildWiltingDroopPackageQuestions,
     buildYellowingStaticQuestions,
     buildStaticObservedSymptoms,
     buildStaticObservedEvidenceSet

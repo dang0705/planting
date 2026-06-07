@@ -10,6 +10,7 @@ const {
 } = require('../presenters/diagnosis-round-presenter')
 const {
   buildQuestionPackageUiHints,
+  buildQuestionPackage,
   buildYellowingQuestionPackage,
   resolveResponseQuestions
 } = require('./question-package-response')
@@ -333,7 +334,8 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
   const hasActiveQuestionPackage =
     Boolean(publicResponse?.questionPackage) && rawQuestions.length > 0
   const questionPackage = hasActiveQuestionPackage
-    ? buildYellowingQuestionPackage(publicResponse, rawQuestions)
+    ? buildQuestionPackage(publicResponse, rawQuestions) ||
+      buildYellowingQuestionPackage(publicResponse, rawQuestions)
     : null
   const questions = hasActiveQuestionPackage
     ? pickMinimalPackageQuestions(rawQuestions, { limit: questionPackage?.questionCount || 1 })
@@ -447,6 +449,11 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
     questions,
     finalResult,
     visibleOutcomes,
+    blockedActionExplanations: Array.isArray(publicResponse.blockedActionExplanations)
+      ? publicResponse.blockedActionExplanations
+      : [],
+    highRiskWarning: normalizeText(publicResponse.highRiskWarning),
+    observationPeriod: normalizeText(publicResponse.observationPeriod),
     outcomeMode,
     routeDecisionCause: publicResponse.routeDecisionCause || null,
     summaryCard: pickMinimalSummaryCard(publicResponse.summaryCard),
@@ -542,11 +549,19 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
     stopReason: publicResponse.stopReason || '',
     finalResult,
     visibleOutcomes,
+    blockedActionExplanations: Array.isArray(publicResponse.blockedActionExplanations)
+      ? publicResponse.blockedActionExplanations
+      : [],
+    highRiskWarning: normalizeText(publicResponse.highRiskWarning),
+    observationPeriod: normalizeText(publicResponse.observationPeriod),
     outcomeMode,
     ...(publicResponse.userPlantId ? { userPlantId: publicResponse.userPlantId } : {}),
     ...(publicResponse.plantCatalogId ? { plantCatalogId: publicResponse.plantCatalogId } : {}),
     ...(publicResponse.nonProblematicType || finalResult?.nonProblematicType
-      ? { nonProblematicType: publicResponse.nonProblematicType || finalResult?.nonProblematicType || '' }
+      ? {
+          nonProblematicType:
+            publicResponse.nonProblematicType || finalResult?.nonProblematicType || ''
+        }
       : {}),
     ...(publicResponse.nonProblematicLabel
       ? { nonProblematicLabel: publicResponse.nonProblematicLabel }

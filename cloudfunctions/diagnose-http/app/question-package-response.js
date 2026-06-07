@@ -1,6 +1,11 @@
 'use strict'
 
 const { fromQuestionId } = require('../mappers/public-id-mapper')
+const {
+  WILTING_DROOP_PACKAGE_MODE,
+  WILTING_DROOP_PACKAGE_SOURCE_MODE,
+  WILTING_DROOP_PACKAGE_QUESTION_COUNT
+} = require('./wilting-droop-question-package')
 
 const YELLOW_LEAF_PACKAGE_MODE = 'yellow_leaf'
 const YELLOWING_PACKAGE_SOURCE_MODE = 'manual_yellowing_care_environment_frontloaded'
@@ -9,7 +14,13 @@ const QUESTION_PACKAGE_MODE_ALIASES = new Map([
   [YELLOW_LEAF_PACKAGE_MODE, YELLOW_LEAF_PACKAGE_MODE],
   [YELLOWING_PACKAGE_SOURCE_MODE, YELLOW_LEAF_PACKAGE_MODE],
   ['yellowing_mode', YELLOW_LEAF_PACKAGE_MODE],
-  ['leaf_yellowing', YELLOW_LEAF_PACKAGE_MODE]
+  ['leaf_yellowing', YELLOW_LEAF_PACKAGE_MODE],
+  [WILTING_DROOP_PACKAGE_MODE, WILTING_DROOP_PACKAGE_MODE],
+  [WILTING_DROOP_PACKAGE_SOURCE_MODE, WILTING_DROOP_PACKAGE_MODE],
+  ['wilt_droop', WILTING_DROOP_PACKAGE_MODE],
+  ['wilting', WILTING_DROOP_PACKAGE_MODE],
+  ['drooping', WILTING_DROOP_PACKAGE_MODE],
+  ['wilting_droop_mode', WILTING_DROOP_PACKAGE_MODE]
 ])
 const QUESTION_PACKAGE_BY_MODE = {
   [YELLOW_LEAF_PACKAGE_MODE]: {
@@ -22,6 +33,26 @@ const QUESTION_PACKAGE_BY_MODE = {
       'light_change_context',
       'fertilization_growth_context',
       'airflow_humidity_context'
+    ],
+    answerSubmitMode: 'package',
+    questionDisplayMode: 'package',
+    fixedQuestionPackage: true,
+    outcomePolicy: {
+      allowMultipleOutcomes: true,
+      preferSingleOutcome: false
+    }
+  },
+  [WILTING_DROOP_PACKAGE_MODE]: {
+    mode: WILTING_DROOP_PACKAGE_MODE,
+    route: 'wilting_droop',
+    sourceMode: WILTING_DROOP_PACKAGE_SOURCE_MODE,
+    questionCount: WILTING_DROOP_PACKAGE_QUESTION_COUNT,
+    targetDimensions: [
+      'watering_frequency_context',
+      'wilting_shape',
+      'wilting_rhythm_environment',
+      'recent_stress',
+      'wilting_high_risk'
     ],
     answerSubmitMode: 'package',
     questionDisplayMode: 'package',
@@ -200,6 +231,23 @@ function buildYellowingQuestionPackage(response = {}, questions = []) {
   })
 }
 
+function buildQuestionPackage(response = {}, questions = []) {
+  const questionCount = Array.isArray(questions) ? questions.length : 0
+  const mode = normalizeQuestionPackageMode(
+    response?.questionPackage?.mode ||
+      response?.questionPackage?.diagnosisMode ||
+      resolveSourceMode(response)
+  )
+  const questionPackage = getQuestionPackageByMode(mode, {
+    questionCount,
+    sourceMode: resolveSourceMode(response) || response?.questionPackage?.sourceMode || ''
+  })
+  if (!questionPackage || questionCount !== questionPackage.questionCount) {
+    return null
+  }
+  return questionPackage
+}
+
 function buildQuestionPackageUiHints(baseUiHints = {}, questionPackage = null, questionCount = 0) {
   if (!questionPackage) {
     return {
@@ -232,7 +280,11 @@ module.exports = {
   YELLOW_LEAF_PACKAGE_MODE,
   YELLOWING_PACKAGE_SOURCE_MODE,
   YELLOWING_PACKAGE_QUESTION_COUNT,
+  WILTING_DROOP_PACKAGE_MODE,
+  WILTING_DROOP_PACKAGE_SOURCE_MODE,
+  WILTING_DROOP_PACKAGE_QUESTION_COUNT,
   getQuestionPackageByMode,
+  buildQuestionPackage,
   buildYellowingQuestionPackage,
   buildQuestionPackageUiHints,
   resolveResponseQuestions,

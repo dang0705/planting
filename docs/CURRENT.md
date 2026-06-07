@@ -4,7 +4,7 @@ status: current
 doc_type: map
 owner: docs-keeper
 sync_policy: active
-last_verified_date: 2026-06-06
+last_verified_date: 2026-06-07
 last_verified_commit: unknown-from-upload
 source_of_truth:
   - package.json
@@ -129,6 +129,8 @@ POST /diagnose
 - 2026-06-06 最新题包口径：当前不存在“追问”，也不再以“每轮最多 1 题”作为产品/UX 契约。
 - `maxQuestionsPerRound: 1`、`maxFollowUpRounds`、`follow-up` 文件名或函数名如果仍存在，只能视为实现细节、历史命名或兼容路径，不能覆盖当前题包口径。
 - 问诊题包是当前任务口径；旧“黄叶 4 题 package”只能作为已知题包形态之一，不再作为题包长度或题包场景上限。
+- `wilting_droop` 是当前固定题包模式之一，source mode 为 `manual_wilting_droop_route_package`，由手动枯萎/发蔫入口返回 5 题 package：Q0 为 `CareBehaviorTimeline` 浇水时间线，Q1-Q4 覆盖发蔫形态、节律/环境、近期应激和高危异常。
+- `wilting_droop` 整包提交后的终端 resolver 可产出多个 `visibleOutcomes`，并返回轻量冲突动作解释、`highRiskWarning` 与 `observationPeriod`；用户结果页口径是“建议行动清单”，不得写成“最可能原因”。
 - 固定题包 `answer_submit` 完成后是终止问诊状态；后端不得继续规划 route-planned、forced 或 generic 下一题，响应应进入 final/result 路径。
 - route planner 只保留 outcome/evidence 判定；缺失证据不得转成 `NEED_MORE_INFO`、`requiresFollowUp` 或 `nextQuestionKeys`。旧 route-planned follow-up resolver 已删除。
 - 有效 `yellow_leaf` 题包答案必须按同一当前轮次的 package 进行持久化和归属校验；legacy `questionQueue` 仍是兼容/选择锚点，不能拒绝同一题包内的 sibling questions。非题包路径仍保持旧 queue-anchor 单题语义。

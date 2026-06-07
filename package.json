@@ -13,6 +13,7 @@
     "test:tailwind": "node test-tailwind.mjs",
     "test:route-planning": "node test-route-planning.mjs",
     "test:route-sql": "node test-route-sql.mjs",
+    "test:wilting-droop-package": "node test-wilting-droop-package.mjs",
     "test:route-golden": "node verify-route-golden-manifest.mjs",
     "test:diagnosis-review-perf": "node test-diagnosis-review-perf.mjs",
     "test:all": "node test-all.mjs",

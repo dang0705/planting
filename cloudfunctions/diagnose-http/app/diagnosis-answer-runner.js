@@ -10,6 +10,7 @@ const {
   buildRouteAnswersFromRuntimeEnvironmentCarePayload
 } = require('./care-behavior-payload')
 const { isQuestionPackageAnswerSubmitPayload } = require('./question-package-response')
+const { resolveWiltingDroopOutcomeResult } = require('../domain/wilting-droop-outcome-resolver')
 const {
   resolveQuestionPackageSnapshot,
   resolvePackageAnswerOwnership,
@@ -358,30 +359,44 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
       ? runtimeAskedQuestionKeys.length
       : 0
   })
-  const roundResult = await runDiagnosisRound({
-    openid,
-    userPlantId: refreshedSessionState.userPlantId,
-    plantId: refreshedSessionState.plantId,
-    lockedPlantContext: refreshedSessionState.plantContext,
-    observedSymptoms: hasImageInputs ? [] : observedSymptoms,
-    observedEvidenceSet: runtimeObservedEvidenceSet,
-    visualAggregateResult:
-      visualExtraction?.aggregateResult || refreshedSessionState.visualAggregateResult || null,
-    answers: routeRuntimeAnswers,
-    askedQuestionKeys: runtimeAskedQuestionKeys,
-    answeredQuestionGroupKeys: runtimeAnsweredQuestionGroupKeys,
-    unknownCountByGroup: runtimeUnknownCountByGroup,
-    symptomClassState: refreshedSessionState.symptomClassRuntime || null,
-    round,
-    stage: 'question',
-    sessionId,
-    answerOptionMappings: runtimeAnswerOptionMappings,
-    storedQuestionRows: isTerminalQuestionPackageSubmit ? [] : legacyQuestionRowsForRound,
-    preloadedAskedQuestionRows: runtimeAskedQuestionRows,
-    preloadedRouteAnswerEffects: runtimeRouteAnswerEffects,
-    terminalQuestioningState: isTerminalQuestionPackageSubmit,
-    perfLogger: timing
-  })
+  const wiltingDroopRoundResult = isTerminalQuestionPackageSubmit
+    ? resolveWiltingDroopOutcomeResult({
+        sessionId,
+        round,
+        answers: routeRuntimeAnswers,
+        questionPackage:
+          payload.questionPackage || questionPackageSnapshot?.questionPackage || null,
+        plantContext: refreshedSessionState.plantContext || sessionState.plantContext || {},
+        careBehaviorTimeline: runtimeCarePayload.careBehaviorTimeline,
+        environmentCareContext: runtimeCarePayload.environmentCareContext
+      })
+    : null
+  const roundResult =
+    wiltingDroopRoundResult ||
+    (await runDiagnosisRound({
+      openid,
+      userPlantId: refreshedSessionState.userPlantId,
+      plantId: refreshedSessionState.plantId,
+      lockedPlantContext: refreshedSessionState.plantContext,
+      observedSymptoms: hasImageInputs ? [] : observedSymptoms,
+      observedEvidenceSet: runtimeObservedEvidenceSet,
+      visualAggregateResult:
+        visualExtraction?.aggregateResult || refreshedSessionState.visualAggregateResult || null,
+      answers: routeRuntimeAnswers,
+      askedQuestionKeys: runtimeAskedQuestionKeys,
+      answeredQuestionGroupKeys: runtimeAnsweredQuestionGroupKeys,
+      unknownCountByGroup: runtimeUnknownCountByGroup,
+      symptomClassState: refreshedSessionState.symptomClassRuntime || null,
+      round,
+      stage: 'question',
+      sessionId,
+      answerOptionMappings: runtimeAnswerOptionMappings,
+      storedQuestionRows: isTerminalQuestionPackageSubmit ? [] : legacyQuestionRowsForRound,
+      preloadedAskedQuestionRows: runtimeAskedQuestionRows,
+      preloadedRouteAnswerEffects: runtimeRouteAnswerEffects,
+      terminalQuestioningState: isTerminalQuestionPackageSubmit,
+      perfLogger: timing
+    }))
 
   if (visualExtraction?.visualCallBatchId) {
     roundResult.latestVisualCallBatchId = visualExtraction.visualCallBatchId

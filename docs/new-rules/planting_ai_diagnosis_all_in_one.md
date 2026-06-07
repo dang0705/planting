@@ -49,7 +49,7 @@
 - `/diagnosis/question/start`：`runQuestionStartDiagnosis -> buildFrontendResponse`，不经过 presenter。
 - `/diagnosis/answer`：`runAnswerDiagnosis -> presentDiagnosisAnswerResponse -> buildFrontendAnswerResponse`；终态只返回结果页必要字段，不返回 trace、output eligibility、route decision cause、环境上下文等大字段。
 
-因此不能把三个入口的响应行为写成完全一致。黄叶 4 题题包主要依赖 `question-start` 直接进入前端响应构造。
+因此不能把三个入口的响应行为写成完全一致。黄叶 4 题题包与枯萎/发蔫 5 题题包主要依赖 `question-start` 直接进入前端响应构造。
 
 ## 3. 手动症状模式
 
@@ -63,7 +63,7 @@
 - `enteredRuntime: 1`。
 - `enteredExplanation: 1`。
 
-若模式是 `yellowing_mode`，之后固定走 `static-question-package-start.js` 的模块级静态题包启动路径；默认路径通过 `persistRoundRuntime(..., { questionPackageSnapshotOnly: true })` 保存题包 snapshot，但静态构造不加载 prior repository、manual fast path 或 `diagnosis-engine`。当前未配置固定题包的手动模式返回 501，不再把 start 主路径转入 `runDiagnosisRound`。
+若模式是 `yellowing_mode`，之后固定走 `static-question-package-start.js` 的模块级静态题包启动路径生成 `yellow_leaf` 4 题 package。若模式是枯萎/发蔫，则生成 `wilting_droop` 5 题 package，`sourceMode` 为 `manual_wilting_droop_route_package`。默认路径通过 `persistRoundRuntime(..., { questionPackageSnapshotOnly: true })` 保存题包 snapshot，但静态构造不加载 prior repository、manual fast path 或 `diagnosis-engine`。当前未配置固定题包的手动模式返回 501，不再把 start 主路径转入 `runDiagnosisRound`。
 
 ## 4. route planner
 
@@ -81,6 +81,16 @@ route planner 做四件事：
 固定题包由 `QUESTION_PACKAGE_BY_MODE` 声明并通过 `getQuestionPackageByMode(mode)` 获取。当前 `yellow_leaf` package 显式包含：
 
 - 4 个目标维度。
+- `answerSubmitMode: package`。
+- `questionDisplayMode: package`。
+- `fixedQuestionPackage: true`。
+- `outcomePolicy.allowMultipleOutcomes: true`。
+- `outcomePolicy.preferSingleOutcome: false`。
+
+当前 `wilting_droop` package 显式包含：
+
+- 5 个目标维度：浇水行为时间线、发蔫形态、节律/环境、近期应激、高危异常。
+- `sourceMode: manual_wilting_droop_route_package`。
 - `answerSubmitMode: package`。
 - `questionDisplayMode: package`。
 - `fixedQuestionPackage: true`。
@@ -143,6 +153,18 @@ route planner 做四件事：
 
 因此，文档和 AI 不能把“非 package 默认单题”写成“黄叶 package 只能提交首题”。
 
+## 7.1 枯萎/发蔫 5 题题包
+
+枯萎/发蔫固定题包的模式是 `wilting_droop`，source mode 是 `manual_wilting_droop_route_package`。题包顺序必须保持：
+
+1. Q0：过去 10 天浇水行为，使用 `CareBehaviorTimeline` / `care_behavior_timeline`。
+2. Q1：发蔫形态。
+3. Q2：发蔫节律与环境点位。
+4. Q3：最近 7 天应激事件。
+5. Q4：高危异常。
+
+整包完成后，`resolveWiltingDroopOutcomeResult` 可产出多个 `visibleOutcomes`，并返回 `blockedActionExplanations`、`highRiskWarning`、`observationPeriod`。用户结果页名称是“建议行动清单”。不得把该结果写成“最可能原因”，也不得新增 ranking、score、probability、main-cause 排序口径。
+
 ## 8. 回答提交
 
 `/diagnosis/answer` 不是无条件重算入口。它会校验：
@@ -198,8 +220,10 @@ package 提交后，系统会用 snapshot 构造本轮 answered runtime，并重
 - `cloudfunctions/diagnose-http/handlers/diagnosis-handlers.js`
 - `cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js`
 - `cloudfunctions/diagnose-http/app/static-question-package-start.js`
+- `cloudfunctions/diagnose-http/app/wilting-droop-question-package.js`
 - `cloudfunctions/diagnose-http/app/question-package-response.js`
 - `cloudfunctions/diagnose-http/app/frontend-response.js`
+- `cloudfunctions/diagnose-http/domain/wilting-droop-outcome-resolver.js`
 - `cloudfunctions/diagnose-http/app/package-answer-ownership-runtime.js`
 - `cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js`
 - `cloudfunctions/diagnose-http/domain/outcome-route-planner.js`
@@ -219,6 +243,8 @@ package 提交后，系统会用 snapshot 构造本轮 answered runtime，并重
 - [ ] 是否没有恢复旧 ranking/score-gap 追问规则。
 - [ ] 是否没有恢复旧 dynamic next-question helper 作为当前权威。
 - [ ] 固定题包是否仍通过 `getQuestionPackageByMode(mode)`。
+- [ ] `wilting_droop` 是否仍是 5 题固定题包，Q0 是否仍是 `CareBehaviorTimeline`。
+- [ ] `wilting_droop` 结果是否仍是“建议行动清单”，且没有 ranking/score/probability/main-cause。
 - [ ] `/diagnosis/question/start` package 响应是否使用 `questions` 而不是旧数组字段。
 - [ ] package snapshot 和归属校验是否覆盖包内所有题。
 - [ ] stop state 是否仍能阻止未完成追问输出。

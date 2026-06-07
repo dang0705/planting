@@ -9,6 +9,8 @@
 - 当前诊断仍以 **route 模式** 汇总证据和决定输出；当前问诊入口按 **mode question package** 收敛，固定题包由 `getQuestionPackageByMode(mode)` 作为显式入口。
 - 旧的“ranking / score gap / hypothesis pool 决定追问与停止”、旧 dynamic next-question helpers、旧 active follow-up residues 不再作为当前事实使用。
 - `yellow_leaf` 映射到固定 4 题前置题包：`answerSubmitMode = package`、`questionDisplayMode = package`、`fixedQuestionPackage = true`，并带有 `outcomePolicy`。
+- `wilting_droop` 映射到固定 5 题前置题包，source mode 为 `manual_wilting_droop_route_package`：Q0 是 `CareBehaviorTimeline` 水分行为时间线，Q1-Q4 分别覆盖发蔫形态、节律/环境、近期应激和高危异常；黄叶语义不因此改变。
+- `wilting_droop` 整包完成后按答案产出“建议行动清单”：可包含多个 `visibleOutcomes`、冲突动作解释、高危提醒和观察周期；不得引入 ranking / score / probability / main-cause / “最可能原因”排序口径。
 - `/diagnosis/question/start` 的 `yellowing_mode` 固定走 `static-question-package-start.js` 的模块级静态题包启动路径，返回 active `questions` 与 `questionPackage`；该路径只保存 package snapshot，不加载 prior repository、manual fast path 或 `diagnosis-engine`。
 - package 响应以 `questions` 作为前端题目数组；非 package 兼容路径才保留单题 queue-anchor 语义。
 - 有效 `yellow_leaf` package 的回答归属以 `runtimeSnapshot.questionPackageSnapshot.packageQuestions` 为准；`questionQueue` 是运行时兼容/校验结构，不是题包 sibling questions 的拒绝依据。

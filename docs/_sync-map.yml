@@ -82,9 +82,12 @@ areas:
   diagnose-question-package:
     code:
       - cloudfunctions/diagnose-http/app/question-package-response.js
+      - cloudfunctions/diagnose-http/app/wilting-droop-question-package.js
       - cloudfunctions/diagnose-http/app/manual-symptom-question-start-fast-path.js
       - cloudfunctions/diagnose-http/app/frontend-response.js
+      - cloudfunctions/diagnose-http/domain/wilting-droop-outcome-resolver.js
       - src/pages/diagnose/follow-up/**
+      - src/pages/diagnose/question-package/**
       - src/utils/diagnose-follow-up-payload.js
       - src/utils/diagnose-result-normalizer.js
       - src/http-functions/diagnose/client.js

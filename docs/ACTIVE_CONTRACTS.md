@@ -4,7 +4,7 @@ status: current
 doc_type: contract
 owner: docs-keeper
 sync_policy: active
-last_verified_date: 2026-06-06
+last_verified_date: 2026-06-07
 last_verified_commit: unknown-from-upload
 source_of_truth:
   - src/http-functions/**
@@ -228,12 +228,17 @@ options[]
 - 禁止把 `maxQuestionsPerRound: 1` 或旧“常规 route 追问每轮 1 题”写成当前 UX/产品契约。
 - 旧“黄叶 4 题 package”只能作为历史上已知题包形态，不是当前题包长度上限，也不是唯一适用场景。
 - 有效 `yellow_leaf` 题包的包内答案按同一当前轮次整体持久化和归属校验；`questionQueue` 不作为题包题数和停止口径依据，仅允许作为运行时兼容锚点。
+- `wilting_droop` 固定题包使用 `sourceMode: manual_wilting_droop_route_package`，共 5 题：Q0 为 `care_behavior_timeline`/`CareBehaviorTimeline` 水分行为时间线，Q1-Q4 分别覆盖发蔫形态、节律/环境、近期应激和高危异常。
+- `wilting_droop` 终端结果以 `visibleOutcomes` 多行动建议为中心，公开标题/结果名为“建议行动清单”；不提供 ranking、score、probability、main-cause 或“最可能原因”排序口径。
+- `wilting_droop` 结果可额外返回 `blockedActionExplanations`、`highRiskWarning`、`observationPeriod`。当高危异常阻断补水、喷水、施肥、暴晒等动作时，前端应展示冲突动作解释，而不是把被阻断动作继续作为主要建议。
 
 需求指针：`docs/tickets/86exv6fnx-diagnose-question-package.md`。
 
 事实源：
 
 ```text
+cloudfunctions/diagnose-http/app/wilting-droop-question-package.js
+cloudfunctions/diagnose-http/domain/wilting-droop-outcome-resolver.js
 cloudfunctions/diagnose-http/app/question-package-response.js
 cloudfunctions/diagnose-http/app/diagnosis-answer-runner.js
 cloudfunctions/diagnose-http/domain/diagnosis-engine.js
