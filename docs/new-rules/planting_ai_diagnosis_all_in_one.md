@@ -8,9 +8,9 @@
 
 本文件已经移除旧大而全 Sxx 规则结构，只保留当前运行时会影响实现、问诊、停止、输出和前端契约的概念。
 
-## 1. 当前唯一主问诊模式
+## 1. 当前诊断主链与问诊模式
 
-当前唯一主问诊模式是 **route 模式**。
+当前诊断主链是 **route 模式**；当前问诊题目按 **mode question package** 工作。固定题包的入口是 `getQuestionPackageByMode(mode)`。
 
 不要再使用以下概念作为当前执行依据：
 
@@ -18,6 +18,7 @@
 - score gap 达标停止。
 - hypothesis pool 逐题追问协议。
 - 固定答满 N 题即可输出。
+- 旧 dynamic next-question helpers 作为当前问诊权威。
 - 旧 Sxx all-in-one 作为最新结构源。
 
 当前有效主对象是：
@@ -26,8 +27,9 @@
 - `planOutcomeRoutes`
 - `routeDecision`
 - `visibleOutcomeKeys`
-- `nextQuestionKeys`
-- `followUps`
+- `getQuestionPackageByMode(mode)`
+- `questionPackage`
+- `uiHints`
 - `questionQueue`
 - `stopState`
 - `outputEligibility`
@@ -71,19 +73,20 @@ route planner 做四件事：
 3. 对每个 outcome 评估 gate：pass、fail、block、need_more_info、conflict。
 4. 生成 `visibleOutcomeKeys` 或 `nextQuestionKeys`。
 
-常规 route 追问的 `maxQuestionCount` 是 1。主链还会把最终候选追问 `.slice(0, 1)`。
+常规 route 调用的 `maxQuestionCount` 仍是 1；这只描述非 package 兼容路径，不能作为固定题包的题数权威。
 
-## 5. 常规追问规则
+## 5. 题包与非 package 兼容路径
 
-常规追问只在 `routeDecision.requiresFollowUp === true` 且有可问问题时产生。
+固定题包由 `QUESTION_PACKAGE_BY_MODE` 声明并通过 `getQuestionPackageByMode(mode)` 获取。当前 `yellow_leaf` package 显式包含：
 
-触发追问通常需要：
+- 4 个目标维度。
+- `answerSubmitMode: package`。
+- `questionDisplayMode: package`。
+- `fixedQuestionPackage: true`。
+- `outcomePolicy.allowMultipleOutcomes: true`。
+- `outcomePolicy.preferSingleOutcome: false`。
 
-- 仍可进入下一轮追问。
-- `nextQuestionKeys` 非空。
-- 存在 required question，或没有可见 outcome，或存在行动建议冲突。
-
-旧 `legacyFollowUpAllowed` 在当前主链中为 false，因此旧 selector 不应写成当前事实。
+非 package 路径仍保留单题 queue-anchor 兼容语义。旧 selector、旧 dynamic next-question helper、旧 active follow-up residues 不应写成当前事实。
 
 ## 6. 黄叶 4 题题包
 
@@ -103,7 +106,12 @@ route planner 做四件事：
     "sourceMode": "manual_yellowing_care_environment_frontloaded",
     "questionCount": 4,
     "answerSubmitMode": "package",
-    "questionDisplayMode": "package"
+    "questionDisplayMode": "package",
+    "fixedQuestionPackage": true,
+    "outcomePolicy": {
+      "allowMultipleOutcomes": true,
+      "preferSingleOutcome": false
+    }
   }
 }
 ```
@@ -120,16 +128,16 @@ route planner 做四件事：
 - `questionPackage` / `uiHints` 可进入前端。
 - 前端 normalizer 会按 `questionCount` 保留 4 题。
 - 前端 follow-up 页面支持 package 展示和整包提交。
+- package queue 会保留包内全部问题。
 - 后端 package persistence 会让有效 `yellow_leaf` package 的 4 个问题按同一当前轮次落库。
 - answer ownership 会基于同轮持久化 rows 允许包内 4 个答案一起通过。
 
 仍需区分：
 
-- `planQuestionQueue` 仍只取 `response.followUps.slice(0, 1)`。
-- legacy `questionQueue` 仍是兼容/选择 artifact，不是拒绝 package sibling questions 的依据。
+- `questionQueue` 仍是兼容/校验 artifact，不是固定题包的题数权威。
 - 非 package 路径仍按 queue-anchor 单题语义工作。
 
-因此，文档和 AI 不能把“questionQueue 只锚定首题”写成“黄叶 package 只能提交首题”。
+因此，文档和 AI 不能把“非 package 默认单题”写成“黄叶 package 只能提交首题”。
 
 ## 8. 回答提交
 
@@ -178,7 +186,7 @@ route planner 做四件事：
 - 按 `questionCount` 展示问题进度。
 - package 模式最后一次性提交整包答案。
 
-但后端 answer ownership 仍是硬门槛，前端不能假设只要能展示就一定能提交成功。
+但后端 answer ownership 仍是硬门槛，前端不能忽略 package metadata 或 option mapping。
 
 ## 12. 当前代码源索引
 
@@ -205,8 +213,9 @@ route planner 做四件事：
 
 - [ ] 是否仍以 route 模式为主事实。
 - [ ] 是否没有恢复旧 ranking/score-gap 追问规则。
-- [ ] 常规追问是否仍是 1 题上限，或文档是否同步解释题数变更。
-- [ ] 若题包变为后端包级协议，是否同步改 queue、持久化和归属校验。
+- [ ] 是否没有恢复旧 dynamic next-question helper 作为当前权威。
+- [ ] 固定题包是否仍通过 `getQuestionPackageByMode(mode)`。
+- [ ] package queue、持久化和归属校验是否覆盖包内所有题。
 - [ ] stop state 是否仍能阻止未完成追问输出。
 - [ ] output eligibility 是否仍能阻止 active queue 输出。
 - [ ] 前端是否保留并使用 `questionPackage` / `uiHints`。

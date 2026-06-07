@@ -6,19 +6,19 @@
 
 ## 当前诊断主链结论
 
-- 当前问诊主模式是 **route 模式**，其核心事实来源是 `planOutcomeRoutes`、`routeDecision`、`visibleOutcomeKeys`、`nextQuestionKeys`、`stopDecision` 与运行时 `questionQueue`。
-- 旧的“ranking / score gap / hypothesis pool 决定追问与停止”的说法不再作为当前事实使用。
-- 常规 route 追问每轮最多 1 题；`diagnosis-engine.js` 在 route complete path 中以 `maxQuestionCount: 1` 调用 route planner，并最终将候选追问 `.slice(0, 1)`。
-- 黄叶手动入口存在 4 题前置题包：`questionPackage.mode = yellow_leaf`，`answerSubmitMode = package`，`questionDisplayMode = package`。
-- 黄叶题包已收敛为包级持久化与归属校验：有效 `yellow_leaf` package 会让包内 4 题按同一当前轮次落库并通过 ownership；legacy `questionQueue` 仍只作为兼容/选择锚点，不能拒绝 package sibling questions。非题包路径仍保持 queue-anchor 单题行为。
-- 停止与输出资格由 `stage === final`、`followUpRequired === false`、无 active queue、正式 outcome type、正式 stop decision 共同决定；不是“答满若干题就输出”。
+- 当前诊断仍以 **route 模式** 汇总证据和决定输出；当前问诊入口按 **mode question package** 收敛，固定题包由 `getQuestionPackageByMode(mode)` 作为显式入口。
+- 旧的“ranking / score gap / hypothesis pool 决定追问与停止”、旧 dynamic next-question helpers、旧 active follow-up residues 不再作为当前事实使用。
+- `yellow_leaf` 映射到固定 4 题前置题包：`answerSubmitMode = package`、`questionDisplayMode = package`、`fixedQuestionPackage = true`，并带有 `outcomePolicy`。
+- package 响应会让 `questionQueue` 保留包内全部问题；非 package 路径仍保持单题 queue-anchor 行为。
+- 有效 `yellow_leaf` package 会让包内 4 题按同一当前轮次落库并通过 ownership；`questionQueue` 是运行时兼容/校验结构，不是题包 sibling questions 的拒绝依据。
+- package answer submit 是终止当前问诊轮次的提交形态；停止与输出资格仍由 `stage === final`、`followUpRequired === false`、无 active queue、正式 outcome type、正式 stop decision 共同决定，不是“答满若干题就输出”。
 
 ## 阅读顺序
 
 1. `00_文档总索引_与阅读顺序.md`：总原则、阅读路径、过时概念修正表。
 2. `02_诊断HTTP接口_请求响应与路由.md`：HTTP 入口与 handler 差异。
 3. `03_诊断运行时主链路_逐步执行逻辑.md`：route-only 主链与决策节点。
-4. `05_问诊系统_问题生成_过滤_停止策略.md`：追问、停止、输出资格的真实代码逻辑。
+4. `05_问诊系统_问题生成_过滤_停止策略.md`：题包、queue 兼容层、停止、输出资格的真实代码逻辑。
 5. `06_问题排序_证据计分_输出守卫.md`：route gate、候选状态、输出守卫。
 6. `07_结果格式化_公开响应_前端接入契约.md`：公开响应与前端题包契约。
 7. `10_实施规则映射_开发约束_审计清单.md`：开发/审计检查项。
@@ -31,4 +31,4 @@
 
 - 新增或变更问诊、停止、输出资格逻辑时，必须同时更新 `03`、`05`、`06`、`07`、`10` 与 `new-rules/planting_ai_diagnosis_all_in_one.md`。
 - `ai_and_memories` 只允许引用本目录与 `new-rules` 的最新结构、概念和行号。
-- 文档中出现“旧追问模式”“动态多轮 ranking 追问”“答题数足够即可输出”“黄叶 4 题后端全链路已闭环”等说法，均视为需要复核的高风险陈述。
+- 文档中出现“旧追问模式”“动态多轮 ranking 追问”“dynamic next-question helper 是当前权威”“答题数足够即可输出”“questionQueue 拒绝有效 package sibling questions”等说法，均视为需要复核的高风险陈述。

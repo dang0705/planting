@@ -32,7 +32,7 @@
 
 代码来源：`cloudfunctions/diagnose-http/handlers/diagnosis-handlers.js` 114-140。
 
-回答入口会做严格归属校验：必须有 `diagnosisSessionId`，必须加载 session，必须校验当前轮次、问题 key、option key 与 follow-up 归属。该入口不能被文档描述成“前端传什么答案都可进入 route 重算”。
+回答入口会做严格归属校验：必须有 `diagnosisSessionId`，必须加载 session，必须校验当前轮次、问题 key、option key 与 follow-up 归属。package answer submit 会作为当前题包轮次的终止提交状态传入诊断引擎；该入口不能被文档描述成“前端传什么答案都可进入 route 重算”。
 
 ## 5. 手动症状模式入口
 
@@ -51,11 +51,11 @@
 `buildFrontendDiagnosisResponse` 的关键逻辑：
 
 - 当 `publicResponse.followUpRequired` 为 true 时，读取 `resolveResponseQuestions(publicResponse)`。
-- 尝试构造黄叶 `questionPackage`。
+- 通过 `getQuestionPackageByMode(mode)` 尝试构造固定 `questionPackage`。
 - 有题包时按 `questionPackage.questionCount` 保留 follow-up；无题包时默认只保留 1 题。
 - 返回 `questions`、`followUpQuestions`、`questionPackage` 与 `uiHints`。
 
-代码来源：`cloudfunctions/diagnose-http/app/frontend-response.js` 341-390；题包构造来源 `cloudfunctions/diagnose-http/app/question-package-response.js` 3-67。
+代码来源：`cloudfunctions/diagnose-http/app/frontend-response.js` 341-390；题包构造来源 `cloudfunctions/diagnose-http/app/question-package-response.js` 5-82。
 
 ## 7. 文档必须保留的接口差异
 
@@ -63,8 +63,8 @@
 |---|---:|---:|---|
 | `/diagnosis/start` | 是 | 1 | 不作为黄叶题包主入口 |
 | `/diagnosis/question/start` | 否，直接 `buildFrontendResponse` | 1 或 fast path | 可一次性返回 4 题题包 |
-| `/diagnosis/answer` | 是 | 1 | 提交答案后重算；后端校验仍受 queue/持久化约束 |
+| `/diagnosis/answer` | 是 | 1 | 整包提交后重算；后端按 package queue/持久化/ownership 校验 |
 
 ## 8. 风险边界
 
-文档必须明确：黄叶 4 题包是“响应与前端支持”的事实，但当前后端 queue 与持久化校验并未完全包级化。若产品要求真正一次性提交 4 题并全量通过后端归属校验，需要同步改 `questionQueue` 规划、`appendFollowUpQuestions` 过滤与 `validateFollowUpAnswerOwnership`。
+文档必须明确：黄叶 4 题包已经是 `getQuestionPackageByMode('yellow_leaf')` 驱动的固定 package 协议，响应、前端展示/提交、package queue、持久化与归属校验均应允许包内 4 题。非 package 路径仍按单题 queue-anchor 语义工作，不能把 package 规则外推到所有模式。

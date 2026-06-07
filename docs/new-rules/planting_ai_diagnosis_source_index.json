@@ -1,14 +1,16 @@
 {
-  "generated_at": "2026-06-06T00:00:00+08:00",
+  "generated_at": "2026-06-07T00:00:00+08:00",
   "source_of_truth": "code-base.zip extracted working tree; code implementation is the only normative source",
-  "status": "route_mode_synced",
+  "status": "explicit_question_package_synced",
   "deprecated_original_model": {
     "note": "旧 Sxx 大而全规则集不再作为当前执行结构源；只可作为历史背景。",
     "do_not_use_as_current_facts": [
       "ranking / score gap controls follow-up",
       "fixed number of answers grants output eligibility",
       "questionQueue first-anchor means yellow leaf package can only submit the first question",
-      "question-start/start/answer response paths are equivalent"
+      "question-start/start/answer response paths are equivalent",
+      "dynamic next-question helpers as current questioning authority",
+      "questionQueue as fixed package question-count authority"
     ]
   },
   "docs_structure": [
@@ -120,7 +122,7 @@
     },
     {
       "file": "docs/code-logics/03_诊断运行时主链路_逐步执行逻辑.md",
-      "line_count": 123,
+      "line_count": 130,
       "headings": [
         {
           "title": "# 03｜诊断运行时主链路：route-only 执行逻辑",
@@ -139,34 +141,34 @@
           "lines": "27-39"
         },
         {
-          "title": "## 4. 常规追问生成",
-          "lines": "40-50"
+          "title": "## 4. 旧动态追问逻辑的当前状态",
+          "lines": "40-51"
         },
         {
           "title": "## 5. 黄叶手动 fast path",
-          "lines": "51-68"
+          "lines": "52-72"
         },
         {
-          "title": "## 6. 黄叶题包的真实边界",
-          "lines": "69-87"
+          "title": "## 6. 黄叶题包的 queue、持久化与 ownership 边界",
+          "lines": "73-94"
         },
         {
           "title": "## 7. 停止决策",
-          "lines": "88-97"
+          "lines": "95-104"
         },
         {
           "title": "## 8. 输出资格",
-          "lines": "98-115"
+          "lines": "105-122"
         },
         {
           "title": "## 9. 文档修正原则",
-          "lines": "116-123"
+          "lines": "123-130"
         }
       ]
     },
     {
       "file": "docs/code-logics/05_问诊系统_问题生成_过滤_停止策略.md",
-      "line_count": 134,
+      "line_count": 138,
       "headings": [
         {
           "title": "# 05｜问诊系统：问题生成、过滤、停止策略",
@@ -181,48 +183,52 @@
           "lines": "19-22"
         },
         {
-          "title": "### 2.1 route-planned follow-up",
-          "lines": "23-30"
+          "title": "### 2.1 mode question package",
+          "lines": "23-28"
         },
         {
-          "title": "### 2.2 黄叶手动 4 题题包",
-          "lines": "31-43"
+          "title": "### 2.2 非 package route 兼容路径",
+          "lines": "29-34"
         },
         {
-          "title": "### 2.3 retake / 图片补拍分支",
-          "lines": "44-47"
+          "title": "### 2.3 黄叶手动 4 题题包",
+          "lines": "35-47"
+        },
+        {
+          "title": "### 2.4 retake / 图片补拍分支",
+          "lines": "48-51"
         },
         {
           "title": "## 3. 过滤与去重",
-          "lines": "48-62"
+          "lines": "52-66"
         },
         {
           "title": "## 4. question queue 的真实作用",
-          "lines": "63-70"
+          "lines": "67-74"
         },
         {
           "title": "## 5. 追问持久化与归属校验",
-          "lines": "71-78"
+          "lines": "75-82"
         },
         {
           "title": "## 6. 黄叶 4 题题包的必须表述",
-          "lines": "79-90"
+          "lines": "83-94"
         },
         {
           "title": "## 7. 回答提交规则",
-          "lines": "91-104"
+          "lines": "95-108"
         },
         {
           "title": "## 8. 停止策略",
-          "lines": "105-118"
+          "lines": "109-122"
         },
         {
           "title": "## 9. 输出资格",
-          "lines": "119-124"
+          "lines": "123-128"
         },
         {
           "title": "## 10. 开发检查点",
-          "lines": "125-134"
+          "lines": "129-138"
         }
       ]
     },
@@ -278,7 +284,7 @@
     },
     {
       "file": "docs/code-logics/07_结果格式化_公开响应_前端接入契约.md",
-      "line_count": 88,
+      "line_count": 97,
       "headings": [
         {
           "title": "# 07｜结果格式化、公开响应与前端接入契约",
@@ -294,31 +300,35 @@
         },
         {
           "title": "## 3. 黄叶题包响应契约",
-          "lines": "21-38"
+          "lines": "21-40"
         },
         {
           "title": "## 4. 前端 normalizer",
-          "lines": "39-49"
+          "lines": "41-51"
         },
         {
           "title": "## 5. 前端 follow-up 页面",
-          "lines": "50-63"
+          "lines": "52-65"
         },
         {
           "title": "## 6. 前端 payload",
-          "lines": "64-69"
+          "lines": "66-71"
         },
         {
           "title": "## 7. 必须暴露给前端的边界",
-          "lines": "70-77"
+          "lines": "72-77"
         },
         {
-          "title": "## 8. final 结果读取",
-          "lines": "78-81"
+          "title": "## 8. 养护时间线环境上下文取数模式",
+          "lines": "78-85"
         },
         {
-          "title": "## 9. 前端不得做的事",
-          "lines": "82-88"
+          "title": "## 9. final 结果读取",
+          "lines": "86-90"
+        },
+        {
+          "title": "## 10. 前端不得做的事",
+          "lines": "91-97"
         }
       ]
     },
@@ -374,7 +384,7 @@
     },
     {
       "file": "docs/code-logics/10_实施规则映射_开发约束_审计清单.md",
-      "line_count": 85,
+      "line_count": 87,
       "headings": [
         {
           "title": "# 10｜实施规则映射、开发约束与审计清单",
@@ -386,31 +396,31 @@
         },
         {
           "title": "## 2. 问诊改动审计清单",
-          "lines": "18-32"
+          "lines": "18-34"
         },
         {
           "title": "## 3. 停止与输出资格审计清单",
-          "lines": "33-42"
+          "lines": "35-44"
         },
         {
           "title": "## 4. HTTP 接口审计清单",
-          "lines": "43-49"
+          "lines": "45-51"
         },
         {
           "title": "## 5. 文档禁用表述",
-          "lines": "50-60"
+          "lines": "52-62"
         },
         {
           "title": "## 6. 允许保留的历史概念",
-          "lines": "61-71"
+          "lines": "63-73"
         },
         {
           "title": "## 7. Codex / AI 执行规则",
-          "lines": "72-82"
+          "lines": "74-84"
         },
         {
           "title": "## 8. 本轮已确认的高风险边界",
-          "lines": "83-85"
+          "lines": "85-87"
         }
       ]
     },
@@ -496,7 +506,7 @@
     },
     {
       "file": "docs/new-rules/planting_ai_diagnosis_all_in_one.md",
-      "line_count": 222,
+      "line_count": 233,
       "headings": [
         {
           "title": "# Planting AI 诊断运行规则 All-in-One（code-base 同步版）",
@@ -507,60 +517,60 @@
           "lines": "5-10"
         },
         {
-          "title": "## 1. 当前唯一主问诊模式",
-          "lines": "11-34"
+          "title": "## 1. 当前诊断主链与问诊模式",
+          "lines": "11-36"
         },
         {
           "title": "## 2. 入口与 handler 差异",
-          "lines": "35-50"
+          "lines": "37-52"
         },
         {
           "title": "## 3. 手动症状模式",
-          "lines": "51-64"
+          "lines": "53-66"
         },
         {
           "title": "## 4. route planner",
-          "lines": "65-75"
+          "lines": "67-77"
         },
         {
-          "title": "## 5. 常规追问规则",
-          "lines": "76-87"
+          "title": "## 5. 题包与非 package 兼容路径",
+          "lines": "78-90"
         },
         {
           "title": "## 6. 黄叶 4 题题包",
-          "lines": "88-112"
+          "lines": "91-120"
         },
         {
           "title": "## 7. 黄叶题包的硬边界",
-          "lines": "113-131"
+          "lines": "121-141"
         },
         {
           "title": "## 8. 回答提交",
-          "lines": "132-144"
+          "lines": "142-154"
         },
         {
           "title": "## 9. 停止规则",
-          "lines": "145-158"
+          "lines": "155-168"
         },
         {
           "title": "## 10. 输出资格",
-          "lines": "159-164"
+          "lines": "169-174"
         },
         {
           "title": "## 11. 公开响应与前端契约",
-          "lines": "165-180"
+          "lines": "175-190"
         },
         {
           "title": "## 12. 当前代码源索引",
-          "lines": "181-199"
+          "lines": "191-209"
         },
         {
           "title": "## 13. 修改 checklist",
-          "lines": "200-212"
+          "lines": "210-223"
         },
         {
           "title": "## 14. 旧概念处置",
-          "lines": "213-222"
+          "lines": "224-233"
         }
       ]
     }
@@ -578,13 +588,13 @@
     },
     {
       "file": "cloudfunctions/diagnose-http/app/manual-symptom-question-start-fast-path.js",
-      "lines": "30-35,132-193,231-328",
-      "fact": "yellowing 4-question package response"
+      "lines": "25-38,224-285",
+      "fact": "yellowing fast path consumes getQuestionPackageByMode and returns 4-question package response"
     },
     {
       "file": "cloudfunctions/diagnose-http/app/question-package-response.js",
-      "lines": "3-67",
-      "fact": "yellow leaf package validation and ui hints"
+      "lines": "5-82,167-173",
+      "fact": "explicit mode-to-question-package mapping, yellow_leaf outcomePolicy, package validation and ui hints"
     },
     {
       "file": "cloudfunctions/diagnose-http/app/frontend-response.js",
@@ -598,13 +608,13 @@
     },
     {
       "file": "cloudfunctions/diagnose-http/domain/diagnosis-engine.js",
-      "lines": "5876-5897,6106-6120,6191-6220,6855-6966",
-      "fact": "route-only main chain, legacyFollowUpAllowed=false, single normal follow-up, route stop decision"
+      "lines": "2257-2266,3105-3113,3185-3187,3785-3904",
+      "fact": "route decision remains output/evidence planner; package answer submit finalizes questioning; old dynamic follow-up helpers are not active facts"
     },
     {
       "file": "cloudfunctions/diagnose-http/domain/question-queue/question-queue-planner.js",
-      "lines": "89-199",
-      "fact": "question queue only anchors first follow-up"
+      "lines": "56-74,109-177",
+      "fact": "package queue keeps all package questions; non-package responses default to one question"
     },
     {
       "file": "cloudfunctions/diagnose-http/services/session-follow-up-service.js",
@@ -637,5 +647,5 @@
       "fact": "frontend answer payload builder"
     }
   ],
-  "docs_structure_note": "包括本轮改写的 code-logics 00/02/03/05/06/07/08/10/11 与 new-rules all-in-one。"
+  "docs_structure_note": "包括本轮同步的 code-logics 00/02/03/05/07/08/10 与 new-rules all-in-one；06/11 未作内容改动但索引行号按当前文件重算。"
 }
