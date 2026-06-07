@@ -123,7 +123,7 @@ route planner 做四件事：
 
 ## 7. 黄叶题包的硬边界
 
-必须保留这个事实：黄叶 4 题题包当前是 package 协议，回答归属以 package snapshot 为准，不能再被 legacy queue 首题锚点拒绝 sibling questions。
+必须保留这个事实：黄叶 4 题题包当前是 package 协议，回答归属以 package snapshot 为准，不能被非题包路径拒绝包内其他问题。
 
 已成立：
 
@@ -133,11 +133,13 @@ route planner 做四件事：
 - 前端题包页面支持 package 展示和整包提交。
 - 后端 package persistence 会把有效 `yellow_leaf` package 的 4 个问题写入 `runtimeSnapshot.questionPackageSnapshot.packageQuestions`。
 - answer ownership 会基于 `questionPackageSnapshot.packageQuestions` 允许包内 4 个答案一起通过。
+- `CareBehaviorTimeline.vue` 的虚拟答案 `care_behavior_timeline` 是浇水题的合法 package answer，后端必须在 route 运行前把可判定的过浇行为转换成 `often_wet`。
+- 黄叶过浇行为、施浓肥 / 近期换盆、直晒 / 光照突然增强是强阳性整包验收样本，分别必须产生 `overwatering_root_pressure`、`fertilizer_repot_stress`、`sunburn` visible outcome。
 
 仍需区分：
 
-- `questionQueue` 仍是兼容/校验 artifact，不是固定题包的题数或归属权威。
-- 非 package 路径仍按 queue-anchor 单题语义工作。
+- 固定题包的题数、归属和停止输入以 `questionPackage`、package snapshot 与整包 answers 为准。
+- 非 package 路径不得反向约束黄叶 4 题题包。
 
 因此，文档和 AI 不能把“非 package 默认单题”写成“黄叶 package 只能提交首题”。
 
@@ -152,7 +154,7 @@ route planner 做四件事：
 - question key 是否属于当前 session 可回答集合。
 - option key 是否属于该 question 的合法映射。
 
-package 提交后，系统会用 snapshot 构造本轮 answered runtime，并重跑 `runDiagnosisRound`。非 package 兼容提交才继续标记 legacy question rows 和 question queue。
+package 提交后，系统会用 snapshot 构造本轮 answered runtime，并重跑 `runDiagnosisRound`。
 
 ## 9. 停止规则
 

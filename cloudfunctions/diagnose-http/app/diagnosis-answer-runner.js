@@ -12,7 +12,9 @@ const {
 const { isQuestionPackageAnswerSubmitPayload } = require('./question-package-response')
 const {
   resolveQuestionPackageSnapshot,
-  resolvePackageAnswerOwnership
+  resolvePackageAnswerOwnership,
+  buildPackageAnswerOptionMappings,
+  mergePackageAnswerOptionMappings
 } = require('./package-answer-ownership-runtime')
 const { buildPackageAnswerRuntimeState } = require('./answer-runtime-state')
 const { runDeferredAnswerPersistence } = require('./answer-runner-helpers')
@@ -225,7 +227,10 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     })
 
     const optionMappings = isTerminalQuestionPackageSubmit
-      ? questionOptionMappingsFromStore
+      ? mergePackageAnswerOptionMappings(
+          questionOptionMappingsFromStore,
+          buildPackageAnswerOptionMappings(questionPackageSnapshot)
+        )
       : getLegacyAnswerSubmitRuntime().buildLegacyAnswerOptionMappings(
           questionKeys,
           questionOptionMappingsFromStore

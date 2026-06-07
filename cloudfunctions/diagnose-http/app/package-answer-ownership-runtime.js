@@ -1,5 +1,7 @@
 'use strict'
 
+const { fromOptionId } = require('../mappers/public-id-mapper')
+
 function normalizeText(value = '') {
   return String(value || '').trim()
 }
@@ -47,6 +49,70 @@ function buildOptionMetaByQuestionOption(optionMappings = []) {
     result.set(`${questionKey}::${optionKey}`, option)
   }
   return result
+}
+
+function buildPackageAnswerOptionMappings(questionPackageSnapshot = null) {
+  const packageQuestions = Array.isArray(questionPackageSnapshot?.packageQuestions)
+    ? questionPackageSnapshot.packageQuestions
+    : []
+  const mappings = []
+
+  for (const question of packageQuestions) {
+    const questionKey = normalizeText(question?.questionKey)
+    if (!questionKey) {
+      continue
+    }
+
+    if (normalizeText(question?.uiVariant) === 'care_behavior_timeline') {
+      mappings.push({
+        questionKey,
+        optionKey: 'care_behavior_timeline',
+        text: '养护记录已提供',
+        optionTextUserCn: '养护记录已提供',
+        value: 0,
+        associationStrength: 0
+      })
+    }
+
+    const questionOptions = Array.isArray(question?.options) ? question.options : []
+    for (const option of questionOptions) {
+      const optionKey = normalizeOptionKey(
+        option?.optionKey || fromOptionId(option?.optionId || '') || option?.optionId || ''
+      )
+      if (!optionKey) {
+        continue
+      }
+      mappings.push({
+        questionKey,
+        optionKey,
+        text: normalizeText(option?.text || option?.label || option?.optionText || ''),
+        optionTextUserCn: normalizeText(
+          option?.optionTextUserCn || option?.text || option?.label || option?.optionText || ''
+        ),
+        value: optionKey === 'unknown' ? 0 : 1,
+        associationStrength: optionKey === 'unknown' ? 0 : 1
+      })
+    }
+  }
+
+  return mappings
+}
+
+function mergePackageAnswerOptionMappings(storeMappings = [], snapshotMappings = []) {
+  const result = new Map()
+  for (const item of [...snapshotMappings, ...storeMappings]) {
+    const questionKey = normalizeText(item?.questionKey)
+    const optionKey = normalizeOptionKey(item?.optionKey)
+    if (!questionKey || !optionKey) {
+      continue
+    }
+    result.set(`${questionKey}::${optionKey}`, {
+      ...item,
+      questionKey,
+      optionKey
+    })
+  }
+  return Array.from(result.values())
 }
 
 function resolveAnswerStatus(optionKey = '', optionMeta = {}) {
@@ -155,6 +221,8 @@ function buildPackageAnswerRuntime({
 module.exports = {
   resolveQuestionPackageSnapshot,
   resolvePackageAnswerOwnership,
+  buildPackageAnswerOptionMappings,
+  mergePackageAnswerOptionMappings,
   buildPackageAnswerRuntime,
   _test: {
     resolveAnswerStatus

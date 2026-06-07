@@ -220,6 +220,8 @@ export function buildDiagnosisAnswerMutationPayload({
   requestMode = '',
   baseAnswerRevision = 0,
   dirtyFromQuestionId = '',
+  questionPackage = null,
+  uiHints = null,
   careBehaviorTimeline = null,
   environmentWeatherWindow = null,
   ...careBehaviorSidecar
@@ -251,6 +253,12 @@ export function buildDiagnosisAnswerMutationPayload({
     ...(requestMode ? { requestMode } : {}),
     ...(Number(baseAnswerRevision || 0) ? { baseAnswerRevision: Number(baseAnswerRevision || 0) } : {}),
     ...(dirtyFromQuestionId ? { dirtyFromQuestionId } : {}),
+    ...(questionPackage && typeof questionPackage === 'object'
+      ? { questionPackage }
+      : {}),
+    ...(uiHints && typeof uiHints === 'object'
+      ? { uiHints }
+      : {}),
     imageIds: resolvedImageIds.length ? resolvedImageIds : primaryImageRef ? [primaryImageRef] : [],
     ...(primaryImageRef ? { image: primaryImageRef } : {}),
     ...(normalizedImages.length ? { images: normalizedImages } : {}),

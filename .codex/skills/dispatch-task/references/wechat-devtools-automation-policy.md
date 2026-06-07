@@ -80,6 +80,8 @@ QA 是正式自动化验收 owner。
 
 ## 内置 MCP transport 失活时的 fallback
 
+当 Test Contract 或用户要求包含小程序端上真实行为、端上接口时延、`wx.request` 真实返回、页面交互或真人路径复核时，内置 `mcp__wechat_dev_tools` transport 失活不得成为停止验收的第一结论。必须先尝试底层 `miniprogram-automator` 直连继续取证。
+
 当内置 `mcp__wechat_dev_tools` transport 持续失活，但已满足以下条件时：
 
 1. `9420` 已监听。
@@ -104,6 +106,16 @@ tool_session_blocker
    - `fallback_automator=used`
    - `classification=tool_session_blocker` / `recovered`
 5. 若底层 automator 也无法连接，才升级为真正的 `devtools_automator_blocker`。
+
+## miniprogram-automator 直连验收
+
+当使用底层 `miniprogram-automator` 继续端上验证时，证据必须来自真实小程序运行时，而不是 Node 直接请求后端：
+
+1. 若依赖不存在，先安装项目 dev dependency：`npm install --save-dev miniprogram-automator@0.12.1 --legacy-peer-deps`。
+2. 优先连接已开启 automation 的 DevTools WebSocket；若连接失败，可用 WeChat DevTools CLI 对 `dist/dev/mp-weixin` 或 Test Contract 指定 projectPath 启动 automation。
+3. 接口验收必须在 `miniProgram.evaluate` 中调用小程序环境的 `wx.request`，并记录 `projectPath`、automation port、request path、HTTP status、业务 code、关键响应字段和断言结果。
+4. UI / 交互验收必须记录 page path、操作链、selector 或截图引用。
+5. 只有 `miniprogram-automator` 也无法启动、无法连接或无法执行 required item，才允许把该验收项标为 `devtools_automator_blocker`。
 
 ## 输出预算
 

@@ -31,7 +31,7 @@ QA scope 由 Test Contract / 验收标准决定，不由“是否有 UI diff”�
 
 如果 WeChat DevTools MCP 可连接，QA 不得只做连接能力验证；必须执行 Test Contract 中的真实交互步骤。
 
-如果 MCP 不可用，必须标记为 blocker 或未验证项，不得判定通过。
+如果内置 MCP 不可用，且验收项要求小程序端上真实行为，QA 必须先尝试底层 `miniprogram-automator` 直连继续验收；只有内置 MCP 与底层 automator 都无法覆盖 required item 时，才标记为 blocker 或未验证项。
 
 当出现 `QA tool/session blocker`（如 `Transport closed`）时先做会话归因：
 
@@ -52,6 +52,14 @@ QA scope 由 Test Contract / 验收标准决定，不由“是否有 UI diff”�
 - `operation chain`
 - `screenshot/selector/log` 引用
 - blocker 分类（`QA tool/session blocker` 或 `product blocker`）
+
+当证据来自底层 `miniprogram-automator` 时，还必须补齐：
+
+- `automation_tool=miniprogram-automator`
+- automation port 或 `wsEndpoint`
+- 是否通过 WeChat DevTools CLI 启动 automation
+- 若验证接口，说明请求是在小程序运行时通过 `wx.request` 发起，而不是 Node 直接 HTTP
+- HTTP status、业务 code、关键响应字段和断言结果
 
 ## 输出预算
 

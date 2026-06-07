@@ -8,7 +8,7 @@ const originalModuleLoad = Module._load
 const captured = {
   runDiagnosisRoundArgs: null,
   persistRoundResultArgs: null,
-  markFollowUpAnswersArgs: null,
+  markQuestionAnswersArgs: null,
   getQuestionOptionMappingsArgs: null,
   routeAnswerEffectsArgs: null
 }
@@ -65,6 +65,16 @@ const sessionState = {
 }
 
 Module._load = function loadWithStubs(request, parent, isMain) {
+  if (request === '/opt/utils/cloudbase') {
+    return { models: {} }
+  }
+  if (request === '/opt/utils/plant-knowledge') {
+    return {
+      getPlantCatalogById: async () => null,
+      getUserPlantInstanceById: async () => null
+    }
+  }
+
   if (request === '../domain/diagnosis-engine') {
     return {
       runDiagnosisRound: async args => {
@@ -122,14 +132,14 @@ Module._load = function loadWithStubs(request, parent, isMain) {
     return {
       getSessionState: async () => sessionState,
       getObservedSymptomsBySession: async () => [],
-      validateFollowUpAnswerOwnership: async (_sessionId, answers, answerRound) => ({
+      validateQuestionAnswerOwnership: async (_sessionId, answers, answerRound) => ({
         ok: true,
         followUpRows: sessionState.followUpRows,
         answerRound,
         answers
       }),
-      markFollowUpAnswers: async (_sessionId, answers) => {
-        captured.markFollowUpAnswersArgs = answers
+      markQuestionAnswers: async (_sessionId, answers) => {
+        captured.markQuestionAnswersArgs = answers
         return {
           updatedAnswers: answers,
           followUpRows: sessionState.followUpRows,
@@ -237,8 +247,6 @@ const {
 } = require('./cloudfunctions/diagnose-http/app/care-behavior-payload.js')
 const { buildRuntimeSnapshotPayload } = require('./cloudfunctions/diagnose-http/services/session-runtime-snapshot-codec.js')
 
-Module._load = originalModuleLoad
-
 const payload = {
   diagnosisSessionId: 'session-bridge-1',
   roundId: 'round_1',
@@ -298,7 +306,7 @@ const result = await runAnswerDiagnosis({
   openid: 'openid_1'
 })
 
-assert.equal(captured.markFollowUpAnswersArgs[0].optionKey, 'care_behavior_timeline')
+assert.equal(captured.markQuestionAnswersArgs[0].optionKey, 'care_behavior_timeline')
 assert.equal(captured.runDiagnosisRoundArgs.answers[0].optionKey, 'often_wet')
 assert.equal(captured.runDiagnosisRoundArgs.answers[0].questionKey, 'q_observed_probe__leaf_yellowing__watering_frequency_context')
 assert.equal(result.response.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
@@ -339,5 +347,7 @@ const compactSnapshot = JSON.parse(buildRuntimeSnapshotPayload({
 
 assert.equal(compactSnapshot.careBehaviorTimeline.dailyRecords.length, 25)
 assert.equal(compactSnapshot.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
+
+Module._load = originalModuleLoad
 
 console.log('care-behavior-answer-runner tests passed')

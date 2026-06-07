@@ -15,6 +15,8 @@ Module._load = function patchedLoad(request, parent, isMain) {
 const {
   resolveQuestionPackageSnapshot,
   resolvePackageAnswerOwnership,
+  buildPackageAnswerOptionMappings,
+  mergePackageAnswerOptionMappings,
   buildPackageAnswerRuntime
 } = require('./cloudfunctions/diagnose-http/app/package-answer-ownership-runtime.js')
 const {
@@ -30,14 +32,23 @@ const questionPackageSnapshot = {
       questionGroupKey: 'care_water',
       targetDimension: 'watering_frequency',
       targetSymptomKey: 'leaf_yellowing',
-      questionText: '浇水频率如何？'
+      uiVariant: 'care_behavior_timeline',
+      questionText: '浇水频率如何？',
+      options: [
+        { optionKey: 'normal', optionId: 'opt_bm9ybWFs', text: '正常' },
+        { optionKey: 'unknown', optionId: 'opt_dW5rbm93bg', text: '不确定' }
+      ]
     },
     {
       questionKey: 'q_package_2',
       questionGroupKey: 'care_light',
       targetDimension: 'light_change',
       targetSymptomKey: 'leaf_yellowing',
-      questionText: '光照是否变化？'
+      questionText: '光照是否变化？',
+      options: [
+        { optionKey: 'stronger', optionId: 'opt_c3Ryb25nZXI', text: '更强' },
+        { optionKey: 'unknown', optionId: 'opt_dW5rbm93bg', text: '不确定' }
+      ]
     }
   ]
 }
@@ -66,6 +77,36 @@ const invalidOwnership = resolvePackageAnswerOwnership({
 })
 assert.equal(invalidOwnership.ok, false)
 assert.deepEqual(invalidOwnership.invalidQuestionKeys, ['outside_package'])
+
+const snapshotOptionMappings = buildPackageAnswerOptionMappings(resolvedSnapshot)
+assert.deepEqual(
+  snapshotOptionMappings.map(item => `${item.questionKey}::${item.optionKey}`),
+  [
+    'q_package_1::care_behavior_timeline',
+    'q_package_1::normal',
+    'q_package_1::unknown',
+    'q_package_2::stronger',
+    'q_package_2::unknown'
+  ]
+)
+
+const timelineRuntime = buildPackageAnswerRuntime({
+  questionPackageSnapshot: resolvedSnapshot,
+  answers: [
+    { questionKey: 'q_package_1', optionKey: 'care_behavior_timeline' },
+    { questionKey: 'q_package_2', optionKey: 'unknown' }
+  ],
+  optionMappings: snapshotOptionMappings
+})
+assert.equal(timelineRuntime.updatedAnswers[0].optionKey, 'care_behavior_timeline')
+assert.equal(
+  mergePackageAnswerOptionMappings(
+    [{ questionKey: 'q_package_1', optionKey: 'normal', value: 1, associationStrength: 0.8 }],
+    snapshotOptionMappings
+  ).find(item => item.questionKey === 'q_package_1' && item.optionKey === 'normal')
+    .associationStrength,
+  0.8
+)
 
 const packageRuntime = buildPackageAnswerRuntime({
   questionPackageSnapshot: resolvedSnapshot,
@@ -107,16 +148,7 @@ assert.equal(packageRuntime.askedQuestionRows.length, 2)
 const packageRuntimeState = buildPackageAnswerRuntimeState({
   questionPackageSnapshot: resolvedSnapshot,
   answers,
-  optionMappings: [
-    { questionKey: 'q_package_1', optionKey: 'normal', value: 1, associationStrength: 0.8 },
-    {
-      questionKey: 'q_package_2',
-      optionKey: 'unknown',
-      value: 0,
-      associationStrength: 0,
-      text: '不确定'
-    }
-  ]
+  optionMappings: snapshotOptionMappings
 })
 assert.deepEqual(packageRuntimeState.runtimeAnswers, answers)
 assert.deepEqual(packageRuntimeState.runtimeUnknownCountByGroup, {
