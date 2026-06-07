@@ -34,7 +34,7 @@ const {
   getLatestVisualAggregateSummary,
   resolveSymptomClassFromVisualCandidates
 } = require('./detail-data-loaders')
-const { listDiagnosisReviewFollowUps, listDiagnosisReviewAnswerEvents } = require('./follow-up-detail-loaders')
+const { listDiagnosisReviewQuestions, listDiagnosisReviewAnswerEvents } = require('./question-detail-loaders')
 const {
   createReviewTimingLogger,
   settleOptionalReviewSection
@@ -239,7 +239,7 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
   const [
     batchRecordResult,
     visualRawRecordsResult,
-    followUpRecordsResult,
+    questionRecordsResult,
     answerRevisionEventsResult,
     visualAggregateSummaryResult,
     visualListEnrichmentResult,
@@ -265,8 +265,8 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
     }),
     settleOptionalReviewSection({
       scope: 'diagnosis-review detail',
-      sectionName: 'followUpRecords',
-      loader: () => listDiagnosisReviewFollowUps(safeSessionId),
+      sectionName: 'questionRecords',
+      loader: () => listDiagnosisReviewQuestions(safeSessionId),
       fallbackValue: [],
       degradedSections,
       timing,
@@ -314,7 +314,7 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
   ])
   const batchRecord = batchRecordResult.value
   const visualRawRecords = visualRawRecordsResult.value || []
-  const followUpRecords = followUpRecordsResult.value || []
+  const questionRecords = questionRecordsResult.value || []
   const answerRevisionEvents = answerRevisionEventsResult.value || []
   const visualAggregateSummary = visualAggregateSummaryResult.value
   const visualListEnrichment = visualListEnrichmentResult.value || new Map()
@@ -460,10 +460,10 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
     coreProcess,
     actionAdviceGovernance,
     visualRawRecords,
-    followUpRecords,
+    questionRecords,
     answerRevisionEvents,
-    followUpAnswerEvents: answerRevisionEvents,
-    firstRoundQuestions: followUpRecords.filter(item => Number(item?.roundIndex || 1) <= 1),
+    questionAnswerEvents: answerRevisionEvents,
+    firstRoundQuestions: questionRecords.filter(item => Number(item?.roundIndex || 1) <= 1),
     batchReviewMeta:
       batchRecord || mapped?.reviewSourceType === 'batch'
         ? {

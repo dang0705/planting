@@ -133,7 +133,7 @@ async function persistRoundRuntime({
     openid,
     plantContext,
     response,
-    followUpRows: legacyQuestionRows
+    questionRows: legacyQuestionRows
   })
   runDeferredPersistenceJobs(sessionId, deferredPersistenceJobs)
 }

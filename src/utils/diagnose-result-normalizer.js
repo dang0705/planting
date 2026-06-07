@@ -39,10 +39,35 @@ function resolveDiagnosisQuestionSource(diagnosis = {}) {
   if (Array.isArray(diagnosis.questions) && diagnosis.questions.length) {
     return diagnosis.questions
   }
-  if (Array.isArray(diagnosis.followUps) && diagnosis.followUps.length) {
-    return diagnosis.followUps
+  return Array.isArray(diagnosis.questions) ? diagnosis.questions : []
+}
+
+function normalizeQuestionMode(value = '') {
+  return String(value || '').trim().toLowerCase()
+}
+
+function resolveQuestionPackageLimit(questionPackage = null, uiHints = {}) {
+  const candidateValues = [
+    questionPackage?.questionCount,
+    questionPackage?.maxQuestionsThisRound,
+    uiHints?.maxQuestionsThisRound
+  ]
+  for (const value of candidateValues) {
+    const count = Number(value)
+    if (Number.isFinite(count) && count > 1) {return count}
   }
-  return Array.isArray(diagnosis.questions) ? diagnosis.questions : diagnosis.followUps
+  return 1
+}
+
+function isActiveQuestionPackage({ stage = '', questionPackage = null, uiHints = {}, questions = [] } = {}) {
+  if (!questions.length) {return false}
+  const normalizedStage = normalizeQuestionMode(stage)
+  const answerSubmitMode = normalizeQuestionMode(uiHints?.answerSubmitMode || questionPackage?.answerSubmitMode)
+  const questionDisplayMode = normalizeQuestionMode(uiHints?.questionDisplayMode || questionPackage?.questionDisplayMode)
+  return normalizedStage === 'question_package' ||
+    answerSubmitMode === 'package' ||
+    questionDisplayMode === 'package' ||
+    Boolean(questionPackage && questions.length > 1)
 }
 
 export function normalizeQuestions(questions = [], options = {}) {
@@ -96,24 +121,37 @@ export function normalizeQuestions(questions = [], options = {}) {
 
 export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantName = '植物' } = {}) {
   const diagnosis = diagnosisResult || {}
-  const stage = diagnosis.stage || 'followup'
+  const hasIncomingQuestions = Array.isArray(diagnosis.questions) && diagnosis.questions.length
+  const stage = diagnosis.stage || (hasIncomingQuestions ? 'question_package' : 'final')
+  const rawUiHints =
+    diagnosis.uiHints &&
+    typeof diagnosis.uiHints === 'object' &&
+    !Array.isArray(diagnosis.uiHints)
+      ? diagnosis.uiHints
+      : {}
   const rawQuestionPackage =
     diagnosis.questionPackage &&
     typeof diagnosis.questionPackage === 'object' &&
     !Array.isArray(diagnosis.questionPackage)
       ? { ...diagnosis.questionPackage }
       : null
-  const packageQuestionCount = Number(rawQuestionPackage?.questionCount || 0)
-  const followUps = normalizeQuestions(resolveDiagnosisQuestionSource(diagnosis), {
-    limit: rawQuestionPackage && Number.isFinite(packageQuestionCount) && packageQuestionCount > 1
-      ? packageQuestionCount
-      : 1
+  const questions = normalizeQuestions(resolveDiagnosisQuestionSource(diagnosis), {
+    limit: resolveQuestionPackageLimit(rawQuestionPackage, rawUiHints)
   })
   const finalResult = diagnosis.finalResult || null
   const explanation = diagnosis.explanation || diagnosis.resultExplanation || {}
   const normalizedNextSteps = normalizeDiagnosisAdviceSteps(diagnosis, explanation)
   const normalizedWhatToAvoid = normalizeDiagnosisAvoidAdvice(diagnosis, explanation)
-  const followUpRequired = Boolean(diagnosis.followUpRequired) || (stage === 'followup' && followUps.length > 0)
+  const activeQuestionPackage = isActiveQuestionPackage({
+    stage,
+    questionPackage: rawQuestionPackage,
+    uiHints: rawUiHints,
+    questions
+  })
+  const hasActiveQuestions = Boolean(
+    questions.length &&
+      (activeQuestionPackage || normalizeQuestionMode(stage) === 'question_package')
+  )
   const observedSymptoms = normalizeObservedSymptoms(
     diagnosis.observedSymptoms || diagnosis.symptoms
   )
@@ -161,10 +199,18 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
   )
   const routeDecision = normalizeRouteDecision(diagnosis.routeDecision)
   const questionPackage = rawQuestionPackage
-  const rawMaxQuestionsThisRound = diagnosis?.uiHints?.maxQuestionsThisRound
+  const rawMaxQuestionsThisRound = rawUiHints?.maxQuestionsThisRound
   const hasMaxQuestionsThisRound = rawMaxQuestionsThisRound !== undefined &&
     rawMaxQuestionsThisRound !== null &&
     Number.isFinite(Number(rawMaxQuestionsThisRound))
+  const questionDisplayMode =
+    rawUiHints?.questionDisplayMode ||
+    questionPackage?.questionDisplayMode ||
+    (activeQuestionPackage ? 'package' : 'single')
+  const answerSubmitMode =
+    rawUiHints?.answerSubmitMode ||
+    questionPackage?.answerSubmitMode ||
+    (activeQuestionPackage ? 'package' : 'per_question')
   const coreProcess = normalizeCoreProcess(diagnosis.coreProcess, {
     latestVisualCallBatchId: diagnosis.latestVisualCallBatchId || null,
     observedSymptoms,
@@ -201,7 +247,7 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
     plantIdentityId: diagnosis.plantIdentityId || '',
     latestVisualCallBatchId: diagnosis.latestVisualCallBatchId || null,
     stage,
-    status: diagnosis.status || diagnosis.sessionStatus || (followUpRequired ? 'active' : 'closed'),
+    status: diagnosis.status || diagnosis.sessionStatus || (hasActiveQuestions ? 'active' : 'closed'),
     outcomeType,
     nonProblematicType: diagnosis.nonProblematicType || '',
     nonProblematicLabel: diagnosis.nonProblematicLabel || '',
@@ -210,12 +256,12 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
     stopReason: diagnosis.stopReason || '',
     plantName,
     scientificName: resolveScientificName(diagnosis),
-    healthStatusText: mapSeverityToHealthText({ severity, outcomeType, followUpRequired }),
-    mainIssueText: resolveMainIssueText({ finalResult, summaryCard, outcomeType, followUpRequired }),
+    healthStatusText: mapSeverityToHealthText({ severity, outcomeType, hasActiveQuestions }),
+    mainIssueText: resolveMainIssueText({ finalResult, summaryCard, outcomeType, hasActiveQuestions }),
     summaryText: resolveSummaryText({ finalResult, summaryCard, explanation, outcomeType }),
-    followUps,
+    questions,
     ...(questionPackage ? { questionPackage } : {}),
-    followUpRequired,
+    hasActiveQuestions,
     answerRevision: Number(diagnosis.answerRevision || 0),
     uiPatch:
       diagnosis.uiPatch && typeof diagnosis.uiPatch === 'object'
@@ -259,12 +305,12 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
     visualAggregateSummary,
     shadowCompareSummary,
     uiHints: {
-      canUploadMoreImages: Boolean(diagnosis?.uiHints?.canUploadMoreImages),
-      maxQuestionsThisRound: hasMaxQuestionsThisRound ? Number(rawMaxQuestionsThisRound) : followUps.length ? 1 : 0,
-      questionDisplayMode: diagnosis?.uiHints?.questionDisplayMode || 'single',
-      answerSubmitMode: diagnosis?.uiHints?.answerSubmitMode || 'per_question',
-      optionLayout: diagnosis?.uiHints?.optionLayout || 'vertical',
-      transition: diagnosis?.uiHints?.transition || 'swiper'
+      canUploadMoreImages: Boolean(rawUiHints?.canUploadMoreImages),
+      maxQuestionsThisRound: hasMaxQuestionsThisRound ? Number(rawMaxQuestionsThisRound) : questions.length,
+      questionDisplayMode,
+      answerSubmitMode,
+      optionLayout: rawUiHints?.optionLayout || 'vertical',
+      transition: rawUiHints?.transition || 'swiper'
     },
     confidenceLevel: diagnosis.confidenceLevel || 'normal',
     confidenceReasons: normalizeStringList(diagnosis.confidenceReasons),

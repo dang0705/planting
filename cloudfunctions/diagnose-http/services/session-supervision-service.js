@@ -89,7 +89,7 @@ async function upsertVisualSupervisionRecords({
   )
   const trace = normalizeVisualBatchTraceForSupervision(response?.visualBatchTrace)
   const currentVisualCallBatchId = resolveLatestVisualCallBatchId(response, trace)
-  const hasFinalDecision = !response?.followUpRequired && Boolean(
+  const hasFinalDecision = !response?.questionRequired && Boolean(
     normalizeStoredNullableText(response?.outcomeType || '', '') ||
       normalizeStoredNullableText(response?.stopReason || '', '') ||
       normalizeStoredNullableText(response?.sessionStatus || '', '') === 'completed'

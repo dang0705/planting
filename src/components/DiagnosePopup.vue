@@ -228,31 +228,31 @@
             </view>
           </view>
 
-          <view v-if="result.followUpRequired" id="diagnose-result-followup-required" class="mb-3">
+          <view v-if="hasActiveDiagnosisQuestions" id="diagnose-result-question-package-required" class="mb-3">
             <text class="block text-sm font-semibold text-gray-900 mb-2">继续问诊</text>
             <view class="bg-gray-50 rounded-xl p-3">
               <text class="block text-[10px] text-gray-500 mb-3">
                 每次只回答一个关键问题。答题与补图是两种正式方式，需要分开提交。
               </text>
               <view
-                v-if="currentFollowUpQuestion"
-                id="diagnose-followup-swiper"
-                class="followup-swiper"
+                v-if="currentQuestion"
+                id="diagnose-question-package-swiper"
+                class="question-package-swiper"
               >
-                <view class="followup-swiper-track" :style="followUpSwiperTrackStyle">
+                <view class="question-package-swiper-track" :style="questionSwiperTrackStyle">
                   <view
-                    v-for="(question, pageIndex) in followUpSwiperPages"
-                    :key="question?.questionId || `followup-placeholder-${pageIndex}`"
-                    class="followup-swiper-item"
+                    v-for="(question, pageIndex) in questionSwiperPages"
+                    :key="question?.questionId || `question-package-placeholder-${pageIndex}`"
+                    class="question-package-swiper-item"
                   >
                     <view
                       v-if="question"
                       :key="question.questionId"
-                      :id="`diagnose-followup-question-${question.questionId}`"
-                      class="followup-question-card followup-question-card--animated"
+                      :id="`diagnose-question-package-question-${question.questionId}`"
+                      class="question-package-question-card question-package-question-card--animated"
                     >
                       <text class="block text-[10px] text-[#8B7355] mb-1">
-                        当前问题 {{ activeFollowUpQuestionIndex + 1 }} / {{ followUpQuestionStack.length || 1 }}
+                        当前问题 {{ activeQuestionIndex + 1 }} / {{ questionStack.length || 1 }}
                       </text>
                       <text class="block text-xs font-semibold text-gray-900 leading-relaxed mb-1">
                         {{ getQuestionTitle(question) }}
@@ -265,7 +265,7 @@
                       </text>
                       <CareBehaviorTimeline
                         v-if="isCareBehaviorWateringTimelineQuestion(question)"
-                        :question-id="getFollowUpQuestionId(question)"
+                        :question-id="getQuestionId(question)"
                         :question="question"
                         :timeline="getCareBehaviorTimelineByQuestion(question)"
                         :loading="environmentWeatherWindowLoading"
@@ -273,18 +273,18 @@
                         @change="payload => handleCareBehaviorTimelineChange(question, payload)"
                       />
                       <view
-                        :id="`diagnose-followup-option-stack-${question.questionId}`"
+                        :id="`diagnose-question-package-option-stack-${question.questionId}`"
                         v-if="getVisibleCareBehaviorOptions(question).length"
-                        class="followup-option-stack"
-                        :class="question.uiVariant === 'single_select_accordion' ? 'followup-option-stack--accordion' : ''"
+                        class="question-package-option-stack"
+                        :class="question.uiVariant === 'single_select_accordion' ? 'question-package-option-stack--accordion' : ''"
                       >
                         <uni-collapse
-                          v-if="isAccordionFollowUpQuestion(question)"
-                          v-model="currentFollowUpAccordionValue"
+                          v-if="isAccordionQuestion(question)"
+                          v-model="currentQuestionAccordionValue"
                           accordion
                           :border="false"
-                          class="followup-option-collapse"
-                          @change="handleFollowUpAccordionChange(question, $event)"
+                          class="question-package-option-collapse"
+                          @change="handleQuestionAccordionChange(question, $event)"
                         >
                           <uni-collapse-item
                             v-for="option in getVisibleCareBehaviorOptions(question)"
@@ -293,34 +293,34 @@
                             :title="getOptionText(question, option)"
                             :border="false"
                             :title-border="false"
-                            class="followup-option-collapse-item"
+                            class="question-package-option-collapse-item"
                           >
                             <template #title>
                               <view
-                                class="followup-option-accordion-title"
+                                class="question-package-option-accordion-title"
                               :class="
-                                isSelectedFollowUpOption(question, option)
-                                  ? 'followup-option-accordion-title--active'
-                                  : 'followup-option-accordion-title--idle'
+                                isSelectedQuestionOption(question, option)
+                                  ? 'question-package-option-accordion-title--active'
+                                  : 'question-package-option-accordion-title--idle'
                               "
                             >
-                              <text class="followup-option-accordion-text">{{ getOptionText(question, option) }}</text>
-                              <text class="followup-option-accordion-badge">
-                                {{ isSelectedFollowUpOption(question, option) ? '已选' : '单选' }}
+                              <text class="question-package-option-accordion-text">{{ getOptionText(question, option) }}</text>
+                              <text class="question-package-option-accordion-badge">
+                                {{ isSelectedQuestionOption(question, option) ? '已选' : '单选' }}
                               </text>
                             </view>
                           </template>
                           <view
-                            :id="`diagnose-followup-option-${question.questionId}-${option.optionId}`"
-                            class="followup-option-collapse-body"
+                            :id="`diagnose-question-package-option-${question.questionId}-${option.optionId}`"
+                            class="question-package-option-collapse-body"
                             :class="
-                              isSelectedFollowUpOption(question, option)
-                                ? 'followup-option-collapse-body--active'
+                              isSelectedQuestionOption(question, option)
+                                ? 'question-package-option-collapse-body--active'
                                 : ''
                             "
-                            @click.stop="selectFollowUpOption(question, option)"
+                            @click.stop="selectQuestionOption(question, option)"
                           >
-                              <text class="followup-option-description">
+                              <text class="question-package-option-description">
                                 {{ getOptionDescription(option) || '选择这一项后继续下一步排查。' }}
                               </text>
                             </view>
@@ -330,23 +330,23 @@
                           <view
                             v-for="option in getVisibleCareBehaviorOptions(question)"
                             :key="option.optionId"
-                            :id="`diagnose-followup-option-${question.questionId}-${option.optionId}`"
-                            class="followup-option-button"
+                            :id="`diagnose-question-package-option-${question.questionId}-${option.optionId}`"
+                            class="question-package-option-button"
                             style="width: 100%; display: flex; justify-content: flex-start; text-align: left;"
                             :class="
-                              followUpAnswers[question.questionId] === option.optionId
-                                ? 'followup-option-button--active'
-                                : 'followup-option-button--idle'
+                              questionAnswers[question.questionId] === option.optionId
+                                ? 'question-package-option-button--active'
+                                : 'question-package-option-button--idle'
                             "
-                            @click="selectFollowUpOption(question, option)"
+                            @click="selectQuestionOption(question, option)"
                           >
-                            <view class="followup-option-content">
-                              <view class="followup-option-title-row">
-                                <text class="followup-option-text">{{ getOptionText(question, option) }}</text>
+                            <view class="question-package-option-content">
+                              <view class="question-package-option-title-row">
+                                <text class="question-package-option-text">{{ getOptionText(question, option) }}</text>
                               </view>
                               <text
                                 v-if="getOptionDescription(option)"
-                                class="followup-option-description"
+                                class="question-package-option-description"
                               >
                                 {{ getOptionDescription(option) }}
                               </text>
@@ -354,28 +354,28 @@
                           </view>
                         </template>
                       </view>
-                      <view class="followup-nav-row">
+                      <view class="question-package-nav-row">
                         <button
-                          id="diagnose-followup-prev-button"
-                          class="followup-nav-button"
-                          :class="{ 'followup-nav-button--disabled': isSubmittingAnyFollowUp || activeFollowUpQuestionIndex <= 0 }"
-                          :disabled="isSubmittingAnyFollowUp || activeFollowUpQuestionIndex <= 0"
-                          @click="goPreviousFollowUpQuestion"
+                          id="diagnose-question-package-prev-button"
+                          class="question-package-nav-button"
+                          :class="{ 'question-package-nav-button--disabled': isSubmittingQuestionFlow || activeQuestionIndex <= 0 }"
+                          :disabled="isSubmittingQuestionFlow || activeQuestionIndex <= 0"
+                          @click="goPreviousQuestion"
                         >
                           上一题
                         </button>
                         <button
-                          id="diagnose-followup-next-button"
-                          class="followup-nav-button"
-                          :class="{ 'followup-nav-button--disabled': !canProceedFollowUpQuestion() }"
-                          :disabled="!canProceedFollowUpQuestion()"
-                          @click="handleNextFollowUpQuestion"
+                          id="diagnose-question-package-next-button"
+                          class="question-package-nav-button"
+                          :class="{ 'question-package-nav-button--disabled': !canProceedQuestion() }"
+                          :disabled="!canProceedQuestion()"
+                          @click="handleNextQuestion"
                         >
                           下一题
                         </button>
                       </view>
                       <text
-                        v-if="hasDirtyFollowUpAnswers"
+                        v-if="hasDirtyQuestionAnswers"
                         class="block text-[10px] text-[#8B7355] leading-relaxed mt-2"
                       >
                         你修改了之前的答案，点下一题后后续问题会交给后端重新判断。
@@ -384,13 +384,13 @@
                   </view>
                 </view>
               </view>
-              <view v-else id="diagnose-followup-empty-question" class="px-3 py-2 rounded-xl bg-white border border-gray-100">
+              <view v-else id="diagnose-question-package-empty-question" class="px-3 py-2 rounded-xl bg-white border border-gray-100">
                 <text class="block text-[10px] text-gray-500">
                   当前没有可继续回答的问题。
                 </text>
               </view>
               <text
-                v-if="followUpImageFiles.length || hasPendingFollowUpUploads || hasFollowUpUploadErrors"
+                v-if="additionalImageFiles.length || hasPendingAdditionalImageUploads || hasAdditionalImageUploadErrors"
                 class="block text-[10px] text-[#8B7355] mt-3"
               >
                 当前有待处理补图，请先完成补图提交或清空补图后再继续下一题。
@@ -398,17 +398,17 @@
             </view>
           </view>
 
-          <view v-if="result.followUpRequired" id="diagnose-followup-image-section" class="mb-3">
+          <view v-if="hasActiveDiagnosisQuestions" id="diagnose-question-package-image-section" class="mb-3">
             <text class="block text-sm font-semibold text-gray-900 mb-2">补充图片</text>
             <view class="bg-[#F8F6F0] rounded-xl p-3 border border-[#D8F3DC]">
               <text class="block text-[10px] text-gray-500 mb-2">
                 当前阶段最多补图 1 次。若补图，将生成新的视觉调用批次并重建视觉证据。
               </text>
 
-              <view v-if="followUpCaptureSuggestions.length" id="diagnose-followup-capture-suggestions" class="mb-3">
+              <view v-if="additionalImageCaptureSuggestions.length" id="diagnose-question-package-capture-suggestions" class="mb-3">
                 <text class="block text-[11px] font-semibold text-gray-800 mb-1">建议优先补拍</text>
                 <view
-                  v-for="item in followUpCaptureSuggestions"
+                  v-for="item in additionalImageCaptureSuggestions"
                   :key="item"
                   class="mb-1 last:mb-0 px-2.5 py-2 rounded-lg bg-white text-[11px] text-gray-700"
                 >
@@ -416,12 +416,12 @@
                 </view>
               </view>
 
-              <view v-if="canShowFollowUpUploader">
-                <view id="diagnose-followup-upload-slot-grid" class="slot-grid">
+              <view v-if="canShowAdditionalImageUploader">
+                <view id="diagnose-question-package-upload-slot-grid" class="slot-grid">
                   <view
-                    v-for="slot in followUpSlotGroups"
+                    v-for="slot in additionalImageSlotGroups"
                     :key="slot.slotType"
-                    :id="`diagnose-followup-upload-slot-${slot.slotType}`"
+                    :id="`diagnose-question-package-upload-slot-${slot.slotType}`"
                     class="slot-card bg-white border border-[#E7E0D1]"
                   >
                     <view class="flex items-start justify-between gap-2 mb-2">
@@ -458,8 +458,8 @@
                         </view>
                         <view
                           class="absolute top-1 right-1 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center"
-                          :id="`diagnose-followup-remove-image-${entry.index}-button`"
-                          @click.stop="removeFollowUpImage(entry.index)"
+                          :id="`diagnose-question-package-remove-image-${entry.index}-button`"
+                          @click.stop="removeAdditionalImage(entry.index)"
                         >
                           <text class="text-white text-xs">×</text>
                         </view>
@@ -467,9 +467,9 @@
 
                       <view
                         v-if="slot.canAdd"
-                        :id="`diagnose-followup-upload-${slot.slotType}-button`"
+                        :id="`diagnose-question-package-upload-${slot.slotType}-button`"
                         class="aspect-square bg-[#FFFDF8] rounded-xl flex flex-col items-center justify-center border border-dashed border-[#B7DCC5]"
-                        @click="chooseFollowUpImage(slot.slotType)"
+                        @click="chooseAdditionalImage(slot.slotType)"
                       >
                         <text class="text-xl text-[#8FB69B] mb-0.5">+</text>
                         <text class="text-[9px] text-[#8FB69B] text-center px-1">补到此槽位</text>
@@ -480,26 +480,26 @@
 
                 <view class="flex items-center justify-between mt-3 mb-1">
                   <text class="text-[10px] text-gray-400">
-                    {{ followUpImageFiles.length }}/{{ FOLLOW_UP_IMAGE_LIMIT }} 张
+                    {{ additionalImageFiles.length }}/{{ ADDITIONAL_IMAGE_LIMIT }} 张
                   </text>
                   <text
-                    id="diagnose-followup-clear-images-button"
+                    id="diagnose-question-package-clear-images-button"
                     class="text-[10px] text-[#8B7355]"
-                    @click="resetFollowUpUploads"
+                    @click="resetAdditionalImages"
                   >清空补图</text>
                 </view>
-                <text v-if="hasPendingFollowUpUploads" class="block text-[10px] text-[#2D6A4F] text-center mt-1">
+                <text v-if="hasPendingAdditionalImageUploads" class="block text-[10px] text-[#2D6A4F] text-center mt-1">
                   补图上传中，处理完成后可提交
                 </text>
-                <text v-else-if="hasFollowUpUploadErrors" class="block text-[10px] text-red-500 text-center mt-1">
+                <text v-else-if="hasAdditionalImageUploadErrors" class="block text-[10px] text-red-500 text-center mt-1">
                   存在上传失败的补图，请删除后重新添加
                 </text>
 
               </view>
 
-              <view v-else id="diagnose-followup-upload-blocked" class="px-3 py-2.5 rounded-xl bg-white">
+              <view v-else id="diagnose-question-package-upload-blocked" class="px-3 py-2.5 rounded-xl bg-white">
                 <text class="block text-[11px] text-gray-600">
-                  {{ followUpUploadBlockedReason }}
+                  {{ additionalImageUploadBlockedReason }}
                 </text>
               </view>
             </view>
@@ -525,14 +525,14 @@
 
         <view v-else id="diagnose-popup-footer-result-actions" class="space-y-2">
           <button
-            v-if="result.followUpRequired && canShowFollowUpUploader"
-            id="diagnose-followup-image-submit-button"
+            v-if="hasActiveDiagnosisQuestions && canShowAdditionalImageUploader"
+            id="diagnose-question-package-image-submit-button"
             class="w-full bg-[#2D6A4F] text-white py-2.5 rounded-xl text-sm"
-            :class="{ 'opacity-50': isSubmittingAnyFollowUp || !canSubmitFollowUpImages() }"
-            :disabled="isSubmittingAnyFollowUp || !canSubmitFollowUpImages()"
-            @click="submitFollowUpImages"
+            :class="{ 'opacity-50': isSubmittingQuestionFlow || !canSubmitAdditionalImages() }"
+            :disabled="isSubmittingQuestionFlow || !canSubmitAdditionalImages()"
+            @click="submitAdditionalImages"
           >
-            {{ isSubmittingFollowUpImage ? '补图诊断中...' : '提交补图并重新诊断' }}
+            {{ isSubmittingAdditionalImage ? '补图诊断中...' : '提交补图并重新诊断' }}
           </button>
 
           <view class="flex gap-2">
@@ -579,14 +579,14 @@ import { useDiagnoseStore } from '@/store/diagnose.js'
 import { useCloudImageUploader } from '@/composables/useCloudImageUploader'
 import { useDiagnoseMutation } from '@/vue-query/diagnose/mutations/useDiagnoseMutation.js'
 import { useDiagnosisQuestionStartMutation } from '@/vue-query/diagnose/mutations/useDiagnosisQuestionStartMutation.js'
-import { useDiagnoseFollowUpMutation } from '@/vue-query/diagnose/mutations/useDiagnoseFollowUpMutation.js'
+import { useDiagnosisAnswerMutation } from '@/vue-query/diagnose/mutations/useDiagnosisAnswerMutation.js'
 import { getEnvironmentWeatherWindow } from '@/api/weather.js'
 import CareBehaviorTimeline from '@/components/CareBehaviorTimeline.vue'
 import {
   normalizeDiagnosisResult,
-  createFollowUpAnswerMap,
-  isFollowUpAnswerComplete,
-  buildFollowUpPayload,
+  createQuestionAnswerMap,
+  isQuestionAnswerComplete,
+  buildQuestionAnswerPayload,
   getHealthClass
 } from '@/utils/diagnose-flow.js'
 import {
@@ -603,16 +603,16 @@ import {
 import { mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline } from '@/utils/care-behavior-weather-window.js'
 import {
   PRIMARY_IMAGE_LIMIT,
-  FOLLOW_UP_IMAGE_LIMIT,
+  ADDITIONAL_IMAGE_LIMIT,
   PRIMARY_SLOT_SEQUENCE,
-  FOLLOW_UP_SLOT_SEQUENCE,
+  ADDITIONAL_IMAGE_SLOT_SEQUENCE,
   getOrganOptionLabel,
   normalizeSlotType,
   getSlotCapacity,
   getSlotFileCount,
   buildSlotGroups,
   buildSlotMetadata,
-  inferFollowUpSlotTypeFromSuggestion
+  inferAdditionalImageSlotTypeFromSuggestion
 } from '@/utils/diagnose-image-slots.js'
 import AIStreamDialog from './AIStreamDialog.vue'
 
@@ -642,26 +642,26 @@ const showAIDialog = ref(false)
 const aiStreamDialogRef = ref(null)
 const pendingDiagnosePayload = ref(null)
 const casePreviewImages = ref([])
-const followUpAnswers = ref({})
+const questionAnswers = ref({})
 const careBehaviorTimelineByQuestionId = ref({})
 const environmentWeatherWindow = ref(null)
 const environmentWeatherWindowRequestKey = ref('')
 const environmentWeatherWindowLoading = ref(false)
-const followUpQuestionStack = ref([])
-const activeFollowUpQuestionIndex = ref(0)
-const committedFollowUpAnswers = ref({})
-const dirtyFollowUpFromIndex = ref(-1)
-const followUpAnswerRevision = ref(0)
-const expandedFollowUpOptionByQuestion = ref({})
-const submittingFollowUpMode = ref('')
+const questionStack = ref([])
+const activeQuestionIndex = ref(0)
+const committedQuestionAnswers = ref({})
+const dirtyQuestionFromIndex = ref(-1)
+const questionAnswerRevision = ref(0)
+const expandedQuestionOptionByQuestion = ref({})
+const submittingQuestionMode = ref('')
 const viewportHeight = ref(0)
 const tabBarOccupiedHeight = ref(50)
-const followUpSwiperCurrent = ref(0)
-const followUpSwiperPages = ref([null, null])
+const questionSwiperCurrent = ref(0)
+const questionSwiperPages = ref([null, null])
 
 const diagnoseMutation = useDiagnoseMutation()
 const questionStartMutation = useDiagnosisQuestionStartMutation()
-const followUpMutation = useDiagnoseFollowUpMutation()
+const diagnosisAnswerMutation = useDiagnosisAnswerMutation()
 
 const uploader = useCloudImageUploader({
   count: PRIMARY_IMAGE_LIMIT,
@@ -673,8 +673,8 @@ const uploader = useCloudImageUploader({
   forceCompression: true,
   preserveImageDetails: false
 })
-const followUpUploader = useCloudImageUploader({
-  count: FOLLOW_UP_IMAGE_LIMIT,
+const additionalImageUploader = useCloudImageUploader({
+  count: ADDITIONAL_IMAGE_LIMIT,
   size: 5,
   suffix: ['jpg', 'jpeg', 'png', 'webp'],
   sizeType: ['compressed'],
@@ -687,9 +687,9 @@ const followUpUploader = useCloudImageUploader({
 const imageFiles = uploader.files
 const hasPendingUploads = uploader.hasPendingUploads
 const hasUploadErrors = uploader.hasUploadErrors
-const followUpImageFiles = followUpUploader.files
-const hasPendingFollowUpUploads = followUpUploader.hasPendingUploads
-const hasFollowUpUploadErrors = followUpUploader.hasUploadErrors
+const additionalImageFiles = additionalImageUploader.files
+const hasPendingAdditionalImageUploads = additionalImageUploader.hasPendingUploads
+const hasAdditionalImageUploadErrors = additionalImageUploader.hasUploadErrors
 const runtimeEnv = import.meta.env || {}
 const isLocalDevelopmentBuild = Boolean(runtimeEnv.DEV) || runtimeEnv.MODE === 'development'
 let automationEnabled =
@@ -701,7 +701,7 @@ automationEnabled =
   (!runtimeEnv.PROD && runtimeEnv.VITE_APP_ENV !== 'production')
 // #endif
 const AUTOMATION_DIAGNOSE_IMAGES_STORAGE_KEY = '__plantsight_diagnose_automation_images__'
-const DIAGNOSIS_FOLLOW_UP_STORAGE_KEY_PREFIX = '__plantsight_diagnose_follow_up__'
+const DIAGNOSIS_QUESTION_PACKAGE_STORAGE_KEY_PREFIX = '__plantsight_diagnose_question_package__'
 const SYMPTOM_CLASS_QUICK_SELECT_OPTIONS = [
   { classKey: 'yellowing_mode', classNameCn: '黄叶模式', symptomKey: 'uniform_yellowing', symptomCn: '整叶黄化' },
   { classKey: 'bacterial_leaf_spot_mode', classNameCn: '细菌性叶斑模式', symptomKey: 'water_soaked_spots', symptomCn: '水渍斑' },
@@ -736,107 +736,115 @@ const SYMPTOM_CLASS_QUICK_SELECT_OPTIONS = [
 const selectedDevSymptomClassKey = ref('')
 
 const primaryStructuredImages = computed(() => buildStructuredImageInputs(imageFiles.value))
-const followUpStructuredImages = computed(() => buildStructuredImageInputs(followUpImageFiles.value))
+const additionalStructuredImages = computed(() => buildStructuredImageInputs(additionalImageFiles.value))
 const selectedDevSymptomClassOption = computed(() =>
   SYMPTOM_CLASS_QUICK_SELECT_OPTIONS.find(item => item.classKey === selectedDevSymptomClassKey.value) || null
 )
 const hasSelectedSymptomMode = computed(() => Boolean(selectedDevSymptomClassOption.value))
-const followUpCaptureSuggestions = computed(() =>
-  Array.isArray(result.value?.visualAggregateSummary?.suggestedFollowupCapture)
-    ? result.value.visualAggregateSummary.suggestedFollowupCapture
+const additionalImageCaptureSuggestions = computed(() =>
+  Array.isArray(result.value?.visualAggregateSummary?.suggestedAdditionalImageCapture)
+    ? result.value.visualAggregateSummary.suggestedAdditionalImageCapture
     : []
 )
-const followUpSlotTypes = computed(() => {
+const additionalImageSlotTypes = computed(() => {
   const inferredSlotTypes = uniqueStrings(
-    followUpCaptureSuggestions.value.map(item => inferFollowUpSlotTypeFromSuggestion(item, 'whole_plant'))
+    additionalImageCaptureSuggestions.value.map(item => inferAdditionalImageSlotTypeFromSuggestion(item, 'whole_plant'))
   )
 
   if (inferredSlotTypes.length) {
     return uniqueStrings([...inferredSlotTypes, 'other'])
   }
 
-  return [...FOLLOW_UP_SLOT_SEQUENCE]
+  return [...ADDITIONAL_IMAGE_SLOT_SEQUENCE]
 })
 const primarySlotGroups = computed(() =>
   buildSlotGroups(imageFiles.value, PRIMARY_SLOT_SEQUENCE, PRIMARY_IMAGE_LIMIT)
 )
-const followUpSlotGroups = computed(() =>
-  buildSlotGroups(followUpImageFiles.value, followUpSlotTypes.value, FOLLOW_UP_IMAGE_LIMIT)
+const additionalImageSlotGroups = computed(() =>
+  buildSlotGroups(additionalImageFiles.value, additionalImageSlotTypes.value, ADDITIONAL_IMAGE_LIMIT)
 )
-const hasUsedFollowUpRetake = computed(() => detectUsedFollowUpRetake(result.value))
-const canShowFollowUpUploader = computed(
-  () => Boolean(result.value?.followUpRequired && result.value?.uiHints?.canUploadMoreImages)
+const hasUsedAdditionalImageSubmission = computed(() => detectUsedAdditionalImageSubmission(result.value))
+const activeDiagnosisQuestions = computed(() =>
+  Array.isArray(result.value?.questions)
+    ? result.value.questions.filter(item => item?.questionId)
+    : []
 )
-const followUpUploadBlockedReason = computed(() => {
-  if (!result.value?.followUpRequired) {
-    return '当前轮没有开放补图。'
+const hasActiveDiagnosisQuestions = computed(() =>
+  Boolean(result.value?.hasActiveQuestions && activeDiagnosisQuestions.value.length)
+)
+const canShowAdditionalImageUploader = computed(
+  () => Boolean(hasActiveDiagnosisQuestions.value && result.value?.uiHints?.canUploadMoreImages)
+)
+const additionalImageUploadBlockedReason = computed(() => {
+  if (!hasActiveDiagnosisQuestions.value) {
+    return '当前没有开放补图。'
   }
 
-  if (hasUsedFollowUpRetake.value) {
+  if (hasUsedAdditionalImageSubmission.value) {
     return '本次会话的补图机会已使用，请继续答题或重新开始新的诊断。'
   }
 
   return '当前轮次没有开放补图入口，请优先回答问题。'
 })
-const isSubmittingAnyFollowUp = computed(() => Boolean(submittingFollowUpMode.value))
-const isSubmittingFollowUpAnswer = computed(() => submittingFollowUpMode.value === 'answers')
-const isSubmittingFollowUpImage = computed(() => submittingFollowUpMode.value === 'images')
-const currentFollowUpQuestion = computed(() => {
-  const items = Array.isArray(followUpQuestionStack.value) ? followUpQuestionStack.value : []
-  return items[activeFollowUpQuestionIndex.value] || null
+const isSubmittingQuestionFlow = computed(() => Boolean(submittingQuestionMode.value))
+const isSubmittingQuestionAnswer = computed(() => submittingQuestionMode.value === 'answers')
+const isSubmittingAdditionalImage = computed(() => submittingQuestionMode.value === 'images')
+const currentQuestion = computed(() => {
+  const items = Array.isArray(questionStack.value) ? questionStack.value : []
+  return items[activeQuestionIndex.value] || null
 })
-const hasDirtyFollowUpAnswers = computed(() => dirtyFollowUpFromIndex.value >= 0)
-const followUpSwiperTrackStyle = computed(() =>
-  `transform: translateX(-${followUpSwiperCurrent.value * 100}%);`
+const hasDirtyQuestionAnswers = computed(() => dirtyQuestionFromIndex.value >= 0)
+const questionSwiperTrackStyle = computed(() =>
+  `transform: translateX(-${questionSwiperCurrent.value * 100}%);`
 )
-const currentFollowUpAccordionValue = computed({
+const currentQuestionAccordionValue = computed({
   get() {
-    const question = currentFollowUpQuestion.value
-    if (!isAccordionFollowUpQuestion(question)) {return ''}
-    return getExpandedFollowUpOptionId(question)
+    const question = currentQuestion.value
+    if (!isAccordionQuestion(question)) {return ''}
+    return getExpandedQuestionOptionId(question)
   },
   set(value) {
-    const question = currentFollowUpQuestion.value
-    if (!isAccordionFollowUpQuestion(question)) {return}
+    const question = currentQuestion.value
+    if (!isAccordionQuestion(question)) {return}
     const optionId = normalizeCollapseOptionValue(value)
     if (!optionId) {return}
-    setExpandedFollowUpOption(question, optionId)
-    setFollowUpAnswer(getFollowUpQuestionId(question), optionId)
+    setExpandedQuestionOption(question, optionId)
+    setQuestionAnswer(getQuestionId(question), optionId)
   }
 })
 
 watch(
-  currentFollowUpQuestion,
+  currentQuestion,
   async question => {
     if (!question) {
-      followUpSwiperPages.value = [null, null]
-      followUpSwiperCurrent.value = 0
+      questionSwiperPages.value = [null, null]
+      questionSwiperCurrent.value = 0
       return
     }
 
-    const activeIndex = followUpSwiperCurrent.value
-    const activeQuestion = followUpSwiperPages.value[activeIndex]
-    const questionId = getFollowUpQuestionId(question)
+    const activeIndex = questionSwiperCurrent.value
+    const activeQuestion = questionSwiperPages.value[activeIndex]
+    const questionId = getQuestionId(question)
 
     if (!activeQuestion) {
-      followUpSwiperPages.value = [question, null]
-      followUpSwiperCurrent.value = 0
+      questionSwiperPages.value = [question, null]
+      questionSwiperCurrent.value = 0
       return
     }
 
-    if (getFollowUpQuestionId(activeQuestion) === questionId) {
-      followUpSwiperPages.value = followUpSwiperPages.value.map((item, index) =>
+    if (getQuestionId(activeQuestion) === questionId) {
+      questionSwiperPages.value = questionSwiperPages.value.map((item, index) =>
         index === activeIndex ? question : item
       )
       return
     }
 
     const nextIndex = activeIndex === 0 ? 1 : 0
-    followUpSwiperPages.value = followUpSwiperPages.value.map((item, index) =>
+    questionSwiperPages.value = questionSwiperPages.value.map((item, index) =>
       index === nextIndex ? question : item
     )
     await nextTick()
-    followUpSwiperCurrent.value = nextIndex
+    questionSwiperCurrent.value = nextIndex
   },
   { immediate: true }
 )
@@ -916,7 +924,7 @@ function refreshViewportHeight() {
   }
 }
 
-function isAccordionFollowUpQuestion(question) {
+function isAccordionQuestion(question) {
   return String(question?.uiVariant || '').trim() === 'single_select_accordion'
 }
 
@@ -1076,12 +1084,12 @@ function getOptionText(question = {}, option = {}) {
       option?.desc ||
       ''
   )
-  const mappedText = resolveYellowingFollowUpOptionText(question, option)
+  const mappedText = resolveYellowingQuestionOptionText(question, option)
   return mappedText || text
 }
 
-function resolveYellowingFollowUpOptionText(question = {}, option = {}) {
-  if (!isYellowingFollowUpQuestion(question)) {
+function resolveYellowingQuestionOptionText(question = {}, option = {}) {
+  if (!isYellowingQuestion(question)) {
     return ''
   }
 
@@ -1169,7 +1177,7 @@ function getOptionDescription(option = {}) {
   )
 }
 
-function isYellowingFollowUpQuestion(question = {}) {
+function isYellowingQuestion(question = {}) {
   const questionKey = normalizeText(question?.questionKey)
   const questionText = normalizeText(
     question?.questionTextCn ||
@@ -1208,18 +1216,18 @@ function isFrequencyOption(optionKey = '', optionText = '', optionKeys = []) {
   return optionKeys.some(item => compactText.includes(item.replaceAll('_', '')))
 }
 
-function getFollowUpQuestionId(question) {
+function getQuestionId(question) {
   return String(question?.questionId || '').trim()
 }
 
-function findFollowUpQuestionById(questionId = '') {
+function findQuestionById(questionId = '') {
   const normalizedQuestionId = String(questionId || '').trim()
   if (!normalizedQuestionId) {return null}
-  return followUpQuestionStack.value.find(item => getFollowUpQuestionId(item) === normalizedQuestionId) || null
+  return questionStack.value.find(item => getQuestionId(item) === normalizedQuestionId) || null
 }
 
 function getCareBehaviorTimelineByQuestion(question = {}) {
-  const questionId = getFollowUpQuestionId(question)
+  const questionId = getQuestionId(question)
   const fallbackTimeline = mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(
     extractCareBehaviorTimelineFromQuestion(question),
     environmentWeatherWindow.value
@@ -1234,7 +1242,7 @@ function buildCareBehaviorTimelineByQuestionIdMap(questions = []) {
   return (Array.isArray(questions) ? questions : [])
     .filter(item => isCareBehaviorWateringTimelineQuestion(item))
     .reduce((acc, item) => {
-      const questionId = getFollowUpQuestionId(item)
+      const questionId = getQuestionId(item)
       if (!questionId) {return acc}
       const sourceTimeline = careBehaviorTimelineByQuestionId.value?.[questionId] ||
         extractCareBehaviorTimelineFromQuestion(item)
@@ -1247,7 +1255,7 @@ function buildCareBehaviorTimelineByQuestionIdMap(questions = []) {
 }
 
 function handleCareBehaviorTimelineChange(question, timeline = null) {
-  const questionId = getFollowUpQuestionId(question)
+  const questionId = getQuestionId(question)
   if (!questionId) {return}
   const currentTimeline = careBehaviorTimelineByQuestionId.value?.[questionId] || {}
   const nextTimeline = mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(
@@ -1319,7 +1327,7 @@ function applyEnvironmentWeatherWindowToCareBehaviorTimelines() {
   )
 }
 
-async function refreshEnvironmentWeatherWindowForCareBehavior(questions = followUpQuestionStack.value) {
+async function refreshEnvironmentWeatherWindowForCareBehavior(questions = questionStack.value) {
   try {
     const timelineQuestions = (Array.isArray(questions) ? questions : [])
       .filter(item => isCareBehaviorWateringTimelineQuestion(item))
@@ -1362,10 +1370,10 @@ async function refreshEnvironmentWeatherWindowForCareBehavior(questions = follow
 }
 
 function syncCareBehaviorTimelineAnswer(question, timeline = null) {
-  const questionId = getFollowUpQuestionId(question)
+  const questionId = getQuestionId(question)
   if (!questionId) {return}
 
-  const currentOptionId = String(followUpAnswers.value[questionId] || '').trim()
+  const currentOptionId = String(questionAnswers.value[questionId] || '').trim()
   const recordedOptionId = resolveCareBehaviorTimelineRecordedAnswerOptionId(question)
   const meaningfulTimeline = hasMeaningfulCareBehaviorTimeline(timeline)
   const visibleOptions = getVisibleCareBehaviorOptions(question)
@@ -1375,7 +1383,7 @@ function syncCareBehaviorTimelineAnswer(question, timeline = null) {
 
   if (nextAnswerId) {
     if (currentOptionId !== nextAnswerId) {
-      setFollowUpAnswer(questionId, nextAnswerId)
+      setQuestionAnswer(questionId, nextAnswerId)
     }
     return
   }
@@ -1385,20 +1393,20 @@ function syncCareBehaviorTimelineAnswer(question, timeline = null) {
   }
 
   if (currentOptionId) {
-    setFollowUpAnswer(questionId, '')
+    setQuestionAnswer(questionId, '')
   }
 }
 
-function getFollowUpOptionId(option) {
+function getQuestionOptionId(option) {
   return String(option?.optionId || '').trim()
 }
 
-function getExpandedFollowUpOptionId(question) {
-  const questionId = getFollowUpQuestionId(question)
+function getExpandedQuestionOptionId(question) {
+  const questionId = getQuestionId(question)
   if (!questionId) {return ''}
   return String(
-    expandedFollowUpOptionByQuestion.value[questionId] ||
-    followUpAnswers.value[questionId] ||
+    expandedQuestionOptionByQuestion.value[questionId] ||
+    questionAnswers.value[questionId] ||
     question?.defaultOptionId ||
     ''
   ).trim()
@@ -1414,65 +1422,65 @@ function normalizeCollapseOptionValue(value) {
   return String(value || '').trim()
 }
 
-function setExpandedFollowUpOption(question, optionId) {
-  const questionId = getFollowUpQuestionId(question)
+function setExpandedQuestionOption(question, optionId) {
+  const questionId = getQuestionId(question)
   const normalizedOptionId = String(optionId || '').trim()
   if (!questionId || !normalizedOptionId) {return}
-  expandedFollowUpOptionByQuestion.value = {
-    ...expandedFollowUpOptionByQuestion.value,
+  expandedQuestionOptionByQuestion.value = {
+    ...expandedQuestionOptionByQuestion.value,
     [questionId]: normalizedOptionId
   }
 }
 
-function handleFollowUpAccordionChange(question, value) {
+function handleQuestionAccordionChange(question, value) {
   const optionId = normalizeCollapseOptionValue(value)
   if (!optionId) {return}
-  setExpandedFollowUpOption(question, optionId)
-  setFollowUpAnswer(getFollowUpQuestionId(question), optionId)
+  setExpandedQuestionOption(question, optionId)
+  setQuestionAnswer(getQuestionId(question), optionId)
 }
 
-function isFollowUpOptionExpanded(question, option) {
-  if (!isAccordionFollowUpQuestion(question)) {return true}
-  const optionId = getFollowUpOptionId(option)
-  return Boolean(optionId && getExpandedFollowUpOptionId(question) === optionId)
+function isQuestionOptionExpanded(question, option) {
+  if (!isAccordionQuestion(question)) {return true}
+  const optionId = getQuestionOptionId(option)
+  return Boolean(optionId && getExpandedQuestionOptionId(question) === optionId)
 }
 
-function isSelectedFollowUpOption(question, option) {
-  const questionId = getFollowUpQuestionId(question)
-  const optionId = getFollowUpOptionId(option)
+function isSelectedQuestionOption(question, option) {
+  const questionId = getQuestionId(question)
+  const optionId = getQuestionOptionId(option)
   if (!questionId || !optionId) {return false}
   const selectedOptionId = String(
-    followUpAnswers.value[questionId] ||
+    questionAnswers.value[questionId] ||
     question?.defaultOptionId ||
     ''
   ).trim()
   return selectedOptionId === optionId
 }
 
-function selectFollowUpOption(question, option) {
-  const questionId = getFollowUpQuestionId(question)
-  const optionId = getFollowUpOptionId(option)
+function selectQuestionOption(question, option) {
+  const questionId = getQuestionId(question)
+  const optionId = getQuestionOptionId(option)
   if (!questionId || !optionId) {return}
-  setFollowUpAnswer(questionId, optionId)
-  if (isAccordionFollowUpQuestion(question)) {
-    setExpandedFollowUpOption(question, optionId)
+  setQuestionAnswer(questionId, optionId)
+  if (isAccordionQuestion(question)) {
+    setExpandedQuestionOption(question, optionId)
   }
 }
 
-function findFollowUpQuestionIndex(questionId = '') {
+function findQuestionIndex(questionId = '') {
   const normalizedQuestionId = String(questionId || '').trim()
   if (!normalizedQuestionId) {return -1}
-  return followUpQuestionStack.value.findIndex(item => getFollowUpQuestionId(item) === normalizedQuestionId)
+  return questionStack.value.findIndex(item => getQuestionId(item) === normalizedQuestionId)
 }
 
-function updateDirtyFollowUpIndex(questionId = '', optionId = '') {
-  const questionIndex = findFollowUpQuestionIndex(questionId)
+function updateDirtyQuestionIndex(questionId = '', optionId = '') {
+  const questionIndex = findQuestionIndex(questionId)
   if (questionIndex < 0) {return}
 
   const committedOptionId = String(
-    committedFollowUpAnswers.value?.[questionId]?.optionId || ''
+    committedQuestionAnswers.value?.[questionId]?.optionId || ''
   ).trim()
-  const isHistoricalQuestion = questionIndex < followUpQuestionStack.value.length - 1
+  const isHistoricalQuestion = questionIndex < questionStack.value.length - 1
 
   if (committedOptionId && committedOptionId === String(optionId || '').trim()) {
     return
@@ -1482,66 +1490,66 @@ function updateDirtyFollowUpIndex(questionId = '', optionId = '') {
     return
   }
 
-  dirtyFollowUpFromIndex.value =
-    dirtyFollowUpFromIndex.value >= 0
-      ? Math.min(dirtyFollowUpFromIndex.value, questionIndex)
+  dirtyQuestionFromIndex.value =
+    dirtyQuestionFromIndex.value >= 0
+      ? Math.min(dirtyQuestionFromIndex.value, questionIndex)
       : questionIndex
 }
 
-function goPreviousFollowUpQuestion() {
-  activeFollowUpQuestionIndex.value = Math.max(0, activeFollowUpQuestionIndex.value - 1)
+function goPreviousQuestion() {
+  activeQuestionIndex.value = Math.max(0, activeQuestionIndex.value - 1)
 }
 
-function goNextFollowUpQuestion() {
-  if (hasDirtyFollowUpAnswers.value && activeFollowUpQuestionIndex.value >= dirtyFollowUpFromIndex.value) {
+function goNextQuestion() {
+  if (hasDirtyQuestionAnswers.value && activeQuestionIndex.value >= dirtyQuestionFromIndex.value) {
     return
   }
-  activeFollowUpQuestionIndex.value = Math.min(
-    Math.max(followUpQuestionStack.value.length - 1, 0),
-    activeFollowUpQuestionIndex.value + 1
+  activeQuestionIndex.value = Math.min(
+    Math.max(questionStack.value.length - 1, 0),
+    activeQuestionIndex.value + 1
   )
 }
 
-function canProceedFollowUpQuestion() {
-  const question = currentFollowUpQuestion.value
-  const questionId = getFollowUpQuestionId(question)
+function canProceedQuestion() {
+  const question = currentQuestion.value
+  const questionId = getQuestionId(question)
   if (!questionId) {return false}
-  if (isSubmittingAnyFollowUp.value) {return false}
-  if (followUpImageFiles.value.length > 0 || hasPendingFollowUpUploads.value || hasFollowUpUploadErrors.value) {
+  if (isSubmittingQuestionFlow.value) {return false}
+  if (additionalImageFiles.value.length > 0 || hasPendingAdditionalImageUploads.value || hasAdditionalImageUploadErrors.value) {
     return false
   }
-  return Boolean(followUpAnswers.value[questionId])
+  return Boolean(questionAnswers.value[questionId])
 }
 
-async function handleNextFollowUpQuestion() {
-  if (!canProceedFollowUpQuestion()) {
+async function handleNextQuestion() {
+  if (!canProceedQuestion()) {
     return
   }
 
-  if (!hasDirtyFollowUpAnswers.value && activeFollowUpQuestionIndex.value < followUpQuestionStack.value.length - 1) {
-    goNextFollowUpQuestion()
+  if (!hasDirtyQuestionAnswers.value && activeQuestionIndex.value < questionStack.value.length - 1) {
+    goNextQuestion()
     return
   }
 
-  await submitFollowUps()
+  await submitQuestionAnswers()
 }
 
-function resetFollowUpQuestionState(followUps = [], { answerRevision = 0 } = {}) {
-  const nextFollowUps = Array.isArray(followUps) ? followUps.filter(item => item?.questionId) : []
-  followUpQuestionStack.value = nextFollowUps
-  activeFollowUpQuestionIndex.value = 0
-  followUpAnswers.value = createFollowUpAnswerMap(nextFollowUps)
-  careBehaviorTimelineByQuestionId.value = buildCareBehaviorTimelineByQuestionIdMap(nextFollowUps)
-  committedFollowUpAnswers.value = {}
-  dirtyFollowUpFromIndex.value = -1
-  followUpAnswerRevision.value = Number(answerRevision || 0)
-  expandedFollowUpOptionByQuestion.value = {}
-  refreshEnvironmentWeatherWindowForCareBehavior(nextFollowUps)
+function resetQuestionState(questions = [], { answerRevision = 0 } = {}) {
+  const nextQuestions = Array.isArray(questions) ? questions.filter(item => item?.questionId) : []
+  questionStack.value = nextQuestions
+  activeQuestionIndex.value = 0
+  questionAnswers.value = createQuestionAnswerMap(nextQuestions)
+  careBehaviorTimelineByQuestionId.value = buildCareBehaviorTimelineByQuestionIdMap(nextQuestions)
+  committedQuestionAnswers.value = {}
+  dirtyQuestionFromIndex.value = -1
+  questionAnswerRevision.value = Number(answerRevision || 0)
+  expandedQuestionOptionByQuestion.value = {}
+  refreshEnvironmentWeatherWindowForCareBehavior(nextQuestions)
 }
 
-function mergeFollowUpQuestionState(nextResult = null, submittedPayload = null) {
-  const nextFollowUps = Array.isArray(nextResult?.followUps)
-    ? nextResult.followUps.filter(item => item?.questionId)
+function mergeQuestionState(nextResult = null, submittedPayload = null) {
+  const nextQuestions = Array.isArray(nextResult?.questions)
+    ? nextResult.questions.filter(item => item?.questionId)
     : []
   const submittedAnswers = Array.isArray(submittedPayload?.answers) ? submittedPayload.answers : []
   const submittedAnswerMap = submittedAnswers.reduce((entries, item) => {
@@ -1556,31 +1564,31 @@ function mergeFollowUpQuestionState(nextResult = null, submittedPayload = null) 
     return entries
   }, {})
 
-  const dirtyIndex = dirtyFollowUpFromIndex.value
+  const dirtyIndex = dirtyQuestionFromIndex.value
   const patchKeepUntilQuestionId = String(nextResult?.uiPatch?.keepUntilQuestionId || '').trim()
   const patchKeepIndex = patchKeepUntilQuestionId
-    ? findFollowUpQuestionIndex(patchKeepUntilQuestionId)
+    ? findQuestionIndex(patchKeepUntilQuestionId)
     : -1
   const keepEndIndex =
     patchKeepIndex >= 0
       ? patchKeepIndex
       : dirtyIndex >= 0
         ? dirtyIndex
-        : followUpQuestionStack.value.length - 1
-  const keptQuestions = followUpQuestionStack.value.slice(0, Math.max(0, keepEndIndex + 1))
-  const keptQuestionIds = new Set(keptQuestions.map(item => getFollowUpQuestionId(item)).filter(Boolean))
-  const appendQuestions = nextFollowUps.filter(item => !keptQuestionIds.has(getFollowUpQuestionId(item)))
-  const nextStack = nextResult?.followUpRequired ? [...keptQuestions, ...appendQuestions] : []
-  const nextStackQuestionIds = new Set(nextStack.map(item => getFollowUpQuestionId(item)).filter(Boolean))
+        : questionStack.value.length - 1
+  const keptQuestions = questionStack.value.slice(0, Math.max(0, keepEndIndex + 1))
+  const keptQuestionIds = new Set(keptQuestions.map(item => getQuestionId(item)).filter(Boolean))
+  const appendQuestions = nextQuestions.filter(item => !keptQuestionIds.has(getQuestionId(item)))
+  const nextStack = nextResult?.hasActiveQuestions ? [...keptQuestions, ...appendQuestions] : []
+  const nextStackQuestionIds = new Set(nextStack.map(item => getQuestionId(item)).filter(Boolean))
 
-  followUpQuestionStack.value = nextStack
-  followUpAnswers.value = {
+  questionStack.value = nextStack
+  questionAnswers.value = {
     ...Object.fromEntries(
-      Object.entries(followUpAnswers.value || {}).filter(([questionId]) =>
+      Object.entries(questionAnswers.value || {}).filter(([questionId]) =>
         nextStackQuestionIds.has(questionId)
       )
     ),
-    ...createFollowUpAnswerMap(appendQuestions)
+    ...createQuestionAnswerMap(appendQuestions)
   }
   careBehaviorTimelineByQuestionId.value = {
     ...Object.fromEntries(
@@ -1590,9 +1598,9 @@ function mergeFollowUpQuestionState(nextResult = null, submittedPayload = null) 
     ),
     ...buildCareBehaviorTimelineByQuestionIdMap(nextStack)
   }
-  committedFollowUpAnswers.value = {
+  committedQuestionAnswers.value = {
     ...Object.fromEntries(
-      Object.entries(committedFollowUpAnswers.value || {}).filter(([questionId]) =>
+      Object.entries(committedQuestionAnswers.value || {}).filter(([questionId]) =>
         nextStackQuestionIds.has(questionId)
       )
     ),
@@ -1600,10 +1608,10 @@ function mergeFollowUpQuestionState(nextResult = null, submittedPayload = null) 
       Object.entries(submittedAnswerMap).filter(([questionId]) => nextStackQuestionIds.has(questionId))
     )
   }
-  dirtyFollowUpFromIndex.value = -1
-  followUpAnswerRevision.value = Number(nextResult?.answerRevision || followUpAnswerRevision.value || 0)
-  activeFollowUpQuestionIndex.value = nextStack.length ? nextStack.length - 1 : 0
-  expandedFollowUpOptionByQuestion.value = {}
+  dirtyQuestionFromIndex.value = -1
+  questionAnswerRevision.value = Number(nextResult?.answerRevision || questionAnswerRevision.value || 0)
+  activeQuestionIndex.value = nextStack.length ? nextStack.length - 1 : 0
+  expandedQuestionOptionByQuestion.value = {}
   refreshEnvironmentWeatherWindowForCareBehavior(nextStack)
 }
 
@@ -1617,7 +1625,7 @@ watch(
     userStore.location?.longitude,
     userStore.location?.city,
     userStore.location?.province,
-    followUpQuestionStack.value.map(item => getFollowUpQuestionId(item)).join('|')
+    questionStack.value.map(item => getQuestionId(item)).join('|')
   ],
   () => {
     refreshEnvironmentWeatherWindowForCareBehavior()
@@ -1717,7 +1725,7 @@ async function startQuestionDiagnosisFromSymptomClass() {
       description: `无图症状模式：${option.symptomCn}（${option.classNameCn}）`,
       onFinish: diagnosisResult => {
         userStore.useAIQuota()
-        navigateToDiagnosisFollowUpPage(diagnosisResult)
+        navigateToDiagnosisQuestionPackagePage(diagnosisResult)
       }
     })
   } catch (error) {
@@ -1810,19 +1818,19 @@ function getPreviewImagesFromFiles(files = []) {
   )
 }
 
-function getCasePreviewImages({ includeFollowUp = false } = {}) {
+function getCasePreviewImages({ includeAdditionalImages = false } = {}) {
   const baseImages = casePreviewImages.value.length
     ? casePreviewImages.value
     : getPreviewImagesFromFiles(imageFiles.value)
 
-  if (!includeFollowUp) {
+  if (!includeAdditionalImages) {
     return uniqueStrings(baseImages)
   }
 
-  return uniqueStrings([...baseImages, ...getPreviewImagesFromFiles(followUpImageFiles.value)])
+  return uniqueStrings([...baseImages, ...getPreviewImagesFromFiles(additionalImageFiles.value)])
 }
 
-function detectUsedFollowUpRetake(currentResult = null) {
+function detectUsedAdditionalImageSubmission(currentResult = null) {
   const trace = currentResult?.visualBatchTrace
   if (!trace || typeof trace !== 'object') {
     return false
@@ -1871,14 +1879,14 @@ async function chooseImage(slotType = 'other') {
   }
 }
 
-async function chooseFollowUpImage(slotType = 'whole_plant') {
+async function chooseAdditionalImage(slotType = 'whole_plant') {
   const normalizedSlotType = normalizeSlotType(slotType, 'whole_plant')
-  const slotLimit = getSlotCapacity(FOLLOW_UP_IMAGE_LIMIT)
-  if (followUpImageFiles.value.length >= FOLLOW_UP_IMAGE_LIMIT) {
-    uni.showToast({ title: `最多补 ${FOLLOW_UP_IMAGE_LIMIT} 张`, icon: 'none' })
+  const slotLimit = getSlotCapacity(ADDITIONAL_IMAGE_LIMIT)
+  if (additionalImageFiles.value.length >= ADDITIONAL_IMAGE_LIMIT) {
+    uni.showToast({ title: `最多补 ${ADDITIONAL_IMAGE_LIMIT} 张`, icon: 'none' })
     return
   }
-  if (getSlotFileCount(followUpImageFiles.value, normalizedSlotType) >= slotLimit) {
+  if (getSlotFileCount(additionalImageFiles.value, normalizedSlotType) >= slotLimit) {
     uni.showToast({
       title: `${getOrganOptionLabel(normalizedSlotType)}最多 ${slotLimit} 张`,
       icon: 'none'
@@ -1887,11 +1895,11 @@ async function chooseFollowUpImage(slotType = 'whole_plant') {
   }
 
   try {
-    await followUpUploader.chooseAndUpload({
+    await additionalImageUploader.chooseAndUpload({
       plantId: props.plantId,
       maxAge: 7200,
       pickCount: 1,
-      entryPatch: buildSlotMetadata(normalizedSlotType, followUpImageFiles.value.length)
+      entryPatch: buildSlotMetadata(normalizedSlotType, additionalImageFiles.value.length)
     })
   } catch (error) {
     const message = String(error?.errMsg || error?.message || '')
@@ -1911,12 +1919,12 @@ function removeImage(index) {
   uploader.removeAt(index)
 }
 
-function removeFollowUpImage(index) {
-  followUpUploader.removeAt(index)
+function removeAdditionalImage(index) {
+  additionalImageUploader.removeAt(index)
 }
 
-async function resetFollowUpUploads() {
-  await followUpUploader.reset()
+async function resetAdditionalImages() {
+  await additionalImageUploader.reset()
 }
 
 async function startDiagnose() {
@@ -2010,17 +2018,17 @@ function handleAIDialogClose() {
   showAIDialog.value = false
 }
 
-function buildDiagnosisFollowUpStorageKey(diagnosisSessionId = '') {
-  return `${DIAGNOSIS_FOLLOW_UP_STORAGE_KEY_PREFIX}${diagnosisSessionId || Date.now()}`
+function buildDiagnosisQuestionPackageStorageKey(diagnosisSessionId = '') {
+  return `${DIAGNOSIS_QUESTION_PACKAGE_STORAGE_KEY_PREFIX}${diagnosisSessionId || Date.now()}`
 }
 
-function navigateToDiagnosisFollowUpPage(diagnosisResult) {
-  const previewImages = getCasePreviewImages({ includeFollowUp: false })
+function navigateToDiagnosisQuestionPackagePage(diagnosisResult) {
+  const previewImages = getCasePreviewImages({ includeAdditionalImages: false })
   const normalizedResult = normalizeDiagnosisResult(diagnosisResult, {
     images: previewImages,
     plantName: props.plantName || '植物'
   })
-  const storageKey = buildDiagnosisFollowUpStorageKey(normalizedResult.diagnosisSessionId)
+  const storageKey = buildDiagnosisQuestionPackageStorageKey(normalizedResult.diagnosisSessionId)
 
   uni.setStorageSync(storageKey, {
     plantId: props.plantId,
@@ -2035,7 +2043,7 @@ function navigateToDiagnosisFollowUpPage(diagnosisResult) {
   pendingDiagnosePayload.value = null
   close()
   uni.navigateTo({
-    url: `/pages/diagnose/follow-up?draftKey=${encodeURIComponent(storageKey)}`
+    url: `/pages/diagnose/question-package?draftKey=${encodeURIComponent(storageKey)}`
   })
 }
 
@@ -2047,7 +2055,7 @@ function handleAIDialogCancel() {
 
 function handleAIDialogConfirm(diagnosisResult) {
   if (diagnosisResult) {
-    navigateToDiagnosisFollowUpPage(diagnosisResult)
+    navigateToDiagnosisQuestionPackagePage(diagnosisResult)
     return
   }
   showAIDialog.value = false
@@ -2074,14 +2082,14 @@ function handleAIRetry() {
   }
 }
 
-function setFollowUpAnswer(questionId, answerValue) {
-  updateDirtyFollowUpIndex(questionId, answerValue)
-  followUpAnswers.value = {
-    ...followUpAnswers.value,
+function setQuestionAnswer(questionId, answerValue) {
+  updateDirtyQuestionIndex(questionId, answerValue)
+  questionAnswers.value = {
+    ...questionAnswers.value,
     [questionId]: answerValue
   }
 
-  const question = findFollowUpQuestionById(questionId)
+  const question = findQuestionById(questionId)
   if (!question || !isCareBehaviorWateringTimelineQuestion(question)) {
     return
   }
@@ -2117,70 +2125,70 @@ function canStartDiagnose() {
   return !hasPendingUploads.value
 }
 
-function canSubmitFollowUps() {
-  if (followUpImageFiles.value.length > 0 || hasPendingFollowUpUploads.value || hasFollowUpUploadErrors.value) {
+function canSubmitQuestionAnswers() {
+  if (additionalImageFiles.value.length > 0 || hasPendingAdditionalImageUploads.value || hasAdditionalImageUploadErrors.value) {
     return false
   }
 
-  if (!hasDirtyFollowUpAnswers.value && activeFollowUpQuestionIndex.value < followUpQuestionStack.value.length - 1) {
+  if (!hasDirtyQuestionAnswers.value && activeQuestionIndex.value < questionStack.value.length - 1) {
     return false
   }
 
-  return isFollowUpAnswerComplete(
-    followUpQuestionStack.value.slice(0, activeFollowUpQuestionIndex.value + 1),
-    followUpAnswers.value
+  return isQuestionAnswerComplete(
+    questionStack.value.slice(0, activeQuestionIndex.value + 1),
+    questionAnswers.value
   )
 }
 
-function canSubmitFollowUpImages() {
-  if (!canShowFollowUpUploader.value) {
+function canSubmitAdditionalImages() {
+  if (!canShowAdditionalImageUploader.value) {
     return false
   }
 
-  if (hasUsedFollowUpRetake.value) {
+  if (hasUsedAdditionalImageSubmission.value) {
     return false
   }
 
-  if (hasPendingFollowUpUploads.value || hasFollowUpUploadErrors.value) {
+  if (hasPendingAdditionalImageUploads.value || hasAdditionalImageUploadErrors.value) {
     return false
   }
 
-  return followUpStructuredImages.value.length > 0
+  return additionalStructuredImages.value.length > 0
 }
 
-async function submitFollowUps() {
-  if (!result.value || !canSubmitFollowUps()) {
+async function submitQuestionAnswers() {
+  if (!result.value || !canSubmitQuestionAnswers()) {
     return
   }
 
-  submittingFollowUpMode.value = 'answers'
+  submittingQuestionMode.value = 'answers'
   try {
-    const isRevisionSubmit = hasDirtyFollowUpAnswers.value
+    const isRevisionSubmit = hasDirtyQuestionAnswers.value
     const submitQuestionStack = isRevisionSubmit
-      ? followUpQuestionStack.value.slice(0, activeFollowUpQuestionIndex.value + 1)
-      : currentFollowUpQuestion.value
-        ? [currentFollowUpQuestion.value]
+      ? questionStack.value.slice(0, activeQuestionIndex.value + 1)
+      : currentQuestion.value
+        ? [currentQuestion.value]
         : []
-    const payload = buildFollowUpPayload(result.value, followUpAnswers.value, {
+    const payload = buildQuestionAnswerPayload(result.value, questionAnswers.value, {
       questionStack: submitQuestionStack,
       requestMode: isRevisionSubmit ? 'answer_revision' : 'answer_submit',
-      baseAnswerRevision: followUpAnswerRevision.value,
+      baseAnswerRevision: questionAnswerRevision.value,
       dirtyFromQuestionId:
-        dirtyFollowUpFromIndex.value >= 0
-          ? getFollowUpQuestionId(followUpQuestionStack.value[dirtyFollowUpFromIndex.value])
+        dirtyQuestionFromIndex.value >= 0
+          ? getQuestionId(questionStack.value[dirtyQuestionFromIndex.value])
           : '',
       careBehaviorTimelineByQuestionId: careBehaviorTimelineByQuestionId.value,
       environmentWeatherWindow: environmentWeatherWindow.value
     })
-    const rerunResult = await followUpMutation.mutateAsync(payload)
+    const rerunResult = await diagnosisAnswerMutation.mutateAsync(payload)
 
-    const previewImages = getCasePreviewImages({ includeFollowUp: false })
+    const previewImages = getCasePreviewImages({ includeAdditionalImages: false })
     casePreviewImages.value = previewImages
     result.value = normalizeDiagnosisResult(rerunResult, {
       images: previewImages,
       plantName: props.plantName || result.value.plantName || '植物'
     })
-    mergeFollowUpQuestionState(result.value, payload)
+    mergeQuestionState(result.value, payload)
 
     diagnoseStore.addToHistory({
       images: previewImages,
@@ -2190,27 +2198,27 @@ async function submitFollowUps() {
     emit('success', result.value)
 
     uni.showToast({
-      title: result.value.followUpRequired ? '问诊已更新' : '诊断已收敛',
+      title: result.value.hasActiveQuestions ? '问诊已更新' : '诊断已收敛',
       icon: 'success'
     })
   } catch (error) {
     console.error('问诊处理失败:', error)
     uni.showToast({ title: error.message || '问诊失败，请重试', icon: 'none' })
   } finally {
-    submittingFollowUpMode.value = ''
+    submittingQuestionMode.value = ''
   }
 }
 
-async function submitFollowUpImages() {
-  if (!result.value || !canSubmitFollowUpImages()) {
+async function submitAdditionalImages() {
+  if (!result.value || !canSubmitAdditionalImages()) {
     return
   }
 
-  submittingFollowUpMode.value = 'images'
+  submittingQuestionMode.value = 'images'
   try {
-    const structuredImages = followUpStructuredImages.value
+    const structuredImages = additionalStructuredImages.value
     const imageIds = structuredImages.map(item => item.imageRef).filter(Boolean)
-    const rerunResult = await followUpMutation.mutateAsync({
+    const rerunResult = await diagnosisAnswerMutation.mutateAsync({
       diagnosisSessionId: result.value.diagnosisSessionId,
       roundId: result.value.roundId,
       image: imageIds[0] || '',
@@ -2220,13 +2228,13 @@ async function submitFollowUpImages() {
       visualBatchTrace: result.value.visualBatchTrace
     })
 
-    const nextPreviewImages = getCasePreviewImages({ includeFollowUp: true })
+    const nextPreviewImages = getCasePreviewImages({ includeAdditionalImages: true })
     casePreviewImages.value = nextPreviewImages
     result.value = normalizeDiagnosisResult(rerunResult, {
       images: nextPreviewImages,
       plantName: props.plantName || result.value.plantName || '植物'
     })
-    resetFollowUpQuestionState(result.value.followUps, {
+    resetQuestionState(result.value.questions, {
       answerRevision: result.value.answerRevision
     })
 
@@ -2236,34 +2244,34 @@ async function submitFollowUpImages() {
       diagnosisId: result.value.diagnosisSessionId || ''
     })
     emit('success', result.value)
-    await followUpUploader.reset()
+    await additionalImageUploader.reset()
 
     uni.showToast({
-      title: result.value.followUpRequired ? '补图已更新' : '补图诊断已完成',
+      title: result.value.hasActiveQuestions ? '补图已更新' : '补图诊断已完成',
       icon: 'success'
     })
   } catch (error) {
     console.error('提交补图失败:', error)
     uni.showToast({ title: error.message || '补图失败，请重试', icon: 'none' })
   } finally {
-    submittingFollowUpMode.value = ''
+    submittingQuestionMode.value = ''
   }
 }
 
 async function resetDiagnose() {
-  await Promise.all([uploader.reset(), followUpUploader.reset()])
+  await Promise.all([uploader.reset(), additionalImageUploader.reset()])
   result.value = null
   pendingDiagnosePayload.value = null
   casePreviewImages.value = []
-  followUpAnswers.value = {}
+  questionAnswers.value = {}
   careBehaviorTimelineByQuestionId.value = {}
-  followUpQuestionStack.value = []
-  activeFollowUpQuestionIndex.value = 0
-  committedFollowUpAnswers.value = {}
-  dirtyFollowUpFromIndex.value = -1
-  followUpAnswerRevision.value = 0
-  expandedFollowUpOptionByQuestion.value = {}
-  submittingFollowUpMode.value = ''
+  questionStack.value = []
+  activeQuestionIndex.value = 0
+  committedQuestionAnswers.value = {}
+  dirtyQuestionFromIndex.value = -1
+  questionAnswerRevision.value = 0
+  expandedQuestionOptionByQuestion.value = {}
+  submittingQuestionMode.value = ''
   selectedDevSymptomClassKey.value = ''
 }
 
@@ -2438,13 +2446,13 @@ defineExpose({
   font-weight: 700;
 }
 
-.followup-nav-row {
+.question-package-nav-row {
   display: flex;
   gap: 10px;
   margin-top: 12px;
 }
 
-.followup-nav-button {
+.question-package-nav-button {
   flex: 1;
   height: 36px;
   padding: 0;
@@ -2457,7 +2465,7 @@ defineExpose({
   line-height: 36px;
 }
 
-.followup-nav-button--disabled {
+.question-package-nav-button--disabled {
   opacity: 0.45;
 }
 
@@ -2512,14 +2520,14 @@ defineExpose({
   gap: 8px;
 }
 
-.followup-swiper {
+.question-package-swiper {
   width: 100%;
   height: 340px;
   overflow-x: hidden;
   overflow-y: visible;
 }
 
-.followup-swiper-track {
+.question-package-swiper-track {
   display: flex;
   height: 100%;
   min-height: 0;
@@ -2528,14 +2536,14 @@ defineExpose({
   will-change: transform;
 }
 
-.followup-swiper-item {
+.question-package-swiper-item {
   flex: 0 0 100%;
   overflow-x: hidden;
   overflow-y: visible;
   width: 100%;
 }
 
-.followup-question-card {
+.question-package-question-card {
   min-height: 180px;
   border-radius: 16px;
   padding: 12px;
@@ -2544,11 +2552,11 @@ defineExpose({
   overflow: visible;
 }
 
-.followup-question-card--animated {
-  animation: followup-card-enter 260ms ease-out both;
+.question-package-question-card--animated {
+  animation: question-package-card-enter 260ms ease-out both;
 }
 
-.followup-option-stack {
+.question-package-option-stack {
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -2556,18 +2564,18 @@ defineExpose({
   width: 100%;
 }
 
-.followup-option-stack--accordion {
+.question-package-option-stack--accordion {
   gap: 10px;
 }
 
-.followup-option-collapse {
+.question-package-option-collapse {
   width: 100%;
   overflow: visible;
   border-radius: 20rpx;
   background: transparent;
 }
 
-.followup-option-collapse-item {
+.question-package-option-collapse-item {
   margin-bottom: 16rpx;
   overflow: hidden;
   border: 1px solid #e5e7eb;
@@ -2575,7 +2583,7 @@ defineExpose({
   background: #ffffff;
 }
 
-.followup-option-accordion-title {
+.question-package-option-accordion-title {
   display: flex;
   box-sizing: border-box;
   width: 100%;
@@ -2585,17 +2593,17 @@ defineExpose({
   padding: 22rpx 24rpx;
 }
 
-.followup-option-accordion-title--active {
+.question-package-option-accordion-title--active {
   color: #ffffff;
   background: #2d6a4f;
 }
 
-.followup-option-accordion-title--idle {
+.question-package-option-accordion-title--idle {
   color: #374151;
   background: #ffffff;
 }
 
-.followup-option-accordion-text {
+.question-package-option-accordion-text {
   flex: 1;
   font-size: 28rpx;
   font-weight: 700;
@@ -2605,7 +2613,7 @@ defineExpose({
   word-break: break-word;
 }
 
-.followup-option-accordion-badge {
+.question-package-option-accordion-badge {
   flex-shrink: 0;
   padding: 4rpx 12rpx;
   border: 1px solid currentColor;
@@ -2616,16 +2624,16 @@ defineExpose({
   opacity: 0.9;
 }
 
-.followup-option-collapse-body {
+.question-package-option-collapse-body {
   padding: 0 24rpx 22rpx;
   background: #ffffff;
 }
 
-.followup-option-collapse-body--active {
+.question-package-option-collapse-body--active {
   background: #eaf6ef;
 }
 
-.followup-option-button {
+.question-package-option-button {
   display: flex;
   box-sizing: border-box;
   width: 100%;
@@ -2643,19 +2651,19 @@ defineExpose({
   white-space: normal;
 }
 
-.followup-option-stack--accordion .followup-option-button {
+.question-package-option-stack--accordion .question-package-option-button {
   min-height: 58px;
   padding: 11px 12px;
 }
 
-.followup-option-content {
+.question-package-option-content {
   display: flex;
   flex-direction: column;
   gap: 4px;
   width: 100%;
 }
 
-.followup-option-text {
+.question-package-option-text {
   display: block;
   width: 100%;
   font-weight: 600;
@@ -2664,7 +2672,7 @@ defineExpose({
   word-break: break-word;
 }
 
-.followup-option-description {
+.question-package-option-description {
   display: block;
   width: 100%;
   font-size: 10px;
@@ -2675,16 +2683,16 @@ defineExpose({
   opacity: 0.82;
 }
 
-.followup-option-stack--accordion .followup-option-description {
+.question-package-option-stack--accordion .question-package-option-description {
   margin-top: 2px;
 }
 
-.followup-option-button--active {
+.question-package-option-button--active {
   color: #fff;
   background: #2d6a4f;
 }
 
-.followup-option-button--idle {
+.question-package-option-button--idle {
   color: #374151;
   background: #fff;
   border: 1px solid #e5e7eb;
@@ -2712,7 +2720,7 @@ defineExpose({
   }
 }
 
-@keyframes followup-card-enter {
+@keyframes question-package-card-enter {
   from {
     opacity: 0;
     transform: translate3d(18rpx, 0, 0);
@@ -2722,7 +2730,7 @@ defineExpose({
     transform: translate3d(0, 0, 0);
   }
 }
-.followup-option-title-row {
+.question-package-option-title-row {
   width: 100%;
   display: flex;
   align-items: center;

@@ -138,8 +138,8 @@ export function normalizeVisualAggregateSummary(summary = null) {
     )
       ? (summary.aggregateMissingInfoForPath || summary.aggregate_missing_info_for_path)
       : [],
-    suggestedFollowupCapture: normalizeStringList(
-      summary?.suggestedFollowupCapture || summary?.suggested_followup_capture
+    suggestedAdditionalImageCapture: normalizeStringList(
+      summary?.suggestedAdditionalImageCapture || summary?.suggested_additional_image_capture
     ),
     admissionReadyFlag: Number(summary?.admissionReadyFlag ?? summary?.admission_ready_flag ?? 0) ? 1 : 0,
     routePrimaryAction: String(summary?.routePrimaryAction || summary?.route_primary_action || '').trim(),

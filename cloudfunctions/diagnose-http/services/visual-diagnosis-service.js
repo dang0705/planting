@@ -414,13 +414,13 @@ function resolvePerImageRoutePrimaryAction({
 } = {}) {
   const normalizedAnalyzability = normalizeAnalyzability(analyzability, 'medium')
   const candidateCount = Array.isArray(symptomCandidates) ? symptomCandidates.length : 0
-  const followupCount = Array.isArray(suggestedFollowupCapture)
+  const questionCount = Array.isArray(suggestedFollowupCapture)
     ? suggestedFollowupCapture.length
     : 0
 
   if (normalizedAnalyzability === 'low') {return 'retake_first'}
   if (candidateCount > 0) {return 'standard_flow'}
-  if (normalizedAnalyzability === 'marginal' || followupCount > 0) {return 'ask_first'}
+  if (normalizedAnalyzability === 'marginal' || questionCount > 0) {return 'ask_first'}
   return 'uncertain_prepare'
 }
 
@@ -921,7 +921,7 @@ function resolveAdmissionDecision(candidate = {}, aggregateAnalyzability = 'medi
   if (keepAsCandidate) {
     return {
       admission_result: 'candidate_retained',
-      admission_reason: reasons.join('; ') || 'needs_followup_confirmation',
+      admission_reason: reasons.join('; ') || 'needs_question_confirmation',
       entered_runtime: 0,
       target_layer: 'visual_candidate'
     }
@@ -1016,9 +1016,9 @@ function buildAggregateRouteHints({
   }
 
   if (Array.isArray(suggestedFollowupCapture) && suggestedFollowupCapture.length) {
-    routeHintMap.set('request_specific_organ::followup_capture_needed', {
+    routeHintMap.set('request_specific_organ::question_capture_needed', {
       type: 'request_specific_organ',
-      reason: 'followup_capture_needed'
+      reason: 'question_capture_needed'
     })
   }
 
@@ -1177,7 +1177,7 @@ async function buildAggregateResult({
   const duplicateViewGroups = buildDuplicateViewGroups(aggregatedSymptomCandidates)
   const outOfPoolSymptomHints = await buildOutOfPoolSymptomHints(successfulResults)
   const suggestedFollowupCapture = normalizeStringList(
-    successfulResults.flatMap(item => item?.normalizedResult?.suggested_followup_capture || [])
+    successfulResults.flatMap(item => item?.normalizedResult?.suggested_question_capture || [])
   )
   const organCoverageSummary = {
     covered_organs: normalizeStringList(
@@ -1227,7 +1227,7 @@ async function buildAggregateResult({
     out_of_pool_symptom_hints: outOfPoolSymptomHints,
     aggregate_quality_grade: aggregateQualityGrade,
     aggregate_analyzability: aggregateAnalyzability,
-    suggested_followup_capture: suggestedFollowupCapture,
+    suggested_question_capture: suggestedFollowupCapture,
     admission_ready_flag:
       aggregatedSymptomCandidates.length > 0 && aggregateAnalyzability !== 'low',
     admission_records: admissionRecords,
@@ -1254,7 +1254,7 @@ function buildAggregateSummaryForStorage(aggregateResult = {}) {
     organ_support_summary: aggregateResult.organ_support_summary,
     out_of_pool_symptom_hints: aggregateResult.out_of_pool_symptom_hints,
     aggregate_quality_grade: aggregateResult.aggregate_quality_grade,
-    suggested_followup_capture: aggregateResult.suggested_followup_capture,
+    suggested_question_capture: aggregateResult.suggested_question_capture,
     admission_ready_flag: aggregateResult.admission_ready_flag,
     admission_records: (aggregateResult.admission_records || []).map(item => ({
       visual_admission_record_id: item.visual_admission_record_id,
@@ -1329,7 +1329,7 @@ async function persistVisualBatchArtifacts({
   aggregateResult = null
 } = {}) {
   const batchStatus =
-    aggregateResult?.route_primary_action === 'standard_flow' ? 'completed' : 'needs_followup'
+    aggregateResult?.route_primary_action === 'standard_flow' ? 'completed' : 'needs_question'
 
   await models.$runSQL(
     `
@@ -1488,7 +1488,7 @@ async function persistVisualBatchArtifacts({
       shadow_compare_model_name: shadowCompare?.source_model_name || '',
       shadow_compare_adapter_name: shadowCompare?.adapter_name || '',
       out_of_pool_symptom_candidates: normalizedResult.out_of_pool_symptom_candidates || [],
-      suggested_followup_capture: normalizedResult.suggested_followup_capture || [],
+      suggested_question_capture: normalizedResult.suggested_question_capture || [],
       normalization_notes: normalizedResult.normalization_notes || []
     }
 
@@ -1572,7 +1572,7 @@ async function persistVisualBatchArtifacts({
         routePrimaryAction: resolvePerImageRoutePrimaryAction({
           analyzability: normalizedResult.analyzability,
           symptomCandidates: normalizedResult.symptom_candidates,
-          suggestedFollowupCapture: normalizedResult.suggested_followup_capture
+          suggestedFollowupCapture: normalizedResult.suggested_question_capture
         }),
         top1StabilityScore: Number.isFinite(candidateScores[0]) ? candidateScores[0] : 0,
         top3StabilityScore:

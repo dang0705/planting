@@ -3,7 +3,7 @@
 const {
   routeSelection: questionSelectionConfig,
   unknownFlow,
-  followUpSelection
+  questionSelection
 } = require('../constants/scoring')
 const { projectObservedSymptomsFromEvidence } = require('./observed-evidence')
 const {
@@ -112,7 +112,7 @@ function mergeObservedSymptomContext(projectedObservedSymptoms = [], providedObs
   })
 }
 
-function selectFollowUpQuestions({
+function selectQuestionQuestions({
   candidateOutcomes = [],
   strategies = [],
   questions = [],
@@ -235,16 +235,16 @@ function selectFollowUpQuestions({
     const observedTarget = observedSymptomMap.get(targetSymptomKey)
     const strongVisualLock = Boolean(
       observedTarget &&
-      observedTarget.confidence >= followUpSelection.visualLockThreshold &&
-      observedTarget.signalReliability >= followUpSelection.highSpecificityThreshold
+      observedTarget.confidence >= questionSelection.visualLockThreshold &&
+      observedTarget.signalReliability >= questionSelection.highSpecificityThreshold
     )
     const weakVisualOverlap = Boolean(observedTarget && !strongVisualLock)
     const nonRedundancyFactor =
       targetDimension === QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
         ? strongVisualLock
-          ? 1 - followUpSelection.strongOverlapPenalty
+          ? 1 - questionSelection.strongOverlapPenalty
           : weakVisualOverlap
-            ? 1 - followUpSelection.weakOverlapPenalty
+            ? 1 - questionSelection.weakOverlapPenalty
             : 1
         : 1
 
@@ -325,6 +325,6 @@ function selectFollowUpQuestions({
 }
 
 module.exports = {
-  selectFollowUpQuestions,
+  selectQuestionQuestions,
   shouldAllowSecondaryObservedSymptomProbe
 }

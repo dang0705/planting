@@ -8,6 +8,7 @@ areas:
     code:
       - AGENTS.md
       - .codex/**
+      - .agents/**
       - .brv/context-tree/**
       - docs/_sync-map.yml
       - docs/_doc-status.yml
@@ -21,6 +22,7 @@ areas:
       - docs/ARCHIVE_INDEX.md
     brv_keys:
       - F-AI-WORKFLOW-001
+      - F-WECHAT-MCP-LOCAL-SKILL-PATH-007
     trigger: "AI default context, dispatch, docs_keeper, BRV, MCP, model or context-pack changed"
     public_contract: true
 

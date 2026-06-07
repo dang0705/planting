@@ -150,7 +150,7 @@ function parsePartialStructuredVisualResult(text) {
     safeJsonParseArrayField(source, 'missing_info_for_path')
   )
   const suggestedFollowupCapture = normalizeSuggestedFollowupCapture(
-    safeJsonParseArrayField(source, 'suggested_followup_capture')
+    safeJsonParseArrayField(source, 'suggested_question_capture')
   )
   const normalizationNotes = normalizeNotes(safeJsonParseArrayField(source, 'normalization_notes'))
   const uncertainSymptoms = safeJsonParseArrayField(source, 'uncertain_symptoms')
@@ -179,7 +179,7 @@ function parsePartialStructuredVisualResult(text) {
     route_hints: routeHints,
     visual_discriminators: visualDiscriminators,
     missing_info_for_path: missingInfoForPath,
-    suggested_followup_capture: suggestedFollowupCapture,
+    suggested_question_capture: suggestedFollowupCapture,
     normalization_notes: Array.from(new Set([
       ...normalizationNotes,
       'partial_model_output_salvaged'
@@ -301,8 +301,8 @@ function parseStructuredVisualResult(text) {
     route_hints: normalizeRouteHints(payload?.route_hints || []),
     visual_discriminators: normalizeVisualDiscriminators(payload?.visual_discriminators || []),
     missing_info_for_path: normalizeMissingInfoForPath(payload?.missing_info_for_path || []),
-    suggested_followup_capture: normalizeSuggestedFollowupCapture(
-      payload?.suggested_followup_capture || []
+    suggested_question_capture: normalizeSuggestedFollowupCapture(
+      payload?.suggested_question_capture || []
     ),
     normalization_notes: normalizeNotes(payload?.normalization_notes || []),
     uncertain_symptoms: (Array.isArray(payload?.uncertain_symptoms) ? payload.uncertain_symptoms : [])
@@ -344,7 +344,7 @@ function parseLLMVisualResult(text) {
     ],
     visual_discriminators: [],
     missing_info_for_path: [],
-    suggested_followup_capture: ['补拍更清晰的受损部位特写和整株图'],
+    suggested_question_capture: ['补拍更清晰的受损部位特写和整株图'],
     normalization_notes: ['模型输出无法稳定解析，已降级为空结果。'],
     uncertain_symptoms: []
   }

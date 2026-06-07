@@ -234,7 +234,7 @@ function buildCompactVisualAggregateSummary(visualAggregateSummary = null) {
     ),
     suggestedFollowupCapture: buildCompactSuggestedFollowupCapture(
       visualAggregateSummary.suggestedFollowupCapture ||
-        visualAggregateSummary.suggested_followup_capture ||
+        visualAggregateSummary.suggested_question_capture ||
         null
     )
   }

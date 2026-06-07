@@ -1,17 +1,17 @@
 'use strict'
 
-const { adaptLegacyFollowUpAnswers } = require('./legacy-rule-adapter')
+const { adaptLegacyQuestionAnswers } = require('./legacy-rule-adapter')
 
-function isLegacyFollowUpPayload(payload = {}) {
+function isLegacyQuestionPayload(payload = {}) {
   return String(payload?.mode || '').toLowerCase() === 'follow_up' ||
-    Array.isArray(payload?.followUpAnswers)
+    Array.isArray(payload?.questionAnswers)
 }
 
-function buildLegacyFollowUpPayload(payload = {}) {
+function buildLegacyQuestionPayload(payload = {}) {
   return {
     diagnosisSessionId: payload?.diagnosisId,
     roundId: payload?.roundId || '',
-    followUpAnswers: adaptLegacyFollowUpAnswers(payload?.followUpAnswers || [])
+    questionAnswers: adaptLegacyQuestionAnswers(payload?.questionAnswers || [])
   }
 }
 
@@ -33,7 +33,7 @@ function buildLegacyStartPayload(payload = {}) {
 }
 
 module.exports = {
-  isLegacyFollowUpPayload,
-  buildLegacyFollowUpPayload,
+  isLegacyQuestionPayload,
+  buildLegacyQuestionPayload,
   buildLegacyStartPayload
 }

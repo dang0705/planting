@@ -512,7 +512,7 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
           : Array.isArray(snapshot.whatToAvoid)
             ? snapshot.whatToAvoid
             : [],
-      followUps: Array.isArray(snapshot.askedQuestions) ? snapshot.askedQuestions : [],
+      questions: Array.isArray(snapshot.askedQuestions) ? snapshot.askedQuestions : [],
       versionMetadata: snapshot.versionMetadata || {},
       timeline: {
         createdAt: ''

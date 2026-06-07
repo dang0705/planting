@@ -143,7 +143,7 @@ function buildSnapshotPayload({
   sessionId,
   plantContext,
   response,
-  followUps = [],
+  questions = [],
   clientContext = null
 } = {}) {
   const explanation = response?.explanation || response?.resultExplanation || {}
@@ -250,13 +250,13 @@ function buildSnapshotPayload({
     needHumanReview: Boolean(response?.needHumanReview),
     nextSteps: Array.isArray(response?.nextSteps) ? response.nextSteps : [],
     whatToAvoid: Array.isArray(response?.whatToAvoid) ? response.whatToAvoid : [],
-    askedQuestions: (followUps || []).map(item => ({
+    askedQuestions: (questions || []).map(item => ({
       questionOrder: Number(item?.questionOrder || 0),
       text: item?.questionText || '',
       answerValue: item?.answerValue || '',
       status: item?.status || 'pending'
     })),
-    chosenAnswers: (followUps || [])
+    chosenAnswers: (questions || [])
       .filter(item => String(item?.answerValue || '').trim())
       .map(item => ({
         questionOrder: Number(item?.questionOrder || 0),
@@ -279,7 +279,7 @@ function resolveSessionRoute(response = {}) {
   if (response?.routePrimaryAction) {
     return normalizeDiagnosisRoutePrimaryAction(response.routePrimaryAction, 'ask_first')
   }
-  if (response?.followUpRequired) {
+  if (response?.questionRequired) {
     return 'ask_first'
   }
   if (normalizeOutcomeType(response?.outcomeType, '') === 'uncertain') {
@@ -292,7 +292,7 @@ function resolveSessionStatus(response = {}) {
   if (response?.sessionStatus) {
     return response.sessionStatus
   }
-  return response?.followUpRequired ? 'awaiting_follow_up' : 'completed'
+  return response?.questionRequired ? 'awaiting_follow_up' : 'completed'
 }
 
 function buildOutcomePayload(response = {}) {
@@ -340,7 +340,7 @@ function buildCompactRouteDecision(routeDecision = null) {
       routeDecision.visibleActionConflictGroups
     ),
     visibleActionProfileKeys: normalizeRuntimeStringList(routeDecision.visibleActionProfileKeys),
-    requiresFollowUp: Boolean(routeDecision.requiresFollowUp),
+    requiresQuestion: Boolean(routeDecision.requiresQuestion),
     ...(decisionCause ? { decisionCause } : {}),
     candidateOutcomeStates: (Array.isArray(routeDecision.candidateOutcomeStates)
       ? routeDecision.candidateOutcomeStates
@@ -390,8 +390,8 @@ function buildRuntimeSnapshotPayload({
         : null)
   )
   const isQuestionPackageSnapshot = Boolean(response?.questionPackageSnapshot)
-  const isFollowUpRuntimeSnapshot =
-    Boolean(response?.followUpRequired) && !isQuestionPackageSnapshot
+  const isQuestionRuntimeSnapshot =
+    Boolean(response?.questionRequired) && !isQuestionPackageSnapshot
   const careBehaviorTimeline = compactCareBehaviorTimelineForSnapshot(
     response?.careBehaviorTimeline || null
   )
@@ -446,8 +446,8 @@ function buildRuntimeSnapshotPayload({
       : 0,
     observedEvidenceSet,
     observedEvidenceSetCount: observedEvidenceSet.length,
-    derivedEvidenceSet: isFollowUpRuntimeSnapshot ? [] : derivedEvidenceSet,
-    diagnosisDirections: isFollowUpRuntimeSnapshot ? [] : diagnosisDirections,
+    derivedEvidenceSet: isQuestionRuntimeSnapshot ? [] : derivedEvidenceSet,
+    diagnosisDirections: isQuestionRuntimeSnapshot ? [] : diagnosisDirections,
     symptomClassRuntime,
     ...(isQuestionPackageSnapshot
       ? {
@@ -456,18 +456,18 @@ function buildRuntimeSnapshotPayload({
             : 0
         }
       : {
-          followUpCount: Array.isArray(response?.followUps) ? response.followUps.length : 0
+          questionCount: Array.isArray(response?.questions) ? response.questions.length : 0
         }),
     questionPackageSnapshot: response?.questionPackageSnapshot || null,
     questionQueue: isQuestionPackageSnapshot ? null : response?.questionQueue || null,
     stopState: response?.stopState || null,
     outputEligibility: response?.outputEligibility || null,
-    diagnosticTrace: isFollowUpRuntimeSnapshot
+    diagnosticTrace: isQuestionRuntimeSnapshot
       ? []
       : Array.isArray(response?.diagnosticTrace)
         ? response.diagnosticTrace
         : [],
-    careBaselineSummary: isFollowUpRuntimeSnapshot ? null : response?.careBaselineSummary || null,
+    careBaselineSummary: isQuestionRuntimeSnapshot ? null : response?.careBaselineSummary || null,
     careBehaviorTimeline,
     environmentCareContext,
     environmentDeviationHints: Array.isArray(response?.environmentDeviationHints)

@@ -208,7 +208,7 @@ export function handleDiagnoseError(error, { onError } = {}) {
   throw error
 }
 
-export function buildFollowUpMutationPayload({
+export function buildDiagnosisAnswerMutationPayload({
   diagnosisSessionId,
   roundId,
   answers = [],

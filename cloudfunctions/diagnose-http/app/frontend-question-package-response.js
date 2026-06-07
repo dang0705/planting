@@ -36,10 +36,10 @@ function buildQuestionPackageSummaryCard(questions = []) {
     title: '诊断问题',
     subtitle:
       questions.length > 1
-        ? `还需要确认 ${questions.length} 个关键信息`
+        ? `需要回答 ${questions.length} 道问题`
         : questions.length
-          ? '还需要再确认 1 个关键信息'
-          : '还需要继续确认',
+          ? '需要回答 1 道问题'
+          : '请继续完成问题',
     severity: 'low',
     statusText: ''
   }

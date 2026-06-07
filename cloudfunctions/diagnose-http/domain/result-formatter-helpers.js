@@ -282,11 +282,11 @@ function buildUncertainFinalResult({ resultId, lowConfidence = {} } = {}) {
 }
 
 function resolveOutcomeType({
-  followUpRequired = false,
+  questionRequired = false,
   lowConfidence = {},
   stopDecision = null
 } = {}) {
-  if (followUpRequired) {return null}
+  if (questionRequired) {return null}
 
   const lockedOutcomeType = normalizeText(stopDecision?.outcomeLocked || '', '')
   if (lockedOutcomeType === 'uncertain') {
@@ -300,18 +300,18 @@ function resolveOutcomeType({
 }
 
 function resolveRoutePrimaryAction({
-  followUpRequired = false,
+  questionRequired = false,
   outcomeType = null,
   preferredRoutePrimaryAction = ''
 } = {}) {
   if (preferredRoutePrimaryAction === 'retake_first') {return 'retake_first'}
-  if (followUpRequired) {return 'ask_first'}
+  if (questionRequired) {return 'ask_first'}
   if (outcomeType === 'uncertain') {return 'uncertain_prepare'}
   return 'standard_flow'
 }
 
-function resolveStopReason({ followUpRequired = false, stopDecision = null } = {}) {
-  if (followUpRequired) {return 'await_follow_up'}
+function resolveStopReason({ questionRequired = false, stopDecision = null } = {}) {
+  if (questionRequired) {return 'await_follow_up'}
   return normalizeText(stopDecision?.stopReason || '', '')
 }
 

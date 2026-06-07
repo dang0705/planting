@@ -1,9 +1,9 @@
 'use strict'
 
-const { buildSyntheticFollowUpOptionMappings } = require('../utils/synthetic-follow-up')
+const { buildSyntheticQuestionOptionMappings } = require('../utils/synthetic-question-package')
 const {
-  markFollowUpAnswers,
-  validateFollowUpAnswerOwnership
+  markQuestionAnswers,
+  validateQuestionAnswerOwnership
 } = require('../services/session-service')
 const { markQueueItemsAnswered } = require('../services/question-queue-runtime-service')
 const { mergeAnswerRuntimeState } = require('./answer-runtime-state')
@@ -19,8 +19,8 @@ async function validateLegacyAnswerOwnership({
   sessionState,
   rows
 } = {}) {
-  return validateFollowUpAnswerOwnership(sessionId, answers, answerRound, {
-    followUpRows: rows,
+  return validateQuestionAnswerOwnership(sessionId, answers, answerRound, {
+    questionRows: rows,
     queuedQuestionKeys: resolveLegacyQuestionKeysForValidation({
       answerRound,
       sessionState,
@@ -32,7 +32,7 @@ async function validateLegacyAnswerOwnership({
 function buildLegacyAnswerOptionMappings(questionKeys = [], storedMappings = []) {
   return [
     ...(Array.isArray(storedMappings) ? storedMappings : []),
-    ...buildSyntheticFollowUpOptionMappings(questionKeys)
+    ...buildSyntheticQuestionOptionMappings(questionKeys)
   ]
 }
 
@@ -48,10 +48,10 @@ async function applyLegacyAnswerSubmitRuntime({
   deferredJobs,
   timing
 } = {}) {
-  const markResultPromise = markFollowUpAnswers(sessionId, answers, {
+  const markResultPromise = markQuestionAnswers(sessionId, answers, {
     optionMappings,
     answerRound,
-    followUpRows: rows,
+    questionRows: rows,
     awaitPersistence: false
   })
   if (Array.isArray(deferredJobs)) {
@@ -71,7 +71,7 @@ async function applyLegacyAnswerSubmitRuntime({
       : 0
   })
   const updatedAnswers = Array.isArray(markResult?.updatedAnswers) ? markResult.updatedAnswers : []
-  const rowSnapshot = markResult?.followUpRows || rows
+  const rowSnapshot = markResult?.questionRows || rows
   return {
     markResult,
     rowSnapshot,

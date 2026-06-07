@@ -118,12 +118,12 @@ const VISUAL_PROMPT_LINES = [
     zh: '器官不确定时设置 normalized_organ=unknown；route_hints 只作为流程提示。'
   },
   {
-    en: 'Keep JSON lean: no display names, region notes, follow-up descriptions, or normalization notes.',
+    en: 'Keep JSON lean: no display names, region notes, question descriptions, or normalization notes.',
     zh: '保持 JSON 精简：不要输出显示名、区域描述、补图长文案或归一化备注。'
   },
   {
-    en: 'Forbidden legacy keys: display_name_cn, visibility_scope, supporting_region_note, admission_readiness, suggested_followup_capture, normalization_notes.',
-    zh: '禁止输出旧字段：display_name_cn、visibility_scope、supporting_region_note、admission_readiness、suggested_followup_capture、normalization_notes。'
+    en: 'Forbidden legacy keys: display_name_cn, visibility_scope, supporting_region_note, admission_readiness, suggested_question_capture, normalization_notes.',
+    zh: '禁止输出旧字段：display_name_cn、visibility_scope、supporting_region_note、admission_readiness、suggested_question_capture、normalization_notes。'
   },
   {
     en: 'Return strict JSON only, using only schema keys/enums below.',

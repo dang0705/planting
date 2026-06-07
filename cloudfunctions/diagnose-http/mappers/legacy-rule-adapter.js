@@ -54,8 +54,8 @@ function adaptObservedSymptoms(observedSymptoms = []) {
     .filter(Boolean)
 }
 
-function adaptLegacyFollowUpAnswers(followUpAnswers = []) {
-  return (Array.isArray(followUpAnswers) ? followUpAnswers : [])
+function adaptLegacyQuestionAnswers(questionAnswers = []) {
+  return (Array.isArray(questionAnswers) ? questionAnswers : [])
     .map(item => {
       if (!item) {return null}
       const questionKey = mapByAlias(
@@ -80,5 +80,5 @@ module.exports = {
   mapByAlias,
   normalizeOptionKey,
   adaptObservedSymptoms,
-  adaptLegacyFollowUpAnswers
+  adaptLegacyQuestionAnswers
 }

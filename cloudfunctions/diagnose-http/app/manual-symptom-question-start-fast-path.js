@@ -15,7 +15,7 @@ const { buildRuntimeArtifacts } = require('../domain/runtime-artifacts')
 const { buildDiagnosisDirections } = require('../utils/diagnosis-directions')
 const { buildDerivedEvidenceSet } = require('../utils/derived-evidence')
 const { collectBridgeTargetSymptomKeys } = require('../utils/question-symptom-bridge')
-const { buildSyntheticObservedProbeQuestions } = require('../utils/synthetic-follow-up')
+const { buildSyntheticObservedProbeQuestions } = require('../utils/synthetic-question-package')
 const { QUESTION_TARGET_DIMENSIONS } = require('../utils/question-target-dimension')
 const {
   filterYellowingCareEnvironmentCandidateOutcomeKeys,
@@ -98,7 +98,7 @@ function shouldUseYellowingCareEnvironmentGuard(activeSymptomKeys = []) {
   return Boolean(keys.length && keys.every(isYellowingFlowSymptomKey))
 }
 
-function mapSyntheticQuestionToFollowUp(question = {}) {
+function mapSyntheticQuestionToQuestion(question = {}) {
   return {
     questionKey: question.questionKey,
     questionId: toQuestionId(question.questionKey),
@@ -132,7 +132,7 @@ function mapSyntheticQuestionToFollowUp(question = {}) {
   }
 }
 
-function buildManualYellowingCareStartFollowUps({ plantContext = {} } = {}) {
+function buildManualYellowingCareStartQuestions({ plantContext = {} } = {}) {
   const yellowingItem = {
     symptomKey: 'leaf_yellowing',
     symptomCn: '叶片发黄',
@@ -155,7 +155,7 @@ function buildManualYellowingCareStartFollowUps({ plantContext = {} } = {}) {
     seenQuestionKeys.add(questionKey)
     uniqueQuestions.push(question)
   }
-  return uniqueQuestions.map(mapSyntheticQuestionToFollowUp)
+  return uniqueQuestions.map(mapSyntheticQuestionToQuestion)
 }
 
 async function buildManualStartRouteDecision({
@@ -222,12 +222,12 @@ async function buildManualQuestionStartRoundResult({
   const activeSymptomKeys = resolveManualStartActiveSymptomKeys(observedEvidenceSet, observedSymptoms)
   const useYellowingCareEnvironmentGuard = shouldUseYellowingCareEnvironmentGuard(activeSymptomKeys)
   if (useYellowingCareEnvironmentGuard) {
-    const yellowingCareFollowUps = await buildManualYellowingCareStartFollowUps({
+    const yellowingCareQuestions = await buildManualYellowingCareStartQuestions({
       plantContext
     })
-    if (yellowingCareFollowUps.length === YELLOWING_PACKAGE_QUESTION_COUNT) {
+    if (yellowingCareQuestions.length === YELLOWING_PACKAGE_QUESTION_COUNT) {
       const questionPackage = getQuestionPackageByMode(YELLOW_LEAF_PACKAGE_MODE, {
-        questionCount: yellowingCareFollowUps.length
+        questionCount: yellowingCareQuestions.length
       })
       const response = {
         diagnosisSessionId: sessionId,
@@ -235,12 +235,12 @@ async function buildManualQuestionStartRoundResult({
         roundIndex: Number(round || 1),
         currentRoundIndex: Number(round || 1),
         currentRoundId: `round_${Number(round || 1)}`,
-        stage: 'followup',
+        stage: 'question_package',
         status: 'active',
-        followUpRequired: true,
+        questionRequired: true,
         routePrimaryAction: 'ask_first',
-        stopReason: 'await_follow_up',
-        sessionStatus: 'awaiting_follow_up',
+        stopReason: 'await_package_answers',
+        sessionStatus: 'awaiting_question_package',
         outcomeType: '',
         plantId: plantContext?.userPlantId || plantContext?.plantId || '',
         plantIdentityId: plantContext?.plantIdentityId || '',
@@ -250,16 +250,16 @@ async function buildManualQuestionStartRoundResult({
         observedEvidenceSet,
         derivedEvidenceSet,
         diagnosisDirections,
-        followUps: yellowingCareFollowUps,
+        questions: yellowingCareQuestions,
         questionPackage,
-        uiHints: buildQuestionPackageUiHints({}, questionPackage, yellowingCareFollowUps.length),
+        uiHints: buildQuestionPackageUiHints({}, questionPackage, yellowingCareQuestions.length),
         metrics: {
             routeDecision: {
               mode: 'manual_yellowing_care_environment_frontloaded',
               candidateOutcomeKeys: [],
               visibleOutcomeKeys: [],
               nextQuestionKeys: [],
-              requiresFollowUp: false,
+              requiresQuestion: false,
               decisionCause: {
               decisionCauseKey: 'manual_yellowing_care_environment_guard',
               decisionCauseText: '黄叶手动入口直接前置养护/环境实题。'
@@ -270,7 +270,7 @@ async function buildManualQuestionStartRoundResult({
           mode: 'manual_yellowing_care_environment_frontloaded',
           visibleOutcomeKeys: [],
           nextQuestionKeys: [],
-          requiresFollowUp: false
+          requiresQuestion: false
         },
         plantContext
       }
@@ -294,7 +294,7 @@ module.exports = {
     resolveManualStartActiveSymptomKeys,
     collectCandidateOutcomeKeysFromRouteGroups,
     shouldUseYellowingCareEnvironmentGuard,
-    buildManualYellowingCareStartFollowUps,
+    buildManualYellowingCareStartQuestions,
     buildManualStartRouteDecision,
     buildManualQuestionStartRoundResult
   }

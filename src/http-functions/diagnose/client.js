@@ -332,8 +332,8 @@ function normalizeVisualAggregateSummary(summary = null) {
       summary?.aggregateQualityGrade || summary?.aggregate_quality_grade || '',
     aggregateAnalyzability:
       summary?.aggregateAnalyzability || summary?.aggregate_analyzability || '',
-    suggestedFollowupCapture: normalizeStringList(
-      summary?.suggestedFollowupCapture || summary?.suggested_followup_capture
+    suggestedAdditionalImageCapture: normalizeStringList(
+      summary?.suggestedAdditionalImageCapture || summary?.suggested_additional_image_capture
     ),
     admissionReadyFlag: Number(summary?.admissionReadyFlag ?? summary?.admission_ready_flag ?? 0) ? 1 : 0,
     routePrimaryAction: String(summary?.routePrimaryAction || summary?.route_primary_action || '').trim(),
@@ -559,19 +559,20 @@ function normalizeCoreProcess(coreProcess = null, fallback = {}) {
   const normalizedEnvironmentDeviationHints = Array.isArray(fallback?.environmentDeviationHints)
     ? fallback.environmentDeviationHints
     : []
+  const questionCore = coreProcess?.questions || coreProcess?.questionPackage || {}
   const questionQueueForSummary =
-    coreProcess?.followUp?.questionQueue && typeof coreProcess.followUp.questionQueue === 'object'
-      ? normalizeQuestionQueue(coreProcess.followUp.questionQueue)
+    questionCore?.questionQueue && typeof questionCore.questionQueue === 'object'
+      ? normalizeQuestionQueue(questionCore.questionQueue)
       : normalizedQuestionQueue
 
   const questionCountSummary =
-    coreProcess?.followUp?.questionCountSummary && typeof coreProcess.followUp.questionCountSummary === 'object'
+    questionCore?.questionCountSummary && typeof questionCore.questionCountSummary === 'object'
       ? {
-          totalItems: Number(coreProcess.followUp.questionCountSummary?.totalItems || 0),
-          activeItems: Number(coreProcess.followUp.questionCountSummary?.activeItems || 0),
-          askedItems: Number(coreProcess.followUp.questionCountSummary?.askedItems || 0),
-          answeredItems: Number(coreProcess.followUp.questionCountSummary?.answeredItems || 0),
-          invalidatedItems: Number(coreProcess.followUp.questionCountSummary?.invalidatedItems || 0)
+          totalItems: Number(questionCore.questionCountSummary?.totalItems || 0),
+          activeItems: Number(questionCore.questionCountSummary?.activeItems || 0),
+          askedItems: Number(questionCore.questionCountSummary?.askedItems || 0),
+          answeredItems: Number(questionCore.questionCountSummary?.answeredItems || 0),
+          invalidatedItems: Number(questionCore.questionCountSummary?.invalidatedItems || 0)
         }
       : {
           totalItems: Array.isArray(questionQueueForSummary?.questionItems)
@@ -630,9 +631,9 @@ function normalizeCoreProcess(coreProcess = null, fallback = {}) {
         ? coreProcess.evidence.environmentDeviationHints
         : normalizedEnvironmentDeviationHints
     },
-    followUp: {
+    questions: {
       routePrimaryAction:
-        String(coreProcess?.followUp?.routePrimaryAction || fallback?.routePrimaryAction || '').trim(),
+        String(questionCore?.routePrimaryAction || fallback?.routePrimaryAction || '').trim(),
       questionQueue: questionQueueForSummary,
       questionCountSummary
     },
@@ -692,10 +693,10 @@ function normalizeHistoryDetail(detail) {
   }
 
   if (detail?.diagnosisSessionId && detail?.finalResult) {
-    const followUps = Array.isArray(detail.followUps) ? detail.followUps : []
-    const hasPendingFollowUps =
-      String(detail.stage || '').toLowerCase() === 'followup' ||
-      followUps.some(item => String(item?.status || '').toLowerCase() === 'pending')
+    const questions = Array.isArray(detail.questions) ? detail.questions : []
+    const hasActiveQuestions =
+      String(detail.stage || '').toLowerCase() === 'question_package' ||
+      questions.some(item => String(item?.status || '').toLowerCase() === 'pending')
     const observedEvidenceSet = normalizeObservedEvidenceSet(detail.observedEvidenceSet)
     const derivedEvidenceSet = normalizeDerivedEvidenceSet(detail.derivedEvidenceSet)
     const diagnosisDirections = normalizeDiagnosisDirections(detail.diagnosisDirections)
@@ -742,8 +743,8 @@ function normalizeHistoryDetail(detail) {
       plantCatalogId: detail.plantCatalogId || null,
       plantIdentityId: detail.plantIdentityId || '',
       latestVisualCallBatchId: detail.latestVisualCallBatchId || null,
-      stage: detail.stage || (hasPendingFollowUps ? 'followup' : 'final'),
-      status: detail.status || (hasPendingFollowUps ? 'active' : 'closed'),
+      stage: detail.stage || (hasActiveQuestions ? 'question_package' : 'final'),
+      status: detail.status || (hasActiveQuestions ? 'active' : 'closed'),
       outcomeType: detail.outcomeType || '',
       nonProblematicType: detail.nonProblematicType || '',
       nonProblematicLabel: detail.nonProblematicLabel || '',
@@ -758,7 +759,8 @@ function normalizeHistoryDetail(detail) {
       environmentDeviationHints: Array.isArray(detail.environmentDeviationHints)
         ? detail.environmentDeviationHints
         : [],
-      followUps,
+      questions,
+      hasActiveQuestions,
       contributingFactors: Array.isArray(detail.contributingFactors) ? detail.contributingFactors : [],
       intermediateStates: Array.isArray(detail.intermediateStates) ? detail.intermediateStates : [],
       nextSteps,
@@ -799,8 +801,8 @@ function normalizeHistoryDetail(detail) {
     plantCatalogId: detail.plantCatalogId || null,
     plantIdentityId: detail.plantIdentityId || '',
     latestVisualCallBatchId: detail.latestVisualCallBatchId || null,
-    stage: detail.needsFollowUp ? 'followup' : 'final',
-    status: detail.needsFollowUp ? 'active' : 'closed',
+    stage: 'final',
+    status: 'closed',
     finalResult: {
       problemId: detail.topProblemKey || '',
       displayName: detail.finalProblemCn || detail.topProblemKey || '待进一步确认',
@@ -827,15 +829,8 @@ function normalizeHistoryDetail(detail) {
     diagnosisDirections: [],
     careBaselineSummary: null,
     environmentDeviationHints: [],
-    followUps: Array.isArray(detail.followUps)
-      ? detail.followUps.map(item => ({
-          questionId: item?.symptomKey || '',
-          text: item?.questionText || '',
-          helpText: item?.rationale || '',
-          status: item?.status || 'pending',
-          answerValue: item?.answerValue || ''
-        }))
-      : [],
+    questions: [],
+    hasActiveQuestions: false,
     contributingFactors: [],
     intermediateStates: [],
     nextSteps: detail.treatment
@@ -1242,9 +1237,4 @@ export async function requestDiagnoseStream(payload, { onProgress } = {}) {
     }
     throw error
   }
-}
-
-// 兼容旧调用名：follow-up 即提交问诊答案。
-export async function requestDiagnoseFollowUp(payload) {
-  return requestDiagnosisAnswer(payload)
 }

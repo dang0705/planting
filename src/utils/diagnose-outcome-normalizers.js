@@ -156,7 +156,7 @@ export function resolveMainIssueText({
   finalResult = null,
   summaryCard = null,
   outcomeType = '',
-  followUpRequired = false
+  hasActiveQuestions = false
 } = {}) {
   if (finalResult?.displayNameCn) {
     return finalResult.displayNameCn
@@ -171,7 +171,7 @@ export function resolveMainIssueText({
   }
 
   const normalizedOutcomeType = normalizeOutcomeType(outcomeType)
-  if (followUpRequired) {return '待进一步确认'}
+  if (hasActiveQuestions) {return '待进一步确认'}
   if (normalizedOutcomeType === 'non_problematic') {return '暂未见明显问题'}
   if (normalizedOutcomeType === 'uncertain') {return '暂不能稳定判断'}
   return '待进一步确认'

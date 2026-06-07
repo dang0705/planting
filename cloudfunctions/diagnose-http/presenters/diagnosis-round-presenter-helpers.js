@@ -44,7 +44,7 @@ function isVisualEvidenceItem(item = {}) {
   return sourceType.includes('visual')
 }
 
-function hasConsumedFollowUpRetakeQuota(visualBatchTrace = null) {
+function hasConsumedQuestionRetakeQuota(visualBatchTrace = null) {
   if (!visualBatchTrace || typeof visualBatchTrace !== 'object') {
     return false
   }
@@ -70,8 +70,8 @@ function hasConsumedFollowUpRetakeQuota(visualBatchTrace = null) {
   return Boolean(currentBatchId && originBatchId && currentBatchId !== originBatchId)
 }
 
-function resolveFollowUpCanUploadMoreImages(visualAggregateSummary = null, visualBatchTrace = null) {
-  if (hasConsumedFollowUpRetakeQuota(visualBatchTrace)) {
+function resolveQuestionCanUploadMoreImages(visualAggregateSummary = null, visualBatchTrace = null) {
+  if (hasConsumedQuestionRetakeQuota(visualBatchTrace)) {
     return false
   }
 
@@ -114,21 +114,21 @@ function buildSummaryCard(roundResult = {}) {
   }
 
   const topProblem = roundResult?.topProblem || roundResult?.finalResult || null
-  const followUpCount = Array.isArray(roundResult?.followUps) ? roundResult.followUps.length : 0
+  const questionCount = Array.isArray(roundResult?.questions) ? roundResult.questions.length : 0
 
   return {
     resultId: roundResult?.resultId || roundResult?.finalResult?.resultId || '',
     title: topProblem?.displayName ? `更像是${topProblem.displayName}` : '正在进一步确认诊断方向',
     subtitle:
-      followUpCount > 0
-        ? `还需要再确认 ${followUpCount} 个关键信息`
+      questionCount > 0
+        ? `还需要再确认 ${questionCount} 个关键信息`
         : '当前证据已基本收敛',
     severity: topProblem?.severity || 'medium'
   }
 }
 
-function toPublicQuestions(followUps = []) {
-  return (Array.isArray(followUps) ? followUps : []).map(item => {
+function toPublicQuestions(questions = []) {
+  return (Array.isArray(questions) ? questions : []).map(item => {
     const questionText = resolveQuestionText(item)
 
     return {
@@ -231,14 +231,14 @@ const diagnosisRoundPresenterHelpers = {
   toPublicObservedEvidenceSet,
   toPublicQuestions,
   buildSummaryCard,
-  resolveFollowUpCanUploadMoreImages
+  resolveQuestionCanUploadMoreImages
 }
 
 module.exports = {
   normalizeEvidenceSourceType,
   isVisualEvidenceItem,
-  hasConsumedFollowUpRetakeQuota,
-  resolveFollowUpCanUploadMoreImages,
+  hasConsumedQuestionRetakeQuota,
+  resolveQuestionCanUploadMoreImages,
   resolvePublicPlantRefs,
   buildSummaryCard,
   toPublicQuestions,

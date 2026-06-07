@@ -224,7 +224,7 @@ async function resolveSymptomClassRuntime({
     const existing = scoresByClassKey.get(mapping.classKey) || {
       classKey: mapping.classKey,
       classNameCn: classMeta.classNameCn || mapping.classNameCn || mapping.classKey,
-      followupModeV1: classMeta.followupModeV1 || mapping.followupModeV1 || 'disabled',
+      questionModeV1: classMeta.questionModeV1 || mapping.questionModeV1 || 'disabled',
       runtimeGateRule: classMeta.runtimeGateRule || 'soft',
       dataStatus: classMeta.dataStatus || mapping.dataStatus || 'unknown',
       visualScore: 0,
@@ -259,7 +259,7 @@ async function resolveSymptomClassRuntime({
       return {
         classKey: item.classKey,
         classNameCn: item.classNameCn,
-        followupModeV1: item.followupModeV1,
+        questionModeV1: item.questionModeV1,
         runtimeGateRule: item.runtimeGateRule,
         visualScore,
         questionActivationScore,
@@ -278,13 +278,13 @@ async function resolveSymptomClassRuntime({
 
   const runtimeEligibleClasses = classScores.filter(
     item =>
-      isRuntimeEligibleClassMode(item.followupModeV1, round) &&
+      isRuntimeEligibleClassMode(item.questionModeV1, round) &&
       item.runtimeScore >= classSwitchRules.secondaryClassScoreFloor
   )
 
   const activeClassCandidates = runtimeEligibleClasses.filter(
     item =>
-      item.followupModeV1 === 'full' &&
+      item.questionModeV1 === 'full' &&
       item.runtimeScore >= classSwitchRules.activeClassScoreFloor
   )
 
@@ -335,7 +335,7 @@ async function resolveSymptomClassRuntime({
 
   const eligibleGroupsByClass = new Map()
   for (const strategy of rawGroupStrategies) {
-    if (!classSwitchRules.runtimeFollowupModes.includes(strategy.followupModeV1)) {continue}
+    if (!classSwitchRules.runtimeFollowupModes.includes(strategy.questionModeV1)) {continue}
     if (!strategy.classLevelAllowsRuntimeV1) {continue}
     if (!strategy.effectiveRuntimeV1) {continue}
 

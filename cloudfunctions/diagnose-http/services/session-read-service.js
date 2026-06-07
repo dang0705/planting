@@ -14,13 +14,13 @@ const {
 } = require('../repositories/visual-aggregate-repository')
 const { getProblemsByKeys } = require('../repositories/problem-repository')
 const { getLatestQueueBySession } = require('../repositories/question-queue-repository')
-const { listFollowUpRows } = require('../repositories/session-follow-up-repository')
+const { listQuestionRows } = require('../repositories/session-question-repository')
 const { getLatestStopStateBySession } = require('../repositories/stop-state-repository')
 const {
   readQuestionGroupKeyFromRationale,
   readQuestionKeyFromRationale,
   readRoundFromRationale
-} = require('./session-follow-up-service')
+} = require('./session-question-service')
 const { resolveLatestVisualCallBatchId } = require('../utils/visual-batch-id')
 const {
   safeJsonParse,
@@ -76,13 +76,13 @@ async function getSessionState(openid, sessionId) {
   const [
     persistedQuestionQueue,
     persistedStopStateBundle,
-    followUpRows,
+    questionRows,
     persistedObservedEvidenceSet,
     persistedVisualAggregateResult
   ] = await Promise.all([
     hasSnapshotQuestionQueue ? Promise.resolve(null) : getLatestQueueBySession(sessionId, openid),
     hasSnapshotStopState ? Promise.resolve(null) : getLatestStopStateBySession(sessionId, openid),
-    listFollowUpRows(sessionId),
+    listQuestionRows(sessionId),
     shouldLoadObservedEvidenceSet
       ? getObservedEvidenceSetBySession(sessionId, openid)
       : Promise.resolve(snapshotObservedEvidenceSet),
@@ -109,7 +109,7 @@ async function getSessionState(openid, sessionId) {
   const unknownStreakByGroup = {}
   let maxRound = 1
 
-  for (const row of followUpRows) {
+  for (const row of questionRows) {
     const questionKey = readQuestionKeyFromRationale(row.rationale) || String(row.symptom_key || '').trim()
     const groupKey = readQuestionGroupKeyFromRationale(row.rationale)
     if (Number(row.asked || 0) === 1 && questionKey) {
@@ -196,7 +196,7 @@ async function getSessionState(openid, sessionId) {
     currentRoundId: normalizeStoredNullableText(session.current_round_id, ''),
     currentRoundIndex: Number(session.current_round_index || 0),
     latestVisualCallBatchId,
-    followUpRows,
+    questionRows,
     outcomeType: normalizeOutcomeType(session.outcome_type, ''),
     sessionStatus: normalizeStoredNullableText(session.session_status, ''),
     askedQuestionKeys: Array.from(new Set(askedQuestionKeys)),
@@ -221,7 +221,7 @@ async function getSessionState(openid, sessionId) {
       ? runtimeSnapshot.symptomClassRuntime.classSwitchHistory
       : [],
     nextRound: Math.max(maxRound + 1, Number(session.follow_up_round || 1) + 1),
-    hasPendingFollowUp: Number(session.needs_follow_up || 0) === 1
+    hasPendingQuestion: Number(session.needs_follow_up || 0) === 1
   }
 }
 

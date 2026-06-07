@@ -129,18 +129,19 @@ export function normalizeCoreProcess(coreProcess = null, fallback = {}) {
   const normalizedEnvironmentDeviationHints = Array.isArray(fallback?.environmentDeviationHints)
     ? fallback.environmentDeviationHints
     : []
+  const questionCore = coreProcess?.questions || coreProcess?.questionPackage || {}
   const questionQueueForSummary =
-    coreProcess?.followUp?.questionQueue && typeof coreProcess.followUp.questionQueue === 'object'
-      ? normalizeQuestionQueue(coreProcess.followUp.questionQueue)
+    questionCore?.questionQueue && typeof questionCore.questionQueue === 'object'
+      ? normalizeQuestionQueue(questionCore.questionQueue)
       : normalizedQuestionQueue
   const questionCountSummary =
-    coreProcess?.followUp?.questionCountSummary && typeof coreProcess.followUp.questionCountSummary === 'object'
+    questionCore?.questionCountSummary && typeof questionCore.questionCountSummary === 'object'
       ? {
-          totalItems: Number(coreProcess.followUp.questionCountSummary?.totalItems || 0),
-          activeItems: Number(coreProcess.followUp.questionCountSummary?.activeItems || 0),
-          askedItems: Number(coreProcess.followUp.questionCountSummary?.askedItems || 0),
-          answeredItems: Number(coreProcess.followUp.questionCountSummary?.answeredItems || 0),
-          invalidatedItems: Number(coreProcess.followUp.questionCountSummary?.invalidatedItems || 0)
+          totalItems: Number(questionCore.questionCountSummary?.totalItems || 0),
+          activeItems: Number(questionCore.questionCountSummary?.activeItems || 0),
+          askedItems: Number(questionCore.questionCountSummary?.askedItems || 0),
+          answeredItems: Number(questionCore.questionCountSummary?.answeredItems || 0),
+          invalidatedItems: Number(questionCore.questionCountSummary?.invalidatedItems || 0)
         }
       : {
           totalItems: Array.isArray(questionQueueForSummary?.questionItems)
@@ -199,9 +200,9 @@ export function normalizeCoreProcess(coreProcess = null, fallback = {}) {
         ? coreProcess.evidence.environmentDeviationHints
         : normalizedEnvironmentDeviationHints
     },
-    followUp: {
+    questions: {
       routePrimaryAction:
-        String(coreProcess?.followUp?.routePrimaryAction || fallback?.routePrimaryAction || '').trim(),
+        String(questionCore?.routePrimaryAction || fallback?.routePrimaryAction || '').trim(),
       questionQueue: questionQueueForSummary,
       questionCountSummary
     },

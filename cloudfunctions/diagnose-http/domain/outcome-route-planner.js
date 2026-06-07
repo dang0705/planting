@@ -316,7 +316,7 @@ async function planOutcomeRoutes({
       .filter(Boolean)
     const hasActionConflict = dedupeKeys(limitedActionConflictGroups).length > 1
     const limitedVisibleOutcomeCount = limitedVisibleOutcomeKeys.length
-    const requiresFollowUp = false
+    const requiresQuestion = false
 
     const activeRouteGroupKeys = dedupeKeys(
       routes
@@ -329,7 +329,7 @@ async function planOutcomeRoutes({
       candidateOutcomeStates: sortedStates,
       activeRouteGroupKeys,
       visibleOutcomeKeys: limitedVisibleOutcomeKeys,
-      requiresFollowUp,
+      requiresQuestion,
       nextQuestionKeys: [],
       nextQuestions: [],
       questionEvidenceKeys: dedupeKeys(rankedQuestionEvidence.map(item => item.questionKey)),

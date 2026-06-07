@@ -44,7 +44,7 @@ function buildRouteDecisionReviewSummary(routeDecision = null, stopReason = '') 
       nextQuestionKeys: [],
       visibleActionConflictGroups: [],
       visibleActionProfileKeys: [],
-      requiresFollowUp: false,
+      requiresQuestion: false,
       decisionCause: {
         decisionCauseKey: '',
         decisionCauseText: '',
@@ -110,7 +110,7 @@ function buildRouteDecisionReviewSummary(routeDecision = null, stopReason = '') 
     visibleActionProfileKeys: Array.isArray(safeDecision.visibleActionProfileKeys)
       ? safeDecision.visibleActionProfileKeys.map(item => String(item || '').trim()).filter(Boolean)
       : [],
-    requiresFollowUp: Boolean(safeDecision.requiresFollowUp),
+    requiresQuestion: Boolean(safeDecision.requiresQuestion),
     decisionCause,
     candidateOutcomeStates,
     hasVisibleOutcome: visibleOutcomeKeys.length > 0,
@@ -204,7 +204,7 @@ function mapDiagnosisReviewRow(row = {}) {
     stopReason,
     sessionStatus: String(row.session_status || '').trim(),
     identityResolutionStatus: String(row.current_identity_resolution_status || '').trim(),
-    followUpRound: Number(row.follow_up_round || 0),
+    questionRound: Number(row.follow_up_round || 0),
     currentRoundIndex: Number(row.current_round_index || 0),
     imageCount: Number(row.image_count || 0),
     previewVisualRawImageRecordId: String(row.preview_visual_raw_image_record_id || '').trim(),

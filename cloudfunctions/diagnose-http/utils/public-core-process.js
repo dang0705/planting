@@ -173,7 +173,7 @@ function buildPublicRouteDecisionForReview(routeDecision = null) {
     visibleOutcomeKeys: Array.isArray(routeDecision?.visibleOutcomeKeys)
       ? routeDecision.visibleOutcomeKeys.map(item => String(item || '').trim()).filter(Boolean)
       : [],
-    requiresFollowUp: Boolean(routeDecision?.requiresFollowUp),
+    requiresQuestion: Boolean(routeDecision?.requiresQuestion),
     nextQuestionKeys: Array.isArray(routeDecision?.nextQuestionKeys)
       ? routeDecision.nextQuestionKeys.map(item => String(item || '').trim()).filter(Boolean)
       : [],
@@ -274,7 +274,7 @@ function buildPublicCoreProcess({
         ? environmentDeviationHints
         : []
     },
-    followUp: {
+    question: {
       routePrimaryAction: String(routePrimaryAction || '').trim(),
       questionQueue: buildPublicQuestionQueue(questionQueue),
       questionCountSummary: buildQuestionCountSummary(questionQueue)

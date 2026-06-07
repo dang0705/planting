@@ -243,11 +243,11 @@ function resolveAggregateRoutePrimaryAction({
   suggestedFollowupCapture = []
 } = {}) {
   const analyzability = normalizeAnalyzability(aggregateAnalyzability, 'medium')
-  const followupCount = Array.isArray(suggestedFollowupCapture) ? suggestedFollowupCapture.length : 0
+  const questionCount = Array.isArray(suggestedFollowupCapture) ? suggestedFollowupCapture.length : 0
 
   if (analyzability === 'low') {return 'retake_first'}
   if (observedSymptomCount > 0) {return 'standard_flow'}
-  if (followupCount > 0 || analyzability === 'marginal') {return 'ask_first'}
+  if (questionCount > 0 || analyzability === 'marginal') {return 'ask_first'}
   return 'uncertain_prepare'
 }
 

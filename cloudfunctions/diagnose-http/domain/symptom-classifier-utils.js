@@ -128,8 +128,8 @@ function normalizeObservedSymptoms(observedSymptoms = []) {
     .filter(item => item.symptomKey)
 }
 
-function isRuntimeEligibleClassMode(followupModeV1 = '', round = 1) {
-  const normalizedMode = normalizeText(followupModeV1).toLowerCase()
+function isRuntimeEligibleClassMode(questionModeV1 = '', round = 1) {
+  const normalizedMode = normalizeText(questionModeV1).toLowerCase()
   if (classSwitchRules.activeFollowupModes.includes(normalizedMode)) {
     return true
   }

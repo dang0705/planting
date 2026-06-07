@@ -122,7 +122,7 @@ function buildFallbackDecision({
     })),
     activeRouteGroupKeys: [],
     visibleOutcomeKeys: [],
-    requiresFollowUp: false,
+    requiresQuestion: false,
     nextQuestionKeys: [],
     nextQuestions: [],
     gateResults: [],

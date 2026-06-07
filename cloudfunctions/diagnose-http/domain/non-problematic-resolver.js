@@ -164,7 +164,7 @@ function resolveNonProblematicRule({
   return null
 }
 
-function resolveNonProblematicFollowUpCandidate({
+function resolveNonProblematicQuestionCandidate({
   observedSymptoms = [],
   observedEvidenceSet = []
 } = {}) {
@@ -190,7 +190,7 @@ function resolveNonProblematicFollowUpCandidate({
   return null
 }
 
-function toFollowUpPayload(question = {}) {
+function toQuestionPayload(question = {}) {
   const questionText = question.questionText || question.text || ''
 
   return {
@@ -253,8 +253,8 @@ function buildNonProblematicRoundResult({
       nonProblematicType: rule?.key || '',
       nonProblematicLabel: rule?.label || ''
     },
-    followUpRequired: false,
-    followUps: [],
+    questionRequired: false,
+    questions: [],
     contributingFactors: [],
     intermediateStates: [],
     problemCausality: [],
@@ -293,7 +293,7 @@ function buildNonProblematicRoundResult({
   }
 }
 
-function buildNonProblematicFollowUpRoundResult({
+function buildNonProblematicQuestionRoundResult({
   sessionId,
   round = 1,
   observedSymptoms = [],
@@ -302,7 +302,7 @@ function buildNonProblematicFollowUpRoundResult({
   diagnosisDirections = [],
   plantContext = {},
   rule,
-  followUps = []
+  questions = []
 } = {}) {
   const careGuidance = buildCareGuidance({
     plantContext,
@@ -313,12 +313,12 @@ function buildNonProblematicFollowUpRoundResult({
   const response = {
     diagnosisSessionId: sessionId,
     roundId: `round_${round}`,
-    stage: 'followup',
+    stage: 'question',
     observedSymptoms,
     topProblem: null,
     finalResult: null,
-    followUpRequired: true,
-    followUps: (Array.isArray(followUps) ? followUps : []).map(toFollowUpPayload),
+    questionRequired: true,
+    questions: (Array.isArray(questions) ? questions : []).map(toQuestionPayload),
     contributingFactors: [],
     intermediateStates: [],
     problemCausality: [],
@@ -356,7 +356,7 @@ function buildNonProblematicFollowUpRoundResult({
 
 module.exports = {
   resolveNonProblematicRule,
-  resolveNonProblematicFollowUpCandidate,
+  resolveNonProblematicQuestionCandidate,
   buildNonProblematicRoundResult,
-  buildNonProblematicFollowUpRoundResult
+  buildNonProblematicQuestionRoundResult
 }

@@ -2,7 +2,7 @@
 
 const {
   routeSelection: questionSelectionConfig,
-  followUpSelection
+  questionSelection
 } = require('../constants/scoring')
 const {
   QUESTION_TARGET_DIMENSIONS,
@@ -304,8 +304,8 @@ function shouldAllowSecondaryObservedSymptomProbe(
   const observed = observedSymptomMap.get(normalizedSymptomKey)
   if (
     !observed ||
-    Number(observed?.confidence || 0) < followUpSelection.visualLockThreshold ||
-    Number(observed?.signalReliability || 0) < followUpSelection.highSpecificityThreshold
+    Number(observed?.confidence || 0) < questionSelection.visualLockThreshold ||
+    Number(observed?.signalReliability || 0) < questionSelection.highSpecificityThreshold
   ) {
     return false
   }

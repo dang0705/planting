@@ -292,8 +292,8 @@ function resolveHighSpecificityConvergencePlan({
     directionKey: matchedRule.directionKey,
     problemKey: matchedRule.problemKey,
     policy: matchedRule.policy,
-    shouldBypassFollowUp:
-      matchedRule.policy === HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES.ZERO_FOLLOW_UP,
+    shouldBypassQuestion:
+      matchedRule.policy === HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES.ZERO_QUESTION,
     maxQuestions:
       matchedRule.policy === HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES.SINGLE_CONFIRMATION
         ? 1

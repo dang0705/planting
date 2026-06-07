@@ -1,7 +1,7 @@
 'use strict'
 
 const HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES = {
-  ZERO_FOLLOW_UP: 'zero_follow_up',
+  ZERO_QUESTION: 'zero_follow_up',
   SINGLE_CONFIRMATION: 'single_confirmation'
 }
 
@@ -18,7 +18,7 @@ const HIGH_SPECIFICITY_FAST_CONVERGENCE_RULES = [
   {
     directionKey: 'scale_insect_direction',
     problemKey: 'scale_insects',
-    policy: HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES.ZERO_FOLLOW_UP,
+    policy: HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES.ZERO_QUESTION,
     requiredAllSymptomKeys: ['scale_shells'],
     minConfidenceBand: 'medium',
     minStrengthLevel: 'medium',
@@ -27,7 +27,7 @@ const HIGH_SPECIFICITY_FAST_CONVERGENCE_RULES = [
   {
     directionKey: 'aphid_direction',
     problemKey: 'aphids',
-    policy: HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES.ZERO_FOLLOW_UP,
+    policy: HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES.ZERO_QUESTION,
     requiredAllSymptomKeys: ['aphids_visible'],
     minConfidenceBand: 'medium',
     minStrengthLevel: 'medium',
@@ -36,7 +36,7 @@ const HIGH_SPECIFICITY_FAST_CONVERGENCE_RULES = [
   {
     directionKey: 'powdery_mildew_direction',
     problemKey: 'powdery_mildew',
-    policy: HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES.ZERO_FOLLOW_UP,
+    policy: HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES.ZERO_QUESTION,
     requiredAllSymptomKeys: ['powder_white'],
     minConfidenceBand: 'medium',
     minStrengthLevel: 'medium',
@@ -54,7 +54,7 @@ const HIGH_SPECIFICITY_FAST_CONVERGENCE_RULES = [
 ]
 
 function getHighSpecificityQuestionBlockedSymptomKeys({
-  policy = HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES.ZERO_FOLLOW_UP
+  policy = HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES.ZERO_QUESTION
 } = {}) {
   return Array.from(
     new Set(

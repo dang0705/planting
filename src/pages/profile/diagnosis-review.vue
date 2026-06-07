@@ -792,9 +792,9 @@
             </section>
 
             <section class="drawer-panel">
-              <h4 class="drawer-panel-title">全部追问流水</h4>
+              <h4 class="drawer-panel-title">全部答题记录</h4>
               <div
-                v-for="question in getFollowUpRecords(currentDetail)"
+                v-for="question in getQuestionRecords(currentDetail)"
                 :key="`all_${question.id || question.questionKey}`"
                 class="question-history-row"
               >
@@ -809,8 +809,8 @@
                   运行时生效影响: {{ formatResolvedAnswerEffect(question) }}
                 </p>
               </div>
-              <div v-if="!getFollowUpRecords(currentDetail).length" class="drawer-empty-box">
-                当前详情未记录追问流水
+              <div v-if="!getQuestionRecords(currentDetail).length" class="drawer-empty-box">
+                当前详情未记录答题记录
               </div>
             </section>
 
@@ -1298,7 +1298,7 @@ const compareRows = computed(() => [
     label: '决策 / 停止',
     resolve: detail =>
       [
-        detail?.routePrimaryAction || detail?.coreProcess?.followUp?.routePrimaryAction || '未返回',
+        detail?.routePrimaryAction || detail?.coreProcess?.questions?.routePrimaryAction || '未返回',
         detail?.stopReason || detail?.coreProcess?.decision?.stopReason || '未返回',
         getRouteDecision(detail)?.decisionCause?.decisionCauseKey || ''
       ].filter(Boolean).join(' / ')
@@ -1345,7 +1345,7 @@ const compareRows = computed(() => [
   },
   {
     key: 'follow_up.questions',
-    label: '追问计数',
+    label: '题目计数',
     resolve: detail => formatQuestionCountSummary(detail)
   },
   {
@@ -2165,7 +2165,7 @@ function formatVisualRouteHints(detail = null) {
 }
 
 function formatQuestionCountSummary(detail = null) {
-  const summary = detail?.questionCountSummary || detail?.coreProcess?.followUp?.questionCountSummary || {}
+  const summary = detail?.questionCountSummary || detail?.coreProcess?.questions?.questionCountSummary || {}
   return `总 ${Number(summary?.totalItems || 0)} / 已问 ${Number(summary?.askedItems || 0)} / 已答 ${Number(summary?.answeredItems || 0)} / active ${Number(summary?.activeItems || 0)}`
 }
 
@@ -2855,10 +2855,10 @@ function getCoreProcessFieldRows(detail = null) {
       value: formatDetailLines(getDiagnosisDirectionLabels(detail), '尚无诊断方向')
     },
     {
-      key: 'followUp.questionQueue',
-      label: '追问队列',
-      meaning: '本轮可追问的问题队列；完成后可能为空，应结合下方追问流水查看历史提问。',
-      value: formatDetailLines(getQuestionQueueLabels(detail), '本轮无可追问题')
+      key: 'questions.questionQueue',
+      label: '题目队列',
+      meaning: '本轮题目队列；完成后可能为空，应结合下方答题记录查看历史题目。',
+      value: formatDetailLines(getQuestionQueueLabels(detail), '本轮无可用题目')
     },
     {
       key: 'decision.outputEligibility',
@@ -2873,13 +2873,13 @@ function getVisualRawRecords(detail = null) {
   return Array.isArray(detail?.visualRawRecords) ? detail.visualRawRecords : []
 }
 
-function getFollowUpRecords(detail = null) {
-  return Array.isArray(detail?.followUpRecords) ? detail.followUpRecords : []
+function getQuestionRecords(detail = null) {
+  return Array.isArray(detail?.questionRecords) ? detail.questionRecords : []
 }
 
 function getAnswerRevisionEvents(detail = null) {
   if (Array.isArray(detail?.answerRevisionEvents)) {return detail.answerRevisionEvents}
-  return Array.isArray(detail?.followUpAnswerEvents) ? detail.followUpAnswerEvents : []
+  return Array.isArray(detail?.questionAnswerEvents) ? detail.questionAnswerEvents : []
 }
 
 function getFirstRoundQuestions(detail = null) {
@@ -2888,10 +2888,10 @@ function getFirstRoundQuestions(detail = null) {
     : []
   if (firstRoundQuestions.length) {return firstRoundQuestions}
 
-  const followUpRecords = getFollowUpRecords(detail)
-  if (!followUpRecords.length) {return []}
-  const firstRoundIndex = Math.min(...followUpRecords.map(item => Number(item?.roundIndex || 1)))
-  return followUpRecords.filter(item => Number(item?.roundIndex || 1) === firstRoundIndex)
+  const questionRecords = getQuestionRecords(detail)
+  if (!questionRecords.length) {return []}
+  const firstRoundIndex = Math.min(...questionRecords.map(item => Number(item?.roundIndex || 1)))
+  return questionRecords.filter(item => Number(item?.roundIndex || 1) === firstRoundIndex)
 }
 
 function getVisualCandidateLabels(detail = null) {
@@ -2977,7 +2977,7 @@ function formatRoutingScope(value = '') {
   const map = {
     symptom_confirmation: '症状确认',
     context_probe: '上下文补问',
-    differential_probe: '鉴别追问',
+    differential_probe: '鉴别问题',
     problem_confirmation: '问题确认'
   }
   return map[normalized] || normalized || '未标注'
@@ -3300,8 +3300,8 @@ function getDiagnosisDirectionLabels(detail = null) {
 }
 
 function getQuestionQueueLabels(detail = null) {
-  const questionItems = Array.isArray(detail?.coreProcess?.followUp?.questionQueue?.questionItems)
-    ? detail.coreProcess.followUp.questionQueue.questionItems
+  const questionItems = Array.isArray(detail?.coreProcess?.questions?.questionQueue?.questionItems)
+    ? detail.coreProcess.questions.questionQueue.questionItems
     : []
   return questionItems.map(entry => {
     const questionText = String(

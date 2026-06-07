@@ -153,27 +153,27 @@ async function upsertDiagnosisSession({
     userDescription: description || '',
     aiSummary: finalResult?.summary || topProblem?.summary || '',
     healthStatus:
-      response?.followUpRequired
+      response?.questionRequired
         ? (topProblem ? 'warning' : 'unknown')
         : (isProblematicOutcome && topProblem ? 'warning' : 'unknown'),
     topProblemKey: topProblem?.problemId || null,
     topProblemScoreValue: normalizedTopProblemScore === null ? 0 : normalizedTopProblemScore,
     topProblemScoreHasValue: normalizedTopProblemScore === null ? 0 : 1,
     reliabilityScore: Number(reliabilityScore || 0),
-    followUpRound: Number(round || 1),
-    needsFollowUp: response?.followUpRequired ? 1 : 0,
+    questionRound: Number(round || 1),
+    needsQuestion: response?.questionRequired ? 1 : 0,
     outcomeType: normalizeNullableSqlText(outcomeType),
     outcomePayloadJson,
     stopReason: normalizeNullableSqlText(response?.stopReason),
     sessionStatus,
     runtimeSnapshotJson,
     finalProblemKey: normalizeNullableSqlText(
-      !response?.followUpRequired && isProblematicOutcome
+      !response?.questionRequired && isProblematicOutcome
         ? (finalResult?.problemId || topProblem?.problemId)
         : null
     ),
     finalProblemCn: normalizeNullableSqlText(
-      !response?.followUpRequired
+      !response?.questionRequired
         ? (finalResult?.displayName || topProblem?.displayName)
         : null
     ),

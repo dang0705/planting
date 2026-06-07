@@ -252,10 +252,10 @@ function buildActionAdviceFallback({
 
 function resolveOutcomeMode({
   authoritativeRouteDecision = false,
-  followUpRequired = false,
+  questionRequired = false,
   visibleOutcomes = []
 } = {}) {
-  if (followUpRequired) {return 'follow_up_required'}
+  if (questionRequired) {return 'follow_up_required'}
   if (!authoritativeRouteDecision) {return 'route_fallback_uncertain'}
   if (visibleOutcomes.length) {return 'visible_outcomes'}
   return 'uncertain_only'
@@ -270,7 +270,7 @@ function resolveRouteOutcomePayload({
   plantContext = {},
   observedEvidenceSet = [],
   outcomeType = '',
-  followUpRequired = false
+  questionRequired = false
 } = {}) {
   const problemMap = new Map((Array.isArray(problems) ? problems : []).map(item => [item.problemKey, item]))
   const explanationMap = new Map(
@@ -369,7 +369,7 @@ function resolveRouteOutcomePayload({
     visibleOutcomes: effectiveVisibleOutcomes,
     outcomeMode: resolveOutcomeMode({
       authoritativeRouteDecision,
-      followUpRequired,
+      questionRequired,
       visibleOutcomes: effectiveVisibleOutcomes
     }),
     routeDecisionCause: normalizeRouteDecisionCause(routeDecision?.decisionCause),

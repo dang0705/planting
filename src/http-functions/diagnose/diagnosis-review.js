@@ -283,8 +283,8 @@ function normalizeQuestionCountSummary(questionCountSummary = null) {
   }
 }
 
-function deriveQuestionCountSummaryFromFollowUps(followUpRecords = []) {
-  const safeItems = Array.isArray(followUpRecords) ? followUpRecords : []
+function deriveQuestionCountSummaryFromQuestions(questionRecords = []) {
+  const safeItems = Array.isArray(questionRecords) ? questionRecords : []
 
   const totalItems = safeItems.length
   const askedItems = safeItems.filter(item => Number(item?.asked || 0) === 1).length
@@ -353,7 +353,7 @@ function _mapHistoryItemToReviewRow(item = {}) {
     stopReason: '',
     sessionStatus: '',
     identityResolutionStatus: '',
-    followUpRound: 0,
+    questionRound: 0,
     currentRoundIndex: 0,
     imageCount: 0,
     previewVisualRawImageRecordId: '',
@@ -571,22 +571,22 @@ function mapHistoryDetailToReviewDetail(detail = {}, options = {}) {
   const safeOptions = typeof options === 'object' && options !== null ? options : {}
   const requestedSourceType = normalizeReviewSourceType(safeOptions.requestedSourceType || 'all', 'all')
   const clientPlatform = String(detail?.clientPlatform || detail?.client_platform || '').trim()
-  const followUpRecords = Array.isArray(detail?.followUpRecords)
-    ? detail.followUpRecords
+  const questionRecords = Array.isArray(detail?.questionRecords)
+    ? detail.questionRecords
     : []
   const rawBatchReviewMeta =
     detail?.batchReviewMeta && typeof detail.batchReviewMeta === 'object' ? detail.batchReviewMeta : null
   const firstRoundQuestions = Array.isArray(detail?.firstRoundQuestions)
     ? detail.firstRoundQuestions
-    : followUpRecords.filter(item => Number(item?.roundIndex || 1) <= 1)
+    : questionRecords.filter(item => Number(item?.roundIndex || 1) <= 1)
   const routePrimaryAction = String(
     detail?.routePrimaryAction ||
-      detail?.coreProcess?.followUp?.routePrimaryAction ||
+      detail?.coreProcess?.questions?.routePrimaryAction ||
       (detail?.finalResult?.displayName === '暂不能稳定判断' ? 'standard_flow' : '')
   ).trim()
   const stopReason = String(detail?.stopReason || detail?.coreProcess?.decision?.stopReason || '').trim()
   const questionCountSummary = normalizeQuestionCountSummary(
-    detail?.questionCountSummary || detail?.coreProcess?.followUp?.questionCountSummary || null
+    detail?.questionCountSummary || detail?.coreProcess?.questions?.questionCountSummary || null
   )
   const diagnosisDirectionLabels = (Array.isArray(detail?.coreProcess?.evidence?.diagnosisDirections)
     ? detail.coreProcess.evidence.diagnosisDirections
@@ -607,8 +607,8 @@ function mapHistoryDetailToReviewDetail(detail = {}, options = {}) {
     clientPlatform
   )
   const coreProcess = detail?.coreProcess && typeof detail.coreProcess === 'object' ? detail.coreProcess : null
-  const fallbackQuestionCountSummary = deriveQuestionCountSummaryFromFollowUps
-    ? deriveQuestionCountSummaryFromFollowUps(followUpRecords)
+  const fallbackQuestionCountSummary = deriveQuestionCountSummaryFromQuestions
+    ? deriveQuestionCountSummaryFromQuestions(questionRecords)
     : questionCountSummary
   const finalQuestionCountSummary =
     questionCountSummary.totalItems || questionCountSummary.askedItems || questionCountSummary.answeredItems
@@ -664,7 +664,7 @@ function mapHistoryDetailToReviewDetail(detail = {}, options = {}) {
     diagnosisDirectionLabels,
     questionCountSummary: finalQuestionCountSummary,
     coreProcess,
-    followUpRecords,
+    questionRecords,
     firstRoundQuestions,
     coreSummary: {
       routePrimaryAction,

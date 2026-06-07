@@ -3,10 +3,10 @@
 const {
   readQuestionKeyFromRationale,
   readRoundFromRationale
-} = require('../services/session-follow-up-service')
+} = require('../services/session-question-service')
 const {
   pickQuestionKeysFromQuestionQueue,
-  buildAskedQuestionRowsFromFollowUpRows: buildAskedLegacyQuestionRows
+  buildAskedQuestionRowsFromQuestionRows: buildAskedLegacyQuestionRows
 } = require('./request-normalizers')
 
 function collectAnsweredLegacyQuestionKeys(rows = []) {
@@ -29,13 +29,13 @@ function collectAnsweredLegacyQuestionKeys(rows = []) {
 
 function resolveLegacyQuestionState(sessionState = {}) {
   return {
-    rows: Array.isArray(sessionState.followUpRows) ? sessionState.followUpRows : [],
+    rows: Array.isArray(sessionState.questionRows) ? sessionState.questionRows : [],
     progress: sessionState.questionQueue || null
   }
 }
 
 function resolveLegacyOwnershipRows(ownership = null, fallbackRows = []) {
-  return Array.isArray(ownership?.followUpRows) ? ownership.followUpRows : fallbackRows
+  return Array.isArray(ownership?.questionRows) ? ownership.questionRows : fallbackRows
 }
 
 function resolveLegacyQuestionKeysForValidation({

@@ -7,7 +7,7 @@ const {
   buildOrthogonalProbeText,
   isSyntheticObservedProbeQuestionKey,
   parseSyntheticObservedProbeQuestionKey
-} = require('./synthetic-follow-up')
+} = require('./synthetic-question-package')
 
 function normalizeText(value = '') {
   return String(value || '').trim()

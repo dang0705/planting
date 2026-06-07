@@ -70,7 +70,7 @@ function resolveQuestionQueueLimit(response = {}) {
   if (Number.isFinite(declaredCount) && declaredCount > 0) {
     return declaredCount
   }
-  return Array.isArray(response?.followUps) ? response.followUps.length : 1
+  return Array.isArray(response?.questions) ? response.questions.length : 1
 }
 
 function buildRetakeQuestionItems(response = {}, serviceTarget = '') {
@@ -93,8 +93,8 @@ function buildRetakeQuestionItems(response = {}, serviceTarget = '') {
     serviceTarget,
     appliesWhen: {
       routePrimaryAction: 'retake_first',
-      stage: normalizeText(response?.stage, 'followup'),
-      followUpRequired: true,
+      stage: normalizeText(response?.stage, 'question'),
+      questionRequired: true,
       questionGroupKey: 'retake_capture',
       targetSymptomKey: ''
     },
@@ -117,11 +117,11 @@ function planQuestionQueue(response = {}) {
     outcomeType: response?.outcomeType,
     nonProblematicType: response?.nonProblematicType
   })
-  const followUpRequired = Boolean(response?.followUpRequired)
-  const followUps = Array.isArray(response?.followUps) ? response.followUps.slice(0, questionLimit) : []
-  const total = followUps.length
+  const questionRequired = Boolean(response?.questionRequired)
+  const questions = Array.isArray(response?.questions) ? response.questions.slice(0, questionLimit) : []
+  const total = questions.length
 
-  const followUpItems = followUps.map((item, index) => {
+  const baseQuestionItems = questions.map((item, index) => {
     const currentPriority = Math.max(total - index, 1)
     const estimatedInformationGain =
       total > 0 ? roundValue((total - index) / total) : 0
@@ -154,8 +154,8 @@ function planQuestionQueue(response = {}) {
       serviceTarget,
       appliesWhen: {
         routePrimaryAction,
-        stage: normalizeText(response?.stage, followUpRequired ? 'followup' : 'final'),
-        followUpRequired,
+        stage: normalizeText(response?.stage, questionRequired ? 'question' : 'final'),
+        questionRequired,
         questionGroupKey: normalizeText(item?.questionGroupKey),
         targetSymptomKey: normalizeText(item?.targetSymptomKey),
         targetDimension: normalizeText(item?.targetDimension),
@@ -173,19 +173,19 @@ function planQuestionQueue(response = {}) {
 
   const questionItems = (normalizeText(routePrimaryAction) === 'retake_first'
     ? buildRetakeQuestionItems(response, serviceTarget)
-    : followUpItems
+    : baseQuestionItems
   ).slice(0, questionLimit)
 
   const activeItemCount = questionItems.length
   const queueStatus = activeItemCount
     ? 'active'
-    : followUpRequired
+    : questionRequired
       ? 'blocked'
       : 'exhausted'
   const exhaustedReason = activeItemCount
     ? ''
-    : followUpRequired
-      ? 'followup_required_but_no_actionable_question'
+    : questionRequired
+      ? 'question_required_but_no_actionable_question'
       : 'no_high_value_question'
   const decisionCause = response?.decisionCause && typeof response.decisionCause === 'object'
     ? response.decisionCause

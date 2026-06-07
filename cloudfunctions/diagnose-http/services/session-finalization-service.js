@@ -7,9 +7,9 @@ const {
   insertDiagnosisFeedbackRecord
 } = require('../repositories/session-finalization-repository')
 const { buildSnapshotPayload } = require('./session-runtime-snapshot-codec')
-const { getFollowUpSnapshotRows } = require('./session-follow-up-service')
+const { getQuestionSnapshotRows } = require('./session-question-service')
 
-function normalizeFollowUpSnapshotRows(rows = []) {
+function normalizeQuestionSnapshotRows(rows = []) {
   return (Array.isArray(rows) ? rows : []).map(row => ({
     questionOrder: Number(row?.questionOrder ?? row?.question_order ?? 0),
     questionText: row?.questionText || row?.question_text || '',
@@ -23,16 +23,16 @@ async function saveFinalDiagnosisSnapshot({
   openid,
   plantContext,
   response,
-  followUpRows = null
+  questionRows = null
 } = {}) {
-  const followUps = Array.isArray(followUpRows)
-    ? normalizeFollowUpSnapshotRows(followUpRows)
-    : await getFollowUpSnapshotRows(sessionId)
+  const questions = Array.isArray(questionRows)
+    ? normalizeQuestionSnapshotRows(questionRows)
+    : await getQuestionSnapshotRows(sessionId)
   const snapshot = buildSnapshotPayload({
     sessionId,
     plantContext,
     response,
-    followUps
+    questions
   })
 
   try {

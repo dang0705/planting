@@ -1,7 +1,7 @@
 'use strict'
 
 const {
-  followUpSelection
+  questionSelection
 } = require('../constants/scoring')
 const {
   QUESTION_TARGET_DIMENSIONS,
@@ -78,7 +78,7 @@ function buildObservedEvidenceCoverageIndex(observedEvidenceSet = [], symptomMet
       sourceType === 'visual_admission' ||
       String(item?.parentEvidenceKey || '').startsWith('visual_admission:')
 
-    if (isActive && isVisualAdmission && confidence >= followUpSelection.visualLockThreshold) {
+    if (isActive && isVisualAdmission && confidence >= questionSelection.visualLockThreshold) {
       current.strongVisualPresenceCovered = true
       for (const targetDimension of inferObservedVisualCoveredDimensions({
         symptomKey,
@@ -110,7 +110,7 @@ function hasStrongVisualCandidateCoverage(item = {}) {
   if (confidenceBand === 'high' && ['medium', 'strong'].includes(strengthLevel)) {
     return true
   }
-  if (strengthLevel === 'strong' && signalReliability >= followUpSelection.highSpecificityThreshold) {
+  if (strengthLevel === 'strong' && signalReliability >= questionSelection.highSpecificityThreshold) {
     return true
   }
   if (confidenceBand === 'high' && admissionReadiness === 'ready') {

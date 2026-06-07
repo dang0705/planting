@@ -2,8 +2,8 @@
 
 const { jsonResponse } = require('/opt/utils/http')
 const {
-  isLegacyFollowUpPayload,
-  buildLegacyFollowUpPayload,
+  isLegacyQuestionPayload,
+  buildLegacyQuestionPayload,
   buildLegacyStartPayload
 } = require('../mappers/legacy-diagnose-request-mapper')
 const {
@@ -21,15 +21,15 @@ async function handleLegacyDiagnose(request, context, payload) {
   payload = payload || {}
   const principal = await resolveRequestPrincipal({ request, context, payload })
 
-  const isFollowUp = isLegacyFollowUpPayload(payload)
+  const isQuestion = isLegacyQuestionPayload(payload)
 
   try {
     assertAuthenticatedUser({ ...principal, message: '需要登录才能使用 AI 诊断功能' })
     await ensureRefactorReady()
 
-    const executed = isFollowUp
+    const executed = isQuestion
       ? await runAnswerDiagnosis({
-          payload: buildLegacyFollowUpPayload(payload),
+          payload: buildLegacyQuestionPayload(payload),
           openid: principal.userInfo?.openid || '',
           skipPersistence: principal.skipPersistence
         })

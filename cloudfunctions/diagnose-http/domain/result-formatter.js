@@ -74,14 +74,14 @@ function formatDiagnosisResponse({
   derivedEvidenceSet = [],
   diagnosisDirections = [],
   candidateOutcomes = [],
-  followUps = [],
+  questions = [],
   problems = [],
   explanations = [],
   routeOutcomes = [],
   causality = [],
   plantContext = {},
   plantId,
-  followUpRequired = false,
+  questionRequired = false,
   lowConfidence = { isLowConfidence: false, reasons: [], advice: [] },
   symptomClassRuntime = null,
   highSpecificityFastConvergence = null,
@@ -140,14 +140,14 @@ function formatDiagnosisResponse({
         baseSummaryText,
         lowConfidence
       )
-  const outcomeType = resolveOutcomeType({ followUpRequired, lowConfidence, stopDecision })
+  const outcomeType = resolveOutcomeType({ questionRequired, lowConfidence, stopDecision })
   const shouldSuppressProblemLikePresentation = outcomeType === 'uncertain'
   const routePrimaryAction = resolveRoutePrimaryAction({
-    followUpRequired,
+    questionRequired,
     outcomeType,
     preferredRoutePrimaryAction
   })
-  const stopReason = resolveStopReason({ followUpRequired, stopDecision })
+  const stopReason = resolveStopReason({ questionRequired, stopDecision })
   const legacyExplanationPayload = outcomeType === 'uncertain'
     ? buildUncertainExplanation(lowConfidence, symptomClassRuntime)
     : buildExplanation(primaryProblem, primaryExplanation)
@@ -160,7 +160,7 @@ function formatDiagnosisResponse({
     plantContext,
     observedEvidenceSet,
     outcomeType,
-    followUpRequired
+    questionRequired
   })
   const {
     authoritativeRouteDecision,
@@ -227,7 +227,7 @@ function formatDiagnosisResponse({
     : []
   const shouldUseRouteActionAdvice = Boolean(
     authoritativeRouteDecision &&
-    !followUpRequired &&
+    !questionRequired &&
     outcomeType !== 'uncertain'
   )
   const routeActionSteps = shouldUseRouteActionAdvice
@@ -288,7 +288,7 @@ function formatDiagnosisResponse({
 
   const routeBackedFinalResultPayload =
     routeLeadingVisibleOutcome &&
-    !followUpRequired &&
+    !questionRequired &&
     !shouldSuppressProblemLikePresentation &&
     outcomeType === 'problematic'
       ? {
@@ -303,7 +303,7 @@ function formatDiagnosisResponse({
           actionAdvice
         }
       : routeLeadingVisibleOutcome &&
-        !followUpRequired &&
+        !questionRequired &&
         outcomeType === 'non_problematic'
         ? {
             resultId,
@@ -326,8 +326,8 @@ function formatDiagnosisResponse({
     observedSymptoms,
     topProblem: authoritativeRouteDecision ? routeBackedTopProblemPayload : topProblemPayload,
     finalResult: authoritativeRouteDecision ? routeBackedFinalResultPayload : finalResultPayload,
-    followUpRequired: Boolean(followUpRequired && followUps.length),
-    followUps: followUps.map(question => {
+    questionRequired: Boolean(questionRequired && questions.length),
+    questions: questions.map(question => {
       const questionRole = normalizeQuestionRole(
         question.questionRole || question.question_role || '',
         inferQuestionRole(question.targetDimension || question.target_dimension || '', question.routingScope || question.routing_scope || '')
@@ -421,7 +421,7 @@ function formatDiagnosisResponse({
     routePrimaryAction,
     stopReason,
     stopReasonDetail: normalizeText(stopDecision?.stopReasonDetail || '', ''),
-    sessionStatus: followUpRequired ? 'awaiting_follow_up' : 'completed',
+    sessionStatus: questionRequired ? 'awaiting_follow_up' : 'completed',
     plantId,
     observedEvidenceSet,
     derivedEvidenceSet,

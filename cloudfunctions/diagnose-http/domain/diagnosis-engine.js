@@ -26,7 +26,7 @@ const {
   getQuestionOptionMappings
 } = require('../repositories/question-repository')
 const outcomeRouteRepository = require('../repositories/outcome-route-repository')
-const { listFollowUpRows } = require('../repositories/session-follow-up-repository')
+const { listQuestionRows } = require('../repositories/session-question-repository')
 const { getCausalityEdges } = require('../repositories/causality-repository')
 const {
   computeVisualEvidenceScores,
@@ -52,8 +52,8 @@ const {
   buildVisualCandidateQuestionGroupKey,
   buildSyntheticVisualCandidateQuestionKey,
   parseSyntheticObservedProbeQuestionKey,
-  buildSyntheticFollowUpOptionMappings
-} = require('../utils/synthetic-follow-up')
+  buildSyntheticQuestionOptionMappings
+} = require('../utils/synthetic-question-package')
 const {
   YELLOWING_LEAF_AGE_PATTERN_QUESTION_KEY,
   isDisabledYellowingFlowQuestion
@@ -711,7 +711,7 @@ function buildDirectAdjustmentCandidatePriors(optionMappings = [], existingProbl
     }))
 }
 
-function hasFollowUpHistory({
+function hasQuestionHistory({
   round = 1,
   answers = [],
   askedQuestionKeys = [],
@@ -920,7 +920,7 @@ function collectYellowingAllowedDimensionsForAnsweredBranch(askedQuestions = [])
   return allowed.size ? allowed : null
 }
 
-function isYellowingFollowUpAllowedByAnsweredBranch(askedQuestions = [], question = {}, options = {}) {
+function isYellowingQuestionAllowedByAnsweredBranch(askedQuestions = [], question = {}, options = {}) {
   const { yellowingGateMode = false } = options || {}
   if (yellowingGateMode) {
     const targetDimension = normalizeQuestionTargetDimension(
@@ -1002,10 +1002,10 @@ function collectAnswerRouteRecords(answers = [], askedQuestionRows = []) {
 
 function collectRouteAnswerRecordsForDecision({
   answers = [],
-  answeredFollowUpAnswerRecords = []
+  answeredQuestionAnswerRecords = []
 } = {}) {
   const recordsByQuestionKey = new Map()
-  for (const item of Array.isArray(answeredFollowUpAnswerRecords) ? answeredFollowUpAnswerRecords : []) {
+  for (const item of Array.isArray(answeredQuestionAnswerRecords) ? answeredQuestionAnswerRecords : []) {
     const questionKey = normalizeKey(item?.questionKey || item?.question_key || '')
     const optionKey = normalizeKey(item?.optionKey || item?.option_key || item?.answerValue || item?.answer_value || '')
     if (!questionKey || !optionKey) {continue}
@@ -1187,7 +1187,7 @@ function hasPositiveRootBridgeAnswer(answerLikeRecords = []) {
   )
 }
 
-function shouldBlockFollowUpByRouteConstraint(question = {}, {
+function shouldBlockQuestionByRouteConstraint(question = {}, {
   answers = [],
   askedQuestionRows = [],
   symptomClassRuntime = null
@@ -1273,9 +1273,9 @@ function shouldBlockFollowUpByRouteConstraint(question = {}, {
   return false
 }
 
-function filterFollowUpsByAnsweredRouteConstraints(followUps = [], options = {}) {
-  return (Array.isArray(followUps) ? followUps : [])
-    .filter(question => !shouldBlockFollowUpByRouteConstraint(question, options))
+function filterQuestionsByAnsweredRouteConstraints(questions = [], options = {}) {
+  return (Array.isArray(questions) ? questions : [])
+    .filter(question => !shouldBlockQuestionByRouteConstraint(question, options))
 }
 
 async function buildCandidatePriors(
@@ -1330,7 +1330,7 @@ async function buildCandidatePriors(
     evidenceOnlyPriors
   )
 
-  if (Number(round || 1) <= 1 && stage !== 'followup') {
+  if (Number(round || 1) <= 1 && stage !== 'question') {
     return merged
   }
 
@@ -1375,7 +1375,7 @@ function collectMappedSymptomKeysFromAnswers(answers = [], optionMappings = []) 
     .filter(Boolean)
 }
 
-function parseFollowUpRationaleMeta(rationale = '') {
+function parseQuestionRationaleMeta(rationale = '') {
   if (rationale && typeof rationale === 'object') {
     return rationale
   }
@@ -1391,11 +1391,11 @@ function parseFollowUpRationaleMeta(rationale = '') {
   }
 }
 
-function collectAnswerLikeRecordsFromFollowUpRows(rows = []) {
+function collectAnswerLikeRecordsFromQuestionRows(rows = []) {
   return (Array.isArray(rows) ? rows : [])
     .filter(row => Number(row?.asked || 0) === 1)
     .map(row => {
-      const rationale = parseFollowUpRationaleMeta(row?.rationale)
+      const rationale = parseQuestionRationaleMeta(row?.rationale)
       return {
         questionKey: String(
           rationale?.questionKey ||
@@ -1516,8 +1516,8 @@ function resolveVisualRouteContext(visualAggregateResult = null) {
   return {
     routePrimaryAction: normalizeRoutePrimaryAction(visualAggregateResult?.route_primary_action),
     routeHints: normalizeRouteHints(visualAggregateResult?.aggregate_route_hints || []),
-    suggestedFollowupCapture: (Array.isArray(visualAggregateResult?.suggested_followup_capture)
-      ? visualAggregateResult.suggested_followup_capture
+    suggestedFollowupCapture: (Array.isArray(visualAggregateResult?.suggested_question_capture)
+      ? visualAggregateResult.suggested_question_capture
       : []
     )
       .map(item => String(item || '').trim())
@@ -1526,14 +1526,14 @@ function resolveVisualRouteContext(visualAggregateResult = null) {
 }
 
 function buildRetakeAdviceFromVisualRouteContext(visualRouteContext = {}) {
-  const followupCapture = Array.isArray(visualRouteContext?.suggestedFollowupCapture)
+  const questionCapture = Array.isArray(visualRouteContext?.suggestedFollowupCapture)
     ? visualRouteContext.suggestedFollowupCapture
     : []
 
-  if (followupCapture.length) {
+  if (questionCapture.length) {
     return Array.from(
       new Set(
-        followupCapture.map(item =>
+        questionCapture.map(item =>
           item.startsWith('请') ? item : `请优先补拍：${item}`
         )
       )
@@ -2098,8 +2098,8 @@ function buildUncertainRoundResult({
       urgency: isOutOfPoolUncertain ? 'low' : 'medium',
       outOfPoolObservation: outOfPoolObservationFallback
     },
-    followUpRequired: false,
-    followUps: [],
+    questionRequired: false,
+    questions: [],
     contributingFactors: [],
     intermediateStates: [],
     problemCausality: [],
@@ -2163,7 +2163,7 @@ async function tryBuildRouteAnswerFastPath({
   symptomClassRuntime,
   answers,
   askedQuestionKeys,
-  answeredFollowUpAnswerRecords,
+  answeredQuestionAnswerRecords,
   preloadedRouteAnswerEffects,
   visualAggregateResult,
   visualRouteContext,
@@ -2178,7 +2178,7 @@ async function tryBuildRouteAnswerFastPath({
     })
   }
   if (
-    stage !== 'followup' ||
+    stage !== 'question' ||
     !isRouteOutputEnabled() ||
     !isRoutePlanningObservationEnabled() ||
     !Array.isArray(answers) ||
@@ -2194,7 +2194,7 @@ async function tryBuildRouteAnswerFastPath({
 
   const routeAnswerRecordsForDecision = collectRouteAnswerRecordsForDecision({
     answers,
-    answeredFollowUpAnswerRecords
+    answeredQuestionAnswerRecords
   })
   const routeAnswerEffectQuestionKeys = Array.from(
     new Set(
@@ -2339,14 +2339,14 @@ async function tryBuildRouteAnswerFastPath({
     derivedEvidenceSet: outputDerivedEvidenceSet,
     diagnosisDirections: outputDiagnosisDirections,
     candidateOutcomes: [],
-    followUps: [],
+    questions: [],
     problems: [],
     explanations: [],
     routeOutcomes,
     causality: [],
     plantContext,
     plantId: plantContext?.userPlantId || plantContext?.plantId,
-    followUpRequired: false,
+    questionRequired: false,
     lowConfidence: { isLowConfidence: false, reasons: [], advice: [] },
     symptomClassRuntime,
     highSpecificityFastConvergence: null,
@@ -2394,7 +2394,7 @@ async function runDiagnosisRound({
   round = 1,
   stage = 'preliminary',
   answerOptionMappings: rawAnswerOptionMappings = [],
-  storedFollowUpRows: preloadedStoredFollowUpRows = null,
+  storedQuestionRows: preloadedStoredQuestionRows = null,
   preloadedAskedQuestionRows = null,
   preloadedRouteAnswerEffects = null,
   sessionId,
@@ -2469,7 +2469,7 @@ async function runDiagnosisRound({
   )
   const routeFastPathAnswerOptionMappings = [
     ...normalizedProvidedAnswerOptionMappings,
-    ...buildSyntheticFollowUpOptionMappings(questionKeys)
+    ...buildSyntheticQuestionOptionMappings(questionKeys)
   ]
   const routeFastPathAnswerDerivedSymptoms = collectPositiveMappedObservedSymptomsFromAnswers(
     answers,
@@ -2494,7 +2494,7 @@ async function runDiagnosisRound({
     })
   )
   const routeFastPathDerivedEvidenceForResolution = []
-  const shouldAttemptRouteFastPath = stage === 'followup' && Boolean(Array.isArray(answers) && answers.length)
+  const shouldAttemptRouteFastPath = stage === 'question' && Boolean(Array.isArray(answers) && answers.length)
   let routeFastPathResultBeforeHydration = null
   if (shouldAttemptRouteFastPath) {
     routeFastPathResultBeforeHydration = await tryBuildRouteAnswerFastPath({
@@ -2517,8 +2517,8 @@ async function runDiagnosisRound({
       symptomClassRuntime: symptomClassState,
       answers,
       askedQuestionKeys,
-      answeredFollowUpAnswerRecords: Array.isArray(preloadedStoredFollowUpRows)
-        ? collectAnswerLikeRecordsFromFollowUpRows(preloadedStoredFollowUpRows)
+      answeredQuestionAnswerRecords: Array.isArray(preloadedStoredQuestionRows)
+        ? collectAnswerLikeRecordsFromQuestionRows(preloadedStoredQuestionRows)
         : [],
       preloadedRouteAnswerEffects,
       visualAggregateResult,
@@ -2530,30 +2530,30 @@ async function runDiagnosisRound({
   if (routeFastPathResultBeforeHydration) {
     return routeFastPathResultBeforeHydration
   }
-  const shouldSkipStoredFollowUpLookup = (
+  const shouldSkipStoredQuestionLookup = (
     !shouldAttemptRouteFastPath &&
     Number(round || 1) <= 1 &&
     stage === 'preliminary' &&
     !askedQuestionKeyList.length
   )
-  const resolvedStoredFollowUpRowsCache = Array.isArray(preloadedStoredFollowUpRows)
-    ? preloadedStoredFollowUpRows
-    : shouldSkipStoredFollowUpLookup
+  const resolvedStoredQuestionRowsCache = Array.isArray(preloadedStoredQuestionRows)
+    ? preloadedStoredQuestionRows
+    : shouldSkipStoredQuestionLookup
       ? []
       : null
   const [
     answerOptionMappingsFromStore,
-    resolvedStoredFollowUpRows,
+    resolvedStoredQuestionRows,
     askedQuestionRowsFromRepository
   ] = await Promise.all([
     missingQuestionKeys.length
       ? getQuestionOptionMappings(missingQuestionKeys)
       : Promise.resolve([]),
-    resolvedStoredFollowUpRowsCache !== null
-      ? Promise.resolve(resolvedStoredFollowUpRowsCache)
+    resolvedStoredQuestionRowsCache !== null
+      ? Promise.resolve(resolvedStoredQuestionRowsCache)
       : sessionId
-        ? listFollowUpRows(sessionId).catch(error => {
-          console.warn('diagnose-http failed to load follow-up rows:', {
+        ? listQuestionRows(sessionId).catch(error => {
+          console.warn('diagnose-http failed to load question rows:', {
             sessionId,
             message: error?.message || String(error)
           })
@@ -2573,7 +2573,7 @@ async function runDiagnosisRound({
   for (const item of [
     ...normalizedProvidedAnswerOptionMappings,
     ...answerOptionMappingsFromStore,
-    ...buildSyntheticFollowUpOptionMappings(questionKeys)
+    ...buildSyntheticQuestionOptionMappings(questionKeys)
   ]) {
     const dedupeKey = buildOptionMappingKey(item)
     if (!dedupeKey) {continue}
@@ -2627,12 +2627,12 @@ async function runDiagnosisRound({
   const askedQuestionRows = mergeAskedQuestionRows(
     Array.from(preloadedAskedQuestionRowMap.values()),
     askedQuestionRowsFromRepository,
-    collectAnswerLikeRecordsFromFollowUpRows(resolvedStoredFollowUpRows),
+    collectAnswerLikeRecordsFromQuestionRows(resolvedStoredQuestionRows),
     answers
   )
-  const answeredFollowUpAnswerRecordsForRoute =
+  const answeredQuestionAnswerRecordsForRoute =
     sessionId && askedQuestionKeys.length
-      ? collectAnswerLikeRecordsFromFollowUpRows(resolvedStoredFollowUpRows)
+      ? collectAnswerLikeRecordsFromQuestionRows(resolvedStoredQuestionRows)
       : []
   if (shouldAttemptRouteFastPath) {
     const routeFastPathResult = await tryBuildRouteAnswerFastPath({
@@ -2647,7 +2647,7 @@ async function runDiagnosisRound({
       symptomClassRuntime: symptomClassState,
       answers,
       askedQuestionKeys,
-      answeredFollowUpAnswerRecords: answeredFollowUpAnswerRecordsForRoute,
+      answeredQuestionAnswerRecords: answeredQuestionAnswerRecordsForRoute,
       preloadedRouteAnswerEffects,
       visualAggregateResult,
       visualRouteContext,
@@ -3030,14 +3030,14 @@ async function runDiagnosisRound({
     }
   })
 
-  const allowCausalityBoost = Number(round || 1) > 1 || stage === 'followup'
+  const allowCausalityBoost = Number(round || 1) > 1 || stage === 'question'
   const causalityEdges = allowCausalityBoost
     ? candidatePriorsCausalityEdges && candidatePriorsCausalityEdges.length
       ? candidatePriorsCausalityEdges
       : await getCausalityEdges(candidateProblemKeys.slice(0, 3))
     : []
-  const answeredFollowUpAnswerRecords = sessionId && askedQuestionKeys.length
-    ? collectAnswerLikeRecordsFromFollowUpRows(resolvedStoredFollowUpRows)
+  const answeredQuestionAnswerRecords = sessionId && askedQuestionKeys.length
+    ? collectAnswerLikeRecordsFromQuestionRows(resolvedStoredQuestionRows)
     : []
   const fastConvergencePlan = resolveHighSpecificityConvergencePlan({
     visualAggregateResult,
@@ -3050,7 +3050,7 @@ async function runDiagnosisRound({
     stage
   })
 
-  const followUpHistory = hasFollowUpHistory({
+  const questionHistory = hasQuestionHistory({
     round,
     answers,
     askedQuestionKeys,
@@ -3058,7 +3058,7 @@ async function runDiagnosisRound({
   })
   const routeAnswerRecordsForDecision = collectRouteAnswerRecordsForDecision({
     answers,
-    answeredFollowUpAnswerRecords
+    answeredQuestionAnswerRecords
   })
   const routeAnswerEffectQuestionKeys = Array.from(
     new Set([
@@ -3133,7 +3133,7 @@ async function runDiagnosisRound({
     labeledObservedEvidenceForResolution,
     buildObservedEvidenceSetFromAnswerEffects(answerEffects, symptomMap, {
       originVisualCallBatchId: runtimeOriginVisualCallBatchId,
-      firstSeenStage: stage === 'followup' ? 'followup' : stage
+      firstSeenStage: stage === 'question' ? 'question' : stage
     })
   )
   const labeledMergedObservedEvidence = applySymptomDictionaryToEvidenceSet(
@@ -3182,8 +3182,8 @@ async function runDiagnosisRound({
   })
   const effectiveHasUsableRouteOutputDecision = hasUsableRouteOutputDecision
   const effectiveShouldUseRouteOutputDecision = shouldUseRouteOutputDecision
-  const filteredFollowUps = []
-  const followUpRequired = false
+  const filteredQuestions = []
+  const questionRequired = false
   logDiagnosisRuntime('diagnose-http package flow finalization:', {
     sessionId,
     round,
@@ -3214,7 +3214,7 @@ async function runDiagnosisRound({
     symptomClassRuntime: mergedSymptomClassRuntime
   })
   const prioritizedOutputCandidateOutcomes =
-    !followUpRequired
+    !questionRequired
       ? prioritizeOutputEligibleCandidateOutcomes(
         candidateOutcomes,
         labeledMergedObservedEvidence,
@@ -3226,14 +3226,14 @@ async function runDiagnosisRound({
       )
       : candidateOutcomes
   const outputCandidateOutcomes =
-    !followUpRequired
+    !questionRequired
       ? scopeCandidateOutcomesToDiagnosisDirections(
           prioritizedOutputCandidateOutcomes,
           diagnosisDirections,
           problemRoleByKey
         )
       : prioritizedOutputCandidateOutcomes
-  const stabilizedOutputCandidateOutcomes = !followUpRequired
+  const stabilizedOutputCandidateOutcomes = !questionRequired
     ? stabilizeOutputCandidateOutcomesAgainstConfirmedGuardShift(
         outputCandidateOutcomes,
         contextProblemGuard,
@@ -3282,7 +3282,7 @@ async function runDiagnosisRound({
           lowConfidenceBase?.uncertainLegalityReason ||
           (outputContextProblemGuard.applies &&
           !outputContextProblemGuard.hasRequiredContext &&
-          filteredFollowUps.length === 0
+          filteredQuestions.length === 0
             ? 'input_unfillable'
             : '')
       }
@@ -3329,8 +3329,8 @@ async function runDiagnosisRound({
     )
   )
   const yellowingOnlyRuntimeEvidenceAfterQuestionPackage =
-    !followUpRequired &&
-    followUpHistory &&
+    !questionRequired &&
+    questionHistory &&
     !effectiveHasUsableRouteOutputDecision &&
     activeRuntimeSymptomKeysForOutput.length > 0 &&
     activeRuntimeSymptomKeysForOutput.every(symptomKey =>
@@ -3347,8 +3347,8 @@ async function runDiagnosisRound({
     ) &&
     !hasForceableOutputProblem
   const structuralOnlyRuntimeEvidenceAfterQuestionPackage =
-    !followUpRequired &&
-    followUpHistory &&
+    !questionRequired &&
+    questionHistory &&
     activeRuntimeSymptomKeysForOutput.length > 0 &&
     activeRuntimeSymptomKeysForOutput.every(symptomKey =>
       [
@@ -3367,14 +3367,14 @@ async function runDiagnosisRound({
     ].includes(String(stabilizedOutputCandidateOutcomes?.[0]?.problemKey || '').trim()) &&
     Number(stabilizedOutputCandidateOutcomes?.[0]?.questionEvidence || 0) <= 0
   const hasLeafSpotBridgeRoutingGap =
-    !followUpRequired &&
+    !questionRequired &&
     String(mergedSymptomClassRuntime?.classGateDecision?.blockedReason || '').trim() === 'class_group_pool_empty' &&
     Array.isArray(mergedSymptomClassRuntime?.classScores) &&
     mergedSymptomClassRuntime.classScores.some(
       item => String(item?.classKey || '').trim() === 'leaf_spot_complex_mode'
     )
   const shouldBlockUnscopedClassOutput =
-    !followUpRequired &&
+    !questionRequired &&
     shouldBlockUnscopedClassProblemOutput({
       candidateOutcomes: stabilizedOutputCandidateOutcomes,
       diagnosisDirections,
@@ -3383,22 +3383,22 @@ async function runDiagnosisRound({
       fastConvergencePlan
     })
   const shouldBlockUnforceablePackageOutcome =
-    !followUpRequired &&
-    followUpHistory &&
+    !questionRequired &&
+    questionHistory &&
     !hasForceableOutputProblem &&
-    filteredFollowUps.length === 0
+    filteredQuestions.length === 0
   const shouldBlockUnforceableOutputOutcome =
-    !followUpRequired &&
-    !followUpHistory &&
+    !questionRequired &&
+    !questionHistory &&
     !hasForceableOutputProblem &&
-    filteredFollowUps.length === 0
+    filteredQuestions.length === 0
   const hasActiveObservedEvidence = hasActiveObservedEvidenceEntries(labeledMergedObservedEvidence)
   const shouldBlockOutOfPoolHintUnconfirmed =
     weakOutOfPoolHintOnly &&
-    !followUpRequired &&
+    !questionRequired &&
     !hasActiveObservedEvidence
   const broadVisualDifferentialUnresolved =
-    !followUpRequired &&
+    !questionRequired &&
     !fastConvergencePlan?.applied &&
     (
       edemaFlatSpotDifferentialActive ||
@@ -3429,7 +3429,7 @@ async function runDiagnosisRound({
         uncertainLegalityReason:
           lowConfidence?.uncertainLegalityReason || 'resource_limit'
       }
-    : effectiveOutOfPoolOnlyNoMapping && !followUpRequired
+    : effectiveOutOfPoolOnlyNoMapping && !questionRequired
       ? {
           ...lowConfidence,
           isLowConfidence: true,
@@ -3450,7 +3450,7 @@ async function runDiagnosisRound({
         }),
         uncertainLegalityReason: 'out_of_pool_no_mapping'
       }
-    : effectiveWeakOutOfPoolHintOnly && !followUpRequired
+    : effectiveWeakOutOfPoolHintOnly && !questionRequired
       ? {
           ...lowConfidence,
           isLowConfidence: true,
@@ -3593,8 +3593,8 @@ async function runDiagnosisRound({
       }
     : lowConfidence
   const shouldForceOutputAfterQuestionPackage =
-    !followUpRequired &&
-    followUpHistory &&
+    !questionRequired &&
+    questionHistory &&
     !hasLeafSpotBridgeRoutingGap &&
     !effectiveOutOfPoolOnlyNoMapping &&
     !effectiveWeakOutOfPoolHintOnly &&
@@ -3607,7 +3607,7 @@ async function runDiagnosisRound({
     hasEligibleOutputProblem &&
     hasForceableOutputProblem
   const decisionCause =
-    !followUpRequired &&
+    !questionRequired &&
     effectiveOutOfPoolOnlyNoMapping
       ? {
           decisionCauseKey: 'out_of_pool_no_mapping',
@@ -3615,7 +3615,7 @@ async function runDiagnosisRound({
           decisionCauseText: '当前存在诊断范围外的可见异常，但没有已审计 proxy mapping，因此跳过常规诊断并输出保守池外结果。',
           decisionCauseDetails: buildWeakOutOfPoolHintOnlyDecisionDetails(visualAggregateResult)
         }
-      : !followUpRequired &&
+      : !questionRequired &&
     effectiveWeakOutOfPoolHintOnly
       ? {
           decisionCauseKey: 'weak_out_of_pool_proxy_only',
@@ -3623,7 +3623,7 @@ async function runDiagnosisRound({
           decisionCauseText: '正式 symptom_candidates 为空，仅存在池外弱提示，不能直接输出具体问题。',
           decisionCauseDetails: buildWeakOutOfPoolHintOnlyDecisionDetails(visualAggregateResult)
         }
-      : !followUpRequired &&
+      : !questionRequired &&
     shouldBlockOutOfPoolHintUnconfirmed
       ? {
           decisionCauseKey: 'out_of_pool_hint_unconfirmed_after_package',
@@ -3631,7 +3631,7 @@ async function runDiagnosisRound({
           decisionCauseText: '图片里存在池外可见异常提示，但题包答案没有形成可确认的正式证据，因此不能输出非问题结论。',
           decisionCauseDetails: buildWeakOutOfPoolHintOnlyDecisionDetails(visualAggregateResult)
         }
-      : !followUpRequired &&
+      : !questionRequired &&
     !hasActiveObservedEvidence
       ? {
           decisionCauseKey: 'no_observed_symptoms',
@@ -3658,10 +3658,10 @@ async function runDiagnosisRound({
                 : []
             }
           }
-      : !followUpRequired &&
+      : !questionRequired &&
     outputContextProblemGuard.applies &&
     !outputContextProblemGuard.hasRequiredContext &&
-    filteredFollowUps.length === 0
+    filteredQuestions.length === 0
       ? {
           decisionCauseKey:
             mergedSymptomClassRuntime?.enabled &&
@@ -3739,7 +3739,7 @@ async function runDiagnosisRound({
         ? {
             decisionCauseKey: shouldBlockUnforceablePackageOutcome
               ? 'no_forceable_output_problem_after_package'
-              : 'no_forceable_output_problem_without_followup',
+              : 'no_forceable_output_problem_without_question',
             decisionCauseCategory: 'output_guard',
             decisionCauseText: shouldBlockUnforceablePackageOutcome
               ? '题包提交后仍未形成可安全输出的 root cause 证据。'
@@ -3756,7 +3756,7 @@ async function runDiagnosisRound({
         uncertainLegalityReason: ''
       }
     : governedLowConfidence
-  const explanationProblemKeys = !followUpRequired
+  const explanationProblemKeys = !questionRequired
     ? stabilizedOutputCandidateOutcomes.slice(0, 5).map(item => item.problemKey).filter(Boolean)
     : []
   const explanations = explanationProblemKeys.length
@@ -3790,7 +3790,7 @@ async function runDiagnosisRound({
       : leadingVisibleOutcomeKey
         ? 'problematic'
         : 'uncertain'
-  const stopDecision = followUpRequired
+  const stopDecision = questionRequired
     ? null
     : effectiveHasUsableRouteOutputDecision
       ? {
@@ -3873,7 +3873,7 @@ async function runDiagnosisRound({
       ? await outcomeRouteRepository.getOutcomeActionProfiles(allActionProfileKeys)
       : []
 
-  const stageFinal = followUpRequired ? 'followup' : 'final'
+  const stageFinal = questionRequired ? 'question' : 'final'
 
   const publicResponse = formatDiagnosisResponse({
     sessionId,
@@ -3884,14 +3884,14 @@ async function runDiagnosisRound({
     derivedEvidenceSet: mergedDerivedEvidenceSet,
     diagnosisDirections,
     candidateOutcomes: stabilizedOutputCandidateOutcomes,
-    followUps: filteredFollowUps,
+    questions: filteredQuestions,
     problems,
     explanations,
     routeOutcomes,
     causality: causalityEdges,
     plantContext,
     plantId: plantContext.userPlantId || plantContext.plantId,
-    followUpRequired,
+    questionRequired,
     lowConfidence: effectiveLowConfidence,
     symptomClassRuntime: mergedSymptomClassRuntime,
     highSpecificityFastConvergence: fastConvergencePlan,
@@ -3921,7 +3921,7 @@ async function runDiagnosisRound({
     routeDecision: routeDebugTraceEnabled ? sanitizeRouteDecisionForPublic(routeDecision) : null,
     __runtimeRouteDecision: routeDecision,
     answerEffects,
-    followUpStopPolicy: null,
+    questionStopPolicy: null,
     plantContext
   }
   attachPrivateSymptomClassRuntime(result, mergedSymptomClassRuntime)
@@ -3936,10 +3936,10 @@ module.exports = {
   shouldRestrictToCandidateSeedOnly,
   _test: {
     resolveVisibleRouteActionProfileKeys,
-    filterFollowUpsByAnsweredRouteConstraints,
+    filterQuestionsByAnsweredRouteConstraints,
     isYellowingEquivalentDimensionAnswered,
-    isYellowingFollowUpAllowedByAnsweredBranch,
-    collectAnswerLikeRecordsFromFollowUpRows,
+    isYellowingQuestionAllowedByAnsweredBranch,
+    collectAnswerLikeRecordsFromQuestionRows,
     collectRouteAnswerRecordsForDecision,
     mergeAskedQuestionRows,
     collectMatchedRouteEffectOutcomeKeys,

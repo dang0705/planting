@@ -2,7 +2,7 @@
 
 const { invalidateQueueForRound } = require('../services/question-queue-runtime-service')
 const {
-  hasConsumedFollowUpRetakeQuota
+  hasConsumedQuestionRetakeQuota
 } = require('../presenters/diagnosis-round-presenter-helpers')
 
 async function prepareLegacyImageInputRuntime({
@@ -18,7 +18,7 @@ async function prepareLegacyImageInputRuntime({
         ? legacyQuestionProgress
         : null
   })
-  if (hasConsumedFollowUpRetakeQuota(visualBatchTrace || null)) {
+  if (hasConsumedQuestionRetakeQuota(visualBatchTrace || null)) {
     throw Object.assign(new Error('补图次数已达上限'), { statusCode: 400 })
   }
 }

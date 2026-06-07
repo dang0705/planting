@@ -123,7 +123,7 @@ function normalizePublicSymptomClassRuntime(runtime = null) {
     ? {
         classKey: normalizeStoredNullableText(runtime.primaryClass.classKey, ''),
         classNameCn: normalizeStoredNullableText(runtime.primaryClass.classNameCn, ''),
-        followupModeV1: normalizeStoredNullableText(runtime.primaryClass.followupModeV1, ''),
+        questionModeV1: normalizeStoredNullableText(runtime.primaryClass.questionModeV1, ''),
         runtimeScore: Number(runtime.primaryClass.runtimeScore || 0)
       }
     : null
@@ -132,7 +132,7 @@ function normalizePublicSymptomClassRuntime(runtime = null) {
     .map(item => ({
       classKey: normalizeStoredNullableText(item?.classKey, ''),
       classNameCn: normalizeStoredNullableText(item?.classNameCn, ''),
-      followupModeV1: normalizeStoredNullableText(item?.followupModeV1, ''),
+      questionModeV1: normalizeStoredNullableText(item?.questionModeV1, ''),
       runtimeScore: Number(item?.runtimeScore || 0)
     }))
     .filter(item => item.classKey)
@@ -141,7 +141,7 @@ function normalizePublicSymptomClassRuntime(runtime = null) {
     .map(item => ({
       classKey: normalizeStoredNullableText(item?.classKey, ''),
       classNameCn: normalizeStoredNullableText(item?.classNameCn, ''),
-      followupModeV1: normalizeStoredNullableText(item?.followupModeV1, ''),
+      questionModeV1: normalizeStoredNullableText(item?.questionModeV1, ''),
       runtimeGateRule: normalizeStoredNullableText(item?.runtimeGateRule, ''),
       visualScore: Number(item?.visualScore || 0),
       questionActivationScore: Number(item?.questionActivationScore || 0),
@@ -159,7 +159,7 @@ function normalizePublicSymptomClassRuntime(runtime = null) {
       basePriority: Number(item?.basePriority || 0),
       maxQuestionsPerRound: Number(item?.maxQuestionsPerRound || 0),
       classGateType: normalizeStoredNullableText(item?.classGateType, ''),
-      followupModeV1: normalizeStoredNullableText(item?.followupModeV1, ''),
+      questionModeV1: normalizeStoredNullableText(item?.questionModeV1, ''),
       runtimeBlockReason: normalizeStoredNullableText(item?.runtimeBlockReason, '')
     }))
     .filter(item => item.groupKey)

@@ -10,7 +10,7 @@ const {
 } = require('../utils/question-target-dimension')
 const {
   parseSyntheticObservedProbeQuestionKey
-} = require('../utils/synthetic-follow-up')
+} = require('../utils/synthetic-question-package')
 const {
   isDisabledYellowingFlowQuestion
 } = require('../utils/yellowing-question-policy')

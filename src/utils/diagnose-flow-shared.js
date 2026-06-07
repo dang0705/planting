@@ -1,4 +1,4 @@
-export function resolveDefaultFollowUpOptionId(question = {}) {
+export function resolveDefaultQuestionOptionId(question = {}) {
   const options = Array.isArray(question?.options) ? question.options : []
   const defaultOptionId = String(question?.defaultOptionId || '').trim()
   const defaultOptionKey = String(question?.defaultOptionKey || '').trim().toLowerCase()
@@ -43,10 +43,10 @@ export function resolveDisplaySymptomCn(...candidates) {
   return candidate
 }
 
-export function mapSeverityToHealthText({ severity = 'medium', outcomeType = '', followUpRequired = false } = {}) {
+export function mapSeverityToHealthText({ severity = 'medium', outcomeType = '', hasActiveQuestions = false } = {}) {
   const normalizedOutcomeType = normalizeOutcomeType(outcomeType)
 
-  if (followUpRequired) {return '待进一步确认'}
+  if (hasActiveQuestions) {return '待进一步确认'}
   if (normalizedOutcomeType === 'non_problematic') {return '暂未见明显问题'}
   if (normalizedOutcomeType === 'uncertain') {return '待进一步确认'}
 

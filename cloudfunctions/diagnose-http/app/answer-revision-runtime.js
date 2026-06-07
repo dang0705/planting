@@ -31,7 +31,7 @@ async function applyAnswerRevisionRuntime({
     answers,
     dirtyQuestionKey,
     optionMappings,
-    followUpRows: legacyQuestionRows,
+    questionRows: legacyQuestionRows,
     answerRevisionBefore,
     answerRevisionAfter: nextAnswerRevision
   })
@@ -65,8 +65,8 @@ async function applyAnswerRevisionRuntime({
     throw Object.assign(new Error('诊断会话不存在或已失效'), { statusCode: 404 })
   }
 
-  const legacyQuestionRowsForRound = Array.isArray(refreshedSessionState.followUpRows)
-    ? refreshedSessionState.followUpRows
+  const legacyQuestionRowsForRound = Array.isArray(refreshedSessionState.questionRows)
+    ? refreshedSessionState.questionRows
     : legacyQuestionRows
 
   return {

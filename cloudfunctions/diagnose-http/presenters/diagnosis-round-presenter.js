@@ -21,7 +21,7 @@ const {
 } = require('./diagnosis-round-presenter-helpers')
 const {
   filterQuestionsByQuestionQueue
-} = require('../utils/follow-up-contract')
+} = require('../utils/question-contract')
 const {
   buildPublicQuestionQueue,
   buildPublicStopState,
@@ -229,17 +229,17 @@ function buildCompactAnswerRoundResponse(roundResult = {}, helpers = diagnosisRo
     toPublicObservedSymptoms,
     toPublicQuestions,
     buildSummaryCard,
-    resolveFollowUpCanUploadMoreImages
+    resolveQuestionCanUploadMoreImages
   } = helpers
 
   const diagnosisSessionId = roundResult?.diagnosisSessionId || ''
   const roundId = roundResult?.roundId || 'round_1'
-  const isFollowUp = Boolean(roundResult?.followUpRequired)
+  const isQuestion = Boolean(roundResult?.questionRequired)
   const plantRefs = resolvePublicPlantRefs(roundResult)
   const observedSymptoms = toPublicObservedSymptoms(roundResult?.observedSymptoms || [])
   const routePrimaryAction = normalizeDiagnosisRoutePrimaryAction(
     roundResult?.routePrimaryAction,
-    isFollowUp ? 'ask_first' : 'standard_flow'
+    isQuestion ? 'ask_first' : 'standard_flow'
   )
   const stopReason = String(roundResult?.stopReason || '').trim()
   const visualAggregateSource = roundResult?.visualAggregateSummary || roundResult?.visualAggregateResult || null
@@ -261,8 +261,8 @@ function buildCompactAnswerRoundResponse(roundResult = {}, helpers = diagnosisRo
     plantCatalogId: plantRefs.plantCatalogId,
     plantIdentityId: plantRefs.plantIdentityId,
     latestVisualCallBatchId: plantRefs.latestVisualCallBatchId,
-    stage: isFollowUp ? 'followup' : 'final',
-    status: isFollowUp ? 'active' : 'closed',
+    stage: isQuestion ? 'question' : 'final',
+    status: isQuestion ? 'active' : 'closed',
     routePrimaryAction,
     stopReason,
     outcomeType: normalizeOutcomeType(roundResult?.outcomeType, ''),
@@ -285,20 +285,20 @@ function buildCompactAnswerRoundResponse(roundResult = {}, helpers = diagnosisRo
       ? roundResult.confidenceReasons
       : [],
     needHumanReview: Boolean(roundResult?.needHumanReview),
-    followUpRequired: isFollowUp,
+    questionRequired: isQuestion,
     ...(careBehaviorTimeline ? { careBehaviorTimeline } : {}),
     ...(environmentCareContext ? { environmentCareContext } : {})
   }
 
-  if (isFollowUp) {
+  if (isQuestion) {
     const questionQueue = buildPublicQuestionQueue(roundResult?.questionQueue || null)
     const questions = toPublicQuestions(
-      filterQuestionsByQuestionQueue(roundResult?.followUps || [], questionQueue, {
+      filterQuestionsByQuestionQueue(roundResult?.questions || [], questionQueue, {
         requireQueueAnchor: true
       })
     ).slice(0, 1)
     const publicVisualAggregateSummary = buildPublicVisualAggregateSummary(visualAggregateSource)
-    const canUploadMoreImages = resolveFollowUpCanUploadMoreImages(
+    const canUploadMoreImages = resolveQuestionCanUploadMoreImages(
       publicVisualAggregateSummary,
       roundResult?.visualBatchTrace || null
     )
@@ -342,12 +342,12 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
     toPublicObservedEvidenceSet,
     toPublicQuestions,
     buildSummaryCard,
-    resolveFollowUpCanUploadMoreImages
+    resolveQuestionCanUploadMoreImages
   } = helpers
 
   const diagnosisSessionId = roundResult?.diagnosisSessionId || ''
   const roundId = roundResult?.roundId || 'round_1'
-  const isFollowUp = Boolean(roundResult?.followUpRequired)
+  const isQuestion = Boolean(roundResult?.questionRequired)
   const plantRefs = resolvePublicPlantRefs(roundResult)
   const observedSymptoms = toPublicObservedSymptoms(roundResult?.observedSymptoms || [])
   const observedEvidenceSet = toPublicObservedEvidenceSet(roundResult?.observedEvidenceSet || [])
@@ -369,16 +369,16 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
     roundResult?.careBehaviorTimeline || null
   )
 
-  if (isFollowUp) {
+  if (isQuestion) {
     const questions = toPublicQuestions(
-      filterQuestionsByQuestionQueue(roundResult?.followUps || [], questionQueue, {
+      filterQuestionsByQuestionQueue(roundResult?.questions || [], questionQueue, {
         requireQueueAnchor: true
       })
     ).slice(0, 1)
     const visualAggregateSummary = buildPublicVisualAggregateSummary(
       roundResult?.visualAggregateSummary || roundResult?.visualAggregateResult || null
     )
-    const canUploadMoreImages = resolveFollowUpCanUploadMoreImages(
+    const canUploadMoreImages = resolveQuestionCanUploadMoreImages(
       visualAggregateSummary,
       roundResult?.visualBatchTrace || null
     )
@@ -413,7 +413,7 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
       plantCatalogId: plantRefs.plantCatalogId,
       plantIdentityId: plantRefs.plantIdentityId,
       latestVisualCallBatchId: plantRefs.latestVisualCallBatchId,
-      stage: 'followup',
+      stage: 'question',
       status: 'active',
       routePrimaryAction: normalizeDiagnosisRoutePrimaryAction(
         roundResult?.routePrimaryAction,
@@ -451,7 +451,7 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
         ? roundResult.confidenceReasons
         : [],
       needHumanReview: Boolean(roundResult?.needHumanReview),
-      followUpRequired: true,
+      questionRequired: true,
       ...(careBehaviorTimeline ? { careBehaviorTimeline } : {}),
       ...(environmentCareContext ? { environmentCareContext } : {}),
       questions,
@@ -547,7 +547,7 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
       .filter(Boolean),
     outcomeMode: String(roundResult?.outcomeMode || '').trim(),
     routeDecisionCause: roundResult?.routeDecisionCause || null,
-    followUpRequired: false,
+    questionRequired: false,
     uiHints: {
       canUploadMoreImages: false,
       maxQuestionsThisRound: 0

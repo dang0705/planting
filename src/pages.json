@@ -38,7 +38,7 @@
 			}
 		},
 		{
-			"path": "pages/diagnose/follow-up",
+			"path": "pages/diagnose/question-package",
 			"style": {
 				"navigationBarTitleText": "继续问诊",
 				"navigationBarBackgroundColor": "#2D7A4F",

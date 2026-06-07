@@ -1,10 +1,10 @@
 'use strict'
 
-const { appendFollowUpQuestions: writeLegacyQuestionRows } = require('./session-service')
+const { appendQuestionQuestions: writeLegacyQuestionRows } = require('./session-service')
 const { buildYellowingQuestionPackage } = require('../app/question-package-response')
 
 function shouldWriteLegacyQuestionRows(response = {}) {
-  return Boolean(response?.followUpRequired)
+  return Boolean(response?.questionRequired)
 }
 
 async function writeLegacyRoundQuestionRows({
@@ -13,7 +13,7 @@ async function writeLegacyRoundQuestionRows({
   response,
   isInitialRound = false
 } = {}) {
-  const legacyQuestions = Array.isArray(response?.followUps) ? response.followUps : []
+  const legacyQuestions = Array.isArray(response?.questions) ? response.questions : []
   const isQuestionPackagePersistence = Boolean(
     buildYellowingQuestionPackage(response, legacyQuestions)
   )

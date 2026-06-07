@@ -6,7 +6,7 @@ const { getQuestionsByKeys } = require('../repositories/question-repository')
 const {
   readQuestionKeyFromRationale,
   readQuestionGroupKeyFromRationale
-} = require('../services/session-follow-up-service')
+} = require('../services/session-question-service')
 const {
   resolveQuestionText,
   buildQuestionTextCandidateKeys
@@ -55,7 +55,7 @@ function normalizeAnswerQuestionKey(value = '') {
   return String(value || '').trim()
 }
 
-function parseFollowUpRationale(value = '') {
+function parseQuestionRationale(value = '') {
   if (value && typeof value === 'object') {
     return value
   }
@@ -87,9 +87,8 @@ function resolveQuestionKeyCandidates(item = {}) {
 }
 
 async function withQuestionTextFallback(response = {}) {
-  const followUps = Array.isArray(response?.followUps) ? response.followUps : []
   const questions = Array.isArray(response?.questions) ? response.questions : []
-  const sourceList = [...followUps, ...questions]
+  const sourceList = [...questions]
   if (!sourceList.length) {
     return response
   }
@@ -135,16 +134,13 @@ async function withQuestionTextFallback(response = {}) {
 
   return {
     ...response,
-    followUps: followUps.length
-      ? followUps.map(hydrateItem).filter(keepItemWithQuestionText)
-      : response.followUps,
     questions: questions.length
       ? questions.map(hydrateItem).filter(keepItemWithQuestionText)
       : response.questions
   }
 }
 
-function buildAskedQuestionRowsFromFollowUpRows(rows = []) {
+function buildAskedQuestionRowsFromQuestionRows(rows = []) {
   const askRows = Array.isArray(rows) ? rows : []
   const seen = new Set()
   const result = []
@@ -162,7 +158,7 @@ function buildAskedQuestionRowsFromFollowUpRows(rows = []) {
     }
     seen.add(normalizedQuestionKey)
 
-    const rationale = parseFollowUpRationale(row?.rationale)
+    const rationale = parseQuestionRationale(row?.rationale)
     const questionText = String(
       rationale?.questionTextUserCn ||
         rationale?.questionTextCn ||
@@ -207,7 +203,7 @@ function buildAskedQuestionRowsFromFollowUpRows(rows = []) {
   return result
 }
 
-function buildRuntimeAnswersFromFollowUpUpdates(previousAnswers = [], updatedFollowUpAnswers = []) {
+function buildRuntimeAnswersFromQuestionUpdates(previousAnswers = [], updatedQuestionAnswers = []) {
   const answerMap = new Map()
 
   for (const item of Array.isArray(previousAnswers) ? previousAnswers : []) {
@@ -219,7 +215,7 @@ function buildRuntimeAnswersFromFollowUpUpdates(previousAnswers = [], updatedFol
     })
   }
 
-  for (const item of Array.isArray(updatedFollowUpAnswers) ? updatedFollowUpAnswers : []) {
+  for (const item of Array.isArray(updatedQuestionAnswers) ? updatedQuestionAnswers : []) {
     const key = normalizeAnswerQuestionKey(item?.questionKey || '')
     const optionKey = String(item?.optionKey || '').trim()
     if (!key || !optionKey) {continue}
@@ -232,12 +228,12 @@ function buildRuntimeAnswersFromFollowUpUpdates(previousAnswers = [], updatedFol
   return Array.from(answerMap.values())
 }
 
-function buildRuntimeUnknownCountByGroup(previousUnknownCountByGroup = {}, updatedFollowUpAnswers = []) {
+function buildRuntimeUnknownCountByGroup(previousUnknownCountByGroup = {}, updatedQuestionAnswers = []) {
   const nextUnknownCountByGroup = {
     ...previousUnknownCountByGroup
   }
 
-  for (const item of Array.isArray(updatedFollowUpAnswers) ? updatedFollowUpAnswers : []) {
+  for (const item of Array.isArray(updatedQuestionAnswers) ? updatedQuestionAnswers : []) {
     const groupKey = String(item?.questionGroupKey || '__default__').trim() || '__default__'
     const status = String(item?.status || '').trim().toLowerCase()
 
@@ -449,12 +445,12 @@ module.exports = {
   normalizeUploadCompression,
   pickQuestionKeysFromQuestionQueue,
   normalizeAnswerQuestionKey,
-  parseFollowUpRationale,
+  parseQuestionRationale,
   resolveQuestionKey,
   resolveQuestionKeyCandidates,
   withQuestionTextFallback,
-  buildAskedQuestionRowsFromFollowUpRows,
-  buildRuntimeAnswersFromFollowUpUpdates,
+  buildAskedQuestionRowsFromQuestionRows,
+  buildRuntimeAnswersFromQuestionUpdates,
   buildRuntimeUnknownCountByGroup,
   resolveVisualImageInputs,
   stripVisualEvidenceItems,

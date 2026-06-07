@@ -1,6 +1,6 @@
 'use strict'
 
-const { buildSyntheticObservedProbeQuestions } = require('../utils/synthetic-follow-up')
+const { buildSyntheticObservedProbeQuestions } = require('../utils/synthetic-question-package')
 
 function buildObservedProbeQuestionsFromLegacySource(...args) {
   return buildSyntheticObservedProbeQuestions(...args)

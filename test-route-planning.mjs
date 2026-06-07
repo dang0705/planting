@@ -48,8 +48,8 @@ const {
   buildFrontendDiagnosisResponse
 } = require('./cloudfunctions/diagnose-http/app/frontend-response.js')
 const {
-  buildSyntheticFollowUpOptionMappings
-} = require('./cloudfunctions/diagnose-http/utils/synthetic-follow-up.js')
+  buildSyntheticQuestionOptionMappings
+} = require('./cloudfunctions/diagnose-http/utils/synthetic-question-package.js')
 const {
   buildRuntimeSnapshotPayload
 } = require('./cloudfunctions/diagnose-http/services/session-runtime-snapshot-codec.js')
@@ -352,7 +352,7 @@ async function testRoutePlannerKeepsThreeVisibleOutcomesAcrossMixedGroupLimits()
   assert.equal(decision.decisionCause.decisionCauseKey, 'route_action_conflict_unresolved')
 }
 
-async function testRoutePlannerDoesNotRequireFollowUpForMissingGate() {
+async function testRoutePlannerDoesNotRequireQuestionForMissingGate() {
   const routeEvidenceContext = buildRouteEvidenceContext({
     candidateOutcomes: [{ problemKey: 'overwatering_root_pressure' }]
   })
@@ -408,11 +408,11 @@ async function testRoutePlannerDoesNotRequireFollowUpForMissingGate() {
     featureFlags: { routePlanningEnabled: true },
   })
 
-  assert.equal(withBudget.requiresFollowUp, false)
+  assert.equal(withBudget.requiresQuestion, false)
   assert.deepEqual(withBudget.nextQuestionKeys, [])
   assert.deepEqual(withBudget.nextQuestions, [])
   assert.deepEqual(withBudget.candidateOutcomeStates[0].questionEvidenceKeys, ['q_soil_moisture_recent'])
-  assert.equal(noBudget.requiresFollowUp, false)
+  assert.equal(noBudget.requiresQuestion, false)
   assert.deepEqual(noBudget.nextQuestionKeys, [])
 }
 
@@ -436,7 +436,7 @@ async function testRoutePlannerFallbackIsConservative() {
 
   assert.equal(routeDecision.fallbackPolicy, 'uncertain')
   assert.deepEqual(routeDecision.visibleOutcomeKeys, [])
-  assert.equal(routeDecision.requiresFollowUp, false)
+  assert.equal(routeDecision.requiresQuestion, false)
 }
 
 function testRouteFallbackPayloadNoCandidateOutcomeLeak() {
@@ -459,7 +459,7 @@ function testRouteFallbackPayloadNoCandidateOutcomeLeak() {
     plantContext: {},
     observedEvidenceSet: [],
     outcomeType: 'uncertain',
-    followUpRequired: false
+    questionRequired: false
   })
 
   assert.equal(payload.outcomeMode, 'route_fallback_uncertain')
@@ -494,7 +494,7 @@ function testRouteVisibleOutcomesSuppressUncertainWhenConcreteExists() {
     plantContext: {},
     observedEvidenceSet: [],
     outcomeType: 'problematic',
-    followUpRequired: false
+    questionRequired: false
   })
 
   assert.deepEqual(
@@ -640,7 +640,7 @@ async function testRoutePlannerNextQuestions() {
     featureFlags: { routePlanningEnabled: true },
   })
 
-  assert.equal(decision.requiresFollowUp, false)
+  assert.equal(decision.requiresQuestion, false)
   assert.deepEqual(decision.nextQuestionKeys, [])
   assert.deepEqual(decision.nextQuestions, [])
   assert.deepEqual(decision.candidateOutcomeStates[0].questionEvidenceKeys, ['q_soil_moisture_recent'])
@@ -1145,7 +1145,7 @@ async function testYellowingCareContextOnlyDoesNotCloseWaterConflict() {
   })
 
   assert.deepEqual(decision.visibleOutcomeKeys, [])
-  assert.equal(decision.requiresFollowUp, false)
+  assert.equal(decision.requiresQuestion, false)
   assert.deepEqual(decision.nextQuestionKeys, [])
   assert.deepEqual(decision.nextQuestions, [])
   assert.deepEqual(decision.candidateOutcomeStates[0].questionEvidenceKeys, [
@@ -1275,7 +1275,7 @@ async function testVisualCandidateYellowingExpandsRouteGroupAndPlansWateringCont
 
   assert.deepEqual(decision.activeRouteGroupKeys, ['yellowing_care_split_group'])
   assert.equal(decision.decisionCause.decisionCauseDetails.symptomMatchedRouteGroupKeys[0], 'yellowing_care_split_group')
-  assert.equal(decision.requiresFollowUp, false)
+  assert.equal(decision.requiresQuestion, false)
   assert.deepEqual(decision.nextQuestionKeys, [])
   assert.deepEqual(decision.nextQuestions, [])
   assert.deepEqual(decision.candidateOutcomeStates[0].questionEvidenceKeys, [
@@ -1284,7 +1284,7 @@ async function testVisualCandidateYellowingExpandsRouteGroupAndPlansWateringCont
 }
 
 async function testYellowingFrontloadedCareStartsWithWateringQuestion() {
-  const followUps = diagnosisEngineTest.filterFollowUpsByAnsweredRouteConstraints(
+  const questions = diagnosisEngineTest.filterQuestionsByAnsweredRouteConstraints(
     [
       {
         questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
@@ -1307,7 +1307,7 @@ async function testYellowingFrontloadedCareStartsWithWateringQuestion() {
   )
 
   assert.deepEqual(
-    followUps.map(item => item.questionKey),
+    questions.map(item => item.questionKey),
     [
       'q_observed_probe__leaf_yellowing__watering_frequency_context'
     ]
@@ -1315,7 +1315,7 @@ async function testYellowingFrontloadedCareStartsWithWateringQuestion() {
 }
 
 async function testYellowingFrontloadedCareAdvancesAfterWateringQuestion() {
-  const followUps = diagnosisEngineTest.filterFollowUpsByAnsweredRouteConstraints(
+  const questions = diagnosisEngineTest.filterQuestionsByAnsweredRouteConstraints(
     [
       {
         questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
@@ -1348,13 +1348,13 @@ async function testYellowingFrontloadedCareAdvancesAfterWateringQuestion() {
     }
   )
 
-  const followUpKeys = followUps.map(item => item.questionKey)
+  const questionKeys = questions.map(item => item.questionKey)
   assert.equal(
-    followUpKeys.includes('q_observed_probe__leaf_yellowing__yellowing_care_area_gate'),
+    questionKeys.includes('q_observed_probe__leaf_yellowing__yellowing_care_area_gate'),
     false
   )
   assert.equal(
-    followUpKeys.includes('q_observed_probe__leaf_yellowing__light_change_context'),
+    questionKeys.includes('q_observed_probe__leaf_yellowing__light_change_context'),
     true
   )
 }
@@ -1448,7 +1448,7 @@ async function testYellowingRouteDoesNotHoldVisibleOutcomeForMissingPackageGroup
   })
 
   assert.deepEqual(decision.visibleOutcomeKeys, ['overwatering_root_pressure'])
-  assert.equal(decision.requiresFollowUp, false)
+  assert.equal(decision.requiresQuestion, false)
   assert.deepEqual(decision.nextQuestionKeys, [])
   assert.equal(decision.decisionCause.decisionCauseKey, 'route_visible_outcomes_ready')
 }
@@ -1512,7 +1512,7 @@ async function testYellowingRouteUsesHistoricalGroupedAnswersForClosure() {
   ]
   const routeAnswerRecords = diagnosisEngineTest.collectRouteAnswerRecordsForDecision({
     answers: currentAnswers,
-    answeredFollowUpAnswerRecords: historicalAnswers
+    answeredQuestionAnswerRecords: historicalAnswers
   })
   const currentOnlyDecision = await planOutcomeRoutes({
     candidateOutcomeKeys: ['overwatering_root_pressure'],
@@ -1583,7 +1583,7 @@ async function testRouteFastPathBackfillsHistoricalRouteAnswerEffects() {
   ]
   const routeAnswerRecords = diagnosisEngineTest.collectRouteAnswerRecordsForDecision({
     answers: currentAnswers,
-    answeredFollowUpAnswerRecords: historicalAnswers
+    answeredQuestionAnswerRecords: historicalAnswers
   })
   const routeAnswerEffectQuestionKeys = routeAnswerRecords.map(item => item.questionKey)
   const preloadedRouteAnswerEffects = [
@@ -1821,7 +1821,7 @@ async function testYellowingCareContextAnswerKeepsRouteQuestionEvidence() {
     featureFlags: { routePlanningEnabled: true },
   })
 
-  assert.equal(lightDecision.requiresFollowUp, false)
+  assert.equal(lightDecision.requiresQuestion, false)
   assert.deepEqual(lightDecision.nextQuestionKeys, [])
   assert.deepEqual(lightDecision.candidateOutcomeStates[0].questionEvidenceKeys, [
     'q_observed_probe__leaf_yellowing__light_change_context'
@@ -1969,7 +1969,7 @@ async function testYellowingLowLightRouteClosesWithActionAdvice() {
         userDefinitionCn: '当前更像长期光照不足引起的偏弱和黄化。'
       }
     ],
-    followUpRequired: false,
+    questionRequired: false,
     stopDecision: {
       outcomeLocked: 'problematic',
       stopReason: 'route_visible_outcomes_ready',
@@ -2415,7 +2415,7 @@ function testRootStressRouteUsesUserFriendlyDisplayName() {
         userDefinitionCn: '当前更像根部周围环境不稳定，疑似闷根或根系受压。'
       }
     ],
-    followUpRequired: false,
+    questionRequired: false,
     stopDecision: {
       outcomeLocked: 'problematic',
       stopReason: 'route_visible_outcomes_ready',
@@ -2732,7 +2732,7 @@ async function testYellowingStrongLightRouteClosesWithSunburnActionAdvice() {
         userDefinitionCn: '当前更像近期直射明显增强或暴晒引起的强光刺激。'
       }
     ],
-    followUpRequired: false,
+    questionRequired: false,
     stopDecision: {
       outcomeLocked: 'problematic',
       stopReason: 'route_visible_outcomes_ready',
@@ -2827,7 +2827,7 @@ function testRouteExplanationFollowsRoutePrimaryOutcome() {
         userDefinitionCn: '当前仍有积水候选。'
       }
     ],
-    followUpRequired: false,
+    questionRequired: false,
     stopDecision: {
       outcomeLocked: 'problematic',
       stopReason: 'route_visible_outcomes_ready',
@@ -2886,12 +2886,12 @@ function testRouteExplanationFollowsRoutePrimaryOutcome() {
   assert.match(response.resultExplanation.firstAid, /移离正午直射光/)
 }
 
-function testFollowUpCompletedStateUsesRouteConvergenceBranch() {
-  const source = readFileSync('./src/pages/diagnose/follow-up.vue', 'utf8')
+function testQuestionCompletedStateUsesRouteConvergenceBranch() {
+  const source = readFileSync('./src/pages/diagnose/question-package.vue', 'utf8')
 
   assert.match(
     source,
-    /v-else-if="result && !result\.followUpRequired && !hasRouteConvergenceDetails"/
+    /v-else-if="result && !result\.hasActiveQuestions && !hasRouteConvergenceDetails"/
   )
   assert.match(
     source,
@@ -2995,7 +2995,7 @@ function testManualQuestionStartRouteGroupBridge() {
   assert.deepEqual(nonYellowingCandidateOutcomeKeys, ['leaf_spot_problem'])
 }
 
-async function testManualQuestionStartFastPathBuildsFollowUpRound() {
+async function testManualQuestionStartFastPathBuildsQuestionRound() {
   const observedSymptoms = [
     {
       symptomKey: 'uniform_yellowing',
@@ -3083,13 +3083,13 @@ async function testManualQuestionStartFastPathBuildsFollowUpRound() {
     routePlanner
   })
 
-  assert.equal(result.followUpRequired, true)
-  assert.equal(result.stage, 'followup')
-  assert.equal(result.sessionStatus, 'awaiting_follow_up')
-  assert.equal(result.followUps.length, 4)
-  assert.equal(result.followUps[0].selectionSource, 'route_planner')
+  assert.equal(result.questionRequired, true)
+  assert.equal(result.stage, 'question_package')
+  assert.equal(result.sessionStatus, 'awaiting_question_package')
+  assert.equal(result.questions.length, 4)
+  assert.equal(result.questions[0].selectionSource, 'route_planner')
   assert.deepEqual(
-    result.followUps.map(item => item.questionKey),
+    result.questions.map(item => item.questionKey),
     [
       'q_observed_probe__leaf_yellowing__watering_frequency_context',
       'q_observed_probe__leaf_yellowing__light_change_context',
@@ -3098,7 +3098,7 @@ async function testManualQuestionStartFastPathBuildsFollowUpRound() {
     ]
   )
   assert.equal(
-    result.followUps.some(item => item.questionKey === 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate'),
+    result.questions.some(item => item.questionKey === 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate'),
     false
   )
   assert.equal(result.__runtimeRouteDecision.mode, 'manual_yellowing_care_environment_frontloaded')
@@ -3137,7 +3137,7 @@ function testVisualParserFields() {
 }
 
 function testPestSpecklingStickyNoGuard() {
-  const optionMappings = buildSyntheticFollowUpOptionMappings(
+  const optionMappings = buildSyntheticQuestionOptionMappings(
     ['q_observed_probe__yellow_speckling__surface_stickiness'],
     [
       {
@@ -3207,7 +3207,7 @@ function testFormatDiagnosisResponseRouteFields() {
       }
     ],
     plantContext: {},
-    followUpRequired: false,
+    questionRequired: false,
     stopDecision: {
       outcomeLocked: 'problematic',
       stopReason: 'route_visible_outcomes_ready',
@@ -3295,7 +3295,7 @@ function testRouteOutputUsesDiagnosisOutcomesAndAvoidsCandidateOutcomeSummaryLea
       }
     ],
     plantContext: {},
-    followUpRequired: false,
+    questionRequired: false,
     stopDecision: {
       outcomeLocked: 'problematic',
       stopReason: 'route_visible_outcomes_ready',
@@ -3362,7 +3362,7 @@ function testRouteFinalStopStateCloses() {
       }
     ],
     plantContext: {},
-    followUpRequired: false,
+    questionRequired: false,
     stopDecision: {
       outcomeLocked: 'problematic',
       stopReason: 'route_visible_outcomes_ready',
@@ -3423,7 +3423,7 @@ function testFormatDiagnosisResponseRouteOutputDisabled() {
       }
     ],
     plantContext: {},
-    followUpRequired: false,
+    questionRequired: false,
     stopDecision: {
       outcomeLocked: 'problematic',
       stopReason: 'problematic_output_ready',
@@ -3475,7 +3475,7 @@ function testRouteModeHidesCandidateOutcomesFromPublicPayload() {
         resultSummaryCn: '当前更像缺铁。'
       }
     ],
-    followUpRequired: false,
+    questionRequired: false,
     stopDecision: {
       outcomeLocked: 'uncertain',
       stopReason: 'route_fallback_uncertain',
@@ -3502,7 +3502,7 @@ function testRouteConflictVisibleOutcomesStillProduceRouteBackedFinalResult() {
     problems: [],
     explanations: [],
     plantContext: {},
-    followUpRequired: false,
+    questionRequired: false,
     stopDecision: {
       outcomeLocked: 'problematic',
       stopReason: 'route_visible_outcomes_ready',
@@ -3721,17 +3721,17 @@ function testSessionResultReadServicePreservesRouteMultiOutcomeFields() {
   assert.equal(payloadWinsFields.outcomeMode, 'visible_outcomes')
 }
 
-function testRouteModeDoesNotBuildLegacyFollowUpsAfterPackageAnswer() {
+function testRouteModeDoesNotBuildLegacyQuestionsAfterPackageAnswer() {
   const source = readFileSync(
     './cloudfunctions/diagnose-http/domain/diagnosis-engine.js',
     'utf8'
   )
 
-  assert.doesNotMatch(source, /const genericFollowUps =/)
-  assert.doesNotMatch(source, /const routePlannedFollowUps =/)
+  assert.doesNotMatch(source, /const genericQuestions =/)
+  assert.doesNotMatch(source, /const routePlannedQuestions =/)
   assert.doesNotMatch(source, /shouldHoldYellowingRouteOutputForRequiredGroups/)
-  assert.doesNotMatch(source, /canAskAnotherFollowUpRound/)
-  assert.doesNotMatch(source, /const shouldAskFollowUp\s*=/)
+  assert.doesNotMatch(source, /canAskAnotherQuestionRound/)
+  assert.doesNotMatch(source, /const shouldAskQuestion\s*=/)
 }
 
 function testUncertainSuppressesTopProblem() {
@@ -3762,7 +3762,7 @@ function testUncertainSuppressesTopProblem() {
       }
     ],
     plantContext: {},
-    followUpRequired: false,
+    questionRequired: false,
     lowConfidence: {
       isLowConfidence: true,
       reasons: ['input_unfillable'],
@@ -3810,7 +3810,7 @@ function testUncertainSuppressesRouteFinalResultProblem() {
       }
     ],
     plantContext: {},
-    followUpRequired: false,
+    questionRequired: false,
     lowConfidence: {
       isLowConfidence: true,
       reasons: ['route_action_conflict_unresolved'],
@@ -3879,7 +3879,7 @@ function testPresenterKeepsCareBehaviorEvidenceAndDropsWeatherWindow() {
   const roundResult = {
     diagnosisSessionId: 'diag_care_evidence_1',
     roundId: 'round_2',
-    followUpRequired: true,
+    questionRequired: true,
     routePrimaryAction: 'ask_first',
     stopReason: 'route_visible_outcomes_ready',
     outcomeType: 'problematic',
@@ -3997,7 +3997,7 @@ function testPresenterKeepsCareBehaviorEvidenceAndDropsWeatherWindow() {
         ]
       }
     ],
-    followUps: [
+    questions: [
       {
         questionId: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
         questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
@@ -4092,7 +4092,7 @@ function testRouteBackedNonProblematicOutcome() {
         userDefinitionCn: '底部老叶逐步黄化，更符合自然代谢。'
       }
     ],
-    followUpRequired: false,
+    questionRequired: false,
     stopDecision: {
       outcomeLocked: 'non_problematic',
       stopReason: 'route_visible_outcomes_ready',
@@ -4380,7 +4380,7 @@ async function testGoldenRouteSamples() {
     })
 
     assert.equal(decision.visibleOutcomeKeys[0], item.expectedPrimaryOutcomeKey, item.label)
-    assert.equal(decision.requiresFollowUp, false, item.label)
+    assert.equal(decision.requiresQuestion, false, item.label)
   }
 }
 
@@ -4481,7 +4481,7 @@ async function testGoldenUncertainSamples() {
     stage: 'final',
     candidateOutcomes: [],
     plantContext: {},
-    followUpRequired: false,
+    questionRequired: false,
     lowConfidence: {
       isLowConfidence: true,
       reasons: ['input_unfillable'],
@@ -4542,8 +4542,8 @@ function testFrontendNormalizationCompatibility() {
       summary: '当前更像烂根。',
       severity: 'high'
     },
-    followUpRequired: false,
-    followUps: []
+    questionRequired: false,
+    questions: []
   })
   assert.equal(legacyResult.diagnosisSessionId, 'legacy_1')
   assert.equal(Object.prototype.hasOwnProperty.call(legacyResult, 'primaryOutcome'), false)
@@ -4586,8 +4586,8 @@ function testFrontendNormalizationCompatibility() {
       displayName: '积水/根系压力',
       summary: '当前更像积水/根系压力。'
     },
-    followUpRequired: false,
-    followUps: []
+    questionRequired: false,
+    questions: []
   })
 
   assert.equal(routeResult.visibleOutcomes[0].displayNameCn, '积水/根系压力')
@@ -4648,8 +4648,8 @@ function testFrontendNormalizationCompatibility() {
       displayName: '强光灼伤',
       summary: '当前路径已收敛到强光灼伤方向。'
     },
-    followUpRequired: false,
-    followUps: []
+    questionRequired: false,
+    questions: []
   })
 
   assert.equal(multiOutcomeResult.visibleOutcomes[0].displayNameCn, '强光灼伤')
@@ -4678,8 +4678,8 @@ function testFrontendNormalizationCompatibility() {
       displayName: '积水/根系压力',
       summary: '当前路径已收敛到积水/根系压力方向。'
     },
-    followUpRequired: false,
-    followUps: []
+    questionRequired: false,
+    questions: []
   })
 
   assert.deepEqual(
@@ -4818,7 +4818,7 @@ async function testReviewGovernancePrefersRouteActionAdvice() {
 
 async function main() {
   console.log('=== Route Planning 测试开始 ===\n')
-  await testRoutePlannerDoesNotRequireFollowUpForMissingGate()
+  await testRoutePlannerDoesNotRequireQuestionForMissingGate()
   console.log('✓ route planner missing evidence does not require another question')
   await testRoutePlannerConflict()
   console.log('✓ route planner 冲突保护')
@@ -4888,7 +4888,7 @@ async function main() {
   console.log('✓ runtime snapshot persists internal route decision')
   testManualQuestionStartRouteGroupBridge()
   console.log('✓ manual question/start bridges symptom to route group')
-  await testManualQuestionStartFastPathBuildsFollowUpRound()
+  await testManualQuestionStartFastPathBuildsQuestionRound()
   console.log('✓ manual question/start fast path builds guarded question package')
   testVisualParserFields()
   console.log('✓ 视觉新增字段解析')
@@ -4900,7 +4900,7 @@ async function main() {
   console.log('✓ route output uses diagnosis_outcomes and avoids candidate_outcome summary leak')
   testRouteExplanationFollowsRoutePrimaryOutcome()
   console.log('✓ route explanation follows route primary outcome')
-  testFollowUpCompletedStateUsesRouteConvergenceBranch()
+  testQuestionCompletedStateUsesRouteConvergenceBranch()
   console.log('✓ package completed state uses route convergence branch')
   testDiagnosisResultPageUsesVisibleOutcomeList()
   console.log('✓ diagnosis result page uses visible outcome list')
@@ -4914,7 +4914,7 @@ async function main() {
   console.log('✓ route conflict visible outcomes 仍输出 route-backed finalResult')
   testSessionResultReadServicePreservesRouteMultiOutcomeFields()
   console.log('✓ session result read service preserves route multi outcome fields')
-  testRouteModeDoesNotBuildLegacyFollowUpsAfterPackageAnswer()
+  testRouteModeDoesNotBuildLegacyQuestionsAfterPackageAnswer()
   console.log('✓ route mode 不允许 legacy generic question 补位')
   testUncertainSuppressesTopProblem()
   console.log('✓ uncertain suppresses top problem')

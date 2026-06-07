@@ -14,8 +14,8 @@ import {
   normalizeCareBehaviorTimeline
 } from './src/utils/care-behavior-timeline.js'
 import {
-  buildFollowUpPayload,
-  createFollowUpAnswerMap,
+  buildQuestionAnswerPayload,
+  createQuestionAnswerMap,
   normalizeQuestions
 } from './src/utils/diagnose-flow.js'
 import { formatWeatherText } from './src/utils/care-behavior-weather.js'
@@ -26,8 +26,8 @@ import {
 
 const require = createRequire(import.meta.url)
 const {
-  buildSyntheticFollowUpOptionMappings
-} = require('./cloudfunctions/diagnose-http/utils/synthetic-follow-up/option-mappings.js')
+  buildSyntheticQuestionOptionMappings
+} = require('./cloudfunctions/diagnose-http/utils/synthetic-question-package/option-mappings.js')
 
 const baseDate = '2026-05-28'
 
@@ -130,10 +130,10 @@ assert.deepEqual(
   ['unknown', 'unclear']
 )
 
-const legacyInitialAnswerMap = createFollowUpAnswerMap([legacyWateringQuestion])
+const legacyInitialAnswerMap = createQuestionAnswerMap([legacyWateringQuestion])
 assert.equal(legacyInitialAnswerMap[legacyWateringQuestion.questionId], '')
 
-const legacyMeaningfulPayload = buildFollowUpPayload(
+const legacyMeaningfulPayload = buildQuestionAnswerPayload(
   { diagnosisSessionId: 's-legacy-meaningful', roundId: 'r1' },
   { [legacyWateringQuestion.questionId]: 'care_behavior_timeline' },
   {
@@ -152,7 +152,7 @@ const legacyMeaningfulPayload = buildFollowUpPayload(
 assert.equal(legacyMeaningfulPayload.answers[0].optionId, 'care_behavior_timeline')
 assert.equal(Object.hasOwn(legacyMeaningfulPayload, 'careBehaviorTimeline'), true)
 
-const legacyUnknownPayload = buildFollowUpPayload(
+const legacyUnknownPayload = buildQuestionAnswerPayload(
   { diagnosisSessionId: 's-legacy-unknown', roundId: 'r1' },
   { [legacyWateringQuestion.questionId]: 'unknown' },
   {
@@ -203,7 +203,7 @@ const ordinaryIsDefaultQuestion = {
   ]
 }
 
-const ordinaryAnswerMap = createFollowUpAnswerMap([
+const ordinaryAnswerMap = createQuestionAnswerMap([
   ordinaryDefaultIdQuestion,
   ordinaryDefaultKeyQuestion,
   ordinaryIsDefaultQuestion
@@ -294,7 +294,7 @@ const visibleTimelineOptions = getVisibleCareBehaviorOptions(timelineQuestion)
 assert.equal(visibleTimelineOptions.length, 1)
 assert.equal(visibleTimelineOptions[0].optionId, 'unclear')
 
-const resolvedDefaultTimelineAnswers = createFollowUpAnswerMap([timelineQuestion])
+const resolvedDefaultTimelineAnswers = createQuestionAnswerMap([timelineQuestion])
 assert.equal(resolvedDefaultTimelineAnswers[timelineQuestion.questionId], 'timeline_recorded')
 assert.equal(
   resolveCareBehaviorTimelineRecordedAnswerOptionId(timelineQuestion),
@@ -363,12 +363,12 @@ const componentSourceFiles = [
   './src/components/care-behavior-timeline/weather.js'
 ]
 const componentSource = componentSourceFiles.map(file => readFileSync(file, 'utf8')).join('\n')
-const followUpPageSource = readFileSync('./src/pages/diagnose/follow-up.vue', 'utf8')
+const questionPageSource = readFileSync('./src/pages/diagnose/question-package.vue', 'utf8')
 const diagnosePopupSource = readFileSync('./src/components/DiagnosePopup.vue', 'utf8')
 const compactComponentSource = componentSource.replace(/\s+/g, ' ')
-const fixedContextMatches = followUpPageSource.match(/class="followup-fixed-context"/g) || []
-const followUpPageTrackStart = followUpPageSource.indexOf('followup-page-swiper-track')
-const followUpPageItemStart = followUpPageSource.indexOf('followup-page-swiper-item')
+const fixedContextMatches = questionPageSource.match(/class="question-package-fixed-context"/g) || []
+const questionPageTrackStart = questionPageSource.indexOf('question-package-page-swiper-track')
+const questionPageItemStart = questionPageSource.indexOf('question-package-page-swiper-item')
 assert.ok(componentSource.includes('v-if="item.watering"') || componentSource.includes(':active="item.watering"'))
 assert.ok(
   componentSource.includes('v-if="item.fertilizing"') || componentSource.includes(':active="item.fertilizing"')
@@ -476,12 +476,12 @@ assert.equal(
   false
 )
 assert.equal(componentSource.includes('care-behavior-action-row'), false)
-assert.ok(followUpPageSource.includes('careBehaviorTimelineAnswerSyncSuppressedByQuestionId'))
+assert.ok(questionPageSource.includes('careBehaviorTimelineAnswerSyncSuppressedByQuestionId'))
 assert.ok(
-  followUpPageSource.includes('setCareBehaviorTimelineAnswerSyncSuppression(questionId, true)')
+  questionPageSource.includes('setCareBehaviorTimelineAnswerSyncSuppression(questionId, true)')
 )
-assert.ok(followUpPageSource.includes('clearCareBehaviorTimelineAnswerSyncSuppression(questionId)'))
-assert.ok(followUpPageSource.includes('isCareBehaviorTimelineUnclearAnswer(question, answerId)'))
+assert.ok(questionPageSource.includes('clearCareBehaviorTimelineAnswerSyncSuppression(questionId)'))
+assert.ok(questionPageSource.includes('isCareBehaviorTimelineUnclearAnswer(question, answerId)'))
 assert.ok(
   componentSource.indexOf('selectedDate.value = item.date') <
     componentSource.indexOf("toggleCareAction(item.date, 'watering')")
@@ -570,41 +570,41 @@ assert.equal(compactComponentSource.includes('margin: 12px auto 0'), false)
 assert.ok(compactComponentSource.includes('温度'))
 assert.ok(compactComponentSource.includes('湿度'))
 
-assert.ok(followUpPageSource.includes('followup-fixed-context'))
+assert.ok(questionPageSource.includes('question-package-fixed-context'))
 assert.equal(fixedContextMatches.length, 1)
-assert.ok(followUpPageSource.includes('followUpDiagnosisContextText'))
-assert.ok(followUpPageSource.includes('followUpQuestionProgressText'))
-assert.ok(followUpPageSource.includes('followup-page-body'))
-assert.ok(followUpPageSource.includes('followup-page-swiper-track'))
-assert.ok(followUpPageSource.includes('followUpPageTrackStyle'))
-assert.ok(diagnosePopupSource.includes('followup-swiper-track'))
-assert.ok(diagnosePopupSource.includes('followUpSwiperTrackStyle'))
-assert.equal(followUpPageSource.includes('<swiper'), false)
-assert.equal(followUpPageSource.includes('<swiper-item'), false)
+assert.ok(questionPageSource.includes('questionDiagnosisContextText'))
+assert.ok(questionPageSource.includes('questionProgressText'))
+assert.ok(questionPageSource.includes('question-package-page-body'))
+assert.ok(questionPageSource.includes('question-package-page-swiper-track'))
+assert.ok(questionPageSource.includes('questionPageTrackStyle'))
+assert.ok(diagnosePopupSource.includes('question-package-swiper-track'))
+assert.ok(diagnosePopupSource.includes('questionSwiperTrackStyle'))
+assert.equal(questionPageSource.includes('<swiper'), false)
+assert.equal(questionPageSource.includes('<swiper-item'), false)
 assert.equal(diagnosePopupSource.includes('<swiper'), false)
 assert.equal(diagnosePopupSource.includes('<swiper-item'), false)
-assert.ok(followUpPageSource.includes('environmentWeatherWindowLoading'))
-assert.ok(followUpPageSource.includes('environmentWeatherWindowError'))
+assert.ok(questionPageSource.includes('environmentWeatherWindowLoading'))
+assert.ok(questionPageSource.includes('environmentWeatherWindowError'))
 assert.ok(
-  followUpPageSource.includes(
+  questionPageSource.includes(
     'hasMeaningfulCareBehaviorTimeline(getCareBehaviorTimelineByQuestion(question))'
   )
 )
-assert.ok(followUpPageSource.includes('请您选择在过去的10天内，哪几天浇了水？'))
-assert.ok(followUpPageSource.includes(':loading="environmentWeatherWindowLoading"'))
-assert.ok(followUpPageSource.includes(':error="environmentWeatherWindowError"'))
-assert.ok(followUpPageSource.includes('Object.keys(storedTimeline).length'))
+assert.ok(questionPageSource.includes('请您选择在过去的10天内，哪几天浇了水？'))
+assert.ok(questionPageSource.includes(':loading="environmentWeatherWindowLoading"'))
+assert.ok(questionPageSource.includes(':error="environmentWeatherWindowError"'))
+assert.ok(questionPageSource.includes('Object.keys(storedTimeline).length'))
 assert.ok(
-  followUpPageSource.includes(
+  questionPageSource.includes(
     'mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(storedTimeline, environmentWeatherWindow.value)'
   )
 )
 assert.ok(
-  followUpPageSource.indexOf('followup-fixed-context') < followUpPageTrackStart
+  questionPageSource.indexOf('question-package-fixed-context') < questionPageTrackStart
 )
-assert.ok(followUpPageItemStart > followUpPageTrackStart)
-assert.equal(followUpPageSource.includes('followup-question-count'), false)
-assert.ok(followUpPageSource.includes('uni.navigateBack({ delta: 1 })'))
+assert.ok(questionPageItemStart > questionPageTrackStart)
+assert.equal(questionPageSource.includes('question-package-question-count'), false)
+assert.ok(questionPageSource.includes('uni.navigateBack({ delta: 1 })'))
 
 const hiddenDefaultTimelineQuestion = {
   questionId: 'timeline-hidden-default',
@@ -623,7 +623,7 @@ const hiddenDefaultTimelineQuestion = {
 }
 
 assert.equal(
-  createFollowUpAnswerMap([hiddenDefaultTimelineQuestion])[
+  createQuestionAnswerMap([hiddenDefaultTimelineQuestion])[
     hiddenDefaultTimelineQuestion.questionId
   ],
   ''
@@ -647,13 +647,13 @@ const hiddenDefaultKeyTimelineQuestion = {
 }
 
 assert.equal(
-  createFollowUpAnswerMap([hiddenDefaultKeyTimelineQuestion])[
+  createQuestionAnswerMap([hiddenDefaultKeyTimelineQuestion])[
     hiddenDefaultKeyTimelineQuestion.questionId
   ],
   ''
 )
 
-const legacySyntheticMappings = buildSyntheticFollowUpOptionMappings([
+const legacySyntheticMappings = buildSyntheticQuestionOptionMappings([
   'q_observed_probe__leaf_yellowing__watering_frequency_context'
 ])
 assert.equal(
@@ -879,7 +879,7 @@ assert.equal(
   '阴 · abc℃ · N/A%'
 )
 
-const meaningfulTimelinePayload = buildFollowUpPayload(
+const meaningfulTimelinePayload = buildQuestionAnswerPayload(
   {
     diagnosisSessionId: 'session-1',
     roundId: 'round-1',
@@ -905,7 +905,7 @@ assert.equal(
   '2026-05-27'
 )
 
-const weatherWindowPayload = buildFollowUpPayload(
+const weatherWindowPayload = buildQuestionAnswerPayload(
   {
     diagnosisSessionId: 'session-weather-window',
     roundId: 'round-weather-window'
@@ -930,7 +930,7 @@ assert.equal(
 )
 assert.equal(weatherWindowPayload.careBehaviorTimeline.watering_events_10d.length, 1)
 
-const unclearOnlyPayload = buildFollowUpPayload(
+const unclearOnlyPayload = buildQuestionAnswerPayload(
   {
     diagnosisSessionId: 'session-2',
     roundId: 'round-2'
@@ -951,7 +951,7 @@ const unclearOnlyPayload = buildFollowUpPayload(
 assert.equal(unclearOnlyPayload.answers[0].optionId, 'unclear')
 assert.equal(Object.hasOwn(unclearOnlyPayload, 'careBehaviorTimeline'), false)
 
-const unclearWithMeaningfulTimelinePayload = buildFollowUpPayload(
+const unclearWithMeaningfulTimelinePayload = buildQuestionAnswerPayload(
   {
     diagnosisSessionId: 'session-3',
     roundId: 'round-3'

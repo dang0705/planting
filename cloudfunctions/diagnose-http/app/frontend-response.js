@@ -305,7 +305,7 @@ function pickMinimalVisualAggregateSummary(summary = null) {
       summary?.aggregateAnalyzability || summary?.aggregate_analyzability || ''
     ).trim(),
     suggestedFollowupCapture: normalizeStringList(
-      summary?.suggestedFollowupCapture || summary?.suggested_followup_capture
+      summary?.suggestedFollowupCapture || summary?.suggested_question_capture
     ),
     admissionReadyFlag: Number(summary?.admissionReadyFlag ?? summary?.admission_ready_flag ?? 0)
       ? 1

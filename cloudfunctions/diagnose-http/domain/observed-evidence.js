@@ -310,7 +310,7 @@ function buildObservedEvidenceSetFromAnswerEffects(answerEffects = [], symptomMa
           parentEvidenceKey: `answer:${item.questionKey || ''}:${item.optionKey || ''}`,
           sourceRecordId: `${item.questionKey || ''}:${item.optionKey || ''}`,
           originVisualCallBatchId: defaults.originVisualCallBatchId || '',
-          firstSeenStage: defaults.firstSeenStage || 'followup',
+          firstSeenStage: defaults.firstSeenStage || 'question',
           enteredRuntime: 1,
           isKeyEvidence: 1
         },
