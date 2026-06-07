@@ -47,7 +47,7 @@
 
 - `/diagnosis/start`：`runStartDiagnosis -> presentDiagnosisRoundResponse -> buildFrontendResponse`。
 - `/diagnosis/question/start`：`runQuestionStartDiagnosis -> buildFrontendResponse`，不经过 presenter。
-- `/diagnosis/answer`：`runAnswerDiagnosis -> presentDiagnosisAnswerResponse -> buildFrontendResponse`。
+- `/diagnosis/answer`：`runAnswerDiagnosis -> presentDiagnosisAnswerResponse -> buildFrontendAnswerResponse`；终态只返回结果页必要字段，不返回 trace、output eligibility、route decision cause、环境上下文等大字段。
 
 因此不能把三个入口的响应行为写成完全一致。黄叶 4 题题包主要依赖 `question-start` 直接进入前端响应构造。
 

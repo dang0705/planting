@@ -420,7 +420,22 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     hasImageInputs: Boolean(hasImageInputs)
   })
 
-  await Promise.all(requiredAnswerPersistenceTasks)
+  const shouldReturnBeforeRoundPersistence =
+    isTerminalQuestionPackageSubmit && !hasImageInputs && !isAnswerRevision
+  if (shouldReturnBeforeRoundPersistence) {
+    for (const task of requiredAnswerPersistenceTasks) {
+      if (task && typeof task.then === 'function') {
+        task.catch(error => {
+          console.error('diagnosis-answer deferred required persistence failed:', {
+            sessionId,
+            message: String(error?.message || error || '')
+          })
+        })
+      }
+    }
+  } else {
+    await Promise.all(requiredAnswerPersistenceTasks)
+  }
   await persistRoundResult({
     sessionId,
     openid,
@@ -430,7 +445,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     image: '',
     description: '',
     skipPersistence,
-    awaitPersistence: true,
+    awaitPersistence: !shouldReturnBeforeRoundPersistence,
     clientContext,
     legacyQuestionRows: isTerminalQuestionPackageSubmit ? null : legacyQuestionRowsForRound
   })

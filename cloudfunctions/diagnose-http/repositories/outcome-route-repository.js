@@ -64,19 +64,27 @@ function setCached(cache, key = '', value) {
   })
 }
 
-function getComposedCachedAnswerEffects(safeKeys = []) {
+function getComposedCachedRows(cache, cachePrefix = '', safeKeys = []) {
   if (!STATIC_REPOSITORY_CACHE_TTL_MS || safeKeys.length <= 1) {return undefined}
   const rows = []
   for (const key of safeKeys.slice().sort()) {
     const singleKey = buildSchemaCacheKey([
-      'answerEffectsByQuestion',
+      cachePrefix,
       normalizeCacheSignature([key])
     ])
-    const cached = getCached(staticCache.answerEffectsByQuestionSignature, singleKey)
+    const cached = getCached(cache, singleKey)
     if (cached === undefined) {return undefined}
     rows.push(...cached)
   }
   return rows
+}
+
+function getComposedCachedAnswerEffects(safeKeys = []) {
+  return getComposedCachedRows(
+    staticCache.answerEffectsByQuestionSignature,
+    'answerEffectsByQuestion',
+    safeKeys
+  )
 }
 
 function withPendingStaticQuery(key = '', loader) {
@@ -662,10 +670,28 @@ async function getOutcomeRoutesByOutcomeKeys(outcomeKeys = []) {
   const cacheKey = buildSchemaCacheKey(['routesByOutcome', normalizeCacheSignature(safeKeys)])
   const cached = getCached(staticCache.routesByOutcomeSignature, cacheKey)
   if (cached !== undefined) {return cached}
+  const composedCached = getComposedCachedRows(
+    staticCache.routesByOutcomeSignature,
+    'routesByOutcome',
+    safeKeys
+  )
+  if (composedCached !== undefined) {
+    setCached(staticCache.routesByOutcomeSignature, cacheKey, composedCached)
+    return composedCached
+  }
 
   return withPendingStaticQuery(cacheKey, async () => {
     const cachedAfterWait = getCached(staticCache.routesByOutcomeSignature, cacheKey)
     if (cachedAfterWait !== undefined) {return cachedAfterWait}
+    const composedCachedAfterWait = getComposedCachedRows(
+      staticCache.routesByOutcomeSignature,
+      'routesByOutcome',
+      safeKeys
+    )
+    if (composedCachedAfterWait !== undefined) {
+      setCached(staticCache.routesByOutcomeSignature, cacheKey, composedCachedAfterWait)
+      return composedCachedAfterWait
+    }
 
     const rows = await runSql(
     `
@@ -707,10 +733,28 @@ async function getOutcomeRouteGates(routeKeys = []) {
   const cacheKey = buildSchemaCacheKey(['gatesByRoute', normalizeCacheSignature(safeKeys)])
   const cached = getCached(staticCache.gatesByRouteSignature, cacheKey)
   if (cached !== undefined) {return cached}
+  const composedCached = getComposedCachedRows(
+    staticCache.gatesByRouteSignature,
+    'gatesByRoute',
+    safeKeys
+  )
+  if (composedCached !== undefined) {
+    setCached(staticCache.gatesByRouteSignature, cacheKey, composedCached)
+    return composedCached
+  }
 
   return withPendingStaticQuery(cacheKey, async () => {
     const cachedAfterWait = getCached(staticCache.gatesByRouteSignature, cacheKey)
     if (cachedAfterWait !== undefined) {return cachedAfterWait}
+    const composedCachedAfterWait = getComposedCachedRows(
+      staticCache.gatesByRouteSignature,
+      'gatesByRoute',
+      safeKeys
+    )
+    if (composedCachedAfterWait !== undefined) {
+      setCached(staticCache.gatesByRouteSignature, cacheKey, composedCachedAfterWait)
+      return composedCachedAfterWait
+    }
 
     const rows = await runSql(
     `
@@ -752,10 +796,28 @@ async function getOutcomeRouteQuestions(routeKeys = []) {
   const cacheKey = buildSchemaCacheKey(['questionsByRoute', normalizeCacheSignature(safeKeys)])
   const cached = getCached(staticCache.questionsByRouteSignature, cacheKey)
   if (cached !== undefined) {return cached}
+  const composedCached = getComposedCachedRows(
+    staticCache.questionsByRouteSignature,
+    'questionsByRoute',
+    safeKeys
+  )
+  if (composedCached !== undefined) {
+    setCached(staticCache.questionsByRouteSignature, cacheKey, composedCached)
+    return composedCached
+  }
 
   return withPendingStaticQuery(cacheKey, async () => {
     const cachedAfterWait = getCached(staticCache.questionsByRouteSignature, cacheKey)
     if (cachedAfterWait !== undefined) {return cachedAfterWait}
+    const composedCachedAfterWait = getComposedCachedRows(
+      staticCache.questionsByRouteSignature,
+      'questionsByRoute',
+      safeKeys
+    )
+    if (composedCachedAfterWait !== undefined) {
+      setCached(staticCache.questionsByRouteSignature, cacheKey, composedCachedAfterWait)
+      return composedCachedAfterWait
+    }
 
     const rows = await runSql(
     `
@@ -850,10 +912,28 @@ async function getOutcomeActionProfiles(actionProfileKeys = []) {
   const cacheKey = buildSchemaCacheKey(['actionProfiles', normalizeCacheSignature(safeKeys)])
   const cached = getCached(staticCache.actionProfilesBySignature, cacheKey)
   if (cached !== undefined) {return cached}
+  const composedCached = getComposedCachedRows(
+    staticCache.actionProfilesBySignature,
+    'actionProfiles',
+    safeKeys
+  )
+  if (composedCached !== undefined) {
+    setCached(staticCache.actionProfilesBySignature, cacheKey, composedCached)
+    return composedCached
+  }
 
   return withPendingStaticQuery(cacheKey, async () => {
     const cachedAfterWait = getCached(staticCache.actionProfilesBySignature, cacheKey)
     if (cachedAfterWait !== undefined) {return cachedAfterWait}
+    const composedCachedAfterWait = getComposedCachedRows(
+      staticCache.actionProfilesBySignature,
+      'actionProfiles',
+      safeKeys
+    )
+    if (composedCachedAfterWait !== undefined) {
+      setCached(staticCache.actionProfilesBySignature, cacheKey, composedCachedAfterWait)
+      return composedCachedAfterWait
+    }
 
     const rows = await runSql(
     `
@@ -887,10 +967,28 @@ async function getDiagnosisOutcomesByKeys(outcomeKeys = []) {
   const cacheKey = buildSchemaCacheKey(['diagnosisOutcomes', normalizeCacheSignature(safeKeys)])
   const cached = getCached(staticCache.outcomesBySignature, cacheKey)
   if (cached !== undefined) {return cached}
+  const composedCached = getComposedCachedRows(
+    staticCache.outcomesBySignature,
+    'diagnosisOutcomes',
+    safeKeys
+  )
+  if (composedCached !== undefined) {
+    setCached(staticCache.outcomesBySignature, cacheKey, composedCached)
+    return composedCached
+  }
 
   return withPendingStaticQuery(cacheKey, async () => {
     const cachedAfterWait = getCached(staticCache.outcomesBySignature, cacheKey)
     if (cachedAfterWait !== undefined) {return cachedAfterWait}
+    const composedCachedAfterWait = getComposedCachedRows(
+      staticCache.outcomesBySignature,
+      'diagnosisOutcomes',
+      safeKeys
+    )
+    if (composedCachedAfterWait !== undefined) {
+      setCached(staticCache.outcomesBySignature, cacheKey, composedCachedAfterWait)
+      return composedCachedAfterWait
+    }
 
     const rows = await runSql(
     `

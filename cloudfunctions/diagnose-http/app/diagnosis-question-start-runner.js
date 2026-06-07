@@ -7,6 +7,7 @@ const {
   _test: staticQuestionPackageStartTest
 } = require('./static-question-package-start')
 const { createReviewTimingLogger } = require('../repositories/diagnosis-review/review-performance')
+const { preloadStaticRepositoryCacheForCurrentSchema } = require('./static-cache-preloader')
 
 function getManualQuestionStartFastPath() {
   return require('./manual-symptom-question-start-fast-path')
@@ -18,6 +19,19 @@ function getResolveRequestClientContext() {
 
 function buildQuestionStartSessionId() {
   return `diag_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+}
+
+async function preloadStaticRepositoryCacheSafely(context = {}) {
+  try {
+    await preloadStaticRepositoryCacheForCurrentSchema()
+  } catch (error) {
+    if (String(process.env.DIAGNOSIS_DEBUG_LOGS || '').trim() === 'true') {
+      console.warn('diagnosis-question-start static cache preload skipped', {
+        sessionId: String(context.sessionId || '').trim(),
+        message: error?.message || String(error || '')
+      })
+    }
+  }
 }
 
 const manualQuestionStartFastPathTest = {
@@ -319,6 +333,8 @@ async function runQuestionStartDiagnosis({ payload, openid, skipPersistence = fa
     timing.mark('static-question-package-ready', {
       packageQuestionCount: Array.isArray(roundResult?.questions) ? roundResult.questions.length : 0
     })
+    await preloadStaticRepositoryCacheSafely({ sessionId })
+    timing.mark('static-repository-cache-ready')
     await persistQuestionStartRoundResult({
       sessionId,
       openid,
@@ -369,6 +385,7 @@ module.exports = {
     ...manualQuestionStartFastPathTest,
     ...staticQuestionPackageStartTest,
     buildQuestionStartSessionId,
+    preloadStaticRepositoryCacheSafely,
     getResolveRequestClientContext,
     buildMinimalPlantContext,
     buildStaticQuestionPackageStartRoundResult,

@@ -29,6 +29,10 @@ function buildFrontendResponse(payload) {
   return require('../app/frontend-response').buildFrontendDiagnosisResponse(payload)
 }
 
+function buildFrontendAnswerResponse(payload) {
+  return require('../app/frontend-response').buildFrontendAnswerResponse(payload)
+}
+
 async function handleDiagnosisStart(request, context, payload) {
   payload = payload || {}
   const principal = await resolveRequestPrincipal({ request, context, payload })
@@ -117,15 +121,22 @@ async function handleDiagnosisAnswer(request, context, payload) {
 
   try {
     assertAuthenticatedUser({ ...principal, message: '请先登录' })
-    await getRefactorReadiness().ensureRefactorReady()
+    await getRefactorReadiness().ensureRefactorReady({
+      strict: false,
+      allowStale: true,
+      refreshTimeoutMs: 0,
+      source: 'diagnosis-answer'
+    })
     const executed = await getAnswerRunner().runAnswerDiagnosis({
       payload,
       openid: principal.userInfo?.openid || '',
       skipPersistence: principal.skipPersistence
     })
-    const hydratedResponse = await withQuestionTextFallback(executed.response)
+    const hydratedResponse = executed.response?.questionRequired
+      ? await withQuestionTextFallback(executed.response)
+      : executed.response
     const publicResponse = presentDiagnosisAnswerResponse(hydratedResponse)
-    const data = buildFrontendResponse(publicResponse)
+    const data = buildFrontendAnswerResponse(publicResponse)
     if (executed.answerRevision) {
       data.answerRevision = executed.answerRevision
     }

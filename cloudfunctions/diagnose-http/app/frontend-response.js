@@ -482,6 +482,88 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
   }
 }
 
+function buildFrontendAnswerResponse(publicResponse = {}) {
+  const questions = pickMinimalQuestions(resolveResponseQuestions(publicResponse))
+  if (questions.length) {
+    return buildFrontendDiagnosisResponse(publicResponse)
+  }
+
+  const explanation = publicResponse.explanation || publicResponse.resultExplanation || null
+  const visibleOutcomes = buildVisibleOutcomeEntries(publicResponse)
+  const rawFinalResult = pickMinimalFinalResult(publicResponse.finalResult) || {}
+  const finalResult = {
+    resultId: rawFinalResult.resultId || publicResponse.resultId || '',
+    problemId: rawFinalResult.problemId || '',
+    problemKey: rawFinalResult.problemKey || '',
+    displayName: rawFinalResult.displayName || rawFinalResult.problemName || '',
+    summary: rawFinalResult.summary || '',
+    severity: rawFinalResult.severity || '',
+    confidenceLevel: rawFinalResult.confidenceLevel || '',
+    outcomeType: rawFinalResult.outcomeType || publicResponse.outcomeType || '',
+    nonProblematicType: rawFinalResult.nonProblematicType || ''
+  }
+  const actionAdvice = pickMinimalActionAdvice(
+    publicResponse.actionAdvice || publicResponse.finalResult?.actionAdvice
+  )
+  const nextSteps = buildMinimalAdviceSteps(publicResponse, explanation)
+  const whatToAvoid = buildMinimalAvoidAdvice(publicResponse, explanation)
+  const outcomeMode = normalizeOutcomeMode(
+    publicResponse.outcomeMode || publicResponse.finalResult?.outcomeMode || '',
+    visibleOutcomes
+  )
+  const summaryCard = pickMinimalSummaryCard(publicResponse.summaryCard)
+
+  const hasVisibleOutcomes = Array.isArray(visibleOutcomes) && visibleOutcomes.length > 0
+  const treatmentText = normalizeText(
+    publicResponse.treatmentText ||
+      publicResponse.treatment ||
+      nextSteps
+        .map(item => item.text)
+        .filter(Boolean)
+        .join('\n') ||
+      explanation?.firstAid
+  )
+  const preventionText = normalizeText(
+    publicResponse.preventionText ||
+      publicResponse.prevention ||
+      whatToAvoid.join('\n') ||
+      explanation?.avoid
+  )
+
+  return {
+    diagnosisSessionId: publicResponse.diagnosisSessionId || '',
+    resultId: publicResponse.resultId || finalResult?.resultId || '',
+    roundId: publicResponse.roundId || 'round_1',
+    plantId:
+      publicResponse.plantId || publicResponse.userPlantId || publicResponse.plantCatalogId || '',
+    stage: publicResponse.stage || 'final',
+    status: publicResponse.status || publicResponse.sessionStatus || 'closed',
+    outcomeType: publicResponse.outcomeType || finalResult?.outcomeType || '',
+    stopReason: publicResponse.stopReason || '',
+    finalResult,
+    visibleOutcomes,
+    outcomeMode,
+    ...(publicResponse.userPlantId ? { userPlantId: publicResponse.userPlantId } : {}),
+    ...(publicResponse.plantCatalogId ? { plantCatalogId: publicResponse.plantCatalogId } : {}),
+    ...(publicResponse.nonProblematicType || finalResult?.nonProblematicType
+      ? { nonProblematicType: publicResponse.nonProblematicType || finalResult?.nonProblematicType || '' }
+      : {}),
+    ...(publicResponse.nonProblematicLabel
+      ? { nonProblematicLabel: publicResponse.nonProblematicLabel }
+      : {}),
+    ...(!hasVisibleOutcomes && actionAdvice ? { actionAdvice } : {}),
+    ...(!hasVisibleOutcomes && nextSteps.length ? { nextSteps } : {}),
+    ...(!hasVisibleOutcomes && whatToAvoid.length ? { whatToAvoid } : {}),
+    ...(!hasVisibleOutcomes && treatmentText ? { treatmentText } : {}),
+    ...(!hasVisibleOutcomes && preventionText ? { preventionText } : {}),
+    ...(!hasVisibleOutcomes && summaryCard ? { summaryCard } : {}),
+    confidenceLevel: publicResponse.confidenceLevel || finalResult?.confidenceLevel || '',
+    ...(publicResponse.needHumanReview ? { needHumanReview: true } : {}),
+    hasActiveQuestions: false,
+    questions: []
+  }
+}
+
 module.exports = {
   normalizeStringList,
   pickMinimalQuestions,
@@ -496,5 +578,6 @@ module.exports = {
   pickMinimalFinalResult,
   pickMinimalOutcomeEntry,
   pickMinimalSummaryCard,
-  buildFrontendDiagnosisResponse
+  buildFrontendDiagnosisResponse,
+  buildFrontendAnswerResponse
 }

@@ -64,6 +64,7 @@ function triggerStaticRepositoryCachePreloadForSchemaEnvs(schemaEnvs = DEFAULT_P
 }
 
 module.exports = {
+  preloadStaticRepositoryCacheForCurrentSchema,
   triggerStaticRepositoryCachePreload,
   triggerStaticRepositoryCachePreloadForSchemaEnvs
 }

@@ -45,7 +45,8 @@ const {
   buildPublicRoundResponse
 } = require('./cloudfunctions/diagnose-http/presenters/diagnosis-round-presenter.js')
 const {
-  buildFrontendDiagnosisResponse
+  buildFrontendDiagnosisResponse,
+  buildFrontendAnswerResponse
 } = require('./cloudfunctions/diagnose-http/app/frontend-response.js')
 const {
   buildSyntheticQuestionOptionMappings
@@ -2009,6 +2010,43 @@ async function testYellowingLowLightRouteClosesWithActionAdvice() {
   assert.equal(normalized.actionAdvice.todayActions[0], '把植株移到更稳定明亮散射光处')
   assert.equal(normalized.nextSteps[0].text, '把植株移到更稳定明亮散射光处')
   assert.equal(normalized.treatmentText.includes('螯合铁'), false)
+
+  const frontendAnswer = buildFrontendAnswerResponse({
+    ...response,
+    visibleOutcomes: response.visibleOutcomes.map(item => ({
+      ...item,
+      actionAdviceItems: response.actionAdvice.todayActions,
+      avoidAdviceItems: response.actionAdvice.avoidActions
+    })),
+    outputEligibility: { status: 'visible', reasons: ['route_ready'] },
+    routeDecisionCause: decision.decisionCause,
+    visualBatchTrace: [{ batchId: 'batch_should_not_return' }],
+    visualAggregateSummary: { sample: true },
+    summaryCard: {
+      title: '光照不足/生长偏弱',
+      subtitle: '重复摘要',
+      severity: 'medium',
+      statusText: '已完成'
+    }
+  })
+  assert.equal(frontendAnswer.actionAdvice, undefined)
+  assert.equal(frontendAnswer.nextSteps, undefined)
+  assert.equal(frontendAnswer.whatToAvoid, undefined)
+  assert.equal(frontendAnswer.summaryCard, undefined)
+  assert.equal(frontendAnswer.outputEligibility, undefined)
+  assert.equal(frontendAnswer.routeDecisionCause, undefined)
+  assert.equal(frontendAnswer.visualBatchTrace, undefined)
+  assert.equal(frontendAnswer.visualAggregateSummary, undefined)
+  assert.equal(frontendAnswer.finalResult.visibleOutcomes, undefined)
+  assert.equal(frontendAnswer.finalResult.actionAdvice, undefined)
+  assert.deepEqual(frontendAnswer.visibleOutcomes.map(item => item.outcomeKey), [
+    'low_light_growth_weakness'
+  ])
+  assert.equal(frontendAnswer.visibleOutcomes[0].actionAdviceItems[0], '把植株移到更稳定明亮散射光处')
+  assert.equal(JSON.stringify(frontendAnswer).length < 2500, true)
+
+  const normalizedFrontendAnswer = normalizeDiagnosisResult(frontendAnswer)
+  assert.equal(normalizedFrontendAnswer.visibleOutcomes[0].outcomeKey, 'low_light_growth_weakness')
 }
 
 function testRouteActionProfilesLimitedToVisibleOutcomes() {

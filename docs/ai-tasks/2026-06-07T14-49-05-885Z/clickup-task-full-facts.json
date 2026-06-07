@@ -1,0 +1,497 @@
+{
+  "loaded": true,
+  "source": "api",
+  "taskId": "86exvt6fe",
+  "url": "https://app.clickup.com/t/86exvt6fe",
+  "title": "实现枯萎/发蔫问诊 route 模式：多 outcomes + 高危 block 防呆",
+  "status": "backlog",
+  "statusType": "open",
+  "priority": null,
+  "assignees": [],
+  "tags": [],
+  "requirementSummary": "目标：本任务不做：\n*   长势不佳模式\n*   虫害完整问诊模式\n*   病斑完整问诊模式\n*   黄叶模式重构\n*   新 ranking 引擎\n*   新 AI 推理链路\n*   数据库 route 权重设计\n* * *\n不做：本任务不得引入：；权重排序；置信度排序；主因排序；最可能原因排序；特异性分数；复杂规则引擎",
+  "factsQuality": {
+    "status": "blocked",
+    "score": 72,
+    "weakStructure": false,
+    "highRisk": true,
+    "missingFacts": [
+      "missing_acceptance_source"
+    ],
+    "warnings": [
+      "missing_execution_hints"
+    ],
+    "requiredHumanActions": [
+      "补充 native checklist 或验收标准，否则不能进入实现。 "
+    ],
+    "sectionMatches": {
+      "background": {
+        "title": "背景",
+        "alias": "背景"
+      },
+      "goal": {
+        "title": "非目标",
+        "alias": "目标"
+      },
+      "scopeMustNotDo": {
+        "title": "1\\. 不做 ranking",
+        "alias": "不做"
+      },
+      "acceptanceCriteria": {
+        "title": "验收标准",
+        "alias": "验收标准"
+      }
+    }
+  },
+  "weakStructure": false,
+  "missingFacts": [
+    "missing_acceptance_source"
+  ],
+  "counts": {
+    "subtasks": 5,
+    "comments": 0,
+    "attachments": 0,
+    "linkedTasks": 0,
+    "dependencies": 0,
+    "nativeChecklistItems": 0,
+    "externalLinks": 5,
+    "figmaLinks": 0,
+    "hardConstraints": 10
+  },
+  "readBlockers": [
+    "clickup_facts_quality_blocked:missing_acceptance_source"
+  ],
+  "markdownDescription": "# 任务描述\n## 背景\n青花植已基本完成黄叶模式问诊，并沉淀出基于：\n*   植物属级养护数据\n*   用户浇水频率\n*   和风天气时光机过去 10 天温湿度\n*   温湿度叠加浇水算法\n*   可视化浇水行为诊断组件的水分行为判断能力。\n下一步准备开发 **枯萎 / 发蔫** 问诊方向。\n* * *\n## 核心原则\n### 1\\. 不做 ranking\n本任务不得引入：\n*   权重排序\n*   置信度排序\n*   主因排序\n*   最可能原因排序\n*   特异性分数\n*   复杂规则引擎\n### 2\\. route 命中即产出 outcome\n每个题包答案都可以独立触发一个或多个可行动 outcomes。\n最终结果是 outcome 集合，不是唯一诊断。\n### 3\\. 高危 block 只做动作冲突防呆\n枯萎 / 发蔫场景中，部分动作存在明显冲突。\n例如：\n\n```plain\n补足浇水\nvs\n停浇查根\n\n\n```\n\n因此需要一个极简 block 机制：\n\n```scss\n普通 route：只产出 outcome\n高危 route：产出 outcome，并 block 冲突 action\n\n\n```\n\n这不是 ranking，只是 safety guard。\n* * *\n# 推荐问诊结构\n## Q0：复用黄叶模式首题问题和前端组件 - CareBehaviorTimeline.vue\n对应 outcomes：保持和黄叶模式一样\n\n* * *\n## Q1：发蔫形态\n问题：\n\n```plain\n你现在看到的状态更接近哪一种？\n\n\n```\n\n选项与 outcomes：\n\n| 选项 | outcome |\n| ---| --- |\n| 整株软塌下垂 | 全株水分压力：先减少折腾，配合水分组件处理 |\n| 局部叶片 / 枝条发蔫 | 检查局部枝条、叶背、虫害或机械损伤 |\n| 新叶嫩梢为主 | 保护嫩梢：避免强光、风口、浓肥 |\n| 叶片干脆、卷曲、焦边 | 干枯组织处理：后续可修剪，不等待原叶恢复 |\n| 不确定 | 不产出 outcome |\n\n* * *\n## Q2：发蔫节律与点位环境\n问题：\n\n```plain\n发蔫通常在什么情况下更明显？\n\n\n```\n\n选项与 outcomes：\n\n| 选项 | outcome |\n| ---| --- |\n| 白天明显，晚上 / 早晨缓解 | 降低蒸腾压力 |\n| 靠近强光窗边、西晒、高温玻璃后 | 移离强光热源 |\n| 空调、暖气、风扇直吹 | 移出直吹区，保留温和通风 |\n| 全天都蔫 | 持续发蔫：结合水分组件和高危信号处理 |\n| 不确定 | 不产出 outcome |\n\n* * *\n## Q3：近期应激操作\n问题：\n\n```plain\n最近 7 天有没有发生以下情况？\n\n\n```\n\n选项与 outcomes：\n\n| 选项 | outcome | block |\n| ---| ---| --- |\n| 刚买回家、运输、搬位置 | 缓苗稳定 | 频繁搬动 |\n| 刚换盆、分株、修根、换土 | 换盆后缓苗 | 立即施肥、再次换盆、暴晒 |\n| 最近大量修剪 | 修剪后恢复 | 强光、风口刺激 |\n| 最近施浓肥、用药、喷清洁液 | 暂停施肥用药 | 继续施肥、继续喷药 |\n| 都没有 / 不确定 | 不产出 | 无 |\n\n* * *\n## Q4：高危异常征象\n问题：\n\n```plain\n有没有看到以下异常？\n\n\n```\n\n选项与 outcomes：\n\n| 选项 | outcome | block |\n| ---| ---| --- |\n| 茎基部发黑、发软、塌陷 | 停浇查根茎 | 补足浇水、施肥 |\n| 土壤 / 根部 / 盆底有异味 | 停浇查根、检查排水 | 补足浇水、叶面喷水 |\n| 叶片发黑、水渍状、软烂 | 隔离并清理软烂组织 | 叶面喷水、继续闷养 |\n| 黄叶或落叶明显增加 | 检查根系压力和排水 | 视 Q0 结果处理 |\n| 虫害、蛛网、白絮、斑点扩散 | 隔离并进入病虫处理 | 与浇水不互斥 |\n| 都没有 / 不确定 | 不产出 | 无 |\n\n# 必须避免的方向\n不得做：\n\n```plain\n特异性分数\n复杂互斥矩阵\n全局 ranking\n原因概率排序\n主因选择器\nAI 重新推断唯一诊断\n\n\n```\n\n本任务只允许：\n\n```scss\nroute 命中\noutcome 产出\n少数高危 block\n同类 outcome 合并\n\n\n```\n\n* * *\n# 验收标准\n## 功能验收\n*   枯萎 / 发蔫问诊包含 Q0 水分行为组件 + Q1–Q4 题包。\n*   每个有效答案都能独立触发 outcome。\n*   最终结果支持多个 outcomes 同时输出。\n*   不出现 ranking、概率排序、主因排序。\n*   高危异常可 block 冲突动作。\n*   命中腐烂 / 异味 / 水渍软烂时，不输出“直接增加浇水”类行动。\n*   刚换盆 / 修根 route 命中时，不输出“立即施肥 / 再次换盆 / 暴晒”类行动。\n*   浓肥 / 药剂 route 命中时，不输出“继续施肥 / 继续喷药”类行动。\n## 代码验收\n*   outcome 数据结构保持轻量，不引入复杂权重字段。\n*   block 逻辑独立封装，便于测试。\n*   route 配置可读，中文主名优先。\n*   不改动黄叶模式既有 route 语义。\n*   不引入 ranking 或评分算法。\n*   单元测试覆盖 outcome 收集、去重、block、同类合并。\n## 文案验收\n*   结果页表达为“建议行动清单”，不是“最可能原因”。\n*   高危 block 触发时，要解释为什么暂不建议执行被 block 的动作。\n*   中文为主，英文仅作为辅助术语。\n*   用户不需要理解 route、block 等内部概念。\n* * *\n# 非目标\n本任务不做：\n*   长势不佳模式\n*   虫害完整问诊模式\n*   病斑完整问诊模式\n*   黄叶模式重构\n*   新 ranking 引擎\n*   新 AI 推理链路\n*   数据库 route 权重设计\n* * *\n# 建议任务拆分\n*   子任务 1：定义枯萎 / 发蔫 route 配置产出： Q0–Q4 问题配置 answer → outcome 映射 高危 block 列表 ([https://app.clickup.com/t/86exvt6yd](https://app.clickup.com/t/86exvt6yd))\n*   子任务 2：实现 outcome resolver产出： outcome 收集 去重 block 处理 同类 actionGroup 合并 ([https://app.clickup.com/t/86exvt6z0](https://app.clickup.com/t/86exvt6z0))\n*   子任务 3：接入水分行为组件产出： 读取水分组件输出 将缺水 / 过浇 / 基本合理 / 信息不足转为 route outcome ([https://app.clickup.com/t/86exvt6zg](https://app.clickup.com/t/86exvt6zg))\n*   子任务 4：结果页展示产出： 多 outcomes 行动清单 高危提醒 观察周期 被 block 动作解释 ([https://app.clickup.com/t/86exvt70t](https://app.clickup.com/t/86exvt70t))\n*   子任务 5：测试产出： 缺水 + 光热压力 过浇 + 根腐高危 浇水基本合理 + 空调直吹 + 刚换盆 局部发蔫 + 虫害 缺水倾向 + 土壤异味 block 补水 ([https://app.clickup.com/t/86exvt716](https://app.clickup.com/t/86exvt716))\n* * *",
+  "description": "任务描述\n背景\n青花植已基本完成黄叶模式问诊，并沉淀出基于：\n 植物属级养护数据 \n 用户浇水频率 \n 和风天气时光机过去 10 天温湿度 \n 温湿度叠加浇水算法 \n 可视化浇水行为诊断组件的水分行为判断能力。\n下一步准备开发 枯萎 / 发蔫 问诊方向。\n核心原则\n1. 不做 ranking\n本任务不得引入：\n 权重排序 \n 置信度排序 \n 主因排序 \n 最可能原因排序 \n 特异性分数 \n 复杂规则引擎 \n2. route 命中即产出 outcome\n每个题包答案都可以独立触发一个或多个可行动 outcomes。\n最终结果是 outcome 集合，不是唯一诊断。\n3. 高危 block 只做动作冲突防呆\n枯萎 / 发蔫场景中，部分动作存在明显冲突。\n例如：\n补足浇水\nvs\n停浇查根\n\n因此需要一个极简 block 机制：\n普通 route：只产出 outcome\n高危 route：产出 outcome，并 block 冲突 action\n\n这不是 ranking，只是 safety guard。\n推荐问诊结构\nQ0：复用黄叶模式首题问题和前端组件 - CareBehaviorTimeline.vue\n对应 outcomes：保持和黄叶模式一样\n\n\nQ1：发蔫形态\n问题：\n你现在看到的状态更接近哪一种？\n\n选项与 outcomes：\n\n[table-embed:1:1 选项| 1:2 outcome| 2:1 整株软塌下垂| 2:2 全株水分压力：先减少折腾，配合水分组件处理| 3:1 局部叶片 / 枝条发蔫| 3:2 检查局部枝条、叶背、虫害或机械损伤| 4:1 新叶嫩梢为主| 4:2 保护嫩梢：避免强光、风口、浓肥| 5:1 叶片干脆、卷曲、焦边| 5:2 干枯组织处理：后续可修剪，不等待原叶恢复| 6:1 不确定| 6:2 不产出 outcome|]\nQ2：发蔫节律与点位环境\n问题：\n发蔫通常在什么情况下更明显？\n\n选项与 outcomes：\n\n[table-embed:1:1 选项| 1:2 outcome| 2:1 白天明显，晚上 / 早晨缓解| 2:2 降低蒸腾压力| 3:1 靠近强光窗边、西晒、高温玻璃后| 3:2 移离强光热源| 4:1 空调、暖气、风扇直吹| 4:2 移出直吹区，保留温和通风| 5:1 全天都蔫| 5:2 持续发蔫：结合水分组件和高危信号处理| 6:1 不确定| 6:2 不产出 outcome|]\nQ3：近期应激操作\n问题：\n最近 7 天有没有发生以下情况？\n\n选项与 outcomes：\n\n[table-embed:1:1 选项| 1:2 outcome| 1:3 block| 2:1 刚买回家、运输、搬位置| 2:2 缓苗稳定| 2:3 频繁搬动| 3:1 刚换盆、分株、修根、换土| 3:2 换盆后缓苗| 3:3 立即施肥、再次换盆、暴晒| 4:1 最近大量修剪| 4:2 修剪后恢复| 4:3 强光、风口刺激| 5:1 最近施浓肥、用药、喷清洁液| 5:2 暂停施肥用药| 5:3 继续施肥、继续喷药| 6:1 都没有 / 不确定| 6:2 不产出| 6:3 无|]\nQ4：高危异常征象\n问题：\n有没有看到以下异常？\n\n选项与 outcomes：\n\n[table-embed:1:1 选项| 1:2 outcome| 1:3 block| 2:1 茎基部发黑、发软、塌陷| 2:2 停浇查根茎| 2:3 补足浇水、施肥| 3:1 土壤 / 根部 / 盆底有异味| 3:2 停浇查根、检查排水| 3:3 补足浇水、叶面喷水| 4:1 叶片发黑、水渍状、软烂| 4:2 隔离并清理软烂组织| 4:3 叶面喷水、继续闷养| 5:1 黄叶或落叶明显增加| 5:2 检查根系压力和排水| 5:3 视 Q0 结果处理| 6:1 虫害、蛛网、白絮、斑点扩散| 6:2 隔离并进入病虫处理| 6:3 与浇水不互斥| 7:1 都没有 / 不确定| 7:2 不产出| 7:3 无|]必须避免的方向\n不得做：\n特异性分数\n复杂互斥矩阵\n全局 ranking\n原因概率排序\n主因选择器\nAI 重新推断唯一诊断\n\n本任务只允许：\nroute 命中\noutcome 产出\n少数高危 block\n同类 outcome 合并\n\n验收标准\n功能验收\n 枯萎 / 发蔫问诊包含 Q0 水分行为组件 + Q1–Q4 题包。 \n 每个有效答案都能独立触发 outcome。 \n 最终结果支持多个 outcomes 同时输出。 \n 不出现 ranking、概率排序、主因排序。 \n 高危异常可 block 冲突动作。 \n 命中腐烂 / 异味 / 水渍软烂时，不输出“直接增加浇水”类行动。 \n 刚换盆 / 修根 route 命中时，不输出“立即施肥 / 再次换盆 / 暴晒”类行动。 \n 浓肥 / 药剂 route 命中时，不输出“继续施肥 / 继续喷药”类行动。 \n代码验收\n outcome 数据结构保持轻量，不引入复杂权重字段。 \n block 逻辑独立封装，便于测试。 \n route 配置可读，中文主名优先。 \n 不改动黄叶模式既有 route 语义。 \n 不引入 ranking 或评分算法。 \n 单元测试覆盖 outcome 收集、去重、block、同类合并。 \n文案验收\n 结果页表达为“建议行动清单”，不是“最可能原因”。 \n 高危 block 触发时，要解释为什么暂不建议执行被 block 的动作。 \n 中文为主，英文仅作为辅助术语。 \n 用户不需要理解 route、block 等内部概念。 \n非目标\n本任务不做：\n 长势不佳模式 \n 虫害完整问诊模式 \n 病斑完整问诊模式 \n 黄叶模式重构 \n 新 ranking 引擎 \n 新 AI 推理链路 \n 数据库 route 权重设计 \n建议任务拆分",
+  "customFields": [],
+  "requirementFacts": {
+    "background": "青花植已基本完成黄叶模式问诊，并沉淀出基于：\n*   植物属级养护数据\n*   用户浇水频率\n*   和风天气时光机过去 10 天温湿度\n*   温湿度叠加浇水算法\n*   可视化浇水行为诊断组件的水分行为判断能力。\n下一步准备开发 **枯萎 / 发蔫** 问诊方向。\n* * *",
+    "goal": "本任务不做：\n*   长势不佳模式\n*   虫害完整问诊模式\n*   病斑完整问诊模式\n*   黄叶模式重构\n*   新 ranking 引擎\n*   新 AI 推理链路\n*   数据库 route 权重设计\n* * *",
+    "scopeMustDo": [],
+    "scopeMustNotDo": [
+      "本任务不得引入：",
+      "权重排序",
+      "置信度排序",
+      "主因排序",
+      "最可能原因排序",
+      "特异性分数",
+      "复杂规则引擎"
+    ],
+    "dataStructureNotes": [],
+    "frontendStateNotes": [],
+    "cleanupTargets": [],
+    "acceptanceCriteria": [],
+    "risksAndNotes": [],
+    "codexExecutionHints": [],
+    "sectionMatches": {
+      "background": {
+        "title": "背景",
+        "alias": "背景"
+      },
+      "goal": {
+        "title": "非目标",
+        "alias": "目标"
+      },
+      "scopeMustNotDo": {
+        "title": "1\\. 不做 ranking",
+        "alias": "不做"
+      },
+      "acceptanceCriteria": {
+        "title": "验收标准",
+        "alias": "验收标准"
+      }
+    },
+    "rawSections": [
+      {
+        "title": "任务描述",
+        "level": 1,
+        "content": "",
+        "listItems": []
+      },
+      {
+        "title": "背景",
+        "level": 2,
+        "content": "青花植已基本完成黄叶模式问诊，并沉淀出基于：\n*   植物属级养护数据\n*   用户浇水频率\n*   和风天气时光机过去 10 天温湿度\n*   温湿度叠加浇水算法\n*   可视化浇水行为诊断组件的水分行为判断能力。\n下一步准备开发 **枯萎 / 发蔫** 问诊方向。\n* * *",
+        "listItems": [
+          "青花植已基本完成黄叶模式问诊，并沉淀出基于：",
+          "植物属级养护数据",
+          "用户浇水频率",
+          "和风天气时光机过去 10 天温湿度",
+          "温湿度叠加浇水算法",
+          "可视化浇水行为诊断组件的水分行为判断能力。",
+          "下一步准备开发 **枯萎 / 发蔫** 问诊方向。",
+          "* *"
+        ]
+      },
+      {
+        "title": "核心原则",
+        "level": 2,
+        "content": "",
+        "listItems": []
+      },
+      {
+        "title": "1\\. 不做 ranking",
+        "level": 3,
+        "content": "本任务不得引入：\n*   权重排序\n*   置信度排序\n*   主因排序\n*   最可能原因排序\n*   特异性分数\n*   复杂规则引擎",
+        "listItems": [
+          "本任务不得引入：",
+          "权重排序",
+          "置信度排序",
+          "主因排序",
+          "最可能原因排序",
+          "特异性分数",
+          "复杂规则引擎"
+        ]
+      },
+      {
+        "title": "2\\. route 命中即产出 outcome",
+        "level": 3,
+        "content": "每个题包答案都可以独立触发一个或多个可行动 outcomes。\n最终结果是 outcome 集合，不是唯一诊断。",
+        "listItems": [
+          "每个题包答案都可以独立触发一个或多个可行动 outcomes。",
+          "最终结果是 outcome 集合，不是唯一诊断。"
+        ]
+      },
+      {
+        "title": "3\\. 高危 block 只做动作冲突防呆",
+        "level": 3,
+        "content": "枯萎 / 发蔫场景中，部分动作存在明显冲突。\n例如：\n\n```plain\n补足浇水\nvs\n停浇查根\n\n\n```\n\n因此需要一个极简 block 机制：\n\n```scss\n普通 route：只产出 outcome\n高危 route：产出 outcome，并 block 冲突 action\n\n\n```\n\n这不是 ranking，只是 safety guard。\n* * *",
+        "listItems": [
+          "枯萎 / 发蔫场景中，部分动作存在明显冲突。",
+          "例如：",
+          "补足浇水",
+          "vs",
+          "停浇查根",
+          "因此需要一个极简 block 机制：",
+          "普通 route：只产出 outcome",
+          "高危 route：产出 outcome，并 block 冲突 action",
+          "这不是 ranking，只是 safety guard。",
+          "* *"
+        ]
+      },
+      {
+        "title": "推荐问诊结构",
+        "level": 1,
+        "content": "",
+        "listItems": []
+      },
+      {
+        "title": "Q0：复用黄叶模式首题问题和前端组件 - CareBehaviorTimeline.vue",
+        "level": 2,
+        "content": "对应 outcomes：保持和黄叶模式一样\n\n* * *",
+        "listItems": [
+          "对应 outcomes：保持和黄叶模式一样",
+          "* *"
+        ]
+      },
+      {
+        "title": "Q1：发蔫形态",
+        "level": 2,
+        "content": "问题：\n\n```plain\n你现在看到的状态更接近哪一种？\n\n\n```\n\n选项与 outcomes：\n\n| 选项 | outcome |\n| ---| --- |\n| 整株软塌下垂 | 全株水分压力：先减少折腾，配合水分组件处理 |\n| 局部叶片 / 枝条发蔫 | 检查局部枝条、叶背、虫害或机械损伤 |\n| 新叶嫩梢为主 | 保护嫩梢：避免强光、风口、浓肥 |\n| 叶片干脆、卷曲、焦边 | 干枯组织处理：后续可修剪，不等待原叶恢复 |\n| 不确定 | 不产出 outcome |\n\n* * *",
+        "listItems": [
+          "问题：",
+          "你现在看到的状态更接近哪一种？",
+          "选项与 outcomes：",
+          "| 选项 | outcome |",
+          "| ---| --- |",
+          "| 整株软塌下垂 | 全株水分压力：先减少折腾，配合水分组件处理 |",
+          "| 局部叶片 / 枝条发蔫 | 检查局部枝条、叶背、虫害或机械损伤 |",
+          "| 新叶嫩梢为主 | 保护嫩梢：避免强光、风口、浓肥 |",
+          "| 叶片干脆、卷曲、焦边 | 干枯组织处理：后续可修剪，不等待原叶恢复 |",
+          "| 不确定 | 不产出 outcome |",
+          "* *"
+        ]
+      },
+      {
+        "title": "Q2：发蔫节律与点位环境",
+        "level": 2,
+        "content": "问题：\n\n```plain\n发蔫通常在什么情况下更明显？\n\n\n```\n\n选项与 outcomes：\n\n| 选项 | outcome |\n| ---| --- |\n| 白天明显，晚上 / 早晨缓解 | 降低蒸腾压力 |\n| 靠近强光窗边、西晒、高温玻璃后 | 移离强光热源 |\n| 空调、暖气、风扇直吹 | 移出直吹区，保留温和通风 |\n| 全天都蔫 | 持续发蔫：结合水分组件和高危信号处理 |\n| 不确定 | 不产出 outcome |\n\n* * *",
+        "listItems": [
+          "问题：",
+          "发蔫通常在什么情况下更明显？",
+          "选项与 outcomes：",
+          "| 选项 | outcome |",
+          "| ---| --- |",
+          "| 白天明显，晚上 / 早晨缓解 | 降低蒸腾压力 |",
+          "| 靠近强光窗边、西晒、高温玻璃后 | 移离强光热源 |",
+          "| 空调、暖气、风扇直吹 | 移出直吹区，保留温和通风 |",
+          "| 全天都蔫 | 持续发蔫：结合水分组件和高危信号处理 |",
+          "| 不确定 | 不产出 outcome |",
+          "* *"
+        ]
+      },
+      {
+        "title": "Q3：近期应激操作",
+        "level": 2,
+        "content": "问题：\n\n```plain\n最近 7 天有没有发生以下情况？\n\n\n```\n\n选项与 outcomes：\n\n| 选项 | outcome | block |\n| ---| ---| --- |\n| 刚买回家、运输、搬位置 | 缓苗稳定 | 频繁搬动 |\n| 刚换盆、分株、修根、换土 | 换盆后缓苗 | 立即施肥、再次换盆、暴晒 |\n| 最近大量修剪 | 修剪后恢复 | 强光、风口刺激 |\n| 最近施浓肥、用药、喷清洁液 | 暂停施肥用药 | 继续施肥、继续喷药 |\n| 都没有 / 不确定 | 不产出 | 无 |\n\n* * *",
+        "listItems": [
+          "问题：",
+          "最近 7 天有没有发生以下情况？",
+          "选项与 outcomes：",
+          "| 选项 | outcome | block |",
+          "| ---| ---| --- |",
+          "| 刚买回家、运输、搬位置 | 缓苗稳定 | 频繁搬动 |",
+          "| 刚换盆、分株、修根、换土 | 换盆后缓苗 | 立即施肥、再次换盆、暴晒 |",
+          "| 最近大量修剪 | 修剪后恢复 | 强光、风口刺激 |",
+          "| 最近施浓肥、用药、喷清洁液 | 暂停施肥用药 | 继续施肥、继续喷药 |",
+          "| 都没有 / 不确定 | 不产出 | 无 |",
+          "* *"
+        ]
+      },
+      {
+        "title": "Q4：高危异常征象",
+        "level": 2,
+        "content": "问题：\n\n```plain\n有没有看到以下异常？\n\n\n```\n\n选项与 outcomes：\n\n| 选项 | outcome | block |\n| ---| ---| --- |\n| 茎基部发黑、发软、塌陷 | 停浇查根茎 | 补足浇水、施肥 |\n| 土壤 / 根部 / 盆底有异味 | 停浇查根、检查排水 | 补足浇水、叶面喷水 |\n| 叶片发黑、水渍状、软烂 | 隔离并清理软烂组织 | 叶面喷水、继续闷养 |\n| 黄叶或落叶明显增加 | 检查根系压力和排水 | 视 Q0 结果处理 |\n| 虫害、蛛网、白絮、斑点扩散 | 隔离并进入病虫处理 | 与浇水不互斥 |\n| 都没有 / 不确定 | 不产出 | 无 |",
+        "listItems": [
+          "问题：",
+          "有没有看到以下异常？",
+          "选项与 outcomes：",
+          "| 选项 | outcome | block |",
+          "| ---| ---| --- |",
+          "| 茎基部发黑、发软、塌陷 | 停浇查根茎 | 补足浇水、施肥 |",
+          "| 土壤 / 根部 / 盆底有异味 | 停浇查根、检查排水 | 补足浇水、叶面喷水 |",
+          "| 叶片发黑、水渍状、软烂 | 隔离并清理软烂组织 | 叶面喷水、继续闷养 |",
+          "| 黄叶或落叶明显增加 | 检查根系压力和排水 | 视 Q0 结果处理 |",
+          "| 虫害、蛛网、白絮、斑点扩散 | 隔离并进入病虫处理 | 与浇水不互斥 |",
+          "| 都没有 / 不确定 | 不产出 | 无 |"
+        ]
+      },
+      {
+        "title": "必须避免的方向",
+        "level": 1,
+        "content": "不得做：\n\n```plain\n特异性分数\n复杂互斥矩阵\n全局 ranking\n原因概率排序\n主因选择器\nAI 重新推断唯一诊断\n\n\n```\n\n本任务只允许：\n\n```scss\nroute 命中\noutcome 产出\n少数高危 block\n同类 outcome 合并\n\n\n```\n\n* * *",
+        "listItems": [
+          "不得做：",
+          "特异性分数",
+          "复杂互斥矩阵",
+          "全局 ranking",
+          "原因概率排序",
+          "主因选择器",
+          "AI 重新推断唯一诊断",
+          "本任务只允许：",
+          "route 命中",
+          "outcome 产出",
+          "少数高危 block",
+          "同类 outcome 合并",
+          "* *"
+        ]
+      },
+      {
+        "title": "验收标准",
+        "level": 1,
+        "content": "",
+        "listItems": []
+      },
+      {
+        "title": "功能验收",
+        "level": 2,
+        "content": "*   枯萎 / 发蔫问诊包含 Q0 水分行为组件 + Q1–Q4 题包。\n*   每个有效答案都能独立触发 outcome。\n*   最终结果支持多个 outcomes 同时输出。\n*   不出现 ranking、概率排序、主因排序。\n*   高危异常可 block 冲突动作。\n*   命中腐烂 / 异味 / 水渍软烂时，不输出“直接增加浇水”类行动。\n*   刚换盆 / 修根 route 命中时，不输出“立即施肥 / 再次换盆 / 暴晒”类行动。\n*   浓肥 / 药剂 route 命中时，不输出“继续施肥 / 继续喷药”类行动。",
+        "listItems": [
+          "枯萎 / 发蔫问诊包含 Q0 水分行为组件 + Q1–Q4 题包。",
+          "每个有效答案都能独立触发 outcome。",
+          "最终结果支持多个 outcomes 同时输出。",
+          "不出现 ranking、概率排序、主因排序。",
+          "高危异常可 block 冲突动作。",
+          "命中腐烂 / 异味 / 水渍软烂时，不输出“直接增加浇水”类行动。",
+          "刚换盆 / 修根 route 命中时，不输出“立即施肥 / 再次换盆 / 暴晒”类行动。",
+          "浓肥 / 药剂 route 命中时，不输出“继续施肥 / 继续喷药”类行动。"
+        ]
+      },
+      {
+        "title": "代码验收",
+        "level": 2,
+        "content": "*   outcome 数据结构保持轻量，不引入复杂权重字段。\n*   block 逻辑独立封装，便于测试。\n*   route 配置可读，中文主名优先。\n*   不改动黄叶模式既有 route 语义。\n*   不引入 ranking 或评分算法。\n*   单元测试覆盖 outcome 收集、去重、block、同类合并。",
+        "listItems": [
+          "outcome 数据结构保持轻量，不引入复杂权重字段。",
+          "block 逻辑独立封装，便于测试。",
+          "route 配置可读，中文主名优先。",
+          "不改动黄叶模式既有 route 语义。",
+          "不引入 ranking 或评分算法。",
+          "单元测试覆盖 outcome 收集、去重、block、同类合并。"
+        ]
+      },
+      {
+        "title": "文案验收",
+        "level": 2,
+        "content": "*   结果页表达为“建议行动清单”，不是“最可能原因”。\n*   高危 block 触发时，要解释为什么暂不建议执行被 block 的动作。\n*   中文为主，英文仅作为辅助术语。\n*   用户不需要理解 route、block 等内部概念。\n* * *",
+        "listItems": [
+          "结果页表达为“建议行动清单”，不是“最可能原因”。",
+          "高危 block 触发时，要解释为什么暂不建议执行被 block 的动作。",
+          "中文为主，英文仅作为辅助术语。",
+          "用户不需要理解 route、block 等内部概念。",
+          "* *"
+        ]
+      },
+      {
+        "title": "非目标",
+        "level": 1,
+        "content": "本任务不做：\n*   长势不佳模式\n*   虫害完整问诊模式\n*   病斑完整问诊模式\n*   黄叶模式重构\n*   新 ranking 引擎\n*   新 AI 推理链路\n*   数据库 route 权重设计\n* * *",
+        "listItems": [
+          "本任务不做：",
+          "长势不佳模式",
+          "虫害完整问诊模式",
+          "病斑完整问诊模式",
+          "黄叶模式重构",
+          "新 ranking 引擎",
+          "新 AI 推理链路",
+          "数据库 route 权重设计",
+          "* *"
+        ]
+      },
+      {
+        "title": "建议任务拆分",
+        "level": 1,
+        "content": "*   子任务 1：定义枯萎 / 发蔫 route 配置产出： Q0–Q4 问题配置 answer → outcome 映射 高危 block 列表 ([https://app.clickup.com/t/86exvt6yd](https://app.clickup.com/t/86exvt6yd))\n*   子任务 2：实现 outcome resolver产出： outcome 收集 去重 block 处理 同类 actionGroup 合并 ([https://app.clickup.com/t/86exvt6z0](https://app.clickup.com/t/86exvt6z0))\n*   子任务 3：接入水分行为组件产出： 读取水分组件输出 将缺水 / 过浇 / 基本合理 / 信息不足转为 route outcome ([https://app.clickup.com/t/86exvt6zg](https://app.clickup.com/t/86exvt6zg))\n*   子任务 4：结果页展示产出： 多 outcomes 行动清单 高危提醒 观察周期 被 block 动作解释 ([https://app.clickup.com/t/86exvt70t](https://app.clickup.com/t/86exvt70t))\n*   子任务 5：测试产出： 缺水 + 光热压力 过浇 + 根腐高危 浇水基本合理 + 空调直吹 + 刚换盆 局部发蔫 + 虫害 缺水倾向 + 土壤异味 block 补水 ([https://app.clickup.com/t/86exvt716](https://app.clickup.com/t/86exvt716))\n* * *",
+        "listItems": [
+          "子任务 1：定义枯萎 / 发蔫 route 配置产出： Q0–Q4 问题配置 answer → outcome 映射 高危 block 列表 ([https://app.clickup.com/t/86exvt6yd](https://app.clickup.com/t/86exvt6yd))",
+          "子任务 2：实现 outcome resolver产出： outcome 收集 去重 block 处理 同类 actionGroup 合并 ([https://app.clickup.com/t/86exvt6z0](https://app.clickup.com/t/86exvt6z0))",
+          "子任务 3：接入水分行为组件产出： 读取水分组件输出 将缺水 / 过浇 / 基本合理 / 信息不足转为 route outcome ([https://app.clickup.com/t/86exvt6zg](https://app.clickup.com/t/86exvt6zg))",
+          "子任务 4：结果页展示产出： 多 outcomes 行动清单 高危提醒 观察周期 被 block 动作解释 ([https://app.clickup.com/t/86exvt70t](https://app.clickup.com/t/86exvt70t))",
+          "子任务 5：测试产出： 缺水 + 光热压力 过浇 + 根腐高危 浇水基本合理 + 空调直吹 + 刚换盆 局部发蔫 + 虫害 缺水倾向 + 土壤异味 block 补水 ([https://app.clickup.com/t/86exvt716](https://app.clickup.com/t/86exvt716))",
+          "* *"
+        ]
+      }
+    ]
+  },
+  "externalLinks": [
+    {
+      "url": "https://app.clickup.com/t/86exvt6yd",
+      "provider": "clickup",
+      "source": "clickup_task_markdown_description"
+    },
+    {
+      "url": "https://app.clickup.com/t/86exvt6z0",
+      "provider": "clickup",
+      "source": "clickup_task_markdown_description"
+    },
+    {
+      "url": "https://app.clickup.com/t/86exvt6zg",
+      "provider": "clickup",
+      "source": "clickup_task_markdown_description"
+    },
+    {
+      "url": "https://app.clickup.com/t/86exvt70t",
+      "provider": "clickup",
+      "source": "clickup_task_markdown_description"
+    },
+    {
+      "url": "https://app.clickup.com/t/86exvt716",
+      "provider": "clickup",
+      "source": "clickup_task_markdown_description"
+    }
+  ],
+  "figmaLinks": [],
+  "subtasks": [
+    {
+      "id": "86exvt78z",
+      "name": "子任务 1：定义枯萎 / 发蔫 route 配置产出： Q0–Q4 问题配置  answer → outcome 映射  高危 block 列表",
+      "status": "backlog",
+      "statusType": "open",
+      "dateCreated": "1780843153188",
+      "dateUpdated": "1780843219230",
+      "tags": [],
+      "customFields": []
+    },
+    {
+      "id": "86exvt6z0",
+      "name": "子任务 2：实现 outcome resolver产出： outcome 收集  去重  block 处理  同类 actionGroup 合并",
+      "status": "backlog",
+      "statusType": "open",
+      "dateCreated": "1780842978152",
+      "dateUpdated": "1780842978152",
+      "tags": [],
+      "customFields": []
+    },
+    {
+      "id": "86exvt6zg",
+      "name": "子任务 3：接入水分行为组件产出： 读取水分组件输出  将缺水 / 过浇 / 基本合理 / 信息不足转为 route outcome",
+      "status": "backlog",
+      "statusType": "open",
+      "dateCreated": "1780842987733",
+      "dateUpdated": "1780842987733",
+      "tags": [],
+      "customFields": []
+    },
+    {
+      "id": "86exvt70t",
+      "name": "子任务 4：结果页展示产出： 多 outcomes 行动清单  高危提醒  观察周期  被 block 动作解释",
+      "status": "backlog",
+      "statusType": "open",
+      "dateCreated": "1780842996290",
+      "dateUpdated": "1780842996290",
+      "tags": [],
+      "customFields": []
+    },
+    {
+      "id": "86exvt716",
+      "name": "子任务 5：测试产出： 缺水 + 光热压力  过浇 + 根腐高危  浇水基本合理 + 空调直吹 + 刚换盆  局部发蔫 + 虫害  缺水倾向 + 土壤异味 block 补水",
+      "status": "backlog",
+      "statusType": "open",
+      "dateCreated": "1780843002785",
+      "dateUpdated": "1780843002785",
+      "tags": [],
+      "customFields": []
+    }
+  ],
+  "comments": [],
+  "attachments": [],
+  "linkedTasks": [],
+  "dependencies": [],
+  "checklistItems": [],
+  "hardConstraints": [
+    {
+      "quote": "本任务不得引入：",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "因此需要一个极简 block 机制：",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "## Q0：复用黄叶模式首题问题和前端组件 - CareBehaviorTimeline.vue",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "# 必须避免的方向",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "不得做：",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "# 验收标准",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "## 功能验收",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "## 代码验收",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "## 文案验收",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "*   用户不需要理解 route、block 等内部概念。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    }
+  ],
+  "fullFactsPolicy": {
+    "kind": "debug_full_facts",
+    "entersModelPromptByDefault": false
+  }
+}
