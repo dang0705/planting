@@ -703,6 +703,12 @@ automationEnabled =
 const AUTOMATION_DIAGNOSE_IMAGES_STORAGE_KEY = '__plantsight_diagnose_automation_images__'
 const DIAGNOSIS_QUESTION_PACKAGE_STORAGE_KEY_PREFIX = '__plantsight_diagnose_question_package__'
 const SYMPTOM_CLASS_QUICK_SELECT_OPTIONS = [
+  {
+    classKey: 'wilting_droop_mode',
+    classNameCn: '枯萎 / 发蔫模式',
+    symptomKey: 'wilting_droop',
+    symptomCn: '枯萎 / 发蔫'
+  },
   { classKey: 'yellowing_mode', classNameCn: '黄叶模式', symptomKey: 'uniform_yellowing', symptomCn: '整叶黄化' },
   { classKey: 'bacterial_leaf_spot_mode', classNameCn: '细菌性叶斑模式', symptomKey: 'water_soaked_spots', symptomCn: '水渍斑' },
   { classKey: 'chewing_pest_mode', classNameCn: '咀嚼损伤虫害模式', symptomKey: 'holes_in_leaf', symptomCn: '叶片穿孔' },

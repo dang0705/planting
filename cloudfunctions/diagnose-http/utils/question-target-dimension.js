@@ -1,5 +1,5 @@
 'use strict'
-
+//Todo route 模式下也不该有 gate dimensions 等概念了
 const QUESTION_TARGET_DIMENSIONS = {
   VISUAL_PRESENCE: 'visual_presence',
   SURFACE_RESIDUE: 'surface_residue',
@@ -227,32 +227,33 @@ function normalizeText(value = '', fallback = '') {
   return normalized || fallback
 }
 
-function normalizeQuestionTargetDimension(value = '', fallback = QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE) {
+function normalizeQuestionTargetDimension(
+  value = '',
+  fallback = QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
+) {
   const normalized = normalizeText(value).toLowerCase()
-  return Object.values(QUESTION_TARGET_DIMENSIONS).includes(normalized)
-    ? normalized
-    : fallback
+  return Object.values(QUESTION_TARGET_DIMENSIONS).includes(normalized) ? normalized : fallback
 }
 
-function normalizeQuestionRoutingScope(value = '', fallback = QUESTION_ROUTING_SCOPES.SYMPTOM_CONFIRMATION) {
+function normalizeQuestionRoutingScope(
+  value = '',
+  fallback = QUESTION_ROUTING_SCOPES.SYMPTOM_CONFIRMATION
+) {
   const normalized = normalizeText(value).toLowerCase()
-  return Object.values(QUESTION_ROUTING_SCOPES).includes(normalized)
-    ? normalized
-    : fallback
+  return Object.values(QUESTION_ROUTING_SCOPES).includes(normalized) ? normalized : fallback
 }
 
 function normalizeQuestionRole(value = '', fallback = QUESTION_ROLES.SYMPTOM_CONFIRMATION) {
   const normalized = normalizeText(value).toLowerCase()
-  return Object.values(QUESTION_ROLES).includes(normalized)
-    ? normalized
-    : fallback
+  return Object.values(QUESTION_ROLES).includes(normalized) ? normalized : fallback
 }
 
-function normalizeQuestionEffectMode(value = '', fallback = QUESTION_EFFECT_MODES.EVIDENCE_ADMISSION) {
+function normalizeQuestionEffectMode(
+  value = '',
+  fallback = QUESTION_EFFECT_MODES.EVIDENCE_ADMISSION
+) {
   const normalized = normalizeText(value).toLowerCase()
-  return Object.values(QUESTION_EFFECT_MODES).includes(normalized)
-    ? normalized
-    : fallback
+  return Object.values(QUESTION_EFFECT_MODES).includes(normalized) ? normalized : fallback
 }
 
 function inferQuestionTargetDimension(questionKey = '', targetSymptomKey = '') {
@@ -341,16 +342,15 @@ function inferQuestionRoutingScope(questionKey = '', targetSymptomKey = '') {
     : QUESTION_ROUTING_SCOPES.DIFFERENTIAL_PROBE
 }
 
-function inferObservedVisualCoveredDimensions({
-  symptomKey = '',
-  patternKey = ''
-} = {}) {
+function inferObservedVisualCoveredDimensions({ symptomKey = '', patternKey = '' } = {}) {
   const coveredDimensions = new Set([QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE])
   const normalizedSymptomKey = normalizeText(symptomKey).toLowerCase()
   const normalizedPatternKey = normalizeText(patternKey).toLowerCase()
 
-  const symptomDimensions = OBSERVED_VISUAL_COVERED_DIMENSION_BY_SYMPTOM_KEY[normalizedSymptomKey] || []
-  const patternDimensions = OBSERVED_VISUAL_COVERED_DIMENSION_BY_PATTERN_KEY[normalizedPatternKey] || []
+  const symptomDimensions =
+    OBSERVED_VISUAL_COVERED_DIMENSION_BY_SYMPTOM_KEY[normalizedSymptomKey] || []
+  const patternDimensions =
+    OBSERVED_VISUAL_COVERED_DIMENSION_BY_PATTERN_KEY[normalizedPatternKey] || []
 
   for (const targetDimension of [...symptomDimensions, ...patternDimensions]) {
     coveredDimensions.add(targetDimension)
@@ -361,7 +361,9 @@ function inferObservedVisualCoveredDimensions({
 
 function resolveQuestionTargetDimensionLabel(targetDimension = '') {
   const normalized = normalizeQuestionTargetDimension(targetDimension)
-  return QUESTION_TARGET_DIMENSION_LABELS[normalized] || QUESTION_TARGET_DIMENSION_LABELS.visual_presence
+  return (
+    QUESTION_TARGET_DIMENSION_LABELS[normalized] || QUESTION_TARGET_DIMENSION_LABELS.visual_presence
+  )
 }
 
 function isGenericObservedProbeDirectEvidenceDimension(targetDimension = '') {

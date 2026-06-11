@@ -1,8 +1,8 @@
 # Token-lean Codex configuration for this repository.
 # Use higher models or CloudBase MCP only when the task explicitly requires them.
 
-model = "gpt-5.4-mini"
-model_reasoning_effort = "medium"
+model = "gpt-5.5"
+model_reasoning_effort = "xhigh"
 approval_policy = "never"
 sandbox_mode = "workspace-write"
 

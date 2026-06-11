@@ -1,7 +1,7 @@
 name = "qa_reviewer"
 description = "QA 测试验证 agent。负责 unit-test、smoke、e2e、微信开发者工具自动化、回归、验收证据、未验证项和发布前质量缺口；严禁替代 main agent 做代码 review。"
-model = "gpt-5.4"
-model_reasoning_effort = "high"
+model = "deepseek-v4-pro"
+model_provider = "volcengine-coding-plan"
 sandbox_mode = "read-only"
 nickname_candidates = ["QA"]
 developer_instructions = """

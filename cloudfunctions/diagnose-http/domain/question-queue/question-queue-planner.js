@@ -1,4 +1,5 @@
 'use strict'
+// Todo 仍然有Queue的逻辑?
 
 const crypto = require('crypto')
 const {
@@ -15,7 +16,9 @@ function normalizeText(value = '', fallback = '') {
 
 function normalizeRoundIndex(roundId = '', fallback = 1) {
   const match = String(roundId || '').match(/round_(\d+)/i)
-  if (!match) {return Number(fallback || 1) || 1}
+  if (!match) {
+    return Number(fallback || 1) || 1
+  }
   return Number(match[1] || fallback || 1) || 1
 }
 
@@ -56,9 +59,9 @@ function roundValue(value, digits = 4) {
 function isQuestionPackageResponse(response = {}) {
   return Boolean(
     response?.questionPackage &&
-      typeof response.questionPackage === 'object' &&
-      normalizeText(response.questionPackage.answerSubmitMode) === 'package' &&
-      normalizeText(response.questionPackage.questionDisplayMode) === 'package'
+    typeof response.questionPackage === 'object' &&
+    normalizeText(response.questionPackage.answerSubmitMode) === 'package' &&
+    normalizeText(response.questionPackage.questionDisplayMode) === 'package'
   )
 }
 
@@ -77,9 +80,7 @@ function buildRetakeQuestionItems(response = {}, serviceTarget = '') {
   const suggestions = Array.isArray(response?.visualAggregateSummary?.suggestedFollowupCapture)
     ? response.visualAggregateSummary.suggestedFollowupCapture
     : []
-  const captureTargets = suggestions.length
-    ? suggestions
-    : ['补拍更清晰的受损部位近照']
+  const captureTargets = suggestions.length ? suggestions : ['补拍更清晰的受损部位近照']
 
   return captureTargets.map((text, index) => ({
     questionKey: `retake_capture_${index + 1}`,
@@ -118,13 +119,14 @@ function planQuestionQueue(response = {}) {
     nonProblematicType: response?.nonProblematicType
   })
   const questionRequired = Boolean(response?.questionRequired)
-  const questions = Array.isArray(response?.questions) ? response.questions.slice(0, questionLimit) : []
+  const questions = Array.isArray(response?.questions)
+    ? response.questions.slice(0, questionLimit)
+    : []
   const total = questions.length
 
   const baseQuestionItems = questions.map((item, index) => {
     const currentPriority = Math.max(total - index, 1)
-    const estimatedInformationGain =
-      total > 0 ? roundValue((total - index) / total) : 0
+    const estimatedInformationGain = total > 0 ? roundValue((total - index) / total) : 0
     const questionRole = normalizeQuestionRole(
       item?.questionRole || item?.questionCategory || '',
       inferQuestionRole(item?.targetDimension || '', item?.routingScope || '')
@@ -171,25 +173,23 @@ function planQuestionQueue(response = {}) {
     }
   })
 
-  const questionItems = (normalizeText(routePrimaryAction) === 'retake_first'
-    ? buildRetakeQuestionItems(response, serviceTarget)
-    : baseQuestionItems
+  const questionItems = (
+    normalizeText(routePrimaryAction) === 'retake_first'
+      ? buildRetakeQuestionItems(response, serviceTarget)
+      : baseQuestionItems
   ).slice(0, questionLimit)
 
   const activeItemCount = questionItems.length
-  const queueStatus = activeItemCount
-    ? 'active'
-    : questionRequired
-      ? 'blocked'
-      : 'exhausted'
+  const queueStatus = activeItemCount ? 'active' : questionRequired ? 'blocked' : 'exhausted'
   const exhaustedReason = activeItemCount
     ? ''
     : questionRequired
       ? 'question_required_but_no_actionable_question'
       : 'no_high_value_question'
-  const decisionCause = response?.decisionCause && typeof response.decisionCause === 'object'
-    ? response.decisionCause
-    : null
+  const decisionCause =
+    response?.decisionCause && typeof response.decisionCause === 'object'
+      ? response.decisionCause
+      : null
 
   return {
     questionQueueId: buildQuestionQueueId(sessionId, roundId),
@@ -206,7 +206,8 @@ function planQuestionQueue(response = {}) {
       decisionCauseCategory: String(decisionCause?.decisionCauseCategory || '').trim(),
       decisionCauseText: String(decisionCause?.decisionCauseText || '').trim(),
       decisionCauseDetails:
-        decisionCause?.decisionCauseDetails && typeof decisionCause.decisionCauseDetails === 'object'
+        decisionCause?.decisionCauseDetails &&
+        typeof decisionCause.decisionCauseDetails === 'object'
           ? decisionCause.decisionCauseDetails
           : null
     },

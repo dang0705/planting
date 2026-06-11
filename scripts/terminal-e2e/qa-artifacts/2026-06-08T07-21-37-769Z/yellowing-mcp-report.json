@@ -1,0 +1,1266 @@
+{
+  "tool": "miniprogram-automator",
+  "startedAt": "2026-06-08T07:23:20.567Z",
+  "port": 9430,
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/build/mp-weixin",
+  "profile": "overwatering",
+  "maxSteps": 12,
+  "logs": [
+    {
+      "time": "2026-06-08T07:21:38.230Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "位置权限状态:",
+          "authorized"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.230Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "位置权限状态:",
+          "authorized"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.231Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "位置权限状态:",
+          "authorized"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.231Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "位置权限状态:",
+          "authorized"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.231Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "位置权限已授权，直接获取位置信息"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.231Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "位置权限已授权，直接获取位置信息"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.232Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "位置权限已授权，直接获取位置信息"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.232Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "位置权限已授权，直接获取位置信息"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.641Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          {
+            "__v_isShallow": false,
+            "dep": {},
+            "__v_isRef": true,
+            "_rawValue": true,
+            "_value": true
+          },
+          "loaded"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.641Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          {
+            "__v_isShallow": false,
+            "dep": {},
+            "__v_isRef": true,
+            "_rawValue": true,
+            "_value": true
+          },
+          "loaded"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.644Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          {
+            "__v_isShallow": false,
+            "dep": {},
+            "__v_isRef": true,
+            "_rawValue": true,
+            "_value": true
+          },
+          "loaded"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.644Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          {
+            "__v_isShallow": false,
+            "dep": {},
+            "__v_isRef": true,
+            "_rawValue": true,
+            "_value": true
+          },
+          "loaded"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.729Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "获取位置成功，经纬度:",
+          31.22352,
+          121.45591
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.729Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "获取位置成功，经纬度:",
+          31.22352,
+          121.45591
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.729Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "获取位置成功，经纬度:",
+          31.22352,
+          121.45591
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.729Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "获取位置成功，经纬度:",
+          31.22352,
+          121.45591
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.792Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "获取城市信息成功:",
+          {
+            "province": "上海市",
+            "city": "上海市",
+            "district": "静安区"
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.792Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "获取城市信息成功:",
+          {
+            "province": "上海市",
+            "city": "上海市",
+            "district": "静安区"
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.793Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "获取城市信息成功:",
+          {
+            "province": "上海市",
+            "city": "上海市",
+            "district": "静安区"
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.793Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "获取城市信息成功:",
+          {
+            "province": "上海市",
+            "city": "上海市",
+            "district": "静安区"
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.793Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "获取位置信息成功:",
+          {
+            "latitude": 31.22352,
+            "longitude": 121.45591,
+            "province": "上海市",
+            "city": "上海市",
+            "district": "静安区"
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.793Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "获取位置信息成功:",
+          {
+            "latitude": 31.22352,
+            "longitude": 121.45591,
+            "province": "上海市",
+            "city": "上海市",
+            "district": "静安区"
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.793Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "获取位置信息成功:",
+          {
+            "latitude": 31.22352,
+            "longitude": 121.45591,
+            "province": "上海市",
+            "city": "上海市",
+            "district": "静安区"
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.793Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "获取位置信息成功:",
+          {
+            "latitude": 31.22352,
+            "longitude": 121.45591,
+            "province": "上海市",
+            "city": "上海市",
+            "district": "静安区"
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.794Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "🔍 [刷新天气] userStore.location:",
+          {
+            "province": "上海市",
+            "city": "上海市",
+            "latitude": 31.22352,
+            "longitude": 121.45591
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.794Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "🔍 [刷新天气] userStore.location:",
+          {
+            "province": "上海市",
+            "city": "上海市",
+            "latitude": 31.22352,
+            "longitude": 121.45591
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.794Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "🔍 [刷新天气] userStore.location:",
+          {
+            "province": "上海市",
+            "city": "上海市",
+            "latitude": 31.22352,
+            "longitude": 121.45591
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.794Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "🔍 [刷新天气] userStore.location:",
+          {
+            "province": "上海市",
+            "city": "上海市",
+            "latitude": 31.22352,
+            "longitude": 121.45591
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.794Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "🔍 [刷新天气] latitude:",
+          31.22352,
+          "longitude:",
+          121.45591,
+          "city:",
+          "上海市"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.794Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "🔍 [刷新天气] latitude:",
+          31.22352,
+          "longitude:",
+          121.45591,
+          "city:",
+          "上海市"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.798Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "🔍 [刷新天气] latitude:",
+          31.22352,
+          "longitude:",
+          121.45591,
+          "city:",
+          "上海市"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:38.798Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "🔍 [刷新天气] latitude:",
+          31.22352,
+          "longitude:",
+          121.45591,
+          "city:",
+          "上海市"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.222Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "✅ [天气API] HTTP 函数响应:",
+          {
+            "code": 200,
+            "message": "获取成功",
+            "data": {
+              "temperature": 22,
+              "humidity": 47,
+              "weather": "阴",
+              "feelsLike": 20,
+              "windDir": "东风",
+              "windScale": "3",
+              "windSpeed": "12",
+              "pressure": "1010",
+              "visibility": "29",
+              "updateTime": "2026-06-08T14:12+08:00",
+              "raw": {
+                "obsTime": "2026-06-08T14:12+08:00",
+                "temp": "22",
+                "feelsLike": "20",
+                "icon": "104",
+                "text": "阴",
+                "wind360": "90",
+                "windDir": "东风",
+                "windScale": "3",
+                "windSpeed": "12",
+                "humidity": "47",
+                "precip": "0.0",
+                "pressure": "1010",
+                "vis": "29",
+                "cloud": "100",
+                "dew": "12"
+              },
+              "cached": true,
+              "cacheEnabled": true,
+              "cacheScope": "city",
+              "city": "上海市",
+              "province": "上海市",
+              "cachedAt": "2026-06-08T06:23:15",
+              "expiresAt": "2026-06-09T06:23:15",
+              "timestamp": "2026-06-08T07:21:39.209Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.222Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "✅ [天气API] HTTP 函数响应:",
+          {
+            "code": 200,
+            "message": "获取成功",
+            "data": {
+              "temperature": 22,
+              "humidity": 47,
+              "weather": "阴",
+              "feelsLike": 20,
+              "windDir": "东风",
+              "windScale": "3",
+              "windSpeed": "12",
+              "pressure": "1010",
+              "visibility": "29",
+              "updateTime": "2026-06-08T14:12+08:00",
+              "raw": {
+                "obsTime": "2026-06-08T14:12+08:00",
+                "temp": "22",
+                "feelsLike": "20",
+                "icon": "104",
+                "text": "阴",
+                "wind360": "90",
+                "windDir": "东风",
+                "windScale": "3",
+                "windSpeed": "12",
+                "humidity": "47",
+                "precip": "0.0",
+                "pressure": "1010",
+                "vis": "29",
+                "cloud": "100",
+                "dew": "12"
+              },
+              "cached": true,
+              "cacheEnabled": true,
+              "cacheScope": "city",
+              "city": "上海市",
+              "province": "上海市",
+              "cachedAt": "2026-06-08T06:23:15",
+              "expiresAt": "2026-06-09T06:23:15",
+              "timestamp": "2026-06-08T07:21:39.209Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.222Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "✅ [天气API] HTTP 函数响应:",
+          {
+            "code": 200,
+            "message": "获取成功",
+            "data": {
+              "temperature": 22,
+              "humidity": 47,
+              "weather": "阴",
+              "feelsLike": 20,
+              "windDir": "东风",
+              "windScale": "3",
+              "windSpeed": "12",
+              "pressure": "1010",
+              "visibility": "29",
+              "updateTime": "2026-06-08T14:12+08:00",
+              "raw": {
+                "obsTime": "2026-06-08T14:12+08:00",
+                "temp": "22",
+                "feelsLike": "20",
+                "icon": "104",
+                "text": "阴",
+                "wind360": "90",
+                "windDir": "东风",
+                "windScale": "3",
+                "windSpeed": "12",
+                "humidity": "47",
+                "precip": "0.0",
+                "pressure": "1010",
+                "vis": "29",
+                "cloud": "100",
+                "dew": "12"
+              },
+              "cached": true,
+              "cacheEnabled": true,
+              "cacheScope": "city",
+              "city": "上海市",
+              "province": "上海市",
+              "cachedAt": "2026-06-08T06:23:15",
+              "expiresAt": "2026-06-09T06:23:15",
+              "timestamp": "2026-06-08T07:21:39.209Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.222Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "✅ [天气API] HTTP 函数响应:",
+          {
+            "code": 200,
+            "message": "获取成功",
+            "data": {
+              "temperature": 22,
+              "humidity": 47,
+              "weather": "阴",
+              "feelsLike": 20,
+              "windDir": "东风",
+              "windScale": "3",
+              "windSpeed": "12",
+              "pressure": "1010",
+              "visibility": "29",
+              "updateTime": "2026-06-08T14:12+08:00",
+              "raw": {
+                "obsTime": "2026-06-08T14:12+08:00",
+                "temp": "22",
+                "feelsLike": "20",
+                "icon": "104",
+                "text": "阴",
+                "wind360": "90",
+                "windDir": "东风",
+                "windScale": "3",
+                "windSpeed": "12",
+                "humidity": "47",
+                "precip": "0.0",
+                "pressure": "1010",
+                "vis": "29",
+                "cloud": "100",
+                "dew": "12"
+              },
+              "cached": true,
+              "cacheEnabled": true,
+              "cacheScope": "city",
+              "city": "上海市",
+              "province": "上海市",
+              "cachedAt": "2026-06-08T06:23:15",
+              "expiresAt": "2026-06-09T06:23:15",
+              "timestamp": "2026-06-08T07:21:39.209Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.225Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "formatWeatherDisplay 接收的数据:",
+          {
+            "temperature": 22,
+            "humidity": 47,
+            "weather": "阴",
+            "feelsLike": 20,
+            "windDir": "东风",
+            "windScale": "3",
+            "windSpeed": "12",
+            "pressure": "1010",
+            "visibility": "29",
+            "updateTime": "2026-06-08T14:12+08:00",
+            "raw": {
+              "obsTime": "2026-06-08T14:12+08:00",
+              "temp": "22",
+              "feelsLike": "20",
+              "icon": "104",
+              "text": "阴",
+              "wind360": "90",
+              "windDir": "东风",
+              "windScale": "3",
+              "windSpeed": "12",
+              "humidity": "47",
+              "precip": "0.0",
+              "pressure": "1010",
+              "vis": "29",
+              "cloud": "100",
+              "dew": "12"
+            },
+            "cached": true,
+            "cacheEnabled": true,
+            "cacheScope": "city",
+            "city": "上海市",
+            "province": "上海市",
+            "cachedAt": "2026-06-08T06:23:15",
+            "expiresAt": "2026-06-09T06:23:15",
+            "timestamp": "2026-06-08T07:21:39.209Z"
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.225Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "formatWeatherDisplay 接收的数据:",
+          {
+            "temperature": 22,
+            "humidity": 47,
+            "weather": "阴",
+            "feelsLike": 20,
+            "windDir": "东风",
+            "windScale": "3",
+            "windSpeed": "12",
+            "pressure": "1010",
+            "visibility": "29",
+            "updateTime": "2026-06-08T14:12+08:00",
+            "raw": {
+              "obsTime": "2026-06-08T14:12+08:00",
+              "temp": "22",
+              "feelsLike": "20",
+              "icon": "104",
+              "text": "阴",
+              "wind360": "90",
+              "windDir": "东风",
+              "windScale": "3",
+              "windSpeed": "12",
+              "humidity": "47",
+              "precip": "0.0",
+              "pressure": "1010",
+              "vis": "29",
+              "cloud": "100",
+              "dew": "12"
+            },
+            "cached": true,
+            "cacheEnabled": true,
+            "cacheScope": "city",
+            "city": "上海市",
+            "province": "上海市",
+            "cachedAt": "2026-06-08T06:23:15",
+            "expiresAt": "2026-06-09T06:23:15",
+            "timestamp": "2026-06-08T07:21:39.209Z"
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.225Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "formatWeatherDisplay 接收的数据:",
+          {
+            "temperature": 22,
+            "humidity": 47,
+            "weather": "阴",
+            "feelsLike": 20,
+            "windDir": "东风",
+            "windScale": "3",
+            "windSpeed": "12",
+            "pressure": "1010",
+            "visibility": "29",
+            "updateTime": "2026-06-08T14:12+08:00",
+            "raw": {
+              "obsTime": "2026-06-08T14:12+08:00",
+              "temp": "22",
+              "feelsLike": "20",
+              "icon": "104",
+              "text": "阴",
+              "wind360": "90",
+              "windDir": "东风",
+              "windScale": "3",
+              "windSpeed": "12",
+              "humidity": "47",
+              "precip": "0.0",
+              "pressure": "1010",
+              "vis": "29",
+              "cloud": "100",
+              "dew": "12"
+            },
+            "cached": true,
+            "cacheEnabled": true,
+            "cacheScope": "city",
+            "city": "上海市",
+            "province": "上海市",
+            "cachedAt": "2026-06-08T06:23:15",
+            "expiresAt": "2026-06-09T06:23:15",
+            "timestamp": "2026-06-08T07:21:39.209Z"
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.225Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "formatWeatherDisplay 接收的数据:",
+          {
+            "temperature": 22,
+            "humidity": 47,
+            "weather": "阴",
+            "feelsLike": 20,
+            "windDir": "东风",
+            "windScale": "3",
+            "windSpeed": "12",
+            "pressure": "1010",
+            "visibility": "29",
+            "updateTime": "2026-06-08T14:12+08:00",
+            "raw": {
+              "obsTime": "2026-06-08T14:12+08:00",
+              "temp": "22",
+              "feelsLike": "20",
+              "icon": "104",
+              "text": "阴",
+              "wind360": "90",
+              "windDir": "东风",
+              "windScale": "3",
+              "windSpeed": "12",
+              "humidity": "47",
+              "precip": "0.0",
+              "pressure": "1010",
+              "vis": "29",
+              "cloud": "100",
+              "dew": "12"
+            },
+            "cached": true,
+            "cacheEnabled": true,
+            "cacheScope": "city",
+            "city": "上海市",
+            "province": "上海市",
+            "cachedAt": "2026-06-08T06:23:15",
+            "expiresAt": "2026-06-09T06:23:15",
+            "timestamp": "2026-06-08T07:21:39.209Z"
+          }
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.225Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "提取的温度:",
+          22,
+          "天气:",
+          "阴",
+          "湿度:",
+          47
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.225Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "提取的温度:",
+          22,
+          "天气:",
+          "阴",
+          "湿度:",
+          47
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.226Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "提取的温度:",
+          22,
+          "天气:",
+          "阴",
+          "湿度:",
+          47
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.226Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "提取的温度:",
+          22,
+          "天气:",
+          "阴",
+          "湿度:",
+          47
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.226Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "格式化结果:",
+          "☁️ 22°C 湿度: 47%"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.226Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "格式化结果:",
+          "☁️ 22°C 湿度: 47%"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.226Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "格式化结果:",
+          "☁️ 22°C 湿度: 47%"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.226Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "格式化结果:",
+          "☁️ 22°C 湿度: 47%"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.226Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "天气信息获取完成"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.226Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "天气信息获取完成"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.227Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "天气信息获取完成"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:39.227Z",
+      "type": "console",
+      "data": {
+        "type": "log",
+        "args": [
+          "天气信息获取完成"
+        ]
+      }
+    },
+    {
+      "time": "2026-06-08T07:21:42.630Z",
+      "type": "state",
+      "label": "launch",
+      "path": "pages/index/index"
+    },
+    {
+      "time": "2026-06-08T07:21:43.812Z",
+      "type": "state",
+      "label": "popup-opened",
+      "path": "pages/index/index"
+    },
+    {
+      "time": "2026-06-08T07:21:45.521Z",
+      "type": "state",
+      "label": "after-yellowing",
+      "path": "pages/diagnose/question-package"
+    },
+    {
+      "time": "2026-06-08T07:21:45.794Z",
+      "type": "state",
+      "label": "fallback-question",
+      "mapped": false,
+      "questionId": {}
+    },
+    {
+      "time": "2026-06-08T07:21:53.386Z",
+      "type": "answer",
+      "step": 1,
+      "questionId": {},
+      "questionText": "",
+      "chosenOptionText": "说不清/没留意\n单选",
+      "pathBefore": "pages/diagnose/question-package",
+      "pathAfter": "pages/diagnose/question-package"
+    },
+    {
+      "time": "2026-06-08T07:21:53.676Z",
+      "type": "state",
+      "label": "fallback-question",
+      "mapped": false,
+      "questionId": {}
+    },
+    {
+      "time": "2026-06-08T07:22:01.274Z",
+      "type": "answer",
+      "step": 2,
+      "questionId": {},
+      "questionText": "",
+      "chosenOptionText": "说不清/没留意\n已选",
+      "pathBefore": "pages/diagnose/question-package",
+      "pathAfter": "pages/diagnose/question-package"
+    },
+    {
+      "time": "2026-06-08T07:22:01.561Z",
+      "type": "state",
+      "label": "fallback-question",
+      "mapped": false,
+      "questionId": {}
+    },
+    {
+      "time": "2026-06-08T07:22:09.189Z",
+      "type": "answer",
+      "step": 3,
+      "questionId": {},
+      "questionText": "",
+      "chosenOptionText": "说不清/没留意\n已选",
+      "pathBefore": "pages/diagnose/question-package",
+      "pathAfter": "pages/diagnose/question-package"
+    },
+    {
+      "time": "2026-06-08T07:22:09.476Z",
+      "type": "state",
+      "label": "fallback-question",
+      "mapped": false,
+      "questionId": {}
+    },
+    {
+      "time": "2026-06-08T07:22:17.119Z",
+      "type": "answer",
+      "step": 4,
+      "questionId": {},
+      "questionText": "",
+      "chosenOptionText": "说不清/没留意\n已选",
+      "pathBefore": "pages/diagnose/question-package",
+      "pathAfter": "pages/diagnose/question-package"
+    },
+    {
+      "time": "2026-06-08T07:22:17.401Z",
+      "type": "state",
+      "label": "fallback-question",
+      "mapped": false,
+      "questionId": {}
+    },
+    {
+      "time": "2026-06-08T07:22:24.978Z",
+      "type": "answer",
+      "step": 5,
+      "questionId": {},
+      "questionText": "",
+      "chosenOptionText": "说不清/没留意\n已选",
+      "pathBefore": "pages/diagnose/question-package",
+      "pathAfter": "pages/diagnose/question-package"
+    },
+    {
+      "time": "2026-06-08T07:22:25.261Z",
+      "type": "state",
+      "label": "fallback-question",
+      "mapped": false,
+      "questionId": {}
+    },
+    {
+      "time": "2026-06-08T07:22:32.819Z",
+      "type": "answer",
+      "step": 6,
+      "questionId": {},
+      "questionText": "",
+      "chosenOptionText": "说不清/没留意\n已选",
+      "pathBefore": "pages/diagnose/question-package",
+      "pathAfter": "pages/diagnose/question-package"
+    },
+    {
+      "time": "2026-06-08T07:22:33.110Z",
+      "type": "state",
+      "label": "fallback-question",
+      "mapped": false,
+      "questionId": {}
+    },
+    {
+      "time": "2026-06-08T07:22:40.694Z",
+      "type": "answer",
+      "step": 7,
+      "questionId": {},
+      "questionText": "",
+      "chosenOptionText": "说不清/没留意\n已选",
+      "pathBefore": "pages/diagnose/question-package",
+      "pathAfter": "pages/diagnose/question-package"
+    },
+    {
+      "time": "2026-06-08T07:22:40.990Z",
+      "type": "state",
+      "label": "fallback-question",
+      "mapped": false,
+      "questionId": {}
+    },
+    {
+      "time": "2026-06-08T07:22:48.579Z",
+      "type": "answer",
+      "step": 8,
+      "questionId": {},
+      "questionText": "",
+      "chosenOptionText": "说不清/没留意\n已选",
+      "pathBefore": "pages/diagnose/question-package",
+      "pathAfter": "pages/diagnose/question-package"
+    },
+    {
+      "time": "2026-06-08T07:22:48.876Z",
+      "type": "state",
+      "label": "fallback-question",
+      "mapped": false,
+      "questionId": {}
+    },
+    {
+      "time": "2026-06-08T07:22:56.486Z",
+      "type": "answer",
+      "step": 9,
+      "questionId": {},
+      "questionText": "",
+      "chosenOptionText": "说不清/没留意\n已选",
+      "pathBefore": "pages/diagnose/question-package",
+      "pathAfter": "pages/diagnose/question-package"
+    },
+    {
+      "time": "2026-06-08T07:22:56.767Z",
+      "type": "state",
+      "label": "fallback-question",
+      "mapped": false,
+      "questionId": {}
+    },
+    {
+      "time": "2026-06-08T07:23:04.521Z",
+      "type": "answer",
+      "step": 10,
+      "questionId": {},
+      "questionText": "",
+      "chosenOptionText": "说不清/没留意\n已选",
+      "pathBefore": "pages/diagnose/question-package",
+      "pathAfter": "pages/diagnose/question-package"
+    },
+    {
+      "time": "2026-06-08T07:23:04.803Z",
+      "type": "state",
+      "label": "fallback-question",
+      "mapped": false,
+      "questionId": {}
+    },
+    {
+      "time": "2026-06-08T07:23:12.460Z",
+      "type": "answer",
+      "step": 11,
+      "questionId": {},
+      "questionText": "",
+      "chosenOptionText": "说不清/没留意\n已选",
+      "pathBefore": "pages/diagnose/question-package",
+      "pathAfter": "pages/diagnose/question-package"
+    },
+    {
+      "time": "2026-06-08T07:23:12.827Z",
+      "type": "state",
+      "label": "fallback-question",
+      "mapped": false,
+      "questionId": {}
+    },
+    {
+      "time": "2026-06-08T07:23:20.362Z",
+      "type": "answer",
+      "step": 12,
+      "questionId": {},
+      "questionText": "",
+      "chosenOptionText": "说不清/没留意\n已选",
+      "pathBefore": "pages/diagnose/question-package",
+      "pathAfter": "pages/diagnose/question-package"
+    },
+    {
+      "time": "2026-06-08T07:23:20.411Z",
+      "type": "result",
+      "path": "pages/diagnose/question-package",
+      "isCompleted": false,
+      "questionCount": 0,
+      "hasActiveQuestions": false
+    },
+    {
+      "time": "2026-06-08T07:23:20.535Z",
+      "type": "result-elements",
+      "outcomeHits": []
+    },
+    {
+      "time": "2026-06-08T07:23:20.551Z",
+      "type": "result",
+      "screenshot": "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-23-20-535Z-final-state.png"
+    }
+  ],
+  "screenshots": [
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-21-43-813Z-00-popup-opened.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-21-45-474Z-01-yellowing-selected.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-21-48-952Z-step-1-before.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-21-53-386Z-step-1-after.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-21-56-852Z-step-2-before.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-22-01-274Z-step-2-after.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-22-04-707Z-step-3-before.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-22-09-189Z-step-3-after.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-22-12-666Z-step-4-before.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-22-17-120Z-step-4-after.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-22-20-556Z-step-5-before.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-22-24-978Z-step-5-after.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-22-28-392Z-step-6-before.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-22-32-819Z-step-6-after.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-22-36-257Z-step-7-before.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-22-40-694Z-step-7-after.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-22-44-156Z-step-8-before.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-22-48-579Z-step-8-after.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-22-52-042Z-step-9-before.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-22-56-486Z-step-9-after.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-23-00-085Z-step-10-before.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-23-04-521Z-step-10-after.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-23-08-037Z-step-11-before.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-23-12-460Z-step-11-after.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-23-15-966Z-step-12-before.png",
+    "/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/qa-artifacts/2026-06-08T07-21-37-769Z/2026-06-08T07-23-20-362Z-step-12-after.png"
+  ]
+}
