@@ -72,7 +72,7 @@
 ## 字段生命周期
 
 - 前端：`CareBehaviorTimeline.vue` 写入本地 answer object，`buildFollowUpPayload()` 拆出 `careBehaviorTimeline` 顶层字段。
-- 触发：后端 synthetic follow-up 对浇水、施肥、光照相关 `targetDimension` 默认注入 `uiVariant=care_behavior_timeline`；前端也按 `targetDimension` 做兜底识别。
+- 触发：后端 synthetic follow-up 对浇水、施肥、光照相关 `packageTopic` 默认注入 `uiVariant=care_behavior_timeline`；前端也按 `packageTopic` 做保守识别。
 - 诊断 answer 主链：`care-behavior-payload.js` 归一化 sidecar，生成 `environmentCareContext`。
 - 多轮恢复：空的 incoming `careBehaviorTimeline` 不能覆盖 snapshot 中已有的真实时间线；只有包含 daily records / events / 明确施肥 bucket 的 incoming timeline 才作为新输入。
 - runtime：`diagnosis-engine` 所有返回路径透传 sidecar，包含 route fast path / early return。

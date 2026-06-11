@@ -1,17 +1,17 @@
--- 黄叶 gate 分组问诊修正：一页一组 gate.options，完成必要分组后再由 route/gate/outcome 收敛。
+-- 黄叶 condition 分组问诊修正：一页一组 condition.options，完成必要分组后再由 route/condition/outcome 收敛。
 -- 目标：
--- 1. 停用旧 yellowing_care_area_gate 作为 route 闭合依赖。
--- 2. route gate 直接依赖对应分组问题的 option。
--- 3. 停用旧 care-area / primary-clue 对 outcome_answer_effects 的 ranking/effect 输入。
+-- 1. 停用既有 yellowing_care_area_condition 作为 route 闭合依赖。
+-- 2. route condition 直接依赖对应分组问题的 option。
+-- 3. 停用既有 care-area / primary-clue 对 outcome_answer_effects 的 ranking/effect 输入。
 
 UPDATE outcome_route_questions
 SET enabled = 0,
     data_status = 'inactive',
     updated_at = NOW()
 WHERE route_key LIKE 'yellowing_%'
-  AND question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate';
+  AND question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition';
 
-UPDATE outcome_route_gates
+UPDATE outcome_route_conditions
 SET required_answer_effects_json = CASE route_key
   WHEN 'yellowing_wet_soil_route' THEN JSON_OBJECT(
     'questionOptionPairs',
@@ -115,18 +115,18 @@ SET enabled = 0,
     data_status = 'inactive',
     updated_at = NOW()
 WHERE question_key IN (
-  'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
-  'q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate'
+  'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
+  'q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition'
 );
 
 UPDATE question_option_mapping_v5_real
 SET is_active = 0,
     data_status = 'inactive',
     updated_at = NOW()
-WHERE question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate';
+WHERE question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition';
 
 UPDATE question_library_v5_real
 SET is_active = 0,
     data_status = 'inactive',
     updated_at = NOW()
-WHERE question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate';
+WHERE question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition';

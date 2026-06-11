@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS outcome_routes (
   host_profile_condition_json JSON NULL COMMENT '植物基线条件 JSON',
   entry_priority INT NOT NULL DEFAULT 0 COMMENT '入口优先级',
   max_questions INT NOT NULL DEFAULT 1 COMMENT '该路径最大追问数',
-  fallback_policy VARCHAR(64) NOT NULL DEFAULT '' COMMENT '兜底策略',
+  fallback_policy VARCHAR(64) NOT NULL DEFAULT '' COMMENT '保守策略',
   action_profile_key VARCHAR(128) NOT NULL DEFAULT '' COMMENT '行动建议模板键',
   action_conflict_group VARCHAR(128) NOT NULL DEFAULT '' COMMENT '行动冲突组',
   enabled TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否启用',
@@ -45,10 +45,10 @@ CREATE TABLE IF NOT EXISTS outcome_routes (
   KEY idx_outcome_routes_data (data_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='诊断 outcome 可达路径表';
 
-CREATE TABLE IF NOT EXISTS outcome_route_gates (
-  gate_key VARCHAR(128) PRIMARY KEY COMMENT '路径 gate 键',
+CREATE TABLE IF NOT EXISTS outcome_route_conditions (
+  condition_key VARCHAR(128) PRIMARY KEY COMMENT '路径 condition 键',
   route_key VARCHAR(128) NOT NULL DEFAULT '' COMMENT '所属路径键',
-  gate_role VARCHAR(64) NOT NULL DEFAULT '' COMMENT 'gate 角色',
+  condition_role VARCHAR(64) NOT NULL DEFAULT '' COMMENT 'condition 角色',
   required_evidence_json JSON NOT NULL COMMENT '必需证据 JSON',
   required_answer_effects_json JSON NOT NULL COMMENT '必需回答效果 JSON',
   blocker_evidence_json JSON NOT NULL COMMENT '阻断证据 JSON',
@@ -59,26 +59,26 @@ CREATE TABLE IF NOT EXISTS outcome_route_gates (
   on_unknown VARCHAR(64) NOT NULL DEFAULT '' COMMENT '未知动作',
   decision_cause_key VARCHAR(128) NOT NULL DEFAULT '' COMMENT '决策原因键',
   decision_cause_text_cn TEXT NULL COMMENT '中文决策说明',
-  gate_priority INT NOT NULL DEFAULT 0 COMMENT 'gate 优先级',
+  condition_priority INT NOT NULL DEFAULT 0 COMMENT 'condition 优先级',
   enabled TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否启用',
   review_status VARCHAR(64) NOT NULL DEFAULT 'draft' COMMENT '审核状态',
   data_status VARCHAR(64) NOT NULL DEFAULT 'active' COMMENT '数据状态',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  KEY idx_outcome_route_gates_route (route_key),
-  KEY idx_outcome_route_gates_role (gate_role),
-  KEY idx_outcome_route_gates_enabled (enabled),
-  KEY idx_outcome_route_gates_review (review_status),
-  KEY idx_outcome_route_gates_data (data_status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='诊断 outcome 路径 gate 表';
+  KEY idx_outcome_route_conditions_route (route_key),
+  KEY idx_outcome_route_conditions_role (condition_role),
+  KEY idx_outcome_route_conditions_enabled (enabled),
+  KEY idx_outcome_route_conditions_review (review_status),
+  KEY idx_outcome_route_conditions_data (data_status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='诊断 outcome 路径 condition 表';
 
 CREATE TABLE IF NOT EXISTS outcome_route_questions (
   outcome_route_question_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '路径问题自增ID',
   route_key VARCHAR(128) NOT NULL DEFAULT '' COMMENT '路径键',
   step_no INT NOT NULL DEFAULT 1 COMMENT '路径步骤号',
   question_key VARCHAR(128) NOT NULL DEFAULT '' COMMENT '问题键',
-  gate_key VARCHAR(128) NOT NULL DEFAULT '' COMMENT '服务的 gate 键',
-  question_role VARCHAR(64) NOT NULL DEFAULT '' COMMENT '问题角色',
+  condition_key VARCHAR(128) NOT NULL DEFAULT '' COMMENT '服务的 condition 键',
+  route_package_role VARCHAR(64) NOT NULL DEFAULT '' COMMENT '问题角色',
   required_for_closure TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否闭合必需',
   ask_priority INT NOT NULL DEFAULT 0 COMMENT '提问优先级',
   skip_if_evidence_json JSON NOT NULL COMMENT '已存在证据时跳过规则 JSON',
@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS outcome_route_questions (
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (outcome_route_question_id),
   UNIQUE KEY uk_outcome_route_questions_unique (route_key, step_no, question_key),
-  KEY idx_outcome_route_questions_gate (gate_key),
+  KEY idx_outcome_route_questions_condition (condition_key),
   KEY idx_outcome_route_questions_question (question_key),
   KEY idx_outcome_route_questions_enabled (enabled),
   KEY idx_outcome_route_questions_review (review_status),
@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS outcome_action_profiles (
 
 CREATE TABLE IF NOT EXISTS diagnosis_outcomes (
   outcome_key VARCHAR(128) PRIMARY KEY COMMENT 'outcome 键',
-  legacy_problem_key VARCHAR(128) NOT NULL DEFAULT '' COMMENT '兼容旧 problem_key',
+  session_problem_key VARCHAR(128) NOT NULL DEFAULT '' COMMENT '适配既有 problem_key',
   outcome_name_cn VARCHAR(255) NOT NULL DEFAULT '' COMMENT 'outcome 中文名',
   outcome_type VARCHAR(64) NOT NULL DEFAULT '' COMMENT 'outcome 类型',
   outcome_category VARCHAR(64) NOT NULL DEFAULT '' COMMENT 'outcome 分类',
@@ -158,7 +158,7 @@ CREATE TABLE IF NOT EXISTS diagnosis_outcomes (
   data_status VARCHAR(64) NOT NULL DEFAULT 'active' COMMENT '数据状态',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  KEY idx_diagnosis_outcomes_legacy_problem (legacy_problem_key),
+  KEY idx_diagnosis_outcomes_session_problem (session_problem_key),
   KEY idx_diagnosis_outcomes_action_profile (action_profile_key),
   KEY idx_diagnosis_outcomes_type (outcome_type),
   KEY idx_diagnosis_outcomes_review (review_status),

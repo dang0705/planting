@@ -61,8 +61,8 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           }
@@ -124,8 +124,8 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           }
@@ -193,16 +193,16 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           },
           {
             "questionKey": "q_leaf_margin_necrosis_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "leaf_margin_necrosis",
             "text": "叶缘已经形成连续的褐黑坏死带了吗？"
           }
@@ -248,8 +248,8 @@
           {
             "questionKey": "q_irregular_blotches_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "irregular_blotches",
             "text": "病斑呈不规则斑块状，而不是规则圆斑吗？"
           }
@@ -302,8 +302,8 @@
           {
             "questionKey": "q_black_spots_spreading_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "black_spots_spreading",
             "text": "是否有逐渐扩大的黑斑或暗色斑块？"
           }
@@ -358,8 +358,8 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           }
@@ -427,16 +427,16 @@
           {
             "questionKey": "q_holes_in_leaf_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "holes_in_leaf",
             "text": "叶片上有被咬穿的洞，而不是病斑干掉后的穿孔吗？"
           },
           {
             "questionKey": "q_leaf_margin_necrosis_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "leaf_margin_necrosis",
             "text": "叶缘已经形成连续的褐黑坏死带了吗？"
           }
@@ -498,8 +498,8 @@
           {
             "questionKey": "q_irregular_blotches_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "irregular_blotches",
             "text": "病斑呈不规则斑块状，而不是规则圆斑吗？"
           }
@@ -561,16 +561,16 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           },
           {
             "questionKey": "q_leaf_margin_necrosis_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "leaf_margin_necrosis",
             "text": "叶缘已经形成连续的褐黑坏死带了吗？"
           }
@@ -632,8 +632,8 @@
           {
             "questionKey": "q_skeletonized_leaves_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "skeletonized_leaves",
             "text": "叶片被吃到只剩叶脉骨架或半透明网状残留了吗？"
           }
@@ -688,8 +688,8 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           }
@@ -751,8 +751,8 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           }
@@ -820,16 +820,16 @@
           {
             "questionKey": "q_skeletonized_leaves_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "skeletonized_leaves",
             "text": "叶片被吃到只剩叶脉骨架或半透明网状残留了吗？"
           },
           {
             "questionKey": "q_chewed_edges_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "chewed_edges",
             "text": "叶缘像被一口一口啃掉，而不是焦边或病斑吗？"
           }
@@ -900,8 +900,8 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           }
@@ -969,16 +969,16 @@
           {
             "questionKey": "q_leaf_margin_necrosis_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "leaf_margin_necrosis",
             "text": "叶缘已经形成连续的褐黑坏死带了吗？"
           },
           {
             "questionKey": "q_black_spots_spreading_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "black_spots_spreading",
             "text": "是否有逐渐扩大的黑斑或暗色斑块？"
           }
@@ -1046,8 +1046,8 @@
           {
             "questionKey": "q_black_spots_spreading_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "black_spots_spreading",
             "text": "是否有逐渐扩大的黑斑或暗色斑块？"
           }
@@ -1118,8 +1118,8 @@
           {
             "questionKey": "q_irregular_blotches_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "irregular_blotches",
             "text": "病斑呈不规则斑块状，而不是规则圆斑吗？"
           }
@@ -1187,8 +1187,8 @@
           {
             "questionKey": "q_irregular_blotches_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "irregular_blotches",
             "text": "病斑呈不规则斑块状，而不是规则圆斑吗？"
           }
@@ -1250,8 +1250,8 @@
           {
             "questionKey": "q_black_spots_spreading_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "black_spots_spreading",
             "text": "是否有逐渐扩大的黑斑或暗色斑块？"
           }
@@ -1319,16 +1319,16 @@
           {
             "questionKey": "q_leaf_margin_necrosis_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "leaf_margin_necrosis",
             "text": "叶缘已经形成连续的褐黑坏死带了吗？"
           },
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           }

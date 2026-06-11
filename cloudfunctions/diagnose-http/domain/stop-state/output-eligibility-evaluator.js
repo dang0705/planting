@@ -1,10 +1,8 @@
 'use strict'
 
-const { summarizeQuestionQueue } = require('../question-queue/question-queue-invalidator')
-
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function normalizeStringList(values = []) {
@@ -69,8 +67,15 @@ function resolveNextStepHints(response = {}) {
   return Array.from(new Set(hints)).filter(Boolean)
 }
 
-function evaluateOutputEligibility({ response = {}, questionQueue = null, stopState = null } = {}) {
-  const queueSummary = summarizeQuestionQueue(questionQueue || {})
+function hasPendingQuestions(response = {}) {
+  const terminalQuestioningState = response?.terminalQuestioningState
+  if (terminalQuestioningState && typeof terminalQuestioningState === 'object') {
+    return Number(terminalQuestioningState?.requiresQuestion || 0) === 1
+  }
+  return Array.isArray(response?.questions) && response.questions.length > 0
+}
+
+function evaluateOutputEligibility({ response = {}, stopState = null } = {}) {
   const outcomeType = normalizeText(response?.outcomeType)
   const hasFormalOutcome = ['problematic', 'non_problematic', 'uncertain'].includes(outcomeType)
   const hasFormalStopDecision = Boolean(
@@ -81,7 +86,7 @@ function evaluateOutputEligibility({ response = {}, questionQueue = null, stopSt
   const eligible =
     normalizeText(response?.stage) === 'final' &&
     stopState?.isStopped === 1 &&
-    queueSummary.activeItemCount === 0 &&
+    !hasPendingQuestions(response) &&
     hasFormalStopDecision &&
     hasFormalOutcome
       ? 1

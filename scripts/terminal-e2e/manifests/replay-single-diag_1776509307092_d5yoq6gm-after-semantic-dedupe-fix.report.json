@@ -64,7 +64,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -91,7 +91,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -111,7 +111,7 @@
           {
             "questionKey": "q_irregular_blotches_confirm",
             "questionText": "病斑呈不规则斑块状，而不是规则圆斑吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",

@@ -44,7 +44,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -64,7 +64,7 @@
           {
             "questionKey": "q_sticky_honeydew_confirm",
             "questionText": "叶面或周围表面有明显发黏的蜜露吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -81,7 +81,7 @@
           {
             "questionKey": "q_observed_probe__sticky_honeydew__distribution_scope",
             "questionText": "这种“叶子摸起来发黏”主要集中在个别叶片/局部，还是多片叶子都能看到？",
-            "targetDimension": "distribution_scope",
+            "packageTopic": "distribution_scope",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -166,8 +166,8 @@
             "questionEvidence": 0,
             "totalEvidence": 0,
             "penalty": 0,
-            "genusCompatibility": 0.82,
-            "hostCompatibility": 0.82,
+            "genusSuitabilityibility": 0.82,
+            "hostSuitabilityibility": 0.82,
             "baseScore": 0,
             "finalScore": 0
           },
@@ -180,8 +180,8 @@
             "questionEvidence": 0,
             "totalEvidence": 0,
             "penalty": 0,
-            "genusCompatibility": 0.76,
-            "hostCompatibility": 0.76,
+            "genusSuitabilityibility": 0.76,
+            "hostSuitabilityibility": 0.76,
             "baseScore": 0,
             "finalScore": 0
           },
@@ -194,8 +194,8 @@
             "questionEvidence": 0,
             "totalEvidence": 0,
             "penalty": 0,
-            "genusCompatibility": 0.76,
-            "hostCompatibility": 0.7,
+            "genusSuitabilityibility": 0.76,
+            "hostSuitabilityibility": 0.7,
             "baseScore": 0,
             "finalScore": 0
           }

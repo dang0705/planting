@@ -62,7 +62,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "light_stress_mode",
             "primaryClassRuntimeScore": 0.595,
@@ -124,7 +124,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -192,7 +192,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -254,7 +254,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.7905,

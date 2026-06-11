@@ -48,12 +48,12 @@ function isSyntheticVisualCandidateQuestionKey(questionKey = '') {
   return normalizeText(questionKey).startsWith(SYNTHETIC_VISUAL_CANDIDATE_QUESTION_PREFIX)
 }
 
-function buildObservedProbeQuestionGroupKey(symptomKey = '', targetDimension = '') {
-  return `${SYNTHETIC_OBSERVED_PROBE_GROUP_PREFIX}${normalizeText(symptomKey)}__${normalizeText(targetDimension)}`
+function buildObservedProbeQuestionGroupKey(symptomKey = '', packageTopic = '') {
+  return `${SYNTHETIC_OBSERVED_PROBE_GROUP_PREFIX}${normalizeText(symptomKey)}__${normalizeText(packageTopic)}`
 }
 
-function buildSyntheticObservedProbeQuestionKey(symptomKey = '', targetDimension = '') {
-  return `${SYNTHETIC_OBSERVED_PROBE_QUESTION_PREFIX}${normalizeText(symptomKey)}__${normalizeText(targetDimension)}`
+function buildSyntheticObservedProbeQuestionKey(symptomKey = '', packageTopic = '') {
+  return `${SYNTHETIC_OBSERVED_PROBE_QUESTION_PREFIX}${normalizeText(symptomKey)}__${normalizeText(packageTopic)}`
 }
 
 function isSyntheticObservedProbeQuestionKey(questionKey = '') {
@@ -63,15 +63,15 @@ function isSyntheticObservedProbeQuestionKey(questionKey = '') {
 function parseSyntheticObservedProbeQuestionKey(questionKey = '') {
   const normalizedQuestionKey = normalizeText(questionKey)
   if (!isSyntheticObservedProbeQuestionKey(normalizedQuestionKey)) {
-    return { symptomKey: '', targetDimension: '' }
+    return { symptomKey: '', packageTopic: '' }
   }
 
   const body = normalizedQuestionKey.slice(SYNTHETIC_OBSERVED_PROBE_QUESTION_PREFIX.length)
-  const [symptomKey, targetDimension] = body.split('__')
+  const [symptomKey, packageTopic] = body.split('__')
 
   return {
     symptomKey: normalizeText(symptomKey),
-    targetDimension: normalizeText(targetDimension)
+    packageTopic: normalizeText(packageTopic)
   }
 }
 

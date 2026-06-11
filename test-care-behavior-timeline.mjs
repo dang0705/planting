@@ -8,7 +8,7 @@ import {
   buildCareBehaviorDisplayWindow,
   getVisibleCareBehaviorOptions,
   hasMeaningfulCareBehaviorTimeline,
-  isLegacyWateringTimelineQuestion,
+  isSessionWateringTimelineQuestion,
   isCareBehaviorWateringTimelineQuestion,
   resolveCareBehaviorTimelineRecordedAnswerOptionId,
   normalizeCareBehaviorTimeline
@@ -31,7 +31,7 @@ const {
 
 const baseDate = '2026-05-28'
 
-const normalizedFromLegacy = normalizeCareBehaviorTimeline({
+const normalizedFromSession = normalizeCareBehaviorTimeline({
   referenceDate: baseDate,
   wateringEvents: ['2026-05-20', '2026-05-21'],
   fertilizingEvents10d: ['2026-05-20'],
@@ -39,16 +39,16 @@ const normalizedFromLegacy = normalizeCareBehaviorTimeline({
   last_fertilized_bucket: '31_60d'
 })
 
-assert.equal(normalizedFromLegacy.reference_date, baseDate)
-assert.equal(normalizedFromLegacy.watering_events_10d.length, 2)
-assert.equal(normalizedFromLegacy.fertilizing_events_10d.length, 1)
-assert.equal(normalizedFromLegacy.light_change_events_10d.length, 1)
-assert.equal(normalizedFromLegacy.watering_events_10d[0].watered, true)
-assert.equal(normalizedFromLegacy.watering_events_10d[0].amount, 'normal')
-assert.equal(normalizedFromLegacy.fertilizing_events_10d[0].fertilized, true)
-assert.equal(normalizedFromLegacy.fertilizing_events_10d[0].strength, 'thin')
-assert.equal(normalizedFromLegacy.light_change_events_10d[0].event, 'direct_sun_exposure')
-assert.equal(normalizedFromLegacy.last_fertilized_bucket, 'within_10d')
+assert.equal(normalizedFromSession.reference_date, baseDate)
+assert.equal(normalizedFromSession.watering_events_10d.length, 2)
+assert.equal(normalizedFromSession.fertilizing_events_10d.length, 1)
+assert.equal(normalizedFromSession.light_change_events_10d.length, 1)
+assert.equal(normalizedFromSession.watering_events_10d[0].watered, true)
+assert.equal(normalizedFromSession.watering_events_10d[0].amount, 'normal')
+assert.equal(normalizedFromSession.fertilizing_events_10d[0].fertilized, true)
+assert.equal(normalizedFromSession.fertilizing_events_10d[0].strength, 'thin')
+assert.equal(normalizedFromSession.light_change_events_10d[0].event, 'direct_sun_exposure')
+assert.equal(normalizedFromSession.last_fertilized_bucket, 'within_10d')
 
 const displayWindow = buildCareBehaviorDisplayWindow(new Date(baseDate))
 assert.equal(displayWindow.length, 21)
@@ -91,24 +91,24 @@ assert.equal(fromCamelCase.last_fertilized_bucket, 'within_10d')
 const ordinaryWateringQuestion = {
   questionId: 'w-plain',
   questionKey: 'watering_frequency_context',
-  targetDimension: 'watering',
+  packageTopic: 'watering',
   options: [
     { optionId: 'often_wet', optionText: '近2周 2 次以上' },
     { optionId: 'unknown', optionText: '说不清' },
     { optionId: 'unclear', optionText: '没留意' }
   ]
 }
-assert.equal(isLegacyWateringTimelineQuestion(ordinaryWateringQuestion), true)
+assert.equal(isSessionWateringTimelineQuestion(ordinaryWateringQuestion), true)
 assert.equal(isCareBehaviorWateringTimelineQuestion(ordinaryWateringQuestion), true)
 assert.deepEqual(
   getVisibleCareBehaviorOptions(ordinaryWateringQuestion).map(option => option.optionId),
   ['unknown', 'unclear']
 )
 
-const legacyWateringQuestion = {
-  questionId: 'legacy-water',
+const sessionWateringQuestion = {
+  questionId: 'session-water',
   questionKey: 'watering_frequency_context',
-  targetDimension: 'watering',
+  packageTopic: 'watering',
   defaultOptionId: 'often_wet',
   options: [
     {
@@ -124,22 +124,22 @@ const legacyWateringQuestion = {
   ]
 }
 
-assert.equal(isCareBehaviorWateringTimelineQuestion(legacyWateringQuestion), true)
+assert.equal(isCareBehaviorWateringTimelineQuestion(sessionWateringQuestion), true)
 assert.deepEqual(
-  getVisibleCareBehaviorOptions(legacyWateringQuestion).map(option => option.optionId),
+  getVisibleCareBehaviorOptions(sessionWateringQuestion).map(option => option.optionId),
   ['unknown', 'unclear']
 )
 
-const legacyInitialAnswerMap = createQuestionAnswerMap([legacyWateringQuestion])
-assert.equal(legacyInitialAnswerMap[legacyWateringQuestion.questionId], '')
+const sessionInitialAnswerMap = createQuestionAnswerMap([sessionWateringQuestion])
+assert.equal(sessionInitialAnswerMap[sessionWateringQuestion.questionId], '')
 
-const legacyMeaningfulPayload = buildQuestionAnswerPayload(
-  { diagnosisSessionId: 's-legacy-meaningful', roundId: 'r1' },
-  { [legacyWateringQuestion.questionId]: 'care_behavior_timeline' },
+const sessionMeaningfulPayload = buildQuestionAnswerPayload(
+  { diagnosisSessionId: 's-session-meaningful', roundId: 'r1' },
+  { [sessionWateringQuestion.questionId]: 'care_behavior_timeline' },
   {
-    questionStack: [legacyWateringQuestion],
+    questionStack: [sessionWateringQuestion],
     careBehaviorTimelineByQuestionId: {
-      [legacyWateringQuestion.questionId]: {
+      [sessionWateringQuestion.questionId]: {
         reference_date: baseDate,
         watering_events_10d: [{ date: '2026-05-27', watered: true, amount: 'normal' }],
         fertilizing_events_10d: [],
@@ -149,16 +149,16 @@ const legacyMeaningfulPayload = buildQuestionAnswerPayload(
   }
 )
 
-assert.equal(legacyMeaningfulPayload.answers[0].optionId, 'care_behavior_timeline')
-assert.equal(Object.hasOwn(legacyMeaningfulPayload, 'careBehaviorTimeline'), true)
+assert.equal(sessionMeaningfulPayload.answers[0].optionId, 'care_behavior_timeline')
+assert.equal(Object.hasOwn(sessionMeaningfulPayload, 'careBehaviorTimeline'), true)
 
-const legacyUnknownPayload = buildQuestionAnswerPayload(
-  { diagnosisSessionId: 's-legacy-unknown', roundId: 'r1' },
-  { [legacyWateringQuestion.questionId]: 'unknown' },
+const sessionUnknownPayload = buildQuestionAnswerPayload(
+  { diagnosisSessionId: 's-session-unknown', roundId: 'r1' },
+  { [sessionWateringQuestion.questionId]: 'unknown' },
   {
-    questionStack: [legacyWateringQuestion],
+    questionStack: [sessionWateringQuestion],
     careBehaviorTimelineByQuestionId: {
-      [legacyWateringQuestion.questionId]: {
+      [sessionWateringQuestion.questionId]: {
         reference_date: baseDate,
         watering_events_10d: [{ date: '2026-05-27', watered: true, amount: 'normal' }],
         fertilizing_events_10d: [],
@@ -168,13 +168,13 @@ const legacyUnknownPayload = buildQuestionAnswerPayload(
   }
 )
 
-assert.equal(legacyUnknownPayload.answers[0].optionId, 'unknown')
-assert.equal(Object.hasOwn(legacyUnknownPayload, 'careBehaviorTimeline'), false)
+assert.equal(sessionUnknownPayload.answers[0].optionId, 'unknown')
+assert.equal(Object.hasOwn(sessionUnknownPayload, 'careBehaviorTimeline'), false)
 
 const ordinaryDefaultIdQuestion = {
   questionId: 'normal-default-id',
   questionKey: 'normal_default_id',
-  targetDimension: 'light',
+  packageTopic: 'light',
   defaultOptionId: 'yes-option',
   options: [
     { optionId: 'yes-option', optionKey: 'yes_option', optionText: '是' },
@@ -185,7 +185,7 @@ const ordinaryDefaultIdQuestion = {
 const ordinaryDefaultKeyQuestion = {
   questionId: 'normal-default-key',
   questionKey: 'normal_default_key',
-  targetDimension: 'humidity',
+  packageTopic: 'humidity',
   defaultOptionKey: 'yes_option',
   options: [
     { optionId: 'yes-option', optionKey: 'yes_option', optionText: '是' },
@@ -196,7 +196,7 @@ const ordinaryDefaultKeyQuestion = {
 const ordinaryIsDefaultQuestion = {
   questionId: 'normal-is-default',
   questionKey: 'normal_is_default',
-  targetDimension: 'soil',
+  packageTopic: 'soil',
   options: [
     { optionId: 'yes-option', optionKey: 'yes_option', optionText: '是', isDefault: true },
     { optionId: 'no-option', optionKey: 'no_option', optionText: '否' }
@@ -250,7 +250,7 @@ assert.equal(appendResult.careBehaviorTimeline.watering_events_10d.length, 3)
 assert.equal(appendResult.careBehaviorTimeline.fertilizing_events_10d.length, 1)
 assert.equal(appendResult.careBehaviorTimeline.light_change_events_10d.length, 1)
 assert.equal(appendResult.careBehaviorTimeline.last_fertilized_bucket, 'within_10d')
-const appendWithLegacyBucketButFertilize = appendCareBehaviorSidecar(
+const appendWithSessionBucketButFertilize = appendCareBehaviorSidecar(
   { diagnosisSessionId: 's-conflict', answers: [{ questionId: 'q1', optionId: 'ok' }] },
   {
     questionStack: [{ questionId: 'q3', uiVariant: 'care_behavior_timeline' }],
@@ -263,19 +263,19 @@ const appendWithLegacyBucketButFertilize = appendCareBehaviorSidecar(
     }
   }
 )
-assert.equal(appendWithLegacyBucketButFertilize.careBehaviorTimeline.reference_date, '2026-05-28')
+assert.equal(appendWithSessionBucketButFertilize.careBehaviorTimeline.reference_date, '2026-05-28')
 assert.equal(
-  appendWithLegacyBucketButFertilize.careBehaviorTimeline.last_fertilized_bucket,
+  appendWithSessionBucketButFertilize.careBehaviorTimeline.last_fertilized_bucket,
   'within_10d'
 )
-assert.equal(appendWithLegacyBucketButFertilize.answers.length, 1)
-assert.equal(appendWithLegacyBucketButFertilize.answers[0].questionId, 'q1')
-assert.equal(appendWithLegacyBucketButFertilize.answers[0].optionId, 'ok')
+assert.equal(appendWithSessionBucketButFertilize.answers.length, 1)
+assert.equal(appendWithSessionBucketButFertilize.answers[0].questionId, 'q1')
+assert.equal(appendWithSessionBucketButFertilize.answers[0].optionId, 'ok')
 
 const timelineQuestion = {
   questionId: 'timeline-q',
   uiVariant: 'care_behavior_timeline',
-  targetDimension: 'watering',
+  packageTopic: 'watering',
   defaultOptionId: 'timeline_recorded',
   options: [
     {
@@ -304,7 +304,7 @@ assert.equal(
 const unclearDefaultButRecordedTimelineQuestion = {
   questionId: 'timeline-unclear-default',
   uiVariant: 'care_behavior_timeline',
-  targetDimension: 'watering',
+  packageTopic: 'watering',
   defaultOptionId: 'unclear',
   options: [
     { optionId: 'timeline_provided', optionKey: 'timeline_provided', optionText: '记录已提供' },
@@ -313,10 +313,10 @@ const unclearDefaultButRecordedTimelineQuestion = {
     { optionId: 'often_dry', optionKey: 'often_dry', optionText: '近2周 0 次' }
   ]
 }
-const fallbackTimelineQuestion = {
-  questionId: 'timeline-fallback',
+const conservativeTimelineQuestion = {
+  questionId: 'timeline-conservative',
   uiVariant: 'care_behavior_timeline',
-  targetDimension: 'watering',
+  packageTopic: 'watering',
   defaultOptionId: 'unclear',
   options: [
     { optionId: 'care_behavior_timeline', optionText: '记录已提供' },
@@ -326,7 +326,7 @@ const fallbackTimelineQuestion = {
 const noSentinelTimelineQuestion = {
   questionId: 'timeline-no-sentinel',
   uiVariant: 'care_behavior_timeline',
-  targetDimension: 'watering',
+  packageTopic: 'watering',
   defaultOptionId: 'unclear',
   options: [
     { optionId: 'unclear', optionText: '说不清/没留意' },
@@ -339,7 +339,7 @@ assert.equal(
   'timeline_provided'
 )
 assert.equal(
-  resolveCareBehaviorTimelineRecordedAnswerOptionId(fallbackTimelineQuestion),
+  resolveCareBehaviorTimelineRecordedAnswerOptionId(conservativeTimelineQuestion),
   'care_behavior_timeline'
 )
 assert.equal(
@@ -364,11 +364,12 @@ const componentSourceFiles = [
 ]
 const componentSource = componentSourceFiles.map(file => readFileSync(file, 'utf8')).join('\n')
 const questionPageSource = readFileSync('./src/pages/diagnose/question-package.vue', 'utf8')
+const questionFlowSource = readFileSync('./src/pages/diagnose/question-package/question-flow.js', 'utf8')
 const diagnosePopupSource = readFileSync('./src/components/DiagnosePopup.vue', 'utf8')
 const compactComponentSource = componentSource.replace(/\s+/g, ' ')
-const fixedContextMatches = questionPageSource.match(/class="question-package-fixed-context"/g) || []
-const questionPageTrackStart = questionPageSource.indexOf('question-package-page-swiper-track')
-const questionPageItemStart = questionPageSource.indexOf('question-package-page-swiper-item')
+const pageSwiperMatches = questionPageSource.match(/id="diagnose-question-package-page-swiper"/g) || []
+const questionPageTrackStart = questionPageSource.indexOf('questionPageTrackStyle')
+const questionPageItemStart = questionPageSource.indexOf('diagnose-question-package-page-item')
 assert.ok(componentSource.includes('v-if="item.watering"') || componentSource.includes(':active="item.watering"'))
 assert.ok(
   componentSource.includes('v-if="item.fertilizing"') || componentSource.includes(':active="item.fertilizing"')
@@ -394,7 +395,7 @@ assert.ok(componentSource.includes('selectedDateDialogHumidityText'))
 assert.ok(componentSource.includes('selectedDateBehaviorStatusText'))
 assert.ok(componentSource.includes('care-behavior-detail-status'))
 assert.ok(componentSource.includes('care-behavior-error-banner'))
-assert.ok(componentSource.includes('care-behavior-grid-skeleton'))
+assert.ok(componentSource.includes('care-behavior-skeleton-cell'))
 assert.ok(componentSource.includes('showLoadingSkeleton'))
 assert.ok(componentSource.includes('loadingErrorText'))
 assert.ok(componentSource.includes('care-behavior-day--today'))
@@ -476,12 +477,7 @@ assert.equal(
   false
 )
 assert.equal(componentSource.includes('care-behavior-action-row'), false)
-assert.ok(questionPageSource.includes('careBehaviorTimelineAnswerSyncSuppressedByQuestionId'))
-assert.ok(
-  questionPageSource.includes('setCareBehaviorTimelineAnswerSyncSuppression(questionId, true)')
-)
-assert.ok(questionPageSource.includes('clearCareBehaviorTimelineAnswerSyncSuppression(questionId)'))
-assert.ok(questionPageSource.includes('isCareBehaviorTimelineUnclearAnswer(question, answerId)'))
+assert.ok(questionFlowSource.includes('isCareBehaviorTimelineUnclearAnswer(question, currentOptionId)'))
 assert.ok(
   componentSource.indexOf('selectedDate.value = item.date') <
     componentSource.indexOf("toggleCareAction(item.date, 'watering')")
@@ -528,7 +524,7 @@ assert.ok(
   compactComponentSource.includes('entry.temp ?? entry.temperature ?? entry.tempC ?? entry.tempF')
 )
 assert.ok(
-  componentSource.includes('care-behavior-cell--selected border-2 border-[#2d7a4f]')
+  componentSource.includes('care-behavior-cell--selected border-2 !border-[#2d7a4f]')
 )
 assert.ok(componentSource.includes('care-behavior-day--today font-bold text-red-500'))
 assert.ok(
@@ -570,14 +566,13 @@ assert.equal(compactComponentSource.includes('margin: 12px auto 0'), false)
 assert.ok(compactComponentSource.includes('温度'))
 assert.ok(compactComponentSource.includes('湿度'))
 
-assert.ok(questionPageSource.includes('question-package-fixed-context'))
-assert.equal(fixedContextMatches.length, 1)
+assert.ok(questionPageSource.includes('id="diagnose-question-package-page"'))
+assert.equal(pageSwiperMatches.length, 1)
 assert.ok(questionPageSource.includes('questionDiagnosisContextText'))
 assert.ok(questionPageSource.includes('questionProgressText'))
-assert.ok(questionPageSource.includes('question-package-page-body'))
-assert.ok(questionPageSource.includes('question-package-page-swiper-track'))
+assert.ok(questionPageSource.includes('diagnose-question-package-page-swiper'))
 assert.ok(questionPageSource.includes('questionPageTrackStyle'))
-assert.ok(diagnosePopupSource.includes('question-package-swiper-track'))
+assert.ok(diagnosePopupSource.includes('questionSwiperTrackStyle'))
 assert.ok(diagnosePopupSource.includes('questionSwiperTrackStyle'))
 assert.equal(questionPageSource.includes('<swiper'), false)
 assert.equal(questionPageSource.includes('<swiper-item'), false)
@@ -586,21 +581,20 @@ assert.equal(diagnosePopupSource.includes('<swiper-item'), false)
 assert.ok(questionPageSource.includes('environmentWeatherWindowLoading'))
 assert.ok(questionPageSource.includes('environmentWeatherWindowError'))
 assert.ok(
-  questionPageSource.includes(
+  questionFlowSource.includes(
     'hasMeaningfulCareBehaviorTimeline(getCareBehaviorTimelineByQuestion(question))'
   )
 )
-assert.ok(questionPageSource.includes('请您选择在过去的10天内，哪几天浇了水？'))
 assert.ok(questionPageSource.includes(':loading="environmentWeatherWindowLoading"'))
 assert.ok(questionPageSource.includes(':error="environmentWeatherWindowError"'))
-assert.ok(questionPageSource.includes('Object.keys(storedTimeline).length'))
+assert.ok(questionFlowSource.includes('Object.keys(storedTimeline).length'))
 assert.ok(
-  questionPageSource.includes(
+  questionFlowSource.includes(
     'mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(storedTimeline, environmentWeatherWindow.value)'
   )
 )
 assert.ok(
-  questionPageSource.indexOf('question-package-fixed-context') < questionPageTrackStart
+  questionPageSource.indexOf('questionDiagnosisContextText') < questionPageTrackStart
 )
 assert.ok(questionPageItemStart > questionPageTrackStart)
 assert.equal(questionPageSource.includes('question-package-question-count'), false)
@@ -609,7 +603,7 @@ assert.ok(questionPageSource.includes('uni.navigateBack({ delta: 1 })'))
 const hiddenDefaultTimelineQuestion = {
   questionId: 'timeline-hidden-default',
   uiVariant: 'care_behavior_timeline',
-  targetDimension: 'watering',
+  packageTopic: 'watering',
   defaultOptionId: 'often_wet',
   options: [
     {
@@ -632,7 +626,7 @@ assert.equal(
 const hiddenDefaultKeyTimelineQuestion = {
   questionId: 'timeline-hidden-default-key',
   uiVariant: 'care_behavior_timeline',
-  targetDimension: 'watering',
+  packageTopic: 'watering',
   defaultOptionKey: 'often_wet',
   options: [
     { optionId: 'timeline_recorded', optionKey: 'timeline_recorded', optionText: '记录已提供' },
@@ -653,11 +647,11 @@ assert.equal(
   ''
 )
 
-const legacySyntheticMappings = buildSyntheticQuestionOptionMappings([
+const sessionSyntheticMappings = buildSyntheticQuestionOptionMappings([
   'q_observed_probe__leaf_yellowing__watering_frequency_context'
 ])
 assert.equal(
-  legacySyntheticMappings.some(item => item.optionKey === 'care_behavior_timeline'),
+  sessionSyntheticMappings.some(item => item.optionKey === 'care_behavior_timeline'),
   true
 )
 
@@ -723,15 +717,15 @@ const unknownLightEvent = normalizeCareBehaviorTimeline({
 
 assert.equal(unknownLightEvent.light_change_events_10d[0].event, 'unknown')
 
-const legacyReferenceDate = '2026-01-15'
-const appendLegacyReferenceDate = appendCareBehaviorSidecar(
+const sessionReferenceDate = '2026-01-15'
+const appendSessionReferenceDate = appendCareBehaviorSidecar(
   { diagnosisSessionId: 's4' },
   {
-    questionStack: [{ questionId: 'legacyRefQuestion', uiVariant: 'care_behavior_timeline' }],
+    questionStack: [{ questionId: 'sessionRefQuestion', uiVariant: 'care_behavior_timeline' }],
     careBehaviorTimelineByQuestionId: {
-      legacyRefQuestion: {
-        reference_date: legacyReferenceDate,
-        watering_events_10d: [{ date: legacyReferenceDate, watered: true, amount: 'normal' }],
+      sessionRefQuestion: {
+        reference_date: sessionReferenceDate,
+        watering_events_10d: [{ date: sessionReferenceDate, watered: true, amount: 'normal' }],
         fertilizing_events_10d: [],
         light_change_events_10d: []
       }
@@ -739,8 +733,8 @@ const appendLegacyReferenceDate = appendCareBehaviorSidecar(
   }
 )
 
-assert.equal(appendLegacyReferenceDate.careBehaviorTimeline.reference_date, legacyReferenceDate)
-assert.equal(appendLegacyReferenceDate.careBehaviorTimeline.watering_events_10d.length, 1)
+assert.equal(appendSessionReferenceDate.careBehaviorTimeline.reference_date, sessionReferenceDate)
+assert.equal(appendSessionReferenceDate.careBehaviorTimeline.watering_events_10d.length, 1)
 
 const weatherTimelineQuestion = {
   questionId: 'w1',

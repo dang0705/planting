@@ -44,7 +44,7 @@ TENCENT_SECRET_ID + TENCENT_SECRET_KEY
 TENCENTCLOUD_SECRETID + TENCENTCLOUD_SECRETKEY
 ```
 
-`CLOUDBASE_*`、`TENCENT_*`、`TENCENTCLOUD_*` 三套命名在本地 gateway 和云函数 SDK 初始化时会自动兼容。不要把真实密钥写回 `cloudbaserc.json`、workflow、文档或任何已跟踪文件；已经暴露过的旧密钥必须在控制台轮换。
+`CLOUDBASE_*`、`TENCENT_*`、`TENCENTCLOUD_*` 三套命名在本地 gateway 和云函数 SDK 初始化时会自动适配。不要把真实密钥写回 `cloudbaserc.json`、workflow、文档或任何已跟踪文件；已经暴露过的既有密钥必须在控制台轮换。
 
 如果只想验证 gateway 和 health route，可临时跳过启动前凭据检查：
 
@@ -121,7 +121,7 @@ diagnose-http, plant-catalog-http, plant-user-http, identify-http, diagnosis-his
 
 如果端口被其他项目占用，或该端口已经跑着不完整的函数 gateway，小程序构建会直接失败并提示缺少哪些函数；不要忽略这一步，否则微信开发者工具里会看到未启动函数对应接口 404。
 
-如果 `.env.local` 或 shell 没有提供 CloudBase 凭据，脚本会在启动本地业务函数前失败并提示缺少 `SecretId` / `SecretKey`。如果 3010 上已经跑着旧 gateway，但业务探针仍返回 `secret id error`，脚本也会失败并提示检查本地凭据。不要用空值、旧泄漏值或已提交文件兜底；应在未提交的 `.env.local` 中配置已轮换的最小权限密钥。
+如果 `.env.local` 或 shell 没有提供 CloudBase 凭据，脚本会在启动本地业务函数前失败并提示缺少 `SecretId` / `SecretKey`。如果 3010 上已经跑着既有 gateway，但业务探针仍返回 `secret id error`，脚本也会失败并提示检查本地凭据。不要用空值、既有泄漏值或已提交文件保守；应在未提交的 `.env.local` 中配置已轮换的最小权限密钥。
 
 如果业务探针报：
 
@@ -129,7 +129,7 @@ diagnose-http, plant-catalog-http, plant-user-http, identify-http, diagnosis-his
 Database connection failed, please check the corresponding database connection configuration
 ```
 
-说明密钥已经通过签名，但 SQL 连接配置或权限没有通过。先确认当前 shell 没有用旧的 `CLOUDBASE_*` / `TENCENT_*` 覆盖 `.env.local`，再确认 CloudBase 关系型数据库实例为 `READY` 且密钥账号有目标环境 SQL 权限。如 CloudBase 控制台使用了非默认数据库连接名，可在 `.env.local` 设置 `CLOUDBASE_SQL_DBLINK_NAME`；不确定时保持为空，默认使用内置 MySQL 连接。
+说明密钥已经通过签名，但 SQL 连接配置或权限没有通过。先确认当前 shell 没有用既有的 `CLOUDBASE_*` / `TENCENT_*` 覆盖 `.env.local`，再确认 CloudBase 关系型数据库实例为 `READY` 且密钥账号有目标环境 SQL 权限。如 CloudBase 控制台使用了非默认数据库连接名，可在 `.env.local` 设置 `CLOUDBASE_SQL_DBLINK_NAME`；不确定时保持为空，默认使用内置 MySQL 连接。
 
 该脚本会设置：
 
@@ -231,4 +231,4 @@ curl http://127.0.0.1:3010/diagnose-http/health
 - 本地函数默认使用 `APP_ENV=development`、`SCHEMA_ENV=development`、`SQL_DATABASE=cloud1_dev`。
 - 本地业务函数访问 CloudBase SQL/Auth/Storage 时必须从 `.env.local` 或 shell 获得凭据；启动前检查只验证变量存在，不会打印真实值。
 - 生产环境设置本地或非 HTTPS `VITE_API_BASE_URL` 会直接失败。
-- 本地 `/opt` 兼容只通过 `scripts/dev/cloudfunctions-local-opt-alias.cjs` 注入，不修改线上函数源码或生产 layer。
+- 本地 `/opt` 适配只通过 `scripts/dev/cloudfunctions-local-opt-alias.cjs` 注入，不修改线上函数源码或生产 layer。

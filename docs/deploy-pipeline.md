@@ -38,7 +38,7 @@ PR 合并闸门必须同时要求 `Code and mini program build` 和 `Deploy Clou
 | Secrets | `TENCENT_SECRET_KEY` | CloudBase 发布专用子账号 SecretKey |
 | Secrets | `WECHAT_MINIPROGRAM_PRIVATE_KEY` | 微信小程序 CI 私钥内容 |
 
-`cloudbase_env_id` 和 `wechat_miniprogram_appid` 只是非敏感兜底输入。生产环境仍必须使用 Environment Variable/Secret 和最小权限子账号，不复用个人长期主账号密钥。
+`cloudbase_env_id` 和 `wechat_miniprogram_appid` 只是非敏感保守输入。生产环境仍必须使用 Environment Variable/Secret 和最小权限子账号，不复用个人长期主账号密钥。
 
 ## 流程
 
@@ -47,8 +47,8 @@ PR 合并闸门必须同时要求 `Code and mini program build` 和 `Deploy Clou
 PR workflow 分为两个 job：
 
 1. `Code and mini program build`
-   - `npm ci --legacy-peer-deps`
-   - 当前依赖树存在历史 peer 冲突，CI 安装显式使用 legacy peer 解析。
+   - `npm ci --session-peer-deps`
+   - 当前依赖树存在历史 peer 冲突，CI 安装显式使用 session peer 解析。
    - `npm run check:secrets`
    - 扫描当前已跟踪文件，阻止 `.env`、私钥文件、CloudBase/微信/第三方明文密钥进入仓库。
    - `npm run lint`
@@ -66,7 +66,7 @@ PR workflow 分为两个 job：
 
 ### 手动 release
 
-1. `npm ci --legacy-peer-deps`
+1. `npm ci --session-peer-deps`
 2. `npm run check:secrets`
 3. `npm run lint`
 4. `npm run test:ci`
@@ -117,7 +117,7 @@ node scripts/deploy-miniprogram-ci.mjs --dry-run --action=preview --appid=<appid
 
 | 失败位置 | 先检查 | 处理顺序 |
 |---|---|---|
-| `npm ci --legacy-peer-deps` | lockfile 是否与 `package.json` 同步 | 本地重跑 `npm ci --legacy-peer-deps`，确认没有手工改 `node_modules` 后再提交 lockfile |
+| `npm ci --session-peer-deps` | lockfile 是否与 `package.json` 同步 | 本地重跑 `npm ci --session-peer-deps`，确认没有手工改 `node_modules` 后再提交 lockfile |
 | `npm run check:secrets` | 报错文件是否为已跟踪文件或新增待提交文件 | 移除明文值，改成环境变量或占位符；若已暴露，先轮换再继续 |
 | `npm run lint` | 是否为本次 diff 引入的新 error | 先修 error；warning 不作为当前发布阻断，但不要新增无意义 warning |
 | `build:mp-weixin:ci` | `VITE_APP_ENV`、`VITE_CLOUDBASE_ENV_ID` 是否来自目标 Environment 或手动非敏感输入 | 不要回退到 Windows `set VAR=...&&` 脚本；`prod` 不允许靠 dev 默认 envId 发布 |

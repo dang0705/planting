@@ -16,7 +16,7 @@ stale_if_changed:
 
 # Archive / Retrieval Index
 
-本文说明旧文档如何处理。目标不是删除知识，而是阻止旧蓝图和大型材料污染默认 AI 上下文。
+本文说明既有文档如何处理。目标不是删除知识，而是阻止既有蓝图和大型材料污染默认 AI 上下文。
 
 ## 1. 当前活文档
 
@@ -117,9 +117,9 @@ docs/cautions/**
 
 - 运行/发布常用口径已压缩进 `docs/RUNBOOK.md`。
 - 数据库任务可读取 `docs/data-base/**`，但必须用 SQL 文件和代码常量二次验证。
-- 发布/调试事故可按需读取旧 runbook 片段。
+- 发布/调试事故可按需读取既有 runbook 片段。
 
-## 7. 旧设计蓝图
+## 7. 既有设计蓝图
 
 匹配示例：
 
@@ -140,7 +140,7 @@ docs/*v7*.md
 - 如果解释“为什么这么做”，可改造成 ADR。
 - 如果仍描述当前外部契约，应迁移精简到 `ACTIVE_CONTRACTS.md` 后归档原文。
 
-## 8. BRV 旧材料
+## 8. BRV 既有材料
 
 ```text
 .brv/review-backups/**
@@ -154,11 +154,11 @@ docs/*v7*.md
 
 - 默认不读。
 - 只允许 `.brv/context-tree/_index.md` 与 `.brv/context-tree/facts-index.yml` 进入默认 BRV 上下文。
-- 旧 BRV 中若有与当前代码冲突的观察，必须标记 `superseded`。
+- 既有 BRV 中若有与当前代码冲突的观察，必须标记 `superseded`。
 
 ## 9. 物理迁移建议
 
-不要一次性移动全部旧文档。建议分三步：
+不要一次性移动全部既有文档。建议分三步：
 
 ```text
 1. 先合入本包，让默认 AI 消费路径变窄。

@@ -795,7 +795,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "unknown",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "不确定，继续帮我排查"
@@ -816,7 +816,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=unknown",
         "roundsUsed": 1,
         "questionCount": 1,
         "isFinal": false,
@@ -843,7 +843,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "pest_trace",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "看到虫子或虫害痕迹"
@@ -864,7 +864,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=pest_trace",
         "roundsUsed": 1,
         "questionCount": 1,
         "isFinal": true,
@@ -891,7 +891,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "disease_trace",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "还有斑点、烂斑或霉粉"
@@ -912,7 +912,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=disease_trace",
         "roundsUsed": 1,
         "questionCount": 1,
         "isFinal": true,
@@ -939,7 +939,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "care_context",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "先看日常养护"
@@ -960,7 +960,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context",
         "roundsUsed": 1,
         "questionCount": 1,
         "isFinal": true,
@@ -1030,7 +1030,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "yellowing_only",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "只是发黄，没看到其他异常"
@@ -1051,7 +1051,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=yellowing_only",
         "roundsUsed": 1,
         "questionCount": 1,
         "isFinal": false,
@@ -1080,7 +1080,7 @@
       "round1": {
         "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
         "optionKey": "pest_trace",
-        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是既有伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
         "optionText": "有小虫、黑色颗粒、黏液痕或新鲜不规则缺口"
       },
       "round2": [],
@@ -1272,8 +1272,8 @@
       "round1": {
         "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
         "optionKey": "mechanical_old",
-        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
-        "optionText": "更像折伤、摩擦、旧伤或焦边裂开"
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是既有伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "optionText": "更像折伤、摩擦、既有伤或焦边裂开"
       },
       "round2": [],
       "outcome": {
@@ -1320,7 +1320,7 @@
       "round1": {
         "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
         "optionKey": "unknown",
-        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是既有伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
         "optionText": "看不出/不确定"
       },
       "round2": [],
@@ -1368,7 +1368,7 @@
       "round1": {
         "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
         "optionKey": "lesion_dropout",
-        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是既有伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
         "optionText": "先有褐斑、黑斑或黄边，后来中间干枯脱落"
       },
       "round2": [],
@@ -1654,7 +1654,7 @@
         "symptomKey": "vein_darkening"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "pest_trace",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "看到虫子或虫害痕迹"
@@ -1675,7 +1675,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=pest_trace",
         "roundsUsed": 1,
         "questionCount": 1,
         "isFinal": true,
@@ -1757,7 +1757,7 @@
         "symptomKey": "vein_darkening"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "unknown",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "不确定，继续帮我排查"
@@ -1778,7 +1778,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=unknown",
         "roundsUsed": 1,
         "questionCount": 1,
         "isFinal": false,
@@ -1860,7 +1860,7 @@
         "symptomKey": "vein_darkening"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "disease_trace",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "还有斑点、烂斑或霉粉"
@@ -1881,7 +1881,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=disease_trace",
         "roundsUsed": 1,
         "questionCount": 1,
         "isFinal": true,
@@ -2004,7 +2004,7 @@
         "symptomKey": "vein_darkening"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "care_context",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "先看日常养护"
@@ -2025,7 +2025,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context",
         "roundsUsed": 1,
         "questionCount": 1,
         "isFinal": true,
@@ -2052,7 +2052,7 @@
         "symptomKey": "vein_darkening"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "yellowing_only",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "只是发黄，没看到其他异常"
@@ -2073,7 +2073,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=yellowing_only",
         "roundsUsed": 1,
         "questionCount": 1,
         "isFinal": false,
@@ -2100,7 +2100,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "unknown",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "不确定，继续帮我排查"
@@ -2121,7 +2121,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=unknown",
         "roundsUsed": 1,
         "questionCount": 1,
         "isFinal": false,
@@ -2148,7 +2148,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "pest_trace",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "看到虫子或虫害痕迹"
@@ -2169,7 +2169,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=pest_trace",
         "roundsUsed": 1,
         "questionCount": 1,
         "isFinal": true,
@@ -2196,7 +2196,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "care_context",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "先看日常养护"
@@ -2217,7 +2217,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context",
         "roundsUsed": 1,
         "questionCount": 1,
         "isFinal": true,
@@ -2244,7 +2244,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "yellowing_only",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "只是发黄，没看到其他异常"
@@ -2265,7 +2265,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=yellowing_only",
         "roundsUsed": 1,
         "questionCount": 1,
         "isFinal": false,
@@ -2292,7 +2292,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "disease_trace",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "还有斑点、烂斑或霉粉"
@@ -2313,7 +2313,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=disease_trace",
         "roundsUsed": 1,
         "questionCount": 1,
         "isFinal": true,
@@ -2340,7 +2340,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "unknown",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "不确定，继续帮我排查"
@@ -2368,7 +2368,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first",
         "roundsUsed": 2,
         "questionCount": 2,
         "isFinal": false,
@@ -2395,7 +2395,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "unknown",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "不确定，继续帮我排查"
@@ -2423,7 +2423,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=old_lower_leaves_first",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=old_lower_leaves_first",
         "roundsUsed": 2,
         "questionCount": 2,
         "isFinal": false,
@@ -2450,7 +2450,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "unknown",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "不确定，继续帮我排查"
@@ -2478,7 +2478,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=no_clear_age_bias",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=no_clear_age_bias",
         "roundsUsed": 2,
         "questionCount": 2,
         "isFinal": false,
@@ -2670,7 +2670,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "unknown",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "不确定，继续帮我排查"
@@ -2698,7 +2698,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=unknown",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=unknown",
         "roundsUsed": 2,
         "questionCount": 2,
         "isFinal": false,
@@ -2967,7 +2967,7 @@
       "round1": {
         "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
         "optionKey": "pest_trace",
-        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是既有伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
         "optionText": "有小虫、黑色颗粒、黏液痕或新鲜不规则缺口"
       },
       "round2": [
@@ -3084,7 +3084,7 @@
       "round1": {
         "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
         "optionKey": "pest_trace",
-        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是既有伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
         "optionText": "有小虫、黑色颗粒、黏液痕或新鲜不规则缺口"
       },
       "round2": [
@@ -3146,7 +3146,7 @@
       "round1": {
         "questionKey": "q_observed_probe__holes_in_leaf__structural_cause",
         "optionKey": "pest_trace",
-        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是旧伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
+        "questionText": "这题是为了区分真实缺损更像虫害、病斑脱落，还是既有伤/摩擦，不是重复确认有没有洞。请看这些“叶片孔洞”周围更像哪种情况？",
         "optionText": "有小虫、黑色颗粒、黏液痕或新鲜不规则缺口"
       },
       "round2": [
@@ -3646,7 +3646,7 @@
         "symptomKey": "vein_darkening"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "unknown",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "不确定，继续帮我排查"
@@ -3674,7 +3674,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=unknown",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=unknown",
         "roundsUsed": 2,
         "questionCount": 2,
         "isFinal": false,
@@ -3701,7 +3701,7 @@
         "symptomKey": "vein_darkening"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "unknown",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "不确定，继续帮我排查"
@@ -3729,7 +3729,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=no_clear_age_bias",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=no_clear_age_bias",
         "roundsUsed": 2,
         "questionCount": 2,
         "isFinal": false,
@@ -3811,7 +3811,7 @@
         "symptomKey": "vein_darkening"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "unknown",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "不确定，继续帮我排查"
@@ -3839,7 +3839,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first",
         "roundsUsed": 2,
         "questionCount": 2,
         "isFinal": false,
@@ -3866,7 +3866,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "unknown",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "不确定，继续帮我排查"
@@ -3894,7 +3894,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=unknown",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=unknown",
         "roundsUsed": 2,
         "questionCount": 2,
         "isFinal": false,
@@ -3921,7 +3921,7 @@
         "symptomKey": "vein_darkening"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "unknown",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "不确定，继续帮我排查"
@@ -3949,7 +3949,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=old_lower_leaves_first",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=old_lower_leaves_first",
         "roundsUsed": 2,
         "questionCount": 2,
         "isFinal": false,
@@ -3976,7 +3976,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "unknown",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "不确定，继续帮我排查"
@@ -4004,7 +4004,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first",
         "roundsUsed": 2,
         "questionCount": 2,
         "isFinal": false,
@@ -4031,7 +4031,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "unknown",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "不确定，继续帮我排查"
@@ -4059,7 +4059,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=old_lower_leaves_first",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=old_lower_leaves_first",
         "roundsUsed": 2,
         "questionCount": 2,
         "isFinal": false,
@@ -4086,7 +4086,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "unknown",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "不确定，继续帮我排查"
@@ -4114,7 +4114,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=no_clear_age_bias",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=unknown > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=no_clear_age_bias",
         "roundsUsed": 2,
         "questionCount": 2,
         "isFinal": false,

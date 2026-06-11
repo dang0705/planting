@@ -438,36 +438,36 @@ function normalizeDiagnosisDirections(diagnosisDirections = []) {
     .filter(item => item.directionId)
 }
 
-function normalizeQuestionQueue(questionQueue = null) {
-  if (!questionQueue || typeof questionQueue !== 'object') {
+function normalizeQuestionPackageSnapshot(questionPackageSnapshot = null) {
+  if (!questionPackageSnapshot || typeof questionPackageSnapshot !== 'object') {
     return null
   }
 
   return {
-    questionQueueId: String(questionQueue?.questionQueueId || '').trim(),
-    sessionId: String(questionQueue?.sessionId || '').trim(),
-    roundId: String(questionQueue?.roundId || '').trim(),
-    roundIndex: Number(questionQueue?.roundIndex || 1),
-    routePrimaryAction: String(questionQueue?.routePrimaryAction || '').trim(),
-    queueStatus: String(questionQueue?.queueStatus || '').trim(),
+    questionPackageSnapshotId: String(questionPackageSnapshot?.questionPackageSnapshotId || '').trim(),
+    sessionId: String(questionPackageSnapshot?.sessionId || '').trim(),
+    roundId: String(questionPackageSnapshot?.roundId || '').trim(),
+    roundIndex: Number(questionPackageSnapshot?.roundIndex || 1),
+    routePrimaryAction: String(questionPackageSnapshot?.routePrimaryAction || '').trim(),
+    queueStatus: String(questionPackageSnapshot?.queueStatus || '').trim(),
     queueDecision:
-      questionQueue?.queueDecision && typeof questionQueue.queueDecision === 'object'
+      questionPackageSnapshot?.queueDecision && typeof questionPackageSnapshot.queueDecision === 'object'
         ? {
-            hasActionableItems: Number(questionQueue.queueDecision?.hasActionableItems || 0) ? 1 : 0,
-            exhaustedReason: String(questionQueue.queueDecision?.exhaustedReason || '').trim(),
-            serviceTarget: String(questionQueue.queueDecision?.serviceTarget || '').trim()
+            hasActionableItems: Number(questionPackageSnapshot.queueDecision?.hasActionableItems || 0) ? 1 : 0,
+            exhaustedReason: String(questionPackageSnapshot.queueDecision?.exhaustedReason || '').trim(),
+            serviceTarget: String(questionPackageSnapshot.queueDecision?.serviceTarget || '').trim()
           }
         : null,
-    questionItems: (Array.isArray(questionQueue?.questionItems) ? questionQueue.questionItems : []).map(item => ({
+    questionItems: (Array.isArray(questionPackageSnapshot?.questionItems) ? questionPackageSnapshot.questionItems : []).map(item => ({
       questionKey: String(item?.questionKey || '').trim(),
       questionId: String(item?.questionId || '').trim(),
       targetSymptomKey: String(item?.targetSymptomKey || '').trim(),
       questionGroupKey: String(item?.questionGroupKey || '').trim(),
-      targetDimension: String(item?.targetDimension || '').trim(),
-      routingScope: String(item?.routingScope || '').trim(),
-      questionRole: String(item?.questionRole || item?.questionCategory || '').trim(),
-      questionCategory: String(item?.questionCategory || item?.questionRole || '').trim(),
-      effectMode: String(item?.effectMode || '').trim(),
+      packageTopic: String(item?.packageTopic || '').trim(),
+      packageSection: String(item?.packageSection || '').trim(),
+      routePackageRole: String(item?.routePackageRole || item?.routePackageRole || '').trim(),
+      routePackageRole: String(item?.routePackageRole || item?.routePackageRole || '').trim(),
+      packageEffect: String(item?.packageEffect || '').trim(),
       questionText: String(item?.questionText || item?.text || '').trim(),
       helpText: String(item?.helpText || '').trim(),
       currentPriority: Number(item?.currentPriority || 0),
@@ -480,10 +480,10 @@ function normalizeQuestionQueue(questionQueue = null) {
       invalidReason: String(item?.invalidReason || '').trim(),
       status: String(item?.status || '').trim() || 'pending'
     })),
-    activeItemCount: Number(questionQueue?.activeItemCount || 0),
-    askedItemCount: Number(questionQueue?.askedItemCount || 0),
-    answeredItemCount: Number(questionQueue?.answeredItemCount || 0),
-    invalidatedItemCount: Number(questionQueue?.invalidatedItemCount || 0)
+    activeItemCount: Number(questionPackageSnapshot?.activeItemCount || 0),
+    askedItemCount: Number(questionPackageSnapshot?.askedItemCount || 0),
+    answeredItemCount: Number(questionPackageSnapshot?.answeredItemCount || 0),
+    invalidatedItemCount: Number(questionPackageSnapshot?.invalidatedItemCount || 0)
   }
 }
 
@@ -546,7 +546,7 @@ function normalizeCoreProcess(coreProcess = null, fallback = {}) {
   const normalizedDiagnosisDirections = Array.isArray(fallback?.diagnosisDirections)
     ? fallback.diagnosisDirections
     : []
-  const normalizedQuestionQueue = fallback?.questionQueue || null
+  const normalizedQuestionPackageSnapshot = fallback?.questionPackageSnapshot || null
   const normalizedStopState = fallback?.stopState || null
   const normalizedOutputEligibility = fallback?.outputEligibility || null
   const normalizedDiagnosticTrace = Array.isArray(fallback?.diagnosticTrace)
@@ -560,10 +560,10 @@ function normalizeCoreProcess(coreProcess = null, fallback = {}) {
     ? fallback.environmentDeviationHints
     : []
   const questionCore = coreProcess?.questions || coreProcess?.questionPackage || {}
-  const questionQueueForSummary =
-    questionCore?.questionQueue && typeof questionCore.questionQueue === 'object'
-      ? normalizeQuestionQueue(questionCore.questionQueue)
-      : normalizedQuestionQueue
+  const questionPackageSnapshotForSummary =
+    questionCore?.questionPackageSnapshot && typeof questionCore.questionPackageSnapshot === 'object'
+      ? normalizeQuestionPackageSnapshot(questionCore.questionPackageSnapshot)
+      : normalizedQuestionPackageSnapshot
 
   const questionCountSummary =
     questionCore?.questionCountSummary && typeof questionCore.questionCountSummary === 'object'
@@ -575,13 +575,13 @@ function normalizeCoreProcess(coreProcess = null, fallback = {}) {
           invalidatedItems: Number(questionCore.questionCountSummary?.invalidatedItems || 0)
         }
       : {
-          totalItems: Array.isArray(questionQueueForSummary?.questionItems)
-            ? questionQueueForSummary.questionItems.length
+          totalItems: Array.isArray(questionPackageSnapshotForSummary?.questionItems)
+            ? questionPackageSnapshotForSummary.questionItems.length
             : 0,
-          activeItems: Number(questionQueueForSummary?.activeItemCount || 0),
-          askedItems: Number(questionQueueForSummary?.askedItemCount || 0),
-          answeredItems: Number(questionQueueForSummary?.answeredItemCount || 0),
-          invalidatedItems: Number(questionQueueForSummary?.invalidatedItemCount || 0)
+          activeItems: Number(questionPackageSnapshotForSummary?.activeItemCount || 0),
+          askedItems: Number(questionPackageSnapshotForSummary?.askedItemCount || 0),
+          answeredItems: Number(questionPackageSnapshotForSummary?.answeredItemCount || 0),
+          invalidatedItems: Number(questionPackageSnapshotForSummary?.invalidatedItemCount || 0)
         }
 
   return {
@@ -634,7 +634,7 @@ function normalizeCoreProcess(coreProcess = null, fallback = {}) {
     questions: {
       routePrimaryAction:
         String(questionCore?.routePrimaryAction || fallback?.routePrimaryAction || '').trim(),
-      questionQueue: questionQueueForSummary,
+      questionPackageSnapshot: questionPackageSnapshotForSummary,
       questionCountSummary
     },
     decision: {
@@ -700,7 +700,7 @@ function normalizeHistoryDetail(detail) {
     const observedEvidenceSet = normalizeObservedEvidenceSet(detail.observedEvidenceSet)
     const derivedEvidenceSet = normalizeDerivedEvidenceSet(detail.derivedEvidenceSet)
     const diagnosisDirections = normalizeDiagnosisDirections(detail.diagnosisDirections)
-    const questionQueue = normalizeQuestionQueue(detail.questionQueue)
+    const questionPackageSnapshot = normalizeQuestionPackageSnapshot(detail.questionPackageSnapshot)
     const stopState = normalizeStopState(detail.stopState)
     const outputEligibility = normalizeOutputEligibility(detail.outputEligibility)
     const diagnosticTrace = normalizeDiagnosticTrace(detail.diagnosticTrace)
@@ -724,7 +724,7 @@ function normalizeHistoryDetail(detail) {
         ? detail.environmentDeviationHints
         : [],
       routePrimaryAction: detail.routePrimaryAction || '',
-      questionQueue,
+      questionPackageSnapshot,
       stopReason: detail.stopReason || '',
       stopState,
       outputEligibility,
@@ -775,7 +775,7 @@ function normalizeHistoryDetail(detail) {
         detail.prevention ||
         explanation?.avoid ||
         whatToAvoid.join('\n'),
-      questionQueue,
+      questionPackageSnapshot,
       stopState,
       outputEligibility,
       diagnosticTrace,
@@ -839,7 +839,7 @@ function normalizeHistoryDetail(detail) {
     whatToAvoid: detail.prevention ? [detail.prevention] : [],
     treatmentText: detail.treatment || '',
     preventionText: detail.prevention || '',
-    questionQueue: null,
+    questionPackageSnapshot: null,
     stopState: null,
     outputEligibility: null,
     diagnosticTrace: [],
@@ -859,7 +859,7 @@ function normalizeHistoryDetail(detail) {
       careBaselineSummary: null,
       environmentDeviationHints: [],
       routePrimaryAction: '',
-      questionQueue: null,
+      questionPackageSnapshot: null,
       stopReason: '',
       stopState: null,
       outputEligibility: null,
@@ -970,7 +970,7 @@ export async function requestDiagnosisFeedback(payload) {
   return unwrapResponseEnvelope(response?.data, '提交反馈失败')
 }
 
-// 兼容旧调用名：同步诊断即发起首轮诊断。
+// 适配既有调用名：同步诊断即发起首轮诊断。
 export async function requestDiagnoseSync(payload) {
   return requestDiagnosisStart(payload)
 }
@@ -1212,7 +1212,7 @@ function buildStreamDiagnosisPromise(payload, { onProgress } = {}) {
   })
 }
 
-// 兼容旧调用名：保留真实 SSE 调用入口，供灰度或脚本验证使用。
+// 适配既有调用名：保留真实 SSE 调用入口，供灰度或脚本验证使用。
 export async function requestDiagnoseStream(payload, { onProgress } = {}) {
   onProgress?.('正在分析图片并生成问诊...')
   const streamPayload = {

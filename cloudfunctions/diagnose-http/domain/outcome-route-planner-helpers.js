@@ -3,7 +3,7 @@
 const {
   ROUTE_MODE,
   ROUTE_STATUS,
-  ROUTE_FALLBACK_POLICY
+  ROUTE_CONSERVATIVE_POLICY
 } = require('../constants/outcome-route')
 const {
   isDisabledYellowingFlowQuestion
@@ -97,19 +97,19 @@ function collectVisualRouteSymptomKeys(visualAggregateResult = null) {
   ])
 }
 
-function buildFallbackDecision({
+function buildConservativeDecision({
   candidateOutcomeKeys = [],
   candidateOutcomes = [],
-  decisionCauseKey = 'route_fallback',
+  decisionCauseKey = 'route_conservative',
   decisionCauseText = 'route 未形成权威闭合，转保守不确定输出'
 } = {}) {
-  const legacyOutcomeKeys = dedupeKeys(
+  const currentOutcomeKeys = dedupeKeys(
     (Array.isArray(candidateOutcomes) ? candidateOutcomes : [])
       .map(item => normalizeKey(item?.problemKey || item?.outcomeKey || item?.candidateOutcomeKey || ''))
   )
   const outcomeKeys = dedupeKeys(candidateOutcomeKeys).length
     ? dedupeKeys(candidateOutcomeKeys)
-    : legacyOutcomeKeys
+    : currentOutcomeKeys
 
   return {
     mode: ROUTE_MODE.MULTI_OUTCOME_ROUTE,
@@ -117,7 +117,7 @@ function buildFallbackDecision({
       outcomeKey,
       state: ROUTE_STATUS.CANDIDATE,
       routeKeys: [],
-      missingGateKeys: [],
+      missingConditionKeys: [],
       nextQuestionKeys: []
     })),
     activeRouteGroupKeys: [],
@@ -125,16 +125,16 @@ function buildFallbackDecision({
     requiresQuestion: false,
     nextQuestionKeys: [],
     nextQuestions: [],
-    gateResults: [],
+    conditionResults: [],
     blockedOutcomeKeys: [],
     conflictingOutcomePairs: [],
     visibleActionProfileKeys: [],
     visibleActionConflictGroups: [],
     routeTrace: [],
-    fallbackPolicy: ROUTE_FALLBACK_POLICY.UNCERTAIN,
+    conservativePolicy: ROUTE_CONSERVATIVE_POLICY.UNCERTAIN,
     decisionCause: {
       decisionCauseKey,
-      decisionCauseCategory: 'route_fallback',
+      decisionCauseCategory: 'route_conservative',
       decisionCauseText,
       decisionCauseDetails: {}
     },
@@ -236,7 +236,7 @@ function buildRouteEvidenceContext({
       dedupeKeys([
         symptomClassRuntime?.currentClassKey,
         symptomClassRuntime?.primaryClass?.classKey,
-        symptomClassRuntime?.classGateDecision?.currentClassKey,
+        symptomClassRuntime?.classConditionDecision?.currentClassKey,
         ...safeObservedEvidenceSet.map(item => item?.symptomClassKey || item?.symptom_class_key || '')
       ])
     ),
@@ -293,10 +293,10 @@ function splitQuestionOptionPair(pair = '') {
   }
 }
 
-function isGateContradictedByAnsweredSplit(gate = {}, routeEvidenceContext = {}) {
+function isConditionContradictedByAnsweredSplit(condition = {}, routeEvidenceContext = {}) {
   const answeredQuestionKeySet = routeEvidenceContext?.answeredQuestionKeySet || new Set()
   const answeredQuestionOptionPairSet = routeEvidenceContext?.answeredQuestionOptionPairSet || new Set()
-  const requiredPairs = normalizeQuestionOptionPairs(gate?.requiredAnswerEffects?.questionOptionPairs)
+  const requiredPairs = normalizeQuestionOptionPairs(condition?.requiredAnswerEffects?.questionOptionPairs)
 
   return requiredPairs.some(pair => {
     const { questionKey } = splitQuestionOptionPair(pair)
@@ -326,12 +326,12 @@ function sortCandidateStates(states = [], candidateOutcomeOrderMap = new Map()) 
 }
 
 module.exports = {
-  buildFallbackDecision,
+  buildConservativeDecision,
   buildRouteDecisionCause,
   buildRouteEvidenceContext,
   collectVisualRouteSymptomKeys,
   dedupeKeys,
-  isGateContradictedByAnsweredSplit,
+  isConditionContradictedByAnsweredSplit,
   normalizeKey,
   sortCandidateStates
 }

@@ -9,9 +9,9 @@ function mapByAlias(kind, key) {
   return map[normalized] || normalized
 }
 
-function normalizeConfidence(value, fallback = 0.75) {
+function normalizeConfidence(value, conservative = 0.75) {
   const num = Number(value)
-  if (!Number.isFinite(num)) {return fallback}
+  if (!Number.isFinite(num)) {return conservative}
   if (num < 0) {return 0}
   if (num > 1) {return 1}
   return num
@@ -54,7 +54,7 @@ function adaptObservedSymptoms(observedSymptoms = []) {
     .filter(Boolean)
 }
 
-function adaptLegacyQuestionAnswers(questionAnswers = []) {
+function adaptSessionQuestionAnswers(questionAnswers = []) {
   return (Array.isArray(questionAnswers) ? questionAnswers : [])
     .map(item => {
       if (!item) {return null}
@@ -80,5 +80,5 @@ module.exports = {
   mapByAlias,
   normalizeOptionKey,
   adaptObservedSymptoms,
-  adaptLegacyQuestionAnswers
+  adaptSessionQuestionAnswers
 }

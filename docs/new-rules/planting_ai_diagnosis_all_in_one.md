@@ -6,7 +6,7 @@
 
 本文件是当前代码有效运行规则的压缩摘要，不是历史规则全集。若它与 `code-base` 冲突，以 `code-base` 为准并修本文档。
 
-本文件已经移除旧大而全 Sxx 规则结构，只保留当前运行时会影响实现、问诊、停止、输出和前端契约的概念。
+本文件已经移除既有大而全 Sxx 规则结构，只保留当前运行时会影响实现、问诊、停止、输出和前端契约的概念。
 
 ## 1. 当前诊断主链与问诊模式
 
@@ -18,8 +18,8 @@
 - score gap 达标停止。
 - hypothesis pool 逐题追问协议。
 - 固定答满 N 题即可输出。
-- 旧 dynamic next-question helpers 作为当前问诊权威。
-- 旧 Sxx all-in-one 作为最新结构源。
+- 既有 dynamic next-question helpers 作为当前问诊权威。
+- 既有 Sxx all-in-one 作为最新结构源。
 
 当前有效主对象是：
 
@@ -31,7 +31,7 @@
 - `questionPackage`
 - `uiHints`
 - `questionPackageSnapshot`
-- `questionQueue`（仅非 package 兼容/运行时校验）
+- `questionPackageSnapshot`（仅非 package 当前/运行时校验）
 - `stopState`
 - `outputEligibility`
 
@@ -70,13 +70,13 @@
 route planner 做四件事：
 
 1. 根据候选 outcome、active symptom、answer effects、视觉 route hints 构造 route 判断上下文。
-2. 查询 route groups、routes、gates、route questions。
-3. 对每个 outcome 评估 gate：pass、fail、block、need_more_info、conflict。
+2. 查询 route groups、routes、conditions、route questions。
+3. 对每个 outcome 评估 condition：pass、fail、block、need_more_info、conflict。
 4. 生成 `visibleOutcomeKeys` 或 `nextQuestionKeys`。
 
-常规 route 调用的 `maxQuestionCount` 仍是 1；这只描述非 package 兼容路径，不能作为固定题包的题数权威。
+常规 route 调用的 `maxQuestionCount` 仍是 1；这只描述非 package 当前路径，不能作为固定题包的题数权威。
 
-## 5. 题包与非 package 兼容路径
+## 5. 题包与非 package 当前路径
 
 固定题包由 `QUESTION_PACKAGE_BY_MODE` 声明并通过 `getQuestionPackageByMode(mode)` 获取。当前 `yellow_leaf` package 显式包含：
 
@@ -97,7 +97,7 @@ route planner 做四件事：
 - `outcomePolicy.allowMultipleOutcomes: true`。
 - `outcomePolicy.preferSingleOutcome: false`。
 
-非 package 路径仍保留单题 queue-anchor 兼容语义。旧 selector、旧 dynamic next-question helper、旧 active follow-up residues 不应写成当前事实。
+非 package 路径仍保留单题 session question row anchor 当前语义。既有 selector、既有 dynamic next-question helper、既有 active follow-up residues 不应写成当前事实。
 
 ## 6. 黄叶 4 题题包
 
@@ -129,7 +129,7 @@ route planner 做四件事：
 
 前端可以据此展示 4 题套餐，并在最后一次提交整包答案。
 
-不要再把 manual fast path、route planner 或 diagnosis-engine 兼容路径写成黄叶 question/start 固定题包的启动路径。
+不要再把 manual fast path、route planner 或 diagnosis-engine 当前路径写成黄叶 question/start 固定题包的启动路径。
 
 ## 7. 黄叶题包的硬边界
 
@@ -185,7 +185,7 @@ package 提交后，系统会用 snapshot 构造本轮 answered runtime，并重
 停止要求：
 
 - `stage === final`
-- 无 active question queue
+- 无 active question package snapshot
 - outcome type 是正式值：`problematic`、`non_problematic` 或 `uncertain`
 - 有显式 stop decision
 - stop reason 属于 final stop reason
@@ -193,16 +193,16 @@ package 提交后，系统会用 snapshot 构造本轮 answered runtime，并重
 
 ## 10. 输出资格
 
-输出资格由 `outputEligibility` 判定。只有 stop state 已停止、queue 清空、正式 outcome 与正式 stop decision 均存在时，才是 eligible。
+输出资格由 `outputEligibility` 判定。只有 stop state 已停止、package state 清空、正式 outcome 与正式 stop decision 均存在时，才是 eligible。
 
-固定题包阶段、stop state 未停止或仍有 active queue 时，输出保守级别是 blocked。
+固定题包阶段、stop state 未停止或仍有 pending package question 时，输出保守级别是 blocked。
 
 ## 11. 公开响应与前端契约
 
 前端响应构造逻辑：
 
 - 有题包：按 `questionPackage.questionCount` 保留 `questions`。
-- 无题包：兼容问题默认只保留 1 题。
+- 无题包：当前问题默认只保留 1 题。
 - package 响应透出 `questions`、`questionPackage` 和 `uiHints`。
 
 前端 normalizer 与题包页面支持：
@@ -240,21 +240,21 @@ package 提交后，系统会用 snapshot 构造本轮 answered runtime，并重
 修改问诊或诊断输出前后，必须检查：
 
 - [ ] 是否仍以 route 模式为主事实。
-- [ ] 是否没有恢复旧 ranking/score-gap 追问规则。
-- [ ] 是否没有恢复旧 dynamic next-question helper 作为当前权威。
+- [ ] 是否没有恢复既有 ranking/score-gap 追问规则。
+- [ ] 是否没有恢复既有 dynamic next-question helper 作为当前权威。
 - [ ] 固定题包是否仍通过 `getQuestionPackageByMode(mode)`。
 - [ ] `wilting_droop` 是否仍是 5 题固定题包，Q0 是否仍是 `CareBehaviorTimeline`。
 - [ ] `wilting_droop` 结果是否仍是“建议行动清单”，且没有 ranking/score/probability/main-cause。
-- [ ] `/diagnosis/question/start` package 响应是否使用 `questions` 而不是旧数组字段。
+- [ ] `/diagnosis/question/start` package 响应是否使用 `questions` 而不是既有数组字段。
 - [ ] package snapshot 和归属校验是否覆盖包内所有题。
 - [ ] stop state 是否仍能阻止未完成追问输出。
-- [ ] output eligibility 是否仍能阻止 active queue 输出。
+- [ ] output eligibility 是否仍能阻止 pending package question 输出。
 - [ ] 前端是否保留并使用 `questionPackage` / `uiHints`。
 - [ ] `ai_and_memories` 是否更新到最新章节与行号。
 
-## 14. 旧概念处置
+## 14. 既有概念处置
 
-旧规则不是全部删除，而是降级：
+既有规则不是全部删除，而是降级：
 
 - 可作为历史背景。
 - 不可作为实现依据。

@@ -38,11 +38,11 @@ async function ensureOutOfPoolCandidateGroupTable() {
   }
 }
 
-async function listOutOfPoolCandidateGroups(params = {}, fallbackListFn = null) {
+async function listOutOfPoolCandidateGroups(params = {}, conservativeListFn = null) {
   const ensured = await ensureOutOfPoolCandidateGroupTable()
   if (!ensured) {
-    return typeof fallbackListFn === 'function'
-      ? fallbackListFn(params)
+    return typeof conservativeListFn === 'function'
+      ? conservativeListFn(params)
       : { items: [], page: 1, pageSize: 20, total: 0, hasMore: false, summary: {} }
   }
 

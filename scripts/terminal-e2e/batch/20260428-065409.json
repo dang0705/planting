@@ -44,7 +44,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "sap_sucking_honeydew_pest_mode",
           "primaryClassRuntimeScore": 0.9,
@@ -64,7 +64,7 @@
           {
             "questionKey": "q_sticky_honeydew_confirm",
             "questionText": "叶面或周围表面有明显发黏的蜜露吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -147,8 +147,8 @@
             "questionEvidence": 0.729,
             "totalEvidence": 0.9113,
             "penalty": 0,
-            "genusCompatibility": 0.6,
-            "hostCompatibility": 0.7,
+            "genusSuitabilityibility": 0.6,
+            "hostSuitabilityibility": 0.7,
             "baseScore": 0.7195,
             "finalScore": 0.7195
           },
@@ -161,8 +161,8 @@
             "questionEvidence": 0.648,
             "totalEvidence": 0.81,
             "penalty": 0,
-            "genusCompatibility": 0.5,
-            "hostCompatibility": 1,
+            "genusSuitabilityibility": 0.5,
+            "hostSuitabilityibility": 1,
             "baseScore": 0.648,
             "finalScore": 0.648
           },
@@ -175,8 +175,8 @@
             "questionEvidence": 0.6885,
             "totalEvidence": 0.8606,
             "penalty": 0,
-            "genusCompatibility": 0.55,
-            "hostCompatibility": 0.55,
+            "genusSuitabilityibility": 0.55,
+            "hostSuitabilityibility": 0.55,
             "baseScore": 0.6422,
             "finalScore": 0.6422
           }

@@ -124,9 +124,9 @@ function parsePartialStructuredVisualResult(text) {
     .map(normalizeSymptomCandidate)
     .filter(Boolean)
     .slice(0, 8)
-  const legacyCandidates = symptomCandidates.length
+  const secondaryCandidates = symptomCandidates.length
     ? []
-    : buildLegacyCandidates({ symptoms: safeJsonParseArrayField(source, 'symptoms') }).slice(0, 8)
+    : buildSessionCandidates({ symptoms: safeJsonParseArrayField(source, 'symptoms') }).slice(0, 8)
   const outOfPoolCandidates = safeJsonParseArrayField(source, 'out_of_pool_symptom_candidates')
     .map(normalizeOutOfPoolSymptomCandidate)
     .filter(Boolean)
@@ -160,7 +160,7 @@ function parsePartialStructuredVisualResult(text) {
 
   if (
     !symptomCandidates.length &&
-    !legacyCandidates.length &&
+    !secondaryCandidates.length &&
     !outOfPoolCandidates.length &&
     !normalizedOrgan &&
     !routeHints.length &&
@@ -174,7 +174,7 @@ function parsePartialStructuredVisualResult(text) {
     normalized_organ: normalizeOrgan(normalizedOrgan, 'unknown'),
     image_quality_grade: qualityGrade,
     analyzability,
-    symptom_candidates: symptomCandidates.length ? symptomCandidates : legacyCandidates,
+    symptom_candidates: symptomCandidates.length ? symptomCandidates : secondaryCandidates,
     out_of_pool_symptom_candidates: outOfPoolCandidates,
     route_hints: routeHints,
     visual_discriminators: visualDiscriminators,
@@ -237,7 +237,7 @@ function normalizeOutOfPoolSymptomCandidate(item) {
   }
 }
 
-function buildLegacyCandidates(payload = {}) {
+function buildSessionCandidates(payload = {}) {
   return (Array.isArray(payload?.symptoms) ? payload.symptoms : [])
     .map(item => {
       const symptomKey = String(item?.symptom_key || item?.symptomKey || '').trim()
@@ -274,7 +274,7 @@ function parseStructuredVisualResult(text) {
 
   const symptomCandidates = Array.isArray(payload?.symptom_candidates)
     ? payload.symptom_candidates.map(normalizeSymptomCandidate).filter(Boolean).slice(0, 8)
-    : buildLegacyCandidates(payload).slice(0, 8)
+    : buildSessionCandidates(payload).slice(0, 8)
 
   const qualityGrade = normalizeQualityGrade(
     payload?.image_quality_grade || payload?.image_quality,
@@ -312,7 +312,7 @@ function parseStructuredVisualResult(text) {
   }
 }
 
-function toLegacyObservedSymptoms(visualResult = null) {
+function toSessionObservedSymptoms(visualResult = null) {
   return (Array.isArray(visualResult?.symptom_candidates) ? visualResult.symptom_candidates : [])
     .filter(item => normalizeAdmissionReadiness(item?.admission_readiness, 'cautious') !== 'retain_only')
     .map(item => ({
@@ -352,7 +352,7 @@ function parseLLMVisualResult(text) {
 
 function parseLLMDiagnosis(text) {
   const visualResult = parseLLMVisualResult(text)
-  const observedSymptoms = toLegacyObservedSymptoms(visualResult)
+  const observedSymptoms = toSessionObservedSymptoms(visualResult)
   const summary = observedSymptoms.map(item => item.symptomKey).join('、')
 
   return {

@@ -1,6 +1,6 @@
 'use strict'
 
-const { normalizeOptionKey } = require('../mappers/legacy-rule-adapter')
+const { normalizeOptionKey } = require('../mappers/diagnosis-rule-adapter')
 const { fromQuestionId, fromOptionId } = require('../mappers/public-id-mapper')
 const { getQuestionsByKeys } = require('../repositories/question-repository')
 const {
@@ -42,15 +42,6 @@ function normalizeUploadCompression(value = null) {
   return normalized
 }
 
-function pickQuestionKeysFromQuestionQueue(questionQueue = null) {
-  const queueItems = Array.isArray(questionQueue?.questionItems) ? questionQueue.questionItems : []
-  return new Set(
-    queueItems
-      .map(item => String(item?.questionKey || '').trim())
-      .filter(Boolean)
-  )
-}
-
 function normalizeAnswerQuestionKey(value = '') {
   return String(value || '').trim()
 }
@@ -86,7 +77,7 @@ function resolveQuestionKeyCandidates(item = {}) {
   return candidates.length ? candidates : [resolveQuestionKey(item)].filter(Boolean)
 }
 
-async function withQuestionTextFallback(response = {}) {
+async function withQuestionTextConservative(response = {}) {
   const questions = Array.isArray(response?.questions) ? response.questions : []
   const sourceList = [...questions]
   if (!sourceList.length) {
@@ -117,17 +108,17 @@ async function withQuestionTextFallback(response = {}) {
     if (resolveQuestionText(item)) {
       return item
     }
-    const fallbackText = resolveQuestionText(
+    const conservativeText = resolveQuestionText(
       item,
       new Map(resolveQuestionKeyCandidates(item).map(key => [key, questionMetaByKey.get(key)]))
     )
-    if (!fallbackText) {
+    if (!conservativeText) {
       return item
     }
     return {
       ...item,
-      text: fallbackText,
-      questionText: fallbackText
+      text: conservativeText,
+      questionText: conservativeText
     }
   }
   const keepItemWithQuestionText = item => Boolean(resolveQuestionText(item))
@@ -176,9 +167,9 @@ function buildAskedQuestionRowsFromQuestionRows(rows = []) {
           row?.target_symptom_key ||
           ''
       ),
-      targetDimension: normalizeAnswerQuestionKey(
+      packageTopic: normalizeAnswerQuestionKey(
         rationale?.td ||
-          rationale?.targetDimension ||
+          rationale?.packageTopic ||
           ''
       ),
       questionGroupKey: normalizeAnswerQuestionKey(
@@ -187,9 +178,9 @@ function buildAskedQuestionRowsFromQuestionRows(rows = []) {
           row?.question_group_key ||
           '__default__'
       ) || '__default__',
-      routingScope: normalizeAnswerQuestionKey(
+      packageSection: normalizeAnswerQuestionKey(
         rationale?.rs ||
-          rationale?.routingScope ||
+          rationale?.packageSection ||
           ''
       ),
       questionText,
@@ -339,7 +330,7 @@ function normalizeEvidenceSourceType(value = '') {
 function isVisualEvidenceItem(item = {}) {
   const sourceType = normalizeEvidenceSourceType(item?.sourceType || item?.source_type || '')
   if (!sourceType) {return false}
-  if (sourceType === 'legacy_observed_symptom') {return true}
+  if (sourceType === 'session_observed_symptom') {return true}
   return sourceType.includes('visual')
 }
 
@@ -393,9 +384,9 @@ function resolveNextAnswerRevision(sessionState = {}, baseAnswerRevision = null)
   return Math.max(currentRevision, Number.isFinite(baseRevision) ? baseRevision : 0) + 1
 }
 
-function mergeClientContextFields(primary = null, fallback = null) {
+function mergeClientContextFields(primary = null, conservative = null) {
   const source = primary && typeof primary === 'object' ? primary : {}
-  const base = fallback && typeof fallback === 'object' ? fallback : {}
+  const base = conservative && typeof conservative === 'object' ? conservative : {}
   const pickText = key => {
     const first = String(source?.[key] || '').trim()
     if (first) {return first}
@@ -403,7 +394,7 @@ function mergeClientContextFields(primary = null, fallback = null) {
     return second || ''
   }
   const structuredImageCountSource = Number(source?.structuredImageCount || 0)
-  const structuredImageCountFallback = Number(base?.structuredImageCount || 0)
+  const structuredImageCountConservative = Number(base?.structuredImageCount || 0)
 
   const merged = {
     source: pickText('source'),
@@ -413,8 +404,8 @@ function mergeClientContextFields(primary = null, fallback = null) {
     structuredImageCount:
       structuredImageCountSource > 0
         ? structuredImageCountSource
-        : structuredImageCountFallback > 0
-          ? structuredImageCountFallback
+        : structuredImageCountConservative > 0
+          ? structuredImageCountConservative
           : 0,
     auditLabel: pickText('auditLabel'),
     auditFileName: pickText('auditFileName'),
@@ -426,7 +417,7 @@ function mergeClientContextFields(primary = null, fallback = null) {
     : null
 }
 
-function resolveRequestClientContext(payload = {}, fallback = null) {
+function resolveRequestClientContext(payload = {}, conservative = null) {
   const explicitContext = {
     source: payload?.source,
     platform: payload?.platform,
@@ -438,17 +429,16 @@ function resolveRequestClientContext(payload = {}, fallback = null) {
     auditCaseKey: payload?.auditCaseKey
   }
 
-  return mergeClientContextFields(payload?.clientContext || null, mergeClientContextFields(explicitContext, fallback))
+  return mergeClientContextFields(payload?.clientContext || null, mergeClientContextFields(explicitContext, conservative))
 }
 
 module.exports = {
   normalizeUploadCompression,
-  pickQuestionKeysFromQuestionQueue,
   normalizeAnswerQuestionKey,
   parseQuestionRationale,
   resolveQuestionKey,
   resolveQuestionKeyCandidates,
-  withQuestionTextFallback,
+  withQuestionTextConservative,
   buildAskedQuestionRowsFromQuestionRows,
   buildRuntimeAnswersFromQuestionUpdates,
   buildRuntimeUnknownCountByGroup,

@@ -1,10 +1,10 @@
 'use strict'
 
 const {
-  QUESTION_TARGET_DIMENSIONS,
-  normalizeQuestionTargetDimension,
-  inferObservedVisualCoveredDimensions
-} = require('./question-target-dimension')
+  QUESTION_PACKAGE_TOPICS,
+  normalizeQuestionPackageTopic,
+  inferObservedVisualCoveredTopics
+} = require('./question-package-topic')
 const { collectBridgeTargetSymptomKeys } = require('./question-symptom-bridge')
 const {
   DIAGNOSIS_DIRECTION_DEFINITIONS,
@@ -20,9 +20,9 @@ const {
 } = require('./diagnosis-direction-indexes')
 const { debugLog } = require('./common')
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function normalizeStringList(values = []) {
@@ -279,7 +279,7 @@ function buildDiagnosisDirections({
       ]),
       coveredFactDimensions: normalizeStringList(
         [...matchedSymptomKeys, ...matchedCandidateSymptomKeys].flatMap(symptomKey =>
-          inferObservedVisualCoveredDimensions({
+          inferObservedVisualCoveredTopics({
             symptomKey
           })
         )
@@ -292,7 +292,7 @@ function buildDiagnosisDirections({
         matchedPatternCount: matchedPatternKeys.length,
         confidence
       },
-      outputGateHints: {
+      outputConditionHints: {
         allowConclusionOnlyByProblemKey: 1,
         requiresAuditedClosure: 1,
         shouldStayInternal: 1
@@ -355,18 +355,18 @@ function normalizePublicDiagnosisDirectionItem(item = {}) {
     ),
     coveredFactDimensions: normalizeStringList(
       item?.coveredFactDimensions || item?.covered_fact_dimensions || []
-    ).map(targetDimension =>
-      normalizeQuestionTargetDimension(
-        targetDimension,
-        QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
+    ).map(packageTopic =>
+      normalizeQuestionPackageTopic(
+        packageTopic,
+        QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE
       )
     ),
     preferredQuestionDimensions: normalizeStringList(
       item?.preferredQuestionDimensions || item?.preferred_question_dimensions || []
-    ).map(targetDimension =>
-      normalizeQuestionTargetDimension(
-        targetDimension,
-        QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
+    ).map(packageTopic =>
+      normalizeQuestionPackageTopic(
+        packageTopic,
+        QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE
       )
     ),
     candidateProblemKeys: normalizeStringList(
@@ -383,15 +383,15 @@ function normalizePublicDiagnosisDirectionItem(item = {}) {
             confidence: Number(item.supportSummary?.confidence || 0)
           }
         : null,
-    outputGateHints:
-      item?.outputGateHints && typeof item.outputGateHints === 'object'
+    outputConditionHints:
+      item?.outputConditionHints && typeof item.outputConditionHints === 'object'
         ? {
             allowConclusionOnlyByProblemKey:
-              Number(item.outputGateHints?.allowConclusionOnlyByProblemKey || 0) ? 1 : 0,
+              Number(item.outputConditionHints?.allowConclusionOnlyByProblemKey || 0) ? 1 : 0,
             requiresAuditedClosure:
-              Number(item.outputGateHints?.requiresAuditedClosure || 0) ? 1 : 0,
+              Number(item.outputConditionHints?.requiresAuditedClosure || 0) ? 1 : 0,
             shouldStayInternal:
-              Number(item.outputGateHints?.shouldStayInternal || 0) ? 1 : 0
+              Number(item.outputConditionHints?.shouldStayInternal || 0) ? 1 : 0
           }
         : null,
     tracePayload:
@@ -432,9 +432,9 @@ function computeDiagnosisDirectionQuestionBoost(
   } = {}
 ) {
   const targetSymptomKey = normalizeText(question?.targetSymptomKey || '', '')
-  const targetDimension = normalizeQuestionTargetDimension(
-    question?.targetDimension,
-    QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
+  const packageTopic = normalizeQuestionPackageTopic(
+    question?.packageTopic,
+    QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE
   )
   let bestBoost = 0
 
@@ -464,7 +464,7 @@ function computeDiagnosisDirectionQuestionBoost(
       boost += 20
     }
 
-    const preferredDimensionIndex = preferredQuestionDimensions.indexOf(targetDimension)
+    const preferredDimensionIndex = preferredQuestionDimensions.indexOf(packageTopic)
     if (preferredDimensionIndex >= 0) {
       boost += Math.max(0, 28 - preferredDimensionIndex * 5)
     }

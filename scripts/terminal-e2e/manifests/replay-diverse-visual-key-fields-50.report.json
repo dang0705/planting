@@ -52,7 +52,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -69,8 +69,8 @@
           {
             "questionKey": "q_holes_in_leaf_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "holes_in_leaf",
             "text": "叶片上有被咬穿的洞，而不是病斑干掉后的穿孔吗？"
           }
@@ -129,7 +129,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -146,8 +146,8 @@
           {
             "questionKey": "q_black_spots_spreading_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "black_spots_spreading",
             "text": "是否有逐渐扩大的黑斑或暗色斑块？"
           }
@@ -206,7 +206,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -223,8 +223,8 @@
           {
             "questionKey": "q_holes_in_leaf_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "holes_in_leaf",
             "text": "叶片上有被咬穿的洞，而不是病斑干掉后的穿孔吗？"
           }
@@ -283,7 +283,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -300,8 +300,8 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           }
@@ -354,7 +354,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -371,8 +371,8 @@
           {
             "questionKey": "q_black_spots_spreading_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "black_spots_spreading",
             "text": "是否有逐渐扩大的黑斑或暗色斑块？"
           }
@@ -442,7 +442,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -516,7 +516,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -533,8 +533,8 @@
           {
             "questionKey": "q_irregular_blotches_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "irregular_blotches",
             "text": "病斑呈不规则斑块状，而不是规则圆斑吗？"
           }
@@ -599,7 +599,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -616,8 +616,8 @@
           {
             "questionKey": "q_black_spots_spreading_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "black_spots_spreading",
             "text": "是否有逐渐扩大的黑斑或暗色斑块？"
           }
@@ -682,7 +682,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -699,8 +699,8 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           }
@@ -770,7 +770,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -787,8 +787,8 @@
           {
             "questionKey": "q_holes_in_leaf_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "holes_in_leaf",
             "text": "叶片上有被咬穿的洞，而不是病斑干掉后的穿孔吗？"
           }
@@ -847,7 +847,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -864,8 +864,8 @@
           {
             "questionKey": "q_holes_in_leaf_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "holes_in_leaf",
             "text": "叶片上有被咬穿的洞，而不是病斑干掉后的穿孔吗？"
           }
@@ -930,7 +930,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -947,8 +947,8 @@
           {
             "questionKey": "q_irregular_blotches_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "irregular_blotches",
             "text": "病斑呈不规则斑块状，而不是规则圆斑吗？"
           }
@@ -1001,7 +1001,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1018,8 +1018,8 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           }
@@ -1078,7 +1078,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1095,8 +1095,8 @@
           {
             "questionKey": "q_holes_in_leaf_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "holes_in_leaf",
             "text": "叶片上有被咬穿的洞，而不是病斑干掉后的穿孔吗？"
           }
@@ -1148,7 +1148,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1203,7 +1203,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1277,7 +1277,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1294,8 +1294,8 @@
           {
             "questionKey": "q_holes_in_leaf_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "holes_in_leaf",
             "text": "叶片上有被咬穿的洞，而不是病斑干掉后的穿孔吗？"
           }
@@ -1341,7 +1341,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1420,7 +1420,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1437,16 +1437,16 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           },
           {
             "questionKey": "q_leaf_margin_necrosis_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "leaf_margin_necrosis",
             "text": "叶缘已经形成连续的褐黑坏死带了吗？"
           }
@@ -1507,7 +1507,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1524,8 +1524,8 @@
           {
             "questionKey": "q_irregular_blotches_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "irregular_blotches",
             "text": "病斑呈不规则斑块状，而不是规则圆斑吗？"
           }
@@ -1590,7 +1590,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1607,8 +1607,8 @@
           {
             "questionKey": "q_black_spots_spreading_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "black_spots_spreading",
             "text": "是否有逐渐扩大的黑斑或暗色斑块？"
           }
@@ -1673,7 +1673,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1690,16 +1690,16 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           },
           {
             "questionKey": "q_leaf_margin_necrosis_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "leaf_margin_necrosis",
             "text": "叶缘已经形成连续的褐黑坏死带了吗？"
           }
@@ -1768,7 +1768,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1785,8 +1785,8 @@
           {
             "questionKey": "q_irregular_blotches_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "irregular_blotches",
             "text": "病斑呈不规则斑块状，而不是规则圆斑吗？"
           }
@@ -1851,7 +1851,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1868,8 +1868,8 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           }
@@ -1921,7 +1921,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1938,8 +1938,8 @@
           {
             "questionKey": "q_black_spots_spreading_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "black_spots_spreading",
             "text": "是否有逐渐扩大的黑斑或暗色斑块？"
           }
@@ -2010,7 +2010,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -2027,8 +2027,8 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           }
@@ -2093,7 +2093,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -2110,16 +2110,16 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           },
           {
             "questionKey": "q_leaf_margin_necrosis_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "leaf_margin_necrosis",
             "text": "叶缘已经形成连续的褐黑坏死带了吗？"
           }
@@ -2184,7 +2184,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -2201,24 +2201,24 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "selectionSource": "",
-            "routingScope": "context_probe",
-            "targetDimension": "light_exposure",
+            "packageSection": "context_probe",
+            "packageTopic": "light_exposure",
             "targetSymptomKey": "leaf_yellowing",
             "text": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？"
           },
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "selectionSource": "",
-            "routingScope": "context_probe",
-            "targetDimension": "watering_context",
+            "packageSection": "context_probe",
+            "packageTopic": "watering_context",
             "targetSymptomKey": "leaf_yellowing",
             "text": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？"
           },
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "selectionSource": "",
-            "routingScope": "context_probe",
-            "targetDimension": "fertilization_context",
+            "packageSection": "context_probe",
+            "packageTopic": "fertilization_context",
             "targetSymptomKey": "leaf_yellowing",
             "text": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？"
           }
@@ -2271,7 +2271,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -2356,7 +2356,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -2373,16 +2373,16 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           },
           {
             "questionKey": "q_leaf_margin_necrosis_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "leaf_margin_necrosis",
             "text": "叶缘已经形成连续的褐黑坏死带了吗？"
           }
@@ -2452,7 +2452,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -2469,8 +2469,8 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           }
@@ -2529,7 +2529,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -2546,8 +2546,8 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           }
@@ -2599,7 +2599,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -2678,7 +2678,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -2695,8 +2695,8 @@
           {
             "questionKey": "q_holes_in_leaf_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "holes_in_leaf",
             "text": "叶片上有被咬穿的洞，而不是病斑干掉后的穿孔吗？"
           }
@@ -2761,7 +2761,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -2778,8 +2778,8 @@
           {
             "questionKey": "q_holes_in_leaf_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "holes_in_leaf",
             "text": "叶片上有被咬穿的洞，而不是病斑干掉后的穿孔吗？"
           }
@@ -2832,7 +2832,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -2849,8 +2849,8 @@
           {
             "questionKey": "q_irregular_blotches_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "irregular_blotches",
             "text": "病斑呈不规则斑块状，而不是规则圆斑吗？"
           }
@@ -2920,7 +2920,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -2937,8 +2937,8 @@
           {
             "questionKey": "q_black_spots_spreading_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "black_spots_spreading",
             "text": "是否有逐渐扩大的黑斑或暗色斑块？"
           }
@@ -3003,7 +3003,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3020,16 +3020,16 @@
           {
             "questionKey": "q_black_spots_spreading_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "black_spots_spreading",
             "text": "是否有逐渐扩大的黑斑或暗色斑块？"
           },
           {
             "questionKey": "q_leaf_margin_necrosis_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "leaf_margin_necrosis",
             "text": "叶缘已经形成连续的褐黑坏死带了吗？"
           }
@@ -3088,7 +3088,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -3167,7 +3167,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3184,8 +3184,8 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           }
@@ -3244,7 +3244,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3261,8 +3261,8 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           }
@@ -3336,7 +3336,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3353,16 +3353,16 @@
           {
             "questionKey": "q_leaf_margin_necrosis_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "leaf_margin_necrosis",
             "text": "叶缘已经形成连续的褐黑坏死带了吗？"
           },
           {
             "questionKey": "q_irregular_blotches_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "irregular_blotches",
             "text": "病斑呈不规则斑块状，而不是规则圆斑吗？"
           }
@@ -3437,7 +3437,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3454,16 +3454,16 @@
           {
             "questionKey": "q_chewed_edges_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "chewed_edges",
             "text": "叶缘像被一口一口啃掉，而不是焦边或病斑吗？"
           },
           {
             "questionKey": "q_leaf_margin_necrosis_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "leaf_margin_necrosis",
             "text": "叶缘已经形成连续的褐黑坏死带了吗？"
           }
@@ -3528,7 +3528,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3602,7 +3602,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3619,8 +3619,8 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           }
@@ -3685,7 +3685,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3702,8 +3702,8 @@
           {
             "questionKey": "q_holes_in_leaf_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "holes_in_leaf",
             "text": "叶片上有被咬穿的洞，而不是病斑干掉后的穿孔吗？"
           }
@@ -3773,7 +3773,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3790,8 +3790,8 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           }
@@ -3865,7 +3865,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3882,16 +3882,16 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           },
           {
             "questionKey": "q_leaf_margin_necrosis_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "leaf_margin_necrosis",
             "text": "叶缘已经形成连续的褐黑坏死带了吗？"
           }
@@ -3956,7 +3956,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3973,16 +3973,16 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           },
           {
             "questionKey": "q_leaf_margin_necrosis_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "leaf_margin_necrosis",
             "text": "叶缘已经形成连续的褐黑坏死带了吗？"
           }
@@ -4034,7 +4034,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -4051,8 +4051,8 @@
           {
             "questionKey": "q_leaf_margin_necrosis_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "leaf_margin_necrosis",
             "text": "叶缘已经形成连续的褐黑坏死带了吗？"
           }

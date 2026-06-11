@@ -1,10 +1,10 @@
 'use strict'
 
-const { QUESTION_TARGET_DIMENSIONS } = require('../question-target-dimension')
+const { QUESTION_PACKAGE_TOPICS } = require('../question-package-topic')
 
 module.exports = {
   black_spots_spreading: {
-      [QUESTION_TARGET_DIMENSIONS.SURFACE_RESIDUE]: {
+      [QUESTION_PACKAGE_TOPICS.SURFACE_RESIDUE]: {
         yes: [
           { problemKey: 'fungal_leaf_spot', effectValue: 0.2 },
           { problemKey: 'bacterial_leaf_spot', effectValue: 0.16 },
@@ -16,7 +16,7 @@ module.exports = {
           { problemKey: 'bacterial_leaf_spot', effectValue: -0.12 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.TISSUE_MOISTURE]: {
+      [QUESTION_PACKAGE_TOPICS.TISSUE_MOISTURE]: {
         yes: [
           { problemKey: 'fungal_leaf_spot', effectValue: 0.18 },
           { problemKey: 'bacterial_leaf_spot', effectValue: 0.1 },
@@ -29,7 +29,7 @@ module.exports = {
           { problemKey: 'fungal_leaf_spot', effectValue: -0.14 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.LESION_HALO]: {
+      [QUESTION_PACKAGE_TOPICS.LESION_HALO]: {
         yes: [
           { problemKey: 'bacterial_leaf_spot', effectValue: 0.18 },
           { problemKey: 'fungal_leaf_spot', effectValue: 0.1 }
@@ -39,7 +39,7 @@ module.exports = {
           { problemKey: 'bacterial_leaf_spot', effectValue: -0.12 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.LESION_WATER_SOAKING]: {
+      [QUESTION_PACKAGE_TOPICS.LESION_WATER_SOAKING]: {
         yes: [
           { problemKey: 'bacterial_leaf_spot', effectValue: 0.24 },
           { problemKey: 'edema', effectValue: 0.16 },
@@ -50,7 +50,7 @@ module.exports = {
           { problemKey: 'bacterial_leaf_spot', effectValue: -0.14 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.TISSUE_INTEGRITY]: {
+      [QUESTION_PACKAGE_TOPICS.TISSUE_INTEGRITY]: {
         yes: [
           { problemKey: 'chewing_insects', effectValue: 0.22 },
           { problemKey: 'caterpillars', effectValue: 0.16 },
@@ -70,7 +70,7 @@ module.exports = {
       }
     },
   structuralDamageCause: {
-      [QUESTION_TARGET_DIMENSIONS.STRUCTURAL_CAUSE]: {
+      [QUESTION_PACKAGE_TOPICS.STRUCTURAL_CAUSE]: {
         pest_trace: [
           { problemKey: 'chewing_insects', effectValue: 0.28 },
           { problemKey: 'caterpillars', effectValue: 0.18 },
@@ -95,7 +95,7 @@ module.exports = {
       }
     },
   pestTraceType: {
-      [QUESTION_TARGET_DIMENSIONS.PEST_TRACE_TYPE]: {
+      [QUESTION_PACKAGE_TOPICS.PEST_TRACE_TYPE]: {
         mite_webbing: [
           { problemKey: 'spider_mites', effectValue: 0.28 },
           { problemKey: 'thrips', effectValue: -0.08 },
@@ -125,7 +125,7 @@ module.exports = {
           { problemKey: 'nutrient_deficiency', effectValue: -0.02 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.SURFACE_STICKINESS]: {
+      [QUESTION_PACKAGE_TOPICS.SURFACE_STICKINESS]: {
         yes: [
           { problemKey: 'whiteflies', effectValue: 0.24 },
           { problemKey: 'aphids', effectValue: 0.22 },
@@ -144,7 +144,7 @@ module.exports = {
       }
     },
   edemaBumpStage: {
-      [QUESTION_TARGET_DIMENSIONS.EDEMA_BUMP_STAGE]: {
+      [QUESTION_PACKAGE_TOPICS.EDEMA_BUMP_STAGE]: {
         watery_blister: [
           { problemKey: 'edema', effectValue: 0.24 },
           { problemKey: 'overwatering', effectValue: 0.12 },
@@ -164,7 +164,7 @@ module.exports = {
       }
     },
   tunnels_in_leaf: {
-      [QUESTION_TARGET_DIMENSIONS.LEAF_TUNNEL_PATTERN]: {
+      [QUESTION_PACKAGE_TOPICS.LEAF_TUNNEL_PATTERN]: {
         mine_line: [
           { problemKey: 'leaf_miners', effectValue: 0.3 }
         ],
@@ -174,7 +174,7 @@ module.exports = {
       }
     },
   powder_white: {
-      [QUESTION_TARGET_DIMENSIONS.POWDER_PATTERN]: {
+      [QUESTION_PACKAGE_TOPICS.POWDER_PATTERN]: {
         spreading_powder: [
           { problemKey: 'powdery_mildew', effectValue: 0.3 }
         ],
@@ -184,7 +184,7 @@ module.exports = {
       }
     },
   brown_spots_halo: {
-      [QUESTION_TARGET_DIMENSIONS.SURFACE_RESIDUE]: {
+      [QUESTION_PACKAGE_TOPICS.SURFACE_RESIDUE]: {
         yes: [
           { problemKey: 'fungal_leaf_spot', effectValue: 0.2 },
           { problemKey: 'bacterial_leaf_spot', effectValue: 0.18 },
@@ -196,7 +196,7 @@ module.exports = {
           { problemKey: 'bacterial_leaf_spot', effectValue: -0.14 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.TISSUE_MOISTURE]: {
+      [QUESTION_PACKAGE_TOPICS.TISSUE_MOISTURE]: {
         yes: [
           { problemKey: 'fungal_leaf_spot', effectValue: 0.18 },
           { problemKey: 'bacterial_leaf_spot', effectValue: 0.12 },
@@ -209,7 +209,7 @@ module.exports = {
           { problemKey: 'fungal_leaf_spot', effectValue: -0.14 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.LESION_HALO]: {
+      [QUESTION_PACKAGE_TOPICS.LESION_HALO]: {
         yes: [
           { problemKey: 'bacterial_leaf_spot', effectValue: 0.2 },
           { problemKey: 'fungal_leaf_spot', effectValue: 0.1 }
@@ -219,7 +219,7 @@ module.exports = {
           { problemKey: 'bacterial_leaf_spot', effectValue: -0.14 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.LESION_WATER_SOAKING]: {
+      [QUESTION_PACKAGE_TOPICS.LESION_WATER_SOAKING]: {
         yes: [
           { problemKey: 'bacterial_leaf_spot', effectValue: 0.24 },
           { problemKey: 'edema', effectValue: 0.18 },
@@ -230,7 +230,7 @@ module.exports = {
           { problemKey: 'bacterial_leaf_spot', effectValue: -0.16 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.TISSUE_INTEGRITY]: {
+      [QUESTION_PACKAGE_TOPICS.TISSUE_INTEGRITY]: {
         yes: [
           { problemKey: 'chewing_insects', effectValue: 0.22 },
           { problemKey: 'caterpillars', effectValue: 0.16 },
@@ -250,7 +250,7 @@ module.exports = {
       }
     },
   irregular_blotches: {
-      [QUESTION_TARGET_DIMENSIONS.SURFACE_RESIDUE]: {
+      [QUESTION_PACKAGE_TOPICS.SURFACE_RESIDUE]: {
         yes: [
           { problemKey: 'fungal_leaf_spot', effectValue: 0.18 },
           { problemKey: 'bacterial_leaf_spot', effectValue: 0.14 },
@@ -262,7 +262,7 @@ module.exports = {
           { problemKey: 'bacterial_leaf_spot', effectValue: -0.1 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.TISSUE_MOISTURE]: {
+      [QUESTION_PACKAGE_TOPICS.TISSUE_MOISTURE]: {
         yes: [
           { problemKey: 'fungal_leaf_spot', effectValue: 0.16 },
           { problemKey: 'bacterial_leaf_spot', effectValue: 0.1 },
@@ -274,7 +274,7 @@ module.exports = {
           { problemKey: 'fungal_leaf_spot', effectValue: -0.12 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.TISSUE_INTEGRITY]: {
+      [QUESTION_PACKAGE_TOPICS.TISSUE_INTEGRITY]: {
         yes: [
           { problemKey: 'chewing_insects', effectValue: 0.2 },
           { problemKey: 'caterpillars', effectValue: 0.14 },
@@ -294,7 +294,7 @@ module.exports = {
       }
     },
   chewed_edges: {
-      [QUESTION_TARGET_DIMENSIONS.TISSUE_INTEGRITY]: {
+      [QUESTION_PACKAGE_TOPICS.TISSUE_INTEGRITY]: {
         yes: [
           { problemKey: 'chewing_insects', effectValue: 0.08 },
           { problemKey: 'caterpillars', effectValue: 0.06 },
@@ -310,7 +310,7 @@ module.exports = {
           { problemKey: 'snails_slugs', effectValue: -0.08 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.UNDERSIDE_PRESENCE]: {
+      [QUESTION_PACKAGE_TOPICS.UNDERSIDE_PRESENCE]: {
         yes: [
           { problemKey: 'chewing_insects', effectValue: 0.22 },
           { problemKey: 'caterpillars', effectValue: 0.16 },
@@ -324,7 +324,7 @@ module.exports = {
           { problemKey: 'snails_slugs', effectValue: -0.08 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.DISTRIBUTION_SCOPE]: {
+      [QUESTION_PACKAGE_TOPICS.DISTRIBUTION_SCOPE]: {
         yes: [
           { problemKey: 'chewing_insects', effectValue: 0.06 },
           { problemKey: 'caterpillars', effectValue: 0.04 },
@@ -332,7 +332,7 @@ module.exports = {
           { problemKey: 'snails_slugs', effectValue: 0.04 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.PROGRESSION]: {
+      [QUESTION_PACKAGE_TOPICS.PROGRESSION]: {
         yes: [
           { problemKey: 'chewing_insects', effectValue: 0.05 },
           { problemKey: 'caterpillars', effectValue: 0.04 },

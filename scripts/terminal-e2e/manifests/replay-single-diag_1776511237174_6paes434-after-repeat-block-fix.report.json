@@ -64,7 +64,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -91,7 +91,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -111,7 +111,7 @@
           {
             "questionKey": "q_irregular_blotches_confirm",
             "questionText": "病斑呈不规则斑块状，而不是规则圆斑吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -128,7 +128,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
             "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -139,7 +139,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
             "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -150,7 +150,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",

@@ -15,7 +15,7 @@ const staticCache = {
   preloadExpiresAtBySchema: new Map(),
   routeGroupsBySignature: new Map(),
   routesByOutcomeSignature: new Map(),
-  gatesByRouteSignature: new Map(),
+  conditionsByRouteSignature: new Map(),
   questionsByRouteSignature: new Map(),
   answerEffectsByQuestionSignature: new Map(),
   actionProfilesBySignature: new Map(),
@@ -104,15 +104,15 @@ function withPendingStaticQuery(key = '', loader) {
   return promise
 }
 
-function safeJsonParse(value, fallback) {
-  if (value === null || value === undefined || value === '') {return fallback}
+function safeJsonParse(value, conservative) {
+  if (value === null || value === undefined || value === '') {return conservative}
   if (Array.isArray(value) || (value && typeof value === 'object')) {
     return value
   }
   try {
     return JSON.parse(String(value))
   } catch {
-    return fallback
+    return conservative
   }
 }
 
@@ -166,7 +166,7 @@ function mapRouteRow(row = {}) {
     hostProfileCondition: safeJsonParse(row.host_profile_condition_json, {}),
     entryPriority: Number(row.entry_priority || 0),
     maxQuestions: Number(row.max_questions || 1),
-    fallbackPolicy: row.fallback_policy || '',
+    conservativePolicy: row.conservative_policy || '',
     actionProfileKey: row.action_profile_key || '',
     actionConflictGroup: row.action_conflict_group || '',
     enabled: Number(row.enabled || 0) === 1,
@@ -175,11 +175,11 @@ function mapRouteRow(row = {}) {
   }
 }
 
-function mapGateRow(row = {}) {
+function mapConditionRow(row = {}) {
   return {
-    gateKey: row.gate_key || '',
+    conditionKey: row.condition_key || '',
     routeKey: row.route_key || '',
-    gateRole: row.gate_role || '',
+    conditionRole: row.condition_role || '',
     requiredEvidence: safeJsonParse(row.required_evidence_json, {}),
     requiredAnswerEffects: safeJsonParse(row.required_answer_effects_json, {}),
     blockerEvidence: safeJsonParse(row.blocker_evidence_json, {}),
@@ -190,7 +190,7 @@ function mapGateRow(row = {}) {
     onUnknown: row.on_unknown || '',
     decisionCauseKey: row.decision_cause_key || '',
     decisionCauseTextCn: row.decision_cause_text_cn || '',
-    gatePriority: Number(row.gate_priority || 0),
+    conditionPriority: Number(row.condition_priority || 0),
     enabled: Number(row.enabled || 0) === 1,
     reviewStatus: row.review_status || '',
     dataStatus: row.data_status || ''
@@ -202,11 +202,11 @@ function mapRouteQuestionRow(row = {}) {
     routeKey: row.route_key || '',
     stepNo: Number(row.step_no || 0),
     questionKey: row.question_key || '',
-    targetDimension: row.target_dimension || '',
+    packageTopic: row.package_topic || '',
     targetSymptomKey: row.target_symptom_key || '',
     questionTextUserCn: row.question_text_user_cn || '',
-    gateKey: row.gate_key || '',
-    questionRole: row.question_role || '',
+    conditionKey: row.condition_key || '',
+    routePackageRole: row.route_package_role || '',
     requiredForClosure: Number(row.required_for_closure || 0) === 1,
     askPriority: Number(row.ask_priority || 0),
     skipIfEvidence: safeJsonParse(row.skip_if_evidence_json, {}),
@@ -252,7 +252,7 @@ function mapActionProfileRow(row = {}) {
 function mapDiagnosisOutcomeRow(row = {}) {
   return {
     outcomeKey: row.outcome_key || '',
-    legacyProblemKey: row.legacy_problem_key || '',
+    sourceProblemKey: row.session_problem_key || '',
     outcomeNameCn: row.outcome_name_cn || '',
     outcomeType: row.outcome_type || '',
     outcomeCategory: row.outcome_category || '',
@@ -374,7 +374,7 @@ async function preloadOutcomeRouteRepositoryCache() {
       allRouteGroupsRaw,
       allRoutesRaw,
       allQuestionsRaw,
-      allGatesRaw,
+      allConditionsRaw,
       allAnswerEffectsRaw,
       allActionProfilesRaw,
       allOutcomesRaw
@@ -414,7 +414,7 @@ async function preloadOutcomeRouteRepositoryCache() {
             host_profile_condition_json,
             entry_priority,
             max_questions,
-            fallback_policy,
+            conservative_policy,
             action_profile_key,
             action_conflict_group,
             enabled,
@@ -433,11 +433,11 @@ async function preloadOutcomeRouteRepositoryCache() {
             route_questions.route_key,
             route_questions.step_no,
             route_questions.question_key,
-            questions.target_dimension,
+            questions.package_topic,
             questions.target_symptom_key,
             questions.question_text_user_cn,
-            route_questions.gate_key,
-            route_questions.question_role,
+            route_questions.condition_key,
+            route_questions.route_package_role,
             route_questions.required_for_closure,
             route_questions.ask_priority,
             route_questions.skip_if_evidence_json,
@@ -460,9 +460,9 @@ async function preloadOutcomeRouteRepositoryCache() {
       runSql(
         `
           SELECT
-            gate_key,
+            condition_key,
             route_key,
-            gate_role,
+            condition_role,
             required_evidence_json,
             required_answer_effects_json,
             blocker_evidence_json,
@@ -473,11 +473,11 @@ async function preloadOutcomeRouteRepositoryCache() {
             on_unknown,
             decision_cause_key,
             decision_cause_text_cn,
-            gate_priority,
+            condition_priority,
             enabled,
             review_status,
             data_status
-          FROM ${table('outcome_route_gates')}
+          FROM ${table('outcome_route_conditions')}
           WHERE route_key IN (
             SELECT route_key FROM ${table('outcome_routes')}
             WHERE enabled = 1
@@ -487,7 +487,7 @@ async function preloadOutcomeRouteRepositoryCache() {
             AND enabled = 1
             AND ${buildAuditedStatusClause('data_status')}
             AND ${buildReviewedStatusClause('review_status')}
-          ORDER BY gate_priority DESC, gate_key ASC
+          ORDER BY condition_priority DESC, condition_key ASC
         `
       ),
       runSql(
@@ -535,7 +535,7 @@ async function preloadOutcomeRouteRepositoryCache() {
         `
           SELECT
             outcome_key,
-            legacy_problem_key,
+            session_problem_key,
             outcome_name_cn,
             outcome_type,
             outcome_category,
@@ -561,7 +561,7 @@ async function preloadOutcomeRouteRepositoryCache() {
     const mappedRouteGroups = allRouteGroupsRaw.map(mapRouteGroupRow)
     const mappedRoutes = allRoutesRaw.map(mapRouteRow)
     const mappedQuestions = allQuestionsRaw.map(mapRouteQuestionRow)
-    const mappedGates = allGatesRaw.map(mapGateRow)
+    const mappedConditions = allConditionsRaw.map(mapConditionRow)
     const mappedAnswerEffects = allAnswerEffectsRaw.map(mapAnswerEffectRow)
     const mappedActionProfiles = allActionProfilesRaw.map(mapActionProfileRow)
     const mappedOutcomes = allOutcomesRaw.map(mapDiagnosisOutcomeRow)
@@ -606,13 +606,13 @@ async function preloadOutcomeRouteRepositoryCache() {
       list.push(row)
       questionsByRoute.set(key, list)
     }
-    const gatesByRoute = new Map()
-    for (const row of mappedGates) {
+    const conditionsByRoute = new Map()
+    for (const row of mappedConditions) {
       const key = normalizeKey(row.routeKey)
       if (!key) {continue}
-      const list = gatesByRoute.get(key) || []
+      const list = conditionsByRoute.get(key) || []
       list.push(row)
-      gatesByRoute.set(key, list)
+      conditionsByRoute.set(key, list)
     }
     const effectsByQuestion = new Map()
     for (const row of mappedAnswerEffects) {
@@ -637,9 +637,9 @@ async function preloadOutcomeRouteRepositoryCache() {
 
     for (const routeKey of Array.from(routeKeys)) {
       const questionsCacheKey = buildSchemaCacheKey(['questionsByRoute', normalizeCacheSignature([routeKey])])
-      const gatesCacheKey = buildSchemaCacheKey(['gatesByRoute', normalizeCacheSignature([routeKey])])
+      const conditionsCacheKey = buildSchemaCacheKey(['conditionsByRoute', normalizeCacheSignature([routeKey])])
       setCached(staticCache.questionsByRouteSignature, questionsCacheKey, questionsByRoute.get(routeKey) || [])
-      setCached(staticCache.gatesByRouteSignature, gatesCacheKey, gatesByRoute.get(routeKey) || [])
+      setCached(staticCache.conditionsByRouteSignature, conditionsCacheKey, conditionsByRoute.get(routeKey) || [])
     }
     for (const [questionKey, rows] of effectsByQuestion.entries()) {
       const cacheKey = buildSchemaCacheKey([
@@ -707,7 +707,7 @@ async function getOutcomeRoutesByOutcomeKeys(outcomeKeys = []) {
         host_profile_condition_json,
         entry_priority,
         max_questions,
-        fallback_policy,
+        conservative_policy,
         action_profile_key,
         action_conflict_group,
         enabled,
@@ -727,41 +727,41 @@ async function getOutcomeRoutesByOutcomeKeys(outcomeKeys = []) {
   })
 }
 
-async function getOutcomeRouteGates(routeKeys = []) {
+async function getOutcomeRouteConditions(routeKeys = []) {
   const safeKeys = normalizeKeys(routeKeys)
   if (!safeKeys.length) {return []}
-  const cacheKey = buildSchemaCacheKey(['gatesByRoute', normalizeCacheSignature(safeKeys)])
-  const cached = getCached(staticCache.gatesByRouteSignature, cacheKey)
+  const cacheKey = buildSchemaCacheKey(['conditionsByRoute', normalizeCacheSignature(safeKeys)])
+  const cached = getCached(staticCache.conditionsByRouteSignature, cacheKey)
   if (cached !== undefined) {return cached}
   const composedCached = getComposedCachedRows(
-    staticCache.gatesByRouteSignature,
-    'gatesByRoute',
+    staticCache.conditionsByRouteSignature,
+    'conditionsByRoute',
     safeKeys
   )
   if (composedCached !== undefined) {
-    setCached(staticCache.gatesByRouteSignature, cacheKey, composedCached)
+    setCached(staticCache.conditionsByRouteSignature, cacheKey, composedCached)
     return composedCached
   }
 
   return withPendingStaticQuery(cacheKey, async () => {
-    const cachedAfterWait = getCached(staticCache.gatesByRouteSignature, cacheKey)
+    const cachedAfterWait = getCached(staticCache.conditionsByRouteSignature, cacheKey)
     if (cachedAfterWait !== undefined) {return cachedAfterWait}
     const composedCachedAfterWait = getComposedCachedRows(
-      staticCache.gatesByRouteSignature,
-      'gatesByRoute',
+      staticCache.conditionsByRouteSignature,
+      'conditionsByRoute',
       safeKeys
     )
     if (composedCachedAfterWait !== undefined) {
-      setCached(staticCache.gatesByRouteSignature, cacheKey, composedCachedAfterWait)
+      setCached(staticCache.conditionsByRouteSignature, cacheKey, composedCachedAfterWait)
       return composedCachedAfterWait
     }
 
     const rows = await runSql(
     `
       SELECT
-        gate_key,
+        condition_key,
         route_key,
-        gate_role,
+        condition_role,
         required_evidence_json,
         required_answer_effects_json,
         blocker_evidence_json,
@@ -772,20 +772,20 @@ async function getOutcomeRouteGates(routeKeys = []) {
         on_unknown,
         decision_cause_key,
         decision_cause_text_cn,
-        gate_priority,
+        condition_priority,
         enabled,
         review_status,
         data_status
-      FROM ${table('outcome_route_gates')}
+      FROM ${table('outcome_route_conditions')}
       WHERE route_key IN ${sqlInList(safeKeys)}
         AND enabled = 1
         AND ${buildAuditedStatusClause('data_status')}
         AND ${buildReviewedStatusClause('review_status')}
-      ORDER BY gate_priority DESC, gate_key ASC
+      ORDER BY condition_priority DESC, condition_key ASC
     `
     )
-    const mappedRows = rows.map(mapGateRow)
-    setCached(staticCache.gatesByRouteSignature, cacheKey, mappedRows)
+    const mappedRows = rows.map(mapConditionRow)
+    setCached(staticCache.conditionsByRouteSignature, cacheKey, mappedRows)
     return mappedRows
   })
 }
@@ -825,11 +825,11 @@ async function getOutcomeRouteQuestions(routeKeys = []) {
         route_questions.route_key,
         route_questions.step_no,
         route_questions.question_key,
-        questions.target_dimension,
+        questions.package_topic,
         questions.target_symptom_key,
         questions.question_text_user_cn,
-        route_questions.gate_key,
-        route_questions.question_role,
+        route_questions.condition_key,
+        route_questions.route_package_role,
         route_questions.required_for_closure,
         route_questions.ask_priority,
         route_questions.skip_if_evidence_json,
@@ -994,7 +994,7 @@ async function getDiagnosisOutcomesByKeys(outcomeKeys = []) {
     `
       SELECT
         outcome_key,
-        legacy_problem_key,
+        session_problem_key,
         outcome_name_cn,
         outcome_type,
         outcome_category,
@@ -1026,7 +1026,7 @@ module.exports = {
   getAllActiveOutcomeRouteGroups,
   getOutcomeRouteGroupsByKeys,
   getOutcomeRoutesByOutcomeKeys,
-  getOutcomeRouteGates,
+  getOutcomeRouteConditions,
   getOutcomeRouteQuestions,
   getOutcomeAnswerEffects,
   getOutcomeActionProfiles,

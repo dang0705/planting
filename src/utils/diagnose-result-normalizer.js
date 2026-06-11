@@ -17,7 +17,7 @@ import {
   normalizeDiagnosticTrace,
   normalizeOutputEligibility,
   normalizeProblemCausality,
-  normalizeQuestionQueue,
+  normalizeQuestionPackageSnapshot,
   normalizeStopState
 } from './diagnose-process-normalizers.js'
 import {
@@ -79,12 +79,12 @@ export function normalizeQuestions(questions = [], options = {}) {
       questionId: item.questionId,
       questionKey: item.questionKey || item.questionId,
       targetSymptomKey: item.targetSymptomKey || '',
-      targetDimension: item.targetDimension || '',
+      packageTopic: item.packageTopic || '',
       questionGroupKey: item.questionGroupKey || '',
-      routingScope: item.routingScope || '',
-      questionRole: item.questionRole || item.questionCategory || '',
-      questionCategory: item.questionCategory || item.questionRole || '',
-      effectMode: item.effectMode || '',
+      packageSection: item.packageSection || '',
+      routePackageRole: item.routePackageRole || item.routePackageRole || '',
+      routePackageRole: item.routePackageRole || item.routePackageRole || '',
+      packageEffect: item.packageEffect || '',
       text: item.questionTextUserCn || item.questionTextCn || item.text || item.questionText || item.title || '',
       helpText: item.helpTextCn || item.helpText || item.questionHelpText || '',
       defaultOptionKey: item.defaultOptionKey || '',
@@ -165,7 +165,7 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
   const observedEvidenceSet = normalizeObservedEvidenceSet(diagnosis.observedEvidenceSet)
   const derivedEvidenceSet = normalizeDerivedEvidenceSet(diagnosis.derivedEvidenceSet)
   const diagnosisDirections = normalizeDiagnosisDirections(diagnosis.diagnosisDirections)
-  const questionQueue = normalizeQuestionQueue(diagnosis.questionQueue)
+  const questionPackageSnapshot = normalizeQuestionPackageSnapshot(diagnosis.questionPackageSnapshot)
   const stopState = normalizeStopState(diagnosis.stopState)
   const outputEligibility = normalizeOutputEligibility(diagnosis.outputEligibility)
   const diagnosticTrace = normalizeDiagnosticTrace(diagnosis.diagnosticTrace)
@@ -175,18 +175,18 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
     normalizeShadowCompareSummary(diagnosis.shadowCompareSummary) ||
     visualAggregateSummary?.shadowCompareSummary ||
     null
-  const legacyPrimaryOutcome = normalizeOutcomeEntry(
+  const sessionPrimaryOutcome = normalizeOutcomeEntry(
     diagnosis.primaryOutcome || finalResult?.primaryOutcome
   )
-  const legacySecondaryOutcomes = normalizeOutcomeList(
+  const sessionSecondaryOutcomes = normalizeOutcomeList(
     diagnosis.secondaryOutcomes || finalResult?.secondaryOutcomes
   )
   const visibleOutcomes = synthesizeVisibleOutcomes({
     visibleOutcomes: normalizeOutcomeList(
       diagnosis.visibleOutcomes || finalResult?.visibleOutcomes
     ),
-    legacyPrimaryOutcome,
-    legacySecondaryOutcomes
+    sessionPrimaryOutcome,
+    sessionSecondaryOutcomes
   })
   const routeDecisionCause = normalizeRouteDecisionCause(
     diagnosis.routeDecisionCause ||
@@ -222,7 +222,7 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
       ? diagnosis.environmentDeviationHints
       : [],
     routePrimaryAction: diagnosis.routePrimaryAction || '',
-    questionQueue,
+    questionPackageSnapshot,
     stopReason: diagnosis.stopReason || '',
     stopState,
     outputEligibility,
@@ -296,7 +296,7 @@ export function normalizeDiagnosisResult(diagnosisResult, { images = [], plantNa
     environmentDeviationHints: Array.isArray(diagnosis.environmentDeviationHints)
       ? diagnosis.environmentDeviationHints
       : [],
-    questionQueue,
+    questionPackageSnapshot,
     stopState,
     outputEligibility,
     diagnosticTrace,

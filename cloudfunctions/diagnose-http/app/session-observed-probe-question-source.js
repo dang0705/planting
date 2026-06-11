@@ -2,10 +2,10 @@
 
 const { buildSyntheticObservedProbeQuestions } = require('../utils/synthetic-question-package')
 
-function buildObservedProbeQuestionsFromLegacySource(...args) {
+function buildObservedProbeQuestionsFromSessionSource(...args) {
   return buildSyntheticObservedProbeQuestions(...args)
 }
 
 module.exports = {
-  buildObservedProbeQuestionsFromLegacySource
+  buildObservedProbeQuestionsFromSessionSource
 }

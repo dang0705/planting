@@ -12,8 +12,8 @@ const {
   getCandidateProblemPriors,
   getGenusCandidatePriors,
   getHostCandidatePriors,
-  getGenusCompatibilityMap,
-  getHostCompatibilityMap
+  getGenusSuitabilityMap,
+  getHostSuitabilityMap
 } = require('../repositories/prior-repository')
 const { getProblemsByKeys, getExplanationsByProblemKeys } = require('../repositories/problem-repository')
 const {
@@ -37,17 +37,17 @@ const { resolveSymptomClassRuntime } = require('./symptom-classifier')
 const { formatDiagnosisResponse } = require('./result-formatter')
 const { buildRuntimeArtifacts } = require('./runtime-artifacts')
 const { resolveHighSpecificityConvergencePlan } = require('./high-specificity-fast-convergence')
-const { resolveLowConfidenceState } = require('./uncertain-gate')
+const { resolveLowConfidenceState } = require('./uncertain-condition')
 const {
   resolveNonProblematicRule,
   buildNonProblematicRoundResult
 } = require('./non-problematic-resolver')
 const {
-  QUESTION_TARGET_DIMENSIONS,
-  QUESTION_ROUTING_SCOPES,
-  normalizeQuestionTargetDimension,
+  QUESTION_PACKAGE_TOPICS,
+  QUESTION_PACKAGE_SECTIONS,
+  normalizeQuestionPackageTopic,
   isGenericObservedProbeDirectEvidenceDimension
-} = require('../utils/question-target-dimension')
+} = require('../utils/question-package-topic')
 const {
   buildVisualCandidateQuestionGroupKey,
   buildSyntheticVisualCandidateQuestionKey,
@@ -177,7 +177,7 @@ function sanitizeRouteDecisionForPublic(routeDecision = null) {
     nextQuestionKeys: Array.isArray(routeDecision.nextQuestionKeys)
       ? routeDecision.nextQuestionKeys.map(item => normalizeKey(item)).filter(Boolean)
       : [],
-    fallbackPolicy: normalizeKey(routeDecision.fallbackPolicy || ''),
+    conservativePolicy: normalizeKey(routeDecision.conservativePolicy || ''),
     decisionCause: normalizeDecisionCause(routeDecision.decisionCause)
   }
 }
@@ -216,13 +216,13 @@ function isRouteDebugTraceEnabled() {
   return isEnabledFeatureFlag('ROUTE_DEBUG_TRACE_ENABLED', 'ROUTE_MODE_ENABLED')
 }
 
-function isEnabledFeatureFlag(primaryEnvKey = '', fallbackEnvKey = '', options = {}) {
+function isEnabledFeatureFlag(primaryEnvKey = '', conservativeEnvKey = '', options = {}) {
   const primaryRaw = String(process.env[primaryEnvKey] || '').trim()
-  const fallbackRaw = String(process.env[fallbackEnvKey] || '').trim()
+  const conservativeRaw = String(process.env[conservativeEnvKey] || '').trim()
   const defaultEnabled = Boolean(options?.defaultEnabled)
   const raw = String(
     primaryRaw ||
-      fallbackRaw ||
+      conservativeRaw ||
       (defaultEnabled ? '1' : '0')
   )
     .trim()
@@ -257,8 +257,8 @@ function hasBroadVisualDifferentialInput({
   const classKeys = [
     symptomClassRuntime?.currentClassKey,
     symptomClassRuntime?.primaryClass?.classKey,
-    symptomClassRuntime?.classGateDecision?.currentClassKey,
-    symptomClassRuntime?.classGateDecision?.primaryClassKey
+    symptomClassRuntime?.classConditionDecision?.currentClassKey,
+    symptomClassRuntime?.classConditionDecision?.primaryClassKey
   ].map(item => normalizeKey(item)).filter(Boolean)
 
   if (classKeys.some(classKey => BROAD_VISUAL_DIFFERENTIAL_CLASS_KEYS.has(classKey))) {
@@ -326,7 +326,7 @@ function shouldRestrictToCandidateSeedOnly({
     return false
   }
 
-  const blockedReason = String(symptomClassRuntime?.classGateDecision?.blockedReason || '').trim()
+  const blockedReason = String(symptomClassRuntime?.classConditionDecision?.blockedReason || '').trim()
   if (blockedReason === 'no_observed_symptoms') {
     return true
   }
@@ -457,8 +457,8 @@ function mergeCandidatePriors(...groups) {
       if (!item?.problemKey) {continue}
       const existing = merged.get(item.problemKey) || {
         problemKey: item.problemKey,
-        genusCompatibility: null,
-        hostCompatibility: null,
+        genusSuitability: null,
+        hostSuitability: null,
         finalPriorScore: 0,
         matchedHostLevel: '',
         sourceLayer: '',
@@ -467,10 +467,10 @@ function mergeCandidatePriors(...groups) {
 
       merged.set(item.problemKey, {
         ...existing,
-        genusCompatibility:
-          item.genusCompatibility ?? existing.genusCompatibility,
-        hostCompatibility:
-          item.hostCompatibility ?? existing.hostCompatibility,
+        genusSuitability:
+          item.genusSuitability ?? existing.genusSuitability,
+        hostSuitability:
+          item.hostSuitability ?? existing.hostSuitability,
         finalPriorScore: Math.max(
           Number(existing.finalPriorScore || 0),
           Number(item.finalPriorScore || 0)
@@ -535,8 +535,8 @@ function buildDirectionCandidatePriors(diagnosisDirections = [], existingProblem
 
       priors.push({
         problemKey,
-        genusCompatibility: null,
-        hostCompatibility: null,
+        genusSuitability: null,
+        hostSuitability: null,
         finalPriorScore,
         matchedHostLevel: '',
         sourceLayer: `direction_${normalizeKey(direction?.directionKey || 'hint')}`,
@@ -617,13 +617,13 @@ function hasDirectPositiveProblemAnswer(answerEffects = [], problemKey = '') {
     if (Number(item?.value || 0) <= 0) {return false}
     if (isDisabledYellowingFlowQuestion(item)) {return false}
 
-    const { targetDimension } = parseSyntheticObservedProbeQuestionKey(item?.questionKey || '')
-    const normalizedTargetDimension =
-      normalizeQuestionTargetDimension(item?.targetDimension || '', '') ||
-      normalizeQuestionTargetDimension(targetDimension, '')
+    const { packageTopic } = parseSyntheticObservedProbeQuestionKey(item?.questionKey || '')
+    const normalizedPackageTopic =
+      normalizeQuestionPackageTopic(item?.packageTopic || '', '') ||
+      normalizeQuestionPackageTopic(packageTopic, '')
     return (
       !item?.isGenericObservedProbeDirectPositive &&
-      !isGenericObservedProbeDirectEvidenceDimension(normalizedTargetDimension)
+      !isGenericObservedProbeDirectEvidenceDimension(normalizedPackageTopic)
     )
   })
 }
@@ -702,8 +702,8 @@ function buildDirectAdjustmentCandidatePriors(optionMappings = [], existingProbl
     .filter(problemKey => !existingProblemKeySet.has(problemKey))
     .map(problemKey => ({
       problemKey,
-      genusCompatibility: null,
-      hostCompatibility: null,
+      genusSuitability: null,
+      hostSuitability: null,
       finalPriorScore: 0.34,
       matchedHostLevel: '',
       sourceLayer: 'answer_direct_adjustment',
@@ -724,7 +724,7 @@ function hasQuestionHistory({
   return false
 }
 
-const YELLOWING_GATE_SYMPTOM_KEYS = new Set([
+const YELLOWING_CONDITION_SYMPTOM_KEYS = new Set([
   'leaf_yellowing',
   'uniform_yellowing',
   'yellow_lower_leaves',
@@ -736,14 +736,14 @@ const YELLOWING_GATE_SYMPTOM_KEYS = new Set([
   'vein_darkening'
 ])
 
-const YELLOWING_GATE_CLASS_KEYS = new Set([
+const YELLOWING_CONDITION_CLASS_KEYS = new Set([
   'yellowing_mode',
   'nutrient_stress_mode',
   'thrips_damage_mode'
 ])
 
-const YELLOWING_PRIMARY_CLUE_GATE_QUESTION_KEY =
-  'q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate'
+const YELLOWING_PRIMARY_CLUE_TOPIC_QUESTION_KEY =
+  'q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition'
 const LEAF_YELLOWING_FERTILIZATION_BACKGROUND_QUESTION_KEY =
   'q_leaf_yellowing_fertilization_background'
 
@@ -764,67 +764,67 @@ const ROOT_BRIDGE_QUESTION_KEYS = new Set([
 ])
 
 const YELLOWING_REQUIRED_GROUP_DIMENSIONS = [
-  QUESTION_TARGET_DIMENSIONS.WATERING_FREQUENCY_CONTEXT,
-  QUESTION_TARGET_DIMENSIONS.LIGHT_CHANGE_CONTEXT,
-  QUESTION_TARGET_DIMENSIONS.FERTILIZATION_GROWTH_CONTEXT,
-  QUESTION_TARGET_DIMENSIONS.AIRFLOW_HUMIDITY_CONTEXT
+  QUESTION_PACKAGE_TOPICS.WATERING_FREQUENCY_CONTEXT,
+  QUESTION_PACKAGE_TOPICS.LIGHT_CHANGE_CONTEXT,
+  QUESTION_PACKAGE_TOPICS.FERTILIZATION_GROWTH_CONTEXT,
+  QUESTION_PACKAGE_TOPICS.AIRFLOW_HUMIDITY_CONTEXT
 ]
 
-const YELLOWING_GATE_DIMENSION_EQUIVALENTS = {
-  [QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE]: [
-    QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE
+const YELLOWING_CONDITION_DIMENSION_EQUIVALENTS = {
+  [QUESTION_PACKAGE_TOPICS.YELLOWING_PRIMARY_CLUE_TOPIC]: [
+    QUESTION_PACKAGE_TOPICS.YELLOWING_PRIMARY_CLUE_TOPIC
   ],
-  [QUESTION_TARGET_DIMENSIONS.YELLOWING_CARE_AREA_GATE]: [
-    QUESTION_TARGET_DIMENSIONS.YELLOWING_CARE_AREA_GATE
+  [QUESTION_PACKAGE_TOPICS.YELLOWING_CARE_AREA_TOPIC]: [
+    QUESTION_PACKAGE_TOPICS.YELLOWING_CARE_AREA_TOPIC
   ],
-  [QUESTION_TARGET_DIMENSIONS.YELLOWING_DISEASE_TRACE_GATE]: [
-    QUESTION_TARGET_DIMENSIONS.YELLOWING_DISEASE_TRACE_GATE
+  [QUESTION_PACKAGE_TOPICS.YELLOWING_DISEASE_TRACE_TOPIC]: [
+    QUESTION_PACKAGE_TOPICS.YELLOWING_DISEASE_TRACE_TOPIC
   ],
-  [QUESTION_TARGET_DIMENSIONS.PEST_TRACE_TYPE]: [
-    QUESTION_TARGET_DIMENSIONS.PEST_TRACE_TYPE
+  [QUESTION_PACKAGE_TOPICS.PEST_TRACE_TYPE]: [
+    QUESTION_PACKAGE_TOPICS.PEST_TRACE_TYPE
   ],
-  [QUESTION_TARGET_DIMENSIONS.YELLOWING_LEAF_AGE_PATTERN]: [
-    QUESTION_TARGET_DIMENSIONS.YELLOWING_LEAF_AGE_PATTERN,
-    QUESTION_TARGET_DIMENSIONS.HOST_CONFIRMATION
+  [QUESTION_PACKAGE_TOPICS.YELLOWING_LEAF_AGE_PATTERN]: [
+    QUESTION_PACKAGE_TOPICS.YELLOWING_LEAF_AGE_PATTERN,
+    QUESTION_PACKAGE_TOPICS.HOST_CONFIRMATION
   ],
-  [QUESTION_TARGET_DIMENSIONS.YELLOWING_DISTRIBUTION_PATTERN]: [
-    QUESTION_TARGET_DIMENSIONS.YELLOWING_DISTRIBUTION_PATTERN,
-    QUESTION_TARGET_DIMENSIONS.DISTRIBUTION_SCOPE
+  [QUESTION_PACKAGE_TOPICS.YELLOWING_DISTRIBUTION_PATTERN]: [
+    QUESTION_PACKAGE_TOPICS.YELLOWING_DISTRIBUTION_PATTERN,
+    QUESTION_PACKAGE_TOPICS.DISTRIBUTION_SCOPE
   ],
-  [QUESTION_TARGET_DIMENSIONS.WATERING_FREQUENCY_CONTEXT]: [
-    QUESTION_TARGET_DIMENSIONS.WATERING_FREQUENCY_CONTEXT,
-    QUESTION_TARGET_DIMENSIONS.WATERING_CONTEXT
+  [QUESTION_PACKAGE_TOPICS.WATERING_FREQUENCY_CONTEXT]: [
+    QUESTION_PACKAGE_TOPICS.WATERING_FREQUENCY_CONTEXT,
+    QUESTION_PACKAGE_TOPICS.WATERING_CONTEXT
   ],
-  [QUESTION_TARGET_DIMENSIONS.LIGHT_CHANGE_CONTEXT]: [
-    QUESTION_TARGET_DIMENSIONS.LIGHT_CHANGE_CONTEXT,
-    QUESTION_TARGET_DIMENSIONS.LIGHT_EXPOSURE
+  [QUESTION_PACKAGE_TOPICS.LIGHT_CHANGE_CONTEXT]: [
+    QUESTION_PACKAGE_TOPICS.LIGHT_CHANGE_CONTEXT,
+    QUESTION_PACKAGE_TOPICS.LIGHT_EXPOSURE
   ],
-  [QUESTION_TARGET_DIMENSIONS.FERTILIZATION_GROWTH_CONTEXT]: [
-    QUESTION_TARGET_DIMENSIONS.FERTILIZATION_GROWTH_CONTEXT,
-    QUESTION_TARGET_DIMENSIONS.FERTILIZATION_CONTEXT
+  [QUESTION_PACKAGE_TOPICS.FERTILIZATION_GROWTH_CONTEXT]: [
+    QUESTION_PACKAGE_TOPICS.FERTILIZATION_GROWTH_CONTEXT,
+    QUESTION_PACKAGE_TOPICS.FERTILIZATION_CONTEXT
   ],
-  [QUESTION_TARGET_DIMENSIONS.AIRFLOW_HUMIDITY_CONTEXT]: [
-    QUESTION_TARGET_DIMENSIONS.AIRFLOW_HUMIDITY_CONTEXT
+  [QUESTION_PACKAGE_TOPICS.AIRFLOW_HUMIDITY_CONTEXT]: [
+    QUESTION_PACKAGE_TOPICS.AIRFLOW_HUMIDITY_CONTEXT
   ],
-  [QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED]: [
-    QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED,
-    QUESTION_TARGET_DIMENSIONS.PROGRESSION
+  [QUESTION_PACKAGE_TOPICS.YELLOWING_PROGRESSION_SPEED]: [
+    QUESTION_PACKAGE_TOPICS.YELLOWING_PROGRESSION_SPEED,
+    QUESTION_PACKAGE_TOPICS.PROGRESSION
   ]
 }
 
-function resolveYellowingEquivalentDimensions(targetDimension = '') {
-  const normalizedTargetDimension = normalizeQuestionTargetDimension(targetDimension, '')
-  if (!normalizedTargetDimension) {return []}
+function resolveYellowingEquivalentDimensions(packageTopic = '') {
+  const normalizedPackageTopic = normalizeQuestionPackageTopic(packageTopic, '')
+  if (!normalizedPackageTopic) {return []}
 
   const equivalents = new Set([
-    normalizedTargetDimension,
-    ...(YELLOWING_GATE_DIMENSION_EQUIVALENTS[normalizedTargetDimension] || [])
+    normalizedPackageTopic,
+    ...(YELLOWING_CONDITION_DIMENSION_EQUIVALENTS[normalizedPackageTopic] || [])
   ])
 
-  for (const [sourceDimension, sourceEquivalents] of Object.entries(YELLOWING_GATE_DIMENSION_EQUIVALENTS)) {
+  for (const [sourceDimension, sourceEquivalents] of Object.entries(YELLOWING_CONDITION_DIMENSION_EQUIVALENTS)) {
     if (
-      sourceDimension === normalizedTargetDimension ||
-      (Array.isArray(sourceEquivalents) && sourceEquivalents.includes(normalizedTargetDimension))
+      sourceDimension === normalizedPackageTopic ||
+      (Array.isArray(sourceEquivalents) && sourceEquivalents.includes(normalizedPackageTopic))
     ) {
       equivalents.add(sourceDimension)
       for (const dimension of Array.isArray(sourceEquivalents) ? sourceEquivalents : []) {
@@ -836,84 +836,84 @@ function resolveYellowingEquivalentDimensions(targetDimension = '') {
   return Array.from(equivalents)
 }
 
-function isYellowingGateSymptomKey(symptomKey = '') {
-  return YELLOWING_GATE_SYMPTOM_KEYS.has(normalizeKey(symptomKey))
+function isYellowingConditionSymptomKey(symptomKey = '') {
+  return YELLOWING_CONDITION_SYMPTOM_KEYS.has(normalizeKey(symptomKey))
 }
 
-function collectAnsweredTargetDimensions(askedQuestions = []) {
+function collectAnsweredPackageTopics(askedQuestions = []) {
   return new Set(
     (Array.isArray(askedQuestions) ? askedQuestions : [])
       .map(item => {
         const questionKey = normalizeKey(item?.questionKey || item?.question_key || item?.symptom_key || '')
         const parsedSyntheticObservedProbe = parseSyntheticObservedProbeQuestionKey(questionKey)
-        return normalizeQuestionTargetDimension(item?.targetDimension || item?.target_dimension || '', '') ||
-          normalizeQuestionTargetDimension(parsedSyntheticObservedProbe?.targetDimension || '', '')
+        return normalizeQuestionPackageTopic(item?.packageTopic || item?.package_topic || '', '') ||
+          normalizeQuestionPackageTopic(parsedSyntheticObservedProbe?.packageTopic || '', '')
       })
       .filter(Boolean)
   )
 }
 
-function hasAnsweredYellowingGateDimension(answeredDimensions = new Set(), targetDimension = '') {
-  const equivalents = resolveYellowingEquivalentDimensions(targetDimension)
-  return equivalents.some(dimension => answeredDimensions.has(dimension))
+function hasAnsweredYellowingConditionDimension(answeredTopics = new Set(), packageTopic = '') {
+  const equivalents = resolveYellowingEquivalentDimensions(packageTopic)
+  return equivalents.some(dimension => answeredTopics.has(dimension))
 }
 
-function resolveNextMissingYellowingGroupDimension(answeredDimensions = new Set()) {
+function resolveNextMissingYellowingGroupDimension(answeredTopics = new Set()) {
   return YELLOWING_REQUIRED_GROUP_DIMENSIONS.find(
-    dimension => !hasAnsweredYellowingGateDimension(answeredDimensions, dimension)
+    dimension => !hasAnsweredYellowingConditionDimension(answeredTopics, dimension)
   ) || ''
 }
 
 function isYellowingEquivalentDimensionAnswered(askedQuestions = [], question = {}) {
   const targetSymptomKey = normalizeKey(question?.targetSymptomKey || question?.target_symptom_key || '')
-  if (!isYellowingGateSymptomKey(targetSymptomKey)) {
+  if (!isYellowingConditionSymptomKey(targetSymptomKey)) {
     return false
   }
-  const targetDimension = normalizeQuestionTargetDimension(
-    question?.targetDimension || question?.target_dimension || '',
+  const packageTopic = normalizeQuestionPackageTopic(
+    question?.packageTopic || question?.package_topic || '',
     ''
   )
-  if (!targetDimension) {
+  if (!packageTopic) {
     return false
   }
-  const equivalents = resolveYellowingEquivalentDimensions(targetDimension)
+  const equivalents = resolveYellowingEquivalentDimensions(packageTopic)
   if (!equivalents.length) {
     return false
   }
-  const answeredDimensions = collectAnsweredTargetDimensions(askedQuestions)
-  return equivalents.some(dimension => answeredDimensions.has(dimension))
+  const answeredTopics = collectAnsweredPackageTopics(askedQuestions)
+  return equivalents.some(dimension => answeredTopics.has(dimension))
 }
 
-function isQuestionDimensionEquivalentToAllowed(allowedDimensions = new Set(), targetDimension = '') {
-  const normalizedTargetDimension = normalizeQuestionTargetDimension(targetDimension, '')
-  if (!normalizedTargetDimension) {return true}
-  if (allowedDimensions.has(normalizedTargetDimension)) {return true}
-  for (const allowedDimension of allowedDimensions) {
+function isQuestionDimensionEquivalentToAllowed(allowedTopics = new Set(), packageTopic = '') {
+  const normalizedPackageTopic = normalizeQuestionPackageTopic(packageTopic, '')
+  if (!normalizedPackageTopic) {return true}
+  if (allowedTopics.has(normalizedPackageTopic)) {return true}
+  for (const allowedDimension of allowedTopics) {
     const equivalents = resolveYellowingEquivalentDimensions(allowedDimension)
-    if (equivalents.includes(normalizedTargetDimension)) {
+    if (equivalents.includes(normalizedPackageTopic)) {
       return true
     }
   }
   return false
 }
 
-function isTargetDimensionInYellowingRequiredGroups(targetDimension = '') {
-  const normalizedTargetDimension = normalizeQuestionTargetDimension(targetDimension, '')
-  if (!normalizedTargetDimension) {return false}
-  if (YELLOWING_REQUIRED_GROUP_DIMENSIONS.includes(normalizedTargetDimension)) {return true}
+function isPackageTopicInYellowingRequiredGroups(packageTopic = '') {
+  const normalizedPackageTopic = normalizeQuestionPackageTopic(packageTopic, '')
+  if (!normalizedPackageTopic) {return false}
+  if (YELLOWING_REQUIRED_GROUP_DIMENSIONS.includes(normalizedPackageTopic)) {return true}
   return YELLOWING_REQUIRED_GROUP_DIMENSIONS.some(requiredDimension =>
-    resolveYellowingEquivalentDimensions(requiredDimension).includes(normalizedTargetDimension)
+    resolveYellowingEquivalentDimensions(requiredDimension).includes(normalizedPackageTopic)
   )
 }
 
 function collectYellowingAllowedDimensionsForAnsweredBranch(askedQuestions = []) {
-  const answeredDimensions = collectAnsweredTargetDimensions(askedQuestions)
+  const answeredTopics = collectAnsweredPackageTopics(askedQuestions)
   const allowed = new Set(
     YELLOWING_REQUIRED_GROUP_DIMENSIONS.filter(dimension =>
-      hasAnsweredYellowingGateDimension(answeredDimensions, dimension)
+      hasAnsweredYellowingConditionDimension(answeredTopics, dimension)
     )
   )
-  const nextMissingDimension = resolveNextMissingYellowingGroupDimension(answeredDimensions)
+  const nextMissingDimension = resolveNextMissingYellowingGroupDimension(answeredTopics)
   if (nextMissingDimension) {
     allowed.add(nextMissingDimension)
   }
@@ -921,32 +921,32 @@ function collectYellowingAllowedDimensionsForAnsweredBranch(askedQuestions = [])
 }
 
 function isYellowingQuestionAllowedByAnsweredBranch(askedQuestions = [], question = {}, options = {}) {
-  const { yellowingGateMode = false } = options || {}
-  if (yellowingGateMode) {
-    const targetDimension = normalizeQuestionTargetDimension(
-      question?.targetDimension || question?.target_dimension || '',
+  const { yellowingConditionMode = false } = options || {}
+  if (yellowingConditionMode) {
+    const packageTopic = normalizeQuestionPackageTopic(
+      question?.packageTopic || question?.package_topic || '',
       ''
     )
-    if (!isTargetDimensionInYellowingRequiredGroups(targetDimension)) {
+    if (!isPackageTopicInYellowingRequiredGroups(packageTopic)) {
       return false
     }
   }
   const targetSymptomKey = normalizeKey(question?.targetSymptomKey || question?.target_symptom_key || '')
-  if (!isYellowingGateSymptomKey(targetSymptomKey) && !yellowingGateMode) {
+  if (!isYellowingConditionSymptomKey(targetSymptomKey) && !yellowingConditionMode) {
     return true
   }
-  const allowedDimensions = collectYellowingAllowedDimensionsForAnsweredBranch(askedQuestions)
-  if (!allowedDimensions) {
+  const allowedTopics = collectYellowingAllowedDimensionsForAnsweredBranch(askedQuestions)
+  if (!allowedTopics) {
     return true
   }
-  const targetDimension = normalizeQuestionTargetDimension(
-    question?.targetDimension || question?.target_dimension || '',
+  const packageTopic = normalizeQuestionPackageTopic(
+    question?.packageTopic || question?.package_topic || '',
     ''
   )
-  if (!targetDimension) {
+  if (!packageTopic) {
     return false
   }
-  return isQuestionDimensionEquivalentToAllowed(allowedDimensions, targetDimension)
+  return isQuestionDimensionEquivalentToAllowed(allowedTopics, packageTopic)
 }
 
 function getAnsweredOptionKey(answerLikeRecords = [], questionKey = '') {
@@ -983,11 +983,11 @@ function collectAnswerRouteRecords(answers = [], askedQuestionRows = []) {
         ...row,
         questionKey,
         optionKey: normalizeKey(answer?.optionKey || answer?.option_key || ''),
-        targetDimension:
-          row.targetDimension ||
-          row.target_dimension ||
-          answer?.targetDimension ||
-          answer?.target_dimension ||
+        packageTopic:
+          row.packageTopic ||
+          row.package_topic ||
+          answer?.packageTopic ||
+          answer?.package_topic ||
           '',
         targetSymptomKey:
           row.targetSymptomKey ||
@@ -1194,28 +1194,28 @@ function shouldBlockQuestionByRouteConstraint(question = {}, {
 } = {}) {
   const questionKey = normalizeKey(question?.questionKey || question?.question_key || '')
   if (!questionKey) {return false}
-  const questionTargetDimension = normalizeQuestionTargetDimension(
-    question?.targetDimension || question?.target_dimension || '',
+  const questionPackageTopic = normalizeQuestionPackageTopic(
+    question?.packageTopic || question?.package_topic || '',
     ''
   )
 
   const runtimeClassKey = resolveRuntimeClassKey(symptomClassRuntime)
   const answerRouteRecords = collectAnswerRouteRecords(answers, askedQuestionRows)
   if (
-    YELLOWING_GATE_CLASS_KEYS.has(runtimeClassKey) &&
+    YELLOWING_CONDITION_CLASS_KEYS.has(runtimeClassKey) &&
     isDisabledYellowingFlowQuestion(question)
   ) {
     return true
   }
   const yellowingPrimaryClue = getAnsweredOptionKey(
     answerRouteRecords,
-    YELLOWING_PRIMARY_CLUE_GATE_QUESTION_KEY
+    YELLOWING_PRIMARY_CLUE_TOPIC_QUESTION_KEY
   )
 
   if (
-    YELLOWING_GATE_CLASS_KEYS.has(runtimeClassKey) &&
+    YELLOWING_CONDITION_CLASS_KEYS.has(runtimeClassKey) &&
     !yellowingPrimaryClue &&
-    !YELLOWING_REQUIRED_GROUP_DIMENSIONS.includes(questionTargetDimension)
+    !YELLOWING_REQUIRED_GROUP_DIMENSIONS.includes(questionPackageTopic)
   ) {
     return true
   }
@@ -1289,15 +1289,15 @@ async function buildCandidatePriors(
 
   const linkedPriorBundle = await getLinkedCandidatePriors(plantContext)
   const linkedPriors = Array.isArray(linkedPriorBundle?.priors) ? linkedPriorBundle.priors : []
-  const shouldUseLegacyFallback = !linkedPriorBundle?.hasAnyLinks
+  const shouldUseSessionConservative = !linkedPriorBundle?.hasAnyLinks
   const [plantPriors, genusPriors, hostPriors, evidenceEdges] = await Promise.all([
-    shouldUseLegacyFallback
+    shouldUseSessionConservative
       ? getCandidateProblemPriors(plantContext)
       : Promise.resolve([]),
-    shouldUseLegacyFallback
+    shouldUseSessionConservative
       ? getGenusCandidatePriors(plantContext.genus)
       : Promise.resolve([]),
-    shouldUseLegacyFallback
+    shouldUseSessionConservative
       ? getHostCandidatePriors({
           genus: plantContext.genus,
           family: plantContext.family,
@@ -1313,8 +1313,8 @@ async function buildCandidatePriors(
     new Set((evidenceEdges || []).map(item => item.problemKey).filter(Boolean))
   ).map(problemKey => ({
     problemKey,
-    genusCompatibility: null,
-    hostCompatibility: null,
+    genusSuitability: null,
+    hostSuitability: null,
     finalPriorScore: 0.35,
     matchedHostLevel: '',
     sourceLayer: 'evidence_hit',
@@ -1322,7 +1322,7 @@ async function buildCandidatePriors(
     }))
 
   const prioritizedStaticPriors =
-    linkedPriors.length || !shouldUseLegacyFallback
+    linkedPriors.length || !shouldUseSessionConservative
       ? linkedPriors
       : mergeCandidatePriors(plantPriors, genusPriors, hostPriors)
   const merged = mergeCandidatePriors(
@@ -1350,8 +1350,8 @@ async function buildCandidatePriors(
     .filter(problemKey => !baseProblemKeys.includes(problemKey))
     .map(problemKey => ({
       problemKey,
-      genusCompatibility: null,
-      hostCompatibility: null,
+      genusSuitability: null,
+      hostSuitability: null,
       finalPriorScore: 0.2,
       matchedHostLevel: '',
       sourceLayer: 'causal_linked',
@@ -1406,8 +1406,8 @@ function collectAnswerLikeRecordsFromQuestionRows(rows = []) {
         optionKey: String(row?.answer_value || '').trim().toLowerCase(),
         status: String(row?.status || '').trim().toLowerCase(),
         targetSymptomKey: String(rationale?.targetSymptomKey || rationale?.tsk || '').trim(),
-        targetDimension: String(rationale?.targetDimension || rationale?.td || '').trim(),
-        routingScope: String(rationale?.routingScope || rationale?.rs || '').trim()
+        packageTopic: String(rationale?.packageTopic || rationale?.td || '').trim(),
+        packageSection: String(rationale?.packageSection || rationale?.rs || '').trim()
       }
     })
     .filter(item => item.questionKey && item.optionKey)
@@ -1422,13 +1422,13 @@ function mergeAskedQuestionRows(...groups) {
 
     const existing = map.get(questionKey) || {}
     const parsedSyntheticObservedProbe = parseSyntheticObservedProbeQuestionKey(questionKey)
-    const targetDimension =
-      normalizeQuestionTargetDimension(item?.targetDimension || item?.target_dimension || '', '') ||
-      normalizeQuestionTargetDimension(
-        parsedSyntheticObservedProbe?.targetDimension || '',
+    const packageTopic =
+      normalizeQuestionPackageTopic(item?.packageTopic || item?.package_topic || '', '') ||
+      normalizeQuestionPackageTopic(
+        parsedSyntheticObservedProbe?.packageTopic || '',
         ''
       ) ||
-      normalizeQuestionTargetDimension(existing?.targetDimension || existing?.target_dimension || '', '')
+      normalizeQuestionPackageTopic(existing?.packageTopic || existing?.package_topic || '', '')
     const targetSymptomKey = normalizeKey(
       item?.targetSymptomKey ||
         item?.target_symptom_key ||
@@ -1437,11 +1437,11 @@ function mergeAskedQuestionRows(...groups) {
         existing?.target_symptom_key ||
         ''
     )
-    const routingScope = normalizeKey(
-      item?.routingScope ||
-        item?.routing_scope ||
-        existing?.routingScope ||
-        existing?.routing_scope ||
+    const packageSection = normalizeKey(
+      item?.packageSection ||
+        item?.package_section ||
+        existing?.packageSection ||
+        existing?.package_section ||
         ''
     )
 
@@ -1449,9 +1449,9 @@ function mergeAskedQuestionRows(...groups) {
       ...existing,
       ...item,
       questionKey,
-      targetDimension,
+      packageTopic,
       targetSymptomKey,
-      routingScope
+      packageSection
     })
   }
 
@@ -1546,19 +1546,19 @@ function buildRetakeAdviceFromVisualRouteContext(visualRouteContext = {}) {
   ]
 }
 
-function normalizeVisualCandidateBand(value = '', fallback = 'low') {
+function normalizeVisualCandidateBand(value = '', conservative = 'low') {
   const normalized = String(value || '').trim().toLowerCase()
-  return ['low', 'medium', 'high'].includes(normalized) ? normalized : fallback
+  return ['low', 'medium', 'high'].includes(normalized) ? normalized : conservative
 }
 
-function normalizeVisualCandidateStrength(value = '', fallback = 'weak') {
+function normalizeVisualCandidateStrength(value = '', conservative = 'weak') {
   const normalized = String(value || '').trim().toLowerCase()
-  return ['weak', 'medium', 'strong'].includes(normalized) ? normalized : fallback
+  return ['weak', 'medium', 'strong'].includes(normalized) ? normalized : conservative
 }
 
-function normalizeVisualCandidateReadiness(value = '', fallback = 'cautious') {
+function normalizeVisualCandidateReadiness(value = '', conservative = 'cautious') {
   const normalized = String(value || '').trim().toLowerCase()
-  return ['retain_only', 'cautious', 'ready'].includes(normalized) ? normalized : fallback
+  return ['retain_only', 'cautious', 'ready'].includes(normalized) ? normalized : conservative
 }
 
 function scoreVisualCandidateSeed(item = {}) {
@@ -1955,7 +1955,7 @@ function buildWeakOutOfPoolHintOnlyDecisionDetails(visualAggregateResult = {}) {
   }
 }
 
-function buildOutOfPoolObservationFallback(decisionCause = null) {
+function buildOutOfPoolObservationConservative(decisionCause = null) {
   const details = decisionCause?.decisionCauseDetails && typeof decisionCause.decisionCauseDetails === 'object'
     ? decisionCause.decisionCauseDetails
     : {}
@@ -1988,12 +1988,12 @@ function buildSyntheticVisualCandidateQuestion(item = {}) {
 
   return {
     questionKey: buildSyntheticVisualCandidateQuestionKey(symptomKey),
-    selectionSource: 'controlled_fallback',
+    selectionSource: 'controlled_conservative',
     targetSymptomKey: symptomKey,
-    targetDimension: QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE,
-    routingScope: QUESTION_ROUTING_SCOPES.SYMPTOM_CONFIRMATION,
-    questionRole: 'symptom_confirmation',
-    effectMode: 'evidence_admission',
+    packageTopic: QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE,
+    packageSection: QUESTION_PACKAGE_SECTIONS.SYMPTOM_CONFIRMATION,
+    routePackageRole: 'symptom_confirmation',
+    packageEffect: 'evidence_admission',
     questionText: `图片里疑似出现“${symptomLabel}”，你复看后是否也能确认？`,
     helpText,
     questionGroupKey: buildVisualCandidateQuestionGroupKey(symptomKey),
@@ -2042,9 +2042,9 @@ function buildUncertainRoundResult({
     normalizedUncertainLegalityReason === 'out_of_pool_hint_unconfirmed' ||
     normalizedDecisionCause?.decisionCauseCategory === 'out_of_pool_visual_hint' ||
     normalizedDecisionCause?.decisionCauseCategory === 'visual_scope_gap'
-  const outOfPoolObservationFallback = buildOutOfPoolObservationFallback(normalizedDecisionCause)
-  const outOfPoolSummary = outOfPoolObservationFallback?.observationText
-    ? `图片中存在当前自动诊断范围外的可见异常。模型原始观察为：${outOfPoolObservationFallback.observationText}。这不是正式诊断结论，系统暂不能给出针对性处理建议；建议先保持观察，避免仅凭本次结果进行大幅养护调整。`
+  const outOfPoolObservationConservative = buildOutOfPoolObservationConservative(normalizedDecisionCause)
+  const outOfPoolSummary = outOfPoolObservationConservative?.observationText
+    ? `图片中存在当前自动诊断范围外的可见异常。模型原始观察为：${outOfPoolObservationConservative.observationText}。这不是正式诊断结论，系统暂不能给出针对性处理建议；建议先保持观察，避免仅凭本次结果进行大幅养护调整。`
     : '图片中存在当前自动诊断范围外的可见异常。系统无法把它稳定归入现有诊断路径，因此本次不继续常规诊断，也不判断为“暂无明显问题”。由于该异常尚未纳入当前诊断池，系统暂不能给出针对性的处理建议；建议先保持观察，避免仅凭本次结果进行大幅养护调整。'
   const summary = isOutOfPoolUncertain
     ? outOfPoolSummary
@@ -2064,8 +2064,8 @@ function buildUncertainRoundResult({
   })
   const explanation = isOutOfPoolUncertain
     ? {
-        whyItHappens: outOfPoolObservationFallback?.observationText
-          ? `当前图片中有可见异常，但该异常未形成可确认的正式诊断证据。模型原始观察为：${outOfPoolObservationFallback.observationText}。`
+        whyItHappens: outOfPoolObservationConservative?.observationText
+          ? `当前图片中有可见异常，但该异常未形成可确认的正式诊断证据。模型原始观察为：${outOfPoolObservationConservative.observationText}。`
           : '当前图片中有可见异常，但该异常超出当前自动诊断支持的症状范围，或尚未形成可确认的正式诊断证据。',
         whatToCheckNext: '可继续观察该异常是否扩大、重复出现或影响整体状态；如变化明显，建议由人工或更完整资料进一步确认。',
         firstAid: '在没有稳定归类前，先保持养护条件相对稳定，不建议仅凭本次结果进行针对性处理。',
@@ -2096,7 +2096,7 @@ function buildUncertainRoundResult({
       summary,
       severity: 'low',
       urgency: isOutOfPoolUncertain ? 'low' : 'medium',
-      outOfPoolObservation: outOfPoolObservationFallback
+      outOfPoolObservation: outOfPoolObservationConservative
     },
     questionRequired: false,
     questions: [],
@@ -2267,7 +2267,7 @@ async function tryBuildRouteAnswerFastPath({
   const leadingVisibleOutcomeKey = resolveLeadingVisibleOutcomeKey(routeDecision)
   markFastPath('route-fastpath-route-planned', {
     mode: normalizeKey(routeDecision?.mode || ''),
-    fallbackPolicy: normalizeKey(routeDecision?.fallbackPolicy || ''),
+    conservativePolicy: normalizeKey(routeDecision?.conservativePolicy || ''),
     leadingVisibleOutcomeKey,
     visibleOutcomeCount: Array.isArray(routeDecision?.visibleOutcomeKeys)
       ? routeDecision.visibleOutcomeKeys.length
@@ -2281,7 +2281,7 @@ async function tryBuildRouteAnswerFastPath({
     markFastPath('route-fastpath-skip', {
       reason: 'route_not_authoritative_or_visible',
       mode: normalizeKey(routeDecision?.mode || ''),
-      fallbackPolicy: normalizeKey(routeDecision?.fallbackPolicy || ''),
+      conservativePolicy: normalizeKey(routeDecision?.conservativePolicy || ''),
       leadingVisibleOutcomeKey,
       visibleOutcomeCount: Array.isArray(routeDecision?.visibleOutcomeKeys)
         ? routeDecision.visibleOutcomeKeys.length
@@ -2478,7 +2478,7 @@ async function runDiagnosisRound({
   const routeFastPathObservedEvidenceForResolution = mergeObservedEvidenceSet(
     normalizeObservedEvidenceSetItems(observedEvidenceSet),
     buildObservedEvidenceSetFromSymptoms(observedSymptoms, {
-      sourceType: 'legacy_observed_symptom',
+      sourceType: 'session_observed_symptom',
       firstSeenStage: stage,
       originVisualCallBatchId: runtimeOriginVisualCallBatchId,
       enteredRuntime: 1
@@ -2588,7 +2588,7 @@ async function runDiagnosisRound({
   const observedEvidenceForResolution = mergeObservedEvidenceSet(
     normalizeObservedEvidenceSetItems(observedEvidenceSet),
     buildObservedEvidenceSetFromSymptoms(observedSymptoms, {
-      sourceType: 'legacy_observed_symptom',
+      sourceType: 'session_observed_symptom',
       firstSeenStage: stage,
       originVisualCallBatchId: runtimeOriginVisualCallBatchId,
       enteredRuntime: 1
@@ -2818,7 +2818,7 @@ async function runDiagnosisRound({
           decisionCauseDetails: {
             preferredVisualRouteAction: preferredVisualRouteAction || '',
             blockedReason:
-              symptomClassRuntime?.classGateDecision?.blockedReason ||
+              symptomClassRuntime?.classConditionDecision?.blockedReason ||
               'no_observed_symptoms'
           }
         }
@@ -2939,11 +2939,11 @@ async function runDiagnosisRound({
     ? getEvidenceEdges({ symptomKeys, problemKeys: candidateProblemKeys })
     : Promise.resolve([])
   const problemsPromise = getProblemsByKeys(candidateProblemKeys)
-  const fallbackGenusMapPromise = getGenusCompatibilityMap(
+  const conservativeGenusMapPromise = getGenusSuitabilityMap(
     plantContext.genus,
     candidateProblemKeys
   )
-  const fallbackHostMapPromise = getHostCompatibilityMap(
+  const conservativeHostMapPromise = getHostSuitabilityMap(
     {
       genus: plantContext.genus,
       family: plantContext.family,
@@ -2955,14 +2955,14 @@ async function runDiagnosisRound({
     symptomRows,
     evidenceEdges,
     problems,
-    fallbackGenusMap,
-    fallbackHostMap
+    conservativeGenusMap,
+    conservativeHostMap
   ] = await Promise.all([
     symptomRowsPromise,
     evidenceEdgesPromise,
     problemsPromise,
-    fallbackGenusMapPromise,
-    fallbackHostMapPromise
+    conservativeGenusMapPromise,
+    conservativeHostMapPromise
   ])
 
   const symptomMap = mapByKey(symptomRows, 'symptomKey')
@@ -2993,10 +2993,10 @@ async function runDiagnosisRound({
 
   const candidateOutcomes = candidateProblemKeys.map(problemKey => {
     const prior = priorMap.get(problemKey) || {}
-    const genusCompatibility =
-      Number(prior.genusCompatibility ?? fallbackGenusMap[problemKey] ?? 0.5)
-    const hostCompatibility =
-      Number(prior.hostCompatibility ?? fallbackHostMap[problemKey]?.hostCompatibility ?? 1)
+    const genusSuitability =
+      Number(prior.genusSuitability ?? conservativeGenusMap[problemKey] ?? 0.5)
+    const hostSuitability =
+      Number(prior.hostSuitability ?? conservativeHostMap[problemKey]?.hostSuitability ?? 1)
 
     const visualEvidence = Number(visualScores[problemKey] || 0)
     const questionEvidence = Number(questionScores[problemKey] || 0)
@@ -3009,8 +3009,8 @@ async function runDiagnosisRound({
     ].filter(Boolean).length
     const evidenceWeight =
       totalEvidence *
-        computeGenusFactor(genusCompatibility) *
-        computeHostFactor(hostCompatibility) -
+        computeGenusFactor(genusSuitability) *
+        computeHostFactor(hostSuitability) -
       penalty
 
     const problem = problems.find(item => item.problemKey === problemKey)
@@ -3024,8 +3024,8 @@ async function runDiagnosisRound({
       penalty: roundNum(penalty),
       totalEvidence: roundNum(totalEvidence),
       evidenceCount,
-      genusCompatibility: roundNum(genusCompatibility),
-      hostCompatibility: roundNum(hostCompatibility),
+      genusSuitability: roundNum(genusSuitability),
+      hostSuitability: roundNum(hostSuitability),
       evidenceWeight: roundNum(evidenceWeight)
     }
   })
@@ -3081,7 +3081,7 @@ async function runDiagnosisRound({
     ? routeAnswerEffectsResolution.routeAnswerEffects
     : []
   if (!routeAnswerEffectsResolution.ok) {
-    logDiagnosisRuntime('diagnose-http route answer effects fallback for complete path', {
+    logDiagnosisRuntime('diagnose-http route answer effects conservative for complete path', {
       sessionId,
       round,
       stage,
@@ -3368,7 +3368,7 @@ async function runDiagnosisRound({
     Number(stabilizedOutputCandidateOutcomes?.[0]?.questionEvidence || 0) <= 0
   const hasLeafSpotBridgeRoutingGap =
     !questionRequired &&
-    String(mergedSymptomClassRuntime?.classGateDecision?.blockedReason || '').trim() === 'class_group_pool_empty' &&
+    String(mergedSymptomClassRuntime?.classConditionDecision?.blockedReason || '').trim() === 'class_group_pool_empty' &&
     Array.isArray(mergedSymptomClassRuntime?.classScores) &&
     mergedSymptomClassRuntime.classScores.some(
       item => String(item?.classKey || '').trim() === 'leaf_spot_complex_mode'
@@ -3445,7 +3445,7 @@ async function runDiagnosisRound({
             '图片中存在当前自动诊断范围外的可见异常。本次不继续常规诊断，也不判断为暂无明显问题；由于该异常尚未纳入当前诊断池，系统暂不能给出针对性的处理建议，建议先保持观察并避免仅凭本次结果进行大幅调整。'
           ])
         ),
-        outOfPoolObservation: buildOutOfPoolObservationFallback({
+        outOfPoolObservation: buildOutOfPoolObservationConservative({
           decisionCauseDetails: buildWeakOutOfPoolHintOnlyDecisionDetails(visualAggregateResult)
         }),
         uncertainLegalityReason: 'out_of_pool_no_mapping'
@@ -3466,7 +3466,7 @@ async function runDiagnosisRound({
               '图片中存在当前诊断范围外的可见异常，但还没有形成可确认的正式诊断证据；本次只作为非诊断观察展示，系统暂不能给出针对性处理建议。'
           ])
         ),
-        outOfPoolObservation: buildOutOfPoolObservationFallback({
+        outOfPoolObservation: buildOutOfPoolObservationConservative({
           decisionCauseDetails: buildWeakOutOfPoolHintOnlyDecisionDetails(visualAggregateResult)
         }),
         uncertainLegalityReason:
@@ -3488,7 +3488,7 @@ async function runDiagnosisRound({
               '图片里存在池外可见异常提示，但题包答案没有形成可确认的正式证据；本次只作为非诊断观察展示，不判断为暂无明显问题，也不输出具体处理方向。'
           ])
         ),
-        outOfPoolObservation: buildOutOfPoolObservationFallback({
+        outOfPoolObservation: buildOutOfPoolObservationConservative({
           decisionCauseDetails: buildWeakOutOfPoolHintOnlyDecisionDetails(visualAggregateResult)
         }),
         uncertainLegalityReason:
@@ -3526,7 +3526,7 @@ async function runDiagnosisRound({
         advice: Array.from(
           new Set([
             ...(Array.isArray(lowConfidence?.advice) ? lowConfidence.advice : []),
-            '当前只有孔洞、缺口或网状缺损这类结构事实，题包答案没有形成虫害活动、病斑脱落或机械旧伤的明确分流证据，不能直接输出具体虫害。'
+            '当前只有孔洞、缺口或网状缺损这类结构事实，题包答案没有形成虫害活动、病斑脱落或机械既有伤的明确分流证据，不能直接输出具体虫害。'
           ])
         ),
         uncertainLegalityReason:
@@ -3640,7 +3640,7 @@ async function runDiagnosisRound({
           decisionCauseDetails: {
             currentClassKey: mergedSymptomClassRuntime?.currentClassKey || '',
             blockedReason:
-              mergedSymptomClassRuntime?.classGateDecision?.blockedReason ||
+              mergedSymptomClassRuntime?.classConditionDecision?.blockedReason ||
               'no_observed_symptoms'
           }
         }
@@ -3652,7 +3652,7 @@ async function runDiagnosisRound({
             decisionCauseDetails: {
               currentClassKey: mergedSymptomClassRuntime?.currentClassKey || '',
               primaryClassKey: mergedSymptomClassRuntime?.primaryClass?.classKey || '',
-              blockedReason: mergedSymptomClassRuntime?.classGateDecision?.blockedReason || '',
+              blockedReason: mergedSymptomClassRuntime?.classConditionDecision?.blockedReason || '',
               classScoreKeys: Array.isArray(mergedSymptomClassRuntime?.classScores)
                 ? mergedSymptomClassRuntime.classScores.map(item => item?.classKey).filter(Boolean)
                 : []
@@ -3665,7 +3665,7 @@ async function runDiagnosisRound({
       ? {
           decisionCauseKey:
             mergedSymptomClassRuntime?.enabled &&
-            mergedSymptomClassRuntime?.classGateDecision?.hasEnabledGroups
+            mergedSymptomClassRuntime?.classConditionDecision?.hasEnabledGroups
               ? 'class_converged_context_guard_blocked'
               : 'context_guard_blocked_without_required_context',
           decisionCauseCategory: 'context_guard_block',
@@ -3674,7 +3674,7 @@ async function runDiagnosisRound({
             problemKey: outputContextProblemGuard.problemKey || '',
             currentClassKey: mergedSymptomClassRuntime?.currentClassKey || '',
             currentGroupKey: mergedSymptomClassRuntime?.currentGroupKey || '',
-            hasEnabledGroups: Boolean(mergedSymptomClassRuntime?.classGateDecision?.hasEnabledGroups),
+            hasEnabledGroups: Boolean(mergedSymptomClassRuntime?.classConditionDecision?.hasEnabledGroups),
             preferredQuestionKeys: Array.isArray(outputContextProblemGuard.preferredQuestionKeys)
               ? outputContextProblemGuard.preferredQuestionKeys
               : [],
@@ -3817,7 +3817,7 @@ async function runDiagnosisRound({
                 normalizeDecisionCause(routeDecision?.decisionCause) ||
                 decisionCause || {
                   decisionCauseKey: 'route_no_visible_outcome',
-                  decisionCauseCategory: 'route_fallback',
+                  decisionCauseCategory: 'route_conservative',
                   decisionCauseText: 'route 未形成可展示 outcome，按保守不确定输出。',
                   decisionCauseDetails: {}
                 }
@@ -3826,17 +3826,17 @@ async function runDiagnosisRound({
               outcomeLocked: 'uncertain',
               stopReason: hasAuthoritativeRouteDecision
                 ? 'route_uncertain_with_candidates'
-                : 'route_fallback_uncertain',
-              uncertainLegalityReason: 'route_fallback',
+                : 'route_conservative_uncertain',
+              uncertainLegalityReason: 'route_conservative',
               stopReasonDetail:
                 routeDecision?.decisionCause?.decisionCauseKey ||
                 decisionCause?.decisionCauseKey ||
-                'route_fallback_uncertain',
+                'route_conservative_uncertain',
               decisionCause:
                 normalizeDecisionCause(routeDecision?.decisionCause) ||
                 decisionCause || {
-                  decisionCauseKey: 'route_fallback_uncertain',
-                  decisionCauseCategory: 'route_fallback',
+                  decisionCauseKey: 'route_conservative_uncertain',
+                  decisionCauseCategory: 'route_conservative',
                   decisionCauseText: 'route 未形成权威闭合，按保守不确定输出。',
                   decisionCauseDetails: {}
                 }

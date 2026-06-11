@@ -24,11 +24,11 @@ function mapDiagnosisQuestionReviewRow(row = {}) {
     roundIndex,
     questionKey: String(row.symptom_key || '').trim(),
     targetSymptomKey: String(row.target_symptom_key || rationale.tsk || '').trim(),
-    targetDimension: String(row.target_dimension || rationale.td || '').trim(),
-    routingScope: String(row.routing_scope || rationale.rs || '').trim(),
-    questionRole: String(row.question_role || rationale.qr || '').trim(),
-    questionCategory: String(row.question_role || rationale.qr || '').trim(),
-    effectMode: String(row.effect_mode || rationale.em || '').trim(),
+    packageTopic: String(row.package_topic || rationale.td || '').trim(),
+    packageSection: String(row.package_section || rationale.rs || '').trim(),
+    routePackageRole: String(row.route_package_role || rationale.qr || '').trim(),
+    routePackageRole: String(row.route_package_role || rationale.qr || '').trim(),
+    packageEffect: String(row.package_effect || rationale.em || '').trim(),
     questionGroupKey: String(row.question_group_key || rationale.qg || '').trim(),
     questionText: String(row.question_text || row.question_text_user_cn || row.question_text_cn || '').trim(),
     optionKey,
@@ -70,7 +70,7 @@ function indexSyntheticQuestionOptionMappings(optionMappings = []) {
   return map
 }
 
-function applySyntheticQuestionReviewFallback(row = {}, syntheticMappingIndex = new Map()) {
+function applySyntheticQuestionReviewConservative(row = {}, syntheticMappingIndex = new Map()) {
   const questionKey = String(row?.symptom_key || '').trim()
   const optionKey = String(row?.answer_value || '').trim()
   if (!questionKey || !optionKey) {return row}
@@ -113,5 +113,5 @@ function applySyntheticQuestionReviewFallback(row = {}, syntheticMappingIndex = 
 module.exports = {
   mapDiagnosisQuestionReviewRow,
   indexSyntheticQuestionOptionMappings,
-  applySyntheticQuestionReviewFallback
+  applySyntheticQuestionReviewConservative
 }

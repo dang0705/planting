@@ -12,8 +12,8 @@ const {
     modelReasoningMode,
     options: llmOptions = {},
     host: endpoint,
-    fallbackService = '',
-    fallbackModel = '',
+    conservativeService = '',
+    conservativeModel = '',
     cloudbaseAi = {},
     sse,
     requestTimeoutSec = 8,
@@ -29,14 +29,14 @@ const HTTP_AGENT = new https.Agent({ keepAlive: true, maxSockets: 32 })
 let clientInstance = null
 let cloudBaseAiAccessTokenCache = null
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
-function normalizeOrgan(value = '', fallback = 'unknown') {
-  const normalized = normalizeText(value, fallback).toLowerCase()
-  return normalized || fallback
+function normalizeOrgan(value = '', conservative = 'unknown') {
+  const normalized = normalizeText(value, conservative).toLowerCase()
+  return normalized || conservative
 }
 
 function normalizeServiceValue(value = '') {
@@ -61,9 +61,9 @@ function isKnownCloudBaseOpenAiProvider(value = '') {
   return ['hunyuan', 'hunyuan-exp', 'deepseek'].includes(normalizeServiceValue(value))
 }
 
-function normalizePositiveNumber(value, fallback = null) {
+function normalizePositiveNumber(value, conservative = null) {
   const num = Number(value)
-  return Number.isFinite(num) && num > 0 ? num : fallback
+  return Number.isFinite(num) && num > 0 ? num : conservative
 }
 
 function normalizeUploadCompression(value = null) {
@@ -431,7 +431,7 @@ function resolveCloudBaseAiEnvId() {
   )
 }
 
-function buildCloudBaseGatewayBase() {
+function buildCloudBaseConditionwayBase() {
   const envId = resolveCloudBaseAiEnvId()
   if (!envId) {
     throw new Error('缺少 CloudBase AI HTTP API 环境 ID 配置')
@@ -453,7 +453,7 @@ async function signInCloudBaseAiAnonymously() {
     process.env.LLM_CLOUDBASE_AI_DEVICE_ID || '',
     `diagnose-http-qwen-${process.pid || 'pid'}`
   )
-  const response = await requestJsonHttp(`${buildCloudBaseGatewayBase()}/auth/v1/signin/anonymously`, {
+  const response = await requestJsonHttp(`${buildCloudBaseConditionwayBase()}/auth/v1/signin/anonymously`, {
     headers: {
       'x-device-id': deviceId
     },
@@ -1211,7 +1211,7 @@ function callHunyuanVisionStream(messages, { onText, modelName = model } = {}) {
       res => {
         if (!res || typeof res.on !== 'function') {
           console.log(
-            'diagnose-http hunyuan stream fallback raw response:',
+            'diagnose-http hunyuan stream conservative raw response:',
             safeSerializeLogPayload(res)
           )
           const responseUsage = normalizeUsage(extractUsage(res))
@@ -1268,8 +1268,8 @@ async function callLLMDiagnose(
   {
     onText,
     timeoutMs = null,
-    disableFallback = false,
-    disableImageDataUrlFallback = false
+    disableConservative = false,
+    disableImageDataUrlConservative = false
   } = {}
 ) {
   const startedAt = Date.now()
@@ -1351,8 +1351,8 @@ async function callLLMDiagnose(
 
   const shouldUseStream = Boolean(sse && typeof onText === 'function')
   const activeService = normalizeServiceValue(service)
-  const fallbackServiceName = normalizeServiceValue(fallbackService)
-  const fallbackModelName = normalizeText(fallbackModel || '', 'hunyuan-vision-1.5-instruct')
+  const conservativeServiceName = normalizeServiceValue(conservativeService)
+  const conservativeModelName = normalizeText(conservativeModel || '', 'hunyuan-vision-1.5-instruct')
   const buildLlmTiming = (extra = {}) => ({
     service,
     model,
@@ -1383,7 +1383,7 @@ async function callLLMDiagnose(
         if (!isCloudBaseAiImageDownloadError(error)) {
           throw error
         }
-        if (disableImageDataUrlFallback) {
+        if (disableImageDataUrlConservative) {
           throw error
         }
 
@@ -1396,7 +1396,7 @@ async function callLLMDiagnose(
         const result = await callCloudBaseQwen(dataUrlMessages)
         return {
           ...result,
-          imageInputTransport: 'data_url_fallback'
+          imageInputTransport: 'data_url_conservative'
         }
       }
     }
@@ -1406,28 +1406,28 @@ async function callLLMDiagnose(
       : callHunyuanVisionNonStream(messages)
   }
 
-  const callFallback = async (reason) => {
-    if (!isHunyuanService(fallbackServiceName)) {
+  const callConservative = async (reason) => {
+    if (!isHunyuanService(conservativeServiceName)) {
       throw reason
     }
 
-    console.warn('diagnose-http primary visual model failed, fallback to hunyuan:', {
+    console.warn('diagnose-http primary visual model failed, conservative to hunyuan:', {
       service,
       model,
-      fallbackService,
-      fallbackModel: fallbackModelName,
+      conservativeService,
+      conservativeModel: conservativeModelName,
       reason: String(reason?.message || reason || '')
     })
 
-    const fallbackStartedAt = Date.now()
+    const conservativeStartedAt = Date.now()
     const result = shouldUseStream
-      ? await callHunyuanVisionStream(messages, { onText, modelName: fallbackModelName })
-      : await callHunyuanVisionNonStream(messages, { modelName: fallbackModelName })
+      ? await callHunyuanVisionStream(messages, { onText, modelName: conservativeModelName })
+      : await callHunyuanVisionNonStream(messages, { modelName: conservativeModelName })
     const llmTiming = buildLlmTiming({
-      fallback: 1,
-      fallbackService: fallbackServiceName,
-      fallbackModel: fallbackModelName,
-      fallbackCallMs: Math.max(0, Date.now() - fallbackStartedAt),
+      conservative: 1,
+      conservativeService: conservativeServiceName,
+      conservativeModel: conservativeModelName,
+      conservativeCallMs: Math.max(0, Date.now() - conservativeStartedAt),
       primaryError: String(reason?.message || reason || '').slice(0, 240),
       httpTiming: result?.httpTiming || null
     })
@@ -1439,18 +1439,18 @@ async function callLLMDiagnose(
       llmTiming,
       promptAudit: {
         ...promptAudit,
-        service: fallbackServiceName,
-        model: fallbackModelName,
-        fallbackFrom: {
+        service: conservativeServiceName,
+        model: conservativeModelName,
+        conservativeFrom: {
           service,
           model,
           reason: String(reason?.message || reason || '')
         }
       },
       adapterMetaOverride: {
-        source_model_provider: fallbackServiceName,
-        source_model_name: fallbackModelName,
-        source_model_reasoning_mode: 'fallback'
+        source_model_provider: conservativeServiceName,
+        source_model_name: conservativeModelName,
+        source_model_reasoning_mode: 'conservative'
       }
     }
   }
@@ -1475,8 +1475,8 @@ async function callLLMDiagnose(
         }
       }
     } catch (error) {
-      if (!isHunyuanService(activeService) && !disableFallback) {
-        return callFallback(error)
+      if (!isHunyuanService(activeService) && !disableConservative) {
+        return callConservative(error)
       }
       throw error
     }
@@ -1501,8 +1501,8 @@ async function callLLMDiagnose(
       }
     }
   } catch (error) {
-    if (!isHunyuanService(activeService) && !disableFallback) {
-      return callFallback(error)
+    if (!isHunyuanService(activeService) && !disableConservative) {
+      return callConservative(error)
     }
 
     debugLog('混元流式失败，尝试回退非流式:', error.message)
@@ -1522,16 +1522,16 @@ async function callLLMDiagnose(
       }
     }
 
-    const fallbackStartedAt = Date.now()
+    const conservativeStartedAt = Date.now()
     const fullText = await callHunyuanVisionNonStream(messages)
     const text = fullText?.text || ''
     if (text && typeof onText === 'function') {
       onText(text, text)
     }
     const llmTiming = buildLlmTiming({
-      fallback: 1,
-      fallbackService: 'hunyuan',
-      fallbackCallMs: Math.max(0, Date.now() - fallbackStartedAt),
+      conservative: 1,
+      conservativeService: 'hunyuan',
+      conservativeCallMs: Math.max(0, Date.now() - conservativeStartedAt),
       primaryError: String(error?.message || error || '').slice(0, 240),
       httpTiming: fullText?.httpTiming || null
     })

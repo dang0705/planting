@@ -1,14 +1,14 @@
 # route-planning 完成审计
 
-## 2026-05-11 复审结论（覆盖旧完成口径）
+## 2026-05-11 复审结论（覆盖既有完成口径）
 
-本节为 2026-05-11 对 `$dispatch: 完全将 ranking 改为 route 规划，并严格遵循 04_主动瘦身计划_养护类问题主轴` 的最新复审。下方旧章节保留为历史记录，但不再单独作为完成判定。
+本节为 2026-05-11 对 `$dispatch: 完全将 ranking 改为 route 规划，并严格遵循 04_主动瘦身计划_养护类问题主轴` 的最新复审。下方既有章节保留为历史记录，但不再单独作为完成判定。
 
 当前结论：**按当前完成口径可以标记为完成**。
 
 2026-05-11 13:15 最终复核：
 
-1. 已用 CloudBase MCP 复查真实会话，失败样本不是 route 表缺失，而是旧 smoke 用 `yes,yes,yes` 这种泛化答案无法稳定表达 route 分支选项；真实 route 需要明确回答 `watering_area -> often_wet`。
+1. 已用 CloudBase MCP 复查真实会话，失败样本不是 route 表缺失，而是既有 smoke 用 `yes,yes,yes` 这种泛化答案无法稳定表达 route 分支选项；真实 route 需要明确回答 `watering_area -> often_wet`。
 2. 已修正云内 runner 默认黄叶积水样本：`problematic_leaf_yellowing_followup_overwatering` 的 `answerPattern` 从 `yes,yes,yes` 改为 `watering_area,often_wet`。
 3. 已部署 `diagnose-route-regression-runner`，部署请求 `6e99ab7c-2a29-4afb-bca8-a84989991c03`；函数详情显示 `Status=Active`、`CodeResult=success`。
 4. 已用 CloudBase MCP 直接执行默认云内 runner，请求 `1b43a652-30a2-4b31-b1e0-43f67a087409`，返回 `checkedCaseCount=3` 且全部通过：
@@ -18,13 +18,13 @@
 5. 另用单 case 精确答案复验，请求 `4508074c-d34e-4f3d-bf56-41be001f0da6`，确认黄叶积水 route 能在真实云端闭合到 `overwatering_root_pressure`。
 6. 2026-05-11 13:15 复验发现并修正两个配置残留：
    - `outcome_routes` 中 4 条黄叶 route 的 `max_questions=3` 已收敛为 `2`，与 04 文档“最多 2 轮问诊”一致；
-   - `outcome_answer_effects` 中旧 `q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate` effect 已从 seed 和 `cloud1_dev` 真实表移除。
+   - `outcome_answer_effects` 中既有 `q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition` effect 已从 seed 和 `cloud1_dev` 真实表移除。
 7. CloudBase MCP 读回确认：
    - `active_final_outcomes=11`；
    - `active_routes=15`；
    - `active_route_questions=15`；
    - `active_answer_effects=21`；
-   - `legacy_primary_gate_effects=0`；
+   - `session_primary_gate_effects=0`；
    - `routes_over_2_max_questions=0`。
 8. 2026-05-11 13:15 已再次用 CloudBase MCP 执行云内 runner，请求 `3074ce2a-c31c-4b18-ab57-6fadc822b937`，返回 `checkedCaseCount=3` 且全部通过。
 9. 本地复验通过：
@@ -37,16 +37,16 @@
    - `npm run build`
    - `git diff --check`
 
-本次真实问题归因：route 主链和 SQL route 数据已能被系统吃到；此前失败是由黄叶 route 相关修复叠加旧 runner 泛化答案造成的误判。后续 smoke 应使用 route optionKey 精确表达路径，不再用 `yes` 代表所有 route 问题。
+本次真实问题归因：route 主链和 SQL route 数据已能被系统吃到；此前失败是由黄叶 route 相关修复叠加既有 runner 泛化答案造成的误判。后续 smoke 应使用 route optionKey 精确表达路径，不再用 `yes` 代表所有 route 问题。
 
 已闭合证据：
 
-1. `ranking` 已降级为候选排序/审计，不再作为 route mode 下的公开 final 裁判；route 非权威时公开输出统一兜底 `uncertain`。
-2. `routeDecision.nextQuestionKeys` 接管追问主链，旧 `generic/forced follow-up` 在 route mode 下不再补位。
+1. `ranking` 已降级为候选排序/审计，不再作为 route mode 下的公开 final 裁判；route 非权威时公开输出统一保守 `uncertain`。
+2. `routeDecision.nextQuestionKeys` 接管追问主链，既有 `generic/forced follow-up` 在 route mode 下不再补位。
 3. 公开响应隐藏 `rankings`，debug 仅保留 `rankingAudit` 和净化后的 `routeDecision` 摘要。
 4. `uncertain` 不回填 `topProblem/finalResult.problemId/primaryOutcome`，避免把内部候选泄漏成结论。
-5. `diagnosis_outcomes / outcome_routes / outcome_route_gates / outcome_route_questions / outcome_answer_effects` 已在 `cloud1_dev` 真实落库。
-6. 2026-05-11 已修正黄叶 route 数据：当时黄叶分流默认问题改为 `q_observed_probe__leaf_yellowing__yellowing_care_area_gate`；黄叶积水/缺水/弱光/晒伤 route 统一变成两层问题，避免第三轮才能闭合；只回答分支题不能同时放行行动冲突 outcome。2026-05-16 后此条仅作历史快照，正式运行口径已改为“黄叶分组 gate 逐页提问，一页一组 options，累计必要分组答案后再闭合 route/outcome”，不再把 `yellowing_care_area_gate` 作为一屏聚合 gate。
+5. `diagnosis_outcomes / outcome_routes / outcome_route_conditions / outcome_route_questions / outcome_answer_effects` 已在 `cloud1_dev` 真实落库。
+6. 2026-05-11 已修正黄叶 route 数据：当时黄叶分流默认问题改为 `q_observed_probe__leaf_yellowing__yellowing_care_area_condition`；黄叶积水/缺水/弱光/晒伤 route 统一变成两层问题，避免第三轮才能闭合；只回答分支题不能同时放行行动冲突 outcome。2026-05-16 后此条仅作历史快照，正式运行口径已改为“黄叶分组 condition 逐页提问，一页一组 options，累计必要分组答案后再闭合 route/outcome”，不再把 `yellowing_care_area_condition` 作为一屏聚合 condition。
 7. 2026-05-11 已修正 route planner 下一题生成：`routeDecision.nextQuestionKeys` 会过滤已回答 `questionKey`，避免黄叶已答分支题后下一轮重复返回分支题。
 8. `04_主动瘦身计划_养护类问题主轴.md` 建议的 80-120 个黄金样例已固化为可复跑本地验收：`scripts/terminal-e2e/manifests/route-planning-golden-cases.manifest.json` 覆盖 13 组、112 条样例，`verify-route-golden-manifest.mjs` 会展开并验证 route、关键问题、闭合/不确定、行动冲突和 ranking 不泄漏。
 9. 本地验证已通过：
@@ -57,12 +57,12 @@
    - `npm run lint`：退出码 0，仍有项目既有 warning
    - `npm run build`
    - `git diff --check`
-10. CloudBase MCP 已验证 `cloud1_dev` 中所有 active route 的 `max_questions <= 2`，黄叶 route question 只剩 1-2 个问题，旧 `yellowing_primary_clue_gate` route question 与 active answer effect 均已移除。
+10. CloudBase MCP 已验证 `cloud1_dev` 中所有 active route 的 `max_questions <= 2`，黄叶 route question 只剩 1-2 个问题，既有 `yellowing_primary_clue_condition` route question 与 active answer effect 均已移除。
 11. 2026-05-11 已通过 CloudBase MCP 更新 `diagnose-http` 代码，部署请求 `1285b9e2-e053-439a-9c49-9a3bb4c655e2`；随后查询函数详情显示 `Status=Active`、`CodeResult=success`。
 12. 2026-05-11 公网 HTTP health 入口复验通过：`cloudbase-http-check.mjs --path=/diagnose-http/health?webfn=true` 返回 `status=200`。本地公网脚本仍可能受当前工具环境 DNS / fetch 波动影响；正式完成口径改以 CloudBase MCP 云内 runner 为准。
 13. 2026-05-11 已补齐 review 后台 route path 可视化链路：
    - `runtime_snapshot_json.routeDecision` 映射为 `coreProcess.route.routeDecision`；
-   - review 详情页新增 “Route 路径” 面板，展示 activeRouteGroupKeys、visibleOutcomeKeys、primaryOutcomeKey、nextQuestionKeys、decisionCause、candidateOutcomeStates、routeTrace、gateResults；
+   - review 详情页新增 “Route 路径” 面板，展示 activeRouteGroupKeys、visibleOutcomeKeys、primaryOutcomeKey、nextQuestionKeys、decisionCause、candidateOutcomeStates、routeTrace、conditionResults；
    - `test-route-planning.mjs` 已新增 `review core process keeps route path` 回归。
 14. 2026-05-11 已再次通过 CloudBase MCP 更新 `diagnose-http` 代码，部署请求 `8cc4942a-fc77-4ae4-802c-070752522ea1`；随后查询函数详情显示 `Status=Active`、`CodeResult=success`。
 
@@ -86,7 +86,7 @@
 依据 [route-planning.md](/Users/jay/WebstormProjects/planting/docs/ai-tasks/route-planning.md) 与后续实现/交接文档，本线程的可交付物可收敛为：
 
 1. 将 ranking 从终局裁判降级为候选排序、fallback 和审计。
-2. 让 route/gate/outcome/action profile 接管追问、可见 outcome 和行动建议主链。
+2. 让 route/condition/outcome/action profile 接管追问、可见 outcome 和行动建议主链。
 3. 补齐视觉路径判别字段与前端归一化契约。
 4. 提供 route SQL schema、MVP seed 与本地一致性验证。
 5. 提供本地回归、构建、以及 route/outcome regression 的验收证据。
@@ -99,8 +99,8 @@
 | ranking 不再直接决定最终公开结果 | [diagnosis-engine.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/diagnosis-engine.js), [result-formatter.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/result-formatter.js) 已接入 `routeDecision`、`primaryOutcome`、`visibleOutcomes`、`actionAdvice`；route mode 下非权威 route 统一公开 `uncertain`，ranking 仅保留候选排序/审计/fallback 语义 | 完成 |
 | route 决定 follow-up | [diagnosis-engine.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/diagnosis-engine.js) 中 `routeDecision.nextQuestionKeys` 接管；[route-planned-followup-resolver.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/route-planned-followup-resolver.js) 生成 route follow-up；`test-route-planning.mjs` 已覆盖 | 完成（本地） |
 | visibleOutcomeKeys / primaryOutcome / secondaryOutcomes / routeDecisionCause / actionAdvice 契约落地 | [result-formatter.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/result-formatter.js), [diagnose-flow.js](/Users/jay/WebstormProjects/planting/src/utils/diagnose-flow.js), [follow-up.vue](/Users/jay/WebstormProjects/planting/src/pages/diagnose/follow-up.vue) | 完成（本地） |
-| 用户态不展示内部 routeTrace / gateResults / internal ranking | [diagnosis-engine.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/diagnosis-engine.js) 中 `sanitizeRouteDecisionForPublic`；[follow-up.vue](/Users/jay/WebstormProjects/planting/src/pages/diagnose/follow-up.vue) 仅开发态展示最小 debug 摘要；`test-route-planning.mjs` 已覆盖前端归一化不保留 `routeTrace/gateResults` | 完成（本地） |
-| action conflict 必须优先追问或输出不确定 + 保守建议 | [outcome-action-resolver.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/outcome-action-resolver.js), [outcome-route-planner.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/outcome-route-planner.js), `test-route-planning.mjs` 的冲突保护用例；`cloud1_dev` active route 数据已验证 `max_questions <= 2` 且旧黄叶 primary gate effect 清零 | 完成 |
+| 用户态不展示内部 routeTrace / conditionResults / internal ranking | [diagnosis-engine.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/diagnosis-engine.js) 中 `sanitizeRouteDecisionForPublic`；[follow-up.vue](/Users/jay/WebstormProjects/planting/src/pages/diagnose/follow-up.vue) 仅开发态展示最小 debug 摘要；`test-route-planning.mjs` 已覆盖前端归一化不保留 `routeTrace/conditionResults` | 完成（本地） |
+| action conflict 必须优先追问或输出不确定 + 保守建议 | [outcome-action-resolver.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/outcome-action-resolver.js), [outcome-route-planner.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/outcome-route-planner.js), `test-route-planning.mjs` 的冲突保护用例；`cloud1_dev` active route 数据已验证 `max_questions <= 2` 且既有黄叶 primary condition effect 清零 | 完成 |
 | 视觉 prompt / parser / aggregate / 前端透传 `visual_discriminators`、`missing_info_for_path` | [symptom-labeler-prompt.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/utils/symptom-labeler-prompt.js), [diagnosis-parser.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/utils/diagnosis-parser.js), [visual-diagnosis-service.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/services/visual-diagnosis-service.js), [diagnose-flow.js](/Users/jay/WebstormProjects/planting/src/utils/diagnose-flow.js) | 完成（本地） |
 | 视觉违规 `outcome_key` 不得进入运行时 | `test-route-planning.mjs` 已覆盖 parser 忽略违规 `outcome_key` | 完成（本地） |
 | uncertain 不展示 `topProblem` | `test-route-planning.mjs` 已覆盖 | 完成（本地） |
@@ -113,7 +113,7 @@
 | `npm run build` 通过 | 2026-05-11 当前复验：`DONE Build complete.` | 完成 |
 | `npm run lint` 通过 | 2026-05-11 当前复验：退出码 0，`5636 warnings and 0 errors` | 完成 |
 | `npm run check:diagnose-outcome-regression` 形成业务验收结论 | 2026-05-09 最终复验：新增并部署 [diagnose-route-regression-runner](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-route-regression-runner/index.js)，通过 CloudBase 控制面 `invokeFunction` 以 `baseUrl=https://cloud1-2grufevs395a9d5e.api.tcloudbasegateway.com/v1/functions` 在云内执行 3 条真实样本回归；结果 `checkedCaseCount=3` 且 `3/3 ok`，覆盖 `non_problematic_normal_leaf_aging`、`uncertain_unknown_answers`、`problematic_leaf_yellowing_followup_overwatering` | 完成 |
-| route SQL / seed 已真实执行到数据库并验证 | 2026-05-11 已在 CloudBase SQL `default / cloud1_dev` 读回：`active_final_outcomes=11`、`active_routes=15`、`active_route_questions=15`、`active_answer_effects=21`、`legacy_primary_gate_effects=0`、`routes_over_2_max_questions=0` | 完成 |
+| route SQL / seed 已真实执行到数据库并验证 | 2026-05-11 已在 CloudBase SQL `default / cloud1_dev` 读回：`active_final_outcomes=11`、`active_routes=15`、`active_route_questions=15`、`active_answer_effects=21`、`session_primary_gate_effects=0`、`routes_over_2_max_questions=0` | 完成 |
 | 黄点虫害 synthetic follow-up 守卫成立 | 2026-05-08 已修正 `yellow_speckling` 场景下 `surface_stickiness=no` 的 direct problem effects；`spider_mites` / `thrips` 保留正向区分度，`whiteflies` / `aphids` / `scale_insects` 维持负向；`test-route-planning.mjs` 已新增回归 | 完成 |
 
 ## 3. 当前命令证据
@@ -125,7 +125,7 @@
 - `npm run lint -- --quiet`：通过，`0 error`
 - 云内 route regression runner：通过，`3/3`
 - 2026-05-09 新增核对：
-  - 原始设计包 [07_Codex实施任务包_验收清单与风险.md](/Users/jay/WebstormProjects/planting/docs/route规划及outcome瘦身计划/07_Codex实施任务包_验收清单与风险.md) 的口径是“有一套可复跑的真实样本 smoke 验收脚本与结果文档”，不是硬绑定旧的三 case 单进程 batch 命令形态
+  - 原始设计包 [07_Codex实施任务包_验收清单与风险.md](/Users/jay/WebstormProjects/planting/docs/route规划及outcome瘦身计划/07_Codex实施任务包_验收清单与风险.md) 的口径是“有一套可复跑的真实样本 smoke 验收脚本与结果文档”，不是硬绑定既有的三 case 单进程 batch 命令形态
   - 已新增 [run-diagnose-outcome-suite.mjs](/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/run-diagnose-outcome-suite.mjs)，改为逐 case 独立执行并汇总报告，`package.json` 的 `check:diagnose-outcome-regression` 已切到该 suite
   - 实测对照：
     - 三个 case 各自独立 one-case batch：可通过
@@ -180,7 +180,7 @@
     - `non_problematic_normal_leaf_aging`：通过
     - `uncertain_unknown_answers`：通过
     - `problematic_leaf_yellowing_followup_overwatering`：通过
-  - 这条云内 runner 已满足原设计包“可复跑真实样本 smoke 验收脚本与结果文档”的要求；旧的本地 shell suite 仍可保留为辅助手段，但不再构成完成阻塞
+  - 这条云内 runner 已满足原设计包“可复跑真实样本 smoke 验收脚本与结果文档”的要求；既有的本地 shell suite 仍可保留为辅助手段，但不再构成完成阻塞
 
 ## 4. 结论
 
@@ -198,7 +198,7 @@
 
 保留说明：
 
-- 旧的本地 shell `check:diagnose-outcome-regression` 仍可能受当前环境 DNS / fetch 波动影响，不再作为本任务完成判定的唯一口径。
+- 既有的本地 shell `check:diagnose-outcome-regression` 仍可能受当前环境 DNS / fetch 波动影响，不再作为本任务完成判定的唯一口径。
 - `npm run dev:h5` 在当前容器环境仍有 `listen EPERM`，因此没有补做页面级运行截图；这不影响本次 route-planning 后端/契约/回归验收结论。
 
 最终状态：`已完成。`

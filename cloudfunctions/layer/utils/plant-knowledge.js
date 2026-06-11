@@ -77,11 +77,11 @@ function normalizeNullableString(value) {
 }
 
 function resolveCatalogPlantId(row = {}) {
-  return row.legacy_plant_id || row.plant_identity_id || ''
+  return row.session_plant_id || row.plant_identity_id || ''
 }
 
 function resolveUserPlantCatalogLookupId(row = {}) {
-  return row.plant_identity_id || row.plant_id || row.legacy_plant_id || ''
+  return row.plant_identity_id || row.plant_id || row.session_plant_id || ''
 }
 
 function buildCatalogFieldMatchCondition(operator, paramName) {
@@ -154,7 +154,7 @@ const CATALOG_FROM_SQL = `
 const CATALOG_SELECT_SQL = `
   SELECT
     pie.plant_identity_id,
-    pie.legacy_plant_id,
+    pie.session_plant_id,
     pie.canonical_identity_name,
     pie.canonical_identity_name_cn,
     pie.canonical_identity_name_en,
@@ -201,7 +201,7 @@ function mapPlantRow(row) {
     id: catalogId,
     plantId: catalogId,
     plantIdentityId: row.plant_identity_id || '',
-    legacyPlantId: row.legacy_plant_id || '',
+    sessionPlantId: row.session_plant_id || '',
     canonicalName,
     aliasNames: row.alias_names || '',
     latinName: scientificName,
@@ -251,7 +251,7 @@ async function listPlantCatalog({ keyword = '', page = 1, pageSize = 10, offset 
   sql += `
     WHERE ${conditions.join(' AND ')}
     ORDER BY
-      CAST(COALESCE(NULLIF(pie.legacy_plant_id, ''), '0') AS UNSIGNED),
+      CAST(COALESCE(NULLIF(pie.session_plant_id, ''), '0') AS UNSIGNED),
       pie.primary_display_name,
       pie.plant_identity_id
     LIMIT {{limit}} OFFSET {{offset}}
@@ -286,11 +286,11 @@ async function getPlantCatalogById(plantId) {
     WHERE pie.is_active = 1
       AND (
         pie.plant_identity_id = {{plantId}}
-        OR pie.legacy_plant_id = {{plantId}}
+        OR pie.session_plant_id = {{plantId}}
       )
     ORDER BY
       CASE
-        WHEN pie.legacy_plant_id = {{plantId}} THEN 0
+        WHEN pie.session_plant_id = {{plantId}} THEN 0
         ELSE 1
       END,
       pie.primary_display_name,
@@ -326,7 +326,7 @@ async function findCanonicalPlantMatch(name, limit = 5) {
       )
     ORDER BY
       match_score DESC,
-      CAST(COALESCE(NULLIF(pie.legacy_plant_id, ''), '0') AS UNSIGNED),
+      CAST(COALESCE(NULLIF(pie.session_plant_id, ''), '0') AS UNSIGNED),
       pie.primary_display_name,
       pie.plant_identity_id
     LIMIT {{limit}}
@@ -357,7 +357,7 @@ async function createUserPlantInstance({
   openid,
   plantId = null,
   plantIdentityId = null,
-  legacyPlantId = null,
+  sessionPlantId = null,
   recognizedName = null,
   sourceType = 'catalog',
   recognitionType = null,
@@ -371,13 +371,13 @@ async function createUserPlantInstance({
   let plant = null
   const normalizedPlantId = normalizeNullableString(plantId)
   const normalizedPlantIdentityId = normalizeNullableString(plantIdentityId)
-  const normalizedLegacyPlantId = normalizeNullableString(legacyPlantId)
+  const normalizedSessionPlantId = normalizeNullableString(sessionPlantId)
   const normalizedRecognizedName = normalizeNullableString(recognizedName)
   const normalizedIdentityResolutionStatus = normalizeNullableString(identityResolutionStatus)
   const normalizedVisualCallBatchId = normalizeNullableString(visualCallBatchId)
-  let compatibilityPlantId = null
+  let suitabilityibilityPlantId = null
   let persistedPlantIdentityId = normalizedPlantIdentityId
-  let persistedLegacyPlantId = normalizedLegacyPlantId
+  let persistedSessionPlantId = normalizedSessionPlantId
   let canonicalName = normalizedRecognizedName
   let plantGenus = null
   let plantFamilyEn = null
@@ -386,7 +386,7 @@ async function createUserPlantInstance({
     new Set(
       [
         normalizedPlantIdentityId,
-        normalizedLegacyPlantId,
+        normalizedSessionPlantId,
         normalizedPlantId
       ].filter(Boolean)
     )
@@ -423,11 +423,11 @@ async function createUserPlantInstance({
   }
 
   if (plant) {
-    compatibilityPlantId = plant.id || normalizedPlantId || normalizedLegacyPlantId || normalizedPlantIdentityId
+    suitabilityibilityPlantId = plant.id || normalizedPlantId || normalizedSessionPlantId || normalizedPlantIdentityId
     persistedPlantIdentityId = plant.plantIdentityId || persistedPlantIdentityId
-    persistedLegacyPlantId = plant.legacyPlantId || persistedLegacyPlantId
-    if (!persistedLegacyPlantId && compatibilityPlantId && compatibilityPlantId !== persistedPlantIdentityId) {
-      persistedLegacyPlantId = compatibilityPlantId
+    persistedSessionPlantId = plant.sessionPlantId || persistedSessionPlantId
+    if (!persistedSessionPlantId && suitabilityibilityPlantId && suitabilityibilityPlantId !== persistedPlantIdentityId) {
+      persistedSessionPlantId = suitabilityibilityPlantId
     }
     canonicalName = plant.canonicalName
     plantGenus = plant.genus
@@ -442,11 +442,11 @@ async function createUserPlantInstance({
 
   const sql = `
     INSERT INTO user_plant_instances (
-      _openid, plant_id, plant_identity_id, legacy_plant_id, canonical_name, recognized_name,
+      _openid, plant_id, plant_identity_id, session_plant_id, canonical_name, recognized_name,
       source_type, recognition_type, recognition_confidence, identity_resolution_status,
       visual_call_batch_id, nickname, location, photos, plant_genus, plant_family_en, plant_latin_name
     ) VALUES (
-      {{openid}}, {{plantId}}, {{plantIdentityId}}, {{legacyPlantId}}, {{canonicalName}}, {{recognizedName}},
+      {{openid}}, {{plantId}}, {{plantIdentityId}}, {{sessionPlantId}}, {{canonicalName}}, {{recognizedName}},
       {{sourceType}}, {{recognitionType}}, NULLIF({{recognitionConfidence}}, ''), {{identityResolutionStatus}},
       {{visualCallBatchId}}, {{nickname}}, {{location}}, {{photos}}, {{plantGenus}}, {{plantFamilyEn}}, {{plantLatinName}}
     )
@@ -454,9 +454,9 @@ async function createUserPlantInstance({
 
   await models.$runSQL(sql, {
     openid,
-    plantId: compatibilityPlantId,
+    plantId: suitabilityibilityPlantId,
     plantIdentityId: persistedPlantIdentityId,
-    legacyPlantId: persistedLegacyPlantId,
+    sessionPlantId: persistedSessionPlantId,
     canonicalName,
     recognizedName: normalizedRecognizedName,
     sourceType: normalizeNullableString(sourceType) || 'catalog',
@@ -488,7 +488,7 @@ async function createUserPlantInstance({
         FROM user_plant_instances
         WHERE _openid = {{openid}}
           AND COALESCE(plant_identity_id, '') = COALESCE({{plantIdentityId}}, '')
-          AND COALESCE(legacy_plant_id, '') = COALESCE({{legacyPlantId}}, '')
+          AND COALESCE(session_plant_id, '') = COALESCE({{sessionPlantId}}, '')
           AND COALESCE(recognized_name, '') = COALESCE({{recognizedName}}, '')
           AND COALESCE(nickname, '') = COALESCE({{nickname}}, '')
           AND COALESCE(location, '') = COALESCE({{location}}, '')
@@ -498,7 +498,7 @@ async function createUserPlantInstance({
       {
         openid,
         plantIdentityId: persistedPlantIdentityId,
-        legacyPlantId: persistedLegacyPlantId,
+        sessionPlantId: persistedSessionPlantId,
         recognizedName: normalizedRecognizedName,
         nickname: normalizeNullableString(nickname),
         location: normalizeNullableString(location)
@@ -527,14 +527,14 @@ const USER_PLANT_LATEST_DIAGNOSIS_SQL = `
 
 function mapUserPlantInstanceRow(row, plant = null) {
   const plantIdentityId = plant?.plantIdentityId || row.plant_identity_id || ''
-  const legacyPlantId = plant?.legacyPlantId || row.legacy_plant_id || ''
+  const sessionPlantId = plant?.sessionPlantId || row.session_plant_id || ''
   const canonicalName = row.canonical_name || plant?.canonicalName || row.recognized_name || ''
 
   return {
     id: row.id,
     plantId: row.plant_id,
     plantIdentityId,
-    legacyPlantId,
+    sessionPlantId,
     canonicalName,
     nickname: row.nickname || '',
     displayName: row.nickname || canonicalName || row.recognized_name || '未命名植物',
@@ -578,7 +578,7 @@ async function getUserPlantInstanceById(openid, id) {
       up.id,
       up.plant_id,
       up.plant_identity_id,
-      up.legacy_plant_id,
+      up.session_plant_id,
       up.canonical_name,
       up.recognized_name,
       up.source_type,
@@ -619,7 +619,7 @@ async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) 
       up.id,
       up.plant_id,
       up.plant_identity_id,
-      up.legacy_plant_id,
+      up.session_plant_id,
       up.canonical_name,
       up.recognized_name,
       up.source_type,
@@ -992,12 +992,12 @@ async function buildDiagnosisDecision({
         ppp.problem_key,
         p.problem_cn,
         p.problem_type,
-        ppp.host_compatibility,
-        COALESCE(ppp.genus_compatibility, 0) AS is_genus_candidate
+        ppp.host_suitabilityibility,
+        COALESCE(ppp.genus_suitabilityibility, 0) AS is_genus_candidate
       FROM plant_problem_profiles ppp
       JOIN problems p ON p.problem_key = ppp.problem_key
       WHERE ppp.plant_id = {{plantId}}
-      ORDER BY ppp.host_compatibility DESC, ppp.problem_key ASC
+      ORDER BY ppp.host_suitabilityibility DESC, ppp.problem_key ASC
     `,
     { plantId: plantContext.plantId }
   )
@@ -1067,8 +1067,8 @@ async function buildDiagnosisDecision({
 
   const rankings = candidates
     .map(candidate => {
-      const hostCompatibility = clampProbability(candidate.host_compatibility)
-      const genusCompatibility = Number(candidate.is_genus_candidate || 0) > 0 ? 1 : 0
+      const hostSuitabilityibility = clampProbability(candidate.host_suitabilityibility)
+      const genusSuitabilityibility = Number(candidate.is_genus_candidate || 0) > 0 ? 1 : 0
       const evidenceRows = evidenceByProblem.get(candidate.problem_key) || []
       let symptomSupportScore = 0
       let evidenceCount = 0
@@ -1082,8 +1082,8 @@ async function buildDiagnosisDecision({
         const contribution =
           Number(evidence.association_strength || 0) *
           Number(symptomMeta.symptom_reliability || 0) *
-          genusCompatibility *
-          hostCompatibility
+          genusSuitabilityibility *
+          hostSuitabilityibility
 
         symptomSupportScore += contribution
         if (contribution > DIAGNOSIS_RULES.decisiveContributionThreshold) {
@@ -1092,8 +1092,8 @@ async function buildDiagnosisDecision({
         if (
           Number(evidence.association_strength || 0) >= DIAGNOSIS_RULES.decisiveAssociationStrength &&
           Number(symptomMeta.symptom_reliability || 0) >= DIAGNOSIS_RULES.decisiveSymptomReliability &&
-          genusCompatibility === 1 &&
-          hostCompatibility >= DIAGNOSIS_RULES.decisiveHostCompatibility
+          genusSuitabilityibility === 1 &&
+          hostSuitabilityibility >= DIAGNOSIS_RULES.decisiveHostSuitabilityibility
         ) {
           decisiveSymptomCount += 1
         }
@@ -1109,8 +1109,8 @@ async function buildDiagnosisDecision({
         problemKey: candidate.problem_key,
         problemCn: candidate.problem_cn || candidate.problem_key,
         problemType: candidate.problem_type || '',
-        genusCompatibility: round(genusCompatibility),
-        hostCompatibility: round(hostCompatibility),
+        genusSuitabilityibility: round(genusSuitabilityibility),
+        hostSuitabilityibility: round(hostSuitabilityibility),
         symptomSupportScore: round(symptomSupportScore),
         evidenceCount,
         decisiveSymptomCount,
@@ -1196,8 +1196,8 @@ async function buildDiagnosisDecision({
       item.weights[row.problem_key] =
         Number(row.association_strength || 0) *
         Number(row.symptom_reliability || 0) *
-        Number(candidateMeta.genusCompatibility || 0) *
-        Number(candidateMeta.hostCompatibility || 0)
+        Number(candidateMeta.genusSuitabilityibility || 0) *
+        Number(candidateMeta.hostSuitabilityibility || 0)
       questionMap.set(row.symptom_key, item)
     }
 

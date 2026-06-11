@@ -4,7 +4,7 @@ import fs from 'node:fs/promises'
 const ROUTE_TABLES = [
   'outcome_route_groups',
   'outcome_routes',
-  'outcome_route_gates',
+  'outcome_route_conditions',
   'outcome_route_questions',
   'outcome_answer_effects',
   'outcome_action_profiles',
@@ -12,7 +12,7 @@ const ROUTE_TABLES = [
 ]
 
 const REQUIRED_QUESTION_KEYS = [
-  'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+  'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
   'q_observed_probe__leaf_yellowing__watering_frequency_context',
   'q_observed_probe__leaf_yellowing__light_change_context',
   'q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern',
@@ -34,7 +34,7 @@ async function testRouteSchemaAndSeed() {
     seedSql,
     tableConfig,
     questionRepositorySource,
-    questionTargetDimensionSource,
+    questionPackageTopicSource,
     diagnosisEngineSource,
     contextRequiredGuardSource,
     questionTemplateGovernanceSql
@@ -43,7 +43,7 @@ async function testRouteSchemaAndSeed() {
     readFile('./scripts/sql/seed-outcome-route-mvp.sql'),
     readFile('./src/data-system/config/tables.js'),
     readFile('./cloudfunctions/diagnose-http/repositories/question-repository.js'),
-    readFile('./cloudfunctions/diagnose-http/utils/question-target-dimension.js'),
+    readFile('./cloudfunctions/diagnose-http/utils/question-package-topic.js'),
     readFile('./cloudfunctions/diagnose-http/domain/diagnosis-engine.js'),
     readFile('./cloudfunctions/diagnose-http/utils/context-required-problem-guard.js'),
     readFile('./scripts/sql/question-data-layer-template-governance-20260429.sql')
@@ -62,7 +62,7 @@ async function testRouteSchemaAndSeed() {
     )
   }
 
-  for (const tableName of ['diagnosis_outcomes', 'outcome_action_profiles', 'outcome_route_groups', 'outcome_routes', 'outcome_route_gates', 'outcome_route_questions', 'outcome_answer_effects']) {
+  for (const tableName of ['diagnosis_outcomes', 'outcome_action_profiles', 'outcome_route_groups', 'outcome_routes', 'outcome_route_conditions', 'outcome_route_questions', 'outcome_answer_effects']) {
     expectIncludes(
       seedSql,
       `REPLACE INTO ${tableName} (`,
@@ -72,13 +72,13 @@ async function testRouteSchemaAndSeed() {
 
   for (const questionKey of REQUIRED_QUESTION_KEYS) {
     const existsInQuestionRepo = questionRepositorySource.includes(`${questionKey}: {`)
-    const existsInTargetDimension = questionTargetDimensionSource.includes(`${questionKey}:`)
+    const existsInPackageTopic = questionPackageTopicSource.includes(`${questionKey}:`)
     const existsInDiagnosisEngine = diagnosisEngineSource.includes(`'${questionKey}'`)
     const existsInContextGuard = contextRequiredGuardSource.includes(`'${questionKey}'`)
     const existsInQuestionTemplateGovernance = questionTemplateGovernanceSql.includes(`'${questionKey}'`)
     assert.equal(
       existsInQuestionRepo ||
-        existsInTargetDimension ||
+        existsInPackageTopic ||
         existsInDiagnosisEngine ||
         existsInContextGuard ||
         existsInQuestionTemplateGovernance,
@@ -97,17 +97,17 @@ async function testRouteSchemaAndSeed() {
   expectIncludes(
     seedSql,
     "q_observed_probe__leaf_yellowing__watering_frequency_context:often_wet",
-    '湿土 gate 缺少基于黄叶浇水上下文的闭合条件'
+    '湿土 condition 缺少基于黄叶浇水上下文的闭合条件'
   )
   expectIncludes(
     seedSql,
     "q_observed_probe__leaf_yellowing__watering_frequency_context:often_dry",
-    '干土 gate 缺少基于黄叶浇水上下文的闭合条件'
+    '干土 condition 缺少基于黄叶浇水上下文的闭合条件'
   )
   assert.equal(
-    seedSql.includes("('q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate'"),
+    seedSql.includes("('q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition'"),
     false,
-    'seed 不应再写入旧 yellowing_primary_clue_gate 路径'
+    'seed 不应再写入既有 yellowing_primary_clue_condition 路径'
   )
   assert.equal(
     /yellowing_(wet_soil|dry_soil|low_light|sunburn)_route[\s\S]*?, 3, 'uncertain'/.test(seedSql),
@@ -117,12 +117,12 @@ async function testRouteSchemaAndSeed() {
   expectIncludes(
     seedSql,
     "q_observed_probe__leaf_yellowing__light_change_context:weaker_light",
-    '弱光 gate 缺少基于黄叶光照上下文的闭合条件'
+    '弱光 condition 缺少基于黄叶光照上下文的闭合条件'
   )
   expectIncludes(
     seedSql,
     "q_observed_probe__leaf_yellowing__light_change_context:stronger_direct_light",
-    '强光 gate 缺少基于黄叶光照上下文的闭合条件'
+    '强光 condition 缺少基于黄叶光照上下文的闭合条件'
   )
   expectIncludes(seedSql, `'action_sunburn_basic'`, 'seed 缺少晒伤 action profile 绑定')
 }

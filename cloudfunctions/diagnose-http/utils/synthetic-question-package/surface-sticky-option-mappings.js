@@ -5,7 +5,7 @@ const { buildSyntheticDirectProblemAdjustments } = require('./rules')
 function buildSurfaceStickyOptionMappings({
   questionKey = '',
   symptomKey = '',
-  targetDimension = '',
+  packageTopic = '',
   normalizedPatternKey = '',
   optionTextByKey = {},
   symptomMeta = {},
@@ -48,7 +48,7 @@ function buildSurfaceStickyOptionMappings({
       associationStrength: stickyTargetSymptomKey ? 1 : 0,
       directProblemAdjustments: buildSyntheticDirectProblemAdjustments(
         { ...symptomMeta, symptomKey },
-        targetDimension,
+        packageTopic,
         'yes'
       ),
       answerEffectCn: stickyTargetSymptomKey
@@ -66,7 +66,7 @@ function buildSurfaceStickyOptionMappings({
       associationStrength: dryResidueAssociationStrength,
       directProblemAdjustments: buildSyntheticDirectProblemAdjustments(
         { ...symptomMeta, symptomKey },
-        targetDimension,
+        packageTopic,
         'no'
       ),
       answerEffectCn: dryResidueSymptomKey

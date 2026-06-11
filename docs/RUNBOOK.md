@@ -26,12 +26,12 @@ stale_if_changed:
 
 # Runbook
 
-本文只保留当前常用运行、验证、调试、发布入口。一次性 handoff、旧排查记录和大文档不再作为默认操作手册。
+本文只保留当前常用运行、验证、调试、发布入口。一次性 handoff、既有排查记录和大文档不再作为默认操作手册。
 
 ## 1. 安装
 
 ```bash
-npm ci --legacy-peer-deps
+npm ci --session-peer-deps
 ```
 
 如果 CloudBase 本地函数依赖缺失：
@@ -206,7 +206,7 @@ outputEligibility
 
 如果文档、BRV、AI 记忆与这些运行锚点冲突，以运行锚点和源码为准。
 
-## 9. 不再默认使用的旧操作材料
+## 9. 不再默认使用的既有操作材料
 
 以下材料只可按需检索，不作为默认 runbook：
 
@@ -215,5 +215,5 @@ docs/ai-runs/**
 docs/ai-tasks/**
 docs/route规划及outcome瘦身计划/**
 docs/new-rules/**
-旧 handoff 中的一次性命令
+既有 handoff 中的一次性命令
 ```

@@ -59,7 +59,7 @@
           "questionGroupPoolSize": 4,
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -127,7 +127,7 @@
           "questionGroupPoolSize": 4,
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 1.088,
@@ -189,7 +189,7 @@
           "questionGroupPoolSize": 2,
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,

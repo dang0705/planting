@@ -5,9 +5,9 @@ const {
   questionSelection
 } = require('../constants/scoring')
 const {
-  QUESTION_TARGET_DIMENSIONS,
-  normalizeQuestionTargetDimension
-} = require('../utils/question-target-dimension')
+  QUESTION_PACKAGE_TOPICS,
+  normalizeQuestionPackageTopic
+} = require('../utils/question-package-topic')
 const {
   OBSERVED_SYMPTOM_BRIDGE_TARGETS
 } = require('../utils/question-symptom-bridge')
@@ -20,9 +20,9 @@ const {
   shouldBlockReturnToVisualPresenceQuestion
 } = require('./question-selector-coverage')
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function buildObservedMetaSets(observedSymptomMap = new Map()) {
@@ -62,13 +62,13 @@ const ROUTE_HINT_PRIORITY_KEYWORDS = [
 
 const OBSERVED_CONTEXT_DIMENSION_PRIORITY_BY_SYMPTOM = {
   leaf_yellowing: [
-    QUESTION_TARGET_DIMENSIONS.HOST_CONFIRMATION,
-    QUESTION_TARGET_DIMENSIONS.LIGHT_EXPOSURE,
-    QUESTION_TARGET_DIMENSIONS.WATERING_CONTEXT,
-    QUESTION_TARGET_DIMENSIONS.FERTILIZATION_CONTEXT,
-    QUESTION_TARGET_DIMENSIONS.DISTRIBUTION_SCOPE,
-    QUESTION_TARGET_DIMENSIONS.SUBSTRATE_MOISTURE,
-    QUESTION_TARGET_DIMENSIONS.PROGRESSION
+    QUESTION_PACKAGE_TOPICS.HOST_CONFIRMATION,
+    QUESTION_PACKAGE_TOPICS.LIGHT_EXPOSURE,
+    QUESTION_PACKAGE_TOPICS.WATERING_CONTEXT,
+    QUESTION_PACKAGE_TOPICS.FERTILIZATION_CONTEXT,
+    QUESTION_PACKAGE_TOPICS.DISTRIBUTION_SCOPE,
+    QUESTION_PACKAGE_TOPICS.SUBSTRATE_MOISTURE,
+    QUESTION_PACKAGE_TOPICS.PROGRESSION
   ]
 }
 
@@ -196,16 +196,16 @@ function computeObservedContextDimensionBoost(
     return 0
   }
 
-  const targetDimension = normalizeQuestionTargetDimension(
-    question?.targetDimension,
-    QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
+  const packageTopic = normalizeQuestionPackageTopic(
+    question?.packageTopic,
+    QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE
   )
   let bestBoost = 0
 
   for (const observedSymptomKey of observedSymptomMap.keys()) {
-    const preferredDimensions =
+    const preferredTopics =
       OBSERVED_CONTEXT_DIMENSION_PRIORITY_BY_SYMPTOM[observedSymptomKey] || []
-    if (!preferredDimensions.length) {continue}
+    if (!preferredTopics.length) {continue}
 
     const bridgeTargets = OBSERVED_SYMPTOM_BRIDGE_TARGETS[observedSymptomKey] || []
     if (
@@ -215,12 +215,12 @@ function computeObservedContextDimensionBoost(
       continue
     }
 
-    const dimensionIndex = preferredDimensions.indexOf(targetDimension)
+    const dimensionIndex = preferredTopics.indexOf(packageTopic)
     if (dimensionIndex < 0) {continue}
 
     const bridgeHostBonus =
       observedSymptomKey !== targetSymptomKey &&
-      targetDimension === QUESTION_TARGET_DIMENSIONS.HOST_CONFIRMATION
+      packageTopic === QUESTION_PACKAGE_TOPICS.HOST_CONFIRMATION
         ? 22
         : 0
 
@@ -328,12 +328,12 @@ function buildAskedDimensionsByTargetSymptom(askedQuestions = []) {
     const targetSymptomKey = normalizeText(askedQuestion?.targetSymptomKey || '', '')
     if (!targetSymptomKey) {continue}
 
-    const targetDimension = normalizeQuestionTargetDimension(
-      askedQuestion?.targetDimension,
-      QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
+    const packageTopic = normalizeQuestionPackageTopic(
+      askedQuestion?.packageTopic,
+      QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE
     )
     const current = map.get(targetSymptomKey) || new Set()
-    current.add(targetDimension)
+    current.add(packageTopic)
     map.set(targetSymptomKey, current)
   }
 
@@ -349,7 +349,7 @@ function selectDiversifiedCandidateItems(candidateItems = [], maxQuestions = que
   const selected = []
   const deferred = []
   const usedGroups = new Set()
-  const usedDimensionsByBucket = new Map()
+  const usedTopicsByBucket = new Map()
   const safeMaxQuestions = Math.max(1, Math.min(1, Number(maxQuestions || 1)))
   const sorted = Array.from(candidateItems || []).sort((a, b) => b.candidateScore - a.candidateScore)
 
@@ -360,20 +360,20 @@ function selectDiversifiedCandidateItems(candidateItems = [], maxQuestions = que
     }
 
     const dimensionBucketKey = buildQuestionDimensionBucketKey(item)
-    const targetDimension = normalizeQuestionTargetDimension(
-      item?.targetDimension,
-      QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
+    const packageTopic = normalizeQuestionPackageTopic(
+      item?.packageTopic,
+      QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE
     )
-    const usedDimensions = usedDimensionsByBucket.get(dimensionBucketKey) || new Set()
+    const usedTopics = usedTopicsByBucket.get(dimensionBucketKey) || new Set()
 
-    if (usedDimensions.has(targetDimension)) {
+    if (usedTopics.has(packageTopic)) {
       deferred.push(item)
       continue
     }
 
     selected.push(item)
-    usedDimensions.add(targetDimension)
-    usedDimensionsByBucket.set(dimensionBucketKey, usedDimensions)
+    usedTopics.add(packageTopic)
+    usedTopicsByBucket.set(dimensionBucketKey, usedTopics)
     if (normalizedGroupKey !== '__default__') {
       usedGroups.add(normalizedGroupKey)
     }

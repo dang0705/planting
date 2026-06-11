@@ -75,8 +75,8 @@ function buildRouteDecisionReviewSummary(routeDecision = null, stopReason = '') 
       routeKeys: Array.isArray(state?.routeKeys)
         ? state.routeKeys.map(item => String(item || '').trim()).filter(Boolean)
         : [],
-      missingGateKeys: Array.isArray(state?.missingGateKeys)
-        ? state.missingGateKeys.map(item => String(item || '').trim()).filter(Boolean)
+      missingConditionKeys: Array.isArray(state?.missingConditionKeys)
+        ? state.missingConditionKeys.map(item => String(item || '').trim()).filter(Boolean)
         : [],
       nextQuestionKeys: Array.isArray(state?.nextQuestionKeys)
         ? state.nextQuestionKeys.map(item => String(item || '').trim()).filter(Boolean)
@@ -145,8 +145,7 @@ function mapDiagnosisReviewRow(row = {}) {
   const derivedEvidenceSet = Array.isArray(runtimeSnapshot?.derivedEvidenceSet)
     ? runtimeSnapshot.derivedEvidenceSet
     : []
-  const _questionQueue = runtimeSnapshot?.questionQueue || null
-  const questionCountSummary = resolveQuestionCountSummary(row, runtimeSnapshot)
+  const questionCountSummary = resolveQuestionCountSummary(row)
   const stopReason = normalizeStoredNullableText(
     runtimeSnapshot?.stopReason || runtimeSnapshot?.stopState?.stopReason,
     ''
@@ -212,7 +211,7 @@ function mapDiagnosisReviewRow(row = {}) {
     hasReplayImage: imagePreview.hasReplayImage,
     imageState: imagePreview.imageState,
     hunyuanPromptAudit,
-    // 兼容前端列表直接消费的平铺字段（避免再次手工拆 nested 字段）
+    // 当前前端列表直接消费的平铺字段（避免再次手工拆 nested 字段）
     llmPromptText: String(normalizedPromptRow.llm_prompt_text || '').trim(),
     llmPromptPreview: String(normalizedPromptRow.llm_prompt_preview || '').trim(),
     llmPromptLength: Number(normalizedPromptRow.llm_prompt_length || 0),
@@ -239,7 +238,7 @@ function mapDiagnosisReviewRow(row = {}) {
     diagnosisDirectionLabels: directionLabels,
     symptomClass: buildSymptomClassRuntimeReviewPayload(runtimeSnapshot?.symptomClassRuntime || null),
     questionCountSummary,
-    reviewSourceType: String(row.review_source_type || '').trim() || 'legacy',
+    reviewSourceType: String(row.review_source_type || '').trim() || 'session',
     clientPlatform: String(row.client_platform || '').trim(),
     reviewSourceEvidence: String(row.review_source_evidence || '').trim(),
     batchReviewMeta:
@@ -259,8 +258,7 @@ function mapDiagnosisReviewRow(row = {}) {
       observedEvidenceCount: observedEvidenceSet.length,
       derivedEvidenceCount: derivedEvidenceSet.length,
       diagnosisDirectionLabels: directionLabels,
-      questionCountSummary,
-      _questionQueue
+      questionCountSummary
     },
     routeDecisionSummary
   }

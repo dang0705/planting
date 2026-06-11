@@ -150,13 +150,6 @@ Module._load = function loadWithStubs(request, parent, isMain) {
     }
   }
 
-  if (request === '../services/question-queue-runtime-service') {
-    return {
-      markQueueItemsAnswered: async () => true,
-      invalidateQueueForRound: async () => true
-    }
-  }
-
   if (request === '../presenters/diagnosis-round-presenter-helpers') {
     return {
       hasConsumedFollowUpRetakeQuota: () => false

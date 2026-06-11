@@ -249,7 +249,7 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
       scope: 'diagnosis-review detail',
       sectionName: 'batchRecord',
       loader: () => getDiagnosisBatchReviewRecord(safeSessionId),
-      fallbackValue: null,
+      conservativeValue: null,
       degradedSections,
       timing,
       timeoutMs: 1200
@@ -258,7 +258,7 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
       scope: 'diagnosis-review detail',
       sectionName: 'visualRawRecords',
       loader: () => listDiagnosisReviewVisualRawRecords(safeSessionId),
-      fallbackValue: [],
+      conservativeValue: [],
       degradedSections,
       timing,
       timeoutMs: 1200
@@ -267,7 +267,7 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
       scope: 'diagnosis-review detail',
       sectionName: 'questionRecords',
       loader: () => listDiagnosisReviewQuestions(safeSessionId),
-      fallbackValue: [],
+      conservativeValue: [],
       degradedSections,
       timing,
       timeoutMs: 1200
@@ -276,7 +276,7 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
       scope: 'diagnosis-review detail',
       sectionName: 'answerRevisionEvents',
       loader: () => listDiagnosisReviewAnswerEvents(safeSessionId),
-      fallbackValue: [],
+      conservativeValue: [],
       degradedSections,
       timing,
       timeoutMs: 1200
@@ -288,7 +288,7 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
         diagnosisSessionId: safeSessionId,
         visualCallBatchId: row.latest_visual_call_batch_id || ''
       }),
-      fallbackValue: null,
+      conservativeValue: null,
       degradedSections,
       timing,
       timeoutMs: 1200
@@ -297,7 +297,7 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
       scope: 'diagnosis-review detail',
       sectionName: 'visualListEnrichment',
       loader: () => loadDiagnosisReviewListVisualRows([safeSessionId]),
-      fallbackValue: new Map(),
+      conservativeValue: new Map(),
       degradedSections,
       timing,
       timeoutMs: 1200
@@ -306,7 +306,7 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
       scope: 'diagnosis-review detail',
       sectionName: 'questionCountEnrichment',
       loader: () => loadDiagnosisReviewListQuestionCounts([safeSessionId]),
-      fallbackValue: new Map(),
+      conservativeValue: new Map(),
       degradedSections,
       timing,
       timeoutMs: 1200
@@ -344,7 +344,7 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
       scope: 'diagnosis-review detail',
       sectionName: 'symptomClassRuntime',
       loader: () => resolveSymptomClassFromVisualCandidates(visualAggregateSummary),
-      fallbackValue: null,
+      conservativeValue: null,
       degradedSections,
       timing,
       timeoutMs: 1200
@@ -368,14 +368,14 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
         MINI_PROGRAM_CLIENT_PLATFORMS.has(clientPlatform) ||
         isLikelyManualOpenId
       ? 'manual'
-      : 'legacy'
+      : 'session'
   const reviewSourceEvidence = batchRecord
     ? 'batch_table'
     : storedReviewSourceType === 'manual' || MINI_PROGRAM_CLIENT_PLATFORMS.has(clientPlatform)
       ? 'platform_tagged'
       : isLikelyManualOpenId
         ? 'openid_inferred_manual'
-      : 'openid_inferred_legacy'
+      : 'openid_inferred_session'
   const previewImageRef = String(enrichedRow.preview_image_ref || '').trim()
 
   const mapped = mapDiagnosisReviewRow({
@@ -403,7 +403,7 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
       runtimeSnapshot,
       mapped
     }),
-    fallbackValue: null,
+    conservativeValue: null,
     degradedSections,
     timing,
     timeoutMs: 1200
@@ -441,7 +441,6 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
     routePrimaryAction:
       row.current_route_primary_action || runtimeSnapshot?.routePrimaryAction || '',
     routeDecision: runtimeSnapshot?.routeDecision || runtimeSnapshot?.metrics?.routeDecision || null,
-    questionQueue: runtimeSnapshot?.questionQueue || null,
     stopReason: runtimeSnapshot?.stopReason || runtimeSnapshot?.stopState?.stopReason || '',
     stopState: runtimeSnapshot?.stopState || null,
     outputEligibility: runtimeSnapshot?.outputEligibility || null,

@@ -1,6 +1,6 @@
 'use strict'
 
-const { GATE_RESULT } = require('../constants/outcome-route')
+const { CONDITION_RESULT } = require('../constants/outcome-route')
 
 function normalizeKey(value = '') {
   return String(value || '').trim()
@@ -183,60 +183,60 @@ function summarizeRequiredAnswerEffects(requiredAnswerEffects = {}) {
   }
 }
 
-function evaluateOutcomeRouteGate({
-  gate = {},
+function evaluateOutcomeRouteCondition({
+  condition = {},
   routeEvidenceContext = {}
 } = {}) {
-  const hasBlocker = matchesBlockerEvidence(gate.blockerEvidence, routeEvidenceContext)
+  const hasBlocker = matchesBlockerEvidence(condition.blockerEvidence, routeEvidenceContext)
   if (hasBlocker) {
     return {
-      gateKey: gate.gateKey || '',
-      routeKey: gate.routeKey || '',
-      gateRole: gate.gateRole || '',
-      result: GATE_RESULT.BLOCK,
-      decisionCauseKey: gate.decisionCauseKey || '',
-      decisionCauseText: gate.decisionCauseTextCn || '',
+      conditionKey: condition.conditionKey || '',
+      routeKey: condition.routeKey || '',
+      conditionRole: condition.conditionRole || '',
+      result: CONDITION_RESULT.BLOCK,
+      decisionCauseKey: condition.decisionCauseKey || '',
+      decisionCauseText: condition.decisionCauseTextCn || '',
       requiredEvidenceMatched: false,
       requiredAnswerEffectsMatched: false,
-      requiredAnswerEffectsSummary: summarizeRequiredAnswerEffects(gate.requiredAnswerEffects),
+      requiredAnswerEffectsSummary: summarizeRequiredAnswerEffects(condition.requiredAnswerEffects),
       blockerMatched: true
     }
   }
 
   const requiredEvidenceMatched = matchesRequiredEvidence(
-    gate.requiredEvidence,
+    condition.requiredEvidence,
     routeEvidenceContext
   )
   const requiredAnswerEffectsMatched = matchesRequiredAnswerEffects(
-    gate.requiredAnswerEffects,
+    condition.requiredAnswerEffects,
     routeEvidenceContext
   )
 
   if (requiredEvidenceMatched && requiredAnswerEffectsMatched) {
     return {
-      gateKey: gate.gateKey || '',
-      routeKey: gate.routeKey || '',
-      gateRole: gate.gateRole || '',
-      result: GATE_RESULT.PASS,
-      decisionCauseKey: gate.decisionCauseKey || '',
-      decisionCauseText: gate.decisionCauseTextCn || '',
+      conditionKey: condition.conditionKey || '',
+      routeKey: condition.routeKey || '',
+      conditionRole: condition.conditionRole || '',
+      result: CONDITION_RESULT.PASS,
+      decisionCauseKey: condition.decisionCauseKey || '',
+      decisionCauseText: condition.decisionCauseTextCn || '',
       requiredEvidenceMatched: true,
       requiredAnswerEffectsMatched: true,
-      requiredAnswerEffectsSummary: summarizeRequiredAnswerEffects(gate.requiredAnswerEffects),
+      requiredAnswerEffectsSummary: summarizeRequiredAnswerEffects(condition.requiredAnswerEffects),
       blockerMatched: false
     }
   }
 
   return {
-    gateKey: gate.gateKey || '',
-    routeKey: gate.routeKey || '',
-    gateRole: gate.gateRole || '',
-    result: GATE_RESULT.FAIL,
-    decisionCauseKey: gate.decisionCauseKey || '',
-    decisionCauseText: gate.decisionCauseTextCn || '',
+    conditionKey: condition.conditionKey || '',
+    routeKey: condition.routeKey || '',
+    conditionRole: condition.conditionRole || '',
+    result: CONDITION_RESULT.FAIL,
+    decisionCauseKey: condition.decisionCauseKey || '',
+    decisionCauseText: condition.decisionCauseTextCn || '',
     requiredEvidenceMatched,
     requiredAnswerEffectsMatched,
-    requiredAnswerEffectsSummary: summarizeRequiredAnswerEffects(gate.requiredAnswerEffects),
+    requiredAnswerEffectsSummary: summarizeRequiredAnswerEffects(condition.requiredAnswerEffects),
     blockerMatched: false
   }
 }
@@ -246,5 +246,5 @@ module.exports = {
   matchesRequiredAnswerEffects,
   matchesBlockerEvidence,
   summarizeRequiredAnswerEffects,
-  evaluateOutcomeRouteGate
+  evaluateOutcomeRouteCondition
 }

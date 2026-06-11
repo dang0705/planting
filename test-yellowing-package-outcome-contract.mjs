@@ -86,9 +86,9 @@ const ROUTES = [
 
 const GATES = [
   {
-    gateKey: 'yellowing_overwatering_gate',
+    conditionKey: 'yellowing_overwatering_condition',
     routeKey: 'yellowing_overwatering_route',
-    gateRole: 'display_gate',
+    conditionRole: 'display_condition',
     requiredEvidence: { anySymptomKeys: ['uniform_yellowing'] },
     requiredAnswerEffects: {
       questionOptionPairs: [`${QUESTION_KEYS.watering}:often_wet`],
@@ -98,9 +98,9 @@ const GATES = [
     conflictOutcomeKeys: []
   },
   {
-    gateKey: 'yellowing_fertilizer_gate',
+    conditionKey: 'yellowing_fertilizer_condition',
     routeKey: 'yellowing_fertilizer_route',
-    gateRole: 'display_gate',
+    conditionRole: 'display_condition',
     requiredEvidence: { anySymptomKeys: ['uniform_yellowing'] },
     requiredAnswerEffects: {
       questionOptionPairs: [`${QUESTION_KEYS.fertilization}:recent_heavy_fertilizer_or_repot`],
@@ -110,9 +110,9 @@ const GATES = [
     conflictOutcomeKeys: []
   },
   {
-    gateKey: 'yellowing_sunburn_gate',
+    conditionKey: 'yellowing_sunburn_condition',
     routeKey: 'yellowing_sunburn_route',
-    gateRole: 'display_gate',
+    conditionRole: 'display_condition',
     requiredEvidence: { anySymptomKeys: ['uniform_yellowing'] },
     requiredAnswerEffects: {
       questionOptionPairs: [`${QUESTION_KEYS.light}:stronger_direct_light`],
@@ -221,7 +221,7 @@ async function assertYellowingPackageOutcome({ label, answers, expectedOutcomeKe
     featureFlags: { routePlanningEnabled: true }
   })
 
-  assert.equal(decision.fallbackPolicy, '', label)
+  assert.equal(decision.conservativePolicy, '', label)
   assert.equal(decision.decisionCause.decisionCauseKey, 'route_visible_outcomes_ready', label)
   assert.deepEqual(decision.visibleOutcomeKeys, [expectedOutcomeKey], label)
 }

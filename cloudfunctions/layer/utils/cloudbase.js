@@ -60,7 +60,7 @@ const SQL_TABLES = [
   'observed_evidence_set',
   'diagnosis_symptom_observations',
   'diagnosis_follow_ups',
-  'question_queue',
+  'question_package_snapshot',
   'stop_state',
   'diagnosis_feedback',
   'diagnosis_batch_reviews',
@@ -93,7 +93,7 @@ function qualifySqlTableNames(sql, databaseName) {
  *
  * 线上云函数通常可以使用运行时身份；本地 tcb-ff 调试则需要显式凭据。
  * 本仓库的 GitHub Actions 使用 TENCENT_* 命名，历史本地脚本使用 CLOUDBASE_*，
- * 这里统一兼容，避免本地只配置 TENCENT_* 时仍报 secret id error。
+ * 这里统一适配，避免本地只配置 TENCENT_* 时仍报 secret id error。
  */
 function resolveCloudbaseCredentials(env = process.env) {
   const secretId = String(

@@ -16,7 +16,7 @@ const { buildDiagnosisDirections } = require('../utils/diagnosis-directions')
 const { buildDerivedEvidenceSet } = require('../utils/derived-evidence')
 const { collectBridgeTargetSymptomKeys } = require('../utils/question-symptom-bridge')
 const { buildSyntheticObservedProbeQuestions } = require('../utils/synthetic-question-package')
-const { QUESTION_TARGET_DIMENSIONS } = require('../utils/question-target-dimension')
+const { QUESTION_PACKAGE_TOPICS } = require('../utils/question-package-topic')
 const {
   filterYellowingCareEnvironmentCandidateOutcomeKeys,
   filterDisabledYellowingFlowQuestions,
@@ -30,18 +30,18 @@ const {
 } = require('./question-package-response')
 const YELLOW_LEAF_QUESTION_PACKAGE = getQuestionPackageByMode(YELLOW_LEAF_PACKAGE_MODE)
 const YELLOWING_FRONTLOADED_CARE_CONTEXT_DIMENSIONS =
-  YELLOW_LEAF_QUESTION_PACKAGE?.targetDimensions || [
-    QUESTION_TARGET_DIMENSIONS.WATERING_FREQUENCY_CONTEXT,
-    QUESTION_TARGET_DIMENSIONS.LIGHT_CHANGE_CONTEXT,
-    QUESTION_TARGET_DIMENSIONS.FERTILIZATION_GROWTH_CONTEXT,
-    QUESTION_TARGET_DIMENSIONS.AIRFLOW_HUMIDITY_CONTEXT
+  YELLOW_LEAF_QUESTION_PACKAGE?.packageTopics || [
+    QUESTION_PACKAGE_TOPICS.WATERING_FREQUENCY_CONTEXT,
+    QUESTION_PACKAGE_TOPICS.LIGHT_CHANGE_CONTEXT,
+    QUESTION_PACKAGE_TOPICS.FERTILIZATION_GROWTH_CONTEXT,
+    QUESTION_PACKAGE_TOPICS.AIRFLOW_HUMIDITY_CONTEXT
   ]
 
-function isEnabledFeatureFlag(primaryEnvKey = '', fallbackEnvKey = '', options = {}) {
+function isEnabledFeatureFlag(primaryEnvKey = '', conservativeEnvKey = '', options = {}) {
   const primaryRaw = String(process.env[primaryEnvKey] || '').trim()
-  const fallbackRaw = String(process.env[fallbackEnvKey] || '').trim()
+  const conservativeRaw = String(process.env[conservativeEnvKey] || '').trim()
   const defaultEnabled = Boolean(options?.defaultEnabled)
-  const raw = String(primaryRaw || fallbackRaw || (defaultEnabled ? '1' : '0'))
+  const raw = String(primaryRaw || conservativeRaw || (defaultEnabled ? '1' : '0'))
     .trim()
     .toLowerCase()
   return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on'
@@ -104,19 +104,19 @@ function mapSyntheticQuestionToQuestion(question = {}) {
     questionId: toQuestionId(question.questionKey),
     selectionSource: 'route_planner',
     routeKey: '',
-    gateKey: '',
+    conditionKey: '',
     outcomeKey: '',
     targetSymptomKey: question.targetSymptomKey || '',
     questionGroupKey: question.questionGroupKey || '',
-    targetDimension: question.targetDimension || '',
-    routingScope: question.routingScope || '',
+    packageTopic: question.packageTopic || '',
+    packageSection: question.packageSection || '',
     defaultOptionKey: question.defaultOptionKey || '',
     defaultOptionId: question.defaultOptionKey ? toOptionId(question.defaultOptionKey) : '',
     uiVariant: question.uiVariant || '',
     renderMode: question.renderMode || '',
-    questionRole: question.questionRole || '',
-    questionCategory: question.questionRole || '',
-    effectMode: question.effectMode || '',
+    routePackageRole: question.routePackageRole || '',
+    routePackageRole: question.routePackageRole || '',
+    packageEffect: question.packageEffect || '',
     type: question.questionType || 'single_choice',
     text: question.questionText || '',
     questionText: question.questionText || '',
@@ -140,10 +140,10 @@ function buildManualYellowingCareStartQuestions({ plantContext = {} } = {}) {
     locationKey: 'leaf',
     patternKey: 'yellowing'
   }
-  const questions = YELLOWING_FRONTLOADED_CARE_CONTEXT_DIMENSIONS.flatMap(targetDimension =>
+  const questions = YELLOWING_FRONTLOADED_CARE_CONTEXT_DIMENSIONS.flatMap(packageTopic =>
     buildSyntheticObservedProbeQuestions(yellowingItem, {
       maxQuestions: 1,
-      preferredDimensions: [targetDimension],
+      preferredTopics: [packageTopic],
       plantContext
     })
   )

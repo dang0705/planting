@@ -1,6 +1,6 @@
 'use strict'
 
-const { QUESTION_TARGET_DIMENSIONS } = require('../question-target-dimension')
+const { QUESTION_PACKAGE_TOPICS } = require('../question-package-topic')
 const {
   normalizeText,
   isSyntheticVisualCandidateQuestionKey,
@@ -18,7 +18,7 @@ const {
   buildSyntheticVisualCandidateOptionMappings
 } = require('./visual-candidate-option-mappings')
 
-function isLegacyWateringQuestionQuestionKey(questionKey = '') {
+function isSessionWateringQuestionQuestionKey(questionKey = '') {
   const normalizedQuestionKey = normalizeText(questionKey)
   return normalizedQuestionKey.includes('watering_frequency_context') ||
     normalizedQuestionKey.includes('watering_context')
@@ -43,16 +43,16 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
     }
 
     if (isSyntheticObservedProbeQuestionKey(questionKey)) {
-      const { symptomKey, targetDimension } = parseSyntheticObservedProbeQuestionKey(questionKey)
-      const dimensionLabel = targetDimension || '补充维度'
+      const { symptomKey, packageTopic } = parseSyntheticObservedProbeQuestionKey(questionKey)
+      const dimensionLabel = packageTopic || '补充维度'
       const symptomMeta = symptomMap.get(symptomKey) || {}
       const normalizedPatternKey = normalizeText(symptomMeta?.patternKey)
-      const optionTexts = buildSyntheticObservedProbeOptionTexts(symptomMeta, targetDimension)
+      const optionTexts = buildSyntheticObservedProbeOptionTexts(symptomMeta, packageTopic)
       const optionTextByKey = Object.fromEntries(
         normalizeSyntheticOptionEntries(optionTexts).map(option => [option.optionKey, option.text])
       )
 
-      if (isLegacyWateringQuestionQuestionKey(questionKey)) {
+      if (isSessionWateringQuestionQuestionKey(questionKey)) {
         return [
           {
             questionKey,
@@ -81,11 +81,11 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
         ]
       }
 
-      if (targetDimension === QUESTION_TARGET_DIMENSIONS.SURFACE_STICKINESS) {
+      if (packageTopic === QUESTION_PACKAGE_TOPICS.SURFACE_STICKINESS) {
         return buildSurfaceStickyOptionMappings({
           questionKey,
           symptomKey,
-          targetDimension,
+          packageTopic,
           normalizedPatternKey,
           optionTextByKey,
           symptomMeta,
@@ -93,7 +93,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
         })
       }
 
-      if (targetDimension === QUESTION_TARGET_DIMENSIONS.STRUCTURAL_CAUSE) {
+      if (packageTopic === QUESTION_PACKAGE_TOPICS.STRUCTURAL_CAUSE) {
         return [
           {
             questionKey,
@@ -105,7 +105,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
             associationStrength: 0,
             directProblemAdjustments: buildSyntheticDirectProblemAdjustments(
               { ...symptomMeta, symptomKey },
-              targetDimension,
+              packageTopic,
               'pest_trace'
             ),
             answerEffectCn: '记录“结构缺损更像虫害活动痕迹”的分流线索。',
@@ -121,7 +121,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
             associationStrength: 0,
             directProblemAdjustments: buildSyntheticDirectProblemAdjustments(
               { ...symptomMeta, symptomKey },
-              targetDimension,
+              packageTopic,
               'lesion_dropout'
             ),
             answerEffectCn: '记录“结构缺损更像病斑干枯脱落”的分流线索。',
@@ -137,10 +137,10 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
             associationStrength: 0,
             directProblemAdjustments: buildSyntheticDirectProblemAdjustments(
               { ...symptomMeta, symptomKey },
-              targetDimension,
+              packageTopic,
               'mechanical_old'
             ),
-            answerEffectCn: '记录“结构缺损更像机械/旧伤”的保守分流线索。',
+            answerEffectCn: '记录“结构缺损更像机械/既有伤”的保守分流线索。',
             dataStatus: 'synthetic'
           },
           {
@@ -158,7 +158,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
         ]
       }
 
-      if (targetDimension === QUESTION_TARGET_DIMENSIONS.LEAF_TUNNEL_PATTERN) {
+      if (packageTopic === QUESTION_PACKAGE_TOPICS.LEAF_TUNNEL_PATTERN) {
         return [
           {
             questionKey,
@@ -170,7 +170,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
             associationStrength: symptomKey === 'tunnels_in_leaf' ? 0.9 : 0,
             directProblemAdjustments: buildSyntheticDirectProblemAdjustments(
               { ...symptomMeta, symptomKey },
-              targetDimension,
+              packageTopic,
               'mine_line'
             ),
             answerEffectCn: '记录“线状痕迹符合潜叶道形态”的分流线索。',
@@ -186,7 +186,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
             associationStrength: symptomKey === 'tunnels_in_leaf' ? 0.8 : 0,
             directProblemAdjustments: buildSyntheticDirectProblemAdjustments(
               { ...symptomMeta, symptomKey },
-              targetDimension,
+              packageTopic,
               'other_mark'
             ),
             answerEffectCn: '记录“线状痕迹不符合典型潜叶道”的分流线索。',
@@ -207,7 +207,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
         ]
       }
 
-      if (targetDimension === QUESTION_TARGET_DIMENSIONS.POWDER_PATTERN) {
+      if (packageTopic === QUESTION_PACKAGE_TOPICS.POWDER_PATTERN) {
         return [
           {
             questionKey,
@@ -219,7 +219,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
             associationStrength: symptomKey === 'powder_white' ? 0.75 : 0,
             directProblemAdjustments: buildSyntheticDirectProblemAdjustments(
               { ...symptomMeta, symptomKey },
-              targetDimension,
+              packageTopic,
               'spreading_powder'
             ),
             answerEffectCn: '记录“白色粉层呈扩散趋势”的分流线索。',
@@ -235,7 +235,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
             associationStrength: 0,
             directProblemAdjustments: buildSyntheticDirectProblemAdjustments(
               { ...symptomMeta, symptomKey },
-              targetDimension,
+              packageTopic,
               'limited_static'
             ),
             answerEffectCn: '记录“白色粉层暂未见扩散”的保守分流线索。',
@@ -256,7 +256,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
         ]
       }
 
-      if (targetDimension === QUESTION_TARGET_DIMENSIONS.TISSUE_INTEGRITY) {
+      if (packageTopic === QUESTION_PACKAGE_TOPICS.TISSUE_INTEGRITY) {
         const structuralChewingSymptom = isStructuralChewingSymptom({ ...symptomMeta, symptomKey })
 
         return [
@@ -270,7 +270,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
             associationStrength: structuralChewingSymptom ? 1 : 0,
             directProblemAdjustments: buildSyntheticDirectProblemAdjustments(
               { ...symptomMeta, symptomKey },
-              targetDimension,
+              packageTopic,
               'yes'
             ),
             answerEffectCn: structuralChewingSymptom
@@ -288,7 +288,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
             associationStrength: structuralChewingSymptom ? 0.85 : 0,
             directProblemAdjustments: buildSyntheticDirectProblemAdjustments(
               { ...symptomMeta, symptomKey },
-              targetDimension,
+              packageTopic,
               'no'
             ),
             answerEffectCn: structuralChewingSymptom
@@ -311,7 +311,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
         ]
       }
 
-      if (targetDimension === QUESTION_TARGET_DIMENSIONS.LESION_HALO) {
+      if (packageTopic === QUESTION_PACKAGE_TOPICS.LESION_HALO) {
         const haloTargetSymptomKey =
           symptomKey === 'black_spots_spreading' || symptomKey === 'brown_spots_halo'
             ? 'brown_spots_halo'
@@ -328,7 +328,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
             associationStrength: haloTargetSymptomKey ? 1 : 0,
             directProblemAdjustments: buildSyntheticDirectProblemAdjustments(
               { ...symptomMeta, symptomKey },
-              targetDimension,
+              packageTopic,
               'yes'
             ),
             answerEffectCn: haloTargetSymptomKey
@@ -346,7 +346,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
             associationStrength: haloTargetSymptomKey ? 0.9 : 0,
             directProblemAdjustments: buildSyntheticDirectProblemAdjustments(
               { ...symptomMeta, symptomKey },
-              targetDimension,
+              packageTopic,
               'no'
             ),
             answerEffectCn: haloTargetSymptomKey
@@ -369,7 +369,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
         ]
       }
 
-      if (targetDimension === QUESTION_TARGET_DIMENSIONS.LESION_WATER_SOAKING) {
+      if (packageTopic === QUESTION_PACKAGE_TOPICS.LESION_WATER_SOAKING) {
         const waterSoakedTargetSymptomKey =
           symptomKey === 'black_spots_spreading' || symptomKey === 'brown_spots_halo'
             ? 'water_soaked_spots'
@@ -386,7 +386,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
             associationStrength: waterSoakedTargetSymptomKey ? 1 : 0,
             directProblemAdjustments: buildSyntheticDirectProblemAdjustments(
               { ...symptomMeta, symptomKey },
-              targetDimension,
+              packageTopic,
               'yes'
             ),
             answerEffectCn: waterSoakedTargetSymptomKey
@@ -404,7 +404,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
             associationStrength: waterSoakedTargetSymptomKey ? 0.9 : 0,
             directProblemAdjustments: buildSyntheticDirectProblemAdjustments(
               { ...symptomMeta, symptomKey },
-              targetDimension,
+              packageTopic,
               'no'
             ),
             answerEffectCn: waterSoakedTargetSymptomKey
@@ -444,7 +444,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
               ? []
               : buildSyntheticDirectProblemAdjustments(
                   { ...symptomMeta, symptomKey },
-                  targetDimension,
+                  packageTopic,
                   optionKey
                 ),
           answerEffectCn:
@@ -466,7 +466,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
           associationStrength: 0,
           directProblemAdjustments: buildSyntheticDirectProblemAdjustments(
             { ...symptomMeta, symptomKey },
-            targetDimension,
+            packageTopic,
             'yes'
           ),
           answerEffectCn: `记录“${dimensionLabel}”维度的补充观察。`,
@@ -482,7 +482,7 @@ function buildSyntheticQuestionOptionMappings(questionKeys = [], symptomDictiona
           associationStrength: 0,
           directProblemAdjustments: buildSyntheticDirectProblemAdjustments(
             { ...symptomMeta, symptomKey },
-            targetDimension,
+            packageTopic,
             'no'
           ),
           answerEffectCn: `记录“${dimensionLabel}”维度的补充观察。`,

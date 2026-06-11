@@ -54,7 +54,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.088,
@@ -74,7 +74,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -85,7 +85,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -96,7 +96,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -219,7 +219,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.6905,
@@ -239,7 +239,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -250,7 +250,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -261,7 +261,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -278,7 +278,7 @@
           {
             "questionKey": "q_iron_not_old_first",
             "questionText": "老叶相对保持较绿，而新叶更黄?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -289,7 +289,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -300,7 +300,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -418,7 +418,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.088,
@@ -438,7 +438,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -449,7 +449,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -460,7 +460,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -583,7 +583,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -603,7 +603,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -614,7 +614,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -625,7 +625,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -748,7 +748,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -768,7 +768,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -779,7 +779,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -790,7 +790,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -913,7 +913,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.6905,
@@ -933,7 +933,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -944,7 +944,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -955,7 +955,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -972,7 +972,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -983,7 +983,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -994,7 +994,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1112,7 +1112,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -1132,7 +1132,7 @@
           {
             "questionKey": "q_observed_probe__patchy_browning__distribution_scope",
             "questionText": "这种“局部褐变”主要集中在个别叶片/局部，还是多片叶子都能看到？",
-            "targetDimension": "distribution_scope",
+            "packageTopic": "distribution_scope",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1143,7 +1143,7 @@
           {
             "questionKey": "q_observed_probe__patchy_browning__progression",
             "questionText": "这种“局部褐变”是最近几天明显扩展，还是已经存在较久且基本稳定？",
-            "targetDimension": "progression",
+            "packageTopic": "progression",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1154,7 +1154,7 @@
           {
             "questionKey": "q_observed_probe__patchy_browning__host_confirmation",
             "questionText": "这种“局部褐变”是否主要集中在老叶，而不是新叶也差不多都有？",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1277,7 +1277,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -1297,7 +1297,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1308,7 +1308,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "soft_wet",
               "optionText": "发软、湿润或带水渍感",
@@ -1319,7 +1319,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1336,7 +1336,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1347,7 +1347,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1358,7 +1358,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1476,7 +1476,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5405,
@@ -1496,7 +1496,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -1507,7 +1507,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -1518,7 +1518,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1535,7 +1535,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -1546,7 +1546,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -1557,7 +1557,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1675,7 +1675,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.1305,
@@ -1695,7 +1695,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1706,7 +1706,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -1717,7 +1717,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -1840,7 +1840,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.6405,
@@ -1860,7 +1860,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -1871,7 +1871,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -1882,7 +1882,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1899,7 +1899,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1910,7 +1910,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -1921,7 +1921,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -2039,7 +2039,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -2059,7 +2059,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -2070,7 +2070,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -2081,7 +2081,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -2204,7 +2204,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.938,
@@ -2224,7 +2224,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -2235,7 +2235,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -2246,7 +2246,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -2263,7 +2263,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -2274,7 +2274,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -2285,7 +2285,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -2403,7 +2403,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.733,
@@ -2423,7 +2423,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -2434,7 +2434,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -2445,7 +2445,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -2462,7 +2462,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -2473,7 +2473,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -2484,7 +2484,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -2602,7 +2602,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -2622,7 +2622,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -2633,7 +2633,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -2644,7 +2644,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -2767,7 +2767,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.1305,
@@ -2787,7 +2787,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -2798,7 +2798,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -2809,7 +2809,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -2932,7 +2932,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5405,
@@ -2952,7 +2952,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -2963,7 +2963,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -2974,7 +2974,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -2991,7 +2991,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -3002,7 +3002,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -3013,7 +3013,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -3131,7 +3131,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.6905,
@@ -3151,7 +3151,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -3162,7 +3162,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -3173,7 +3173,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -3190,7 +3190,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -3201,7 +3201,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -3212,7 +3212,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -3330,7 +3330,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.633,
@@ -3350,7 +3350,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -3361,7 +3361,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -3372,7 +3372,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -3389,7 +3389,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -3400,7 +3400,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -3411,7 +3411,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -3529,7 +3529,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.6405,
@@ -3549,7 +3549,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -3560,7 +3560,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -3571,7 +3571,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -3588,7 +3588,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -3599,7 +3599,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -3610,7 +3610,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -3728,7 +3728,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5405,
@@ -3748,7 +3748,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -3759,7 +3759,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -3770,7 +3770,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -3787,7 +3787,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -3798,7 +3798,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -3809,7 +3809,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -3927,7 +3927,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5405,
@@ -3947,7 +3947,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -3958,7 +3958,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -3969,7 +3969,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -3986,7 +3986,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -3997,7 +3997,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -4008,7 +4008,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -4126,7 +4126,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.683,
@@ -4146,7 +4146,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -4157,7 +4157,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -4168,7 +4168,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -4185,7 +4185,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -4196,7 +4196,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -4207,7 +4207,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -4325,7 +4325,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.888,
@@ -4345,7 +4345,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -4356,7 +4356,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -4367,7 +4367,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -4384,7 +4384,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -4395,7 +4395,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -4406,7 +4406,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -4524,7 +4524,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.088,
@@ -4544,7 +4544,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -4555,7 +4555,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -4566,7 +4566,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -4689,7 +4689,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -4709,7 +4709,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -4720,7 +4720,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -4731,7 +4731,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -4854,7 +4854,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5405,
@@ -4874,7 +4874,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -4885,7 +4885,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -4896,7 +4896,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -4913,7 +4913,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -4924,7 +4924,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -4935,7 +4935,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -5053,7 +5053,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.733,
@@ -5073,7 +5073,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -5084,7 +5084,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -5095,7 +5095,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5112,7 +5112,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5123,7 +5123,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -5134,7 +5134,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -5252,7 +5252,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5405,
@@ -5272,7 +5272,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -5283,7 +5283,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -5294,7 +5294,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5311,7 +5311,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -5322,7 +5322,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -5333,7 +5333,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -5451,7 +5451,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.1305,
@@ -5471,7 +5471,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5482,7 +5482,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -5493,7 +5493,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -5616,7 +5616,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5405,
@@ -5636,7 +5636,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -5647,7 +5647,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -5658,7 +5658,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -5675,7 +5675,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -5686,7 +5686,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -5697,7 +5697,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -5815,7 +5815,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.6905,
@@ -5835,7 +5835,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5846,7 +5846,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -5857,7 +5857,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5874,7 +5874,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5885,7 +5885,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -5896,7 +5896,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -6014,7 +6014,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.833,
@@ -6034,7 +6034,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -6045,7 +6045,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -6056,7 +6056,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -6073,7 +6073,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -6084,7 +6084,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -6095,7 +6095,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -6246,7 +6246,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.98,
@@ -6266,7 +6266,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -6433,7 +6433,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.98,
@@ -6453,7 +6453,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -6587,7 +6587,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.54785,
@@ -6607,7 +6607,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -6618,7 +6618,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -6629,7 +6629,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -6646,7 +6646,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -6657,7 +6657,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -6668,7 +6668,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -6808,7 +6808,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -6939,7 +6939,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.84535,
@@ -6959,7 +6959,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -6970,7 +6970,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -6981,7 +6981,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -6998,7 +6998,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -7009,7 +7009,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -7020,7 +7020,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -7138,7 +7138,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.99535,
@@ -7158,7 +7158,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -7169,7 +7169,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -7180,7 +7180,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -7336,7 +7336,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -7489,7 +7489,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -7653,7 +7653,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -7784,7 +7784,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.088,
@@ -7804,7 +7804,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -7815,7 +7815,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -7826,7 +7826,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -7949,7 +7949,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.988,
@@ -7969,7 +7969,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -7980,7 +7980,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -7991,7 +7991,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -8008,7 +8008,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -8019,7 +8019,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -8030,7 +8030,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -8148,7 +8148,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.088,
@@ -8168,7 +8168,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -8179,7 +8179,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -8190,7 +8190,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -8313,7 +8313,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5905,
@@ -8333,7 +8333,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -8344,7 +8344,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -8355,7 +8355,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -8372,7 +8372,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -8383,7 +8383,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -8394,7 +8394,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -8512,7 +8512,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.683,
@@ -8532,7 +8532,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -8543,7 +8543,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -8554,7 +8554,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -8571,7 +8571,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -8582,7 +8582,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -8593,7 +8593,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -8711,7 +8711,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.1305,
@@ -8731,7 +8731,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -8742,7 +8742,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -8753,7 +8753,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -8898,7 +8898,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -9051,7 +9051,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -9215,7 +9215,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -9379,7 +9379,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -9510,7 +9510,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.6905,
@@ -9530,7 +9530,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -9541,7 +9541,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -9552,7 +9552,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -9569,7 +9569,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -9580,7 +9580,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -9591,7 +9591,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -9709,7 +9709,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.088,
@@ -9729,7 +9729,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -9740,7 +9740,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -9751,7 +9751,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -9874,7 +9874,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.833,
@@ -9894,7 +9894,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -9905,7 +9905,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -9916,7 +9916,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10061,7 +10061,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -10192,7 +10192,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.088,
@@ -10212,7 +10212,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10223,7 +10223,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10234,7 +10234,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -10357,7 +10357,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.988,
@@ -10377,7 +10377,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -10388,7 +10388,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -10399,7 +10399,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -10416,7 +10416,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -10427,7 +10427,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -10438,7 +10438,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -10589,7 +10589,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -10720,7 +10720,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.833,
@@ -10740,7 +10740,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10751,7 +10751,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -10762,7 +10762,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -10885,7 +10885,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.6905,
@@ -10905,7 +10905,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -10916,7 +10916,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -10927,7 +10927,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10944,7 +10944,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -10955,7 +10955,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -10966,7 +10966,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -11084,7 +11084,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -11104,7 +11104,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -11115,7 +11115,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -11126,7 +11126,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -11249,7 +11249,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.683,
@@ -11269,7 +11269,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -11280,7 +11280,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -11291,7 +11291,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -11308,7 +11308,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -11319,7 +11319,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -11330,7 +11330,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -11470,7 +11470,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -11601,7 +11601,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.088,
@@ -11621,7 +11621,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -11632,7 +11632,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -11643,7 +11643,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -11766,7 +11766,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5405,
@@ -11786,7 +11786,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -11797,7 +11797,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -11808,7 +11808,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -11825,7 +11825,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -11836,7 +11836,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -11847,7 +11847,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -11965,7 +11965,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.1305,
@@ -11985,7 +11985,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -11996,7 +11996,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -12007,7 +12007,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -12141,7 +12141,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -12272,7 +12272,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.088,
@@ -12292,7 +12292,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -12303,7 +12303,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -12314,7 +12314,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -12437,7 +12437,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -12457,7 +12457,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -12468,7 +12468,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -12479,7 +12479,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -12602,7 +12602,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.1305,
@@ -12622,7 +12622,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -12633,7 +12633,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -12644,7 +12644,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -12789,7 +12789,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -12942,7 +12942,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -13073,7 +13073,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.6405,
@@ -13093,7 +13093,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -13104,7 +13104,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -13115,7 +13115,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -13132,7 +13132,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -13143,7 +13143,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -13154,7 +13154,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -13272,7 +13272,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.088,
@@ -13292,7 +13292,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -13303,7 +13303,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -13314,7 +13314,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -13437,7 +13437,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.8805,
@@ -13457,7 +13457,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -13468,7 +13468,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -13479,7 +13479,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -13496,7 +13496,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -13507,7 +13507,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -13518,7 +13518,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -13658,7 +13658,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -13789,7 +13789,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -13809,7 +13809,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -13820,7 +13820,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -13831,7 +13831,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -13954,7 +13954,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.6405,
@@ -13974,7 +13974,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -13985,7 +13985,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -13996,7 +13996,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -14013,7 +14013,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -14024,7 +14024,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -14035,7 +14035,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -14153,7 +14153,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.733,
@@ -14173,7 +14173,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -14184,7 +14184,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -14195,7 +14195,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -14212,7 +14212,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -14223,7 +14223,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -14234,7 +14234,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -14385,7 +14385,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -14516,7 +14516,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.088,
@@ -14536,7 +14536,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -14547,7 +14547,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -14558,7 +14558,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -14681,7 +14681,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.088,
@@ -14701,7 +14701,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -14712,7 +14712,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -14723,7 +14723,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -14846,7 +14846,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.833,
@@ -14866,7 +14866,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -14877,7 +14877,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -14888,7 +14888,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -15033,7 +15033,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -15197,7 +15197,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -15328,7 +15328,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -15348,7 +15348,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15359,7 +15359,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -15370,7 +15370,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15493,7 +15493,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.6905,
@@ -15513,7 +15513,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -15524,7 +15524,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -15535,7 +15535,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -15552,7 +15552,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15563,7 +15563,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -15574,7 +15574,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15692,7 +15692,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.833,
@@ -15712,7 +15712,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15723,7 +15723,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -15734,7 +15734,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -15879,7 +15879,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -16010,7 +16010,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.088,
@@ -16030,7 +16030,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -16041,7 +16041,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -16052,7 +16052,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -16175,7 +16175,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.988,
@@ -16195,7 +16195,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -16206,7 +16206,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -16217,7 +16217,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -16234,7 +16234,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -16245,7 +16245,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -16256,7 +16256,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -16374,7 +16374,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.1305,
@@ -16394,7 +16394,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -16405,7 +16405,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -16416,7 +16416,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -16539,7 +16539,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -16670,7 +16670,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -16690,7 +16690,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -16701,7 +16701,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -16712,7 +16712,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -16835,7 +16835,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5405,
@@ -16855,7 +16855,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -16866,7 +16866,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -16877,7 +16877,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -16894,7 +16894,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -16905,7 +16905,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -16916,7 +16916,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -17034,7 +17034,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.833,
@@ -17054,7 +17054,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -17065,7 +17065,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -17076,7 +17076,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -17221,7 +17221,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -17352,7 +17352,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -17372,7 +17372,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -17383,7 +17383,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -17394,7 +17394,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -17517,7 +17517,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5405,
@@ -17537,7 +17537,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -17548,7 +17548,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -17559,7 +17559,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -17576,7 +17576,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -17587,7 +17587,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -17598,7 +17598,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",

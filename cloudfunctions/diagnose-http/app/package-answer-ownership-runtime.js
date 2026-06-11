@@ -31,7 +31,7 @@ function resolveQuestionGroupKey(item = {}) {
       item?.questionGroupKey ||
         item?.question_group_key ||
         item?.groupKey ||
-        item?.targetDimension ||
+        item?.packageTopic ||
         item?.targetSymptomKey ||
         '__default__'
     ) || '__default__'
@@ -202,9 +202,9 @@ function buildPackageAnswerRuntime({
         return {
           questionKey,
           targetSymptomKey: normalizeText(item?.targetSymptomKey),
-          targetDimension: normalizeText(item?.targetDimension),
+          packageTopic: normalizeText(item?.packageTopic),
           questionGroupKey: resolveQuestionGroupKey(item),
-          routingScope: normalizeText(item?.routingScope),
+          packageSection: normalizeText(item?.packageSection),
           questionText: normalizeText(item?.questionText || item?.text),
           questionTextUserCn: normalizeText(
             item?.questionTextUserCn || item?.questionText || item?.text

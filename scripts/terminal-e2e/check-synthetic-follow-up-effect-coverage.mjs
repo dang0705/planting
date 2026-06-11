@@ -40,9 +40,9 @@ const RUNTIME_SYNTHETIC_EFFECT_CASES = [
     symptomCn: '叶片发黄',
     locationKey: 'leaf',
     dimensions: [
-      'yellowing_primary_clue_gate',
-      'yellowing_care_area_gate',
-      'yellowing_disease_trace_gate',
+      'yellowing_primary_clue_condition',
+      'yellowing_care_area_condition',
+      'yellowing_disease_trace_condition',
       'pest_trace_type',
       'yellowing_leaf_age_pattern',
       'yellowing_distribution_pattern',
@@ -152,8 +152,8 @@ const RUNTIME_SYNTHETIC_EFFECT_CASES = [
   }
 ]
 
-function buildObservedProbeQuestionKey(symptomKey, targetDimension) {
-  return `q_observed_probe__${symptomKey}__${targetDimension}`
+function buildObservedProbeQuestionKey(symptomKey, packageTopic) {
+  return `q_observed_probe__${symptomKey}__${packageTopic}`
 }
 
 function hasResolvedRuntimeEffect(mapping = {}) {

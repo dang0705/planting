@@ -44,7 +44,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -64,7 +64,7 @@
           {
             "questionKey": "q_stippling_confirm",
             "questionText": "叶片上有密集、细小的褪色点或斑驳吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",

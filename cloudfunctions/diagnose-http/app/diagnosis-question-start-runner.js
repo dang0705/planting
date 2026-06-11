@@ -100,7 +100,7 @@ const MANUAL_SYMPTOM_MODE_OPTIONS = [
   },
   {
     classKey: 'general_stress_mode',
-    classNameCn: '泛胁迫兜底模式',
+    classNameCn: '泛胁迫保守模式',
     symptomKey: 'distorted_growth',
     symptomCn: '整体畸形'
   },
@@ -310,10 +310,10 @@ async function runQuestionStartDiagnosis({ payload, openid, skipPersistence = fa
     },
     null
   )
-  const legacyPlantId = payload.plantId || null
+  const requestPlantId = payload.plantId || null
   const plantCatalogId = payload.plantCatalogId || payload.catalogPlantId || null
   const userPlantId = payload.userPlantId || null
-  const plantId = plantCatalogId || legacyPlantId
+  const plantId = plantCatalogId || requestPlantId
   if (!userPlantId && !plantId) {
     throw Object.assign(new Error('缺少 userPlantId 或 plantCatalogId'), { statusCode: 400 })
   }

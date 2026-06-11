@@ -8,7 +8,7 @@ const { buildSyntheticQuestionOptionMappings } = require('../../utils/synthetic-
 const {
   mapDiagnosisQuestionReviewRow,
   indexSyntheticQuestionOptionMappings,
-  applySyntheticQuestionReviewFallback
+  applySyntheticQuestionReviewConservative
 } = require('./question-mappers')
 
 async function listDiagnosisReviewQuestions(diagnosisSessionId = '') {
@@ -31,10 +31,10 @@ async function listDiagnosisReviewQuestions(diagnosisSessionId = '') {
         questions.created_at,
         questions.answered_at,
         questions.target_symptom_key,
-        questions.target_dimension,
-        questions.routing_scope,
-        questions.question_role,
-        questions.effect_mode,
+        questions.package_topic,
+        questions.package_section,
+        questions.route_package_role,
+        questions.package_effect,
         questions.question_group_key,
         questions.question_text_cn,
         questions.question_text_user_cn,
@@ -70,7 +70,7 @@ async function listDiagnosisReviewQuestions(diagnosisSessionId = '') {
   ])
 
   return rows
-    .map(row => applySyntheticQuestionReviewFallback(row, resolvedMappingIndex))
+    .map(row => applySyntheticQuestionReviewConservative(row, resolvedMappingIndex))
     .map(mapDiagnosisQuestionReviewRow)
 }
 

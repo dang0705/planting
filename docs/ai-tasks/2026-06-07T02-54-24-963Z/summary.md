@@ -16,13 +16,13 @@
 - weakStructure: false
 - missingFacts: missing_goal_or_positive_scope
 
-## Facts quality gate
+## Facts quality condition
 
 - status: blocked
 - score: 56
 - highRisk: true
 - warnings: missing_negative_scope_or_non_goal_boundary; missing_execution_hints; weak_markdown_section_structure
-- requiredHumanActions: 补充明确目标或必须做范围。 ; 高风险任务必须补充不做范围 / 禁止事项 / 非目标边界。 
+- requiredHumanActions: 补充明确目标或必须做范围。 ; 高风险任务必须补充不做范围 / 禁止事项 / 非目标边界。
 
 ## Native checklist items
 
@@ -35,8 +35,8 @@
 - [ ] Checklist / 固定题包改为静态配置、模块级缓存或等价免费方案读取。 (a96f3cdf-df73-443b-bd81-d42140f63f52/db993299-0028-458a-b947-fd0c88aa7239)
 - [ ] Checklist / 避免每次请求重复构建固定题包。 (a96f3cdf-df73-443b-bd81-d42140f63f52/5575a7f1-ab38-411a-954d-45f0c9a59d3d)
 - [ ] Checklist / 避免每次请求读取数据库获取固定题包，除非已有明确必要且耗时可控。 (a96f3cdf-df73-443b-bd81-d42140f63f52/893df773-7b6d-4769-a9a3-4b91b1f8f4d9)
-- [ ] Checklist / 删除或绕开旧动态诊断流中的无用分支。 (a96f3cdf-df73-443b-bd81-d42140f63f52/8235a064-ee39-4db2-85f0-a3a09f89264d)
-- [ ] Checklist / 删除或绕开旧逐题推进状态机中的无用逻辑。 (a96f3cdf-df73-443b-bd81-d42140f63f52/a91545f4-70b9-4a5a-9cd6-3845767978a8)
+- [ ] Checklist / 删除或绕开既有动态诊断流中的无用分支。 (a96f3cdf-df73-443b-bd81-d42140f63f52/8235a064-ee39-4db2-85f0-a3a09f89264d)
+- [ ] Checklist / 删除或绕开既有逐题推进状态机中的无用逻辑。 (a96f3cdf-df73-443b-bd81-d42140f63f52/a91545f4-70b9-4a5a-9cd6-3845767978a8)
 - [ ] Checklist / 精简响应体字段，只保留前端启动问诊必要数据。 (a96f3cdf-df73-443b-bd81-d42140f63f52/cf57f346-2ce3-4db0-a8b2-3fce9a81ae53)
 - [ ] Checklist / 确认不会把所有模式题库无边界全量下发。 (a96f3cdf-df73-443b-bd81-d42140f63f52/ffb4952b-d391-49b8-9dad-8547bbce3b14)
 - [ ] Checklist / 确认不修改 outcome / route 判定权重。 (a96f3cdf-df73-443b-bd81-d42140f63f52/e9a8a62f-52c8-437e-9b70-e903a28b4236)
@@ -51,25 +51,25 @@
 
 ## Hard constraints
 
-- 该接口位于问诊链路的入口阶段，用户点击开始问诊后，前端需要尽快拿到当前模式的题包或起始问答数据。如果该接口继续承担过多动态诊断、数据库查询、旧状态机兼容、运行时组装等职责，会导致首屏等待明显变长。  
+- 该接口位于问诊链路的入口阶段，用户点击开始问诊后，前端需要尽快拿到当前模式的题包或起始问答数据。如果该接口继续承担过多动态诊断、数据库查询、既有状态机适配、运行时组装等职责，会导致首屏等待明显变长。
   - source: clickup_task_description
-- 需要明确区分：  
+- 需要明确区分：
   - source: clickup_task_description
-- 必须做  
+- 必须做
   - source: clickup_task_description
-- 不要长期保留噪音日志，最终只保留必要的性能诊断信息或删除临时日志。  
+- 不要长期保留噪音日志，最终只保留必要的性能诊断信息或删除临时日志。
   - source: clickup_task_description
-- 不要返回：  
+- 不要返回：
   - source: clickup_task_description
-- - [ ] 如冷启动仍超过 500ms，需要记录原因，并说明在不启用付费能力前提下的剩余边界。  
+- - [ ] 如冷启动仍超过 500ms，需要记录原因，并说明在不启用付费能力前提下的剩余边界。
   - source: clickup_task_description
-- 验收标准  
+- 验收标准
   - source: clickup_task_description
-- 任务结果中必须包含优化前后耗时对比。  
+- 任务结果中必须包含优化前后耗时对比。
   - source: clickup_task_description
-- 性能优化必须保持问诊业务边界：当前模式题包可以返回，但不能无边界返回所有模式题库。  
+- 性能优化必须保持问诊业务边界：当前模式题包可以返回，但不能无边界返回所有模式题库。
   - source: clickup_task_description
-- 不要全量扫描无关模块。不要扩大到天气、养护、支付、登录、图片识别等模块。优先用测量结果驱动优化。  
+- 不要全量扫描无关模块。不要扩大到天气、养护、支付、登录、图片识别等模块。优先用测量结果驱动优化。
   - source: clickup_task_description
 
 ## Written files

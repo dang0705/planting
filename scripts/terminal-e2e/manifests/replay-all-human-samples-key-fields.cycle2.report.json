@@ -52,7 +52,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -120,7 +120,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -182,7 +182,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -250,7 +250,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -267,8 +267,8 @@
           {
             "questionKey": "q_black_spots_spreading_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "black_spots_spreading",
             "text": "是否有逐渐扩大的黑斑或暗色斑块？"
           }
@@ -321,7 +321,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -338,8 +338,8 @@
           {
             "questionKey": "q_black_spots_spreading_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "black_spots_spreading",
             "text": "是否有逐渐扩大的黑斑或暗色斑块？"
           }
@@ -392,7 +392,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "chewing_pest_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -454,7 +454,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -516,7 +516,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -533,8 +533,8 @@
           {
             "questionKey": "q_black_spots_spreading_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "black_spots_spreading",
             "text": "是否有逐渐扩大的黑斑或暗色斑块？"
           }
@@ -580,7 +580,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -642,7 +642,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -659,8 +659,8 @@
           {
             "questionKey": "q_black_spots_spreading_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "black_spots_spreading",
             "text": "是否有逐渐扩大的黑斑或暗色斑块？"
           }
@@ -723,7 +723,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "light_stress_mode",
             "primaryClassRuntimeScore": 0.595,
@@ -797,7 +797,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -814,8 +814,8 @@
           {
             "questionKey": "q_irregular_blotches_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "irregular_blotches",
             "text": "病斑呈不规则斑块状，而不是规则圆斑吗？"
           }
@@ -869,7 +869,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 1.088,
@@ -932,7 +932,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 1.088,
@@ -1011,7 +1011,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -1061,7 +1061,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1111,7 +1111,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1161,7 +1161,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1211,7 +1211,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1261,7 +1261,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1311,7 +1311,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1377,7 +1377,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1451,7 +1451,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -1525,7 +1525,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "chewing_pest_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -1588,7 +1588,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -1645,7 +1645,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1700,7 +1700,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1763,7 +1763,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "bacterial_leaf_spot_mode",
             "primaryClassRuntimeScore": 1,
@@ -1848,7 +1848,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 1.088,
@@ -1931,7 +1931,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -1986,7 +1986,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -2043,7 +2043,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -2093,7 +2093,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -2159,7 +2159,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -2228,7 +2228,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 1.7,
@@ -2291,7 +2291,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "bacterial_leaf_spot_mode",
             "primaryClassRuntimeScore": 1,
@@ -2357,7 +2357,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -2426,7 +2426,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -2483,7 +2483,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -2546,7 +2546,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -2609,7 +2609,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -2672,7 +2672,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "bacterial_leaf_spot_mode",
             "primaryClassRuntimeScore": 1,
@@ -2761,7 +2761,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -2836,7 +2836,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "light_stress_mode",
             "primaryClassRuntimeScore": 0.595,
@@ -2899,7 +2899,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -2978,7 +2978,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -3035,7 +3035,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3085,7 +3085,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3155,7 +3155,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3212,7 +3212,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3291,7 +3291,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -3348,7 +3348,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "bacterial_leaf_spot_mode",
             "primaryClassRuntimeScore": 1,
@@ -3417,7 +3417,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -3480,7 +3480,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3543,7 +3543,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 1.088,
@@ -3626,7 +3626,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "chewing_pest_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -3689,7 +3689,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3746,7 +3746,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3803,7 +3803,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3886,7 +3886,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -3955,7 +3955,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -3972,8 +3972,8 @@
           {
             "questionKey": "q_holes_in_leaf_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "holes_in_leaf",
             "text": "叶片上有被咬穿的洞，而不是病斑干掉后的穿孔吗？"
           }
@@ -4014,7 +4014,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -4075,7 +4075,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -4158,7 +4158,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -4214,7 +4214,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -4283,7 +4283,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -4346,7 +4346,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -4409,7 +4409,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -4472,7 +4472,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -4535,7 +4535,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "bacterial_leaf_spot_mode",
             "primaryClassRuntimeScore": 1,
@@ -4620,7 +4620,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 1.088,
@@ -4683,7 +4683,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -4733,7 +4733,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -4790,7 +4790,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "bacterial_leaf_spot_mode",
             "primaryClassRuntimeScore": 1,
@@ -4840,7 +4840,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -4890,7 +4890,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -4964,7 +4964,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -5014,7 +5014,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -5064,7 +5064,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -5114,7 +5114,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -5164,7 +5164,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -5214,7 +5214,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -5271,7 +5271,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -5327,7 +5327,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -5390,7 +5390,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -5453,7 +5453,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -5536,7 +5536,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -5553,24 +5553,24 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "selectionSource": "",
-            "routingScope": "differential_probe",
-            "targetDimension": "surface_residue",
+            "packageSection": "differential_probe",
+            "packageTopic": "surface_residue",
             "targetSymptomKey": "black_spots_spreading",
             "text": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？"
           },
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "selectionSource": "",
-            "routingScope": "differential_probe",
-            "targetDimension": "tissue_moisture",
+            "packageSection": "differential_probe",
+            "packageTopic": "tissue_moisture",
             "targetSymptomKey": "black_spots_spreading",
             "text": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？"
           },
           {
             "questionKey": "q_bacterial_water_soaked",
             "selectionSource": "",
-            "routingScope": "differential_probe",
-            "targetDimension": "tissue_moisture",
+            "packageSection": "differential_probe",
+            "packageTopic": "tissue_moisture",
             "targetSymptomKey": "water_soaked_spots",
             "text": "病斑有水渍感、湿润半透明吗？"
           }
@@ -5618,7 +5618,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 1.7,
@@ -5675,7 +5675,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -5738,7 +5738,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.85,
@@ -5795,7 +5795,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.85,
@@ -5852,7 +5852,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.85,
@@ -5909,7 +5909,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -5972,7 +5972,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.85,
@@ -6029,7 +6029,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.85,
@@ -6086,7 +6086,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.85,
@@ -6143,7 +6143,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -6206,7 +6206,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.85,
@@ -6263,7 +6263,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.85,
@@ -6320,7 +6320,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.85,
@@ -6377,7 +6377,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -6440,7 +6440,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.85,
@@ -6497,7 +6497,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.85,
@@ -6554,7 +6554,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.85,
@@ -6611,7 +6611,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -6680,7 +6680,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.85,
@@ -6737,7 +6737,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.85,
@@ -6794,7 +6794,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.85,
@@ -6857,7 +6857,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -6920,7 +6920,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -6983,7 +6983,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -7040,7 +7040,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -7103,7 +7103,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -7166,7 +7166,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -7223,7 +7223,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -7304,7 +7304,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -7361,7 +7361,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -7442,7 +7442,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -7517,7 +7517,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -7580,7 +7580,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -7643,7 +7643,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -7700,7 +7700,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -7757,7 +7757,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -7838,7 +7838,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -7901,7 +7901,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -7964,7 +7964,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -8021,7 +8021,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -8078,7 +8078,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -8159,7 +8159,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -8216,7 +8216,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -8279,7 +8279,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -8336,7 +8336,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -8393,7 +8393,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -8474,7 +8474,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -8537,7 +8537,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -8600,7 +8600,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -8657,7 +8657,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -8720,7 +8720,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -8807,7 +8807,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -8888,7 +8888,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -8951,7 +8951,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -9014,7 +9014,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -9071,7 +9071,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -9128,7 +9128,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -9209,7 +9209,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -9272,7 +9272,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -9335,7 +9335,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -9392,7 +9392,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -9455,7 +9455,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -9541,7 +9541,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -9604,7 +9604,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -9667,7 +9667,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -9724,7 +9724,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -9781,7 +9781,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -9862,7 +9862,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -9937,7 +9937,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -10000,7 +10000,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -10063,7 +10063,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -10120,7 +10120,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -10177,7 +10177,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -10258,7 +10258,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -10315,7 +10315,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -10378,7 +10378,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -10435,7 +10435,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -10492,7 +10492,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -10567,7 +10567,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -10624,7 +10624,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -10687,7 +10687,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -10744,7 +10744,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -10807,7 +10807,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -10864,7 +10864,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -10927,7 +10927,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -11014,7 +11014,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -11071,7 +11071,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -11128,7 +11128,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -11209,7 +11209,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -11272,7 +11272,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -11335,7 +11335,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -11392,7 +11392,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -11449,7 +11449,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -11536,7 +11536,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -11623,7 +11623,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -11704,7 +11704,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -11785,7 +11785,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -11848,7 +11848,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -11911,7 +11911,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -11974,7 +11974,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -12037,7 +12037,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -12094,7 +12094,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -12151,7 +12151,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -12208,7 +12208,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -12265,7 +12265,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -12352,7 +12352,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -12438,7 +12438,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -12525,7 +12525,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -12612,7 +12612,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -12687,7 +12687,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -12750,7 +12750,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -12813,7 +12813,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -12888,7 +12888,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -12969,7 +12969,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.93,
@@ -13044,7 +13044,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 2.54785,
@@ -13131,7 +13131,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.98,
@@ -13194,7 +13194,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -13262,7 +13262,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -13343,7 +13343,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "mite_damage_mode",
             "primaryClassRuntimeScore": 0.98,
@@ -13406,7 +13406,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -13469,7 +13469,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -13526,7 +13526,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -13583,7 +13583,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -13646,7 +13646,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -13709,7 +13709,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -13772,7 +13772,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -13829,7 +13829,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -13892,7 +13892,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -13949,7 +13949,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -14006,7 +14006,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -14063,7 +14063,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -14120,7 +14120,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -14177,7 +14177,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -14240,7 +14240,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -14303,7 +14303,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -14360,7 +14360,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -14417,7 +14417,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -14474,7 +14474,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -14531,7 +14531,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -14594,7 +14594,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -14651,7 +14651,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -14708,7 +14708,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -14765,7 +14765,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -14828,7 +14828,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -14885,7 +14885,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -14948,7 +14948,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -15011,7 +15011,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -15068,7 +15068,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -15125,7 +15125,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -15182,7 +15182,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -15245,7 +15245,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -15308,7 +15308,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -15365,7 +15365,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -15422,7 +15422,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -15485,7 +15485,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -15542,7 +15542,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -15599,7 +15599,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -15656,7 +15656,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -15719,7 +15719,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -15776,7 +15776,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -15833,7 +15833,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -15890,7 +15890,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -15940,7 +15940,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -15990,7 +15990,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -16040,7 +16040,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -16090,7 +16090,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -16140,7 +16140,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -16190,7 +16190,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -16240,7 +16240,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -16290,7 +16290,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -16340,7 +16340,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -16390,7 +16390,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -16440,7 +16440,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -16490,7 +16490,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -16540,7 +16540,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -16590,7 +16590,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -16640,7 +16640,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -16690,7 +16690,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -16740,7 +16740,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -16790,7 +16790,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -16840,7 +16840,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -16890,7 +16890,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.833,
@@ -16907,24 +16907,24 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "selectionSource": "",
-            "routingScope": "context_probe",
-            "targetDimension": "light_exposure",
+            "packageSection": "context_probe",
+            "packageTopic": "light_exposure",
             "targetSymptomKey": "leaf_yellowing",
             "text": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？"
           },
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "selectionSource": "",
-            "routingScope": "context_probe",
-            "targetDimension": "watering_context",
+            "packageSection": "context_probe",
+            "packageTopic": "watering_context",
             "targetSymptomKey": "leaf_yellowing",
             "text": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？"
           },
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "selectionSource": "",
-            "routingScope": "context_probe",
-            "targetDimension": "fertilization_context",
+            "packageSection": "context_probe",
+            "packageTopic": "fertilization_context",
             "targetSymptomKey": "leaf_yellowing",
             "text": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？"
           }
@@ -16965,7 +16965,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -16982,24 +16982,24 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "selectionSource": "",
-            "routingScope": "context_probe",
-            "targetDimension": "light_exposure",
+            "packageSection": "context_probe",
+            "packageTopic": "light_exposure",
             "targetSymptomKey": "leaf_yellowing",
             "text": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？"
           },
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "selectionSource": "",
-            "routingScope": "context_probe",
-            "targetDimension": "watering_context",
+            "packageSection": "context_probe",
+            "packageTopic": "watering_context",
             "targetSymptomKey": "leaf_yellowing",
             "text": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？"
           },
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "selectionSource": "",
-            "routingScope": "context_probe",
-            "targetDimension": "fertilization_context",
+            "packageSection": "context_probe",
+            "packageTopic": "fertilization_context",
             "targetSymptomKey": "leaf_yellowing",
             "text": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？"
           }
@@ -17040,7 +17040,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -17057,24 +17057,24 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "selectionSource": "",
-            "routingScope": "context_probe",
-            "targetDimension": "light_exposure",
+            "packageSection": "context_probe",
+            "packageTopic": "light_exposure",
             "targetSymptomKey": "leaf_yellowing",
             "text": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？"
           },
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "selectionSource": "",
-            "routingScope": "context_probe",
-            "targetDimension": "watering_context",
+            "packageSection": "context_probe",
+            "packageTopic": "watering_context",
             "targetSymptomKey": "leaf_yellowing",
             "text": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？"
           },
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "selectionSource": "",
-            "routingScope": "context_probe",
-            "targetDimension": "fertilization_context",
+            "packageSection": "context_probe",
+            "packageTopic": "fertilization_context",
             "targetSymptomKey": "leaf_yellowing",
             "text": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？"
           }
@@ -17115,7 +17115,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -17165,7 +17165,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -17215,7 +17215,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -17265,7 +17265,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 2.5405,
@@ -17315,7 +17315,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -17365,7 +17365,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -17415,7 +17415,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -17465,7 +17465,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -17515,7 +17515,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 2.583,
@@ -17565,7 +17565,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -17615,7 +17615,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -17665,7 +17665,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -17715,7 +17715,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -17765,7 +17765,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -17815,7 +17815,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 2.5405,
@@ -17865,7 +17865,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -17915,7 +17915,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -17965,7 +17965,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -18015,7 +18015,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -18065,7 +18065,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 2.5405,
@@ -18115,7 +18115,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -18165,7 +18165,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -18215,7 +18215,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -18265,7 +18265,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -18315,7 +18315,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -18365,7 +18365,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -18415,7 +18415,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -18465,7 +18465,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -18515,7 +18515,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -18565,7 +18565,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -18615,7 +18615,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -18665,7 +18665,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -18715,7 +18715,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -18765,7 +18765,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 2.65,
@@ -18815,7 +18815,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 2.583,
@@ -18865,7 +18865,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 2.5405,
@@ -18915,7 +18915,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -18965,7 +18965,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -19015,7 +19015,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -19065,7 +19065,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -19115,7 +19115,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -19165,7 +19165,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -19215,7 +19215,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -19265,7 +19265,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -19315,7 +19315,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "fungal_leaf_spot_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -19365,7 +19365,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -19415,7 +19415,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -19465,7 +19465,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -19515,7 +19515,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -19565,7 +19565,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -19615,7 +19615,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -19665,7 +19665,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -19715,7 +19715,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -19765,7 +19765,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -19815,7 +19815,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -19865,7 +19865,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -19915,7 +19915,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -19965,7 +19965,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -20015,7 +20015,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -20065,7 +20065,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -20115,7 +20115,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -20165,7 +20165,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -20215,7 +20215,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -20265,7 +20265,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -20315,7 +20315,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -20365,7 +20365,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -20415,7 +20415,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -20465,7 +20465,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -20515,7 +20515,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -20565,7 +20565,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -20615,7 +20615,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -20665,7 +20665,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "root_rot_wet_wilt_mode",
             "primaryClassRuntimeScore": 1.75,
@@ -20715,7 +20715,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -20765,7 +20765,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -20815,7 +20815,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -20832,24 +20832,24 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "selectionSource": "",
-            "routingScope": "context_probe",
-            "targetDimension": "light_exposure",
+            "packageSection": "context_probe",
+            "packageTopic": "light_exposure",
             "targetSymptomKey": "leaf_yellowing",
             "text": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？"
           },
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "selectionSource": "",
-            "routingScope": "context_probe",
-            "targetDimension": "watering_context",
+            "packageSection": "context_probe",
+            "packageTopic": "watering_context",
             "targetSymptomKey": "leaf_yellowing",
             "text": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？"
           },
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "selectionSource": "",
-            "routingScope": "context_probe",
-            "targetDimension": "fertilization_context",
+            "packageSection": "context_probe",
+            "packageTopic": "fertilization_context",
             "targetSymptomKey": "leaf_yellowing",
             "text": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？"
           }
@@ -20890,7 +20890,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,

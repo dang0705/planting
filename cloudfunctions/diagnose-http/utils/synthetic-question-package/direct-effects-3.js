@@ -1,10 +1,10 @@
 'use strict'
 
-const { QUESTION_TARGET_DIMENSIONS } = require('../question-target-dimension')
+const { QUESTION_PACKAGE_TOPICS } = require('../question-package-topic')
 
 module.exports = {
   holes_in_leaf: {
-      [QUESTION_TARGET_DIMENSIONS.TISSUE_INTEGRITY]: {
+      [QUESTION_PACKAGE_TOPICS.TISSUE_INTEGRITY]: {
         yes: [
           { problemKey: 'chewing_insects', effectValue: 0.08 },
           { problemKey: 'caterpillars', effectValue: 0.06 },
@@ -20,7 +20,7 @@ module.exports = {
           { problemKey: 'beetles', effectValue: -0.12 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.UNDERSIDE_PRESENCE]: {
+      [QUESTION_PACKAGE_TOPICS.UNDERSIDE_PRESENCE]: {
         yes: [
           { problemKey: 'chewing_insects', effectValue: 0.22 },
           { problemKey: 'caterpillars', effectValue: 0.14 },
@@ -34,7 +34,7 @@ module.exports = {
           { problemKey: 'beetles', effectValue: -0.08 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.DISTRIBUTION_SCOPE]: {
+      [QUESTION_PACKAGE_TOPICS.DISTRIBUTION_SCOPE]: {
         yes: [
           { problemKey: 'chewing_insects', effectValue: 0.06 },
           { problemKey: 'caterpillars', effectValue: 0.04 },
@@ -42,7 +42,7 @@ module.exports = {
           { problemKey: 'beetles', effectValue: 0.04 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.PROGRESSION]: {
+      [QUESTION_PACKAGE_TOPICS.PROGRESSION]: {
         yes: [
           { problemKey: 'chewing_insects', effectValue: 0.05 },
           { problemKey: 'snails_slugs', effectValue: 0.04 }
@@ -50,7 +50,7 @@ module.exports = {
       }
     },
   skeletonized_leaves: {
-      [QUESTION_TARGET_DIMENSIONS.TISSUE_INTEGRITY]: {
+      [QUESTION_PACKAGE_TOPICS.TISSUE_INTEGRITY]: {
         yes: [
           { problemKey: 'chewing_insects', effectValue: 0.08 },
           { problemKey: 'beetles', effectValue: 0.06 },
@@ -64,7 +64,7 @@ module.exports = {
           { problemKey: 'caterpillars', effectValue: -0.14 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.UNDERSIDE_PRESENCE]: {
+      [QUESTION_PACKAGE_TOPICS.UNDERSIDE_PRESENCE]: {
         yes: [
           { problemKey: 'chewing_insects', effectValue: 0.24 },
           { problemKey: 'beetles', effectValue: 0.16 },
@@ -76,7 +76,7 @@ module.exports = {
           { problemKey: 'caterpillars', effectValue: -0.08 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.DISTRIBUTION_SCOPE]: {
+      [QUESTION_PACKAGE_TOPICS.DISTRIBUTION_SCOPE]: {
         yes: [
           { problemKey: 'chewing_insects', effectValue: 0.06 },
           { problemKey: 'beetles', effectValue: 0.05 },
@@ -85,26 +85,26 @@ module.exports = {
       }
     },
   tunnels_in_leaf: {
-      [QUESTION_TARGET_DIMENSIONS.DISTRIBUTION_SCOPE]: {
+      [QUESTION_PACKAGE_TOPICS.DISTRIBUTION_SCOPE]: {
         yes: [
           { problemKey: 'leaf_miners', effectValue: 0.22 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.UNDERSIDE_PRESENCE]: {
+      [QUESTION_PACKAGE_TOPICS.UNDERSIDE_PRESENCE]: {
         yes: [
           { problemKey: 'leaf_miners', effectValue: 0.12 }
         ]
       }
     },
   water_soaked_stem: {
-      [QUESTION_TARGET_DIMENSIONS.HOST_CONFIRMATION]: {
+      [QUESTION_PACKAGE_TOPICS.HOST_CONFIRMATION]: {
         yes: [
           { problemKey: 'poor_drainage', effectValue: 0.18 },
           { problemKey: 'root_stress', effectValue: 0.14 },
           { problemKey: 'general_stress', effectValue: 0.12 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.PROGRESSION]: {
+      [QUESTION_PACKAGE_TOPICS.PROGRESSION]: {
         yes: [
           { problemKey: 'poor_drainage', effectValue: 0.14 },
           { problemKey: 'root_stress', effectValue: 0.12 },
@@ -117,14 +117,14 @@ module.exports = {
       }
     },
   soft_stem: {
-      [QUESTION_TARGET_DIMENSIONS.HOST_CONFIRMATION]: {
+      [QUESTION_PACKAGE_TOPICS.HOST_CONFIRMATION]: {
         yes: [
           { problemKey: 'poor_drainage', effectValue: 0.16 },
           { problemKey: 'root_stress', effectValue: 0.14 },
           { problemKey: 'general_stress', effectValue: 0.12 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.PROGRESSION]: {
+      [QUESTION_PACKAGE_TOPICS.PROGRESSION]: {
         yes: [
           { problemKey: 'poor_drainage', effectValue: 0.12 },
           { problemKey: 'root_stress', effectValue: 0.12 },

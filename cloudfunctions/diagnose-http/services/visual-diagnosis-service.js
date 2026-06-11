@@ -181,7 +181,7 @@ async function resolveOutOfPoolAuditImageRef(imageRef = '', outOfPoolCandidates 
       return `data:${contentType};base64,${buffer.toString('base64')}`
     } catch (error) {
       console.warn(
-        'diagnose-http out-of-pool replay image fetch failed, fallback to original image ref:',
+        'diagnose-http out-of-pool replay image fetch failed, conservative to original image ref:',
         String(error?.message || error || '')
       )
     }
@@ -908,7 +908,7 @@ function resolveAdmissionDecision(candidate = {}, aggregateAnalyzability = 'medi
   if (allowFormalAdmission) {
     return {
       admission_result: 'formally_admitted',
-      admission_reason: 'formal_gate_passed',
+      admission_reason: 'formal_condition_passed',
       entered_runtime: 1,
       target_layer: 'observed_evidence_set'
     }

@@ -13,7 +13,6 @@ const {
   getVisualAggregateResultByBatchId
 } = require('../repositories/visual-aggregate-repository')
 const { getProblemsByKeys } = require('../repositories/problem-repository')
-const { getLatestQueueBySession } = require('../repositories/question-queue-repository')
 const { listQuestionRows } = require('../repositories/session-question-repository')
 const { getLatestStopStateBySession } = require('../repositories/stop-state-repository')
 const {
@@ -48,7 +47,6 @@ const {
   getObservedEvidenceSetBySession,
   getFinalDiagnosisSnapshot,
   mergeRuntimeDecisionObject,
-  mergeRuntimeQueue,
   toPublicProblemId,
   getResultById
 } = require('./session-result-read-service')
@@ -61,8 +59,6 @@ async function getSessionState(openid, sessionId) {
     session.latest_visual_call_batch_id,
     runtimeSnapshot
   )
-  const hasSnapshotQuestionQueue =
-    runtimeSnapshot && Number(runtimeSnapshot?.questionQueue?.roundIndex || 0) > 0
   const hasSnapshotStopState = Boolean(
     runtimeSnapshot && (runtimeSnapshot?.stopState || runtimeSnapshot?.outputEligibility)
   )
@@ -74,13 +70,11 @@ async function getSessionState(openid, sessionId) {
     latestVisualCallBatchId
   )
   const [
-    persistedQuestionQueue,
     persistedStopStateBundle,
     questionRows,
     persistedObservedEvidenceSet,
     persistedVisualAggregateResult
   ] = await Promise.all([
-    hasSnapshotQuestionQueue ? Promise.resolve(null) : getLatestQueueBySession(sessionId, openid),
     hasSnapshotStopState ? Promise.resolve(null) : getLatestStopStateBySession(sessionId, openid),
     listQuestionRows(sessionId),
     shouldLoadObservedEvidenceSet
@@ -90,10 +84,6 @@ async function getSessionState(openid, sessionId) {
       ? getVisualAggregateResultByBatchId(latestVisualCallBatchId)
       : Promise.resolve(snapshotVisualAggregateSummary)
   ])
-  const mergedQuestionQueue = mergeRuntimeQueue(
-    persistedQuestionQueue,
-    runtimeSnapshot?.questionQueue || null
-  )
   const mergedStopState = mergeRuntimeDecisionObject(
     persistedStopStateBundle?.stopState || null,
     runtimeSnapshot?.stopState || null
@@ -173,7 +163,6 @@ async function getSessionState(openid, sessionId) {
       runtimeSnapshot?.shadowCompareSummary ||
       runtimeSnapshot?.visualAggregateSummary?.shadowCompareSummary ||
       null,
-    questionQueue: mergedQuestionQueue,
     stopState: mergedStopState,
     outputEligibility: mergedOutputEligibility,
     diagnosticTrace: Array.isArray(runtimeSnapshot?.diagnosticTrace)

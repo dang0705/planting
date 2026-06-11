@@ -44,7 +44,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.85,
@@ -64,7 +64,7 @@
           {
             "questionKey": "q_stippling_confirm",
             "questionText": "叶片上有密集、细小的褪色点或斑驳吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -81,7 +81,7 @@
           {
             "questionKey": "q_spider_webbing_visible",
             "questionText": "叶片、叶柄或节间能看到细密蛛网吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -92,7 +92,7 @@
           {
             "questionKey": "q_observed_probe__stippling__distribution_scope",
             "questionText": "这种“叶子上有很多细小的褪色点”主要集中在个别叶片/局部，还是多片叶子都能看到？",
-            "targetDimension": "distribution_scope",
+            "packageTopic": "distribution_scope",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -103,7 +103,7 @@
           {
             "questionKey": "q_observed_probe__stippling__progression",
             "questionText": "这种“叶子上有很多细小的褪色点”是最近几天明显扩展，还是已经存在较久且基本稳定？",
-            "targetDimension": "progression",
+            "packageTopic": "progression",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -181,8 +181,8 @@
             "questionEvidence": 0,
             "totalEvidence": 0,
             "penalty": 0,
-            "genusCompatibility": 0.76,
-            "hostCompatibility": 0.76,
+            "genusSuitabilityibility": 0.76,
+            "hostSuitabilityibility": 0.76,
             "baseScore": 0,
             "finalScore": 0
           },
@@ -195,8 +195,8 @@
             "questionEvidence": 0,
             "totalEvidence": 0,
             "penalty": 0,
-            "genusCompatibility": 0.76,
-            "hostCompatibility": 0.7,
+            "genusSuitabilityibility": 0.76,
+            "hostSuitabilityibility": 0.7,
             "baseScore": 0,
             "finalScore": 0
           },
@@ -209,8 +209,8 @@
             "questionEvidence": 0,
             "totalEvidence": 0,
             "penalty": 0,
-            "genusCompatibility": 0.45,
-            "hostCompatibility": 0.45,
+            "genusSuitabilityibility": 0.45,
+            "hostSuitabilityibility": 0.45,
             "baseScore": 0,
             "finalScore": 0
           }

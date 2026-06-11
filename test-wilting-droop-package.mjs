@@ -100,7 +100,7 @@ function testPackageConfigAndStart() {
   assert.equal(startResult.questionPackage.mode, 'wilting_droop')
   assert.equal(startResult.questions.length, 5)
   assert.equal(startResult.questions[0].uiVariant, 'care_behavior_timeline')
-  assert.equal(startResult.questions[0].targetDimension, 'watering_frequency_context')
+  assert.equal(startResult.questions[0].packageTopic, 'watering_frequency_context')
 
   assert.equal(
     isQuestionPackageAnswerSubmitPayload({

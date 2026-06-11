@@ -63,18 +63,18 @@ const ROUTE_PATH_SCHEMA_APPENDIX = `
 5. 如果当前图片无法提供这两类信息，字段保留空数组，不要省略。
 `.trim()
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
-function normalizeOrgan(value = '', fallback = 'unknown') {
-  const normalized = normalizeText(value, fallback).toLowerCase()
-  return normalized || fallback
+function normalizeOrgan(value = '', conservative = 'unknown') {
+  const normalized = normalizeText(value, conservative).toLowerCase()
+  return normalized || conservative
 }
 
-function normalizeLocationKey(value = '', fallback = '') {
-  return normalizeText(value, fallback).toLowerCase()
+function normalizeLocationKey(value = '', conservative = '') {
+  return normalizeText(value, conservative).toLowerCase()
 }
 
 function compactDisplayText(value = '') {

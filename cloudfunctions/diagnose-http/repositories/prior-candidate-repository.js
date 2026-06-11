@@ -119,15 +119,15 @@ async function getLinkedCandidatePriors(plantContext = {}) {
 
     const links = await getLinkedDiagnosisTargets(plantContext?.plantIdentityId)
     if (!links.length) {
-      const fallbackResult = {
+      const conservativeResult = {
         hasAnyLinks: false,
         hasReviewedLinks: false,
         selectedLevel: '',
         weakBackgroundOnly: false,
         priors: []
       }
-      setCacheEntry(priorCache.linkedCandidatePriorsByPlantIdentity, cacheKey, fallbackResult)
-      return fallbackResult
+      setCacheEntry(priorCache.linkedCandidatePriorsByPlantIdentity, cacheKey, conservativeResult)
+      return conservativeResult
     }
 
     const bridge = resolveLinkedDiagnosisBridge(links, plantContext)
@@ -156,8 +156,8 @@ async function getLinkedCandidatePriors(plantContext = {}) {
           `
             SELECT
               problem_key,
-              genus_compatibility,
-              host_compatibility,
+              genus_suitability,
+              host_suitability,
               final_prior_score,
               matched_host_level,
               source_layer,
@@ -182,9 +182,9 @@ async function getLinkedCandidatePriors(plantContext = {}) {
           `
             SELECT
               problem_key,
-              genus_compatibility,
-              1 AS host_compatibility,
-              genus_compatibility AS final_prior_score,
+              genus_suitability,
+              1 AS host_suitability,
+              genus_suitability AS final_prior_score,
               'genus' AS matched_host_level,
               'linked_genus_profile' AS source_layer,
               data_status
@@ -241,8 +241,8 @@ async function getCandidateProblemPriors(plantContext) {
       `
         SELECT
           problem_key,
-          genus_compatibility,
-          host_compatibility,
+          genus_suitability,
+          host_suitability,
           final_prior_score,
           matched_host_level,
           source_layer,
@@ -275,16 +275,16 @@ async function getGenusCandidatePriors(genus = '') {
       `
         SELECT
           problem_key,
-          genus_compatibility,
-          1 AS host_compatibility,
-          genus_compatibility AS final_prior_score,
+          genus_suitability,
+          1 AS host_suitability,
+          genus_suitability AS final_prior_score,
           'genus' AS matched_host_level,
           'derived_from_genus_profile' AS source_layer,
           data_status
         FROM ${table('genus_problem_profiles')}
         WHERE genus = {{genus}}
           AND data_status IN ('audited', 'partial')
-        ORDER BY genus_compatibility DESC, problem_key ASC
+        ORDER BY genus_suitability DESC, problem_key ASC
       `,
       { genus }
     )
@@ -316,9 +316,9 @@ async function getHostCandidatePriors({ genus = '', family = '', category = '' }
           `
             SELECT
               problem_key,
-              0.5 AS genus_compatibility,
-              host_compatibility,
-              host_compatibility AS final_prior_score,
+              0.5 AS genus_suitability,
+              host_suitability,
+              host_suitability AS final_prior_score,
               host_level AS matched_host_level,
               'derived_from_host_profile' AS source_layer,
               data_status

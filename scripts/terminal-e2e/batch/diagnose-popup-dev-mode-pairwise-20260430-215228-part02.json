@@ -34,14 +34,14 @@
         "symptomKey": "vein_darkening"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "care_context",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "先看日常养护"
       },
       "round2": [
         {
-          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_condition",
           "optionKey": "airflow_humidity_area",
           "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
           "optionText": "通风或空气湿度变化"
@@ -68,7 +68,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=with_wilting_or_drop",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=with_wilting_or_drop",
         "roundsUsed": 3,
         "questionCount": 3,
         "isFinal": true,
@@ -95,14 +95,14 @@
         "symptomKey": "vein_darkening"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "care_context",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "先看日常养护"
       },
       "round2": [
         {
-          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_condition",
           "optionKey": "airflow_humidity_area",
           "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
           "optionText": "通风或空气湿度变化"
@@ -129,7 +129,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=unknown",
+        "answerPathSignature": "nutrient_stress_mode/vein_darkening > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=unknown",
         "roundsUsed": 3,
         "questionCount": 3,
         "isFinal": true,
@@ -156,14 +156,14 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "care_context",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "先看日常养护"
       },
       "round2": [
         {
-          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_condition",
           "optionKey": "light_area",
           "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
           "optionText": "光照变化明显"
@@ -190,7 +190,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=light_area > q_observed_probe__leaf_yellowing__light_change_context=stronger_direct_light",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=light_area > q_observed_probe__leaf_yellowing__light_change_context=stronger_direct_light",
         "roundsUsed": 3,
         "questionCount": 3,
         "isFinal": true,
@@ -217,14 +217,14 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "care_context",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "先看日常养护"
       },
       "round2": [
         {
-          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_condition",
           "optionKey": "airflow_humidity_area",
           "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
           "optionText": "通风或空气湿度变化"
@@ -251,7 +251,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=rapid_spreading",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=rapid_spreading",
         "roundsUsed": 3,
         "questionCount": 3,
         "isFinal": true,
@@ -278,14 +278,14 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "care_context",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "先看日常养护"
       },
       "round2": [
         {
-          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_condition",
           "optionKey": "airflow_humidity_area",
           "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
           "optionText": "通风或空气湿度变化"
@@ -312,7 +312,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=with_wilting_or_drop",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=with_wilting_or_drop",
         "roundsUsed": 3,
         "questionCount": 3,
         "isFinal": true,
@@ -339,14 +339,14 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "care_context",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "先看日常养护"
       },
       "round2": [
         {
-          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_condition",
           "optionKey": "airflow_humidity_area",
           "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
           "optionText": "通风或空气湿度变化"
@@ -373,7 +373,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=unknown",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=unknown",
         "roundsUsed": 3,
         "questionCount": 3,
         "isFinal": true,
@@ -400,14 +400,14 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "care_context",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "先看日常养护"
       },
       "round2": [
         {
-          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+          "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_condition",
           "optionKey": "airflow_humidity_area",
           "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
           "optionText": "通风或空气湿度变化"
@@ -434,7 +434,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=slow_stable",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=slow_stable",
         "roundsUsed": 3,
         "questionCount": 3,
         "isFinal": true,
@@ -461,7 +461,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "pest_trace",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "看到虫子或虫害痕迹"
@@ -495,7 +495,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=thrips_silver_black > q_spider_webbing_visible=no",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=thrips_silver_black > q_spider_webbing_visible=no",
         "roundsUsed": 3,
         "questionCount": 3,
         "isFinal": true,
@@ -522,7 +522,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "pest_trace",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "看到虫子或虫害痕迹"
@@ -556,7 +556,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=thrips_silver_black > q_spider_webbing_visible=unknown",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=thrips_silver_black > q_spider_webbing_visible=unknown",
         "roundsUsed": 3,
         "questionCount": 3,
         "isFinal": true,
@@ -583,7 +583,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+        "questionKey": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition",
         "optionKey": "pest_trace",
         "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
         "optionText": "看到虫子或虫害痕迹"
@@ -617,7 +617,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=thrips_silver_black > q_spider_webbing_visible=yes",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=thrips_silver_black > q_spider_webbing_visible=yes",
         "roundsUsed": 3,
         "questionCount": 3,
         "isFinal": true,

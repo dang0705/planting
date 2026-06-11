@@ -210,8 +210,8 @@ async function resolveSymptomClassFromVisualCandidates(aggregateSummary = null) 
     })),
     classScores,
     classSwitchHistory: [],
-    classGateDecision: {
-      decision: 'visual_candidate_review_fallback',
+    classConditionDecision: {
+      decision: 'visual_candidate_review_conservative',
       reason: 'runtime_snapshot_symptom_class_missing',
       sourceSymptomKey: primaryClass.sourceSymptomKey,
       sourceSymptomCn: primaryClass.sourceSymptomCn

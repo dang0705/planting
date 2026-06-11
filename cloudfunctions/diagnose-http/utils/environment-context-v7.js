@@ -288,10 +288,10 @@ function buildEnvironmentSummary({
     .filter(Boolean)
   const bounds = resolveEnvironmentBounds(boundsInput)
   const effectiveBounds = {
-    temperatureMin: firstNumber(bounds.temperatureMin, thresholds.fallbackTemperatureMinC),
-    temperatureMax: firstNumber(bounds.temperatureMax, thresholds.fallbackTemperatureMaxC),
-    humidityMin: firstNumber(bounds.humidityMin, thresholds.fallbackHumidityMinPercent),
-    humidityMax: firstNumber(bounds.humidityMax, thresholds.fallbackHumidityMaxPercent),
+    temperatureMin: firstNumber(bounds.temperatureMin, thresholds.conservativeTemperatureMinC),
+    temperatureMax: firstNumber(bounds.temperatureMax, thresholds.conservativeTemperatureMaxC),
+    humidityMin: firstNumber(bounds.humidityMin, thresholds.conservativeHumidityMinPercent),
+    humidityMax: firstNumber(bounds.humidityMax, thresholds.conservativeHumidityMaxPercent),
     uvIndexMax: bounds.uvIndexMax
   }
   const summary = {
@@ -396,11 +396,11 @@ function buildForecastEnvironmentSummary15d(options = {}) {
   })
 }
 
-function normalizeWateringEvent(event = {}, fallbackReferenceDate = '') {
+function normalizeWateringEvent(event = {}, conservativeReferenceDate = '') {
   if (!isPlainObject(event)) {return null}
   const watered = event.watered !== false && event.didWater !== false && event.action !== 'none'
   const amount = normalizeText(event.amount || event.wateringAmount || event.watering_amount || event.level || event.value)
-  const date = normalizeDate(event.date || event.eventDate || event.day || fallbackReferenceDate)
+  const date = normalizeDate(event.date || event.eventDate || event.day || conservativeReferenceDate)
   if (!watered && !amount) {return null}
   return {
     date,
@@ -409,11 +409,11 @@ function normalizeWateringEvent(event = {}, fallbackReferenceDate = '') {
   }
 }
 
-function normalizeFertilizingEvent(event = {}, fallbackReferenceDate = '') {
+function normalizeFertilizingEvent(event = {}, conservativeReferenceDate = '') {
   if (!isPlainObject(event)) {return null}
   const fertilized = event.fertilized !== false && event.didFertilize !== false && event.action !== 'none'
   const strength = normalizeText(event.strength || event.fertilizingStrength || event.fertilizerStrength || event.concentration || event.value)
-  const date = normalizeDate(event.date || event.eventDate || event.day || fallbackReferenceDate)
+  const date = normalizeDate(event.date || event.eventDate || event.day || conservativeReferenceDate)
   if (!fertilized && !strength) {return null}
   return {
     date,
@@ -422,10 +422,10 @@ function normalizeFertilizingEvent(event = {}, fallbackReferenceDate = '') {
   }
 }
 
-function normalizeLightEvent(event = {}, fallbackReferenceDate = '') {
+function normalizeLightEvent(event = {}, conservativeReferenceDate = '') {
   if (!isPlainObject(event)) {return null}
   const value = normalizeRawText(event.event || event.lightEvent || event.light_event || event.value || event.condition)
-  const date = normalizeDate(event.date || event.eventDate || event.day || fallbackReferenceDate)
+  const date = normalizeDate(event.date || event.eventDate || event.day || conservativeReferenceDate)
   if (!value) {return null}
   return {
     date,
@@ -751,14 +751,14 @@ function buildWateringPlanner({
         result: effectiveWetWaterings10d
       }),
       buildPlannerFormulaStep({
-        key: 'too_wet_gate',
+        key: 'too_wet_condition',
         expression: 'wateringCount10d > effectiveWetWaterings10d',
         inputs: { wateringCount10d, effectiveWetWaterings10d },
         result: wetExceeded,
         passed: wetExceeded
       }),
       buildPlannerFormulaStep({
-        key: 'too_dry_gate',
+        key: 'too_dry_condition',
         expression: '(forecastHotDryHit && lastWateredTooLongAgo) || (historicalHotDryHit && wateringCount10d === 0)',
         inputs: { forecastHotDryHit, lastWateredTooLongAgo, historicalHotDryHit, wateringCount10d },
         result: dryExceeded,
@@ -851,7 +851,7 @@ function buildFertilizingPlanner(...args) {
     ],
     fertilizerType: FERTILIZING_BASELINE.fertilizerType
   }
-  const recentGateHit =
+  const recentConditionHit =
     justRepotted ||
     concentrated ||
     recentFertilizingCount > 0 ||
@@ -862,8 +862,8 @@ function buildFertilizingPlanner(...args) {
   const dueGapBuckets = Array.isArray(thresholds.dueGapBuckets)
     ? thresholds.dueGapBuckets.map(item => normalizeBucket(item))
     : []
-  const deficiencyGateHit = weakGrowth && deficiencyGapBuckets.includes(lastFertilizedBucket)
-  const dueGateHit = dueGapBuckets.includes(lastFertilizedBucket)
+  const deficiencyConditionHit = weakGrowth && deficiencyGapBuckets.includes(lastFertilizedBucket)
+  const dueConditionHit = dueGapBuckets.includes(lastFertilizedBucket)
   const calculation = {
     formulaVersion: 'fertilizing_planner_v7_configurable',
     inputs: {
@@ -876,37 +876,37 @@ function buildFertilizingPlanner(...args) {
     thresholds: clonePlain(thresholds),
     formulas: [
       buildPlannerFormulaStep({
-        key: 'recent_or_high_risk_gate',
+        key: 'recent_or_high_risk_condition',
         expression: 'justRepotted || concentrated || recentFertilizingCount > 0 || lastFertilizedBucket === "within_10d"',
         inputs: { justRepotted, concentrated, recentFertilizingCount, lastFertilizedBucket },
-        result: recentGateHit,
-        passed: recentGateHit
+        result: recentConditionHit,
+        passed: recentConditionHit
       }),
       buildPlannerFormulaStep({
-        key: 'possible_deficiency_gate',
+        key: 'possible_deficiency_condition',
         expression: 'weakGrowth && deficiencyGapBuckets.includes(lastFertilizedBucket)',
         inputs: { weakGrowth, lastFertilizedBucket },
         thresholds: { deficiencyGapBuckets },
-        result: deficiencyGateHit,
-        passed: deficiencyGateHit
+        result: deficiencyConditionHit,
+        passed: deficiencyConditionHit
       }),
       buildPlannerFormulaStep({
-        key: 'thin_after_due_gate',
+        key: 'thin_after_due_condition',
         expression: 'dueGapBuckets.includes(lastFertilizedBucket)',
         inputs: { lastFertilizedBucket },
         thresholds: { dueGapBuckets },
-        result: dueGateHit,
-        passed: dueGateHit
+        result: dueConditionHit,
+        passed: dueConditionHit
       })
     ]
   }
 
-  if (recentGateHit) {
+  if (recentConditionHit) {
     return {
       baseline,
       action: FERTILIZING_ACTIONS.PAUSE,
       lastFertilizedBucket,
-      reasons: ['recent_or_high_risk_fertilizing_gate'],
+      reasons: ['recent_or_high_risk_fertilizing_condition'],
       thresholds: clonePlain(thresholds),
       calculation: {
         ...calculation,
@@ -917,7 +917,7 @@ function buildFertilizingPlanner(...args) {
     }
   }
 
-  if (deficiencyGateHit) {
+  if (deficiencyConditionHit) {
     return {
       baseline,
       action: FERTILIZING_ACTIONS.POSSIBLE_DEFICIENCY_CHECK,
@@ -933,7 +933,7 @@ function buildFertilizingPlanner(...args) {
     }
   }
 
-  if (dueGateHit) {
+  if (dueConditionHit) {
     return {
       baseline,
       action: FERTILIZING_ACTIONS.THIN_AFTER_DUE,

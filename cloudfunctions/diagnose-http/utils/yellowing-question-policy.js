@@ -1,20 +1,20 @@
 'use strict'
 
 const {
-  QUESTION_TARGET_DIMENSIONS,
-  normalizeQuestionTargetDimension
-} = require('./question-target-dimension')
+  QUESTION_PACKAGE_TOPICS,
+  normalizeQuestionPackageTopic
+} = require('./question-package-topic')
 
 const YELLOWING_LEAF_AGE_PATTERN_QUESTION_KEY =
   'q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern'
 const YELLOWING_DISTRIBUTION_PATTERN_QUESTION_KEY =
   'q_observed_probe__leaf_yellowing__yellowing_distribution_pattern'
-const YELLOWING_CARE_AREA_GATE_QUESTION_KEY =
-  'q_observed_probe__leaf_yellowing__yellowing_care_area_gate'
+const YELLOWING_CARE_AREA_TOPIC_QUESTION_KEY =
+  'q_observed_probe__leaf_yellowing__yellowing_care_area_condition'
 
 const DISABLED_YELLOWING_FLOW_DIMENSIONS = new Set([
-  QUESTION_TARGET_DIMENSIONS.YELLOWING_LEAF_AGE_PATTERN,
-  QUESTION_TARGET_DIMENSIONS.YELLOWING_DISTRIBUTION_PATTERN
+  QUESTION_PACKAGE_TOPICS.YELLOWING_LEAF_AGE_PATTERN,
+  QUESTION_PACKAGE_TOPICS.YELLOWING_DISTRIBUTION_PATTERN
 ])
 
 const DISABLED_YELLOWING_FLOW_QUESTION_KEYS = new Set([
@@ -40,14 +40,14 @@ const YELLOWING_FLOW_SYMPTOM_KEYS = new Set([
 ])
 
 const YELLOWING_CARE_ENVIRONMENT_DIMENSIONS = new Set([
-  QUESTION_TARGET_DIMENSIONS.WATERING_FREQUENCY_CONTEXT,
-  QUESTION_TARGET_DIMENSIONS.LIGHT_CHANGE_CONTEXT,
-  QUESTION_TARGET_DIMENSIONS.FERTILIZATION_GROWTH_CONTEXT,
-  QUESTION_TARGET_DIMENSIONS.AIRFLOW_HUMIDITY_CONTEXT,
-  QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED,
-  QUESTION_TARGET_DIMENSIONS.WATERING_CONTEXT,
-  QUESTION_TARGET_DIMENSIONS.LIGHT_EXPOSURE,
-  QUESTION_TARGET_DIMENSIONS.FERTILIZATION_CONTEXT
+  QUESTION_PACKAGE_TOPICS.WATERING_FREQUENCY_CONTEXT,
+  QUESTION_PACKAGE_TOPICS.LIGHT_CHANGE_CONTEXT,
+  QUESTION_PACKAGE_TOPICS.FERTILIZATION_GROWTH_CONTEXT,
+  QUESTION_PACKAGE_TOPICS.AIRFLOW_HUMIDITY_CONTEXT,
+  QUESTION_PACKAGE_TOPICS.YELLOWING_PROGRESSION_SPEED,
+  QUESTION_PACKAGE_TOPICS.WATERING_CONTEXT,
+  QUESTION_PACKAGE_TOPICS.LIGHT_EXPOSURE,
+  QUESTION_PACKAGE_TOPICS.FERTILIZATION_CONTEXT
 ])
 
 const YELLOWING_BLOCKED_OUTCOME_KEYS = new Set([
@@ -72,14 +72,14 @@ const YELLOWING_BLOCKED_KEY_PATTERN =
   /(leaf_?spot|spot_|_spot|lesion|halo|water_?soaked|variegation|marking|mosaic|blotch|mottle|speckl|stippl|pest|mite|thrips|whitefl|aphid|scale|mealy|honeydew|sooty|mold|mildew|powder|rust|disease)/i
 
 const YELLOWING_CARE_ENVIRONMENT_KEY_DIMENSIONS = [
-  QUESTION_TARGET_DIMENSIONS.WATERING_FREQUENCY_CONTEXT,
-  QUESTION_TARGET_DIMENSIONS.LIGHT_CHANGE_CONTEXT,
-  QUESTION_TARGET_DIMENSIONS.FERTILIZATION_GROWTH_CONTEXT,
-  QUESTION_TARGET_DIMENSIONS.AIRFLOW_HUMIDITY_CONTEXT,
-  QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED,
-  QUESTION_TARGET_DIMENSIONS.WATERING_CONTEXT,
-  QUESTION_TARGET_DIMENSIONS.LIGHT_EXPOSURE,
-  QUESTION_TARGET_DIMENSIONS.FERTILIZATION_CONTEXT
+  QUESTION_PACKAGE_TOPICS.WATERING_FREQUENCY_CONTEXT,
+  QUESTION_PACKAGE_TOPICS.LIGHT_CHANGE_CONTEXT,
+  QUESTION_PACKAGE_TOPICS.FERTILIZATION_GROWTH_CONTEXT,
+  QUESTION_PACKAGE_TOPICS.AIRFLOW_HUMIDITY_CONTEXT,
+  QUESTION_PACKAGE_TOPICS.YELLOWING_PROGRESSION_SPEED,
+  QUESTION_PACKAGE_TOPICS.WATERING_CONTEXT,
+  QUESTION_PACKAGE_TOPICS.LIGHT_EXPOSURE,
+  QUESTION_PACKAGE_TOPICS.FERTILIZATION_CONTEXT
 ]
 
 function normalizeKey(value = '') {
@@ -94,20 +94,20 @@ function isYellowingQuestionLike(question = {}) {
   const questionKey = normalizeKey(question?.questionKey || question?.question_key || '')
   const targetSymptomKey = normalizeKey(question?.targetSymptomKey || question?.target_symptom_key || '')
   const routeKey = normalizeKey(question?.routeKey || question?.route_key || '')
-  const gateKey = normalizeKey(question?.gateKey || question?.gate_key || '')
+  const conditionKey = normalizeKey(question?.conditionKey || question?.condition_key || '')
   const questionGroupKey = normalizeKey(question?.questionGroupKey || question?.question_group_key || '')
   return (
     isYellowingFlowSymptomKey(targetSymptomKey) ||
     /yellowing|leaf_yellow/.test(questionKey) ||
     /yellowing|leaf_yellow/.test(routeKey) ||
-    /yellowing|leaf_yellow/.test(gateKey) ||
+    /yellowing|leaf_yellow/.test(conditionKey) ||
     /yellowing|leaf_yellow/.test(questionGroupKey)
   )
 }
 
-function isYellowingCareEnvironmentDimension(targetDimension = '') {
+function isYellowingCareEnvironmentDimension(packageTopic = '') {
   return YELLOWING_CARE_ENVIRONMENT_DIMENSIONS.has(
-    normalizeQuestionTargetDimension(targetDimension, '')
+    normalizeQuestionPackageTopic(packageTopic, '')
   )
 }
 
@@ -124,9 +124,9 @@ function isBlockedYellowingOutcomeKey(outcomeKey = '') {
 
 function isBlockedYellowingCareQuestion(question = {}) {
   const questionKey = normalizeKey(question?.questionKey || question?.question_key || '')
-  const targetDimension = normalizeQuestionTargetDimension(
-    question?.targetDimension ||
-      question?.target_dimension ||
+  const packageTopic = normalizeQuestionPackageTopic(
+    question?.packageTopic ||
+      question?.package_topic ||
       question?.evidenceDimension ||
       question?.evidence_dimension ||
       '',
@@ -138,7 +138,7 @@ function isBlockedYellowingCareQuestion(question = {}) {
   const questionGroupKey = normalizeKey(question?.questionGroupKey || question?.question_group_key || '')
   const text = [
     questionKey,
-    targetDimension,
+    packageTopic,
     outcomeKey,
     routeKey,
     targetSymptomKey,
@@ -151,7 +151,7 @@ function isBlockedYellowingCareQuestion(question = {}) {
   if (YELLOWING_BLOCKED_KEY_PATTERN.test(text)) {
     return true
   }
-  if (!isYellowingCareEnvironmentDimension(targetDimension)) {
+  if (!isYellowingCareEnvironmentDimension(packageTopic)) {
     return true
   }
   return false
@@ -170,15 +170,15 @@ function isDisabledYellowingFlowQuestion(question = {}) {
     return true
   }
 
-  const targetDimension = normalizeQuestionTargetDimension(
-    question?.targetDimension ||
-      question?.target_dimension ||
+  const packageTopic = normalizeQuestionPackageTopic(
+    question?.packageTopic ||
+      question?.package_topic ||
       question?.evidenceDimension ||
       question?.evidence_dimension ||
       '',
     ''
   )
-  if (!DISABLED_YELLOWING_FLOW_DIMENSIONS.has(targetDimension)) {
+  if (!DISABLED_YELLOWING_FLOW_DIMENSIONS.has(packageTopic)) {
     return false
   }
 
@@ -217,7 +217,7 @@ function filterYellowingCareEnvironmentCandidateOutcomeKeys(outcomeKeys = []) {
 
 module.exports = {
   YELLOWING_LEAF_AGE_PATTERN_QUESTION_KEY,
-  YELLOWING_CARE_AREA_GATE_QUESTION_KEY,
+  YELLOWING_CARE_AREA_TOPIC_QUESTION_KEY,
   isYellowingFlowSymptomKey,
   isYellowingCareEnvironmentDimension,
   isDisallowedYellowingCareEnvironmentQuestion,

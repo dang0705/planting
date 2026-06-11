@@ -14,7 +14,9 @@ function parseArgs(rawArgs) {
   const parsed = {}
   for (let i = 0; i < rawArgs.length; i += 1) {
     const arg = String(rawArgs[i])
-    if (!arg.startsWith('--')) continue
+    if (!arg.startsWith('--')) {
+      continue
+    }
     const trimmed = arg.slice(2)
     const sep = trimmed.indexOf('=')
     if (sep >= 0) {
@@ -35,7 +37,9 @@ function parseArgs(rawArgs) {
 
 function toNumber(value, fallback = NaN) {
   const num = Number(value)
-  if (!Number.isFinite(num)) return fallback
+  if (!Number.isFinite(num)) {
+    return fallback
+  }
   return num
 }
 
@@ -123,7 +127,9 @@ async function findElementByIdContains(page, contains, timeoutMs = 12000, interv
 function parseQuestionOptionId(elementId) {
   const marker = 'diagnose-question-package-page-option-'
   const start = elementId.indexOf(marker)
-  if (start < 0) return null
+  if (start < 0) {
+    return null
+  }
 
   const tail = elementId.slice(start + marker.length)
   if (tail.startsWith('stack-')) {
@@ -131,7 +137,9 @@ function parseQuestionOptionId(elementId) {
   }
 
   const lastDash = tail.lastIndexOf('-')
-  if (lastDash < 0) return null
+  if (lastDash < 0) {
+    return null
+  }
 
   return {
     questionId: tail.slice(0, lastDash),
@@ -142,7 +150,9 @@ function parseQuestionOptionId(elementId) {
 function parseQuestionIdFromStackId(elementId) {
   const marker = 'diagnose-question-package-page-question-shell-'
   const start = elementId.indexOf(marker)
-  if (start < 0) return null
+  if (start < 0) {
+    return null
+  }
   return elementId.slice(start + marker.length)
 }
 
@@ -155,8 +165,12 @@ function safeFirstLine(text) {
 
 function decodeQuestionKey(rawId) {
   const key = normalize(rawId)
-  if (!key) return ''
-  if (!key.startsWith('q_')) return key
+  if (!key) {
+    return ''
+  }
+  if (!key.startsWith('q_')) {
+    return key
+  }
   const body = key.slice(2)
   try {
     const decoded = Buffer.from(body.replace(/_/g, '/').replace(/-/g, '+'), 'base64').toString('utf8')
@@ -254,7 +268,9 @@ async function collectQuestionOptions(page) {
   const grouped = new Map()
   for (const item of elements) {
     const parsed = parseQuestionOptionId(item.elementId)
-    if (!parsed) continue
+    if (!parsed) {
+      continue
+    }
     const entry = grouped.get(parsed.questionId) || []
     const optionText = await safeText(item.element)
     entry.push({
@@ -278,10 +294,14 @@ async function collectQuestionShellIds(page) {
 }
 
 async function resolveQuestionMetaByShell(page, questionId) {
-  if (!questionId) return {}
+  if (!questionId) {
+    return {}
+  }
   const marker = 'diagnose-question-package-page-question-shell-' + questionId
   const shell = await findElementByIdSuffix(page, marker, 3000, 200)
-  if (!shell) return { questionId, decodedQuestionId: decodeQuestionKey(questionId) }
+  if (!shell) {
+    return { questionId, decodedQuestionId: decodeQuestionKey(questionId) }
+  }
   const rawText = await safeText(shell)
   const firstLine = safeFirstLine(rawText)
   return {
@@ -301,7 +321,7 @@ function pickBestOption(questionMeta, options, profile) {
       questionMeta?.decodedQuestionId ||
       ''
   )
-  const qTarget = normalizeText(questionMeta?.targetDimension || '')
+  const qTarget = normalizeText(questionMeta?.packageTopic || '')
   const decodedQuestionId = normalizeText(questionMeta?.decodedQuestionId || '')
   const combined = `${qText} ${qTarget} ${decodedQuestionId}`
 
@@ -388,7 +408,7 @@ async function clickQuestionNext(page, questionId) {
 
 async function runYellowingQuickFlow({
   port,
-  projectPath,
+  projectPath: _projectPath,
   maxSteps,
   profile
 }) {

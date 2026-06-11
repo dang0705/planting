@@ -14,7 +14,7 @@ export {
 export {
   isUncertainCareBehaviorOption,
   isCareBehaviorTimelineSentinelOption,
-  isLegacyWateringTimelineQuestion,
+  isSessionWateringTimelineQuestion,
   isCareBehaviorTimelineQuestion,
   isCareBehaviorWateringTimelineQuestion,
   getVisibleCareBehaviorOptions,

@@ -13,7 +13,7 @@ function isEnglishLikeSymptomLabel(value = '') {
   return /[A-Za-z]/.test(normalized) && !/[\u4e00-\u9fff]/.test(normalized)
 }
 
-function resolvePublicSymptomCn(item = {}, fallback = '') {
+function resolvePublicSymptomCn(item = {}, conservative = '') {
   const candidate = String(
     item?.symptomCn ||
       item?.symptom_cn ||
@@ -26,7 +26,7 @@ function resolvePublicSymptomCn(item = {}, fallback = '') {
       item?.symptom_key ||
       item?.evidenceKey ||
       item?.evidence_key ||
-      fallback ||
+      conservative ||
       ''
   ).trim()
 
@@ -40,7 +40,7 @@ function resolvePublicSymptomCn(item = {}, fallback = '') {
 function isVisualEvidenceItem(item = {}) {
   const sourceType = normalizeEvidenceSourceType(item?.sourceType || item?.source_type || '')
   if (!sourceType) {return false}
-  if (sourceType === 'legacy_observed_symptom') {return true}
+  if (sourceType === 'session_observed_symptom') {return true}
   return sourceType.includes('visual')
 }
 
@@ -87,7 +87,7 @@ function resolveQuestionCanUploadMoreImages(visualAggregateSummary = null, visua
     visualAggregateSummary.suggestedFollowupCapture.length > 0
 }
 
-function resolvePublicPlantRefs(source = {}, fallbackPlantId = '') {
+function resolvePublicPlantRefs(source = {}, conservativePlantId = '') {
   const plantContext = source?.plantContext || {}
   const userPlantId = plantContext?.userPlantId || null
   const plantCatalogId = plantContext?.plantId || null
@@ -99,7 +99,7 @@ function resolvePublicPlantRefs(source = {}, fallbackPlantId = '') {
     plantCatalogId,
     plantIdentityId,
     latestVisualCallBatchId,
-    plantId: userPlantId || plantCatalogId || fallbackPlantId || ''
+    plantId: userPlantId || plantCatalogId || conservativePlantId || ''
   }
 }
 
@@ -137,11 +137,11 @@ function toPublicQuestions(questions = []) {
       selectionSource: item.selectionSource || '',
       targetSymptomKey: item.targetSymptomKey || '',
       questionGroupKey: item.questionGroupKey || '',
-      targetDimension: item.targetDimension || '',
-      routingScope: item.routingScope || '',
-      questionRole: item.questionRole || item.questionCategory || '',
-      questionCategory: item.questionCategory || item.questionRole || '',
-      effectMode: item.effectMode || '',
+      packageTopic: item.packageTopic || '',
+      packageSection: item.packageSection || '',
+      routePackageRole: item.routePackageRole || item.routePackageRole || '',
+      routePackageRole: item.routePackageRole || item.routePackageRole || '',
+      packageEffect: item.packageEffect || '',
       defaultOptionKey: item.defaultOptionKey || '',
       defaultOptionId: item.defaultOptionId || '',
       uiVariant: item.uiVariant || '',

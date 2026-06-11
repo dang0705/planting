@@ -12,7 +12,7 @@ import {
   isCareBehaviorTimelineSentinelAnswer,
   isCareBehaviorTimelineUnclearAnswer,
   isCareBehaviorWateringTimelineQuestion,
-  isLegacyWateringTimelineQuestion,
+  isSessionWateringTimelineQuestion,
   normalizeCareBehaviorTimeline,
   resolveCareBehaviorTimelineAutoAnswerOptionId,
   resolveCareBehaviorTimelineRecordedAnswerOptionId
@@ -57,19 +57,19 @@ function isYellowingQuestion(question = {}) {
   return questionKey.includes('yellowing') || questionText.includes('黄叶')
 }
 
-function isYellowingWateringQuestion(questionKey = '', targetDimension = '') {
+function isYellowingWateringQuestion(questionKey = '', packageTopic = '') {
   return questionKey.includes('watering_frequency_context') ||
     questionKey.includes('watering_context') ||
     questionKey.includes('watering') ||
-    targetDimension.includes('watering')
+    packageTopic.includes('watering')
 }
 
-function isYellowingFertilizationQuestion(questionKey = '', targetDimension = '') {
+function isYellowingFertilizationQuestion(questionKey = '', packageTopic = '') {
   return questionKey.includes('fertilization_growth_context') ||
     questionKey.includes('fertilization_context') ||
     questionKey.includes('fertilization_reference') ||
     questionKey.includes('fertilization') ||
-    targetDimension.includes('fertilization')
+    packageTopic.includes('fertilization')
 }
 
 function resolveYellowingQuestionOptionText(question = {}, option = {}) {
@@ -77,14 +77,14 @@ function resolveYellowingQuestionOptionText(question = {}, option = {}) {
   const optionKey = normalizeText(option?.optionKey || option?.value || option?.optionId || option?.id || '')
   const optionText = normalizeText(option?.optionTextUserCn || option?.optionTextCn || option?.text || option?.optionText || option?.label || '')
   const questionKey = normalizeText(question?.questionKey)
-  const targetDimension = normalizeText(question?.targetDimension)
+  const packageTopic = normalizeText(question?.packageTopic)
 
-  if (isYellowingWateringQuestion(questionKey, targetDimension)) {
+  if (isYellowingWateringQuestion(questionKey, packageTopic)) {
     if (isFrequencyOption(optionKey, optionText, ['often_wet','more_wet','too_wet','over_wet','yes'])) {return '近2周 2 次以上'}
     if (isFrequencyOption(optionKey, optionText, ['normal_or_stable','no_change','normal','stable'])) {return '近2周 1-2 次'}
     if (isFrequencyOption(optionKey, optionText, ['often_dry','more_dry','not_enough','dry','lack'])) {return '近2周 0 次'}
   }
-  if (isYellowingFertilizationQuestion(questionKey, targetDimension)) {
+  if (isYellowingFertilizationQuestion(questionKey, packageTopic)) {
     if (isFrequencyOption(optionKey, optionText, ['low_or_no_fertilizer','no','none','not_fertilized'])) {return '近1个月 0 次'}
     if (isFrequencyOption(optionKey, optionText, ['normal_light_fertilizer','normal','appropriate'])) {return '近1个月 1-2 次'}
     if (isFrequencyOption(optionKey, optionText, ['recent_heavy_fertilizer_or_repot','heavy_fertilizer','heavy','repot','fertilize'])) {return '近1个月 2 次以上'}
@@ -220,7 +220,7 @@ export function useQuestionPackageFlow({ result, images, plantName, userStore, d
     if (isCareBehaviorTimelineUnclearAnswer(question, currentOptionId) && isTimelineAnswerSyncSuppressed(questionId)) {return}
     const recordedOptionId = resolveCareBehaviorTimelineRecordedAnswerOptionId(question)
     const nextAnswerId = hasMeaningfulCareBehaviorTimeline(timeline)
-      ? (isLegacyWateringTimelineQuestion(question) ? 'care_behavior_timeline' : recordedOptionId)
+      ? (isSessionWateringTimelineQuestion(question) ? 'care_behavior_timeline' : recordedOptionId)
       : ''
     if (nextAnswerId) {
       if (currentOptionId !== nextAnswerId) {setQuestionAnswer(questionId, nextAnswerId)}

@@ -2,22 +2,22 @@ const FAST_VISION_PROFILE = 'fast_vision'
 const QWEN_VL_FAST_VISION_PROFILE = 'qwen_vl_fast_vision'
 const DEEP_THINKING_VISION_PROFILE = 'deep_thinking_vision'
 const DEFAULT_MODEL_PROFILE = QWEN_VL_FAST_VISION_PROFILE
-function envText(name, fallback = '') {
+function envText(name, conservative = '') {
   const value = String(process.env[name] || '').trim()
-  return value || fallback
+  return value || conservative
 }
 
-function envNumber(name, fallback) {
+function envNumber(name, conservative) {
   const value = Number(process.env[name])
-  return Number.isFinite(value) ? value : fallback
+  return Number.isFinite(value) ? value : conservative
 }
 
-function envBoolean(name, fallback = false) {
+function envBoolean(name, conservative = false) {
   const raw = String(process.env[name] || '').trim().toLowerCase()
-  if (!raw) {return fallback}
+  if (!raw) {return conservative}
   if (['1', 'true', 'yes', 'on'].includes(raw)) {return true}
   if (['0', 'false', 'no', 'off'].includes(raw)) {return false}
-  return fallback
+  return conservative
 }
 
 const modelProfiles = {
@@ -122,8 +122,8 @@ const VISUAL_PROMPT_LINES = [
     zh: '保持 JSON 精简：不要输出显示名、区域描述、补图长文案或归一化备注。'
   },
   {
-    en: 'Forbidden legacy keys: display_name_cn, visibility_scope, supporting_region_note, admission_readiness, suggested_question_capture, normalization_notes.',
-    zh: '禁止输出旧字段：display_name_cn、visibility_scope、supporting_region_note、admission_readiness、suggested_question_capture、normalization_notes。'
+    en: 'Forbidden session keys: display_name_cn, visibility_scope, supporting_region_note, admission_readiness, suggested_question_capture, normalization_notes.',
+    zh: '禁止输出既有字段：display_name_cn、visibility_scope、supporting_region_note、admission_readiness、suggested_question_capture、normalization_notes。'
   },
   {
     en: 'Return strict JSON only, using only schema keys/enums below.',
@@ -176,8 +176,8 @@ module.exports = {
     modelReasoningMode: activeModelProfileConfig.reasoningMode,
     model: envText('LLM_MODEL', activeModelProfileConfig.model),
     service: envText('LLM_SERVICE', activeModelProfileConfig.provider),
-    fallbackService: envText('LLM_FALLBACK_SERVICE', ''),
-    fallbackModel: envText('LLM_FALLBACK_MODEL', 'hunyuan-vision-1.5-instruct'),
+    conservativeService: envText('LLM_CONSERVATIVE_SERVICE', ''),
+    conservativeModel: envText('LLM_CONSERVATIVE_MODEL', 'hunyuan-vision-1.5-instruct'),
     shadowService: envText('LLM_SHADOW_SERVICE', ''),
     shadowModel: envText('LLM_SHADOW_MODEL', ''),
     requestTimeoutSec: envNumber('LLM_REQUEST_TIMEOUT_SEC', 45),

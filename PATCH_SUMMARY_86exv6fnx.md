@@ -53,4 +53,4 @@ docs/tickets/86exv6fnx-diagnose-question-package.md
 
 - `常规 route 追问每轮 1 题`
 - `黄叶 4 题 package 是题包长度/场景上限`
-- `后端 queue/持久化/归属校验仍首题锚定` unless re-verified from current code and ticket export
+- `后端 pendingList/持久化/归属校验仍首题锚定` unless re-verified from current code and ticket export

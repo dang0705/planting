@@ -13,10 +13,10 @@ const {
   clamp01,
   roundNum,
   dedupeStrings,
-  normalizeClassGateMode,
-  normalizeClassGateSourceMode,
-  isHardGateMode,
-  isHardGateCandidate,
+  normalizeClassConditionMode,
+  normalizeClassConditionSourceMode,
+  isHardConditionMode,
+  isHardConditionCandidate,
   parseUnknownSwitchPolicy,
   shouldBlockGroupByUnknownPolicy,
   getUnknownPolicyPriorityPenalty,
@@ -104,37 +104,37 @@ function isClassSwitchAllowed(fromClassKey = '', classStrategyMap = new Map()) {
   return list.some(item => Boolean(item?.classSwitchAllowed))
 }
 
-function buildClassGateDecision({
+function buildClassConditionDecision({
   primaryClass = null,
   round = 1,
   selectedClassKey = '',
-  sourceGateMode = 'soft',
-  hardGateTriggered = false,
-  blockedByUnknownGate = false,
+  sourceConditionMode = 'soft',
+  hardConditionTriggered = false,
+  blockedByUnknownCondition = false,
   hasEnabledGroups = false,
   classSwitchBlocked = false,
   unknownCountByGroup = {}
 }) {
   const selectedClass = primaryClass || {}
-  const effectiveGateMode = normalizeClassGateMode(selectedClass.runtimeGateRule || classSwitchRules.classGateTypes.soft)
+  const effectiveConditionMode = normalizeClassConditionMode(selectedClass.runtimeConditionRule || classSwitchRules.classConditionTypes.soft)
   return {
     enabled: Boolean(selectedClass?.classKey || hasEnabledGroups),
-    gateMode: hardGateTriggered
-      ? classSwitchRules.classGateTypes.hard
-      : effectiveGateMode,
-    sourceMode: normalizeClassGateSourceMode(sourceGateMode),
+    conditionMode: hardConditionTriggered
+      ? classSwitchRules.classConditionTypes.hard
+      : effectiveConditionMode,
+    sourceMode: normalizeClassConditionSourceMode(sourceConditionMode),
     primaryClassKey: normalizeText(selectedClass.classKey || ''),
     primaryClassRuntimeScore: Number(selectedClass.runtimeScore || 0),
     unknownLockCount: Object.keys(unknownCountByGroup || {}).length,
     currentClassKey: normalizeText(selectedClassKey || ''),
     hasEnabledGroups: Boolean(hasEnabledGroups),
-    isHardBlocked: Boolean(hardGateTriggered && classSwitchBlocked),
+    isHardBlocked: Boolean(hardConditionTriggered && classSwitchBlocked),
     classSwitchBlocked: Boolean(classSwitchBlocked),
-    blockedReason: hardGateTriggered && classSwitchBlocked
-      ? 'hard_gate_class_switch_forbidden'
+    blockedReason: hardConditionTriggered && classSwitchBlocked
+      ? 'hard_condition_class_switch_forbidden'
       : hasEnabledGroups
           ? ''
-          : blockedByUnknownGate
+          : blockedByUnknownCondition
             ? 'class_group_blocked_by_unknown_limit'
             : 'class_group_pool_empty',
     reviewedAtRound: Number(round || 1)
@@ -155,10 +155,10 @@ function buildEmptyRuntime(previousState = {}, round = 1, reason = 'no_class_run
       ? previousState.classSwitchHistory
       : [],
     questionGroupPool: [],
-    classGateDecision: {
+    classConditionDecision: {
       enabled: false,
-      gateMode: classSwitchRules.classGateTypes.disabled,
-      sourceMode: classSwitchRules.classGateTypes.disabled,
+      conditionMode: classSwitchRules.classConditionTypes.disabled,
+      sourceMode: classSwitchRules.classConditionTypes.disabled,
       primaryClassKey: '',
       primaryClassRuntimeScore: 0,
       unknownLockCount: Number(
@@ -225,7 +225,7 @@ async function resolveSymptomClassRuntime({
       classKey: mapping.classKey,
       classNameCn: classMeta.classNameCn || mapping.classNameCn || mapping.classKey,
       questionModeV1: classMeta.questionModeV1 || mapping.questionModeV1 || 'disabled',
-      runtimeGateRule: classMeta.runtimeGateRule || 'soft',
+      runtimeConditionRule: classMeta.runtimeConditionRule || 'soft',
       dataStatus: classMeta.dataStatus || mapping.dataStatus || 'unknown',
       visualScore: 0,
       questionActivationScore: 0,
@@ -260,7 +260,7 @@ async function resolveSymptomClassRuntime({
         classKey: item.classKey,
         classNameCn: item.classNameCn,
         questionModeV1: item.questionModeV1,
-        runtimeGateRule: item.runtimeGateRule,
+        runtimeConditionRule: item.runtimeConditionRule,
         visualScore,
         questionActivationScore,
         primaryLockScore: roundNum(item.primaryLockScore),
@@ -298,21 +298,21 @@ async function resolveSymptomClassRuntime({
     .slice(0, classSwitchRules.maxSecondaryClasses)
 
   const classScoreByKey = new Map(classScores.map(item => [item.classKey, item]))
-  const primaryClassMode = normalizeClassGateMode(primaryClass?.runtimeGateRule || '')
-  const sourcePrimaryClassMode = normalizeClassGateSourceMode(primaryClass?.runtimeGateRule || '')
-  const hardGateByMode = isHardGateMode(primaryClassMode) || isHardGateCandidate(sourcePrimaryClassMode)
-  const hardGateTriggered =
-    hardGateByMode && Number(primaryClass?.runtimeScore || 0) >= classSwitchRules.hardGateActivationScoreFloor
+  const primaryClassMode = normalizeClassConditionMode(primaryClass?.runtimeConditionRule || '')
+  const sourcePrimaryClassMode = normalizeClassConditionSourceMode(primaryClass?.runtimeConditionRule || '')
+  const hardConditionByMode = isHardConditionMode(primaryClassMode) || isHardConditionCandidate(sourcePrimaryClassMode)
+  const hardConditionTriggered =
+    hardConditionByMode && Number(primaryClass?.runtimeScore || 0) >= classSwitchRules.hardConditionActivationScoreFloor
   const previousCurrentClassKey = normalizeText(previousState?.currentClassKey)
   const previousClassScore = Number(classScoreByKey.get(previousCurrentClassKey)?.runtimeScore || 0)
   const stickyPreviousClass = previousCurrentClassKey &&
-    previousClassScore >= classSwitchRules.hardGateStickyPreviousFloor
+    previousClassScore >= classSwitchRules.hardConditionStickyPreviousFloor
       ? previousCurrentClassKey
       : ''
 
   const bridgeSeedClassKeys = collectBridgeSeedClassKeys(classScores)
   const candidateClassKeys = expandBridgeCandidateClassKeys(
-    hardGateTriggered
+    hardConditionTriggered
       ? dedupeStrings([
         primaryClass?.classKey,
         stickyPreviousClass,
@@ -388,7 +388,7 @@ async function resolveSymptomClassRuntime({
       .map(item => normalizeText(item.groupKey))
       .filter(Boolean)
   )
-  const blockedByUnknownGate = blockedByUnknownGroupKeySet.size > 0
+  const blockedByUnknownCondition = blockedByUnknownGroupKeySet.size > 0
 
   let currentClassKey = ''
   if (previousCurrentClassKey && candidateClassKeys.includes(previousCurrentClassKey) && hasAvailableGroups(previousCurrentClassKey)) {
@@ -446,19 +446,19 @@ async function resolveSymptomClassRuntime({
         ]
       : previousClassSwitchHistory
 
-  const classGateDecision = buildClassGateDecision({
+  const classConditionDecision = buildClassConditionDecision({
     primaryClass,
     round,
     selectedClassKey: currentClassKey || primaryClass?.classKey || '',
-    sourceGateMode: sourcePrimaryClassMode,
-    hardGateTriggered,
-    blockedByUnknownGate,
+    sourceConditionMode: sourcePrimaryClassMode,
+    hardConditionTriggered,
+    blockedByUnknownCondition,
     hasEnabledGroups,
     classSwitchBlocked,
     unknownCountByGroup
   })
   if (classSwitchBlocked) {
-    classGateDecision.disabledGroupKeys = Array.from(blockedByUnknownGroupKeySet)
+    classConditionDecision.disabledGroupKeys = Array.from(blockedByUnknownGroupKeySet)
   }
 
   return {
@@ -475,7 +475,7 @@ async function resolveSymptomClassRuntime({
     ),
     classSwitchHistory: nextClassSwitchHistory,
     questionGroupPool: filteredQuestionGroupPool,
-    classGateDecision
+    classConditionDecision
   }
 }
 

@@ -4,9 +4,9 @@ const { models } = require('/opt/utils/cloudbase')
 const { sqlInList } = require('./sql')
 const { table } = require('../db/table-helper')
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value ?? '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function normalizeBoolean(value) {
@@ -34,7 +34,7 @@ function mapGroupStrategyRow(row = {}) {
     allowWhenAiLocked: normalizeBoolean(row.allow_when_ai_locked),
     maxQuestionsPerRound: Math.max(1, Number(row.max_questions_per_round || 1)),
     activationCondition: normalizeText(row.activation_condition),
-    classGateType: normalizeText(row.class_gate_type, 'soft'),
+    classConditionType: normalizeText(row.class_condition_type, 'soft'),
     classSwitchAllowed: normalizeBoolean(row.class_switch_allowed),
     unknownSwitchPolicy: normalizeText(row.unknown_switch_policy),
     aiLockedConfirmPenalty: Number(row.ai_locked_confirm_penalty || 0),
@@ -122,7 +122,7 @@ async function getClassQuestionGroupStrategies(classKeys = []) {
             allow_when_ai_locked,
             max_questions_per_round,
             activation_condition,
-            class_gate_type,
+            class_condition_type,
             class_switch_allowed,
             unknown_switch_policy,
             ai_locked_confirm_penalty,
@@ -156,7 +156,7 @@ async function getClassQuestionGroupStrategies(classKeys = []) {
     return rows
   } catch (error) {
     if (isMissingRuntimeTableError(error)) {
-      console.warn('class question group strategy table not ready, fallback to legacy flow:', error.message)
+      console.warn('class question group strategy table not ready, conservative to session flow:', error.message)
       return []
     }
     throw error

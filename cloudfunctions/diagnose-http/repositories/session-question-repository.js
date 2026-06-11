@@ -3,8 +3,8 @@
 const { models } = require('/opt/utils/cloudbase')
 const { table } = require('../db/table-helper')
 
-function normalizeText(value = '', fallback = '') {
-  return String(value || '').trim() || String(fallback || '').trim()
+function normalizeText(value = '', conservative = '') {
+  return String(value || '').trim() || String(conservative || '').trim()
 }
 
 function truncateText(value = '', maxLength = 255) {

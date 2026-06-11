@@ -23,7 +23,7 @@ const DATA_SOURCE_CONFIGS = {
 }
 
 const RAW_PLANT_CATALOG_COLUMNS = [
-  'legacy_plant_id',
+  'session_plant_id',
   'primary_display_name',
   'cover_image_ref',
   'basic_description',
@@ -33,8 +33,8 @@ const RAW_PLANT_CATALOG_COLUMNS = [
   'family_name_cn',
   'family_name_canonical',
   'genus_name',
-  'legacy_status_flag',
-  'legacy_reserved_field',
+  'session_status_flag',
+  'session_reserved_field',
   'created_at',
   'updated_at'
 ]
@@ -128,7 +128,7 @@ function buildCatalogContext(rawRow = {}) {
   const genusName = normalizePrimitive(rawRow.genus_name)
   const identityLevel = inferIdentityLevel(scientificName, genusName)
   const plantIdentityId = buildStableId('plant_identity', [
-    rawRow.legacy_plant_id,
+    rawRow.session_plant_id,
     scientificName || primaryDisplayName,
     identityLevel
   ])
@@ -155,7 +155,7 @@ function mapPlantIdentityEntity(rawRow = {}) {
 
   return {
     plant_identity_id: context.plantIdentityId,
-    legacy_plant_id: normalizePrimitive(rawRow.legacy_plant_id),
+    session_plant_id: normalizePrimitive(rawRow.session_plant_id),
     canonical_identity_name: context.scientificName || context.primaryDisplayName,
     canonical_identity_name_cn: context.primaryDisplayName,
     canonical_identity_name_en: context.scientificName,
@@ -270,21 +270,21 @@ function mapPlantIdentityMatchRules(rawRow = {}) {
 function mapPlantIdentityDiagnosisLinks(rawRow = {}) {
   const context = buildCatalogContext(rawRow)
   const rows = []
-  const legacyPlantId = normalizePrimitive(rawRow.legacy_plant_id)
+  const sessionPlantId = normalizePrimitive(rawRow.session_plant_id)
 
-  if (context.plantIdentityId && legacyPlantId) {
+  if (context.plantIdentityId && sessionPlantId) {
     rows.push({
       link_id: buildStableId('diagnosis_link', [
         context.plantIdentityId,
         'identity',
         'plant_problem_profiles',
-        legacyPlantId
+        sessionPlantId
       ]),
       plant_identity_id: context.plantIdentityId,
       link_level: 'identity',
-      target_profile_key: legacyPlantId,
+      target_profile_key: sessionPlantId,
       target_table_name: 'plant_problem_profiles',
-      target_record_key: `plant_id:${legacyPlantId}`,
+      target_record_key: `plant_id:${sessionPlantId}`,
       link_strength: 'exact',
       review_status: 'reviewed',
       is_active: 1,
@@ -393,7 +393,7 @@ const TABLE_CONFIGS = [
     inputColumns: RAW_PLANT_CATALOG_COLUMNS,
     columns: [
       'plant_identity_id',
-      'legacy_plant_id',
+      'session_plant_id',
       'canonical_identity_name',
       'canonical_identity_name_cn',
       'canonical_identity_name_en',
@@ -644,8 +644,8 @@ const TABLE_CONFIGS = [
       'family',
       'category',
       'problem_key',
-      'genus_compatibility',
-      'host_compatibility',
+      'genus_suitabilityibility',
+      'host_suitabilityibility',
       'final_prior_score',
       'matched_host_level',
       'source_layer',
@@ -658,16 +658,16 @@ const TABLE_CONFIGS = [
       'family',
       'category',
       'problem_key',
-      'genus_compatibility',
-      'host_compatibility',
+      'genus_suitabilityibility',
+      'host_suitabilityibility',
       'final_prior_score',
       'matched_host_level',
       'source_layer',
       'data_status'
     ],
     numericColumns: [
-      'genus_compatibility',
-      'host_compatibility',
+      'genus_suitabilityibility',
+      'host_suitabilityibility',
       'final_prior_score'
     ],
     jsonColumns: [],
@@ -686,10 +686,10 @@ const TABLE_CONFIGS = [
       'question_group_key',
       'question_level',
       'observability',
-      'target_dimension',
-      'routing_scope',
-      'question_role',
-      'effect_mode',
+      'package_topic',
+      'package_section',
+      'route_package_role',
+      'package_effect',
       'allow_unknown',
       'priority',
       'data_status',
@@ -707,10 +707,10 @@ const TABLE_CONFIGS = [
       'question_group_key',
       'question_level',
       'observability',
-      'target_dimension',
-      'routing_scope',
-      'question_role',
-      'effect_mode',
+      'package_topic',
+      'package_section',
+      'route_package_role',
+      'package_effect',
       'allow_unknown',
       'priority',
       'data_status',
@@ -878,15 +878,15 @@ const TABLE_CONFIGS = [
     rowMapper: identityRowMapper
   },
   {
-    table: 'outcome_route_gates',
+    table: 'outcome_route_conditions',
     source: 'diagnosis',
-    sheet: 'outcome_route_gates',
+    sheet: 'outcome_route_conditions',
     enabledByDefault: false,
-    keys: ['gate_key'],
+    keys: ['condition_key'],
     inputColumns: [
-      'gate_key',
+      'condition_key',
       'route_key',
-      'gate_role',
+      'condition_role',
       'required_evidence_json',
       'required_answer_effects_json',
       'blocker_evidence_json',
@@ -897,15 +897,15 @@ const TABLE_CONFIGS = [
       'on_unknown',
       'decision_cause_key',
       'decision_cause_text_cn',
-      'gate_priority',
+      'condition_priority',
       'enabled',
       'review_status',
       'data_status'
     ],
     columns: [
-      'gate_key',
+      'condition_key',
       'route_key',
-      'gate_role',
+      'condition_role',
       'required_evidence_json',
       'required_answer_effects_json',
       'blocker_evidence_json',
@@ -916,12 +916,12 @@ const TABLE_CONFIGS = [
       'on_unknown',
       'decision_cause_key',
       'decision_cause_text_cn',
-      'gate_priority',
+      'condition_priority',
       'enabled',
       'review_status',
       'data_status'
     ],
-    numericColumns: ['gate_priority', 'enabled'],
+    numericColumns: ['condition_priority', 'enabled'],
     jsonColumns: [
       'required_evidence_json',
       'required_answer_effects_json',
@@ -940,8 +940,8 @@ const TABLE_CONFIGS = [
       'route_key',
       'step_no',
       'question_key',
-      'gate_key',
-      'question_role',
+      'condition_key',
+      'route_package_role',
       'required_for_closure',
       'ask_priority',
       'skip_if_evidence_json',
@@ -954,8 +954,8 @@ const TABLE_CONFIGS = [
       'route_key',
       'step_no',
       'question_key',
-      'gate_key',
-      'question_role',
+      'condition_key',
+      'route_package_role',
       'required_for_closure',
       'ask_priority',
       'skip_if_evidence_json',
@@ -1054,7 +1054,7 @@ const TABLE_CONFIGS = [
     keys: ['outcome_key'],
     inputColumns: [
       'outcome_key',
-      'legacy_problem_key',
+      'session_problem_key',
       'outcome_name_cn',
       'outcome_type',
       'outcome_category',
@@ -1072,7 +1072,7 @@ const TABLE_CONFIGS = [
     ],
     columns: [
       'outcome_key',
-      'legacy_problem_key',
+      'session_problem_key',
       'outcome_name_cn',
       'outcome_type',
       'outcome_category',

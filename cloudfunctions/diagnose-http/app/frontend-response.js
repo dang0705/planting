@@ -32,12 +32,12 @@ function pickMinimalQuestions(items = []) {
         questionId: String(item?.questionId || item?.questionKey || '').trim(),
         questionKey: String(item?.questionKey || item?.questionId || '').trim(),
         targetSymptomKey: String(item?.targetSymptomKey || '').trim(),
-        targetDimension: String(item?.targetDimension || '').trim(),
+        packageTopic: String(item?.packageTopic || '').trim(),
         questionGroupKey: String(item?.questionGroupKey || '').trim(),
-        routingScope: String(item?.routingScope || '').trim(),
-        questionRole: String(item?.questionRole || item?.questionCategory || '').trim(),
-        questionCategory: String(item?.questionCategory || item?.questionRole || '').trim(),
-        effectMode: String(item?.effectMode || '').trim(),
+        packageSection: String(item?.packageSection || '').trim(),
+        routePackageRole: String(item?.routePackageRole || item?.routePackageRole || '').trim(),
+        routePackageRole: String(item?.routePackageRole || item?.routePackageRole || '').trim(),
+        packageEffect: String(item?.packageEffect || '').trim(),
         defaultOptionKey: String(item?.defaultOptionKey || '').trim(),
         defaultOptionId: String(item?.defaultOptionId || '').trim(),
         uiVariant: String(item?.uiVariant || '').trim(),
@@ -139,7 +139,7 @@ function buildMinimalAdviceSteps(publicResponse = {}, explanation = null) {
     publicResponse.actionAdvice || publicResponse.finalResult?.actionAdvice
   )
   const directSteps = pickMinimalNextSteps(publicResponse.nextSteps)
-  const fallbackTexts = normalizeStringList([
+  const conservativeTexts = normalizeStringList([
     publicResponse.treatmentText,
     publicResponse.treatment,
     explanation?.firstAid
@@ -147,12 +147,12 @@ function buildMinimalAdviceSteps(publicResponse = {}, explanation = null) {
   const mergedTexts = normalizeStringList([
     ...actionAdviceTexts,
     ...directSteps.map(item => item.text),
-    ...fallbackTexts
+    ...conservativeTexts
   ])
 
   return mergedTexts.map((text, index) => ({
     text,
-    type: directSteps[index]?.type || (index >= directSteps.length ? 'fallback' : ''),
+    type: directSteps[index]?.type || (index >= directSteps.length ? 'conservative' : ''),
     priority: directSteps[index]?.priority
   }))
 }
@@ -226,8 +226,8 @@ function buildVisibleOutcomeEntries(source = {}) {
   )
     ? source.visibleOutcomes || source.finalResult?.visibleOutcomes
     : []
-  const legacyPrimaryOutcome = source.primaryOutcome || source.finalResult?.primaryOutcome || null
-  const legacySecondaryOutcomes = Array.isArray(
+  const primaryOutcomeEntry = source.primaryOutcome || source.finalResult?.primaryOutcome || null
+  const secondaryOutcomeEntries = Array.isArray(
     source.secondaryOutcomes || source.finalResult?.secondaryOutcomes
   )
     ? source.secondaryOutcomes || source.finalResult?.secondaryOutcomes
@@ -236,8 +236,8 @@ function buildVisibleOutcomeEntries(source = {}) {
   const seen = new Set()
   for (const outcome of [
     ...directVisibleOutcomes,
-    ...[legacyPrimaryOutcome].filter(Boolean),
-    ...legacySecondaryOutcomes
+    ...[primaryOutcomeEntry].filter(Boolean),
+    ...secondaryOutcomeEntries
   ]) {
     const minimalOutcome = pickMinimalOutcomeEntry(outcome)
     if (!minimalOutcome) {

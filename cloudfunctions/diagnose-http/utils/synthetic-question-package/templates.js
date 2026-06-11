@@ -1,6 +1,6 @@
 'use strict'
 
-const { QUESTION_TARGET_DIMENSIONS } = require('../question-target-dimension')
+const { QUESTION_PACKAGE_TOPICS } = require('../question-package-topic')
 const {
   CARE_CONTEXT_OPTION_COPY,
   normalizeText
@@ -20,7 +20,7 @@ const NEUTRAL_STRUCTURAL_PATTERN_LABELS = {
   tunnels: '叶片隧道状痕迹'
 }
 
-function resolveNeutralSymptomLabel(item = {}, fallback = '该异常') {
+function resolveNeutralSymptomLabel(item = {}, conservative = '该异常') {
   const symptomKey = normalizeText(item?.symptomKey)
   const patternKey = normalizeText(item?.patternKey)
   const neutralLabel =
@@ -28,7 +28,7 @@ function resolveNeutralSymptomLabel(item = {}, fallback = '该异常') {
     NEUTRAL_STRUCTURAL_PATTERN_LABELS[patternKey]
   if (neutralLabel) {return neutralLabel}
 
-  return normalizeText(item?.symptomCn || item?.displayTextCn || symptomKey) || fallback
+  return normalizeText(item?.symptomCn || item?.displayTextCn || symptomKey) || conservative
 }
 
 function normalizeSyntheticOptionEntries(optionTexts = {}) {
@@ -111,16 +111,16 @@ function renderDataLayerOptions(optionRows = [], variables = {}) {
     .filter(item => item.optionKey && item.text)
 }
 
-function resolveSyntheticDefaultOptionKey(targetDimension = '', optionEntries = []) {
+function resolveSyntheticDefaultOptionKey(packageTopic = '', optionEntries = []) {
   const keys = new Set(
     (Array.isArray(optionEntries) ? optionEntries : [])
       .map(item => normalizeText(item?.optionKey))
       .filter(Boolean)
   )
   const preferredByDimension = {
-    [QUESTION_TARGET_DIMENSIONS.YELLOWING_PRIMARY_CLUE_GATE]: 'care_context'
+    [QUESTION_PACKAGE_TOPICS.YELLOWING_PRIMARY_CLUE_TOPIC]: 'care_context'
   }
-  const preferred = preferredByDimension[targetDimension]
+  const preferred = preferredByDimension[packageTopic]
   if (preferred && keys.has(preferred)) {return preferred}
   if (keys.has('unknown')) {return 'unknown'}
   return normalizeText(optionEntries?.[0]?.optionKey || '')

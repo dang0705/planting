@@ -20,10 +20,6 @@ const {
   diagnosisRoundPresenterHelpers
 } = require('./diagnosis-round-presenter-helpers')
 const {
-  filterQuestionsByQuestionQueue
-} = require('../utils/question-contract')
-const {
-  buildPublicQuestionQueue,
   buildPublicStopState,
   buildPublicOutputEligibility,
   buildCompactActionAdvice,
@@ -291,12 +287,7 @@ function buildCompactAnswerRoundResponse(roundResult = {}, helpers = diagnosisRo
   }
 
   if (isQuestion) {
-    const questionQueue = buildPublicQuestionQueue(roundResult?.questionQueue || null)
-    const questions = toPublicQuestions(
-      filterQuestionsByQuestionQueue(roundResult?.questions || [], questionQueue, {
-        requireQueueAnchor: true
-      })
-    ).slice(0, 1)
+    const questions = toPublicQuestions(roundResult?.questions || []).slice(0, 1)
     const publicVisualAggregateSummary = buildPublicVisualAggregateSummary(visualAggregateSource)
     const canUploadMoreImages = resolveQuestionCanUploadMoreImages(
       publicVisualAggregateSummary,
@@ -353,7 +344,6 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
   const observedEvidenceSet = toPublicObservedEvidenceSet(roundResult?.observedEvidenceSet || [])
   const derivedEvidenceSet = normalizePublicDerivedEvidenceSet(roundResult?.derivedEvidenceSet || [])
   const diagnosisDirections = normalizePublicDiagnosisDirectionSet(roundResult?.diagnosisDirections || [])
-  const questionQueue = buildPublicQuestionQueue(roundResult?.questionQueue || null)
   const stopState = buildPublicStopState(roundResult?.stopState || null)
   const outputEligibility = buildPublicOutputEligibility(roundResult?.outputEligibility || null)
   const diagnosticTrace = Array.isArray(roundResult?.diagnosticTrace) ? roundResult.diagnosticTrace : []
@@ -370,11 +360,7 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
   )
 
   if (isQuestion) {
-    const questions = toPublicQuestions(
-      filterQuestionsByQuestionQueue(roundResult?.questions || [], questionQueue, {
-        requireQueueAnchor: true
-      })
-    ).slice(0, 1)
+    const questions = toPublicQuestions(roundResult?.questions || []).slice(0, 1)
     const visualAggregateSummary = buildPublicVisualAggregateSummary(
       roundResult?.visualAggregateSummary || roundResult?.visualAggregateResult || null
     )
@@ -398,7 +384,6 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
         roundResult?.routePrimaryAction,
         'ask_first'
       ),
-      questionQueue,
       stopReason: roundResult?.stopReason || '',
       stopState,
       outputEligibility,
@@ -431,7 +416,6 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
       visualAggregateSummary,
       shadowCompareSummary: visualAggregateSummary?.shadowCompareSummary || null,
       identityResolutionStatus: roundResult?.identityResolutionStatus || '',
-      questionQueue,
       stopState,
       outputEligibility,
       diagnosticTrace,
@@ -486,7 +470,6 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
     careBaselineSummary,
     environmentDeviationHints,
     routePrimaryAction: normalizedRoutePrimaryAction,
-    questionQueue,
     stopReason: normalizedStopReason,
     stopState,
     outputEligibility,
@@ -518,7 +501,6 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
     shadowCompareSummary: visualAggregateSummary?.shadowCompareSummary || null,
     identityResolutionStatus: roundResult?.identityResolutionStatus || '',
     stopReason: normalizedStopReason,
-    questionQueue,
     stopState,
     outputEligibility,
     diagnosticTrace,
@@ -556,7 +538,6 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
 }
 
 module.exports = {
-  buildPublicQuestionQueue,
   buildPublicStopState,
   buildPublicOutputEligibility,
   buildCompactAnswerRoundResponse,

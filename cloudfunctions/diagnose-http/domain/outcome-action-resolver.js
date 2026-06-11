@@ -6,9 +6,9 @@ const {
   isAuthoritativeRouteDecision
 } = require('../utils/outcome-route-contract')
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function normalizeKey(value = '') {
@@ -134,7 +134,7 @@ function buildOutcomeSummary(routeOutcome = null, problem = null, explanation = 
   )
 }
 
-function resolveDisplayName(routeOutcome, problem, explanation, fallbackOutcomeKey = '') {
+function resolveDisplayName(routeOutcome, problem, explanation, conservativeOutcomeKey = '') {
   return normalizeText(
     routeOutcome?.displayNameCn ||
       routeOutcome?.outcomeNameCn ||
@@ -143,7 +143,7 @@ function resolveDisplayName(routeOutcome, problem, explanation, fallbackOutcomeK
       explanation?.displayNameCn ||
       '',
     ''
-  ) || normalizeText(fallbackOutcomeKey)
+  ) || normalizeText(conservativeOutcomeKey)
 }
 
 function resolveOutcomeSummary(routeOutcome, problem, explanation) {
@@ -170,7 +170,7 @@ function buildOutcomeEntry({
     return null
   }
 
-  const fallbackDisplayName = resolveDisplayName(
+  const conservativeDisplayName = resolveDisplayName(
     routeOutcome,
     problem,
     explanation,
@@ -186,7 +186,7 @@ function buildOutcomeEntry({
     actionProfileKey: normalizeText(routeOutcome?.actionProfileKey || actionProfile?.actionProfileKey || ''),
     outcomeType: normalizeText(routeOutcome?.outcomeType || ''),
     outcomeCategory: normalizeText(routeOutcome?.outcomeCategory || ''),
-    displayNameCn: normalizeText(fallbackDisplayName),
+    displayNameCn: normalizeText(conservativeDisplayName),
     summary: resolveOutcomeSummary(routeOutcome, problem, explanation),
     severity: mapSeverity(problem || routeOutcome),
     urgency: mapUrgency(problem || routeOutcome),
@@ -216,7 +216,7 @@ function suppressUncertainWhenConcreteOutcomeExists(outcomes = []) {
     : safeOutcomes
 }
 
-function buildActionAdviceFallback({
+function buildActionAdviceConservative({
   actionProfiles = [],
   careGuidance = {},
   leadingVisibleOutcome = null
@@ -243,7 +243,7 @@ function buildActionAdviceFallback({
   return {
     todayActions: uniqKeys(firstAid ? [firstAid] : ['先保持当前浇水和光照节奏，避免同时调整多项参数。']),
     threeDayActions: ['观察 3-7 天症状变化，确认是新叶/老叶扩展规律。'],
-    sevenDayObserve: ['保留近期叶片新旧对比照片，便于下一轮确认。'],
+    sevenDayObserve: ['保留近期叶片新既有对比照片，便于下一轮确认。'],
     avoidActions: uniqKeys(avoid ? [avoid] : ['避免大幅改变量，尤其避免一次性重施肥或大范围停浇。']),
     retakeOrEscalate: ['建议补拍新老叶重点部位并继续问诊后再收敛。'],
     conflictDetected: false
@@ -256,7 +256,7 @@ function resolveOutcomeMode({
   visibleOutcomes = []
 } = {}) {
   if (questionRequired) {return 'follow_up_required'}
-  if (!authoritativeRouteDecision) {return 'route_fallback_uncertain'}
+  if (!authoritativeRouteDecision) {return 'route_conservative_uncertain'}
   if (visibleOutcomes.length) {return 'visible_outcomes'}
   return 'uncertain_only'
 }
@@ -350,17 +350,17 @@ function resolveRouteOutcomePayload({
         conflictDetected: false
       }
 
-  const actionAdviceFallback = buildActionAdviceFallback({
+  const actionAdviceConservative = buildActionAdviceConservative({
     actionProfiles: safeActionProfiles,
     careGuidance,
     leadingVisibleOutcome
   })
 
-  const actionAdvice = appendYellowingReviewAdvice(hasActionConflict || !actionAdviceFallback
+  const actionAdvice = appendYellowingReviewAdvice(hasActionConflict || !actionAdviceConservative
     ? mergedActionAdvice
     : {
         ...mergedActionAdvice,
-        ...actionAdviceFallback
+        ...actionAdviceConservative
       }, shouldAppendYellowingReviewAdvice)
 
   return {

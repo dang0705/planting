@@ -47,7 +47,7 @@ export const usePlantStore = defineStore('plants', {
           id: p.id,
           plantId: p.plantId || null,
           plantIdentityId: p.plantIdentityId || '',
-          legacyPlantId: p.legacyPlantId || '',
+          sessionPlantId: p.sessionPlantId || '',
           canonicalName: p.canonicalName || '',
           nickname: p.nickname || '',
           displayName: p.displayName || p.nickname || p.canonicalName || p.recognizedName || '未命名植物',

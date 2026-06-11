@@ -6,7 +6,6 @@ const { debugLog } = require('../utils/common')
 let diagnosisHandlers = null
 let reviewHandlers = null
 let outOfPoolHandlers = null
-let legacyHandlers = null
 
 function getDiagnosisHandlers() {
   if (!diagnosisHandlers) {
@@ -27,13 +26,6 @@ function getOutOfPoolHandlers() {
     outOfPoolHandlers = require('../handlers/out-of-pool-handlers')
   }
   return outOfPoolHandlers
-}
-
-function getLegacyHandlers() {
-  if (!legacyHandlers) {
-    legacyHandlers = require('../handlers/legacy-handlers')
-  }
-  return legacyHandlers
 }
 
 function normalizeHttpPayload(payload) {
@@ -99,13 +91,6 @@ async function main(event, context) {
 
     if (path.includes('/diagnosis/start')) {
       if (method !== 'POST') {return methodNotAllowed(method)}
-      const {
-        handleDiagnosisStartStream,
-        requestWantsDiagnosisStartSse
-      } = getLegacyHandlers()
-      if (requestWantsDiagnosisStartSse(request, payload)) {
-        return handleDiagnosisStartStream(event, context, request, payload)
-      }
       const { handleDiagnosisStart } = getDiagnosisHandlers()
       return handleDiagnosisStart(request, context, payload)
     }
@@ -211,18 +196,6 @@ async function main(event, context) {
       if (method !== 'POST') {return methodNotAllowed(method)}
       const { handleOutOfPoolProxyMappingDisable } = getOutOfPoolHandlers()
       return handleOutOfPoolProxyMappingDisable(request, context, payload)
-    }
-
-    if (path.includes('/stream/diagnose')) {
-      if (method !== 'POST') {return methodNotAllowed(method)}
-      const { handleLegacyDiagnoseStream } = getLegacyHandlers()
-      return handleLegacyDiagnoseStream(event, context, request, payload)
-    }
-
-    if (path.includes('/diagnose')) {
-      if (method !== 'POST') {return methodNotAllowed(method)}
-      const { handleLegacyDiagnose } = getLegacyHandlers()
-      return handleLegacyDiagnose(request, context, payload)
     }
 
     return notFound(path)

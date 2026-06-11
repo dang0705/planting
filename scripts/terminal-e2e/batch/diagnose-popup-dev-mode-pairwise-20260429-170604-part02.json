@@ -1891,7 +1891,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=watering_area"
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=watering_area"
       },
       "round2": [],
       "outcome": {
@@ -1900,7 +1900,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=watering_area",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=watering_area",
         "roundsUsed": 2
       }
     },
@@ -1920,7 +1920,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=light_area"
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=light_area"
       },
       "round2": [],
       "outcome": {
@@ -1929,7 +1929,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=light_area",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=light_area",
         "roundsUsed": 2
       }
     },
@@ -1949,7 +1949,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=fertilization_area"
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=fertilization_area"
       },
       "round2": [],
       "outcome": {
@@ -1958,7 +1958,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=fertilization_area",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=fertilization_area",
         "roundsUsed": 2
       }
     },
@@ -1978,7 +1978,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area"
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=airflow_humidity_area"
       },
       "round2": [],
       "outcome": {
@@ -1987,7 +1987,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=airflow_humidity_area",
         "roundsUsed": 2
       }
     },
@@ -2007,7 +2007,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=unknown"
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=unknown"
       },
       "round2": [],
       "outcome": {
@@ -2016,7 +2016,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=unknown",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=unknown",
         "roundsUsed": 2
       }
     },
@@ -2036,7 +2036,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=mite_webbing"
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=mite_webbing"
       },
       "round2": [],
       "outcome": {
@@ -2045,7 +2045,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=mite_webbing",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=mite_webbing",
         "roundsUsed": 2
       }
     },
@@ -2065,7 +2065,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=thrips_silver_black"
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=thrips_silver_black"
       },
       "round2": [],
       "outcome": {
@@ -2074,7 +2074,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=thrips_silver_black",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=thrips_silver_black",
         "roundsUsed": 2
       }
     },
@@ -2094,7 +2094,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=sticky_honeydew"
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=sticky_honeydew"
       },
       "round2": [],
       "outcome": {
@@ -2103,7 +2103,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=sticky_honeydew",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=sticky_honeydew",
         "roundsUsed": 2
       }
     },
@@ -2123,7 +2123,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=unknown"
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=unknown"
       },
       "round2": [],
       "outcome": {
@@ -2132,7 +2132,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=unknown",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=unknown",
         "roundsUsed": 2
       }
     },
@@ -2152,7 +2152,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=no_pest_trace"
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=no_pest_trace"
       },
       "round2": [],
       "outcome": {
@@ -2161,7 +2161,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=no_pest_trace",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=pest_trace > q_observed_probe__leaf_yellowing__pest_trace_type=no_pest_trace",
         "roundsUsed": 2
       }
     },
@@ -2181,7 +2181,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=halo_spots"
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_condition=halo_spots"
       },
       "round2": [],
       "outcome": {
@@ -2190,7 +2190,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=halo_spots",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_condition=halo_spots",
         "roundsUsed": 2
       }
     },
@@ -2210,7 +2210,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=water_soaked_soft"
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_condition=water_soaked_soft"
       },
       "round2": [],
       "outcome": {
@@ -2219,7 +2219,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=water_soaked_soft",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_condition=water_soaked_soft",
         "roundsUsed": 2
       }
     },
@@ -2239,7 +2239,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=powder_mold_surface"
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_condition=powder_mold_surface"
       },
       "round2": [],
       "outcome": {
@@ -2248,7 +2248,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=powder_mold_surface",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_condition=powder_mold_surface",
         "roundsUsed": 2
       }
     },
@@ -2268,7 +2268,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=yellowing_only_no_lesion"
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_condition=yellowing_only_no_lesion"
       },
       "round2": [],
       "outcome": {
@@ -2277,7 +2277,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=yellowing_only_no_lesion",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_condition=yellowing_only_no_lesion",
         "roundsUsed": 2
       }
     },
@@ -2297,7 +2297,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first"
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first"
       },
       "round2": [],
       "outcome": {
@@ -2306,7 +2306,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=new_leaves_first",
         "roundsUsed": 2
       }
     },
@@ -2326,7 +2326,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=unknown"
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_condition=unknown"
       },
       "round2": [],
       "outcome": {
@@ -2335,7 +2335,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_gate=unknown",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=disease_trace > q_observed_probe__leaf_yellowing__yellowing_disease_trace_condition=unknown",
         "roundsUsed": 2
       }
     },
@@ -2355,7 +2355,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=old_lower_leaves_first"
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=old_lower_leaves_first"
       },
       "round2": [],
       "outcome": {
@@ -2364,7 +2364,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=old_lower_leaves_first",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=old_lower_leaves_first",
         "roundsUsed": 2
       }
     },
@@ -2384,7 +2384,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=no_clear_age_bias"
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=no_clear_age_bias"
       },
       "round2": [],
       "outcome": {
@@ -2393,7 +2393,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=no_clear_age_bias",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=no_clear_age_bias",
         "roundsUsed": 2
       }
     },
@@ -2413,7 +2413,7 @@
         "symptomKey": "yellow_speckling"
       },
       "round1": {
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=unknown"
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=unknown"
       },
       "round2": [],
       "outcome": {
@@ -2422,7 +2422,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=unknown",
+        "answerPathSignature": "thrips_damage_mode/yellow_speckling > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=yellowing_only > q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern=unknown",
         "roundsUsed": 2
       }
     },
@@ -2529,7 +2529,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=watering_area > q_observed_probe__leaf_yellowing__watering_frequency_context=often_wet"
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=watering_area > q_observed_probe__leaf_yellowing__watering_frequency_context=often_wet"
       },
       "round2": [],
       "outcome": {
@@ -2538,7 +2538,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=watering_area > q_observed_probe__leaf_yellowing__watering_frequency_context=often_wet",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=watering_area > q_observed_probe__leaf_yellowing__watering_frequency_context=often_wet",
         "roundsUsed": 3
       }
     },
@@ -2558,7 +2558,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=watering_area > q_observed_probe__leaf_yellowing__watering_frequency_context=normal_or_stable"
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=watering_area > q_observed_probe__leaf_yellowing__watering_frequency_context=normal_or_stable"
       },
       "round2": [],
       "outcome": {
@@ -2567,7 +2567,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=watering_area > q_observed_probe__leaf_yellowing__watering_frequency_context=normal_or_stable",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=watering_area > q_observed_probe__leaf_yellowing__watering_frequency_context=normal_or_stable",
         "roundsUsed": 3
       }
     },
@@ -2587,7 +2587,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=watering_area > q_observed_probe__leaf_yellowing__watering_frequency_context=often_dry"
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=watering_area > q_observed_probe__leaf_yellowing__watering_frequency_context=often_dry"
       },
       "round2": [],
       "outcome": {
@@ -2596,7 +2596,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=watering_area > q_observed_probe__leaf_yellowing__watering_frequency_context=often_dry",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=watering_area > q_observed_probe__leaf_yellowing__watering_frequency_context=often_dry",
         "roundsUsed": 3
       }
     },
@@ -2616,7 +2616,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=watering_area > q_observed_probe__leaf_yellowing__watering_frequency_context=unknown"
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=watering_area > q_observed_probe__leaf_yellowing__watering_frequency_context=unknown"
       },
       "round2": [],
       "outcome": {
@@ -2625,7 +2625,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=watering_area > q_observed_probe__leaf_yellowing__watering_frequency_context=unknown",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=watering_area > q_observed_probe__leaf_yellowing__watering_frequency_context=unknown",
         "roundsUsed": 3
       }
     },
@@ -2645,7 +2645,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=light_area > q_observed_probe__leaf_yellowing__light_change_context=stronger_direct_light"
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=light_area > q_observed_probe__leaf_yellowing__light_change_context=stronger_direct_light"
       },
       "round2": [],
       "outcome": {
@@ -2654,7 +2654,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=light_area > q_observed_probe__leaf_yellowing__light_change_context=stronger_direct_light",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=light_area > q_observed_probe__leaf_yellowing__light_change_context=stronger_direct_light",
         "roundsUsed": 3
       }
     },
@@ -2674,7 +2674,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=light_area > q_observed_probe__leaf_yellowing__light_change_context=no_clear_change"
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=light_area > q_observed_probe__leaf_yellowing__light_change_context=no_clear_change"
       },
       "round2": [],
       "outcome": {
@@ -2683,7 +2683,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=light_area > q_observed_probe__leaf_yellowing__light_change_context=no_clear_change",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=light_area > q_observed_probe__leaf_yellowing__light_change_context=no_clear_change",
         "roundsUsed": 3
       }
     },
@@ -2703,7 +2703,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=light_area > q_observed_probe__leaf_yellowing__light_change_context=weaker_light"
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=light_area > q_observed_probe__leaf_yellowing__light_change_context=weaker_light"
       },
       "round2": [],
       "outcome": {
@@ -2712,7 +2712,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=light_area > q_observed_probe__leaf_yellowing__light_change_context=weaker_light",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=light_area > q_observed_probe__leaf_yellowing__light_change_context=weaker_light",
         "roundsUsed": 3
       }
     },
@@ -2732,7 +2732,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=light_area > q_observed_probe__leaf_yellowing__light_change_context=unknown"
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=light_area > q_observed_probe__leaf_yellowing__light_change_context=unknown"
       },
       "round2": [],
       "outcome": {
@@ -2741,7 +2741,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=light_area > q_observed_probe__leaf_yellowing__light_change_context=unknown",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=light_area > q_observed_probe__leaf_yellowing__light_change_context=unknown",
         "roundsUsed": 3
       }
     },
@@ -2761,7 +2761,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=fertilization_area > q_observed_probe__leaf_yellowing__fertilization_growth_context=low_or_no_fertilizer"
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=fertilization_area > q_observed_probe__leaf_yellowing__fertilization_growth_context=low_or_no_fertilizer"
       },
       "round2": [],
       "outcome": {
@@ -2770,7 +2770,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=fertilization_area > q_observed_probe__leaf_yellowing__fertilization_growth_context=low_or_no_fertilizer",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=fertilization_area > q_observed_probe__leaf_yellowing__fertilization_growth_context=low_or_no_fertilizer",
         "roundsUsed": 3
       }
     },
@@ -2790,7 +2790,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=fertilization_area > q_observed_probe__leaf_yellowing__fertilization_growth_context=normal_light_fertilizer"
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=fertilization_area > q_observed_probe__leaf_yellowing__fertilization_growth_context=normal_light_fertilizer"
       },
       "round2": [],
       "outcome": {
@@ -2799,7 +2799,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=fertilization_area > q_observed_probe__leaf_yellowing__fertilization_growth_context=normal_light_fertilizer",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=fertilization_area > q_observed_probe__leaf_yellowing__fertilization_growth_context=normal_light_fertilizer",
         "roundsUsed": 3
       }
     },
@@ -2819,7 +2819,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=fertilization_area > q_observed_probe__leaf_yellowing__fertilization_growth_context=recent_heavy_fertilizer_or_repot"
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=fertilization_area > q_observed_probe__leaf_yellowing__fertilization_growth_context=recent_heavy_fertilizer_or_repot"
       },
       "round2": [],
       "outcome": {
@@ -2828,7 +2828,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=fertilization_area > q_observed_probe__leaf_yellowing__fertilization_growth_context=recent_heavy_fertilizer_or_repot",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=fertilization_area > q_observed_probe__leaf_yellowing__fertilization_growth_context=recent_heavy_fertilizer_or_repot",
         "roundsUsed": 3
       }
     },
@@ -2848,7 +2848,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=fertilization_area > q_observed_probe__leaf_yellowing__fertilization_growth_context=unknown"
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=fertilization_area > q_observed_probe__leaf_yellowing__fertilization_growth_context=unknown"
       },
       "round2": [],
       "outcome": {
@@ -2857,7 +2857,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=fertilization_area > q_observed_probe__leaf_yellowing__fertilization_growth_context=unknown",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=fertilization_area > q_observed_probe__leaf_yellowing__fertilization_growth_context=unknown",
         "roundsUsed": 3
       }
     },
@@ -2877,7 +2877,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=rapid_spreading"
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=rapid_spreading"
       },
       "round2": [],
       "outcome": {
@@ -2886,7 +2886,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=rapid_spreading",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=rapid_spreading",
         "roundsUsed": 3
       }
     },
@@ -2906,7 +2906,7 @@
         "symptomKey": "uniform_yellowing"
       },
       "round1": {
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=slow_stable"
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=slow_stable"
       },
       "round2": [],
       "outcome": {
@@ -2915,7 +2915,7 @@
       "calculationProcess": {
         "batchSource": "diagnose-popup-dev-mode-pairwise",
         "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
-        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_gate=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=slow_stable",
+        "answerPathSignature": "yellowing_mode/uniform_yellowing > q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition=care_context > q_observed_probe__leaf_yellowing__yellowing_care_area_condition=airflow_humidity_area > q_observed_probe__leaf_yellowing__yellowing_progression_speed=slow_stable",
         "roundsUsed": 3
       }
     }

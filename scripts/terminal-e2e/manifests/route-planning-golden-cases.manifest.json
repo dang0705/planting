@@ -18,7 +18,7 @@
       "answerVariants": [
         [
           {
-            "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+            "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_condition",
             "optionKey": "watering_area"
           },
           {
@@ -39,7 +39,7 @@
       "answerVariants": [
         [
           {
-            "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+            "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_condition",
             "optionKey": "watering_area"
           },
           {
@@ -51,7 +51,7 @@
     },
     {
       "scenarioKey": "yellowing_leaf_age_disabled",
-      "label": "黄叶 + 新老叶旧答案禁用",
+      "label": "黄叶 + 新老叶既有答案禁用",
       "count": 8,
       "expectedPrimaryOutcomeKey": null,
       "expectedDecisionCauseKeys": [
@@ -189,7 +189,7 @@
     },
     {
       "scenarioKey": "structural_damage_old_injury",
-      "label": "结构损伤/旧伤",
+      "label": "结构损伤/既有伤",
       "count": 8,
       "expectedOutcomeKey": "structural_damage_old_injury",
       "expectedRouteKey": "holes_old_injury_route",
@@ -237,13 +237,13 @@
       "answerVariants": [
         [
           {
-            "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+            "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_condition",
             "optionKey": "watering_area"
           }
         ],
         [
           {
-            "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_gate",
+            "questionKey": "q_observed_probe__leaf_yellowing__yellowing_care_area_condition",
             "optionKey": "watering_area"
           },
           {

@@ -89,8 +89,8 @@ function isExplicitCareBehaviorTimelineQuestion(question = {}) {
     hasCareBehaviorTimelineSource(question)
 }
 
-function isLegacyWateringTimelineTarget(question = {}) {
-  const target = String(question?.targetDimension || '').trim().toLowerCase()
+function isSessionWateringTimelineTarget(question = {}) {
+  const target = String(question?.packageTopic || '').trim().toLowerCase()
   const qk = String(question?.questionKey || '').trim().toLowerCase()
   return qk.includes('watering_frequency_context') ||
     qk.includes('watering_context') ||
@@ -123,19 +123,19 @@ export function isCareBehaviorTimelineSentinelOption(option = {}) {
   })
 }
 
-export function isLegacyWateringTimelineQuestion(question = {}) {
+export function isSessionWateringTimelineQuestion(question = {}) {
   if (isExplicitCareBehaviorTimelineQuestion(question)) {
     return false
   }
-  return isLegacyWateringTimelineTarget(question)
+  return isSessionWateringTimelineTarget(question)
 }
 
 export function isCareBehaviorTimelineQuestion(question = {}) {
-  return isExplicitCareBehaviorTimelineQuestion(question) || isLegacyWateringTimelineQuestion(question)
+  return isExplicitCareBehaviorTimelineQuestion(question) || isSessionWateringTimelineQuestion(question)
 }
 
 export function isCareBehaviorWateringTimelineQuestion(question = {}) {
-  if (isLegacyWateringTimelineQuestion(question)) {
+  if (isSessionWateringTimelineQuestion(question)) {
     return true
   }
 
@@ -143,7 +143,7 @@ export function isCareBehaviorWateringTimelineQuestion(question = {}) {
     return false
   }
 
-  const target = String(question?.targetDimension || '').trim().toLowerCase()
+  const target = String(question?.packageTopic || '').trim().toLowerCase()
   const qk = String(question?.questionKey || '').trim().toLowerCase()
   const text = getQuestionText(question)
 
@@ -191,7 +191,7 @@ export function resolveCareBehaviorTimelineAutoAnswerOptionId(question = {}) {
     return ''
   }
 
-  if (isLegacyWateringTimelineQuestion(question)) {
+  if (isSessionWateringTimelineQuestion(question)) {
     return ''
   }
 
@@ -220,7 +220,7 @@ export function resolveCareBehaviorTimelineAutoAnswerOptionId(question = {}) {
 }
 
 export function resolveCareBehaviorTimelineRecordedAnswerOptionId(question = {}) {
-  if (!isCareBehaviorWateringTimelineQuestion(question) || isLegacyWateringTimelineQuestion(question)) {
+  if (!isCareBehaviorWateringTimelineQuestion(question) || isSessionWateringTimelineQuestion(question)) {
     return ''
   }
 

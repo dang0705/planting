@@ -37,45 +37,45 @@ function stringifyJson(value) {
   return JSON.stringify(value)
 }
 
-function normalizeEnum(value, allowed, fallback) {
+function normalizeEnum(value, allowed, conservative) {
   const normalized = String(value || '').trim().toLowerCase()
-  return allowed.includes(normalized) ? normalized : fallback
+  return allowed.includes(normalized) ? normalized : conservative
 }
 
-function normalizeOrgan(value, fallback = 'unknown') {
-  return normalizeEnum(value, ALLOWED_ORGANS, fallback)
+function normalizeOrgan(value, conservative = 'unknown') {
+  return normalizeEnum(value, ALLOWED_ORGANS, conservative)
 }
 
-function normalizeQualityGrade(value, fallback = 'medium') {
-  return normalizeEnum(value, ALLOWED_QUALITY_GRADES, fallback)
+function normalizeQualityGrade(value, conservative = 'medium') {
+  return normalizeEnum(value, ALLOWED_QUALITY_GRADES, conservative)
 }
 
-function normalizeAnalyzability(value, fallback = 'medium') {
-  return normalizeEnum(value, ALLOWED_ANALYZABILITY, fallback)
+function normalizeAnalyzability(value, conservative = 'medium') {
+  return normalizeEnum(value, ALLOWED_ANALYZABILITY, conservative)
 }
 
-function normalizeStrengthLevel(value, fallback = 'medium') {
-  return normalizeEnum(value, ALLOWED_STRENGTH_LEVELS, fallback)
+function normalizeStrengthLevel(value, conservative = 'medium') {
+  return normalizeEnum(value, ALLOWED_STRENGTH_LEVELS, conservative)
 }
 
-function normalizeConfidenceBand(value, fallback = 'medium') {
-  return normalizeEnum(value, ALLOWED_CONFIDENCE_BANDS, fallback)
+function normalizeConfidenceBand(value, conservative = 'medium') {
+  return normalizeEnum(value, ALLOWED_CONFIDENCE_BANDS, conservative)
 }
 
-function normalizeVisibilityScope(value, fallback = 'organ') {
-  return normalizeEnum(value, ALLOWED_VISIBILITY_SCOPES, fallback)
+function normalizeVisibilityScope(value, conservative = 'organ') {
+  return normalizeEnum(value, ALLOWED_VISIBILITY_SCOPES, conservative)
 }
 
-function normalizeAdmissionReadiness(value, fallback = 'cautious') {
-  return normalizeEnum(value, ALLOWED_ADMISSION_READINESS, fallback)
+function normalizeAdmissionReadiness(value, conservative = 'cautious') {
+  return normalizeEnum(value, ALLOWED_ADMISSION_READINESS, conservative)
 }
 
-function normalizeOrganSource(value, fallback = 'unknown') {
-  return normalizeEnum(value, ALLOWED_ORGAN_SOURCES, fallback)
+function normalizeOrganSource(value, conservative = 'unknown') {
+  return normalizeEnum(value, ALLOWED_ORGAN_SOURCES, conservative)
 }
 
-function normalizeRoutePrimaryAction(value, fallback = 'ask_first') {
-  return normalizeEnum(value, ALLOWED_ROUTE_PRIMARY_ACTIONS, fallback)
+function normalizeRoutePrimaryAction(value, conservative = 'ask_first') {
+  return normalizeEnum(value, ALLOWED_ROUTE_PRIMARY_ACTIONS, conservative)
 }
 
 function confidenceBandToScore(value) {
@@ -153,9 +153,9 @@ function resolveSubjectCompletenessLevel(inputSlotType = 'unknown', analyzabilit
   return 'unknown'
 }
 
-function normalizeText(value, fallback = '') {
+function normalizeText(value, conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function normalizeStringList(values = []) {

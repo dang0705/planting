@@ -5,59 +5,6 @@ const {
   normalizeDiagnosisRoutePrimaryAction
 } = require('../utils/diagnosis-contract')
 
-function buildPublicQuestionQueue(questionQueue = null) {
-  if (!questionQueue || typeof questionQueue !== 'object') {
-    return null
-  }
-
-  return {
-    questionQueueId: String(questionQueue?.questionQueueId || '').trim(),
-    sessionId: String(questionQueue?.sessionId || '').trim(),
-    roundId: String(questionQueue?.roundId || '').trim(),
-    roundIndex: Number(questionQueue?.roundIndex || 1),
-    routePrimaryAction: normalizeDiagnosisRoutePrimaryAction(questionQueue?.routePrimaryAction, ''),
-    queueStatus: String(questionQueue?.queueStatus || '').trim(),
-    queueDecision: questionQueue?.queueDecision && typeof questionQueue.queueDecision === 'object'
-      ? {
-          hasActionableItems: Number(questionQueue.queueDecision?.hasActionableItems || 0) ? 1 : 0,
-          exhaustedReason: String(questionQueue.queueDecision?.exhaustedReason || '').trim(),
-          serviceTarget: String(questionQueue.queueDecision?.serviceTarget || '').trim(),
-          decisionCauseKey: String(questionQueue.queueDecision?.decisionCauseKey || '').trim(),
-          decisionCauseCategory: String(questionQueue.queueDecision?.decisionCauseCategory || '').trim(),
-          decisionCauseText: String(questionQueue.queueDecision?.decisionCauseText || '').trim(),
-          decisionCauseDetails:
-            questionQueue.queueDecision?.decisionCauseDetails &&
-            typeof questionQueue.queueDecision.decisionCauseDetails === 'object'
-              ? questionQueue.queueDecision.decisionCauseDetails
-              : null
-        }
-      : null,
-    questionItems: (Array.isArray(questionQueue?.questionItems) ? questionQueue.questionItems : []).map(item => ({
-      questionKey: String(item?.questionKey || '').trim(),
-      questionId: String(item?.questionId || '').trim(),
-      targetSymptomKey: String(item?.targetSymptomKey || '').trim(),
-      questionGroupKey: String(item?.questionGroupKey || '').trim(),
-      targetDimension: String(item?.targetDimension || '').trim(),
-      routingScope: String(item?.routingScope || '').trim(),
-      questionText: String(item?.questionText || '').trim(),
-      helpText: String(item?.helpText || '').trim(),
-      currentPriority: Number(item?.currentPriority || 0),
-      estimatedInformationGain: Number(item?.estimatedInformationGain || 0),
-      serviceTarget: String(item?.serviceTarget || '').trim(),
-      appliesWhen: item?.appliesWhen || null,
-      asked: Number(item?.asked || 0) ? 1 : 0,
-      answered: Number(item?.answered || 0) ? 1 : 0,
-      invalidated: Number(item?.invalidated || 0) ? 1 : 0,
-      invalidReason: String(item?.invalidReason || '').trim(),
-      status: String(item?.status || '').trim() || 'pending'
-    })),
-    activeItemCount: Number(questionQueue?.activeItemCount || 0),
-    askedItemCount: Number(questionQueue?.askedItemCount || 0),
-    answeredItemCount: Number(questionQueue?.answeredItemCount || 0),
-    invalidatedItemCount: Number(questionQueue?.invalidatedItemCount || 0)
-  }
-}
-
 function buildPublicStopState(stopState = null) {
   if (!stopState || typeof stopState !== 'object') {
     return null
@@ -158,9 +105,9 @@ function buildCompactOutcomeEntry(outcome = null) {
   }
 }
 
-function toCompactFlag(value, fallback = null) {
+function toCompactFlag(value, conservative = null) {
   if (value === null || typeof value === 'undefined') {
-    return fallback
+    return conservative
   }
   return Number(value) ? 1 : 0
 }
@@ -276,7 +223,6 @@ function buildCompactFinalResult(roundResult = {}) {
 }
 
 module.exports = {
-  buildPublicQuestionQueue,
   buildPublicStopState,
   buildPublicOutputEligibility,
   buildCompactActionAdvice,

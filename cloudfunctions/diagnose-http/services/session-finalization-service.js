@@ -44,7 +44,7 @@ async function saveFinalDiagnosisSnapshot({
       dataBundleVersion: versionMetadata.dataBundleVersion,
       questionSystemVersion: versionMetadata.questionSystemVersion,
       resultExplanationVersion: versionMetadata.resultExplanationVersion,
-      legacyAdapterVersion: versionMetadata.legacyAdapterVersion
+      sessionAdapterVersion: versionMetadata.sessionAdapterVersion
     })
   } catch (error) {
     console.warn('写入 diagnosis_result_snapshots 失败（已降级忽略）:', error.message)

@@ -35,7 +35,7 @@ docs/ai-rules/diagnose-http-cloud-debugging.md
 4. `cloudbase-http-check.mjs`。
 5. terminal-e2e / batch / suite 回放脚本。
 6. replay / zero-model / DB-backed replay。
-7. `diagnosis_sessions`、`diagnosis_follow_ups`、`question_queue`、`visual_*` 相关查表。
+7. `diagnosis_sessions`、`diagnosis_follow_ups`、`question_package_snapshot`、`visual_*` 相关查表。
 8. `cloud1_dev` 与 production schema 分流。
 9. H5 管理页：
    - `diagnosis-review`
@@ -44,7 +44,7 @@ docs/ai-rules/diagnose-http-cloud-debugging.md
 11. CloudBase 函数日志、`requestId`、`FUNCTION_EXECUTE_FAIL`、`SYS_ERR`。
 12. `skipAuth`、匿名登录、Bearer token、`x-terminal-e2e`。
 13. 云函数部署、layer、bundled ZIP、COS deploy。
-14. ranking → route、outcome 瘦身、gate、问诊路径、runtime 的 live 验收。
+14. ranking → route、outcome 瘦身、condition、问诊路径、runtime 的 live 验收。
 15. 历史 session 暴露的客户端最终展示异常，例如 review/list 可见但真实 bug 在 result/read 或前端消费链路。
 
 ---
@@ -55,8 +55,8 @@ docs/ai-rules/diagnose-http-cloud-debugging.md
 |---|---:|---|
 | `code_explorer` | 高 | 定位 `diagnose-http`、terminal-e2e、replay、H5 管理页、schema helper、部署脚本 |
 | `implementer_deep` | 中高 | 修改 diagnose-http、replay、CloudBase、schema、H5 代理、部署脚本 |
-| `qa_reviewer` | 中高 | 审查 live 验收是否有效、是否拿旧 session / 错 schema / 错 wrapper 当证据 |
-| `architect_reviewer` | 中 | 涉及 route、outcome、gate、replay、schema 边界设计 |
+| `qa_reviewer` | 中高 | 审查 live 验收是否有效、是否拿既有 session / 错 schema / 错 wrapper 当证据 |
+| `architect_reviewer` | 中 | 涉及 route、outcome、condition、replay、schema 边界设计 |
 | `docs_keeper` | 中 | 整理排障文档、同步规则、归档踩坑记录 |
 | `implementer_fast` | 低 | 仅当是小范围脚本修复且 Dispatch Plan 明确指定 |
 
@@ -106,7 +106,7 @@ docs/ai-rules/diagnose-http-cloud-debugging.md
 2. 不得通过 startup preload 或 post-response preload 阻塞 `question/start` 首屏返回；预热逻辑不能成为请求关键路径。
 3. `start/answer` 主链仍必须保持严格 readiness，避免在依赖未就绪时进入真实诊断推进。
 4. `question/start` 可使用非严格 readiness，但只能接受 cached/deferred readiness；不能因为非严格 readiness 绕过后续 follow-up/final/output eligibility guard。
-5. `fast path`、`warm path`、`early return` 只允许缩短首题生成链路，不得改变 route、gate、outcome、final 资格判断。
+5. `fast path`、`warm path`、`early return` 只允许缩短首题生成链路，不得改变 route、condition、outcome、final 资格判断。
 
 CloudBase 配置约束：
 
@@ -202,7 +202,7 @@ dev_terminal_*
 - 42. 新增审核表的 collation 必须跟现有诊断表对齐
 - 46. diagnose SQL 表不要靠想当然查字段
 - 56. review list 若只在 live 报 `Illegal mix of collations`
-- 64. `--app-env=development` 的 smoke 若只写 prod schema，再回读 `cloud1_dev` 会读到旧 gate JSON：本次 `diag_1778900911740_co24xnlm` 验证已确认需按读写同 schema 执行
+- 64. `--app-env=development` 的 smoke 若只写 prod schema，再回读 `cloud1_dev` 会读到既有 condition JSON：本次 `diag_1778900911740_co24xnlm` 验证已确认需按读写同 schema 执行
 - 58. 以后所有本地测试先统一 schema，再开始调试
 - 61. diagnosis-review 合并回访数据时，先补表，再统一 schema helper
 - 62. 诊断函数不能因为 `NODE_ENV=production` 就强制锁死 prod schema
@@ -217,7 +217,7 @@ SCHEMA_ENV
 schema-resolver.js
 table()
 diagnosis_sessions
-question_queue
+question_package_snapshot
 visual_raw_image_records
 collation
 utf8mb4_0900_ai_ci
@@ -238,21 +238,21 @@ SQL_TIMEOUT
 2. 本地 / H5 / terminal e2e 默认优先查 `cloud1_dev`。
 3. 线上 / production 网关请求优先查 `cloud1-2grufevs395a9d5e`。
 4. 先看真实 schema，再写 SQL。
-5. `question_queue` 不要默认是每题一行，优先检查 JSON 字段。
+5. `question_package_snapshot` 不要默认是每题一行，优先检查 JSON 字段。
 6. `models.$runSQL` 预编译 SQL 不支持 `IS NULL`，改用 `<=> NULL`。
 7. 新表 collation 必须与主链表对齐。
 8. 显式 request env 优先，不得被 `NODE_ENV=production` 强行覆盖。
 9. `TERMINAL_E2E_FUNCTION_BASE_URL` 优先于默认网关地址时，必须配合正确的函数路径前缀（见 5.10）。
-10. 同一 smoke 验收要强制“写库 schema 与读库 schema 一致”：`diag_1778900911740_co24xnlm`（0 模型）曾在 `--app-env=development` 下写入 `cloud1`/prod，但读取走 `cloud1_dev` 时仍拿到了旧黄叶 JSON；问题复现后修订为读写同 schema 后通过。
-11. `visual_raw_image_records` 禁止对 `session_id` 强制 `COLLATE`；无历史兼容依赖时可改依赖 `idx_visual_raw_session_order(session_id,input_slot_order,created_at)`。
+10. 同一 smoke 验收要强制“写库 schema 与读库 schema 一致”：`diag_1778900911740_co24xnlm`（0 模型）曾在 `--app-env=development` 下写入 `cloud1`/prod，但读取走 `cloud1_dev` 时仍拿到了既有黄叶 JSON；问题复现后修订为读写同 schema 后通过。
+11. `visual_raw_image_records` 禁止对 `session_id` 强制 `COLLATE`；无历史适配依赖时可改依赖 `idx_visual_raw_session_order(session_id,input_slot_order,created_at)`。
 12. `diagnosis_sessions` 相关查询需补齐 `idx_diagnosis_sessions_created_at` 与 `idx_diagnosis_sessions_outcome_created`，用于 list 的排序与筛选。
 13. review list 主查询应统一使用 `diagnosis_sessions LEFT JOIN batch` 的 compact 模式，配合 `SQL_TIMEOUT`（建议 5s）与降级返回（partial/degraded），避免 >5s 长挂。
 
-### 5.3.1 e2e 路径与 service base 的兼容说明（补充）
+### 5.3.1 e2e 路径与 service base 的适配说明（补充）
 
 对应原文重点章节：
 
-- 13. 追问后最终输出不能靠空候选或纯先验硬判（本小节为部署脚本路径兼容补充）
+- 13. 追问后最终输出不能靠空候选或纯先验硬判（本小节为部署脚本路径适配补充）
 - 20. CloudBase MCP 函数服务的参数形态别猜（本小节为执行入口参数与 URL 约束补充）
 - 26. `scripts/deploy-function.js` 不是闭环验收路径（本小节为 smoke 运行方式补充）
 
@@ -270,7 +270,7 @@ webfn=true
 
 排查原则：
 
-1. 不再适用：`https://<envId>.service.tcloudbase.com/diagnose` 这类旧写法。服务域名下诊断入口为 `.../diagnose-http/...`。
+1. 不再适用：`https://<envId>.service.tcloudbase.com/diagnose` 这类既有写法。服务域名下诊断入口为 `.../diagnose-http/...`。
 2. 不再适用：用服务域名时继续拼 `webfn=true`。
 3. 诊断函数健康检查与 smoke 在服务域名下应使用 ` /diagnose-http/health`。
 4. 若使用 `TERMINAL_E2E_FUNCTION_BASE_URL`，建议明确写 `--app-env=development`、`--skip-auth=true`、`--terminal-e2e=true`。
@@ -420,7 +420,7 @@ sips
 适用场景：
 
 - 用户给出 `diag_*` session，问题发生在客户端运行时、最终展示、follow-up、diagnose 结果页或 review/list 回放中。
-- 任务目标是确认 route / outcome / gate / runtime 的用户可见结果，而不是重新调用模型。
+- 任务目标是确认 route / outcome / condition / runtime 的用户可见结果，而不是重新调用模型。
 
 关键词：
 
@@ -450,7 +450,7 @@ normalizeDiagnosisResult
    - `src/utils/diagnose-flow.js`
    - `src/pages/diagnose/follow-up.vue`
    - `src/pages/diagnose/diagnose.vue`
-5. 如果旧 snapshot 单结果、新 payload 多结果并存，验收要确认前端最终展示使用最新多 outcome 契约。
+5. 如果既有 snapshot 单结果、新 payload 多结果并存，验收要确认前端最终展示使用最新多 outcome 契约。
 6. 如果 DNS 或网关抖动导致重复 smoke 失败，必须记录最近一次成功的 HTTP 证据、函数部署证据、DB / 日志证据，并把后续失败标为网络层风险，不能反向证明业务验收通过。
 7. goal 完成标准必须按目标验收契约逐项全绿；DB、replay、日志、命令成功或 review 回放任一单项通过都不等于完成。
 
@@ -490,7 +490,7 @@ review/detail
 review/images
 manual
 batch
-legacy
+session
 ```
 
 排查原则：
@@ -502,7 +502,7 @@ legacy
 5. 改 `vite.config.js` 后必须重启 `npm run dev:h5`。
 6. `history` 是 owner-scoped，不适合内部审核页查全量。
 7. 内部审核页走 `diagnosis/review/list/detail/images`。
-8. `manual` 不只靠 platform tag，旧真人小程序会话可按 openid 形态推断。
+8. `manual` 不只靠 platform tag，既有真人小程序会话可按 openid 形态推断。
 9. review 图片预取应按分页和并发上限限流，不在列表页一次性拉齐所有 replay 图。
 
 ---
@@ -549,7 +549,7 @@ plant-sample
 - 13. 追问后最终输出不能靠空候选或纯先验硬判
 - 14. 宽景/全株图里的结构性虫害候选不得直接 final
 - 32. 上下文依赖型问题不能被泛化视觉证据直接授权输出
-- 33. outcome regression manifest 也可能固化旧 bug
+- 33. outcome regression manifest 也可能固化既有 bug
 - 34. 首轮显式 observedEvidenceSet 不能再触发同 symptom 的视觉重复确认
 - 36. explicit observed fact 的阻断不能只做在 selector 前半段
 - 47. output eligibility 和 low-confidence 不能各算各的
@@ -563,12 +563,12 @@ plant-sample
 
 ```text
 output_eligibility
-uncertain-gate
+uncertain-condition
 low-confidence
 observedEvidenceSet
-legacy_observed_symptom
+session_observed_symptom
 visual_presence
-question_queue
+question_package_snapshot
 question governance
 candidate_retained
 observed_evidence_set
@@ -593,16 +593,16 @@ outcome
 3. 泛化视觉症状不能直接授权具体养护原因。
 4. 宽景结构性虫害候选只能 candidate retained，不能直接入正式证据。
 5. explicit observed fact 必须在 selector 与 final merge 两层阻断同 symptom visual confirmation。
-6. output eligibility 与 uncertain gate 必须使用同一套 guard。
-7. regression manifest 可能固化旧 bug，规则修复后必须重新审计。
+6. output eligibility 与 uncertain condition 必须使用同一套 guard。
+7. regression manifest 可能固化既有 bug，规则修复后必须重新审计。
 8. forced static confirm 必须走 payload builder，不能直接返回 raw question row。
 9. `diagnose-http` 的 route / high-specificity / fast path 只能加速路径规划，不得绕过主链 follow-up / final 输出守卫；黄叶首个浇水频率题命中 `often_wet` 或 `often_dry` 后仍必须等待光照、施肥、整体状态等必答分组，不能直接 final。
 10. 修改快捷路径时必须同时补两类证据：负向 smoke（应继续追问而非 final）和正向 smoke（必答分组完成后仍能 final）；只跑完整 happy path 不足以证明未复发。
 11. 性能优化不得把 `diagnosis_sessions.runtime_snapshot_json`、当前 round 的 `diagnosis_follow_ups`、当前答案 mark / answer row、final snapshot 改成无协议的后台异步写；这些是 answer 下一轮恢复状态的同步边界。
-12. 允许后台补写的仅限 review / audit / 可兜底状态，例如 `question_queue`、`stop_state`、`observed_evidence_set`、`diagnosis_symptom_observations`、`visual_supervision`；补写失败必须打日志，不能影响主响应。
-13. `question/start` 在显式传 `plantCatalogId` 且无 `userPlantId` 时，不应再把 catalog id 当 user plant id 做兼容探测；否则会引入无意义 SQL 查询并拖慢首题。
-14. route 静态缓存必须按 SQL schema 隔离；不得让 `cloud1_dev` 与 production 共享题库、route、gate 或 outcome 缓存。
-15. 未证明等价前，禁止组合缓存 `outcome_routes`、`outcome_route_gates`、`diagnosis_outcomes` 或 route planner 输出；历史 v6 曾因此导致黄叶完整路径缺 `fertilizer_repot_stress` 并混入 `root_stress`。仅 answer effect 行可以做单题缓存精确拼接，且必须跑负样本和完整路径正样本。
+12. 允许后台补写的仅限 review / audit / 可保守状态，例如 `question_package_snapshot`、`stop_state`、`observed_evidence_set`、`diagnosis_symptom_observations`、`visual_supervision`；补写失败必须打日志，不能影响主响应。
+13. `question/start` 在显式传 `plantCatalogId` 且无 `userPlantId` 时，不应再把 catalog id 当 user plant id 做适配探测；否则会引入无意义 SQL 查询并拖慢首题。
+14. route 静态缓存必须按 SQL schema 隔离；不得让 `cloud1_dev` 与 production 共享题库、route、condition 或 outcome 缓存。
+15. 未证明等价前，禁止组合缓存 `outcome_routes`、`outcome_route_conditions`、`diagnosis_outcomes` 或 route planner 输出；历史 v6 曾因此导致黄叶完整路径缺 `fertilizer_repot_stress` 并混入 `root_stress`。仅 answer effect 行可以做单题缓存精确拼接，且必须跑负样本和完整路径正样本。
 16. active follow-up 响应可瘦身，但必须保留下一题展示所需字段：`diagnosisSessionId`、`roundId`、`stage`、`status`、`stopReason`、`followUpRequired`、`questions[*].questionId/questionKey/options[*].optionId/optionKey/text`。不得在 follow-up 响应里返回误导前端的 `finalResult` / `visibleOutcomes`。
 17. active runtime snapshot 可裁剪 review-only 重字段，但 `routeDecision` 只能降为 compact 权威结构，不能删除；`metrics.routeDecision` 不再作为权威出口。
 18. 每次压 `question/start` / `diagnosis/answer` 延迟后，至少记录：负样本 `often_wet`、负样本 `often_dry`、完整正样本 `often_wet -> stronger_direct_light -> recent_heavy_fertilizer_or_repot -> with_wilting_or_drop`、warm benchmark 的 avg / min / max / p50 / p95 / p99、函数 alias 与预置并发状态。

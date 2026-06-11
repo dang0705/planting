@@ -6,7 +6,7 @@ This revision supersedes the previous diagnosis facts that said regular route fo
 
 生成日期：2026-06-06
 
-本包不是把旧文档继续同步一遍，而是把知识体系治理成：
+本包不是把既有文档继续同步一遍，而是把知识体系治理成：
 
 ```text
 蓝图归档；
@@ -52,10 +52,10 @@ AGENTS.md
 docs/CURRENT.md
 ```
 
-只有触发具体任务域时，才读 `docs/ACTIVE_CONTRACTS.md`、`docs/RUNBOOK.md` 或命中的源码文件。旧的 `docs/code-logics/**`、`docs/new-rules/**`、`docs/route规划及outcome瘦身计划/**`、`docs/ai-runs/**` 默认不读。
+只有触发具体任务域时，才读 `docs/ACTIVE_CONTRACTS.md`、`docs/RUNBOOK.md` 或命中的源码文件。既有的 `docs/code-logics/**`、`docs/new-rules/**`、`docs/route规划及outcome瘦身计划/**`、`docs/ai-runs/**` 默认不读。
 
 ## 重要边界
 
 - 本包基于上传文件静态分析生成，未连接你的实际 Git commit。落地后应把 `verified_at_commit: unknown-from-upload` 改成当前 commit hash。
 - 如果上传包与真实工作区不一致，以真实工作区代码为准。
-- 旧文档不要直接删除；先按 `docs/ARCHIVE_INDEX.md` 和 `docs/_doc-status.yml` 标记为 archive-only / retrieval-only。
+- 既有文档不要直接删除；先按 `docs/ARCHIVE_INDEX.md` 和 `docs/_doc-status.yml` 标记为 archive-only / retrieval-only。

@@ -6,9 +6,9 @@ const {
   getContextRequiredProblemGuard: _getContextRequiredProblemGuard
 } = require('./context-required-problem-guard')
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 const ROOT_ROT_RUNTIME_CLASS_KEY = 'root_rot_wet_wilt_mode'

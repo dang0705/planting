@@ -8,9 +8,9 @@ function normalizeText(value = '') {
   return String(value || '').trim()
 }
 
-function normalizeNumber(value, fallback = null) {
+function normalizeNumber(value, conservative = null) {
   const number = Number(value)
-  return Number.isFinite(number) ? number : fallback
+  return Number.isFinite(number) ? number : conservative
 }
 
 async function getFreshCachedWeatherContext(openid = '') {

@@ -8,7 +8,7 @@
 
 - `/diagnosis/start`：从图片/既有上下文进入诊断主链。
 - `/diagnosis/question/start`：从手动症状模式进入问诊，当前黄叶 4 题题包与枯萎/发蔫 5 题题包由此入口产生。
-- `/diagnosis/answer`：提交题包答案或非 package 兼容回答后重跑诊断主链。
+- `/diagnosis/answer`：提交题包答案或非 package 当前回答后重跑诊断主链。
 
 这些入口不是同一套响应包装路径，差异会影响题包是否能完整透出。
 
@@ -32,7 +32,7 @@
 
 代码来源：`cloudfunctions/diagnose-http/handlers/diagnosis-handlers.js` 114-140。
 
-回答入口会做严格归属校验：必须有 `diagnosisSessionId`，必须加载 session，必须校验当前轮次、问题 key、option key 与题包 snapshot 或非 package 兼容行归属。package answer submit 会作为当前题包轮次的终止提交状态传入诊断引擎；该入口不能被文档描述成“前端传什么答案都可进入 route 重算”。
+回答入口会做严格归属校验：必须有 `diagnosisSessionId`，必须加载 session，必须校验当前轮次、问题 key、option key 与题包 snapshot 或非 package 当前行归属。package answer submit 会作为当前题包轮次的终止提交状态传入诊断引擎；该入口不能被文档描述成“前端传什么答案都可进入 route 重算”。
 
 ## 5. 手动症状模式入口
 
@@ -61,9 +61,9 @@
 | 入口 | 是否经过 presenter | 常规题数 | 固定题包 |
 |---|---:|---:|---|
 | `/diagnosis/start` | 是 | 1 | 不作为手动固定题包主入口 |
-| `/diagnosis/question/start` | 否，直接 `buildFrontendResponse` | 非 package 当前不转入 start 兼容诊断 | 静态 package start 返回 active `questions`：黄叶 4 题，枯萎/发蔫 5 题 |
+| `/diagnosis/question/start` | 否，直接 `buildFrontendResponse` | 非 package 当前不转入 start 当前诊断 | 静态 package start 返回 active `questions`：黄叶 4 题，枯萎/发蔫 5 题 |
 | `/diagnosis/answer` | 是 | 1 | 整包提交后重算或进入专用 resolver；后端按 package snapshot ownership 校验 |
 
 ## 8. 风险边界
 
-文档必须明确：黄叶 4 题包与枯萎/发蔫 5 题包已经是 `getQuestionPackageByMode(mode)` 驱动的固定 package 协议，响应、前端展示/提交、package snapshot 与归属校验均应允许包内全部题目。黄叶 4 题语义不因新增 `wilting_droop` 改变。非 package 兼容路径仍按单题 queue-anchor 语义工作，不能把 package 规则外推到所有模式。
+文档必须明确：黄叶 4 题包与枯萎/发蔫 5 题包已经是 `getQuestionPackageByMode(mode)` 驱动的固定 package 协议，响应、前端展示/提交、package snapshot 与归属校验均应允许包内全部题目。黄叶 4 题语义不因新增 `wilting_droop` 改变。非 package 当前路径仍按单题 package state-anchor 语义工作，不能把 package 规则外推到所有模式。

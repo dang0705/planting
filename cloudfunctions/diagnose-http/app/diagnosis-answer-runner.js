@@ -32,20 +32,20 @@ const outcomeRouteRepository = require('../repositories/outcome-route-repository
 const { createReviewTimingLogger } = require('../repositories/diagnosis-review/review-performance')
 const { triggerStaticRepositoryCachePreload } = require('./static-cache-preloader')
 
-function getLegacyQuestionRowRuntime() {
-  return require('./legacy-question-row-runtime')
+function getSessionQuestionRowRuntime() {
+  return require('./session-question-row-runtime')
 }
 
-function getLegacyAnswerSubmitRuntime() {
-  return require('./legacy-answer-submit-runtime')
+function getSessionAnswerSubmitRuntime() {
+  return require('./session-answer-submit-runtime')
 }
 
 function getAnswerRevisionRuntime() {
   return require('./answer-revision-runtime')
 }
 
-function getLegacyImageInputRuntime() {
-  return require('./legacy-image-input-runtime')
+function getSessionImageInputRuntime() {
+  return require('./session-image-input-runtime')
 }
 
 async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } = {}) {
@@ -147,31 +147,31 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   let runtimeAskedQuestionKeys = refreshedSessionState.askedQuestionKeys
   let runtimeAnsweredQuestionGroupKeys = refreshedSessionState.answeredQuestionGroupKeys || []
   let runtimeUnknownCountByGroup = refreshedSessionState.unknownCountByGroup
-  const needsLegacyQuestionState = !isTerminalQuestionPackageSubmit || hasImageInputs
-  const legacyQuestionState = needsLegacyQuestionState
-    ? getLegacyQuestionRowRuntime().resolveLegacyQuestionState(refreshedSessionState)
+  const needsSessionQuestionState = !isTerminalQuestionPackageSubmit || hasImageInputs
+  const sessionQuestionState = needsSessionQuestionState
+    ? getSessionQuestionRowRuntime().resolveSessionQuestionState(refreshedSessionState)
     : { rows: [], progress: null }
-  const legacyQuestionRowsForSession = legacyQuestionState.rows
-  const legacyQuestionProgress = legacyQuestionState.progress
+  const sessionQuestionRowsForSession = sessionQuestionState.rows
+  const sessionQuestionProgress = sessionQuestionState.progress
   const questionPackageSnapshot = resolveQuestionPackageSnapshot(refreshedSessionState)
   let runtimeAnswerOptionMappings = []
   let runtimeRouteAnswerEffects = []
-  let legacyQuestionRowsForRound = legacyQuestionRowsForSession
+  let sessionQuestionRowsForRound = sessionQuestionRowsForSession
   let runtimeAskedQuestionRows = []
   const requiredAnswerPersistenceTasks = []
   const deferredAnswerPersistenceJobs = []
 
   if (hasAnswers) {
     const questionKeys = Array.from(new Set(answers.map(item => item.questionKey).filter(Boolean)))
-    const sessionAnsweredLegacyQuestionKeys = isTerminalQuestionPackageSubmit
+    const sessionAnsweredSessionQuestionKeys = isTerminalQuestionPackageSubmit
       ? []
-      : getLegacyQuestionRowRuntime().collectAnsweredLegacyQuestionKeys(
-          legacyQuestionRowsForSession
+      : getSessionQuestionRowRuntime().collectAnsweredSessionQuestionKeys(
+          sessionQuestionRowsForSession
         )
     const routeAnswerEffectQuestionKeys = Array.from(
       new Set([
         ...questionKeys,
-        ...(isTerminalQuestionPackageSubmit ? [] : sessionAnsweredLegacyQuestionKeys),
+        ...(isTerminalQuestionPackageSubmit ? [] : sessionAnsweredSessionQuestionKeys),
         ...(Array.isArray(refreshedSessionState.answeredAnswers)
           ? refreshedSessionState.answeredAnswers
               .map(item => String(item?.questionKey || '').trim())
@@ -204,12 +204,12 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
               routeAnswerEffectsPromise
             ])
           : await Promise.all([
-              getLegacyAnswerSubmitRuntime().validateLegacyAnswerOwnership({
+              getSessionAnswerSubmitRuntime().validateSessionAnswerOwnership({
                 sessionId,
                 answers,
                 answerRound,
                 sessionState,
-                rows: legacyQuestionRowsForSession
+                rows: sessionQuestionRowsForSession
               }),
               optionMappingPromise,
               routeAnswerEffectsPromise
@@ -232,18 +232,18 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
           questionOptionMappingsFromStore,
           buildPackageAnswerOptionMappings(questionPackageSnapshot)
         )
-      : getLegacyAnswerSubmitRuntime().buildLegacyAnswerOptionMappings(
+      : getSessionAnswerSubmitRuntime().buildSessionAnswerOptionMappings(
           questionKeys,
           questionOptionMappingsFromStore
         )
     runtimeAnswerOptionMappings = optionMappings
-    legacyQuestionRowsForRound = getLegacyQuestionRowRuntime().resolveLegacyOwnershipRows(
+    sessionQuestionRowsForRound = getSessionQuestionRowRuntime().resolveSessionOwnershipRows(
       ownership,
-      legacyQuestionRowsForSession
+      sessionQuestionRowsForSession
     )
     runtimeAskedQuestionRows = isTerminalQuestionPackageSubmit
       ? []
-      : getLegacyQuestionRowRuntime().buildAskedLegacyQuestionRows(legacyQuestionRowsForRound)
+      : getSessionQuestionRowRuntime().buildAskedSessionQuestionRows(sessionQuestionRowsForRound)
     const validPairs = new Set(optionMappings.map(item => `${item.questionKey}::${item.optionKey}`))
     const invalidPairs = answers.filter(
       item => !validPairs.has(`${item.questionKey}::${item.optionKey}`)
@@ -262,9 +262,9 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
         answers,
         dirtyQuestionKey,
         optionMappings,
-        legacyQuestionRows: legacyQuestionRowsForSession,
+        sessionQuestionRows: sessionQuestionRowsForSession,
         expectedRound,
-        legacyQuestionProgress
+        sessionQuestionProgress
       })
       answerRevision = revisionRuntime.answerRevision
       uiPatch = revisionRuntime.uiPatch
@@ -274,7 +274,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
       runtimeAskedQuestionKeys = revisionRuntime.runtimeAskedQuestionKeys
       runtimeAnsweredQuestionGroupKeys = revisionRuntime.runtimeAnsweredQuestionGroupKeys
       runtimeUnknownCountByGroup = revisionRuntime.runtimeUnknownCountByGroup
-      legacyQuestionRowsForRound = revisionRuntime.legacyQuestionRowsForRound
+      sessionQuestionRowsForRound = revisionRuntime.sessionQuestionRowsForRound
       runtimeAskedQuestionRows = revisionRuntime.runtimeAskedQuestionRows
     } else if (isTerminalQuestionPackageSubmit) {
       const packageRuntimeState = buildPackageAnswerRuntimeState({
@@ -289,38 +289,38 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
       runtimeUnknownCountByGroup = packageRuntimeState.runtimeUnknownCountByGroup
       runtimeAskedQuestionRows = packageRuntimeState.runtimeAskedQuestionRows
     } else {
-      const legacySubmitRuntime =
-        await getLegacyAnswerSubmitRuntime().applyLegacyAnswerSubmitRuntime({
+      const sessionSubmitRuntime =
+        await getSessionAnswerSubmitRuntime().applySessionAnswerSubmitRuntime({
           sessionId,
           openid,
           answerRound,
           answers,
           optionMappings,
-          legacyQuestionProgress,
+          sessionQuestionProgress,
           sessionState: refreshedSessionState,
-          rows: legacyQuestionRowsForRound,
+          rows: sessionQuestionRowsForRound,
           deferredJobs: deferredAnswerPersistenceJobs,
           timing
         })
-      const markResult = legacySubmitRuntime.markResult
+      const markResult = sessionSubmitRuntime.markResult
       if (Array.isArray(markResult?.pendingWrites)) {
         requiredAnswerPersistenceTasks.push(...markResult.pendingWrites)
       }
-      runtimeAnswers = legacySubmitRuntime.runtimeAnswers
-      runtimeAskedQuestionKeys = legacySubmitRuntime.runtimeAskedQuestionKeys
-      runtimeAnsweredQuestionGroupKeys = legacySubmitRuntime.runtimeAnsweredQuestionGroupKeys
-      runtimeUnknownCountByGroup = legacySubmitRuntime.runtimeUnknownCountByGroup
-      legacyQuestionRowsForRound = legacySubmitRuntime.rowSnapshot
-      runtimeAskedQuestionRows = legacySubmitRuntime.askedQuestionRows
+      runtimeAnswers = sessionSubmitRuntime.runtimeAnswers
+      runtimeAskedQuestionKeys = sessionSubmitRuntime.runtimeAskedQuestionKeys
+      runtimeAnsweredQuestionGroupKeys = sessionSubmitRuntime.runtimeAnsweredQuestionGroupKeys
+      runtimeUnknownCountByGroup = sessionSubmitRuntime.runtimeUnknownCountByGroup
+      sessionQuestionRowsForRound = sessionSubmitRuntime.rowSnapshot
+      runtimeAskedQuestionRows = sessionSubmitRuntime.askedQuestionRows
     }
   }
 
   if (hasImageInputs) {
-    await getLegacyImageInputRuntime().prepareLegacyImageInputRuntime({
+    await getSessionImageInputRuntime().prepareSessionImageInputRuntime({
       sessionId,
       openid,
       answerRound,
-      legacyQuestionProgress,
+      sessionQuestionProgress,
       visualBatchTrace: refreshedSessionState.visualBatchTrace || null
     })
 
@@ -391,7 +391,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
       stage: 'question',
       sessionId,
       answerOptionMappings: runtimeAnswerOptionMappings,
-      storedQuestionRows: isTerminalQuestionPackageSubmit ? [] : legacyQuestionRowsForRound,
+      storedQuestionRows: isTerminalQuestionPackageSubmit ? [] : sessionQuestionRowsForRound,
       preloadedAskedQuestionRows: runtimeAskedQuestionRows,
       preloadedRouteAnswerEffects: runtimeRouteAnswerEffects,
       terminalQuestioningState: isTerminalQuestionPackageSubmit,
@@ -462,7 +462,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     skipPersistence,
     awaitPersistence: !shouldReturnBeforeRoundPersistence,
     clientContext,
-    legacyQuestionRows: isTerminalQuestionPackageSubmit ? null : legacyQuestionRowsForRound
+    sessionQuestionRows: isTerminalQuestionPackageSubmit ? null : sessionQuestionRowsForRound
   })
   runDeferredAnswerPersistence(sessionId, deferredAnswerPersistenceJobs)
 

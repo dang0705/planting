@@ -25,9 +25,9 @@ function getSchemaCache(schema) {
   return cacheBySchema.get(safeSchema)
 }
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value ?? '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function normalizeCacheSignature(items = []) {
@@ -78,7 +78,7 @@ function mapClassRow(row = {}) {
     dataSource: normalizeText(row.data_source),
     auditNote: normalizeText(row.audit_note),
     questionModeV1: normalizeFollowupMode(row.question_mode_v1),
-    runtimeGateRule: normalizeText(row.runtime_gate_rule, 'soft'),
+    runtimeConditionRule: normalizeText(row.runtime_condition_rule, 'soft'),
     runtimeNotes: normalizeText(row.runtime_notes)
   }
 }
@@ -141,7 +141,7 @@ async function querySymptomClasses(classKeys = []) {
           data_source,
           audit_note,
           question_mode_v1,
-          runtime_gate_rule,
+          runtime_condition_rule,
           runtime_notes
         FROM ${table('symptom_classes')}
         WHERE class_key IN ${sqlInList(safeKeys)}
@@ -153,7 +153,7 @@ async function querySymptomClasses(classKeys = []) {
     return (result?.data?.executeResultList || []).map(mapClassRow)
   } catch (error) {
     if (isMissingRuntimeTableError(error)) {
-      console.warn('symptom class runtime tables not ready, fallback to legacy flow:', error.message)
+      console.warn('symptom class runtime tables not ready, conservative to session flow:', error.message)
       return []
     }
     throw error
@@ -199,7 +199,7 @@ async function querySymptomClassMappings(symptomKeys = []) {
     return (result?.data?.executeResultList || []).map(mapMappingRow)
   } catch (error) {
     if (isMissingRuntimeTableError(error)) {
-      console.warn('symptom class mapping table not ready, fallback to legacy flow:', error.message)
+      console.warn('symptom class mapping table not ready, conservative to session flow:', error.message)
       return []
     }
     throw error

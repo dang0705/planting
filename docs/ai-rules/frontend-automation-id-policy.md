@@ -20,7 +20,7 @@
 
 1. `id` 必须稳定、语义清楚，用于自动化定位和用户可见状态断言。
 2. 动态 `id` 只允许使用稳定业务 key，例如 `plant.id`、`slotType`、`questionId`、`optionId`、`record._id`。
-3. 深链或历史兼容页面若上游数据缺失稳定 key，可以显式写入 fallback 契约，例如 `questionIndex`、`optionKey`、`optionIndex`；QA 使用前必须按文档确认 fallback 规则。
+3. 深链或历史适配页面若上游数据缺失稳定 key，可以显式写入 fallback 契约，例如 `questionIndex`、`optionKey`、`optionIndex`；QA 使用前必须按文档确认 fallback 规则。
 4. 禁止把 `openid`、token、CloudBase 环境密钥、完整 `diagnosisSessionId`、route debug key、prompt、模型原始返回写进 `id`。
 5. 自动化不得依赖中文文案、Tailwind class、页面层级顺序或截图坐标作为首选定位方式。
 6. 开发/自动化辅助入口必须标明为辅助入口，不能单独作为真实用户路径验收通过证据。
@@ -119,8 +119,8 @@ MCP 连接成功、页面能打开、截图存在，都不是业务验收通过�
   5. 问诊选项 id 可命中，并且后续提交走 /diagnosis/answer
   6. 该会话证据 sourceType=manual_symptom_mode，可在 result/review/detail 或日志中确认
   7. diagnosis-result-page-outcome-list 或 diagnosis-result-page-empty 可命中
-  8. legacy `watering_frequency_context` / watering target 题不管是否带 `uiVariant=care_behavior_timeline`，都应验收 `diagnose-care-behavior-timeline-{questionId}`
-  9. 旧频次 options `often_wet / normal_or_stable / often_dry` 不应作为自动化点击目标；仅 `unknown` / `unclear` / “说不清” / “没留意” 可见/可见到
+  8. session `watering_frequency_context` / watering target 题不管是否带 `uiVariant=care_behavior_timeline`，都应验收 `diagnose-care-behavior-timeline-{questionId}`
+  9. 既有频次 options `often_wet / normal_or_stable / often_dry` 不应作为自动化点击目标；仅 `unknown` / `unclear` / “说不清” / “没留意” 可见/可见到
   10. `care_behavior_timeline` 为隐藏技术 answer（非用户可见 option），仅用于 `answers[]` 合法占位；真实行为数据以 `careBehaviorTimeline` sidecar 作为准入依据
   11. 问诊时间线题只保留“说不清/没留意” option；普通浇水选项不应可见
   12. timeline marker 仅用于显示/断言（`diagnose-care-behavior-{water|fertilize|light}-{yyyy-mm-dd}`），用户可点击 toggle 统一由 action chip（`diagnose-care-behavior-action-{water|fertilize|light}-{yyyy-mm-dd}`）执行

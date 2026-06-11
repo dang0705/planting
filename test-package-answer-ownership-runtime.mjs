@@ -30,7 +30,7 @@ const questionPackageSnapshot = {
     {
       questionKey: 'q_package_1',
       questionGroupKey: 'care_water',
-      targetDimension: 'watering_frequency',
+      packageTopic: 'watering_frequency',
       targetSymptomKey: 'leaf_yellowing',
       uiVariant: 'care_behavior_timeline',
       questionText: '浇水频率如何？',
@@ -42,7 +42,7 @@ const questionPackageSnapshot = {
     {
       questionKey: 'q_package_2',
       questionGroupKey: 'care_light',
-      targetDimension: 'light_change',
+      packageTopic: 'light_change',
       targetSymptomKey: 'leaf_yellowing',
       questionText: '光照是否变化？',
       options: [

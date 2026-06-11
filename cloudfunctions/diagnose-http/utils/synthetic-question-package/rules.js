@@ -1,14 +1,14 @@
 'use strict'
 
 const {
-  QUESTION_TARGET_DIMENSIONS,
-  normalizeQuestionTargetDimension
-} = require('../question-target-dimension')
+  QUESTION_PACKAGE_TOPICS,
+  normalizeQuestionPackageTopic
+} = require('../question-package-topic')
 const { normalizeText } = require('./keys')
 const {
   ORTHOGONAL_DIMENSION_PRIORITY_BY_PATTERN,
   ORTHOGONAL_DIMENSION_PRIORITY_BY_SYMPTOM
-} = require('./dimension-priorities')
+} = require('./topic-priorities')
 const SYNTHETIC_DIRECT_PROBLEM_EFFECTS_BY_SYMPTOM = require('./direct-effects')
 
 function isStructuralChewingSymptom(item = {}) {
@@ -75,22 +75,22 @@ function buildOrthogonalProbeDimensionOrder(item = {}) {
   const symptomSpecific = ORTHOGONAL_DIMENSION_PRIORITY_BY_SYMPTOM[symptomKey] || []
   const base = ORTHOGONAL_DIMENSION_PRIORITY_BY_PATTERN[patternKey] || []
 
-  const fallback = locationKey === 'stem'
+  const conservative = locationKey === 'stem'
     ? [
-        QUESTION_TARGET_DIMENSIONS.TISSUE_MOISTURE,
-        QUESTION_TARGET_DIMENSIONS.PROGRESSION,
-        QUESTION_TARGET_DIMENSIONS.HOST_CONFIRMATION
+        QUESTION_PACKAGE_TOPICS.TISSUE_MOISTURE,
+        QUESTION_PACKAGE_TOPICS.PROGRESSION,
+        QUESTION_PACKAGE_TOPICS.HOST_CONFIRMATION
       ]
     : [
-        QUESTION_TARGET_DIMENSIONS.DISTRIBUTION_SCOPE,
-        QUESTION_TARGET_DIMENSIONS.PROGRESSION,
-        QUESTION_TARGET_DIMENSIONS.HOST_CONFIRMATION
+        QUESTION_PACKAGE_TOPICS.DISTRIBUTION_SCOPE,
+        QUESTION_PACKAGE_TOPICS.PROGRESSION,
+        QUESTION_PACKAGE_TOPICS.HOST_CONFIRMATION
       ]
 
-  const combined = [...symptomSpecific, ...base, ...fallback]
+  const combined = [...symptomSpecific, ...base, ...conservative]
 
-  if (locationKey === 'leaf' && !combined.includes(QUESTION_TARGET_DIMENSIONS.UNDERSIDE_PRESENCE)) {
-    combined.push(QUESTION_TARGET_DIMENSIONS.UNDERSIDE_PRESENCE)
+  if (locationKey === 'leaf' && !combined.includes(QUESTION_PACKAGE_TOPICS.UNDERSIDE_PRESENCE)) {
+    combined.push(QUESTION_PACKAGE_TOPICS.UNDERSIDE_PRESENCE)
   }
   if (
     symptomKey === 'black_spots_spreading' ||
@@ -98,58 +98,58 @@ function buildOrthogonalProbeDimensionOrder(item = {}) {
     symptomKey === 'irregular_blotches'
   ) {
     const blockedVisualFactReviewDimensions = new Set([
-      QUESTION_TARGET_DIMENSIONS.SURFACE_RESIDUE,
-      QUESTION_TARGET_DIMENSIONS.TISSUE_INTEGRITY
+      QUESTION_PACKAGE_TOPICS.SURFACE_RESIDUE,
+      QUESTION_PACKAGE_TOPICS.TISSUE_INTEGRITY
     ])
     return Array.from(new Set([
-      QUESTION_TARGET_DIMENSIONS.LESION_WATER_SOAKING,
-      QUESTION_TARGET_DIMENSIONS.LESION_HALO,
-      QUESTION_TARGET_DIMENSIONS.TISSUE_MOISTURE,
-      QUESTION_TARGET_DIMENSIONS.PROGRESSION,
-      QUESTION_TARGET_DIMENSIONS.DISTRIBUTION_SCOPE,
+      QUESTION_PACKAGE_TOPICS.LESION_WATER_SOAKING,
+      QUESTION_PACKAGE_TOPICS.LESION_HALO,
+      QUESTION_PACKAGE_TOPICS.TISSUE_MOISTURE,
+      QUESTION_PACKAGE_TOPICS.PROGRESSION,
+      QUESTION_PACKAGE_TOPICS.DISTRIBUTION_SCOPE,
       ...combined
-    ])).filter(targetDimension => !blockedVisualFactReviewDimensions.has(targetDimension))
+    ])).filter(packageTopic => !blockedVisualFactReviewDimensions.has(packageTopic))
   }
 
   return Array.from(new Set(combined))
 }
 
-function buildSyntheticDirectProblemAdjustments(item = {}, targetDimension = '', optionKey = '') {
+function buildSyntheticDirectProblemAdjustments(item = {}, packageTopic = '', optionKey = '') {
   const symptomKey = normalizeText(item?.symptomKey)
-  const normalizedTargetDimension = normalizeQuestionTargetDimension(targetDimension, '')
+  const normalizedPackageTopic = normalizeQuestionPackageTopic(packageTopic, '')
   const normalizedOptionKey = normalizeText(optionKey).toLowerCase()
-  if (!symptomKey || !normalizedTargetDimension || !normalizedOptionKey) {
+  if (!symptomKey || !normalizedPackageTopic || !normalizedOptionKey) {
     return []
   }
 
   const symptomEffects =
     isStructuralChewingSymptom({ ...item, symptomKey }) &&
-    normalizedTargetDimension === QUESTION_TARGET_DIMENSIONS.STRUCTURAL_CAUSE
+    normalizedPackageTopic === QUESTION_PACKAGE_TOPICS.STRUCTURAL_CAUSE
       ? SYNTHETIC_DIRECT_PROBLEM_EFFECTS_BY_SYMPTOM.structuralDamageCause
       : isPestTraceSymptom({ ...item, symptomKey }) &&
         [
-          QUESTION_TARGET_DIMENSIONS.PEST_TRACE_TYPE,
-          QUESTION_TARGET_DIMENSIONS.SURFACE_STICKINESS
-        ].includes(normalizedTargetDimension)
+          QUESTION_PACKAGE_TOPICS.PEST_TRACE_TYPE,
+          QUESTION_PACKAGE_TOPICS.SURFACE_STICKINESS
+        ].includes(normalizedPackageTopic)
         ? SYNTHETIC_DIRECT_PROBLEM_EFFECTS_BY_SYMPTOM.pestTraceType
       : isEdemaBumpSymptom({ ...item, symptomKey }) &&
-        normalizedTargetDimension === QUESTION_TARGET_DIMENSIONS.EDEMA_BUMP_STAGE
+        normalizedPackageTopic === QUESTION_PACKAGE_TOPICS.EDEMA_BUMP_STAGE
         ? SYNTHETIC_DIRECT_PROBLEM_EFFECTS_BY_SYMPTOM.edemaBumpStage
       : isYellowingSymptom({ ...item, symptomKey }) &&
         [
-          QUESTION_TARGET_DIMENSIONS.YELLOWING_DISEASE_TRACE_GATE,
-          QUESTION_TARGET_DIMENSIONS.PEST_TRACE_TYPE,
-          QUESTION_TARGET_DIMENSIONS.YELLOWING_LEAF_AGE_PATTERN,
-          QUESTION_TARGET_DIMENSIONS.YELLOWING_DISTRIBUTION_PATTERN,
-          QUESTION_TARGET_DIMENSIONS.WATERING_FREQUENCY_CONTEXT,
-          QUESTION_TARGET_DIMENSIONS.LIGHT_CHANGE_CONTEXT,
-          QUESTION_TARGET_DIMENSIONS.FERTILIZATION_GROWTH_CONTEXT,
-          QUESTION_TARGET_DIMENSIONS.AIRFLOW_HUMIDITY_CONTEXT,
-          QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED
-        ].includes(normalizedTargetDimension)
+          QUESTION_PACKAGE_TOPICS.YELLOWING_DISEASE_TRACE_TOPIC,
+          QUESTION_PACKAGE_TOPICS.PEST_TRACE_TYPE,
+          QUESTION_PACKAGE_TOPICS.YELLOWING_LEAF_AGE_PATTERN,
+          QUESTION_PACKAGE_TOPICS.YELLOWING_DISTRIBUTION_PATTERN,
+          QUESTION_PACKAGE_TOPICS.WATERING_FREQUENCY_CONTEXT,
+          QUESTION_PACKAGE_TOPICS.LIGHT_CHANGE_CONTEXT,
+          QUESTION_PACKAGE_TOPICS.FERTILIZATION_GROWTH_CONTEXT,
+          QUESTION_PACKAGE_TOPICS.AIRFLOW_HUMIDITY_CONTEXT,
+          QUESTION_PACKAGE_TOPICS.YELLOWING_PROGRESSION_SPEED
+        ].includes(normalizedPackageTopic)
         ? SYNTHETIC_DIRECT_PROBLEM_EFFECTS_BY_SYMPTOM.yellowingDifferential
       : SYNTHETIC_DIRECT_PROBLEM_EFFECTS_BY_SYMPTOM[symptomKey]
-  const dimensionEffects = symptomEffects?.[normalizedTargetDimension]
+  const dimensionEffects = symptomEffects?.[normalizedPackageTopic]
   const optionEffects = dimensionEffects?.[normalizedOptionKey]
 
   return (Array.isArray(optionEffects) ? optionEffects : [])

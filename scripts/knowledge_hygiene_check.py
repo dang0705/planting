@@ -6,7 +6,7 @@ Usage:
   python scripts/knowledge_hygiene_check.py --changed-files file1 file2 ...
   python scripts/knowledge_hygiene_check.py --base origin/main
 
-This script intentionally uses only stdlib. It is a cheap PR/task gate, not a
+This script intentionally uses only stdlib. It is a cheap PR/task condition, not a
 full documentation auditor.
 """
 

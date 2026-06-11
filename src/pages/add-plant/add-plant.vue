@@ -296,17 +296,17 @@ function normalizeIdentifyPlantCandidate(candidate) {
 
   const normalizedId = String(candidate.id || '').trim()
   const plantIdentityId = String(candidate.plantIdentityId || '').trim()
-  const legacyPlantId = String(candidate.legacyPlantId || '').trim()
+  const sessionPlantId = String(candidate.sessionPlantId || '').trim()
   const canonicalName = String(candidate.canonicalName || candidate.name || '').trim()
   const internetName = String(candidate.internetName || '').trim()
 
   const matchedDefaultPlant =
     defaultPlants.value.find(item => {
       const sameIdentity = plantIdentityId && item.plantIdentityId === plantIdentityId
-      const sameLegacy = legacyPlantId && item.legacyPlantId === legacyPlantId
+      const sameSession = sessionPlantId && item.sessionPlantId === sessionPlantId
       const sameId = normalizedId && item.id === normalizedId
       const sameName = canonicalName && item.canonicalName === canonicalName
-      return sameIdentity || sameLegacy || sameId || sameName
+      return sameIdentity || sameSession || sameId || sameName
     }) || null
 
   if (matchedDefaultPlant) {
@@ -316,10 +316,10 @@ function normalizeIdentifyPlantCandidate(candidate) {
   if (!canonicalName) {return null}
 
   return {
-    id: normalizedId || legacyPlantId || plantIdentityId || canonicalName,
-    plantId: normalizedId || legacyPlantId || plantIdentityId || '',
+    id: normalizedId || sessionPlantId || plantIdentityId || canonicalName,
+    plantId: normalizedId || sessionPlantId || plantIdentityId || '',
     plantIdentityId,
-    legacyPlantId,
+    sessionPlantId,
     canonicalName,
     internetName
   }
@@ -609,11 +609,11 @@ async function submitForm() {
     const payloadPlantIdentityId = String(
       selectedCatalogPlant?.plantIdentityId || ''
     ).trim()
-    const payloadLegacyPlantId = String(
-      selectedCatalogPlant?.legacyPlantId || ''
+    const payloadSessionPlantId = String(
+      selectedCatalogPlant?.sessionPlantId || ''
     ).trim()
     const payloadPlantId = String(
-      selectedCatalogPlant?.id || payloadLegacyPlantId || payloadPlantIdentityId || ''
+      selectedCatalogPlant?.id || payloadSessionPlantId || payloadPlantIdentityId || ''
     ).trim()
     const payloadRecognizedName = String(
       identifyContext.value?.recognizedName || recognizedName.value || ''
@@ -658,7 +658,7 @@ async function submitForm() {
     const res = await createUserPlant({
       plantId: payloadPlantId || null,
       plantIdentityId: payloadPlantIdentityId || null,
-      legacyPlantId: payloadLegacyPlantId || null,
+      sessionPlantId: payloadSessionPlantId || null,
       recognizedName: payloadRecognizedName || null,
       nickname:
         formData.value.nickname || selectedCatalogPlant?.canonicalName || payloadRecognizedName,

@@ -102,7 +102,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -166,7 +166,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -230,7 +230,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -294,7 +294,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -358,7 +358,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -422,7 +422,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -486,7 +486,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -550,7 +550,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -580,7 +580,7 @@
           {
             "questionKey": "q_black_spots_spreading_confirm",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -591,7 +591,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些斑点/斑块更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -608,7 +608,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -619,7 +619,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "这些斑点/斑块摸起来更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -660,7 +660,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -724,7 +724,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -788,7 +788,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -852,7 +852,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -916,7 +916,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -980,7 +980,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -1044,7 +1044,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -1108,7 +1108,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -1172,7 +1172,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -1202,7 +1202,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1213,7 +1213,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些褐色病斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1230,7 +1230,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1241,7 +1241,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "这些褐色病斑摸起来更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1252,7 +1252,7 @@
           {
             "questionKey": "q_observed_probe__brown_spots_halo__surface_residue",
             "questionText": "这些“褐斑带黄晕”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1293,7 +1293,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -1323,7 +1323,7 @@
           {
             "questionKey": "q_black_spots_spreading_confirm",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -1334,7 +1334,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些斑点/斑块更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -1351,7 +1351,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1362,7 +1362,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "这些斑点/斑块摸起来更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1403,7 +1403,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -1433,7 +1433,7 @@
           {
             "questionKey": "q_black_spots_spreading_confirm",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -1444,7 +1444,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些斑点/斑块更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -1461,7 +1461,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1472,7 +1472,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "这些斑点/斑块摸起来更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1513,7 +1513,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,

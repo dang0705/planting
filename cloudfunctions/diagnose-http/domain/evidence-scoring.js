@@ -3,11 +3,11 @@
 const { clamp01 } = require('../repositories/sql')
 const { evidence: evidenceConfig } = require('../constants/scoring')
 const {
-  QUESTION_TARGET_DIMENSIONS: _QUESTION_TARGET_DIMENSIONS,
-  normalizeQuestionTargetDimension,
-  inferQuestionTargetDimension,
+  QUESTION_PACKAGE_TOPICS: _QUESTION_PACKAGE_TOPICS,
+  normalizeQuestionPackageTopic,
+  inferQuestionPackageTopic,
   isGenericObservedProbeDirectEvidenceDimension
-} = require('../utils/question-target-dimension')
+} = require('../utils/question-package-topic')
 const {
   parseSyntheticObservedProbeQuestionKey
 } = require('../utils/synthetic-question-package')
@@ -121,26 +121,26 @@ function buildQuestionIndex(questions = []) {
   return map
 }
 
-function resolveQuestionTargetDimension({
+function resolveQuestionPackageTopic({
   questionKey = '',
   answer = null,
   question = null
 } = {}) {
   const parsed = parseSyntheticObservedProbeQuestionKey(questionKey)
-  const parsedDimension = normalizeQuestionTargetDimension(parsed?.targetDimension, '')
+  const parsedDimension = normalizeQuestionPackageTopic(parsed?.packageTopic, '')
   if (parsedDimension) {return parsedDimension}
 
-  const explicitDimension = normalizeQuestionTargetDimension(
-    answer?.targetDimension ||
-      answer?.target_dimension ||
-      question?.targetDimension ||
-      question?.target_dimension ||
+  const explicitDimension = normalizeQuestionPackageTopic(
+    answer?.packageTopic ||
+      answer?.package_topic ||
+      question?.packageTopic ||
+      question?.package_topic ||
       '',
     ''
   )
   if (explicitDimension) {return explicitDimension}
 
-  return inferQuestionTargetDimension(
+  return inferQuestionPackageTopic(
     questionKey,
     answer?.targetSymptomKey ||
       answer?.target_symptom_key ||
@@ -153,19 +153,19 @@ function resolveQuestionTargetDimension({
 function normalizeDirectProblemEffectValueForQuestion(
   questionKey = '',
   effectValue = 0,
-  targetDimensionOverride = ''
+  packageTopicOverride = ''
 ) {
   const normalizedEffectValue = Number(effectValue || 0)
   if (normalizedEffectValue <= 0) {
     return normalizedEffectValue
   }
 
-  const { targetDimension } = parseSyntheticObservedProbeQuestionKey(questionKey)
-  const normalizedTargetDimension =
-    normalizeQuestionTargetDimension(targetDimensionOverride, '') ||
-    normalizeQuestionTargetDimension(targetDimension, '') ||
-    inferQuestionTargetDimension(questionKey)
-  if (!isGenericObservedProbeDirectEvidenceDimension(normalizedTargetDimension)) {
+  const { packageTopic } = parseSyntheticObservedProbeQuestionKey(questionKey)
+  const normalizedPackageTopic =
+    normalizeQuestionPackageTopic(packageTopicOverride, '') ||
+    normalizeQuestionPackageTopic(packageTopic, '') ||
+    inferQuestionPackageTopic(questionKey)
+  if (!isGenericObservedProbeDirectEvidenceDimension(normalizedPackageTopic)) {
     return normalizedEffectValue
   }
 
@@ -205,12 +205,12 @@ function computeQuestionEvidenceAndPenalty({
     const mapping = mappingIndex.get(`${questionKey}::${optionKey}`)
     if (!mapping) {continue}
     const question = questionIndex.get(questionKey) || null
-    const targetDimension = resolveQuestionTargetDimension({
+    const packageTopic = resolveQuestionPackageTopic({
       questionKey,
       answer,
       question
     })
-    if (isDisabledYellowingFlowQuestion({ questionKey, targetDimension })) {
+    if (isDisabledYellowingFlowQuestion({ questionKey, packageTopic })) {
       continue
     }
 
@@ -226,7 +226,7 @@ function computeQuestionEvidenceAndPenalty({
         const effectValue = normalizeDirectProblemEffectValueForQuestion(
           questionKey,
           adjustment.effectValue,
-          targetDimension
+          packageTopic
         )
 
         answerEffects.push({
@@ -234,10 +234,10 @@ function computeQuestionEvidenceAndPenalty({
           optionKey,
           problemKey: adjustment.problemKey,
           value: round(effectValue),
-          targetDimension,
+          packageTopic,
           isGenericObservedProbeDirectPositive:
             effectValue > 0 &&
-            isGenericObservedProbeDirectEvidenceDimension(targetDimension),
+            isGenericObservedProbeDirectEvidenceDimension(packageTopic),
           effectType: effectValue > 0 ? 'direct_problem_positive' : 'direct_problem_negative'
         })
       }
@@ -249,7 +249,7 @@ function computeQuestionEvidenceAndPenalty({
           questionKey,
           optionKey,
           value: 0,
-          targetDimension,
+          packageTopic,
           effectType: 'neutral'
         })
       }
@@ -286,7 +286,7 @@ function computeQuestionEvidenceAndPenalty({
       optionKey,
       mappedSymptomKey,
       value: answerValue,
-      targetDimension,
+      packageTopic,
       effectType: answerValue > 0 ? 'positive' : 'negative'
     })
   }

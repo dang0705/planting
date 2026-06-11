@@ -64,7 +64,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -81,8 +81,8 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           }
@@ -152,7 +152,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -169,16 +169,16 @@
           {
             "questionKey": "q_irregular_blotches_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "irregular_blotches",
             "text": "病斑呈不规则斑块状，而不是规则圆斑吗？"
           },
           {
             "questionKey": "q_anthracnose_concentric",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "concentric_rings",
             "text": "病斑上有明显同心轮纹吗？"
           }
@@ -237,7 +237,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -311,7 +311,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -328,16 +328,16 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           },
           {
             "questionKey": "q_leaf_margin_necrosis_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "leaf_margin_necrosis",
             "text": "叶缘已经形成连续的褐黑坏死带了吗？"
           }
@@ -402,7 +402,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -419,16 +419,16 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "brown_spots_halo",
             "text": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？"
           },
           {
             "questionKey": "q_leaf_margin_necrosis_confirm",
             "selectionSource": "",
-            "routingScope": "symptom_confirmation",
-            "targetDimension": "visual_presence",
+            "packageSection": "symptom_confirmation",
+            "packageTopic": "visual_presence",
             "targetSymptomKey": "leaf_margin_necrosis",
             "text": "叶缘已经形成连续的褐黑坏死带了吗？"
           }

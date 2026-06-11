@@ -25,7 +25,7 @@ stale_if_changed:
 
 # Knowledge Governance
 
-本文是仓库知识治理规则。它替代“所有文档持续同步”的旧策略。
+本文是仓库知识治理规则。它替代“所有文档持续同步”的既有策略。
 
 ## 1. 核心原则
 
@@ -125,7 +125,7 @@ reason: ""
 ```text
 大规模架构重写
 公共契约大改
-旧文档与代码大面积冲突
+既有文档与代码大面积冲突
 BRV 索引污染严重
 迁移/发布事故复盘
 ```
@@ -176,7 +176,7 @@ Only relevant hunks.
 | env/schema/CloudBase 路由变化 | 更新 `ACTIVE_CONTRACTS.md` 和 `RUNBOOK.md` | 更新 facts-index |
 | package script、CI、部署、本地调试变化 | 更新 `RUNBOOK.md` | 视情况更新 |
 | agent 分工、dispatch、context pack、MCP 策略变化 | 更新 `AGENTS.md`、`.codex/context-packs.yml`、本文 | 更新 facts-index |
-| 旧文档与代码冲突 | 标记 stale/superseded | 禁止引用旧文档为事实 |
+| 既有文档与代码冲突 | 标记 stale/superseded | 禁止引用既有文档为事实 |
 | 新增稳定源码事实 | 如影响契约则更新活文档 | 添加 source-index 记录 |
 
 ## 7. BRV 只做索引
@@ -200,14 +200,14 @@ confidence: high
 
 ```text
 无来源的经验性长文
-把旧蓝图当当前事实
+把既有蓝图当当前事实
 把 AI handoff 当运行事实
 把 BRV 写成第二套文档
 ```
 
 ## 8. 归档策略
 
-不急着物理删除旧文档。先做状态治理：
+不急着物理删除既有文档。先做状态治理：
 
 1. `docs/_doc-status.yml` 标记状态。
 2. `docs/ARCHIVE_INDEX.md` 说明可读条件。

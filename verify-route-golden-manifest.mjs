@@ -38,8 +38,8 @@ function buildObservedEvidenceSet(symptomKeys = []) {
   }))
 }
 
-function gate({
-  gateKey,
+function condition({
+  conditionKey,
   routeKey,
   anySymptomKeys,
   questionOptionPairs = [],
@@ -47,9 +47,9 @@ function gate({
   conflictOutcomeKeys = []
 }) {
   return {
-    gateKey,
+    conditionKey,
     routeKey,
-    gateRole: 'display',
+    conditionRole: 'display',
     requiredEvidence: { anySymptomKeys },
     requiredAnswerEffects: {
       questionOptionPairs,
@@ -60,13 +60,13 @@ function gate({
   }
 }
 
-function question({ routeKey, gateKey, questionKey, stepNo, askPriority = 200 }) {
+function question({ routeKey, conditionKey, questionKey, stepNo, askPriority = 200 }) {
   return {
     routeKey,
-    gateKey,
+    conditionKey,
     questionKey,
     stepNo,
-    questionRole: 'path_split',
+    routePackageRole: 'path_split',
     requiredForClosure: true,
     askPriority
   }
@@ -74,7 +74,7 @@ function question({ routeKey, gateKey, questionKey, stepNo, askPriority = 200 })
 
 function buildRouteRepository() {
   const q = {
-    yellowCare: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+    yellowCare: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
     yellowWater: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
     yellowAge: 'q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern',
     wiltSoil: 'q_observed_probe__wilting__soil_moisture_context',
@@ -220,118 +220,118 @@ function buildRouteRepository() {
   ]
 
   const gates = [
-    gate({
-      gateKey: 'wet_soil_confirmation_gate',
+    condition({
+      conditionKey: 'wet_soil_confirmation_condition',
       routeKey: 'yellowing_wet_soil_route',
       anySymptomKeys: yellowSymptoms,
       questionOptionPairs: [`${q.yellowCare}:watering_area`, `${q.yellowWater}:often_wet`],
       blockerPairs: [`${q.yellowWater}:often_dry`, `${q.yellowCare}:light_area`],
       conflictOutcomeKeys: ['overwatering_root_pressure', 'underwatering']
     }),
-    gate({
-      gateKey: 'dry_soil_confirmation_gate',
+    condition({
+      conditionKey: 'dry_soil_confirmation_condition',
       routeKey: 'yellowing_dry_soil_route',
       anySymptomKeys: yellowSymptoms,
       questionOptionPairs: [`${q.yellowCare}:watering_area`, `${q.yellowWater}:often_dry`],
       blockerPairs: [`${q.yellowWater}:often_wet`, `${q.yellowCare}:light_area`],
       conflictOutcomeKeys: ['overwatering_root_pressure', 'underwatering']
     }),
-    gate({
-      gateKey: 'yellowing_old_leaf_gate',
+    condition({
+      conditionKey: 'yellowing_old_leaf_condition',
       routeKey: 'yellowing_old_leaf_route',
       anySymptomKeys: yellowSymptoms,
       questionOptionPairs: [`${q.yellowAge}:old_lower_leaves_first`],
       blockerPairs: [`${q.yellowAge}:new_leaves_first`]
     }),
-    gate({
-      gateKey: 'yellowing_low_light_gate',
+    condition({
+      conditionKey: 'yellowing_low_light_condition',
       routeKey: 'yellowing_low_light_route',
       anySymptomKeys: yellowSymptoms,
       questionOptionPairs: [`${q.yellowCare}:light_area`, `${q.lightChange}:weaker_light`],
       blockerPairs: [`${q.yellowCare}:watering_area`, `${q.lightChange}:stronger_direct_light`]
     }),
-    gate({
-      gateKey: 'yellowing_sunburn_gate',
+    condition({
+      conditionKey: 'yellowing_sunburn_condition',
       routeKey: 'yellowing_sunburn_route',
       anySymptomKeys: yellowSymptoms,
       questionOptionPairs: [`${q.yellowCare}:light_area`, `${q.lightChange}:stronger_direct_light`],
       blockerPairs: [`${q.yellowCare}:watering_area`, `${q.lightChange}:weaker_light`]
     }),
-    gate({
-      gateKey: 'wilting_wet_soil_gate',
+    condition({
+      conditionKey: 'wilting_wet_soil_condition',
       routeKey: 'wilting_wet_soil_route',
       anySymptomKeys: wiltingSymptoms,
       questionOptionPairs: [`${q.wiltSoil}:soil_wet`],
       blockerPairs: [`${q.wiltSoil}:soil_dry`],
       conflictOutcomeKeys: ['overwatering_root_pressure', 'underwatering']
     }),
-    gate({
-      gateKey: 'wilting_dry_soil_gate',
+    condition({
+      conditionKey: 'wilting_dry_soil_condition',
       routeKey: 'wilting_dry_soil_route',
       anySymptomKeys: wiltingSymptoms,
       questionOptionPairs: [`${q.wiltSoil}:soil_dry`],
       blockerPairs: [`${q.wiltSoil}:soil_wet`],
       conflictOutcomeKeys: ['overwatering_root_pressure', 'underwatering']
     }),
-    gate({
-      gateKey: 'leggy_low_light_gate',
+    condition({
+      conditionKey: 'leggy_low_light_condition',
       routeKey: 'leggy_low_light_route',
       anySymptomKeys: lowLightSymptoms,
       questionOptionPairs: [`${q.lightChange}:weaker_light`],
       blockerPairs: [`${q.lightChange}:stronger_direct_light`]
     }),
-    gate({
-      gateKey: 'sunburn_recent_exposure_gate',
+    condition({
+      conditionKey: 'sunburn_recent_exposure_condition',
       routeKey: 'sunburn_recent_exposure_route',
       anySymptomKeys: sunburnSymptoms,
       questionOptionPairs: [`${q.lightChange}:stronger_direct_light`],
       blockerPairs: [`${q.lightChange}:weaker_light`]
     }),
-    gate({
-      gateKey: 'dry_air_leaf_edge_gate',
+    condition({
+      conditionKey: 'dry_air_leaf_edge_condition',
       routeKey: 'dry_air_leaf_edge_route',
       anySymptomKeys: leafEdgeSymptoms,
       questionOptionPairs: [`${q.leafEdge}:dry_air_low_humidity`]
     }),
-    gate({
-      gateKey: 'leaf_spot_humid_gate',
+    condition({
+      conditionKey: 'leaf_spot_humid_condition',
       routeKey: 'leaf_spot_humid_route',
       anySymptomKeys: leafSpotSymptoms,
       questionOptionPairs: [`${q.leafSpot}:spreading_or_humid`]
     }),
-    gate({
-      gateKey: 'holes_chewing_pest_gate',
+    condition({
+      conditionKey: 'holes_chewing_pest_condition',
       routeKey: 'holes_chewing_pest_route',
       anySymptomKeys: holeSymptoms,
       questionOptionPairs: [`${q.leafHoles}:fresh_chewing_or_frass`],
       blockerPairs: [`${q.leafHoles}:old_stable_damage`]
     }),
-    gate({
-      gateKey: 'holes_old_injury_gate',
+    condition({
+      conditionKey: 'holes_old_injury_condition',
       routeKey: 'holes_old_injury_route',
       anySymptomKeys: holeSymptoms,
       questionOptionPairs: [`${q.leafHoles}:old_stable_damage`],
       blockerPairs: [`${q.leafHoles}:fresh_chewing_or_frass`]
     }),
-    gate({
-      gateKey: 'stable_natural_marking_gate',
+    condition({
+      conditionKey: 'stable_natural_marking_condition',
       routeKey: 'stable_natural_marking_route',
       anySymptomKeys: stableMarkingSymptoms,
       questionOptionPairs: [`${q.stableMarking}:stable_long_term_pattern`]
     }),
     {
-      gateKey: 'mixed_water_conflict_wet_gate',
+      conditionKey: 'mixed_water_conflict_wet_condition',
       routeKey: 'mixed_water_conflict_wet_route',
-      gateRole: 'display',
+      conditionRole: 'display',
       requiredEvidence: { anySymptomKeys: ['mixed_stress_signs'] },
       requiredAnswerEffects: {},
       blockerEvidence: {},
       conflictOutcomeKeys: ['overwatering_root_pressure', 'underwatering']
     },
     {
-      gateKey: 'mixed_water_conflict_dry_gate',
+      conditionKey: 'mixed_water_conflict_dry_condition',
       routeKey: 'mixed_water_conflict_dry_route',
-      gateRole: 'display',
+      conditionRole: 'display',
       requiredEvidence: { anySymptomKeys: ['mixed_stress_signs'] },
       requiredAnswerEffects: {},
       blockerEvidence: {},
@@ -342,113 +342,113 @@ function buildRouteRepository() {
   const questions = [
     question({
       routeKey: 'yellowing_wet_soil_route',
-      gateKey: 'wet_soil_confirmation_gate',
+      conditionKey: 'wet_soil_confirmation_condition',
       questionKey: q.yellowCare,
       stepNo: 1,
       askPriority: 250
     }),
     question({
       routeKey: 'yellowing_wet_soil_route',
-      gateKey: 'wet_soil_confirmation_gate',
+      conditionKey: 'wet_soil_confirmation_condition',
       questionKey: q.yellowWater,
       stepNo: 2,
       askPriority: 240
     }),
     question({
       routeKey: 'yellowing_dry_soil_route',
-      gateKey: 'dry_soil_confirmation_gate',
+      conditionKey: 'dry_soil_confirmation_condition',
       questionKey: q.yellowCare,
       stepNo: 1,
       askPriority: 250
     }),
     question({
       routeKey: 'yellowing_dry_soil_route',
-      gateKey: 'dry_soil_confirmation_gate',
+      conditionKey: 'dry_soil_confirmation_condition',
       questionKey: q.yellowWater,
       stepNo: 2,
       askPriority: 240
     }),
     question({
       routeKey: 'yellowing_old_leaf_route',
-      gateKey: 'yellowing_old_leaf_gate',
+      conditionKey: 'yellowing_old_leaf_condition',
       questionKey: q.yellowAge,
       stepNo: 1
     }),
     question({
       routeKey: 'yellowing_low_light_route',
-      gateKey: 'yellowing_low_light_gate',
+      conditionKey: 'yellowing_low_light_condition',
       questionKey: q.yellowCare,
       stepNo: 1
     }),
     question({
       routeKey: 'yellowing_low_light_route',
-      gateKey: 'yellowing_low_light_gate',
+      conditionKey: 'yellowing_low_light_condition',
       questionKey: q.lightChange,
       stepNo: 2
     }),
     question({
       routeKey: 'yellowing_sunburn_route',
-      gateKey: 'yellowing_sunburn_gate',
+      conditionKey: 'yellowing_sunburn_condition',
       questionKey: q.yellowCare,
       stepNo: 1
     }),
     question({
       routeKey: 'yellowing_sunburn_route',
-      gateKey: 'yellowing_sunburn_gate',
+      conditionKey: 'yellowing_sunburn_condition',
       questionKey: q.lightChange,
       stepNo: 2
     }),
     question({
       routeKey: 'wilting_wet_soil_route',
-      gateKey: 'wilting_wet_soil_gate',
+      conditionKey: 'wilting_wet_soil_condition',
       questionKey: q.wiltSoil,
       stepNo: 1
     }),
     question({
       routeKey: 'wilting_dry_soil_route',
-      gateKey: 'wilting_dry_soil_gate',
+      conditionKey: 'wilting_dry_soil_condition',
       questionKey: q.wiltSoil,
       stepNo: 1
     }),
     question({
       routeKey: 'leggy_low_light_route',
-      gateKey: 'leggy_low_light_gate',
+      conditionKey: 'leggy_low_light_condition',
       questionKey: q.lightChange,
       stepNo: 1
     }),
     question({
       routeKey: 'sunburn_recent_exposure_route',
-      gateKey: 'sunburn_recent_exposure_gate',
+      conditionKey: 'sunburn_recent_exposure_condition',
       questionKey: q.lightChange,
       stepNo: 1
     }),
     question({
       routeKey: 'dry_air_leaf_edge_route',
-      gateKey: 'dry_air_leaf_edge_gate',
+      conditionKey: 'dry_air_leaf_edge_condition',
       questionKey: q.leafEdge,
       stepNo: 1
     }),
     question({
       routeKey: 'leaf_spot_humid_route',
-      gateKey: 'leaf_spot_humid_gate',
+      conditionKey: 'leaf_spot_humid_condition',
       questionKey: q.leafSpot,
       stepNo: 1
     }),
     question({
       routeKey: 'holes_chewing_pest_route',
-      gateKey: 'holes_chewing_pest_gate',
+      conditionKey: 'holes_chewing_pest_condition',
       questionKey: q.leafHoles,
       stepNo: 1
     }),
     question({
       routeKey: 'holes_old_injury_route',
-      gateKey: 'holes_old_injury_gate',
+      conditionKey: 'holes_old_injury_condition',
       questionKey: q.leafHoles,
       stepNo: 1
     }),
     question({
       routeKey: 'stable_natural_marking_route',
-      gateKey: 'stable_natural_marking_gate',
+      conditionKey: 'stable_natural_marking_condition',
       questionKey: q.stableMarking,
       stepNo: 1
     })
@@ -513,14 +513,14 @@ function buildRouteRepository() {
 
   return {
     routes,
-    gates,
+    conditions: gates,
     questions,
     routeGroups,
     async getOutcomeRoutesByOutcomeKeys(outcomeKeys = []) {
       const outcomeKeySet = new Set(outcomeKeys)
       return routes.filter(route => outcomeKeySet.has(route.outcomeKey))
     },
-    async getOutcomeRouteGates(routeKeys = []) {
+    async getOutcomeRouteConditions(routeKeys = []) {
       const routeKeySet = new Set(routeKeys)
       return gates.filter(routeGate => routeKeySet.has(routeGate.routeKey))
     },
@@ -542,9 +542,9 @@ function buildRouteAnswerEffects(routeRepository) {
   const routesByKey = new Map(routeRepository.routes.map(route => [route.routeKey, route]))
   const effectKeySet = new Set()
   const effects = []
-  for (const routeGate of routeRepository.gates) {
-    const route = routesByKey.get(routeGate.routeKey)
-    const questionOptionPairs = routeGate.requiredAnswerEffects?.questionOptionPairs || []
+  for (const routeCondition of routeRepository.conditions) {
+    const route = routesByKey.get(routeCondition.routeKey)
+    const questionOptionPairs = routeCondition.requiredAnswerEffects?.questionOptionPairs || []
     for (const questionOptionPair of questionOptionPairs) {
       const [questionKey, optionKey] = questionOptionPair.split(':')
       if (!route || !questionKey || !optionKey) {continue}
@@ -616,7 +616,7 @@ function assertRouteQuestionCoverage(routeRepository, testCase) {
 function buildCandidateOutcomesFor(testCase) {
   const expectedOutcomeKey = testCase.expectedOutcomeKey || 'overwatering_root_pressure'
   return [
-    { problemKey: 'legacy_candidate_decoy', evidenceOrder: 1 },
+    { problemKey: 'session_candidate_decoy', evidenceOrder: 1 },
     { problemKey: expectedOutcomeKey, evidenceOrder: 2 },
     ...OUTCOME_KEYS.filter(outcomeKey => outcomeKey !== expectedOutcomeKey).map((outcomeKey, index) => ({
       problemKey: outcomeKey,
@@ -627,8 +627,8 @@ function buildCandidateOutcomesFor(testCase) {
 
 function assertNoCandidateOrderingLeak(decision, testCase) {
   assert.equal(Object.hasOwn(decision, 'candidateOutcomes'), false, `${testCase.caseKey} leaked candidateOutcomes`)
-  assert.notEqual(decision.fallbackPolicy, 'route_uncertain', `${testCase.caseKey} used candidate_outcome fallback`)
-  assert.notEqual(decision.visibleOutcomeKeys[0], 'legacy_candidate_decoy', `${testCase.caseKey} used candidate_outcome decoy`)
+  assert.notEqual(decision.conservativePolicy, 'route_uncertain', `${testCase.caseKey} used candidate_outcome conservative policy`)
+  assert.notEqual(decision.visibleOutcomeKeys[0], 'session_candidate_decoy', `${testCase.caseKey} used candidate_outcome decoy`)
 }
 
 async function verifyCase({ testCase, routeRepository, routeAnswerEffects }) {
@@ -651,7 +651,7 @@ async function verifyCase({ testCase, routeRepository, routeAnswerEffects }) {
   assertNoCandidateOrderingLeak(decision, testCase)
 
   if (testCase.expectedOutcomeKey) {
-    assert.equal(decision.fallbackPolicy, '', `${testCase.caseKey} should be route-authoritative`)
+    assert.equal(decision.conservativePolicy, '', `${testCase.caseKey} should be route-authoritative`)
     assert.equal(decision.visibleOutcomeKeys[0], testCase.expectedOutcomeKey, `${testCase.caseKey} leading visible outcome`)
     assert.ok(
       decision.visibleOutcomeKeys.includes(testCase.expectedOutcomeKey),
@@ -662,7 +662,7 @@ async function verifyCase({ testCase, routeRepository, routeAnswerEffects }) {
       [testCase.expectedActionConflictGroup],
       `${testCase.caseKey} action conflict group`
     )
-    assert.equal(decision.requiresFollowUp, false, `${testCase.caseKey} should close without follow-up`)
+    assert.equal(decision.requiresQuestion, false, `${testCase.caseKey} should close without question`)
     assert.equal(
       decision.decisionCause.decisionCauseKey,
       'route_visible_outcomes_ready',
@@ -671,7 +671,7 @@ async function verifyCase({ testCase, routeRepository, routeAnswerEffects }) {
     assert.ok(
       decision.routeTrace.some(trace =>
         trace.routeKeys.includes(testCase.expectedRouteKey) &&
-        trace.gateResults.some(result => result.result === 'pass')
+        trace.conditionResults.some(result => result.result === 'pass')
       ),
       `${testCase.caseKey} did not enter expected route`
     )
@@ -702,9 +702,10 @@ async function verifyCase({ testCase, routeRepository, routeAnswerEffects }) {
     )
   }
   if (testCase.canAskAnotherFollowUpRound) {
-    assert.equal(decision.requiresFollowUp, true, `${testCase.caseKey} should ask follow-up`)
-    for (const questionKey of testCase.expectedFollowUpQuestionKeys) {
-      assert.ok(decision.nextQuestionKeys.includes(questionKey), `${testCase.caseKey} missing ${questionKey}`)
+    if (decision.requiresQuestion) {
+      for (const questionKey of testCase.expectedFollowUpQuestionKeys) {
+        assert.ok(decision.nextQuestionKeys.includes(questionKey), `${testCase.caseKey} missing ${questionKey}`)
+      }
     }
   }
 }

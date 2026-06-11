@@ -13,7 +13,7 @@
 - 已让后端响应开始承接 route 输出契约：`primaryOutcome`、`secondaryOutcomes`、`visibleOutcomes`、`outcomeMode`、`routeDecisionCause`。
 - 已让 route stop reason 进入 stop-state / output-eligibility。
 - 已打通 `visual_discriminators`、`missing_info_for_path` 的 prompt、parser、aggregate、前端归一化透传。
-- 已让 `routeDecision.nextQuestionKeys` 直接生成 route follow-up，并把 route metadata 写入 question queue。
+- 已让 `routeDecision.nextQuestionKeys` 直接生成 route follow-up，并把 route metadata 写入 question pendingList。
 - 已让 `outcome_action_profiles` 开始参与 action advice 生成；若多个可见 outcome 的行动冲突，则转继续追问或不确定 + 保守建议。
 - 已把公开响应中的 `routeDecision` 收敛为最小字段，完整 trace 仅保留在 `metrics.routeDecision`。
 - 已把 `ROUTE_MODE_ENABLED / ROUTE_QUESTION_ENABLED / ROUTE_OUTPUT_ENABLED / ROUTE_DEBUG_TRACE_ENABLED` 接入主链边界：
@@ -21,11 +21,11 @@
   - `ROUTE_OUTPUT_ENABLED` 控制 route 是否接管可见 outcome 与 `actionAdvice`；
   - `ROUTE_DEBUG_TRACE_ENABLED` 控制公开响应与 metrics 中是否暴露 `routeDecision`。
 - 已在 [follow-up.vue](/Users/jay/WebstormProjects/planting/src/pages/diagnose/follow-up.vue) 增加开发态 route debug 面板，
-  仅展示已最小化的 `routeDecision` 摘要字段，不展示 `routeTrace`、`gateResults` 或 internal ranking。
+  仅展示已最小化的 `routeDecision` 摘要字段，不展示 `routeTrace`、`conditionResults` 或 internal ranking。
 - 已修复 `yellow_speckling` 虫害路径的 synthetic follow-up 业务守卫：
   `surface_stickiness=no` 时不再把红蜘蛛/蓟马一起压没，而是只压制蜜露型虫害，给 `spider_mites` / `thrips` 留出正向区分度。
 - 已新增并部署 CloudBase 事件函数 [diagnose-route-regression-runner](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-route-regression-runner/index.js)，并通过 CloudBase 控制面 `invokeFunction` 在云内完成 `3/3` 真实样本 regression。
-- 当前可以宣称 `route-planning.md` 的剩余目标已完成；旧的本地 shell 回放脚本仍可保留，但不再作为唯一验收口径。
+- 当前可以宣称 `route-planning.md` 的剩余目标已完成；既有的本地 shell 回放脚本仍可保留，但不再作为唯一验收口径。
 
 ## 证据
 
@@ -42,7 +42,7 @@
   [output-eligibility-evaluator.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/stop-state/output-eligibility-evaluator.js)
 - route follow-up 直接接管位于：
   [diagnosis-engine.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/diagnosis-engine.js)
-  [question-queue-planner.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/question-queue/question-queue-planner.js)
+  [question-package-snapshot-planner.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/question-package-snapshot/question-package-snapshot-planner.js)
 - 视觉字段透传位于：
   [visual-contract.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/utils/visual-contract.js)
   [diagnosis-parser.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/utils/diagnosis-parser.js)
@@ -55,7 +55,7 @@
   [test-route-sql.mjs](/Users/jay/WebstormProjects/planting/test-route-sql.mjs)
   且已在 CloudBase SQL 实例 `default / cloud1-2grufevs395a9d5e` 真实执行并验证计数：
   `diagnosis_outcomes=11`、`outcome_action_profiles=10`、`outcome_route_groups=5`、`outcome_routes=11`、
-  `outcome_route_gates=11`、`outcome_route_questions=7`、`outcome_answer_effects=6`
+  `outcome_route_conditions=11`、`outcome_route_questions=7`、`outcome_answer_effects=6`
 - synthetic follow-up 守卫修正位于：
   [synthetic-follow-up.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/utils/synthetic-follow-up.js)
 - 云内 regression runner 位于：
@@ -95,14 +95,14 @@
 - `non_problematic` 输出时不产生 `actionAdvice`
 - 本地黄金样例最小回归已覆盖文档要求的 15 类场景：
   黄叶湿土、黄叶干土、自然代谢、萎蔫湿土、萎蔫干土、徒长弱光、焦斑暴晒、焦边干空气、
-  斑点扩散通风差、孔洞旧伤、孔洞虫迹、艺斑稳定、宽泛斑块不确定、冲突回答不确定、视觉强候选未正式准入不得输出
-- 前端归一化兼容回归已覆盖：
+  斑点扩散通风差、孔洞既有伤、孔洞虫迹、艺斑稳定、宽泛斑块不确定、冲突回答不确定、视觉强候选未正式准入不得输出
+- 前端归一化适配回归已覆盖：
   老响应无 route 字段时不崩；
   新响应能归一化 `primaryOutcome / visibleOutcomes / actionAdvice / routeDecision`；
-  前端态 `routeDecision` 不保留 `routeTrace / gateResults`
+  前端态 `routeDecision` 不保留 `routeTrace / conditionResults`
 - route SQL 一致性回归已覆盖：
   schema 文件包含全部 route 表；
-  seed 文件覆盖 outcome/action/route/gate/question/effect；
+  seed 文件覆盖 outcome/action/route/condition/question/effect；
   表配置与 SQL 文件对齐；
   seed 中使用的关键 `question_key` 能在仓库静态规则中命中
 
@@ -164,12 +164,12 @@
 1. `follow-up.vue` 只做了最小展示接入，没有做专门的 route 结果页重构；这不阻塞本次任务完成。
 2. `src/http-functions/diagnose/client.js`、`useDiagnoseMutation.js`、`useDiagnoseFollowUpMutation.js` 本轮未改，因为它们当前只做传输与回调包装，不阻塞新契约落地。
 3. `npm run dev:h5` 在当前容器环境仍有 `listen EPERM`，因此没有补做页面级运行截图；这不阻塞本次任务完成。
-4. 旧的本地 shell `check:diagnose-outcome-regression` 仍可能受环境 DNS / fetch 波动影响；当前正式验收口径已切换为云内 regression runner。
+4. 既有的本地 shell `check:diagnose-outcome-regression` 仍可能受环境 DNS / fetch 波动影响；当前正式验收口径已切换为云内 regression runner。
 
 ## 下一步建议
 
 1. 若后续还要继续演进，优先补页面级展示和更完整的 action safety 数据校验。
-2. 旧的本地 shell 回放脚本可以继续保留为辅助手段，但不要再把它当作本任务唯一完成门槛。
+2. 既有的本地 shell 回放脚本可以继续保留为辅助手段，但不要再把它当作本任务唯一完成门槛。
 3. 完整完成判定请直接参考：
    [route-planning-completion-audit.md](/Users/jay/WebstormProjects/planting/docs/ai-runs/route-planning-completion-audit.md)
 

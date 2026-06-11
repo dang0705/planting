@@ -414,8 +414,8 @@ function buildRoundChoiceSets(questions = []) {
 
 function buildCanonicalQuestions(data = {}) {
   const publicQuestions = Array.isArray(data?.questions) ? data.questions : []
-  const queueItems = Array.isArray(data?.questionQueue?.questionItems)
-    ? data.questionQueue.questionItems
+  const queueItems = Array.isArray(data?.questionPackageSnapshot?.questionItems)
+    ? data.questionPackageSnapshot.questionItems
     : []
 
   if (!queueItems.length) {
@@ -577,7 +577,7 @@ function materializeAnswersForRound(questions = [], optionIds = [], expectedSign
     answers.push({
       questionId: normalizeText(question?.questionId),
       questionText: normalizeText(question?.text || question?.questionText || question?.questionId),
-      targetDimension: normalizeText(question?.targetDimension),
+      packageTopic: normalizeText(question?.packageTopic),
       optionId,
       optionText: normalizeText(option?.text || option?.label || option?.optionId)
     })

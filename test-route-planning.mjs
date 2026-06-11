@@ -25,7 +25,7 @@ const {
 } = require('./cloudfunctions/diagnose-http/domain/stop-state/stop-state-evaluator.js')
 const {
   matchesRequiredAnswerEffects
-} = require('./cloudfunctions/diagnose-http/domain/outcome-gate-evaluator.js')
+} = require('./cloudfunctions/diagnose-http/domain/outcome-condition-evaluator.js')
 const {
   isCandidateOutcomeOutputEligible
 } = require('./cloudfunctions/diagnose-http/utils/output-eligibility.js')
@@ -121,7 +121,7 @@ function buildVisualAggregateWithCandidates(symptomKeys = []) {
 
 function createMockRouteRepository({
   routes = [],
-  gates = [],
+  conditions = [],
   questions = [],
   routeGroups = []
 } = {}) {
@@ -130,9 +130,9 @@ function createMockRouteRepository({
       const safeOutcomeKeys = new Set(outcomeKeys)
       return routes.filter(item => safeOutcomeKeys.has(item.outcomeKey))
     },
-    async getOutcomeRouteGates(routeKeys = []) {
+    async getOutcomeRouteConditions(routeKeys = []) {
       const safeRouteKeys = new Set(routeKeys)
-      return gates.filter(item => safeRouteKeys.has(item.routeKey))
+      return conditions.filter(item => safeRouteKeys.has(item.routeKey))
     },
     async getOutcomeRouteQuestions(routeKeys = []) {
       const safeRouteKeys = new Set(routeKeys)
@@ -174,12 +174,12 @@ async function testRoutePlannerConflict() {
         }
       ]
     },
-    async getOutcomeRouteGates() {
+    async getOutcomeRouteConditions() {
       return [
         {
-          gateKey: 'gate_under',
+          conditionKey: 'condition_under',
           routeKey: 'route_under',
-          gateRole: 'display_gate',
+          conditionRole: 'display_condition',
           requiredEvidence: {},
           requiredAnswerEffects: {},
           blockerEvidence: {},
@@ -190,9 +190,9 @@ async function testRoutePlannerConflict() {
           onUnknown: ''
         },
         {
-          gateKey: 'gate_over',
+          conditionKey: 'condition_over',
           routeKey: 'route_over',
-          gateRole: 'display_gate',
+          conditionRole: 'display_condition',
           requiredEvidence: {},
           requiredAnswerEffects: {},
           blockerEvidence: {},
@@ -223,7 +223,7 @@ async function testRoutePlannerConflict() {
     routeRepository,
     featureFlags: { routePlanningEnabled: true },
   })
-  assert.equal(decision.fallbackPolicy, '')
+  assert.equal(decision.conservativePolicy, '')
   assert.deepEqual(decision.visibleOutcomeKeys, ['underwatering', 'overwatering_root_pressure'])
   assert.deepEqual(decision.visibleOutcomeKeys.slice(1), ['overwatering_root_pressure'])
   assert.deepEqual(decision.visibleActionConflictGroups.sort(), ['water_less', 'water_more'])
@@ -270,11 +270,11 @@ async function testRoutePlannerKeepsThreeVisibleOutcomesAcrossMixedGroupLimits()
         actionConflictGroup: 'water_less'
       }
     ],
-    gates: [
+    conditions: [
       {
-        gateKey: 'gate_nitrogen',
+        conditionKey: 'condition_nitrogen',
         routeKey: 'route_nitrogen',
-        gateRole: 'display_gate',
+        conditionRole: 'display_condition',
         requiredEvidence: {},
         requiredAnswerEffects: {},
         blockerEvidence: {},
@@ -285,9 +285,9 @@ async function testRoutePlannerKeepsThreeVisibleOutcomesAcrossMixedGroupLimits()
         onUnknown: ''
       },
       {
-        gateKey: 'gate_sunburn',
+        conditionKey: 'condition_sunburn',
         routeKey: 'route_sunburn',
-        gateRole: 'display_gate',
+        conditionRole: 'display_condition',
         requiredEvidence: {},
         requiredAnswerEffects: {},
         blockerEvidence: {},
@@ -298,9 +298,9 @@ async function testRoutePlannerKeepsThreeVisibleOutcomesAcrossMixedGroupLimits()
         onUnknown: ''
       },
       {
-        gateKey: 'gate_leaf_spot',
+        conditionKey: 'condition_leaf_spot',
         routeKey: 'route_leaf_spot',
-        gateRole: 'display_gate',
+        conditionRole: 'display_condition',
         requiredEvidence: {},
         requiredAnswerEffects: {},
         blockerEvidence: {},
@@ -311,9 +311,9 @@ async function testRoutePlannerKeepsThreeVisibleOutcomesAcrossMixedGroupLimits()
         onUnknown: ''
       },
       {
-        gateKey: 'gate_overwatering',
+        conditionKey: 'condition_overwatering',
         routeKey: 'route_overwatering',
-        gateRole: 'display_gate',
+        conditionRole: 'display_condition',
         requiredEvidence: {},
         requiredAnswerEffects: {},
         blockerEvidence: {},
@@ -353,7 +353,7 @@ async function testRoutePlannerKeepsThreeVisibleOutcomesAcrossMixedGroupLimits()
   assert.equal(decision.decisionCause.decisionCauseKey, 'route_action_conflict_unresolved')
 }
 
-async function testRoutePlannerDoesNotRequireQuestionForMissingGate() {
+async function testRoutePlannerDoesNotRequireQuestionForMissingCondition() {
   const routeEvidenceContext = buildRouteEvidenceContext({
     candidateOutcomes: [{ problemKey: 'overwatering_root_pressure' }]
   })
@@ -367,11 +367,11 @@ async function testRoutePlannerDoesNotRequireQuestionForMissingGate() {
         actionConflictGroup: 'water_less'
       }
     ],
-    gates: [
+    conditions: [
       {
-        gateKey: 'soil_gate',
+        conditionKey: 'soil_condition',
         routeKey: 'wet_route',
-        gateRole: 'split_question_gate',
+        conditionRole: 'split_question_condition',
         requiredEvidence: { symptomKeys: ['soil_moisture_confirmed'] },
         requiredAnswerEffects: {},
         blockerEvidence: {},
@@ -387,8 +387,8 @@ async function testRoutePlannerDoesNotRequireQuestionForMissingGate() {
         routeKey: 'wet_route',
         stepNo: 1,
         questionKey: 'q_soil_moisture_recent',
-        gateKey: 'soil_gate',
-        questionRole: 'path_split',
+        conditionKey: 'soil_condition',
+        routePackageRole: 'path_split',
         requiredForClosure: true,
         askPriority: 100
       }
@@ -417,7 +417,7 @@ async function testRoutePlannerDoesNotRequireQuestionForMissingGate() {
   assert.deepEqual(noBudget.nextQuestionKeys, [])
 }
 
-async function testRoutePlannerFallbackIsConservative() {
+async function testRoutePlannerConservativeIsConservative() {
   const routeDecision = await planOutcomeRoutes({
     candidateOutcomeKeys: ['overwatering_root_pressure', 'underwatering'],
     routeEvidenceContext: buildRouteEvidenceContext({
@@ -428,22 +428,22 @@ async function testRoutePlannerFallbackIsConservative() {
     }),
     routeRepository: createMockRouteRepository({
       routes: [],
-      gates: [],
+      conditions: [],
       questions: [],
       routeGroups: []
     }),
     featureFlags: { routePlanningEnabled: true },
   })
 
-  assert.equal(routeDecision.fallbackPolicy, 'uncertain')
+  assert.equal(routeDecision.conservativePolicy, 'uncertain')
   assert.deepEqual(routeDecision.visibleOutcomeKeys, [])
   assert.equal(routeDecision.requiresQuestion, false)
 }
 
-function testRouteFallbackPayloadNoCandidateOutcomeLeak() {
+function testRouteConservativePayloadNoCandidateOutcomeLeak() {
   const payload = resolveRouteOutcomePayload({
     routeDecision: {
-      fallbackPolicy: 'uncertain',
+      conservativePolicy: 'uncertain',
       visibleOutcomeKeys: []
     },
     problems: [
@@ -463,7 +463,7 @@ function testRouteFallbackPayloadNoCandidateOutcomeLeak() {
     questionRequired: false
   })
 
-  assert.equal(payload.outcomeMode, 'route_fallback_uncertain')
+  assert.equal(payload.outcomeMode, 'route_conservative_uncertain')
   assert.deepEqual(payload.visibleOutcomes, [])
   assert.equal(Object.prototype.hasOwnProperty.call(payload, 'primaryOutcome'), false)
   assert.equal(Object.prototype.hasOwnProperty.call(payload, 'secondaryOutcomes'), false)
@@ -538,7 +538,7 @@ function testSessionResultReadSuppressesUncertainWhenConcreteExists() {
   )
 }
 
-function testGateQuestionOptionPairsDoNotRequireRouteEffectMirror() {
+function testConditionQuestionOptionPairsDoNotRequireRouteEffectMirror() {
   const matched = matchesRequiredAnswerEffects(
     {
       questionOptionPairs: [
@@ -599,12 +599,12 @@ async function testRoutePlannerNextQuestions() {
         }
       ]
     },
-    async getOutcomeRouteGates() {
+    async getOutcomeRouteConditions() {
       return [
         {
-          gateKey: 'soil_gate',
+          conditionKey: 'soil_condition',
           routeKey: 'wet_route',
-          gateRole: 'split_question_gate',
+          conditionRole: 'split_question_condition',
           requiredEvidence: { symptomKeys: ['soil_moisture_confirmed'] },
           requiredAnswerEffects: {},
           blockerEvidence: {},
@@ -622,8 +622,8 @@ async function testRoutePlannerNextQuestions() {
           routeKey: 'wet_route',
           stepNo: 1,
           questionKey: 'q_soil_moisture_recent',
-          gateKey: 'soil_gate',
-          questionRole: 'path_split',
+          conditionKey: 'soil_condition',
+          routePackageRole: 'path_split',
           requiredForClosure: true,
           askPriority: 100
         }
@@ -652,7 +652,7 @@ async function testRoutePlannerConsumesSqlAnswerEffects() {
     observedEvidenceSet: buildObservedEvidenceSet(['uniform_yellowing']),
     answers: [
       {
-        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
         optionKey: 'watering_area'
       },
       {
@@ -662,7 +662,7 @@ async function testRoutePlannerConsumesSqlAnswerEffects() {
     ],
     routeAnswerEffects: [
       {
-        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
         optionKey: 'watering_area',
         outcomeKey: 'overwatering_root_pressure',
         routeKey: 'yellowing_wet_soil_route',
@@ -696,17 +696,17 @@ async function testRoutePlannerConsumesSqlAnswerEffects() {
         maxVisibleOutcomes: 3
       }
     ],
-    gates: [
+    conditions: [
       {
-        gateKey: 'wet_soil_confirmation_gate',
+        conditionKey: 'wet_soil_confirmation_condition',
         routeKey: 'yellowing_wet_soil_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: {
           anySymptomKeys: ['leaf_yellowing', 'uniform_yellowing']
         },
         requiredAnswerEffects: {
           questionOptionPairs: [
-            'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:watering_area',
+            'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:watering_area',
             'q_observed_probe__leaf_yellowing__watering_frequency_context:often_wet'
           ],
           routeKeys: ['yellowing_wet_soil_route']
@@ -765,11 +765,11 @@ async function testWiltingWetSoilAnswerExpandsToWiltingRouteEvidence() {
         maxVisibleOutcomes: 2
       }
     ],
-    gates: [
+    conditions: [
       {
-        gateKey: 'wilting_wet_gate',
+        conditionKey: 'wilting_wet_condition',
         routeKey: 'wilting_wet_soil_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: { symptomKeys: ['wilting'] },
         requiredAnswerEffects: {
           questionOptionPairs: ['q_root_rot_wet_soil_wilt:yes']
@@ -780,9 +780,9 @@ async function testWiltingWetSoilAnswerExpandsToWiltingRouteEvidence() {
         conflictOutcomeKeys: ['underwatering']
       },
       {
-        gateKey: 'wilting_dry_gate',
+        conditionKey: 'wilting_dry_condition',
         routeKey: 'wilting_dry_soil_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: { symptomKeys: ['wilting'] },
         requiredAnswerEffects: {
           questionOptionPairs: ['q_root_rot_wet_soil_wilt:no']
@@ -798,8 +798,8 @@ async function testWiltingWetSoilAnswerExpandsToWiltingRouteEvidence() {
         routeKey: 'wilting_wet_soil_route',
         stepNo: 1,
         questionKey: 'q_root_rot_wet_soil_wilt',
-        gateKey: 'wilting_wet_gate',
-        questionRole: 'critical_split',
+        conditionKey: 'wilting_wet_condition',
+        routePackageRole: 'critical_split',
         requiredForClosure: true,
         askPriority: 96
       },
@@ -807,8 +807,8 @@ async function testWiltingWetSoilAnswerExpandsToWiltingRouteEvidence() {
         routeKey: 'wilting_dry_soil_route',
         stepNo: 1,
         questionKey: 'q_root_rot_wet_soil_wilt',
-        gateKey: 'wilting_dry_gate',
-        questionRole: 'critical_split',
+        conditionKey: 'wilting_dry_condition',
+        routePackageRole: 'critical_split',
         requiredForClosure: true,
         askPriority: 96
       }
@@ -900,11 +900,11 @@ async function testRoutePlannerPassedAlternativeRouteSurvivesContradictedSplit()
         actionConflictGroup: 'watering_add'
       }
     ],
-    gates: [
+    conditions: [
       {
-        gateKey: 'wet_soil_confirmation_gate',
+        conditionKey: 'wet_soil_confirmation_condition',
         routeKey: 'yellowing_wet_soil_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
         requiredAnswerEffects: {
           questionOptionPairs: [
@@ -915,9 +915,9 @@ async function testRoutePlannerPassedAlternativeRouteSurvivesContradictedSplit()
         blockerEvidence: {}
       },
       {
-        gateKey: 'dry_soil_contradicted_gate',
+        conditionKey: 'dry_soil_contradicted_condition',
         routeKey: 'yellowing_dry_soil_alternative_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
         requiredAnswerEffects: {
           questionOptionPairs: [
@@ -974,11 +974,11 @@ async function testRoutePlannerSameRouteBlockerOverridesPass() {
         actionConflictGroup: 'watering_stop'
       }
     ],
-    gates: [
+    conditions: [
       {
-        gateKey: 'wet_soil_confirmation_gate',
+        conditionKey: 'wet_soil_confirmation_condition',
         routeKey: 'yellowing_wet_soil_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
         requiredAnswerEffects: {
           questionOptionPairs: [
@@ -988,9 +988,9 @@ async function testRoutePlannerSameRouteBlockerOverridesPass() {
         blockerEvidence: {}
       },
       {
-        gateKey: 'root_rot_blocker_gate',
+        conditionKey: 'root_rot_blocker_condition',
         routeKey: 'yellowing_wet_soil_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
         requiredAnswerEffects: {},
         blockerEvidence: {
@@ -1026,20 +1026,20 @@ async function testYellowingCareContextOnlyDoesNotCloseWaterConflict() {
     observedEvidenceSet: buildObservedEvidenceSet(['leaf_yellowing']),
     answers: [
       {
-        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
         optionKey: 'watering_area'
       }
     ],
     routeAnswerEffects: [
       {
-        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
         optionKey: 'watering_area',
         outcomeKey: 'overwatering_root_pressure',
         routeKey: 'yellowing_wet_soil_route',
         effectType: 'support'
       },
       {
-        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
         optionKey: 'watering_area',
         outcomeKey: 'underwatering',
         routeKey: 'yellowing_dry_soil_route',
@@ -1076,15 +1076,15 @@ async function testYellowingCareContextOnlyDoesNotCloseWaterConflict() {
         actionConflictGroup: 'watering_add'
       }
     ],
-    gates: [
+    conditions: [
       {
-        gateKey: 'wet_soil_confirmation_gate',
+        conditionKey: 'wet_soil_confirmation_condition',
         routeKey: 'yellowing_wet_soil_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
         requiredAnswerEffects: {
           questionOptionPairs: [
-            'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:watering_area',
+            'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:watering_area',
             'q_observed_probe__leaf_yellowing__watering_frequency_context:often_wet'
           ],
           routeKeys: ['yellowing_wet_soil_route']
@@ -1097,13 +1097,13 @@ async function testYellowingCareContextOnlyDoesNotCloseWaterConflict() {
         conflictOutcomeKeys: ['underwatering']
       },
       {
-        gateKey: 'dry_soil_confirmation_gate',
+        conditionKey: 'dry_soil_confirmation_condition',
         routeKey: 'yellowing_dry_soil_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
         requiredAnswerEffects: {
           questionOptionPairs: [
-            'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:watering_area',
+            'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:watering_area',
             'q_observed_probe__leaf_yellowing__watering_frequency_context:often_dry'
           ],
           routeKeys: ['yellowing_dry_soil_route']
@@ -1121,8 +1121,8 @@ async function testYellowingCareContextOnlyDoesNotCloseWaterConflict() {
         routeKey: 'yellowing_wet_soil_route',
         stepNo: 2,
         questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-        gateKey: 'wet_soil_confirmation_gate',
-        questionRole: 'context_probe',
+        conditionKey: 'wet_soil_confirmation_condition',
+        routePackageRole: 'context_probe',
         requiredForClosure: true,
         askPriority: 240
       },
@@ -1130,8 +1130,8 @@ async function testYellowingCareContextOnlyDoesNotCloseWaterConflict() {
         routeKey: 'yellowing_dry_soil_route',
         stepNo: 2,
         questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-        gateKey: 'dry_soil_confirmation_gate',
-        questionRole: 'context_probe',
+        conditionKey: 'dry_soil_confirmation_condition',
+        routePackageRole: 'context_probe',
         requiredForClosure: true,
         askPriority: 240
       }
@@ -1165,20 +1165,20 @@ async function testVisualCandidateYellowingExpandsRouteGroupAndPlansWateringCont
     visualAggregateResult,
     answers: [
       {
-        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
         optionKey: 'watering_area'
       }
     ],
     routeAnswerEffects: [
       {
-        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
         optionKey: 'watering_area',
         outcomeKey: 'overwatering_root_pressure',
         routeKey: 'yellowing_wet_soil_route',
         effectType: 'support'
       },
       {
-        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
         optionKey: 'watering_area',
         outcomeKey: 'underwatering',
         routeKey: 'yellowing_dry_soil_route',
@@ -1213,15 +1213,15 @@ async function testVisualCandidateYellowingExpandsRouteGroupAndPlansWateringCont
         actionConflictGroup: 'watering_add'
       }
     ],
-    gates: [
+    conditions: [
       {
-        gateKey: 'wet_soil_confirmation_gate',
+        conditionKey: 'wet_soil_confirmation_condition',
         routeKey: 'yellowing_wet_soil_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
         requiredAnswerEffects: {
           questionOptionPairs: [
-            'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:watering_area',
+            'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:watering_area',
             'q_observed_probe__leaf_yellowing__watering_frequency_context:often_wet'
           ],
           routeKeys: ['yellowing_wet_soil_route']
@@ -1230,13 +1230,13 @@ async function testVisualCandidateYellowingExpandsRouteGroupAndPlansWateringCont
         conflictOutcomeKeys: ['underwatering']
       },
       {
-        gateKey: 'dry_soil_confirmation_gate',
+        conditionKey: 'dry_soil_confirmation_condition',
         routeKey: 'yellowing_dry_soil_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
         requiredAnswerEffects: {
           questionOptionPairs: [
-            'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:watering_area',
+            'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:watering_area',
             'q_observed_probe__leaf_yellowing__watering_frequency_context:often_dry'
           ],
           routeKeys: ['yellowing_dry_soil_route']
@@ -1250,8 +1250,8 @@ async function testVisualCandidateYellowingExpandsRouteGroupAndPlansWateringCont
         routeKey: 'yellowing_wet_soil_route',
         stepNo: 2,
         questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-        gateKey: 'wet_soil_confirmation_gate',
-        questionRole: 'context_probe',
+        conditionKey: 'wet_soil_confirmation_condition',
+        routePackageRole: 'context_probe',
         requiredForClosure: true,
         askPriority: 240
       },
@@ -1259,8 +1259,8 @@ async function testVisualCandidateYellowingExpandsRouteGroupAndPlansWateringCont
         routeKey: 'yellowing_dry_soil_route',
         stepNo: 2,
         questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-        gateKey: 'dry_soil_confirmation_gate',
-        questionRole: 'context_probe',
+        conditionKey: 'dry_soil_confirmation_condition',
+        routePackageRole: 'context_probe',
         requiredForClosure: true,
         askPriority: 240
       }
@@ -1288,14 +1288,14 @@ async function testYellowingFrontloadedCareStartsWithWateringQuestion() {
   const questions = diagnosisEngineTest.filterQuestionsByAnsweredRouteConstraints(
     [
       {
-        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
         targetSymptomKey: 'leaf_yellowing',
-        targetDimension: 'yellowing_care_area_gate'
+        packageTopic: 'yellowing_care_area_condition'
       },
       {
         questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
         targetSymptomKey: 'leaf_yellowing',
-        targetDimension: 'watering_frequency_context'
+        packageTopic: 'watering_frequency_context'
       }
     ],
     {
@@ -1321,12 +1321,12 @@ async function testYellowingFrontloadedCareAdvancesAfterWateringQuestion() {
       {
         questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
         targetSymptomKey: 'leaf_yellowing',
-        targetDimension: 'watering_frequency_context'
+        packageTopic: 'watering_frequency_context'
       },
       {
         questionKey: 'q_observed_probe__leaf_yellowing__light_change_context',
         targetSymptomKey: 'leaf_yellowing',
-        targetDimension: 'light_change_context'
+        packageTopic: 'light_change_context'
       }
     ],
     {
@@ -1340,7 +1340,7 @@ async function testYellowingFrontloadedCareAdvancesAfterWateringQuestion() {
         {
           questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
           targetSymptomKey: 'leaf_yellowing',
-          targetDimension: 'watering_frequency_context'
+          packageTopic: 'watering_frequency_context'
         }
       ],
       symptomClassRuntime: {
@@ -1351,7 +1351,7 @@ async function testYellowingFrontloadedCareAdvancesAfterWateringQuestion() {
 
   const questionKeys = questions.map(item => item.questionKey)
   assert.equal(
-    questionKeys.includes('q_observed_probe__leaf_yellowing__yellowing_care_area_gate'),
+    questionKeys.includes('q_observed_probe__leaf_yellowing__yellowing_care_area_condition'),
     false
   )
   assert.equal(
@@ -1382,11 +1382,11 @@ async function testYellowingRouteDoesNotHoldVisibleOutcomeForMissingPackageGroup
         outcomeKey: 'uncertain_observation'
       }
     ],
-    gates: [
+    conditions: [
       {
-        gateKey: 'wet_soil_confirmation_gate',
+        conditionKey: 'wet_soil_confirmation_condition',
         routeKey: 'yellowing_wet_soil_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
         requiredAnswerEffects: {
           questionOptionPairs: [
@@ -1403,8 +1403,8 @@ async function testYellowingRouteDoesNotHoldVisibleOutcomeForMissingPackageGroup
         routeKey: 'yellowing_wet_soil_route',
         stepNo: 2,
         questionKey: 'q_observed_probe__leaf_yellowing__light_change_context',
-        gateKey: 'wet_soil_confirmation_gate',
-        questionRole: 'context_probe',
+        conditionKey: 'wet_soil_confirmation_condition',
+        routePackageRole: 'context_probe',
         requiredForClosure: true,
         askPriority: 240
       }
@@ -1473,11 +1473,11 @@ async function testYellowingRouteUsesHistoricalGroupedAnswersForClosure() {
         actionConflictGroup: 'watering_stop'
       }
     ],
-    gates: [
+    conditions: [
       {
-        gateKey: 'wet_soil_confirmation_gate',
+        conditionKey: 'wet_soil_confirmation_condition',
         routeKey: 'yellowing_wet_soil_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: {
           anySymptomKeys: ['leaf_yellowing']
         },
@@ -1721,15 +1721,15 @@ async function testYellowingCareContextAnswerKeepsRouteQuestionEvidence() {
         outcomeKey: 'normal_leaf_aging'
       }
     ],
-    gates: [
+    conditions: [
       {
-        gateKey: 'wet_soil_confirmation_gate',
+        conditionKey: 'wet_soil_confirmation_condition',
         routeKey: 'yellowing_wet_soil_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
         requiredAnswerEffects: {
           questionOptionPairs: [
-            'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:watering_area',
+            'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:watering_area',
             'q_observed_probe__leaf_yellowing__watering_frequency_context:often_wet'
           ],
           routeKeys: ['yellowing_wet_soil_route']
@@ -1738,13 +1738,13 @@ async function testYellowingCareContextAnswerKeepsRouteQuestionEvidence() {
         conflictOutcomeKeys: []
       },
       {
-        gateKey: 'yellowing_low_light_gate',
+        conditionKey: 'yellowing_low_light_condition',
         routeKey: 'yellowing_low_light_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
         requiredAnswerEffects: {
           questionOptionPairs: [
-            'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:light_area',
+            'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:light_area',
             'q_observed_probe__leaf_yellowing__light_change_context:weaker_light'
           ],
           routeKeys: ['yellowing_low_light_route']
@@ -1753,9 +1753,9 @@ async function testYellowingCareContextAnswerKeepsRouteQuestionEvidence() {
         conflictOutcomeKeys: []
       },
       {
-        gateKey: 'old_leaf_aging_gate',
+        conditionKey: 'old_leaf_aging_condition',
         routeKey: 'yellowing_old_leaf_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
         requiredAnswerEffects: {
           questionOptionPairs: [
@@ -1772,8 +1772,8 @@ async function testYellowingCareContextAnswerKeepsRouteQuestionEvidence() {
         routeKey: 'yellowing_wet_soil_route',
         stepNo: 2,
         questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-        gateKey: 'wet_soil_confirmation_gate',
-        questionRole: 'context_probe',
+        conditionKey: 'wet_soil_confirmation_condition',
+        routePackageRole: 'context_probe',
         requiredForClosure: true,
         askPriority: 240
       },
@@ -1781,8 +1781,8 @@ async function testYellowingCareContextAnswerKeepsRouteQuestionEvidence() {
         routeKey: 'yellowing_low_light_route',
         stepNo: 2,
         questionKey: 'q_observed_probe__leaf_yellowing__light_change_context',
-        gateKey: 'yellowing_low_light_gate',
-        questionRole: 'context_probe',
+        conditionKey: 'yellowing_low_light_condition',
+        routePackageRole: 'context_probe',
         requiredForClosure: true,
         askPriority: 240
       },
@@ -1790,8 +1790,8 @@ async function testYellowingCareContextAnswerKeepsRouteQuestionEvidence() {
         routeKey: 'yellowing_old_leaf_route',
         stepNo: 1,
         questionKey: 'q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern',
-        gateKey: 'old_leaf_aging_gate',
-        questionRole: 'critical_split',
+        conditionKey: 'old_leaf_aging_condition',
+        routePackageRole: 'critical_split',
         requiredForClosure: true,
         askPriority: 230
       }
@@ -1804,13 +1804,13 @@ async function testYellowingCareContextAnswerKeepsRouteQuestionEvidence() {
       observedEvidenceSet: buildObservedEvidenceSet(['leaf_yellowing']),
       answers: [
         {
-          questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+          questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
           optionKey: 'light_area'
         }
       ],
       routeAnswerEffects: [
         {
-          questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+          questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
           optionKey: 'light_area',
           outcomeKey: 'low_light_growth_weakness',
           routeKey: 'yellowing_low_light_route',
@@ -1834,7 +1834,7 @@ async function testYellowingCareContextAnswerKeepsRouteQuestionEvidence() {
       observedEvidenceSet: buildObservedEvidenceSet(['leaf_yellowing']),
       answers: [
         {
-          questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+          questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
           optionKey: 'unknown'
         }
       ]
@@ -1857,7 +1857,7 @@ async function testYellowingLowLightRouteClosesWithActionAdvice() {
     observedEvidenceSet: buildObservedEvidenceSet(['leaf_yellowing']),
     answers: [
       {
-        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
         optionKey: 'light_area'
       },
       {
@@ -1867,7 +1867,7 @@ async function testYellowingLowLightRouteClosesWithActionAdvice() {
     ],
     routeAnswerEffects: [
       {
-        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
         optionKey: 'light_area',
         outcomeKey: 'low_light_growth_weakness',
         routeKey: 'yellowing_low_light_route',
@@ -1909,17 +1909,17 @@ async function testYellowingLowLightRouteClosesWithActionAdvice() {
         actionConflictGroup: 'increase_light'
       }
     ],
-    gates: [
+    conditions: [
       {
-        gateKey: 'yellowing_low_light_gate',
+        conditionKey: 'yellowing_low_light_condition',
         routeKey: 'yellowing_low_light_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: {
           anySymptomKeys: ['leaf_yellowing']
         },
         requiredAnswerEffects: {
           questionOptionPairs: [
-            'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:light_area',
+            'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:light_area',
             'q_observed_probe__leaf_yellowing__light_change_context:weaker_light'
           ],
           routeKeys: ['yellowing_low_light_route']
@@ -1937,7 +1937,7 @@ async function testYellowingLowLightRouteClosesWithActionAdvice() {
     featureFlags: { routePlanningEnabled: true },
   })
 
-  assert.equal(decision.fallbackPolicy, '')
+  assert.equal(decision.conservativePolicy, '')
   assert.deepEqual(decision.visibleOutcomeKeys, ['low_light_growth_weakness'])
   assert.deepEqual(decision.visibleActionProfileKeys, ['action_low_light_basic'])
   assert.deepEqual(decision.visibleActionConflictGroups, ['increase_light'])
@@ -2231,7 +2231,7 @@ function testYellowingNutrientGuardDoesNotForceLeafAgeQuestion() {
   assert.equal(guard.preferredQuestionKeys.includes('q_leaf_yellowing_new_growth_bias'), false)
 }
 
-function testLegacyYellowingLeafAgeAnswerDoesNotAffectEvidenceScoring() {
+function testSessionYellowingLeafAgeAnswerDoesNotAffectEvidenceScoring() {
   const result = computeQuestionEvidenceAndPenalty({
     answers: [
       {
@@ -2242,7 +2242,7 @@ function testLegacyYellowingLeafAgeAnswerDoesNotAffectEvidenceScoring() {
     questions: [
       {
         questionKey: 'q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern',
-        targetDimension: 'yellowing_leaf_age_pattern'
+        packageTopic: 'yellowing_leaf_age_pattern'
       }
     ],
     optionMappings: [
@@ -2281,7 +2281,7 @@ function testLegacyYellowingLeafAgeAnswerDoesNotAffectEvidenceScoring() {
   assert.equal(result.questionScores.nitrogen_deficiency, 0)
 }
 
-async function testLegacyYellowingLeafAgeAnswerDoesNotCloseRoute() {
+async function testSessionYellowingLeafAgeAnswerDoesNotCloseRoute() {
   const routeRepository = createMockRouteRepository({
     routes: [
       {
@@ -2292,11 +2292,11 @@ async function testLegacyYellowingLeafAgeAnswerDoesNotCloseRoute() {
         actionConflictGroup: 'observe'
       }
     ],
-    gates: [
+    conditions: [
       {
-        gateKey: 'old_leaf_aging_gate',
+        conditionKey: 'old_leaf_aging_condition',
         routeKey: 'yellowing_old_leaf_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
         requiredAnswerEffects: {
           questionOptionPairs: [
@@ -2313,11 +2313,11 @@ async function testLegacyYellowingLeafAgeAnswerDoesNotCloseRoute() {
         routeKey: 'yellowing_old_leaf_route',
         stepNo: 1,
         questionKey: 'q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern',
-        gateKey: 'old_leaf_aging_gate',
-        questionRole: 'critical_split',
+        conditionKey: 'old_leaf_aging_condition',
+        routePackageRole: 'critical_split',
         requiredForClosure: true,
         askPriority: 230,
-        targetDimension: 'yellowing_leaf_age_pattern'
+        packageTopic: 'yellowing_leaf_age_pattern'
       }
     ]
   })
@@ -2328,7 +2328,7 @@ async function testLegacyYellowingLeafAgeAnswerDoesNotCloseRoute() {
       {
         questionKey: 'q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern',
         optionKey: 'old_lower_leaves_first',
-        targetDimension: 'yellowing_leaf_age_pattern'
+        packageTopic: 'yellowing_leaf_age_pattern'
       }
     ],
     routeAnswerEffects: [
@@ -2504,11 +2504,11 @@ async function testYellowingAirflowLeafSpotRequiresVisibleSpotEvidence() {
         actionConflictGroup: 'control_moisture'
       }
     ],
-    gates: [
+    conditions: [
       {
-        gateKey: 'airflow_leaf_spot_gate',
+        conditionKey: 'airflow_leaf_spot_condition',
         routeKey: 'yellowing_airflow_leaf_spot_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: {
           symptomKeys: ['spreading_spots'],
           anySymptomKeys: [
@@ -2521,7 +2521,7 @@ async function testYellowingAirflowLeafSpotRequiresVisibleSpotEvidence() {
         },
         requiredAnswerEffects: {
           questionOptionPairs: [
-            'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:airflow_humidity_area',
+            'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:airflow_humidity_area',
             'q_observed_probe__leaf_yellowing__yellowing_progression_speed:rapid_spreading'
           ],
           routeKeys: ['yellowing_airflow_leaf_spot_route']
@@ -2532,7 +2532,7 @@ async function testYellowingAirflowLeafSpotRequiresVisibleSpotEvidence() {
   })
   const airflowRapidAnswers = [
     {
-      questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+      questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
       optionKey: 'airflow_humidity_area'
     },
     {
@@ -2542,7 +2542,7 @@ async function testYellowingAirflowLeafSpotRequiresVisibleSpotEvidence() {
   ]
   const routeAnswerEffects = [
     {
-      questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+      questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
       optionKey: 'airflow_humidity_area',
       outcomeKey: 'leaf_spot_problem',
       routeKey: 'yellowing_airflow_leaf_spot_route',
@@ -2575,7 +2575,7 @@ async function testYellowingAirflowLeafSpotRequiresVisibleSpotEvidence() {
     [],
     '纯黄叶候选不得保留叶斑 outcome'
   )
-  assert.equal(yellowingOnlyDecision.decisionCause.decisionCauseKey, 'route_fallback_no_candidates')
+  assert.equal(yellowingOnlyDecision.decisionCause.decisionCauseKey, 'route_conservative_no_candidates')
 
   const visibleSpotDecision = await planOutcomeRoutes({
     candidateOutcomeKeys: ['leaf_spot_problem'],
@@ -2616,7 +2616,7 @@ async function testYellowingStrongLightRouteClosesWithSunburnActionAdvice() {
     observedEvidenceSet: buildObservedEvidenceSet(['leaf_yellowing']),
     answers: [
       {
-        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
         optionKey: 'light_area'
       },
       {
@@ -2626,14 +2626,14 @@ async function testYellowingStrongLightRouteClosesWithSunburnActionAdvice() {
     ],
     routeAnswerEffects: [
       {
-        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
         optionKey: 'light_area',
         outcomeKey: 'low_light_growth_weakness',
         routeKey: 'yellowing_low_light_route',
         effectType: 'support'
       },
       {
-        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
         optionKey: 'light_area',
         outcomeKey: 'sunburn',
         routeKey: 'yellowing_sunburn_route',
@@ -2683,17 +2683,17 @@ async function testYellowingStrongLightRouteClosesWithSunburnActionAdvice() {
         actionConflictGroup: 'avoid_sun'
       }
     ],
-    gates: [
+    conditions: [
       {
-        gateKey: 'yellowing_low_light_gate',
+        conditionKey: 'yellowing_low_light_condition',
         routeKey: 'yellowing_low_light_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: {
           anySymptomKeys: ['leaf_yellowing']
         },
         requiredAnswerEffects: {
           questionOptionPairs: [
-            'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:light_area',
+            'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:light_area',
             'q_observed_probe__leaf_yellowing__light_change_context:weaker_light'
           ],
           routeKeys: ['yellowing_low_light_route']
@@ -2706,15 +2706,15 @@ async function testYellowingStrongLightRouteClosesWithSunburnActionAdvice() {
         conflictOutcomeKeys: []
       },
       {
-        gateKey: 'yellowing_sunburn_gate',
+        conditionKey: 'yellowing_sunburn_condition',
         routeKey: 'yellowing_sunburn_route',
-        gateRole: 'display',
+        conditionRole: 'display',
         requiredEvidence: {
           anySymptomKeys: ['leaf_yellowing']
         },
         requiredAnswerEffects: {
           questionOptionPairs: [
-            'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:light_area',
+            'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:light_area',
             'q_observed_probe__leaf_yellowing__light_change_context:stronger_direct_light'
           ],
           routeKeys: ['yellowing_sunburn_route']
@@ -2736,7 +2736,7 @@ async function testYellowingStrongLightRouteClosesWithSunburnActionAdvice() {
     featureFlags: { routePlanningEnabled: true },
   })
 
-  assert.equal(decision.fallbackPolicy, '')
+  assert.equal(decision.conservativePolicy, '')
   assert.deepEqual(decision.visibleOutcomeKeys, ['sunburn'])
   assert.deepEqual(decision.visibleActionProfileKeys, ['action_sunburn_basic'])
   assert.deepEqual(decision.visibleActionConflictGroups, ['avoid_sun'])
@@ -2886,7 +2886,7 @@ function testRouteExplanationFollowsRoutePrimaryOutcome() {
       ],
       visibleActionConflictGroups: ['avoid_sun', 'fertilizer_more', 'water_less'],
       visibleActionProfileKeys: ['action_sunburn_basic'],
-      fallbackPolicy: '',
+      conservativePolicy: '',
       decisionCause: {
         decisionCauseKey: 'route_visible_outcomes_ready',
         decisionCauseCategory: 'outcome_route',
@@ -2954,9 +2954,9 @@ function testRuntimeSnapshotPersistsInternalRouteDecision() {
     mode: 'multi_outcome_route',
     visibleOutcomeKeys: ['overwatering_root_pressure'],
     activeRouteGroupKeys: ['yellowing_care_split_group'],
-    gateResults: [
+    conditionResults: [
       {
-        gateKey: 'wet_soil_confirmation_gate',
+        conditionKey: 'wet_soil_confirmation_condition',
         result: 'pass'
       }
     ],
@@ -3069,35 +3069,35 @@ async function testManualQuestionStartFastPathBuildsQuestionRound() {
   }
   const questionRepository = {
     async findQuestionKeysByTargetSymptoms() {
-      throw new Error('route-backed package should be used before fallback')
+      throw new Error('route-backed package should be used before conservative')
     },
     async getQuestionsByKeys(questionKeys) {
-      assert.deepEqual(questionKeys, ['q_observed_probe__leaf_yellowing__yellowing_care_area_gate'])
+      assert.deepEqual(questionKeys, ['q_observed_probe__leaf_yellowing__yellowing_care_area_condition'])
       return [
         {
-          questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+          questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
           questionTextUserCn: '为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。',
-          questionGroupKey: 'yellowing_care_area_gate',
+          questionGroupKey: 'yellowing_care_area_condition',
           targetSymptomKey: 'leaf_yellowing',
-          targetDimension: 'yellowing_care_area_gate',
-          routingScope: 'context_probe',
-          questionRole: 'route_gate',
+          packageTopic: 'yellowing_care_area_condition',
+          packageSection: 'context_probe',
+          routePackageRole: 'route_condition',
           questionType: 'single_choice',
           defaultOptionKey: 'watering_area'
         }
       ]
     },
     async getQuestionOptionMappings(questionKeys) {
-      assert.deepEqual(questionKeys, ['q_observed_probe__leaf_yellowing__yellowing_care_area_gate'])
+      assert.deepEqual(questionKeys, ['q_observed_probe__leaf_yellowing__yellowing_care_area_condition'])
       return [
         {
-          questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+          questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
           optionKey: 'watering_area',
           optionTextUserCn: '浇水可能不合适',
           isDefault: true
         },
         {
-          questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+          questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
           optionKey: 'light_area',
           optionTextUserCn: '光照变化明显'
         }
@@ -3136,11 +3136,10 @@ async function testManualQuestionStartFastPathBuildsQuestionRound() {
     ]
   )
   assert.equal(
-    result.questions.some(item => item.questionKey === 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate'),
+    result.questions.some(item => item.questionKey === 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition'),
     false
   )
   assert.equal(result.__runtimeRouteDecision.mode, 'manual_yellowing_care_environment_frontloaded')
-  assert.equal(result.questionQueue?.queueStatus, 'active')
   assert.equal(Number(result.outputEligibility?.eligible || 0), 0)
 }
 
@@ -3260,7 +3259,7 @@ function testFormatDiagnosisResponseRouteFields() {
     routeDecision: {
       visibleOutcomeKeys: ['overwatering_root_pressure'],
       visibleActionConflictGroups: ['water_less'],
-      fallbackPolicy: '',
+      conservativePolicy: '',
       decisionCause: {
         decisionCauseKey: 'wet_soil_confirmed',
         decisionCauseCategory: 'outcome_route',
@@ -3337,19 +3336,19 @@ function testRouteOutputUsesDiagnosisOutcomesAndAvoidsCandidateOutcomeSummaryLea
     stopDecision: {
       outcomeLocked: 'problematic',
       stopReason: 'route_visible_outcomes_ready',
-      stopReasonDetail: 'wet_soil_confirmation_gate',
+      stopReasonDetail: 'wet_soil_confirmation_condition',
       uncertainLegalityReason: '',
       decisionCause: {
-        decisionCauseKey: 'wet_soil_confirmation_gate',
+        decisionCauseKey: 'wet_soil_confirmation_condition',
         decisionCauseCategory: 'outcome_route',
         decisionCauseText: '路径已形成可公开结果。'
       }
     },
     routeDecision: {
       visibleOutcomeKeys: ['overwatering_root_pressure'],
-      fallbackPolicy: '',
+      conservativePolicy: '',
       decisionCause: {
-        decisionCauseKey: 'wet_soil_confirmation_gate',
+        decisionCauseKey: 'wet_soil_confirmation_condition',
         decisionCauseCategory: 'outcome_route',
         decisionCauseText: '路径已形成可公开结果。'
       }
@@ -3404,19 +3403,19 @@ function testRouteFinalStopStateCloses() {
     stopDecision: {
       outcomeLocked: 'problematic',
       stopReason: 'route_visible_outcomes_ready',
-      stopReasonDetail: 'yellowing_care_area_gate',
+      stopReasonDetail: 'yellowing_care_area_condition',
       uncertainLegalityReason: '',
       decisionCause: {
-        decisionCauseKey: 'yellowing_care_area_gate',
+        decisionCauseKey: 'yellowing_care_area_condition',
         decisionCauseCategory: 'outcome_route',
         decisionCauseText: '路径已形成可公开结果。'
       }
     },
     routeDecision: {
       visibleOutcomeKeys: ['overwatering_root_pressure'],
-      fallbackPolicy: '',
+      conservativePolicy: '',
       decisionCause: {
-        decisionCauseKey: 'yellowing_care_area_gate',
+        decisionCauseKey: 'yellowing_care_area_condition',
         decisionCauseCategory: 'outcome_route',
         decisionCauseText: '路径已形成可公开结果。'
       }
@@ -3424,10 +3423,7 @@ function testRouteFinalStopStateCloses() {
     actionProfiles: []
   })
 
-  const stopState = evaluateStopState({
-    response,
-    questionQueue: response.questionQueue
-  })
+  const stopState = evaluateStopState({ response })
 
   assert.equal(stopState.isStopped, 1)
   assert.equal(stopState.stopReason, 'route_visible_outcomes_ready')
@@ -3470,7 +3466,7 @@ function testFormatDiagnosisResponseRouteOutputDisabled() {
     },
     routeDecision: {
       visibleOutcomeKeys: ['overwatering_root_pressure'],
-      fallbackPolicy: '',
+      conservativePolicy: '',
       decisionCause: {
         decisionCauseKey: 'wet_soil_confirmed',
         decisionCauseCategory: 'outcome_route',
@@ -3516,9 +3512,9 @@ function testRouteModeHidesCandidateOutcomesFromPublicPayload() {
     questionRequired: false,
     stopDecision: {
       outcomeLocked: 'uncertain',
-      stopReason: 'route_fallback_uncertain',
-      stopReasonDetail: 'route_fallback_no_routes',
-      uncertainLegalityReason: 'route_fallback'
+      stopReason: 'route_conservative_uncertain',
+      stopReasonDetail: 'route_conservative_no_routes',
+      uncertainLegalityReason: 'route_conservative'
     },
     hideCandidateOutcomes: true
   })
@@ -3555,7 +3551,7 @@ function testRouteConflictVisibleOutcomesStillProduceRouteBackedFinalResult() {
     routeDecision: {
       visibleOutcomeKeys: ['underwatering', 'overwatering_root_pressure'],
       visibleActionConflictGroups: ['watering_stop', 'watering_add'],
-      fallbackPolicy: '',
+      conservativePolicy: '',
       decisionCause: {
         decisionCauseKey: 'route_action_conflict_unresolved',
         decisionCauseCategory: 'outcome_route',
@@ -3662,7 +3658,7 @@ function testSessionResultReadServicePreservesRouteMultiOutcomeFields() {
     snapshot: {
       finalResult: {
         displayName: '缺氮/长期营养不足',
-        summary: '主结论来自旧 snapshot。'
+        summary: '主结论来自既有 snapshot。'
       }
     },
     outcomePayload: {
@@ -3715,18 +3711,18 @@ function testSessionResultReadServicePreservesRouteMultiOutcomeFields() {
   const payloadWinsFields = sessionResultReadServiceTest.resolveRouteOutcomeFields({
     snapshot: {
       primaryOutcome: {
-        outcomeKey: 'legacy_single',
-        problemKey: 'legacy_single',
-        displayNameCn: '旧单结论'
+        outcomeKey: 'session_single',
+        problemKey: 'session_single',
+        displayNameCn: '既有单结论'
       },
       visibleOutcomes: [
         {
-          outcomeKey: 'legacy_single',
-          problemKey: 'legacy_single',
-          displayNameCn: '旧单结论'
+          outcomeKey: 'session_single',
+          problemKey: 'session_single',
+          displayNameCn: '既有单结论'
         }
       ],
-      outcomeMode: 'legacy_single'
+      outcomeMode: 'session_single'
     },
     outcomePayload: {
       finalResult: {
@@ -3759,7 +3755,7 @@ function testSessionResultReadServicePreservesRouteMultiOutcomeFields() {
   assert.equal(payloadWinsFields.outcomeMode, 'visible_outcomes')
 }
 
-function testRouteModeDoesNotBuildLegacyQuestionsAfterPackageAnswer() {
+function testRouteModeDoesNotBuildSessionQuestionsAfterPackageAnswer() {
   const source = readFileSync(
     './cloudfunctions/diagnose-http/domain/diagnosis-engine.js',
     'utf8'
@@ -4025,7 +4021,7 @@ function testPresenterKeepsCareBehaviorEvidenceAndDropsWeatherWindow() {
         questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
         text: '最近 10 天浇水/盆土干湿背景',
         uiVariant: 'care_behavior_timeline',
-        targetDimension: 'watering_frequency_context',
+        packageTopic: 'watering_frequency_context',
         options: [
           {
             optionId: 'opt_dW5rbm93bg',
@@ -4041,7 +4037,7 @@ function testPresenterKeepsCareBehaviorEvidenceAndDropsWeatherWindow() {
         questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
         text: '最近 10 天浇水/盆土干湿背景',
         uiVariant: 'care_behavior_timeline',
-        targetDimension: 'watering_frequency_context',
+        packageTopic: 'watering_frequency_context',
         options: [
           {
             optionId: 'opt_dW5rbm93bg',
@@ -4144,7 +4140,7 @@ function testRouteBackedNonProblematicOutcome() {
       }
     },
     routeDecision: {
-      fallbackPolicy: '',
+      conservativePolicy: '',
       visibleOutcomeKeys: ['normal_leaf_aging'],
       visibleActionProfileKeys: ['action_non_problematic_observe'],
       visibleActionConflictGroups: ['observe'],
@@ -4248,83 +4244,83 @@ async function testGoldenRouteSamples() {
         actionConflictGroup: 'control_pest'
       }
     ],
-    gates: [
+    conditions: [
       {
-        gateKey: 'gate_yellow_wet',
+        conditionKey: 'condition_yellow_wet',
         routeKey: 'route_yellow_wet',
-        gateRole: 'display_gate',
+        conditionRole: 'display_condition',
         requiredEvidence: { symptomKeys: ['leaf_yellowing', 'soil_wet'] },
         requiredAnswerEffects: {},
         blockerEvidence: {}
       },
       {
-        gateKey: 'gate_yellow_dry',
+        conditionKey: 'condition_yellow_dry',
         routeKey: 'route_yellow_dry',
-        gateRole: 'display_gate',
+        conditionRole: 'display_condition',
         requiredEvidence: { symptomKeys: ['leaf_yellowing', 'soil_dry'] },
         requiredAnswerEffects: {},
         blockerEvidence: {}
       },
       {
-        gateKey: 'gate_wilt_wet',
+        conditionKey: 'condition_wilt_wet',
         routeKey: 'route_wilt_wet',
-        gateRole: 'display_gate',
+        conditionRole: 'display_condition',
         requiredEvidence: { symptomKeys: ['wilting', 'soil_wet'] },
         requiredAnswerEffects: {},
         blockerEvidence: {}
       },
       {
-        gateKey: 'gate_wilt_dry',
+        conditionKey: 'condition_wilt_dry',
         routeKey: 'route_wilt_dry',
-        gateRole: 'display_gate',
+        conditionRole: 'display_condition',
         requiredEvidence: { symptomKeys: ['wilting', 'soil_dry'] },
         requiredAnswerEffects: {},
         blockerEvidence: {}
       },
       {
-        gateKey: 'gate_leggy_light',
+        conditionKey: 'condition_leggy_light',
         routeKey: 'route_leggy_low_light',
-        gateRole: 'display_gate',
+        conditionRole: 'display_condition',
         requiredEvidence: { symptomKeys: ['leggy_growth', 'weak_light'] },
         requiredAnswerEffects: {},
         blockerEvidence: {}
       },
       {
-        gateKey: 'gate_sunburn',
+        conditionKey: 'condition_sunburn',
         routeKey: 'route_sunburn',
-        gateRole: 'display_gate',
+        conditionRole: 'display_condition',
         requiredEvidence: { symptomKeys: ['scorching_spots', 'recent_strong_sun'] },
         requiredAnswerEffects: {},
         blockerEvidence: {}
       },
       {
-        gateKey: 'gate_dry_air',
+        conditionKey: 'condition_dry_air',
         routeKey: 'route_dry_air',
-        gateRole: 'display_gate',
+        conditionRole: 'display_condition',
         requiredEvidence: { symptomKeys: ['burnt_leaf_edge', 'dry_air_condition'] },
         requiredAnswerEffects: {},
         blockerEvidence: {}
       },
       {
-        gateKey: 'gate_leaf_spot',
+        conditionKey: 'condition_leaf_spot',
         routeKey: 'route_leaf_spot',
-        gateRole: 'display_gate',
+        conditionRole: 'display_condition',
         requiredEvidence: { symptomKeys: ['spreading_spots', 'poor_ventilation'] },
         requiredAnswerEffects: {},
         blockerEvidence: {}
       },
       {
-        gateKey: 'gate_old_injury',
+        conditionKey: 'condition_old_injury',
         routeKey: 'route_old_injury',
-        gateRole: 'display_gate',
+        conditionRole: 'display_condition',
         requiredEvidence: { symptomKeys: ['holes_in_leaf', 'no_pest_trace', 'not_spreading'] },
         requiredAnswerEffects: {},
         blockerEvidence: {}
       },
       {
-        gateKey: 'gate_chewing_pest',
+        conditionKey: 'condition_chewing_pest',
         routeKey: 'route_chewing_pest',
-        gateRole: 'display_gate',
+        conditionRole: 'display_condition',
         requiredEvidence: { symptomKeys: ['holes_in_leaf', 'visible_pest_trace'] },
         requiredAnswerEffects: {},
         blockerEvidence: {}
@@ -4476,19 +4472,19 @@ async function testGoldenUncertainSamples() {
         actionConflictGroup: 'water_less'
       }
     ],
-    gates: [
+    conditions: [
       {
-        gateKey: 'gate_conflict_under',
+        conditionKey: 'condition_conflict_under',
         routeKey: 'route_conflict_under',
-        gateRole: 'display_gate',
+        conditionRole: 'display_condition',
         requiredEvidence: { symptomKeys: ['leaf_yellowing'] },
         requiredAnswerEffects: {},
         blockerEvidence: {}
       },
       {
-        gateKey: 'gate_conflict_over',
+        conditionKey: 'condition_conflict_over',
         routeKey: 'route_conflict_over',
-        gateRole: 'display_gate',
+        conditionRole: 'display_condition',
         requiredEvidence: { symptomKeys: ['leaf_yellowing'] },
         requiredAnswerEffects: {},
         blockerEvidence: {}
@@ -4545,18 +4541,18 @@ async function testGoldenUncertainSamples() {
     routeRepository: createMockRouteRepository({
       routes: [
         {
-          routeKey: 'route_leaf_spot_gate',
+          routeKey: 'route_leaf_spot_condition',
           routeGroupKey: 'spot_split',
           outcomeKey: 'leaf_spot_problem',
           actionProfileKey: 'ap_leaf_spot',
           actionConflictGroup: 'control_moisture'
         }
       ],
-      gates: [
+      conditions: [
         {
-          gateKey: 'gate_leaf_spot_admission',
-          routeKey: 'route_leaf_spot_gate',
-          gateRole: 'display_gate',
+          conditionKey: 'condition_leaf_spot_admission',
+          routeKey: 'route_leaf_spot_condition',
+          conditionRole: 'display_condition',
           requiredEvidence: { symptomKeys: ['spreading_spots', 'poor_ventilation'] },
           requiredAnswerEffects: {},
           blockerEvidence: {}
@@ -4569,9 +4565,9 @@ async function testGoldenUncertainSamples() {
   assert.deepEqual(visualStrongButNotAdmitted.visibleOutcomeKeys, [])
 }
 
-function testFrontendNormalizationCompatibility() {
-  const legacyResult = normalizeDiagnosisResult({
-    diagnosisSessionId: 'legacy_1',
+function testFrontendNormalizationSuitability() {
+  const currentResult = normalizeDiagnosisResult({
+    diagnosisSessionId: 'session_1',
     roundId: 'round_1',
     stage: 'final',
     outcomeType: 'problematic',
@@ -4583,10 +4579,10 @@ function testFrontendNormalizationCompatibility() {
     questionRequired: false,
     questions: []
   })
-  assert.equal(legacyResult.diagnosisSessionId, 'legacy_1')
-  assert.equal(Object.prototype.hasOwnProperty.call(legacyResult, 'primaryOutcome'), false)
-  assert.deepEqual(legacyResult.visibleOutcomes, [])
-  assert.equal(legacyResult.routeDecision, null)
+  assert.equal(currentResult.diagnosisSessionId, 'session_1')
+  assert.equal(Object.prototype.hasOwnProperty.call(currentResult, 'primaryOutcome'), false)
+  assert.deepEqual(currentResult.visibleOutcomes, [])
+  assert.equal(currentResult.routeDecision, null)
 
   const routeResult = normalizeDiagnosisResult({
     diagnosisSessionId: 'route_1',
@@ -4611,14 +4607,14 @@ function testFrontendNormalizationCompatibility() {
       visibleOutcomeKeys: ['overwatering_root_pressure'],
       activeRouteGroupKeys: ['watering_split'],
       nextQuestionKeys: ['q_soil_moisture_recent'],
-      fallbackPolicy: '',
+      conservativePolicy: '',
       decisionCause: {
         decisionCauseKey: 'wet_soil_confirmed',
         decisionCauseCategory: 'outcome_route',
         decisionCauseText: '用户确认盆土长期潮湿。'
       },
       routeTrace: [{ routeKey: 'route_hidden' }],
-      gateResults: [{ gateKey: 'gate_hidden' }]
+      conditionResults: [{ conditionKey: 'condition_hidden' }]
     },
     finalResult: {
       displayName: '积水/根系压力',
@@ -4632,7 +4628,7 @@ function testFrontendNormalizationCompatibility() {
   assert.equal(routeResult.actionAdvice.todayActions[0], '先暂停浇水。')
   assert.deepEqual(routeResult.routeDecision.visibleOutcomeKeys, ['overwatering_root_pressure'])
   assert.equal(Object.prototype.hasOwnProperty.call(routeResult.routeDecision, 'routeTrace'), false)
-  assert.equal(Object.prototype.hasOwnProperty.call(routeResult.routeDecision, 'gateResults'), false)
+  assert.equal(Object.prototype.hasOwnProperty.call(routeResult.routeDecision, 'conditionResults'), false)
 
   const multiOutcomeResult = normalizeDiagnosisResult({
     diagnosisSessionId: 'route_multi_1',
@@ -4675,7 +4671,7 @@ function testFrontendNormalizationCompatibility() {
       visibleOutcomeKeys: ['sunburn', 'nutrient_deficiency', 'overwatering_root_pressure'],
       activeRouteGroupKeys: ['light_heat_split_group'],
       nextQuestionKeys: [],
-      fallbackPolicy: '',
+      conservativePolicy: '',
       decisionCause: {
         decisionCauseKey: 'route_action_conflict_unresolved',
         decisionCauseCategory: 'outcome_route',
@@ -4774,7 +4770,7 @@ function testReviewCoreProcessKeepsRoutePath() {
       activeRouteGroupKeys: ['yellowing_care_split_group'],
       visibleOutcomeKeys: ['overwatering_root_pressure'],
       nextQuestionKeys: [],
-      fallbackPolicy: '',
+      conservativePolicy: '',
       decisionCause: {
         decisionCauseKey: 'route_visible_outcomes_ready',
         decisionCauseText: 'route 已形成可展示 outcome。'
@@ -4784,15 +4780,15 @@ function testReviewCoreProcessKeepsRoutePath() {
           outcomeKey: 'overwatering_root_pressure',
           state: 'display_eligible',
           routeKeys: ['yellowing_wet_soil_route'],
-          missingGateKeys: [],
+          missingConditionKeys: [],
           nextQuestionKeys: []
         }
       ],
-      gateResults: [
+      conditionResults: [
         {
-          gateKey: 'wet_soil_confirmation_gate',
+          conditionKey: 'wet_soil_confirmation_condition',
           routeKey: 'yellowing_wet_soil_route',
-          gateRole: 'display',
+          conditionRole: 'display',
           result: 'pass',
           requiredEvidenceMatched: true,
           requiredAnswerEffectsMatched: true,
@@ -4803,10 +4799,10 @@ function testReviewCoreProcessKeepsRoutePath() {
         {
           outcomeKey: 'overwatering_root_pressure',
           routeKeys: ['yellowing_wet_soil_route'],
-          gateResults: [
+          conditionResults: [
             {
-              gateKey: 'wet_soil_confirmation_gate',
-              gateRole: 'display',
+              conditionKey: 'wet_soil_confirmation_condition',
+              conditionRole: 'display',
               result: 'pass'
             }
           ]
@@ -4820,7 +4816,7 @@ function testReviewCoreProcessKeepsRoutePath() {
     'yellowing_care_split_group'
   ])
   assert.equal(coreProcess.route.routeDecision.routeTrace[0].routeKeys[0], 'yellowing_wet_soil_route')
-  assert.equal(coreProcess.route.routeDecision.gateResults[0].result, 'pass')
+  assert.equal(coreProcess.route.routeDecision.conditionResults[0].result, 'pass')
 }
 
 async function testReviewGovernancePrefersRouteActionAdvice() {
@@ -4856,24 +4852,24 @@ async function testReviewGovernancePrefersRouteActionAdvice() {
 
 async function main() {
   console.log('=== Route Planning 测试开始 ===\n')
-  await testRoutePlannerDoesNotRequireQuestionForMissingGate()
+  await testRoutePlannerDoesNotRequireQuestionForMissingCondition()
   console.log('✓ route planner missing evidence does not require another question')
   await testRoutePlannerConflict()
   console.log('✓ route planner 冲突保护')
   await testRoutePlannerKeepsThreeVisibleOutcomesAcrossMixedGroupLimits()
   console.log('✓ route planner mixed group limits keep three visible outcomes')
-  await testRoutePlannerFallbackIsConservative()
-  console.log('✓ route planner fallback 保守不确定')
+  await testRoutePlannerConservativeIsConservative()
+  console.log('✓ route planner conservative 保守不确定')
   await testRoutePlannerNextQuestions()
   console.log('✓ route planner keeps question evidence without next question')
-  testRouteFallbackPayloadNoCandidateOutcomeLeak()
-  console.log('✓ route fallback payload 不回填 candidate_outcome')
+  testRouteConservativePayloadNoCandidateOutcomeLeak()
+  console.log('✓ route conservative payload 不回填 candidate_outcome')
   testRouteVisibleOutcomesSuppressUncertainWhenConcreteExists()
   console.log('✓ concrete route outcome suppresses uncertain visible outcome')
   testSessionResultReadSuppressesUncertainWhenConcreteExists()
   console.log('✓ session result read suppresses uncertain visible outcome')
-  testGateQuestionOptionPairsDoNotRequireRouteEffectMirror()
-  console.log('✓ gate question-option pairs do not require route effect mirror')
+  testConditionQuestionOptionPairsDoNotRequireRouteEffectMirror()
+  console.log('✓ condition question-option pairs do not require route effect mirror')
   await testRoutePlannerConsumesSqlAnswerEffects()
   console.log('✓ route planner consumes SQL answer effects')
   await testWiltingWetSoilAnswerExpandsToWiltingRouteEvidence()
@@ -4910,10 +4906,10 @@ async function main() {
   console.log('✓ yellowing weak leaf-age evidence does not close nutrient outcomes')
   testYellowingNutrientGuardDoesNotForceLeafAgeQuestion()
   console.log('✓ yellowing nutrient guard does not force leaf-age question')
-  testLegacyYellowingLeafAgeAnswerDoesNotAffectEvidenceScoring()
-  console.log('✓ legacy yellowing leaf-age answer does not affect evidence scoring')
-  await testLegacyYellowingLeafAgeAnswerDoesNotCloseRoute()
-  console.log('✓ legacy yellowing leaf-age answer does not close route')
+  testSessionYellowingLeafAgeAnswerDoesNotAffectEvidenceScoring()
+  console.log('✓ session yellowing leaf-age answer does not affect evidence scoring')
+  await testSessionYellowingLeafAgeAnswerDoesNotCloseRoute()
+  console.log('✓ session yellowing leaf-age answer does not close route')
   testMultiOutcomeConflictPreservesPerOutcomeAdviceItems()
   console.log('✓ multi-outcome conflict preserves per-outcome advice items')
   testRootStressRouteUsesUserFriendlyDisplayName()
@@ -4952,8 +4948,8 @@ async function main() {
   console.log('✓ route conflict visible outcomes 仍输出 route-backed finalResult')
   testSessionResultReadServicePreservesRouteMultiOutcomeFields()
   console.log('✓ session result read service preserves route multi outcome fields')
-  testRouteModeDoesNotBuildLegacyQuestionsAfterPackageAnswer()
-  console.log('✓ route mode 不允许 legacy generic question 补位')
+  testRouteModeDoesNotBuildSessionQuestionsAfterPackageAnswer()
+  console.log('✓ route mode 不允许 session generic question 补位')
   testUncertainSuppressesTopProblem()
   console.log('✓ uncertain suppresses top problem')
   testUncertainSuppressesRouteFinalResultProblem()
@@ -4972,8 +4968,8 @@ async function main() {
   console.log('✓ golden non-problematic samples')
   await testGoldenUncertainSamples()
   console.log('✓ golden uncertain samples')
-  testFrontendNormalizationCompatibility()
-  console.log('✓ frontend normalization compatibility')
+  testFrontendNormalizationSuitability()
+  console.log('✓ frontend normalization suitability')
   testDiagnosisReviewDisplaysEnvironmentCareCalculation()
   console.log('✓ diagnosis review displays environment care calculation')
   testReviewCoreProcessKeepsRoutePath()

@@ -5,21 +5,20 @@ import Module from 'node:module'
 const require = createRequire(import.meta.url)
 const originalLoad = Module._load
 
-let legacyQuestionRowWriterCallCount = 0
-let legacyQuestionProgressWriterCallCount = 0
+let sessionQuestionRowWriterCallCount = 0
 let persistedRuntimeResponse = null
 
 Module._load = function patchedLoad(request, parent, isMain) {
   if (
-    request === './legacy-round-question-row-adapter' &&
+    request === './round-question-row-adapter' &&
     String(parent?.filename || '').endsWith(
       '/cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js'
     )
   ) {
     return {
-      shouldWriteLegacyQuestionRows: () => false,
-      writeLegacyRoundQuestionRows: async () => {
-        legacyQuestionRowWriterCallCount += 1
+      shouldWriteSessionQuestionRows: () => false,
+      writeSessionRoundQuestionRows: async () => {
+        sessionQuestionRowWriterCallCount += 1
       }
     }
   }
@@ -37,18 +36,6 @@ Module._load = function patchedLoad(request, parent, isMain) {
       replaceObservedSymptoms: async () => {},
       upsertVisualSupervisionRecords: async () => {},
       saveFinalDiagnosisSnapshot: async () => {}
-    }
-  }
-  if (
-    request === '../repositories/question-queue-repository' &&
-    String(parent?.filename || '').endsWith(
-      '/cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js'
-    )
-  ) {
-    return {
-      replaceQueueForRound: async () => {
-        legacyQuestionProgressWriterCallCount += 1
-      }
     }
   }
   if (
@@ -82,12 +69,10 @@ try {
     questionPackageSnapshotOnly: true
   })
 
-  assert.equal(legacyQuestionRowWriterCallCount, 0)
-  assert.equal(legacyQuestionProgressWriterCallCount, 0)
+  assert.equal(sessionQuestionRowWriterCallCount, 0)
   assert.deepEqual(persistedRuntimeResponse?.questionPackageSnapshot?.packageQuestions, [
     { questionKey: 'package_q_1' }
   ])
-  assert.equal(persistedRuntimeResponse?.[`question${'Queue'}`], null)
 } finally {
   Module._load = originalLoad
 }

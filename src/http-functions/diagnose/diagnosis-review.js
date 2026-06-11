@@ -70,7 +70,7 @@ async function requestLocalDiagnosisReviewImages(query = {}) {
   return unwrapResponseEnvelope(response?.data, '读取本地诊断审计图片失败')
 }
 
-function normalizeReviewSourceEvidence(value = '', reviewSourceType = 'legacy', clientPlatform = '') {
+function normalizeReviewSourceEvidence(value = '', reviewSourceType = 'session', clientPlatform = '') {
   const normalized = String(value || '').trim()
   if (normalized) {return normalized}
   if (reviewSourceType === 'batch') {return 'batch_table'}
@@ -79,7 +79,7 @@ function normalizeReviewSourceEvidence(value = '', reviewSourceType = 'legacy', 
     return 'platform_tagged'
   }
   if (reviewSourceType === 'manual') {return 'openid_inferred_manual'}
-  return 'openid_inferred_legacy'
+  return 'openid_inferred_session'
 }
 
 function hasExplicitSummary(data = {}) {
@@ -97,7 +97,7 @@ function hasExplicitSourceBreakdown(data = {}) {
   if (!rawSummary || typeof rawSummary !== 'object') {
     return false
   }
-  return ['manualCount', 'batchCount', 'legacyCount'].some(key =>
+  return ['manualCount', 'batchCount', 'sessionCount'].some(key =>
     Object.prototype.hasOwnProperty.call(rawSummary, key)
   )
 }
@@ -134,7 +134,7 @@ function buildNormalizedSummaryFromRaw(data = {}, fallbackSummary = {}) {
     otherOutcomeCount,
     manualCount: Number(rawSummary?.manualCount || fallbackSummary.manualCount || 0),
     batchCount: Number(rawSummary?.batchCount || fallbackSummary.batchCount || 0),
-    legacyCount: Number(rawSummary?.legacyCount || fallbackSummary.legacyCount || 0)
+    sessionCount: Number(rawSummary?.sessionCount || fallbackSummary.sessionCount || 0)
   }
 }
 
@@ -360,9 +360,9 @@ function _mapHistoryItemToReviewRow(item = {}) {
     previewImageRef: '',
     hasReplayImage: 0,
     imageState: 'missing',
-    reviewSourceType: 'legacy',
+    reviewSourceType: 'session',
     clientPlatform: '',
-    reviewSourceEvidence: 'openid_inferred_legacy',
+    reviewSourceEvidence: 'openid_inferred_session',
     batchReviewMeta: null,
     feedbackSummary: normalizeFeedbackSummary(null),
     observedEvidenceCount: 0,
@@ -379,7 +379,7 @@ function _mapHistoryItemToReviewRow(item = {}) {
       diagnosisDirectionLabels: [],
       questionCountSummary: normalizeQuestionCountSummary(null)
     },
-    fallbackMode: 'legacy_history'
+    fallbackMode: 'session_history'
   }
 }
 
@@ -404,16 +404,16 @@ function buildFallbackSummary(items = []) {
     otherOutcomeCount,
     manualCount: safeItems.filter(item => item?.reviewSourceType === 'manual').length,
     batchCount: safeItems.filter(item => item?.reviewSourceType === 'batch').length,
-    legacyCount: safeItems.filter(item => item?.reviewSourceType === 'legacy').length
+    sessionCount: safeItems.filter(item => item?.reviewSourceType === 'session').length
   }
 }
 
-function normalizeReviewSourceType(value = '', fallback = 'legacy') {
+function normalizeReviewSourceType(value = '', fallback = 'session') {
   const normalized = String(value || '').trim().toLowerCase()
   if (normalized === 'all') {return 'all'}
   if (normalized === 'batch') {return 'batch'}
   if (normalized === 'manual') {return 'manual'}
-  if (normalized === 'legacy') {return 'legacy'}
+  if (normalized === 'session') {return 'session'}
   if (normalized === 'web') {return 'web'}
   return fallback
 }
@@ -458,7 +458,7 @@ function resolveNormalizedReviewSourceType({
     return 'manual'
   }
 
-  return 'legacy'
+  return 'session'
 }
 
 function normalizeReviewListResponse(data = {}, sourceType = 'all') {
@@ -488,7 +488,7 @@ function normalizeReviewListResponse(data = {}, sourceType = 'all') {
   })
   const requestedSourceType = normalizeReviewSourceType(sourceType, 'all')
   const items = normalizedItems.filter(item => {
-    if (requestedSourceType === 'all') {return item.reviewSourceType !== 'legacy'}
+    if (requestedSourceType === 'all') {return item.reviewSourceType !== 'session'}
     return item.reviewSourceType === requestedSourceType
   })
 
@@ -496,7 +496,7 @@ function normalizeReviewListResponse(data = {}, sourceType = 'all') {
   const rawSummary = buildNormalizedSummaryFromRaw(data, fallbackSummary)
   const useRawSummaryForSource =
     requestedSourceType === 'batch' ||
-    requestedSourceType === 'legacy' ||
+    requestedSourceType === 'session' ||
     (requestedSourceType === 'manual' && hasExplicitSourceBreakdown(data))
   const directSourceSummary = {
     total: hasExplicitSummary(data) && useRawSummaryForSource ? rawSummary.total : items.length,
@@ -517,14 +517,14 @@ function normalizeReviewListResponse(data = {}, sourceType = 'all') {
     directSourceSummary.total - directSourceSummary.finalizedCount - directSourceSummary.otherOutcomeCount
   )
   const effectiveSummary =
-    requestedSourceType === 'legacy'
+    requestedSourceType === 'session'
       ? rawSummary
       : requestedSourceType === 'all'
         ? {
             ...rawSummary,
             manualCount: Number(rawSummary.manualCount || fallbackSummary.manualCount || 0),
             batchCount: Number(rawSummary.batchCount || fallbackSummary.batchCount || 0),
-            legacyCount: Number(rawSummary.legacyCount || fallbackSummary.legacyCount || 0)
+            sessionCount: Number(rawSummary.sessionCount || fallbackSummary.sessionCount || 0)
           }
         : {
             ...(hasExplicitSummary(data) && useRawSummaryForSource ? rawSummary : directSourceSummary)
@@ -541,11 +541,11 @@ function normalizeReviewListResponse(data = {}, sourceType = 'all') {
       : requestedSourceType === 'all'
         ? Number(effectiveSummary.batchCount || 0)
         : 0
-  const legacyCount =
-    requestedSourceType === 'legacy'
+  const sessionCount =
+    requestedSourceType === 'session'
       ? effectiveSummary.total
       : requestedSourceType === 'all'
-        ? Number(effectiveSummary.legacyCount || 0)
+        ? Number(effectiveSummary.sessionCount || 0)
         : 0
 
   return {
@@ -562,7 +562,7 @@ function normalizeReviewListResponse(data = {}, sourceType = 'all') {
       otherOutcomeCount: effectiveSummary.otherOutcomeCount,
       manualCount,
       batchCount,
-      legacyCount
+      sessionCount
     }
   }
 }
@@ -677,7 +677,7 @@ function mapHistoryDetailToReviewDetail(detail = {}, options = {}) {
     routePrimaryAction,
     stopReason,
     symptomClass,
-    fallbackMode: 'legacy_result',
+    fallbackMode: 'session_result',
     imageFallbackReason: 'review_images_unavailable'
   }
 }

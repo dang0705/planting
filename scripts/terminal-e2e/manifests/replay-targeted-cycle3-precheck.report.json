@@ -36,37 +36,37 @@
               "questionKey": "q_nitrogen_old_leaves_yellow",
               "questionText": "发黄先从老叶开始?",
               "questionGroupKey": "nitrogen_group",
-              "targetDimension": "host_confirmation"
+              "packageTopic": "host_confirmation"
             },
             {
               "questionKey": "q_root_rot_bad_smell",
               "questionText": "根部或根团有明显腐烂异味?",
               "questionGroupKey": "root_rot_group",
-              "targetDimension": "root_zone_context"
+              "packageTopic": "root_zone_context"
             },
             {
               "questionKey": "q_root_rot_black_roots",
               "questionText": "根系发黑而不是健康的浅色?",
               "questionGroupKey": "root_rot_group",
-              "targetDimension": "root_zone_context"
+              "packageTopic": "root_zone_context"
             },
             {
               "questionKey": "q_nitrogen_uniform_yellow",
               "questionText": "老叶更偏整片均匀变黄?",
               "questionGroupKey": "nitrogen_group",
-              "targetDimension": "distribution_scope"
+              "packageTopic": "distribution_scope"
             },
             {
               "questionKey": "q_nitrogen_spindly",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": ""
+              "packageTopic": ""
             },
             {
               "questionKey": "q_nitrogen_slow_growth",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": ""
+              "packageTopic": ""
             }
           ],
           "answeredQuestionGroupKeys": [
@@ -78,7 +78,7 @@
               "questionKey": "q_nitrogen_old_leaves_yellow",
               "questionText": "发黄先从老叶开始?",
               "questionGroupKey": "nitrogen_group",
-              "targetDimension": "host_confirmation",
+              "packageTopic": "host_confirmation",
               "optionKey": "unknown",
               "optionText": "看不出/不确定"
             },
@@ -86,7 +86,7 @@
               "questionKey": "q_root_rot_bad_smell",
               "questionText": "根部或根团有明显腐烂异味?",
               "questionGroupKey": "root_rot_group",
-              "targetDimension": "root_zone_context",
+              "packageTopic": "root_zone_context",
               "optionKey": "unknown",
               "optionText": "看不出/不确定"
             },
@@ -94,7 +94,7 @@
               "questionKey": "q_root_rot_black_roots",
               "questionText": "根系发黑而不是健康的浅色?",
               "questionGroupKey": "root_rot_group",
-              "targetDimension": "root_zone_context",
+              "packageTopic": "root_zone_context",
               "optionKey": "unknown",
               "optionText": "看不出/不确定"
             },
@@ -102,7 +102,7 @@
               "questionKey": "q_nitrogen_uniform_yellow",
               "questionText": "老叶更偏整片均匀变黄?",
               "questionGroupKey": "nitrogen_group",
-              "targetDimension": "distribution_scope",
+              "packageTopic": "distribution_scope",
               "optionKey": "unknown",
               "optionText": "看不出/不确定"
             },
@@ -110,7 +110,7 @@
               "questionKey": "q_nitrogen_spindly",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": "",
+              "packageTopic": "",
               "optionKey": "unknown",
               "optionText": ""
             },
@@ -118,7 +118,7 @@
               "questionKey": "q_nitrogen_slow_growth",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": "",
+              "packageTopic": "",
               "optionKey": "unknown",
               "optionText": ""
             }
@@ -183,7 +183,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -225,37 +225,37 @@
               "questionKey": "q_nitrogen_old_leaves_yellow",
               "questionText": "发黄先从老叶开始?",
               "questionGroupKey": "nitrogen_group",
-              "targetDimension": "host_confirmation"
+              "packageTopic": "host_confirmation"
             },
             {
               "questionKey": "q_root_rot_bad_smell",
               "questionText": "根部或根团有明显腐烂异味?",
               "questionGroupKey": "root_rot_group",
-              "targetDimension": "root_zone_context"
+              "packageTopic": "root_zone_context"
             },
             {
               "questionKey": "q_root_rot_black_roots",
               "questionText": "根系发黑而不是健康的浅色?",
               "questionGroupKey": "root_rot_group",
-              "targetDimension": "root_zone_context"
+              "packageTopic": "root_zone_context"
             },
             {
               "questionKey": "q_nitrogen_uniform_yellow",
               "questionText": "老叶更偏整片均匀变黄?",
               "questionGroupKey": "nitrogen_group",
-              "targetDimension": "distribution_scope"
+              "packageTopic": "distribution_scope"
             },
             {
               "questionKey": "q_nitrogen_spindly",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": ""
+              "packageTopic": ""
             },
             {
               "questionKey": "q_nitrogen_slow_growth",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": ""
+              "packageTopic": ""
             }
           ],
           "answeredQuestionGroupKeys": [
@@ -267,7 +267,7 @@
               "questionKey": "q_nitrogen_old_leaves_yellow",
               "questionText": "发黄先从老叶开始?",
               "questionGroupKey": "nitrogen_group",
-              "targetDimension": "host_confirmation",
+              "packageTopic": "host_confirmation",
               "optionKey": "unknown",
               "optionText": "看不出/不确定"
             },
@@ -275,7 +275,7 @@
               "questionKey": "q_root_rot_bad_smell",
               "questionText": "根部或根团有明显腐烂异味?",
               "questionGroupKey": "root_rot_group",
-              "targetDimension": "root_zone_context",
+              "packageTopic": "root_zone_context",
               "optionKey": "unknown",
               "optionText": "看不出/不确定"
             },
@@ -283,7 +283,7 @@
               "questionKey": "q_root_rot_black_roots",
               "questionText": "根系发黑而不是健康的浅色?",
               "questionGroupKey": "root_rot_group",
-              "targetDimension": "root_zone_context",
+              "packageTopic": "root_zone_context",
               "optionKey": "unknown",
               "optionText": "看不出/不确定"
             },
@@ -291,7 +291,7 @@
               "questionKey": "q_nitrogen_uniform_yellow",
               "questionText": "老叶更偏整片均匀变黄?",
               "questionGroupKey": "nitrogen_group",
-              "targetDimension": "distribution_scope",
+              "packageTopic": "distribution_scope",
               "optionKey": "unknown",
               "optionText": "看不出/不确定"
             },
@@ -299,7 +299,7 @@
               "questionKey": "q_nitrogen_spindly",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": "",
+              "packageTopic": "",
               "optionKey": "unknown",
               "optionText": ""
             },
@@ -307,7 +307,7 @@
               "questionKey": "q_nitrogen_slow_growth",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": "",
+              "packageTopic": "",
               "optionKey": "unknown",
               "optionText": ""
             }
@@ -372,7 +372,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -411,19 +411,19 @@
               "questionKey": "q_leaf_yellowing_confirm",
               "questionText": "植株有比较明确的发黄叶片，而不是轻微失绿或反光吗？",
               "questionGroupKey": "leaf_yellowing_group",
-              "targetDimension": "visual_presence"
+              "packageTopic": "visual_presence"
             },
             {
               "questionKey": "q_root_rot_yellow_decline",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": ""
+              "packageTopic": ""
             },
             {
               "questionKey": "q_aphids_general_yellowing",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": ""
+              "packageTopic": ""
             }
           ],
           "answeredQuestionGroupKeys": [
@@ -436,7 +436,7 @@
               "questionKey": "q_leaf_yellowing_confirm",
               "questionText": "植株有比较明确的发黄叶片，而不是轻微失绿或反光吗？",
               "questionGroupKey": "leaf_yellowing_group",
-              "targetDimension": "visual_presence",
+              "packageTopic": "visual_presence",
               "optionKey": "yes",
               "optionText": "是，比较确定"
             },
@@ -444,7 +444,7 @@
               "questionKey": "q_root_rot_yellow_decline",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": "",
+              "packageTopic": "",
               "optionKey": "yes",
               "optionText": ""
             },
@@ -452,7 +452,7 @@
               "questionKey": "q_aphids_general_yellowing",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": "",
+              "packageTopic": "",
               "optionKey": "yes",
               "optionText": ""
             }
@@ -510,7 +510,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -549,19 +549,19 @@
               "questionKey": "q_leaf_yellowing_confirm",
               "questionText": "植株有比较明确的发黄叶片，而不是轻微失绿或反光吗？",
               "questionGroupKey": "leaf_yellowing_group",
-              "targetDimension": "visual_presence"
+              "packageTopic": "visual_presence"
             },
             {
               "questionKey": "q_root_rot_yellow_decline",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": ""
+              "packageTopic": ""
             },
             {
               "questionKey": "q_aphids_general_yellowing",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": ""
+              "packageTopic": ""
             }
           ],
           "answeredQuestionGroupKeys": [
@@ -574,7 +574,7 @@
               "questionKey": "q_leaf_yellowing_confirm",
               "questionText": "植株有比较明确的发黄叶片，而不是轻微失绿或反光吗？",
               "questionGroupKey": "leaf_yellowing_group",
-              "targetDimension": "visual_presence",
+              "packageTopic": "visual_presence",
               "optionKey": "yes",
               "optionText": "是，比较确定"
             },
@@ -582,7 +582,7 @@
               "questionKey": "q_root_rot_yellow_decline",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": "",
+              "packageTopic": "",
               "optionKey": "yes",
               "optionText": ""
             },
@@ -590,7 +590,7 @@
               "questionKey": "q_aphids_general_yellowing",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": "",
+              "packageTopic": "",
               "optionKey": "yes",
               "optionText": ""
             }
@@ -648,7 +648,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.85,
@@ -686,13 +686,13 @@
               "questionKey": "q_observed_probe__yellow_speckling__underside_presence",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": ""
+              "packageTopic": ""
             },
             {
               "questionKey": "q_visual_candidate_confirm__irregular_blotches",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": ""
+              "packageTopic": ""
             }
           ],
           "answeredQuestionGroupKeys": [
@@ -704,7 +704,7 @@
               "questionKey": "q_observed_probe__yellow_speckling__underside_presence",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": "",
+              "packageTopic": "",
               "optionKey": "yes",
               "optionText": ""
             },
@@ -712,7 +712,7 @@
               "questionKey": "q_visual_candidate_confirm__irregular_blotches",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": "",
+              "packageTopic": "",
               "optionKey": "yes",
               "optionText": ""
             }
@@ -762,7 +762,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -801,19 +801,19 @@
               "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": ""
+              "packageTopic": ""
             },
             {
               "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": ""
+              "packageTopic": ""
             },
             {
               "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": ""
+              "packageTopic": ""
             }
           ],
           "answeredQuestionGroupKeys": [
@@ -826,7 +826,7 @@
               "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": "",
+              "packageTopic": "",
               "optionKey": "yes",
               "optionText": ""
             },
@@ -834,7 +834,7 @@
               "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": "",
+              "packageTopic": "",
               "optionKey": "yes",
               "optionText": ""
             },
@@ -842,7 +842,7 @@
               "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
               "questionText": "",
               "questionGroupKey": "",
-              "targetDimension": "",
+              "packageTopic": "",
               "optionKey": "no",
               "optionText": ""
             }
@@ -899,7 +899,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -938,19 +938,19 @@
               "questionKey": "q_leaf_yellowing_light_background",
               "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
               "questionGroupKey": "yellowing_light_background_group",
-              "targetDimension": "light_exposure"
+              "packageTopic": "light_exposure"
             },
             {
               "questionKey": "q_leaf_yellowing_watering_background",
               "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
               "questionGroupKey": "yellowing_watering_background_group",
-              "targetDimension": "watering_context"
+              "packageTopic": "watering_context"
             },
             {
               "questionKey": "q_leaf_yellowing_fertilization_background",
               "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
               "questionGroupKey": "yellowing_fertilization_background_group",
-              "targetDimension": "fertilization_context"
+              "packageTopic": "fertilization_context"
             }
           ],
           "answeredQuestionGroupKeys": [
@@ -963,7 +963,7 @@
               "questionKey": "q_leaf_yellowing_light_background",
               "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
               "questionGroupKey": "yellowing_light_background_group",
-              "targetDimension": "light_exposure",
+              "packageTopic": "light_exposure",
               "optionKey": "no_change",
               "optionText": "没有明显变化"
             },
@@ -971,7 +971,7 @@
               "questionKey": "q_leaf_yellowing_watering_background",
               "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
               "questionGroupKey": "yellowing_watering_background_group",
-              "targetDimension": "watering_context",
+              "packageTopic": "watering_context",
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化"
             },
@@ -979,7 +979,7 @@
               "questionKey": "q_leaf_yellowing_fertilization_background",
               "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
               "questionGroupKey": "yellowing_fertilization_background_group",
-              "targetDimension": "fertilization_context",
+              "packageTopic": "fertilization_context",
               "optionKey": "unknown",
               "optionText": "看不出/不确定"
             }
@@ -1044,7 +1044,7 @@
           "questionGroupPoolKeys": [],
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.7905,

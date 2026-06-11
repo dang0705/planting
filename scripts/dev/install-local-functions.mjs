@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const projectRoot = path.resolve(__dirname, '..', '..')
 
 function runRootInstall() {
-  const args = ['install', '--legacy-peer-deps']
+  const args = ['install', '--session-peer-deps']
   process.stdout.write(`\n[root] npm ${args.join(' ')}\n`)
   return new Promise((resolve, reject) => {
     const child = spawn('npm', args, {

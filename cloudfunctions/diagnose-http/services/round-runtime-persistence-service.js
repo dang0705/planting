@@ -7,12 +7,11 @@ const {
   upsertVisualSupervisionRecords,
   saveFinalDiagnosisSnapshot
 } = require('./session-service')
-const { replaceQueueForRound } = require('../repositories/question-queue-repository')
 const { upsertStopState } = require('../repositories/stop-state-repository')
 const {
-  shouldWriteLegacyQuestionRows,
-  writeLegacyRoundQuestionRows
-} = require('./legacy-round-question-row-adapter')
+  shouldWriteSessionQuestionRows,
+  writeSessionRoundQuestionRows
+} = require('./round-question-row-adapter')
 
 function buildQuestionPackageSnapshot(response = {}) {
   const questionPackage = response?.questionPackage || {}
@@ -60,14 +59,13 @@ async function persistRoundRuntime({
   image,
   description,
   clientContext = null,
-  legacyQuestionRows = null,
+  sessionQuestionRows = null,
   questionPackageSnapshotOnly = false
 } = {}) {
   const isInitialRound = Number(round || 1) <= 1
   const persistenceResponse = questionPackageSnapshotOnly
     ? {
         ...response,
-        questionQueue: null,
         questionPackageSnapshot: buildQuestionPackageSnapshot(response)
       }
     : response
@@ -92,12 +90,6 @@ async function persistRoundRuntime({
         response: persistenceResponse
       }),
     () =>
-      replaceQueueForRound({
-        sessionId,
-        openid,
-        questionQueue: persistenceResponse?.questionQueue || null
-      }),
-    () =>
       upsertStopState({
         sessionId,
         openid,
@@ -105,9 +97,6 @@ async function persistRoundRuntime({
         outputEligibility: persistenceResponse?.outputEligibility || null
       })
   ]
-  if (questionPackageSnapshotOnly) {
-    deferredPersistenceJobs.splice(1, 1)
-  }
   if (isInitialRound) {
     deferredPersistenceJobs.push(
       () => replaceObservedEvidenceSet(sessionId, openid, response?.observedEvidenceSet || []),
@@ -115,9 +104,9 @@ async function persistRoundRuntime({
     )
   }
 
-  if (questionPackageSnapshotOnly || shouldWriteLegacyQuestionRows(response)) {
+  if (questionPackageSnapshotOnly || shouldWriteSessionQuestionRows(response)) {
     if (!questionPackageSnapshotOnly) {
-      await writeLegacyRoundQuestionRows({
+      await writeSessionRoundQuestionRows({
         sessionId,
         round,
         response,
@@ -133,7 +122,7 @@ async function persistRoundRuntime({
     openid,
     plantContext,
     response,
-    questionRows: legacyQuestionRows
+    questionRows: sessionQuestionRows
   })
   runDeferredPersistenceJobs(sessionId, deferredPersistenceJobs)
 }

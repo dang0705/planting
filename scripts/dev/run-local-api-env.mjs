@@ -421,7 +421,7 @@ function buildLocalBusinessRouteHint(unavailable = []) {
   ) {
     return (
       '\nCloudBase 密钥已进入 SQL 调用，但数据库连接配置未通过。请检查：\n' +
-      '- 当前 shell 是否用旧的 CLOUDBASE_* / TENCENT_* 覆盖了 .env.local。\n' +
+      '- 当前 shell 是否用既有的 CLOUDBASE_* / TENCENT_* 覆盖了 .env.local。\n' +
       '- CloudBase 关系型数据库实例是否 READY，且密钥账号有该环境 SQL 权限。\n' +
       '- 如控制台使用非默认数据库连接名，在 .env.local 设置 CLOUDBASE_SQL_DBLINK_NAME。'
     )

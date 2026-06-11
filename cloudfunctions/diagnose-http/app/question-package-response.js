@@ -28,7 +28,7 @@ const QUESTION_PACKAGE_BY_MODE = {
     route: 'yellow_leaf',
     sourceMode: YELLOWING_PACKAGE_SOURCE_MODE,
     questionCount: YELLOWING_PACKAGE_QUESTION_COUNT,
-    targetDimensions: [
+    packageTopics: [
       'watering_frequency_context',
       'light_change_context',
       'fertilization_growth_context',
@@ -47,7 +47,7 @@ const QUESTION_PACKAGE_BY_MODE = {
     route: 'wilting_droop',
     sourceMode: WILTING_DROOP_PACKAGE_SOURCE_MODE,
     questionCount: WILTING_DROOP_PACKAGE_QUESTION_COUNT,
-    targetDimensions: [
+    packageTopics: [
       'watering_frequency_context',
       'wilting_shape',
       'wilting_rhythm_environment',
@@ -102,9 +102,9 @@ function getQuestionPackageByMode(mode = '', options = {}) {
     route: normalizeText(options.route || packageConfig.route),
     sourceMode: normalizeText(options.sourceMode || packageConfig.sourceMode),
     questionCount,
-    targetDimensions: Array.isArray(options.targetDimensions)
-      ? options.targetDimensions.map(item => normalizeText(item)).filter(Boolean)
-      : packageConfig.targetDimensions.slice(),
+    packageTopics: Array.isArray(options.packageTopics)
+      ? options.packageTopics.map(item => normalizeText(item)).filter(Boolean)
+      : packageConfig.packageTopics.slice(),
     answerSubmitMode: packageConfig.answerSubmitMode,
     questionDisplayMode: packageConfig.questionDisplayMode,
     fixedQuestionPackage: Boolean(packageConfig.fixedQuestionPackage),

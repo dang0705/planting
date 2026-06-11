@@ -176,7 +176,7 @@ test('watering planner returns wet, dry and baseline contexts', () => {
   assert.equal(wetPlan.action, WATERING_ACTIONS.WET)
   assert.equal(wetPlan.thresholds.wetHighHumidityDaysMin, 4)
   assert.equal(
-    wetPlan.calculation.formulas.find(item => item.key === 'too_wet_gate').passed,
+    wetPlan.calculation.formulas.find(item => item.key === 'too_wet_condition').passed,
     true
   )
 
@@ -318,7 +318,7 @@ test('fertilizing planner does not depend on weather inputs and keeps the fixed 
   assert.equal(plan.lastFertilizedBucket, '31_60d')
   assert.equal(plan.calculation.formulaVersion, 'fertilizing_planner_v7_configurable')
   assert.equal(
-    plan.calculation.formulas.find(item => item.key === 'thin_after_due_gate').passed,
+    plan.calculation.formulas.find(item => item.key === 'thin_after_due_condition').passed,
     true
   )
 })

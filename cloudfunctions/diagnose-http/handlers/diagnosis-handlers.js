@@ -7,7 +7,7 @@ const {
 } = require('../presenters/diagnosis-round-presenter')
 const { listDiagnosisHistory, getResultById, saveDiagnosisFeedback } = require('../services/session-service')
 const { resolveRequestPrincipal, assertAuthenticatedUser, runWithQuotaGuard } = require('../services/request-guard')
-const { withQuestionTextFallback } = require('../app/request-normalizers')
+const { withQuestionTextConservative } = require('../app/request-normalizers')
 
 function getRefactorReadiness() {
   return require('../app/refactor-readiness')
@@ -50,9 +50,9 @@ async function handleDiagnosisStart(request, context, payload) {
         skipPersistence: principal.skipPersistence
       })
     })
-    const hydratedResponse = await withQuestionTextFallback(executed.response)
+    const hydratedResponse = await withQuestionTextConservative(executed.response)
     const publicResponse = presentDiagnosisRoundResponse(hydratedResponse)
-    const hydratedPublicResponse = await withQuestionTextFallback(publicResponse)
+    const hydratedPublicResponse = await withQuestionTextConservative(publicResponse)
 
     return jsonResponse(200, {
       code: 200,
@@ -90,8 +90,8 @@ async function handleDiagnosisQuestionStart(request, context, payload) {
         skipPersistence: principal.skipPersistence
       })
     })
-    const hydratedResponse = await withQuestionTextFallback(executed.response)
-    const hydratedPublicResponse = await withQuestionTextFallback({
+    const hydratedResponse = await withQuestionTextConservative(executed.response)
+    const hydratedPublicResponse = await withQuestionTextConservative({
       ...hydratedResponse,
       userPlantId: executed.userPlantId || hydratedResponse.userPlantId || null,
       plantId: executed.plantId || hydratedResponse.plantId || '',
@@ -133,7 +133,7 @@ async function handleDiagnosisAnswer(request, context, payload) {
       skipPersistence: principal.skipPersistence
     })
     const hydratedResponse = executed.response?.questionRequired
-      ? await withQuestionTextFallback(executed.response)
+      ? await withQuestionTextConservative(executed.response)
       : executed.response
     const publicResponse = presentDiagnosisAnswerResponse(hydratedResponse)
     const data = buildFrontendAnswerResponse(publicResponse)

@@ -59,7 +59,7 @@
           "questionGroupPoolSize": 4,
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -127,7 +127,7 @@
           "questionGroupPoolSize": 5,
           "classGateDecision": {
             "enabled": true,
-            "gateMode": "soft",
+            "conditionMode": "soft",
             "sourceMode": "soft",
             "primaryClassKey": "yellowing_mode",
             "primaryClassRuntimeScore": 0.7905,
@@ -174,7 +174,7 @@
           "questionGroupPoolSize": 0,
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -221,7 +221,7 @@
           "questionGroupPoolSize": 0,
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -268,7 +268,7 @@
           "questionGroupPoolSize": 0,
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -315,7 +315,7 @@
           "questionGroupPoolSize": 0,
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -362,7 +362,7 @@
           "questionGroupPoolSize": 0,
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -409,7 +409,7 @@
           "questionGroupPoolSize": 0,
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -456,7 +456,7 @@
           "questionGroupPoolSize": 0,
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,
@@ -503,7 +503,7 @@
           "questionGroupPoolSize": 0,
           "classGateDecision": {
             "enabled": false,
-            "gateMode": "disabled",
+            "conditionMode": "disabled",
             "sourceMode": "disabled",
             "primaryClassKey": "",
             "primaryClassRuntimeScore": 0,

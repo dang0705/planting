@@ -1,19 +1,19 @@
 'use strict'
 
-function envNumber(name, fallback) {
+function envNumber(name, conservative) {
   const value = Number(process.env[name])
-  return Number.isFinite(value) ? value : fallback
+  return Number.isFinite(value) ? value : conservative
 }
 
-function envText(name, fallback = '') {
+function envText(name, conservative = '') {
   const value = String(process.env[name] || '').trim()
-  return value || fallback
+  return value || conservative
 }
 
-function envTextList(name, fallback = []) {
+function envTextList(name, conservative) {
   const raw = String(process.env[name] || '').trim()
   if (!raw) {
-    return fallback
+    return conservative
   }
   return raw
     .split(',')
@@ -21,10 +21,10 @@ function envTextList(name, fallback = []) {
     .filter(Boolean)
 }
 
-function envJson(name, fallback = {}) {
+function envJson(name, conservative = {}) {
   const raw = String(process.env[name] || '').trim()
   if (!raw) {
-    return fallback
+    return conservative
   }
 
   try {
@@ -36,7 +36,7 @@ function envJson(name, fallback = {}) {
     // ignore
   }
 
-  return fallback
+  return conservative
 }
 
 function buildConfigFromEnvOverrides(base = {}) {
@@ -48,10 +48,10 @@ function buildConfigFromEnvOverrides(base = {}) {
   return {
     version: envText('CARE_PLANNER_THRESHOLDS_VERSION', base.version || ''),
     environment: {
-      fallbackHumidityMinPercent: envNumber('CARE_ENV_HUMIDITY_MIN_PERCENT', undefined),
-      fallbackHumidityMaxPercent: envNumber('CARE_ENV_HUMIDITY_MAX_PERCENT', undefined),
-      fallbackTemperatureMinC: envNumber('CARE_ENV_TEMPERATURE_MIN_C', undefined),
-      fallbackTemperatureMaxC: envNumber('CARE_ENV_TEMPERATURE_MAX_C', undefined)
+      conservativeHumidityMinPercent: envNumber('CARE_ENV_HUMIDITY_MIN_PERCENT', undefined),
+      conservativeHumidityMaxPercent: envNumber('CARE_ENV_HUMIDITY_MAX_PERCENT', undefined),
+      conservativeTemperatureMinC: envNumber('CARE_ENV_TEMPERATURE_MIN_C', undefined),
+      conservativeTemperatureMaxC: envNumber('CARE_ENV_TEMPERATURE_MAX_C', undefined)
     },
     watering: {
       behaviorWindowDays: envNumber('CARE_WATERING_BEHAVIOR_WINDOW_DAYS', undefined),
@@ -119,10 +119,10 @@ function mergeConfig(base = {}, overrides = {}) {
 const CARE_PLANNER_THRESHOLDS_BASE = {
   version: 'care_planner_thresholds_v1',
   environment: {
-    fallbackHumidityMinPercent: envNumber('CARE_ENV_HUMIDITY_MIN_PERCENT', 35),
-    fallbackHumidityMaxPercent: envNumber('CARE_ENV_HUMIDITY_MAX_PERCENT', 75),
-    fallbackTemperatureMinC: envNumber('CARE_ENV_TEMPERATURE_MIN_C', 12),
-    fallbackTemperatureMaxC: envNumber('CARE_ENV_TEMPERATURE_MAX_C', 30)
+    conservativeHumidityMinPercent: envNumber('CARE_ENV_HUMIDITY_MIN_PERCENT', 35),
+    conservativeHumidityMaxPercent: envNumber('CARE_ENV_HUMIDITY_MAX_PERCENT', 75),
+    conservativeTemperatureMinC: envNumber('CARE_ENV_TEMPERATURE_MIN_C', 12),
+    conservativeTemperatureMaxC: envNumber('CARE_ENV_TEMPERATURE_MAX_C', 30)
   },
   watering: {
     behaviorWindowDays: envNumber('CARE_WATERING_BEHAVIOR_WINDOW_DAYS', 10),

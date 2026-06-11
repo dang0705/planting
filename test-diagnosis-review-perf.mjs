@@ -14,7 +14,7 @@ async function testStripDiagnosisReviewListPayload() {
     displayName: '示例结果',
     summary: 'ok',
     coreSummary: {
-      _questionQueue: { questionItems: [{ questionKey: 'q1' }] }
+      questionCountSummary: { questionTotal: 1, questionPending: 1 }
     },
     routeDecisionSummary: {
       candidateOutcomeStates: [{ outcomeKey: 'outcome_a' }]
@@ -37,7 +37,7 @@ async function testOptionalSectionDegrades() {
     loader: async () => {
       throw new Error('boom')
     },
-    fallbackValue: [],
+    conservativeValue: [],
     degradedSections,
     timeoutMs: 50
   })
@@ -48,9 +48,9 @@ async function testOptionalSectionDegrades() {
   assert.deepEqual(degradedSections, ['visualRawRecords'])
 }
 
-async function testAnswerHandlerUsesSingleQuestionFallback() {
+async function testAnswerHandlerUsesSingleQuestionConservative() {
   const originalLoad = Module._load
-  const fallbackCalls = []
+  const conservativeCalls = []
 
   const stubs = new Map([
     ['/opt/utils/http', {
@@ -86,8 +86,8 @@ async function testAnswerHandlerUsesSingleQuestionFallback() {
       })
     }],
     ['../app/request-normalizers', {
-      withQuestionTextFallback: async response => {
-        fallbackCalls.push(response)
+      withQuestionTextConservative: async response => {
+        conservativeCalls.push(response)
         return response
       }
     }],
@@ -112,7 +112,7 @@ async function testAnswerHandlerUsesSingleQuestionFallback() {
     const response = await handleDiagnosisAnswer({}, {}, {})
 
     assert.equal(response.statusCode, 200)
-    assert.equal(fallbackCalls.length, 1)
+    assert.equal(conservativeCalls.length, 1)
     assert.equal(response.body.data.questions[0].questionKey, 'question_a')
   } finally {
     Module._load = originalLoad
@@ -121,6 +121,6 @@ async function testAnswerHandlerUsesSingleQuestionFallback() {
 
 await testStripDiagnosisReviewListPayload()
 await testOptionalSectionDegrades()
-await testAnswerHandlerUsesSingleQuestionFallback()
+await testAnswerHandlerUsesSingleQuestionConservative()
 
 console.log('diagnosis-review perf tests passed')

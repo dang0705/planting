@@ -2,14 +2,14 @@
 
 const { safeJsonParse } = require('../utils/stored-value')
 const {
-  QUESTION_TARGET_DIMENSIONS,
-  normalizeQuestionTargetDimension,
-  normalizeQuestionRoutingScope,
-  normalizeQuestionRole,
-  normalizeQuestionEffectMode,
-  inferQuestionRole,
-  inferQuestionEffectMode
-} = require('../utils/question-target-dimension')
+  QUESTION_PACKAGE_TOPICS,
+  normalizeQuestionPackageTopic,
+  normalizeQuestionPackageSection,
+  normalizeRoutePackageRole,
+  normalizeQuestionPackageEffect,
+  inferRoutePackageRole,
+  inferQuestionPackageEffect
+} = require('../utils/question-package-topic')
 const { getQuestionsByKeys } = require('../repositories/question-repository')
 const {
   insertQuestionQuestionsRows,
@@ -19,14 +19,9 @@ const {
   insertQuestionAnswerRevisionEvents
 } = require('../repositories/session-question-repository')
 const {
-  collectQueuedQuestionKeys,
-  filterQuestionsByQuestionQueue
-} = require('../utils/question-contract')
-const {
   isSyntheticObservedProbeQuestionKey,
   isSyntheticVisualCandidateQuestionKey
 } = require('../utils/synthetic-question-package')
-const { getQueueBySessionAndRound } = require('../repositories/question-queue-repository')
 const { buildQuestionTextCandidateKeys } = require('../utils/question-text-resolver')
 const { resolveQuestionText } = require('../utils/question-text-resolver')
 
@@ -126,14 +121,16 @@ async function appendQuestionQuestions(
   round,
   questions = [],
   {
-    questionQueue = null,
-    assumeNoExisting = false,
-    allowUnqueuedQuestions = false
+    assumeNoExisting = false
   } = {}
 ) {
-  const list = allowUnqueuedQuestions
-    ? filterQuestionsByQuestionQueue(questions, null, { requireQueueAnchor: false })
-    : filterQuestionsByQuestionQueue(questions, questionQueue, { requireQueueAnchor: true })
+  const list = (Array.isArray(questions) ? questions : [])
+    .map(item => ({
+      ...item,
+      questionKey: resolveQuestionKey(item),
+      targetSymptomKey: String(item?.targetSymptomKey || '').trim()
+    }))
+    .filter(item => Boolean(item.questionKey))
   if (!list.length) {return}
 
   const questionRows = assumeNoExisting ? [] : await listQuestionRows(sessionId)
@@ -159,7 +156,7 @@ async function appendQuestionQuestions(
 
   const needsQuestionMetaLookup = deDupedQuestionRows.some(item =>
     !resolveQuestionText(item, {}) ||
-    !String(item?.targetDimension || '').trim() ||
+    !String(item?.packageTopic || '').trim() ||
     !String(item?.targetSymptomKey || '').trim()
   )
   const questionMetaMap = needsQuestionMetaLookup
@@ -175,21 +172,21 @@ async function appendQuestionQuestions(
       const questionKey = resolveQuestionKey(item)
       const questionMeta = questionMetaMap.get(questionKey) || {}
       const targetSymptomKey = String(item?.targetSymptomKey || questionMeta?.targetSymptomKey || '').trim()
-      const targetDimension = normalizeQuestionTargetDimension(
-        item?.targetDimension || questionMeta?.targetDimension || '',
-        QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
+      const packageTopic = normalizeQuestionPackageTopic(
+        item?.packageTopic || questionMeta?.packageTopic || '',
+        QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE
       )
-      const routingScope = normalizeQuestionRoutingScope(
-        item?.routingScope || questionMeta?.routingScope || '',
+      const packageSection = normalizeQuestionPackageSection(
+        item?.packageSection || questionMeta?.packageSection || '',
         ''
       )
-      const questionRole = normalizeQuestionRole(
-        item?.questionRole || item?.questionCategory || questionMeta?.questionRole || '',
-        inferQuestionRole(targetDimension, routingScope)
+      const routePackageRole = normalizeRoutePackageRole(
+        item?.routePackageRole || questionMeta?.routePackageRole || '',
+        inferRoutePackageRole(packageTopic, packageSection)
       )
-      const effectMode = normalizeQuestionEffectMode(
-        item?.effectMode || questionMeta?.effectMode || '',
-        inferQuestionEffectMode(questionRole, targetDimension)
+      const packageEffect = normalizeQuestionPackageEffect(
+        item?.packageEffect || questionMeta?.packageEffect || '',
+        inferQuestionPackageEffect(routePackageRole, packageTopic)
       )
       return {
         questionOrder: Number(index + 1),
@@ -200,10 +197,10 @@ async function appendQuestionQuestions(
           qk: questionKey,
           qg: item.questionGroupKey || '',
           tsk: targetSymptomKey,
-          td: targetDimension,
-          rs: routingScope,
-          qr: questionRole,
-          em: effectMode,
+          td: packageTopic,
+          rs: packageSection,
+          qr: routePackageRole,
+          em: packageEffect,
           dok: String(item?.defaultOptionKey || '').trim(),
           uv: String(item?.uiVariant || '').trim(),
           opts: (Array.isArray(item?.options) ? item.options : [])
@@ -345,7 +342,7 @@ async function validateQuestionAnswerOwnership(
   sessionId,
   answers = [],
   answerRound = 1,
-  { questionRows: preloadedQuestionRows = null, queuedQuestionKeys = null } = {}
+  { questionRows: preloadedQuestionRows = null, packageQuestionKeys = null } = {}
 ) {
   const normalizedAnswers = (Array.isArray(answers) ? answers : [])
     .map(item => String(item?.questionKey || '').trim())
@@ -375,13 +372,10 @@ async function validateQuestionAnswerOwnership(
     }
   }
 
-  const normalizedQueuedQuestionKeys = queuedQuestionKeys instanceof Set
-    ? new Set(Array.from(queuedQuestionKeys).map(item => String(item || '').trim()).filter(Boolean))
+  const submittedPackageQuestionKeys = packageQuestionKeys instanceof Set
+    ? new Set(Array.from(packageQuestionKeys).map(item => String(item || '').trim()).filter(Boolean))
     : null
-  const questionQueueQuestionKeys = normalizedQueuedQuestionKeys
-    ? normalizedQueuedQuestionKeys
-    : collectQueuedQuestionKeys(await getQueueBySessionAndRound(sessionId, answerRound))
-  for (const questionKey of questionQueueQuestionKeys) {
+  for (const questionKey of (submittedPackageQuestionKeys || new Set())) {
     allowed.add(questionKey)
   }
 

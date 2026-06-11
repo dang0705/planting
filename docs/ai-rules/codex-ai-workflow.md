@@ -10,7 +10,7 @@
 
 `dispatch-task` 是阶段门禁入口，不是普通实现入口。
 
-## 2. Phase Gate 模型
+## 2. Phase Condition 模型
 
 ```text
 Phase 0: 硬门禁
@@ -47,7 +47,7 @@ Phase 7: ClickUp markdown checklist 回写 + Git commit
 |---|---|
 | ClickUp 读取 | `.codex/skills/dispatch-task/references/clickup-ticket-read-policy.md` |
 | checklist / writeback | `.codex/skills/dispatch-task/references/checklist-writeback-policy.md` |
-| Agent Assignment Gate | `.codex/skills/dispatch-task/references/agent-assignment-gate.md` |
+| Agent Assignment Condition | `.codex/skills/dispatch-task/references/agent-assignment-condition.md` |
 | Git commit | `.codex/skills/dispatch-task/references/git-completion-policy.md` |
 | Review Scope / QA 边界 | `.codex/skills/dispatch-task/references/review-scope-policy.md` |
 | handoff | `docs/ai-rules/subagent-handoff.md` |
@@ -103,7 +103,7 @@ Phase 7: ClickUp markdown checklist 回写 + Git commit
 commit message 必须根据改动内容生成，精炼且不超过 50 个字符。最终任务 commit message 同样不超过 50 个字符。
 
 
-## Completion Gate
+## Completion Condition
 
 任务不得因为部分测试通过而停止。所有 required acceptance items 必须完成验收，或存在明确 blocker 并已写回。小程序实际交互要求必须由 QA 执行自动化或端上验证。
 

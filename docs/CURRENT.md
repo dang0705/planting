@@ -31,7 +31,7 @@ stale_if_changed:
 
 # Current System Map
 
-本文是当前代码事实的最小导航图。它替代旧的“大而全文档”作为默认 AI 入口。
+本文是当前代码事实的最小导航图。它替代冗长版文档作为默认 AI 入口。
 
 ## 1. 项目定位
 
@@ -64,7 +64,7 @@ stale_if_changed:
 - `src/pages/profile/diagnosis-review.vue`：诊断审查页面。
 - `src/pages/profile/out-of-pool-review.vue`：池外视觉候选和代理映射审查。
 - `src/http-functions/core/httpRequest.js`：统一 HTTP 云函数请求封装。
-- `src/http-functions/diagnose/client.js`：诊断主链、结果、历史、反馈、SSE 兼容客户端。
+- `src/http-functions/diagnose/client.js`：诊断主链、结果、历史、反馈、SSE 客户端。
 - `src/http-functions/diagnose/diagnosis-review.js`：诊断 review 客户端。
 - `src/http-functions/diagnose/out-of-pool-review.js`：池外候选治理客户端。
 - `src/http-functions/storage/client.js`：诊断图片上传/删除客户端。
@@ -73,7 +73,7 @@ stale_if_changed:
 
 | 函数 | 当前职责 |
 |---|---|
-| `diagnose-http` | 统一诊断主链、问诊题包、结果、历史、反馈、review、池外候选、legacy `/diagnose` 兼容。 |
+| `diagnose-http` | 统一诊断主链、问诊题包、结果、历史、反馈、review、池外候选，含 `/diagnose` 入口路径。 |
 | `storage-http` | 诊断/植物图片上传、临时 URL、图片删除，图片后缀有 allowlist。 |
 | `identify-http` | 植物识别，当前通过百度视觉识别能力取候选。 |
 | `weather-http` | 当前天气与环境天气窗口，支持 `/weather/current`、`/weather/environment-context`、`/weather/v7/environment-context`。 |
@@ -103,7 +103,7 @@ cloudfunctions/diagnose-http/app.js
 ```text
 GET  /health
 POST /diagnosis/start
-POST /diagnosis/question/start   # 题包/兼容入口；不要从名称反推当前仍是追问
+POST /diagnosis/question/start   # 题包初始化入口；不要从名称反推当前仍是追问
 POST /diagnosis/answer           # 题包/问题答案提交；不要按每轮 1 题解释
 GET  /diagnosis/result
 GET  /diagnosis/history
@@ -124,16 +124,16 @@ POST /diagnose
 
 ## 5. 当前运行时关键事实
 
-- 诊断运行时已是 route/outcome 主导，不应把旧 ranking 规划文档当当前事实。
-- `visibleOutcomes` 是前端可见结果的首要出口；旧 `primaryOutcome` / `secondaryOutcomes` 只能作为兼容或回读来源，不应作为新契约中心。
+- 诊断运行时已是 route/outcome 主导，不应以 ranking 规划文档当当前事实。
+- `visibleOutcomes` 是前端可见结果的首要出口；`primaryOutcome` / `secondaryOutcomes` 仅为历史回读来源，不应作为新契约中心。
 - 2026-06-06 最新题包口径：当前不存在“追问”，也不再以“每轮最多 1 题”作为产品/UX 契约。
-- `maxQuestionsPerRound: 1`、`maxFollowUpRounds`、`follow-up` 文件名或函数名如果仍存在，只能视为实现细节、历史命名或兼容路径，不能覆盖当前题包口径。
-- 问诊题包是当前任务口径；旧“黄叶 4 题 package”只能作为已知题包形态之一，不再作为题包长度或题包场景上限。
+- `maxQuestionsPerRound: 1`、`maxFollowUpRounds`、`follow-up` 文件名或函数名如果仍存在，只能视为实现细节或历史命名，不能覆盖当前题包口径。
+- 问诊题包是当前任务口径；黄叶 4 题是已知历史题包形态之一，不再作为题包长度或题包场景上限。
 - `wilting_droop` 是当前固定题包模式之一，source mode 为 `manual_wilting_droop_route_package`，由手动枯萎/发蔫入口返回 5 题 package：Q0 为 `CareBehaviorTimeline` 浇水时间线，Q1-Q4 覆盖发蔫形态、节律/环境、近期应激和高危异常。
 - `wilting_droop` 整包提交后的终端 resolver 可产出多个 `visibleOutcomes`，并返回轻量冲突动作解释、`highRiskWarning` 与 `observationPeriod`；用户结果页口径是“建议行动清单”，不得写成“最可能原因”。
 - 固定题包 `answer_submit` 完成后是终止问诊状态；后端不得继续规划 route-planned、forced 或 generic 下一题，响应应进入 final/result 路径。
-- route planner 只保留 outcome/evidence 判定；缺失证据不得转成 `NEED_MORE_INFO`、`requiresFollowUp` 或 `nextQuestionKeys`。旧 route-planned follow-up resolver 已删除。
-- 有效 `yellow_leaf` 题包答案必须按同一当前轮次的 package 进行持久化和归属校验；legacy `questionQueue` 仍是兼容/选择锚点，不能拒绝同一题包内的 sibling questions。非题包路径仍保持旧 queue-anchor 单题语义。
+- route planner 只保留 outcome/evidence 判定；缺失证据不得转成 `NEED_MORE_INFO`、`requiresFollowUp` 或 `nextQuestionKeys`。route-planned follow-up resolver 已不再作为当前路径。
+- 有效 `yellow_leaf` 题包答案必须按同一当前轮次的 package 进行持久化和归属校验；既往队列或锚点实现不再作为包级停止依据。
 - 环境上下文当前以 v7 为准，使用 10 天历史窗口与 15 天天气预报窗口参与养护建议。
 - `diagnosis-history-http` 已下线；历史、结果、反馈通过 `diagnose-http`。
 
@@ -149,7 +149,7 @@ POST /diagnose
 
 ## 7. 本地与发布入口
 
-最小常用命令见 `docs/RUNBOOK.md`。不要从旧 handoff 中复制一次性命令作为当前发布入口。
+最小常用命令见 `docs/RUNBOOK.md`。不要直接复用历史 handoff 命令作为当前发布入口。
 
 ## 8. 不是当前事实源的材料
 
@@ -162,11 +162,11 @@ docs/ai-runs/**
 docs/ai-tasks/**
 .brv/review-backups/**
 .brv/dream-log/**
-旧 BRV superseded facts
+BRV superseded facts
 ```
 
-这些材料只能在明确需要历史原因、原始规则溯源、旧方案比较时按索引读取。
+这些材料只能在明确需要历史原因、原始规则溯源、既往方案比较时按索引读取。
 
 ## 9. 当前题包任务指针
 
-最新问诊题包任务使用 `docs/tickets/86exv6fnx-diagnose-question-package.md` 作为极简需求指针。该指针用于使旧“追问 / 每轮 1 题”口径失效；实现事实仍必须回到当前代码、测试、schema 和提交 diff 验证。
+最新问诊题包任务使用 `docs/tickets/86exv6fnx-diagnose-question-package.md` 作为极简需求指针。该指针用于使“追问 / 每轮 1 题”口径失效；实现事实仍必须回到当前代码、测试、schema 和提交 diff 验证。

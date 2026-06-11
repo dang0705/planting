@@ -594,7 +594,7 @@ import {
   getVisibleCareBehaviorOptions,
   hasMeaningfulCareBehaviorTimeline,
   isCareBehaviorTimelineSentinelAnswer,
-  isLegacyWateringTimelineQuestion,
+  isSessionWateringTimelineQuestion,
   isCareBehaviorWateringTimelineQuestion,
   normalizeCareBehaviorTimeline,
   resolveCareBehaviorTimelineAutoAnswerOptionId,
@@ -715,7 +715,7 @@ const SYMPTOM_CLASS_QUICK_SELECT_OPTIONS = [
   { classKey: 'edema_overwater_mode', classNameCn: '水肿/过湿模式', symptomKey: 'edema', symptomCn: '水肿' },
   { classKey: 'flower_stress_mode', classNameCn: '花器胁迫模式', symptomKey: 'bud_drop', symptomCn: '掉花苞' },
   { classKey: 'fungal_leaf_spot_mode', classNameCn: '真菌性叶斑模式', symptomKey: 'brown_spots_halo', symptomCn: '褐斑带黄晕' },
-  { classKey: 'general_stress_mode', classNameCn: '泛胁迫兜底模式', symptomKey: 'distorted_growth', symptomCn: '整体畸形' },
+  { classKey: 'general_stress_mode', classNameCn: '泛胁迫保守模式', symptomKey: 'distorted_growth', symptomCn: '整体畸形' },
   { classKey: 'gray_mold_mode', classNameCn: '灰霉模式', symptomKey: 'gray_fuzzy_mold', symptomCn: '灰色绒霉' },
   { classKey: 'humidity_stress_mode', classNameCn: '湿度胁迫模式', symptomKey: 'low_humidity_damage', symptomCn: '低湿伤害' },
   { classKey: 'leaf_edge_necrosis_mode', classNameCn: '叶缘坏死模式', symptomKey: 'leaf_margin_necrosis', symptomCn: '叶缘坏死' },
@@ -1109,9 +1109,9 @@ function resolveYellowingQuestionOptionText(question = {}, option = {}) {
       ''
   )
   const questionKey = normalizeText(question?.questionKey)
-  const targetDimension = normalizeText(question?.targetDimension)
+  const packageTopic = normalizeText(question?.packageTopic)
 
-  if (isYellowingWateringQuestion(questionKey, targetDimension)) {
+  if (isYellowingWateringQuestion(questionKey, packageTopic)) {
     if (isFrequencyOption(optionKey, optionText, [
       'often_wet',
       'more_wet',
@@ -1141,7 +1141,7 @@ function resolveYellowingQuestionOptionText(question = {}, option = {}) {
     return ''
   }
 
-  if (isYellowingFertilizationQuestion(questionKey, targetDimension)) {
+  if (isYellowingFertilizationQuestion(questionKey, packageTopic)) {
     if (isFrequencyOption(optionKey, optionText, [
       'low_or_no_fertilizer',
       'no',
@@ -1194,19 +1194,19 @@ function isYellowingQuestion(question = {}) {
   return questionKey.includes('yellowing') || questionText.includes('黄叶')
 }
 
-function isYellowingWateringQuestion(questionKey = '', targetDimension = '') {
+function isYellowingWateringQuestion(questionKey = '', packageTopic = '') {
   return questionKey.includes('watering_frequency_context') ||
     questionKey.includes('watering_context') ||
     questionKey.includes('watering') ||
-    targetDimension.includes('watering')
+    packageTopic.includes('watering')
 }
 
-function isYellowingFertilizationQuestion(questionKey = '', targetDimension = '') {
+function isYellowingFertilizationQuestion(questionKey = '', packageTopic = '') {
   return questionKey.includes('fertilization_growth_context') ||
     questionKey.includes('fertilization_context') ||
     questionKey.includes('fertilization_reference') ||
     questionKey.includes('fertilization') ||
-    targetDimension.includes('fertilization')
+    packageTopic.includes('fertilization')
 }
 
 function isFrequencyOption(optionKey = '', optionText = '', optionKeys = []) {
@@ -1384,7 +1384,7 @@ function syncCareBehaviorTimelineAnswer(question, timeline = null) {
   const meaningfulTimeline = hasMeaningfulCareBehaviorTimeline(timeline)
   const visibleOptions = getVisibleCareBehaviorOptions(question)
   const nextAnswerId = meaningfulTimeline
-    ? (isLegacyWateringTimelineQuestion(question) ? 'care_behavior_timeline' : recordedOptionId)
+    ? (isSessionWateringTimelineQuestion(question) ? 'care_behavior_timeline' : recordedOptionId)
     : ''
 
   if (nextAnswerId) {

@@ -61,7 +61,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "chewing_pest_mode",
           "primaryClassRuntimeScore": 1.5351,
@@ -81,7 +81,7 @@
           {
             "questionKey": "q_observed_probe__holes_in_leaf__tissue_integrity",
             "questionText": "这些“叶子被咬出了洞”更接近哪种情况：表面变色/斑点但叶片还完整，还是已经形成穿孔、缺口或组织缺损？",
-            "targetDimension": "tissue_integrity",
+            "packageTopic": "tissue_integrity",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -98,7 +98,7 @@
           {
             "questionKey": "q_observed_probe__chewed_edges__tissue_integrity",
             "questionText": "这些“叶子边缘像被啃过”更接近哪种情况：表面变色/斑点但叶片还完整，还是已经形成穿孔、缺口或组织缺损？",
-            "targetDimension": "tissue_integrity",
+            "packageTopic": "tissue_integrity",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -183,8 +183,8 @@
             "questionEvidence": 0,
             "totalEvidence": 1.0439,
             "penalty": 0,
-            "genusCompatibility": 0.5,
-            "hostCompatibility": 1,
+            "genusSuitabilityibility": 0.5,
+            "hostSuitabilityibility": 1,
             "baseScore": 0.8351,
             "finalScore": 0.8351
           },
@@ -197,8 +197,8 @@
             "questionEvidence": 0,
             "totalEvidence": 1.0439,
             "penalty": 0,
-            "genusCompatibility": 0.5,
-            "hostCompatibility": 1,
+            "genusSuitabilityibility": 0.5,
+            "hostSuitabilityibility": 1,
             "baseScore": 0.8351,
             "finalScore": 0.8351
           },
@@ -211,8 +211,8 @@
             "questionEvidence": 0,
             "totalEvidence": 1.0275,
             "penalty": 0,
-            "genusCompatibility": 0.5,
-            "hostCompatibility": 1,
+            "genusSuitabilityibility": 0.5,
+            "hostSuitabilityibility": 1,
             "baseScore": 0.822,
             "finalScore": 0.822
           }

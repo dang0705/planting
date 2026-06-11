@@ -11,7 +11,7 @@ CloudBase 线上部署会按各云函数目录下的 `package.json` 自动安装
 ## 当前策略
 
 1. 本地云函数运行依赖统一安装在项目根目录 `node_modules`。
-2. `npm run dev:functions:install` 只在根目录执行 `npm install --legacy-peer-deps`。
+2. `npm run dev:functions:install` 只在根目录执行 `npm install --session-peer-deps`。
 3. `scripts/dev/local-functions-gateway.mjs` 从根目录解析 `@cloudbase/functions-framework/bin/tcb-ff.js`。
 4. 各 HTTP 云函数的本地 `npm start` 指向 `../../node_modules/@cloudbase/functions-framework/bin/tcb-ff.js`。
 5. `cloudfunctions/*/node_modules` 不应提交，也不应作为本地调试前置条件。

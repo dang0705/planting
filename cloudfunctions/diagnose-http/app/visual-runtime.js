@@ -90,7 +90,7 @@ async function persistRoundResult({
   skipPersistence = false,
   awaitPersistence = true,
   clientContext = null,
-  legacyQuestionRows = null,
+  sessionQuestionRows = null,
   questionRows = null
 }) {
   if (skipPersistence) {
@@ -106,7 +106,7 @@ async function persistRoundResult({
     image,
     description,
     clientContext,
-    legacyQuestionRows: legacyQuestionRows || questionRows
+    sessionQuestionRows: sessionQuestionRows || questionRows
   })
   if (!awaitPersistence) {
     persistencePromise.catch(error => {

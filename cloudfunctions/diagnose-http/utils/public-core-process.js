@@ -1,89 +1,5 @@
 'use strict'
 
-function buildQuestionCountSummary(questionQueue = null) {
-  if (!questionQueue || typeof questionQueue !== 'object') {
-    return {
-      totalItems: 0,
-      activeItems: 0,
-      askedItems: 0,
-      answeredItems: 0,
-      invalidatedItems: 0
-    }
-  }
-
-  const questionItems = Array.isArray(questionQueue?.questionItems)
-    ? questionQueue.questionItems
-    : []
-  const askedItems = questionItems.filter(item => Number(item?.asked || 0) ? 1 : 0).length
-  const answeredItems = questionItems.filter(item => Number(item?.answered || 0) ? 1 : 0).length
-  const invalidatedItems = questionItems.filter(item => Number(item?.invalidated || 0) ? 1 : 0).length
-  const activeItems = questionItems.filter(item => {
-    const status = String(item?.status || '').trim().toLowerCase()
-    return Number(item?.asked || 0) && !Number(item?.answered || 0) && !Number(item?.invalidated || 0) && status !== 'answered' && status !== 'invalidated'
-  }).length
-
-  return {
-    totalItems: questionItems.length,
-    activeItems: Number(questionQueue?.activeItemCount || activeItems || 0),
-    askedItems: Number(questionQueue?.askedItemCount || askedItems || 0),
-    answeredItems: Number(questionQueue?.answeredItemCount || answeredItems || 0),
-    invalidatedItems: Number(questionQueue?.invalidatedItemCount || invalidatedItems || 0)
-  }
-}
-
-function buildPublicQuestionQueue(questionQueue = null) {
-  if (!questionQueue || typeof questionQueue !== 'object') {
-    return null
-  }
-
-  return {
-    questionQueueId: String(questionQueue?.questionQueueId || '').trim(),
-    sessionId: String(questionQueue?.sessionId || '').trim(),
-    roundId: String(questionQueue?.roundId || '').trim(),
-    roundIndex: Number(questionQueue?.roundIndex || 1),
-    routePrimaryAction: String(questionQueue?.routePrimaryAction || '').trim(),
-    queueStatus: String(questionQueue?.queueStatus || '').trim(),
-    queueDecision: questionQueue?.queueDecision && typeof questionQueue.queueDecision === 'object'
-      ? {
-          hasActionableItems: Number(questionQueue.queueDecision?.hasActionableItems || 0) ? 1 : 0,
-          exhaustedReason: String(questionQueue.queueDecision?.exhaustedReason || '').trim(),
-          serviceTarget: String(questionQueue.queueDecision?.serviceTarget || '').trim(),
-          decisionCauseKey: String(questionQueue.queueDecision?.decisionCauseKey || '').trim(),
-          decisionCauseCategory: String(questionQueue.queueDecision?.decisionCauseCategory || '').trim(),
-          decisionCauseText: String(questionQueue.queueDecision?.decisionCauseText || '').trim(),
-          decisionCauseDetails:
-            questionQueue.queueDecision?.decisionCauseDetails &&
-            typeof questionQueue.queueDecision.decisionCauseDetails === 'object'
-              ? questionQueue.queueDecision.decisionCauseDetails
-              : null
-        }
-      : null,
-    questionItems: (Array.isArray(questionQueue?.questionItems) ? questionQueue.questionItems : []).map(item => ({
-      questionKey: String(item?.questionKey || '').trim(),
-      questionId: String(item?.questionId || '').trim(),
-      targetSymptomKey: String(item?.targetSymptomKey || '').trim(),
-      questionGroupKey: String(item?.questionGroupKey || '').trim(),
-      targetDimension: String(item?.targetDimension || '').trim(),
-      routingScope: String(item?.routingScope || '').trim(),
-      questionText: String(item?.questionText || '').trim(),
-      helpText: String(item?.helpText || '').trim(),
-      currentPriority: Number(item?.currentPriority || 0),
-      estimatedInformationGain: Number(item?.estimatedInformationGain || 0),
-      serviceTarget: String(item?.serviceTarget || '').trim(),
-      appliesWhen: item?.appliesWhen || null,
-      asked: Number(item?.asked || 0) ? 1 : 0,
-      answered: Number(item?.answered || 0) ? 1 : 0,
-      invalidated: Number(item?.invalidated || 0) ? 1 : 0,
-      invalidReason: String(item?.invalidReason || '').trim(),
-      status: String(item?.status || '').trim() || 'pending'
-    })),
-    activeItemCount: Number(questionQueue?.activeItemCount || 0),
-    askedItemCount: Number(questionQueue?.askedItemCount || 0),
-    answeredItemCount: Number(questionQueue?.answeredItemCount || 0),
-    invalidatedItemCount: Number(questionQueue?.invalidatedItemCount || 0)
-  }
-}
-
 function buildPublicStopState(stopState = null) {
   if (!stopState || typeof stopState !== 'object') {
     return null
@@ -154,8 +70,8 @@ function buildPublicSymptomClassPayload(symptomClass = null) {
       : [],
     classScores: Array.isArray(symptomClass.classScores) ? symptomClass.classScores : [],
     classSwitchHistory: Array.isArray(symptomClass.classSwitchHistory) ? symptomClass.classSwitchHistory : [],
-    classGateDecision: symptomClass?.classGateDecision && typeof symptomClass.classGateDecision === 'object'
-      ? symptomClass.classGateDecision
+    classConditionDecision: symptomClass?.classConditionDecision && typeof symptomClass.classConditionDecision === 'object'
+      ? symptomClass.classConditionDecision
       : null
   }
 }
@@ -177,7 +93,7 @@ function buildPublicRouteDecisionForReview(routeDecision = null) {
     nextQuestionKeys: Array.isArray(routeDecision?.nextQuestionKeys)
       ? routeDecision.nextQuestionKeys.map(item => String(item || '').trim()).filter(Boolean)
       : [],
-    fallbackPolicy: String(routeDecision?.fallbackPolicy || '').trim(),
+    conservativePolicy: String(routeDecision?.conservativePolicy || '').trim(),
     decisionCause:
       routeDecision?.decisionCause && typeof routeDecision.decisionCause === 'object'
         ? routeDecision.decisionCause
@@ -195,19 +111,19 @@ function buildPublicRouteDecisionForReview(routeDecision = null) {
           routeKeys: Array.isArray(item?.routeKeys)
             ? item.routeKeys.map(routeKey => String(routeKey || '').trim()).filter(Boolean)
             : [],
-          missingGateKeys: Array.isArray(item?.missingGateKeys)
-            ? item.missingGateKeys.map(gateKey => String(gateKey || '').trim()).filter(Boolean)
+          missingConditionKeys: Array.isArray(item?.missingConditionKeys)
+            ? item.missingConditionKeys.map(conditionKey => String(conditionKey || '').trim()).filter(Boolean)
             : [],
           nextQuestionKeys: Array.isArray(item?.nextQuestionKeys)
             ? item.nextQuestionKeys.map(questionKey => String(questionKey || '').trim()).filter(Boolean)
             : []
         }))
       : [],
-    gateResults: Array.isArray(routeDecision?.gateResults)
-      ? routeDecision.gateResults.map(item => ({
-          gateKey: String(item?.gateKey || '').trim(),
+    conditionResults: Array.isArray(routeDecision?.conditionResults)
+      ? routeDecision.conditionResults.map(item => ({
+          conditionKey: String(item?.conditionKey || '').trim(),
           routeKey: String(item?.routeKey || '').trim(),
-          gateRole: String(item?.gateRole || '').trim(),
+          conditionRole: String(item?.conditionRole || '').trim(),
           result: String(item?.result || '').trim(),
           blockerMatched: Boolean(item?.blockerMatched),
           requiredEvidenceMatched: Boolean(item?.requiredEvidenceMatched),
@@ -220,10 +136,10 @@ function buildPublicRouteDecisionForReview(routeDecision = null) {
           routeKeys: Array.isArray(item?.routeKeys)
             ? item.routeKeys.map(routeKey => String(routeKey || '').trim()).filter(Boolean)
             : [],
-          gateResults: Array.isArray(item?.gateResults)
-            ? item.gateResults.map(result => ({
-                gateKey: String(result?.gateKey || '').trim(),
-                gateRole: String(result?.gateRole || '').trim(),
+          conditionResults: Array.isArray(item?.conditionResults)
+            ? item.conditionResults.map(result => ({
+                conditionKey: String(result?.conditionKey || '').trim(),
+                conditionRole: String(result?.conditionRole || '').trim(),
                 result: String(result?.result || '').trim()
               }))
             : []
@@ -246,7 +162,6 @@ function buildPublicCoreProcess({
   environmentDeviationHints = [],
   routePrimaryAction = '',
   routeDecision = null,
-  questionQueue = null,
   stopReason = '',
   stopState = null,
   outputEligibility = null,
@@ -275,9 +190,7 @@ function buildPublicCoreProcess({
         : []
     },
     question: {
-      routePrimaryAction: String(routePrimaryAction || '').trim(),
-      questionQueue: buildPublicQuestionQueue(questionQueue),
-      questionCountSummary: buildQuestionCountSummary(questionQueue)
+      routePrimaryAction: String(routePrimaryAction || '').trim()
     },
     route: {
       routeDecision: buildPublicRouteDecisionForReview(routeDecision)
@@ -294,7 +207,6 @@ function buildPublicCoreProcess({
 module.exports = {
   buildPublicCoreProcess,
   buildPublicOutputEligibility,
-  buildPublicQuestionQueue,
   buildPublicRouteDecisionForReview,
   buildPublicStopState,
   buildPublicSymptomClassPayload

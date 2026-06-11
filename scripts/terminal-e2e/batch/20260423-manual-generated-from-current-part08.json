@@ -54,7 +54,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.1305,
@@ -74,7 +74,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -85,7 +85,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -96,7 +96,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -241,7 +241,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -394,7 +394,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -525,7 +525,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -545,7 +545,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -556,7 +556,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -567,7 +567,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -712,7 +712,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 0.93,
@@ -843,7 +843,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5905,
@@ -863,7 +863,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -874,7 +874,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -885,7 +885,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -902,7 +902,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -913,7 +913,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -924,7 +924,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -1042,7 +1042,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5405,
@@ -1062,7 +1062,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -1073,7 +1073,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -1084,7 +1084,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -1101,7 +1101,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -1112,7 +1112,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -1123,7 +1123,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -1241,7 +1241,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.733,
@@ -1261,7 +1261,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1272,7 +1272,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -1283,7 +1283,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1300,7 +1300,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -1311,7 +1311,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1322,7 +1322,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1440,7 +1440,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -1460,7 +1460,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1471,7 +1471,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -1482,7 +1482,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1605,7 +1605,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.1305,
@@ -1625,7 +1625,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1636,7 +1636,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1647,7 +1647,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -1770,7 +1770,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.088,
@@ -1790,7 +1790,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -1801,7 +1801,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -1812,7 +1812,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -1935,7 +1935,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -1955,7 +1955,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1966,7 +1966,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -1977,7 +1977,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -1994,7 +1994,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -2005,7 +2005,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -2016,7 +2016,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -2134,7 +2134,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.1305,
@@ -2154,7 +2154,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -2165,7 +2165,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -2176,7 +2176,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -2299,7 +2299,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.6405,
@@ -2319,7 +2319,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -2330,7 +2330,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -2341,7 +2341,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -2358,7 +2358,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -2369,7 +2369,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -2380,7 +2380,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -2498,7 +2498,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.6905,
@@ -2518,7 +2518,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -2529,7 +2529,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -2540,7 +2540,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -2557,7 +2557,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -2568,7 +2568,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -2579,7 +2579,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -2697,7 +2697,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.1305,
@@ -2717,7 +2717,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -2728,7 +2728,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -2739,7 +2739,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -2862,7 +2862,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.988,
@@ -2882,7 +2882,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -2893,7 +2893,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -2904,7 +2904,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -2921,7 +2921,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -2932,7 +2932,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -2943,7 +2943,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -3061,7 +3061,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -3081,7 +3081,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -3092,7 +3092,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -3103,7 +3103,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -3226,7 +3226,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.833,
@@ -3246,7 +3246,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -3257,7 +3257,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -3268,7 +3268,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -3391,7 +3391,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5405,
@@ -3411,7 +3411,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -3422,7 +3422,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -3433,7 +3433,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -3450,7 +3450,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -3461,7 +3461,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -3472,7 +3472,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -3590,7 +3590,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.088,
@@ -3610,7 +3610,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -3621,7 +3621,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -3632,7 +3632,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -3755,7 +3755,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.1305,
@@ -3775,7 +3775,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -3786,7 +3786,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -3797,7 +3797,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -3920,7 +3920,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.838,
@@ -3940,7 +3940,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -3951,7 +3951,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -3962,7 +3962,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -3979,7 +3979,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -3990,7 +3990,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -4001,7 +4001,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -4119,7 +4119,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5905,
@@ -4139,7 +4139,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -4150,7 +4150,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -4161,7 +4161,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -4178,7 +4178,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -4189,7 +4189,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -4200,7 +4200,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -4318,7 +4318,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.1305,
@@ -4338,7 +4338,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -4349,7 +4349,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -4360,7 +4360,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -4494,7 +4494,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.85,
@@ -4514,7 +4514,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -4525,7 +4525,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "dry_firm",
               "optionText": "更像干硬坏死，不发软",
@@ -4536,7 +4536,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -4670,7 +4670,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 1.7,
@@ -4690,7 +4690,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -4701,7 +4701,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "dry_firm",
               "optionText": "更像干硬坏死，不发软",
@@ -4712,7 +4712,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -4729,7 +4729,7 @@
           {
             "questionKey": "q_sticky_honeydew_confirm",
             "questionText": "叶面或周围表面有明显发黏的蜜露吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -4740,7 +4740,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -4751,7 +4751,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -4869,7 +4869,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -4889,7 +4889,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -4900,7 +4900,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "soft_wet",
               "optionText": "发软、湿润或带水渍感",
@@ -4911,7 +4911,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -4928,7 +4928,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -4939,7 +4939,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -4950,7 +4950,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5068,7 +5068,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -5088,7 +5088,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -5099,7 +5099,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5110,7 +5110,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -5127,7 +5127,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5138,7 +5138,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5149,7 +5149,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5267,7 +5267,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "bacterial_leaf_spot_mode",
           "primaryClassRuntimeScore": 1,
@@ -5287,7 +5287,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -5298,7 +5298,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5309,7 +5309,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -5326,7 +5326,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5337,7 +5337,7 @@
           {
             "questionKey": "q_observed_probe__water_soaked_spots__tissue_integrity",
             "questionText": "这些“水渍斑”所在位置，叶组织本身是完整但变色，还是已经被咬掉/破掉，形成缺口、真洞或缺损边缘？",
-            "targetDimension": "tissue_integrity",
+            "packageTopic": "tissue_integrity",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5348,7 +5348,7 @@
           {
             "questionKey": "q_observed_probe__water_soaked_spots__surface_residue",
             "questionText": "这些“水渍斑”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5477,7 +5477,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -5497,7 +5497,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -5508,7 +5508,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5519,7 +5519,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -5536,7 +5536,7 @@
           {
             "questionKey": "q_sticky_honeydew_confirm",
             "questionText": "叶面或周围表面有明显发黏的蜜露吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5547,7 +5547,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5558,7 +5558,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5676,7 +5676,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -5696,7 +5696,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5707,7 +5707,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5718,7 +5718,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5735,7 +5735,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -5746,7 +5746,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5757,7 +5757,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5875,7 +5875,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.85,
@@ -5895,7 +5895,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -5906,7 +5906,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "dry_firm",
               "optionText": "更像干硬坏死，不发软",
@@ -5917,7 +5917,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5934,7 +5934,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5945,7 +5945,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -5956,7 +5956,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -6074,7 +6074,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 1.6405,
@@ -6094,7 +6094,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -6105,7 +6105,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -6116,7 +6116,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -6133,7 +6133,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -6144,7 +6144,7 @@
           {
             "questionKey": "q_observed_probe__water_soaked_spots__tissue_integrity",
             "questionText": "这些“水渍斑”所在位置，叶组织本身是完整但变色，还是已经被咬掉/破掉，形成缺口、真洞或缺损边缘？",
-            "targetDimension": "tissue_integrity",
+            "packageTopic": "tissue_integrity",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -6155,7 +6155,7 @@
           {
             "questionKey": "q_observed_probe__water_soaked_spots__surface_residue",
             "questionText": "这些“水渍斑”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -6273,7 +6273,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -6293,7 +6293,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -6304,7 +6304,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "soft_wet",
               "optionText": "发软、湿润或带水渍感",
@@ -6315,7 +6315,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -6332,7 +6332,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -6343,7 +6343,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -6354,7 +6354,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -6472,7 +6472,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "bacterial_leaf_spot_mode",
           "primaryClassRuntimeScore": 1,
@@ -6492,7 +6492,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -6503,7 +6503,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "dry_firm",
               "optionText": "更像干硬坏死，不发软",
@@ -6514,7 +6514,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -6648,7 +6648,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 1.6405,
@@ -6668,7 +6668,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -6679,7 +6679,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -6690,7 +6690,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -6707,7 +6707,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -6718,7 +6718,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -6729,7 +6729,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -6858,7 +6858,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "sap_sucking_honeydew_pest_mode",
           "primaryClassRuntimeScore": 1.163655,
@@ -6878,7 +6878,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -6889,7 +6889,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "dry_firm",
               "optionText": "更像干硬坏死，不发软",
@@ -6900,7 +6900,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -6917,7 +6917,7 @@
           {
             "questionKey": "q_sticky_honeydew_confirm",
             "questionText": "叶面或周围表面有明显发黏的蜜露吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -6928,7 +6928,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -6939,7 +6939,7 @@
           {
             "questionKey": "q_observed_probe__water_soaked_spots__tissue_integrity",
             "questionText": "这些“水渍斑”所在位置，叶组织本身是完整但变色，还是已经被咬掉/破掉，形成缺口、真洞或缺损边缘？",
-            "targetDimension": "tissue_integrity",
+            "packageTopic": "tissue_integrity",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -7057,7 +7057,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "bacterial_leaf_spot_mode",
           "primaryClassRuntimeScore": 1,
@@ -7077,7 +7077,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -7088,7 +7088,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "dry_firm",
               "optionText": "更像干硬坏死，不发软",
@@ -7099,7 +7099,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -7233,7 +7233,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "sap_sucking_honeydew_pest_mode",
           "primaryClassRuntimeScore": 1.163655,
@@ -7253,7 +7253,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -7264,7 +7264,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "soft_wet",
               "optionText": "发软、湿润或带水渍感",
@@ -7275,7 +7275,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -7292,7 +7292,7 @@
           {
             "questionKey": "q_sticky_honeydew_confirm",
             "questionText": "叶面或周围表面有明显发黏的蜜露吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -7303,7 +7303,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -7314,7 +7314,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -7443,7 +7443,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 1.6405,
@@ -7463,7 +7463,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -7474,7 +7474,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -7485,7 +7485,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -7502,7 +7502,7 @@
           {
             "questionKey": "q_sticky_honeydew_confirm",
             "questionText": "叶面或周围表面有明显发黏的蜜露吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -7513,7 +7513,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -7524,7 +7524,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -7642,7 +7642,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 1.6405,
@@ -7662,7 +7662,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -7673,7 +7673,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -7684,7 +7684,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -7701,7 +7701,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -7712,7 +7712,7 @@
           {
             "questionKey": "q_observed_probe__water_soaked_spots__tissue_integrity",
             "questionText": "这些“水渍斑”所在位置，叶组织本身是完整但变色，还是已经被咬掉/破掉，形成缺口、真洞或缺损边缘？",
-            "targetDimension": "tissue_integrity",
+            "packageTopic": "tissue_integrity",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -7723,7 +7723,7 @@
           {
             "questionKey": "q_observed_probe__water_soaked_spots__surface_residue",
             "questionText": "这些“水渍斑”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -7852,7 +7852,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "sap_sucking_honeydew_pest_mode",
           "primaryClassRuntimeScore": 0.263655,
@@ -7872,7 +7872,7 @@
           {
             "questionKey": "q_sticky_honeydew_confirm",
             "questionText": "叶面或周围表面有明显发黏的蜜露吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -7883,7 +7883,7 @@
           {
             "questionKey": "q_observed_probe__sooty_mold__surface_stickiness",
             "questionText": "这些“叶子表面有黑灰一样的脏层”摸起来更像发黏、有蜜露感，还是只是干灰层/脏层但不发黏？",
-            "targetDimension": "surface_stickiness",
+            "packageTopic": "surface_stickiness",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -7894,7 +7894,7 @@
           {
             "questionKey": "q_observed_probe__sooty_mold__underside_presence",
             "questionText": "翻看叶背、叶脉附近或更隐蔽的位置，这种“叶子表面有黑灰一样的脏层”在背面是否更明显？",
-            "targetDimension": "underside_presence",
+            "packageTopic": "underside_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -7911,7 +7911,7 @@
           {
             "questionKey": "q_observed_probe__sooty_mold__distribution_scope",
             "questionText": "这种“叶子表面有黑灰一样的脏层”主要集中在个别叶片/局部，还是多片叶子都能看到？",
-            "targetDimension": "distribution_scope",
+            "packageTopic": "distribution_scope",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -7922,7 +7922,7 @@
           {
             "questionKey": "q_observed_probe__patchy_browning__distribution_scope",
             "questionText": "这种“局部褐变”主要集中在个别叶片/局部，还是多片叶子都能看到？",
-            "targetDimension": "distribution_scope",
+            "packageTopic": "distribution_scope",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -7933,7 +7933,7 @@
           {
             "questionKey": "q_observed_probe__patchy_browning__progression",
             "questionText": "这种“局部褐变”是最近几天明显扩展，还是已经存在较久且基本稳定？",
-            "targetDimension": "progression",
+            "packageTopic": "progression",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -8051,7 +8051,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -8071,7 +8071,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -8082,7 +8082,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "soft_wet",
               "optionText": "发软、湿润或带水渍感",
@@ -8093,7 +8093,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -8110,7 +8110,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -8121,7 +8121,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -8132,7 +8132,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -8250,7 +8250,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -8270,7 +8270,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -8281,7 +8281,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "soft_wet",
               "optionText": "发软、湿润或带水渍感",
@@ -8292,7 +8292,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -8309,7 +8309,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -8320,7 +8320,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -8331,7 +8331,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -8449,7 +8449,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "bacterial_leaf_spot_mode",
           "primaryClassRuntimeScore": 1,
@@ -8469,7 +8469,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "embedded",
               "optionText": "像长在叶子里面，擦不掉",
@@ -8480,7 +8480,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -8491,7 +8491,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -8614,7 +8614,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 1.6405,
@@ -8634,7 +8634,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -8645,7 +8645,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -8656,7 +8656,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -8673,7 +8673,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -8684,7 +8684,7 @@
           {
             "questionKey": "q_observed_probe__water_soaked_spots__tissue_integrity",
             "questionText": "这些“水渍斑”所在位置，叶组织本身是完整但变色，还是已经被咬掉/破掉，形成缺口、真洞或缺损边缘？",
-            "targetDimension": "tissue_integrity",
+            "packageTopic": "tissue_integrity",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -8695,7 +8695,7 @@
           {
             "questionKey": "q_observed_probe__water_soaked_spots__surface_residue",
             "questionText": "这些“水渍斑”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -8824,7 +8824,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "bacterial_leaf_spot_mode",
           "primaryClassRuntimeScore": 1,
@@ -8844,7 +8844,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "embedded",
               "optionText": "像长在叶子里面，擦不掉",
@@ -8855,7 +8855,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "dry_firm",
               "optionText": "更像干硬坏死，不发软",
@@ -8866,7 +8866,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -8989,7 +8989,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.85,
@@ -9009,7 +9009,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -9020,7 +9020,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "dry_firm",
               "optionText": "更像干硬坏死，不发软",
@@ -9031,7 +9031,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -9165,7 +9165,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.85,
@@ -9185,7 +9185,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "embedded",
               "optionText": "像长在叶子里面，擦不掉",
@@ -9196,7 +9196,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "dry_firm",
               "optionText": "更像干硬坏死，不发软",
@@ -9207,7 +9207,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -9341,7 +9341,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "sap_sucking_honeydew_pest_mode",
           "primaryClassRuntimeScore": 1.163655,
@@ -9361,7 +9361,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -9372,7 +9372,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "soft_wet",
               "optionText": "发软、湿润或带水渍感",
@@ -9383,7 +9383,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -9400,7 +9400,7 @@
           {
             "questionKey": "q_sticky_honeydew_confirm",
             "questionText": "叶面或周围表面有明显发黏的蜜露吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -9411,7 +9411,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -9422,7 +9422,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -9540,7 +9540,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -9560,7 +9560,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -9571,7 +9571,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -9582,7 +9582,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -9599,7 +9599,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -9610,7 +9610,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -9621,7 +9621,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -9739,7 +9739,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "bacterial_leaf_spot_mode",
           "primaryClassRuntimeScore": 1,
@@ -9759,7 +9759,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "embedded",
               "optionText": "像长在叶子里面，擦不掉",
@@ -9770,7 +9770,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -9781,7 +9781,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -9904,7 +9904,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.85,
@@ -9924,7 +9924,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "embedded",
               "optionText": "像长在叶子里面，擦不掉",
@@ -9935,7 +9935,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "dry_firm",
               "optionText": "更像干硬坏死，不发软",
@@ -9946,7 +9946,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10069,7 +10069,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -10089,7 +10089,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10100,7 +10100,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "soft_wet",
               "optionText": "发软、湿润或带水渍感",
@@ -10111,7 +10111,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10128,7 +10128,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10139,7 +10139,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10150,7 +10150,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10268,7 +10268,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.85,
@@ -10288,7 +10288,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -10299,7 +10299,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "dry_firm",
               "optionText": "更像干硬坏死，不发软",
@@ -10310,7 +10310,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10327,7 +10327,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10338,7 +10338,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10349,7 +10349,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10467,7 +10467,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "bacterial_leaf_spot_mode",
           "primaryClassRuntimeScore": 1,
@@ -10487,7 +10487,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "embedded",
               "optionText": "像长在叶子里面，擦不掉",
@@ -10498,7 +10498,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "soft_wet",
               "optionText": "发软、湿润或带水渍感",
@@ -10509,7 +10509,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -10632,7 +10632,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "bacterial_leaf_spot_mode",
           "primaryClassRuntimeScore": 1,
@@ -10652,7 +10652,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10663,7 +10663,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "soft_wet",
               "optionText": "发软、湿润或带水渍感",
@@ -10674,7 +10674,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -10797,7 +10797,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 1.6405,
@@ -10817,7 +10817,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10828,7 +10828,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10839,7 +10839,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -10856,7 +10856,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -10867,7 +10867,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10878,7 +10878,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -10996,7 +10996,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.85,
@@ -11016,7 +11016,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "embedded",
               "optionText": "像长在叶子里面，擦不掉",
@@ -11027,7 +11027,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "dry_firm",
               "optionText": "更像干硬坏死，不发软",
@@ -11038,7 +11038,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -11161,7 +11161,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.85,
@@ -11181,7 +11181,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "embedded",
               "optionText": "像长在叶子里面，擦不掉",
@@ -11192,7 +11192,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "soft_wet",
               "optionText": "发软、湿润或带水渍感",
@@ -11203,7 +11203,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -11220,7 +11220,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -11231,7 +11231,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -11242,7 +11242,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -11360,7 +11360,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -11380,7 +11380,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -11391,7 +11391,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -11402,7 +11402,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -11419,7 +11419,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -11430,7 +11430,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -11441,7 +11441,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -11559,7 +11559,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.85,
@@ -11579,7 +11579,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "embedded",
               "optionText": "像长在叶子里面，擦不掉",
@@ -11590,7 +11590,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -11601,7 +11601,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -11724,7 +11724,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.85,
@@ -11744,7 +11744,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "embedded",
               "optionText": "像长在叶子里面，擦不掉",
@@ -11755,7 +11755,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "soft_wet",
               "optionText": "发软、湿润或带水渍感",
@@ -11766,7 +11766,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -11783,7 +11783,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -11794,7 +11794,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -11805,7 +11805,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -11923,7 +11923,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "bacterial_leaf_spot_mode",
           "primaryClassRuntimeScore": 1,
@@ -11943,7 +11943,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -11954,7 +11954,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -11965,7 +11965,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -12088,7 +12088,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -12108,7 +12108,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -12119,7 +12119,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -12130,7 +12130,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -12253,7 +12253,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.088,
@@ -12273,7 +12273,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -12284,7 +12284,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -12295,7 +12295,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -12418,7 +12418,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -12438,7 +12438,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -12449,7 +12449,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no_change",
               "optionText": "浇水节奏没有明显变化",
@@ -12460,7 +12460,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -12477,7 +12477,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -12488,7 +12488,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -12499,7 +12499,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -12617,7 +12617,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.6405,
@@ -12637,7 +12637,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -12648,7 +12648,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -12659,7 +12659,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -12676,7 +12676,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -12687,7 +12687,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -12698,7 +12698,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -12816,7 +12816,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5905,
@@ -12836,7 +12836,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -12847,7 +12847,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -12858,7 +12858,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -12875,7 +12875,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -12886,7 +12886,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -12897,7 +12897,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -13015,7 +13015,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.088,
@@ -13035,7 +13035,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -13046,7 +13046,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -13057,7 +13057,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，最近长期停肥或明显缺少供肥",
@@ -13180,7 +13180,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -13200,7 +13200,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -13211,7 +13211,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -13222,7 +13222,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -13239,7 +13239,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -13250,7 +13250,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -13261,7 +13261,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -13379,7 +13379,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5405,
@@ -13399,7 +13399,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -13410,7 +13410,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -13421,7 +13421,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -13438,7 +13438,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -13449,7 +13449,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -13460,7 +13460,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -13578,7 +13578,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.6905,
@@ -13598,7 +13598,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -13609,7 +13609,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -13620,7 +13620,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -13637,7 +13637,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -13648,7 +13648,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -13659,7 +13659,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -13777,7 +13777,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -13797,7 +13797,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "less_light",
               "optionText": "是，最近更弱光或更阴",
@@ -13808,7 +13808,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -13819,7 +13819,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -13942,7 +13942,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.6405,
@@ -13962,7 +13962,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -13973,7 +13973,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -13984,7 +13984,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -14001,7 +14001,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -14012,7 +14012,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -14023,7 +14023,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -14141,7 +14141,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5405,
@@ -14161,7 +14161,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -14172,7 +14172,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -14183,7 +14183,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -14200,7 +14200,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -14211,7 +14211,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -14222,7 +14222,7 @@
           {
             "questionKey": "q_underwater_dry_wilt",
             "questionText": "盆土干透时明显萎蔫?",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -14340,7 +14340,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "mite_damage_mode",
           "primaryClassRuntimeScore": 1,
@@ -14360,7 +14360,7 @@
           {
             "questionKey": "q_spider_webbing_visible",
             "questionText": "叶片、叶柄或节间能看到细密蛛网吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -14371,7 +14371,7 @@
           {
             "questionKey": "q_observed_probe__yellow_speckling__underside_presence",
             "questionText": "翻看叶背、叶脉附近或更隐蔽的位置，这种“叶子上有密密麻麻的小黄点”在背面是否更明显？",
-            "targetDimension": "underside_presence",
+            "packageTopic": "underside_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -14382,7 +14382,7 @@
           {
             "questionKey": "q_observed_probe__yellow_speckling__surface_stickiness",
             "questionText": "这些“叶子上有密密麻麻的小黄点”摸起来更像发黏、有蜜露感，还是只是干灰层/脏层但不发黏？",
-            "targetDimension": "surface_stickiness",
+            "packageTopic": "surface_stickiness",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -14505,7 +14505,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.85,
@@ -14525,7 +14525,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "embedded",
               "optionText": "像长在叶子里面，擦不掉",
@@ -14536,7 +14536,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "soft_wet",
               "optionText": "发软、湿润或带水渍感",
@@ -14547,7 +14547,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -14564,7 +14564,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -14575,7 +14575,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -14586,7 +14586,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -14704,7 +14704,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5905,
@@ -14724,7 +14724,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "no_change",
               "optionText": "没有明显变化",
@@ -14735,7 +14735,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -14746,7 +14746,7 @@
           {
             "questionKey": "q_leaf_yellowing_fertilization_background",
             "questionText": "最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？",
-            "targetDimension": "fertilization_context",
+            "packageTopic": "fertilization_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，近期并非长期缺肥背景",
@@ -14763,7 +14763,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -14774,7 +14774,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -14785,7 +14785,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -14903,7 +14903,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -14923,7 +14923,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -14934,7 +14934,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -14945,7 +14945,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -14962,7 +14962,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -14973,7 +14973,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -14984,7 +14984,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15113,7 +15113,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.7905,
@@ -15133,7 +15133,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -15144,7 +15144,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "soft_wet",
               "optionText": "发软、湿润或带水渍感",
@@ -15155,7 +15155,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15172,7 +15172,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -15183,7 +15183,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15194,7 +15194,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15312,7 +15312,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -15332,7 +15332,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
             "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15343,7 +15343,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
             "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15354,7 +15354,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15371,7 +15371,7 @@
           {
             "questionKey": "q_black_spots_spreading_confirm",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15489,7 +15489,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.6905,
@@ -15509,7 +15509,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -15520,7 +15520,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15537,7 +15537,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15548,7 +15548,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -15666,7 +15666,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -15686,7 +15686,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
             "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15697,7 +15697,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
             "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15708,7 +15708,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15725,7 +15725,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15843,7 +15843,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 1.55125,
@@ -15863,7 +15863,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15874,7 +15874,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15885,7 +15885,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -15902,7 +15902,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -15913,7 +15913,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -15924,7 +15924,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -16042,7 +16042,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -16062,7 +16062,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
             "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -16073,7 +16073,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
             "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -16084,7 +16084,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -16207,7 +16207,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -16227,7 +16227,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
             "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -16238,7 +16238,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
             "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -16249,7 +16249,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -16266,7 +16266,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -16384,7 +16384,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.85,
@@ -16404,7 +16404,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -16415,7 +16415,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "dry_firm",
               "optionText": "更像干硬坏死，不发软",
@@ -16426,7 +16426,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -16549,7 +16549,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.85,
@@ -16569,7 +16569,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "embedded",
               "optionText": "像长在叶子里面，擦不掉",
@@ -16580,7 +16580,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "soft_wet",
               "optionText": "发软、湿润或带水渍感",
@@ -16591,7 +16591,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -16608,7 +16608,7 @@
           {
             "questionKey": "q_brown_spots_halo_confirm",
             "questionText": "叶片有褐色病斑，并在周围伴随黄色晕圈吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -16619,7 +16619,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -16630,7 +16630,7 @@
           {
             "questionKey": "q_observed_probe__black_spots_spreading__lesion_water_soaking",
             "questionText": "黑斑边缘或附近组织是否带半透明、水渍样扩散感，摸上去偏湿软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -16748,7 +16748,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.6905,
@@ -16768,7 +16768,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -16779,7 +16779,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_dry",
               "optionText": "更像经常干透后才浇",
@@ -16796,7 +16796,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -16807,7 +16807,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "new",
               "optionText": "新叶为主",
@@ -16936,7 +16936,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "fungal_leaf_spot_mode",
           "primaryClassRuntimeScore": 0.85,
@@ -16956,7 +16956,7 @@
           {
             "questionKey": "q_black_spots_surface_layer_check",
             "questionText": "这些黑斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "surface",
               "optionText": "更像浮在表面，轻擦会蹭开",
@@ -16967,7 +16967,7 @@
           {
             "questionKey": "q_black_spots_tissue_moisture_check",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "dry_firm",
               "optionText": "更像干硬坏死，不发软",
@@ -16978,7 +16978,7 @@
           {
             "questionKey": "q_bacterial_water_soaked",
             "questionText": "病斑有水渍感、湿润半透明吗？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -17101,7 +17101,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -17121,7 +17121,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
             "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -17132,7 +17132,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
             "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -17143,7 +17143,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -17266,7 +17266,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 1.6405,
@@ -17286,7 +17286,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "more_sun",
               "optionText": "是，最近更强光或更直晒",
@@ -17297,7 +17297,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "more_wet",
               "optionText": "更像长期偏湿、久不干",
@@ -17314,7 +17314,7 @@
           {
             "questionKey": "q_root_rot_bad_smell",
             "questionText": "根部或根团有明显腐烂异味?",
-            "targetDimension": "root_zone_context",
+            "packageTopic": "root_zone_context",
             "answer": {
               "optionKey": "no",
               "optionText": "否，基本没有",
@@ -17325,7 +17325,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -17336,7 +17336,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -17454,7 +17454,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "yellowing_mode",
           "primaryClassRuntimeScore": 2.5405,
@@ -17474,7 +17474,7 @@
           {
             "questionKey": "q_leaf_yellowing_light_background",
             "questionText": "最近这次黄叶之前，光照是更强直晒，还是更弱更阴？",
-            "targetDimension": "light_exposure",
+            "packageTopic": "light_exposure",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -17485,7 +17485,7 @@
           {
             "questionKey": "q_leaf_yellowing_watering_background",
             "questionText": "最近这盆更像长期偏湿久不干，还是经常干透后才浇？",
-            "targetDimension": "watering_context",
+            "packageTopic": "watering_context",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -17502,7 +17502,7 @@
           {
             "questionKey": "q_iron_new_leaves_yellow",
             "questionText": "发黄主要出现在新叶?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "uniform",
               "optionText": "新老叶都黄",
@@ -17513,7 +17513,7 @@
           {
             "questionKey": "q_nitrogen_old_leaves_yellow",
             "questionText": "发黄先从老叶开始?",
-            "targetDimension": "host_confirmation",
+            "packageTopic": "host_confirmation",
             "answer": {
               "optionKey": "old",
               "optionText": "老叶为主",
@@ -17631,7 +17631,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "chewing_pest_mode",
           "primaryClassRuntimeScore": 1.6405,
@@ -17651,7 +17651,7 @@
           {
             "questionKey": "q_observed_probe__holes_in_leaf__tissue_integrity",
             "questionText": "这些“叶子被咬出了洞”所在位置，叶组织本身是完整但变色，还是已经被咬掉/破掉，形成缺口、真洞或缺损边缘？",
-            "targetDimension": "tissue_integrity",
+            "packageTopic": "tissue_integrity",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -17662,7 +17662,7 @@
           {
             "questionKey": "q_observed_probe__holes_in_leaf__distribution_scope",
             "questionText": "这种“叶子被咬出了洞”主要集中在个别叶片/局部，还是多片叶子都能看到？",
-            "targetDimension": "distribution_scope",
+            "packageTopic": "distribution_scope",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -17673,7 +17673,7 @@
           {
             "questionKey": "q_chewed_edges_confirm",
             "questionText": "叶缘像被一口一口啃掉，而不是焦边或病斑吗？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "answer": {
               "optionKey": "yes",
               "optionText": "是，比较确定",
@@ -17690,7 +17690,7 @@
           {
             "questionKey": "q_observed_probe__chewed_edges__tissue_integrity",
             "questionText": "这些“叶子边缘像被啃过”所在位置，叶组织本身是完整但变色，还是已经被咬掉/破掉，形成缺口、真洞或缺损边缘？",
-            "targetDimension": "tissue_integrity",
+            "packageTopic": "tissue_integrity",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -17701,7 +17701,7 @@
           {
             "questionKey": "q_observed_probe__chewed_edges__distribution_scope",
             "questionText": "这种“叶子边缘像被啃过”主要集中在个别叶片/局部，还是多片叶子都能看到？",
-            "targetDimension": "distribution_scope",
+            "packageTopic": "distribution_scope",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -17819,7 +17819,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -17839,7 +17839,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
             "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -17850,7 +17850,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
             "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -17861,7 +17861,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -17984,7 +17984,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -18004,7 +18004,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
             "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -18015,7 +18015,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
             "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -18026,7 +18026,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -18149,7 +18149,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -18169,7 +18169,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
             "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -18180,7 +18180,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
             "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -18191,7 +18191,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -18314,7 +18314,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": true,
-          "gateMode": "soft",
+          "conditionMode": "soft",
           "sourceMode": "soft",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,
@@ -18334,7 +18334,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__surface_residue",
             "questionText": "这些“不规则斑块”更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -18345,7 +18345,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__tissue_moisture",
             "questionText": "异常附近组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",
@@ -18356,7 +18356,7 @@
           {
             "questionKey": "q_observed_probe__irregular_blotches__lesion_halo",
             "questionText": "这些黑斑周围是否还能看到一圈偏黄、发浅或像晕开的边缘？",
-            "targetDimension": "lesion_halo",
+            "packageTopic": "lesion_halo",
             "answer": {
               "optionKey": "unknown",
               "optionText": "看不出/不确定",

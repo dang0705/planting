@@ -49,7 +49,7 @@ async function main(event, context) {
         openid,
         plantId: request.body.plantId || null,
         plantIdentityId: request.body.plantIdentityId || null,
-        legacyPlantId: request.body.legacyPlantId || null,
+        sessionPlantId: request.body.sessionPlantId || null,
         recognizedName: request.body.recognizedName || null,
         sourceType: request.body.sourceType || 'catalog',
         recognitionType: request.body.recognitionType || null,

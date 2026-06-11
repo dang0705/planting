@@ -11,7 +11,7 @@ The previous governance pass contained a source-verified memory entry that prese
 | 输入 | 用途 |
 |---|---|
 | `code-base.zip` | 当前代码事实源。 |
-| `docs.zip` | 旧文档、蓝图、代码逻辑文档、runbook、handoff。 |
+| `docs.zip` | 既有文档、蓝图、代码逻辑文档、runbook、handoff。 |
 | `ai_and_memories.zip` | Codex 配置、agent、skill、BRV 记忆。 |
 
 ## 2. 主要判断
@@ -34,7 +34,7 @@ diagnosis-history-http deprecated
 layer
 ```
 
-因此，任何旧记忆若说当前包缺少这些函数，均已过时。
+因此，任何既有记忆若说当前包缺少这些函数，均已过时。
 
 ### 2.2 文档当前状态
 
@@ -105,6 +105,6 @@ scripts/knowledge_hygiene_check.py
 
 ## 5. 未做的事
 
-- 未物理移动旧文档到 `docs/archive/`；本包先做状态治理，避免破坏现有引用。
+- 未物理移动既有文档到 `docs/archive/`；本包先做状态治理，避免破坏现有引用。
 - 未运行真实仓库测试；上传包不等同于可执行工作区。
 - 未连接 CloudBase、MCP、Git 或线上环境。

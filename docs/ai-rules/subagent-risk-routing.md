@@ -24,7 +24,7 @@
 
 4. 问题簇。
 
-5. gate 守卫。
+5. condition 守卫。
 
 6. replay 逻辑。
 
@@ -50,7 +50,7 @@
 
 2. 涉及多文件核心逻辑。
 
-3. 涉及诊断 runtime、outcome、gate、replay。
+3. 涉及诊断 runtime、outcome、condition、replay。
 
 4. 涉及 CloudBase 云函数或部署。
 

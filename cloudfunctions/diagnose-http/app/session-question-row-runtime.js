@@ -5,11 +5,10 @@ const {
   readRoundFromRationale
 } = require('../services/session-question-service')
 const {
-  pickQuestionKeysFromQuestionQueue,
-  buildAskedQuestionRowsFromQuestionRows: buildAskedLegacyQuestionRows
+  buildAskedQuestionRowsFromQuestionRows: buildAskedSessionQuestionRows
 } = require('./request-normalizers')
 
-function collectAnsweredLegacyQuestionKeys(rows = []) {
+function collectAnsweredSessionQuestionKeys(rows = []) {
   const answeredRows = Array.isArray(rows) ? rows : []
   const keys = new Set()
   for (const row of answeredRows) {
@@ -27,26 +26,22 @@ function collectAnsweredLegacyQuestionKeys(rows = []) {
   return Array.from(keys)
 }
 
-function resolveLegacyQuestionState(sessionState = {}) {
+function resolveSessionQuestionState(sessionState = {}) {
   return {
     rows: Array.isArray(sessionState.questionRows) ? sessionState.questionRows : [],
-    progress: sessionState.questionQueue || null
+    progress: null
   }
 }
 
-function resolveLegacyOwnershipRows(ownership = null, fallbackRows = []) {
-  return Array.isArray(ownership?.questionRows) ? ownership.questionRows : fallbackRows
+function resolveSessionOwnershipRows(ownership = null, conservativeRows = []) {
+  return Array.isArray(ownership?.questionRows) ? ownership.questionRows : conservativeRows
 }
 
-function resolveLegacyQuestionKeysForValidation({
+function resolveSessionQuestionKeysForValidation({
   answerRound = 1,
-  sessionState = {},
+  sessionState: _sessionState = {},
   rows = []
 } = {}) {
-  if (Number(answerRound || 1) === Number(sessionState?.questionQueue?.roundIndex || 0)) {
-    return pickQuestionKeysFromQuestionQueue(sessionState.questionQueue)
-  }
-
   return new Set(
     (Array.isArray(rows) ? rows : [])
       .filter(row => {
@@ -66,9 +61,9 @@ function resolveLegacyQuestionKeysForValidation({
 }
 
 module.exports = {
-  resolveLegacyQuestionState,
-  resolveLegacyOwnershipRows,
-  collectAnsweredLegacyQuestionKeys,
-  resolveLegacyQuestionKeysForValidation,
-  buildAskedLegacyQuestionRows
+  resolveSessionQuestionState,
+  resolveSessionOwnershipRows,
+  collectAnsweredSessionQuestionKeys,
+  resolveSessionQuestionKeysForValidation,
+  buildAskedSessionQuestionRows
 }

@@ -89,7 +89,7 @@ function buildResolvedPlantContext({
   const resolvedPlantId =
     plant?.plantId ||
     userPlant?.plantId ||
-    userPlant?.legacyPlantId ||
+    userPlant?.requestPlantId ||
     (plantId !== null && plantId !== undefined ? String(plantId) : '')
   const resolvedPlantIdentityId = plant?.plantIdentityId || userPlant?.plantIdentityId || ''
   const resolvedIdentityStatus =
@@ -107,7 +107,7 @@ function buildResolvedPlantContext({
     plantId: resolvedPlantId || null,
     plantDisplayName: resolvedDisplayName,
     plantIdentityId: resolvedPlantIdentityId,
-    legacyPlantId: plant?.legacyPlantId || userPlant?.legacyPlantId || '',
+    requestPlantId: plant?.requestPlantId || userPlant?.requestPlantId || '',
     identityResolutionStatus: resolvedIdentityStatus,
     latestVisualCallBatchId: userPlant?.visualCallBatchId || '',
     recognizedName: userPlant?.recognizedName || '',
@@ -156,7 +156,7 @@ async function resolvePlantContext({
   if (candidateUserPlantId !== null && candidateUserPlantId !== undefined && candidateUserPlantId !== '') {
     const userPlant = await getUserPlantInstanceById(openid, Number(candidateUserPlantId))
     if (userPlant) {
-      const catalogLookupId = userPlant.plantIdentityId || userPlant.legacyPlantId || userPlant.plantId || ''
+      const catalogLookupId = userPlant.plantIdentityId || userPlant.requestPlantId || userPlant.plantId || ''
       const plant = catalogLookupId ? await getPlantCatalogById(String(catalogLookupId)) : null
       const careProfile = await getGenusCareProfile(plant?.genus || userPlant?.genus || '', plant?.familyEn || userPlant?.familyEn || '')
       debugLog('diagnose-http plant-context resolved from userPlant:', {

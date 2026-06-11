@@ -1,11 +1,11 @@
 'use strict'
 
 const {
-  buildObservedProbeQuestionsFromLegacySource
-} = require('./legacy-observed-probe-question-source')
+  buildObservedProbeQuestionsFromSessionSource
+} = require('./session-observed-probe-question-source')
 
 function buildObservedProbePackageQuestions(...args) {
-  return buildObservedProbeQuestionsFromLegacySource(...args)
+  return buildObservedProbeQuestionsFromSessionSource(...args)
 }
 
 module.exports = {

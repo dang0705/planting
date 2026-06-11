@@ -4,7 +4,7 @@
 
 - 在 `diagnose-http` 中完成 ranking→route 第一阶段代码接入：route 进入 SQL 表面与运行时观测链路。
 - 保持 ranking 默认行为不变，仅新增 `routeDecision` 观测字段，不接管追问与最终输出。
-- 新增 route 常量、repository、gate/planner 骨架，支持空数据安全 fallback。
+- 新增 route 常量、repository、condition/planner 骨架，支持空数据安全 fallback。
 
 ## 2. 非目标
 
@@ -24,7 +24,7 @@
 - ✅ 本轮实际改过：[cloudfunctions/diagnose-http/constants/tables.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/constants/tables.js)
 - ✅ 本轮实际改过：[cloudfunctions/diagnose-http/constants/outcome-route.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/constants/outcome-route.js)
 - ✅ 本轮实际改过：[cloudfunctions/diagnose-http/repositories/outcome-route-repository.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/repositories/outcome-route-repository.js)
-- ✅ 本轮实际改过：[cloudfunctions/diagnose-http/domain/outcome-gate-evaluator.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/outcome-gate-evaluator.js)
+- ✅ 本轮实际改过：[cloudfunctions/diagnose-http/domain/outcome-condition-evaluator.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/outcome-condition-evaluator.js)
 - ✅ 本轮实际改过：[cloudfunctions/diagnose-http/domain/outcome-route-planner.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/outcome-route-planner.js)
 - ✅ 本轮实际改过：[cloudfunctions/diagnose-http/domain/diagnosis-engine.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/diagnosis-engine.js)
 - ✅ 本轮实际改过：[src/data-system/config/tables.js](/Users/jay/WebstormProjects/planting/src/data-system/config/tables.js)
@@ -36,7 +36,7 @@
 - [docs/ai-rules/diagnosis-replay.md](/Users/jay/WebstormProjects/planting/docs/ai-rules/diagnosis-replay.md)
 - [docs/ai-rules/cloudbase-auth-database.md](/Users/jay/WebstormProjects/planting/docs/ai-rules/cloudbase-auth-database.md)
 
-## 6. 是否涉及旧 agent 能力
+## 6. 是否涉及既有 agent 能力
 
 - 模块化守门：是（新增 route 模块但不破坏 ranking 主链）
 - 代码逻辑字典：否（未新增 `docs/code-logics`）
@@ -45,7 +45,7 @@
 ## 7. 执行步骤
 
 1. 补齐 route 表名常量与 data-system 表配置（JSON/numeric 列定义）。
-2. 新增 route 常量、repository、gate evaluator、planner 骨架。
+2. 新增 route 常量、repository、condition evaluator、planner 骨架。
 3. 在 `diagnosis-engine.js` ranking 后接入 `routeDecision` 观测。
 4. 保持 follow-up 与 output 仍由 ranking 逻辑驱动。
 5. 进行聚焦语法校验与脚本存在性检查。

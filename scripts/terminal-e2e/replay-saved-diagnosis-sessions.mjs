@@ -749,8 +749,8 @@ function summarizeFollowUps(followUps = []) {
     questionKey: normalizeText(item?.questionKey),
     questionGroupKey: normalizeText(item?.questionGroupKey),
     selectionSource: normalizeText(item?.selectionSource),
-    routingScope: normalizeText(item?.routingScope),
-    targetDimension: normalizeText(item?.targetDimension),
+    packageSection: normalizeText(item?.packageSection),
+    packageTopic: normalizeText(item?.packageTopic),
     targetSymptomKey: normalizeText(item?.targetSymptomKey),
     text: normalizeText(item?.text)
   }))
@@ -761,8 +761,8 @@ function summarizeFollowUpKeysOnly(followUps = []) {
     questionKey: normalizeText(item?.questionKey),
     questionGroupKey: normalizeText(item?.questionGroupKey),
     selectionSource: normalizeText(item?.selectionSource),
-    routingScope: normalizeText(item?.routingScope),
-    targetDimension: normalizeText(item?.targetDimension),
+    packageSection: normalizeText(item?.packageSection),
+    packageTopic: normalizeText(item?.packageTopic),
     targetSymptomKey: normalizeText(item?.targetSymptomKey),
     text: normalizeText(item?.text)
   }))
@@ -787,7 +787,7 @@ function summarizeAuditRoundQuestions(round = {}) {
       return {
         questionKey,
         questionText: normalizeText(item?.questionText),
-        targetDimension: normalizeText(item?.targetDimension),
+        packageTopic: normalizeText(item?.packageTopic),
         answer: answer
           ? {
               optionKey: normalizeText(answer?.optionKey),
@@ -852,7 +852,7 @@ function mapQuestionHistory(
         question?.questionTextUserCn || question?.questionTextCn
       ),
       questionGroupKey: normalizeText(question?.questionGroupKey),
-      targetDimension: normalizeText(question?.targetDimension),
+      packageTopic: normalizeText(question?.packageTopic),
       optionKey,
       optionText: normalizeText(
         option?.optionTextUserCn ||
@@ -873,7 +873,7 @@ function buildRoundQuestionAnswerPair(
   const questionKey = normalizeText(question?.questionKey || answer?.questionKey)
   const questionText = normalizeText(question?.questionText || answer?.questionText)
   const questionGroupKey = normalizeText(question?.questionGroupKey || answer?.questionGroupKey)
-  const targetDimension = normalizeText(question?.targetDimension || answer?.targetDimension)
+  const packageTopic = normalizeText(question?.packageTopic || answer?.packageTopic)
   const optionKey = normalizeText(answer?.optionKey)
   const optionCandidates = optionMapByQuestionKey.get(questionKey) || []
   const matchedOption = optionCandidates.find(item => normalizeText(item?.optionKey) === optionKey) || null
@@ -882,7 +882,7 @@ function buildRoundQuestionAnswerPair(
     questionKey,
     questionText,
     questionGroupKey,
-    targetDimension,
+    packageTopic,
     answer: {
       optionKey,
       optionText: normalizeText(
@@ -1187,8 +1187,8 @@ function summarizeRankingSnapshot(rankings = []) {
       questionEvidence: Number(item?.questionEvidence || 0),
       totalEvidence: Number(item?.totalEvidence || 0),
       penalty: Number(item?.penalty || 0),
-      genusCompatibility: Number(item?.genusCompatibility || 0),
-      hostCompatibility: Number(item?.hostCompatibility || 0),
+      genusSuitabilityibility: Number(item?.genusSuitabilityibility || 0),
+      hostSuitabilityibility: Number(item?.hostSuitabilityibility || 0),
       baseScore: Number(item?.baseScore || 0),
       finalScore: Number(item?.finalScore || 0)
     }))
@@ -1293,7 +1293,7 @@ function pickSimulatedAnswerForQuestion({
       question?.questionTextCn
     ),
     questionGroupKey: normalizeText(followUp?.questionGroupKey || question?.questionGroupKey),
-    targetDimension: normalizeText(followUp?.targetDimension || question?.targetDimension),
+    packageTopic: normalizeText(followUp?.packageTopic || question?.packageTopic),
     optionKey,
     optionText,
     status: normalizeText(status, 'simulated'),
@@ -1419,7 +1419,7 @@ function summarizeSimulationRound({
     questionKey: normalizeText(item?.questionKey),
     questionText: normalizeText(item?.questionText),
     questionGroupKey: normalizeText(item?.questionGroupKey),
-    targetDimension: normalizeText(item?.targetDimension),
+    packageTopic: normalizeText(item?.packageTopic),
     optionKey: normalizeText(item?.optionKey),
     optionText: normalizeText(item?.optionText),
     status: normalizeText(item?.status),
@@ -1439,7 +1439,7 @@ function summarizeSimulationRound({
       questionKey: normalizeText(item?.questionKey),
       questionText: normalizeText(item?.text),
       questionGroupKey: normalizeText(item?.questionGroupKey),
-      targetDimension: normalizeText(item?.targetDimension)
+      packageTopic: normalizeText(item?.packageTopic)
     })),
     answers: normalizedAnswers,
     questionAnswerPairs: normalizedFollowUps.map(item => {
@@ -1451,7 +1451,7 @@ function summarizeSimulationRound({
           questionKey: item?.questionKey,
           questionText: item?.text,
           questionGroupKey: item?.questionGroupKey,
-          targetDimension: item?.targetDimension
+          packageTopic: item?.packageTopic
         },
         answer,
         optionMapByQuestionKey
@@ -1481,7 +1481,7 @@ async function buildActualRounds(sessionId = '', questionMap = new Map(), option
       row.question_text || questionMeta?.questionTextUserCn || questionMeta?.questionTextCn
     )
     const questionGroupKey = normalizeText(questionMeta?.questionGroupKey)
-    const targetDimension = normalizeText(questionMeta?.targetDimension)
+    const packageTopic = normalizeText(questionMeta?.packageTopic)
     const optionKey = normalizeText(row.answer_value)
     const optionCandidates = optionMapByQuestionKey.get(questionKey) || []
     const matchedOption = optionCandidates.find(item => normalizeText(item?.optionKey) === optionKey) || null
@@ -1497,7 +1497,7 @@ async function buildActualRounds(sessionId = '', questionMap = new Map(), option
       questionKey,
       questionText,
       questionGroupKey,
-      targetDimension
+      packageTopic
     })
 
     if (Number(row.asked || 0) === 1) {
@@ -1505,7 +1505,7 @@ async function buildActualRounds(sessionId = '', questionMap = new Map(), option
         questionKey,
         questionText,
         questionGroupKey,
-        targetDimension,
+        packageTopic,
         optionKey,
         optionText: normalizeText(
           matchedOption?.optionTextUserCn ||
@@ -1520,7 +1520,7 @@ async function buildActualRounds(sessionId = '', questionMap = new Map(), option
             questionKey,
             questionText,
             questionGroupKey,
-            targetDimension
+            packageTopic
           },
           answer,
           optionMapByQuestionKey
@@ -1597,7 +1597,7 @@ async function replaySession({ sessionId, openid }, replayOptions = {}) {
         questionKey,
         questionText: normalizeText(question?.questionTextUserCn || question?.questionTextCn),
         questionGroupKey: normalizeText(question?.questionGroupKey),
-        targetDimension: normalizeText(question?.targetDimension)
+        packageTopic: normalizeText(question?.packageTopic)
       }
     }),
     answeredQuestionGroupKeys: Array.isArray(sessionState.answeredQuestionGroupKeys)
@@ -2229,7 +2229,7 @@ async function main() {
     conclusionFiles: batchArtifacts.artifacts.map(item => item.conclusionFile),
     batchRootBaseName: batchArtifacts.rootBaseName,
     batchPartCount: Number(batchArtifacts.partCount || batchArtifacts.artifacts.length || 0),
-    legacyReportFile: normalizeText(reportFile),
+    sessionReportFile: normalizeText(reportFile),
     total: report.total,
     success: report.success,
     failed: report.failed,

@@ -103,7 +103,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zcHJlYWRpbmdfY29uZmlybQ",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -132,7 +132,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zcHJlYWRpbmdfY29uZmlybQ",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -141,7 +141,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zdXJmYWNlX2xheWVyX2NoZWNr",
             "questionText": "这些斑点/斑块更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "optionId": "opt_ZW1iZWRkZWQ",
             "optionText": "像长在叶子里面，擦不掉"
           }
@@ -170,7 +170,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zcHJlYWRpbmdfY29uZmlybQ",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -179,7 +179,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zdXJmYWNlX2xheWVyX2NoZWNr",
             "questionText": "这些斑点/斑块更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "optionId": "opt_c3VyZmFjZQ",
             "optionText": "更像浮在表面，轻擦会蹭开"
           }
@@ -208,7 +208,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zcHJlYWRpbmdfY29uZmlybQ",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -217,7 +217,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zdXJmYWNlX2xheWVyX2NoZWNr",
             "questionText": "这些斑点/斑块更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -238,7 +238,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zcHJlYWRpbmdfY29uZmlybQ",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -247,7 +247,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c190aXNzdWVfbW9pc3R1cmVfY2hlY2s",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_ZHJ5X2Zpcm0",
             "optionText": "更像干硬坏死，不发软"
           }
@@ -268,7 +268,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zcHJlYWRpbmdfY29uZmlybQ",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -277,7 +277,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c190aXNzdWVfbW9pc3R1cmVfY2hlY2s",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_c29mdF93ZXQ",
             "optionText": "发软、湿润或带水渍感"
           }
@@ -298,7 +298,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zcHJlYWRpbmdfY29uZmlybQ",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -307,7 +307,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c190aXNzdWVfbW9pc3R1cmVfY2hlY2s",
             "questionText": "斑点附近叶组织更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -328,7 +328,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -337,9 +337,9 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_bm9fcGVzdF90cmFjZQ",
-            "optionText": "没有这些虫害痕迹，更像晒伤、肥害、旧伤或普通变色"
+            "optionText": "没有这些虫害痕迹，更像晒伤、肥害、既有伤或普通变色"
           }
         ]
       ],
@@ -358,7 +358,7 @@
           {
             "questionId": "q_cV9icm93bl9zcG90c19oYWxvX2NvbmZpcm0",
             "questionText": "褐色斑点周围，有没有一圈发黄的边？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -367,7 +367,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zdXJmYWNlX2xheWVyX2NoZWNr",
             "questionText": "这些斑点/斑块更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "optionId": "opt_c3VyZmFjZQ",
             "optionText": "更像浮在表面，轻擦会蹭开"
           }
@@ -388,7 +388,7 @@
           {
             "questionId": "q_cV9icm93bl9zcG90c19oYWxvX2NvbmZpcm0",
             "questionText": "褐色斑点周围，有没有一圈发黄的边？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -397,7 +397,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zdXJmYWNlX2xheWVyX2NoZWNr",
             "questionText": "这些黑斑更像长在叶子里面，还是像浮在表面的脏层？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "optionId": "opt_ZW1iZWRkZWQ",
             "optionText": "像长在叶子里面，擦不掉"
           }
@@ -426,7 +426,7 @@
           {
             "questionId": "q_cV9icm93bl9zcG90c19oYWxvX2NvbmZpcm0",
             "questionText": "褐色斑点周围，有没有一圈发黄的边？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -435,7 +435,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zdXJmYWNlX2xheWVyX2NoZWNr",
             "questionText": "这些褐色病斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "optionId": "opt_c3VyZmFjZQ",
             "optionText": "更像浮在表面，轻擦会蹭开"
           }
@@ -456,7 +456,7 @@
           {
             "questionId": "q_cV9icm93bl9zcG90c19oYWxvX2NvbmZpcm0",
             "questionText": "褐色斑点周围，有没有一圈发黄的边？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -465,7 +465,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zdXJmYWNlX2xheWVyX2NoZWNr",
             "questionText": "这些褐色病斑更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -486,7 +486,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zcHJlYWRpbmdfY29uZmlybQ",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -495,7 +495,7 @@
           {
             "questionId": "q_cV9iYWN0ZXJpYWxfd2F0ZXJfc29ha2Vk",
             "questionText": "病斑是不是像被水浸过，发暗、半透明或偏湿？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -524,7 +524,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zcHJlYWRpbmdfY29uZmlybQ",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -533,7 +533,7 @@
           {
             "questionId": "q_cV9iYWN0ZXJpYWxfd2F0ZXJfc29ha2Vk",
             "questionText": "病斑是不是像被水浸过，发暗、半透明或偏湿？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -562,7 +562,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -571,7 +571,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_dGhyaXBzX3NpbHZlcl9ibGFjaw",
             "optionText": "有银白擦伤样痕迹，并伴很小的黑色排泄点"
           }
@@ -600,7 +600,7 @@
           {
             "questionId": "q_cV9icm93bl9zcG90c19oYWxvX2NvbmZpcm0",
             "questionText": "褐色斑点周围，有没有一圈发黄的边？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -609,7 +609,7 @@
           {
             "questionId": "q_cV9ob2xlc19pbl9sZWFmX2NvbmZpcm0",
             "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
-            "targetDimension": "structural_cause",
+            "packageTopic": "structural_cause",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -638,7 +638,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zcHJlYWRpbmdfY29uZmlybQ",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -647,7 +647,7 @@
           {
             "questionId": "q_cV9ob2xlc19pbl9sZWFmX2NvbmZpcm0",
             "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
-            "targetDimension": "structural_cause",
+            "packageTopic": "structural_cause",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -676,7 +676,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zcHJlYWRpbmdfY29uZmlybQ",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -685,7 +685,7 @@
           {
             "questionId": "q_cV9ob2xlc19pbl9sZWFmX2NvbmZpcm0",
             "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
-            "targetDimension": "structural_cause",
+            "packageTopic": "structural_cause",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -706,7 +706,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zcHJlYWRpbmdfY29uZmlybQ",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -715,7 +715,7 @@
           {
             "questionId": "q_cV9ob2xlc19pbl9sZWFmX2NvbmZpcm0",
             "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
-            "targetDimension": "structural_cause",
+            "packageTopic": "structural_cause",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -744,7 +744,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zcHJlYWRpbmdfY29uZmlybQ",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -753,7 +753,7 @@
           {
             "questionId": "q_cV9ob2xlc19pbl9sZWFmX2NvbmZpcm0",
             "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
-            "targetDimension": "structural_cause",
+            "packageTopic": "structural_cause",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -774,7 +774,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zcHJlYWRpbmdfY29uZmlybQ",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -783,7 +783,7 @@
           {
             "questionId": "q_cV9ob2xlc19pbl9sZWFmX2NvbmZpcm0",
             "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
-            "targetDimension": "structural_cause",
+            "packageTopic": "structural_cause",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -804,7 +804,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zcHJlYWRpbmdfY29uZmlybQ",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -813,7 +813,7 @@
           {
             "questionId": "q_cV9ob2xlc19pbl9sZWFmX2NvbmZpcm0",
             "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
-            "targetDimension": "structural_cause",
+            "packageTopic": "structural_cause",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -842,7 +842,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zcHJlYWRpbmdfY29uZmlybQ",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -870,7 +870,7 @@
           {
             "questionId": "q_cV9icm93bl9zcG90c19oYWxvX2NvbmZpcm0",
             "questionText": "褐色斑点周围，有没有一圈发黄的边？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -889,7 +889,7 @@
           {
             "questionId": "q_cV9icm93bl9zcG90c19oYWxvX2NvbmZpcm0",
             "questionText": "褐色斑点周围，有没有一圈发黄的边？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -909,7 +909,7 @@
           {
             "questionId": "q_cV9sZWFmX21hcmdpbl9uZWNyb3Npc19jb25maXJt",
             "questionText": "叶子边缘有没有形成一圈连续的褐色或黑色干枯边？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -938,7 +938,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9faXJyZWd1bGFyX2Jsb3RjaGVzX19sZXNpb25fd2F0ZXJfc29ha2luZw",
             "questionText": "斑点边缘有没有像被水浸过一样，发暗、半透明或偏软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -967,7 +967,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9faXJyZWd1bGFyX2Jsb3RjaGVzX19sZXNpb25fd2F0ZXJfc29ha2luZw",
             "questionText": "斑点边缘有没有像被水浸过一样，发暗、半透明或偏软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -996,7 +996,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9faXJyZWd1bGFyX2Jsb3RjaGVzX19sZXNpb25fd2F0ZXJfc29ha2luZw",
             "questionText": "斑点边缘有没有像被水浸过一样，发暗、半透明或偏软？",
-            "targetDimension": "lesion_water_soaking",
+            "packageTopic": "lesion_water_soaking",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -1025,7 +1025,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -1034,7 +1034,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_d2F0ZXJpbmdfYXJlYQ",
             "optionText": "浇水可能不合适"
           }
@@ -1055,7 +1055,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -1064,7 +1064,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_bGlnaHRfYXJlYQ",
             "optionText": "光照变化明显"
           }
@@ -1085,7 +1085,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -1094,7 +1094,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_ZmVydGlsaXphdGlvbl9hcmVh",
             "optionText": "施肥或换盆变化"
           }
@@ -1115,7 +1115,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -1124,7 +1124,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_YWlyZmxvd19odW1pZGl0eV9hcmVh",
             "optionText": "通风或空气湿度变化"
           }
@@ -1145,7 +1145,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -1154,7 +1154,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "没有明显变化 / 不确定"
           }
@@ -1183,7 +1183,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -1192,7 +1192,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_bWl0ZV93ZWJiaW5n",
             "optionText": "叶背或叶柄附近有细网、蜕皮，或极小活动点"
           }
@@ -1221,7 +1221,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -1230,7 +1230,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_dGhyaXBzX3NpbHZlcl9ibGFjaw",
             "optionText": "有银白擦伤样痕迹，并伴很小的黑色排泄点"
           }
@@ -1259,7 +1259,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -1268,7 +1268,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_c3RpY2t5X2hvbmV5ZGV3",
             "optionText": "表面发黏，或附近有蜜露/煤灰样黑层"
           }
@@ -1297,7 +1297,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -1306,9 +1306,9 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_bm9fcGVzdF90cmFjZQ",
-            "optionText": "没有这些虫害痕迹，更像晒伤、肥害、旧伤或普通变色"
+            "optionText": "没有这些虫害痕迹，更像晒伤、肥害、既有伤或普通变色"
           }
         ]
       ],
@@ -1335,7 +1335,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -1344,7 +1344,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -1373,7 +1373,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -1382,7 +1382,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_aGFsb19zcG90cw",
             "optionText": "有褐色或黑色斑点，周围还有一圈发黄"
           }
@@ -1411,7 +1411,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -1420,7 +1420,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_d2F0ZXJfc29ha2VkX3NvZnQ",
             "optionText": "斑点像被水浸过，发暗、半透明或偏软"
           }
@@ -1449,7 +1449,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -1458,7 +1458,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_cG93ZGVyX21vbGRfc3VyZmFjZQ",
             "optionText": "表面像有粉、霉、灰尘或脏层"
           }
@@ -1487,7 +1487,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -1496,7 +1496,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHlfbm9fbGVzaW9u",
             "optionText": "只是颜色发黄，没有明显斑点或烂斑"
           }
@@ -1525,7 +1525,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -1534,7 +1534,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定"
           }
@@ -1563,7 +1563,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -1572,7 +1572,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bmV3X2xlYXZlc19maXJzdA",
             "optionText": "新叶更明显"
           }
@@ -1593,7 +1593,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -1602,7 +1602,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_b2xkX2xvd2VyX2xlYXZlc19maXJzdA",
             "optionText": "老叶或下部叶更明显"
           }
@@ -1623,7 +1623,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -1632,7 +1632,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bm9fY2xlYXJfYWdlX2JpYXM",
             "optionText": "新老叶差不多，或看不出先后"
           }
@@ -1653,7 +1653,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -1662,7 +1662,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定"
           }
@@ -1683,7 +1683,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -1692,7 +1692,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bmV3X2xlYXZlc19maXJzdA",
             "optionText": "新叶更明显"
           }
@@ -1713,7 +1713,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -1722,7 +1722,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_b2xkX2xvd2VyX2xlYXZlc19maXJzdA",
             "optionText": "老叶或下部叶更明显"
           }
@@ -1743,7 +1743,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -1752,7 +1752,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bm9fY2xlYXJfYWdlX2JpYXM",
             "optionText": "新老叶差不多，或看不出先后"
           }
@@ -1773,7 +1773,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -1782,7 +1782,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定"
           }
@@ -1803,7 +1803,7 @@
           {
             "questionId": "q_cV9icm93bl9zcG90c19oYWxvX2NvbmZpcm0",
             "questionText": "褐色斑点周围，有没有一圈发黄的边？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -1812,7 +1812,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zdXJmYWNlX2xheWVyX2NoZWNr",
             "questionText": "这些深色斑块更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "optionId": "opt_ZW1iZWRkZWQ",
             "optionText": "像长在叶子里面，擦不掉"
           }
@@ -1841,7 +1841,7 @@
           {
             "questionId": "q_cV9icm93bl9zcG90c19oYWxvX2NvbmZpcm0",
             "questionText": "褐色斑点周围，有没有一圈发黄的边？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -1850,7 +1850,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zdXJmYWNlX2xheWVyX2NoZWNr",
             "questionText": "这些深色斑块更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "optionId": "opt_c3VyZmFjZQ",
             "optionText": "更像浮在表面，轻擦会蹭开"
           }
@@ -1871,7 +1871,7 @@
           {
             "questionId": "q_cV9icm93bl9zcG90c19oYWxvX2NvbmZpcm0",
             "questionText": "褐色斑点周围，有没有一圈发黄的边？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -1880,7 +1880,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zdXJmYWNlX2xheWVyX2NoZWNr",
             "questionText": "这些深色斑块更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -1901,7 +1901,7 @@
           {
             "questionId": "q_cV9iYWN0ZXJpYWxfd2F0ZXJfc29ha2Vk",
             "questionText": "病斑是不是像被水浸过，发暗、半透明或偏湿？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -1930,7 +1930,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -1939,9 +1939,9 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_bm9fcGVzdF90cmFjZQ",
-            "optionText": "没有这些虫害痕迹，更像晒伤、肥害、旧伤或普通变色"
+            "optionText": "没有这些虫害痕迹，更像晒伤、肥害、既有伤或普通变色"
           }
         ]
       ],
@@ -1968,7 +1968,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -1977,7 +1977,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_aGFsb19zcG90cw",
             "optionText": "有褐色或黑色斑点，周围还有一圈发黄"
           }
@@ -2006,7 +2006,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -2015,7 +2015,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_d2F0ZXJfc29ha2VkX3NvZnQ",
             "optionText": "斑点像被水浸过，发暗、半透明或偏软"
           }
@@ -2044,7 +2044,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -2053,7 +2053,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_b2xkX2xvd2VyX2xlYXZlc19maXJzdA",
             "optionText": "老叶或下部叶更明显"
           }
@@ -2074,7 +2074,7 @@
           {
             "questionId": "q_cV9iYWN0ZXJpYWxfd2F0ZXJfc29ha2Vk",
             "questionText": "病斑是不是像被水浸过，发暗、半透明或偏湿？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -2083,7 +2083,7 @@
           {
             "questionId": "q_cV9sZWFmX21hcmdpbl9uZWNyb3Npc19jb25maXJt",
             "questionText": "叶子边缘有没有形成一圈连续的褐色或黑色干枯边？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -2104,7 +2104,7 @@
           {
             "questionId": "q_cV9iYWN0ZXJpYWxfd2F0ZXJfc29ha2Vk",
             "questionText": "病斑是不是像被水浸过，发暗、半透明或偏湿？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -2113,7 +2113,7 @@
           {
             "questionId": "q_cV9sZWFmX21hcmdpbl9uZWNyb3Npc19jb25maXJt",
             "questionText": "叶子边缘有没有形成一圈连续的褐色或黑色干枯边？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -2134,7 +2134,7 @@
           {
             "questionId": "q_cV9iYWN0ZXJpYWxfd2F0ZXJfc29ha2Vk",
             "questionText": "病斑是不是像被水浸过，发暗、半透明或偏湿？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -2143,7 +2143,7 @@
           {
             "questionId": "q_cV9sZWFmX21hcmdpbl9uZWNyb3Npc19jb25maXJt",
             "questionText": "叶子边缘有没有形成一圈连续的褐色或黑色干枯边？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -2172,7 +2172,7 @@
           {
             "questionId": "q_cV9iYWN0ZXJpYWxfd2F0ZXJfc29ha2Vk",
             "questionText": "病斑是不是像被水浸过，发暗、半透明或偏湿？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -2181,7 +2181,7 @@
           {
             "questionId": "q_cV9sZWFmX21hcmdpbl9uZWNyb3Npc19jb25maXJt",
             "questionText": "叶子边缘有没有形成一圈连续的褐色或黑色干枯边？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -2202,7 +2202,7 @@
           {
             "questionId": "q_cV9iYWN0ZXJpYWxfd2F0ZXJfc29ha2Vk",
             "questionText": "病斑是不是像被水浸过，发暗、半透明或偏湿？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -2211,7 +2211,7 @@
           {
             "questionId": "q_cV9sZWFmX21hcmdpbl9uZWNyb3Npc19jb25maXJt",
             "questionText": "叶子边缘有没有形成一圈连续的褐色或黑色干枯边？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -2232,7 +2232,7 @@
           {
             "questionId": "q_cV9iYWN0ZXJpYWxfd2F0ZXJfc29ha2Vk",
             "questionText": "病斑是不是像被水浸过，发暗、半透明或偏湿？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -2241,7 +2241,7 @@
           {
             "questionId": "q_cV9sZWFmX21hcmdpbl9uZWNyb3Npc19jb25maXJt",
             "questionText": "叶子边缘有没有形成一圈连续的褐色或黑色干枯边？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -2270,7 +2270,7 @@
           {
             "questionId": "q_cV9iYWN0ZXJpYWxfd2F0ZXJfc29ha2Vk",
             "questionText": "病斑是不是像被水浸过，发暗、半透明或偏湿？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -2299,7 +2299,7 @@
           {
             "questionId": "q_cV9pcnJlZ3VsYXJfYmxvdGNoZXNfY29uZmlybQ",
             "questionText": "病斑的形状是不是不规则的一片或一块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -2308,7 +2308,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c190aXNzdWVfbW9pc3R1cmVfY2hlY2s",
             "questionText": "这些斑点/斑块摸起来更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -2329,7 +2329,7 @@
           {
             "questionId": "q_cV9iYWN0ZXJpYWxfd2F0ZXJfc29ha2Vk",
             "questionText": "病斑是不是像被水浸过，发暗、半透明或偏湿？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -2338,7 +2338,7 @@
           {
             "questionId": "q_cV9pcnJlZ3VsYXJfYmxvdGNoZXNfY29uZmlybQ",
             "questionText": "病斑的形状是不是不规则的一片或一块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -2359,7 +2359,7 @@
           {
             "questionId": "q_cV9iYWN0ZXJpYWxfd2F0ZXJfc29ha2Vk",
             "questionText": "病斑是不是像被水浸过，发暗、半透明或偏湿？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -2388,7 +2388,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -2397,7 +2397,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bmV3X2xlYXZlc19maXJzdA",
             "optionText": "新叶更明显"
           }
@@ -2418,7 +2418,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -2427,7 +2427,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_b2xkX2xvd2VyX2xlYXZlc19maXJzdA",
             "optionText": "老叶或下部叶更明显"
           }
@@ -2448,7 +2448,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -2457,7 +2457,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bm9fY2xlYXJfYWdlX2JpYXM",
             "optionText": "新老叶差不多，或看不出先后"
           }
@@ -2478,7 +2478,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -2487,7 +2487,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定"
           }
@@ -2508,7 +2508,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zcHJlYWRpbmdfY29uZmlybQ",
             "questionText": "是否有逐渐扩大的黑斑或暗色斑块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -2537,7 +2537,7 @@
           {
             "questionId": "q_cV9ob2xlc19pbl9sZWFmX2NvbmZpcm0",
             "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
-            "targetDimension": "structural_cause",
+            "packageTopic": "structural_cause",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -2566,7 +2566,7 @@
           {
             "questionId": "q_cV9ob2xlc19pbl9sZWFmX2NvbmZpcm0",
             "questionText": "这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？",
-            "targetDimension": "structural_cause",
+            "packageTopic": "structural_cause",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -2595,7 +2595,7 @@
           {
             "questionId": "q_cV9icm93bl9zcG90c19oYWxvX2NvbmZpcm0",
             "questionText": "褐色斑点周围，有没有一圈发黄的边？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -2604,7 +2604,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c19zdXJmYWNlX2xheWVyX2NoZWNr",
             "questionText": "这些斑点/斑块更像长在叶组织里面，还是像浮在表面的脏层、轻擦会蹭开？",
-            "targetDimension": "surface_residue",
+            "packageTopic": "surface_residue",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -2625,7 +2625,7 @@
           {
             "questionId": "q_cV9pcnJlZ3VsYXJfYmxvdGNoZXNfY29uZmlybQ",
             "questionText": "病斑的形状是不是不规则的一片或一块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -2634,7 +2634,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c190aXNzdWVfbW9pc3R1cmVfY2hlY2s",
             "questionText": "这些斑点/斑块摸起来更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_ZHJ5X2Zpcm0",
             "optionText": "更像干硬坏死，不发软"
           }
@@ -2655,7 +2655,7 @@
           {
             "questionId": "q_cV9pcnJlZ3VsYXJfYmxvdGNoZXNfY29uZmlybQ",
             "questionText": "病斑的形状是不是不规则的一片或一块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -2664,7 +2664,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c190aXNzdWVfbW9pc3R1cmVfY2hlY2s",
             "questionText": "这些斑点/斑块摸起来更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_c29mdF93ZXQ",
             "optionText": "发软、湿润或带水渍感"
           }
@@ -2693,7 +2693,7 @@
           {
             "questionId": "q_cV9pcnJlZ3VsYXJfYmxvdGNoZXNfY29uZmlybQ",
             "questionText": "病斑的形状是不是不规则的一片或一块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -2702,7 +2702,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c190aXNzdWVfbW9pc3R1cmVfY2hlY2s",
             "questionText": "这些斑点/斑块摸起来更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -2723,7 +2723,7 @@
           {
             "questionId": "q_cV9pcnJlZ3VsYXJfYmxvdGNoZXNfY29uZmlybQ",
             "questionText": "病斑的形状是不是不规则的一片或一块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -2732,7 +2732,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c190aXNzdWVfbW9pc3R1cmVfY2hlY2s",
             "questionText": "这些斑点/斑块摸起来更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_ZHJ5X2Zpcm0",
             "optionText": "更像干硬坏死，不发软"
           }
@@ -2761,7 +2761,7 @@
           {
             "questionId": "q_cV9pcnJlZ3VsYXJfYmxvdGNoZXNfY29uZmlybQ",
             "questionText": "病斑的形状是不是不规则的一片或一块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -2770,7 +2770,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c190aXNzdWVfbW9pc3R1cmVfY2hlY2s",
             "questionText": "这些斑点/斑块摸起来更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_c29mdF93ZXQ",
             "optionText": "发软、湿润或带水渍感"
           }
@@ -2791,7 +2791,7 @@
           {
             "questionId": "q_cV9pcnJlZ3VsYXJfYmxvdGNoZXNfY29uZmlybQ",
             "questionText": "病斑的形状是不是不规则的一片或一块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -2800,7 +2800,7 @@
           {
             "questionId": "q_cV9ibGFja19zcG90c190aXNzdWVfbW9pc3R1cmVfY2hlY2s",
             "questionText": "这些斑点/斑块摸起来更像干硬坏死，还是发软、带水渍感？",
-            "targetDimension": "tissue_moisture",
+            "packageTopic": "tissue_moisture",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -2821,7 +2821,7 @@
           {
             "questionId": "q_cV9pcnJlZ3VsYXJfYmxvdGNoZXNfY29uZmlybQ",
             "questionText": "病斑的形状是不是不规则的一片或一块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -2983,7 +2983,7 @@
           {
             "questionId": "q_cV9pcnJlZ3VsYXJfYmxvdGNoZXNfY29uZmlybQ",
             "questionText": "病斑的形状是不是不规则的一片或一块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_bm8",
             "optionText": "不是的"
           }
@@ -3012,7 +3012,7 @@
           {
             "questionId": "q_cV9pcnJlZ3VsYXJfYmxvdGNoZXNfY29uZmlybQ",
             "questionText": "病斑的形状是不是不规则的一片或一块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -3041,7 +3041,7 @@
           {
             "questionId": "q_cV9pcnJlZ3VsYXJfYmxvdGNoZXNfY29uZmlybQ",
             "questionText": "病斑的形状是不是不规则的一片或一块？",
-            "targetDimension": "visual_presence",
+            "packageTopic": "visual_presence",
             "optionId": "opt_eWVz",
             "optionText": "是的"
           }
@@ -3070,7 +3070,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -3079,7 +3079,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_d2F0ZXJpbmdfYXJlYQ",
             "optionText": "浇水可能不合适"
           }
@@ -3100,7 +3100,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -3109,7 +3109,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_bGlnaHRfYXJlYQ",
             "optionText": "光照变化明显"
           }
@@ -3130,7 +3130,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -3139,7 +3139,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_ZmVydGlsaXphdGlvbl9hcmVh",
             "optionText": "施肥或换盆变化"
           }
@@ -3160,7 +3160,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -3169,7 +3169,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_YWlyZmxvd19odW1pZGl0eV9hcmVh",
             "optionText": "通风或空气湿度变化"
           }
@@ -3190,7 +3190,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -3199,7 +3199,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "没有明显变化 / 不确定"
           }
@@ -3228,7 +3228,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -3237,7 +3237,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_bWl0ZV93ZWJiaW5n",
             "optionText": "叶背或叶柄附近有细网、蜕皮，或极小活动点"
           }
@@ -3266,7 +3266,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -3275,7 +3275,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_dGhyaXBzX3NpbHZlcl9ibGFjaw",
             "optionText": "有银白擦伤样痕迹，并伴很小的黑色排泄点"
           }
@@ -3304,7 +3304,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -3313,7 +3313,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_c3RpY2t5X2hvbmV5ZGV3",
             "optionText": "表面发黏，或附近有蜜露/煤灰样黑层"
           }
@@ -3342,7 +3342,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -3351,9 +3351,9 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_bm9fcGVzdF90cmFjZQ",
-            "optionText": "没有这些虫害痕迹，更像晒伤、肥害、旧伤或普通变色"
+            "optionText": "没有这些虫害痕迹，更像晒伤、肥害、既有伤或普通变色"
           }
         ]
       ],
@@ -3380,7 +3380,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -3389,7 +3389,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -3418,7 +3418,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -3427,7 +3427,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_aGFsb19zcG90cw",
             "optionText": "有褐色或黑色斑点，周围还有一圈发黄"
           }
@@ -3456,7 +3456,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -3465,7 +3465,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_d2F0ZXJfc29ha2VkX3NvZnQ",
             "optionText": "斑点像被水浸过，发暗、半透明或偏软"
           }
@@ -3494,7 +3494,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -3503,7 +3503,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_cG93ZGVyX21vbGRfc3VyZmFjZQ",
             "optionText": "表面像有粉、霉、灰尘或脏层"
           }
@@ -3532,7 +3532,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -3541,7 +3541,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHlfbm9fbGVzaW9u",
             "optionText": "只是颜色发黄，没有明显斑点或烂斑"
           }
@@ -3570,7 +3570,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -3579,7 +3579,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定"
           }
@@ -3608,7 +3608,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -3617,7 +3617,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bmV3X2xlYXZlc19maXJzdA",
             "optionText": "新叶更明显"
           }
@@ -3638,7 +3638,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -3647,7 +3647,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_b2xkX2xvd2VyX2xlYXZlc19maXJzdA",
             "optionText": "老叶或下部叶更明显"
           }
@@ -3668,7 +3668,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -3677,7 +3677,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bm9fY2xlYXJfYWdlX2JpYXM",
             "optionText": "新老叶差不多，或看不出先后"
           }
@@ -3698,7 +3698,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -3707,7 +3707,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定"
           }
@@ -3728,7 +3728,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -3737,7 +3737,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bmV3X2xlYXZlc19maXJzdA",
             "optionText": "新叶更明显"
           }
@@ -3758,7 +3758,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -3767,7 +3767,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_b2xkX2xvd2VyX2xlYXZlc19maXJzdA",
             "optionText": "老叶或下部叶更明显"
           }
@@ -3788,7 +3788,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -3797,7 +3797,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bm9fY2xlYXJfYWdlX2JpYXM",
             "optionText": "新老叶差不多，或看不出先后"
           }
@@ -3818,7 +3818,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -3827,7 +3827,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定"
           }
@@ -3848,7 +3848,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -3857,7 +3857,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_d2F0ZXJpbmdfYXJlYQ",
             "optionText": "浇水可能不合适"
           }
@@ -3878,7 +3878,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -3887,7 +3887,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_bGlnaHRfYXJlYQ",
             "optionText": "光照变化明显"
           }
@@ -3908,7 +3908,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -3917,7 +3917,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_ZmVydGlsaXphdGlvbl9hcmVh",
             "optionText": "施肥或换盆变化"
           }
@@ -3938,7 +3938,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -3947,7 +3947,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_YWlyZmxvd19odW1pZGl0eV9hcmVh",
             "optionText": "通风或空气湿度变化"
           }
@@ -3968,7 +3968,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -3977,7 +3977,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "没有明显变化 / 不确定"
           }
@@ -4006,7 +4006,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -4015,7 +4015,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_bWl0ZV93ZWJiaW5n",
             "optionText": "叶背或叶柄附近有细网、蜕皮，或极小活动点"
           }
@@ -4036,7 +4036,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -4045,7 +4045,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_dGhyaXBzX3NpbHZlcl9ibGFjaw",
             "optionText": "有银白擦伤样痕迹，并伴很小的黑色排泄点"
           }
@@ -4066,7 +4066,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -4075,7 +4075,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_c3RpY2t5X2hvbmV5ZGV3",
             "optionText": "表面发黏，或附近有蜜露/煤灰样黑层"
           }
@@ -4104,7 +4104,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -4113,9 +4113,9 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_bm9fcGVzdF90cmFjZQ",
-            "optionText": "没有这些虫害痕迹，更像晒伤、肥害、旧伤或普通变色"
+            "optionText": "没有这些虫害痕迹，更像晒伤、肥害、既有伤或普通变色"
           }
         ]
       ],
@@ -4142,7 +4142,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -4151,7 +4151,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -4180,7 +4180,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -4189,7 +4189,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_aGFsb19zcG90cw",
             "optionText": "有褐色或黑色斑点，周围还有一圈发黄"
           }
@@ -4218,7 +4218,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -4227,7 +4227,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_d2F0ZXJfc29ha2VkX3NvZnQ",
             "optionText": "斑点像被水浸过，发暗、半透明或偏软"
           }
@@ -4256,7 +4256,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -4265,7 +4265,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_cG93ZGVyX21vbGRfc3VyZmFjZQ",
             "optionText": "表面像有粉、霉、灰尘或脏层"
           }
@@ -4294,7 +4294,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -4303,7 +4303,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHlfbm9fbGVzaW9u",
             "optionText": "只是颜色发黄，没有明显斑点或烂斑"
           }
@@ -4332,7 +4332,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -4341,7 +4341,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定"
           }
@@ -4362,7 +4362,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -4371,7 +4371,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bmV3X2xlYXZlc19maXJzdA",
             "optionText": "新叶更明显"
           }
@@ -4392,7 +4392,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -4401,7 +4401,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_b2xkX2xvd2VyX2xlYXZlc19maXJzdA",
             "optionText": "老叶或下部叶更明显"
           }
@@ -4422,7 +4422,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -4431,7 +4431,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bm9fY2xlYXJfYWdlX2JpYXM",
             "optionText": "新老叶差不多，或看不出先后"
           }
@@ -4452,7 +4452,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -4461,7 +4461,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定"
           }
@@ -4482,7 +4482,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -4491,7 +4491,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bmV3X2xlYXZlc19maXJzdA",
             "optionText": "新叶更明显"
           }
@@ -4512,7 +4512,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -4521,7 +4521,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_b2xkX2xvd2VyX2xlYXZlc19maXJzdA",
             "optionText": "老叶或下部叶更明显"
           }
@@ -4542,7 +4542,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -4551,7 +4551,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bm9fY2xlYXJfYWdlX2JpYXM",
             "optionText": "新老叶差不多，或看不出先后"
           }
@@ -4572,7 +4572,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -4581,7 +4581,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定"
           }
@@ -4602,7 +4602,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -4611,7 +4611,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_d2F0ZXJpbmdfYXJlYQ",
             "optionText": "浇水可能不合适"
           }
@@ -4632,7 +4632,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -4641,7 +4641,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_bGlnaHRfYXJlYQ",
             "optionText": "光照变化明显"
           }
@@ -4662,7 +4662,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -4671,7 +4671,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_ZmVydGlsaXphdGlvbl9hcmVh",
             "optionText": "施肥或换盆变化"
           }
@@ -4692,7 +4692,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -4701,7 +4701,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_YWlyZmxvd19odW1pZGl0eV9hcmVh",
             "optionText": "通风或空气湿度变化"
           }
@@ -4722,7 +4722,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -4731,7 +4731,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "没有明显变化 / 不确定"
           }
@@ -4760,7 +4760,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -4769,7 +4769,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_bWl0ZV93ZWJiaW5n",
             "optionText": "叶背或叶柄附近有细网、蜕皮，或极小活动点"
           }
@@ -4798,7 +4798,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -4807,7 +4807,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_dGhyaXBzX3NpbHZlcl9ibGFjaw",
             "optionText": "有银白擦伤样痕迹，并伴很小的黑色排泄点"
           }
@@ -4836,7 +4836,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -4845,7 +4845,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_c3RpY2t5X2hvbmV5ZGV3",
             "optionText": "表面发黏，或附近有蜜露/煤灰样黑层"
           }
@@ -4874,7 +4874,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -4883,9 +4883,9 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_bm9fcGVzdF90cmFjZQ",
-            "optionText": "没有这些虫害痕迹，更像晒伤、肥害、旧伤或普通变色"
+            "optionText": "没有这些虫害痕迹，更像晒伤、肥害、既有伤或普通变色"
           }
         ]
       ],
@@ -4912,7 +4912,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -4921,7 +4921,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -4950,7 +4950,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -4959,7 +4959,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_aGFsb19zcG90cw",
             "optionText": "有褐色或黑色斑点，周围还有一圈发黄"
           }
@@ -4988,7 +4988,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -4997,7 +4997,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_d2F0ZXJfc29ha2VkX3NvZnQ",
             "optionText": "斑点像被水浸过，发暗、半透明或偏软"
           }
@@ -5026,7 +5026,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -5035,7 +5035,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_cG93ZGVyX21vbGRfc3VyZmFjZQ",
             "optionText": "表面像有粉、霉、灰尘或脏层"
           }
@@ -5064,7 +5064,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -5073,7 +5073,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHlfbm9fbGVzaW9u",
             "optionText": "只是颜色发黄，没有明显斑点或烂斑"
           }
@@ -5102,7 +5102,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -5111,7 +5111,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定"
           }
@@ -5140,7 +5140,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -5149,7 +5149,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bmV3X2xlYXZlc19maXJzdA",
             "optionText": "新叶更明显"
           }
@@ -5170,7 +5170,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -5179,7 +5179,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_b2xkX2xvd2VyX2xlYXZlc19maXJzdA",
             "optionText": "老叶或下部叶更明显"
           }
@@ -5200,7 +5200,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -5209,7 +5209,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bm9fY2xlYXJfYWdlX2JpYXM",
             "optionText": "新老叶差不多，或看不出先后"
           }
@@ -5230,7 +5230,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -5239,7 +5239,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定"
           }
@@ -5260,7 +5260,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -5269,7 +5269,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bmV3X2xlYXZlc19maXJzdA",
             "optionText": "新叶更明显"
           }
@@ -5290,7 +5290,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -5299,7 +5299,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_b2xkX2xvd2VyX2xlYXZlc19maXJzdA",
             "optionText": "老叶或下部叶更明显"
           }
@@ -5320,7 +5320,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -5329,7 +5329,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bm9fY2xlYXJfYWdlX2JpYXM",
             "optionText": "新老叶差不多，或看不出先后"
           }
@@ -5350,7 +5350,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -5359,7 +5359,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定"
           }
@@ -5380,7 +5380,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -5389,7 +5389,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_d2F0ZXJpbmdfYXJlYQ",
             "optionText": "浇水可能不合适"
           }
@@ -5410,7 +5410,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -5419,7 +5419,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_bGlnaHRfYXJlYQ",
             "optionText": "光照变化明显"
           }
@@ -5440,7 +5440,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -5449,7 +5449,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_ZmVydGlsaXphdGlvbl9hcmVh",
             "optionText": "施肥或换盆变化"
           }
@@ -5470,7 +5470,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -5479,7 +5479,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_YWlyZmxvd19odW1pZGl0eV9hcmVh",
             "optionText": "通风或空气湿度变化"
           }
@@ -5500,7 +5500,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -5509,7 +5509,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "没有明显变化 / 不确定"
           }
@@ -5538,7 +5538,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -5547,7 +5547,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_bWl0ZV93ZWJiaW5n",
             "optionText": "叶背或叶柄附近有细网、蜕皮，或极小活动点"
           }
@@ -5568,7 +5568,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -5577,7 +5577,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_dGhyaXBzX3NpbHZlcl9ibGFjaw",
             "optionText": "有银白擦伤样痕迹，并伴很小的黑色排泄点"
           }
@@ -5606,7 +5606,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -5615,7 +5615,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_c3RpY2t5X2hvbmV5ZGV3",
             "optionText": "表面发黏，或附近有蜜露/煤灰样黑层"
           }
@@ -5636,7 +5636,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -5645,9 +5645,9 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_bm9fcGVzdF90cmFjZQ",
-            "optionText": "没有这些虫害痕迹，更像晒伤、肥害、旧伤或普通变色"
+            "optionText": "没有这些虫害痕迹，更像晒伤、肥害、既有伤或普通变色"
           }
         ]
       ],
@@ -5666,7 +5666,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -5675,7 +5675,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "看不出/不确定"
           }
@@ -5696,7 +5696,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -5705,7 +5705,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_aGFsb19zcG90cw",
             "optionText": "有褐色或黑色斑点，周围还有一圈发黄"
           }
@@ -5734,7 +5734,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -5743,7 +5743,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_d2F0ZXJfc29ha2VkX3NvZnQ",
             "optionText": "斑点像被水浸过，发暗、半透明或偏软"
           }
@@ -5772,7 +5772,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -5781,7 +5781,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_cG93ZGVyX21vbGRfc3VyZmFjZQ",
             "optionText": "表面像有粉、霉、灰尘或脏层"
           }
@@ -5802,7 +5802,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -5811,7 +5811,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHlfbm9fbGVzaW9u",
             "optionText": "只是颜色发黄，没有明显斑点或烂斑"
           }
@@ -5840,7 +5840,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -5849,7 +5849,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定"
           }
@@ -5878,7 +5878,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -5887,7 +5887,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bmV3X2xlYXZlc19maXJzdA",
             "optionText": "新叶更明显"
           }
@@ -5908,7 +5908,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -5917,7 +5917,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_b2xkX2xvd2VyX2xlYXZlc19maXJzdA",
             "optionText": "老叶或下部叶更明显"
           }
@@ -5938,7 +5938,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -5947,7 +5947,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bm9fY2xlYXJfYWdlX2JpYXM",
             "optionText": "新老叶差不多，或看不出先后"
           }
@@ -5968,7 +5968,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_eWVsbG93aW5nX29ubHk",
             "optionText": "只是发黄，没看到其他异常"
           }
@@ -5977,7 +5977,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定"
           }
@@ -5998,7 +5998,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -6007,7 +6007,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bmV3X2xlYXZlc19maXJzdA",
             "optionText": "新叶更明显"
           }
@@ -6028,7 +6028,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -6037,7 +6037,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_b2xkX2xvd2VyX2xlYXZlc19maXJzdA",
             "optionText": "老叶或下部叶更明显"
           }
@@ -6058,7 +6058,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -6067,7 +6067,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_bm9fY2xlYXJfYWdlX2JpYXM",
             "optionText": "新老叶差不多，或看不出先后"
           }
@@ -6088,7 +6088,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定，继续帮我排查"
           }
@@ -6097,7 +6097,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19sZWFmX2FnZV9wYXR0ZXJu",
             "questionText": "黄叶如果暂时没有明显虫痕、病斑或养护变化，就需要看它先从哪里开始。发黄主要先出现在新叶，还是老叶/下部叶？",
-            "targetDimension": "yellowing_leaf_age_pattern",
+            "packageTopic": "yellowing_leaf_age_pattern",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定"
           }
@@ -6118,7 +6118,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -6127,7 +6127,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_d2F0ZXJpbmdfYXJlYQ",
             "optionText": "浇水可能不合适"
           }
@@ -6148,7 +6148,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -6157,7 +6157,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_bGlnaHRfYXJlYQ",
             "optionText": "光照变化明显"
           }
@@ -6178,7 +6178,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -6187,7 +6187,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19jYXJlX2FyZWFfZ2F0ZQ",
             "questionText": "为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。每个选项下面有参考说明，选最接近你实际情况的即可。",
-            "targetDimension": "yellowing_care_area_gate",
+            "packageTopic": "yellowing_care_area_condition",
             "optionId": "opt_ZmVydGlsaXphdGlvbl9hcmVh",
             "optionText": "施肥或换盆变化"
           }
@@ -6207,7 +6207,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -6229,7 +6229,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_Y2FyZV9jb250ZXh0",
             "optionText": "先看日常养护"
           }
@@ -6252,7 +6252,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -6261,7 +6261,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_bWl0ZV93ZWJiaW5n",
             "optionText": "叶背或叶柄附近有细网、蜕皮，或极小活动点"
           }
@@ -6290,7 +6290,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -6299,7 +6299,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_dGhyaXBzX3NpbHZlcl9ibGFjaw",
             "optionText": "有银白擦伤样痕迹，并伴很小的黑色排泄点"
           }
@@ -6328,7 +6328,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -6337,7 +6337,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3Blc3RfdHJhY2VfdHlwZQ",
             "questionText": "这题是为了确认有没有更直接的虫子活动线索，避免只凭黄点、缺口或斑驳就判断成虫害。这些痕迹旁边更接近哪种情况？",
-            "targetDimension": "pest_trace_type",
+            "packageTopic": "pest_trace_type",
             "optionId": "opt_c3RpY2t5X2hvbmV5ZGV3",
             "optionText": "表面发黏，或附近有蜜露/煤灰样黑层"
           }
@@ -6365,7 +6365,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -6387,7 +6387,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_cGVzdF90cmFjZQ",
             "optionText": "看到虫子或虫害痕迹"
           }
@@ -6410,7 +6410,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -6419,7 +6419,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_aGFsb19zcG90cw",
             "optionText": "有褐色或黑色斑点，周围还有一圈发黄"
           }
@@ -6448,7 +6448,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -6457,7 +6457,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_d2F0ZXJfc29ha2VkX3NvZnQ",
             "optionText": "斑点像被水浸过，发暗、半透明或偏软"
           }
@@ -6486,7 +6486,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -6495,7 +6495,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_cG93ZGVyX21vbGRfc3VyZmFjZQ",
             "optionText": "表面像有粉、霉、灰尘或脏层"
           }
@@ -6523,7 +6523,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -6546,7 +6546,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19wcmltYXJ5X2NsdWVfZ2F0ZQ",
             "questionText": "黄叶原因较复杂，先选你最明显看到的一类线索。这样后面会按方向继续问，避免问很多无关问题。",
-            "targetDimension": "yellowing_primary_clue_gate",
+            "packageTopic": "yellowing_primary_clue_condition",
             "optionId": "opt_ZGlzZWFzZV90cmFjZQ",
             "optionText": "还有斑点、烂斑或霉粉"
           }
@@ -6555,7 +6555,7 @@
           {
             "questionId": "q_cV9vYnNlcnZlZF9wcm9iZV9fbGVhZl95ZWxsb3dpbmdfX3llbGxvd2luZ19kaXNlYXNlX3RyYWNlX2dhdGU",
             "questionText": "黄叶如果伴随斑点、烂斑或霉层，后续判断会完全不同。请先看发黄的位置，最接近下面哪一种？",
-            "targetDimension": "yellowing_disease_trace_gate",
+            "packageTopic": "yellowing_disease_trace_condition",
             "optionId": "opt_dW5rbm93bg",
             "optionText": "不确定"
           }

@@ -20,11 +20,11 @@ const {
   buildProblemSetCacheKey
 } = require('./prior-cache')
 
-async function getGenusCompatibilityMap(genus, problemKeys = []) {
+async function getGenusSuitabilityMap(genus, problemKeys = []) {
   const safeKeys = Array.from(new Set((problemKeys || []).map(item => String(item || '').trim()).filter(Boolean)))
   if (!genus || !safeKeys.length) {return {}}
   const cacheKey = `${String(genus || '').trim()}::${buildProblemSetCacheKey(safeKeys)}`
-  const cached = getCacheEntry(priorCache.genusCompatibilityByGenusAndProblemSet, cacheKey)
+  const cached = getCacheEntry(priorCache.genusSuitabilityByGenusAndProblemSet, cacheKey)
   if (cached) {return cached}
 
   const cachedGenusPriors = getCacheEntry(priorCache.genusCandidatePriorsByGenus, String(genus || '').trim())
@@ -33,19 +33,19 @@ async function getGenusCompatibilityMap(genus, problemKeys = []) {
     const map = {}
     for (const row of cachedGenusPriors) {
       if (!safeKeySet.has(row.problemKey)) {continue}
-      map[row.problemKey] = clamp01(row.genusCompatibility)
+      map[row.problemKey] = clamp01(row.genusSuitability)
     }
-    setCacheEntry(priorCache.genusCompatibilityByGenusAndProblemSet, cacheKey, map)
+    setCacheEntry(priorCache.genusSuitabilityByGenusAndProblemSet, cacheKey, map)
     return map
   }
 
-  return withPending(pendingPriorCache.genusCompatibilityByGenusAndProblemSet, cacheKey, async () => {
-    const cachedAfterWait = getCacheEntry(priorCache.genusCompatibilityByGenusAndProblemSet, cacheKey)
+  return withPending(pendingPriorCache.genusSuitabilityByGenusAndProblemSet, cacheKey, async () => {
+    const cachedAfterWait = getCacheEntry(priorCache.genusSuitabilityByGenusAndProblemSet, cacheKey)
     if (cachedAfterWait) {return cachedAfterWait}
 
     const result = await models.$runSQL(
       `
-        SELECT problem_key, genus_compatibility
+        SELECT problem_key, genus_suitability
         FROM ${table('genus_problem_profiles')}
         WHERE genus = {{genus}}
           AND problem_key IN ${sqlInList(safeKeys)}
@@ -56,18 +56,18 @@ async function getGenusCompatibilityMap(genus, problemKeys = []) {
 
     const map = {}
     for (const row of result?.data?.executeResultList || []) {
-      map[row.problem_key] = clamp01(row.genus_compatibility)
+      map[row.problem_key] = clamp01(row.genus_suitability)
     }
-    setCacheEntry(priorCache.genusCompatibilityByGenusAndProblemSet, cacheKey, map)
+    setCacheEntry(priorCache.genusSuitabilityByGenusAndProblemSet, cacheKey, map)
     return map
   })
 }
 
-async function getHostCompatibilityMap({ genus = '', family = '', category = '' } = {}, problemKeys = []) {
+async function getHostSuitabilityMap({ genus = '', family = '', category = '' } = {}, problemKeys = []) {
   const safeKeys = Array.from(new Set((problemKeys || []).map(item => String(item || '').trim()).filter(Boolean)))
   if (!safeKeys.length) {return {}}
   const cacheKey = `${buildHostContextCacheKey({ genus, family, category })}::${buildProblemSetCacheKey(safeKeys)}`
-  const cached = getCacheEntry(priorCache.hostCompatibilityByHostContextAndProblemSet, cacheKey)
+  const cached = getCacheEntry(priorCache.hostSuitabilityByHostContextAndProblemSet, cacheKey)
   if (cached) {return cached}
 
   const hostContextCacheKey = buildHostContextCacheKey({ genus, family, category })
@@ -77,21 +77,21 @@ async function getHostCompatibilityMap({ genus = '', family = '', category = '' 
     const map = {}
     for (const row of cachedHostPriors) {
       if (!safeKeySet.has(row.problemKey)) {continue}
-      const score = clamp01(row.hostCompatibility)
+      const score = clamp01(row.hostSuitability)
       const existing = map[row.problemKey]
-      if (!existing || score > existing.hostCompatibility) {
+      if (!existing || score > existing.hostSuitability) {
         map[row.problemKey] = {
-          hostCompatibility: score,
+          hostSuitability: score,
           hostLevel: row.matchedHostLevel || ''
         }
       }
     }
-    setCacheEntry(priorCache.hostCompatibilityByHostContextAndProblemSet, cacheKey, map)
+    setCacheEntry(priorCache.hostSuitabilityByHostContextAndProblemSet, cacheKey, map)
     return map
   }
 
-  return withPending(pendingPriorCache.hostCompatibilityByHostContextAndProblemSet, cacheKey, async () => {
-    const cachedAfterWait = getCacheEntry(priorCache.hostCompatibilityByHostContextAndProblemSet, cacheKey)
+  return withPending(pendingPriorCache.hostSuitabilityByHostContextAndProblemSet, cacheKey, async () => {
+    const cachedAfterWait = getCacheEntry(priorCache.hostSuitabilityByHostContextAndProblemSet, cacheKey)
     if (cachedAfterWait) {return cachedAfterWait}
 
     const tasks = []
@@ -104,7 +104,7 @@ async function getHostCompatibilityMap({ genus = '', family = '', category = '' 
       tasks.push(
         models.$runSQL(
           `
-            SELECT problem_key, host_compatibility, host_level
+            SELECT problem_key, host_suitability, host_level
             FROM ${table('problem_host_profiles')}
             WHERE ${hostWhereClause}
               AND host_name = {{hostName}}
@@ -122,17 +122,17 @@ async function getHostCompatibilityMap({ genus = '', family = '', category = '' 
     for (const result of settled) {
       for (const row of result?.data?.executeResultList || []) {
         const existing = map[row.problem_key]
-        const score = clamp01(row.host_compatibility)
-        if (!existing || score > existing.hostCompatibility) {
+        const score = clamp01(row.host_suitability)
+        if (!existing || score > existing.hostSuitability) {
           map[row.problem_key] = {
-            hostCompatibility: score,
+            hostSuitability: score,
             hostLevel: row.host_level || ''
           }
         }
       }
     }
 
-    setCacheEntry(priorCache.hostCompatibilityByHostContextAndProblemSet, cacheKey, map)
+    setCacheEntry(priorCache.hostSuitabilityByHostContextAndProblemSet, cacheKey, map)
     return map
   })
 }
@@ -143,6 +143,6 @@ module.exports = {
   getCandidateProblemPriors,
   getGenusCandidatePriors,
   getHostCandidatePriors,
-  getGenusCompatibilityMap,
-  getHostCompatibilityMap
+  getGenusSuitabilityMap,
+  getHostSuitabilityMap
 }

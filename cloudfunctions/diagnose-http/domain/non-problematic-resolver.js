@@ -38,7 +38,7 @@ function hasAllKeys(observedSymptomSet, requiredKeys = []) {
   return safeRequiredKeys.length > 0 && safeRequiredKeys.every(symptomKey => observedSymptomSet.has(symptomKey))
 }
 
-function isRuleContextCompatible(item = {}, observedSymptomSet = new Set()) {
+function isRuleContextSuitible(item = {}, observedSymptomSet = new Set()) {
   if (!item?.requiresIsolatedSeed) {return true}
 
   const allowedContextKeys = normalizeKeyList(
@@ -155,7 +155,7 @@ function resolveNonProblematicRule({
 
     if (
       hasAllKeys(observedSymptomSet, requiredSymptomKeys) &&
-      isRuleContextCompatible(item, observedSymptomSet)
+      isRuleContextSuitible(item, observedSymptomSet)
     ) {
       return item
     }
@@ -182,7 +182,7 @@ function resolveNonProblematicQuestionCandidate({
 
     const requiredSymptomKeys = normalizeKeyList(item?.requiredSymptomKeys || [])
     if (hasAllKeys(observedSymptomSet, requiredSymptomKeys)) {continue}
-    if (!isRuleContextCompatible(item, observedSymptomSet)) {continue}
+    if (!isRuleContextSuitible(item, observedSymptomSet)) {continue}
 
     return item
   }

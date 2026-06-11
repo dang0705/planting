@@ -5,14 +5,13 @@ const {
   markQuestionAnswers,
   validateQuestionAnswerOwnership
 } = require('../services/session-service')
-const { markQueueItemsAnswered } = require('../services/question-queue-runtime-service')
 const { mergeAnswerRuntimeState } = require('./answer-runtime-state')
 const {
-  resolveLegacyQuestionKeysForValidation,
-  buildAskedLegacyQuestionRows
-} = require('./legacy-question-row-runtime')
+  resolveSessionQuestionKeysForValidation,
+  buildAskedSessionQuestionRows
+} = require('./session-question-row-runtime')
 
-async function validateLegacyAnswerOwnership({
+async function validateSessionAnswerOwnership({
   sessionId,
   answers,
   answerRound,
@@ -21,7 +20,7 @@ async function validateLegacyAnswerOwnership({
 } = {}) {
   return validateQuestionAnswerOwnership(sessionId, answers, answerRound, {
     questionRows: rows,
-    queuedQuestionKeys: resolveLegacyQuestionKeysForValidation({
+    packageQuestionKeys: resolveSessionQuestionKeysForValidation({
       answerRound,
       sessionState,
       rows
@@ -29,23 +28,21 @@ async function validateLegacyAnswerOwnership({
   })
 }
 
-function buildLegacyAnswerOptionMappings(questionKeys = [], storedMappings = []) {
+function buildSessionAnswerOptionMappings(questionKeys = [], storedMappings = []) {
   return [
     ...(Array.isArray(storedMappings) ? storedMappings : []),
     ...buildSyntheticQuestionOptionMappings(questionKeys)
   ]
 }
 
-async function applyLegacyAnswerSubmitRuntime({
+async function applySessionAnswerSubmitRuntime({
   sessionId,
-  openid,
+  openid: _openid,
   answerRound,
   answers,
   optionMappings,
-  legacyQuestionProgress,
   sessionState,
   rows,
-  deferredJobs,
   timing
 } = {}) {
   const markResultPromise = markQuestionAnswers(sessionId, answers, {
@@ -54,18 +51,8 @@ async function applyLegacyAnswerSubmitRuntime({
     questionRows: rows,
     awaitPersistence: false
   })
-  if (Array.isArray(deferredJobs)) {
-    deferredJobs.push(() =>
-      markQueueItemsAnswered(sessionId, openid, answerRound, answers, {
-        questionQueue:
-          Number(answerRound || 1) === Number(legacyQuestionProgress?.roundIndex || 0)
-            ? legacyQuestionProgress
-            : null
-      })
-    )
-  }
   const markResult = await markResultPromise
-  timing?.mark?.('legacy-answer-rows-marked', {
+  timing?.mark?.('session-answer-rows-marked', {
     updatedAnswerCount: Array.isArray(markResult?.updatedAnswers)
       ? markResult.updatedAnswers.length
       : 0
@@ -75,7 +62,7 @@ async function applyLegacyAnswerSubmitRuntime({
   return {
     markResult,
     rowSnapshot,
-    askedQuestionRows: buildAskedLegacyQuestionRows(rowSnapshot),
+    askedQuestionRows: buildAskedSessionQuestionRows(rowSnapshot),
     ...mergeAnswerRuntimeState({
       sessionState,
       updatedAnswers
@@ -84,7 +71,7 @@ async function applyLegacyAnswerSubmitRuntime({
 }
 
 module.exports = {
-  validateLegacyAnswerOwnership,
-  buildLegacyAnswerOptionMappings,
-  applyLegacyAnswerSubmitRuntime
+  validateSessionAnswerOwnership,
+  buildSessionAnswerOptionMappings,
+  applySessionAnswerSubmitRuntime
 }

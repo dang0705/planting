@@ -60,7 +60,7 @@ const {
 } = require('../../cloudfunctions/diagnose-http/domain/evidence-scoring')
 const {
   resolveLowConfidenceState
-} = require('../../cloudfunctions/diagnose-http/domain/uncertain-gate')
+} = require('../../cloudfunctions/diagnose-http/domain/uncertain-condition')
 const {
   formatDiagnosisResponse
 } = require('../../cloudfunctions/diagnose-http/domain/result-formatter')
@@ -71,8 +71,8 @@ const {
   evaluateOutputEligibility
 } = require('../../cloudfunctions/diagnose-http/domain/stop-state/output-eligibility-evaluator')
 const {
-  planQuestionQueue
-} = require('../../cloudfunctions/diagnose-http/domain/question-queue/question-queue-planner')
+  planQuestionPackageSnapshot
+} = require('../../cloudfunctions/diagnose-http/domain/question-package-snapshot/question-package-snapshot-planner')
 const {
   buildSyntheticObservedProbeQuestions,
   buildSyntheticFollowUpOptionMappings,
@@ -178,7 +178,7 @@ function checkObservedMorphologyPriorityGuard() {
       {
         questionKey: 'q_black_spots_spreading_confirm',
         targetSymptomKey: 'black_spots_spreading',
-        targetDimension: 'visual_presence',
+        packageTopic: 'visual_presence',
         questionTextUserCn: '是否有逐渐扩大的黑斑或暗色斑块？',
         questionGroupKey: 'leaf_spot_group',
         reviewStatus: 'audited'
@@ -186,7 +186,7 @@ function checkObservedMorphologyPriorityGuard() {
       {
         questionKey: 'q_brown_spots_halo_confirm',
         targetSymptomKey: 'brown_spots_halo',
-        targetDimension: 'visual_presence',
+        packageTopic: 'visual_presence',
         questionTextUserCn: '叶片有褐色病斑，并在周围伴随黄色晕圈吗？',
         questionGroupKey: 'leaf_spot_group',
         reviewStatus: 'audited'
@@ -268,7 +268,7 @@ function checkObservedMorphologyPriorityGuard() {
       {
         questionKey: 'q_black_spots_spreading_confirm',
         targetSymptomKey: 'black_spots_spreading',
-        targetDimension: 'visual_presence',
+        packageTopic: 'visual_presence',
         questionTextUserCn: '是否有逐渐扩大的黑斑或暗色斑块？',
         questionGroupKey: 'leaf_spot_group',
         reviewStatus: 'audited'
@@ -276,7 +276,7 @@ function checkObservedMorphologyPriorityGuard() {
       {
         questionKey: 'q_brown_spots_halo_confirm',
         targetSymptomKey: 'brown_spots_halo',
-        targetDimension: 'visual_presence',
+        packageTopic: 'visual_presence',
         questionTextUserCn: '叶片有褐色病斑，并在周围伴随黄色晕圈吗？',
         questionGroupKey: 'leaf_spot_group',
         reviewStatus: 'audited'
@@ -284,7 +284,7 @@ function checkObservedMorphologyPriorityGuard() {
       {
         questionKey: 'q_bacterial_water_soaked',
         targetSymptomKey: 'water_soaked_spots',
-        targetDimension: 'lesion_water_soaking',
+        packageTopic: 'lesion_water_soaking',
         questionTextUserCn: '病斑附近组织是否发软、带水渍感？',
         questionGroupKey: 'leaf_spot_texture_group',
         reviewStatus: 'audited'
@@ -292,7 +292,7 @@ function checkObservedMorphologyPriorityGuard() {
       {
         questionKey: 'q_black_spots_surface_layer_check',
         targetSymptomKey: 'black_spots_spreading',
-        targetDimension: 'surface_residue',
+        packageTopic: 'surface_residue',
         questionTextUserCn: '这些黑斑更像浮在表面、轻擦会蹭开吗？',
         questionGroupKey: 'leaf_surface_residue_group',
         reviewStatus: 'audited'
@@ -407,7 +407,7 @@ function checkObservedMorphologyPriorityGuard() {
       {
         questionKey: 'q_black_spots_spreading_confirm',
         targetSymptomKey: 'black_spots_spreading',
-        targetDimension: 'visual_presence',
+        packageTopic: 'visual_presence',
         questionTextUserCn: '是否有逐渐扩大的黑斑或暗色斑块？',
         questionGroupKey: 'leaf_spot_group',
         reviewStatus: 'audited'
@@ -415,7 +415,7 @@ function checkObservedMorphologyPriorityGuard() {
       {
         questionKey: 'q_brown_spots_halo_confirm',
         targetSymptomKey: 'brown_spots_halo',
-        targetDimension: 'visual_presence',
+        packageTopic: 'visual_presence',
         questionTextUserCn: '叶片有褐色病斑，并在周围伴随黄色晕圈吗？',
         questionGroupKey: 'leaf_spot_group',
         reviewStatus: 'audited'
@@ -423,7 +423,7 @@ function checkObservedMorphologyPriorityGuard() {
       {
         questionKey: 'q_bacterial_water_soaked',
         targetSymptomKey: 'water_soaked_spots',
-        targetDimension: 'tissue_moisture',
+        packageTopic: 'tissue_moisture',
         questionTextUserCn: '病斑附近组织是否发软、带水渍感？',
         questionGroupKey: 'leaf_spot_texture_group',
         reviewStatus: 'audited'
@@ -431,7 +431,7 @@ function checkObservedMorphologyPriorityGuard() {
       {
         questionKey: 'q_black_spots_surface_layer_check',
         targetSymptomKey: 'black_spots_spreading',
-        targetDimension: 'surface_residue',
+        packageTopic: 'surface_residue',
         questionTextUserCn: '这些黑斑更像浮在表面、轻擦会蹭开吗？',
         questionGroupKey: 'leaf_surface_residue_group',
         reviewStatus: 'audited'
@@ -439,7 +439,7 @@ function checkObservedMorphologyPriorityGuard() {
       {
         questionKey: 'q_black_spots_tissue_moisture_check',
         targetSymptomKey: 'black_spots_spreading',
-        targetDimension: 'tissue_moisture',
+        packageTopic: 'tissue_moisture',
         questionTextUserCn: '斑点附近组织更像干硬坏死，还是发软、带水渍感？',
         questionGroupKey: 'leaf_spot_texture_group',
         reviewStatus: 'audited'
@@ -528,7 +528,7 @@ function checkObservedMorphologyPriorityGuard() {
       {
         questionKey: 'q_black_spots_spreading_confirm',
         targetSymptomKey: 'black_spots_spreading',
-        targetDimension: 'visual_presence',
+        packageTopic: 'visual_presence',
         questionTextUserCn: '是否有逐渐扩大的黑斑或暗色斑块？',
         questionGroupKey: 'leaf_spot_group',
         reviewStatus: 'audited'
@@ -536,7 +536,7 @@ function checkObservedMorphologyPriorityGuard() {
       {
         questionKey: 'q_bacterial_water_soaked',
         targetSymptomKey: 'water_soaked_spots',
-        targetDimension: 'tissue_moisture',
+        packageTopic: 'tissue_moisture',
         questionTextUserCn: '病斑附近组织是否发软、带水渍感？',
         questionGroupKey: 'leaf_spot_texture_group',
         reviewStatus: 'audited'
@@ -566,7 +566,7 @@ function checkObservedMorphologyPriorityGuard() {
       {
         questionKey: 'q_black_spots_surface_layer_check',
         targetSymptomKey: 'black_spots_spreading',
-        targetDimension: 'surface_residue',
+        packageTopic: 'surface_residue',
         questionGroupKey: 'leaf_surface_residue_group',
         reviewStatus: 'audited'
       }
@@ -597,7 +597,7 @@ function checkObservedMorphologyPriorityGuard() {
     '后续轮次应继续保留正交维度 probing，而不是回退到同维度确认'
   )
 
-  const sameTargetDimensionBlockedSelected = selectFollowUpQuestions({
+  const samePackageTopicBlockedSelected = selectFollowUpQuestions({
     rankings: [
       { problemKey: 'fungal_leaf_spot', finalScore: 0.91, baseScore: 0.91 }
     ],
@@ -613,7 +613,7 @@ function checkObservedMorphologyPriorityGuard() {
       {
         questionKey: 'q_black_spots_surface_layer_recheck',
         targetSymptomKey: 'black_spots_spreading',
-        targetDimension: 'surface_residue',
+        packageTopic: 'surface_residue',
         questionTextUserCn: '这些斑点更像浮在表面，能轻擦掉吗？',
         questionGroupKey: 'leaf_surface_residue_group_v2',
         reviewStatus: 'audited'
@@ -643,7 +643,7 @@ function checkObservedMorphologyPriorityGuard() {
       {
         questionKey: 'q_black_spots_surface_layer_check',
         targetSymptomKey: 'black_spots_spreading',
-        targetDimension: 'surface_residue',
+        packageTopic: 'surface_residue',
         questionGroupKey: 'leaf_surface_residue_group',
         reviewStatus: 'audited'
       }
@@ -660,9 +660,9 @@ function checkObservedMorphologyPriorityGuard() {
   })
 
   assert.equal(
-    sameTargetDimensionBlockedSelected.length,
+    samePackageTopicBlockedSelected.length,
     0,
-    '同一 targetSymptomKey + targetDimension 已问过后，不允许跨 questionGroupKey 再次进入队列'
+    '同一 targetSymptomKey + packageTopic 已问过后，不允许跨 questionGroupKey 再次进入队列'
   )
 
   const sameDimensionSelected = selectFollowUpQuestions({
@@ -681,7 +681,7 @@ function checkObservedMorphologyPriorityGuard() {
       {
         questionKey: 'q_sooty_mold_confirm',
         targetSymptomKey: 'sooty_mold',
-        targetDimension: 'surface_residue',
+        packageTopic: 'surface_residue',
         questionTextUserCn: '叶片表面有黑灰色、像煤污一样的覆盖层吗？',
         questionGroupKey: 'honeydew_pests_group',
         reviewStatus: 'audited'
@@ -756,8 +756,8 @@ function checkExplicitObservedVisualPresenceBlockGuard() {
       {
         questionKey: 'q_leaf_yellowing_confirm',
         targetSymptomKey: 'leaf_yellowing',
-        targetDimension: 'visual_presence',
-        routingScope: 'symptom_confirmation',
+        packageTopic: 'visual_presence',
+        packageSection: 'symptom_confirmation',
         questionTextUserCn: '植株有比较明确的发黄叶片，而不是轻微失绿或反光吗？',
         questionGroupKey: 'leaf_yellowing_group',
         reviewStatus: 'audited'
@@ -765,8 +765,8 @@ function checkExplicitObservedVisualPresenceBlockGuard() {
       {
         questionKey: 'q_observed_probe__leaf_yellowing__host_confirmation',
         targetSymptomKey: 'leaf_yellowing',
-        targetDimension: 'host_confirmation',
-        routingScope: 'context_probe',
+        packageTopic: 'host_confirmation',
+        packageSection: 'context_probe',
         questionTextUserCn: '这种叶黄是否主要集中在老叶？',
         questionGroupKey: 'observed_probe__leaf_yellowing__host_confirmation',
         reviewStatus: 'synthetic'
@@ -787,7 +787,7 @@ function checkExplicitObservedVisualPresenceBlockGuard() {
       {
         symptomKey: 'leaf_yellowing',
         confidence: 0.92,
-        sourceType: 'legacy_observed_symptom',
+        sourceType: 'session_observed_symptom',
         currentStatus: 'active'
       }
     ],
@@ -804,7 +804,7 @@ function checkExplicitObservedVisualPresenceBlockGuard() {
 
   assert.ok(
     !selected.some(item => item.questionKey === 'q_leaf_yellowing_confirm'),
-    '首轮显式传入的 legacy_observed_symptom 不允许再回到同 symptom 的 visual_presence confirm'
+    '首轮显式传入的 session_observed_symptom 不允许再回到同 symptom 的 visual_presence confirm'
   )
 
   return {
@@ -827,12 +827,12 @@ function checkSyntheticObservedProbeGuard() {
 
   assert.equal(leafQuestions.length, 1, '单题契约下叶部灼伤类 symptom 每轮只生成 1 条正交 probe 题')
   assert.deepEqual(
-    leafQuestions.map(item => item.targetDimension),
+    leafQuestions.map(item => item.packageTopic),
     ['distribution_scope'],
     '叶缘灼伤应先转向分布范围维度，而不是回到 visual_presence'
   )
   assert.ok(
-    leafQuestions.every(item => item.targetDimension !== 'visual_presence'),
+    leafQuestions.every(item => item.packageTopic !== 'visual_presence'),
     'synthetic observed probe 不允许生成 visual_presence 维度题'
   )
 
@@ -848,7 +848,7 @@ function checkSyntheticObservedProbeGuard() {
   )
 
   assert.deepEqual(
-    stemQuestions.map(item => item.targetDimension),
+    stemQuestions.map(item => item.packageTopic),
     ['tissue_moisture'],
     '单题契约下茎部水浸类 symptom 应先转向组织湿软维度'
   )
@@ -865,7 +865,7 @@ function checkSyntheticObservedProbeGuard() {
   )
 
   assert.deepEqual(
-    yellowingQuestions.map(item => item.targetDimension),
+    yellowingQuestions.map(item => item.packageTopic),
     ['yellowing_leaf_age_pattern'],
     '单题契约下叶片黄化类 symptom 应先转向明确叶龄分流维度，而不是停留在通用进展题'
   )
@@ -895,7 +895,7 @@ function checkObservedContextDimensionDiversityGuard() {
       {
         questionKey: 'q_iron_new_leaves_yellow',
         targetSymptomKey: 'yellow_new_leaves',
-        targetDimension: 'host_confirmation',
+        packageTopic: 'host_confirmation',
         questionTextUserCn: '发黄主要出现在新叶?',
         questionGroupKey: 'yellow_new_group',
         reviewStatus: 'audited'
@@ -903,7 +903,7 @@ function checkObservedContextDimensionDiversityGuard() {
       {
         questionKey: 'q_nitrogen_old_leaves_yellow',
         targetSymptomKey: 'yellow_lower_leaves',
-        targetDimension: 'host_confirmation',
+        packageTopic: 'host_confirmation',
         questionTextUserCn: '发黄先从老叶开始?',
         questionGroupKey: 'yellow_old_group',
         reviewStatus: 'audited'
@@ -911,7 +911,7 @@ function checkObservedContextDimensionDiversityGuard() {
       {
         questionKey: 'q_leaf_yellowing_watering_background',
         targetSymptomKey: 'leaf_yellowing',
-        targetDimension: 'watering_context',
+        packageTopic: 'watering_context',
         questionTextUserCn: '最近浇水节奏更像偏湿还是偏干?',
         questionGroupKey: 'yellowing_watering_background_group',
         reviewStatus: 'audited'
@@ -919,7 +919,7 @@ function checkObservedContextDimensionDiversityGuard() {
       {
         questionKey: 'q_leaf_yellowing_light_background',
         targetSymptomKey: 'leaf_yellowing',
-        targetDimension: 'light_exposure',
+        packageTopic: 'light_exposure',
         questionTextUserCn: '最近光照是更强直晒，还是更弱更阴?',
         questionGroupKey: 'yellowing_light_background_group',
         reviewStatus: 'audited'
@@ -927,7 +927,7 @@ function checkObservedContextDimensionDiversityGuard() {
       {
         questionKey: 'q_leaf_yellowing_fertilization_background',
         targetSymptomKey: 'leaf_yellowing',
-        targetDimension: 'fertilization_context',
+        packageTopic: 'fertilization_context',
         questionTextUserCn: '最近是否长期停肥或恢复供肥较慢?',
         questionGroupKey: 'yellowing_fertilization_background_group',
         reviewStatus: 'audited'
@@ -975,7 +975,7 @@ function checkObservedContextDimensionDiversityGuard() {
     maxQuestions: 3
   })
 
-  const selectedDimensions = selected.map(item => item.targetDimension)
+  const selectedDimensions = selected.map(item => item.packageTopic)
   assert.equal(selected.length, 1, 'yellowing 正式 follow-up 必须遵守单题契约')
   assert.ok(
     selectedDimensions.filter(item => item === 'host_confirmation').length <= 1,
@@ -1077,7 +1077,7 @@ function checkPestSpecklingObservedProbeGuard() {
     { maxQuestions: 3 }
   )
 
-  const selectedDimensions = selected.map(item => item.targetDimension)
+  const selectedDimensions = selected.map(item => item.packageTopic)
   assert.equal(selected.length, 1, 'yellow_speckling 每轮只能生成 1 个正交 probe')
   assert.equal(
     selectedDimensions[0],
@@ -1162,7 +1162,7 @@ function checkPestSpecklingObservedProbeGuard() {
   return {
     name: 'pest_speckling_observed_probe_guard',
     ok: true,
-    targetDimensions: selectedDimensions
+    packageTopics: selectedDimensions
   }
 }
 
@@ -1200,8 +1200,8 @@ function checkPestSpecklingDirectionManagedVisualPresenceGuard() {
       {
         questionKey: 'q_yellowing_patchy_yellow_speckling',
         targetSymptomKey: 'yellow_speckling',
-        targetDimension: 'visual_presence',
-        routingScope: 'symptom_confirmation',
+        packageTopic: 'visual_presence',
+        packageSection: 'symptom_confirmation',
         questionGroupKey: 'yellowing_patchy_context_group',
         questionTextUserCn: '黄化区里是否还能看到密集细小失绿点或针刺样黄点？',
         reviewStatus: 'audited'
@@ -1209,8 +1209,8 @@ function checkPestSpecklingDirectionManagedVisualPresenceGuard() {
       {
         questionKey: 'q_observed_probe__yellow_speckling__underside_presence',
         targetSymptomKey: 'yellow_speckling',
-        targetDimension: 'underside_presence',
-        routingScope: 'differential_probe',
+        packageTopic: 'underside_presence',
+        packageSection: 'differential_probe',
         questionGroupKey: 'observed_probe__yellow_speckling__underside_presence',
         questionTextUserCn: '翻看叶背或阴面时，这些细小黄点/失绿点是否更明显？',
         reviewStatus: 'audited'
@@ -1267,7 +1267,7 @@ function checkExplicitObservedSymptomGuard() {
   const explicitObservedSymptomKeySet = buildExplicitObservedSymptomKeySet([
     {
       symptomKey: 'leaf_yellowing',
-      sourceType: 'legacy_observed_symptom',
+      sourceType: 'session_observed_symptom',
       currentStatus: 'active'
     },
     {
@@ -1289,7 +1289,7 @@ function checkExplicitObservedSymptomGuard() {
 
   assert.ok(
     explicitObservedSymptomKeySet.has('leaf_yellowing'),
-    '首轮显式传入的 legacy_observed_symptom 必须被视为 explicit observed symptom'
+    '首轮显式传入的 session_observed_symptom 必须被视为 explicit observed symptom'
   )
   assert.ok(
     explicitObservedSymptomKeySet.has('poor_drainage'),
@@ -1843,7 +1843,7 @@ function checkCorroboratedConvergenceGuard() {
   assert.equal(
     resultStateHeadLowConfidence.isLowConfidence,
     false,
-    'raw ranking 头部是 result_state 时，uncertain gate 必须改按 output-eligible root_cause 计算'
+    'raw ranking 头部是 result_state 时，uncertain condition 必须改按 output-eligible root_cause 计算'
   )
 
   const response = {
@@ -1865,14 +1865,14 @@ function checkCorroboratedConvergenceGuard() {
       summary: '当前最像真菌叶斑。'
     }
   }
-  const questionQueue = {
+  const questionPackageSnapshot = {
     questionItems: [],
     queueStatus: 'exhausted'
   }
-  const stopState = evaluateStopState({ response, questionQueue })
+  const stopState = evaluateStopState({ response, questionPackageSnapshot })
   const outputEligibility = evaluateOutputEligibility({
     response,
-    questionQueue,
+    questionPackageSnapshot,
     stopState
   })
 
@@ -2055,14 +2055,14 @@ function checkFormalUncertainGuard() {
 
   const stopState = evaluateStopState({
     response: uncertainResponse,
-    questionQueue: {
+    questionPackageSnapshot: {
       questionItems: [],
       queueStatus: 'exhausted'
     }
   })
   const outputEligibility = evaluateOutputEligibility({
     response: uncertainResponse,
-    questionQueue: {
+    questionPackageSnapshot: {
       questionItems: [],
       queueStatus: 'exhausted'
     },
@@ -2110,21 +2110,21 @@ function checkDecisionCausePropagationGuard() {
     }
   })
 
-  const questionQueue = planQuestionQueue(response)
+  const questionPackageSnapshot = planQuestionPackageSnapshot(response)
   const stopState = evaluateStopState({
     response,
-    questionQueue
+    questionPackageSnapshot
   })
   const outputEligibility = evaluateOutputEligibility({
     response,
-    questionQueue,
+    questionPackageSnapshot,
     stopState
   })
 
   assert.equal(
-    questionQueue.queueDecision?.decisionCauseKey,
+    questionPackageSnapshot.queueDecision?.decisionCauseKey,
     'class_converged_context_guard_blocked',
-    'questionQueue 必须保留 explicit decisionCauseKey，供 history/review 回放'
+    'questionPackageSnapshot 必须保留 explicit decisionCauseKey，供 history/review 回放'
   )
   assert.equal(
     stopState.stopReasonType,
@@ -2197,8 +2197,8 @@ function checkDerivedEvidenceAndCareBaselineGuard() {
         questionEvidence: 0.24,
         totalEvidence: 1.02,
         penalty: 0,
-        hostCompatibility: 1,
-        genusCompatibility: 1,
+        hostSuitabilityibility: 1,
+        genusSuitabilityibility: 1,
         evidenceCount: 2,
         finalScore: 0.92,
         baseScore: 0.92,
@@ -2478,19 +2478,19 @@ function checkChewingVisualCandidateSeedGuard() {
     'candidate_retained 的 holes_in_leaf 必须先生成 visual candidate confirm 题，而不是直接跳到其他维度'
   )
   assert.equal(
-    syntheticCandidateQuestion?.targetDimension,
+    syntheticCandidateQuestion?.packageTopic,
     'visual_presence',
     'visual candidate confirm 题必须显式落在 visual_presence 维度'
   )
   assert.equal(
-    syntheticCandidateQuestion?.routingScope,
+    syntheticCandidateQuestion?.packageSection,
     'symptom_confirmation',
     'visual candidate confirm 题必须走 symptom_confirmation，而不是直接走 differential_probe'
   )
 
   const orthogonalQuestions = buildSyntheticObservedProbeQuestions(candidate, { maxQuestions: 1 })
   assert.equal(
-    orthogonalQuestions?.[0]?.targetDimension,
+    orthogonalQuestions?.[0]?.packageTopic,
     'structural_cause',
     'holes_in_leaf 的正交 probe 应进入 structural_cause 分流，避免在已有孔洞后重复确认是否有洞'
   )
@@ -2971,13 +2971,13 @@ function checkFollowUpRoundLimitSemanticsGuard() {
   assert.equal(
     canOpenNextFollowUpRound(3),
     true,
-    '一页一题模式下不再用旧的 2 轮上限截断追问'
+    '一页一题模式下不再用既有的 2 轮上限截断追问'
   )
 
   assert.equal(
     canOpenNextFollowUpRound(8),
     true,
-    '黄叶等低特异模式需要按分流 gate 决定是否继续，而不是按固定轮数停止'
+    '黄叶等低特异模式需要按分流 condition 决定是否继续，而不是按固定轮数停止'
   )
 
   return {
@@ -3017,8 +3017,8 @@ function checkYellowingSecondRoundProbeGuard() {
         questionTextUserCn: '最近是否长期停肥、换盆后迟迟没恢复供肥，或整个生长期几乎没补过肥？',
         targetSymptomKey: 'leaf_yellowing',
         questionGroupKey: 'yellowing_fertilization_background_group',
-        targetDimension: 'fertilization_context',
-        routingScope: 'context_probe',
+        packageTopic: 'fertilization_context',
+        packageSection: 'context_probe',
         reviewStatus: 'audited'
       },
       {
@@ -3026,8 +3026,8 @@ function checkYellowingSecondRoundProbeGuard() {
         questionTextUserCn: '发黄主要出现在新叶，而老叶相对更绿吗？',
         targetSymptomKey: 'yellow_new_leaves',
         questionGroupKey: 'leaf_yellowing_group',
-        targetDimension: 'host_confirmation',
-        routingScope: 'context_probe',
+        packageTopic: 'host_confirmation',
+        packageSection: 'context_probe',
         reviewStatus: 'audited'
       }
     ],
@@ -3073,19 +3073,19 @@ function checkYellowingSecondRoundProbeGuard() {
         questionKey: 'q_leaf_yellowing_light_background',
         questionGroupKey: 'yellowing_light_background_group',
         targetSymptomKey: 'leaf_yellowing',
-        targetDimension: 'light_exposure'
+        packageTopic: 'light_exposure'
       },
       {
         questionKey: 'q_leaf_yellowing_watering_background',
         questionGroupKey: 'yellowing_watering_background_group',
         targetSymptomKey: 'leaf_yellowing',
-        targetDimension: 'watering_context'
+        packageTopic: 'watering_context'
       },
       {
         questionKey: 'q_leaf_yellowing_fertilization_background',
         questionGroupKey: 'yellowing_fertilization_background_group',
         targetSymptomKey: 'leaf_yellowing',
-        targetDimension: 'fertilization_context'
+        packageTopic: 'fertilization_context'
       }
     ],
     symptomDictionary: [
@@ -3151,11 +3151,11 @@ async function checkYellowingSyntheticFollowUpDimensionPersistenceGuard() {
     }
   })
   assert.equal(
-    firstGate[0]?.targetDimension,
+    firstGate[0]?.packageTopic,
     'watering_frequency_context',
-    '黄叶模式必须先按分组 gate 问浇水频率，不能聚合全部 gate options 或回到旧首要线索 gate'
+    '黄叶模式必须先按分组 condition 问浇水频率，不能聚合全部 condition options 或回到既有首要线索 condition'
   )
-  assert.equal(firstGate.length, 1, '黄叶分组 gate 每轮只能返回一组问题')
+  assert.equal(firstGate.length, 1, '黄叶分组 condition 每轮只能返回一组问题')
   assert.ok(
     (
       String(firstGate[0]?.questionText || '').includes('浇水') ||
@@ -3165,7 +3165,7 @@ async function checkYellowingSyntheticFollowUpDimensionPersistenceGuard() {
       )
     ) &&
       !String(firstGate[0]?.questionText || '').includes('原因较复杂'),
-    '黄叶第一组题必须是具体浇水上下文，不再展示旧分流说明题干'
+    '黄叶第一组题必须是具体浇水上下文，不再展示既有分流说明题干'
   )
 
   const wateringRows = diagnosisEngineTestHooks.mergeAskedQuestionRows(
@@ -3197,7 +3197,7 @@ async function checkYellowingSyntheticFollowUpDimensionPersistenceGuard() {
     }
   })
   assert.equal(
-    lightGate[0]?.targetDimension,
+    lightGate[0]?.packageTopic,
     'light_change_context',
     '黄叶回答浇水组后，下一页必须进入光照变化组'
   )
@@ -3244,7 +3244,7 @@ async function checkYellowingSyntheticFollowUpDimensionPersistenceGuard() {
     }
   })
   assert.equal(
-    fertilizationGate[0]?.targetDimension,
+    fertilizationGate[0]?.packageTopic,
     'fertilization_growth_context',
     '黄叶回答浇水和光照后，下一页必须进入施肥/长势组'
   )
@@ -3256,9 +3256,9 @@ async function checkYellowingSyntheticFollowUpDimensionPersistenceGuard() {
   assert.ok(
     diagnosisEngineTestHooks.isYellowingEquivalentDimensionAnswered(wateringAnsweredRows, {
       targetSymptomKey: 'leaf_yellowing',
-      targetDimension: QUESTION_TARGET_DIMENSIONS.WATERING_CONTEXT
+      packageTopic: QUESTION_TARGET_DIMENSIONS.WATERING_CONTEXT
     }),
-    '已回答 watering_frequency_context 后，旧静态 watering_context 必须被等价维度去重'
+    '已回答 watering_frequency_context 后，既有静态 watering_context 必须被等价维度去重'
   )
 
   const progressionRows = diagnosisEngineTestHooks.mergeAskedQuestionRows(
@@ -3317,7 +3317,7 @@ async function checkYellowingSyntheticFollowUpDimensionPersistenceGuard() {
   })
 
   assert.equal(
-    progressionGate[0]?.targetDimension,
+    progressionGate[0]?.packageTopic,
     'yellowing_progression_speed',
     '黄叶回答前三组后，下一页必须进入发展速度组'
   )

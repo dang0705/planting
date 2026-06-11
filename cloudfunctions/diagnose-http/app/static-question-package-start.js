@@ -57,19 +57,19 @@ function mapStaticQuestionToPackageQuestion(question = {}) {
     questionId: toQuestionId(question.questionKey),
     selectionSource: 'static_question_package',
     routeKey: '',
-    gateKey: '',
+    conditionKey: '',
     outcomeKey: '',
     targetSymptomKey: question.targetSymptomKey || '',
     questionGroupKey: question.questionGroupKey || '',
-    targetDimension: question.targetDimension || '',
-    routingScope: question.routingScope || '',
+    packageTopic: question.packageTopic || '',
+    packageSection: question.packageSection || '',
     defaultOptionKey: question.defaultOptionKey || '',
     defaultOptionId: question.defaultOptionKey ? toOptionId(question.defaultOptionKey) : '',
     uiVariant: question.uiVariant || '',
     renderMode: question.renderMode || '',
-    questionRole: question.questionRole || '',
-    questionCategory: question.questionRole || '',
-    effectMode: question.effectMode || '',
+    routePackageRole: question.routePackageRole || '',
+    routePackageRole: question.routePackageRole || '',
+    packageEffect: question.packageEffect || '',
     type: question.questionType || 'single_choice',
     text: question.questionText || '',
     questionText: question.questionText || '',
@@ -87,11 +87,11 @@ function mapStaticQuestionToPackageQuestion(question = {}) {
 
 function buildYellowingStaticQuestions() {
   const questionPackage = getQuestionPackageByMode(YELLOW_LEAF_PACKAGE_MODE)
-  const targetDimensions = questionPackage?.targetDimensions || []
-  const questions = targetDimensions.flatMap(targetDimension =>
+  const packageTopics = questionPackage?.packageTopics || []
+  const questions = packageTopics.flatMap(packageTopic =>
     buildObservedProbePackageQuestions(YELLOWING_STATIC_ITEM, {
       maxQuestions: 1,
-      preferredDimensions: [targetDimension],
+      preferredTopics: [packageTopic],
       plantContext: {}
     })
   )

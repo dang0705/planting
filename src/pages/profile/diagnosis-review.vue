@@ -47,9 +47,9 @@
         <span class="summary-label">脚本批跑</span>
         <strong class="summary-value">{{ summary.batchCount }}</strong>
       </article>
-      <article v-if="filters.sourceType === 'legacy'" class="summary-panel">
+      <article v-if="filters.sourceType === 'session'" class="summary-panel">
         <span class="summary-label">未归一历史</span>
-        <strong class="summary-value">{{ summary.legacyCount }}</strong>
+        <strong class="summary-value">{{ summary.sessionCount }}</strong>
       </article>
       <article class="summary-panel">
         <span class="summary-label">已闭环</span>
@@ -778,8 +778,8 @@
                 </strong>
                 <p class="drawer-detail-copy">
                   目标症状: {{ question.targetSymptomKey || '无' }}； 维度:
-                  {{ formatTargetDimension(question.targetDimension) }}； 作用域:
-                  {{ formatRoutingScope(question.routingScope) }}
+                  {{ formatPackageTopic(question.packageTopic) }}； 作用域:
+                  {{ formatPackageSection(question.packageSection) }}
                 </p>
                 <p class="drawer-detail-copy">回答: {{ formatQuestionAnswer(question) }}</p>
                 <p v-if="formatResolvedAnswerEffect(question)" class="drawer-detail-copy">
@@ -912,7 +912,7 @@ const sourceOptions = [
   { label: '手动 + 批跑', value: 'all' },
   { label: '真人手动', value: 'manual' },
   { label: '脚本批跑', value: 'batch' },
-  { label: '未归一历史', value: 'legacy' }
+  { label: '未归一历史', value: 'session' }
 ]
 
 function createListState() {
@@ -933,7 +933,7 @@ function createListState() {
       otherOutcomeCount: 0,
       manualCount: 0,
       batchCount: 0,
-      legacyCount: 0
+      sessionCount: 0
     },
     fallbackMode: 'formal_review'
   }
@@ -941,7 +941,7 @@ function createListState() {
 
 const manualListState = ref(createListState())
 const batchListState = ref(createListState())
-const legacyListState = ref(createListState())
+const sessionListState = ref(createListState())
 const items = ref([])
 const imageLoadingMap = ref({})
 const imagePreviewMap = ref({})
@@ -974,7 +974,7 @@ const summary = computed(() =>
       total: accumulator.total + Number(currentState.summary.total || 0),
       manualCount: accumulator.manualCount + Number(currentState.summary.manualCount || 0),
       batchCount: accumulator.batchCount + Number(currentState.summary.batchCount || 0),
-      legacyCount: accumulator.legacyCount + Number(currentState.summary.legacyCount || 0),
+      sessionCount: accumulator.sessionCount + Number(currentState.summary.sessionCount || 0),
       finalizedCount: accumulator.finalizedCount + Number(currentState.summary.finalizedCount || 0),
       pendingCount: accumulator.pendingCount + Number(currentState.summary.pendingCount || 0),
       problematicCount:
@@ -989,7 +989,7 @@ const summary = computed(() =>
       total: 0,
       manualCount: 0,
       batchCount: 0,
-      legacyCount: 0,
+      sessionCount: 0,
       finalizedCount: 0,
       pendingCount: 0,
       problematicCount: 0,
@@ -1004,7 +1004,7 @@ const tableHeight = computed(() => 'calc(100vh - 350px)')
 
 function normalizeSectionKey(value = '') {
   const normalized = String(value || '').trim()
-  if (normalized === 'batch' || normalized === 'legacy') {return normalized}
+  if (normalized === 'batch' || normalized === 'session') {return normalized}
   return 'manual'
 }
 
@@ -1015,7 +1015,7 @@ function resolveReviewRowBySessionId(sessionId = '') {
     items.value.find(item => item.diagnosisSessionId === safeSessionId) ||
     manualListState.value.items.find(item => item.diagnosisSessionId === safeSessionId) ||
     batchListState.value.items.find(item => item.diagnosisSessionId === safeSessionId) ||
-    legacyListState.value.items.find(item => item.diagnosisSessionId === safeSessionId) ||
+    sessionListState.value.items.find(item => item.diagnosisSessionId === safeSessionId) ||
     null
   )
 }
@@ -1167,7 +1167,7 @@ function registerImageCellRef(node, sectionKey, sessionId = '') {
 
 function stateForSource(sourceType = '') {
   if (sourceType === 'batch') {return batchListState.value}
-  if (sourceType === 'legacy') {return legacyListState.value}
+  if (sourceType === 'session') {return sessionListState.value}
   return manualListState.value
 }
 
@@ -1183,7 +1183,7 @@ function syncCombinedItems() {
   items.value = sortItemsByCreatedAt([
     ...manualListState.value.items,
     ...batchListState.value.items,
-    ...legacyListState.value.items
+    ...sessionListState.value.items
   ])
 }
 
@@ -1222,11 +1222,11 @@ const reviewSections = computed(() => {
       state: batchListState.value
     })
   }
-  if (filters.value.sourceType === 'legacy') {
+  if (filters.value.sourceType === 'session') {
     sections.push({
-      key: 'legacy',
+      key: 'session',
       title: '未归一历史记录',
-      state: legacyListState.value
+      state: sessionListState.value
     })
   }
   return sections
@@ -1394,25 +1394,25 @@ const fallbackNotice = computed(() => {
     }
   }
 
-  if (modes.has('legacy_history')) {
+  if (modes.has('session_history')) {
     return {
-      title: 'LEGACY HISTORY FALLBACK',
+      title: 'SESSION HISTORY FALLBACK',
       message:
-        '当前列表已临时回退到既有 history 链路。该模式仅用于开发态兜底，返回字段会比正式审计链更少。'
+        '当前列表已临时回退到既有 history 链路。该模式仅用于开发态保守，返回字段会比正式审计链更少。'
     }
   }
 
-  if (modes.has('legacy_result')) {
+  if (modes.has('session_result')) {
     return {
-      title: 'LEGACY RESULT FALLBACK',
+      title: 'SESSION RESULT FALLBACK',
       message:
-        '当前详情已临时回退到既有 result 链路。该模式仅用于开发态兜底，正式管理页仍以 review 合同为准。'
+        '当前详情已临时回退到既有 result 链路。该模式仅用于开发态保守，正式管理页仍以 review 合同为准。'
     }
   }
 
   return {
     title: 'FALLBACK MODE',
-    message: `当前运行在兼容模式：${activeModes.map(item => `${item.key}:${item.mode}`).join(' / ')}`
+    message: `当前运行在适配模式：${activeModes.map(item => `${item.key}:${item.mode}`).join(' / ')}`
   }
 })
 
@@ -1457,7 +1457,7 @@ function updateListState(sourceType, data = {}) {
     otherOutcomeCount: Number(data?.summary?.otherOutcomeCount || 0),
     manualCount: Number(data?.summary?.manualCount || 0),
     batchCount: Number(data?.summary?.batchCount || 0),
-    legacyCount: Number(data?.summary?.legacyCount || 0)
+    sessionCount: Number(data?.summary?.sessionCount || 0)
   }
   scheduleAutoLoadVisiblePreviewImages(sourceType)
   schedulePreviewLazyScan()
@@ -1580,10 +1580,10 @@ function findPreviewImageRow(sessionId = '', sectionKey = '') {
   const safeSessionId = String(sessionId || '').trim()
   if (!safeSessionId) {return null}
   const normalizedSection = String(sectionKey || '').trim()
-  const knownSection = ['manual', 'batch', 'legacy'].includes(normalizedSection)
+  const knownSection = ['manual', 'batch', 'session'].includes(normalizedSection)
   const states = knownSection
     ? [stateForSource(normalizedSection)]
-    : [manualListState.value, batchListState.value, legacyListState.value]
+    : [manualListState.value, batchListState.value, sessionListState.value]
   for (const state of states) {
     const row = (Array.isArray(state?.items) ? state.items : []).find(
       item => item?.diagnosisSessionId === safeSessionId
@@ -1631,7 +1631,7 @@ async function loadSourceList(sourceType = 'manual') {
     currentState.summary = createListState().summary
     showMessage(
       `${
-        sourceType === 'batch' ? '批跑' : sourceType === 'legacy' ? '未归一历史' : '手动'
+        sourceType === 'batch' ? '批跑' : sourceType === 'session' ? '未归一历史' : '手动'
       }记录读取失败：${error?.message || '未知错误'}`,
       'error'
     )
@@ -1653,10 +1653,10 @@ async function loadList() {
   } else {
     resetListState('batch')
   }
-  if (filters.value.sourceType === 'legacy') {
-    tasks.push(loadSourceList('legacy'))
+  if (filters.value.sourceType === 'session') {
+    tasks.push(loadSourceList('session'))
   } else {
-    resetListState('legacy')
+    resetListState('session')
   }
   await Promise.all(tasks)
   syncCombinedItems()
@@ -1665,7 +1665,7 @@ async function loadList() {
 function applyFilters() {
   manualListState.value.page = 1
   batchListState.value.page = 1
-  legacyListState.value.page = 1
+  sessionListState.value.page = 1
   loadList()
 }
 
@@ -1677,7 +1677,7 @@ function resetFilters() {
   }
   manualListState.value.page = 1
   batchListState.value.page = 1
-  legacyListState.value.page = 1
+  sessionListState.value.page = 1
   loadList()
 }
 
@@ -1698,7 +1698,7 @@ function updateItemPreviewImage(diagnosisSessionId, previewImageRef = '') {
       : current
   manualListState.value.items = manualListState.value.items.map(patch)
   batchListState.value.items = batchListState.value.items.map(patch)
-  legacyListState.value.items = legacyListState.value.items.map(patch)
+  sessionListState.value.items = sessionListState.value.items.map(patch)
   syncCombinedItems()
 }
 
@@ -1714,7 +1714,7 @@ function clearItemPreviewImage(diagnosisSessionId = '') {
       : current
   manualListState.value.items = manualListState.value.items.map(patch)
   batchListState.value.items = batchListState.value.items.map(patch)
-  legacyListState.value.items = legacyListState.value.items.map(patch)
+  sessionListState.value.items = sessionListState.value.items.map(patch)
   const nextPreviewMap = { ...imagePreviewMap.value }
   delete nextPreviewMap[safeSessionId]
   imagePreviewMap.value = nextPreviewMap
@@ -1809,11 +1809,11 @@ async function ensureDetail(sessionId) {
     })
     const normalizedDetail = {
       ...detail,
-      reviewSourceType: currentRow?.reviewSourceType || detail?.reviewSourceType || 'legacy',
+      reviewSourceType: currentRow?.reviewSourceType || detail?.reviewSourceType || 'session',
       reviewSourceEvidence:
         currentRow?.reviewSourceEvidence ||
         detail?.reviewSourceEvidence ||
-        'openid_inferred_legacy',
+        'openid_inferred_session',
       clientPlatform: currentRow?.clientPlatform || detail?.clientPlatform || '',
       symptomClass: detail?.symptomClass || currentRow?.symptomClass || null,
       questionCountSummary:
@@ -1881,7 +1881,7 @@ async function ensureDetail(sessionId) {
         : current
     manualListState.value.items = manualListState.value.items.map(patch)
     batchListState.value.items = batchListState.value.items.map(patch)
-    legacyListState.value.items = legacyListState.value.items.map(patch)
+    sessionListState.value.items = sessionListState.value.items.map(patch)
     syncCombinedItems()
     return normalizedDetail
   } catch (error) {
@@ -1995,7 +1995,7 @@ function formatRouteText(routePrimaryAction = '') {
 function formatSourceLabel(sourceType = '') {
   if (sourceType === 'batch') {return '脚本批跑'}
   if (sourceType === 'manual') {return '真人手动'}
-  if (sourceType === 'legacy') {return '未归一历史'}
+  if (sourceType === 'session') {return '未归一历史'}
   return '未知来源'
 }
 
@@ -2003,7 +2003,7 @@ function formatSourceEvidenceLabel(sourceEvidence = '') {
   if (sourceEvidence === 'platform_tagged') {return '真人小程序诊断（平台标记）'}
   if (sourceEvidence === 'openid_inferred_manual') {return '真人小程序诊断（openid 推断）'}
   if (sourceEvidence === 'web_tagged') {return 'Web / H5 调试诊断'}
-  if (sourceEvidence === 'openid_inferred_legacy') {return '真人小程序诊断（历史推断）'}
+  if (sourceEvidence === 'openid_inferred_session') {return '真人小程序诊断（历史推断）'}
   return '未归一来源'
 }
 
@@ -2066,7 +2066,7 @@ function formatAdviceItems(items = []) {
 function formatGovernedAdviceSource(source = '') {
   if (source === 'audited_explanation') {return '已审核解释表'}
   if (source === 'problem_fallback') {return '问题主表 fallback'}
-  if (source === 'governance_fallback') {return '治理兜底'}
+  if (source === 'governance_fallback') {return '治理保守'}
   return source || '无正式建议'
 }
 
@@ -2288,11 +2288,11 @@ const formulaStepLabelMap = {
   rainy_pressure_hit: '多雨命中',
   wet_pressure_score: '偏湿环境扣减分',
   effective_wet_waterings_10d: '偏湿修正后的过浇阈值',
-  too_wet_gate: '过浇判断',
-  too_dry_gate: '缺水判断',
-  recent_or_high_risk_gate: '近期或高风险施肥门控',
-  possible_deficiency_gate: '疑似缺肥门控',
-  thin_after_due_gate: '到期薄肥门控'
+  too_wet_condition: '过浇判断',
+  too_dry_condition: '缺水判断',
+  recent_or_high_risk_condition: '近期或高风险施肥门控',
+  possible_deficiency_condition: '疑似缺肥门控',
+  thin_after_due_condition: '到期薄肥门控'
 }
 
 const formulaTermLabelMap = {
@@ -2514,11 +2514,11 @@ function formatPlannerFormulaProcessLines(step = {}, key = '', substitutedExpres
         `计算过程：取最大值(1, ${formatFormulaValue(deducted)}) = ${formatFormulaProcessResult(step)}`
       ]
     }
-    case 'too_wet_gate':
+    case 'too_wet_condition':
       return [
         `计算过程：最近 10 天实际浇水次数 > 偏湿修正后的过浇阈值 = ${formatFormulaValue(inputs.wateringCount10d)} > ${formatFormulaValue(inputs.effectiveWetWaterings10d)} = ${formatFormulaProcessResult(step)}`
       ]
-    case 'too_dry_gate': {
+    case 'too_dry_condition': {
       const forecastBranch = Boolean(inputs.forecastHotDryHit) && Boolean(inputs.lastWateredTooLongAgo)
       const noWatering = Number(inputs.wateringCount10d) === 0
       const historicalBranch = Boolean(inputs.historicalHotDryHit) && noWatering
@@ -2528,7 +2528,7 @@ function formatPlannerFormulaProcessLines(step = {}, key = '', substitutedExpres
         `计算过程：未来干热分支 或 历史干热分支 = ${formatFormulaValue(forecastBranch)} 或 ${formatFormulaValue(historicalBranch)} = ${formatFormulaProcessResult(step)}`
       ]
     }
-    case 'recent_or_high_risk_gate': {
+    case 'recent_or_high_risk_condition': {
       const concentrated = Boolean(inputs.concentrated)
       const recentFertilizingHit = Number(inputs.recentFertilizingCount) > 0
       const within10d = inputs.lastFertilizedBucket === 'within_10d'
@@ -2537,7 +2537,7 @@ function formatPlannerFormulaProcessLines(step = {}, key = '', substitutedExpres
         `计算过程：以上任一命中即可暂停施肥 = ${formatFormulaValue(Boolean(inputs.justRepotted))} 或 ${formatFormulaValue(concentrated)} 或 ${formatFormulaValue(recentFertilizingHit)} 或 ${formatFormulaValue(within10d)} = ${formatFormulaProcessResult(step)}`
       ]
     }
-    case 'possible_deficiency_gate': {
+    case 'possible_deficiency_condition': {
       const gapHit = Array.isArray(thresholds.deficiencyGapBuckets) &&
         thresholds.deficiencyGapBuckets.includes(inputs.lastFertilizedBucket)
       return [
@@ -2545,7 +2545,7 @@ function formatPlannerFormulaProcessLines(step = {}, key = '', substitutedExpres
         `计算过程：弱生长 且 缺肥时间桶命中 = ${formatFormulaValue(inputs.weakGrowth)} 且 ${formatFormulaValue(gapHit)} = ${formatFormulaProcessResult(step)}`
       ]
     }
-    case 'thin_after_due_gate': {
+    case 'thin_after_due_condition': {
       const dueHit = Array.isArray(thresholds.dueGapBuckets) &&
         thresholds.dueGapBuckets.includes(inputs.lastFertilizedBucket)
       return [
@@ -2688,7 +2688,7 @@ function getRoutePathRows(detail = null) {
     title: item.outcomeKey || '未知结果',
     meta: [
       item.state ? `状态=${item.state}` : '',
-      item.missingGateKeys?.length ? `缺少门禁=${item.missingGateKeys.join(', ')}` : '',
+      item.missingConditionKeys?.length ? `缺少门禁=${item.missingConditionKeys.join(', ')}` : '',
       item.nextQuestionKeys?.length ? `下一题=${item.nextQuestionKeys.join(', ')}` : ''
     ].filter(Boolean).join(' / '),
       value: formatDetailLines(item.routeKeys, '无')
@@ -2698,24 +2698,24 @@ function getRoutePathRows(detail = null) {
     title: `流程回看 ${item.outcomeKey || '未知结果'}`,
     meta: formatDetailLines(item.routeKeys, '无'),
     value: formatDetailLines(
-      (Array.isArray(item.gateResults) ? item.gateResults : []).map(result =>
+      (Array.isArray(item.conditionResults) ? item.conditionResults : []).map(result =>
         [
-          result.gateKey || '未知门禁',
-          result.gateRole || '',
+          result.conditionKey || '未知门禁',
+          result.conditionRole || '',
           result.result || ''
         ].filter(Boolean).join(':')
       ),
       '无门禁'
     )
   }))
-  const gateRows = (Array.isArray(routeDecision.gateResults) ? routeDecision.gateResults : []).map(item => ({
-    key: item.routeKey && item.gateKey
-      ? `${item.routeKey} / 门禁:${item.gateKey}`
+  const gateRows = (Array.isArray(routeDecision.conditionResults) ? routeDecision.conditionResults : []).map(item => ({
+    key: item.routeKey && item.conditionKey
+      ? `${item.routeKey} / 门禁:${item.conditionKey}`
       : '门禁:未知',
-    title: item.gateKey || '未知门禁',
+    title: item.conditionKey || '未知门禁',
     meta: [
       item.routeKey,
-      item.gateRole,
+      item.conditionRole,
       item.result
     ].filter(Boolean).join(' / '),
     value: [
@@ -2855,10 +2855,10 @@ function getCoreProcessFieldRows(detail = null) {
       value: formatDetailLines(getDiagnosisDirectionLabels(detail), '尚无诊断方向')
     },
     {
-      key: 'questions.questionQueue',
+      key: 'questions.questionPackageSnapshot',
       label: '题目队列',
       meaning: '本轮题目队列；完成后可能为空，应结合下方答题记录查看历史题目。',
-      value: formatDetailLines(getQuestionQueueLabels(detail), '本轮无可用题目')
+      value: formatDetailLines(getQuestionPackageSnapshotLabels(detail), '本轮无可用题目')
     },
     {
       key: 'decision.outputEligibility',
@@ -2953,7 +2953,7 @@ function formatVisualSlot(record = {}) {
   return `图${order} ${record?.inputSlotLabel || record?.inputSlotType || '未知槽位'}`
 }
 
-function formatTargetDimension(value = '') {
+function formatPackageTopic(value = '') {
   const normalized = String(value || '').trim()
   const map = {
     visual_presence: '视觉是否存在',
@@ -2972,7 +2972,7 @@ function formatTargetDimension(value = '') {
   return map[normalized] || normalized || '未标注'
 }
 
-function formatRoutingScope(value = '') {
+function formatPackageSection(value = '') {
   const normalized = String(value || '').trim()
   const map = {
     symptom_confirmation: '症状确认',
@@ -3299,19 +3299,19 @@ function getDiagnosisDirectionLabels(detail = null) {
   return diagnosisDirections.map(entry => String(entry?.label || entry?.directionKey || '').trim())
 }
 
-function getQuestionQueueLabels(detail = null) {
-  const questionItems = Array.isArray(detail?.coreProcess?.questions?.questionQueue?.questionItems)
-    ? detail.coreProcess.questions.questionQueue.questionItems
+function getQuestionPackageSnapshotLabels(detail = null) {
+  const questionItems = Array.isArray(detail?.coreProcess?.questions?.questionPackageSnapshot?.questionItems)
+    ? detail.coreProcess.questions.questionPackageSnapshot.questionItems
     : []
   return questionItems.map(entry => {
     const questionText = String(
       entry?.text || entry?.questionText || entry?.questionId || ''
     ).trim()
-    const targetDimension = String(entry?.targetDimension || '').trim()
+    const packageTopic = String(entry?.packageTopic || '').trim()
     const status = String(entry?.status || '').trim()
     return [
       questionText,
-      targetDimension ? `(${targetDimension})` : '',
+      packageTopic ? `(${packageTopic})` : '',
       status ? `[${status}]` : ''
     ]
       .filter(Boolean)

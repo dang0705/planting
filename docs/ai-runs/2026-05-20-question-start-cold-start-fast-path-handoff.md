@@ -5,7 +5,7 @@
 - 区分两类路径：
   - 严格真冷启动：无任何预热（无 Provisioned Concurrency、无历史实例复用、无缓存命中）场景。
   - `route settled + provisioned concurrency` 用户可见路径：以路由已 settle、函数实例可用/可复用为前提的可观测样本，记录其性能收益与边界。
-- 优先保证 fast path 在“仅加速首屏提速”而非改变流程策略，不引入 route/gate/outcome 组合缓存，不破坏 follow-up/final/output 资格判断链路。
+- 优先保证 fast path 在“仅加速首屏提速”而非改变流程策略，不引入 route/condition/outcome 组合缓存，不破坏 follow-up/final/output 资格判断链路。
 
 ## 二、代码变更摘要
 - 已变更文件（本轮需写入 handoff 证据）：
@@ -23,7 +23,7 @@
   - 当前 `round` 的 `diagnosis_follow_ups` 写入链路。
   - 当前答案 mark / final snapshot 的同步边界。
 - 不允许的行为：
-  - 不做 route / gate / outcome 组合缓存。
+  - 不做 route / condition / outcome 组合缓存。
   - `fast path / warm path / early return` **不得绕过** `follow-up/final/output eligibility guard`，保持主链资格判断完整。
 - 任何 optimization 仅作为首屏提速手段，不能改变：
   - 问诊流程归属。

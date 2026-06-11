@@ -3,17 +3,17 @@
   "source_of_truth": "code-base.zip extracted working tree; code implementation is the only normative source",
   "status": "explicit_question_package_synced",
   "deprecated_original_model": {
-    "note": "旧 Sxx 大而全规则集不再作为当前执行结构源；只可作为历史背景。",
+    "note": "既有 Sxx 大而全规则集不再作为当前执行结构源；只可作为历史背景。",
     "do_not_use_as_current_facts": [
       "ranking / score gap controls follow-up",
       "fixed number of answers grants output eligibility",
-      "questionQueue first-anchor means yellow leaf package can only submit the first question",
+      "questionPackageSnapshot first-anchor means yellow leaf package can only submit the first question",
       "question-start/start/answer response paths are equivalent",
       "dynamic next-question helpers as current questioning authority",
-      "questionQueue as fixed package question-count authority",
-      "legacy array field as package primary response field",
+      "questionPackageSnapshot as fixed package question-count authority",
+      "session array field as package primary response field",
       "question-start routes unmatched fixed-package mode to diagnosis-engine",
-      "package answer ownership by legacy follow-up rows",
+      "package answer ownership by session follow-up rows",
       "wilting_droop result page as ranking / score / probability / main-cause ordering"
     ]
   },
@@ -65,7 +65,7 @@
           "lines": "20-23"
         },
         {
-          "title": "## 3. 必须废弃或降级的旧概念",
+          "title": "## 3. 必须废弃或降级的既有概念",
           "lines": "24-35"
         },
         {
@@ -145,7 +145,7 @@
           "lines": "27-39"
         },
         {
-          "title": "## 4. 旧动态追问逻辑的当前状态",
+          "title": "## 4. 既有动态追问逻辑的当前状态",
           "lines": "40-51"
         },
         {
@@ -153,7 +153,7 @@
           "lines": "52-84"
         },
         {
-          "title": "## 6. 黄叶题包的 snapshot、兼容 queue 与 ownership 边界",
+          "title": "## 6. 黄叶题包的 snapshot、当前 package state 与 ownership 边界",
           "lines": "85-109"
         },
         {
@@ -191,7 +191,7 @@
           "lines": "23-28"
         },
         {
-          "title": "### 2.2 非 package route 兼容路径",
+          "title": "### 2.2 非 package route 当前路径",
           "lines": "29-34"
         },
         {
@@ -211,7 +211,7 @@
           "lines": "66-80"
         },
         {
-          "title": "## 4. question queue 的真实作用",
+          "title": "## 4. question package snapshot 的真实作用",
           "lines": "81-88"
         },
         {
@@ -245,7 +245,7 @@
       "line_count": 113,
       "headings": [
         {
-          "title": "# 06｜route gate、问题排序、证据收敛与输出守卫",
+          "title": "# 06｜route condition、问题排序、证据收敛与输出守卫",
           "lines": "1-4"
         },
         {
@@ -365,7 +365,7 @@
           "lines": "42-54"
         },
         {
-          "title": "## 5. question queue 与 follow-up 持久化",
+          "title": "## 5. question package snapshot 与 follow-up 持久化",
           "lines": "55-60"
         },
         {
@@ -541,7 +541,7 @@
           "lines": "68-78"
         },
         {
-          "title": "## 5. 题包与非 package 兼容路径",
+          "title": "## 5. 题包与非 package 当前路径",
           "lines": "79-101"
         },
         {
@@ -581,7 +581,7 @@
           "lines": "238-254"
         },
         {
-          "title": "## 14. 旧概念处置",
+          "title": "## 14. 既有概念处置",
           "lines": "255-264"
         }
       ]
@@ -634,14 +634,14 @@
       "fact": "wilting_droop terminal package resolver produces multiple visibleOutcomes, blocked action explanations, high-risk warning, observation period, and result title 建议行动清单 without ranking or probability fields"
     },
     {
-      "file": "cloudfunctions/diagnose-http/domain/question-queue/question-queue-planner.js",
+      "file": "cloudfunctions/diagnose-http/domain/runtime-artifacts.js",
       "lines": "56-74,109-177",
-      "fact": "questionQueue remains compatibility runtime state and is not the package answer ownership authority"
+      "fact": "questionPackageSnapshot remains suitability runtime state and is not the package answer ownership authority"
     },
     {
       "file": "cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js",
       "lines": "17-35,54-128",
-      "fact": "static package start persists runtimeSnapshot.questionPackageSnapshot.packageQuestions and skips legacy question row writes"
+      "fact": "static package start persists runtimeSnapshot.questionPackageSnapshot.packageQuestions and skips session question row writes"
     },
     {
       "file": "cloudfunctions/diagnose-http/app/package-answer-ownership-runtime.js",

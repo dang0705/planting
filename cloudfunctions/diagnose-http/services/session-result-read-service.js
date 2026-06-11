@@ -8,7 +8,6 @@ const {
   getDiagnosisSessionResultRow
 } = require('../repositories/diagnosis-session-read-repository')
 const { getProblemsByKeys, getExplanationsByProblemKeys } = require('../repositories/problem-repository')
-const { getLatestQueueBySession } = require('../repositories/question-queue-repository')
 const { getLatestStopStateBySession } = require('../repositories/stop-state-repository')
 const { resolveLatestVisualCallBatchId } = require('../utils/visual-batch-id')
 const { safeJsonParse, normalizeStoredNullableText } = require('../utils/stored-value')
@@ -17,7 +16,6 @@ const { normalizePublicObservedEvidenceSet } = require('./session-runtime-snapsh
 const { normalizePublicDerivedEvidenceSet } = require('../utils/derived-evidence')
 const { normalizePublicDiagnosisDirectionSet } = require('../utils/diagnosis-directions')
 const { buildPublicCoreProcess } = require('../utils/public-core-process')
-const { buildPublicQuestionQueue } = require('../presenters/diagnosis-round-presenter')
 
 function toPublicProblemId(problemValue = '') {
   const value = String(problemValue || '').trim()
@@ -70,7 +68,7 @@ async function resolveGovernedProblemAdvice(problemValue = '') {
   const explanationRow = explanations.find(item => item.problemKey === problemKey) || null
   const explanation = buildGovernedExplanation(problem, explanationRow)
   const nextSteps = explanation?.firstAid
-    ? [{ stepId: 'advice_1', text: explanation.firstAid, type: explanationRow ? 'explanation' : 'problem_fallback' }]
+    ? [{ stepId: 'advice_1', text: explanation.firstAid, type: explanationRow ? 'explanation' : 'problem_conservative' }]
     : []
   const whatToAvoid = explanation?.avoid ? [explanation.avoid] : []
 
@@ -82,7 +80,7 @@ async function resolveGovernedProblemAdvice(problemValue = '') {
   }
 }
 
-function buildProblematicAdviceGovernanceFallback(problemValue = '') {
+function buildProblematicAdviceGovernanceConservative(problemValue = '') {
   const problemKey = toInternalProblemKey(problemValue)
   const firstAid = '当前结果暂未匹配到已审核的处理建议。建议先保持养护条件稳定，观察问题是否扩大或重复出现，再结合人工复核结果决定具体处理。'
   const avoid = '不要在缺少已审核处理建议时直接大幅调整浇水、施肥、修剪或用药。'
@@ -96,13 +94,13 @@ function buildProblematicAdviceGovernanceFallback(problemValue = '') {
       whatToCheckNext: '请优先核对该结果是否已有 audited explanation 或 audited problem action 字段。',
       firstAid,
       avoid,
-      reassurance: '这是治理兜底文案，用于避免把未审核旧建议当作正式处理建议展示。'
+      reassurance: '这是治理保护文案，用于避免把未审核既有建议当作正式处理建议展示。'
     },
     nextSteps: [
       {
-        stepId: 'advice_governance_fallback',
+        stepId: 'advice_governance_conservative',
         text: firstAid,
-        type: 'governance_fallback'
+        type: 'governance_conservative'
       }
     ],
     whatToAvoid: [avoid]
@@ -162,24 +160,6 @@ function mergeRuntimeDecisionObject(persisted = null, snapshot = null) {
     return persisted
   }
   return { ...snapshot, ...persisted }
-}
-
-function mergeRuntimeQueue(persisted = null, snapshot = null) {
-  const merged = mergeRuntimeDecisionObject(persisted, snapshot)
-  if (!merged || typeof merged !== 'object') {
-    return null
-  }
-
-  if (
-    merged.queueDecision &&
-    typeof merged.queueDecision === 'object' &&
-    snapshot?.queueDecision &&
-    typeof snapshot.queueDecision === 'object'
-  ) {
-    merged.queueDecision = { ...snapshot.queueDecision, ...merged.queueDecision }
-  }
-
-  return merged
 }
 
 function asPlainObject(value = null) {
@@ -250,15 +230,15 @@ function suppressUncertainWhenConcreteOutcomeExists(outcomes = []) {
 
 function mergeVisibleOutcomeEntries({
   visibleOutcomes = [],
-  legacyPrimaryOutcome = null,
-  legacySecondaryOutcomes = []
+  primaryOutcomeEntry = null,
+  secondaryOutcomeEntries = []
 } = {}) {
   const merged = []
   const seen = new Set()
   for (const outcome of [
     ...normalizeOutcomeList(visibleOutcomes),
-    ...[normalizeOutcomeEntry(legacyPrimaryOutcome)].filter(Boolean),
-    ...normalizeOutcomeList(legacySecondaryOutcomes)
+    ...[normalizeOutcomeEntry(primaryOutcomeEntry)].filter(Boolean),
+    ...normalizeOutcomeList(secondaryOutcomeEntries)
   ]) {
     const identityKey = resolveOutcomeIdentityKey(outcome, merged.length)
     if (seen.has(identityKey)) {continue}
@@ -287,8 +267,8 @@ function buildPublicRouteFinalResult(finalResult = null, { visibleOutcomes = [],
     visibleOutcomes:
       publicFinalResult.visibleOutcomes ||
       visibleOutcomes,
-    legacyPrimaryOutcome: safeFinalResult.primaryOutcome,
-    legacySecondaryOutcomes: safeFinalResult.secondaryOutcomes
+    primaryOutcomeEntry: safeFinalResult.primaryOutcome,
+    secondaryOutcomeEntries: safeFinalResult.secondaryOutcomes
   })
   publicFinalResult.outcomeMode = normalizeRouteOutcomeMode(
     publicFinalResult.outcomeMode || outcomeMode || '',
@@ -304,13 +284,13 @@ function resolveRouteOutcomeFields({ snapshot = null, outcomePayload = null } = 
   const payloadFinalResult = asPlainObject(outcomePayloadObject.finalResult)
   const snapshotFinalResult = asPlainObject(snapshotObject.finalResult)
   const finalResult = mergePlainObjects(snapshotFinalResult, payloadFinalResult)
-  const legacyPrimaryOutcome = normalizeOutcomeEntry(firstPlainObject(
+  const primaryOutcomeEntry = normalizeOutcomeEntry(firstPlainObject(
     outcomePayloadObject.primaryOutcome ||
       payloadFinalResult?.primaryOutcome,
     snapshotObject.primaryOutcome,
     snapshotFinalResult?.primaryOutcome
   ))
-  const legacySecondaryOutcomes = firstOutcomeList(
+  const secondaryOutcomeEntries = firstOutcomeList(
     outcomePayloadObject.secondaryOutcomes ||
       payloadFinalResult?.secondaryOutcomes,
     snapshotObject.secondaryOutcomes,
@@ -324,8 +304,8 @@ function resolveRouteOutcomeFields({ snapshot = null, outcomePayload = null } = 
   )
   const visibleOutcomes = mergeVisibleOutcomeEntries({
     visibleOutcomes: rawVisibleOutcomes,
-    legacyPrimaryOutcome,
-    legacySecondaryOutcomes
+    primaryOutcomeEntry,
+    secondaryOutcomeEntries
   })
   const rawOutcomeMode = normalizeStoredNullableText(
     outcomePayloadObject.outcomeMode ||
@@ -370,10 +350,7 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
 
   const snapshot = await getFinalDiagnosisSnapshot(openid, finalSessionId)
   const persistedObservedEvidenceSet = await getObservedEvidenceSetBySession(finalSessionId, openid)
-  const [persistedQuestionQueue, persistedStopStateBundle] = await Promise.all([
-    getLatestQueueBySession(finalSessionId, openid),
-    getLatestStopStateBySession(finalSessionId, openid)
-  ])
+  const persistedStopStateBundle = await getLatestStopStateBySession(finalSessionId, openid)
 
   if (snapshot) {
     const routeOutcomeFields = resolveRouteOutcomeFields({ snapshot })
@@ -405,12 +382,6 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
       snapshot?.shadowCompareSummary ||
       snapshot?.visualAggregateSummary?.shadowCompareSummary ||
       null
-    const questionQueue = buildPublicQuestionQueue(
-      mergeRuntimeQueue(
-        persistedQuestionQueue || null,
-        snapshot?.questionQueue || null
-      )
-    )
     const outputEligibility = mergeRuntimeDecisionObject(
       persistedStopStateBundle?.outputEligibility || null,
       snapshot?.outputEligibility || null
@@ -428,7 +399,7 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
         )
       : null
     const effectiveGovernedAdvice = normalizedSnapshotOutcomeType === 'problematic'
-      ? governedAdvice || buildProblematicAdviceGovernanceFallback(
+      ? governedAdvice || buildProblematicAdviceGovernanceConservative(
           snapshot?.finalResult?.problemId ||
             snapshot?.finalResult?.problemKey ||
             snapshot?.topProblem?.problemId ||
@@ -450,7 +421,6 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
         ? snapshot.environmentDeviationHints
         : [],
       routePrimaryAction: normalizedSnapshotRoutePrimaryAction,
-      questionQueue,
       stopReason: closedStageRecord.stopReason,
       stopState: persistedStopState,
       outputEligibility,
@@ -484,7 +454,6 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
       visualBatchTrace: snapshot?.visualBatchTrace || null,
       visualAggregateSummary,
       shadowCompareSummary,
-      questionQueue,
       stopState: persistedStopState,
       outputEligibility,
       diagnosticTrace,
@@ -534,7 +503,7 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
     ? await resolveGovernedProblemAdvice(row.final_problem_key || row.top_problem_key || '')
     : null
   const effectiveGovernedAdvice = normalizedOutcomeType === 'problematic'
-    ? governedAdvice || buildProblematicAdviceGovernanceFallback(row.final_problem_key || row.top_problem_key || '')
+    ? governedAdvice || buildProblematicAdviceGovernanceConservative(row.final_problem_key || row.top_problem_key || '')
     : null
   const observedEvidenceSet = persistedObservedEvidenceSet.length
     ? persistedObservedEvidenceSet
@@ -559,12 +528,6 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
     runtimeSnapshot?.shadowCompareSummary ||
     runtimeSnapshot?.visualAggregateSummary?.shadowCompareSummary ||
     null
-  const questionQueue = buildPublicQuestionQueue(
-    mergeRuntimeQueue(
-      persistedQuestionQueue || null,
-      runtimeSnapshot?.questionQueue || null
-    )
-  )
   const outputEligibility = mergeRuntimeDecisionObject(
     persistedStopStateBundle?.outputEligibility || null,
     runtimeSnapshot?.outputEligibility || null
@@ -586,14 +549,13 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
       ? runtimeSnapshot.environmentDeviationHints
       : [],
     routePrimaryAction: normalizedRoutePrimaryAction,
-    questionQueue,
     stopReason: closedStageRecord.stopReason,
     stopState: persistedStopState,
     outputEligibility,
     diagnosticTrace
   })
 
-  const fallbackFinalResult = {
+  const conservativeFinalResult = {
     problemId:
       normalizedOutcomeType === 'problematic'
         ? toPublicProblemId(normalizeStoredNullableText(row.final_problem_key, ''))
@@ -616,7 +578,7 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
         ? 'low'
         : 'medium'
   }
-  const finalResult = routeOutcomeFields.finalResult || fallbackFinalResult
+  const finalResult = routeOutcomeFields.finalResult || conservativeFinalResult
 
   return {
     resultId: resultId || toResultId(finalSessionId, parsed.round || 1),
@@ -651,7 +613,6 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
     visualBatchTrace: runtimeSnapshot?.visualBatchTrace || null,
     visualAggregateSummary,
     shadowCompareSummary,
-    questionQueue,
     stopState: persistedStopState,
     outputEligibility,
     diagnosticTrace,
@@ -694,7 +655,6 @@ module.exports = {
   getObservedEvidenceSetBySession,
   getFinalDiagnosisSnapshot,
   mergeRuntimeDecisionObject,
-  mergeRuntimeQueue,
   getResultById,
   _test: {
     asPlainObject,

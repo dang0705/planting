@@ -16,7 +16,7 @@
 - weakStructure: false
 - missingFacts: missing_acceptance_source
 
-## Facts quality gate
+## Facts quality condition
 
 - status: blocked
 - score: 72

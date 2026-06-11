@@ -44,7 +44,7 @@
         "questionGroupPoolKeys": [],
         "classGateDecision": {
           "enabled": false,
-          "gateMode": "disabled",
+          "conditionMode": "disabled",
           "sourceMode": "disabled",
           "primaryClassKey": "",
           "primaryClassRuntimeScore": 0,

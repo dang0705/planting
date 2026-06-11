@@ -98,7 +98,7 @@ cloudfunctions/layer/utils/http.js
 |---|---|---|
 | GET | `/health` | 健康检查。 |
 | POST | `/diagnosis/start` | 开始诊断主链。 |
-| POST | `/diagnosis/question/start` | 题包/兼容初始化入口；不要从路径名反推当前仍是“追问”。 |
+| POST | `/diagnosis/question/start` | 题包初始化入口；不要从路径名反推当前仍是“追问”。 |
 | POST | `/diagnosis/answer` | 提交题包/问题答案；当前契约不按“每轮最多 1 题”定义。 |
 | GET | `/diagnosis/result` | 读取诊断结果。 |
 | GET | `/diagnosis/history` | 读取诊断历史。 |
@@ -113,14 +113,14 @@ cloudfunctions/layer/utils/http.js
 | GET | `/visual/out-of-pool/proxy-mappings/list` | 代理映射列表。 |
 | POST | `/visual/out-of-pool/proxy-mappings/upsert` | 新增/更新代理映射。 |
 | POST | `/visual/out-of-pool/proxy-mappings/disable` | 禁用代理映射。 |
-| POST | `/stream/diagnose` | SSE/流式兼容入口。 |
-| POST | `/diagnose` | legacy 兼容入口。 |
+| POST | `/stream/diagnose` | SSE/流式入口。 |
+| POST | `/diagnose` | 后向路径入口。 |
 
 事实源：`cloudfunctions/diagnose-http/app/http-router.js`。
 
 ### 3.2 前端诊断客户端
 
-前端当前通过 `src/http-functions/diagnose/client.js` 暴露以下能力。注意：历史函数名中的 `QuestionStart` / `FollowUp` 是代码兼容命名，不能单独作为当前产品“追问”口径的证据：
+前端当前通过 `src/http-functions/diagnose/client.js` 暴露以下能力。注意：历史函数名中的 `QuestionStart` / `FollowUp` 为历史实现命名，不能单独作为当前产品“追问”口径的证据：
 
 ```text
 requestDiagnosisStart
@@ -143,7 +143,7 @@ src/http-functions/diagnose/out-of-pool-review.js
 
 ### 3.3 结果输出契约
 
-`visibleOutcomes` 是当前前端可见诊断结果的首要出口。旧 `primaryOutcome` / `secondaryOutcomes` 只能作为兼容或回读来源，不应作为新契约中心。
+`visibleOutcomes` 是当前前端可见诊断结果的首要出口。`primaryOutcome` / `secondaryOutcomes` 只能作为历史回读来源，不应作为新契约中心。
 
 前端可依赖的核心字段包括：
 
@@ -181,7 +181,7 @@ preventionText
 careBaselineSummary
 environmentDeviationHints
 visualBatchTrace
-visualAggregateSummary
+visualCombinedInfo
 uiHints
 outputEligibility
 confidenceLevel
@@ -202,14 +202,14 @@ src/utils/diagnose-result-normalizer.js
 
 ### 3.4 问诊题包契约
 
-当前产品口径不再维护“追问”，也不再把“每轮最多 1 题”作为 UX/产品契约。题包是当前问诊交互口径；旧单题追问相关端点、函数名、文件名只作为兼容实现路径处理。
+当前产品口径不再维护“追问”，也不再把“每轮最多 1 题”作为 UX/产品契约。题包是当前问诊交互口径；单题追问相关端点、函数名、文件名只作为既有实现路径处理。
 
 基础题目字段：
 
 ```text
 questionId
 questionKey
-targetDimension
+focusDimension
 text
 helpText
 uiVariant
@@ -225,9 +225,9 @@ options[]
 - 前端提交题包答案时应把 `questionPackage` 和 `uiHints` 元数据随 answer payload 回传；这些字段用于后端识别 package 提交，不是展示专用临时字段。
 - 固定题包 `requestMode: answer_submit` 且答案数满足题包元数据时，后端将其视为终止问诊状态；完成后不得再产生下一题或追问规划，响应应进入 final/result 路径。
 - 后端 route planner 不再把缺失证据表达为 `NEED_MORE_INFO` / `requiresFollowUp` / `nextQuestionKeys`；route-planned follow-up resolver 不再是当前代码路径。
-- 禁止把 `maxQuestionsPerRound: 1` 或旧“常规 route 追问每轮 1 题”写成当前 UX/产品契约。
-- 旧“黄叶 4 题 package”只能作为历史上已知题包形态，不是当前题包长度上限，也不是唯一适用场景。
-- 有效 `yellow_leaf` 题包的包内答案按同一当前轮次整体持久化和归属校验；`questionQueue` 不作为题包题数和停止口径依据，仅允许作为运行时兼容锚点。
+- 禁止把 `maxQuestionsPerRound: 1` 或“常规 route 追问每轮 1 题”写成当前 UX/产品契约。
+- “黄叶 4 题 package”只能作为历史上已知题包形态，不是当前题包长度上限，也不是唯一适用场景。
+- 有效 `yellow_leaf` 题包的包内答案按同一当前轮次整体持久化和归属校验；问题序列字段不作为题包题数和停止口径依据，仅作为历史实现字段。
 - `wilting_droop` 固定题包使用 `sourceMode: manual_wilting_droop_route_package`，共 5 题：Q0 为 `care_behavior_timeline`/`CareBehaviorTimeline` 水分行为时间线，Q1-Q4 分别覆盖发蔫形态、节律/环境、近期应激和高危异常。
 - `wilting_droop` 终端结果以 `visibleOutcomes` 多行动建议为中心，公开标题/结果名为“建议行动清单”；不提供 ranking、score、probability、main-cause 或“最可能原因”排序口径。
 - `wilting_droop` 结果可额外返回 `blockedActionExplanations`、`highRiskWarning`、`observationPeriod`。当高危异常阻断补水、喷水、施肥、暴晒等动作时，前端应展示冲突动作解释，而不是把被阻断动作继续作为主要建议。
@@ -303,7 +303,7 @@ identityResolutionStatus / taxonomyMatchStatus
 strongMatch
 weakCandidates
 primaryCandidate
-plant match fields: id, plantIdentityId, legacyPlantId, canonicalName, matchAlias, internetName
+plant match fields: id, plantIdentityId, historicalPlantId, canonicalName, matchAlias, internetName
 ```
 
 事实源：`cloudfunctions/identify-http/app.js` 与 `cloudfunctions/layer/utils/plant-knowledge.js`。
@@ -407,4 +407,4 @@ getUserByEmail
 - `/diagnosis/history`、`/diagnosis/history/detail`、`/diagnosis/history/feedback`、`/diagnosis/decision` 返回 410。
 - 替代路径在 `diagnose-http`：`/diagnosis/history`、`/diagnosis/result`、`/diagnosis/feedback`。
 
-旧文档若仍要求调用 `diagnosis-history-http`，应标记为 stale/superseded。
+文档若要求调用 `diagnosis-history-http`，应标记为 stale/superseded。

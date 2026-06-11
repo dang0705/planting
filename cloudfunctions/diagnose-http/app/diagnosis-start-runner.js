@@ -1,6 +1,6 @@
 'use strict'
 
-const { adaptObservedSymptoms } = require('../mappers/legacy-rule-adapter')
+const { adaptObservedSymptoms } = require('../mappers/diagnosis-rule-adapter')
 const { runDiagnosisRound } = require('../domain/diagnosis-engine')
 const { buildSessionId } = require('../services/session-service')
 const { resolveLatestVisualCallBatchId } = require('../utils/visual-batch-id')
@@ -23,10 +23,10 @@ async function runStartDiagnosis({
 } = {}) {
   payload = payload || {}
   const clientContext = resolveRequestClientContext(payload, null)
-  const legacyPlantId = payload.plantId || null
+  const requestPlantId = payload.plantId || null
   const plantCatalogId = payload.plantCatalogId || payload.catalogPlantId || null
   const userPlantId = payload.userPlantId || null
-  const plantId = plantCatalogId || legacyPlantId
+  const plantId = plantCatalogId || requestPlantId
   if (!userPlantId && !plantId) {
     throw Object.assign(new Error('缺少 userPlantId 或 plantCatalogId'), { statusCode: 400 })
   }

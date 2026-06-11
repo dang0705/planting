@@ -1,10 +1,10 @@
 'use strict'
 
-const { QUESTION_TARGET_DIMENSIONS } = require('../question-target-dimension')
+const { QUESTION_PACKAGE_TOPICS } = require('../question-package-topic')
 
 module.exports = {
   leaf_yellowing: {
-      [QUESTION_TARGET_DIMENSIONS.HOST_CONFIRMATION]: {
+      [QUESTION_PACKAGE_TOPICS.HOST_CONFIRMATION]: {
         yes: [
           { problemKey: 'nitrogen_deficiency', effectValue: 0.34 },
           { problemKey: 'low_light', effectValue: 0.14 },
@@ -16,7 +16,7 @@ module.exports = {
           { problemKey: 'nitrogen_deficiency', effectValue: -0.1 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.PROGRESSION]: {
+      [QUESTION_PACKAGE_TOPICS.PROGRESSION]: {
         yes: [
           { problemKey: 'root_stress', effectValue: 0.14 },
           { problemKey: 'temperature_stress', effectValue: 0.1 },
@@ -32,7 +32,7 @@ module.exports = {
           { problemKey: 'overwatering', effectValue: -0.08 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.DISTRIBUTION_SCOPE]: {
+      [QUESTION_PACKAGE_TOPICS.DISTRIBUTION_SCOPE]: {
         yes: [
           { problemKey: 'spider_mites', effectValue: 0.12 },
           { problemKey: 'thrips', effectValue: 0.12 },
@@ -47,7 +47,7 @@ module.exports = {
           { problemKey: 'nutrient_deficiency', effectValue: 0.12 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.LIGHT_EXPOSURE]: {
+      [QUESTION_PACKAGE_TOPICS.LIGHT_EXPOSURE]: {
         yes: [
           { problemKey: 'sunburn', effectValue: 0.26 },
           { problemKey: 'heat_stress', effectValue: 0.2 },
@@ -59,7 +59,7 @@ module.exports = {
           { problemKey: 'nitrogen_deficiency', effectValue: 0.06 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.WATERING_CONTEXT]: {
+      [QUESTION_PACKAGE_TOPICS.WATERING_CONTEXT]: {
         yes: [
           { problemKey: 'overwatering', effectValue: 0.26 },
           { problemKey: 'root_rot', effectValue: 0.18 },
@@ -73,7 +73,7 @@ module.exports = {
           { problemKey: 'root_rot', effectValue: -0.12 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.FERTILIZATION_CONTEXT]: {
+      [QUESTION_PACKAGE_TOPICS.FERTILIZATION_CONTEXT]: {
         yes: [
           { problemKey: 'nitrogen_deficiency', effectValue: 0.24 },
           { problemKey: 'iron_deficiency', effectValue: 0.18 },
@@ -89,7 +89,7 @@ module.exports = {
       }
     },
   yellowingDifferential: {
-      [QUESTION_TARGET_DIMENSIONS.YELLOWING_DISEASE_TRACE_GATE]: {
+      [QUESTION_PACKAGE_TOPICS.YELLOWING_DISEASE_TRACE_TOPIC]: {
         halo_spots: [
           { problemKey: 'fungal_leaf_spot', effectValue: 0.2 },
           { problemKey: 'bacterial_leaf_spot', effectValue: 0.14 }
@@ -110,7 +110,7 @@ module.exports = {
           { problemKey: 'low_light', effectValue: 0.03 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.PEST_TRACE_TYPE]: {
+      [QUESTION_PACKAGE_TOPICS.PEST_TRACE_TYPE]: {
         mite_webbing: [
           { problemKey: 'spider_mites', effectValue: 0.22 },
           { problemKey: 'whiteflies', effectValue: -0.08 },
@@ -137,7 +137,7 @@ module.exports = {
           { problemKey: 'nutrient_deficiency', effectValue: -0.02 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.YELLOWING_LEAF_AGE_PATTERN]: {
+      [QUESTION_PACKAGE_TOPICS.YELLOWING_LEAF_AGE_PATTERN]: {
         new_leaves_first: [
           { problemKey: 'iron_deficiency', effectValue: 0.26 },
           { problemKey: 'nutrient_deficiency', effectValue: 0.12 },
@@ -154,7 +154,7 @@ module.exports = {
           { problemKey: 'nutrient_deficiency', effectValue: 0.03 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.YELLOWING_DISTRIBUTION_PATTERN]: {
+      [QUESTION_PACKAGE_TOPICS.YELLOWING_DISTRIBUTION_PATTERN]: {
         uniform_whole_leaf: [
           { problemKey: 'nitrogen_deficiency', effectValue: 0.12 },
           { problemKey: 'low_light', effectValue: 0.05 },
@@ -176,7 +176,7 @@ module.exports = {
           { problemKey: 'salt_stress', effectValue: 0.1 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.WATERING_FREQUENCY_CONTEXT]: {
+      [QUESTION_PACKAGE_TOPICS.WATERING_FREQUENCY_CONTEXT]: {
         often_wet: [
           { problemKey: 'overwatering', effectValue: 0.26 },
           { problemKey: 'root_stress', effectValue: 0.18 },
@@ -194,7 +194,7 @@ module.exports = {
           { problemKey: 'root_rot', effectValue: -0.08 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.LIGHT_CHANGE_CONTEXT]: {
+      [QUESTION_PACKAGE_TOPICS.LIGHT_CHANGE_CONTEXT]: {
         stronger_direct_light: [
           { problemKey: 'sunburn', effectValue: 0.24 },
           { problemKey: 'heat_stress', effectValue: 0.18 },
@@ -209,7 +209,7 @@ module.exports = {
           { problemKey: 'sunburn', effectValue: -0.08 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.FERTILIZATION_GROWTH_CONTEXT]: {
+      [QUESTION_PACKAGE_TOPICS.FERTILIZATION_GROWTH_CONTEXT]: {
         low_or_no_fertilizer: [
           { problemKey: 'nitrogen_deficiency', effectValue: 0.22 },
           { problemKey: 'nutrient_deficiency', effectValue: 0.2 },
@@ -224,7 +224,7 @@ module.exports = {
           { problemKey: 'nutrient_deficiency', effectValue: -0.08 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.AIRFLOW_HUMIDITY_CONTEXT]: {
+      [QUESTION_PACKAGE_TOPICS.AIRFLOW_HUMIDITY_CONTEXT]: {
         stagnant_humid: [
           { problemKey: 'root_stress', effectValue: 0.12 },
           { problemKey: 'overwatering', effectValue: 0.08 },
@@ -240,7 +240,7 @@ module.exports = {
           { problemKey: 'temperature_stress', effectValue: -0.06 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.YELLOWING_PROGRESSION_SPEED]: {
+      [QUESTION_PACKAGE_TOPICS.YELLOWING_PROGRESSION_SPEED]: {
         rapid_spreading: [
           { problemKey: 'root_stress', effectValue: 0.16 },
           { problemKey: 'temperature_stress', effectValue: 0.12 },
@@ -259,7 +259,7 @@ module.exports = {
       }
     },
   yellow_speckling: {
-      [QUESTION_TARGET_DIMENSIONS.UNDERSIDE_PRESENCE]: {
+      [QUESTION_PACKAGE_TOPICS.UNDERSIDE_PRESENCE]: {
         yes: [
           { problemKey: 'spider_mites', effectValue: 0.14 },
           { problemKey: 'whiteflies', effectValue: 0.14 },
@@ -274,7 +274,7 @@ module.exports = {
           { problemKey: 'nutrient_deficiency', effectValue: 0.1 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.SURFACE_STICKINESS]: {
+      [QUESTION_PACKAGE_TOPICS.SURFACE_STICKINESS]: {
         yes: [
           { problemKey: 'whiteflies', effectValue: 0.26 },
           { problemKey: 'aphids', effectValue: 0.24 },
@@ -291,7 +291,7 @@ module.exports = {
           { problemKey: 'scale_insects', effectValue: -0.1 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.DISTRIBUTION_SCOPE]: {
+      [QUESTION_PACKAGE_TOPICS.DISTRIBUTION_SCOPE]: {
         yes: [
           { problemKey: 'spider_mites', effectValue: 0.08 },
           { problemKey: 'thrips', effectValue: 0.12 },
@@ -306,7 +306,7 @@ module.exports = {
           { problemKey: 'spider_mites', effectValue: -0.08 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.PROGRESSION]: {
+      [QUESTION_PACKAGE_TOPICS.PROGRESSION]: {
         yes: [
           { problemKey: 'spider_mites', effectValue: 0.08 },
           { problemKey: 'thrips', effectValue: 0.12 },
@@ -318,7 +318,7 @@ module.exports = {
           { problemKey: 'spider_mites', effectValue: -0.08 }
         ]
       },
-      [QUESTION_TARGET_DIMENSIONS.HOST_CONFIRMATION]: {
+      [QUESTION_PACKAGE_TOPICS.HOST_CONFIRMATION]: {
         yes: [
           { problemKey: 'nitrogen_deficiency', effectValue: 0.14 },
           { problemKey: 'low_light', effectValue: 0.1 },

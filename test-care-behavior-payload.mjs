@@ -24,7 +24,7 @@ const {
 } = require('./cloudfunctions/diagnose-http/app/care-behavior-payload.js')
 const {
   buildSyntheticObservedProbeQuestions
-} = require('./cloudfunctions/diagnose-http/utils/synthetic-follow-up/builders.js')
+} = require('./cloudfunctions/diagnose-http/utils/synthetic-question-package/builders.js')
 const {
   buildRouteEvidenceContext,
   planOutcomeRoutes
@@ -280,12 +280,12 @@ const rainyWetRouteDecision = await planOutcomeRoutes({
         }
       ]
     },
-    async getOutcomeRouteGates() {
+    async getOutcomeRouteConditions() {
       return [
         {
-          gateKey: 'gate_overwatering_root_pressure',
+          conditionKey: 'condition_overwatering_root_pressure',
           routeKey: 'watering_root_pressure_route',
-          gateRole: 'display_gate',
+          conditionRole: 'display_condition',
           requiredEvidence: {},
           requiredAnswerEffects: {
             questionOptionPairs: [
@@ -392,12 +392,12 @@ const baselineWetRouteDecision = await planOutcomeRoutes({
         }
       ]
     },
-    async getOutcomeRouteGates() {
+    async getOutcomeRouteConditions() {
       return [
         {
-          gateKey: 'gate_overwatering_root_pressure',
+          conditionKey: 'condition_overwatering_root_pressure',
           routeKey: 'watering_root_pressure_route',
-          gateRole: 'display_gate',
+          conditionRole: 'display_condition',
           requiredEvidence: {},
           requiredAnswerEffects: {
             questionOptionPairs: [
@@ -559,12 +559,12 @@ const wetRouteDecision = await planOutcomeRoutes({
         }
       ]
     },
-    async getOutcomeRouteGates() {
+    async getOutcomeRouteConditions() {
       return [
         {
-          gateKey: 'gate_overwatering_root_pressure',
+          conditionKey: 'condition_overwatering_root_pressure',
           routeKey: 'watering_root_pressure_route',
-          gateRole: 'display_gate',
+          conditionRole: 'display_condition',
           requiredEvidence: {},
           requiredAnswerEffects: {
             questionOptionPairs: [
@@ -678,12 +678,12 @@ const baselineRouteDecision = await planOutcomeRoutes({
         }
       ]
     },
-    async getOutcomeRouteGates() {
+    async getOutcomeRouteConditions() {
       return [
         {
-          gateKey: 'gate_overwatering_root_pressure',
+          conditionKey: 'condition_overwatering_root_pressure',
           routeKey: 'watering_root_pressure_route',
-          gateRole: 'display_gate',
+          conditionRole: 'display_condition',
           requiredEvidence: {},
           requiredAnswerEffects: {
             questionOptionPairs: [
@@ -847,6 +847,6 @@ const [timelineQuestion] = buildSyntheticObservedProbeQuestions(
 )
 
 assert.equal(timelineQuestion.uiVariant, 'care_behavior_timeline')
-assert.equal(timelineQuestion.targetDimension, 'watering_frequency_context')
+assert.equal(timelineQuestion.packageTopic, 'watering_frequency_context')
 
 console.log('care-behavior-payload tests passed')

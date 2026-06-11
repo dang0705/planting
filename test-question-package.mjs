@@ -20,7 +20,7 @@ function buildQuestion(index) {
   return {
     questionId: `question_${index}`,
     questionKey: `q_observed_probe__leaf_yellowing__package_${index}`,
-    targetDimension: `dimension_${index}`,
+    packageTopic: `dimension_${index}`,
     targetSymptomKey: `leaf_yellowing_package_${index}`,
     text: `黄叶题目 ${index}`,
     options: [
@@ -33,20 +33,20 @@ function buildQuestion(index) {
   }
 }
 
-function buildYellowingPackageQuestion(targetDimension) {
-  const questionKey = `q_observed_probe__leaf_yellowing__${targetDimension}`
-  const optionKey = `${targetDimension}_normal`
+function buildYellowingPackageQuestion(packageTopic) {
+  const questionKey = `q_observed_probe__leaf_yellowing__${packageTopic}`
+  const optionKey = `${packageTopic}_normal`
   return {
     questionId: toQuestionId(questionKey),
     questionKey,
-    targetDimension,
+    packageTopic,
     targetSymptomKey: 'leaf_yellowing',
-    text: `黄叶题目 ${targetDimension}`,
+    text: `黄叶题目 ${packageTopic}`,
     options: [
       {
         optionId: toOptionId(optionKey),
         optionKey,
-        text: `选项 ${targetDimension}`
+        text: `选项 ${packageTopic}`
       }
     ]
   }
@@ -96,7 +96,7 @@ function testModeToQuestionPackageMapping() {
   assert.equal(questionPackage.mode, 'yellow_leaf')
   assert.equal(questionPackage.route, 'yellow_leaf')
   assert.equal(questionPackage.questionCount, 4)
-  assert.deepEqual(questionPackage.targetDimensions, [
+  assert.deepEqual(questionPackage.packageTopics, [
     'watering_frequency_context',
     'light_change_context',
     'fertilization_growth_context',
@@ -188,9 +188,9 @@ function testYellowingCompletePackageAnswersAreTerminalQuestioningPayload() {
     'light_change_context',
     'fertilization_growth_context',
     'airflow_humidity_context'
-  ].map(targetDimension => ({
-    questionKey: `q_observed_probe__leaf_yellowing__${targetDimension}`,
-    optionKey: `${targetDimension}_normal`
+  ].map(packageTopic => ({
+    questionKey: `q_observed_probe__leaf_yellowing__${packageTopic}`,
+    optionKey: `${packageTopic}_normal`
   }))
 
   assert.equal(

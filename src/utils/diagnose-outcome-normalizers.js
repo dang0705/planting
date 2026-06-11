@@ -117,15 +117,15 @@ function suppressUncertainWhenConcreteOutcomeExists(outcomes = []) {
 
 export function synthesizeVisibleOutcomes({
   visibleOutcomes = [],
-  legacyPrimaryOutcome = null,
-  legacySecondaryOutcomes = []
+  sessionPrimaryOutcome = null,
+  sessionSecondaryOutcomes = []
 } = {}) {
   const merged = []
   const seen = new Set()
   for (const outcome of [
     ...normalizeOutcomeList(visibleOutcomes),
-    ...[normalizeOutcomeEntry(legacyPrimaryOutcome)].filter(Boolean),
-    ...normalizeOutcomeList(legacySecondaryOutcomes)
+    ...[normalizeOutcomeEntry(sessionPrimaryOutcome)].filter(Boolean),
+    ...normalizeOutcomeList(sessionSecondaryOutcomes)
   ]) {
     const identityKey = resolveOutcomeIdentityKey(outcome, merged.length)
     if (seen.has(identityKey)) {continue}

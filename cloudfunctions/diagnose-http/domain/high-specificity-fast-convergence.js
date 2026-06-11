@@ -5,9 +5,9 @@ const {
   HIGH_SPECIFICITY_FAST_CONVERGENCE_RULES
 } = require('../constants/high-specificity-fast-convergence')
 
-function normalizeText(value, fallback = '') {
+function normalizeText(value, conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function normalizeStringList(values = []) {
@@ -20,19 +20,19 @@ function normalizeStringList(values = []) {
   )
 }
 
-function normalizeOrgan(value = '', fallback = 'unknown') {
-  const normalized = normalizeText(value, fallback).toLowerCase()
-  return normalized || fallback
+function normalizeOrgan(value = '', conservative = 'unknown') {
+  const normalized = normalizeText(value, conservative).toLowerCase()
+  return normalized || conservative
 }
 
-function normalizeBand(value = '', fallback = 'low') {
-  const normalized = normalizeText(value, fallback).toLowerCase()
-  return ['low', 'medium', 'high'].includes(normalized) ? normalized : fallback
+function normalizeBand(value = '', conservative = 'low') {
+  const normalized = normalizeText(value, conservative).toLowerCase()
+  return ['low', 'medium', 'high'].includes(normalized) ? normalized : conservative
 }
 
-function normalizeStrength(value = '', fallback = 'weak') {
-  const normalized = normalizeText(value, fallback).toLowerCase()
-  return ['weak', 'medium', 'strong'].includes(normalized) ? normalized : fallback
+function normalizeStrength(value = '', conservative = 'weak') {
+  const normalized = normalizeText(value, conservative).toLowerCase()
+  return ['weak', 'medium', 'strong'].includes(normalized) ? normalized : conservative
 }
 
 function rankBand(value = '') {

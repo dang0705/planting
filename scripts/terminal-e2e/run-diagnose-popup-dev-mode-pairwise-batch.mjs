@@ -973,7 +973,7 @@ async function runSessionSweepForMode(mode, {
         modeKey: mode.modeKey,
         symptomKey: mode.symptomKey,
         questionKey,
-        questionRole: normalizeText(question.questionRole || question.questionCategory),
+        routePackageRole: normalizeText(question.routePackageRole || question.routePackageRole),
         optionKeys: []
       })
     }
@@ -1134,7 +1134,7 @@ async function runSessionSweepBatch({
   reportFile
 } = {}) {
   const batchGeneratedAt = new Date().toISOString()
-  const queue = modes.slice()
+  const pendingList = modes.slice()
   const records = []
   const failures = []
   const directFinals = []
@@ -1164,14 +1164,14 @@ async function runSessionSweepBatch({
   function printProgress(force = false) {
     if (!force && completedModeCount % 2 !== 0) {return}
     process.stderr.write(
-      `[pairwise-session-sweep] modes=${completedModeCount}/${modes.length}, active=${activeCount}, queued=${queue.length}, records=${records.length}, coveredPairs=${coveredPairs.size}, scheduledPairs=${scheduledPairs.size}, failures=${failures.length}\n`
+      `[pairwise-session-sweep] modes=${completedModeCount}/${modes.length}, active=${activeCount}, queued=${pendingList.length}, records=${records.length}, coveredPairs=${coveredPairs.size}, scheduledPairs=${scheduledPairs.size}, failures=${failures.length}\n`
     )
   }
 
   await new Promise(resolve => {
     const pump = () => {
-      while (activeCount < concurrency && queue.length && !shouldStop()) {
-        const mode = queue.shift()
+      while (activeCount < concurrency && pendingList.length && !shouldStop()) {
+        const mode = pendingList.shift()
         activeCount += 1
         runSessionSweepForMode(mode, {
           userPlantId,
@@ -1202,7 +1202,7 @@ async function runSessionSweepBatch({
             pump()
           })
       }
-      if ((shouldStop() || queue.length === 0) && activeCount === 0) {
+      if ((shouldStop() || pendingList.length === 0) && activeCount === 0) {
         printProgress(true)
         resolve()
       }
@@ -1210,12 +1210,12 @@ async function runSessionSweepBatch({
     pump()
   })
 
-  if (shouldStop() && queue.length) {
+  if (shouldStop() && pendingList.length) {
     failures.push({
       modeKey: '',
       symptomKey: '',
       answerPathSignature: '',
-      error: `达到 maxCases=${maxCases}，剩余模式 ${queue.length} 个未执行`
+      error: `达到 maxCases=${maxCases}，剩余模式 ${pendingList.length} 个未执行`
     })
   }
 
@@ -1298,11 +1298,11 @@ async function runEngineExhaustiveCountBatch({
   progressIntervalMs
 } = {}) {
   const batchGeneratedAt = new Date().toISOString()
-  const queue = modes.map(mode => ({ mode, answerPath: [] }))
+  const pendingList = modes.map(mode => ({ mode, answerPath: [] }))
   const terminalCases = []
   const failures = []
   const discoveredQuestions = new Map()
-  const scheduledPathSignatures = new Set(queue.map(item => buildPathSignature(item.mode, item.answerPath)))
+  const scheduledPathSignatures = new Set(pendingList.map(item => buildPathSignature(item.mode, item.answerPath)))
   const coveredPairs = new Set()
   let activeCount = 0
   let completedTaskCount = 0
@@ -1318,7 +1318,7 @@ async function runEngineExhaustiveCountBatch({
     if (!force && currentCount - lastProgressCount < 25) {return}
     lastProgressCount = currentCount
     process.stderr.write(
-      `[engine-exhaustive-count] tasks=${completedTaskCount}, active=${activeCount}, queued=${queue.length}, terminalCases=${terminalCases.length}, failures=${failures.length}, discoveredQuestions=${discoveredQuestions.size}, maxDepth=${maxObservedDepth}\n`
+      `[engine-exhaustive-count] tasks=${completedTaskCount}, active=${activeCount}, queued=${pendingList.length}, terminalCases=${terminalCases.length}, failures=${failures.length}, discoveredQuestions=${discoveredQuestions.size}, maxDepth=${maxObservedDepth}\n`
     )
   }
 
@@ -1331,7 +1331,7 @@ async function runEngineExhaustiveCountBatch({
         modeKey: mode.modeKey,
         symptomKey: mode.symptomKey,
         questionKey,
-        questionRole: normalizeText(question.questionRole || question.questionCategory),
+        routePackageRole: normalizeText(question.routePackageRole || question.routePackageRole),
         optionKeys: []
       })
     }
@@ -1413,7 +1413,7 @@ async function runEngineExhaustiveCountBatch({
         const signature = buildPathSignature(task.mode, nextAnswerPath)
         if (scheduledPathSignatures.has(signature)) {continue}
         scheduledPathSignatures.add(signature)
-        queue.push({ mode: task.mode, answerPath: nextAnswerPath })
+        pendingList.push({ mode: task.mode, answerPath: nextAnswerPath })
       }
     } catch (error) {
       failures.push({
@@ -1432,8 +1432,8 @@ async function runEngineExhaustiveCountBatch({
 
   await new Promise(resolve => {
     const pump = () => {
-      while (activeCount < concurrency && queue.length && !shouldStop()) {
-        const task = queue.shift()
+      while (activeCount < concurrency && pendingList.length && !shouldStop()) {
+        const task = pendingList.shift()
         activeCount += 1
         processTask(task)
           .finally(() => {
@@ -1443,7 +1443,7 @@ async function runEngineExhaustiveCountBatch({
             pump()
           })
       }
-      if ((shouldStop() || queue.length === 0) && activeCount === 0) {
+      if ((shouldStop() || pendingList.length === 0) && activeCount === 0) {
         printProgress(true)
         resolve()
       }
@@ -1453,12 +1453,12 @@ async function runEngineExhaustiveCountBatch({
 
   if (progressTimer) {clearInterval(progressTimer)}
 
-  if (shouldStop() && queue.length) {
+  if (shouldStop() && pendingList.length) {
     failures.push({
       modeKey: '',
       symptomKey: '',
       answerPathSignature: '',
-      error: `达到 maxCases=${maxCases}，剩余路径 ${queue.length} 条未执行`
+      error: `达到 maxCases=${maxCases}，剩余路径 ${pendingList.length} 条未执行`
     })
   }
 
@@ -1538,7 +1538,7 @@ async function runCoverageBatch({
   runPath = runAnswerPath
 } = {}) {
   const batchGeneratedAt = new Date().toISOString()
-  const queue = modes.map(mode => ({ mode, answerPath: [] }))
+  const pendingList = modes.map(mode => ({ mode, answerPath: [] }))
   const scheduledPairs = new Set()
   const coveredPairs = new Set()
   const records = []
@@ -1558,7 +1558,7 @@ async function runCoverageBatch({
     if (!force && currentRecordCount - lastProgressRecordCount < 25) {return}
     lastProgressRecordCount = currentRecordCount
     process.stderr.write(
-      `[pairwise-batch] tasks=${completedTaskCount}, active=${activeCount}, queued=${queue.length}, records=${records.length}, coveredPairs=${coveredPairs.size}, scheduledPairs=${scheduledPairs.size}, failures=${failures.length}\n`
+      `[pairwise-batch] tasks=${completedTaskCount}, active=${activeCount}, queued=${pendingList.length}, records=${records.length}, coveredPairs=${coveredPairs.size}, scheduledPairs=${scheduledPairs.size}, failures=${failures.length}\n`
     )
   }
 
@@ -1648,7 +1648,7 @@ async function runCoverageBatch({
             modeKey: task.mode.modeKey,
             symptomKey: task.mode.symptomKey,
             questionKey,
-            questionRole: normalizeText(question.questionRole || question.questionCategory),
+            routePackageRole: normalizeText(question.routePackageRole || question.routePackageRole),
             optionKeys: []
           })
         }
@@ -1661,7 +1661,7 @@ async function runCoverageBatch({
           if (scheduledPairs.has(pairKey)) {continue}
           if (shouldStopScheduling()) {continue}
           scheduledPairs.add(pairKey)
-          queue.push({
+          pendingList.push({
             mode: task.mode,
             answerPath: [
               ...task.answerPath,
@@ -1694,8 +1694,8 @@ async function runCoverageBatch({
 
   await new Promise(resolve => {
     const pump = () => {
-      while (activeCount < concurrency && queue.length && !shouldStopScheduling()) {
-        const task = queue.shift()
+      while (activeCount < concurrency && pendingList.length && !shouldStopScheduling()) {
+        const task = pendingList.shift()
         activeCount += 1
         processTask(task)
           .finally(() => {
@@ -1705,7 +1705,7 @@ async function runCoverageBatch({
             pump()
           })
       }
-      if ((shouldStopScheduling() || queue.length === 0) && activeCount === 0) {
+      if ((shouldStopScheduling() || pendingList.length === 0) && activeCount === 0) {
         printProgress(true)
         resolve()
       }
@@ -1717,12 +1717,12 @@ async function runCoverageBatch({
     clearInterval(progressTimer)
   }
 
-  if (shouldStopScheduling() && queue.length) {
+  if (shouldStopScheduling() && pendingList.length) {
     failures.push({
       modeKey: '',
       symptomKey: '',
       answerPathSignature: '',
-      error: `达到 maxCases=${maxCases}，剩余队列 ${queue.length} 条未执行`
+      error: `达到 maxCases=${maxCases}，剩余队列 ${pendingList.length} 条未执行`
     })
   }
 

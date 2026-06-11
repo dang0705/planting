@@ -10,11 +10,11 @@ const {
   toResultId
 } = require('../mappers/public-id-mapper')
 const {
-  normalizeQuestionRole,
-  normalizeQuestionEffectMode,
-  inferQuestionRole,
-  inferQuestionEffectMode
-} = require('../utils/question-target-dimension')
+  normalizeRoutePackageRole,
+  normalizeQuestionPackageEffect,
+  inferRoutePackageRole,
+  inferQuestionPackageEffect
+} = require('../utils/question-package-topic')
 const {
   buildActionAdviceSteps,
   buildActionAvoidTexts,
@@ -148,7 +148,7 @@ function formatDiagnosisResponse({
     preferredRoutePrimaryAction
   })
   const stopReason = resolveStopReason({ questionRequired, stopDecision })
-  const legacyExplanationPayload = outcomeType === 'uncertain'
+  const currentExplanationPayload = outcomeType === 'uncertain'
     ? buildUncertainExplanation(lowConfidence, symptomClassRuntime)
     : buildExplanation(primaryProblem, primaryExplanation)
   const routeOutcomePayload = resolveRouteOutcomePayload({
@@ -189,7 +189,7 @@ function formatDiagnosisResponse({
         routePrimaryExplanation: explanationMap.get(routeLeadingVisibleOutcome.problemKey) || null,
         routeSafeSummary
       })
-    : legacyExplanationPayload
+    : currentExplanationPayload
   if (careGuidance.environmentDeviationHints.length) {
     explanationPayload.whatToCheckNext = uniqList([
       explanationPayload.whatToCheckNext,
@@ -328,13 +328,13 @@ function formatDiagnosisResponse({
     finalResult: authoritativeRouteDecision ? routeBackedFinalResultPayload : finalResultPayload,
     questionRequired: Boolean(questionRequired && questions.length),
     questions: questions.map(question => {
-      const questionRole = normalizeQuestionRole(
-        question.questionRole || question.question_role || '',
-        inferQuestionRole(question.targetDimension || question.target_dimension || '', question.routingScope || question.routing_scope || '')
+      const routePackageRole = normalizeRoutePackageRole(
+        question.routePackageRole || question.route_package_role || '',
+        inferRoutePackageRole(question.packageTopic || question.package_topic || '', question.packageSection || question.package_section || '')
       )
-      const effectMode = normalizeQuestionEffectMode(
-        question.effectMode || question.effect_mode || '',
-        inferQuestionEffectMode(questionRole, question.targetDimension || question.target_dimension || '')
+      const packageEffect = normalizeQuestionPackageEffect(
+        question.packageEffect || question.package_effect || '',
+        inferQuestionPackageEffect(routePackageRole, question.packageTopic || question.package_topic || '')
       )
       const resolvedQuestionText = String(
         question.questionText ||
@@ -350,11 +350,11 @@ function formatDiagnosisResponse({
         questionKey: question.questionKey,
         targetSymptomKey: question.targetSymptomKey || '',
         questionGroupKey: question.questionGroupKey,
-        targetDimension: question.targetDimension || '',
-        routingScope: question.routingScope || '',
-        questionRole,
-        questionCategory: questionRole,
-        effectMode,
+        packageTopic: question.packageTopic || '',
+        packageSection: question.packageSection || '',
+        routePackageRole,
+        routePackageRole: routePackageRole,
+        packageEffect,
         type: 'single_choice',
         text: resolvedQuestionText,
         questionText: resolvedQuestionText,

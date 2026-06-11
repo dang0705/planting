@@ -427,7 +427,7 @@ function isCompactRuntimePayload(scope = '', payload = {}) {
   return (
     payload &&
     typeof payload === 'object' &&
-    !payload.questionQueue &&
+    !payload.questionPackageSnapshot &&
     !payload.coreProcess &&
     normalizeText(payload.diagnosisSessionId || '') &&
     normalizeText(payload.roundId || '') &&
@@ -465,7 +465,7 @@ function assertFormalRuntimeArtifacts(scope, payload = {}) {
     return
   }
 
-  const questionQueue = payload?.questionQueue
+  const questionPackageSnapshot = payload?.questionPackageSnapshot
   const stopState = payload?.stopState
   const outputEligibility = payload?.outputEligibility
   const diagnosticTrace = payload?.diagnosticTrace
@@ -473,7 +473,7 @@ function assertFormalRuntimeArtifacts(scope, payload = {}) {
   const stage = normalizeText(payload?.stage || '')
   const routePrimaryAction = normalizeText(payload?.routePrimaryAction || '')
 
-  assertCondition(questionQueue && typeof questionQueue === 'object', `${scope} questionQueue 缺失`)
+  assertCondition(questionPackageSnapshot && typeof questionPackageSnapshot === 'object', `${scope} questionPackageSnapshot 缺失`)
   assertCondition(stopState && typeof stopState === 'object', `${scope} stopState 缺失`)
   assertCondition(outputEligibility && typeof outputEligibility === 'object', `${scope} outputEligibility 缺失`)
   assertCondition(Array.isArray(diagnosticTrace), `${scope} diagnosticTrace 缺失`)
@@ -482,10 +482,10 @@ function assertFormalRuntimeArtifacts(scope, payload = {}) {
   assertCondition(coreProcess?.evidence && typeof coreProcess.evidence === 'object', `${scope} coreProcess.evidence 缺失`)
   assertCondition(coreProcess?.followUp && typeof coreProcess.followUp === 'object', `${scope} coreProcess.followUp 缺失`)
   assertCondition(coreProcess?.decision && typeof coreProcess.decision === 'object', `${scope} coreProcess.decision 缺失`)
-  assertCondition(Array.isArray(questionQueue?.questionItems), `${scope} questionQueue.questionItems 不是数组`)
+  assertCondition(Array.isArray(questionPackageSnapshot?.questionItems), `${scope} questionPackageSnapshot.questionItems 不是数组`)
   assertCondition(
-    coreProcess?.followUp?.questionQueue && typeof coreProcess.followUp.questionQueue === 'object',
-    `${scope} coreProcess.followUp.questionQueue 缺失`
+    coreProcess?.followUp?.questionPackageSnapshot && typeof coreProcess.followUp.questionPackageSnapshot === 'object',
+    `${scope} coreProcess.followUp.questionPackageSnapshot 缺失`
   )
   assertCondition(
     coreProcess?.decision?.stopState && typeof coreProcess.decision.stopState === 'object',
@@ -501,7 +501,7 @@ function assertFormalRuntimeArtifacts(scope, payload = {}) {
   )
   assertCondition(
     Number(coreProcess?.followUp?.questionCountSummary?.totalItems ?? 0) ===
-      Number(questionQueue?.questionItems?.length || 0),
+      Number(questionPackageSnapshot?.questionItems?.length || 0),
     `${scope} coreProcess questionCountSummary.totalItems 不一致`
   )
   assertCondition(
@@ -513,8 +513,8 @@ function assertFormalRuntimeArtifacts(scope, payload = {}) {
     `${scope} coreProcess stopReason 不一致`
   )
   assertCondition(
-    diagnosticTrace.some(item => normalizeText(item?.eventType || '') === 'question_queue_evaluated'),
-    `${scope} diagnosticTrace 缺少 question_queue_evaluated`
+    diagnosticTrace.some(item => normalizeText(item?.eventType || '') === 'question_package_snapshot_evaluated'),
+    `${scope} diagnosticTrace 缺少 question_package_snapshot_evaluated`
   )
   assertCondition(
     diagnosticTrace.some(item => normalizeText(item?.eventType || '') === 'stop_state_formed'),
@@ -530,15 +530,15 @@ function assertFormalRuntimeArtifacts(scope, payload = {}) {
     assertCondition(Number(stopState?.isStopped || 0) === 0, `${scope} followup stopState 不应已停止`)
     assertCondition(Number(stopState?.allowMoreQuestions || 0) === 1, `${scope} followup 应允许继续追问`)
     assertCondition(
-      Number(questionQueue?.activeItemCount || 0) > 0,
-      `${scope} followup questionQueue.activeItemCount 应大于 0`
+      Number(questionPackageSnapshot?.activeItemCount || 0) > 0,
+      `${scope} followup questionPackageSnapshot.activeItemCount 应大于 0`
     )
   }
 
   if (stage === 'final') {
     assertCondition(Number(stopState?.isStopped || 0) === 1, `${scope} final stopState 应已停止`)
     assertCondition(Number(outputEligibility?.eligible || 0) === 1, `${scope} final outputEligibility 应可输出`)
-    assertCondition(Number(questionQueue?.activeItemCount || 0) === 0, `${scope} final questionQueue.activeItemCount 应为 0`)
+    assertCondition(Number(questionPackageSnapshot?.activeItemCount || 0) === 0, `${scope} final questionPackageSnapshot.activeItemCount 应为 0`)
     assertCondition(Array.isArray(payload?.derivedEvidenceSet), `${scope} final derivedEvidenceSet 缺失`)
     assertCondition(
       payload?.careBaselineSummary && typeof payload.careBaselineSummary === 'object',
@@ -551,10 +551,10 @@ function assertFormalRuntimeArtifacts(scope, payload = {}) {
   }
 
   if (stage === 'followup' && routePrimaryAction === 'retake_first') {
-    const hasRetakeItem = (Array.isArray(questionQueue?.questionItems) ? questionQueue.questionItems : []).some(
+    const hasRetakeItem = (Array.isArray(questionPackageSnapshot?.questionItems) ? questionPackageSnapshot.questionItems : []).some(
       item => normalizeText(item?.questionGroupKey || '') === 'retake_capture'
     )
-    assertCondition(hasRetakeItem, `${scope} retake_first 缺少 retake_capture questionQueue 项`)
+    assertCondition(hasRetakeItem, `${scope} retake_first 缺少 retake_capture questionPackageSnapshot 项`)
   }
 }
 

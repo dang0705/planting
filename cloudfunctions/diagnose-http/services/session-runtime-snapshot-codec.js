@@ -217,7 +217,6 @@ function buildSnapshotPayload({
     visualBatchTrace: response?.visualBatchTrace || null,
     visualAggregateSummary,
     shadowCompareSummary,
-    questionQueue: response?.questionQueue || null,
     stopState: response?.stopState || null,
     outputEligibility: response?.outputEligibility || null,
     diagnosticTrace: Array.isArray(response?.diagnosticTrace) ? response.diagnosticTrace : [],
@@ -350,7 +349,7 @@ function buildCompactRouteDecision(routeDecision = null) {
         outcomeKey: String(state?.outcomeKey || '').trim(),
         state: String(state?.state || '').trim(),
         routeKeys: normalizeRuntimeStringList(state?.routeKeys),
-        missingGateKeys: normalizeRuntimeStringList(state?.missingGateKeys),
+        missingConditionKeys: normalizeRuntimeStringList(state?.missingConditionKeys),
         nextQuestionKeys: normalizeRuntimeStringList(state?.nextQuestionKeys)
       }))
       .filter(state => state.outcomeKey || state.state)
@@ -459,7 +458,6 @@ function buildRuntimeSnapshotPayload({
           questionCount: Array.isArray(response?.questions) ? response.questions.length : 0
         }),
     questionPackageSnapshot: response?.questionPackageSnapshot || null,
-    questionQueue: isQuestionPackageSnapshot ? null : response?.questionQueue || null,
     stopState: response?.stopState || null,
     outputEligibility: response?.outputEligibility || null,
     diagnosticTrace: isQuestionRuntimeSnapshot

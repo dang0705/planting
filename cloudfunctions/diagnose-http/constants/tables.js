@@ -19,7 +19,7 @@ module.exports = [
   'diagnosis_result_explanations',
   'outcome_route_groups',
   'outcome_routes',
-  'outcome_route_gates',
+  'outcome_route_conditions',
   'outcome_route_questions',
   'outcome_answer_effects',
   'outcome_action_profiles',
@@ -27,6 +27,5 @@ module.exports = [
   'visual_supervision_records',
   'visual_out_of_pool_candidate_reviews',
   'visual_out_of_pool_proxy_mappings',
-  'question_queue',
   'stop_state'
 ]

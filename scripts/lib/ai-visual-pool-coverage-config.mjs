@@ -22,13 +22,13 @@ export const aiVisualPoolCoverageConfig = {
   secretKey: cloudbaseSecretKey,
   batchIds: {
     auditedGapClosure: 'batch_20260413_ai_visual_pool_gap_closure',
-    legacyGapClosure: 'batch_20260413_ai_visual_pool_legacy_gap_closure',
+    sessionGapClosure: 'batch_20260413_ai_visual_pool_session_gap_closure',
     stableMarkingBridge: 'batch_20260413_ai_visual_np_gap_closure'
   },
   batchPurpose: {
     auditedGapClosure: 'close original 19 ai_visual_pool formal audited question gaps',
-    legacyGapClosure:
-      'close remaining 23 legacy ai_visual_pool formal audited question gaps and sync prod audited assets to cloud1_dev',
+    sessionGapClosure:
+      'close remaining 23 session ai_visual_pool formal audited question gaps and sync prod audited assets to cloud1_dev',
     stableMarkingBridge: 'bridge stable_natural_marking_pattern into formal audited question coverage'
   },
   exceptionKeys: ['normal_leaf_aging_stable'],
@@ -46,9 +46,9 @@ export const aiVisualPoolCoverageConfig = {
   },
   sourceVerificationSummary: {
     auditedGapClosureGenerator: 'scripts/curation/ai_visual_pool_question_gap_closure_v1.js',
-    legacyGapClosureGenerator: 'scripts/curation/ai_visual_pool_legacy_gap_closure_v1.js',
+    sessionGapClosureGenerator: 'scripts/curation/ai_visual_pool_session_gap_closure_v1.js',
     auditedGapClosureSqlGenerator: 'scripts/generate-ai-visual-pool-question-gap-closure.mjs',
-    legacyGapClosureSqlGenerator: 'scripts/generate-ai-visual-pool-legacy-gap-closure.mjs',
+    sessionGapClosureSqlGenerator: 'scripts/generate-ai-visual-pool-session-gap-closure.mjs',
     stableMarkingBridgeGenerator: 'scripts/generate-ai-visual-pool-stable-marking-audited-upgrade.mjs',
     sqlVerifier: 'scripts/verify-ai-visual-pool-stable-gap-closure.mjs',
     artifactRenderer: 'scripts/render-ai-visual-pool-coverage-artifacts.mjs',
@@ -60,7 +60,7 @@ export const aiVisualPoolCoverageConfig = {
     'scripts/terminal-e2e/cloudbase-http-check.mjs',
     'docs/ai_visual_pool_question_gap_closure_compare_v1.md',
     'docs/ai_visual_pool_19_gap_closure_compare_v1.md',
-    'docs/ai_visual_pool_legacy_gap_closure_compare_v1.md'
+    'docs/ai_visual_pool_session_gap_closure_compare_v1.md'
   ],
   runtimeVerification: {
     stableMarkingSmoke: {

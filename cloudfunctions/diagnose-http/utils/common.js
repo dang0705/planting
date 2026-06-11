@@ -18,7 +18,7 @@ function buildRecordId() {
   return `diagnose_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 }
 
-function shouldFallbackToModel(error) {
+function shouldConservativeToModel(error) {
   const message = String(error?.message || '')
 
   if (/超时|timeout|ETIMEDOUT|ECONNRESET|ECONNABORTED/i.test(message)) {
@@ -37,6 +37,6 @@ module.exports = {
   debugLog,
   isSkipAuthEnabled,
   buildRecordId,
-  shouldFallbackToModel
+  shouldConservativeToModel
 }
 

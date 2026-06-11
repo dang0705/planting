@@ -143,7 +143,7 @@ async function persistIdentifyRuntimeArtifacts({
   taxonomyMatchStatus = 'unresolved',
   identityResolutionStatus = 'unresolved',
   inputSlotType = 'unknown',
-  legacyCanonicalPlantId = null
+  sessionCanonicalPlantId = null
 }) {
   const normalizedConfidence = normalizeConfidence(confidence)
   const visualCallBatchId = buildRuntimeId('visbatch')
@@ -370,7 +370,7 @@ async function persistIdentifyRuntimeArtifacts({
       recognizedName,
       recognizedType,
       confidence: normalizedConfidence,
-      canonicalPlantId: legacyCanonicalPlantId || '',
+      canonicalPlantId: sessionCanonicalPlantId || '',
       matchType: primaryCandidate?.matchType || null,
       rawPayload: stringifyJson(rawPayload),
       candidateMatches: stringifyJson(candidateMatches)

@@ -90,18 +90,18 @@ function normalizeText(value = '') {
   return String(value || '').trim()
 }
 
-function normalizeReviewSourceType(value = '', fallback = 'legacy') {
+function normalizeReviewSourceType(value = '', fallback = 'session') {
   const normalized = String(value || '').trim().toLowerCase()
   if (normalized === 'all') {return 'all'}
   if (normalized === 'batch') {return 'batch'}
   if (normalized === 'manual') {return 'manual'}
-  if (normalized === 'legacy') {return 'legacy'}
+  if (normalized === 'session') {return 'session'}
   if (normalized === 'web') {return 'web'}
   if (fallback === 'all') {return 'all'}
   return fallback
 }
 
-function normalizeReviewSourceEvidence(value = '', reviewSourceType = 'legacy', clientPlatform = '') {
+function normalizeReviewSourceEvidence(value = '', reviewSourceType = 'session', clientPlatform = '') {
   const normalized = normalizeText(value)
   if (normalized) {return normalized}
   if (reviewSourceType === 'batch') {return 'batch_table'}
@@ -112,7 +112,7 @@ function normalizeReviewSourceEvidence(value = '', reviewSourceType = 'legacy', 
   if (reviewSourceType === 'manual') {
     return 'openid_inferred_manual'
   }
-  return 'openid_inferred_legacy'
+  return 'openid_inferred_session'
 }
 
 function hasExplicitSummary(data = {}) {
@@ -130,7 +130,7 @@ function hasExplicitSourceBreakdown(data = {}) {
   if (!rawSummary || typeof rawSummary !== 'object') {
     return false
   }
-  return ['manualCount', 'batchCount', 'legacyCount'].some(key =>
+  return ['manualCount', 'batchCount', 'sessionCount'].some(key =>
     Object.prototype.hasOwnProperty.call(rawSummary, key)
   )
 }
@@ -167,7 +167,7 @@ function buildNormalizedSummaryFromRaw(data = {}, fallbackSummary = {}) {
     otherOutcomeCount,
     manualCount: Number(rawSummary?.manualCount || fallbackSummary.manualCount || 0),
     batchCount: Number(rawSummary?.batchCount || fallbackSummary.batchCount || 0),
-    legacyCount: Number(rawSummary?.legacyCount || fallbackSummary.legacyCount || 0)
+    sessionCount: Number(rawSummary?.sessionCount || fallbackSummary.sessionCount || 0)
   }
 }
 
@@ -211,7 +211,7 @@ function resolveNormalizedReviewSourceType({
     return 'manual'
   }
 
-  return 'legacy'
+  return 'session'
 }
 
 function normalizePreviewImageRef(value = '') {
@@ -397,7 +397,7 @@ function resolveQuestionCountSummary(detail = {}) {
     detail?.questionCountSummary ||
       detail?.coreSummary?.questionCountSummary ||
       detail?.coreProcess?.followUp?.questionCountSummary ||
-      detail?.questionQueue?.questionCountSummary ||
+      detail?.questionPackageSnapshot?.questionCountSummary ||
       null
   )
 }
@@ -525,7 +525,7 @@ function buildLocalDiagnosisReviewSummary(items = []) {
     otherOutcomeCount,
     manualCount: safeItems.filter(item => item?.reviewSourceType === 'manual').length,
     batchCount: safeItems.filter(item => item?.reviewSourceType === 'batch').length,
-    legacyCount: safeItems.filter(item => item?.reviewSourceType === 'legacy').length
+    sessionCount: safeItems.filter(item => item?.reviewSourceType === 'session').length
   }
 }
 
@@ -556,7 +556,7 @@ function normalizeReviewListEnvelopeData(data = {}, fallbackSourceType = 'all') 
   })
   const requestedSourceType = normalizeReviewSourceType(fallbackSourceType, 'all')
   const items = normalizedItems.filter(item => {
-    if (requestedSourceType === 'all') {return item.reviewSourceType !== 'legacy'}
+    if (requestedSourceType === 'all') {return item.reviewSourceType !== 'session'}
     return item.reviewSourceType === requestedSourceType
   })
 
@@ -564,7 +564,7 @@ function normalizeReviewListEnvelopeData(data = {}, fallbackSourceType = 'all') 
   const rawSummary = buildNormalizedSummaryFromRaw(data, fallbackSummary)
   const useRawSummaryForSource =
     requestedSourceType === 'batch' ||
-    requestedSourceType === 'legacy' ||
+    requestedSourceType === 'session' ||
     (requestedSourceType === 'manual' && hasExplicitSourceBreakdown(data))
   const directSourceSummary = {
     total: hasExplicitSummary(data) && useRawSummaryForSource ? rawSummary.total : items.length,
@@ -585,14 +585,14 @@ function normalizeReviewListEnvelopeData(data = {}, fallbackSourceType = 'all') 
     directSourceSummary.total - directSourceSummary.finalizedCount - directSourceSummary.otherOutcomeCount
   )
   const effectiveSummary =
-    requestedSourceType === 'legacy'
+    requestedSourceType === 'session'
       ? rawSummary
       : requestedSourceType === 'all'
         ? {
             ...rawSummary,
             manualCount: Number(rawSummary.manualCount || fallbackSummary.manualCount || 0),
             batchCount: Number(rawSummary.batchCount || fallbackSummary.batchCount || 0),
-            legacyCount: Number(rawSummary.legacyCount || fallbackSummary.legacyCount || 0)
+            sessionCount: Number(rawSummary.sessionCount || fallbackSummary.sessionCount || 0)
           }
         : {
             ...(hasExplicitSummary(data) && useRawSummaryForSource ? rawSummary : directSourceSummary)
@@ -609,11 +609,11 @@ function normalizeReviewListEnvelopeData(data = {}, fallbackSourceType = 'all') 
       : requestedSourceType === 'all'
         ? Number(effectiveSummary.batchCount || 0)
         : 0
-  const legacyCount =
-    requestedSourceType === 'legacy'
+  const sessionCount =
+    requestedSourceType === 'session'
       ? effectiveSummary.total
       : requestedSourceType === 'all'
-        ? Number(effectiveSummary.legacyCount || 0)
+        ? Number(effectiveSummary.sessionCount || 0)
         : 0
 
   return {
@@ -630,7 +630,7 @@ function normalizeReviewListEnvelopeData(data = {}, fallbackSourceType = 'all') 
       otherOutcomeCount: effectiveSummary.otherOutcomeCount,
       manualCount,
       batchCount,
-      legacyCount
+      sessionCount
     }
   }
 }
@@ -732,7 +732,7 @@ async function handleLocalDiagnosisReviewRequest(req, res) {
     const filtered = records.filter(record => {
       const item = mapAuditRecordToListItem(record)
       if (sourceType === 'all') {
-        return item.reviewSourceType !== 'legacy'
+        return item.reviewSourceType !== 'session'
       }
       if (item.reviewSourceType !== sourceType) {
         return false
