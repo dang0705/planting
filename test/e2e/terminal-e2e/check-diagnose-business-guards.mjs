@@ -1778,11 +1778,9 @@ function checkFormalUncertainGuard() {
         visualEvidence: 0.4,
         questionEvidence: 0.2,
         totalEvidence: 0.6,
-        evidenceCount: 2,
-        rankNo: 1
+        evidenceCount: 2
       }
     ],
-    followUps: [],
     problems: [
       {
         problemKey: 'fungal_leaf_spot',
@@ -1863,11 +1861,9 @@ function checkFormalUncertainGuard() {
         visualEvidence: 0.3,
         questionEvidence: 0.1,
         totalEvidence: 0.4,
-        evidenceCount: 2,
-        rankNo: 1
+        evidenceCount: 2
       }
     ],
-    followUps: [],
     problems: [
       {
         problemKey: 'fungal_leaf_spot',
@@ -1925,7 +1921,6 @@ function checkDecisionCausePropagationGuard() {
     stage: 'final',
     observedSymptoms: [],
     candidateOutcomes: [],
-    followUps: [],
     problems: [],
     explanations: [],
     causality: [],
@@ -2036,11 +2031,9 @@ function checkDerivedEvidenceAndCareBaselineGuard() {
         genusSuitabilityibility: 1,
         evidenceCount: 2,
         finalScore: 0.92,
-        baseScore: 0.92,
-        rankNo: 1
+        baseScore: 0.92
       }
     ],
-    followUps: [],
     problems: [
       {
         problemKey: 'sunburn',
