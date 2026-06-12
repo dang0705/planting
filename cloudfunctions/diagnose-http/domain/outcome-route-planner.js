@@ -252,7 +252,6 @@ async function planOutcomeRoutes({
         state,
         routeKeys: matchedRouteKeys,
         missingConditionKeys,
-        nextQuestionKeys: [],
         questionEvidenceKeys: dedupeKeys(candidateQuestions.map(item => item.questionKey))
       })
 
@@ -330,7 +329,6 @@ async function planOutcomeRoutes({
       activeRouteGroupKeys,
       visibleOutcomeKeys: limitedVisibleOutcomeKeys,
       requiresQuestion,
-      nextQuestionKeys: [],
       nextQuestions: [],
       questionEvidenceKeys: dedupeKeys(rankedQuestionEvidence.map(item => item.questionKey)),
       conditionResults,

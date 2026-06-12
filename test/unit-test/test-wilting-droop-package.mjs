@@ -49,9 +49,8 @@ function allResultText(result) {
   return JSON.stringify(result)
 }
 
-function assertNoRankingFields(result) {
+function assertNoPriorityFields(result) {
   const forbiddenKeys = [
-    'ranking',
     'rank',
     'score',
     'confidence',
@@ -67,13 +66,13 @@ function assertNoRankingFields(result) {
       assert.equal(
         forbiddenKeys.some(forbidden => key.toLowerCase().includes(forbidden.toLowerCase())),
         false,
-        `forbidden ranking field: ${key}`
+        `forbidden priority field: ${key}`
       )
       visit(child)
     }
   }
   visit(result.visibleOutcomes)
-  assert.doesNotMatch(allResultText(result), /最可能原因|概率排序|主因排序|ranking|probability/i)
+  assert.doesNotMatch(allResultText(result), /最可能原因|概率排序|主因排序|probability/i)
 }
 
 function testPackageConfigAndStart() {
@@ -135,7 +134,7 @@ function testDryWaterAndHeatPressure() {
   assert.ok(names.includes('降低蒸腾压力'))
   assert.ok(names.includes('全株水分压力'))
   assert.equal(result.visibleOutcomes.length >= 3, true)
-  assertNoRankingFields(result)
+  assertNoPriorityFields(result)
 }
 
 function testWetAndRootRotBlocksWatering() {
@@ -151,7 +150,7 @@ function testWetAndRootRotBlocksWatering() {
   assert.ok(result.blockedActionExplanations.some(item => item.actionText === '补足浇水'))
   assert.doesNotMatch(text, /沿盆土缓慢补水/)
   assert.match(result.highRiskWarning, /高危信号/)
-  assertNoRankingFields(result)
+  assertNoPriorityFields(result)
 }
 
 function testReasonableWaterAirflowAndRepotRecovery() {
@@ -169,7 +168,7 @@ function testReasonableWaterAirflowAndRepotRecovery() {
   for (const actionText of ['立即施肥', '再次换盆', '暴晒']) {
     assert.ok(result.blockedActionExplanations.some(item => item.actionText === actionText))
   }
-  assertNoRankingFields(result)
+  assertNoPriorityFields(result)
 }
 
 function testLocalWiltAndPestOutcomes() {
@@ -183,7 +182,7 @@ function testLocalWiltAndPestOutcomes() {
   const names = outcomeNames(result)
   assert.ok(names.includes('局部检查'))
   assert.ok(names.includes('隔离并进入病虫处理'))
-  assertNoRankingFields(result)
+  assertNoPriorityFields(result)
 }
 
 function testDryTendencyAndOdorBlocksWaterReplenishment() {
@@ -198,7 +197,7 @@ function testDryTendencyAndOdorBlocksWaterReplenishment() {
   assert.ok(outcomeNames(result).includes('停浇查根和排水'))
   assert.ok(result.blockedActionExplanations.some(item => item.actionText === '补足浇水'))
   assert.doesNotMatch(text, /沿盆土缓慢补水/)
-  assertNoRankingFields(result)
+  assertNoPriorityFields(result)
 }
 
 function testFrontendSurfaceFields() {

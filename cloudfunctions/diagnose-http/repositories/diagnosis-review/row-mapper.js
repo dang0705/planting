@@ -41,7 +41,6 @@ function buildRouteDecisionReviewSummary(routeDecision = null, stopReason = '') 
       activeRouteGroupKeys: [],
       visibleOutcomeKeys: [],
       visibleOutcomeCount: 0,
-      nextQuestionKeys: [],
       visibleActionConflictGroups: [],
       visibleActionProfileKeys: [],
       requiresQuestion: false,
@@ -64,9 +63,6 @@ function buildRouteDecisionReviewSummary(routeDecision = null, stopReason = '') 
   const visibleActionConflictGroups = Array.isArray(safeDecision.visibleActionConflictGroups)
     ? safeDecision.visibleActionConflictGroups.map(item => String(item || '').trim()).filter(Boolean)
     : []
-  const nextQuestionKeys = Array.isArray(safeDecision.nextQuestionKeys)
-    ? safeDecision.nextQuestionKeys.map(item => String(item || '').trim()).filter(Boolean)
-    : []
 
   const candidateOutcomeStates = Array.isArray(safeDecision.candidateOutcomeStates)
     ? safeDecision.candidateOutcomeStates.map(state => ({
@@ -77,9 +73,6 @@ function buildRouteDecisionReviewSummary(routeDecision = null, stopReason = '') 
         : [],
       missingConditionKeys: Array.isArray(state?.missingConditionKeys)
         ? state.missingConditionKeys.map(item => String(item || '').trim()).filter(Boolean)
-        : [],
-      nextQuestionKeys: Array.isArray(state?.nextQuestionKeys)
-        ? state.nextQuestionKeys.map(item => String(item || '').trim()).filter(Boolean)
         : []
     }))
     : []
@@ -105,7 +98,6 @@ function buildRouteDecisionReviewSummary(routeDecision = null, stopReason = '') 
       : [],
     visibleOutcomeKeys,
     visibleOutcomeCount: visibleOutcomeKeys.length,
-    nextQuestionKeys,
     visibleActionConflictGroups,
     visibleActionProfileKeys: Array.isArray(safeDecision.visibleActionProfileKeys)
       ? safeDecision.visibleActionProfileKeys.map(item => String(item || '').trim()).filter(Boolean)

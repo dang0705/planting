@@ -313,8 +313,7 @@ const rainyWetRouteDecision = await planOutcomeRoutes({
       ]
     }
   },
-  featureFlags: { routePlanningEnabled: true },
-  canAskAnotherFollowUpRound: false
+  featureFlags: { routePlanningEnabled: true }
 })
 
 assert.deepEqual(rainyWetRouteDecision.visibleOutcomeKeys, ['overwatering_root_pressure'])
@@ -425,8 +424,7 @@ const baselineWetRouteDecision = await planOutcomeRoutes({
       ]
     }
   },
-  featureFlags: { routePlanningEnabled: true },
-  canAskAnotherFollowUpRound: false
+  featureFlags: { routePlanningEnabled: true }
 })
 
 assert.deepEqual(baselineWetRouteDecision.visibleOutcomeKeys, ['overwatering_root_pressure'])
@@ -592,8 +590,7 @@ const wetRouteDecision = await planOutcomeRoutes({
       ]
     }
   },
-  featureFlags: { routePlanningEnabled: true },
-  canAskAnotherFollowUpRound: false
+  featureFlags: { routePlanningEnabled: true }
 })
 
 assert.deepEqual(wetRouteDecision.visibleOutcomeKeys, ['overwatering_root_pressure'])
@@ -711,8 +708,7 @@ const baselineRouteDecision = await planOutcomeRoutes({
       ]
     }
   },
-  featureFlags: { routePlanningEnabled: true },
-  canAskAnotherFollowUpRound: false
+  featureFlags: { routePlanningEnabled: true }
 })
 
 assert.deepEqual(baselineRouteDecision.visibleOutcomeKeys, [])

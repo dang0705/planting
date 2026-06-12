@@ -288,14 +288,8 @@ export function useQuestionPackageResultView({ result, payload, routeOptions }) 
   const routeDebugVisibleOutcomeText = computed(() =>
     normalizeArrayText(routeDebugDecision.value?.visibleOutcomeKeys).join(' / ')
   )
-  const routeDebugNextQuestionText = computed(() =>
-    normalizeArrayText(routeDebugDecision.value?.nextQuestionKeys).join(' / ')
-  )
   const routeDebugGroupText = computed(() =>
     normalizeArrayText(routeDebugDecision.value?.activeRouteGroupKeys).join(' / ')
-  )
-  const routeDebugFallbackPolicy = computed(() =>
-    String(routeDebugDecision.value?.fallbackPolicy || '').trim()
   )
   const sessionLabel = computed(() =>
     String(
@@ -332,9 +326,7 @@ export function useQuestionPackageResultView({ result, payload, routeOptions }) 
     routeDebugSummaryText,
     routeDebugModeText,
     routeDebugVisibleOutcomeText,
-    routeDebugNextQuestionText,
     routeDebugGroupText,
-    routeDebugFallbackPolicy,
     sessionLabel,
     roundLabel
   }

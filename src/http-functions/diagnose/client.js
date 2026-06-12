@@ -449,15 +449,6 @@ function normalizeQuestionPackageSnapshot(questionPackageSnapshot = null) {
     roundId: String(questionPackageSnapshot?.roundId || '').trim(),
     roundIndex: Number(questionPackageSnapshot?.roundIndex || 1),
     routePrimaryAction: String(questionPackageSnapshot?.routePrimaryAction || '').trim(),
-    queueStatus: String(questionPackageSnapshot?.queueStatus || '').trim(),
-    queueDecision:
-      questionPackageSnapshot?.queueDecision && typeof questionPackageSnapshot.queueDecision === 'object'
-        ? {
-            hasActionableItems: Number(questionPackageSnapshot.queueDecision?.hasActionableItems || 0) ? 1 : 0,
-            exhaustedReason: String(questionPackageSnapshot.queueDecision?.exhaustedReason || '').trim(),
-            serviceTarget: String(questionPackageSnapshot.queueDecision?.serviceTarget || '').trim()
-          }
-        : null,
     questionItems: (Array.isArray(questionPackageSnapshot?.questionItems) ? questionPackageSnapshot.questionItems : []).map(item => ({
       questionKey: String(item?.questionKey || '').trim(),
       questionId: String(item?.questionId || '').trim(),

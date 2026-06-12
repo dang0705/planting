@@ -174,9 +174,6 @@ function sanitizeRouteDecisionForPublic(routeDecision = null) {
     activeRouteGroupKeys: Array.isArray(routeDecision.activeRouteGroupKeys)
       ? routeDecision.activeRouteGroupKeys.map(item => normalizeKey(item)).filter(Boolean)
       : [],
-    nextQuestionKeys: Array.isArray(routeDecision.nextQuestionKeys)
-      ? routeDecision.nextQuestionKeys.map(item => normalizeKey(item)).filter(Boolean)
-      : [],
     conservativePolicy: normalizeKey(routeDecision.conservativePolicy || ''),
     decisionCause: normalizeDecisionCause(routeDecision.decisionCause)
   }

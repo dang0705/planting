@@ -223,7 +223,6 @@ function buildStaticQuestionPackageStartRoundResult({
         mode: sourceMode,
         candidateOutcomeKeys: [],
         visibleOutcomeKeys: [],
-        nextQuestionKeys: [],
         requiresQuestionPackage: true,
         decisionCause: {
           decisionCauseKey: isWiltingDroopPackage
@@ -238,7 +237,6 @@ function buildStaticQuestionPackageStartRoundResult({
     __runtimeRouteDecision: {
       mode: sourceMode,
       visibleOutcomeKeys: [],
-      nextQuestionKeys: [],
       requiresQuestionPackage: true
     },
     plantContext

@@ -18,7 +18,6 @@ const CONDITION_RESULT = Object.freeze({
   PASS: 'pass',
   FAIL: 'fail',
   BLOCK: 'block',
-  NEED_MORE_INFO: 'need_more_info',
   CONFLICT: 'conflict'
 })
 

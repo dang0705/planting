@@ -577,9 +577,7 @@ function expandCases(manifest) {
         ...group,
         caseKey: `${group.scenarioKey}_${String(index + 1).padStart(3, '0')}`,
         symptomKeys,
-        answers,
-        canAskAnotherFollowUpRound:
-          group.scenarioKey === 'uncertain_or_conflict' && answers.length === 1
+        answers
       })
     }
     return cases
@@ -644,7 +642,6 @@ async function verifyCase({ testCase, routeRepository, routeAnswerEffects }) {
     routeRepository,
     maxVisibleOutcomes: 3,
     maxQuestionCount: 1,
-    canAskAnotherFollowUpRound: testCase.canAskAnotherFollowUpRound,
     featureFlags: { routePlanningEnabled: true }
   })
 
@@ -700,13 +697,6 @@ async function verifyCase({ testCase, routeRepository, routeAnswerEffects }) {
       decision.visibleActionConflictGroups.length > 1,
       `${testCase.caseKey} should retain conflicting action groups for audit`
     )
-  }
-  if (testCase.canAskAnotherFollowUpRound) {
-    if (decision.requiresQuestion) {
-      for (const questionKey of testCase.expectedFollowUpQuestionKeys) {
-        assert.ok(decision.nextQuestionKeys.includes(questionKey), `${testCase.caseKey} missing ${questionKey}`)
-      }
-    }
   }
 }
 

@@ -45,7 +45,7 @@ stale_if_changed:
 | 前端诊断页面 | `src/pages/diagnose/**`, `src/components/DiagnosePopup.vue` |
 | 前端 HTTP 函数客户端 | `src/http-functions/**`, `src/api/env.js` |
 | Vue Query 数据流 | `src/vue-query/**` |
-| 前端诊断归一化 | `src/utils/diagnose-result-normalizer.js`, `src/utils/diagnose-flow*.js`, `src/utils/diagnose-follow-up-payload.js` |
+| 前端诊断归一化 | `src/utils/diagnose-result-normalizer.js`, `src/utils/diagnose-flow*.js` |
 | 诊断统一后端 | `cloudfunctions/diagnose-http/**` |
 | 诊断路由入口 | `cloudfunctions/diagnose-http/app.js`, `cloudfunctions/diagnose-http/app/http-router.js` |
 | 诊断主链 | `cloudfunctions/diagnose-http/domain/diagnosis-engine.js` |
@@ -60,7 +60,7 @@ stale_if_changed:
 
 - `src/pages/index/index.vue`：首页。
 - `src/pages/diagnose/diagnose.vue`：诊断入口。
-- `src/pages/diagnose/follow-up.vue` 与 `src/pages/diagnose/follow-up/**`：历史命名仍含 `follow-up`，但当前产品口径应按问诊题包/结果展示理解，不再按“追问”理解。
+- 诊断延续页与相关目录：历史命名不定义当前产品口径，当前以问诊题包与结果展示理解。
 - `src/pages/profile/diagnosis-review.vue`：诊断审查页面。
 - `src/pages/profile/out-of-pool-review.vue`：池外视觉候选和代理映射审查。
 - `src/http-functions/core/httpRequest.js`：统一 HTTP 云函数请求封装。
@@ -124,15 +124,15 @@ POST /diagnose
 
 ## 5. 当前运行时关键事实
 
-- 诊断运行时已是 route/outcome 主导，不应以 ranking 规划文档当当前事实。
+- 诊断运行时已是 route/outcome 主导，不应以历史排序文档当当前事实。
 - `visibleOutcomes` 是前端可见结果的首要出口；`primaryOutcome` / `secondaryOutcomes` 仅为历史回读来源，不应作为新契约中心。
 - 2026-06-06 最新题包口径：当前不存在“追问”，也不再以“每轮最多 1 题”作为产品/UX 契约。
-- `maxQuestionsPerRound: 1`、`maxFollowUpRounds`、`follow-up` 文件名或函数名如果仍存在，只能视为实现细节或历史命名，不能覆盖当前题包口径。
+- `maxQuestionsPerRound: 1` 及相关历史参数/命名即使在实现中可见，也只能视为实现细节或历史命名，不能覆盖当前题包口径。
 - 问诊题包是当前任务口径；黄叶 4 题是已知历史题包形态之一，不再作为题包长度或题包场景上限。
 - `wilting_droop` 是当前固定题包模式之一，source mode 为 `manual_wilting_droop_route_package`，由手动枯萎/发蔫入口返回 5 题 package：Q0 为 `CareBehaviorTimeline` 浇水时间线，Q1-Q4 覆盖发蔫形态、节律/环境、近期应激和高危异常。
 - `wilting_droop` 整包提交后的终端 resolver 可产出多个 `visibleOutcomes`，并返回轻量冲突动作解释、`highRiskWarning` 与 `observationPeriod`；用户结果页口径是“建议行动清单”，不得写成“最可能原因”。
 - 固定题包 `answer_submit` 完成后是终止问诊状态；后端不得继续规划 route-planned、forced 或 generic 下一题，响应应进入 final/result 路径。
-- route planner 只保留 outcome/evidence 判定；缺失证据不得转成 `NEED_MORE_INFO`、`requiresFollowUp` 或 `nextQuestionKeys`。route-planned follow-up resolver 已不再作为当前路径。
+- route 只保留 outcome/evidence 判定；缺失证据不应进入补问或重试分支，当前路径按终止决策与公开响应收敛。
 - 有效 `yellow_leaf` 题包答案必须按同一当前轮次的 package 进行持久化和归属校验；既往队列或锚点实现不再作为包级停止依据。
 - 环境上下文当前以 v7 为准，使用 10 天历史窗口与 15 天天气预报窗口参与养护建议。
 - `diagnosis-history-http` 已下线；历史、结果、反馈通过 `diagnose-http`。

@@ -410,11 +410,9 @@ async function testRoutePlannerDoesNotRequireQuestionForMissingCondition() {
   })
 
   assert.equal(withBudget.requiresQuestion, false)
-  assert.deepEqual(withBudget.nextQuestionKeys, [])
   assert.deepEqual(withBudget.nextQuestions, [])
   assert.deepEqual(withBudget.candidateOutcomeStates[0].questionEvidenceKeys, ['q_soil_moisture_recent'])
   assert.equal(noBudget.requiresQuestion, false)
-  assert.deepEqual(noBudget.nextQuestionKeys, [])
 }
 
 async function testRoutePlannerConservativeIsConservative() {
@@ -642,7 +640,6 @@ async function testRoutePlannerNextQuestions() {
   })
 
   assert.equal(decision.requiresQuestion, false)
-  assert.deepEqual(decision.nextQuestionKeys, [])
   assert.deepEqual(decision.nextQuestions, [])
   assert.deepEqual(decision.candidateOutcomeStates[0].questionEvidenceKeys, ['q_soil_moisture_recent'])
 }
@@ -1147,7 +1144,6 @@ async function testYellowingCareContextOnlyDoesNotCloseWaterConflict() {
 
   assert.deepEqual(decision.visibleOutcomeKeys, [])
   assert.equal(decision.requiresQuestion, false)
-  assert.deepEqual(decision.nextQuestionKeys, [])
   assert.deepEqual(decision.nextQuestions, [])
   assert.deepEqual(decision.candidateOutcomeStates[0].questionEvidenceKeys, [
     'q_observed_probe__leaf_yellowing__watering_frequency_context'
@@ -1277,7 +1273,6 @@ async function testVisualCandidateYellowingExpandsRouteGroupAndPlansWateringCont
   assert.deepEqual(decision.activeRouteGroupKeys, ['yellowing_care_split_group'])
   assert.equal(decision.decisionCause.decisionCauseDetails.symptomMatchedRouteGroupKeys[0], 'yellowing_care_split_group')
   assert.equal(decision.requiresQuestion, false)
-  assert.deepEqual(decision.nextQuestionKeys, [])
   assert.deepEqual(decision.nextQuestions, [])
   assert.deepEqual(decision.candidateOutcomeStates[0].questionEvidenceKeys, [
     'q_observed_probe__leaf_yellowing__watering_frequency_context'
@@ -1450,7 +1445,6 @@ async function testYellowingRouteDoesNotHoldVisibleOutcomeForMissingPackageGroup
 
   assert.deepEqual(decision.visibleOutcomeKeys, ['overwatering_root_pressure'])
   assert.equal(decision.requiresQuestion, false)
-  assert.deepEqual(decision.nextQuestionKeys, [])
   assert.equal(decision.decisionCause.decisionCauseKey, 'route_visible_outcomes_ready')
 }
 
@@ -1823,7 +1817,6 @@ async function testYellowingCareContextAnswerKeepsRouteQuestionEvidence() {
   })
 
   assert.equal(lightDecision.requiresQuestion, false)
-  assert.deepEqual(lightDecision.nextQuestionKeys, [])
   assert.deepEqual(lightDecision.candidateOutcomeStates[0].questionEvidenceKeys, [
     'q_observed_probe__leaf_yellowing__light_change_context'
   ])
@@ -1843,7 +1836,6 @@ async function testYellowingCareContextAnswerKeepsRouteQuestionEvidence() {
     featureFlags: { routePlanningEnabled: true },
   })
 
-  assert.deepEqual(unknownDecision.nextQuestionKeys, [])
   assert.equal(
     unknownDecision.candidateOutcomeStates.some(state =>
       (state.questionEvidenceKeys || []).includes('q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern')
@@ -2359,7 +2351,6 @@ async function testSessionYellowingLeafAgeAnswerDoesNotCloseRoute() {
   })
 
   assert.deepEqual(decision.visibleOutcomeKeys, [])
-  assert.deepEqual(decision.nextQuestionKeys, [])
 }
 
 function testMultiOutcomeConflictPreservesPerOutcomeAdviceItems() {
@@ -4606,7 +4597,6 @@ function testFrontendNormalizationSuitability() {
       mode: 'multi_outcome_route',
       visibleOutcomeKeys: ['overwatering_root_pressure'],
       activeRouteGroupKeys: ['watering_split'],
-      nextQuestionKeys: ['q_soil_moisture_recent'],
       conservativePolicy: '',
       decisionCause: {
         decisionCauseKey: 'wet_soil_confirmed',
@@ -4670,7 +4660,6 @@ function testFrontendNormalizationSuitability() {
       mode: 'multi_outcome_route',
       visibleOutcomeKeys: ['sunburn', 'nutrient_deficiency', 'overwatering_root_pressure'],
       activeRouteGroupKeys: ['light_heat_split_group'],
-      nextQuestionKeys: [],
       conservativePolicy: '',
       decisionCause: {
         decisionCauseKey: 'route_action_conflict_unresolved',
@@ -4769,7 +4758,6 @@ function testReviewCoreProcessKeepsRoutePath() {
       mode: 'multi_outcome_route',
       activeRouteGroupKeys: ['yellowing_care_split_group'],
       visibleOutcomeKeys: ['overwatering_root_pressure'],
-      nextQuestionKeys: [],
       conservativePolicy: '',
       decisionCause: {
         decisionCauseKey: 'route_visible_outcomes_ready',
@@ -4780,8 +4768,7 @@ function testReviewCoreProcessKeepsRoutePath() {
           outcomeKey: 'overwatering_root_pressure',
           state: 'display_eligible',
           routeKeys: ['yellowing_wet_soil_route'],
-          missingConditionKeys: [],
-          nextQuestionKeys: []
+          missingConditionKeys: []
         }
       ],
       conditionResults: [

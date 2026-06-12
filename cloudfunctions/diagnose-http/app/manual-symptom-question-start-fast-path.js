@@ -258,7 +258,6 @@ async function buildManualQuestionStartRoundResult({
               mode: 'manual_yellowing_care_environment_frontloaded',
               candidateOutcomeKeys: [],
               visibleOutcomeKeys: [],
-              nextQuestionKeys: [],
               requiresQuestion: false,
               decisionCause: {
               decisionCauseKey: 'manual_yellowing_care_environment_guard',
@@ -269,7 +268,6 @@ async function buildManualQuestionStartRoundResult({
         __runtimeRouteDecision: {
           mode: 'manual_yellowing_care_environment_frontloaded',
           visibleOutcomeKeys: [],
-          nextQuestionKeys: [],
           requiresQuestion: false
         },
         plantContext

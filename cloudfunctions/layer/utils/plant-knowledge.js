@@ -1005,7 +1005,7 @@ async function buildDiagnosisDecision({
   if (!candidates.length) {
     return {
       plant: plantContext,
-      rankings: [],
+      candidateOutcomes: [],
       topProblemKey: '',
       topProblemCn: '',
       topScore: 0,
@@ -1065,7 +1065,7 @@ async function buildDiagnosisDecision({
     }
   }
 
-  const rankings = candidates
+  const candidateOutcomes = candidates
     .map(candidate => {
       const hostCompatibility = clampProbability(candidate.host_compatibility)
       const genusCompatibility = Number(candidate.is_genus_candidate || 0) > 0 ? 1 : 0
@@ -1124,8 +1124,8 @@ async function buildDiagnosisDecision({
       isDecisive: index === 0 && item.decisiveSymptomCount > 0
     }))
 
-  const top = rankings[0]
-  const second = rankings[1] || { weightedScore: 0 }
+  const top = candidateOutcomes[0]
+  const second = candidateOutcomes[1] || { weightedScore: 0 }
   const topScoreGap = round(top.weightedScore - second.weightedScore)
   const reliabilityScore = round(clampProbability(
     top.weightedScore +
@@ -1142,21 +1142,21 @@ async function buildDiagnosisDecision({
 
   const followUps = []
   if (needsFollowUp) {
-    const topRankingKeys = rankings.slice(0, DIAGNOSIS_RULES.followUpMaxQuestions).map(item => item.problemKey)
-    const causalityRows = await loadProblemCausality(topRankingKeys)
+    const topCandidateOutcomeKeys = candidateOutcomes.slice(0, DIAGNOSIS_RULES.followUpMaxQuestions).map(item => item.problemKey)
+    const causalityRows = await loadProblemCausality(topCandidateOutcomeKeys)
     const causalityCandidateKeys = []
 
     for (const row of causalityRows) {
-      if (topRankingKeys.includes(row.cause_problem_key) && row.effect_problem_key) {
+      if (topCandidateOutcomeKeys.includes(row.cause_problem_key) && row.effect_problem_key) {
         causalityCandidateKeys.push(row.effect_problem_key)
       }
-      if (topRankingKeys.includes(row.effect_problem_key) && row.cause_problem_key) {
+      if (topCandidateOutcomeKeys.includes(row.effect_problem_key) && row.cause_problem_key) {
         causalityCandidateKeys.push(row.cause_problem_key)
       }
     }
 
     const topCandidateKeys = Array.from(
-      new Set([...topRankingKeys, ...causalityCandidateKeys])
+      new Set([...topCandidateOutcomeKeys, ...causalityCandidateKeys])
     ).slice(0, DIAGNOSIS_RULES.followUpMaxQuestions + causalityCandidateKeys.length)
     const evidenceResult = await models.$runSQL(
       `
@@ -1180,7 +1180,7 @@ async function buildDiagnosisDecision({
     const excludedSet = new Set(
       excludedSymptomKeys.map(item => String(item || '').trim()).filter(Boolean)
     )
-    const candidateMetaMap = new Map(rankings.map(item => [item.problemKey, item]))
+    const candidateMetaMap = new Map(candidateOutcomes.map(item => [item.problemKey, item]))
     const questionMap = new Map()
     for (const row of evidenceResult?.data?.executeResultList || []) {
       if (observedSet.has(row.symptom_key) || excludedSet.has(row.symptom_key)) {continue}
@@ -1211,7 +1211,7 @@ async function buildDiagnosisDecision({
           locationKey: item.locationKey,
           informationGain: round(informationGain),
           questionText: buildQuestionText(item),
-          rationale: `用于区分 ${rankings
+          rationale: `用于区分 ${candidateOutcomes
             .slice(0, 2)
             .map(candidate => candidate.problemCn)
             .join(' / ')}${causalityRows.length ? '，并覆盖相关诱因链' : ''}`
@@ -1235,7 +1235,7 @@ async function buildDiagnosisDecision({
 
   return {
     plant: plantContext,
-    rankings,
+    candidateOutcomes,
     topProblemKey: top.problemKey,
     topProblemCn: top.problemCn,
     topScore: top.weightedScore,

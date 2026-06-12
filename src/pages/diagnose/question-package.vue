@@ -345,18 +345,8 @@
               class="block text-xs leading-relaxed text-gray-600"
               >展示结果：{{ routeDebugVisibleOutcomeText }}</text
             >
-            <text
-              v-if="routeDebugNextQuestionText"
-              class="block text-xs leading-relaxed text-gray-600"
-              >下一步问题：{{ routeDebugNextQuestionText }}</text
-            >
             <text v-if="routeDebugGroupText" class="block text-xs leading-relaxed text-gray-600"
               >命中流程组：{{ routeDebugGroupText }}</text
-            >
-            <text
-              v-if="routeDebugFallbackPolicy"
-              class="block text-xs leading-relaxed text-gray-600"
-              >回退策略：{{ routeDebugFallbackPolicy }}</text
             >
           </view>
         </view>
@@ -482,9 +472,7 @@ const {
   routeDebugSummaryText,
   routeDebugModeText,
   routeDebugVisibleOutcomeText,
-  routeDebugNextQuestionText,
-  routeDebugGroupText,
-  routeDebugFallbackPolicy
+  routeDebugGroupText
 } = useQuestionPackageResultView({ result, payload, routeOptions })
 const hasRouteConvergenceDetails = computed(() => routeConvergenceDetailsVisible.value)
 

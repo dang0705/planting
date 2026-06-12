@@ -90,9 +90,6 @@ function buildPublicRouteDecisionForReview(routeDecision = null) {
       ? routeDecision.visibleOutcomeKeys.map(item => String(item || '').trim()).filter(Boolean)
       : [],
     requiresQuestion: Boolean(routeDecision?.requiresQuestion),
-    nextQuestionKeys: Array.isArray(routeDecision?.nextQuestionKeys)
-      ? routeDecision.nextQuestionKeys.map(item => String(item || '').trim()).filter(Boolean)
-      : [],
     conservativePolicy: String(routeDecision?.conservativePolicy || '').trim(),
     decisionCause:
       routeDecision?.decisionCause && typeof routeDecision.decisionCause === 'object'
@@ -113,9 +110,6 @@ function buildPublicRouteDecisionForReview(routeDecision = null) {
             : [],
           missingConditionKeys: Array.isArray(item?.missingConditionKeys)
             ? item.missingConditionKeys.map(conditionKey => String(conditionKey || '').trim()).filter(Boolean)
-            : [],
-          nextQuestionKeys: Array.isArray(item?.nextQuestionKeys)
-            ? item.nextQuestionKeys.map(questionKey => String(questionKey || '').trim()).filter(Boolean)
             : []
         }))
       : [],

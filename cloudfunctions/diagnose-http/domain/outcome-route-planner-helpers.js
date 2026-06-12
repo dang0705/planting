@@ -117,13 +117,11 @@ function buildConservativeDecision({
       outcomeKey,
       state: ROUTE_STATUS.CANDIDATE,
       routeKeys: [],
-      missingConditionKeys: [],
-      nextQuestionKeys: []
+      missingConditionKeys: []
     })),
     activeRouteGroupKeys: [],
     visibleOutcomeKeys: [],
     requiresQuestion: false,
-    nextQuestionKeys: [],
     nextQuestions: [],
     conditionResults: [],
     blockedOutcomeKeys: [],

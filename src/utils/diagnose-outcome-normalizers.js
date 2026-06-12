@@ -80,9 +80,7 @@ export function normalizeRouteDecision(routeDecision = null) {
     mode: String(routeDecision?.mode || '').trim(),
     visibleOutcomeKeys: normalizeStringList(routeDecision?.visibleOutcomeKeys),
     activeRouteGroupKeys: normalizeStringList(routeDecision?.activeRouteGroupKeys),
-    nextQuestionKeys: normalizeStringList(routeDecision?.nextQuestionKeys),
-    decisionCause: normalizeRouteDecisionCause(routeDecision?.decisionCause),
-    fallbackPolicy: String(routeDecision?.fallbackPolicy || '').trim()
+    decisionCause: normalizeRouteDecisionCause(routeDecision?.decisionCause)
   }
 }
 

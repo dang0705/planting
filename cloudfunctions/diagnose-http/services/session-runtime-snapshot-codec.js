@@ -334,7 +334,6 @@ function buildCompactRouteDecision(routeDecision = null) {
     stopReason: String(routeDecision.stopReason || '').trim(),
     activeRouteGroupKeys: normalizeRuntimeStringList(routeDecision.activeRouteGroupKeys),
     visibleOutcomeKeys: normalizeRuntimeStringList(routeDecision.visibleOutcomeKeys),
-    nextQuestionKeys: normalizeRuntimeStringList(routeDecision.nextQuestionKeys),
     visibleActionConflictGroups: normalizeRuntimeStringList(
       routeDecision.visibleActionConflictGroups
     ),
@@ -349,8 +348,7 @@ function buildCompactRouteDecision(routeDecision = null) {
         outcomeKey: String(state?.outcomeKey || '').trim(),
         state: String(state?.state || '').trim(),
         routeKeys: normalizeRuntimeStringList(state?.routeKeys),
-        missingConditionKeys: normalizeRuntimeStringList(state?.missingConditionKeys),
-        nextQuestionKeys: normalizeRuntimeStringList(state?.nextQuestionKeys)
+        missingConditionKeys: normalizeRuntimeStringList(state?.missingConditionKeys)
       }))
       .filter(state => state.outcomeKey || state.state)
   }

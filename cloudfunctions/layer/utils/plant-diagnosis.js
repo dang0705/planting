@@ -369,7 +369,7 @@ async function buildStructuredDiagnosis({
       roundType: normalizedFollowUpAnswers.length ? 'follow_up' : 'initial',
       observedSymptoms: [],
       followUpAnswers: normalizedFollowUpAnswers,
-      rankings: [],
+      candidateOutcomes: [],
       followUps: [],
       topProblemKey: baseResult.topProblemKey || null,
       topProblemScore: baseResult.topProblemScore || null,
@@ -387,25 +387,25 @@ async function buildStructuredDiagnosis({
     observedSymptoms,
     excludedSymptomKeys: normalizedFollowUpAnswers.map(item => item.symptomKey)
   })
-  const topRanking = decision.rankings[0]
-  if (!topRanking) {
+  const topCandidateOutcome = decision.candidateOutcomes[0]
+  if (!topCandidateOutcome) {
     return {
       ...baseResult,
       diagnosisMode: mode,
       roundType: normalizedFollowUpAnswers.length ? 'follow_up' : 'initial',
       observedSymptoms,
       followUpAnswers: normalizedFollowUpAnswers,
-      rankings: [],
+      candidateOutcomes: [],
       followUps: [],
       reliabilityScore: 0,
       needsFollowUp: false
     }
   }
 
-  const problem = await loadProblemProfile(topRanking.problemKey)
+  const problem = await loadProblemProfile(topCandidateOutcome.problemKey)
   const needsFollowUp = Boolean(decision.needsFollowUp && decision.followUps.length > 0)
   const healthScore = mapHealthScore(
-    Number(topRanking.weightedScore || 0),
+    Number(topCandidateOutcome.weightedScore || 0),
     Number(decision.reliabilityScore || 0),
     needsFollowUp
   )
@@ -415,12 +415,12 @@ async function buildStructuredDiagnosis({
     ...baseResult,
     diagnosisMode: mode,
     roundType: normalizedFollowUpAnswers.length ? 'follow_up' : 'initial',
-    mainIssue: needsFollowUp ? null : problem?.problemCn || topRanking.problemCn || baseResult.mainIssue,
+    mainIssue: needsFollowUp ? null : problem?.problemCn || topCandidateOutcome.problemCn || baseResult.mainIssue,
     symptoms: observedSymptoms.map(item => item.symptomCn).join('、') || baseResult.symptoms || '',
     treatment: joinProblemActions(problem, baseResult),
     prevention: joinProblemPreventions(problem, baseResult),
     summary: buildSummary({
-      problemCn: problem?.problemCn || topRanking.problemCn,
+      problemCn: problem?.problemCn || topCandidateOutcome.problemCn,
       reliabilityScore: decision.reliabilityScore,
       needsFollowUp,
       observedSymptoms,
@@ -429,16 +429,16 @@ async function buildStructuredDiagnosis({
     }),
     healthScore,
     healthStatus,
-    problemType: problem?.problemType || topRanking.problemType || '',
-    topProblemKey: topRanking.problemKey,
-    topProblemScore: round(topRanking.weightedScore),
+    problemType: problem?.problemType || topCandidateOutcome.problemType || '',
+    topProblemKey: topCandidateOutcome.problemKey,
+    topProblemScore: round(topCandidateOutcome.weightedScore),
     reliabilityScore: round(decision.reliabilityScore),
     needsFollowUp,
-    finalProblemKey: needsFollowUp ? null : topRanking.problemKey,
-    finalProblemCn: needsFollowUp ? null : problem?.problemCn || topRanking.problemCn,
+    finalProblemKey: needsFollowUp ? null : topCandidateOutcome.problemKey,
+    finalProblemCn: needsFollowUp ? null : problem?.problemCn || topCandidateOutcome.problemCn,
     observedSymptoms,
     followUpAnswers: normalizedFollowUpAnswers,
-    rankings: decision.rankings,
+    candidateOutcomes: decision.candidateOutcomes,
     followUps: decision.followUps,
     supportingSymptomCount: decision.supportingSymptomCount,
     decisiveSymptomCount: decision.decisiveSymptomCount,

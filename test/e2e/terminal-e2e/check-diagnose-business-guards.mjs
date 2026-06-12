@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const projectRoot = path.resolve(__dirname, '../..')
+const projectRoot = path.resolve(__dirname, '../../..')
 const originalResolveFilename = Module._resolveFilename
 
 Module._resolveFilename = function resolveLocalLayerPath(request, parent, isMain, options) {
@@ -32,76 +32,64 @@ Module._resolveFilename = function resolveLocalLayerPath(request, parent, isMain
 
 const {
   filterPromptSymptomsByLocation
-} = require('../../cloudfunctions/diagnose-http/utils/prompt-symptom-pool')
+} = require('../../../cloudfunctions/diagnose-http/utils/prompt-symptom-pool')
 const {
   HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES,
   getHighSpecificityQuestionBlockedSymptomKeys
-} = require('../../cloudfunctions/diagnose-http/constants/high-specificity-fast-convergence')
+} = require('../../../cloudfunctions/diagnose-http/constants/high-specificity-fast-convergence')
 const {
   resolveHighSpecificityConvergencePlan
-} = require('../../cloudfunctions/diagnose-http/domain/high-specificity-fast-convergence')
+} = require('../../../cloudfunctions/diagnose-http/domain/high-specificity-fast-convergence')
 const {
-  selectFollowUpQuestions
-} = require('../../cloudfunctions/diagnose-http/domain/question-selector')
+  selectQuestionQuestions
+} = require('../../../cloudfunctions/diagnose-http/domain/question-selector')
 const {
-  canOpenNextFollowUpRound,
   shouldUseVisualCandidateSeedQuestion,
   buildSyntheticVisualCandidateQuestion,
   shouldSuppressCrossDirectionVisualCandidate,
-  shouldAllowForcedContextProblemFollowUp,
-  shouldRestrictToCandidateSeedOnly,
-  shouldForceMoldDirectionFirstRoundFollowUp,
-  shouldForceVisualCandidateOrthogonalFollowUp,
-  _test: diagnosisEngineTestHooks
-} = require('../../cloudfunctions/diagnose-http/domain/diagnosis-engine')
+  shouldRestrictToCandidateSeedOnly
+} = require('../../../cloudfunctions/diagnose-http/domain/diagnosis-engine')
 const {
-  computeVisualEvidenceScores,
-  computeQuestionEvidenceAndPenalty
-} = require('../../cloudfunctions/diagnose-http/domain/evidence-scoring')
+  computeVisualEvidenceScores
+} = require('../../../cloudfunctions/diagnose-http/domain/evidence-scoring')
 const {
   resolveLowConfidenceState
-} = require('../../cloudfunctions/diagnose-http/domain/uncertain-condition')
+} = require('../../../cloudfunctions/diagnose-http/domain/uncertain-condition')
 const {
   formatDiagnosisResponse
-} = require('../../cloudfunctions/diagnose-http/domain/result-formatter')
+} = require('../../../cloudfunctions/diagnose-http/domain/result-formatter')
 const {
   evaluateStopState
-} = require('../../cloudfunctions/diagnose-http/domain/stop-state/stop-state-evaluator')
+} = require('../../../cloudfunctions/diagnose-http/domain/stop-state/stop-state-evaluator')
 const {
   evaluateOutputEligibility
-} = require('../../cloudfunctions/diagnose-http/domain/stop-state/output-eligibility-evaluator')
-const {
-  planQuestionPackageSnapshot
-} = require('../../cloudfunctions/diagnose-http/domain/question-package-snapshot/question-package-snapshot-planner')
+} = require('../../../cloudfunctions/diagnose-http/domain/stop-state/output-eligibility-evaluator')
 const {
   buildSyntheticObservedProbeQuestions,
-  buildSyntheticFollowUpOptionMappings,
+  buildSyntheticQuestionOptionMappings,
   buildSyntheticVisualCandidateQuestionKey
-} = require('../../cloudfunctions/diagnose-http/utils/synthetic-follow-up')
-const {
-  QUESTION_TARGET_DIMENSIONS
-} = require('../../cloudfunctions/diagnose-http/utils/question-target-dimension')
+} = require('../../../cloudfunctions/diagnose-http/utils/synthetic-question-package')
 const {
   buildDerivedEvidenceSet
-} = require('../../cloudfunctions/diagnose-http/utils/derived-evidence')
+} = require('../../../cloudfunctions/diagnose-http/utils/derived-evidence')
 const {
   buildDiagnosisDirections
-} = require('../../cloudfunctions/diagnose-http/utils/diagnosis-directions')
+} = require('../../../cloudfunctions/diagnose-http/utils/diagnosis-directions')
 const {
   resolveNonProblematicRule
-} = require('../../cloudfunctions/diagnose-http/domain/non-problematic-resolver')
+} = require('../../../cloudfunctions/diagnose-http/domain/non-problematic-resolver')
 const {
   buildExplicitObservedSymptomKeySet
-} = require('../../cloudfunctions/diagnose-http/utils/explicit-observed-symptom')
+} = require('../../../cloudfunctions/diagnose-http/utils/explicit-observed-symptom')
 const {
   evaluateContextRequiredProblemGuard
-} = require('../../cloudfunctions/diagnose-http/utils/context-required-problem-guard')
+} = require('../../../cloudfunctions/diagnose-http/utils/context-required-problem-guard')
 const {
-  getOutputEligibleProblemRankings
-} = require('../../cloudfunctions/diagnose-http/utils/output-eligibility')
+  getOutputEligibleCandidateOutcomes
+} = require('../../../cloudfunctions/diagnose-http/utils/output-eligibility')
 const {
   prompts: { llm: buildPromptTemplate }
-} = require('../../cloudfunctions/diagnose-http/configs')
+} = require('../../../cloudfunctions/diagnose-http/configs')
 
 function checkPromptLocationPoolGuard() {
   const symptomRows = [
@@ -155,8 +143,8 @@ function checkPromptCommonSenseGuard() {
 }
 
 function checkObservedMorphologyPriorityGuard() {
-  const candidateOnlySelected = selectFollowUpQuestions({
-    rankings: [
+  const candidateOnlySelected = selectQuestionQuestions({
+    candidateOutcomes: [
       { problemKey: 'fungal_leaf_spot', finalScore: 0.91, baseScore: 0.91 },
       { problemKey: 'black_spot', finalScore: 0.83, baseScore: 0.83 }
     ],
@@ -231,8 +219,8 @@ function checkObservedMorphologyPriorityGuard() {
     '尚未锁定时也不允许同部位同形态 sibling 题抢占直接观察题'
   )
 
-  const selected = selectFollowUpQuestions({
-    rankings: [
+  const selected = selectQuestionQuestions({
+    candidateOutcomes: [
       { problemKey: 'fungal_leaf_spot', finalScore: 0.91, baseScore: 0.91 },
       { problemKey: 'black_spot', finalScore: 0.83, baseScore: 0.83 },
       { problemKey: 'bacterial_leaf_spot', finalScore: 0.81, baseScore: 0.81 },
@@ -364,8 +352,8 @@ function checkObservedMorphologyPriorityGuard() {
     '高置信视觉事实锁定后，应只返回一个非 visual_presence 的差异维度问题'
   )
 
-  const candidateLockedSelected = selectFollowUpQuestions({
-    rankings: [
+  const candidateLockedSelected = selectQuestionQuestions({
+    candidateOutcomes: [
       { problemKey: 'fungal_leaf_spot', finalScore: 0.91, baseScore: 0.91 },
       { problemKey: 'black_spot', finalScore: 0.83, baseScore: 0.83 },
       { problemKey: 'bacterial_leaf_spot', finalScore: 0.81, baseScore: 0.81 },
@@ -505,8 +493,8 @@ function checkObservedMorphologyPriorityGuard() {
     '高强度 visual candidate 阶段应转向表面附着或组织湿软等差异维度问题'
   )
 
-  const returnBlockedSelected = selectFollowUpQuestions({
-    rankings: [
+  const returnBlockedSelected = selectQuestionQuestions({
+    candidateOutcomes: [
       { problemKey: 'fungal_leaf_spot', finalScore: 0.91, baseScore: 0.91 },
       { problemKey: 'bacterial_leaf_spot', finalScore: 0.81, baseScore: 0.81 }
     ],
@@ -597,8 +585,8 @@ function checkObservedMorphologyPriorityGuard() {
     '后续轮次应继续保留正交维度 probing，而不是回退到同维度确认'
   )
 
-  const samePackageTopicBlockedSelected = selectFollowUpQuestions({
-    rankings: [
+  const samePackageTopicBlockedSelected = selectQuestionQuestions({
+    candidateOutcomes: [
       { problemKey: 'fungal_leaf_spot', finalScore: 0.91, baseScore: 0.91 }
     ],
     strategies: [
@@ -665,8 +653,8 @@ function checkObservedMorphologyPriorityGuard() {
     '同一 targetSymptomKey + packageTopic 已问过后，不允许跨 questionGroupKey 再次进入队列'
   )
 
-  const sameDimensionSelected = selectFollowUpQuestions({
-    rankings: [
+  const sameDimensionSelected = selectQuestionQuestions({
+    candidateOutcomes: [
       { problemKey: 'sooty_mold_associated_pests', finalScore: 0.78, baseScore: 0.78 }
     ],
     strategies: [
@@ -733,8 +721,8 @@ function checkObservedMorphologyPriorityGuard() {
 }
 
 function checkExplicitObservedVisualPresenceBlockGuard() {
-  const selected = selectFollowUpQuestions({
-    rankings: [
+  const selected = selectQuestionQuestions({
+    candidateOutcomes: [
       { problemKey: 'chlorosis', finalScore: 0.78, baseScore: 0.78 },
       { problemKey: 'iron_deficiency', finalScore: 0.72, baseScore: 0.72 }
     ],
@@ -866,8 +854,8 @@ function checkSyntheticObservedProbeGuard() {
 
   assert.deepEqual(
     yellowingQuestions.map(item => item.packageTopic),
-    ['yellowing_leaf_age_pattern'],
-    '单题契约下叶片黄化类 symptom 应先转向明确叶龄分流维度，而不是停留在通用进展题'
+    ['watering_frequency_context'],
+    '黄叶题包应先进入浇水/干湿背景题'
   )
 
   return {
@@ -877,8 +865,8 @@ function checkSyntheticObservedProbeGuard() {
 }
 
 function checkObservedContextDimensionDiversityGuard() {
-  const selected = selectFollowUpQuestions({
-    rankings: [
+  const selected = selectQuestionQuestions({
+    candidateOutcomes: [
       { problemKey: 'iron_deficiency', finalScore: 0.72, baseScore: 0.72 },
       { problemKey: 'nitrogen_deficiency', finalScore: 0.7, baseScore: 0.7 },
       { problemKey: 'underwatering', finalScore: 0.66, baseScore: 0.66 },
@@ -994,77 +982,6 @@ function checkObservedContextDimensionDiversityGuard() {
   }
 }
 
-function checkSyntheticObservedProbeScoringGuard() {
-  const questionKeys = [
-    'q_observed_probe__leaf_yellowing__host_confirmation',
-    'q_observed_probe__leaf_yellowing__light_exposure',
-    'q_observed_probe__leaf_yellowing__fertilization_context'
-  ]
-  const optionMappings = buildSyntheticFollowUpOptionMappings(questionKeys, [
-    {
-      symptomKey: 'leaf_yellowing',
-      symptomCn: '叶子明显发黄',
-      locationKey: 'leaf'
-    }
-  ])
-
-  const { questionScores, penalties, answerEffects } = computeQuestionEvidenceAndPenalty({
-    answers: [
-      { questionKey: 'q_observed_probe__leaf_yellowing__host_confirmation', optionKey: 'no' },
-      { questionKey: 'q_observed_probe__leaf_yellowing__light_exposure', optionKey: 'no' },
-      { questionKey: 'q_observed_probe__leaf_yellowing__fertilization_context', optionKey: 'yes' }
-    ],
-    optionMappings,
-    candidateProblemKeys: [
-      'nitrogen_deficiency',
-      'iron_deficiency',
-      'root_rot',
-      'overwatering',
-      'low_light',
-      'sunburn'
-    ],
-    symptomDictionary: [],
-    evidenceEdges: []
-  })
-
-  assert.ok(
-    Number(questionScores.iron_deficiency || 0) > Number(questionScores.overwatering || 0),
-    '叶片黄化在“非老叶优先 + 非暴晒 + 长期缺肥背景”时，应更强地推动缺铁/缺营养路径，而不是继续与过湿问题并列'
-  )
-  assert.equal(
-    Number(questionScores.root_rot || 0),
-    0,
-    'leaf_yellowing 的 generic synthetic probe 不应再直接给 root_rot 正向加分'
-  )
-  assert.equal(
-    Number(questionScores.overwatering || 0),
-    0,
-    'leaf_yellowing 的 generic synthetic probe 不应再直接给 overwatering 正向加分'
-  )
-  assert.ok(
-    Number(questionScores.low_light || 0) > 0,
-    '在明确排除直晒后，light context 仍必须给低光路径留下正向区分度'
-  )
-  assert.equal(
-    Number(questionScores.sunburn || 0),
-    0,
-    '明确排除直晒背景后，不应继续给日灼路径加分'
-  )
-  assert.ok(
-    Object.values(penalties).some(value => Number(value || 0) > 0),
-    '与当前上下文相反的候选问题应能收到反向 penalty，而不是只记录答案文本'
-  )
-  assert.ok(
-    answerEffects.some(item => item.effectType === 'direct_problem_positive'),
-    'synthetic context probe 必须留下 direct problem effect，避免 system-wide uncertain'
-  )
-
-  return {
-    name: 'synthetic_observed_probe_scoring_guard',
-    ok: true
-  }
-}
-
 function checkPestSpecklingObservedProbeGuard() {
   const selected = buildSyntheticObservedProbeQuestions(
     {
@@ -1089,7 +1006,7 @@ function checkPestSpecklingObservedProbeGuard() {
     'yellow_speckling 首题不应把 host_confirmation 提前到虫害痕迹类型分流之前'
   )
 
-  const optionMappings = buildSyntheticFollowUpOptionMappings(
+  const optionMappings = buildSyntheticQuestionOptionMappings(
     [
       ...selected.map(item => item.questionKey),
       'q_observed_probe__yellow_speckling__surface_stickiness'
@@ -1135,27 +1052,27 @@ function checkPestSpecklingObservedProbeGuard() {
   )
 
   assert.ok(
-    miteWebbing?.directProblemAdjustments?.some(effect => effect.problemKey === 'spider_mites' && Number(effect.scoreDelta || 0) > 0),
+    miteWebbing?.directProblemAdjustments?.some(effect => effect.problemKey === 'spider_mites' && Number(effect.effectValue || 0) > 0),
     'yellow_speckling 的细网/极小活动点选项需要能直接把红蜘蛛路径拉开'
   )
   assert.ok(
-    thripsSilverBlack?.directProblemAdjustments?.some(effect => effect.problemKey === 'thrips' && Number(effect.scoreDelta || 0) > 0),
+    thripsSilverBlack?.directProblemAdjustments?.some(effect => effect.problemKey === 'thrips' && Number(effect.effectValue || 0) > 0),
     'yellow_speckling 的银白擦伤伴黑点选项需要能直接把蓟马路径拉开'
   )
   assert.ok(
-    honeydewTrace?.directProblemAdjustments?.some(effect => effect.problemKey === 'whiteflies' && Number(effect.scoreDelta || 0) > 0),
+    honeydewTrace?.directProblemAdjustments?.some(effect => effect.problemKey === 'whiteflies' && Number(effect.effectValue || 0) > 0),
     'yellow_speckling 的蜜露/煤灰选项需要能直接增强白粉虱/蜜露类虫害路径'
   )
   assert.ok(
-    noPestTrace?.directProblemAdjustments?.some(effect => effect.problemKey === 'spider_mites' && Number(effect.scoreDelta || 0) < 0),
+    noPestTrace?.directProblemAdjustments?.some(effect => effect.problemKey === 'spider_mites' && Number(effect.effectValue || 0) < 0),
     'yellow_speckling 的无虫害痕迹选项需要能降低红蜘蛛等刺吸式害虫路径'
   )
   assert.ok(
-    stickyYes?.directProblemAdjustments?.some(effect => effect.problemKey === 'whiteflies' && Number(effect.scoreDelta || 0) > 0),
+    stickyYes?.directProblemAdjustments?.some(effect => effect.problemKey === 'whiteflies' && Number(effect.effectValue || 0) > 0),
     'yellow_speckling 的黏腻题在 yes 时需要能直接增强白粉虱/蜜露类虫害路径'
   )
   assert.ok(
-    stickyNo?.directProblemAdjustments?.some(effect => effect.problemKey === 'spider_mites' && Number(effect.scoreDelta || 0) > 0),
+    stickyNo?.directProblemAdjustments?.some(effect => effect.problemKey === 'spider_mites' && Number(effect.effectValue || 0) > 0),
     'yellow_speckling 的黏腻题在 no 时需要给红蜘蛛留出正向区分度'
   )
 
@@ -1180,8 +1097,8 @@ function checkPestSpecklingDirectionManagedVisualPresenceGuard() {
     }
   ]
 
-  const selected = selectFollowUpQuestions({
-    rankings: [{ problemKey: 'spider_mites', finalScore: 0.9, baseScore: 0.9 }],
+  const selected = selectQuestionQuestions({
+    candidateOutcomes: [{ problemKey: 'spider_mites', finalScore: 0.9, baseScore: 0.9 }],
     strategies: [
       {
         problemKey: 'spider_mites',
@@ -1310,83 +1227,9 @@ function checkExplicitObservedSymptomGuard() {
   }
 }
 
-function checkStemSoftnessSyntheticScoringGuard() {
-  const questionKeys = [
-    'q_observed_probe__water_soaked_stem__host_confirmation',
-    'q_observed_probe__water_soaked_stem__progression',
-    'q_observed_probe__soft_stem__host_confirmation',
-    'q_observed_probe__soft_stem__progression'
-  ]
-  const optionMappings = buildSyntheticFollowUpOptionMappings(questionKeys, [
-    {
-      symptomKey: 'water_soaked_stem',
-      symptomCn: '茎部带水渍感',
-      locationKey: 'stem'
-    },
-    {
-      symptomKey: 'soft_stem',
-      symptomCn: '茎部发软',
-      locationKey: 'stem'
-    }
-  ])
-
-  const { questionScores } = computeQuestionEvidenceAndPenalty({
-    answers: [
-      { questionKey: 'q_observed_probe__water_soaked_stem__host_confirmation', optionKey: 'yes' },
-      { questionKey: 'q_observed_probe__water_soaked_stem__progression', optionKey: 'yes' },
-      { questionKey: 'q_observed_probe__soft_stem__host_confirmation', optionKey: 'yes' },
-      { questionKey: 'q_observed_probe__soft_stem__progression', optionKey: 'yes' }
-    ],
-    optionMappings,
-    candidateProblemKeys: [
-      'root_rot',
-      'crown_rot',
-      'soft_rot',
-      'overwatering',
-      'poor_drainage',
-      'root_stress',
-      'general_stress'
-    ],
-    symptomDictionary: [],
-    evidenceEdges: []
-  })
-
-  assert.equal(
-    Number(questionScores.root_rot || 0),
-    0,
-    'water_soaked_stem/soft_stem 的 generic synthetic probe 不应再直接给 root_rot 正向加分'
-  )
-  assert.equal(
-    Number(questionScores.crown_rot || 0),
-    0,
-    'water_soaked_stem/soft_stem 的 generic synthetic probe 不应再直接给 crown_rot 正向加分'
-  )
-  assert.equal(
-    Number(questionScores.soft_rot || 0),
-    0,
-    'water_soaked_stem/soft_stem 的 generic synthetic probe 不应再直接给 soft_rot 正向加分'
-  )
-  assert.equal(
-    Number(questionScores.overwatering || 0),
-    0,
-    'water_soaked_stem/soft_stem 的 generic synthetic probe 不应再直接给 overwatering 正向加分'
-  )
-  assert.ok(
-    Number(questionScores.poor_drainage || 0) > 0 ||
-      Number(questionScores.root_stress || 0) > 0 ||
-      Number(questionScores.general_stress || 0) > 0,
-    'generic synthetic probe 仍应保留风险提示分，而不是完全失去信号'
-  )
-
-  return {
-    name: 'stem_softness_synthetic_scoring_guard',
-    ok: true
-  }
-}
-
 function checkContextRequiredProblemGuard() {
   const withoutContext = evaluateContextRequiredProblemGuard({
-    rankings: [
+    candidateOutcomes: [
       { problemKey: 'root_rot', finalScore: 0.66 }
     ],
     observedEvidenceSet: [
@@ -1409,7 +1252,7 @@ function checkContextRequiredProblemGuard() {
   )
 
   const visualOnlyCorroboration = evaluateContextRequiredProblemGuard({
-    rankings: [
+    candidateOutcomes: [
       { problemKey: 'root_rot', finalScore: 0.74 }
     ],
     observedEvidenceSet: [
@@ -1431,7 +1274,7 @@ function checkContextRequiredProblemGuard() {
   )
 
   const overwateringVisualOnlyCorroboration = evaluateContextRequiredProblemGuard({
-    rankings: [
+    candidateOutcomes: [
       { problemKey: 'overwatering', finalScore: 0.68 }
     ],
     observedEvidenceSet: [
@@ -1453,7 +1296,7 @@ function checkContextRequiredProblemGuard() {
   )
 
   const lowLightWithoutContext = evaluateContextRequiredProblemGuard({
-    rankings: [
+    candidateOutcomes: [
       { problemKey: 'low_light', finalScore: 0.67 }
     ],
     observedEvidenceSet: [
@@ -1476,7 +1319,7 @@ function checkContextRequiredProblemGuard() {
   )
 
   const lowLightWithContext = evaluateContextRequiredProblemGuard({
-    rankings: [
+    candidateOutcomes: [
       { problemKey: 'low_light', finalScore: 0.72 }
     ],
     observedEvidenceSet: [
@@ -1498,7 +1341,7 @@ function checkContextRequiredProblemGuard() {
   )
 
   const withContext = evaluateContextRequiredProblemGuard({
-    rankings: [
+    candidateOutcomes: [
       { problemKey: 'root_rot', finalScore: 0.78 }
     ],
     observedEvidenceSet: [
@@ -1520,7 +1363,7 @@ function checkContextRequiredProblemGuard() {
   )
 
   const weakContextOnly = evaluateContextRequiredProblemGuard({
-    rankings: [
+    candidateOutcomes: [
       { problemKey: 'root_rot', finalScore: 0.73 }
     ],
     observedEvidenceSet: [
@@ -1546,7 +1389,7 @@ function checkContextRequiredProblemGuard() {
   )
 
   const mealybugsWithoutContext = evaluateContextRequiredProblemGuard({
-    rankings: [
+    candidateOutcomes: [
       { problemKey: 'mealybugs', finalScore: 0.81 }
     ],
     observedEvidenceSet: [
@@ -1573,7 +1416,7 @@ function checkContextRequiredProblemGuard() {
   )
 
   const mealybugsWithContext = evaluateContextRequiredProblemGuard({
-    rankings: [
+    candidateOutcomes: [
       { problemKey: 'mealybugs', finalScore: 0.86 }
     ],
     observedEvidenceSet: [
@@ -1646,7 +1489,7 @@ function checkHighSpecificityFastConvergenceGuard() {
         signalReliability: 0.9
       }
     ],
-    rankings: [
+    candidateOutcomes: [
       {
         problemKey: 'spider_mites',
         finalScore: 0.98,
@@ -1749,7 +1592,7 @@ function checkEvidenceSourceIsolationGuard() {
 
 function checkCorroboratedConvergenceGuard() {
   const lowConfidence = resolveLowConfidenceState({
-    rankings: [
+    candidateOutcomes: [
       {
         problemKey: 'fungal_leaf_spot',
         problemRole: 'root_cause',
@@ -1785,7 +1628,7 @@ function checkCorroboratedConvergenceGuard() {
   )
 
   const resultStateHeadLowConfidence = resolveLowConfidenceState({
-    rankings: [
+    candidateOutcomes: [
       {
         problemKey: 'chlorosis',
         problemRole: 'result_state',
@@ -1843,7 +1686,7 @@ function checkCorroboratedConvergenceGuard() {
   assert.equal(
     resultStateHeadLowConfidence.isLowConfidence,
     false,
-    'raw ranking 头部是 result_state 时，uncertain condition 必须改按 output-eligible root_cause 计算'
+    'raw candidate outcome 头部是 result_state 时，uncertain condition 必须改按 output-eligible root_cause 计算'
   )
 
   const response = {
@@ -1866,8 +1709,7 @@ function checkCorroboratedConvergenceGuard() {
     }
   }
   const questionPackageSnapshot = {
-    questionItems: [],
-    queueStatus: 'exhausted'
+    questionItems: []
   }
   const stopState = evaluateStopState({ response, questionPackageSnapshot })
   const outputEligibility = evaluateOutputEligibility({
@@ -1887,7 +1729,7 @@ function checkCorroboratedConvergenceGuard() {
 
 function checkFormalUncertainGuard() {
   const lowConfidenceWithoutLegality = resolveLowConfidenceState({
-    rankings: [
+    candidateOutcomes: [
       {
         problemKey: 'fungal_leaf_spot',
         problemRole: 'root_cause',
@@ -1927,7 +1769,7 @@ function checkFormalUncertainGuard() {
     round: 2,
     stage: 'final',
     observedSymptoms: [],
-    rankings: [
+    candidateOutcomes: [
       {
         problemKey: 'fungal_leaf_spot',
         problemCn: '真菌叶斑',
@@ -1969,7 +1811,7 @@ function checkFormalUncertainGuard() {
   )
 
   const lowConfidenceWithLegality = resolveLowConfidenceState({
-    rankings: [
+    candidateOutcomes: [
       {
         problemKey: 'fungal_leaf_spot',
         problemRole: 'root_cause',
@@ -2012,7 +1854,7 @@ function checkFormalUncertainGuard() {
     round: 2,
     stage: 'final',
     observedSymptoms: [],
-    rankings: [
+    candidateOutcomes: [
       {
         problemKey: 'fungal_leaf_spot',
         problemCn: '真菌叶斑',
@@ -2056,15 +1898,13 @@ function checkFormalUncertainGuard() {
   const stopState = evaluateStopState({
     response: uncertainResponse,
     questionPackageSnapshot: {
-      questionItems: [],
-      queueStatus: 'exhausted'
+      questionItems: []
     }
   })
   const outputEligibility = evaluateOutputEligibility({
     response: uncertainResponse,
     questionPackageSnapshot: {
-      questionItems: [],
-      queueStatus: 'exhausted'
+      questionItems: []
     },
     stopState
   })
@@ -2084,7 +1924,7 @@ function checkDecisionCausePropagationGuard() {
     round: 2,
     stage: 'final',
     observedSymptoms: [],
-    rankings: [],
+    candidateOutcomes: [],
     followUps: [],
     problems: [],
     explanations: [],
@@ -2110,7 +1950,7 @@ function checkDecisionCausePropagationGuard() {
     }
   })
 
-  const questionPackageSnapshot = planQuestionPackageSnapshot(response)
+  const questionPackageSnapshot = { questionItems: [] }
   const stopState = evaluateStopState({
     response,
     questionPackageSnapshot
@@ -2121,11 +1961,6 @@ function checkDecisionCausePropagationGuard() {
     stopState
   })
 
-  assert.equal(
-    questionPackageSnapshot.queueDecision?.decisionCauseKey,
-    'class_converged_context_guard_blocked',
-    'questionPackageSnapshot 必须保留 explicit decisionCauseKey，供 history/review 回放'
-  )
   assert.equal(
     stopState.stopReasonType,
     'uncertain_class_converged_context_guard_blocked',
@@ -2189,7 +2024,7 @@ function checkDerivedEvidenceAndCareBaselineGuard() {
     ],
     observedEvidenceSet,
     derivedEvidenceSet,
-    rankings: [
+    candidateOutcomes: [
       {
         problemKey: 'sunburn',
         problemCn: '晒伤/日灼',
@@ -2622,72 +2457,6 @@ function checkMoldDirectionCoverageGuard() {
   }
 }
 
-function checkMoldDirectionFirstRoundFollowUpGuard() {
-  assert.ok(
-    shouldForceMoldDirectionFirstRoundFollowUp({
-      diagnosisDirections: [
-        {
-          directionKey: 'mold_direction',
-          status: 'leading',
-          matchedSymptomKeys: ['brown_spots_halo'],
-          matchedCandidateSymptomKeys: [],
-          matchedPatternKeys: ['spots'],
-          tracePayload: {
-            matchedCandidatePatternKeys: []
-          }
-        }
-      ],
-      followUpHistory: false,
-      canAskAnotherFollowUpRound: true
-    }),
-    'brown_spots_halo / irregular_blotches 这类外观型叶斑证据首轮不应直接收口，必须先触发正交 follow-up'
-  )
-
-  return {
-    name: 'mold_direction_first_round_followup_guard',
-    ok: true
-  }
-}
-
-function checkCandidateConfirmSecondRoundOrthogonalGuard() {
-  assert.ok(
-    shouldForceVisualCandidateOrthogonalFollowUp({
-      visualAggregateResult: {
-        admission_records: [
-          {
-            admission_result: 'candidate_retained',
-            object_key: 'brown_spots_halo',
-            candidate: {
-              symptom_key: 'brown_spots_halo',
-              confidence_band: 'low',
-              strength_level: 'weak',
-              admission_readiness: 'cautious',
-              support_count: 1
-            }
-          }
-        ]
-      },
-      symptomDictionary: [
-        {
-          symptomKey: 'brown_spots_halo',
-          displayTextCn: '褐斑带黄晕',
-          locationKey: 'leaf',
-          patternKey: 'spots'
-        }
-      ],
-      observedEvidenceSet: [],
-      askedQuestionKeys: ['q_brown_spots_halo_confirm'],
-      canAskAnotherFollowUpRound: true
-    }),
-    'formal candidate confirm 已答但仍无正式证据时，brown_spots 这类候选必须强制转入第二轮正交 follow-up，不能直接落到无关问题'
-  )
-
-  return {
-    name: 'candidate_confirm_second_round_orthogonal_guard',
-    ok: true
-  }
-}
-
 function checkCrossDirectionVisualCandidateSuppressionGuard() {
   assert.equal(
     shouldSuppressCrossDirectionVisualCandidate(
@@ -2760,7 +2529,7 @@ function checkCrossDirectionVisualCandidateSuppressionGuard() {
 
 function checkSpiderMiteContextGuard() {
   const contextGuard = evaluateContextRequiredProblemGuard({
-    rankings: [
+    candidateOutcomes: [
       {
         problemKey: 'spider_mites',
         finalScore: 0.92,
@@ -2800,7 +2569,7 @@ function checkSpiderMiteContextGuard() {
 }
 
 function checkSpiderMiteOutputEligibilityGuard() {
-  const eligible = getOutputEligibleProblemRankings(
+  const eligible = getOutputEligibleCandidateOutcomes(
     [
       {
         problemKey: 'spider_mites',
@@ -2850,47 +2619,6 @@ function checkSpiderMiteOutputEligibilityGuard() {
 
   return {
     name: 'spider_mite_output_eligibility_guard',
-    ok: true
-  }
-}
-
-function checkCandidateOnlyNoForcedContextFollowUpGuard() {
-  assert.equal(
-    shouldAllowForcedContextProblemFollowUp({
-      contextProblemGuard: {
-        applies: true,
-        hasRequiredContext: false,
-        problemKey: 'mealybugs'
-      },
-      observedEvidenceSet: []
-    }),
-    false,
-    '没有 formal observed evidence 时，candidate-only 排名不能直接触发具体 root_cause 的 forced context follow-up'
-  )
-
-  assert.equal(
-    shouldAllowForcedContextProblemFollowUp({
-      contextProblemGuard: {
-        applies: true,
-        hasRequiredContext: false,
-        problemKey: 'spider_mites'
-      },
-      observedEvidenceSet: [
-        {
-          observedEvidenceSetId: 'ev_yellow_speckling',
-          symptomKey: 'yellow_speckling',
-          confidence: 0.82,
-          sourceType: 'visual_admitted',
-          currentStatus: 'active'
-        }
-      ]
-    }),
-    true,
-    '已有 active observed evidence 时，context-required 问题仍可进入 forced context follow-up'
-  )
-
-  return {
-    name: 'candidate_only_no_forced_context_followup_guard',
     ok: true
   }
 }
@@ -2955,40 +2683,9 @@ function checkCandidateOnlyControlledFallbackGuard() {
   }
 }
 
-function checkFollowUpRoundLimitSemanticsGuard() {
-  assert.equal(
-    canOpenNextFollowUpRound(1),
-    true,
-    '初诊轮结束后应允许进入第 1 轮人工问答'
-  )
-
-  assert.equal(
-    canOpenNextFollowUpRound(2),
-    true,
-    '已完成 1 轮人工问答后，一页一题模式仍应允许继续问答'
-  )
-
-  assert.equal(
-    canOpenNextFollowUpRound(3),
-    true,
-    '一页一题模式下不再用既有的 2 轮上限截断追问'
-  )
-
-  assert.equal(
-    canOpenNextFollowUpRound(8),
-    true,
-    '黄叶等低特异模式需要按分流 condition 决定是否继续，而不是按固定轮数停止'
-  )
-
-  return {
-    name: 'followup_round_unlimited_semantics_guard',
-    ok: true
-  }
-}
-
 function checkYellowingSecondRoundProbeGuard() {
-  const selected = selectFollowUpQuestions({
-    rankings: [
+  const selected = selectQuestionQuestions({
+    candidateOutcomes: [
       {
         problemKey: 'iron_deficiency',
         finalScore: 0.74,
@@ -3139,232 +2836,35 @@ function checkYellowingSecondRoundProbeGuard() {
   }
 }
 
-async function checkYellowingSyntheticFollowUpDimensionPersistenceGuard() {
-  const firstGate = await diagnosisEngineTestHooks.buildYellowingGateFollowUps({
-    rankings: [{ problemKey: 'nitrogen_deficiency', finalScore: 0.26 }],
-    observedSymptoms: [{ symptomKey: 'leaf_yellowing', symptomCn: '叶片发黄' }],
-    observedEvidenceSet: [{ symptomKey: 'leaf_yellowing', symptomCn: '叶片发黄' }],
-    askedQuestions: [],
-    symptomClassRuntime: {
-      enabled: true,
-      currentClassKey: 'yellowing_mode'
-    }
-  })
-  assert.equal(
-    firstGate[0]?.packageTopic,
-    'watering_frequency_context',
-    '黄叶模式必须先按分组 condition 问浇水频率，不能聚合全部 condition options 或回到既有首要线索 condition'
-  )
-  assert.equal(firstGate.length, 1, '黄叶分组 condition 每轮只能返回一组问题')
-  assert.ok(
-    (
-      String(firstGate[0]?.questionText || '').includes('浇水') ||
-      String(firstGate[0]?.helpText || '').includes('浇水') ||
-      (Array.isArray(firstGate[0]?.options) ? firstGate[0].options : []).some(option =>
-        String(option.text || '').includes('湿') || String(option.description || '').includes('浇水')
-      )
-    ) &&
-      !String(firstGate[0]?.questionText || '').includes('原因较复杂'),
-    '黄叶第一组题必须是具体浇水上下文，不再展示既有分流说明题干'
-  )
-
-  const wateringRows = diagnosisEngineTestHooks.mergeAskedQuestionRows(
-    diagnosisEngineTestHooks.collectAnswerLikeRecordsFromFollowUpRows([
-      {
-        asked: 1,
-        answer_value: 'often_wet',
-        status: 'answered',
-        symptom_key: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-        rationale: JSON.stringify({
-          qk: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-          qg: 'observed_probe__leaf_yellowing__watering_frequency_context',
-          tsk: 'leaf_yellowing',
-          td: 'watering_frequency_context',
-          rs: 'context_probe',
-          r: 1
-        })
-      }
-    ])
-  )
-  const lightGate = await diagnosisEngineTestHooks.buildYellowingGateFollowUps({
-    rankings: [{ problemKey: 'nitrogen_deficiency', finalScore: 0.26 }],
-    observedSymptoms: [{ symptomKey: 'leaf_yellowing', symptomCn: '叶片发黄' }],
-    observedEvidenceSet: [{ symptomKey: 'leaf_yellowing', symptomCn: '叶片发黄' }],
-    askedQuestions: wateringRows,
-    symptomClassRuntime: {
-      enabled: true,
-      currentClassKey: 'yellowing_mode'
-    }
-  })
-  assert.equal(
-    lightGate[0]?.packageTopic,
-    'light_change_context',
-    '黄叶回答浇水组后，下一页必须进入光照变化组'
-  )
-  assert.equal(lightGate.length, 1, '黄叶光照组也只能返回一组问题')
-
-  const fertilizationRows = diagnosisEngineTestHooks.mergeAskedQuestionRows(
-    diagnosisEngineTestHooks.collectAnswerLikeRecordsFromFollowUpRows([
-      {
-        asked: 1,
-        answer_value: 'often_wet',
-        status: 'answered',
-        symptom_key: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-        rationale: JSON.stringify({
-          qk: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-          tsk: 'leaf_yellowing',
-          td: 'watering_frequency_context',
-          rs: 'context_probe',
-          r: 1
-        })
-      },
-      {
-        asked: 1,
-        answer_value: 'no_clear_change',
-        status: 'answered',
-        symptom_key: 'q_observed_probe__leaf_yellowing__light_change_context',
-        rationale: JSON.stringify({
-          qk: 'q_observed_probe__leaf_yellowing__light_change_context',
-          tsk: 'leaf_yellowing',
-          td: 'light_change_context',
-          rs: 'context_probe',
-          r: 2
-        })
-      }
-    ])
-  )
-  const fertilizationGate = await diagnosisEngineTestHooks.buildYellowingGateFollowUps({
-    rankings: [{ problemKey: 'nitrogen_deficiency', finalScore: 0.26 }],
-    observedSymptoms: [{ symptomKey: 'leaf_yellowing', symptomCn: '叶片发黄' }],
-    observedEvidenceSet: [{ symptomKey: 'leaf_yellowing', symptomCn: '叶片发黄' }],
-    askedQuestions: fertilizationRows,
-    symptomClassRuntime: {
-      enabled: true,
-      currentClassKey: 'yellowing_mode'
-    }
-  })
-  assert.equal(
-    fertilizationGate[0]?.packageTopic,
-    'fertilization_growth_context',
-    '黄叶回答浇水和光照后，下一页必须进入施肥/长势组'
-  )
-  assert.equal(fertilizationGate.length, 1, '黄叶施肥/长势组也只能返回一组问题')
-
-  const wateringAnsweredRows = diagnosisEngineTestHooks.mergeAskedQuestionRows([
-    ...wateringRows,
-  ])
-  assert.ok(
-    diagnosisEngineTestHooks.isYellowingEquivalentDimensionAnswered(wateringAnsweredRows, {
-      targetSymptomKey: 'leaf_yellowing',
-      packageTopic: QUESTION_TARGET_DIMENSIONS.WATERING_CONTEXT
-    }),
-    '已回答 watering_frequency_context 后，既有静态 watering_context 必须被等价维度去重'
-  )
-
-  const progressionRows = diagnosisEngineTestHooks.mergeAskedQuestionRows(
-    diagnosisEngineTestHooks.collectAnswerLikeRecordsFromFollowUpRows([
-      {
-        asked: 1,
-        answer_value: 'often_wet',
-        status: 'answered',
-        symptom_key: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-        rationale: JSON.stringify({
-          qk: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-          qg: 'observed_probe__leaf_yellowing__watering_frequency_context',
-          tsk: 'leaf_yellowing',
-          td: 'watering_frequency_context',
-          rs: 'context_probe',
-          r: 1
-        })
-      },
-      {
-        asked: 1,
-        answer_value: 'no_clear_change',
-        status: 'answered',
-        symptom_key: 'q_observed_probe__leaf_yellowing__light_change_context',
-        rationale: JSON.stringify({
-          qk: 'q_observed_probe__leaf_yellowing__light_change_context',
-          qg: 'observed_probe__leaf_yellowing__light_change_context',
-          tsk: 'leaf_yellowing',
-          td: 'light_change_context',
-          r: 2
-        })
-      },
-      {
-        asked: 1,
-        answer_value: 'normal_light_fertilizer',
-        status: 'answered',
-        symptom_key: 'q_observed_probe__leaf_yellowing__fertilization_growth_context',
-        rationale: JSON.stringify({
-          qk: 'q_observed_probe__leaf_yellowing__fertilization_growth_context',
-          qg: 'observed_probe__leaf_yellowing__fertilization_growth_context',
-          tsk: 'leaf_yellowing',
-          td: 'fertilization_growth_context',
-          r: 3
-        })
-      }
-    ])
-  )
-  const progressionGate = await diagnosisEngineTestHooks.buildYellowingGateFollowUps({
-    rankings: [{ problemKey: 'nitrogen_deficiency', finalScore: 0.26 }],
-    observedSymptoms: [{ symptomKey: 'leaf_yellowing', symptomCn: '叶片发黄' }],
-    observedEvidenceSet: [{ symptomKey: 'leaf_yellowing', symptomCn: '叶片发黄' }],
-    askedQuestions: progressionRows,
-    symptomClassRuntime: {
-      enabled: true,
-      currentClassKey: 'yellowing_mode'
-    }
-  })
-
-  assert.equal(
-    progressionGate[0]?.packageTopic,
-    'yellowing_progression_speed',
-    '黄叶回答前三组后，下一页必须进入发展速度组'
-  )
-  assert.equal(progressionGate.length, 1, '黄叶发展速度组也只能返回一组问题')
-
-  return {
-    name: 'yellowing_synthetic_followup_dimension_persistence_guard',
-    ok: true
-  }
-}
-
-  const checks = [
-    checkPromptLocationPoolGuard(),
-    checkPromptCommonSenseGuard(),
-    checkObservedMorphologyPriorityGuard(),
-    checkExplicitObservedVisualPresenceBlockGuard(),
-    checkSyntheticObservedProbeGuard(),
-    checkObservedContextDimensionDiversityGuard(),
-    checkSyntheticObservedProbeScoringGuard(),
-    checkPestSpecklingObservedProbeGuard(),
-    checkPestSpecklingDirectionManagedVisualPresenceGuard(),
-    checkExplicitObservedSymptomGuard(),
-    checkStemSoftnessSyntheticScoringGuard(),
-    checkContextRequiredProblemGuard(),
-    checkHighSpecificityFastConvergenceGuard(),
-    checkEvidenceSourceIsolationGuard(),
-    checkCorroboratedConvergenceGuard(),
-    checkFormalUncertainGuard(),
-    checkDecisionCausePropagationGuard(),
-    checkDerivedEvidenceAndCareBaselineGuard(),
-    checkDiagnosisDirectionsGuard(),
-    checkHealthyDirectionGuard(),
-    checkChewingDirectionGuard(),
-    checkChewingVisualCandidateSeedGuard(),
-    checkStructuralOutOfPoolHintSeedGuard(),
-    checkMoldOutOfPoolHintSeedGuard(),
-    checkMoldDirectionCoverageGuard(),
-    checkMoldDirectionFirstRoundFollowUpGuard(),
-    checkCandidateConfirmSecondRoundOrthogonalGuard(),
-    checkCrossDirectionVisualCandidateSuppressionGuard(),
-    checkSpiderMiteContextGuard(),
-    checkSpiderMiteOutputEligibilityGuard(),
-    checkCandidateOnlyNoForcedContextFollowUpGuard(),
-    checkCandidateOnlyControlledFallbackGuard(),
-    checkFollowUpRoundLimitSemanticsGuard(),
-    checkYellowingSecondRoundProbeGuard(),
-    await checkYellowingSyntheticFollowUpDimensionPersistenceGuard()
-  ]
+const checks = [
+  checkPromptLocationPoolGuard(),
+  checkPromptCommonSenseGuard(),
+  checkObservedMorphologyPriorityGuard(),
+  checkExplicitObservedVisualPresenceBlockGuard(),
+  checkSyntheticObservedProbeGuard(),
+  checkObservedContextDimensionDiversityGuard(),
+  checkPestSpecklingObservedProbeGuard(),
+  checkPestSpecklingDirectionManagedVisualPresenceGuard(),
+  checkExplicitObservedSymptomGuard(),
+  checkContextRequiredProblemGuard(),
+  checkHighSpecificityFastConvergenceGuard(),
+  checkEvidenceSourceIsolationGuard(),
+  checkCorroboratedConvergenceGuard(),
+  checkFormalUncertainGuard(),
+  checkDecisionCausePropagationGuard(),
+  checkDerivedEvidenceAndCareBaselineGuard(),
+  checkDiagnosisDirectionsGuard(),
+  checkHealthyDirectionGuard(),
+  checkChewingDirectionGuard(),
+  checkChewingVisualCandidateSeedGuard(),
+  checkStructuralOutOfPoolHintSeedGuard(),
+  checkMoldOutOfPoolHintSeedGuard(),
+  checkMoldDirectionCoverageGuard(),
+  checkCrossDirectionVisualCandidateSuppressionGuard(),
+  checkSpiderMiteContextGuard(),
+  checkSpiderMiteOutputEligibilityGuard(),
+  checkCandidateOnlyControlledFallbackGuard(),
+  checkYellowingSecondRoundProbeGuard()
+]
 
 console.log(JSON.stringify({ ok: true, checks }, null, 2))

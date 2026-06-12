@@ -120,7 +120,7 @@ cloudfunctions/layer/utils/http.js
 
 ### 3.2 前端诊断客户端
 
-前端当前通过 `src/http-functions/diagnose/client.js` 暴露以下能力。注意：历史函数名中的 `QuestionStart` / `FollowUp` 为历史实现命名，不能单独作为当前产品“追问”口径的证据：
+前端当前通过 `src/http-functions/diagnose/client.js` 暴露以下能力。注意：以下能力只作为接口入口与链路实现，不定义额外追问产品口径：
 
 ```text
 requestDiagnosisStart
@@ -131,7 +131,6 @@ requestDiagnosisHistory
 requestDiagnosisFeedback
 requestDiagnoseSync
 requestDiagnoseStream
-requestDiagnoseFollowUp
 ```
 
 Review 与池外候选治理使用：
@@ -223,13 +222,13 @@ options[]
 - 前端题包模式可显示“问题 X/N”。
 - 前端可在题包内本地导航，并在收集完成后提交整包答案。
 - 前端提交题包答案时应把 `questionPackage` 和 `uiHints` 元数据随 answer payload 回传；这些字段用于后端识别 package 提交，不是展示专用临时字段。
-- 固定题包 `requestMode: answer_submit` 且答案数满足题包元数据时，后端将其视为终止问诊状态；完成后不得再产生下一题或追问规划，响应应进入 final/result 路径。
-- 后端 route planner 不再把缺失证据表达为 `NEED_MORE_INFO` / `requiresFollowUp` / `nextQuestionKeys`；route-planned follow-up resolver 不再是当前代码路径。
+- 固定题包 `requestMode: answer_submit` 且答案数满足题包元数据时，后端将其视为终止问诊状态；完成后不得再产生下一题或下一轮提问，响应应进入 final/result 路径。
+- 后端 route planner 不再输出历史补充条件分支；缺失证据进入固定终止与公开响应收敛逻辑。
 - 禁止把 `maxQuestionsPerRound: 1` 或“常规 route 追问每轮 1 题”写成当前 UX/产品契约。
 - “黄叶 4 题 package”只能作为历史上已知题包形态，不是当前题包长度上限，也不是唯一适用场景。
 - 有效 `yellow_leaf` 题包的包内答案按同一当前轮次整体持久化和归属校验；问题序列字段不作为题包题数和停止口径依据，仅作为历史实现字段。
 - `wilting_droop` 固定题包使用 `sourceMode: manual_wilting_droop_route_package`，共 5 题：Q0 为 `care_behavior_timeline`/`CareBehaviorTimeline` 水分行为时间线，Q1-Q4 分别覆盖发蔫形态、节律/环境、近期应激和高危异常。
-- `wilting_droop` 终端结果以 `visibleOutcomes` 多行动建议为中心，公开标题/结果名为“建议行动清单”；不提供 ranking、score、probability、main-cause 或“最可能原因”排序口径。
+- `wilting_droop` 终端结果以 `visibleOutcomes` 多行动建议为中心，公开标题/结果名为“建议行动清单”；不提供 top 顺序口径或“最可能原因”排序输出。
 - `wilting_droop` 结果可额外返回 `blockedActionExplanations`、`highRiskWarning`、`observationPeriod`。当高危异常阻断补水、喷水、施肥、暴晒等动作时，前端应展示冲突动作解释，而不是把被阻断动作继续作为主要建议。
 
 需求指针：`docs/tickets/86exv6fnx-diagnose-question-package.md`。
@@ -346,7 +345,7 @@ currentWeather
 timestamp
 ```
 
-开发环境缺少和风天气 key 时会使用 local dev fallback。
+开发环境缺少和风天气 key 时，`/weather/environment-context` 读取应返回明确错误提示，并拒绝将缺失配置作为正常执行条件。
 
 事实源：
 

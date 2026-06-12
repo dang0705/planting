@@ -2662,11 +2662,6 @@ function getRouteDecisionFieldRows(detail = null) {
       value: formatDetailLines(routeDecision.visibleOutcomeKeys, '无')
     },
     {
-      key: 'nextQuestionKeys',
-      label: '下一题',
-      value: formatDetailLines(routeDecision.nextQuestionKeys, '无')
-    },
-    {
       key: 'decisionCause',
       label: '决策原因',
       value: [
@@ -2688,8 +2683,7 @@ function getRoutePathRows(detail = null) {
     title: item.outcomeKey || '未知结果',
     meta: [
       item.state ? `状态=${item.state}` : '',
-      item.missingConditionKeys?.length ? `缺少门禁=${item.missingConditionKeys.join(', ')}` : '',
-      item.nextQuestionKeys?.length ? `下一题=${item.nextQuestionKeys.join(', ')}` : ''
+      item.missingConditionKeys?.length ? `缺少门禁=${item.missingConditionKeys.join(', ')}` : ''
     ].filter(Boolean).join(' / '),
       value: formatDetailLines(item.routeKeys, '无')
   }))
