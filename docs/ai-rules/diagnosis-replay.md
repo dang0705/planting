@@ -27,7 +27,7 @@ npm run run:with-cloudbase-env -- --function=diagnose-http -- node <script> ...
 标准 wrapper：
 
 ```text
-scripts/terminal-e2e/run-with-cloudbase-env.mjs
+test/e2e/terminal-e2e/run-with-cloudbase-env.mjs
 ```
 
 ## 4. 历史诊断决策点复盘
@@ -56,13 +56,13 @@ scripts/terminal-e2e/run-with-cloudbase-env.mjs
 每个 diagnosis replay batch 必须输出 canonical batch artifact：
 
 ```text
-scripts/terminal-e2e/batch/
+test/e2e/terminal-e2e/batch/
 ```
 
 并输出成对 conclusion artifact：
 
 ```text
-scripts/terminal-e2e/conclusion/
+test/e2e/terminal-e2e/conclusion/
 ```
 
 canonical batch results 只保留 replay audit 核心字段：

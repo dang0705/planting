@@ -147,7 +147,7 @@ areas:
       - scripts/dev/**
       - scripts/deploy-*.mjs
       - scripts/security/**
-      - scripts/terminal-e2e/**
+      - test/e2e/terminal-e2e/**
       - cloudfunctions/**/package.json
       - cloudfunctions/**/cloudbase-functions.json
     docs:

@@ -28,8 +28,8 @@
 
 ## 本地验证
 - `npm run test:route-planning`：passed
-- `node scripts/terminal-e2e/check-diagnose-business-guards.mjs`：黄叶分组与轮次上限断言已通过到 CloudBase 凭证分支；本地无 secretId/secretKey 时在后续云调用处退出
-- `npx oxlint cloudfunctions/diagnose-http/domain/diagnosis-engine.js scripts/terminal-e2e/check-diagnose-business-guards.mjs --quiet`：0 errors / 364 warnings
+- `node test/e2e/terminal-e2e/check-diagnose-business-guards.mjs`：黄叶分组与轮次上限断言已通过到 CloudBase 凭证分支；本地无 secretId/secretKey 时在后续云调用处退出
+- `npx oxlint cloudfunctions/diagnose-http/domain/diagnosis-engine.js test/e2e/terminal-e2e/check-diagnose-business-guards.mjs --quiet`：0 errors / 364 warnings
 - `npx oxlint cloudfunctions/diagnose-http/app.js cloudfunctions/diagnose-http/repositories/diagnosis-review-repository.js --quiet`：0 errors / 325 warnings
 - `npm run lint`：0 errors / 5653 warnings
 - `npm test`：passed
@@ -325,22 +325,22 @@
   - 不可达文件：0 个；
   - 不可达文件行数：0 行。
 - 可重复审计脚本：
-  - 新增 `scripts/terminal-e2e/audit-diagnose-http-runtime-size.mjs`；
+  - 新增 `test/e2e/terminal-e2e/audit-diagnose-http-runtime-size.mjs`；
   - 用途：输出 `diagnose-http` JS 总行数、超过 500 行文件、从入口 `app.js` 的静态 require 可达性和不可达列表；
   - 支持 `--baseline-lines`、`--baseline-over-threshold-files` 和 `--reduction-target-percent`，用于直接计算减少比例和目标是否达成；
-  - `node scripts/terminal-e2e/audit-diagnose-http-runtime-size.mjs` 输出：
+  - `node test/e2e/terminal-e2e/audit-diagnose-http-runtime-size.mjs` 输出：
     - `totalJsFiles=124`
     - `totalJsLines=40492`
     - `reachableJsFiles=124`
     - `unreachableJsFiles=0`
     - `unreachableJsLines=0`
     - `overThresholdFiles=6`
-  - `node scripts/terminal-e2e/audit-diagnose-http-runtime-size.mjs --baseline-over-threshold-files=17 --baseline-lines=40802` 输出：
+  - `node test/e2e/terminal-e2e/audit-diagnose-http-runtime-size.mjs --baseline-over-threshold-files=17 --baseline-lines=40802` 输出：
     - `lineReduction.reductionPercent=0.76`
     - `lineReduction.targetMet=false`
     - `overThresholdReduction.reductionPercent=64.71`
     - `overThresholdReduction.targetMet=true`
-  - `npx oxlint scripts/terminal-e2e/audit-diagnose-http-runtime-size.mjs --quiet`：0 errors / 14 warnings。
+  - `npx oxlint test/e2e/terminal-e2e/audit-diagnose-http-runtime-size.mjs --quiet`：0 errors / 14 warnings。
 - ranking 删除边界：
   - 已删除 `diagnosis_problem_rankings` 表层持久化写链；
   - ranking 主链仍作为候选排序、fallback、eligibility guard、route evidence 与 debug audit 输入；
@@ -352,7 +352,7 @@
 - 入口使用补充审计：
   - 前端正式诊断 start / answer / result / history 使用 `diagnose-http/diagnosis/start`、`diagnose-http/diagnosis/answer`、`diagnose-http/diagnosis/result`、`diagnose-http/diagnosis/history`；
   - 前端流式诊断也使用 `diagnose-http/diagnosis/start`，通过 chunked / `Accept: text/event-stream` 触发 SSE，不直接调用 session `/stream/diagnose`；
-  - `scripts/terminal-e2e/cloudbase-http-check.mjs` 的 stream start 模式仍调用 `diagnose-http/stream/diagnose`；
+  - `test/e2e/terminal-e2e/cloudbase-http-check.mjs` 的 stream start 模式仍调用 `diagnose-http/stream/diagnose`；
   - `cloudfunctions/diagnose-http/cloudbase-functions.json` 仍公开 `/stream/diagnose` 与 `/diagnose` 路由；
   - `src/pages/profile/diagnosis-review.vue` 仍调用 `/diagnosis/review/*`；
   - `src/pages/profile/out-of-pool-review.vue` 仍调用 `/visual/out-of-pool/*`；
@@ -419,7 +419,7 @@
 - 当前统计：
   - `synthetic-follow-up.js`：3 行；
   - 新增子模块最大文件 `option-mappings.js`：475 行；
-  - `node scripts/terminal-e2e/audit-diagnose-http-runtime-size.mjs --baseline-over-threshold-files=17 --baseline-lines=40802`：
+  - `node test/e2e/terminal-e2e/audit-diagnose-http-runtime-size.mjs --baseline-over-threshold-files=17 --baseline-lines=40802`：
     - `totalJsFiles=139`
     - `totalJsLines=40685`
     - `reachableJsFiles=139`
@@ -544,7 +544,7 @@
   - `npm run build`：passed；
   - `npm run lint`：0 errors / 5567 warnings。
 - 最新瘦身审计：
-  - `node scripts/terminal-e2e/audit-diagnose-http-runtime-size.mjs --baseline-over-threshold-files=17 --baseline-lines=40802`
+  - `node test/e2e/terminal-e2e/audit-diagnose-http-runtime-size.mjs --baseline-over-threshold-files=17 --baseline-lines=40802`
   - `totalJsLines=40636`
   - `lineReduction.reductionPercent=0.41`
   - `lineReduction.targetMet=false`
@@ -600,7 +600,7 @@
   - `npm test`：passed；
   - `npm run lint`：0 errors / 5567 warnings；
   - `npm run build`：passed；
-  - `node scripts/terminal-e2e/audit-diagnose-http-runtime-size.mjs --baseline-over-threshold-files=17 --baseline-lines=40802`：
+  - `node test/e2e/terminal-e2e/audit-diagnose-http-runtime-size.mjs --baseline-over-threshold-files=17 --baseline-lines=40802`：
     - `totalJsLines=41120`
     - `lineReduction.reductionPercent=-0.78`
     - `lineReduction.targetMet=false`

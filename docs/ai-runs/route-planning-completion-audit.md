@@ -48,7 +48,7 @@
 5. `diagnosis_outcomes / outcome_routes / outcome_route_conditions / outcome_route_questions / outcome_answer_effects` 已在 `cloud1_dev` 真实落库。
 6. 2026-05-11 已修正黄叶 route 数据：当时黄叶分流默认问题改为 `q_observed_probe__leaf_yellowing__yellowing_care_area_condition`；黄叶积水/缺水/弱光/晒伤 route 统一变成两层问题，避免第三轮才能闭合；只回答分支题不能同时放行行动冲突 outcome。2026-05-16 后此条仅作历史快照，正式运行口径已改为“黄叶分组 condition 逐页提问，一页一组 options，累计必要分组答案后再闭合 route/outcome”，不再把 `yellowing_care_area_condition` 作为一屏聚合 condition。
 7. 2026-05-11 已修正 route planner 下一题生成：`routeDecision.nextQuestionKeys` 会过滤已回答 `questionKey`，避免黄叶已答分支题后下一轮重复返回分支题。
-8. `04_主动瘦身计划_养护类问题主轴.md` 建议的 80-120 个黄金样例已固化为可复跑本地验收：`scripts/terminal-e2e/manifests/route-planning-golden-cases.manifest.json` 覆盖 13 组、112 条样例，`verify-route-golden-manifest.mjs` 会展开并验证 route、关键问题、闭合/不确定、行动冲突和 ranking 不泄漏。
+8. `04_主动瘦身计划_养护类问题主轴.md` 建议的 80-120 个黄金样例已固化为可复跑本地验收：`test/e2e/terminal-e2e/manifests/route-planning-golden-cases.manifest.json` 覆盖 13 组、112 条样例，`verify-route-golden-manifest.mjs` 会展开并验证 route、关键问题、闭合/不确定、行动冲突和 ranking 不泄漏。
 9. 本地验证已通过：
    - `npm run test:route-sql`
    - `npm run test:route-planning`
@@ -105,7 +105,7 @@
 | 视觉违规 `outcome_key` 不得进入运行时 | `test-route-planning.mjs` 已覆盖 parser 忽略违规 `outcome_key` | 完成（本地） |
 | uncertain 不展示 `topProblem` | `test-route-planning.mjs` 已覆盖 | 完成（本地） |
 | non_problematic 不产生治疗型 `actionAdvice` | `test-route-planning.mjs` 已覆盖 | 完成（本地） |
-| 本地黄金样例覆盖文档要求 13 组、80-120 数量级 | [route-planning-golden-cases.manifest.json](/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/manifests/route-planning-golden-cases.manifest.json) 按 04 文档展开 112 条样例；[verify-route-golden-manifest.mjs](/Users/jay/WebstormProjects/planting/verify-route-golden-manifest.mjs) 验证正确 route、关键问题、闭合/不确定、行动冲突和 ranking 不泄漏；`npm test` 已纳入 `Route Golden Manifest` | 完成（本地） |
+| 本地黄金样例覆盖文档要求 13 组、80-120 数量级 | [route-planning-golden-cases.manifest.json](/Users/jay/WebstormProjects/planting/test/e2e/terminal-e2e/manifests/route-planning-golden-cases.manifest.json) 按 04 文档展开 112 条样例；[verify-route-golden-manifest.mjs](/Users/jay/WebstormProjects/planting/verify-route-golden-manifest.mjs) 验证正确 route、关键问题、闭合/不确定、行动冲突和 ranking 不泄漏；`npm test` 已纳入 `Route Golden Manifest` | 完成（本地） |
 | route SQL schema 存在 | [ensure-outcome-route-tables.sql](/Users/jay/WebstormProjects/planting/scripts/sql/ensure-outcome-route-tables.sql) | 完成（文件层） |
 | route MVP seed 存在 | [seed-outcome-route-mvp.sql](/Users/jay/WebstormProjects/planting/scripts/sql/seed-outcome-route-mvp.sql) | 完成（文件层） |
 | SQL/config/seed 一致性验证 | [test-route-sql.mjs](/Users/jay/WebstormProjects/planting/test-route-sql.mjs)；`npm test` 已包含 Route SQL | 完成（本地） |
@@ -126,25 +126,25 @@
 - 云内 route regression runner：通过，`3/3`
 - 2026-05-09 新增核对：
   - 原始设计包 [07_Codex实施任务包_验收清单与风险.md](/Users/jay/WebstormProjects/planting/docs/route规划及outcome瘦身计划/07_Codex实施任务包_验收清单与风险.md) 的口径是“有一套可复跑的真实样本 smoke 验收脚本与结果文档”，不是硬绑定既有的三 case 单进程 batch 命令形态
-  - 已新增 [run-diagnose-outcome-suite.mjs](/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/run-diagnose-outcome-suite.mjs)，改为逐 case 独立执行并汇总报告，`package.json` 的 `check:diagnose-outcome-regression` 已切到该 suite
+  - 已新增 [run-diagnose-outcome-suite.mjs](/Users/jay/WebstormProjects/planting/test/e2e/terminal-e2e/run-diagnose-outcome-suite.mjs)，改为逐 case 独立执行并汇总报告，`package.json` 的 `check:diagnose-outcome-regression` 已切到该 suite
   - 实测对照：
     - 三个 case 各自独立 one-case batch：可通过
     - 新 suite / 原三 case 聚合命令：在当前 shell 环境中仍会偶发统一报 `fetch failed`
   - 这说明当前剩余阻塞更准确地说是“CloudBase HTTP 网关 DNS / fetch 稳定性不足，导致整组 smoke suite 不能稳定产出报告”，而不是 route 业务链仍未闭合
 - 2026-05-09 继续补充核对：
-  - 已新增 [run-diagnose-outcome-direct.mjs](/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/run-diagnose-outcome-direct.mjs)，尝试绕开 HTTP 网关，直接复用 `diagnose-http` 的 `runStartDiagnosis / runAnswerDiagnosis / session-service`
+  - 已新增 [run-diagnose-outcome-direct.mjs](/Users/jay/WebstormProjects/planting/test/e2e/terminal-e2e/run-diagnose-outcome-direct.mjs)，尝试绕开 HTTP 网关，直接复用 `diagnose-http` 的 `runStartDiagnosis / runAnswerDiagnosis / session-service`
   - 已将 [app.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/app.js) 暴露 `runStartDiagnosis`、`runAnswerDiagnosis`、`buildFrontendDiagnosisResponse` 供 direct runner 使用
   - direct runner 在 `run-with-cloudbase-env` 注入 CloudBase 凭据后，仍然失败于：
     `WxCloudSDKError: getaddrinfo ENOTFOUND cloud1-2grufevs395a9d5e.tcb-api.tencentcloudapi.com`
   - 这说明不只是 webfn HTTP 网关不稳定，连本地基于 `@cloudbase/node-sdk` 的正式运行时直调也被 CloudBase 控制面 DNS 阻断
 - `npm run dev:h5 -- --host 127.0.0.1 --port 4173`：失败，`listen EPERM`，因此本轮未取得 H5 页面级运行证据
 - CloudBase SQL 实执行：通过，route schema 与 MVP seed 已落库并可读回验证
-- `node scripts/terminal-e2e/cloudbase-http-check.mjs --env=... --path=/diagnose-http/health?webfn=true --skip-auth=true --force-anonymous-auth=true --app-env=development`：`200`
+- `node test/e2e/terminal-e2e/cloudbase-http-check.mjs --env=... --path=/diagnose-http/health?webfn=true --skip-auth=true --force-anonymous-auth=true --app-env=development`：`200`
   - 说明 `api.tcloudbasegateway.com` 不是稳定性完全不可用，而是原脚本在 `skip-auth=true` 时没有强制匿名登录，曾被 `401/MISSING_CREDENTIALS` 误伤
 - `run-diagnose-outcome-batch.mjs` 已补透传 `force-anonymous-auth`
 - `package.json` 中 `check:diagnose-outcome-regression` / `check:diagnose-regression:full` 已补 `--force-anonymous-auth=true`
 - 2026-05-09 新增核对：
-  - [diagnose-outcome-regression.manifest.json](/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/manifests/diagnose-outcome-regression.manifest.json) 中 `problematic_leaf_yellowing_followup_overwatering` 本来就显式注入了 `leaf_yellowing`
+  - [diagnose-outcome-regression.manifest.json](/Users/jay/WebstormProjects/planting/test/e2e/terminal-e2e/manifests/diagnose-outcome-regression.manifest.json) 中 `problematic_leaf_yellowing_followup_overwatering` 本来就显式注入了 `leaf_yellowing`
   - 单条云端 smoke 复验（显式 `leaf_yellowing` + `watering_area,often_wet`）已得到：
     - `start.stage=followup`
     - `final stopReason=route_visible_outcomes_ready`
@@ -157,13 +157,13 @@
 - 另有一条非 manifest 的单独 smoke（仅图片+描述、不显式注入 `leaf_yellowing`）仍可能停在 `uncertain`；这说明视觉/文本准入与 route authoritative output 是两个不同问题域，不能混为一条 route 主链缺口
 - 当前仍存在偶发 `signInAnonymously -> fetch failed`，导致整组 regression 会在匿名登录阶段直接失败；该问题仍未稳定消除
 - 2026-05-09 已新增测试基建修正：
-  - [cloudbase-http-check.mjs](/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/cloudbase-http-check.mjs) 支持注入共享 access token（仅测试基建）
-  - [run-diagnose-outcome-batch.mjs](/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/run-diagnose-outcome-batch.mjs) 支持父进程尝试获取一次共享匿名 token 后复用给所有 case
+  - [cloudbase-http-check.mjs](/Users/jay/WebstormProjects/planting/test/e2e/terminal-e2e/cloudbase-http-check.mjs) 支持注入共享 access token（仅测试基建）
+  - [run-diagnose-outcome-batch.mjs](/Users/jay/WebstormProjects/planting/test/e2e/terminal-e2e/run-diagnose-outcome-batch.mjs) 支持父进程尝试获取一次共享匿名 token 后复用给所有 case
   - 但当前环境下共享匿名登录仍会偶发 `fetch failed`，所以整组 regression 还不能稳定跑绿
 - `npm run check:diagnose-business-guards` 初次复验暴露真实业务守卫缺口：
   - `yellow_speckling` 的黏腻题在 `no` 时未给红蜘蛛留出正向区分度
   - 该问题已修复在 [synthetic-follow-up.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/utils/synthetic-follow-up.js)，并由 `test-route-planning.mjs` 新增用例覆盖
-- `npm run run:with-cloudbase-env -- --function=diagnose-http --app-env=development -- node scripts/terminal-e2e/check-diagnose-business-guards.mjs`：
+- `npm run run:with-cloudbase-env -- --function=diagnose-http --app-env=development -- node test/e2e/terminal-e2e/check-diagnose-business-guards.mjs`：
   - 本地业务守卫修复后不再报 `yellow_speckling` 断言
   - 后续仍因 `cloud1-2grufevs395a9d5e.tcb-api.tencentcloudapi.com` `ENOTFOUND` 中断
 - CloudBase MCP 控制面可用：

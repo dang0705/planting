@@ -74,7 +74,7 @@
 
 ## 七、DB 查询与排障证据
 - `diagnosis_sessions` 与 `diagnosis_follow_ups` 已通过：
-  - `scripts/terminal-e2e/run-with-cloudbase-env.mjs` 进行抽样核验。
+  - `test/e2e/terminal-e2e/run-with-cloudbase-env.mjs` 进行抽样核验。
 - `observed_evidence_set.last_updated_at` 已补充抽样核验，三条 smoke session 均为正常时间戳而非字符串 `null`：
   - `diag_1779248060289_eb2fcaer`：`2026-05-20T11:34:20`
   - `diag_1779248062526_lic2nu70`：`2026-05-20T11:34:22`

@@ -52,12 +52,12 @@ export const aiVisualPoolCoverageConfig = {
     stableMarkingBridgeGenerator: 'scripts/generate-ai-visual-pool-stable-marking-audited-upgrade.mjs',
     sqlVerifier: 'scripts/verify-ai-visual-pool-stable-gap-closure.mjs',
     artifactRenderer: 'scripts/render-ai-visual-pool-coverage-artifacts.mjs',
-    runtimeSmoke: 'scripts/terminal-e2e/cloudbase-http-check.mjs'
+    runtimeSmoke: 'test/e2e/terminal-e2e/cloudbase-http-check.mjs'
   },
   verificationQueriesOrReports: [
     'scripts/verify-ai-visual-pool-stable-gap-closure.mjs',
     'scripts/render-ai-visual-pool-coverage-artifacts.mjs',
-    'scripts/terminal-e2e/cloudbase-http-check.mjs',
+    'test/e2e/terminal-e2e/cloudbase-http-check.mjs',
     'docs/ai_visual_pool_question_gap_closure_compare_v1.md',
     'docs/ai_visual_pool_19_gap_closure_compare_v1.md',
     'docs/ai_visual_pool_session_gap_closure_compare_v1.md'

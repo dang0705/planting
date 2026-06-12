@@ -126,7 +126,7 @@
   - `run-diagnose-outcome-batch.mjs` 已补透传 `force-anonymous-auth`
   - `package.json` 中 `check:diagnose-outcome-regression` / `check:diagnose-regression:full` 已补 `--force-anonymous-auth=true`
   - 2026-05-09 新核对发现：
-    - [diagnose-outcome-regression.manifest.json](/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/manifests/diagnose-outcome-regression.manifest.json) 中黄叶 case 本来就显式注入了 `leaf_yellowing`
+    - [diagnose-outcome-regression.manifest.json](/Users/jay/WebstormProjects/planting/test/e2e/terminal-e2e/manifests/diagnose-outcome-regression.manifest.json) 中黄叶 case 本来就显式注入了 `leaf_yellowing`
     - 单条云端 smoke（显式 `leaf_yellowing` + `watering_area,often_wet`）已得到：
       - `start.stage=followup`
       - `final stopReason=route_visible_outcomes_ready`
@@ -136,15 +136,15 @@
     - 这说明“视觉/文本准入”与“route authoritative output”是两个不同问题域
   - 当前仍存在偶发 `signInAnonymously -> fetch failed`，导致整组 regression 仍有不稳定失败
   - 2026-05-09 已新增测试基建支持：
-    - [cloudbase-http-check.mjs](/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/cloudbase-http-check.mjs) 支持注入共享 access token
-    - [run-diagnose-outcome-batch.mjs](/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/run-diagnose-outcome-batch.mjs) 会尝试先获取一次共享匿名 token 再复用给所有 case
+    - [cloudbase-http-check.mjs](/Users/jay/WebstormProjects/planting/test/e2e/terminal-e2e/cloudbase-http-check.mjs) 支持注入共享 access token
+    - [run-diagnose-outcome-batch.mjs](/Users/jay/WebstormProjects/planting/test/e2e/terminal-e2e/run-diagnose-outcome-batch.mjs) 会尝试先获取一次共享匿名 token 再复用给所有 case
     - 但当前环境下共享匿名登录仍可能直接 `fetch failed`
   - 2026-05-09 已新增：
-    - [run-diagnose-outcome-suite.mjs](/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/run-diagnose-outcome-suite.mjs)
+    - [run-diagnose-outcome-suite.mjs](/Users/jay/WebstormProjects/planting/test/e2e/terminal-e2e/run-diagnose-outcome-suite.mjs)
     - `package.json` 的 `check:diagnose-outcome-regression` 已切到“逐 case 独立执行并汇总报告”的 suite 形态，以符合原设计包“可复跑真实样本 smoke 脚本与结果文档”的口径
     - 实测三条 case 各自独立 one-case batch 可通过，但整组 suite 在当前 shell 环境里仍可能统一报 `fetch failed`
   - 2026-05-09 进一步尝试：
-    - [run-diagnose-outcome-direct.mjs](/Users/jay/WebstormProjects/planting/scripts/terminal-e2e/run-diagnose-outcome-direct.mjs) 已尝试直接复用 `diagnose-http` 的 `runStartDiagnosis / runAnswerDiagnosis / session-service`，绕开 HTTP 网关
+    - [run-diagnose-outcome-direct.mjs](/Users/jay/WebstormProjects/planting/test/e2e/terminal-e2e/run-diagnose-outcome-direct.mjs) 已尝试直接复用 `diagnose-http` 的 `runStartDiagnosis / runAnswerDiagnosis / session-service`，绕开 HTTP 网关
     - [app.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/app.js) 已暴露 `runStartDiagnosis`、`runAnswerDiagnosis`、`buildFrontendDiagnosisResponse`
     - direct runner 在 `run-with-cloudbase-env` 下仍失败于 `WxCloudSDKError: getaddrinfo ENOTFOUND cloud1-2grufevs395a9d5e.tcb-api.tencentcloudapi.com`
     - 说明不仅是 webfn HTTP 网关，连本地 `@cloudbase/node-sdk` 控制面也被 DNS 阻断

@@ -32,7 +32,7 @@
   - 黄叶相关 outcome 的 action advice 增加病虫害复核与老叶自然代谢观察提示；叶斑等非黄叶 outcome 不追加。
 - `test-route-planning.mjs`
   - 增加 route planned 禁用叶龄题、forced-context 不再强制叶龄题、黄叶 outcome advice、弱叶龄证据不得闭合营养类 outcome、历史 leaf-age answer/effect 不得影响证据计分或闭合 route 的回归。
-- `scripts/terminal-e2e/manifests/route-planning-golden-cases.manifest.json`
+- `test/e2e/terminal-e2e/manifests/route-planning-golden-cases.manifest.json`
   - 将既有 `yellowing_old_leaf` 正向 golden 改为 `yellowing_leaf_age_disabled` 负向 golden，确保历史新/老叶答案不再期待闭合 `normal_leaf_aging` route。
 
 ## 文档同步

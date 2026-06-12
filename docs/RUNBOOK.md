@@ -11,7 +11,7 @@ source_of_truth:
   - scripts/dev/**
   - scripts/deploy-*.mjs
   - scripts/security/check-no-secrets.mjs
-  - scripts/terminal-e2e/**
+  - test/e2e/terminal-e2e/**
   - docs/deploy-pipeline.md
   - docs/local-cloudbase-functions-debugging.md
   - docs/cautions/cloudfunctions_local_root_dependencies.md
@@ -20,7 +20,7 @@ stale_if_changed:
   - scripts/dev/**
   - scripts/deploy-*.mjs
   - scripts/security/**
-  - scripts/terminal-e2e/**
+  - test/e2e/terminal-e2e/**
   - cloudfunctions/**/package.json
 ---
 
