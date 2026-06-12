@@ -414,6 +414,11 @@ function buildLocalBusinessRouteHint(unavailable = []) {
   if (message.includes('secret id error') || message.includes('sign_param_invalid')) {
     return '\n请检查 .env.local 中的 CloudBase SecretId/SecretKey 是否存在、已轮换且有目标环境 SQL 权限。'
   }
+  if (message.includes('unknown column') || message.includes('sqlstate: 42s22')) {
+    return (
+      '\nCloudBase SQL 已连接成功，但当前开发库表结构与代码不一致。请先补齐缺失字段或执行对应 schema 迁移，再重新启动。'
+    )
+  }
   if (
     message.includes('database connection failed') ||
     message.includes('run query failed') ||

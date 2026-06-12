@@ -16,7 +16,7 @@ function normalizeBoolean(value) {
   return normalized === '1' || normalized === 'true' || normalized === 'yes'
 }
 
-function normalizeFollowupMode(value = '') {
+function normalizeQuestionMode(value = '') {
   const normalized = String(value || '').trim().toLowerCase()
   if (normalized === 'full' || normalized === 'limited' || normalized === 'explanation_only') {
     return normalized
@@ -42,7 +42,7 @@ function mapGroupStrategyRow(row = {}) {
     dataStatus: normalizeText(row.data_status, 'unknown'),
     dataSource: normalizeText(row.data_source),
     auditNote: normalizeText(row.audit_note),
-    questionModeV1: normalizeFollowupMode(row.question_mode_v1),
+    questionModeV1: normalizeQuestionMode(row.question_mode_v1),
     classLevelAllowsRuntimeV1: normalizeBoolean(row.class_level_allows_runtime_v1),
     groupRuntimeEligibilityRule: normalizeText(row.group_runtime_eligibility_rule),
     assetValidationRequired: normalizeBoolean(row.asset_validation_required),

@@ -519,6 +519,23 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
     visibleOutcomes
   )
   const summaryCard = pickMinimalSummaryCard(publicResponse.summaryCard)
+  const questionPackage =
+    publicResponse.questionPackage && typeof publicResponse.questionPackage === 'object'
+      ? publicResponse.questionPackage
+      : null
+  const hasQuestionPackageResult =
+    Boolean(questionPackage) &&
+    String(questionPackage?.answerSubmitMode || publicResponse?.uiHints?.answerSubmitMode || '').trim() === 'package'
+  const packageUiHints = hasQuestionPackageResult
+    ? {
+        canUploadMoreImages: false,
+        maxQuestionsThisRound: Number(questionPackage?.questionCount || 0),
+        questionDisplayMode: questionPackage?.questionDisplayMode || 'package',
+        answerSubmitMode: questionPackage?.answerSubmitMode || 'package',
+        optionLayout: 'vertical',
+        transition: 'swiper'
+      }
+    : null
 
   const hasVisibleOutcomes = Array.isArray(visibleOutcomes) && visibleOutcomes.length > 0
   const treatmentText = normalizeText(
@@ -566,6 +583,7 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
     ...(publicResponse.nonProblematicLabel
       ? { nonProblematicLabel: publicResponse.nonProblematicLabel }
       : {}),
+    ...(hasQuestionPackageResult ? { questionPackage } : {}),
     ...(!hasVisibleOutcomes && actionAdvice ? { actionAdvice } : {}),
     ...(!hasVisibleOutcomes && nextSteps.length ? { nextSteps } : {}),
     ...(!hasVisibleOutcomes && whatToAvoid.length ? { whatToAvoid } : {}),
@@ -575,7 +593,8 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
     confidenceLevel: publicResponse.confidenceLevel || finalResult?.confidenceLevel || '',
     ...(publicResponse.needHumanReview ? { needHumanReview: true } : {}),
     hasActiveQuestions: false,
-    questions: []
+    questions: [],
+    ...(packageUiHints ? { uiHints: packageUiHints } : {})
   }
 }
 

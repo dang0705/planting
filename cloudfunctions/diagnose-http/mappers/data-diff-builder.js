@@ -46,9 +46,9 @@ const expectedColumns = {
     'review_status',
     'is_active'
   ],
-  genus_problem_profiles: ['genus', 'problem_key', 'genus_suitability', 'data_status'],
-  problem_host_profiles: ['problem_key', 'host_level', 'host_name', 'host_suitability', 'data_status'],
-  plant_problem_profiles: ['plant_id', 'problem_key', 'genus_suitability', 'host_suitability', 'final_prior_score', 'data_status'],
+  genus_problem_profiles: ['genus', 'problem_key', 'genus_compatibility', 'data_status'],
+  problem_host_profiles: ['problem_key', 'host_level', 'host_name', 'host_compatibility', 'data_status'],
+  plant_problem_profiles: ['plant_id', 'problem_key', 'genus_compatibility', 'host_compatibility', 'final_prior_score', 'data_status'],
   problem_causality: ['cause_problem_key', 'effect_problem_key', 'relation_type', 'relation_strength', 'data_status'],
   question_library_v5_real: ['question_key', 'question_text_cn', 'question_group_key', 'allow_unknown', 'priority', 'target_symptom_key', 'data_status'],
   question_option_mapping_v5_real: ['question_key', 'option_key', 'maps_to_symptom_key', 'value', 'association_strength', 'data_status'],

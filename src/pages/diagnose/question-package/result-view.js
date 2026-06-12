@@ -122,15 +122,21 @@ export function useQuestionPackageResultView({ result, payload, routeOptions }) 
     () => Boolean(result.value) && !result.value.hasActiveQuestions
   )
   const finalOutcome = computed(() => result.value?.finalResult || {})
-  const outcomeTypeValue = computed(() =>
-    String(result.value?.outcomeType || finalOutcome.value?.outcomeType || '').trim()
-  )
   const visibleOutcomeSource = computed(() =>
     Array.isArray(result.value?.visibleOutcomes) && result.value.visibleOutcomes.length
       ? result.value.visibleOutcomes
       : Array.isArray(result.value?.finalResult?.visibleOutcomes)
         ? result.value.finalResult.visibleOutcomes
         : []
+  )
+  const leadingVisibleOutcome = computed(() => visibleOutcomeSource.value[0] || null)
+  const outcomeTypeValue = computed(() =>
+    String(
+      leadingVisibleOutcome.value?.outcomeType ||
+        result.value?.outcomeType ||
+        finalOutcome.value?.outcomeType ||
+        ''
+    ).trim()
   )
   const visibleOutcomeDisplays = computed(() =>
     uniqueStrings(visibleOutcomeSource.value.map(formatOutcomeDisplayLabel))
@@ -139,7 +145,8 @@ export function useQuestionPackageResultView({ result, payload, routeOptions }) 
   const allOutcomeDisplays = computed(() => visibleOutcomeDisplays.value)
   const outcomeDisplayTitle = computed(() =>
     String(
-      formatOutcomeDisplayLabel(finalOutcome.value) ||
+      formatOutcomeDisplayLabel(leadingVisibleOutcome.value) ||
+        formatOutcomeDisplayLabel(finalOutcome.value) ||
         formatOutcomeDisplayLabel(result.value?.mainIssueText) ||
         formatOutcomeDisplayLabel(result.value?.summaryCard?.title) ||
         '诊断已完成'
@@ -147,6 +154,8 @@ export function useQuestionPackageResultView({ result, payload, routeOptions }) 
   )
   const outcomeSummaryText = computed(() =>
     String(
+      formatOutcomeDisplayLabel(leadingVisibleOutcome.value?.summaryCn) ||
+        formatOutcomeDisplayLabel(leadingVisibleOutcome.value?.summary) ||
       formatOutcomeDisplayLabel(finalOutcome.value?.summaryCn) ||
         formatOutcomeDisplayLabel(finalOutcome.value?.summary) ||
         formatOutcomeDisplayLabel(result.value?.summaryText) ||

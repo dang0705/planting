@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS outcome_action_profiles (
 
 CREATE TABLE IF NOT EXISTS diagnosis_outcomes (
   outcome_key VARCHAR(128) PRIMARY KEY COMMENT 'outcome 键',
-  session_problem_key VARCHAR(128) NOT NULL DEFAULT '' COMMENT '适配既有 problem_key',
+  problem_key VARCHAR(128) NOT NULL DEFAULT '' COMMENT '对应问题键',
   outcome_name_cn VARCHAR(255) NOT NULL DEFAULT '' COMMENT 'outcome 中文名',
   outcome_type VARCHAR(64) NOT NULL DEFAULT '' COMMENT 'outcome 类型',
   outcome_category VARCHAR(64) NOT NULL DEFAULT '' COMMENT 'outcome 分类',
@@ -158,7 +158,7 @@ CREATE TABLE IF NOT EXISTS diagnosis_outcomes (
   data_status VARCHAR(64) NOT NULL DEFAULT 'active' COMMENT '数据状态',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  KEY idx_diagnosis_outcomes_session_problem (session_problem_key),
+  KEY idx_diagnosis_outcomes_problem (problem_key),
   KEY idx_diagnosis_outcomes_action_profile (action_profile_key),
   KEY idx_diagnosis_outcomes_type (outcome_type),
   KEY idx_diagnosis_outcomes_review (review_status),

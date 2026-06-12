@@ -13,8 +13,8 @@ const priorCache = {
   candidateProblemPriorsByPlantId: new Map(),
   genusCandidatePriorsByGenus: new Map(),
   hostCandidatePriorsByHostKey: new Map(),
-  genusSuitabilityByGenusAndProblemSet: new Map(),
-  hostSuitabilityByHostContextAndProblemSet: new Map()
+  genusCompatibilityByGenusAndProblemSet: new Map(),
+  hostCompatibilityByHostContextAndProblemSet: new Map()
 }
 
 const pendingPriorCache = {
@@ -24,8 +24,8 @@ const pendingPriorCache = {
   candidateProblemPriorsByPlantId: new Map(),
   genusCandidatePriorsByGenus: new Map(),
   hostCandidatePriorsByHostKey: new Map(),
-  genusSuitabilityByGenusAndProblemSet: new Map(),
-  hostSuitabilityByHostContextAndProblemSet: new Map()
+  genusCompatibilityByGenusAndProblemSet: new Map(),
+  hostCompatibilityByHostContextAndProblemSet: new Map()
 }
 
 function getCacheEntry(cache, key = '') {
@@ -118,8 +118,8 @@ function normalizeCareStrategy(value) {
 function mapCandidateRow(row = {}) {
   return {
     problemKey: row.problem_key,
-    genusSuitability: clamp01(row.genus_suitability),
-    hostSuitability: clamp01(row.host_suitability),
+    genusSuitability: clamp01(row.genus_compatibility),
+    hostSuitability: clamp01(row.host_compatibility),
     finalPriorScore: clamp01(row.final_prior_score),
     matchedHostLevel: row.matched_host_level || '',
     sourceLayer: row.source_layer || '',

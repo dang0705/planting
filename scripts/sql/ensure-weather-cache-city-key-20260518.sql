@@ -1,5 +1,5 @@
 -- Extend weather_cache for city-level 24h weather cache.
--- Keep existing _openid rows for diagnose-http weather context suitabilityibility.
+-- Keep existing _openid rows for diagnose-http weather context compatibility.
 
 SET @prod_schema = 'cloud1-2grufevs395a9d5e';
 SET @dev_schema = 'cloud1_dev';

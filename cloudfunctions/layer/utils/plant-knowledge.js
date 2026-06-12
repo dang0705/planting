@@ -375,7 +375,7 @@ async function createUserPlantInstance({
   const normalizedRecognizedName = normalizeNullableString(recognizedName)
   const normalizedIdentityResolutionStatus = normalizeNullableString(identityResolutionStatus)
   const normalizedVisualCallBatchId = normalizeNullableString(visualCallBatchId)
-  let suitabilityibilityPlantId = null
+  let matchedPlantId = null
   let persistedPlantIdentityId = normalizedPlantIdentityId
   let persistedSessionPlantId = normalizedSessionPlantId
   let canonicalName = normalizedRecognizedName
@@ -423,11 +423,11 @@ async function createUserPlantInstance({
   }
 
   if (plant) {
-    suitabilityibilityPlantId = plant.id || normalizedPlantId || normalizedSessionPlantId || normalizedPlantIdentityId
+    matchedPlantId = plant.id || normalizedPlantId || normalizedSessionPlantId || normalizedPlantIdentityId
     persistedPlantIdentityId = plant.plantIdentityId || persistedPlantIdentityId
     persistedSessionPlantId = plant.sessionPlantId || persistedSessionPlantId
-    if (!persistedSessionPlantId && suitabilityibilityPlantId && suitabilityibilityPlantId !== persistedPlantIdentityId) {
-      persistedSessionPlantId = suitabilityibilityPlantId
+    if (!persistedSessionPlantId && matchedPlantId && matchedPlantId !== persistedPlantIdentityId) {
+      persistedSessionPlantId = matchedPlantId
     }
     canonicalName = plant.canonicalName
     plantGenus = plant.genus
@@ -454,7 +454,7 @@ async function createUserPlantInstance({
 
   await models.$runSQL(sql, {
     openid,
-    plantId: suitabilityibilityPlantId,
+    plantId: matchedPlantId,
     plantIdentityId: persistedPlantIdentityId,
     sessionPlantId: persistedSessionPlantId,
     canonicalName,
@@ -992,12 +992,12 @@ async function buildDiagnosisDecision({
         ppp.problem_key,
         p.problem_cn,
         p.problem_type,
-        ppp.host_suitabilityibility,
-        COALESCE(ppp.genus_suitabilityibility, 0) AS is_genus_candidate
+        ppp.host_compatibility,
+        COALESCE(ppp.genus_compatibility, 0) AS is_genus_candidate
       FROM plant_problem_profiles ppp
       JOIN problems p ON p.problem_key = ppp.problem_key
       WHERE ppp.plant_id = {{plantId}}
-      ORDER BY ppp.host_suitabilityibility DESC, ppp.problem_key ASC
+      ORDER BY ppp.host_compatibility DESC, ppp.problem_key ASC
     `,
     { plantId: plantContext.plantId }
   )
@@ -1067,8 +1067,8 @@ async function buildDiagnosisDecision({
 
   const rankings = candidates
     .map(candidate => {
-      const hostSuitabilityibility = clampProbability(candidate.host_suitabilityibility)
-      const genusSuitabilityibility = Number(candidate.is_genus_candidate || 0) > 0 ? 1 : 0
+      const hostCompatibility = clampProbability(candidate.host_compatibility)
+      const genusCompatibility = Number(candidate.is_genus_candidate || 0) > 0 ? 1 : 0
       const evidenceRows = evidenceByProblem.get(candidate.problem_key) || []
       let symptomSupportScore = 0
       let evidenceCount = 0
@@ -1082,8 +1082,8 @@ async function buildDiagnosisDecision({
         const contribution =
           Number(evidence.association_strength || 0) *
           Number(symptomMeta.symptom_reliability || 0) *
-          genusSuitabilityibility *
-          hostSuitabilityibility
+          genusCompatibility *
+          hostCompatibility
 
         symptomSupportScore += contribution
         if (contribution > DIAGNOSIS_RULES.decisiveContributionThreshold) {

@@ -252,7 +252,7 @@ function mapActionProfileRow(row = {}) {
 function mapDiagnosisOutcomeRow(row = {}) {
   return {
     outcomeKey: row.outcome_key || '',
-    sourceProblemKey: row.session_problem_key || '',
+    sourceProblemKey: row.problem_key || '',
     outcomeNameCn: row.outcome_name_cn || '',
     outcomeType: row.outcome_type || '',
     outcomeCategory: row.outcome_category || '',
@@ -535,7 +535,7 @@ async function preloadOutcomeRouteRepositoryCache() {
         `
           SELECT
             outcome_key,
-            session_problem_key,
+            problem_key,
             outcome_name_cn,
             outcome_type,
             outcome_category,
@@ -994,7 +994,7 @@ async function getDiagnosisOutcomesByKeys(outcomeKeys = []) {
     `
       SELECT
         outcome_key,
-        session_problem_key,
+        problem_key,
         outcome_name_cn,
         outcome_type,
         outcome_category,

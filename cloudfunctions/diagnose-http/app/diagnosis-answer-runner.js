@@ -11,6 +11,7 @@ const {
 } = require('./care-behavior-payload')
 const { isQuestionPackageAnswerSubmitPayload } = require('./question-package-response')
 const { resolveWiltingDroopOutcomeResult } = require('../domain/wilting-droop-outcome-resolver')
+const { resolveYellowLeafOutcomeResult } = require('../domain/yellow-leaf-outcome-resolver')
 const {
   resolveQuestionPackageSnapshot,
   resolvePackageAnswerOwnership,
@@ -31,6 +32,7 @@ const { extractVisualSymptomsSafely, persistRoundResult } = require('./visual-ru
 const outcomeRouteRepository = require('../repositories/outcome-route-repository')
 const { createReviewTimingLogger } = require('../repositories/diagnosis-review/review-performance')
 const { triggerStaticRepositoryCachePreload } = require('./static-cache-preloader')
+const { getQuestionPackageByMode, buildQuestionPackageUiHints } = require('./question-package-response')
 
 function getSessionQuestionRowRuntime() {
   return require('./session-question-row-runtime')
@@ -371,8 +373,23 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
         environmentCareContext: runtimeCarePayload.environmentCareContext
       })
     : null
+  const yellowLeafRoundResult =
+    isTerminalQuestionPackageSubmit && !wiltingDroopRoundResult
+      ? await resolveYellowLeafOutcomeResult({
+          sessionId,
+          round,
+          answers: routeRuntimeAnswers,
+          questionPackage:
+            payload.questionPackage || questionPackageSnapshot?.questionPackage || null,
+          plantContext: refreshedSessionState.plantContext || sessionState.plantContext || {},
+          careBehaviorTimeline: runtimeCarePayload.careBehaviorTimeline,
+          environmentCareContext: runtimeCarePayload.environmentCareContext,
+          routeAnswerEffects: runtimeRouteAnswerEffects
+        })
+      : null
   const roundResult =
     wiltingDroopRoundResult ||
+    yellowLeafRoundResult ||
     (await runDiagnosisRound({
       openid,
       userPlantId: refreshedSessionState.userPlantId,
@@ -419,6 +436,26 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   }
   if (runtimeCarePayload.environmentCareContext) {
     roundResult.environmentCareContext = runtimeCarePayload.environmentCareContext
+  }
+  if (isTerminalQuestionPackageSubmit) {
+    const terminalQuestionPackage =
+      payload.questionPackage ||
+      questionPackageSnapshot?.questionPackage ||
+      getQuestionPackageByMode(questionPackageSnapshot?.mode || '', {
+        questionCount: Array.isArray(questionPackageSnapshot?.packageQuestions)
+          ? questionPackageSnapshot.packageQuestions.length
+          : 0,
+        sourceMode: questionPackageSnapshot?.sourceMode || ''
+      }) ||
+      null
+    if (terminalQuestionPackage) {
+      roundResult.questionPackage = terminalQuestionPackage
+      roundResult.uiHints = buildQuestionPackageUiHints(
+        roundResult.uiHints || {},
+        terminalQuestionPackage,
+        Number(terminalQuestionPackage.questionCount || 0)
+      )
+    }
   }
 
   if (!roundResult.visualBatchTrace && refreshedSessionState.visualBatchTrace) {

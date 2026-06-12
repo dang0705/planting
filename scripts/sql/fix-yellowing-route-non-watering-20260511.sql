@@ -134,7 +134,7 @@ ON DUPLICATE KEY UPDATE
 -- 只有用户明确 unknown 或正式证据不足时才保守进入 uncertain_observation。
 REPLACE INTO diagnosis_outcomes (
   outcome_key,
-  session_problem_key,
+  problem_key,
   outcome_name_cn,
   outcome_type,
   outcome_category,

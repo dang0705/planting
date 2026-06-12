@@ -8,7 +8,7 @@ WHERE question_key = 'q_observed_probe__leaf_yellowing__yellowing_primary_clue_c
 
 REPLACE INTO diagnosis_outcomes (
   outcome_key,
-  session_problem_key,
+  problem_key,
   outcome_name_cn,
   outcome_type,
   outcome_category,

@@ -319,9 +319,15 @@ function buildCompactAnswerRoundResponse(roundResult = {}, helpers = diagnosisRo
     intermediateStates: Array.isArray(roundResult?.intermediateStates)
       ? roundResult.intermediateStates
       : [],
+    ...(roundResult?.questionPackage && typeof roundResult.questionPackage === 'object'
+      ? { questionPackage: roundResult.questionPackage }
+      : {}),
     uiHints: {
       canUploadMoreImages: false,
-      maxQuestionsThisRound: 0
+      maxQuestionsThisRound: roundResult?.questionPackage?.questionCount || 0,
+      ...(roundResult?.uiHints && typeof roundResult.uiHints === 'object'
+        ? roundResult.uiHints
+        : {})
     }
   }
 }

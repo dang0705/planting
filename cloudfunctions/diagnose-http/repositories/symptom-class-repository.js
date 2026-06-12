@@ -57,7 +57,7 @@ function normalizeBoolean(value) {
   return normalized === '1' || normalized === 'true' || normalized === 'yes'
 }
 
-function normalizeFollowupMode(value = '') {
+function normalizeQuestionMode(value = '') {
   const normalized = String(value || '').trim().toLowerCase()
   if (normalized === 'full' || normalized === 'limited' || normalized === 'explanation_only') {
     return normalized
@@ -77,7 +77,7 @@ function mapClassRow(row = {}) {
     dataStatus: normalizeText(row.data_status, 'unknown'),
     dataSource: normalizeText(row.data_source),
     auditNote: normalizeText(row.audit_note),
-    questionModeV1: normalizeFollowupMode(row.question_mode_v1),
+    questionModeV1: normalizeQuestionMode(row.question_mode_v1),
     runtimeConditionRule: normalizeText(row.runtime_condition_rule, 'soft'),
     runtimeNotes: normalizeText(row.runtime_notes)
   }
@@ -99,7 +99,7 @@ function mapMappingRow(row = {}) {
     dataStatus: normalizeText(row.data_status, 'unknown'),
     dataSource: normalizeText(row.data_source),
     auditNote: normalizeText(row.audit_note),
-    questionModeV1: normalizeFollowupMode(row.question_mode_v1),
+    questionModeV1: normalizeQuestionMode(row.question_mode_v1),
     explanationOnlySemantic: normalizeText(row.explanation_only_semantic),
     effectiveQuestionActivationV1: normalizeBoolean(row.effective_question_activation_v1),
     runtimePolicy: normalizeText(row.runtime_policy),
