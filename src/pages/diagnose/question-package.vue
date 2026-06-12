@@ -169,7 +169,7 @@
           id="diagnose-question-package-outcome-action-advice"
           class="mt-3.5 rounded-[22px] bg-emerald-50 p-4"
         >
-          <text class="block text-[15px] font-black text-gray-900">建议行动清单</text>
+          <text class="block text-[15px] font-black text-gray-900">处理建议</text>
           <view v-for="group in actionAdviceGroups" :key="group.key" class="mb-3 last:mb-0">
             <text class="mt-2.5 block text-xs font-extrabold leading-snug text-gray-800"
               >{{ group.outcomeLabel }}：</text
@@ -183,13 +183,6 @@
             </text>
           </view>
         </view>
-
-        <ResultRiskSections
-          id-prefix="diagnose-question-package-outcome"
-          :high-risk-warning-text="highRiskWarningText"
-          :blocked-action-explanations="blockedActionExplanations"
-          :observation-period-text="observationPeriodText"
-        />
 
         <view
           v-if="avoidAdviceGroups.length"
@@ -284,7 +277,7 @@
           id="diagnose-question-package-result-action-advice"
           class="mt-3.5 rounded-[22px] border border-[#e7e0d1] bg-[#fffdf8] p-4 shadow-sm"
         >
-          <text class="block text-[15px] font-black text-gray-900">建议行动清单</text>
+          <text class="block text-[15px] font-black text-gray-900">建议先这样做</text>
           <view v-if="actionAdviceGroups.length" class="mt-3 flex flex-col gap-2">
             <view
               v-for="group in actionAdviceGroups"
@@ -307,16 +300,6 @@
             >暂时没有更具体的行动建议，建议先保持观察并避免过度处理。</text
           >
         </view>
-
-        <ResultRiskSections
-          id-prefix="diagnose-question-package-result"
-          :high-risk-warning-text="highRiskWarningText"
-          :blocked-action-explanations="blockedActionExplanations"
-          :observation-period-text="observationPeriodText"
-          risk-class="mt-3.5 rounded-[22px] border border-red-100 bg-red-50 p-4 shadow-sm"
-          observation-class="mt-3.5 rounded-[22px] border border-[#e7e0d1] bg-[#fffdf8] p-4 shadow-sm"
-          use-list-wrapper
-        />
 
         <view
           v-if="avoidAdviceGroups.length"
@@ -344,15 +327,39 @@
           </view>
         </view>
 
-        <RouteDebugPanel
-          :show="showRouteDebugPanel"
-          :summary-text="routeDebugSummaryText"
-          :mode-text="routeDebugModeText"
-          :visible-outcome-text="routeDebugVisibleOutcomeText"
-          :next-question-text="routeDebugNextQuestionText"
-          :group-text="routeDebugGroupText"
-          :fallback-policy="routeDebugFallbackPolicy"
-        />
+        <view
+          v-if="showRouteDebugPanel"
+          id="diagnose-question-package-debug-panel"
+          class="mt-3.5 rounded-[22px] border border-[#e7e0d1] bg-[#fffdf8] p-4 shadow-sm"
+        >
+          <text class="block text-[15px] font-black text-gray-900">决策详情</text>
+          <view class="mt-3 flex flex-col gap-2">
+            <text v-if="routeDebugSummaryText" class="block text-xs leading-relaxed text-gray-600"
+              >决策原因：{{ routeDebugSummaryText }}</text
+            >
+            <text v-if="routeDebugModeText" class="block text-xs leading-relaxed text-gray-600"
+              >模式：{{ routeDebugModeText }}</text
+            >
+            <text
+              v-if="routeDebugVisibleOutcomeText"
+              class="block text-xs leading-relaxed text-gray-600"
+              >展示结果：{{ routeDebugVisibleOutcomeText }}</text
+            >
+            <text
+              v-if="routeDebugNextQuestionText"
+              class="block text-xs leading-relaxed text-gray-600"
+              >下一步问题：{{ routeDebugNextQuestionText }}</text
+            >
+            <text v-if="routeDebugGroupText" class="block text-xs leading-relaxed text-gray-600"
+              >命中流程组：{{ routeDebugGroupText }}</text
+            >
+            <text
+              v-if="routeDebugFallbackPolicy"
+              class="block text-xs leading-relaxed text-gray-600"
+              >回退策略：{{ routeDebugFallbackPolicy }}</text
+            >
+          </view>
+        </view>
       </view>
     </scroll-view>
 
@@ -383,8 +390,6 @@ import { useDiagnoseStore } from '@/store/diagnose.js'
 import { useUserStore } from '@/store/user.js'
 import CareBehaviorTimeline from '@/components/CareBehaviorTimeline.vue'
 import { useDiagnosisAnswerMutation } from '@/vue-query/diagnose/mutations/useDiagnosisAnswerMutation.js'
-import ResultRiskSections from './question-package/ResultRiskSections.vue'
-import RouteDebugPanel from './question-package/RouteDebugPanel.vue'
 import {
   DEFAULT_CACHE_KEY,
   resolveQuestionPackagePayload,
@@ -473,9 +478,6 @@ const {
   observedItems,
   actionAdviceGroups,
   avoidAdviceGroups,
-  blockedActionExplanations,
-  highRiskWarningText,
-  observationPeriodText,
   showRouteDebugPanel,
   routeDebugSummaryText,
   routeDebugModeText,

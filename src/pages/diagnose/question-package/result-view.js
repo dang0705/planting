@@ -122,21 +122,15 @@ export function useQuestionPackageResultView({ result, payload, routeOptions }) 
     () => Boolean(result.value) && !result.value.hasActiveQuestions
   )
   const finalOutcome = computed(() => result.value?.finalResult || {})
+  const outcomeTypeValue = computed(() =>
+    String(result.value?.outcomeType || finalOutcome.value?.outcomeType || '').trim()
+  )
   const visibleOutcomeSource = computed(() =>
     Array.isArray(result.value?.visibleOutcomes) && result.value.visibleOutcomes.length
       ? result.value.visibleOutcomes
       : Array.isArray(result.value?.finalResult?.visibleOutcomes)
         ? result.value.finalResult.visibleOutcomes
         : []
-  )
-  const leadingVisibleOutcome = computed(() => visibleOutcomeSource.value[0] || null)
-  const outcomeTypeValue = computed(() =>
-    String(
-      leadingVisibleOutcome.value?.outcomeType ||
-        result.value?.outcomeType ||
-        finalOutcome.value?.outcomeType ||
-        ''
-    ).trim()
   )
   const visibleOutcomeDisplays = computed(() =>
     uniqueStrings(visibleOutcomeSource.value.map(formatOutcomeDisplayLabel))
@@ -145,8 +139,7 @@ export function useQuestionPackageResultView({ result, payload, routeOptions }) 
   const allOutcomeDisplays = computed(() => visibleOutcomeDisplays.value)
   const outcomeDisplayTitle = computed(() =>
     String(
-      formatOutcomeDisplayLabel(leadingVisibleOutcome.value) ||
-        formatOutcomeDisplayLabel(finalOutcome.value) ||
+      formatOutcomeDisplayLabel(finalOutcome.value) ||
         formatOutcomeDisplayLabel(result.value?.mainIssueText) ||
         formatOutcomeDisplayLabel(result.value?.summaryCard?.title) ||
         '诊断已完成'
@@ -154,8 +147,6 @@ export function useQuestionPackageResultView({ result, payload, routeOptions }) 
   )
   const outcomeSummaryText = computed(() =>
     String(
-      formatOutcomeDisplayLabel(leadingVisibleOutcome.value?.summaryCn) ||
-        formatOutcomeDisplayLabel(leadingVisibleOutcome.value?.summary) ||
       formatOutcomeDisplayLabel(finalOutcome.value?.summaryCn) ||
         formatOutcomeDisplayLabel(finalOutcome.value?.summary) ||
         formatOutcomeDisplayLabel(result.value?.summaryText) ||
@@ -267,7 +258,7 @@ export function useQuestionPackageResultView({ result, payload, routeOptions }) 
       outcomeSources: outcomeAdviceSources.value,
       getOutcomeItems: buildOutcomeActionAdviceItems,
       fallbackItems: actionAdviceTexts.value,
-      fallbackLabel: '建议行动清单'
+      fallbackLabel: '通用建议'
     })
   )
   const avoidAdviceGroups = computed(() =>
@@ -282,20 +273,6 @@ export function useQuestionPackageResultView({ result, payload, routeOptions }) 
   const routeDebugEnabled =
     runtimeEnv.VITE_APP_ENV === 'development' ||
     (Boolean(runtimeEnv.DEV) && runtimeEnv.VITE_APP_ENV !== 'production')
-  const blockedActionExplanations = computed(() =>
-    (Array.isArray(result.value?.blockedActionExplanations)
-      ? result.value.blockedActionExplanations
-      : []
-    )
-      .map((item, index) => ({
-        key: String(item?.actionKey || item?.actionText || `blocked_${index}`).trim(),
-        actionText: String(item?.actionText || '').trim(),
-        explanation: String(item?.explanation || '').trim()
-      }))
-      .filter(item => item.actionText || item.explanation)
-  )
-  const highRiskWarningText = computed(() => String(result.value?.highRiskWarning || '').trim())
-  const observationPeriodText = computed(() => String(result.value?.observationPeriod || '').trim())
   const routeDebugDecision = computed(
     () => result.value?.routeDecision || result.value?.__runtimeRouteDecision || null
   )
@@ -351,9 +328,6 @@ export function useQuestionPackageResultView({ result, payload, routeOptions }) 
     observedItems,
     actionAdviceGroups,
     avoidAdviceGroups,
-    blockedActionExplanations,
-    highRiskWarningText,
-    observationPeriodText,
     showRouteDebugPanel,
     routeDebugSummaryText,
     routeDebugModeText,

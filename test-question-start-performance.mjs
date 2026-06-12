@@ -17,6 +17,7 @@ const payload = {
 let plantContextCallCount = 0
 let priorRepositoryLoadCount = 0
 let diagnosisEngineLoadCount = 0
+let staticCachePreloaderLoadCount = 0
 let persistenceServiceLoadCount = 0
 let persistRoundRuntimeCallCount = 0
 let persistenceStubMs = 0
@@ -30,6 +31,15 @@ Module._load = function loadWithQuestionStartPerfStubs(request, parent, isMain) 
       getPlantCatalogById: async () => null,
       getUserPlantInstanceById: async () => null
     }
+  }
+  if (
+    request === './static-cache-preloader' &&
+    String(parent?.filename || '').endsWith(
+      '/cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js'
+    )
+  ) {
+    staticCachePreloaderLoadCount += 1
+    throw new Error('static question/start should not load static-cache-preloader')
   }
   if (
     request === '../repositories/prior-repository' &&
@@ -173,6 +183,7 @@ for (let index = 0; index < 8; index += 1) {
 assert.equal(plantContextCallCount, 0)
 assert.equal(priorRepositoryLoadCount, 0)
 assert.equal(diagnosisEngineLoadCount, 0)
+assert.equal(staticCachePreloaderLoadCount, 0)
 
 const warmRuns = runs.slice(1)
 const maxWarmMs = Math.max(...warmRuns.map(item => item.elapsedMs))
@@ -191,6 +202,7 @@ console.log(
       plantContextCallCount,
       priorRepositoryLoadCount,
       diagnosisEngineLoadCount,
+      staticCachePreloaderLoadCount,
       persistenceServiceLoadCount,
       persistRoundRuntimeCallCount,
       questionCount: runs[0].questionCount,
