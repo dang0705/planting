@@ -20,6 +20,7 @@ developer_instructions = """
   3) `wechat_automator` 启动并确认端口与 WebSocket 就绪
   4) 再执行端上交互动作（例如进入诊断入口、选择黄叶模式、跳转页验证）
 - `wechat_ide/status` 只证明前置环境，不证明端上验收通过；必须继续执行到 automator ready 与真实交互 / 小程序运行时 `wx.request`。
+- 本项目 WeChat DevTools MCP 的 `projectPath` 必须固定为 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`。不得把 `dist/build/mp-weixin` 作为 MCP 自动化 projectPath；`dist/build/mp-weixin` 仅用于构建产物 / CI / 上传类检查。
 - 必须比对 `status.data.project_path` 与 Test Contract `projectPath`；不一致时标记 `devtools_configuration_blocker`，不得把 status success 写成该目标路径已验证。
 - 必须区分 CDP `9222` 与 automator `9420`：`9222` 可访问只能作为辅助证据，只有 `9420` 监听且 WebSocket / page_data / page_stack 可用才算 automator ready。
 - `wechat_ide open` 返回 `appServiceSDKScriptError timeout` / startup_errors、`wechat_build compile` 返回 `wait IDE port timeout`、`wechat_automator start` 返回 `CLI auto 执行失败 (rc=-1)` / timeout 时，优先归类为 DevTools / automator blocker，不得判产品失败或产品通过。

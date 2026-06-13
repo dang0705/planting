@@ -4,12 +4,14 @@
 
 本记录来自任务 `86exxzd5t` 的 QA recovery。尾号 `136` 的 `qa_reviewer` 线程结论为 `blocked / not_verified`：后端 smoke 已证明 `/diagnosis/question/start` 不再触发 `Unknown column package_topic`，但没有取得小程序运行时 `wx.request` 证据，因此不能判定端上验收通过。
 
+2026-06-13 追加硬规定：本项目 WeChat DevTools MCP 的项目目录必须固定为 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`。此前把 Test Contract 写成 `dist/build/mp-weixin` 是错误 contract；`dist/build/mp-weixin` 只能用于构建产物 / CI / 上传类检查，不得作为 MCP 自动化 projectPath。
+
 ## 1. 配置 / 项目路径
 
-- 原始信号：`wechat_ide status` 返回 success，但 `status.data.project_path` 是 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`，Test Contract 要求 `/Users/jay/WebstormProjects/planting/dist/build/mp-weixin`。
-- 易误判点：把 `status success` / `project_exists=true` 当成当前构建产物已被验证。
-- 正确归因：MCP 可达不等于项目路径正确。
-- 硬要求：每次端上 QA 必须比对 `status.data.project_path` 与 Test Contract `projectPath`；不一致时不得宣称该合同路径已验证。
+- 原始信号：`wechat_ide status` 返回 success，`status.data.project_path` 是 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`；此前 Test Contract 错写成 `/Users/jay/WebstormProjects/planting/dist/build/mp-weixin`。
+- 易误判点：把错误 contract 当成目标路径，再把正确 dev MCP 路径误判为 mismatch。
+- 正确归因：MCP 自动化必须使用 `dist/dev/mp-weixin`；错误的是 contract 中的 `dist/build/mp-weixin`。
+- 硬要求：每次端上 QA 必须比对 `status.data.project_path` 是否等于 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`；Test Contract 写 `dist/build/mp-weixin` 时必须退回。
 
 ## 2. 端口 / 进程
 
@@ -39,7 +41,7 @@
 - 原始信号：`miniprogram-automator.launch({ projectPath: dist/build/mp-weixin, port: 9431 })` 失败：`Failed to launch wechat web devTools, please make sure http port is open`。
 - 易误判点：以为底层 automator 能绕过所有 MCP/IDE 问题。
 - 正确归因：fallback 仍依赖微信开发者工具 HTTP/automation 能力。
-- 硬要求：MCP 不可用时必须尝试底层 automator；但只有 fallback 成功执行小程序运行时 `wx.request` 才算端上证据。launch/connect 失败必须保留 raw error。
+- 硬要求：MCP 不可用时必须尝试底层 automator，且 projectPath 必须使用 `dist/dev/mp-weixin`；只有 fallback 成功执行小程序运行时 `wx.request` 才算端上证据。launch/connect 失败必须保留 raw error。
 
 ## 6. QA Contract
 
@@ -65,7 +67,7 @@
 ## 9. 必须执行的总规则
 
 1. `wechat_ide/status` 只能作为前置检查，不能作为验收证据。
-2. 每次 QA 必须核对 MCP `project_path` 与 Test Contract `projectPath` 完全一致。
+2. 每次 QA 必须核对 MCP `project_path` 是否等于 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`；Test Contract 写 `dist/build/mp-weixin` 必须退回。
 3. `9222` CDP 不等于 `9420` automator。
 4. `open` 出现 `appServiceSDKScriptError timeout` 或 startup_errors 时，不得继续判业务通过。
 5. `CLI auto rc=-1`、`wait IDE port timeout`、`Failed connecting ws://localhost:9420` 优先归类为 DevTools automation blocker。

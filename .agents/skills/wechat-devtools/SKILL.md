@@ -499,8 +499,9 @@ wechat_build(action='compile', project_path='...')                 # ③ 重新�
 
 适用场景：诊断流、`/diagnosis/question/start`、`/diagnosis/answer`、question package、SQL schema regression。
 
+0. 本项目 WeChat DevTools MCP 的 `project_path` 必须固定为 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`。不得把 `dist/build/mp-weixin` 作为 MCP 自动化 project path；`dist/build/mp-weixin` 仅用于构建产物 / CI / 上传类检查。
 1. `wechat_ide(status)` 成功不是端上证据。必须继续到 `is_login`、`open/start`、`9420` automator 就绪、`page_data` 或小程序运行时 `wx.request`。
-2. 每次验收必须比对 `status.data.project_path` 与 Test Contract `projectPath`。本次事故中 status 成功但实际指向 `dist/dev/mp-weixin`，合同要求 `dist/build/mp-weixin`。
+2. 每次验收必须比对 `status.data.project_path` 与固定 MCP project path。若 Test Contract 写成 `dist/build/mp-weixin`，QA 必须退回 contract blocker 并要求改为 `dist/dev/mp-weixin`。
 3. `9222` 是 CDP 调试端口，`9420` 是 automator 端口。`9222 /json/version` 可访问不能证明 `9420` 可用，也不能证明端上交互可执行。
 4. `wechat_ide(open)` 报 `SystemError (appServiceSDKScriptError) timeout`、`wechat_build(compile)` 报 `wait IDE port timeout`、`wechat_automator(start)` 报 `CLI auto 执行失败 (rc=-1)` / timeout 时，优先归类为 DevTools / automator blocker。
 5. 底层 `miniprogram-automator` fallback 仍依赖微信开发者工具 HTTP / automation 能力。`Failed to launch wechat web devTools, please make sure http port is open` 只能说明 fallback 未启动成功，不能当成端上证据。

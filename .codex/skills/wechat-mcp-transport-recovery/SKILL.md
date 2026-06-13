@@ -99,7 +99,7 @@ tool_session_blocker
 特征：
 
 1. `wechat_ide/status` 返回 success。
-2. `status.data.project_path` 与 Test Contract 的 `projectPath` 不一致。
+2. `status.data.project_path` 不是本项目固定 MCP 路径 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`。
 3. 或者 `9222` CDP 可访问，但 `9420` automation port 不监听。
 
 结论：
@@ -108,7 +108,7 @@ tool_session_blocker
 devtools_configuration_blocker
 ```
 
-不得把 `status success`、`project_exists=true`、`9222 /json/version` 当成端上验收通过。它们只说明前置环境部分可见，不说明当前验收项目路径、automator 或小程序运行时 `wx.request` 已可用。
+不得把 `status success`、`project_exists=true`、`9222 /json/version` 当成端上验收通过。它们只说明前置环境部分可见，不说明当前验收项目路径、automator 或小程序运行时 `wx.request` 已可用。不得把 `dist/build/mp-weixin` 作为本项目 MCP 自动化 projectPath。
 
 ### E. 登录态 / token 失效
 
@@ -144,7 +144,7 @@ ls -la <projectPath>/project.config.json
 判断：
 
 1. `project.config.json` 不存在：项目路径错误。
-2. `wechat_ide/status` 中的 `project_path` 与 Test Contract `projectPath` 不一致：先修正 MCP 环境或显式传入 `project_path`，不得继续验收。
+2. `wechat_ide/status` 中的 `project_path` 不是 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`：先修正 MCP 环境或显式传入固定 `project_path`，不得继续验收。
 3. 无 DevTools 进程、无 `9420`：先拉起 DevTools。
 4. 有 DevTools 进程、无 `9420`：先恢复 automator。
 5. 只有 `9222` 可用：只能说明 CDP 可用，不能说明 automator 可用。
@@ -158,7 +158,7 @@ ls -la <projectPath>/project.config.json
 [mcp_servers.wechat-dev-tools.env]
 WEAPP_WS_ENDPOINT = "ws://localhost:9420"
 WEAPP_AUTOLAUNCH = "true"
-WEAPP_PROJECT_PATH = "/absolute/path/to/dist/build/mp-weixin"
+WEAPP_PROJECT_PATH = "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin"
 WECHAT_DEVTOOLS_CLI_PATH = "/Applications/wechatwebdevtools.app/Contents/MacOS/cli"
 WEAPP_TRUST_PROJECT = "true"
 WEAPP_LAUNCH_TIMEOUT = "90000"
@@ -181,7 +181,7 @@ pkill -f wechatwebdevtools || true
 
 ```bash
 /Applications/wechatwebdevtools.app/Contents/MacOS/cli auto \
-  --project /absolute/path/to/dist/build/mp-weixin \
+  --project /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin \
   --auto-port 9420 \
   --trust-project
 ```

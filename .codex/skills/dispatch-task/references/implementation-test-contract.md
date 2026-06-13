@@ -73,7 +73,7 @@ Mini Program Runtime QA:
 - automation_required: yes
 - endpoint:
 - page:
-- projectPath:
+- projectPath: /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin
 - payload:
 - assertions:
 - evidence_source: wechat_devtools_mcp / miniprogram_automator_wx_request / real_device_interaction
@@ -83,6 +83,8 @@ Mini Program Runtime QA:
 ```
 
 对 `/diagnosis/question/start`、`/diagnosis/answer` 等端上接口，合格证据必须来自小程序运行时的 `wx.request` 或真实端上交互，通过 WeChat DevTools MCP 或底层 `miniprogram-automator` 获取。Node 直接 HTTP、curl、云函数本地 invoke 只能作为后端 smoke，不得替代端上 QA。
+
+本项目 WeChat DevTools MCP 的 `projectPath` 必须固定为 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`。Test Contract 不得把 `dist/build/mp-weixin` 写成 MCP 自动化 projectPath；如出现，QA 必须退回 `contract_blocker`。
 
 如果本轮代码未部署到云端，Test Contract 必须要求 QA 使用 local functions gateway + 小程序运行时验证。若 WeChat DevTools MCP 与底层 `miniprogram-automator` 都失败，QA 必须输出 blocker / not_verified；不得把该任务标记为 complete。
 
