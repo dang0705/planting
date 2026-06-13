@@ -23,6 +23,10 @@ const {
   isYellowingFlowSymptomKey
 } = require('../utils/yellowing-question-policy')
 const {
+  buildRegisteredQuestionForPackageTopic,
+  mapRegisteredQuestionOptions
+} = require('./diagnosis-question-registry')
+const {
   YELLOW_LEAF_PACKAGE_MODE,
   YELLOWING_PACKAGE_QUESTION_COUNT,
   getQuestionPackageByMode,
@@ -101,7 +105,7 @@ function shouldUseYellowingCareEnvironmentGuard(activeSymptomKeys = []) {
 function mapSyntheticQuestionToQuestion(question = {}) {
   return {
     questionKey: question.questionKey,
-    questionId: toQuestionId(question.questionKey),
+    questionId: question.questionId || toQuestionId(question.questionKey),
     selectionSource: 'route_planner',
     routeKey: '',
     conditionKey: '',
@@ -115,19 +119,12 @@ function mapSyntheticQuestionToQuestion(question = {}) {
     uiVariant: question.uiVariant || '',
     renderMode: question.renderMode || '',
     routePackageRole: question.routePackageRole || '',
-    routePackageRole: question.routePackageRole || '',
     packageEffect: question.packageEffect || '',
-    type: question.questionType || 'single_choice',
-    text: question.questionText || '',
-    questionText: question.questionText || '',
+    type: question.questionType || question.answerType || 'single_choice',
+    text: question.text || question.questionText || '',
+    questionText: question.questionText || question.text || '',
     helpText: question.helpText || '',
-    options: (Array.isArray(question.options) ? question.options : []).map(option => ({
-      optionId: toOptionId(option.optionKey),
-      optionKey: option.optionKey,
-      text: option.text || '',
-      description: option.description || '',
-      isDefault: Boolean(option.isDefault)
-    })),
+    options: mapRegisteredQuestionOptions(question.options),
     whyThisQuestion: question.whyThisQuestion || ''
   }
 }
@@ -141,11 +138,14 @@ function buildManualYellowingCareStartQuestions({ plantContext = {} } = {}) {
     patternKey: 'yellowing'
   }
   const questions = YELLOWING_FRONTLOADED_CARE_CONTEXT_DIMENSIONS.flatMap(packageTopic =>
+    buildRegisteredQuestionForPackageTopic(packageTopic, {
+      targetSymptomKey: yellowingItem.symptomKey
+    }) ||
     buildSyntheticObservedProbeQuestions(yellowingItem, {
-      maxQuestions: 1,
-      preferredTopics: [packageTopic],
-      plantContext
-    })
+        maxQuestions: 1,
+        preferredTopics: [packageTopic],
+        plantContext
+      })
   )
   const uniqueQuestions = []
   const seenQuestionKeys = new Set()

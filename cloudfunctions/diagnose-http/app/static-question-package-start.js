@@ -5,6 +5,10 @@ const { buildRuntimeArtifacts } = require('../domain/runtime-artifacts')
 const { buildObservedProbePackageQuestions } = require('./static-package-question-builder')
 const { filterDisabledYellowingFlowQuestions } = require('../utils/yellowing-question-policy')
 const {
+  buildRegisteredQuestionForPackageTopic,
+  mapRegisteredQuestionOptions
+} = require('./diagnosis-question-registry')
+const {
   YELLOW_LEAF_PACKAGE_MODE,
   YELLOWING_PACKAGE_QUESTION_COUNT,
   getQuestionPackageByMode,
@@ -54,7 +58,7 @@ function clonePlain(value) {
 function mapStaticQuestionToPackageQuestion(question = {}) {
   return {
     questionKey: question.questionKey,
-    questionId: toQuestionId(question.questionKey),
+    questionId: question.questionId || toQuestionId(question.questionKey),
     selectionSource: 'static_question_package',
     routeKey: '',
     conditionKey: '',
@@ -68,19 +72,12 @@ function mapStaticQuestionToPackageQuestion(question = {}) {
     uiVariant: question.uiVariant || '',
     renderMode: question.renderMode || '',
     routePackageRole: question.routePackageRole || '',
-    routePackageRole: question.routePackageRole || '',
     packageEffect: question.packageEffect || '',
-    type: question.questionType || 'single_choice',
-    text: question.questionText || '',
-    questionText: question.questionText || '',
+    type: question.questionType || question.answerType || 'single_choice',
+    text: question.text || question.questionText || '',
+    questionText: question.questionText || question.text || '',
     helpText: question.helpText || '',
-    options: (Array.isArray(question.options) ? question.options : []).map(option => ({
-      optionId: toOptionId(option.optionKey),
-      optionKey: option.optionKey,
-      text: option.text || '',
-      description: option.description || '',
-      isDefault: Boolean(option.isDefault)
-    })),
+    options: mapRegisteredQuestionOptions(question.options),
     whyThisQuestion: question.whyThisQuestion || ''
   }
 }
@@ -89,11 +86,14 @@ function buildYellowingStaticQuestions() {
   const questionPackage = getQuestionPackageByMode(YELLOW_LEAF_PACKAGE_MODE)
   const packageTopics = questionPackage?.packageTopics || []
   const questions = packageTopics.flatMap(packageTopic =>
+    buildRegisteredQuestionForPackageTopic(packageTopic, {
+      targetSymptomKey: YELLOWING_STATIC_ITEM.symptomKey
+    }) ||
     buildObservedProbePackageQuestions(YELLOWING_STATIC_ITEM, {
-      maxQuestions: 1,
-      preferredTopics: [packageTopic],
-      plantContext: {}
-    })
+        maxQuestions: 1,
+        preferredTopics: [packageTopic],
+        plantContext: {}
+      })
   )
   const uniqueQuestions = []
   const seenQuestionKeys = new Set()

@@ -1,6 +1,10 @@
 'use strict'
 
 const { toOptionId, toQuestionId } = require('../mappers/public-id-mapper')
+const {
+  buildWateringFrequencyContextQuestionDefinition,
+  mapRegisteredQuestionOptions
+} = require('./diagnosis-question-registry')
 
 const WILTING_DROOP_PACKAGE_MODE = 'wilting_droop'
 const WILTING_DROOP_PACKAGE_SOURCE_MODE = 'manual_wilting_droop_route_package'
@@ -18,21 +22,7 @@ const WILTING_DROOP_STATIC_ITEM = Object.freeze({
 })
 
 const RAW_WILTING_DROOP_PACKAGE_QUESTIONS = Object.freeze([
-  {
-    questionKey: 'q_wilting_droop__watering_frequency_context',
-    packageTopic: 'watering_frequency_context',
-    questionGroupKey: 'wilting_droop_water_behavior',
-    uiVariant: 'care_behavior_timeline',
-    renderMode: 'care_behavior_timeline',
-    routePackageRole: 'route_package_water_behavior',
-    questionText: '请您选择在过去的10天内，哪几天浇了水？',
-    helpText: '系统会结合天气和浇水记录判断偏干、偏湿或基本合理。',
-    defaultOptionKey: 'care_behavior_timeline',
-    options: [
-      { optionKey: 'care_behavior_timeline', text: '养护记录已提供', isDefault: true },
-      { optionKey: 'unknown', text: '不确定 / 记不清' }
-    ]
-  },
+  buildWateringFrequencyContextQuestionDefinition(),
   {
     questionKey: 'q_wilting_droop__shape',
     packageTopic: 'wilting_shape',
@@ -105,7 +95,7 @@ function clonePlain(value) {
 function mapWiltingDroopQuestion(question = {}) {
   return {
     questionKey: question.questionKey,
-    questionId: toQuestionId(question.questionKey),
+    questionId: question.questionId || toQuestionId(question.questionKey),
     selectionSource: 'static_question_package',
     routeKey: 'wilting_droop',
     conditionKey: '',
@@ -119,19 +109,12 @@ function mapWiltingDroopQuestion(question = {}) {
     uiVariant: question.uiVariant || '',
     renderMode: question.renderMode || '',
     routePackageRole: question.routePackageRole || '',
-    routePackageRole: question.routePackageRole || '',
     packageEffect: 'route_outcome',
-    type: 'single_choice',
-    text: question.questionText || '',
-    questionText: question.questionText || '',
+    type: question.questionType || question.answerType || 'single_choice',
+    text: question.text || question.questionText || '',
+    questionText: question.questionText || question.text || '',
     helpText: question.helpText || '',
-    options: (Array.isArray(question.options) ? question.options : []).map(option => ({
-      optionId: toOptionId(option.optionKey),
-      optionKey: option.optionKey,
-      text: option.text || '',
-      description: option.description || '',
-      isDefault: Boolean(option.isDefault)
-    })),
+    options: mapRegisteredQuestionOptions(question.options),
     whyThisQuestion: '枯萎 / 发蔫固定题包用于收集水分、环境、近期应激和高危异常。'
   }
 }

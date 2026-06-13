@@ -15,10 +15,14 @@ const {
 const {
   buildFrontendAnswerResponse
 } = require('../../cloudfunctions/diagnose-http/app/frontend-response.js')
+const {
+  WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
+  WATERING_FREQUENCY_CONTEXT_TEXT
+} = require('../../cloudfunctions/diagnose-http/app/diagnosis-question-registry.js')
 
 function buildAnswers(optionKeys = []) {
   const questionKeys = [
-    'q_wilting_droop__watering_frequency_context',
+    WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
     'q_wilting_droop__shape',
     'q_wilting_droop__rhythm_environment',
     'q_wilting_droop__recent_stress',
@@ -100,6 +104,20 @@ function testPackageConfigAndStart() {
   assert.equal(startResult.questions.length, 5)
   assert.equal(startResult.questions[0].uiVariant, 'care_behavior_timeline')
   assert.equal(startResult.questions[0].packageTopic, 'watering_frequency_context')
+  assert.equal(startResult.questions[0].questionKey, WATERING_FREQUENCY_CONTEXT_QUESTION_KEY)
+  assert.equal(startResult.questions[0].text, WATERING_FREQUENCY_CONTEXT_TEXT)
+  assert.equal(startResult.questions[0].helpText, '系统会结合天气和浇水记录判断偏干、偏湿或基本合理。')
+  assert.deepEqual(
+    startResult.questions[0].options.map(({ optionKey, text, isDefault }) => ({
+      optionKey,
+      text,
+      isDefault
+    })),
+    [
+      { optionKey: 'care_behavior_timeline', text: '养护记录已提供', isDefault: true },
+      { optionKey: 'unknown', text: '不确定 / 记不清', isDefault: false }
+    ]
+  )
 
   assert.equal(
     isQuestionPackageAnswerSubmitPayload({

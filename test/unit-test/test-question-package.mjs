@@ -15,6 +15,16 @@ const {
   isQuestionPackageAnswerSubmitPayload,
   resolveResponseQuestions
 } = require('../../cloudfunctions/diagnose-http/app/question-package-response.js')
+const {
+  _test: staticQuestionPackageStartTest
+} = require('../../cloudfunctions/diagnose-http/app/static-question-package-start.js')
+const {
+  buildWiltingDroopPackageQuestions
+} = require('../../cloudfunctions/diagnose-http/app/wilting-droop-question-package.js')
+const {
+  WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
+  WATERING_FREQUENCY_CONTEXT_TEXT
+} = require('../../cloudfunctions/diagnose-http/app/diagnosis-question-registry.js')
 
 function buildQuestion(index) {
   return {
@@ -236,6 +246,47 @@ function testPackageSubmitTerminalQuestioningRuntimeWiring() {
   }
 }
 
+function pickWateringQuestion(questions = []) {
+  return questions.find(item => item.packageTopic === 'watering_frequency_context')
+}
+
+function assertNoRuntimeGeneratedQuestionId(question = {}) {
+  assert.equal(question.questionId, toQuestionId(question.questionKey))
+  assert.doesNotMatch(question.questionId, /question_\d+|random|uuid|timestamp|date/i)
+  assert.doesNotMatch(question.questionKey, /random|uuid|timestamp|date_now|math_random/i)
+}
+
+function testSharedWateringQuestionRegistryAcrossPackages() {
+  const yellowWatering = pickWateringQuestion(staticQuestionPackageStartTest.buildYellowingStaticQuestions())
+  const wiltingWatering = pickWateringQuestion(buildWiltingDroopPackageQuestions())
+  assert.ok(yellowWatering)
+  assert.ok(wiltingWatering)
+
+  assert.equal(yellowWatering.questionKey, WATERING_FREQUENCY_CONTEXT_QUESTION_KEY)
+  assert.equal(wiltingWatering.questionKey, WATERING_FREQUENCY_CONTEXT_QUESTION_KEY)
+  assert.equal(yellowWatering.questionId, wiltingWatering.questionId)
+  assert.equal(yellowWatering.text, WATERING_FREQUENCY_CONTEXT_TEXT)
+  assert.equal(yellowWatering.text, '请您选择在过去的10天内，哪几天浇了水？')
+
+  for (const field of ['text', 'questionText', 'helpText', 'type', 'uiVariant', 'renderMode']) {
+    assert.equal(yellowWatering[field], wiltingWatering[field], field)
+  }
+  assert.deepEqual(
+    yellowWatering.options.map(({ optionKey, text, isDefault }) => ({ optionKey, text, isDefault })),
+    wiltingWatering.options.map(({ optionKey, text, isDefault }) => ({ optionKey, text, isDefault }))
+  )
+  assertNoRuntimeGeneratedQuestionId(yellowWatering)
+  assertNoRuntimeGeneratedQuestionId(wiltingWatering)
+}
+
+function testQuestionRegistryDoesNotOwnRouteOutcomeWeights() {
+  const registry = readFileSync(
+    'cloudfunctions/diagnose-http/app/diagnosis-question-registry.js',
+    'utf8'
+  )
+  assert.doesNotMatch(registry, /outcome-route|outcome-resolver|effectStrength|routeWeight/)
+}
+
 testYellowingPackageFrontendResponse()
 testModeToQuestionPackageMapping()
 testQuestionsAreOnlyPackageQuestionSource()
@@ -244,5 +295,7 @@ testGenericPackageAnswerSubmitIsTerminalQuestioningPayload()
 testYellowingCompletePackageAnswersAreTerminalQuestioningPayload()
 testNonPackageFourAnswerSubmitIsNotTerminalQuestioningPayload()
 testPackageSubmitTerminalQuestioningRuntimeWiring()
+testSharedWateringQuestionRegistryAcrossPackages()
+testQuestionRegistryDoesNotOwnRouteOutcomeWeights()
 
 console.log('question package tests passed')
