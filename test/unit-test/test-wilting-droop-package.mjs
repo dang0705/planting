@@ -36,15 +36,8 @@ function buildQuestionRepositoryStub() {
           questionType: 'single_choice',
           targetSymptomKey: 'leaf_yellowing',
           questionGroupKey: 'db_watering_frequency_context',
-          packageTopic: 'watering_frequency_context',
-          packageSection: 'route_package',
-          routePackageRole: 'route_package_water_behavior',
-          packageEffect: 'route_outcome',
           helpTextCn: REQUIRED_WATERING_HELP,
-          whyThisQuestionCn: '数据库题库定义的共用浇水时间线题。',
-          defaultOptionKey: 'care_behavior_timeline',
-          uiVariant: 'care_behavior_timeline',
-          renderMode: 'care_behavior_timeline'
+          whyThisQuestionCn: '数据库题库定义的共用浇水时间线题。'
         }
       ]
     },
@@ -57,17 +50,13 @@ function buildQuestionRepositoryStub() {
           questionKey: WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
           optionKey: 'care_behavior_timeline',
           optionTextUserCn: '养护记录已提供',
-          optionTextCn: '养护记录已提供',
-          displayOrder: 1,
-          isDefault: true
+          optionTextCn: '养护记录已提供'
         },
         {
           questionKey: WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
           optionKey: 'unknown',
           optionTextUserCn: '不确定 / 记不清',
-          optionTextCn: '不确定 / 记不清',
-          displayOrder: 2,
-          isDefault: false
+          optionTextCn: '不确定 / 记不清'
         }
       ]
     }

@@ -16,6 +16,20 @@ QA scope 由 Test Contract / 验收标准决定，不由“是否有 UI diff”�
 
 如果 ticket / prompt / 验收标准 / request changes 明确要求小程序实际交互、页面点选、表单输入、按钮状态、控件状态、端上 UI 行为或用户路径验证，则 QA 必须执行自动化或端上验证。
 
+凡是任务触及以下任一项，QA 必须要求 Test Contract 中存在端上验证项；缺失时直接退回 `contract_blocker`，不得自行降级为 unit tests 或 backend smoke：
+
+1. `/diagnosis/question/start`。
+2. `/diagnosis/answer`。
+3. question package / fixed question package / package answer submit。
+4. 诊断小程序请求路径、诊断页面入口、端上 `wx.request` 链路。
+5. CloudBase SQL repository / schema / seed。
+
+这类 QA Contract 必须包含 concrete `endpoint`、`page`、`projectPath`、`payload`、`assertions`、`evidence_source`。只写 unit tests、Node HTTP、curl、backend smoke 或“按现有测试执行”均不合格。
+
+对 `/diagnosis/question/start`、`/diagnosis/answer` 等端上接口，合格证据必须来自小程序运行时的 `wx.request` 或真实端上交互，通过 WeChat DevTools MCP 或底层 `miniprogram-automator` 获取。Node 直接 HTTP / curl 只能作为后端 smoke，不得替代端上 QA。
+
+如果本轮代码未部署到云端，QA 必须使用 local functions gateway + 小程序运行时验证。若 WeChat DevTools MCP 与底层 `miniprogram-automator` 都失败，QA Result 必须标记 blocker / not_verified；不得标记 complete。
+
 ## WeChat DevTools MCP
 
 必须使用 WeChat DevTools MCP 的场景：
@@ -60,6 +74,15 @@ QA scope 由 Test Contract / 验收标准决定，不由“是否有 UI diff”�
 - 是否通过 WeChat DevTools CLI 启动 automation
 - 若验证接口，说明请求是在小程序运行时通过 `wx.request` 发起，而不是 Node 直接 HTTP
 - HTTP status、业务 code、关键响应字段和断言结果
+
+## SQL schema truth gate
+
+CloudBase SQL repository / schema / seed 改动必须有 schema truth gate 证据：
+
+1. 优先使用 live `INFORMATION_SCHEMA` 或 CloudBase MCP 验证真实 schema。
+2. 若 auth 不可用，至少使用 checked-in schema spec + runtime endpoint smoke / 端上 `wx.request` 证明没有 `Unknown column`。
+3. live schema 未验证必须列为 gap，不得写成 schema 已完整验证。
+4. 只运行 repository unit tests 不能证明 live schema truth。
 
 ## 输出预算
 

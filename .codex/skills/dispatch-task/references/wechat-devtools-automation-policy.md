@@ -61,6 +61,20 @@ QA 是正式自动化验收 owner。
 
 判断依据是验收标准和 Test Contract，不是是否存在 UI diff。
 
+以下任务即使没有 UI diff，也必须要求 QA 执行 WeChat DevTools MCP 或底层 `miniprogram-automator` 的小程序运行时验证：
+
+1. `/diagnosis/question/start`。
+2. `/diagnosis/answer`。
+3. question package / fixed question package / package answer submit。
+4. 诊断小程序请求路径、诊断页面入口、端上 `wx.request` 链路。
+5. CloudBase SQL repository / schema / seed。
+
+合格证据必须来自小程序运行时的 `wx.request` 或真实端上交互。Node 直接 HTTP、curl、云函数本地 invoke 只能作为后端 smoke，不能替代端上 QA。
+
+QA Contract 必须包含 concrete `endpoint`、`page`、`projectPath`、`payload`、`assertions`、`evidence_source`；缺少任一核心字段时，QA 应退回 `contract_blocker`。
+
+如果本轮代码未部署到云端，QA 必须通过 local functions gateway 让小程序运行时命中新代码。若内置 MCP 与底层 automator 都无法执行 required item，只能输出 blocker / not_verified，不得标记 complete。
+
 ## 跨 agent MCP 会话失效处理
 
 当 QA 线程出现 WeChat MCP 会话层异常（如 `Transport closed`）时，先判定是否为 `QA tool/session blocker`，而非产品功能 blocker。判断规则如下：
@@ -116,6 +130,15 @@ tool_session_blocker
 3. 接口验收必须在 `miniProgram.evaluate` 中调用小程序环境的 `wx.request`，并记录 `projectPath`、automation port、request path、HTTP status、业务 code、关键响应字段和断言结果。
 4. UI / 交互验收必须记录 page path、操作链、selector 或截图引用。
 5. 只有 `miniprogram-automator` 也无法启动、无法连接或无法执行 required item，才允许把该验收项标为 `devtools_automator_blocker`。
+
+## SQL schema truth gate
+
+当自动化验收涉及 CloudBase SQL repository / schema / seed 时：
+
+1. 优先使用 live `INFORMATION_SCHEMA` 或 CloudBase MCP 验证真实 schema。
+2. 若 auth 不可用，必须至少结合 checked-in schema spec 与 runtime endpoint smoke / 小程序运行时 `wx.request`，证明链路没有 `Unknown column`。
+3. live schema 未验证必须作为 gap 记录。
+4. 不能用 Node repository unit tests 替代小程序运行时请求或 live schema gate。
 
 ## 输出预算
 

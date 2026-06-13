@@ -51,15 +51,8 @@ function buildQuestionRepositoryStub({
           questionType: 'single_choice',
           targetSymptomKey: 'leaf_yellowing',
           questionGroupKey: 'db_mock_watering_group',
-          packageTopic: WATERING_TOPIC,
-          packageSection: 'route_package',
-          routePackageRole: 'route_package_water_behavior',
-          packageEffect: 'route_outcome',
           helpTextCn: DB_STUB_WATERING_HELP,
-          whyThisQuestionCn: 'DB mock：为什么问这题',
-          defaultOptionKey: 'care_behavior_timeline',
-          uiVariant: 'care_behavior_timeline',
-          renderMode: 'care_behavior_timeline'
+          whyThisQuestionCn: 'DB mock：为什么问这题'
         }
       ]
     },
@@ -67,14 +60,11 @@ function buildQuestionRepositoryStub({
       if (!includeOptions || !questionKeys.includes(WATERING_FREQUENCY_CONTEXT_QUESTION_KEY)) {
         return []
       }
-      return DB_STUB_OPTIONS.map((option, index) => ({
+      return DB_STUB_OPTIONS.map(option => ({
         questionKey: WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
         optionKey: option.optionKey,
         optionTextUserCn: option.text,
-        optionTextCn: option.text,
-        optionDescriptionUserCn: `DB mock option ${index}`,
-        displayOrder: index + 1,
-        isDefault: option.isDefault
+        optionTextCn: option.text
       }))
     }
   }

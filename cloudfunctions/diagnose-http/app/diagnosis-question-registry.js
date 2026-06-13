@@ -10,6 +10,18 @@ const REGISTERED_QUESTION_KEY_BY_TOPIC = Object.freeze({
   [WATERING_FREQUENCY_CONTEXT_TOPIC]: WATERING_FREQUENCY_CONTEXT_QUESTION_KEY
 })
 
+const REGISTERED_RUNTIME_METADATA_BY_TOPIC = Object.freeze({
+  [WATERING_FREQUENCY_CONTEXT_TOPIC]: Object.freeze({
+    packageTopic: WATERING_FREQUENCY_CONTEXT_TOPIC,
+    packageSection: 'route_package',
+    routePackageRole: 'route_package_water_behavior',
+    packageEffect: 'route_outcome',
+    defaultOptionKey: 'care_behavior_timeline',
+    uiVariant: 'care_behavior_timeline',
+    renderMode: 'care_behavior_timeline'
+  })
+})
+
 function normalizeText(value = '') {
   return String(value || '').trim()
 }
@@ -20,6 +32,10 @@ function resolveRegisteredQuestionKey(packageTopic = '') {
 
 function isRegisteredPackageQuestionTopic(packageTopic = '') {
   return Boolean(resolveRegisteredQuestionKey(packageTopic))
+}
+
+function resolveRuntimeMetadata(packageTopic = '') {
+  return REGISTERED_RUNTIME_METADATA_BY_TOPIC[normalizeText(packageTopic)] || {}
 }
 
 function assertRepository(repository = {}) {
@@ -66,14 +82,19 @@ function mapDbQuestionToPackageQuestion({
   options,
   selectionSource = 'data_repository_question_package',
   routeKey = '',
-  targetSymptomKey = ''
+  targetSymptomKey = '',
+  runtimeMetadata = {}
 } = {}) {
   const questionKey = normalizeText(question?.questionKey)
   const defaultOptionKey = normalizeText(
-    question?.defaultOptionKey || options.find(option => option.isDefault)?.optionKey
+    runtimeMetadata.defaultOptionKey || question?.defaultOptionKey || options.find(option => option.isDefault)?.optionKey
   )
   const text = normalizeText(question?.questionTextUserCn || question?.questionTextCn)
   const helpText = normalizeText(question?.helpTextCn)
+  const mappedOptions = options.map(option => ({
+    ...option,
+    isDefault: Boolean(option?.isDefault || option?.optionKey === defaultOptionKey)
+  }))
 
   return {
     questionKey,
@@ -82,20 +103,20 @@ function mapDbQuestionToPackageQuestion({
     conditionKey: '',
     outcomeKey: '',
     targetSymptomKey: normalizeText(targetSymptomKey || question?.targetSymptomKey),
-    questionGroupKey: normalizeText(question?.questionGroupKey || question?.packageTopic),
-    packageTopic: normalizeText(question?.packageTopic),
-    packageSection: normalizeText(question?.packageSection),
+    questionGroupKey: normalizeText(question?.questionGroupKey || runtimeMetadata.packageTopic),
+    packageTopic: normalizeText(runtimeMetadata.packageTopic || question?.packageTopic),
+    packageSection: normalizeText(runtimeMetadata.packageSection || question?.packageSection),
     defaultOptionKey,
     defaultOptionId: defaultOptionKey,
-    uiVariant: normalizeText(question?.uiVariant),
-    renderMode: normalizeText(question?.renderMode),
-    routePackageRole: normalizeText(question?.routePackageRole),
-    packageEffect: normalizeText(question?.packageEffect),
+    uiVariant: normalizeText(runtimeMetadata.uiVariant || question?.uiVariant),
+    renderMode: normalizeText(runtimeMetadata.renderMode || question?.renderMode),
+    routePackageRole: normalizeText(runtimeMetadata.routePackageRole || question?.routePackageRole),
+    packageEffect: normalizeText(runtimeMetadata.packageEffect || question?.packageEffect),
     type: normalizeText(question?.questionType) || 'single_choice',
     text,
     questionText: text,
     helpText,
-    options,
+    options: mappedOptions,
     whyThisQuestion: normalizeText(question?.whyThisQuestionCn)
   }
 }
@@ -109,6 +130,7 @@ async function loadRegisteredPackageQuestion({
 } = {}) {
   const questionKey = resolveRegisteredQuestionKey(packageTopic)
   if (!questionKey) {return null}
+  const runtimeMetadata = resolveRuntimeMetadata(packageTopic)
   const resolvedRepository = repository || getDefaultQuestionRepository()
   assertRepository(resolvedRepository)
 
@@ -135,7 +157,8 @@ async function loadRegisteredPackageQuestion({
     options,
     selectionSource,
     routeKey,
-    targetSymptomKey
+    targetSymptomKey,
+    runtimeMetadata
   })
 }
 
@@ -145,6 +168,7 @@ module.exports = {
   isRegisteredPackageQuestionTopic,
   loadRegisteredPackageQuestion,
   resolveRegisteredQuestionKey,
+  resolveRuntimeMetadata,
   _test: {
     mapDbQuestionToPackageQuestion,
     mapDbOptionsToPackageOptions

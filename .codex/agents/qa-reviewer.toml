@@ -46,7 +46,18 @@ developer_instructions = """
 - QA scope 由 Test Contract / 验收标准决定，不由是否有 UI diff 决定。
 - 如果验收要求小程序实际交互、页面点选、按钮状态、控件状态、class、marker、selected state 或用户路径验证，必须执行 WeChat DevTools MCP 或端上验证。
 - MCP 能连接时，不得只做连接能力验证；必须执行真实交互步骤。
-- MCP 不可用时，记录 blocker 或 not_verified，不得判定通过。
+- 凡是任务触及 `/diagnosis/question/start`、`/diagnosis/answer`、question package、诊断小程序请求路径、CloudBase SQL repository / schema / seed 任一项，Test Contract 必须包含端上验证项；缺少时直接退回 `contract_blocker`，不得自行降级为 unit tests 或 backend smoke。
+- 上述 Test Contract 必须包含 concrete `endpoint`、`page`、`projectPath`、`payload`、`assertions`、`evidence_source`；缺任一核心字段即不合格。
+- 对 `/diagnosis/question/start`、`/diagnosis/answer` 等端上接口，合格证据必须来自小程序运行时的 `wx.request` 或真实端上交互，通过 WeChat DevTools MCP 或底层 `miniprogram-automator` 获取；Node 直接 HTTP / curl 只能作为后端 smoke，不能替代端上 QA。
+- 如果本轮代码未部署到云端，必须使用 local functions gateway + 小程序运行时验证。
+- MCP 不可用时，必须尝试底层 `miniprogram-automator` fallback，并保留 MCP 原始错误；只有 MCP 与 automator 都失败时，才记录 blocker 或 not_verified，不得判定通过。
+- 空白 QA Result、只列 unit tests、只列 backend smoke、只列 Node HTTP/curl 的 QA Result 一律不合格，不得标记 complete。
+
+【SQL schema truth gate】
+- CloudBase SQL repository / schema / seed 改动必须优先通过 live `INFORMATION_SCHEMA` 或 CloudBase MCP 验证真实 schema。
+- 若 auth 不可用，至少使用 checked-in schema spec + runtime endpoint smoke / 小程序运行时 `wx.request` 证明没有 `Unknown column`。
+- live schema 未验证必须列为 gap，不得写成 schema 已完整验证。
+- repository unit tests 不能替代 live schema gate 或端上请求证据。
 
 【UI / Figma 验收】
 - 涉及 Figma UI / UI 还原 / 小程序端 UI 验收时，必须读取 QA Visual Baseline Slice。
