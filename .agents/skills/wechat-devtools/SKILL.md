@@ -492,3 +492,19 @@ wechat_build(action='compile', project_path='...')                 # ③ 重新�
 - ✅ 截图/操作失败后执行 `open` → `start` → `compile` 恢复连接
 - ✅ navigate 后必须通过 `page_data` 或 `page_stack` 校验当前页面路径
 - ✅ 在跨页面测试中比对同名字段的一致性
+
+---
+
+## 项目事故补充：2026-06-13 端上 QA 漏验
+
+适用场景：诊断流、`/diagnosis/question/start`、`/diagnosis/answer`、question package、SQL schema regression。
+
+1. `wechat_ide(status)` 成功不是端上证据。必须继续到 `is_login`、`open/start`、`9420` automator 就绪、`page_data` 或小程序运行时 `wx.request`。
+2. 每次验收必须比对 `status.data.project_path` 与 Test Contract `projectPath`。本次事故中 status 成功但实际指向 `dist/dev/mp-weixin`，合同要求 `dist/build/mp-weixin`。
+3. `9222` 是 CDP 调试端口，`9420` 是 automator 端口。`9222 /json/version` 可访问不能证明 `9420` 可用，也不能证明端上交互可执行。
+4. `wechat_ide(open)` 报 `SystemError (appServiceSDKScriptError) timeout`、`wechat_build(compile)` 报 `wait IDE port timeout`、`wechat_automator(start)` 报 `CLI auto 执行失败 (rc=-1)` / timeout 时，优先归类为 DevTools / automator blocker。
+5. 底层 `miniprogram-automator` fallback 仍依赖微信开发者工具 HTTP / automation 能力。`Failed to launch wechat web devTools, please make sure http port is open` 只能说明 fallback 未启动成功，不能当成端上证据。
+6. backend curl / Node HTTP / local gateway smoke 即使返回 200，也只能作为 `backend_smoke_pass_only`。涉及诊断端上接口的验收，合格证据必须来自小程序运行时 `wx.request` 或真实端上交互。
+7. live schema 未验证必须列为 gap。不得因为 backend smoke 未出现 `Unknown column` 就宣称 CloudBase live schema 已验证。
+8. QA 子线程报 `Instructions are required` 是 subagent 调用层 blocker，不是 WeChat DevTools 或产品接口证据。
+9. 出现 `INVALID_TOKEN` / `需要重新登录` 后，必须重新执行 `is_login` 并要求扫码登录；未登录时停止端上验收。

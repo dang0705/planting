@@ -94,6 +94,38 @@ tool_session_blocker
 
 此时不得把问题误判成产品失败。
 
+### D. status 假阳性 / 项目路径偏差
+
+特征：
+
+1. `wechat_ide/status` 返回 success。
+2. `status.data.project_path` 与 Test Contract 的 `projectPath` 不一致。
+3. 或者 `9222` CDP 可访问，但 `9420` automation port 不监听。
+
+结论：
+
+```text
+devtools_configuration_blocker
+```
+
+不得把 `status success`、`project_exists=true`、`9222 /json/version` 当成端上验收通过。它们只说明前置环境部分可见，不说明当前验收项目路径、automator 或小程序运行时 `wx.request` 已可用。
+
+### E. 登录态 / token 失效
+
+特征：
+
+1. CLI 或 MCP 返回 `INVALID_TOKEN`。
+2. 返回 `需要重新登录`。
+3. 之前 `is_login=true`，后续 open / auto 又失败并提示登录态失效。
+
+结论：
+
+```text
+devtools_auth_blocker
+```
+
+出现上述信号后必须重新执行 `is_login`。未登录时停止端上 QA 并要求扫码登录，不得继续重试 endpoint 或把失败归为产品 blocker。
+
 ## 5. 标准检查顺序
 
 只按这个顺序执行，不要来回盲试。
@@ -104,6 +136,7 @@ tool_session_blocker
 
 ```bash
 lsof -nP -iTCP:9420 -sTCP:LISTEN
+lsof -nP -iTCP:9222 -sTCP:LISTEN
 ps aux | rg -i 'wechatwebdevtools|9420|miniprogram-automator|automator'
 ls -la <projectPath>/project.config.json
 ```
@@ -111,9 +144,11 @@ ls -la <projectPath>/project.config.json
 判断：
 
 1. `project.config.json` 不存在：项目路径错误。
-2. 无 DevTools 进程、无 `9420`：先拉起 DevTools。
-3. 有 DevTools 进程、无 `9420`：先恢复 automator。
-4. 有 `9420`：继续验证原始连接。
+2. `wechat_ide/status` 中的 `project_path` 与 Test Contract `projectPath` 不一致：先修正 MCP 环境或显式传入 `project_path`，不得继续验收。
+3. 无 DevTools 进程、无 `9420`：先拉起 DevTools。
+4. 有 DevTools 进程、无 `9420`：先恢复 automator。
+5. 只有 `9222` 可用：只能说明 CDP 可用，不能说明 automator 可用。
+6. 有 `9420`：继续验证原始连接。
 
 ### Step 2：确认 WeChat MCP 配置足够
 
@@ -162,6 +197,8 @@ pkill -f wechatwebdevtools || true
 ```bash
 lsof -nP -iTCP:9420 -sTCP:LISTEN
 ```
+
+若返回 `CLI auto 执行失败 (rc=-1)`、`wait IDE port timeout`、`appServiceSDKScriptError timeout` 或超时，优先归类为 `devtools_automator_blocker` / `devtools_auth_blocker`，不得判为产品接口失败。
 
 ### Step 5：验证原始 WebSocket
 
@@ -263,16 +300,40 @@ recovered
 
 如果底层 automator 已通，应继续完成端上验证，而不是停在内置 MCP transport。
 
+### 规则 5
+
+后端 `curl`、Node HTTP、local gateway smoke 即使返回 200，也只能记为：
+
+```text
+backend_smoke_pass_only
+```
+
+涉及 `/diagnosis/question/start`、`/diagnosis/answer`、question package 或 SQL schema regression 的验收，必须取得小程序运行时 `wx.request` 或真实端上交互证据。
+
+### 规则 6
+
+原 QA 线程或替换 QA 线程报：
+
+```text
+Instructions are required
+```
+
+这属于 subagent 调用 / 线程请求层 blocker，不是 WeChat DevTools、automator 或产品接口的通过 / 失败证据。必须保留 raw error，并按同角色线程失效规则处理；替换线程存在不等于验收完成。
+
 ## 8. 输出建议
 
 ```text
 WeChat MCP Recovery Result
 - transport_status:
 - devtools_process:
+- status_project_path:
+- expected_project_path:
+- cdp_port_9222:
 - automator_port_9420:
 - raw_websocket:
 - built_in_mcp_transport:
 - fallback_automator:
+- login_status:
 - classification:
 - can_continue_qa:
 - next_action:
@@ -285,4 +346,3 @@ WeChat MCP Recovery Result
 1. 内置 WeChat MCP 恢复可用。
 2. 底层 automator 直连可用，且已切换过去继续完成任务。
 3. 已证明 CLI auto 拉不起、`9420` 不监听、原始 WebSocket 也不可握手，此时才可判真正的 DevTools/automator blocker。
-
