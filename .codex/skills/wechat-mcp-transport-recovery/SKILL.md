@@ -130,6 +130,8 @@ devtools_auth_blocker
 
 只按这个顺序执行，不要来回盲试。
 
+恢复过程中默认不得执行 `cache_clean(clean_type="all")` 或等价清缓存操作。该操作可能清除 DevTools 登录态 / 项目授权态，导致用户必须重新扫码。除非用户明确授权，否则只允许使用 `open`、`start`、`compile`、端口检查和最小范围编译缓存清理。
+
 ### Step 1：检查端口、进程、项目路径
 
 优先命令：

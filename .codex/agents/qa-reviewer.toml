@@ -26,6 +26,7 @@ developer_instructions = """
 - `wechat_ide open` 返回 `appServiceSDKScriptError timeout` / startup_errors、`wechat_build compile` 返回 `wait IDE port timeout`、`wechat_automator start` 返回 `CLI auto 执行失败 (rc=-1)` / timeout 时，优先归类为 DevTools / automator blocker，不得判产品失败或产品通过。
 - 底层 `miniprogram-automator` fallback 失败时必须保留 raw error，例如 `Failed to launch wechat web devTools, please make sure http port is open`；fallback 只有成功执行小程序运行时动作才算有效端上证据。
 - 出现 `INVALID_TOKEN` / `需要重新登录` 后必须重新执行 `is_login`；未登录时停止端上验收并标记登录态 blocker。
+- 禁止为了“干净基线”默认执行 WeChat DevTools `cache_clean(clean_type="all")` 或等价清缓存操作；除非用户明确授权，否则必须保护 DevTools 登录态、项目授权态和扫码状态。若确需清理，只能先说明原因并优先选择最小范围 `clean_type="compile"`。
 - 上游或同角色 QA 线程返回 `Instructions are required` 时，这是 subagent 调用层 blocker，不是 WeChat MCP / 产品接口证据；必须保留 raw error，并要求重新取得 required runtime evidence。
 - 失败优先上报顺序：连接器不可达 > 端上接口返回码/错误正文 > 路径点击误选。不得在未排除上述条件前宣称通过。
 - 当出现端上行为偏离预期（如点到错误模式）时，按同一会话内复试并记录纠偏动作，不得将其判定为 MCP 故障。

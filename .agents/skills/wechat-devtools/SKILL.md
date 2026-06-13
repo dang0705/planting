@@ -82,7 +82,7 @@ uv tool install wechat-devtools-mcp --force  # 通过uv安装wechat-devtools-mcp
 | `preview` | 生成预览二维码 | `qr_format="terminal"` |
 | `upload` | 上传到微信后台 | **`version`（必填）**, `desc?` |
 | `build_npm` | 构建 NPM 依赖（upload 前必做） | — |
-| `cache_clean` | 清除缓存 | `clean_type="compile"` |
+| `cache_clean` | 清除编译缓存 | 默认禁止；仅在用户明确授权时使用，优先 `clean_type="compile"` |
 
 ### `wechat_automator` — 自动化交互
 
@@ -167,8 +167,7 @@ wechat_ide(action='open', cdp_enabled=True)         # 开启 IDE + CDP 9222 + �
   ↳ IDE 冷启动可能出现瞬态错误（simulator not found / subPackages of undefined），属正常现象，忽略并继续执行 compile 即可刷新
 wechat_automator(action='start')                    # 启动 daemon + 开启自动化 9420
 wechat_file(action='project_info')                  # [可选] 确认项目结构
-wechat_build(action='cache_clean', clean_type='all')     # 清除全部缓存
-wechat_build(action='compile')                            # 编译建立干净 CDP 基线（自动重连 automator）
+wechat_build(action='compile')                            # 编译建立 CDP 基线（自动重连 automator）
 wechat_automator(action='page_data')                # 验证连接可用
   ↳ ⚠ 检查输出中 AppID 是否为 undefined
   ↳ 如果 undefined → project_path 可能指向了子目录而非项目根目录
@@ -229,7 +228,6 @@ wechat_build(action='compile')                              # ④ 捕获编译�
 ### SOP D：全页面巡检（回归/发布前验收）
 
 ```
-wechat_build(action='cache_clean', clean_type='all')    # 建立干净 CDP 基线
 wechat_build(action='compile')
   ↳ ⚠ 检查 AppID 是否为 undefined
 wechat_file(action='list_pages')                        # 获取页面列表，确认有效路径
@@ -469,7 +467,9 @@ wechat_build(action='compile', project_path='...')                 # ③ 重新�
 
 - ❌ `open` 返回 `startup_errors` 后仍继续执行后续测试操作（必须先修复错误）
 - ❌ 未确认 `is_login: true` 时调用 `preview` / `upload`
-- ❌ 对生产项目调用 `cache_clean(clean_type='all')`
+- ❌ QA 默认调用 `cache_clean(clean_type='all')` 或任何会清登录态 / 授权态的缓存操作
+- ❌ 未经用户明确授权，为了“干净环境”清空 WeChat DevTools 全部缓存，导致需要重新扫码授权
+- ✅ 如确需处理编译缓存，优先使用最小范围的编译动作或 `clean_type="compile"`；必须先记录原因并确认不会清除登录态 / 授权态
 - ❌ 在 `evaluate` 中执行 `eval()` 或不安全代码
 - ❌ 脑补运行状态——必须以 MCP 接口返回的实际数据为准
 - ❌ 同一失败操作重试超过 3 次（应转为诊断根因）
@@ -509,3 +509,4 @@ wechat_build(action='compile', project_path='...')                 # ③ 重新�
 7. live schema 未验证必须列为 gap。不得因为 backend smoke 未出现 `Unknown column` 就宣称 CloudBase live schema 已验证。
 8. QA 子线程报 `Instructions are required` 是 subagent 调用层 blocker，不是 WeChat DevTools 或产品接口证据。
 9. 出现 `INVALID_TOKEN` / `需要重新登录` 后，必须重新执行 `is_login` 并要求扫码登录；未登录时停止端上验收。
+10. QA 不得为了建立“干净基线”默认执行 `cache_clean(clean_type='all')` 或等价清缓存操作；除非用户明确授权，否则必须保护 DevTools 登录态和项目授权态，避免触发重新扫码。

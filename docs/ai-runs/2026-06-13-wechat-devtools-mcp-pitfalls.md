@@ -76,3 +76,4 @@
 8. live schema 未验证必须列 gap。
 9. QA/subagent 线程报 `Instructions are required` 是 agent 调用层 blocker。
 10. 出现 `INVALID_TOKEN` / `需要重新登录` 后，必须重新扫码登录；未登录时停止端上验收。
+11. QA 不得默认执行 `cache_clean(clean_type="all")` 或等价清缓存操作。该操作会频繁破坏 DevTools 登录态 / 项目授权态，导致用户需要重新扫码；除非用户明确授权，否则只允许最小范围恢复。

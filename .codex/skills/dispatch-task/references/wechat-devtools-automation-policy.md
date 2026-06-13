@@ -75,6 +75,8 @@ QA Contract 必须包含 concrete `endpoint`、`page`、`projectPath`、`payload
 
 本项目 WeChat DevTools MCP 的 `projectPath` 必须固定为 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`。`dist/build/mp-weixin` 不得作为 MCP 自动化项目路径；若 Test Contract 写成该路径，QA 必须退回 `contract_blocker`，不得按该路径继续验收。
 
+QA 不得为了“干净基线”默认执行 WeChat DevTools `cache_clean(clean_type="all")` 或等价清缓存操作。除非用户明确授权，否则必须保护 DevTools 登录态、项目授权态和扫码状态，避免触发重新扫码。确需清理时必须记录原因，并优先使用最小范围的编译缓存清理。
+
 如果本轮代码未部署到云端，QA 必须通过 local functions gateway 让小程序运行时命中新代码。若内置 MCP 与底层 automator 都无法执行 required item，只能输出 blocker / not_verified，不得标记 complete。
 
 ## 跨 agent MCP 会话失效处理
