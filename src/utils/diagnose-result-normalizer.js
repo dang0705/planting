@@ -3,6 +3,7 @@ import {
   normalizeOutcomeType,
   normalizeStringList
 } from './diagnose-flow-shared.js'
+import { getQuestionIdentity } from './diagnose-question-identity.js'
 import {
   normalizeObservedEvidenceSet,
   normalizeObservedSymptoms,
@@ -73,17 +74,16 @@ function isActiveQuestionPackage({ stage = '', questionPackage = null, uiHints =
 export function normalizeQuestions(questions = [], options = {}) {
   const limit = Math.max(1, Number(options?.limit || 1))
   return (Array.isArray(questions) ? questions : [])
-    .filter(item => item?.questionId)
+    .filter(item => getQuestionIdentity(item))
     .slice(0, limit)
     .map(item => ({
-      questionId: item.questionId,
-      questionKey: item.questionKey || item.questionId,
+      ...(item.questionId ? { questionId: item.questionId } : {}),
+      questionKey: getQuestionIdentity(item),
       targetSymptomKey: item.targetSymptomKey || '',
       packageTopic: item.packageTopic || '',
       questionGroupKey: item.questionGroupKey || '',
       packageSection: item.packageSection || '',
-      routePackageRole: item.routePackageRole || item.routePackageRole || '',
-      routePackageRole: item.routePackageRole || item.routePackageRole || '',
+      routePackageRole: item.routePackageRole || '',
       packageEffect: item.packageEffect || '',
       text: item.questionTextUserCn || item.questionTextCn || item.text || item.questionText || item.title || '',
       helpText: item.helpTextCn || item.helpText || item.questionHelpText || '',
@@ -102,10 +102,10 @@ export function normalizeQuestions(questions = [], options = {}) {
       timeline: item.timeline,
 
       options: (Array.isArray(item.options) ? item.options : [])
-        .filter(option => option?.optionId)
+        .filter(option => option?.optionId || option?.optionKey)
         .map(option => ({
-          optionId: option.optionId,
-          optionKey: option.optionKey || '',
+          optionId: option.optionId || option.optionKey,
+          optionKey: option.optionKey || option.optionId || '',
           text: option.optionTextUserCn || option.optionTextCn || option.text || option.optionText || option.label || option.desc || '',
           description:
             option.optionDescriptionUserCn ||

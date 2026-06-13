@@ -5,6 +5,7 @@ import {
   createQuestionAnswerMap,
   normalizeDiagnosisResult
 } from '@/utils/diagnose-flow.js'
+import { getQuestionIdentity as getQuestionId } from '@/utils/diagnose-question-identity.js'
 import {
   extractCareBehaviorTimelineFromQuestion,
   getVisibleCareBehaviorOptions,
@@ -32,7 +33,7 @@ function dedupeQuestionsById(questions = []) {
   return (Array.isArray(questions) ? questions : [])
     .map(item => item || {})
     .filter(item => {
-      const questionId = normalizeText(item?.questionId)
+      const questionId = getQuestionId(item)
       if (!questionId || seen.has(questionId)) {return false}
       seen.add(questionId)
       return true
@@ -92,9 +93,7 @@ function resolveYellowingQuestionOptionText(question = {}, option = {}) {
   return ''
 }
 
-export function getQuestionId(question = {}) {
-  return normalizeText(question?.questionId)
-}
+export { getQuestionId }
 
 export function getQuestionTitle(question = {}) {
   if (isCareBehaviorWateringTimelineQuestion(question)) {
@@ -168,7 +167,9 @@ export function useQuestionPackageFlow({ result, images, plantName, userStore, d
   }
 
   function resetQuestionState(questions = []) {
-    const nextQuestions = dedupeQuestionsById(Array.isArray(questions) ? questions.filter(item => item?.questionId) : [])
+    const nextQuestions = dedupeQuestionsById(
+      Array.isArray(questions) ? questions.filter(item => getQuestionId(item)) : []
+    )
     questionStack.value = nextQuestions
     activeQuestionIndex.value = 0
     questionAnswers.value = createQuestionAnswerMap(nextQuestions)

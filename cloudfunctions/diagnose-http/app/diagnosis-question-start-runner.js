@@ -317,7 +317,7 @@ async function runQuestionStartDiagnosis({ payload, openid, skipPersistence = fa
       userPlantId,
       plantCatalogId
     })
-    const roundResult = buildStaticQuestionPackageStartRoundResult({
+    const roundResult = await buildStaticQuestionPackageStartRoundResult({
       sessionId,
       option,
       plantContext,

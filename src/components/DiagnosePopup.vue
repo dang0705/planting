@@ -242,13 +242,13 @@
                 <view class="question-package-swiper-track" :style="questionSwiperTrackStyle">
                   <view
                     v-for="(question, pageIndex) in questionSwiperPages"
-                    :key="question?.questionId || `question-package-placeholder-${pageIndex}`"
+                    :key="getQuestionId(question) || `question-package-placeholder-${pageIndex}`"
                     class="question-package-swiper-item"
                   >
                     <view
                       v-if="question"
-                      :key="question.questionId"
-                      :id="`diagnose-question-package-question-${question.questionId}`"
+                      :key="getQuestionId(question)"
+                      :id="`diagnose-question-package-question-${getQuestionId(question)}`"
                       class="question-package-question-card question-package-question-card--animated"
                     >
                       <text class="block text-[10px] text-[#8B7355] mb-1">
@@ -273,7 +273,7 @@
                         @change="payload => handleCareBehaviorTimelineChange(question, payload)"
                       />
                       <view
-                        :id="`diagnose-question-package-option-stack-${question.questionId}`"
+                        :id="`diagnose-question-package-option-stack-${getQuestionId(question)}`"
                         v-if="getVisibleCareBehaviorOptions(question).length"
                         class="question-package-option-stack"
                         :class="question.uiVariant === 'single_select_accordion' ? 'question-package-option-stack--accordion' : ''"
@@ -311,7 +311,7 @@
                             </view>
                           </template>
                           <view
-                            :id="`diagnose-question-package-option-${question.questionId}-${option.optionId}`"
+                            :id="`diagnose-question-package-option-${getQuestionId(question)}-${getQuestionOptionId(option)}`"
                             class="question-package-option-collapse-body"
                             :class="
                               isSelectedQuestionOption(question, option)
@@ -330,11 +330,11 @@
                           <view
                             v-for="option in getVisibleCareBehaviorOptions(question)"
                             :key="option.optionId"
-                            :id="`diagnose-question-package-option-${question.questionId}-${option.optionId}`"
+                            :id="`diagnose-question-package-option-${getQuestionId(question)}-${getQuestionOptionId(option)}`"
                             class="question-package-option-button"
                             style="width: 100%; display: flex; justify-content: flex-start; text-align: left;"
                             :class="
-                              questionAnswers[question.questionId] === option.optionId
+                              isSelectedQuestionOption(question, option)
                                 ? 'question-package-option-button--active'
                                 : 'question-package-option-button--idle'
                             "
@@ -589,6 +589,7 @@ import {
   buildQuestionAnswerPayload,
   getHealthClass
 } from '@/utils/diagnose-flow.js'
+import { getQuestionIdentity as getQuestionId } from '@/utils/diagnose-question-identity.js'
 import {
   extractCareBehaviorTimelineFromQuestion,
   getVisibleCareBehaviorOptions,
@@ -772,7 +773,7 @@ const additionalImageSlotGroups = computed(() =>
 const hasUsedAdditionalImageSubmission = computed(() => detectUsedAdditionalImageSubmission(result.value))
 const activeDiagnosisQuestions = computed(() =>
   Array.isArray(result.value?.questions)
-    ? result.value.questions.filter(item => item?.questionId)
+    ? result.value.questions.filter(item => getQuestionId(item))
     : []
 )
 const hasActiveDiagnosisQuestions = computed(() =>
@@ -1222,10 +1223,6 @@ function isFrequencyOption(optionKey = '', optionText = '', optionKeys = []) {
   return optionKeys.some(item => compactText.includes(item.replaceAll('_', '')))
 }
 
-function getQuestionId(question) {
-  return String(question?.questionId || '').trim()
-}
-
 function findQuestionById(questionId = '') {
   const normalizedQuestionId = String(questionId || '').trim()
   if (!normalizedQuestionId) {return null}
@@ -1541,7 +1538,7 @@ async function handleNextQuestion() {
 }
 
 function resetQuestionState(questions = [], { answerRevision = 0 } = {}) {
-  const nextQuestions = Array.isArray(questions) ? questions.filter(item => item?.questionId) : []
+  const nextQuestions = Array.isArray(questions) ? questions.filter(item => getQuestionId(item)) : []
   questionStack.value = nextQuestions
   activeQuestionIndex.value = 0
   questionAnswers.value = createQuestionAnswerMap(nextQuestions)
@@ -1555,12 +1552,12 @@ function resetQuestionState(questions = [], { answerRevision = 0 } = {}) {
 
 function mergeQuestionState(nextResult = null, submittedPayload = null) {
   const nextQuestions = Array.isArray(nextResult?.questions)
-    ? nextResult.questions.filter(item => item?.questionId)
+    ? nextResult.questions.filter(item => getQuestionId(item))
     : []
   const submittedAnswers = Array.isArray(submittedPayload?.answers) ? submittedPayload.answers : []
   const submittedAnswerMap = submittedAnswers.reduce((entries, item) => {
-    const questionId = String(item?.questionId || '').trim()
-    const optionId = String(item?.optionId || '').trim()
+    const questionId = getQuestionId(item)
+    const optionId = String(item?.optionKey || item?.optionId || '').trim()
     if (questionId && optionId) {
       entries[questionId] = {
         optionId,

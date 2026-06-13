@@ -16,9 +16,63 @@ const {
   buildFrontendAnswerResponse
 } = require('../../cloudfunctions/diagnose-http/app/frontend-response.js')
 const {
-  WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
-  WATERING_FREQUENCY_CONTEXT_TEXT
+  WATERING_FREQUENCY_CONTEXT_QUESTION_KEY
 } = require('../../cloudfunctions/diagnose-http/app/diagnosis-question-registry.js')
+
+const REQUIRED_WATERING_TEXT = '请您选择在过去的10天内，哪几天浇了水？'
+const REQUIRED_WATERING_HELP = '系统会结合天气和浇水记录判断偏干、偏湿或基本合理。'
+
+function buildQuestionRepositoryStub() {
+  return {
+    async getQuestionsByKeys(questionKeys = []) {
+      if (!questionKeys.includes(WATERING_FREQUENCY_CONTEXT_QUESTION_KEY)) {
+        return []
+      }
+      return [
+        {
+          questionKey: WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
+          questionTextUserCn: REQUIRED_WATERING_TEXT,
+          questionTextCn: REQUIRED_WATERING_TEXT,
+          questionType: 'single_choice',
+          targetSymptomKey: 'leaf_yellowing',
+          questionGroupKey: 'db_watering_frequency_context',
+          packageTopic: 'watering_frequency_context',
+          packageSection: 'route_package',
+          routePackageRole: 'route_package_water_behavior',
+          packageEffect: 'route_outcome',
+          helpTextCn: REQUIRED_WATERING_HELP,
+          whyThisQuestionCn: '数据库题库定义的共用浇水时间线题。',
+          defaultOptionKey: 'care_behavior_timeline',
+          uiVariant: 'care_behavior_timeline',
+          renderMode: 'care_behavior_timeline'
+        }
+      ]
+    },
+    async getQuestionOptionMappings(questionKeys = []) {
+      if (!questionKeys.includes(WATERING_FREQUENCY_CONTEXT_QUESTION_KEY)) {
+        return []
+      }
+      return [
+        {
+          questionKey: WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
+          optionKey: 'care_behavior_timeline',
+          optionTextUserCn: '养护记录已提供',
+          optionTextCn: '养护记录已提供',
+          displayOrder: 1,
+          isDefault: true
+        },
+        {
+          questionKey: WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
+          optionKey: 'unknown',
+          optionTextUserCn: '不确定 / 记不清',
+          optionTextCn: '不确定 / 记不清',
+          displayOrder: 2,
+          isDefault: false
+        }
+      ]
+    }
+  }
+}
 
 function buildAnswers(optionKeys = []) {
   const questionKeys = [
@@ -79,7 +133,7 @@ function assertNoPriorityFields(result) {
   assert.doesNotMatch(allResultText(result), /最可能原因|概率排序|主因排序|probability/i)
 }
 
-function testPackageConfigAndStart() {
+async function testPackageConfigAndStart() {
   const questionPackage = getQuestionPackageByMode('wilt_droop')
   assert.equal(questionPackage.mode, 'wilting_droop')
   assert.equal(questionPackage.route, 'wilting_droop')
@@ -89,7 +143,7 @@ function testPackageConfigAndStart() {
     preferSingleOutcome: false
   })
 
-  const startResult = buildStaticQuestionPackageStartRoundResult({
+  const startResult = await buildStaticQuestionPackageStartRoundResult({
     sessionId: 'diag_start',
     option: {
       classKey: 'wilting_droop_mode',
@@ -98,15 +152,17 @@ function testPackageConfigAndStart() {
       symptomCn: '枯萎 / 发蔫'
     },
     plantContext: { plantId: 'plant_catalog_1' },
-    round: 1
+    round: 1,
+    repository: buildQuestionRepositoryStub()
   })
   assert.equal(startResult.questionPackage.mode, 'wilting_droop')
   assert.equal(startResult.questions.length, 5)
   assert.equal(startResult.questions[0].uiVariant, 'care_behavior_timeline')
   assert.equal(startResult.questions[0].packageTopic, 'watering_frequency_context')
   assert.equal(startResult.questions[0].questionKey, WATERING_FREQUENCY_CONTEXT_QUESTION_KEY)
-  assert.equal(startResult.questions[0].text, WATERING_FREQUENCY_CONTEXT_TEXT)
-  assert.equal(startResult.questions[0].helpText, '系统会结合天气和浇水记录判断偏干、偏湿或基本合理。')
+  assert.equal(Object.prototype.hasOwnProperty.call(startResult.questions[0], 'questionId'), false)
+  assert.equal(startResult.questions[0].text, REQUIRED_WATERING_TEXT)
+  assert.equal(startResult.questions[0].helpText, REQUIRED_WATERING_HELP)
   assert.deepEqual(
     startResult.questions[0].options.map(({ optionKey, text, isDefault }) => ({
       optionKey,
@@ -235,7 +291,7 @@ function testFrontendSurfaceFields() {
   assert.doesNotMatch(allResultText(frontend), /最可能原因/)
 }
 
-testPackageConfigAndStart()
+await testPackageConfigAndStart()
 testDryWaterAndHeatPressure()
 testWetAndRootRotBlocksWatering()
 testReasonableWaterAirflowAndRepotRecovery()

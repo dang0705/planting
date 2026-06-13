@@ -25,21 +25,21 @@
           >
             <view
               v-for="(question, questionIndex) in questionStack"
-              :key="question.questionId || question.questionKey || questionIndex"
-              :id="`diagnose-question-package-page-item-${question.questionId || questionIndex}`"
+              :key="getQuestionId(question) || questionIndex"
+              :id="`diagnose-question-package-page-item-${getQuestionId(question) || questionIndex}`"
               class="h-full w-full shrink-0 grow-0 basis-full overflow-x-hidden overflow-y-visible"
             >
               <scroll-view
-                :id="`diagnose-question-package-page-question-scroll-${question.questionId || questionIndex}`"
+                :id="`diagnose-question-package-page-question-scroll-${getQuestionId(question) || questionIndex}`"
                 scroll-y
                 class="h-full"
               >
                 <view
-                  :id="`diagnose-question-package-page-question-shell-${question.questionId || questionIndex}`"
+                  :id="`diagnose-question-package-page-question-shell-${getQuestionId(question) || questionIndex}`"
                   class="box-border min-h-full px-4 pb-[34px]"
                 >
                   <view
-                    :id="`diagnose-question-package-page-question-card-${question.questionId || questionIndex}`"
+                    :id="`diagnose-question-package-page-question-card-${getQuestionId(question) || questionIndex}`"
                     class="question-package-card-enter rounded-[20px] border border-emerald-100 bg-white px-4 py-4 shadow-sm"
                   >
                     <text class="block text-base font-semibold leading-7 text-[#2d7a4f]">
@@ -64,13 +64,13 @@
 
                     <view
                       v-if="getVisibleCareBehaviorOptions(question).length"
-                      :id="`diagnose-question-package-page-option-stack-${question.questionId || questionIndex}`"
+                      :id="`diagnose-question-package-page-option-stack-${getQuestionId(question) || questionIndex}`"
                       class="mt-4 flex flex-col gap-2.5"
                     >
                       <view
                         v-for="(option, optionIndex) in getVisibleCareBehaviorOptions(question)"
                         :key="option.optionId || option.optionKey || option.text"
-                        :id="`diagnose-question-package-page-option-${question.questionId || questionIndex}-${option.optionId || option.optionKey || optionIndex}`"
+                        :id="`diagnose-question-package-page-option-${getQuestionId(question) || questionIndex}-${option.optionId || option.optionKey || optionIndex}`"
                         class="overflow-hidden rounded-2xl border border-emerald-100 bg-white"
                         :class="
                           isSelectedQuestionOption(question, option)

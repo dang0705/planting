@@ -1,12 +1,12 @@
 'use strict'
 
-const { toOptionId, toQuestionId } = require('../mappers/public-id-mapper')
+const { toOptionId } = require('../mappers/public-id-mapper')
 const { buildRuntimeArtifacts } = require('../domain/runtime-artifacts')
 const { buildObservedProbePackageQuestions } = require('./static-package-question-builder')
 const { filterDisabledYellowingFlowQuestions } = require('../utils/yellowing-question-policy')
 const {
-  buildRegisteredQuestionForPackageTopic,
-  mapRegisteredQuestionOptions
+  loadRegisteredPackageQuestion,
+  isRegisteredPackageQuestionTopic
 } = require('./diagnosis-question-registry')
 const {
   YELLOW_LEAF_PACKAGE_MODE,
@@ -58,7 +58,6 @@ function clonePlain(value) {
 function mapStaticQuestionToPackageQuestion(question = {}) {
   return {
     questionKey: question.questionKey,
-    questionId: question.questionId || toQuestionId(question.questionKey),
     selectionSource: 'static_question_package',
     routeKey: '',
     conditionKey: '',
@@ -77,24 +76,39 @@ function mapStaticQuestionToPackageQuestion(question = {}) {
     text: question.text || question.questionText || '',
     questionText: question.questionText || question.text || '',
     helpText: question.helpText || '',
-    options: mapRegisteredQuestionOptions(question.options),
+    options: (Array.isArray(question.options) ? question.options : []).map(option => ({
+      optionId: option.optionId || option.optionKey,
+      optionKey: option.optionKey,
+      text: option.text || '',
+      description: option.description || '',
+      isDefault: Boolean(option.isDefault)
+    })),
     whyThisQuestion: question.whyThisQuestion || ''
   }
 }
 
-function buildYellowingStaticQuestions() {
+async function buildYellowingStaticQuestions({
+  repository = null
+} = {}) {
   const questionPackage = getQuestionPackageByMode(YELLOW_LEAF_PACKAGE_MODE)
   const packageTopics = questionPackage?.packageTopics || []
-  const questions = packageTopics.flatMap(packageTopic =>
-    buildRegisteredQuestionForPackageTopic(packageTopic, {
-      targetSymptomKey: YELLOWING_STATIC_ITEM.symptomKey
-    }) ||
-    buildObservedProbePackageQuestions(YELLOWING_STATIC_ITEM, {
+  const questions = []
+  for (const packageTopic of packageTopics) {
+    if (isRegisteredPackageQuestionTopic(packageTopic)) {
+      questions.push(await loadRegisteredPackageQuestion({
+        packageTopic,
+        repository,
+        selectionSource: 'data_repository_question_package',
+        targetSymptomKey: YELLOWING_STATIC_ITEM.symptomKey
+      }))
+      continue
+    }
+    questions.push(...buildObservedProbePackageQuestions(YELLOWING_STATIC_ITEM, {
         maxQuestions: 1,
         preferredTopics: [packageTopic],
         plantContext: {}
-      })
-  )
+      }))
+  }
   const uniqueQuestions = []
   const seenQuestionKeys = new Set()
   for (const question of filterDisabledYellowingFlowQuestions(questions)) {
@@ -107,8 +121,6 @@ function buildYellowingStaticQuestions() {
   }
   return deepFreeze(uniqueQuestions.map(mapStaticQuestionToPackageQuestion))
 }
-
-const STATIC_YELLOWING_PACKAGE_QUESTIONS = buildYellowingStaticQuestions()
 
 function isYellowingStaticQuestionStartMode(option = {}) {
   return String(option?.classKey || '').trim() === YELLOWING_CLASS_KEY
@@ -160,11 +172,12 @@ function buildStaticObservedEvidenceSet(option = {}) {
   ]
 }
 
-function buildStaticQuestionPackageStartRoundResult({
+async function buildStaticQuestionPackageStartRoundResult({
   sessionId,
   option,
   plantContext,
-  round = 1
+  round = 1,
+  repository = null
 } = {}) {
   if (
     !isYellowingStaticQuestionStartMode(option) &&
@@ -177,8 +190,8 @@ function buildStaticQuestionPackageStartRoundResult({
     ? WILTING_DROOP_PACKAGE_QUESTION_COUNT
     : YELLOWING_PACKAGE_QUESTION_COUNT
   const packageQuestions = isWiltingDroopPackage
-    ? buildWiltingDroopPackageQuestions()
-    : clonePlain(STATIC_YELLOWING_PACKAGE_QUESTIONS)
+    ? await buildWiltingDroopPackageQuestions({ repository })
+    : clonePlain(await buildYellowingStaticQuestions({ repository }))
   if (packageQuestions.length !== expectedQuestionCount) {
     throw Object.assign(new Error('固定题包数量异常'), { statusCode: 500 })
   }
@@ -258,7 +271,6 @@ module.exports = {
   isYellowingStaticQuestionStartMode,
   isWiltingDroopStaticQuestionStartMode,
   _test: {
-    STATIC_YELLOWING_PACKAGE_QUESTIONS,
     buildWiltingDroopPackageQuestions,
     buildYellowingStaticQuestions,
     buildStaticObservedSymptoms,

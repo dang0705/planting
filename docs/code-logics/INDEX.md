@@ -10,6 +10,7 @@
 - 既有的动态提问控制模型、动态下一题生成、legacy extension residue 不再作为当前事实使用。
 - `yellow_leaf` 映射到固定 4 题前置题包：`answerSubmitMode = package`、`questionDisplayMode = package`、`fixedQuestionPackage = true`，并带有 `outcomePolicy`。
 - `wilting_droop` 映射到固定 5 题前置题包，source mode 为 `manual_wilting_droop_route_package`：Q0 是 `CareBehaviorTimeline` 水分行为时间线，Q1-Q4 分别覆盖发蔫形态、节律/环境、近期应激和高危异常；黄叶语义不因此改变。
+- 黄叶与 `wilting_droop` 共用的 `watering_frequency_context` 只由 registry 映射到 DB `questionKey`；题干、选项、UI 元数据来自数据库题库，题包响应以 `questionKey` 作为题目身份，不依赖后端临时生成的 `questionId`。
 - `wilting_droop` 整包完成后按答案产出“建议行动清单”：可包含多个 `visibleOutcomes`、冲突动作解释、高危提醒和观察周期；不引入概率排序或“最可能原因”作为公开出口。
 - `/diagnosis/question/start` 的 `yellowing_mode` 固定走 `static-question-package-start.js` 的模块级静态题包启动路径，返回 active `questions` 与 `questionPackage`；该路径只保存 package snapshot，不加载 prior repository、manual fast path 或 `diagnosis-engine`。
 - package 响应以 `questions` 作为前端题目数组；非 package 当前路径才保留单题 session question row anchor 语义。

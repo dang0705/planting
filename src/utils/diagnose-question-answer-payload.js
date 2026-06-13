@@ -6,12 +6,14 @@ import {
   shouldIncludeCareBehaviorTimelineQuestion
 } from './care-behavior-timeline.js'
 import { resolveDefaultQuestionOptionId } from './diagnose-flow-shared.js'
+import { getQuestionIdentity } from './diagnose-question-identity.js'
 
 export function createQuestionAnswerMap(questions = []) {
   const entries = {}
   for (const item of questions || []) {
-    if (!item?.questionId) {continue}
-    entries[item.questionId] = isCareBehaviorWateringTimelineQuestion(item)
+    const questionId = getQuestionIdentity(item)
+    if (!questionId) {continue}
+    entries[questionId] = isCareBehaviorWateringTimelineQuestion(item)
       ? resolveCareBehaviorTimelineAutoAnswerOptionId(item) || ''
       : resolveDefaultQuestionOptionId(item)
   }
@@ -19,9 +21,9 @@ export function createQuestionAnswerMap(questions = []) {
 }
 
 export function isQuestionAnswerComplete(questions = [], answerMap = {}) {
-  const activeQuestions = (questions || []).filter(item => item?.questionId)
+  const activeQuestions = (questions || []).filter(item => getQuestionIdentity(item))
   if (!activeQuestions.length) {return false}
-  return activeQuestions.every(item => Boolean(answerMap[item.questionId]))
+  return activeQuestions.every(item => Boolean(answerMap[getQuestionIdentity(item)]))
 }
 
 export function buildQuestionAnswerPayload(result, answerMap = {}, options = {}) {
@@ -30,16 +32,20 @@ export function buildQuestionAnswerPayload(result, answerMap = {}, options = {})
     : Array.isArray(result?.questions)
       ? result.questions
       : []
+  const sidecarQuestionStack = questions.map(question => ({
+    ...question,
+    questionId: getQuestionIdentity(question)
+  }))
   const answers = questions
-    .filter(item => item?.questionId && answerMap[item.questionId])
+    .filter(item => getQuestionIdentity(item) && answerMap[getQuestionIdentity(item)])
     .map(item => ({
-      questionId: item.questionId,
-      optionId: answerMap[item.questionId]
+      questionKey: getQuestionIdentity(item),
+      optionKey: answerMap[getQuestionIdentity(item)]
     }))
 
   const sanitizedCareBehaviorTimelineByQuestionId = Object.fromEntries(
     Object.entries(options?.careBehaviorTimelineByQuestionId || {}).filter(([questionId]) => {
-      const question = questions.find(entry => String(entry?.questionId || '').trim() === String(questionId || '').trim())
+      const question = questions.find(entry => getQuestionIdentity(entry) === String(questionId || '').trim())
       const answerId = String(answerMap[questionId] || '').trim()
       if (!question) {
         return true
@@ -49,14 +55,14 @@ export function buildQuestionAnswerPayload(result, answerMap = {}, options = {})
   )
   const excludedQuestionIds = questions
     .filter(item => {
-      const questionId = String(item?.questionId || '').trim()
+      const questionId = getQuestionIdentity(item)
       if (!questionId) {
         return false
       }
       const answerId = String(answerMap[questionId] || '').trim()
       return isCareBehaviorTimelineQuestion(item) && !shouldIncludeCareBehaviorTimelineQuestion(item, answerId)
     })
-    .map(item => String(item?.questionId || '').trim())
+    .map(item => getQuestionIdentity(item))
 
   const basePayload = {
     diagnosisSessionId: result?.diagnosisSessionId || '',
@@ -77,7 +83,7 @@ export function buildQuestionAnswerPayload(result, answerMap = {}, options = {})
   }
 
   return appendCareBehaviorSidecar(basePayload, {
-    questionStack: questions,
+    questionStack: sidecarQuestionStack,
     careBehaviorTimelineByQuestionId: sanitizedCareBehaviorTimelineByQuestionId,
     careBehaviorTimeline: options?.careBehaviorTimeline,
     excludedQuestionIds

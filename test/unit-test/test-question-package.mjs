@@ -23,8 +23,62 @@ const {
 } = require('../../cloudfunctions/diagnose-http/app/wilting-droop-question-package.js')
 const {
   WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
-  WATERING_FREQUENCY_CONTEXT_TEXT
+  loadRegisteredPackageQuestion
 } = require('../../cloudfunctions/diagnose-http/app/diagnosis-question-registry.js')
+
+const WATERING_TOPIC = 'watering_frequency_context'
+const DB_STUB_WATERING_TEXT = 'DB mock：请选择过去 10 天内哪些天浇了水？'
+const DB_STUB_WATERING_HELP = 'DB mock：结合天气和浇水记录判断干湿。'
+const DB_STUB_OPTIONS = [
+  { optionKey: 'care_behavior_timeline', text: 'DB mock：养护记录已提供', isDefault: true },
+  { optionKey: 'unknown', text: 'DB mock：不确定 / 记不清', isDefault: false }
+]
+
+function buildQuestionRepositoryStub({
+  includeQuestion = true,
+  includeOptions = true
+} = {}) {
+  return {
+    async getQuestionsByKeys(questionKeys = []) {
+      if (!includeQuestion || !questionKeys.includes(WATERING_FREQUENCY_CONTEXT_QUESTION_KEY)) {
+        return []
+      }
+      return [
+        {
+          questionKey: WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
+          questionTextUserCn: DB_STUB_WATERING_TEXT,
+          questionTextCn: 'DB mock：内部题干',
+          questionType: 'single_choice',
+          targetSymptomKey: 'leaf_yellowing',
+          questionGroupKey: 'db_mock_watering_group',
+          packageTopic: WATERING_TOPIC,
+          packageSection: 'route_package',
+          routePackageRole: 'route_package_water_behavior',
+          packageEffect: 'route_outcome',
+          helpTextCn: DB_STUB_WATERING_HELP,
+          whyThisQuestionCn: 'DB mock：为什么问这题',
+          defaultOptionKey: 'care_behavior_timeline',
+          uiVariant: 'care_behavior_timeline',
+          renderMode: 'care_behavior_timeline'
+        }
+      ]
+    },
+    async getQuestionOptionMappings(questionKeys = []) {
+      if (!includeOptions || !questionKeys.includes(WATERING_FREQUENCY_CONTEXT_QUESTION_KEY)) {
+        return []
+      }
+      return DB_STUB_OPTIONS.map((option, index) => ({
+        questionKey: WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
+        optionKey: option.optionKey,
+        optionTextUserCn: option.text,
+        optionTextCn: option.text,
+        optionDescriptionUserCn: `DB mock option ${index}`,
+        displayOrder: index + 1,
+        isDefault: option.isDefault
+      }))
+    }
+  }
+}
 
 function buildQuestion(index) {
   return {
@@ -83,8 +137,17 @@ function testYellowingPackageFrontendResponse() {
   const response = buildFrontendDiagnosisResponse(buildPackageResponse())
   assert.equal(response.questions.length, 4)
   assert.deepEqual(
-    response.questions.map(item => item.questionId),
-    ['question_1', 'question_2', 'question_3', 'question_4']
+    response.questions.map(item => item.questionKey),
+    [
+      'q_observed_probe__leaf_yellowing__package_1',
+      'q_observed_probe__leaf_yellowing__package_2',
+      'q_observed_probe__leaf_yellowing__package_3',
+      'q_observed_probe__leaf_yellowing__package_4'
+    ]
+  )
+  assert.deepEqual(
+    response.questions.map(item => Object.prototype.hasOwnProperty.call(item, 'questionId')),
+    [false, false, false, false]
   )
   assert.equal(response.questionPackage.mode, 'yellow_leaf')
   assert.equal(response.questionPackage.sourceMode, 'manual_yellowing_care_environment_frontloaded')
@@ -247,44 +310,120 @@ function testPackageSubmitTerminalQuestioningRuntimeWiring() {
 }
 
 function pickWateringQuestion(questions = []) {
-  return questions.find(item => item.packageTopic === 'watering_frequency_context')
+  return questions.find(item => item.packageTopic === WATERING_TOPIC)
 }
 
 function assertNoRuntimeGeneratedQuestionId(question = {}) {
-  assert.equal(question.questionId, toQuestionId(question.questionKey))
-  assert.doesNotMatch(question.questionId, /question_\d+|random|uuid|timestamp|date/i)
+  assert.equal(Object.prototype.hasOwnProperty.call(question, 'questionId'), false)
+  assert.notEqual(question.questionKey, toQuestionId(question.questionKey))
   assert.doesNotMatch(question.questionKey, /random|uuid|timestamp|date_now|math_random/i)
 }
 
-function testSharedWateringQuestionRegistryAcrossPackages() {
-  const yellowWatering = pickWateringQuestion(staticQuestionPackageStartTest.buildYellowingStaticQuestions())
-  const wiltingWatering = pickWateringQuestion(buildWiltingDroopPackageQuestions())
+async function testSharedWateringQuestionRegistryAcrossPackages() {
+  const repository = buildQuestionRepositoryStub()
+  const yellowWatering = pickWateringQuestion(
+    await staticQuestionPackageStartTest.buildYellowingStaticQuestions({ repository })
+  )
+  const wiltingWatering = pickWateringQuestion(
+    await buildWiltingDroopPackageQuestions({ repository })
+  )
   assert.ok(yellowWatering)
   assert.ok(wiltingWatering)
 
   assert.equal(yellowWatering.questionKey, WATERING_FREQUENCY_CONTEXT_QUESTION_KEY)
   assert.equal(wiltingWatering.questionKey, WATERING_FREQUENCY_CONTEXT_QUESTION_KEY)
-  assert.equal(yellowWatering.questionId, wiltingWatering.questionId)
-  assert.equal(yellowWatering.text, WATERING_FREQUENCY_CONTEXT_TEXT)
-  assert.equal(yellowWatering.text, '请您选择在过去的10天内，哪几天浇了水？')
+  assert.equal(yellowWatering.text, DB_STUB_WATERING_TEXT)
+  assert.equal(yellowWatering.helpText, DB_STUB_WATERING_HELP)
 
   for (const field of ['text', 'questionText', 'helpText', 'type', 'uiVariant', 'renderMode']) {
     assert.equal(yellowWatering[field], wiltingWatering[field], field)
   }
   assert.deepEqual(
     yellowWatering.options.map(({ optionKey, text, isDefault }) => ({ optionKey, text, isDefault })),
-    wiltingWatering.options.map(({ optionKey, text, isDefault }) => ({ optionKey, text, isDefault }))
+    DB_STUB_OPTIONS
+  )
+  assert.deepEqual(
+    wiltingWatering.options.map(({ optionKey, text, isDefault }) => ({ optionKey, text, isDefault })),
+    DB_STUB_OPTIONS
   )
   assertNoRuntimeGeneratedQuestionId(yellowWatering)
   assertNoRuntimeGeneratedQuestionId(wiltingWatering)
 }
 
-function testQuestionRegistryDoesNotOwnRouteOutcomeWeights() {
+async function testRegisteredQuestionFailsWhenDbRowsAreMissing() {
+  await assert.rejects(
+    () => loadRegisteredPackageQuestion({
+      packageTopic: WATERING_TOPIC,
+      repository: buildQuestionRepositoryStub({ includeQuestion: false })
+    }),
+    /缺少数据库题目定义/
+  )
+  await assert.rejects(
+    () => loadRegisteredPackageQuestion({
+      packageTopic: WATERING_TOPIC,
+      repository: buildQuestionRepositoryStub({ includeOptions: false })
+    }),
+    /缺少数据库选项定义/
+  )
+}
+
+async function testFrontendQuestionKeyOnlyPackageAnswerPayload() {
+  const {
+    createQuestionAnswerMap,
+    buildQuestionAnswerPayload
+  } = await import('../../src/utils/diagnose-question-answer-payload.js')
+  const {
+    normalizeQuestions
+  } = await import('../../src/utils/diagnose-result-normalizer.js')
+  const questions = [
+    {
+      questionKey: WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
+      packageTopic: WATERING_TOPIC,
+      uiVariant: 'care_behavior_timeline',
+      renderMode: 'care_behavior_timeline',
+      defaultOptionKey: 'care_behavior_timeline',
+      options: [
+        {
+          optionKey: 'care_behavior_timeline',
+          text: 'DB mock：养护记录已提供',
+          isDefault: true
+        }
+      ]
+    }
+  ]
+  const answerMap = createQuestionAnswerMap(questions)
+  answerMap[WATERING_FREQUENCY_CONTEXT_QUESTION_KEY] = 'care_behavior_timeline'
+  const payload = buildQuestionAnswerPayload(
+    {
+      diagnosisSessionId: 'diag_package_key_only',
+      roundId: 'round_1',
+      questions,
+      questionPackage: { mode: 'yellow_leaf' },
+      uiHints: { answerSubmitMode: 'package', questionDisplayMode: 'package' }
+    },
+    answerMap,
+    { questionStack: questions }
+  )
+
+  assert.deepEqual(payload.answers, [
+    {
+      questionKey: WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
+      optionKey: 'care_behavior_timeline'
+    }
+  ])
+
+  const normalizedQuestions = normalizeQuestions(questions, { limit: 4 })
+  assert.equal(normalizedQuestions[0].questionKey, WATERING_FREQUENCY_CONTEXT_QUESTION_KEY)
+  assert.equal(Object.prototype.hasOwnProperty.call(normalizedQuestions[0], 'questionId'), false)
+}
+
+function testQuestionRegistryDoesNotOwnCopyOrRouteOutcomeWeights() {
   const registry = readFileSync(
     'cloudfunctions/diagnose-http/app/diagnosis-question-registry.js',
     'utf8'
   )
   assert.doesNotMatch(registry, /outcome-route|outcome-resolver|effectStrength|routeWeight/)
+  assert.doesNotMatch(registry, /过去的10天内|养护记录已提供|不确定 \/ 记不清/)
 }
 
 testYellowingPackageFrontendResponse()
@@ -295,7 +434,9 @@ testGenericPackageAnswerSubmitIsTerminalQuestioningPayload()
 testYellowingCompletePackageAnswersAreTerminalQuestioningPayload()
 testNonPackageFourAnswerSubmitIsNotTerminalQuestioningPayload()
 testPackageSubmitTerminalQuestioningRuntimeWiring()
-testSharedWateringQuestionRegistryAcrossPackages()
-testQuestionRegistryDoesNotOwnRouteOutcomeWeights()
+await testSharedWateringQuestionRegistryAcrossPackages()
+await testRegisteredQuestionFailsWhenDbRowsAreMissing()
+await testFrontendQuestionKeyOnlyPackageAnswerPayload()
+testQuestionRegistryDoesNotOwnCopyOrRouteOutcomeWeights()
 
 console.log('question package tests passed')

@@ -1,11 +1,6 @@
 'use strict'
 
-const {
-  getQuestionsByKeys,
-  getQuestionOptionMappings,
-  findQuestionKeysByTargetSymptoms
-} = require('../repositories/question-repository')
-const { toOptionId, toQuestionId } = require('../mappers/public-id-mapper')
+const { toOptionId } = require('../mappers/public-id-mapper')
 const outcomeRouteRepository = require('../repositories/outcome-route-repository')
 const {
   planOutcomeRoutes,
@@ -23,8 +18,8 @@ const {
   isYellowingFlowSymptomKey
 } = require('../utils/yellowing-question-policy')
 const {
-  buildRegisteredQuestionForPackageTopic,
-  mapRegisteredQuestionOptions
+  loadRegisteredPackageQuestion,
+  isRegisteredPackageQuestionTopic
 } = require('./diagnosis-question-registry')
 const {
   YELLOW_LEAF_PACKAGE_MODE,
@@ -40,6 +35,10 @@ const YELLOWING_FRONTLOADED_CARE_CONTEXT_DIMENSIONS =
     QUESTION_PACKAGE_TOPICS.FERTILIZATION_GROWTH_CONTEXT,
     QUESTION_PACKAGE_TOPICS.AIRFLOW_HUMIDITY_CONTEXT
   ]
+
+function getDefaultQuestionRepository() {
+  return require('../repositories/question-repository')
+}
 
 function isEnabledFeatureFlag(primaryEnvKey = '', conservativeEnvKey = '', options = {}) {
   const primaryRaw = String(process.env[primaryEnvKey] || '').trim()
@@ -105,7 +104,6 @@ function shouldUseYellowingCareEnvironmentGuard(activeSymptomKeys = []) {
 function mapSyntheticQuestionToQuestion(question = {}) {
   return {
     questionKey: question.questionKey,
-    questionId: question.questionId || toQuestionId(question.questionKey),
     selectionSource: 'route_planner',
     routeKey: '',
     conditionKey: '',
@@ -124,12 +122,21 @@ function mapSyntheticQuestionToQuestion(question = {}) {
     text: question.text || question.questionText || '',
     questionText: question.questionText || question.text || '',
     helpText: question.helpText || '',
-    options: mapRegisteredQuestionOptions(question.options),
+    options: (Array.isArray(question.options) ? question.options : []).map(option => ({
+      optionId: option.optionId || option.optionKey,
+      optionKey: option.optionKey,
+      text: option.text || '',
+      description: option.description || '',
+      isDefault: Boolean(option.isDefault)
+    })),
     whyThisQuestion: question.whyThisQuestion || ''
   }
 }
 
-function buildManualYellowingCareStartQuestions({ plantContext = {} } = {}) {
+async function buildManualYellowingCareStartQuestions({
+  plantContext = {},
+  repository = getDefaultQuestionRepository()
+} = {}) {
   const yellowingItem = {
     symptomKey: 'leaf_yellowing',
     symptomCn: '叶片发黄',
@@ -137,16 +144,23 @@ function buildManualYellowingCareStartQuestions({ plantContext = {} } = {}) {
     locationKey: 'leaf',
     patternKey: 'yellowing'
   }
-  const questions = YELLOWING_FRONTLOADED_CARE_CONTEXT_DIMENSIONS.flatMap(packageTopic =>
-    buildRegisteredQuestionForPackageTopic(packageTopic, {
-      targetSymptomKey: yellowingItem.symptomKey
-    }) ||
-    buildSyntheticObservedProbeQuestions(yellowingItem, {
+  const questions = []
+  for (const packageTopic of YELLOWING_FRONTLOADED_CARE_CONTEXT_DIMENSIONS) {
+    if (isRegisteredPackageQuestionTopic(packageTopic)) {
+      questions.push(await loadRegisteredPackageQuestion({
+        packageTopic,
+        repository,
+        selectionSource: 'data_repository_question_package',
+        targetSymptomKey: yellowingItem.symptomKey
+      }))
+      continue
+    }
+    questions.push(...buildSyntheticObservedProbeQuestions(yellowingItem, {
         maxQuestions: 1,
         preferredTopics: [packageTopic],
         plantContext
-      })
-  )
+      }))
+  }
   const uniqueQuestions = []
   const seenQuestionKeys = new Set()
   for (const question of filterDisabledYellowingFlowQuestions(questions)) {
@@ -201,11 +215,7 @@ async function buildManualQuestionStartRoundResult({
   observedEvidenceSet = [],
   round = 1,
   routeRepository: _routeRepository = outcomeRouteRepository,
-  questionRepository: _questionRepository = {
-    findQuestionKeysByTargetSymptoms,
-    getQuestionsByKeys,
-    getQuestionOptionMappings
-  },
+  questionRepository: _questionRepository = getDefaultQuestionRepository(),
   routePlanner: _routePlanner = planOutcomeRoutes
 } = {}) {
   const derivedEvidenceSet = buildDerivedEvidenceSet({
@@ -223,7 +233,8 @@ async function buildManualQuestionStartRoundResult({
   const useYellowingCareEnvironmentGuard = shouldUseYellowingCareEnvironmentGuard(activeSymptomKeys)
   if (useYellowingCareEnvironmentGuard) {
     const yellowingCareQuestions = await buildManualYellowingCareStartQuestions({
-      plantContext
+      plantContext,
+      repository: _questionRepository
     })
     if (yellowingCareQuestions.length === YELLOWING_PACKAGE_QUESTION_COUNT) {
       const questionPackage = getQuestionPackageByMode(YELLOW_LEAF_PACKAGE_MODE, {

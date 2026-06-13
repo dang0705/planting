@@ -1,9 +1,9 @@
 'use strict'
 
-const { toOptionId, toQuestionId } = require('../mappers/public-id-mapper')
+const { toOptionId } = require('../mappers/public-id-mapper')
 const {
-  buildWateringFrequencyContextQuestionDefinition,
-  mapRegisteredQuestionOptions
+  WATERING_FREQUENCY_CONTEXT_TOPIC,
+  loadRegisteredPackageQuestion
 } = require('./diagnosis-question-registry')
 
 const WILTING_DROOP_PACKAGE_MODE = 'wilting_droop'
@@ -22,7 +22,9 @@ const WILTING_DROOP_STATIC_ITEM = Object.freeze({
 })
 
 const RAW_WILTING_DROOP_PACKAGE_QUESTIONS = Object.freeze([
-  buildWateringFrequencyContextQuestionDefinition(),
+  {
+    registeredPackageTopic: WATERING_FREQUENCY_CONTEXT_TOPIC
+  },
   {
     questionKey: 'q_wilting_droop__shape',
     packageTopic: 'wilting_shape',
@@ -95,7 +97,6 @@ function clonePlain(value) {
 function mapWiltingDroopQuestion(question = {}) {
   return {
     questionKey: question.questionKey,
-    questionId: question.questionId || toQuestionId(question.questionKey),
     selectionSource: 'static_question_package',
     routeKey: 'wilting_droop',
     conditionKey: '',
@@ -114,13 +115,35 @@ function mapWiltingDroopQuestion(question = {}) {
     text: question.text || question.questionText || '',
     questionText: question.questionText || question.text || '',
     helpText: question.helpText || '',
-    options: mapRegisteredQuestionOptions(question.options),
+    options: (Array.isArray(question.options) ? question.options : []).map(option => ({
+      optionId: option.optionId || option.optionKey,
+      optionKey: option.optionKey,
+      text: option.text || '',
+      description: option.description || '',
+      isDefault: Boolean(option.isDefault)
+    })),
     whyThisQuestion: '枯萎 / 发蔫固定题包用于收集水分、环境、近期应激和高危异常。'
   }
 }
 
-function buildWiltingDroopPackageQuestions() {
-  return clonePlain(RAW_WILTING_DROOP_PACKAGE_QUESTIONS.map(mapWiltingDroopQuestion))
+async function buildWiltingDroopPackageQuestions({
+  repository = null
+} = {}) {
+  const questions = []
+  for (const question of RAW_WILTING_DROOP_PACKAGE_QUESTIONS) {
+    if (question.registeredPackageTopic) {
+      questions.push(await loadRegisteredPackageQuestion({
+        packageTopic: question.registeredPackageTopic,
+        repository,
+        selectionSource: 'data_repository_question_package',
+        routeKey: 'wilting_droop',
+        targetSymptomKey: WILTING_DROOP_STATIC_ITEM.symptomKey
+      }))
+      continue
+    }
+    questions.push(mapWiltingDroopQuestion(question))
+  }
+  return clonePlain(questions)
 }
 
 function isWiltingDroopStaticQuestionStartMode(option = {}) {

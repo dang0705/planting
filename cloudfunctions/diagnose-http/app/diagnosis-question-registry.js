@@ -1,88 +1,152 @@
 'use strict'
 
-const { toOptionId, toQuestionId } = require('../mappers/public-id-mapper')
+const { toOptionId } = require('../mappers/public-id-mapper')
 
 const WATERING_FREQUENCY_CONTEXT_TOPIC = 'watering_frequency_context'
 const WATERING_FREQUENCY_CONTEXT_QUESTION_KEY =
   'q_observed_probe__leaf_yellowing__watering_frequency_context'
-const WATERING_FREQUENCY_CONTEXT_TEXT = '请您选择在过去的10天内，哪几天浇了水？'
-const WATERING_FREQUENCY_CONTEXT_HELP_TEXT =
-  '系统会结合天气和浇水记录判断偏干、偏湿或基本合理。'
 
-const WATERING_FREQUENCY_CONTEXT_OPTIONS = Object.freeze([
-  { optionKey: 'care_behavior_timeline', text: '养护记录已提供', isDefault: true },
-  { optionKey: 'unknown', text: '不确定 / 记不清' }
-])
-
-const WATERING_FREQUENCY_CONTEXT_DEFINITION = Object.freeze({
-  questionKey: WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
-  questionId: toQuestionId(WATERING_FREQUENCY_CONTEXT_QUESTION_KEY),
-  packageTopic: WATERING_FREQUENCY_CONTEXT_TOPIC,
-  questionGroupKey: WATERING_FREQUENCY_CONTEXT_TOPIC,
-  packageSection: 'route_package',
-  uiVariant: 'care_behavior_timeline',
-  renderMode: 'care_behavior_timeline',
-  routePackageRole: 'route_package_water_behavior',
-  packageEffect: 'route_outcome',
-  questionType: 'single_choice',
-  answerType: 'single_choice',
-  questionText: WATERING_FREQUENCY_CONTEXT_TEXT,
-  text: WATERING_FREQUENCY_CONTEXT_TEXT,
-  helpText: WATERING_FREQUENCY_CONTEXT_HELP_TEXT,
-  defaultOptionKey: 'care_behavior_timeline',
-  options: WATERING_FREQUENCY_CONTEXT_OPTIONS
+const REGISTERED_QUESTION_KEY_BY_TOPIC = Object.freeze({
+  [WATERING_FREQUENCY_CONTEXT_TOPIC]: WATERING_FREQUENCY_CONTEXT_QUESTION_KEY
 })
 
-function clonePlain(value) {
-  if (Array.isArray(value)) {
-    return value.map(clonePlain)
-  }
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, clonePlain(child)]))
-  }
-  return value
+function normalizeText(value = '') {
+  return String(value || '').trim()
 }
 
-function isWateringFrequencyContextTopic(packageTopic = '') {
-  return String(packageTopic || '').trim() === WATERING_FREQUENCY_CONTEXT_TOPIC
+function resolveRegisteredQuestionKey(packageTopic = '') {
+  return REGISTERED_QUESTION_KEY_BY_TOPIC[normalizeText(packageTopic)] || ''
 }
 
-function buildWateringFrequencyContextQuestionDefinition(overrides = {}) {
+function isRegisteredPackageQuestionTopic(packageTopic = '') {
+  return Boolean(resolveRegisteredQuestionKey(packageTopic))
+}
+
+function assertRepository(repository = {}) {
+  if (
+    !repository ||
+    typeof repository.getQuestionsByKeys !== 'function' ||
+    typeof repository.getQuestionOptionMappings !== 'function'
+  ) {
+    throw Object.assign(new Error('题包问题数据库仓储不可用'), { statusCode: 500 })
+  }
+}
+
+function getDefaultQuestionRepository() {
+  return require('../repositories/question-repository')
+}
+
+function buildMissingQuestionError(questionKey = '') {
+  return Object.assign(new Error(`题包问题缺少数据库题目定义: ${questionKey}`), {
+    statusCode: 500
+  })
+}
+
+function buildMissingOptionsError(questionKey = '') {
+  return Object.assign(new Error(`题包问题缺少数据库选项定义: ${questionKey}`), {
+    statusCode: 500
+  })
+}
+
+function mapDbOptionsToPackageOptions(options = []) {
+  return (Array.isArray(options) ? options : []).map(option => {
+    const optionKey = normalizeText(option?.optionKey)
+    return {
+      optionId: normalizeText(option?.optionId) || optionKey || toOptionId(optionKey),
+      optionKey,
+      text: normalizeText(option?.optionTextUserCn || option?.optionTextCn || option?.text),
+      description: normalizeText(option?.optionDescriptionUserCn || option?.description),
+      isDefault: Boolean(option?.isDefault)
+    }
+  }).filter(option => option.optionKey && option.text)
+}
+
+function mapDbQuestionToPackageQuestion({
+  question,
+  options,
+  selectionSource = 'data_repository_question_package',
+  routeKey = '',
+  targetSymptomKey = ''
+} = {}) {
+  const questionKey = normalizeText(question?.questionKey)
+  const defaultOptionKey = normalizeText(
+    question?.defaultOptionKey || options.find(option => option.isDefault)?.optionKey
+  )
+  const text = normalizeText(question?.questionTextUserCn || question?.questionTextCn)
+  const helpText = normalizeText(question?.helpTextCn)
+
   return {
-    ...clonePlain(WATERING_FREQUENCY_CONTEXT_DEFINITION),
-    ...overrides,
-    options: clonePlain(overrides.options || WATERING_FREQUENCY_CONTEXT_DEFINITION.options)
+    questionKey,
+    selectionSource,
+    routeKey: normalizeText(routeKey),
+    conditionKey: '',
+    outcomeKey: '',
+    targetSymptomKey: normalizeText(targetSymptomKey || question?.targetSymptomKey),
+    questionGroupKey: normalizeText(question?.questionGroupKey || question?.packageTopic),
+    packageTopic: normalizeText(question?.packageTopic),
+    packageSection: normalizeText(question?.packageSection),
+    defaultOptionKey,
+    defaultOptionId: defaultOptionKey,
+    uiVariant: normalizeText(question?.uiVariant),
+    renderMode: normalizeText(question?.renderMode),
+    routePackageRole: normalizeText(question?.routePackageRole),
+    packageEffect: normalizeText(question?.packageEffect),
+    type: normalizeText(question?.questionType) || 'single_choice',
+    text,
+    questionText: text,
+    helpText,
+    options,
+    whyThisQuestion: normalizeText(question?.whyThisQuestionCn)
   }
 }
 
-function buildRegisteredQuestionForPackageTopic(packageTopic = '', overrides = {}) {
-  if (isWateringFrequencyContextTopic(packageTopic)) {
-    return buildWateringFrequencyContextQuestionDefinition(overrides)
-  }
-  return null
-}
+async function loadRegisteredPackageQuestion({
+  packageTopic = '',
+  repository = null,
+  selectionSource = 'data_repository_question_package',
+  routeKey = '',
+  targetSymptomKey = ''
+} = {}) {
+  const questionKey = resolveRegisteredQuestionKey(packageTopic)
+  if (!questionKey) {return null}
+  const resolvedRepository = repository || getDefaultQuestionRepository()
+  assertRepository(resolvedRepository)
 
-function mapRegisteredQuestionOptions(options = []) {
-  return (Array.isArray(options) ? options : []).map(option => ({
-    optionId: option.optionId || toOptionId(option.optionKey),
-    optionKey: option.optionKey,
-    text: option.text || '',
-    description: option.description || '',
-    isDefault: Boolean(option.isDefault)
-  }))
+  const [questions, optionRows] = await Promise.all([
+    resolvedRepository.getQuestionsByKeys([questionKey]),
+    resolvedRepository.getQuestionOptionMappings([questionKey])
+  ])
+  const question = (Array.isArray(questions) ? questions : [])
+    .find(item => normalizeText(item?.questionKey) === questionKey)
+  if (!question) {
+    throw buildMissingQuestionError(questionKey)
+  }
+
+  const options = mapDbOptionsToPackageOptions(
+    (Array.isArray(optionRows) ? optionRows : [])
+      .filter(item => normalizeText(item?.questionKey) === questionKey)
+  )
+  if (!options.length) {
+    throw buildMissingOptionsError(questionKey)
+  }
+
+  return mapDbQuestionToPackageQuestion({
+    question,
+    options,
+    selectionSource,
+    routeKey,
+    targetSymptomKey
+  })
 }
 
 module.exports = {
   WATERING_FREQUENCY_CONTEXT_TOPIC,
   WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
-  WATERING_FREQUENCY_CONTEXT_TEXT,
-  WATERING_FREQUENCY_CONTEXT_HELP_TEXT,
-  WATERING_FREQUENCY_CONTEXT_OPTIONS,
-  buildRegisteredQuestionForPackageTopic,
-  buildWateringFrequencyContextQuestionDefinition,
-  isWateringFrequencyContextTopic,
-  mapRegisteredQuestionOptions,
+  isRegisteredPackageQuestionTopic,
+  loadRegisteredPackageQuestion,
+  resolveRegisteredQuestionKey,
   _test: {
-    WATERING_FREQUENCY_CONTEXT_DEFINITION
+    mapDbQuestionToPackageQuestion,
+    mapDbOptionsToPackageOptions
   }
 }

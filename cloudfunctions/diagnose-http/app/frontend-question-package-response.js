@@ -3,7 +3,7 @@
 function pickMinimalPackageQuestions(items = [], options = {}) {
   const limit = Math.max(1, Number(options?.limit || 1))
   return (Array.isArray(items) ? items : [])
-    .filter(item => item?.questionId || item?.questionKey)
+    .filter(item => item?.questionKey || item?.questionId)
     .slice(0, limit)
     .map(item => {
       const questionText = String(
@@ -11,7 +11,6 @@ function pickMinimalPackageQuestions(items = [], options = {}) {
       ).trim()
 
       return {
-        questionId: String(item?.questionId || item?.questionKey || '').trim(),
         questionKey: String(item?.questionKey || item?.questionId || '').trim(),
         packageTopic: String(item?.packageTopic || '').trim(),
         defaultOptionKey: String(item?.defaultOptionKey || '').trim(),
