@@ -75,7 +75,23 @@ QA Contract 必须包含 concrete `endpoint`、`page`、`projectPath`、`payload
 
 本项目 WeChat DevTools MCP 的 `projectPath` 必须固定为 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`。`dist/build/mp-weixin` 不得作为 MCP 自动化项目路径；若 Test Contract 写成该路径，QA 必须退回 `contract_blocker`，不得按该路径继续验收。
 
+QA 端上自动化前置链必须固定为：
+
+```text
+wechat_ide/status
+wechat_ide/is_login
+projectPath 校验为 /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin
+9420 automator 监听 / 原始 WebSocket / page_stack / page_data 或 wx.request
+真实交互 / 运行时接口断言
+```
+
+`wechat_ide/status`、`9222` CDP 或 `/json/version` 只能作为辅助环境信息，不能作为 automator ready 或端上通过证据。
+
 QA 不得为了“干净基线”默认执行 WeChat DevTools `cache_clean(clean_type="all")` 或等价清缓存操作。除非用户明确授权，否则必须保护 DevTools 登录态、项目授权态和扫码状态，避免触发重新扫码。确需清理时必须记录原因，并优先使用最小范围的编译缓存清理。
+
+QA 不得默认调用 `wechat_ide(open, cdp_enabled=true)` 建立 CDP 基线，不得默认 `pkill` / 完整重启 / CLI auto 拉起。默认路径是复用现有 IDE / `9420` 会话并做原始 WebSocket / automator 验证；只有用户明确同意重启，或已证明无可复用会话且任务必须拉起时，才允许 open / CLI auto / 必要重启，并记录副作用。
+
+诊断流自动化必须先按 `docs/ai-rules/frontend-automation-id-policy.md` 第三点“诊断流 id 映射”定位，例如 `diagnose-entry-button-{plant.id}`。不得依赖中文文案、坐标或页面层级作为首选定位方式。
 
 如果本轮代码未部署到云端，QA 必须通过 local functions gateway 让小程序运行时命中新代码。若内置 MCP 与底层 automator 都无法执行 required item，只能输出 blocker / not_verified，不得标记 complete。
 
@@ -130,7 +146,7 @@ tool_session_blocker
 当使用底层 `miniprogram-automator` 继续端上验证时，证据必须来自真实小程序运行时，而不是 Node 直接请求后端：
 
 1. 若依赖不存在，先安装项目 dev dependency：`npm install --save-dev miniprogram-automator@0.12.1 --legacy-peer-deps`。
-2. 优先连接已开启 automation 的 DevTools WebSocket；若连接失败，可用 WeChat DevTools CLI 对 `dist/dev/mp-weixin` 或 Test Contract 指定 projectPath 启动 automation。
+2. 优先连接已开启 automation 的 DevTools WebSocket；若连接失败，只有在用户明确同意或已证明无可复用会话且任务必须拉起时，才允许用 WeChat DevTools CLI 对固定路径 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin` 启动 automation，并记录副作用。
 3. 接口验收必须在 `miniProgram.evaluate` 中调用小程序环境的 `wx.request`，并记录 `projectPath`、automation port、request path、HTTP status、业务 code、关键响应字段和断言结果。
 4. UI / 交互验收必须记录 page path、操作链、selector 或截图引用。
 5. 只有 `miniprogram-automator` 也无法启动、无法连接或无法执行 required item，才允许把该验收项标为 `devtools_automator_blocker`。

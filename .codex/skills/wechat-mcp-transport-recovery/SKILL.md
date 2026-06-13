@@ -130,7 +130,9 @@ devtools_auth_blocker
 
 只按这个顺序执行，不要来回盲试。
 
-恢复过程中默认不得执行 `cache_clean(clean_type="all")` 或等价清缓存操作。该操作可能清除 DevTools 登录态 / 项目授权态，导致用户必须重新扫码。除非用户明确授权，否则只允许使用 `open`、`start`、`compile`、端口检查和最小范围编译缓存清理。
+恢复过程中默认不得执行 `cache_clean(clean_type="all")` 或等价清缓存操作。该操作可能清除 DevTools 登录态 / 项目授权态，导致用户必须重新扫码。
+
+恢复过程中也不得默认 `pkill`、不得默认 `wechat_ide(open, cdp_enabled=true)` 建立 CDP 基线、不得连接失败就完整重启。默认先复用现有 IDE / `9420` 会话，完成 `status -> is_login -> projectPath 校验 -> 原始 WebSocket / automator` 归因；只有用户明确同意重启，或已证明无可复用会话且任务必须拉起时，才允许 open / CLI auto / 必要重启，并记录副作用。
 
 ### Step 1：检查端口、进程、项目路径
 
@@ -147,8 +149,8 @@ ls -la <projectPath>/project.config.json
 
 1. `project.config.json` 不存在：项目路径错误。
 2. `wechat_ide/status` 中的 `project_path` 不是 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`：先修正 MCP 环境或显式传入固定 `project_path`，不得继续验收。
-3. 无 DevTools 进程、无 `9420`：先拉起 DevTools。
-4. 有 DevTools 进程、无 `9420`：先恢复 automator。
+3. 无 DevTools 进程、无 `9420`：先记录无可复用会话；只有用户明确同意或任务必须拉起时，才进入受控拉起。
+4. 有 DevTools 进程、无 `9420`：先尝试最小 automator 恢复；不得直接完整重启 DevTools。
 5. 只有 `9222` 可用：只能说明 CDP 可用，不能说明 automator 可用。
 6. 有 `9420`：继续验证原始连接。
 
@@ -173,13 +175,22 @@ WEAPP_CONNECT_TIMEOUT = "90000"
 2. 缺 `WEAPP_PROJECT_PATH` 时，自动拉起可能拿不到目标项目。
 3. 缺 `WECHAT_DEVTOOLS_CLI_PATH` 时，auto launch 可能直接失败。
 
-### Step 3：清理旧 DevTools 进程
+### Step 3：受控例外：终止旧 DevTools 进程
+
+默认禁止执行 `pkill -f wechatwebdevtools`。只有满足以下任一条件时才允许：
+
+1. 用户明确同意重启 / 终止 DevTools。
+2. 已证明没有可复用 IDE / `9420` 会话，且 required item 必须通过端上自动化继续。
+
+执行前后必须记录原因、副作用和登录态 / 授权态风险。若获准执行，命令为：
 
 ```bash
 pkill -f wechatwebdevtools || true
 ```
 
-### Step 4：用 CLI 直接拉起 automator
+### Step 4：受控例外：用 CLI 拉起 automator
+
+默认先复用现有 IDE / `9420` 会话。只有用户明确同意，或已证明无可复用会话且任务必须拉起时，才允许执行 CLI auto：
 
 ```bash
 /Applications/wechatwebdevtools.app/Contents/MacOS/cli auto \

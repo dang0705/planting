@@ -14,13 +14,20 @@ lsof -nP -iTCP:9420 -sTCP:LISTEN
 ps aux | rg -i 'wechatwebdevtools|9420|miniprogram-automator|automator'
 ```
 
-3. 查项目根是否有效：
+3. 查固定项目根是否有效：
 
 ```bash
-ls -la <projectPath>/project.config.json
+ls -la /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin/project.config.json
 ```
 
 ## 恢复动作
+
+默认恢复原则：
+
+1. 先复用现有 IDE / `9420` automator 会话。
+2. 先做 `status -> is_login -> projectPath 校验 -> 原始 WebSocket / miniprogram-automator` 归因。
+3. 不得连接失败就默认 `pkill`、完整重启、`wechat_ide(open, cdp_enabled=true)` 或 `cache_clean(clean_type="all")`。
+4. 只有用户明确同意，或已证明无可复用会话且任务必须拉起时，才允许 open / kill / CLI auto，并记录副作用。
 
 1. 补齐 MCP 环境变量：
 
@@ -34,17 +41,21 @@ WEAPP_LAUNCH_TIMEOUT
 WEAPP_CONNECT_TIMEOUT
 ```
 
-2. 清掉旧 DevTools：
+2. 受控例外：终止旧 DevTools：
+
+默认禁止。只有用户明确同意，或已证明无可复用 IDE / `9420` 会话且 required item 必须端上执行时，才可执行：
 
 ```bash
 pkill -f wechatwebdevtools || true
 ```
 
-3. 手动拉起 automator：
+3. 受控例外：手动拉起 automator：
+
+默认先复用现有 IDE / `9420`。只有用户明确同意，或已证明无可复用会话且任务必须拉起时，才可执行：
 
 ```bash
 /Applications/wechatwebdevtools.app/Contents/MacOS/cli auto \
-  --project <projectPath> \
+  --project /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin \
   --auto-port 9420 \
   --trust-project
 ```
@@ -84,4 +95,3 @@ classification = tool_session_blocker
    - `page.$`
    - `element.tap`
    - `screenshot`
-

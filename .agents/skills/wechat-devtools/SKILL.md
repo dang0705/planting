@@ -161,19 +161,20 @@ uv tool install wechat-devtools-mcp --force  # 通过uv安装wechat-devtools-mcp
 wechat_ide(action='status')                         # 诊断环境
 wechat_ide(action='is_login')                       # 检查登录
   ↳ 未登录: wechat_ide(action='login', qr_format='terminal')
-wechat_ide(action='open', cdp_enabled=True)         # 开启 IDE + CDP 9222 + 自动健康检查
-  ↳ 返回 success=false + startup_errors → 小程序启动阶段有致命错误，必须先修复再继续
-  ↳ 返回 success=true → 启动正常，继续后续步骤
-  ↳ IDE 冷启动可能出现瞬态错误（simulator not found / subPackages of undefined），属正常现象，忽略并继续执行 compile 即可刷新
-wechat_automator(action='start')                    # 启动 daemon + 开启自动化 9420
+校验 status.data.project_path === /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin
+检查并复用现有 9420 automator 会话，确认原始 WebSocket 可握手
+wechat_automator(action='start')                    # 仅在 9420 不可用时做最小 automator 恢复
+wechat_automator(action='page_stack')               # 确认页面栈可读
+wechat_automator(action='page_data')                # 验证当前项目运行时可读
 wechat_file(action='project_info')                  # [可选] 确认项目结构
-wechat_build(action='compile')                            # 编译建立 CDP 基线（自动重连 automator）
-wechat_automator(action='page_data')                # 验证连接可用
+必要时 evaluate(wx.request)                         # 接口验收必须来自小程序运行时
   ↳ ⚠ 检查输出中 AppID 是否为 undefined
   ↳ 如果 undefined → project_path 可能指向了子目录而非项目根目录
   ↳ 云开发项目根目录包含 project.config.json、miniprogram/ 和 cloudfunctions/
   ↳ 正确: project_path="D:/MyProject"  错误: project_path="D:/MyProject/miniprogram"
 ```
+
+> `wechat_ide(action='open', cdp_enabled=True)` 不是默认初始化步骤。只有用户明确同意重启，或已证明没有可复用 IDE / `9420` 会话且任务必须拉起时，才允许 open / CLI auto / 必要重启，并记录重新扫码、项目授权、自动化授权等副作用。
 
 > **project_path 规则**：必须指向包含 `project.config.json` 的根目录。云开发项目的 `miniprogram/` 是子目录，不能作为 project_path。
 
@@ -407,12 +408,12 @@ wechat_automator(action='start')                    # 仅重连
 wechat_automator(action='page_data')                # 验证
 ```
 
-**Full Recovery (when quick fails):**
+**Controlled Recovery (only when explicitly allowed):**
 ```
-wechat_ide(action='open', cdp_enabled=True)         # 重新打开
-wechat_automator(action='start')                    # 重连
-wechat_build(action='compile')                      # 重编译（自动重连 automator）
-wechat_automator(action='page_data')                # 验证
+# 只有用户明确同意，或已证明没有可复用 IDE / 9420 会话且任务必须拉起时才执行
+wechat_ide(action='open', cdp_enabled=True)         # 受控重启，记录扫码/授权副作用
+wechat_automator(action='start')                    # 重连 automator
+wechat_automator(action='page_stack' / 'page_data') # 验证可操作
 ```
 
 ---
@@ -421,12 +422,12 @@ wechat_automator(action='page_data')                # 验证
 
 | 症状 | 原因 | 解决 |
 |------|------|------|
-| CDP 采集失败（9222 无响应） | IDE 未用 cdp_enabled 启动 | `wechat_ide(action='open', cdp_enabled=True)` 重启 |
+| CDP 采集失败（9222 无响应） | IDE 未用 cdp_enabled 启动 | 先确认该验收是否必须 CDP；只有用户明确同意或无可复用会话且任务必须拉起时，才可 `wechat_ide(action='open', cdp_enabled=True)` 并记录副作用 |
 | 截图空白 / 尺寸 0 | automator 未启动或页面未渲染 | 确认 `start` 已调用；增加 `wait_ms=3000` |
 | `Page is not found` | page_path 拼写错 / 未注册 | `wechat_file(action='list_pages')` 核查 |
 | `Element is obfuscated` | 元素被遮挡或在 shadow-root 外 | 检查 WXML 结构，尝试父节点 |
 | `Cannot find context` | 逻辑层崩溃 / 正在重载 | 等待 3s 后重试 |
-| `CLI_TIMEOUT` | 服务端口未开启 / IDE 未运行 | 开启服务端口；`wechat_ide(action='open')` |
+| `CLI_TIMEOUT` | 服务端口未开启 / IDE 未运行 | 开启服务端口；仅在用户明确同意或无可复用会话且任务必须拉起时，才可 `wechat_ide(action='open')` |
 | 元素未找到 | 不在当前页面或 selector 错 | `page_stack` 确认页面；`element_info` 验证 selector |
 | `Using AppID: undefined` | project_path 指向子目录而非项目根目录 | 改为包含 `project.config.json` 的目录 |
 | `appid missing` 云函数失败 | AppID 未配置或未登录 | 检查 project_path + 登录状态 |
@@ -452,14 +453,19 @@ wechat_automator(action='page_data')                # 验证
 
 ### 连接断开恢复流程
 
-当截图或自动化操作报 `Connection closed` 或 `ws://localhost:9420` 连接失败时，执行以下标准恢复流程：
+当截图或自动化操作报 `Connection closed` 或 `ws://localhost:9420` 连接失败时，先执行最小恢复与归因：
 
 ```
-wechat_ide(action='open', project_path='...', cdp_enabled=true)   # ① 重新打开项目
-wechat_automator(action='start', project_path='...')               # ② 重启 automator
-wechat_build(action='compile', project_path='...')                 # ③ 重新编译
-# ④ 重试失败的操作
+wechat_ide(action='status')                                        # ① 诊断环境
+wechat_ide(action='is_login')                                      # ② 确认登录态
+校验 project_path === /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin
+检查 9420 监听与原始 WebSocket                                   # ③ 判断是否有可复用会话
+wechat_automator(action='start', project_path='...')               # ④ 仅恢复 automator
+wechat_automator(action='page_stack' / 'page_data')                # ⑤ 验证可操作
+# ⑥ 只重试失败的操作
 ```
+
+只有用户明确同意重启，或已证明没有可复用 IDE / `9420` 会话且任务必须拉起时，才允许执行 `open` / CLI auto / 必要重启；必须记录副作用。
 
 ---
 
@@ -475,7 +481,9 @@ wechat_build(action='compile', project_path='...')                 # ③ 重新�
 - ❌ 同一失败操作重试超过 3 次（应转为诊断根因）
 - ❌ 自动化测试中使用 `sleep` 硬等待（用 `wait_ms` 或轮询 `page_data`）
 - ❌ 在 SOP 流程中主动调用截图——仅在用户明确要求或异常排查需要视觉确认时才截图
-- ❌ 连接断开时直接走完整恢复（应先快速恢复：仅 `start` → `page_data`）
+- ❌ 连接断开时直接走完整恢复（应先复用现有 IDE/9420，并快速恢复：`status` → `is_login` → projectPath 校验 → `start` → `page_stack/page_data`）
+- ❌ 默认调用 `wechat_ide(open, cdp_enabled=true)` 建立 CDP 基线
+- ❌ 默认 `pkill`、完整重启 DevTools 或 CLI auto 拉起
 - ❌ 没改代码就 compile（浪费时间，直接 evaluate 跳转）
 - ❌ compile 后不验证 automator 连接（v0.8.0 自动重连，但需 `page_data` 确认）
 - ❌ 使用 `miniprogram/` 子目录作为云开发项目的 project_path
@@ -489,7 +497,7 @@ wechat_build(action='compile', project_path='...')                 # ③ 重新�
 - ✅ 关注 CDP 日志中的 `[Violation]` 标记（渲染阻塞/性能问题）
 - ✅ `compile` 后检查 AppID 是否为 undefined
 - ❌ WXML 属性值中使用中文引号 `""` 或未转义双引号（编译错误且工具无法检测）
-- ✅ 截图/操作失败后执行 `open` → `start` → `compile` 恢复连接
+- ✅ 只有用户明确同意，或已证明无可复用 IDE / `9420` 会话且任务必须拉起时，才可执行 `open` / CLI auto / 必要重启，并记录副作用
 - ✅ navigate 后必须通过 `page_data` 或 `page_stack` 校验当前页面路径
 - ✅ 在跨页面测试中比对同名字段的一致性
 
@@ -500,7 +508,7 @@ wechat_build(action='compile', project_path='...')                 # ③ 重新�
 适用场景：诊断流、`/diagnosis/question/start`、`/diagnosis/answer`、question package、SQL schema regression。
 
 0. 本项目 WeChat DevTools MCP 的 `project_path` 必须固定为 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`。不得把 `dist/build/mp-weixin` 作为 MCP 自动化 project path；`dist/build/mp-weixin` 仅用于构建产物 / CI / 上传类检查。
-1. `wechat_ide(status)` 成功不是端上证据。必须继续到 `is_login`、`open/start`、`9420` automator 就绪、`page_data` 或小程序运行时 `wx.request`。
+1. `wechat_ide(status)` 成功不是端上证据。必须继续到 `is_login`、projectPath 校验、`9420` automator / 原始 WebSocket 就绪、`page_stack` / `page_data` 或小程序运行时 `wx.request`。
 2. 每次验收必须比对 `status.data.project_path` 与固定 MCP project path。若 Test Contract 写成 `dist/build/mp-weixin`，QA 必须退回 contract blocker 并要求改为 `dist/dev/mp-weixin`。
 3. `9222` 是 CDP 调试端口，`9420` 是 automator 端口。`9222 /json/version` 可访问不能证明 `9420` 可用，也不能证明端上交互可执行。
 4. `wechat_ide(open)` 报 `SystemError (appServiceSDKScriptError) timeout`、`wechat_build(compile)` 报 `wait IDE port timeout`、`wechat_automator(start)` 报 `CLI auto 执行失败 (rc=-1)` / timeout 时，优先归类为 DevTools / automator blocker。
@@ -509,4 +517,5 @@ wechat_build(action='compile', project_path='...')                 # ③ 重新�
 7. live schema 未验证必须列为 gap。不得因为 backend smoke 未出现 `Unknown column` 就宣称 CloudBase live schema 已验证。
 8. QA 子线程报 `Instructions are required` 是 subagent 调用层 blocker，不是 WeChat DevTools 或产品接口证据。
 9. 出现 `INVALID_TOKEN` / `需要重新登录` 后，必须重新执行 `is_login` 并要求扫码登录；未登录时停止端上验收。
-10. QA 不得为了建立“干净基线”默认执行 `cache_clean(clean_type='all')` 或等价清缓存操作；除非用户明确授权，否则必须保护 DevTools 登录态和项目授权态，避免触发重新扫码。
+10. QA 不得为了建立“干净基线”默认执行 `cache_clean(clean_type='all')`、`wechat_ide(open, cdp_enabled=true)`、`pkill`、完整重启或 CLI auto 拉起；除非用户明确授权，或已证明无可复用会话且任务必须拉起，否则必须保护 DevTools 登录态和项目授权态，避免触发重新扫码。
+11. 诊断流自动化必须先按 `docs/ai-rules/frontend-automation-id-policy.md` 第三点“诊断流 id 映射”定位，例如 `diagnose-entry-button-{plant.id}`；不得依赖中文文案、坐标或页面层级作为首选定位方式。
