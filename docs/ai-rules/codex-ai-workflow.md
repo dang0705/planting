@@ -110,13 +110,13 @@ commit message 必须根据改动内容生成，精炼且不超过 50 个字符�
 
 ## Stable automation and QA budget
 
-WeChat DevTools 自动化采用单一责任原则：`main agent` 默认不直接执行，implementer 只做最小自测，QA 负责正式验收。`main agent` 等待 subagent 时优先低成本观察，不频繁中断。QA 输出使用 QA Result。
+端上 automator 自动化采用单一责任原则：`main agent` 默认不直接执行，implementer 只做最小自测，QA 负责正式验收。`main agent` 等待 subagent 时优先低成本观察，不频繁中断。QA 输出使用 QA Result。
 
 稳定成功模式：
 
-1. 端上自动化默认固定使用 `dist/dev/mp-weixin` 作为 projectPath；`dist/build/mp-weixin` 不作为 WeChat MCP 自动化入口。
+1. 端上自动化默认固定使用 `dist/dev/mp-weixin` 作为 projectPath；`dist/build/mp-weixin` 不作为端上自动化入口。
 2. `status`、`9222` / CDP、截图存在只能说明工具状态，不能作为通过证据；通过证据必须来自 `9420` / WebSocket / `page_stack` / `page_data` / 小程序运行时动作。
-3. 内置 MCP callable 缺失时，只要 `ws://127.0.0.1:9420` 可连，QA 可用 `miniprogram-automator.connect` 继续完成端上 UI 与 runtime evidence。
+3. 只要 `ws://127.0.0.1:9420` 可连，QA 可用 `miniprogram-automator.connect` 完成端上 UI 与 runtime evidence。
 4. API 类端上验收必须在 `miniProgram.evaluate` 内用 `wx.request` 执行，例如 `/diagnose-http/health` 返回 HTTP 200 且 body code 200；Node/curl 只能作为辅助排障。
 5. UI 可见性验收优先使用稳定 selector，例如结果页 `#diagnosis-result-page` / `#diagnosis-result-page-empty`；诊断入口按 `docs/ai-rules/frontend-automation-id-policy.md` 的第三点 id 映射定位。
-6. 入口元素可点击但业务弹窗未出现时，按 `product_or_fixture_blocker` 与 tool/session blocker 分层归因，不得归因为 MCP transport 失败。
+6. 入口元素可点击但业务弹窗未出现时，按 `product_or_fixture_blocker` 与 tool/session blocker 分层归因，不得归因为工具传输失败。

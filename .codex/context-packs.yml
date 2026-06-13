@@ -36,12 +36,12 @@ packs:
     max_additional_files: 3
 
   wechat-runtime-qa:
-    trigger: "WeChat DevTools MCP, miniprogram-automator, 端上自动化, 9420, wx.request, qa_reviewer"
+    trigger: "miniprogram-automator, 端上自动化, 9420, wx.request, qa_reviewer"
     read:
       - .codex/skills/dispatch-task/references/wechat-devtools-automation-policy.md
       - .codex/skills/dispatch-task/references/qa-evidence-policy.md
       - .codex/skills/dispatch-task/references/implementation-test-contract.md
-      - .codex/skills/wechat-mcp-transport-recovery/SKILL.md
+      - .codex/skills/miniprogram-automator-runtime/SKILL.md
       - .agents/skills/wechat-devtools/SKILL.md
       - docs/ai-rules/frontend-automation-id-policy.md
     max_additional_files: 2

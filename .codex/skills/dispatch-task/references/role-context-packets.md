@@ -48,7 +48,7 @@ required_skill: $qa-ui-visual-baseline-policy
 
 ## 自动化职责切片
 
-如果任务需要 WeChat DevTools MCP 或端上验证，role_context_packets 必须写明：
+如果任务需要端上 `miniprogram-automator` / `9420` 验证，role_context_packets 必须写明：
 
 ```text
 automation_owner:

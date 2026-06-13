@@ -310,12 +310,12 @@ wechat_automator(action='page_data')
 ```
 # 架构：
 #   管理后台 → Playwright MCP（浏览器端口）
-#   小程序   → WeChat DevTools MCP（automator 9420 端口）
+#   小程序   → miniprogram-automator（9420 端口）
 #   两者使用不同端口，可以并行运行
 
 # ① 分别从两端提取数据（可并行）
 #   Agent A: Playwright 操作管理后台，提取数据
-#   Agent B: WeChat MCP 操作小程序，提取 page_data
+#   Agent B: miniprogram-automator 操作小程序，提取 page_data
 # ② 在主进程中做数据比对（串行）
 ```
 
@@ -507,15 +507,15 @@ wechat_automator(action='page_stack' / 'page_data')                # ⑤ 验证�
 
 适用场景：诊断流、`/diagnosis/question/start`、`/diagnosis/answer`、question package、SQL schema regression。
 
-0. 本项目 WeChat DevTools MCP 的 `project_path` 必须固定为 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`。不得把 `dist/build/mp-weixin` 作为 MCP 自动化 project path；`dist/build/mp-weixin` 仅用于构建产物 / CI / 上传类检查。
-1. `wechat_ide(status)` 成功不是端上证据。必须继续到 `is_login`、projectPath 校验、`9420` automator / 原始 WebSocket 就绪、`page_stack` / `page_data` 或小程序运行时 `wx.request`。
-2. 每次验收必须比对 `status.data.project_path` 与固定 MCP project path。若 Test Contract 写成 `dist/build/mp-weixin`，QA 必须退回 contract blocker 并要求改为 `dist/dev/mp-weixin`。
+0. 本项目端上 automator 的 `project_path` 必须固定为 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`。不得把 `dist/build/mp-weixin` 作为端上自动化 project path；`dist/build/mp-weixin` 仅用于构建产物 / CI / 上传类检查。
+1. 工具 status 成功不是端上证据。必须继续到 projectPath 校验、`9420` automator / 原始 WebSocket 就绪、`page_stack` / `page_data` 或小程序运行时 `wx.request`。
+2. 每次验收必须比对 Test Contract 与固定 automator project path。若 Test Contract 写成 `dist/build/mp-weixin`，QA 必须退回 contract blocker 并要求改为 `dist/dev/mp-weixin`。
 3. `9222` 是 CDP 调试端口，`9420` 是 automator 端口。`9222 /json/version` 可访问不能证明 `9420` 可用，也不能证明端上交互可执行。
 4. `wechat_ide(open)` 报 `SystemError (appServiceSDKScriptError) timeout`、`wechat_build(compile)` 报 `wait IDE port timeout`、`wechat_automator(start)` 报 `CLI auto 执行失败 (rc=-1)` / timeout 时，优先归类为 DevTools / automator blocker。
-5. 底层 `miniprogram-automator` fallback 仍依赖微信开发者工具 HTTP / automation 能力。`Failed to launch wechat web devTools, please make sure http port is open` 只能说明 fallback 未启动成功，不能当成端上证据。
+5. `miniprogram-automator` 仍依赖微信开发者工具 HTTP / automation 能力。`Failed to launch wechat web devTools, please make sure http port is open` 只能说明 automator 未启动成功，不能当成端上证据。
 6. backend curl / Node HTTP / local gateway smoke 即使返回 200，也只能作为 `backend_smoke_pass_only`。涉及诊断端上接口的验收，合格证据必须来自小程序运行时 `wx.request` 或真实端上交互。
 7. live schema 未验证必须列为 gap。不得因为 backend smoke 未出现 `Unknown column` 就宣称 CloudBase live schema 已验证。
-8. QA 子线程报 `Instructions are required` 是 subagent 调用层 blocker，不是 WeChat DevTools 或产品接口证据。
+8. QA 子线程报 `Instructions are required` 是 subagent 调用层 blocker，不是端上 automator 或产品接口证据。
 9. 出现 `INVALID_TOKEN` / `需要重新登录` 后，必须重新执行 `is_login` 并要求扫码登录；未登录时停止端上验收。
 10. QA 不得为了建立“干净基线”默认执行 `cache_clean(clean_type='all')`、`wechat_ide(open, cdp_enabled=true)`、`pkill`、完整重启或 CLI auto 拉起；除非用户明确授权，或已证明无可复用会话且任务必须拉起，否则必须保护 DevTools 登录态和项目授权态，避免触发重新扫码。
 11. 诊断流自动化必须先按 `docs/ai-rules/frontend-automation-id-policy.md` 第三点“诊断流 id 映射”定位，例如 `diagnose-entry-button-{plant.id}`；不得依赖中文文案、坐标或页面层级作为首选定位方式。

@@ -27,7 +27,7 @@ inclusion: always
 10. 任何新增复杂功能和模块、交互复杂的前端组件等，实现前必须优先深度分析复用性、wrapper / adapter、插件 / 原生能力；手搓永远是最末位考虑。
 11. 如需安装新插件，必须考证其适配微信小程序、包体积、npm / GitHub 状态、周下载量、star 数和最近 3 年 release 记录，并提供简短介绍，征得用户同意。
 12. 当前项目处于研发未上线阶段，除非用户明确要适配既有逻辑或功能，否则默认新逻辑完整替代既有逻辑，既有逻辑代码、相关依赖树必须予以彻底地调整和删除。严禁写保守、适配的代码。
-13. 使用 wechat-devtools MCP 做诊断相关自动化测试时，必须先读取 `docs/ai-rules/frontend-automation-id-policy.md` 的“第三点 诊断流 id 映射”，并按该映射执行入口定位与关键断言。
+13. 使用端上 `miniprogram-automator` / `9420` 做诊断相关自动化测试时，必须先读取 `docs/ai-rules/frontend-automation-id-policy.md` 的“第三点 诊断流 id 映射”，并按该映射执行入口定位与关键断言。
 14. 除非用户显式要求，否则 subagent 在条件允许的情况下优先考虑线程复用。
 
 ## 3. 项目技术上下文

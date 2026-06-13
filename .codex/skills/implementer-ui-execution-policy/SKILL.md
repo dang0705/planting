@@ -151,7 +151,7 @@ Figma component / variant / state implementation required
 
 ### 2. 自测工具
 
-涉及微信小程序可见页面、组件、交互、Figma 对齐或端上状态展示时，implementer 必须尝试使用 WeChat DevTools MCP 做自测。
+涉及微信小程序可见页面、组件、交互、Figma 对齐或端上状态展示时，implementer 必须尝试使用端上 `miniprogram-automator` / `9420` 做自测。
 
 自测范围：
 
@@ -173,14 +173,14 @@ implementer 自测只用于避免把明显坏的实现交给 QA。它不得替�
 是否仍需 QA 独立验收：是
 ```
 
-### 4. WeChat DevTools MCP 不可用
+### 4. 端上 automator 不可用
 
-如果 WeChat DevTools MCP 不可用、无法连接、页面无法打开或工具异常，implementer 必须记录为自测缺口，不得声称端上自测通过。
+如果端上 `miniprogram-automator` / `9420` 不可用、无法连接、页面无法打开或工具异常，implementer 必须记录为自测缺口，不得声称端上自测通过。
 
 ```text
-WeChat DevTools MCP Self-Check Blocker:
+Mini Program Automator Self-Check Blocker:
 - reason:
-- fallback_check:
+- recovery_check:
 - risk:
 - QA_required: yes
 ```
@@ -191,8 +191,8 @@ WeChat DevTools MCP Self-Check Blocker:
 Implementer UI Self-Check:
 - ui_implementation_required: yes / no
 - figma_lite_present: yes / no
-- wechat_devtools_mcp_required: yes / no
-- wechat_devtools_mcp_used: yes / no
+- miniprogram_automator_required: yes / no
+- miniprogram_automator_used: yes / no
 - page_path:
 - operations:
 - result:

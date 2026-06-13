@@ -11,8 +11,8 @@
 1. 所有 required acceptance items 已映射到 Test Case Base。
 2. 所有 required Test Case 已通过，或存在明确 blocker 并已写回 ticket / summary。
 3. QA 已按 Test Contract 完成验收。
-4. 如果验收要求小程序实际交互，QA 已执行 WeChat DevTools MCP 自动化或端上验证。
-   - 若内置 `mcp__wechat_dev_tools` transport 失活，但底层 `miniprogram-automator` 直连已完成 Test Contract required item 的真实端上取证，则同样视为 `mini_program_automation_completed=yes`。
+4. 如果验收要求小程序实际交互，QA 已执行端上 `miniprogram-automator` / `9420` 自动化。
+   - 只有 `miniprogram-automator` 已完成 Test Contract required item 的真实端上取证，才视为 `mini_program_automation_completed=yes`。
 5. 如果任务触及 `/diagnosis/question/start`、`/diagnosis/answer`、question package、诊断小程序请求路径或 CloudBase SQL repository / schema / seed，`mini_program_automation_completed` 必须为 `yes`，或存在明确 blocker / not_verified 结论。
 6. 如果本轮代码未部署到云端，QA 已通过 local functions gateway + 小程序运行时验证命中新代码。
 7. 如果触及 CloudBase SQL repository / schema / seed，schema truth gate 已完成；若 live schema auth 不可用，已记录 checked-in schema spec + runtime endpoint smoke / 端上请求证据，并把 live schema 未验证列为 gap。
@@ -31,11 +31,11 @@
 2. 仅 API 验证通过，但 UI 控件验收未做。
 3. checklist / acceptance criteria 未映射。
 4. QA 自动化未执行，且验收要求端上交互。
-   - 仅当内置 MCP 与 fallback `miniprogram-automator` 两条链路都未拿到 required item 证据时，才继续阻塞 completion。
+   - 仅当 `9420` / `miniprogram-automator` 未拿到 required item 证据时，才继续阻塞 completion。
 5. 任务触及 `/diagnosis/question/start`、`/diagnosis/answer`、question package、诊断小程序请求路径或 CloudBase SQL repository / schema / seed，但 Test Contract 缺少 concrete endpoint / page / projectPath / payload / assertions / evidence_source。
 6. 对端上接口只用 Node 直接 HTTP、curl、backend smoke、unit tests 或 repository tests 作为完成证据。
 7. 本轮代码未部署到云端，且没有 local functions gateway + 小程序运行时验证。
-8. WeChat DevTools MCP 与底层 `miniprogram-automator` 都失败，但仍把 QA 标记为 complete。
+8. `9420` / `miniprogram-automator` 未覆盖 required item，但仍把 QA 标记为 complete。
 9. CloudBase SQL repository / schema / seed 改动缺少 schema truth gate，或 live auth 不可用时没有记录 checked-in schema spec + runtime endpoint smoke / 端上请求证据。
 10. checklist writeback 未执行且没有 blocker / comment fallback。
 11. 有未处理 request changes。

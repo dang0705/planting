@@ -30,8 +30,8 @@
 
 涉及诊断流、小程序页面可见验收、微信开发者工具自动化或稳定选择器时，读取 `docs/ai-rules/frontend-automation-id-policy.md`。
 
-该文档负责维护诊断流关键 `id`、操作映射、禁止暴露字段和 `wechat-dev-tools` MCP 最小验收流程；本文件不重复展开细则。
+该文档负责维护诊断流关键 `id`、操作映射、禁止暴露字段和端上 `miniprogram-automator` / `9420` 最小验收流程；本文件不重复展开细则。
 
 端上自动化验收同时必须按 runtime evidence 归因：`status`、`9222` / CDP、截图存在不等于通过；通过证据需进入 `9420` / WebSocket / `page_stack` / `page_data` 或小程序运行时动作。API 验收必须在小程序运行时通过 `miniProgram.evaluate` + `wx.request` 执行，Node/curl 只能作为辅助排障，不能替代端上证据。
 
-内置 MCP callable 缺失但 `ws://127.0.0.1:9420` 与 `miniprogram-automator` 可用时，QA 可继续完成端上 UI 和 runtime `wx.request` 验收。若稳定入口 selector 可点击但业务状态未出现，应按 product/fixture blocker 与 tool/session blocker 分层，不得直接归因为 MCP transport。
+`ws://127.0.0.1:9420` 与 `miniprogram-automator` 可用时，QA 可完成端上 UI 和 runtime `wx.request` 验收。若稳定入口 selector 可点击但业务状态未出现，应按 product/fixture blocker 与 tool/session blocker 分层，不得归因为工具链问题。

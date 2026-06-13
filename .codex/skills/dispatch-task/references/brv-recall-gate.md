@@ -106,7 +106,7 @@ BRV 召回目标包括：
 1. 当前仓库关键入口。
 2. 诊断主链、结果出口、runtime / route / outcome 相关事实。
 3. 已知测试入口、smoke 入口、replay 入口。
-4. WeChat DevTools MCP 的项目内正确使用方式。
+4. 端上 `miniprogram-automator` / `9420` 的项目内正确使用方式。
 5. CloudBase / 部署 / DB 相关稳定事实。
 6. 已知避坑和历史约束。
 7. 与当前 task facts 直接相关的模块事实。

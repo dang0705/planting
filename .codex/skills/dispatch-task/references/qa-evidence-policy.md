@@ -26,13 +26,13 @@ QA scope 由 Test Contract / 验收标准决定，不由“是否有 UI diff”�
 
 这类 QA Contract 必须包含 concrete `endpoint`、`page`、`projectPath`、`payload`、`assertions`、`evidence_source`。只写 unit tests、Node HTTP、curl、backend smoke 或“按现有测试执行”均不合格。
 
-对 `/diagnosis/question/start`、`/diagnosis/answer` 等端上接口，合格证据必须来自小程序运行时的 `wx.request` 或真实端上交互，通过 WeChat DevTools MCP 或底层 `miniprogram-automator` 获取。Node 直接 HTTP / curl 只能作为后端 smoke，不得替代端上 QA。
+对 `/diagnosis/question/start`、`/diagnosis/answer` 等端上接口，合格证据必须来自小程序运行时的 `wx.request` 或真实端上交互，通过 `miniprogram-automator` / `9420` 获取。Node 直接 HTTP / curl 只能作为后端 smoke，不得替代端上 QA。
 
-如果本轮代码未部署到云端，QA 必须使用 local functions gateway + 小程序运行时验证。若 WeChat DevTools MCP 与底层 `miniprogram-automator` 都失败，QA Result 必须标记 blocker / not_verified；不得标记 complete。
+如果本轮代码未部署到云端，QA 必须使用 local functions gateway + 小程序运行时验证。若 `9420` / `miniprogram-automator` 无法覆盖 required item，QA Result 必须标记 blocker / not_verified；不得标记 complete。
 
-## WeChat DevTools MCP
+## Mini Program Automator
 
-必须使用 WeChat DevTools MCP 的场景：
+必须使用端上 `miniprogram-automator` / `9420` 的场景：
 
 1. 小程序页面点选。
 2. 表单输入。
@@ -43,47 +43,42 @@ QA scope 由 Test Contract / 验收标准决定，不由“是否有 UI diff”�
 7. Figma 或 UI 对齐。
 8. request changes 明确要求用户实际交互。
 
-如果 WeChat DevTools MCP 可连接，QA 不得只做连接能力验证；必须执行 Test Contract 中的真实交互步骤。
+如果 `miniprogram-automator` 可连接，QA 不得只做连接能力验证；必须执行 Test Contract 中的真实交互步骤。
 
-本项目 WeChat DevTools MCP / automator 的 Test Contract `projectPath` 只能是：
+本项目端上 automator 的 Test Contract `projectPath` 只能是：
 
 ```text
 /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin
 ```
 
-`dist/build/mp-weixin` 只允许用于 build / CI / upload 类检查，不得作为端上自动化路径。若 Test Contract 写成 `dist/build/mp-weixin` 或其他 MCP projectPath，QA 必须退回 `contract_blocker`，不得沿该路径继续验收。
+`dist/build/mp-weixin` 只允许用于 build / CI / upload 类检查，不得作为端上自动化路径。若 Test Contract 写成 `dist/build/mp-weixin` 或其他 projectPath，QA 必须退回 `contract_blocker`，不得沿该路径继续验收。
 
 ### 登录态 / 授权态保护补充
 
 QA 默认必须保护微信开发者工具登录态、项目授权态和扫码状态。除非用户明确授权，禁止为了建立“干净 CDP 基线”默认执行会重启 DevTools 的路径。
 
-在当前项目使用 `wechat-devtools-mcp v0.9.8` 时，`wechat_ide(open, cdp_enabled=true)` 会先杀掉已有 DevTools 进程，再以 `--remote-debugging-port=9222 --project=...` 重新拉起 IDE；该动作可能触发重新扫码登录、项目授权或自动化授权。
+部分工具 open 路径会先杀掉已有 DevTools 进程，再重新拉起 IDE；该动作可能触发重新扫码登录、项目授权或自动化授权。
 
 因此涉及小程序端上 QA 时，优先顺序必须是：
 
 ```text
-wechat_ide/status
-wechat_ide/is_login
-校验 status.data.project_path / Test Contract projectPath 为 /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin
+校验 Test Contract projectPath 为 /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin
 检查或复用 9420 automator 会话，确认原始 WebSocket 可握手
-wechat_automator start / page_stack / page_data / evaluate(wx.request)
+miniprogram-automator currentPage / page_stack / page_data / evaluate(wx.request)
 真实交互 / 运行时接口断言
-必要时底层 miniprogram-automator fallback
 ```
 
-只有在用户明确同意可重启 DevTools，或当前没有可复用 IDE / automator 会话且任务确需重新拉起时，才允许调用 `wechat_ide(open, cdp_enabled=true)`；输出必须把重新扫码/授权归因到 DevTools / automation session side effect，而不是产品接口失败。
+只有在用户明确同意可重启 DevTools，或当前没有可复用 IDE / automator 会话且任务确需重新拉起时，才允许调用 open / CLI auto；输出必须把重新扫码/授权归因到 DevTools / automation session side effect，而不是产品接口失败。
 
 禁止连接失败后默认执行 `pkill`、默认完整重启、默认 CLI auto 拉起或默认 `cache_clean(clean_type="all")`。这些动作只能作为受控例外，并必须记录触发条件和副作用。
 
-如果内置 MCP 不可用，且验收项要求小程序端上真实行为，QA 必须先尝试底层 `miniprogram-automator` 直连继续验收；只有内置 MCP 与底层 automator 都无法覆盖 required item 时，才标记为 blocker 或未验证项。
-
 诊断流自动化必须先读取并使用 `docs/ai-rules/frontend-automation-id-policy.md` 第三点“诊断流 id 映射”，例如 `diagnose-entry-button-{plant.id}`。不得把中文文案、坐标或页面层级作为首选定位方式。
 
-当出现 `QA tool/session blocker`（如 `Transport closed`）时先做会话归因：
+当出现 `QA tool/session blocker` 时先做会话归因：
 
 1. 若 main 线程在本轮相同 `projectPath`、`pagePath`、测试链路链条下，提供了可复核的端上证据（截图、selector、日志）且包含 Test Contract required item：
    - QA 可基于该证据做 pass/fail 判定，不能将该验收项直接标记为 blocked。
-   - 输出证据来源：`evidence_source=main_agent_wechat_mcp`（或等价中文表达）。
+   - 输出证据来源：`evidence_source=main_agent_automator`（或等价中文表达）。
    - 可在 `failures.attribution` 记录“QA 工具会话失败”；`completion` 不应因该条记录阻塞已充分覆盖的验收项。
 2. 若 main 线程未拿到上述证据，或 evidence 仅覆盖非关键链路：
    - 该验收项保持 blocked。

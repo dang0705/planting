@@ -239,7 +239,7 @@ ClickUp 描述区 markdown checklist 通过项必须通过 ClickUp MCP 整体更
 Figma Drilldown 默认由 implementer 在 implementation 阶段按 request 读取。  
 main agent pre-implementation 阶段默认只保留 Drilldown Request 和 QA Visual Baseline Slice。
 
-如果 implementer packet 包含 `Figma Design Facts Lite`、`Figma Drilldown Request` 或 `UI implementation required`，implementer 必须做 UI / 交互自测；涉及微信小程序可见路径时必须尝试 WeChat DevTools MCP。  
+如果 implementer packet 包含 `Figma Design Facts Lite`、`Figma Drilldown Request` 或 `UI implementation required`，implementer 必须做 UI / 交互自测；涉及微信小程序可见路径时必须尝试端上 `miniprogram-automator` / `9420`。
 自测不替代 QA。
 
 ## 15. 输出模板
@@ -289,7 +289,7 @@ references/completion-gate.md
 
 只有 Completion Gate 通过，才允许停止。仅本地后端测试 PASS 或风险说明，不是完成条件。
 
-如果验收要求小程序实际交互，QA 必须执行 WeChat DevTools MCP 自动化或端上验证；不能只做 MCP 连接能力验证。
+如果验收要求小程序实际交互，QA 必须执行端上 `miniprogram-automator` / `9420` 自动化；不能只做连接能力验证。
 
 
 ## Subagent 进度观察

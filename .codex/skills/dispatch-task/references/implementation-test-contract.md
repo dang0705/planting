@@ -76,27 +76,27 @@ Mini Program Runtime QA:
 - projectPath: /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin
 - payload:
 - assertions:
-- evidence_source: wechat_devtools_mcp / miniprogram_automator_wx_request / real_device_interaction
+- evidence_source: miniprogram_automator_wx_request / miniprogram_automator_ui / real_device_interaction
 - local_functions_gateway_required: yes / no
 - cloud_deploy_status: deployed / not_deployed / unknown
-- blocker_rule: if both MCP and automator fail, mark blocker/not_verified, not complete
+- blocker_rule: if automator cannot cover required item, mark blocker/not_verified, not complete
 ```
 
-对 `/diagnosis/question/start`、`/diagnosis/answer` 等端上接口，合格证据必须来自小程序运行时的 `wx.request` 或真实端上交互，通过 WeChat DevTools MCP 或底层 `miniprogram-automator` 获取。Node 直接 HTTP、curl、云函数本地 invoke 只能作为后端 smoke，不得替代端上 QA。
+对 `/diagnosis/question/start`、`/diagnosis/answer` 等端上接口，合格证据必须来自小程序运行时的 `wx.request` 或真实端上交互，通过 `miniprogram-automator` / `9420` 获取。Node 直接 HTTP、curl、云函数本地 invoke 只能作为后端 smoke，不得替代端上 QA。
 
-本项目 WeChat DevTools MCP 的 `projectPath` 必须固定为 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`。Test Contract 不得把 `dist/build/mp-weixin` 写成 MCP 自动化 projectPath；如出现，QA 必须退回 `contract_blocker`。
+本项目端上 automator 的 `projectPath` 必须固定为 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`。Test Contract 不得把 `dist/build/mp-weixin` 写成端上自动化 projectPath；如出现，QA 必须退回 `contract_blocker`。
 
-Test Contract 若要求 WeChat DevTools MCP / automator 验收，必须写明正确前置验证链：
+Test Contract 若要求端上 automator 验收，必须写明正确前置验证链：
 
 ```text
-status -> is_login -> projectPath 校验 -> 9420 automator 监听 / 原始 WebSocket / page_stack / page_data 或 wx.request -> 真实交互 / 运行时接口断言
+projectPath 校验 -> 9420 automator 监听 -> 原始 WebSocket -> miniprogram-automator currentPage / page_data / selector 或 evaluate(wx.request) -> 真实交互 / 运行时接口断言
 ```
 
-`status`、`9222` CDP 或 `/json/version` 不得写成端上通过证据。`wechat_ide(open, cdp_enabled=true)`、`pkill`、完整重启、CLI auto 拉起、`cache_clean(clean_type="all")` 不得写成默认恢复步骤；只能作为用户明确同意，或已证明无可复用 IDE / `9420` 会话且任务必须拉起时的受控例外，并要求 QA 记录副作用。
+`status`、`9222` CDP 或 `/json/version` 不得写成端上通过证据。`pkill`、完整重启、CLI auto 拉起、`cache_clean(clean_type="all")` 不得写成默认恢复步骤；只能作为用户明确同意，或已证明无可复用 IDE / `9420` 会话且任务必须拉起时的受控例外，并要求 QA 记录副作用。
 
 诊断流 Test Contract 必须要求 QA 先按 `docs/ai-rules/frontend-automation-id-policy.md` 第三点“诊断流 id 映射”定位，例如 `diagnose-entry-button-{plant.id}`；不得以中文文案、坐标或页面层级作为首选定位方式。
 
-如果本轮代码未部署到云端，Test Contract 必须要求 QA 使用 local functions gateway + 小程序运行时验证。若 WeChat DevTools MCP 与底层 `miniprogram-automator` 都失败，QA 必须输出 blocker / not_verified；不得把该任务标记为 complete。
+如果本轮代码未部署到云端，Test Contract 必须要求 QA 使用 local functions gateway + 小程序运行时验证。若 `9420` / `miniprogram-automator` 无法覆盖 required item，QA 必须输出 blocker / not_verified；不得把该任务标记为 complete。
 
 ## SQL schema truth gate
 
