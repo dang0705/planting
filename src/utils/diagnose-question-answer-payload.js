@@ -12,7 +12,9 @@ export function createQuestionAnswerMap(questions = []) {
   const entries = {}
   for (const item of questions || []) {
     const questionId = getQuestionIdentity(item)
-    if (!questionId) {continue}
+    if (!questionId) {
+      continue
+    }
     entries[questionId] = isCareBehaviorWateringTimelineQuestion(item)
       ? resolveCareBehaviorTimelineAutoAnswerOptionId(item) || ''
       : resolveDefaultQuestionOptionId(item)
@@ -22,7 +24,9 @@ export function createQuestionAnswerMap(questions = []) {
 
 export function isQuestionAnswerComplete(questions = [], answerMap = {}) {
   const activeQuestions = (questions || []).filter(item => getQuestionIdentity(item))
-  if (!activeQuestions.length) {return false}
+  if (!activeQuestions.length) {
+    return false
+  }
   return activeQuestions.every(item => Boolean(answerMap[getQuestionIdentity(item)]))
 }
 
@@ -45,7 +49,9 @@ export function buildQuestionAnswerPayload(result, answerMap = {}, options = {})
 
   const sanitizedCareBehaviorTimelineByQuestionId = Object.fromEntries(
     Object.entries(options?.careBehaviorTimelineByQuestionId || {}).filter(([questionId]) => {
-      const question = questions.find(entry => getQuestionIdentity(entry) === String(questionId || '').trim())
+      const question = questions.find(
+        entry => getQuestionIdentity(entry) === String(questionId || '').trim()
+      )
       const answerId = String(answerMap[questionId] || '').trim()
       if (!question) {
         return true
@@ -60,7 +66,10 @@ export function buildQuestionAnswerPayload(result, answerMap = {}, options = {})
         return false
       }
       const answerId = String(answerMap[questionId] || '').trim()
-      return isCareBehaviorTimelineQuestion(item) && !shouldIncludeCareBehaviorTimelineQuestion(item, answerId)
+      return (
+        isCareBehaviorTimelineQuestion(item) &&
+        !shouldIncludeCareBehaviorTimelineQuestion(item, answerId)
+      )
     })
     .map(item => getQuestionIdentity(item))
 
@@ -74,11 +83,16 @@ export function buildQuestionAnswerPayload(result, answerMap = {}, options = {})
     ...(result?.questionPackage && typeof result.questionPackage === 'object'
       ? { questionPackage: result.questionPackage }
       : {}),
-    ...(result?.uiHints && typeof result.uiHints === 'object'
-      ? { uiHints: result.uiHints }
-      : {}),
+    ...(result?.uiHints && typeof result.uiHints === 'object' ? { uiHints: result.uiHints } : {}),
     ...(options?.environmentWeatherWindow && typeof options.environmentWeatherWindow === 'object'
       ? { environmentWeatherWindow: options.environmentWeatherWindow }
+      : {}),
+    ...(options?.lightEnvironmentByQuestionId &&
+    typeof options.lightEnvironmentByQuestionId === 'object'
+      ? {
+          userLightContext:
+            Object.values(options.lightEnvironmentByQuestionId).find(Boolean) || null
+        }
       : {})
   }
 

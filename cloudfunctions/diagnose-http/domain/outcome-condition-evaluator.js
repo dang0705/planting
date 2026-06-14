@@ -20,19 +20,99 @@ function normalizeStringArray(value) {
 }
 
 function setHasAll(set, expected = []) {
-  if (!expected.length) {return true}
+  if (!expected.length) {
+    return true
+  }
   for (const item of expected) {
-    if (!set.has(item)) {return false}
+    if (!set.has(item)) {
+      return false
+    }
   }
   return true
 }
 
 function setHasAny(set, expected = []) {
-  if (!expected.length) {return false}
+  if (!expected.length) {
+    return false
+  }
   for (const item of expected) {
-    if (set.has(item)) {return true}
+    if (set.has(item)) {
+      return true
+    }
   }
   return false
+}
+
+function getLightHealthEvidence(routeEvidenceContext = {}) {
+  const direct = routeEvidenceContext.lightHealthEvidence
+  if (direct && typeof direct === 'object') {
+    return direct
+  }
+  const outputEvidence = routeEvidenceContext.environmentCareContext?.outputs?.lightHealthEvidence
+  if (outputEvidence && typeof outputEvidence === 'object') {
+    return outputEvidence
+  }
+  return null
+}
+
+function getLightHealthScore(routeEvidenceContext = {}, evidence = null) {
+  const candidates = [
+    routeEvidenceContext.lightHealthScore,
+    routeEvidenceContext.environmentCareContext?.outputs?.lightHealthScore,
+    evidence?.calculation?.score
+  ]
+  for (const value of candidates) {
+    const numberValue = Number(value)
+    if (Number.isFinite(numberValue)) {
+      return numberValue
+    }
+  }
+  return null
+}
+
+function hasLightHealthConstraint(requiredAnswerEffects = {}) {
+  return Boolean(
+    normalizeStringArray(requiredAnswerEffects.lightHealthLevels).length ||
+    normalizeStringArray(requiredAnswerEffects.lightHealthDirections).length ||
+    requiredAnswerEffects.lightHealthMaxScore !== undefined ||
+    requiredAnswerEffects.lightHealthMinScore !== undefined
+  )
+}
+
+function matchesLightHealth(requiredAnswerEffects = {}, routeEvidenceContext = {}) {
+  if (!hasLightHealthConstraint(requiredAnswerEffects)) {
+    return true
+  }
+  const evidence = getLightHealthEvidence(routeEvidenceContext)
+  const score = getLightHealthScore(routeEvidenceContext, evidence)
+  if (!evidence || !Number.isFinite(score)) {
+    return false
+  }
+
+  const expectedLevels = normalizeStringArray(requiredAnswerEffects.lightHealthLevels)
+  const expectedDirections = normalizeStringArray(requiredAnswerEffects.lightHealthDirections)
+  const actualLevel = normalizeKey(
+    routeEvidenceContext.lightHealthLevel ||
+      routeEvidenceContext.environmentCareContext?.outputs?.lightHealthLevel ||
+      ''
+  )
+  const actualDirection = normalizeKey(evidence.direction || '')
+  if (expectedLevels.length && !expectedLevels.includes(actualLevel)) {
+    return false
+  }
+  if (expectedDirections.length && !expectedDirections.includes(actualDirection)) {
+    return false
+  }
+
+  const maxScore = Number(requiredAnswerEffects.lightHealthMaxScore)
+  if (Number.isFinite(maxScore) && score > maxScore) {
+    return false
+  }
+  const minScore = Number(requiredAnswerEffects.lightHealthMinScore)
+  if (Number.isFinite(minScore) && score < minScore) {
+    return false
+  }
+  return true
 }
 
 function matchesRequiredEvidence(requiredEvidence = {}, routeEvidenceContext = {}) {
@@ -50,31 +130,46 @@ function matchesRequiredEvidence(requiredEvidence = {}, routeEvidenceContext = {
   const anyDiagnosisDirectionKeys = normalizeStringArray(requiredEvidence.anyDiagnosisDirectionKeys)
   const symptomClassKeys = normalizeStringArray(requiredEvidence.symptomClassKeys)
 
-  if (!setHasAll(activeSymptomKeySet, symptomKeys)) {return false}
-  if (anySymptomKeys.length && !setHasAny(activeSymptomKeySet, anySymptomKeys)) {return false}
-  if (setHasAny(activeSymptomKeySet, absentSymptomKeys)) {return false}
-  if (!setHasAll(derivedEvidenceKeySet, derivedEvidenceKeys)) {return false}
+  if (!setHasAll(activeSymptomKeySet, symptomKeys)) {
+    return false
+  }
+  if (anySymptomKeys.length && !setHasAny(activeSymptomKeySet, anySymptomKeys)) {
+    return false
+  }
+  if (setHasAny(activeSymptomKeySet, absentSymptomKeys)) {
+    return false
+  }
+  if (!setHasAll(derivedEvidenceKeySet, derivedEvidenceKeys)) {
+    return false
+  }
   if (anyDerivedEvidenceKeys.length && !setHasAny(derivedEvidenceKeySet, anyDerivedEvidenceKeys)) {
     return false
   }
-  if (!setHasAll(diagnosisDirectionKeySet, diagnosisDirectionKeys)) {return false}
+  if (!setHasAll(diagnosisDirectionKeySet, diagnosisDirectionKeys)) {
+    return false
+  }
   if (
     anyDiagnosisDirectionKeys.length &&
     !setHasAny(diagnosisDirectionKeySet, anyDiagnosisDirectionKeys)
   ) {
     return false
   }
-  if (!setHasAll(symptomClassKeySet, symptomClassKeys)) {return false}
+  if (!setHasAll(symptomClassKeySet, symptomClassKeys)) {
+    return false
+  }
   return true
 }
 
 function matchesRequiredAnswerEffects(requiredAnswerEffects = {}, routeEvidenceContext = {}) {
   const answeredQuestionKeySet = routeEvidenceContext.answeredQuestionKeySet || new Set()
   const answeredOptionKeySet = routeEvidenceContext.answeredOptionKeySet || new Set()
-  const answeredQuestionOptionPairSet = routeEvidenceContext.answeredQuestionOptionPairSet || new Set()
+  const answeredQuestionOptionPairSet =
+    routeEvidenceContext.answeredQuestionOptionPairSet || new Set()
   const answerEffectTypeSet = routeEvidenceContext.answerEffectTypeSet || new Set()
-  const routeAnswerEffectOutcomeKeySet = routeEvidenceContext.routeAnswerEffectOutcomeKeySet || new Set()
-  const routeAnswerEffectRouteKeySet = routeEvidenceContext.routeAnswerEffectRouteKeySet || new Set()
+  const routeAnswerEffectOutcomeKeySet =
+    routeEvidenceContext.routeAnswerEffectOutcomeKeySet || new Set()
+  const routeAnswerEffectRouteKeySet =
+    routeEvidenceContext.routeAnswerEffectRouteKeySet || new Set()
 
   const questionKeys = normalizeStringArray(requiredAnswerEffects.questionKeys)
   const anyQuestionKeys = normalizeStringArray(requiredAnswerEffects.anyQuestionKeys)
@@ -86,6 +181,9 @@ function matchesRequiredAnswerEffects(requiredAnswerEffects = {}, routeEvidenceC
       : requiredAnswerEffects.questionOptionPairs
   )
   const anyQuestionOptionPairs = normalizeStringArray(requiredAnswerEffects.anyQuestionOptionPairs)
+  const fallbackQuestionOptionPairs = normalizeStringArray(
+    requiredAnswerEffects.fallbackQuestionOptionPairs
+  )
   const effectTypes = normalizeStringArray(requiredAnswerEffects.effectTypes).map(item =>
     item.toLowerCase()
   )
@@ -97,42 +195,69 @@ function matchesRequiredAnswerEffects(requiredAnswerEffects = {}, routeEvidenceC
   const routeKeys = normalizeStringArray(requiredAnswerEffects.routeKeys)
   const anyRouteKeys = normalizeStringArray(requiredAnswerEffects.anyRouteKeys)
 
-  if (!setHasAll(answeredQuestionKeySet, questionKeys)) {return false}
-  if (anyQuestionKeys.length && !setHasAny(answeredQuestionKeySet, anyQuestionKeys)) {return false}
-  if (!setHasAll(answeredOptionKeySet, optionKeys)) {return false}
-  if (anyOptionKeys.length && !setHasAny(answeredOptionKeySet, anyOptionKeys)) {return false}
+  if (!setHasAll(answeredQuestionKeySet, questionKeys)) {
+    return false
+  }
+  if (anyQuestionKeys.length && !setHasAny(answeredQuestionKeySet, anyQuestionKeys)) {
+    return false
+  }
+  if (!setHasAll(answeredOptionKeySet, optionKeys)) {
+    return false
+  }
+  if (anyOptionKeys.length && !setHasAny(answeredOptionKeySet, anyOptionKeys)) {
+    return false
+  }
   const matchedQuestionOptionPairs = questionOptionPairs.filter(pair =>
     answeredQuestionOptionPairSet.has(pair)
   )
   const requiredQuestionOptionPairCount = questionOptionPairs.length
-  const hasQuestionOptionConstraint = Boolean(
-    questionOptionPairs.length || anyQuestionOptionPairs.length
-  )
+  const lightHealthConstrained = hasLightHealthConstraint(requiredAnswerEffects)
+  const lightHealthMatched = matchesLightHealth(requiredAnswerEffects, routeEvidenceContext)
   const questionOptionPairSatisfied = (() => {
-    if (!requiredQuestionOptionPairCount) {return true}
-    if (setHasAll(answeredQuestionOptionPairSet, questionOptionPairs)) {return true}
-    if (requiredQuestionOptionPairCount <= 2) {return false}
+    if (lightHealthConstrained && lightHealthMatched) {
+      return true
+    }
+    if (lightHealthConstrained && !lightHealthMatched && fallbackQuestionOptionPairs.length) {
+      return setHasAny(answeredQuestionOptionPairSet, fallbackQuestionOptionPairs)
+    }
+    if (lightHealthConstrained && !lightHealthMatched) {
+      return false
+    }
+    if (!requiredQuestionOptionPairCount) {
+      return true
+    }
+    if (setHasAll(answeredQuestionOptionPairSet, questionOptionPairs)) {
+      return true
+    }
+    if (requiredQuestionOptionPairCount <= 2) {
+      return false
+    }
     return matchedQuestionOptionPairs.length >= 2
   })()
-  if (!questionOptionPairSatisfied) {return false}
+  if (!questionOptionPairSatisfied) {
+    return false
+  }
   if (
     anyQuestionOptionPairs.length &&
     !setHasAny(answeredQuestionOptionPairSet, anyQuestionOptionPairs)
   ) {
     return false
   }
-  if (!setHasAll(answerEffectTypeSet, effectTypes)) {return false}
+  if (!setHasAll(answerEffectTypeSet, effectTypes)) {
+    return false
+  }
   if (anyEffectTypes.length && !setHasAny(answerEffectTypeSet, anyEffectTypes)) {
     return false
   }
-  if (hasQuestionOptionConstraint) {
-    return true
+  if (!setHasAll(routeAnswerEffectOutcomeKeySet, outcomeKeys)) {
+    return false
   }
-  if (!setHasAll(routeAnswerEffectOutcomeKeySet, outcomeKeys)) {return false}
   if (anyOutcomeKeys.length && !setHasAny(routeAnswerEffectOutcomeKeySet, anyOutcomeKeys)) {
     return false
   }
-  if (!setHasAll(routeAnswerEffectRouteKeySet, routeKeys)) {return false}
+  if (!setHasAll(routeAnswerEffectRouteKeySet, routeKeys)) {
+    return false
+  }
   if (anyRouteKeys.length && !setHasAny(routeAnswerEffectRouteKeySet, anyRouteKeys)) {
     return false
   }
@@ -140,7 +265,9 @@ function matchesRequiredAnswerEffects(requiredAnswerEffects = {}, routeEvidenceC
 }
 
 function matchesBlockerEvidence(blockerEvidence = {}, routeEvidenceContext = {}) {
-  if (!blockerEvidence || typeof blockerEvidence !== 'object') {return false}
+  if (!blockerEvidence || typeof blockerEvidence !== 'object') {
+    return false
+  }
   const hasEvidenceBlocker = matchesRequiredEvidence(blockerEvidence, routeEvidenceContext)
   const hasAnswerBlocker = matchesRequiredAnswerEffects(blockerEvidence, routeEvidenceContext)
 
@@ -159,6 +286,8 @@ function matchesBlockerEvidence(blockerEvidence = {}, routeEvidenceContext = {})
     normalizeStringArray(blockerEvidence.anyOptionKeys).length ||
     normalizeStringArray(blockerEvidence.questionOptionPairs).length ||
     normalizeStringArray(blockerEvidence.anyQuestionOptionPairs).length ||
+    normalizeStringArray(blockerEvidence.fallbackQuestionOptionPairs).length ||
+    hasLightHealthConstraint(blockerEvidence) ||
     normalizeStringArray(blockerEvidence.effectTypes).length ||
     normalizeStringArray(blockerEvidence.anyEffectTypes).length ||
     normalizeStringArray(blockerEvidence.outcomeKeys).length ||
@@ -166,7 +295,9 @@ function matchesBlockerEvidence(blockerEvidence = {}, routeEvidenceContext = {})
     normalizeStringArray(blockerEvidence.routeKeys).length ||
     normalizeStringArray(blockerEvidence.anyRouteKeys).length
 
-  if (!hasAnyConstraint) {return false}
+  if (!hasAnyConstraint) {
+    return false
+  }
   return hasEvidenceBlocker && hasAnswerBlocker
 }
 
@@ -179,14 +310,16 @@ function summarizeRequiredAnswerEffects(requiredAnswerEffects = {}) {
     ),
     anyQuestionOptionPairs: normalizeStringArray(requiredAnswerEffects.anyQuestionOptionPairs),
     routeKeys: normalizeStringArray(requiredAnswerEffects.routeKeys),
-    outcomeKeys: normalizeStringArray(requiredAnswerEffects.outcomeKeys)
+    outcomeKeys: normalizeStringArray(requiredAnswerEffects.outcomeKeys),
+    lightHealthLevels: normalizeStringArray(requiredAnswerEffects.lightHealthLevels),
+    lightHealthDirections: normalizeStringArray(requiredAnswerEffects.lightHealthDirections),
+    fallbackQuestionOptionPairs: normalizeStringArray(
+      requiredAnswerEffects.fallbackQuestionOptionPairs
+    )
   }
 }
 
-function evaluateOutcomeRouteCondition({
-  condition = {},
-  routeEvidenceContext = {}
-} = {}) {
+function evaluateOutcomeRouteCondition({ condition = {}, routeEvidenceContext = {} } = {}) {
   const hasBlocker = matchesBlockerEvidence(condition.blockerEvidence, routeEvidenceContext)
   if (hasBlocker) {
     return {
@@ -245,6 +378,7 @@ module.exports = {
   matchesRequiredEvidence,
   matchesRequiredAnswerEffects,
   matchesBlockerEvidence,
+  matchesLightHealth,
   summarizeRequiredAnswerEffects,
   evaluateOutcomeRouteCondition
 }

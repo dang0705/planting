@@ -525,7 +525,9 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
       : null
   const hasQuestionPackageResult =
     Boolean(questionPackage) &&
-    String(questionPackage?.answerSubmitMode || publicResponse?.uiHints?.answerSubmitMode || '').trim() === 'package'
+    String(
+      questionPackage?.answerSubmitMode || publicResponse?.uiHints?.answerSubmitMode || ''
+    ).trim() === 'package'
   const packageUiHints = hasQuestionPackageResult
     ? {
         canUploadMoreImages: false,
@@ -552,6 +554,10 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
       publicResponse.prevention ||
       whatToAvoid.join('\n') ||
       explanation?.avoid
+  )
+  const environmentCareContext = compactEnvironmentCareContextForPublic(
+    publicResponse.environmentCareContext || null,
+    publicResponse.careBehaviorTimeline || null
   )
 
   return {
@@ -594,6 +600,7 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
     ...(publicResponse.needHumanReview ? { needHumanReview: true } : {}),
     hasActiveQuestions: false,
     questions: [],
+    ...(environmentCareContext ? { environmentCareContext } : {}),
     ...(packageUiHints ? { uiHints: packageUiHints } : {})
   }
 }

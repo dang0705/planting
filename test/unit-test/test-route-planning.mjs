@@ -86,9 +86,7 @@ const {
 } = require('../../cloudfunctions/diagnose-http/services/session-result-read-service.js')
 Module._load = originalModuleLoad
 
-const {
-  normalizeDiagnosisResult
-} = await import('../../src/utils/diagnose-flow.js')
+const { normalizeDiagnosisResult } = await import('../../src/utils/diagnose-flow.js')
 
 function buildObservedEvidenceSet(symptomKeys = []) {
   return (Array.isArray(symptomKeys) ? symptomKeys : []).map((symptomKey, index) => ({
@@ -105,13 +103,15 @@ function buildObservedEvidenceSet(symptomKeys = []) {
 
 function buildVisualAggregateWithCandidates(symptomKeys = []) {
   return {
-    aggregated_symptom_candidates: (Array.isArray(symptomKeys) ? symptomKeys : []).map(symptomKey => ({
-      symptom_key: symptomKey,
-      confidence_band: 'medium',
-      strength_level: 'medium',
-      admission_readiness: 'cautious',
-      support_count: 1
-    })),
+    aggregated_symptom_candidates: (Array.isArray(symptomKeys) ? symptomKeys : []).map(
+      symptomKey => ({
+        symptom_key: symptomKey,
+        confidence_band: 'medium',
+        strength_level: 'medium',
+        admission_readiness: 'cautious',
+        support_count: 1
+      })
+    ),
     admission_records: (Array.isArray(symptomKeys) ? symptomKeys : []).map(symptomKey => ({
       admission_result: 'candidate_retained',
       object_key: symptomKey
@@ -221,7 +221,7 @@ async function testRoutePlannerConflict() {
     candidateOutcomeKeys: ['underwatering', 'overwatering_root_pressure'],
     routeEvidenceContext,
     routeRepository,
-    featureFlags: { routePlanningEnabled: true },
+    featureFlags: { routePlanningEnabled: true }
   })
   assert.equal(decision.conservativePolicy, '')
   assert.deepEqual(decision.visibleOutcomeKeys, ['underwatering', 'overwatering_root_pressure'])
@@ -340,7 +340,7 @@ async function testRoutePlannerKeepsThreeVisibleOutcomesAcrossMixedGroupLimits()
     routeEvidenceContext,
     routeRepository,
     featureFlags: { routePlanningEnabled: true },
-    maxVisibleOutcomes: 3,
+    maxVisibleOutcomes: 3
   })
 
   assert.deepEqual(decision.visibleOutcomeKeys, [
@@ -349,7 +349,11 @@ async function testRoutePlannerKeepsThreeVisibleOutcomesAcrossMixedGroupLimits()
     'leaf_spot_problem'
   ])
   assert.deepEqual(decision.visibleOutcomeKeys.slice(1), ['sunburn', 'leaf_spot_problem'])
-  assert.deepEqual(decision.visibleActionConflictGroups.sort(), ['avoid_sun', 'control_moisture', 'fertilizer_more'])
+  assert.deepEqual(decision.visibleActionConflictGroups.sort(), [
+    'avoid_sun',
+    'control_moisture',
+    'fertilizer_more'
+  ])
   assert.equal(decision.decisionCause.decisionCauseKey, 'route_action_conflict_unresolved')
 }
 
@@ -400,18 +404,20 @@ async function testRoutePlannerDoesNotRequireQuestionForMissingCondition() {
     candidateOutcomeKeys: ['overwatering_root_pressure'],
     routeEvidenceContext,
     routeRepository,
-    featureFlags: { routePlanningEnabled: true },
+    featureFlags: { routePlanningEnabled: true }
   })
   const noBudget = await planOutcomeRoutes({
     candidateOutcomeKeys: ['overwatering_root_pressure'],
     routeEvidenceContext,
     routeRepository,
-    featureFlags: { routePlanningEnabled: true },
+    featureFlags: { routePlanningEnabled: true }
   })
 
   assert.equal(withBudget.requiresQuestion, false)
   assert.deepEqual(withBudget.nextQuestions, [])
-  assert.deepEqual(withBudget.candidateOutcomeStates[0].questionEvidenceKeys, ['q_soil_moisture_recent'])
+  assert.deepEqual(withBudget.candidateOutcomeStates[0].questionEvidenceKeys, [
+    'q_soil_moisture_recent'
+  ])
   assert.equal(noBudget.requiresQuestion, false)
 }
 
@@ -430,7 +436,7 @@ async function testRoutePlannerConservativeIsConservative() {
       questions: [],
       routeGroups: []
     }),
-    featureFlags: { routePlanningEnabled: true },
+    featureFlags: { routePlanningEnabled: true }
   })
 
   assert.equal(routeDecision.conservativePolicy, 'uncertain')
@@ -536,8 +542,8 @@ function testSessionResultReadSuppressesUncertainWhenConcreteExists() {
   )
 }
 
-function testConditionQuestionOptionPairsDoNotRequireRouteEffectMirror() {
-  const matched = matchesRequiredAnswerEffects(
+function testConditionQuestionOptionPairsRequireDeclaredRouteEffectMirror() {
+  const routeMirrorMissing = matchesRequiredAnswerEffects(
     {
       questionOptionPairs: [
         'q_observed_probe__leaf_yellowing__light_change_context:stronger_direct_light'
@@ -545,9 +551,7 @@ function testConditionQuestionOptionPairsDoNotRequireRouteEffectMirror() {
       routeKeys: ['yellowing_sunburn_route']
     },
     {
-      answeredQuestionKeySet: new Set([
-        'q_observed_probe__leaf_yellowing__light_change_context'
-      ]),
+      answeredQuestionKeySet: new Set(['q_observed_probe__leaf_yellowing__light_change_context']),
       answeredOptionKeySet: new Set(['stronger_direct_light']),
       answeredQuestionOptionPairSet: new Set([
         'q_observed_probe__leaf_yellowing__light_change_context:stronger_direct_light'
@@ -558,16 +562,33 @@ function testConditionQuestionOptionPairsDoNotRequireRouteEffectMirror() {
     }
   )
 
-  assert.equal(matched, true)
+  assert.equal(routeMirrorMissing, false)
+
+  const routeMirrorMatched = matchesRequiredAnswerEffects(
+    {
+      questionOptionPairs: [
+        'q_observed_probe__leaf_yellowing__light_change_context:stronger_direct_light'
+      ],
+      routeKeys: ['yellowing_sunburn_route']
+    },
+    {
+      answeredQuestionKeySet: new Set(['q_observed_probe__leaf_yellowing__light_change_context']),
+      answeredOptionKeySet: new Set(['stronger_direct_light']),
+      answeredQuestionOptionPairSet: new Set([
+        'q_observed_probe__leaf_yellowing__light_change_context:stronger_direct_light'
+      ]),
+      answerEffectTypeSet: new Set(),
+      routeAnswerEffectOutcomeKeySet: new Set(),
+      routeAnswerEffectRouteKeySet: new Set(['yellowing_sunburn_route'])
+    }
+  )
+
+  assert.equal(routeMirrorMatched, true)
 
   const arrayShapeMatched = matchesRequiredAnswerEffects(
-    [
-      'q_observed_probe__leaf_yellowing__light_change_context:stronger_direct_light'
-    ],
+    ['q_observed_probe__leaf_yellowing__light_change_context:stronger_direct_light'],
     {
-      answeredQuestionKeySet: new Set([
-        'q_observed_probe__leaf_yellowing__light_change_context'
-      ]),
+      answeredQuestionKeySet: new Set(['q_observed_probe__leaf_yellowing__light_change_context']),
       answeredOptionKeySet: new Set(['stronger_direct_light']),
       answeredQuestionOptionPairSet: new Set([
         'q_observed_probe__leaf_yellowing__light_change_context:stronger_direct_light'
@@ -636,12 +657,14 @@ async function testRoutePlannerNextQuestions() {
     candidateOutcomeKeys: ['overwatering_root_pressure'],
     routeEvidenceContext,
     routeRepository,
-    featureFlags: { routePlanningEnabled: true },
+    featureFlags: { routePlanningEnabled: true }
   })
 
   assert.equal(decision.requiresQuestion, false)
   assert.deepEqual(decision.nextQuestions, [])
-  assert.deepEqual(decision.candidateOutcomeStates[0].questionEvidenceKeys, ['q_soil_moisture_recent'])
+  assert.deepEqual(decision.candidateOutcomeStates[0].questionEvidenceKeys, [
+    'q_soil_moisture_recent'
+  ])
 }
 
 async function testRoutePlannerConsumesSqlAnswerEffects() {
@@ -718,7 +741,7 @@ async function testRoutePlannerConsumesSqlAnswerEffects() {
     candidateOutcomeKeys: ['overwatering_root_pressure'],
     routeEvidenceContext,
     routeRepository,
-    featureFlags: { routePlanningEnabled: true },
+    featureFlags: { routePlanningEnabled: true }
   })
 
   assert.deepEqual(decision.visibleOutcomeKeys, ['overwatering_root_pressure'])
@@ -816,7 +839,7 @@ async function testWiltingWetSoilAnswerExpandsToWiltingRouteEvidence() {
     candidateOutcomeKeys: ['root_rot'],
     routeEvidenceContext,
     routeRepository,
-    featureFlags: { routePlanningEnabled: true },
+    featureFlags: { routePlanningEnabled: true }
   })
 
   assert.deepEqual(routeEvidenceContext.activeSymptomKeys, [
@@ -845,7 +868,7 @@ async function testWiltingWetSoilAnswerExpandsToWiltingRouteEvidence() {
     candidateOutcomeKeys: ['root_rot'],
     routeEvidenceContext: dryRouteEvidenceContext,
     routeRepository,
-    featureFlags: { routePlanningEnabled: true },
+    featureFlags: { routePlanningEnabled: true }
   })
 
   assert.deepEqual(dryRouteEvidenceContext.activeSymptomKeys, [
@@ -866,9 +889,7 @@ async function testRoutePlannerPassedAlternativeRouteSurvivesContradictedSplit()
         optionKey: 'often_wet'
       }
     ],
-    askedQuestionKeys: [
-      'q_observed_probe__leaf_yellowing__watering_frequency_context'
-    ],
+    askedQuestionKeys: ['q_observed_probe__leaf_yellowing__watering_frequency_context'],
     routeAnswerEffects: [
       {
         questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
@@ -1011,7 +1032,7 @@ async function testRoutePlannerSameRouteBlockerOverridesPass() {
     candidateOutcomeKeys: ['overwatering_root_pressure'],
     routeEvidenceContext,
     routeRepository,
-    featureFlags: { routePlanningEnabled: true },
+    featureFlags: { routePlanningEnabled: true }
   })
 
   assert.deepEqual(decision.visibleOutcomeKeys, [])
@@ -1139,7 +1160,7 @@ async function testYellowingCareContextOnlyDoesNotCloseWaterConflict() {
     candidateOutcomeKeys: ['overwatering_root_pressure', 'underwatering'],
     routeEvidenceContext,
     routeRepository,
-    featureFlags: { routePlanningEnabled: true },
+    featureFlags: { routePlanningEnabled: true }
   })
 
   assert.deepEqual(decision.visibleOutcomeKeys, [])
@@ -1267,11 +1288,14 @@ async function testVisualCandidateYellowingExpandsRouteGroupAndPlansWateringCont
     candidateOutcomeKeys: ['iron_deficiency'],
     routeEvidenceContext,
     routeRepository,
-    featureFlags: { routePlanningEnabled: true },
+    featureFlags: { routePlanningEnabled: true }
   })
 
   assert.deepEqual(decision.activeRouteGroupKeys, ['yellowing_care_split_group'])
-  assert.equal(decision.decisionCause.decisionCauseDetails.symptomMatchedRouteGroupKeys[0], 'yellowing_care_split_group')
+  assert.equal(
+    decision.decisionCause.decisionCauseDetails.symptomMatchedRouteGroupKeys[0],
+    'yellowing_care_split_group'
+  )
   assert.equal(decision.requiresQuestion, false)
   assert.deepEqual(decision.nextQuestions, [])
   assert.deepEqual(decision.candidateOutcomeStates[0].questionEvidenceKeys, [
@@ -1304,9 +1328,7 @@ async function testYellowingFrontloadedCareStartsWithWateringQuestion() {
 
   assert.deepEqual(
     questions.map(item => item.questionKey),
-    [
-      'q_observed_probe__leaf_yellowing__watering_frequency_context'
-    ]
+    ['q_observed_probe__leaf_yellowing__watering_frequency_context']
   )
 }
 
@@ -1440,7 +1462,7 @@ async function testYellowingRouteDoesNotHoldVisibleOutcomeForMissingPackageGroup
     candidateOutcomeKeys: ['overwatering_root_pressure', 'uncertain_observation'],
     routeEvidenceContext,
     routeRepository,
-    featureFlags: { routePlanningEnabled: true },
+    featureFlags: { routePlanningEnabled: true }
   })
 
   assert.deepEqual(decision.visibleOutcomeKeys, ['overwatering_root_pressure'])
@@ -1683,117 +1705,122 @@ async function testRouteFastPathBackfillsHistoricalRouteAnswerEffects() {
 }
 
 async function testYellowingCareContextAnswerKeepsRouteQuestionEvidence() {
-  const buildYellowingRouteRepository = () => createMockRouteRepository({
-    routeGroups: [
-      {
-        routeGroupKey: 'yellowing_care_split_group',
-        entrySymptomKeys: ['leaf_yellowing'],
-        candidateOutcomeKeys: [
-          'overwatering_root_pressure',
-          'underwatering',
-          'normal_leaf_aging',
-          'low_light_growth_weakness',
-          'sunburn'
-        ],
-        maxVisibleOutcomes: 3
-      }
-    ],
-    routes: [
-      {
-        routeKey: 'yellowing_wet_soil_route',
-        routeGroupKey: 'yellowing_care_split_group',
-        outcomeKey: 'overwatering_root_pressure'
-      },
-      {
-        routeKey: 'yellowing_low_light_route',
-        routeGroupKey: 'yellowing_care_split_group',
-        outcomeKey: 'low_light_growth_weakness'
-      },
-      {
-        routeKey: 'yellowing_old_leaf_route',
-        routeGroupKey: 'yellowing_care_split_group',
-        outcomeKey: 'normal_leaf_aging'
-      }
-    ],
-    conditions: [
-      {
-        conditionKey: 'wet_soil_confirmation_condition',
-        routeKey: 'yellowing_wet_soil_route',
-        conditionRole: 'display',
-        requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
-        requiredAnswerEffects: {
-          questionOptionPairs: [
-            'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:watering_area',
-            'q_observed_probe__leaf_yellowing__watering_frequency_context:often_wet'
+  const buildYellowingRouteRepository = () =>
+    createMockRouteRepository({
+      routeGroups: [
+        {
+          routeGroupKey: 'yellowing_care_split_group',
+          entrySymptomKeys: ['leaf_yellowing'],
+          candidateOutcomeKeys: [
+            'overwatering_root_pressure',
+            'underwatering',
+            'normal_leaf_aging',
+            'low_light_growth_weakness',
+            'sunburn'
           ],
-          routeKeys: ['yellowing_wet_soil_route']
+          maxVisibleOutcomes: 3
+        }
+      ],
+      routes: [
+        {
+          routeKey: 'yellowing_wet_soil_route',
+          routeGroupKey: 'yellowing_care_split_group',
+          outcomeKey: 'overwatering_root_pressure'
         },
-        blockerEvidence: {},
-        conflictOutcomeKeys: []
-      },
-      {
-        conditionKey: 'yellowing_low_light_condition',
-        routeKey: 'yellowing_low_light_route',
-        conditionRole: 'display',
-        requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
-        requiredAnswerEffects: {
-          questionOptionPairs: [
-            'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:light_area',
-            'q_observed_probe__leaf_yellowing__light_change_context:weaker_light'
-          ],
-          routeKeys: ['yellowing_low_light_route']
+        {
+          routeKey: 'yellowing_low_light_route',
+          routeGroupKey: 'yellowing_care_split_group',
+          outcomeKey: 'low_light_growth_weakness'
         },
-        blockerEvidence: {},
-        conflictOutcomeKeys: []
-      },
-      {
-        conditionKey: 'old_leaf_aging_condition',
-        routeKey: 'yellowing_old_leaf_route',
-        conditionRole: 'display',
-        requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
-        requiredAnswerEffects: {
-          questionOptionPairs: [
-            'q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern:old_lower_leaves_first'
-          ],
-          routeKeys: ['yellowing_old_leaf_route']
+        {
+          routeKey: 'yellowing_old_leaf_route',
+          routeGroupKey: 'yellowing_care_split_group',
+          outcomeKey: 'normal_leaf_aging'
+        }
+      ],
+      conditions: [
+        {
+          conditionKey: 'wet_soil_confirmation_condition',
+          routeKey: 'yellowing_wet_soil_route',
+          conditionRole: 'display',
+          requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
+          requiredAnswerEffects: {
+            questionOptionPairs: [
+              'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:watering_area',
+              'q_observed_probe__leaf_yellowing__watering_frequency_context:often_wet'
+            ],
+            routeKeys: ['yellowing_wet_soil_route']
+          },
+          blockerEvidence: {},
+          conflictOutcomeKeys: []
         },
-        blockerEvidence: {},
-        conflictOutcomeKeys: []
-      }
-    ],
-    questions: [
-      {
-        routeKey: 'yellowing_wet_soil_route',
-        stepNo: 2,
-        questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
-        conditionKey: 'wet_soil_confirmation_condition',
-        routePackageRole: 'context_probe',
-        requiredForClosure: true,
-        askPriority: 240
-      },
-      {
-        routeKey: 'yellowing_low_light_route',
-        stepNo: 2,
-        questionKey: 'q_observed_probe__leaf_yellowing__light_change_context',
-        conditionKey: 'yellowing_low_light_condition',
-        routePackageRole: 'context_probe',
-        requiredForClosure: true,
-        askPriority: 240
-      },
-      {
-        routeKey: 'yellowing_old_leaf_route',
-        stepNo: 1,
-        questionKey: 'q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern',
-        conditionKey: 'old_leaf_aging_condition',
-        routePackageRole: 'critical_split',
-        requiredForClosure: true,
-        askPriority: 230
-      }
-    ]
-  })
+        {
+          conditionKey: 'yellowing_low_light_condition',
+          routeKey: 'yellowing_low_light_route',
+          conditionRole: 'display',
+          requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
+          requiredAnswerEffects: {
+            questionOptionPairs: [
+              'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:light_area',
+              'q_observed_probe__leaf_yellowing__light_change_context:weaker_light'
+            ],
+            routeKeys: ['yellowing_low_light_route']
+          },
+          blockerEvidence: {},
+          conflictOutcomeKeys: []
+        },
+        {
+          conditionKey: 'old_leaf_aging_condition',
+          routeKey: 'yellowing_old_leaf_route',
+          conditionRole: 'display',
+          requiredEvidence: { anySymptomKeys: ['leaf_yellowing'] },
+          requiredAnswerEffects: {
+            questionOptionPairs: [
+              'q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern:old_lower_leaves_first'
+            ],
+            routeKeys: ['yellowing_old_leaf_route']
+          },
+          blockerEvidence: {},
+          conflictOutcomeKeys: []
+        }
+      ],
+      questions: [
+        {
+          routeKey: 'yellowing_wet_soil_route',
+          stepNo: 2,
+          questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
+          conditionKey: 'wet_soil_confirmation_condition',
+          routePackageRole: 'context_probe',
+          requiredForClosure: true,
+          askPriority: 240
+        },
+        {
+          routeKey: 'yellowing_low_light_route',
+          stepNo: 2,
+          questionKey: 'q_observed_probe__leaf_yellowing__light_change_context',
+          conditionKey: 'yellowing_low_light_condition',
+          routePackageRole: 'context_probe',
+          requiredForClosure: true,
+          askPriority: 240
+        },
+        {
+          routeKey: 'yellowing_old_leaf_route',
+          stepNo: 1,
+          questionKey: 'q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern',
+          conditionKey: 'old_leaf_aging_condition',
+          routePackageRole: 'critical_split',
+          requiredForClosure: true,
+          askPriority: 230
+        }
+      ]
+    })
 
   const lightDecision = await planOutcomeRoutes({
-    candidateOutcomeKeys: ['overwatering_root_pressure', 'low_light_growth_weakness', 'normal_leaf_aging'],
+    candidateOutcomeKeys: [
+      'overwatering_root_pressure',
+      'low_light_growth_weakness',
+      'normal_leaf_aging'
+    ],
     routeEvidenceContext: buildRouteEvidenceContext({
       observedEvidenceSet: buildObservedEvidenceSet(['leaf_yellowing']),
       answers: [
@@ -1813,7 +1840,7 @@ async function testYellowingCareContextAnswerKeepsRouteQuestionEvidence() {
       ]
     }),
     routeRepository: buildYellowingRouteRepository(),
-    featureFlags: { routePlanningEnabled: true },
+    featureFlags: { routePlanningEnabled: true }
   })
 
   assert.equal(lightDecision.requiresQuestion, false)
@@ -1822,7 +1849,11 @@ async function testYellowingCareContextAnswerKeepsRouteQuestionEvidence() {
   ])
 
   const unknownDecision = await planOutcomeRoutes({
-    candidateOutcomeKeys: ['overwatering_root_pressure', 'low_light_growth_weakness', 'normal_leaf_aging'],
+    candidateOutcomeKeys: [
+      'overwatering_root_pressure',
+      'low_light_growth_weakness',
+      'normal_leaf_aging'
+    ],
     routeEvidenceContext: buildRouteEvidenceContext({
       observedEvidenceSet: buildObservedEvidenceSet(['leaf_yellowing']),
       answers: [
@@ -1833,12 +1864,14 @@ async function testYellowingCareContextAnswerKeepsRouteQuestionEvidence() {
       ]
     }),
     routeRepository: buildYellowingRouteRepository(),
-    featureFlags: { routePlanningEnabled: true },
+    featureFlags: { routePlanningEnabled: true }
   })
 
   assert.equal(
     unknownDecision.candidateOutcomeStates.some(state =>
-      (state.questionEvidenceKeys || []).includes('q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern')
+      (state.questionEvidenceKeys || []).includes(
+        'q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern'
+      )
     ),
     false
   )
@@ -1926,7 +1959,7 @@ async function testYellowingLowLightRouteClosesWithActionAdvice() {
     candidateOutcomeKeys: ['iron_deficiency'],
     routeEvidenceContext,
     routeRepository,
-    featureFlags: { routePlanningEnabled: true },
+    featureFlags: { routePlanningEnabled: true }
   })
 
   assert.equal(decision.conservativePolicy, '')
@@ -1988,7 +2021,10 @@ async function testYellowingLowLightRouteClosesWithActionAdvice() {
   assert.equal(response.finalResult.summary.includes('缺铁'), false)
   assert.equal(response.actionAdvice.todayActions[0], '把植株移到更稳定明亮散射光处')
   assert.equal(response.nextSteps[0].text, '把植株移到更稳定明亮散射光处')
-  assert.equal(response.nextSteps.some(item => String(item?.text || '').includes('螯合铁')), false)
+  assert.equal(
+    response.nextSteps.some(item => String(item?.text || '').includes('螯合铁')),
+    false
+  )
   assert.equal(response.whatToAvoid[0], '不要突然暴晒或一次性大幅施肥')
 
   const persistedAdvice = sessionStateWriteServiceTest.resolvePersistedAdviceTexts(response)
@@ -2031,10 +2067,14 @@ async function testYellowingLowLightRouteClosesWithActionAdvice() {
   assert.equal(frontendAnswer.visualAggregateSummary, undefined)
   assert.equal(frontendAnswer.finalResult.visibleOutcomes, undefined)
   assert.equal(frontendAnswer.finalResult.actionAdvice, undefined)
-  assert.deepEqual(frontendAnswer.visibleOutcomes.map(item => item.outcomeKey), [
-    'low_light_growth_weakness'
-  ])
-  assert.equal(frontendAnswer.visibleOutcomes[0].actionAdviceItems[0], '把植株移到更稳定明亮散射光处')
+  assert.deepEqual(
+    frontendAnswer.visibleOutcomes.map(item => item.outcomeKey),
+    ['low_light_growth_weakness']
+  )
+  assert.equal(
+    frontendAnswer.visibleOutcomes[0].actionAdviceItems[0],
+    '把植株移到更稳定明亮散射光处'
+  )
   assert.equal(JSON.stringify(frontendAnswer).length < 2500, true)
 
   const normalizedFrontendAnswer = normalizeDiagnosisResult(frontendAnswer)
@@ -2103,10 +2143,7 @@ function testLeafSpotRouteAdviceDoesNotAppendYellowingFertilizerGuidance() {
     outcomeType: 'problematic'
   })
 
-  assert.deepEqual(payload.actionAdvice.todayActions, [
-    '先减少叶面长期潮湿',
-    '改善通风'
-  ])
+  assert.deepEqual(payload.actionAdvice.todayActions, ['先减少叶面长期潮湿', '改善通风'])
   assert.deepEqual(payload.actionAdvice.avoidActions, ['不要继续频繁喷水到叶面'])
   assert.deepEqual(payload.visibleOutcomes[0].actionAdviceItems, [
     '先减少叶面长期潮湿',
@@ -2347,7 +2384,7 @@ async function testSessionYellowingLeafAgeAnswerDoesNotCloseRoute() {
     candidateOutcomeKeys: ['normal_leaf_aging'],
     routeEvidenceContext,
     routeRepository,
-    featureFlags: { routePlanningEnabled: true },
+    featureFlags: { routePlanningEnabled: true }
   })
 
   assert.deepEqual(decision.visibleOutcomeKeys, [])
@@ -2409,21 +2446,22 @@ function testMultiOutcomeConflictPreservesPerOutcomeAdviceItems() {
   })
 
   assert.equal(payload.actionAdvice.conflictDetected, true)
-  assert.deepEqual(payload.visibleOutcomes.map(item => item.displayNameCn), [
-    '晒伤/强光刺激',
-    '施肥/换盆应激',
-    '积水/根系受影响'
-  ])
-  assert.deepEqual(payload.visibleOutcomes.map(item => item.actionAdviceItems), [
-    ['移到柔和光线处', '观察新叶是否继续焦边'],
-    ['暂停施肥', '记录新叶恢复情况'],
-    ['暂停浇水并加强通风', '确认盆土是否变干']
-  ])
-  assert.deepEqual(payload.visibleOutcomes.map(item => item.avoidAdviceItems), [
-    ['不要突然暴晒'],
-    ['不要继续追肥'],
-    ['不要继续保持盆土长期潮湿']
-  ])
+  assert.deepEqual(
+    payload.visibleOutcomes.map(item => item.displayNameCn),
+    ['晒伤/强光刺激', '施肥/换盆应激', '积水/根系受影响']
+  )
+  assert.deepEqual(
+    payload.visibleOutcomes.map(item => item.actionAdviceItems),
+    [
+      ['移到柔和光线处', '观察新叶是否继续焦边'],
+      ['暂停施肥', '记录新叶恢复情况'],
+      ['暂停浇水并加强通风', '确认盆土是否变干']
+    ]
+  )
+  assert.deepEqual(
+    payload.visibleOutcomes.map(item => item.avoidAdviceItems),
+    [['不要突然暴晒'], ['不要继续追肥'], ['不要继续保持盆土长期潮湿']]
+  )
 }
 
 function testRootStressRouteUsesUserFriendlyDisplayName() {
@@ -2566,7 +2604,10 @@ async function testYellowingAirflowLeafSpotRequiresVisibleSpotEvidence() {
     [],
     '纯黄叶候选不得保留叶斑 outcome'
   )
-  assert.equal(yellowingOnlyDecision.decisionCause.decisionCauseKey, 'route_conservative_no_candidates')
+  assert.equal(
+    yellowingOnlyDecision.decisionCause.decisionCauseKey,
+    'route_conservative_no_candidates'
+  )
 
   const visibleSpotDecision = await planOutcomeRoutes({
     candidateOutcomeKeys: ['leaf_spot_problem'],
@@ -2724,7 +2765,7 @@ async function testYellowingStrongLightRouteClosesWithSunburnActionAdvice() {
     candidateOutcomeKeys: ['iron_deficiency'],
     routeEvidenceContext,
     routeRepository,
-    featureFlags: { routePlanningEnabled: true },
+    featureFlags: { routePlanningEnabled: true }
   })
 
   assert.equal(decision.conservativePolicy, '')
@@ -2870,11 +2911,7 @@ function testRouteExplanationFollowsRoutePrimaryOutcome() {
     },
     routeDecision: {
       mode: 'multi_outcome_route',
-      visibleOutcomeKeys: [
-        'sunburn',
-        'nutrient_deficiency',
-        'overwatering_root_pressure'
-      ],
+      visibleOutcomeKeys: ['sunburn', 'nutrient_deficiency', 'overwatering_root_pressure'],
       visibleActionConflictGroups: ['avoid_sun', 'fertilizer_more', 'water_less'],
       visibleActionProfileKeys: ['action_sunburn_basic'],
       conservativePolicy: '',
@@ -2898,15 +2935,14 @@ function testRouteExplanationFollowsRoutePrimaryOutcome() {
 
   assert.equal(response.visibleOutcomes[0].outcomeKey, 'sunburn')
   assert.equal(response.outcomeMode, 'visible_outcomes')
-  assert.deepEqual(response.visibleOutcomes.map(item => item.outcomeKey), [
-    'sunburn',
-    'nutrient_deficiency',
-    'overwatering_root_pressure'
-  ])
-  assert.deepEqual(response.visibleOutcomes.slice(1).map(item => item.outcomeKey), [
-    'nutrient_deficiency',
-    'overwatering_root_pressure'
-  ])
+  assert.deepEqual(
+    response.visibleOutcomes.map(item => item.outcomeKey),
+    ['sunburn', 'nutrient_deficiency', 'overwatering_root_pressure']
+  )
+  assert.deepEqual(
+    response.visibleOutcomes.slice(1).map(item => item.outcomeKey),
+    ['nutrient_deficiency', 'overwatering_root_pressure']
+  )
   assert.doesNotMatch(response.explanation.whyItHappens, /缺铁/)
   assert.match(response.explanation.whyItHappens, /强光|灼伤/)
   assert.doesNotMatch(response.resultExplanation.whyItHappens, /缺铁/)
@@ -2922,10 +2958,7 @@ function testQuestionCompletedStateUsesRouteConvergenceBranch() {
     source,
     /v-else-if="result && !result\.hasActiveQuestions && !hasRouteConvergenceDetails"/
   )
-  assert.match(
-    source,
-    /const hasRouteConvergenceDetails = computed\(\(\) =>/
-  )
+  assert.match(source, /const hasRouteConvergenceDetails = computed\(\(\) =>/)
 }
 
 function testDiagnosisResultPageUsesVisibleOutcomeList() {
@@ -2934,10 +2967,7 @@ function testDiagnosisResultPageUsesVisibleOutcomeList() {
   assert.match(source, /function buildOutcomeDisplayItems/)
   assert.match(source, /v-for="item in viewModel\.outcomeItems"/)
   assert.match(source, /normalizeDiagnosisResult\(remoteResult\.value/)
-  assert.doesNotMatch(
-    source,
-    /mainIssue:\s*remoteResult\.value\?\.finalResult\?\.displayName/
-  )
+  assert.doesNotMatch(source, /mainIssue:\s*remoteResult\.value\?\.finalResult\?\.displayName/)
 }
 
 function testRuntimeSnapshotPersistsInternalRouteDecision() {
@@ -2962,28 +2992,33 @@ function testRuntimeSnapshotPersistsInternalRouteDecision() {
     }
   }
 
-  const snapshot = JSON.parse(buildRuntimeSnapshotPayload({
-    sessionId: 'diag_test_route_snapshot',
-    plantContext: {
-      plantId: '1'
-    },
-    response: {
-      roundId: 'round_4',
-      outcomeType: 'problematic',
-      metrics: {
-        reliabilityScore: 0.12,
-        routeDecisionGap: 0.03,
-        routeDecision: null
+  const snapshot = JSON.parse(
+    buildRuntimeSnapshotPayload({
+      sessionId: 'diag_test_route_snapshot',
+      plantContext: {
+        plantId: '1'
       },
-      __runtimeRouteDecision: routeDecision
-    },
-    round: 4
-  }))
+      response: {
+        roundId: 'round_4',
+        outcomeType: 'problematic',
+        metrics: {
+          reliabilityScore: 0.12,
+          routeDecisionGap: 0.03,
+          routeDecision: null
+        },
+        __runtimeRouteDecision: routeDecision
+      },
+      round: 4
+    })
+  )
 
   assert.equal(snapshot.metrics, null)
   assert.deepEqual(snapshot.routeDecision.visibleOutcomeKeys, ['overwatering_root_pressure'])
   assert.deepEqual(snapshot.routeDecision.activeRouteGroupKeys, ['yellowing_care_split_group'])
-  assert.equal(snapshot.routeDecision.decisionCause.decisionCauseKey, 'route_visible_outcomes_ready')
+  assert.equal(
+    snapshot.routeDecision.decisionCause.decisionCauseKey,
+    'route_visible_outcomes_ready'
+  )
   assert.equal(snapshot.routeDecision.routeTrace, undefined)
 }
 
@@ -3011,16 +3046,17 @@ function testManualQuestionStartRouteGroupBridge() {
   )
   assert.deepEqual(candidateOutcomeKeys, ['overwatering_root_pressure', 'underwatering'])
 
-  const nonYellowingCandidateOutcomeKeys = questionStartRunnerTest.collectCandidateOutcomeKeysFromRouteGroups(
-    [
-      {
-        routeGroupKey: 'leaf_spot_split_group',
-        entrySymptomKeys: ['spreading_spots'],
-        candidateOutcomeKeys: ['leaf_spot_problem']
-      }
-    ],
-    ['spreading_spots']
-  )
+  const nonYellowingCandidateOutcomeKeys =
+    questionStartRunnerTest.collectCandidateOutcomeKeysFromRouteGroups(
+      [
+        {
+          routeGroupKey: 'leaf_spot_split_group',
+          entrySymptomKeys: ['spreading_spots'],
+          candidateOutcomeKeys: ['leaf_spot_problem']
+        }
+      ],
+      ['spreading_spots']
+    )
   assert.deepEqual(nonYellowingCandidateOutcomeKeys, ['leaf_spot_problem'])
 }
 
@@ -3063,40 +3099,46 @@ async function testManualQuestionStartFastPathBuildsQuestionRound() {
       throw new Error('route-backed package should be used before conservative')
     },
     async getQuestionsByKeys(questionKeys) {
-      assert.deepEqual(questionKeys, ['q_observed_probe__leaf_yellowing__yellowing_care_area_condition'])
+      assert.deepEqual(questionKeys, [
+        'q_observed_probe__leaf_yellowing__watering_frequency_context'
+      ])
       return [
         {
-          questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
-          questionTextUserCn: '为了判断黄叶是否和日常养护有关，先选最近两周最可疑的一项。',
-          questionGroupKey: 'yellowing_care_area_condition',
+          questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
+          questionTextUserCn: '请您选择在过去的10天内，哪几天浇了水？',
+          questionGroupKey: 'watering_frequency_context',
           targetSymptomKey: 'leaf_yellowing',
-          packageTopic: 'yellowing_care_area_condition',
+          packageTopic: 'watering_frequency_context',
           packageSection: 'context_probe',
           routePackageRole: 'route_condition',
           questionType: 'single_choice',
-          defaultOptionKey: 'watering_area'
+          defaultOptionKey: 'care_behavior_timeline'
         }
       ]
     },
     async getQuestionOptionMappings(questionKeys) {
-      assert.deepEqual(questionKeys, ['q_observed_probe__leaf_yellowing__yellowing_care_area_condition'])
+      assert.deepEqual(questionKeys, [
+        'q_observed_probe__leaf_yellowing__watering_frequency_context'
+      ])
       return [
         {
-          questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
-          optionKey: 'watering_area',
-          optionTextUserCn: '浇水可能不合适',
+          questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
+          optionKey: 'care_behavior_timeline',
+          optionTextUserCn: '按浇水日历判断',
           isDefault: true
         },
         {
-          questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
-          optionKey: 'light_area',
-          optionTextUserCn: '光照变化明显'
+          questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
+          optionKey: 'unknown',
+          optionTextUserCn: '说不清/没留意'
         }
       ]
     }
   }
   const routePlanner = async () => {
-    throw new Error('pure yellowing manual start should use care/environment guard before route planning')
+    throw new Error(
+      'pure yellowing manual start should use care/environment guard before route planning'
+    )
   }
 
   const result = await questionStartRunnerTest.buildManualQuestionStartRoundResult({
@@ -3127,7 +3169,9 @@ async function testManualQuestionStartFastPathBuildsQuestionRound() {
     ]
   )
   assert.equal(
-    result.questions.some(item => item.questionKey === 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition'),
+    result.questions.some(
+      item => item.questionKey === 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition'
+    ),
     false
   )
   assert.equal(result.__runtimeRouteDecision.mode, 'manual_yellowing_care_environment_frontloaded')
@@ -3135,29 +3179,31 @@ async function testManualQuestionStartFastPathBuildsQuestionRound() {
 }
 
 function testVisualParserFields() {
-  const parsed = parseLLMVisualResult(JSON.stringify({
-    normalized_organ: 'leaf',
-    image_quality_grade: 'good',
-    analyzability: 'high',
-    symptom_candidates: [],
-    out_of_pool_symptom_candidates: [],
-    route_hints: [],
-    visual_discriminators: [
-      {
-        dimension_key: 'visible_pest_trace',
-        value_key: 'possible',
-        confidence_band: 'medium',
-        visible_basis_cn: '叶片上可见疑似虫咬痕迹'
-      }
-    ],
-    outcome_key: 'root_rot',
-    missing_info_for_path: [
-      {
-        dimension_key: 'soil_moisture',
-        reason_cn: '图片无法判断盆土内部干湿'
-      }
-    ]
-  }))
+  const parsed = parseLLMVisualResult(
+    JSON.stringify({
+      normalized_organ: 'leaf',
+      image_quality_grade: 'good',
+      analyzability: 'high',
+      symptom_candidates: [],
+      out_of_pool_symptom_candidates: [],
+      route_hints: [],
+      visual_discriminators: [
+        {
+          dimension_key: 'visible_pest_trace',
+          value_key: 'possible',
+          confidence_band: 'medium',
+          visible_basis_cn: '叶片上可见疑似虫咬痕迹'
+        }
+      ],
+      outcome_key: 'root_rot',
+      missing_info_for_path: [
+        {
+          dimension_key: 'soil_moisture',
+          reason_cn: '图片无法判断盆土内部干湿'
+        }
+      ]
+    })
+  )
 
   assert.equal(parsed.visual_discriminators[0].dimension_key, 'visible_pest_trace')
   assert.equal(parsed.missing_info_for_path[0].dimension_key, 'soil_moisture')
@@ -3693,11 +3739,10 @@ function testSessionResultReadServicePreservesRouteMultiOutcomeFields() {
     }
   })
 
-  assert.deepEqual(mergedRouteFields.visibleOutcomes.map(item => item.outcomeKey), [
-    'nitrogen_deficiency',
-    'sunburn',
-    'nutrient_deficiency'
-  ])
+  assert.deepEqual(
+    mergedRouteFields.visibleOutcomes.map(item => item.outcomeKey),
+    ['nitrogen_deficiency', 'sunburn', 'nutrient_deficiency']
+  )
 
   const payloadWinsFields = sessionResultReadServiceTest.resolveRouteOutcomeFields({
     snapshot: {
@@ -3739,18 +3784,15 @@ function testSessionResultReadServicePreservesRouteMultiOutcomeFields() {
     }
   })
 
-  assert.deepEqual(payloadWinsFields.visibleOutcomes.map(item => item.outcomeKey), [
-    'sunburn',
-    'nutrient_deficiency'
-  ])
+  assert.deepEqual(
+    payloadWinsFields.visibleOutcomes.map(item => item.outcomeKey),
+    ['sunburn', 'nutrient_deficiency']
+  )
   assert.equal(payloadWinsFields.outcomeMode, 'visible_outcomes')
 }
 
 function testRouteModeDoesNotBuildSessionQuestionsAfterPackageAnswer() {
-  const source = readFileSync(
-    './cloudfunctions/diagnose-http/domain/diagnosis-engine.js',
-    'utf8'
-  )
+  const source = readFileSync('./cloudfunctions/diagnose-http/domain/diagnosis-engine.js', 'utf8')
 
   assert.doesNotMatch(source, /const genericQuestions =/)
   assert.doesNotMatch(source, /const routePlannedQuestions =/)
@@ -4050,21 +4092,39 @@ function testPresenterKeepsCareBehaviorEvidenceAndDropsWeatherWindow() {
   assert.equal(compact.environmentCareContext.historicalSummary10d.highHumidityDays, 5)
   assert.equal(compact.environmentCareContext.forecastSummary15d.aboveGenusUvMaxDays, 3)
   assert.equal(Object.prototype.hasOwnProperty.call(compact, 'environmentWeatherWindow'), false)
-  assert.equal(Object.prototype.hasOwnProperty.call(compact.environmentCareContext || {}, 'environmentWeatherWindow'), false)
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(
+      compact.environmentCareContext || {},
+      'environmentWeatherWindow'
+    ),
+    false
+  )
 
   assert.equal(publicRound.careBehaviorTimeline.dailyRecords.length, 10)
   assert.equal(publicRound.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
   assert.equal(publicRound.environmentCareContext.historicalSummary10d.highHumidityDays, 5)
   assert.equal(publicRound.environmentCareContext.forecastSummary15d.aboveGenusUvMaxDays, 3)
   assert.equal(Object.prototype.hasOwnProperty.call(publicRound, 'environmentWeatherWindow'), false)
-  assert.equal(Object.prototype.hasOwnProperty.call(publicRound.environmentCareContext || {}, 'environmentWeatherWindow'), false)
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(
+      publicRound.environmentCareContext || {},
+      'environmentWeatherWindow'
+    ),
+    false
+  )
 
   assert.equal(frontend.careBehaviorTimeline.dailyRecords.length, 10)
   assert.equal(frontend.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
   assert.equal(frontend.environmentCareContext.historicalSummary10d.highHumidityDays, 5)
   assert.equal(frontend.environmentCareContext.forecastSummary15d.aboveGenusUvMaxDays, 3)
   assert.equal(Object.prototype.hasOwnProperty.call(frontend, 'environmentWeatherWindow'), false)
-  assert.equal(Object.prototype.hasOwnProperty.call(frontend.environmentCareContext || {}, 'environmentWeatherWindow'), false)
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(
+      frontend.environmentCareContext || {},
+      'environmentWeatherWindow'
+    ),
+    false
+  )
 }
 
 function testNonProblematicHasNoTreatmentAdvice() {
@@ -4496,7 +4556,10 @@ async function testGoldenUncertainSamples() {
     routeRepository: conflictRepository,
     featureFlags: { routePlanningEnabled: true }
   })
-  assert.deepEqual(conflictDecision.visibleOutcomeKeys, ['underwatering', 'overwatering_root_pressure'])
+  assert.deepEqual(conflictDecision.visibleOutcomeKeys, [
+    'underwatering',
+    'overwatering_root_pressure'
+  ])
   assert.deepEqual(conflictDecision.visibleOutcomeKeys.slice(1), ['overwatering_root_pressure'])
   assert.equal(conflictDecision.decisionCause.decisionCauseKey, 'route_action_conflict_unresolved')
 
@@ -4618,7 +4681,10 @@ function testFrontendNormalizationSuitability() {
   assert.equal(routeResult.actionAdvice.todayActions[0], '先暂停浇水。')
   assert.deepEqual(routeResult.routeDecision.visibleOutcomeKeys, ['overwatering_root_pressure'])
   assert.equal(Object.prototype.hasOwnProperty.call(routeResult.routeDecision, 'routeTrace'), false)
-  assert.equal(Object.prototype.hasOwnProperty.call(routeResult.routeDecision, 'conditionResults'), false)
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(routeResult.routeDecision, 'conditionResults'),
+    false
+  )
 
   const multiOutcomeResult = normalizeDiagnosisResult({
     diagnosisSessionId: 'route_multi_1',
@@ -4798,43 +4864,52 @@ function testReviewCoreProcessKeepsRoutePath() {
     }
   })
 
-  assert.deepEqual(coreProcess.route.routeDecision.visibleOutcomeKeys, ['overwatering_root_pressure'])
+  assert.deepEqual(coreProcess.route.routeDecision.visibleOutcomeKeys, [
+    'overwatering_root_pressure'
+  ])
   assert.deepEqual(coreProcess.route.routeDecision.activeRouteGroupKeys, [
     'yellowing_care_split_group'
   ])
-  assert.equal(coreProcess.route.routeDecision.routeTrace[0].routeKeys[0], 'yellowing_wet_soil_route')
+  assert.equal(
+    coreProcess.route.routeDecision.routeTrace[0].routeKeys[0],
+    'yellowing_wet_soil_route'
+  )
   assert.equal(coreProcess.route.routeDecision.conditionResults[0].result, 'pass')
 }
 
 async function testReviewGovernancePrefersRouteActionAdvice() {
-  const governance = await diagnosisReviewRepositoryTest.resolveDiagnosisReviewActionAdviceGovernance({
-    row: {
-      final_problem_key: 'low_light_growth_weakness',
-      treatment: '先检查新叶是否黄而叶脉仍绿，必要时补充螯合铁。',
-      prevention: '避免长期用高碱性水或介质。'
-    },
-    runtimeSnapshot: {
-      outcomeType: 'problematic',
-      finalResult: {
-        problemId: 'p_bG93X2xpZ2h0X2dyb3d0aF93ZWFrbmVzcw',
-        displayName: '光照不足/生长偏弱',
-        summary: '当前更像长期光照不足引起的偏弱和黄化。'
+  const governance =
+    await diagnosisReviewRepositoryTest.resolveDiagnosisReviewActionAdviceGovernance({
+      row: {
+        final_problem_key: 'low_light_growth_weakness',
+        treatment: '先检查新叶是否黄而叶脉仍绿，必要时补充螯合铁。',
+        prevention: '避免长期用高碱性水或介质。'
       },
-      actionAdvice: {
-        todayActions: ['把植株移到更稳定明亮散射光处'],
-        avoidActions: ['不要突然暴晒或一次性大幅施肥']
+      runtimeSnapshot: {
+        outcomeType: 'problematic',
+        finalResult: {
+          problemId: 'p_bG93X2xpZ2h0X2dyb3d0aF93ZWFrbmVzcw',
+          displayName: '光照不足/生长偏弱',
+          summary: '当前更像长期光照不足引起的偏弱和黄化。'
+        },
+        actionAdvice: {
+          todayActions: ['把植株移到更稳定明亮散射光处'],
+          avoidActions: ['不要突然暴晒或一次性大幅施肥']
+        }
+      },
+      mapped: {
+        outcomeType: 'problematic',
+        problemKey: 'low_light_growth_weakness'
       }
-    },
-    mapped: {
-      outcomeType: 'problematic',
-      problemKey: 'low_light_growth_weakness'
-    }
-  })
+    })
 
   assert.equal(governance.governedAdvice.source, 'route_action_advice')
   assert.equal(governance.governedAdvice.nextSteps[0].text, '把植株移到更稳定明亮散射光处')
   assert.equal(governance.governedAdvice.whatToAvoid[0], '不要突然暴晒或一次性大幅施肥')
-  assert.equal(governance.governedAdvice.nextSteps.some(item => item.text.includes('螯合铁')), false)
+  assert.equal(
+    governance.governedAdvice.nextSteps.some(item => item.text.includes('螯合铁')),
+    false
+  )
 }
 
 async function main() {
@@ -4855,8 +4930,8 @@ async function main() {
   console.log('✓ concrete route outcome suppresses uncertain visible outcome')
   testSessionResultReadSuppressesUncertainWhenConcreteExists()
   console.log('✓ session result read suppresses uncertain visible outcome')
-  testConditionQuestionOptionPairsDoNotRequireRouteEffectMirror()
-  console.log('✓ condition question-option pairs do not require route effect mirror')
+  testConditionQuestionOptionPairsRequireDeclaredRouteEffectMirror()
+  console.log('✓ condition question-option pairs require declared route effect mirror')
   await testRoutePlannerConsumesSqlAnswerEffects()
   console.log('✓ route planner consumes SQL answer effects')
   await testWiltingWetSoilAnswerExpandsToWiltingRouteEvidence()

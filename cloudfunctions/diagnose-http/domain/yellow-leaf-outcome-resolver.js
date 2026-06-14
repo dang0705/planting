@@ -8,6 +8,18 @@ const {
 } = require('../app/question-package-response')
 const { OUTCOME_EFFECT_TYPE } = require('../constants/outcome-route')
 
+const LIGHT_CONTEXT_QUESTION_KEY = 'q_observed_probe__leaf_yellowing__light_change_context'
+const LIGHT_HEALTH_ROUTE_BY_DIRECTION = {
+  low: {
+    outcomeKey: 'low_light_growth_weakness',
+    routeKey: 'yellowing_low_light_route'
+  },
+  strong: {
+    outcomeKey: 'sunburn',
+    routeKey: 'yellowing_sunburn_route'
+  }
+}
+
 function normalizeText(value = '') {
   return String(value || '').trim()
 }
@@ -40,18 +52,67 @@ function collectMatchedAnswerEffects(routeAnswerEffects = [], answers = []) {
   )
 }
 
+function normalizeOutcomeKey(value = '') {
+  const normalized = normalizeText(value)
+  return normalized === 'low_light' ? 'low_light_growth_weakness' : normalized
+}
+
+function hasValidLightHealthEvidence(environmentCareContext = null) {
+  const evidence = environmentCareContext?.outputs?.lightHealthEvidence
+  const score = Number(environmentCareContext?.outputs?.lightHealthScore)
+  return Boolean(evidence && typeof evidence === 'object' && Number.isFinite(score))
+}
+
+function buildLightHealthOutcomeEffects(environmentCareContext = null) {
+  if (!hasValidLightHealthEvidence(environmentCareContext)) {
+    return []
+  }
+  const evidence = environmentCareContext.outputs.lightHealthEvidence
+  const direction = normalizeText(evidence.direction)
+  const target = LIGHT_HEALTH_ROUTE_BY_DIRECTION[direction]
+  if (!target) {
+    return []
+  }
+  const score = Number(environmentCareContext.outputs.lightHealthScore)
+  const severityBoost = score < 40 ? 2.4 : score < 65 ? 2 : 1.55
+  return [
+    {
+      questionKey: 'light_health_evidence',
+      optionKey: direction,
+      outcomeKey: target.outcomeKey,
+      routeKey: target.routeKey,
+      effectType: OUTCOME_EFFECT_TYPE.SUPPORT,
+      effectStrength: severityBoost,
+      evidenceDimension: 'light_health',
+      evidence
+    }
+  ]
+}
+
+function shouldUseAnswerEffect(effect = {}, hasLightHealthEvidence = false) {
+  if (!hasLightHealthEvidence) {
+    return true
+  }
+  const questionKey = normalizeText(effect?.questionKey || effect?.question_key || '')
+  return questionKey !== LIGHT_CONTEXT_QUESTION_KEY
+}
+
 function buildOutcomeScoreMap(matchedEffects = []) {
   const scoreMap = new Map()
 
   for (const effect of Array.isArray(matchedEffects) ? matchedEffects : []) {
     const effectType = normalizeMode(effect?.effectType || effect?.effect_type || '')
-    const redirectedOutcomeKey = normalizeText(effect?.redirectOutcomeKey || effect?.redirect_outcome_key || '')
-    const baseOutcomeKey = normalizeText(effect?.outcomeKey || effect?.outcome_key || '')
+    const redirectedOutcomeKey = normalizeText(
+      effect?.redirectOutcomeKey || effect?.redirect_outcome_key || ''
+    )
+    const baseOutcomeKey = normalizeOutcomeKey(effect?.outcomeKey || effect?.outcome_key || '')
     const outcomeKey =
       effectType === OUTCOME_EFFECT_TYPE.REDIRECT && redirectedOutcomeKey
-        ? redirectedOutcomeKey
+        ? normalizeOutcomeKey(redirectedOutcomeKey)
         : baseOutcomeKey
-    if (!outcomeKey) {continue}
+    if (!outcomeKey) {
+      continue
+    }
 
     const current = scoreMap.get(outcomeKey) || {
       outcomeKey,
@@ -81,7 +142,9 @@ function buildOutcomeScoreMap(matchedEffects = []) {
 
   return Array.from(scoreMap.values())
     .filter(item => !item.excluded && item.score > 0)
-    .sort((left, right) => right.score - left.score || left.outcomeKey.localeCompare(right.outcomeKey))
+    .sort(
+      (left, right) => right.score - left.score || left.outcomeKey.localeCompare(right.outcomeKey)
+    )
 }
 
 function buildVisibleOutcome(outcome = {}, actionProfile = null) {
@@ -90,7 +153,9 @@ function buildVisibleOutcome(outcome = {}, actionProfile = null) {
     problemKey: normalizeText(outcome?.sourceProblemKey || outcome?.outcomeKey),
     outcomeType: normalizeText(outcome?.outcomeType || 'problematic') || 'problematic',
     outcomeCategory: normalizeText(outcome?.outcomeCategory || 'yellow_leaf_route'),
-    displayNameCn: normalizeText(outcome?.displayNameCn || outcome?.outcomeNameCn || outcome?.outcomeKey),
+    displayNameCn: normalizeText(
+      outcome?.displayNameCn || outcome?.outcomeNameCn || outcome?.outcomeKey
+    ),
     summary: normalizeText(outcome?.userDefinitionCn),
     severity: normalizeText(outcome?.riskLevel || 'medium'),
     urgency: '',
@@ -113,18 +178,20 @@ async function resolveYellowLeafOutcomeResult({
     return null
   }
 
-  const matchedEffects = collectMatchedAnswerEffects(routeAnswerEffects, answers)
+  const hasLightHealthEvidence = hasValidLightHealthEvidence(environmentCareContext)
+  const matchedEffects = [
+    ...buildLightHealthOutcomeEffects(environmentCareContext),
+    ...collectMatchedAnswerEffects(routeAnswerEffects, answers).filter(effect =>
+      shouldUseAnswerEffect(effect, hasLightHealthEvidence)
+    )
+  ]
   const rankedOutcomeScores = buildOutcomeScoreMap(matchedEffects)
   const matchedOutcomeKeys = rankedOutcomeScores.map(item => item.outcomeKey)
   const diagnosisOutcomes = matchedOutcomeKeys.length
     ? await outcomeRouteRepository.getDiagnosisOutcomesByKeys(matchedOutcomeKeys)
     : []
   const actionProfileKeys = Array.from(
-    new Set(
-      diagnosisOutcomes
-        .map(item => normalizeText(item?.actionProfileKey))
-        .filter(Boolean)
-    )
+    new Set(diagnosisOutcomes.map(item => normalizeText(item?.actionProfileKey)).filter(Boolean))
   )
   const actionProfiles = actionProfileKeys.length
     ? await outcomeRouteRepository.getOutcomeActionProfiles(actionProfileKeys)
@@ -140,7 +207,9 @@ async function resolveYellowLeafOutcomeResult({
     .map(item =>
       buildVisibleOutcome(
         diagnosisOutcomeMap.get(item.outcomeKey),
-        actionProfileMap.get(normalizeText(diagnosisOutcomeMap.get(item.outcomeKey)?.actionProfileKey))
+        actionProfileMap.get(
+          normalizeText(diagnosisOutcomeMap.get(item.outcomeKey)?.actionProfileKey)
+        )
       )
     )
     .filter(item => item.outcomeKey)
@@ -169,7 +238,9 @@ async function resolveYellowLeafOutcomeResult({
     status: 'closed',
     sessionStatus: 'closed',
     routePrimaryAction: 'finalize',
-    stopReason: hasVisibleOutcomes ? 'yellow_leaf_route_package_completed' : 'yellow_leaf_route_package_uncertain',
+    stopReason: hasVisibleOutcomes
+      ? 'yellow_leaf_route_package_completed'
+      : 'yellow_leaf_route_package_uncertain',
     outcomeType,
     outcomeMode: hasVisibleOutcomes ? 'visible_outcomes' : 'uncertain',
     plantId: plantContext?.userPlantId || plantContext?.plantId || '',
@@ -217,7 +288,9 @@ async function resolveYellowLeafOutcomeResult({
         ? 'yellow_leaf_route_package_completed'
         : 'yellow_leaf_route_package_uncertain',
       decisionCauseText: hasVisibleOutcomes
-        ? '黄叶固定题包已完成，按 route answer effects 直接收敛 outcome。'
+        ? hasLightHealthEvidence
+          ? '黄叶固定题包已完成，按光照健康度 evidence 与 route answer effects 收敛 outcome。'
+          : '黄叶固定题包已完成，按 route answer effects 直接收敛 outcome。'
         : '黄叶固定题包已完成，但 route answer effects 未形成可展示 outcome。'
     },
     questionPackage: {
@@ -235,6 +308,8 @@ module.exports = {
   _test: {
     isYellowLeafQuestionPackage,
     collectMatchedAnswerEffects,
-    buildOutcomeScoreMap
+    buildOutcomeScoreMap,
+    buildLightHealthOutcomeEffects,
+    hasValidLightHealthEvidence
   }
 }

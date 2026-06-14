@@ -61,9 +61,18 @@
                       :error="environmentWeatherWindowError"
                       @change="payload => handleCareBehaviorTimelineChange(question, payload)"
                     />
+                    <DiagnoseLightEnvironmentPicker
+                      v-if="isLightEnvironmentQuestion(question)"
+                      :question-id="getQuestionId(question)"
+                      :model-value="getLightEnvironmentByQuestion(question)"
+                      @change="payload => handleLightEnvironmentChange(question, payload)"
+                    />
 
                     <view
-                      v-if="getVisibleCareBehaviorOptions(question).length"
+                      v-if="
+                        !isLightEnvironmentQuestion(question) &&
+                        getVisibleCareBehaviorOptions(question).length
+                      "
                       :id="`diagnose-question-package-page-option-stack-${getQuestionId(question) || questionIndex}`"
                       class="mt-4 flex flex-col gap-2.5"
                     >
@@ -353,23 +362,7 @@
       </view>
     </scroll-view>
 
-    <view
-      v-else
-      id="diagnose-question-package-empty-state"
-      class="box-border min-h-screen px-4 py-7"
-    >
-      <text class="block text-[17px] font-extrabold text-gray-900">暂时没有需要继续回答的问题</text>
-      <text class="mt-2 block text-xs leading-relaxed text-gray-500"
-        >如果刚完成视觉诊断，请返回上一页重新进入问诊。</text
-      >
-      <button
-        id="diagnose-question-package-back-button"
-        class="mt-5 h-[48px] rounded-xl bg-[#2d7a4f] p-0 text-[14px] font-bold leading-[48px] text-white"
-        @click="returnPreviousPage"
-      >
-        返回上一页
-      </button>
-    </view>
+    <QuestionPackageEmptyState v-else @back="returnPreviousPage" />
   </view>
 </template>
 
@@ -379,20 +372,22 @@ import { onLoad } from '@dcloudio/uni-app'
 import { useDiagnoseStore } from '@/store/diagnose.js'
 import { useUserStore } from '@/store/user.js'
 import CareBehaviorTimeline from '@/components/CareBehaviorTimeline.vue'
+import DiagnoseLightEnvironmentPicker from '@/components/DiagnoseLightEnvironmentPicker.vue'
 import { useDiagnosisAnswerMutation } from '@/vue-query/diagnose/mutations/useDiagnosisAnswerMutation.js'
+import QuestionPackageEmptyState from './question-package/QuestionPackageEmptyState.vue'
 import {
   DEFAULT_CACHE_KEY,
   resolveQuestionPackagePayload,
   resolveInitialDiagnosisResult
 } from './question-package/payload.js'
+import { useQuestionPackageFlow } from './question-package/question-flow.js'
+import { getQuestionIdentity as getQuestionId } from '@/utils/diagnose-question-identity.js'
 import {
-  getQuestionId,
   getOptionDescription,
   getOptionText,
   getQuestionHelpText,
-  getQuestionTitle,
-  useQuestionPackageFlow
-} from './question-package/question-flow.js'
+  getQuestionTitle
+} from './question-package/question-display.js'
 import { useQuestionPackageResultView } from './question-package/result-view.js'
 
 const diagnoseStore = useDiagnoseStore()
@@ -438,8 +433,11 @@ const {
   resetQuestionState,
   getCareBehaviorTimelineByQuestion,
   handleCareBehaviorTimelineChange,
+  getLightEnvironmentByQuestion,
+  handleLightEnvironmentChange,
   getVisibleCareBehaviorOptions,
   isCareBehaviorWateringTimelineQuestion,
+  isLightEnvironmentQuestion,
   selectQuestionOption,
   isSelectedQuestionOption,
   canProceedQuestion,

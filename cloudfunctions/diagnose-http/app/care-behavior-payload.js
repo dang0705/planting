@@ -10,13 +10,46 @@ function isPlainObject(value) {
 }
 
 function hasMeaningfulTimeline(timeline = {}) {
-  if (!isPlainObject(timeline)) {return false}
+  if (!isPlainObject(timeline)) {
+    return false
+  }
   const normalized = normalizeCareBehaviorTimeline(timeline)
-  if (normalized.dailyRecords.length > 0) {return true}
-  if (normalized.wateringEvents10d.length > 0) {return true}
-  if (normalized.fertilizingEvents10d.length > 0) {return true}
-  if (normalized.lightChangeEvents10d.length > 0) {return true}
+  if (normalized.dailyRecords.length > 0) {
+    return true
+  }
+  if (normalized.wateringEvents10d.length > 0) {
+    return true
+  }
+  if (normalized.fertilizingEvents10d.length > 0) {
+    return true
+  }
+  if (normalized.lightChangeEvents10d.length > 0) {
+    return true
+  }
   return normalized.lastFertilizedBucket !== 'unknown'
+}
+
+function hasMeaningfulUserLightContext(value = {}) {
+  if (!isPlainObject(value)) {
+    return false
+  }
+  return [
+    'facing',
+    'windowType',
+    'window_type',
+    'position',
+    'hasDirectSun',
+    'has_direct_sun',
+    'distance',
+    'distanceMeters',
+    'distance_meters'
+  ].some(
+    key =>
+      Object.prototype.hasOwnProperty.call(value, key) &&
+      value[key] !== undefined &&
+      value[key] !== null &&
+      value[key] !== ''
+  )
 }
 
 function pickPayloadValue(payload = {}, ...keys) {
@@ -33,7 +66,9 @@ function resolveSnapshot(sessionState = {}) {
 }
 
 function normalizeRouteAnswerKey(value = '') {
-  return String(value || '').trim().toLowerCase()
+  return String(value || '')
+    .trim()
+    .toLowerCase()
 }
 
 function isWateringContextRouteQuestion(questionKey = '') {
@@ -68,7 +103,9 @@ function buildRouteAnswersFromRuntimeEnvironmentCarePayload({
     : {}
   const resolvedContext = isPlainObject(resolvedPayload.environmentCareContext)
     ? resolvedPayload.environmentCareContext
-    : (isPlainObject(environmentCareContext) ? environmentCareContext : null)
+    : isPlainObject(environmentCareContext)
+      ? environmentCareContext
+      : null
   const wateringContext = String(resolvedContext?.outputs?.wateringContext || '').trim()
   const routeOptionKey = resolveWateringRouteOptionKey(wateringContext)
 
@@ -118,7 +155,20 @@ function resolveRuntimeEnvironmentCarePayload({
     'weatherWindow',
     'weather_window'
   )
+  const incomingUserLightContext = pickPayloadValue(
+    safePayload,
+    'userLightContext',
+    'user_light_context',
+    'lightEnvironment'
+  ) || {
+    facing: pickPayloadValue(safePayload, 'facing'),
+    windowType: pickPayloadValue(safePayload, 'windowType', 'window_type'),
+    position: pickPayloadValue(safePayload, 'position'),
+    hasDirectSun: pickPayloadValue(safePayload, 'hasDirectSun', 'has_direct_sun'),
+    distance: pickPayloadValue(safePayload, 'distance')
+  }
   const incomingHasMeaningfulTimeline = hasMeaningfulTimeline(incomingTimeline)
+  const incomingHasMeaningfulLightContext = hasMeaningfulUserLightContext(incomingUserLightContext)
   const snapshotTimeline = isPlainObject(snapshot.careBehaviorTimeline)
     ? snapshot.careBehaviorTimeline
     : null
@@ -126,19 +176,15 @@ function resolveRuntimeEnvironmentCarePayload({
     ? snapshot.environmentCareContext
     : null
 
-  if (!incomingHasMeaningfulTimeline && !incomingWeatherWindow) {
+  if (
+    !incomingHasMeaningfulTimeline &&
+    !incomingWeatherWindow &&
+    !incomingHasMeaningfulLightContext
+  ) {
     return {
       careBehaviorTimeline: snapshotTimeline,
       environmentCareContext: snapshotContext,
       restoredFromSnapshot: Boolean(snapshotTimeline || snapshotContext)
-    }
-  }
-
-  if (!incomingHasMeaningfulTimeline && snapshotTimeline && snapshotContext) {
-    return {
-      careBehaviorTimeline: snapshotTimeline,
-      environmentCareContext: snapshotContext,
-      restoredFromSnapshot: true
     }
   }
 
@@ -151,19 +197,21 @@ function resolveRuntimeEnvironmentCarePayload({
     snapshotContext?.environmentWeatherWindow ||
     null
 
-  const environmentCareContext = environmentWeatherWindow || careBehaviorTimeline
-    ? buildEnvironmentCareContextV7({
-        diagnosisDate:
-          safePayload.diagnosisDate ||
-          safePayload.diagnosis_date ||
-          environmentWeatherWindow?.meta?.diagnosisDate ||
-          environmentWeatherWindow?.meta?.diagnosis_date ||
-          careBehaviorTimeline?.referenceDate,
-        plantContext,
-        environmentWeatherWindow: environmentWeatherWindow || {},
-        careBehaviorTimeline: careBehaviorTimeline || {}
-      })
-    : snapshotContext
+  const environmentCareContext =
+    environmentWeatherWindow || careBehaviorTimeline || incomingHasMeaningfulLightContext
+      ? buildEnvironmentCareContextV7({
+          diagnosisDate:
+            safePayload.diagnosisDate ||
+            safePayload.diagnosis_date ||
+            environmentWeatherWindow?.meta?.diagnosisDate ||
+            environmentWeatherWindow?.meta?.diagnosis_date ||
+            careBehaviorTimeline?.referenceDate,
+          plantContext,
+          environmentWeatherWindow: environmentWeatherWindow || {},
+          careBehaviorTimeline: careBehaviorTimeline || {},
+          userLightContext: incomingHasMeaningfulLightContext ? incomingUserLightContext : {}
+        })
+      : snapshotContext
 
   return {
     careBehaviorTimeline,

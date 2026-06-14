@@ -1,0 +1,856 @@
+{
+  "loaded": true,
+  "source": "api",
+  "taskId": "86exy7xr3",
+  "url": "https://app.clickup.com/t/86exy7xr3",
+  "title": "实现自有历史天气缓存：D-1 到 D-10 滚动窗口（低成本对象存储方案）",
+  "status": "backlog",
+  "statusType": "open",
+  "priority": {
+    "id": "2",
+    "priority": "high",
+    "color": "#f8ae00",
+    "orderIndex": "2"
+  },
+  "assignees": [],
+  "tags": [],
+  "requirementSummary": "目标：```plain\nweather-ingestion 定时云函数\n  ↓\n调用 QWeather /v7/weather/10d\n  ↓\n写入 raw forecast snapshot\n  ↓\n按地点本地日期生成 daily archive\n  ↓\n生成 recent-10d.json\n  ↓\n写入对象存储\n\n\ndiagnose-http / weather-http\n  ↓\n先查云函数内存 Map\n  ↓ miss\n读取对象存储 recent-10d.json\n  ↓\n写入内存 Map\n  ↓\n返回给诊断逻辑\n```\n必须做：新增或整理天气地点注册结构 `WeatherLocation`。；支持按业务真实地点注册 `locationKey` 与和风 `LocationID`。；新增定时采集任务，从和风每日预报接口获取 10 天预报数据。；将采集到的每日预报结果保存为 raw forecast snapshot。；按地点本地日期生成 D-1 daily archive。；维护 D-1 到 D-10 滚动窗口。；将滚动窗口物化为对象存储 JSON：`recent-10d.json`。；诊断链路通过自有服务读取 `recent-10d.json`，不直接请求和风。\n不做：不把天气 daily 主体拆成数据库多行作为热缓存。；不在用户诊断请求中同步请求和风接口。；不启用 Redis、付费缓存、付费 CDN、云函数付费保活、升配等付费能力。；不批量抓取全国 / 全城市天气。；不缓存或批量下载 GeoAPI 全量数据。；不做长期天气数据仓库。；不做复杂天气分析后台。；不扩大到养护算法、问诊题包、outcome 权重重构。\n验收：系统能为业务地点生成 D-1 到 D-10 的 `recent-10d.json`。；`recent-10d.json` 存放在对象存储 / 云存储，而不是数据库 daily 多行热缓存。；数据库只保存地点元数据、对象路径和必要引用。；诊断链路能通过自有缓存读取最近 10 天天气窗口。；用户诊断请求中不再同步请求和风天气接口。；服务端具备内存 Map 缓存，热实例可减少对象存储读取。；缓存缺失时，诊断流程不阻塞，可降级为天气证据不足。；天气窗口包含植物诊断需要的基础字段与派生特征。；所有天气窗口包含 `sourceKind` 与 `quality`。；日期窗口按地点本地时区计算。",
+  "factsQuality": {
+    "status": "pass",
+    "score": 100,
+    "weakStructure": false,
+    "highRisk": true,
+    "missingFacts": [],
+    "warnings": [],
+    "requiredHumanActions": [],
+    "sectionMatches": {
+      "background": {
+        "title": "背景",
+        "alias": "背景"
+      },
+      "goal": {
+        "title": "推荐目标架构",
+        "alias": "目标"
+      },
+      "scopeMustDo": {
+        "title": "必须做",
+        "alias": "必须做"
+      },
+      "scopeMustNotDo": {
+        "title": "不做",
+        "alias": "不做"
+      },
+      "suggestedSolution": {
+        "title": "实现自有历史天气缓存：D-1 到 D-10 滚动窗口（低成本对象存储方案）",
+        "alias": "方案"
+      },
+      "acceptanceCriteria": {
+        "title": "验收标准",
+        "alias": "验收标准"
+      },
+      "risksAndNotes": {
+        "title": "风险与注意事项",
+        "alias": "风险与注意事项"
+      },
+      "codexExecutionHints": {
+        "title": "Codex 执行提示",
+        "alias": "Codex 执行提示"
+      }
+    }
+  },
+  "weakStructure": false,
+  "missingFacts": [],
+  "counts": {
+    "subtasks": 0,
+    "comments": 0,
+    "attachments": 0,
+    "linkedTasks": 0,
+    "dependencies": 0,
+    "nativeChecklistItems": 0,
+    "externalLinks": 0,
+    "figmaLinks": 0,
+    "hardConstraints": 21
+  },
+  "readBlockers": [],
+  "markdownDescription": "# 实现自有历史天气缓存：D-1 到 D-10 滚动窗口（低成本对象存储方案）\n\n## 背景\n\n当前青花植诊断依赖近 10 天环境上下文判断浇水、盆土干湿、闷根、低光、通风、温湿度胁迫等问题。\n\n但和风天气时光机存在两个问题：\n\n1. 只能补历史数据，无法覆盖今天；\n2. 历史字段相对少，无法完整覆盖每日预报里的 `uvIndex`、`cloud`、`vis`、昼夜天气、昼夜风力等对植物诊断有价值的字段。\n\n因此，不能只依赖和风时光机作为青花植的历史天气事实源。\n\n本任务目标是：在 MVP 阶段，用低成本方案自建一个 D-1 到 D-10 的历史天气滚动窗口缓存。诊断链路只读自有缓存，不在用户请求时实时请求和风。\n\n## 设计口径\n\n这不是简单的“接口缓存”，而是青花植自己的：\n\n```plain\nweather history service / 自有历史天气缓存服务\n```\n\n核心职责：\n\n```plain\n定时采集和风天气数据\n  ↓\n沉淀地点级天气快照\n  ↓\n生成 D-1 到 D-10 滚动窗口 JSON\n  ↓\n诊断服务读取自有缓存\n  ↓\n病例保存天气特征快照，保证诊断可追溯\n```\n\n## 关键架构结论\n\nMVP 阶段不建议把天气主体缓存放数据库。\n\n天气数据特征是：\n\n```plain\n小体积\n按 locationKey + 日期窗口读取\n写入频率低\n读多写少\n查询模式固定\n不需要复杂 SQL\n不需要事务强一致\n```\n\n因此主缓存层应使用：\n\n```plain\n对象存储 / 云存储 JSON 文件\n```\n\n数据库只存元数据、索引、对象路径和病例引用，不作为天气窗口主体热缓存。\n\n推荐分层：\n\n```plain\nL0：小程序本地缓存，仅做 UI 加速\nL1：云函数内存 Map，热实例内加速\nL2：对象存储 recent-10d.json，作为持久缓存主层\nDB：只存 location registry / object path / diagnosis evidence reference\n```\n\n## 推荐目标架构\n\n```plain\nweather-ingestion 定时云函数\n  ↓\n调用 QWeather /v7/weather/10d\n  ↓\n写入 raw forecast snapshot\n  ↓\n按地点本地日期生成 daily archive\n  ↓\n生成 recent-10d.json\n  ↓\n写入对象存储\n\n\ndiagnose-http / weather-http\n  ↓\n先查云函数内存 Map\n  ↓ miss\n读取对象存储 recent-10d.json\n  ↓\n写入内存 Map\n  ↓\n返回给诊断逻辑\n```\n\n## 范围\n\n### 必须做\n\n*   新增或整理天气地点注册结构 `WeatherLocation`。\n*   支持按业务真实地点注册 `locationKey` 与和风 `LocationID`。\n*   新增定时采集任务，从和风每日预报接口获取 10 天预报数据。\n*   将采集到的每日预报结果保存为 raw forecast snapshot。\n*   按地点本地日期生成 D-1 daily archive。\n*   维护 D-1 到 D-10 滚动窗口。\n*   将滚动窗口物化为对象存储 JSON：`recent-10d.json`。\n*   诊断链路通过自有服务读取 `recent-10d.json`，不直接请求和风。\n*   在 `diagnose-http` 或独立 `weather-http` 中加入模块级内存 Map 缓存。\n*   小程序端可做本地缓存，但只能做 UI 加速，不能作为服务端诊断事实源。\n*   数据库只保存天气地点元数据、对象路径、生成时间、病例天气证据引用。\n*   生成植物诊断友好的天气派生特征，例如：\n    *   最近 3 / 7 / 10 天降水累计；\n    *   连续阴雨天数；\n    *   连续高温天数；\n    *   连续低温天数；\n    *   平均湿度 / 低湿天数；\n    *   cloud / uvIndex 形成的低光 proxy；\n    *   风速形成的通风 proxy；\n    *   雨后盆土偏湿风险。\n*   为每个天气窗口保留 `sourceKind` 与 `quality`。\n*   诊断 session 使用天气时，保存 `DiagnosisWeatherEvidence` 快照，保证后续可追溯。\n*   缓存缺失时，诊断不能阻塞；应返回天气证据不足或触发后台补抓。\n\n### 不做\n\n*   不把天气 daily 主体拆成数据库多行作为热缓存。\n*   不在用户诊断请求中同步请求和风接口。\n*   不启用 Redis、付费缓存、付费 CDN、云函数付费保活、升配等付费能力。\n*   不批量抓取全国 / 全城市天气。\n*   不缓存或批量下载 GeoAPI 全量数据。\n*   不做长期天气数据仓库。\n*   不做复杂天气分析后台。\n*   不扩大到养护算法、问诊题包、outcome 权重重构。\n*   不要求本任务一次完成实时天气 hourly 采样；实时采样可作为后续增强。\n\n## 数据存储设计\n\n### 1\\. WeatherLocation 元数据，存数据库\n\n```plain\ntype WeatherLocation = {\n  locationKey: string\n  qweatherLocationId: string\n  cityName?: string\n  timezone: string\n  isActive: boolean\n  lastUsedAt: string\n  recentObjectPath?: string\n  recentGeneratedAt?: string\n  createdAt: string\n  updatedAt: string\n}\n```\n\n说明：\n\n*   只保存业务真实使用过的地点。\n*   不批量保存和风 GeoAPI 全量地点数据。\n*   `timezone` 必须存在，后续按地点本地日期归档。\n\n### 2\\. 对象存储路径设计\n\n建议路径：\n\n```plain\nweather-cache/\n  v1/\n    locations/\n      {locationKey}/\n        recent-10d.json\n        manifest.json\n        daily/\n          2026-06-04.json\n          2026-06-05.json\n          2026-06-06.json\n        raw/\n          forecast-2026-06-14T00-00.json\n          forecast-2026-06-14T06-00.json\n```\n\n诊断接口只读：\n\n```plain\nweather-cache/v1/locations/{locationKey}/recent-10d.json\n```\n\n### 3\\. recent-10d.json 结构\n\n```plain\ntype WeatherRecent10dCache = {\n  locationKey: string\n  timezone: string\n  window: {\n    from: string\n    to: string\n    days: 10\n  }\n  provider: 'QWeather'\n  sourceKind: 'forecast_snapshot_archive' | 'mixed' | 'backfilled_limited'\n  generatedAt: string\n  daily: WeatherDailyArchive[]\n}\n```\n\n单日结构建议：\n\n```plain\ntype WeatherDailyArchive = {\n  date: string\n\n  tempMax?: number\n  tempMin?: number\n  humidity?: number\n  precip?: number\n  pressure?: number\n  vis?: number\n  cloud?: number\n  uvIndex?: number\n\n  textDay?: string\n  textNight?: string\n  iconDay?: string\n  iconNight?: string\n\n  windSpeedDay?: number\n  windSpeedNight?: number\n  windScaleDay?: string\n  windScaleNight?: string\n\n  plantFeatures: {\n    wetSoilRiskFromRain?: 'none' | 'low' | 'medium' | 'high'\n    dryAirLevel?: 'none' | 'low' | 'medium' | 'high'\n    lowLightProxy?: 'none' | 'low' | 'medium' | 'high'\n    heatStressLevel?: 'none' | 'low' | 'medium' | 'high'\n    coldStressLevel?: 'none' | 'low' | 'medium' | 'high'\n    ventilationProxy?: 'poor' | 'normal' | 'strong' | 'unknown'\n  }\n\n  quality: {\n    completeness: 'complete' | 'partial' | 'backfilled_limited'\n    sourceKind: 'forecast_snapshot_final' | 'observed_rollup' | 'historical_reanalysis' | 'mixed'\n    missingFields?: string[]\n  }\n}\n```\n\n### 4\\. DiagnosisWeatherEvidence，随病例保存\n\n```plain\ntype DiagnosisWeatherEvidence = {\n  diagnosisSessionId: string\n  locationKey: string\n  weatherWindowFrom: string\n  weatherWindowTo: string\n  weatherObjectPath: string\n  featureSnapshot: Record<string, any>\n  createdAt: string\n}\n```\n\n目的：\n\n*   后续即使天气缓存被清理，病例仍可追溯；\n*   解释 outcome 时能说明当时使用了哪些天气特征；\n*   避免历史天气缓存变化污染旧诊断结果。\n\n## 读取策略\n\n### 服务端读取\n\n建议提供内部接口：\n\n```plain\nGET /internal/weather/recent?locationKey={locationKey}&days=10\n```\n\n逻辑：\n\n```plain\n1. 读取云函数内存 Map\n2. 命中则直接返回\n3. 未命中则读取对象存储 recent-10d.json\n4. 写入内存 Map，TTL 建议 30 分钟\n5. 返回天气窗口给诊断逻辑\n```\n\n### 云函数内存缓存\n\n```plain\ntype MemoryWeatherCacheItem = {\n  expiresAt: number\n  data: WeatherRecent10dCache\n}\n```\n\n建议 key：\n\n```plain\nweather:recent10:{locationKey}\n```\n\n注意：\n\n*   云函数内存缓存只是 L1；\n*   冷启动会丢；\n*   多实例不共享；\n*   不能作为持久层。\n\n### 小程序端缓存\n\n小程序端可以缓存同一用户最近一次读取的天气窗口，用于 UI 加速。\n\n有效期：\n\n```plain\n当天内有效\n跨天失效\nlocationKey 变化失效\n```\n\n小程序本地缓存不能作为服务端诊断事实源。\n\n## 写入策略\n\n### 定时采集\n\nMVP 建议：\n\n```plain\n每 6 小时采集一次 /v7/weather/10d\n每天 00:10–00:30，按地点本地日期定稿昨天 daily archive\n每天定稿后重建 recent-10d.json\n```\n\n注意：归档必须按 `WeatherLocation.timezone`，不能按云函数服务器时区。\n\n### 滚动窗口\n\n每日定稿后：\n\n```plain\n生成 D-1 daily archive\n保留最新 10 天 daily archive\n重建 recent-10d.json\n更新 manifest.json\n更新 WeatherLocation.recentObjectPath / recentGeneratedAt\n```\n\n### 缺失与降级\n\n如果 `recent-10d.json` 不存在或过期：\n\n```plain\n诊断不阻塞\n返回 weatherUnavailable / weatherEvidenceInsufficient\n后台触发补抓或下一轮定时任务修复\n结果页说明天气证据不足\n```\n\n不要在用户请求中同步请求和风。\n\n## sourceKind 与 quality 规则\n\n必须区分数据来源，避免把预报快照伪装成严格历史实况。\n\n```plain\nforecast_snapshot_final：由每日预报快照定稿\nobserved_rollup：由实时天气采样聚合，后续增强\nhistorical_reanalysis：由时光机补偿，字段有限\nmixed：多个来源混合\n```\n\nMVP 第一阶段允许：\n\n```plain\nsourceKind = forecast_snapshot_archive\nquality.sourceKind = forecast_snapshot_final\n```\n\n如果未来接入时光机补偿，缺字段必须标记：\n\n```plain\nquality.completeness = backfilled_limited\n```\n\n## 实施阶段\n\n### Phase 1：MVP 最小闭环\n\n*   WeatherLocation 元数据。\n*   定时采集和风每日 10 天预报。\n*   保存 raw snapshot。\n*   生成 D-1 daily archive。\n*   生成 recent-10d.json。\n*   diagnose-http / weather-http 从对象存储读取 recent-10d.json。\n*   云函数内存 Map 加速。\n*   病例保存 weather feature snapshot。\n\n### Phase 2：实时天气采样增强，后续任务\n\n*   每小时采集 `/v7/weather/now`。\n*   生成 observed daily rollup。\n*   提升当天真实环境可信度。\n*   `sourceKind` 可变为 `mixed`。\n\n### Phase 3：时光机补偿，后续任务\n\n*   每天 T+1 使用和风时光机补偿昨天历史数据。\n*   保留 forecast snapshot 中时光机没有的字段。\n*   标记 `backfilled_limited`。\n\n## CheckList\n\n- [ ] 定位当前天气数据读取链路。\n- [ ] 确认诊断链路是否仍实时请求和风。\n- [ ] 定义 `WeatherLocation` 元数据结构。\n- [ ] 支持业务地点注册 `locationKey` 与和风 `LocationID`。\n- [ ] 设计对象存储路径：`weather-cache/v1/locations/{locationKey}/recent-10d.json`。\n- [ ] 实现和风每日 10 天预报定时采集。\n- [ ] 保存 raw forecast snapshot。\n- [ ] 按地点本地日期生成 D-1 daily archive。\n- [ ] 每日重建 D-1 到 D-10 的 `recent-10d.json`。\n- [ ] 生成或更新 `manifest.json`。\n- [ ] 数据库只保存对象路径与元数据，不保存天气 daily 主体热缓存。\n- [ ] 实现服务端读取 recent weather 的方法或内部接口。\n- [ ] 在服务端加入模块级内存 Map 缓存。\n- [ ] 设置内存缓存 TTL，建议 30 分钟。\n- [ ] 诊断链路改为读取自有天气缓存，不在用户请求中同步请求和风。\n- [ ] 缓存缺失时诊断不阻塞，返回天气证据不足或降级信息。\n- [ ] 生成植物诊断需要的派生特征。\n- [ ] 保存 `DiagnosisWeatherEvidence` 快照到病例或诊断结果上下文。\n- [ ] 正确处理地点时区，不使用服务器时区生成归档日期。\n- [ ] 保留 `sourceKind` 与 `quality`。\n- [ ] 不引入 Redis、付费缓存、付费 CDN、云函数保活或升配。\n- [ ] 不批量抓取全国 / 全城市天气。\n- [ ] 不缓存 GeoAPI 全量数据。\n- [ ] 补充最小测试：能生成 recent-10d.json。\n- [ ] 补充最小测试：D-1 到 D-10 日期窗口正确。\n- [ ] 补充最小测试：对象存储 miss 时诊断降级但不阻塞。\n- [ ] 补充最小测试：内存缓存命中后不重复读对象存储。\n- [ ] 运行 lint / 类型检查。\n- [ ] 手动验证一次诊断能读取自有 weather window。\n- [ ] 在任务结果中记录：对象路径、数据结构、采集频率、缓存 TTL、降级策略。\n\n## 验收标准\n\n1. 系统能为业务地点生成 D-1 到 D-10 的 `recent-10d.json`。\n2. `recent-10d.json` 存放在对象存储 / 云存储，而不是数据库 daily 多行热缓存。\n3. 数据库只保存地点元数据、对象路径和必要引用。\n4. 诊断链路能通过自有缓存读取最近 10 天天气窗口。\n5. 用户诊断请求中不再同步请求和风天气接口。\n6. 服务端具备内存 Map 缓存，热实例可减少对象存储读取。\n7. 缓存缺失时，诊断流程不阻塞，可降级为天气证据不足。\n8. 天气窗口包含植物诊断需要的基础字段与派生特征。\n9. 所有天气窗口包含 `sourceKind` 与 `quality`。\n10. 日期窗口按地点本地时区计算。\n11. 病例或诊断结果中保存天气特征快照，保证可追溯。\n12. 未引入 Redis、付费缓存、付费 CDN、云函数付费保活或升配。\n13. 未批量缓存 GeoAPI 全量数据。\n14. lint / 类型检查通过。\n15. 任务结果中必须记录优化前后诊断链路对和风的依赖变化。\n\n## 风险与注意事项\n\n### 1\\. 不要把预报快照伪装成严格历史实况\n\nMVP 第一阶段的数据本质是“每日预报快照归档”，不是严格的实况历史。字段上必须保留 `sourceKind` 和 `quality`，避免后续诊断解释变脏。\n\n### 2\\. 不要在诊断请求里临时补抓天气\n\n这会拖慢接口，也会破坏 500ms 目标。天气应该提前物化，诊断只读自有缓存。\n\n### 3\\. 不要把天气窗口主体放数据库\n\n数据库适合保存索引、对象路径、病例证据引用，不适合作为 MVP 阶段天气窗口热缓存主体。\n\n### 4\\. 不要无边界扩展地点\n\n只为业务真实需要的地点生成缓存，不做全国城市天气仓库。\n\n### 5\\. D-1 到 D-10 不等于 D0\n\n本任务只负责历史诊断窗口 D-1 到 D-10。若养护模式需要 D0 或未来 7 天，应另走 forecast cache，不要混在本任务里。\n\n## Codex 执行提示\n\n执行前优先读取最小必要上下文：\n\n*   当前和风天气调用位置。\n*   问诊 / 诊断读取天气数据的服务层。\n*   云函数目录结构。\n*   对象存储 / 云存储工具封装。\n*   当前是否已有 `genus_care_profiles` 或天气特征层。\n*   当前诊断结果是否保存 evidence snapshot。\n\n不要全量扫描无关模块。不要扩大到问诊题包、outcome 权重、养护算法重构、支付、登录、图片识别等模块。\n\n本任务的核心是：\n\n```plain\n用低成本对象存储 JSON 物化 D-1 到 D-10 天气窗口，\n让诊断链路读自有缓存，\n不再实时依赖和风。\n```",
+  "description": "实现自有历史天气缓存：D-1 到 D-10 滚动窗口（低成本对象存储方案）\n\n背景\n\n当前青花植诊断依赖近 10 天环境上下文判断浇水、盆土干湿、闷根、低光、通风、温湿度胁迫等问题。\n\n但和风天气时光机存在两个问题：\n\n只能补历史数据，无法覆盖今天；\n历史字段相对少，无法完整覆盖每日预报里的 uvIndex、cloud、vis、昼夜天气、昼夜风力等对植物诊断有价值的字段。\n\n因此，不能只依赖和风时光机作为青花植的历史天气事实源。\n\n本任务目标是：在 MVP 阶段，用低成本方案自建一个 D-1 到 D-10 的历史天气滚动窗口缓存。诊断链路只读自有缓存，不在用户请求时实时请求和风。\n\n设计口径\n\n这不是简单的“接口缓存”，而是青花植自己的：\n\nweather history service / 自有历史天气缓存服务\n\n核心职责：\n\n定时采集和风天气数据\n  ↓\n沉淀地点级天气快照\n  ↓\n生成 D-1 到 D-10 滚动窗口 JSON\n  ↓\n诊断服务读取自有缓存\n  ↓\n病例保存天气特征快照，保证诊断可追溯\n\n关键架构结论\n\nMVP 阶段不建议把天气主体缓存放数据库。\n\n天气数据特征是：\n\n小体积\n按 locationKey + 日期窗口读取\n写入频率低\n读多写少\n查询模式固定\n不需要复杂 SQL\n不需要事务强一致\n\n因此主缓存层应使用：\n\n对象存储 / 云存储 JSON 文件\n\n数据库只存元数据、索引、对象路径和病例引用，不作为天气窗口主体热缓存。\n\n推荐分层：\n\nL0：小程序本地缓存，仅做 UI 加速\nL1：云函数内存 Map，热实例内加速\nL2：对象存储 recent-10d.json，作为持久缓存主层\nDB：只存 location registry / object path / diagnosis evidence reference\n\n推荐目标架构\n\nweather-ingestion 定时云函数\n  ↓\n调用 QWeather /v7/weather/10d\n  ↓\n写入 raw forecast snapshot\n  ↓\n按地点本地日期生成 daily archive\n  ↓\n生成 recent-10d.json\n  ↓\n写入对象存储\n\n\ndiagnose-http / weather-http\n  ↓\n先查云函数内存 Map\n  ↓ miss\n读取对象存储 recent-10d.json\n  ↓\n写入内存 Map\n  ↓\n返回给诊断逻辑\n\n范围\n\n必须做\n\n新增或整理天气地点注册结构 WeatherLocation。\n支持按业务真实地点注册 locationKey 与和风 LocationID。\n新增定时采集任务，从和风每日预报接口获取 10 天预报数据。\n将采集到的每日预报结果保存为 raw forecast snapshot。\n按地点本地日期生成 D-1 daily archive。\n维护 D-1 到 D-10 滚动窗口。\n将滚动窗口物化为对象存储 JSON：recent-10d.json。\n诊断链路通过自有服务读取 recent-10d.json，不直接请求和风。\n在 diagnose-http 或独立 weather-http 中加入模块级内存 Map 缓存。\n小程序端可做本地缓存，但只能做 UI 加速，不能作为服务端诊断事实源。\n数据库只保存天气地点元数据、对象路径、生成时间、病例天气证据引用。\n生成植物诊断友好的天气派生特征，例如：\n最近 3 / 7 / 10 天降水累计；\n连续阴雨天数；\n连续高温天数；\n连续低温天数；\n平均湿度 / 低湿天数；\ncloud / uvIndex 形成的低光 proxy；\n风速形成的通风 proxy；\n雨后盆土偏湿风险。\n为每个天气窗口保留 sourceKind 与 quality。\n诊断 session 使用天气时，保存 DiagnosisWeatherEvidence 快照，保证后续可追溯。\n缓存缺失时，诊断不能阻塞；应返回天气证据不足或触发后台补抓。\n\n不做\n\n不把天气 daily 主体拆成数据库多行作为热缓存。\n不在用户诊断请求中同步请求和风接口。\n不启用 Redis、付费缓存、付费 CDN、云函数付费保活、升配等付费能力。\n不批量抓取全国 / 全城市天气。\n不缓存或批量下载 GeoAPI 全量数据。\n不做长期天气数据仓库。\n不做复杂天气分析后台。\n不扩大到养护算法、问诊题包、outcome 权重重构。\n不要求本任务一次完成实时天气 hourly 采样；实时采样可作为后续增强。\n\n数据存储设计\n\n1. WeatherLocation 元数据，存数据库\n\ntype WeatherLocation = {\n  locationKey: string\n  qweatherLocationId: string\n  cityName?: string\n  timezone: string\n  isActive: boolean\n  lastUsedAt: string\n  recentObjectPath?: string\n  recentGeneratedAt?: string\n  createdAt: string\n  updatedAt: string\n}\n\n说明：\n\n只保存业务真实使用过的地点。\n不批量保存和风 GeoAPI 全量地点数据。\ntimezone 必须存在，后续按地点本地日期归档。\n\n2. 对象存储路径设计\n\n建议路径：\n\nweather-cache/\n  v1/\n    locations/\n      {locationKey}/\n        recent-10d.json\n        manifest.json\n        daily/\n          2026-06-04.json\n          2026-06-05.json\n          2026-06-06.json\n        raw/\n          forecast-2026-06-14T00-00.json\n          forecast-2026-06-14T06-00.json\n\n诊断接口只读：\n\nweather-cache/v1/locations/{locationKey}/recent-10d.json\n\n3. recent-10d.json 结构\n\ntype WeatherRecent10dCache = {\n  locationKey: string\n  timezone: string\n  window: {\n    from: string\n    to: string\n    days: 10\n  }\n  provider: 'QWeather'\n  sourceKind: 'forecast_snapshot_archive' | 'mixed' | 'backfilled_limited'\n  generatedAt: string\n  daily: WeatherDailyArchive[]\n}\n\n单日结构建议：\n\ntype WeatherDailyArchive = {\n  date: string\n\n  tempMax?: number\n  tempMin?: number\n  humidity?: number\n  precip?: number\n  pressure?: number\n  vis?: number\n  cloud?: number\n  uvIndex?: number\n\n  textDay?: string\n  textNight?: string\n  iconDay?: string\n  iconNight?: string\n\n  windSpeedDay?: number\n  windSpeedNight?: number\n  windScaleDay?: string\n  windScaleNight?: string\n\n  plantFeatures: {\n    wetSoilRiskFromRain?: 'none' | 'low' | 'medium' | 'high'\n    dryAirLevel?: 'none' | 'low' | 'medium' | 'high'\n    lowLightProxy?: 'none' | 'low' | 'medium' | 'high'\n    heatStressLevel?: 'none' | 'low' | 'medium' | 'high'\n    coldStressLevel?: 'none' | 'low' | 'medium' | 'high'\n    ventilationProxy?: 'poor' | 'normal' | 'strong' | 'unknown'\n  }\n\n  quality: {\n    completeness: 'complete' | 'partial' | 'backfilled_limited'\n    sourceKind: 'forecast_snapshot_final' | 'observed_rollup' | 'historical_reanalysis' | 'mixed'\n    missingFields?: string[]\n  }\n}\n\n4. DiagnosisWeatherEvidence，随病例保存\n\ntype DiagnosisWeatherEvidence = {\n  diagnosisSessionId: string\n  locationKey: string\n  weatherWindowFrom: string\n  weatherWindowTo: string\n  weatherObjectPath: string\n  featureSnapshot: Record<string, any>\n  createdAt: string\n}\n\n目的：\n\n后续即使天气缓存被清理，病例仍可追溯；\n解释 outcome 时能说明当时使用了哪些天气特征；\n避免历史天气缓存变化污染旧诊断结果。\n\n读取策略\n\n服务端读取\n\n建议提供内部接口：\n\nGET /internal/weather/recent?locationKey={locationKey}&days=10\n\n逻辑：\n\n1. 读取云函数内存 Map\n2. 命中则直接返回\n3. 未命中则读取对象存储 recent-10d.json\n4. 写入内存 Map，TTL 建议 30 分钟\n5. 返回天气窗口给诊断逻辑\n\n云函数内存缓存\n\ntype MemoryWeatherCacheItem = {\n  expiresAt: number\n  data: WeatherRecent10dCache\n}\n\n建议 key：\n\nweather:recent10:{locationKey}\n\n注意：\n\n云函数内存缓存只是 L1；\n冷启动会丢；\n多实例不共享；\n不能作为持久层。\n\n小程序端缓存\n\n小程序端可以缓存同一用户最近一次读取的天气窗口，用于 UI 加速。\n\n有效期：\n\n当天内有效\n跨天失效\nlocationKey 变化失效\n\n小程序本地缓存不能作为服务端诊断事实源。\n\n写入策略\n\n定时采集\n\nMVP 建议：\n\n每 6 小时采集一次 /v7/weather/10d\n每天 00:10–00:30，按地点本地日期定稿昨天 daily archive\n每天定稿后重建 recent-10d.json\n\n注意：归档必须按 WeatherLocation.timezone，不能按云函数服务器时区。\n\n滚动窗口\n\n每日定稿后：\n\n生成 D-1 daily archive\n保留最新 10 天 daily archive\n重建 recent-10d.json\n更新 manifest.json\n更新 WeatherLocation.recentObjectPath / recentGeneratedAt\n\n缺失与降级\n\n如果 recent-10d.json 不存在或过期：\n\n诊断不阻塞\n返回 weatherUnavailable / weatherEvidenceInsufficient\n后台触发补抓或下一轮定时任务修复\n结果页说明天气证据不足\n\n不要在用户请求中同步请求和风。\n\nsourceKind 与 quality 规则\n\n必须区分数据来源，避免把预报快照伪装成严格历史实况。\n\nforecast_snapshot_final：由每日预报快照定稿\nobserved_rollup：由实时天气采样聚合，后续增强\nhistorical_reanalysis：由时光机补偿，字段有限\nmixed：多个来源混合\n\nMVP 第一阶段允许：\n\nsourceKind = forecast_snapshot_archive\nquality.sourceKind = forecast_snapshot_final\n\n如果未来接入时光机补偿，缺字段必须标记：\n\nquality.completeness = backfilled_limited\n\n实施阶段\n\nPhase 1：MVP 最小闭环\n\nWeatherLocation 元数据。\n定时采集和风每日 10 天预报。\n保存 raw snapshot。\n生成 D-1 daily archive。\n生成 recent-10d.json。\ndiagnose-http / weather-http 从对象存储读取 recent-10d.json。\n云函数内存 Map 加速。\n病例保存 weather feature snapshot。\n\nPhase 2：实时天气采样增强，后续任务\n\n每小时采集 /v7/weather/now。\n生成 observed daily rollup。\n提升当天真实环境可信度。\nsourceKind 可变为 mixed。\n\nPhase 3：时光机补偿，后续任务\n\n每天 T+1 使用和风时光机补偿昨天历史数据。\n保留 forecast snapshot 中时光机没有的字段。\n标记 backfilled_limited。\n\nCheckList\n\n定位当前天气数据读取链路。\n确认诊断链路是否仍实时请求和风。\n定义 WeatherLocation 元数据结构。\n支持业务地点注册 locationKey 与和风 LocationID。\n设计对象存储路径：weather-cache/v1/locations/{locationKey}/recent-10d.json。\n实现和风每日 10 天预报定时采集。\n保存 raw forecast snapshot。\n按地点本地日期生成 D-1 daily archive。\n每日重建 D-1 到 D-10 的 recent-10d.json。\n生成或更新 manifest.json。\n数据库只保存对象路径与元数据，不保存天气 daily 主体热缓存。\n实现服务端读取 recent weather 的方法或内部接口。\n在服务端加入模块级内存 Map 缓存。\n设置内存缓存 TTL，建议 30 分钟。\n诊断链路改为读取自有天气缓存，不在用户请求中同步请求和风。\n缓存缺失时诊断不阻塞，返回天气证据不足或降级信息。\n生成植物诊断需要的派生特征。\n保存 DiagnosisWeatherEvidence 快照到病例或诊断结果上下文。\n正确处理地点时区，不使用服务器时区生成归档日期。\n保留 sourceKind 与 quality。\n不引入 Redis、付费缓存、付费 CDN、云函数保活或升配。\n不批量抓取全国 / 全城市天气。\n不缓存 GeoAPI 全量数据。\n补充最小测试：能生成 recent-10d.json。\n补充最小测试：D-1 到 D-10 日期窗口正确。\n补充最小测试：对象存储 miss 时诊断降级但不阻塞。\n补充最小测试：内存缓存命中后不重复读对象存储。\n运行 lint / 类型检查。\n手动验证一次诊断能读取自有 weather window。\n在任务结果中记录：对象路径、数据结构、采集频率、缓存 TTL、降级策略。\n\n验收标准\n\n系统能为业务地点生成 D-1 到 D-10 的 recent-10d.json。\nrecent-10d.json 存放在对象存储 / 云存储，而不是数据库 daily 多行热缓存。\n数据库只保存地点元数据、对象路径和必要引用。\n诊断链路能通过自有缓存读取最近 10 天天气窗口。\n用户诊断请求中不再同步请求和风天气接口。\n服务端具备内存 Map 缓存，热实例可减少对象存储读取。\n缓存缺失时，诊断流程不阻塞，可降级为天气证据不足。\n天气窗口包含植物诊断需要的基础字段与派生特征。\n所有天气窗口包含 sourceKind 与 quality。\n日期窗口按地点本地时区计算。\n病例或诊断结果中保存天气特征快照，保证可追溯。\n未引入 Redis、付费缓存、付费 CDN、云函数付费保活或升配。\n未批量缓存 GeoAPI 全量数据。\nlint / 类型检查通过。\n任务结果中必须记录优化前后诊断链路对和风的依赖变化。\n\n风险与注意事项\n\n1. 不要把预报快照伪装成严格历史实况\n\nMVP 第一阶段的数据本质是“每日预报快照归档”，不是严格的实况历史。字段上必须保留 sourceKind 和 quality，避免后续诊断解释变脏。\n\n2. 不要在诊断请求里临时补抓天气\n\n这会拖慢接口，也会破坏 500ms 目标。天气应该提前物化，诊断只读自有缓存。\n\n3. 不要把天气窗口主体放数据库\n\n数据库适合保存索引、对象路径、病例证据引用，不适合作为 MVP 阶段天气窗口热缓存主体。\n\n4. 不要无边界扩展地点\n\n只为业务真实需要的地点生成缓存，不做全国城市天气仓库。\n\n5. D-1 到 D-10 不等于 D0\n\n本任务只负责历史诊断窗口 D-1 到 D-10。若养护模式需要 D0 或未来 7 天，应另走 forecast cache，不要混在本任务里。\n\nCodex 执行提示\n\n执行前优先读取最小必要上下文：\n\n当前和风天气调用位置。\n问诊 / 诊断读取天气数据的服务层。\n云函数目录结构。\n对象存储 / 云存储工具封装。\n当前是否已有 genus_care_profiles 或天气特征层。\n当前诊断结果是否保存 evidence snapshot。\n\n不要全量扫描无关模块。不要扩大到问诊题包、outcome 权重、养护算法重构、支付、登录、图片识别等模块。\n\n本任务的核心是：\n\n用低成本对象存储 JSON 物化 D-1 到 D-10 天气窗口，\n让诊断链路读自有缓存，\n不再实时依赖和风。",
+  "customFields": [
+    {
+      "id": "67e06bad-dee1-43a2-a110-dd012565fffe",
+      "name": "figma_link",
+      "type": "url"
+    },
+    {
+      "id": "91cceaa3-4b49-499d-a6e5-e426ac1cd5e8",
+      "name": "figma_link2",
+      "type": "url"
+    }
+  ],
+  "requirementFacts": {
+    "background": "当前青花植诊断依赖近 10 天环境上下文判断浇水、盆土干湿、闷根、低光、通风、温湿度胁迫等问题。\n\n但和风天气时光机存在两个问题：\n\n1. 只能补历史数据，无法覆盖今天；\n2. 历史字段相对少，无法完整覆盖每日预报里的 `uvIndex`、`cloud`、`vis`、昼夜天气、昼夜风力等对植物诊断有价值的字段。\n\n因此，不能只依赖和风时光机作为青花植的历史天气事实源。\n\n本任务目标是：在 MVP 阶段，用低成本方案自建一个 D-1 到 D-10 的历史天气滚动窗口缓存。诊断链路只读自有缓存，不在用户请求时实时请求和风。",
+    "goal": "```plain\nweather-ingestion 定时云函数\n  ↓\n调用 QWeather /v7/weather/10d\n  ↓\n写入 raw forecast snapshot\n  ↓\n按地点本地日期生成 daily archive\n  ↓\n生成 recent-10d.json\n  ↓\n写入对象存储\n\n\ndiagnose-http / weather-http\n  ↓\n先查云函数内存 Map\n  ↓ miss\n读取对象存储 recent-10d.json\n  ↓\n写入内存 Map\n  ↓\n返回给诊断逻辑\n```",
+    "scopeMustDo": [
+      "新增或整理天气地点注册结构 `WeatherLocation`。",
+      "支持按业务真实地点注册 `locationKey` 与和风 `LocationID`。",
+      "新增定时采集任务，从和风每日预报接口获取 10 天预报数据。",
+      "将采集到的每日预报结果保存为 raw forecast snapshot。",
+      "按地点本地日期生成 D-1 daily archive。",
+      "维护 D-1 到 D-10 滚动窗口。",
+      "将滚动窗口物化为对象存储 JSON：`recent-10d.json`。",
+      "诊断链路通过自有服务读取 `recent-10d.json`，不直接请求和风。",
+      "在 `diagnose-http` 或独立 `weather-http` 中加入模块级内存 Map 缓存。",
+      "小程序端可做本地缓存，但只能做 UI 加速，不能作为服务端诊断事实源。",
+      "数据库只保存天气地点元数据、对象路径、生成时间、病例天气证据引用。",
+      "生成植物诊断友好的天气派生特征，例如：",
+      "最近 3 / 7 / 10 天降水累计；",
+      "连续阴雨天数；",
+      "连续高温天数；",
+      "连续低温天数；",
+      "平均湿度 / 低湿天数；",
+      "cloud / uvIndex 形成的低光 proxy；",
+      "风速形成的通风 proxy；",
+      "雨后盆土偏湿风险。",
+      "为每个天气窗口保留 `sourceKind` 与 `quality`。",
+      "诊断 session 使用天气时，保存 `DiagnosisWeatherEvidence` 快照，保证后续可追溯。",
+      "缓存缺失时，诊断不能阻塞；应返回天气证据不足或触发后台补抓。"
+    ],
+    "scopeMustNotDo": [
+      "不把天气 daily 主体拆成数据库多行作为热缓存。",
+      "不在用户诊断请求中同步请求和风接口。",
+      "不启用 Redis、付费缓存、付费 CDN、云函数付费保活、升配等付费能力。",
+      "不批量抓取全国 / 全城市天气。",
+      "不缓存或批量下载 GeoAPI 全量数据。",
+      "不做长期天气数据仓库。",
+      "不做复杂天气分析后台。",
+      "不扩大到养护算法、问诊题包、outcome 权重重构。",
+      "不要求本任务一次完成实时天气 hourly 采样；实时采样可作为后续增强。"
+    ],
+    "suggestedSolution": "",
+    "dataStructureNotes": [],
+    "frontendStateNotes": [],
+    "cleanupTargets": [],
+    "acceptanceCriteria": [
+      "系统能为业务地点生成 D-1 到 D-10 的 `recent-10d.json`。",
+      "`recent-10d.json` 存放在对象存储 / 云存储，而不是数据库 daily 多行热缓存。",
+      "数据库只保存地点元数据、对象路径和必要引用。",
+      "诊断链路能通过自有缓存读取最近 10 天天气窗口。",
+      "用户诊断请求中不再同步请求和风天气接口。",
+      "服务端具备内存 Map 缓存，热实例可减少对象存储读取。",
+      "缓存缺失时，诊断流程不阻塞，可降级为天气证据不足。",
+      "天气窗口包含植物诊断需要的基础字段与派生特征。",
+      "所有天气窗口包含 `sourceKind` 与 `quality`。",
+      "日期窗口按地点本地时区计算。",
+      "病例或诊断结果中保存天气特征快照，保证可追溯。",
+      "未引入 Redis、付费缓存、付费 CDN、云函数付费保活或升配。",
+      "未批量缓存 GeoAPI 全量数据。",
+      "lint / 类型检查通过。",
+      "任务结果中必须记录优化前后诊断链路对和风的依赖变化。"
+    ],
+    "risksAndNotes": [],
+    "codexExecutionHints": [
+      "执行前优先读取最小必要上下文：",
+      "当前和风天气调用位置。",
+      "问诊 / 诊断读取天气数据的服务层。",
+      "云函数目录结构。",
+      "对象存储 / 云存储工具封装。",
+      "当前是否已有 `genus_care_profiles` 或天气特征层。",
+      "当前诊断结果是否保存 evidence snapshot。",
+      "不要全量扫描无关模块。不要扩大到问诊题包、outcome 权重、养护算法重构、支付、登录、图片识别等模块。",
+      "本任务的核心是：",
+      "用低成本对象存储 JSON 物化 D-1 到 D-10 天气窗口，",
+      "让诊断链路读自有缓存，",
+      "不再实时依赖和风。"
+    ],
+    "sectionMatches": {
+      "background": {
+        "title": "背景",
+        "alias": "背景"
+      },
+      "goal": {
+        "title": "推荐目标架构",
+        "alias": "目标"
+      },
+      "scopeMustDo": {
+        "title": "必须做",
+        "alias": "必须做"
+      },
+      "scopeMustNotDo": {
+        "title": "不做",
+        "alias": "不做"
+      },
+      "suggestedSolution": {
+        "title": "实现自有历史天气缓存：D-1 到 D-10 滚动窗口（低成本对象存储方案）",
+        "alias": "方案"
+      },
+      "acceptanceCriteria": {
+        "title": "验收标准",
+        "alias": "验收标准"
+      },
+      "risksAndNotes": {
+        "title": "风险与注意事项",
+        "alias": "风险与注意事项"
+      },
+      "codexExecutionHints": {
+        "title": "Codex 执行提示",
+        "alias": "Codex 执行提示"
+      }
+    },
+    "rawSections": [
+      {
+        "title": "实现自有历史天气缓存：D-1 到 D-10 滚动窗口（低成本对象存储方案）",
+        "level": 1,
+        "content": "",
+        "listItems": []
+      },
+      {
+        "title": "背景",
+        "level": 2,
+        "content": "当前青花植诊断依赖近 10 天环境上下文判断浇水、盆土干湿、闷根、低光、通风、温湿度胁迫等问题。\n\n但和风天气时光机存在两个问题：\n\n1. 只能补历史数据，无法覆盖今天；\n2. 历史字段相对少，无法完整覆盖每日预报里的 `uvIndex`、`cloud`、`vis`、昼夜天气、昼夜风力等对植物诊断有价值的字段。\n\n因此，不能只依赖和风时光机作为青花植的历史天气事实源。\n\n本任务目标是：在 MVP 阶段，用低成本方案自建一个 D-1 到 D-10 的历史天气滚动窗口缓存。诊断链路只读自有缓存，不在用户请求时实时请求和风。",
+        "listItems": [
+          "当前青花植诊断依赖近 10 天环境上下文判断浇水、盆土干湿、闷根、低光、通风、温湿度胁迫等问题。",
+          "但和风天气时光机存在两个问题：",
+          "只能补历史数据，无法覆盖今天；",
+          "历史字段相对少，无法完整覆盖每日预报里的 `uvIndex`、`cloud`、`vis`、昼夜天气、昼夜风力等对植物诊断有价值的字段。",
+          "因此，不能只依赖和风时光机作为青花植的历史天气事实源。",
+          "本任务目标是：在 MVP 阶段，用低成本方案自建一个 D-1 到 D-10 的历史天气滚动窗口缓存。诊断链路只读自有缓存，不在用户请求时实时请求和风。"
+        ]
+      },
+      {
+        "title": "设计口径",
+        "level": 2,
+        "content": "这不是简单的“接口缓存”，而是青花植自己的：\n\n```plain\nweather history service / 自有历史天气缓存服务\n```\n\n核心职责：\n\n```plain\n定时采集和风天气数据\n  ↓\n沉淀地点级天气快照\n  ↓\n生成 D-1 到 D-10 滚动窗口 JSON\n  ↓\n诊断服务读取自有缓存\n  ↓\n病例保存天气特征快照，保证诊断可追溯\n```",
+        "listItems": [
+          "这不是简单的“接口缓存”，而是青花植自己的：",
+          "weather history service / 自有历史天气缓存服务",
+          "核心职责：",
+          "定时采集和风天气数据",
+          "↓",
+          "沉淀地点级天气快照",
+          "↓",
+          "生成 D-1 到 D-10 滚动窗口 JSON",
+          "↓",
+          "诊断服务读取自有缓存",
+          "↓",
+          "病例保存天气特征快照，保证诊断可追溯"
+        ]
+      },
+      {
+        "title": "关键架构结论",
+        "level": 2,
+        "content": "MVP 阶段不建议把天气主体缓存放数据库。\n\n天气数据特征是：\n\n```plain\n小体积\n按 locationKey + 日期窗口读取\n写入频率低\n读多写少\n查询模式固定\n不需要复杂 SQL\n不需要事务强一致\n```\n\n因此主缓存层应使用：\n\n```plain\n对象存储 / 云存储 JSON 文件\n```\n\n数据库只存元数据、索引、对象路径和病例引用，不作为天气窗口主体热缓存。\n\n推荐分层：\n\n```plain\nL0：小程序本地缓存，仅做 UI 加速\nL1：云函数内存 Map，热实例内加速\nL2：对象存储 recent-10d.json，作为持久缓存主层\nDB：只存 location registry / object path / diagnosis evidence reference\n```",
+        "listItems": [
+          "MVP 阶段不建议把天气主体缓存放数据库。",
+          "天气数据特征是：",
+          "小体积",
+          "按 locationKey + 日期窗口读取",
+          "写入频率低",
+          "读多写少",
+          "查询模式固定",
+          "不需要复杂 SQL",
+          "不需要事务强一致",
+          "因此主缓存层应使用：",
+          "对象存储 / 云存储 JSON 文件",
+          "数据库只存元数据、索引、对象路径和病例引用，不作为天气窗口主体热缓存。",
+          "推荐分层：",
+          "L0：小程序本地缓存，仅做 UI 加速",
+          "L1：云函数内存 Map，热实例内加速",
+          "L2：对象存储 recent-10d.json，作为持久缓存主层",
+          "DB：只存 location registry / object path / diagnosis evidence reference"
+        ]
+      },
+      {
+        "title": "推荐目标架构",
+        "level": 2,
+        "content": "```plain\nweather-ingestion 定时云函数\n  ↓\n调用 QWeather /v7/weather/10d\n  ↓\n写入 raw forecast snapshot\n  ↓\n按地点本地日期生成 daily archive\n  ↓\n生成 recent-10d.json\n  ↓\n写入对象存储\n\n\ndiagnose-http / weather-http\n  ↓\n先查云函数内存 Map\n  ↓ miss\n读取对象存储 recent-10d.json\n  ↓\n写入内存 Map\n  ↓\n返回给诊断逻辑\n```",
+        "listItems": [
+          "weather-ingestion 定时云函数",
+          "↓",
+          "调用 QWeather /v7/weather/10d",
+          "↓",
+          "写入 raw forecast snapshot",
+          "↓",
+          "按地点本地日期生成 daily archive",
+          "↓",
+          "生成 recent-10d.json",
+          "↓",
+          "写入对象存储",
+          "diagnose-http / weather-http",
+          "↓",
+          "先查云函数内存 Map",
+          "↓ miss",
+          "读取对象存储 recent-10d.json",
+          "↓",
+          "写入内存 Map",
+          "↓",
+          "返回给诊断逻辑"
+        ]
+      },
+      {
+        "title": "范围",
+        "level": 2,
+        "content": "",
+        "listItems": []
+      },
+      {
+        "title": "必须做",
+        "level": 3,
+        "content": "*   新增或整理天气地点注册结构 `WeatherLocation`。\n*   支持按业务真实地点注册 `locationKey` 与和风 `LocationID`。\n*   新增定时采集任务，从和风每日预报接口获取 10 天预报数据。\n*   将采集到的每日预报结果保存为 raw forecast snapshot。\n*   按地点本地日期生成 D-1 daily archive。\n*   维护 D-1 到 D-10 滚动窗口。\n*   将滚动窗口物化为对象存储 JSON：`recent-10d.json`。\n*   诊断链路通过自有服务读取 `recent-10d.json`，不直接请求和风。\n*   在 `diagnose-http` 或独立 `weather-http` 中加入模块级内存 Map 缓存。\n*   小程序端可做本地缓存，但只能做 UI 加速，不能作为服务端诊断事实源。\n*   数据库只保存天气地点元数据、对象路径、生成时间、病例天气证据引用。\n*   生成植物诊断友好的天气派生特征，例如：\n    *   最近 3 / 7 / 10 天降水累计；\n    *   连续阴雨天数；\n    *   连续高温天数；\n    *   连续低温天数；\n    *   平均湿度 / 低湿天数；\n    *   cloud / uvIndex 形成的低光 proxy；\n    *   风速形成的通风 proxy；\n    *   雨后盆土偏湿风险。\n*   为每个天气窗口保留 `sourceKind` 与 `quality`。\n*   诊断 session 使用天气时，保存 `DiagnosisWeatherEvidence` 快照，保证后续可追溯。\n*   缓存缺失时，诊断不能阻塞；应返回天气证据不足或触发后台补抓。",
+        "listItems": [
+          "新增或整理天气地点注册结构 `WeatherLocation`。",
+          "支持按业务真实地点注册 `locationKey` 与和风 `LocationID`。",
+          "新增定时采集任务，从和风每日预报接口获取 10 天预报数据。",
+          "将采集到的每日预报结果保存为 raw forecast snapshot。",
+          "按地点本地日期生成 D-1 daily archive。",
+          "维护 D-1 到 D-10 滚动窗口。",
+          "将滚动窗口物化为对象存储 JSON：`recent-10d.json`。",
+          "诊断链路通过自有服务读取 `recent-10d.json`，不直接请求和风。",
+          "在 `diagnose-http` 或独立 `weather-http` 中加入模块级内存 Map 缓存。",
+          "小程序端可做本地缓存，但只能做 UI 加速，不能作为服务端诊断事实源。",
+          "数据库只保存天气地点元数据、对象路径、生成时间、病例天气证据引用。",
+          "生成植物诊断友好的天气派生特征，例如：",
+          "最近 3 / 7 / 10 天降水累计；",
+          "连续阴雨天数；",
+          "连续高温天数；",
+          "连续低温天数；",
+          "平均湿度 / 低湿天数；",
+          "cloud / uvIndex 形成的低光 proxy；",
+          "风速形成的通风 proxy；",
+          "雨后盆土偏湿风险。",
+          "为每个天气窗口保留 `sourceKind` 与 `quality`。",
+          "诊断 session 使用天气时，保存 `DiagnosisWeatherEvidence` 快照，保证后续可追溯。",
+          "缓存缺失时，诊断不能阻塞；应返回天气证据不足或触发后台补抓。"
+        ]
+      },
+      {
+        "title": "不做",
+        "level": 3,
+        "content": "*   不把天气 daily 主体拆成数据库多行作为热缓存。\n*   不在用户诊断请求中同步请求和风接口。\n*   不启用 Redis、付费缓存、付费 CDN、云函数付费保活、升配等付费能力。\n*   不批量抓取全国 / 全城市天气。\n*   不缓存或批量下载 GeoAPI 全量数据。\n*   不做长期天气数据仓库。\n*   不做复杂天气分析后台。\n*   不扩大到养护算法、问诊题包、outcome 权重重构。\n*   不要求本任务一次完成实时天气 hourly 采样；实时采样可作为后续增强。",
+        "listItems": [
+          "不把天气 daily 主体拆成数据库多行作为热缓存。",
+          "不在用户诊断请求中同步请求和风接口。",
+          "不启用 Redis、付费缓存、付费 CDN、云函数付费保活、升配等付费能力。",
+          "不批量抓取全国 / 全城市天气。",
+          "不缓存或批量下载 GeoAPI 全量数据。",
+          "不做长期天气数据仓库。",
+          "不做复杂天气分析后台。",
+          "不扩大到养护算法、问诊题包、outcome 权重重构。",
+          "不要求本任务一次完成实时天气 hourly 采样；实时采样可作为后续增强。"
+        ]
+      },
+      {
+        "title": "数据存储设计",
+        "level": 2,
+        "content": "",
+        "listItems": []
+      },
+      {
+        "title": "1\\. WeatherLocation 元数据，存数据库",
+        "level": 3,
+        "content": "```plain\ntype WeatherLocation = {\n  locationKey: string\n  qweatherLocationId: string\n  cityName?: string\n  timezone: string\n  isActive: boolean\n  lastUsedAt: string\n  recentObjectPath?: string\n  recentGeneratedAt?: string\n  createdAt: string\n  updatedAt: string\n}\n```\n\n说明：\n\n*   只保存业务真实使用过的地点。\n*   不批量保存和风 GeoAPI 全量地点数据。\n*   `timezone` 必须存在，后续按地点本地日期归档。",
+        "listItems": [
+          "type WeatherLocation = {",
+          "locationKey: string",
+          "qweatherLocationId: string",
+          "cityName?: string",
+          "timezone: string",
+          "isActive: boolean",
+          "lastUsedAt: string",
+          "recentObjectPath?: string",
+          "recentGeneratedAt?: string",
+          "createdAt: string",
+          "updatedAt: string",
+          "说明：",
+          "只保存业务真实使用过的地点。",
+          "不批量保存和风 GeoAPI 全量地点数据。",
+          "`timezone` 必须存在，后续按地点本地日期归档。"
+        ]
+      },
+      {
+        "title": "2\\. 对象存储路径设计",
+        "level": 3,
+        "content": "建议路径：\n\n```plain\nweather-cache/\n  v1/\n    locations/\n      {locationKey}/\n        recent-10d.json\n        manifest.json\n        daily/\n          2026-06-04.json\n          2026-06-05.json\n          2026-06-06.json\n        raw/\n          forecast-2026-06-14T00-00.json\n          forecast-2026-06-14T06-00.json\n```\n\n诊断接口只读：\n\n```plain\nweather-cache/v1/locations/{locationKey}/recent-10d.json\n```",
+        "listItems": [
+          "建议路径：",
+          "weather-cache/",
+          "v1/",
+          "locations/",
+          "recent-10d.json",
+          "manifest.json",
+          "daily/",
+          "2026-06-04.json",
+          "2026-06-05.json",
+          "2026-06-06.json",
+          "raw/",
+          "forecast-2026-06-14T00-00.json",
+          "forecast-2026-06-14T06-00.json",
+          "诊断接口只读：",
+          "weather-cache/v1/locations/{locationKey}/recent-10d.json"
+        ]
+      },
+      {
+        "title": "3\\. recent-10d.json 结构",
+        "level": 3,
+        "content": "```plain\ntype WeatherRecent10dCache = {\n  locationKey: string\n  timezone: string\n  window: {\n    from: string\n    to: string\n    days: 10\n  }\n  provider: 'QWeather'\n  sourceKind: 'forecast_snapshot_archive' | 'mixed' | 'backfilled_limited'\n  generatedAt: string\n  daily: WeatherDailyArchive[]\n}\n```\n\n单日结构建议：\n\n```plain\ntype WeatherDailyArchive = {\n  date: string\n\n  tempMax?: number\n  tempMin?: number\n  humidity?: number\n  precip?: number\n  pressure?: number\n  vis?: number\n  cloud?: number\n  uvIndex?: number\n\n  textDay?: string\n  textNight?: string\n  iconDay?: string\n  iconNight?: string\n\n  windSpeedDay?: number\n  windSpeedNight?: number\n  windScaleDay?: string\n  windScaleNight?: string\n\n  plantFeatures: {\n    wetSoilRiskFromRain?: 'none' | 'low' | 'medium' | 'high'\n    dryAirLevel?: 'none' | 'low' | 'medium' | 'high'\n    lowLightProxy?: 'none' | 'low' | 'medium' | 'high'\n    heatStressLevel?: 'none' | 'low' | 'medium' | 'high'\n    coldStressLevel?: 'none' | 'low' | 'medium' | 'high'\n    ventilationProxy?: 'poor' | 'normal' | 'strong' | 'unknown'\n  }\n\n  quality: {\n    completeness: 'complete' | 'partial' | 'backfilled_limited'\n    sourceKind: 'forecast_snapshot_final' | 'observed_rollup' | 'historical_reanalysis' | 'mixed'\n    missingFields?: string[]\n  }\n}\n```",
+        "listItems": [
+          "type WeatherRecent10dCache = {",
+          "locationKey: string",
+          "timezone: string",
+          "window: {",
+          "from: string",
+          "to: string",
+          "days: 10",
+          "provider: 'QWeather'",
+          "sourceKind: 'forecast_snapshot_archive' | 'mixed' | 'backfilled_limited'",
+          "generatedAt: string",
+          "daily: WeatherDailyArchive[]",
+          "单日结构建议：",
+          "type WeatherDailyArchive = {",
+          "date: string",
+          "tempMax?: number",
+          "tempMin?: number",
+          "humidity?: number",
+          "precip?: number",
+          "pressure?: number",
+          "vis?: number",
+          "cloud?: number",
+          "uvIndex?: number",
+          "textDay?: string",
+          "textNight?: string",
+          "iconDay?: string",
+          "iconNight?: string",
+          "windSpeedDay?: number",
+          "windSpeedNight?: number",
+          "windScaleDay?: string",
+          "windScaleNight?: string",
+          "plantFeatures: {",
+          "wetSoilRiskFromRain?: 'none' | 'low' | 'medium' | 'high'",
+          "dryAirLevel?: 'none' | 'low' | 'medium' | 'high'",
+          "lowLightProxy?: 'none' | 'low' | 'medium' | 'high'",
+          "heatStressLevel?: 'none' | 'low' | 'medium' | 'high'",
+          "coldStressLevel?: 'none' | 'low' | 'medium' | 'high'",
+          "ventilationProxy?: 'poor' | 'normal' | 'strong' | 'unknown'",
+          "quality: {",
+          "completeness: 'complete' | 'partial' | 'backfilled_limited'",
+          "sourceKind: 'forecast_snapshot_final' | 'observed_rollup' | 'historical_reanalysis' | 'mixed'",
+          "missingFields?: string[]"
+        ]
+      },
+      {
+        "title": "4\\. DiagnosisWeatherEvidence，随病例保存",
+        "level": 3,
+        "content": "```plain\ntype DiagnosisWeatherEvidence = {\n  diagnosisSessionId: string\n  locationKey: string\n  weatherWindowFrom: string\n  weatherWindowTo: string\n  weatherObjectPath: string\n  featureSnapshot: Record<string, any>\n  createdAt: string\n}\n```\n\n目的：\n\n*   后续即使天气缓存被清理，病例仍可追溯；\n*   解释 outcome 时能说明当时使用了哪些天气特征；\n*   避免历史天气缓存变化污染旧诊断结果。",
+        "listItems": [
+          "type DiagnosisWeatherEvidence = {",
+          "diagnosisSessionId: string",
+          "locationKey: string",
+          "weatherWindowFrom: string",
+          "weatherWindowTo: string",
+          "weatherObjectPath: string",
+          "featureSnapshot: Record<string, any>",
+          "createdAt: string",
+          "目的：",
+          "后续即使天气缓存被清理，病例仍可追溯；",
+          "解释 outcome 时能说明当时使用了哪些天气特征；",
+          "避免历史天气缓存变化污染旧诊断结果。"
+        ]
+      },
+      {
+        "title": "读取策略",
+        "level": 2,
+        "content": "",
+        "listItems": []
+      },
+      {
+        "title": "服务端读取",
+        "level": 3,
+        "content": "建议提供内部接口：\n\n```plain\nGET /internal/weather/recent?locationKey={locationKey}&days=10\n```\n\n逻辑：\n\n```plain\n1. 读取云函数内存 Map\n2. 命中则直接返回\n3. 未命中则读取对象存储 recent-10d.json\n4. 写入内存 Map，TTL 建议 30 分钟\n5. 返回天气窗口给诊断逻辑\n```",
+        "listItems": [
+          "建议提供内部接口：",
+          "GET /internal/weather/recent?locationKey={locationKey}&days=10",
+          "逻辑：",
+          "读取云函数内存 Map",
+          "命中则直接返回",
+          "未命中则读取对象存储 recent-10d.json",
+          "写入内存 Map，TTL 建议 30 分钟",
+          "返回天气窗口给诊断逻辑"
+        ]
+      },
+      {
+        "title": "云函数内存缓存",
+        "level": 3,
+        "content": "```plain\ntype MemoryWeatherCacheItem = {\n  expiresAt: number\n  data: WeatherRecent10dCache\n}\n```\n\n建议 key：\n\n```plain\nweather:recent10:{locationKey}\n```\n\n注意：\n\n*   云函数内存缓存只是 L1；\n*   冷启动会丢；\n*   多实例不共享；\n*   不能作为持久层。",
+        "listItems": [
+          "type MemoryWeatherCacheItem = {",
+          "expiresAt: number",
+          "data: WeatherRecent10dCache",
+          "建议 key：",
+          "weather:recent10:{locationKey}",
+          "注意：",
+          "云函数内存缓存只是 L1；",
+          "冷启动会丢；",
+          "多实例不共享；",
+          "不能作为持久层。"
+        ]
+      },
+      {
+        "title": "小程序端缓存",
+        "level": 3,
+        "content": "小程序端可以缓存同一用户最近一次读取的天气窗口，用于 UI 加速。\n\n有效期：\n\n```plain\n当天内有效\n跨天失效\nlocationKey 变化失效\n```\n\n小程序本地缓存不能作为服务端诊断事实源。",
+        "listItems": [
+          "小程序端可以缓存同一用户最近一次读取的天气窗口，用于 UI 加速。",
+          "有效期：",
+          "当天内有效",
+          "跨天失效",
+          "locationKey 变化失效",
+          "小程序本地缓存不能作为服务端诊断事实源。"
+        ]
+      },
+      {
+        "title": "写入策略",
+        "level": 2,
+        "content": "",
+        "listItems": []
+      },
+      {
+        "title": "定时采集",
+        "level": 3,
+        "content": "MVP 建议：\n\n```plain\n每 6 小时采集一次 /v7/weather/10d\n每天 00:10–00:30，按地点本地日期定稿昨天 daily archive\n每天定稿后重建 recent-10d.json\n```\n\n注意：归档必须按 `WeatherLocation.timezone`，不能按云函数服务器时区。",
+        "listItems": [
+          "MVP 建议：",
+          "每 6 小时采集一次 /v7/weather/10d",
+          "每天 00:10–00:30，按地点本地日期定稿昨天 daily archive",
+          "每天定稿后重建 recent-10d.json",
+          "注意：归档必须按 `WeatherLocation.timezone`，不能按云函数服务器时区。"
+        ]
+      },
+      {
+        "title": "滚动窗口",
+        "level": 3,
+        "content": "每日定稿后：\n\n```plain\n生成 D-1 daily archive\n保留最新 10 天 daily archive\n重建 recent-10d.json\n更新 manifest.json\n更新 WeatherLocation.recentObjectPath / recentGeneratedAt\n```",
+        "listItems": [
+          "每日定稿后：",
+          "生成 D-1 daily archive",
+          "保留最新 10 天 daily archive",
+          "重建 recent-10d.json",
+          "更新 manifest.json",
+          "更新 WeatherLocation.recentObjectPath / recentGeneratedAt"
+        ]
+      },
+      {
+        "title": "缺失与降级",
+        "level": 3,
+        "content": "如果 `recent-10d.json` 不存在或过期：\n\n```plain\n诊断不阻塞\n返回 weatherUnavailable / weatherEvidenceInsufficient\n后台触发补抓或下一轮定时任务修复\n结果页说明天气证据不足\n```\n\n不要在用户请求中同步请求和风。",
+        "listItems": [
+          "如果 `recent-10d.json` 不存在或过期：",
+          "诊断不阻塞",
+          "返回 weatherUnavailable / weatherEvidenceInsufficient",
+          "后台触发补抓或下一轮定时任务修复",
+          "结果页说明天气证据不足",
+          "不要在用户请求中同步请求和风。"
+        ]
+      },
+      {
+        "title": "sourceKind 与 quality 规则",
+        "level": 2,
+        "content": "必须区分数据来源，避免把预报快照伪装成严格历史实况。\n\n```plain\nforecast_snapshot_final：由每日预报快照定稿\nobserved_rollup：由实时天气采样聚合，后续增强\nhistorical_reanalysis：由时光机补偿，字段有限\nmixed：多个来源混合\n```\n\nMVP 第一阶段允许：\n\n```plain\nsourceKind = forecast_snapshot_archive\nquality.sourceKind = forecast_snapshot_final\n```\n\n如果未来接入时光机补偿，缺字段必须标记：\n\n```plain\nquality.completeness = backfilled_limited\n```",
+        "listItems": [
+          "必须区分数据来源，避免把预报快照伪装成严格历史实况。",
+          "forecast_snapshot_final：由每日预报快照定稿",
+          "observed_rollup：由实时天气采样聚合，后续增强",
+          "historical_reanalysis：由时光机补偿，字段有限",
+          "mixed：多个来源混合",
+          "MVP 第一阶段允许：",
+          "sourceKind = forecast_snapshot_archive",
+          "quality.sourceKind = forecast_snapshot_final",
+          "如果未来接入时光机补偿，缺字段必须标记：",
+          "quality.completeness = backfilled_limited"
+        ]
+      },
+      {
+        "title": "实施阶段",
+        "level": 2,
+        "content": "",
+        "listItems": []
+      },
+      {
+        "title": "Phase 1：MVP 最小闭环",
+        "level": 3,
+        "content": "*   WeatherLocation 元数据。\n*   定时采集和风每日 10 天预报。\n*   保存 raw snapshot。\n*   生成 D-1 daily archive。\n*   生成 recent-10d.json。\n*   diagnose-http / weather-http 从对象存储读取 recent-10d.json。\n*   云函数内存 Map 加速。\n*   病例保存 weather feature snapshot。",
+        "listItems": [
+          "WeatherLocation 元数据。",
+          "定时采集和风每日 10 天预报。",
+          "保存 raw snapshot。",
+          "生成 D-1 daily archive。",
+          "生成 recent-10d.json。",
+          "diagnose-http / weather-http 从对象存储读取 recent-10d.json。",
+          "云函数内存 Map 加速。",
+          "病例保存 weather feature snapshot。"
+        ]
+      },
+      {
+        "title": "Phase 2：实时天气采样增强，后续任务",
+        "level": 3,
+        "content": "*   每小时采集 `/v7/weather/now`。\n*   生成 observed daily rollup。\n*   提升当天真实环境可信度。\n*   `sourceKind` 可变为 `mixed`。",
+        "listItems": [
+          "每小时采集 `/v7/weather/now`。",
+          "生成 observed daily rollup。",
+          "提升当天真实环境可信度。",
+          "`sourceKind` 可变为 `mixed`。"
+        ]
+      },
+      {
+        "title": "Phase 3：时光机补偿，后续任务",
+        "level": 3,
+        "content": "*   每天 T+1 使用和风时光机补偿昨天历史数据。\n*   保留 forecast snapshot 中时光机没有的字段。\n*   标记 `backfilled_limited`。",
+        "listItems": [
+          "每天 T+1 使用和风时光机补偿昨天历史数据。",
+          "保留 forecast snapshot 中时光机没有的字段。",
+          "标记 `backfilled_limited`。"
+        ]
+      },
+      {
+        "title": "CheckList",
+        "level": 2,
+        "content": "- [ ] 定位当前天气数据读取链路。\n- [ ] 确认诊断链路是否仍实时请求和风。\n- [ ] 定义 `WeatherLocation` 元数据结构。\n- [ ] 支持业务地点注册 `locationKey` 与和风 `LocationID`。\n- [ ] 设计对象存储路径：`weather-cache/v1/locations/{locationKey}/recent-10d.json`。\n- [ ] 实现和风每日 10 天预报定时采集。\n- [ ] 保存 raw forecast snapshot。\n- [ ] 按地点本地日期生成 D-1 daily archive。\n- [ ] 每日重建 D-1 到 D-10 的 `recent-10d.json`。\n- [ ] 生成或更新 `manifest.json`。\n- [ ] 数据库只保存对象路径与元数据，不保存天气 daily 主体热缓存。\n- [ ] 实现服务端读取 recent weather 的方法或内部接口。\n- [ ] 在服务端加入模块级内存 Map 缓存。\n- [ ] 设置内存缓存 TTL，建议 30 分钟。\n- [ ] 诊断链路改为读取自有天气缓存，不在用户请求中同步请求和风。\n- [ ] 缓存缺失时诊断不阻塞，返回天气证据不足或降级信息。\n- [ ] 生成植物诊断需要的派生特征。\n- [ ] 保存 `DiagnosisWeatherEvidence` 快照到病例或诊断结果上下文。\n- [ ] 正确处理地点时区，不使用服务器时区生成归档日期。\n- [ ] 保留 `sourceKind` 与 `quality`。\n- [ ] 不引入 Redis、付费缓存、付费 CDN、云函数保活或升配。\n- [ ] 不批量抓取全国 / 全城市天气。\n- [ ] 不缓存 GeoAPI 全量数据。\n- [ ] 补充最小测试：能生成 recent-10d.json。\n- [ ] 补充最小测试：D-1 到 D-10 日期窗口正确。\n- [ ] 补充最小测试：对象存储 miss 时诊断降级但不阻塞。\n- [ ] 补充最小测试：内存缓存命中后不重复读对象存储。\n- [ ] 运行 lint / 类型检查。\n- [ ] 手动验证一次诊断能读取自有 weather window。\n- [ ] 在任务结果中记录：对象路径、数据结构、采集频率、缓存 TTL、降级策略。",
+        "listItems": [
+          "[ ] 定位当前天气数据读取链路。",
+          "[ ] 确认诊断链路是否仍实时请求和风。",
+          "[ ] 定义 `WeatherLocation` 元数据结构。",
+          "[ ] 支持业务地点注册 `locationKey` 与和风 `LocationID`。",
+          "[ ] 设计对象存储路径：`weather-cache/v1/locations/{locationKey}/recent-10d.json`。",
+          "[ ] 实现和风每日 10 天预报定时采集。",
+          "[ ] 保存 raw forecast snapshot。",
+          "[ ] 按地点本地日期生成 D-1 daily archive。",
+          "[ ] 每日重建 D-1 到 D-10 的 `recent-10d.json`。",
+          "[ ] 生成或更新 `manifest.json`。",
+          "[ ] 数据库只保存对象路径与元数据，不保存天气 daily 主体热缓存。",
+          "[ ] 实现服务端读取 recent weather 的方法或内部接口。",
+          "[ ] 在服务端加入模块级内存 Map 缓存。",
+          "[ ] 设置内存缓存 TTL，建议 30 分钟。",
+          "[ ] 诊断链路改为读取自有天气缓存，不在用户请求中同步请求和风。",
+          "[ ] 缓存缺失时诊断不阻塞，返回天气证据不足或降级信息。",
+          "[ ] 生成植物诊断需要的派生特征。",
+          "[ ] 保存 `DiagnosisWeatherEvidence` 快照到病例或诊断结果上下文。",
+          "[ ] 正确处理地点时区，不使用服务器时区生成归档日期。",
+          "[ ] 保留 `sourceKind` 与 `quality`。",
+          "[ ] 不引入 Redis、付费缓存、付费 CDN、云函数保活或升配。",
+          "[ ] 不批量抓取全国 / 全城市天气。",
+          "[ ] 不缓存 GeoAPI 全量数据。",
+          "[ ] 补充最小测试：能生成 recent-10d.json。",
+          "[ ] 补充最小测试：D-1 到 D-10 日期窗口正确。",
+          "[ ] 补充最小测试：对象存储 miss 时诊断降级但不阻塞。",
+          "[ ] 补充最小测试：内存缓存命中后不重复读对象存储。",
+          "[ ] 运行 lint / 类型检查。",
+          "[ ] 手动验证一次诊断能读取自有 weather window。",
+          "[ ] 在任务结果中记录：对象路径、数据结构、采集频率、缓存 TTL、降级策略。"
+        ]
+      },
+      {
+        "title": "验收标准",
+        "level": 2,
+        "content": "1. 系统能为业务地点生成 D-1 到 D-10 的 `recent-10d.json`。\n2. `recent-10d.json` 存放在对象存储 / 云存储，而不是数据库 daily 多行热缓存。\n3. 数据库只保存地点元数据、对象路径和必要引用。\n4. 诊断链路能通过自有缓存读取最近 10 天天气窗口。\n5. 用户诊断请求中不再同步请求和风天气接口。\n6. 服务端具备内存 Map 缓存，热实例可减少对象存储读取。\n7. 缓存缺失时，诊断流程不阻塞，可降级为天气证据不足。\n8. 天气窗口包含植物诊断需要的基础字段与派生特征。\n9. 所有天气窗口包含 `sourceKind` 与 `quality`。\n10. 日期窗口按地点本地时区计算。\n11. 病例或诊断结果中保存天气特征快照，保证可追溯。\n12. 未引入 Redis、付费缓存、付费 CDN、云函数付费保活或升配。\n13. 未批量缓存 GeoAPI 全量数据。\n14. lint / 类型检查通过。\n15. 任务结果中必须记录优化前后诊断链路对和风的依赖变化。",
+        "listItems": [
+          "系统能为业务地点生成 D-1 到 D-10 的 `recent-10d.json`。",
+          "`recent-10d.json` 存放在对象存储 / 云存储，而不是数据库 daily 多行热缓存。",
+          "数据库只保存地点元数据、对象路径和必要引用。",
+          "诊断链路能通过自有缓存读取最近 10 天天气窗口。",
+          "用户诊断请求中不再同步请求和风天气接口。",
+          "服务端具备内存 Map 缓存，热实例可减少对象存储读取。",
+          "缓存缺失时，诊断流程不阻塞，可降级为天气证据不足。",
+          "天气窗口包含植物诊断需要的基础字段与派生特征。",
+          "所有天气窗口包含 `sourceKind` 与 `quality`。",
+          "日期窗口按地点本地时区计算。",
+          "病例或诊断结果中保存天气特征快照，保证可追溯。",
+          "未引入 Redis、付费缓存、付费 CDN、云函数付费保活或升配。",
+          "未批量缓存 GeoAPI 全量数据。",
+          "lint / 类型检查通过。",
+          "任务结果中必须记录优化前后诊断链路对和风的依赖变化。"
+        ]
+      },
+      {
+        "title": "风险与注意事项",
+        "level": 2,
+        "content": "",
+        "listItems": []
+      },
+      {
+        "title": "1\\. 不要把预报快照伪装成严格历史实况",
+        "level": 3,
+        "content": "MVP 第一阶段的数据本质是“每日预报快照归档”，不是严格的实况历史。字段上必须保留 `sourceKind` 和 `quality`，避免后续诊断解释变脏。",
+        "listItems": [
+          "MVP 第一阶段的数据本质是“每日预报快照归档”，不是严格的实况历史。字段上必须保留 `sourceKind` 和 `quality`，避免后续诊断解释变脏。"
+        ]
+      },
+      {
+        "title": "2\\. 不要在诊断请求里临时补抓天气",
+        "level": 3,
+        "content": "这会拖慢接口，也会破坏 500ms 目标。天气应该提前物化，诊断只读自有缓存。",
+        "listItems": [
+          "这会拖慢接口，也会破坏 500ms 目标。天气应该提前物化，诊断只读自有缓存。"
+        ]
+      },
+      {
+        "title": "3\\. 不要把天气窗口主体放数据库",
+        "level": 3,
+        "content": "数据库适合保存索引、对象路径、病例证据引用，不适合作为 MVP 阶段天气窗口热缓存主体。",
+        "listItems": [
+          "数据库适合保存索引、对象路径、病例证据引用，不适合作为 MVP 阶段天气窗口热缓存主体。"
+        ]
+      },
+      {
+        "title": "4\\. 不要无边界扩展地点",
+        "level": 3,
+        "content": "只为业务真实需要的地点生成缓存，不做全国城市天气仓库。",
+        "listItems": [
+          "只为业务真实需要的地点生成缓存，不做全国城市天气仓库。"
+        ]
+      },
+      {
+        "title": "5\\. D-1 到 D-10 不等于 D0",
+        "level": 3,
+        "content": "本任务只负责历史诊断窗口 D-1 到 D-10。若养护模式需要 D0 或未来 7 天，应另走 forecast cache，不要混在本任务里。",
+        "listItems": [
+          "本任务只负责历史诊断窗口 D-1 到 D-10。若养护模式需要 D0 或未来 7 天，应另走 forecast cache，不要混在本任务里。"
+        ]
+      },
+      {
+        "title": "Codex 执行提示",
+        "level": 2,
+        "content": "执行前优先读取最小必要上下文：\n\n*   当前和风天气调用位置。\n*   问诊 / 诊断读取天气数据的服务层。\n*   云函数目录结构。\n*   对象存储 / 云存储工具封装。\n*   当前是否已有 `genus_care_profiles` 或天气特征层。\n*   当前诊断结果是否保存 evidence snapshot。\n\n不要全量扫描无关模块。不要扩大到问诊题包、outcome 权重、养护算法重构、支付、登录、图片识别等模块。\n\n本任务的核心是：\n\n```plain\n用低成本对象存储 JSON 物化 D-1 到 D-10 天气窗口，\n让诊断链路读自有缓存，\n不再实时依赖和风。\n```",
+        "listItems": [
+          "执行前优先读取最小必要上下文：",
+          "当前和风天气调用位置。",
+          "问诊 / 诊断读取天气数据的服务层。",
+          "云函数目录结构。",
+          "对象存储 / 云存储工具封装。",
+          "当前是否已有 `genus_care_profiles` 或天气特征层。",
+          "当前诊断结果是否保存 evidence snapshot。",
+          "不要全量扫描无关模块。不要扩大到问诊题包、outcome 权重、养护算法重构、支付、登录、图片识别等模块。",
+          "本任务的核心是：",
+          "用低成本对象存储 JSON 物化 D-1 到 D-10 天气窗口，",
+          "让诊断链路读自有缓存，",
+          "不再实时依赖和风。"
+        ]
+      }
+    ]
+  },
+  "externalLinks": [],
+  "figmaLinks": [],
+  "subtasks": [],
+  "comments": [],
+  "attachments": [],
+  "linkedTasks": [],
+  "dependencies": [],
+  "checklistItems": [],
+  "hardConstraints": [
+    {
+      "quote": "不需要复杂 SQL",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "不需要事务强一致",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "### 必须做",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "*   不要求本任务一次完成实时天气 hourly 采样；实时采样可作为后续增强。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "*   `timezone` 必须存在，后续按地点本地日期归档。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "注意：归档必须按 `WeatherLocation.timezone`，不能按云函数服务器时区。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "不要在用户请求中同步请求和风。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "必须区分数据来源，避免把预报快照伪装成严格历史实况。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "如果未来接入时光机补偿，缺字段必须标记：",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "- [ ] 生成植物诊断需要的派生特征。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "## 验收标准",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "8. 天气窗口包含植物诊断需要的基础字段与派生特征。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "15. 任务结果中必须记录优化前后诊断链路对和风的依赖变化。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "### 1\\. 不要把预报快照伪装成严格历史实况",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "MVP 第一阶段的数据本质是“每日预报快照归档”，不是严格的实况历史。字段上必须保留 `sourceKind` 和 `quality`，避免后续诊断解释变脏。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "### 2\\. 不要在诊断请求里临时补抓天气",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "### 3\\. 不要把天气窗口主体放数据库",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "### 4\\. 不要无边界扩展地点",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "只为业务真实需要的地点生成缓存，不做全国城市天气仓库。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "本任务只负责历史诊断窗口 D-1 到 D-10。若养护模式需要 D0 或未来 7 天，应另走 forecast cache，不要混在本任务里。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "不要全量扫描无关模块。不要扩大到问诊题包、outcome 权重、养护算法重构、支付、登录、图片识别等模块。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    }
+  ],
+  "fullFactsPolicy": {
+    "kind": "debug_full_facts",
+    "entersModelPromptByDefault": false
+  }
+}

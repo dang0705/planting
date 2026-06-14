@@ -1,0 +1,22 @@
+[
+  {
+    "id": "clickup.get_task",
+    "provider": "clickup",
+    "method": "GET",
+    "url": "https://api.clickup.com/api/v2/task/86exy7xr3",
+    "status": "success",
+    "inputSummary": "读取 ClickUp task 86exy7xr3",
+    "statusCode": 200,
+    "outputSummary": "{\"id\":\"86exy7xr3\",\"custom_id\":null,\"custom_item_id\":0,\"name\":\"实现自有历史天气缓存：D-1 到 D-10 滚动窗口（低成本对象存储方案）\",\"text_content\":\"实现自有历史天气缓存：D-1 到 D-10 滚动窗口（低成本对象存储方案）\\n\\n背景\\n\\n当前青花植诊断依赖近 10 天环境上下文判断浇水、盆土干湿、闷根、低光、通风、温湿度胁迫等问题。\\n\\n但和风天气时光机存在两个问题：\\n\\n只能补历史数据，无法覆盖今天；\\n历史字段相对少，无法完整覆盖每日预报里的 uvIndex、cloud、vis、昼夜天气、昼夜风力等对植物诊断有价值的字段。\\n\\n因此，不能只依赖和风时光机作为青花植的历史天气事实源。\\n\\n本任务目标是：在 MVP 阶段，用低成本方案自建一个 D-1 到 D-10 的历史天气滚动窗口缓存。诊断链路只读自有缓存，不在用户请求时实时请求和风。\\n\\n设计口径\\n\\n这不是简单的“接口缓存”，而是青花植自己的：\\n\\nweather history service / 自有历史天气缓存服务\\n\\n核心职责：\\n\\n定时采集和风天气数据\\n  ↓\\n沉淀地点级天气快照\\n  ↓\\n生成 D-1 到 D-10 滚动窗口 JSON\\n  ↓\\n诊断服务读取自有缓存\\n  ↓\\n病例保存天气特征快照，保证诊断可追溯\\n\\n关键架构结论\\n\\nMVP 阶段不建议把天气主体缓存放数据库。\\n\\n天气数据特征是：\\n\\n小体积\\n按 locationKey + 日期窗口读取\\n写入频率低\\n读多写少\\n查询模式固定\\n不需要复杂 SQL\\n不需要事务强一致\\n\\n因此主缓存层应使用：\\n\\n对象存储 / 云存储 JSON 文件\\n\\n数据库只存元数据、索引、对象路径和病例引用，不作为天气窗口主体热"
+  },
+  {
+    "id": "clickup.get_task_comments",
+    "provider": "clickup",
+    "method": "GET",
+    "url": "https://api.clickup.com/api/v2/task/86exy7xr3/comment",
+    "status": "success",
+    "inputSummary": "读取 ClickUp task comments 86exy7xr3",
+    "statusCode": 200,
+    "outputSummary": "{\"comments\":[]}"
+  }
+]

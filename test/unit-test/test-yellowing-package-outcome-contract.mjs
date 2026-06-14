@@ -145,7 +145,7 @@ function createRouteRepository() {
       const allowed = new Set(outcomeKeys)
       return ROUTES.filter(item => allowed.has(item.outcomeKey))
     },
-    async getOutcomeRouteGates(routeKeys = []) {
+    async getOutcomeRouteConditions(routeKeys = []) {
       const allowed = new Set(routeKeys)
       return GATES.filter(item => allowed.has(item.routeKey))
     },
@@ -187,7 +187,10 @@ function buildOverwateringTimelineAnswers() {
     }
   })
 
-  assert.equal(runtimeEnvironmentCarePayload.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
+  assert.equal(
+    runtimeEnvironmentCarePayload.environmentCareContext.outputs.wateringContext,
+    'likely_too_wet'
+  )
 
   return buildRouteAnswersFromRuntimeEnvironmentCarePayload({
     answers: [
@@ -202,11 +205,7 @@ function buildOverwateringTimelineAnswers() {
 
 async function assertYellowingPackageOutcome({ label, answers, expectedOutcomeKey }) {
   const decision = await planOutcomeRoutes({
-    candidateOutcomeKeys: [
-      'overwatering_root_pressure',
-      'fertilizer_repot_stress',
-      'sunburn'
-    ],
+    candidateOutcomeKeys: ['overwatering_root_pressure', 'fertilizer_repot_stress', 'sunburn'],
     routeEvidenceContext: buildRouteEvidenceContext({
       observedEvidenceSet: buildObservedEvidenceSet(),
       answers,

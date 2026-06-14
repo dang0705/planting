@@ -6,7 +6,10 @@ const Module = require('node:module')
 const originalModuleLoad = Module._load
 
 Module._load = function loadWithStubs(request, parent, isMain) {
-  if (request === './repositories/outcome-route-repository') {
+  if (
+    request === './repositories/outcome-route-repository' ||
+    request === '../repositories/outcome-route-repository'
+  ) {
     return {
       getDiagnosisOutcomesByKeys: async outcomeKeys =>
         outcomeKeys.map(key => ({
@@ -15,8 +18,10 @@ Module._load = function loadWithStubs(request, parent, isMain) {
           outcomeType: 'problematic',
           outcomeCategory: 'yellow_leaf_route',
           displayNameCn: key === 'overwatering_root_pressure' ? '过浇导致根压' : key,
-          userDefinitionCn: key === 'overwatering_root_pressure' ? '浇水频率偏高，根部处于受压状态。' : '',
-          actionProfileKey: key === 'overwatering_root_pressure' ? 'action_overwatering_root_pressure_basic' : '',
+          userDefinitionCn:
+            key === 'overwatering_root_pressure' ? '浇水频率偏高，根部处于受压状态。' : '',
+          actionProfileKey:
+            key === 'overwatering_root_pressure' ? 'action_overwatering_root_pressure_basic' : '',
           riskLevel: 'medium'
         })),
       getOutcomeActionProfiles: async keys =>
@@ -34,7 +39,9 @@ Module._load = function loadWithStubs(request, parent, isMain) {
   return originalModuleLoad.call(this, request, parent, isMain)
 }
 
-const { resolveYellowLeafOutcomeResult } = require('../../cloudfunctions/diagnose-http/domain/yellow-leaf-outcome-resolver.js')
+const {
+  resolveYellowLeafOutcomeResult
+} = require('../../cloudfunctions/diagnose-http/domain/yellow-leaf-outcome-resolver.js')
 
 const result = await resolveYellowLeafOutcomeResult({
   sessionId: 'session-yellow-1',

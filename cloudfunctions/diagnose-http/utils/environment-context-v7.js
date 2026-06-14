@@ -1,6 +1,7 @@
 'use strict'
 
 const { resolveCarePlannerThresholds } = require('../configs/care-planner-thresholds')
+const { estimateLightHealth, normalizeUserLightContext } = require('./light-health-estimator')
 
 const WATERING_CONTEXTS = Object.freeze({
   WET: 'likely_too_wet',
@@ -58,15 +59,7 @@ const STRONGER_LIGHT_TOKENS = [
   '移到直射',
   '换到强光'
 ]
-const LOW_LIGHT_TOKENS = [
-  'low_light',
-  'shade',
-  'dark',
-  'weak_light',
-  '阴暗',
-  '弱光',
-  '背阴'
-]
+const LOW_LIGHT_TOKENS = ['low_light', 'shade', 'dark', 'weak_light', '阴暗', '弱光', '背阴']
 
 function normalizeText(value = '') {
   return String(value || '')
@@ -87,7 +80,9 @@ function isPlainObject(value) {
 }
 
 function toNumber(value) {
-  if (value === null || value === undefined || value === '') {return undefined}
+  if (value === null || value === undefined || value === '') {
+    return undefined
+  }
   const number = Number(value)
   return Number.isFinite(number) ? number : undefined
 }
@@ -95,13 +90,17 @@ function toNumber(value) {
 function firstNumber(...values) {
   for (const value of values) {
     const number = toNumber(value)
-    if (number !== undefined) {return number}
+    if (number !== undefined) {
+      return number
+    }
   }
   return undefined
 }
 
 function clonePlain(value) {
-  if (!isPlainObject(value) && !Array.isArray(value)) {return value}
+  if (!isPlainObject(value) && !Array.isArray(value)) {
+    return value
+  }
   return JSON.parse(JSON.stringify(value))
 }
 
@@ -118,28 +117,32 @@ function pickNumberFields(source = {}, fields = []) {
 function firstText(...values) {
   for (const value of values) {
     const text = normalizeRawText(value)
-    if (text) {return text}
+    if (text) {
+      return text
+    }
   }
   return ''
 }
 
 function normalizeDate(value = '') {
   const raw = normalizeRawText(value)
-  if (!raw) {return ''}
+  if (!raw) {
+    return ''
+  }
   const match = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/)
   if (match) {
-    return [
-      match[1],
-      String(match[2]).padStart(2, '0'),
-      String(match[3]).padStart(2, '0')
-    ].join('-')
+    return [match[1], String(match[2]).padStart(2, '0'), String(match[3]).padStart(2, '0')].join(
+      '-'
+    )
   }
   return raw.slice(0, 10)
 }
 
 function parseDate(value = '') {
   const normalized = normalizeDate(value)
-  if (!normalized) {return null}
+  if (!normalized) {
+    return null
+  }
   const date = new Date(`${normalized}T12:00:00Z`)
   return Number.isNaN(date.getTime()) ? null : date
 }
@@ -147,7 +150,9 @@ function parseDate(value = '') {
 function daysAgo(referenceDate = '', eventDate = '') {
   const reference = parseDate(referenceDate)
   const event = parseDate(eventDate)
-  if (!reference || !event) {return null}
+  if (!reference || !event) {
+    return null
+  }
   return Math.floor((reference.getTime() - event.getTime()) / MS_PER_DAY)
 }
 
@@ -181,7 +186,9 @@ function normalizeBucket(value = '') {
 }
 
 function normalizeDailyEnvironmentRecord(record = {}) {
-  if (!isPlainObject(record)) {return null}
+  if (!isPlainObject(record)) {
+    return null
+  }
 
   const tempMin = firstNumber(
     record.tempMin,
@@ -216,10 +223,18 @@ function normalizeDailyEnvironmentRecord(record = {}) {
     record.rain
   )
   const uvIndex = firstNumber(record.uvIndex, record.uv_index, record.uv)
-  const weatherText = firstText(record.weatherText, record.textDay, record.textNight, record.weather, record.text)
+  const weatherText = firstText(
+    record.weatherText,
+    record.textDay,
+    record.textNight,
+    record.weather,
+    record.text
+  )
 
   return {
-    date: normalizeDate(record.date || record.fxDate || record.obsDate || record.time || record.day),
+    date: normalizeDate(
+      record.date || record.fxDate || record.obsDate || record.time || record.day
+    ),
     tempMin,
     tempMax,
     humidity,
@@ -235,17 +250,49 @@ function resolveEnvironmentBounds(options = {}) {
   const genus = options.genusCareProfile || options.genusProfile || options.plantContext || {}
   const watering = genus.watering || genus.wateringStrategy || genus.watering_strategy_json || {}
   return {
-    temperatureMin: firstNumber(options.temperatureMin, options.tempMin, genus.temperatureMin, genus.tempMin, watering.tempMin),
-    temperatureMax: firstNumber(options.temperatureMax, options.tempMax, genus.temperatureMax, genus.tempMax, watering.tempMax),
-    humidityMin: firstNumber(options.humidityMin, options.rhMin, genus.humidityMin, genus.rhMin, watering.humidityMin),
-    humidityMax: firstNumber(options.humidityMax, options.rhMax, genus.humidityMax, genus.rhMax, watering.humidityMax),
-    uvIndexMax: firstNumber(options.uvIndexMax, options.uvMax, genus.uvIndexMax, genus.uvMax, genus.sunning?.uvIndexMax)
+    temperatureMin: firstNumber(
+      options.temperatureMin,
+      options.tempMin,
+      genus.temperatureMin,
+      genus.tempMin,
+      watering.tempMin
+    ),
+    temperatureMax: firstNumber(
+      options.temperatureMax,
+      options.tempMax,
+      genus.temperatureMax,
+      genus.tempMax,
+      watering.tempMax
+    ),
+    humidityMin: firstNumber(
+      options.humidityMin,
+      options.rhMin,
+      genus.humidityMin,
+      genus.rhMin,
+      watering.humidityMin
+    ),
+    humidityMax: firstNumber(
+      options.humidityMax,
+      options.rhMax,
+      genus.humidityMax,
+      genus.rhMax,
+      watering.humidityMax
+    ),
+    uvIndexMax: firstNumber(
+      options.uvIndexMax,
+      options.uvMax,
+      genus.uvIndexMax,
+      genus.uvMax,
+      genus.sunning?.uvIndexMax
+    )
   }
 }
 
 function isRainyRecord(record = {}) {
   const precipitation = toNumber(record.precipitation)
-  if (precipitation !== undefined && precipitation > 0) {return true}
+  if (precipitation !== undefined && precipitation > 0) {
+    return true
+  }
   return /雨|雪|rain|shower|storm/i.test(record.weatherText || '')
 }
 
@@ -340,12 +387,24 @@ function buildEnvironmentSummary({
       record.tempMax > effectiveBounds.temperatureMax
     const rainy = isRainyRecord(record)
 
-    if (highHumidity) {summary.highHumidityDays += 1}
-    if (lowHumidity) {summary.lowHumidityDays += 1}
-    if (cold && highHumidity) {summary.coldHumidDays += 1}
-    if (hot && lowHumidity) {summary.hotDryDays += 1}
-    if (hot && highHumidity) {summary.hotHumidDays += 1}
-    if (rainy) {summary.rainyDays += 1}
+    if (highHumidity) {
+      summary.highHumidityDays += 1
+    }
+    if (lowHumidity) {
+      summary.lowHumidityDays += 1
+    }
+    if (cold && highHumidity) {
+      summary.coldHumidDays += 1
+    }
+    if (hot && lowHumidity) {
+      summary.hotDryDays += 1
+    }
+    if (hot && highHumidity) {
+      summary.hotHumidDays += 1
+    }
+    if (rainy) {
+      summary.rainyDays += 1
+    }
 
     updateConsecutiveStreak(streaks, 'highHumidity', highHumidity)
     updateConsecutiveStreak(streaks, 'lowHumidity', lowHumidity)
@@ -397,11 +456,19 @@ function buildForecastEnvironmentSummary15d(options = {}) {
 }
 
 function normalizeWateringEvent(event = {}, conservativeReferenceDate = '') {
-  if (!isPlainObject(event)) {return null}
+  if (!isPlainObject(event)) {
+    return null
+  }
   const watered = event.watered !== false && event.didWater !== false && event.action !== 'none'
-  const amount = normalizeText(event.amount || event.wateringAmount || event.watering_amount || event.level || event.value)
-  const date = normalizeDate(event.date || event.eventDate || event.day || conservativeReferenceDate)
-  if (!watered && !amount) {return null}
+  const amount = normalizeText(
+    event.amount || event.wateringAmount || event.watering_amount || event.level || event.value
+  )
+  const date = normalizeDate(
+    event.date || event.eventDate || event.day || conservativeReferenceDate
+  )
+  if (!watered && !amount) {
+    return null
+  }
   return {
     date,
     watered: true,
@@ -410,11 +477,24 @@ function normalizeWateringEvent(event = {}, conservativeReferenceDate = '') {
 }
 
 function normalizeFertilizingEvent(event = {}, conservativeReferenceDate = '') {
-  if (!isPlainObject(event)) {return null}
-  const fertilized = event.fertilized !== false && event.didFertilize !== false && event.action !== 'none'
-  const strength = normalizeText(event.strength || event.fertilizingStrength || event.fertilizerStrength || event.concentration || event.value)
-  const date = normalizeDate(event.date || event.eventDate || event.day || conservativeReferenceDate)
-  if (!fertilized && !strength) {return null}
+  if (!isPlainObject(event)) {
+    return null
+  }
+  const fertilized =
+    event.fertilized !== false && event.didFertilize !== false && event.action !== 'none'
+  const strength = normalizeText(
+    event.strength ||
+      event.fertilizingStrength ||
+      event.fertilizerStrength ||
+      event.concentration ||
+      event.value
+  )
+  const date = normalizeDate(
+    event.date || event.eventDate || event.day || conservativeReferenceDate
+  )
+  if (!fertilized && !strength) {
+    return null
+  }
   return {
     date,
     fertilized: true,
@@ -423,10 +503,18 @@ function normalizeFertilizingEvent(event = {}, conservativeReferenceDate = '') {
 }
 
 function normalizeLightEvent(event = {}, conservativeReferenceDate = '') {
-  if (!isPlainObject(event)) {return null}
-  const value = normalizeRawText(event.event || event.lightEvent || event.light_event || event.value || event.condition)
-  const date = normalizeDate(event.date || event.eventDate || event.day || conservativeReferenceDate)
-  if (!value) {return null}
+  if (!isPlainObject(event)) {
+    return null
+  }
+  const value = normalizeRawText(
+    event.event || event.lightEvent || event.light_event || event.value || event.condition
+  )
+  const date = normalizeDate(
+    event.date || event.eventDate || event.day || conservativeReferenceDate
+  )
+  if (!value) {
+    return null
+  }
   return {
     date,
     event: normalizeText(value),
@@ -440,7 +528,9 @@ function eventsFromDailyRecords(dailyRecords = [], referenceDate = '') {
   const lightChangeEvents = []
 
   for (const record of Array.isArray(dailyRecords) ? dailyRecords : []) {
-    if (!isPlainObject(record)) {continue}
+    if (!isPlainObject(record)) {
+      continue
+    }
     const date = normalizeDate(record.date || record.day || referenceDate)
     if (
       record.watered === true ||
@@ -449,7 +539,9 @@ function eventsFromDailyRecords(dailyRecords = [], referenceDate = '') {
       record.watering_amount
     ) {
       const event = normalizeWateringEvent(record, date)
-      if (event) {wateringEvents.push(event)}
+      if (event) {
+        wateringEvents.push(event)
+      }
     }
     if (
       record.fertilized === true ||
@@ -459,14 +551,30 @@ function eventsFromDailyRecords(dailyRecords = [], referenceDate = '') {
       record.fertilizing_strength
     ) {
       const event = normalizeFertilizingEvent(record, date)
-      if (event) {fertilizingEvents.push(event)}
+      if (event) {
+        fertilizingEvents.push(event)
+      }
     }
-    if (record.lightEvent || record.light_event || record.lightCondition || record.light_condition) {
-      const event = normalizeLightEvent({
-        ...record,
-        event: record.lightEvent || record.light_event || record.lightCondition || record.light_condition
-      }, date)
-      if (event) {lightChangeEvents.push(event)}
+    if (
+      record.lightEvent ||
+      record.light_event ||
+      record.lightCondition ||
+      record.light_condition
+    ) {
+      const event = normalizeLightEvent(
+        {
+          ...record,
+          event:
+            record.lightEvent ||
+            record.light_event ||
+            record.lightCondition ||
+            record.light_condition
+        },
+        date
+      )
+      if (event) {
+        lightChangeEvents.push(event)
+      }
     }
   }
 
@@ -479,7 +587,9 @@ function dedupeNormalizedEvents(events = [], keyResolver = event => JSON.stringi
 
   for (const event of Array.isArray(events) ? events : []) {
     const key = String(keyResolver(event) || '').trim()
-    if (!key || seen.has(key)) {continue}
+    if (!key || seen.has(key)) {
+      continue
+    }
     seen.add(key)
     deduped.push(event)
   }
@@ -491,7 +601,9 @@ function latestDaysAgo(referenceDate = '', events = []) {
   let latest = null
   for (const event of events) {
     const diff = daysAgo(referenceDate, event.date)
-    if (diff === null || diff < 0) {continue}
+    if (diff === null || diff < 0) {
+      continue
+    }
     latest = latest === null ? diff : Math.min(latest, diff)
   }
   return latest
@@ -514,8 +626,12 @@ function buildBehaviorSummary(referenceDate = '', events = {}, lastFertilizedBuc
     fertilizingCount10d: fertilizingEvents.length,
     latestFertilizerStrength: normalizeText(latestFertilizingEvent?.strength || ''),
     lastFertilizedBucket,
-    movedToStrongerLightWithin10d: lightChangeEvents.some(event => includesAnyToken(event.event || event.rawEvent, STRONGER_LIGHT_TOKENS)),
-    userHasDirectSunExposure: lightChangeEvents.some(event => includesAnyToken(event.event || event.rawEvent, DIRECT_LIGHT_TOKENS))
+    movedToStrongerLightWithin10d: lightChangeEvents.some(event =>
+      includesAnyToken(event.event || event.rawEvent, STRONGER_LIGHT_TOKENS)
+    ),
+    userHasDirectSunExposure: lightChangeEvents.some(event =>
+      includesAnyToken(event.event || event.rawEvent, DIRECT_LIGHT_TOKENS)
+    )
   }
 }
 
@@ -530,7 +646,9 @@ function normalizeCareBehaviorTimeline(input = {}) {
   )
   const dailyRecords = Array.isArray(source.dailyRecords)
     ? source.dailyRecords
-    : (Array.isArray(source.daily_records) ? source.daily_records : [])
+    : Array.isArray(source.daily_records)
+      ? source.daily_records
+      : []
   const eventsFromDaily = eventsFromDailyRecords(dailyRecords, referenceDate)
   const wateringEvents10d = [
     ...(Array.isArray(source.wateringEvents10d) ? source.wateringEvents10d : []),
@@ -539,9 +657,8 @@ function normalizeCareBehaviorTimeline(input = {}) {
   ]
     .map(event => normalizeWateringEvent(event, referenceDate))
     .filter(Boolean)
-  const dedupedWateringEvents10d = dedupeNormalizedEvents(
-    wateringEvents10d,
-    event => normalizeDate(event.date)
+  const dedupedWateringEvents10d = dedupeNormalizedEvents(wateringEvents10d, event =>
+    normalizeDate(event.date)
   ).slice(0, 10)
   const fertilizingEvents10d = [
     ...(Array.isArray(source.fertilizingEvents10d) ? source.fertilizingEvents10d : []),
@@ -550,9 +667,8 @@ function normalizeCareBehaviorTimeline(input = {}) {
   ]
     .map(event => normalizeFertilizingEvent(event, referenceDate))
     .filter(Boolean)
-  const dedupedFertilizingEvents10d = dedupeNormalizedEvents(
-    fertilizingEvents10d,
-    event => normalizeDate(event.date)
+  const dedupedFertilizingEvents10d = dedupeNormalizedEvents(fertilizingEvents10d, event =>
+    normalizeDate(event.date)
   ).slice(0, 10)
   const lightChangeEvents10d = [
     ...(Array.isArray(source.lightChangeEvents10d) ? source.lightChangeEvents10d : []),
@@ -561,17 +677,16 @@ function normalizeCareBehaviorTimeline(input = {}) {
   ]
     .map(event => normalizeLightEvent(event, referenceDate))
     .filter(Boolean)
-  const dedupedLightChangeEvents10d = dedupeNormalizedEvents(
-    lightChangeEvents10d,
-    event => normalizeDate(event.date)
+  const dedupedLightChangeEvents10d = dedupeNormalizedEvents(lightChangeEvents10d, event =>
+    normalizeDate(event.date)
   ).slice(0, 10)
-  const lastFertilizedBucket = normalizeBucket(source.lastFertilizedBucket || source.last_fertilized_bucket)
-  const normalizedDailyRecords = dailyRecords
-    .filter(isPlainObject)
-    .map(record => ({
-      ...record,
-      date: normalizeDate(record.date || record.day || referenceDate)
-    }))
+  const lastFertilizedBucket = normalizeBucket(
+    source.lastFertilizedBucket || source.last_fertilized_bucket
+  )
+  const normalizedDailyRecords = dailyRecords.filter(isPlainObject).map(record => ({
+    ...record,
+    date: normalizeDate(record.date || record.day || referenceDate)
+  }))
 
   const summary = buildBehaviorSummary(
     referenceDate,
@@ -601,11 +716,14 @@ function normalizeCareBehaviorTimeline(input = {}) {
 }
 
 function resolveBaselineInterval(wateringStrategy = {}) {
-  const freq = wateringStrategy.freq || wateringStrategy.intervalDays || wateringStrategy.interval_days
+  const freq =
+    wateringStrategy.freq || wateringStrategy.intervalDays || wateringStrategy.interval_days
   if (Array.isArray(freq) && freq.length >= 2) {
     const min = toNumber(freq[0])
     const max = toNumber(freq[1])
-    if (min !== undefined && max !== undefined) {return [min, max]}
+    if (min !== undefined && max !== undefined) {
+      return [min, max]
+    }
   }
   return [5, 8]
 }
@@ -632,13 +750,16 @@ function buildWateringPlanner({
   const maxReasonableWaterings10d = Math.max(1, Math.ceil(behaviorWindowDays / minIntervalDays))
   const highHumidityPressureHit =
     Number(historical.highHumidityDays || 0) >= Number(thresholds.wetHighHumidityDaysMin || 0) ||
-    Number(historical.maxConsecutiveHighHumidityDays || 0) >= Number(thresholds.wetHighHumidityConsecutiveDaysMin || 0)
+    Number(historical.maxConsecutiveHighHumidityDays || 0) >=
+      Number(thresholds.wetHighHumidityConsecutiveDaysMin || 0)
   const coldHumidPressureHit =
     Number(historical.coldHumidDays || 0) >= Number(thresholds.wetColdHumidDaysMin || 0) ||
-    Number(historical.maxConsecutiveColdHumidDays || 0) >= Number(thresholds.wetColdHumidConsecutiveDaysMin || 0)
+    Number(historical.maxConsecutiveColdHumidDays || 0) >=
+      Number(thresholds.wetColdHumidConsecutiveDaysMin || 0)
   const rainyPressureHit =
     Number(historical.rainyDays || 0) >= Number(thresholds.wetRainyDaysMin || 0) ||
-    Number(historical.maxConsecutiveRainyDays || 0) >= Number(thresholds.wetRainyConsecutiveDaysMin || 0)
+    Number(historical.maxConsecutiveRainyDays || 0) >=
+      Number(thresholds.wetRainyConsecutiveDaysMin || 0)
   const wetPressureHitCount = [
     highHumidityPressureHit,
     coldHumidPressureHit,
@@ -648,17 +769,18 @@ function buildWateringPlanner({
   const effectiveWetWaterings10d = Math.max(1, maxReasonableWaterings10d - wetPressureScore)
   const forecastHotDryHit =
     Number(forecast.hotDryDays || 0) >= Number(thresholds.dryForecastHotDryDaysMin || 0) ||
-    Number(forecast.maxConsecutiveHotDryDays || 0) >= Number(thresholds.dryForecastHotDryConsecutiveDaysMin || 0)
+    Number(forecast.maxConsecutiveHotDryDays || 0) >=
+      Number(thresholds.dryForecastHotDryConsecutiveDaysMin || 0)
   const historicalHotDryHit =
     Number(historical.hotDryDays || 0) >= Number(thresholds.dryHistoricalHotDryDaysMin || 0) ||
-    Number(historical.maxConsecutiveHotDryDays || 0) >= Number(thresholds.dryHistoricalHotDryConsecutiveDaysMin || 0)
+    Number(historical.maxConsecutiveHotDryDays || 0) >=
+      Number(thresholds.dryHistoricalHotDryConsecutiveDaysMin || 0)
   const lastWateredTooLongAgo =
     lastWateredDaysAgo === null ||
     Number(lastWateredDaysAgo) >= Number(thresholds.dryLastWateredDaysAgoMin || 0)
   const wetExceeded = wateringCount10d > effectiveWetWaterings10d
   const dryExceeded =
-    (forecastHotDryHit && lastWateredTooLongAgo) ||
-    (historicalHotDryHit && wateringCount10d === 0)
+    (forecastHotDryHit && lastWateredTooLongAgo) || (historicalHotDryHit && wateringCount10d === 0)
   const calculation = {
     formulaVersion: 'watering_planner_v7_configurable',
     inputs: {
@@ -675,10 +797,7 @@ function buildWateringPlanner({
         'maxConsecutiveRainyDays',
         'maxConsecutiveHotDryDays'
       ]),
-      forecast: pickNumberFields(forecast, [
-        'hotDryDays',
-        'maxConsecutiveHotDryDays'
-      ])
+      forecast: pickNumberFields(forecast, ['hotDryDays', 'maxConsecutiveHotDryDays'])
     },
     thresholds: clonePlain(thresholds),
     formulas: [
@@ -690,21 +809,25 @@ function buildWateringPlanner({
       }),
       buildPlannerFormulaStep({
         key: 'high_humidity_pressure_hit',
-        expression: 'highHumidityDays >= wetHighHumidityDaysMin || maxConsecutiveHighHumidityDays >= wetHighHumidityConsecutiveDaysMin',
+        expression:
+          'highHumidityDays >= wetHighHumidityDaysMin || maxConsecutiveHighHumidityDays >= wetHighHumidityConsecutiveDaysMin',
         inputs: {
           highHumidityDays: Number(historical.highHumidityDays || 0),
           maxConsecutiveHighHumidityDays: Number(historical.maxConsecutiveHighHumidityDays || 0)
         },
         thresholds: {
           wetHighHumidityDaysMin: Number(thresholds.wetHighHumidityDaysMin || 0),
-          wetHighHumidityConsecutiveDaysMin: Number(thresholds.wetHighHumidityConsecutiveDaysMin || 0)
+          wetHighHumidityConsecutiveDaysMin: Number(
+            thresholds.wetHighHumidityConsecutiveDaysMin || 0
+          )
         },
         result: highHumidityPressureHit,
         passed: highHumidityPressureHit
       }),
       buildPlannerFormulaStep({
         key: 'cold_humid_pressure_hit',
-        expression: 'coldHumidDays >= wetColdHumidDaysMin || maxConsecutiveColdHumidDays >= wetColdHumidConsecutiveDaysMin',
+        expression:
+          'coldHumidDays >= wetColdHumidDaysMin || maxConsecutiveColdHumidDays >= wetColdHumidConsecutiveDaysMin',
         inputs: {
           coldHumidDays: Number(historical.coldHumidDays || 0),
           maxConsecutiveColdHumidDays: Number(historical.maxConsecutiveColdHumidDays || 0)
@@ -718,7 +841,8 @@ function buildWateringPlanner({
       }),
       buildPlannerFormulaStep({
         key: 'rainy_pressure_hit',
-        expression: 'rainyDays >= wetRainyDaysMin || maxConsecutiveRainyDays >= wetRainyConsecutiveDaysMin',
+        expression:
+          'rainyDays >= wetRainyDaysMin || maxConsecutiveRainyDays >= wetRainyConsecutiveDaysMin',
         inputs: {
           rainyDays: Number(historical.rainyDays || 0),
           maxConsecutiveRainyDays: Number(historical.maxConsecutiveRainyDays || 0)
@@ -759,7 +883,8 @@ function buildWateringPlanner({
       }),
       buildPlannerFormulaStep({
         key: 'too_dry_condition',
-        expression: '(forecastHotDryHit && lastWateredTooLongAgo) || (historicalHotDryHit && wateringCount10d === 0)',
+        expression:
+          '(forecastHotDryHit && lastWateredTooLongAgo) || (historicalHotDryHit && wateringCount10d === 0)',
         inputs: { forecastHotDryHit, lastWateredTooLongAgo, historicalHotDryHit, wateringCount10d },
         result: dryExceeded,
         passed: dryExceeded
@@ -772,9 +897,10 @@ function buildWateringPlanner({
       baseline,
       wateringContext: WATERING_CONTEXTS.WET,
       action: WATERING_ACTIONS.WET,
-      reasons: wetPressureScore > 0
-        ? ['recent_watering_plus_wet_environment']
-        : ['recent_watering_exceeds_baseline_window'],
+      reasons:
+        wetPressureScore > 0
+          ? ['recent_watering_plus_wet_environment']
+          : ['recent_watering_exceeds_baseline_window'],
       thresholds: clonePlain(thresholds),
       calculation: {
         ...calculation,
@@ -837,8 +963,12 @@ function buildFertilizingPlanner(...args) {
       options.recent_fertilizer_strength ||
       summary.latestFertilizerStrength
   )
-  const weakGrowth = Boolean(options.plantShowsWeakGrowth || options.weakGrowth || options.hasWeakGrowth)
-  const justRepotted = Boolean(options.justRepottedRecently || options.justRepotted || options.recentlyRepotted)
+  const weakGrowth = Boolean(
+    options.plantShowsWeakGrowth || options.weakGrowth || options.hasWeakGrowth
+  )
+  const justRepotted = Boolean(
+    options.justRepottedRecently || options.justRepotted || options.recentlyRepotted
+  )
   const recentFertilizingCount = Number(summary.fertilizingCount10d || 0)
   const concentratedStrengths = Array.isArray(thresholds.concentratedStrengths)
     ? thresholds.concentratedStrengths.map(item => normalizeText(item)).filter(Boolean)
@@ -877,7 +1007,8 @@ function buildFertilizingPlanner(...args) {
     formulas: [
       buildPlannerFormulaStep({
         key: 'recent_or_high_risk_condition',
-        expression: 'justRepotted || concentrated || recentFertilizingCount > 0 || lastFertilizedBucket === "within_10d"',
+        expression:
+          'justRepotted || concentrated || recentFertilizingCount > 0 || lastFertilizedBucket === "within_10d"',
         inputs: { justRepotted, concentrated, recentFertilizingCount, lastFertilizedBucket },
         result: recentConditionHit,
         passed: recentConditionHit
@@ -964,9 +1095,17 @@ function buildFertilizingPlanner(...args) {
   }
 }
 
-function hasDirectExposureScene({ userLightCondition = '', userHasDirectSunExposure = false, behaviorTimeline = {} } = {}) {
-  if (userHasDirectSunExposure === true) {return true}
-  if (includesAnyToken(userLightCondition, DIRECT_LIGHT_TOKENS)) {return true}
+function hasDirectExposureScene({
+  userLightCondition = '',
+  userHasDirectSunExposure = false,
+  behaviorTimeline = {}
+} = {}) {
+  if (userHasDirectSunExposure === true) {
+    return true
+  }
+  if (includesAnyToken(userLightCondition, DIRECT_LIGHT_TOKENS)) {
+    return true
+  }
   const summary = behaviorTimeline?.summary || {}
   return summary.userHasDirectSunExposure === true
 }
@@ -976,7 +1115,10 @@ function buildLightPlanner({
   userLightCondition = '',
   userHasDirectSunExposure = false,
   plantRequiresBrightLight = false,
-  behaviorTimeline = {}
+  behaviorTimeline = {},
+  plantContext = {},
+  userLightContext = {},
+  weatherDays = []
 } = {}) {
   const timeline = behaviorTimeline?.summary
     ? behaviorTimeline
@@ -1000,9 +1142,20 @@ function buildLightPlanner({
     lightContext.push(LIGHT_CONTEXTS.LOW_LIGHT_BACKGROUND)
   }
 
+  const lightHealth = estimateLightHealth({
+    plantContext,
+    userLightContext,
+    weatherDays
+  })
+
   return {
     lightContext,
-    realExposureScene: directExposure
+    realExposureScene: directExposure,
+    userLightContext: normalizeUserLightContext(userLightContext),
+    lightHealthScore: lightHealth?.lightHealthScore ?? null,
+    lightHealthLevel: lightHealth?.lightHealthLevel || '',
+    lightHealthReason: lightHealth?.lightHealthReason || '',
+    lightHealthEvidence: lightHealth?.lightHealthEvidence || null
   }
 }
 
@@ -1022,6 +1175,7 @@ function buildEnvironmentCareContextV7({
   plantContext = {},
   environmentWeatherWindow = {},
   careBehaviorTimeline = {},
+  userLightContext = {},
   thresholds: rawThresholds = null
 } = {}) {
   const thresholds = resolveCarePlannerThresholds(
@@ -1053,19 +1207,25 @@ function buildEnvironmentCareContextV7({
     uvIndexMax: plantContext.uvIndexMax
   }
   const historicalSummary10d = buildHistoricalEnvironmentSummary10d({
-    dailyRecords: environmentWeatherWindow.historicalDays || environmentWeatherWindow.historical_days || [],
+    dailyRecords:
+      environmentWeatherWindow.historicalDays || environmentWeatherWindow.historical_days || [],
     userHasDirectSunExposure: directExposure,
     thresholds,
     ...bounds
   })
   const forecastSummary15d = buildForecastEnvironmentSummary15d({
-    dailyRecords: environmentWeatherWindow.forecastDays || environmentWeatherWindow.forecast_days || [],
+    dailyRecords:
+      environmentWeatherWindow.forecastDays || environmentWeatherWindow.forecast_days || [],
     userHasDirectSunExposure: directExposure,
     thresholds,
     ...bounds
   })
   const watering = buildWateringPlanner({
-    wateringStrategy: plantContext.watering || plantContext.wateringStrategy || plantContext.watering_strategy_json || {},
+    wateringStrategy:
+      plantContext.watering ||
+      plantContext.wateringStrategy ||
+      plantContext.watering_strategy_json ||
+      {},
     historical: historicalSummary10d,
     forecast: forecastSummary15d,
     behaviorTimeline: timeline,
@@ -1075,7 +1235,9 @@ function buildEnvironmentCareContextV7({
     behaviorTimeline: timeline,
     lastFertilizedBucket: timeline.lastFertilizedBucket,
     plantShowsWeakGrowth: Boolean(plantContext.plantShowsWeakGrowth || plantContext.weakGrowth),
-    justRepottedRecently: Boolean(plantContext.justRepottedRecently || plantContext.recentlyRepotted),
+    justRepottedRecently: Boolean(
+      plantContext.justRepottedRecently || plantContext.recentlyRepotted
+    ),
     thresholds
   })
   const light = buildLightPlanner({
@@ -1083,7 +1245,15 @@ function buildEnvironmentCareContextV7({
     userLightCondition: plantContext.userLightCondition || plantContext.lightCondition || '',
     userHasDirectSunExposure: directExposure,
     plantRequiresBrightLight: resolvePlantRequiresBrightLight(plantContext),
-    behaviorTimeline: timeline
+    behaviorTimeline: timeline,
+    plantContext,
+    userLightContext,
+    weatherDays: [
+      ...(environmentWeatherWindow.historicalDays ||
+        environmentWeatherWindow.historical_days ||
+        []),
+      ...(environmentWeatherWindow.forecastDays || environmentWeatherWindow.forecast_days || [])
+    ]
   })
 
   return {
@@ -1101,25 +1271,34 @@ function buildEnvironmentCareContextV7({
       watering: watering.calculation || null,
       fertilizing: fertilizing.calculation || null,
       light: {
-        formulaVersion: 'light_planner_v7_contextual',
+        formulaVersion: light.lightHealthEvidence
+          ? 'light_health_estimator_v1'
+          : 'light_planner_v7_contextual',
         inputs: {
-          forecast: pickNumberFields(forecastSummary15d, [
-            'aboveGenusUvMaxDays'
-          ]),
+          forecast: pickNumberFields(forecastSummary15d, ['aboveGenusUvMaxDays']),
           userHasDirectSunExposure: directExposure,
-          plantRequiresBrightLight: resolvePlantRequiresBrightLight(plantContext)
+          plantRequiresBrightLight: resolvePlantRequiresBrightLight(plantContext),
+          userLightContext: light.userLightContext
         },
         result: {
           lightContext: light.lightContext,
-          realExposureScene: light.realExposureScene
-        }
+          realExposureScene: light.realExposureScene,
+          lightHealthScore: light.lightHealthScore,
+          lightHealthLevel: light.lightHealthLevel,
+          lightHealthReason: light.lightHealthReason
+        },
+        evidence: light.lightHealthEvidence
       }
     },
     outputs: {
       wateringContext: watering.wateringContext,
       wateringAction: watering.action,
       fertilizingAction: fertilizing.action,
-      lightContext: light.lightContext
+      lightContext: light.lightContext,
+      lightHealthScore: light.lightHealthScore,
+      lightHealthLevel: light.lightHealthLevel,
+      lightHealthReason: light.lightHealthReason,
+      lightHealthEvidence: light.lightHealthEvidence
     }
   }
 }

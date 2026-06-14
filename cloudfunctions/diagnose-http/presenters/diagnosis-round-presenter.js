@@ -1,24 +1,14 @@
 'use strict'
 
-const {
-  buildPublicVisualAggregateSummary
-} = require('../utils/public-runtime-summary')
-const {
-  buildPublicCoreProcess
-} = require('../utils/public-core-process')
-const {
-  normalizePublicDerivedEvidenceSet
-} = require('../utils/derived-evidence')
-const {
-  normalizePublicDiagnosisDirectionSet
-} = require('../utils/diagnosis-directions')
+const { buildPublicVisualAggregateSummary } = require('../utils/public-runtime-summary')
+const { buildPublicCoreProcess } = require('../utils/public-core-process')
+const { normalizePublicDerivedEvidenceSet } = require('../utils/derived-evidence')
+const { normalizePublicDiagnosisDirectionSet } = require('../utils/diagnosis-directions')
 const {
   normalizeOutcomeType,
   normalizeDiagnosisRoutePrimaryAction
 } = require('../utils/diagnosis-contract')
-const {
-  diagnosisRoundPresenterHelpers
-} = require('./diagnosis-round-presenter-helpers')
+const { diagnosisRoundPresenterHelpers } = require('./diagnosis-round-presenter-helpers')
 const {
   buildPublicStopState,
   buildPublicOutputEligibility,
@@ -34,9 +24,13 @@ function isPlainObject(value) {
 }
 
 function compactCareBehaviorEvent(event = {}, eventType = '') {
-  if (!isPlainObject(event)) {return null}
+  if (!isPlainObject(event)) {
+    return null
+  }
   const date = String(event.date || '').trim()
-  if (!date) {return null}
+  if (!date) {
+    return null
+  }
 
   if (eventType === 'watering') {
     return {
@@ -68,7 +62,9 @@ function compactCareBehaviorEventList(events = [], eventType = '') {
 }
 
 function compactCareBehaviorSummary(summary = null) {
-  if (!isPlainObject(summary)) {return null}
+  if (!isPlainObject(summary)) {
+    return null
+  }
 
   return {
     wateringCount10d: Number(summary.wateringCount10d || 0),
@@ -84,11 +80,19 @@ function compactCareBehaviorSummary(summary = null) {
 }
 
 function compactEnvironmentSummary(summary = null) {
-  if (!isPlainObject(summary)) {return null}
+  if (!isPlainObject(summary)) {
+    return null
+  }
 
   return {
-    windowDays: summary.windowDays === null || summary.windowDays === undefined ? null : Number(summary.windowDays),
-    recordCount: summary.recordCount === null || summary.recordCount === undefined ? null : Number(summary.recordCount),
+    windowDays:
+      summary.windowDays === null || summary.windowDays === undefined
+        ? null
+        : Number(summary.windowDays),
+    recordCount:
+      summary.recordCount === null || summary.recordCount === undefined
+        ? null
+        : Number(summary.recordCount),
     highHumidityDays: Number(summary.highHumidityDays || 0),
     lowHumidityDays: Number(summary.lowHumidityDays || 0),
     coldHumidDays: Number(summary.coldHumidDays || 0),
@@ -111,7 +115,9 @@ function compactEnvironmentSummary(summary = null) {
 }
 
 function compactWateringPlanner(value = null) {
-  if (!isPlainObject(value)) {return null}
+  if (!isPlainObject(value)) {
+    return null
+  }
   return {
     baseline: isPlainObject(value.baseline) ? value.baseline : null,
     wateringContext: String(value.wateringContext || '').trim(),
@@ -126,7 +132,9 @@ function compactWateringPlanner(value = null) {
 }
 
 function compactFertilizingPlanner(value = null) {
-  if (!isPlainObject(value)) {return null}
+  if (!isPlainObject(value)) {
+    return null
+  }
   return {
     baseline: isPlainObject(value.baseline) ? value.baseline : null,
     action: String(value.action || '').trim(),
@@ -140,17 +148,31 @@ function compactFertilizingPlanner(value = null) {
 }
 
 function compactLightPlanner(value = null) {
-  if (!isPlainObject(value)) {return null}
+  if (!isPlainObject(value)) {
+    return null
+  }
   return {
     lightContext: Array.isArray(value.lightContext)
       ? value.lightContext.map(item => String(item || '').trim()).filter(Boolean)
       : [],
+    userLightContext: isPlainObject(value.userLightContext) ? value.userLightContext : null,
+    lightHealthScore:
+      value.lightHealthScore === null || value.lightHealthScore === undefined
+        ? null
+        : Number(value.lightHealthScore),
+    lightHealthLevel: String(value.lightHealthLevel || '').trim(),
+    lightHealthReason: String(value.lightHealthReason || '').trim(),
+    lightHealthEvidence: isPlainObject(value.lightHealthEvidence)
+      ? value.lightHealthEvidence
+      : null,
     realExposureScene: Boolean(value.realExposureScene)
   }
 }
 
 function compactCareBehaviorTimelineForPublic(value = null) {
-  if (!isPlainObject(value)) {return null}
+  if (!isPlainObject(value)) {
+    return null
+  }
 
   const referenceDate = String(value.referenceDate || value.reference_date || '').trim()
   const dailyRecords = Array.isArray(value.dailyRecords)
@@ -181,14 +203,20 @@ function compactCareBehaviorTimelineForPublic(value = null) {
     fertilizing_events_10d: fertilizingEvents10d,
     lightChangeEvents10d,
     light_change_events_10d: lightChangeEvents10d,
-    lastFertilizedBucket: String(value.lastFertilizedBucket || value.last_fertilized_bucket || '').trim(),
-    last_fertilized_bucket: String(value.lastFertilizedBucket || value.last_fertilized_bucket || '').trim(),
+    lastFertilizedBucket: String(
+      value.lastFertilizedBucket || value.last_fertilized_bucket || ''
+    ).trim(),
+    last_fertilized_bucket: String(
+      value.lastFertilizedBucket || value.last_fertilized_bucket || ''
+    ).trim(),
     summary: compactCareBehaviorSummary(value.summary)
   }
 }
 
 function compactEnvironmentCareContextForPublic(value = null, careBehaviorTimeline = null) {
-  if (!isPlainObject(value)) {return null}
+  if (!isPlainObject(value)) {
+    return null
+  }
 
   const outputs = isPlainObject(value.outputs)
     ? {
@@ -197,7 +225,16 @@ function compactEnvironmentCareContextForPublic(value = null, careBehaviorTimeli
         fertilizingAction: String(value.outputs.fertilizingAction || '').trim(),
         lightContext: Array.isArray(value.outputs.lightContext)
           ? value.outputs.lightContext.map(item => String(item || '').trim()).filter(Boolean)
-          : []
+          : [],
+        lightHealthScore:
+          value.outputs.lightHealthScore === null || value.outputs.lightHealthScore === undefined
+            ? null
+            : Number(value.outputs.lightHealthScore),
+        lightHealthLevel: String(value.outputs.lightHealthLevel || '').trim(),
+        lightHealthReason: String(value.outputs.lightHealthReason || '').trim(),
+        lightHealthEvidence: isPlainObject(value.outputs.lightHealthEvidence)
+          ? value.outputs.lightHealthEvidence
+          : null
       }
     : null
   const compactTimeline = compactCareBehaviorTimelineForPublic(
@@ -219,7 +256,10 @@ function compactEnvironmentCareContextForPublic(value = null, careBehaviorTimeli
   }
 }
 
-function buildCompactAnswerRoundResponse(roundResult = {}, helpers = diagnosisRoundPresenterHelpers) {
+function buildCompactAnswerRoundResponse(
+  roundResult = {},
+  helpers = diagnosisRoundPresenterHelpers
+) {
   const {
     resolvePublicPlantRefs,
     toPublicObservedSymptoms,
@@ -238,11 +278,16 @@ function buildCompactAnswerRoundResponse(roundResult = {}, helpers = diagnosisRo
     isQuestion ? 'ask_first' : 'standard_flow'
   )
   const stopReason = String(roundResult?.stopReason || '').trim()
-  const visualAggregateSource = roundResult?.visualAggregateSummary || roundResult?.visualAggregateResult || null
+  const visualAggregateSource =
+    roundResult?.visualAggregateSummary || roundResult?.visualAggregateResult || null
   const compactVisualAggregateSummary = buildCompactVisualAggregateSummary(visualAggregateSource)
-  const compactVisualBatchTrace = buildCompactVisualBatchTrace(roundResult?.visualBatchTrace || null)
+  const compactVisualBatchTrace = buildCompactVisualBatchTrace(
+    roundResult?.visualBatchTrace || null
+  )
   const careBehaviorTimeline = compactCareBehaviorTimelineForPublic(
-    roundResult?.careBehaviorTimeline || roundResult?.environmentCareContext?.careBehaviorTimeline || null
+    roundResult?.careBehaviorTimeline ||
+      roundResult?.environmentCareContext?.careBehaviorTimeline ||
+      null
   )
   const environmentCareContext = compactEnvironmentCareContextForPublic(
     roundResult?.environmentCareContext || null,
@@ -271,7 +316,10 @@ function buildCompactAnswerRoundResponse(roundResult = {}, helpers = diagnosisRo
     nextSteps: Array.isArray(roundResult?.nextSteps) ? roundResult.nextSteps : [],
     whatToAvoid: Array.isArray(roundResult?.whatToAvoid) ? roundResult.whatToAvoid : [],
     actionAdvice: buildCompactActionAdvice(roundResult?.actionAdvice),
-    visibleOutcomes: (Array.isArray(roundResult?.visibleOutcomes) ? roundResult.visibleOutcomes : [])
+    visibleOutcomes: (Array.isArray(roundResult?.visibleOutcomes)
+      ? roundResult.visibleOutcomes
+      : []
+    )
       .map(buildCompactOutcomeEntry)
       .filter(Boolean),
     outcomeMode: String(roundResult?.outcomeMode || '').trim(),
@@ -348,17 +396,25 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
   const plantRefs = resolvePublicPlantRefs(roundResult)
   const observedSymptoms = toPublicObservedSymptoms(roundResult?.observedSymptoms || [])
   const observedEvidenceSet = toPublicObservedEvidenceSet(roundResult?.observedEvidenceSet || [])
-  const derivedEvidenceSet = normalizePublicDerivedEvidenceSet(roundResult?.derivedEvidenceSet || [])
-  const diagnosisDirections = normalizePublicDiagnosisDirectionSet(roundResult?.diagnosisDirections || [])
+  const derivedEvidenceSet = normalizePublicDerivedEvidenceSet(
+    roundResult?.derivedEvidenceSet || []
+  )
+  const diagnosisDirections = normalizePublicDiagnosisDirectionSet(
+    roundResult?.diagnosisDirections || []
+  )
   const stopState = buildPublicStopState(roundResult?.stopState || null)
   const outputEligibility = buildPublicOutputEligibility(roundResult?.outputEligibility || null)
-  const diagnosticTrace = Array.isArray(roundResult?.diagnosticTrace) ? roundResult.diagnosticTrace : []
+  const diagnosticTrace = Array.isArray(roundResult?.diagnosticTrace)
+    ? roundResult.diagnosticTrace
+    : []
   const careBaselineSummary = roundResult?.careBaselineSummary || null
   const environmentDeviationHints = Array.isArray(roundResult?.environmentDeviationHints)
     ? roundResult.environmentDeviationHints
     : []
   const careBehaviorTimeline = compactCareBehaviorTimelineForPublic(
-    roundResult?.careBehaviorTimeline || roundResult?.environmentCareContext?.careBehaviorTimeline || null
+    roundResult?.careBehaviorTimeline ||
+      roundResult?.environmentCareContext?.careBehaviorTimeline ||
+      null
   )
   const environmentCareContext = compactEnvironmentCareContextForPublic(
     roundResult?.environmentCareContext || null,
@@ -431,7 +487,10 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
       nextSteps: Array.isArray(roundResult?.nextSteps) ? roundResult.nextSteps : [],
       whatToAvoid: Array.isArray(roundResult?.whatToAvoid) ? roundResult.whatToAvoid : [],
       actionAdvice: buildCompactActionAdvice(roundResult?.actionAdvice),
-      visibleOutcomes: (Array.isArray(roundResult?.visibleOutcomes) ? roundResult.visibleOutcomes : [])
+      visibleOutcomes: (Array.isArray(roundResult?.visibleOutcomes)
+        ? roundResult.visibleOutcomes
+        : []
+      )
         .map(buildCompactOutcomeEntry)
         .filter(Boolean),
       outcomeMode: String(roundResult?.outcomeMode || '').trim(),
@@ -530,7 +589,10 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
     nextSteps: Array.isArray(roundResult?.nextSteps) ? roundResult.nextSteps : [],
     whatToAvoid: Array.isArray(roundResult?.whatToAvoid) ? roundResult.whatToAvoid : [],
     actionAdvice: buildCompactActionAdvice(roundResult?.actionAdvice),
-    visibleOutcomes: (Array.isArray(roundResult?.visibleOutcomes) ? roundResult.visibleOutcomes : [])
+    visibleOutcomes: (Array.isArray(roundResult?.visibleOutcomes)
+      ? roundResult.visibleOutcomes
+      : []
+    )
       .map(buildCompactOutcomeEntry)
       .filter(Boolean),
     outcomeMode: String(roundResult?.outcomeMode || '').trim(),

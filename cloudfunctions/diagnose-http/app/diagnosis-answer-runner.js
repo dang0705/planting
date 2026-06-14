@@ -32,7 +32,10 @@ const { extractVisualSymptomsSafely, persistRoundResult } = require('./visual-ru
 const outcomeRouteRepository = require('../repositories/outcome-route-repository')
 const { createReviewTimingLogger } = require('../repositories/diagnosis-review/review-performance')
 const { triggerStaticRepositoryCachePreload } = require('./static-cache-preloader')
-const { getQuestionPackageByMode, buildQuestionPackageUiHints } = require('./question-package-response')
+const {
+  getQuestionPackageByMode,
+  buildQuestionPackageUiHints
+} = require('./question-package-response')
 
 function getSessionQuestionRowRuntime() {
   return require('./session-question-row-runtime')
@@ -48,6 +51,39 @@ function getAnswerRevisionRuntime() {
 
 function getSessionImageInputRuntime() {
   return require('./session-image-input-runtime')
+}
+
+function isCompleteQuestionPackageSnapshotAnswerSubmit({
+  requestMode = '',
+  questionPackageSnapshot = null,
+  answers = []
+} = {}) {
+  if (normalizeRequestMode(requestMode) !== 'answer_submit') {
+    return false
+  }
+
+  const packageQuestionKeys = new Set(
+    (Array.isArray(questionPackageSnapshot?.packageQuestions)
+      ? questionPackageSnapshot.packageQuestions
+      : []
+    )
+      .map(item => String(item?.questionKey || '').trim())
+      .filter(Boolean)
+  )
+  if (!packageQuestionKeys.size) {
+    return false
+  }
+
+  const answerQuestionKeys = new Set(
+    (Array.isArray(answers) ? answers : [])
+      .map(item => String(item?.questionKey || '').trim())
+      .filter(Boolean)
+  )
+  if (answerQuestionKeys.size < packageQuestionKeys.size) {
+    return false
+  }
+
+  return Array.from(packageQuestionKeys).every(questionKey => answerQuestionKeys.has(questionKey))
 }
 
 async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } = {}) {
@@ -83,7 +119,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   const hasImageInputs = imageInputs.length > 0
   const requestMode = normalizeRequestMode(payload.requestMode || payload.mode || '')
   const isAnswerRevision = requestMode === 'answer_revision'
-  const isTerminalQuestionPackageSubmit = isQuestionPackageAnswerSubmitPayload({
+  const payloadQuestionPackageSubmit = isQuestionPackageAnswerSubmitPayload({
     payload,
     answers,
     requestMode
@@ -138,6 +174,14 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
 
   const answerRound = roundFromClient || expectedRound
   let refreshedSessionState = sessionState
+  const questionPackageSnapshot = resolveQuestionPackageSnapshot(refreshedSessionState)
+  const isTerminalQuestionPackageSubmit =
+    payloadQuestionPackageSubmit ||
+    isCompleteQuestionPackageSnapshotAnswerSubmit({
+      requestMode,
+      questionPackageSnapshot,
+      answers
+    })
   let visualExtraction = null
   let runtimeAnswers = answers
   const runtimeCarePayload = resolveRuntimeEnvironmentCarePayload({
@@ -155,7 +199,6 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     : { rows: [], progress: null }
   const sessionQuestionRowsForSession = sessionQuestionState.rows
   const sessionQuestionProgress = sessionQuestionState.progress
-  const questionPackageSnapshot = resolveQuestionPackageSnapshot(refreshedSessionState)
   let runtimeAnswerOptionMappings = []
   let runtimeRouteAnswerEffects = []
   let sessionQuestionRowsForRound = sessionQuestionRowsForSession
@@ -528,6 +571,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
 module.exports = {
   runAnswerDiagnosis,
   _test: {
-    runDeferredAnswerPersistence
+    runDeferredAnswerPersistence,
+    isCompleteQuestionPackageSnapshotAnswerSubmit
   }
 }
