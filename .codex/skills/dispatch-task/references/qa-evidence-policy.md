@@ -42,6 +42,7 @@ QA scope 由 Test Contract / 验收标准决定，不由“是否有 UI diff”�
 6. 弹窗 / 组件显示。
 7. Figma 或 UI 对齐。
 8. request changes 明确要求用户实际交互。
+9. 本地环境依赖的云函数数据格式有较大改动。
 
 如果 `miniprogram-automator` 可连接，QA 不得只做连接能力验证；必须执行 Test Contract 中的真实交互步骤。
 
@@ -88,6 +89,7 @@ miniprogram-automator currentPage / page_stack / page_data / evaluate(wx.request
    - `product`（功能或行为缺陷）
 
 输出时请固定补齐：
+
 - `projectPath`
 - `pagePath`
 - `operation chain`
@@ -132,7 +134,6 @@ QA 输出必须合并为一个简洁结果，不拆成大量重复章节。
 ## 合并输出结构
 
 使用 `../assets/templates/qa-evidence.md` 中的 `QA Result` 模板。
-
 
 ## 禁止旧式展开章节
 
