@@ -47,7 +47,9 @@ function parseCareJson(value) {
 
 function normalizeNullableString(value) {
   const normalized = String(value ?? '').trim()
-  if (!normalized) {return null}
+  if (!normalized) {
+    return null
+  }
 
   const lowered = normalized.toLowerCase()
   if (lowered === 'null' || lowered === 'undefined') {
@@ -176,7 +178,9 @@ function mapPlantRow(row) {
     ''
   const scientificName = row.scientific_name || row.canonical_identity_name_en || ''
   const internetName =
-    scientificName && scientificName !== canonicalName ? scientificName : row.canonical_identity_name_en || ''
+    scientificName && scientificName !== canonicalName
+      ? scientificName
+      : row.canonical_identity_name_en || ''
 
   return {
     id: catalogId,
@@ -194,7 +198,8 @@ function mapPlantRow(row) {
     genus: row.genus_name || '',
     familyCn: row.family_name_cn || '',
     familyEn: row.family_name_en || row.family_name_canonical || '',
-    difficulty: row.difficulty === null || row.difficulty === undefined ? 0 : Number(row.difficulty || 0),
+    difficulty:
+      row.difficulty === null || row.difficulty === undefined ? 0 : Number(row.difficulty || 0),
     internetName,
     identityLevel: row.identity_level || '',
     identityReviewStatus: row.identity_review_status || '',
@@ -202,10 +207,14 @@ function mapPlantRow(row) {
     fertilization: parseCareJson(row.fertilizing_strategy_json),
     sunning: parseCareJson(row.light_strategy_json),
     ventilation: parseCareJson(row.airflow_strategy_json),
-    temperatureMin: row.temp_min_c === null || row.temp_min_c === undefined ? null : Number(row.temp_min_c),
-    temperatureMax: row.temp_max_c === null || row.temp_max_c === undefined ? null : Number(row.temp_max_c),
-    humidityMin: row.humidity_min === null || row.humidity_min === undefined ? null : Number(row.humidity_min),
-    humidityMax: row.humidity_max === null || row.humidity_max === undefined ? null : Number(row.humidity_max),
+    temperatureMin:
+      row.temp_min_c === null || row.temp_min_c === undefined ? null : Number(row.temp_min_c),
+    temperatureMax:
+      row.temp_max_c === null || row.temp_max_c === undefined ? null : Number(row.temp_max_c),
+    humidityMin:
+      row.humidity_min === null || row.humidity_min === undefined ? null : Number(row.humidity_min),
+    humidityMax:
+      row.humidity_max === null || row.humidity_max === undefined ? null : Number(row.humidity_max),
     varianceLevel: row.evidence_level || '',
     careAuditStatus: row.care_review_status || ''
   }
@@ -285,7 +294,9 @@ async function getPlantCatalogById(plantId) {
 
 async function findCanonicalPlantMatch(name, limit = 5) {
   const normalized = normalizePlantKeyword(name)
-  if (!normalized) {return []}
+  if (!normalized) {
+    return []
+  }
 
   const sql = `
     ${CATALOG_SELECT_SQL},
@@ -365,11 +376,7 @@ async function createUserPlantInstance({
   let plantLatinName = null
   const lookupCandidates = Array.from(
     new Set(
-      [
-        normalizedPlantIdentityId,
-        normalizedSessionPlantId,
-        normalizedPlantId
-      ].filter(Boolean)
+      [normalizedPlantIdentityId, normalizedSessionPlantId, normalizedPlantId].filter(Boolean)
     )
   )
 
@@ -404,7 +411,8 @@ async function createUserPlantInstance({
   }
 
   if (plant) {
-    matchedPlantId = plant.id || normalizedPlantId || normalizedSessionPlantId || normalizedPlantIdentityId
+    matchedPlantId =
+      plant.id || normalizedPlantId || normalizedSessionPlantId || normalizedPlantIdentityId
     persistedPlantIdentityId = plant.plantIdentityId || persistedPlantIdentityId
     persistedSessionPlantId = plant.sessionPlantId || persistedSessionPlantId
     if (!persistedSessionPlantId && matchedPlantId && matchedPlantId !== persistedPlantIdentityId) {
@@ -416,10 +424,9 @@ async function createUserPlantInstance({
     plantLatinName = plant.latinName
   }
 
-  const finalIdentityResolutionStatus =
-    persistedPlantIdentityId
-      ? 'matched'
-      : normalizedIdentityResolutionStatus || 'unresolved'
+  const finalIdentityResolutionStatus = persistedPlantIdentityId
+    ? 'matched'
+    : normalizedIdentityResolutionStatus || 'unresolved'
 
   const sql = `
     INSERT INTO user_plant_instances (
@@ -549,7 +556,8 @@ function mapUserPlantInstanceRow(row, plant = null) {
     humidityMax: plant?.humidityMax ?? null,
     varianceLevel: plant?.varianceLevel || '',
     healthStatus: row.health_status || 'unknown',
-    healthScore: row.health_score === null || row.health_score === undefined ? null : Number(row.health_score)
+    healthScore:
+      row.health_score === null || row.health_score === undefined ? null : Number(row.health_score)
   }
 }
 
@@ -585,7 +593,9 @@ async function getUserPlantInstanceById(openid, id) {
   `
   const result = await models.$runSQL(sql, { openid, id: Number(id) })
   const row = result?.data?.executeResultList?.[0]
-  if (!row) {return null}
+  if (!row) {
+    return null
+  }
 
   const plantLookupId = resolveUserPlantCatalogLookupId(row)
   const plant = plantLookupId ? await getPlantCatalogById(plantLookupId) : null
@@ -633,11 +643,7 @@ async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) 
   const result = await models.$runSQL(sql, { openid, limit, offset })
   const rows = result?.data?.executeResultList || []
   const plantIds = Array.from(
-    new Set(
-      rows
-        .map(row => resolveUserPlantCatalogLookupId(row))
-        .filter(Boolean)
-    )
+    new Set(rows.map(row => resolveUserPlantCatalogLookupId(row)).filter(Boolean))
   )
   const plants = await Promise.all(
     plantIds.map(async plantId => [plantId, await getPlantCatalogById(plantId)])
@@ -646,10 +652,7 @@ async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) 
 
   return {
     list: rows.map(row =>
-      mapUserPlantInstanceRow(
-        row,
-        plantMap.get(resolveUserPlantCatalogLookupId(row)) || null
-      )
+      mapUserPlantInstanceRow(row, plantMap.get(resolveUserPlantCatalogLookupId(row)) || null)
     ),
     total,
     page: Number(page),
@@ -706,10 +709,13 @@ async function deleteUserPlantInstance(openid, id) {
   if (!existing) {
     throw new Error('植物不存在或无权限删除')
   }
-  await models.$runSQL('DELETE FROM user_plant_instances WHERE id = {{id}} AND _openid = {{openid}}', {
-    id: Number(id),
-    openid
-  })
+  await models.$runSQL(
+    'DELETE FROM user_plant_instances WHERE id = {{id}} AND _openid = {{openid}}',
+    {
+      id: Number(id),
+      openid
+    }
+  )
   return true
 }
 
@@ -814,7 +820,10 @@ async function listDiagnosisSessions(openid, { page = 1, pageSize = 10, userPlan
       mainIssue: row.final_problem_cn || row.top_problem_key || null,
       summary: normalizeReliabilitySummary(row.ai_summary || '', row.reliability_score),
       imageUrl: row.image_url || '',
-      healthScore: row.health_score === null || row.health_score === undefined ? null : Number(row.health_score),
+      healthScore:
+        row.health_score === null || row.health_score === undefined
+          ? null
+          : Number(row.health_score),
       healthStatus: row.health_status || 'unknown',
       reliabilityScore:
         row.reliability_score === null || row.reliability_score === undefined
@@ -826,7 +835,9 @@ async function listDiagnosisSessions(openid, { page = 1, pageSize = 10, userPlan
     total: Number(countResult?.data?.executeResultList?.[0]?.total || 0),
     page: Number(page),
     pageSize: limit,
-    hasMore: offset + (listResult?.data?.executeResultList || []).length < Number(countResult?.data?.executeResultList?.[0]?.total || 0)
+    hasMore:
+      offset + (listResult?.data?.executeResultList || []).length <
+      Number(countResult?.data?.executeResultList?.[0]?.total || 0)
   }
 }
 
@@ -872,5 +883,6 @@ module.exports = {
   updateUserPlantInstance,
   deleteUserPlantInstance,
   recordIdentifySession,
-  listDiagnosisSessions
+  listDiagnosisSessions,
+  resolvePlantContext
 }

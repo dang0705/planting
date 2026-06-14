@@ -4,50 +4,89 @@ import path from 'node:path'
 import automator from 'miniprogram-automator'
 
 const PORT = Number(process.env.MINIPROGRAM_AUTOMATOR_PORT || 9420)
-const PROJECT_PATH = process.env.MINIPROGRAM_PROJECT_PATH || path.join(process.cwd(), 'dist/dev/mp-weixin')
-const REPORT_DIR = path.join(process.cwd(), 'scripts/terminal-e2e/qa-artifacts', new Date().toISOString().replace(/[:.]/g, '-'))
+const PROJECT_PATH =
+  process.env.MINIPROGRAM_PROJECT_PATH || path.join(process.cwd(), 'dist/dev/mp-weixin')
+const REPORT_DIR = path.join(
+  process.cwd(),
+  'scripts/terminal-e2e/qa-artifacts',
+  new Date().toISOString().replace(/[:.]/g, '-')
+)
 
-function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)) }
-async function takeShot(mp, filePath) {
-  try { await mp.screenshot({ path: filePath }) } catch { }
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
-function normalize(value) { return String(value || '').trim() }
-function toLower(value) { return normalize(value).toLowerCase() }
-function nowStamp() { return new Date().toISOString() }
+async function takeShot(mp, filePath) {
+  try {
+    await mp.screenshot({ path: filePath })
+  } catch {
+    // 截图失败不阻断诊断流程探测。
+  }
+}
+function normalize(value) {
+  return String(value || '').trim()
+}
+function toLower(value) {
+  return normalize(value).toLowerCase()
+}
+function nowStamp() {
+  return new Date().toISOString()
+}
 
 function scoreForWateringOption(text) {
   const t = normalize(text)
-  if (!t) return -1
+  if (!t) {
+    return -1
+  }
   const hasThree = /3|三/.test(t)
   const hasDay = /天|日/.test(t)
-  if (hasThree && hasDay) return 100
-  if (/周/.test(t) && hasThree) return 80
-  if (/3/.test(t)) return 60
-  if (/(一|二|三|两|3)天|过去两周|10天/.test(t)) return 55
+  if (hasThree && hasDay) {
+    return 100
+  }
+  if (/周/.test(t) && hasThree) {
+    return 80
+  }
+  if (/3/.test(t)) {
+    return 60
+  }
+  if (/(一|二|三|两|3)天|过去两周|10天/.test(t)) {
+    return 55
+  }
   return 20
 }
 
 function scoreForUnknown(text) {
   const t = toLower(normalize(text))
-  if (!t) return -1
+  if (!t) {
+    return -1
+  }
   const kw = ['看不清', '看不出', '不知道', '不确定', '不清楚', 'unclear', 'unknown']
-  if (kw.some(item => t.includes(item))) return 90
+  if (kw.some(item => t.includes(item))) {
+    return 90
+  }
   return 10
 }
 
 function chooseOption(questionTitleText, options, forceUnknown = false) {
   const title = normalize(questionTitleText)
   const isWatering = /浇水|watering|water/.test(title)
-  const scored = options.map(option => ({
-    ...option,
-    score: forceUnknown
-      ? scoreForUnknown(option.text)
-      : (isWatering ? scoreForWateringOption(option.text) : scoreForUnknown(option.text))
-  })).sort((a, b) => b.score - a.score)
+  const scored = options
+    .map(option => ({
+      ...option,
+      score: forceUnknown
+        ? scoreForUnknown(option.text)
+        : isWatering
+          ? scoreForWateringOption(option.text)
+          : scoreForUnknown(option.text)
+    }))
+    .sort((a, b) => b.score - a.score)
 
   const candidate = scored[0]
-  if (!candidate) return null
-  if (candidate.score <= 0) return null
+  if (!candidate) {
+    return null
+  }
+  if (candidate.score <= 0) {
+    return null
+  }
   return candidate
 }
 
@@ -56,7 +95,9 @@ async function collectElementsWithId(page) {
   const items = []
   for (const item of elements) {
     const id = await item.attribute('id')
-    if (id) items.push({ id, el: item })
+    if (id) {
+      items.push({ id, el: item })
+    }
   }
   return items
 }
@@ -66,7 +107,9 @@ async function findByIdSuffix(page, suffix, timeoutMs = 12000, interval = 250) {
   while (Date.now() < end) {
     const items = await collectElementsWithId(page)
     const hit = items.find(item => item.id.endsWith(suffix))
-    if (hit) return hit.el
+    if (hit) {
+      return hit.el
+    }
     await sleep(interval)
   }
   return null
@@ -77,14 +120,20 @@ async function findByIdContains(page, contains, timeoutMs = 12000, interval = 25
   while (Date.now() < end) {
     const items = await collectElementsWithId(page)
     const hit = items.find(item => item.id.includes(contains))
-    if (hit) return hit.el
+    if (hit) {
+      return hit.el
+    }
     await sleep(interval)
   }
   return null
 }
 
 async function safeText(el) {
-  try { return normalize(await el.text()) } catch { return '' }
+  try {
+    return normalize(await el.text())
+  } catch {
+    return ''
+  }
 }
 
 async function runOnce(iteration) {
@@ -115,11 +164,13 @@ async function runOnce(iteration) {
 
     await takeShot(miniProgram, path.join(REPORT_DIR, `${stamp}-session${iteration}-00-index.png`))
 
-    const toasts = await miniProgram.evaluate(() => {
+    await miniProgram.evaluate(() => {
       const stack = []
       const origin = wx.showToast
       wx.showToast = (opts = {}) => {
-        if (opts && opts.title) stack.push(opts.title)
+        if (opts && opts.title) {
+          stack.push(opts.title)
+        }
         return Promise.resolve({ errMsg: 'showToast:ok' })
       }
       window.__qaDiagnoseToasts = { stack, origin }
@@ -165,16 +216,28 @@ async function runOnce(iteration) {
       throw new Error('未打开诊断弹窗')
     }
 
-    const yellowing = await findByIdSuffix(startPage, 'diagnose-dev-symptom-class-option-yellowing_mode', 12000, 300)
-    if (!yellowing) throw new Error('未找到黄叶模式按钮')
+    const yellowing = await findByIdSuffix(
+      startPage,
+      'diagnose-dev-symptom-class-option-yellowing_mode',
+      12000,
+      300
+    )
+    if (!yellowing) {
+      throw new Error('未找到黄叶模式按钮')
+    }
     runLog.steps.push({ step: 3, action: 'select-yellowing' })
     await yellowing.tap()
     await sleep(700)
-    await takeShot(miniProgram, path.join(shotDir, `${stamp}-session${iteration}-02-yellowing-selected.png`))
+    await takeShot(
+      miniProgram,
+      path.join(shotDir, `${stamp}-session${iteration}-02-yellowing-selected.png`)
+    )
 
     const pageAfterSelect = await miniProgram.currentPage()
     const pathAfterSelect = pageAfterSelect.path || pageAfterSelect.__route__ || ''
-    const enteredQuestionPackageAfterSelect = pathAfterSelect.includes('pages/diagnose/question-package')
+    const enteredQuestionPackageAfterSelect = pathAfterSelect.includes(
+      'pages/diagnose/question-package'
+    )
 
     if (enteredQuestionPackageAfterSelect) {
       runLog.steps.push({ step: 4, action: 'auto-entered-question-package', path: pathAfterSelect })
@@ -195,7 +258,12 @@ async function runOnce(iteration) {
       const pageNow = await miniProgram.currentPage()
       const currentPath = pageNow.path || pageNow.__route__ || ''
       if (!currentPath.includes('pages/diagnose/question-package')) {
-        runLog.steps.push({ step, action: 'break-not-question-package', reason: 'not-question-package', path: currentPath })
+        runLog.steps.push({
+          step,
+          action: 'break-not-question-package',
+          reason: 'not-question-package',
+          path: currentPath
+        })
         break
       }
 
@@ -209,10 +277,13 @@ async function runOnce(iteration) {
           const optionId = idx > 0 ? suffix.slice(idx + 1) : ''
           return { ...item, questionId, optionId }
         })
-      const questionShellItems = questionIdItems.filter(item => item.id.startsWith('diagnose-question-package-page-question-shell-'))
+      const questionShellItems = questionIdItems.filter(item =>
+        item.id.startsWith('diagnose-question-package-page-question-shell-')
+      )
 
-      const questionIds = questionShellItems
-        .map(item => item.id.replace('diagnose-question-package-page-question-shell-', ''))
+      const questionIds = questionShellItems.map(item =>
+        item.id.replace('diagnose-question-package-page-question-shell-', '')
+      )
       const currentQuestionId = questionIds[0] || null
       if (!currentQuestionId) {
         log.stepLogs.push({ step, action: 'break', reason: 'no-question-shell' })
@@ -221,8 +292,9 @@ async function runOnce(iteration) {
 
       const questionTitleEl = questionShellItems.find(item => item.id.endsWith(currentQuestionId))
       const questionTitleText = questionTitleEl ? await safeText(questionTitleEl.el) : ''
-      const currentQuestionOptions = optionItems
-        .filter(item => item.questionId === currentQuestionId)
+      const currentQuestionOptions = optionItems.filter(
+        item => item.questionId === currentQuestionId
+      )
 
       if (!currentQuestionOptions.length) {
         runLog.steps.push({ step, action: 'no-options', questionId: currentQuestionId })
@@ -239,12 +311,20 @@ async function runOnce(iteration) {
       const forceUnknown = !/浇水/.test(questionTitleText)
       const chosen = chooseOption(questionTitleText, detailedOptions, forceUnknown)
       if (!chosen) {
-        runLog.steps.push({ step, action: 'no-choice', questionId: currentQuestionId, questionTitleText })
+        runLog.steps.push({
+          step,
+          action: 'no-choice',
+          questionId: currentQuestionId,
+          questionTitleText
+        })
         break
       }
 
       await chosen.el.tap()
-      await takeShot(miniProgram, path.join(REPORT_DIR, `${stamp}-session${iteration}-step${step}-choose.png`))
+      await takeShot(
+        miniProgram,
+        path.join(REPORT_DIR, `${stamp}-session${iteration}-step${step}-choose.png`)
+      )
 
       const nextBtn = await findByIdContains(pageNow, 'diagnose-question-package-page-next-button')
       if (!nextBtn) {
@@ -263,7 +343,14 @@ async function runOnce(iteration) {
         toPath: afterPath
       })
 
-      log.stepLogs.push({ step, action: 'answer', questionId: currentQuestionId, chosen: chosen.text, fromPath: currentPath, toPath: afterPath })
+      log.stepLogs.push({
+        step,
+        action: 'answer',
+        questionId: currentQuestionId,
+        chosen: chosen.text,
+        fromPath: currentPath,
+        toPath: afterPath
+      })
       answers.push({
         step,
         action: 'answer',
@@ -273,7 +360,10 @@ async function runOnce(iteration) {
         fromPath: currentPath,
         toPath: afterPath
       })
-      await takeShot(miniProgram, path.join(REPORT_DIR, `${stamp}-session${iteration}-step${step}-next.png`))
+      await takeShot(
+        miniProgram,
+        path.join(REPORT_DIR, `${stamp}-session${iteration}-step${step}-next.png`)
+      )
 
       if (afterPath.includes('pages/diagnose/question-package') === false) {
         break
@@ -317,14 +407,21 @@ async function main() {
   }
 
   const reportFile = path.join(REPORT_DIR, 'yellowing-fixed-result.json')
-  fs.writeFileSync(reportFile, JSON.stringify({
-    tool: 'mcp-automator-direct-9420',
-    startedAt: new Date().toISOString(),
-    iterations: 3,
-    port: PORT,
-    projectPath: PROJECT_PATH,
-    results
-  }, null, 2))
+  fs.writeFileSync(
+    reportFile,
+    JSON.stringify(
+      {
+        tool: 'mcp-automator-direct-9420',
+        startedAt: new Date().toISOString(),
+        iterations: 3,
+        port: PORT,
+        projectPath: PROJECT_PATH,
+        results
+      },
+      null,
+      2
+    )
+  )
   console.log('DONE', reportFile)
 }
 

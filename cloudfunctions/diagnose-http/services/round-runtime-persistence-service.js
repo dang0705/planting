@@ -8,6 +8,7 @@ const {
   saveFinalDiagnosisSnapshot
 } = require('./session-service')
 const { upsertStopState } = require('../repositories/stop-state-repository')
+const { saveDiagnosisWeatherEvidenceReference } = require('../repositories/weather-repository')
 const {
   shouldWriteSessionQuestionRows,
   writeSessionRoundQuestionRows
@@ -95,6 +96,11 @@ async function persistRoundRuntime({
         openid,
         stopState: persistenceResponse?.stopState || null,
         outputEligibility: persistenceResponse?.outputEligibility || null
+      }),
+    () =>
+      saveDiagnosisWeatherEvidenceReference({
+        sessionId,
+        response: persistenceResponse
       })
   ]
   if (isInitialRound) {

@@ -17,6 +17,14 @@
     },
     {
       "functionName": "weather-http",
+      "path": "/weather/recent"
+    },
+    {
+      "functionName": "weather-http",
+      "path": "/weather/ingestion/recent-10d"
+    },
+    {
+      "functionName": "weather-http",
       "path": "/weather/health"
     }
   ]

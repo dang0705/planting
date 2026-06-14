@@ -315,7 +315,9 @@ plant match fields: id, plantIdentityId, historicalPlantId, canonicalName, match
 |---|---|---|
 | GET | `/weather/health` | 健康检查。 |
 | GET/POST | `/weather/current` | 当前天气，支持城市缓存和用户缓存。 |
+| GET/POST | `/weather/recent` | 最近天气缓存接口，返回自有 recent-10d 缓存结果。 |
 | GET/POST | `/weather/environment-context` | 环境天气窗口。 |
+| GET/POST | `/weather/ingestion/recent-10d` | 触发最近十天历史天气抓取与归档更新。 |
 | GET/POST | `/weather/v7/environment-context` | v7 环境天气窗口。 |
 
 ### 6.2 v7 天气窗口
@@ -325,7 +327,7 @@ plant match fields: id, plantIdentityId, historicalPlantId, canonicalName, match
 当前窗口：
 
 ```text
-historicalDays: 诊断日之前 10 天
+historicalDays: 诊断日前 D-1 到 D-10（自有缓存）
 forecastDays: 诊断日起 15 天
 currentWeather: 当前天气，可失败降级
 ```
@@ -345,14 +347,37 @@ currentWeather
 timestamp
 ```
 
-开发环境缺少和风天气 key 时，`/weather/environment-context` 读取应返回明确错误提示，并拒绝将缺失配置作为正常执行条件。
+诊断模式下，`/weather/environment-context` 必须优先读取自有 recent-10d 缓存。缓存 miss / 读取异常时返回 `200`，以 `weather evidence insufficient` 或空 `historicalDays` 表示不足；不能在用户诊断链路中同步触发 QWeather 同步调用。
+
+### 6.3 定时采集与批处理
+
+`weather-http` 新增 CloudBase timer event：`weather-ingestion-recent-10d`，cron 为 `0 20 0/6 * * * *`。该事件由 `app.js` 顶部受控分支处理，复用 recent-10d service。
+
+批处理逻辑只扫描 `weather_locations` 中 `is_active = 1` 且 `qweather_location_id` 非空的地点，并可带 `limit` 控制处理量，不触发全量省市/全国抓取。
+
+实现 helper 已拆分为：
+- `recent-weather-payloads.js`
+- `recent-weather-archive.js`
+- `recent-weather-batch.js`
 
 事实源：
 
 ```text
 cloudfunctions/weather-http/app.js
+cloudfunctions/weather-http/routes/recent-weather-routes.js
 cloudfunctions/weather-http/services/weather-window-service.js
+cloudfunctions/weather-http/services/recent-weather-service.js
+cloudfunctions/weather-http/services/weather-object-storage.js
+cloudfunctions/weather-http/repositories/weather-location-repository.js
+cloudfunctions/weather-http/routes/recent-weather-routes.js
+cloudfunctions/weather-http/services/recent-weather-payloads.js
+cloudfunctions/weather-http/services/recent-weather-archive.js
+cloudfunctions/weather-http/services/recent-weather-batch.js
 cloudfunctions/weather-http/adapters/qweather-adapter.js
+scripts/sql/ensure-weather-history-cache-tables.sql
+cloudfunctions/diagnose-http/repositories/weather-repository.js
+cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js
+cloudfunctions/weather-http/config.json
 ```
 
 ## 7. 植物目录与用户植物契约

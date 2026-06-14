@@ -13,6 +13,15 @@ const {
   resolveHttpUserInfo
 } = require('/opt/utils/http')
 const { buildEnvironmentWeatherWindow } = require('./services/weather-window-service')
+const {
+  buildDiagnosisRecentWeatherWindow,
+  buildRecentWeatherService,
+  handleRecentWeatherIngestionRequest,
+  handleRecentWeatherRequest,
+  handleRecentWeatherTimerEvent,
+  isRecentWeatherIngestionTimerEvent,
+  isDiagnosisMode
+} = require('./routes/recent-weather-routes')
 
 const QWEATHER_CONFIG = {
   baseUrl: process.env.QWEATHER_API_BASE_URL || 'https://n773jqqeap.re.qweatherapi.com',
@@ -57,17 +66,25 @@ function buildCityCacheContext({ city = '', province = '' } = {}) {
 }
 
 function buildCityCacheOpenid(cacheKey = '') {
-  const hash = crypto.createHash('sha1').update(String(cacheKey || '')).digest('hex')
+  const hash = crypto
+    .createHash('sha1')
+    .update(String(cacheKey || ''))
+    .digest('hex')
   return `city:${hash.slice(0, 40)}`
 }
 
 function formatDate(date) {
-  return date.toISOString().replace('T', ' ').replace(/\.\d{3}Z$/, '')
+  return date
+    .toISOString()
+    .replace('T', ' ')
+    .replace(/\.\d{3}Z$/, '')
 }
 
 function parseDbDate(value = '') {
   const raw = String(value || '').trim()
-  if (!raw) {return null}
+  if (!raw) {
+    return null
+  }
   return new Date(raw.includes('T') ? raw : `${raw.replace(' ', 'T')}Z`)
 }
 
@@ -150,14 +167,18 @@ function asArray(value = []) {
 }
 
 function normalizeEnvironmentContextMode(value = '') {
-  return String(value || '').trim().toLowerCase()
+  return String(value || '')
+    .trim()
+    .toLowerCase()
 }
 
 function buildEnvironmentWeatherWindowByMode(weatherWindow = null, mode = '') {
   const normalizedMode = normalizeEnvironmentContextMode(mode)
-  if (normalizedMode !== 'diagnosis') {return weatherWindow || {}}
+  if (normalizedMode !== 'diagnosis') {
+    return weatherWindow || {}
+  }
 
-  const sourceWindow = (weatherWindow && typeof weatherWindow === 'object') ? weatherWindow : {}
+  const sourceWindow = weatherWindow && typeof weatherWindow === 'object' ? weatherWindow : {}
   const historicalDays = asArray(sourceWindow.historicalDays)
   const historicalDaysLegacy = asArray(sourceWindow.historical_days)
   const normalizedHistoricalDays = historicalDays.length ? historicalDays : historicalDaysLegacy
@@ -181,22 +202,23 @@ function buildEnvironmentWeatherWindowByMode(weatherWindow = null, mode = '') {
   return {
     ...responseWindow,
     historicalDays: normalizedHistoricalDays,
-    meta: sourceWindow.meta && typeof sourceWindow.meta === 'object'
-      ? {
-          ...sourceWindow.meta,
-          recordCounts: {
-            historicalDays: normalizedHistoricalDays.length,
-            forecastDays: 0,
-            totalDailyRecords: normalizedHistoricalDays.length
+    meta:
+      sourceWindow.meta && typeof sourceWindow.meta === 'object'
+        ? {
+            ...sourceWindow.meta,
+            recordCounts: {
+              historicalDays: normalizedHistoricalDays.length,
+              forecastDays: 0,
+              totalDailyRecords: normalizedHistoricalDays.length
+            }
           }
-        }
-      : {
-          recordCounts: {
-            historicalDays: normalizedHistoricalDays.length,
-            forecastDays: 0,
-            totalDailyRecords: normalizedHistoricalDays.length
+        : {
+            recordCounts: {
+              historicalDays: normalizedHistoricalDays.length,
+              forecastDays: 0,
+              totalDailyRecords: normalizedHistoricalDays.length
+            }
           }
-        }
   }
 }
 
@@ -207,7 +229,9 @@ async function getCachedWeatherByOpenid(openid) {
       { openid }
     )
     const rows = result?.data?.executeResultList || []
-    if (!rows.length) {return null}
+    if (!rows.length) {
+      return null
+    }
 
     const cache = rows[0]
     const expiresAt = parseDbDate(cache.expires_at)
@@ -226,7 +250,9 @@ async function getCachedWeatherByOpenid(openid) {
 }
 
 async function getCachedWeatherByCity(cacheKey = '') {
-  if (!cacheKey) {return null}
+  if (!cacheKey) {
+    return null
+  }
 
   try {
     const result = await models.$runSQL(
@@ -242,7 +268,9 @@ async function getCachedWeatherByCity(cacheKey = '') {
       { cacheKey }
     )
     const rows = result?.data?.executeResultList || []
-    if (!rows.length) {return null}
+    if (!rows.length) {
+      return null
+    }
 
     const cache = rows[0]
     return {
@@ -297,7 +325,9 @@ async function saveCachedWeatherForOpenid(openid, weatherData, expiresAt = getNe
 
 async function saveCachedWeatherForCity(cacheContext = {}, weatherData) {
   const cacheKey = String(cacheContext.cacheKey || '').trim()
-  if (!cacheKey) {return null}
+  if (!cacheKey) {
+    return null
+  }
 
   const now = new Date()
   const expiresAt = getCityCacheExpiresAt()
@@ -373,7 +403,10 @@ async function main(event, context) {
       return jsonResponse(200, { code: 200, data: { status: 'ok', timestamp: Date.now() } })
     }
 
-    if (path.includes('/weather/environment-context') || path.includes('/weather/v7/environment-context')) {
+    if (
+      path.includes('/weather/environment-context') ||
+      path.includes('/weather/v7/environment-context')
+    ) {
       if (!['GET', 'POST'].includes(method)) {
         return methodNotAllowed(method)
       }
@@ -382,19 +415,28 @@ async function main(event, context) {
       const lat = payload.lat
       const lng = payload.lng
       const environmentContextMode = payload.mode || payload.environmentContextMode
-      if (!lat || !lng) {
+      const diagnosisMode = isDiagnosisMode(environmentContextMode)
+      if (!diagnosisMode && (!lat || !lng)) {
         return jsonResponse(400, { code: 400, message: '缺少位置参数：lat 和 lng', data: null })
       }
 
-      const weatherWindow = await buildEnvironmentWeatherWindow({
-        lat,
-        lng,
-        diagnosisDate: payload.diagnosisDate || payload.diagnosis_date || payload.date,
-        appEnv,
-        apiKey: QWEATHER_CONFIG.apiKey,
-        baseUrl: QWEATHER_CONFIG.baseUrl
-      })
-      const responseWindow = buildEnvironmentWeatherWindowByMode(weatherWindow, environmentContextMode)
+      const weatherWindow = diagnosisMode
+        ? await buildDiagnosisRecentWeatherWindow({
+            payload,
+            service: buildRecentWeatherService(QWEATHER_CONFIG)
+          })
+        : await buildEnvironmentWeatherWindow({
+            lat,
+            lng,
+            diagnosisDate: payload.diagnosisDate || payload.diagnosis_date || payload.date,
+            appEnv,
+            apiKey: QWEATHER_CONFIG.apiKey,
+            baseUrl: QWEATHER_CONFIG.baseUrl
+          })
+      const responseWindow = buildEnvironmentWeatherWindowByMode(
+        weatherWindow,
+        environmentContextMode
+      )
 
       return jsonResponse(200, {
         code: 200,
@@ -403,6 +445,37 @@ async function main(event, context) {
           ...responseWindow,
           timestamp: new Date().toISOString()
         }
+      })
+    }
+
+    if (path.includes('/weather/recent')) {
+      if (!['GET', 'POST'].includes(method)) {
+        return methodNotAllowed(method)
+      }
+      const payload = method === 'GET' ? request.query : request.body
+      const result = await handleRecentWeatherRequest({
+        payload,
+        service: buildRecentWeatherService(QWEATHER_CONFIG)
+      })
+      return jsonResponse(result.code, {
+        code: result.code,
+        message: result.message,
+        data: result.data
+      })
+    }
+
+    if (path.includes('/weather/ingestion/recent-10d')) {
+      if (method !== 'POST') {
+        return methodNotAllowed(method)
+      }
+      const result = await handleRecentWeatherIngestionRequest({
+        payload: request.body || {},
+        service: buildRecentWeatherService(QWEATHER_CONFIG)
+      })
+      return jsonResponse(result.code, {
+        code: result.code,
+        message: result.message,
+        data: result.data
       })
     }
 
@@ -459,7 +532,11 @@ async function main(event, context) {
           cachedAt: cityCache.cachedAt,
           expiresAt: cityCache.expiresAt
         }
-        await saveCachedWeatherForOpenid(openid, weatherData, parseDbDate(cityCache.expiresAt) || getCityCacheExpiresAt())
+        await saveCachedWeatherForOpenid(
+          openid,
+          weatherData,
+          parseDbDate(cityCache.expiresAt) || getCityCacheExpiresAt()
+        )
       }
     }
 
@@ -521,6 +598,13 @@ async function main(event, context) {
 }
 
 module.exports.main = (event, context) => {
+  if (isRecentWeatherIngestionTimerEvent(event)) {
+    return handleRecentWeatherTimerEvent({
+      event,
+      service: buildRecentWeatherService(QWEATHER_CONFIG)
+    })
+  }
+
   const request = getHttpRequestData(event, context)
   const appEnv = resolveRequestAppEnv(request.headers, request.query, request.body)
   return runWithRequestAppEnv(appEnv, () => main(event, context))
