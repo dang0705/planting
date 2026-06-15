@@ -28,7 +28,8 @@ inclusion: always
 11. 如需安装新插件，必须考证其适配微信小程序、包体积、npm / GitHub 状态、周下载量、star 数和最近 3 年 release 记录，并提供简短介绍，征得用户同意。
 12. 当前项目处于研发未上线阶段，除非用户明确要适配既有逻辑或功能，否则默认新逻辑完整替代既有逻辑，既有逻辑代码、相关依赖树必须予以彻底地调整和删除。严禁写保守、适配的代码。
 13. 使用端上 `miniprogram-automator` / `9420` 做诊断相关自动化测试时，必须先读取 `docs/ai-rules/frontend-automation-id-policy.md` 的“第三点 诊断流 id 映射”，并按该映射执行入口定位与关键断言。
-14. 除非用户显式要求，否则 subagent 在条件允许的情况下优先考虑线程复用。
+14. 今后所有端上验收如果本轮代码未部署到云端，必须先成功跑通 `npm run dev:mp-weixin:local-functions:lan` 的完整 LAN 本地函数 flow，并让小程序运行时命中新代码；只启动 scoped/local 单函数 gateway、backend curl、Node HTTP 或 gateway health，不得算端上验收完成。
+15. 除非用户显式要求，否则 subagent 在条件允许的情况下优先考虑线程复用。
 
 ## 3. 项目技术上下文
 

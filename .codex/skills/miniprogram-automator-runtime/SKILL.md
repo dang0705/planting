@@ -10,10 +10,18 @@ description: "微信小程序端上自动化默认通道：使用 miniprogram-au
 本 skill 是本项目微信小程序端上自动化的默认通道。默认执行模式固定为：
 
 ```text
-dist/dev/mp-weixin -> 9420 automator -> miniprogram-automator -> page / wx.request evidence
+npm run dev:mp-weixin:local-functions:lan -> dist/dev/mp-weixin -> 9420 automator -> miniprogram-automator -> page / wx.request evidence
 ```
 
 微信开发者工具仍是运行载体；项目规则不再使用额外自动化抽象层作为默认路径，也不再要求先走其他工具层、失败后再改用 automator。
+
+如果本轮代码未部署到云端，端上验收必须先成功跑通完整 LAN 本地函数 flow：
+
+```bash
+npm run dev:mp-weixin:local-functions:lan
+```
+
+只有该命令完成本地 CloudBase 函数 gateway readiness、函数 health route readiness、关键业务探针，并进入 `dist/dev/mp-weixin` watch 状态后，后续 `9420` / `miniprogram-automator` / `wx.request` 证据才可作为本轮端上验收。只启动 `LOCAL_FUNCTIONS=weather-http` 等 scoped gateway、只用 Node/curl 请求、只看 `__local_functions__/health` 或单函数 health，均只能作为排障证据，不得作为验收通过。
 
 ## 2. 适用触发
 
@@ -39,6 +47,7 @@ dist/dev/mp-weixin -> 9420 automator -> miniprogram-automator -> page / wx.reque
 默认先复用现有微信开发者工具和 `9420` 会话：
 
 ```bash
+npm run dev:mp-weixin:local-functions:lan
 lsof -nP -iTCP:9420 -sTCP:LISTEN
 ps aux | rg -i 'wechatwebdevtools|9420|miniprogram-automator|automator'
 ls -la /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin/project.config.json
@@ -99,6 +108,8 @@ const automator = require('miniprogram-automator')
 8. `miniProgram.evaluate(() => new Promise(resolve => wx.request(...)))`
 
 接口验收必须在小程序运行时用 `wx.request` 发起，Node 直接 HTTP、curl、local gateway smoke 只能作为后端 smoke。
+
+当发现 `3010/__local_functions__/health` 返回包含目标函数，但对应函数 health route 502 或提示 `connect ECONNREFUSED 127.0.0.1:900x` 时，必须归因为 stale local gateway / worker 缺失。此时不得绕过完整 LAN flow 用 scoped gateway 直接验收；应先修复并重新跑通 `npm run dev:mp-weixin:local-functions:lan`。
 
 ## 8. 诊断流定位
 

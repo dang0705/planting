@@ -28,7 +28,16 @@ QA scope 由 Test Contract / 验收标准决定，不由“是否有 UI diff”�
 
 对 `/diagnosis/question/start`、`/diagnosis/answer` 等端上接口，合格证据必须来自小程序运行时的 `wx.request` 或真实端上交互，通过 `miniprogram-automator` / `9420` 获取。Node 直接 HTTP / curl 只能作为后端 smoke，不得替代端上 QA。
 
-如果本轮代码未部署到云端，QA 必须使用 local functions gateway + 小程序运行时验证。若 `9420` / `miniprogram-automator` 无法覆盖 required item，QA Result 必须标记 blocker / not_verified；不得标记 complete。
+如果本轮代码未部署到云端，QA 必须先成功跑通 `npm run dev:mp-weixin:local-functions:lan` 的完整 LAN 本地函数 flow，再使用小程序运行时验证。若 `dev:mp-weixin:local-functions:lan`、`9420` 或 `miniprogram-automator` 无法覆盖 required item，QA Result 必须标记 blocker / not_verified；不得标记 complete。
+
+完整 LAN flow 的成功标准必须包括：
+
+1. `npm run dev:mp-weixin:local-functions:lan` 输出本地 CloudBase 函数 gateway 已就绪。
+2. 所有 required functions 的 health route 已就绪。
+3. 脚本内关键业务探针通过。
+4. `dist/dev/mp-weixin` 构建进入 watch / ready 状态。
+
+只启动 scoped gateway（例如只跑 `LOCAL_FUNCTIONS=weather-http`）、只看 `__local_functions__/health`、只做 curl/Node HTTP 或只做单函数 gateway smoke，均只能作为排障证据，不能算端上验收完成。
 
 ## Mini Program Automator
 
@@ -63,6 +72,7 @@ QA 默认必须保护微信开发者工具登录态、项目授权态和扫码�
 因此涉及小程序端上 QA 时，优先顺序必须是：
 
 ```text
+成功跑通 npm run dev:mp-weixin:local-functions:lan
 校验 Test Contract projectPath 为 /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin
 检查或复用 9420 automator 会话，确认原始 WebSocket 可握手
 miniprogram-automator currentPage / page_stack / page_data / evaluate(wx.request)
@@ -102,6 +112,7 @@ miniprogram-automator currentPage / page_stack / page_data / evaluate(wx.request
 - automation port 或 `wsEndpoint`
 - 是否通过 WeChat DevTools CLI 启动 automation
 - 若验证接口，说明请求是在小程序运行时通过 `wx.request` 发起，而不是 Node 直接 HTTP
+- 若本轮代码未部署云端，说明 `npm run dev:mp-weixin:local-functions:lan` 已跑通，且小程序请求命中该 LAN base URL
 - HTTP status、业务 code、关键响应字段和断言结果
 
 ## SQL schema truth gate
