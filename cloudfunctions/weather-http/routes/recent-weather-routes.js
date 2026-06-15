@@ -24,6 +24,7 @@ function pickPayloadLocation(payload = {}) {
     cityName: payload.cityName || payload.city || payload.city_name || '',
     city: payload.city || payload.cityName || '',
     timezone: payload.timezone || '',
+    diagnosisDate: payload.diagnosisDate || payload.diagnosis_date || payload.date || '',
     lat: payload.lat,
     lng: payload.lng
   }
@@ -111,7 +112,9 @@ async function handleRecentWeatherIngestionRequest({ payload = {}, service }) {
       recentObjectPath: result.recentObjectPath,
       recentFileId: result.recentFileId,
       targetDate: result.targetDate,
+      forecastDailyArchives: result.forecastDailyArchives || [],
       quality: result.quality,
+      recentPayload: result.recentPayload,
       sourceKind: 'weather_cache_recent_10d'
     }
   }

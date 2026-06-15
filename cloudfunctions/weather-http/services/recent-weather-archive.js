@@ -14,6 +14,7 @@ const {
   normalizeManifest,
   snapshotHasDailyForDate
 } = require('./recent-weather-payloads')
+const { isDisallowedHistoricalDaily } = require('./recent-weather-source-policy')
 
 async function readManifest({ storage, location }) {
   const locationKey = location.locationKey
@@ -66,6 +67,13 @@ async function readDailyArchive({ storage, location, date, manifest }) {
   if (!payload?.daily) {
     return buildMissingDailyRecord({ date, dailyObjectPath })
   }
+  if (isDisallowedHistoricalDaily(payload)) {
+    return buildMissingDailyRecord({
+      date,
+      dailyObjectPath,
+      reason: 'qweather_historical_weather_disallowed'
+    })
+  }
   return normalizeDailyWeatherRecord(payload.daily, {
     date,
     source: 'weather_cache_daily_archive',
@@ -111,6 +119,7 @@ async function rebuildRecentWeather({ storage, location, targetDate, generatedAt
 module.exports = {
   buildRecentWeatherObjectPath,
   findHistoricalRawSnapshotForDate,
+  isDisallowedHistoricalDaily,
   readManifest,
   rebuildRecentWeather
 }

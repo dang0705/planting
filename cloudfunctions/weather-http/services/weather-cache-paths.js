@@ -17,11 +17,21 @@ function normalizeLocationKey(value = '') {
   return normalizePathSegment(value, '')
 }
 
+function normalizeCoordinate(value) {
+  const number = Number(value)
+  if (!Number.isFinite(number)) {
+    return ''
+  }
+  return number.toFixed(5).replace('-', 'm').replace('.', '_')
+}
+
 function buildLocationKey({
   locationKey = '',
   qweatherLocationId = '',
   cityName = '',
-  city = ''
+  city = '',
+  lat,
+  lng
 } = {}) {
   const explicitKey = normalizeLocationKey(locationKey)
   if (explicitKey) {
@@ -31,6 +41,12 @@ function buildLocationKey({
   const locationId = normalizePathSegment(qweatherLocationId, '')
   if (locationId) {
     return `qweather:${locationId}`
+  }
+
+  const normalizedLat = normalizeCoordinate(lat)
+  const normalizedLng = normalizeCoordinate(lng)
+  if (normalizedLat && normalizedLng) {
+    return `coord:${normalizedLng}_${normalizedLat}`
   }
 
   const normalizedCity = normalizePathSegment(cityName || city, '')
@@ -79,6 +95,7 @@ module.exports = {
   buildWeatherLocationBasePath,
   buildWeatherManifestObjectPath,
   buildWeatherRawForecastObjectPath,
+  normalizeCoordinate,
   normalizeLocationKey,
   normalizePathSegment
 }

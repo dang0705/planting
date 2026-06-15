@@ -67,14 +67,19 @@ function buildDailyArchivePayload({
 }) {
   const forecastDaily = findForecastDailyForDate(snapshot, targetDate)
   const normalizedDaily = forecastDaily
-    ? normalizeDailyWeatherRecord(forecastDaily, {
-        date: targetDate,
-        source: 'qweather_forecast_10d_archive',
-        sourceKind: 'qweather_forecast_10d_archive',
-        weatherObjectPath: dailyObjectPath,
-        rawObjectPath,
-        quality: 'partial'
-      })
+    ? normalizeDailyWeatherRecord(
+        {
+          ...forecastDaily,
+          source: 'qweather_forecast_10d_archive',
+          sourceKind: 'qweather_forecast_10d_archive'
+        },
+        {
+          date: targetDate,
+          weatherObjectPath: dailyObjectPath,
+          rawObjectPath,
+          quality: 'partial'
+        }
+      )
     : buildMissingDailyRecord({
         date: targetDate,
         dailyObjectPath,

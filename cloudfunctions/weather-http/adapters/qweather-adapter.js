@@ -56,9 +56,22 @@ function normalizeForecastDaily(record = {}, source = 'qweather_forecast_15d') {
     tempMinC: toNumber(record.tempMin),
     humidity: toNumber(record.humidity),
     precipMm: toNumber(record.precip),
+    pressure: toNumber(record.pressure),
+    visibilityKm: toNumber(record.vis),
+    cloud: toNumber(record.cloud),
     uvIndex: toNumber(record.uvIndex),
+    iconDay: record.iconDay || '',
     textDay: record.textDay || '',
+    iconNight: record.iconNight || '',
     textNight: record.textNight || '',
+    wind360Day: toNumber(record.wind360Day),
+    windDirDay: record.windDirDay || '',
+    windScaleDay: record.windScaleDay || '',
+    windSpeedDay: toNumber(record.windSpeedDay),
+    wind360Night: toNumber(record.wind360Night),
+    windDirNight: record.windDirNight || '',
+    windScaleNight: record.windScaleNight || '',
+    windSpeedNight: toNumber(record.windSpeedNight),
     source
   })
 }

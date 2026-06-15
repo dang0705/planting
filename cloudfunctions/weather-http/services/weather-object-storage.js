@@ -63,6 +63,25 @@ async function readJsonFromFileId(app, fileId = '') {
   return parseJsonBuffer(result)
 }
 
+async function resolveFileIdFromCloudPath(app, cloudPath = '') {
+  const pathKey = String(cloudPath || '').trim()
+  if (!pathKey || typeof app.getUploadMetadata !== 'function') {
+    return ''
+  }
+
+  const result = await app.getUploadMetadata({ cloudPath: pathKey }).catch(error => {
+    const message = String(error?.message || error || '')
+    if (/not\s*found|不存在|NoSuchKey|404/i.test(message)) {
+      return null
+    }
+    throw error
+  })
+
+  return String(
+    result?.data?.fileId || result?.data?.fileID || result?.fileId || result?.fileID || ''
+  )
+}
+
 function createWeatherObjectStorage({ app = loadDefaultCloudBaseApp() } = {}) {
   async function uploadJson({ cloudPath = '', payload = {} } = {}) {
     if (!cloudPath) {
@@ -108,6 +127,11 @@ function createWeatherObjectStorage({ app = loadDefaultCloudBaseApp() } = {}) {
       }
     }
 
+    const resolvedFileId = await resolveFileIdFromCloudPath(app, cloudPath)
+    if (resolvedFileId) {
+      return readJsonFromFileId(app, resolvedFileId)
+    }
+
     return null
   }
 
@@ -119,5 +143,6 @@ function createWeatherObjectStorage({ app = loadDefaultCloudBaseApp() } = {}) {
 
 module.exports = {
   createWeatherObjectStorage,
-  parseJsonBuffer
+  parseJsonBuffer,
+  resolveFileIdFromCloudPath
 }
