@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { loginWithCode, loginWithPhone, getAccessToken, getUserById } from '@/api/wechat'
+import { normalizeWeatherCoordinates } from '@/utils/weather-coordinate.js'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -43,7 +44,9 @@ export const useUserStore = defineStore('user', {
   getters: {
     isPremium: state => state.membership.type === 'premium',
     canDiagnose: state => {
-      if (state.membership.type === 'premium') {return true}
+      if (state.membership.type === 'premium') {
+        return true
+      }
       return state.membership.freeQuota > 0
     },
     displayName: state => state.nickname || state.username || '植物爱好者',
@@ -193,7 +196,17 @@ export const useUserStore = defineStore('user', {
      * 设置位置信息
      */
     setLocation(location) {
-      this.location = { ...this.location, ...location }
+      const normalizedLocation = normalizeWeatherCoordinates(location)
+      this.location = {
+        ...this.location,
+        ...location,
+        ...(normalizedLocation
+          ? {
+              latitude: normalizedLocation.latitude,
+              longitude: normalizedLocation.longitude
+            }
+          : {})
+      }
     },
 
     /**
@@ -256,7 +269,6 @@ export const useUserStore = defineStore('user', {
       try {
         const user = await getUserById(this.openid)
         if (user) {
-
           // 更新会员信息
           this.membership = {
             type: user.subscription_plan || 'free',

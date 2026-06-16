@@ -84,13 +84,17 @@ assert.deepEqual(calls.historicalDates, [
   '2026-05-25',
   '2026-05-26'
 ])
-assert.equal(windowPayload.historicalDays.some(day => Object.hasOwn(day, 'uvIndex')), false)
+assert.equal(
+  windowPayload.historicalDays.some(day => Object.hasOwn(day, 'uvIndex')),
+  false
+)
 assert.equal(windowPayload.forecastDays.filter(day => day.uvIndex === 8).length, 4)
 assert.equal(windowPayload.meta.todaySource, 'forecast_15d_with_weather_now')
 
 console.log('weather-environment-context tests passed')
 
-const qweatherAdapterPath = require.resolve('../../cloudfunctions/weather-http/adapters/qweather-adapter.js')
+const qweatherAdapterPath =
+  require.resolve('../../cloudfunctions/weather-http/adapters/qweather-adapter.js')
 const { createQWeatherAdapter } = require(qweatherAdapterPath)
 
 await runQWeatherAdapterTests()
@@ -114,7 +118,18 @@ async function runQWeatherAdapterTests() {
     status: 200,
     data: {
       code: '200',
-      daily: [{ fxDate: '2026-06-01', tempMax: '30', tempMin: '20', humidity: 55, precip: '1', uvIndex: 8, textDay: '晴', textNight: '晴' }]
+      daily: [
+        {
+          fxDate: '2026-06-01',
+          tempMax: '30',
+          tempMin: '20',
+          humidity: 55,
+          precip: '1',
+          uvIndex: 8,
+          textDay: '晴',
+          textNight: '晴'
+        }
+      ]
     }
   }
 
@@ -126,7 +141,7 @@ async function runQWeatherAdapterTests() {
     }
   }
 
-  const mockedHistoricalResponse = (dateText) => ({
+  const mockedHistoricalResponse = dateText => ({
     status: 200,
     data: {
       code: '200',
@@ -167,11 +182,18 @@ async function runQWeatherAdapterTests() {
     throw new Error(`unmocked qweather request: ${url}`)
   }
 
-  const adapterUnderTest = createQWeatherAdapter({ apiKey: 'test-key', httpClient: { get: mockGet } })
+  const adapterUnderTest = createQWeatherAdapter({
+    apiKey: 'test-key',
+    httpClient: { get: mockGet }
+  })
 
   const nowPayload = await adapterUnderTest.fetchCurrentWeather({ lat: 31.2, lng: 121.5 })
   const forecastPayload = await adapterUnderTest.fetchForecast15d({ lat: 31.2, lng: 121.5 })
-  const historyPayload = await adapterUnderTest.fetchHistoricalWeather({ lat: 31.2, lng: 121.5, date: '2026-05-22' })
+  const historyPayload = await adapterUnderTest.fetchHistoricalWeather({
+    lat: 31.2,
+    lng: 121.5,
+    date: '2026-05-22'
+  })
 
   assert.equal(nowPayload.tempC, 27)
   assert.equal(nowPayload.text, '阴')
@@ -183,14 +205,14 @@ async function runQWeatherAdapterTests() {
   assert.equal(forecastCalls, 1, '15d预报必须通过经纬度请求')
   assert.equal(historicalCalls, 1, '历史接口应按本轮调用一次')
 
-  const lookupCall = calls.find((item) => item.path === '/geo/v2/city/lookup')
-  const historicalCall = calls.find((item) => item.path === '/v7/historical/weather')
-  const nowCall = calls.find((item) => item.path === '/v7/weather/now')
-  const forecastCall = calls.find((item) => item.path === '/v7/weather/15d')
-  assert.equal(lookupCall.params.location, '121.5,31.2')
+  const lookupCall = calls.find(item => item.path === '/geo/v2/city/lookup')
+  const historicalCall = calls.find(item => item.path === '/v7/historical/weather')
+  const nowCall = calls.find(item => item.path === '/v7/weather/now')
+  const forecastCall = calls.find(item => item.path === '/v7/weather/15d')
+  assert.equal(lookupCall.params.location, '121.50,31.20')
   assert.equal(historicalCall.params.location, 'LOCATION_ID_001')
-  assert.equal(nowCall.params.location, '121.5,31.2')
-  assert.equal(forecastCall.params.location, '121.5,31.2')
+  assert.equal(nowCall.params.location, '121.50,31.20')
+  assert.equal(forecastCall.params.location, '121.50,31.20')
 
   await adapterUnderTest.fetchHistoricalWeather({ lat: 31.2, lng: 121.5, date: '2026-05-23' })
   assert.equal(lookupCalls, 1, '地理反查应命中进程内缓存')
@@ -203,7 +225,10 @@ async function runQWeatherAdapterTests() {
     }
     return mockGet(url, options)
   }
-  const adapterErrorCase = createQWeatherAdapter({ apiKey: 'test-key', httpClient: { get: mockGetWithError } })
+  const adapterErrorCase = createQWeatherAdapter({
+    apiKey: 'test-key',
+    httpClient: { get: mockGetWithError }
+  })
   let hasCodeStatus = false
   try {
     await adapterErrorCase.fetchHistoricalWeather({ lat: 31.2, lng: 121.5, date: '2026-05-24' })

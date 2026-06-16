@@ -1,6 +1,7 @@
 'use strict'
 
 const INVALID_LOCATION_KEY_CHARS = /[^a-zA-Z0-9:_-]/g
+const WEATHER_COORDINATE_PRECISION = 2
 
 function normalizePathSegment(value = '', fallback = 'unknown') {
   const normalized = String(value || '')
@@ -18,11 +19,47 @@ function normalizeLocationKey(value = '') {
 }
 
 function normalizeCoordinate(value) {
+  const text = normalizeCoordinateText(value)
+  return text ? text.replace('-', 'm').replace('.', '_') : ''
+}
+
+function normalizeCoordinateNumber(value) {
   const number = Number(value)
   if (!Number.isFinite(number)) {
+    return null
+  }
+  const rounded = Number(number.toFixed(WEATHER_COORDINATE_PRECISION))
+  return Object.is(rounded, -0) ? 0 : rounded
+}
+
+function normalizeCoordinateText(value) {
+  const normalized = normalizeCoordinateNumber(value)
+  if (normalized === null) {
     return ''
   }
-  return number.toFixed(5).replace('-', 'm').replace('.', '_')
+  return normalized.toFixed(WEATHER_COORDINATE_PRECISION)
+}
+
+function normalizeWeatherCoordinates({ lat, lng } = {}) {
+  const normalizedLat = normalizeCoordinateNumber(lat)
+  const normalizedLng = normalizeCoordinateNumber(lng)
+  if (normalizedLat === null || normalizedLng === null) {
+    return null
+  }
+  return {
+    lat: normalizedLat,
+    lng: normalizedLng,
+    latText: normalizedLat.toFixed(WEATHER_COORDINATE_PRECISION),
+    lngText: normalizedLng.toFixed(WEATHER_COORDINATE_PRECISION)
+  }
+}
+
+function normalizeQWeatherLocation(input = {}) {
+  const coordinates = normalizeWeatherCoordinates(input)
+  if (!coordinates) {
+    throw new Error('缺少位置参数：lat 和 lng')
+  }
+  return `${coordinates.lngText},${coordinates.latText}`
 }
 
 function buildLocationKey({
@@ -89,6 +126,7 @@ function buildWeatherRawForecastObjectPath(locationKey = '', timestamp = Date.no
 }
 
 module.exports = {
+  WEATHER_COORDINATE_PRECISION,
   buildLocationKey,
   buildRecentWeatherObjectPath,
   buildWeatherDailyObjectPath,
@@ -96,6 +134,10 @@ module.exports = {
   buildWeatherManifestObjectPath,
   buildWeatherRawForecastObjectPath,
   normalizeCoordinate,
+  normalizeCoordinateNumber,
+  normalizeCoordinateText,
   normalizeLocationKey,
-  normalizePathSegment
+  normalizePathSegment,
+  normalizeQWeatherLocation,
+  normalizeWeatherCoordinates
 }

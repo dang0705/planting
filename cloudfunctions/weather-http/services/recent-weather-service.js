@@ -6,7 +6,8 @@ const {
   buildRecentWeatherObjectPath,
   buildWeatherDailyObjectPath,
   buildWeatherManifestObjectPath,
-  buildWeatherRawForecastObjectPath
+  buildWeatherRawForecastObjectPath,
+  normalizeWeatherCoordinates
 } = require('./weather-cache-paths')
 const { addDays, formatLocalDateInTimezone, normalizeDate } = require('./recent-weather-features')
 const {
@@ -15,7 +16,6 @@ const {
 } = require('./recent-weather-memory-cache')
 const { createWeatherLocationRepository } = require('../repositories/weather-location-repository')
 const { createWeatherObjectStorage } = require('./weather-object-storage')
-const { archiveForecastSnapshotDailyEntries } = require('./recent-weather-forecast-archive')
 const {
   normalizeRecentHistoricalDays,
   normalizeRecentPayload
@@ -57,6 +57,25 @@ function hasDailyArchiveEntries(manifest = {}) {
   return Boolean(Object.keys(manifest?.dailyArchives || {}).length)
 }
 
+async function pruneFutureDailyArchives({ storage, manifest, targetDate }) {
+  const normalizedTargetDate = normalizeDate(targetDate)
+  const removed = []
+  for (const [date, archiveMeta] of Object.entries(manifest?.dailyArchives || {})) {
+    const normalizedDate = normalizeDate(date)
+    if (!normalizedDate || normalizedDate <= normalizedTargetDate) {
+      continue
+    }
+    delete manifest.dailyArchives[date]
+    const cloudPath = archiveMeta?.cloudPath || ''
+    const fileId = archiveMeta?.fileId || ''
+    if (typeof storage.deleteJson === 'function' && (cloudPath || fileId)) {
+      await storage.deleteJson({ cloudPath, fileId }).catch(() => false)
+    }
+    removed.push({ date: normalizedDate, cloudPath, fileId })
+  }
+  return removed
+}
+
 function resolveDiagnosisDate(input = {}) {
   return String(input.diagnosisDate || input.diagnosis_date || input.date || '').trim()
 }
@@ -74,6 +93,21 @@ function recentPayloadMatchesDiagnosisDate(payload = {}, diagnosisDate = '') {
   const payloadTargetDate = normalizeDate(payload.window?.targetDate || '')
   return (
     payloadDiagnosisDate === normalizedDiagnosisDate || payloadTargetDate === expectedTargetDate
+  )
+}
+
+function shouldRebuildRecentPayloadFromArchives(payload = {}, diagnosisDate = '') {
+  if (!payload) {
+    return true
+  }
+  if (!recentPayloadMatchesDiagnosisDate(payload, diagnosisDate)) {
+    return true
+  }
+  return Boolean(
+    payload.weatherEvidenceInsufficient ||
+    payload.quality === 'missing' ||
+    payload.meta?.quality === 'missing' ||
+    payload.meta?.weatherEvidenceInsufficient
   )
 }
 
@@ -179,20 +213,24 @@ function createRecentWeatherService({
     const targetDate = normalizeDate(
       diagnosisDate ? addDays(diagnosisDate, -1) : addDays(localToday, -1)
     )
-    const manifest = hasDailyArchiveEntries(defaultManifest)
+    const manifest = (hasDailyArchiveEntries(defaultManifest)
       ? defaultManifest
-      : await readManifest({ storage, location: resolvedLocation }).catch(() => null)
-    if (!manifest || !Object.keys(manifest.dailyArchives || {}).length) {
-      return null
+      : await readManifest({ storage, location: resolvedLocation }).catch(() => null)) || {
+      dailyArchives: {}
     }
+    const hasManifestDailyEntries = Object.keys(manifest.dailyArchives || {}).length > 0
 
     const rebuilt = await rebuildRecentWeather({
       storage,
       location: resolvedLocation,
       targetDate,
       generatedAt,
-      manifest
+      manifest,
+      uploadMissingRecent: hasManifestDailyEntries
     })
+    if (rebuilt.skippedUpload || !rebuilt.uploadResult) {
+      return null
+    }
     if (typeof locationRepository.updateRecentObjectMetadata === 'function') {
       await locationRepository
         .updateRecentObjectMetadata({
@@ -259,7 +297,7 @@ function createRecentWeatherService({
       }
     }
     const diagnosisDate = resolveDiagnosisDate(input)
-    if (result?.payload && !recentPayloadMatchesDiagnosisDate(result.payload, diagnosisDate)) {
+    if (result?.payload && shouldRebuildRecentPayloadFromArchives(result.payload, diagnosisDate)) {
       result = null
     }
     if (!result?.payload) {
@@ -328,10 +366,11 @@ function createRecentWeatherService({
     const targetDate = normalizeDate(input.targetDate || addDays(localToday, -1))
     const manifest = await readManifest({ storage, location })
     const qweatherAdapter = adapter || createQWeatherAdapter({ apiKey, baseUrl })
+    const normalizedCoordinates = normalizeWeatherCoordinates(input) || {}
     const forecast = await qweatherAdapter.fetchForecast10d({
       locationId: location.qweatherLocationId,
-      lat: input.lat,
-      lng: input.lng
+      lat: normalizedCoordinates.lat,
+      lng: normalizedCoordinates.lng
     })
     const rawObjectPath = buildWeatherRawForecastObjectPath(
       location.locationKey,
@@ -380,15 +419,12 @@ function createRecentWeatherService({
       generatedAt,
       quality: dailyPayload.quality
     }
-
-    const forecastDailyArchives = await archiveForecastSnapshotDailyEntries({
-      location,
-      generatedAt,
+    const prunedFutureDailyArchives = await pruneFutureDailyArchives({
+      storage,
       manifest,
-      snapshot: rawPayload,
-      rawObjectPath,
-      storage
+      targetDate
     })
+
     manifest.updatedAt = generatedAt
 
     const { recentPayload, uploadResult } = await rebuildRecentWeather({
@@ -425,12 +461,8 @@ function createRecentWeatherService({
       recentObjectPath: recentPayload.weatherObjectPath,
       recentFileId: uploadResult.fileId,
       targetDate,
-      forecastDailyArchives: forecastDailyArchives.map(item => ({
-        date: item.date,
-        dailyObjectPath: item.dailyObjectPath,
-        quality: item.dailyPayload.quality,
-        sourceKind: item.dailyPayload.sourceKind
-      })),
+      forecastDailyArchives: [],
+      prunedFutureDailyArchives,
       quality: recentPayload.quality,
       recentPayload: normalizedRecentPayload
     }

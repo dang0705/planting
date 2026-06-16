@@ -22,6 +22,7 @@ const {
   isRecentWeatherIngestionTimerEvent,
   isDiagnosisMode
 } = require('./routes/recent-weather-routes')
+const { normalizeQWeatherLocation } = require('./services/weather-cache-paths')
 
 const QWEATHER_CONFIG = {
   baseUrl: process.env.QWEATHER_API_BASE_URL || 'https://n773jqqeap.re.qweatherapi.com',
@@ -105,7 +106,8 @@ async function fetchWeather(lat, lng) {
   if (!QWEATHER_CONFIG.apiKey) {
     throw new Error('缺少环境变量 QWEATHER_API_KEY')
   }
-  const url = `${QWEATHER_CONFIG.baseUrl}/v7/weather/now?location=${lng},${lat}&key=${QWEATHER_CONFIG.apiKey}`
+  const location = normalizeQWeatherLocation({ lat, lng })
+  const url = `${QWEATHER_CONFIG.baseUrl}/v7/weather/now?location=${location}&key=${QWEATHER_CONFIG.apiKey}`
   const response = await axios.get(url, {
     timeout: 10000,
     headers: {

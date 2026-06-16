@@ -4,24 +4,26 @@
  */
 
 import { WEATHER_CONFIG } from '@/config/weather'
+import {
+  WEATHER_COORDINATE_PRECISION,
+  normalizeWeatherCoordinates
+} from '@/utils/weather-coordinate.js'
 import { fetchCurrentWeatherQuery } from '@/vue-query/weather/queries/current-weather.js'
 import { fetchEnvironmentWeatherQuery } from '@/vue-query/weather/queries/environment-weather.js'
 
 const CITY_LOOKUP_CACHE_TTL_MS = 5 * 60 * 1000
-const CITY_LOOKUP_COORDINATE_PRECISION = 5
 const cityLookupInflight = new Map()
 const cityLookupCache = new Map()
 const MAX_ARRAY_HISTORY_DAYS_TO_KEEP = 120
 
 function buildCityLookupKey(latitude, longitude) {
-  const normalizedLat = Number(latitude)
-  const normalizedLng = Number(longitude)
-  if (!Number.isFinite(normalizedLat) || !Number.isFinite(normalizedLng)) {
+  const location = normalizeWeatherCoordinates({ latitude, longitude })
+  if (!location) {
     return ''
   }
   return [
-    normalizedLat.toFixed(CITY_LOOKUP_COORDINATE_PRECISION),
-    normalizedLng.toFixed(CITY_LOOKUP_COORDINATE_PRECISION)
+    location.latitude.toFixed(WEATHER_COORDINATE_PRECISION),
+    location.longitude.toFixed(WEATHER_COORDINATE_PRECISION)
   ].join(',')
 }
 
@@ -38,7 +40,7 @@ function normalizeEnvironmentWeatherWindowPayload(window = null) {
     return window
   }
 
-  const asArray = value => Array.isArray(value) ? value : []
+  const asArray = value => (Array.isArray(value) ? value : [])
   const {
     historical_days: historicalDaysSnake,
     historicalDays: historicalDaysCamel,
@@ -62,7 +64,9 @@ function isResolvedCityName(city = '') {
 
 function getCachedCityLookup(cacheKey = '') {
   const cached = cityLookupCache.get(cacheKey)
-  if (!cached) {return null}
+  if (!cached) {
+    return null
+  }
   if (Date.now() - Number(cached.cachedAt || 0) > CITY_LOOKUP_CACHE_TTL_MS) {
     cityLookupCache.delete(cacheKey)
     return null
@@ -71,7 +75,9 @@ function getCachedCityLookup(cacheKey = '') {
 }
 
 function setCachedCityLookup(cacheKey = '', value = null) {
-  if (!cacheKey || !value || !isResolvedCityName(value.city)) {return}
+  if (!cacheKey || !value || !isResolvedCityName(value.city)) {
+    return
+  }
   cityLookupCache.set(cacheKey, {
     cachedAt: Date.now(),
     value
@@ -218,20 +224,28 @@ export async function getCurrentLocation() {
         uni.getLocation({
           type: 'gcj02',
           success: async res => {
+            const location = normalizeWeatherCoordinates({
+              latitude: res.latitude,
+              longitude: res.longitude
+            })
+            if (!location) {
+              reject(new Error('location_failed'))
+              return
+            }
             try {
-              console.log('获取位置成功，经纬度:', res.latitude, res.longitude)
-              const cityInfo = await getCityNameByLocation(res.latitude, res.longitude)
+              console.log('获取位置成功，经纬度:', location.latitude, location.longitude)
+              const cityInfo = await getCityNameByLocation(location.latitude, location.longitude)
               console.log('获取城市信息成功:', cityInfo)
               resolve({
-                latitude: res.latitude,
-                longitude: res.longitude,
+                latitude: location.latitude,
+                longitude: location.longitude,
                 ...cityInfo
               })
             } catch (error) {
               console.error('获取城市信息失败:', error)
               resolve({
-                latitude: res.latitude,
-                longitude: res.longitude,
+                latitude: location.latitude,
+                longitude: location.longitude,
                 province: '',
                 city: '当前位置',
                 district: ''
@@ -259,7 +273,8 @@ export async function getCurrentLocation() {
 }
 
 export function getCityNameByLocation(latitude, longitude) {
-  const cacheKey = buildCityLookupKey(latitude, longitude)
+  const location = normalizeWeatherCoordinates({ latitude, longitude })
+  const cacheKey = location ? buildCityLookupKey(location.latitude, location.longitude) : ''
   if (!cacheKey) {
     return Promise.resolve(buildFallbackCityInfo())
   }
@@ -278,7 +293,7 @@ export function getCityNameByLocation(latitude, longitude) {
     wx.request({
       url: 'https://apis.map.qq.com/ws/geocoder/v1/',
       data: {
-        location: `${latitude},${longitude}`,
+        location: `${location.latitude},${location.longitude}`,
         key: 'OB4BZ-D4W3U-B7VVO-4PJWW-6TKDJ-WPB77',
         output: 'json'
       },
@@ -312,12 +327,9 @@ export function getCityNameByLocation(latitude, longitude) {
 export async function getWeatherInfo(options = {}) {
   try {
     const { lat, lng, city = '', province = '', useCache = WEATHER_CONFIG.USE_CACHE } = options
-    const hasLat = lat !== undefined && lat !== null && lat !== ''
-    const hasLng = lng !== undefined && lng !== null && lng !== ''
-    const normalizedLat = hasLat ? Number(lat) : NaN
-    const normalizedLng = hasLng ? Number(lng) : NaN
+    const location = normalizeWeatherCoordinates({ lat, lng })
 
-    if (!Number.isFinite(normalizedLat) || !Number.isFinite(normalizedLng)) {
+    if (!location) {
       return {
         temperature: 20,
         humidity: 60,
@@ -330,8 +342,8 @@ export async function getWeatherInfo(options = {}) {
     }
 
     const result = await fetchCurrentWeatherQuery({
-      lat: normalizedLat,
-      lng: normalizedLng,
+      lat: location.lat,
+      lng: location.lng,
       city,
       province,
       useCache
@@ -359,24 +371,16 @@ export async function getWeatherInfo(options = {}) {
 }
 
 export async function getEnvironmentWeatherWindow(options = {}) {
-  const {
-    lat,
-    lng,
-    diagnosisDate = '',
-    city = '',
-    province = '',
-    mode = ''
-  } = options
-  const normalizedLat = Number(lat)
-  const normalizedLng = Number(lng)
+  const { lat, lng, diagnosisDate = '', city = '', province = '', mode = '' } = options
+  const location = normalizeWeatherCoordinates({ lat, lng })
 
-  if (!Number.isFinite(normalizedLat) || !Number.isFinite(normalizedLng)) {
+  if (!location) {
     return null
   }
 
   const result = await fetchEnvironmentWeatherQuery({
-    lat: normalizedLat,
-    lng: normalizedLng,
+    lat: location.lat,
+    lng: location.lng,
     diagnosisDate,
     city,
     province,
@@ -393,7 +397,9 @@ export async function getEnvironmentWeatherWindow(options = {}) {
 export function formatWeatherDisplay(weatherData) {
   console.log('formatWeatherDisplay 接收的数据:', weatherData)
 
-  if (!weatherData) {return '🌤️ --°C 湿度: --%'}
+  if (!weatherData) {
+    return '🌤️ --°C 湿度: --%'
+  }
 
   const temperature =
     weatherData.temperature ||

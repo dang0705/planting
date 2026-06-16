@@ -16,6 +16,24 @@ const {
 } = require('./recent-weather-payloads')
 const { isDisallowedHistoricalDaily } = require('./recent-weather-source-policy')
 
+function resolveDailyArchiveRecord(payload = {}) {
+  if (payload?.daily) {
+    return payload.daily
+  }
+
+  if (
+    payload?.date ||
+    payload?.fxDate ||
+    payload?.uvIndex !== undefined ||
+    payload?.tempMaxC !== undefined ||
+    payload?.humidity !== undefined
+  ) {
+    return payload
+  }
+
+  return null
+}
+
 async function readManifest({ storage, location }) {
   const locationKey = location.locationKey
   const manifestPath = location.manifestObjectPath || buildWeatherManifestObjectPath(locationKey)
@@ -64,7 +82,8 @@ async function readDailyArchive({ storage, location, date, manifest }) {
     cloudPath: dailyObjectPath,
     fileId: dailyArchiveMeta.fileId || ''
   })
-  if (!payload?.daily) {
+  const dailyRecord = resolveDailyArchiveRecord(payload)
+  if (!dailyRecord) {
     return buildMissingDailyRecord({ date, dailyObjectPath })
   }
   if (isDisallowedHistoricalDaily(payload)) {
@@ -74,16 +93,23 @@ async function readDailyArchive({ storage, location, date, manifest }) {
       reason: 'qweather_historical_weather_disallowed'
     })
   }
-  return normalizeDailyWeatherRecord(payload.daily, {
+  return normalizeDailyWeatherRecord(dailyRecord, {
     date,
     source: 'weather_cache_daily_archive',
-    sourceKind: payload.sourceKind || 'weather_cache_daily_archive',
-    weatherObjectPath: dailyObjectPath,
+    sourceKind: dailyRecord.sourceKind || payload.sourceKind || 'weather_cache_daily_archive',
+    weatherObjectPath: dailyRecord.weatherObjectPath || dailyObjectPath,
     rawObjectPath: payload.rawObjectPath || ''
   })
 }
 
-async function rebuildRecentWeather({ storage, location, targetDate, generatedAt, manifest }) {
+async function rebuildRecentWeather({
+  storage,
+  location,
+  targetDate,
+  generatedAt,
+  manifest,
+  uploadMissingRecent = true
+}) {
   const dates = buildDateRangeEndingAt(targetDate, 10)
   const dailyObjectPaths = {}
   const days = []
@@ -103,6 +129,14 @@ async function rebuildRecentWeather({ storage, location, targetDate, generatedAt
     days,
     dailyObjectPaths
   })
+  if (!uploadMissingRecent && recentPayload.quality === 'missing') {
+    return {
+      recentPayload,
+      uploadResult: null,
+      skippedUpload: true
+    }
+  }
+
   const uploadResult = await storage.uploadJson({
     cloudPath: recentPayload.weatherObjectPath,
     payload: recentPayload

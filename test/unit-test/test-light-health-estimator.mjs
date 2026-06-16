@@ -96,14 +96,18 @@ const plantContext = {
   sunning: { way: '明亮散射光', freq: [2, 4], unit: '小时/天' }
 }
 
-function buildCarePayload(userLightContext, environmentWeatherWindow = weatherWindow) {
+function buildCarePayload(
+  userLightContext,
+  environmentWeatherWindow = weatherWindow,
+  inputPlantContext = plantContext
+) {
   return resolveRuntimeEnvironmentCarePayload({
     payload: {
       environmentWeatherWindow,
       userLightContext
     },
     sessionState: {},
-    plantContext
+    plantContext: inputPlantContext
   })
 }
 
@@ -129,7 +133,8 @@ const qaStrongLightPayload = buildCarePayload(
     hasDirectSun: true,
     distance: 0.5
   },
-  qaStrongWeatherWindow
+  qaStrongWeatherWindow,
+  {}
 )
 
 assert.equal(lowLightPayload.environmentCareContext.outputs.lightHealthLevel, '严重不足')
@@ -141,8 +146,12 @@ assert.equal(
 )
 assert.ok(qaStrongLightPayload.environmentCareContext.outputs.lightHealthScore > 84)
 assert.notEqual(
-  lowLightPayload.environmentCareContext.outputs.lightHealthScore,
-  strongLightPayload.environmentCareContext.outputs.lightHealthScore
+  lowLightPayload.environmentCareContext.outputs.lightHealthEvidence.direction,
+  strongLightPayload.environmentCareContext.outputs.lightHealthEvidence.direction
+)
+assert.ok(
+  strongLightPayload.environmentCareContext.outputs.lightHealthEvidence.calculation.indoorEqHours >
+    lowLightPayload.environmentCareContext.outputs.lightHealthEvidence.calculation.indoorEqHours
 )
 assert.equal(
   lowLightPayload.environmentCareContext.outputs.lightHealthEvidence.profile.source,
@@ -283,8 +292,13 @@ assert.equal(
   '严重偏强'
 )
 assert.notEqual(
-  snapshotRecalculatedWithNewLight.environmentCareContext.outputs.lightHealthScore,
-  snapshotBaseline.environmentCareContext.outputs.lightHealthScore
+  snapshotRecalculatedWithNewLight.environmentCareContext.outputs.lightHealthEvidence.direction,
+  snapshotBaseline.environmentCareContext.outputs.lightHealthEvidence.direction
+)
+assert.ok(
+  snapshotRecalculatedWithNewLight.environmentCareContext.outputs.lightHealthEvidence.calculation
+    .indoorEqHours >
+    snapshotBaseline.environmentCareContext.outputs.lightHealthEvidence.calculation.indoorEqHours
 )
 assert.equal(snapshotRecalculatedWithNewLight.restoredFromSnapshot, false)
 assert.equal(snapshotRecalculatedWithNewLight.careBehaviorTimeline.dailyRecords.length, 1)
@@ -352,6 +366,7 @@ assert.equal(compactQaStrongContext.outputs.lightHealthScore, 91)
 assert.equal(compactQaStrongContext.outputs.lightHealthLevel, '略偏强')
 assert.match(compactQaStrongContext.outputs.lightHealthReason, /偏强/)
 assert.equal(compactQaStrongContext.outputs.lightHealthEvidence.direction, 'strong')
+assert.ok(compactQaStrongContext.outputs.lightHealthEvidence.calculation.directSunExposureHours > 0)
 
 const fallbackResult = await resolveYellowLeafOutcomeResult({
   sessionId: 'light_health_fallback',

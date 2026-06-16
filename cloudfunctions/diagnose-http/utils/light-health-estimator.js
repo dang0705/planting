@@ -55,6 +55,14 @@ const OVER_PENALTY = {
   明亮散射光: 65,
   耐阴: 75
 }
+const DIRECT_SUN_EXPOSURE_BASE_HOURS = 2.3
+const DIRECT_SUN_POSITION_EXPOSURE = {
+  window_side: 1,
+  middle: 0.45,
+  unknown: 0.3,
+  deep: 0
+}
+const DIRECT_SUN_BLOCKED_WINDOWS = new Set(['blocked', 'no_window'])
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value))
@@ -341,6 +349,35 @@ function getDistanceFactor(distance) {
   return clamp(0.82 - (distance - 3) * 0.06, 0.42, 0.82)
 }
 
+function getDirectSunExposureHours({
+  env = {},
+  facingFactor = 1,
+  windowFactor = 1,
+  distanceFactor = 1,
+  uvFactor = 1
+} = {}) {
+  if (env.hasDirectSun !== true) {
+    return 0
+  }
+  if (env.facing === 'no_window' || DIRECT_SUN_BLOCKED_WINDOWS.has(env.windowType)) {
+    return 0
+  }
+
+  const positionExposure = DIRECT_SUN_POSITION_EXPOSURE[env.position] ?? 0
+  if (positionExposure <= 0) {
+    return 0
+  }
+
+  const exposureHours =
+    DIRECT_SUN_EXPOSURE_BASE_HOURS *
+    uvFactor *
+    clamp(facingFactor, 0.35, 1.1) *
+    clamp(windowFactor, 0.55, 1.2) *
+    positionExposure *
+    distanceFactor
+  return round(exposureHours, 2)
+}
+
 function getOverPenalty(way = '') {
   return OVER_PENALTY[normalizeText(way)] || 45
 }
@@ -416,7 +453,14 @@ function estimateLightHealth({ plantContext = {}, userLightContext = {}, weather
   const distanceFactor = getDistanceFactor(env.distance)
   const indoorFactor =
     facingFactor * windowFactor * positionFactor * directSunFactor * distanceFactor
-  const indoorEqHours = outdoorEqHours * indoorFactor
+  const directSunExposureHours = getDirectSunExposureHours({
+    env,
+    facingFactor,
+    windowFactor,
+    distanceFactor,
+    uvFactor
+  })
+  const indoorEqHours = outdoorEqHours * indoorFactor + directSunExposureHours
   let score = 100
   if (indoorEqHours < minNeed) {
     score = 100 - ((minNeed - indoorEqHours) / minNeed) * 120
@@ -460,10 +504,12 @@ function estimateLightHealth({ plantContext = {}, userLightContext = {}, weather
         positionFactor,
         directSunFactor,
         distanceFactor: round(distanceFactor, 3),
-        indoorFactor: round(indoorFactor, 3)
+        indoorFactor: round(indoorFactor, 3),
+        directSunExposureHours
       },
       calculation: {
         indoorEqHours: round(indoorEqHours, 2),
+        directSunExposureHours,
         needRange: profile.freq,
         score
       }
@@ -477,6 +523,7 @@ module.exports = {
   normalizeLightProfile,
   _test: {
     estimateBaseOutdoorHours,
+    getDirectSunExposureHours,
     normalizeWeatherDay,
     getDistanceFactor
   }

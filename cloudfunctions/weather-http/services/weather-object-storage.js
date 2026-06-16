@@ -5,6 +5,10 @@ const os = require('os')
 const path = require('path')
 const crypto = require('crypto')
 
+const DEFAULT_STORAGE_BUCKET_BY_ENV = {
+  'cloud1-2grufevs395a9d5e': '636c-cloud1-2grufevs395a9d5e-1403815561'
+}
+
 function loadDefaultCloudBaseApp() {
   try {
     return require('/opt/utils/cloudbase').getCloudBase()
@@ -49,13 +53,73 @@ function parseJsonBuffer(value) {
   return null
 }
 
+function isMissingStorageObjectError(error) {
+  const code = String(error?.code || error?.errorCode || '')
+  const message = String(error?.message || error || '')
+  return code === 'STORAGE_FILE_NONEXIST' || /not\s*found|不存在|NoSuchKey|404/i.test(message)
+}
+
+function resolveCloudBaseEnvId(app = {}) {
+  return String(
+    process.env.CLOUDBASE_ENV_ID ||
+      process.env.TCB_ENV ||
+      app?.config?.env ||
+      app?.config?.envId ||
+      app?.config?.envName ||
+      ''
+  ).trim()
+}
+
+function collectStorageBuckets(envId = '') {
+  return [
+    process.env.WEATHER_CACHE_STORAGE_BUCKET,
+    process.env.CLOUDBASE_STORAGE_BUCKET,
+    process.env.TCB_STORAGE_BUCKET,
+    DEFAULT_STORAGE_BUCKET_BY_ENV[envId]
+  ]
+    .map(value => String(value || '').trim())
+    .filter(Boolean)
+}
+
+function buildCloudStorageFileId({ envId = '', bucket = '', cloudPath = '' } = {}) {
+  const normalizedPath = String(cloudPath || '').replace(/^\/+/, '')
+  if (!normalizedPath) {
+    return ''
+  }
+  const normalizedBucket = String(bucket || '')
+    .trim()
+    .replace(/\/+$/, '')
+  if (normalizedBucket.startsWith('cloud://')) {
+    return `${normalizedBucket}/${normalizedPath}`
+  }
+  if (!envId || !normalizedBucket) {
+    return ''
+  }
+  const bucketSegment = normalizedBucket.includes('.')
+    ? normalizedBucket
+    : `${envId}.${normalizedBucket}`
+  return `cloud://${bucketSegment}/${normalizedPath}`
+}
+
+function buildCloudStorageFileIdCandidates({ app = {}, cloudPath = '' } = {}) {
+  const normalizedPath = String(cloudPath || '').replace(/^\/+/, '')
+  if (!normalizedPath) {
+    return []
+  }
+  const envId = resolveCloudBaseEnvId(app)
+  const candidates = collectStorageBuckets(envId)
+    .map(bucket => buildCloudStorageFileId({ envId, bucket, cloudPath: normalizedPath }))
+    .filter(Boolean)
+  candidates.push(`cloud://${normalizedPath}`)
+  return [...new Set(candidates)]
+}
+
 async function readJsonFromFileId(app, fileId = '') {
   if (!fileId || typeof app.downloadFile !== 'function') {
     return null
   }
   const result = await app.downloadFile({ fileID: fileId }).catch(error => {
-    const message = String(error?.message || error || '')
-    if (/not\s*found|不存在|NoSuchKey|404/i.test(message)) {
+    if (isMissingStorageObjectError(error)) {
       return null
     }
     throw error
@@ -70,8 +134,7 @@ async function resolveFileIdFromCloudPath(app, cloudPath = '') {
   }
 
   const result = await app.getUploadMetadata({ cloudPath: pathKey }).catch(error => {
-    const message = String(error?.message || error || '')
-    if (/not\s*found|不存在|NoSuchKey|404/i.test(message)) {
+    if (isMissingStorageObjectError(error)) {
       return null
     }
     throw error
@@ -86,6 +149,16 @@ function createWeatherObjectStorage({ app = loadDefaultCloudBaseApp() } = {}) {
   async function uploadJson({ cloudPath = '', payload = {} } = {}) {
     if (!cloudPath) {
       throw new Error('缺少天气缓存对象路径')
+    }
+
+    const existingFileId = await resolveFileIdFromCloudPath(app, cloudPath).catch(() => '')
+    if (existingFileId && typeof app.deleteFile === 'function') {
+      await app.deleteFile({ fileList: [existingFileId] }).catch(error => {
+        if (isMissingStorageObjectError(error)) {
+          return null
+        }
+        throw error
+      })
     }
 
     const tempFilePath = createTempJsonFileName()
@@ -115,13 +188,19 @@ function createWeatherObjectStorage({ app = loadDefaultCloudBaseApp() } = {}) {
 
     if (typeof app.downloadFileByCloudPath === 'function' && cloudPath) {
       const result = await app.downloadFileByCloudPath({ cloudPath }).catch(error => {
-        const message = String(error?.message || error || '')
-        if (/not\s*found|不存在|NoSuchKey|404/i.test(message)) {
+        if (isMissingStorageObjectError(error)) {
           return null
         }
         throw error
       })
       const parsed = parseJsonBuffer(result)
+      if (parsed) {
+        return parsed
+      }
+    }
+
+    for (const candidateFileId of buildCloudStorageFileIdCandidates({ app, cloudPath })) {
+      const parsed = await readJsonFromFileId(app, candidateFileId)
       if (parsed) {
         return parsed
       }
@@ -135,14 +214,32 @@ function createWeatherObjectStorage({ app = loadDefaultCloudBaseApp() } = {}) {
     return null
   }
 
+  async function deleteJson({ cloudPath = '', fileId = '' } = {}) {
+    const targetFileId =
+      String(fileId || '').trim() || (await resolveFileIdFromCloudPath(app, cloudPath))
+    if (!targetFileId || typeof app.deleteFile !== 'function') {
+      return false
+    }
+    await app.deleteFile({ fileList: [targetFileId] }).catch(error => {
+      if (isMissingStorageObjectError(error)) {
+        return null
+      }
+      throw error
+    })
+    return true
+  }
+
   return {
+    deleteJson,
     uploadJson,
     downloadJson
   }
 }
 
 module.exports = {
+  buildCloudStorageFileIdCandidates,
   createWeatherObjectStorage,
+  isMissingStorageObjectError,
   parseJsonBuffer,
   resolveFileIdFromCloudPath
 }

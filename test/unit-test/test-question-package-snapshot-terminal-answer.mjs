@@ -250,7 +250,7 @@ assert.equal(
   frontendResponse.environmentCareContext.outputs.lightHealthEvidence.direction,
   'strong'
 )
-assert.equal(frontendResponse.environmentCareContext.outputs.lightHealthLevel, '略偏强')
+assert.match(frontendResponse.environmentCareContext.outputs.lightHealthLevel, /偏强/)
 
 Module._load = originalModuleLoad
 

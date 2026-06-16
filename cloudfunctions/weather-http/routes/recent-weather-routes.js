@@ -113,6 +113,7 @@ async function handleRecentWeatherIngestionRequest({ payload = {}, service }) {
       recentFileId: result.recentFileId,
       targetDate: result.targetDate,
       forecastDailyArchives: result.forecastDailyArchives || [],
+      prunedFutureDailyArchives: result.prunedFutureDailyArchives || [],
       quality: result.quality,
       recentPayload: result.recentPayload,
       sourceKind: 'weather_cache_recent_10d'

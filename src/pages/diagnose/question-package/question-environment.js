@@ -1,6 +1,10 @@
 import { getQuestionIdentity as getQuestionId } from '@/utils/diagnose-question-identity.js'
 import { extractCareBehaviorTimelineFromQuestion } from '@/utils/care-behavior-timeline.js'
 import {
+  WEATHER_COORDINATE_PRECISION,
+  normalizeWeatherCoordinates
+} from '@/utils/weather-coordinate.js'
+import {
   createDefaultLightEnvironment,
   isLightEnvironmentQuestion,
   sanitizeLightEnvironment
@@ -64,14 +68,13 @@ export function resolveCareBehaviorReferenceDate(questions = []) {
 }
 
 export function resolveCareBehaviorWeatherLocation(location = {}) {
-  const lat = Number(location.latitude ?? location.lat)
-  const lng = Number(location.longitude ?? location.lng)
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat === 0 || lng === 0) {
+  const normalizedLocation = normalizeWeatherCoordinates(location)
+  if (!normalizedLocation || normalizedLocation.lat === 0 || normalizedLocation.lng === 0) {
     return null
   }
   return {
-    lat,
-    lng,
+    lat: normalizedLocation.lat,
+    lng: normalizedLocation.lng,
     city: normalizeText(location.city),
     province: normalizeText(location.province)
   }
@@ -79,8 +82,8 @@ export function resolveCareBehaviorWeatherLocation(location = {}) {
 
 export function buildEnvironmentWeatherWindowRequestKey(location = {}, diagnosisDate = '') {
   return [
-    Number(location.lat).toFixed(5),
-    Number(location.lng).toFixed(5),
+    Number(location.lat).toFixed(WEATHER_COORDINATE_PRECISION),
+    Number(location.lng).toFixed(WEATHER_COORDINATE_PRECISION),
     normalizeText(location.city),
     normalizeText(location.province),
     normalizeText(diagnosisDate)

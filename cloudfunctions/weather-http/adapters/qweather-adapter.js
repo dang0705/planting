@@ -1,6 +1,7 @@
 'use strict'
 
 const axios = require('axios')
+const { normalizeQWeatherLocation } = require('../services/weather-cache-paths.js')
 
 const DEFAULT_QWEATHER_BASE_URL = 'https://n773jqqeap.re.qweatherapi.com'
 const LOCATION_ID_CACHE = new Map()
@@ -24,10 +25,7 @@ function toDate8(value = '') {
 }
 
 function normalizeLocation({ lat, lng } = {}) {
-  if (lat === undefined || lat === null || lng === undefined || lng === null) {
-    throw new Error('缺少位置参数：lat 和 lng')
-  }
-  return `${lng},${lat}`
+  return normalizeQWeatherLocation({ lat, lng })
 }
 
 function formatQWeatherError(error, path) {

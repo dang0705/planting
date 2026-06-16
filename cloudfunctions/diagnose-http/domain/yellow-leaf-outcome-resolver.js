@@ -19,6 +19,46 @@ const LIGHT_HEALTH_ROUTE_BY_DIRECTION = {
     routeKey: 'yellowing_sunburn_route'
   }
 }
+const BUILTIN_LIGHT_OUTCOMES = {
+  low_light_growth_weakness: {
+    outcomeKey: 'low_light_growth_weakness',
+    sourceProblemKey: 'low_light_growth_weakness',
+    outcomeType: 'problematic',
+    outcomeCategory: 'light',
+    displayNameCn: '光照不足/生长偏弱',
+    userDefinitionCn: '当前更像长期光照不足引起的徒长与偏弱。',
+    actionProfileKey: 'action_low_light_basic',
+    riskLevel: 'low'
+  },
+  sunburn: {
+    outcomeKey: 'sunburn',
+    sourceProblemKey: 'sunburn',
+    outcomeType: 'problematic',
+    outcomeCategory: 'light',
+    displayNameCn: '晒伤/强光刺激',
+    userDefinitionCn: '当前更像暴晒或强光刺激后的组织灼伤。',
+    actionProfileKey: 'action_sunburn_basic',
+    riskLevel: 'medium'
+  }
+}
+const BUILTIN_LIGHT_ACTION_PROFILES = {
+  action_low_light_basic: {
+    actionProfileKey: 'action_low_light_basic',
+    todayActions: ['把植株移到更稳定明亮散射光处'],
+    threeDayActions: [],
+    sevenDayObserve: ['观察新叶颜色和徒长是否缓解。'],
+    avoidActions: ['不要突然暴晒。'],
+    retakeOrEscalate: []
+  },
+  action_sunburn_basic: {
+    actionProfileKey: 'action_sunburn_basic',
+    todayActions: ['先移离正午直射光', '保持通风稳定'],
+    threeDayActions: ['3 天内观察灼伤边界是否继续扩大'],
+    sevenDayObserve: ['7 天内观察新叶是否恢复正常'],
+    avoidActions: ['不要马上重肥或重药'],
+    retakeOrEscalate: ['若灼伤持续扩大，补拍叶面与摆放位置']
+  }
+}
 
 function normalizeText(value = '') {
   return String(value || '').trim()
@@ -147,6 +187,42 @@ function buildOutcomeScoreMap(matchedEffects = []) {
     )
 }
 
+function mergeBuiltinLightOutcomes(outcomeKeys = [], diagnosisOutcomes = []) {
+  const result = new Map(
+    (Array.isArray(diagnosisOutcomes) ? diagnosisOutcomes : [])
+      .map(item => [normalizeText(item?.outcomeKey), item])
+      .filter(([key]) => key)
+  )
+  for (const outcomeKey of Array.isArray(outcomeKeys) ? outcomeKeys : []) {
+    const normalizedOutcomeKey = normalizeOutcomeKey(outcomeKey)
+    if (!result.has(normalizedOutcomeKey) && BUILTIN_LIGHT_OUTCOMES[normalizedOutcomeKey]) {
+      result.set(normalizedOutcomeKey, BUILTIN_LIGHT_OUTCOMES[normalizedOutcomeKey])
+    }
+  }
+  return Array.from(result.values())
+}
+
+function mergeBuiltinLightActionProfiles(actionProfileKeys = [], actionProfiles = []) {
+  const result = new Map(
+    (Array.isArray(actionProfiles) ? actionProfiles : [])
+      .map(item => [normalizeText(item?.actionProfileKey), item])
+      .filter(([key]) => key)
+  )
+  for (const actionProfileKey of Array.isArray(actionProfileKeys) ? actionProfileKeys : []) {
+    const normalizedActionProfileKey = normalizeText(actionProfileKey)
+    if (
+      !result.has(normalizedActionProfileKey) &&
+      BUILTIN_LIGHT_ACTION_PROFILES[normalizedActionProfileKey]
+    ) {
+      result.set(
+        normalizedActionProfileKey,
+        BUILTIN_LIGHT_ACTION_PROFILES[normalizedActionProfileKey]
+      )
+    }
+  }
+  return Array.from(result.values())
+}
+
 function buildVisibleOutcome(outcome = {}, actionProfile = null) {
   return {
     outcomeKey: normalizeText(outcome?.outcomeKey),
@@ -187,15 +263,23 @@ async function resolveYellowLeafOutcomeResult({
   ]
   const rankedOutcomeScores = buildOutcomeScoreMap(matchedEffects)
   const matchedOutcomeKeys = rankedOutcomeScores.map(item => item.outcomeKey)
-  const diagnosisOutcomes = matchedOutcomeKeys.length
+  const repositoryDiagnosisOutcomes = matchedOutcomeKeys.length
     ? await outcomeRouteRepository.getDiagnosisOutcomesByKeys(matchedOutcomeKeys)
     : []
+  const diagnosisOutcomes = mergeBuiltinLightOutcomes(
+    matchedOutcomeKeys,
+    repositoryDiagnosisOutcomes
+  )
   const actionProfileKeys = Array.from(
     new Set(diagnosisOutcomes.map(item => normalizeText(item?.actionProfileKey)).filter(Boolean))
   )
-  const actionProfiles = actionProfileKeys.length
+  const repositoryActionProfiles = actionProfileKeys.length
     ? await outcomeRouteRepository.getOutcomeActionProfiles(actionProfileKeys)
     : []
+  const actionProfiles = mergeBuiltinLightActionProfiles(
+    actionProfileKeys,
+    repositoryActionProfiles
+  )
   const actionProfileMap = new Map(
     actionProfiles.map(item => [normalizeText(item?.actionProfileKey), item])
   )
@@ -310,6 +394,8 @@ module.exports = {
     collectMatchedAnswerEffects,
     buildOutcomeScoreMap,
     buildLightHealthOutcomeEffects,
-    hasValidLightHealthEvidence
+    hasValidLightHealthEvidence,
+    mergeBuiltinLightActionProfiles,
+    mergeBuiltinLightOutcomes
   }
 }

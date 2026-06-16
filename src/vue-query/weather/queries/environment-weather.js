@@ -1,5 +1,6 @@
 import { requestHttpFunction } from '@/api/http'
 import { runVueQueryQuery } from '@/lib/vue-query-runtime.js'
+import { normalizeWeatherCoordinates } from '@/utils/weather-coordinate.js'
 
 export function buildEnvironmentWeatherQueryOptions({
   lat,
@@ -12,15 +13,20 @@ export function buildEnvironmentWeatherQueryOptions({
   const normalizedCity = String(city || '').trim()
   const normalizedProvince = String(province || '').trim()
   const normalizedDiagnosisDate = String(diagnosisDate || '').trim()
-  const normalizedMode = String(mode || '').trim().toLowerCase()
+  const normalizedMode = String(mode || '')
+    .trim()
+    .toLowerCase()
+  const location = normalizeWeatherCoordinates({ lat, lng }) || {}
+  const normalizedLat = location.lat
+  const normalizedLng = location.lng
 
   return {
     queryKey: [
       'http-function',
       'weather-http',
       'environment-context',
-      lat,
-      lng,
+      normalizedLat,
+      normalizedLng,
       normalizedDiagnosisDate,
       normalizedCity,
       normalizedProvince,
@@ -30,8 +36,8 @@ export function buildEnvironmentWeatherQueryOptions({
       requestHttpFunction('weather-http/weather/environment-context', {
         method: 'POST',
         body: {
-          lat,
-          lng,
+          lat: normalizedLat,
+          lng: normalizedLng,
           diagnosisDate: normalizedDiagnosisDate,
           city: normalizedCity,
           province: normalizedProvince,
