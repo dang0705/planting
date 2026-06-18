@@ -31,7 +31,12 @@ function pickPayloadLocation(payload = {}) {
 }
 
 async function buildDiagnosisRecentWeatherWindow({ payload = {}, service }) {
-  const recentWindow = await service.readRecentWeatherForDiagnosis(pickPayloadLocation(payload))
+  const recentWindow = await service.readRecentWeatherForDiagnosis({
+    ...pickPayloadLocation(payload),
+    allowArchiveRebuild:
+      payload.allowArchiveRebuild === true || payload.allowArchiveRebuild === 'true',
+    readTimeoutMs: payload.readTimeoutMs || payload.timeoutMs
+  })
   return {
     ...recentWindow,
     meta: {

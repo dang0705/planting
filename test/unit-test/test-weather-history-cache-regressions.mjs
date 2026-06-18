@@ -397,7 +397,7 @@ for (const day of buildForecastDaily('2026-06-03', 10)) {
     daily: day
   })
 }
-const archiveOnlyRead = await createRecentWeatherService({
+const archiveOnlyService = createRecentWeatherService({
   storage: archiveOnlyStorage,
   locationRepository: createMemoryLocationRepository([
     {
@@ -409,9 +409,17 @@ const archiveOnlyRead = await createRecentWeatherService({
     }
   ]),
   now: () => new Date('2026-06-14T00:30:00Z')
-}).readRecentWeatherForDiagnosis({
+})
+const archiveOnlyDefaultRead = await archiveOnlyService.readRecentWeatherForDiagnosis({
   locationKey: 'city:ArchiveOnly',
   diagnosisDate: '2026-06-13'
+})
+assert.equal(archiveOnlyDefaultRead.historicalDays.length, 0)
+assert.equal(archiveOnlyDefaultRead.meta.reason, 'recent_10d_rebuild_deferred')
+const archiveOnlyRead = await archiveOnlyService.readRecentWeatherForDiagnosis({
+  locationKey: 'city:ArchiveOnly',
+  diagnosisDate: '2026-06-13',
+  allowArchiveRebuild: true
 })
 assert.equal(archiveOnlyRead.historicalDays.length, 10)
 assert.equal(archiveOnlyRead.cacheSourceKind, 'rebuilt_from_daily_archives')
@@ -457,7 +465,8 @@ const directDailyOnlyRead = await createRecentWeatherService({
   lat: 31.22352,
   lng: 121.45591,
   city: '上海市',
-  diagnosisDate: '2026-06-18'
+  diagnosisDate: '2026-06-18',
+  allowArchiveRebuild: true
 })
 assert.equal(directDailyOnlyRead.historicalDays.length, 10)
 assert.equal(directDailyOnlyRead.cacheSourceKind, 'rebuilt_from_daily_archives')
@@ -507,7 +516,8 @@ const historicalDailyRead = await createRecentWeatherService({
   now: () => new Date('2026-06-14T00:30:00Z')
 }).readRecentWeatherForDiagnosis({
   locationKey: 'city:HistoricalDaily',
-  diagnosisDate: '2026-06-14'
+  diagnosisDate: '2026-06-14',
+  allowArchiveRebuild: true
 })
 assert.equal(historicalDailyRead.historicalDays.at(-1).date, '2026-06-13')
 assert.equal(historicalDailyRead.historicalDays.at(-1).missing, true)

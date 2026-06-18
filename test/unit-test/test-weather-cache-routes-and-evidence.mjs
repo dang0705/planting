@@ -4,21 +4,59 @@ import Module from 'node:module'
 
 const require = createRequire(import.meta.url)
 const originalLoad = Module._load
+const originalQWeatherApiKey = process.env.QWEATHER_API_KEY
+process.env.QWEATHER_API_KEY = 'unit-weather-key'
 const sqlCalls = []
 let legacyWeatherWindowCallCount = 0
 let timerForecastCallCount = 0
+let currentForecastCallCount = 0
+const storageObjects = new Map()
+const storageObjectsByFileId = new Map()
 
 const fakeCloudbaseApp = {
+  async downloadFile({ fileID }) {
+    const payload = storageObjectsByFileId.get(fileID)
+    if (!payload) {
+      const error = new Error('storage file not found')
+      error.code = 'STORAGE_FILE_NONEXIST'
+      throw error
+    }
+    return { fileContent: Buffer.from(JSON.stringify(payload), 'utf8') }
+  },
   async uploadFile({ cloudPath, fileContent }) {
+    const chunks = []
     if (fileContent && typeof fileContent.on === 'function') {
       await new Promise((resolve, reject) => {
-        fileContent.on('data', () => {})
+        fileContent.on('data', chunk => chunks.push(Buffer.from(chunk)))
         fileContent.on('end', resolve)
         fileContent.on('error', reject)
       })
     }
-    return { fileID: `cloud://${cloudPath}` }
+    const fileID = `cloud://${cloudPath}`
+    const payload = JSON.parse(Buffer.concat(chunks).toString('utf8'))
+    storageObjects.set(cloudPath, payload)
+    storageObjectsByFileId.set(fileID, payload)
+    return { fileID }
+  },
+  async downloadFileByCloudPath({ cloudPath }) {
+    const payload = storageObjects.get(cloudPath)
+    if (!payload) {
+      const error = new Error('storage file not found')
+      error.code = 'STORAGE_FILE_NONEXIST'
+      throw error
+    }
+    return { fileContent: Buffer.from(JSON.stringify(payload), 'utf8') }
   }
+}
+
+async function waitForCondition(predicate, { attempts = 20, delayMs = 10 } = {}) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    if (predicate()) {
+      return true
+    }
+    await new Promise(resolve => setTimeout(resolve, delayMs))
+  }
+  return false
 }
 
 Module._load = function patchedWeatherCacheLoad(request, parent, isMain) {
@@ -93,24 +131,42 @@ Module._load = function patchedWeatherCacheLoad(request, parent, isMain) {
   if (
     request === '../adapters/qweather-adapter' &&
     String(parent?.filename || '').endsWith(
-      '/cloudfunctions/weather-http/services/recent-weather-service.js'
+      '/cloudfunctions/weather-http/services/recent-weather-current.js'
     )
   ) {
     return {
       createQWeatherAdapter: () => ({
-        async fetchForecast10d({ locationId }) {
-          timerForecastCallCount += 1
-          assert.equal(locationId, 'TIMER_ACTIVE')
+        async fetchForecast10d({ locationId, lat, lng }) {
+          if (locationId === 'TIMER_ACTIVE') {
+            timerForecastCallCount += 1
+            return {
+              raw: { code: '200' },
+              daily: [
+                {
+                  date: '2026-06-14',
+                  tempMaxC: 30,
+                  tempMinC: 20,
+                  humidity: 60,
+                  textDay: '晴',
+                  source: 'fake_timer_forecast'
+                }
+              ]
+            }
+          }
+
+          currentForecastCallCount += 1
+          assert.equal(lat, 31.22)
+          assert.equal(lng, 121.46)
           return {
             raw: { code: '200' },
             daily: [
               {
-                date: '2026-06-14',
+                date: '2026-06-17',
                 tempMaxC: 30,
                 tempMinC: 20,
                 humidity: 60,
                 textDay: '晴',
-                source: 'fake_timer_forecast'
+                source: 'fake_current_entry_forecast'
               }
             ]
           }
@@ -180,6 +236,65 @@ try {
   assert.equal(missPayload.data.historicalDays.length, 0)
   assert.equal(missPayload.data.meta.quality, 'missing')
   assert.equal(legacyWeatherWindowCallCount, 0)
+
+  const currentResponse = await weatherApp.main(
+    {
+      path: '/weather/current',
+      method: 'POST',
+      headers: {},
+      query: {},
+      body: {
+        lat: 31.22,
+        lng: 121.46,
+        city: '上海市'
+      }
+    },
+    {}
+  )
+  const currentPayload = JSON.parse(currentResponse.body)
+  assert.equal(currentResponse.statusCode, 200)
+  assert.equal(currentPayload.data.temperature, 30)
+  assert.equal(currentPayload.data.weather, '晴')
+  assert.equal(currentPayload.data.cached, false)
+  assert.equal(currentPayload.data.dailyWeatherCache.refreshed, false)
+  assert.equal(currentPayload.data.dailyWeatherCache.refreshScheduled, true)
+  assert.equal(currentPayload.data.dailyWeatherCache.reason, 'daily_archive_missing')
+  assert.equal(currentForecastCallCount, 1)
+  assert.equal(
+    await waitForCondition(() =>
+      storageObjects.has('weather-cache/v1/locations/coord:121_46_31_22/daily/2026-06-17.json')
+    ),
+    true
+  )
+  assert.equal(
+    storageObjects.has('weather-cache/v1/locations/coord:121_46_31_22/daily/2026-06-17.json'),
+    true
+  )
+  assert.equal(
+    sqlCalls.some(item => /weather_cache/.test(item.sql)),
+    false
+  )
+
+  const cachedCurrentResponse = await weatherApp.main(
+    {
+      path: '/weather/current',
+      method: 'POST',
+      headers: {},
+      query: {},
+      body: {
+        lat: 31.22,
+        lng: 121.46,
+        city: '上海市'
+      }
+    },
+    {}
+  )
+  const cachedCurrentPayload = JSON.parse(cachedCurrentResponse.body)
+  assert.equal(cachedCurrentResponse.statusCode, 200)
+  assert.equal(cachedCurrentPayload.data.cached, true)
+  assert.equal(cachedCurrentPayload.data.cacheScope, 'daily_archive')
+  assert.equal(cachedCurrentPayload.data.dailyWeatherCache.reason, 'daily_archive_present')
+  assert.equal(currentForecastCallCount, 1)
 
   sqlCalls.length = 0
   const timerResponse = await weatherApp.main(
@@ -256,6 +371,11 @@ try {
   assert.equal(evidenceWrite.params.quality, 'complete')
 } finally {
   Module._load = originalLoad
+  if (originalQWeatherApiKey === undefined) {
+    delete process.env.QWEATHER_API_KEY
+  } else {
+    process.env.QWEATHER_API_KEY = originalQWeatherApiKey
+  }
 }
 
 console.log('weather-cache-routes-and-evidence tests passed')

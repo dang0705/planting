@@ -1,13 +1,11 @@
 'use strict'
 
-const { createQWeatherAdapter } = require('../adapters/qweather-adapter')
 const {
   buildLocationKey,
   buildRecentWeatherObjectPath,
   buildWeatherDailyObjectPath,
   buildWeatherManifestObjectPath,
-  buildWeatherRawForecastObjectPath,
-  normalizeWeatherCoordinates
+  buildWeatherRawForecastObjectPath
 } = require('./weather-cache-paths')
 const { addDays, formatLocalDateInTimezone, normalizeDate } = require('./recent-weather-features')
 const {
@@ -16,10 +14,7 @@ const {
 } = require('./recent-weather-memory-cache')
 const { createWeatherLocationRepository } = require('../repositories/weather-location-repository')
 const { createWeatherObjectStorage } = require('./weather-object-storage')
-const {
-  normalizeRecentHistoricalDays,
-  normalizeRecentPayload
-} = require('./recent-weather-normalize')
+const { normalizeRecentPayload } = require('./recent-weather-normalize')
 const { ingestActiveLocations: ingestActiveLocationsBatch } = require('./recent-weather-batch')
 const {
   findHistoricalRawSnapshotForDate,
@@ -28,11 +23,15 @@ const {
 } = require('./recent-weather-archive')
 const {
   RECENT_SCHEMA_VERSION,
-  asArray,
   buildDailyArchivePayload,
-  buildRecentWeatherPayload,
-  isPlainObject
+  buildRecentWeatherPayload
 } = require('./recent-weather-payloads')
+const {
+  buildCurrentWeatherDataFromDailyArchive,
+  buildRawForecastPayload,
+  createCurrentWeatherArchiveService
+} = require('./recent-weather-current')
+const { createDiagnosisRecentWeatherReader } = require('./recent-weather-diagnosis-reader')
 
 function resolveLocationInput(input = {}) {
   const locationKey = buildLocationKey(input)
@@ -74,41 +73,6 @@ async function pruneFutureDailyArchives({ storage, manifest, targetDate }) {
     removed.push({ date: normalizedDate, cloudPath, fileId })
   }
   return removed
-}
-
-function resolveDiagnosisDate(input = {}) {
-  return String(input.diagnosisDate || input.diagnosis_date || input.date || '').trim()
-}
-
-function recentPayloadMatchesDiagnosisDate(payload = {}, diagnosisDate = '') {
-  if (!diagnosisDate) {
-    return true
-  }
-
-  const normalizedDiagnosisDate = normalizeDate(diagnosisDate)
-  const expectedTargetDate = addDays(normalizedDiagnosisDate, -1)
-  const payloadDiagnosisDate = normalizeDate(
-    payload.meta?.diagnosisDate || payload.meta?.diagnosis_date || ''
-  )
-  const payloadTargetDate = normalizeDate(payload.window?.targetDate || '')
-  return (
-    payloadDiagnosisDate === normalizedDiagnosisDate || payloadTargetDate === expectedTargetDate
-  )
-}
-
-function shouldRebuildRecentPayloadFromArchives(payload = {}, diagnosisDate = '') {
-  if (!payload) {
-    return true
-  }
-  if (!recentPayloadMatchesDiagnosisDate(payload, diagnosisDate)) {
-    return true
-  }
-  return Boolean(
-    payload.weatherEvidenceInsufficient ||
-    payload.quality === 'missing' ||
-    payload.meta?.quality === 'missing' ||
-    payload.meta?.weatherEvidenceInsufficient
-  )
 }
 
 function createRecentWeatherService({
@@ -253,143 +217,37 @@ function createRecentWeatherService({
     }
   }
 
-  async function readRecentWeatherForDiagnosis(input = {}) {
-    const locationKey = buildLocationKey(input)
-    if (!locationKey) {
-      return {
-        weatherEvidenceInsufficient: true,
-        reason: 'location_key_missing',
-        historicalDays: [],
-        meta: {
-          sourceKind: 'weather_cache_recent_10d',
-          quality: 'missing',
-          weatherEvidenceInsufficient: true,
-          warnings: ['location_key_missing'],
-          recordCounts: {
-            historicalDays: 0,
-            forecastDays: 0,
-            totalDailyRecords: 0
-          }
-        }
-      }
-    }
-
-    let result = null
-    try {
-      result = await readRecentWeather({ locationKey })
-    } catch (error) {
-      return {
-        weatherEvidenceInsufficient: true,
-        locationKey,
-        historicalDays: [],
-        meta: {
-          sourceKind: 'weather_cache_recent_10d',
-          quality: 'missing',
-          weatherObjectPath: buildRecentWeatherObjectPath(locationKey),
-          weatherEvidenceInsufficient: true,
-          warnings: [`recent_10d_read_failed:${error.message || error}`],
-          recordCounts: {
-            historicalDays: 0,
-            forecastDays: 0,
-            totalDailyRecords: 0
-          }
-        }
-      }
-    }
-    const diagnosisDate = resolveDiagnosisDate(input)
-    if (result?.payload && shouldRebuildRecentPayloadFromArchives(result.payload, diagnosisDate)) {
-      result = null
-    }
-    if (!result?.payload) {
-      result = await rebuildRecentWeatherFromArchives({
-        locationKey,
-        diagnosisDate
-      }).catch(() => null)
-    }
-
-    if (!result?.payload) {
-      return {
-        weatherEvidenceInsufficient: true,
-        locationKey,
-        historicalDays: [],
-        meta: {
-          sourceKind: 'weather_cache_recent_10d',
-          quality: 'missing',
-          weatherObjectPath: buildRecentWeatherObjectPath(locationKey),
-          weatherEvidenceInsufficient: true,
-          warnings: ['recent_10d_object_missing'],
-          recordCounts: {
-            historicalDays: 0,
-            forecastDays: 0,
-            totalDailyRecords: 0
-          }
-        }
-      }
-    }
-
-    return {
-      ...result.payload,
-      cacheHit: result.cacheHit,
-      cacheSourceKind: result.sourceKind,
-      historicalDays: normalizeRecentHistoricalDays(result.payload),
-      meta: {
-        ...(isPlainObject(result.payload.meta) ? result.payload.meta : {}),
-        sourceKind: result.payload.sourceKind || 'weather_cache_recent_10d',
-        quality: result.payload.quality || 'partial',
-        weatherObjectPath:
-          result.payload.weatherObjectPath || buildRecentWeatherObjectPath(locationKey),
-        cacheHit: result.cacheHit,
-        cacheSourceKind: result.sourceKind,
-        weatherEvidenceInsufficient: Boolean(result.payload.weatherEvidenceInsufficient),
-        recordCounts: {
-          ...(isPlainObject(result.payload.meta?.recordCounts)
-            ? result.payload.meta.recordCounts
-            : {}),
-          historicalDays: normalizeRecentHistoricalDays(result.payload).length,
-          forecastDays: 0,
-          totalDailyRecords: normalizeRecentHistoricalDays(result.payload).length
-        }
-      }
-    }
+  async function resolveArchiveLocation(locationInput = {}) {
+    return !isCoordinateLocationKey(locationInput.locationKey) &&
+      typeof locationRepository.upsertLocation === 'function'
+      ? await locationRepository.upsertLocation(locationInput).catch(() => locationInput)
+      : locationInput
   }
 
-  async function ingestRecentForecast(input = {}) {
-    const locationInput = resolveLocationInput(input)
-    const location =
-      !isCoordinateLocationKey(locationInput.locationKey) &&
-      typeof locationRepository.upsertLocation === 'function'
-        ? await locationRepository.upsertLocation(locationInput).catch(() => locationInput)
-        : locationInput
-    const generatedAtDate = now()
+  async function writeForecastArchive({
+    input = {},
+    locationInput = resolveLocationInput(input),
+    forecast,
+    targetDate,
+    generatedAtDate,
+    preferForecastSnapshot = false
+  }) {
+    const location = await resolveArchiveLocation(locationInput)
     const generatedAt = generatedAtDate.toISOString()
-    const localToday = formatLocalDateInTimezone(generatedAtDate, location.timezone)
-    const targetDate = normalizeDate(input.targetDate || addDays(localToday, -1))
     const manifest = await readManifest({ storage, location })
-    const qweatherAdapter = adapter || createQWeatherAdapter({ apiKey, baseUrl })
-    const normalizedCoordinates = normalizeWeatherCoordinates(input) || {}
-    const forecast = await qweatherAdapter.fetchForecast10d({
-      locationId: location.qweatherLocationId,
-      lat: normalizedCoordinates.lat,
-      lng: normalizedCoordinates.lng
-    })
     const rawObjectPath = buildWeatherRawForecastObjectPath(
       location.locationKey,
       generatedAt.replace(/\.\d{3}Z$/, 'Z')
     )
-    const rawPayload = {
-      schemaVersion: 'weather-cache/v1/raw-forecast-10d',
-      location,
-      generatedAt,
-      sourceKind: 'qweather_forecast_10d',
-      raw: forecast.raw || {},
-      daily: asArray(forecast.daily)
-    }
+    const rawPayload = buildRawForecastPayload({ location, generatedAt, forecast })
     const rawUpload = await storage.uploadJson({ cloudPath: rawObjectPath, payload: rawPayload })
-    const historicalSnapshot = await findHistoricalRawSnapshotForDate({
-      storage,
-      manifest,
-      targetDate
-    })
+    const historicalSnapshot = preferForecastSnapshot
+      ? null
+      : await findHistoricalRawSnapshotForDate({
+          storage,
+          manifest,
+          targetDate
+        })
     const dailySnapshot = historicalSnapshot?.payload || rawPayload
     const dailyRawObjectPath = historicalSnapshot?.rawObjectPath || rawObjectPath
     const dailyObjectPath = buildWeatherDailyObjectPath(location.locationKey, targetDate)
@@ -461,11 +319,41 @@ function createRecentWeatherService({
       recentObjectPath: recentPayload.weatherObjectPath,
       recentFileId: uploadResult.fileId,
       targetDate,
+      dailyPayload,
       forecastDailyArchives: [],
       prunedFutureDailyArchives,
       quality: recentPayload.quality,
       recentPayload: normalizedRecentPayload
     }
+  }
+
+  const currentWeatherArchive = createCurrentWeatherArchiveService({
+    storage,
+    adapter,
+    apiKey,
+    baseUrl,
+    now,
+    resolveLocationInput,
+    writeForecastArchive
+  })
+  const readRecentWeatherForDiagnosis = createDiagnosisRecentWeatherReader({
+    readRecentWeather,
+    rebuildRecentWeatherFromArchives
+  })
+
+  async function ingestRecentForecast(input = {}) {
+    const locationInput = resolveLocationInput(input)
+    const generatedAtDate = now()
+    const localToday = formatLocalDateInTimezone(generatedAtDate, locationInput.timezone)
+    const targetDate = normalizeDate(input.targetDate || addDays(localToday, -1))
+    const forecast = await currentWeatherArchive.fetchForecast10d(input, locationInput)
+    return writeForecastArchive({
+      input,
+      locationInput,
+      forecast,
+      targetDate,
+      generatedAtDate
+    })
   }
 
   async function ingestActiveLocations({ limit = 20 } = {}) {
@@ -477,6 +365,7 @@ function createRecentWeatherService({
   }
 
   return {
+    getCurrentWeatherFromDailyArchive: currentWeatherArchive.getCurrentWeatherFromDailyArchive,
     ingestActiveLocations,
     ingestRecentForecast,
     readRecentWeather,
@@ -488,6 +377,7 @@ module.exports = {
   RECENT_SCHEMA_VERSION,
   buildDailyArchivePayload,
   buildRecentWeatherPayload,
+  buildCurrentWeatherDataFromDailyArchive,
   createRecentWeatherService,
   resolveLocationInput
 }

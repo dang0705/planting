@@ -115,6 +115,16 @@ function buildForecastDaily(startDate, count) {
   })
 }
 
+async function waitForCondition(predicate, { attempts = 20, delayMs = 10 } = {}) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    if (predicate()) {
+      return true
+    }
+    await new Promise(resolve => setTimeout(resolve, delayMs))
+  }
+  return false
+}
+
 assert.equal(
   buildRecentWeatherObjectPath('city:Shanghai'),
   'weather-cache/v1/locations/city:Shanghai/recent-10d.json'
@@ -189,6 +199,52 @@ assert.equal(
   true,
   'ingestion 必须写 recent-10d.json'
 )
+
+clearRecentWeatherMemoryCache()
+const currentEntryStorage = createMemoryStorage()
+let currentEntryForecastCalls = 0
+const currentEntryService = createRecentWeatherService({
+  storage: currentEntryStorage,
+  locationRepository: createMemoryLocationRepository(),
+  now: () => new Date('2026-06-17T01:00:00Z'),
+  adapter: {
+    async fetchForecast10d({ lat, lng }) {
+      currentEntryForecastCalls += 1
+      assert.equal(lat, 31.22)
+      assert.equal(lng, 121.46)
+      return {
+        raw: { code: '200' },
+        daily: buildForecastDaily('2026-06-17', 10)
+      }
+    }
+  }
+})
+const currentEntryResult = await currentEntryService.getCurrentWeatherFromDailyArchive({
+  lat: 31.22,
+  lng: 121.46,
+  city: '上海市',
+  timezone: 'Asia/Shanghai'
+})
+assert.equal(
+  await waitForCondition(() =>
+    currentEntryStorage.objects.has(buildWeatherDailyObjectPath('coord:121_46_31_22', '2026-06-17'))
+  ),
+  true
+)
+const currentEntrySecondResult = await currentEntryService.getCurrentWeatherFromDailyArchive({
+  lat: 31.22,
+  lng: 121.46,
+  city: '上海市',
+  timezone: 'Asia/Shanghai'
+})
+assert.equal(currentEntryResult.weatherData.temperature, 29)
+assert.equal(currentEntryResult.dailyWeatherCache.refreshed, false)
+assert.equal(currentEntryResult.dailyWeatherCache.refreshScheduled, true)
+assert.equal(currentEntryResult.dailyWeatherCache.targetDate, '2026-06-17')
+assert.equal(currentEntrySecondResult.weatherData.temperature, 29)
+assert.equal(currentEntrySecondResult.dailyWeatherCache.cacheHit, true)
+assert.equal(currentEntrySecondResult.dailyWeatherCache.reason, 'daily_archive_present')
+assert.equal(currentEntryForecastCalls, 1, 'current 入口已有 D0 归档时不得重复请求 10d')
 
 const sqlStatements = []
 const locationRepositoryUnderTest = createWeatherLocationRepository({
@@ -371,6 +427,35 @@ assert.equal(missWindow.weatherEvidenceInsufficient, true)
 assert.equal(missWindow.historicalDays.length, 0)
 assert.equal(missWindow.meta.quality, 'missing')
 assert.equal(missStorage.reads.get(buildRecentWeatherObjectPath('city:Missing')), 1)
+assert.equal(missWindow.meta.reason, 'recent_10d_rebuild_deferred')
+
+clearRecentWeatherMemoryCache()
+let slowStorageCompleted = false
+const slowStorage = {
+  async uploadJson() {
+    throw new Error('slow test should not upload')
+  },
+  async downloadJson() {
+    await new Promise(resolve => setTimeout(resolve, 30))
+    slowStorageCompleted = true
+    return null
+  }
+}
+const slowReadService = createRecentWeatherService({
+  storage: slowStorage,
+  locationRepository: createMemoryLocationRepository()
+})
+const slowReadStartedAt = Date.now()
+const slowReadWindow = await slowReadService.readRecentWeatherForDiagnosis({
+  locationKey: 'city:SlowStorage',
+  readTimeoutMs: 5
+})
+assert.equal(slowReadWindow.weatherEvidenceInsufficient, true)
+assert.equal(slowReadWindow.historicalDays.length, 0)
+assert.equal(slowReadWindow.meta.reason, 'recent_10d_read_timeout')
+assert.equal(slowReadWindow.meta.timedOut, true)
+assert.ok(Date.now() - slowReadStartedAt < 25, 'diagnosis weather read must not wait slow storage')
+assert.equal(slowStorageCompleted, false)
 
 clearRecentWeatherMemoryCache()
 const cacheStorage = createMemoryStorage({

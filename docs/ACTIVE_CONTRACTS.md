@@ -314,7 +314,7 @@ plant match fields: id, plantIdentityId, historicalPlantId, canonicalName, match
 | 方法 | 路径 | 当前用途 |
 |---|---|---|
 | GET | `/weather/health` | 健康检查。 |
-| GET/POST | `/weather/current` | 当前天气，支持城市缓存和用户缓存。 |
+| GET/POST | `/weather/current` | 当前天气，以同位置同日期 D0 daily archive 作为缓存事实源；未命中时调用和风每日预报并后台调度 daily 归档。 |
 | GET/POST | `/weather/recent` | 最近天气缓存接口，返回自有 recent-10d 缓存结果。 |
 | GET/POST | `/weather/environment-context` | 环境天气窗口。 |
 | GET/POST | `/weather/ingestion/recent-10d` | 触发最近十天历史天气抓取与归档更新。 |
@@ -347,15 +347,18 @@ currentWeather
 timestamp
 ```
 
-诊断模式下，`/weather/environment-context` 必须优先读取自有 recent-10d 缓存。缓存 miss / 读取异常时返回 `200`，以 `weather evidence insufficient` 或空 `historicalDays` 表示不足；不能在用户诊断链路中同步触发 QWeather 同步调用。
+诊断模式下，`/weather/environment-context` 必须优先读取自有 recent-10d 缓存。缓存 miss / 读取异常 / 读取超时时返回 `200`，以 `weather evidence insufficient` 或空 `historicalDays` 表示不足；不能在用户诊断链路中同步触发 QWeather 同步调用，也不能默认同步从 daily archives 重建 recent。同步 archive 重建只能由显式维护调用开启，前端诊断入口必须按短超时降级返回。
 
 ### 6.3 定时采集与批处理
 
 `weather-http` 新增 CloudBase timer event：`weather-ingestion-recent-10d`，cron 为 `0 20 0/6 * * * *`。该事件由 `app.js` 顶部受控分支处理，复用 recent-10d service。
 
+`/weather/current` 的 D0 daily archive 同时作为 current 响应缓存和 recent-10d 重建输入；旧 SQL `weather_cache` 城市缓存/用户缓存不再作为 current 路由缓存策略。daily 写入、raw snapshot 写入、`recent-10d.json` 重建和 manifest 更新均为后台归档动作，不阻塞客户端响应；定时采集仍默认维护 D-1 历史归档。
+
 批处理逻辑只扫描 `weather_locations` 中 `is_active = 1` 且 `qweather_location_id` 非空的地点，并可带 `limit` 控制处理量，不触发全量省市/全国抓取。
 
 实现 helper 已拆分为：
+
 - `recent-weather-payloads.js`
 - `recent-weather-archive.js`
 - `recent-weather-batch.js`
