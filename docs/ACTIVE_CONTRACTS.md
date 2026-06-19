@@ -347,7 +347,7 @@ currentWeather
 timestamp
 ```
 
-诊断模式下，`/weather/environment-context` 必须优先读取自有 recent-10d 缓存。缓存 miss / 读取异常 / 读取超时时返回 `200`，以 `weather evidence insufficient` 或空 `historicalDays` 表示不足；不能在用户诊断链路中同步触发 QWeather 同步调用，也不能默认同步从 daily archives 重建 recent。同步 archive 重建只能由显式维护调用开启，前端诊断入口必须按短超时降级返回。
+诊断模式下，`/weather/environment-context` 必须优先读取自有 recent-10d 缓存。诊断天气事实链路为 `plant -> careLocationId -> locationKey -> weather-cache`；诊断请求已有植物 careLocation 时不得使用用户当前位置作为事实源。热门城市上海必须使用 `locationKey=city:shanghai`，上海/上海市/上海坐标不能退化为 `coord:*`；读取路径为 `weather-cache/v1/locations/{locationKey}/recent-10d.json`。缓存 miss / 读取异常 / 读取超时时返回 `200`，以 `weather evidence insufficient` 或空 `historicalDays` 表示不足；`city:shanghai` 的有效 recent payload 已生成且日期窗口匹配时，`weatherEvidenceInsufficient` 应为 `false`。不能在用户诊断链路中同步触发 QWeather 同步调用，也不能默认同步从 daily archives 重建 recent。同步 archive 重建只能由显式维护调用开启，前端诊断入口必须按短超时降级返回。diagnosis reader 必须保留日期窗口守卫：partial recent payload 只有匹配 `diagnosisDate` / `window.targetDate = diagnosisDate - 1` 时才可作为有效证据，过期 payload 不得通过。
 
 ### 6.3 定时采集与批处理
 
@@ -355,7 +355,7 @@ timestamp
 
 `/weather/current` 的 D0 daily archive 同时作为 current 响应缓存和 recent-10d 重建输入；旧 SQL `weather_cache` 城市缓存/用户缓存不再作为 current 路由缓存策略。daily 写入、raw snapshot 写入、`recent-10d.json` 重建和 manifest 更新均为后台归档动作，不阻塞客户端响应；定时采集仍默认维护 D-1 历史归档。
 
-批处理逻辑只扫描 `weather_locations` 中 `is_active = 1` 且 `qweather_location_id` 非空的地点，并可带 `limit` 控制处理量，不触发全量省市/全国抓取。
+批处理逻辑强制覆盖 20 个热门城市（含 `city:shanghai`），再合并 `weather_locations` 中 `is_active = 1` 且 `qweather_location_id` 非空的地点去重，并可带 `limit` 控制处理量，不触发全量省市/全国抓取。若 `/v7/weather/10d` forecast 不含 D-1 历史目标日，维护/ingestion 路径可使用 QWeather Time Machine `/v7/historical/weather` 补 D-1 daily archive；诊断请求仍 storage-only，不同步调用 QWeather/GeoAPI。
 
 数据库建表与校验使用官方 CloudBase CLI（`tcb db execute`）路径，统一通过 `run-with-cloudbase-env` 注入凭据执行；不要将 `$runSQL` 或 `$runSQLRaw` 作为建表主路径。注意：CloudBase Manager API 常见对 `$runSQLRaw` 的限制仅覆盖 DML，不构成 MySQL DDL 能力阻断依据。只允许幂等建表，`scripts/sql/ensure-weather-history-cache-tables.sql` 为当前 DDL 源文件，`npm run ensure:cloudbase-sql-schema` 与 `npm run ensure:cloudbase-sql-schema:verify` 为最小运维入口。
 
@@ -374,6 +374,7 @@ timestamp
 
 ```text
 cloudfunctions/weather-http/app.js
+cloudfunctions/weather-http/services/weather-cache-paths.js
 cloudfunctions/weather-http/routes/recent-weather-routes.js
 cloudfunctions/weather-http/services/weather-window-service.js
 cloudfunctions/weather-http/services/recent-weather-service.js

@@ -1,6 +1,10 @@
 'use strict'
 
-const { buildLocationKey, buildRecentWeatherObjectPath } = require('./weather-cache-paths')
+const {
+  buildLocationKey,
+  buildRecentWeatherObjectPath,
+  normalizeLocationKey
+} = require('./weather-cache-paths')
 const { addDays, normalizeDate } = require('./recent-weather-features')
 const { normalizeRecentHistoricalDays } = require('./recent-weather-normalize')
 const { isPlainObject } = require('./recent-weather-payloads')
@@ -109,12 +113,22 @@ function createDiagnosisRecentWeatherReader({
   rebuildRecentWeatherFromArchives
 }) {
   return async function readRecentWeatherForDiagnosis(input = {}) {
-    const locationKey = buildLocationKey(input)
+    const explicitLocationKey = normalizeLocationKey(input.locationKey || input.location_key || '')
+    const locationKey = explicitLocationKey || buildLocationKey(input)
     if (!locationKey) {
       return buildMissingDiagnosisWeatherWindow({
         ...input,
         reason: 'location_key_missing',
         warning: 'location_key_missing'
+      })
+    }
+    if (!explicitLocationKey && locationKey.startsWith('coord:')) {
+      // 诊断流必须以植物 careLocation 的 locationKey 为准；坐标级 fallback 不算命中。
+      return buildMissingDiagnosisWeatherWindow({
+        ...input,
+        locationKey,
+        reason: 'diagnosis_location_key_missing',
+        warning: 'diagnosis_location_key_missing'
       })
     }
 
@@ -169,6 +183,7 @@ function createDiagnosisRecentWeatherReader({
     const historicalDays = normalizeRecentHistoricalDays(result.payload)
     return {
       ...result.payload,
+      locationKey,
       cacheHit: result.cacheHit,
       cacheSourceKind: result.sourceKind,
       historicalDays,

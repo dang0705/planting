@@ -40,9 +40,10 @@ function normalizeCoordinateText(value) {
   return normalized.toFixed(WEATHER_COORDINATE_PRECISION)
 }
 
-function normalizeWeatherCoordinates({ lat, lng } = {}) {
-  const normalizedLat = normalizeCoordinateNumber(lat)
-  const normalizedLng = normalizeCoordinateNumber(lng)
+function normalizeWeatherCoordinates(input = {}) {
+  const { lat, lng, latitude, longitude } = input || {}
+  const normalizedLat = normalizeCoordinateNumber(lat ?? latitude)
+  const normalizedLng = normalizeCoordinateNumber(lng ?? longitude)
   if (normalizedLat === null || normalizedLng === null) {
     return null
   }
@@ -60,6 +61,41 @@ function normalizeQWeatherLocation(input = {}) {
     throw new Error('缺少位置参数：lat 和 lng')
   }
   return `${coordinates.lngText},${coordinates.latText}`
+}
+
+function stripCityNameSuffix(value = '') {
+  return String(value || '')
+    .trim()
+    .replace(/(市|区|县|盟|州|旗)$/u, '')
+    .trim()
+}
+
+function resolveHotCityKey({ cityName = '', city = '', lat, lng } = {}) {
+  let resolveHotCityByKeyOrName
+  let resolveHotCityLocation
+  try {
+    ;({ resolveHotCityByKeyOrName, resolveHotCityLocation } = require('./hot-city-locations'))
+  } catch {
+    return ''
+  }
+  const candidates = [cityName, city, stripCityNameSuffix(cityName), stripCityNameSuffix(city)]
+    .map(value => String(value || '').trim())
+    .filter(Boolean)
+  for (const candidate of candidates) {
+    const direct = resolveHotCityByKeyOrName(candidate)
+    if (direct?.key) {
+      return direct.key
+    }
+  }
+  const numericLat = Number(lat)
+  const numericLng = Number(lng)
+  if (Number.isFinite(numericLat) && Number.isFinite(numericLng)) {
+    const matched = resolveHotCityLocation({ latitude: numericLat, longitude: numericLng })
+    if (matched?.matched && matched.city?.locationKey) {
+      return matched.city.locationKey
+    }
+  }
+  return ''
 }
 
 function buildLocationKey({
@@ -80,15 +116,15 @@ function buildLocationKey({
     return `qweather:${locationId}`
   }
 
+  const hotCityKey = resolveHotCityKey({ cityName, city, lat, lng })
+  if (hotCityKey) {
+    return hotCityKey
+  }
+
   const normalizedLat = normalizeCoordinate(lat)
   const normalizedLng = normalizeCoordinate(lng)
   if (normalizedLat && normalizedLng) {
     return `coord:${normalizedLng}_${normalizedLat}`
-  }
-
-  const normalizedCity = normalizePathSegment(cityName || city, '')
-  if (normalizedCity) {
-    return `city:${normalizedCity}`
   }
 
   return ''

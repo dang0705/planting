@@ -111,6 +111,46 @@ function buildDailyArchivePayload({
   }
 }
 
+function buildHistoricalDailyArchivePayload({
+  location,
+  targetDate,
+  daily,
+  dailyObjectPath,
+  generatedAt
+}) {
+  const normalizedDaily = normalizeDailyWeatherRecord(
+    {
+      ...daily,
+      source: 'qweather_time_machine_daily_archive',
+      sourceKind: 'qweather_time_machine_daily_archive'
+    },
+    {
+      date: targetDate,
+      weatherObjectPath: dailyObjectPath,
+      quality: 'partial'
+    }
+  )
+  const dailyWithDaylight = {
+    ...normalizedDaily,
+    ...aggregateDaylightSlotFields({
+      daily: normalizedDaily,
+      location,
+      timezone: location?.timezone || 'Asia/Shanghai'
+    })
+  }
+
+  return {
+    schemaVersion: 'weather-cache/v1/daily',
+    location,
+    date: targetDate,
+    generatedAt,
+    sourceKind: 'qweather_time_machine_daily_archive',
+    quality: normalizedDaily.missing ? 'missing' : 'partial',
+    weatherObjectPath: dailyObjectPath,
+    daily: dailyWithDaylight
+  }
+}
+
 function buildRecentWeatherPayload({ location, targetDate, generatedAt, days, dailyObjectPaths }) {
   const quality = resolveRecentWeatherQuality(days)
   const weatherObjectPath = buildRecentWeatherObjectPath(location.locationKey)
@@ -157,6 +197,7 @@ module.exports = {
   RECENT_SCHEMA_VERSION,
   asArray,
   buildDailyArchivePayload,
+  buildHistoricalDailyArchivePayload,
   buildMissingDailyRecord,
   buildRecentWeatherPayload,
   isPlainObject,

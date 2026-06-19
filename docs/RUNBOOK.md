@@ -137,6 +137,10 @@ scripts/sql/ensure-weather-history-cache-tables.sql
 
 本次执行经验：implementer_deep 的坑是把 `runSQL/runSQLRaw` 的 `InvalidParameter` 与 MCP 暴露面不足误判为 DDL 阻断；implementer_fast 的解法是改走官方 CLI 路径（`tcb db instance list` + `tcb db execute`）并以 `ensure:cloudbase-sql-schema:verify` 三表核验通过作为结论。
 
+### 3.2 天气 recent-10d 热门城市缓存运维
+
+天气缓存相关代码变更后，若要让线上/本地真实诊断读到上海热门城市缓存，先重新执行 recent-10d 批量/定时采集，确认 `weather-cache/v1/locations/city:shanghai/recent-10d.json` 已生成且日期窗口匹配，再期待 `/weather/environment-context` 对上海植物返回 `weatherEvidenceInsufficient=false`。既有 `coord:*` 上海缓存属于历史脏 key，不能作为 `city:shanghai` 的有效替代；清理这些脏 key 是独立运维动作，不是诊断请求链路的同步修复步骤。
+
 ## 4. 诊断 smoke / regression
 
 常用 smoke：

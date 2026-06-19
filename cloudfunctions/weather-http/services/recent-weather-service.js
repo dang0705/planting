@@ -8,6 +8,7 @@ const {
   buildWeatherRawForecastObjectPath,
   buildWeatherWorkingObjectPath
 } = require('./weather-cache-paths')
+const { createQWeatherAdapter } = require('../adapters/qweather-adapter')
 const { addDays, formatLocalDateInTimezone, normalizeDate } = require('./recent-weather-features')
 const {
   getRecentWeatherFromMemory,
@@ -25,6 +26,7 @@ const {
 const {
   RECENT_SCHEMA_VERSION,
   buildDailyArchivePayload,
+  buildHistoricalDailyArchivePayload,
   buildRecentWeatherPayload
 } = require('./recent-weather-payloads')
 const {
@@ -77,6 +79,36 @@ async function pruneFutureDailyArchives({ storage, manifest, targetDate }) {
     removed.push({ date: normalizedDate, cloudPath, fileId })
   }
   return removed
+}
+
+async function buildTimeMachineDailyArchivePayload({
+  adapter,
+  location,
+  targetDate,
+  dailyObjectPath,
+  generatedAt
+}) {
+  if (!adapter || typeof adapter.fetchHistoricalWeather !== 'function') {
+    return null
+  }
+  const historicalDaily = await adapter
+    .fetchHistoricalWeather({
+      locationId: location.qweatherLocationId,
+      lat: location.latitude,
+      lng: location.longitude,
+      date: targetDate
+    })
+    .catch(() => null)
+  if (!historicalDaily) {
+    return null
+  }
+  return buildHistoricalDailyArchivePayload({
+    location,
+    targetDate,
+    daily: historicalDaily,
+    dailyObjectPath,
+    generatedAt
+  })
 }
 
 function createRecentWeatherService({
@@ -255,7 +287,7 @@ function createRecentWeatherService({
     const dailySnapshot = historicalSnapshot?.payload || rawPayload
     const dailyRawObjectPath = historicalSnapshot?.rawObjectPath || rawObjectPath
     const dailyObjectPath = buildWeatherDailyObjectPath(location.locationKey, targetDate)
-    const dailyPayload = buildDailyArchivePayload({
+    let dailyPayload = buildDailyArchivePayload({
       location,
       targetDate,
       snapshot: dailySnapshot,
@@ -263,6 +295,16 @@ function createRecentWeatherService({
       dailyObjectPath,
       generatedAt
     })
+    if (dailyPayload.quality === 'missing') {
+      dailyPayload =
+        (await buildTimeMachineDailyArchivePayload({
+          adapter: adapter || createQWeatherAdapter({ apiKey, baseUrl }),
+          location,
+          targetDate,
+          dailyObjectPath,
+          generatedAt
+        })) || dailyPayload
+    }
     const dailyUpload = await storage.uploadJson({
       cloudPath: dailyObjectPath,
       payload: dailyPayload

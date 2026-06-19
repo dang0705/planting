@@ -220,10 +220,11 @@ function createQWeatherAdapter({
       }
     },
 
-    async fetchHistoricalWeather({ lat, lng, date }) {
-      const locationId = await resolveLocationId({ lat, lng })
+    async fetchHistoricalWeather({ locationId, lat, lng, date }) {
+      const resolvedLocationId =
+        String(locationId || '').trim() || (await resolveLocationId({ lat, lng }))
       const data = await request('/v7/historical/weather', {
-        location: locationId,
+        location: resolvedLocationId,
         date: toDate8(date)
       })
       return normalizeHistoricalDaily(data.weatherDaily || data.daily || {}, date)

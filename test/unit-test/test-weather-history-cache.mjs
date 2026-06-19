@@ -210,8 +210,8 @@ const currentEntryService = createRecentWeatherService({
   adapter: {
     async fetchForecast10d({ lat, lng }) {
       currentEntryForecastCalls += 1
-      assert.equal(lat, 31.22)
-      assert.equal(lng, 121.46)
+      assert.equal(lat, 35.22)
+      assert.equal(lng, 105.46)
       return {
         raw: { code: '200' },
         daily: buildForecastDaily('2026-06-17', 10)
@@ -219,24 +219,15 @@ const currentEntryService = createRecentWeatherService({
     }
   }
 })
-const currentEntryResult = await currentEntryService.getCurrentWeatherFromDailyArchive({
-  lat: 31.22,
-  lng: 121.46,
-  city: '上海市',
-  timezone: 'Asia/Shanghai'
-})
+const currentEntryInput = { lat: 35.22, lng: 105.46, city: '远离热城测试地', timezone: 'Asia/Shanghai' }
+const currentEntryResult = await currentEntryService.getCurrentWeatherFromDailyArchive(currentEntryInput)
 assert.equal(
   await waitForCondition(() =>
-    currentEntryStorage.objects.has(buildWeatherDailyObjectPath('coord:121_46_31_22', '2026-06-17'))
+    currentEntryStorage.objects.has(buildWeatherDailyObjectPath('coord:105_46_35_22', '2026-06-17'))
   ),
   true
 )
-const currentEntrySecondResult = await currentEntryService.getCurrentWeatherFromDailyArchive({
-  lat: 31.22,
-  lng: 121.46,
-  city: '上海市',
-  timezone: 'Asia/Shanghai'
-})
+const currentEntrySecondResult = await currentEntryService.getCurrentWeatherFromDailyArchive(currentEntryInput)
 assert.equal(currentEntryResult.weatherData.temperature, 29)
 assert.equal(currentEntryResult.dailyWeatherCache.refreshed, false)
 assert.equal(currentEntryResult.dailyWeatherCache.refreshScheduled, true)
@@ -393,21 +384,22 @@ const batchService = createRecentWeatherService({
   ]),
   now: () => new Date('2026-06-14T00:30:00Z'),
   adapter: {
-    async fetchForecast10d({ locationId }) {
+    async fetchForecast10d() {
       batchForecastCalls += 1
-      assert.equal(locationId, 'BATCH_A')
-      return {
-        raw: { code: '200' },
-        daily: buildForecastDaily('2026-06-13', 10)
-      }
+      return { raw: { code: '200' }, daily: buildForecastDaily('2026-06-13', 10) }
     }
   }
 })
 const batchResult = await batchService.ingestActiveLocations({ limit: 10 })
-assert.equal(batchResult.total, 1)
-assert.equal(batchResult.successCount, 1)
+// 热城常量 20 + DB active 1 = 21
+assert.equal(batchResult.total, 21)
+assert.equal(batchResult.successCount, 21)
 assert.equal(batchResult.failureCount, 0)
-assert.equal(batchForecastCalls, 1)
+assert.equal(batchForecastCalls, 21)
+assert.equal(
+  batchResult.results.some(item => item.locationKey === 'city:shanghai' && item.ok),
+  true
+)
 
 clearRecentWeatherMemoryCache()
 const missStorage = createMemoryStorage()

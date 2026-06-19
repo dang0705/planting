@@ -190,19 +190,24 @@ Module._load = function patchedWeatherCacheLoad(request, parent, isMain) {
             }
           }
 
-          currentForecastCallCount += 1
-          assert.equal(lat, 31.22)
-          assert.equal(lng, 121.46)
+          const isCurrentEntry =
+            Math.abs(lat - 35.22) < 0.01 && Math.abs(lng - 105.46) < 0.01
+          if (isCurrentEntry) {
+            currentForecastCallCount += 1
+          } else {
+            // 热门城市批量走真实坐标；详细路由由 test-weather-hot-city-app-routing 覆盖。
+            timerForecastCallCount += 1
+          }
           return {
             raw: { code: '200' },
             daily: [
               {
-                date: currentArchiveDate,
+                date: isCurrentEntry ? currentArchiveDate : '2026-06-14',
                 tempMaxC: 30,
                 tempMinC: 20,
                 humidity: 60,
                 textDay: '晴',
-                source: 'fake_current_entry_forecast'
+                source: isCurrentEntry ? 'fake_current_entry_forecast' : 'fake_hot_city_forecast'
               }
             ]
           }
@@ -287,9 +292,9 @@ try {
       headers: {},
       query: {},
       body: {
-        lat: 31.22,
-        lng: 121.46,
-        city: '上海市'
+        lat: 35.22,
+        lng: 105.46,
+        city: '远离热城测试地'
       }
     },
     {}
@@ -306,14 +311,14 @@ try {
   assert.equal(
     await waitForCondition(() =>
       storageObjects.has(
-        `weather-cache/v1/locations/coord:121_46_31_22/daily/${currentArchiveDate}.json`
+        `weather-cache/v1/locations/coord:105_46_35_22/daily/${currentArchiveDate}.json`
       )
     ),
     true
   )
   assert.equal(
     storageObjects.has(
-      `weather-cache/v1/locations/coord:121_46_31_22/daily/${currentArchiveDate}.json`
+      `weather-cache/v1/locations/coord:105_46_35_22/daily/${currentArchiveDate}.json`
     ),
     true
   )
@@ -389,9 +394,9 @@ try {
       headers: {},
       query: {},
       body: {
-        lat: 31.22,
-        lng: 121.46,
-        city: '上海市'
+        lat: 35.22,
+        lng: 105.46,
+        city: '远离热城测试地'
       }
     },
     {}
@@ -413,9 +418,10 @@ try {
   )
   assert.equal(timerResponse.code, 200)
   assert.equal(timerResponse.data.sourceKind, 'weather_cache_recent_10d_timer')
-  assert.equal(timerResponse.data.total, 1)
-  assert.equal(timerResponse.data.successCount, 1)
-  assert.equal(timerForecastCallCount, 1)
+  // 热城常量 20 + DB active 行 1 = 21；详细路由由 test-weather-hot-city-app-routing 覆盖。
+  assert.equal(timerResponse.data.total, 21)
+  assert.equal(timerResponse.data.successCount, 21)
+  assert.equal(timerForecastCallCount, 21)
   assert.equal(
     sqlCalls.some(
       item => /FROM weather_locations/.test(item.sql) && /WHERE is_active = 1/.test(item.sql)

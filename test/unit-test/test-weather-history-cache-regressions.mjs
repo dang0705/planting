@@ -107,106 +107,6 @@ function buildForecastDaily(startDate, count) {
   })
 }
 
-assert.equal(
-  buildRecentWeatherObjectPath('coord:121_46_31_22'),
-  'weather-cache/v1/locations/coord:121_46_31_22/recent-10d.json'
-)
-
-clearRecentWeatherMemoryCache()
-const coordinateStorage = createMemoryStorage()
-coordinateStorage.objects.set(buildWeatherManifestObjectPath('coord:121_46_31_22'), {
-  schemaVersion: 'weather-cache/v1/manifest',
-  locationKey: 'coord:121_46_31_22',
-  rawSnapshots: [],
-  dailyArchives: {
-    '2026-06-14': {
-      cloudPath: buildWeatherDailyObjectPath('coord:121_46_31_22', '2026-06-14'),
-      fileId: 'cloud://weather-cache/v1/locations/coord:121_46_31_22/daily/2026-06-14.json',
-      generatedAt: '2026-06-14T00:00:00Z',
-      quality: 'partial'
-    }
-  }
-})
-coordinateStorage.objects.set(buildWeatherDailyObjectPath('coord:121_46_31_22', '2026-06-14'), {
-  schemaVersion: 'weather-cache/v1/daily',
-  date: '2026-06-14',
-  sourceKind: 'qweather_forecast_10d_archive',
-  quality: 'partial'
-})
-let coordinateForecastLocation = ''
-const coordinateService = createRecentWeatherService({
-  storage: coordinateStorage,
-  locationRepository: createMemoryLocationRepository(),
-  now: () => new Date('2026-06-14T00:30:00Z'),
-  adapter: {
-    async fetchForecast10d({ locationId, lat, lng }) {
-      coordinateForecastLocation = locationId || `${lng},${lat}`
-      return {
-        raw: { code: '200' },
-        daily: buildForecastDaily('2026-06-13', 10)
-      }
-    }
-  }
-})
-const coordinateIngest = await coordinateService.ingestRecentForecast({
-  lat: 31.22352,
-  lng: 121.45591,
-  cityName: '上海市',
-  timezone: 'Asia/Shanghai'
-})
-assert.equal(coordinateIngest.location.locationKey, 'coord:121_46_31_22')
-assert.equal(coordinateForecastLocation, '121.46,31.22')
-const coordinateRead = await coordinateService.readRecentWeatherForDiagnosis({
-  lat: 31.22352,
-  lng: 121.45591,
-  city: '上海市',
-  diagnosisDate: '2026-06-14'
-})
-assert.equal(coordinateRead.historicalDays.length, 10)
-assert.equal(coordinateRead.location.locationKey, 'coord:121_46_31_22')
-const nearbyCoordinateRead = await coordinateService.readRecentWeatherForDiagnosis({
-  lat: 31.22351,
-  lng: 121.45592,
-  city: '上海市',
-  diagnosisDate: '2026-06-14'
-})
-assert.equal(nearbyCoordinateRead.location.locationKey, 'coord:121_46_31_22')
-assert.equal(nearbyCoordinateRead.historicalDays.length, 10)
-const archivedForecastDay = coordinateRead.historicalDays.find(day => day.date === '2026-06-13')
-assert.equal(archivedForecastDay.source, 'qweather_forecast_10d_archive')
-assert.equal(archivedForecastDay.sourceKind, 'qweather_forecast_10d_archive')
-assert.equal(archivedForecastDay.uvIndex, 4)
-assert.equal(archivedForecastDay.cloud, 4)
-assert.equal(archivedForecastDay.visibilityKm, 25)
-assert.equal(archivedForecastDay.windSpeedDay, 3)
-assert.equal(archivedForecastDay.windScaleNight, '1-2')
-assert.equal(coordinateIngest.forecastDailyArchives.length, 0)
-assert.equal(coordinateIngest.prunedFutureDailyArchives.length, 1)
-assert.equal(coordinateIngest.prunedFutureDailyArchives[0].date, '2026-06-14')
-assert.equal(
-  coordinateStorage.objects.has(buildWeatherDailyObjectPath('coord:121_46_31_22', '2026-06-14')),
-  false
-)
-assert.equal(
-  coordinateStorage.writes.at(-1).payload.dailyArchives['2026-06-14'],
-  undefined,
-  'manifest 不得继续引用 targetDate 之后的 future daily archive'
-)
-assert.equal(
-  coordinateStorage.writes.filter(item =>
-    item.cloudPath.includes('weather-cache/v1/locations/coord:121_46_31_22/daily/')
-  ).length,
-  1,
-  'ingestion 不得把 10d 未来预报批量写入 daily 历史缓存目录'
-)
-assert.equal(
-  coordinateStorage.writes.some(
-    item => item.cloudPath === buildWeatherDailyObjectPath('coord:121_46_31_22', '2026-06-14')
-  ),
-  false,
-  'D0 预报不得写入 daily 历史缓存目录'
-)
-
 clearRecentWeatherMemoryCache()
 const noSchemaStorage = createMemoryStorage()
 const noSchemaService = createRecentWeatherService({
@@ -461,13 +361,7 @@ const directDailyOnlyRead = await createRecentWeatherService({
   storage: directDailyOnlyStorage,
   locationRepository: createMemoryLocationRepository(),
   now: () => new Date('2026-06-18T00:30:00Z')
-}).readRecentWeatherForDiagnosis({
-  lat: 31.22352,
-  lng: 121.45591,
-  city: '上海市',
-  diagnosisDate: '2026-06-18',
-  allowArchiveRebuild: true
-})
+}).readRecentWeatherForDiagnosis({ locationKey: 'coord:121_46_31_22', lat: 31.22352, lng: 121.45591, city: '上海市', diagnosisDate: '2026-06-18', allowArchiveRebuild: true })
 assert.equal(directDailyOnlyRead.historicalDays.length, 10)
 assert.equal(directDailyOnlyRead.cacheSourceKind, 'rebuilt_from_daily_archives')
 assert.equal(directDailyOnlyRead.historicalDays.at(-1).date, '2026-06-17')
