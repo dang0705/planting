@@ -120,6 +120,16 @@ function buildWeatherDailyObjectPath(locationKey = '', date = '') {
   return `${buildWeatherLocationBasePath(locationKey)}/daily/${safeDate}.json`
 }
 
+function buildWeatherWorkingObjectPath(locationKey = '', date = '') {
+  const safeDate = String(date || '')
+    .trim()
+    .slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(safeDate)) {
+    throw new Error('天气 working 对象路径缺少合法日期')
+  }
+  return `${buildWeatherLocationBasePath(locationKey)}/working/${safeDate}.json`
+}
+
 function buildWeatherRawForecastObjectPath(locationKey = '', timestamp = Date.now()) {
   const safeTimestamp = String(timestamp || Date.now()).replace(/[^0-9T:Z.-]/g, '')
   return `${buildWeatherLocationBasePath(locationKey)}/raw/forecast-${safeTimestamp}.json`
@@ -133,6 +143,7 @@ module.exports = {
   buildWeatherLocationBasePath,
   buildWeatherManifestObjectPath,
   buildWeatherRawForecastObjectPath,
+  buildWeatherWorkingObjectPath,
   normalizeCoordinate,
   normalizeCoordinateNumber,
   normalizeCoordinateText,

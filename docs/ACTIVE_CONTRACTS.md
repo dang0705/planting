@@ -357,6 +357,13 @@ timestamp
 
 批处理逻辑只扫描 `weather_locations` 中 `is_active = 1` 且 `qweather_location_id` 非空的地点，并可带 `limit` 控制处理量，不触发全量省市/全国抓取。
 
+数据库建表与校验使用官方 CloudBase CLI（`tcb db execute`）路径，统一通过 `run-with-cloudbase-env` 注入凭据执行；不要将 `$runSQL` 或 `$runSQLRaw` 作为建表主路径。注意：CloudBase Manager API 常见对 `$runSQLRaw` 的限制仅覆盖 DML，不构成 MySQL DDL 能力阻断依据。只允许幂等建表，`scripts/sql/ensure-weather-history-cache-tables.sql` 为当前 DDL 源文件，`npm run ensure:cloudbase-sql-schema` 与 `npm run ensure:cloudbase-sql-schema:verify` 为最小运维入口。
+
+事实源已扩展为：
+
+- `scripts/ensure-cloudbase-sql-schema.mjs`
+- `scripts/lib/cloudbase-sql-runner.mjs`
+
 实现 helper 已拆分为：
 
 - `recent-weather-payloads.js`

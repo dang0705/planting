@@ -4,8 +4,16 @@
     <view class="mb-6">
       <text class="block text-sm font-semibold text-gray-800 mb-3">植物照片</text>
       <view class="w-[120px] h-[120px] rounded-2xl overflow-hidden" @click="$emit('upload-photo')">
-        <image v-if="modelValue.image" :src="modelValue.image" class="w-full h-full" mode="aspectFill" />
-        <view v-else class="w-full h-full bg-gray-100 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center">
+        <image
+          v-if="modelValue.image"
+          :src="modelValue.image"
+          class="w-full h-full"
+          mode="aspectFill"
+        />
+        <view
+          v-else
+          class="w-full h-full bg-gray-100 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center"
+        >
           <text class="text-[32px] mb-2">📷</text>
           <text class="text-xs text-gray-400">添加照片</text>
         </view>
@@ -14,7 +22,9 @@
 
     <!-- 植物昵称 -->
     <view class="mb-6">
-      <text class="block text-sm font-semibold text-gray-800 mb-3">植物昵称 <text class="font-normal text-gray-400">(可选)</text></text>
+      <text class="block text-sm font-semibold text-gray-800 mb-3"
+        >植物昵称 <text class="font-normal text-gray-400">(可选)</text></text
+      >
       <input
         :value="modelValue.nickname"
         @input="update('nickname', $event.detail.value)"
@@ -22,6 +32,83 @@
         placeholder="给它起个名字吧"
         placeholder-class="text-gray-300"
       />
+    </view>
+
+    <!-- 养护城市 -->
+    <view class="mb-6">
+      <text class="block text-sm font-semibold text-gray-800 mb-3">养护城市</text>
+      <view
+        class="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3"
+      >
+        <view class="min-w-0 flex-1">
+          <text class="block text-sm font-semibold text-gray-800">{{
+            selectedCareLocation?.cityName || '请选择城市'
+          }}</text>
+          <text class="mt-1 block text-xs text-gray-400">{{ locationStatusText }}</text>
+        </view>
+        <button
+          class="m-0 h-9 rounded-full border border-emerald-200 bg-emerald-50 px-4 text-xs font-semibold leading-9 text-[#016630]"
+          @click="showCitySheet = true"
+        >
+          修改
+        </button>
+      </view>
+    </view>
+
+    <view
+      v-if="showCitySheet"
+      class="fixed inset-0 z-50 flex items-end bg-black/30"
+      @click.self="showCitySheet = false"
+    >
+      <view class="w-full rounded-t-[24px] bg-white px-4 pb-6 pt-4 shadow-2xl">
+        <view class="mb-5 flex items-start justify-between gap-3">
+          <view class="min-w-0 flex-1">
+            <text class="block text-[20px] font-bold leading-7 text-gray-900">选择城市</text>
+            <view class="mt-1 flex items-center gap-1.5">
+              <text class="text-[14px] text-gray-500">⌖</text>
+              <text class="text-[13px] leading-5 text-gray-500">{{
+                `当前定位：${selectedCareLocation?.cityName || '未选择'}`
+              }}</text>
+            </view>
+          </view>
+          <button
+            class="m-0 h-9 w-9 rounded-full bg-gray-100 p-0 text-xl leading-9 text-gray-500"
+            @click="showCitySheet = false"
+          >
+            ×
+          </button>
+        </view>
+
+        <view class="grid grid-cols-3 gap-3">
+          <button
+            v-for="city in hotCities"
+            :key="city.locationKey"
+            class="relative m-0 h-[58px] rounded-2xl border p-0 text-center leading-normal"
+            :class="
+              isSelectedCity(city)
+                ? 'border-[#00a63e] bg-[#f0fdf4]'
+                : 'border-[#f3f4f6] bg-[#f9fafb]'
+            "
+            @click="selectCity(city, 'manual_selected')"
+          >
+            <text
+              class="block pt-2 text-[14px] font-medium"
+              :class="isSelectedCity(city) ? 'font-semibold text-[#016630]' : 'text-[#364153]'"
+              >{{ city.cityName }}</text
+            >
+            <text
+              v-if="isSelectedCity(city)"
+              class="mt-0.5 block text-[10px] font-medium text-[#00a63e]"
+              >当前定位</text
+            >
+            <text
+              v-if="isSelectedCity(city)"
+              class="absolute right-2 top-1 text-[12px] font-bold text-[#00a63e]"
+              >✓</text
+            >
+          </button>
+        </view>
+      </view>
     </view>
 
     <!-- 摆放位置 -->
@@ -35,7 +122,11 @@
           :class="modelValue.location === loc ? 'bg-primary border-primary' : 'border-gray-300'"
           @click="update('location', loc)"
         >
-          <text class="text-sm" :class="modelValue.location === loc ? 'text-white' : 'text-gray-600'">{{ loc }}</text>
+          <text
+            class="text-sm"
+            :class="modelValue.location === loc ? 'text-white' : 'text-gray-600'"
+            >{{ loc }}</text
+          >
         </view>
       </view>
     </view>
@@ -43,8 +134,14 @@
     <!-- 种植日期 -->
     <view class="mb-6">
       <text class="block text-sm font-semibold text-gray-800 mb-3">种植日期</text>
-      <picker mode="date" :value="modelValue.plantDate" @change="update('plantDate', $event.detail.value)">
-        <view class="flex items-center justify-between py-3 px-4 bg-white border border-gray-300 rounded-xl">
+      <picker
+        mode="date"
+        :value="modelValue.plantDate"
+        @change="update('plantDate', $event.detail.value)"
+      >
+        <view
+          class="flex items-center justify-between py-3 px-4 bg-white border border-gray-300 rounded-xl"
+        >
           <text class="text-sm text-gray-800">{{ modelValue.plantDate || '选择日期' }}</text>
           <text class="text-lg text-gray-400">›</text>
         </view>
@@ -53,7 +150,9 @@
 
     <!-- 备注 -->
     <view class="mb-6">
-      <text class="block text-sm font-semibold text-gray-800 mb-3">备注 <text class="font-normal text-gray-400">(可选)</text></text>
+      <text class="block text-sm font-semibold text-gray-800 mb-3"
+        >备注 <text class="font-normal text-gray-400">(可选)</text></text
+      >
       <textarea
         :value="modelValue.notes"
         @input="update('notes', $event.detail.value)"
@@ -62,20 +161,124 @@
         placeholder-class="text-gray-300"
         maxlength="200"
       />
-      <text class="block text-right text-xs text-gray-400 mt-2">{{ modelValue.notes.length }}/200</text>
+      <text class="block text-right text-xs text-gray-400 mt-2"
+        >{{ modelValue.notes.length }}/200</text
+      >
     </view>
   </view>
 </template>
 
 <script setup>
+import { computed, onMounted, ref } from 'vue'
+import { fetchHotCityWeatherLocations, resolveHotCityByGps } from '@/api/weather-hot-cities.js'
+import {
+  clearSelectedPlantCareLocation,
+  normalizePlantCareLocation,
+  saveSelectedPlantCareLocation
+} from '@/utils/plant-care-location.js'
+
 const props = defineProps({
   modelValue: { type: Object, required: true }
 })
 const emit = defineEmits(['update:modelValue', 'upload-photo'])
 
 const locations = ['阳台', '客厅', '卧室', '书房', '办公室', '其他']
+const hotCities = ref([])
+const showCitySheet = ref(false)
+const locationStatus = ref('locating')
+const selectedCareLocation = computed(() =>
+  normalizePlantCareLocation(props.modelValue.careLocation)
+)
+const locationStatusText = computed(() => {
+  if (locationStatus.value === 'gps_matched') {
+    return '已按定位匹配养护城市'
+  }
+  if (locationStatus.value === 'manual_selected') {
+    return '已手动选择养护城市'
+  }
+  if (locationStatus.value === 'match_failed') {
+    return '定位未匹配热城，请手动选择'
+  }
+  if (locationStatus.value === 'locate_failed') {
+    return '定位不可用，请手动选择'
+  }
+  return '正在尝试定位匹配'
+})
 
 function update(key, value) {
   emit('update:modelValue', { ...props.modelValue, [key]: value })
 }
+
+function applyCareLocation(careLocation, status) {
+  const normalized = saveSelectedPlantCareLocation(careLocation)
+  if (!normalized) {
+    return
+  }
+  locationStatus.value = status
+  emit('update:modelValue', {
+    ...props.modelValue,
+    location: props.modelValue.location || normalized.cityName,
+    careLocation: normalized
+  })
+}
+
+function selectCity(city, source = 'manual_selected') {
+  applyCareLocation({ ...city, source }, 'manual_selected')
+  showCitySheet.value = false
+}
+
+function isSelectedCity(city) {
+  return Boolean(
+    selectedCareLocation.value?.locationKey &&
+    selectedCareLocation.value.locationKey === city.locationKey
+  )
+}
+
+async function loadHotCities() {
+  hotCities.value = await fetchHotCityWeatherLocations()
+}
+
+function getGpsCoordinates() {
+  return new Promise((resolve, reject) => {
+    uni.getLocation({
+      type: 'gcj02',
+      success: res => resolve({ latitude: res.latitude, longitude: res.longitude }),
+      fail: reject
+    })
+  })
+}
+
+async function matchGpsHotCity() {
+  try {
+    const location = await getGpsCoordinates()
+    const resolved = await resolveHotCityByGps(location)
+    if (resolved.matched && resolved.city) {
+      applyCareLocation(resolved.city, 'gps_matched')
+      return
+    }
+    locationStatus.value = 'match_failed'
+    showCitySheet.value = true
+  } catch {
+    locationStatus.value = 'locate_failed'
+    showCitySheet.value = true
+  }
+}
+
+onMounted(async () => {
+  const hasExistingCareLocation = Boolean(selectedCareLocation.value)
+  if (!hasExistingCareLocation) {
+    clearSelectedPlantCareLocation()
+  }
+  try {
+    await loadHotCities()
+    if (!hasExistingCareLocation) {
+      await matchGpsHotCity()
+    } else {
+      locationStatus.value = selectedCareLocation.value.source || 'manual_selected'
+    }
+  } catch {
+    locationStatus.value = 'locate_failed'
+    showCitySheet.value = true
+  }
+})
 </script>

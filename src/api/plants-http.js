@@ -20,6 +20,7 @@ import {
   requestDiagnosisHistory,
   requestDiagnosisFeedback
 } from '@/http-functions/diagnose/client.js'
+import { resolvePayloadCareLocation } from '@/utils/plant-care-location.js'
 
 export function fetchPlantCatalog(keyword = '', page = 1, pageSize = 10) {
   return fetchPlantCatalogQuery(keyword, page, pageSize)
@@ -34,11 +35,16 @@ export function fetchUserPlants(page = 1, pageSize = 20) {
 }
 
 export function createUserPlant(payload) {
-  return executeCreateUserPlantMutation(payload)
+  return executeCreateUserPlantMutation(withCareLocation(payload, { allowStorageFallback: true }))
 }
 
 export function patchUserPlant(payload) {
-  return executePatchUserPlantMutation(payload)
+  return executePatchUserPlantMutation(withCareLocation(payload, { allowStorageFallback: false }))
+}
+
+function withCareLocation(payload = {}, options = {}) {
+  const careLocation = resolvePayloadCareLocation(payload, options)
+  return careLocation ? { ...payload, careLocation } : payload
 }
 
 export function removeUserPlant(id) {

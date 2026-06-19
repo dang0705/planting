@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import Module from 'node:module'
 
@@ -10,8 +11,43 @@ const sqlCalls = []
 let legacyWeatherWindowCallCount = 0
 let timerForecastCallCount = 0
 let currentForecastCallCount = 0
+let weather24hCallCount = 0
 const storageObjects = new Map()
 const storageObjectsByFileId = new Map()
+const currentArchiveDate = new Date().toISOString().slice(0, 10)
+const routeHourly24h = [
+  ['06:30', 20, 0.1, 30, 60, 24, 8, '晴'],
+  ['08:30', 80, 0.3, 70, 70, 26, 12, '多云'],
+  ['09:30', 40, 0, 20, 62, 27, 10, '多云'],
+  ['12:30', 10, 0, 10, 50, 31, 16, '晴'],
+  ['15:30', 30, 0.5, 65, 58, 30, 18, '阵雨']
+].map(([time, cloud, precip, pop, humidity, temp, windSpeed, text]) => ({
+  fxTime: `2026-06-18T${time}:00+08:00`,
+  cloud,
+  precip,
+  pop,
+  humidity,
+  temp,
+  windSpeed,
+  text
+}))
+const weatherHttpRoutes = new Set(
+  JSON.parse(
+    readFileSync('cloudfunctions/weather-http/cloudbase-functions.json', 'utf8')
+  ).routes.map(route => route.path)
+)
+for (const routePath of [
+  '/weather/hot-cities',
+  '/weather/hot-cities/resolve',
+  '/weather/v7/weather/24h',
+  '/v7/weather/24h'
+]) {
+  assert.equal(
+    weatherHttpRoutes.has(routePath),
+    true,
+    `${routePath} 必须登记到 cloudbase-functions`
+  )
+}
 
 const fakeCloudbaseApp = {
   async downloadFile({ fileID }) {
@@ -130,8 +166,8 @@ Module._load = function patchedWeatherCacheLoad(request, parent, isMain) {
 
   if (
     request === '../adapters/qweather-adapter' &&
-    String(parent?.filename || '').endsWith(
-      '/cloudfunctions/weather-http/services/recent-weather-current.js'
+    /\/cloudfunctions\/weather-http\/services\/(recent-weather-current|d0-weather-24h-service)\.js$/.test(
+      String(parent?.filename || '')
     )
   ) {
     return {
@@ -161,7 +197,7 @@ Module._load = function patchedWeatherCacheLoad(request, parent, isMain) {
             raw: { code: '200' },
             daily: [
               {
-                date: '2026-06-17',
+                date: currentArchiveDate,
                 tempMaxC: 30,
                 tempMinC: 20,
                 humidity: 60,
@@ -169,6 +205,13 @@ Module._load = function patchedWeatherCacheLoad(request, parent, isMain) {
                 source: 'fake_current_entry_forecast'
               }
             ]
+          }
+        },
+        async fetchWeather24h() {
+          weather24hCallCount += 1
+          return {
+            raw: { code: '200' },
+            hourly: routeHourly24h
           }
         }
       })
@@ -262,16 +305,80 @@ try {
   assert.equal(currentForecastCallCount, 1)
   assert.equal(
     await waitForCondition(() =>
-      storageObjects.has('weather-cache/v1/locations/coord:121_46_31_22/daily/2026-06-17.json')
+      storageObjects.has(
+        `weather-cache/v1/locations/coord:121_46_31_22/daily/${currentArchiveDate}.json`
+      )
     ),
     true
   )
   assert.equal(
-    storageObjects.has('weather-cache/v1/locations/coord:121_46_31_22/daily/2026-06-17.json'),
+    storageObjects.has(
+      `weather-cache/v1/locations/coord:121_46_31_22/daily/${currentArchiveDate}.json`
+    ),
     true
   )
   assert.equal(
     sqlCalls.some(item => /weather_cache/.test(item.sql)),
+    false
+  )
+
+  const d0WorkingResponse = await weatherApp.main(
+    {
+      path: '/weather/v7/weather/24h',
+      method: 'POST',
+      headers: {},
+      query: {},
+      body: {
+        locationKey: 'city:Route24h',
+        cityName: '路由24h',
+        latitude: 31.2304,
+        longitude: 121.4737,
+        targetDate: '2026-06-18'
+      }
+    },
+    {}
+  )
+  const d0WorkingPayload = JSON.parse(d0WorkingResponse.body)
+  assert.equal(d0WorkingResponse.statusCode, 200)
+  assert.equal(d0WorkingPayload.data.workingPayload.sunWindow.solarNoon.includes('+08:00'), true)
+  assert.equal(d0WorkingPayload.data.workingPayload.daylightSlots[0].cloudMean, 50)
+  assert.equal(d0WorkingPayload.data.workingPayload.daylightSlots[0].name, 'morning')
+  assert.equal(
+    d0WorkingPayload.data.workingPayload.daylightSlots[0].sourceKind,
+    'hourly_forecast_snapshot'
+  )
+  assert.equal(
+    storageObjects.has('weather-cache/v1/locations/city:Route24h/working/2026-06-18.json'),
+    true
+  )
+  assert.equal(weather24hCallCount, 1)
+
+  const d0FinalizeResponse = await weatherApp.main(
+    {
+      path: '/v7/weather/24h',
+      method: 'POST',
+      headers: {},
+      query: {},
+      body: {
+        locationKey: 'city:Route24h',
+        cityName: '路由24h',
+        latitude: 31.2304,
+        longitude: 121.4737,
+        targetDate: '2026-06-18',
+        finalize: true
+      }
+    },
+    {}
+  )
+  const d0FinalizePayload = JSON.parse(d0FinalizeResponse.body)
+  assert.equal(d0FinalizeResponse.statusCode, 200)
+  assert.equal(d0FinalizePayload.data.finalized, true)
+  assert.equal(
+    storageObjects.has('weather-cache/v1/locations/city:Route24h/daily/2026-06-18.json'),
+    true
+  )
+  assert.equal(
+    storageObjects.has('weather-cache/v1/locations/city:Route24h/recent-10d.json'),
     false
   )
 

@@ -371,20 +371,36 @@ export async function getWeatherInfo(options = {}) {
 }
 
 export async function getEnvironmentWeatherWindow(options = {}) {
-  const { lat, lng, diagnosisDate = '', city = '', province = '', mode = '' } = options
+  const {
+    lat,
+    lng,
+    diagnosisDate = '',
+    city = '',
+    province = '',
+    mode = '',
+    locationKey = '',
+    careLocationId = '',
+    source = '',
+    plantId = ''
+  } = options
   const location = normalizeWeatherCoordinates({ lat, lng })
+  const normalizedLocationKey = String(locationKey || '').trim()
 
-  if (!location) {
+  if (!location && !normalizedLocationKey) {
     return null
   }
 
   const result = await fetchEnvironmentWeatherQuery({
-    lat: location.lat,
-    lng: location.lng,
+    lat: location?.lat,
+    lng: location?.lng,
     diagnosisDate,
     city,
     province,
-    mode
+    mode,
+    locationKey: normalizedLocationKey,
+    careLocationId,
+    source,
+    plantId
   })
 
   if (result?.code === 200) {

@@ -8,7 +8,11 @@ export function buildEnvironmentWeatherQueryOptions({
   diagnosisDate = '',
   city = '',
   province = '',
-  mode = ''
+  mode = '',
+  locationKey = '',
+  careLocationId = '',
+  source = '',
+  plantId = ''
 } = {}) {
   const normalizedCity = String(city || '').trim()
   const normalizedProvince = String(province || '').trim()
@@ -16,6 +20,7 @@ export function buildEnvironmentWeatherQueryOptions({
   const normalizedMode = String(mode || '')
     .trim()
     .toLowerCase()
+  const normalizedLocationKey = String(locationKey || '').trim()
   const location = normalizeWeatherCoordinates({ lat, lng }) || {}
   const normalizedLat = location.lat
   const normalizedLng = location.lng
@@ -30,7 +35,11 @@ export function buildEnvironmentWeatherQueryOptions({
       normalizedDiagnosisDate,
       normalizedCity,
       normalizedProvince,
-      normalizedMode
+      normalizedMode,
+      normalizedLocationKey,
+      String(careLocationId || '').trim(),
+      String(source || '').trim(),
+      String(plantId || '').trim()
     ],
     queryFn: async () =>
       requestHttpFunction('weather-http/weather/environment-context', {
@@ -41,7 +50,11 @@ export function buildEnvironmentWeatherQueryOptions({
           diagnosisDate: normalizedDiagnosisDate,
           city: normalizedCity,
           province: normalizedProvince,
-          mode: normalizedMode
+          mode: normalizedMode,
+          locationKey: normalizedLocationKey,
+          careLocationId,
+          source,
+          plantId
         },
         auth: true
       }),

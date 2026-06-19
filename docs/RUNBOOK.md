@@ -96,6 +96,47 @@ npm run dev:h5:local-functions
 
 事实源：`scripts/dev/local-functions-gateway.mjs` 与 `scripts/dev/run-local-api-env.mjs`。
 
+### 3.1 CloudBase MySQL 表结构建立与校验（最小操作）
+
+官方 SQL 建表流程统一走 CloudBase 凭据注入包装脚本，不直接用 `$runSQLRaw` 判定建表能力：
+
+```bash
+npm run ensure:cloudbase-sql-schema:verify
+```
+
+脚本路径：
+
+```text
+test/e2e/terminal-e2e/run-with-cloudbase-env.mjs --function=weather-http -- node scripts/ensure-cloudbase-sql-schema.mjs --verify-only
+```
+
+如需初始化/修复表结构，仍走：
+
+```bash
+npm run ensure:cloudbase-sql-schema
+```
+
+底层可复用 DDL 源：
+
+```text
+scripts/sql/ensure-weather-history-cache-tables.sql
+```
+
+运行时约束：
+
+- `run-with-cloudbase-env` 负责注入 `CLOUDBASE_*` 凭据与 `SQL_DATABASE*` 上下文。
+- `run-with-cloudbase-env` 会向上查找仓库根目录（`package.json` + `cloudbaserc.json`）以稳定解析 `node` 子进程路径。
+- CLI 实际执行采用官方 CloudBase CLI 命令链（`tcb db execute`），而不是 `$runSQL` / `$runSQLRaw`。
+- 仅允许幂等建表行为；不得把 `$runSQLRaw` 作为建表可行性判定依据。
+
+故障经验与排障顺序：
+
+1. 若遇到 `models.$runSQL/$runSQLRaw` 或 MCP 暴露面判断不通过，先确认这是 Manager API 语义限制（通常仅 `select/insert/update/delete/replace`），不要直接判定 DDL 不可执行。
+2. 无论 `$runSQLRaw` 是否返回 `InvalidParameter`，继续执行官方运维路径：`run-with-cloudbase-env` 注入凭据后，先 `tcb db instance list` 定位实例，再 `tcb db execute` 在目标 instance/schema 上执行 DDL。
+3. 用幂等建表脚本与结果核对；确认 `weather_locations`、`plant_care_locations`、`diagnosis_weather_evidence` 三表存在且可读写时，再认为校验通过。
+
+本次执行经验：implementer_deep 的坑是把 `runSQL/runSQLRaw` 的 `InvalidParameter` 与 MCP 暴露面不足误判为 DDL 阻断；implementer_fast 的解法是改走官方 CLI 路径（`tcb db instance list` + `tcb db execute`）并以 `ensure:cloudbase-sql-schema:verify` 三表核验通过作为结论。
+
 ## 4. 诊断 smoke / regression
 
 常用 smoke：

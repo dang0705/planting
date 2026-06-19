@@ -99,6 +99,26 @@ function normalizeCurrentWeather(data = {}) {
   })
 }
 
+function normalizeHourlyWeather(record = {}) {
+  return pruneUndefined({
+    fxTime: record.fxTime || record.time || '',
+    temp: toNumber(record.temp),
+    icon: record.icon || '',
+    text: record.text || '',
+    wind360: toNumber(record.wind360),
+    windDir: record.windDir || '',
+    windScale: record.windScale || '',
+    windSpeed: toNumber(record.windSpeed),
+    humidity: toNumber(record.humidity),
+    precip: toNumber(record.precip),
+    pop: toNumber(record.pop),
+    pressure: toNumber(record.pressure),
+    cloud: toNumber(record.cloud),
+    dew: toNumber(record.dew),
+    source: 'qweather_weather_24h'
+  })
+}
+
 function createQWeatherAdapter({
   apiKey = '',
   baseUrl = DEFAULT_QWEATHER_BASE_URL,
@@ -191,6 +211,15 @@ function createQWeatherAdapter({
       }
     },
 
+    async fetchWeather24h({ locationId, lat, lng }) {
+      const location = String(locationId || '').trim() || normalizeLocation({ lat, lng })
+      const data = await request('/v7/weather/24h', { location })
+      return {
+        raw: data,
+        hourly: (Array.isArray(data.hourly) ? data.hourly : []).map(normalizeHourlyWeather)
+      }
+    },
+
     async fetchHistoricalWeather({ lat, lng, date }) {
       const locationId = await resolveLocationId({ lat, lng })
       const data = await request('/v7/historical/weather', {
@@ -206,5 +235,6 @@ module.exports = {
   createQWeatherAdapter,
   normalizeForecastDaily,
   normalizeHistoricalDaily,
+  normalizeHourlyWeather,
   normalizeCurrentWeather
 }

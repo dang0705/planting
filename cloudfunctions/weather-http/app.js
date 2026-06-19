@@ -12,12 +12,16 @@ const { buildEnvironmentWeatherWindow } = require('./services/weather-window-ser
 const {
   buildDiagnosisRecentWeatherWindow,
   buildRecentWeatherService,
+  handleD0Weather24hTimerEvent,
   handleRecentWeatherIngestionRequest,
   handleRecentWeatherRequest,
   handleRecentWeatherTimerEvent,
+  handleWeather24hRequest,
+  isD0Weather24hTimerEvent,
   isRecentWeatherIngestionTimerEvent,
   isDiagnosisMode
 } = require('./routes/recent-weather-routes')
+const { listHotCitiesForClient, resolveHotCityLocation } = require('./services/hot-city-locations')
 
 const QWEATHER_CONFIG = {
   baseUrl: process.env.QWEATHER_API_BASE_URL || 'https://n773jqqeap.re.qweatherapi.com',
@@ -163,6 +167,44 @@ async function main(event, context) {
   try {
     if (path.includes('/weather/health')) {
       return jsonResponse(200, { code: 200, data: { status: 'ok', timestamp: Date.now() } })
+    }
+
+    if (path.includes('/weather/hot-cities/resolve')) {
+      if (!['GET', 'POST'].includes(method)) {
+        return methodNotAllowed(method)
+      }
+      const payload = method === 'GET' ? request.query : request.body
+      const result = resolveHotCityLocation({
+        lat: payload.lat ?? payload.latitude,
+        lng: payload.lng ?? payload.longitude
+      })
+      return jsonResponse(200, { code: 200, message: '解析成功', data: result })
+    }
+
+    if (path.includes('/weather/hot-cities')) {
+      if (method !== 'GET') {
+        return methodNotAllowed(method)
+      }
+      return jsonResponse(200, {
+        code: 200,
+        message: '获取成功',
+        data: { list: listHotCitiesForClient() }
+      })
+    }
+
+    if (path.includes('/weather/v7/weather/24h') || path.includes('/v7/weather/24h')) {
+      if (method !== 'POST') {
+        return methodNotAllowed(method)
+      }
+      const result = await handleWeather24hRequest({
+        payload: request.body || {},
+        service: buildRecentWeatherService(QWEATHER_CONFIG)
+      })
+      return jsonResponse(result.code, {
+        code: result.code,
+        message: result.message,
+        data: result.data
+      })
     }
 
     if (
@@ -323,6 +365,13 @@ async function main(event, context) {
 }
 
 module.exports.main = (event, context) => {
+  if (isD0Weather24hTimerEvent(event)) {
+    return handleD0Weather24hTimerEvent({
+      event,
+      service: buildRecentWeatherService(QWEATHER_CONFIG)
+    })
+  }
+
   if (isRecentWeatherIngestionTimerEvent(event)) {
     return handleRecentWeatherTimerEvent({
       event,

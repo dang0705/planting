@@ -49,6 +49,9 @@ function shouldRebuildRecentPayloadFromArchives(payload = {}, diagnosisDate = ''
 
 function buildMissingDiagnosisWeatherWindow({
   locationKey = '',
+  plantId = '',
+  careLocationId = '',
+  source = '',
   reason = 'recent_10d_object_missing',
   warning = reason,
   timedOut = false
@@ -56,11 +59,17 @@ function buildMissingDiagnosisWeatherWindow({
   return {
     weatherEvidenceInsufficient: true,
     ...(locationKey ? { locationKey } : {}),
+    ...(plantId ? { plantId } : {}),
+    ...(careLocationId ? { careLocationId } : {}),
+    ...(source ? { source } : {}),
     historicalDays: [],
     meta: {
       sourceKind: 'weather_cache_recent_10d',
       quality: 'missing',
       ...(locationKey ? { weatherObjectPath: buildRecentWeatherObjectPath(locationKey) } : {}),
+      ...(plantId ? { plantId } : {}),
+      ...(careLocationId ? { careLocationId } : {}),
+      ...(source ? { source } : {}),
       weatherEvidenceInsufficient: true,
       reason,
       timedOut,
@@ -103,6 +112,7 @@ function createDiagnosisRecentWeatherReader({
     const locationKey = buildLocationKey(input)
     if (!locationKey) {
       return buildMissingDiagnosisWeatherWindow({
+        ...input,
         reason: 'location_key_missing',
         warning: 'location_key_missing'
       })
@@ -119,6 +129,7 @@ function createDiagnosisRecentWeatherReader({
       })
       if (result?.timedOut) {
         return buildMissingDiagnosisWeatherWindow({
+          ...input,
           locationKey,
           reason: 'recent_10d_read_timeout',
           warning: `recent_10d_read_timeout:${readTimeoutMs}ms`,
@@ -127,6 +138,7 @@ function createDiagnosisRecentWeatherReader({
       }
     } catch (error) {
       return buildMissingDiagnosisWeatherWindow({
+        ...input,
         locationKey,
         reason: 'recent_10d_read_failed',
         warning: `recent_10d_read_failed:${error.message || error}`
@@ -147,6 +159,7 @@ function createDiagnosisRecentWeatherReader({
 
     if (!result?.payload) {
       return buildMissingDiagnosisWeatherWindow({
+        ...input,
         locationKey,
         reason: allowArchiveRebuild ? 'recent_10d_object_missing' : 'recent_10d_rebuild_deferred',
         warning: allowArchiveRebuild ? 'recent_10d_object_missing' : 'recent_10d_rebuild_deferred'
@@ -165,6 +178,9 @@ function createDiagnosisRecentWeatherReader({
         quality: result.payload.quality || 'partial',
         weatherObjectPath:
           result.payload.weatherObjectPath || buildRecentWeatherObjectPath(locationKey),
+        ...(input.plantId ? { plantId: input.plantId } : {}),
+        ...(input.careLocationId ? { careLocationId: input.careLocationId } : {}),
+        ...(input.source ? { source: input.source } : {}),
         cacheHit: result.cacheHit,
         cacheSourceKind: result.sourceKind,
         weatherEvidenceInsufficient: Boolean(result.payload.weatherEvidenceInsufficient),

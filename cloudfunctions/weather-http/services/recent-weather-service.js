@@ -5,7 +5,8 @@ const {
   buildRecentWeatherObjectPath,
   buildWeatherDailyObjectPath,
   buildWeatherManifestObjectPath,
-  buildWeatherRawForecastObjectPath
+  buildWeatherRawForecastObjectPath,
+  buildWeatherWorkingObjectPath
 } = require('./weather-cache-paths')
 const { addDays, formatLocalDateInTimezone, normalizeDate } = require('./recent-weather-features')
 const {
@@ -31,6 +32,7 @@ const {
   buildRawForecastPayload,
   createCurrentWeatherArchiveService
 } = require('./recent-weather-current')
+const { createD0Weather24hService } = require('./d0-weather-24h-service')
 const { createDiagnosisRecentWeatherReader } = require('./recent-weather-diagnosis-reader')
 
 function resolveLocationInput(input = {}) {
@@ -43,6 +45,8 @@ function resolveLocationInput(input = {}) {
     locationKey,
     qweatherLocationId: String(input.qweatherLocationId || input.qweather_location_id || '').trim(),
     cityName: String(input.cityName || input.city || input.city_name || '').trim(),
+    latitude: input.latitude ?? input.lat ?? null,
+    longitude: input.longitude ?? input.lng ?? null,
     timezone: String(input.timezone || 'Asia/Shanghai').trim() || 'Asia/Shanghai',
     isActive: input.isActive ?? input.is_active ?? true
   }
@@ -285,6 +289,57 @@ function createRecentWeatherService({
 
     manifest.updatedAt = generatedAt
 
+    if (preferForecastSnapshot) {
+      const workingObjectPath = buildWeatherWorkingObjectPath(location.locationKey, targetDate)
+      const workingPayload = {
+        schemaVersion: 'weather-cache/v1/working',
+        location,
+        date: targetDate,
+        generatedAt,
+        sourceKind: 'qweather_forecast_10d_working',
+        rawObjectPath,
+        dailyObjectPath,
+        weatherObjectPath: workingObjectPath,
+        daily: dailyPayload.daily,
+        quality: dailyPayload.quality
+      }
+      const workingUpload = await storage.uploadJson({
+        cloudPath: workingObjectPath,
+        payload: workingPayload
+      })
+      manifest.workingArchives = {
+        ...(manifest.workingArchives || {}),
+        [targetDate]: {
+          cloudPath: workingObjectPath,
+          fileId: workingUpload.fileId,
+          generatedAt,
+          quality: workingPayload.quality
+        }
+      }
+      const manifestPath = buildWeatherManifestObjectPath(location.locationKey)
+      const manifestUpload = await storage.uploadJson({
+        cloudPath: manifestPath,
+        payload: manifest
+      })
+      return {
+        location,
+        rawObjectPath,
+        dailyObjectPath,
+        workingObjectPath,
+        workingFileId: workingUpload.fileId,
+        manifestPath,
+        manifestFileId: manifestUpload.fileId,
+        recentObjectPath: buildRecentWeatherObjectPath(location.locationKey),
+        recentFileId: '',
+        targetDate,
+        dailyPayload,
+        forecastDailyArchives: [],
+        prunedFutureDailyArchives,
+        quality: dailyPayload.quality,
+        recentPayload: null
+      }
+    }
+
     const { recentPayload, uploadResult } = await rebuildRecentWeather({
       storage,
       location,
@@ -336,6 +391,15 @@ function createRecentWeatherService({
     resolveLocationInput,
     writeForecastArchive
   })
+  const d0Weather24h = createD0Weather24hService({
+    storage,
+    locationRepository,
+    adapter,
+    apiKey,
+    baseUrl,
+    now,
+    resolveLocationInput
+  })
   const readRecentWeatherForDiagnosis = createDiagnosisRecentWeatherReader({
     readRecentWeather,
     rebuildRecentWeatherFromArchives
@@ -369,7 +433,8 @@ function createRecentWeatherService({
     ingestActiveLocations,
     ingestRecentForecast,
     readRecentWeather,
-    readRecentWeatherForDiagnosis
+    readRecentWeatherForDiagnosis,
+    updateD0Weather24hWorking: d0Weather24h.updateD0Weather24hWorking
   }
 }
 

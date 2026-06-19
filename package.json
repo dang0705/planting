@@ -38,6 +38,8 @@
     "check:diagnose-fast-convergence-regression": "node test/e2e/terminal-e2e/run-high-specificity-fast-convergence-batch.mjs --case-groups-file=test/e2e/terminal-e2e/manifests/high-specificity-fast-convergence.manifest.json --report-file=test/e2e/terminal-e2e/manifests/high-specificity-fast-convergence.report.json",
     "check:diagnose-regression:full": "node test/e2e/terminal-e2e/run-diagnose-regression-full.mjs --env=cloud1-2grufevs395a9d5e --app-env=development --skip-auth=true --force-anonymous-auth=true --max-followup-loops=3 --start-mode=sync --keep-uploaded-image=false",
     "run:with-cloudbase-env": "node test/e2e/terminal-e2e/run-with-cloudbase-env.mjs",
+    "ensure:cloudbase-sql-schema": "node test/e2e/terminal-e2e/run-with-cloudbase-env.mjs --function=weather-http -- node scripts/ensure-cloudbase-sql-schema.mjs",
+    "ensure:cloudbase-sql-schema:verify": "node test/e2e/terminal-e2e/run-with-cloudbase-env.mjs --function=weather-http -- node scripts/ensure-cloudbase-sql-schema.mjs --verify-only",
     "replay:diagnosis-sessions": "node test/e2e/terminal-e2e/run-with-cloudbase-env.mjs --function=diagnose-http -- node test/e2e/terminal-e2e/replay-saved-diagnosis-sessions.mjs",
     "dev:functions:install": "node scripts/dev/install-local-functions.mjs",
     "dev:functions": "node scripts/dev/local-functions-gateway.mjs",

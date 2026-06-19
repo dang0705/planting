@@ -2,9 +2,26 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
 
-const projectRoot = path.resolve(new URL('../..', import.meta.url).pathname)
+export function resolveProjectRoot(startUrl) {
+  const startPath = fileURLToPath(startUrl)
+  let dir = path.dirname(startPath)
+  const rootDir = path.parse(dir).root
+  while (dir && dir !== rootDir) {
+    if (
+      fs.existsSync(path.join(dir, 'package.json')) &&
+      fs.existsSync(path.join(dir, 'cloudbaserc.json'))
+    ) {
+      return dir
+    }
+    dir = path.dirname(dir)
+  }
+  throw new Error('未能定位仓库根目录：未找到同时包含 package.json 与 cloudbaserc.json 的祖先目录')
+}
+
+const projectRoot = resolveProjectRoot(import.meta.url)
 const DEV_APP_ENV_VALUES = new Set(['dev', 'development', 'cloud1_dev'])
 const PROD_APP_ENV_VALUES = new Set(['prod', 'production', 'cloud1'])
 
@@ -24,7 +41,8 @@ function readEnvFile(filePath) {
     return {}
   }
 
-  return fs.readFileSync(filePath, 'utf8')
+  return fs
+    .readFileSync(filePath, 'utf8')
     .split(/\r?\n/)
     .reduce((env, line) => {
       const trimmed = line.trim()
@@ -46,9 +64,15 @@ function readEnvFile(filePath) {
 }
 
 function normalizeAppEnv(value = '') {
-  const normalized = String(value || '').trim().toLowerCase()
-  if (DEV_APP_ENV_VALUES.has(normalized)) {return 'development'}
-  if (PROD_APP_ENV_VALUES.has(normalized)) {return 'production'}
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase()
+  if (DEV_APP_ENV_VALUES.has(normalized)) {
+    return 'development'
+  }
+  if (PROD_APP_ENV_VALUES.has(normalized)) {
+    return 'production'
+  }
   return 'development'
 }
 
@@ -62,10 +86,14 @@ function parseArgs(argv = []) {
   }
 
   let separatorIndex = argv.indexOf('--')
-  if (separatorIndex < 0) {separatorIndex = argv.length}
+  if (separatorIndex < 0) {
+    separatorIndex = argv.length
+  }
 
   for (const arg of argv.slice(0, separatorIndex)) {
-    if (!arg.startsWith('--')) {continue}
+    if (!arg.startsWith('--')) {
+      continue
+    }
     const [rawKey, ...rest] = arg.slice(2).split('=')
     const key = String(rawKey || '').trim()
     const value = rest.length ? rest.join('=').trim() : 'true'
@@ -97,39 +125,33 @@ function readFunctionEnv(functionName = 'diagnose-http') {
   const config = JSON.parse(raw)
   const functions = Array.isArray(config?.functions) ? config.functions : []
   const matched = functions.find(item => String(item?.name || '').trim() === functionName)
-  const matchedEnv = matched?.envVariables && typeof matched.envVariables === 'object'
-    ? matched.envVariables
-    : {}
+  const matchedEnv =
+    matched?.envVariables && typeof matched.envVariables === 'object' ? matched.envVariables : {}
 
   const mergedEnv = {
     ...matchedEnv,
     ...localEnv,
     ...process.env
   }
-  const envId = String(
-    mergedEnv.CLOUDBASE_ENV_ID ||
-    mergedEnv.TCB_ENV ||
-    config.envId ||
-    ''
-  ).trim()
+  const envId = String(mergedEnv.CLOUDBASE_ENV_ID || mergedEnv.TCB_ENV || config.envId || '').trim()
   const secretId = String(
     mergedEnv.CLOUDBASE_SECRET_ID ||
-    mergedEnv.TENCENT_SECRET_ID ||
-    mergedEnv.TENCENTCLOUD_SECRETID ||
-    ''
+      mergedEnv.TENCENT_SECRET_ID ||
+      mergedEnv.TENCENTCLOUD_SECRETID ||
+      ''
   ).trim()
   const secretKey = String(
     mergedEnv.CLOUDBASE_SECRET_KEY ||
-    mergedEnv.TENCENT_SECRET_KEY ||
-    mergedEnv.TENCENTCLOUD_SECRETKEY ||
-    ''
+      mergedEnv.TENCENT_SECRET_KEY ||
+      mergedEnv.TENCENTCLOUD_SECRETKEY ||
+      ''
   ).trim()
 
   if (!envId || !secretId || !secretKey) {
     throw new Error(
       `缺少函数 ${functionName} 的 CloudBase 凭据。` +
-      '请通过未提交的 .env.local 或 shell/GitHub Secrets 提供 ' +
-      'CLOUDBASE_ENV_ID、CLOUDBASE_SECRET_ID、CLOUDBASE_SECRET_KEY。'
+        '请通过未提交的 .env.local 或 shell/GitHub Secrets 提供 ' +
+        'CLOUDBASE_ENV_ID、CLOUDBASE_SECRET_ID、CLOUDBASE_SECRET_KEY。'
     )
   }
 
@@ -176,7 +198,9 @@ function buildRuntimeEnv(args = {}, baseEnv = {}) {
 async function main() {
   const args = parseArgs(process.argv.slice(2))
   if (!args.command.length) {
-    throw new Error('缺少待执行命令，使用方式：node test/e2e/terminal-e2e/run-with-cloudbase-env.mjs -- node <script> ...')
+    throw new Error(
+      '缺少待执行命令，使用方式：node test/e2e/terminal-e2e/run-with-cloudbase-env.mjs -- node <script> ...'
+    )
   }
 
   const injectedEnv = readFunctionEnv(args.functionName)
@@ -203,7 +227,9 @@ async function main() {
   })
 }
 
-main().catch(error => {
-  process.stderr.write(`${String(error?.stack || error)}\n`)
-  process.exit(1)
-})
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch(error => {
+    process.stderr.write(`${String(error?.stack || error)}\n`)
+    process.exit(1)
+  })
+}

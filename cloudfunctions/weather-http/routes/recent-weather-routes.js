@@ -2,6 +2,15 @@
 
 const { createRecentWeatherService } = require('../services/recent-weather-service')
 const { buildLocationKey } = require('../services/weather-cache-paths')
+const { HOT_CITY_WEATHER_LOCATIONS } = require('../services/hot-city-locations')
+
+const D0_WEATHER_24H_TIMER_TRIGGERS = new Set([
+  'weather-d0-24h-0630',
+  'weather-d0-24h-1130',
+  'weather-d0-24h-1530',
+  'weather-d0-24h-finalize-2130'
+])
+const D0_WEATHER_24H_FINALIZE_TIMER = 'weather-d0-24h-finalize-2130'
 
 function buildRecentWeatherService({ apiKey = '', baseUrl = '' } = {}) {
   return createRecentWeatherService({ apiKey, baseUrl })
@@ -25,6 +34,9 @@ function pickPayloadLocation(payload = {}) {
     city: payload.city || payload.cityName || '',
     timezone: payload.timezone || '',
     diagnosisDate: payload.diagnosisDate || payload.diagnosis_date || payload.date || '',
+    plantId: payload.plantId || payload.plant_id || '',
+    careLocationId: payload.careLocationId || payload.care_location_id || '',
+    source: payload.source || payload.careLocationSource || payload.care_location_source || '',
     lat: payload.lat,
     lng: payload.lng
   }
@@ -126,6 +138,38 @@ async function handleRecentWeatherIngestionRequest({ payload = {}, service }) {
   }
 }
 
+async function handleWeather24hRequest({ payload = {}, service }) {
+  const result = await service.updateD0Weather24hWorking({
+    ...pickPayloadLocation(payload),
+    latitude: payload.latitude ?? payload.lat,
+    longitude: payload.longitude ?? payload.lng,
+    targetDate: payload.targetDate || payload.target_date || payload.date || '',
+    date: payload.date || '',
+    hourly: payload.hourly,
+    finalize: payload.finalize,
+    slotFinalize: payload.slotFinalize || payload.slot_finalize
+  })
+
+  return {
+    code: 200,
+    message: result.finalized ? 'D0 天气定稿成功' : 'D0 天气更新成功',
+    data: {
+      location: result.location,
+      targetDate: result.targetDate,
+      workingObjectPath: result.workingObjectPath,
+      workingFileId: result.workingFileId,
+      dailyObjectPath: result.dailyObjectPath,
+      dailyFileId: result.dailyFileId,
+      manifestPath: result.manifestPath,
+      manifestFileId: result.manifestFileId,
+      finalized: result.finalized,
+      workingPayload: result.workingPayload,
+      dailyPayload: result.dailyPayload,
+      sourceKind: 'qweather_weather_24h_working'
+    }
+  }
+}
+
 function isRecentWeatherIngestionTimerEvent(event = {}) {
   const type = String(event.Type || event.type || '')
     .trim()
@@ -135,6 +179,19 @@ function isRecentWeatherIngestionTimerEvent(event = {}) {
   ).trim()
 
   return type === 'timer' && triggerName === 'weather-ingestion-recent-10d'
+}
+
+function pickTimerTriggerName(event = {}) {
+  return String(
+    event.TriggerName || event.triggerName || event.name || event.trigger_name || ''
+  ).trim()
+}
+
+function isD0Weather24hTimerEvent(event = {}) {
+  const type = String(event.Type || event.type || '')
+    .trim()
+    .toLowerCase()
+  return type === 'timer' && D0_WEATHER_24H_TIMER_TRIGGERS.has(pickTimerTriggerName(event))
 }
 
 async function handleRecentWeatherTimerEvent({
@@ -155,12 +212,67 @@ async function handleRecentWeatherTimerEvent({
   }
 }
 
+async function handleD0Weather24hTimerEvent({ event = {}, service } = {}) {
+  const triggerName = pickTimerTriggerName(event)
+  const finalized = triggerName === D0_WEATHER_24H_FINALIZE_TIMER
+  const targetDate = event.targetDate || event.target_date || ''
+  const results = []
+  let resolvedTargetDate = targetDate
+
+  for (const city of HOT_CITY_WEATHER_LOCATIONS) {
+    try {
+      const result = await service.updateD0Weather24hWorking({
+        locationKey: city.key,
+        cityName: city.name,
+        latitude: city.latitude,
+        longitude: city.longitude,
+        timezone: 'Asia/Shanghai',
+        targetDate,
+        finalize: finalized
+      })
+      resolvedTargetDate = resolvedTargetDate || result.targetDate
+      results.push({
+        locationKey: city.key,
+        workingObjectPath: result.workingObjectPath,
+        dailyObjectPath: result.dailyObjectPath || '',
+        error: ''
+      })
+    } catch (error) {
+      results.push({
+        locationKey: city.key,
+        workingObjectPath: '',
+        dailyObjectPath: '',
+        error: error.message || String(error)
+      })
+    }
+  }
+
+  const succeeded = results.filter(item => !item.error).length
+  return {
+    code: 200,
+    message: finalized ? 'D0 天气定时定稿完成' : 'D0 天气定时更新完成',
+    data: {
+      triggerName,
+      targetDate: resolvedTargetDate || '',
+      finalized,
+      attempted: HOT_CITY_WEATHER_LOCATIONS.length,
+      succeeded,
+      failed: results.length - succeeded,
+      cities: results,
+      sourceKind: finalized ? 'qweather_weather_24h_finalize_timer' : 'qweather_weather_24h_timer'
+    }
+  }
+}
+
 module.exports = {
   buildDiagnosisRecentWeatherWindow,
   buildRecentWeatherService,
+  handleD0Weather24hTimerEvent,
   handleRecentWeatherIngestionRequest,
   handleRecentWeatherRequest,
   handleRecentWeatherTimerEvent,
+  handleWeather24hRequest,
+  isD0Weather24hTimerEvent,
   isRecentWeatherIngestionTimerEvent,
   isDiagnosisMode,
   pickPayloadLocation

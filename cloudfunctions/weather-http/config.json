@@ -4,6 +4,26 @@
       "name": "weather-ingestion-recent-10d",
       "type": "timer",
       "config": "0 20 0/6 * * * *"
+    },
+    {
+      "name": "weather-d0-24h-0630",
+      "type": "timer",
+      "config": "0 30 6 * * * *"
+    },
+    {
+      "name": "weather-d0-24h-1130",
+      "type": "timer",
+      "config": "0 30 11 * * * *"
+    },
+    {
+      "name": "weather-d0-24h-1530",
+      "type": "timer",
+      "config": "0 30 15 * * * *"
+    },
+    {
+      "name": "weather-d0-24h-finalize-2130",
+      "type": "timer",
+      "config": "0 30 21 * * * *"
     }
   ]
 }

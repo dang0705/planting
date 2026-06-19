@@ -1,5 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import { getEnvironmentWeatherWindow } from '@/api/weather.js'
+import { usePlantStore } from '@/store/plants.js'
 import { createQuestionAnswerMap } from '@/utils/diagnose-flow.js'
 import { getQuestionIdentity as getQuestionId } from '@/utils/diagnose-question-identity.js'
 import {
@@ -22,20 +23,18 @@ import {
   sanitizeLightEnvironment
 } from './light-environment.js'
 import {
-  buildEnvironmentWeatherWindowRequestKey,
   buildLightEnvironmentByQuestionIdMap,
   dedupeQuestionsById,
   getLightEnvironmentForQuestion,
-  resolveCareBehaviorReferenceDate,
-  resolveCareBehaviorWeatherLocation
+  resolveCareBehaviorReferenceDate
 } from './question-environment.js'
+import { resolveDiagnosisCareLocation } from './question-care-location.js'
 import { estimateQuestionSwiperHeight } from './question-display.js'
 import { submitQuestionPackageAnswers } from './question-submit.js'
 
 function normalizeText(value = '') {
   return String(value || '').trim()
 }
-
 function isPackageResult(value = {}) {
   return (
     value?.uiHints?.answerSubmitMode === 'package' ||
@@ -47,7 +46,6 @@ function isPackageResult(value = {}) {
 function getQuestionOptionId(option = {}) {
   return normalizeText(option?.optionId)
 }
-
 export function useQuestionPackageFlow({
   result,
   images,
@@ -56,6 +54,7 @@ export function useQuestionPackageFlow({
   diagnoseStore,
   diagnosisAnswerMutation
 }) {
+  const plantStore = usePlantStore()
   const questionStack = ref([])
   const activeQuestionIndex = ref(0)
   const questionAnswers = ref({})
@@ -88,7 +87,6 @@ export function useQuestionPackageFlow({
     }
     return activeQuestionIndex.value >= questionStack.value.length - 1 ? '完成问诊' : '下一题'
   })
-
   function buildCareBehaviorTimelineByQuestionIdMap(questions = []) {
     return (Array.isArray(questions) ? questions : [])
       .filter(item => isCareBehaviorWateringTimelineQuestion(item))
@@ -121,7 +119,6 @@ export function useQuestionPackageFlow({
     suppressedTimelineAnswerByQuestionId.value = {}
     refreshEnvironmentWeatherWindowForCareBehavior(nextQuestions)
   }
-
   function getCareBehaviorTimelineByQuestion(question = {}) {
     const questionId = getQuestionId(question)
     const fallbackTimeline = mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(
@@ -412,12 +409,16 @@ export function useQuestionPackageFlow({
       if (!environmentQuestions.length || environmentWeatherWindowLoading.value) {
         return
       }
-      const location = resolveCareBehaviorWeatherLocation(userStore.location || {})
+      const location = await resolveDiagnosisCareLocation({
+        result: result.value,
+        plantStore,
+        userLocation: userStore.location || {}
+      })
       if (!location) {
         return
       }
       const diagnosisDate = resolveCareBehaviorReferenceDate(environmentQuestions)
-      const requestKey = buildEnvironmentWeatherWindowRequestKey(location, diagnosisDate)
+      const requestKey = `${location.locationKey}|${diagnosisDate}`
       if (
         requestKey === environmentWeatherWindowRequestKey.value &&
         environmentWeatherWindow.value
@@ -427,7 +428,13 @@ export function useQuestionPackageFlow({
       }
       environmentWeatherWindowLoading.value = true
       const weatherWindow = await getEnvironmentWeatherWindow({
-        ...location,
+        lat: location.latitude,
+        lng: location.longitude,
+        city: location.cityName,
+        locationKey: location.locationKey,
+        careLocationId: location.careLocationId,
+        source: location.source,
+        plantId: location.plantId || result.value?.userPlantId || result.value?.plantId || '',
         diagnosisDate,
         mode: 'diagnosis'
       })

@@ -15,6 +15,11 @@ const {
   updateUserPlantInstance,
   deleteUserPlantInstance
 } = require('/opt/utils/plant-knowledge')
+const {
+  attachCareLocation,
+  attachCareLocationsToList,
+  savePlantCareLocation
+} = require('./care-location-service')
 
 async function main(event, context) {
   const request = getHttpRequestData(event, context)
@@ -41,7 +46,8 @@ async function main(event, context) {
         page: Number(request.query.page || 1),
         pageSize: Number(request.query.pageSize || 20)
       })
-      return jsonResponse(200, { code: 200, data })
+      const enrichedData = await attachCareLocationsToList({ openid, data })
+      return jsonResponse(200, { code: 200, data: enrichedData })
     }
 
     if (method === 'POST') {
@@ -60,7 +66,16 @@ async function main(event, context) {
         location: request.body.location || '阳台',
         photos: request.body.photos || null
       })
-      return jsonResponse(200, { code: 200, message: '保存成功', data: created })
+      const careLocation = await savePlantCareLocation({
+        openid,
+        plantId: created?.id,
+        careLocation: request.body.careLocation || request.body.plantCareLocation || null
+      })
+      return jsonResponse(200, {
+        code: 200,
+        message: '保存成功',
+        data: attachCareLocation(created, careLocation)
+      })
     }
 
     if (method === 'PATCH') {
@@ -69,7 +84,16 @@ async function main(event, context) {
         return jsonResponse(400, { code: 400, message: '缺少植物ID', data: null })
       }
       const updated = await updateUserPlantInstance(openid, id, request.body)
-      return jsonResponse(200, { code: 200, message: '更新成功', data: updated })
+      const careLocation = await savePlantCareLocation({
+        openid,
+        plantId: id,
+        careLocation: request.body.careLocation || request.body.plantCareLocation || null
+      })
+      return jsonResponse(200, {
+        code: 200,
+        message: '更新成功',
+        data: attachCareLocation(updated, careLocation)
+      })
     }
 
     if (method === 'DELETE') {

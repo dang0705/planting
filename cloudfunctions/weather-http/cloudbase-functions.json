@@ -25,6 +25,22 @@
     },
     {
       "functionName": "weather-http",
+      "path": "/weather/hot-cities"
+    },
+    {
+      "functionName": "weather-http",
+      "path": "/weather/hot-cities/resolve"
+    },
+    {
+      "functionName": "weather-http",
+      "path": "/weather/v7/weather/24h"
+    },
+    {
+      "functionName": "weather-http",
+      "path": "/v7/weather/24h"
+    },
+    {
+      "functionName": "weather-http",
       "path": "/weather/health"
     }
   ]

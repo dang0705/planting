@@ -66,6 +66,7 @@ const SQL_TABLES = [
   'user_identify_quota',
   'weather_cache',
   'weather_locations',
+  'plant_care_locations',
   'diagnosis_weather_evidence'
 ]
 

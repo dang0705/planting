@@ -20,7 +20,9 @@ export const usePlantStore = defineStore('plants', {
     plantsNeedWater: state => {
       const now = new Date()
       return state.userPlants.filter(p => {
-        if (!p.nextWater) {return false}
+        if (!p.nextWater) {
+          return false
+        }
         return new Date(p.nextWater) <= now
       })
     }
@@ -50,7 +52,8 @@ export const usePlantStore = defineStore('plants', {
           sessionPlantId: p.sessionPlantId || '',
           canonicalName: p.canonicalName || '',
           nickname: p.nickname || '',
-          displayName: p.displayName || p.nickname || p.canonicalName || p.recognizedName || '未命名植物',
+          displayName:
+            p.displayName || p.nickname || p.canonicalName || p.recognizedName || '未命名植物',
           recognizedName: p.recognizedName || '',
           sourceType: p.sourceType || 'catalog',
           recognitionType: p.recognitionType || '',
@@ -58,6 +61,9 @@ export const usePlantStore = defineStore('plants', {
           identityResolutionStatus: p.identityResolutionStatus || '',
           visualCallBatchId: p.visualCallBatchId || '',
           location: p.location || '未设置',
+          careLocationId: p.careLocationId || '',
+          careLocation: p.careLocation || null,
+          locationKey: p.locationKey || p.careLocation?.locationKey || '',
           image: p.image || '',
           photos: p.photos || [],
           imageFileId: p.imageFileId || '',
@@ -94,8 +100,7 @@ export const usePlantStore = defineStore('plants', {
     updateUserPlantLocal(id, updates) {
       const index = this.userPlants.findIndex(p => p.id === id)
       if (index !== -1) {
-        const nextNickname =
-          updates.nickname !== undefined ? updates.nickname : updates.nickName
+        const nextNickname = updates.nickname !== undefined ? updates.nickname : updates.nickName
         if (nextNickname !== undefined) {
           updates.nickname = nextNickname
           updates.displayName =

@@ -8,6 +8,7 @@ const {
   normalizeDate,
   resolveRecentWeatherQuality
 } = require('./recent-weather-features')
+const { aggregateDaylightSlotFields } = require('./daylight-slots')
 
 const RECENT_SCHEMA_VERSION = 'weather-cache/v1/recent-10d'
 const MANIFEST_SCHEMA_VERSION = 'weather-cache/v1/manifest'
@@ -27,6 +28,7 @@ function normalizeManifest(value = {}, locationKey = '') {
     locationKey: manifest.locationKey || locationKey,
     rawSnapshots: asArray(manifest.rawSnapshots).slice(-40),
     dailyArchives: isPlainObject(manifest.dailyArchives) ? manifest.dailyArchives : {},
+    workingArchives: isPlainObject(manifest.workingArchives) ? manifest.workingArchives : {},
     updatedAt: manifest.updatedAt || ''
   }
 }
@@ -85,6 +87,14 @@ function buildDailyArchivePayload({
         dailyObjectPath,
         reason: 'raw_snapshot_without_target_date'
       })
+  const dailyWithDaylight = {
+    ...normalizedDaily,
+    ...aggregateDaylightSlotFields({
+      daily: normalizedDaily,
+      location,
+      timezone: location?.timezone || 'Asia/Shanghai'
+    })
+  }
 
   return {
     schemaVersion: 'weather-cache/v1/daily',
@@ -97,7 +107,7 @@ function buildDailyArchivePayload({
     quality: normalizedDaily.missing ? 'missing' : 'partial',
     rawObjectPath,
     weatherObjectPath: dailyObjectPath,
-    daily: normalizedDaily
+    daily: dailyWithDaylight
   }
 }
 
