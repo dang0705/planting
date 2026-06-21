@@ -9,7 +9,7 @@ Implementation Contract:
 - 文件级改动计划:
 - 数据流 / 调用链:
 - 模块拆分要求:
-- architecture_decisions_locked:
+- technical_decisions_locked:
 - implementation_strategy_locked:
 - dependency_policy_locked:
 - 复用 / 插件 / 手搓裁决:
@@ -30,12 +30,12 @@ Implementation Contract:
 ```
 
 ```text
-Architecture Direction Record:
+Technical Direction Record:
 - decision_id:
 - based_on_solution_discovery:
 - problem_statement:
 - current_system_facts:
-- selected_architecture:
+- selected_technical_design:
 - rejected_options:
 - reuse_native_plugin_manual_decision:
   - existing_reuse:
@@ -95,7 +95,7 @@ Contract-Locked Implementation Contract:
 - allowed_paths:
 - read_only_reference_paths:
 - forbidden_paths:
-- architecture_decisions_locked:
+- technical_decisions_locked:
 - implementation_strategy_locked:
 - dependency_policy_locked:
 - target_anchors:

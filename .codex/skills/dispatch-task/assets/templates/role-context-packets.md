@@ -26,7 +26,7 @@ role_context_packets:
     - contract_lock_level:
     - contract_ref:
     - contract_digest:
-    - architecture_decisions_locked:
+    - technical_decisions_locked:
     - implementation_strategy_locked:
     - dependency_policy_locked:
     - target_anchors:
@@ -123,7 +123,7 @@ implementer_deep_contract_packet:
 - allowed_paths:
 - read_only_reference_paths:
 - forbidden_paths:
-- architecture_decisions_locked:
+- technical_decisions_locked:
 - implementation_strategy_locked:
 - dependency_policy_locked:
 - target_anchors:

@@ -27,7 +27,7 @@ After implementation and main-agent code review, main agent must create a Sync P
 | AI workflow / dispatch / agent roles / context packs | patch `AGENTS.md`, `.codex/context-packs.yml`, `docs/KNOWLEDGE_GOVERNANCE.md` |
 | Old doc contradicts code | mark stale/superseded; do not rewrite old blueprint |
 | New source-verified reusable fact | add/update `.brv/context-tree/facts-index.yml` with source and invalidation |
-| Large architecture rewrite | require explicit audit mode |
+| Large technical rewrite | require explicit audit mode |
 
 ## Active docs
 

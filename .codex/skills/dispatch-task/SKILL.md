@@ -47,6 +47,16 @@ references/main-thread-budget-policy.md
 
 main agent 默认只处理 receipt，不做二次实现、不做二次 QA、不做长日志对账。
 
+## Gate Token Telemetry
+
+读取：
+
+```text
+references/gate-token-telemetry-policy.md
+```
+
+硬规则：每个 gate 完成后、进入下一个 gate 前，main agent 必须在对话中输出 `Gate Token Telemetry`。如果当前环境没有暴露精确 token 计数，必须标记 `counter_status: unavailable` 或 `estimated`，不得编造精确数字。
+
 ## 4. Phase 流程
 
 ```text
@@ -64,6 +74,7 @@ Phase 7: ClickUp 回写与 Git commit
 ```
 
 任何 phase 未通过，不得进入下一 phase。
+任何 gate 完成后，必须先输出 Gate Token Telemetry，才能进入下一 gate。
 
 ## 5. Phase 0：硬门禁
 

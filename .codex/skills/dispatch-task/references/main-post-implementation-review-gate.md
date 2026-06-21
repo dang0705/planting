@@ -40,7 +40,7 @@ implementer 完成后，QA 之前，main agent 必须执行代码 review 并通�
 1. implementer 未输出 `contract_compliance_matrix`。
 2. 出现 allowed_paths 外的代码改动。
 3. 出现未授权依赖、lockfile、schema、API contract 改动。
-4. 实现偏离 locked architecture / locked strategy / pseudocode_by_anchor。
+4. 实现偏离 locked technical direction / locked strategy / pseudocode_by_anchor。
 5. status=done 但存在未解释的 deviation、partial 或 blocked item。
 6. implementer 未输出必需的 `unit_test_evidence`，或 QA Validation Contract 中的 e2e / 端上 blocking 项未覆盖。
 

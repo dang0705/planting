@@ -30,11 +30,11 @@
 
 
 
-## Architecture Direction Record Gate
+## Technical Direction Record Gate
 
-进入 implementer 执行前，main agent 必须输出可审计的 Architecture Direction Record。该记录可以放在 gate receipt 的 `appendix_ref` / handoff 文件中，但不得缺失。
+进入 implementer 执行前，main agent 必须输出可审计的 Technical Direction Record。该记录可以放在 gate receipt 的 `appendix_ref` / handoff 文件中，但不得缺失。
 
-Architecture Direction Record 必须包含：
+Technical Direction Record 必须包含：
 
 外置模板/规范片段：`../assets/templates/main-agent-gates.md`（template_id: `main-agent-quality-gates-02`）。
 
@@ -51,7 +51,7 @@ Architecture Direction Record 必须包含：
 
 ## Contract-Locked Handoff Gate
 
-当派发 `implementer_deep` 时，main agent 必须把 Architecture Direction Record 转成严格 Implementation Contract。该 Contract 是 implementer 的唯一实现依据。
+当派发 `implementer_deep` 时，main agent 必须把 Technical Direction Record 转成严格 Implementation Contract。该 Contract 是 implementer 的唯一实现依据。
 
 必须输出：
 
@@ -60,7 +60,7 @@ Architecture Direction Record 必须包含：
 硬规则：
 
 1. `contract_lock_level=strict` 缺失时，不得派发 `implementer_deep`。
-2. `architecture_decisions_locked` 不能是原则性空话，必须是可执行约束，例如“必须复用 X composable，不得新增 Y store”。
+2. `technical_decisions_locked` 不能是原则性空话，必须是可执行约束，例如“必须复用 X composable，不得新增 Y store”。
 3. `implementation_strategy_locked` 必须写明具体落点与实现步骤，不能只写“实现功能”。
 4. `dependency_policy_locked` 必须写明第三方插件选择；未授权新增依赖时，implementer 不得安装或修改 lockfile。
 5. `pseudocode_by_anchor` 必须按 target anchor 分组，避免 implementer 自由重排架构。
@@ -81,7 +81,7 @@ Architecture Direction Record 必须包含：
 5. `line_count_gate` 缺失，不得派发 implementer。
 6. `over_500_line_touched_files` 非空且无 `decomposition_plan` / `approved_exception`，不得派发 implementer。
 7. `implementer_deep` 缺少 `contract_lock_level=strict`，不得派发。
-8. 缺少 `architecture_decisions_locked`、`implementation_strategy_locked`、`dependency_policy_locked`、`target_anchors` 或 `pseudocode_by_anchor`，不得派发 `implementer_deep`。
+8. 缺少 `technical_decisions_locked`、`implementation_strategy_locked`、`dependency_policy_locked`、`target_anchors` 或 `pseudocode_by_anchor`，不得派发 `implementer_deep`。
 9. 第三方插件 / 原生能力 / 手搓实现没有被 main agent 写死裁决时，不得派发 `implementer_deep`。
 10. Contract 没有要求 implementer 回传 `contract_compliance_matrix`，不得派发 `implementer_deep`。
 
@@ -93,4 +93,4 @@ main agent 可使用以下脚本输出可审计 JSON receipt。脚本不能替�
 
 外置模板/规范片段：`../assets/templates/main-agent-gates.md`（template_id: `main-agent-quality-gates-04`）。
 
-`target-role=implementer_deep` 时，脚本至少检查 `contract_id`、`contract_lock_level`、`strict`、`allowed_paths`、`read_only_reference_paths`、`forbidden_paths`、`architecture_decisions_locked`、`implementation_strategy_locked`、`dependency_policy_locked`、`target_anchors`、`pseudocode_by_anchor`、`stop_conditions`、`contract_compliance_matrix` 等 marker。脚本通过不代表 Contract 质量充分；main agent 仍必须完成 Architecture Direction Record Gate 和 Code Review Gate。
+`target-role=implementer_deep` 时，脚本至少检查 `contract_id`、`contract_lock_level`、`strict`、`allowed_paths`、`read_only_reference_paths`、`forbidden_paths`、`technical_decisions_locked`、`implementation_strategy_locked`、`dependency_policy_locked`、`target_anchors`、`pseudocode_by_anchor`、`stop_conditions`、`contract_compliance_matrix` 等 marker。脚本通过不代表 Contract 质量充分；main agent 仍必须完成 Technical Direction Record Gate 和 Code Review Gate。

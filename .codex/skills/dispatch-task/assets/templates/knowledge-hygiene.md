@@ -28,7 +28,7 @@ Context: Sync Packet
 - User-visible behavior changed: yes/no
 - Public API changed: yes/no
 - Config/schema changed: yes/no
-- Architecture/workflow changed: yes/no
+- Technical/workflow changed: yes/no
 - Deployment/runbook changed: yes/no
 - BRV/source-verified memory affected: yes/no
 

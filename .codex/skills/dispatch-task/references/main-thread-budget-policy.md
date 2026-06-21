@@ -120,3 +120,17 @@ pre-implementation 阶段默认不读取 `assets/templates/` 下的具体模板�
 完整 task facts、ClickUp 原文、checklist 明细和 Acceptance Matrix 逐项内容默认只保留 `source_ref` / `matrix_ref`。
 
 main agent 后续 phase 默认只携带 Task Facts Receipt 与 Acceptance Matrix Receipt。
+
+
+## Gate Token Telemetry 预算
+
+每个 gate 后必须输出 token 消耗回执，但该回执本身必须保持短小。
+
+规则：
+
+1. 默认不超过 120 tokens。
+2. 只输出计数状态、delta、累计、重来源、预算状态、压缩动作和 next gate。
+3. 精确计数不可用时必须写 `unavailable`，不得编造数字。
+4. budget_status 为 yellow / red 时，下一个 gate 前必须执行压缩动作。
+5. 不得把 token 回执扩展成成本长分析。
+6. 不得因为输出 token 回执而读取完整 session JSONL 或完整日志。

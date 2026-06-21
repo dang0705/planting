@@ -14,15 +14,15 @@ Context: Gate Receipt 输出模式
 ## main-agent-quality-gates-02
 
 Source: `references/main-agent-quality-gates.md`  
-Context: Architecture Direction Record Gate
+Context: Technical Direction Record Gate
 
 ```text
-Architecture Direction Record:
+Technical Direction Record:
 - decision_id:
 - based_on_solution_discovery: yes / no
 - problem_statement:
 - current_system_facts:
-- selected_architecture:
+- selected_technical_design:
 - rejected_options:
   - option:
   - rejection_reason:
@@ -55,12 +55,12 @@ Contract-Locked Handoff:
 - contract_id:
 - target_role: implementer_deep
 - contract_lock_level: strict
-- architecture_record_ref:
+- technical_record_ref:
 - objective:
 - allowed_paths:
 - read_only_reference_paths:
 - forbidden_paths:
-- architecture_decisions_locked:
+- technical_decisions_locked:
 - implementation_strategy_locked:
 - dependency_policy_locked:
 - target_anchors:
@@ -99,7 +99,7 @@ contract_compliance_review:
 - matrix_received: yes / no
 - unauthorized_file_changes:
 - unauthorized_dependency_changes:
-- locked_architecture_changed: yes / no
+- locked_technical_direction_changed: yes / no
 - pseudocode_items_implemented:
 - deviations:
 - missing_contract_items:

@@ -125,7 +125,7 @@ implementer_deep_contract_lock:
 - model_assumption: glm-5.2
 - contract_lock_level: strict
 - implementation_contract_id:
-- architecture_decisions_locked: yes
+- technical_decisions_locked: yes
 - implementation_strategy_locked: yes
 - dependency_policy_locked: yes
 - pseudocode_by_anchor_present: yes
@@ -180,7 +180,7 @@ Spawn Contract:
   - acceptance_criteria:
   - implementation_contract_id:
   - contract_lock_level: none / standard / strict
-  - architecture_decisions_locked:
+  - technical_decisions_locked:
   - implementation_strategy_locked:
   - dependency_policy_locked:
   - target_anchors:

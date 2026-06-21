@@ -36,7 +36,7 @@
 3. `allowed_paths`：唯一可写文件 / 目录。
 4. `read_only_reference_paths`：只读参考文件 / 目录。
 5. `forbidden_paths`：禁止修改范围。
-6. `architecture_decisions_locked`：main agent 已写死的架构方向。
+6. `technical_decisions_locked`：main agent 已写死的架构方向。
 7. `implementation_strategy_locked`：main agent 已写死的实现方式。
 8. `dependency_policy_locked`：第三方插件 / 原生能力 / 手搓选择的硬规定。
 9. `target_anchors`：文件路径 + symbol / 函数 / 组件 + 近似行号 + 邻近代码关键词。

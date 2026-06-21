@@ -27,7 +27,7 @@
 
 硬规则：
 
-- `architecture_decisions_locked` 必须写成 implementer 可执行的固定选择，不得写成“自行判断”。
+- `technical_decisions_locked` 必须写成 implementer 可执行的固定选择，不得写成“自行判断”。
 - `implementation_strategy_locked` 必须指定具体函数、组件、store、repository、cloud function 或 adapter 的落点。
 - `dependency_policy_locked` 必须写明第三方插件是否允许；未显式允许时默认禁止新增依赖和修改 lockfile。
 - `pseudocode_by_anchor` 必须覆盖关键分支；如果无需伪代码，必须写 `not_required` 与理由。

@@ -70,7 +70,7 @@ const REQUIRED_DEEP_CONTRACT_MARKERS = [
   'allowed_paths',
   'read_only_reference_paths',
   'forbidden_paths',
-  'architecture_decisions_locked',
+  'technical_decisions_locked',
   'implementation_strategy_locked',
   'dependency_policy_locked',
   'target_anchors',

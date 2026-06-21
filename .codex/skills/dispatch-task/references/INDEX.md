@@ -19,6 +19,7 @@
 | Phase | 场景 | 读取文件 |
 |---|---|---|
 | Main thread | main agent receipt-only 与预算边界 | `main-thread-budget-policy.md` |
+| All gates | 每个 gate 后、下一个 gate 前输出 token 消耗回执 | `gate-token-telemetry-policy.md` |
 | Phase 0 | 硬门禁、mode 判断、Git baseline | `phase-0-gates.md` |
 | Phase 1 | ClickUp 模式下读取主任务、子任务、relationships、链接 | `clickup-ticket-read-policy.md` |
 | Phase 1 | task facts / prompt facts receipt 化 | `task-facts-receipt-policy.md` |
