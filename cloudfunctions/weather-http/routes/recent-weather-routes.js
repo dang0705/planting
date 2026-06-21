@@ -2,20 +2,6 @@
 
 const { createRecentWeatherService } = require('../services/recent-weather-service')
 const { buildLocationKey } = require('../services/weather-cache-paths')
-const { listConfiguredHotCitiesForIngestion } = require('../services/hot-city-locations')
-const { isFinalizeSlot, resolveSlotForTriggerName } = require('../services/now-sample-slots')
-
-const D0_WEATHER_24H_TIMER_TRIGGERS = new Set([
-  'weather-d0-now-morning-0920',
-  'weather-d0-now-forenoon-1220',
-  'weather-d0-now-noon-1420',
-  'weather-d0-now-afternoon-1820',
-  'weather-d0-now-finalize-2130',
-  'weather-d0-24h-0630',
-  'weather-d0-24h-1130',
-  'weather-d0-24h-1530',
-  'weather-d0-24h-finalize-2130'
-])
 
 function buildRecentWeatherService({ apiKey = '', baseUrl = '' } = {}) {
   return createRecentWeatherService({ apiKey, baseUrl })
@@ -172,140 +158,12 @@ async function handleWeather24hRequest({ payload = {}, service }) {
   }
 }
 
-function isRecentWeatherIngestionTimerEvent(event = {}) {
-  const type = String(event.Type || event.type || '')
-    .trim()
-    .toLowerCase()
-  const triggerName = String(
-    event.TriggerName || event.triggerName || event.name || event.trigger_name || ''
-  ).trim()
-
-  return type === 'timer' && triggerName === 'weather-ingestion-recent-10d'
-}
-
-function pickTimerTriggerName(event = {}) {
-  return String(
-    event.TriggerName || event.triggerName || event.name || event.trigger_name || ''
-  ).trim()
-}
-
-function isD0Weather24hTimerEvent(event = {}) {
-  const type = String(event.Type || event.type || '')
-    .trim()
-    .toLowerCase()
-  return type === 'timer' && D0_WEATHER_24H_TIMER_TRIGGERS.has(pickTimerTriggerName(event))
-}
-
-function pickNowSampleAuditFields(sample = null) {
-  if (!sample || typeof sample !== 'object') {
-    return null
-  }
-  return {
-    slotName: sample.slotName || '',
-    sampledAt: sample.sampledAt || '',
-    obsTime: sample.obsTime || '',
-    temp: sample.temp,
-    feelsLike: sample.feelsLike,
-    icon: sample.icon || '',
-    text: sample.text || '',
-    wind360: sample.wind360,
-    windDir: sample.windDir || '',
-    windScale: sample.windScale || '',
-    windSpeed: sample.windSpeed,
-    humidity: sample.humidity,
-    precipLastHour: sample.precipLastHour,
-    pressure: sample.pressure,
-    visibilityKm: sample.visibilityKm,
-    cloud: sample.cloud,
-    dew: sample.dew,
-    sourceKind: sample.sourceKind || ''
-  }
-}
-
-async function handleRecentWeatherTimerEvent({
-  event = {},
-  service,
-  defaultLimit = process.env.WEATHER_INGESTION_BATCH_LIMIT || 20
-} = {}) {
-  const limit = event.limit || event.Limit || defaultLimit
-  const result = await service.ingestActiveLocations({ limit })
-  return {
-    code: 200,
-    message: '定时采集完成',
-    data: {
-      triggerName: event.TriggerName || event.triggerName || '',
-      sourceKind: 'weather_cache_recent_10d_timer',
-      ...result
-    }
-  }
-}
-
-async function handleD0Weather24hTimerEvent({ event = {}, service } = {}) {
-  const triggerName = pickTimerTriggerName(event)
-  const finalized = isFinalizeSlot(resolveSlotForTriggerName(triggerName))
-  const targetDate = event.targetDate || event.target_date || ''
-  const results = []
-  let resolvedTargetDate = targetDate
-
-  const hotCityTargets = listConfiguredHotCitiesForIngestion()
-  for (const city of hotCityTargets) {
-    try {
-      const result = await service.updateNowSample({
-        locationKey: city.key,
-        cityName: city.name,
-        latitude: city.latitude,
-        longitude: city.longitude,
-        timezone: 'Asia/Shanghai',
-        targetDate,
-        triggerName,
-        finalize: finalized
-      })
-      resolvedTargetDate = resolvedTargetDate || result.targetDate
-      results.push({
-        locationKey: city.key,
-        dayObjectPath: result.dayObjectPath,
-        slotName: result.slotName || '',
-        sample: pickNowSampleAuditFields(result.sample || null),
-        latestSample: pickNowSampleAuditFields(result.dayPayload?.latestSample || null),
-        error: ''
-      })
-    } catch (error) {
-      results.push({
-        locationKey: city.key,
-        dayObjectPath: '',
-        slotName: '',
-        error: error.message || String(error)
-      })
-    }
-  }
-
-  const succeeded = results.filter(item => !item.error).length
-  return {
-    code: 200,
-    message: finalized ? 'D0 天气定时定稿完成' : 'D0 天气定时更新完成',
-    data: {
-      triggerName,
-      targetDate: resolvedTargetDate || '',
-      finalized,
-      attempted: hotCityTargets.length,
-      succeeded,
-      failed: results.length - succeeded,
-      cities: results,
-      sourceKind: finalized ? 'observed_now_rollup_timer' : 'observed_now_samples_timer'
-    }
-  }
-}
-
 module.exports = {
   buildDiagnosisRecentWeatherWindow,
   buildRecentWeatherService,
-  handleD0Weather24hTimerEvent,
   handleRecentWeatherIngestionRequest,
   handleRecentWeatherRequest,
-  handleRecentWeatherTimerEvent,
   handleWeather24hRequest,
-  isD0Weather24hTimerEvent,
-  isRecentWeatherIngestionTimerEvent,
   isDiagnosisMode,
   pickPayloadLocation
 }

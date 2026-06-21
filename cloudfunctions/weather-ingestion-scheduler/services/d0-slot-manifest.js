@@ -157,7 +157,17 @@ function createD0SlotManifestService({ storage = createWeatherObjectStorage(), e
     return { manifest, cloudPath, advanced: true, batchResults, completed: manifest.status === 'completed' }
   }
 
-  return { seedManifest, readManifest, advanceManifest }
+  // load or seed：manifest 已存在则直接复用（支持跨 invocation 分批推进），否则 seed 新 job。
+  async function loadOrSeedManifest({ triggerName = '', targetDate = '', cities = null, batchSize = null } = {}) {
+    const resolvedDate = resolveTargetDate(targetDate)
+    const existing = await readManifest({ date: resolvedDate, triggerName })
+    if (existing.manifest) {
+      return existing
+    }
+    return seedManifest({ triggerName, targetDate: resolvedDate, cities, batchSize })
+  }
+
+  return { seedManifest, readManifest, advanceManifest, loadOrSeedManifest }
 }
 
 module.exports = {

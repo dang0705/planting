@@ -7,6 +7,7 @@ const {
   handleD0Weather24hTimerEvent,
   handleRecentWeatherTimerEvent
 } = require('./routes/recent-weather-routes')
+const { createD0TimerAuditService } = require('./services/d0-timer-audit')
 
 const QWEATHER_CONFIG = {
   baseUrl: process.env.QWEATHER_API_BASE_URL || 'https://n773jqqeap.re.qweatherapi.com',
@@ -58,8 +59,33 @@ module.exports.main = async function weatherIngestionTimerMain(event = {}, conte
     type: eventType,
     triggerName,
     eventKeys,
-    hasData: !!Object.keys(event).length
-  })
+   hasData: !!Object.keys(event).length
+ })
+
+  // 被忽略事件也要记审计：status=ignored，按日期聚合到同一 JSON
+  const ignoredStartAt = new Date().toISOString()
+  try {
+    const auditService = createD0TimerAuditService()
+    await auditService.appendAuditRecord({
+      date: '',
+      record: {
+        recordId: `${triggerName || 'unknown'}:${ignoredStartAt}`,
+        triggerName: triggerName || 'unknown',
+        eventType,
+        sourceKind: 'weather_timer_ignored',
+        startAt: ignoredStartAt,
+        endAt: new Date().toISOString(),
+        status: 'ignored',
+        errorSummary: 'failed:0',
+        attempted: 0,
+        succeeded: 0,
+        failed: 0,
+        cities: []
+      }
+    })
+  } catch (auditError) {
+    console.error('weather-ingestion-scheduler ignored audit failed', auditError)
+  }
 
   return {
     code: 200,

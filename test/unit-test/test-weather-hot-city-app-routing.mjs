@@ -104,12 +104,12 @@ Module._load = function patched(request, parent, isMain) {
     }
   }
 
-  if (
-    request === '../adapters/qweather-adapter' &&
-    /\/cloudfunctions\/weather-http\/services\/d0-now-sample-service\.js$/.test(
-      String(parent?.filename || '')
-    )
-  ) {
+ if (
+   request === '../adapters/qweather-adapter' &&
+    /\/cloudfunctions\/weather-(http|ingestion-scheduler)\/services\/d0-now-sample-service\.js$/.test(
+     String(parent?.filename || '')
+   )
+ ) {
     return {
       createQWeatherAdapter: () => ({
         async fetchCurrentWeather({ lat, lng }) {
@@ -134,6 +134,7 @@ Module._load = function patched(request, parent, isMain) {
 
 try {
   const weatherApp = require('../../cloudfunctions/weather-http/app.js')
+  const schedulerApp = require('../../cloudfunctions/weather-ingestion-scheduler/app.js')
 
   // 1) /weather/current 上海坐标必须命中 city:shanghai，不再写 coord:*
   const currentArchiveDate = new Date().toISOString().slice(0, 10)
@@ -179,8 +180,8 @@ try {
     '热门城市坐标不再写入 coord:* 缓存'
   )
 
-  // 2) 定时批量采集从 day files 重建 recent-10d，不再拉取 forecast 10d
-  const timerResponse = await weatherApp.main(
+  // 2) 定时批量采集从 day files 重建 recent-10d（scheduler 是唯一 timer owner）
+  const timerResponse = await schedulerApp.main(
     { Type: 'Timer', TriggerName: 'weather-ingestion-recent-10d' },
     {}
   )

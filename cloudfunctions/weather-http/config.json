@@ -1,34 +1,3 @@
 {
-  "triggers": [
-    {
-      "name": "weather-ingestion-recent-10d",
-      "type": "timer",
-      "config": "0 20 0/6 * * * *"
-    },
-    {
-      "name": "weather-d0-now-morning-0920",
-      "type": "timer",
-      "config": "0 20 9 * * * *"
-    },
-    {
-      "name": "weather-d0-now-forenoon-1220",
-      "type": "timer",
-      "config": "0 20 12 * * * *"
-    },
-    {
-      "name": "weather-d0-now-noon-1420",
-      "type": "timer",
-      "config": "0 20 14 * * * *"
-    },
-    {
-      "name": "weather-d0-now-afternoon-1820",
-      "type": "timer",
-      "config": "0 20 18 * * * *"
-    },
-    {
-      "name": "weather-d0-now-finalize-2130",
-      "type": "timer",
-      "config": "0 30 21 * * * *"
-    }
-  ]
+  "triggers": []
 }

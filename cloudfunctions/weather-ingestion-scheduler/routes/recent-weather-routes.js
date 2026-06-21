@@ -2,8 +2,8 @@
 
 const { createRecentWeatherService } = require('../services/recent-weather-service')
 const { buildLocationKey } = require('../services/weather-cache-paths')
-const { listConfiguredHotCitiesForIngestion } = require('../services/hot-city-locations')
-const { isFinalizeSlot, resolveSlotForTriggerName } = require('../services/now-sample-slots')
+const { createD0SlotManifestService } = require('../services/d0-slot-manifest')
+const { createD0TimerAuditService } = require('../services/d0-timer-audit')
 
 const D0_WEATHER_24H_TIMER_TRIGGERS = new Set([
   'weather-d0-now-morning-0920',
@@ -196,57 +196,6 @@ function isD0Weather24hTimerEvent(event = {}) {
   return type === 'timer' && D0_WEATHER_24H_TIMER_TRIGGERS.has(pickTimerTriggerName(event))
 }
 
-function parseConcurrency(value, fallback = 5) {
-  const numeric = Number(value)
-  if (!Number.isFinite(numeric) || numeric <= 0) {
-    return fallback
-  }
-  return Math.max(1, Math.min(20, Math.trunc(numeric)))
-}
-
-function pickNowSampleAuditFields(sample = null) {
-  if (!sample || typeof sample !== 'object') {
-    return null
-  }
-  return {
-    slotName: sample.slotName || '',
-    sampledAt: sample.sampledAt || '',
-    obsTime: sample.obsTime || '',
-    temp: sample.temp,
-    feelsLike: sample.feelsLike,
-    icon: sample.icon || '',
-    text: sample.text || '',
-    wind360: sample.wind360,
-    windDir: sample.windDir || '',
-    windScale: sample.windScale || '',
-    windSpeed: sample.windSpeed,
-    humidity: sample.humidity,
-    precipLastHour: sample.precipLastHour,
-    pressure: sample.pressure,
-    visibilityKm: sample.visibilityKm,
-    cloud: sample.cloud,
-    dew: sample.dew,
-    sourceKind: sample.sourceKind || ''
-  }
-}
-
-async function mapWithConcurrency(items = [], concurrency = 5, mapper) {
-  const results = new Array(items.length)
-  let nextIndex = 0
-  const workerCount = Math.min(items.length, Math.max(1, concurrency))
-
-  async function runWorker() {
-    while (nextIndex < items.length) {
-      const currentIndex = nextIndex
-      nextIndex += 1
-      results[currentIndex] = await mapper(items[currentIndex], currentIndex)
-    }
-  }
-
-  await Promise.all(Array.from({ length: workerCount }, () => runWorker()))
-  return results
-}
-
 async function handleRecentWeatherTimerEvent({
   event = {},
   service,
@@ -267,57 +216,76 @@ async function handleRecentWeatherTimerEvent({
 
 async function handleD0Weather24hTimerEvent({ event = {}, service } = {}) {
   const triggerName = pickTimerTriggerName(event)
-  const finalized = isFinalizeSlot(resolveSlotForTriggerName(triggerName))
   const targetDate = event.targetDate || event.target_date || ''
-  let resolvedTargetDate = targetDate
+  const manifestService = createD0SlotManifestService({ env: process.env })
+  const auditService = createD0TimerAuditService()
+  const startAt = new Date().toISOString()
 
-  const hotCityTargets = listConfiguredHotCitiesForIngestion()
-  const concurrency = parseConcurrency(process.env.WEATHER_D0_TIMER_CONCURRENCY)
-  const results = await mapWithConcurrency(hotCityTargets, concurrency, async city => {
-    try {
-      const result = await service.updateNowSample({
-        locationKey: city.key,
-        cityName: city.name,
-        latitude: city.latitude,
-        longitude: city.longitude,
-        timezone: 'Asia/Shanghai',
-        targetDate,
-        triggerName,
-        finalize: finalized
-      })
-      resolvedTargetDate = resolvedTargetDate || result.targetDate
-      return {
-        locationKey: city.key,
-        dayObjectPath: result.dayObjectPath,
-        slotName: result.slotName || '',
-        sample: pickNowSampleAuditFields(result.sample || null),
-        latestSample: pickNowSampleAuditFields(result.dayPayload?.latestSample || null),
-        error: ''
-      }
-    } catch (error) {
-      return {
-        locationKey: city.key,
-        dayObjectPath: '',
-        slotName: '',
-        error: error.message || String(error)
-      }
+  // load or seed manifest -> advance ONE batch -> persist cursor（跨 invocation 可推进）
+  const loaded = await manifestService.loadOrSeedManifest({ triggerName, targetDate })
+  const advance = await manifestService.advanceManifest({
+    manifest: loaded.manifest,
+    cloudPath: loaded.cloudPath,
+    worker: city => service.updateNowSample(city)
+  })
+
+  const endAt = new Date().toISOString()
+  const batchResults = advance.batchResults
+  const succeeded = batchResults.filter(item => item.ok).length
+  const failed = batchResults.length - succeeded
+  // 审计状态契约：某批存在失败城市即为 failure，否则 success（completed 仅作字段保留，不作状态）
+  const status = failed > 0 ? 'failure' : 'success'
+  const manifest = advance.manifest
+  const sourceKind = manifest.finalized ? 'observed_now_rollup_timer' : 'observed_now_samples_timer'
+  const firstFailure = batchResults.find(item => !item.ok)
+  const firstErrorText = firstFailure
+    ? String(firstFailure.error || firstFailure.message || 'unknown')
+    : ''
+  // errorSummary：失败城市数 + 首个错误信息（无失败时记 failed:0）
+  const errorSummary = failed > 0 ? `failed:${failed}; ${firstErrorText}` : 'failed:0'
+
+  // 审计记录：同一 invocation 用 recordId 去重，按日期聚合到同一 JSON
+  const recordId = `${triggerName}:${manifest.date}:${startAt}`
+  await auditService.appendAuditRecord({
+    date: manifest.date,
+    record: {
+      recordId,
+      triggerName,
+      targetDate: manifest.date,
+      slotName: manifest.slotName,
+      finalized: manifest.finalized,
+      sourceKind,
+      startAt,
+      endAt,
+      status,
+      errorSummary,
+      cursor: manifest.cursor,
+      batchSize: manifest.batchSize,
+      totalCities: manifest.totalCities,
+      attempted: batchResults.length,
+      succeeded,
+      failed,
+      completed: advance.completed,
+      cities: batchResults
     }
   })
 
-  const succeeded = results.filter(item => !item.error).length
   return {
     code: 200,
-    message: finalized ? 'D0 天气定时定稿完成' : 'D0 天气定时更新完成',
+    message: manifest.finalized ? 'D0 天气定时定稿完成' : 'D0 天气定时更新完成',
     data: {
       triggerName,
-      targetDate: resolvedTargetDate || '',
-      finalized,
-      attempted: hotCityTargets.length,
-      concurrency,
+      targetDate: manifest.date,
+      finalized: manifest.finalized,
+      attempted: batchResults.length,
       succeeded,
-      failed: results.length - succeeded,
-      cities: results,
-      sourceKind: finalized ? 'observed_now_rollup_timer' : 'observed_now_samples_timer'
+      failed,
+      cursor: manifest.cursor,
+      totalCities: manifest.totalCities,
+      completed: advance.completed,
+      batchSize: manifest.batchSize,
+      cities: batchResults,
+      sourceKind
     }
   }
 }

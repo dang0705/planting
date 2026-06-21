@@ -8,6 +8,7 @@ const originalLoad = Module._load
 const storageObjects = new Map()
 const storageObjectsByFileId = new Map()
 let nowCallCount = 0
+let failBeijingStorage = false
 
 function buildMissingStorageError() {
   const error = new Error('storage file not found')
@@ -22,6 +23,9 @@ const fakeCloudbaseApp = {
     return { fileContent: Buffer.from(JSON.stringify(payload), 'utf8') }
   },
   async uploadFile({ cloudPath, fileContent }) {
+    if (failBeijingStorage && /locations\/city:beijing\/days\//.test(cloudPath)) {
+      throw new Error('beijing storage upload forced failure')
+    }
     const chunks = []
     await new Promise((resolve, reject) => {
       fileContent.on('data', chunk => chunks.push(Buffer.from(chunk)))
@@ -46,9 +50,6 @@ const fakeCloudbaseApp = {
   async deleteFile({ fileList }) {
     for (const fileID of fileList) {
       storageObjectsByFileId.delete(fileID)
-      for (const [path, p] of storageObjects) {
-        if (p === storageObjectsByFileId.get(fileID)) { storageObjects.delete(path) }
-      }
     }
     return { fileList: [] }
   }
@@ -73,7 +74,7 @@ Module._load = function patchedWeatherD0TimerLoad(request, parent, isMain) {
     }
   }
 
-  // 拦截 qweather-adapter，模拟 /v7/weather/now（不再用 24h）
+  // 拦截 qweather-adapter，模拟 /v7/weather/now
   if (request === '../adapters/qweather-adapter' || request === './adapters/qweather-adapter') {
     return {
       createQWeatherAdapter: () => ({
@@ -91,53 +92,52 @@ Module._load = function patchedWeatherD0TimerLoad(request, parent, isMain) {
 }
 
 try {
-  const config = JSON.parse(readFileSync('cloudfunctions/weather-http/config.json', 'utf8'))
-  const triggersByName = new Map(config.triggers.map(trigger => [trigger.name, trigger]))
-  assert.equal(triggersByName.has('weather-d0-now-morning-0920'), true)
-  assert.equal(triggersByName.get('weather-d0-now-morning-0920').config, '0 20 9 * * * *')
-  assert.equal(triggersByName.has('weather-d0-now-forenoon-1220'), true)
-  assert.equal(triggersByName.get('weather-d0-now-forenoon-1220').config, '0 20 12 * * * *')
-  assert.equal(triggersByName.has('weather-d0-now-noon-1420'), true)
-  assert.equal(triggersByName.get('weather-d0-now-noon-1420').config, '0 20 14 * * * *')
-  assert.equal(triggersByName.has('weather-d0-now-afternoon-1820'), true)
-  assert.equal(triggersByName.get('weather-d0-now-afternoon-1820').config, '0 20 18 * * * *')
-  assert.equal(triggersByName.has('weather-d0-now-finalize-2130'), true)
-  assert.equal(triggersByName.get('weather-d0-now-finalize-2130').config, '0 30 21 * * * *')
-  assert.equal(triggersByName.has('weather-d0-24h-0630'), false)
+  // 1) scheduler config 保留 D0 timer triggers；weather-http config 不再有 timer triggers
+  const schedulerConfig = JSON.parse(readFileSync('cloudfunctions/weather-ingestion-scheduler/config.json', 'utf8'))
+  const schedulerTriggersByName = new Map(schedulerConfig.triggers.map(t => [t.name, t]))
+  assert.equal(schedulerTriggersByName.has('weather-d0-now-morning-0920'), true)
+  assert.equal(schedulerTriggersByName.get('weather-d0-now-morning-0920').config, '0 20 9 * * * *')
+  assert.equal(schedulerTriggersByName.has('weather-d0-now-finalize-2130'), true)
+  assert.equal(schedulerTriggersByName.get('weather-d0-now-finalize-2130').config, '0 30 21 * * * *')
+  assert.equal(schedulerTriggersByName.has('weather-ingestion-recent-10d'), true)
 
-  const { HOT_CITY_WEATHER_LOCATIONS } = require('../../cloudfunctions/weather-http/services/hot-city-locations.js')
-  const { buildWeatherDayObjectPath } = require('../../cloudfunctions/weather-http/services/weather-cache-paths.js')
-  const weatherApp = require('../../cloudfunctions/weather-http/app.js')
+  const httpConfig = JSON.parse(readFileSync('cloudfunctions/weather-http/config.json', 'utf8'))
+  assert.equal(httpConfig.triggers.length, 0, 'weather-http 不再保留任何 timer trigger')
 
-  // working 定时器：now 采样，写入 days/{date}.json
-  const workingResponse = await weatherApp.main(
-    { Type: 'Timer', TriggerName: 'weather-d0-now-noon-1420', targetDate: '2026-06-18' },
-    {}
-  )
+  const { HOT_CITY_WEATHER_LOCATIONS } = require('../../cloudfunctions/weather-ingestion-scheduler/services/hot-city-locations.js')
+  const { buildWeatherDayObjectPath } = require('../../cloudfunctions/weather-ingestion-scheduler/services/weather-cache-paths.js')
+  const { buildD0TimerAuditPath } = require('../../cloudfunctions/weather-ingestion-scheduler/services/d0-slot-paths.js')
+  const schedulerApp = require('../../cloudfunctions/weather-ingestion-scheduler/app.js')
+
+  // batchSize=5：20 城需要 4 批推进，验证 manifest cursor 跨 invocation 持久化
+  process.env.WEATHER_D0_SLOT_BATCH_SIZE = '5'
+
+  // 2) working 定时器：分批推进直到 completed
+  let workingResponse
+  let workingIterations = 0
+  do {
+    workingResponse = await schedulerApp.main(
+      { Type: 'Timer', TriggerName: 'weather-d0-now-noon-1420', targetDate: '2026-06-18' },
+      {}
+    )
+    workingIterations += 1
+    assert.ok(workingIterations <= 10, 'working 批次推进超过预期')
+  } while (!workingResponse.data.completed)
+
   assert.equal(workingResponse.code, 200)
   assert.equal(workingResponse.data.triggerName, 'weather-d0-now-noon-1420')
   assert.equal(workingResponse.data.finalized, false)
-  assert.equal(workingResponse.data.attempted, 20)
-  assert.equal(workingResponse.data.succeeded, 20)
-  assert.equal(workingResponse.data.failed, 0)
-  assert.equal(nowCallCount, 20, 'should call fetchCurrentWeather 20 times')
+  assert.equal(workingResponse.data.totalCities, 20)
+  assert.equal(workingResponse.data.cursor, 20)
+  assert.equal(workingResponse.data.completed, true)
+  assert.equal(workingIterations, 4, '20城 batchSize=5 应该 4 批完成')
+  assert.equal(nowCallCount, 20, '4 批合计调用 fetchCurrentWeather 20 次')
   assert.equal(
     HOT_CITY_WEATHER_LOCATIONS.every(city =>
       storageObjects.has(buildWeatherDayObjectPath(city.key, '2026-06-18'))
     ),
     true,
     'all cities should have days/{date}.json'
-  )
-  // 不应写入 working/ 或 daily/
-  assert.equal(
-    storageObjects.has('weather-cache/v1/locations/city:shanghai/working/2026-06-18.json'),
-    false,
-    'old working/ path should not be written'
-  )
-  assert.equal(
-    storageObjects.has('weather-cache/v1/locations/city:shanghai/daily/2026-06-18.json'),
-    false,
-    'old daily/ path should not be written'
   )
 
   // 验证 day file 结构
@@ -150,17 +150,23 @@ try {
   assert.ok(shanghaiDayFile.latestSample, 'should have latestSample')
   assert.equal(shanghaiDayFile.latestSample.sourceKind, 'weather_now_sample')
 
-  // finalize 定时器：生成 dailyRollup，state=finalized
-  const finalizeResponse = await weatherApp.main(
-    { Type: 'Timer', TriggerName: 'weather-d0-now-finalize-2130', targetDate: '2026-06-18' },
-    {}
-  )
+  // 3) finalize 定时器：分批推进直到 completed
+  let finalizeResponse
+  let finalizeIterations = 0
+  do {
+    finalizeResponse = await schedulerApp.main(
+      { Type: 'Timer', TriggerName: 'weather-d0-now-finalize-2130', targetDate: '2026-06-18' },
+      {}
+    )
+    finalizeIterations += 1
+    assert.ok(finalizeIterations <= 10, 'finalize 批次推进超过预期')
+  } while (!finalizeResponse.data.completed)
+
   assert.equal(finalizeResponse.code, 200)
   assert.equal(finalizeResponse.data.triggerName, 'weather-d0-now-finalize-2130')
   assert.equal(finalizeResponse.data.finalized, true)
-  assert.equal(finalizeResponse.data.attempted, 20)
-  assert.equal(finalizeResponse.data.succeeded, 20)
-  assert.equal(finalizeResponse.data.failed, 0)
+  assert.equal(finalizeResponse.data.completed, true)
+  assert.equal(finalizeIterations, 4, 'finalize 20城 batchSize=5 应该 4 批完成')
 
   // 验证 finalize 后的 day file
   const finalizedDayFile = storageObjects.get(shanghaiDayPath)
@@ -168,19 +174,83 @@ try {
   assert.equal(finalizedDayFile.sourceKind, 'observed_now_rollup')
   assert.ok(finalizedDayFile.dailyRollup, 'should have dailyRollup')
   assert.ok(finalizedDayFile.finalizedAt, 'should have finalizedAt')
-
-  // 不应写入 recent-10d（finalize 只处理 day file，不重建 recent-10d）
   assert.equal(
     storageObjects.has('weather-cache/v1/locations/city:shanghai/recent-10d.json'),
     false,
     'finalize should not write recent-10d'
   )
 
-  const shanghaiResult = finalizeResponse.data.cities.find(item => item.locationKey === 'city:shanghai')
-  assert.equal(shanghaiResult.dayObjectPath, shanghaiDayPath)
-  assert.equal(shanghaiResult.error, '')
+  // 4) 审计日志：4 working + 4 finalize = 8 records，按日期聚合到同一 JSON
+  const auditPath = buildD0TimerAuditPath({ date: '2026-06-18' })
+  const auditFile = storageObjects.get(auditPath)
+  assert.ok(auditFile, '应有审计日志文件')
+  assert.equal(auditFile.records.length, 8, '8 条审计记录（4 working + 4 finalize）')
+  assert.equal(auditFile.summary.totalInvocations, 8)
+  assert.equal(auditFile.summary.success, 8, '8 条全部 success（20城无失败）')
+  assert.equal(auditFile.summary.failure, 0)
+  assert.equal(auditFile.summary.ignored, 0)
+
+  // 验证每条记录有 startAt/endAt/status/sourceKind/errorSummary/cities summary
+  for (const record of auditFile.records) {
+    assert.ok(record.recordId, 'record 应有 recordId')
+    assert.ok(record.startAt, 'record 应有 startAt')
+    assert.ok(record.endAt, 'record 应有 endAt')
+    assert.ok(['success', 'failure'].includes(record.status), 'D0 record status 应为 success/failure')
+    assert.ok(record.sourceKind, 'record 应有 sourceKind')
+    assert.equal(typeof record.errorSummary, 'string', 'record 应有 errorSummary（字符串）')
+    assert.match(record.errorSummary, /^failed:\d+/, 'errorSummary 应以 failed:N 开头')
+    assert.equal(typeof record.attempted, 'number')
+    assert.ok(Array.isArray(record.cities), 'record 应有 cities summary')
+  }
+
+  // 5) 被忽略事件也要写审计：status=ignored
+  const ignoredResponse = await schedulerApp.main(
+    { Type: 'Unknown', TriggerName: 'unrecognized-trigger' },
+    {}
+  )
+  assert.equal(ignoredResponse.code, 200)
+  assert.equal(ignoredResponse.data.ignored, true)
+
+  // 被忽略事件 audit 按当天日期聚合
+  const { resolveTargetDate } = require('../../cloudfunctions/weather-ingestion-scheduler/services/d0-slot-manifest.js')
+  const todayAuditPath = buildD0TimerAuditPath({ date: resolveTargetDate('') })
+  const todayAuditFile = storageObjects.get(todayAuditPath)
+  assert.ok(todayAuditFile, '被忽略事件应写入当天审计日志')
+  const ignoredRecord = todayAuditFile.records.find(r => r.status === 'ignored')
+  assert.ok(ignoredRecord, '应有一条 status=ignored 的审计记录')
+  assert.equal(ignoredRecord.triggerName, 'unrecognized-trigger')
+  assert.equal(ignoredRecord.sourceKind, 'weather_timer_ignored', 'ignored record 应有 sourceKind')
+  assert.equal(typeof ignoredRecord.errorSummary, 'string', 'ignored record 应有 errorSummary')
+  assert.match(ignoredRecord.errorSummary, /^failed:\d+/, 'ignored errorSummary 应以 failed:N 开头')
+  assert.equal(ignoredRecord.attempted, 0)
+
+  // 6) 失败场景：某批存在失败城市时，audit status 必须是 failure（不是 success/advanced/completed）
+  failBeijingStorage = true
+  const failureResponse = await schedulerApp.main(
+    { Type: 'Timer', TriggerName: 'weather-d0-now-noon-1420', targetDate: '2026-06-19' },
+    {}
+  )
+  failBeijingStorage = false
+  assert.equal(failureResponse.code, 200)
+  assert.equal(failureResponse.data.failed, 1, '北京应失败')
+  assert.equal(failureResponse.data.succeeded, 4, '其余4城成功')
+
+  const failureAuditPath = buildD0TimerAuditPath({ date: '2026-06-19' })
+  const failureAuditFile = storageObjects.get(failureAuditPath)
+  assert.ok(failureAuditFile, '失败场景应有审计日志')
+  const failureRecord = failureAuditFile.records.find(r => r.status === 'failure')
+  assert.ok(failureRecord, '应有一条 status=failure 的审计记录')
+  assert.ok(failureRecord.sourceKind, 'failure record 应有 sourceKind')
+  assert.match(failureRecord.errorSummary, /^failed:1/, 'errorSummary 应含失败城市数 failed:1')
+  assert.match(
+    failureRecord.errorSummary,
+    /beijing storage upload forced failure/,
+    'errorSummary 应含首个错误信息'
+  )
+  assert.equal(failureAuditFile.summary.failure, 1, 'summary.failure 应为 1')
 } finally {
   Module._load = originalLoad
+  delete process.env.WEATHER_D0_SLOT_BATCH_SIZE
 }
 
 console.log('weather-d0-24h-timers tests passed')

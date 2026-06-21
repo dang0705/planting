@@ -33,6 +33,7 @@ miniprogram-ci-qrcode.*
 .env
 .env.*
 !.env.local.example
+cloudbaserc.json
 
 /tmp
 .cache

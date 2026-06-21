@@ -12,13 +12,9 @@ const { buildEnvironmentWeatherWindow } = require('./services/weather-window-ser
 const {
   buildDiagnosisRecentWeatherWindow,
   buildRecentWeatherService,
-  handleD0Weather24hTimerEvent,
   handleRecentWeatherIngestionRequest,
   handleRecentWeatherRequest,
-  handleRecentWeatherTimerEvent,
   handleWeather24hRequest,
-  isD0Weather24hTimerEvent,
-  isRecentWeatherIngestionTimerEvent,
   isDiagnosisMode
 } = require('./routes/recent-weather-routes')
 const { listHotCitiesForClient, resolveHotCityLocation } = require('./services/hot-city-locations')
@@ -364,20 +360,6 @@ async function main(event, context) {
 }
 
 module.exports.main = (event, context) => {
-  if (isD0Weather24hTimerEvent(event)) {
-    return handleD0Weather24hTimerEvent({
-      event,
-      service: buildRecentWeatherService(QWEATHER_CONFIG)
-    })
-  }
-
-  if (isRecentWeatherIngestionTimerEvent(event)) {
-    return handleRecentWeatherTimerEvent({
-      event,
-      service: buildRecentWeatherService(QWEATHER_CONFIG)
-    })
-  }
-
   const request = getHttpRequestData(event, context)
   const appEnv = resolveRequestAppEnv(request.headers, request.query, request.body)
   return runWithRequestAppEnv(appEnv, () => main(event, context))

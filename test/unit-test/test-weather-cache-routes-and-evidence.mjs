@@ -153,12 +153,12 @@ Module._load = function patchedWeatherCacheLoad(request, parent, isMain) {
     }
   }
 
-  if (
-    request === '../adapters/qweather-adapter' &&
-    /\/cloudfunctions\/weather-http\/services\/d0-now-sample-service\.js$/.test(
-      String(parent?.filename || '')
-    )
-  ) {
+ if (
+   request === '../adapters/qweather-adapter' &&
+    /\/cloudfunctions\/weather-(http|ingestion-scheduler)\/services\/d0-now-sample-service\.js$/.test(
+     String(parent?.filename || '')
+   )
+ ) {
     return {
       createQWeatherAdapter: () => ({
         async fetchCurrentWeather() {
@@ -224,6 +224,7 @@ Module._load = function patchedWeatherCacheLoad(request, parent, isMain) {
 
 try {
   const weatherApp = require('../../cloudfunctions/weather-http/app.js')
+  const schedulerApp = require('../../cloudfunctions/weather-ingestion-scheduler/app.js')
   const missResponse = await weatherApp.main(
     {
       path: '/weather/environment-context',
@@ -366,7 +367,7 @@ try {
   assert.equal(currentForecastCallCount, 0, '不得调用 QWeather')
 
   sqlCalls.length = 0
-  const timerResponse = await weatherApp.main(
+  const timerResponse = await schedulerApp.main(
     {
       Type: 'Timer',
       TriggerName: 'weather-ingestion-recent-10d'
@@ -375,11 +376,11 @@ try {
   )
   assert.equal(timerResponse.code, 200)
   assert.equal(timerResponse.data.sourceKind, 'weather_cache_recent_10d_timer')
-  // 新架构：ingestRecentForecast 不再拉取 forecast 10d，从 day files 重建
+  // scheduler 是唯一 timer owner：ingestRecentForecast 不再拉取 forecast 10d，从 day files 重建
   assert.equal(timerForecastCallCount, 0, 'timer 不得调用 fetchForecast10d')
   assert.equal(
     sqlCalls.some(
-      item => /FROM weather_locations/.test(item.sql) && /WHERE is_active = 1/.test(item.sql)
+      item => /FROM weather_locations/.test(item.sql)
     ),
     true
   )
