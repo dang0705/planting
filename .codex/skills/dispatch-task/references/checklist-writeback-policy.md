@@ -8,9 +8,7 @@
 
 模板引用：
 
-```text
-../assets/templates/clickup-writeback.md
-```
+外置模板/规范片段：`../assets/templates/clickup-writeback.md`（template_id: `checklist-writeback-policy-01`）。
 
 ## 识别顺序
 
@@ -27,9 +25,7 @@ ClickUp 描述区中的 slash / Markdown checklist 可以通过整体更新 task
 
 例如：
 
-```markdown
-- [x] 用户在 `D-10 ~ D-1` 中选择多天浇水后，前端能生成正确的最近 10 天浇水行为数据。
-```
+外置模板/规范片段：`../assets/templates/clickup-writeback.md`（template_id: `checklist-writeback-policy-02`）。
 
 回写方式：
 
@@ -47,9 +43,7 @@ Markdown checklist 没有 ClickUp 原生 item id。不得假设存在真实 `ite
 
 必须生成内部引用：
 
-```text
-checklist_ref = md-checklist:<source_ticket_id>:NO<checklist_order_no>
-```
+外置模板/规范片段：`../assets/templates/clickup-writeback.md`（template_id: `checklist-writeback-policy-03`）。
 
 其中 `checklist_order_no` 表示该 ticket 描述区内第几个 markdown checklist 项，按出现顺序从 1 开始编号。
 
@@ -68,17 +62,11 @@ checklist_ref = md-checklist:<source_ticket_id>:NO<checklist_order_no>
 
 如果没有 Markdown checklist，但有验收标准 / request changes / 子任务要求，则必须重建：
 
-```text
-Acceptance Checklist Matrix
-Test Case Base
-Test Contract
-```
+外置模板/规范片段：`../assets/templates/clickup-writeback.md`（template_id: `checklist-writeback-policy-04`）。
 
 完成验收后，通过 ClickUp MCP 写回结构化评论：
 
-```text
-Acceptance Verification Comment
-```
+外置模板/规范片段：`../assets/templates/clickup-writeback.md`（template_id: `checklist-writeback-policy-05`）。
 
 该评论不是 checklist 勾选，不能伪称为 checklist writeback，但它是当前 MCP 能力不足时的最低合规回写。
 
@@ -126,3 +114,18 @@ Test Case Base 是 Test Contract 的基础。不得漏项，不得把后端接�
 3. QA 或 main agent 已给出证据。
 4. 该项不是 blocked / not_applicable / pending。
 5. 已确认该行来自原始 `markdown_description` checklist。
+
+
+## Acceptance Matrix Receipt
+
+checklist / acceptance criteria 读取后，必须生成 Acceptance Matrix Receipt。
+
+main agent 后续默认只携带聚合统计和 `matrix_ref`，不得在每个 gate 反复展开全部 checklist 文案。
+
+逐项验收细节保存在 `matrix_ref`，QA 和 Completion Gate 需要时精准回查。
+
+模板引用：
+
+```text
+../assets/templates/task-facts-receipts.md
+```

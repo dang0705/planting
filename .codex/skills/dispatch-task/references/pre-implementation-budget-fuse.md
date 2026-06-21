@@ -8,9 +8,7 @@
 
 输出模板见：
 
-```text
-../assets/templates/phase-gates.md
-```
+外置模板/规范片段：`../assets/templates/phase-gates.md`（template_id: `pre-implementation-budget-fuse-01`）。
 
 ## 风险分级
 

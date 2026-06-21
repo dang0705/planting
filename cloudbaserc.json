@@ -143,7 +143,13 @@
       "envVariables": {
         "TCB_ENV": "cloud1-2grufevs395a9d5e",
         "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
-        "DEBUG_LOG": "false"
+        "WEATHER_HOT_CITY_INGESTION_KEYS": "city:beijing,city:shanghai,city:guangzhou,city:shenzhen,city:chengdu,city:hangzhou,city:wuhan,city:chongqing,city:nanjing,city:suzhou,city:xian,city:zhengzhou,city:tianjin,city:changsha,city:qingdao,city:ningbo,city:dongguan,city:foshan,city:hefei,city:xiamen",
+        "DEBUG_LOG": "false",
+        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
+        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
+        "TENCENT_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
+        "TENCENT_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
+        "QWEATHER_API_KEY": "1f170fa55e214c2c83d12977025b4a14"
       }
     },
     {
@@ -167,6 +173,25 @@
         "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
         "DEBUG_LOG": "false"
       }
+    },
+    {
+      "name": "weather-ingestion-scheduler",
+      "dir": "./cloudfunctions/weather-ingestion-scheduler",
+      "timeout": 30,
+      "runtime": "Nodejs18.15",
+      "memorySize": 256,
+      "envVariables": {
+        "TCB_ENV": "cloud1-2grufevs395a9d5e",
+        "CLOUDBASE_ENV_ID": "cloud1-2grufevs395a9d5e",
+        "QWEATHER_API_KEY": "1f170fa55e214c2c83d12977025b4a14",
+        "WEATHER_HOT_CITY_INGESTION_KEYS": "city:beijing,city:shanghai,city:guangzhou,city:shenzhen,city:chengdu,city:hangzhou,city:wuhan,city:chongqing,city:nanjing,city:suzhou,city:xian,city:zhengzhou,city:tianjin,city:changsha,city:qingdao,city:ningbo,city:dongguan,city:foshan,city:hefei,city:xiamen",
+        "DEBUG_LOG": "false",
+        "CLOUDBASE_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
+        "CLOUDBASE_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG",
+        "TENCENT_SECRET_ID": "AKIDjMo6D7kDVcWGriS1HRTK0lPr7A27zfAU",
+        "TENCENT_SECRET_KEY": "CBxZx99wWuDKvJUTFoBVgfU6ZrxratfG"
+      },
+      "handler": "app.main"
     }
   ]
 }

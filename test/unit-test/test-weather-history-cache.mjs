@@ -115,16 +115,6 @@ function buildForecastDaily(startDate, count) {
   })
 }
 
-async function waitForCondition(predicate, { attempts = 20, delayMs = 10 } = {}) {
-  for (let attempt = 0; attempt < attempts; attempt += 1) {
-    if (predicate()) {
-      return true
-    }
-    await new Promise(resolve => setTimeout(resolve, delayMs))
-  }
-  return false
-}
-
 assert.equal(
   buildRecentWeatherObjectPath('city:Shanghai'),
   'weather-cache/v1/locations/city:Shanghai/recent-10d.json'
@@ -160,6 +150,31 @@ const service = createRecentWeatherService({
   }
 })
 
+// 新架构：预置 finalized day file（D-1）
+const { buildWeatherDayObjectPath } = require('../../cloudfunctions/weather-http/services/weather-cache-paths.js')
+const laD1Path = buildWeatherDayObjectPath('city:LosAngeles', '2026-06-12')
+storage.objects.set(laD1Path, {
+  schemaVersion: 'weather-cache/v1/day-now-sample',
+  locationKey: 'city:LosAngeles',
+  date: '2026-06-12',
+  state: 'finalized',
+  samples: [{ slotName: 'morning', temp: 20, humidity: 55, sourceKind: 'weather_now_sample' }],
+  latestSample: { slotName: 'morning', temp: 20 },
+  dailyRollup: {
+    date: '2026-06-12',
+    quality: 'partial',
+    sampleSummary: { sampleCount: 1, daylightSampleCount: 1, missingSlots: ['forenoon', 'noon', 'afternoon'] },
+    lightFeatures: { daylightCloudMean: null, lowLightProxy: 'none' },
+    moistureFeatures: { humidityMean: 55, precipLastHourSum: null, wetSoilRiskFromWeather: 'low' },
+    tempFeatures: { tempMean: 20, tempMax: 20, heatStressLevel: 'low', coldStressLevel: 'low' },
+    tempMin: 20,
+    dominantWeatherText: ''
+  },
+  sourceKind: 'observed_now_rollup',
+  quality: 'partial',
+  weatherObjectPath: laD1Path
+})
+
 const ingestResult = await service.ingestRecentForecast({
   locationKey: 'city:LosAngeles',
   qweatherLocationId: 'LA001',
@@ -167,7 +182,7 @@ const ingestResult = await service.ingestRecentForecast({
   timezone: 'America/Los_Angeles'
 })
 
-assert.equal(qweather10dCalls, 1, 'ingestion 必须调用 QWeather 10d 一次')
+assert.equal(qweather10dCalls, 0, '新架构 ingestion 不再调用 QWeather 10d')
 assert.equal(ingestResult.targetDate, '2026-06-12', 'D-1 应按地点 timezone 计算')
 assert.equal(ingestResult.recentObjectPath, buildRecentWeatherObjectPath('city:LosAngeles'))
 assert.equal(ingestResult.quality, 'partial', '缺少 D-10 到 D-2 daily 时 recent 应标记 partial')
@@ -177,7 +192,7 @@ assert.equal(ingestResult.recentPayload.historicalDays.length, 10)
 assert.equal(ingestResult.recentPayload.historicalDays.at(-1).date, '2026-06-12')
 assert.equal(
   ingestResult.recentPayload.historicalDays.at(-1).sourceKind,
-  'qweather_forecast_10d_archive'
+  'observed_now_rollup'
 )
 assert.equal(ingestResult.recentPayload.sourceKind, 'weather_cache_recent_10d')
 assert.equal(ingestResult.recentPayload.plantFeatures.dayCount, 1)
@@ -186,13 +201,6 @@ assert.equal(
   storage.writes.some(item => item.cloudPath === buildWeatherManifestObjectPath('city:LosAngeles')),
   true,
   'ingestion 必须写 manifest.json'
-)
-assert.equal(
-  storage.writes.some(
-    item => item.cloudPath === buildWeatherDailyObjectPath('city:LosAngeles', '2026-06-12')
-  ),
-  true,
-  'ingestion 必须写 D-1 daily archive'
 )
 assert.equal(
   storage.writes.some(item => item.cloudPath === buildRecentWeatherObjectPath('city:LosAngeles')),
@@ -208,34 +216,44 @@ const currentEntryService = createRecentWeatherService({
   locationRepository: createMemoryLocationRepository(),
   now: () => new Date('2026-06-17T01:00:00Z'),
   adapter: {
-    async fetchForecast10d({ lat, lng }) {
+    async fetchForecast10d() {
       currentEntryForecastCalls += 1
-      assert.equal(lat, 35.22)
-      assert.equal(lng, 105.46)
-      return {
-        raw: { code: '200' },
-        daily: buildForecastDaily('2026-06-17', 10)
-      }
+      return { raw: { code: '200' }, daily: [] }
+    },
+    async fetchCurrentWeather() {
+      return { tempC: 25, humidity: 60, text: '晴', obsTime: '2026-06-17T09:30:00+08:00', source: 'qweather_weather_now' }
     }
   }
 })
 const currentEntryInput = { lat: 35.22, lng: 105.46, city: '远离热城测试地', timezone: 'Asia/Shanghai' }
+// 新架构：无 day file 时缓存 miss，返回 evidence insufficient，不调用 QWeather
 const currentEntryResult = await currentEntryService.getCurrentWeatherFromDailyArchive(currentEntryInput)
-assert.equal(
-  await waitForCondition(() =>
-    currentEntryStorage.objects.has(buildWeatherDailyObjectPath('coord:105_46_35_22', '2026-06-17'))
-  ),
-  true
-)
-const currentEntrySecondResult = await currentEntryService.getCurrentWeatherFromDailyArchive(currentEntryInput)
-assert.equal(currentEntryResult.weatherData.temperature, 29)
-assert.equal(currentEntryResult.dailyWeatherCache.refreshed, false)
-assert.equal(currentEntryResult.dailyWeatherCache.refreshScheduled, true)
-assert.equal(currentEntryResult.dailyWeatherCache.targetDate, '2026-06-17')
-assert.equal(currentEntrySecondResult.weatherData.temperature, 29)
-assert.equal(currentEntrySecondResult.dailyWeatherCache.cacheHit, true)
-assert.equal(currentEntrySecondResult.dailyWeatherCache.reason, 'daily_archive_present')
-assert.equal(currentEntryForecastCalls, 1, 'current 入口已有 D0 归档时不得重复请求 10d')
+assert.equal(currentEntryResult.weatherData, null, '无 day file 时 weatherData 为 null')
+assert.equal(currentEntryResult.dailyWeatherCache.weatherEvidenceInsufficient, true)
+assert.equal(currentEntryResult.dailyWeatherCache.cacheHit, false)
+assert.equal(currentEntryForecastCalls, 0, 'current miss 不得调用 QWeather')
+
+let slowCurrentStorageCompleted = false
+const slowCurrentService = createRecentWeatherService({
+  storage: {
+    async downloadJson() {
+      await new Promise(resolve => setTimeout(resolve, 200))
+      slowCurrentStorageCompleted = true
+      return null
+    }
+  },
+  locationRepository: createMemoryLocationRepository(),
+  now: () => new Date('2026-06-17T01:00:00Z')
+})
+const slowCurrentStartedAt = Date.now()
+const slowCurrentResult = await slowCurrentService.getCurrentWeatherFromDailyArchive({
+  ...currentEntryInput,
+  timeoutMs: 5
+})
+assert.equal(slowCurrentResult.weatherData, null)
+assert.equal(slowCurrentResult.dailyWeatherCache.weatherEvidenceInsufficient, true)
+assert.ok(Date.now() - slowCurrentStartedAt < 100, 'current weather miss must not wait slow storage')
+assert.equal(slowCurrentStorageCompleted, false)
 
 const sqlStatements = []
 const locationRepositoryUnderTest = createWeatherLocationRepository({
@@ -296,62 +314,52 @@ assert.equal(sqlStatements.find(item => /FROM weather_locations/.test(item.sql))
 clearRecentWeatherMemoryCache()
 const rollingStorage = createMemoryStorage()
 const rollingRepository = createMemoryLocationRepository()
-let rollingNow = new Date('2026-06-14T00:30:00Z')
-let rollingCallCount = 0
+const rollingNow = new Date('2026-06-14T00:30:00Z')
 const rollingService = createRecentWeatherService({
   storage: rollingStorage,
   locationRepository: rollingRepository,
   now: () => rollingNow,
-  adapter: {
-    async fetchForecast10d() {
-      rollingCallCount += 1
-      return {
-        raw: { code: '200' },
-        daily:
-          rollingCallCount === 1
-            ? buildForecastDaily('2026-06-12', 10)
-            : buildForecastDaily('2026-06-14', 10)
-      }
-    }
-  }
+  adapter: { async fetchForecast10d() { return { raw: {}, daily: [] } } }
 })
 
-const firstRollingIngest = await rollingService.ingestRecentForecast({
+// 新架构：预置两个 finalized day files
+for (const d of ['2026-06-11', '2026-06-12']) {
+  const p = buildWeatherDayObjectPath('city:Rolling', d)
+  rollingStorage.objects.set(p, {
+    schemaVersion: 'weather-cache/v1/day-now-sample',
+    locationKey: 'city:Rolling',
+    date: d,
+    state: 'finalized',
+    samples: [{ slotName: 'morning', temp: 20, humidity: 55, sourceKind: 'weather_now_sample' }],
+    latestSample: { slotName: 'morning', temp: 20 },
+    dailyRollup: {
+      date: d, quality: 'partial',
+      sampleSummary: { sampleCount: 1, daylightSampleCount: 1, missingSlots: ['forenoon', 'noon', 'afternoon'] },
+      lightFeatures: { daylightCloudMean: null, lowLightProxy: 'none' },
+      moistureFeatures: { humidityMean: 55, precipLastHourSum: null, wetSoilRiskFromWeather: 'low' },
+      tempFeatures: { tempMean: 20, tempMax: 20, heatStressLevel: 'low', coldStressLevel: 'low' },
+      tempMin: 20, dominantWeatherText: ''
+    },
+    sourceKind: 'observed_now_rollup', quality: 'partial', weatherObjectPath: p
+  })
+}
+
+const rollingIngest = await rollingService.ingestRecentForecast({
   locationKey: 'city:Rolling',
   qweatherLocationId: 'ROLLING001',
   cityName: '滚动测试',
   timezone: 'America/Los_Angeles'
 })
-rollingNow = new Date('2026-06-15T00:30:00Z')
-const secondRollingIngest = await rollingService.ingestRecentForecast({
-  locationKey: 'city:Rolling',
-  qweatherLocationId: 'ROLLING001',
-  cityName: '滚动测试',
-  timezone: 'America/Los_Angeles'
-})
-
-const rollingLocation = await rollingRepository.findByLocationKey('city:Rolling')
-const rollingManifest = rollingStorage.objectsByFileId.get(rollingLocation.manifestFileId)
-const dailyFromPreviousRaw = rollingStorage.objects.get(
-  buildWeatherDailyObjectPath('city:Rolling', '2026-06-13')
+assert.ok(rollingIngest.recentPayload, 'rolling ingest 应产出 recentPayload')
+assert.equal(
+  rollingIngest.recentPayload.historicalDays.find(day => day.date === '2026-06-12').missing,
+  false,
+  'D-1 finalized day 应在 recent-10d 中可用'
 )
 assert.equal(
-  rollingManifest.dailyArchives['2026-06-12'].fileId.includes('/daily/2026-06-12.json'),
-  true
-)
-assert.equal(
-  rollingManifest.dailyArchives['2026-06-13'].fileId.includes('/daily/2026-06-13.json'),
-  true
-)
-assert.equal(dailyFromPreviousRaw.daily.missing, false)
-assert.equal(dailyFromPreviousRaw.rawObjectPath, firstRollingIngest.rawObjectPath)
-assert.equal(
-  secondRollingIngest.recentPayload.historicalDays.find(day => day.date === '2026-06-12').missing,
-  false
-)
-assert.equal(
-  secondRollingIngest.recentPayload.historicalDays.find(day => day.date === '2026-06-13').missing,
-  false
+  rollingIngest.recentPayload.historicalDays.find(day => day.date === '2026-06-11').missing,
+  false,
+  'D-2 finalized day 应在 recent-10d 中可用'
 )
 
 clearRecentWeatherMemoryCache()
@@ -386,20 +394,51 @@ const batchService = createRecentWeatherService({
   adapter: {
     async fetchForecast10d() {
       batchForecastCalls += 1
-      return { raw: { code: '200' }, daily: buildForecastDaily('2026-06-13', 10) }
+      return { raw: { code: '200' }, daily: [] }
     }
   }
 })
 const batchResult = await batchService.ingestActiveLocations({ limit: 10 })
-// 热城常量 20 + DB active 1 = 21
-assert.equal(batchResult.total, 21)
-assert.equal(batchResult.successCount, 21)
+// 新架构：hasCityFilter 过滤非热城 DB active 地点，只保留 20 热城
+assert.equal(batchResult.total, 20)
+assert.equal(batchResult.successCount, 20)
 assert.equal(batchResult.failureCount, 0)
-assert.equal(batchForecastCalls, 21)
+assert.equal(batchForecastCalls, 0, '新架构不调用 fetchForecast10d')
 assert.equal(
   batchResult.results.some(item => item.locationKey === 'city:shanghai' && item.ok),
   true
 )
+
+clearRecentWeatherMemoryCache()
+const originalHotCityIngestionKeys = process.env.WEATHER_HOT_CITY_INGESTION_KEYS
+process.env.WEATHER_HOT_CITY_INGESTION_KEYS = 'city:shanghai'
+let configuredHotCitySqlCalls = 0
+try {
+  const configuredHotCityService = createRecentWeatherService({
+    storage: createMemoryStorage(),
+    locationRepository: {
+      async listActiveLocations() {
+        configuredHotCitySqlCalls += 1
+        throw new Error('配置热门城市时不应查询 SQL active locations')
+      },
+      async upsertLocation(input) {
+        return input
+      },
+      async updateRecentObjectMetadata() {}
+    },
+    now: () => new Date('2026-06-14T00:30:00Z')
+  })
+  const configuredHotCityResult = await configuredHotCityService.ingestActiveLocations({ limit: 10 })
+  assert.equal(configuredHotCityResult.total, 1)
+  assert.equal(configuredHotCityResult.results[0].locationKey, 'city:shanghai')
+  assert.equal(configuredHotCitySqlCalls, 0, '配置 WEATHER_HOT_CITY_INGESTION_KEYS 时不得查询 SQL')
+} finally {
+  if (originalHotCityIngestionKeys === undefined) {
+    delete process.env.WEATHER_HOT_CITY_INGESTION_KEYS
+  } else {
+    process.env.WEATHER_HOT_CITY_INGESTION_KEYS = originalHotCityIngestionKeys
+  }
+}
 
 clearRecentWeatherMemoryCache()
 const missStorage = createMemoryStorage()

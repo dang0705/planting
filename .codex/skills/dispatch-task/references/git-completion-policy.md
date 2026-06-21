@@ -6,27 +6,17 @@
 
 模板引用：
 
-```text
-../assets/templates/git-commit.md
-```
+外置模板/规范片段：`../assets/templates/git-commit.md`（template_id: `git-completion-policy-01`）。
 
 ## Phase 0 Git baseline
 
 任何 dispatch-task 启动后，在进入实现、QA、文档写入、ClickUp 回写之前，必须执行：
 
-```bash
-git status --short
-git branch --show-current
-```
+外置模板/规范片段：`../assets/templates/git-commit.md`（template_id: `git-completion-policy-02`）。
 
 如果 `git status --short` 有任何输出，立即执行任务前 snapshot commit：
 
-```bash
-git add -A
-git commit -m "<message>"
-git rev-parse HEAD
-git status --short
-```
+外置模板/规范片段：`../assets/templates/git-commit.md`（template_id: `git-completion-policy-03`）。
 
 硬规则：
 
@@ -56,12 +46,7 @@ git status --short
 
 示例：
 
-```text
-chore: snapshot local changes
-chore: snapshot ui edits
-fix: align care timeline UI
-docs: update dispatch gates
-```
+外置模板/规范片段：`../assets/templates/git-commit.md`（template_id: `git-completion-policy-04`）。
 
 ## 最终 commit
 
@@ -87,6 +72,4 @@ docs: update dispatch gates
 
 输出模板见：
 
-```text
-../assets/templates/git-commit.md
-```
+外置模板/规范片段：`../assets/templates/git-commit.md`（template_id: `git-completion-policy-05`）。

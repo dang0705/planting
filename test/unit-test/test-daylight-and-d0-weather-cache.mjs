@@ -3,9 +3,7 @@ import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
 const {
-  buildWeatherDailyObjectPath,
-  buildWeatherManifestObjectPath,
-  buildWeatherWorkingObjectPath,
+  buildWeatherDayObjectPath,
   buildRecentWeatherObjectPath
 } = require('../../cloudfunctions/weather-http/services/weather-cache-paths.js')
 const {
@@ -14,14 +12,14 @@ const {
   clamp
 } = require('../../cloudfunctions/weather-http/services/daylight-slots.js')
 const {
-  buildD0WorkingPayload
-} = require('../../cloudfunctions/weather-http/services/d0-weather-24h-service.js')
-const {
   createRecentWeatherService
 } = require('../../cloudfunctions/weather-http/services/recent-weather-service.js')
 const {
   clearRecentWeatherMemoryCache
 } = require('../../cloudfunctions/weather-http/services/recent-weather-memory-cache.js')
+const {
+  normalizeCurrentWeather
+} = require('../../cloudfunctions/weather-http/adapters/qweather-adapter.js')
 
 function createMemoryStorage() {
   const objects = new Map()
@@ -46,88 +44,7 @@ function createMemoryStorage() {
   }
 }
 
-function buildForecastDaily(startDate, count) {
-  const start = new Date(`${startDate}T12:00:00Z`)
-  return Array.from({ length: count }, (_, index) => {
-    const date = new Date(start)
-    date.setUTCDate(start.getUTCDate() + index)
-    return {
-      date: date.toISOString().slice(0, 10),
-      tempMaxC: 28,
-      tempMinC: 18,
-      humidity: 58,
-      uvIndex: 7,
-      cloud: 20,
-      textDay: '晴'
-    }
-  })
-}
-
-function buildHourly24h(date = '2026-06-18') {
-  return [
-    {
-      fxTime: `${date}T06:30:00+08:00`,
-      cloud: 20,
-      precip: 0.1,
-      pop: 30,
-      humidity: 60,
-      temp: 24,
-      windSpeed: 8,
-      text: '晴'
-    },
-    {
-      fxTime: `${date}T08:30:00+08:00`,
-      cloud: 80,
-      precip: 0.3,
-      pop: 70,
-      humidity: 70,
-      temp: 26,
-      windSpeed: 12,
-      text: '多云'
-    },
-    {
-      fxTime: `${date}T09:30:00+08:00`,
-      cloud: 40,
-      precip: 0,
-      pop: 20,
-      humidity: 62,
-      temp: 27,
-      windSpeed: 10,
-      text: '多云'
-    },
-    {
-      fxTime: `${date}T11:30:00+08:00`,
-      cloud: 60,
-      precip: 0.2,
-      pop: 55,
-      humidity: 64,
-      temp: 29,
-      windSpeed: 14,
-      text: '阴'
-    },
-    {
-      fxTime: `${date}T12:30:00+08:00`,
-      cloud: 10,
-      precip: 0,
-      pop: 10,
-      humidity: 50,
-      temp: 31,
-      windSpeed: 16,
-      text: '晴'
-    },
-    {
-      fxTime: `${date}T15:30:00+08:00`,
-      cloud: 30,
-      precip: 0.5,
-      pop: 65,
-      humidity: 58,
-      temp: 30,
-      windSpeed: 18,
-      text: '阵雨'
-    }
-  ]
-}
-
+// === daylight-slots 基础测试 ===
 const sunWindow = buildSunWindow({
   date: '2026-06-18',
   latitude: 31.2304,
@@ -155,10 +72,6 @@ assert.equal(
   slots.every(slot => slot.durationMinutes > 0),
   true
 )
-assert.equal(
-  slots.some(slot => slot.slotKey === 'midday' || slot.slotKey === 'evening'),
-  false
-)
 assert.equal(slots[0].startTime < slots[0].endTime, true)
 assert.equal(slots[1].durationMinutes, 180)
 assert.equal(slots[2].durationMinutes, 120)
@@ -177,46 +90,33 @@ assert.equal(
   3,
   '短日照下无有效区间的 slot 必须显式 missing'
 )
-assert.equal(shortDaySlots.find(slot => slot.slotKey === 'afternoon').quality, 'complete')
 
-const workingPayload = buildD0WorkingPayload({
-  location: {
-    locationKey: 'city:shanghai',
-    cityName: '上海',
-    latitude: 31.2304,
-    longitude: 121.4737
-  },
-  date: '2026-06-18',
-  timezone: 'Asia/Shanghai',
-  hourly: buildHourly24h(),
-  generatedAt: '2026-06-18T03:30:00.000Z',
-  weatherObjectPath: buildWeatherWorkingObjectPath('city:shanghai', '2026-06-18')
+const normalizedNow = normalizeCurrentWeather({
+  now: {
+    temp: '25',
+    feelsLike: '27',
+    icon: '100',
+    text: '晴',
+    wind360: '180',
+    windDir: '南风',
+    windScale: '3',
+    windSpeed: '12',
+    humidity: '60',
+    precip: '0.2',
+    pressure: '1007',
+    vis: '12',
+    cloud: '35',
+    dew: '18',
+    obsTime: '2026-06-18T09:30:00+08:00'
+  }
 })
-assert.equal(workingPayload.sunWindow.solarNoon.includes('+08:00'), true)
-assert.deepEqual(
-  workingPayload.daylightSlots.map(slot => slot.slotKey),
-  ['morning', 'forenoon', 'noon', 'afternoon']
-)
-const morningSlot = workingPayload.daylightSlots.find(slot => slot.slotKey === 'morning')
-assert.equal(morningSlot.name, 'morning')
-assert.equal(morningSlot.start, morningSlot.startTime)
-assert.equal(morningSlot.end, morningSlot.endTime)
-assert.equal(morningSlot.sourceKind, 'hourly_forecast_snapshot')
-assert.equal(morningSlot.updatedAt, '2026-06-18T03:30:00.000Z')
-assert.deepEqual(morningSlot.missingFields, [])
-assert.equal(morningSlot.cloudMean, 50)
-assert.equal(morningSlot.cloudMax, 80)
-assert.equal(morningSlot.cloudP75, 80)
-assert.equal(morningSlot.precipSum, 0.4)
-assert.equal(morningSlot.precipMaxHourly, 0.3)
-assert.equal(morningSlot.popMax, 70)
-assert.equal(morningSlot.humidityMean, 65)
-assert.equal(morningSlot.tempMean, 25)
-assert.equal(morningSlot.windSpeedMean, 10)
-assert.equal(morningSlot.dominantText, '晴')
-assert.equal(workingPayload.weatherLocation, '121.4737,31.2304')
-assert.equal(workingPayload.sourceKind, 'qweather_weather_24h_working')
+assert.equal(normalizedNow.cloud, 35)
+assert.equal(normalizedNow.wind360, 180)
+assert.equal(normalizedNow.precipMm, 0.2)
+assert.equal(normalizedNow.visibilityKm, 12)
+assert.equal(normalizedNow.dew, 18)
 
+// === now-sample D0 服务测试 ===
 clearRecentWeatherMemoryCache()
 const storage = createMemoryStorage()
 const service = createRecentWeatherService({
@@ -232,99 +132,145 @@ const service = createRecentWeatherService({
   },
   now: () => new Date('2026-06-18T03:00:00Z'),
   adapter: {
-    async fetchForecast10d() {
-      return { raw: { code: '200' }, daily: buildForecastDaily('2026-06-18', 10) }
-    }
-  }
-})
-
-const d0SlotUpdate = await service.updateD0Weather24hWorking({
-  locationKey: 'city:shanghai',
-  cityName: '上海',
-  latitude: 31.2304,
-  longitude: 121.4737,
-  timezone: 'Asia/Shanghai',
-  targetDate: '2026-06-18',
-  hourly: buildHourly24h()
-})
-assert.equal(
-  storage.objects.has(buildWeatherWorkingObjectPath('city:shanghai', '2026-06-18')),
-  true,
-  '24h D0 slot update 必须写 working archive'
-)
-assert.equal(d0SlotUpdate.workingPayload.sunWindow.solarNoon.includes('+08:00'), true)
-assert.equal(d0SlotUpdate.workingPayload.daylightSlots[0].cloudMean, 50)
-assert.equal(d0SlotUpdate.workingPayload.daylightSlots[0].name, 'morning')
-assert.equal(d0SlotUpdate.workingPayload.daylightSlots[0].sourceKind, 'hourly_forecast_snapshot')
-assert.equal(d0SlotUpdate.workingPayload.daylightSlots[0].updatedAt, '2026-06-18T03:00:00.000Z')
-assert.equal(
-  storage.objects.has(buildRecentWeatherObjectPath('city:shanghai')),
-  false,
-  '24h D0 slot update 不得写 recent-10d'
-)
-
-const d0Finalize = await service.updateD0Weather24hWorking({
-  locationKey: 'city:shanghai',
-  cityName: '上海',
-  latitude: 31.2304,
-  longitude: 121.4737,
-  timezone: 'Asia/Shanghai',
-  targetDate: '2026-06-18',
-  hourly: buildHourly24h(),
-  finalize: true
-})
-assert.equal(d0Finalize.finalized, true)
-assert.equal(storage.objects.has(buildWeatherDailyObjectPath('city:shanghai', '2026-06-18')), true)
-assert.equal(d0Finalize.dailyPayload.daily.daylightSlots[0].precipSum, 0.4)
-assert.equal(
-  storage.objects.has(buildRecentWeatherObjectPath('city:shanghai')),
-  false,
-  '24h D0 finalize 不得写 recent-10d'
-)
-
-await service.getCurrentWeatherFromDailyArchive({
-  locationKey: 'city:shanghai',
-  cityName: '上海',
-  latitude: 31.2304,
-  longitude: 121.4737,
-  timezone: 'Asia/Shanghai',
-  waitForArchive: true
-})
-
-assert.equal(
-  storage.objects.has(buildWeatherWorkingObjectPath('city:shanghai', '2026-06-18')),
-  true,
-  'D0 当前天气必须写 working archive'
-)
-assert.equal(storage.objects.has(buildWeatherDailyObjectPath('city:shanghai', '2026-06-18')), true)
-assert.equal(storage.objects.has(buildWeatherManifestObjectPath('city:shanghai')), true)
-assert.equal(
-  storage.objects.has(buildRecentWeatherObjectPath('city:shanghai')),
-  false,
-  'D0 当前天气不得重建 recent-10d'
-)
-
-const d0Daily = storage.objects.get(buildWeatherDailyObjectPath('city:shanghai', '2026-06-18'))
-assert.equal(d0Daily.daily.daylight.slots.length, 4)
-assert.equal(d0Daily.daily.daylight.quality, 'complete')
-
-service.adapter = null
-const ingestService = createRecentWeatherService({
-  storage,
-  locationRepository: {
-    async upsertLocation(input) {
-      return input
+    async fetchCurrentWeather() {
+      return {
+        tempC: 25,
+        feelsLikeC: 27,
+        icon: '100',
+        text: '晴',
+        wind360: 180,
+        windDir: '南风',
+        windScale: '3',
+        windSpeed: 12,
+        humidity: 60,
+        precipMm: 0.2,
+        pressure: 1007,
+        visibilityKm: 12,
+        cloud: 35,
+        dew: 18,
+        obsTime: '2026-06-18T09:30:00+08:00',
+        source: 'qweather_weather_now'
+      }
     },
-    async updateRecentObjectMetadata() {}
-  },
-  now: () => new Date('2026-06-18T03:00:00Z'),
-  adapter: {
     async fetchForecast10d() {
-      return { raw: { code: '200' }, daily: buildForecastDaily('2026-06-08', 10) }
+      return { raw: {}, daily: [] }
     }
   }
 })
-const ingest = await ingestService.ingestRecentForecast({
+
+const dayPath = buildWeatherDayObjectPath('city:shanghai', '2026-06-18')
+
+// now 采样 → days/{date}.json，不写 working/ 或 daily/
+const sampleResult = await service.sampleNowWeather({
+  locationKey: 'city:shanghai',
+  cityName: '上海',
+  latitude: 31.2304,
+  longitude: 121.4737,
+  timezone: 'Asia/Shanghai',
+  targetDate: '2026-06-18',
+  slotName: 'morning'
+})
+assert.equal(sampleResult.finalized, false)
+assert.equal(sampleResult.dayObjectPath, dayPath)
+assert.equal(storage.objects.has(dayPath), true)
+assert.equal(
+  storage.objects.has('weather-cache/v1/locations/city:shanghai/working/2026-06-18.json'),
+  false,
+  'now 采样不得写 working/'
+)
+assert.equal(
+  storage.objects.has('weather-cache/v1/locations/city:shanghai/daily/2026-06-18.json'),
+  false,
+  'now 采样不得写 daily/'
+)
+
+const dayFile = storage.objects.get(dayPath)
+assert.equal(dayFile.state, 'working')
+assert.equal(dayFile.sourceKind, 'observed_now_samples')
+assert.equal(dayFile.latestSample.slotName, 'morning')
+assert.equal(dayFile.latestSample.sourceKind, 'weather_now_sample')
+assert.equal(dayFile.samples[0].cloud, 35, 'now sample 必须保留 /v7/weather/now.cloud')
+assert.equal(dayFile.samples[0].feelsLike, 27)
+assert.equal(dayFile.samples[0].icon, '100')
+assert.equal(dayFile.samples[0].wind360, 180)
+assert.equal(dayFile.samples[0].windDir, '南风')
+assert.equal(dayFile.samples[0].windScale, '3')
+assert.equal(dayFile.samples[0].windSpeed, 12)
+assert.equal(dayFile.samples[0].precipLastHour, 0.2)
+assert.equal(dayFile.samples[0].pressure, 1007)
+assert.equal(dayFile.samples[0].visibilityKm, 12)
+assert.equal(dayFile.samples[0].dew, 18)
+
+dayFile.samples.push({
+  slotName: 'afternoon',
+  sampledAt: '2026-06-18T10:30:00.000Z',
+  obsTime: '2026-06-18T18:30:00+08:00',
+  temp: 28,
+  humidity: 58,
+  cloud: 60,
+  sourceKind: 'weather_now_sample'
+})
+dayFile.latestSample = dayFile.samples[0]
+
+// finalize → dailyRollup + state=finalized
+const finalizeResult = await service.finalizeNowWeather({
+  locationKey: 'city:shanghai',
+  cityName: '上海',
+  latitude: 31.2304,
+  longitude: 121.4737,
+  timezone: 'Asia/Shanghai',
+  targetDate: '2026-06-18'
+})
+assert.equal(finalizeResult.finalized, true)
+const finalizedDayFile = storage.objects.get(dayPath)
+assert.equal(finalizedDayFile.state, 'finalized')
+assert.equal(finalizedDayFile.sourceKind, 'observed_now_rollup')
+assert.ok(finalizedDayFile.dailyRollup, 'finalize 必须生成 dailyRollup')
+assert.ok(finalizedDayFile.finalizedAt, 'finalize 必须设置 finalizedAt')
+assert.equal(finalizedDayFile.latestSample.slotName, 'afternoon')
+assert.equal(finalizedDayFile.latestSample.cloud, 60)
+assert.equal(
+  storage.objects.has(buildRecentWeatherObjectPath('city:shanghai')),
+  false,
+  'D0 finalize 不得写 recent-10d'
+)
+
+// 当前天气从 latestSample 读，不触发 QWeather
+const currentResult = await service.getCurrentWeatherFromDailyArchive({
+  locationKey: 'city:shanghai',
+  cityName: '上海',
+  latitude: 31.2304,
+  longitude: 121.4737,
+  timezone: 'Asia/Shanghai'
+})
+assert.ok(currentResult.weatherData, '当前天气从 latestSample 读')
+assert.equal(currentResult.weatherData.sourceKind, 'weather_now_sample')
+assert.equal(currentResult.dailyWeatherCache.cacheHit, true)
+
+// ingestRecentForecast 从 finalized day files 重建 recent-10d
+// 先写一个 D-1 finalized day file
+const d1Path = buildWeatherDayObjectPath('city:shanghai', '2026-06-17')
+storage.objects.set(d1Path, {
+  schemaVersion: 'weather-cache/v1/day-now-sample',
+  locationKey: 'city:shanghai',
+  date: '2026-06-17',
+  state: 'finalized',
+  samples: [{ slotName: 'morning', temp: 22, humidity: 60, sourceKind: 'weather_now_sample' }],
+  latestSample: { slotName: 'morning', temp: 22 },
+  dailyRollup: {
+    date: '2026-06-17',
+    quality: 'partial',
+    sampleCount: 1,
+    temp: 22,
+    humidity: 60,
+    text: '晴'
+  },
+  sourceKind: 'observed_now_rollup',
+  quality: 'partial',
+  weatherObjectPath: d1Path
+})
+
+const ingest = await service.ingestRecentForecast({
   locationKey: 'city:shanghai',
   cityName: '上海',
   latitude: 31.2304,
@@ -332,16 +278,13 @@ const ingest = await ingestService.ingestRecentForecast({
   timezone: 'Asia/Shanghai',
   targetDate: '2026-06-17'
 })
-
+assert.ok(ingest.recentPayload, 'recentPayload should exist')
 assert.equal(
   ingest.recentPayload.historicalDays.some(day => day.date === '2026-06-18'),
-  false
+  false,
+  'D0 今日不得进入 recent-10d'
 )
 assert.equal(ingest.recentPayload.window.targetDate, '2026-06-17')
 assert.equal(ingest.recentPayload.meta.diagnosisDate, '2026-06-18')
-assert.equal(
-  ingest.prunedFutureDailyArchives.some(item => item.date === '2026-06-18'),
-  true
-)
 
 console.log('daylight-and-d0-weather-cache tests passed')

@@ -24,14 +24,7 @@ main agent 不应直接执行端上 automator 自动化，除非没有可用 QA 
 
 main agent 应输出：
 
-```text
-Automation Ownership:
-- automation_required: yes / no
-- owner: implementer_self_check / qa_reviewer / none
-- implementer_self_check_scope:
-- qa_required_scope:
-- duplicate_automation_forbidden: true
-```
+外置模板/规范片段：`../assets/templates/wechat-automation.md`（template_id: `wechat-devtools-automation-policy-01`）。
 
 ## implementer 自测
 
@@ -77,21 +70,13 @@ QA Contract 必须包含 concrete `endpoint`、`page`、`projectPath`、`payload
 
 本项目端上 automator 的 `projectPath` 必须固定为：
 
-```text
-/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin
-```
+外置模板/规范片段：`../assets/templates/wechat-automation.md`（template_id: `wechat-devtools-automation-policy-02`）。
 
 `dist/build/mp-weixin` 不得作为端上自动化项目路径；若 Test Contract 写成该路径，QA 必须退回 `contract_blocker`，不得按该路径继续验收。
 
 QA 端上自动化前置链必须固定为：
 
-```text
-projectPath 校验为 /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin
-9420 automator 监听
-原始 WebSocket 可握手
-miniprogram-automator currentPage / page_data / selector 或 evaluate(wx.request)
-真实交互 / 运行时接口断言
-```
+外置模板/规范片段：`../assets/templates/wechat-automation.md`（template_id: `wechat-devtools-automation-policy-03`）。
 
 `9222` CDP、`/json/version`、截图存在或工具 status success 只能作为辅助环境信息，不能作为 automator ready 或端上通过证据。
 

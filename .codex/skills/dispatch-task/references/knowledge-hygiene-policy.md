@@ -6,13 +6,7 @@ This policy replaces blanket documentation synchronization.
 
 The repository now follows:
 
-```text
-Code is source of truth.
-Active docs are minimal contracts and navigation.
-BRV is an index only.
-Blueprints are archived.
-docs_keeper is a cleaner, not a synchronizer.
-```
+外置模板/规范片段：`../assets/templates/knowledge-hygiene.md`（template_id: `knowledge-hygiene-policy-01`）。
 
 ## Phase integration
 
@@ -20,38 +14,7 @@ After implementation and main-agent code review, main agent must create a Sync P
 
 ### Sync Packet
 
-```markdown
-# Sync Packet
-
-## Change summary
-- Changed:
-- User-visible behavior changed: yes/no
-- Public API changed: yes/no
-- Config/schema changed: yes/no
-- Architecture/workflow changed: yes/no
-- Deployment/runbook changed: yes/no
-- BRV/source-verified memory affected: yes/no
-
-## Changed files
-- ...
-
-## Relevant diff
-Only include relevant hunks.
-
-## Verification
-- Commands:
-- Result:
-- Known uncertainty:
-
-## Candidate active docs
-- ...
-
-## Candidate BRV index keys
-- ...
-
-## Forbidden context
-- ...
-```
+外置模板/规范片段：`../assets/templates/knowledge-hygiene.md`（template_id: `knowledge-hygiene-policy-02`）。
 
 ## Trigger matrix
 
@@ -70,44 +33,30 @@ Only include relevant hunks.
 
 Only these are synchronized as current docs:
 
-```text
-docs/CURRENT.md
-docs/ACTIVE_CONTRACTS.md
-docs/RUNBOOK.md
-docs/KNOWLEDGE_GOVERNANCE.md
-docs/ARCHIVE_INDEX.md
-docs/_doc-status.yml
-docs/_sync-map.yml
-```
+外置模板/规范片段：`../assets/templates/knowledge-hygiene.md`（template_id: `knowledge-hygiene-policy-03`）。
 
 ## Archive-only docs
 
 The following are not synchronized as current facts:
 
-```text
-docs/new-rules/**
-docs/route规划及outcome瘦身计划/**
-docs/ai-runs/**
-docs/ai-tasks/**
-docs/code-logics/** except when explicitly retrieved by index
-docs/planting_ai_diagnosis_all_in_one_package/**
-.brv/review-backups/**
-.brv/dream-log/**
-```
+外置模板/规范片段：`../assets/templates/knowledge-hygiene.md`（template_id: `knowledge-hygiene-policy-04`）。
 
 ## BRV rule
 
 BRV entries must be compact index records:
 
-```yaml
-id:
-claim_summary:
-source:
-  files: []
-invalidated_by:
-  paths: []
-status: verified | stale | superseded | observation
-confidence: high | medium | low
-```
+外置模板/规范片段：`../assets/templates/knowledge-hygiene.md`（template_id: `knowledge-hygiene-policy-05`）。
 
 No BRV entry may cite archived blueprints as current facts.
+
+
+## Skill metadata hygiene
+
+不得把仅供某个 skill 内部引用的长参考资料伪装成可独立触发的 SKILL.md。
+
+迁移原则：
+
+1. 真正需要用户或 agent 直接触发的能力保留 SKILL.md。
+2. 仅作为主 skill 参考资料的内容应放入 references/。
+3. 不在 dispatch-task 运行中清理其它 skill 的目录结构；这类迁移必须单独执行。
+4. 迁移前必须确认不会破坏现有 skill discovery。

@@ -31,13 +31,13 @@ function createMemoryStorage() {
       return { cloudPath, fileId }
     },
     async downloadJson({ cloudPath, fileId }) {
-      if (fileId) return objectsByFileId.get(fileId) || null
+      if (fileId) { return objectsByFileId.get(fileId) || null }
       return objects.get(cloudPath) || null
     },
     async deleteJson({ cloudPath, fileId }) {
       deletes.push({ cloudPath, fileId })
       objects.delete(cloudPath)
-      if (fileId) objectsByFileId.delete(fileId)
+      if (fileId) { objectsByFileId.delete(fileId) }
       return true
     }
   }
@@ -137,6 +137,27 @@ const service = createRecentWeatherService({
     }
   }
 })
+// 新架构：预置 finalized day file
+const { buildWeatherDayObjectPath } = require('../../cloudfunctions/weather-http/services/weather-cache-paths.js')
+const coordD1Path = buildWeatherDayObjectPath(COORD, '2026-06-13')
+storage.objects.set(coordD1Path, {
+  schemaVersion: 'weather-cache/v1/day-now-sample',
+  locationKey: COORD,
+  date: '2026-06-13',
+  state: 'finalized',
+  samples: [{ slotName: 'morning', temp: 28, humidity: 60, sourceKind: 'weather_now_sample' }],
+  latestSample: { slotName: 'morning', temp: 28 },
+  dailyRollup: {
+    date: '2026-06-13', quality: 'partial',
+    sampleSummary: { sampleCount: 1, daylightSampleCount: 1, missingSlots: ['forenoon', 'noon', 'afternoon'] },
+    lightFeatures: { daylightCloudMean: null, lowLightProxy: 'none' },
+    moistureFeatures: { humidityMean: 60, precipLastHourSum: null, wetSoilRiskFromWeather: 'low' },
+    tempFeatures: { tempMean: 28, tempMax: 28, heatStressLevel: 'low', coldStressLevel: 'low' },
+    tempMin: 28, dominantWeatherText: ''
+  },
+  sourceKind: 'observed_now_rollup', quality: 'partial', weatherObjectPath: coordD1Path
+})
+
 const ingest = await service.ingestRecentForecast({
   lat: LAT,
   lng: LNG,
@@ -144,7 +165,7 @@ const ingest = await service.ingestRecentForecast({
   timezone: 'Asia/Shanghai'
 })
 assert.equal(ingest.location.locationKey, COORD)
-assert.equal(observedForecastLocation, '105.46,35.22')
+assert.equal(observedForecastLocation, '', '新架构不调用 fetchForecast10d')
 
 const read = await service.readRecentWeatherForDiagnosis({
   locationKey: COORD,
@@ -155,37 +176,26 @@ const read = await service.readRecentWeatherForDiagnosis({
 assert.equal(read.historicalDays.length, 10)
 assert.equal(read.location.locationKey, COORD)
 
-const archivedForecastDay = read.historicalDays.find(day => day.date === '2026-06-13')
-assert.equal(archivedForecastDay.source, 'qweather_forecast_10d_archive')
-assert.equal(archivedForecastDay.sourceKind, 'qweather_forecast_10d_archive')
-assert.equal(archivedForecastDay.uvIndex, 4)
-assert.equal(archivedForecastDay.cloud, 4)
-assert.equal(archivedForecastDay.visibilityKm, 25)
-assert.equal(archivedForecastDay.windSpeedDay, 3)
-assert.equal(archivedForecastDay.windScaleNight, '1-2')
+const archivedDay = read.historicalDays.find(day => day.date === '2026-06-13')
+assert.equal(archivedDay.sourceKind, 'observed_now_rollup')
+assert.equal(archivedDay.missing, false)
+assert.equal(archivedDay.tempMaxC, 28)
 
 assert.equal(ingest.forecastDailyArchives.length, 0)
-assert.equal(ingest.prunedFutureDailyArchives.length, 1)
-assert.equal(ingest.prunedFutureDailyArchives[0].date, '2026-06-14')
-assert.equal(storage.objects.has(buildWeatherDailyObjectPath(COORD, '2026-06-14')), false)
-assert.equal(
-  storage.writes.at(-1).payload.dailyArchives['2026-06-14'],
-  undefined,
-  'manifest 不得继续引用 targetDate 之后的 future daily archive'
-)
+assert.equal(ingest.prunedFutureDailyArchives.length, 0, '新架构不写 daily archives，无需 prune')
 assert.equal(
   storage.writes.filter(item =>
     item.cloudPath.includes(`weather-cache/v1/locations/${COORD}/daily/`)
   ).length,
-  1,
-  'ingestion 不得把 10d 未来预报批量写入 daily 历史缓存目录'
+  0,
+  '新架构不得写入 daily 历史缓存目录'
 )
 assert.equal(
   storage.writes.some(
     item => item.cloudPath === buildWeatherDailyObjectPath(COORD, '2026-06-14')
   ),
   false,
-  'D0 预报不得写入 daily 历史缓存目录'
+  'D0 不得写入 daily 历史缓存目录'
 )
 
 console.log('weather-history-cache-coord-regression tests passed')

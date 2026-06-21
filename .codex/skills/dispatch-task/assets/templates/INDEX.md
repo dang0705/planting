@@ -20,3 +20,14 @@
 | Main thread receipts | `main-thread-receipts.md` |
 
 | BRV Recall | `brv-recall.md` |
+| ClickUp ticket facts | `clickup-ticket-facts.md` |
+| Knowledge hygiene | `knowledge-hygiene.md` |
+| Main agent gates | `main-agent-gates.md` |
+| Subagent progress | `subagent-progress.md` |
+| WeChat automator | `wechat-automation.md` |
+| Reference snippets | `reference-snippets.md` |
+| Task Facts receipts | `task-facts-receipts.md` |
+
+## References 外置规则
+
+`references/` 目录不得内联 fenced template / receipt / packet / command snippet。需要精确格式时，只能引用本目录模板文件中的 `template_id`。

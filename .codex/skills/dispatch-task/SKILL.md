@@ -1,13 +1,13 @@
 ---
 name: dispatch-task
-description: "通用任务调度入口：按 phase 执行硬门禁、Agent Assignment、role_context_packets、Implementation/Test Contract、QA、ClickUp 回写和 Git commit；ClickUp ticket 可选。"
+description: '通用任务调度入口：按 phase 执行硬门禁、Agent Assignment、role_context_packets、Implementation/Test Contract、QA、ClickUp 回写和 Git commit；ClickUp ticket 可选。'
 ---
 
 # Dispatch Task Skill
 
 ## 1. 定位
 
-`dispatch-task` 是通用任务调度入口，不是 ClickUp 专用入口。
+`dispatch-task` 是通用任务调度入口。
 
 支持两种模式：
 
@@ -100,9 +100,12 @@ ClickUp 模式读取：
 ```text
 references/clickup-ticket-read-policy.md
 references/checklist-writeback-policy.md
+references/task-facts-receipt-policy.md
 ```
 
 prompt_only 模式只读取 prompt、显式文件、显式链接、用户给定约束和必要外部事实。
+
+prompt_only 模式也必须生成 Task Facts Receipt；完整 prompt / 本地 JSON 只作为 source_ref 保留，后续 phase 默认只消费 receipt。
 
 如果涉及 Figma / UI，按需显式使用：
 
@@ -127,10 +130,19 @@ BRV 输出只允许作为 receipt / packet，不展开完整历史。
 
 ## 7. Phase 2：Agent Assignment + Subagent Reuse Gate
 
-读取：
+默认读取：
 
 ```text
 references/agent-assignment-gate.md
+references/agent-assignment-core.md
+```
+
+按需读取：
+
+```text
+references/implementer-routing-policy.md      # 需要代码改动、code_explorer 或 implementer 时
+references/qa-docs-routing-policy.md          # 需要判断 QA / docs_keeper 时
+references/subagent-spawn-gate.md             # required named subagent 需要复用或 spawn 时
 ```
 
 任何代码改动任务必须分配：
@@ -171,11 +183,12 @@ required_skill: $qa-ui-visual-baseline-policy
 ```text
 references/solution-discovery-gate.md
 references/implementation-test-contract.md
-references/main-agent-quality-gates.md
+references/main-pre-implementation-gates.md
 ```
 
 进入 Technical Direction Gate 前必须先完成 Solution Discovery Gate。  
-派发 implementer 前必须通过 Implementation Contract Completeness Gate。
+派发 implementer 前必须通过 Implementation Contract Completeness Gate。  
+如果选择 `implementer_deep`，main agent 必须额外通过 Contract-Locked Handoff Gate：架构方向、技术选型、实现方式、第三方插件策略、伪代码、目标锚点、停止条件和回传格式必须写死后再派发。
 
 ## 10. Phase 4.45：Pre-Implementation Budget Fuse
 
@@ -189,6 +202,21 @@ references/pre-implementation-budget-fuse.md
 风险为 high / extreme 时，必须压缩 facts、减少候选、推迟完整 Figma Drilldown，并使用 Gate Receipt。
 
 ## 11. Phase 5：Subagent 执行
+
+读取：
+
+```text
+references/subagent-progress-policy.md
+```
+
+main agent 等待 implementer，尤其是 GLM-5.2 `implementer_deep` 时，必须使用更长等待阈值；不得为了查看进度而频繁打断，不得主动打断用户确认是否等待，除非触及危险操作、权限确认、费用/外部发布确认或 hard wait 后没有任何可观察进展。
+
+implementer 完成后、QA 之前，main agent 只读取 post-implementation review 规则：
+
+```text
+references/main-post-implementation-review-gate.md
+references/review-scope-policy.md
+```
 
 执行顺序：
 
@@ -271,13 +299,11 @@ assets/templates/qa-evidence.md
 10. 禁止把完整 Figma / ClickUp / 日志广播给所有 agent。
 11. 禁止在本 skill 或 references 中追加版本号章节；补丁必须整合进既有章节结构。
 
-
 ## very_dirty 自动快照提交
 
 如果任务开始前 Git 工作区为 very_dirty，main agent 必须先创建任务前 dirty snapshot commit。无需用户确认。
 
 commit message 必须根据当前脏改动内容生成，精炼且不超过 50 个字符。任务完成后的最终 commit message 同样不超过 50 个字符。
-
 
 ## Completion Gate
 
@@ -291,7 +317,6 @@ references/completion-gate.md
 
 如果验收要求小程序实际交互，QA 必须执行端上 `miniprogram-automator` / `9420` 自动化；不能只做连接能力验证。
 
-
 ## Subagent 进度观察
 
 main agent 等待 subagent 时，读取：
@@ -302,7 +327,6 @@ references/subagent-progress-policy.md
 
 默认采用低成本观察，不得频繁中断 subagent。超过等待阈值后，只能请求简短 Progress Receipt。
 
-
 ## WeChat DevTools 自动化职责
 
 涉及小程序端上验证时，读取：
@@ -312,7 +336,6 @@ references/wechat-devtools-automation-policy.md
 ```
 
 main agent 默认不直接执行 WeChat DevTools 自动化。implementer 只做最小自测，QA 负责正式验收，禁止重复完整自动化。
-
 
 ## Phase 0 Git baseline
 

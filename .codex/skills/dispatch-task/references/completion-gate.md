@@ -45,26 +45,4 @@
 
 ## 输出模板
 
-```text
-Completion Gate:
-- acceptance_matrix_complete: yes / no
-- required_tests_passed: yes / no
-- qa_completed: yes / no
-- mini_program_automation_completed: yes / no / not_applicable
-- checklist_writeback_completed: yes / no / not_applicable
-- docs_keeper_required: yes / no
-- docs_sync_completed: yes / no / not_applicable
-- docs_sync_evidence_ref:
-- line_count_gate_passed: yes / no
-- over_500_touched_files:
-- decomposition_completed_or_blocked: yes / no / not_applicable
-- endpoint_runtime_contract_complete: yes / no / not_applicable
-- local_functions_gateway_verified: yes / no / not_applicable
-- local_functions_lan_flow_verified: yes / no / not_applicable
-- schema_truth_gate_passed: yes / no / not_applicable
-- blockers_written_back: yes / no
-- git_commit_completed: yes / no
-- open_required_items:
-- pass: yes / no
-- stop_allowed: yes / no
-```
+外置模板/规范片段：`../assets/templates/phase-gates.md`（template_id: `completion-gate-01`）。

@@ -2,15 +2,20 @@
 
 const { createRecentWeatherService } = require('../services/recent-weather-service')
 const { buildLocationKey } = require('../services/weather-cache-paths')
-const { HOT_CITY_WEATHER_LOCATIONS } = require('../services/hot-city-locations')
+const { listConfiguredHotCitiesForIngestion } = require('../services/hot-city-locations')
+const { isFinalizeSlot, resolveSlotForTriggerName } = require('../services/now-sample-slots')
 
 const D0_WEATHER_24H_TIMER_TRIGGERS = new Set([
+  'weather-d0-now-morning-0920',
+  'weather-d0-now-forenoon-1220',
+  'weather-d0-now-noon-1420',
+  'weather-d0-now-afternoon-1820',
+  'weather-d0-now-finalize-2130',
   'weather-d0-24h-0630',
   'weather-d0-24h-1130',
   'weather-d0-24h-1530',
   'weather-d0-24h-finalize-2130'
 ])
-const D0_WEATHER_24H_FINALIZE_TIMER = 'weather-d0-24h-finalize-2130'
 
 function buildRecentWeatherService({ apiKey = '', baseUrl = '' } = {}) {
   return createRecentWeatherService({ apiKey, baseUrl })
@@ -123,8 +128,6 @@ async function handleRecentWeatherIngestionRequest({ payload = {}, service }) {
     message: '采集成功',
     data: {
       location: result.location,
-      rawObjectPath: result.rawObjectPath,
-      dailyObjectPath: result.dailyObjectPath,
       manifestPath: result.manifestPath,
       recentObjectPath: result.recentObjectPath,
       recentFileId: result.recentFileId,
@@ -139,33 +142,32 @@ async function handleRecentWeatherIngestionRequest({ payload = {}, service }) {
 }
 
 async function handleWeather24hRequest({ payload = {}, service }) {
-  const result = await service.updateD0Weather24hWorking({
+  const result = await service.updateNowSample({
     ...pickPayloadLocation(payload),
     latitude: payload.latitude ?? payload.lat,
     longitude: payload.longitude ?? payload.lng,
     targetDate: payload.targetDate || payload.target_date || payload.date || '',
     date: payload.date || '',
-    hourly: payload.hourly,
+    slotName: payload.slotName || payload.slot_name || '',
+    triggerName: payload.triggerName || payload.trigger_name || '',
     finalize: payload.finalize,
     slotFinalize: payload.slotFinalize || payload.slot_finalize
   })
 
   return {
     code: 200,
-    message: result.finalized ? 'D0 天气定稿成功' : 'D0 天气更新成功',
+    message: result.finalized ? 'D0 now 采样定稿成功' : 'D0 now 采样成功',
     data: {
       location: result.location,
       targetDate: result.targetDate,
-      workingObjectPath: result.workingObjectPath,
-      workingFileId: result.workingFileId,
-      dailyObjectPath: result.dailyObjectPath,
-      dailyFileId: result.dailyFileId,
-      manifestPath: result.manifestPath,
-      manifestFileId: result.manifestFileId,
+      dayObjectPath: result.dayObjectPath,
+      dayFileId: result.dayFileId,
+      slotName: result.slotName || '',
       finalized: result.finalized,
-      workingPayload: result.workingPayload,
-      dailyPayload: result.dailyPayload,
-      sourceKind: 'qweather_weather_24h_working'
+      dayPayload: result.dayPayload,
+      dailyRollup: result.dailyRollup || null,
+      sample: result.sample || null,
+      sourceKind: result.finalized ? 'observed_now_rollup' : 'observed_now_samples'
     }
   }
 }
@@ -194,6 +196,32 @@ function isD0Weather24hTimerEvent(event = {}) {
   return type === 'timer' && D0_WEATHER_24H_TIMER_TRIGGERS.has(pickTimerTriggerName(event))
 }
 
+function pickNowSampleAuditFields(sample = null) {
+  if (!sample || typeof sample !== 'object') {
+    return null
+  }
+  return {
+    slotName: sample.slotName || '',
+    sampledAt: sample.sampledAt || '',
+    obsTime: sample.obsTime || '',
+    temp: sample.temp,
+    feelsLike: sample.feelsLike,
+    icon: sample.icon || '',
+    text: sample.text || '',
+    wind360: sample.wind360,
+    windDir: sample.windDir || '',
+    windScale: sample.windScale || '',
+    windSpeed: sample.windSpeed,
+    humidity: sample.humidity,
+    precipLastHour: sample.precipLastHour,
+    pressure: sample.pressure,
+    visibilityKm: sample.visibilityKm,
+    cloud: sample.cloud,
+    dew: sample.dew,
+    sourceKind: sample.sourceKind || ''
+  }
+}
+
 async function handleRecentWeatherTimerEvent({
   event = {},
   service,
@@ -214,34 +242,38 @@ async function handleRecentWeatherTimerEvent({
 
 async function handleD0Weather24hTimerEvent({ event = {}, service } = {}) {
   const triggerName = pickTimerTriggerName(event)
-  const finalized = triggerName === D0_WEATHER_24H_FINALIZE_TIMER
+  const finalized = isFinalizeSlot(resolveSlotForTriggerName(triggerName))
   const targetDate = event.targetDate || event.target_date || ''
   const results = []
   let resolvedTargetDate = targetDate
 
-  for (const city of HOT_CITY_WEATHER_LOCATIONS) {
+  const hotCityTargets = listConfiguredHotCitiesForIngestion()
+  for (const city of hotCityTargets) {
     try {
-      const result = await service.updateD0Weather24hWorking({
+      const result = await service.updateNowSample({
         locationKey: city.key,
         cityName: city.name,
         latitude: city.latitude,
         longitude: city.longitude,
         timezone: 'Asia/Shanghai',
         targetDate,
+        triggerName,
         finalize: finalized
       })
       resolvedTargetDate = resolvedTargetDate || result.targetDate
       results.push({
         locationKey: city.key,
-        workingObjectPath: result.workingObjectPath,
-        dailyObjectPath: result.dailyObjectPath || '',
+        dayObjectPath: result.dayObjectPath,
+        slotName: result.slotName || '',
+        sample: pickNowSampleAuditFields(result.sample || null),
+        latestSample: pickNowSampleAuditFields(result.dayPayload?.latestSample || null),
         error: ''
       })
     } catch (error) {
       results.push({
         locationKey: city.key,
-        workingObjectPath: '',
-        dailyObjectPath: '',
+        dayObjectPath: '',
+        slotName: '',
         error: error.message || String(error)
       })
     }
@@ -255,11 +287,11 @@ async function handleD0Weather24hTimerEvent({ event = {}, service } = {}) {
       triggerName,
       targetDate: resolvedTargetDate || '',
       finalized,
-      attempted: HOT_CITY_WEATHER_LOCATIONS.length,
+      attempted: hotCityTargets.length,
       succeeded,
       failed: results.length - succeeded,
       cities: results,
-      sourceKind: finalized ? 'qweather_weather_24h_finalize_timer' : 'qweather_weather_24h_timer'
+      sourceKind: finalized ? 'observed_now_rollup_timer' : 'observed_now_samples_timer'
     }
   }
 }

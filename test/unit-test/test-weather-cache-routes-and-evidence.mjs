@@ -10,11 +10,10 @@ process.env.QWEATHER_API_KEY = 'unit-weather-key'
 const sqlCalls = []
 let legacyWeatherWindowCallCount = 0
 let timerForecastCallCount = 0
-let currentForecastCallCount = 0
+const currentForecastCallCount = 0
 let weather24hCallCount = 0
 const storageObjects = new Map()
 const storageObjectsByFileId = new Map()
-const currentArchiveDate = new Date().toISOString().slice(0, 10)
 const routeHourly24h = [
   ['06:30', 20, 0.1, 30, 60, 24, 8, '晴'],
   ['08:30', 80, 0.3, 70, 70, 26, 12, '多云'],
@@ -83,16 +82,6 @@ const fakeCloudbaseApp = {
     }
     return { fileContent: Buffer.from(JSON.stringify(payload), 'utf8') }
   }
-}
-
-async function waitForCondition(predicate, { attempts = 20, delayMs = 10 } = {}) {
-  for (let attempt = 0; attempt < attempts; attempt += 1) {
-    if (predicate()) {
-      return true
-    }
-    await new Promise(resolve => setTimeout(resolve, delayMs))
-  }
-  return false
 }
 
 Module._load = function patchedWeatherCacheLoad(request, parent, isMain) {
@@ -166,58 +155,29 @@ Module._load = function patchedWeatherCacheLoad(request, parent, isMain) {
 
   if (
     request === '../adapters/qweather-adapter' &&
-    /\/cloudfunctions\/weather-http\/services\/(recent-weather-current|d0-weather-24h-service)\.js$/.test(
+    /\/cloudfunctions\/weather-http\/services\/d0-now-sample-service\.js$/.test(
       String(parent?.filename || '')
     )
   ) {
     return {
       createQWeatherAdapter: () => ({
-        async fetchForecast10d({ locationId, lat, lng }) {
-          if (locationId === 'TIMER_ACTIVE') {
-            timerForecastCallCount += 1
-            return {
-              raw: { code: '200' },
-              daily: [
-                {
-                  date: '2026-06-14',
-                  tempMaxC: 30,
-                  tempMinC: 20,
-                  humidity: 60,
-                  textDay: '晴',
-                  source: 'fake_timer_forecast'
-                }
-              ]
-            }
-          }
-
-          const isCurrentEntry =
-            Math.abs(lat - 35.22) < 0.01 && Math.abs(lng - 105.46) < 0.01
-          if (isCurrentEntry) {
-            currentForecastCallCount += 1
-          } else {
-            // 热门城市批量走真实坐标；详细路由由 test-weather-hot-city-app-routing 覆盖。
-            timerForecastCallCount += 1
-          }
+        async fetchCurrentWeather() {
+          weather24hCallCount += 1
           return {
-            raw: { code: '200' },
-            daily: [
-              {
-                date: isCurrentEntry ? currentArchiveDate : '2026-06-14',
-                tempMaxC: 30,
-                tempMinC: 20,
-                humidity: 60,
-                textDay: '晴',
-                source: isCurrentEntry ? 'fake_current_entry_forecast' : 'fake_hot_city_forecast'
-              }
-            ]
+            tempC: 25,
+            humidity: 60,
+            text: '晴',
+            obsTime: '2026-06-18T09:30:00+08:00',
+            source: 'qweather_weather_now'
           }
+        },
+        async fetchForecast10d() {
+          timerForecastCallCount += 1
+          return { raw: { code: '200' }, daily: [] }
         },
         async fetchWeather24h() {
           weather24hCallCount += 1
-          return {
-            raw: { code: '200' },
-            hourly: routeHourly24h
-          }
+          return { raw: { code: '200' }, hourly: routeHourly24h }
         }
       })
     }
@@ -301,31 +261,12 @@ try {
   )
   const currentPayload = JSON.parse(currentResponse.body)
   assert.equal(currentResponse.statusCode, 200)
-  assert.equal(currentPayload.data.temperature, 30)
-  assert.equal(currentPayload.data.weather, '晴')
-  assert.equal(currentPayload.data.cached, false)
-  assert.equal(currentPayload.data.dailyWeatherCache.refreshed, false)
-  assert.equal(currentPayload.data.dailyWeatherCache.refreshScheduled, true)
-  assert.equal(currentPayload.data.dailyWeatherCache.reason, 'daily_archive_missing')
-  assert.equal(currentForecastCallCount, 1)
-  assert.equal(
-    await waitForCondition(() =>
-      storageObjects.has(
-        `weather-cache/v1/locations/coord:105_46_35_22/daily/${currentArchiveDate}.json`
-      )
-    ),
-    true
-  )
-  assert.equal(
-    storageObjects.has(
-      `weather-cache/v1/locations/coord:105_46_35_22/daily/${currentArchiveDate}.json`
-    ),
-    true
-  )
-  assert.equal(
-    sqlCalls.some(item => /weather_cache/.test(item.sql)),
-    false
-  )
+  // 新架构：缓存 miss 时返回 evidence insufficient，不调用 QWeather
+  assert.equal(currentPayload.data.weatherEvidenceInsufficient, true)
+  assert.equal(currentPayload.data.dailyWeatherCache.cacheHit, false)
+  assert.equal(currentPayload.data.dailyWeatherCache.weatherEvidenceInsufficient, true)
+  assert.equal(currentForecastCallCount, 0, 'current miss 不得调用 QWeather forecast')
+  assert.equal(weather24hCallCount, 0, 'current miss 不得调用 QWeather now')
 
   const d0WorkingResponse = await weatherApp.main(
     {
@@ -338,25 +279,31 @@ try {
         cityName: '路由24h',
         latitude: 31.2304,
         longitude: 121.4737,
-        targetDate: '2026-06-18'
+        targetDate: '2026-06-18',
+        slotName: 'morning'
       }
     },
     {}
   )
   const d0WorkingPayload = JSON.parse(d0WorkingResponse.body)
   assert.equal(d0WorkingResponse.statusCode, 200)
-  assert.equal(d0WorkingPayload.data.workingPayload.sunWindow.solarNoon.includes('+08:00'), true)
-  assert.equal(d0WorkingPayload.data.workingPayload.daylightSlots[0].cloudMean, 50)
-  assert.equal(d0WorkingPayload.data.workingPayload.daylightSlots[0].name, 'morning')
+  assert.equal(d0WorkingPayload.data.finalized, false)
+  assert.equal(d0WorkingPayload.data.sourceKind, 'observed_now_samples')
+  assert.ok(d0WorkingPayload.data.dayPayload, 'should have dayPayload')
+  assert.equal(d0WorkingPayload.data.dayPayload.state, 'working')
+  assert.ok(d0WorkingPayload.data.dayPayload.latestSample, 'should have latestSample')
+  assert.equal(d0WorkingPayload.data.dayPayload.latestSample.sourceKind, 'weather_now_sample')
   assert.equal(
-    d0WorkingPayload.data.workingPayload.daylightSlots[0].sourceKind,
-    'hourly_forecast_snapshot'
+    storageObjects.has('weather-cache/v1/locations/city:Route24h/days/2026-06-18.json'),
+    true,
+    'now 采样应写 days/ 文件'
   )
   assert.equal(
     storageObjects.has('weather-cache/v1/locations/city:Route24h/working/2026-06-18.json'),
-    true
+    false,
+    '不得写 working/ 文件'
   )
-  assert.equal(weather24hCallCount, 1)
+  assert.equal(weather24hCallCount, 1, '应调用 fetchCurrentWeather')
 
   const d0FinalizeResponse = await weatherApp.main(
     {
@@ -378,15 +325,27 @@ try {
   const d0FinalizePayload = JSON.parse(d0FinalizeResponse.body)
   assert.equal(d0FinalizeResponse.statusCode, 200)
   assert.equal(d0FinalizePayload.data.finalized, true)
+  assert.equal(d0FinalizePayload.data.sourceKind, 'observed_now_rollup')
+  assert.ok(d0FinalizePayload.data.dailyRollup, 'finalize 应生成 dailyRollup')
+  assert.equal(
+    storageObjects.has('weather-cache/v1/locations/city:Route24h/days/2026-06-18.json'),
+    true
+  )
+  const routeDayFile = storageObjects.get('weather-cache/v1/locations/city:Route24h/days/2026-06-18.json')
+  assert.equal(routeDayFile.state, 'finalized')
+  assert.equal(routeDayFile.sourceKind, 'observed_now_rollup')
+  assert.ok(routeDayFile.finalizedAt, '应设置 finalizedAt')
   assert.equal(
     storageObjects.has('weather-cache/v1/locations/city:Route24h/daily/2026-06-18.json'),
-    true
+    false,
+    '不得写 daily/ 文件'
   )
   assert.equal(
     storageObjects.has('weather-cache/v1/locations/city:Route24h/recent-10d.json'),
     false
   )
 
+  // 新架构：无 day file 时仍然 evidence insufficient（Route24h 有 day file 但不同 locationKey）
   const cachedCurrentResponse = await weatherApp.main(
     {
       path: '/weather/current',
@@ -403,10 +362,8 @@ try {
   )
   const cachedCurrentPayload = JSON.parse(cachedCurrentResponse.body)
   assert.equal(cachedCurrentResponse.statusCode, 200)
-  assert.equal(cachedCurrentPayload.data.cached, true)
-  assert.equal(cachedCurrentPayload.data.cacheScope, 'daily_archive')
-  assert.equal(cachedCurrentPayload.data.dailyWeatherCache.reason, 'daily_archive_present')
-  assert.equal(currentForecastCallCount, 1)
+  assert.equal(cachedCurrentPayload.data.weatherEvidenceInsufficient, true)
+  assert.equal(currentForecastCallCount, 0, '不得调用 QWeather')
 
   sqlCalls.length = 0
   const timerResponse = await weatherApp.main(
@@ -418,10 +375,8 @@ try {
   )
   assert.equal(timerResponse.code, 200)
   assert.equal(timerResponse.data.sourceKind, 'weather_cache_recent_10d_timer')
-  // 热城常量 20 + DB active 行 1 = 21；详细路由由 test-weather-hot-city-app-routing 覆盖。
-  assert.equal(timerResponse.data.total, 21)
-  assert.equal(timerResponse.data.successCount, 21)
-  assert.equal(timerForecastCallCount, 21)
+  // 新架构：ingestRecentForecast 不再拉取 forecast 10d，从 day files 重建
+  assert.equal(timerForecastCallCount, 0, 'timer 不得调用 fetchForecast10d')
   assert.equal(
     sqlCalls.some(
       item => /FROM weather_locations/.test(item.sql) && /WHERE is_active = 1/.test(item.sql)

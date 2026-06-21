@@ -33,18 +33,11 @@ ClickUp 内容可能已经被人工压缩，AI 不得二次压缩到丢失约束
 
 出现以下词或同义表达时，必须原样摘录：
 
-```text
-必须 / 不得 / 禁止 / 优先考虑 / 验收 / 对齐 / 参考 / 复用 / 不要 / 仅 / 兼容 / 非目标 / request changes / checklist / acceptance criteria
-```
+外置模板/规范片段：`../assets/templates/clickup-ticket-facts.md`（template_id: `clickup-ticket-read-policy-01`）。
 
 输出：
 
-```text
-ClickUp 硬约束摘录:
-- 原文:
-  - 来源: 主任务 / 子任务 / 关系任务 / 评论 / 附件 / checklist / 验收标准
-  - 处理方式:
-```
+外置模板/规范片段：`../assets/templates/clickup-ticket-facts.md`（template_id: `clickup-ticket-read-policy-02`）。
 
 ## 5. 链接读取
 
@@ -52,29 +45,13 @@ ClickUp 任务、子任务、关系任务或评论中若包含链接，必须先
 
 处理顺序：
 
-```text
-发现链接
-→ 判断是否有对应 MCP
-→ 优先通过 MCP 获取内容
-→ MCP 不可用 / 无权限 / 非支持链接时记录失败原因
-→ 仅在 MCP 不可用后才降级为普通链接或待确认项
-```
+外置模板/规范片段：`../assets/templates/clickup-ticket-facts.md`（template_id: `clickup-ticket-read-policy-03`）。
 
 不得直接把链接当成普通文本跳过。
 
 ## 6. 输出给 dispatch-task 的最小摘要
 
-```text
-ClickUp Ticket Facts:
-- ticket_id:
-- title:
-- status:
-- hard_constraints:
-- relationships_read:
-- external_links:
-- checklist_detected:
-- blocking_gaps:
-```
+外置模板/规范片段：`../assets/templates/clickup-ticket-facts.md`（template_id: `clickup-ticket-read-policy-04`）。
 
 
 ## 默认上下文压缩
@@ -91,3 +68,16 @@ ClickUp Ticket Facts:
 6. 外部链接读取状态。
 
 完整原文只作为 source_ref / audit appendix，需要时回查。
+
+
+## Task Facts Receipt
+
+读取完成后，main agent 必须生成 Task Facts Receipt，并把完整 ClickUp 原文、关系任务正文、评论和附件内容留在 `source_ref` / `evidence_ref`。
+
+默认后续 phase 只携带 receipt；需要精确约束时再按 `source_ref` 回查。
+
+模板引用：
+
+```text
+../assets/templates/task-facts-receipts.md
+```

@@ -144,6 +144,33 @@ try {
   const {
     clearRecentWeatherMemoryCache
   } = require('../../cloudfunctions/weather-http/services/recent-weather-memory-cache.js')
+  const { buildWeatherDayObjectPath } = require('../../cloudfunctions/weather-http/services/weather-cache-paths.js')
+
+  // 新架构：批量采集前需预置 finalized day file
+  const today = new Date().toISOString().slice(0, 10)
+  const d1 = addDays(today, -1)
+  const shanghaiD1Path = buildWeatherDayObjectPath('city:shanghai', d1)
+  storageObjects.set(shanghaiD1Path, {
+    schemaVersion: 'weather-cache/v1/day-now-sample',
+    locationKey: 'city:shanghai',
+    date: d1,
+    state: 'finalized',
+    samples: [{ slotName: 'morning', temp: 24, humidity: 65, sourceKind: 'weather_now_sample' }],
+    latestSample: { slotName: 'morning', temp: 24 },
+    dailyRollup: {
+      date: d1,
+      quality: 'partial',
+      sampleSummary: { sampleCount: 1, daylightSampleCount: 1, missingSlots: ['forenoon', 'noon', 'afternoon'] },
+      lightFeatures: { daylightCloudMean: null, lowLightProxy: 'none' },
+      moistureFeatures: { humidityMean: 65, precipLastHourSum: null, wetSoilRiskFromWeather: 'low' },
+      tempFeatures: { tempMean: 24, tempMax: 24, heatStressLevel: 'low', coldStressLevel: 'low' },
+      tempMin: 24,
+      dominantWeatherText: ''
+    },
+    sourceKind: 'observed_now_rollup',
+    quality: 'partial',
+    weatherObjectPath: shanghaiD1Path
+  })
 
   const ingestionResponse = await weatherApp.main(
     {
@@ -167,12 +194,13 @@ try {
   )
 
   const recentPayload = storageObjects.get(shanghaiResult.recentObjectPath)
+  assert.ok(recentPayload, 'recent-10d.json 应被写入')
   assert.equal(recentPayload.quality, 'partial')
   assert.equal(recentPayload.weatherEvidenceInsufficient, false)
   assert.equal(
     recentPayload.historicalDays.some(day => !day.missing),
     true,
-    'batch 应通过 Time Machine 写入至少一天可用历史日'
+    'batch 应从 finalized day file 聚合至少一天可用历史日'
   )
   assert.equal(
     Array.from(storageObjects.keys()).some(key =>
@@ -209,7 +237,7 @@ try {
     'weather-cache/v1/locations/city:shanghai/recent-10d.json'
   )
   assert.equal(historicalCalls, historicalCallsAfterBatch, '诊断请求不得调用 QWeather')
-  assert.equal(forecast10dCalls, 20)
+  assert.equal(forecast10dCalls, 0, '新架构不得调用 fetchForecast10d')
 } finally {
   Module._load = originalLoad
   if (originalQWeatherApiKey === undefined) {

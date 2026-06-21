@@ -29,6 +29,18 @@
 8. 不做长篇完成后复盘。
 9. 不逐条展开 checklist 全量对账；默认只输出聚合统计和 blocker refs。
 
+
+## implementer_deep 等待预算
+
+main agent 在 `implementer_deep` 执行期间默认等待更久，不主动催促、不重复追问、不把完整 Contract 反复发送给 subagent。
+
+规则：
+
+1. 遵守 `subagent-progress-policy.md` 的 GLM-5.2 / implementer_deep 等待阈值。
+2. 不得在 subagent 正在改代码或跑测试时打断用户确认是否等待。
+3. 不得为了降低 main agent 自身不确定性而打断 implementer。
+4. 只有危险操作、forbidden_paths 触碰、权限 / 费用 / 外部发布确认、用户明确中止、hard wait 后无任何可观察进展时，才允许中断或询问。
+
 ## Subagent 复用预算
 
 main agent 不得通过重复创建 subagent 来解决上下文不清问题。默认必须复用同一 dispatch_run_id / ticket / branch / scope 下的现成同角色线程。
@@ -39,12 +51,7 @@ main agent 不得通过重复创建 subagent 来解决上下文不清问题。�
 
 main agent 默认只处理 receipt：
 
-```text
-status
-blocking
-evidence_ref
-next_action
-```
+外置模板/规范片段：`../assets/templates/main-thread-receipts.md`（template_id: `main-thread-budget-policy-01`）。
 
 subagent 详情必须留在 subagent 线程、证据文件、日志路径或 audit appendix 中。
 
@@ -56,7 +63,7 @@ subagent 详情必须留在 subagent 线程、证据文件、日志路径或 aud
 |---|---:|
 | Phase 0 / git baseline | <= 300 tokens |
 | Agent Assignment / packets | <= 600 tokens |
-| Contract / Test Contract | <= 1200 tokens |
+| Contract / Test Contract | <= 1200 tokens；`implementer_deep` Contract-Locked Handoff 可 <= 2400 tokens 或写入 handoff 文件后引用 |
 | implementer 归并 | <= 500 tokens |
 | QA 归并 | <= 500 tokens |
 | Completion Gate | <= 600 tokens |
@@ -68,17 +75,7 @@ subagent 详情必须留在 subagent 线程、证据文件、日志路径或 aud
 
 Completion Gate 默认只输出聚合统计：
 
-```text
-Completion Receipt:
-- required_total:
-- passed:
-- failed:
-- blocked:
-- not_verified:
-- writeback_status:
-- stop_allowed:
-- blocker_refs:
-```
+外置模板/规范片段：`../assets/templates/main-thread-receipts.md`（template_id: `main-thread-budget-policy-02`）。
 
 需要逐项细节时，必须引用 evidence_ref，不在 main 默认上下文展开。
 
@@ -104,3 +101,22 @@ BRV Recall Gate 只允许输出 receipt / packet。
 4. 不展开 ByteRover / swarm 配置噪声。
 5. 不把完整 BRV 输出广播给所有 subagent。
 6. main agent 只消费 BRV Recall Packet 和 evidence_ref。
+
+
+## Pre-implementation 模板读取预算
+
+pre-implementation 阶段默认不读取 `assets/templates/` 下的具体模板全文。
+
+规则：
+
+1. main agent 只写 `template_ref` / `template_id`。
+2. subagent 根据自己的 `template_ref` 读取对应模板。
+3. main agent 只有在需要输出本阶段最终 receipt 时，才读取对应的最小模板。
+4. 不得为了“格式完整”提前读取全部模板。
+5. 不得把模板正文复制到 role_context_packets。
+
+## Task facts 与 checklist 预算
+
+完整 task facts、ClickUp 原文、checklist 明细和 Acceptance Matrix 逐项内容默认只保留 `source_ref` / `matrix_ref`。
+
+main agent 后续 phase 默认只携带 Task Facts Receipt 与 Acceptance Matrix Receipt。

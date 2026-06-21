@@ -6,9 +6,7 @@ Phase 0 是 `dispatch-task` 的第一阶段。未通过 Phase 0，不得进入�
 
 输出格式引用：
 
-```text
-../assets/templates/phase-gates.md
-```
+外置模板/规范片段：`../assets/templates/phase-gates.md`（template_id: `phase-0-gates-01`）。
 
 ## 必须完成
 
@@ -26,14 +24,7 @@ Phase 0 只使用 `git status --short` 判断工作区是否 dirty，不做 `git
 
 如果 `git status --short` 有任何输出，必须立即执行任务前 snapshot commit：
 
-```bash
-git status --short
-git branch --show-current
-git add -A
-git commit -m "<message>"
-git rev-parse HEAD
-git status --short
-```
+外置模板/规范片段：`../assets/templates/phase-gates.md`（template_id: `phase-0-gates-02`）。
 
 规则：
 

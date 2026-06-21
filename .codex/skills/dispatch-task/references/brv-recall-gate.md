@@ -16,11 +16,7 @@ BRV 不是 task facts，也不是 ClickUp 的替代物：
 
 执行顺序：
 
-```text
-Phase 1: Task facts / ClickUp / prompt facts
-Phase 1.5: BRV Recall Gate
-Phase 2: Agent Assignment
-```
+外置模板/规范片段：`../assets/templates/brv-recall.md`（template_id: `brv-recall-gate-01`）。
 
 必须先知道任务事实，再生成 BRV query。
 
@@ -28,24 +24,15 @@ Phase 2: Agent Assignment
 
 默认召回路径只允许使用非 swarm 路径：
 
-```text
-1. 读取 .brv/context-tree/_index.md
-2. 读取 .brv/context-tree/_manifest.json
-3. 只选择 manifest active_context 中与任务相关的条目
-4. 必要时使用 brv query / source-verified BRV index
-```
+外置模板/规范片段：`../assets/templates/brv-recall.md`（template_id: `brv-recall-gate-02`）。
 
 不得默认执行：
 
-```text
-brv swarm query
-```
+外置模板/规范片段：`../assets/templates/brv-recall.md`（template_id: `brv-recall-gate-03`）。
 
 不得默认检查：
 
-```text
-.brv/swarm/config.yaml
-```
+外置模板/规范片段：`../assets/templates/brv-recall.md`（template_id: `brv-recall-gate-04`）。
 
 ## ByteRover swarm 策略
 
@@ -60,29 +47,17 @@ ByteRover swarm 是可选能力，不是 `$dispatch-task` 的默认依赖。
 
 如果 `.brv/swarm/config.yaml` 不存在：
 
-```text
-swarm_status: not_configured_optional
-```
+外置模板/规范片段：`../assets/templates/brv-recall.md`（template_id: `brv-recall-gate-05`）。
 
 该状态只能留在 main agent 内部诊断或最终技术备注中；默认不得写入：
 
-```text
-brv_status
-blockers
-risk_flags
-role_context_packets
-subagent_memory_context
-```
+外置模板/规范片段：`../assets/templates/brv-recall.md`（template_id: `brv-recall-gate-06`）。
 
 缺少 swarm config 不是产品问题，不是 subagent 问题，也不是正常 BRV recall 失败。
 
 如果默认 BRV recall 过程中工具输出 `swarm config missing`，应判断为错误调用了 swarm 路径或工具噪声：
 
-```text
-brv_status: retry_non_swarm
-noise_suppressed: swarm_config_missing
-fallback: manifest-scoped BRV index / brv query
-```
+外置模板/规范片段：`../assets/templates/brv-recall.md`（template_id: `brv-recall-gate-07`）。
 
 该噪声不得传播给 subagent。
 
@@ -123,17 +98,13 @@ BRV 输出只能是短 packet，不得展开历史。
 
 输出模板见：
 
-```text
-../assets/templates/brv-recall.md
-```
+外置模板/规范片段：`../assets/templates/brv-recall.md`（template_id: `brv-recall-gate-08`）。
 
 必须包含 status、queries、repo_facts、risk_flags、test_entry_refs、mcp_usage_notes、subagent_memory_context、blockers、fallback。
 
 `status` 只描述 BRV recall 本身：
 
-```text
-hit / miss / blocked / skipped / retry_non_swarm
-```
+外置模板/规范片段：`../assets/templates/brv-recall.md`（template_id: `brv-recall-gate-09`）。
 
 不得把 `swarm config missing` 写成 `blocked`。
 
@@ -148,12 +119,7 @@ hit / miss / blocked / skipped / retry_non_swarm
 
 降级优先级：
 
-```text
-1. manifest-scoped BRV index
-2. .codex/memory.md
-3. docs/CURRENT.md / docs/ACTIVE_CONTRACTS.md
-4. 相关源码 / tests / schema
-```
+外置模板/规范片段：`../assets/templates/brv-recall.md`（template_id: `brv-recall-gate-10`）。
 
 如果只是 swarm config 缺失，默认不进入此降级分支；按“ByteRover swarm 策略”处理为 optional/noise。
 
@@ -161,22 +127,29 @@ hit / miss / blocked / skipped / retry_non_swarm
 
 main agent 必须把 BRV 结果压缩成 subagent 可消费的最小记忆上下文：
 
-```text
-subagent_memory_context:
-- relevant_repo_facts:
-- known_test_entries:
-- mcp_usage_notes:
-- forbidden_assumptions:
-- evidence_ref:
-```
+外置模板/规范片段：`../assets/templates/brv-recall.md`（template_id: `brv-recall-gate-11`）。
 
 不同 subagent 只接收与自己相关的切片。不得把完整 BRV 输出广播给所有角色。
 
 禁止把以下内容放入 subagent packet：
 
+外置模板/规范片段：`../assets/templates/brv-recall.md`（template_id: `brv-recall-gate-12`）。
+
+
+## BRV Recall Cache
+
+同一任务恢复、重跑或阶段续跑时，优先复用 BRV Recall Packet。
+
+缓存键由以下字段组成：
+
 ```text
-- swarm config missing
-- ByteRover CLI banner / warning
-- optional swarm capability status
-- unrelated BRV history
+task_id_or_prompt_hash + hard_constraints_hash + affected_domains + branch
 ```
+
+规则：
+
+1. cache hit 时，main agent 只读取 `packet_ref`、status 和 risk_flags，不重新展开 repo_facts。
+2. cache miss 时，执行正常 BRV query。
+3. hard_constraints、affected_domains 或 branch 改变时，缓存失效。
+4. BRV Cache 不能代替 task facts；只缓存仓库事实召回结果。
+5. packet_ref 必须可回查，不能只写自然语言总结。

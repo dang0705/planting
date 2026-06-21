@@ -4,9 +4,7 @@
 
 main agent 做实现后 code review，采用：
 
-```text
-diff-first + dependency-context-limited
-```
+外置模板/规范片段：`../assets/templates/main-agent-gates.md`（template_id: `review-scope-policy-01`）。
 
 不是 diff-only。
 

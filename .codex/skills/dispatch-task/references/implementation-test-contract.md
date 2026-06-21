@@ -4,9 +4,7 @@
 
 本文件定义 Implementation Contract 与 Test Contract 的规则。模板引用：
 
-```text
-../assets/templates/contracts.md
-```
+外置模板/规范片段：`../assets/templates/contracts.md`（template_id: `implementation-test-contract-01`）。
 
 ## Implementation Contract
 
@@ -23,21 +21,23 @@
 7. 关键伪代码。
 8. 给 implementer 的硬限制。
 
+当分配 `implementer_deep` 时，Implementation Contract 必须升级为 Contract-Locked Implementation Contract，且必须包含以下字段：
+
+外置模板/规范片段：`../assets/templates/contracts.md`（template_id: `implementation-test-contract-02`）。
+
+硬规则：
+
+- `architecture_decisions_locked` 必须写成 implementer 可执行的固定选择，不得写成“自行判断”。
+- `implementation_strategy_locked` 必须指定具体函数、组件、store、repository、cloud function 或 adapter 的落点。
+- `dependency_policy_locked` 必须写明第三方插件是否允许；未显式允许时默认禁止新增依赖和修改 lockfile。
+- `pseudocode_by_anchor` 必须覆盖关键分支；如果无需伪代码，必须写 `not_required` 与理由。
+- `stop_conditions` 必须允许 implementer 在 Contract 不可执行时停止，而不是猜测实现。
+
 ## 500 行拆分硬指标
 
 Implementation Contract 必须包含以下字段：
 
-```text
-line_count_gate:
-- touched_code_file_line_counts_before:
-- expected_line_counts_after:
-- over_400_line_touched_files:
-- over_500_line_touched_files:
-- decomposition_required: yes / no
-- decomposition_plan:
-- approved_exception: yes / no
-- exception_reason:
-```
+外置模板/规范片段：`../assets/templates/contracts.md`（template_id: `implementation-test-contract-03`）。
 
 规则：
 
@@ -68,19 +68,7 @@ QA 负责执行与取证，不负责设计测试契约。
 
 上述任务的 Test Contract 不得只列 unit tests、Node 直接 HTTP、curl 或 backend smoke。必须包含：
 
-```text
-Mini Program Runtime QA:
-- automation_required: yes
-- endpoint:
-- page:
-- projectPath: /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin
-- payload:
-- assertions:
-- evidence_source: miniprogram_automator_wx_request / miniprogram_automator_ui / real_device_interaction
-- local_functions_gateway_required: yes / no
-- cloud_deploy_status: deployed / not_deployed / unknown
-- blocker_rule: if automator cannot cover required item, mark blocker/not_verified, not complete
-```
+外置模板/规范片段：`../assets/templates/contracts.md`（template_id: `implementation-test-contract-04`）。
 
 对 `/diagnosis/question/start`、`/diagnosis/answer` 等端上接口，合格证据必须来自小程序运行时的 `wx.request` 或真实端上交互，通过 `miniprogram-automator` / `9420` 获取。Node 直接 HTTP、curl、云函数本地 invoke 只能作为后端 smoke，不得替代端上 QA。
 
@@ -88,9 +76,7 @@ Mini Program Runtime QA:
 
 Test Contract 若要求端上 automator 验收，必须写明正确前置验证链：
 
-```text
-projectPath 校验 -> 9420 automator 监听 -> 原始 WebSocket -> miniprogram-automator currentPage / page_data / selector 或 evaluate(wx.request) -> 真实交互 / 运行时接口断言
-```
+外置模板/规范片段：`../assets/templates/contracts.md`（template_id: `implementation-test-contract-05`）。
 
 `status`、`9222` CDP 或 `/json/version` 不得写成端上通过证据。`pkill`、完整重启、CLI auto 拉起、`cache_clean(clean_type="all")` 不得写成默认恢复步骤；只能作为用户明确同意，或已证明无可复用 IDE / `9420` 会话且任务必须拉起时的受控例外，并要求 QA 记录副作用。
 
@@ -102,16 +88,7 @@ projectPath 校验 -> 9420 automator 监听 -> 原始 WebSocket -> miniprogram-a
 
 凡是任务触及 CloudBase SQL repository / schema / seed，Test Contract 必须包含 schema truth gate：
 
-```text
-Schema Truth Gate:
-- touched_sql_area:
-- live_schema_check: INFORMATION_SCHEMA / CloudBase MCP / unavailable
-- checked_in_schema_spec:
-- runtime_endpoint_smoke:
-- mini_program_runtime_request:
-- unknown_column_guard:
-- live_schema_gap:
-```
+外置模板/规范片段：`../assets/templates/contracts.md`（template_id: `implementation-test-contract-06`）。
 
 优先使用 live `INFORMATION_SCHEMA` 或 CloudBase MCP 证明真实库结构。若 auth 不可用，至少必须使用 checked-in schema spec + runtime endpoint smoke / 端上请求证明没有 `Unknown column`，并把 live schema 未验证列为缺口。
 

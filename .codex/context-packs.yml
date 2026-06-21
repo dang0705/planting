@@ -1,6 +1,6 @@
 version: 1
 updated: 2026-06-06
-purpose: "Define minimal AI-consumed files by task type. Do not scan large docs by default."
+purpose: 'Define minimal AI-consumed files by task type. Do not scan large docs by default.'
 
 default_context:
   read_first:
@@ -23,7 +23,7 @@ default_context:
 
 packs:
   ai-workflow:
-    trigger: "dispatch-task, subagent routing, docs_keeper, BRV, Codex rules"
+    trigger: 'dispatch-task, subagent routing, docs_keeper, BRV, Codex rules'
     read:
       - AGENTS.md
       - .codex/memory.md
@@ -36,18 +36,17 @@ packs:
     max_additional_files: 3
 
   wechat-runtime-qa:
-    trigger: "miniprogram-automator, 端上自动化, 9420, wx.request, qa_reviewer"
+    trigger: 'miniprogram-automator, 端上自动化, 9420, wx.request, qa_reviewer'
     read:
       - .codex/skills/dispatch-task/references/wechat-devtools-automation-policy.md
       - .codex/skills/dispatch-task/references/qa-evidence-policy.md
       - .codex/skills/dispatch-task/references/implementation-test-contract.md
       - .codex/skills/miniprogram-automator-runtime/SKILL.md
-      - .agents/skills/wechat-devtools/SKILL.md
       - docs/ai-rules/frontend-automation-id-policy.md
     max_additional_files: 2
 
   docs-keeper-classify:
-    trigger: "any code change after implementation"
+    trigger: 'any code change after implementation'
     read:
       - docs/_sync-map.yml
       - docs/_doc-status.yml
@@ -59,7 +58,7 @@ packs:
     max_additional_files: 0
 
   docs-keeper-patch:
-    trigger: "classify says active contract, runbook, current map, or BRV index is affected"
+    trigger: 'classify says active contract, runbook, current map, or BRV index is affected'
     read:
       - docs/CURRENT.md
       - docs/ACTIVE_CONTRACTS.md
@@ -73,7 +72,7 @@ packs:
     max_additional_files: 5
 
   diagnose-runtime:
-    trigger: "diagnosis engine, route, outcome, question, final result, output eligibility"
+    trigger: 'diagnosis engine, route, outcome, question, final result, output eligibility'
     read:
       - docs/CURRENT.md
       - docs/ACTIVE_CONTRACTS.md
@@ -92,7 +91,7 @@ packs:
       - docs/new-rules/**
 
   diagnose-question-package:
-    trigger: "diagnosis question package, no-follow-up口径, package UI, batch/package answer submit, removal of one-question-per-round claims"
+    trigger: 'diagnosis question package, no-follow-up口径, package UI, batch/package answer submit, removal of one-question-per-round claims'
     read:
       - docs/tickets/86exv6fnx-diagnose-question-package.md
       - docs/CURRENT.md
@@ -107,11 +106,11 @@ packs:
       - src/utils/diagnose-result-normalizer.js
     max_additional_files: 5
     stale_guards:
-      - "Do not use old claims saying regular route follow-up has one question per round."
-      - "Do not infer current product口径 from follow-up file/function names alone."
+      - 'Do not use old claims saying regular route follow-up has one question per round.'
+      - 'Do not infer current product口径 from follow-up file/function names alone.'
 
   frontend-diagnose:
-    trigger: "diagnosis page, result normalization, frontend API client, question-package UI, legacy follow-up UI names"
+    trigger: 'diagnosis page, result normalization, frontend API client, question-package UI, legacy follow-up UI names'
     read:
       - docs/CURRENT.md
       - docs/ACTIVE_CONTRACTS.md
@@ -125,7 +124,7 @@ packs:
     max_additional_files: 5
 
   cloudbase-api:
-    trigger: "HTTP functions, env routing, auth headers, gateway/local API"
+    trigger: 'HTTP functions, env routing, auth headers, gateway/local API'
     read:
       - docs/ACTIVE_CONTRACTS.md
       - docs/RUNBOOK.md
@@ -137,7 +136,7 @@ packs:
     max_additional_files: 6
 
   storage-identify-weather-plants:
-    trigger: "storage, plant identify, weather, plant catalog/user profile"
+    trigger: 'storage, plant identify, weather, plant catalog/user profile'
     read:
       - docs/ACTIVE_CONTRACTS.md
       - cloudfunctions/storage-http/app.js
@@ -150,7 +149,7 @@ packs:
     max_additional_files: 5
 
   local-debug-deploy:
-    trigger: "local CloudBase gateway, deployment, GitHub Actions, miniprogram CI, smoke"
+    trigger: 'local CloudBase gateway, deployment, GitHub Actions, miniprogram CI, smoke'
     read:
       - docs/RUNBOOK.md
       - package.json
@@ -166,7 +165,7 @@ packs:
     max_additional_files: 4
 
   database-schema:
-    trigger: "SQL schema, data publishing, migrations, table contract"
+    trigger: 'SQL schema, data publishing, migrations, table contract'
     read:
       - docs/ACTIVE_CONTRACTS.md
       - docs/data-base/DATABASE_SCHEMA_SPEC_v2.md

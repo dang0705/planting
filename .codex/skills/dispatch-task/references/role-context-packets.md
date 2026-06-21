@@ -6,16 +6,15 @@
 
 输出格式引用：
 
-```text
-../assets/templates/role-context-packets.md
-```
+外置模板/规范片段：`../assets/templates/role-context-packets.md`（template_id: `role-context-packets-01`）。
 
 ## 预算
 
 默认预算上限：
 
 - code_explorer：不超过 300 tokens。
-- implementer：不超过 900 tokens；复杂 Figma 任务可不超过 1400 tokens。
+- implementer_fast：不超过 900 tokens；复杂 Figma 任务可不超过 1400 tokens。
+- implementer_deep：默认不超过 1600 tokens；Contract-Locked Handoff 可不超过 2400 tokens。超过时必须把完整 Contract 放入 appendix_ref / handoff 文件，并在 packet 中传 `contract_digest` + `contract_ref`。
 - QA：不超过 700 tokens；Figma UI 任务可包含 QA Visual Baseline Slice，必要时不超过 1000 tokens。
 - docs：不超过 400 tokens。
 
@@ -27,15 +26,11 @@ UI skill 不通过 agent 固定配置挂载。必须由 `dispatch-task` 在 `rol
 
 implementer packet：
 
-```text
-required_skill: $implementer-ui-execution-policy
-```
+外置模板/规范片段：`../assets/templates/role-context-packets.md`（template_id: `role-context-packets-02`）。
 
 QA packet：
 
-```text
-required_skill: $qa-ui-visual-baseline-policy
-```
+外置模板/规范片段：`../assets/templates/role-context-packets.md`（template_id: `role-context-packets-03`）。
 
 非 UI 任务不得触发这两个 skill。
 
@@ -50,12 +45,7 @@ required_skill: $qa-ui-visual-baseline-policy
 
 如果任务需要端上 `miniprogram-automator` / `9420` 验证，role_context_packets 必须写明：
 
-```text
-automation_owner:
-- formal_qa_owner: qa_reviewer
-- implementer_self_check_required: yes / no
-- duplicate_automation_forbidden: true
-```
+外置模板/规范片段：`../assets/templates/role-context-packets.md`（template_id: `role-context-packets-04`）。
 
 implementer packet 只包含最小自测范围。QA packet 包含正式自动化范围。
 
@@ -64,15 +54,23 @@ implementer packet 只包含最小自测范围。QA packet 包含正式自动化
 
 每个需要执行的 role_context_packet 必须包含线程复用字段：
 
-```text
-thread_reuse:
-- existing_thread_checked:
-- reuse_existing_thread:
-- existing_thread_ref:
-- replacement_reason_if_new:
-```
+外置模板/规范片段：`../assets/templates/role-context-packets.md`（template_id: `role-context-packets-05`）。
 
 如果同一 dispatch_run_id / ticket / branch / scope 下已有同角色线程且可用，必须复用，不得创建新线程。
+
+
+## implementer_deep Contract Packet 硬字段
+
+当目标角色为 `implementer_deep` 时，role_context_packet 必须携带严格 Contract 字段。不得只传一句任务描述。
+
+外置模板/规范片段：`../assets/templates/role-context-packets.md`（template_id: `role-context-packets-06`）。
+
+规则：
+
+1. packet 只传当前实现所需最小上下文，但不能省略 Contract 锁定字段。
+2. 如果完整 Contract 较长，必须用 `contract_ref` 指向 handoff 文件；`contract_digest` 必须保留硬限制摘要。
+3. `allowed_paths` / `forbidden_paths` 必须在 packet 和 Agent Assignment 中一致；不一致时 Gate 阻塞。
+4. 不得把完整历史、完整 ClickUp、完整 BRV、完整规则目录广播给 implementer_deep。
 
 ## 输出模板引用
 
@@ -91,16 +89,7 @@ thread_reuse:
 
 docs_keeper packet 必须包含：
 
-```text
-docs_sync_scope:
-- changed_contracts:
-- active_docs_candidates:
-- source_index_candidates:
-- brv_sync_required: yes / no
-- source_refs:
-- forbidden_doc_claims:
-- validation_commands:
-```
+外置模板/规范片段：`../assets/templates/role-context-packets.md`（template_id: `role-context-packets-07`）。
 
 规则：
 
@@ -123,19 +112,4 @@ docs_sync_scope:
 
 建议字段：
 
-```text
-brv_recall_packet:
-- status:
-- evidence_ref:
-- relevant_repo_facts:
-- risk_flags:
-- test_entry_refs:
-- mcp_usage_notes:
-
-subagent_memory_context:
-- relevant_repo_facts:
-- known_test_entries:
-- mcp_usage_notes:
-- forbidden_assumptions:
-- evidence_ref:
-```
+外置模板/规范片段：`../assets/templates/role-context-packets.md`（template_id: `role-context-packets-08`）。

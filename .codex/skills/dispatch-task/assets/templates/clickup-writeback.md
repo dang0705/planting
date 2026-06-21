@@ -57,3 +57,50 @@ Acceptance Verification Comment:
 - evidence_refs:
 - comment_writeback_status: success / failed / skipped
 ```
+
+## checklist-writeback-policy-01
+
+Source: `references/checklist-writeback-policy.md`  
+Context: 定位
+
+```text
+../assets/templates/clickup-writeback.md
+```
+
+## checklist-writeback-policy-02
+
+Source: `references/checklist-writeback-policy.md`  
+Context: Markdown checklist 回写
+
+```markdown
+- [x] 用户在 `D-10 ~ D-1` 中选择多天浇水后，前端能生成正确的最近 10 天浇水行为数据。
+```
+
+## checklist-writeback-policy-03
+
+Source: `references/checklist-writeback-policy.md`  
+Context: Markdown checklist 顺序号
+
+```text
+checklist_ref = md-checklist:<source_ticket_id>:NO<checklist_order_no>
+```
+
+## checklist-writeback-policy-04
+
+Source: `references/checklist-writeback-policy.md`  
+Context: 验收标准 fallback
+
+```text
+Acceptance Checklist Matrix
+Test Case Base
+Test Contract
+```
+
+## checklist-writeback-policy-05
+
+Source: `references/checklist-writeback-policy.md`  
+Context: 验收标准 fallback
+
+```text
+Acceptance Verification Comment
+```

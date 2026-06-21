@@ -30,6 +30,7 @@ inclusion: always
 13. 使用端上 `miniprogram-automator` / `9420` 做诊断相关自动化测试时，必须先读取 `docs/ai-rules/frontend-automation-id-policy.md` 的“第三点 诊断流 id 映射”，并按该映射执行入口定位与关键断言。
 14. 今后所有端上验收如果本轮代码未部署到云端，必须先成功跑通 `npm run dev:mp-weixin:local-functions:lan` 的完整 LAN 本地函数 flow，并让小程序运行时命中新代码；只启动 scoped/local 单函数 gateway、backend curl、Node HTTP 或 gateway health，不得算端上验收完成。
 15. 除非用户显式要求，否则 subagent 在条件允许的情况下优先考虑线程复用。
+16. 当上游的数据层结构变动后，应避免用兼容或者adapter的方式实现数据对接。优先同步消费层和数据层结构一致，减少思维负担。
 
 ## 3. 项目技术上下文
 

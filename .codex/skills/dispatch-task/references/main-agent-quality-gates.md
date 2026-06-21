@@ -2,76 +2,24 @@
 
 ## 定位
 
-本文件定义 main agent 在无独立架构角色的工作流中必须执行的质量门禁。
+本文件是 main agent 质量门禁的读取路由，不作为默认长规则文件读取。
 
-main agent 必须通过以下硬门禁：
-
-1. Solution Discovery Gate。
-2. Technical Direction Gate。
-3. Implementation Contract Completeness Gate。
-4. Main Agent Code Review Gate。
-
-## Gate Receipt 输出模式
-
-所有 gate 默认输出 receipt，不输出长篇解释。
-
-模板见：
+pre-implementation 阶段只读：
 
 ```text
-../assets/templates/phase-gates.md
+main-pre-implementation-gates.md
 ```
 
-若 gate 失败，只输出缺失字段、阻塞原因和下一步动作。详细证据放 handoff audit appendix。
-
-## Technical Direction Gate
-
-进入 implementer 执行前，main agent 必须输出并通过 Technical Direction Gate。
-
-硬规则：
-
-1. based_on_solution_discovery=no 时不得通过。
-2. 未评估复用、wrapper/adapter、插件/原生能力，不得允许手搓复杂实现。
-3. 未说明模块边界，不得进入 implementer。
-4. 未说明风险与回滚，不得进入高风险实现。
-5. 单文件可能超过 400 行必须预警；超过 500 行必须要求拆模块。
-6. 未输出 `line_count_gate` 或未检查候选改动文件行数，不得进入 implementer。
-
-## Implementation Contract Completeness Gate
-
-派发 implementer 前，main agent 必须检查 Implementation Contract 完整性。
-
-硬规则：
-
-1. 文件级改动计划缺失，不得派发 implementer。
-2. 禁止修改范围缺失，不得派发 implementer。
-3. Test Contract 缺失，不得派发 implementer。
-4. role_context_packet 缺失，不得派发 implementer。
-5. `line_count_gate` 缺失，不得派发 implementer。
-6. `over_500_line_touched_files` 非空且无 `decomposition_plan` / `approved_exception`，不得派发 implementer。
-
-## Main Agent Code Review Gate
-
-implementer 完成后，QA 之前，main agent 必须执行代码 review 并通过 Main Agent Code Review Gate。
-
-硬规则：
-
-1. 未完成 main agent code review，不得进入 QA。
-2. code review 必须以本轮 diff 为主轴，但允许读取最小依赖上下文。
-3. 发现 blocking findings 时，main agent 不得亲自修复，必须把 findings 转回同一 implementer 线程。不得新开同角色 implementer，除非记录 replacement_reason。
-4. QA 只能消费 code review 摘要做测试与验收，不得替代 code review。
-5. 若 main agent 在 code review 后直接改代码，本 gate 失败并必须停止。
-6. main agent 必须对本轮 touched code files 执行行数检查，输出 `line_count_review`。
-7. 任一 touched code file 修改后超过 500 行，且本轮没有实际拆分或明确 `approved_exception`，Main Agent Code Review Gate 失败，findings 必须转回同一 implementer 线程。
-8. 如果本轮在超过 500 行文件中只做删除，仍必须记录删除后行数；若删除后仍超过 500 行但未拆分，必须给出 `approved_exception` 或作为 blocker 进入 completion。
-
-`line_count_review` 输出形态：
+post-implementation code review 阶段只读：
 
 ```text
-line_count_review:
-- checked: yes / no
-- command_ref:
-- over_500_touched_files:
-- decomposition_completed: yes / no / not_required
-- approved_exception: yes / no / not_applicable
-- blocking_findings:
+main-post-implementation-review-gate.md
+review-scope-policy.md
 ```
+
+## 读取原则
+
+1. 不得在 Phase 4 同时读取 pre 与 post 全量规则。
+2. 不得提前读取 Main Agent Code Review Gate 细则。
+3. 不得因为拆分读取而跳过 Technical Direction Gate、Implementation Contract Completeness Gate 或 Main Agent Code Review Gate。
+4. 所有 gate 默认输出 receipt，详细证据写入 evidence_ref / appendix_ref。

@@ -6,9 +6,7 @@
 
 模板引用：
 
-```text
-../assets/templates/qa-evidence.md
-```
+外置模板/规范片段：`../assets/templates/qa-evidence.md`（template_id: `qa-evidence-policy-01`）。
 
 ## QA scope
 
@@ -57,9 +55,7 @@ QA scope 由 Test Contract / 验收标准决定，不由“是否有 UI diff”�
 
 本项目端上 automator 的 Test Contract `projectPath` 只能是：
 
-```text
-/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin
-```
+外置模板/规范片段：`../assets/templates/qa-evidence.md`（template_id: `qa-evidence-policy-02`）。
 
 `dist/build/mp-weixin` 只允许用于 build / CI / upload 类检查，不得作为端上自动化路径。若 Test Contract 写成 `dist/build/mp-weixin` 或其他 projectPath，QA 必须退回 `contract_blocker`，不得沿该路径继续验收。
 
@@ -71,13 +67,7 @@ QA 默认必须保护微信开发者工具登录态、项目授权态和扫码�
 
 因此涉及小程序端上 QA 时，优先顺序必须是：
 
-```text
-成功跑通 npm run dev:mp-weixin:local-functions:lan
-校验 Test Contract projectPath 为 /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin
-检查或复用 9420 automator 会话，确认原始 WebSocket 可握手
-miniprogram-automator currentPage / page_stack / page_data / evaluate(wx.request)
-真实交互 / 运行时接口断言
-```
+外置模板/规范片段：`../assets/templates/qa-evidence.md`（template_id: `qa-evidence-policy-03`）。
 
 只有在用户明确同意可重启 DevTools，或当前没有可复用 IDE / automator 会话且任务确需重新拉起时，才允许调用 open / CLI auto；输出必须把重新扫码/授权归因到 DevTools / automation session side effect，而不是产品接口失败。
 

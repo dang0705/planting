@@ -9,8 +9,10 @@
 1. 先读本 `references/INDEX.md`。
 2. 当前 phase 需要什么，只读对应 reference 文件。
 3. 禁止一次性读取整个 `references/` 目录。
-4. 禁止把全部 phase 规则放进 `role_context_packets`。
-5. 需要输出格式时，只引用 `../assets/templates/` 下的对应模板，不在 references 内复制模板。
+4. 按需文件不得因为同属一个 phase 而全部读取；必须满足触发条件后再读。
+5. 禁止把全部 phase 规则放进 `role_context_packets`。
+6. 需要输出格式时，只引用 `../assets/templates/` 下的对应模板，不在 references 内复制模板。
+7. `references/` 禁止出现 fenced code block 形式的模板、回执、packet、命令片段或路径片段；所有精确格式必须外置到 `../assets/templates/` 并用 `template_id` 引用。
 
 ## Phase 到规则文件映射
 
@@ -19,26 +21,29 @@
 | Main thread | main agent receipt-only 与预算边界 | `main-thread-budget-policy.md` |
 | Phase 0 | 硬门禁、mode 判断、Git baseline | `phase-0-gates.md` |
 | Phase 1 | ClickUp 模式下读取主任务、子任务、relationships、链接 | `clickup-ticket-read-policy.md` |
+| Phase 1 | task facts / prompt facts receipt 化 | `task-facts-receipt-policy.md` |
 | Phase 1.5 | BRV / ByteRover 项目事实召回 | `brv-recall-gate.md` |
 | Phase 1 / 7 | ClickUp 模式下 markdown checklist、验收标准、Test Case Base、markdown_description 回写 | `checklist-writeback-policy.md` |
-| Phase 2 | Agent Assignment / Execution Gate | `agent-assignment-gate.md` |
+| Phase 2 | Agent Assignment 读取路由 | `agent-assignment-gate.md` |
+| Phase 2 | Agent Assignment 最小核心 | `agent-assignment-core.md` |
+| Phase 2 | implementer / code_explorer 路由 | `implementer-routing-policy.md` |
+| Phase 2 | QA / docs_keeper 路由 | `qa-docs-routing-policy.md` |
+| Phase 2 | Subagent Reuse / Spawn Gate | `subagent-spawn-gate.md` |
 | Phase 3 | role_context_packets | `role-context-packets.md` |
-| Phase 4 | Solution Discovery、Implementation Contract、Test Contract、main agent 质量门禁 | `solution-discovery-gate.md` / `implementation-test-contract.md` / `main-agent-quality-gates.md` |
+| Phase 4 | Solution Discovery、Implementation Contract、Test Contract、pre-implementation 质量门禁 | `solution-discovery-gate.md` / `implementation-test-contract.md` / `main-pre-implementation-gates.md` |
 | Phase 4.45 | pre-implementation token 预算保险丝 | `pre-implementation-budget-fuse.md` |
 | Phase 6 | QA 证据、日志、截图、失败归因 | `qa-evidence-policy.md` |
 | Phase 6 | 端上 automator 自动化职责分配 | `wechat-devtools-automation-policy.md` |
 | Phase 6 / Recovery | `9420` / automator 恢复、端上运行时取证 | `.codex/skills/miniprogram-automator-runtime/SKILL.md` |
 | Phase 7 | Git 工作区、very_dirty、commit | `git-completion-policy.md` |
 | Completion | 最终完成 / Done / 停止门禁 | `completion-gate.md` |
-| Review | diff-first + dependency-context-limited、QA 不审 diff | `review-scope-policy.md` |
+| Review | diff-first + dependency-context-limited、QA 不审 diff | `main-post-implementation-review-gate.md` / `review-scope-policy.md` |
 
 ## 模板入口
 
 所有输出模板统一引用：
 
-```text
-../assets/templates/INDEX.md
-```
+外置模板/规范片段：`../assets/templates/reference-snippets.md`（template_id: `index-01`）。
 
 按功能读取：
 
@@ -50,6 +55,7 @@
 - Git Commit：`../assets/templates/git-commit.md`
 - Implementer UI 自测：`../assets/templates/ui-self-check.md`
 - QA 证据：`../assets/templates/qa-evidence.md`
+- Task Facts / Acceptance Matrix Receipt：`../assets/templates/task-facts-receipts.md`
 
 ## ClickUp 可选原则
 
@@ -62,20 +68,13 @@
 
 Figma / UI 细则不在本目录内，仍由对应 skill 管理：
 
-```text
-.codex/skills/figma-ui-implementation-policy/SKILL.md
-.codex/skills/ui-implementation-scope-policy/SKILL.md
-.codex/skills/implementer-ui-execution-policy/SKILL.md
-.codex/skills/qa-ui-visual-baseline-policy/SKILL.md
-```
+外置模板/规范片段：`../assets/templates/reference-snippets.md`（template_id: `index-02`）。
 
 ## WeChat MCP 恢复路由
 
 当 `dispatch-task` 任一阶段出现以下问题时，优先路由到：
 
-```text
-.codex/skills/miniprogram-automator-runtime/SKILL.md
-```
+外置模板/规范片段：`../assets/templates/reference-snippets.md`（template_id: `index-03`）。
 
 触发信号：
 

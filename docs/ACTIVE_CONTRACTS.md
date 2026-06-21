@@ -314,7 +314,7 @@ plant match fields: id, plantIdentityId, historicalPlantId, canonicalName, match
 | 方法 | 路径 | 当前用途 |
 |---|---|---|
 | GET | `/weather/health` | 健康检查。 |
-| GET/POST | `/weather/current` | 当前天气，以同位置同日期 D0 daily archive 作为缓存事实源；未命中时调用和风每日预报并后台调度 daily 归档。 |
+| GET/POST | `/weather/current` | 当前天气，优先读取同位置当天 `days/{yyyy-mm-dd}.json.latestSample`；缺失时降级到最近 finalized day rollup，仍缺失则返回天气证据不足。 |
 | GET/POST | `/weather/recent` | 最近天气缓存接口，返回自有 recent-10d 缓存结果。 |
 | GET/POST | `/weather/environment-context` | 环境天气窗口。 |
 | GET/POST | `/weather/ingestion/recent-10d` | 触发最近十天历史天气抓取与归档更新。 |
@@ -347,15 +347,17 @@ currentWeather
 timestamp
 ```
 
-诊断模式下，`/weather/environment-context` 必须优先读取自有 recent-10d 缓存。诊断天气事实链路为 `plant -> careLocationId -> locationKey -> weather-cache`；诊断请求已有植物 careLocation 时不得使用用户当前位置作为事实源。热门城市上海必须使用 `locationKey=city:shanghai`，上海/上海市/上海坐标不能退化为 `coord:*`；读取路径为 `weather-cache/v1/locations/{locationKey}/recent-10d.json`。缓存 miss / 读取异常 / 读取超时时返回 `200`，以 `weather evidence insufficient` 或空 `historicalDays` 表示不足；`city:shanghai` 的有效 recent payload 已生成且日期窗口匹配时，`weatherEvidenceInsufficient` 应为 `false`。不能在用户诊断链路中同步触发 QWeather 同步调用，也不能默认同步从 daily archives 重建 recent。同步 archive 重建只能由显式维护调用开启，前端诊断入口必须按短超时降级返回。diagnosis reader 必须保留日期窗口守卫：partial recent payload 只有匹配 `diagnosisDate` / `window.targetDate = diagnosisDate - 1` 时才可作为有效证据，过期 payload 不得通过。
+诊断模式下，`/weather/environment-context` 必须优先读取自有 recent-10d 缓存。诊断天气事实链路为 `plant -> careLocationId -> locationKey -> weather-cache`；诊断请求已有植物 careLocation 时不得使用用户当前位置作为事实源。热门城市上海必须使用 `locationKey=city:shanghai`，上海/上海市/上海坐标不能退化为 `coord:*`；读取路径为 `weather-cache/v1/locations/{locationKey}/recent-10d.json`。缓存 miss / 读取异常 / 读取超时时返回 `200`，以 `weather evidence insufficient` 或空 `historicalDays` 表示不足；`city:shanghai` 的有效 recent payload 已生成且日期窗口匹配时，`weatherEvidenceInsufficient` 应为 `false`。不能在用户诊断链路中同步触发 QWeather 同步调用，也不能默认同步从旧 `dailyArchives` 重建 recent。同步 recent 重建只能读取已 `finalized` 的 `days/{date}.json`，并只能由显式维护调用开启；前端诊断入口必须按短超时降级返回。diagnosis reader 必须保留日期窗口守卫：partial recent payload 只有匹配 `diagnosisDate` / `window.targetDate = diagnosisDate - 1` 时才可作为有效证据，过期 payload 不得通过。
 
 ### 6.3 定时采集与批处理
 
-`weather-http` 新增 CloudBase timer event：`weather-ingestion-recent-10d`，cron 为 `0 20 0/6 * * * *`。该事件由 `app.js` 顶部受控分支处理，复用 recent-10d service。
+`weather-http` CloudBase timer event `weather-ingestion-recent-10d` 的 cron 为 `0 20 0/6 * * * *`。该事件由 `app.js` 顶部受控分支处理，复用 recent-10d service。
 
-`/weather/current` 的 D0 daily archive 同时作为 current 响应缓存和 recent-10d 重建输入；旧 SQL `weather_cache` 城市缓存/用户缓存不再作为 current 路由缓存策略。daily 写入、raw snapshot 写入、`recent-10d.json` 重建和 manifest 更新均为后台归档动作，不阻塞客户端响应；定时采集仍默认维护 D-1 历史归档。
+D0 天气归档使用单一 day file 状态机：路径为 `weather-cache/v1/locations/{locationKey}/days/{yyyy-mm-dd}.json`。白天 now 采样调用 QWeather `/v7/weather/now`，追加 `samples[]` 并更新 `latestSample`，`state=working`；`samples[]` 必须保留 `/v7/weather/now` 的完整关键观测字段，`latestSample` 必须从最终样本列表中取最新样本。定稿时在同一文件生成 `dailyRollup`，写入 `state=finalized`、`finalizedAt`、`sourceKind=observed_now_rollup`。`/weather/current` 不再同步调用 QWeather realtime，也不再读写旧 SQL `weather_cache` 城市缓存/用户缓存；缺失时返回空态或 `weatherEvidenceInsufficient`，不能返回 500。
 
-批处理逻辑强制覆盖 20 个热门城市（含 `city:shanghai`），再合并 `weather_locations` 中 `is_active = 1` 且 `qweather_location_id` 非空的地点去重，并可带 `limit` 控制处理量，不触发全量省市/全国抓取。若 `/v7/weather/10d` forecast 不含 D-1 历史目标日，维护/ingestion 路径可使用 QWeather Time Machine `/v7/historical/weather` 补 D-1 daily archive；诊断请求仍 storage-only，不同步调用 QWeather/GeoAPI。
+D0 now 采样配置包含 4 个采样 timer 与 1 个定稿 timer：`weather-d0-now-morning-0920`、`weather-d0-now-forenoon-1220`、`weather-d0-now-noon-1420`、`weather-d0-now-afternoon-1820`、`weather-d0-now-finalize-2130`。真实 slot 规则由 `now-sample-slots` 计算：morning=`max(09:20,sunrise+20m)`、forenoon=`12:20`、noon=`14:20`、afternoon=`sunset+20m`、finalize=`max(21:30,sunset+30m)`；固定 cron 只负责唤醒，不能替代 slot 语义。
+
+`recent-10d.json` 只聚合 D-1 到 D-10 且 `state=finalized` 的 `days/{date}.json`，D0 当天不得进入 recent。批处理默认覆盖 20 个热门城市（含 `city:shanghai`），并可由环境变量 `WEATHER_HOT_CITY_INGESTION_KEYS` 限定为部分城市；随后再合并 `weather_locations` 中 `is_active = 1` 且 `qweather_location_id` 非空的地点去重。支持 `batch` 入参 `limit` 控制处理量；不触发全量省市/全国抓取。诊断请求仍 storage-only，不同步调用 QWeather/GeoAPI。
 
 数据库建表与校验使用官方 CloudBase CLI（`tcb db execute`）路径，统一通过 `run-with-cloudbase-env` 注入凭据执行；不要将 `$runSQL` 或 `$runSQLRaw` 作为建表主路径。注意：CloudBase Manager API 常见对 `$runSQLRaw` 的限制仅覆盖 DML，不构成 MySQL DDL 能力阻断依据。只允许幂等建表，`scripts/sql/ensure-weather-history-cache-tables.sql` 为当前 DDL 源文件，`npm run ensure:cloudbase-sql-schema` 与 `npm run ensure:cloudbase-sql-schema:verify` 为最小运维入口。
 

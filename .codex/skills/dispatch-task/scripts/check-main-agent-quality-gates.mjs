@@ -9,7 +9,9 @@ const BLOCKING_LINE_THRESHOLD = 500
 function parseArgs(argv = []) {
   const args = {
     mode: 'files',
-    files: []
+    files: [],
+    contractFile: '',
+    targetRole: ''
   }
 
   for (const arg of argv) {
@@ -23,6 +25,14 @@ function parseArgs(argv = []) {
         .split(',')
         .map(item => item.trim())
         .filter(Boolean)
+      continue
+    }
+    if (arg.startsWith('--contract=')) {
+      args.contractFile = arg.slice('--contract='.length).trim()
+      continue
+    }
+    if (arg.startsWith('--target-role=')) {
+      args.targetRole = arg.slice('--target-role='.length).trim()
     }
   }
 
@@ -50,6 +60,59 @@ function countLines(filePath = '') {
   const content = readFileSync(absolutePath, 'utf8')
   if (!content) {return 0}
   return content.split(/\r?\n/).length
+}
+
+
+const REQUIRED_DEEP_CONTRACT_MARKERS = [
+  'contract_id',
+  'contract_lock_level',
+  'strict',
+  'allowed_paths',
+  'read_only_reference_paths',
+  'forbidden_paths',
+  'architecture_decisions_locked',
+  'implementation_strategy_locked',
+  'dependency_policy_locked',
+  'target_anchors',
+  'pseudocode_by_anchor',
+  'stop_conditions',
+  'contract_compliance_matrix'
+]
+
+function checkImplementationContract(contractFile = '', targetRole = '') {
+  if (!contractFile) {
+    return {
+      checked: false,
+      status: 'skipped',
+      reason: 'no_contract_file_provided'
+    }
+  }
+
+  const absolutePath = resolve(process.cwd(), contractFile)
+  if (!existsSync(absolutePath) || !statSync(absolutePath).isFile()) {
+    return {
+      checked: true,
+      status: 'fail',
+      contractFile,
+      reason: 'contract_file_not_found'
+    }
+  }
+
+  const content = readFileSync(absolutePath, 'utf8')
+  const requiredMarkers = targetRole === 'implementer_deep'
+    ? REQUIRED_DEEP_CONTRACT_MARKERS
+    : ['contract_id', 'objective', 'allowed_paths', 'forbidden_paths', 'test_contract']
+  const missingMarkers = requiredMarkers.filter(marker => !content.includes(marker))
+
+  return {
+    checked: true,
+    status: missingMarkers.length ? 'fail' : 'pass',
+    contractFile,
+    targetRole: targetRole || 'unspecified',
+    requiredMarkers,
+    missingMarkers,
+    reason: missingMarkers.length ? 'implementation_contract_missing_required_markers' : ''
+  }
 }
 
 function buildFinding(filePath = '') {
@@ -95,10 +158,12 @@ function main() {
   const findings = files.map(buildFinding)
   const blockingFindings = findings.filter(item => item.severity === 'blocking')
   const warningFindings = findings.filter(item => item.severity === 'warning')
-  const missingInput = args.mode === 'files' && files.length === 0
+  const contractCheck = checkImplementationContract(args.contractFile, args.targetRole)
+  const contractFailed = contractCheck.checked && contractCheck.status !== 'pass'
+  const missingInput = args.mode === 'files' && files.length === 0 && !args.contractFile
   const receipt = {
-    gate: 'main_agent_quality_gates.file_size',
-    status: missingInput || blockingFindings.length ? 'fail' : 'pass',
+    gate: 'main_agent_quality_gates.file_size_and_contract',
+    status: missingInput || blockingFindings.length || contractFailed ? 'fail' : 'pass',
     mode: args.mode,
     thresholds: {
       warningLineThreshold: WARNING_LINE_THRESHOLD,
@@ -108,10 +173,13 @@ function main() {
     findings,
     warningCount: warningFindings.length,
     blockingCount: blockingFindings.length,
-    continueAllowed: !missingInput && blockingFindings.length === 0,
+    contractCheck,
+    continueAllowed: !missingInput && blockingFindings.length === 0 && !contractFailed,
     blockingReason: missingInput
       ? 'missing_file_scope_for_main_agent_quality_gate'
-      : (blockingFindings.length ? 'file_size_gate_failed' : '')
+      : (blockingFindings.length
+        ? 'file_size_gate_failed'
+        : (contractFailed ? 'implementation_contract_gate_failed' : ''))
   }
 
   console.log(JSON.stringify(receipt, null, 2))

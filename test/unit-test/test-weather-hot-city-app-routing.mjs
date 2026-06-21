@@ -48,16 +48,6 @@ const fakeCloudbaseApp = {
   }
 }
 
-async function waitForCondition(predicate, { attempts = 30, delayMs = 5 } = {}) {
-  for (let attempt = 0; attempt < attempts; attempt += 1) {
-    if (predicate()) {
-      return true
-    }
-    await new Promise(resolve => setTimeout(resolve, delayMs))
-  }
-  return false
-}
-
 Module._load = function patched(request, parent, isMain) {
   if (request === '/opt/utils/cloudbase') {
     return {
@@ -116,47 +106,21 @@ Module._load = function patched(request, parent, isMain) {
 
   if (
     request === '../adapters/qweather-adapter' &&
-    /\/cloudfunctions\/weather-http\/services\/(recent-weather-current|d0-weather-24h-service)\.js$/.test(
+    /\/cloudfunctions\/weather-http\/services\/d0-now-sample-service\.js$/.test(
       String(parent?.filename || '')
     )
   ) {
     return {
       createQWeatherAdapter: () => ({
-        async fetchForecast10d({ locationId, lat, lng }) {
-          forecastCallsByLocation.push({ locationId, lat, lng })
-          if (locationId === 'DB_ONLY') {
-            timerForecastCallCount += 1
-            return {
-              raw: { code: '200' },
-              daily: [
-                {
-                  date: '2026-06-14',
-                  tempMaxC: 30,
-                  tempMinC: 20,
-                  humidity: 60,
-                  textDay: '晴',
-                  source: 'fake_db_only'
-                }
-              ]
-            }
-          }
-          // 热门城市批量 / 单点 current 入口都必须真实带到坐标
-          assert.equal(Number.isFinite(lat), true, `hot-city forecast 必须带 lat: ${lat}`)
-          assert.equal(Number.isFinite(lng), true, `hot-city forecast 必须带 lng: ${lng}`)
+        async fetchCurrentWeather({ lat, lng }) {
+          forecastCallsByLocation.push({ locationId: '', lat, lng })
+          assert.equal(Number.isFinite(lat), true, `now 采样必须带 lat: ${lat}`)
+          assert.equal(Number.isFinite(lng), true, `now 采样必须带 lng: ${lng}`)
+          return { tempC: 25, humidity: 60, text: '晴', obsTime: '2026-06-18T09:30:00+08:00', source: 'qweather_weather_now' }
+        },
+        async fetchForecast10d() {
           timerForecastCallCount += 1
-          return {
-            raw: { code: '200' },
-            daily: [
-              {
-                date: new Date().toISOString().slice(0, 10),
-                tempMaxC: 28,
-                tempMinC: 18,
-                humidity: 55,
-                textDay: '多云',
-                source: 'fake_hot_city_forecast'
-              }
-            ]
-          }
+          return { raw: { code: '200' }, daily: [] }
         },
         async fetchWeather24h() {
           return { raw: { code: '200' }, hourly: [] }
@@ -171,8 +135,23 @@ Module._load = function patched(request, parent, isMain) {
 try {
   const weatherApp = require('../../cloudfunctions/weather-http/app.js')
 
-  // 1) /weather/current 上海坐标必须落 city:shanghai daily 缓存，不再写 coord:*
+  // 1) /weather/current 上海坐标必须命中 city:shanghai，不再写 coord:*
   const currentArchiveDate = new Date().toISOString().slice(0, 10)
+  // 预置 Shanghai day file（模拟 now 采样已产出 latestSample）
+  storageObjects.set(
+    `weather-cache/v1/locations/city:shanghai/days/${currentArchiveDate}.json`,
+    {
+      schemaVersion: 'weather-cache/v1/day-now-sample',
+      locationKey: 'city:shanghai',
+      date: currentArchiveDate,
+      state: 'working',
+      samples: [{ slotName: 'morning', temp: 25, humidity: 60, text: '晴', sourceKind: 'weather_now_sample' }],
+      latestSample: { slotName: 'morning', temp: 25, humidity: 60, text: '晴', sourceKind: 'weather_now_sample' },
+      sourceKind: 'observed_now_samples',
+      quality: 'partial',
+      weatherObjectPath: `weather-cache/v1/locations/city:shanghai/days/${currentArchiveDate}.json`
+    }
+  )
   const currentResponse = await weatherApp.main(
     {
       path: '/weather/current',
@@ -183,15 +162,14 @@ try {
     },
     {}
   )
+  const currentPayload = JSON.parse(currentResponse.body)
   assert.equal(currentResponse.statusCode, 200)
+  assert.equal(currentPayload.data.weatherEvidenceInsufficient, undefined, '应有天气数据')
+  assert.equal(currentPayload.data.sourceKind, 'weather_now_sample')
   assert.equal(
-    await waitForCondition(() =>
-      storageObjects.has(
-        `weather-cache/v1/locations/city:shanghai/daily/${currentArchiveDate}.json`
-      )
-    ),
-    true,
-    '上海坐标 + city=上海市 必须落 city:shanghai daily 缓存'
+    currentPayload.data.dailyWeatherCache.locationKey,
+    'city:shanghai',
+    '上海坐标必须命中 city:shanghai'
   )
   assert.equal(
     Array.from(storageObjects.keys()).some(key =>
@@ -201,43 +179,27 @@ try {
     '热门城市坐标不再写入 coord:* 缓存'
   )
 
-  // 2) 定时批量采集必须覆盖 20 热城 + 1 active DB 地点 = 21
+  // 2) 定时批量采集从 day files 重建 recent-10d，不再拉取 forecast 10d
   const timerResponse = await weatherApp.main(
     { Type: 'Timer', TriggerName: 'weather-ingestion-recent-10d' },
     {}
   )
   assert.equal(timerResponse.code, 200)
-  assert.equal(timerResponse.data.total, 21)
-  assert.equal(timerResponse.data.successCount, 21)
+  assert.equal(timerResponse.data.total, 20)
+  assert.equal(timerResponse.data.successCount, 20)
   assert.equal(
     timerResponse.data.results.some(item => item.locationKey === 'city:shanghai' && item.ok),
     true,
     'city:shanghai 必须出现在定时采集结果中'
   )
+  // hasCityFilter 会过滤掉非热城的 DB active 地点
   assert.equal(
-    timerResponse.data.results.some(item => item.locationKey === 'city:DBOnly' && item.ok),
-    true,
-    '数据库 active 地点必须保留在定时采集结果中'
+    timerResponse.data.results.some(item => item.locationKey === 'city:DBOnly'),
+    false,
+    '非热城 DB active 地点被 hasCityFilter 过滤'
   )
-
-  // 3) 热门城市批量 forecast 调用必须真实拿到 lat/lng（非 NaN/undefined），否则 QWeather 会失败
-  const hotCityForecastCalls = forecastCallsByLocation.filter(
-    call => call.locationId !== 'DB_ONLY'
-  )
-  assert.equal(
-    hotCityForecastCalls.every(
-      call => Number.isFinite(call.lat) && Number.isFinite(call.lng)
-    ),
-    true,
-    '所有热城 forecast 调用必须带有效 lat/lng'
-  )
-  assert.equal(
-    hotCityForecastCalls.some(
-      call => Math.abs(call.lat - 31.23) < 0.005 && Math.abs(call.lng - 121.47) < 0.005
-    ),
-    true,
-    '上海坐标必须真实命中 forecast 调用（normalize 到两位精度）'
-  )
+  // 新架构：ingestRecentForecast 不调用 fetchForecast10d
+  assert.equal(timerForecastCallCount, 0, 'timer 不得调用 fetchForecast10d')
 } finally {
   Module._load = originalLoad
   if (originalQWeatherApiKey === undefined) {

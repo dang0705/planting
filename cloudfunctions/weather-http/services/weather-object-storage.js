@@ -163,18 +163,13 @@ function createWeatherObjectStorage({ app = loadDefaultCloudBaseApp() } = {}) {
 
     const tempFilePath = createTempJsonFileName()
     await fs.promises.writeFile(tempFilePath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8')
-
-    try {
-      const uploadResult = await app.uploadFile({
-        cloudPath,
-        fileContent: fs.createReadStream(tempFilePath)
-      })
-      return {
-        cloudPath,
-        fileId: uploadResult?.fileID || uploadResult?.fileId || uploadResult?.fileIDList?.[0] || ''
-      }
-    } finally {
-      await fs.promises.unlink(tempFilePath).catch(() => {})
+    const uploadResult = await app.uploadFile({
+      cloudPath,
+      fileContent: fs.createReadStream(tempFilePath)
+    })
+    return {
+      cloudPath,
+      fileId: uploadResult?.fileID || uploadResult?.fileId || uploadResult?.fileIDList?.[0] || ''
     }
   }
 

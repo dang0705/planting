@@ -27,22 +27,25 @@
 |---|---:|---:|
 | code_explorer | 3 min | 6 min |
 | implementer_fast | 5 min | 10 min |
-| implementer_deep | 10 min | 20 min |
+| implementer_deep | 20 min | 40 min |
 | qa_reviewer | 8 min | 15 min |
 | docs_keeper | 5 min | 10 min |
 
 soft wait 前不得催促。hard wait 后可请求 progress receipt。
 
+
+`implementer_deep` 若由 GLM-5.2 / Volcengine Coding Plan 承担，默认使用更长等待策略：
+
+1. soft wait 前不得发送任何“进度如何 / 是否继续 / 你还在吗”之类提示。
+2. soft wait 到达后，如果 `git status --short`、`git diff --stat`、测试日志、构建日志或进程状态在最近 10 分钟内有变化，必须继续等待，不得打断。
+3. hard wait 到达后，只有在没有任何可观察进展时，才允许请求一次简短 Progress Receipt。
+4. 请求 Progress Receipt 时不得重发完整 Contract，不得改变任务范围，不得要求 implementer 立刻总结全部上下文。
+5. 不得因为 main agent 自身不确定而主动询问用户“是否继续等待”；只有危险操作、权限确认、费用/外部服务确认或用户明确要求停止时，才询问用户。
+6. 如果 implementer 已经开始 apply_patch / 测试命令，main agent 必须等待该命令自然完成或进入明确 blocked 状态。
+
 ## Progress Receipt
 
-```text
-Progress Receipt:
-- status: running / blocked / done
-- current_step:
-- files_touched:
-- blockers:
-- next_action:
-```
+外置模板/规范片段：`../assets/templates/subagent-progress.md`（template_id: `subagent-progress-policy-01`）。
 
 限制：
 

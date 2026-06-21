@@ -141,6 +141,18 @@ scripts/sql/ensure-weather-history-cache-tables.sql
 
 天气缓存相关代码变更后，若要让线上/本地真实诊断读到上海热门城市缓存，先重新执行 recent-10d 批量/定时采集，确认 `weather-cache/v1/locations/city:shanghai/recent-10d.json` 已生成且日期窗口匹配，再期待 `/weather/environment-context` 对上海植物返回 `weatherEvidenceInsufficient=false`。既有 `coord:*` 上海缓存属于历史脏 key，不能作为 `city:shanghai` 的有效替代；清理这些脏 key 是独立运维动作，不是诊断请求链路的同步修复步骤。
 
+D0 当前天气不再维护 `working/{date}.json` 与 `daily/{date}.json` 两套文件。采样和归档都写入 `weather-cache/v1/locations/{locationKey}/days/{date}.json`：白天 now 采样保持 `state=working` 并更新 `latestSample`，定稿后写入 `dailyRollup`、`state=finalized`、`finalizedAt`。`recent-10d.json` 只从 D-1 到 D-10 的 finalized day file 聚合，排障时不要用旧 `dailyArchives` 或 D0 文件解释 recent 证据。
+
+线上/本地 D0 now 采样 timer 应包含：`weather-d0-now-morning-0920`、`weather-d0-now-forenoon-1220`、`weather-d0-now-noon-1420`、`weather-d0-now-afternoon-1820`、`weather-d0-now-finalize-2130`。cron 只是唤醒时间；真实 slot 语义以 `now-sample-slots` 的 sunrise/sunset 计算为准。
+
+开发环境可通过环境变量限制定时任务参与的热门城市：
+
+```bash
+WEATHER_HOT_CITY_INGESTION_KEYS=city:shanghai
+```
+
+支持值为逗号分隔列表，接受 `city:*` key 或城市名（如 `city:shanghai,上海`）。不设置时默认跑全部 20 个热门城市。
+
 ## 4. 诊断 smoke / regression
 
 常用 smoke：

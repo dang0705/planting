@@ -337,19 +337,18 @@ async function main(event, context) {
       })
       weatherData = currentWeatherResult.weatherData
       dailyWeatherCache = currentWeatherResult.dailyWeatherCache
-      if (!weatherData) {
-        throw new Error(currentWeatherResult.message || '获取当天预报归档失败')
-      }
     }
 
+    const isCacheMiss = !weatherData
     return jsonResponse(200, {
       code: 200,
-      message: '获取成功',
+      message: isCacheMiss ? '天气缓存不足，请稍后重试' : '获取成功',
       data: {
-        ...weatherData,
+        ...(weatherData || {}),
+        weatherEvidenceInsufficient: isCacheMiss || undefined,
         cached: Boolean(dailyWeatherCache?.cacheHit),
         cacheEnabled: useCache,
-        cacheScope: dailyWeatherCache?.cacheHit ? 'daily_archive' : 'daily_archive_refresh',
+        cacheScope: dailyWeatherCache?.cacheHit ? 'day_latest_sample' : 'cache_miss',
         city: cityCacheContext.city || String(city || '').trim(),
         province: cityCacheContext.province,
         cachedAt: '',

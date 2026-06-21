@@ -5,9 +5,16 @@ Implementer Result:
 - status: done / blocked / partial
 - changed_files:
 - contract_execution:
+  - contract_id:
+  - contract_lock_level:
   - completed:
   - deviations:
   - blockers:
+- contract_compliance_matrix:
+  - item:
+  - status: done / not_applicable / blocked / deviation_requested
+  - evidence_ref:
+  - notes:
 - validation:
   - commands:
   - result:

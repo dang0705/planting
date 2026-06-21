@@ -129,6 +129,26 @@ const noSchemaService = createRecentWeatherService({
     }
   }
 })
+// 新架构：预置 finalized day file
+const { buildWeatherDayObjectPath } = require('../../cloudfunctions/weather-http/services/weather-cache-paths.js')
+const noSchemaD1Path = buildWeatherDayObjectPath('city:shanghai', '2026-06-13')
+noSchemaStorage.objects.set(noSchemaD1Path, {
+  schemaVersion: 'weather-cache/v1/day-now-sample',
+  locationKey: 'city:shanghai',
+  date: '2026-06-13',
+  state: 'finalized',
+  samples: [{ slotName: 'morning', temp: 28, humidity: 60, sourceKind: 'weather_now_sample' }],
+  latestSample: { slotName: 'morning', temp: 28 },
+  dailyRollup: {
+    date: '2026-06-13', quality: 'partial',
+    sampleSummary: { sampleCount: 1, daylightSampleCount: 1, missingSlots: ['forenoon', 'noon', 'afternoon'] },
+    lightFeatures: { daylightCloudMean: null, lowLightProxy: 'none' },
+    moistureFeatures: { humidityMean: 60, precipLastHourSum: null, wetSoilRiskFromWeather: 'low' },
+    tempFeatures: { tempMean: 28, tempMax: 28, heatStressLevel: 'low', coldStressLevel: 'low' },
+    tempMin: 28, dominantWeatherText: ''
+  },
+  sourceKind: 'observed_now_rollup', quality: 'partial', weatherObjectPath: noSchemaD1Path
+})
 await noSchemaService.ingestRecentForecast({
   lat: 31.22352,
   lng: 121.45591,
@@ -142,7 +162,7 @@ const noSchemaRead = await noSchemaService.readRecentWeatherForDiagnosis({
   diagnosisDate: '2026-06-14'
 })
 assert.equal(noSchemaRead.historicalDays.length, 10)
-assert.equal(noSchemaRead.historicalDays.find(day => day.date === '2026-06-13').uvIndex, 4)
+assert.equal(noSchemaRead.historicalDays.find(day => day.date === '2026-06-13').missing, false)
 
 const cloudPathOnlyPayload = {
   schemaVersion: 'weather-cache/v1/recent-10d',
@@ -321,13 +341,21 @@ const archiveOnlyRead = await archiveOnlyService.readRecentWeatherForDiagnosis({
   diagnosisDate: '2026-06-13',
   allowArchiveRebuild: true
 })
-assert.equal(archiveOnlyRead.historicalDays.length, 10)
-assert.equal(archiveOnlyRead.cacheSourceKind, 'rebuilt_from_daily_archives')
+// 新架构：旧 dailyArchives 不再作为 recent 聚合输入，rebuild 后应为 missing
+assert.equal(archiveOnlyRead.weatherEvidenceInsufficient, true)
+assert.equal(
+  archiveOnlyRead.historicalDays.length === 0 ||
+    archiveOnlyRead.historicalDays.every(day => day.missing),
+  true,
+  '旧 dailyArchives 不应重建出有效 historical days'
+)
+assert.equal(archiveOnlyRead.meta.quality, 'missing')
 assert.equal(
   archiveOnlyStorage.writes.some(
     item => item.cloudPath === buildRecentWeatherObjectPath('city:ArchiveOnly')
   ),
-  true
+  false,
+  '只有旧 dailyArchives 时不应上传有效 recent 文件'
 )
 
 clearRecentWeatherMemoryCache()
@@ -337,24 +365,29 @@ directDailyOnlyStorage.objects.set(buildRecentWeatherObjectPath('coord:121_46_31
   sourceKind: 'weather_cache_recent_10d',
   quality: 'missing',
   weatherEvidenceInsufficient: true,
-  window: {
-    targetDate: '2026-06-17',
-    start: '2026-06-08',
-    end: '2026-06-17',
-    days: 10
-  },
+  window: { targetDate: '2026-06-17', start: '2026-06-08', end: '2026-06-17', days: 10 },
   historicalDays: [],
   meta: { diagnosisDate: '2026-06-18', quality: 'missing' }
 })
+// 新架构：写 finalized day files 而非旧 daily archives
 for (const day of buildForecastDaily('2026-06-08', 10)) {
-  directDailyOnlyStorage.objects.set(buildWeatherDailyObjectPath('coord:121_46_31_22', day.date), {
-    ...day,
-    source: 'qweather_forecast_10d_archive',
-    sourceKind: 'qweather_forecast_10d_archive',
-    quality: 'partial',
-    weatherObjectPath: buildWeatherDailyObjectPath('coord:121_46_31_22', day.date),
-    rawObjectPath:
-      'weather-cache/v1/locations/coord:121_46_31_22/raw/forecast-2026-06-16T12:37:08Z.json'
+  const dayPath = buildWeatherDayObjectPath('coord:121_46_31_22', day.date)
+  directDailyOnlyStorage.objects.set(dayPath, {
+    schemaVersion: 'weather-cache/v1/day-now-sample',
+    locationKey: 'coord:121_46_31_22',
+    date: day.date,
+    state: 'finalized',
+    samples: [{ slotName: 'morning', temp: day.tempMaxC, humidity: day.humidity, sourceKind: 'weather_now_sample' }],
+    latestSample: { slotName: 'morning', temp: day.tempMaxC },
+    dailyRollup: {
+      date: day.date, quality: 'partial',
+      sampleSummary: { sampleCount: 1, daylightSampleCount: 1, missingSlots: ['forenoon', 'noon', 'afternoon'] },
+      lightFeatures: { daylightCloudMean: null, lowLightProxy: 'none' },
+      moistureFeatures: { humidityMean: day.humidity, precipLastHourSum: null, wetSoilRiskFromWeather: 'low' },
+      tempFeatures: { tempMean: day.tempMaxC, tempMax: day.tempMaxC, heatStressLevel: 'low', coldStressLevel: 'low' },
+      tempMin: day.tempMinC, dominantWeatherText: ''
+    },
+    sourceKind: 'observed_now_rollup', quality: 'partial', weatherObjectPath: dayPath
   })
 }
 const directDailyOnlyRead = await createRecentWeatherService({
@@ -363,10 +396,9 @@ const directDailyOnlyRead = await createRecentWeatherService({
   now: () => new Date('2026-06-18T00:30:00Z')
 }).readRecentWeatherForDiagnosis({ locationKey: 'coord:121_46_31_22', lat: 31.22352, lng: 121.45591, city: '上海市', diagnosisDate: '2026-06-18', allowArchiveRebuild: true })
 assert.equal(directDailyOnlyRead.historicalDays.length, 10)
-assert.equal(directDailyOnlyRead.cacheSourceKind, 'rebuilt_from_daily_archives')
+assert.equal(directDailyOnlyRead.cacheSourceKind, 'rebuilt_from_day_archives')
 assert.equal(directDailyOnlyRead.historicalDays.at(-1).date, '2026-06-17')
-assert.equal(directDailyOnlyRead.historicalDays.at(-1).uvIndex, 8)
-assert.equal(directDailyOnlyRead.historicalDays.at(-1).sourceKind, 'qweather_forecast_10d_archive')
+assert.equal(directDailyOnlyRead.historicalDays.at(-1).sourceKind, 'observed_now_rollup')
 assert.equal(
   directDailyOnlyStorage.writes.some(
     item => item.cloudPath === buildRecentWeatherObjectPath('coord:121_46_31_22')
@@ -413,12 +445,9 @@ const historicalDailyRead = await createRecentWeatherService({
   diagnosisDate: '2026-06-14',
   allowArchiveRebuild: true
 })
-assert.equal(historicalDailyRead.historicalDays.at(-1).date, '2026-06-13')
-assert.equal(historicalDailyRead.historicalDays.at(-1).missing, true)
-assert.equal(
-  historicalDailyRead.historicalDays.at(-1).warning,
-  'qweather_historical_weather_disallowed'
-)
+// 新架构：旧 dailyArchives 不再作为 recent 输入，rebuild 后应为 missing
+assert.equal(historicalDailyRead.weatherEvidenceInsufficient, true)
+assert.equal(historicalDailyRead.meta.quality, 'missing')
 
 const missingObjectStorage = createWeatherObjectStorage({
   app: {
