@@ -100,7 +100,7 @@ BRV Recall Gate 只允许输出 receipt / packet。
 3. 不展开完整历史。
 4. 不展开 ByteRover / swarm 配置噪声。
 5. 不把完整 BRV 输出广播给所有 subagent。
-6. main agent 只消费 BRV Recall Packet 和 evidence_ref。
+6. main agent 只消费 BRV Fact Routing Packet 和 evidence_ref。
 
 
 ## Pre-implementation 模板读取预算

@@ -43,6 +43,24 @@
 13. `docs_keeper_required=yes` 但未分配或未完成 docs_keeper。
 14. touched code file 超过 500 行且没有实际拆分、没有 approved exception、没有 blocker 写回。
 
+## implementer 单测与 QA e2e / 端上分离
+
+Completion Gate 必须分别判断：
+
+```text
+- implementer_unit_tests_completed: yes / no / not_applicable
+- qa_e2e_completed: yes / no / not_applicable
+- qa_mini_program_runtime_completed: yes / no / not_applicable
+```
+
+硬规则：
+
+1. 单测归 implementer；QA 不运行或重复运行单测。
+2. 单测缺失或失败时，Completion Gate 不通过，findings 转回同一 implementer 线程。
+3. QA 负责 e2e、端上测试、UI/Figma 验收和运行时链路取证。
+4. QA e2e / 端上证据缺失时，Completion Gate 不通过，归因为 QA gap 或 tool/session blocker。
+5. QA Result 中只有 implementer_unit_evidence_ref 而无 e2e / 端上证据时，不能视为 QA completed。
+
 ## 输出模板
 
 外置模板/规范片段：`../assets/templates/phase-gates.md`（template_id: `completion-gate-01`）。

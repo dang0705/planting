@@ -37,7 +37,7 @@
 
 ## 执行顺序
 
-`dispatch-task` 必须按顺序执行：读取 task facts / ClickUp Contract / BRV Recall Packet / 最小规则上下文；判断 `code_explorer_required`、`code_changes_required`、implementer 类型、`qa_reviewer_required`、`docs_keeper_required`；输出 Agent Assignment；执行 Reuse Gate；对无可复用线程的 required subagent 执行 Spawn Contract Gate；只有复用或 spawn 成功才允许进入实现 / 验证；implementer 完成后按需进入 QA / review / docs sync；main agent 最终 review、ClickUp 回写、Git commit 或总结。
+`dispatch-task` 必须按顺序执行：读取 task facts / ClickUp Contract / BRV Fact Routing Packet / 最小规则上下文；判断 `code_explorer_required`、`code_changes_required`、implementer 类型、`qa_reviewer_required`、`docs_keeper_required`；输出 Agent Assignment；执行 Reuse Gate；对无可复用线程的 required subagent 执行 Spawn Contract Gate；只有复用或 spawn 成功才允许进入实现 / 验证；implementer 完成后按需进入 QA / review / docs sync；main agent 最终 review、ClickUp 回写、Git commit 或总结。
 
 任何 required subagent 未通过 Reuse Gate 或 Spawn Contract Gate，流程必须停止。
 

@@ -31,3 +31,5 @@
 ## References 外置规则
 
 `references/` 目录不得内联 fenced template / receipt / packet / command snippet。需要精确格式时，只能引用本目录模板文件中的 `template_id`。
+
+| Test Ownership | `contracts.md` / `implementer-result.md` / `qa-evidence.md` |

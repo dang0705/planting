@@ -2,15 +2,35 @@
 
 ## 定位
 
-本文件定义 QA 证据、自动化范围、失败归因和输出预算。QA 不做 code review，不审代码 diff。
+本文件定义 QA 证据、e2e / 端上自动化范围、失败归因和输出预算。QA 不做 code review，不审代码 diff，不运行单测。
 
 模板引用：
 
 外置模板/规范片段：`../assets/templates/qa-evidence.md`（template_id: `qa-evidence-policy-01`）。
 
+## 单测归属硬规则
+
+单测只归 implementer。QA 不得运行、重复运行或补跑 unit tests。
+
+QA 可以读取 implementer 的 `unit_test_evidence` 作为上游前置证据，但不得把单测列为 QA checks，也不得用自己补跑单测来填补上游缺口。
+
+如果 Test Contract 要求 QA 运行单测，QA 必须退回：
+
+```text
+contract_blocker=test_ownership_violation
+```
+
+如果 implementer 缺少必需单测证据，QA 必须输出：
+
+```text
+upstream_unit_evidence_missing
+```
+
+然后由 main agent 转回同一 implementer 线程补齐。
+
 ## QA scope
 
-QA scope 由 Test Contract / 验收标准决定，不由“是否有 UI diff”决定。
+QA scope 由 QA Validation Contract / 验收标准决定，不由“是否有 UI diff”决定。QA scope 不包含 unit tests。
 
 如果 ticket / prompt / 验收标准 / request changes 明确要求小程序实际交互、页面点选、表单输入、按钮状态、控件状态、端上 UI 行为或用户路径验证，则 QA 必须执行自动化或端上验证。
 
@@ -22,9 +42,9 @@ QA scope 由 Test Contract / 验收标准决定，不由“是否有 UI diff”�
 4. 诊断小程序请求路径、诊断页面入口、端上 `wx.request` 链路。
 5. CloudBase SQL repository / schema / seed。
 
-这类 QA Contract 必须包含 concrete `endpoint`、`page`、`projectPath`、`payload`、`assertions`、`evidence_source`。只写 unit tests、Node HTTP、curl、backend smoke 或“按现有测试执行”均不合格。
+这类 QA Validation Contract 必须包含 concrete `endpoint`、`page`、`projectPath`、`payload`、`assertions`、`evidence_source`。写入 unit tests 属于职责边界错误；只写 Node HTTP、curl、backend smoke 或“按现有测试执行”均不合格。
 
-对 `/diagnosis/question/start`、`/diagnosis/answer` 等端上接口，合格证据必须来自小程序运行时的 `wx.request` 或真实端上交互，通过 `miniprogram-automator` / `9420` 获取。Node 直接 HTTP / curl 只能作为后端 smoke，不得替代端上 QA。
+对 `/diagnosis/question/start`、`/diagnosis/answer` 等端上接口，合格证据必须来自小程序运行时的 `wx.request` 或真实端上交互，通过 `miniprogram-automator` / `9420` 获取。Node 直接 HTTP / curl 只能作为排障辅助证据，不得替代端上 QA；QA 不得以补跑单测替代端上验收。
 
 如果本轮代码未部署到云端，QA 必须先成功跑通 `npm run dev:mp-weixin:local-functions:lan` 的完整 LAN 本地函数 flow，再使用小程序运行时验证。若 `dev:mp-weixin:local-functions:lan`、`9420` 或 `miniprogram-automator` 无法覆盖 required item，QA Result 必须标记 blocker / not_verified；不得标记 complete。
 
@@ -112,7 +132,7 @@ CloudBase SQL repository / schema / seed 改动必须有 schema truth gate 证�
 1. 优先使用 live `INFORMATION_SCHEMA` 或 CloudBase MCP 验证真实 schema。
 2. 若 auth 不可用，至少使用 checked-in schema spec + runtime endpoint smoke / 端上 `wx.request` 证明没有 `Unknown column`。
 3. live schema 未验证必须列为 gap，不得写成 schema 已完整验证。
-4. 只运行 repository unit tests 不能证明 live schema truth。
+4. repository unit tests 归 implementer；QA 不运行 repository unit tests，也不能用它证明 live schema truth。
 
 ## 输出预算
 
@@ -138,6 +158,6 @@ QA 输出必须合并为一个简洁结果，不拆成大量重复章节。
 
 ## 禁止旧式展开章节
 
-QA 输出只能使用 `QA Result` 一个合并模板。禁止输出独立大章节：测试执行矩阵、unit-test 结果、smoke-test 结果、e2e-test 结果、前端自动化 / wechat-dev-tools 结果、QA Visual Baseline Slice 展开详情、UI / Figma 对齐测试展开详情、边界条件、Dirty Workspace 干扰判断、回归风险、发布前质量缺口、给主控的最终建议。
+QA 输出只能使用 `QA Result` 一个合并模板。禁止输出独立大章节：测试执行矩阵、e2e-test 结果、前端自动化 / wechat-dev-tools 结果、QA Visual Baseline Slice 展开详情、UI / Figma 对齐测试展开详情、边界条件、Dirty Workspace 干扰判断、回归风险、发布前质量缺口、给主控的最终建议。单测结果只能引用 implementer 的 unit_test_evidence，不得作为 QA 自己的结果章节。
 
 这些内容如需表达，必须压缩进 `QA Result` 对应字段。

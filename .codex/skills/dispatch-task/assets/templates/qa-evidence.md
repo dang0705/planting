@@ -11,12 +11,12 @@ QA Result:
   - blocked:
   - not_verified:
 - checks:
-  - unit:
-  - smoke:
+  - implementer_unit_evidence_ref:
   - e2e:
+  - mini_program_runtime:
   - ui_figma:
-  - wechat_devtools:
-  - manual:
+  - runtime_api_flow:
+  - manual_if_needed:
 - evidence:
   - commands:
   - screenshots:
@@ -38,6 +38,10 @@ QA Result:
 - completion:
   - blocks_completion: yes / no
   - reason:
+- test_ownership:
+  - unit_tests_run_by_qa: no
+  - upstream_unit_evidence_missing: yes / no
+  - contract_blocker: test_ownership_violation / none
 - next_action:
 ```
 

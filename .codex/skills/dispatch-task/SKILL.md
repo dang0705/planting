@@ -52,7 +52,7 @@ main agent 默认只处理 receipt，不做二次实现、不做二次 QA、不�
 ```text
 Phase 0: 硬门禁
 Phase 1: 事实读取
-Phase 1.5: BRV Recall Gate
+Phase 1.5: BRV Minimal Fact Routing Gate
 Phase 2: Agent Assignment + Subagent Reuse Gate
 Phase 3: role_context_packets
 Phase 4: Solution Discovery + Implementation Contract + Test Contract
@@ -122,11 +122,11 @@ $ui-implementation-scope-policy
 references/brv-recall-gate.md
 ```
 
-在 task facts / prompt facts 读取完成后，main agent 必须生成 BRV query，召回当前仓库相关事实，并压缩为 BRV Recall Packet。
+在 task facts / prompt facts 读取完成后，main agent 必须生成最小 BRV query，召回当前仓库相关 fact_ref / source_ref / code_ref / test_ref，并压缩为 BRV Fact Routing Packet。
 
 BRV 不可用时不得伪造召回结果；必须记录 miss / blocked / skipped 和 fallback。
 
-BRV 输出只允许作为 receipt / packet，不展开完整历史。
+BRV 输出只允许作为最精简事实路由 receipt / packet，不展开完整历史或完整 BRV context。
 
 ## 7. Phase 2：Agent Assignment + Subagent Reuse Gate
 
@@ -142,6 +142,7 @@ references/agent-assignment-core.md
 ```text
 references/implementer-routing-policy.md      # 需要代码改动、code_explorer 或 implementer 时
 references/qa-docs-routing-policy.md          # 需要判断 QA / docs_keeper 时
+references/test-ownership-policy.md           # 单测 / e2e / 端上测试职责边界
 references/subagent-spawn-gate.md             # required named subagent 需要复用或 spawn 时
 ```
 
@@ -175,6 +176,18 @@ UI/Figma 任务中，必须通过 role_context_packet 显式触发对应 skill�
 required_skill: $implementer-ui-execution-policy
 required_skill: $qa-ui-visual-baseline-policy
 ```
+
+## 测试职责边界
+
+读取：
+
+```text
+references/test-ownership-policy.md
+```
+
+硬规则：单测只归 implementer；QA 不得运行或重复运行单测。QA 只负责 e2e、端上测试、UI/Figma 验收和运行时链路取证。
+
+Test Contract 必须拆成 Implementer Validation Contract 与 QA Validation Contract。unit tests 只能写入 implementer 段，不得写入 QA 段。
 
 ## 9. Phase 4：Solution Discovery、Implementation Contract、Test Contract
 
@@ -243,6 +256,7 @@ references/qa-evidence-policy.md
 ```
 
 QA 不审代码 diff，不做 code review。  
+QA 不运行单测、不重复 implementer 单测；QA 只执行 e2e、端上测试、UI/Figma 验收和运行时链路取证。  
 QA 输出必须摘要化，禁止粘贴完整日志、完整 DevTools dump、完整截图 OCR。
 
 ## 13. Phase 7：ClickUp 回写与 Git commit
@@ -327,7 +341,7 @@ references/subagent-progress-policy.md
 
 默认采用低成本观察，不得频繁中断 subagent。超过等待阈值后，只能请求简短 Progress Receipt。
 
-## WeChat DevTools 自动化职责
+## 小程序端上 automator 自动化职责
 
 涉及小程序端上验证时，读取：
 
@@ -335,7 +349,7 @@ references/subagent-progress-policy.md
 references/wechat-devtools-automation-policy.md
 ```
 
-main agent 默认不直接执行 WeChat DevTools 自动化。implementer 只做最小自测，QA 负责正式验收，禁止重复完整自动化。
+main agent 默认不直接执行完整端上 automator 自动化。implementer 只做最小自测，QA 负责正式验收，禁止重复完整自动化。WeChat MCP 不是默认路径。
 
 ## Phase 0 Git baseline
 

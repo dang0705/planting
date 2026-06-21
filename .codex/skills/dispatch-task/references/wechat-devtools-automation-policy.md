@@ -121,8 +121,13 @@ QA 默认路径是复用现有 IDE / `9420` 会话并做原始 WebSocket / autom
 1. 优先使用 live `INFORMATION_SCHEMA` 或 CloudBase MCP 验证真实 schema。
 2. 若 auth 不可用，必须至少结合 checked-in schema spec 与 runtime endpoint smoke / 小程序运行时 `wx.request`，证明链路没有 `Unknown column`。
 3. live schema 未验证必须作为 gap 记录。
-4. 不能用 Node repository unit tests 替代小程序运行时请求或 live schema gate。
+4. Node repository unit tests 归 implementer；QA 不运行该类单测，也不能用它替代小程序运行时请求或 live schema gate。
 
 ## 输出预算
 
 自动化输出不得粘贴完整 DevTools dump。只记录操作步骤摘要、关键断言、通过 / 失败状态、证据路径或截图引用、失败归因。
+
+
+## 单测归属
+
+端上自动化由 QA 执行；unit tests / repository unit tests 由 implementer 执行。QA 不得用单测替代端上自动化，也不得重复 implementer 单测。

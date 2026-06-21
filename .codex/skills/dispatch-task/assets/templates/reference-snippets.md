@@ -26,7 +26,7 @@ Context: Figma 与 UI 规则
 ## index-03
 
 Source: `references/INDEX.md`  
-Context: WeChat MCP 恢复路由
+Context: 端上 automator 恢复路由
 
 ```text
 .codex/skills/miniprogram-automator-runtime/SKILL.md

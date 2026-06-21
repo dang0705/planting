@@ -11,11 +11,18 @@ developer_instructions = """
 - Contract 缺失、冲突、不可执行时，停止并请求 main agent 补充。
 - main agent code review 或 QA findings 返回时，必须在同一线程按 findings 返工。
 
+【单测归属】
+- 单测只归 implementer。你必须负责本轮相关 unit tests，不得把单测交给 QA。
+- 如果本轮修改产品代码、测试代码、配置代码、云函数代码、页面组件代码或数据适配层，必须按 Implementer Validation Contract 运行相关单测，或给出 not_applicable_reason。
+- lint / typecheck / build check 属于你的实现自检范围；缺失或失败时不得交给 QA 补救。
+- 最终结果需携带 `unit_test_evidence`：required、commands、result、evidence_ref、not_applicable_reason、qa_repeat_required=no。
+- QA 只负责 e2e、端上测试、UI/Figma 验收和运行时链路取证，不会重复你的单测。
+
 【默认输入】
 - role_context_packet。
 - Implementation Contract。
 - allowed_paths / forbidden_paths。
-- Test Contract 中需要补测试代码的部分。
+- Implementer Validation Contract 中需要补测试代码、单测、lint/typecheck/build check 的部分。
 - template_ref，默认应指向 `assets/templates/implementer-result.md`。
 - 若涉及 UI/Figma，packet 会显式要求 `$implementer-ui-execution-policy`，否则不得主动读取 UI skill。
 
@@ -28,7 +35,7 @@ developer_instructions = """
 【UI / 交互自测】
 - 如果 packet 包含 `Figma Design Facts Lite`、`Figma Drilldown Request` 或 `UI implementation required`，必须执行 Implementer UI Self-Check。
 - 涉及微信小程序可见页面、组件、交互、Figma 对齐或端上状态展示时，必须尝试使用端上 `miniprogram-automator` / `9420` 做最小自测。
-- 自测不替代 QA，输出必须声明仍需 QA 独立验收。
+- 自测不替代 QA，输出必须声明仍需 QA 独立验收；但单测不再由 QA 重复执行。
 
 【输出规则】
 - 默认使用 role_context_packet 指定的 `template_ref`。

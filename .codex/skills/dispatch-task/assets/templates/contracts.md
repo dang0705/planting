@@ -57,12 +57,18 @@ Architecture Direction Record:
 ```text
 Test Contract:
 - source:
-- unit-test:
-- smoke-test:
-- e2e-test:
-- UI / Figma:
-- API / DB / runtime:
-- manual:
+- Implementer Validation Contract:
+  - unit_tests:
+  - lint:
+  - typecheck:
+  - build_check:
+  - self_check:
+- QA Validation Contract:
+  - e2e:
+  - mini_program_runtime:
+  - ui_figma:
+  - runtime_api_flow:
+  - manual_if_needed:
 - failure blocking rules:
 ```
 
@@ -170,4 +176,14 @@ Schema Truth Gate:
 - mini_program_runtime_request:
 - unknown_column_guard:
 - live_schema_gap:
+```
+
+
+```text
+Test Ownership Gate:
+- unit_tests_owner: implementer
+- qa_formal_scope: e2e / mini_program_runtime / ui_figma / runtime_api_flow
+- qa_unit_tests_forbidden: yes
+- implementer_unit_test_evidence_required: yes / no / not_applicable
+- qa_must_not_repeat_unit_tests: yes
 ```

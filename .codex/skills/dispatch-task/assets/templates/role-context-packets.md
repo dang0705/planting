@@ -2,8 +2,10 @@
 
 ```text
 role_context_packets:
-- brv_recall_packet:
+- brv_fact_routing_packet:
   - status:
+  - packet_ref:
+  - routing_domains:
   - evidence_ref:
 - code_explorer:
   - thread_reuse:
@@ -150,21 +152,32 @@ docs_sync_scope:
 ## role-context-packets-08
 
 Source: `references/role-context-packets.md`  
-Context: BRV recall packet 分发
+Context: BRV Fact Routing Packet 分发
 
 ```text
-brv_recall_packet:
+brv_fact_routing_packet:
 - status:
-- evidence_ref:
-- relevant_repo_facts:
-- risk_flags:
+- packet_ref:
+- routing_domains:
+- fact_refs:
+- authority_doc_refs:
+- code_entry_refs:
 - test_entry_refs:
-- mcp_usage_notes:
 
-subagent_memory_context:
-- relevant_repo_facts:
-- known_test_entries:
-- mcp_usage_notes:
+subagent_slices:
+- relevant_fact_refs:
+- code_entry_refs:
+- test_entry_refs:
 - forbidden_assumptions:
+- automation_policy:
 - evidence_ref:
+```
+
+
+```text
+test_ownership:
+- implementer_validation_contract_ref:
+- qa_validation_contract_ref:
+- implementer_unit_evidence_required: yes / no / not_applicable
+- qa_unit_tests_forbidden: yes
 ```

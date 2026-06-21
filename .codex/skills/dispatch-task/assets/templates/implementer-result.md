@@ -19,6 +19,13 @@ Implementer Result:
   - commands:
   - result:
   - evidence_ref:
+- unit_test_evidence:
+  - required: yes / no
+  - commands:
+  - result: pass / fail / blocked / not_applicable
+  - evidence_ref:
+  - not_applicable_reason:
+  - qa_repeat_required: no
 - ui_self_check:
   - required:
   - wechat_devtools_used:

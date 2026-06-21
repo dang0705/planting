@@ -93,23 +93,32 @@ docs_keeper packet 必须包含：
 
 规则：
 
-1. `active_docs_candidates` 只能列最小候选文件，优先从 `docs/code-logics/INDEX.md`、`docs/new-rules/planting_ai_diagnosis_source_index.json` 和 BRV Recall Packet 选择。
+1. `active_docs_candidates` 只能列最小候选文件，优先从 `docs/code-logics/INDEX.md`、`docs/new-rules/planting_ai_diagnosis_source_index.json` 和 BRV Fact Routing Packet 选择。
 2. `source_refs` 必须指向当前代码入口、测试入口或 config，而不是旧蓝图。
 3. 若 `brv_sync_required=yes`，packet 必须要求执行 `npm run check:brv-context-lifecycle` 或说明不可执行原因。
 4. docs_keeper receipt 必须明确 `docs_changed` 或 `docs_not_changed_reason`，不能只说“无需同步”。
 
 
-## BRV recall packet 分发
+## BRV Fact Routing Packet 分发
 
-如果 Phase 1.5 产生 BRV Recall Packet，main agent 必须将其压缩后分发到 role_context_packets。
+如果 Phase 1.5 产生 BRV Fact Routing Packet，main agent 必须只按 role 分发最小 fact_ref / source_ref / code_ref / test_ref。
 
 分发原则：
 
 1. 不广播完整 BRV 输出。
-2. 只给每个 subagent 对应的 `subagent_memory_context`。
-3. BRV 缺失时，在 packet 中记录 `brv_status` 和 fallback。
-4. 不输出 ByteRover / swarm 配置噪声。
+2. 不把完整 fact 正文广播给 subagent；默认只传 fact_ref/source_ref。
+3. 只给每个 subagent 对应的 `subagent_slices`。
+4. BRV 缺失时，在 packet 中记录 `brv_status` 和 fallback。
+5. 不输出 ByteRover / swarm / WeChat MCP 配置噪声。
+6. 端上 QA 默认传 automator 路径，不传旧 WeChat MCP recovery。
 
 建议字段：
 
 外置模板/规范片段：`../assets/templates/role-context-packets.md`（template_id: `role-context-packets-08`）。
+
+
+## 测试职责 packet 边界
+
+implementer packet 可以包含 Implementer Validation Contract 中的 unit_tests / lint / typecheck / build_check。QA packet 不得包含 unit tests；只能包含 QA Validation Contract 中的 e2e、mini_program_runtime、ui_figma、runtime_api_flow、manual_if_needed。
+
+QA packet 可以包含 `implementer_unit_evidence_ref` 作为上游证据引用，但不得要求 QA 重跑单测。

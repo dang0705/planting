@@ -23,6 +23,9 @@ Pre-Implementation Budget Check:
 Completion Gate:
 - acceptance_matrix_complete: yes / no
 - required_tests_passed: yes / no
+- implementer_unit_tests_completed: yes / no / not_applicable
+- qa_e2e_completed: yes / no / not_applicable
+- qa_mini_program_runtime_completed: yes / no / not_applicable
 - qa_completed: yes / no
 - mini_program_automation_completed: yes / no / not_applicable
 - checklist_writeback_completed: yes / no / not_applicable
@@ -48,6 +51,9 @@ Context: 输出模板
 Completion Gate:
 - acceptance_matrix_complete: yes / no
 - required_tests_passed: yes / no
+- implementer_unit_tests_completed: yes / no / not_applicable
+- qa_e2e_completed: yes / no / not_applicable
+- qa_mini_program_runtime_completed: yes / no / not_applicable
 - qa_completed: yes / no
 - mini_program_automation_completed: yes / no / not_applicable
 - checklist_writeback_completed: yes / no / not_applicable

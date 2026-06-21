@@ -22,7 +22,7 @@
 | Phase 0 | 硬门禁、mode 判断、Git baseline | `phase-0-gates.md` |
 | Phase 1 | ClickUp 模式下读取主任务、子任务、relationships、链接 | `clickup-ticket-read-policy.md` |
 | Phase 1 | task facts / prompt facts receipt 化 | `task-facts-receipt-policy.md` |
-| Phase 1.5 | BRV / ByteRover 项目事实召回 | `brv-recall-gate.md` |
+| Phase 1.5 | BRV / ByteRover 最精简事实路由 | `brv-recall-gate.md` |
 | Phase 1 / 7 | ClickUp 模式下 markdown checklist、验收标准、Test Case Base、markdown_description 回写 | `checklist-writeback-policy.md` |
 | Phase 2 | Agent Assignment 读取路由 | `agent-assignment-gate.md` |
 | Phase 2 | Agent Assignment 最小核心 | `agent-assignment-core.md` |
@@ -31,6 +31,7 @@
 | Phase 2 | Subagent Reuse / Spawn Gate | `subagent-spawn-gate.md` |
 | Phase 3 | role_context_packets | `role-context-packets.md` |
 | Phase 4 | Solution Discovery、Implementation Contract、Test Contract、pre-implementation 质量门禁 | `solution-discovery-gate.md` / `implementation-test-contract.md` / `main-pre-implementation-gates.md` |
+| Phase 4 / 6 | 测试职责边界：单测归 implementer，QA 只做 e2e / 端上 | `test-ownership-policy.md` |
 | Phase 4.45 | pre-implementation token 预算保险丝 | `pre-implementation-budget-fuse.md` |
 | Phase 6 | QA 证据、日志、截图、失败归因 | `qa-evidence-policy.md` |
 | Phase 6 | 端上 automator 自动化职责分配 | `wechat-devtools-automation-policy.md` |
@@ -70,9 +71,9 @@ Figma / UI 细则不在本目录内，仍由对应 skill 管理：
 
 外置模板/规范片段：`../assets/templates/reference-snippets.md`（template_id: `index-02`）。
 
-## WeChat MCP 恢复路由
+## 端上 automator 恢复路由
 
-当 `dispatch-task` 任一阶段出现以下问题时，优先路由到：
+当 `dispatch-task` 任一阶段出现小程序端上自动化问题时，优先路由到 automator 运行时恢复技能：
 
 外置模板/规范片段：`../assets/templates/reference-snippets.md`（template_id: `index-03`）。
 
@@ -80,8 +81,9 @@ Figma / UI 细则不在本目录内，仍由对应 skill 管理：
 
 1. `9420` 未监听或原始 WebSocket 无法握手。
 2. main / QA 线程对同一 `projectPath` 的 automator 连接能力不一致。
-3. 需要判断是 DevTools/automator 未启动、登录态失效、项目路径错误，还是产品页面问题。
+3. 需要判断是 automator 未启动、登录态失效、项目路径错误，还是产品页面问题。
 4. 需要在不更换线程的前提下继续完成小程序端上验收。
+5. WeChat MCP 不作为默认恢复路径；只有用户明确要求调试 MCP 本身时才读取旧 MCP 经验。
 
 ## Subagent 进度观察
 

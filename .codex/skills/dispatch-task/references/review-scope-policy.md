@@ -18,7 +18,7 @@ main agent 做实现后 code review，采用：
 
 ## QA 边界
 
-QA 不审代码 diff，不做 code review。
+QA 不审代码 diff，不做 code review，不运行或重复运行单测。
 
 `changed_files_as_test_scope_hint` 只作为测试影响范围提示，不作为代码审查对象。
 
@@ -42,3 +42,8 @@ QA 不审代码 diff，不做 code review。
 2. 标记 `Main Agent Boundary Violation`。
 3. 将相关 diff 交回同一 implementer 线程确认、修复或重做。
 4. 重新执行 Main Agent Code Review Gate。
+
+
+## 测试职责边界
+
+单测失败、单测缺失、lint/typecheck/build 自检失败属于 implementer 修复范围；QA 只验证 e2e、端上、UI/Figma 和运行时链路。

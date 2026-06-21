@@ -50,11 +50,44 @@ Implementation Contract 必须包含以下字段：
 
 禁止输出完整 patch、完整规则长文、完整 Figma Drilldown。
 
+## 测试职责边界硬门禁
+
+Test Contract 必须遵守 `test-ownership-policy.md`。
+
+main agent 必须把测试契约拆成：
+
+```text
+Implementer Validation Contract:
+- unit_tests:
+- lint:
+- typecheck:
+- build_check:
+- self_check:
+```
+
+```text
+QA Validation Contract:
+- e2e:
+- mini_program_runtime:
+- ui_figma:
+- runtime_api_flow:
+- manual_if_needed:
+```
+
+硬规则：
+
+1. unit tests / 单元测试只能写入 Implementer Validation Contract。
+2. QA Validation Contract 禁止包含 unit tests。
+3. QA 不得运行或重复运行 implementer 的单测。
+4. 单测缺失、失败或未记录证据时，返回 implementer 补齐；不得交给 QA 补跑。
+5. QA 只负责 e2e、端上测试、UI/Figma 验收和运行时链路取证。
+6. Completion Gate 必须分别检查 implementer 单测证据和 QA e2e / 端上证据。
+
 ## Test Contract
 
 main agent 必须基于 prompt 验收标准或 ClickUp Acceptance Checklist Matrix / Test Case Base 生成 Test Contract。
 
-QA 负责执行与取证，不负责设计测试契约。
+QA 负责执行 QA Validation Contract 中的 e2e、端上测试、UI/Figma 验收和运行时链路取证，不负责设计测试契约，也不得运行单测。
 
 ## 端上接口与题包自动化硬门禁
 
@@ -66,7 +99,7 @@ QA 负责执行与取证，不负责设计测试契约。
 4. 诊断小程序请求路径、诊断页面入口、端上 `wx.request` 链路。
 5. CloudBase SQL repository / schema / seed。
 
-上述任务的 Test Contract 不得只列 unit tests、Node 直接 HTTP、curl 或 backend smoke。必须包含：
+上述任务的 QA Validation Contract 不得列 unit tests，也不得只列 Node 直接 HTTP、curl 或 backend smoke。必须包含：
 
 外置模板/规范片段：`../assets/templates/contracts.md`（template_id: `implementation-test-contract-04`）。
 

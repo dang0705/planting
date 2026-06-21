@@ -129,3 +129,8 @@ main agent 后续默认只携带聚合统计和 `matrix_ref`，不得在每个 g
 ```text
 ../assets/templates/task-facts-receipts.md
 ```
+
+
+## 测试 owner 映射
+
+`verification_type=unit` 的验收项 owner 必须是 implementer。QA 不运行或重复单测。`verification_type=e2e / UI / Figma / runtime / mini_program` 的验收项 owner 必须是 QA。Completion Gate 必须分别消费 implementer 单测证据与 QA e2e / 端上证据。
