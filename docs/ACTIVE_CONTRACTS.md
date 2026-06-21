@@ -341,13 +341,14 @@ meta.forecastWindow
 meta.todaySource
 meta.recordCounts
 meta.warnings
+plantFeatures
 historicalDays[]
 forecastDays[]
 currentWeather
 timestamp
 ```
 
-诊断模式下，`/weather/environment-context` 必须优先读取自有 recent-10d 缓存。诊断天气事实链路为 `plant -> careLocationId -> locationKey -> weather-cache`；诊断请求已有植物 careLocation 时不得使用用户当前位置作为事实源。热门城市上海必须使用 `locationKey=city:shanghai`，上海/上海市/上海坐标不能退化为 `coord:*`；读取路径为 `weather-cache/v1/locations/{locationKey}/recent-10d.json`。缓存 miss / 读取异常 / 读取超时时返回 `200`，以 `weather evidence insufficient` 或空 `historicalDays` 表示不足；`city:shanghai` 的有效 recent payload 已生成且日期窗口匹配时，`weatherEvidenceInsufficient` 应为 `false`。不能在用户诊断链路中同步触发 QWeather 同步调用，也不能默认同步从旧 `dailyArchives` 重建 recent。同步 recent 重建只能读取已 `finalized` 的 `days/{date}.json`，并只能由显式维护调用开启；前端诊断入口必须按短超时降级返回。diagnosis reader 必须保留日期窗口守卫：partial recent payload 只有匹配 `diagnosisDate` / `window.targetDate = diagnosisDate - 1` 时才可作为有效证据，过期 payload 不得通过。
+诊断模式下，`/weather/environment-context` 必须优先读取自有 recent-10d 缓存。`environment-context` 返回重点字段包含 `plantFeatures`（至少 `weatherLightFactor10d/lightConfidence/lightEvidenceInsufficient/validLightDayCount/missingLightDayCount` 及 `dailyRollup.lightFeatures` 派生字段）。诊断天气事实链路为 `plant -> careLocationId -> locationKey -> weather-cache`；诊断请求已有植物 careLocation 时不得使用用户当前位置作为事实源。热门城市上海必须使用 `locationKey=city:shanghai`，上海/上海市/上海坐标不能退化为 `coord:*`；读取路径为 `weather-cache/v1/locations/{locationKey}/recent-10d.json`。缓存 miss / 读取异常 / 读取超时时返回 `200`，以 `weather evidence insufficient` 或空 `historicalDays` 表示不足；`weatherEvidenceInsufficient = true` 或 `lightEvidenceInsufficient = true` 时对应光照估算中性回退为 `1.00`；`city:shanghai` 的有效 recent payload 已生成且日期窗口匹配时，`weatherEvidenceInsufficient` 应为 `false`。不能在用户诊断链路中同步触发 QWeather 同步调用，也不能默认同步从旧 `dailyArchives` 重建 recent。同步 recent 重建只能读取已 `finalized` 的 `days/{date}.json`，并只能由显式维护调用开启；前端诊断入口必须按短超时降级返回。diagnosis reader 必须保留日期窗口守卫：partial recent payload 只有匹配 `diagnosisDate` / `window.targetDate = diagnosisDate - 1` 时才可作为有效证据，过期 payload 不得通过。
 
 ### 6.3 定时采集与批处理
 
@@ -357,7 +358,7 @@ D0 天气归档使用单一 day file 状态机：路径为 `weather-cache/v1/loc
 
 D0 now 采样配置包含 4 个采样 timer 与 1 个定稿 timer：`weather-d0-now-morning-0920`、`weather-d0-now-forenoon-1220`、`weather-d0-now-noon-1420`、`weather-d0-now-afternoon-1820`、`weather-d0-now-finalize-2130`。真实 slot 规则由 `now-sample-slots` 计算：morning=`max(09:20,sunrise+20m)`、forenoon=`12:20`、noon=`14:20`、afternoon=`sunset+20m`、finalize=`max(21:30,sunset+30m)`；固定 cron 只负责唤醒，不能替代 slot 语义。
 
-`recent-10d.json` 只聚合 D-1 到 D-10 且 `state=finalized` 的 `days/{date}.json`，D0 当天不得进入 recent。批处理默认覆盖 20 个热门城市（含 `city:shanghai`），并可由环境变量 `WEATHER_HOT_CITY_INGESTION_KEYS` 限定为部分城市；随后再合并 `weather_locations` 中 `is_active = 1` 且 `qweather_location_id` 非空的地点去重。支持 `batch` 入参 `limit` 控制处理量；不触发全量省市/全国抓取。诊断请求仍 storage-only，不同步调用 QWeather/GeoAPI。
+`recent-10d.json` 只聚合 D-1 到 D-10 且 `state=finalized` 的 `days/{date}.json`，D0 当天不得进入 recent。`dailyRollup.lightFeatures` 包含 `daylightCloudMean/daylightCloudP75/daylightCloudMax`、`visibilityMin/visibilityMean`、`dominantWeatherIcon/dominantWeatherText`、`weatherLightFactor`、`confidence`、`weatherLightCategory`；`recent-10d.json.plantFeatures` 包含至少 `weatherLightFactor10d/lightConfidence/lightEvidenceInsufficient/validLightDayCount/missingLightDayCount`，并可携带支持字段（daylight/cloud/visibility/dominant icon/text）。批处理默认覆盖 20 个热门城市（含 `city:shanghai`），并可由环境变量 `WEATHER_HOT_CITY_INGESTION_KEYS` 限定为部分城市；随后再合并 `weather_locations` 中 `is_active = 1` 且 `qweather_location_id` 非空的地点去重。支持 `batch` 入参 `limit` 控制处理量；不触发全量省市/全国抓取。诊断请求仍 storage-only，不同步调用 QWeather/GeoAPI。`weatherEvidenceInsufficient` 与 `lightEvidenceInsufficient` 为 true 时，光照相关估算回退为中性 `1.00` 而非低光判定。
 
 数据库建表与校验使用官方 CloudBase CLI（`tcb db execute`）路径，统一通过 `run-with-cloudbase-env` 注入凭据执行；不要将 `$runSQL` 或 `$runSQLRaw` 作为建表主路径。注意：CloudBase Manager API 常见对 `$runSQLRaw` 的限制仅覆盖 DML，不构成 MySQL DDL 能力阻断依据。只允许幂等建表，`scripts/sql/ensure-weather-history-cache-tables.sql` 为当前 DDL 源文件，`npm run ensure:cloudbase-sql-schema` 与 `npm run ensure:cloudbase-sql-schema:verify` 为最小运维入口。
 

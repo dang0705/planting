@@ -19,14 +19,13 @@ const {
   DAYLIGHT_SLOT_NAMES,
   classifyColdStressLevel,
   classifyHeatStressLevel,
-  classifyLowLightProxy,
   classifyWetSoilRisk,
   dominantText,
   max,
   mean,
-  percentile,
   pruneUndefined: _unused
 } = require('./now-sample-rollup-helpers')
+const { buildDayLightFeatures } = require('./weather-light-factor')
 
 const DAY_FILE_SCHEMA_VERSION = 'weather-cache/v1/day-now-sample'
 const MAX_SAMPLES = 8
@@ -128,6 +127,7 @@ function resolveDayFileQuality(samples = []) {
  * 构造 dailyRollup，采用 ClickUp 要求的嵌套结构。
  * - sampleSummary: { sampleCount, daylightSampleCount, missingSlots }
  * - lightFeatures: { daylightCloudMean, daylightCloudP75, daylightCloudMax, lowLightProxy }
+ *   扩展光照字段: visibilityMin/visibilityMean/dominantWeatherIcon/dominantWeatherText/weatherLightFactor/confidence/weatherLightCategory
  * - moistureFeatures: { humidityMean, precipLastHourSum, wetSoilRiskFromWeather }
  * - tempFeatures: { tempMean, tempMax, heatStressLevel, coldStressLevel }
  */
@@ -147,7 +147,6 @@ function buildDailyRollup({ samples = [], sunWindow = {}, date = '', generatedAt
   const temps = validSamples.map(s => s.temp).filter(Number.isFinite)
   const humidities = validSamples.map(s => s.humidity).filter(Number.isFinite)
   const precips = validSamples.map(s => s.precipLastHour).filter(Number.isFinite)
-  const clouds = validSamples.map(s => s.cloud).filter(Number.isFinite)
   const winds = validSamples.map(s => s.windSpeed).filter(Number.isFinite)
 
   const tempMean = mean(temps)
@@ -157,9 +156,6 @@ function buildDailyRollup({ samples = [], sunWindow = {}, date = '', generatedAt
   const precipLastHourSum = precips.length
     ? Math.round(precips.reduce((a, b) => a + b, 0) * 100) / 100
     : null
-  const daylightCloudMean = mean(clouds)
-  const daylightCloudP75 = percentile(clouds)
-  const daylightCloudMax = max(clouds)
   const windSpeedMean = mean(winds)
 
   return pruneUndefined({
@@ -171,12 +167,7 @@ function buildDailyRollup({ samples = [], sunWindow = {}, date = '', generatedAt
       daylightSampleCount,
       missingSlots
     },
-    lightFeatures: pruneUndefined({
-      daylightCloudMean,
-      daylightCloudP75,
-      daylightCloudMax,
-      lowLightProxy: classifyLowLightProxy(daylightCloudMean)
-    }),
+    lightFeatures: buildDayLightFeatures({ samples: validSamples, sunWindow, date }),
     moistureFeatures: pruneUndefined({
       humidityMean,
       precipLastHourSum,

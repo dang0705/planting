@@ -76,7 +76,7 @@ stale_if_changed:
 | `diagnose-http` | 统一诊断主链、问诊题包、结果、历史、反馈、review、池外候选，含 `/diagnose` 入口路径。 |
 | `storage-http` | 诊断/植物图片上传、临时 URL、图片删除，图片后缀有 allowlist。 |
 | `identify-http` | 植物识别，当前通过百度视觉识别能力取候选。 |
-| `weather-http` | 当前天气与环境天气窗口，支持 `/weather/current`、`/weather/environment-context`、`/weather/v7/environment-context`、`/weather/health`、`/weather/recent` 与 `/weather/ingestion/recent-10d`。支持 `weather-ingestion-recent-10d` 定时触发并入库最近 10 天天气缓存。诊断模式下 `environment-context` 使用自有 recent-10d 缓存优先，未命中/读取失败时返回 `200` 且 `historicalDays` 可为空。 |
+| `weather-http` | 当前天气与环境天气窗口，支持 `/weather/current`、`/weather/environment-context`、`/weather/v7/environment-context`、`/weather/health`、`/weather/recent` 与 `/weather/ingestion/recent-10d`。支持 `weather-ingestion-recent-10d` 定时触发并入库最近 10 天天气缓存。诊断模式下 `environment-context` 使用自有 recent-10d 缓存优先，`plantFeatures.weatherLightFactor10d` 参与 light 估算；未命中/读取失败时返回 `200` 且 `historicalDays` 可为空。 |
 | `plant-catalog-http` | 植物目录列表、详情、名称映射。 |
 | `plant-user-http` | 用户植物实例 CRUD。 |
 | `auth-user-http` | 微信登录、手机号绑定、用户资料更新、AI quota/权限等用户能力。 |

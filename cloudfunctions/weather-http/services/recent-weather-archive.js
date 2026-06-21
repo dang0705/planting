@@ -36,7 +36,7 @@ function convertDayFileToDailyRecord(dayPayload = {}, date = '') {
   const moistureFeatures = rollup.moistureFeatures || {}
   const lightFeatures = rollup.lightFeatures || {}
 
-  return normalizeDailyWeatherRecord(
+  const record = normalizeDailyWeatherRecord(
     {
       date: date || rollup.date || dayPayload?.date,
       tempMaxC: tempFeatures.tempMax ?? rollup.tempMax ?? tempFeatures.tempMean,
@@ -57,6 +57,10 @@ function convertDayFileToDailyRecord(dayPayload = {}, date = '') {
       quality: rollup.quality || 'partial'
     }
   )
+  if (lightFeatures && Object.keys(lightFeatures).length) {
+    record.lightFeatures = lightFeatures
+  }
+  return record
 }
 
 async function readManifest({ storage, location }) {

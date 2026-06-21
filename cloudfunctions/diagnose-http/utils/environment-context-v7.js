@@ -1118,7 +1118,9 @@ function buildLightPlanner({
   behaviorTimeline = {},
   plantContext = {},
   userLightContext = {},
-  weatherDays = []
+  weatherDays = [],
+  plantFeatures = {},
+  weatherEvidenceInsufficient = false
 } = {}) {
   const timeline = behaviorTimeline?.summary
     ? behaviorTimeline
@@ -1145,7 +1147,9 @@ function buildLightPlanner({
   const lightHealth = estimateLightHealth({
     plantContext,
     userLightContext,
-    weatherDays
+    weatherDays,
+    plantFeatures,
+    weatherEvidenceInsufficient
   })
 
   return {
@@ -1253,7 +1257,9 @@ function buildEnvironmentCareContextV7({
         environmentWeatherWindow.historical_days ||
         []),
       ...(environmentWeatherWindow.forecastDays || environmentWeatherWindow.forecast_days || [])
-    ]
+    ],
+    plantFeatures: environmentWeatherWindow?.plantFeatures || {},
+    weatherEvidenceInsufficient: environmentWeatherWindow?.weatherEvidenceInsufficient === true
   })
 
   return {

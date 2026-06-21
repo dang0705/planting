@@ -432,7 +432,13 @@ function buildReason({ profile, env, indoorEqHours, minNeed, maxNeed }) {
   return `按属级光照需求 ${minNeed}-${maxNeed} 小时/天估算，当前约 ${round(indoorEqHours, 1)} 小时，基本满足 ${profile.way} 需求。`
 }
 
-function estimateLightHealth({ plantContext = {}, userLightContext = {}, weatherDays = [] } = {}) {
+function estimateLightHealth({
+  plantContext = {},
+  userLightContext = {},
+  weatherDays = [],
+  plantFeatures = {},
+  weatherEvidenceInsufficient = false
+} = {}) {
   const env = normalizeUserLightContext(userLightContext)
   if (!env.hasMeaningfulInput) {
     return null
@@ -445,7 +451,16 @@ function estimateLightHealth({ plantContext = {}, userLightContext = {}, weather
   )
   const avgUv = mean(normalizedWeatherDays.map(day => day.uvIndex))
   const uvFactor = avgUv === undefined ? 1 : clamp(1 + 0.35 * ((avgUv - 8) / 8), 0.75, 1.15)
-  const outdoorEqHours = baseOutdoorHours.value * uvFactor
+  // recent-10d 天气光照因子：证据不足或缺失时保持中性 1.00，仅降低 confidence（不视为低光）
+  const recentLightFactor = plantFeatures?.weatherLightFactor10d
+  const lightEvidenceInsufficient = plantFeatures?.lightEvidenceInsufficient === true
+  const useRecentLightFactor =
+    Number.isFinite(recentLightFactor) && !lightEvidenceInsufficient && !weatherEvidenceInsufficient
+  const weatherLightFactor = useRecentLightFactor ? recentLightFactor : 1.0
+  const weatherLightConfidence = useRecentLightFactor
+    ? String(plantFeatures?.lightConfidence || 'none')
+    : 'none'
+  const outdoorEqHours = baseOutdoorHours.value * uvFactor * weatherLightFactor
   const facingFactor = FACTORS.facing[env.facing].factor
   const windowFactor = FACTORS.windowType[env.windowType].factor
   const positionFactor = FACTORS.position[env.position].factor
@@ -496,6 +511,8 @@ function estimateLightHealth({ plantContext = {}, userLightContext = {}, weather
         baseOutdoorHoursSource: baseOutdoorHours.source,
         avgUv: avgUv === undefined ? null : round(avgUv, 2),
         uvFactor: round(uvFactor, 3),
+        weatherLightFactor: round(weatherLightFactor, 3),
+        weatherLightConfidence,
         outdoorEqHours: round(outdoorEqHours, 2)
       },
       factors: {

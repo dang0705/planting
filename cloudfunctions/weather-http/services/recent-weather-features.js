@@ -1,5 +1,7 @@
 'use strict'
 
+const { aggregateRecentLightFeatures } = require('./weather-light-factor')
+
 function normalizeDate(value = '') {
   const raw = String(value || '').trim()
   if (!raw) {
@@ -126,6 +128,7 @@ function resolveRecentWeatherQuality(days = []) {
 
 function buildPlantWeatherFeatures(days = []) {
   const validDays = (Array.isArray(days) ? days : []).filter(day => !day?.missing)
+  const weatherEvidenceInsufficient = resolveRecentWeatherQuality(days) === 'missing'
   const humidityValues = validDays.map(day => normalizeNumber(day.humidity)).filter(Number.isFinite)
   const uvValues = validDays.map(day => normalizeNumber(day.uvIndex)).filter(Number.isFinite)
   const precipValues = validDays.map(day => normalizeNumber(day.precipMm)).filter(Number.isFinite)
@@ -154,7 +157,8 @@ function buildPlantWeatherFeatures(days = []) {
     maxTempC: max(tempMaxValues),
     minTempC: min(tempMinValues),
     heatStressDays: tempMaxValues.filter(value => value >= 32).length,
-    coldStressDays: tempMinValues.filter(value => value <= 8).length
+    coldStressDays: tempMinValues.filter(value => value <= 8).length,
+    ...aggregateRecentLightFeatures(days, { weatherEvidenceInsufficient })
   }
 }
 
