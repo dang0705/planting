@@ -137,7 +137,7 @@
     {
       "name": "weather-http",
       "dir": "./cloudfunctions/weather-http",
-      "timeout": 30,
+      "timeout": 900,
       "runtime": "Nodejs18.15",
       "memorySize": 256,
       "envVariables": {
@@ -177,7 +177,7 @@
     {
       "name": "weather-ingestion-scheduler",
       "dir": "./cloudfunctions/weather-ingestion-scheduler",
-      "timeout": 30,
+      "timeout": 900,
       "runtime": "Nodejs18.15",
       "memorySize": 256,
       "envVariables": {
