@@ -24,11 +24,6 @@
       "name": "weather-d0-now-afternoon-1820",
       "type": "timer",
       "config": "0 20 18 * * * *"
-    },
-    {
-      "name": "weather-d0-now-finalize-2130",
-      "type": "timer",
-      "config": "0 30 21 * * * *"
     }
   ]
 }

@@ -19,7 +19,9 @@ function buildMissingStorageError() {
 const fakeCloudbaseApp = {
   async downloadFile({ fileID }) {
     const payload = storageObjectsByFileId.get(fileID)
-    if (!payload) { throw buildMissingStorageError() }
+    if (!payload) {
+      throw buildMissingStorageError()
+    }
     return { fileContent: Buffer.from(JSON.stringify(payload), 'utf8') }
   },
   async uploadFile({ cloudPath, fileContent }) {
@@ -40,11 +42,15 @@ const fakeCloudbaseApp = {
   },
   async downloadFileByCloudPath({ cloudPath }) {
     const payload = storageObjects.get(cloudPath)
-    if (!payload) { throw buildMissingStorageError() }
+    if (!payload) {
+      throw buildMissingStorageError()
+    }
     return { fileContent: Buffer.from(JSON.stringify(payload), 'utf8') }
   },
   async getUploadMetadata({ cloudPath }) {
-    if (storageObjects.has(cloudPath)) { return { data: { fileId: `cloud://${cloudPath}` } } }
+    if (storageObjects.has(cloudPath)) {
+      return { data: { fileId: `cloud://${cloudPath}` } }
+    }
     throw buildMissingStorageError()
   },
   async deleteFile({ fileList }) {
@@ -59,18 +65,34 @@ Module._load = function patchedWeatherD0TimerLoad(request, parent, isMain) {
   if (request === '/opt/utils/cloudbase') {
     return {
       getCloudBase: () => fakeCloudbaseApp,
-      models: { async $runSQL() { return { data: { executeResultList: [] } } } }
+      models: {
+        async $runSQL() {
+          return { data: { executeResultList: [] } }
+        }
+      }
     }
   }
 
   if (request === '/opt/utils/http') {
     return {
-      jsonResponse(statusCode, payload) { return { statusCode, body: JSON.stringify(payload) } },
-      notFound(path) { return { statusCode: 404, body: JSON.stringify({ code: 404, path }) } },
-      methodNotAllowed(method) { return { statusCode: 405, body: JSON.stringify({ code: 405, method }) } },
-      getHttpRequestData(event) { return event },
-      resolveRequestAppEnv() { return 'production' },
-      runWithRequestAppEnv(_appEnv, runner) { return runner() }
+      jsonResponse(statusCode, payload) {
+        return { statusCode, body: JSON.stringify(payload) }
+      },
+      notFound(path) {
+        return { statusCode: 404, body: JSON.stringify({ code: 404, path }) }
+      },
+      methodNotAllowed(method) {
+        return { statusCode: 405, body: JSON.stringify({ code: 405, method }) }
+      },
+      getHttpRequestData(event) {
+        return event
+      },
+      resolveRequestAppEnv() {
+        return 'production'
+      },
+      runWithRequestAppEnv(_appEnv, runner) {
+        return runner()
+      }
     }
   }
 
@@ -80,10 +102,20 @@ Module._load = function patchedWeatherD0TimerLoad(request, parent, isMain) {
       createQWeatherAdapter: () => ({
         async fetchCurrentWeather() {
           nowCallCount += 1
-          return { tempC: 25, humidity: 60, text: '晴', obsTime: '2026-06-18T09:30:00+08:00', source: 'qweather_weather_now' }
+          return {
+            tempC: 25,
+            humidity: 60,
+            text: '晴',
+            obsTime: '2026-06-18T09:30:00+08:00',
+            source: 'qweather_weather_now'
+          }
         },
-        async fetchForecast10d() { return { raw: {}, daily: [] } },
-        async fetchWeather24h() { return { raw: {}, hourly: [] } }
+        async fetchForecast10d() {
+          return { raw: {}, daily: [] }
+        },
+        async fetchWeather24h() {
+          return { raw: {}, hourly: [] }
+        }
       })
     }
   }
@@ -93,26 +125,76 @@ Module._load = function patchedWeatherD0TimerLoad(request, parent, isMain) {
 
 try {
   // 1) scheduler config 保留 D0 timer triggers；weather-http config 不再有 timer triggers
-  const schedulerConfig = JSON.parse(readFileSync('cloudfunctions/weather-ingestion-scheduler/config.json', 'utf8'))
+  const schedulerConfig = JSON.parse(
+    readFileSync('cloudfunctions/weather-ingestion-scheduler/config.json', 'utf8')
+  )
   const schedulerTriggersByName = new Map(schedulerConfig.triggers.map(t => [t.name, t]))
+  assert.equal(schedulerTriggersByName.has('weather-d0-now-sunrise'), false)
   assert.equal(schedulerTriggersByName.has('weather-d0-now-morning-0920'), true)
   assert.equal(schedulerTriggersByName.get('weather-d0-now-morning-0920').config, '0 20 9 * * * *')
-  assert.equal(schedulerTriggersByName.has('weather-d0-now-finalize-2130'), true)
-  assert.equal(schedulerTriggersByName.get('weather-d0-now-finalize-2130').config, '0 30 21 * * * *')
+  assert.equal(schedulerTriggersByName.has('weather-d0-now-finalize-2130'), false)
   assert.equal(schedulerTriggersByName.has('weather-ingestion-recent-10d'), true)
 
   const httpConfig = JSON.parse(readFileSync('cloudfunctions/weather-http/config.json', 'utf8'))
   assert.equal(httpConfig.triggers.length, 0, 'weather-http 不再保留任何 timer trigger')
 
-  const { HOT_CITY_WEATHER_LOCATIONS } = require('../../cloudfunctions/weather-ingestion-scheduler/services/hot-city-locations.js')
-  const { buildWeatherDayObjectPath } = require('../../cloudfunctions/weather-ingestion-scheduler/services/weather-cache-paths.js')
-  const { buildD0TimerAuditPath } = require('../../cloudfunctions/weather-ingestion-scheduler/services/d0-slot-paths.js')
+  const {
+    HOT_CITY_WEATHER_LOCATIONS
+  } = require('../../cloudfunctions/weather-ingestion-scheduler/services/hot-city-locations.js')
+  const {
+    buildWeatherDayObjectPath
+  } = require('../../cloudfunctions/weather-ingestion-scheduler/services/weather-cache-paths.js')
+  const {
+    buildD0TimerAuditPath
+  } = require('../../cloudfunctions/weather-ingestion-scheduler/services/d0-slot-paths.js')
+  const {
+    isD0Weather24hTimerEvent
+  } = require('../../cloudfunctions/weather-ingestion-scheduler/routes/recent-weather-routes.js')
   const schedulerApp = require('../../cloudfunctions/weather-ingestion-scheduler/app.js')
+  assert.equal(
+    isD0Weather24hTimerEvent({
+      Type: 'Timer',
+      TriggerName: 'weather-d0-now-sunrise__city_shanghai'
+    }),
+    true
+  )
+  assert.equal(
+    isD0Weather24hTimerEvent({
+      Type: 'Timer',
+      TriggerName: 'weather-d0-now-sunset__city_shanghai'
+    }),
+    true
+  )
+  assert.equal(
+    isD0Weather24hTimerEvent({ Type: 'Timer', TriggerName: 'weather-d0-now-sunrise' }),
+    false
+  )
+  assert.equal(
+    isD0Weather24hTimerEvent({ Type: 'Timer', TriggerName: 'weather-d0-now-finalize-2130' }),
+    false
+  )
 
   // batchSize=5：20 城需要 4 批推进，验证 manifest cursor 跨 invocation 持久化
   process.env.WEATHER_D0_SLOT_BATCH_SIZE = '5'
 
-  // 2) working 定时器：分批推进直到 completed
+  // 2) per-city sunrise 定时器：只处理 trigger 指定城市，不得全量跑所有热城市
+  const sunriseResponse = await schedulerApp.main(
+    {
+      Type: 'Timer',
+      TriggerName: 'weather-d0-now-sunrise__city_shanghai',
+      targetDate: '2026-06-19'
+    },
+    {}
+  )
+  assert.equal(sunriseResponse.code, 200)
+  assert.equal(sunriseResponse.data.triggerName, 'weather-d0-now-sunrise__city_shanghai')
+  assert.equal(sunriseResponse.data.totalCities, 1)
+  assert.equal(sunriseResponse.data.succeeded, 1)
+  assert.equal(storageObjects.has(buildWeatherDayObjectPath('city:shanghai', '2026-06-19')), true)
+  assert.equal(storageObjects.has(buildWeatherDayObjectPath('city:beijing', '2026-06-19')), false)
+  nowCallCount = 0
+
+  // 3) working 定时器：分批推进直到 completed
   let workingResponse
   let workingIterations = 0
   do {
@@ -150,23 +232,17 @@ try {
   assert.ok(shanghaiDayFile.latestSample, 'should have latestSample')
   assert.equal(shanghaiDayFile.latestSample.sourceKind, 'weather_now_sample')
 
-  // 3) finalize 定时器：分批推进直到 completed
-  let finalizeResponse
-  let finalizeIterations = 0
-  do {
-    finalizeResponse = await schedulerApp.main(
-      { Type: 'Timer', TriggerName: 'weather-d0-now-finalize-2130', targetDate: '2026-06-18' },
-      {}
-    )
-    finalizeIterations += 1
-    assert.ok(finalizeIterations <= 10, 'finalize 批次推进超过预期')
-  } while (!finalizeResponse.data.completed)
+  // 3) sunset 定时器：只 finalize trigger 指定城市
+  const finalizeResponse = await schedulerApp.main(
+    { Type: 'Timer', TriggerName: 'weather-d0-now-sunset__city_shanghai', targetDate: '2026-06-18' },
+    {}
+  )
 
   assert.equal(finalizeResponse.code, 200)
-  assert.equal(finalizeResponse.data.triggerName, 'weather-d0-now-finalize-2130')
+  assert.equal(finalizeResponse.data.triggerName, 'weather-d0-now-sunset__city_shanghai')
   assert.equal(finalizeResponse.data.finalized, true)
   assert.equal(finalizeResponse.data.completed, true)
-  assert.equal(finalizeIterations, 4, 'finalize 20城 batchSize=5 应该 4 批完成')
+  assert.equal(finalizeResponse.data.totalCities, 1)
 
   // 验证 finalize 后的 day file
   const finalizedDayFile = storageObjects.get(shanghaiDayPath)
@@ -180,13 +256,13 @@ try {
     'finalize should not write recent-10d'
   )
 
-  // 4) 审计日志：4 working + 4 finalize = 8 records，按日期聚合到同一 JSON
+  // 4) 审计日志：4 working + 1 sunset finalize = 5 records，按日期聚合到同一 JSON
   const auditPath = buildD0TimerAuditPath({ date: '2026-06-18' })
   const auditFile = storageObjects.get(auditPath)
   assert.ok(auditFile, '应有审计日志文件')
-  assert.equal(auditFile.records.length, 8, '8 条审计记录（4 working + 4 finalize）')
-  assert.equal(auditFile.summary.totalInvocations, 8)
-  assert.equal(auditFile.summary.success, 8, '8 条全部 success（20城无失败）')
+  assert.equal(auditFile.records.length, 5, '5 条审计记录（4 working + 1 sunset finalize）')
+  assert.equal(auditFile.summary.totalInvocations, 5)
+  assert.equal(auditFile.summary.success, 5, '5 条全部 success（20城 working + 上海 sunset finalize 无失败）')
   assert.equal(auditFile.summary.failure, 0)
   assert.equal(auditFile.summary.ignored, 0)
 
@@ -195,7 +271,10 @@ try {
     assert.ok(record.recordId, 'record 应有 recordId')
     assert.ok(record.startAt, 'record 应有 startAt')
     assert.ok(record.endAt, 'record 应有 endAt')
-    assert.ok(['success', 'failure'].includes(record.status), 'D0 record status 应为 success/failure')
+    assert.ok(
+      ['success', 'failure'].includes(record.status),
+      'D0 record status 应为 success/failure'
+    )
     assert.ok(record.sourceKind, 'record 应有 sourceKind')
     assert.equal(typeof record.errorSummary, 'string', 'record 应有 errorSummary（字符串）')
     assert.match(record.errorSummary, /^failed:\d+/, 'errorSummary 应以 failed:N 开头')
@@ -212,7 +291,9 @@ try {
   assert.equal(ignoredResponse.data.ignored, true)
 
   // 被忽略事件 audit 按当天日期聚合
-  const { resolveTargetDate } = require('../../cloudfunctions/weather-ingestion-scheduler/services/d0-slot-manifest.js')
+  const {
+    resolveTargetDate
+  } = require('../../cloudfunctions/weather-ingestion-scheduler/services/d0-slot-manifest.js')
   const todayAuditPath = buildD0TimerAuditPath({ date: resolveTargetDate('') })
   const todayAuditFile = storageObjects.get(todayAuditPath)
   assert.ok(todayAuditFile, '被忽略事件应写入当天审计日志')

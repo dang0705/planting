@@ -181,10 +181,42 @@ function buildWeatherRawForecastObjectPath(locationKey = '', timestamp = Date.no
   return `${buildWeatherLocationBasePath(locationKey)}/raw/forecast-${safeTimestamp}.json`
 }
 
+function toSafeLocationKey(locationKey = '') {
+  return String(locationKey || '').replace(/[^a-zA-Z0-9_-]/g, '_')
+}
+
+function buildSolarTermCalendarObjectPath(year = '') {
+  const safeYear = String(year || '').trim()
+  if (!/^\d{4}$/.test(safeYear)) {
+    throw new Error('节气历路径缺少合法年份')
+  }
+  return `weather-cache/v1/solar-term-calendar/cn/${safeYear}.json`
+}
+
+function buildSeasonTriggerStateObjectPath(locationKey = '') {
+  const safeLocationKey = toSafeLocationKey(locationKey)
+  if (!safeLocationKey) {
+    throw new Error('season trigger state 路径缺少 locationKey')
+  }
+  return `weather-cache/v1/season-trigger-state/${safeLocationKey}.json`
+}
+
+function buildSeasonTriggerAuditObjectPath({ locationKey = '', year = '' } = {}) {
+  const safeLocationKey = toSafeLocationKey(locationKey)
+  const safeYear = String(year || '').trim()
+  if (!safeLocationKey || !/^\d{4}$/.test(safeYear)) {
+    throw new Error('season trigger audit 路径缺少 locationKey 或 year')
+  }
+  return `weather-cache/v1/season-trigger-audit/${safeLocationKey}/${safeYear}.jsonl`
+}
+
 module.exports = {
   WEATHER_COORDINATE_PRECISION,
   buildLocationKey,
   buildRecentWeatherObjectPath,
+  buildSeasonTriggerAuditObjectPath,
+  buildSeasonTriggerStateObjectPath,
+  buildSolarTermCalendarObjectPath,
   buildWeatherDailyObjectPath,
   buildWeatherDayObjectPath,
   buildWeatherLocationBasePath,
@@ -197,5 +229,6 @@ module.exports = {
   normalizeLocationKey,
   normalizePathSegment,
   normalizeQWeatherLocation,
-  normalizeWeatherCoordinates
+  normalizeWeatherCoordinates,
+  toSafeLocationKey
 }

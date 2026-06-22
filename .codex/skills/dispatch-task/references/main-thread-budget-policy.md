@@ -134,3 +134,21 @@ main agent 后续 phase 默认只携带 Task Facts Receipt 与 Acceptance Matrix
 4. budget_status 为 yellow / red 时，下一个 gate 前必须执行压缩动作。
 5. 不得把 token 回执扩展成成本长分析。
 6. 不得因为输出 token 回执而读取完整 session JSONL 或完整日志。
+
+
+## Gate Token Telemetry 有效性
+
+Gate Token Telemetry 必须体现 token 消耗，而不是 gate 进度。
+
+必填：
+
+1. pre_gate_tokens。
+2. post_gate_tokens。
+3. gate_delta_tokens。
+4. main_cumulative_tokens。
+5. counter_source。
+6. delta_basis。
+
+只输出 completed / in_progress 的阶段清单不是 token 回执，必须重写。
+
+如果当前环境无法读取精确 token，必须写 `counter_status: unavailable` 或 `estimated`，并说明 `counter_source` 与 `delta_basis`。

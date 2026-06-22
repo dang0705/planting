@@ -2,9 +2,25 @@
 
 ## 定位
 
-本规则用于让 dispatch-flow 在运行时可观察 token 消耗。
+本规则用于让 dispatch-flow 在运行时直观看到每个 gate 的 token 实际消耗或可用计数状态。
 
 每个 gate 完成后、进入下一个 gate 前，main agent 必须在对话中输出一次短 token 消耗回执。该回执不替代 gate receipt，也不改变任何 phase / gate 的执行顺序。
+
+## 核心硬规则
+
+Gate Token Telemetry 必须回答：
+
+```text
+这个 gate 之前是多少 token？
+这个 gate 之后是多少 token？
+这个 gate 消耗了多少 token？
+当前累计是多少 token？
+计数来源是什么？
+如果不能读取，为什么不能读取？
+下一 gate 要采取什么压缩动作？
+```
+
+只输出 gate 状态、phase 状态或 completed / in_progress 清单，视为无效遥测，必须立即重写。
 
 ## 强制触发点
 
@@ -43,22 +59,65 @@ main agent 按以下优先级获取 token 信息：
 
 不得编造精确数字。没有精确计数时，只允许输出估算区间或 `unavailable`。
 
-## 回执内容
+## 必填字段
 
 输出模板引用：
 
-`../assets/templates/gate-token-telemetry.md`
+```text
+../assets/templates/gate-token-telemetry.md
+```
 
-必须包含：
+必须包含以下字段：
 
-1. gate_name。
-2. counter_status。
-3. gate_delta_tokens。
-4. main_cumulative_tokens。
-5. heaviest_sources。
-6. budget_status。
-7. compression_action。
-8. next_gate。
+1. `gate_name`
+2. `counter_status`
+3. `counter_source`
+4. `pre_gate_tokens`
+5. `post_gate_tokens`
+6. `gate_delta_tokens`
+7. `main_cumulative_tokens`
+8. `delta_basis`
+9. `heaviest_sources`
+10. `budget_status`
+11. `compression_action`
+12. `next_gate`
+
+其中：
+
+- `counter_status=exact` 时，`pre_gate_tokens`、`post_gate_tokens`、`gate_delta_tokens` 必须是数字。
+- `counter_status=estimated` 时，`gate_delta_tokens` 必须是区间，例如 `8k-15k`。
+- `counter_status=unavailable` 时，必须写明 `counter_source` 和 `delta_basis` 为什么不可用。
+- `heaviest_sources` 至少列出 1 项；不可判断时写 `unknown`。
+- `compression_action` 不得为空。
+
+## 明确禁止的无效输出
+
+以下输出无效：
+
+```text
+Gate Token Telemetry
+- phase0: completed
+- phase1_task_facts: completed
+- phase1_5_brv_recall: completed
+- agent_assignment: in_progress
+```
+
+原因：它只表达进度，没有 token 计数、delta、累计、来源和压缩动作。
+
+也禁止：
+
+```text
+Gate Token Telemetry:
+- completed
+```
+
+```text
+Token looks fine.
+```
+
+```text
+本阶段 token 正常。
+```
 
 ## 预算状态
 
@@ -83,7 +142,7 @@ budget_status 的语义：
 
 ## 限制
 
-token 消耗回执本身必须短，默认不超过 120 tokens。
+token 消耗回执本身必须短，默认不超过 140 tokens。
 
 禁止：
 

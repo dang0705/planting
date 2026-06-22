@@ -107,12 +107,18 @@ Context: 预算估算
 ```
 
 
+
+
 ```text
 Gate Token Telemetry:
 - gate_name:
 - counter_status: exact / estimated / unavailable
+- counter_source: runtime_usage / session_jsonl / estimate / unavailable
+- pre_gate_tokens:
+- post_gate_tokens:
 - gate_delta_tokens:
 - main_cumulative_tokens:
+- delta_basis:
 - heaviest_sources:
 - budget_status: green / yellow / red / unavailable
 - compression_action:

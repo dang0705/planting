@@ -4,17 +4,18 @@ const { createRecentWeatherService } = require('../services/recent-weather-servi
 const { buildLocationKey } = require('../services/weather-cache-paths')
 const { createD0SlotManifestService } = require('../services/d0-slot-manifest')
 const { createD0TimerAuditService } = require('../services/d0-timer-audit')
+const { HOT_CITY_WEATHER_LOCATIONS, toSelectedHotCity } = require('../services/hot-city-locations')
+const { SUNRISE_TRIGGER_PREFIX, SUNSET_TRIGGER_PREFIX } = require('../services/season-trigger-sync')
+const { toSafeLocationKey } = require('../services/weather-cache-paths')
 
 const D0_WEATHER_24H_TIMER_TRIGGERS = new Set([
   'weather-d0-now-morning-0920',
   'weather-d0-now-forenoon-1220',
   'weather-d0-now-noon-1420',
   'weather-d0-now-afternoon-1820',
-  'weather-d0-now-finalize-2130',
   'weather-d0-24h-0630',
   'weather-d0-24h-1130',
-  'weather-d0-24h-1530',
-  'weather-d0-24h-finalize-2130'
+  'weather-d0-24h-1530'
 ])
 
 function buildRecentWeatherService({ apiKey = '', baseUrl = '' } = {}) {
@@ -193,14 +194,52 @@ function isD0Weather24hTimerEvent(event = {}) {
   const type = String(event.Type || event.type || '')
     .trim()
     .toLowerCase()
-  return type === 'timer' && D0_WEATHER_24H_TIMER_TRIGGERS.has(pickTimerTriggerName(event))
+  const triggerName = pickTimerTriggerName(event)
+  return (
+    type === 'timer' &&
+    (D0_WEATHER_24H_TIMER_TRIGGERS.has(triggerName) ||
+      triggerName.startsWith(SUNRISE_TRIGGER_PREFIX) ||
+      triggerName.startsWith(SUNSET_TRIGGER_PREFIX))
+  )
+}
+
+function resolveCitiesForD0Trigger(triggerName = '') {
+  const name = String(triggerName || '').trim()
+  const dynamicPrefix = name.startsWith(SUNRISE_TRIGGER_PREFIX)
+    ? SUNRISE_TRIGGER_PREFIX
+    : name.startsWith(SUNSET_TRIGGER_PREFIX)
+      ? SUNSET_TRIGGER_PREFIX
+      : ''
+  if (!dynamicPrefix) {
+    return null
+  }
+  const safeLocationKey = name.slice(dynamicPrefix.length)
+  const city = HOT_CITY_WEATHER_LOCATIONS.find(
+    item => toSafeLocationKey(item.key) === safeLocationKey
+  )
+  if (!city) {
+    throw new Error(`未知 D0 dynamic trigger location: ${triggerName}`)
+  }
+  const selected = toSelectedHotCity(city)
+  return [
+    {
+      key: selected.locationKey,
+      name: selected.cityName,
+      latitude: selected.latitude,
+      longitude: selected.longitude
+    }
+  ]
 }
 
 async function handleRecentWeatherTimerEvent({
   event = {},
   service,
+  seasonTriggerSync = null,
   defaultLimit = process.env.WEATHER_INGESTION_BATCH_LIMIT || 20
 } = {}) {
+  const seasonTriggerResult = seasonTriggerSync
+    ? await seasonTriggerSync.syncToday({ date: event.date || event.targetDate || '' })
+    : null
   const limit = event.limit || event.Limit || defaultLimit
   const result = await service.ingestActiveLocations({ limit })
   return {
@@ -209,6 +248,7 @@ async function handleRecentWeatherTimerEvent({
     data: {
       triggerName: event.TriggerName || event.triggerName || '',
       sourceKind: 'weather_cache_recent_10d_timer',
+      seasonTriggerSync: seasonTriggerResult,
       ...result
     }
   }
@@ -220,9 +260,15 @@ async function handleD0Weather24hTimerEvent({ event = {}, service } = {}) {
   const manifestService = createD0SlotManifestService({ env: process.env })
   const auditService = createD0TimerAuditService()
   const startAt = new Date().toISOString()
+  const scopedCities = resolveCitiesForD0Trigger(triggerName)
 
   // load or seed manifest -> advance ONE batch -> persist cursor（跨 invocation 可推进）
-  const loaded = await manifestService.loadOrSeedManifest({ triggerName, targetDate })
+  const loaded = await manifestService.loadOrSeedManifest({
+    triggerName,
+    targetDate,
+    cities: scopedCities,
+    batchSize: scopedCities ? scopedCities.length : null
+  })
   const advance = await manifestService.advanceManifest({
     manifest: loaded.manifest,
     cloudPath: loaded.cloudPath,
@@ -301,5 +347,6 @@ module.exports = {
   isD0Weather24hTimerEvent,
   isRecentWeatherIngestionTimerEvent,
   isDiagnosisMode,
-  pickPayloadLocation
+  pickPayloadLocation,
+  resolveCitiesForD0Trigger
 }

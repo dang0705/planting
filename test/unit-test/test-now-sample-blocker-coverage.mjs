@@ -267,6 +267,42 @@ try {
       assert.equal(d1.missing, true, '旧 dailyArchives 不得作为 recent 聚合输入')
     }
   }
+
+  // === Blocker 6: 主读 D0 真实超时且无 fallback 命中时返回 day_latest_sample_read_timeout ===
+  const {
+    createCurrentWeatherArchiveService
+  } = require('../../cloudfunctions/weather-http/services/recent-weather-current.js')
+  const timeoutArchiveService = createCurrentWeatherArchiveService({
+    storage: {
+      async downloadJson() {
+        // 对象存储冷读慢于显式 timeout 预算，模拟主读真实超时
+        await new Promise(resolve => setTimeout(resolve, 80))
+        return null
+      }
+    },
+    now: () => new Date('2026-06-18T13:00:00+08:00'),
+    resolveLocationInput: (input = {}) => ({
+      locationKey: input.locationKey,
+      timezone: input.timezone || 'Asia/Shanghai'
+    })
+  })
+  const timeoutStartedAt = Date.now()
+  const timeoutResult = await timeoutArchiveService.getCurrentWeatherFromDailyArchive({
+    locationKey: 'city:shanghai',
+    timezone: 'Asia/Shanghai',
+    useCache: true,
+    timeoutMs: 20
+  })
+  const timeoutElapsed = Date.now() - timeoutStartedAt
+  assert.equal(timeoutResult.weatherData, null, '主读超时应返回 weatherData=null')
+  assert.equal(timeoutResult.dailyWeatherCache.cacheHit, false)
+  assert.equal(timeoutResult.dailyWeatherCache.weatherEvidenceInsufficient, true)
+  assert.equal(
+    timeoutResult.dailyWeatherCache.reason,
+    'day_latest_sample_read_timeout',
+    '主读超时且无 fallback 命中时应返回超时语义 miss reason'
+  )
+  assert.ok(timeoutElapsed < 200, '超时 miss 不应等待慢存储完成')
 } finally {
   Module._load = originalLoad
   if (originalQWeatherApiKey === undefined) {

@@ -35,7 +35,7 @@ inclusion: always
 
 ## 3. 项目技术上下文
 
-- Frontend：UniApp 3.0，Vue 3，Tailwind CSS 3。
+- Frontend：UniApp 3.0，Vue 3，Tailwind CSS 3，uni-ui。
 - Language：JavaScript。
 - Lint: oxlint
 - formatter: oxformat

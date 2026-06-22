@@ -8,10 +8,12 @@
   },
   "dependencies": {
     "@cloudbase/functions-framework": "^1.18.0",
+    "@cloudbase/manager-node": "5.5.5",
     "@cloudbase/node-sdk": "^3.16.0",
     "axios": "^1.6.0",
     "date-fns-tz": "^3.2.0",
     "geolib": "^3.3.14",
-    "suncalc": "^1.9.0"
+    "solarlunar": "3.1.0",
+    "suncalc": "1.9.0"
   }
 }

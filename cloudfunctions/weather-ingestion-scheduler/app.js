@@ -8,6 +8,7 @@ const {
   handleRecentWeatherTimerEvent
 } = require('./routes/recent-weather-routes')
 const { createD0TimerAuditService } = require('./services/d0-timer-audit')
+const { createSeasonTriggerSyncService } = require('./services/season-trigger-sync')
 
 const QWEATHER_CONFIG = {
   baseUrl: process.env.QWEATHER_API_BASE_URL || 'https://n773jqqeap.re.qweatherapi.com',
@@ -34,8 +35,19 @@ module.exports.main = async function weatherIngestionTimerMain(event = {}, conte
   const triggerName = String(
     event.TriggerName || event.triggerName || event.name || event.trigger_name || ''
   ).trim()
-  const eventType = String(event.Type || event.type || '').trim().toLowerCase()
+  const eventType = String(event.Type || event.type || '')
+    .trim()
+    .toLowerCase()
   const eventKeys = event.keys || event.Params || event.params
+  const seasonTriggerSync = createSeasonTriggerSyncService()
+
+  try {
+    if (isD0Weather24hTimerEvent(event) || isRecentWeatherIngestionTimerEvent(event)) {
+      await seasonTriggerSync.ensureBaseTimerTriggers()
+    }
+  } catch (error) {
+    console.error('ensureBaseTimerTriggers failed', error)
+  }
 
   if (isD0Weather24hTimerEvent(event)) {
     return handleD0Weather24hTimerEvent({
@@ -48,6 +60,7 @@ module.exports.main = async function weatherIngestionTimerMain(event = {}, conte
     return handleRecentWeatherTimerEvent({
       event,
       service: buildRecentWeatherService(),
+      seasonTriggerSync,
       defaultLimit: parseLimit(process.env.WEATHER_INGESTION_BATCH_LIMIT)
     })
   }
@@ -59,8 +72,8 @@ module.exports.main = async function weatherIngestionTimerMain(event = {}, conte
     type: eventType,
     triggerName,
     eventKeys,
-   hasData: !!Object.keys(event).length
- })
+    hasData: !!Object.keys(event).length
+  })
 
   // 被忽略事件也要记审计：status=ignored，按日期聚合到同一 JSON
   const ignoredStartAt = new Date().toISOString()

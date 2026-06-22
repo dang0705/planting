@@ -314,6 +314,139 @@ try {
   const emptyRollup = buildDailyRollup({ samples: [], sunWindow: {}, date: '2026-06-18', generatedAt: 'now' })
   assert.equal(emptyRollup.quality, 'missing')
   assert.equal(emptyRollup.sampleSummary.sampleCount, 0)
+
+  // === 10. D0 day file 真实存在且 latestSample 存在，对象存储冷读 >250ms 但 <600ms 默认预算时仍应命中 ===
+  const {
+    createCurrentWeatherArchiveService
+  } = require('../../cloudfunctions/weather-http/services/recent-weather-current.js')
+  const coldReadD0Path = buildWeatherDayObjectPath('city:shanghai', '2026-06-18')
+  const coldReadD0Payload = {
+    schemaVersion: 'weather-cache/v1/day-now-sample',
+    locationKey: 'city:shanghai',
+    date: '2026-06-18',
+    state: 'working',
+    samples: [{ slotName: 'morning', temp: 26, humidity: 60, sourceKind: 'weather_now_sample' }],
+    latestSample: { slotName: 'morning', temp: 26, humidity: 60, sourceKind: 'weather_now_sample' },
+    sourceKind: 'observed_now_samples',
+    quality: 'partial',
+    weatherObjectPath: coldReadD0Path
+  }
+  const coldReadArchiveService = createCurrentWeatherArchiveService({
+    storage: {
+      async downloadJson({ cloudPath } = {}) {
+        if (cloudPath === coldReadD0Path) {
+          // 真实冷读耗时：超过旧 250ms 默认预算，但落在新 600ms 主读默认预算内
+          await new Promise(resolve => setTimeout(resolve, 320))
+          return coldReadD0Payload
+        }
+        return null
+      }
+    },
+    now: () => fixedNow,
+    resolveLocationInput: (input = {}) => ({
+      locationKey: input.locationKey,
+      timezone: input.timezone || 'Asia/Shanghai'
+    })
+  })
+  const coldReadStartedAt = Date.now()
+  const coldReadResult = await coldReadArchiveService.getCurrentWeatherFromDailyArchive({
+    locationKey: 'city:shanghai',
+    timezone: 'Asia/Shanghai',
+    useCache: true
+  })
+  const coldReadElapsed = Date.now() - coldReadStartedAt
+  assert.ok(
+    coldReadResult.weatherData,
+    '冷读 320ms（<600ms 默认预算）应命中 latestSample，不得误判为 miss'
+  )
+  assert.equal(coldReadResult.dailyWeatherCache.cacheHit, true)
+  assert.equal(coldReadResult.dailyWeatherCache.reason, 'day_latest_sample_present')
+  assert.equal(coldReadResult.weatherData.temperature, 26)
+  assert.ok(coldReadElapsed >= 300, '应真实等待冷读完成，而非在旧 250ms 默认预算上提前超时')
+  assert.ok(coldReadElapsed < 600, '应在新的主读默认预算内完成，不应触发超时')
+
+  // === 11. D0 冷读慢于初始 600ms 主读窗口但快于默认有界 grace 总预算（1500ms），无 fallback 命中时应经 grace 命中 ===
+  const graceHitD0Payload = {
+    schemaVersion: 'weather-cache/v1/day-now-sample',
+    locationKey: 'city:shanghai',
+    date: '2026-06-18',
+    state: 'working',
+    samples: [{ slotName: 'morning', temp: 27, humidity: 58, sourceKind: 'weather_now_sample' }],
+    latestSample: { slotName: 'morning', temp: 27, humidity: 58, sourceKind: 'weather_now_sample' },
+    sourceKind: 'observed_now_samples',
+    quality: 'partial',
+    weatherObjectPath: coldReadD0Path
+  }
+  const graceHitArchiveService = createCurrentWeatherArchiveService({
+    storage: {
+      async downloadJson({ cloudPath } = {}) {
+        if (cloudPath === coldReadD0Path) {
+          // 冷读尖峰：超过初始 600ms 主读窗口，但落在默认有界 grace 总预算（1500ms）内（复用同一 in-flight 读取，不重发下载）
+          await new Promise(resolve => setTimeout(resolve, 900))
+          return graceHitD0Payload
+        }
+        // D-1..D-7 finalized day file 均不存在，无 fallback 命中
+        return null
+      }
+    },
+    now: () => fixedNow,
+    resolveLocationInput: (input = {}) => ({
+      locationKey: input.locationKey,
+      timezone: input.timezone || 'Asia/Shanghai'
+    })
+  })
+  const graceHitStartedAt = Date.now()
+  const graceHitResult = await graceHitArchiveService.getCurrentWeatherFromDailyArchive({
+    locationKey: 'city:shanghai',
+    timezone: 'Asia/Shanghai',
+    useCache: true
+  })
+  const graceHitElapsed = Date.now() - graceHitStartedAt
+  assert.ok(
+    graceHitResult.weatherData,
+    '冷读尖峰 900ms（>600ms 初始窗口、<1500ms grace 总预算）应经 grace 命中 latestSample'
+  )
+  assert.equal(graceHitResult.dailyWeatherCache.cacheHit, true)
+  assert.equal(graceHitResult.dailyWeatherCache.reason, 'day_latest_sample_present')
+  assert.equal(graceHitResult.weatherData.temperature, 27)
+  assert.ok(graceHitElapsed >= 800, '应真实等待冷读尖峰完成，不得在初始 600ms 窗口提前误判 miss')
+  assert.ok(graceHitElapsed < 1500, '应在默认有界 grace 总预算内完成，不得无界等待')
+
+  // === 12. D0 冷读慢于默认有界 grace 总预算（1500ms），无 fallback 命中时应返回有界超时 miss reason ===
+  const graceTimeoutArchiveService = createCurrentWeatherArchiveService({
+    storage: {
+      async downloadJson({ cloudPath } = {}) {
+        if (cloudPath === coldReadD0Path) {
+          // 冷读远超默认有界 grace 总预算：grace 也应超时，不得无界等待
+          await new Promise(resolve => setTimeout(resolve, 1600))
+          return graceHitD0Payload
+        }
+        return null
+      }
+    },
+    now: () => fixedNow,
+    resolveLocationInput: (input = {}) => ({
+      locationKey: input.locationKey,
+      timezone: input.timezone || 'Asia/Shanghai'
+    })
+  })
+  const graceTimeoutStartedAt = Date.now()
+  const graceTimeoutResult = await graceTimeoutArchiveService.getCurrentWeatherFromDailyArchive({
+    locationKey: 'city:shanghai',
+    timezone: 'Asia/Shanghai',
+    useCache: true
+  })
+  const graceTimeoutElapsed = Date.now() - graceTimeoutStartedAt
+  assert.equal(graceTimeoutResult.weatherData, null, '冷读超过 grace 总预算应返回 weatherData=null')
+  assert.equal(graceTimeoutResult.dailyWeatherCache.cacheHit, false)
+  assert.equal(graceTimeoutResult.dailyWeatherCache.weatherEvidenceInsufficient, true)
+  assert.equal(
+    graceTimeoutResult.dailyWeatherCache.reason,
+    'day_latest_sample_read_timeout',
+    '冷读超过 grace 总预算且无 fallback 命中时应返回有界超时 miss reason'
+  )
+  assert.ok(graceTimeoutElapsed >= 1400, '应等待到默认有界 grace 总预算再判超时')
+  assert.ok(graceTimeoutElapsed < 1850, 'grace 超时应有界，不得无界等待慢存储完成')
 } finally {
   Module._load = originalLoad
 }

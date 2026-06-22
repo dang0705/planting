@@ -89,7 +89,8 @@ function listConfiguredHotCitiesForIngestion({ env = process.env } = {}) {
   const results = []
   for (const item of requested) {
     const normalized = String(item).trim()
-    const city = resolveHotCityByKeyOrName(normalized) || resolveHotCityByKeyOrName(`city:${normalized}`)
+    const city =
+      resolveHotCityByKeyOrName(normalized) || resolveHotCityByKeyOrName(`city:${normalized}`)
     if (!city || !city.key || seen.has(city.key)) {
       continue
     }
@@ -162,6 +163,8 @@ function toSelectedHotCity(
     cityName: city.name,
     latitude: city.latitude,
     longitude: city.longitude,
+    timezone: city.timezone || 'Asia/Shanghai',
+    isActive: city.isActive !== false,
     weatherLocation: `${city.longitude.toFixed(4)},${city.latitude.toFixed(4)}`,
     source: normalizeSource(source),
     ...(distanceM !== null ? { distanceM } : {})
@@ -219,12 +222,38 @@ function listHotCitiesForClient() {
   }))
 }
 
+function toSeasonTriggerCity(city = {}) {
+  if (!city?.key) {
+    return null
+  }
+  return {
+    locationKey: city.key,
+    key: city.key,
+    cityName: city.name,
+    name: city.name,
+    latitude: city.latitude,
+    longitude: city.longitude,
+    timezone: city.timezone || 'Asia/Shanghai',
+    isActive: city.isActive !== false
+  }
+}
+
+function resolveHotCityForSeasonTrigger(locationKey = '') {
+  const city =
+    resolveHotCityByKeyOrName(locationKey) ||
+    resolveHotCityByKeyOrName(`city:${String(locationKey || '').trim()}`)
+  return toSeasonTriggerCity(city)
+}
+
 module.exports = {
   ALLOWED_HOT_CITY_SOURCES,
+  HOT_CITY_INGESTION_KEYS_ENV,
   HOT_CITY_WEATHER_LOCATIONS,
   HOT_CITY_SOURCE,
   listHotCitiesForClient,
   normalizeSource,
+  parseHotCityKeys,
+  resolveHotCityForSeasonTrigger,
   resolveHotCityByKeyOrName,
   resolveHotCityLocation,
   getConfiguredHotCityKeys,

@@ -14,7 +14,10 @@ let fallbackCloudBaseApp = null
 function buildCloudBaseInitOptions() {
   const env = String(process.env.CLOUDBASE_ENV_ID || process.env.TCB_ENV || '').trim()
   const secretId = String(
-    process.env.CLOUDBASE_SECRET_ID || process.env.TENCENT_SECRET_ID || process.env.TENCENTCLOUD_SECRETID || ''
+    process.env.CLOUDBASE_SECRET_ID ||
+      process.env.TENCENT_SECRET_ID ||
+      process.env.TENCENTCLOUD_SECRETID ||
+      ''
   ).trim()
   const secretKey = String(
     process.env.CLOUDBASE_SECRET_KEY ||
@@ -82,6 +85,31 @@ function parseJsonBuffer(value) {
     return parseJsonBuffer(value.data)
   }
   return null
+}
+
+function parseTextBuffer(value) {
+  if (!value) {
+    return ''
+  }
+  if (Buffer.isBuffer(value)) {
+    return value.toString('utf8')
+  }
+  if (typeof value === 'string') {
+    return value
+  }
+  if (value instanceof ArrayBuffer) {
+    return Buffer.from(value).toString('utf8')
+  }
+  if (value.Body) {
+    return parseTextBuffer(value.Body)
+  }
+  if (value.fileContent) {
+    return parseTextBuffer(value.fileContent)
+  }
+  if (value.data) {
+    return parseTextBuffer(value.data)
+  }
+  return ''
 }
 
 function isMissingStorageObjectError(error) {
@@ -158,6 +186,19 @@ async function readJsonFromFileId(app, fileId = '') {
   return parseJsonBuffer(result)
 }
 
+async function readTextFromFileId(app, fileId = '') {
+  if (!fileId || typeof app.downloadFile !== 'function') {
+    return ''
+  }
+  const result = await app.downloadFile({ fileID: fileId }).catch(error => {
+    if (isMissingStorageObjectError(error)) {
+      return null
+    }
+    throw error
+  })
+  return parseTextBuffer(result)
+}
+
 async function resolveFileIdFromCloudPath(app, cloudPath = '') {
   const pathKey = String(cloudPath || '').trim()
   if (!pathKey || typeof app.getUploadMetadata !== 'function') {
@@ -177,6 +218,33 @@ async function resolveFileIdFromCloudPath(app, cloudPath = '') {
 }
 
 function createWeatherObjectStorage({ app = loadDefaultCloudBaseApp() } = {}) {
+  async function uploadText({ cloudPath = '', content = '' } = {}) {
+    if (!cloudPath) {
+      throw new Error('缺少天气缓存对象路径')
+    }
+
+    const existingFileId = await resolveFileIdFromCloudPath(app, cloudPath).catch(() => '')
+    if (existingFileId && typeof app.deleteFile === 'function') {
+      await app.deleteFile({ fileList: [existingFileId] }).catch(error => {
+        if (isMissingStorageObjectError(error)) {
+          return null
+        }
+        throw error
+      })
+    }
+
+    const tempFilePath = createTempJsonFileName()
+    await fs.promises.writeFile(tempFilePath, String(content || ''), 'utf8')
+    const uploadResult = await app.uploadFile({
+      cloudPath,
+      fileContent: fs.createReadStream(tempFilePath)
+    })
+    return {
+      cloudPath,
+      fileId: uploadResult?.fileID || uploadResult?.fileId || uploadResult?.fileIDList?.[0] || ''
+    }
+  }
+
   async function uploadJson({ cloudPath = '', payload = {} } = {}) {
     if (!cloudPath) {
       throw new Error('缺少天气缓存对象路径')
@@ -240,6 +308,42 @@ function createWeatherObjectStorage({ app = loadDefaultCloudBaseApp() } = {}) {
     return null
   }
 
+  async function downloadText({ cloudPath = '', fileId = '' } = {}) {
+    if (fileId) {
+      const text = await readTextFromFileId(app, fileId)
+      if (text) {
+        return text
+      }
+    }
+
+    if (typeof app.downloadFileByCloudPath === 'function' && cloudPath) {
+      const result = await app.downloadFileByCloudPath({ cloudPath }).catch(error => {
+        if (isMissingStorageObjectError(error)) {
+          return null
+        }
+        throw error
+      })
+      const text = parseTextBuffer(result)
+      if (text) {
+        return text
+      }
+    }
+
+    for (const candidateFileId of buildCloudStorageFileIdCandidates({ app, cloudPath })) {
+      const text = await readTextFromFileId(app, candidateFileId)
+      if (text) {
+        return text
+      }
+    }
+
+    const resolvedFileId = await resolveFileIdFromCloudPath(app, cloudPath)
+    if (resolvedFileId) {
+      return readTextFromFileId(app, resolvedFileId)
+    }
+
+    return ''
+  }
+
   async function deleteJson({ cloudPath = '', fileId = '' } = {}) {
     const targetFileId =
       String(fileId || '').trim() || (await resolveFileIdFromCloudPath(app, cloudPath))
@@ -257,8 +361,10 @@ function createWeatherObjectStorage({ app = loadDefaultCloudBaseApp() } = {}) {
 
   return {
     deleteJson,
+    downloadText,
     uploadJson,
-    downloadJson
+    downloadJson,
+    uploadText
   }
 }
 
@@ -267,5 +373,6 @@ module.exports = {
   createWeatherObjectStorage,
   isMissingStorageObjectError,
   parseJsonBuffer,
+  parseTextBuffer,
   resolveFileIdFromCloudPath
 }

@@ -143,7 +143,7 @@ scripts/sql/ensure-weather-history-cache-tables.sql
 
 D0 当前天气不再维护 `working/{date}.json` 与 `daily/{date}.json` 两套文件。采样和归档都写入 `weather-cache/v1/locations/{locationKey}/days/{date}.json`：白天 now 采样保持 `state=working` 并更新 `latestSample`，定稿后写入 `dailyRollup`、`state=finalized`、`finalizedAt`。`recent-10d.json` 只从 D-1 到 D-10 的 finalized day file 聚合，排障时不要用旧 `dailyArchives` 或 D0 文件解释 recent 证据。
 
-线上/本地 D0 now 采样 timer 应包含：`weather-d0-now-morning-0920`、`weather-d0-now-forenoon-1220`、`weather-d0-now-noon-1420`、`weather-d0-now-afternoon-1820`、`weather-d0-now-finalize-2130`。cron 只是唤醒时间；真实 slot 语义以 `now-sample-slots` 的 sunrise/sunset 计算为准。
+线上/本地 D0 now 采样日界线触发由 per-city trigger 控制：`weather-d0-now-sunrise__{safeLocationKey}` 与 `weather-d0-now-sunset__{safeLocationKey}`（示例：`weather-d0-now-sunrise__city_shanghai`、`weather-d0-now-sunset__city_shanghai`），旧单 `weather-d0-now-sunrise` 和固定 `weather-d0-now-finalize-2130` 不再是有效精确触发。非节气日不变更触发器，节气日按 `weather-cache/v1/solar-term-calendar/cn/{year}.json` 及 `suncalc` 在城市维度同步后才可更新触发 cron；sunrise 或 sunset 漂移达到 15 分钟才更新。其他 timer 保持：`weather-d0-now-morning-0920`、`weather-d0-now-forenoon-1220`、`weather-d0-now-noon-1420`、`weather-d0-now-afternoon-1820`。CloudBase trigger 写入按完整 timer 集合提交：固定 5 个基线 + state 中仍有效的 per-city sunrise/sunset；不得只提交固定基线或单个动态 trigger，否则线上 trigger 集合会被覆盖。真实 slot 语义以 `now-sample-slots` 的 sunrise/sunset 计算为准。`weather-ingestion-recent-10d` 不创建 D0 `days/{date}.json`，早晨排障应看 D0 timer 日志与 `weather-cache/v1/locations/{locationKey}/days/{date}.json`，并结合 `weather-cache/v1/season-trigger-state/{safeLocationKey}.json` / `.../season-trigger-audit/{safeLocationKey}/{year}.jsonl`。
 
 开发环境可通过环境变量限制定时任务参与的热门城市：
 

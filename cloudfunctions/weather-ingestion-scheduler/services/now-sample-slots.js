@@ -4,21 +4,27 @@ const { buildSunWindow } = require('./daylight-slots')
 
 const NOW_SAMPLE_SLOT_NAMES = ['morning', 'forenoon', 'noon', 'afternoon']
 const NOW_SAMPLE_FINALIZE_SLOT = 'finalize'
+const SUNRISE_TRIGGER_PREFIX = 'weather-d0-now-sunrise__'
+const SUNSET_TRIGGER_PREFIX = 'weather-d0-now-sunset__'
 
 const TRIGGER_TO_SLOT = {
   'weather-d0-now-morning-0920': 'morning',
   'weather-d0-now-forenoon-1220': 'forenoon',
   'weather-d0-now-noon-1420': 'noon',
   'weather-d0-now-afternoon-1820': 'afternoon',
-  'weather-d0-now-finalize-2130': NOW_SAMPLE_FINALIZE_SLOT,
   'weather-d0-24h-0630': 'morning',
   'weather-d0-24h-1130': 'forenoon',
-  'weather-d0-24h-1530': 'afternoon',
-  'weather-d0-24h-finalize-2130': NOW_SAMPLE_FINALIZE_SLOT
+  'weather-d0-24h-1530': 'afternoon'
 }
 
 function resolveSlotForTriggerName(triggerName = '') {
   const key = String(triggerName || '').trim()
+  if (key.startsWith(SUNRISE_TRIGGER_PREFIX)) {
+    return 'morning'
+  }
+  if (key.startsWith(SUNSET_TRIGGER_PREFIX)) {
+    return NOW_SAMPLE_FINALIZE_SLOT
+  }
   return TRIGGER_TO_SLOT[key] || ''
 }
 
@@ -96,28 +102,29 @@ function buildZonedTimeAtClock(date = '', hour, minute, timezone = 'Asia/Shangha
 
 /**
  * 计算单日 now 采样各 slot 的目标触发时间。
- * morning: max(09:20, sunrise+20m)
+ * morning: sunrise
  * forenoon: 12:20
  * noon: 14:20
  * afternoon: sunset+20m
- * finalize: max(21:30, sunset+30m)
+ * finalize: sunset
  */
-function buildNowSampleSlotTimes({ date = '', latitude, longitude, timezone = 'Asia/Shanghai' } = {}) {
+function buildNowSampleSlotTimes({
+  date = '',
+  latitude,
+  longitude,
+  timezone = 'Asia/Shanghai'
+} = {}) {
   const sunWindow = buildSunWindow({ date, latitude, longitude, timezone })
   const sunrise = sunWindow.sunrise
   const sunset = sunWindow.sunset
 
-  const morningBase = buildZonedTimeAtClock(date, 9, 20, timezone)
-  const morningSunrise = addMinutesToZonedTime(sunrise, 20, timezone)
-  const morning = maxZonedTime(morningBase, morningSunrise, timezone)
+  const morning = sunrise
 
   const forenoon = buildZonedTimeAtClock(date, 12, 20, timezone)
   const noon = buildZonedTimeAtClock(date, 14, 20, timezone)
   const afternoon = addMinutesToZonedTime(sunset, 20, timezone)
 
-  const finalizeBase = buildZonedTimeAtClock(date, 21, 30, timezone)
-  const finalizeSunset = addMinutesToZonedTime(sunset, 30, timezone)
-  const finalize = maxZonedTime(finalizeBase, finalizeSunset, timezone)
+  const finalize = sunset
 
   return {
     date: String(date || '').slice(0, 10),
@@ -137,6 +144,8 @@ function buildNowSampleSlotTimes({ date = '', latitude, longitude, timezone = 'A
 module.exports = {
   NOW_SAMPLE_FINALIZE_SLOT,
   NOW_SAMPLE_SLOT_NAMES,
+  SUNRISE_TRIGGER_PREFIX,
+  SUNSET_TRIGGER_PREFIX,
   TRIGGER_TO_SLOT,
   addMinutesToZonedTime,
   buildNowSampleSlotTimes,

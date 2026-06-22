@@ -24,6 +24,7 @@
     "validate-schema": "node src/cli.js validate-schema",
     "check:brv-context-lifecycle": "node scripts/validate-brv-context-lifecycle.mjs",
     "check:secrets": "node scripts/security/check-no-secrets.mjs",
+    "check:weather-season-trigger-sync": "node test/unit-test/test-season-trigger-sync.mjs",
     "check:cloudbase-http": "node test/e2e/terminal-e2e/cloudbase-http-check.mjs",
     "check:diagnose-smoke": "node test/e2e/terminal-e2e/cloudbase-http-check.mjs --smoke=diagnose --env=cloud1-2grufevs395a9d5e --app-env=development --terminal-e2e=true --device-id=codex-dev-e2e-smoke",
     "check:diagnose-smoke:uncertain": "node test/e2e/terminal-e2e/cloudbase-http-check.mjs --smoke=diagnose --env=cloud1-2grufevs395a9d5e --app-env=development --terminal-e2e=true --device-id=codex-dev-e2e-uncertain-unknown --answer-pattern=unknown,unknown,unknown --expect-outcome=uncertain",

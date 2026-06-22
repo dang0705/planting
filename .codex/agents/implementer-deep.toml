@@ -94,6 +94,8 @@ git diff --name-only
 - 不读取完整 AGENTS.md。
 - 不重新评估复用 / 插件 / 手搓方向。
 - Figma Drilldown 只在 packet 明确 `drilldown_required=yes` 且显式要求 `$implementer-ui-execution-policy` 时读取。
+- 项目安装了唯一的UI插件 -- `uni-ui`，对照Figma design时或实现UI功能前应需优先思考 `Figma` 节点或相关上下文的父子节点能否合理的套组件。
+
 
 【UI / 交互自测】
 - 如果 packet 包含 `Figma Design Facts Lite`、`Figma Drilldown Request` 或 `UI implementation required`，必须执行 Implementer UI Self-Check。
