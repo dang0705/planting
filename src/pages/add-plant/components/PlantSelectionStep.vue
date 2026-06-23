@@ -1,18 +1,25 @@
 <template>
-  <view id="add-plant-selection-step" class="px-4 pb-5">
-    <view class="mb-4">
-      <text class="block text-[24px] font-bold leading-8 text-[#1f2937]">添加植物</text>
-      <text class="mt-1 block text-sm leading-5 text-[#6b7280]">拍照识别或从常见植物中选择</text>
-    </view>
+  <view id="add-plant-selection-step" class="px-4 pb-5 pt-6">
+    <view class="mb-6 flex items-center gap-2">
+      <button
+        id="add-plant-ai-identify-button"
+        class="m-0 h-11 w-[127px] shrink-0 rounded-full p-0 text-sm font-medium leading-[44px] text-white"
+        :style="primaryButtonStyle"
+        @click="$emit('ai-identify')"
+      >
+        <text class="mr-1">📷</text>
+        <text>AI 拍照识别</text>
+      </button>
 
-    <view class="mb-4 flex items-center gap-2">
-      <view class="flex h-12 flex-1 items-center rounded-2xl border border-[#e5e7eb] bg-white px-4">
+      <view
+        class="flex h-[45px] min-w-0 flex-1 items-center rounded-full border border-[#2d7a4f] bg-white px-4"
+      >
         <input
           id="add-plant-search-input"
           :value="searchKeyword"
           type="text"
-          placeholder="搜索植物名称"
-          placeholder-class="text-gray-300"
+          placeholder="搜索植物"
+          placeholder-style="color: rgba(10, 10, 10, 0.5)"
           class="min-w-0 flex-1 text-sm text-[#1f2937]"
           @input="$emit('update:searchKeyword', $event.detail.value)"
           @confirm="$emit('search-confirm')"
@@ -20,13 +27,6 @@
         <text v-if="!searchKeyword" class="text-gray-400">🔍</text>
         <text v-else class="text-gray-400" @click="$emit('clear-search')">✕</text>
       </view>
-      <button
-        id="add-plant-ai-identify-button"
-        class="m-0 h-12 rounded-2xl bg-[#2d7a4f] px-4 text-sm font-bold leading-[48px] text-white"
-        @click="$emit('ai-identify')"
-      >
-        AI 识别
-      </button>
     </view>
 
     <text
@@ -36,8 +36,8 @@
       未找到匹配的植物
     </text>
 
-    <view class="mb-4">
-      <text class="mb-3 block text-base font-bold text-[#1f2937]">常见室内植物</text>
+    <view>
+      <text class="mb-3 block text-sm font-medium leading-5 text-[#364153]">常见室内植物</text>
       <view v-if="initialPlantsLoading" class="flex justify-center py-8">
         <text class="text-sm text-gray-400">加载中...</text>
       </view>
@@ -53,12 +53,12 @@
         @touchcancel="$emit('list-touch-end')"
         @scrolltolower="$emit('scroll-lower')"
       >
-        <view class="flex gap-2 pb-2">
+        <view class="flex gap-3 pb-1">
           <view
             v-for="(group, gi) in plantGroups"
             :key="group.key || gi"
             :class="[
-              'shrink-0 snap-start gap-2',
+              'shrink-0 snap-start gap-3',
               group.length < 3 ? 'grid grid-cols-1' : 'grid grid-cols-2 grid-rows-2'
             ]"
           >
@@ -79,25 +79,12 @@
       </scroll-view>
     </view>
 
-    <view
-      id="add-plant-selection-summary"
-      class="mb-4 rounded-2xl bg-white px-4 py-3 shadow-sm"
-      :class="canProceed ? 'border border-[#b9f8cf]' : 'border border-transparent'"
-    >
-      <text class="block text-xs font-bold text-[#6b7280]">当前选择</text>
-      <text class="mt-1 block text-base font-bold text-[#1f2937]">
-        {{ selectedPlant?.canonicalName || recognizedName || '还未选择植物' }}
-      </text>
-      <text class="mt-1 block text-xs text-[#9ca3af]">
-        {{ canProceed ? '可继续完善植物信息' : '请选择植物或使用 AI 识别' }}
-      </text>
-    </view>
-
     <button
       id="add-plant-next-button"
-      class="m-0 h-[52px] w-full rounded-2xl p-0 text-base font-bold leading-[52px] text-white"
-      :class="canProceed ? 'bg-[#2d7a4f]' : 'bg-[#d1d5db]'"
+      class="m-0 mt-5 h-14 w-full rounded-2xl p-0 text-base font-medium leading-[56px] text-white"
+      :class="canProceed ? '' : 'bg-[#d1d5db]'"
       :disabled="!canProceed"
+      :style="canProceed ? primaryButtonStyle : ''"
       @click="$emit('next')"
     >
       <text class="block truncate px-4">
@@ -121,6 +108,9 @@ defineProps({
   recognizedName: { type: String, default: '' },
   canProceed: { type: Boolean, default: false }
 })
+
+const primaryButtonStyle =
+  'background: linear-gradient(90deg, #00a63e 0%, #00bc7d 100%); box-shadow: 0 2px 4px rgba(0, 166, 62, 0.2), 0 4px 6px rgba(0, 166, 62, 0.2)'
 
 defineEmits([
   'update:searchKeyword',

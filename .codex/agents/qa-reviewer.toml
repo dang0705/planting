@@ -1,7 +1,10 @@
 name = "qa_reviewer"
 description = "QA 测试验证 agent。负责 e2e、小程序端上自动化、UI/Figma、运行时链路、回归验收证据、未验证项和发布前质量缺口；严禁运行单测，严禁替代 main agent 做代码 review。"
-model = "gpt-5.4"
-model_reasoning_effort = "high"
+model = "glm-latest"
+model_provider = "volcengine-coding-plan"
+model_reasoning_effort = "medium"
+model_reasoning_summary = "none"
+model_supports_reasoning_summaries = false
 sandbox_mode = "read-only"
 nickname_candidates = ["QA"]
 developer_instructions = """

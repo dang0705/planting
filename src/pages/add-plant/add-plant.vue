@@ -9,7 +9,7 @@
       @change="handleSwiperChange"
     >
       <swiper-item>
-        <scroll-view scroll-y class="h-screen pt-4">
+        <scroll-view scroll-y class="h-screen">
           <PlantSelectionStep
             v-model:search-keyword="searchKeyword"
             :plant-groups="plantGroups"
