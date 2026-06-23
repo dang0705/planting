@@ -30,6 +30,37 @@ const { buildDayLightFeatures } = require('./weather-light-factor')
 const DAY_FILE_SCHEMA_VERSION = 'weather-cache/v1/day-now-sample'
 const MAX_SAMPLES = 8
 
+function upsertSlotSample(samples = [], sample = {}) {
+  const slotName = String(sample?.slotName || '').trim()
+  if (!slotName) {
+    return Array.isArray(samples) ? [...samples] : []
+  }
+
+  const next = Array.isArray(samples) ? [...samples] : []
+  const existingSlotIndex = next.findLastIndex(item => String(item?.slotName || '').trim() === slotName)
+
+  if (sample?.missing) {
+    if (existingSlotIndex === -1) {
+      next.push(sample)
+    }
+    return next.slice(-MAX_SAMPLES)
+  }
+
+  if (existingSlotIndex === -1) {
+    next.push(sample)
+    return next.slice(-MAX_SAMPLES)
+  }
+
+  if (next[existingSlotIndex]?.missing) {
+    next.splice(existingSlotIndex, 1)
+    next.push(sample)
+    return next.slice(-MAX_SAMPLES)
+  }
+
+  // 同 slot 已有成功样本时，保留最早成功值，避免重复槽位（如 sunrise 与固定 morning-0920）污染样本序列。
+  return next.slice(-MAX_SAMPLES)
+}
+
 function normalizeNumber(value) {
   if (value === null || value === undefined || value === '') {
     return undefined
@@ -287,13 +318,13 @@ function createD0NowSampleService({
     const location = await resolveArchiveLocation(locationInput)
     const generatedAtDate = now()
     const timezone = location.timezone || 'Asia/Shanghai'
+    const generatedAt = generatedAtDate.toISOString()
     const targetDate = normalizeDate(
       input.targetDate ||
         input.target_date ||
         input.date ||
         formatLocalDateInTimezone(generatedAtDate, timezone)
     )
-    const generatedAt = generatedAtDate.toISOString()
 
     const slotTimes = buildNowSampleSlotTimes({
       date: targetDate,
@@ -326,7 +357,7 @@ function createD0NowSampleService({
     const dayObjectPath = buildWeatherDayObjectPath(location.locationKey, targetDate)
     const { payload: existingPayload } = await readDayFile(location.locationKey, targetDate)
     const existingSamples = Array.isArray(existingPayload?.samples) ? existingPayload.samples : []
-    const samples = [...existingSamples, sample].slice(-MAX_SAMPLES)
+    const samples = upsertSlotSample(existingSamples, sample)
     const sunWindow = existingPayload?.sunWindow || slotTimes
 
     const dayPayload = buildDayFilePayload({
@@ -378,13 +409,13 @@ function createD0NowSampleService({
     const location = await resolveArchiveLocation(locationInput)
     const generatedAtDate = now()
     const timezone = location.timezone || 'Asia/Shanghai'
+    const generatedAt = generatedAtDate.toISOString()
     const targetDate = normalizeDate(
       input.targetDate ||
         input.target_date ||
         input.date ||
         formatLocalDateInTimezone(generatedAtDate, timezone)
     )
-    const generatedAt = generatedAtDate.toISOString()
     const dayObjectPath = buildWeatherDayObjectPath(location.locationKey, targetDate)
 
     const { payload: existingPayload } = await readDayFile(location.locationKey, targetDate)
