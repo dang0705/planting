@@ -13,6 +13,21 @@ export const LIGHT_FACING_LABELS = Object.freeze({
   no_window: '无窗'
 })
 
+const MEANINGFUL_FACING_KEYS = new Set([
+  'north',
+  'north_east',
+  'east',
+  'south_east',
+  'south',
+  'south_west',
+  'west',
+  'north_west',
+  'unknown',
+  'no_window'
+])
+const MEANINGFUL_WINDOW_KEYS = new Set(['standard', 'no_window', 'grow_light'])
+const MEANINGFUL_POSITION_KEYS = new Set(['window_side', 'middle', 'deep'])
+
 function normalizeText(value = '') {
   return String(value || '').trim()
 }
@@ -95,4 +110,36 @@ export function sanitizeLightEnvironment(value = {}) {
 export function getLightEnvironmentSignature(value = {}) {
   const normalized = sanitizeLightEnvironment(value)
   return JSON.stringify(normalized)
+}
+
+// 判断光照环境对象是否包含任意有效信号（朝向/窗型/摆放/距离/直射光），用于可选光照字段的归一化判定
+export function hasMeaningfulLightEnvironment(value) {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+  if (MEANINGFUL_FACING_KEYS.has(normalizeText(value?.facing))) {
+    return true
+  }
+  if (MEANINGFUL_WINDOW_KEYS.has(normalizeText(value?.windowType))) {
+    return true
+  }
+  if (MEANINGFUL_POSITION_KEYS.has(normalizeText(value?.position))) {
+    return true
+  }
+  if (value?.hasDirectSun === true) {
+    return true
+  }
+  const distance = Number(value?.distance)
+  if (Number.isFinite(distance)) {
+    return true
+  }
+  return false
+}
+
+// 可选光照字段归一化：无有效信号返回 null（不阻止提交并持久化为空）；否则返回规范化的完整对象
+export function normalizeOptionalLightEnvironment(value) {
+  if (!hasMeaningfulLightEnvironment(value)) {
+    return null
+  }
+  return sanitizeLightEnvironment(value)
 }

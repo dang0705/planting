@@ -61,9 +61,10 @@
                       :error="environmentWeatherWindowError"
                       @change="payload => handleCareBehaviorTimelineChange(question, payload)"
                     />
-                    <DiagnoseLightEnvironmentPicker
+                    <LightEnvironmentPicker
                       v-if="isLightEnvironmentQuestion(question)"
                       :question-id="getQuestionId(question)"
+                      :id-prefix="'diagnose-light'"
                       :model-value="getLightEnvironmentByQuestion(question)"
                       @change="payload => handleLightEnvironmentChange(question, payload)"
                     />
@@ -372,7 +373,7 @@ import { onLoad } from '@dcloudio/uni-app'
 import { useDiagnoseStore } from '@/store/diagnose.js'
 import { useUserStore } from '@/store/user.js'
 import CareBehaviorTimeline from '@/components/CareBehaviorTimeline.vue'
-import DiagnoseLightEnvironmentPicker from '@/components/DiagnoseLightEnvironmentPicker.vue'
+import LightEnvironmentPicker from '@/components/LightEnvironmentPicker.vue'
 import { useDiagnosisAnswerMutation } from '@/vue-query/diagnose/mutations/useDiagnosisAnswerMutation.js'
 import QuestionPackageEmptyState from './question-package/QuestionPackageEmptyState.vue'
 import {

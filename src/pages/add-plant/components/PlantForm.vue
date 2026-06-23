@@ -1,5 +1,5 @@
 <template>
-  <view>
+  <view id="add-plant-form">
     <!-- 植物照片 -->
     <view class="mb-6">
       <text class="block text-sm font-semibold text-gray-800 mb-3">植物照片</text>
@@ -34,11 +34,13 @@
       />
     </view>
 
-    <!-- 养护城市 -->
     <view class="mb-6">
-      <text class="block text-sm font-semibold text-gray-800 mb-3">养护城市</text>
+      <text class="block text-sm font-semibold text-gray-800 mb-3">
+        养护城市 <text class="text-red-500">*</text>
+      </text>
       <view
-        class="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3"
+        class="flex items-center justify-between rounded-xl border bg-white px-4 py-3"
+        :class="cityError ? 'border-red-300' : 'border-gray-200'"
       >
         <view class="min-w-0 flex-1">
           <text class="block text-sm font-semibold text-gray-800">{{
@@ -47,12 +49,14 @@
           <text class="mt-1 block text-xs text-gray-400">{{ locationStatusText }}</text>
         </view>
         <button
+          id="add-plant-city-button"
           class="m-0 h-9 rounded-full border border-emerald-200 bg-emerald-50 px-4 text-xs font-semibold leading-9 text-[#016630]"
           @click="showCitySheet = true"
         >
           修改
         </button>
       </view>
+      <text v-if="cityError" class="mt-2 block text-xs text-red-500">{{ cityError }}</text>
     </view>
 
     <view
@@ -82,6 +86,7 @@
         <view class="grid grid-cols-3 gap-3">
           <button
             v-for="city in hotCities"
+            :id="`add-plant-city-option-${city.locationKey}`"
             :key="city.locationKey"
             class="relative m-0 h-[58px] rounded-2xl border p-0 text-center leading-normal"
             :class="
@@ -111,7 +116,18 @@
       </view>
     </view>
 
-    <!-- 摆放位置 -->
+    <view class="mb-6">
+      <text class="block text-sm font-semibold text-gray-800 mb-3">
+        光照环境 <text class="font-normal text-gray-400">(可选)</text>
+      </text>
+      <LightEnvironmentPicker
+        id-prefix="add-plant-light"
+        question-id="profile"
+        :model-value="modelValue.lightEnvironment"
+        @change="value => update('lightEnvironment', value)"
+      />
+    </view>
+
     <view class="mb-6">
       <text class="block text-sm font-semibold text-gray-800 mb-3">摆放位置</text>
       <view class="flex flex-wrap gap-2">
@@ -162,7 +178,7 @@
         maxlength="200"
       />
       <text class="block text-right text-xs text-gray-400 mt-2"
-        >{{ modelValue.notes.length }}/200</text
+        >{{ (modelValue.notes || '').length }}/200</text
       >
     </view>
   </view>
@@ -176,11 +192,13 @@ import {
   normalizePlantCareLocation,
   saveSelectedPlantCareLocation
 } from '@/utils/plant-care-location.js'
+import LightEnvironmentPicker from '@/components/LightEnvironmentPicker.vue'
 
 const props = defineProps({
-  modelValue: { type: Object, required: true }
+  modelValue: { type: Object, required: true },
+  cityError: { type: String, default: '' }
 })
-const emit = defineEmits(['update:modelValue', 'upload-photo'])
+const emit = defineEmits(['update:modelValue', 'upload-photo', 'city-change'])
 
 const locations = ['阳台', '客厅', '卧室', '书房', '办公室', '其他']
 const hotCities = ref([])
@@ -215,6 +233,7 @@ function applyCareLocation(careLocation, status) {
     return
   }
   locationStatus.value = status
+  emit('city-change', normalized)
   emit('update:modelValue', {
     ...props.modelValue,
     location: props.modelValue.location || normalized.cityName,

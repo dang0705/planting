@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 
 const { compassDirectionToFacing, createDefaultLightEnvironment, getLightFacingLabel } =
-  await import('../../src/pages/diagnose/question-package/light-environment.js')
+  await import('../../src/utils/light-environment.js')
 
 const cases = [
   [-1, 'north'],

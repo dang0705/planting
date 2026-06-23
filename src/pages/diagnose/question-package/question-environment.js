@@ -8,7 +8,7 @@ import {
   createDefaultLightEnvironment,
   isLightEnvironmentQuestion,
   sanitizeLightEnvironment
-} from './light-environment.js'
+} from '@/utils/light-environment.js'
 
 function normalizeText(value = '') {
   return String(value || '').trim()

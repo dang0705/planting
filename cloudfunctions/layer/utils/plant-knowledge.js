@@ -45,6 +45,17 @@ function parseCareJson(value) {
   return parseJsonField(value, null)
 }
 
+function stringifyNullableJson(value) {
+  if (value === undefined || value === null || value === '') {
+    return null
+  }
+  return JSON.stringify(value)
+}
+
+function hasOwnField(payload, key) {
+  return Object.prototype.hasOwnProperty.call(payload || {}, key)
+}
+
 function normalizeNullableString(value) {
   const normalized = String(value ?? '').trim()
   if (!normalized) {
@@ -358,6 +369,7 @@ async function createUserPlantInstance({
   visualCallBatchId = null,
   nickname = null,
   location = null,
+  lightEnvironment = null,
   photos = null
 }) {
   let plant = null
@@ -432,11 +444,13 @@ async function createUserPlantInstance({
     INSERT INTO user_plant_instances (
       _openid, plant_id, plant_identity_id, session_plant_id, canonical_name, recognized_name,
       source_type, recognition_type, recognition_confidence, identity_resolution_status,
-      visual_call_batch_id, nickname, location, photos, plant_genus, plant_family_en, plant_latin_name
+      visual_call_batch_id, nickname, location, light_environment_json, photos,
+      plant_genus, plant_family_en, plant_latin_name
     ) VALUES (
       {{openid}}, {{plantId}}, {{plantIdentityId}}, {{sessionPlantId}}, {{canonicalName}}, {{recognizedName}},
       {{sourceType}}, {{recognitionType}}, NULLIF({{recognitionConfidence}}, ''), {{identityResolutionStatus}},
-      {{visualCallBatchId}}, {{nickname}}, {{location}}, {{photos}}, {{plantGenus}}, {{plantFamilyEn}}, {{plantLatinName}}
+      {{visualCallBatchId}}, {{nickname}}, {{location}}, {{lightEnvironmentJson}}, {{photos}},
+      {{plantGenus}}, {{plantFamilyEn}}, {{plantLatinName}}
     )
   `
 
@@ -460,6 +474,7 @@ async function createUserPlantInstance({
     visualCallBatchId: normalizedVisualCallBatchId,
     nickname: normalizeNullableString(nickname),
     location: normalizeNullableString(location),
+    lightEnvironmentJson: stringifyNullableJson(lightEnvironment),
     photos: photos ? JSON.stringify(photos) : null,
     plantGenus,
     plantFamilyEn,
@@ -538,6 +553,10 @@ function mapUserPlantInstanceRow(row, plant = null) {
     visualCallBatchId: row.visual_call_batch_id || '',
     location: row.location || '未设置',
     photos: parseJsonField(row.photos, []),
+    lightEnvironment: parseJsonField(
+      row.light_environment_json_text ?? row.light_environment_json,
+      null
+    ),
     imageFileId: plant?.imageFileId || '',
     lastWatered: row.last_watered || null,
     nextWater: row.next_water || null,
@@ -577,6 +596,7 @@ async function getUserPlantInstanceById(openid, id) {
       up.visual_call_batch_id,
       up.nickname,
       up.location,
+      CAST(up.light_environment_json AS CHAR) AS light_environment_json_text,
       up.photos,
       up.last_watered,
       up.next_water,
@@ -620,6 +640,7 @@ async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) 
       up.visual_call_batch_id,
       up.nickname,
       up.location,
+      CAST(up.light_environment_json AS CHAR) AS light_environment_json_text,
       up.photos,
       up.last_watered,
       up.next_water,
@@ -681,6 +702,10 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
   if (updates.photos !== undefined) {
     fields.push('photos = {{photos}}')
     params.photos = updates.photos ? JSON.stringify(updates.photos) : null
+  }
+  if (hasOwnField(updates, 'lightEnvironment')) {
+    fields.push('light_environment_json = {{lightEnvironmentJson}}')
+    params.lightEnvironmentJson = stringifyNullableJson(updates.lightEnvironment)
   }
   if (updates.lastWatered !== undefined) {
     fields.push('last_watered = {{lastWatered}}')

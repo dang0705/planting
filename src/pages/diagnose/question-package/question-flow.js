@@ -21,7 +21,7 @@ import {
   isLightEnvironmentQuestion,
   resolveLightEnvironmentAnswerKey,
   sanitizeLightEnvironment
-} from './light-environment.js'
+} from '@/utils/light-environment.js'
 import {
   buildLightEnvironmentByQuestionIdMap,
   dedupeQuestionsById,

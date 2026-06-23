@@ -1,9 +1,13 @@
 <template>
-  <view :id="`diagnose-light-environment-${questionId}`" class="mt-4 flex flex-col gap-2.5">
+  <view
+    :id="`${idPrefix}-environment-${questionId}`"
+    class="mt-4 flex flex-col gap-2.5"
+    :class="{ 'pointer-events-none opacity-60': disabled }"
+  >
     <view
       v-for="option in windowOptions"
       :key="option.key"
-      :id="`diagnose-light-window-${option.key}`"
+      :id="`${idPrefix}-window-${option.key}`"
       class="rounded-2xl border bg-white px-4 py-3.5"
       :class="
         selectedWindowKey === option.key ? 'border-[#00a63e] bg-[#f0fdf4]' : 'border-[#e5e7eb]'
@@ -26,14 +30,14 @@
 
     <view
       v-if="selectedWindowKey === 'window'"
-      :id="`diagnose-light-window-detail-${questionId}`"
+      :id="`${idPrefix}-window-detail-${questionId}`"
       class="ml-4 border-l-2 border-[#b9f8cf] pl-4"
     >
       <view class="items-center">
         <view class="relative mx-auto h-[220px] w-[220px] rounded-full bg-[#f8faf9]">
           <image
             v-if="selectedDirectionArrowStyle"
-            id="diagnose-light-selected-direction-arrow"
+            :id="`${idPrefix}-selected-direction-arrow`"
             :src="selectedDirectionArrowIcon"
             class="pointer-events-none absolute z-0 h-[18px] w-[14px]"
             mode="aspectFit"
@@ -42,7 +46,7 @@
           <view
             v-for="direction in directionOptions"
             :key="direction.key"
-            :id="`diagnose-light-facing-${direction.key}`"
+            :id="`${idPrefix}-facing-${direction.key}`"
             class="absolute z-10 flex h-10 w-10 items-center justify-center rounded-full border bg-white"
             :class="
               environment.facing === direction.key
@@ -55,7 +59,7 @@
             <text class="text-[11px] font-medium leading-none">{{ direction.label }}</text>
           </view>
           <view
-            id="diagnose-light-facing-unknown"
+            :id="`${idPrefix}-facing-unknown`"
             class="absolute left-1/2 top-1/2 flex h-[68px] w-[68px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border bg-white"
             :class="
               environment.facing === 'unknown'
@@ -69,7 +73,7 @@
         </view>
 
         <button
-          :id="`diagnose-light-calibrate-button-${questionId}`"
+          :id="`${idPrefix}-calibrate-button-${questionId}`"
           class="mx-auto mt-2 h-9 rounded-full border border-[#b9f8cf] bg-white px-4 text-xs font-bold leading-9 text-[#008236]"
           @click="openDirectionDialog()"
         >
@@ -86,7 +90,7 @@
       </view>
 
       <slider
-        :id="`diagnose-light-distance-slider-${questionId}`"
+        :id="`${idPrefix}-distance-slider-${questionId}`"
         class="mt-2"
         min="0"
         max="10"
@@ -96,6 +100,7 @@
         backgroundColor="#e5e7eb"
         block-color="#ffffff"
         block-size="20"
+        :disabled="disabled"
         @change="handleDistanceChange"
         @changing="handleDistanceChange"
       />
@@ -137,24 +142,29 @@
       <view class="mt-3 flex items-center justify-between rounded-xl bg-[#f8faf9] px-3 py-2.5">
         <text class="text-xs font-bold text-[#4a5565]">每天有直射光</text>
         <switch
-          :id="`diagnose-light-direct-sun-${questionId}`"
+          :id="`${idPrefix}-direct-sun-${questionId}`"
           :checked="environment.hasDirectSun"
           color="#00a63e"
+          :disabled="disabled"
           @change="handleDirectSunChange"
         />
       </view>
     </view>
 
+    <view v-if="errorText" class="mt-1 px-1">
+      <text class="text-xs text-red-500">{{ errorText }}</text>
+    </view>
+
     <view
       v-if="showDirectionDialog"
-      id="diagnose-light-direction-dialog"
+      :id="`${idPrefix}-direction-dialog`"
       class="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,0,0.5)] px-6"
     >
       <view class="w-full max-w-[345px] rounded-2xl bg-white p-5 shadow-xl">
         <view class="flex items-center justify-between">
           <text class="text-base font-bold text-[#1e2939]">校准方位</text>
           <text
-            id="diagnose-light-direction-dialog-close"
+            :id="`${idPrefix}-direction-dialog-close`"
             class="px-1 text-2xl leading-none text-[#9aa4b2]"
             @click="closeDirectionDialog"
           >
@@ -191,7 +201,7 @@
           {{ compassStatusText }}
         </text>
         <button
-          id="diagnose-light-direction-dialog-confirm"
+          :id="`${idPrefix}-direction-dialog-confirm`"
           class="mt-4 h-11 rounded-2xl bg-[#00a63e] p-0 text-base font-bold leading-11 text-white"
           @click="confirmDirection"
         >
@@ -209,12 +219,15 @@ import {
   createDefaultLightEnvironment,
   getLightFacingLabel,
   sanitizeLightEnvironment
-} from '@/pages/diagnose/question-package/light-environment.js'
-import selectedDirectionArrowIcon from '@/pages/diagnose/question-package/direction-selected-arrow.svg'
+} from '@/utils/light-environment.js'
+import selectedDirectionArrowIcon from '@/assets/icons/direction-selected-arrow.svg'
 
 const props = defineProps({
   modelValue: { type: Object, default: () => createDefaultLightEnvironment() },
-  questionId: { type: String, default: '' }
+  questionId: { type: String, default: '' },
+  idPrefix: { type: String, default: 'light-env' },
+  disabled: { type: Boolean, default: false },
+  errorText: { type: String, default: '' }
 })
 const emit = defineEmits(['update:modelValue', 'change'])
 
@@ -312,6 +325,9 @@ function commit(nextValue) {
 }
 
 function selectWindow(key) {
+  if (props.disabled) {
+    return
+  }
   if (key === 'no_window') {
     commit({
       ...environment.value,
@@ -343,6 +359,9 @@ function selectWindow(key) {
 }
 
 function selectFacing(facing) {
+  if (props.disabled) {
+    return
+  }
   commit({ ...environment.value, facing })
 }
 
@@ -420,6 +439,9 @@ function startCompassWatch() {
 }
 
 function openDirectionDialog(nextFacing = '') {
+  if (props.disabled) {
+    return
+  }
   if (nextFacing) {
     commit({ ...environment.value, facing: nextFacing })
   }
@@ -433,17 +455,26 @@ function closeDirectionDialog() {
 }
 
 function selectPosition(position) {
+  if (props.disabled) {
+    return
+  }
   const distance = position === 'window_side' ? 1 : position === 'middle' ? 2.5 : 5
   commit({ ...environment.value, position, distance })
 }
 
 function handleDistanceChange(event) {
+  if (props.disabled) {
+    return
+  }
   const distance = Number(event?.detail?.value)
   const position = distance <= 1.2 ? 'window_side' : distance <= 3.5 ? 'middle' : 'deep'
   commit({ ...environment.value, distance, position })
 }
 
 function handleDirectSunChange(event) {
+  if (props.disabled) {
+    return
+  }
   commit({ ...environment.value, hasDirectSun: Boolean(event?.detail?.value) })
 }
 

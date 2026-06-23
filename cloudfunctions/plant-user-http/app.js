@@ -64,6 +64,12 @@ async function main(event, context) {
         visualCallBatchId: request.body.visualCallBatchId || null,
         nickname: request.body.nickname || request.body.nickName || null,
         location: request.body.location || '阳台',
+        lightEnvironment: Object.prototype.hasOwnProperty.call(
+          request.body || {},
+          'lightEnvironment'
+        )
+          ? request.body.lightEnvironment
+          : null,
         photos: request.body.photos || null
       })
       const careLocation = await savePlantCareLocation({

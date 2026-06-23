@@ -1,11 +1,8 @@
 ﻿<template>
   <view id="index-page" class="min-h-screen bg-[#F8F6F0]">
-    <!-- 自定义导航栏 -->
     <CustomNavbar title="植伴" />
 
-    <!-- 内容区域 -->
     <view class="pb-[70px]" :style="{ paddingTop: userStore.navbarHeight + 'px' }">
-      <!-- 今日养护提醒 -->
       <view
         v-if="plantStore.plantsNeedWater.length > 0"
         class="m-4 p-3 px-4 rounded-2xl"
@@ -19,7 +16,6 @@
         </view>
       </view>
 
-      <!-- 登录用户 -->
       <template v-if="userStore.isAuthenticated">
         <image :src="loading" class="size-20 fixed position-center" v-if="!loaded" />
         <!--          空状态-->
@@ -88,9 +84,10 @@
                           }}</text>
                         </view>
                       </view>
-                      <text class="text-xs text-gray-400"
-                        >{{ getDaysAgo(plant.plantDate) }} · {{ plant.location }}</text
-                      >
+                      <text class="text-xs text-gray-400">
+                        {{ getDaysAgo(plant.plantDate) }} · {{ plant.location }}
+                      </text>
+                      <PlantProfileCompleteness :plant="plant" />
                     </view>
                   </view>
 
@@ -112,12 +109,19 @@
                   <text class="block text-sm font-semibold text-gray-800 mb-2">📋 诊断历史</text>
 
                   <!-- 加载中 -->
-                  <view v-if="loadingHistory[plant.id]" :id="`index-diagnose-history-loading-${plant.id}`" class="text-center py-4">
+                  <view
+                    v-if="loadingHistory[plant.id]"
+                    :id="`index-diagnose-history-loading-${plant.id}`"
+                    class="text-center py-4"
+                  >
                     <text class="text-xs text-gray-400">加载中...</text>
                   </view>
 
                   <!-- 历史记录列表 -->
-                  <view v-else-if="plantDiagnoseHistory[plant.id]?.length > 0" :id="`index-diagnose-history-list-${plant.id}`">
+                  <view
+                    v-else-if="plantDiagnoseHistory[plant.id]?.length > 0"
+                    :id="`index-diagnose-history-list-${plant.id}`"
+                  >
                     <view
                       v-for="record in plantDiagnoseHistory[plant.id]"
                       :key="record._id"
@@ -150,7 +154,11 @@
                   </view>
 
                   <!-- 空状态 -->
-                  <view v-else :id="`index-diagnose-history-empty-${plant.id}`" class="bg-gray-50 rounded-xl p-3 text-center">
+                  <view
+                    v-else
+                    :id="`index-diagnose-history-empty-${plant.id}`"
+                    class="bg-gray-50 rounded-xl p-3 text-center"
+                  >
                     <text class="text-xs text-gray-400">暂无诊断记录</text>
                   </view>
                 </view>
@@ -250,12 +258,14 @@
 
 <script setup>
 import { onMounted, ref, reactive } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import CustomNavbar from '@/components/CustomNavbar'
 import DiagnosePopup from '@/components/DiagnosePopup.vue'
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
 import { getDiagnosisHistory } from '@/api/plants-http.js'
 import loading from '@/assets/icons/loading.svg'
+import PlantProfileCompleteness from './components/PlantProfileCompleteness.vue'
 
 const plantStore = usePlantStore()
 const userStore = useUserStore()
@@ -280,7 +290,13 @@ onMounted(async () => {
 
   // 登录状态下加载用户植物
   if (await userStore.ensureLogin()) {
-    loadUserPlants()
+    loadUserPlants(true)
+  }
+})
+
+onShow(() => {
+  if (userStore.isAuthenticated) {
+    loadUserPlants(true)
   }
 })
 
@@ -307,10 +323,9 @@ async function loadPlantDiagnoseHistory(plantId) {
     plantDiagnoseHistory[plantId] = (result?.items || []).map(item => ({
       _id: item.resultId || item.historyId || '',
       mainIssue: item?.summary?.displayName || '诊断记录',
-      healthStatus:
-        !item?.outcomeType
-          ? 'unknown'
-          : item?.outcomeType === 'non_problematic'
+      healthStatus: !item?.outcomeType
+        ? 'unknown'
+        : item?.outcomeType === 'non_problematic'
           ? 'healthy'
           : item?.outcomeType === 'uncertain'
             ? 'unknown'
@@ -355,10 +370,18 @@ function formatTime(time) {
   const now = new Date()
   const diff = now - date
 
-  if (diff < 60000) {return '刚刚'}
-  if (diff < 3600000) {return `${Math.floor(diff / 60000)}分钟前`}
-  if (diff < 86400000) {return `${Math.floor(diff / 3600000)}小时前`}
-  if (diff < 604800000) {return `${Math.floor(diff / 86400000)}天前`}
+  if (diff < 60000) {
+    return '刚刚'
+  }
+  if (diff < 3600000) {
+    return `${Math.floor(diff / 60000)}分钟前`
+  }
+  if (diff < 86400000) {
+    return `${Math.floor(diff / 3600000)}小时前`
+  }
+  if (diff < 604800000) {
+    return `${Math.floor(diff / 86400000)}天前`
+  }
 
   return `${date.getMonth() + 1}月${date.getDate()}日`
 }
@@ -402,8 +425,10 @@ function handlePhoneLoginUnavailable() {
   })
 }
 
-async function loadUserPlants() {
-  if (loaded.value) {return}
+async function loadUserPlants(force = false) {
+  if (loaded.value && !force) {
+    return
+  }
   loaded.value = false
 
   try {
@@ -412,7 +437,6 @@ async function loadUserPlants() {
     console.error('加载植物列表失败:', e)
   } finally {
     loaded.value = true
-    console.log(loaded, 'loaded')
   }
 }
 
@@ -457,6 +481,9 @@ function getHealthText(status) {
 
 function getDaysAgo(date) {
   const plantDate = new Date(date)
+  if (Number.isNaN(plantDate.getTime())) {
+    return '刚添加'
+  }
   const now = new Date()
   const days = Math.floor((now - plantDate) / (1000 * 60 * 60 * 24))
   return `${days}天`
