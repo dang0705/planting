@@ -32,6 +32,7 @@ inclusion: always
 15. 除非用户显式要求，否则 subagent 在条件允许的情况下优先考虑线程复用。
 16. 当上游的数据层结构变动后，应避免用兼容或者adapter的方式实现数据对接。优先将消费层和数据层结构同步一致，减少思维负担。
 17. subagent尤其是非gpt系的第三方模型如GLM在执行任务的过程中，main agent应当避免主动催促和询问进度。这些行为可能会造成第三方模型的未知行为，如抛异常和超长等待。
+18. 当运行时模型为 GLM 系列时，调用 `mcp__Figma_Desktop__get_design_context`、`get_metadata`、`get_variable_defs` 等 Figma 读取类工具后，禁止/跳过调用 `get_screenshot`；除非用户在当前会话中明确要求查看截图。
 
 ## 3. 项目技术上下文
 
