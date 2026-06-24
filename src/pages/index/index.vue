@@ -1,5 +1,5 @@
 ﻿<template>
-  <view id="index-page" class="min-h-screen bg-[#F8F6F0]">
+  <view id="index-page" class="min-h-screen">
     <CustomNavbar title="植伴" />
 
     <view class="pb-[70px]" :style="{ paddingTop: userStore.navbarHeight + 'px' }">
@@ -44,62 +44,21 @@
               :name="plant.id"
               :open="false"
               :border="false"
+              :show-arrow="false"
               show-animation
               class="mb-4"
               title-border="none"
             >
               <!-- 折叠面板标题插槽 -->
               <template v-slot:title>
-                <view class="flex items-center justify-between w-full pr-4">
-                  <view class="flex items-center flex-1">
-                    <!-- 植物缩略图 -->
-                    <view class="w-16 h-16 rounded-xl overflow-hidden mr-3 flex-shrink-0">
-                      <image
-                        v-if="plant.image"
-                        :src="plant.image"
-                        class="w-full h-full"
-                        mode="aspectFill"
-                      />
-                      <view
-                        v-else
-                        class="w-full h-full flex items-center justify-center"
-                        style="background: linear-gradient(135deg, #d8f3dc 0%, #b7e4c7 100%)"
-                      >
-                        <text class="text-3xl">🪴</text>
-                      </view>
-                    </view>
-
-                    <!-- 植物基本信息 -->
-                    <view class="flex-1">
-                      <view class="flex items-center mb-1">
-                        <text class="text-base font-semibold text-gray-800 mr-2">{{
-                          plant.displayName
-                        }}</text>
-                        <view
-                          :class="getHealthBadgeClass(plant.healthStatus)"
-                          class="px-2 py-0.5 rounded-lg"
-                        >
-                          <text class="text-white text-[10px] font-semibold">{{
-                            getHealthText(plant.healthStatus)
-                          }}</text>
-                        </view>
-                      </view>
-                      <text class="text-xs text-gray-400">
-                        {{ getDaysAgo(plant.plantDate) }} · {{ plant.location }}
-                      </text>
-                      <PlantProfileCompleteness :plant="plant" />
-                    </view>
-                  </view>
-
-                  <!-- 诊断按钮 -->
-                  <view
-                    :id="`diagnose-entry-button-${plant.id}`"
-                    class="ml-2 bg-primary px-3 py-1.5 rounded-lg flex items-center"
-                    @click.stop="openDiagnose(plant)"
-                  >
-                    <text class="text-white text-xs font-semibold">📷 诊断</text>
-                  </view>
-                </view>
+                <PlantCard
+                  :plant="plant"
+                  :reminder-summary="getReminderSummary(plant)"
+                  @diagnose="openDiagnose"
+                  @history="openPlantHistory"
+                  @detail="viewPlantDetail"
+                  @reminder="openReminder"
+                />
               </template>
 
               <!-- 折叠面板内容 -->
@@ -265,10 +224,12 @@ import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
 import { getDiagnosisHistory } from '@/api/plants-http.js'
 import loading from '@/assets/icons/loading.svg'
-import PlantProfileCompleteness from './components/PlantProfileCompleteness.vue'
+import { usePlantingStore } from '@/store/planting.js'
+import PlantCard from './components/PlantCard.vue'
 
 const plantStore = usePlantStore()
 const userStore = useUserStore()
+const plantingStore = usePlantingStore()
 
 const loaded = ref(false)
 const diagnosePopupRef = ref(null)
@@ -345,6 +306,12 @@ function openDiagnose(plant) {
   currentPlantId.value = plant.id
   currentPlantName.value = plant.canonicalName || plant.displayName || '未知植物'
   diagnosePopupRef.value?.open()
+}
+
+function openPlantHistory(plant) {
+  if (!plantDiagnoseHistory[plant.id] && !loadingHistory[plant.id]) {
+    loadPlantDiagnoseHistory(plant.id)
+  }
 }
 
 function handleDiagnoseSuccess(result) {
@@ -453,6 +420,24 @@ function viewPlantDetail(plant) {
   })
 }
 
+function getReminderSummary(plant) {
+  return {
+    water: plantingStore.getPlantReminderState(plant.id, 'water'),
+    fertilize: plantingStore.getPlantReminderState(plant.id, 'fertilize')
+  }
+}
+
+function openReminder({ plant, type }) {
+  plantingStore.setReminderFocus({
+    plantId: plant.id,
+    plantName: plant.displayName || plant.canonicalName || '当前植物',
+    type
+  })
+  uni.switchTab({
+    url: '/pages/calendar/calendar'
+  })
+}
+
 function needsCareToday(plantId) {
   return plantStore.plantsNeedWater.some(p => p.id === plantId)
 }
@@ -477,16 +462,6 @@ function getHealthText(status) {
     unknown: '待确认'
   }
   return textMap[status] || '待确认'
-}
-
-function getDaysAgo(date) {
-  const plantDate = new Date(date)
-  if (Number.isNaN(plantDate.getTime())) {
-    return '刚添加'
-  }
-  const now = new Date()
-  const days = Math.floor((now - plantDate) / (1000 * 60 * 60 * 24))
-  return `${days}天`
 }
 
 function viewTip(tip) {

@@ -1178,6 +1178,58 @@ function createCloudbaseDevProxyPlugin() {
 
 const cloudbaseDevProxyPlugin = createCloudbaseDevProxyPlugin()
 
+// 微信小程序运行时无法解析 ES2020 的 ??（空值合并）与 ?.（可选链）语法。
+// UniApp 的 Vite 插件在 config/index.js 中配置了 esbuild.exclude: /\.js$/，
+// 将所有 .js 文件排除出 esbuild 转译，导致 @tanstack/query-core 等 ESM 依赖
+// 中的 ?? 原样进入 vendor.js，预览时报 SyntaxError: Unexpected token ?。
+// 该插件在 Rollup 写入产物后，用 esbuild 对 common/vendor.js 做一次
+// ES2015 语法降级，消除 ?? 与 ?.。
+function createWeappJsTranspilePlugin() {
+  if (isH5 || isApp) {
+    return null
+  }
+
+  return {
+    name: 'weapp-js-es2020-transpile',
+    enforce: 'post',
+    async writeBundle(options) {
+      const esbuild = await import('esbuild')
+      const pathMod = await import('node:path')
+      const { readFile, writeFile } = await import('node:fs/promises')
+      const dir = options.dir || (options.file && pathMod.dirname(options.file)) || ''
+      if (!dir) {
+        return
+      }
+
+      const vendorPath = pathMod.join(dir, 'common', 'vendor.js')
+      let source
+      try {
+        source = await readFile(vendorPath, 'utf8')
+      } catch {
+        return
+      }
+
+      if (!source.includes('??') && !source.includes('?.')) {
+        return
+      }
+
+      const result = await esbuild.transform(source, {
+        target: 'es2020',
+        supported: {
+          'nullish-coalescing': false,
+          'optional-chain': false
+        },
+        loader: 'js',
+        minify: false
+      })
+
+      await writeFile(vendorPath, result.code, 'utf8')
+    }
+  }
+}
+
+const weappJsTranspilePlugin = createWeappJsTranspilePlugin()
+
 export default defineConfig({
   resolve: {
     alias: {
@@ -1192,6 +1244,7 @@ export default defineConfig({
   },
   plugins: [
     uni(),
+    ...(weappJsTranspilePlugin ? [weappJsTranspilePlugin] : []),
     ...(cloudbaseDevProxyPlugin ? [cloudbaseDevProxyPlugin] : []),
     uvwt({
       disabled: WeappTailwindcssDisabled

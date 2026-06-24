@@ -1,14 +1,11 @@
 <template>
-  <view class="mt-2">
-    <view class="flex items-center gap-2">
-      <view class="h-1.5 flex-1 overflow-hidden rounded-full bg-[#e5e7eb]">
-        <view class="h-full rounded-full bg-[#2d7a4f]" :style="{ width: `${detail.score}%` }" />
-      </view>
-      <text class="text-[10px] font-semibold text-[#2d7a4f]">{{ detail.score }}%</text>
-    </view>
-    <text v-if="detail.requiredMissing" class="mt-1 block text-[10px] text-[#f97316]">
-      待补养护城市
-    </text>
+  <view
+    class="flex size-5 flex-[0_0_20px] items-center justify-center rounded-full bg-[conic-gradient(#2d7a4f_var(--profile-completeness-angle),#dbe7df_0)]"
+    :style="ringStyle"
+    :title="`信息完整度 ${detail.score}%，点击查看说明`"
+    @click.stop="emit('click')"
+  >
+    <view class="size-[14px] rounded-full bg-white" />
   </view>
 </template>
 
@@ -19,6 +16,16 @@ import { getPlantProfileCompletenessDetail } from '@/utils/plant-profile-complet
 const props = defineProps({
   plant: { type: Object, required: true }
 })
+const emit = defineEmits(['click'])
+const SCORE_MIN = 0
+const SCORE_MAX = 100
+const FULL_CIRCLE_DEGREES = 360
+const SCORE_TO_DEGREES = FULL_CIRCLE_DEGREES / SCORE_MAX
 
 const detail = computed(() => getPlantProfileCompletenessDetail(props.plant))
+const ringStyle = computed(() => ({
+  '--profile-completeness-angle': `${
+    Math.max(SCORE_MIN, Math.min(SCORE_MAX, detail.value.score)) * SCORE_TO_DEGREES
+  }deg`
+}))
 </script>

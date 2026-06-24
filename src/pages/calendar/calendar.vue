@@ -30,7 +30,9 @@
         <view class="flex items-center">
           <text class="text-2xl mr-2">🌾</text>
           <view>
-            <text class="block text-base font-semibold text-gray-900">{{ currentSolarTerm.name }}</text>
+            <text class="block text-base font-semibold text-gray-900">{{
+              currentSolarTerm.name
+            }}</text>
             <text class="block text-xs text-gray-600">{{ currentSolarTerm.date }}</text>
           </view>
         </view>
@@ -39,11 +41,59 @@
       <text class="block text-sm text-gray-700 mt-3">{{ currentSolarTerm.tip }}</text>
     </view>
 
+    <view v-if="selectedReminderFocus" class="px-4 py-4">
+      <view class="rounded-2xl bg-white p-4 shadow-sm">
+        <view class="mb-3 flex items-center justify-between">
+          <view class="min-w-0 flex-1">
+            <text class="block text-base font-semibold text-gray-900">
+              {{ selectedReminderFocus.plantName }}
+            </text>
+            <text class="block text-xs text-gray-500">
+              已定位到{{ getTaskName(selectedReminderFocus.type) }}提醒设置
+            </text>
+          </view>
+          <view
+            class="rounded-full px-3 py-1"
+            :class="focusedReminderState.active ? 'bg-[#DBEAFE]' : 'bg-gray-100'"
+          >
+            <text
+              class="text-xs font-semibold"
+              :class="focusedReminderState.active ? 'text-[#2563EB]' : 'text-gray-500'"
+            >
+              {{ focusedReminderState.active ? '已高亮' : '未设置' }}
+            </text>
+          </view>
+        </view>
+
+        <text class="mb-3 block text-sm text-gray-600">
+          {{ focusedReminderText }}
+        </text>
+
+        <view class="flex gap-2">
+          <button
+            class="m-0 flex-1 rounded-xl border-none bg-[#3B82F6] py-2 text-sm font-semibold text-white"
+            @click="enableFocusedReminder"
+          >
+            设置提醒
+          </button>
+          <button
+            class="m-0 flex-1 rounded-xl border-none bg-gray-100 py-2 text-sm font-semibold text-gray-700"
+            @click="disableFocusedReminder"
+          >
+            停用提醒
+          </button>
+        </view>
+      </view>
+    </view>
+
     <!-- 今日提醒 -->
     <view class="px-4 py-4">
       <text class="block text-lg font-bold text-gray-900 mb-3">📅 今日提醒</text>
 
-      <view v-if="plantingStore.todayReminders.length === 0" class="bg-white rounded-2xl p-6 text-center">
+      <view
+        v-if="plantingStore.todayReminders.length === 0"
+        class="bg-white rounded-2xl p-6 text-center"
+      >
         <text class="block text-4xl mb-2">✨</text>
         <text class="block text-sm text-gray-600">今天没有养护任务</text>
       </view>
@@ -55,7 +105,9 @@
       >
         <view class="flex items-center justify-between mb-3">
           <view class="flex-1">
-            <text class="block text-base font-semibold text-gray-900 mb-1">{{ reminder.plantName }}</text>
+            <text class="block text-base font-semibold text-gray-900 mb-1">{{
+              reminder.plantName
+            }}</text>
             <text class="block text-sm text-gray-600">{{ reminder.location }}</text>
           </view>
           <view class="bg-[#D8F3DC] px-3 py-1 rounded-full">
@@ -95,21 +147,18 @@
     <view class="px-4 pb-20">
       <view class="flex items-center justify-between mb-3">
         <text class="block text-lg font-bold text-gray-900">🌱 我的植物</text>
-        <button
-          class="bg-primary text-white text-sm px-4 py-2 rounded-full"
-          @click="addPlan"
-        >
+        <button class="bg-primary text-white text-sm px-4 py-2 rounded-full" @click="addPlan">
           + 添加
         </button>
       </view>
 
-      <view v-if="plantingStore.activePlans.length === 0" class="bg-white rounded-2xl p-6 text-center">
+      <view
+        v-if="plantingStore.activePlans.length === 0"
+        class="bg-white rounded-2xl p-6 text-center"
+      >
         <text class="block text-4xl mb-2">🪴</text>
         <text class="block text-sm text-gray-600 mb-4">还没有种植计划</text>
-        <button
-          class="bg-primary text-white text-sm px-6 py-2 rounded-full"
-          @click="addPlan"
-        >
+        <button class="bg-primary text-white text-sm px-6 py-2 rounded-full" @click="addPlan">
           添加第一株植物
         </button>
       </view>
@@ -141,10 +190,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { usePlantingStore } from '@/store/planting.js'
 
 const plantingStore = usePlantingStore()
+const selectedReminderFocus = ref(null)
 
 // 天气数据
 const weather = ref({
@@ -176,6 +227,33 @@ onMounted(() => {
   getWeatherData()
   // 获取节气数据
   getSolarTermData()
+})
+
+onShow(() => {
+  const focus = plantingStore.consumeReminderFocus()
+  if (focus) {
+    selectedReminderFocus.value = focus
+  }
+})
+
+const focusedReminderState = computed(() => {
+  if (!selectedReminderFocus.value) {
+    return { active: false, nextTime: '' }
+  }
+  return plantingStore.getPlantReminderState(
+    selectedReminderFocus.value.plantId,
+    selectedReminderFocus.value.type
+  )
+})
+
+const focusedReminderText = computed(() => {
+  if (!selectedReminderFocus.value) {
+    return ''
+  }
+  if (!focusedReminderState.value.active) {
+    return `当前没有有效${getTaskName(selectedReminderFocus.value.type)}提醒。`
+  }
+  return `下次提醒：${formatReminderTime(focusedReminderState.value.nextTime)}`
 })
 
 function getWeatherData() {
@@ -213,6 +291,58 @@ function getTaskName(type) {
     check: '检查'
   }
   return names[type] || '任务'
+}
+
+function enableFocusedReminder() {
+  if (!selectedReminderFocus.value) {
+    return
+  }
+  plantingStore.setPlantReminder({
+    plantId: selectedReminderFocus.value.plantId,
+    plantName: selectedReminderFocus.value.plantName,
+    type: selectedReminderFocus.value.type,
+    nextTime: buildTomorrowReminderTime(),
+    intervalDays: selectedReminderFocus.value.type === 'fertilize' ? 30 : 7
+  })
+  uni.showToast({
+    title: `${getTaskName(selectedReminderFocus.value.type)}提醒已设置`,
+    icon: 'success'
+  })
+}
+
+function disableFocusedReminder() {
+  if (!selectedReminderFocus.value) {
+    return
+  }
+  plantingStore.disablePlantReminder({
+    plantId: selectedReminderFocus.value.plantId,
+    type: selectedReminderFocus.value.type
+  })
+  uni.showToast({
+    title: `${getTaskName(selectedReminderFocus.value.type)}提醒已停用`,
+    icon: 'none'
+  })
+}
+
+function buildTomorrowReminderTime() {
+  const nextTime = new Date()
+  nextTime.setDate(nextTime.getDate() + 1)
+  nextTime.setHours(9, 0, 0, 0)
+  return nextTime.toISOString()
+}
+
+function formatReminderTime(value) {
+  if (!value) {
+    return '循环提醒'
+  }
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return '循环提醒'
+  }
+  return `${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(
+    2,
+    '0'
+  )}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
 function completeTask(id) {

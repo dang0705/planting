@@ -1,368 +1,335 @@
 ---
 name: dispatch-task
-description: '通用任务调度入口：按 phase 执行硬门禁、Agent Assignment、role_context_packets、Implementation/Test Contract、QA、ClickUp 回写和 Git commit；ClickUp ticket 可选。'
+description: "低上下文任务调度：main 锁定工程约束与验收边界；实现阶段可分流到 Codex 具名 subagent 或 ZCode 外部实现者，完成后统一由 Codex 回收 diff、测试、QA 与 Completion Gate。"
 ---
 
-# Dispatch Task Skill
+# Dispatch Task
 
-## 1. 定位
+## 1. 角色所有权
 
-`dispatch-task` 是通用任务调度入口。
+- **main**：任务归一化、项目约束、路径边界、风险路由、实现模式选择、handoff 校验、ZCode 桥接控制、computer-use 操作执行、diff review、返工协调与完成收口；不得修改代码类文件。
+- **Codex implementer**：仅在 `implementation_mode=codex_subagent` 时使用；读取目标路径适用规则并实现；负责 unit/lint/typecheck/build/self-check。
+- **ZCode external implementer**：仅在 `implementation_mode=zcode_external` 时替代实现阶段；按 main 生成的 ZCode prompt 修改代码；不替代 main 架构判断、QA 或验收。
+- **QA**：独立验证 e2e、端上、UI/Figma 与运行时；不运行单测，不替代 main code review。
+- **docs_keeper**：仅在公共契约或活文档确实受影响时使用。
 
-支持两种模式：
+普通任务默认只读本文件。不得先读 references/INDEX、完整历史、完整 ClickUp、完整 Figma 或全仓规则。
+
+## 2. Flow
+
+
+### Gate A0 — Implementation Mode 简单触发路由
+
+用户不需要输入完整 `Dispatch Options`。main 必须先做一次轻量触发词识别，再进入 Gate A。
+
+只要本轮任务需要代码修改，且用户输入中出现以下任一正向触发词，就必须设置：
 
 ```text
-mode: clickup_ticket
-mode: prompt_only
+implementation_mode = zcode_external
+external_implementer = zcode_glm
+zcode_target = current_open_chat
 ```
 
-main agent 主导技术方向、Implementation Contract、Test Contract、Agent Assignment、code review、ClickUp 回写和 Git commit。  
-代码实现、代码修复、测试代码改动、配置代码改动、云函数代码改动、页面组件代码改动必须交给 implementer subagent。QA 与文档落地必须交给对应 subagent。
-
-## 2. 规则读取策略
-
-详细规则在本 skill 的 `references/` 目录内，模板在 `assets/templates/` 目录内。
-
-默认读取顺序：
-
-1. 先读 `references/INDEX.md`。
-2. 当前 phase 需要什么，只读对应 reference 文件。
-3. 禁止一次性读取整个 `references/` 目录。
-4. 禁止把全部 phase 规则放进 `role_context_packets`。
-5. 输出模板只引用 `assets/templates/` 下的对应模板，不在本文件重复粘贴。
-
-模板入口：
+正向触发词包括：
 
 ```text
-assets/templates/INDEX.md
+用 ZCode
+走 ZCode
+ZCode 实现
+ZCode 写代码
+交给 ZCode
+外部实现者
+外部 implementer
+外部实现
+zcode_external
+implementation_mode=zcode_external
+GLM 在 ZCode 里跑
+让 GLM 在 ZCode 跑
+实现阶段走 ZCode
 ```
 
-## 3. Main thread budget
-
-main agent 必须读取并遵守：
+最短可用输入示例：
 
 ```text
-references/main-thread-budget-policy.md
-```
-
-main agent 默认只处理 receipt，不做二次实现、不做二次 QA、不做长日志对账。
-
-## Gate Token Telemetry
-
-读取：
-
-```text
-references/gate-token-telemetry-policy.md
-```
-
-硬规则：每个 gate 完成后、进入下一个 gate 前，main agent 必须在对话中输出 `Gate Token Telemetry`。如果当前环境没有暴露精确 token 计数，必须标记 `counter_status: unavailable` 或 `estimated`，不得编造精确数字。
-只输出 phase completed / in_progress 清单无效；必须包含 pre_gate_tokens、post_gate_tokens、gate_delta_tokens、main_cumulative_tokens、counter_source 和 delta_basis。
-
-## 4. Phase 流程
-
-```text
-Phase 0: 硬门禁
-Phase 1: 事实读取
-Phase 1.5: BRV Minimal Fact Routing Gate
-Phase 2: Agent Assignment + Subagent Reuse Gate
-Phase 3: role_context_packets
-Phase 4: Solution Discovery + Implementation Contract + Test Contract
-Phase 4.45: Pre-Implementation Budget Fuse
-Phase 4.5: Main Agent Quality Gates
-Phase 5: Subagent 执行
-Phase 6: QA 与证据
-Phase 7: ClickUp 回写与 Git commit
-```
-
-任何 phase 未通过，不得进入下一 phase。
-任何 gate 完成后，必须先输出 Gate Token Telemetry，才能进入下一 gate。
-
-## 5. Phase 0：硬门禁
-
-读取：
-
-```text
-references/phase-0-gates.md
-```
-
-必须先判断模式：
-
-```text
-Dispatch Mode:
-- mode: clickup_ticket / prompt_only
-- clickup_ticket_id:
-- clickup_required:
-- clickup_reason:
-```
-
-通用 gate 始终生效：
-
-- Git Workspace Check
-- task intent understood
-- Agent Assignment
-- role_context_packets
-- Execution Gate
-
-ClickUp 专属 gate 只在 `clickup_ticket` 模式启用。
-
-## 6. Phase 1：事实读取
-
-ClickUp 模式读取：
-
-```text
-references/clickup-ticket-read-policy.md
-references/checklist-writeback-policy.md
-references/task-facts-receipt-policy.md
-```
-
-prompt_only 模式只读取 prompt、显式文件、显式链接、用户给定约束和必要外部事实。
-
-prompt_only 模式也必须生成 Task Facts Receipt；完整 prompt / 本地 JSON 只作为 source_ref 保留，后续 phase 默认只消费 receipt。
-
-如果涉及 Figma / UI，按需显式使用：
-
-```text
-$figma-ui-implementation-policy
-$ui-implementation-scope-policy
-```
-
-## Phase 1.5：BRV Recall Gate
-
-读取：
-
-```text
-references/brv-recall-gate.md
-```
-
-在 task facts / prompt facts 读取完成后，main agent 必须生成最小 BRV query，召回当前仓库相关 fact_ref / source_ref / code_ref / test_ref，并压缩为 BRV Fact Routing Packet。
-
-BRV 不可用时不得伪造召回结果；必须记录 miss / blocked / skipped 和 fallback。
-
-BRV 输出只允许作为最精简事实路由 receipt / packet，不展开完整历史或完整 BRV context。
-
-## 7. Phase 2：Agent Assignment + Subagent Reuse Gate
-
-默认读取：
-
-```text
-references/agent-assignment-gate.md
-references/agent-assignment-core.md
-```
-
-按需读取：
-
-```text
-references/implementer-routing-policy.md      # 需要代码改动、code_explorer 或 implementer 时
-references/qa-docs-routing-policy.md          # 需要判断 QA / docs_keeper 时
-references/test-ownership-policy.md           # 单测 / e2e / 端上测试职责边界
-references/subagent-spawn-gate.md             # required named subagent 需要复用或 spawn 时
-```
-
-任何代码改动任务必须分配：
-
-```text
-implementer_fast
+用 ZCode 做这个任务：<任务描述 / ClickUp 链接 / Figma 链接>
 ```
 
 或：
 
 ```text
-implementer_deep
+走 ZCode：<任务描述>
 ```
 
-main agent 绝对不得亲自写代码、修代码、改测试代码或改配置代码。缺少可用 implementer 时必须硬停止，不得用 main/default/fallback 线程代替。
+以下情况不得触发 `zcode_external`：
 
-## 8. Phase 3：role_context_packets
+1. 用户明确否定：`不要用 ZCode`、`不用 ZCode`、`禁用 ZCode`、`别走 ZCode`、`no zcode`、`disable zcode`。
+2. 任务不需要代码修改。
+3. 用户只是询问 ZCode 流程、配置或故障，不是在派发实现任务。
 
-读取：
+触发成功后，用户不需要再写 `codex_self_implementation_forbidden`、`computer_use_required` 等长字段；这些由 Gate B2 自动补入 `zcode_contract`。
+
+### Gate A — Intake
+
+main 只读取：用户输入/显式 source、`git status --short`、目标路径最近的 AGENTS.md。UI 任务再定向读取 package.json、Tailwind 配置和组件库入口。
+
+形成短 Brief：`objective / code_changes_required / ui_task / figma_link / risk / acceptance / likely_paths / implementation_mode`。
+
+`implementation_mode`：
+
+- `codex_subagent`：默认模式。使用 `implementer_fast` / `implementer_deep` 具名 subagent。
+- `zcode_external`：当 Gate A0 命中“用 ZCode / 走 ZCode / 外部实现者 / zcode_external / GLM 在 ZCode 里跑”等简单触发词，或任务配置明确指定时使用。该模式只替代 implementer 写代码阶段。
+
+代码任务必须形成 `Project Constraints`：
 
 ```text
-references/role-context-packets.md
+rule_refs              # 路径 + 相关章节，不复制整份 AGENTS.md
+framework
+styling_system         # UI 必填
+new_scss_policy        # UI 必填：forbidden / explicit_exception_only
+scss_exceptions        # 默认 []
+component_library      # UI 必填；若为 uni-ui 且存在 figma_link，必须触发 uni-ui 映射合同
+dependency_policy
+test_commands
 ```
 
-不得把完整 ClickUp、完整 Figma、完整规则、完整日志广播给所有角色。
+项目声明 TailwindCSS 时，必须原样写入 `styling_system`；不得因 Vue/uni-app 习惯默认 SCSS。实现者还需独立核对 `rule_refs`。
 
-UI/Figma 任务中，必须通过 role_context_packet 显式触发对应 skill：
+### Gate B — Handoff Contract
+
+main 只生成一份 JSON Handoff Contract：
 
 ```text
-required_skill: $implementer-ui-execution-policy
-required_skill: $qa-ui-visual-baseline-policy
+dispatch_run_id
+implementation_mode: codex_subagent / zcode_external
+task: {objective, code_changes_required, ui_task, risk, qa_required}
+target_role                         # codex_subagent: exact custom-agent name; zcode_external: zcode_external
+spawn_contract                      # codex implementer 或 QA 具名 spawn 合同
+zcode_contract                      # implementation_mode=zcode_external 时必填
+allowed_paths / forbidden_paths
+acceptance
+project_constraints
+decision_lock:
+  level: standard / strict
+  architecture_invariants
+  local_decisions_allowed
+figma:
+  link / node_id
+  lite_status
+  main_access: lite_only
+  main_tools_used
+  lite_receipt                       # 可选，仅身份/尺寸/顶层分区
+  implementer_fetch_required
+  qa_baseline_fetch_required
+required_skills / required_prompt_sections
+validation
+output_evidence_required
 ```
 
-## 测试职责边界
+`standard` 只锁目标、工程规则和不可破坏的不变量；组件拆分、命名、复用落点等局部决策归实现者。只有 API/schema、迁移、安全、跨系统或不可逆任务读取 `references/high-risk-workflow.md` 并使用 `strict`，不为普通任务生成架构长文或逐文件伪代码。
 
-读取：
+派发前执行：
+
+```bash
+node .agents/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
+```
+
+失败不得进入实现阶段。
+
+### Gate B1 — Codex Named Spawn
+
+仅适用于 `implementation_mode=codex_subagent`，以及任何需要 QA subagent 的阶段。
+
+`target_role` 不是描述文本，而是 `.codex/agents/*.toml` 中 `name` 的精确值。main 必须显式使用该值调用 `spawn_agent`，不得让运行时自行挑选角色。
 
 ```text
-references/test-ownership-policy.md
+若工具 schema 支持 fork_turns：
+  spawn_agent(agent_type=<exact name>, fork_turns="none", message=<minimal handoff>)
+否则若支持 fork_context：
+  spawn_agent(agent_type=<exact name>, fork_context=false, message=<minimal handoff>)
+否则：
+  blocked: named_agent_selector_unavailable
 ```
 
-硬规则：单测只归 implementer；QA 不得运行或重复运行单测。QA 只负责 e2e、端上测试、UI/Figma 验收和运行时链路取证。
+硬规则：
 
-Test Contract 必须拆成 Implementer Validation Contract 与 QA Validation Contract。unit tests 只能写入 implementer 段，不得写入 QA 段。
+1. Codex implementer 必须传 `agent_type=spawn_contract.implementer_agent_type`；QA 必须传 `agent_type=spawn_contract.qa_agent_type`。
+2. 不传 `model`、`reasoning_effort` 或 sandbox override；由具名 agent TOML 决定。
+3. 禁止 full-history fork；具名角色与隔离 handoff 同时成立。
+4. `agent_type` 不在 tool schema、角色不可用、spawn 被拒绝，或 runtime metadata 显示未加载目标配置时，立即阻断。
+5. 禁止回退到 `default`、`worker`、generic agent，也禁止在 user prompt 中让 generic agent“扮演”目标角色。
+6. child 最终 JSON 必须带 `agent_identity={agent_type, dispatch_run_id}`；与 Contract 不一致时结果 validator 阻断。
+7. review/QA 返工发送到原 agent thread，不重新 spawn generic child。
 
-## 9. Phase 4：Solution Discovery、Implementation Contract、Test Contract
+### Gate B2 — ZCode External Implementer Bridge
 
-读取：
+仅适用于 `implementation_mode=zcode_external`。先读取 `references/zcode-external-implementer-bridge.md` 与 `references/zcode-computer-use-action-contract.md`。
+
+该模式下：
+
+1. main 不 spawn Codex implementer。
+2. main 生成 ZCode 专用 prompt；不得把完整 dispatch、完整 references 或完整历史塞进 prompt。
+3. Codex main 必须真实发起 `@ZCode` 或 `@Computer` computer-use tool invocation 操作 ZCode；若工具目标不可用，必须 `blocked: computer_use_unavailable`。
+4. ZCode prompt 必须通过剪贴板一次性粘贴，不得让 Codex 逐字输入。
+5. 不得仅用 shell、AppleScript、osascript、cliclick、xdotool 或类似脚本伪装完成 UI 操作，除非用户本轮明确授权替代方案。
+6. 发送前必须验证：ZCode 当前会话、输入框、prompt sentinel、粘贴完整性。
+7. 发送动作必须记录为 `send_action: enter | send_button | blocked`；不得只写“按 Enter”。
+8. Send receipt 必须包含 `computer_use.tool_invoked=true`、`tool_invocation_evidence.tool_events_seen=true`、动作 trace、`manual_typing_used=false` 与 `shell_only_ui_automation_used=false`。
+9. ZCode/GLM 聊天里说“完成”不算完成。
+10. ZCode 修改后，Codex 必须重新读取真实 `git diff`、验证 allowed/forbidden paths、执行测试/构建、自审、必要时 QA。
+11. ZCode 失败、无 diff、越权修改、无法读取 Figma、prompt 未完整发送或 computer-use 不可用时，不得 fallback 成 main 自己写代码。
+
+
+执行阶段必须出现以下实际工具调用命令，不能只写入 JSON 或自然语言说明：
 
 ```text
-references/solution-discovery-gate.md
-references/implementation-test-contract.md
-references/main-pre-implementation-gates.md
+COMPUTER_USE_CALL 1 target=@ZCode|@Computer
+command: Verify the foreground app is ZCode and the current open chat is the intended ZCode implementer session. Take a screenshot or inspect the app title/input area. Do not type code.
+
+COMPUTER_USE_CALL 2 target=@ZCode|@Computer
+command: Focus the current ZCode chat input. Confirm the input box is active and empty or safe to replace. Do not send anything.
+
+COMPUTER_USE_CALL 3 target=@ZCode|@Computer
+command: Put the exact generated ZCode handoff prompt into the system clipboard, paste it into the active ZCode chat input in one clipboard paste operation, and do not manually type the prompt character by character.
+
+COMPUTER_USE_CALL 4 target=@ZCode|@Computer
+command: Before sending, verify the input box contains both sentinel strings. If either sentinel is missing, block and do not send.
+
+COMPUTER_USE_CALL 5 target=@ZCode|@Computer
+command: Send the prompt using Enter or the visible send button, then confirm the message is present in the ZCode conversation.
 ```
 
-进入 Technical Direction Gate 前必须先完成 Solution Discovery Gate。  
-派发 implementer 前必须通过 Implementation Contract Completeness Gate。  
-如果选择 `implementer_deep`，main agent 必须额外通过 Contract-Locked Handoff Gate：架构方向、技术选型、实现方式、第三方插件策略、伪代码、目标锚点、停止条件和回传格式必须写死后再派发。
+`zcode-send-receipt.json` 必须引用真实 computer-use tool event / transcript step；没有工具事件时不得填写 `tool_invoked=true`。
 
-## 10. Phase 4.45：Pre-Implementation Budget Fuse
+ZCode prompt 派发前建议执行：
 
-读取：
+```bash
+node .agents/skills/dispatch-task/scripts/validate-zcode-prompt.mjs <handoff.json> <zcode-prompt.md>
+```
+
+粘贴/发送后记录并验证：
+
+```bash
+node .agents/skills/dispatch-task/scripts/validate-zcode-send-receipt.mjs <handoff.json> <send-receipt.json>
+```
+
+ZCode 完成后由 Codex 生成 recovery result，并执行：
+
+```bash
+node .agents/skills/dispatch-task/scripts/validate-result.mjs external <handoff.json> <zcode-recovery-result.json>
+```
+
+### Gate C — Implementation Review
+
+Codex subagent 返回 JSON 后执行：
+
+```bash
+node .agents/skills/dispatch-task/scripts/validate-result.mjs implementer <handoff.json> <result.json>
+```
+
+ZCode external 完成后执行 external recovery validator。两种模式都必须做 diff-first review：身份/来源、路径边界、项目约束、decision lock、依赖、验证证据。UI 重点检查 Tailwind/SCSS、组件复用与 uni-ui 映射证据；Figma 任务必须存在实现者直接读取证据。失败退回原实现路径，main 不亲自修复。
+
+### Gate D — QA & Completion
+
+Figma/UI、用户可观察行为、API/schema/数据链路、端上运行、高风险或用户明确要求时需要 QA。纯文档、注释或不影响行为的机械改动可跳过，但要记录理由。
+
+QA 必须按 Gate B1 具名 spawn 为 `qa_reviewer`。返回 JSON 后执行：
+
+```bash
+node .agents/skills/dispatch-task/scripts/validate-result.mjs qa <handoff.json> <result.json>
+```
+
+完成条件：实现模式校验通过；main review 通过；所需 QA 通过；blocker 与未验证项已明确；只输出一份 Completion Receipt，不输出逐 gate telemetry。
+
+## 3. Figma 硬边界
+
+存在 `figma_link` 时：
+
+| 角色 | 必须/允许 | 禁止 |
+|---|---|---|
+| main | 使用 `$figma-ui-implementation-policy`；可只解析 link/node，或最多一次 `get_metadata` 形成 Lite | context、screenshot、variables、assets、视觉摘要、实现切片、Drilldown |
+| Codex implementer | 使用 `$implementer-ui-execution-policy`，在首次 UI 编辑前直接取 metadata + design context + screenshot；再用 `$ui-implementation-scope-policy` | 依赖 main Lite 猜实现、整文件读取 |
+| ZCode external implementer | 在 ZCode prompt 中被强制要求直接读取 Figma context/screenshot；若 ZCode 无 Figma 能力，必须返回 blocker 且不改代码 | 依赖 main Lite 猜实现、让 main 补读完整 Figma |
+| QA | 使用 `$qa-ui-visual-baseline-policy`，独立取 metadata + reference screenshot，并取得实际运行截图 | 只凭 main/实现者转述判通过、整文件读取 |
+
+Handoff 必须保留原始 link/node，并满足：
 
 ```text
-references/pre-implementation-budget-fuse.md
+main_access: lite_only
+implementer_fetch_required: true
+qa_baseline_fetch_required: true
 ```
 
-正式进入 implementation 前必须估算 pre-implementation token 风险。  
-风险为 high / extreme 时，必须压缩 facts、减少候选、推迟完整 Figma Drilldown，并使用 Gate Receipt。
-
-## 11. Phase 5：Subagent 执行
-
-读取：
+`codex_subagent` 模式还必须满足：
 
 ```text
-references/subagent-progress-policy.md
+required_skills.implementer:
+  - $implementer-ui-execution-policy
+  - $ui-implementation-scope-policy
+required_skills.qa:
+  - $qa-ui-visual-baseline-policy
 ```
 
-main agent 等待 implementer，尤其是 GLM-5.2 `implementer_deep` 时，必须使用更长等待阈值；不得为了查看进度而频繁打断，不得主动打断用户确认是否等待，除非触及危险操作、权限确认、费用/外部发布确认或 hard wait 后没有任何可观察进展。
-
-implementer 完成后、QA 之前，main agent 只读取 post-implementation review 规则：
+`zcode_external` 模式还必须满足：
 
 ```text
-references/main-post-implementation-review-gate.md
-references/review-scope-policy.md
+zcode_contract.computer_use_required: true
+zcode_contract.computer_use_tool_invocation_required: true
+zcode_contract.required_computer_use_actions:
+  - verify_zcode_current_session
+  - focus_chat_input
+  - set_clipboard_to_prompt
+  - paste_clipboard
+  - verify_prompt_sentinel_in_input
+  - send_prompt
+zcode_contract.required_prompt_sections:
+  - implementation_contract
+  - allowed_forbidden_paths
+  - project_constraints
+  - figma_direct_fetch
+  - result_json_contract
 ```
 
-执行顺序：
+若 `project_constraints.component_library` 包含 `uni-ui`，则：
 
-```text
-可选 code_explorer
-→ implementer_fast / implementer_deep
-→ main agent code review
-→ qa_reviewer
-→ docs_keeper（按需）
-```
+- `codex_subagent`：handoff 必须追加 `$uni-ui-figma-component-mapper` 与 `uni_ui_mapping_evidence`。
+- `zcode_external`：ZCode prompt 必须追加 `uni_ui_mapping_contract`，并要求外部实现者在首次 UI 编辑前输出最小 `Figma 区域/节点 → uni-ui 组件/备选/风险` 映射证据。
 
-如果 code review 或 QA 不通过：
+main 不得读取或转述该 skill 的组件索引、映射表、组件规则；只负责把 skill 名、prompt section 或 evidence 名写入 Contract。main Lite 仅用于路由，不是实现或 QA 的事实源。Lite 不可用不授权猜测；由实现者直接读取，失败则返回 blocker。
 
-1. main agent 不得亲自改代码。
-2. findings 必须转回同一 implementer 线程。
-3. implementer 修复后重新 review / QA。
+## 4. 路由
 
-## 12. Phase 6：QA 与证据
+- `codex_subagent + implementer_fast`：既有架构内、局部、低风险。
+- `codex_subagent + implementer_deep`：多模块、复杂状态、API/schema、迁移、安全、兼容或高风险。
+- `zcode_external`：用户或配置明确要求 ZCode/GLM 写代码；仍由 main 写死 Architecture Direction + Implementation Contract。
+- `code_explorer`：仅在两次定向搜索后仍找不到入口、规则来源或复用候选。
+- `qa_reviewer`、`docs_keeper`：按 Gate D 与实际文档影响使用。
 
-读取：
+不得为“走完整流程”无条件 spawn 所有角色。同一角色返工优先复用原线程。同一 ZCode 会话返工优先追加“修正 prompt”，不得改由 main 自己写。
 
-```text
-references/qa-evidence-policy.md
-```
+## 5. 条件引用
 
-QA 不审代码 diff，不做 code review。  
-QA 不运行单测、不重复 implementer 单测；QA 只执行 e2e、端上测试、UI/Figma 验收和运行时链路取证。  
-QA 输出必须摘要化，禁止粘贴完整日志、完整 DevTools dump、完整截图 OCR。
+仅触发时读取：
 
-## 13. Phase 7：ClickUp 回写与 Git commit
+- `references/zcode-external-implementer-bridge.md`：`implementation_mode=zcode_external`。
+- `references/zcode-computer-use-action-contract.md`：`implementation_mode=zcode_external`，定义 Codex main 操作 ZCode 的 computer-use 动作协议。
+- `references/high-risk-workflow.md`：高风险 contract lock。
+- `references/clickup-workflow.md`：输入含有效 ClickUp ticket。
+- `references/mini-program-runtime-qa.md`：acceptance 明确要求小程序端上验证。
 
-ClickUp 模式下，读取：
+其余旧 INDEX、BRV 默认门禁、Solution Discovery 仪式、逐 gate telemetry、budget fuse、长模板和重复 role packet 不属于默认流程。
 
-```text
-references/checklist-writeback-policy.md
-```
+## 6. Hard stops
 
-所有会修改文件的任务，读取：
-
-```text
-references/git-completion-policy.md
-```
-
-ClickUp 描述区 markdown checklist 通过项必须通过 ClickUp MCP 整体更新 markdown_description，将原始行 `[ ]` 改为 `[x]`；禁止用 emoji、图标、评论或新增文字替代。  
-任务完成后必须 commit 本轮范围内变更，除非存在明确阻塞原因。
-
-## 14. Figma Drilldown 与 UI 自测
-
-Figma Drilldown 默认由 implementer 在 implementation 阶段按 request 读取。  
-main agent pre-implementation 阶段默认只保留 Drilldown Request 和 QA Visual Baseline Slice。
-
-如果 implementer packet 包含 `Figma Design Facts Lite`、`Figma Drilldown Request` 或 `UI implementation required`，implementer 必须做 UI / 交互自测；涉及微信小程序可见路径时必须尝试端上 `miniprogram-automator` / `9420`。
-自测不替代 QA。
-
-## 15. 输出模板
-
-本 skill 不内联完整模板。使用以下模板文件：
-
-```text
-assets/templates/phase-gates.md
-assets/templates/agent-assignment.md
-assets/templates/role-context-packets.md
-assets/templates/contracts.md
-assets/templates/clickup-writeback.md
-assets/templates/git-commit.md
-assets/templates/ui-self-check.md
-assets/templates/qa-evidence.md
-```
-
-## 16. 禁止事项
-
-1. 禁止跳过 Phase 0。
-2. 禁止把无 ClickUp ticket 的任务强行终止；应进入 prompt_only 模式。
-3. 禁止未分配 implementer 就改代码。
-4. 禁止 main agent 亲自写代码、修代码、改测试代码或改配置代码；没有“低风险小改”例外。
-5. 禁止用 main/default/fallback 线程代替 implementer。
-6. 禁止同一 dispatch_run_id / ticket / scope 下重复新开同角色 subagent；必须优先复用现成同角色线程。
-7. 禁止未生成 role_context_packets 就进入实现。
-8. 禁止 checklist 未映射 Test Case Base 就进入 QA 或回写（仅 clickup_ticket 模式）。
-9. 禁止用 emoji / 图标 / 评论 / 描述替代真实 checklist 勾选。
-10. 禁止把完整 Figma / ClickUp / 日志广播给所有 agent。
-11. 禁止在本 skill 或 references 中追加版本号章节；补丁必须整合进既有章节结构。
-
-## very_dirty 自动快照提交
-
-如果任务开始前 Git 工作区为 very_dirty，main agent 必须先创建任务前 dirty snapshot commit。无需用户确认。
-
-commit message 必须根据当前脏改动内容生成，精炼且不超过 50 个字符。任务完成后的最终 commit message 同样不超过 50 个字符。
-
-## Completion Gate
-
-任务停止 / Done / 完成前必须读取：
-
-```text
-references/completion-gate.md
-```
-
-只有 Completion Gate 通过，才允许停止。仅本地后端测试 PASS 或风险说明，不是完成条件。
-
-如果验收要求小程序实际交互，QA 必须执行端上 `miniprogram-automator` / `9420` 自动化；不能只做连接能力验证。
-
-## Subagent 进度观察
-
-main agent 等待 subagent 时，读取：
-
-```text
-references/subagent-progress-policy.md
-```
-
-默认采用低成本观察，不得频繁中断 subagent。超过等待阈值后，只能请求简短 Progress Receipt。
-
-## 小程序端上 automator 自动化职责
-
-涉及小程序端上验证时，读取：
-
-```text
-references/wechat-devtools-automation-policy.md
-```
-
-main agent 默认不直接执行完整端上 automator 自动化。implementer 只做最小自测，QA 负责正式验收，禁止重复完整自动化。WeChat MCP 不是默认路径。
-
-## Phase 0 Git baseline
-
-Phase 0 只用 `git status --short` 判断是否 dirty。若 dirty，直接创建 snapshot commit。禁止在 Phase 0 使用 `git diff` 做提交前分析。
+1. `codex_subagent` 模式未显式传精确 `agent_type`，使用 full-history fork，或发生 generic/default/worker fallback。
+2. `zcode_external` 模式 spawn 了 Codex implementer、没有 ZCode prompt sentinel、没有 computer-use 工具调用、没有剪贴板粘贴、没有 send receipt，或发送动作不是 `enter/send_button/blocked`。
+3. ZCode 当前会话/输入框/prompt 完整性未通过 computer-use 验证，或 prompt 发送失败仍继续。
+4. 仅用 shell/脚本/自然语言声明替代 computer-use 操作 ZCode，或 ZCode 聊天完成声明被当成完成依据，未由 Codex 回收真实 git diff 和测试。
+5. ZCode 失败后 main 自己写代码，或自动 fallback 到 Codex implementer 而未获得用户明确批准。
+6. child `agent_identity` 与 Contract 不一致，或可见 runtime metadata 显示 `agent_role/agent_path` 未加载目标配置。
+7. UI handoff 缺少 styling system、SCSS policy、component library 或 rule refs。
+8. main 在 Figma 任务使用 `get_design_context/get_screenshot/variables/assets`，或把视觉细节塞进 handoff。
+9. figma_link 存在，但实现者没有直接 Figma 读取证据，或 QA 没有独立 baseline。
+10. `component_library` 包含 `uni-ui` 且存在 figma_link，但缺 uni-ui 映射合同或实现者缺 `uni_ui_mapping_evidence`。
+11. Tailwind 项目新增未授权 `.scss`、`<style lang="scss">` 或用 scoped style 重建常规 UI。
+12. 变更越过 allowed/forbidden paths，或引入未授权依赖/API/schema。
+13. QA 重跑单测；main/QA 用“看起来正确”替代运行证据。

@@ -21,9 +21,8 @@
   </view>
 </template>
 
-<script setup>
+<script setup lang="ts">
 </script>
-
-<style scoped lang="scss">
-</style>
 ```
+
+> 默认使用项目 Tailwind utility、设计 token、uni-ui props/slots 和现有组件完成样式；不得默认新增 `<style lang="scss">`。只有 Contract 明确列出 SCSS 例外时，才能添加局部 style，并必须回填 exception_ref。

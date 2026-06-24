@@ -1,13 +1,13 @@
 import { hasMeaningfulLightEnvironment } from './light-environment.js'
 import { normalizePlantCareLocation } from './plant-care-location.js'
 
-// 完整度权重：养护城市占比最高且必填，其余维度按填写意义分配
+// 完整度权重：养护类资料共 90%，基础身份资料保留 10%。
 const WEIGHTS = Object.freeze({
   identity: 10,
-  careCity: 45,
+  careCity: 60,
   placementLocation: 15,
-  plantDate: 15,
-  lightEnvironment: 15
+  plantDate: 10,
+  lightEnvironment: 5
 })
 
 function normalizeText(value = '') {
@@ -86,7 +86,15 @@ export function getPlantProfileCompletenessDetail(plant = {}) {
   return {
     score,
     items,
-    requiredMissing: !items.careCity.satisfied
+    requiredMissing: !items.careCity.satisfied,
+    missingItems: Object.entries(items)
+      .filter(([, item]) => !item.satisfied)
+      .map(([key, item]) => ({
+        key,
+        label: item.label,
+        required: Boolean(item.required),
+        optional: Boolean(item.optional)
+      }))
   }
 }
 

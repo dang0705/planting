@@ -9,6 +9,8 @@ const DEFAULT_PORT = 9430
 const DEFAULT_PROJECT = path.join(process.cwd(), 'dist/build/mp-weixin')
 const DEFAULT_REPORT_DIR = path.join(process.cwd(), 'test/e2e/terminal-e2e/qa-artifacts')
 const DEFAULT_MAX_STEPS = 12
+const DEFAULT_SCREENSHOT_TIMEOUT_MS = 12000
+const DEFAULT_SCREENSHOT_RETRIES = 2
 
 function parseArgs(rawArgs) {
   const parsed = {}
@@ -55,6 +57,21 @@ function nowStamp() {
   return new Date().toISOString()
 }
 
+function withTimeout(promise, timeoutMs, label) {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+    return promise
+  }
+
+  let timer
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error(`截图超时: ${label || 'unknown'}`))
+    }, timeoutMs)
+  })
+
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer))
+}
+
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
@@ -62,8 +79,37 @@ function sleep(ms) {
 async function screenshot(miniProgram, reportDir, name) {
   await fs.promises.mkdir(reportDir, { recursive: true })
   const filePath = path.join(reportDir, `${nowStamp().replace(/[:.]/g, '-')}-${name}.png`)
-  await miniProgram.screenshot({ path: filePath })
-  return filePath
+  const timeoutMs = toNumber(process.env.MP_SCREENSHOT_TIMEOUT_MS, DEFAULT_SCREENSHOT_TIMEOUT_MS)
+  const retries = Math.max(0, toNumber(process.env.MP_SCREENSHOT_RETRIES, DEFAULT_SCREENSHOT_RETRIES))
+
+  let lastError
+  for (let attempt = 1; attempt <= retries + 1; attempt += 1) {
+    try {
+      await withTimeout(miniProgram.screenshot({ path: filePath }), timeoutMs, `attempt=${attempt}/${retries + 1}, name=${name}`)
+      return filePath
+    } catch (error) {
+      lastError = error
+      if (attempt <= retries) {
+        await sleep(300)
+      }
+    }
+  }
+
+  try {
+    const fallbackPath = filePath.replace(/\.png$/, `-fallback-${Date.now()}.png`)
+    const raw = await withTimeout(miniProgram.screenshot(), timeoutMs, `fallback no-path, name=${name}`)
+    if (typeof raw === 'string' && raw) {
+      await fs.promises.writeFile(fallbackPath, raw, 'base64')
+      return fallbackPath
+    }
+  } catch (error) {
+    lastError = error
+  }
+
+  if (lastError) {
+    console.warn(`[截图失败] ${name}: ${lastError.message || lastError}`)
+  }
+  return null
 }
 
 function log(...args) {
@@ -585,7 +631,7 @@ async function runYellowingQuickFlow({
     const finalShot = await screenshot(miniProgram, reportDir, 'final-state')
     pushLog({ type: 'result', screenshot: finalShot })
   } finally {
-    await miniProgram.screenshot({ path: path.join(DEFAULT_REPORT_DIR, `${Date.now()}-final.png`) }).catch(() => {})
+    await screenshot(miniProgram, DEFAULT_REPORT_DIR, `final-${Date.now()}`)
   }
 
   return {
