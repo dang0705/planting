@@ -25,6 +25,7 @@ const {
 const { createCurrentWeatherArchiveService } = require('./recent-weather-current')
 const { createD0NowSampleService } = require('./d0-now-sample-service')
 const { createDiagnosisRecentWeatherReader } = require('./recent-weather-diagnosis-reader')
+const { formatIsoInTimezone } = require('./now-sample-slots')
 
 function resolveLocationInput(input = {}) {
   const locationKey = buildLocationKey(input)
@@ -148,7 +149,7 @@ function createRecentWeatherService({
         ? await locationRepository.findByLocationKey(key).catch(() => null)
         : null) ||
       fallbackLocation
-    const generatedAt = now().toISOString()
+    const generatedAt = formatIsoInTimezone(now(), resolvedLocation.timezone || 'Asia/Shanghai')
     const localToday = formatLocalDateInTimezone(now(), resolvedLocation.timezone)
     const targetDate = normalizeDate(
       diagnosisDate ? addDays(diagnosisDate, -1) : addDays(localToday, -1)
@@ -239,7 +240,7 @@ function createRecentWeatherService({
       storage,
       location,
       targetDate,
-      generatedAt: generatedAtDate.toISOString(),
+      generatedAt: formatIsoInTimezone(generatedAtDate, locationInput.timezone || 'Asia/Shanghai'),
       manifest,
       uploadMissingRecent: hasArchiveEntries(manifest)
     })
@@ -260,7 +261,7 @@ function createRecentWeatherService({
           recentFileId: uploadResult.fileId,
           manifestObjectPath: manifestPath,
           manifestFileId: manifestUpload.fileId,
-          recentGeneratedAt: generatedAtDate.toISOString()
+          recentGeneratedAt: formatIsoInTimezone(generatedAtDate, locationInput.timezone || 'Asia/Shanghai')
         })
         .catch(() => null)
     }

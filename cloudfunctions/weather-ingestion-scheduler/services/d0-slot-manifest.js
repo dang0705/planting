@@ -7,7 +7,7 @@
 const { createWeatherObjectStorage } = require('./weather-object-storage')
 const { buildD0SlotManifestPath } = require('./d0-slot-paths')
 const { listConfiguredHotCitiesForIngestion } = require('./hot-city-locations')
-const { isFinalizeSlot, resolveSlotForTriggerName } = require('./now-sample-slots')
+const { isFinalizeSlot, formatIsoInTimezone, resolveSlotForTriggerName } = require('./now-sample-slots')
 
 const MANIFEST_SCHEMA_VERSION = 'weather-cache/v1/d0-slot-manifest'
 const DEFAULT_BATCH_SIZE = 5
@@ -25,6 +25,11 @@ function formatShanghaiDate(date) {
   } catch {
     return date.toISOString().slice(0, 10)
   }
+}
+
+// manifest 时间字段使用 Asia/Shanghai 本地 ISO 字符串，不使用 UTC toISOString()
+function localNowIso() {
+  return formatIsoInTimezone(new Date(), 'Asia/Shanghai')
 }
 
 function resolveTargetDate(value = '') {
@@ -56,7 +61,7 @@ function createD0SlotManifestService({ storage = createWeatherObjectStorage(), e
       : listConfiguredHotCitiesForIngestion({ env })
     const resolvedBatchSize = parseBatchSize(batchSize ?? env.WEATHER_D0_SLOT_BATCH_SIZE)
 
-    const now = new Date().toISOString()
+    const now = localNowIso()
     const manifest = {
       schemaVersion: MANIFEST_SCHEMA_VERSION,
       date: resolvedDate,
@@ -147,7 +152,7 @@ function createD0SlotManifestService({ storage = createWeatherObjectStorage(), e
     }
 
     manifest.cursor = endIndex
-    manifest.updatedAt = new Date().toISOString()
+    manifest.updatedAt = localNowIso()
     if (manifest.cursor >= manifest.cities.length) {
       manifest.status = 'completed'
       manifest.completedAt = manifest.updatedAt

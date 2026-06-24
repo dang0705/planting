@@ -21,16 +21,18 @@ const { formatLocalDateInTimezone } = require('./recent-weather-features')
 
 const DRIFT_THRESHOLD_MINUTES = 15
 const SEASON_TRIGGER_STATE_SCHEMA_VERSION = 'weather-cache/v1/season-trigger-state'
-const SUNRISE_TRIGGER_PREFIX = 'weather-d0-now-sunrise__'
-const SUNSET_TRIGGER_PREFIX = 'weather-d0-now-sunset__'
 const SCHEDULER_FUNCTION_NAME = 'weather-ingestion-scheduler'
 
+// 固定 D0 now 定时器基线（与 config.json 同步）。
+// sunrise/sunset 由两个 sweep timer 承担，函数内按城市日出/日落时间筛选应跑城市。
 const BASE_TIMER_TRIGGERS_FALLBACK = [
   { name: 'weather-ingestion-recent-10d', type: 'timer', config: '0 20 0/6 * * * *' },
-  { name: 'weather-d0-now-morning-0920', type: 'timer', config: '0 20 9 * * * *' },
-  { name: 'weather-d0-now-forenoon-1220', type: 'timer', config: '0 20 12 * * * *' },
+  { name: 'weather-d0-now-sunrise-sweep', type: 'timer', config: '0 */10 4-7 * * * *' },
+  { name: 'weather-d0-now-morning-0720', type: 'timer', config: '0 20 7 * * * *' },
+  { name: 'weather-d0-now-forenoon-1120', type: 'timer', config: '0 20 11 * * * *' },
   { name: 'weather-d0-now-noon-1420', type: 'timer', config: '0 20 14 * * * *' },
-  { name: 'weather-d0-now-afternoon-1820', type: 'timer', config: '0 20 18 * * * *' }
+  { name: 'weather-d0-now-afternoon-1620', type: 'timer', config: '0 20 16 * * * *' },
+  { name: 'weather-d0-now-sunset-sweep', type: 'timer', config: '0 */10 17-20 * * * *' }
 ]
 
 function normalizeTimerTrigger(trigger = {}) {
@@ -52,7 +54,7 @@ function loadBaseTimerTriggersFromConfig() {
       : []
     const validTriggers = triggersFromConfig.filter(item => item.type === 'timer')
     return validTriggers.length > 0 ? dedupeTriggers(validTriggers) : BASE_TIMER_TRIGGERS_FALLBACK
-  } catch (error) {
+  } catch {
     return BASE_TIMER_TRIGGERS_FALLBACK
   }
 }
@@ -78,27 +80,6 @@ function dedupeTriggers(triggers = []) {
     })
   }
   return normalized
-}
-
-function buildSunriseTriggerName(locationKey = '') {
-  const safeLocationKey = toSafeLocationKey(locationKey)
-  if (!safeLocationKey) {
-    throw new Error('sunrise trigger 缺少 locationKey')
-  }
-  return `${SUNRISE_TRIGGER_PREFIX}${safeLocationKey}`
-}
-
-function buildSunsetTriggerName(locationKey = '') {
-  const safeLocationKey = toSafeLocationKey(locationKey)
-  if (!safeLocationKey) {
-    throw new Error('sunset trigger 缺少 locationKey')
-  }
-  return `${SUNSET_TRIGGER_PREFIX}${safeLocationKey}`
-}
-
-function isSeasonDynamicTriggerName(name = '') {
-  const value = String(name || '').trim()
-  return value.startsWith(SUNRISE_TRIGGER_PREFIX) || value.startsWith(SUNSET_TRIGGER_PREFIX)
 }
 
 function getLocalTimeParts(date, timezone = DEFAULT_ANCHOR_TIMEZONE) {
@@ -145,6 +126,10 @@ function buildZonedNoon(date = '', timezone = DEFAULT_ANCHOR_TIMEZONE) {
   return new Date(`${text}+08:00`)
 }
 
+/**
+ * 计算城市日出/日落时间，用于季节漂移审计和光照窗口。
+ * sunrise/sunset 同时用于 D0 now-sample 动态触发器和审计/state。
+ */
 function calculateSunTimesForCity({ city = {}, date = '' } = {}) {
   const timezone =
     String(city.timezone || DEFAULT_ANCHOR_TIMEZONE).trim() || DEFAULT_ANCHOR_TIMEZONE
@@ -256,7 +241,7 @@ function createCloudBaseTriggerClient({ env = process.env, functions = null } = 
 
   async function updateTimerTrigger({ triggerName = '', cron = '', additionalTriggers = [] } = {}) {
     if (!triggerName || !cron) {
-      throw new Error('更新 sunrise trigger 缺少 triggerName 或 cron')
+      throw new Error('更新 timer trigger 缺少 triggerName 或 cron')
     }
     await replaceTimerTriggers([
       ...additionalTriggers,
@@ -267,7 +252,7 @@ function createCloudBaseTriggerClient({ env = process.env, functions = null } = 
 
   async function ensureTimerTrigger({ triggerName = '', cron = '', additionalTriggers = [] } = {}) {
     if (!triggerName || !cron) {
-      throw new Error('校验 sunrise trigger 缺少 triggerName 或 cron')
+      throw new Error('校验 timer trigger 缺少 triggerName 或 cron')
     }
     await replaceTimerTriggers([
       ...additionalTriggers,
@@ -355,49 +340,14 @@ function createSeasonTriggerSyncService({
     return { cloudPath }
   }
 
-  async function buildStateBackedSeasonTriggers(overrides = []) {
-    const byName = new Map()
-    const addTrigger = trigger => {
-      const normalized = normalizeTimerTrigger(trigger)
-      if (normalized && isSeasonDynamicTriggerName(normalized.name)) {
-        byName.set(normalized.name, normalized)
-      }
-    }
-
-    for (const trigger of overrides) {
-      addTrigger(trigger)
-    }
-
-    const citySelection = resolveHotCitiesForSeasonSync({ env })
-    for (const city of citySelection.cities) {
-      const { state } = await readState(city.locationKey)
-      const timezone =
-        String(state?.timezone || city.timezone || DEFAULT_ANCHOR_TIMEZONE).trim() ||
-        DEFAULT_ANCHOR_TIMEZONE
-      addTrigger({
-        name: state?.lastSunriseTriggerName || state?.lastTriggerName,
-        config: state?.lastSunriseCron || state?.lastCron
-      })
-      const legacySunsetMinute = minuteOfDayFromIsoText(state?.lastSunset, timezone)
-      addTrigger({
-        name: state?.lastSunsetTriggerName || buildSunsetTriggerName(city.locationKey),
-        config: state?.lastSunsetCron ||
-          (Number.isInteger(legacySunsetMinute)
-            ? buildDailyCronFromMinuteOfDay(legacySunsetMinute)
-            : '')
-      })
-    }
-    return [...byName.values()]
+  async function buildStateBackedSeasonTriggers() {
+    return []
   }
 
   async function syncCity({ city, termContext }) {
     const locationKey = city.locationKey
     const safeLocationKey = toSafeLocationKey(locationKey)
     const sunTimes = calculateSunTimesForCity({ city, date: termContext.today })
-    const sunriseCron = buildDailyCronFromMinuteOfDay(sunTimes.sunriseMinuteOfDay)
-    const sunsetCron = buildDailyCronFromMinuteOfDay(sunTimes.sunsetMinuteOfDay)
-    const sunriseTriggerName = buildSunriseTriggerName(locationKey)
-    const sunsetTriggerName = buildSunsetTriggerName(locationKey)
     const { state, cloudPath } = await readState(locationKey)
     const lastSunriseMinute = Number(state?.lastSunriseMinuteOfDay)
     const lastSunsetMinute = Number(state?.lastSunsetMinuteOfDay)
@@ -415,18 +365,12 @@ function createSeasonTriggerSyncService({
       ? Math.abs(sunTimes.sunsetMinuteOfDay - comparableLastSunsetMinute)
       : DRIFT_THRESHOLD_MINUTES
     const driftMinutes = Math.max(sunriseDriftMinutes, sunsetDriftMinutes)
-    const cityDynamicTriggers = [
-      { name: sunriseTriggerName, config: sunriseCron },
-      { name: sunsetTriggerName, config: sunsetCron }
-    ]
 
     const baseRecord = {
       event: 'city-candidate',
       termName: termContext.currentTerm.termName,
       termDate: termContext.today,
       safeLocationKey,
-      sunriseTriggerName,
-      sunsetTriggerName,
       sunrise: sunTimes.sunrise,
       sunset: sunTimes.sunset,
       sunriseMinuteOfDay: sunTimes.sunriseMinuteOfDay,
@@ -438,140 +382,42 @@ function createSeasonTriggerSyncService({
       sunriseDriftMinutes,
       sunsetDriftMinutes,
       driftMinutes,
-      sunriseCron,
-      sunsetCron,
       previousTerm: termContext.previousTerm,
       nextTerm: termContext.nextTerm,
-      createdAt: new Date().toISOString()
+      createdAt: formatIsoInTimezone(new Date(), sunTimes.timezone)
     }
 
-    if (driftMinutes < DRIFT_THRESHOLD_MINUTES) {
-      let ensureResult
-      try {
-        const additionalTriggers = await buildStateBackedSeasonTriggers(cityDynamicTriggers)
-        ensureResult = await getTriggerClient().ensureTimerTrigger({
-          triggerName: sunriseTriggerName,
-          cron: sunriseCron,
-          additionalTriggers
-        })
-      } catch (error) {
-        await audit.appendAudit({
-          locationKey,
-          date: termContext.today,
-          record: {
-            ...baseRecord,
-            event: 'city-no-change',
-            status: 'no-change-trigger-check-failed',
-            error: error.message || String(error),
-            preservedLastSunriseCron: state?.lastSunriseCron || state?.lastCron || '',
-            preservedLastSunsetCron: state?.lastSunsetCron || ''
-          }
-        })
-        return {
-          locationKey,
-          sunriseTriggerName,
-          sunsetTriggerName,
-          status: 'no-change',
-          driftMinutes,
-          sunriseCron,
-          sunsetCron,
-          ensured: false,
-          ensureError: error.message || String(error)
-        }
-      }
-
-      await audit.appendAudit({
-        locationKey,
-        date: termContext.today,
-        record: {
-          ...baseRecord,
-          event: 'city-no-change',
-          status: 'no-change',
-          triggerEnsured: ensureResult?.ensured ?? false
-        }
-      })
-      return {
-        locationKey,
-        sunriseTriggerName,
-        sunsetTriggerName,
-        status: 'no-change',
-        driftMinutes,
-        sunriseCron,
-        sunsetCron
-      }
+    const nextState = {
+      schemaVersion: SEASON_TRIGGER_STATE_SCHEMA_VERSION,
+      locationKey,
+      safeLocationKey,
+      cityName: city.cityName,
+      timezone: sunTimes.timezone,
+      lastSunriseMinuteOfDay: sunTimes.sunriseMinuteOfDay,
+      lastSunsetMinuteOfDay: sunTimes.sunsetMinuteOfDay,
+      lastSunrise: sunTimes.sunrise,
+      lastSunset: sunTimes.sunset,
+      lastTermDate: termContext.today,
+      lastTermName: termContext.currentTerm.termName,
+      previousTerm: termContext.previousTerm,
+      nextTerm: termContext.nextTerm,
+      updatedAt: formatIsoInTimezone(new Date(), sunTimes.timezone)
     }
-
-    try {
-      const additionalTriggers = await buildStateBackedSeasonTriggers(cityDynamicTriggers)
-      await getTriggerClient().updateTimerTrigger({
-        triggerName: sunriseTriggerName,
-        cron: sunriseCron,
-        locationKey,
-        additionalTriggers
-      })
-      const nextState = {
-        schemaVersion: SEASON_TRIGGER_STATE_SCHEMA_VERSION,
-        locationKey,
-        safeLocationKey,
-        cityName: city.cityName,
-        timezone: sunTimes.timezone,
-        lastCron: sunriseCron,
-        lastTriggerName: sunriseTriggerName,
-        lastSunriseCron: sunriseCron,
-        lastSunsetCron: sunsetCron,
-        lastSunriseTriggerName: sunriseTriggerName,
-        lastSunsetTriggerName: sunsetTriggerName,
-        lastSunriseMinuteOfDay: sunTimes.sunriseMinuteOfDay,
-        lastSunsetMinuteOfDay: sunTimes.sunsetMinuteOfDay,
-        lastSunrise: sunTimes.sunrise,
-        lastSunset: sunTimes.sunset,
-        lastTermDate: termContext.today,
-        lastTermName: termContext.currentTerm.termName,
-        previousTerm: termContext.previousTerm,
-        nextTerm: termContext.nextTerm,
-        updatedAt: new Date().toISOString()
-      }
-      await writeState({ locationKey, state: nextState })
-      await audit.appendAudit({
-        locationKey,
-        date: termContext.today,
-        record: { ...baseRecord, event: 'city-sunrise-sunset-updated', status: 'success' }
-      })
-      return {
-        locationKey,
-        sunriseTriggerName,
-        sunsetTriggerName,
-        status: 'updated',
-        driftMinutes,
-        sunriseCron,
-        sunsetCron,
-        statePath: cloudPath
-      }
-    } catch (error) {
-      await audit.appendAudit({
-        locationKey,
-        date: termContext.today,
-        record: {
-          ...baseRecord,
-          event: 'update-failed',
-          status: 'failure',
-          error: error.message || String(error),
-          preservedLastSunriseCron: state?.lastSunriseCron || state?.lastCron || '',
-          preservedLastSunsetCron: state?.lastSunsetCron || ''
-        }
-      })
-      return {
-        locationKey,
-        sunriseTriggerName,
-        sunsetTriggerName,
-        status: 'update-failed',
-        driftMinutes,
-        sunriseCron,
-        sunsetCron,
-        error: error.message || String(error),
-        preservedLastSunriseCron: state?.lastSunriseCron || state?.lastCron || '',
-        preservedLastSunsetCron: state?.lastSunsetCron || ''
-      }
+    await writeState({ locationKey, state: nextState })
+    await audit.appendAudit({
+      locationKey,
+      date: termContext.today,
+      record: { ...baseRecord, event: 'season-sun-state-updated', status: 'success' }
+    })
+    return {
+      locationKey,
+      status: 'updated',
+      driftMinutes,
+      sunrise: sunTimes.sunrise,
+      sunset: sunTimes.sunset,
+      sunriseMinuteOfDay: sunTimes.sunriseMinuteOfDay,
+      sunsetMinuteOfDay: sunTimes.sunsetMinuteOfDay,
+      statePath: cloudPath
     }
   }
 
@@ -593,7 +439,7 @@ function createSeasonTriggerSyncService({
           status: 'fallback',
           reason: `${HOT_CITY_INGESTION_KEYS_ENV}_empty`,
           cityCount: citySelection.cities.length,
-          createdAt: new Date().toISOString()
+          createdAt: formatIsoInTimezone(new Date(), DEFAULT_ANCHOR_TIMEZONE)
         }
       })
     }
@@ -607,7 +453,7 @@ function createSeasonTriggerSyncService({
           status: 'no-change',
           previousTerm: termContext.previousTerm,
           nextTerm: termContext.nextTerm,
-          createdAt: new Date().toISOString()
+          createdAt: formatIsoInTimezone(new Date(), DEFAULT_ANCHOR_TIMEZONE)
         }
       })
       return {
@@ -647,11 +493,7 @@ function createSeasonTriggerSyncService({
 module.exports = {
   DRIFT_THRESHOLD_MINUTES,
   SEASON_TRIGGER_STATE_SCHEMA_VERSION,
-  SUNRISE_TRIGGER_PREFIX,
-  SUNSET_TRIGGER_PREFIX,
   buildDailyCronFromMinuteOfDay,
-  buildSunriseTriggerName,
-  buildSunsetTriggerName,
   calculateSunTimesForCity,
   createCloudBaseTriggerClient,
   createSeasonTriggerAudit,

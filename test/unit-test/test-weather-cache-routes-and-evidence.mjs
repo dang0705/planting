@@ -68,7 +68,14 @@ const fakeCloudbaseApp = {
       })
     }
     const fileID = `cloud://${cloudPath}`
-    const payload = JSON.parse(Buffer.concat(chunks).toString('utf8'))
+    const text = Buffer.concat(chunks).toString('utf8')
+    // uploadText 会写入 JSONL 等非 JSON 文本，不能一律 JSON.parse
+    let payload
+    try {
+      payload = JSON.parse(text)
+    } catch {
+      payload = text
+    }
     storageObjects.set(cloudPath, payload)
     storageObjectsByFileId.set(fileID, payload)
     return { fileID }

@@ -1,6 +1,6 @@
 'use strict'
 
-const DAYLIGHT_SLOT_NAMES = ['morning', 'forenoon', 'noon', 'afternoon']
+const DAYLIGHT_SLOT_NAMES = ['sunrise', 'morning', 'forenoon', 'noon', 'afternoon', 'sunset']
 
 function roundMetric(value, precision = 1) {
   if (!Number.isFinite(value)) {

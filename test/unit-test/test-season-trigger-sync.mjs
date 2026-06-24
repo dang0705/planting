@@ -4,8 +4,7 @@ const { buildSolarTermCalendar, createSeasonCalendarService, findTermWindow } =
   await import('../../cloudfunctions/weather-ingestion-scheduler/services/season-calendar.js')
 const {
   buildDailyCronFromMinuteOfDay,
-  buildSunriseTriggerName,
-  buildSunsetTriggerName,
+  calculateSunTimesForCity,
   createCloudBaseTriggerClient,
   createSeasonTriggerSyncService,
   resolveHotCitiesForSeasonSync
@@ -53,8 +52,6 @@ assert.equal(
   'weather-cache/v1/solar-term-calendar/cn/2026.json'
 )
 assert.equal(toSafeLocationKey('city:shanghai'), 'city_shanghai')
-assert.equal(buildSunriseTriggerName('city:beijing'), 'weather-d0-now-sunrise__city_beijing')
-assert.equal(buildSunsetTriggerName('city:beijing'), 'weather-d0-now-sunset__city_beijing')
 assert.equal(buildDailyCronFromMinuteOfDay(291), '0 51 4 * * * *')
 
 {
@@ -103,6 +100,20 @@ assert.equal(buildDailyCronFromMinuteOfDay(291), '0 51 4 * * * *')
   assert.ok(selection.cities.length > 1)
 }
 
+// calculateSunTimesForCity 仍可用于审计/光照窗口
+{
+  const sunTimes = calculateSunTimesForCity({
+    city: { locationKey: 'city:shanghai', latitude: 31.2304, longitude: 121.4737, timezone: 'Asia/Shanghai' },
+    date: '2026-06-21'
+  })
+  assert.ok(sunTimes.sunrise, '应有 sunrise')
+  assert.ok(sunTimes.sunset, '应有 sunset')
+  assert.ok(Number.isFinite(sunTimes.sunriseMinuteOfDay))
+  assert.ok(Number.isFinite(sunTimes.sunsetMinuteOfDay))
+  assert.equal(sunTimes.timezone, 'Asia/Shanghai')
+}
+
+// createCloudBaseTriggerClient：ensureBaseTimerTriggers 应保留调用方传入的 sunrise/sunset 动态触发器
 {
   const createdPayloads = []
   const deleted = []
@@ -122,29 +133,36 @@ assert.equal(buildDailyCronFromMinuteOfDay(291), '0 51 4 * * * *')
     }
   })
 
-  await client.updateTimerTrigger({
-    triggerName: 'weather-d0-now-sunrise__city_shanghai',
-    cron: '0 51 4 * * * *',
+  await client.ensureBaseTimerTriggers({
     additionalTriggers: [
-      { name: 'weather-d0-now-sunset__city_shanghai', config: '0 2 19 * * * *' }
+      { name: 'weather-d0-now-sunrise__city_shanghai', type: 'timer', config: '0 51 4 * * * *' },
+      { name: 'weather-d0-now-sunset__city_shanghai', type: 'timer', config: '0 2 19 * * * *' }
     ]
   })
 
   const lastPayload = createdPayloads.at(-1)
   assert.ok(lastPayload.triggers.some(trigger => trigger.name === 'weather-ingestion-recent-10d'))
   assert.ok(
-    lastPayload.triggers.some(trigger => trigger.name === 'weather-d0-now-morning-0920'),
-    '提交 sunrise 时必须携带固定 morning 基线，避免 CloudBase 覆盖全集'
+    lastPayload.triggers.some(trigger => trigger.name === 'weather-d0-now-morning-0720'),
+    '提交时应携带新固定 morning-0720 基线'
   )
   assert.ok(
-    lastPayload.triggers.some(trigger => trigger.name === 'weather-d0-now-sunrise__city_shanghai')
+    lastPayload.triggers.some(trigger => trigger.name === 'weather-d0-now-afternoon-1620'),
+    '提交时应携带新固定 afternoon-1620'
   )
-  assert.ok(
-    lastPayload.triggers.some(trigger => trigger.name === 'weather-d0-now-sunset__city_shanghai')
+  assert.equal(
+    lastPayload.triggers.some(t => t.name.startsWith('weather-d0-now-sunrise__')),
+    true,
+    '应创建 sunrise 动态触发器'
   )
-  assert.ok(deleted.some(item => item.triggerName === 'weather-d0-now-morning-0920'))
+  assert.equal(
+    lastPayload.triggers.some(t => t.name.startsWith('weather-d0-now-sunset__')),
+    true,
+    '应创建 sunset 动态触发器'
+  )
 }
 
+// syncToday：节气日记录日出/日落漂移状态；触发器由 ensureBaseTimerTriggers 统一同步
 {
   const storage = createMemoryStorage()
   const triggerCalls = []
@@ -161,27 +179,19 @@ assert.equal(buildDailyCronFromMinuteOfDay(291), '0 51 4 * * * *')
   const result = await service.syncToday()
   assert.equal(result.isTermDay, true)
   assert.equal(result.cityCount, 2)
-  assert.equal(triggerCalls.length, 2)
-  assert.deepEqual(
-    triggerCalls.map(call => call.triggerName),
-    ['weather-d0-now-sunrise__city_shanghai', 'weather-d0-now-sunrise__city_beijing']
-  )
-  assert.ok(triggerCalls[0].additionalTriggers.some(
-    trigger => trigger.name === 'weather-d0-now-sunset__city_shanghai'
-  ))
+  assert.equal(triggerCalls.length, 0, 'syncToday 不应直接调用 updateTimerTrigger')
   assert.ok(storage.json.has(buildSeasonTriggerStateObjectPath('city:shanghai')))
   assert.ok(storage.text.has('weather-cache/v1/season-trigger-audit/city_shanghai/2026.jsonl'))
 }
 
+// ensureBaseTimerTriggers：sunrise/sunset 由 base sweep timer 承担，不再附加每城动态触发器
 {
   const statePath = buildSeasonTriggerStateObjectPath('city:shanghai')
   const storage = createMemoryStorage({
     json: {
       [statePath]: {
-        lastCron: '0 51 4 * * * *',
-        lastTriggerName: 'weather-d0-now-sunrise__city_shanghai',
         lastSunriseMinuteOfDay: 291,
-        lastSunset: '2026-06-21T19:02:24+08:00',
+        lastSunsetMinuteOfDay: 1142,
         timezone: 'Asia/Shanghai'
       }
     }
@@ -193,72 +203,36 @@ assert.equal(buildDailyCronFromMinuteOfDay(291), '0 51 4 * * * *')
     triggerClient: {
       async ensureBaseTimerTriggers(input) {
         ensureCalls.push(input)
-        return { count: 7 }
+        return { count: 5 }
       }
     }
   })
   await service.ensureBaseTimerTriggers()
-  assert.deepEqual(ensureCalls[0].additionalTriggers, [
-    {
-      name: 'weather-d0-now-sunrise__city_shanghai',
-      type: 'timer',
-      config: '0 51 4 * * * *'
-    },
-    {
-      name: 'weather-d0-now-sunset__city_shanghai',
-      type: 'timer',
-      config: '0 2 19 * * * *'
-    }
-  ])
+  assert.deepEqual(ensureCalls[0].additionalTriggers, [])
 }
 
+// 漂移检测仍在 state 中记录日出/日落
 {
   const statePath = buildSeasonTriggerStateObjectPath('city:shanghai')
-  const initialState = {
-    lastCron: '0 50 4 * * * *',
-    lastSunriseMinuteOfDay: 290,
-    lastSunsetMinuteOfDay: 1142
-  }
-  const storage = createMemoryStorage({ json: { [statePath]: initialState } })
+  const storage = createMemoryStorage()
   const service = createSeasonTriggerSyncService({
     storage,
     env: { WEATHER_HOT_CITY_INGESTION_KEYS: 'city:shanghai' },
     now: () => new Date('2026-06-21T08:00:00+08:00'),
     triggerClient: {
       async updateTimerTrigger() {
-        throw new Error('should not update below threshold')
+        throw new Error('should not be called')
       }
     }
   })
   const result = await service.syncToday()
-  assert.equal(result.cities[0].status, 'no-change')
-  assert.equal(storage.json.get(statePath), initialState, '漂移小于 15 分钟不得覆盖 state')
-}
-
-{
-  const statePath = buildSeasonTriggerStateObjectPath('city:shanghai')
-  const initialState = {
-    lastCron: '0 30 4 * * * *',
-    lastSunriseMinuteOfDay: 270
-  }
-  const storage = createMemoryStorage({ json: { [statePath]: initialState } })
-  const service = createSeasonTriggerSyncService({
-    storage,
-    env: { WEATHER_HOT_CITY_INGESTION_KEYS: 'city:shanghai' },
-    now: () => new Date('2026-06-21T08:00:00+08:00'),
-    triggerClient: {
-      async updateTimerTrigger() {
-        throw new Error('manager down')
-      }
-    }
-  })
-  const result = await service.syncToday()
-  assert.equal(result.cities[0].status, 'update-failed')
-  assert.equal(storage.json.get(statePath), initialState, '更新失败不得覆盖 lastCron/state')
-  assert.match(
-    storage.text.get('weather-cache/v1/season-trigger-audit/city_shanghai/2026.jsonl'),
-    /update-failed/
-  )
+  assert.equal(result.cities[0].status, 'updated')
+  const state = storage.json.get(statePath)
+  assert.ok(state.lastSunriseMinuteOfDay, 'state 应记录 lastSunriseMinuteOfDay')
+  assert.ok(state.lastSunsetMinuteOfDay, 'state 应记录 lastSunsetMinuteOfDay')
+  assert.ok(state.lastSunrise, 'state 应记录 lastSunrise')
+  assert.ok(state.lastSunset, 'state 应记录 lastSunset')
+  assert.equal(state.lastTermName, '夏至')
 }
 
 {

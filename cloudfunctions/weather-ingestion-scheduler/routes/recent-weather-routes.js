@@ -4,15 +4,31 @@ const { createRecentWeatherService } = require('../services/recent-weather-servi
 const { buildLocationKey } = require('../services/weather-cache-paths')
 const { createD0SlotManifestService } = require('../services/d0-slot-manifest')
 const { createD0TimerAuditService } = require('../services/d0-timer-audit')
-const { HOT_CITY_WEATHER_LOCATIONS, toSelectedHotCity } = require('../services/hot-city-locations')
-const { SUNRISE_TRIGGER_PREFIX, SUNSET_TRIGGER_PREFIX } = require('../services/season-trigger-sync')
+const {
+  HOT_CITY_WEATHER_LOCATIONS,
+  listConfiguredHotCitiesForIngestion,
+  toSelectedHotCity
+} = require('../services/hot-city-locations')
+const {
+  formatIsoInTimezone,
+  SUNRISE_TRIGGER_PREFIX,
+  SUNRISE_SWEEP_TRIGGER,
+  SUNSET_TRIGGER_PREFIX,
+  SUNSET_SWEEP_TRIGGER
+} = require('../services/now-sample-slots')
 const { toSafeLocationKey } = require('../services/weather-cache-paths')
+const { calculateSunTimesForCity } = require('../services/season-trigger-sync')
 
+const SUN_SWEEP_WINDOW_MINUTES = 10
+
+// D0 now 定时器包含固定日间 slot，以及按城市动态生成的 sunrise/sunset 边界 slot。
 const D0_WEATHER_24H_TIMER_TRIGGERS = new Set([
-  'weather-d0-now-morning-0920',
-  'weather-d0-now-forenoon-1220',
+  SUNRISE_SWEEP_TRIGGER,
+  'weather-d0-now-morning-0720',
+  'weather-d0-now-forenoon-1120',
   'weather-d0-now-noon-1420',
-  'weather-d0-now-afternoon-1820',
+  'weather-d0-now-afternoon-1620',
+  SUNSET_SWEEP_TRIGGER,
   'weather-d0-24h-0630',
   'weather-d0-24h-1130',
   'weather-d0-24h-1530'
@@ -203,8 +219,99 @@ function isD0Weather24hTimerEvent(event = {}) {
   )
 }
 
-function resolveCitiesForD0Trigger(triggerName = '') {
+function getMinuteOfDayInShanghai(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai',
+    hour12: false,
+    hourCycle: 'h23',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).formatToParts(date)
+  const map = Object.fromEntries(parts.map(part => [part.type, part.value]))
+  return Number(map.hour) * 60 + Number(map.minute)
+}
+
+function getShanghaiDateText(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(date)
+  const map = Object.fromEntries(parts.map(part => [part.type, part.value]))
+  return `${map.year}-${map.month}-${map.day}`
+}
+
+function getShanghaiHourMinuteText(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai',
+    hour12: false,
+    hourCycle: 'h23',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).formatToParts(date)
+  const map = Object.fromEntries(parts.map(part => [part.type, part.value]))
+  return `${map.hour}${map.minute}`
+}
+
+function buildManifestTriggerName({ triggerName = '', event = {} } = {}) {
+  if (triggerName !== SUNRISE_SWEEP_TRIGGER && triggerName !== SUNSET_SWEEP_TRIGGER) {
+    return triggerName
+  }
+  const now = event.now ? new Date(event.now) : new Date()
+  return `${triggerName}-${getShanghaiHourMinuteText(now)}`
+}
+
+function toTimerCity(city = {}) {
+  const selected = toSelectedHotCity(city)
+  return {
+    key: selected.locationKey,
+    name: selected.cityName,
+    latitude: selected.latitude,
+    longitude: selected.longitude
+  }
+}
+
+function resolveSunSweepCities({ triggerName = '', targetDate = '', now = new Date() } = {}) {
+  const slot = triggerName === SUNRISE_SWEEP_TRIGGER
+    ? 'sunrise'
+    : triggerName === SUNSET_SWEEP_TRIGGER
+      ? 'sunset'
+      : ''
+  if (!slot) {
+    return null
+  }
+  const date = targetDate || getShanghaiDateText(now)
+  const currentMinute = getMinuteOfDayInShanghai(now)
+  return listConfiguredHotCitiesForIngestion({ env: process.env })
+    .filter(city => {
+      const sunTimes = calculateSunTimesForCity({
+        city: {
+          locationKey: city.key,
+          latitude: city.latitude,
+          longitude: city.longitude,
+          timezone: city.timezone || 'Asia/Shanghai'
+        },
+        date
+      })
+      const dueMinute = slot === 'sunrise'
+        ? sunTimes.sunriseMinuteOfDay
+        : sunTimes.sunsetMinuteOfDay
+      return Math.abs(currentMinute - dueMinute) <= SUN_SWEEP_WINDOW_MINUTES
+    })
+    .map(toTimerCity)
+}
+
+function resolveCitiesForD0Trigger({ triggerName = '', targetDate = '', event = {} } = {}) {
   const name = String(triggerName || '').trim()
+  const sweepCities = resolveSunSweepCities({
+    triggerName: name,
+    targetDate,
+    now: event.now ? new Date(event.now) : new Date()
+  })
+  if (sweepCities) {
+    return sweepCities
+  }
   const dynamicPrefix = name.startsWith(SUNRISE_TRIGGER_PREFIX)
     ? SUNRISE_TRIGGER_PREFIX
     : name.startsWith(SUNSET_TRIGGER_PREFIX)
@@ -220,15 +327,7 @@ function resolveCitiesForD0Trigger(triggerName = '') {
   if (!city) {
     throw new Error(`未知 D0 dynamic trigger location: ${triggerName}`)
   }
-  const selected = toSelectedHotCity(city)
-  return [
-    {
-      key: selected.locationKey,
-      name: selected.cityName,
-      latitude: selected.latitude,
-      longitude: selected.longitude
-    }
-  ]
+  return [toTimerCity(city)]
 }
 
 async function handleRecentWeatherTimerEvent({
@@ -257,14 +356,15 @@ async function handleRecentWeatherTimerEvent({
 async function handleD0Weather24hTimerEvent({ event = {}, service } = {}) {
   const triggerName = pickTimerTriggerName(event)
   const targetDate = event.targetDate || event.target_date || ''
+  const manifestTriggerName = buildManifestTriggerName({ triggerName, event })
   const manifestService = createD0SlotManifestService({ env: process.env })
   const auditService = createD0TimerAuditService()
-  const startAt = new Date().toISOString()
-  const scopedCities = resolveCitiesForD0Trigger(triggerName)
+  const startAt = formatIsoInTimezone(new Date(), 'Asia/Shanghai')
+  const scopedCities = resolveCitiesForD0Trigger({ triggerName, targetDate, event })
 
   // load or seed manifest -> advance ONE batch -> persist cursor（跨 invocation 可推进）
   const loaded = await manifestService.loadOrSeedManifest({
-    triggerName,
+    triggerName: manifestTriggerName,
     targetDate,
     cities: scopedCities,
     batchSize: scopedCities ? scopedCities.length : null
@@ -275,7 +375,7 @@ async function handleD0Weather24hTimerEvent({ event = {}, service } = {}) {
     worker: city => service.updateNowSample(city)
   })
 
-  const endAt = new Date().toISOString()
+  const endAt = formatIsoInTimezone(new Date(), 'Asia/Shanghai')
   const batchResults = advance.batchResults
   const succeeded = batchResults.filter(item => item.ok).length
   const failed = batchResults.length - succeeded

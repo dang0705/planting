@@ -201,6 +201,24 @@ assert.equal(dayFile.samples[0].pressure, 1007)
 assert.equal(dayFile.samples[0].visibilityKm, 12)
 assert.equal(dayFile.samples[0].dew, 18)
 
+// 时间字段使用本地 ISO 字符串（不以 Z 结尾）
+assert.ok(
+  dayFile.generatedAt && !dayFile.generatedAt.endsWith('Z'),
+  `generatedAt 应为本地 ISO 字符串, got ${dayFile.generatedAt}`
+)
+assert.ok(
+  dayFile.updatedAt && !dayFile.updatedAt.endsWith('Z'),
+  `updatedAt 应为本地 ISO 字符串, got ${dayFile.updatedAt}`
+)
+assert.ok(
+  dayFile.samples[0].sampledAt && !dayFile.samples[0].sampledAt.endsWith('Z'),
+  `sampledAt 应为本地 ISO 字符串, got ${dayFile.samples[0].sampledAt}`
+)
+assert.ok(
+  dayFile.samples[0].obsTime && !dayFile.samples[0].obsTime.endsWith('Z'),
+  `obsTime 应为本地 ISO 字符串, got ${dayFile.samples[0].obsTime}`
+)
+
 dayFile.samples.push({
   slotName: 'afternoon',
   sampledAt: '2026-06-18T10:30:00.000Z',
@@ -227,6 +245,15 @@ assert.equal(finalizedDayFile.state, 'finalized')
 assert.equal(finalizedDayFile.sourceKind, 'observed_now_rollup')
 assert.ok(finalizedDayFile.dailyRollup, 'finalize 必须生成 dailyRollup')
 assert.ok(finalizedDayFile.finalizedAt, 'finalize 必须设置 finalizedAt')
+assert.ok(
+  !finalizedDayFile.finalizedAt.endsWith('Z'),
+  `finalizedAt 应为本地 ISO 字符串, got ${finalizedDayFile.finalizedAt}`
+)
+assert.equal(
+  finalizedDayFile.samples.some(s => s.slotName === 'finalize'),
+  false,
+  'days/{date}.json.samples[] 不得包含 slotName=finalize'
+)
 assert.equal(finalizedDayFile.latestSample.slotName, 'afternoon')
 assert.equal(finalizedDayFile.latestSample.cloud, 60)
 assert.equal(

@@ -12,6 +12,7 @@ const { readManifest } = require('./recent-weather-archive')
 const { buildSunWindow } = require('./daylight-slots')
 const {
   buildNowSampleSlotTimes,
+  formatIsoInTimezone,
   isFinalizeSlot,
   resolveSlotForTriggerName
 } = require('./now-sample-slots')
@@ -30,34 +31,84 @@ const { buildDayLightFeatures } = require('./weather-light-factor')
 const DAY_FILE_SCHEMA_VERSION = 'weather-cache/v1/day-now-sample'
 const MAX_SAMPLES = 8
 
-function upsertSlotSample(samples = [], sample = {}) {
-  const slotName = String(sample?.slotName || '').trim()
-  if (!slotName) {
-    return Array.isArray(samples) ? [...samples] : []
+function getSampleSlotName(sample = {}) {
+  return String(sample?.slotName || '').trim()
+}
+
+function normalizeExistingIsoInTimezone(value = '', timezone = 'Asia/Shanghai', fallback = '') {
+  const raw = normalizeText(value)
+  if (!raw) {
+    return fallback
+  }
+  const date = new Date(raw)
+  if (Number.isNaN(date.getTime())) {
+    return raw
+  }
+  return formatIsoInTimezone(date, timezone)
+}
+
+function normalizeSampleTimeFields(sample = {}, timezone = 'Asia/Shanghai') {
+  if (!sample || typeof sample !== 'object') {
+    return sample
+  }
+  return pruneUndefined({
+    ...sample,
+    sampledAt: normalizeExistingIsoInTimezone(sample.sampledAt, timezone, sample.sampledAt),
+    obsTime: normalizeExistingIsoInTimezone(sample.obsTime, timezone, sample.obsTime)
+  })
+}
+
+function compactSlotSamples(samples = [], timezone = 'Asia/Shanghai') {
+  const next = []
+  const seenSlots = new Set()
+  const source = Array.isArray(samples) ? samples : []
+
+  for (const sample of source) {
+    const normalizedSample = normalizeSampleTimeFields(sample, timezone)
+    const slotName = getSampleSlotName(normalizedSample)
+    if (!slotName) {
+      next.push(normalizedSample)
+      continue
+    }
+    if (seenSlots.has(slotName)) {
+      continue
+    }
+    seenSlots.add(slotName)
+    next.push(normalizedSample)
   }
 
-  const next = Array.isArray(samples) ? [...samples] : []
-  const existingSlotIndex = next.findLastIndex(item => String(item?.slotName || '').trim() === slotName)
+  return next.slice(-MAX_SAMPLES)
+}
+
+function upsertSlotSample(samples = [], sample = {}, { timezone = 'Asia/Shanghai' } = {}) {
+  const slotName = getSampleSlotName(sample)
+  if (!slotName) {
+    return compactSlotSamples(samples, timezone)
+  }
+
+  const next = compactSlotSamples(samples, timezone)
+  const normalizedSample = normalizeSampleTimeFields(sample, timezone)
+  const existingSlotIndex = next.findIndex(item => getSampleSlotName(item) === slotName)
 
   if (sample?.missing) {
     if (existingSlotIndex === -1) {
-      next.push(sample)
+      next.push(normalizedSample)
     }
     return next.slice(-MAX_SAMPLES)
   }
 
   if (existingSlotIndex === -1) {
-    next.push(sample)
+    next.push(normalizedSample)
     return next.slice(-MAX_SAMPLES)
   }
 
   if (next[existingSlotIndex]?.missing) {
     next.splice(existingSlotIndex, 1)
-    next.push(sample)
+    next.push(normalizedSample)
     return next.slice(-MAX_SAMPLES)
   }
 
-  // 同 slot 已有成功样本时，保留最早成功值，避免重复槽位（如 sunrise 与固定 morning-0920）污染样本序列。
+  // 同 slot 已有成功样本时，保留最早成功值，避免重复槽位污染样本序列。
   return next.slice(-MAX_SAMPLES)
 }
 
@@ -79,8 +130,25 @@ function pruneUndefined(payload = {}) {
   )
 }
 
-function buildWeatherNowSample({ slotName = '', sampledAt = '', nowData = {}, sourceKind = 'weather_now_sample' }) {
-  const obsTime = normalizeText(nowData.obsTime || nowData.obs_time || sampledAt)
+/**
+ * 将 QWeather obsTime 规范化为 location.timezone 下的本地 ISO 字符串。
+ * QWeather obsTime 本身已是观测地点本地时间；此函数确保格式统一为带偏移的 ISO 串。
+ * 若 obsTime 缺失则回退到 sampledAt。
+ */
+function normalizeObsTime(obsTime = '', sampledAt = '', timezone = 'Asia/Shanghai') {
+  const raw = normalizeText(obsTime || sampledAt)
+  if (!raw) {
+    return undefined
+  }
+  const date = new Date(raw)
+  if (Number.isNaN(date.getTime())) {
+    return raw
+  }
+  return formatIsoInTimezone(date, timezone)
+}
+
+function buildWeatherNowSample({ slotName = '', sampledAt = '', nowData = {}, sourceKind = 'weather_now_sample', timezone = 'Asia/Shanghai' }) {
+  const obsTime = normalizeObsTime(nowData.obsTime || nowData.obs_time, sampledAt, timezone)
   return pruneUndefined({
     slotName,
     sampledAt,
@@ -103,12 +171,13 @@ function buildWeatherNowSample({ slotName = '', sampledAt = '', nowData = {}, so
   })
 }
 
-function buildSampleFromCurrentWeather({ slotName = '', sampledAt = '', currentWeather = {}, sourceKind }) {
+function buildSampleFromCurrentWeather({ slotName = '', sampledAt = '', currentWeather = {}, sourceKind, timezone = 'Asia/Shanghai' }) {
   return buildWeatherNowSample({
     slotName,
     sampledAt,
     nowData: currentWeather,
-    sourceKind
+    sourceKind,
+    timezone
   })
 }
 
@@ -122,29 +191,31 @@ function resolveSampleTimestampMs(sample = {}) {
   return null
 }
 
+// latestSample 必须忽略 missing 样本，避免 missing sample 覆盖已有最新成功采样
 function resolveLatestSample(samples = []) {
   return (Array.isArray(samples) ? samples : [])
     .filter(sample => sample && !sample.missing)
     .reduce((latest, sample) => {
-    if (!sample) {
+      if (!sample) {
+        return latest
+      }
+      if (!latest) {
+        return sample
+      }
+      const sampleTime = resolveSampleTimestampMs(sample)
+      const latestTime = resolveSampleTimestampMs(latest)
+      if (sampleTime === null && latestTime === null) {
+        return sample
+      }
+      if (sampleTime !== null && (latestTime === null || sampleTime >= latestTime)) {
+        return sample
+      }
       return latest
-    }
-    if (!latest) {
-      return sample
-    }
-    const sampleTime = resolveSampleTimestampMs(sample)
-    const latestTime = resolveSampleTimestampMs(latest)
-    if (sampleTime === null && latestTime === null) {
-      return sample
-    }
-    if (sampleTime !== null && (latestTime === null || sampleTime >= latestTime)) {
-      return sample
-    }
-    return latest
-  }, null)
+    }, null)
 }
 
 function resolveDayFileQuality(samples = []) {
+  // day file quality 只按成功样本计数，只有 missing 样本时 quality 仍应是 missing
   const validSamples = (Array.isArray(samples) ? samples : []).filter(
     sample => sample && !sample.missing
   )
@@ -156,6 +227,7 @@ function resolveDayFileQuality(samples = []) {
 
 /**
  * 构造 dailyRollup，采用 ClickUp 要求的嵌套结构。
+ * finalize 仅从已有 samples[] 生成 rollup，不调用 QWeather /now，不产生 slotName=finalize 样本。
  * - sampleSummary: { sampleCount, daylightSampleCount, missingSlots }
  * - lightFeatures: { daylightCloudMean, daylightCloudP75, daylightCloudMax, lowLightProxy }
  *   扩展光照字段: visibilityMin/visibilityMean/dominantWeatherIcon/dominantWeatherText/weatherLightFactor/confidence/weatherLightCategory
@@ -312,13 +384,14 @@ function createD0NowSampleService({
   /**
    * D0 working：调用 /v7/weather/now 采样，追加到 days/{date}.json 的 samples[]，
    * 更新 latestSample，state 保持 working。
+   * 所有时间字段使用 location.timezone 下的本地 ISO 字符串，不使用 toISOString()。
    */
   async function sampleNowWeather(input = {}) {
     const locationInput = resolveLocationInput(input)
     const location = await resolveArchiveLocation(locationInput)
     const generatedAtDate = now()
     const timezone = location.timezone || 'Asia/Shanghai'
-    const generatedAt = generatedAtDate.toISOString()
+    const generatedAt = formatIsoInTimezone(generatedAtDate, timezone)
     const targetDate = normalizeDate(
       input.targetDate ||
         input.target_date ||
@@ -336,6 +409,10 @@ function createD0NowSampleService({
     if (!slotName) {
       throw new Error('now 采样缺少 slotName 或可识别的 triggerName')
     }
+    // finalize 不是 samples[] slot，不可通过 sampleNowWeather 写入。
+    if (isFinalizeSlot(slotName)) {
+      throw new Error('finalize 不是 now-sample slot，请使用 finalizeNowWeather')
+    }
 
     const observation = await attemptWeatherObservation({
       fetchPrimary: () => fetchCurrentWeatherNow(input, location),
@@ -350,15 +427,21 @@ function createD0NowSampleService({
           slotName,
           sampledAt: generatedAt,
           currentWeather: observation.weatherData,
-          sourceKind: observation.sourceKind
+          sourceKind: observation.sourceKind,
+          timezone
         })
       : observation.missingSample
 
     const dayObjectPath = buildWeatherDayObjectPath(location.locationKey, targetDate)
     const { payload: existingPayload } = await readDayFile(location.locationKey, targetDate)
     const existingSamples = Array.isArray(existingPayload?.samples) ? existingPayload.samples : []
-    const samples = upsertSlotSample(existingSamples, sample)
+    const samples = upsertSlotSample(existingSamples, sample, { timezone })
     const sunWindow = existingPayload?.sunWindow || slotTimes
+    const generatedAtForPayload = normalizeExistingIsoInTimezone(
+      existingPayload?.generatedAt,
+      timezone,
+      generatedAt
+    )
 
     const dayPayload = buildDayFilePayload({
       location,
@@ -369,7 +452,7 @@ function createD0NowSampleService({
       latestSample: resolveLatestSample(samples),
       sourceKind: 'observed_now_samples',
       quality: resolveDayFileQuality(samples),
-      generatedAt: existingPayload?.generatedAt || generatedAt,
+      generatedAt: generatedAtForPayload,
       updatedAt: generatedAt,
       sunWindow,
       weatherObjectPath: dayObjectPath
@@ -401,15 +484,17 @@ function createD0NowSampleService({
   }
 
   /**
-   * D0 finalize：在同一个 days 文件内生成 dailyRollup，
+   * D0 finalize：仅从已有 samples[] 生成 dailyRollup，不调用 QWeather /v7/weather/now。
    * state 改为 finalized，设置 finalizedAt，sourceKind 改为 observed_now_rollup。
+   * finalize 不向 samples[] 写入任何样本，也不产生 slotName=finalize 样本。
+   * 所有时间字段使用 location.timezone 下的本地 ISO 字符串。
    */
   async function finalizeNowWeather(input = {}) {
     const locationInput = resolveLocationInput(input)
     const location = await resolveArchiveLocation(locationInput)
     const generatedAtDate = now()
     const timezone = location.timezone || 'Asia/Shanghai'
-    const generatedAt = generatedAtDate.toISOString()
+    const generatedAt = formatIsoInTimezone(generatedAtDate, timezone)
     const targetDate = normalizeDate(
       input.targetDate ||
         input.target_date ||
@@ -419,7 +504,7 @@ function createD0NowSampleService({
     const dayObjectPath = buildWeatherDayObjectPath(location.locationKey, targetDate)
 
     const { payload: existingPayload } = await readDayFile(location.locationKey, targetDate)
-    const samples = Array.isArray(existingPayload?.samples) ? existingPayload.samples : []
+    const samples = compactSlotSamples(existingPayload?.samples, timezone)
     const sunWindow =
       existingPayload?.sunWindow ||
       buildSunWindow({
@@ -441,7 +526,7 @@ function createD0NowSampleService({
       dailyRollup,
       sourceKind: 'observed_now_rollup',
       quality: dailyRollup.quality,
-      generatedAt: existingPayload?.generatedAt || generatedAt,
+      generatedAt: normalizeExistingIsoInTimezone(existingPayload?.generatedAt, timezone, generatedAt),
       updatedAt: generatedAt,
       sunWindow,
       weatherObjectPath: dayObjectPath
@@ -483,7 +568,7 @@ function createD0NowSampleService({
   }) {
     const manifest = await readManifest({ storage, location })
     manifest.dayArchives = {
-      ...(manifest.dayArchives || {}),
+      ...manifest.dayArchives,
       [targetDate]: { cloudPath: dayObjectPath, fileId, generatedAt, quality, state }
     }
     manifest.updatedAt = generatedAt
@@ -493,15 +578,15 @@ function createD0NowSampleService({
 
   /**
    * 统一入口：根据 finalize 标志分发到 sampleNowWeather 或 finalizeNowWeather。
-   * 保留旧入口名 updateD0Weather24hWorking 以兼容路由调用。
+   * triggerName 中的 sunrise/sunset 不再解析为任何 slot（resolveSlotForTriggerName 返回空），
+   * 因此不会误触发 finalize。
    */
   async function updateNowSample(input = {}) {
     const shouldFinalize =
       input.finalize === true ||
       input.finalize === 'true' ||
       input.slotFinalize === true ||
-      input.slotFinalize === 'true' ||
-      isFinalizeSlot(resolveSlotForTriggerName(input.triggerName || input.trigger_name || ''))
+      input.slotFinalize === 'true'
     if (shouldFinalize) {
       return finalizeNowWeather(input)
     }

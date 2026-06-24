@@ -7,6 +7,7 @@
 const { createWeatherObjectStorage } = require('./weather-object-storage')
 const { buildD0TimerAuditPath } = require('./d0-slot-paths')
 const { resolveTargetDate } = require('./d0-slot-manifest')
+const { formatIsoInTimezone } = require('./now-sample-slots')
 
 const AUDIT_SCHEMA_VERSION = 'weather-cache/v1/d0-timer-audit'
 
@@ -68,7 +69,7 @@ function createD0TimerAuditService({ storage = createWeatherObjectStorage() } = 
 
     auditFile.records.push(record)
     auditFile.summary = buildAuditSummary(auditFile.records)
-    auditFile.updatedAt = new Date().toISOString()
+    auditFile.updatedAt = formatIsoInTimezone(new Date(), 'Asia/Shanghai')
 
     await storage.uploadJson({ cloudPath, payload: auditFile })
     return { cloudPath, recordId, deduped: false, auditFile }
