@@ -1,0 +1,100 @@
+#!/usr/bin/env node
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+
+const [handoffFile, promptFile] = process.argv.slice(2);
+if (!handoffFile || !promptFile) {
+  console.error('usage: validate-zcode-prompt.mjs <handoff.json> <zcode-prompt.md>');
+  process.exit(2);
+}
+
+const readJson = (file) => {
+  try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
+  catch (error) {
+    console.error(JSON.stringify({ status: 'invalid_json', file, error: error.message }, null, 2));
+    process.exit(2);
+  }
+};
+
+const handoff = readJson(handoffFile);
+let prompt;
+try { prompt = fs.readFileSync(promptFile, 'utf8'); }
+catch (error) {
+  console.error(JSON.stringify({ status: 'missing_prompt', file: promptFile, error: error.message }, null, 2));
+  process.exit(2);
+}
+
+const errors = [];
+const need = (condition, message) => { if (!condition) errors.push(message); };
+const mode = handoff.implementation_mode ?? 'codex_subagent';
+const id = handoff.dispatch_run_id;
+const zcode = handoff.zcode_contract ?? {};
+const sha256 = crypto.createHash('sha256').update(prompt).digest('hex');
+const maxChars = Number.isFinite(zcode.prompt_max_chars) ? zcode.prompt_max_chars : 30000;
+
+need(mode === 'zcode_external', 'validate-zcode-prompt requires implementation_mode=zcode_external');
+need(typeof id === 'string' && id.length > 0, 'dispatch_run_id is required');
+need(prompt.length <= maxChars, `prompt exceeds zcode_contract.prompt_max_chars: ${prompt.length}/${maxChars}`);
+
+const start = `<<<ZCODE_IMPLEMENTER_HANDOFF:${id}:START>>>`;
+const end = `<<<ZCODE_IMPLEMENTER_HANDOFF:${id}:END>>>`;
+need(prompt.includes(start), `prompt missing sentinel start: ${start}`);
+need(prompt.includes(end), `prompt missing sentinel end: ${end}`);
+need(prompt.indexOf(start) < prompt.indexOf(end), 'sentinel start must appear before sentinel end');
+
+if (typeof zcode.prompt_sha256 === 'string' && zcode.prompt_sha256.length > 0) {
+  need(zcode.prompt_sha256 === sha256, `prompt_sha256 mismatch: expected ${zcode.prompt_sha256}, got ${sha256}`);
+}
+
+const requiredSectionMarkers = {
+  implementation_contract: '## Implementation Contract',
+  allowed_forbidden_paths: '## Allowed / Forbidden Paths',
+  project_constraints: '## Project Constraints',
+  validation_commands: '## Validation Commands',
+  result_json_contract: '## Result JSON Contract',
+  ui_scope_contract: '## UI Scope Contract',
+  style_stack_contract: '## Style Stack Contract',
+  figma_direct_fetch: '## Figma Direct Fetch',
+  figma_blocker_policy: '## Figma Blocker Policy',
+  uni_ui_mapping_contract: '## uni-ui Mapping Contract'
+};
+
+for (const section of zcode.required_prompt_sections ?? []) {
+  const marker = requiredSectionMarkers[section];
+  if (marker) need(prompt.includes(marker), `prompt missing section marker for ${section}: ${marker}`);
+}
+
+need(prompt.includes('clipboard') || prompt.includes('剪贴板') || prompt.includes('粘贴'),
+  'prompt should preserve clipboard/paste context for auditability');
+need(!prompt.includes('# Dispatch Task\n\n## 1. 角色所有权'),
+  'prompt appears to include the full dispatch skill; keep ZCode prompt minimal');
+
+if (handoff?.figma?.link) {
+  need(prompt.includes(handoff.figma.link), 'Figma prompt must include original figma.link');
+  need(prompt.includes(handoff.figma.node_id), 'Figma prompt must include figma.node_id');
+  need(/design context|get_design_context|Figma context|设计上下文/i.test(prompt),
+    'Figma prompt must require direct design context acquisition');
+  need(/screenshot|get_screenshot|截图/i.test(prompt),
+    'Figma prompt must require direct screenshot acquisition');
+  need(/BLOCKED_ZCODE_FIGMA_UNAVAILABLE/.test(prompt),
+    'Figma prompt must define BLOCKED_ZCODE_FIGMA_UNAVAILABLE');
+}
+
+if (/uni[-_ ]?ui|uniui/i.test(String(handoff?.project_constraints?.component_library ?? ''))) {
+  if (handoff?.figma?.link) {
+    need(prompt.includes('uni_ui_mapping_evidence'),
+      'Figma + uni-ui prompt must require uni_ui_mapping_evidence');
+  }
+}
+
+if (/tailwind/i.test(String(handoff?.project_constraints?.styling_system ?? ''))) {
+  need(/Tailwind/i.test(prompt), 'Tailwind project prompt must mention Tailwind');
+  need(/SCSS|scss/.test(prompt), 'Tailwind project prompt must state SCSS policy');
+}
+
+if (errors.length) {
+  console.error(JSON.stringify({ status: 'blocked', gate: 'zcode_prompt', sha256, errors }, null, 2));
+  process.exit(1);
+}
+
+console.log(JSON.stringify({ status: 'passed', gate: 'zcode_prompt', chars: prompt.length, sha256 }, null, 2));

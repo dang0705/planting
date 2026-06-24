@@ -1,0 +1,144 @@
+{
+  "agent_identity": {
+    "agent_type": "implementer_fast",
+    "dispatch_run_id": "example-ui-001"
+  },
+  "status": "completed",
+  "changed_files": [
+    "src/pages/example/index.vue",
+    "src/components/example/ExampleCard.vue"
+  ],
+  "implementation_summary": "按目标节点实现卡片，并基于 uni-ui 映射优先复用 uni-card/uni-icons",
+  "project_constraints_verified": true,
+  "ui_scope_map": [
+    {
+      "node_id": "1:2",
+      "name": "Example Card",
+      "type": "implement",
+      "code_candidates": [
+        "src/components/example"
+      ],
+      "selected_path": "src/components/example/ExampleCard.vue",
+      "reason": "无同职责现有卡片组件",
+      "qa_required": true
+    }
+  ],
+  "figma_fetch_evidence": {
+    "status": "success",
+    "acquired_by": "implementer",
+    "acquired_before_first_ui_edit": true,
+    "source_link": "https://figma.com/design/example/file?node-id=1-2",
+    "node_id": "1:2",
+    "calls": [
+      "get_metadata",
+      "get_design_context",
+      "get_screenshot"
+    ],
+    "nodes_read": [
+      "1:2"
+    ],
+    "screenshot_ref": "evidence/figma-1-2.png",
+    "variables_or_assets_used": [],
+    "unresolved": []
+  },
+  "style_stack_compliance": {
+    "styling_system": "tailwindcss",
+    "tailwind_used": true,
+    "new_scss_added": false,
+    "scss_exception_ref": "",
+    "new_dependencies": []
+  },
+  "component_reuse_evidence": {
+    "searched": [
+      "src/components",
+      "uni_modules"
+    ],
+    "reused": [
+      "uni-card",
+      "uni-icons"
+    ],
+    "newly_created": [
+      "ExampleCardWrapper"
+    ],
+    "reason": "复用 uni-card 负责卡片语义，新增轻 wrapper 只承接页面专属数据绑定"
+  },
+  "validation_evidence": {
+    "unit_tests": {
+      "result": "not_applicable",
+      "commands": [],
+      "evidence_ref": "",
+      "reason": "纯展示组件无独立单测入口"
+    },
+    "lint": {
+      "result": "not_applicable",
+      "commands": [],
+      "evidence_ref": "",
+      "reason": "仓库未定义独立 lint script"
+    },
+    "typecheck": {
+      "result": "passed",
+      "commands": [
+        "npm run typecheck"
+      ],
+      "evidence_ref": "evidence/typecheck.txt",
+      "reason": ""
+    },
+    "build": {
+      "result": "passed",
+      "commands": [
+        "npm run build:mp-weixin"
+      ],
+      "evidence_ref": "evidence/build.txt",
+      "reason": ""
+    },
+    "self_check": {
+      "result": "passed",
+      "commands": [
+        "manual UI smoke"
+      ],
+      "evidence_ref": "evidence/self-check.png",
+      "reason": ""
+    }
+  },
+  "deviations_or_blockers": [],
+  "qa_handoff": {
+    "page": "/pages/example/index",
+    "state": "default"
+  },
+  "uni_ui_mapping_evidence": {
+    "status": "completed",
+    "skill": "$uni-ui-figma-component-mapper",
+    "generated_before_first_ui_edit": true,
+    "regions": [
+      {
+        "figma_node": "1:2 Example Card",
+        "visual_interaction_signal": "白色圆角卡片、标题、摘要、右侧操作",
+        "preferred_component": "uni-card",
+        "alternative": "自定义 view",
+        "decision": "used",
+        "reason": "语义是独立信息块，uni-card 能承接标题、摘要与点击入口"
+      },
+      {
+        "figma_node": "1:2 / icon",
+        "visual_interaction_signal": "内置语义图标",
+        "preferred_component": "uni-icons",
+        "alternative": "image/SVG",
+        "decision": "used",
+        "reason": "图标语义可由 uni-icons 表达，无需引入自定义资产"
+      }
+    ],
+    "used_components": [
+      "uni-card",
+      "uni-icons"
+    ],
+    "custom_regions": [
+      {
+        "figma_node": "1:2 wrapper layout",
+        "reason": "页面数据绑定与 Tailwind 外层间距属于项目局部布局，不是 uni-ui 独立组件职责",
+        "fallback_component": "uni-card"
+      }
+    ],
+    "install_dependency_checked": true,
+    "easycom_policy": "easycom"
+  }
+}

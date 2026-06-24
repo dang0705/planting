@@ -1,0 +1,5 @@
+interface:
+  display_name: "UI Scope Contract"
+  short_description: "项目 UI 栈与实现范围约束"
+policy:
+  allow_implicit_invocation: false

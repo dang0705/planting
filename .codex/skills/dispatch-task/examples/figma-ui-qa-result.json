@@ -1,0 +1,42 @@
+{
+  "agent_identity": {
+    "agent_type": "qa_reviewer",
+    "dispatch_run_id": "example-ui-001"
+  },
+  "status": "passed",
+  "unit_tests_run": false,
+  "coverage": [
+    "default state",
+    "target page rendering",
+    "primary interaction"
+  ],
+  "checks_and_evidence": [
+    {
+      "check": "visual alignment",
+      "result": "passed",
+      "evidence_ref": "evidence/runtime-example.png"
+    }
+  ],
+  "figma_baseline_evidence": {
+    "status": "ready",
+    "acquired_by": "qa_reviewer",
+    "independent_read": true,
+    "source_link": "https://figma.com/design/example/file?node-id=1-2",
+    "node_id": "1:2",
+    "calls": [
+      "get_metadata",
+      "get_screenshot"
+    ],
+    "reference_screenshot_ref": "evidence/figma-1-2-qa.png",
+    "actual_runtime_screenshot_ref": "evidence/runtime-example.png",
+    "states_checked": [
+      "default"
+    ],
+    "differences": [],
+    "result": "passed"
+  },
+  "failures": [],
+  "not_verified": [],
+  "blocker_classification": "none",
+  "next_action": "complete"
+}
