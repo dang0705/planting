@@ -1,6 +1,6 @@
 ---
 name: dispatch-task
-description: "低上下文任务调度：main 锁定工程约束与验收边界；实现阶段可分流到 Codex 具名 subagent 或 ZCode 外部实现者，完成后统一由 Codex 回收 diff、测试、QA 与 Completion Gate。"
+description: '低上下文任务调度：main 锁定工程约束与验收边界；实现阶段可分流到 Codex 具名 subagent 或 ZCode 外部实现者，完成后统一由 Codex 回收 diff、测试、QA 与 Completion Gate。'
 ---
 
 # Dispatch Task
@@ -16,7 +16,6 @@ description: "低上下文任务调度：main 锁定工程约束与验收边界�
 普通任务默认只读本文件。不得先读 references/INDEX、完整历史、完整 ClickUp、完整 Figma 或全仓规则。
 
 ## 2. Flow
-
 
 ### Gate A0 — Implementation Mode 简单触发路由
 
@@ -130,7 +129,7 @@ output_evidence_required
 派发前执行：
 
 ```bash
-node .agents/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
+node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
 ```
 
 失败不得进入实现阶段。
@@ -178,7 +177,6 @@ node .agents/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
 10. ZCode 修改后，Codex 必须重新读取真实 `git diff`、验证 allowed/forbidden paths、执行测试/构建、自审、必要时 QA。
 11. ZCode 失败、无 diff、越权修改、无法读取 Figma、prompt 未完整发送或 computer-use 不可用时，不得 fallback 成 main 自己写代码。
 
-
 执行阶段必须出现以下实际工具调用命令，不能只写入 JSON 或自然语言说明：
 
 ```text
@@ -203,19 +201,19 @@ command: Send the prompt using Enter or the visible send button, then confirm th
 ZCode prompt 派发前建议执行：
 
 ```bash
-node .agents/skills/dispatch-task/scripts/validate-zcode-prompt.mjs <handoff.json> <zcode-prompt.md>
+node .codex/skills/dispatch-task/scripts/validate-zcode-prompt.mjs <handoff.json> <zcode-prompt.md>
 ```
 
 粘贴/发送后记录并验证：
 
 ```bash
-node .agents/skills/dispatch-task/scripts/validate-zcode-send-receipt.mjs <handoff.json> <send-receipt.json>
+node .codex/skills/dispatch-task/scripts/validate-zcode-send-receipt.mjs <handoff.json> <send-receipt.json>
 ```
 
 ZCode 完成后由 Codex 生成 recovery result，并执行：
 
 ```bash
-node .agents/skills/dispatch-task/scripts/validate-result.mjs external <handoff.json> <zcode-recovery-result.json>
+node .codex/skills/dispatch-task/scripts/validate-result.mjs external <handoff.json> <zcode-recovery-result.json>
 ```
 
 ### Gate C — Implementation Review
@@ -223,7 +221,7 @@ node .agents/skills/dispatch-task/scripts/validate-result.mjs external <handoff.
 Codex subagent 返回 JSON 后执行：
 
 ```bash
-node .agents/skills/dispatch-task/scripts/validate-result.mjs implementer <handoff.json> <result.json>
+node .codex/skills/dispatch-task/scripts/validate-result.mjs implementer <handoff.json> <result.json>
 ```
 
 ZCode external 完成后执行 external recovery validator。两种模式都必须做 diff-first review：身份/来源、路径边界、项目约束、decision lock、依赖、验证证据。UI 重点检查 Tailwind/SCSS、组件复用与 uni-ui 映射证据；Figma 任务必须存在实现者直接读取证据。失败退回原实现路径，main 不亲自修复。
@@ -235,7 +233,7 @@ Figma/UI、用户可观察行为、API/schema/数据链路、端上运行、高�
 QA 必须按 Gate B1 具名 spawn 为 `qa_reviewer`。返回 JSON 后执行：
 
 ```bash
-node .agents/skills/dispatch-task/scripts/validate-result.mjs qa <handoff.json> <result.json>
+node .codex/skills/dispatch-task/scripts/validate-result.mjs qa <handoff.json> <result.json>
 ```
 
 完成条件：实现模式校验通过；main review 通过；所需 QA 通过；blocker 与未验证项已明确；只输出一份 Completion Receipt，不输出逐 gate telemetry。
@@ -244,12 +242,12 @@ node .agents/skills/dispatch-task/scripts/validate-result.mjs qa <handoff.json> 
 
 存在 `figma_link` 时：
 
-| 角色 | 必须/允许 | 禁止 |
-|---|---|---|
-| main | 使用 `$figma-ui-implementation-policy`；可只解析 link/node，或最多一次 `get_metadata` 形成 Lite | context、screenshot、variables、assets、视觉摘要、实现切片、Drilldown |
-| Codex implementer | 使用 `$implementer-ui-execution-policy`，在首次 UI 编辑前直接取 metadata + design context + screenshot；再用 `$ui-implementation-scope-policy` | 依赖 main Lite 猜实现、整文件读取 |
-| ZCode external implementer | 在 ZCode prompt 中被强制要求直接读取 Figma context/screenshot；若 ZCode 无 Figma 能力，必须返回 blocker 且不改代码 | 依赖 main Lite 猜实现、让 main 补读完整 Figma |
-| QA | 使用 `$qa-ui-visual-baseline-policy`，独立取 metadata + reference screenshot，并取得实际运行截图 | 只凭 main/实现者转述判通过、整文件读取 |
+| 角色                       | 必须/允许                                                                                                                                      | 禁止                                                                  |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| main                       | 使用 `$figma-ui-implementation-policy`；可只解析 link/node，或最多一次 `get_metadata` 形成 Lite                                                | context、screenshot、variables、assets、视觉摘要、实现切片、Drilldown |
+| Codex implementer          | 使用 `$implementer-ui-execution-policy`，在首次 UI 编辑前直接取 metadata + design context + screenshot；再用 `$ui-implementation-scope-policy` | 依赖 main Lite 猜实现、整文件读取                                     |
+| ZCode external implementer | 在 ZCode prompt 中被强制要求直接读取 Figma context/screenshot；若 ZCode 无 Figma 能力，必须返回 blocker 且不改代码                             | 依赖 main Lite 猜实现、让 main 补读完整 Figma                         |
+| QA                         | 使用 `$qa-ui-visual-baseline-policy`，独立取 metadata + reference screenshot，并取得实际运行截图                                               | 只凭 main/实现者转述判通过、整文件读取                                |
 
 Handoff 必须保留原始 link/node，并满足：
 
