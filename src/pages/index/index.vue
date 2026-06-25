@@ -217,7 +217,6 @@
 
 <script setup>
 import { onMounted, ref, reactive } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
 import CustomNavbar from '@/components/CustomNavbar'
 import DiagnosePopup from '@/components/DiagnosePopup.vue'
 import { usePlantStore } from '@/store/plants.js'
@@ -251,12 +250,6 @@ onMounted(async () => {
 
   // 登录状态下加载用户植物
   if (await userStore.ensureLogin()) {
-    loadUserPlants(true)
-  }
-})
-
-onShow(() => {
-  if (userStore.isAuthenticated) {
     loadUserPlants(true)
   }
 })

@@ -8,7 +8,9 @@ if (!handoffFile || !receiptFile) {
 }
 
 const readJson = (file) => {
-  try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  }
   catch (error) {
     console.error(JSON.stringify({ status: 'invalid_json', file, error: error.message }, null, 2));
     process.exit(2);
@@ -18,7 +20,11 @@ const readJson = (file) => {
 const handoff = readJson(handoffFile);
 const receipt = readJson(receiptFile);
 const errors = [];
-const need = (condition, message) => { if (!condition) errors.push(message); };
+const need = (condition, message) => {
+  if (!condition) {
+    errors.push(message);
+  }
+};
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const nonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;
 const includesAll = (array, items) => items.every((item) => array?.includes(item));

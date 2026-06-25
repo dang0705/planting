@@ -44,6 +44,7 @@
           <PlantForm
             v-model="formData"
             :city-error="formErrors.careLocation"
+            :active-step="activeStep"
             class="mb-5"
             @upload-photo="uploadPhoto"
             @city-change="formErrors.careLocation = ''"
@@ -173,11 +174,9 @@ onLoad(options => {
 })
 
 onMounted(async () => {
-  if (!(await userStore.ensureLogin())) {
-    showLogin.value = true
-  }
-  await Promise.all([loadPlants(), plantStore.getUserPlants()])
+  await loadPlants()
   if (editMode.value) {
+    await plantStore.getUserPlants()
     prefillEditPlant()
   }
 })

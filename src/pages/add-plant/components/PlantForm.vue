@@ -185,7 +185,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { fetchHotCityWeatherLocations, resolveHotCityByGps } from '@/api/weather-hot-cities.js'
 import {
   clearSelectedPlantCareLocation,
@@ -196,7 +196,8 @@ import LightEnvironmentPicker from '@/components/LightEnvironmentPicker.vue'
 
 const props = defineProps({
   modelValue: { type: Object, required: true },
-  cityError: { type: String, default: '' }
+  cityError: { type: String, default: '' },
+  activeStep: { type: Number, default: 0 }
 })
 const emit = defineEmits(['update:modelValue', 'upload-photo', 'city-change'])
 
@@ -204,6 +205,7 @@ const locations = ['阳台', '客厅', '卧室', '书房', '办公室', '其他'
 const hotCities = ref([])
 const showCitySheet = ref(false)
 const locationStatus = ref('locating')
+const weatherLocationInitialized = ref(false)
 const selectedCareLocation = computed(() =>
   normalizePlantCareLocation(props.modelValue.careLocation)
 )
@@ -283,7 +285,11 @@ async function matchGpsHotCity() {
   }
 }
 
-onMounted(async () => {
+async function initWeatherLocation() {
+  if (weatherLocationInitialized.value) {
+    return
+  }
+  weatherLocationInitialized.value = true
   const hasExistingCareLocation = Boolean(selectedCareLocation.value)
   if (!hasExistingCareLocation) {
     clearSelectedPlantCareLocation()
@@ -299,5 +305,15 @@ onMounted(async () => {
     locationStatus.value = 'locate_failed'
     showCitySheet.value = true
   }
-})
+}
+
+watch(
+  () => props.activeStep,
+  step => {
+    if (step === 1) {
+      initWeatherLocation()
+    }
+  },
+  { immediate: true }
+)
 </script>

@@ -9,7 +9,9 @@ if (!handoffFile || !promptFile) {
 }
 
 const readJson = (file) => {
-  try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  }
   catch (error) {
     console.error(JSON.stringify({ status: 'invalid_json', file, error: error.message }, null, 2));
     process.exit(2);
@@ -18,14 +20,20 @@ const readJson = (file) => {
 
 const handoff = readJson(handoffFile);
 let prompt;
-try { prompt = fs.readFileSync(promptFile, 'utf8'); }
+try {
+  prompt = fs.readFileSync(promptFile, 'utf8');
+}
 catch (error) {
   console.error(JSON.stringify({ status: 'missing_prompt', file: promptFile, error: error.message }, null, 2));
   process.exit(2);
 }
 
 const errors = [];
-const need = (condition, message) => { if (!condition) errors.push(message); };
+const need = (condition, message) => {
+  if (!condition) {
+    errors.push(message);
+  }
+};
 const mode = handoff.implementation_mode ?? 'codex_subagent';
 const id = handoff.dispatch_run_id;
 const zcode = handoff.zcode_contract ?? {};
@@ -61,7 +69,9 @@ const requiredSectionMarkers = {
 
 for (const section of zcode.required_prompt_sections ?? []) {
   const marker = requiredSectionMarkers[section];
-  if (marker) need(prompt.includes(marker), `prompt missing section marker for ${section}: ${marker}`);
+    if (marker) {
+      need(prompt.includes(marker), `prompt missing section marker for ${section}: ${marker}`);
+    }
 }
 
 need(prompt.includes('clipboard') || prompt.includes('剪贴板') || prompt.includes('粘贴'),

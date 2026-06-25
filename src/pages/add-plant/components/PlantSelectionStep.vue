@@ -3,11 +3,12 @@
     <view class="mb-6 flex items-center gap-2">
       <button
         id="add-plant-ai-identify-button"
-        class="m-0 h-11 w-[127px] shrink-0 rounded-full p-0 text-sm font-medium leading-[44px] text-white"
+        class="m-0 flex h-11 w-[127px] shrink-0 items-center justify-center gap-1.5 rounded-full p-0 text-sm font-medium text-white after:border-0"
+        hover-class="none"
         :style="primaryButtonStyle"
         @click="$emit('ai-identify')"
       >
-        <text class="mr-1">📷</text>
+        <image :src="aiIdentifyIcon" class="size-4" mode="aspectFit" />
         <text>AI 拍照识别</text>
       </button>
 
@@ -24,7 +25,12 @@
           @input="$emit('update:searchKeyword', $event.detail.value)"
           @confirm="$emit('search-confirm')"
         />
-        <text v-if="!searchKeyword" class="text-gray-400">🔍</text>
+        <image
+          v-if="!searchKeyword"
+          :src="searchIcon"
+          class="size-4 flex-[0_0_16px]"
+          mode="aspectFit"
+        />
         <text v-else class="text-gray-400" @click="$emit('clear-search')">✕</text>
       </view>
     </view>
@@ -81,20 +87,33 @@
 
     <button
       id="add-plant-next-button"
-      class="m-0 mt-5 h-14 w-full rounded-2xl p-0 text-base font-medium leading-[56px] text-white"
-      :class="canProceed ? '' : 'bg-[#d1d5db]'"
+      class="m-0 mt-5 h-14 w-full rounded-2xl border border-solid p-0 text-base font-medium leading-[56px] after:border-0"
+      hover-class="none"
+      :class="
+        canProceed
+          ? 'border-transparent text-white'
+          : 'border-primary bg-white text-primary'
+      "
       :disabled="!canProceed"
       :style="canProceed ? primaryButtonStyle : ''"
       @click="$emit('next')"
     >
       <text class="block truncate px-4">
-        {{ selectedPlant?.canonicalName ? `选好了 · ${selectedPlant.canonicalName}` : '选好了' }}
+        {{
+          canProceed
+            ? selectedPlant?.canonicalName
+              ? `选好了 · ${selectedPlant.canonicalName}`
+              : '选好了'
+            : '请选择一个植物'
+        }}
       </text>
     </button>
   </view>
 </template>
 
 <script setup>
+import aiIdentifyIcon from '@/assets/icons/ai-identify.svg'
+import searchIcon from '@/assets/icons/search.svg'
 import PlantCard from './PlantCard.vue'
 
 defineProps({

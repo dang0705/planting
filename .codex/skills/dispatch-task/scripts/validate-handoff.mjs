@@ -18,7 +18,11 @@ try {
 }
 
 const errors = [];
-const need = (condition, message) => { if (!condition) errors.push(message); };
+const need = (condition, message) => {
+  if (!condition) {
+    errors.push(message);
+  }
+};
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const nonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;
 const stringArray = (value, { min = 0, max = Infinity } = {}) =>
@@ -313,7 +317,9 @@ if (isObject(figma) && nonEmptyString(figma.link)) {
     'style_stack_compliance',
     'component_reuse_evidence'
   ];
-  if (usesUniUi(pc.component_library)) requiredOutput.push('uni_ui_mapping_evidence');
+  if (usesUniUi(pc.component_library)) {
+    requiredOutput.push('uni_ui_mapping_evidence');
+  }
   for (const key of requiredOutput) {
     need(output.includes(key), `output_evidence_required must include ${key}`);
   }

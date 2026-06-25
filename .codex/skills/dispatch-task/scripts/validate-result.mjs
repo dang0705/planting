@@ -8,7 +8,9 @@ if (!['implementer', 'external', 'qa'].includes(role) || !handoffFile || !result
 }
 
 const readJson = (file) => {
-  try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  }
   catch (error) {
     console.error(JSON.stringify({ status: 'invalid_json', file, error: error.message }, null, 2));
     process.exit(2);
@@ -18,7 +20,11 @@ const readJson = (file) => {
 const handoff = readJson(handoffFile);
 const result = readJson(resultFile);
 const errors = [];
-const need = (condition, message) => { if (!condition) errors.push(message); };
+const need = (condition, message) => {
+  if (!condition) {
+    errors.push(message);
+  }
+};
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const nonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;
 const nonEmptyArray = (value) => Array.isArray(value) && value.length > 0;
@@ -51,7 +57,9 @@ const matchesAny = (file, patterns = []) => patterns.some((pattern) =>
 
 const validateEvidenceCheck = (name, check, requireSuccess) => {
   need(isObject(check), `validation_evidence.${name} must be an object`);
-  if (!isObject(check)) return;
+  if (!isObject(check)) {
+    return;
+  }
   need(['passed', 'not_applicable', 'failed', 'blocked'].includes(check.result),
     `validation_evidence.${name}.result must be passed|not_applicable|failed|blocked`);
   need(Array.isArray(check.commands), `validation_evidence.${name}.commands must be an array`);
@@ -66,7 +74,9 @@ const validateEvidenceCheck = (name, check, requireSuccess) => {
 
 const validateChangedFiles = (changedFiles) => {
   need(Array.isArray(changedFiles), 'changed_files must be an array');
-  if (!Array.isArray(changedFiles)) return;
+  if (!Array.isArray(changedFiles)) {
+    return;
+  }
   for (const file of changedFiles) {
     need(nonEmptyString(file), 'changed_files entries must be strings');
     need(matchesAny(file, handoff.allowed_paths ?? []), `changed file outside allowed_paths: ${file}`);
@@ -138,7 +148,9 @@ const validateUiCommon = (resultObject, { figmaAcquiredBy, uniUiPolicyName }) =>
         'uni_ui_mapping_evidence.easycom_policy must be easycom|manual_existing_pattern|not_applicable');
       for (const [index, region] of (mapping.regions ?? []).entries()) {
         need(isObject(region), `uni_ui_mapping_evidence.regions[${index}] must be an object`);
-        if (!isObject(region)) continue;
+        if (!isObject(region)) {
+          continue;
+        }
         need(nonEmptyString(region.figma_node), `uni_ui_mapping_evidence.regions[${index}].figma_node is required`);
         need(nonEmptyString(region.visual_interaction_signal),
           `uni_ui_mapping_evidence.regions[${index}].visual_interaction_signal is required`);
@@ -150,7 +162,9 @@ const validateUiCommon = (resultObject, { figmaAcquiredBy, uniUiPolicyName }) =>
       }
       for (const [index, item] of (mapping.custom_regions ?? []).entries()) {
         need(isObject(item), `uni_ui_mapping_evidence.custom_regions[${index}] must be an object`);
-        if (!isObject(item)) continue;
+        if (!isObject(item)) {
+          continue;
+        }
         need(nonEmptyString(item.figma_node), `uni_ui_mapping_evidence.custom_regions[${index}].figma_node is required`);
         need(nonEmptyString(item.reason), `uni_ui_mapping_evidence.custom_regions[${index}].reason is required`);
         need(nonEmptyString(item.fallback_component),
@@ -171,11 +185,20 @@ const validateUiCommon = (resultObject, { figmaAcquiredBy, uniUiPolicyName }) =>
     need(evidence?.node_id === handoff.figma.node_id, 'figma_fetch_evidence.node_id must match handoff');
 
     const calls = callsOf(evidence);
-    for (const tool of ['get_metadata', 'get_design_context', 'get_screenshot']) {
+    const screenshotPolicySkip = figmaAcquiredBy === 'zcode_external_implementer'
+      && evidence?.screenshot_policy_skip?.allowed === true
+      && nonEmptyString(evidence?.screenshot_policy_skip?.policy_ref)
+      && /AGENTS\.md.*2\.18/.test(evidence.screenshot_policy_skip.policy_ref);
+    for (const tool of ['get_metadata', 'get_design_context']) {
       need(calls.includes(tool), `implementer must directly call ${tool}`);
     }
+    if (!screenshotPolicySkip) {
+      need(calls.includes('get_screenshot'), 'implementer must directly call get_screenshot');
+    }
     need(nonEmptyArray(evidence?.nodes_read), 'figma_fetch_evidence.nodes_read is required');
-    need(nonEmptyString(evidence?.screenshot_ref), 'figma_fetch_evidence.screenshot_ref is required');
+    if (!screenshotPolicySkip) {
+      need(nonEmptyString(evidence?.screenshot_ref), 'figma_fetch_evidence.screenshot_ref is required');
+    }
     need(Array.isArray(evidence?.variables_or_assets_used), 'variables_or_assets_used must be an array');
     need(Array.isArray(evidence?.unresolved), 'figma_fetch_evidence.unresolved must be an array');
     if (resultObject.status === 'completed') {
