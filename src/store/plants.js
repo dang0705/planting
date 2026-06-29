@@ -70,6 +70,7 @@ export const usePlantStore = defineStore('plants', {
           imageFileId: p.imageFileId || '',
           lastWatered: p.lastWatered || null,
           nextWater: p.nextWater || null,
+          wateringEvents: p.wateringEvents || null,
           createdAt: p.createdAt || null,
           plantDate: p.plantDate || p.createdAt || null,
           notes: p.notes || '',
@@ -159,21 +160,32 @@ export const usePlantStore = defineStore('plants', {
       return this.optimisticUpdate(id, updates)
     },
 
-    async completeWatering(id) {
-      const plant = this.userPlants.find(item => item.id === id)
-      const now = new Date()
-      const nextWater = new Date(now)
-      const freq = plant?.watering?.freq
-      const minDays = Array.isArray(freq) && freq.length ? Number(freq[0] || 0) : 0
-      const maxDays =
-        Array.isArray(freq) && freq.length > 1 ? Number(freq[1] || minDays || 0) : minDays
-      const intervalDays = Math.max(1, Math.round((minDays + maxDays) / 2) || 7)
-      nextWater.setDate(nextWater.getDate() + intervalDays)
+    async completeWatering(id, { wateringEvents = null, nextWaterDate = null } = {}) {
+      // nextWater 不再在前端用平均值公式计算，由后端 buildWateringPlanner 产出
+      const updates = {}
+      const nowIso = new Date().toISOString()
 
-      return this.updateUserPlant(id, {
-        lastWatered: now.toISOString(),
-        nextWater: nextWater.toISOString()
-      })
+      if (wateringEvents && wateringEvents.length > 0) {
+        updates.wateringEvents = wateringEvents
+        const sorted = [...wateringEvents].sort((a, b) =>
+          String(b.date || '').localeCompare(String(a.date || ''))
+        )
+        if (sorted[0]?.date) {
+          updates.lastWatered = sorted[0].date
+        }
+      } else if (wateringEvents === null) {
+        // 旧调用方式（无参数）：仅记录当前时间为 lastWatered
+        updates.lastWatered = nowIso
+      }
+
+      if (nextWaterDate) {
+        updates.nextWater = nextWaterDate
+      }
+
+      if (Object.keys(updates).length === 0) {
+        return { success: false, message: '缺少浇水事件或下次浇水日期' }
+      }
+      return this.updateUserPlant(id, updates)
     }
   },
   persist: false

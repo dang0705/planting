@@ -619,7 +619,57 @@ async function getUserPlantInstanceById(openid, id) {
 
   const plantLookupId = resolveUserPlantCatalogLookupId(row)
   const plant = plantLookupId ? await getPlantCatalogById(plantLookupId) : null
-  return mapUserPlantInstanceRow(row, plant)
+  const plantInstance = mapUserPlantInstanceRow(row, plant)
+  // 单独 try/catch 查询 watering_events_json，列不存在时不阻断主流程
+  plantInstance.wateringEvents = await getUserPlantWateringEvents(openid, id)
+  return plantInstance
+}
+
+async function getUserPlantWateringEvents(openid, id) {
+  try {
+    const result = await models.$runSQL(
+      'SELECT CAST(watering_events_json AS CHAR) AS watering_events_json_text FROM user_plant_instances WHERE id = {{id}} AND _openid = {{openid}} LIMIT 1',
+      { openid, id: Number(id) }
+    )
+    const row = result?.data?.executeResultList?.[0]
+    return parseJsonField(row?.watering_events_json_text, null)
+  } catch {
+    // 列不存在或查询失败时返回 null，不阻断主流程
+    return null
+  }
+}
+
+/**
+ * 精简查询：仅取 planner 所需的属级浇水策略 + 温湿度 bounds。
+ * 分两步查询避免跨表 JOIN collation 冲突：
+ *   1. 从 user_plant_instances 取 plant_id / session_plant_id
+ *   2. 用 getPlantCatalogById 取属级 watering 策略
+ * 不查 watering_events_json（planner 不需要），比 getUserPlantInstanceById 少一次 SQL。
+ */
+async function getUserPlantWateringStrategy(openid, id) {
+  const result = await models.$runSQL(
+    'SELECT plant_id, session_plant_id FROM user_plant_instances WHERE id = {{id}} AND _openid = {{openid}} LIMIT 1',
+    { openid, id: Number(id) }
+  )
+  const row = result?.data?.executeResultList?.[0]
+  if (!row) {
+    return null
+  }
+  const lookupId = resolveUserPlantCatalogLookupId(row)
+  if (!lookupId) {
+    return null
+  }
+  const plant = await getPlantCatalogById(lookupId)
+  if (!plant) {
+    return null
+  }
+  return {
+    watering: plant.watering || null,
+    temperatureMin: plant.temperatureMin ?? null,
+    temperatureMax: plant.temperatureMax ?? null,
+    humidityMin: plant.humidityMin ?? null,
+    humidityMax: plant.humidityMax ?? null
+  }
 }
 
 async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) {
@@ -715,18 +765,43 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
     fields.push('next_water = {{nextWater}}')
     params.nextWater = updates.nextWater
   }
+  if (hasOwnField(updates, 'wateringEvents')) {
+    params.wateringEventsJson = stringifyNullableJson(updates.wateringEvents)
+  }
 
-  if (!fields.length) {
+  if (!fields.length && params.wateringEventsJson === undefined) {
     return existing
   }
 
-  const sql = `
-    UPDATE user_plant_instances
-    SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP
-    WHERE id = {{id}} AND _openid = {{openid}}
-  `
-  await models.$runSQL(sql, params)
-  return getUserPlantInstanceById(openid, id)
+  // 主 UPDATE 不含 watering_events_json，避免列不存在时整条 SQL 失败
+  // （last_watered / next_water 等字段必须能正常写入）
+  let updated
+  if (fields.length) {
+    const sql = `
+      UPDATE user_plant_instances
+      SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP
+      WHERE id = {{id}} AND _openid = {{openid}}
+    `
+    await models.$runSQL(sql, params)
+    updated = await getUserPlantInstanceById(openid, id)
+  } else {
+    updated = existing
+  }
+
+  // watering_events_json 单独 try/catch 写入，列不存在时跳过而不阻断主流程
+  if (params.wateringEventsJson !== undefined) {
+    try {
+      await models.$runSQL(
+        'UPDATE user_plant_instances SET watering_events_json = {{wateringEventsJson}}, updated_at = CURRENT_TIMESTAMP WHERE id = {{id}} AND _openid = {{openid}}',
+        { openid, id: Number(id), wateringEventsJson: params.wateringEventsJson }
+      )
+    } catch {
+      // 列不存在时忽略，不阻断 last_watered / next_water 的写入
+    }
+    updated = await getUserPlantInstanceById(openid, id)
+  }
+
+  return updated
 }
 
 async function deleteUserPlantInstance(openid, id) {
@@ -904,6 +979,8 @@ module.exports = {
   findCanonicalPlantMatch,
   createUserPlantInstance,
   getUserPlantInstanceById,
+  getUserPlantWateringEvents,
+  getUserPlantWateringStrategy,
   listUserPlantInstances,
   updateUserPlantInstance,
   deleteUserPlantInstance,

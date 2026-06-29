@@ -4,8 +4,8 @@ status: current
 doc_type: contract
 owner: docs-keeper
 sync_policy: active
-last_verified_date: 2026-06-07
-last_verified_commit: unknown-from-upload
+last_verified_date: 2026-06-26
+last_verified_commit: sprint-ai-workflow
 source_of_truth:
   - src/http-functions/**
   - src/api/env.js
@@ -18,6 +18,12 @@ source_of_truth:
   - cloudfunctions/plant-catalog-http/app.js
   - cloudfunctions/plant-user-http/app.js
   - cloudfunctions/auth-user-http/app.js
+  - cloudfunctions/layer/utils/watering-planner.js
+  - cloudfunctions/layer/utils/plant-knowledge.js
+  - cloudfunctions/diagnose-http/utils/environment-context-v7.js
+  - src/pages/index/components/WateringReminderSheet.vue
+  - src/store/plants.js
+  - src/components/CareBehaviorTimeline.vue
 stale_if_changed:
   - src/http-functions/**
   - src/api/env.js
@@ -414,8 +420,67 @@ cloudfunctions/weather-http/config.json
 | POST | `/user-plants` | 新建用户植物。 |
 | PATCH | `/user-plants` | 更新用户植物，需 `id`。 |
 | DELETE | `/user-plants` | 删除用户植物，需 `id`。 |
+| POST | `/user-plants/watering-planner` | 复用共享规划器计算浇水建议。 |
 
 `plant-user-http` 需要解析到 openid；否则返回 401。
+
+### 7.2.1 `POST /user-plants/watering-planner`
+
+本接口用于前端请求下一次浇水建议，计算逻辑复用 `cloudfunctions/layer/utils/watering-planner.js`，并与 `diagnose-http` 的建议链路共享。`buildWateringPlanner` 已从 `diagnose-http` 抽取到 layer 共享纯计算模块，diagnose-http 通过 try/catch 回退委托调用。
+
+入参约束：
+
+- `plantId`：植物实例 ID（必填）
+- `wateringEvents`：最近 10 天浇水事件集合，元素结构 `{ date: 'YYYY-MM-DD', watered: true, amount: 'normal' }`
+- `referenceDate`：计算基准日期（ISO 字符串）
+- `weatherDays`：历史天气日数据数组（来自 `getEnvironmentWeatherWindow` 的 `historicalDays`），每日含 `tempMaxC/tempMinC/humidity/precipMm/textDay`
+- `forecastDays`：预报天气日数据数组（来自 `getEnvironmentWeatherWindow` 的 `forecastDays`），字段同 `weatherDays`
+
+返回字段：
+
+- `nextWaterDate`：下次浇水日期 'YYYY-MM-DD' 或 null（WET 阻断时为 null）
+- `nextWaterWindow`：[minDays, maxDays] 建议窗口
+- `nextWaterReason`：人类可读的推算理由
+- `wateringContext`：`likely_too_wet` / `likely_too_dry` / `keep_baseline_or_check_soil`
+- `action`：对应 action 枚举
+
+WET 阻断逻辑：
+
+- WET（偏湿/过浇）时 `nextWaterDate` 返回 null，不推导具体浇水日期
+- 前端检测到 WET 后禁用"添加至日历"按钮，提示"近期过浇，暂不安排浇水"
+- WET 触发条件（两条路径，任一满足）：
+  1. 浇水次数超限：`wateringCount10d > effectiveWetWaterings10d`
+  2. 强偏湿环境独立触发：至少 2 种偏湿天气信号命中（高湿、冷湿、雨天）且有浇水记录，不限制 lastWateredDaysAgo
+- `nextWaterDate` 所有分支均 clamp 到不早于 referenceDate + 1（明天）
+
+天气数据流：
+
+- 前端 `WateringReminderSheet` 在点击"上次浇水"入口时调 `getEnvironmentWeatherWindow({ mode: 'environment' })`
+- `historicalDays` → `weatherDays` → planner `historical`
+- `forecastDays` → `forecastDays` → planner `forecast`
+- 后端 `buildWeatherSummary` 从日数据提取 highHumidityDays/coldHumidDays/rainyDays/hotDryDays 等摘要
+
+性能优化：
+
+- 接口不走 `getUserPlantInstanceById`（3 次串行 SQL），改用 `getUserPlantWateringStrategy`（2 次 SQL）
+- 不查 `watering_events_json`、不查 `alias_summary`
+
+实现约定：
+
+- 数据层字段 `watering_events_json` 为未来发布前需持久化的字段；读写均具备 try/catch 容错，列不存在时不阻断主流程
+- `plant-user-http` 的 `POST /user-plants/watering-planner` 为纯调度接口，不直接修改用户植物主数据
+- `src/store/plants.js` 的 `completeWatering` 已下线旧前端平均值公式，改写回 planner 产出的 `nextWaterDate`
+
+事实源：
+
+```text
+cloudfunctions/layer/utils/watering-planner.js
+cloudfunctions/diagnose-http/utils/environment-context-v7.js
+cloudfunctions/plant-user-http/app.js
+cloudfunctions/layer/utils/plant-knowledge.js
+src/pages/index/components/WateringReminderSheet.vue
+src/store/plants.js
+```
 
 ## 8. 用户认证契约
 

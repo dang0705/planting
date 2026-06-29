@@ -1,6 +1,6 @@
 <template>
   <view
-    :id="`diagnose-care-behavior-date-${item.date}`"
+    :id="`${idPrefix}-care-behavior-date-${item.date}`"
     :class="cellClass"
     hover-class="none"
     hover-stop-propagation
@@ -44,17 +44,17 @@
 
     <view class="care-behavior-dot-row flex min-h-2.5 items-center justify-center gap-[3px]">
       <CareBehaviorTimelineMarker
-        :id="`diagnose-care-behavior-water-${item.date}`"
+        :id="`${idPrefix}-care-behavior-water-${item.date}`"
         dot-class="care-behavior-dot--water bg-[#2b7fff]"
         :active="item.watering"
       />
       <CareBehaviorTimelineMarker
-        :id="`diagnose-care-behavior-fertilize-${item.date}`"
+        :id="`${idPrefix}-care-behavior-fertilize-${item.date}`"
         dot-class="care-behavior-dot--fertilize bg-[#fe9a00]"
         :active="item.fertilizing"
       />
       <CareBehaviorTimelineMarker
-        :id="`diagnose-care-behavior-light-${item.date}`"
+        :id="`${idPrefix}-care-behavior-light-${item.date}`"
         dot-class="care-behavior-dot--light bg-[#22c55e] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.74)]"
         :active="item.lightChange"
       />
@@ -70,7 +70,8 @@ import CareBehaviorTimelineMetric from './CareBehaviorTimelineMetric.vue'
 
 defineEmits(['select', 'press-start', 'press-end'])
 const props = defineProps({
-  item: { type: Object, required: true }
+  item: { type: Object, required: true },
+  idPrefix: { type: String, default: 'diagnose' }
 })
 
 const cellClass = computed(() => [

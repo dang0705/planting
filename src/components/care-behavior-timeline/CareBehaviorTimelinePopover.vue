@@ -21,7 +21,7 @@
           湿度: {{ humidityText }}
         </text>
         <text
-          :id="`diagnose-care-behavior-action-water-${state.date}`"
+          :id="`${idPrefix}-care-behavior-action-water-${state.date}`"
           class="care-behavior-detail-status block whitespace-nowrap pt-1 text-sm leading-5 text-slate-400"
           :class="{
             'text-[#51a2ff]': hasBehavior,
@@ -43,6 +43,7 @@ defineProps({
   dateLabel: { type: String, default: '' },
   hasBehavior: { type: Boolean, default: false },
   humidityText: { type: String, default: '—' },
+  idPrefix: { type: String, default: 'diagnose' },
   popoverStyle: { type: Object, default: () => ({}) },
   state: { type: Object, default: null },
   temperatureText: { type: String, default: '—' }

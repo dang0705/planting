@@ -19,6 +19,7 @@
           v-for="item in cellItems"
           :key="item.date"
           :item="item"
+          :id-prefix="idPrefix"
           @select="$emit('select-date', $event)"
           @press-start="$emit('press-start', $event)"
           @press-end="$emit('press-end')"
@@ -34,6 +35,7 @@
         :has-behavior="selectedDateHasBehavior"
         :popover-style="selectedDatePopoverStyle"
         :arrow-style="selectedDatePopoverArrowStyle"
+        :id-prefix="idPrefix"
         @reset-autohide="$emit('reset-autohide')"
       />
     </view>
@@ -48,6 +50,7 @@ import CareBehaviorTimelineSkeleton from './CareBehaviorTimelineSkeleton.vue'
 defineEmits(['press-end', 'press-start', 'reset-autohide', 'select-date'])
 defineProps({
   cellItems: { type: Array, default: () => [] },
+  idPrefix: { type: String, default: 'diagnose' },
   selectedDateBehaviorStatusText: { type: String, default: '' },
   selectedDateDialogHumidityText: { type: String, default: '—' },
   selectedDateDialogTemperatureText: { type: String, default: '—' },

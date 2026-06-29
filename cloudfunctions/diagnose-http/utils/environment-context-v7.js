@@ -2,18 +2,34 @@
 
 const { resolveCarePlannerThresholds } = require('../configs/care-planner-thresholds')
 const { estimateLightHealth, normalizeUserLightContext } = require('./light-health-estimator')
+// 浇水规划器已抽取到 layer 共享，diagnose-http 与 plant-user-http 共用同一实现。
+// 部署环境通过 CloudBase Layer 加载 /opt/utils/watering-planner；
+// 本地测试环境回退到相对路径直接引用源码。
+let buildWateringPlannerShared
+let normalizeCareBehaviorTimelineShared
+let resolveBaselineIntervalShared
+let WATERING_CONTEXTS_SHARED
+let WATERING_ACTIONS_SHARED
+try {
+  ;({
+    buildWateringPlanner: buildWateringPlannerShared,
+    normalizeCareBehaviorTimeline: normalizeCareBehaviorTimelineShared,
+    resolveBaselineInterval: resolveBaselineIntervalShared,
+    WATERING_CONTEXTS: WATERING_CONTEXTS_SHARED,
+    WATERING_ACTIONS: WATERING_ACTIONS_SHARED
+  } = require('/opt/utils/watering-planner'))
+} catch {
+  ;({
+    buildWateringPlanner: buildWateringPlannerShared,
+    normalizeCareBehaviorTimeline: normalizeCareBehaviorTimelineShared,
+    resolveBaselineInterval: resolveBaselineIntervalShared,
+    WATERING_CONTEXTS: WATERING_CONTEXTS_SHARED,
+    WATERING_ACTIONS: WATERING_ACTIONS_SHARED
+  } = require('../../layer/utils/watering-planner'))
+}
 
-const WATERING_CONTEXTS = Object.freeze({
-  WET: 'likely_too_wet',
-  DRY: 'likely_too_dry',
-  BASELINE: 'keep_baseline_or_check_soil'
-})
-
-const WATERING_ACTIONS = Object.freeze({
-  WET: 'delay_and_check_soil',
-  DRY: 'increase_soil_check_frequency',
-  BASELINE: 'follow_baseline_or_check_soil'
-})
+const WATERING_CONTEXTS = WATERING_CONTEXTS_SHARED
+const WATERING_ACTIONS = WATERING_ACTIONS_SHARED
 
 const FERTILIZING_ACTIONS = Object.freeze({
   PAUSE: 'pause',
@@ -735,214 +751,15 @@ function buildWateringPlanner({
   behaviorTimeline = {},
   thresholds: rawThresholds = null
 } = {}) {
-  const thresholds = resolveCarePlannerThresholds(rawThresholds).watering
-  const timeline = behaviorTimeline?.summary
-    ? behaviorTimeline
-    : normalizeCareBehaviorTimeline(behaviorTimeline)
-  const summary = timeline.summary || {}
-  const wateringCount10d = Number(summary.wateringCount10d || 0)
-  const lastWateredDaysAgo = summary.lastWateredDaysAgo
-  const baseline = {
-    intervalDays: resolveBaselineInterval(wateringStrategy)
-  }
-  const minIntervalDays = Math.max(1, Number(baseline.intervalDays?.[0]) || 5)
-  const behaviorWindowDays = Math.max(1, Number(thresholds.behaviorWindowDays || 10))
-  const maxReasonableWaterings10d = Math.max(1, Math.ceil(behaviorWindowDays / minIntervalDays))
-  const highHumidityPressureHit =
-    Number(historical.highHumidityDays || 0) >= Number(thresholds.wetHighHumidityDaysMin || 0) ||
-    Number(historical.maxConsecutiveHighHumidityDays || 0) >=
-      Number(thresholds.wetHighHumidityConsecutiveDaysMin || 0)
-  const coldHumidPressureHit =
-    Number(historical.coldHumidDays || 0) >= Number(thresholds.wetColdHumidDaysMin || 0) ||
-    Number(historical.maxConsecutiveColdHumidDays || 0) >=
-      Number(thresholds.wetColdHumidConsecutiveDaysMin || 0)
-  const rainyPressureHit =
-    Number(historical.rainyDays || 0) >= Number(thresholds.wetRainyDaysMin || 0) ||
-    Number(historical.maxConsecutiveRainyDays || 0) >=
-      Number(thresholds.wetRainyConsecutiveDaysMin || 0)
-  const wetPressureHitCount = [
-    highHumidityPressureHit,
-    coldHumidPressureHit,
-    rainyPressureHit
-  ].filter(Boolean).length
-  const wetPressureScore = wetPressureHitCount * Number(thresholds.wetPressureDeductionPerHit || 1)
-  const effectiveWetWaterings10d = Math.max(1, maxReasonableWaterings10d - wetPressureScore)
-  const forecastHotDryHit =
-    Number(forecast.hotDryDays || 0) >= Number(thresholds.dryForecastHotDryDaysMin || 0) ||
-    Number(forecast.maxConsecutiveHotDryDays || 0) >=
-      Number(thresholds.dryForecastHotDryConsecutiveDaysMin || 0)
-  const historicalHotDryHit =
-    Number(historical.hotDryDays || 0) >= Number(thresholds.dryHistoricalHotDryDaysMin || 0) ||
-    Number(historical.maxConsecutiveHotDryDays || 0) >=
-      Number(thresholds.dryHistoricalHotDryConsecutiveDaysMin || 0)
-  const lastWateredTooLongAgo =
-    lastWateredDaysAgo === null ||
-    Number(lastWateredDaysAgo) >= Number(thresholds.dryLastWateredDaysAgoMin || 0)
-  const wetExceeded = wateringCount10d > effectiveWetWaterings10d
-  const dryExceeded =
-    (forecastHotDryHit && lastWateredTooLongAgo) || (historicalHotDryHit && wateringCount10d === 0)
-  const calculation = {
-    formulaVersion: 'watering_planner_v7_configurable',
-    inputs: {
-      wateringCount10d,
-      lastWateredDaysAgo,
-      baselineIntervalDays: baseline.intervalDays,
-      historical: pickNumberFields(historical, [
-        'highHumidityDays',
-        'coldHumidDays',
-        'rainyDays',
-        'hotDryDays',
-        'maxConsecutiveHighHumidityDays',
-        'maxConsecutiveColdHumidDays',
-        'maxConsecutiveRainyDays',
-        'maxConsecutiveHotDryDays'
-      ]),
-      forecast: pickNumberFields(forecast, ['hotDryDays', 'maxConsecutiveHotDryDays'])
-    },
-    thresholds: clonePlain(thresholds),
-    formulas: [
-      buildPlannerFormulaStep({
-        key: 'max_reasonable_waterings_10d',
-        expression: 'ceil(behaviorWindowDays / minIntervalDays)',
-        inputs: { behaviorWindowDays, minIntervalDays },
-        result: maxReasonableWaterings10d
-      }),
-      buildPlannerFormulaStep({
-        key: 'high_humidity_pressure_hit',
-        expression:
-          'highHumidityDays >= wetHighHumidityDaysMin || maxConsecutiveHighHumidityDays >= wetHighHumidityConsecutiveDaysMin',
-        inputs: {
-          highHumidityDays: Number(historical.highHumidityDays || 0),
-          maxConsecutiveHighHumidityDays: Number(historical.maxConsecutiveHighHumidityDays || 0)
-        },
-        thresholds: {
-          wetHighHumidityDaysMin: Number(thresholds.wetHighHumidityDaysMin || 0),
-          wetHighHumidityConsecutiveDaysMin: Number(
-            thresholds.wetHighHumidityConsecutiveDaysMin || 0
-          )
-        },
-        result: highHumidityPressureHit,
-        passed: highHumidityPressureHit
-      }),
-      buildPlannerFormulaStep({
-        key: 'cold_humid_pressure_hit',
-        expression:
-          'coldHumidDays >= wetColdHumidDaysMin || maxConsecutiveColdHumidDays >= wetColdHumidConsecutiveDaysMin',
-        inputs: {
-          coldHumidDays: Number(historical.coldHumidDays || 0),
-          maxConsecutiveColdHumidDays: Number(historical.maxConsecutiveColdHumidDays || 0)
-        },
-        thresholds: {
-          wetColdHumidDaysMin: Number(thresholds.wetColdHumidDaysMin || 0),
-          wetColdHumidConsecutiveDaysMin: Number(thresholds.wetColdHumidConsecutiveDaysMin || 0)
-        },
-        result: coldHumidPressureHit,
-        passed: coldHumidPressureHit
-      }),
-      buildPlannerFormulaStep({
-        key: 'rainy_pressure_hit',
-        expression:
-          'rainyDays >= wetRainyDaysMin || maxConsecutiveRainyDays >= wetRainyConsecutiveDaysMin',
-        inputs: {
-          rainyDays: Number(historical.rainyDays || 0),
-          maxConsecutiveRainyDays: Number(historical.maxConsecutiveRainyDays || 0)
-        },
-        thresholds: {
-          wetRainyDaysMin: Number(thresholds.wetRainyDaysMin || 0),
-          wetRainyConsecutiveDaysMin: Number(thresholds.wetRainyConsecutiveDaysMin || 0)
-        },
-        result: rainyPressureHit,
-        passed: rainyPressureHit
-      }),
-      buildPlannerFormulaStep({
-        key: 'wet_pressure_score',
-        expression: 'wetPressureHitCount * wetPressureDeductionPerHit',
-        inputs: {
-          wetPressureHitCount,
-          highHumidityPressureHit,
-          coldHumidPressureHit,
-          rainyPressureHit
-        },
-        thresholds: {
-          wetPressureDeductionPerHit: Number(thresholds.wetPressureDeductionPerHit || 1)
-        },
-        result: wetPressureScore
-      }),
-      buildPlannerFormulaStep({
-        key: 'effective_wet_waterings_10d',
-        expression: 'max(1, maxReasonableWaterings10d - wetPressureScore)',
-        inputs: { maxReasonableWaterings10d, wetPressureScore },
-        result: effectiveWetWaterings10d
-      }),
-      buildPlannerFormulaStep({
-        key: 'too_wet_condition',
-        expression: 'wateringCount10d > effectiveWetWaterings10d',
-        inputs: { wateringCount10d, effectiveWetWaterings10d },
-        result: wetExceeded,
-        passed: wetExceeded
-      }),
-      buildPlannerFormulaStep({
-        key: 'too_dry_condition',
-        expression:
-          '(forecastHotDryHit && lastWateredTooLongAgo) || (historicalHotDryHit && wateringCount10d === 0)',
-        inputs: { forecastHotDryHit, lastWateredTooLongAgo, historicalHotDryHit, wateringCount10d },
-        result: dryExceeded,
-        passed: dryExceeded
-      })
-    ]
-  }
-
-  if (wetExceeded) {
-    return {
-      baseline,
-      wateringContext: WATERING_CONTEXTS.WET,
-      action: WATERING_ACTIONS.WET,
-      reasons:
-        wetPressureScore > 0
-          ? ['recent_watering_plus_wet_environment']
-          : ['recent_watering_exceeds_baseline_window'],
-      thresholds: clonePlain(thresholds),
-      calculation: {
-        ...calculation,
-        result: {
-          wateringContext: WATERING_CONTEXTS.WET,
-          action: WATERING_ACTIONS.WET
-        }
-      }
-    }
-  }
-
-  if (dryExceeded) {
-    return {
-      baseline,
-      wateringContext: WATERING_CONTEXTS.DRY,
-      action: WATERING_ACTIONS.DRY,
-      reasons: ['hot_dry_window_plus_low_recent_watering'],
-      thresholds: clonePlain(thresholds),
-      calculation: {
-        ...calculation,
-        result: {
-          wateringContext: WATERING_CONTEXTS.DRY,
-          action: WATERING_ACTIONS.DRY
-        }
-      }
-    }
-  }
-
-  return {
-    baseline,
-    wateringContext: WATERING_CONTEXTS.BASELINE,
-    action: WATERING_ACTIONS.BASELINE,
-    reasons: ['baseline_or_manual_soil_check'],
-    thresholds: clonePlain(thresholds),
-    calculation: {
-      ...calculation,
-      result: {
-        wateringContext: WATERING_CONTEXTS.BASELINE,
-        action: WATERING_ACTIONS.BASELINE
-      }
-    }
-  }
+  // 委托给 layer 共享实现，传入 diagnose-http 自有的阈值解析器以保持配置覆盖行为一致
+  return buildWateringPlannerShared({
+    wateringStrategy,
+    historical,
+    forecast,
+    behaviorTimeline,
+    thresholds: rawThresholds,
+    resolveThresholds: resolveCarePlannerThresholds
+  })
 }
 
 function buildFertilizingPlanner(...args) {

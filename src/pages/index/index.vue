@@ -212,6 +212,13 @@
       @success="handleDiagnoseSuccess"
       @close="handleDiagnosePopupClose"
     />
+
+    <!-- 浇水提醒弹框 -->
+    <WateringReminderSheet
+      ref="wateringReminderRef"
+      :plant="currentReminderPlant"
+      @close="() => (currentReminderPlant = null)"
+    />
   </view>
 </template>
 
@@ -225,6 +232,7 @@ import { getDiagnosisHistory } from '@/api/plants-http.js'
 import loading from '@/assets/icons/loading.svg'
 import { usePlantingStore } from '@/store/planting.js'
 import PlantCard from './components/PlantCard.vue'
+import WateringReminderSheet from './components/WateringReminderSheet.vue'
 
 const plantStore = usePlantStore()
 const userStore = useUserStore()
@@ -232,8 +240,10 @@ const plantingStore = usePlantingStore()
 
 const loaded = ref(false)
 const diagnosePopupRef = ref(null)
+const wateringReminderRef = ref(null)
 const currentPlantId = ref('')
 const currentPlantName = ref('')
+const currentReminderPlant = ref(null)
 const plantDiagnoseHistory = reactive({})
 const loadingHistory = reactive({})
 
@@ -421,6 +431,13 @@ function getReminderSummary(plant) {
 }
 
 function openReminder({ plant, type }) {
+  if (type === 'water') {
+    // 水滴 icon：打开浇水提醒底部弹框，不再直接跳转日历页
+    currentReminderPlant.value = plant
+    wateringReminderRef.value?.open()
+    return
+  }
+  // 其他提醒类型仍走日历页
   plantingStore.setReminderFocus({
     plantId: plant.id,
     plantName: plant.displayName || plant.canonicalName || '当前植物',

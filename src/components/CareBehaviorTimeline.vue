@@ -1,6 +1,6 @@
 <template>
   <view
-    :id="`diagnose-care-behavior-timeline-${questionId}`"
+    :id="`${idPrefix}-care-behavior-timeline-${questionId}`"
     class="care-behavior-timeline mb-2.5 p-0"
   >
     <view
@@ -14,6 +14,7 @@
 
     <CareBehaviorTimelineGrid
       :cell-items="cellItems"
+      :id-prefix="idPrefix"
       :show-loading-skeleton="showLoadingSkeleton"
       :selected-date-state="selectedDateState"
       :selected-date-label="selectedDateLabel"
@@ -43,7 +44,8 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
   question: { type: Object, default: () => ({}) },
   questionId: { type: String, default: '' },
-  timeline: { type: Object, default: () => ({}) }
+  timeline: { type: Object, default: () => ({}) },
+  idPrefix: { type: String, default: 'diagnose' }
 })
 const emit = defineEmits(['change'])
 
