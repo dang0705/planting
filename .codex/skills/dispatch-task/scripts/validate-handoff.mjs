@@ -67,6 +67,7 @@ if (mode === 'zcode_external') {
     'completion_claim_not_authoritative', 'codex_self_implementation_forbidden',
     'generic_fallback_forbidden', 'recovery_required', 'prompt_max_chars',
     'prompt_sha256', 'required_prompt_sections',
+    'handoff_manual_required', 'handoff_completion_status_source',
     'computer_use_required', 'actual_tool_invocation_required', 'allowed_tool_targets', 'minimum_tool_event_count',
     'computer_use_tool_invocation_required', 'computer_use_action_trace_required', 'clipboard_write_via_computer_use_required',
     'manual_typing_forbidden', 'shell_only_ui_automation_forbidden',
@@ -92,6 +93,9 @@ if (mode === 'zcode_external') {
   need(zcode.generic_fallback_forbidden === true,
     'zcode_contract.generic_fallback_forbidden must be true');
   need(zcode.recovery_required === true, 'zcode_contract.recovery_required must be true');
+  need(zcode.handoff_manual_required === true, 'zcode_contract.handoff_manual_required must be true');
+  need(zcode.handoff_completion_status_source === 'handoff_manual',
+    'zcode_contract.handoff_completion_status_source must be handoff_manual');
   need(zcode.computer_use_required === true, 'zcode_contract.computer_use_required must be true');
   need(zcode.actual_tool_invocation_required === true, 'zcode_contract.actual_tool_invocation_required must be true');
   need(Array.isArray(zcode.allowed_tool_targets), 'zcode_contract.allowed_tool_targets must be an array');
@@ -122,7 +126,7 @@ if (mode === 'zcode_external') {
 
   const baseSections = [
     'implementation_contract', 'allowed_forbidden_paths', 'project_constraints',
-    'validation_commands', 'result_json_contract'
+    'handoff_manual_contract', 'validation_commands', 'result_json_contract'
   ];
   for (const section of baseSections) {
     need(zcode.required_prompt_sections?.includes(section),
@@ -137,6 +141,32 @@ if (mode === 'zcode_external') {
     need(spawn.implementer_agent_type === undefined,
       'zcode_external must not set spawn_contract.implementer_agent_type');
   }
+
+  const handoffManual = data.handoff_manual ?? {};
+  const manualUnknown = unknownKeys(handoffManual, [
+    'required', 'path', 'status_field', 'working_status', 'terminal_statuses',
+    'main_completion_probe'
+  ]);
+  need(isObject(handoffManual), 'zcode_external requires handoff_manual');
+  need(manualUnknown.length === 0, `handoff_manual contains unknown fields: ${manualUnknown.join(', ')}`);
+  need(handoffManual.required === true, 'handoff_manual.required must be true');
+  need(nonEmptyString(handoffManual.path), 'handoff_manual.path is required');
+  if (nonEmptyString(handoffManual.path)) {
+    need(handoffManual.path.startsWith('.tmp/dispatch-task/'),
+      'handoff_manual.path must be under .tmp/dispatch-task/');
+    need(handoffManual.path.includes(data.dispatch_run_id),
+      'handoff_manual.path must include dispatch_run_id');
+    need(handoffManual.path.endsWith('-handoff-manual.json'),
+      'handoff_manual.path must end with -handoff-manual.json');
+  }
+  need(handoffManual.status_field === 'status', 'handoff_manual.status_field must be status');
+  need(handoffManual.working_status === 'working', 'handoff_manual.working_status must be working');
+  need(Array.isArray(handoffManual.terminal_statuses),
+    'handoff_manual.terminal_statuses must be an array');
+  need(includesAll(handoffManual.terminal_statuses, ['completed', 'blocked']),
+    'handoff_manual.terminal_statuses must include completed and blocked');
+  need(handoffManual.main_completion_probe === 'read_json_before_ui',
+    'handoff_manual.main_completion_probe must be read_json_before_ui');
 } else {
   if (codeChanges) {
     need(['implementer_fast', 'implementer_deep'].includes(data.target_role),
@@ -328,7 +358,7 @@ if (isObject(figma) && nonEmptyString(figma.link)) {
 if (mode === 'zcode_external') {
   const output = data.output_evidence_required ?? [];
   need(stringArray(output, { min: 1, max: 14 }), 'zcode_external requires output_evidence_required');
-  for (const key of ['zcode_send_receipt', 'zcode_recovery_evidence', 'validation_evidence']) {
+  for (const key of ['zcode_send_receipt', 'zcode_handoff_manual', 'zcode_recovery_evidence', 'validation_evidence']) {
     need(output.includes(key), `zcode_external output_evidence_required must include ${key}`);
   }
 }

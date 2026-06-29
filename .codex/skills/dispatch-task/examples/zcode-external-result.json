@@ -1,0 +1,204 @@
+{
+  "source": "codex_recovery_after_zcode",
+  "status": "completed",
+  "codex_self_implementation": false,
+  "zcode_completion_claim_treated_as_non_authoritative": true,
+  "git_diff_recovered_by_codex": true,
+  "allowed_forbidden_paths_checked": true,
+  "project_constraints_checked_by_codex": true,
+  "zcode_handoff_manual": {
+    "read_by_codex": true,
+    "path": ".tmp/dispatch-task/example-zcode-ui-001-handoff-manual.json",
+    "status": "completed",
+    "updated_at": "2026-06-29T15:00:00.000Z"
+  },
+  "zcode_send_receipt": {
+    "dispatch_run_id": "example-zcode-ui-001",
+    "status": "sent",
+    "application_verified": "ZCode",
+    "current_session_verified": true,
+    "input_box_verified": true,
+    "clipboard_paste_used": true,
+    "prompt_integrity_verified": true,
+    "sentinel_start_seen_before_send": true,
+    "sentinel_end_seen_before_send": true,
+    "send_action": "enter",
+    "codex_typed_prompt_manually": false,
+    "computer_use": {
+      "tool_invoked": true,
+      "tool_family": "computer_use_or_ui_automation",
+      "actions": [
+        "verify_zcode_current_session",
+        "focus_chat_input",
+        "set_clipboard_to_prompt",
+        "paste_clipboard",
+        "verify_prompt_sentinel_in_input",
+        "send_prompt"
+      ],
+      "clipboard_write_confirmed": true,
+      "shell_only_ui_automation_used": false,
+      "manual_typing_used": false,
+      "tool_invocation_evidence": {
+        "actual_tool_invocation_required": true,
+        "tool_target": "@ZCode",
+        "tool_events_seen": true,
+        "tool_event_count": 5,
+        "transcript_event_refs": [
+          "computer-use-event-1",
+          "computer-use-event-2",
+          "computer-use-event-3",
+          "computer-use-event-4",
+          "computer-use-event-5"
+        ],
+        "commands_issued": [
+          "Verify ZCode current session",
+          "Focus ZCode chat input",
+          "Set clipboard to generated handoff prompt and paste",
+          "Verify prompt sentinels in input",
+          "Send prompt and confirm message appears"
+        ]
+      }
+    }
+  },
+  "zcode_recovery_evidence": {
+    "handoff_manual_read": true,
+    "git_status_read": true,
+    "git_diff_read": true,
+    "forbidden_paths_clean": true,
+    "no_unapproved_dependencies": true,
+    "zcode_chat_result_parsed": true
+  },
+  "changed_files": [
+    "src/pages/home/index.vue",
+    "src/components/home/ReminderCard.vue"
+  ],
+  "implementation_summary": "ZCode 按合同实现首页提醒卡片，Codex 已回收真实 diff 并执行验证。",
+  "deviations_or_blockers": [],
+  "ui_scope_map": [
+    {
+      "node_id": "10:20",
+      "name": "Reminder Card",
+      "type": "must_implement",
+      "code_candidates": [
+        "src/components/home"
+      ],
+      "selected_path": "src/components/home/ReminderCard.vue",
+      "reason": "无同职责现有提醒卡片组件，复用 uni-card 作为语义容器",
+      "qa_required": true
+    }
+  ],
+  "figma_fetch_evidence": {
+    "status": "success",
+    "acquired_by": "zcode_external_implementer",
+    "acquired_before_first_ui_edit": true,
+    "source_link": "https://figma.com/design/example/file?node-id=10-20",
+    "node_id": "10:20",
+    "calls": [
+      "get_metadata",
+      "get_design_context",
+      "get_screenshot"
+    ],
+    "nodes_read": [
+      "10:20"
+    ],
+    "screenshot_ref": "zcode-evidence/figma-10-20.png",
+    "variables_or_assets_used": [],
+    "unresolved": []
+  },
+  "style_stack_compliance": {
+    "styling_system": "tailwindcss",
+    "tailwind_used": true,
+    "new_scss_added": false,
+    "scss_exception_ref": "",
+    "new_dependencies": []
+  },
+  "component_reuse_evidence": {
+    "searched": [
+      "src/components",
+      "src/pages",
+      "uni_modules"
+    ],
+    "reused": [
+      "uni-card",
+      "uni-icons"
+    ],
+    "newly_created": [
+      "ReminderCard"
+    ],
+    "reason": "项目无同职责组件，新增页面专属轻组件；内部复用 uni-card/uni-icons"
+  },
+  "uni_ui_mapping_evidence": {
+    "status": "completed",
+    "policy": "uni-ui-figma-component-mapper-contract",
+    "generated_before_first_ui_edit": true,
+    "regions": [
+      {
+        "figma_node": "10:20 Reminder Card",
+        "visual_interaction_signal": "白色圆角卡片、标题、摘要、右侧日历图标",
+        "preferred_component": "uni-card",
+        "alternative": "自定义 view",
+        "decision": "used",
+        "reason": "语义是独立信息块，uni-card 可承接卡片容器"
+      },
+      {
+        "figma_node": "10:20 calendar icon",
+        "visual_interaction_signal": "日历语义图标，可点击",
+        "preferred_component": "uni-icons",
+        "alternative": "image/SVG",
+        "decision": "used",
+        "reason": "图标语义可由 uni-icons 表达"
+      }
+    ],
+    "used_components": [
+      "uni-card",
+      "uni-icons"
+    ],
+    "custom_regions": [
+      {
+        "figma_node": "10:20 wrapper layout",
+        "reason": "页面专属外层间距与数据绑定不属于 uni-ui 独立组件职责",
+        "fallback_component": "uni-card"
+      }
+    ],
+    "install_dependency_checked": true,
+    "easycom_policy": "easycom"
+  },
+  "validation_evidence": {
+    "unit_tests": {
+      "result": "not_applicable",
+      "commands": [],
+      "evidence_ref": "",
+      "reason": "纯展示组件无独立单测入口"
+    },
+    "lint": {
+      "result": "not_applicable",
+      "commands": [],
+      "evidence_ref": "",
+      "reason": "仓库未定义独立 lint script"
+    },
+    "typecheck": {
+      "result": "passed",
+      "commands": [
+        "npm run typecheck"
+      ],
+      "evidence_ref": "evidence/typecheck.txt",
+      "reason": ""
+    },
+    "build": {
+      "result": "passed",
+      "commands": [
+        "npm run build:mp-weixin"
+      ],
+      "evidence_ref": "evidence/build.txt",
+      "reason": ""
+    },
+    "self_check": {
+      "result": "passed",
+      "commands": [
+        "manual UI smoke"
+      ],
+      "evidence_ref": "evidence/self-check.png",
+      "reason": ""
+    }
+  }
+}

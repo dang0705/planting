@@ -28,18 +28,18 @@
           >
             <view
               class="box-border h-5 w-5 rounded-full border-2 p-[3px]"
-              :class="selectedWindowKey === 'window' ? 'border-[#00a63e]' : 'border-[#d1d5dc]'"
+              :class="selectedWindowKey === 'window' ? 'border-brand' : 'border-[#d1d5dc]'"
             >
               <view
                 v-if="selectedWindowKey === 'window'"
-                class="h-full w-full rounded-full bg-[#00a63e]"
+                class="h-full w-full rounded-full bg-brand"
               />
             </view>
             <text class="text-sm font-bold leading-5 text-[#1e2939]">{{ windowOption.label }}</text>
           </view>
         </template>
 
-        <view class="ml-1 border-l-2 border-[#b9f8cf] pl-4">
+        <view class="ml-1 border-l-2 border-brand-border pl-4">
           <!-- 方位选择器（对齐 Figma 220:62，页面居中） -->
           <view class="items-center pt-1" style="margin-left: -22px">
             <text class="mb-3 block text-center text-sm font-bold text-[#1e2939]">
@@ -131,7 +131,7 @@
           <view class="mt-4 flex items-center justify-between">
             <text class="text-sm leading-5 text-[#4a5565]">离窗距离</text>
             <view class="flex rounded-xl bg-[#f3f4f6] p-0.5">
-              <text class="rounded-[10px] bg-white px-3 py-1 text-xs font-bold text-[#008236]"
+              <text class="rounded-[10px] bg-white px-3 py-1 text-xs font-bold text-brand-dark"
                 >米</text
               >
               <text class="px-3 py-1 text-xs font-bold text-[#6a7282]">步</text>
@@ -158,10 +158,10 @@
             <text class="text-xs text-[#99a1af]">10 m</text>
           </view>
 
-          <view class="mt-2 flex items-center gap-2 rounded-xl bg-[#f0fdf4] px-3 py-2">
+          <view class="mt-2 flex items-center gap-2 rounded-xl bg-brand-tint px-3 py-2">
             <view class="h-2 w-2 rounded-full bg-[#00c950]" />
-            <text class="text-sm font-bold text-[#016630]">{{ distanceBandText }}</text>
-            <text class="ml-auto text-xs text-[#00a63e]">
+            <text class="text-sm font-bold text-brand-darker">{{ distanceBandText }}</text>
+            <text class="ml-auto text-xs text-brand">
               {{ distanceText }} 米 · 光照系数 {{ distanceFactorText }}
             </text>
           </view>
@@ -180,7 +180,7 @@
               class="flex-1 rounded-xl border px-2 py-2 text-center text-xs font-bold"
               :class="
                 environment.position === item.key
-                  ? 'border-[#00a63e] bg-[#f0fdf4] text-[#008236]'
+                  ? 'border-brand bg-brand-tint text-brand-dark'
                   : 'border-[#e5e7eb] text-[#4a5565]'
               "
               @click="selectPosition(item.key)"
@@ -210,19 +210,17 @@
       :key="option.key"
       :id="`${idPrefix}-window-${option.key}`"
       class="rounded-2xl border bg-white px-4 py-3.5"
-      :class="
-        selectedWindowKey === option.key ? 'border-[#00a63e] bg-[#f0fdf4]' : 'border-[#e5e7eb]'
-      "
+      :class="selectedWindowKey === option.key ? 'border-brand bg-brand-tint' : 'border-[#e5e7eb]'"
       @click="selectWindow(option.key)"
     >
       <view class="flex items-center gap-3">
         <view
           class="box-border h-5 w-5 rounded-full border-2 p-[3px]"
-          :class="selectedWindowKey === option.key ? 'border-[#00a63e]' : 'border-[#d1d5dc]'"
+          :class="selectedWindowKey === option.key ? 'border-brand' : 'border-[#d1d5dc]'"
         >
           <view
             v-if="selectedWindowKey === option.key"
-            class="h-full w-full rounded-full bg-[#00a63e]"
+            class="h-full w-full rounded-full bg-brand"
           />
         </view>
         <text class="text-sm font-bold leading-5 text-[#1e2939]">{{ option.label }}</text>
@@ -276,15 +274,15 @@
           >
           <!-- 指针：对齐 Figma 154:278，居中(inset 45.2%) + 旋转，默认 -116.8deg -->
           <view
-            class="absolute left-1/2 top-1/2 h-0.5 w-10 origin-center rounded-full bg-[#00a63e]"
+            class="absolute left-1/2 top-1/2 h-0.5 w-10 origin-center rounded-full bg-brand"
             :style="compassPointerStyle"
           />
           <view
-            class="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#008236]"
+            class="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-dark"
           />
         </view>
 
-        <text class="mt-4 block text-center text-sm font-bold text-[#008236]">
+        <text class="mt-4 block text-center text-sm font-bold text-brand-dark">
           当前朝向：{{ currentFacingText }}窗
         </text>
         <text class="mt-2 block text-center text-xs leading-5 text-[#6a7282]">
@@ -292,7 +290,7 @@
         </text>
         <button
           :id="`${idPrefix}-direction-dialog-confirm`"
-          class="mt-4 h-11 rounded-2xl bg-[#00a63e] p-0 text-base font-bold leading-11 text-white"
+          class="mt-4 h-11 rounded-2xl bg-brand p-0 text-base font-bold leading-11 text-white"
           @click="confirmDirection"
         >
           确认

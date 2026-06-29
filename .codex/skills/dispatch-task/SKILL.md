@@ -104,6 +104,7 @@ task: {objective, code_changes_required, ui_task, risk, qa_required}
 target_role                         # codex_subagent: exact custom-agent name; zcode_external: zcode_external
 spawn_contract                      # codex implementer 或 QA 具名 spawn 合同
 zcode_contract                      # implementation_mode=zcode_external 时必填
+handoff_manual                      # implementation_mode=zcode_external 时必填，本地状态手册路径与完成判定规则
 allowed_paths / forbidden_paths
 acceptance
 project_constraints
@@ -176,6 +177,8 @@ node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
 9. ZCode/GLM 聊天里说“完成”不算完成。
 10. ZCode 修改后，Codex 必须重新读取真实 `git diff`、验证 allowed/forbidden paths、执行测试/构建、自审、必要时 QA。
 11. ZCode 失败、无 diff、越权修改、无法读取 Figma、prompt 未完整发送或 computer-use 不可用时，不得 fallback 成 main 自己写代码。
+12. ZCode prompt 成功发送后，main 不得实时盯屏或高频 `get_app_state` 轮询。监控采样频率必须至少降低 50%，默认使用低成本文件系统回收：`git status --short` / `git diff --name-only`；ZCode UI 状态读取默认间隔不得短于 5 分钟，且只在确认发送、疑似完成/阻断、diff 稳定、等待超时或需要提取最终 Result JSON 时使用。
+13. ZCode prompt 必须包含 `Handoff Manual Contract`。外部实现者开始任务后必须写入 `handoff_manual.path`，先置 `status=working`，完成或阻塞时更新为 `status=completed|blocked`。main 低频回收必须优先读取该 JSON 手册来判定 ZCode 是否已结束；`status=working` 或手册缺失/损坏时默认仍在执行，不得用 UI 聊天状态臆断完成。
 
 执行阶段必须出现以下实际工具调用命令，不能只写入 JSON 或自然语言说明：
 
@@ -208,6 +211,12 @@ node .codex/skills/dispatch-task/scripts/validate-zcode-prompt.mjs <handoff.json
 
 ```bash
 node .codex/skills/dispatch-task/scripts/validate-zcode-send-receipt.mjs <handoff.json> <send-receipt.json>
+```
+
+低频回收时先读取并验证 handoff manual：
+
+```bash
+node .codex/skills/dispatch-task/scripts/validate-zcode-handoff-manual.mjs <handoff.json> <handoff-manual.json>
 ```
 
 ZCode 完成后由 Codex 生成 recovery result，并执行：
@@ -283,6 +292,7 @@ zcode_contract.required_prompt_sections:
   - implementation_contract
   - allowed_forbidden_paths
   - project_constraints
+  - handoff_manual_contract
   - figma_direct_fetch
   - result_json_contract
 ```
@@ -323,11 +333,12 @@ main 不得读取或转述该 skill 的组件索引、映射表、组件规则�
 3. ZCode 当前会话/输入框/prompt 完整性未通过 computer-use 验证，或 prompt 发送失败仍继续。
 4. 仅用 shell/脚本/自然语言声明替代 computer-use 操作 ZCode，或 ZCode 聊天完成声明被当成完成依据，未由 Codex 回收真实 git diff 和测试。
 5. ZCode 失败后 main 自己写代码，或自动 fallback 到 Codex implementer 而未获得用户明确批准。
-6. child `agent_identity` 与 Contract 不一致，或可见 runtime metadata 显示 `agent_role/agent_path` 未加载目标配置。
-7. UI handoff 缺少 styling system、SCSS policy、component library 或 rule refs。
-8. main 在 Figma 任务使用 `get_design_context/get_screenshot/variables/assets`，或把视觉细节塞进 handoff。
-9. figma_link 存在，但实现者没有直接 Figma 读取证据，或 QA 没有独立 baseline。
-10. `component_library` 包含 `uni-ui` 且存在 figma_link，但缺 uni-ui 映射合同或实现者缺 `uni_ui_mapping_evidence`。
-11. Tailwind 项目新增未授权 `.scss`、`<style lang="scss">` 或用 scoped style 重建常规 UI。
-12. 变更越过 allowed/forbidden paths，或引入未授权依赖/API/schema。
-13. QA 重跑单测；main/QA 用“看起来正确”替代运行证据。
+6. `zcode_external` handoff 缺少 `handoff_manual`，ZCode prompt 缺少 `Handoff Manual Contract`，或 main 未先读取 handoff manual 就用 UI 状态判定外部实现者已结束。
+7. child `agent_identity` 与 Contract 不一致，或可见 runtime metadata 显示 `agent_role/agent_path` 未加载目标配置。
+8. UI handoff 缺少 styling system、SCSS policy、component library 或 rule refs。
+9. main 在 Figma 任务使用 `get_design_context/get_screenshot/variables/assets`，或把视觉细节塞进 handoff。
+10. figma_link 存在，但实现者没有直接 Figma 读取证据，或 QA 没有独立 baseline。
+11. `component_library` 包含 `uni-ui` 且存在 figma_link，但缺 uni-ui 映射合同或实现者缺 `uni_ui_mapping_evidence`。
+12. Tailwind 项目新增未授权 `.scss`、`<style lang="scss">` 或用 scoped style 重建常规 UI。
+13. 变更越过 allowed/forbidden paths，或引入未授权依赖/API/schema。
+14. QA 重跑单测；main/QA 用“看起来正确”替代运行证据。

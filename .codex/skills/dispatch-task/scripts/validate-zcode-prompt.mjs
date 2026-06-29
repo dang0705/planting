@@ -58,6 +58,7 @@ const requiredSectionMarkers = {
   implementation_contract: '## Implementation Contract',
   allowed_forbidden_paths: '## Allowed / Forbidden Paths',
   project_constraints: '## Project Constraints',
+  handoff_manual_contract: '## Handoff Manual Contract',
   validation_commands: '## Validation Commands',
   result_json_contract: '## Result JSON Contract',
   ui_scope_contract: '## UI Scope Contract',
@@ -100,6 +101,23 @@ if (/uni[-_ ]?ui|uniui/i.test(String(handoff?.project_constraints?.component_lib
 if (/tailwind/i.test(String(handoff?.project_constraints?.styling_system ?? ''))) {
   need(/Tailwind/i.test(prompt), 'Tailwind project prompt must mention Tailwind');
   need(/SCSS|scss/.test(prompt), 'Tailwind project prompt must state SCSS policy');
+}
+
+if (handoff?.handoff_manual?.required === true || zcode.handoff_manual_required === true) {
+  need(prompt.includes('## Handoff Manual Contract'),
+    'ZCode prompt must include Handoff Manual Contract');
+  need(typeof handoff?.handoff_manual?.path === 'string' && handoff.handoff_manual.path.length > 0,
+    'handoff.handoff_manual.path is required when handoff manual is enabled');
+  if (typeof handoff?.handoff_manual?.path === 'string') {
+    need(prompt.includes(handoff.handoff_manual.path),
+      'ZCode prompt must include handoff_manual.path');
+  }
+  need(/status=working|status.*working/i.test(prompt),
+    'Handoff Manual Contract must instruct ZCode to write status=working when starting');
+  need(/status=completed|status.*completed/i.test(prompt),
+    'Handoff Manual Contract must instruct ZCode to write status=completed when done');
+  need(/status=blocked|status.*blocked/i.test(prompt),
+    'Handoff Manual Contract must instruct ZCode to write status=blocked when blocked');
 }
 
 if (errors.length) {

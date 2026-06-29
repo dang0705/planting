@@ -1,0 +1,188 @@
+{
+  "dispatch_run_id": "zcode-watering-reminder-20260625-001",
+  "implementation_mode": "zcode_external",
+  "task": {
+    "objective": "实现首页植物卡浇水提醒弹框：用最近 10 天浇水事件集合驱动 buildWateringPlanner 计算 nextWaterDate，并在添加日历后写回植物浇水记录与提醒。",
+    "code_changes_required": true,
+    "ui_task": true,
+    "risk": "standard",
+    "qa_required": true
+  },
+  "target_role": "zcode_external",
+  "spawn_contract": {
+    "qa_agent_type": "qa_reviewer",
+    "context_mode": "isolated",
+    "generic_fallback_forbidden": true,
+    "identity_receipt_required": true
+  },
+  "zcode_contract": {
+    "external_implementer": "zcode_glm",
+    "application": "ZCode",
+    "target_session": "current_open_chat",
+    "prompt_transport": "clipboard_paste",
+    "prompt_sentinel_required": true,
+    "prompt_integrity_check_required": true,
+    "input_box_check_required": true,
+    "send_receipt_required": true,
+    "send_action_required": true,
+    "allowed_send_actions": ["enter", "send_button", "blocked"],
+    "completion_claim_not_authoritative": true,
+    "codex_self_implementation_forbidden": true,
+    "generic_fallback_forbidden": true,
+    "recovery_required": true,
+    "prompt_max_chars": 30000,
+    "required_prompt_sections": [
+      "implementation_contract",
+      "allowed_forbidden_paths",
+      "project_constraints",
+      "validation_commands",
+      "result_json_contract",
+      "ui_scope_contract",
+      "style_stack_contract",
+      "figma_direct_fetch",
+      "figma_blocker_policy",
+      "uni_ui_mapping_contract"
+    ],
+    "computer_use_required": true,
+    "actual_tool_invocation_required": true,
+    "allowed_tool_targets": ["@ZCode", "@Computer"],
+    "minimum_tool_event_count": 5,
+    "computer_use_tool_invocation_required": true,
+    "computer_use_action_trace_required": true,
+    "clipboard_write_via_computer_use_required": true,
+    "manual_typing_forbidden": true,
+    "shell_only_ui_automation_forbidden": true,
+    "required_computer_use_actions": [
+      "verify_zcode_current_session",
+      "focus_chat_input",
+      "set_clipboard_to_prompt",
+      "paste_clipboard",
+      "verify_prompt_sentinel_in_input",
+      "send_prompt"
+    ]
+  },
+  "allowed_paths": [
+    "src/pages/index/**",
+    "src/components/CareBehaviorTimeline.vue",
+    "src/components/care-behavior-timeline/**",
+    "src/utils/care-behavior-timeline/**",
+    "src/utils/care-behavior-timeline.js",
+    "src/store/plants.js",
+    "src/store/planting.js",
+    "cloudfunctions/diagnose-http/utils/environment-context-v7.js",
+    "cloudfunctions/diagnose-http/presenters/diagnosis-round-presenter.js",
+    "cloudfunctions/layer/utils/plant-knowledge.js",
+    "cloudfunctions/plant-user-http/**",
+    "test/unit-test/test-environment-care-context.mjs",
+    "test/unit-test/test-care-behavior-timeline.mjs",
+    "test/unit-test/test-pinia.mjs"
+  ],
+  "forbidden_paths": [
+    "package.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "scripts/sql/**",
+    "SQL-cvs/**",
+    "docs/**",
+    ".codex/**",
+    ".agents/**",
+    "cloudfunctions/**/package.json"
+  ],
+  "acceptance": [
+    "首页 pages/index/index 植物卡水滴 icon 打开本页浇水提醒底部弹框，不再直接跳转日历页。",
+    "弹框包含上次浇水入口、建议下次浇水 Summary、添加至日历主操作；点击上次浇水入口打开最近 10 天多选浇水日期选择器。",
+    "日期选择器复用现有 care-behavior-timeline 的多日期浇水事件输出，不新增第三方日期/日历依赖。",
+    "planner 输入是最近 10 天 watering_events_10d 事件集合，不是单一 lastWateredAt；初始为空时提示先选择浇水记录，不臆造 nextWaterDate。",
+    "buildWateringPlanner 输出 nextWaterDate、nextWaterWindow、nextWaterReason；算法基于属级 watering.freq/intervalDays、最近 10 天浇水频率、最近一次浇水距今天数与天气偏湿/偏干信号。",
+    "添加至日历成功后写回植物浇水事件集合到 plant.lastWatered 语义输入，并写回 nextWater，同时用 plantingStore.setPlantReminder 创建 water 提醒。",
+    "下线或绕开 src/store/plants.js 中旧的前端平均值 nextWater 公式，不再作为业务事实源。",
+    "不得新增依赖、不得新增 SCSS、不得改 SQL/schema；如 last_watered 字段无法安全承载事件集合，必须返回 blocker，不得强写数组破坏字段。"
+  ],
+  "project_constraints": {
+    "rule_refs": [
+      "AGENTS.md §2: Tailwind 优先、禁止绕过 lint/test/build、不得削弱业务约束、研发期新逻辑完整替代旧逻辑、风险需上报",
+      "AGENTS.md §3: UniApp 3.0、Vue 3、Tailwind CSS 3、uni-ui、Pinia、Vite、微信小程序优先",
+      ".codex/skills/dispatch-task/SKILL.md Gate B2/Gate C/Gate D: ZCode 外部实现、回收 diff、QA 与 Completion Gate"
+    ],
+    "framework": "UniApp 3.0 + Vue 3 Composition API",
+    "styling_system": "Tailwind CSS 3 via weapp-tailwindcss",
+    "new_scss_policy": "forbidden",
+    "scss_exceptions": [],
+    "component_library": "uni-ui",
+    "dependency_policy": "不得新增依赖；优先复用现有 CareBehaviorTimeline、Pinia store、cloudfunction 工具与 Tailwind utility。若认为必须新增依赖或 schema，直接 blocked 并说明。",
+    "test_commands": [
+      "npm run lint",
+      "npm run test:ci",
+      "node test/unit-test/test-environment-care-context.mjs",
+      "node test/unit-test/test-care-behavior-timeline.mjs",
+      "npm run build:mp-weixin:ci"
+    ]
+  },
+  "decision_lock": {
+    "level": "standard",
+    "architecture_invariants": [
+      "buildWateringPlanner 是 nextWaterDate 的唯一算法事实源，前端不得重新实现平均间隔算法。",
+      "plant.lastWatered 的新业务语义是最近 10 天浇水事件集合；单一最近日期只能作为展示派生，不得作为频率算法输入。",
+      "不得新增 SQL/schema；如果现有 last_watered 不能安全承载事件集合，必须返回 blocker。",
+      "Figma 视觉事实必须由 ZCode 直接读取两个节点，main 的上下文不是视觉实现依据。",
+      "添加日历使用现有项目提醒能力；不得引入新的系统日历插件或付费/云端开关。"
+    ],
+    "local_decisions_allowed": [
+      "弹框组件命名、局部拆分和状态变量命名。",
+      "planner helper 的内部函数名和测试组织。",
+      "在不新增依赖和不改 schema 前提下，选择最小 API/Store 调用链。",
+      "Tailwind utility 组合和现有 uni-ui 组件/自定义轻量结构取舍。"
+    ]
+  },
+  "figma": {
+    "link": "https://www.figma.com/design/r5afPtZu8fRMRenk8TJVjO/planting?node-id=263-53&t=fgdc3suDpt8953dW-4",
+    "node_id": "263:53",
+    "lite_status": "link_only",
+    "main_access": "lite_only",
+    "main_tools_used": [],
+    "implementer_fetch_required": true,
+    "qa_baseline_fetch_required": true
+  },
+  "required_skills": {
+    "qa": ["$qa-ui-visual-baseline-policy"]
+  },
+  "required_prompt_sections": [
+    "implementation_contract",
+    "allowed_forbidden_paths",
+    "project_constraints",
+    "validation_commands",
+    "result_json_contract",
+    "ui_scope_contract",
+    "style_stack_contract",
+    "figma_direct_fetch",
+    "figma_blocker_policy",
+    "uni_ui_mapping_contract"
+  ],
+  "validation": {
+    "external": [
+      "git diff -- allowed paths only; forbidden paths must stay unchanged.",
+      "confirm no package/dependency diff, no SQL/schema diff, no new SCSS.",
+      "npm run lint",
+      "npm run test:ci",
+      "node test/unit-test/test-environment-care-context.mjs",
+      "node test/unit-test/test-care-behavior-timeline.mjs",
+      "npm run build:mp-weixin:ci",
+      "UI/Figma task requires implementer direct Figma metadata/context/screenshot evidence."
+    ],
+    "qa": [
+      "independent Figma baseline for both supplied nodes",
+      "runtime interaction path: water icon -> bottom sheet -> date selector -> nextWater Summary -> add calendar",
+      "if code is not cloud-deployed, full npm run dev:mp-weixin:local-functions:lan before end-side acceptance"
+    ]
+  },
+  "output_evidence_required": [
+    "zcode_send_receipt",
+    "zcode_recovery_evidence",
+    "validation_evidence",
+    "figma_fetch_evidence",
+    "style_stack_compliance",
+    "component_reuse_evidence",
+    "uni_ui_mapping_evidence"
+  ]
+}

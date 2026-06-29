@@ -40,6 +40,8 @@ need(['enter', 'send_button', 'blocked'].includes(receipt.send_action),
   'send_action must be enter|send_button|blocked');
 
 const cu = receipt.computer_use ?? {};
+const alternative = receipt.alternative_ui_automation ?? {};
+const alternativeUsed = alternative.used === true;
 const requiredActions = [
   'verify_zcode_current_session',
   'focus_chat_input',
@@ -76,6 +78,18 @@ need(cu.shell_only_ui_automation_used === false,
 need(cu.manual_typing_used === false,
   'computer_use.manual_typing_used must be false');
 
+if (alternativeUsed) {
+  need(isObject(alternative), 'alternative_ui_automation must be an object when used');
+  need(
+    alternative.user_authorized_in_current_turn === true || alternative.preauthorized_by_dispatch_standard === true,
+    'alternative_ui_automation must record current user authorization or dispatch-standard preauthorization'
+  );
+  need(Array.isArray(alternative.tools) && alternative.tools.length >= 1 && alternative.tools.every(nonEmptyString),
+    'alternative_ui_automation.tools must contain at least one tool');
+  need(Array.isArray(alternative.safety_controls) && alternative.safety_controls.length >= 3 && alternative.safety_controls.every(nonEmptyString),
+    'alternative_ui_automation.safety_controls must contain >=3 non-empty controls');
+}
+
 if (receipt.status === 'sent') {
   need(['enter', 'send_button'].includes(receipt.send_action),
     'sent receipt requires send_action=enter|send_button');
@@ -109,6 +123,14 @@ if (receipt.status === 'blocked') {
     need(cu.tool_invoked === false,
       'computer_use_unavailable requires computer_use.tool_invoked=false');
     validateToolInvocationEvidence(cu, false);
+  }
+  need(receipt.blocked_reason !== 'computer_use_required_actions_unavailable',
+    'computer_use_required_actions_unavailable is deprecated; verified alternative_ui_automation must be attempted before blocking');
+  if (receipt.blocked_reason === 'alternative_ui_automation_unavailable') {
+    need(alternative.attempted === true,
+      'alternative_ui_automation_unavailable requires alternative_ui_automation.attempted=true');
+    need(Array.isArray(alternative.tools) && alternative.tools.length >= 1,
+      'alternative_ui_automation_unavailable requires attempted tool list');
   }
 }
 

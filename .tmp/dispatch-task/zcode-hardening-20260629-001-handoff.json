@@ -1,0 +1,230 @@
+{
+  "dispatch_run_id": "zcode-hardening-20260629-001",
+  "implementation_mode": "zcode_external",
+  "task": {
+    "objective": "以最严要求优化前后端业务源码：跳过测试文件，优先拆分超过 500 行的业务源码文件，前端样式优先 TailwindCSS 并把复用的非预设值归纳到 tailwind.config.js，清理不合理 hardcode 和魔法值，将可配置项沉淀为安全配置或环境变量读取。",
+    "code_changes_required": true,
+    "ui_task": true,
+    "risk": "high",
+    "qa_required": true
+  },
+  "target_role": "zcode_external",
+  "spawn_contract": {
+    "qa_agent_type": "qa_reviewer",
+    "context_mode": "isolated",
+    "generic_fallback_forbidden": true,
+    "identity_receipt_required": true
+  },
+  "zcode_contract": {
+    "external_implementer": "zcode_glm",
+    "application": "ZCode",
+    "target_session": "current_open_chat",
+    "prompt_transport": "clipboard_paste",
+    "prompt_sentinel_required": true,
+    "prompt_integrity_check_required": true,
+    "input_box_check_required": true,
+    "send_receipt_required": true,
+    "send_action_required": true,
+    "allowed_send_actions": [
+      "enter",
+      "send_button",
+      "blocked"
+    ],
+    "completion_claim_not_authoritative": true,
+    "codex_self_implementation_forbidden": true,
+    "generic_fallback_forbidden": true,
+    "recovery_required": true,
+    "prompt_max_chars": 30000,
+    "required_prompt_sections": [
+      "implementation_contract",
+      "allowed_forbidden_paths",
+      "project_constraints",
+      "validation_commands",
+      "ui_scope_contract",
+      "style_stack_contract",
+      "result_json_contract"
+    ],
+    "computer_use_required": true,
+    "actual_tool_invocation_required": true,
+    "allowed_tool_targets": [
+      "@ZCode",
+      "@Computer"
+    ],
+    "minimum_tool_event_count": 5,
+    "computer_use_tool_invocation_required": true,
+    "computer_use_action_trace_required": true,
+    "clipboard_write_via_computer_use_required": true,
+    "manual_typing_forbidden": true,
+    "shell_only_ui_automation_forbidden": true,
+    "required_computer_use_actions": [
+      "verify_zcode_current_session",
+      "focus_chat_input",
+      "set_clipboard_to_prompt",
+      "paste_clipboard",
+      "verify_prompt_sentinel_in_input",
+      "send_prompt"
+    ]
+  },
+  "allowed_paths": [
+    "src/**",
+    "cloudfunctions/**",
+    "scripts/**",
+    "tailwind.config.js",
+    "postcss.config.js",
+    "vite.config.js",
+    "package.json",
+    ".env.local.example",
+    "docs/CURRENT.md",
+    "docs/ACTIVE_CONTRACTS.md",
+    "docs/RUNBOOK.md",
+    "docs/_sync-map.yml",
+    "docs/_doc-status.yml"
+  ],
+  "forbidden_paths": [
+    "test/**",
+    "qa-*.js",
+    ".tmp-diagnose-yellowing-fixed.mjs",
+    ".tmp/**",
+    ".codex/**",
+    ".agents/**",
+    ".brv/**",
+    "dist/**",
+    "node_modules/**",
+    "package-lock.json",
+    ".env.local",
+    ".env*",
+    "cloudbaserc.json",
+    "project.config.json",
+    "project.private.config.json",
+    ".git/**",
+    ".github/**",
+    "tmp/**",
+    "screenshots/**",
+    "qa-artifacts/**",
+    "AI-training/**",
+    "knowledges/**",
+    "SQL-cvs/**"
+  ],
+  "acceptance": [
+    "测试文件先跳过：不得新增、删除或修改 test/**、根目录 qa-*.js、临时 QA 脚本或测试快照来达成通过。",
+    "所有本轮触达的业务源码文件必须低于 500 行；若确有无法合理拆分且硬拆破坏阅读的文件，必须在文件起始处写中文说明，且只能作为极少数阻断例外。",
+    "对当前已超过 500 行且属于业务源码的文件，优先处理高收益、低风险目标；不得一次性重写诊断核心主链导致行为不可追踪。",
+    "前端样式默认使用 TailwindCSS utility / design token / uni-ui props，不新增 SCSS；可复用的非预设颜色、间距、尺寸等沉淀到 tailwind.config.js。",
+    "清理不合理 hardcode、魔法数字、魔法字符串；运行时配置必须来自集中常量、安全配置或环境变量读取，不得把 secret 写入仓库。",
+    "不得新增依赖，不得修改 package-lock.json，不得开启 CloudBase 付费能力或预置并发。",
+    "不得变更数据库 schema、线上云资源、公开 API 契约、鉴权语义或诊断业务约束；发现必须变更时立即 BLOCKED。",
+    "保持现有用户可观察行为和业务约束不被削弱；不能通过删除有效业务逻辑、放宽校验或 fallback 适配来通过检查。",
+    "完成后必须给出真实变更文件、拆分前后行数证据、Tailwind/配置化证据、hardcode 清理证据和验证命令结果。"
+  ],
+  "project_constraints": {
+    "rule_refs": [
+      "AGENTS.md#2 全局硬规则",
+      "AGENTS.md#3 项目技术上下文",
+      "AGENTS.md#5 读取边界",
+      ".codex/skills/dispatch-task/SKILL.md#Gate B2",
+      ".codex/skills/dispatch-task/references/zcode-external-implementer-bridge.md#ZCode 外部实现者桥接",
+      ".codex/skills/dispatch-task/references/zcode-computer-use-action-contract.md#Computer Use 动作序列",
+      ".codex/skills/dispatch-task/references/high-risk-workflow.md#Strict Decision Lock"
+    ],
+    "framework": "UniApp 3.0 + Vue 3 + JavaScript + Pinia + Vite，微信小程序优先",
+    "styling_system": "Tailwind CSS 3 + weapp-tailwindcss；uni-ui 通过 src/pages.json easycom 解析",
+    "new_scss_policy": "forbidden",
+    "scss_exceptions": [],
+    "component_library": "uni-ui + 项目现有 Vue 组件",
+    "dependency_policy": "no_new_dependencies；不得修改 package-lock.json；package.json 只允许调整脚本或非依赖配置，禁止新增 dependencies/devDependencies/optionalDependencies",
+    "test_commands": [
+      "npm run lint",
+      "npm run fmt:check",
+      "npm run test:ci",
+      "npm run build:mp-weixin:ci"
+    ]
+  },
+  "decision_lock": {
+    "level": "strict",
+    "architecture_invariants": [
+      "本轮跳过测试文件，任何 test/** 与根目录 QA 脚本都不得修改。",
+      "不得新增依赖、不得改 package-lock.json、不得开启 CloudBase 付费能力。",
+      "不得修改数据库 schema、迁移脚本语义、公开 API 契约、鉴权语义、诊断业务约束或线上云资源配置。",
+      "不得通过删除有效业务逻辑、削弱校验、放宽真实业务约束或写 fallback/adapter 保留被替代旧逻辑来让检查通过。",
+      "前端样式优先 TailwindCSS 和 uni-ui，复用 token 进 tailwind.config.js；常规 UI 不新增 scoped style 或 SCSS。",
+      "配置化必须安全：真实 secret 不得进入仓库；只能更新示例环境文件、集中常量、读取逻辑或已有安全配置。"
+    ],
+    "data_or_api_contract": [
+      "公开 HTTP API 路径、请求/响应字段、错误码、鉴权头、数据库表结构和诊断结果口径均不允许变更。",
+      "如发现 500 行拆分或 hardcode 清理必须触碰上述契约，停止并输出 BLOCKED_CONTRACT_CHANGE_REQUIRED。"
+    ],
+    "compatibility_requirements": [
+      "保持微信小程序端可构建，保持现有 UniApp/Vue/Pinia 运行方式。",
+      "模块拆分后必须保持原导入方行为等价，避免循环依赖和跨层反向依赖。"
+    ],
+    "dependency_policy": [
+      "禁止新增 npm 依赖；禁止安装插件；禁止修改 lockfile。",
+      "优先使用现有框架、原生 JS、项目已有工具函数和 uni-ui/Tailwind 能力。"
+    ],
+    "migration_or_rollback": [
+      "不得执行数据迁移；不得改线上资源。",
+      "拆分应保持可用 git diff 回滚，单个变更批次应聚焦一个模块族。"
+    ],
+    "authorized_schema_changes": [],
+    "stop_conditions": [
+      "需要修改 forbidden_paths。",
+      "需要新增依赖或改 package-lock.json。",
+      "需要变更 schema/API/鉴权/诊断业务口径。",
+      "需要真实 CloudBase 付费能力或云端配置变更。",
+      "无法在不修改测试文件的前提下保持验证通过。",
+      "无法确认某个 hardcode 是业务常量、配置项还是外部契约。"
+    ],
+    "local_decisions_allowed": [
+      "在 allowed_paths 内拆分过大的业务源码文件并调整导入导出。",
+      "抽取局部常量、配置对象、纯函数、composable 或 service helper。",
+      "将重复 Tailwind 非预设值沉淀到 tailwind.config.js。",
+      "更新 .env.local.example 中的非 secret 示例键。",
+      "必要时更新 docs/CURRENT.md、docs/ACTIVE_CONTRACTS.md、docs/RUNBOOK.md 或同步索引，前提是只描述已完成的当前契约。"
+    ]
+  },
+  "figma": {
+    "lite_status": "link_only",
+    "main_access": "lite_only",
+    "main_tools_used": [],
+    "implementer_fetch_required": false,
+    "qa_baseline_fetch_required": false
+  },
+  "required_skills": {
+    "qa": []
+  },
+  "required_prompt_sections": [
+    "implementation_contract",
+    "allowed_forbidden_paths",
+    "project_constraints",
+    "validation_commands",
+    "ui_scope_contract",
+    "style_stack_contract",
+    "result_json_contract"
+  ],
+  "validation": {
+    "external": [
+      "validate-zcode-prompt passes before send",
+      "real computer-use send receipt is valid or blocked",
+      "git diff recovery after ZCode completion",
+      "allowed/forbidden path boundary check",
+      "line-count gate for touched business source files",
+      "dependency and lockfile diff check",
+      "lint/format/test/build commands"
+    ],
+    "qa": [
+      "qa_reviewer runs after external recovery if observable behavior changed",
+      "for mini-program observable changes, use full LAN local functions flow before end-side acceptance when code is not deployed"
+    ]
+  },
+  "output_evidence_required": [
+    "zcode_send_receipt",
+    "zcode_recovery_evidence",
+    "validation_evidence",
+    "line_count_evidence",
+    "hardcode_audit_evidence",
+    "style_stack_compliance",
+    "component_reuse_evidence",
+    "forbidden_path_check",
+    "dependency_diff_check"
+  ]
+}

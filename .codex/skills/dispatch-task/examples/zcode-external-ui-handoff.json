@@ -1,0 +1,164 @@
+{
+  "dispatch_run_id": "example-zcode-ui-001",
+  "implementation_mode": "zcode_external",
+  "task": {
+    "objective": "按目标 Figma 节点实现首页提醒卡片",
+    "code_changes_required": true,
+    "ui_task": true,
+    "risk": "standard",
+    "qa_required": true
+  },
+  "target_role": "zcode_external",
+  "spawn_contract": {
+    "qa_agent_type": "qa_reviewer",
+    "context_mode": "isolated",
+    "generic_fallback_forbidden": true,
+    "identity_receipt_required": true
+  },
+  "zcode_contract": {
+    "external_implementer": "zcode_glm",
+    "application": "ZCode",
+    "target_session": "current_open_chat",
+    "prompt_transport": "clipboard_paste",
+    "prompt_sentinel_required": true,
+    "prompt_integrity_check_required": true,
+    "input_box_check_required": true,
+    "send_receipt_required": true,
+    "send_action_required": true,
+    "allowed_send_actions": [
+      "enter",
+      "send_button",
+      "blocked"
+    ],
+    "completion_claim_not_authoritative": true,
+    "codex_self_implementation_forbidden": true,
+    "generic_fallback_forbidden": true,
+    "recovery_required": true,
+    "handoff_manual_required": true,
+    "handoff_completion_status_source": "handoff_manual",
+    "prompt_max_chars": 30000,
+    "required_prompt_sections": [
+      "implementation_contract",
+      "allowed_forbidden_paths",
+      "project_constraints",
+      "handoff_manual_contract",
+      "validation_commands",
+      "ui_scope_contract",
+      "style_stack_contract",
+      "figma_direct_fetch",
+      "figma_blocker_policy",
+      "uni_ui_mapping_contract",
+      "result_json_contract"
+    ],
+    "computer_use_required": true,
+    "computer_use_tool_invocation_required": true,
+    "computer_use_action_trace_required": true,
+    "clipboard_write_via_computer_use_required": true,
+    "manual_typing_forbidden": true,
+    "shell_only_ui_automation_forbidden": true,
+    "required_computer_use_actions": [
+      "verify_zcode_current_session",
+      "focus_chat_input",
+      "set_clipboard_to_prompt",
+      "paste_clipboard",
+      "verify_prompt_sentinel_in_input",
+      "send_prompt"
+    ],
+    "actual_tool_invocation_required": true,
+    "allowed_tool_targets": [
+      "@ZCode",
+      "@Computer"
+    ],
+    "minimum_tool_event_count": 5
+  },
+  "handoff_manual": {
+    "required": true,
+    "path": ".tmp/dispatch-task/example-zcode-ui-001-handoff-manual.json",
+    "status_field": "status",
+    "working_status": "working",
+    "terminal_statuses": [
+      "completed",
+      "blocked"
+    ],
+    "main_completion_probe": "read_json_before_ui"
+  },
+  "allowed_paths": [
+    "src/pages/home/**",
+    "src/components/home/**"
+  ],
+  "forbidden_paths": [
+    "package.json",
+    "package-lock.json",
+    "src/api/**",
+    "src/stores/**"
+  ],
+  "acceptance": [
+    "视觉、文案与交互匹配目标 Figma 节点",
+    "使用项目 TailwindCSS，不新增 SCSS",
+    "优先复用现有组件与 uni-ui",
+    "ZCode 只修改 allowed_paths 内文件"
+  ],
+  "project_constraints": {
+    "rule_refs": [
+      "AGENTS.md#UI-与样式"
+    ],
+    "framework": "uni-app + Vue",
+    "styling_system": "tailwindcss",
+    "new_scss_policy": "forbidden",
+    "scss_exceptions": [],
+    "component_library": "uni-ui",
+    "dependency_policy": "no_new_dependencies",
+    "test_commands": [
+      "npm run typecheck",
+      "npm run build:mp-weixin"
+    ]
+  },
+  "decision_lock": {
+    "level": "standard",
+    "architecture_invariants": [
+      "不得新增 store/API/schema",
+      "不得修改提醒业务数据结构"
+    ],
+    "local_decisions_allowed": [
+      "组件局部拆分",
+      "Tailwind utility 组合",
+      "现有组件或 uni-ui 复用落点"
+    ]
+  },
+  "figma": {
+    "link": "https://figma.com/design/example/file?node-id=10-20",
+    "node_id": "10:20",
+    "lite_status": "link_only",
+    "main_access": "lite_only",
+    "main_tools_used": [],
+    "implementer_fetch_required": true,
+    "qa_baseline_fetch_required": true
+  },
+  "required_skills": {
+    "qa": [
+      "$qa-ui-visual-baseline-policy"
+    ]
+  },
+  "validation": {
+    "external": [
+      "ZCode prompt sentinel check",
+      "git diff recovery",
+      "unit/lint/typecheck/build/self-check"
+    ],
+    "qa": [
+      "independent Figma baseline",
+      "runtime screenshot",
+      "interaction path"
+    ]
+  },
+  "output_evidence_required": [
+    "zcode_send_receipt",
+    "zcode_handoff_manual",
+    "zcode_recovery_evidence",
+    "validation_evidence",
+    "figma_fetch_evidence",
+    "style_stack_compliance",
+    "component_reuse_evidence",
+    "uni_ui_mapping_evidence"
+  ]
+}

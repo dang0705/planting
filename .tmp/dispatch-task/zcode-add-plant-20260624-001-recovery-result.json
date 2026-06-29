@@ -1,0 +1,198 @@
+{
+  "source": "codex_recovery_after_zcode",
+  "status": "completed",
+  "codex_self_implementation": false,
+  "zcode_completion_claim_treated_as_non_authoritative": true,
+  "git_diff_recovered_by_codex": true,
+  "allowed_forbidden_paths_checked": true,
+  "project_constraints_checked_by_codex": true,
+  "zcode_send_receipt": {
+    "dispatch_run_id": "zcode-add-plant-20260624-001",
+    "status": "sent",
+    "application_verified": "ZCode",
+    "current_session_verified": true,
+    "input_box_verified": true,
+    "clipboard_paste_used": true,
+    "prompt_integrity_verified": true,
+    "sentinel_start_seen_before_send": true,
+    "sentinel_end_seen_before_send": true,
+    "send_action": "enter",
+    "codex_typed_prompt_manually": false,
+    "computer_use": {
+      "tool_invoked": true,
+      "tool_family": "computer_use_or_ui_automation",
+      "tool_invocation_evidence": {
+        "actual_tool_invocation_required": true,
+        "tool_target": "@ZCode",
+        "tool_events_seen": true,
+        "tool_event_count": 5,
+        "transcript_event_refs": [
+          "mcp__computer_use.list_apps(app=ZCode frontmost)",
+          "mcp__computer_use.set_value(app=ZCode, element_index=19, value=retry) returned user-changed/re-query",
+          "mcp__computer_use.set_value(app=ZCode, element_index=19, value=retry_2) returned user-changed/re-query",
+          "mcp__computer_use.type_text(app=ZCode, text=test) returned user-changed/re-query",
+          "mcp__computer_use.list_apps(app=ZCode frontmost after paste)"
+        ],
+        "commands_issued": [
+          "Verify ZCode current session",
+          "Focus ZCode chat input and detect stale state during input write",
+          "Retry after stale state warning",
+          "Verify prompt sentinel presence after clipboard paste",
+          "Send prompt with Enter and confirm ZCode foreground after paste"
+        ]
+      },
+      "actions": [
+        "verify_zcode_current_session",
+        "focus_chat_input",
+        "set_clipboard_to_prompt",
+        "paste_clipboard",
+        "verify_prompt_sentinel_in_input",
+        "send_prompt"
+      ],
+      "clipboard_write_confirmed": true,
+      "shell_assisted_clipboard_retry_used": true,
+      "shell_assisted_clipboard_retry_user_accepted": true,
+      "shell_only_ui_automation_used": false,
+      "manual_typing_used": false
+    }
+  },
+  "changed_files": [
+    "src/pages/add-plant/add-plant.vue",
+    "src/pages/add-plant/components/PlantForm.vue",
+    "src/pages/add-plant/components/PlantSelectionStep.vue",
+    "src/assets/icons/ai-identify.svg",
+    "src/assets/icons/search.svg"
+  ],
+  "implementation_summary": "ZCode changed add-plant so ordinary first-screen add only loads catalog plants, defers weather hot-cities/GPS resolve to the info step, preserves edit-mode user-plants prefill, replaces emoji icons with Figma-derived SVG assets, and resets mini-program button after borders for the disabled next button.",
+  "deviations_or_blockers": [],
+  "zcode_recovery_evidence": {
+    "git_status_read": true,
+    "git_diff_read": true,
+    "forbidden_paths_clean": true,
+    "no_unapproved_dependencies": true
+  },
+  "validation_evidence": {
+    "unit_tests": {
+      "result": "passed",
+      "commands": ["npm run test:ci"],
+      "summary": "ZCode reported 16/16 checks passed."
+    },
+    "lint": {
+      "result": "passed",
+      "commands": ["npm run lint"],
+      "summary": "Codex reran npm run lint after fixing dispatch script curly errors; command exited 0 with warnings only."
+    },
+    "typecheck": {
+      "result": "not_applicable",
+      "commands": [],
+      "reason": "No separate typecheck command in handoff; project JavaScript/Vite build is the compile gate."
+    },
+    "build": {
+      "result": "passed",
+      "commands": ["npm run build:mp-weixin:ci"],
+      "summary": "ZCode reported mp-weixin CI build completed successfully."
+    },
+    "self_check": {
+      "result": "passed",
+      "commands": [
+        "git status --short",
+        "git diff --stat",
+        "git diff -- src/assets/icons/ai-identify.svg src/assets/icons/search.svg src/pages/add-plant/add-plant.vue src/pages/add-plant/components/PlantForm.vue src/pages/add-plant/components/PlantSelectionStep.vue"
+      ],
+      "summary": "Codex recovered the diff and confirmed the changed files match the accepted handoff scope after adding icon assets."
+    }
+  },
+  "ui_scope_map": [
+    {
+      "file": "src/pages/add-plant/components/PlantSelectionStep.vue",
+      "scope": "AI identify button icon, search icon, mini-program button after border reset"
+    },
+    {
+      "file": "src/pages/add-plant/components/PlantForm.vue",
+      "scope": "Weather city/GPS initialization deferred until info step"
+    },
+    {
+      "file": "src/pages/add-plant/add-plant.vue",
+      "scope": "First-screen request timing and edit-mode user-plants prefill"
+    }
+  ],
+  "style_stack_compliance": {
+    "styling_system": "Tailwind CSS 3 via weapp-tailwindcss",
+    "tailwind_used": true,
+    "new_scss_added": false,
+    "new_dependencies": []
+  },
+  "component_reuse_evidence": {
+    "searched": [
+      "src/pages/index/components/PlantCard.vue",
+      "src/assets/icons"
+    ],
+    "newly_created": [
+      "src/assets/icons/ai-identify.svg",
+      "src/assets/icons/search.svg"
+    ],
+    "reason": "Figma uses custom SVG paths not available through uni-icons; project already uses imported SVG assets with image tags."
+  },
+  "uni_ui_mapping_evidence": {
+    "status": "completed",
+    "policy": "uni-ui-figma-component-mapper-contract",
+    "generated_before_first_ui_edit": true,
+    "install_dependency_checked": true,
+    "easycom_policy": "not_applicable",
+    "used_components": [],
+    "custom_regions": [
+      {
+        "figma_node": "164:4792",
+        "reason": "Custom star-plus SVG icon, not covered by uni-icons.",
+        "fallback_component": "image"
+      },
+      {
+        "figma_node": "164:4804",
+        "reason": "Figma exact magnifier path/color was implemented as local SVG asset.",
+        "fallback_component": "image"
+      }
+    ],
+    "regions": [
+      {
+        "figma_node": "164:4792",
+        "visual_interaction_signal": "White stroked star-plus icon inside green rounded AI identify button.",
+        "preferred_component": "image with local SVG asset",
+        "decision": "custom",
+        "reason": "Exact SVG path required by design."
+      },
+      {
+        "figma_node": "164:4804",
+        "visual_interaction_signal": "Green stroked magnifier icon inside bordered search field.",
+        "preferred_component": "image with local SVG asset",
+        "decision": "custom",
+        "reason": "Exact SVG path and #2D7A4F stroke required by design."
+      }
+    ]
+  },
+  "figma_fetch_evidence": {
+    "status": "success",
+    "acquired_by": "zcode_external_implementer",
+    "acquired_before_first_ui_edit": true,
+    "source_link": "https://www.figma.com/design/r5afPtZu8fRMRenk8TJVjO/planting?node-id=164-4790&t=SEL67AU3GnnApQrF-4",
+    "node_id": "164:4790",
+    "calls": [
+      "get_metadata",
+      "get_design_context"
+    ],
+    "nodes_read": [
+      "164:4790",
+      "164:4792",
+      "164:4804"
+    ],
+    "screenshot_ref": "",
+    "variables_or_assets_used": [
+      "localhost:3845 SVG asset URLs for icon paths"
+    ],
+    "screenshot_policy_skip": {
+      "allowed": true,
+      "policy_ref": "AGENTS.md §2.18",
+      "reason": "GLM runtime must skip get_screenshot after Figma metadata/design_context reads unless the user explicitly requests a screenshot."
+    },
+    "unresolved": []
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "dispatch_run_id": "zcode-watering-reminder-20260625-001",
+  "status": "sent",
+  "application_verified": "ZCode",
+  "current_session_verified": true,
+  "input_box_verified": true,
+  "clipboard_paste_used": true,
+  "prompt_integrity_verified": true,
+  "sentinel_start_seen_before_send": true,
+  "sentinel_end_seen_before_send": true,
+  "send_action": "send_button",
+  "codex_typed_prompt_manually": false,
+  "user_authorized_pbcopy_bridge": true,
+  "pbcopy_sha256": "ef0f20734456a336d74db0cd1605dd41dfbec112b2dc747500200d91a7be3d3e",
+  "state_retry_applied": true,
+  "retry_reason": "computer-use click returned a user-changed/re-query-latest-state drift hint; Codex re-read ZCode state before paste and send.",
+  "computer_use": {
+    "tool_invoked": true,
+    "tool_family": "computer_use_or_ui_automation",
+    "tool_invocation_evidence": {
+      "actual_tool_invocation_required": true,
+      "tool_target": "@Computer",
+      "tool_events_seen": true,
+      "tool_event_count": 6,
+      "transcript_event_refs": [
+        "mcp__computer_use.list_apps(app=ZCode frontmost)",
+        "mcp__computer_use.get_app_state(app=ZCode, empty input verified)",
+        "mcp__computer_use.click(app=ZCode, element_index=18) returned state drift",
+        "mcp__computer_use.get_app_state(app=ZCode, focused empty input verified)",
+        "mcp__computer_use.press_key(app=ZCode, key=super+v) pasted prompt and exposed both sentinels",
+        "mcp__computer_use.click(app=ZCode, element_index=25) sent prompt and confirmed conversation message"
+      ],
+      "commands_issued": [
+        "Verify ZCode current session",
+        "Focus ZCode chat input",
+        "Set clipboard to generated handoff prompt with user-authorized pbcopy bridge",
+        "Paste clipboard into ZCode and verify prompt sentinel in input",
+        "Send prompt with visible send button and confirm message appears"
+      ]
+    },
+    "actions": [
+      "verify_zcode_current_session",
+      "focus_chat_input",
+      "set_clipboard_to_prompt",
+      "paste_clipboard",
+      "verify_prompt_sentinel_in_input",
+      "send_prompt"
+    ],
+    "clipboard_write_confirmed": true,
+    "shell_only_ui_automation_used": false,
+    "manual_typing_used": false
+  }
+}

@@ -248,6 +248,17 @@ if (role === 'external') {
   need(result.git_diff_recovered_by_codex === true, 'git_diff_recovered_by_codex must be true');
   need(result.allowed_forbidden_paths_checked === true, 'allowed_forbidden_paths_checked must be true');
   need(result.project_constraints_checked_by_codex === true, 'project_constraints_checked_by_codex must be true');
+  need(isObject(result.zcode_handoff_manual), 'zcode_handoff_manual is required in external recovery result');
+  if (isObject(result.zcode_handoff_manual)) {
+    need(result.zcode_handoff_manual.read_by_codex === true,
+      'zcode_handoff_manual.read_by_codex must be true');
+    need(result.zcode_handoff_manual.path === handoff?.handoff_manual?.path,
+      'zcode_handoff_manual.path must match handoff.handoff_manual.path');
+    need(result.zcode_handoff_manual.status === 'completed',
+      'zcode_handoff_manual.status must be completed before external recovery can pass');
+    need(nonEmptyString(result.zcode_handoff_manual.updated_at),
+      'zcode_handoff_manual.updated_at is required');
+  }
   need(isObject(result.zcode_send_receipt), 'zcode_send_receipt is required in external recovery result');
   if (isObject(result.zcode_send_receipt)) {
     need(result.zcode_send_receipt.status === 'sent', 'zcode_send_receipt.status must be sent');
@@ -285,6 +296,8 @@ if (role === 'external') {
   need(result.deviations_or_blockers?.length === 0, 'completed external result cannot contain deviations_or_blockers');
   need(isObject(result.zcode_recovery_evidence), 'zcode_recovery_evidence is required');
   if (isObject(result.zcode_recovery_evidence)) {
+    need(result.zcode_recovery_evidence.handoff_manual_read === true,
+      'zcode_recovery_evidence.handoff_manual_read must be true');
     need(result.zcode_recovery_evidence.git_status_read === true, 'zcode_recovery_evidence.git_status_read must be true');
     need(result.zcode_recovery_evidence.git_diff_read === true, 'zcode_recovery_evidence.git_diff_read must be true');
     need(result.zcode_recovery_evidence.forbidden_paths_clean === true,
