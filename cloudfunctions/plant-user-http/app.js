@@ -14,7 +14,6 @@ const {
   listUserPlantInstances,
   updateUserPlantInstance,
   deleteUserPlantInstance,
-  getUserPlantInstanceById,
   getUserPlantWateringStrategy
 } = require('/opt/utils/plant-knowledge')
 const {
@@ -86,6 +85,7 @@ async function main(event, context) {
         historical,
         forecast,
         behaviorTimeline: timeline,
+        potProfile: strategy.potProfile || null,
         referenceDate
       })
       return jsonResponse(200, {
@@ -95,7 +95,18 @@ async function main(event, context) {
           nextWaterWindow: plan.nextWaterWindow,
           nextWaterReason: plan.nextWaterReason,
           wateringContext: plan.wateringContext,
-          action: plan.action
+          action: plan.action,
+          // v2.1 新增字段
+          amountClass: plan.amountClass,
+          amountRangeMl: plan.amountRangeMl,
+          stopCondition: plan.stopCondition,
+          confidenceLevel: plan.confidenceLevel,
+          reasonCodes: plan.reasonCodes,
+          effectiveHydrationLoad: plan.effectiveHydrationLoad,
+          wetPressureLoad: plan.wetPressureLoad,
+          lastEffectiveRootWateredDaysAgo: plan.lastEffectiveRootWateredDaysAgo,
+          rootZoneMoistureIndex: plan.rootZoneMoistureIndex,
+          userDoseEcho: plan.userDoseEcho
         }
       })
     }
@@ -208,7 +219,9 @@ function buildWeatherSummary(dailyRecords = [], plantContext = {}) {
   let streakRain = 0
   let streakDry = 0
   for (const record of dailyRecords) {
-    if (!record || typeof record !== 'object') continue
+    if (!record || typeof record !== 'object') {
+      continue
+    }
     // 适配 historicalDays 实际字段名 tempMaxC/tempMinC/precipMm/textDay
     const humidity = Number(record.humidity ?? record.humidityPercent)
     const tempMaxVal = Number(record.tempMaxC ?? record.tempMax ?? record.temperatureMax ?? record.dayMaxTemp)
@@ -220,10 +233,18 @@ function buildWeatherSummary(dailyRecords = [], plantContext = {}) {
     const isHot = !isNaN(tempMaxVal) && tempMaxVal > tempMax
     const isCold = !isNaN(tempMinVal) && tempMinVal < tempMin
     const isRainy = precipitation > 0 || /雨|rain|shower/i.test(weatherText)
-    if (isHighHumidity) summary.highHumidityDays++
-    if (isCold && isHighHumidity) summary.coldHumidDays++
-    if (isRainy) summary.rainyDays++
-    if (isHot && isLowHumidity) summary.hotDryDays++
+    if (isHighHumidity) {
+      summary.highHumidityDays++
+    }
+    if (isCold && isHighHumidity) {
+      summary.coldHumidDays++
+    }
+    if (isRainy) {
+      summary.rainyDays++
+    }
+    if (isHot && isLowHumidity) {
+      summary.hotDryDays++
+    }
     streakHigh = isHighHumidity ? streakHigh + 1 : 0
     streakCold = isCold && isHighHumidity ? streakCold + 1 : 0
     streakRain = isRainy ? streakRain + 1 : 0
