@@ -238,6 +238,21 @@ test('gate: 正常→BASELINE', () => {
   assert.equal(gate.gateState, GATE_STATE.BASELINE)
 })
 
+test('gate: DRY 阈值真正受 baselineIntervalDays[0] 约束', () => {
+  const gate = evaluateDryWetGate({
+    rootZoneMoistureIndex: 0.2,
+    wetPressureLoad: 0,
+    lastEffectiveRootWateredDaysAgo: 3,
+    potGeometry: { hasDrainageHole: 'true' },
+    weatherWetPressureHitCount: 0,
+    forecastHotDryHit: false,
+    historicalHotDryHit: false,
+    baselineIntervalDays: [10, 14],
+    recentThoroughWatering: false
+  })
+  assert.notEqual(gate.gateState, GATE_STATE.DRY, '未达 baseline min 天数不应判 DRY')
+})
+
 /* ============================================================
  * 3. 共享规划器 v2.1 主入口
  * ============================================================ */

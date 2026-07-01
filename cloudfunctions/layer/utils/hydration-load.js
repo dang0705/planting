@@ -355,9 +355,10 @@ function evaluateDryWetGate({
   // 条件2：天气偏干（预报/历史 hot-dry）+ 无有效浇水记录或距上次浇水很久
   // 喷雾不能抵消干燥风险
   const isLowMoisture = rootZoneMoistureIndex < 0.3
+  const baselineMinDays = Number(baselineIntervalDays[0]) || 5
   const isTooLongAgo =
     lastEffectiveRootWateredDaysAgo === null ||
-    lastEffectiveRootWateredDaysAgo >= Number(baselineIntervalDays[0]) || 5
+    lastEffectiveRootWateredDaysAgo >= baselineMinDays
   const isDry = isLowMoisture && isTooLongAgo || (forecastHotDryHit && isTooLongAgo) || (historicalHotDryHit && lastEffectiveRootWateredDaysAgo === null)
 
   if (isDry) {
