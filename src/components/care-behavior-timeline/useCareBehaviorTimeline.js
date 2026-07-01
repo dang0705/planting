@@ -66,6 +66,14 @@ export function useCareBehaviorTimeline(props, emit) {
   const longPressTriggeredDate = ref('')
   const suppressSelectDateAfterLongPress = ref('')
   const initialSkeletonVisible = ref(true)
+  const wateringDoseByDate = ref({})
+
+  function setWateringDose(date, amount) {
+    if (!date) {
+      return
+    }
+    wateringDoseByDate.value = { ...wateringDoseByDate.value, [date]: amount }
+  }
 
   const referenceDate = useReferenceDate(props)
   const dateWindowSet = computed(() => getCareBehaviorDateSet(referenceDate.value))
@@ -216,9 +224,19 @@ export function useCareBehaviorTimeline(props, emit) {
       recorded_fertilizing_events_10d: timelineEventSources.value.recordedFertilizingEvents,
       recorded_light_change_events_10d: timelineEventSources.value.recordedLightChangeEvents,
       recorded_watering_events_10d: timelineEventSources.value.recordedWateringEvents,
-      selected_watering_events_10d: nextTimeline.watering_events_10d
+      selected_watering_events_10d: (nextTimeline.watering_events_10d || []).map(ev => ({
+        ...ev,
+        amount: wateringDoseByDate.value[ev.date] || ev.amount || 'normal'
+      }))
     }
   })
+
+  const wateringDoseRows = computed(() =>
+    (timelinePayload.value?.selected_watering_events_10d || []).map(ev => ({
+      date: ev.date,
+      amount: ev.amount || 'normal'
+    }))
+  )
 
   function buildDateStates() {
     const state = {}
@@ -410,6 +428,8 @@ export function useCareBehaviorTimeline(props, emit) {
     handleDatePressEnd,
     handleDatePressStart,
     resetDatePopoverAutoHide,
-    selectDate
+    selectDate,
+    wateringDoseRows,
+    setWateringDose
   }
 }

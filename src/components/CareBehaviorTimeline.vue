@@ -31,12 +31,19 @@
     />
 
     <CareBehaviorTimelineLegend />
+
+    <CareBehaviorWateringDoseList
+      v-if="enableDosePerDate"
+      :rows="wateringDoseRows"
+      @update-dose="onUpdateDose"
+    />
   </view>
 </template>
 
 <script setup>
 import CareBehaviorTimelineGrid from './care-behavior-timeline/CareBehaviorTimelineGrid.vue'
 import CareBehaviorTimelineLegend from './care-behavior-timeline/CareBehaviorTimelineLegend.vue'
+import CareBehaviorWateringDoseList from './care-behavior-timeline/CareBehaviorWateringDoseList.vue'
 import { useCareBehaviorTimeline } from './care-behavior-timeline/useCareBehaviorTimeline.js'
 
 const props = defineProps({
@@ -45,7 +52,8 @@ const props = defineProps({
   question: { type: Object, default: () => ({}) },
   questionId: { type: String, default: '' },
   timeline: { type: Object, default: () => ({}) },
-  idPrefix: { type: String, default: 'diagnose' }
+  idPrefix: { type: String, default: 'diagnose' },
+  enableDosePerDate: { type: Boolean, default: false }
 })
 const emit = defineEmits(['change'])
 
@@ -64,6 +72,12 @@ const {
   handleDatePressEnd,
   handleDatePressStart,
   resetDatePopoverAutoHide,
-  selectDate
+  selectDate,
+  wateringDoseRows,
+  setWateringDose
 } = useCareBehaviorTimeline(props, emit)
+
+function onUpdateDose({ date, amount }) {
+  setWateringDose(date, amount)
+}
 </script>
