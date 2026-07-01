@@ -15,7 +15,7 @@ import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
 
-const { computePotGeometry } = require('../../cloudfunctions/layer/utils/pot-geometry.js')
+const { computePotGeometry, resolveSubstrateRetentionFactor } = require('../../cloudfunctions/layer/utils/pot-geometry.js')
 const {
   computeEffectiveHydrationLoad,
   computeWetPressureLoad,
@@ -58,6 +58,27 @@ function makeEvent(daysAgo, amount = 'normal') {
 /* ============================================================
  * 1. 盆型几何计算
  * ============================================================ */
+
+test('substrate: 新增排水基质因子命中非默认值', () => {
+  assert.ok(resolveSubstrateRetentionFactor('perlite') < 0.6, 'perlite 保水应偏低')
+  assert.ok(resolveSubstrateRetentionFactor('ceramsite') <= 0.5, 'ceramsite 保水应偏低')
+  assert.ok(resolveSubstrateRetentionFactor('coarse_sand') < 0.6, 'coarse_sand 保水应偏低')
+})
+
+test('substrate: JSON 数组多选按比例加权', () => {
+  const single = resolveSubstrateRetentionFactor('peat')
+  const mixed = resolveSubstrateRetentionFactor(
+    JSON.stringify([{ material: 'peat', ratio: 50 }, { material: 'perlite', ratio: 50 }])
+  )
+  assert.ok(mixed < single && mixed > resolveSubstrateRetentionFactor('perlite'),
+    '混合保水因子应介于纯泥炭与纯珍珠岩之间')
+})
+
+test('substrate: 非法 JSON / 空 → 1.0 基线', () => {
+  assert.equal(resolveSubstrateRetentionFactor('unknown'), 1.0)
+  assert.equal(resolveSubstrateRetentionFactor('[bad json'), 1.0)
+  assert.equal(resolveSubstrateRetentionFactor(''), 1.0)
+})
 
 test('pot-geometry: 完整盆型计算正确', () => {
   const geo = computePotGeometry({

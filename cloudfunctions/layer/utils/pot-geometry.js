@@ -41,6 +41,9 @@ const SUBSTRATE_TYPE = Object.freeze({
   BARK: 'bark',
   SPHAGNUM: 'sphagnum',
   GRITTY: 'gritty',
+  PERLITE: 'perlite',
+  CERAMSITE: 'ceramsite',
+  COARSE_SAND: 'coarse_sand',
   UNKNOWN: 'unknown'
 })
 
@@ -65,6 +68,9 @@ const SUBSTRATE_RETENTION_FACTOR = Object.freeze({
   bark: 0.7,
   sphagnum: 1.4,
   gritty: 0.5,
+  perlite: 0.4,
+  ceramsite: 0.5,
+  coarse_sand: 0.4,
   unknown: 1.0
 })
 
@@ -113,6 +119,41 @@ function normalizeSubstrateType(value) {
     return raw
   }
   return SUBSTRATE_TYPE.UNKNOWN
+}
+
+/**
+ * 解析基质保水因子，支持单值枚举或 JSON 数组字符串（多选+比例）。
+ * JSON 数组元素形如 { material, ratio }（ratio 为百分数）；按 ratio 加权平均各 material 因子。
+ * 非法 JSON / 空 / 权重和为 0 → 1.0 基线。
+ */
+function resolveSubstrateRetentionFactor(substrateType) {
+  const raw = String(substrateType ?? '').trim()
+  if (raw.startsWith('[')) {
+    let parsed
+    try {
+      parsed = JSON.parse(raw)
+    } catch {
+      return 1.0
+    }
+    if (!Array.isArray(parsed) || !parsed.length) {
+      return 1.0
+    }
+    let weightSum = 0
+    let factorSum = 0
+    for (const item of parsed) {
+      const material = normalizeSubstrateType(item?.material)
+      const ratio = Number(item?.ratio)
+      if (!Number.isFinite(ratio) || ratio <= 0) {
+        continue
+      }
+      const factor = SUBSTRATE_RETENTION_FACTOR[material] ?? 1.0
+      weightSum += ratio
+      factorSum += factor * ratio
+    }
+    return weightSum > 0 ? factorSum / weightSum : 1.0
+  }
+  const single = normalizeSubstrateType(raw)
+  return SUBSTRATE_RETENTION_FACTOR[single] ?? 1.0
 }
 
 /**
@@ -198,8 +239,10 @@ function computePotGeometry(potProfile = {}) {
   // 材质蒸发因子
   const materialEvaporationFactor = MATERIAL_EVAPORATION_FACTOR[potMaterial] ?? 1.0
 
-  // 基质保水因子
-  const substrateRetentionFactor = SUBSTRATE_RETENTION_FACTOR[substrateType] ?? 1.0
+  // 基质保水因子（支持单值或 JSON 数组多选按比例加权）
+  const substrateRetentionFactor = resolveSubstrateRetentionFactor(
+    potProfile.substrateType ?? potProfile.substrate_type
+  )
 
   // 表面蒸发因子：S/V 比越高、材质蒸发越强 → 蒸发贡献越大
   const surfaceEvaporationFactor = Math.min(2.0, surfaceToVolumeRatio * 10 * materialEvaporationFactor)
@@ -283,6 +326,7 @@ module.exports = {
   normalizeDrainageHole,
   normalizePotMaterial,
   normalizeSubstrateType,
+  resolveSubstrateRetentionFactor,
   DRAINAGE_HOLE,
   POT_MATERIAL,
   SUBSTRATE_TYPE
