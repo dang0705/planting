@@ -411,11 +411,38 @@ test('amountSuggestion: WET 时水量为 0', () => {
   assert.deepEqual(suggestion.amountRangeMl, [0, 0])
 })
 
-test('amountSuggestion: DRY 时建议浇透', () => {
+test('amountSuggestion: DRY 时建议量为体积 20~30% 且区间单调', () => {
   const geo = computePotGeometry({ potTopDiameterCm: 12, potBottomDiameterCm: 10, potHeightCm: 10 })
   const suggestion = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8])
-  assert.equal(suggestion.amountClass, DOSE_CLASS.THOROUGH)
   assert.ok(suggestion.amountRangeMl[1] > suggestion.amountRangeMl[0])
+  assert.ok([DOSE_CLASS.MIST, DOSE_CLASS.SMALL, DOSE_CLASS.NORMAL, DOSE_CLASS.THOROUGH].includes(suggestion.amountClass))
+})
+
+test('amountSuggestion: 小盆体积 → 档位落 mist/small', () => {
+  const smallGeo = computePotGeometry({
+    potTopDiameterCm: 6, potBottomDiameterCm: 5, potHeightCm: 6,
+    hasDrainageHole: 'true', potMaterial: 'plastic', substrateType: 'general'
+  })
+  const sug = computeAmountSuggestion(smallGeo, GATE_STATE.DRY)
+  assert.ok([DOSE_CLASS.MIST, DOSE_CLASS.SMALL].includes(sug.amountClass),
+    `小盆 DRY 应落 mist/small，实际 ${sug.amountClass}（上限 ${sug.amountRangeMl[1]}ml）`)
+})
+
+test('amountSuggestion: 大盆 DRY → thorough', () => {
+  const bigGeo = computePotGeometry({
+    potTopDiameterCm: 30, potBottomDiameterCm: 24, potHeightCm: 28,
+    hasDrainageHole: 'true', potMaterial: 'ceramic', substrateType: 'general'
+  })
+  const sug = computeAmountSuggestion(bigGeo, GATE_STATE.DRY)
+  assert.equal(sug.amountClass, DOSE_CLASS.THOROUGH)
+})
+
+test('amountSuggestion: 无盆型保守 normal 不猜档', () => {
+  const dry = computeAmountSuggestion({}, GATE_STATE.DRY)
+  assert.equal(dry.amountClass, DOSE_CLASS.NORMAL)
+  assert.equal(dry.confidenceLevel, 'low')
+  const base = computeAmountSuggestion({}, GATE_STATE.BASELINE)
+  assert.equal(base.amountClass, DOSE_CLASS.NORMAL)
 })
 
 test('amountSuggestion: 无盆型时给保守区间', () => {

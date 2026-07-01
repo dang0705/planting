@@ -419,35 +419,53 @@ function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELI
   const volumeMl = Number(potGeometry.potVolumeMl) || 0
   const volumeConfidence = potGeometry.volumeConfidence || 'low'
 
-  // 体积未知时给出保守区间
+  // 无盆型体积：无法可靠分档，按 gate 保守给 normal 区间
   if (volumeMl <= 0) {
+    if (gateState === GATE_STATE.WET) {
+      return {
+        amountClass: DOSE_CLASS.UNKNOWN,
+        amountRangeMl: [0, 0],
+        stopCondition: '暂停浇水，检查土壤干湿后再决定',
+        confidenceLevel: 'low'
+      }
+    }
+    if (gateState === GATE_STATE.DRY) {
+      return {
+        amountClass: DOSE_CLASS.NORMAL,
+        amountRangeMl: [100, 200],
+        stopCondition: '盆底出水即可停止',
+        confidenceLevel: 'low'
+      }
+    }
     return {
       amountClass: DOSE_CLASS.NORMAL,
-      amountRangeMl: [50, 200],
-      stopCondition: '盆底出水即可停止',
+      amountRangeMl: [50, 150],
+      stopCondition: '盆土表面湿润即可停止',
       confidenceLevel: 'low'
     }
   }
 
-  let amountClass
+  // WET 恒暂停
+  if (gateState === GATE_STATE.WET) {
+    return {
+      amountClass: DOSE_CLASS.UNKNOWN,
+      amountRangeMl: [0, 0],
+      stopCondition: '暂停浇水，检查土壤干湿后再决定',
+      confidenceLevel: volumeConfidence
+    }
+  }
+
+  // 按 gate 定倍率算建议量区间，再按上限 ml 落档
   let amountRangeMl
   let stopCondition
-
-  if (gateState === GATE_STATE.WET) {
-    amountClass = DOSE_CLASS.UNKNOWN
-    amountRangeMl = [0, 0]
-    stopCondition = '暂停浇水，检查土壤干湿后再决定'
-  } else if (gateState === GATE_STATE.DRY) {
-    amountClass = DOSE_CLASS.THOROUGH
-    // 干燥时建议浇透，约盆体体积的 20%~30%
+  if (gateState === GATE_STATE.DRY) {
     amountRangeMl = [Math.round(volumeMl * 0.2), Math.round(volumeMl * 0.3)]
     stopCondition = '盆底有水流出即可停止'
   } else {
-    amountClass = DOSE_CLASS.NORMAL
-    // 基线建议约盆体体积的 10%~15%
     amountRangeMl = [Math.round(volumeMl * 0.1), Math.round(volumeMl * 0.15)]
     stopCondition = '盆土表面湿润即可停止'
   }
+  const amountClass = classifyDoseByAmount(amountRangeMl[1])
 
   return {
     amountClass,
@@ -455,6 +473,23 @@ function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELI
     stopCondition,
     confidenceLevel: volumeConfidence
   }
+}
+
+/**
+ * 按单次建议水量上限（ml）落档：≤30 mist / ≤80 small / ≤300 normal / >300 thorough。
+ */
+function classifyDoseByAmount(upperMl = 0) {
+  const ml = Number(upperMl) || 0
+  if (ml <= 30) {
+    return DOSE_CLASS.MIST
+  }
+  if (ml <= 80) {
+    return DOSE_CLASS.SMALL
+  }
+  if (ml <= 300) {
+    return DOSE_CLASS.NORMAL
+  }
+  return DOSE_CLASS.THOROUGH
 }
 
 module.exports = {
