@@ -46,7 +46,7 @@
 - `surfaceEvaporationFactor = min(2.0, S/V比 × 10 × 材质蒸发因子)`
 - `depthRetentionFactor = min(2.0, (有效深度/10) × 基质保水因子)`
 - `potGeometryDryDownFactor = clamp(蒸发/保水, 0.3, 3.0)`，越高干透越快。
-- **材质/基质只经此因子参与**，不影响体积、不影响 amountRangeMl 数值；经 `rootZoneMoistureIndex` → gate 间接影响。
+- **材质/基质经此因子参与** `rootZoneMoistureIndex` → gate（影响"何时浇/是否暂停"）。此外基质保水强度（`substrateRetentionFactor`）与排水孔还经 §6.1 修正矩阵**直接收窄无排水孔时的单次水量**。
 
 材质蒸发因子（`MATERIAL_EVAPORATION_FACTOR`）：
 
@@ -79,6 +79,7 @@
 
 - 有排水孔：0.2；未知：0.5；无排水孔：0.8，且锥度 `taperRatio>1.3`（上宽下窄）时额外加成，clamp 到 1.5。
 - 作用：`computeWetPressureLoad` 的乘子；`resolveLookbackWindowDays`（无排水孔窗口 ×1.3）；gate 的"无排水孔窄底盆"判定（`hasDrainageHole==='false' && taperRatio>1.3`）。
+- 另注：`hasDrainageHole` 原始值还经 §6.1 修正矩阵直接收窄单次水量（与本因子是两条独立路径）。
 
 ## 4. 负载与根区湿度（hydration-load）
 
@@ -143,7 +144,23 @@
 - 无盆型（volumeMl≤0）无法可靠分档，保守只给 normal，confidence 仍 `low`。
 - 语义：amountClass 反映"下次建议的绝对水量规模"，独立于用户历史剂量（后者由 userDoseEcho 单独回显，不污染建议）。
 
-### 6.1 userDoseEcho 用户历史剂量回显（双轨）
+### 6.1 排水孔/基质/喜干植物修正（resolveDrainageAmountModifier）
+
+DRY/BASELINE 的水量区间在按体积算出后，再乘排水安全修正系数（防积水烂根），按积水风险从高到低匹配，只取第一命中：
+
+| 排水孔状态 | 下限× | 上限× | 判定依据 |
+| --- | --- | --- | --- |
+| 有排水孔 `true` | 1.0 | 1.0 | 基线 |
+| 无孔 + 喜干植物 | 0.4 | 0.35 | `wateringQuantization.dryTolerance === 'high'` |
+| 无孔 + 保水基质 | 0.5 | 0.4 | `potGeometry.substrateRetentionFactor > 1.0` |
+| 无孔（普通） | 0.6 | 0.5 | — |
+| 未知 `unknown` | 1.0 | 0.85 | 不假设无孔，仅适度收上限 |
+
+- 喜干信号来自属级 `watering_way_quantization_json.dryTolerance`（经 `getPlantCatalogById` → `getUserPlantWateringStrategy` → `app.js` → `buildWateringPlanner` → `computeAmountSuggestion` 传入的 `wateringQuantization`）。
+- 保水基质用 `substrateRetentionFactor`（由 `resolveSubstrateRetentionFactor` 按单值或 JSON 多选加权算出，`computePotGeometry` 暴露）；> 1.0 表示保水强于中性田园土。
+- 有排水孔时修正矩阵不介入（系数 1.0），水量只随体积/gate。
+
+### 6.2 userDoseEcho 用户历史剂量回显（双轨）
 
 - `resolveUserDoseEcho(wateringEvents, referenceDate)`：取最近一次**非喷雾**浇水的 doseClass；只有喷雾 → mist；无事件 → null。
 - `buildWateringPlanner` 返回 `userDoseEcho`，`plant-user-http` 响应透出，前端 `WateringReminderSheet` 以"你通常浇 Y"对照"建议水量 X"展示。
