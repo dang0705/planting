@@ -218,16 +218,18 @@ export function useCareBehaviorTimeline(props, emit) {
         last_fertilized_bucket: bucketSelection.value
       }
     )
+    const wateringEventsWithDose = (nextTimeline.watering_events_10d || []).map(ev => ({
+      ...ev,
+      amount: wateringDoseByDate.value[ev.date] || ev.amount || 'normal'
+    }))
     return {
       ...nextTimeline,
+      watering_events_10d: wateringEventsWithDose,
       last_fertilized_bucket: bucketSelection.value,
       recorded_fertilizing_events_10d: timelineEventSources.value.recordedFertilizingEvents,
       recorded_light_change_events_10d: timelineEventSources.value.recordedLightChangeEvents,
       recorded_watering_events_10d: timelineEventSources.value.recordedWateringEvents,
-      selected_watering_events_10d: (nextTimeline.watering_events_10d || []).map(ev => ({
-        ...ev,
-        amount: wateringDoseByDate.value[ev.date] || ev.amount || 'normal'
-      }))
+      selected_watering_events_10d: wateringEventsWithDose
     }
   })
 
