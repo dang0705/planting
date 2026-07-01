@@ -256,6 +256,33 @@ function computeLastEffectiveRootWateredDaysAgo(wateringEvents = [], referenceDa
 }
 
 /**
+ * 提取用户近期代表性剂量：最近一次非喷雾浇水的 doseClass；
+ * 若只有喷雾则返回 mist；无事件返回 null。
+ */
+function resolveUserDoseEcho(wateringEvents = [], referenceDate = '') {
+  let bestDiff = null
+  let bestDose = null
+  let mistSeen = false
+  for (const event of wateringEvents) {
+    const doseClass = resolveDoseClass(event)
+    if (doseClass === DOSE_CLASS.MIST) {
+      mistSeen = true
+      continue
+    }
+    const diff = referenceDate ? daysAgo(referenceDate, event.date) : 0
+    const effectiveDiff = diff === null ? Number.MAX_SAFE_INTEGER : diff
+    if (bestDiff === null || effectiveDiff < bestDiff) {
+      bestDiff = effectiveDiff
+      bestDose = doseClass
+    }
+  }
+  if (bestDose !== null) {
+    return bestDose
+  }
+  return mistSeen ? DOSE_CLASS.MIST : null
+}
+
+/**
  * 计算根区湿度指数（0~1）。
  *
  * 综合水合负载、湿压、盆型干透因子和天气偏湿信号，
@@ -506,5 +533,6 @@ module.exports = {
   computeRootZoneMoistureIndex,
   evaluateDryWetGate,
   hasRecentThoroughWatering,
-  computeAmountSuggestion
+  computeAmountSuggestion,
+  resolveUserDoseEcho
 }

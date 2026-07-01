@@ -23,6 +23,7 @@ const {
   evaluateDryWetGate,
   hasRecentThoroughWatering,
   computeAmountSuggestion,
+  resolveUserDoseEcho,
   DOSE_CLASS,
   GATE_STATE,
   REASON_CODE
@@ -449,4 +450,30 @@ test('amountSuggestion: 无盆型时给保守区间', () => {
   const suggestion = computeAmountSuggestion({}, GATE_STATE.BASELINE, [5, 8])
   assert.equal(suggestion.confidenceLevel, 'low')
   assert.ok(suggestion.amountRangeMl[0] > 0)
+})
+
+test('userDoseEcho: 取最近一次非喷雾剂量', () => {
+  const events = [makeEvent(1, 'mist'), makeEvent(2, 'thorough'), makeEvent(5, 'small')]
+  assert.equal(resolveUserDoseEcho(events, REF_DATE), DOSE_CLASS.THOROUGH)
+})
+
+test('userDoseEcho: 只有喷雾 → mist', () => {
+  assert.equal(resolveUserDoseEcho([makeEvent(1, 'mist')], REF_DATE), DOSE_CLASS.MIST)
+})
+
+test('userDoseEcho: 无事件 → null', () => {
+  assert.equal(resolveUserDoseEcho([], REF_DATE), null)
+})
+
+test('planner: 返回 userDoseEcho', () => {
+  const plan = buildWateringPlanner({
+    wateringStrategy: { freq: [5, 8] },
+    behaviorTimeline: normalizeCareBehaviorTimeline({
+      referenceDate: REF_DATE,
+      watering_events_10d: [makeEvent(2, 'thorough')]
+    }),
+    potProfile: { potTopDiameterCm: 12, potBottomDiameterCm: 8, potHeightCm: 10, hasDrainageHole: 'true' },
+    referenceDate: REF_DATE
+  })
+  assert.equal(plan.userDoseEcho, DOSE_CLASS.THOROUGH)
 })
