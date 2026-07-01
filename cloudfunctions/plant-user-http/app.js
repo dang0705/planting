@@ -86,6 +86,7 @@ async function main(event, context) {
         forecast,
         behaviorTimeline: timeline,
         potProfile: strategy.potProfile || null,
+        wateringQuantization: strategy.wateringQuantization || null,
         referenceDate
       })
       return jsonResponse(200, {

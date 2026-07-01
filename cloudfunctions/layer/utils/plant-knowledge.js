@@ -70,6 +70,18 @@ function normalizeNullableString(value) {
   return normalized
 }
 
+/**
+ * DECIMAL 列：$runSQL 会把 JS null 序列化成字符串 'null' 导致 Incorrect decimal value，
+ * 统一转成空字符串 '' 传入，SQL 侧用 NULLIF(x, '') 转回 NULL
+ */
+function toNullableDecimal(value) {
+  if (value === null || value === undefined || value === '' || value === 'null') {
+    return ''
+  }
+  const num = Number(value)
+  return Number.isFinite(num) ? num : ''
+}
+
 function resolveCatalogPlantId(row = {}) {
   return row.session_plant_id || row.plant_identity_id || ''
 }
@@ -166,6 +178,7 @@ const CATALOG_SELECT_SQL = `
     pie.cover_image_ref,
     pie.review_status AS identity_review_status,
     gcp.watering_strategy_json,
+    gcp.watering_way_quantization_json,
     gcp.fertilizing_strategy_json,
     gcp.light_strategy_json,
     gcp.airflow_strategy_json,
@@ -215,6 +228,7 @@ function mapPlantRow(row) {
     identityLevel: row.identity_level || '',
     identityReviewStatus: row.identity_review_status || '',
     watering: parseCareJson(row.watering_strategy_json),
+    wateringQuantization: parseCareJson(row.watering_way_quantization_json),
     fertilization: parseCareJson(row.fertilizing_strategy_json),
     sunning: parseCareJson(row.light_strategy_json),
     ventilation: parseCareJson(row.airflow_strategy_json),
@@ -576,7 +590,46 @@ function mapUserPlantInstanceRow(row, plant = null) {
     varianceLevel: plant?.varianceLevel || '',
     healthStatus: row.health_status || 'unknown',
     healthScore:
-      row.health_score === null || row.health_score === undefined ? null : Number(row.health_score)
+      row.health_score === null || row.health_score === undefined ? null : Number(row.health_score),
+    // 盆型档案（直接来自主表列，前端 WateringReminderSheet 直接读取）
+    potProfile: mapPotProfileFromRow(row)
+  }
+}
+
+/**
+ * 从 user_plant_instances 行提取盆型档案。
+ * substrate_type 可能是 JSON 数组字符串（多选+比例）或单值。
+ */
+function mapPotProfileFromRow(row) {
+  const substrateType = row.substrate_type || 'unknown'
+  let substrateComposition = null
+  if (typeof substrateType === 'string' && substrateType.startsWith('[')) {
+    try {
+      substrateComposition = JSON.parse(substrateType)
+    } catch {
+      substrateComposition = null
+    }
+  }
+  return {
+    potTopDiameterCm:
+      row.pot_top_diameter_cm === null || row.pot_top_diameter_cm === undefined
+        ? null
+        : Number(row.pot_top_diameter_cm),
+    potBottomDiameterCm:
+      row.pot_bottom_diameter_cm === null || row.pot_bottom_diameter_cm === undefined
+        ? null
+        : Number(row.pot_bottom_diameter_cm),
+    potHeightCm:
+      row.pot_height_cm === null || row.pot_height_cm === undefined
+        ? null
+        : Number(row.pot_height_cm),
+    hasDrainageHole: row.has_drainage_hole || 'true',
+    potMaterial: row.pot_material || 'unknown',
+    substrateType,
+    substrateComposition,
+    profileVersion: Number(row.pot_profile_version || 1),
+    source: row.pot_profile_source || 'default',
+    confidence: row.pot_profile_confidence || 'low'
   }
 }
 
@@ -604,6 +657,15 @@ async function getUserPlantInstanceById(openid, id) {
       up.plant_genus,
       up.plant_family_en,
       up.plant_latin_name,
+      up.pot_top_diameter_cm,
+      up.pot_bottom_diameter_cm,
+      up.pot_height_cm,
+      up.has_drainage_hole,
+      up.pot_material,
+      up.substrate_type,
+      up.pot_profile_version,
+      up.pot_profile_source,
+      up.pot_profile_confidence,
       ds.health_status,
       ds.health_score
     FROM user_plant_instances up
@@ -640,10 +702,11 @@ async function getUserPlantWateringEvents(openid, id) {
 }
 
 /**
- * 精简查询：仅取 planner 所需的属级浇水策略 + 温湿度 bounds。
+ * 精简查询：仅取 planner 所需的属级浇水策略 + 温湿度 bounds + 盆型扩展。
  * 分两步查询避免跨表 JOIN collation 冲突：
  *   1. 从 user_plant_instances 取 plant_id / session_plant_id
  *   2. 用 getPlantCatalogById 取属级 watering 策略
+ *   3. 从 user_plant_instances 主表盆型列取盆型档案（v2.1）
  * 不查 watering_events_json（planner 不需要），比 getUserPlantInstanceById 少一次 SQL。
  */
 async function getUserPlantWateringStrategy(openid, id) {
@@ -663,12 +726,15 @@ async function getUserPlantWateringStrategy(openid, id) {
   if (!plant) {
     return null
   }
+  const potProfile = await getUserPlantCareExtension(openid, id)
   return {
     watering: plant.watering || null,
+    wateringQuantization: plant.wateringQuantization || null,
     temperatureMin: plant.temperatureMin ?? null,
     temperatureMax: plant.temperatureMax ?? null,
     humidityMin: plant.humidityMin ?? null,
-    humidityMax: plant.humidityMax ?? null
+    humidityMax: plant.humidityMax ?? null,
+    potProfile
   }
 }
 
@@ -698,6 +764,15 @@ async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) 
       up.plant_genus,
       up.plant_family_en,
       up.plant_latin_name,
+      up.pot_top_diameter_cm,
+      up.pot_bottom_diameter_cm,
+      up.pot_height_cm,
+      up.has_drainage_hole,
+      up.pot_material,
+      up.substrate_type,
+      up.pot_profile_version,
+      up.pot_profile_source,
+      up.pot_profile_confidence,
       ds.health_status,
       ds.health_score
     FROM user_plant_instances up
@@ -769,7 +844,24 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
     params.wateringEventsJson = stringifyNullableJson(updates.wateringEvents)
   }
 
-  if (!fields.length && params.wateringEventsJson === undefined) {
+  // 盆型档案字段检测（同时兼容 camelCase / snake_case）
+  const hasPotProfileUpdate =
+    hasOwnField(updates, 'potTopDiameterCm') ||
+    hasOwnField(updates, 'pot_top_diameter_cm') ||
+    hasOwnField(updates, 'potBottomDiameterCm') ||
+    hasOwnField(updates, 'pot_bottom_diameter_cm') ||
+    hasOwnField(updates, 'potHeightCm') ||
+    hasOwnField(updates, 'pot_height_cm') ||
+    hasOwnField(updates, 'hasDrainageHole') ||
+    hasOwnField(updates, 'has_drainage_hole') ||
+    hasOwnField(updates, 'potMaterial') ||
+    hasOwnField(updates, 'pot_material') ||
+    hasOwnField(updates, 'substrateType') ||
+    hasOwnField(updates, 'substrate_type') ||
+    hasOwnField(updates, 'source') ||
+    hasOwnField(updates, 'confidence')
+
+  if (!fields.length && params.wateringEventsJson === undefined && !hasPotProfileUpdate) {
     return existing
   }
 
@@ -801,6 +893,48 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
     updated = await getUserPlantInstanceById(openid, id)
   }
 
+  // 盆型档案单独 try/catch 写入，列不存在时跳过而不阻断主流程
+  // 保留 pot_profile_version = pot_profile_version + 1 的版本自增语义
+  if (hasPotProfileUpdate) {
+    const potParams = {
+      openid,
+      id: Number(id),
+      potTopDiameterCm: toNullableDecimal(updates.potTopDiameterCm ?? updates.pot_top_diameter_cm),
+      potBottomDiameterCm: toNullableDecimal(
+        updates.potBottomDiameterCm ?? updates.pot_bottom_diameter_cm
+      ),
+      potHeightCm: toNullableDecimal(updates.potHeightCm ?? updates.pot_height_cm),
+      hasDrainageHole:
+        normalizeNullableString(updates.hasDrainageHole ?? updates.has_drainage_hole) || 'true',
+      potMaterial: normalizeNullableString(updates.potMaterial ?? updates.pot_material) || 'unknown',
+      substrateType:
+        normalizeNullableString(updates.substrateType ?? updates.substrate_type) || 'unknown',
+      source: normalizeNullableString(updates.source) || 'user',
+      confidence: normalizeNullableString(updates.confidence) || 'normal'
+    }
+    try {
+      await models.$runSQL(
+        `UPDATE user_plant_instances
+        SET
+          pot_top_diameter_cm = NULLIF({{potTopDiameterCm}}, ''),
+          pot_bottom_diameter_cm = NULLIF({{potBottomDiameterCm}}, ''),
+          pot_height_cm = NULLIF({{potHeightCm}}, ''),
+          has_drainage_hole = {{hasDrainageHole}},
+          pot_material = {{potMaterial}},
+          substrate_type = {{substrateType}},
+          pot_profile_source = {{source}},
+          pot_profile_confidence = {{confidence}},
+          pot_profile_version = pot_profile_version + 1,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = {{id}} AND _openid = {{openid}}`,
+        potParams
+      )
+    } catch {
+      // 列不存在时忽略，不阻断 nickname / last_watered 等字段的写入
+    }
+    updated = await getUserPlantInstanceById(openid, id)
+  }
+
   return updated
 }
 
@@ -817,6 +951,91 @@ async function deleteUserPlantInstance(openid, id) {
     }
   )
   return true
+}
+
+/* ---------- 用户植物盆型档案（v2.1，落用户植物主表 user_plant_instances） ---------- */
+
+/**
+ * 读取用户植物盆型档案。
+ * 盆型信息直接存在 user_plant_instances 主表列上，不再使用独立扩展表。
+ * 列不存在时返回默认档案，不阻断主流程。
+ */
+async function getUserPlantCareExtension(openid, userPlantId) {
+  try {
+    const result = await models.$runSQL(
+      `SELECT
+        pot_top_diameter_cm,
+        pot_bottom_diameter_cm,
+        pot_height_cm,
+        has_drainage_hole,
+        pot_material,
+        substrate_type,
+        pot_profile_version,
+        pot_profile_source,
+        pot_profile_confidence
+      FROM user_plant_instances
+      WHERE _openid = {{openid}} AND id = {{userPlantId}}
+      LIMIT 1`,
+      { openid, userPlantId: Number(userPlantId) }
+    )
+    const row = result?.data?.executeResultList?.[0]
+    if (!row) {
+      return buildDefaultPotProfile()
+    }
+    return mapCareExtensionRow(row)
+  } catch {
+    // 列不存在或查询失败时返回默认档案
+    return buildDefaultPotProfile()
+  }
+}
+
+function mapCareExtensionRow(row) {
+  // substrate_type 可能是 JSON（多选+比例）或单值字符串
+  const substrateType = row.substrate_type || 'unknown'
+  let substrateComposition = null
+  if (typeof substrateType === 'string' && substrateType.startsWith('[')) {
+    try {
+      substrateComposition = JSON.parse(substrateType)
+    } catch {
+      substrateComposition = null
+    }
+  }
+
+  return {
+    potTopDiameterCm:
+      row.pot_top_diameter_cm === null || row.pot_top_diameter_cm === undefined
+        ? null
+        : Number(row.pot_top_diameter_cm),
+    potBottomDiameterCm:
+      row.pot_bottom_diameter_cm === null || row.pot_bottom_diameter_cm === undefined
+        ? null
+        : Number(row.pot_bottom_diameter_cm),
+    potHeightCm:
+      row.pot_height_cm === null || row.pot_height_cm === undefined
+        ? null
+        : Number(row.pot_height_cm),
+    hasDrainageHole: row.has_drainage_hole || 'true',
+    potMaterial: row.pot_material || 'unknown',
+    substrateType,
+    substrateComposition,
+    profileVersion: Number(row.pot_profile_version || 1),
+    source: row.pot_profile_source || 'user',
+    confidence: row.pot_profile_confidence || 'normal'
+  }
+}
+
+function buildDefaultPotProfile() {
+  return {
+    potTopDiameterCm: null,
+    potBottomDiameterCm: null,
+    potHeightCm: null,
+    hasDrainageHole: 'true',
+    potMaterial: 'unknown',
+    substrateType: 'unknown',
+    profileVersion: 1,
+    source: 'default',
+    confidence: 'low'
+  }
 }
 
 async function recordIdentifySession({
@@ -981,6 +1200,7 @@ module.exports = {
   getUserPlantInstanceById,
   getUserPlantWateringEvents,
   getUserPlantWateringStrategy,
+  getUserPlantCareExtension,
   listUserPlantInstances,
   updateUserPlantInstance,
   deleteUserPlantInstance,

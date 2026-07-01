@@ -398,6 +398,7 @@ function buildWateringPlanner({
   forecast = {},
   behaviorTimeline = {},
   potProfile = null,
+  wateringQuantization = null,
   thresholds: rawThresholds = null,
   referenceDate = '',
   resolveThresholds = null
@@ -487,7 +488,9 @@ function buildWateringPlanner({
   })
 
   // 水量建议
-  const amountSuggestion = computeAmountSuggestion(potGeometry, gate.gateState, baseline.intervalDays)
+  const amountSuggestion = computeAmountSuggestion(potGeometry, gate.gateState, baseline.intervalDays, {
+    wateringQuantization
+  })
 
   // 用户历史剂量回显（最近一次非喷雾浇水的剂量档）
   const userDoseEcho = resolveUserDoseEcho(

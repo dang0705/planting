@@ -446,6 +446,56 @@ test('amountSuggestion: 无盆型保守 normal 不猜档', () => {
   assert.equal(base.amountClass, DOSE_CLASS.NORMAL)
 })
 
+test('amountSuggestion: 排水孔修正矩阵按优先级调制水量', () => {
+  const geo = d => computePotGeometry({
+    potTopDiameterCm: 15, potBottomDiameterCm: 12, potHeightCm: 14,
+    hasDrainageHole: d, potMaterial: 'plastic', substrateType: 'general'
+  })
+  const withHole = computeAmountSuggestion(geo('true'), GATE_STATE.DRY)
+  const unknownHole = computeAmountSuggestion(geo('unknown'), GATE_STATE.DRY)
+  const noHole = computeAmountSuggestion(geo('false'), GATE_STATE.DRY)
+  // 有排水孔=基线
+  const [lo0, hi0] = withHole.amountRangeMl
+  // 未知：上限×0.85，下限不变
+  assert.equal(unknownHole.amountRangeMl[0], lo0, '未知排水孔下限不变')
+  assert.ok(unknownHole.amountRangeMl[1] < hi0, '未知排水孔上限收窄')
+  // 无排水孔：下×0.6 上×0.5，比未知更严
+  assert.ok(noHole.amountRangeMl[0] < lo0, '无排水孔下限收窄')
+  assert.ok(noHole.amountRangeMl[1] < unknownHole.amountRangeMl[1], '无排水孔上限比未知更严')
+})
+
+test('amountSuggestion: 无排水孔+保水基质比普通无孔更严', () => {
+  const base = { potTopDiameterCm: 18, potBottomDiameterCm: 15, potHeightCm: 16, hasDrainageHole: 'false', potMaterial: 'plastic' }
+  const normalSub = computeAmountSuggestion(computePotGeometry({ ...base, substrateType: 'general' }), GATE_STATE.DRY)
+  const waterRetaining = computeAmountSuggestion(computePotGeometry({ ...base, substrateType: 'sphagnum' }), GATE_STATE.DRY)
+  assert.ok(waterRetaining.amountRangeMl[1] <= normalSub.amountRangeMl[1], '无孔+保水基质上限不高于普通无孔')
+})
+
+test('amountSuggestion: 无排水孔+喜干植物最严（dryTolerance high）', () => {
+  const geo = computePotGeometry({
+    potTopDiameterCm: 18, potBottomDiameterCm: 15, potHeightCm: 16,
+    hasDrainageHole: 'false', potMaterial: 'plastic', substrateType: 'general'
+  })
+  const normalPlant = computeAmountSuggestion(geo, GATE_STATE.DRY)
+  const dryLovingPlant = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8], {
+    wateringQuantization: { dryTolerance: 'high' }
+  })
+  assert.ok(dryLovingPlant.amountRangeMl[1] < normalPlant.amountRangeMl[1], '喜干植物无孔上限最严')
+  assert.ok(dryLovingPlant.amountRangeMl[0] < normalPlant.amountRangeMl[0], '喜干植物无孔下限最严')
+})
+
+test('amountSuggestion: 有排水孔时不受基质/喜干修正影响', () => {
+  const geo = computePotGeometry({
+    potTopDiameterCm: 15, potBottomDiameterCm: 12, potHeightCm: 14,
+    hasDrainageHole: 'true', potMaterial: 'plastic', substrateType: 'sphagnum'
+  })
+  const plain = computeAmountSuggestion(geo, GATE_STATE.DRY)
+  const withDryLoving = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8], {
+    wateringQuantization: { dryTolerance: 'high' }
+  })
+  assert.deepEqual(plain.amountRangeMl, withDryLoving.amountRangeMl, '有排水孔时修正矩阵不介入')
+})
+
 test('amountSuggestion: 无盆型时给保守区间', () => {
   const suggestion = computeAmountSuggestion({}, GATE_STATE.BASELINE, [5, 8])
   assert.equal(suggestion.confidenceLevel, 'low')

@@ -442,7 +442,7 @@ function hasRecentThoroughWatering(wateringEvents = [], referenceDate = '', with
  * @param {number[]} baselineIntervalDays - 属级基线间隔
  * @returns {object} { amountClass, amountRangeMl, stopCondition, confidenceLevel }
  */
-function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELINE, _baselineIntervalDays = [5, 8]) {
+function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELINE, _baselineIntervalDays = [5, 8], options = {}) {
   const volumeMl = Number(potGeometry.potVolumeMl) || 0
   const volumeConfidence = potGeometry.volumeConfidence || 'low'
 
@@ -482,7 +482,7 @@ function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELI
     }
   }
 
-  // 按 gate 定倍率算建议量区间，再按上限 ml 落档
+  // 按 gate 定倍率算建议量区间
   let amountRangeMl
   let stopCondition
   if (gateState === GATE_STATE.DRY) {
@@ -492,6 +492,16 @@ function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELI
     amountRangeMl = [Math.round(volumeMl * 0.1), Math.round(volumeMl * 0.15)]
     stopCondition = '盆土表面湿润即可停止'
   }
+
+  // 排水孔/基质/喜干植物修正：无排水孔时收窄水量以防积水烂根
+  const modifier = resolveDrainageAmountModifier(potGeometry, options.wateringQuantization)
+  amountRangeMl = [
+    Math.round(amountRangeMl[0] * modifier.lower),
+    Math.round(amountRangeMl[1] * modifier.upper)
+  ]
+  if (modifier.stopCondition) {
+    stopCondition = modifier.stopCondition
+  }
   const amountClass = classifyDoseByAmount(amountRangeMl[1])
 
   return {
@@ -500,6 +510,38 @@ function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELI
     stopCondition,
     confidenceLevel: volumeConfidence
   }
+}
+
+/**
+ * 排水孔/基质/喜干植物对单次水量的修正系数（下限×lower、上限×upper）。
+ * 按积水风险从高到低匹配，只取第一命中：
+ *   - 有排水孔          → 1.0 / 1.0（基线）
+ *   - 无排水孔+喜干植物  → 0.4 / 0.35（最高积水风险，如多肉/虎尾兰）
+ *   - 无排水孔+保水基质  → 0.5 / 0.4
+ *   - 无排水孔（普通）   → 0.6 / 0.5
+ *   - 未知排水孔        → 1.0 / 0.85（不假设无孔，但适度收上限）
+ * 喜干判定用属级量化 watering_way_quantization_json.dryTolerance === 'high'；
+ * 保水基质用 potGeometry.substrateRetentionFactor > 1.0（保水因子高于中性田园土）。
+ */
+function resolveDrainageAmountModifier(potGeometry = {}, wateringQuantization = null) {
+  const drainage = potGeometry.hasDrainageHole || 'unknown'
+  if (drainage === 'true') {
+    return { lower: 1.0, upper: 1.0 }
+  }
+  if (drainage === 'false') {
+    const isDryLoving = String(wateringQuantization?.dryTolerance || '').toLowerCase() === 'high'
+    if (isDryLoving) {
+      return { lower: 0.4, upper: 0.35, stopCondition: '无排水孔且喜干，少量给水、切勿积水' }
+    }
+    const retentionFactor = Number(potGeometry.substrateRetentionFactor)
+    const isWaterRetaining = Number.isFinite(retentionFactor) && retentionFactor > 1.0
+    if (isWaterRetaining) {
+      return { lower: 0.5, upper: 0.4, stopCondition: '无排水孔且基质保水强，少量给水、切勿积水' }
+    }
+    return { lower: 0.6, upper: 0.5, stopCondition: '无排水孔，控制水量避免积水' }
+  }
+  // unknown
+  return { lower: 1.0, upper: 0.85 }
 }
 
 /**
@@ -534,5 +576,6 @@ module.exports = {
   evaluateDryWetGate,
   hasRecentThoroughWatering,
   computeAmountSuggestion,
+  resolveDrainageAmountModifier,
   resolveUserDoseEcho
 }
