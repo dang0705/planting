@@ -351,6 +351,33 @@ test('planner: 盆型档案影响水量建议', () => {
   assert.ok(planWithPot.amountRangeMl[0] <= planWithPot.amountRangeMl[1], '区间下限不超上限')
 })
 
+test('planner: 无排水孔 BASELINE 周期拉长（×1.15），有孔不变', () => {
+  const build = drain => buildWateringPlanner({
+    wateringStrategy: { freq: [8, 12] },
+    historical: {},
+    forecast: {},
+    behaviorTimeline: normalizeCareBehaviorTimeline({
+      referenceDate: REF_DATE,
+      wateringEvents10d: [makeEvent(6, 'normal')]
+    }),
+    potProfile: {
+      potTopDiameterCm: 15, potBottomDiameterCm: 12, potHeightCm: 14,
+      hasDrainageHole: drain, substrateType: 'general'
+    },
+    referenceDate: REF_DATE
+  })
+  const withHole = build('true')
+  const noHole = build('false')
+  // 两者都应是 BASELINE（无偏干偏湿信号）
+  assert.equal(withHole.wateringContext, WATERING_CONTEXTS.BASELINE)
+  assert.equal(noHole.wateringContext, WATERING_CONTEXTS.BASELINE)
+  // 无孔下次浇水日期应晚于有孔（间隔被拉长）
+  assert.ok(noHole.nextWaterDate > withHole.nextWaterDate,
+    `无孔应晚于有孔：无孔=${noHole.nextWaterDate} 有孔=${withHole.nextWaterDate}`)
+  // 窗口上限也应拉长
+  assert.ok(noHole.nextWaterWindow[1] > withHole.nextWaterWindow[1], '无孔窗口上限应拉长')
+})
+
 test('planner: wateringStrategy.way/freq 影响回看窗口', () => {
   const planShortInterval = buildWateringPlanner({
     wateringStrategy: { freq: [3, 5] },

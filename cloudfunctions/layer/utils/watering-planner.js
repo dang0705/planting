@@ -312,7 +312,7 @@ function buildPlannerFormulaStep({
  * @param {string} referenceDate - 参考日期 'YYYY-MM-DD'
  * @returns {{ nextWaterDate: string|null, nextWaterWindow: [number, number], nextWaterReason: string }}
  */
-function resolveNextWaterDate(baseline, wateringContext, timeline, referenceDate) {
+function resolveNextWaterDate(baseline, wateringContext, timeline, referenceDate, intervalFactor = 1.0) {
   const interval = baseline.intervalDays || [5, 8]
   const minDays = Math.max(1, Number(interval[0]) || 5)
   const maxDays = Math.max(minDays, Number(interval[1]) || minDays)
@@ -349,11 +349,15 @@ function resolveNextWaterDate(baseline, wateringContext, timeline, referenceDate
     }
   }
 
-  // BASELINE
+  // BASELINE：排水孔仅在此轻微调制周期（intervalFactor），DRY/WET 不受影响
+  const factor = Number(intervalFactor) > 0 ? Number(intervalFactor) : 1.0
+  const baselineMinDays = Math.max(1, Math.round(minDays * factor))
+  const baselineMaxDays = Math.max(baselineMinDays, Math.round(maxDays * factor))
+  const baselineMidDays = Math.max(1, Math.round((baselineMinDays + baselineMaxDays) / 2))
   if (wateringEvents.length === 0) {
     return {
       nextWaterDate: null,
-      nextWaterWindow: [minDays, maxDays],
+      nextWaterWindow: [baselineMinDays, baselineMaxDays],
       nextWaterReason: '尚无浇水记录，请先选择最近 10 天的浇水日期'
     }
   }
@@ -361,11 +365,11 @@ function resolveNextWaterDate(baseline, wateringContext, timeline, referenceDate
     .slice()
     .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))[0]
   const base = latestEvent ? parseDate(latestEvent.date) || refDate : refDate
-  base.setDate(base.getDate() + midDays)
+  base.setDate(base.getDate() + baselineMidDays)
   const clamped = clampToTomorrow(base)
   return {
     nextWaterDate: formatDate(clamped),
-    nextWaterWindow: [minDays, maxDays],
+    nextWaterWindow: [baselineMinDays, baselineMaxDays],
     nextWaterReason: '按属级基线间隔建议下次浇水时间'
   }
 }
@@ -498,12 +502,14 @@ function buildWateringPlanner({
     timeline.referenceDate || timeline.reference_date || referenceDate
   )
 
-  // 下次浇水日期
+  // 下次浇水日期（排水孔轻微拉长 BASELINE 周期：无孔 ×1.15，其余 ×1.0）
+  const drainageIntervalFactor = potGeometry.hasDrainageHole === 'false' ? 1.15 : 1.0
   const nextWater = resolveNextWaterDate(
     baseline,
     gate.wateringContext,
     timeline,
-    effectiveReferenceDate
+    effectiveReferenceDate,
+    drainageIntervalFactor
   )
 
   // 计算过程（保留 formula step 结构，兼容诊断页展示）

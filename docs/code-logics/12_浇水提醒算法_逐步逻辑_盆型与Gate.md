@@ -168,8 +168,8 @@ DRY/BASELINE 的水量区间在按体积算出后，再乘排水安全修正系�
 ## 7. 下次浇水日期（resolveNextWaterDate）
 
 - WET：返回 `null`，前端提示"暂停浇水并检查土壤"。
-- DRY：今天 + 1。
-- BASELINE：最近浇水日 + baseline 区间中值；无浇水记录返回 `null`。
+- DRY：今天 + 1（不受排水孔周期系数影响）。
+- BASELINE：最近浇水日 + baseline 区间中值；无浇水记录返回 `null`。**排水孔在此轻微调制周期**：无排水孔 `intervalFactor=1.15`（间隔+窗口拉长约 15%，干得慢缓浇防涝），有孔/未知 `1.0`。系数仅作用 BASELINE，DRY/WET 不变。
 - 所有日期 clamp 到不早于明天（referenceDate + 1）。
 
 ## 8. 可审计性现状
