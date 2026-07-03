@@ -10,6 +10,7 @@
         </view>
 
         <view
+          id="watering-reminder-last-watering-row"
           class="mx-[15px] mt-[24px] flex items-center rounded-[14px] bg-white border border-[#e8efeb] p-4"
           @click="openLastWateringPicker"
         >
@@ -30,6 +31,7 @@
             <text class="text-[12px] text-[#8a978e]">用于修正光照与盆土水分衰减</text>
           </view>
           <view
+            id="watering-reminder-pot-profile-row"
             class="mt-1.5 flex items-center rounded-[14px] bg-[#f7faf5] border border-[#e1e9dd] p-3"
             @click="openPotProfileEditor"
           >
