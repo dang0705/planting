@@ -123,7 +123,7 @@
 
 ## 6. 水量建议与矿泉水瓶度量（computeAmountSuggestion）
 
-接收 `(potGeometry, gateState, baselineIntervalDays, { wateringQuantization, weatherWetPressureHitCount })`。按体积算出建议水量区间（ml）后，依次乘 **天气偏湿压制（仅DRY，§6.0）** → **属级需水系数（§6.1）** → **排水孔/基质修正（§6.2）**，最后换算成用户可读的「约 X 瓶矿泉水」文案（`amountBottleText`）。
+接收 `(potGeometry, gateState, baselineIntervalDays, { wateringQuantization, weatherWetPressureHitCount, userDoseEcho })`。按体积算出建议水量区间（ml）后，依次乘 **天气偏湿压制（仅DRY，§6.0）** → **属级需水系数（§6.1）** → **排水孔/基质修正（§6.2）** → **用户历史剂量锚定下限（§6.3）**，最后换算成用户可读文案（`amountBottleText`）。
 
 | 条件 | amountRangeMl 基线 |
 | --- | --- |
@@ -138,7 +138,7 @@
 矿泉水瓶度量（`water-volume-format.js`，前后端各一份，口径一致）：
 - `BOTTLE_ML = 550`；`formatMlToBottleText(ml)` 按 0.5 瓶粒度就近换算，附 ml。
 - ≤50ml → 「喷一喷」；≥2500ml → 「一大桶」；其余「约 X 瓶（Y ml）」。
-- `amountBottleText` 由 `formatMlRangeToBottleText(amountRangeMl)` 取区间上限换算。
+- `amountBottleText` 由 `formatMlRangeToBottleText(amountRangeMl)` 换算：下限 >50ml 且上下限差 >50ml 时输出区间文案「约{min}~{max}ml」；否则退回取上限单值。
 
 ### 6.0 天气偏湿水量压制（resolveWeatherWetAmountFactor）
 
@@ -185,7 +185,33 @@
 - 保水基质用 `substrateRetentionFactor`（由 `resolveSubstrateRetentionFactor` 按单值或 JSON 多选加权算出，`computePotGeometry` 暴露）；> 1.0 表示保水强于中性田园土。
 - 有排水孔时修正矩阵不介入（系数 1.0），水量只随体积/gate/需水系数。
 
-### 6.3 录入侧绝对 ml 与档反推（resolveDoseClass / resolveMlToDoseClass）
+### 6.3 用户历史剂量锚定下限（userDoseEcho 锚定）
+
+在排水修正之后，对 BASELINE/DRY 区间下限做用户历史剂量锚定（WET 不受影响）。让"用户上次实际浇了多少"参与建议水量，而非只由盆体积×gate 决定。
+
+**数据来源**：`resolveUserDoseEcho` 取最近一次非喷雾浇水的 `{ doseClass, amountMl }`。返回对象（含具体 ml），无事件返回 null。
+
+**锚定规则**（仅 small/normal/thorough，mist/unknown 不锚定）：
+
+| 条件 | 锚定值 | 说明 |
+| --- | --- | --- |
+| 有 `amountMl`（具体ml） | `max(amountMl, 基线下限)` | 用户习惯浇更多时锚到用户值 |
+| 无 `amountMl`，有 doseClass | 按 doseClass 反推代表 ml | small=V×0.08, normal=V×0.2, thorough=V×0.4 |
+| mist / unknown / null | 不锚定 | 喷雾不代表根区浇水 |
+
+- 锚定值 > 上限时 clamp 到上限（下限不超过上限）。
+- 锚定命中时追加 `USER_DOSE_ANCHORED` reasonCode。
+- **上限保持体积基准不变**：不被用户浇量拉高或压低，防止"上次浇少→永远建议少"死循环。
+
+**效果示例**（V=2749ml，BASELINE 基线 [275, 412]）：
+
+| 用户上次浇量 | echo doseClass | 锚定后下限 | amountRangeMl | amountBottleText |
+| --- | --- | --- | --- | --- |
+| 350ml | small | 350 | [350, 412] | 约350~412ml |
+| 550ml | normal | clamp→412 | [412, 412] | 约半瓶（412ml） |
+| 30ml | mist | 不锚定 | [275, 412] | 约275~412ml |
+
+### 6.4 录入侧绝对 ml 与档反推（resolveDoseClass / resolveMlToDoseClass）
 
 录入侧（用户"上次浇了多少"）改为存**绝对 amountMl**（矿泉水瓶档：喷一喷 30 / 小半瓶 150 / 半瓶 275 / 一瓶 550 / 两瓶 1100 / 一大桶 2600）。
 
@@ -196,10 +222,10 @@
 
 **amountMl 与 amount 标签冲突校验（resolveDoseClassWithConflict）**：当事件同时带 `amountMl` 和 `amount` 标签时，按 ml 反推的 doseClass rank 与 amount 标签 rank 比较，rank 差 ≥2 判冲突（如 30ml + normal 在 2749ml 盆上：ml 反推为 mist，标签为 normal，差 2）。冲突时以 ml 反推为准，并在 reasonCodes 追加 `AMOUNT_ML_CONFLICTS_WITH_AMOUNT_LABEL`，confidence 降为 low。解决用户录了"正常浇"但实际只浇了 30ml 的矛盾输入。
 
-### 6.4 userDoseEcho 用户历史剂量回显（双轨）
+### 6.5 userDoseEcho 用户历史剂量回显（双轨）
 
-- `resolveUserDoseEcho(wateringEvents, referenceDate, potVolumeMl)`：取最近一次**非喷雾**浇水的 doseClass；只有喷雾 → mist；无事件 → null。
-- `buildWateringPlanner` 返回 `userDoseEcho`，`plant-user-http` 响应透出，前端 `WateringReminderSheet` 以"你通常浇 Y"对照"建议水量 X"展示。
+- `resolveUserDoseEcho(wateringEvents, referenceDate, potVolumeMl)`：取最近一次**非喷雾**浇水的 `{ doseClass, amountMl }` 对象；只有喷雾 → `{ doseClass: 'mist', amountMl: null }`；无事件 → null。
+- `userDoseEcho` 同时服务于两个用途：① §6.3 锚定水量区间下限（算法参与）；② 前端 `WateringReminderSheet` 以"你通常浇 Y"对照"建议水量 X"展示（回显）。
 
 ## 7. 下次浇水日期（resolveNextWaterDate）
 
@@ -216,4 +242,4 @@
 
 ## 9. 单元测试覆盖
 
-`test/unit-test/test-watering-planner-v21.mjs` 覆盖：gate 三态、盆型影响水量区间、baseline 解析、`computeAmountSuggestion` 的 WET/DRY/无盆型分支、基质多选加权、排水材料因子、DRY baseline min 阈值、大小盆瓶数文案、录入侧 amountMl 按盆体积反推档、属级需水系数（喜干<湿润）、userDoseEcho 回显（最近非喷雾/仅喷雾/无事件）、**DRY 湿信号刹车压制为 BASELINE**、**amountMl 与 amount 标签冲突校验**、**天气偏湿水量压制（DRY ×0.5/×0.8）**、**田园土 retentionFactor 1.1**。另有 `test/unit-test/test-water-volume-format.mjs` 覆盖瓶数换算与百分比落档。
+`test/unit-test/test-watering-planner-v21.mjs` 覆盖：gate 三态、盆型影响水量区间、baseline 解析、`computeAmountSuggestion` 的 WET/DRY/无盆型分支、基质多选加权、排水材料因子、DRY baseline min 阈值、大小盆瓶数文案、录入侧 amountMl 按盆体积反推档、属级需水系数（喜干<湿润）、userDoseEcho 回显（最近非喷雾/仅喷雾/无事件）、**DRY 湿信号刹车压制为 BASELINE**、**amountMl 与 amount 标签冲突校验**、**天气偏湿水量压制（DRY ×0.5/×0.8）**、**田园土 retentionFactor 1.1**、**userDoseEcho 锚定区间下限（amountMl/doseClass反推/mist不锚/clamp）**、**区间文案 formatMlRangeToBottleText**。另有 `test/unit-test/test-water-volume-format.mjs` 覆盖瓶数换算与百分比落档。
