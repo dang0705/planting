@@ -11,6 +11,9 @@
 
 export const BOTTLE_ML = 550
 
+/** 5 升油桶（大水量计量单位）。 */
+export const BUCKET_ML = 5000
+
 /**
  * 录入侧「用户上次浇了多少」瓶档选项。
  * value 为该档的代表 ml（提交给后端 amountMl）。
@@ -26,7 +29,8 @@ export const WATERING_BOTTLE_OPTIONS = [
 ]
 
 const MIST_TEXT_MAX_ML = 50
-const BUCKET_TEXT_MIN_ML = 2500
+/** ≥ 5000ml（5 升）改用油桶计量。 */
+const BUCKET_TEXT_MIN_ML = BUCKET_ML
 
 function toFiniteNumber(value) {
   const num = Number(value)
@@ -34,7 +38,8 @@ function toFiniteNumber(value) {
 }
 
 /**
- * ml → 「约 X 瓶」文案（0.5 瓶粒度，附 ml）。与后端 formatMlToBottleText 一致。
+ * ml → 用户可读文案。与后端 formatMlToBottleText 口径一致：
+ * ≤50 喷一喷；50~5000 矿泉水瓶（0.5瓶粒度）；≥5000 用5升油桶「约N桶」四舍五入。
  * @param {number} ml
  * @returns {string}
  */
@@ -47,7 +52,8 @@ export function formatMlToBottleText(ml) {
     return `喷一喷（约${Math.round(value)}ml）`
   }
   if (value >= BUCKET_TEXT_MIN_ML) {
-    return `一大桶（约${Math.round(value)}ml）`
+    const buckets = Math.max(1, Math.round(value / BUCKET_ML))
+    return `约${buckets}桶（5升油桶，约${Math.round(value)}ml）`
   }
   const bottles = Math.round((value / BOTTLE_ML) * 2) / 2
   const roundedMl = Math.round(value)
@@ -96,4 +102,40 @@ export function resolveBottleOptionValue(amountMl) {
     }
   }
   return best
+}
+
+/** 超大盆体积阈值：超过此值（50 升）视为异常大盆，保存时需二次确认。 */
+export const OVERSIZED_POT_VOLUME_ML = 50000
+
+/**
+ * 由盆口/盆底直径与盆高估算盆体积（截锥体，ml=cm³）。与后端 computePotGeometry 口径一致。
+ * 缺直径返回 0；缺盆高按平均直径×0.85 估算。
+ * @param {{potTopDiameterCm:number, potBottomDiameterCm:number, potHeightCm:number}} dims
+ * @returns {number} 体积 ml
+ */
+export function estimatePotVolumeMl({ potTopDiameterCm, potBottomDiameterCm, potHeightCm } = {}) {
+  const top = toFiniteNumber(potTopDiameterCm)
+  const bottom = toFiniteNumber(potBottomDiameterCm)
+  const resolvedTop = top ?? bottom
+  const resolvedBottom = bottom ?? top
+  if (resolvedTop === null || resolvedTop === undefined || resolvedBottom === null || resolvedBottom === undefined) {
+    return 0
+  }
+  const avgDiameter = (resolvedTop + resolvedBottom) / 2
+  let height = toFiniteNumber(potHeightCm)
+  if (height === null) {
+    height = avgDiameter * 0.85
+  }
+  const R = resolvedTop / 2
+  const r = resolvedBottom / 2
+  return (Math.PI * height / 3) * (R * R + R * r + r * r)
+}
+
+/**
+ * 判定盆体积是否异常偏大（需保存前二次确认）。
+ * @param {object} dims 盆型尺寸
+ * @returns {boolean}
+ */
+export function isOversizedPot(dims) {
+  return estimatePotVolumeMl(dims) > OVERSIZED_POT_VOLUME_ML
 }

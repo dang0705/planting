@@ -157,14 +157,17 @@
 
 <script setup>
 import { ref, computed, nextTick, watch } from 'vue'
-import { requestHttpFunction } from '@/api/http'
+import { usePlantStore } from '@/store/plants.js'
+import { isOversizedPot, estimatePotVolumeMl } from '@/utils/water-volume-format.js'
 import PotCanvas from '@/components/PotCanvas.vue'
 
 const props = defineProps({
-  plantId: { type: Number, default: null }
+  plant: { type: Object, default: null }
 })
 
 const emit = defineEmits(['saved', 'summary'])
+
+const plantStore = usePlantStore()
 
 const popupRef = ref(null)
 const potCanvasRef = ref(null)
@@ -259,6 +262,38 @@ const summary = computed(() => {
   return parts.join(' · ')
 })
 
+/**
+ * 从 props.plant.potProfile 读取盆型档案，回填表单。
+ * substrateType 可能是 JSON 数组字符串（多选+比例），需反序列化成 substrateComposition。
+ */
+function applyPotProfile(potProfile) {
+  if (!potProfile) {
+    return
+  }
+  const d = { ...potProfile }
+  if (typeof d.substrateType === 'string' && d.substrateType.startsWith('[')) {
+    try {
+      d.substrateComposition = JSON.parse(d.substrateType)
+    } catch {
+      d.substrateComposition = []
+    }
+  }
+  profileData.value = d
+  form.value = {
+    potTopDiameterCm:
+      d.potTopDiameterCm !== null && d.potTopDiameterCm > 0 ? String(d.potTopDiameterCm) : '',
+    potBottomDiameterCm:
+      d.potBottomDiameterCm !== null && d.potBottomDiameterCm > 0
+        ? String(d.potBottomDiameterCm)
+        : '',
+    potHeightCm: d.potHeightCm !== null && d.potHeightCm > 0 ? String(d.potHeightCm) : '',
+    hasDrainageHole: d.hasDrainageHole || 'true'
+  }
+  if (d.substrateComposition) {
+    selectedSubstrates.value = d.substrateComposition.map(s => s.material)
+  }
+}
+
 async function open() {
   form.value = {
     potTopDiameterCm: '',
@@ -270,41 +305,11 @@ async function open() {
   loading.value = true
   popupRef.value?.open()
 
-  if (props.plantId) {
-    try {
-      const response = await requestHttpFunction('plant-user-http/user-plants/pot-profile', {
-        method: 'GET',
-        query: { userPlantId: props.plantId }
-      })
-      if (response?.code === 200 && response.data) {
-        profileData.value = response.data
-        const d = response.data
-        form.value = {
-          potTopDiameterCm:
-            d.potTopDiameterCm !== null && d.potTopDiameterCm > 0 ? String(d.potTopDiameterCm) : '',
-          potBottomDiameterCm:
-            d.potBottomDiameterCm !== null && d.potBottomDiameterCm > 0
-              ? String(d.potBottomDiameterCm)
-              : '',
-          potHeightCm: d.potHeightCm !== null && d.potHeightCm > 0 ? String(d.potHeightCm) : '',
-          hasDrainageHole: d.hasDrainageHole || 'true'
-        }
-        if (d.substrateComposition) {
-          selectedSubstrates.value = d.substrateComposition.map(s => s.material)
-        }
-      }
-    } catch (error) {
-      console.warn('加载盆型档案失败:', error)
-    } finally {
-      loading.value = false
-      await nextTick()
-      setTimeout(() => potCanvasRef.value?.initCanvas(), 300)
-    }
-  } else {
-    loading.value = false
-    await nextTick()
-    setTimeout(() => potCanvasRef.value?.initCanvas(), 300)
-  }
+  applyPotProfile(props.plant?.potProfile)
+
+  loading.value = false
+  await nextTick()
+  setTimeout(() => potCanvasRef.value?.initCanvas(), 300)
 }
 
 function close() {
@@ -312,13 +317,37 @@ function close() {
 }
 
 async function save() {
-  if (!props.plantId) {
+  const plantId = props.plant?.id
+  if (!plantId) {
     return
   }
+
+  // 超大盆型二次确认：避免误填（如把 mm 当 cm）导致体积异常、浇水量荒谬
+  const dims = {
+    potTopDiameterCm: form.value.potTopDiameterCm,
+    potBottomDiameterCm: form.value.potBottomDiameterCm,
+    potHeightCm: form.value.potHeightCm
+  }
+  if (isOversizedPot(dims)) {
+    const liters = Math.round(estimatePotVolumeMl(dims) / 1000)
+    const confirmed = await new Promise(resolve => {
+      uni.showModal({
+        title: '盆型尺寸确认',
+        content: `按当前尺寸估算容积约 ${liters} 升，明显大于常见家庭盆栽。请确认尺寸单位是厘米(cm)且填写无误。`,
+        confirmText: '确认无误',
+        cancelText: '返回修改',
+        success: res => resolve(Boolean(res.confirm)),
+        fail: () => resolve(false)
+      })
+    })
+    if (!confirmed) {
+      return
+    }
+  }
+
   saving.value = true
   try {
     const payload = {
-      userPlantId: props.plantId,
       potTopDiameterCm: form.value.potTopDiameterCm || null,
       potBottomDiameterCm: form.value.potBottomDiameterCm || null,
       potHeightCm: form.value.potHeightCm || null,
@@ -327,27 +356,16 @@ async function save() {
         ? JSON.stringify(substrateComposition.value)
         : 'unknown'
     }
-    const response = await requestHttpFunction('plant-user-http/user-plants/pot-profile', {
-      method: 'POST',
-      body: payload
-    })
-    if (response?.code === 200) {
-      const savedData = response.data
-      if (
-        savedData &&
-        typeof savedData.substrateType === 'string' &&
-        savedData.substrateType.startsWith('[')
-      ) {
-        try {
-          savedData.substrateComposition = JSON.parse(savedData.substrateType)
-        } catch {
-          savedData.substrateComposition = []
-        }
-      }
+    const result = await plantStore.savePotProfile(plantId, payload)
+    if (result?.success) {
+      const savedData = { ...payload }
+      savedData.substrateComposition = substrateComposition.value
       profileData.value = savedData
       emit('saved', savedData)
       uni.showToast({ title: '盆型信息已保存', icon: 'success' })
       close()
+    } else {
+      uni.showToast({ title: result?.message || '保存失败', icon: 'none' })
     }
   } catch (error) {
     console.error('保存盆型档案失败:', error)

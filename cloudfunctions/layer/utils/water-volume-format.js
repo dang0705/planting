@@ -13,6 +13,9 @@
 
 const BOTTLE_ML = 550
 
+/** 5 升油桶（大水量计量单位）。 */
+const BUCKET_ML = 5000
+
 /**
  * 浇水量分级（与 hydration-load.DOSE_CLASS 保持一致）。
  */
@@ -44,8 +47,8 @@ const FIXED_ML_THRESHOLDS = Object.freeze({
 
 /** 低于此 ml 视为"喷一喷"，不换算瓶数。 */
 const MIST_TEXT_MAX_ML = 50
-/** 高于此 ml 视为"一大桶"，不再细数瓶。 */
-const BUCKET_TEXT_MIN_ML = 2500
+/** ≥ 5000ml（5 升）改用「约 N 桶」油桶计量。 */
+const BUCKET_TEXT_MIN_ML = BUCKET_ML
 
 function toFiniteNumber(value) {
   const num = Number(value)
@@ -53,12 +56,12 @@ function toFiniteNumber(value) {
 }
 
 /**
- * 把绝对水量 ml 换算成「约 X 瓶」文案（0.5 瓶粒度，附 ml）。
+ * 把绝对水量 ml 换算成用户可读文案。
  *
- * - ≤0：无需浇水提示
+ * - ≤0：无需浇水
  * - ≤50ml：喷一喷
- * - ≥2500ml：一大桶
- * - 其余：就近 0.5 瓶粒度，如「约半瓶(275ml)」「约1瓶(550ml)」「约1.5瓶(825ml)」
+ * - 50 ~ 5000ml：就近 0.5 瓶粒度矿泉水瓶，如「约半瓶(275ml)」「约1瓶(550ml)」
+ * - ≥5000ml：改用 5 升油桶计量，四舍五入「约 N 桶（5升油桶，约 X ml）」
  *
  * @param {number} ml
  * @returns {string}
@@ -72,7 +75,8 @@ function formatMlToBottleText(ml) {
     return `喷一喷（约${Math.round(value)}ml）`
   }
   if (value >= BUCKET_TEXT_MIN_ML) {
-    return `一大桶（约${Math.round(value)}ml）`
+    const buckets = Math.max(1, Math.round(value / BUCKET_ML))
+    return `约${buckets}桶（5升油桶，约${Math.round(value)}ml）`
   }
   // 就近 0.5 瓶粒度
   const bottles = Math.round((value / BOTTLE_ML) * 2) / 2

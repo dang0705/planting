@@ -62,9 +62,24 @@ test('format: 约1.5瓶（825ml）', () => {
   assert.match(text, /1\.5\s*瓶/)
 })
 
-test('format: 大量走"一大桶"', () => {
+test('format: 2500~5000ml 仍用瓶（未达5升油桶）', () => {
   const text = formatMlToBottleText(2600)
-  assert.match(text, /大桶|桶/)
+  assert.match(text, /瓶/)
+  assert.doesNotMatch(text, /桶/)
+})
+
+test('format: ≥5升改用油桶计量（约N桶）', () => {
+  // 5000ml = 1 桶
+  assert.match(formatMlToBottleText(5000), /约1桶/)
+  assert.match(formatMlToBottleText(5000), /5升油桶|5L|升/)
+  // 12000ml ≈ 2.4 桶 → 四舍五入 约2桶
+  assert.match(formatMlToBottleText(12000), /约2桶/)
+  // 85118ml ≈ 17.0 桶 → 约17桶
+  assert.match(formatMlToBottleText(85118), /约17桶/)
+})
+
+test('format: 4999ml 仍用瓶（不足5升不进油桶）', () => {
+  assert.doesNotMatch(formatMlToBottleText(4999), /桶/)
 })
 
 test('format: 0.5 瓶粒度就近取整', () => {
