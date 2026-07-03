@@ -459,13 +459,13 @@ test('amountSuggestion: 小盆体积 → 瓶数文案偏小（喷/半瓶）', ()
     `小盆 DRY 瓶数文案应偏小，实际 ${sug.amountBottleText}（上限 ${sug.amountRangeMl[1]}ml）`)
 })
 
-test('amountSuggestion: 大盆 DRY → 瓶数文案偏大（多瓶/大桶）', () => {
+test('amountSuggestion: 大盆 DRY → 瓶数/区间文案偏大（多瓶/大桶/区间）', () => {
   const bigGeo = computePotGeometry({
     potTopDiameterCm: 30, potBottomDiameterCm: 24, potHeightCm: 28,
     hasDrainageHole: 'true', potMaterial: 'ceramic', substrateType: 'general'
   })
   const sug = computeAmountSuggestion(bigGeo, GATE_STATE.DRY)
-  assert.match(sug.amountBottleText, /瓶|桶/)
+  assert.match(sug.amountBottleText, /瓶|桶|ml/)
   assert.ok(sug.amountRangeMl[1] > 300, '大盆 DRY 上限应远超 300ml')
 })
 
@@ -494,8 +494,8 @@ test('planner: 录入侧 amountMl 按盆体积反推档（同 ml 大盆=少量�
   const smallPot = build({ potTopDiameterCm: 8, potBottomDiameterCm: 7, potHeightCm: 8, hasDrainageHole: 'true' })
   const bigPot = build({ potTopDiameterCm: 30, potBottomDiameterCm: 24, potHeightCm: 28, hasDrainageHole: 'true' })
   // 500ml 对小盆(V≈354)占比>100% → 浇透档回显；对大盆(V≈16000)仅 3% → 喷雾档回显
-  assert.equal(smallPot.userDoseEcho, DOSE_CLASS.THOROUGH, `小盆 500ml 应回显浇透，实际 ${smallPot.userDoseEcho}`)
-  assert.equal(bigPot.userDoseEcho, DOSE_CLASS.MIST, `大盆 500ml 应回显喷雾，实际 ${bigPot.userDoseEcho}`)
+  assert.equal(smallPot.userDoseEcho?.doseClass ?? smallPot.userDoseEcho, DOSE_CLASS.THOROUGH, `小盆 500ml 应回显浇透，实际 ${JSON.stringify(smallPot.userDoseEcho)}`)
+  assert.equal(bigPot.userDoseEcho?.doseClass ?? bigPot.userDoseEcho, DOSE_CLASS.MIST, `大盆 500ml 应回显喷雾，实际 ${JSON.stringify(bigPot.userDoseEcho)}`)
 })
 
 test('amountSuggestion: 排水孔修正矩阵按优先级调制水量', () => {
@@ -556,11 +556,13 @@ test('amountSuggestion: 无盆型时给保守区间', () => {
 
 test('userDoseEcho: 取最近一次非喷雾剂量', () => {
   const events = [makeEvent(1, 'mist'), makeEvent(2, 'thorough'), makeEvent(5, 'small')]
-  assert.equal(resolveUserDoseEcho(events, REF_DATE), DOSE_CLASS.THOROUGH)
+  const echo = resolveUserDoseEcho(events, REF_DATE)
+  assert.equal(echo?.doseClass, DOSE_CLASS.THOROUGH)
 })
 
 test('userDoseEcho: 只有喷雾 → mist', () => {
-  assert.equal(resolveUserDoseEcho([makeEvent(1, 'mist')], REF_DATE), DOSE_CLASS.MIST)
+  const echo = resolveUserDoseEcho([makeEvent(1, 'mist')], REF_DATE)
+  assert.equal(echo?.doseClass, DOSE_CLASS.MIST)
 })
 
 test('userDoseEcho: 无事件 → null', () => {
@@ -577,7 +579,7 @@ test('planner: 返回 userDoseEcho', () => {
     potProfile: { potTopDiameterCm: 12, potBottomDiameterCm: 8, potHeightCm: 10, hasDrainageHole: 'true' },
     referenceDate: REF_DATE
   })
-  assert.equal(plan.userDoseEcho, DOSE_CLASS.THOROUGH)
+  assert.equal(plan.userDoseEcho?.doseClass, DOSE_CLASS.THOROUGH)
 })
 
 /* ============================================================
@@ -770,4 +772,147 @@ test('planner: 龟背竹案例端到端 — 强湿+无有效浇水 → BASELINE 
   assert.ok(plan.reasonCodes.includes(REASON_CODE.AMOUNT_ML_CONFLICTS_WITH_AMOUNT_LABEL), '含冲突 reasonCode')
   // 水量不应是 411-618ml 那种大水量（BASELINE 倍率 0.1~0.15）
   assert.ok(plan.amountRangeMl[1] < 500, `BASELINE 水量应保守，实际 ${plan.amountRangeMl[1]}`)
+})
+
+/* ============================================================
+ * userDoseEcho 锚定水量区间下限 + 区间文案（改动1-3）
+ * ============================================================ */
+
+test('resolveUserDoseEcho: 返回 { doseClass, amountMl } 对象', () => {
+  // 550ml 对 V=2749ml 占比 20% → normal 档
+  const events = [
+    { date: REF_DATE, watered: true, amount: 'normal', amountMl: 550 }
+  ]
+  const echo = resolveUserDoseEcho(events, REF_DATE, 2749)
+  assert.equal(echo.doseClass, DOSE_CLASS.NORMAL)
+  assert.equal(echo.amountMl, 550)
+})
+
+test('resolveUserDoseEcho: 无 amountMl 字段时 amountMl 为 null', () => {
+  const events = [makeEvent(1, 'thorough')] // makeEvent 不带 amountMl
+  const echo = resolveUserDoseEcho(events, REF_DATE)
+  assert.equal(echo.doseClass, DOSE_CLASS.THOROUGH)
+  assert.equal(echo.amountMl, null)
+})
+
+test('computeAmountSuggestion: userDoseEcho.amountMl 锚定下限（用户浇量 > 基线下限）', () => {
+  const geo = computePotGeometry({
+    potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15,
+    hasDrainageHole: 'true', potMaterial: 'ceramic', substrateType: 'general'
+  })
+  // V≈2749ml, BASELINE 基线区间 [275, 412]，用户浇 350ml(normal)
+  const withoutEcho = computeAmountSuggestion(geo, GATE_STATE.BASELINE)
+  const withEcho = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], {
+    userDoseEcho: { doseClass: 'normal', amountMl: 350 }
+  })
+  // 无 echo 时下限 = 275
+  assert.ok(withoutEcho.amountRangeMl[0] < 350, `无锚定下限应 < 350，实际 ${withoutEcho.amountRangeMl[0]}`)
+  // 有 echo 时下限锚到 350（350 < 上限412，不被 clamp）
+  assert.equal(withEcho.amountRangeMl[0], 350, `锚定后下限应为 350，实际 ${withEcho.amountRangeMl[0]}`)
+  // 上限不变
+  assert.equal(withEcho.amountRangeMl[1], withoutEcho.amountRangeMl[1], '上限不应变')
+  // 含 USER_DOSE_ANCHORED reasonCode
+  assert.ok(withEcho.reasonCodes.includes(REASON_CODE.USER_DOSE_ANCHORED), '应含 USER_DOSE_ANCHORED')
+})
+
+test('computeAmountSuggestion: userDoseEcho 超过上限时 clamp 到上限', () => {
+  const geo = computePotGeometry({
+    potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15,
+    hasDrainageHole: 'true', potMaterial: 'ceramic', substrateType: 'general'
+  })
+  // V≈2749ml, BASELINE 区间 [275, 412]，用户浇 550ml > 上限 412
+  const withEcho = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], {
+    userDoseEcho: { doseClass: 'normal', amountMl: 550 }
+  })
+  assert.equal(withEcho.amountRangeMl[0], withEcho.amountRangeMl[1], '下限应 clamp 到上限')
+  assert.ok(withEcho.reasonCodes.includes(REASON_CODE.USER_DOSE_ANCHORED))
+})
+
+test('computeAmountSuggestion: userDoseEcho 基线下限更高时不锚（用户浇量 < 基线下限）', () => {
+  const geo = computePotGeometry({
+    potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15,
+    hasDrainageHole: 'true', potMaterial: 'ceramic', substrateType: 'general'
+  })
+  // V≈2749ml, BASELINE 基线区间 [275, 412]，用户只浇了 100ml(small)
+  const withEcho = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], {
+    userDoseEcho: { doseClass: 'small', amountMl: 100 }
+  })
+  // 100 < 275，不锚定
+  assert.ok(withEcho.amountRangeMl[0] < 100 || withEcho.amountRangeMl[0] === 275, `下限不应被拉低，实际 ${withEcho.amountRangeMl[0]}`)
+  assert.ok(!withEcho.reasonCodes?.includes(REASON_CODE.USER_DOSE_ANCHORED), '不应含 USER_DOSE_ANCHORED')
+})
+
+test('computeAmountSuggestion: mist 不锚定', () => {
+  const geo = computePotGeometry({
+    potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15,
+    hasDrainageHole: 'true', potMaterial: 'ceramic', substrateType: 'general'
+  })
+  const withMist = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], {
+    userDoseEcho: { doseClass: 'mist', amountMl: 30 }
+  })
+  assert.ok(!withMist.reasonCodes?.includes(REASON_CODE.USER_DOSE_ANCHORED), 'mist 不应锚定')
+})
+
+test('computeAmountSuggestion: 无 amountMl 时按 doseClass 反推锚定', () => {
+  const geo = computePotGeometry({
+    potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15,
+    hasDrainageHole: 'true', potMaterial: 'ceramic', substrateType: 'general'
+  })
+  // V≈2749ml, small → V×0.08=220, 基线下限 275 > 220 → 不锚
+  // normal → V×0.2=550, 550 > 上限412 → clamp 到 412
+  const withNormal = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], {
+    userDoseEcho: { doseClass: 'normal', amountMl: null }
+  })
+  assert.equal(withNormal.amountRangeMl[0], withNormal.amountRangeMl[1], 'normal 反推超过上限应 clamp')
+  assert.ok(withNormal.reasonCodes.includes(REASON_CODE.USER_DOSE_ANCHORED))
+  // small → 220 < 275，不锚定
+  const withSmall = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], {
+    userDoseEcho: { doseClass: 'small', amountMl: null }
+  })
+  assert.ok(!withSmall.reasonCodes?.includes(REASON_CODE.USER_DOSE_ANCHORED), 'small 反推值 < 基线下限不应锚定')
+})
+
+test('planner: 用户浇 350ml(normal) → 下限锚定 + 区间文案', () => {
+  const plan = buildWateringPlanner({
+    wateringStrategy: { freq: [5, 8] },
+    behaviorTimeline: normalizeCareBehaviorTimeline({
+      referenceDate: REF_DATE,
+      watering_events_10d: [{ date: makeEvent(2).date, watered: true, amount: 'normal', amountMl: 350 }]
+    }),
+    potProfile: { potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15, hasDrainageHole: 'true' },
+    referenceDate: REF_DATE
+  })
+  assert.ok(plan.amountRangeMl[0] >= 350, `下限应锚定≥350，实际 ${plan.amountRangeMl[0]}`)
+  assert.ok(plan.reasonCodes.includes(REASON_CODE.USER_DOSE_ANCHORED), '应含 USER_DOSE_ANCHORED')
+  assert.match(plan.amountBottleText, /ml/, '区间文案应含 ml')
+})
+
+test('planner: 用户浇 30ml(mist) → 不锚定 + 正常区间', () => {
+  const plan = buildWateringPlanner({
+    wateringStrategy: { freq: [5, 8] },
+    behaviorTimeline: normalizeCareBehaviorTimeline({
+      referenceDate: REF_DATE,
+      watering_events_10d: [{ date: makeEvent(2).date, watered: true, amount: 'spray', amountMl: 30 }]
+    }),
+    potProfile: { potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15, hasDrainageHole: 'true' },
+    referenceDate: REF_DATE
+  })
+  assert.ok(!plan.reasonCodes.includes(REASON_CODE.USER_DOSE_ANCHORED), 'mist 不应锚定')
+  // mist 不锚定：下限由 gate 倍率决定（DRY=V×0.2=550），不被用户浇量影响
+  assert.equal(plan.userDoseEcho?.doseClass, DOSE_CLASS.MIST, 'echo 应为 mist')
+})
+
+test('formatMlRangeToBottleText: 区间文案', () => {
+  const { formatMlRangeToBottleText } = require('../../cloudfunctions/layer/utils/water-volume-format.js')
+  // 区间跨度大且下限>50 → 区间文案
+  assert.equal(formatMlRangeToBottleText([275, 412]), '约275~412ml')
+  assert.equal(formatMlRangeToBottleText([100, 300]), '约100~300ml')
+  // [0,0] → 暂停
+  assert.equal(formatMlRangeToBottleText([0, 0]), '暂停浇水')
+  // 下限≤50（喷雾级）→ 单值取上限
+  assert.match(formatMlRangeToBottleText([30, 200]), /瓶|ml/)
+  // 上下限差≤50 → 单值
+  assert.match(formatMlRangeToBottleText([100, 120]), /瓶|ml/)
+  // 非法
+  assert.equal(formatMlRangeToBottleText(null), '暂无建议水量')
 })

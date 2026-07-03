@@ -520,18 +520,28 @@ function buildWateringPlanner({
     gate.reasonCodes.push(REASON_CODE.AMOUNT_ML_CONFLICTS_WITH_AMOUNT_LABEL)
   }
 
-  // 水量建议
-  const amountSuggestion = computeAmountSuggestion(potGeometry, gate.gateState, baseline.intervalDays, {
-    wateringQuantization,
-    weatherWetPressureHitCount
-  })
-
-  // 用户历史剂量回显（最近一次非喷雾浇水的剂量档）
+  // 用户历史剂量回显（最近一次非喷雾浇水的剂量档 + amountMl）
   const userDoseEcho = resolveUserDoseEcho(
     timeline.watering_events_10d || timeline.wateringEvents10d || [],
     timeline.referenceDate || timeline.reference_date || referenceDate,
     Number(potGeometry.potVolumeMl) || 0
   )
+
+  // 水量建议（传入 userDoseEcho 锚定区间下限）
+  const amountSuggestion = computeAmountSuggestion(potGeometry, gate.gateState, baseline.intervalDays, {
+    wateringQuantization,
+    weatherWetPressureHitCount,
+    userDoseEcho
+  })
+
+  // 合并水量建议产生的 reasonCodes（如 USER_DOSE_ANCHORED）
+  if (Array.isArray(amountSuggestion.reasonCodes) && amountSuggestion.reasonCodes.length) {
+    for (const rc of amountSuggestion.reasonCodes) {
+      if (!gate.reasonCodes.includes(rc)) {
+        gate.reasonCodes.push(rc)
+      }
+    }
+  }
 
   // 下次浇水日期（排水孔轻微拉长 BASELINE 周期：无孔 ×1.15，其余 ×1.0）
   const drainageIntervalFactor = potGeometry.hasDrainageHole === 'false' ? 1.15 : 1.0

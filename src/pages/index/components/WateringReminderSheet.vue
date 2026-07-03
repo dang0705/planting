@@ -351,10 +351,13 @@ const plannerSummaryRows = computed(() => {
     })
   }
   if (plannerResult.value?.userDoseEcho) {
+    const echo = plannerResult.value.userDoseEcho
+    // 兼容对象 { doseClass, amountMl } 和旧字符串格式
+    const doseClass = typeof echo === 'string' ? echo : echo?.doseClass
     const echoMap = { unknown: '不确定', mist: '喷一喷', small: '小半瓶', normal: '约一瓶', thorough: '浇到出水' }
     rows.push({
       label: '你通常浇',
-      value: echoMap[plannerResult.value.userDoseEcho] || '约一瓶',
+      value: echoMap[doseClass] || '约一瓶',
       valueClass: 'text-xs text-gray-500'
     })
   }

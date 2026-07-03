@@ -58,7 +58,8 @@ const REASON_CODE = Object.freeze({
   NO_DRAINAGE_NARROW_BOTTOM: 'NO_DRAINAGE_NARROW_BOTTOM',
   DRY_SUPPRESSED_BY_WET_ENVIRONMENT: 'DRY_SUPPRESSED_BY_WET_ENVIRONMENT',
   AMOUNT_ML_CONFLICTS_WITH_AMOUNT_LABEL: 'AMOUNT_ML_CONFLICTS_WITH_AMOUNT_LABEL',
-  WET_ENVIRONMENT_AMOUNT_REDUCED: 'WET_ENVIRONMENT_AMOUNT_REDUCED'
+  WET_ENVIRONMENT_AMOUNT_REDUCED: 'WET_ENVIRONMENT_AMOUNT_REDUCED',
+  USER_DOSE_ANCHORED: 'USER_DOSE_ANCHORED'
 })
 
 /**
@@ -308,12 +309,18 @@ function computeLastEffectiveRootWateredDaysAgo(wateringEvents = [], referenceDa
 }
 
 /**
- * 提取用户近期代表性剂量：最近一次非喷雾浇水的 doseClass；
+ * 提取用户近期代表性剂量：最近一次非喷雾浇水的 doseClass + amountMl；
  * 若只有喷雾则返回 mist；无事件返回 null。
+ *
+ * @returns {{ doseClass: string, amountMl: number|null } | string | null}
+ *   返回对象 { doseClass, amountMl }；向后兼容：调用方若按字符串使用，
+ *   对象的 toString 不影响——planner 和 app.js 已适配对象格式。
+ *   mist 时返回 { doseClass: 'mist', amountMl: null }。
  */
 function resolveUserDoseEcho(wateringEvents = [], referenceDate = '', potVolumeMl = 0) {
   let bestDiff = null
   let bestDose = null
+  let bestAmountMl = null
   let mistSeen = false
   for (const event of wateringEvents) {
     const doseClass = resolveDoseClass(event, potVolumeMl)
@@ -326,12 +333,14 @@ function resolveUserDoseEcho(wateringEvents = [], referenceDate = '', potVolumeM
     if (bestDiff === null || effectiveDiff < bestDiff) {
       bestDiff = effectiveDiff
       bestDose = doseClass
+      const rawMl = Number(event.amountMl ?? event.amount_ml)
+      bestAmountMl = Number.isFinite(rawMl) && rawMl > 0 ? rawMl : null
     }
   }
   if (bestDose !== null) {
-    return bestDose
+    return { doseClass: bestDose, amountMl: bestAmountMl }
   }
-  return mistSeen ? DOSE_CLASS.MIST : null
+  return mistSeen ? { doseClass: DOSE_CLASS.MIST, amountMl: null } : null
 }
 
 /**
@@ -597,11 +606,40 @@ function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELI
     stopCondition = modifier.stopCondition
   }
 
+  // 用户历史剂量锚定区间下限（mist 不锚定）
+  const reasonCodes = []
+  const echo = options.userDoseEcho
+  const echoDoseClass = echo ? (typeof echo === 'string' ? echo : echo.doseClass) : null
+  const echoAmountMl = echo && typeof echo === 'object' ? Number(echo.amountMl) : null
+  if (echoDoseClass && echoDoseClass !== DOSE_CLASS.MIST && echoDoseClass !== DOSE_CLASS.UNKNOWN) {
+    // 锚定 ml：优先用具体 amountMl，无则按 doseClass 反推代表 ml
+    let anchorMl = null
+    if (Number.isFinite(echoAmountMl) && echoAmountMl > 0) {
+      anchorMl = echoAmountMl
+    } else {
+      // 按 doseClass 对应体积百分比反推代表 ml
+      const ratioByDose = { small: 0.08, normal: 0.2, thorough: 0.4 }
+      const ratio = ratioByDose[echoDoseClass]
+      if (ratio) {
+        anchorMl = Math.round(volumeMl * ratio)
+      }
+    }
+    if (anchorMl && anchorMl > amountRangeMl[0]) {
+      amountRangeMl[0] = anchorMl
+      // 下限不能超过上限
+      if (amountRangeMl[0] > amountRangeMl[1]) {
+        amountRangeMl[0] = amountRangeMl[1]
+      }
+      reasonCodes.push(REASON_CODE.USER_DOSE_ANCHORED)
+    }
+  }
+
   return {
     amountRangeMl,
     amountBottleText: formatMlRangeToBottleText(amountRangeMl),
     stopCondition,
-    confidenceLevel: volumeConfidence
+    confidenceLevel: volumeConfidence,
+    reasonCodes
   }
 }
 

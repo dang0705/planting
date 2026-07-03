@@ -148,8 +148,11 @@ function resolveMlToDoseClass(ml, potVolumeMl) {
 }
 
 /**
- * 把水量区间 [minMl, maxMl] 换算成瓶数文案（以上限为准，反映"最多浇到"规模）。
- * [0,0] → 暂停提示；非法 → 安全兜底。
+ * 把水量区间 [minMl, maxMl] 换算成瓶数文案。
+ *
+ * - [0,0] → 暂停提示
+ * - 下限 ≤ 50ml（喷雾级）或上下限差 ≤ 50ml → 退回单值（取上限）
+ * - 否则 → 「约{min}~{max}ml」区间文案（保留范围信息）
  *
  * @param {number[]} rangeMl
  * @returns {string}
@@ -158,9 +161,14 @@ function formatMlRangeToBottleText(rangeMl) {
   if (!Array.isArray(rangeMl) || rangeMl.length < 2) {
     return '暂无建议水量'
   }
+  const lower = toFiniteNumber(rangeMl[0])
   const upper = toFiniteNumber(rangeMl[1])
   if (upper === null || upper <= 0) {
     return '暂停浇水'
+  }
+  // 区间跨度足够大且下限非喷雾级时，输出区间文案
+  if (lower !== null && lower > MIST_TEXT_MAX_ML && (upper - lower) > MIST_TEXT_MAX_ML) {
+    return `约${Math.round(lower)}~${Math.round(upper)}ml`
   }
   return formatMlToBottleText(upper)
 }

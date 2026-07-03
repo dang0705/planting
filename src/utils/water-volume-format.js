@@ -64,7 +64,9 @@ export function formatMlToBottleText(ml) {
 }
 
 /**
- * 水量区间 [min,max] → 瓶数文案（以上限为准）。与后端 formatMlRangeToBottleText 一致。
+ * 水量区间 [min,max] → 瓶数文案。与后端 formatMlRangeToBottleText 一致。
+ * - 下限 ≤ 50ml 或上下限差 ≤ 50ml → 取上限单值
+ * - 否则 → 「约{min}~{max}ml」区间文案
  * @param {number[]} rangeMl
  * @returns {string}
  */
@@ -72,9 +74,13 @@ export function formatMlRangeToBottleText(rangeMl) {
   if (!Array.isArray(rangeMl) || rangeMl.length < 2) {
     return '暂无建议水量'
   }
+  const lower = toFiniteNumber(rangeMl[0])
   const upper = toFiniteNumber(rangeMl[1])
   if (upper === null || upper <= 0) {
     return '暂停浇水'
+  }
+  if (lower !== null && lower > MIST_TEXT_MAX_ML && (upper - lower) > MIST_TEXT_MAX_ML) {
+    return `约${Math.round(lower)}~${Math.round(upper)}ml`
   }
   return formatMlToBottleText(upper)
 }
