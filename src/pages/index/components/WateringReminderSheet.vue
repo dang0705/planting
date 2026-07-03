@@ -90,6 +90,7 @@
             <text
               v-for="code in plannerResult.reasonCodes"
               :key="code"
+              v-show="reasonCodeLabel(code)"
               class="rounded-full bg-white/60 px-2 py-0.5 text-[10px] text-gray-500"
               >{{ reasonCodeLabel(code) }}</text
             >
@@ -366,18 +367,22 @@ const plannerSummaryRows = computed(() => {
 
 function reasonCodeLabel(code) {
   const map = {
-    OVERWATERING_RISK_WARNING: '过浇风险',
-    CHECK_SOIL_BEFORE_WATERING: '建议查土',
-    INCREASE_WATERING_FREQUENCY: '增加浇水频率',
-    RECENT_THOROUGH_WATERING: '近期浇透',
-    STRONG_WET_ENVIRONMENT: '强偏湿环境',
-    HOT_DRY_FORECAST: '高温干燥预报',
-    NO_RECENT_WATERING: '近期无浇水',
-    BASELINE_INTERVAL: '基线间隔',
-    MIST_DOES_NOT_OFFSET_DRY: '喷雾不抵消干燥',
-    NO_DRAINAGE_NARROW_BOTTOM: '无排水孔窄底盆'
+    OVERWATERING_RISK_WARNING: '可能浇多了',
+    CHECK_SOIL_BEFORE_WATERING: '先检查土壤',
+    INCREASE_WATERING_FREQUENCY: '该浇水了',
+    RECENT_THOROUGH_WATERING: '最近刚浇透',
+    STRONG_WET_ENVIRONMENT: '最近天气很湿',
+    HOT_DRY_FORECAST: '接下来又热又干',
+    NO_RECENT_WATERING: '有一阵没浇了',
+    BASELINE_INTERVAL: '按正常节奏来',
+    MIST_DOES_NOT_OFFSET_DRY: '喷一下不够，要浇透',
+    NO_DRAINAGE_NARROW_BOTTOM: '盆没孔要少浇',
+    DRY_SUPPRESSED_BY_WET_ENVIRONMENT: '天气湿，先别急着浇',
+    AMOUNT_ML_CONFLICTS_WITH_AMOUNT_LABEL: '上次浇水量记录有出入',
+    WET_ENVIRONMENT_AMOUNT_REDUCED: '天气湿，少浇点',
+    USER_DOSE_ANCHORED: '参考了你平时的浇水量'
   }
-  return map[code] || code
+  return map[code] || ''
 }
 
 function todayStr() {
