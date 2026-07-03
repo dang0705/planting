@@ -815,17 +815,19 @@ test('computeAmountSuggestion: userDoseEcho.amountMl 锚定下限（用户浇量
   assert.ok(withEcho.reasonCodes.includes(REASON_CODE.USER_DOSE_ANCHORED), '应含 USER_DOSE_ANCHORED')
 })
 
-test('computeAmountSuggestion: userDoseEcho 超过上限时 clamp 到上限', () => {
+test('computeAmountSuggestion: userDoseEcho 超过上限时不锚定（不 clamp）', () => {
   const geo = computePotGeometry({
     potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15,
     hasDrainageHole: 'true', potMaterial: 'ceramic', substrateType: 'general'
   })
   // V≈2749ml, BASELINE 区间 [275, 412]，用户浇 550ml > 上限 412
+  const withoutEcho = computeAmountSuggestion(geo, GATE_STATE.BASELINE)
   const withEcho = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], {
     userDoseEcho: { doseClass: 'normal', amountMl: 550 }
   })
-  assert.equal(withEcho.amountRangeMl[0], withEcho.amountRangeMl[1], '下限应 clamp 到上限')
-  assert.ok(withEcho.reasonCodes.includes(REASON_CODE.USER_DOSE_ANCHORED))
+  // 超过上限不锚定，区间不变
+  assert.equal(withEcho.amountRangeMl[0], withoutEcho.amountRangeMl[0], '超过上限不锚定，下限不变')
+  assert.ok(!withEcho.reasonCodes?.includes(REASON_CODE.USER_DOSE_ANCHORED), '不应含 USER_DOSE_ANCHORED')
 })
 
 test('computeAmountSuggestion: userDoseEcho 基线下限更高时不锚（用户浇量 < 基线下限）', () => {
@@ -858,18 +860,17 @@ test('computeAmountSuggestion: 无 amountMl 时按 doseClass 反推锚定', () =
     potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15,
     hasDrainageHole: 'true', potMaterial: 'ceramic', substrateType: 'general'
   })
-  // V≈2749ml, small → V×0.08=220, 基线下限 275 > 220 → 不锚
-  // normal → V×0.2=550, 550 > 上限412 → clamp 到 412
-  const withNormal = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], {
-    userDoseEcho: { doseClass: 'normal', amountMl: null }
-  })
-  assert.equal(withNormal.amountRangeMl[0], withNormal.amountRangeMl[1], 'normal 反推超过上限应 clamp')
-  assert.ok(withNormal.reasonCodes.includes(REASON_CODE.USER_DOSE_ANCHORED))
-  // small → 220 < 275，不锚定
+  // V≈2749ml, BASELINE [275, 412]
+  // small → V×0.08=220, 220 < 275 → 不锚
   const withSmall = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], {
     userDoseEcho: { doseClass: 'small', amountMl: null }
   })
   assert.ok(!withSmall.reasonCodes?.includes(REASON_CODE.USER_DOSE_ANCHORED), 'small 反推值 < 基线下限不应锚定')
+  // normal → V×0.2=550, 550 > 上限412 → 超过上限不锚定
+  const withNormal = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], {
+    userDoseEcho: { doseClass: 'normal', amountMl: null }
+  })
+  assert.ok(!withNormal.reasonCodes?.includes(REASON_CODE.USER_DOSE_ANCHORED), 'normal 反推超过上限不锚定')
 })
 
 test('planner: 用户浇 350ml(normal) → 下限锚定 + 区间文案', () => {

@@ -606,7 +606,7 @@ function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELI
     stopCondition = modifier.stopCondition
   }
 
-  // 用户历史剂量锚定区间下限（mist 不锚定）
+  // 用户历史剂量锚定区间下限（mist/unknown 不锚定）
   const reasonCodes = []
   const echo = options.userDoseEcho
   const echoDoseClass = echo ? (typeof echo === 'string' ? echo : echo.doseClass) : null
@@ -624,12 +624,10 @@ function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELI
         anchorMl = Math.round(volumeMl * ratio)
       }
     }
-    if (anchorMl && anchorMl > amountRangeMl[0]) {
+    // 仅当锚定值在 [当前下限, 上限) 区间内才锚定
+    // 超过上限时不锚定——用户浇量异常多（如浇透/一大桶）不代表下次也要浇这么多
+    if (anchorMl && anchorMl > amountRangeMl[0] && anchorMl < amountRangeMl[1]) {
       amountRangeMl[0] = anchorMl
-      // 下限不能超过上限
-      if (amountRangeMl[0] > amountRangeMl[1]) {
-        amountRangeMl[0] = amountRangeMl[1]
-      }
       reasonCodes.push(REASON_CODE.USER_DOSE_ANCHORED)
     }
   }
