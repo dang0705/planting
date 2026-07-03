@@ -27,7 +27,7 @@
 | 7. 天气信号 | 偏湿命中数、预报/历史 hot-dry 命中 | weather 信号 |
 | 8. 近期浇透 | `hasRecentThoroughWatering(events, refDate)` | 布尔 |
 | 9. Dry/Wet Gate | `evaluateDryWetGate({...})` | `gateState / wateringContext / action / reasonCodes` |
-| 10. 水量建议 | `computeAmountSuggestion(potGeometry, gate.gateState, baseline.intervalDays)` | `amountClass / amountRangeMl / stopCondition / confidenceLevel` |
+| 10. 水量建议 | `computeAmountSuggestion(potGeometry, gate.gateState, baseline.intervalDays, { wateringQuantization })` | `amountRangeMl / amountBottleText / stopCondition / confidenceLevel` |
 | 11. 下次浇水日期 | `resolveNextWaterDate(baseline, gate.wateringContext, timeline, refDate)` | `nextWaterDate / nextWaterWindow / nextWaterReason` |
 
 ## 3. 盆型 / 基质如何参与计算
@@ -46,7 +46,7 @@
 - `surfaceEvaporationFactor = min(2.0, S/V比 × 10 × 材质蒸发因子)`
 - `depthRetentionFactor = min(2.0, (有效深度/10) × 基质保水因子)`
 - `potGeometryDryDownFactor = clamp(蒸发/保水, 0.3, 3.0)`，越高干透越快。
-- **材质/基质经此因子参与** `rootZoneMoistureIndex` → gate（影响"何时浇/是否暂停"）。此外基质保水强度（`substrateRetentionFactor`）与排水孔还经 §6.1 修正矩阵**直接收窄无排水孔时的单次水量**。
+- **材质/基质经此因子参与** `rootZoneMoistureIndex` → gate（影响"何时浇/是否暂停"）。此外基质保水强度（`substrateRetentionFactor`）与排水孔还经 §6.2 修正矩阵**直接收窄无排水孔时的单次水量**。
 
 材质蒸发因子（`MATERIAL_EVAPORATION_FACTOR`）：
 
@@ -79,7 +79,7 @@
 
 - 有排水孔：0.2；未知：0.5；无排水孔：0.8，且锥度 `taperRatio>1.3`（上宽下窄）时额外加成，clamp 到 1.5。
 - 作用：`computeWetPressureLoad` 的乘子；`resolveLookbackWindowDays`（无排水孔窗口 ×1.3）；gate 的"无排水孔窄底盆"判定（`hasDrainageHole==='false' && taperRatio>1.3`）。
-- 另注：`hasDrainageHole` 原始值还经 §6.1 修正矩阵直接收窄单次水量（与本因子是两条独立路径）。
+- 另注：`hasDrainageHole` 原始值还经 §6.2 修正矩阵直接收窄单次水量（与本因子是两条独立路径）。
 
 ## 4. 负载与根区湿度（hydration-load）
 
@@ -119,34 +119,44 @@
 
 > 代码修复记录（Q2-B）：`isTooLongAgo` 原为 `A || B || 5`，`|| 5` 恒真使阈值失效，已修为 `lastEffective===null || lastEffective >= (baselineMin ?? 5)`，baseline min 阈值恢复生效。`isWet`/`isDry` 仍用混合 `&&`/`||` 未加括号，按 JS 运算符优先级解读。
 
-## 6. 水量建议与档位分级（computeAmountSuggestion）
+## 6. 水量建议与矿泉水瓶度量（computeAmountSuggestion）
 
-只接收 `(potGeometry, gateState)`，**不读取 wateringEvents 的 amount**（用户历史剂量另经 `userDoseEcho` 双轨回显，见 §6.1）。Q2-B 后按"单次建议水量绝对 ml"落档，启用 mist/small：
+接收 `(potGeometry, gateState, baselineIntervalDays, { wateringQuantization })`。按体积算出建议水量区间（ml）后，依次乘 **属级需水系数（§6.1）** 和 **排水孔/基质修正（§6.2）**，最后换算成用户可读的「约 X 瓶矿泉水」文案（`amountBottleText`）。
 
-| 条件 | amountRangeMl | 落档规则 |
-| --- | --- | --- |
-| WET（有/无盆型） | `[0,0]` | unknown（暂停） |
-| DRY 有盆型 | `[V×0.2, V×0.3]` | 按上限 ml 落档 |
-| BASELINE 有盆型 | `[V×0.1, V×0.15]` | 按上限 ml 落档 |
-| DRY 无盆型 | `[100,200]` | normal（保守） |
-| BASELINE 无盆型 | `[50,150]` | normal（保守） |
-
-档位落桶（`classifyDoseByAmount`，按 amountRangeMl 上限 ml）：
-
-| 建议量上限 ml | 档位 |
+| 条件 | amountRangeMl 基线 |
 | --- | --- |
-| ≤ 30 | mist |
-| 31 ~ 80 | small |
-| 81 ~ 300 | normal |
-| > 300 | thorough |
+| WET（有/无盆型） | `[0,0]`（暂停） |
+| DRY 有盆型 | `[V×0.2, V×0.3]` |
+| BASELINE 有盆型 | `[V×0.1, V×0.15]` |
+| DRY 无盆型 | `[100,200]`（保守） |
+| BASELINE 无盆型 | `[50,150]`（保守） |
 
-- 小盆浇透绝对水量小 → 可落 mist/small；大盆 → normal/thorough。`mist`/`small` 不再是死代码。
-- 无盆型（volumeMl≤0）无法可靠分档，保守只给 normal，confidence 仍 `low`。
-- 语义：amountClass 反映"下次建议的绝对水量规模"，独立于用户历史剂量（后者由 userDoseEcho 单独回显，不污染建议）。
+**输出不再有 amountClass 相对档**。原因：建议水量已是"体积 × 固定倍率"，若再按"水量/体积"百分比落档会对所有盆恒定落同一档，失去区分度。改为直接输出绝对 ml 区间 + 瓶数文案。
 
-### 6.1 排水孔/基质/喜干植物修正（resolveDrainageAmountModifier）
+矿泉水瓶度量（`water-volume-format.js`，前后端各一份，口径一致）：
+- `BOTTLE_ML = 550`；`formatMlToBottleText(ml)` 按 0.5 瓶粒度就近换算，附 ml。
+- ≤50ml → 「喷一喷」；≥2500ml → 「一大桶」；其余「约 X 瓶（Y ml）」。
+- `amountBottleText` 由 `formatMlRangeToBottleText(amountRangeMl)` 取区间上限换算。
 
-DRY/BASELINE 的水量区间在按体积算出后，再乘排水安全修正系数（防积水烂根），按积水风险从高到低匹配，只取第一命中：
+### 6.1 属级需水量修正（resolveSpeciesWaterFactor）
+
+让"这类植物本身多需水"参与水量（不只看盆体积）。以属级 `watering_way_quantization_json.targetMoistureMid`（目标湿度中值）为锚，乘到 DRY/BASELINE 区间上：
+
+| targetMoistureMid | 需水系数 | 典型 |
+| --- | --- | --- |
+| ≤ 0.35 | 0.6 | 喜干（多肉/龙舌兰，backfill 0.28） |
+| 0.35 ~ 0.5（不含 0.5） | 0.85 | 微干（表土微干，backfill 0.45） |
+| 0.5（缺省中性） | 1.0 | 中性 |
+| 0.5 ~ 0.75 | 1.15 | 湿润（均匀湿润，backfill 0.65） |
+| > 0.75 | 1.25 | 高湿/水生（backfill 0.85） |
+
+- 无量化数据 / 非法值 → 1.0（中性，不改变水量）。
+- 数据链：属级 `watering_way_quantization_json` 经 `getUserPlantWateringStrategy` → `app.js` → `buildWateringPlanner` → `computeAmountSuggestion` 的 `options.wateringQuantization` 传入。
+- 与 §6.2 排水孔修正是**独立乘子、按序叠加**（先需水系数、后排水安全），喜干+无孔叠加后最严。
+
+### 6.2 排水孔/基质修正（resolveDrainageAmountModifier）
+
+在需水系数之后再乘排水安全修正系数（防积水烂根），按积水风险从高到低匹配，只取第一命中：
 
 | 排水孔状态 | 下限× | 上限× | 判定依据 |
 | --- | --- | --- | --- |
@@ -156,13 +166,22 @@ DRY/BASELINE 的水量区间在按体积算出后，再乘排水安全修正系�
 | 无孔（普通） | 0.6 | 0.5 | — |
 | 未知 `unknown` | 1.0 | 0.85 | 不假设无孔，仅适度收上限 |
 
-- 喜干信号来自属级 `watering_way_quantization_json.dryTolerance`（经 `getPlantCatalogById` → `getUserPlantWateringStrategy` → `app.js` → `buildWateringPlanner` → `computeAmountSuggestion` 传入的 `wateringQuantization`）。
+- 喜干信号来自属级 `watering_way_quantization_json.dryTolerance`。
 - 保水基质用 `substrateRetentionFactor`（由 `resolveSubstrateRetentionFactor` 按单值或 JSON 多选加权算出，`computePotGeometry` 暴露）；> 1.0 表示保水强于中性田园土。
-- 有排水孔时修正矩阵不介入（系数 1.0），水量只随体积/gate。
+- 有排水孔时修正矩阵不介入（系数 1.0），水量只随体积/gate/需水系数。
 
-### 6.2 userDoseEcho 用户历史剂量回显（双轨）
+### 6.3 录入侧绝对 ml 与档反推（resolveDoseClass / resolveMlToDoseClass）
 
-- `resolveUserDoseEcho(wateringEvents, referenceDate)`：取最近一次**非喷雾**浇水的 doseClass；只有喷雾 → mist；无事件 → null。
+录入侧（用户"上次浇了多少"）改为存**绝对 amountMl**（矿泉水瓶档：喷一喷 30 / 小半瓶 150 / 半瓶 275 / 一瓶 550 / 两瓶 1100 / 一大桶 2600）。
+
+- `resolveDoseClass(event, potVolumeMl)`：事件带 `amountMl` 时优先按 **盆体积百分比反推**相对档（5%/15%/40% → mist/small/normal/thorough）；否则回退旧的 amount 字符串档匹配（兼容历史数据）。
+- `classifyDoseByVolumeRatio` / `resolveMlToDoseClass`：有盆体积按百分比、无盆体积 fallback 固定 ml 阈值（30/80/300）。
+- 水合负载 / 湿压 / `userDoseEcho` / `hasRecentThoroughWatering` 等计算均透传 `potVolumeMl`，使录入侧 ml 真正驱动算法。
+- 意义：同样 500ml，对小盆（V≈350）反推为浇透、对大盆（V≈16000）反推为喷雾——同一绝对量对不同盆的相对意义不同。
+
+### 6.4 userDoseEcho 用户历史剂量回显（双轨）
+
+- `resolveUserDoseEcho(wateringEvents, referenceDate, potVolumeMl)`：取最近一次**非喷雾**浇水的 doseClass；只有喷雾 → mist；无事件 → null。
 - `buildWateringPlanner` 返回 `userDoseEcho`，`plant-user-http` 响应透出，前端 `WateringReminderSheet` 以"你通常浇 Y"对照"建议水量 X"展示。
 
 ## 7. 下次浇水日期（resolveNextWaterDate）
@@ -180,4 +199,4 @@ DRY/BASELINE 的水量区间在按体积算出后，再乘排水安全修正系�
 
 ## 9. 单元测试覆盖
 
-`test/unit-test/test-watering-planner-v21.mjs` 覆盖：gate 三态、盆型影响水量区间、baseline 解析、`computeAmountSuggestion` 的 WET/DRY/无盆型分支、基质多选加权、排水材料因子、DRY baseline min 阈值、amountClass 体积分档（小盆 mist/small、大盆 thorough）、userDoseEcho 回显（最近非喷雾/仅喷雾/无事件）。
+`test/unit-test/test-watering-planner-v21.mjs` 覆盖：gate 三态、盆型影响水量区间、baseline 解析、`computeAmountSuggestion` 的 WET/DRY/无盆型分支、基质多选加权、排水材料因子、DRY baseline min 阈值、大小盆瓶数文案、录入侧 amountMl 按盆体积反推档、属级需水系数（喜干<湿润）、userDoseEcho 回显（最近非喷雾/仅喷雾/无事件）。另有 `test/unit-test/test-water-volume-format.mjs` 覆盖瓶数换算与百分比落档。

@@ -23,6 +23,7 @@ const {
   evaluateDryWetGate,
   hasRecentThoroughWatering,
   computeAmountSuggestion,
+  resolveSpeciesWaterFactor,
   resolveUserDoseEcho,
   DOSE_CLASS,
   GATE_STATE,
@@ -576,4 +577,68 @@ test('planner: 返回 userDoseEcho', () => {
     referenceDate: REF_DATE
   })
   assert.equal(plan.userDoseEcho, DOSE_CLASS.THOROUGH)
+})
+
+/* ============================================================
+ * Task6：属级需水量进入水量算法（resolveSpeciesWaterFactor）
+ * ============================================================ */
+
+test('speciesFactor: 按 targetMoistureMid 映射需水系数', () => {
+  // 喜干 0.28 → 收窄；缺省 0.5 → 1.0；湿润 0.65 → 放大
+  assert.ok(resolveSpeciesWaterFactor({ targetMoistureMid: 0.28 }) < 1.0, '喜干应收窄(<1)')
+  assert.ok(Math.abs(resolveSpeciesWaterFactor({ targetMoistureMid: 0.5 }) - 1.0) < 1e-9, '缺省应=1.0')
+  assert.ok(resolveSpeciesWaterFactor({ targetMoistureMid: 0.65 }) > 1.0, '湿润应放大(>1)')
+})
+
+test('speciesFactor: 缺省/非法量化 → 1.0 中性', () => {
+  assert.equal(resolveSpeciesWaterFactor(null), 1.0)
+  assert.equal(resolveSpeciesWaterFactor({}), 1.0)
+  assert.equal(resolveSpeciesWaterFactor({ targetMoistureMid: 'x' }), 1.0)
+})
+
+test('amountSuggestion: 喜干植物建议水量 < 湿润植物（同盆同gate）', () => {
+  const geo = computePotGeometry({
+    potTopDiameterCm: 20, potBottomDiameterCm: 16, potHeightCm: 18,
+    hasDrainageHole: 'true', potMaterial: 'plastic', substrateType: 'general'
+  })
+  const dryLoving = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8], {
+    wateringQuantization: { targetMoistureMid: 0.28 }
+  })
+  const moistLoving = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8], {
+    wateringQuantization: { targetMoistureMid: 0.65 }
+  })
+  assert.ok(dryLoving.amountRangeMl[1] < moistLoving.amountRangeMl[1],
+    `喜干上限应小于湿润：喜干=${dryLoving.amountRangeMl[1]} 湿润=${moistLoving.amountRangeMl[1]}`)
+  assert.ok(dryLoving.amountRangeMl[0] < moistLoving.amountRangeMl[0], '喜干下限也应更小')
+})
+
+test('amountSuggestion: 无量化数据时需水系数不改变水量（1.0）', () => {
+  const geo = computePotGeometry({
+    potTopDiameterCm: 20, potBottomDiameterCm: 16, potHeightCm: 18,
+    hasDrainageHole: 'true', potMaterial: 'plastic', substrateType: 'general'
+  })
+  const noQuant = computeAmountSuggestion(geo, GATE_STATE.DRY)
+  const neutralQuant = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8], {
+    wateringQuantization: { targetMoistureMid: 0.5 }
+  })
+  assert.deepEqual(noQuant.amountRangeMl, neutralQuant.amountRangeMl, '缺省与中性一致')
+})
+
+test('amountSuggestion: 需水系数与排水孔修正叠加（喜干+无孔最严）', () => {
+  const geo = computePotGeometry({
+    potTopDiameterCm: 20, potBottomDiameterCm: 16, potHeightCm: 18,
+    hasDrainageHole: 'false', potMaterial: 'plastic', substrateType: 'general'
+  })
+  const dryLovingNoHole = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8], {
+    wateringQuantization: { targetMoistureMid: 0.28, dryTolerance: 'high' }
+  })
+  const geoHole = computePotGeometry({
+    potTopDiameterCm: 20, potBottomDiameterCm: 16, potHeightCm: 18,
+    hasDrainageHole: 'true', potMaterial: 'plastic', substrateType: 'general'
+  })
+  const moistHole = computeAmountSuggestion(geoHole, GATE_STATE.DRY, [5, 8], {
+    wateringQuantization: { targetMoistureMid: 0.65 }
+  })
+  assert.ok(dryLovingNoHole.amountRangeMl[1] < moistHole.amountRangeMl[1],
+    '喜干+无孔应远小于湿润+有孔')
 })

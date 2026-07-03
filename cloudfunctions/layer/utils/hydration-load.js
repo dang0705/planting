@@ -510,6 +510,13 @@ function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELI
     stopCondition = '盆土表面湿润即可停止'
   }
 
+  // 属级需水量修正（Task 6）：以 targetMoistureMid 为锚，喜干收窄、湿润放大
+  const speciesFactor = resolveSpeciesWaterFactor(options.wateringQuantization)
+  amountRangeMl = [
+    Math.round(amountRangeMl[0] * speciesFactor),
+    Math.round(amountRangeMl[1] * speciesFactor)
+  ]
+
   // 排水孔/基质/喜干植物修正：无排水孔时收窄水量以防积水烂根
   const modifier = resolveDrainageAmountModifier(potGeometry, options.wateringQuantization)
   amountRangeMl = [
@@ -526,6 +533,39 @@ function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELI
     stopCondition,
     confidenceLevel: volumeConfidence
   }
+}
+
+/**
+ * 属级需水量修正系数（Task 6）。
+ *
+ * 以属级量化 watering_way_quantization_json.targetMoistureMid（目标湿度中值）为锚，
+ * 映射到单次建议水量的乘子，让"这类植物本身多需水"真正参与水量（不只看盆体积）：
+ *   - 喜干  (≤0.35，如多肉/龙舌兰) → 0.6
+ *   - 微干  (0.35~0.55)            → 0.85
+ *   - 中性  (0.55 附近缺省 0.5)     → 1.0
+ *   - 湿润  (0.55~0.75)            → 1.15
+ *   - 高湿/水生 (>0.75)            → 1.25
+ * 无量化数据 / 非法值 → 1.0（中性，不改变水量）。
+ *
+ * @param {object|null} wateringQuantization
+ * @returns {number} 需水系数
+ */
+function resolveSpeciesWaterFactor(wateringQuantization = null) {
+  const mid = Number(wateringQuantization?.targetMoistureMid)
+  if (!Number.isFinite(mid)) {
+    return 1.0
+  }
+  if (mid <= 0.35) {
+    return 0.6
+  }
+  if (mid <= 0.55) {
+    // 0.5 缺省档保持中性 1.0；0.35~0.5 之间轻收窄
+    return mid < 0.5 ? 0.85 : 1.0
+  }
+  if (mid <= 0.75) {
+    return 1.15
+  }
+  return 1.25
 }
 
 /**
@@ -575,6 +615,7 @@ module.exports = {
   evaluateDryWetGate,
   hasRecentThoroughWatering,
   computeAmountSuggestion,
+  resolveSpeciesWaterFactor,
   resolveDrainageAmountModifier,
   resolveUserDoseEcho
 }
