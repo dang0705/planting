@@ -25,7 +25,7 @@ export const WATERING_BOTTLE_OPTIONS = [
   { label: '半瓶', value: 'half', amountMl: 275 },
   { label: '一瓶', value: 'one', amountMl: 550 },
   { label: '两瓶', value: 'two', amountMl: 1100 },
-  { label: '一大桶', value: 'bucket', amountMl: 2600 }
+  { label: '约5瓶', value: 'five', amountMl: 2600 }
 ]
 
 const MIST_TEXT_MAX_ML = 50
