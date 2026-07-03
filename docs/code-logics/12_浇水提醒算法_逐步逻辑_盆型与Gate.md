@@ -62,7 +62,7 @@
 
 | 基质 | 因子 |
 | --- | --- |
-| general | 1.0 |
+| general | 1.1 |
 | peat | 1.3 |
 | coco | 1.2 |
 | bark | 0.7 |
@@ -115,13 +115,15 @@
 2. 预报 hot-dry 且 距上次浇水久
 3. 历史 hot-dry 且 无有效浇水记录
 
+**湿信号刹车**：DRY 命中且 `weatherWetPressureHitCount≥2` 且 DRY 不来自 `FORECAST_HOT_DRY_HIT` 时，降级为 BASELINE + `DRY_SUPPRESSED_BY_WET_ENVIRONMENT` + `CHECK_SOIL_BEFORE_WATERING`。解决"历史无有效浇水 + 天气强湿"冲突场景下过早判 DRY 并给大水量的问题。预报确有热干时不压制。
+
 **BASELINE（keep_baseline_or_check_soil，action=follow_baseline_or_check_soil）**：以上都不满足时的兜底态。
 
 > 代码修复记录（Q2-B）：`isTooLongAgo` 原为 `A || B || 5`，`|| 5` 恒真使阈值失效，已修为 `lastEffective===null || lastEffective >= (baselineMin ?? 5)`，baseline min 阈值恢复生效。`isWet`/`isDry` 仍用混合 `&&`/`||` 未加括号，按 JS 运算符优先级解读。
 
 ## 6. 水量建议与矿泉水瓶度量（computeAmountSuggestion）
 
-接收 `(potGeometry, gateState, baselineIntervalDays, { wateringQuantization })`。按体积算出建议水量区间（ml）后，依次乘 **属级需水系数（§6.1）** 和 **排水孔/基质修正（§6.2）**，最后换算成用户可读的「约 X 瓶矿泉水」文案（`amountBottleText`）。
+接收 `(potGeometry, gateState, baselineIntervalDays, { wateringQuantization, weatherWetPressureHitCount })`。按体积算出建议水量区间（ml）后，依次乘 **天气偏湿压制（仅DRY，§6.0）** → **属级需水系数（§6.1）** → **排水孔/基质修正（§6.2）**，最后换算成用户可读的「约 X 瓶矿泉水」文案（`amountBottleText`）。
 
 | 条件 | amountRangeMl 基线 |
 | --- | --- |
@@ -137,6 +139,19 @@
 - `BOTTLE_ML = 550`；`formatMlToBottleText(ml)` 按 0.5 瓶粒度就近换算，附 ml。
 - ≤50ml → 「喷一喷」；≥2500ml → 「一大桶」；其余「约 X 瓶（Y ml）」。
 - `amountBottleText` 由 `formatMlRangeToBottleText(amountRangeMl)` 取区间上限换算。
+
+### 6.0 天气偏湿水量压制（resolveWeatherWetAmountFactor）
+
+在 gate 倍率之后、属级需水系数之前，对 DRY 水量区间乘天气偏湿压制系数（仅 DRY 生效，BASELINE/WET 返回 1.0 不压）：
+
+| weatherWetPressureHitCount | 系数 | 语义 |
+| --- | --- | --- |
+| 0 | 1.0 | 正常 |
+| 1 | 0.8 | 轻度偏湿，收窄 20% |
+| ≥2 | 0.5 | 强偏湿，水量砍半 + stopCondition 改查土提示 |
+
+- 与 §5 的湿信号刹车配合：刹车把 DRY 降级为 BASELINE 后本节不再介入（仅 DRY 生效）；若 DRY 未被刹车（如预报确有热干）但仍有湿信号命中，本节收窄水量。
+- stopCondition 在 `weatherWetPressureHitCount≥2` 时改为「先查土，确认表土干燥后再浇」。
 
 ### 6.1 属级需水量修正（resolveSpeciesWaterFactor）
 
@@ -179,6 +194,8 @@
 - 水合负载 / 湿压 / `userDoseEcho` / `hasRecentThoroughWatering` 等计算均透传 `potVolumeMl`，使录入侧 ml 真正驱动算法。
 - 意义：同样 500ml，对小盆（V≈350）反推为浇透、对大盆（V≈16000）反推为喷雾——同一绝对量对不同盆的相对意义不同。
 
+**amountMl 与 amount 标签冲突校验（resolveDoseClassWithConflict）**：当事件同时带 `amountMl` 和 `amount` 标签时，按 ml 反推的 doseClass rank 与 amount 标签 rank 比较，rank 差 ≥2 判冲突（如 30ml + normal 在 2749ml 盆上：ml 反推为 mist，标签为 normal，差 2）。冲突时以 ml 反推为准，并在 reasonCodes 追加 `AMOUNT_ML_CONFLICTS_WITH_AMOUNT_LABEL`，confidence 降为 low。解决用户录了"正常浇"但实际只浇了 30ml 的矛盾输入。
+
 ### 6.4 userDoseEcho 用户历史剂量回显（双轨）
 
 - `resolveUserDoseEcho(wateringEvents, referenceDate, potVolumeMl)`：取最近一次**非喷雾**浇水的 doseClass；只有喷雾 → mist；无事件 → null。
@@ -199,4 +216,4 @@
 
 ## 9. 单元测试覆盖
 
-`test/unit-test/test-watering-planner-v21.mjs` 覆盖：gate 三态、盆型影响水量区间、baseline 解析、`computeAmountSuggestion` 的 WET/DRY/无盆型分支、基质多选加权、排水材料因子、DRY baseline min 阈值、大小盆瓶数文案、录入侧 amountMl 按盆体积反推档、属级需水系数（喜干<湿润）、userDoseEcho 回显（最近非喷雾/仅喷雾/无事件）。另有 `test/unit-test/test-water-volume-format.mjs` 覆盖瓶数换算与百分比落档。
+`test/unit-test/test-watering-planner-v21.mjs` 覆盖：gate 三态、盆型影响水量区间、baseline 解析、`computeAmountSuggestion` 的 WET/DRY/无盆型分支、基质多选加权、排水材料因子、DRY baseline min 阈值、大小盆瓶数文案、录入侧 amountMl 按盆体积反推档、属级需水系数（喜干<湿润）、userDoseEcho 回显（最近非喷雾/仅喷雾/无事件）、**DRY 湿信号刹车压制为 BASELINE**、**amountMl 与 amount 标签冲突校验**、**天气偏湿水量压制（DRY ×0.5/×0.8）**、**田园土 retentionFactor 1.1**。另有 `test/unit-test/test-water-volume-format.mjs` 覆盖瓶数换算与百分比落档。
