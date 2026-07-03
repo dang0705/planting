@@ -275,7 +275,7 @@ test('planner: 不再输出 wateringCount10d，输出 v2.1 字段', () => {
   assert.ok(plan.wetPressureLoad !== undefined)
   assert.ok(plan.lastEffectiveRootWateredDaysAgo !== undefined)
   assert.ok(plan.rootZoneMoistureIndex !== undefined)
-  assert.ok(plan.amountClass !== undefined)
+  assert.ok(plan.amountBottleText !== undefined)
   assert.ok(plan.amountRangeMl !== undefined)
   assert.ok(plan.stopCondition !== undefined)
   assert.ok(plan.confidenceLevel !== undefined)
@@ -443,34 +443,57 @@ test('amountSuggestion: DRY 时建议量为体积 20~30% 且区间单调', () =>
   const geo = computePotGeometry({ potTopDiameterCm: 12, potBottomDiameterCm: 10, potHeightCm: 10 })
   const suggestion = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8])
   assert.ok(suggestion.amountRangeMl[1] > suggestion.amountRangeMl[0])
-  assert.ok([DOSE_CLASS.MIST, DOSE_CLASS.SMALL, DOSE_CLASS.NORMAL, DOSE_CLASS.THOROUGH].includes(suggestion.amountClass))
+  assert.equal(typeof suggestion.amountBottleText, 'string')
+  assert.ok(suggestion.amountBottleText.length > 0)
 })
 
-test('amountSuggestion: 小盆体积 → 档位落 mist/small', () => {
+test('amountSuggestion: 小盆体积 → 瓶数文案偏小（喷/半瓶）', () => {
   const smallGeo = computePotGeometry({
     potTopDiameterCm: 6, potBottomDiameterCm: 5, potHeightCm: 6,
     hasDrainageHole: 'true', potMaterial: 'plastic', substrateType: 'general'
   })
   const sug = computeAmountSuggestion(smallGeo, GATE_STATE.DRY)
-  assert.ok([DOSE_CLASS.MIST, DOSE_CLASS.SMALL].includes(sug.amountClass),
-    `小盆 DRY 应落 mist/small，实际 ${sug.amountClass}（上限 ${sug.amountRangeMl[1]}ml）`)
+  assert.match(sug.amountBottleText, /喷|半瓶/,
+    `小盆 DRY 瓶数文案应偏小，实际 ${sug.amountBottleText}（上限 ${sug.amountRangeMl[1]}ml）`)
 })
 
-test('amountSuggestion: 大盆 DRY → thorough', () => {
+test('amountSuggestion: 大盆 DRY → 瓶数文案偏大（多瓶/大桶）', () => {
   const bigGeo = computePotGeometry({
     potTopDiameterCm: 30, potBottomDiameterCm: 24, potHeightCm: 28,
     hasDrainageHole: 'true', potMaterial: 'ceramic', substrateType: 'general'
   })
   const sug = computeAmountSuggestion(bigGeo, GATE_STATE.DRY)
-  assert.equal(sug.amountClass, DOSE_CLASS.THOROUGH)
+  assert.match(sug.amountBottleText, /瓶|桶/)
+  assert.ok(sug.amountRangeMl[1] > 300, '大盆 DRY 上限应远超 300ml')
 })
 
-test('amountSuggestion: 无盆型保守 normal 不猜档', () => {
+test('amountSuggestion: 无盆型仍给瓶数文案与保守区间', () => {
   const dry = computeAmountSuggestion({}, GATE_STATE.DRY)
-  assert.equal(dry.amountClass, DOSE_CLASS.NORMAL)
+  assert.equal(typeof dry.amountBottleText, 'string')
+  assert.ok(dry.amountBottleText.length > 0)
   assert.equal(dry.confidenceLevel, 'low')
   const base = computeAmountSuggestion({}, GATE_STATE.BASELINE)
-  assert.equal(base.amountClass, DOSE_CLASS.NORMAL)
+  assert.ok(base.amountRangeMl[1] > 0)
+})
+
+test('planner: 录入侧 amountMl 按盆体积反推档（同 ml 大盆=少量、小盆=浇透）', () => {
+  // 同一次浇水 500ml：对小盆是浇透（进而更易偏湿），对大盆只是少量
+  const build = potProfile => buildWateringPlanner({
+    wateringStrategy: { freq: [5, 8] },
+    historical: {},
+    forecast: {},
+    behaviorTimeline: normalizeCareBehaviorTimeline({
+      referenceDate: REF_DATE,
+      wateringEvents10d: [{ date: makeEvent(1).date, watered: true, amountMl: 500 }]
+    }),
+    potProfile,
+    referenceDate: REF_DATE
+  })
+  const smallPot = build({ potTopDiameterCm: 8, potBottomDiameterCm: 7, potHeightCm: 8, hasDrainageHole: 'true' })
+  const bigPot = build({ potTopDiameterCm: 30, potBottomDiameterCm: 24, potHeightCm: 28, hasDrainageHole: 'true' })
+  // 500ml 对小盆(V≈354)占比>100% → 浇透档回显；对大盆(V≈16000)仅 3% → 喷雾档回显
+  assert.equal(smallPot.userDoseEcho, DOSE_CLASS.THOROUGH, `小盆 500ml 应回显浇透，实际 ${smallPot.userDoseEcho}`)
+  assert.equal(bigPot.userDoseEcho, DOSE_CLASS.MIST, `大盆 500ml 应回显喷雾，实际 ${bigPot.userDoseEcho}`)
 })
 
 test('amountSuggestion: 排水孔修正矩阵按优先级调制水量', () => {

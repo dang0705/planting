@@ -77,7 +77,7 @@ const {
   setWateringDose
 } = useCareBehaviorTimeline(props, emit)
 
-function onUpdateDose({ date, amount }) {
-  setWateringDose(date, amount)
+function onUpdateDose({ date, amountMl }) {
+  setWateringDose(date, amountMl)
 }
 </script>

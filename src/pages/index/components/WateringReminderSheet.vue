@@ -177,6 +177,7 @@ import { getEnvironmentWeatherWindow } from '@/api/weather.js'
 import { mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline } from '@/utils/care-behavior-weather-window.js'
 import CareBehaviorTimeline from '@/components/CareBehaviorTimeline.vue'
 import PotProfileEditor from './PotProfileEditor.vue'
+import { formatMlRangeToBottleText } from '@/utils/water-volume-format.js'
 import waterDefaultIcon from '@/assets/icons/home-card-water-default.svg'
 
 const props = defineProps({
@@ -292,9 +293,18 @@ const canAddToCalendar = computed(
   () => !isOverWateringBlocked.value && Boolean(plannerResult.value?.nextWaterDate)
 )
 
-const amountClassLabel = computed(() => {
-  const map = { unknown: '未知', mist: '喷雾', small: '少量', normal: '普通', thorough: '浇透' }
-  return map[plannerResult.value?.amountClass] || '未知'
+const amountBottleText = computed(() => {
+  const result = plannerResult.value
+  if (!result) {
+    return ''
+  }
+  if (result.amountBottleText) {
+    return result.amountBottleText
+  }
+  if (Array.isArray(result.amountRangeMl)) {
+    return formatMlRangeToBottleText(result.amountRangeMl)
+  }
+  return ''
 })
 
 const confidenceLevelLabel = computed(() => {
@@ -314,27 +324,16 @@ const confidenceLevelClass = computed(() => {
 })
 
 const plannerSummaryRows = computed(() => {
-  if (!plannerResult.value?.amountClass || isOverWateringBlocked.value) {
+  if (!amountBottleText.value || isOverWateringBlocked.value) {
     return []
   }
   const rows = [
     {
       label: '建议水量',
-      value: amountClassLabel.value,
+      value: amountBottleText.value,
       valueClass: 'text-xs font-medium text-gray-700'
     }
   ]
-  if (
-    plannerResult.value?.amountRangeMl?.length === 2 &&
-    plannerResult.value.amountRangeMl[1] > 0
-  ) {
-    rows.push({
-      label: '水量区间',
-      value:
-        plannerResult.value.amountRangeMl[0] + '–' + plannerResult.value.amountRangeMl[1] + ' ml',
-      valueClass: 'text-xs text-gray-700'
-    })
-  }
   if (plannerResult.value?.stopCondition) {
     rows.push({
       label: '停止条件',
@@ -350,10 +349,10 @@ const plannerSummaryRows = computed(() => {
     })
   }
   if (plannerResult.value?.userDoseEcho) {
-    const echoMap = { unknown: '不确定', mist: '喷雾', small: '少量', normal: '普通', thorough: '浇透' }
+    const echoMap = { unknown: '不确定', mist: '喷一喷', small: '小半瓶', normal: '约一瓶', thorough: '浇到出水' }
     rows.push({
       label: '你通常浇',
-      value: echoMap[plannerResult.value.userDoseEcho] || '普通',
+      value: echoMap[plannerResult.value.userDoseEcho] || '约一瓶',
       valueClass: 'text-xs text-gray-500'
     })
   }

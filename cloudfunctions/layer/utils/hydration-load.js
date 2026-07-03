@@ -17,6 +17,11 @@
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 
+const {
+  resolveMlToDoseClass,
+  formatMlRangeToBottleText
+} = require('./water-volume-format')
+
 /**
  * 浇水量分级
  */
@@ -117,9 +122,20 @@ function daysAgo(referenceDate = '', eventDate = '') {
 }
 
 /**
- * 将浇水事件的 amount 字段映射到 doseClass 枚举。
+ * 将浇水事件映射到 doseClass 枚举。
+ *
+ * 优先级：
+ *   1. 事件带数值 amountMl（录入侧存的绝对水量）→ 按盆体积百分比反推档（Task 5）。
+ *   2. 否则回退到 amount 字符串档匹配（向后兼容历史相对档数据）。
+ *
+ * @param {object} event
+ * @param {number} [potVolumeMl] - 盆体积，用于 amountMl 反推；缺省时反推走固定 ml 阈值
  */
-function resolveDoseClass(event = {}) {
+function resolveDoseClass(event = {}, potVolumeMl = 0) {
+  const amountMl = Number(event.amountMl ?? event.amount_ml)
+  if (Number.isFinite(amountMl) && amountMl > 0) {
+    return resolveMlToDoseClass(amountMl, potVolumeMl)
+  }
   const amount = normalizeText(event.amount || event.wateringAmount || event.level || event.value)
   if (!amount || amount === 'unknown') {
     return DOSE_CLASS.UNKNOWN
@@ -175,7 +191,7 @@ function resolveLookbackWindowDays(baselineIntervalDays = [5, 8], potGeometry = 
  * @param {number} lookbackWindowDays - 回看窗口
  * @returns {number} 0~1+ 的水合负载
  */
-function computeEffectiveHydrationLoad(wateringEvents = [], referenceDate = '', lookbackWindowDays = 10) {
+function computeEffectiveHydrationLoad(wateringEvents = [], referenceDate = '', lookbackWindowDays = 10, potVolumeMl = 0) {
   if (!wateringEvents.length || lookbackWindowDays <= 0) {
     return 0
   }
@@ -185,7 +201,7 @@ function computeEffectiveHydrationLoad(wateringEvents = [], referenceDate = '', 
     if (diff === null || diff < 0 || diff >= lookbackWindowDays) {
       continue
     }
-    const doseClass = resolveDoseClass(event)
+    const doseClass = resolveDoseClass(event, potVolumeMl)
     const weight = DOSE_HYDRATION_WEIGHT[doseClass] ?? 0.4
     const recencyDecay = 1 - diff / lookbackWindowDays
     totalLoad += weight * recencyDecay
@@ -215,12 +231,13 @@ function computeWetPressureLoad(
     return 0
   }
   let totalPressure = 0
+  const potVolumeMl = Number(potGeometry.potVolumeMl) || 0
   for (const event of wateringEvents) {
     const diff = daysAgo(referenceDate, event.date)
     if (diff === null || diff < 0 || diff >= lookbackWindowDays) {
       continue
     }
-    const doseClass = resolveDoseClass(event)
+    const doseClass = resolveDoseClass(event, potVolumeMl)
     const weight = DOSE_WET_PRESSURE_WEIGHT[doseClass] ?? 0.3
     const recencyDecay = 1 - diff / lookbackWindowDays
     totalPressure += weight * recencyDecay
@@ -239,10 +256,10 @@ function computeWetPressureLoad(
  * @param {string} referenceDate - 参考日期
  * @returns {number|null} 天数，null 表示无有效浇水记录
  */
-function computeLastEffectiveRootWateredDaysAgo(wateringEvents = [], referenceDate = '') {
+function computeLastEffectiveRootWateredDaysAgo(wateringEvents = [], referenceDate = '', potVolumeMl = 0) {
   let latest = null
   for (const event of wateringEvents) {
-    const doseClass = resolveDoseClass(event)
+    const doseClass = resolveDoseClass(event, potVolumeMl)
     if (doseClass === DOSE_CLASS.MIST) {
       continue
     }
@@ -259,12 +276,12 @@ function computeLastEffectiveRootWateredDaysAgo(wateringEvents = [], referenceDa
  * 提取用户近期代表性剂量：最近一次非喷雾浇水的 doseClass；
  * 若只有喷雾则返回 mist；无事件返回 null。
  */
-function resolveUserDoseEcho(wateringEvents = [], referenceDate = '') {
+function resolveUserDoseEcho(wateringEvents = [], referenceDate = '', potVolumeMl = 0) {
   let bestDiff = null
   let bestDose = null
   let mistSeen = false
   for (const event of wateringEvents) {
-    const doseClass = resolveDoseClass(event)
+    const doseClass = resolveDoseClass(event, potVolumeMl)
     if (doseClass === DOSE_CLASS.MIST) {
       mistSeen = true
       continue
@@ -419,13 +436,13 @@ function evaluateDryWetGate({
 /**
  * 检测近期是否有浇透事件。
  */
-function hasRecentThoroughWatering(wateringEvents = [], referenceDate = '', withinDays = 5) {
+function hasRecentThoroughWatering(wateringEvents = [], referenceDate = '', withinDays = 5, potVolumeMl = 0) {
   for (const event of wateringEvents) {
     const diff = daysAgo(referenceDate, event.date)
     if (diff === null || diff < 0 || diff > withinDays) {
       continue
     }
-    if (resolveDoseClass(event) === DOSE_CLASS.THOROUGH) {
+    if (resolveDoseClass(event, potVolumeMl) === DOSE_CLASS.THOROUGH) {
       return true
     }
   }
@@ -435,38 +452,38 @@ function hasRecentThoroughWatering(wateringEvents = [], referenceDate = '', with
 /**
  * 计算下次水量建议。
  *
- * 根据盆型体积、gate 状态和 doseClass 推荐水量区间（ml）。
+ * 根据盆型体积、gate 状态推荐水量区间（ml），并给出矿泉水瓶度量文案。
  *
  * @param {object} potGeometry - 盆型几何
  * @param {string} gateState - 门控状态
  * @param {number[]} baselineIntervalDays - 属级基线间隔
- * @returns {object} { amountClass, amountRangeMl, stopCondition, confidenceLevel }
+ * @returns {object} { amountRangeMl, amountBottleText, stopCondition, confidenceLevel }
  */
 function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELINE, _baselineIntervalDays = [5, 8], options = {}) {
   const volumeMl = Number(potGeometry.potVolumeMl) || 0
   const volumeConfidence = potGeometry.volumeConfidence || 'low'
 
-  // 无盆型体积：无法可靠分档，按 gate 保守给 normal 区间
+  // 无盆型体积：无法可靠估算，按 gate 保守给区间
   if (volumeMl <= 0) {
     if (gateState === GATE_STATE.WET) {
       return {
-        amountClass: DOSE_CLASS.UNKNOWN,
         amountRangeMl: [0, 0],
+        amountBottleText: formatMlRangeToBottleText([0, 0]),
         stopCondition: '暂停浇水，检查土壤干湿后再决定',
         confidenceLevel: 'low'
       }
     }
     if (gateState === GATE_STATE.DRY) {
       return {
-        amountClass: DOSE_CLASS.NORMAL,
         amountRangeMl: [100, 200],
+        amountBottleText: formatMlRangeToBottleText([100, 200]),
         stopCondition: '盆底出水即可停止',
         confidenceLevel: 'low'
       }
     }
     return {
-      amountClass: DOSE_CLASS.NORMAL,
       amountRangeMl: [50, 150],
+      amountBottleText: formatMlRangeToBottleText([50, 150]),
       stopCondition: '盆土表面湿润即可停止',
       confidenceLevel: 'low'
     }
@@ -475,8 +492,8 @@ function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELI
   // WET 恒暂停
   if (gateState === GATE_STATE.WET) {
     return {
-      amountClass: DOSE_CLASS.UNKNOWN,
       amountRangeMl: [0, 0],
+      amountBottleText: formatMlRangeToBottleText([0, 0]),
       stopCondition: '暂停浇水，检查土壤干湿后再决定',
       confidenceLevel: volumeConfidence
     }
@@ -502,11 +519,10 @@ function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELI
   if (modifier.stopCondition) {
     stopCondition = modifier.stopCondition
   }
-  const amountClass = classifyDoseByAmount(amountRangeMl[1])
 
   return {
-    amountClass,
     amountRangeMl,
+    amountBottleText: formatMlRangeToBottleText(amountRangeMl),
     stopCondition,
     confidenceLevel: volumeConfidence
   }
@@ -542,23 +558,6 @@ function resolveDrainageAmountModifier(potGeometry = {}, wateringQuantization = 
   }
   // unknown
   return { lower: 1.0, upper: 0.85 }
-}
-
-/**
- * 按单次建议水量上限（ml）落档：≤30 mist / ≤80 small / ≤300 normal / >300 thorough。
- */
-function classifyDoseByAmount(upperMl = 0) {
-  const ml = Number(upperMl) || 0
-  if (ml <= 30) {
-    return DOSE_CLASS.MIST
-  }
-  if (ml <= 80) {
-    return DOSE_CLASS.SMALL
-  }
-  if (ml <= 300) {
-    return DOSE_CLASS.NORMAL
-  }
-  return DOSE_CLASS.THOROUGH
 }
 
 module.exports = {

@@ -153,17 +153,25 @@ function normalizeWateringEvent(event = {}, conservativeReferenceDate = '') {
   const amount = normalizeText(
     event.amount || event.wateringAmount || event.watering_amount || event.level || event.value
   )
+  // 录入侧新增：绝对水量 ml（矿泉水瓶度量），优先于相对档参与算法反推
+  const amountMlRaw = event.amountMl ?? event.amount_ml
+  const amountMl = Number(amountMlRaw)
+  const hasAmountMl = Number.isFinite(amountMl) && amountMl > 0
   const date = normalizeDate(
     event.date || event.eventDate || event.day || conservativeReferenceDate
   )
-  if (!watered && !amount) {
+  if (!watered && !amount && !hasAmountMl) {
     return null
   }
-  return {
+  const normalized = {
     date,
     watered: true,
     amount: amount || 'unknown'
   }
+  if (hasAmountMl) {
+    normalized.amountMl = Math.round(amountMl)
+  }
+  return normalized
 }
 
 function dedupeNormalizedEvents(events = [], keyResolver = event => JSON.stringify(event)) {
@@ -228,11 +236,13 @@ function normalizeCareBehaviorTimeline(input = {}) {
 function buildBehaviorSummary(referenceDate = '', events = {}, potGeometry = {}) {
   const wateringEvents = Array.isArray(events.wateringEvents) ? events.wateringEvents : []
   const lookbackWindowDays = resolveLookbackWindowDays([5, 8], potGeometry)
+  const potVolumeMl = Number(potGeometry.potVolumeMl) || 0
 
   const effectiveHydrationLoad = computeEffectiveHydrationLoad(
     wateringEvents,
     referenceDate,
-    lookbackWindowDays
+    lookbackWindowDays,
+    potVolumeMl
   )
   const wetPressureLoad = computeWetPressureLoad(
     wateringEvents,
@@ -242,7 +252,8 @@ function buildBehaviorSummary(referenceDate = '', events = {}, potGeometry = {})
   )
   const lastEffectiveRootWateredDaysAgo = computeLastEffectiveRootWateredDaysAgo(
     wateringEvents,
-    referenceDate
+    referenceDate,
+    potVolumeMl
   )
   const rootZoneMoistureIndex = computeRootZoneMoistureIndex(
     effectiveHydrationLoad,
@@ -257,7 +268,7 @@ function buildBehaviorSummary(referenceDate = '', events = {}, potGeometry = {})
     lastEffectiveRootWateredDaysAgo,
     rootZoneMoistureIndex,
     thoroughWateringCount10d: wateringEvents.filter(event =>
-      resolveDoseClass(event) === DOSE_CLASS.THOROUGH
+      resolveDoseClass(event, potVolumeMl) === DOSE_CLASS.THOROUGH
     ).length,
     lastWateredDaysAgo: latestDaysAgo(referenceDate, wateringEvents),
     lookbackWindowDays
@@ -392,7 +403,7 @@ function resolveNextWaterDate(baseline, wateringContext, timeline, referenceDate
  * 输出：
  *   baseline / wateringContext / action / reasons / thresholds / calculation
  *   nextWaterDate / nextWaterWindow / nextWaterReason
- *   amountClass / amountRangeMl / stopCondition / confidenceLevel / reasonCodes
+ *   amountBottleText / amountRangeMl / stopCondition / confidenceLevel / reasonCodes
  *   effectiveHydrationLoad / wetPressureLoad / lastEffectiveRootWateredDaysAgo /
  *   rootZoneMoistureIndex / potGeometry
  */
@@ -474,7 +485,9 @@ function buildWateringPlanner({
     new Date().toISOString()
   const recentThoroughWatering = hasRecentThoroughWatering(
     timeline.watering_events_10d || timeline.wateringEvents10d || [],
-    effectiveReferenceDate
+    effectiveReferenceDate,
+    5,
+    Number(potGeometry.potVolumeMl) || 0
   )
 
   // Dry/Wet Gate 判定
@@ -499,7 +512,8 @@ function buildWateringPlanner({
   // 用户历史剂量回显（最近一次非喷雾浇水的剂量档）
   const userDoseEcho = resolveUserDoseEcho(
     timeline.watering_events_10d || timeline.wateringEvents10d || [],
-    timeline.referenceDate || timeline.reference_date || referenceDate
+    timeline.referenceDate || timeline.reference_date || referenceDate,
+    Number(potGeometry.potVolumeMl) || 0
   )
 
   // 下次浇水日期（排水孔轻微拉长 BASELINE 周期：无孔 ×1.15，其余 ×1.0）
@@ -646,8 +660,8 @@ function buildWateringPlanner({
     rootZoneMoistureIndex,
     userDoseEcho,
     potGeometry,
-    amountClass: amountSuggestion.amountClass,
     amountRangeMl: amountSuggestion.amountRangeMl,
+    amountBottleText: amountSuggestion.amountBottleText,
     stopCondition: amountSuggestion.stopCondition,
     confidenceLevel: amountSuggestion.confidenceLevel,
     // 下次浇水日期

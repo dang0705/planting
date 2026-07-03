@@ -68,11 +68,11 @@ export function useCareBehaviorTimeline(props, emit) {
   const initialSkeletonVisible = ref(true)
   const wateringDoseByDate = ref({})
 
-  function setWateringDose(date, amount) {
+  function setWateringDose(date, amountMl) {
     if (!date) {
       return
     }
-    wateringDoseByDate.value = { ...wateringDoseByDate.value, [date]: amount }
+    wateringDoseByDate.value = { ...wateringDoseByDate.value, [date]: amountMl }
   }
 
   const referenceDate = useReferenceDate(props)
@@ -218,10 +218,18 @@ export function useCareBehaviorTimeline(props, emit) {
         last_fertilized_bucket: bucketSelection.value
       }
     )
-    const wateringEventsWithDose = (nextTimeline.watering_events_10d || []).map(ev => ({
-      ...ev,
-      amount: wateringDoseByDate.value[ev.date] || ev.amount || 'normal'
-    }))
+    const wateringEventsWithDose = (nextTimeline.watering_events_10d || []).map(ev => {
+      const hasSelection = Object.prototype.hasOwnProperty.call(wateringDoseByDate.value, ev.date)
+      const selectedMl = hasSelection ? wateringDoseByDate.value[ev.date] : undefined
+      const amountMl = selectedMl !== undefined ? selectedMl : ev.amountMl
+      const next = { ...ev }
+      if (amountMl !== null && amountMl !== undefined) {
+        next.amountMl = amountMl
+      } else {
+        delete next.amountMl
+      }
+      return next
+    })
     return {
       ...nextTimeline,
       watering_events_10d: wateringEventsWithDose,
@@ -236,7 +244,7 @@ export function useCareBehaviorTimeline(props, emit) {
   const wateringDoseRows = computed(() =>
     (timelinePayload.value?.selected_watering_events_10d || []).map(ev => ({
       date: ev.date,
-      amount: ev.amount || 'normal'
+      amountMl: ev.amountMl ?? null
     }))
   )
 

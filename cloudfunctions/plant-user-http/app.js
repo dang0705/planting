@@ -98,8 +98,9 @@ async function main(event, context) {
           wateringContext: plan.wateringContext,
           action: plan.action,
           // v2.1 新增字段
-          amountClass: plan.amountClass,
           amountRangeMl: plan.amountRangeMl,
+          amountBottleText: plan.amountBottleText,
+          potVolumeMl: plan.potGeometry?.potVolumeMl ?? 0,
           stopCondition: plan.stopCondition,
           confidenceLevel: plan.confidenceLevel,
           reasonCodes: plan.reasonCodes,
