@@ -62,7 +62,7 @@ const MATERIAL_EVAPORATION_FACTOR = Object.freeze({
  * 基质对保水的影响因子（越高保水越强）
  */
 const SUBSTRATE_RETENTION_FACTOR = Object.freeze({
-  general: 1.0,
+  general: 1.1,
   peat: 1.3,
   coco: 1.2,
   bark: 0.7,

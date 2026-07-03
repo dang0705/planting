@@ -55,7 +55,10 @@ const REASON_CODE = Object.freeze({
   NO_RECENT_WATERING: 'NO_RECENT_WATERING',
   BASELINE_INTERVAL: 'BASELINE_INTERVAL',
   MIST_DOES_NOT_OFFSET_DRY: 'MIST_DOES_NOT_OFFSET_DRY',
-  NO_DRAINAGE_NARROW_BOTTOM: 'NO_DRAINAGE_NARROW_BOTTOM'
+  NO_DRAINAGE_NARROW_BOTTOM: 'NO_DRAINAGE_NARROW_BOTTOM',
+  DRY_SUPPRESSED_BY_WET_ENVIRONMENT: 'DRY_SUPPRESSED_BY_WET_ENVIRONMENT',
+  AMOUNT_ML_CONFLICTS_WITH_AMOUNT_LABEL: 'AMOUNT_ML_CONFLICTS_WITH_AMOUNT_LABEL',
+  WET_ENVIRONMENT_AMOUNT_REDUCED: 'WET_ENVIRONMENT_AMOUNT_REDUCED'
 })
 
 /**
@@ -132,11 +135,43 @@ function daysAgo(referenceDate = '', eventDate = '') {
  * @param {number} [potVolumeMl] - 盆体积，用于 amountMl 反推；缺省时反推走固定 ml 阈值
  */
 function resolveDoseClass(event = {}, potVolumeMl = 0) {
+  return resolveDoseClassWithConflict(event, potVolumeMl).doseClass
+}
+
+/** doseClass → 数值 rank，用于冲突判定（mist=0 ... thorough=3）。 */
+const DOSE_RANK = { mist: 0, small: 1, normal: 2, thorough: 3, unknown: -1 }
+
+/**
+ * 解析 doseClass 并检测 amountMl 与 amount 标签的冲突。
+ *
+ * 冲突定义：amountMl 反推的档位与 amount 标签档位的 rank 差 ≥ 2（如 normal vs mist）。
+ * 冲突时以 amountMl 反推为准，标记 doseConflict=true。
+ *
+ * @param {object} event
+ * @param {number} [potVolumeMl]
+ * @returns {{ doseClass: string, doseConflict: boolean }}
+ */
+function resolveDoseClassWithConflict(event = {}, potVolumeMl = 0) {
   const amountMl = Number(event.amountMl ?? event.amount_ml)
-  if (Number.isFinite(amountMl) && amountMl > 0) {
-    return resolveMlToDoseClass(amountMl, potVolumeMl)
-  }
   const amount = normalizeText(event.amount || event.wateringAmount || event.level || event.value)
+  const labelDose = resolveDoseClassByLabel(amount)
+
+  if (Number.isFinite(amountMl) && amountMl > 0) {
+    const inferredDose = resolveMlToDoseClass(amountMl, potVolumeMl)
+    // 检测冲突：标签有效且 rank 差 ≥ 2
+    let doseConflict = false
+    if (labelDose !== DOSE_CLASS.UNKNOWN && inferredDose !== DOSE_CLASS.UNKNOWN) {
+      const rankDiff = Math.abs(DOSE_RANK[labelDose] - DOSE_RANK[inferredDose])
+      doseConflict = rankDiff >= 2
+    }
+    return { doseClass: inferredDose, doseConflict }
+  }
+
+  return { doseClass: labelDose, doseConflict: false }
+}
+
+/** 仅按 amount 字符串标签解析 doseClass（原 resolveDoseClass 的字符串匹配部分）。 */
+function resolveDoseClassByLabel(amount) {
   if (!amount || amount === 'unknown') {
     return DOSE_CLASS.UNKNOWN
   }
@@ -395,15 +430,38 @@ function evaluateDryWetGate({
   }
 
   // ---- DRY 判定 ----
-  // 条件1：根区湿度低（<0.3）+ 距上次有效浇水较久（≥ baseline min）
-  // 条件2：天气偏干（预报/历史 hot-dry）+ 无有效浇水记录或距上次浇水很久
-  // 喷雾不能抵消干燥风险
+  // 保留触发原因，用于湿信号刹车判断
   const isLowMoisture = rootZoneMoistureIndex < 0.3
   const baselineMinDays = Number(baselineIntervalDays[0]) || 5
   const isTooLongAgo =
     lastEffectiveRootWateredDaysAgo === null ||
     lastEffectiveRootWateredDaysAgo >= baselineMinDays
-  const isDry = isLowMoisture && isTooLongAgo || (forecastHotDryHit && isTooLongAgo) || (historicalHotDryHit && lastEffectiveRootWateredDaysAgo === null)
+
+  const dryReasons = []
+  if (isLowMoisture && isTooLongAgo) {
+    dryReasons.push('LOW_MOISTURE_LONG_GAP')
+  }
+  if (forecastHotDryHit && isTooLongAgo) {
+    dryReasons.push('FORECAST_HOT_DRY_HIT')
+  }
+  if (historicalHotDryHit && lastEffectiveRootWateredDaysAgo === null) {
+    dryReasons.push('HISTORICAL_HOT_DRY_NO_WATERING')
+  }
+  const isDry = dryReasons.length > 0
+
+  // 湿信号刹车：强偏湿环境（≥2 项）且 DRY 不来自预报热干时，降级为 BASELINE + 查土
+  if (isDry && weatherWetPressureHitCount >= 2 && !dryReasons.includes('FORECAST_HOT_DRY_HIT')) {
+    reasonCodes.push(REASON_CODE.STRONG_WET_ENVIRONMENT)
+    reasonCodes.push(REASON_CODE.DRY_SUPPRESSED_BY_WET_ENVIRONMENT)
+    reasonCodes.push(REASON_CODE.CHECK_SOIL_BEFORE_WATERING)
+    reasonCodes.push(REASON_CODE.BASELINE_INTERVAL)
+    return {
+      gateState: GATE_STATE.BASELINE,
+      reasonCodes,
+      wateringContext: 'keep_baseline_or_check_soil',
+      action: 'follow_baseline_or_check_soil'
+    }
+  }
 
   if (isDry) {
     reasonCodes.push(REASON_CODE.INCREASE_WATERING_FREQUENCY)
@@ -510,6 +568,18 @@ function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELI
     stopCondition = '盆土表面湿润即可停止'
   }
 
+  // 天气偏湿水量压制（仅 DRY 生效，BASELINE 不压）
+  const wetFactor = resolveWeatherWetAmountFactor(gateState, Number(options.weatherWetPressureHitCount) || 0)
+  if (wetFactor < 1.0) {
+    amountRangeMl = [
+      Math.round(amountRangeMl[0] * wetFactor),
+      Math.round(amountRangeMl[1] * wetFactor)
+    ]
+    if (gateState === GATE_STATE.DRY && Number(options.weatherWetPressureHitCount) >= 2) {
+      stopCondition = '先查土，确认表层 3-5cm 干透后再浇；不要按毫升一次倒完'
+    }
+  }
+
   // 属级需水量修正（Task 6）：以 targetMoistureMid 为锚，喜干收窄、湿润放大
   const speciesFactor = resolveSpeciesWaterFactor(options.wateringQuantization)
   amountRangeMl = [
@@ -533,6 +603,32 @@ function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELI
     stopCondition,
     confidenceLevel: volumeConfidence
   }
+}
+
+/**
+ * 天气偏湿对 DRY 水量的压制系数（仅 DRY 生效，BASELINE/WET 返回 1.0）。
+ *
+ * | weatherWetPressureHitCount | 系数 | 语义 |
+ * |---|---|---|
+ * | 0 | 1.0 | 正常 |
+ * | 1 | 0.8 | 轻度偏湿，收窄 20% |
+ * | ≥2 | 0.5 | 强偏湿，水量砍半 + 查土提示 |
+ *
+ * @param {string} gateState
+ * @param {number} weatherWetPressureHitCount
+ * @returns {number}
+ */
+function resolveWeatherWetAmountFactor(gateState, weatherWetPressureHitCount = 0) {
+  if (gateState !== GATE_STATE.DRY) {
+    return 1.0
+  }
+  if (weatherWetPressureHitCount >= 2) {
+    return 0.5
+  }
+  if (weatherWetPressureHitCount === 1) {
+    return 0.8
+  }
+  return 1.0
 }
 
 /**
@@ -607,6 +703,7 @@ module.exports = {
   DOSE_HYDRATION_WEIGHT,
   DOSE_WET_PRESSURE_WEIGHT,
   resolveDoseClass,
+  resolveDoseClassWithConflict,
   resolveLookbackWindowDays,
   computeEffectiveHydrationLoad,
   computeWetPressureLoad,
@@ -616,6 +713,7 @@ module.exports = {
   hasRecentThoroughWatering,
   computeAmountSuggestion,
   resolveSpeciesWaterFactor,
+  resolveWeatherWetAmountFactor,
   resolveDrainageAmountModifier,
   resolveUserDoseEcho
 }

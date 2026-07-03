@@ -22,7 +22,9 @@ const {
 const {
   DOSE_CLASS,
   GATE_STATE,
+  REASON_CODE,
   resolveDoseClass,
+  resolveDoseClassWithConflict,
   resolveLookbackWindowDays,
   computeEffectiveHydrationLoad,
   computeWetPressureLoad,
@@ -504,9 +506,24 @@ function buildWateringPlanner({
     recentThoroughWatering
   })
 
+  // amountMl 与 amount 标签冲突检测（Task 修正）
+  const events = timeline.watering_events_10d || timeline.wateringEvents10d || []
+  const potVolumeMl = Number(potGeometry.potVolumeMl) || 0
+  let hasDoseConflict = false
+  for (const ev of events) {
+    if (resolveDoseClassWithConflict(ev, potVolumeMl).doseConflict) {
+      hasDoseConflict = true
+      break
+    }
+  }
+  if (hasDoseConflict) {
+    gate.reasonCodes.push(REASON_CODE.AMOUNT_ML_CONFLICTS_WITH_AMOUNT_LABEL)
+  }
+
   // 水量建议
   const amountSuggestion = computeAmountSuggestion(potGeometry, gate.gateState, baseline.intervalDays, {
-    wateringQuantization
+    wateringQuantization,
+    weatherWetPressureHitCount
   })
 
   // 用户历史剂量回显（最近一次非喷雾浇水的剂量档）
@@ -663,7 +680,7 @@ function buildWateringPlanner({
     amountRangeMl: amountSuggestion.amountRangeMl,
     amountBottleText: amountSuggestion.amountBottleText,
     stopCondition: amountSuggestion.stopCondition,
-    confidenceLevel: amountSuggestion.confidenceLevel,
+    confidenceLevel: hasDoseConflict ? 'low' : amountSuggestion.confidenceLevel,
     // 下次浇水日期
     nextWaterDate: nextWater.nextWaterDate,
     nextWaterWindow: nextWater.nextWaterWindow,

@@ -24,6 +24,7 @@ const {
   hasRecentThoroughWatering,
   computeAmountSuggestion,
   resolveSpeciesWaterFactor,
+  resolveDoseClassWithConflict,
   resolveUserDoseEcho,
   DOSE_CLASS,
   GATE_STATE,
@@ -641,4 +642,132 @@ test('amountSuggestion: 需水系数与排水孔修正叠加（喜干+无孔最�
   })
   assert.ok(dryLovingNoHole.amountRangeMl[1] < moistHole.amountRangeMl[1],
     '喜干+无孔应远小于湿润+有孔')
+})
+
+/* ============================================================
+ * DRY 湿信号刹车 + amountMl 冲突校验 + 天气水量压制（GPT 修正）
+ * ============================================================ */
+
+test('gate: DRY 被强偏湿环境压制为 BASELINE（无 FORECAST_HOT_DRY_HIT）', () => {
+  // 低湿度 + 无有效浇水 → 本应 DRY，但 weatherWetPressureHitCount≥2 且无预报热干 → 压制
+  const gate = evaluateDryWetGate({
+    rootZoneMoistureIndex: 0.1,
+    wetPressureLoad: 0,
+    lastEffectiveRootWateredDaysAgo: null,
+    potGeometry: { hasDrainageHole: 'true' },
+    weatherWetPressureHitCount: 2,
+    forecastHotDryHit: false,
+    historicalHotDryHit: false,
+    baselineIntervalDays: [5, 8]
+  })
+  assert.equal(gate.gateState, GATE_STATE.BASELINE, '应被压制为 BASELINE')
+  assert.ok(gate.reasonCodes.includes(REASON_CODE.DRY_SUPPRESSED_BY_WET_ENVIRONMENT), '应含 DRY_SUPPRESSED')
+  assert.ok(gate.reasonCodes.includes(REASON_CODE.CHECK_SOIL_BEFORE_WATERING), '应含查土提示')
+})
+
+test('gate: FORECAST_HOT_DRY_HIT 时 DRY 不被湿信号压制', () => {
+  const gate = evaluateDryWetGate({
+    rootZoneMoistureIndex: 0.1,
+    wetPressureLoad: 0,
+    lastEffectiveRootWateredDaysAgo: null,
+    potGeometry: { hasDrainageHole: 'true' },
+    weatherWetPressureHitCount: 2,
+    forecastHotDryHit: true,
+    historicalHotDryHit: false,
+    baselineIntervalDays: [5, 8]
+  })
+  assert.equal(gate.gateState, GATE_STATE.DRY, '预报热干时 DRY 不被压制')
+})
+
+test('gate: weatherWetPressureHitCount<2 时不压制 DRY', () => {
+  const gate = evaluateDryWetGate({
+    rootZoneMoistureIndex: 0.1,
+    wetPressureLoad: 0,
+    lastEffectiveRootWateredDaysAgo: null,
+    potGeometry: { hasDrainageHole: 'true' },
+    weatherWetPressureHitCount: 1,
+    forecastHotDryHit: false,
+    historicalHotDryHit: false,
+    baselineIntervalDays: [5, 8]
+  })
+  assert.equal(gate.gateState, GATE_STATE.DRY, '仅1项湿信号不压制')
+})
+
+test('resolveDoseClassWithConflict: 30ml+normal 在 2749ml 盆上判冲突', () => {
+  const { doseClass, doseConflict } = resolveDoseClassWithConflict(
+    { amount: 'normal', amountMl: 30 }, 2749
+  )
+  assert.equal(doseClass, DOSE_CLASS.MIST, '30ml 反推为 mist')
+  assert.equal(doseConflict, true, 'normal vs mist rank差2 → 冲突')
+})
+
+test('resolveDoseClassWithConflict: 300ml+normal 在 2749ml 盆上不冲突', () => {
+  const { doseClass, doseConflict } = resolveDoseClassWithConflict(
+    { amount: 'normal', amountMl: 300 }, 2749
+  )
+  assert.equal(doseConflict, false, '300ml 反推 normal，与标签一致不冲突')
+})
+
+test('amountSuggestion: DRY + weatherWetPressureHitCount≥2 水量压制 ×0.5', () => {
+  const geo = computePotGeometry({
+    potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15,
+    hasDrainageHole: 'true', substrateType: 'general'
+  })
+  const normal = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8], { weatherWetPressureHitCount: 0 })
+  const suppressed = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8], { weatherWetPressureHitCount: 2 })
+  assert.ok(suppressed.amountRangeMl[1] < normal.amountRangeMl[1], '湿信号≥2 应压制水量')
+  assert.ok(suppressed.amountRangeMl[1] <= normal.amountRangeMl[1] * 0.55, '约 ×0.5')
+  assert.match(suppressed.stopCondition, /查土.*干透/, 'stopCondition 应含查土提示')
+})
+
+test('amountSuggestion: BASELINE 不受 weatherWetAmountFactor 影响', () => {
+  const geo = computePotGeometry({
+    potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15,
+    hasDrainageHole: 'true', substrateType: 'general'
+  })
+  const normal = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], { weatherWetPressureHitCount: 0 })
+  const withWet = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], { weatherWetPressureHitCount: 2 })
+  assert.deepEqual(normal.amountRangeMl, withWet.amountRangeMl, 'BASELINE 不受湿信号压制')
+})
+
+test('potGeometry: 田园土 retentionFactor=1.1（命中保水基质档）', () => {
+  const geo = computePotGeometry({
+    potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15,
+    hasDrainageHole: 'false', substrateType: 'general'
+  })
+  assert.ok(geo.substrateRetentionFactor > 1.0, '田园土应 >1.0')
+  // 无孔+保水基质 → 命中 0.5/0.4 档而非 0.6/0.5
+  const modifier = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8])
+  const withHole = computeAmountSuggestion(
+    computePotGeometry({ ...geo, hasDrainageHole: 'true' }), GATE_STATE.DRY, [5, 8]
+  )
+  assert.ok(modifier.amountRangeMl[1] < withHole.amountRangeMl[1], '无孔田园土应比有孔更保守')
+})
+
+test('planner: 龟背竹案例端到端 — 强湿+无有效浇水 → BASELINE 非大水量', () => {
+  const REF = '2026-07-03'
+  const plan = buildWateringPlanner({
+    wateringStrategy: { freq: [5, 8] },
+    historical: {
+      highHumidityDays: 5, maxConsecutiveHighHumidityDays: 3,
+      rainyDays: 4, maxConsecutiveRainyDays: 3,
+      coldHumidDays: 0, hotDryDays: 0
+    },
+    forecast: {},
+    behaviorTimeline: normalizeCareBehaviorTimeline({
+      referenceDate: REF,
+      watering_events_10d: [{ date: '2026-06-23', watered: true, amount: 'normal', amountMl: 30 }]
+    }),
+    potProfile: { potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15, hasDrainageHole: 'true', substrateType: 'general' },
+    wateringQuantization: { targetMoistureMid: 0.65, dryTolerance: 'low' },
+    referenceDate: REF
+  })
+  // DRY 应被湿信号压制为 BASELINE
+  assert.equal(plan.wateringContext, WATERING_CONTEXTS.BASELINE, '应被压制为 BASELINE')
+  assert.ok(plan.reasonCodes.includes(REASON_CODE.DRY_SUPPRESSED_BY_WET_ENVIRONMENT), '含 DRY_SUPPRESSED')
+  // 30ml+normal 冲突 → confidence low
+  assert.equal(plan.confidenceLevel, 'low', '冲突应降 confidence')
+  assert.ok(plan.reasonCodes.includes(REASON_CODE.AMOUNT_ML_CONFLICTS_WITH_AMOUNT_LABEL), '含冲突 reasonCode')
+  // 水量不应是 411-618ml 那种大水量（BASELINE 倍率 0.1~0.15）
+  assert.ok(plan.amountRangeMl[1] < 500, `BASELINE 水量应保守，实际 ${plan.amountRangeMl[1]}`)
 })
