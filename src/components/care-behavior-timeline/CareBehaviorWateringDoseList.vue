@@ -44,7 +44,7 @@ const bottleOptions = computed(() => resolveWateringDoseOptions(props.potVolumeM
 const useBucket = computed(() => isDoseOptionsUsingBucket(props.potVolumeMl))
 const doseRefText = computed(() =>
   useBucket.value
-    ? '以 5 升油桶为参照；喷一喷不计入根区浇水'
+    ? '以 5 升油桶为参照'
     : '以 550ml 矿泉水瓶为参照；喷一喷不计入根区浇水'
 )
 

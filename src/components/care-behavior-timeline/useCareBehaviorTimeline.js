@@ -415,6 +415,10 @@ export function useCareBehaviorTimeline(props, emit) {
     deep: true,
     immediate: true
   })
+  // 盆体积变化导致档位变化时，清除旧的剂量选中态（旧 ml 不匹配新档位）
+  watch(() => props.potVolumeMl, () => {
+    wateringDoseByDate.value = {}
+  })
   onMounted(initializeSkeletonVisibility)
   onMounted(initializeTimelineFromProps)
   onUnmounted(() => {

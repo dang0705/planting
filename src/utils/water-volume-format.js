@@ -86,14 +86,20 @@ export function resolveWateringDoseOptions(potVolumeMl) {
     return `约${bottles}瓶`
   }
 
-  return [
-    { label: '不知道', value: null, amountMl: null },
-    { label: '喷一喷', value: 'spray', amountMl: mistMl },
+  const options = [
+    { label: '不知道', value: null, amountMl: null }
+  ]
+  // 油桶模式（大盆）不展示"喷一喷"——3% 盆体积可能上千 ml，不是喷雾语义
+  if (!useBucket) {
+    options.push({ label: '喷一喷', value: 'spray', amountMl: mistMl })
+  }
+  options.push(
     { label: labelFor(smallMl, 0), value: 'quarter', amountMl: smallMl },
     { label: labelFor(normalMl, 1), value: 'half', amountMl: normalMl },
     { label: labelFor(thoroughMl, 2), value: 'one', amountMl: thoroughMl },
     { label: labelFor(heavyMl, 3), value: 'two', amountMl: heavyMl }
-  ]
+  )
+  return options
 }
 
 /**
