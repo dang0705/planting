@@ -89,9 +89,11 @@ async function main(event, context) {
         wateringQuantization: strategy.wateringQuantization || null,
         referenceDate
       })
+      const planId = `plan_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
       return jsonResponse(200, {
         code: 200,
         data: {
+          planId,
           nextWaterDate: plan.nextWaterDate,
           nextWaterWindow: plan.nextWaterWindow,
           nextWaterReason: plan.nextWaterReason,

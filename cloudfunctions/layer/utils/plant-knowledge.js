@@ -687,18 +687,56 @@ async function getUserPlantInstanceById(openid, id) {
   return plantInstance
 }
 
-async function getUserPlantWateringEvents(openid, id) {
+async function getUserPlantWateringEvents(openid, id, limit = 10) {
   try {
     const result = await models.$runSQL(
-      'SELECT CAST(watering_events_json AS CHAR) AS watering_events_json_text FROM user_plant_instances WHERE id = {{id}} AND _openid = {{openid}} LIMIT 1',
-      { openid, id: Number(id) }
+      `SELECT id, event_date, amount_label, amount_ml, source, plan_id, created_at
+       FROM user_watering_events
+       WHERE _openid = {{openid}} AND user_plant_id = {{userPlantId}}
+       ORDER BY event_date DESC LIMIT {{limit}}`,
+      { openid, userPlantId: Number(id), limit: Number(limit) }
     )
-    const row = result?.data?.executeResultList?.[0]
-    return parseJsonField(row?.watering_events_json_text, null)
+    const rows = result?.data?.executeResultList || []
+    return rows.map(row => ({
+      id: row.id,
+      date: row.event_date,
+      watered: true,
+      amount: row.amount_label,
+      amountMl: row.amount_ml,
+      source: row.source,
+      planId: row.plan_id
+    }))
   } catch {
-    // 列不存在或查询失败时返回 null，不阻断主流程
+    // 表不存在或查询失败时返回 null，不阻断主流程
     return null
   }
+}
+
+/**
+ * 插入单条浇水事件到独立审计表。
+ * @param {string} openid
+ * @param {number} userPlantId - user_plant_instances.id
+ * @param {object} event - { date, amount, amountMl, source, planId }
+ */
+async function insertWateringEvent(openid, userPlantId, event = {}) {
+  const params = {
+    openid,
+    userPlantId: Number(userPlantId),
+    eventDate: event.date || null,
+    amountLabel: event.amount || event.amount_label || null,
+    amountMl: event.amountMl || event.amount_ml || null,
+    source: event.source || 'manual',
+    planId: event.planId || event.plan_id || null
+  }
+  if (!params.eventDate) {
+    return null
+  }
+  await models.$runSQL(
+    `INSERT INTO user_watering_events (_openid, user_plant_id, event_date, amount_label, amount_ml, source, plan_id)
+     VALUES ({{openid}}, {{userPlantId}}, {{eventDate}}, {{amountLabel}}, {{amountMl}}, {{source}}, {{planId}})`,
+    params
+  )
+  return params
 }
 
 /**
@@ -841,7 +879,8 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
     params.nextWater = updates.nextWater
   }
   if (hasOwnField(updates, 'wateringEvents')) {
-    params.wateringEventsJson = stringifyNullableJson(updates.wateringEvents)
+    // 事件写入独立审计表，不再覆盖写 JSON 列
+    params.wateringEvents = updates.wateringEvents
   }
 
   // 盆型档案字段检测（同时兼容 camelCase / snake_case）
@@ -861,7 +900,7 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
     hasOwnField(updates, 'source') ||
     hasOwnField(updates, 'confidence')
 
-  if (!fields.length && params.wateringEventsJson === undefined && !hasPotProfileUpdate) {
+  if (!fields.length && params.wateringEvents === undefined && !hasPotProfileUpdate) {
     return existing
   }
 
@@ -880,15 +919,14 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
     updated = existing
   }
 
-  // watering_events_json 单独 try/catch 写入，列不存在时跳过而不阻断主流程
-  if (params.wateringEventsJson !== undefined) {
-    try {
-      await models.$runSQL(
-        'UPDATE user_plant_instances SET watering_events_json = {{wateringEventsJson}}, updated_at = CURRENT_TIMESTAMP WHERE id = {{id}} AND _openid = {{openid}}',
-        { openid, id: Number(id), wateringEventsJson: params.wateringEventsJson }
-      )
-    } catch {
-      // 列不存在时忽略，不阻断 last_watered / next_water 的写入
+  // 浇水事件逐条 INSERT 到独立审计表
+  if (params.wateringEvents !== undefined && Array.isArray(params.wateringEvents)) {
+    for (const ev of params.wateringEvents) {
+      try {
+        await insertWateringEvent(openid, id, ev)
+      } catch {
+        // 单条事件写入失败不阻断其余事件
+      }
     }
     updated = await getUserPlantInstanceById(openid, id)
   }
@@ -1199,6 +1237,7 @@ module.exports = {
   createUserPlantInstance,
   getUserPlantInstanceById,
   getUserPlantWateringEvents,
+  insertWateringEvent,
   getUserPlantWateringStrategy,
   getUserPlantCareExtension,
   listUserPlantInstances,

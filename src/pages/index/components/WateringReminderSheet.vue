@@ -528,8 +528,11 @@ async function addToCalendar() {
   }
   const wateringEvents = selectedWateringEventsForPlanner.value
   const nextWaterDate = plannerResult.value.nextWaterDate
+  const planId = plannerResult.value?.planId || null
+  // 只传本次新增的浇水事件（带 planId 审计追溯），后端逐条 INSERT 到独立事件表
+  const newEvents = wateringEvents.map(ev => ({ ...ev, planId }))
   try {
-    await plantStore.completeWatering(props.plant.id, { wateringEvents, nextWaterDate })
+    await plantStore.completeWatering(props.plant.id, { wateringEvents: newEvents, nextWaterDate })
     plantingStore.setPlantReminder({
       plantId: props.plant.id,
       plantName: props.plant.displayName || props.plant.canonicalName || '当前植物',

@@ -47,7 +47,11 @@ function normalizeCareBehaviorEvent(value, type, explicitDate = '') {
     return {
       date,
       watered: true,
-      amount: normalizeAmount(value?.amount || value?.wateringAmount || value?.dose)
+      amount: normalizeAmount(value?.amount || value?.wateringAmount || value?.dose),
+      ...(value?.amountMl != null ? { amountMl: value.amountMl } : {}),
+      ...(value?.id != null ? { id: value.id } : {}),
+      ...(value?.planId != null ? { planId: value.planId } : {}),
+      ...(value?.source != null ? { source: value.source } : {})
     }
   }
   if (type === 'fertilizing') {
