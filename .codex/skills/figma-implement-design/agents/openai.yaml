@@ -1,5 +1,0 @@
-interface:
-  display_name: "Figma Implement Compatibility"
-  short_description: "兼容入口；仅显式委托给 implementer UI policy"
-policy:
-  allow_implicit_invocation: false

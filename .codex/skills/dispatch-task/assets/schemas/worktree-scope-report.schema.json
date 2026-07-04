@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Worktree Scope Report",
+  "type": "object",
+  "required": [
+    "status",
+    "changed_files"
+  ],
+  "properties": {
+    "status": {
+      "enum": [
+        "passed",
+        "blocked"
+      ]
+    },
+    "changed_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

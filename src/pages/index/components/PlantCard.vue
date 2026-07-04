@@ -71,6 +71,7 @@
         <button
           v-for="item in reminderItems"
           :key="item.type"
+          :id="`plant-card-reminder-${plant.id}-${item.type}`"
           class="m-0 flex size-8 items-center justify-center rounded-full border p-0 after:border-0"
           :class="item.active ? 'border-[#74d4ff] bg-[#f0f9ff]' : 'border-[#e5e7eb] bg-[#f9fafb]'"
           hover-class="none"

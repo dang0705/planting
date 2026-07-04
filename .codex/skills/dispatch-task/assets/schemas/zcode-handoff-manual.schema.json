@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ZCode Handoff Manual",
+  "type": "object",
+  "required": [
+    "dispatch_run_id",
+    "status",
+    "updated_at",
+    "phase"
+  ],
+  "properties": {
+    "status": {
+      "enum": [
+        "working",
+        "completed",
+        "blocked"
+      ]
+    }
+  }
+}

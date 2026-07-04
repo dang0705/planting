@@ -1,8 +1,3 @@
----
-name: figma-ui-implementation-policy
-description: "main/dispatcher 专用 Figma Routing Lite：只保留节点身份与粗粒度结构，禁止获取实现或验收细节。"
----
-
 # Figma Routing Lite
 
 ## 所有权

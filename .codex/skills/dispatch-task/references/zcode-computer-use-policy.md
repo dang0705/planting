@@ -1,0 +1,80 @@
+# ZCode Computer Use Policy
+
+仅当 `implementation_mode=zcode_external` 时读取。本文定义 Codex main 操作 ZCode 的 UI/Computer Use 协议。
+
+## 必须真实调用工具
+
+ZCode bridge 不是“生成 prompt 让用户复制”。Codex main 必须通过 `@ZCode` 或 `@Computer` 真实完成：聚焦 ZCode、定位输入框、剪贴板粘贴 prompt、验证 sentinel、发送消息。
+
+不得只在 JSON 中写 `tool_invoked=true`。send receipt 必须引用真实 tool event / transcript step。
+
+## 固定动作序列
+
+```text
+verify_zcode_current_session
+focus_chat_input
+set_clipboard_to_prompt
+paste_clipboard
+verify_prompt_sentinel_in_input
+send_prompt
+```
+
+prompt 必须一次性剪贴板粘贴；禁止逐字输入。
+
+## 替代 UI 自动化
+
+如果 Computer Use 能确认 ZCode 会话和输入框，但当前工具不提供粘贴/发送动作，可使用已验证替代通道：系统剪贴板 + macOS UI 自动化。前提是：
+
+1. Computer Use 已确认前台应用、会话和输入框。
+2. 只从剪贴板一次性粘贴，不逐字输入。
+3. 发送后再由 Computer Use 确认消息进入会话。
+4. receipt 记录 `alternative_ui_automation.used=true` 与安全控制。
+
+若完全没有 Computer Use / UI automation 工具，必须 `blocked: computer_use_unavailable`。
+
+## 发送后低频回收
+
+发送成功且确认 ZCode 已收到 prompt 后，必须断开持续 UI 监视。
+
+前 30 分钟只允许每 5 分钟检查：
+
+```text
+handoff_manual
+scoped_git_status
+scoped_git_diff_name_only
+scoped_git_diff_stat
+```
+
+30 分钟后才允许低频查看 ZCode UI，且间隔不得短于 10 分钟。禁止盯屏、保活 UI 观察或连续读取 app state。
+
+## Send Receipt 校验
+
+发送后执行：
+
+```bash
+node .codex/skills/dispatch-task/scripts/validate-zcode-send-receipt.mjs <handoff.json> <send-receipt.json>
+```
+
+核心字段：
+
+```json
+{
+  "status": "sent | blocked",
+  "send_action": "enter | send_button | blocked",
+  "clipboard_paste_used": true,
+  "prompt_integrity_verified": true,
+  "computer_use": {
+    "tool_invoked": true,
+    "actions": [
+      "verify_zcode_current_session",
+      "focus_chat_input",
+      "set_clipboard_to_prompt",
+      "paste_clipboard",
+      "verify_prompt_sentinel_in_input",
+      "send_prompt"
+    ],
+    "manual_typing_used": false,
+    "shell_only_ui_automation_used": false
+  }
+}
+```

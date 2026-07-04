@@ -144,7 +144,7 @@
             id-prefix="home-watering"
             :timeline="timelineInput"
             :enable-dose-per-date="true"
-            :pot-volume-ml="plannerResult?.potVolumeMl || 0"
+            :pot-volume-ml="potVolumeMl"
             @change="onTimelineChange"
           />
         </view>
@@ -153,21 +153,21 @@
             class="m-0 flex-1 rounded-[10px] border border-gray-200 bg-white py-2.5 text-sm text-gray-700 after:border-0"
             hover-class="none"
             @click="closeDatePicker"
-          >取消</button>
+          >
+            取消
+          </button>
           <button
             class="m-0 flex-1 rounded-[10px] bg-[#2d7a4f] py-2.5 text-sm font-medium text-white after:border-0"
             hover-class="none"
             @click="confirmDatePicker"
-          >确认</button>
+          >
+            确认
+          </button>
         </view>
       </view>
     </uni-popup>
 
-    <PotProfileEditor
-      ref="potProfileEditorRef"
-      :plant="props.plant"
-      @saved="onPotProfileSaved"
-    />
+    <PotProfileEditor ref="potProfileEditorRef" :plant="props.plant" @saved="onPotProfileSaved" />
   </view>
 </template>
 
@@ -181,7 +181,7 @@ import { getEnvironmentWeatherWindow } from '@/api/weather.js'
 import { mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline } from '@/utils/care-behavior-weather-window.js'
 import CareBehaviorTimeline from '@/components/CareBehaviorTimeline.vue'
 import PotProfileEditor from './PotProfileEditor.vue'
-import { formatMlRangeToBottleText } from '@/utils/water-volume-format.js'
+import { formatMlRangeToBottleText, estimatePotVolumeMl } from '@/utils/water-volume-format.js'
 import waterDefaultIcon from '@/assets/icons/home-card-water-default.svg'
 
 const props = defineProps({
@@ -216,6 +216,18 @@ const substrateLabelMap = {
   gritty: '颗粒土',
   coarse_sand: '粗砂'
 }
+
+/**
+ * 盆体积 ml：优先用 planner 后端精确值，兜底用 potProfile 估算。
+ * 日期选择器打开时 planner 可能还没触发，需用 potProfile 兜底让录入侧瓶档即时动态生成。
+ */
+const potVolumeMl = computed(() => {
+  const fromPlanner = plannerResult.value?.potVolumeMl
+  if (fromPlanner && fromPlanner > 0) {
+    return fromPlanner
+  }
+  return estimatePotVolumeMl(props.plant?.potProfile)
+})
 
 const potProfileSummary = computed(() => {
   const p = props.plant?.potProfile
@@ -356,7 +368,13 @@ const plannerSummaryRows = computed(() => {
     const echo = plannerResult.value.userDoseEcho
     // 兼容对象 { doseClass, amountMl } 和旧字符串格式
     const doseClass = typeof echo === 'string' ? echo : echo?.doseClass
-    const echoMap = { unknown: '不确定', mist: '喷一喷', small: '小半瓶', normal: '约一瓶', thorough: '浇到出水' }
+    const echoMap = {
+      unknown: '不确定',
+      mist: '喷一喷',
+      small: '小半瓶',
+      normal: '约一瓶',
+      thorough: '浇到出水'
+    }
     rows.push({
       label: '你通常浇',
       value: echoMap[doseClass] || '约一瓶',
