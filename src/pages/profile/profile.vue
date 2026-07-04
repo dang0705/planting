@@ -227,6 +227,13 @@ const menuItems = ref([
     title: '诊断记录管理',
     action: 'diagnosisReview',
     devOnly: true
+  },
+  {
+    id: 7,
+    icon: '💧',
+    title: '浇水算法审计',
+    action: 'wateringReview',
+    devOnly: true
   }
 ])
 
@@ -307,6 +314,11 @@ function handleMenuClick(item) {
     case 'diagnosisReview':
       uni.navigateTo({
         url: '/pages/profile/diagnosis-review'
+      })
+      break
+    case 'wateringReview':
+      uni.navigateTo({
+        url: '/pages/profile/watering-review'
       })
       break
   }
