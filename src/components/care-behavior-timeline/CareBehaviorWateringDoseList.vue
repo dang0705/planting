@@ -1,7 +1,7 @@
 <template>
   <view v-if="rows.length" class="care-dose-list mt-3 rounded-[12px] border border-gray-100 bg-white p-3">
     <text class="block text-sm font-medium text-gray-900">每次浇了多少水？</text>
-    <text class="mt-0.5 block text-xs text-gray-400">以 550ml 矿泉水瓶为参照；喷一喷不计入根区浇水</text>
+    <text class="mt-0.5 block text-xs text-gray-400">{{ doseRefText }}</text>
     <view v-for="row in rows" :key="row.date" class="mt-3">
       <view class="flex items-center justify-between">
         <text class="text-xs font-medium text-gray-700">{{ row.date }}</text>
@@ -32,7 +32,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { resolveWateringDoseOptions, resolveBottleOptionValue } from '@/utils/water-volume-format.js'
+import { resolveWateringDoseOptions, resolveBottleOptionValue, isDoseOptionsUsingBucket } from '@/utils/water-volume-format.js'
 
 const props = defineProps({
   rows: { type: Array, default: () => [] },
@@ -41,6 +41,12 @@ const props = defineProps({
 const emit = defineEmits(['update-dose'])
 
 const bottleOptions = computed(() => resolveWateringDoseOptions(props.potVolumeMl))
+const useBucket = computed(() => isDoseOptionsUsingBucket(props.potVolumeMl))
+const doseRefText = computed(() =>
+  useBucket.value
+    ? '以 5 升油桶为参照；喷一喷不计入根区浇水'
+    : '以 550ml 矿泉水瓶为参照；喷一喷不计入根区浇水'
+)
 
 function doseLabel(amountMl) {
   const value = resolveBottleOptionValue(amountMl, bottleOptions.value)

@@ -61,12 +61,26 @@ export function resolveWateringDoseOptions(potVolumeMl) {
   const thoroughMl = Math.round(v * 0.5)
   const heavyMl = Math.round(v * 0.8)
 
-  // 按 ml 量级选单位和标签
-  const labelFor = (ml) => {
-    if (ml >= BUCKET_ML) {
-      const buckets = Math.max(1, Math.round(ml / BUCKET_ML))
-      return `约${buckets}桶`
+  // 全档位统一单位：以最高档（heavyMl）为基准判断
+  // 最高档 ≥5000ml → 全用油桶；否则全用矿泉水瓶
+  const useBucket = heavyMl >= BUCKET_ML
+
+  // 油桶模式下保证桶数递增，避免多档重复"约1桶"
+  let bucketCounts = null
+  if (useBucket) {
+    const rawCounts = [smallMl, normalMl, thoroughMl, heavyMl].map(ml => Math.max(1, Math.round(ml / BUCKET_ML)))
+    bucketCounts = []
+    for (let i = 0; i < rawCounts.length; i++) {
+      const prev = i > 0 ? bucketCounts[i - 1] : 0
+      bucketCounts.push(rawCounts[i] > prev ? rawCounts[i] : prev + 1)
     }
+  }
+
+  const labelFor = (ml, idx) => {
+    if (useBucket) {
+      return `约${bucketCounts[idx]}桶`
+    }
+    if (ml <= MIST_TEXT_MAX_ML) return '喷一喷'
     const bottles = Math.round((ml / BOTTLE_ML) * 2) / 2
     if (bottles <= 0.5) return '约半瓶'
     return `约${bottles}瓶`
@@ -75,11 +89,24 @@ export function resolveWateringDoseOptions(potVolumeMl) {
   return [
     { label: '不知道', value: null, amountMl: null },
     { label: '喷一喷', value: 'spray', amountMl: mistMl },
-    { label: labelFor(smallMl), value: 'quarter', amountMl: smallMl },
-    { label: labelFor(normalMl), value: 'half', amountMl: normalMl },
-    { label: labelFor(thoroughMl), value: 'one', amountMl: thoroughMl },
-    { label: labelFor(heavyMl), value: 'two', amountMl: heavyMl }
+    { label: labelFor(smallMl, 0), value: 'quarter', amountMl: smallMl },
+    { label: labelFor(normalMl, 1), value: 'half', amountMl: normalMl },
+    { label: labelFor(thoroughMl, 2), value: 'one', amountMl: thoroughMl },
+    { label: labelFor(heavyMl, 3), value: 'two', amountMl: heavyMl }
   ]
+}
+
+/**
+ * 判断动态瓶档是否使用油桶单位（供说明文案切换）。
+ * @param {number} potVolumeMl
+ * @returns {boolean}
+ */
+export function isDoseOptionsUsingBucket(potVolumeMl) {
+  const v = toFiniteNumber(potVolumeMl)
+  if (v === null || v <= 0) {
+    return false
+  }
+  return Math.round(v * 0.8) >= BUCKET_ML
 }
 
 const MIST_TEXT_MAX_ML = 50
