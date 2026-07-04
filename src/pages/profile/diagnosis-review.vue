@@ -245,8 +245,8 @@
                 <span :class="resolvePromptCacheBadgeClass(row)">
                   {{ resolvePromptCacheStatus(row).statusLabelCn }}
                 </span>
-                hit {{ resolvePromptCacheStatus(row).promptCacheHitTokens }} /
-                miss {{ resolvePromptCacheStatus(row).promptCacheMissTokens }} /
+                hit {{ resolvePromptCacheStatus(row).promptCacheHitTokens }} / miss
+                {{ resolvePromptCacheStatus(row).promptCacheMissTokens }} /
                 {{ formatPromptCacheHitRatio(row) }}
               </span>
               <span v-else class="cell-meta prompt-cache-line">Prompt cache 展开查看</span>
@@ -499,11 +499,7 @@
                     </span>
                   </div>
                 </div>
-                <div
-                  v-for="row in compareRows"
-                  :key="row.key"
-                  class="compare-row"
-                >
+                <div v-for="row in compareRows" :key="row.key" class="compare-row">
                   <div class="compare-label">
                     <strong>{{ row.label }}</strong>
                     <span>{{ row.key }}</span>
@@ -558,7 +554,10 @@
 
             <section class="drawer-panel">
               <h4 class="drawer-panel-title">环境与养护计算</h4>
-              <div v-if="getEnvironmentCareCalculation(currentDetail)" class="environment-care-shell">
+              <div
+                v-if="getEnvironmentCareCalculation(currentDetail)"
+                class="environment-care-shell"
+              >
                 <div class="drawer-detail-grid">
                   <article
                     v-for="field in getEnvironmentCareCalculationSummaryRows(currentDetail)"
@@ -582,11 +581,7 @@
                     <p class="process-field-meaning">{{ row.meta }}</p>
                     <p class="process-field-value">{{ row.value }}</p>
                     <div v-if="row.formulaLines?.length" class="formula-line-list">
-                      <p
-                        v-for="line in row.formulaLines"
-                        :key="line.key"
-                        class="formula-line"
-                      >
+                      <p v-for="line in row.formulaLines" :key="line.key" class="formula-line">
                         <span class="formula-line-title">{{ line.title }}</span>
                         <span class="formula-line-expression">{{ line.expression }}</span>
                         <span class="formula-line-substitution">{{ line.substitution }}</span>
@@ -599,14 +594,16 @@
                         </span>
                       </p>
                     </div>
-                    <pre v-if="row.formula" class="raw-json-preview">{{ stringifyCompact(row.formula) }}</pre>
+                    <pre v-if="row.formula" class="raw-json-preview">{{
+                      stringifyCompact(row.formula)
+                    }}</pre>
                   </article>
                 </div>
-                <pre class="raw-json-preview">{{ stringifyCompact(getEnvironmentCareCalculation(currentDetail)) }}</pre>
+                <pre class="raw-json-preview">{{
+                  stringifyCompact(getEnvironmentCareCalculation(currentDetail))
+                }}</pre>
               </div>
-              <div v-else class="drawer-empty-box">
-                当前详情未返回环境与养护计算数据
-              </div>
+              <div v-else class="drawer-empty-box">当前详情未返回环境与养护计算数据</div>
             </section>
 
             <section class="drawer-panel">
@@ -636,11 +633,11 @@
                     <p class="process-field-value">{{ row.value }}</p>
                   </article>
                 </div>
-                <pre class="raw-json-preview">{{ stringifyCompact(getRouteDecision(currentDetail)) }}</pre>
+                <pre class="raw-json-preview">{{
+                  stringifyCompact(getRouteDecision(currentDetail))
+                }}</pre>
               </div>
-              <div v-else class="drawer-empty-box">
-                当前详情未返回诊断决策信息
-              </div>
+              <div v-else class="drawer-empty-box">当前详情未返回诊断决策信息</div>
             </section>
 
             <section v-if="getActionAdviceGovernance(currentDetail)" class="drawer-panel">
@@ -662,11 +659,17 @@
                   </p>
                   <p class="drawer-detail-copy">
                     处理建议:
-                    {{ formatAdviceItems(getGovernedAdvice(currentDetail)?.nextSteps).join('；') || '无' }}
+                    {{
+                      formatAdviceItems(getGovernedAdvice(currentDetail)?.nextSteps).join('；') ||
+                      '无'
+                    }}
                   </p>
                   <p class="drawer-detail-copy">
                     暂时不要:
-                    {{ formatAdviceItems(getGovernedAdvice(currentDetail)?.whatToAvoid).join('；') || '无' }}
+                    {{
+                      formatAdviceItems(getGovernedAdvice(currentDetail)?.whatToAvoid).join('；') ||
+                      '无'
+                    }}
                   </p>
                   <p class="drawer-detail-copy">
                     解释:
@@ -694,11 +697,18 @@
                   </p>
                   <p class="drawer-detail-copy">
                     原始 nextSteps:
-                    {{ formatAdviceItems(getRawStoredAdvice(currentDetail)?.nextSteps).join('；') || '无' }}
+                    {{
+                      formatAdviceItems(getRawStoredAdvice(currentDetail)?.nextSteps).join('；') ||
+                      '无'
+                    }}
                   </p>
                   <p class="drawer-detail-copy">
                     原始 whatToAvoid:
-                    {{ formatAdviceItems(getRawStoredAdvice(currentDetail)?.whatToAvoid).join('；') || '无' }}
+                    {{
+                      formatAdviceItems(getRawStoredAdvice(currentDetail)?.whatToAvoid).join(
+                        '；'
+                      ) || '无'
+                    }}
                   </p>
                   <pre class="raw-json-preview">{{
                     stringifyCompact(getRawStoredAdvice(currentDetail))
@@ -734,10 +744,9 @@
                 <p class="drawer-detail-copy">
                   Prompt / Token:
                   {{ formatPromptSnippet(resolveFullPromptText(record)) }}
-                  | prompt {{ resolvePromptTokens(record).prompt }} /
-                  completion {{ resolvePromptTokens(record).completion }} /
-                  total {{ resolvePromptTokens(record).total }}
-                  | 估算 {{ formatPromptTokenCost(record) }}
+                  | prompt {{ resolvePromptTokens(record).prompt }} / completion
+                  {{ resolvePromptTokens(record).completion }} / total
+                  {{ resolvePromptTokens(record).total }} | 估算 {{ formatPromptTokenCost(record) }}
                 </p>
                 <p class="drawer-detail-copy">
                   Prompt 缓存状态:
@@ -745,15 +754,19 @@
                     {{ resolvePromptCacheStatus(record?.llmPromptAudit).statusLabelCn }}
                   </span>
                   hit {{ resolvePromptCacheStatus(record?.llmPromptAudit).promptCacheHitTokens }} /
-                  miss {{ resolvePromptCacheStatus(record?.llmPromptAudit).promptCacheMissTokens }} /
-                  create {{
+                  miss
+                  {{ resolvePromptCacheStatus(record?.llmPromptAudit).promptCacheMissTokens }} /
+                  create
+                  {{
                     resolvePromptCacheStatus(record?.llmPromptAudit).promptCacheCreationInputTokens
-                  }} /
-                  output {{ resolvePromptCacheStatus(record?.llmPromptAudit).outputTokens }} /
+                  }}
+                  / output {{ resolvePromptCacheStatus(record?.llmPromptAudit).outputTokens }} /
                   ratio {{ formatPromptCacheHitRatio(record?.llmPromptAudit) }}
                 </p>
                 <p class="drawer-detail-copy">完整 Prompt:</p>
-                <pre class="raw-json-preview">{{ resolveFullPromptText(record) || '无 prompt' }}</pre>
+                <pre class="raw-json-preview">{{
+                  resolveFullPromptText(record) || '无 prompt'
+                }}</pre>
                 <p class="drawer-detail-copy">AI 原始文本返回:</p>
                 <pre class="raw-json-preview">{{ record?.rawTextOutput || '无原始文本' }}</pre>
                 <p class="drawer-detail-copy">AI 原始结构化返回:</p>
@@ -1004,13 +1017,17 @@ const tableHeight = computed(() => 'calc(100vh - 350px)')
 
 function normalizeSectionKey(value = '') {
   const normalized = String(value || '').trim()
-  if (normalized === 'batch' || normalized === 'session') {return normalized}
+  if (normalized === 'batch' || normalized === 'session') {
+    return normalized
+  }
   return 'manual'
 }
 
 function resolveReviewRowBySessionId(sessionId = '') {
   const safeSessionId = String(sessionId || '').trim()
-  if (!safeSessionId) {return null}
+  if (!safeSessionId) {
+    return null
+  }
   return (
     items.value.find(item => item.diagnosisSessionId === safeSessionId) ||
     manualListState.value.items.find(item => item.diagnosisSessionId === safeSessionId) ||
@@ -1072,8 +1089,10 @@ function resolveImageCellObserver(sectionKey = '') {
           continue
         }
 
-        if (Array.isArray(imagePreviewMap.value[sessionId]) &&
-          imagePreviewMap.value[sessionId].length > 0) {
+        if (
+          Array.isArray(imagePreviewMap.value[sessionId]) &&
+          imagePreviewMap.value[sessionId].length > 0
+        ) {
           continue
         }
 
@@ -1166,8 +1185,12 @@ function registerImageCellRef(node, sectionKey, sessionId = '') {
 }
 
 function stateForSource(sourceType = '') {
-  if (sourceType === 'batch') {return batchListState.value}
-  if (sourceType === 'session') {return sessionListState.value}
+  if (sourceType === 'batch') {
+    return batchListState.value
+  }
+  if (sourceType === 'session') {
+    return sessionListState.value
+  }
   return manualListState.value
 }
 
@@ -1196,7 +1219,9 @@ function resolveRowIndex(sourceType = 'manual', index = 0) {
 
 function sectionTotalPages(sourceType = 'manual') {
   const currentState = stateForSource(sourceType)
-  if (!currentState.total) {return 1}
+  if (!currentState.total) {
+    return 1
+  }
   return Math.max(1, Math.ceil(currentState.total / currentState.pageSize))
 }
 
@@ -1286,7 +1311,8 @@ const compareRows = computed(() => [
   {
     key: 'result.final',
     label: '最终结论',
-    resolve: detail => String(detail?.displayName || detail?.finalResult?.displayName || '无').trim()
+    resolve: detail =>
+      String(detail?.displayName || detail?.finalResult?.displayName || '无').trim()
   },
   {
     key: 'result.summary',
@@ -1298,10 +1324,14 @@ const compareRows = computed(() => [
     label: '决策 / 停止',
     resolve: detail =>
       [
-        detail?.routePrimaryAction || detail?.coreProcess?.questions?.routePrimaryAction || '未返回',
+        detail?.routePrimaryAction ||
+          detail?.coreProcess?.questions?.routePrimaryAction ||
+          '未返回',
         detail?.stopReason || detail?.coreProcess?.decision?.stopReason || '未返回',
         getRouteDecision(detail)?.decisionCause?.decisionCauseKey || ''
-      ].filter(Boolean).join(' / ')
+      ]
+        .filter(Boolean)
+        .join(' / ')
   },
   {
     key: 'visual.prompt_token',
@@ -1483,9 +1513,15 @@ async function autoLoadVisiblePreviewImages(sourceType = 'manual') {
   const rows = Array.isArray(currentState.items) ? currentState.items : []
   const candidates = rows.filter(row => {
     const sessionId = String(row?.diagnosisSessionId || '').trim()
-    if (!sessionId || Number(row?.imageCount || 0) <= 0) {return false}
-    if (resolveRowPreviewImage(row)) {return false}
-    if (imageLoadingMap.value[sessionId]) {return false}
+    if (!sessionId || Number(row?.imageCount || 0) <= 0) {
+      return false
+    }
+    if (resolveRowPreviewImage(row)) {
+      return false
+    }
+    if (imageLoadingMap.value[sessionId]) {
+      return false
+    }
     return true
   })
   for (const row of candidates.slice(0, imagePrefetchBatchSize)) {
@@ -1497,7 +1533,9 @@ let previewLazyScanTimer = null
 let previewLazyEventsBound = false
 
 function bindPreviewLazyScanEvents() {
-  if (previewLazyEventsBound || !isH5Runtime) {return}
+  if (previewLazyEventsBound || !isH5Runtime) {
+    return
+  }
   previewLazyEventsBound = true
   if (typeof document !== 'undefined') {
     document.addEventListener('scroll', schedulePreviewLazyScan, true)
@@ -1508,7 +1546,9 @@ function bindPreviewLazyScanEvents() {
 }
 
 function unbindPreviewLazyScanEvents() {
-  if (!previewLazyEventsBound) {return}
+  if (!previewLazyEventsBound) {
+    return
+  }
   previewLazyEventsBound = false
   if (typeof document !== 'undefined') {
     document.removeEventListener('scroll', schedulePreviewLazyScan, true)
@@ -1523,7 +1563,9 @@ function unbindPreviewLazyScanEvents() {
 }
 
 function schedulePreviewLazyScan() {
-  if (!isH5Runtime) {return}
+  if (!isH5Runtime) {
+    return
+  }
   if (previewLazyScanTimer) {
     clearTimeout(previewLazyScanTimer)
   }
@@ -1534,14 +1576,22 @@ function schedulePreviewLazyScan() {
 }
 
 async function scanVisiblePreviewImageCells() {
-  if (!isH5Runtime || typeof window === 'undefined') {return}
+  if (!isH5Runtime || typeof window === 'undefined') {
+    return
+  }
   const rowsToPrefetch = []
   for (const [key, node] of imageCellNodes.entries()) {
-    if (!isPreviewImageCellVisible(node)) {continue}
+    if (!isPreviewImageCellVisible(node)) {
+      continue
+    }
     const { sessionId, sectionKey } = resolveImageCellIdentity(key, node)
-    if (!sessionId || imageIntersectionAttempted.has(sessionId)) {continue}
+    if (!sessionId || imageIntersectionAttempted.has(sessionId)) {
+      continue
+    }
     const row = findPreviewImageRow(sessionId, sectionKey)
-    if (!row || resolveRowPreviewImage(row) || imageLoadingMap.value[sessionId]) {continue}
+    if (!row || resolveRowPreviewImage(row) || imageLoadingMap.value[sessionId]) {
+      continue
+    }
     imageIntersectionAttempted.add(sessionId)
     rowsToPrefetch.push(row)
     if (rowsToPrefetch.length >= imagePrefetchBatchSize) {
@@ -1554,7 +1604,9 @@ async function scanVisiblePreviewImageCells() {
 }
 
 function isPreviewImageCellVisible(node) {
-  if (!node || typeof node.getBoundingClientRect !== 'function') {return false}
+  if (!node || typeof node.getBoundingClientRect !== 'function') {
+    return false
+  }
   const rect = node.getBoundingClientRect()
   const viewportHeight = window.innerHeight || document.documentElement?.clientHeight || 0
   const viewportWidth = window.innerWidth || document.documentElement?.clientWidth || 0
@@ -1578,7 +1630,9 @@ function resolveImageCellIdentity(key, node) {
 
 function findPreviewImageRow(sessionId = '', sectionKey = '') {
   const safeSessionId = String(sessionId || '').trim()
-  if (!safeSessionId) {return null}
+  if (!safeSessionId) {
+    return null
+  }
   const normalizedSection = String(sectionKey || '').trim()
   const knownSection = ['manual', 'batch', 'session'].includes(normalizedSection)
   const states = knownSection
@@ -1588,7 +1642,9 @@ function findPreviewImageRow(sessionId = '', sectionKey = '') {
     const row = (Array.isArray(state?.items) ? state.items : []).find(
       item => item?.diagnosisSessionId === safeSessionId
     )
-    if (row) {return row}
+    if (row) {
+      return row
+    }
   }
   return null
 }
@@ -1688,7 +1744,9 @@ function handlePageChange(sourceType, nextPage) {
 }
 
 function updateItemPreviewImage(diagnosisSessionId, previewImageRef = '') {
-  if (!previewImageRef) {return}
+  if (!previewImageRef) {
+    return
+  }
   const patch = current =>
     current.diagnosisSessionId === diagnosisSessionId
       ? {
@@ -1704,7 +1762,9 @@ function updateItemPreviewImage(diagnosisSessionId, previewImageRef = '') {
 
 function clearItemPreviewImage(diagnosisSessionId = '') {
   const safeSessionId = String(diagnosisSessionId || '').trim()
-  if (!safeSessionId) {return}
+  if (!safeSessionId) {
+    return
+  }
   const patch = current =>
     current.diagnosisSessionId === safeSessionId
       ? {
@@ -1723,7 +1783,9 @@ function clearItemPreviewImage(diagnosisSessionId = '') {
 
 async function ensurePreviewImages(item, { silent = false, forceRefresh = false } = {}) {
   const sessionId = item?.diagnosisSessionId
-  if (!sessionId) {return []}
+  if (!sessionId) {
+    return []
+  }
 
   if (
     !forceRefresh &&
@@ -1788,7 +1850,9 @@ async function handleImageAction(item) {
 }
 
 async function ensureDetail(sessionId) {
-  if (!sessionId) {return null}
+  if (!sessionId) {
+    return null
+  }
   if (detailMap.value[sessionId]) {
     return detailMap.value[sessionId]
   }
@@ -1930,7 +1994,9 @@ function clearCompareSessions() {
 
 async function loadCompareSessions(sessionIds = []) {
   const targets = normalizeCompareSessionIds(sessionIds)
-  if (!targets.length) {return}
+  if (!targets.length) {
+    return
+  }
 
   await Promise.allSettled(
     targets.map(async sessionId => {
@@ -1939,17 +2005,16 @@ async function loadCompareSessions(sessionIds = []) {
         reviewSourceType: 'all',
         batchReviewMeta: null
       }
-      await Promise.all([
-        ensureDetail(sessionId),
-        ensurePreviewImages(row, { silent: true })
-      ])
+      await Promise.all([ensureDetail(sessionId), ensurePreviewImages(row, { silent: true })])
     })
   )
 }
 
 async function openDetail(row) {
   const sessionId = String(row?.diagnosisSessionId || '').trim()
-  if (!sessionId) {return}
+  if (!sessionId) {
+    return
+  }
   selectedSessionId.value = sessionId
   detailDrawerVisible.value = true
   await Promise.all([ensureDetail(sessionId), ensurePreviewImages(row, { silent: true })])
@@ -1957,7 +2022,9 @@ async function openDetail(row) {
 
 function copySessionId(item) {
   const value = String(item?.diagnosisSessionId || '').trim()
-  if (!value) {return}
+  if (!value) {
+    return
+  }
   uni.setClipboardData({
     data: value,
     success: () => {
@@ -1967,9 +2034,15 @@ function copySessionId(item) {
 }
 
 function formatOutcomeLabel(outcomeType = '') {
-  if (outcomeType === 'problematic') {return '有问题'}
-  if (outcomeType === 'non_problematic') {return '未见明确问题'}
-  if (outcomeType === 'uncertain') {return '不确定'}
+  if (outcomeType === 'problematic') {
+    return '有问题'
+  }
+  if (outcomeType === 'non_problematic') {
+    return '未见明确问题'
+  }
+  if (outcomeType === 'uncertain') {
+    return '不确定'
+  }
   return '未知'
 }
 
@@ -1993,17 +2066,31 @@ function formatRouteText(routePrimaryAction = '') {
 }
 
 function formatSourceLabel(sourceType = '') {
-  if (sourceType === 'batch') {return '脚本批跑'}
-  if (sourceType === 'manual') {return '真人手动'}
-  if (sourceType === 'session') {return '未归一历史'}
+  if (sourceType === 'batch') {
+    return '脚本批跑'
+  }
+  if (sourceType === 'manual') {
+    return '真人手动'
+  }
+  if (sourceType === 'session') {
+    return '未归一历史'
+  }
   return '未知来源'
 }
 
 function formatSourceEvidenceLabel(sourceEvidence = '') {
-  if (sourceEvidence === 'platform_tagged') {return '真人小程序诊断（平台标记）'}
-  if (sourceEvidence === 'openid_inferred_manual') {return '真人小程序诊断（openid 推断）'}
-  if (sourceEvidence === 'web_tagged') {return 'Web / H5 调试诊断'}
-  if (sourceEvidence === 'openid_inferred_session') {return '真人小程序诊断（历史推断）'}
+  if (sourceEvidence === 'platform_tagged') {
+    return '真人小程序诊断（平台标记）'
+  }
+  if (sourceEvidence === 'openid_inferred_manual') {
+    return '真人小程序诊断（openid 推断）'
+  }
+  if (sourceEvidence === 'web_tagged') {
+    return 'Web / H5 调试诊断'
+  }
+  if (sourceEvidence === 'openid_inferred_session') {
+    return '真人小程序诊断（历史推断）'
+  }
   return '未归一来源'
 }
 
@@ -2064,20 +2151,32 @@ function formatAdviceItems(items = []) {
 }
 
 function formatGovernedAdviceSource(source = '') {
-  if (source === 'audited_explanation') {return '已审核解释表'}
-  if (source === 'problem_fallback') {return '问题主表 fallback'}
-  if (source === 'governance_fallback') {return '治理保守'}
+  if (source === 'audited_explanation') {
+    return '已审核解释表'
+  }
+  if (source === 'problem_fallback') {
+    return '问题主表 fallback'
+  }
+  if (source === 'governance_fallback') {
+    return '治理保守'
+  }
   return source || '无正式建议'
 }
 
 function formatAdviceDisplayRecommendation(value = '') {
-  if (value === 'show_governed_advice_only') {return '只展示 governed advice；raw 仅作审计'}
-  if (value === 'not_applicable') {return '当前结果类型不适用'}
+  if (value === 'show_governed_advice_only') {
+    return '只展示 governed advice；raw 仅作审计'
+  }
+  if (value === 'not_applicable') {
+    return '当前结果类型不适用'
+  }
   return value || '未声明'
 }
 
 function formatRawAdvicePolicy(value = '') {
-  if (value === 'do_not_show_as_governed_advice') {return '仅审计原文，不作为正式建议展示'}
+  if (value === 'do_not_show_as_governed_advice') {
+    return '仅审计原文，不作为正式建议展示'
+  }
   return value || '仅审计原文'
 }
 
@@ -2085,10 +2184,7 @@ function resolveCompareTitle(column = {}) {
   const detail = column?.detail || null
   const row = column?.row || null
   return String(
-    detail?.displayName ||
-      detail?.finalResult?.displayName ||
-      row?.displayName ||
-      '诊断记录'
+    detail?.displayName || detail?.finalResult?.displayName || row?.displayName || '诊断记录'
   ).trim()
 }
 
@@ -2111,10 +2207,7 @@ function formatDetailPromptStats(detail = null) {
   const audit = record?.llmPromptAudit || detail?.hunyuanPromptAudit || null
   const tokens = resolvePromptTokens(audit)
   const promptLength = Number(
-    audit?.promptLength ||
-      record?.llmPromptLength ||
-      resolveFullPromptText(record).length ||
-      0
+    audit?.promptLength || record?.llmPromptLength || resolveFullPromptText(record).length || 0
   )
   const candidatePoolTextLength = Number(
     audit?.promptDebugMeta?.candidatePoolTextLength ||
@@ -2127,11 +2220,15 @@ function formatDetailPromptStats(detail = null) {
     `tokens ${tokens.prompt}/${tokens.completion}/${tokens.total}`,
     `cache ${formatPromptCacheSummary(audit)}`,
     `cost ${formatPromptTokenCost(record || audit)}`
-  ].filter(Boolean).join(' / ')
+  ]
+    .filter(Boolean)
+    .join(' / ')
 }
 
 function formatOutOfPoolCandidates(detail = null) {
-  const candidates = Array.isArray(resolveFirstParsedVisualResult(detail)?.out_of_pool_symptom_candidates)
+  const candidates = Array.isArray(
+    resolveFirstParsedVisualResult(detail)?.out_of_pool_symptom_candidates
+  )
     ? resolveFirstParsedVisualResult(detail).out_of_pool_symptom_candidates
     : []
   const labels = candidates.map(item => {
@@ -2159,13 +2256,17 @@ function formatVisualRouteHints(detail = null) {
     ? resolveFirstParsedVisualResult(detail).route_hints
     : []
   const labels = [...aggregateHints, ...rawHints].map(item =>
-    [item?.type, item?.reason].map(value => String(value || '').trim()).filter(Boolean).join(':')
+    [item?.type, item?.reason]
+      .map(value => String(value || '').trim())
+      .filter(Boolean)
+      .join(':')
   )
   return formatDetailLines(labels, '无')
 }
 
 function formatQuestionCountSummary(detail = null) {
-  const summary = detail?.questionCountSummary || detail?.coreProcess?.questions?.questionCountSummary || {}
+  const summary =
+    detail?.questionCountSummary || detail?.coreProcess?.questions?.questionCountSummary || {}
   return `总 ${Number(summary?.totalItems || 0)} / 已问 ${Number(summary?.askedItems || 0)} / 已答 ${Number(summary?.answeredItems || 0)} / active ${Number(summary?.activeItems || 0)}`
 }
 
@@ -2179,13 +2280,19 @@ function getEnvironmentCareCalculation(detail = null) {
 }
 
 function formatEnvironmentCareResult(result = null) {
-  if (!isPlainRecord(result)) {return '无'}
+  if (!isPlainRecord(result)) {
+    return '无'
+  }
   const labels = [
     result.wateringContext ? `浇水=${result.wateringContext}` : '',
     result.fertilizingAction ? `施肥=${result.fertilizingAction}` : '',
-    result.lightContext ? `光照=${Array.isArray(result.lightContext) ? result.lightContext.join(',') : result.lightContext}` : ''
+    result.lightContext
+      ? `光照=${Array.isArray(result.lightContext) ? result.lightContext.join(',') : result.lightContext}`
+      : ''
   ].filter(Boolean)
-  if (labels.length) {return labels.join(' / ')}
+  if (labels.length) {
+    return labels.join(' / ')
+  }
   return stringifyCompact(result)
 }
 
@@ -2196,29 +2303,23 @@ function formatEnvironmentCareHighHumidityMetric(calculation = null) {
     : {}
   const thresholds = isPlainRecord(historicalSummary.thresholds) ? historicalSummary.thresholds : {}
   const highHumidityDays = Number(
-    keyMetrics.highHumidityDays ??
-      historicalSummary.highHumidityDays ??
-      0
+    keyMetrics.highHumidityDays ?? historicalSummary.highHumidityDays ?? 0
   )
   const maxConsecutiveHighHumidityDays = Number(
     keyMetrics.maxConsecutiveHighHumidityDays ??
       historicalSummary.maxConsecutiveHighHumidityDays ??
       0
   )
-  const humidityMaxPercent =
-    keyMetrics.humidityMaxPercent ??
-    thresholds.humidityMaxPercent ??
-    null
-  const thresholdText = humidityMaxPercent === null || humidityMaxPercent === undefined
-    ? '适湿上限未返回'
-    : `属级适湿上限 ${humidityMaxPercent}%`
+  const humidityMaxPercent = keyMetrics.humidityMaxPercent ?? thresholds.humidityMaxPercent ?? null
+  const thresholdText =
+    humidityMaxPercent === null || humidityMaxPercent === undefined
+      ? '适湿上限未返回'
+      : `属级适湿上限 ${humidityMaxPercent}%`
   return `历史高湿天数 ${highHumidityDays} 天 / 连续高湿 ${maxConsecutiveHighHumidityDays} 天 / ${thresholdText}`
 }
 
 function formatEnvironmentCareThresholdFactors(calculation = null) {
-  const factors = isPlainRecord(calculation?.thresholdFactors)
-    ? calculation.thresholdFactors
-    : {}
+  const factors = isPlainRecord(calculation?.thresholdFactors) ? calculation.thresholdFactors : {}
   const highHumidityDaysMin = Number(factors.wetHighHumidityDaysMin ?? 0)
   const highHumidityConsecutiveDaysMin = Number(factors.wetHighHumidityConsecutiveDaysMin ?? 0)
   const coldHumidDaysMin = Number(factors.wetColdHumidDaysMin ?? 0)
@@ -2236,7 +2337,9 @@ function formatEnvironmentCareThresholdFactors(calculation = null) {
 
 function getEnvironmentCareCalculationSummaryRows(detail = null) {
   const calculation = getEnvironmentCareCalculation(detail)
-  if (!calculation) {return []}
+  if (!calculation) {
+    return []
+  }
   return [
     {
       key: 'environmentCareCalculation.version',
@@ -2246,11 +2349,14 @@ function getEnvironmentCareCalculationSummaryRows(detail = null) {
     {
       key: 'environmentCareCalculation.inputs',
       label: '输入摘要',
-      value: [
-        calculation.inputs?.behaviorSummary10d ? '最近10天行为' : '',
-        calculation.inputs?.historicalSummary10d ? '历史10天天气' : '',
-        calculation.inputs?.forecastSummary15d ? '未来15天预报' : ''
-      ].filter(Boolean).join(' / ') || '未返回'
+      value:
+        [
+          calculation.inputs?.behaviorSummary10d ? '最近10天行为' : '',
+          calculation.inputs?.historicalSummary10d ? '历史10天天气' : '',
+          calculation.inputs?.forecastSummary15d ? '未来15天预报' : ''
+        ]
+          .filter(Boolean)
+          .join(' / ') || '未返回'
     },
     {
       key: 'environmentCareCalculation.keyMetrics.highHumidityDays',
@@ -2271,10 +2377,14 @@ function getEnvironmentCareCalculationSummaryRows(detail = null) {
 }
 
 function formatEnvironmentCareBaseline(value = null) {
-  if (!isPlainRecord(value)) {return 'baseline 未返回'}
-  return Object.entries(value)
-    .map(([key, item]) => `${key}=${Array.isArray(item) ? item.join(',') : String(item ?? '')}`)
-    .join(' / ') || 'baseline 未返回'
+  if (!isPlainRecord(value)) {
+    return 'baseline 未返回'
+  }
+  return (
+    Object.entries(value)
+      .map(([key, item]) => `${key}=${Array.isArray(item) ? item.join(',') : String(item ?? '')}`)
+      .join(' / ') || 'baseline 未返回'
+  )
 }
 
 function formatEnvironmentCareReasons(reasons = []) {
@@ -2298,8 +2408,14 @@ const formulaStepLabelMap = {
 const formulaTermLabelMap = {
   behaviorWindowDays: '行为窗口天数',
   minIntervalDays: '属级最小浇水间隔',
+  lookbackWindowDays: '动态回看窗口天数',
+  effectiveHydrationLoad: '有效水合负载',
+  wetPressureLoad: '湿压负载',
+  lastEffectiveRootWateredDaysAgo: '距上次有效根区浇水天数',
+  rootZoneMoistureIndex: '根区湿度指数',
+  potGeometryDryDownFactor: '盆型干透因子',
+  drainageRiskFactor: '排水风险因子',
   maxReasonableWaterings10d: '最近 10 天基线允许浇水次数',
-  wateringCount10d: '最近 10 天实际浇水次数',
   wetPressureHitCount: '偏湿环境命中数',
   wetPressureDeductionPerHit: '每个偏湿命中的扣减值',
   wetPressureScore: '偏湿环境扣减分',
@@ -2309,7 +2425,7 @@ const formulaTermLabelMap = {
   wetHighHumidityDaysMin: '高湿天数阈值',
   wetHighHumidityConsecutiveDaysMin: '连续高湿天数阈值',
   coldHumidDays: '历史冷湿天数',
-  maxConsecutiveColdHumidDays: '连续冷湿天数',
+  maxConsecutiveColdHumidityDays: '连续冷湿天数',
   wetColdHumidDaysMin: '冷湿天数阈值',
   wetColdHumidConsecutiveDaysMin: '连续冷湿天数阈值',
   rainyDays: '历史下雨天数',
@@ -2352,10 +2468,12 @@ const formulaValueLabelMap = {
 
 function formatFormulaLabel(key = '') {
   const normalizedKey = String(key || '').trim()
-  return formulaStepLabelMap[normalizedKey] ||
+  return (
+    formulaStepLabelMap[normalizedKey] ||
     formulaTermLabelMap[normalizedKey] ||
     normalizedKey ||
     '未命名步骤'
+  )
 }
 
 function formatFormulaTechnicalLabel(key = '') {
@@ -2368,14 +2486,22 @@ function formatFormulaValue(value) {
   if (Array.isArray(value)) {
     return `[${value.map(item => formatFormulaValue(item)).join(', ')}]`
   }
-  if (value === null || value === undefined) {return '未返回'}
-  if (typeof value === 'boolean') {return value ? '命中' : '未命中'}
-  if (typeof value === 'number') {return Number.isFinite(value) ? String(value) : 'NaN'}
+  if (value === null || value === undefined) {
+    return '未返回'
+  }
+  if (typeof value === 'boolean') {
+    return value ? '命中' : '未命中'
+  }
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? String(value) : 'NaN'
+  }
   if (typeof value === 'string') {
     const valueLabel = formulaValueLabelMap[value]
     return valueLabel ? `${valueLabel}（${value}）` : `"${value}"`
   }
-  if (isPlainRecord(value)) {return stringifyCompact(value).replace(/\s+/g, ' ')}
+  if (isPlainRecord(value)) {
+    return stringifyCompact(value).replace(/\s+/g, ' ')
+  }
   return String(value)
 }
 
@@ -2415,9 +2541,7 @@ function substituteFormulaExpression(expression = '', scope = {}) {
 }
 
 function formatFormulaResult(step = {}) {
-  const result = Object.prototype.hasOwnProperty.call(step, 'result')
-    ? step.result
-    : ''
+  const result = Object.prototype.hasOwnProperty.call(step, 'result') ? step.result : ''
   const passedText = Object.prototype.hasOwnProperty.call(step, 'passed')
     ? `；判定=${step.passed ? '通过' : '未通过'}`
     : ''
@@ -2451,9 +2575,7 @@ function formatFormulaComparisonProcess({
   rightLabel = '',
   rightValue
 } = {}) {
-  const hit = operator === '>='
-    ? Number(leftValue) >= Number(rightValue)
-    : false
+  const hit = operator === '>=' ? Number(leftValue) >= Number(rightValue) : false
   return `${leftLabel} ${operator} ${rightLabel} = ${formatFormulaValue(leftValue)} ${operator} ${formatFormulaValue(rightValue)} = ${formatFormulaValue(hit)}`
 }
 
@@ -2469,8 +2591,11 @@ function formatPlannerFormulaProcessLines(step = {}, key = '', substitutedExpres
       ]
     }
     case 'high_humidity_pressure_hit': {
-      const historicalHit = Number(inputs.highHumidityDays) >= Number(thresholds.wetHighHumidityDaysMin)
-      const consecutiveHit = Number(inputs.maxConsecutiveHighHumidityDays) >= Number(thresholds.wetHighHumidityConsecutiveDaysMin)
+      const historicalHit =
+        Number(inputs.highHumidityDays) >= Number(thresholds.wetHighHumidityDaysMin)
+      const consecutiveHit =
+        Number(inputs.maxConsecutiveHighHumidityDays) >=
+        Number(thresholds.wetHighHumidityConsecutiveDaysMin)
       return [
         `计算过程：${formatFormulaComparisonProcess({ leftLabel: '历史高湿天数', leftValue: inputs.highHumidityDays, rightLabel: '高湿天数阈值', rightValue: thresholds.wetHighHumidityDaysMin })}`,
         `计算过程：${formatFormulaComparisonProcess({ leftLabel: '连续高湿天数', leftValue: inputs.maxConsecutiveHighHumidityDays, rightLabel: '连续高湿天数阈值', rightValue: thresholds.wetHighHumidityConsecutiveDaysMin })}`,
@@ -2479,7 +2604,9 @@ function formatPlannerFormulaProcessLines(step = {}, key = '', substitutedExpres
     }
     case 'cold_humid_pressure_hit': {
       const historicalHit = Number(inputs.coldHumidDays) >= Number(thresholds.wetColdHumidDaysMin)
-      const consecutiveHit = Number(inputs.maxConsecutiveColdHumidDays) >= Number(thresholds.wetColdHumidConsecutiveDaysMin)
+      const consecutiveHit =
+        Number(inputs.maxConsecutiveColdHumidDays) >=
+        Number(thresholds.wetColdHumidConsecutiveDaysMin)
       return [
         `计算过程：${formatFormulaComparisonProcess({ leftLabel: '历史冷湿天数', leftValue: inputs.coldHumidDays, rightLabel: '冷湿天数阈值', rightValue: thresholds.wetColdHumidDaysMin })}`,
         `计算过程：${formatFormulaComparisonProcess({ leftLabel: '连续冷湿天数', leftValue: inputs.maxConsecutiveColdHumidDays, rightLabel: '连续冷湿天数阈值', rightValue: thresholds.wetColdHumidConsecutiveDaysMin })}`,
@@ -2488,7 +2615,8 @@ function formatPlannerFormulaProcessLines(step = {}, key = '', substitutedExpres
     }
     case 'rainy_pressure_hit': {
       const historicalHit = Number(inputs.rainyDays) >= Number(thresholds.wetRainyDaysMin)
-      const consecutiveHit = Number(inputs.maxConsecutiveRainyDays) >= Number(thresholds.wetRainyConsecutiveDaysMin)
+      const consecutiveHit =
+        Number(inputs.maxConsecutiveRainyDays) >= Number(thresholds.wetRainyConsecutiveDaysMin)
       return [
         `计算过程：${formatFormulaComparisonProcess({ leftLabel: '历史下雨天数', leftValue: inputs.rainyDays, rightLabel: '下雨天数阈值', rightValue: thresholds.wetRainyDaysMin })}`,
         `计算过程：${formatFormulaComparisonProcess({ leftLabel: '连续下雨天数', leftValue: inputs.maxConsecutiveRainyDays, rightLabel: '连续下雨天数阈值', rightValue: thresholds.wetRainyConsecutiveDaysMin })}`,
@@ -2516,15 +2644,18 @@ function formatPlannerFormulaProcessLines(step = {}, key = '', substitutedExpres
     }
     case 'too_wet_condition':
       return [
-        `计算过程：最近 10 天实际浇水次数 > 偏湿修正后的过浇阈值 = ${formatFormulaValue(inputs.wateringCount10d)} > ${formatFormulaValue(inputs.effectiveWetWaterings10d)} = ${formatFormulaProcessResult(step)}`
+        `计算过程：根区湿度指数 > 0.6 且 湿压负载 > 0.4 = ${formatFormulaValue(inputs.rootZoneMoistureIndex)} > 0.6 且 ${formatFormulaValue(inputs.wetPressureLoad)} > 0.4 = ${formatFormulaProcessResult(step)}`
       ]
     case 'too_dry_condition': {
-      const forecastBranch = Boolean(inputs.forecastHotDryHit) && Boolean(inputs.lastWateredTooLongAgo)
-      const noWatering = Number(inputs.wateringCount10d) === 0
-      const historicalBranch = Boolean(inputs.historicalHotDryHit) && noWatering
+      const forecastBranch =
+        Boolean(inputs.forecastHotDryHit) && Boolean(inputs.lastWateredTooLongAgo)
+      const noEffectiveWatering =
+        inputs.lastEffectiveRootWateredDaysAgo === null ||
+        inputs.lastEffectiveRootWateredDaysAgo === undefined
+      const historicalBranch = Boolean(inputs.historicalHotDryHit) && noEffectiveWatering
       return [
         `计算过程：未来干热分支 = ${formatFormulaBooleanCondition('未来高温干燥命中', inputs.forecastHotDryHit)} 且 ${formatFormulaBooleanCondition('距上次浇水过久', inputs.lastWateredTooLongAgo)} = ${formatFormulaValue(forecastBranch)}`,
-        `计算过程：历史干热分支 = ${formatFormulaBooleanCondition('历史高温干燥命中', inputs.historicalHotDryHit)} 且 最近 10 天实际浇水次数为 0(${formatFormulaValue(noWatering)}) = ${formatFormulaValue(historicalBranch)}`,
+        `计算过程：历史干热分支 = ${formatFormulaBooleanCondition('历史高温干燥命中', inputs.historicalHotDryHit)} 且 无有效根区浇水记录(${formatFormulaValue(noEffectiveWatering)}) = ${formatFormulaValue(historicalBranch)}`,
         `计算过程：未来干热分支 或 历史干热分支 = ${formatFormulaValue(forecastBranch)} 或 ${formatFormulaValue(historicalBranch)} = ${formatFormulaProcessResult(step)}`
       ]
     }
@@ -2538,7 +2669,8 @@ function formatPlannerFormulaProcessLines(step = {}, key = '', substitutedExpres
       ]
     }
     case 'possible_deficiency_condition': {
-      const gapHit = Array.isArray(thresholds.deficiencyGapBuckets) &&
+      const gapHit =
+        Array.isArray(thresholds.deficiencyGapBuckets) &&
         thresholds.deficiencyGapBuckets.includes(inputs.lastFertilizedBucket)
       return [
         `计算过程：缺肥时间桶判断 = ${formatFormulaIncludesProcess(thresholds.deficiencyGapBuckets, inputs.lastFertilizedBucket)}`,
@@ -2546,7 +2678,8 @@ function formatPlannerFormulaProcessLines(step = {}, key = '', substitutedExpres
       ]
     }
     case 'thin_after_due_condition': {
-      const dueHit = Array.isArray(thresholds.dueGapBuckets) &&
+      const dueHit =
+        Array.isArray(thresholds.dueGapBuckets) &&
         thresholds.dueGapBuckets.includes(inputs.lastFertilizedBucket)
       return [
         `计算过程：到期薄肥时间桶判断 = ${formatFormulaIncludesProcess(thresholds.dueGapBuckets, inputs.lastFertilizedBucket)}`,
@@ -2559,17 +2692,21 @@ function formatPlannerFormulaProcessLines(step = {}, key = '', substitutedExpres
 }
 
 function formatPlannerFormulaLines(formula = null) {
-  if (!isPlainRecord(formula)) {return []}
+  if (!isPlainRecord(formula)) {
+    return []
+  }
   const steps = Array.isArray(formula.formulas) ? formula.formulas : []
   if (!steps.length) {
     return isPlainRecord(formula.result)
-      ? [{
-          key: 'formula.result',
-          title: '结果（result）',
-          expression: '公式：结果',
-          substitution: `代入：结果 = ${formatFormulaValue(formula.result)}`,
-          processLines: [`计算过程：后端返回结果 = ${formatFormulaValue(formula.result)}`]
-        }]
+      ? [
+          {
+            key: 'formula.result',
+            title: '结果（result）',
+            expression: '公式：结果',
+            substitution: `代入：结果 = ${formatFormulaValue(formula.result)}`,
+            processLines: [`计算过程：后端返回结果 = ${formatFormulaValue(formula.result)}`]
+          }
+        ]
       : []
   }
   return steps.map((step, index) => {
@@ -2592,7 +2729,9 @@ function formatPlannerFormulaLines(formula = null) {
 
 function getEnvironmentCareCalculationRows(detail = null) {
   const calculation = getEnvironmentCareCalculation(detail)
-  if (!calculation) {return []}
+  if (!calculation) {
+    return []
+  }
   const watering = isPlainRecord(calculation.watering) ? calculation.watering : {}
   const fertilizing = isPlainRecord(calculation.fertilizing) ? calculation.fertilizing : {}
   const light = isPlainRecord(calculation.light) ? calculation.light : {}
@@ -2604,7 +2743,9 @@ function getEnvironmentCareCalculationRows(detail = null) {
         watering.wateringContext ? `context=${watering.wateringContext}` : '',
         watering.action ? `action=${watering.action}` : '',
         formatEnvironmentCareBaseline(watering.baseline)
-      ].filter(Boolean).join(' / '),
+      ]
+        .filter(Boolean)
+        .join(' / '),
       value: formatEnvironmentCareReasons(watering.reasons),
       formula: watering.formula || null,
       formulaLines: formatPlannerFormulaLines(watering.formula)
@@ -2616,7 +2757,9 @@ function getEnvironmentCareCalculationRows(detail = null) {
         fertilizing.action ? `action=${fertilizing.action}` : '',
         fertilizing.lastFertilizedBucket ? `last=${fertilizing.lastFertilizedBucket}` : '',
         formatEnvironmentCareBaseline(fertilizing.baseline)
-      ].filter(Boolean).join(' / '),
+      ]
+        .filter(Boolean)
+        .join(' / '),
       value: formatEnvironmentCareReasons(fertilizing.reasons),
       formula: fertilizing.formula || null,
       formulaLines: formatPlannerFormulaLines(fertilizing.formula)
@@ -2629,7 +2772,9 @@ function getEnvironmentCareCalculationRows(detail = null) {
         Array.isArray(light.lightContext) && light.lightContext.length
           ? `context=${light.lightContext.join(',')}`
           : ''
-      ].filter(Boolean).join(' / '),
+      ]
+        .filter(Boolean)
+        .join(' / '),
       value: light.formula ? '见下方过程 JSON' : '未返回光照计算过程',
       formula: light.formula || null,
       formulaLines: formatPlannerFormulaLines(light.formula)
@@ -2644,7 +2789,9 @@ function getRouteDecision(detail = null) {
 
 function getRouteDecisionFieldRows(detail = null) {
   const routeDecision = getRouteDecision(detail)
-  if (!routeDecision) {return []}
+  if (!routeDecision) {
+    return []
+  }
   return [
     {
       key: 'mode',
@@ -2664,54 +2811,59 @@ function getRouteDecisionFieldRows(detail = null) {
     {
       key: 'decisionCause',
       label: '决策原因',
-      value: [
-        routeDecision.decisionCause?.decisionCauseKey,
-        routeDecision.decisionCause?.decisionCauseText
-      ].filter(Boolean).join(' / ') || '无'
+      value:
+        [
+          routeDecision.decisionCause?.decisionCauseKey,
+          routeDecision.decisionCause?.decisionCauseText
+        ]
+          .filter(Boolean)
+          .join(' / ') || '无'
     }
   ]
 }
 
 function getRoutePathRows(detail = null) {
   const routeDecision = getRouteDecision(detail)
-  if (!routeDecision) {return []}
-  const candidateRows = (Array.isArray(routeDecision.candidateOutcomeStates)
-    ? routeDecision.candidateOutcomeStates
-    : []
+  if (!routeDecision) {
+    return []
+  }
+  const candidateRows = (
+    Array.isArray(routeDecision.candidateOutcomeStates) ? routeDecision.candidateOutcomeStates : []
   ).map(item => ({
     key: item.outcomeKey ? `候选:${item.outcomeKey}` : '候选:未知',
     title: item.outcomeKey || '未知结果',
     meta: [
       item.state ? `状态=${item.state}` : '',
       item.missingConditionKeys?.length ? `缺少门禁=${item.missingConditionKeys.join(', ')}` : ''
-    ].filter(Boolean).join(' / '),
-      value: formatDetailLines(item.routeKeys, '无')
+    ]
+      .filter(Boolean)
+      .join(' / '),
+    value: formatDetailLines(item.routeKeys, '无')
   }))
-  const traceRows = (Array.isArray(routeDecision.routeTrace) ? routeDecision.routeTrace : []).map(item => ({
-    key: item.outcomeKey ? `流程回看:${item.outcomeKey}` : '流程回看:未知结果',
-    title: `流程回看 ${item.outcomeKey || '未知结果'}`,
-    meta: formatDetailLines(item.routeKeys, '无'),
-    value: formatDetailLines(
-      (Array.isArray(item.conditionResults) ? item.conditionResults : []).map(result =>
-        [
-          result.conditionKey || '未知门禁',
-          result.conditionRole || '',
-          result.result || ''
-        ].filter(Boolean).join(':')
-      ),
-      '无门禁'
-    )
-  }))
-  const gateRows = (Array.isArray(routeDecision.conditionResults) ? routeDecision.conditionResults : []).map(item => ({
-    key: item.routeKey && item.conditionKey
-      ? `${item.routeKey} / 门禁:${item.conditionKey}`
-      : '门禁:未知',
+  const traceRows = (Array.isArray(routeDecision.routeTrace) ? routeDecision.routeTrace : []).map(
+    item => ({
+      key: item.outcomeKey ? `流程回看:${item.outcomeKey}` : '流程回看:未知结果',
+      title: `流程回看 ${item.outcomeKey || '未知结果'}`,
+      meta: formatDetailLines(item.routeKeys, '无'),
+      value: formatDetailLines(
+        (Array.isArray(item.conditionResults) ? item.conditionResults : []).map(result =>
+          [result.conditionKey || '未知门禁', result.conditionRole || '', result.result || '']
+            .filter(Boolean)
+            .join(':')
+        ),
+        '无门禁'
+      )
+    })
+  )
+  const gateRows = (
+    Array.isArray(routeDecision.conditionResults) ? routeDecision.conditionResults : []
+  ).map(item => ({
+    key:
+      item.routeKey && item.conditionKey
+        ? `${item.routeKey} / 门禁:${item.conditionKey}`
+        : '门禁:未知',
     title: item.conditionKey || '未知门禁',
-    meta: [
-      item.routeKey,
-      item.conditionRole,
-      item.result
-    ].filter(Boolean).join(' / '),
+    meta: [item.routeKey, item.conditionRole, item.result].filter(Boolean).join(' / '),
     value: [
       `证据满足=${Boolean(item.requiredEvidenceMatched)}`,
       `答题满足=${Boolean(item.requiredAnswerEffectsMatched)}`,
@@ -2723,7 +2875,9 @@ function getRoutePathRows(detail = null) {
 
 function formatTime(value) {
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {return ''}
+  if (Number.isNaN(date.getTime())) {
+    return ''
+  }
   const year = date.getFullYear()
   const month = `${date.getMonth() + 1}`.padStart(2, '0')
   const day = `${date.getDate()}`.padStart(2, '0')
@@ -2790,10 +2944,10 @@ function formatDetailLines(items = [], fallback = '无', options = {}) {
   const safeItems = (Array.isArray(items) ? items : [])
     .map(item => String(item || '').trim())
     .filter(Boolean)
-  if (!safeItems.length) {return fallback}
-  const limit = Number.isFinite(Number(options?.limit))
-    ? Math.max(1, Number(options.limit))
-    : 8
+  if (!safeItems.length) {
+    return fallback
+  }
+  const limit = Number.isFinite(Number(options?.limit)) ? Math.max(1, Number(options.limit)) : 8
   const visibleItems = safeItems.slice(0, limit)
   if (safeItems.length > limit) {
     visibleItems.push(`另 ${safeItems.length - limit} 条未展示（共 ${safeItems.length} 条）`)
@@ -2872,7 +3026,9 @@ function getQuestionRecords(detail = null) {
 }
 
 function getAnswerRevisionEvents(detail = null) {
-  if (Array.isArray(detail?.answerRevisionEvents)) {return detail.answerRevisionEvents}
+  if (Array.isArray(detail?.answerRevisionEvents)) {
+    return detail.answerRevisionEvents
+  }
   return Array.isArray(detail?.questionAnswerEvents) ? detail.questionAnswerEvents : []
 }
 
@@ -2880,10 +3036,14 @@ function getFirstRoundQuestions(detail = null) {
   const firstRoundQuestions = Array.isArray(detail?.firstRoundQuestions)
     ? detail.firstRoundQuestions
     : []
-  if (firstRoundQuestions.length) {return firstRoundQuestions}
+  if (firstRoundQuestions.length) {
+    return firstRoundQuestions
+  }
 
   const questionRecords = getQuestionRecords(detail)
-  if (!questionRecords.length) {return []}
+  if (!questionRecords.length) {
+    return []
+  }
   const firstRoundIndex = Math.min(...questionRecords.map(item => Number(item?.roundIndex || 1)))
   return questionRecords.filter(item => Number(item?.roundIndex || 1) === firstRoundIndex)
 }
@@ -2934,7 +3094,9 @@ function formatRawSymptoms(symptoms = []) {
 }
 
 function stringifyCompact(value = null) {
-  if (value === null || value === undefined || value === '') {return '无'}
+  if (value === null || value === undefined || value === '') {
+    return '无'
+  }
   try {
     return JSON.stringify(value, null, 2).slice(0, 5000)
   } catch {
@@ -3001,15 +3163,21 @@ function formatResolvedAnswerEffect(question = {}) {
   const resolvedAnswerEffect = String(question?.resolvedAnswerEffect || '').trim()
   const mapsToSymptomKey = String(question?.resolvedMapsToSymptomKey || '').trim()
   const associationStrength = Number(question?.resolvedAssociationStrength)
-  const directEffects = formatResolvedDirectProblemAdjustments(question?.resolvedDirectProblemAdjustments)
+  const directEffects = formatResolvedDirectProblemAdjustments(
+    question?.resolvedDirectProblemAdjustments
+  )
 
-  if (resolvedAnswerEffect && resolvedAnswerEffect !== String(question?.answerEffect || '').trim()) {
+  if (
+    resolvedAnswerEffect &&
+    resolvedAnswerEffect !== String(question?.answerEffect || '').trim()
+  ) {
     parts.push(resolvedAnswerEffect)
   }
   if (mapsToSymptomKey) {
-    const strengthText = Number.isFinite(associationStrength) && associationStrength > 0
-      ? `strength ${associationStrength.toFixed(2)}`
-      : ''
+    const strengthText =
+      Number.isFinite(associationStrength) && associationStrength > 0
+        ? `strength ${associationStrength.toFixed(2)}`
+        : ''
     parts.push(`症状映射 ${mapsToSymptomKey}${strengthText ? `（${strengthText}）` : ''}`)
   }
   if (directEffects.length) {
@@ -3078,16 +3246,10 @@ function resolveFullPromptText(row = null) {
 function resolvePromptTokens(row = null) {
   const usage = row?.usage || row?.hunyuanPromptAudit?.usage || row?.llmPromptAudit?.usage || {}
   const promptTokens = Number(
-    row?.promptTokens ??
-      row?.llmPromptTokens?.prompt ??
-      usage?.promptTokens ??
-      0
+    row?.promptTokens ?? row?.llmPromptTokens?.prompt ?? usage?.promptTokens ?? 0
   )
   const completionTokens = Number(
-    row?.completionTokens ??
-      row?.llmPromptTokens?.completion ??
-      usage?.completionTokens ??
-      0
+    row?.completionTokens ?? row?.llmPromptTokens?.completion ?? usage?.completionTokens ?? 0
   )
   const totalTokens = Number(
     row?.totalTokens ??
@@ -3104,15 +3266,23 @@ function resolvePromptTokens(row = null) {
 
 function hasPromptTokenMetrics(row = null) {
   const tokens = resolvePromptTokens(row)
-  return Number(tokens.prompt || 0) > 0 ||
+  return (
+    Number(tokens.prompt || 0) > 0 ||
     Number(tokens.completion || 0) > 0 ||
     Number(tokens.total || 0) > 0
+  )
 }
 
 function normalizePromptCacheStatus(value = '') {
-  const normalized = String(value || '').trim().toLowerCase()
-  if (normalized === 'hit' || normalized === 'cache_hit') {return 'hit'}
-  if (normalized === 'miss' || normalized === 'cache_miss') {return 'miss'}
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase()
+  if (normalized === 'hit' || normalized === 'cache_hit') {
+    return 'hit'
+  }
+  if (normalized === 'miss' || normalized === 'cache_miss') {
+    return 'miss'
+  }
   return 'unknown'
 }
 
@@ -3129,9 +3299,7 @@ function resolvePromptCacheStatus(row = null) {
     usage?.qwenCacheStatus ||
     null
   const rawStatus =
-    statusSource && typeof statusSource === 'object'
-      ? statusSource
-      : { status: statusSource }
+    statusSource && typeof statusSource === 'object' ? statusSource : { status: statusSource }
   const promptTokens = Number(
     rawStatus?.promptTokens ??
       row?.promptTokens ??
@@ -3149,10 +3317,7 @@ function resolvePromptCacheStatus(row = null) {
       0
   )
   const hitTokens = Number(
-    rawStatus?.promptCacheHitTokens ??
-      row?.promptCacheHitTokens ??
-      usage?.promptCacheHitTokens ??
-      0
+    rawStatus?.promptCacheHitTokens ?? row?.promptCacheHitTokens ?? usage?.promptCacheHitTokens ?? 0
   )
   const creationTokens = Number(
     rawStatus?.promptCacheCreationInputTokens ??
@@ -3168,17 +3333,19 @@ function resolvePromptCacheStatus(row = null) {
   )
   const rawStatusText = normalizePromptCacheStatus(rawStatus?.status || '')
   const metricAvailable = Boolean(
-    Number(rawStatus?.metricAvailable ?? row?.promptCacheMetricAvailable ?? usage?.promptCacheMetricAvailable ?? 0) ||
-      rawStatusText !== 'unknown'
+    Number(
+      rawStatus?.metricAvailable ??
+        row?.promptCacheMetricAvailable ??
+        usage?.promptCacheMetricAvailable ??
+        0
+    ) || rawStatusText !== 'unknown'
   )
   const missTokens = Number.isFinite(explicitMissTokens)
     ? Math.max(0, explicitMissTokens)
     : metricAvailable
       ? Math.max(0, promptTokens - Math.max(0, hitTokens) - Math.max(0, creationTokens))
       : 0
-  const fallbackStatus = metricAvailable
-    ? (Number(hitTokens || 0) > 0 ? 'hit' : 'miss')
-    : 'unknown'
+  const fallbackStatus = metricAvailable ? (Number(hitTokens || 0) > 0 ? 'hit' : 'miss') : 'unknown'
   const status = normalizePromptCacheStatus(rawStatus?.status || fallbackStatus)
   const hitRatio = promptTokens > 0 ? Number((Math.max(0, hitTokens) / promptTokens).toFixed(4)) : 0
 
@@ -3199,10 +3366,12 @@ function resolvePromptCacheStatus(row = null) {
 
 function hasPromptCacheMetrics(row = null) {
   const status = resolvePromptCacheStatus(row)
-  return Number(status.metricAvailable || 0) > 0 ||
+  return (
+    Number(status.metricAvailable || 0) > 0 ||
     Number(status.promptCacheHitTokens || 0) > 0 ||
     Number(status.promptCacheMissTokens || 0) > 0 ||
     Number(status.promptCacheCreationInputTokens || 0) > 0
+  )
 }
 
 function resolvePromptCacheBadgeClass(row = null) {
@@ -3228,11 +3397,14 @@ function formatPromptCacheSummary(row = null) {
 
 function resolvePromptTokenCost(row = null) {
   const cacheStatus = resolvePromptCacheStatus(row)
-  return calculateLlmTokenCost({
-    ...resolvePromptTokens(row),
-    promptCacheHitTokens: cacheStatus.promptCacheHitTokens,
-    promptCacheCreationInputTokens: cacheStatus.promptCacheCreationInputTokens
-  }, row)
+  return calculateLlmTokenCost(
+    {
+      ...resolvePromptTokens(row),
+      promptCacheHitTokens: cacheStatus.promptCacheHitTokens,
+      promptCacheCreationInputTokens: cacheStatus.promptCacheCreationInputTokens
+    },
+    row
+  )
 }
 
 function formatPromptTokenCost(row = null) {
@@ -3254,8 +3426,12 @@ function formatPromptTokenCost(row = null) {
 
 function formatPromptSnippet(value = '') {
   const text = String(value || '').trim()
-  if (!text) {return '无 prompt'}
-  if (text.length <= 120) {return text}
+  if (!text) {
+    return '无 prompt'
+  }
+  if (text.length <= 120) {
+    return text
+  }
   return `${text.slice(0, 117)}...`
 }
 
@@ -3294,7 +3470,9 @@ function getDiagnosisDirectionLabels(detail = null) {
 }
 
 function getQuestionPackageSnapshotLabels(detail = null) {
-  const questionItems = Array.isArray(detail?.coreProcess?.questions?.questionPackageSnapshot?.questionItems)
+  const questionItems = Array.isArray(
+    detail?.coreProcess?.questions?.questionPackageSnapshot?.questionItems
+  )
     ? detail.coreProcess.questions.questionPackageSnapshot.questionItems
     : []
   return questionItems.map(entry => {
@@ -3303,11 +3481,7 @@ function getQuestionPackageSnapshotLabels(detail = null) {
     ).trim()
     const packageTopic = String(entry?.packageTopic || '').trim()
     const status = String(entry?.status || '').trim()
-    return [
-      questionText,
-      packageTopic ? `(${packageTopic})` : '',
-      status ? `[${status}]` : ''
-    ]
+    return [questionText, packageTopic ? `(${packageTopic})` : '', status ? `[${status}]` : '']
       .filter(Boolean)
       .join(' ')
   })

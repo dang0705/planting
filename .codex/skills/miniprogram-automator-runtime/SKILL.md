@@ -157,3 +157,7 @@ Mini Program Automator Runtime Result
 - classification:
 - next_action:
 ```
+## 11. 本地 LAN smoke 证据规则
+
+当验收使用本地 HTTP smoke 或 LAN direct HTTP 时，必须读取 `references/local-smoke-test-and-lan-direct-connection-policy.md`。缺少环境/终端头导致的会话未持久化，不得误判为产品 blocker。
+

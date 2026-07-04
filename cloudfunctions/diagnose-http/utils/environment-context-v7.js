@@ -6,23 +6,17 @@ const { estimateLightHealth, normalizeUserLightContext } = require('./light-heal
 // 部署环境通过 CloudBase Layer 加载 /opt/utils/watering-planner；
 // 本地测试环境回退到相对路径直接引用源码。
 let buildWateringPlannerShared
-let normalizeCareBehaviorTimelineShared
-let resolveBaselineIntervalShared
 let WATERING_CONTEXTS_SHARED
 let WATERING_ACTIONS_SHARED
 try {
   ;({
     buildWateringPlanner: buildWateringPlannerShared,
-    normalizeCareBehaviorTimeline: normalizeCareBehaviorTimelineShared,
-    resolveBaselineInterval: resolveBaselineIntervalShared,
     WATERING_CONTEXTS: WATERING_CONTEXTS_SHARED,
     WATERING_ACTIONS: WATERING_ACTIONS_SHARED
   } = require('/opt/utils/watering-planner'))
 } catch {
   ;({
     buildWateringPlanner: buildWateringPlannerShared,
-    normalizeCareBehaviorTimeline: normalizeCareBehaviorTimelineShared,
-    resolveBaselineInterval: resolveBaselineIntervalShared,
     WATERING_CONTEXTS: WATERING_CONTEXTS_SHARED,
     WATERING_ACTIONS: WATERING_ACTIONS_SHARED
   } = require('../../layer/utils/watering-planner'))
@@ -633,12 +627,21 @@ function buildBehaviorSummary(referenceDate = '', events = {}, lastFertilizedBuc
     .slice()
     .sort((left, right) => String(right.date || '').localeCompare(String(left.date || '')))[0]
 
+  // v2.1：使用 doseClass 枚举替代硬编码 amount 列表
+  const thoroughWateringCount10d = wateringEvents.filter(event =>
+    ['thorough', 'deep', 'soaked', '浇透', '透浇'].includes(normalizeText(event.amount))
+  ).length
+  const lastWateredDaysAgoValue = latestDaysAgo(referenceDate, wateringEvents)
+
   return {
-    wateringCount10d: wateringEvents.length,
-    thoroughWateringCount10d: wateringEvents.filter(event =>
-      ['thorough', 'deep', 'soaked', '浇透', '透浇'].includes(normalizeText(event.amount))
-    ).length,
-    lastWateredDaysAgo: latestDaysAgo(referenceDate, wateringEvents),
+    // v2.1：移除 wateringCount10d，改用 effectiveHydrationLoad 等字段
+    // diagnose-http 自有 buildBehaviorSummary 不接入盆型几何，使用简化水合负载
+    effectiveHydrationLoad: computeSimplifiedHydrationLoad(wateringEvents, referenceDate),
+    wetPressureLoad: computeSimplifiedWetPressure(wateringEvents, referenceDate),
+    lastEffectiveRootWateredDaysAgo: computeLastEffectiveRootWatered(wateringEvents, referenceDate),
+    rootZoneMoistureIndex: null,
+    thoroughWateringCount10d,
+    lastWateredDaysAgo: lastWateredDaysAgoValue,
     fertilizingCount10d: fertilizingEvents.length,
     latestFertilizerStrength: normalizeText(latestFertilizingEvent?.strength || ''),
     lastFertilizedBucket,
@@ -649,6 +652,92 @@ function buildBehaviorSummary(referenceDate = '', events = {}, lastFertilizedBuc
       includesAnyToken(event.event || event.rawEvent, DIRECT_LIGHT_TOKENS)
     )
   }
+}
+
+/**
+ * diagnose-http 简化水合负载计算（不依赖盆型几何）。
+ * 按 doseClass 权重 × recencyDecay 求和，归一化到 0~1。
+ */
+function computeSimplifiedHydrationLoad(wateringEvents = [], referenceDate = '') {
+  if (!wateringEvents.length) {
+    return 0
+  }
+  const lookback = 10
+  const weightMap = { unknown: 0.4, mist: 0.1, small: 0.4, normal: 0.7, thorough: 1.0 }
+  let total = 0
+  for (const event of wateringEvents) {
+    const diff = daysAgo(referenceDate, event.date)
+    if (diff === null || diff < 0 || diff >= lookback) {
+      continue
+    }
+    const amount = normalizeText(event.amount || event.wateringAmount || event.level || event.value)
+    let doseClass = 'unknown'
+    if (['mist', '喷雾', '喷淋'].includes(amount)) {
+      doseClass = 'mist'
+    } else if (['small', '少量', '少许'].includes(amount)) {
+      doseClass = 'small'
+    } else if (['normal', '普通', '常规'].includes(amount)) {
+      doseClass = 'normal'
+    } else if (['thorough', 'deep', 'soaked', '浇透', '透浇', '大水'].includes(amount)) {
+      doseClass = 'thorough'
+    }
+    const weight = weightMap[doseClass] ?? 0.4
+    const recencyDecay = 1 - diff / lookback
+    total += weight * recencyDecay
+  }
+  return Math.round((total / lookback) * 10 * 100) / 100
+}
+
+/**
+ * diagnose-http 简化湿压计算（不依赖盆型几何）。
+ */
+function computeSimplifiedWetPressure(wateringEvents = [], referenceDate = '') {
+  if (!wateringEvents.length) {
+    return 0
+  }
+  const lookback = 10
+  const weightMap = { unknown: 0.3, mist: 0.05, small: 0.3, normal: 0.6, thorough: 1.0 }
+  let total = 0
+  for (const event of wateringEvents) {
+    const diff = daysAgo(referenceDate, event.date)
+    if (diff === null || diff < 0 || diff >= lookback) {
+      continue
+    }
+    const amount = normalizeText(event.amount || event.wateringAmount || event.level || event.value)
+    let doseClass = 'unknown'
+    if (['mist', '喷雾', '喷淋'].includes(amount)) {
+      doseClass = 'mist'
+    } else if (['small', '少量', '少许'].includes(amount)) {
+      doseClass = 'small'
+    } else if (['normal', '普通', '常规'].includes(amount)) {
+      doseClass = 'normal'
+    } else if (['thorough', 'deep', 'soaked', '浇透', '透浇', '大水'].includes(amount)) {
+      doseClass = 'thorough'
+    }
+    const weight = weightMap[doseClass] ?? 0.3
+    const recencyDecay = 1 - diff / lookback
+    total += weight * recencyDecay
+  }
+  return Math.round((total / lookback) * 10 * 100) / 100
+}
+
+/**
+ * 距上次有效根区浇水的天数（排除喷雾）。
+ */
+function computeLastEffectiveRootWatered(wateringEvents = [], referenceDate = '') {
+  let latest = null
+  for (const event of wateringEvents) {
+    const amount = normalizeText(event.amount || event.wateringAmount || event.level || event.value)
+    if (['mist', '喷雾', '喷淋'].includes(amount)) {
+      continue
+    }
+    const diff = daysAgo(referenceDate, event.date)
+    if (diff === null || diff < 0) {
+      continue
+    }
+    latest = latest === null ? diff : Math.min(latest, diff)
+  }
+  return latest
 }
 
 function normalizeCareBehaviorTimeline(input = {}) {
@@ -729,19 +818,6 @@ function normalizeCareBehaviorTimeline(input = {}) {
     last_fertilized_bucket: summary.lastFertilizedBucket,
     summary
   }
-}
-
-function resolveBaselineInterval(wateringStrategy = {}) {
-  const freq =
-    wateringStrategy.freq || wateringStrategy.intervalDays || wateringStrategy.interval_days
-  if (Array.isArray(freq) && freq.length >= 2) {
-    const min = toNumber(freq[0])
-    const max = toNumber(freq[1])
-    if (min !== undefined && max !== undefined) {
-      return [min, max]
-    }
-  }
-  return [5, 8]
 }
 
 function buildWateringPlanner({

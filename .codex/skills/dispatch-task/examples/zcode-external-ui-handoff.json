@@ -69,7 +69,19 @@
       "@ZCode",
       "@Computer"
     ],
-    "minimum_tool_event_count": 5
+    "minimum_tool_event_count": 5,
+    "post_send_computer_use_policy": {
+      "disconnect_after_send_confirmed": true,
+      "first_30m_probe_interval_minutes": 5,
+      "first_30m_allowed_probes": [
+        "handoff_manual",
+        "scoped_git_status",
+        "scoped_git_diff_name_only",
+        "scoped_git_diff_stat"
+      ],
+      "ui_probe_after_30m_min_interval_minutes": 10,
+      "continuous_ui_monitoring_forbidden": true
+    }
   },
   "handoff_manual": {
     "required": true,
@@ -160,5 +172,6 @@
     "style_stack_compliance",
     "component_reuse_evidence",
     "uni_ui_mapping_evidence"
-  ]
+  ],
+  "dispatch_tier": "external_zcode"
 }

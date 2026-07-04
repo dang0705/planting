@@ -36,11 +36,19 @@ const includesAll = (array, items) => items.every((item) => array?.includes(item
 
 const risk = data?.task?.risk;
 const mode = data.implementation_mode ?? 'codex_subagent';
+const dispatchTier = data.dispatch_tier;
 const maxContractChars = risk === 'high' ? 24000 : 14000;
 need(raw.length <= maxContractChars, `handoff exceeds character budget: ${raw.length}/${maxContractChars}`);
 
 need(nonEmptyString(data.dispatch_run_id), 'dispatch_run_id is required');
 need(['codex_subagent', 'zcode_external'].includes(mode), 'implementation_mode must be codex_subagent|zcode_external');
+if (dispatchTier !== undefined) {
+  need(['standard_task', 'deep_contract', 'external_zcode', 'qa_only', 'docs_only'].includes(dispatchTier),
+    'dispatch_tier must be standard_task|deep_contract|external_zcode|qa_only|docs_only when a handoff is generated');
+}
+if (mode === 'zcode_external') {
+  need(dispatchTier === 'external_zcode' || dispatchTier === undefined, 'zcode_external should use dispatch_tier=external_zcode');
+}
 need(isObject(data.task), 'task object is required');
 need(nonEmptyString(data?.task?.objective), 'task.objective is required');
 need(typeof data?.task?.code_changes_required === 'boolean', 'task.code_changes_required must be boolean');
@@ -71,7 +79,7 @@ if (mode === 'zcode_external') {
     'computer_use_required', 'actual_tool_invocation_required', 'allowed_tool_targets', 'minimum_tool_event_count',
     'computer_use_tool_invocation_required', 'computer_use_action_trace_required', 'clipboard_write_via_computer_use_required',
     'manual_typing_forbidden', 'shell_only_ui_automation_forbidden',
-    'required_computer_use_actions'
+    'required_computer_use_actions', 'post_send_computer_use_policy'
   ]);
   need(zcodeUnknown.length === 0, `zcode_contract contains unknown fields: ${zcodeUnknown.join(', ')}`);
   need(zcode.external_implementer === 'zcode_glm', 'zcode_contract.external_implementer must be zcode_glm');
@@ -121,6 +129,31 @@ if (mode === 'zcode_external') {
     need(zcode.required_computer_use_actions?.includes(action),
       `zcode_contract.required_computer_use_actions must include ${action}`);
   }
+  const postSendPolicy = zcode.post_send_computer_use_policy ?? {};
+  const postSendPolicyUnknown = unknownKeys(postSendPolicy, [
+    'disconnect_after_send_confirmed', 'first_30m_probe_interval_minutes',
+    'first_30m_allowed_probes', 'ui_probe_after_30m_min_interval_minutes',
+    'continuous_ui_monitoring_forbidden'
+  ]);
+  need(isObject(postSendPolicy), 'zcode_contract.post_send_computer_use_policy is required');
+  need(postSendPolicyUnknown.length === 0,
+    `zcode_contract.post_send_computer_use_policy contains unknown fields: ${postSendPolicyUnknown.join(', ')}`);
+  need(postSendPolicy.disconnect_after_send_confirmed === true,
+    'zcode_contract.post_send_computer_use_policy.disconnect_after_send_confirmed must be true');
+  need(postSendPolicy.first_30m_probe_interval_minutes === 5,
+    'zcode_contract.post_send_computer_use_policy.first_30m_probe_interval_minutes must be 5');
+  need(Array.isArray(postSendPolicy.first_30m_allowed_probes),
+    'zcode_contract.post_send_computer_use_policy.first_30m_allowed_probes must be an array');
+  for (const probe of [
+    'handoff_manual', 'scoped_git_status', 'scoped_git_diff_name_only', 'scoped_git_diff_stat'
+  ]) {
+    need(postSendPolicy.first_30m_allowed_probes?.includes(probe),
+      `zcode_contract.post_send_computer_use_policy.first_30m_allowed_probes must include ${probe}`);
+  }
+  need(postSendPolicy.ui_probe_after_30m_min_interval_minutes === 10,
+    'zcode_contract.post_send_computer_use_policy.ui_probe_after_30m_min_interval_minutes must be 10');
+  need(postSendPolicy.continuous_ui_monitoring_forbidden === true,
+    'zcode_contract.post_send_computer_use_policy.continuous_ui_monitoring_forbidden must be true');
   need(stringArray(zcode.required_prompt_sections, { min: 5, max: 16 }),
     'zcode_contract.required_prompt_sections must contain 5-16 section ids');
 
@@ -234,8 +267,8 @@ if (ui) {
   if (mode === 'codex_subagent') {
     const skills = data?.required_skills?.implementer;
     need(stringArray(skills, { min: 1, max: 8 }), 'UI codex_subagent task requires required_skills.implementer');
-    need(skills?.includes('$ui-implementation-scope-policy'),
-      'UI codex_subagent task requires $ui-implementation-scope-policy');
+    need(skills?.includes('$implementer-ui-execution-policy'),
+      'UI codex_subagent task requires $implementer-ui-execution-policy');
   } else {
     need(zcode.required_prompt_sections?.includes('ui_scope_contract'),
       'UI zcode_external task requires ui_scope_contract prompt section');
@@ -322,8 +355,7 @@ if (isObject(figma) && nonEmptyString(figma.link)) {
     const implementerSkills = data?.required_skills?.implementer ?? [];
     need(implementerSkills.includes('$implementer-ui-execution-policy'),
       'Figma codex_subagent task requires $implementer-ui-execution-policy');
-    need(implementerSkills.includes('$ui-implementation-scope-policy'),
-      'Figma codex_subagent task requires $ui-implementation-scope-policy');
+    
     if (usesUniUi(pc.component_library)) {
       need(implementerSkills.includes('$uni-ui-figma-component-mapper'),
         'Figma + uni-ui codex_subagent task requires $uni-ui-figma-component-mapper');
@@ -368,4 +400,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log(JSON.stringify({ status: 'passed', gate: 'handoff_contract', implementation_mode: mode, chars: raw.length }, null, 2));
+console.log(JSON.stringify({ status: 'passed', gate: 'handoff_contract', implementation_mode: mode, dispatch_tier: dispatchTier ?? null, chars: raw.length }, null, 2));

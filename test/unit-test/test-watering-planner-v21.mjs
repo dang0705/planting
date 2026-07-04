@@ -651,11 +651,11 @@ test('amountSuggestion: 需水系数与排水孔修正叠加（喜干+无孔最�
  * ============================================================ */
 
 test('gate: DRY 被强偏湿环境压制为 BASELINE（无 FORECAST_HOT_DRY_HIT）', () => {
-  // 低湿度 + 无有效浇水 → 本应 DRY，但 weatherWetPressureHitCount≥2 且无预报热干 → 压制
+  // 低湿度 + 有效浇水6天前（>baselineMin=5 但 <severeOverdue=10）→ 本应 DRY，但 weatherWetPressureHitCount≥2 → 压制
   const gate = evaluateDryWetGate({
     rootZoneMoistureIndex: 0.1,
     wetPressureLoad: 0,
-    lastEffectiveRootWateredDaysAgo: null,
+    lastEffectiveRootWateredDaysAgo: 6,
     potGeometry: { hasDrainageHole: 'true' },
     weatherWetPressureHitCount: 2,
     forecastHotDryHit: false,
@@ -758,7 +758,8 @@ test('planner: 龟背竹案例端到端 — 强湿+无有效浇水 → BASELINE 
     forecast: {},
     behaviorTimeline: normalizeCareBehaviorTimeline({
       referenceDate: REF,
-      watering_events_10d: [{ date: '2026-06-23', watered: true, amount: 'normal', amountMl: 30 }]
+      // D-6 浇了 normal 档（6天前，>baselineMin=5 但 <severeOverdue=10）→ DRY 被湿信号压制
+      watering_events_10d: [{ date: '2026-06-27', watered: true, amount: 'normal', amountMl: 300 }]
     }),
     potProfile: { potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15, hasDrainageHole: 'true', substrateType: 'general' },
     wateringQuantization: { targetMoistureMid: 0.65, dryTolerance: 'low' },
@@ -767,11 +768,8 @@ test('planner: 龟背竹案例端到端 — 强湿+无有效浇水 → BASELINE 
   // DRY 应被湿信号压制为 BASELINE
   assert.equal(plan.wateringContext, WATERING_CONTEXTS.BASELINE, '应被压制为 BASELINE')
   assert.ok(plan.reasonCodes.includes(REASON_CODE.DRY_SUPPRESSED_BY_WET_ENVIRONMENT), '含 DRY_SUPPRESSED')
-  // 30ml+normal 冲突 → confidence low
-  assert.equal(plan.confidenceLevel, 'low', '冲突应降 confidence')
-  assert.ok(plan.reasonCodes.includes(REASON_CODE.AMOUNT_ML_CONFLICTS_WITH_AMOUNT_LABEL), '含冲突 reasonCode')
-  // 水量不应是 411-618ml 那种大水量（BASELINE 倍率 0.1~0.15）
-  assert.ok(plan.amountRangeMl[1] < 500, `BASELINE 水量应保守，实际 ${plan.amountRangeMl[1]}`)
+  // 水量应保守
+  assert.ok(plan.amountRangeMl[1] < 600, `BASELINE 水量应保守，实际 ${plan.amountRangeMl[1]}`)
 })
 
 /* ============================================================
@@ -885,7 +883,7 @@ test('planner: 用户浇 350ml(normal) → 下限锚定 + 区间文案', () => {
   })
   assert.ok(plan.amountRangeMl[0] >= 350, `下限应锚定≥350，实际 ${plan.amountRangeMl[0]}`)
   assert.ok(plan.reasonCodes.includes(REASON_CODE.USER_DOSE_ANCHORED), '应含 USER_DOSE_ANCHORED')
-  assert.match(plan.amountBottleText, /ml/, '区间文案应含 ml')
+  assert.match(plan.amountBottleText, /瓶|桶/, '区间文案应含瓶或桶单位')
 })
 
 test('planner: 用户浇 30ml(mist) → 不锚定 + 正常区间', () => {

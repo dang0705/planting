@@ -217,13 +217,13 @@
     <WateringReminderSheet
       ref="wateringReminderRef"
       :plant="currentReminderPlant"
-      @close="() => (currentReminderPlant = null)"
+      @close="() => (currentReminderPlantId = null)"
     />
   </view>
 </template>
 
 <script setup>
-import { onMounted, ref, reactive } from 'vue'
+import { onMounted, ref, reactive, computed } from 'vue'
 import CustomNavbar from '@/components/CustomNavbar'
 import DiagnosePopup from '@/components/DiagnosePopup.vue'
 import { usePlantStore } from '@/store/plants.js'
@@ -243,7 +243,13 @@ const diagnosePopupRef = ref(null)
 const wateringReminderRef = ref(null)
 const currentPlantId = ref('')
 const currentPlantName = ref('')
-const currentReminderPlant = ref(null)
+const currentReminderPlantId = ref(null)
+// 从 store 派生，避免存对象快照导致盆型保存后 store 更新但 Sheet 仍读旧引用
+const currentReminderPlant = computed(() =>
+  currentReminderPlantId.value === null
+    ? null
+    : plantStore.userPlants.find(p => p.id === currentReminderPlantId.value) || null
+)
 const plantDiagnoseHistory = reactive({})
 const loadingHistory = reactive({})
 
@@ -433,7 +439,7 @@ function getReminderSummary(plant) {
 function openReminder({ plant, type }) {
   if (type === 'water') {
     // 水滴 icon：打开浇水提醒底部弹框，不再直接跳转日历页
-    currentReminderPlant.value = plant
+    currentReminderPlantId.value = plant.id
     wateringReminderRef.value?.open()
     return
   }

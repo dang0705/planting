@@ -1,8 +1,14 @@
 <template>
   <view>
-    <uni-popup ref="popupRef" type="bottom" :is-mask-click="!loading" @change="onPopupChange">
+    <uni-popup
+      ref="popupRef"
+      type="bottom"
+      :safe-area="false"
+      :is-mask-click="!loading"
+      @change="onPopupChange"
+    >
       <view
-        class="watering-reminder-sheet rounded-t-[20px] bg-white pb-[env(safe-area-inset-bottom)]"
+        class="watering-reminder-sheet rounded-t-[20px] bg-white"
       >
         <view class="mx-auto mt-2.5 h-1 w-14 rounded-full bg-[#d7e6dc]" />
         <view class="px-5 pt-4">
@@ -114,17 +120,19 @@
             }}
           </button>
         </view>
-        <view class="h-4" />
       </view>
     </uni-popup>
 
     <uni-popup
       ref="datePickerPopupRef"
-      type="center"
+      type="bottom"
+      :safe-area="false"
       :is-mask-click="true"
       @change="onDatePickerChange"
     >
-      <view class="watering-date-picker mx-5 w-[353px] rounded-[16px] bg-white p-0">
+      <view
+        class="watering-date-picker mx-5 w-[353px] max-h-[82vh] rounded-[16px] bg-white p-0"
+      >
         <view class="flex items-center justify-between px-5 pt-[18px]">
           <text class="text-lg font-medium text-gray-900">选择浇水日期</text>
           <view

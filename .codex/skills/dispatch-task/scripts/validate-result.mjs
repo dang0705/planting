@@ -215,7 +215,7 @@ if (role === 'implementer') {
   need(result?.agent_identity?.dispatch_run_id === handoff?.dispatch_run_id,
     'implementer agent_identity.dispatch_run_id must match handoff');
   need(['completed', 'blocked'].includes(result.status), 'implementer status must be completed|blocked');
-  need(result.status === 'completed', `implementation gate cannot continue with status=${result.status}`);
+  // completed 可进入 main review；blocked 是合法阻断结果，但不得进入 Completion Gate。
   validateChangedFiles(result.changed_files);
   need(nonEmptyString(result.implementation_summary), 'implementation_summary is required');
   need(result.project_constraints_verified === true, 'project_constraints_verified must be true');
@@ -241,7 +241,7 @@ if (role === 'external') {
   need(implementationMode === 'zcode_external', 'role=external is only valid for implementation_mode=zcode_external');
   need(result.source === 'codex_recovery_after_zcode', 'external result source must be codex_recovery_after_zcode');
   need(['completed', 'blocked'].includes(result.status), 'external status must be completed|blocked');
-  need(result.status === 'completed', `external implementation gate cannot continue with status=${result.status}`);
+  // completed 可进入 main review；blocked 是合法阻断结果，但不得进入 Completion Gate。
   need(result.codex_self_implementation === false, 'codex_self_implementation must be false');
   need(result.zcode_completion_claim_treated_as_non_authoritative === true,
     'ZCode completion claim must be treated as non-authoritative');

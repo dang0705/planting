@@ -3,7 +3,6 @@ import fs from 'node:fs'
 
 const migrationPath = 'scripts/sql/watering-reminder-v21-schema-20260630.sql'
 const FIRST_LINE_INDEX = 0
-const CREATE_TABLE_START_INDEX = 0
 const WATERING_WAY_QUANTIZATION_KEYS = [
   'wayClass',
   'depletionTrigger',
@@ -28,15 +27,16 @@ function assertNotIncludes(pattern, message) {
   assert.doesNotMatch(migration, pattern, `${message}，请检查 ${migrationPath}`)
 }
 
-assertNotIncludes(/\bDROP\b|\bTRUNCATE\b|\bDELETE\b/i, 'schema migration 不允许破坏性 SQL')
-
-assertIncludes(
-  /CREATE TABLE IF NOT EXISTS [`"]?cloud1_dev[`"]?\.[`"]?user_plant_care_extensions[`"]?/i,
-  '必须新增用户植物养护扩展表'
+assertNotIncludes(
+  /\bDROP\s+TABLE\b.*\bwatering_events\b/i,
+  'schema migration 不得删除 watering_events 表'
 )
-assertIncludes(/`id`\s+BIGINT UNSIGNED NOT NULL AUTO_INCREMENT/i, 'id 类型必须锁定')
-assertIncludes(/`_openid`\s+VARCHAR\(64\) NOT NULL DEFAULT ''/i, '_openid 默认值必须锁定')
-assertIncludes(/`user_plant_id`\s+BIGINT UNSIGNED NOT NULL/i, 'user_plant_id 必须存在')
+
+// 盆型字段折叠进 user_plant_instances 主表（ALTER TABLE），不再使用独立扩展表
+assertIncludes(
+  /ALTER TABLE [`"]?cloud1_dev[`"]?\.[`"]?user_plant_instances[`"]?/i,
+  '盆型字段必须通过 ALTER TABLE 添加到 user_plant_instances 主表'
+)
 assertIncludes(/`pot_top_diameter_cm`\s+DECIMAL\(6,2\) NULL/i, '盆口直径字段必须存在')
 assertIncludes(/`pot_bottom_diameter_cm`\s+DECIMAL\(6,2\) NULL/i, '盆底直径字段必须存在')
 assertIncludes(/`pot_height_cm`\s+DECIMAL\(6,2\) NULL/i, '盆高字段必须存在')
@@ -53,57 +53,23 @@ assertIncludes(
   /`substrate_type`[\s\S]+COMMENT '基质类型：允许 JSON 数组字符串（多选\+比例）或单值'/i,
   '基质类型注释必须说明允许 JSON 数组字符串或单值'
 )
-assertIncludes(/`profile_version`\s+INT UNSIGNED NOT NULL DEFAULT 1/i, '画像版本字段必须存在')
-assertIncludes(/`source`\s+VARCHAR\(32\) NOT NULL DEFAULT 'user'/i, '画像来源字段必须存在')
-assertIncludes(/`confidence`\s+VARCHAR\(16\) NOT NULL DEFAULT 'normal'/i, '置信度字段必须存在')
-assertIncludes(/`created_at`\s+DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP/i, 'created_at 必须存在')
 assertIncludes(
-  /`updated_at`\s+DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP/i,
-  'updated_at 必须自动更新时间'
-)
-
-assertIncludes(
-  /UNIQUE KEY [`"]?uk_user_plant_care_extensions_openid_plant[`"]?\s*\([`"]?_openid[`"]?,\s*[`"]?user_plant_id[`"]?\)/i,
-  '必须按用户和植物实例建立唯一键'
+  /`pot_profile_version`\s+INT UNSIGNED NOT NULL DEFAULT 1/i,
+  '画像版本字段必须存在（带 pot_profile_ 前缀）'
 )
 assertIncludes(
-  /KEY [`"]?idx_user_plant_care_extensions_user_plant_id[`"]?\s*\([`"]?user_plant_id[`"]?\)/i,
-  '必须覆盖 user_plant_id 查询索引'
+  /`pot_profile_source`\s+VARCHAR\(32\) NOT NULL DEFAULT 'default'/i,
+  '画像来源字段必须存在（带 pot_profile_ 前缀，默认 default）'
 )
 assertIncludes(
-  /KEY [`"]?idx_user_plant_care_extensions_profile_version[`"]?\s*\([`"]?profile_version[`"]?\)/i,
-  '必须覆盖 profile_version 查询索引'
+  /`pot_profile_confidence`\s+VARCHAR\(16\) NOT NULL DEFAULT 'low'/i,
+  '置信度字段必须存在（带 pot_profile_ 前缀，默认 low）'
 )
-
+// 历史扩展表已废弃，研发未上线无需迁移数据
 assertIncludes(
-  /CHECK\s*\(\s*`has_drainage_hole`\s+IN\s*\('true',\s*'false',\s*'unknown'\)/i,
-  '排水孔枚举必须约束'
+  /DROP TABLE IF EXISTS [`"]?cloud1_dev[`"]?\.[`"]?user_plant_care_extensions[`"]?/i,
+  '历史扩展表 user_plant_care_extensions 必须废弃'
 )
-assertIncludes(
-  /CHECK\s*\(\s*`pot_material`\s+IN\s*\('plastic',\s*'ceramic',\s*'terracotta',\s*'glazed',\s*'unknown'\)/i,
-  '盆器材质枚举必须约束'
-)
-assertNotIncludes(
-  /chk_user_plant_care_extensions_substrate_type|`substrate_type`\s+IN\s*\(/i,
-  '基质类型不得再使用枚举 CHECK 阻断 JSON 数组字符串'
-)
-assertIncludes(
-  /CHECK\s*\(\s*`source`\s+IN\s*\('user',\s*'default',\s*'inferred'\)/i,
-  '画像来源枚举必须约束'
-)
-assertIncludes(
-  /CHECK\s*\(\s*`confidence`\s+IN\s*\('low',\s*'normal',\s*'high'\)/i,
-  '置信度枚举必须约束'
-)
-assertIncludes(
-  /`pot_top_diameter_cm`\s+IS NULL OR `pot_top_diameter_cm`\s+>\s+0/i,
-  '盆口直径必须约束为正数或空'
-)
-assertIncludes(
-  /`pot_bottom_diameter_cm`\s+IS NULL OR `pot_bottom_diameter_cm`\s+>\s+0/i,
-  '盆底直径必须约束为正数或空'
-)
-assertIncludes(/`pot_height_cm`\s+IS NULL OR `pot_height_cm`\s+>\s+0/i, '盆高必须约束为正数或空')
 
 assertIncludes(
   /ALTER TABLE [`"]?cloud1_dev[`"]?\.[`"]?genus_care_profiles[`"]?/i,
@@ -164,14 +130,6 @@ assert.ok(
   'docs/genus_care_profiles.md 表头必须继续显示 watering_strategy_json'
 )
 
-const createTableEnd = migration.indexOf('ALTER TABLE')
-const userPlantCareDdl = migration.slice(CREATE_TABLE_START_INDEX, createTableEnd)
-assert.ok(
-  !/WateringEvent|watering_events|watering_event|watered_at|dose_class|amount_ml|runoff_observed|saucer_water_cleared/i.test(
-    userPlantCareDdl
-  ),
-  '用户植物养护扩展表不能混入单次浇水事件字段'
-)
 assertNotIncludes(
   /ALTER TABLE [`"]?cloud1_dev[`"]?\.[`"]?watering_events[`"]?/i,
   '本 schema 任务不得修改 watering_events 表'

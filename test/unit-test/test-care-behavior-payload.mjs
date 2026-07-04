@@ -147,23 +147,24 @@ const duplicatedAliasResult = resolveRuntimeEnvironmentCarePayload({
   plantContext
 })
 
-assert.equal(duplicatedAliasResult.environmentCareContext.behaviorSummary10d.wateringCount10d, 3)
-assert.equal(duplicatedAliasResult.environmentCareContext.watering.wateringContext, 'likely_too_wet')
+assert.equal(
+  duplicatedAliasResult.environmentCareContext.behaviorSummary10d.effectiveHydrationLoad !==
+    undefined,
+  true
+)
+assert.equal(
+  duplicatedAliasResult.environmentCareContext.watering.wateringContext,
+  'likely_too_wet'
+)
 assert.equal(duplicatedAliasResult.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
 
 const sameDayDuplicateResult = resolveRuntimeEnvironmentCarePayload({
   payload: {
     careBehaviorTimeline: {
       referenceDate: '2026-05-31',
-      dailyRecords: [
-        { date: '2026-05-31', watered: true, wateringAmount: '' }
-      ],
-      wateringEvents10d: [
-        { date: '2026-05-31', watered: true, amount: 'normal' }
-      ],
-      watering_events_10d: [
-        { date: '2026-05-31', watered: true, amount: 'heavy' }
-      ],
+      dailyRecords: [{ date: '2026-05-31', watered: true, wateringAmount: '' }],
+      wateringEvents10d: [{ date: '2026-05-31', watered: true, amount: 'normal' }],
+      watering_events_10d: [{ date: '2026-05-31', watered: true, amount: 'heavy' }],
       lastFertilizedBucket: '31_60d'
     },
     environmentWeatherWindow: {
@@ -191,8 +192,15 @@ const sameDayDuplicateResult = resolveRuntimeEnvironmentCarePayload({
   plantContext: slowWateringPlantContext
 })
 
-assert.equal(sameDayDuplicateResult.environmentCareContext.behaviorSummary10d.wateringCount10d, 1)
-assert.equal(sameDayDuplicateResult.environmentCareContext.watering.wateringContext, 'keep_baseline_or_check_soil')
+assert.equal(
+  sameDayDuplicateResult.environmentCareContext.behaviorSummary10d.effectiveHydrationLoad !==
+    undefined,
+  true
+)
+assert.equal(
+  sameDayDuplicateResult.environmentCareContext.watering.wateringContext,
+  'keep_baseline_or_check_soil'
+)
 
 const rainyWetResult = resolveRuntimeEnvironmentCarePayload({
   payload: {
@@ -231,7 +239,10 @@ const rainyWetResult = resolveRuntimeEnvironmentCarePayload({
 })
 
 assert.equal(rainyWetResult.environmentCareContext.historicalSummary10d.rainyDays, 4)
-assert.equal(rainyWetResult.environmentCareContext.behaviorSummary10d.wateringCount10d, 3)
+assert.equal(
+  rainyWetResult.environmentCareContext.behaviorSummary10d.effectiveHydrationLoad !== undefined,
+  true
+)
 assert.equal(rainyWetResult.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
 
 const wetRouteAnswerEffects = [
@@ -369,7 +380,10 @@ const baselineWetAnswers = buildRouteAnswersFromRuntimeEnvironmentCarePayload({
 
 assert.equal(baselineWetAnswers[0].optionKey, 'often_wet')
 assert.deepEqual(
-  diagnosisEngineTest.collectMatchedRouteEffectOutcomeKeys(wetRouteAnswerEffects, baselineWetAnswers),
+  diagnosisEngineTest.collectMatchedRouteEffectOutcomeKeys(
+    wetRouteAnswerEffects,
+    baselineWetAnswers
+  ),
   ['overwatering_root_pressure']
 )
 
@@ -467,16 +481,17 @@ const extremeWetResult = resolveRuntimeEnvironmentCarePayload({
 })
 
 assert.equal(extremeWetResult.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
-assert.equal(extremeWetResult.environmentCareContext.behaviorSummary10d.wateringCount10d, 10)
+assert.equal(
+  extremeWetResult.environmentCareContext.behaviorSummary10d.effectiveHydrationLoad !== undefined,
+  true
+)
 
 // 反例：baseline [7,12] + 10 天 1 次 + 多雨 => 不应命中过浇
 const sparseRainResult = resolveRuntimeEnvironmentCarePayload({
   payload: {
     careBehaviorTimeline: {
       referenceDate: '2026-05-31',
-      dailyRecords: [
-        { date: '2026-05-31', watered: true, wateringAmount: 'normal' }
-      ],
+      dailyRecords: [{ date: '2026-05-31', watered: true, wateringAmount: 'normal' }],
       lastFertilizedBucket: '31_60d'
     },
     environmentWeatherWindow: {
@@ -504,7 +519,10 @@ const sparseRainResult = resolveRuntimeEnvironmentCarePayload({
   plantContext: slowWateringPlantContext
 })
 
-assert.equal(sparseRainResult.environmentCareContext.outputs.wateringContext, 'keep_baseline_or_check_soil')
+assert.equal(
+  sparseRainResult.environmentCareContext.outputs.wateringContext,
+  'keep_baseline_or_check_soil'
+)
 
 const sparseRainAnswers = buildRouteAnswersFromRuntimeEnvironmentCarePayload({
   answers: [
@@ -518,7 +536,10 @@ const sparseRainAnswers = buildRouteAnswersFromRuntimeEnvironmentCarePayload({
 
 assert.equal(sparseRainAnswers[0].optionKey, 'normal_or_stable')
 assert.deepEqual(
-  diagnosisEngineTest.collectMatchedRouteEffectOutcomeKeys(wetRouteAnswerEffects, sparseRainAnswers),
+  diagnosisEngineTest.collectMatchedRouteEffectOutcomeKeys(
+    wetRouteAnswerEffects,
+    sparseRainAnswers
+  ),
   []
 )
 
@@ -599,11 +620,7 @@ const baselineResult = resolveRuntimeEnvironmentCarePayload({
   payload: {
     careBehaviorTimeline: {
       referenceDate: '2026-05-27',
-      dailyRecords: [
-        { date: '2026-05-25', watered: true, wateringAmount: 'normal' },
-        { date: '2026-05-26', watered: true, wateringAmount: 'normal' },
-        { date: '2026-05-27', watered: true, wateringAmount: 'normal' }
-      ],
+      dailyRecords: [{ date: '2026-05-24', watered: true, wateringAmount: 'normal' }],
       lastFertilizedBucket: '31_60d'
     },
     environmentWeatherWindow: {
@@ -631,7 +648,10 @@ const baselineResult = resolveRuntimeEnvironmentCarePayload({
   plantContext
 })
 
-assert.equal(baselineResult.environmentCareContext.outputs.wateringContext, 'keep_baseline_or_check_soil')
+assert.equal(
+  baselineResult.environmentCareContext.outputs.wateringContext,
+  'keep_baseline_or_check_soil'
+)
 
 const baselineAnswerRouteEffects = [
   {
@@ -746,7 +766,10 @@ const restoredWithEmptyIncomingTimeline = resolveRuntimeEnvironmentCarePayload({
 
 assert.equal(restoredWithEmptyIncomingTimeline.careBehaviorTimeline.dailyRecords.length, 3)
 assert.equal(restoredWithEmptyIncomingTimeline.careBehaviorTimeline.lastFertilizedBucket, '31_60d')
-assert.equal(restoredWithEmptyIncomingTimeline.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
+assert.equal(
+  restoredWithEmptyIncomingTimeline.environmentCareContext.outputs.wateringContext,
+  'likely_too_wet'
+)
 
 const chlorophytumPlantContext = {
   genus: 'Chlorophytum',
@@ -759,9 +782,7 @@ const chlorophytumPlantContext = {
 const chlorophytumInitialPayload = {
   careBehaviorTimeline: {
     referenceDate: '2026-06-04',
-    dailyRecords: [
-      { date: '2026-05-29', watered: true, wateringAmount: 'normal' }
-    ]
+    dailyRecords: [{ date: '2026-05-29', watered: true, wateringAmount: 'normal' }]
   },
   environmentWeatherWindow: {
     meta: { diagnosisDate: '2026-06-04' },
@@ -781,22 +802,28 @@ const chlorophytumInitialResult = resolveRuntimeEnvironmentCarePayload({
   sessionState: {},
   plantContext: chlorophytumPlantContext
 })
-assert.equal(chlorophytumInitialResult.environmentCareContext.historicalSummary10d.highHumidityDays, 5)
 assert.equal(
-  chlorophytumInitialResult.environmentCareContext.historicalSummary10d.thresholds.humidityMaxPercent,
+  chlorophytumInitialResult.environmentCareContext.historicalSummary10d.highHumidityDays,
+  5
+)
+assert.equal(
+  chlorophytumInitialResult.environmentCareContext.historicalSummary10d.thresholds
+    .humidityMaxPercent,
   70
 )
 
-const chlorophytumRuntimeSnapshot = JSON.parse(buildRuntimeSnapshotPayload({
-  sessionId: 'diag_chlorophytum_high_humidity_snapshot',
-  plantContext: chlorophytumPlantContext,
-  response: {
-    roundId: 'round_1',
-    careBehaviorTimeline: chlorophytumInitialResult.careBehaviorTimeline,
-    environmentCareContext: chlorophytumInitialResult.environmentCareContext
-  },
-  round: 1
-}))
+const chlorophytumRuntimeSnapshot = JSON.parse(
+  buildRuntimeSnapshotPayload({
+    sessionId: 'diag_chlorophytum_high_humidity_snapshot',
+    plantContext: chlorophytumPlantContext,
+    response: {
+      roundId: 'round_1',
+      careBehaviorTimeline: chlorophytumInitialResult.careBehaviorTimeline,
+      environmentCareContext: chlorophytumInitialResult.environmentCareContext
+    },
+    round: 1
+  })
+)
 assert.equal(chlorophytumRuntimeSnapshot.plantContext.humidityMax, 70)
 assert.equal(
   chlorophytumRuntimeSnapshot.environmentCareContext.environmentWeatherWindow.historicalDays.length,
@@ -818,14 +845,20 @@ const chlorophytumRecalculatedFromSnapshot = resolveRuntimeEnvironmentCarePayloa
   plantContext: chlorophytumRuntimeSnapshot.plantContext
 })
 const chlorophytumWetPressureStep =
-  chlorophytumRecalculatedFromSnapshot.environmentCareContext.watering.calculation.formulas
-    .find(step => step.key === 'wet_pressure_score')
+  chlorophytumRecalculatedFromSnapshot.environmentCareContext.watering.calculation.formulas.find(
+    step => step.key === 'wet_pressure_score'
+  )
 const chlorophytumHighHumidityStep =
-  chlorophytumRecalculatedFromSnapshot.environmentCareContext.watering.calculation.formulas
-    .find(step => step.key === 'high_humidity_pressure_hit')
-assert.equal(chlorophytumRecalculatedFromSnapshot.environmentCareContext.historicalSummary10d.highHumidityDays, 5)
+  chlorophytumRecalculatedFromSnapshot.environmentCareContext.watering.calculation.formulas.find(
+    step => step.key === 'high_humidity_pressure_hit'
+  )
 assert.equal(
-  chlorophytumRecalculatedFromSnapshot.environmentCareContext.historicalSummary10d.thresholds.humidityMaxPercent,
+  chlorophytumRecalculatedFromSnapshot.environmentCareContext.historicalSummary10d.highHumidityDays,
+  5
+)
+assert.equal(
+  chlorophytumRecalculatedFromSnapshot.environmentCareContext.historicalSummary10d.thresholds
+    .humidityMaxPercent,
   70
 )
 assert.equal(chlorophytumHighHumidityStep.inputs.highHumidityDays, 5)

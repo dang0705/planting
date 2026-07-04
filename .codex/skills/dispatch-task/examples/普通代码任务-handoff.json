@@ -53,5 +53,6 @@
   },
   "output_evidence_required": [
     "validation_evidence"
-  ]
+  ],
+  "dispatch_tier": "standard_task"
 }

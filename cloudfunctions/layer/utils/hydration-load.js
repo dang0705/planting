@@ -62,6 +62,9 @@ const REASON_CODE = Object.freeze({
   USER_DOSE_ANCHORED: 'USER_DOSE_ANCHORED'
 })
 
+/** 冲突检测阈值：≤50ml 的浇水配非喷雾标签才算冲突（如 30ml+normal）。 */
+const MIST_TEXT_MAX_ML_FOR_CONFLICT = 50
+
 /**
  * 各 doseClass 的有效水合权重（0~1）。
  * 喷雾（mist）水合贡献极低，不能抵消干燥风险。
@@ -159,12 +162,12 @@ function resolveDoseClassWithConflict(event = {}, potVolumeMl = 0) {
 
   if (Number.isFinite(amountMl) && amountMl > 0) {
     const inferredDose = resolveMlToDoseClass(amountMl, potVolumeMl)
-    // 检测冲突：标签有效且 rank 差 ≥ 2
-    let doseConflict = false
-    if (labelDose !== DOSE_CLASS.UNKNOWN && inferredDose !== DOSE_CLASS.UNKNOWN) {
-      const rankDiff = Math.abs(DOSE_RANK[labelDose] - DOSE_RANK[inferredDose])
-      doseConflict = rankDiff >= 2
-    }
+    // 冲突检测：仅当 ml 处于喷雾量级（≤50ml）但用户标签是 small/normal/thorough 时才算冲突。
+    // 大盆下 normal 档代表 ml（如 550ml）可能占盆体积比 <5% 被归为 MIST，
+    // 但这是动态瓶档的正常换算结果，不是数据冲突。
+    const isMistLevelMl = amountMl <= MIST_TEXT_MAX_ML_FOR_CONFLICT
+    const isLabelNonMist = labelDose !== DOSE_CLASS.MIST && labelDose !== DOSE_CLASS.UNKNOWN
+    const doseConflict = isMistLevelMl && isLabelNonMist
     return { doseClass: inferredDose, doseConflict }
   }
 
@@ -295,9 +298,20 @@ function computeWetPressureLoad(
 function computeLastEffectiveRootWateredDaysAgo(wateringEvents = [], referenceDate = '', potVolumeMl = 0) {
   let latest = null
   for (const event of wateringEvents) {
-    const doseClass = resolveDoseClass(event, potVolumeMl)
+    const { doseClass, doseConflict } = resolveDoseClassWithConflict(event, potVolumeMl)
     if (doseClass === DOSE_CLASS.MIST) {
-      continue
+      // 大盆下 normal 档代表 ml 可能被归为 MIST，但用户明确选了非喷雾档且无冲突，
+      // 仍视为有效根浇（记录日期），只是 hydration 权重按 MIST 算。
+      // 有冲突（如 30ml+normal，ml 与标签极端矛盾）时以 ml 为准→跳过。
+      if (doseConflict) {
+        continue
+      }
+      const labelDose = resolveDoseClassByLabel(
+        normalizeText(event.amount || event.wateringAmount || event.level || event.value)
+      )
+      if (labelDose === DOSE_CLASS.MIST || labelDose === DOSE_CLASS.UNKNOWN) {
+        continue
+      }
     }
     const diff = daysAgo(referenceDate, event.date)
     if (diff === null || diff < 0) {
@@ -459,7 +473,19 @@ function evaluateDryWetGate({
   const isDry = dryReasons.length > 0
 
   // 湿信号刹车：强偏湿环境（≥2 项）且 DRY 不来自预报热干时，降级为 BASELINE + 查土
-  if (isDry && weatherWetPressureHitCount >= 2 && !dryReasons.includes('FORECAST_HOT_DRY_HIT')) {
+  // 但超期天数远超基线（>baselineMinDays×2）时不压制——严重缺水不会被天气湿信号掩盖
+  // null（无有效根浇）且 isTooLongAgo 时也视为严重超期
+  const severeOverdueDays = (baselineMinDays || 5) * 2
+  const isSevereOverdue = isTooLongAgo && (
+    lastEffectiveRootWateredDaysAgo === null ||
+    lastEffectiveRootWateredDaysAgo >= severeOverdueDays
+  )
+  if (
+    isDry &&
+    weatherWetPressureHitCount >= 2 &&
+    !dryReasons.includes('FORECAST_HOT_DRY_HIT') &&
+    !isSevereOverdue
+  ) {
     reasonCodes.push(REASON_CODE.STRONG_WET_ENVIRONMENT)
     reasonCodes.push(REASON_CODE.DRY_SUPPRESSED_BY_WET_ENVIRONMENT)
     reasonCodes.push(REASON_CODE.CHECK_SOIL_BEFORE_WATERING)

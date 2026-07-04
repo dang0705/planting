@@ -9,9 +9,31 @@ const {
   DIRECT_SUN_BLOCKED_WINDOWS,
   DIRECT_SUN_EXPOSURE_BASE_HOURS,
   DIRECT_SUN_POSITION_EXPOSURE,
+  DIRECT_SUN_ATTENUATION_FACTOR,
+  DIRECT_SUN_BOOST_FACTOR,
+  DIRECT_SUN_FACING_CLAMP,
+  DIRECT_SUN_WINDOW_CLAMP,
+  DISTANCE_FACTOR_DEEP_MIN,
+  DISTANCE_FACTOR_DEEP_SLOPE,
+  DISTANCE_FACTOR_MID_BOUNDARY,
+  DISTANCE_FACTOR_MID_MIN,
+  DISTANCE_FACTOR_MID_SLOPE,
+  DISTANCE_FACTOR_NEAR_MAX,
   FACTORS,
   OVER_PENALTY,
-  WEATHER_SUN_FACTOR
+  OVER_PENALTY_FALLBACK,
+  SCORE_CLAMP_RANGE,
+  SCORE_FULL,
+  SCORE_MODERATE_THRESHOLD,
+  SCORE_SEVERE_THRESHOLD,
+  SUNSHINE_COVERAGE_RATIO,
+  UNDERLIGHT_PENALTY_WEIGHT,
+  UV_FACTOR_CLAMP,
+  UV_FACTOR_SLOPE,
+  UV_REFERENCE,
+  WEATHER_FACTOR_UNKNOWN,
+  WEATHER_SUN_FACTOR,
+  DAYLIGHT_FALLBACK_HOURS
 } = require('./light-health-factors')
 const {
   clamp,
@@ -78,21 +100,21 @@ function normalizeWeatherDay(record = {}) {
 function resolveWeatherFactor(weatherText = '') {
   const normalized = normalizeText(weatherText)
   const matched = WEATHER_SUN_FACTOR.find(item => item.pattern.test(normalized))
-  return matched || { value: 0.35, label: '未知' }
+  return matched || { value: WEATHER_FACTOR_UNKNOWN, label: '未知' }
 }
 
 function estimateBaseOutdoorHours(weatherDays = []) {
   const days = (Array.isArray(weatherDays) ? weatherDays : []).map(normalizeWeatherDay)
   const sunshineHours = days.map(day => day.sunshineHours).filter(value => value !== undefined)
-  if (sunshineHours.length >= Math.ceil(Math.max(days.length, 1) * 0.5)) {
+  if (sunshineHours.length >= Math.ceil(Math.max(days.length, 1) * SUNSHINE_COVERAGE_RATIO)) {
     return { value: mean(sunshineHours) || 0, source: 'sunshine_hours_mean' }
   }
   const estimated = days.length
     ? days.map(day => {
-        const daylight = day.daylightHours ?? 12
+        const daylight = day.daylightHours ?? DAYLIGHT_FALLBACK_HOURS
         return daylight * resolveWeatherFactor(day.weatherText).value
       })
-    : [12 * 0.35]
+    : [DAYLIGHT_FALLBACK_HOURS * WEATHER_FACTOR_UNKNOWN]
   return {
     value: mean(estimated) || 0,
     source: days.length ? 'daylight_weather_factor_mean' : 'fallback_unknown_weather'
@@ -101,10 +123,10 @@ function estimateBaseOutdoorHours(weatherDays = []) {
 
 function getDirectSunFactor(value) {
   if (value === true) {
-    return 1.08
+    return DIRECT_SUN_BOOST_FACTOR
   }
   if (value === false) {
-    return 0.92
+    return DIRECT_SUN_ATTENUATION_FACTOR
   }
   return 1
 }
@@ -113,13 +135,22 @@ function getDistanceFactor(distance) {
   if (distance === undefined) {
     return 1
   }
-  if (distance <= 1) {
+  if (distance <= DISTANCE_FACTOR_NEAR_MAX) {
     return 1
   }
-  if (distance <= 3) {
-    return clamp(1 - (distance - 1) * 0.08, 0.82, 1)
+  if (distance <= DISTANCE_FACTOR_MID_BOUNDARY) {
+    return clamp(
+      1 - (distance - DISTANCE_FACTOR_NEAR_MAX) * DISTANCE_FACTOR_MID_SLOPE,
+      DISTANCE_FACTOR_MID_MIN,
+      1
+    )
   }
-  return clamp(0.82 - (distance - 3) * 0.06, 0.42, 0.82)
+  return clamp(
+    DISTANCE_FACTOR_MID_MIN -
+      (distance - DISTANCE_FACTOR_MID_BOUNDARY) * DISTANCE_FACTOR_DEEP_SLOPE,
+    DISTANCE_FACTOR_DEEP_MIN,
+    DISTANCE_FACTOR_MID_MIN
+  )
 }
 
 function getDirectSunExposureHours({
@@ -144,32 +175,32 @@ function getDirectSunExposureHours({
   const exposureHours =
     DIRECT_SUN_EXPOSURE_BASE_HOURS *
     uvFactor *
-    clamp(facingFactor, 0.35, 1.1) *
-    clamp(windowFactor, 0.55, 1.2) *
+    clamp(facingFactor, ...DIRECT_SUN_FACING_CLAMP) *
+    clamp(windowFactor, ...DIRECT_SUN_WINDOW_CLAMP) *
     positionExposure *
     distanceFactor
   return round(exposureHours, 2)
 }
 
 function getOverPenalty(way = '') {
-  return OVER_PENALTY[normalizeText(way)] || 45
+  return OVER_PENALTY[normalizeText(way)] || OVER_PENALTY_FALLBACK
 }
 
 function resolveLevel({ score, indoorEqHours, minNeed, maxNeed }) {
   if (indoorEqHours < minNeed) {
-    if (score < 40) {
+    if (score < SCORE_SEVERE_THRESHOLD) {
       return '严重不足'
     }
-    if (score < 65) {
+    if (score < SCORE_MODERATE_THRESHOLD) {
       return '明显不足'
     }
     return '略不足'
   }
   if (indoorEqHours > maxNeed) {
-    if (score < 40) {
+    if (score < SCORE_SEVERE_THRESHOLD) {
       return '严重偏强'
     }
-    if (score < 65) {
+    if (score < SCORE_MODERATE_THRESHOLD) {
       return '明显偏强'
     }
     return '略偏强'
@@ -223,7 +254,10 @@ function estimateLightHealth({
     normalizeWeatherDay
   )
   const avgUv = mean(normalizedWeatherDays.map(day => day.uvIndex))
-  const uvFactor = avgUv === undefined ? 1 : clamp(1 + 0.35 * ((avgUv - 8) / 8), 0.75, 1.15)
+  const uvFactor =
+    avgUv === undefined
+      ? 1
+      : clamp(1 + UV_FACTOR_SLOPE * ((avgUv - UV_REFERENCE) / UV_REFERENCE), ...UV_FACTOR_CLAMP)
   // recent-10d 天气光照因子：证据不足或缺失时保持中性 1.00，仅降低 confidence（不视为低光）
   const recentLightFactor = plantFeatures?.weatherLightFactor10d
   const lightEvidenceInsufficient = plantFeatures?.lightEvidenceInsufficient === true
@@ -249,13 +283,13 @@ function estimateLightHealth({
     uvFactor
   })
   const indoorEqHours = outdoorEqHours * indoorFactor + directSunExposureHours
-  let score = 100
+  let score = SCORE_FULL
   if (indoorEqHours < minNeed) {
-    score = 100 - ((minNeed - indoorEqHours) / minNeed) * 120
+    score = SCORE_FULL - ((minNeed - indoorEqHours) / minNeed) * UNDERLIGHT_PENALTY_WEIGHT
   } else if (indoorEqHours > maxNeed) {
-    score = 100 - ((indoorEqHours - maxNeed) / maxNeed) * getOverPenalty(profile.way)
+    score = SCORE_FULL - ((indoorEqHours - maxNeed) / maxNeed) * getOverPenalty(profile.way)
   }
-  score = clamp(Math.round(score), 0, 100)
+  score = clamp(Math.round(score), ...SCORE_CLAMP_RANGE)
   const level = resolveLevel({ score, indoorEqHours, minNeed, maxNeed })
   const direction = resolveDirection(level)
   const reason = buildReason({ profile, env, indoorEqHours, minNeed, maxNeed })

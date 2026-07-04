@@ -136,18 +136,17 @@ export function formatMlToBottleText(ml) {
     return '无需浇水'
   }
   if (value <= MIST_TEXT_MAX_ML) {
-    return `喷一喷（约${Math.round(value)}ml）`
+    return '喷一喷'
   }
   if (value >= BUCKET_TEXT_MIN_ML) {
     const buckets = Math.max(1, Math.round(value / BUCKET_ML))
-    return `约${buckets}桶（5升油桶，约${Math.round(value)}ml）`
+    return `约${buckets}桶（5升油桶）`
   }
   const bottles = Math.round((value / BOTTLE_ML) * 2) / 2
-  const roundedMl = Math.round(value)
   if (bottles <= 0.5) {
-    return `约半瓶（${roundedMl}ml）`
+    return '约半瓶'
   }
-  return `约${bottles}瓶（${roundedMl}ml）`
+  return `约${bottles}瓶`
 }
 
 /**
@@ -180,9 +179,12 @@ export function formatMlRangeToBottleText(rangeMl) {
       if (loBottles === hiBottles) {
         return formatMlToBottleText(upper)
       }
-      return `约${loBottles}~${hiBottles}瓶（${Math.round(lower)}~${Math.round(upper)}ml）`
+      return `约${loBottles}~${hiBottles}瓶`
     }
-    return `约${Math.round(lower)}~${Math.round(upper)}ml`
+    // 跨瓶/桶级（下限<5000，上限≥5000）→ 按上限统一换算油桶，不输出原始 ml
+    const loBuckets = Math.max(1, Math.round(lower / BUCKET_ML))
+    const hiBuckets = Math.max(loBuckets, Math.round(upper / BUCKET_ML))
+    return `约${loBuckets}~${hiBuckets}桶（5升油桶）`
   }
   return formatMlToBottleText(upper)
 }

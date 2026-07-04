@@ -7,67 +7,78 @@ inclusion: always
 
 # Repository Agent Rules
 
-## 1. 定位
+## 0. 规则层级与 Skill 使用边界
 
-本文件只保留仓库级全局约束、项目基础上下文和读取边界。
+1. 本文件只定义仓库级全局硬规则、入口规则和安全边界，不承载具体任务执行流程。
+2. 复杂任务、跨文件修改、Figma 实现、端上 QA、ZCode 外部实现、subagent 协作等，必须优先进入 `.codex/skills/dispatch-task`。
+3. skill 是可被显式调用的执行能力；reference 只是 skill 内部支撑资料，不得把 reference 当作独立任务入口。
+4. 当 AGENTS.md 与具体 skill 出现冲突时：安全、付费、部署、数据、读取边界以 AGENTS.md 为准；具体执行步骤、handoff、validator、receipt 以当前被调用的 skill 为准。
+5. 不得把 `.codex/skills/**/references/`、archived docs 或历史设计默认全量读入上下文；必须按任务选择最小必要文件。
 
-具体 skill 的 phase、condition、模板、MCP 读取、ClickUp 回写、Git 提交流程、Figma/UI 切片、QA 证据、role_context_packets 等细则，必须放在对应 skill 目录及其 `references/` / `assets/` 中，不得写入本全局文件。
+## 1. 项目技术上下文
 
-## 2. 全局硬规则
-
-1. 避免无关重构但必须删除用户明确说不需要或业务逻辑上已被替代或不再需要的代码，不得使用fallback、保守等手段保留、适配此类代码。
-2. 不允许绕过oxlintrc/oxfmtrc、测试失败或构建失败。
-3. 不允许删除有效业务逻辑来让检查通过。
-4. 不允许为了通过测试而削弱真实业务约束。
-5. 未经允许严禁开启 CloudBase 或任何可能导致付费的功能如云函数的预置并发。
-6. 中文是一等公民；文档、注释、产品术语和诊断领域概念必须中文优先。
-7. 外部事实必须通过对应 MCP / 工具读取；不得跳过链接内容直接假设。
-8. 项目内已经有完美适配小程序的 Tailwind Css 解决方案，前端的样式组织不允许以任何理由跳过、无视 Tailwind Css，必须首先考虑使用它组织样式。
-9. 超过 500 行的代码必须合理解耦拆分模块。
-10. 任何新增复杂功能和模块、交互复杂的前端组件等，实现前必须优先深度分析复用性、wrapper / adapter、插件 / 原生能力；手搓永远是最末位考虑。
-11. 如需安装新插件，必须考证其适配微信小程序、包体积、npm / GitHub 状态、周下载量、star 数和最近 3 年 release 记录，并提供简短介绍，征得用户同意。
-12. 当前项目处于研发未上线阶段，除非用户明确要适配既有逻辑或功能，否则默认新逻辑完整替代既有逻辑，既有逻辑代码、相关依赖树必须予以彻底地调整和删除。严禁写保守、适配的代码。
-13. 使用端上 `miniprogram-automator` / `9420` 做诊断相关自动化测试时，必须先读取 `docs/ai-rules/frontend-automation-id-policy.md` 的“第三点 诊断流 id 映射”，并按该映射执行入口定位与关键断言。
-14. 今后所有端上验收如果本轮代码未部署到云端，必须先成功跑通 `npm run dev:mp-weixin:local-functions:lan` 的完整 LAN 本地函数 flow，并让小程序运行时命中新代码；只启动 scoped/local 单函数 gateway、backend curl、Node HTTP 或 gateway health，不得算端上验收完成。
-15. 除非用户显式要求，否则 subagent 在条件允许的情况下优先考虑线程复用。
-16. 当上游的数据层结构变动后，应避免用兼容或者adapter的方式实现数据对接。优先将消费层和数据层结构同步一致，减少思维负担。
-17. subagent尤其是非gpt系的第三方模型如GLM在执行任务的过程中，main agent应当避免主动催促和询问进度。这些行为可能会造成第三方模型的未知行为，如抛异常和超长等待。
-18. 当运行时模型为 GLM 系列时，调用 `mcp__Figma_Desktop__get_design_context`、`get_metadata`、`get_variable_defs` 等 Figma 读取类工具后，禁止/跳过调用 `get_screenshot`；除非用户在当前会话中明确要求查看截图。
-19. 对于任何的需求，不能天然认为一定正确，必须有足够的风险意识。当识别到任务有风险、方向可能错误时需第一时间交由用户决定实施方向。
-
-## 3. 项目技术上下文
-
+- Language：JavaScript,Node.js。
 - Frontend：UniApp 3.0，Vue 3，Tailwind CSS 3，uni-ui。
-- Language：JavaScript。
+- Backend / Cloud：Tencent CloudBase、Cloud Functions、MySQL / TDSQL-C。
 - Lint: oxlint
 - formatter: oxformat
 - State：Pinia。
 - Build：Vite。
 - Platform：微信小程序优先。
-- Backend / Cloud：Tencent CloudBase、Cloud Functions、MySQL / TDSQL-C。
 - AI：视觉识别与诊断链路涉及 Qwen / 混元 Vision 等能力。
 
-不得把本项目默认当作 Taro / React / Zustand 项目处理。
+## 2. 全局行为硬规则
 
-## 4. 当前可用 subagent
+1. 业务逻辑、数据结构的变动，优先采取最彻底的解决方案，实现时对齐定义和消费两端。如采用保守方案必须说明彻底解决的风险，征得用户同意后才可执行保守操作。
+2. 模块命名合理，模块的拆分遵循高内聚、低耦合的设计思路。以提高维护性和复用性为前提，保证模块加载的性能。
+3. 开发结束后，只针对业务代码范围内的`src/*`和`cloudfunctions/*`下所改动的文件路径精准执行`npm run lint`和`npm run fmt`。
+4. 超过 500 行的代码必须合理解耦拆分模块。
+5. 新增或重构复杂功能的，实现前须优先复用现有组件或模块，现有实现不满足的可考虑依赖 `npm`/ `github` 上成熟的插件，手搓是最末位考虑。
+6. 如需依赖新插件，必须考证其适配微信小程序、包体积、npm / GitHub 状态、周下载量、star 数和最近 3 年 release 记录，并提供简短介绍，征得用户同意。
+7. 今后所有端上验收如果本轮代码未部署到云端，必须先成功跑通 `npm run dev:mp-weixin:local-functions:lan` 的完整 LAN 本地函数 flow，并让小程序运行时命中新代码；只启动 scoped/local 单函数 gateway、backend curl、Node HTTP 或 gateway health，不得算端上验收完成。
+8. 除非用户显式要求，否则 subagent 在条件允许的情况下优先考虑线程复用。
+9. subagent尤其是非gpt系的第三方模型如GLM在执行任务的过程中，main agent应当避免主动催促和询问进度。这些行为可能会造成第三方模型的未知行为，如抛异常和超长等待。
+10. 当运行时模型为 GLM 系列时，调用 `mcp__Figma_Desktop__get_design_context`、`get_metadata`、`get_variable_defs` 等 Figma 读取类工具后，禁止/跳过调用 `get_screenshot`；除非用户在当前会话中明确要求查看截图。
+11. 对于任何的需求，不能天然认为一定正确，必须有强烈的风险意识。当识别到任务有关键风险和方向的错误时需第一时间交由用户决定实施方向。
+12. 客户端显示的文案必须以用户角度以及常理判断，严禁将内部讨论用语、计算公式，拗口或难理解的文案暴露给用户。必须遵循用户理解友好，利于用户操作的思想设计最优的展示文案。
 
-| 角色               | 全局边界                                                                           |
-| ------------------ | ---------------------------------------------------------------------------------- |
-| `code_explorer`    | 可选低成本代码定位器；只读定位入口、调用链、依赖来源或影响范围                     |
-| `implementer_fast` | 低风险局部契约执行；不做技术方向裁决                                               |
-| `implementer_deep` | 高风险 / 多文件契约执行；不做技术方向裁决                                          |
-| `qa_reviewer`      | 测试执行、smoke、e2e、UI / Figma 验收、失败归因；不审 diff、不做 code review       |
-| `docs_keeper`      | 知识卫生、活文档维护、索引同步、术语一致性、既有文档归档；不维护既有蓝图为当前事实 |
+## 3. dispatch-task 触发规则
 
-## 5. 读取边界
+以下任务必须优先进入 `.codex/skills/dispatch-task`，不得直接实施：
 
-1. Subagent 默认不读取完整 `AGENTS.md`。
-2. `docs/code-logics/` 不得全量读取；先读 `INDEX.md`。
-3. `docs/new-rules/` 不得全量读取；先读 source index，再按需读取指定章节 / Sxx。
-4. 任务相关 skill 的专属规则只在该 skill 被调用后按需读取。
-5. 不得把完整 ClickUp、完整 Figma、完整日志、完整规则广播给所有角色。
+1. 跨多个业务模块、多个文件或多个系统的实现任务。
+2. 涉及 schema、数据结构、诊断链路、状态机、缓存、云函数、数据库的任务。
+3. 涉及 Figma design → 代码实现 → 端上截图验收的 UI 任务。
+4. 涉及 ClickUp / Figma / GitHub / CloudBase / WeChat DevTools / ByteRover 多工具协作的任务。
+5. 用户明确要求使用 subagent、ZCode、GLM、外部实现者或 QA reviewer 的任务。
+6. 存在明显架构风险、业务方向风险、数据一致性风险、部署风险或付费风险的任务。
 
-## 6. 知识治理边界
+轻任务可不进入完整 dispatch-task 流程：单文件低风险修正、文案、import、类型标注、简单样式、只读分析任务。但一旦发现影响范围扩大，必须升级为 dispatch-task。
+
+## 4. 前端行为约束
+
+1. 开发`Vue`组件时参考`skills/uni-app`及`skills/vue-best-practices`，如有概念冲突的采纳前者。
+2. css优先使用 `Tailwind Css` 组织样式并参考 `skills/tailwindcss-base-use` ，进阶布局则参考 `skills/tailwindcss-advanced-layouts`。
+3. 合理利用前端缓存释放服务端开销，参考 `skills/pinia`。
+4. 考虑到 `miniprogram-automator` 端上测试，凡是涉及点击、交互的元素均需绑定语义化的id，并更新到 `docs/ai-rules/frontend-automation-id-policy.md`。
+
+## 5. 后端行为约束
+
+1. 涉及部署环境、数据库、云函数、云存储、身份权限的参考`.codex/skills/cloudbase`
+2. 未经允许严禁开启 `CloudBase` 或任何可能导致付费的功能如云函数的预置并发。
+
+## 6. QA行为约束
+
+1. 使用端上 `miniprogram-automator` / `9420` 做诊断相关自动化测试时，先读取 `docs/ai-rules/frontend-automation-id-policy.md` 的“第三点 诊断流 id 映射”，并按该映射执行入口定位与关键断言。
+2. `miniprogram-automator` 的目的若为了验证UI，必须对比截图。
+3. QA 不运行 unit tests；QA 负责运行时、端上、UI/Figma、E2E 和用户可观察行为验证。
+
+## 7. 读取边界
+
+1. `docs/code-logics/` 不得全量读取；先读 `INDEX.md`。
+2. `docs/new-rules/` 不得全量读取；先读 source index，再按需读取指定章节 / Sxx。
+
+## 8. 知识治理边界
 
 1. 代码、测试、schema、配置和 package scripts 是事实源。
 2. Active docs 只解释当前契约和操作方式，不是第二事实源。

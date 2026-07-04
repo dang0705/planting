@@ -67,7 +67,24 @@ function compactCareBehaviorSummary(summary = null) {
   }
 
   return {
-    wateringCount10d: Number(summary.wateringCount10d || 0),
+    effectiveHydrationLoad:
+      summary.effectiveHydrationLoad === null || summary.effectiveHydrationLoad === undefined
+        ? null
+        : Number(summary.effectiveHydrationLoad),
+    wetPressureLoad:
+      summary.wetPressureLoad === null || summary.wetPressureLoad === undefined
+        ? null
+        : Number(summary.wetPressureLoad),
+    lastEffectiveRootWateredDaysAgo:
+      summary.lastEffectiveRootWateredDaysAgo === null ||
+      summary.lastEffectiveRootWateredDaysAgo === undefined
+        ? null
+        : Number(summary.lastEffectiveRootWateredDaysAgo),
+    rootZoneMoistureIndex:
+      summary.rootZoneMoistureIndex === null || summary.rootZoneMoistureIndex === undefined
+        ? null
+        : Number(summary.rootZoneMoistureIndex),
+    thoroughWateringCount10d: Number(summary.thoroughWateringCount10d || 0),
     fertilizingCount10d: Number(summary.fertilizingCount10d || 0),
     lastWateredDaysAgo:
       summary.lastWateredDaysAgo === null || summary.lastWateredDaysAgo === undefined

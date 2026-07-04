@@ -21,14 +21,14 @@ Handoff 必须含原始 `figma.link/node_id`、Project Constraints、allowed/for
 
 只读目标 node/frame/component，禁止整文件读取。Figma 不可用、node 无效或上下文不足时返回 blocker，不得依赖 main Lite、文字转述或模型习惯猜 UI。
 
-Acquisition 完成后读取 `$ui-implementation-scope-policy`，基于直接设计事实与代码搜索生成最小 `ui_scope_map`。
+Acquisition 完成后读取本 skill 的 `references/ui-scope-policy.md`，基于直接设计事实与代码搜索生成最小 `ui_scope_map`。
 
 ## 项目规则
 
 - 独立核对 `project_constraints.rule_refs`、最近 AGENTS.md、Tailwind 配置与组件入口。
 - 先搜索现有组件/utility/composable，再决定新建。
 - Tailwind 项目用 utility/token；除 Contract 明确例外外，禁止新增 `.scss`、`<style lang="scss">` 或大段 scoped style。
-- 复用顺序由 `$ui-implementation-scope-policy` 决定；无法同时满足设计与工程约束时返回 deviation/blocker，不静默降级。
+- 复用顺序由 `references/ui-scope-policy.md` 决定；无法同时满足设计与工程约束时返回 deviation/blocker，不静默降级。
 
 ## Evidence
 

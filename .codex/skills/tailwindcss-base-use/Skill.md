@@ -1,3 +1,8 @@
+---
+name: tailwindcss-base-use
+description: Tailwind CSS 的基础用法以及使用规范，避免arbitrary，优先使用预设。3次及以上重复arbitrary必须沉淀到 `tailwindcss.config`
+---
+
 # Tailwind CSS 基础用法 Skill
 
 ## 核心原则
@@ -16,15 +21,13 @@ Tailwind 内置预设
 推荐：
 
 ```html
-<div class="p-4 mt-6 w-64 rounded-lg text-sm bg-slate-100">
-</div>
+<div class="p-4 mt-6 w-64 rounded-lg text-sm bg-slate-100"></div>
 ```
 
 避免：
 
 ```html
-<div class="p-[16px] mt-[24px] w-[256px] rounded-[8px] text-[14px]">
-</div>
+<div class="p-[16px] mt-[24px] w-[256px] rounded-[8px] text-[14px]"></div>
 ```
 
 ---
@@ -34,15 +37,13 @@ Tailwind 内置预设
 允许：
 
 ```html
-<div class="top-[117px]">
-</div>
+<div class="top-[117px]"></div>
 ```
 
 允许：
 
 ```html
-<div class="max-w-[calc(100vw-2rem)]">
-</div>
+<div class="max-w-[calc(100vw-2rem)]"></div>
 ```
 
 不允许把任意值作为默认写法。
@@ -66,10 +67,10 @@ module.exports = {
   theme: {
     extend: {
       spacing: {
-        'app-header': '72px',
-      },
-    },
-  },
+        'app-header': '72px'
+      }
+    }
+  }
 }
 ```
 
@@ -84,26 +85,21 @@ module.exports = {
 ## 响应式
 
 ```html
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3"></div>
 ```
 
-| 前缀 | 宽度 |
-|------|------|
-| sm | 640px |
-| md | 768px |
-| lg | 1024px |
-| xl | 1280px |
-| 2xl | 1536px |
+| 前缀 | 宽度   |
+| ---- | ------ |
+| sm   | 640px  |
+| md   | 768px  |
+| lg   | 1024px |
+| xl   | 1280px |
+| 2xl  | 1536px |
 
 ## 状态修饰符
 
 ```html
-<button
-  class="bg-blue-600 hover:bg-blue-700 focus:ring-2 disabled:opacity-50"
->
-  保存
-</button>
+<button class="bg-blue-600 hover:bg-blue-700 focus:ring-2 disabled:opacity-50">保存</button>
 ```
 
 常用：
@@ -118,19 +114,23 @@ module.exports = {
 
 推荐：
 
-```js
-spacing: {
-  'app-header': '72px',
-  'panel': '360px',
+```json
+{
+  "spacing": {
+    "app-header": "72px",
+    "panel": "360px"
+  }
 }
 ```
 
 不推荐：
 
-```js
-spacing: {
-  '72px': '72px',
-  '360px': '360px',
+```json
+{
+  "spacing": {
+    "72px": "72px",
+    "360px": "360px"
+  }
 }
 ```
 
@@ -138,9 +138,7 @@ spacing: {
 
 ```js
 module.exports = {
-  content: [
-    './src/**/*.{js,ts,jsx,tsx,vue}',
-  ],
+  content: ['./src/**/*.{js,ts,jsx,tsx,vue}']
 }
 ```
 

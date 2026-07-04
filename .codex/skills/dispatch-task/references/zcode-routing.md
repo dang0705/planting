@@ -1,10 +1,10 @@
 # ZCode Routing Policy
 
-仅当 `implementation_mode=zcode_external` 时读取。本文只定义外部实现者路由，不重复完整 prompt 模板。
+仅当内部路由字段 `implementation_mode=zcode_external` 时读取。该字段由 dispatch-task 自动推断或由用户强制指定；用户不必每次逐字输入。本文只定义外部实现者路由，不重复完整 prompt 模板。
 
 ## 触发
 
-命中“用 ZCode / 走 ZCode / 外部实现者 / zcode_external / GLM 在 ZCode 里跑”等正向触发词，且任务需要代码修改时，设置：
+命中“用 ZCode / 走 ZCode / ZCode 实现 / 交给外部实现者 / GLM 在 ZCode 里跑”等自然语言正向触发词，或用户显式写入 `zcode_external` / `implementation_mode=zcode_external`，且任务需要代码修改时，main 自动设置：
 
 ```text
 implementation_mode = zcode_external

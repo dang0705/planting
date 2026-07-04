@@ -1,162 +1,172 @@
 <template>
-  <uni-popup ref="popupRef" type="center" :is-mask-click="true">
-    <scroll-view
-      scroll-y
-      class="mx-5 w-[353px] max-h-[80vh] rounded-[20px] bg-white border border-[#cfe2d4]"
-    >
-      <!-- 标题区 -->
-      <view class="flex items-center justify-between px-[18px] pt-[18px]">
-        <text class="text-[20px] font-bold text-[#1f2933]">盆型与基质</text>
-        <view
-          class="flex size-[28px] items-center justify-center rounded-[14px] bg-[#f2f5f0]"
-          @click="close"
-        >
-          <text class="text-[16px] text-[#53645a]">×</text>
+  <uni-popup ref="popupRef" type="bottom" :safe-area="false" :is-mask-click="true">
+    <view class="mx-0 rounded-t-[20px] bg-white">
+      <view class="mx-auto mt-2.5 h-1 w-14 rounded-full bg-[#d7e6dc]" />
+      <scroll-view
+        scroll-y
+        class="w-full max-h-[90vh] rounded-[20px] bg-white border border-[#cfe2d4]"
+      >
+        <!-- 标题区 -->
+        <view class="flex items-center justify-between px-[18px] pt-[18px]">
+          <text class="text-[20px] font-bold text-[#1f2933]">盆型与基质</text>
+          <view
+            class="flex size-[28px] items-center justify-center rounded-[14px] bg-[#f2f5f0]"
+            @click="close"
+          >
+            <text class="text-[16px] text-[#53645a]">×</text>
+          </view>
         </view>
-      </view>
-      <view class="px-[18px] pt-1">
-        <text class="block text-[12px] text-[#8a978e]"
-          >尺寸用于估算水量，基质用于修正保水与透气。</text
-        >
-      </view>
-
-      <!-- 盆型区域 -->
-      <view class="mx-[18px] mt-3 rounded-[18px] bg-[#f7faf5] border border-[#e1e9dd] p-[13px]">
-        <text class="block text-[14px] font-bold text-[#1f2933]">盆型尺寸</text>
-        <view
-          class="mt-2 rounded-[16px] bg-white border border-[#e1e9dd] flex justify-center items-center py-3"
-        >
-          <PotCanvas
-            ref="potCanvasRef"
-            :pot-top-diameter-cm="
-              loading ? null : form.potTopDiameterCm ? Number(form.potTopDiameterCm) : 20
-            "
-            :pot-bottom-diameter-cm="
-              loading ? null : form.potBottomDiameterCm ? Number(form.potBottomDiameterCm) : 10
-            "
-            :pot-height-cm="loading ? null : form.potHeightCm ? Number(form.potHeightCm) : 15"
-            :substrate-composition="substrateComposition"
-            :texture-map="textureMap"
-            @update:pot-top-diameter-cm="v => (form.potTopDiameterCm = String(v))"
-            @update:pot-bottom-diameter-cm="v => (form.potBottomDiameterCm = String(v))"
-            @update:pot-height-cm="v => (form.potHeightCm = String(v))"
-          />
+        <view class="px-[18px] pt-1">
+          <text class="block text-[12px] text-[#8a978e]"
+            >尺寸用于估算水量，基质用于修正保水与透气。</text
+          >
         </view>
 
-        <!-- 基质池 -->
-        <view class="mt-3 rounded-[16px] bg-[#f7faf5] border border-[#e1e9dd] p-3">
-          <text class="block text-[12px] font-semibold text-[#1f2933] mb-2">选择盆土构成</text>
-          <view class="flex flex-wrap gap-2">
-            <view
-              v-for="opt in substrateOptions"
-              :key="opt.value"
-              class="flex items-center rounded-[12px] border px-2 py-1.5"
-              :class="
-                isSubstrateSelected(opt.value)
-                  ? 'bg-[#e8f3ea] border-[#2f8f57]'
-                  : 'bg-white border-[#e1e9dd]'
+        <!-- 盆型区域 -->
+        <view class="mx-[18px] mt-3 rounded-[18px] bg-[#f7faf5] border border-[#e1e9dd] p-[13px]">
+          <text class="block text-[14px] font-bold text-[#1f2933]">盆型尺寸</text>
+          <view
+            class="pot-canvas-shell relative mt-2 h-[231px] overflow-hidden rounded-[16px] bg-white border border-[#e1e9dd]"
+          >
+            <PotCanvas
+              ref="potCanvasRef"
+              :canvas-width="potCanvasSize.width"
+              :canvas-height="potCanvasSize.height"
+              :pot-top-diameter-cm="
+                loading ? null : form.potTopDiameterCm ? Number(form.potTopDiameterCm) : 20
               "
-              @click="toggleSubstrate(opt.value)"
-            >
-              <text
-                class="text-[10px]"
+              :pot-bottom-diameter-cm="
+                loading ? null : form.potBottomDiameterCm ? Number(form.potBottomDiameterCm) : 10
+              "
+              :pot-height-cm="loading ? null : form.potHeightCm ? Number(form.potHeightCm) : 15"
+              :substrate-composition="substrateComposition"
+              :texture-map="textureMap"
+              @update:pot-top-diameter-cm="v => (form.potTopDiameterCm = String(v))"
+              @update:pot-bottom-diameter-cm="v => (form.potBottomDiameterCm = String(v))"
+              @update:pot-height-cm="v => (form.potHeightCm = String(v))"
+            />
+          </view>
+
+          <!-- 基质池 -->
+          <view class="mt-3 rounded-[16px] bg-[#f7faf5] border border-[#e1e9dd] p-3">
+            <text class="block text-[12px] font-semibold text-[#1f2933] mb-2">选择盆土构成</text>
+            <view class="flex flex-wrap gap-2">
+              <view
+                v-for="opt in substrateOptions"
+                :key="opt.value"
+                class="flex items-center rounded-[12px] border px-2 py-1.5"
                 :class="
-                  isSubstrateSelected(opt.value) ? 'text-[#2f8f57] font-semibold' : 'text-[#1f2933]'
+                  isSubstrateSelected(opt.value)
+                    ? 'bg-[#e8f3ea] border-[#2f8f57]'
+                    : 'bg-white border-[#e1e9dd]'
                 "
-                >{{ opt.label }}</text
+                @click="toggleSubstrate(opt.value)"
+              >
+                <text
+                  class="text-[10px]"
+                  :class="
+                    isSubstrateSelected(opt.value)
+                      ? 'text-[#2f8f57] font-semibold'
+                      : 'text-[#1f2933]'
+                  "
+                  >{{ opt.label }}</text
+                >
+              </view>
+            </view>
+            <!-- 已选基质比例 -->
+            <view v-if="substrateComposition.length > 0" class="mt-3 space-y-2">
+              <view
+                v-for="item in substrateComposition"
+                :key="item.material"
+                class="flex items-center gap-2"
+              >
+                <text class="w-12 text-[10px] text-[#53645a]">{{
+                  substrateLabel(item.material)
+                }}</text>
+                <view class="flex-1 h-1 rounded-full bg-gray-200">
+                  <view
+                    class="h-1 rounded-full bg-[#2f8f57]"
+                    :style="{ width: item.ratio + '%' }"
+                  />
+                </view>
+                <text class="w-8 text-right text-[10px] text-[#53645a]">{{ item.ratio }}%</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 排水孔 -->
+        <view class="mx-[18px] mt-3">
+          <text class="block text-[14px] font-bold text-[#1f2933] mb-2">底部是否有排水孔？</text>
+          <view class="flex gap-3">
+            <view
+              class="flex items-center justify-center h-[42px] flex-1 rounded-[14px] border"
+              :class="
+                form.hasDrainageHole === 'true'
+                  ? 'bg-[#e8f3ea] border-[#2f8f57]'
+                  : 'bg-[#f7faf5] border-[#e1e9dd]'
+              "
+              @click="form.hasDrainageHole = 'true'"
+            >
+              <view
+                class="size-[18px] rounded-full border-2 mr-2 flex items-center justify-center"
+                :class="form.hasDrainageHole === 'true' ? 'border-[#2f8f57]' : 'border-[#e1e9dd]'"
+              >
+                <view
+                  v-if="form.hasDrainageHole === 'true'"
+                  class="size-[8px] rounded-full bg-[#2f8f57]"
+                />
+              </view>
+              <text
+                class="text-[14px]"
+                :class="
+                  form.hasDrainageHole === 'true' ? 'text-[#2f8f57] font-bold' : 'text-[#53645a]'
+                "
+                >有</text
+              >
+            </view>
+            <view
+              class="flex items-center justify-center h-[42px] flex-1 rounded-[14px] border"
+              :class="
+                form.hasDrainageHole !== 'true'
+                  ? 'bg-[#e8f3ea] border-[#2f8f57]'
+                  : 'bg-[#f7faf5] border-[#e1e9dd]'
+              "
+              @click="form.hasDrainageHole = 'unknown'"
+            >
+              <view
+                class="size-[18px] rounded-full border-2 mr-2"
+                :class="form.hasDrainageHole !== 'true' ? 'border-[#2f8f57]' : 'border-[#e1e9dd]'"
+              />
+              <text
+                class="text-[14px]"
+                :class="
+                  form.hasDrainageHole !== 'true' ? 'text-[#2f8f57] font-bold' : 'text-[#53645a]'
+                "
+                >无 / 不确定</text
               >
             </view>
           </view>
-          <!-- 已选基质比例 -->
-          <view v-if="substrateComposition.length > 0" class="mt-3 space-y-2">
-            <view
-              v-for="item in substrateComposition"
-              :key="item.material"
-              class="flex items-center gap-2"
-            >
-              <text class="w-12 text-[10px] text-[#53645a]">{{
-                substrateLabel(item.material)
-              }}</text>
-              <view class="flex-1 h-1 rounded-full bg-gray-200">
-                <view class="h-1 rounded-full bg-[#2f8f57]" :style="{ width: item.ratio + '%' }" />
-              </view>
-              <text class="w-8 text-right text-[10px] text-[#53645a]">{{ item.ratio }}%</text>
-            </view>
-          </view>
         </view>
-      </view>
 
-      <!-- 排水孔 -->
-      <view class="mx-[18px] mt-3">
-        <text class="block text-[14px] font-bold text-[#1f2933] mb-2">底部是否有排水孔？</text>
-        <view class="flex gap-3">
-          <view
-            class="flex items-center justify-center h-[42px] flex-1 rounded-[14px] border"
-            :class="
-              form.hasDrainageHole === 'true'
-                ? 'bg-[#e8f3ea] border-[#2f8f57]'
-                : 'bg-[#f7faf5] border-[#e1e9dd]'
-            "
-            @click="form.hasDrainageHole = 'true'"
+        <!-- 确认按钮 -->
+        <view class="px-[18px] pt-4 pb-[18px]">
+          <button
+            class="m-0 w-full rounded-[22px] bg-[#2f8f57] py-3 text-[15px] font-bold text-white after:border-0"
+            hover-class="none"
+            :disabled="saving"
+            @click="save"
           >
-            <view
-              class="size-[18px] rounded-full border-2 mr-2 flex items-center justify-center"
-              :class="form.hasDrainageHole === 'true' ? 'border-[#2f8f57]' : 'border-[#e1e9dd]'"
-            >
-              <view
-                v-if="form.hasDrainageHole === 'true'"
-                class="size-[8px] rounded-full bg-[#2f8f57]"
-              />
-            </view>
-            <text
-              class="text-[14px]"
-              :class="
-                form.hasDrainageHole === 'true' ? 'text-[#2f8f57] font-bold' : 'text-[#53645a]'
-              "
-              >有</text
-            >
-          </view>
-          <view
-            class="flex items-center justify-center h-[42px] flex-1 rounded-[14px] border"
-            :class="
-              form.hasDrainageHole !== 'true'
-                ? 'bg-[#e8f3ea] border-[#2f8f57]'
-                : 'bg-[#f7faf5] border-[#e1e9dd]'
-            "
-            @click="form.hasDrainageHole = 'unknown'"
-          >
-            <view
-              class="size-[18px] rounded-full border-2 mr-2"
-              :class="form.hasDrainageHole !== 'true' ? 'border-[#2f8f57]' : 'border-[#e1e9dd]'"
-            />
-            <text
-              class="text-[14px]"
-              :class="
-                form.hasDrainageHole !== 'true' ? 'text-[#2f8f57] font-bold' : 'text-[#53645a]'
-              "
-              >无 / 不确定</text
-            >
-          </view>
+            {{ saving ? '保存中...' : '确认并保存' }}
+          </button>
         </view>
-      </view>
-
-      <!-- 确认按钮 -->
-      <view class="px-[18px] pt-4 pb-[18px]">
-        <button
-          class="m-0 w-full rounded-[22px] bg-[#2f8f57] py-3 text-[15px] font-bold text-white after:border-0"
-          hover-class="none"
-          :disabled="saving"
-          @click="save"
-        >
-          {{ saving ? '保存中...' : '确认并保存' }}
-        </button>
-      </view>
-    </scroll-view>
+      </scroll-view>
+    </view>
   </uni-popup>
 </template>
 
 <script setup>
-import { ref, computed, nextTick, watch } from 'vue'
+import { ref, computed, nextTick, watch, getCurrentInstance } from 'vue'
 import { usePlantStore } from '@/store/plants.js'
 import { isOversizedPot, estimatePotVolumeMl } from '@/utils/water-volume-format.js'
 import PotCanvas from '@/components/PotCanvas.vue'
@@ -173,6 +183,11 @@ const popupRef = ref(null)
 const potCanvasRef = ref(null)
 const loading = ref(false)
 const saving = ref(false)
+const instance = getCurrentInstance()
+const potCanvasSize = ref({
+  width: 200,
+  height: 207
+})
 
 const form = ref({
   potTopDiameterCm: '',
@@ -237,6 +252,39 @@ function toggleSubstrate(value) {
 function substrateLabel(value) {
   const opt = substrateOptions.find(o => o.value === value)
   return opt ? opt.label : value
+}
+
+function measurePotCanvasShell() {
+  return new Promise(resolve => {
+    const proxy = instance?.proxy
+    if (!proxy) {
+      resolve(null)
+      return
+    }
+    uni
+      .createSelectorQuery()
+      .in(proxy)
+      .select('.pot-canvas-shell')
+      .boundingClientRect(rect => {
+        resolve(rect || null)
+      })
+      .exec()
+  })
+}
+
+async function updatePotCanvasSize() {
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const rect = await measurePotCanvasShell()
+    if (rect && rect.width > 0 && rect.height > 0) {
+      potCanvasSize.value = {
+        width: Math.round(rect.width),
+        height: Math.round(rect.height)
+      }
+      return true
+    }
+    await new Promise(resolve => setTimeout(resolve, 120))
+  }
+  return false
 }
 
 const summary = computed(() => {
@@ -308,6 +356,9 @@ async function open() {
   applyPotProfile(props.plant?.potProfile)
 
   loading.value = false
+  await nextTick()
+  await new Promise(resolve => setTimeout(resolve, 360))
+  await updatePotCanvasSize()
   await nextTick()
   setTimeout(() => potCanvasRef.value?.initCanvas(), 300)
 }

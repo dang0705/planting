@@ -3963,7 +3963,7 @@ function testPresenterKeepsCareBehaviorEvidenceAndDropsWeatherWindow() {
         { date: '2026-05-31', watered: true, amount: 'normal' }
       ],
       summary: {
-        wateringCount10d: 3,
+        effectiveHydrationLoad: 0.8,
         lastWateredDaysAgo: 0,
         userHasDirectSunExposure: false
       }
@@ -3977,14 +3977,14 @@ function testPresenterKeepsCareBehaviorEvidenceAndDropsWeatherWindow() {
         lightContext: []
       },
       behaviorSummary10d: {
-        wateringCount10d: 3,
+        effectiveHydrationLoad: 0.8,
         lastWateredDaysAgo: 0
       },
       watering: {
         wateringContext: 'likely_too_wet',
         action: 'delay_and_check_soil',
         summary: {
-          wateringCount10d: 3,
+          effectiveHydrationLoad: 0.8,
           lastWateredDaysAgo: 0
         }
       },
@@ -4807,7 +4807,7 @@ function testDiagnosisReviewDisplaysEnvironmentCareCalculation() {
   assert.ok(source.includes('processLines: formatPlannerFormulaProcessLines'))
   assert.ok(source.includes('high_humidity_pressure_hit'))
   assert.ok(source.includes('计算过程：高湿命中 ='))
-  assert.ok(source.includes('计算过程：最近 10 天实际浇水次数 > 偏湿修正后的过浇阈值'))
+  assert.ok(source.includes('计算过程：根区湿度指数 > 0.6 且 湿压负载 > 0.4'))
   assert.ok(source.includes('计算过程：未来干热分支'))
   assert.ok(source.includes('计算过程：缺肥时间桶判断'))
   assert.ok(detailLoaderSource.includes('keyMetrics'))

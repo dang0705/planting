@@ -27,6 +27,11 @@
 6. `07_结果格式化_公开响应_前端接入契约.md`：公开响应与前端题包契约。
 7. `10_实施规则映射_开发约束_审计清单.md`：开发/审计检查项。
 
+## 用户植物 / 浇水模块（诊断主链之外）
+
+- `09_植物识别_图片存储_天气_用户植物模块.md`：植物识别、图片存储、天气、用户植物实例。
+- `12_浇水提醒算法_逐步逻辑_盆型与Gate.md`：浇水提醒 v2.1 算法逐步逻辑，含盆型/基质如何参与、Dry/Wet Gate 判定、水量建议与"amount 恒 normal"成因、可审计性现状。事实源 `cloudfunctions/layer/utils/{watering-planner,hydration-load,pot-geometry}.js`。
+
 ## 与 new-rules 的关系
 
 `new-rules/planting_ai_diagnosis_all_in_one.md` 已从“大而全历史规则集”收缩为“当前代码实际运行涉及的规则摘要”。若需要找实现事实，优先读本目录；若需要 AI 执行时的最小规则提示，再读 `new-rules`。

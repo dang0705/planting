@@ -68,7 +68,6 @@
   "required_skills": {
     "implementer": [
       "$implementer-ui-execution-policy",
-      "$ui-implementation-scope-policy",
       "$uni-ui-figma-component-mapper"
     ],
     "qa": [
@@ -93,5 +92,6 @@
     "style_stack_compliance",
     "component_reuse_evidence",
     "uni_ui_mapping_evidence"
-  ]
+  ],
+  "dispatch_tier": "standard_task"
 }

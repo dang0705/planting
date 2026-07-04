@@ -52,9 +52,7 @@ const sessionState = {
       question_text: '过去 10 天浇水/盆土干湿背景'
     }
   ],
-  askedQuestionKeys: [
-    'q_observed_probe__leaf_yellowing__watering_frequency_context'
-  ],
+  askedQuestionKeys: ['q_observed_probe__leaf_yellowing__watering_frequency_context'],
   answeredQuestionGroupKeys: [],
   unknownCountByGroup: {},
   observedEvidenceSet: [],
@@ -233,12 +231,16 @@ Module._load = function loadWithStubs(request, parent, isMain) {
   return originalModuleLoad.call(this, request, parent, isMain)
 }
 
-const { runAnswerDiagnosis } = require('../../cloudfunctions/diagnose-http/app/diagnosis-answer-runner.js')
+const {
+  runAnswerDiagnosis
+} = require('../../cloudfunctions/diagnose-http/app/diagnosis-answer-runner.js')
 const {
   resolveRuntimeEnvironmentCarePayload,
   buildRouteAnswersFromRuntimeEnvironmentCarePayload
 } = require('../../cloudfunctions/diagnose-http/app/care-behavior-payload.js')
-const { buildRuntimeSnapshotPayload } = require('../../cloudfunctions/diagnose-http/services/session-runtime-snapshot-codec.js')
+const {
+  buildRuntimeSnapshotPayload
+} = require('../../cloudfunctions/diagnose-http/services/session-runtime-snapshot-codec.js')
 
 const payload = {
   diagnosisSessionId: 'session-bridge-1',
@@ -301,42 +303,56 @@ const result = await runAnswerDiagnosis({
 
 assert.equal(captured.markQuestionAnswersArgs[0].optionKey, 'care_behavior_timeline')
 assert.equal(captured.runDiagnosisRoundArgs.answers[0].optionKey, 'often_wet')
-assert.equal(captured.runDiagnosisRoundArgs.answers[0].questionKey, 'q_observed_probe__leaf_yellowing__watering_frequency_context')
+assert.equal(
+  captured.runDiagnosisRoundArgs.answers[0].questionKey,
+  'q_observed_probe__leaf_yellowing__watering_frequency_context'
+)
 assert.equal(result.response.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
 assert.equal(result.response.careBehaviorTimeline.dailyRecords.length, 3)
-assert.equal(captured.persistRoundResultArgs.response.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
-assert.equal(captured.routeAnswerEffectsArgs[0], 'q_observed_probe__leaf_yellowing__watering_frequency_context')
-assert.equal(captured.getQuestionOptionMappingsArgs[0], 'q_observed_probe__leaf_yellowing__watering_frequency_context')
+assert.equal(
+  captured.persistRoundResultArgs.response.environmentCareContext.outputs.wateringContext,
+  'likely_too_wet'
+)
+assert.equal(
+  captured.routeAnswerEffectsArgs[0],
+  'q_observed_probe__leaf_yellowing__watering_frequency_context'
+)
+assert.equal(
+  captured.getQuestionOptionMappingsArgs[0],
+  'q_observed_probe__leaf_yellowing__watering_frequency_context'
+)
 assert.equal(
   captured.runDiagnosisRoundArgs.answerOptionMappings.some(item => item.optionKey === 'often_wet'),
   true
 )
 
-const compactSnapshot = JSON.parse(buildRuntimeSnapshotPayload({
-  sessionId: 'session-bridge-1',
-  plantContext: sessionState.plantContext,
-  response: {
-    careBehaviorTimeline: {
-      referenceDate: '2026-05-27',
-      dailyRecords: Array.from({ length: 30 }, (_, index) => ({
-        date: `2026-05-${String(index + 1).padStart(2, '0')}`,
-        watered: true,
-        wateringAmount: 'normal'
-      }))
-    },
-    environmentCareContext: {
-      outputs: {
-        wateringContext: 'likely_too_wet'
+const compactSnapshot = JSON.parse(
+  buildRuntimeSnapshotPayload({
+    sessionId: 'session-bridge-1',
+    plantContext: sessionState.plantContext,
+    response: {
+      careBehaviorTimeline: {
+        referenceDate: '2026-05-27',
+        dailyRecords: Array.from({ length: 30 }, (_, index) => ({
+          date: `2026-05-${String(index + 1).padStart(2, '0')}`,
+          watered: true,
+          wateringAmount: 'normal'
+        }))
       },
-      behaviorSummary10d: {
-        wateringCount10d: 30
-      },
-      watering: {
-        wateringContext: 'likely_too_wet'
+      environmentCareContext: {
+        outputs: {
+          wateringContext: 'likely_too_wet'
+        },
+        behaviorSummary10d: {
+          effectiveHydrationLoad: 1.5
+        },
+        watering: {
+          wateringContext: 'likely_too_wet'
+        }
       }
     }
-  }
-}))
+  })
+)
 
 assert.equal(compactSnapshot.careBehaviorTimeline.dailyRecords.length, 25)
 assert.equal(compactSnapshot.environmentCareContext.outputs.wateringContext, 'likely_too_wet')

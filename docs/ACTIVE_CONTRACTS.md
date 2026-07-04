@@ -20,10 +20,16 @@ source_of_truth:
   - cloudfunctions/auth-user-http/app.js
   - cloudfunctions/layer/utils/watering-planner.js
   - cloudfunctions/layer/utils/plant-knowledge.js
+  - cloudfunctions/layer/utils/pot-geometry.js
+  - cloudfunctions/layer/utils/hydration-load.js
   - cloudfunctions/diagnose-http/utils/environment-context-v7.js
   - src/pages/index/components/WateringReminderSheet.vue
+  - src/pages/index/components/DoseSelector.vue
+  - src/pages/index/components/PotProfileEditor.vue
+  - src/components/PotCanvas.vue
   - src/store/plants.js
   - src/components/CareBehaviorTimeline.vue
+  - scripts/sql/watering-reminder-v21-schema-20260630.sql
 stale_if_changed:
   - src/http-functions/**
   - src/api/env.js
@@ -72,22 +78,22 @@ src/utils/runtime-env.js
 
 重要请求头/参数：
 
-| 名称 | 用途 |
-|---|---|
-| `x-app-env` / `x-env` | 指定 app 环境；后端用于 schema/env 分流。 |
-| `Authorization` | CloudBase / 用户身份凭证。 |
-| `x-wx-openid` / `x-openid` | 微信 openid 或本地调试身份。 |
-| `x-terminal-e2e` | 终端 E2E 标记。 |
-| `x-anonymous-dev-identity` | 本地/开发匿名身份辅助标记。 |
+| 名称                       | 用途                                      |
+| -------------------------- | ----------------------------------------- |
+| `x-app-env` / `x-env`      | 指定 app 环境；后端用于 schema/env 分流。 |
+| `Authorization`            | CloudBase / 用户身份凭证。                |
+| `x-wx-openid` / `x-openid` | 微信 openid 或本地调试身份。              |
+| `x-terminal-e2e`           | 终端 E2E 标记。                           |
+| `x-anonymous-dev-identity` | 本地/开发匿名身份辅助标记。               |
 
 生产构建禁止使用本地或非 HTTPS `VITE_API_BASE_URL`。
 
 ### 2.3 schema/env 映射
 
-| 输入环境 | 当前 schema/env |
-|---|---|
-| `development` / `dev` / `local` / `test` / `stage` | `cloud1_dev` |
-| `production` / `prod` | `cloud1-2grufevs395a9d5e` |
+| 输入环境                                           | 当前 schema/env           |
+| -------------------------------------------------- | ------------------------- |
+| `development` / `dev` / `local` / `test` / `stage` | `cloud1_dev`              |
+| `production` / `prod`                              | `cloud1-2grufevs395a9d5e` |
 
 后端事实源：
 
@@ -100,27 +106,27 @@ cloudfunctions/layer/utils/http.js
 
 ### 3.1 当前路由
 
-| 方法 | 路径 | 当前用途 |
-|---|---|---|
-| GET | `/health` | 健康检查。 |
-| POST | `/diagnosis/start` | 开始诊断主链。 |
-| POST | `/diagnosis/question/start` | 题包初始化入口；不要从路径名反推当前仍是“追问”。 |
-| POST | `/diagnosis/answer` | 提交题包/问题答案；当前契约不按“每轮最多 1 题”定义。 |
-| GET | `/diagnosis/result` | 读取诊断结果。 |
-| GET | `/diagnosis/history` | 读取诊断历史。 |
-| POST | `/diagnosis/feedback` | 提交反馈。 |
-| GET | `/diagnosis/review/list` | 诊断审查列表。 |
-| GET | `/diagnosis/review/images` | 审查图片读取。 |
-| GET | `/diagnosis/review/detail` | 审查详情。 |
-| POST | `/diagnosis/review/import` | 导入审查样本。 |
-| GET | `/visual/out-of-pool/list` | 池外视觉候选列表。 |
-| GET | `/visual/out-of-pool/image` | 池外候选图片。 |
-| POST | `/visual/out-of-pool/review` | 池外候选 review。 |
-| GET | `/visual/out-of-pool/proxy-mappings/list` | 代理映射列表。 |
-| POST | `/visual/out-of-pool/proxy-mappings/upsert` | 新增/更新代理映射。 |
-| POST | `/visual/out-of-pool/proxy-mappings/disable` | 禁用代理映射。 |
-| POST | `/stream/diagnose` | SSE/流式入口。 |
-| POST | `/diagnose` | 后向路径入口。 |
+| 方法 | 路径                                         | 当前用途                                             |
+| ---- | -------------------------------------------- | ---------------------------------------------------- |
+| GET  | `/health`                                    | 健康检查。                                           |
+| POST | `/diagnosis/start`                           | 开始诊断主链。                                       |
+| POST | `/diagnosis/question/start`                  | 题包初始化入口；不要从路径名反推当前仍是“追问”。     |
+| POST | `/diagnosis/answer`                          | 提交题包/问题答案；当前契约不按“每轮最多 1 题”定义。 |
+| GET  | `/diagnosis/result`                          | 读取诊断结果。                                       |
+| GET  | `/diagnosis/history`                         | 读取诊断历史。                                       |
+| POST | `/diagnosis/feedback`                        | 提交反馈。                                           |
+| GET  | `/diagnosis/review/list`                     | 诊断审查列表。                                       |
+| GET  | `/diagnosis/review/images`                   | 审查图片读取。                                       |
+| GET  | `/diagnosis/review/detail`                   | 审查详情。                                           |
+| POST | `/diagnosis/review/import`                   | 导入审查样本。                                       |
+| GET  | `/visual/out-of-pool/list`                   | 池外视觉候选列表。                                   |
+| GET  | `/visual/out-of-pool/image`                  | 池外候选图片。                                       |
+| POST | `/visual/out-of-pool/review`                 | 池外候选 review。                                    |
+| GET  | `/visual/out-of-pool/proxy-mappings/list`    | 代理映射列表。                                       |
+| POST | `/visual/out-of-pool/proxy-mappings/upsert`  | 新增/更新代理映射。                                  |
+| POST | `/visual/out-of-pool/proxy-mappings/disable` | 禁用代理映射。                                       |
+| POST | `/stream/diagnose`                           | SSE/流式入口。                                       |
+| POST | `/diagnose`                                  | 后向路径入口。                                       |
 
 事实源：`cloudfunctions/diagnose-http/app/http-router.js`。
 
@@ -259,16 +265,16 @@ src/utils/diagnose-result-normalizer.js
 
 ### 4.1 路由
 
-| 方法 | 路径 | 当前用途 |
-|---|---|---|
-| GET | `/storage/health` | 健康检查。 |
-| POST | `/storage/diagnose-images` | 上传诊断图片。 |
-| DELETE | `/storage/diagnose-images` | 删除诊断图片。 |
-| POST | `/storage/files` | 上传植物图片并写入 `plant_images`。 |
-| GET | `/storage/files` | 根据 `fileId` 获取临时 URL。 |
-| DELETE | `/storage/files` | 删除文件。 |
-| GET | `/storage/plant-images` | 按 `plantId` 读取植物图片列表。 |
-| PATCH | `/storage/plant-images` | 更新图片绑定的 `plantId`。 |
+| 方法   | 路径                       | 当前用途                            |
+| ------ | -------------------------- | ----------------------------------- |
+| GET    | `/storage/health`          | 健康检查。                          |
+| POST   | `/storage/diagnose-images` | 上传诊断图片。                      |
+| DELETE | `/storage/diagnose-images` | 删除诊断图片。                      |
+| POST   | `/storage/files`           | 上传植物图片并写入 `plant_images`。 |
+| GET    | `/storage/files`           | 根据 `fileId` 获取临时 URL。        |
+| DELETE | `/storage/files`           | 删除文件。                          |
+| GET    | `/storage/plant-images`    | 按 `plantId` 读取植物图片列表。     |
+| PATCH  | `/storage/plant-images`    | 更新图片绑定的 `plantId`。          |
 
 ### 4.2 图片输入与路径
 
@@ -317,14 +323,14 @@ plant match fields: id, plantIdentityId, historicalPlantId, canonicalName, match
 
 ### 6.1 当前路由
 
-| 方法 | 路径 | 当前用途 |
-|---|---|---|
-| GET | `/weather/health` | 健康检查。 |
-| GET/POST | `/weather/current` | 当前天气，优先读取同位置当天 `days/{yyyy-mm-dd}.json.latestSample`；缺失时降级到最近 finalized day rollup，仍缺失则返回天气证据不足。 |
-| GET/POST | `/weather/recent` | 最近天气缓存接口，返回自有 recent-10d 缓存结果。 |
-| GET/POST | `/weather/environment-context` | 环境天气窗口。 |
-| GET/POST | `/weather/ingestion/recent-10d` | 触发最近十天历史天气抓取与归档更新。 |
-| GET/POST | `/weather/v7/environment-context` | v7 环境天气窗口。 |
+| 方法     | 路径                              | 当前用途                                                                                                                              |
+| -------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| GET      | `/weather/health`                 | 健康检查。                                                                                                                            |
+| GET/POST | `/weather/current`                | 当前天气，优先读取同位置当天 `days/{yyyy-mm-dd}.json.latestSample`；缺失时降级到最近 finalized day rollup，仍缺失则返回天气证据不足。 |
+| GET/POST | `/weather/recent`                 | 最近天气缓存接口，返回自有 recent-10d 缓存结果。                                                                                      |
+| GET/POST | `/weather/environment-context`    | 环境天气窗口。                                                                                                                        |
+| GET/POST | `/weather/ingestion/recent-10d`   | 触发最近十天历史天气抓取与归档更新。                                                                                                  |
+| GET/POST | `/weather/v7/environment-context` | v7 环境天气窗口。                                                                                                                     |
 
 ### 6.2 v7 天气窗口
 
@@ -404,29 +410,31 @@ cloudfunctions/weather-http/config.json
 
 ### 7.1 `plant-catalog-http`
 
-| 方法 | 路径 | 当前用途 |
-|---|---|---|
-| GET | `/catalog/health` | 健康检查。 |
-| GET | `/catalog/map?keyword=` | 名称映射到规范植物候选。 |
-| GET | `/catalog/plants` | 植物目录列表。 |
-| GET | `/catalog/plants?plantId=` | 植物详情。 |
+| 方法 | 路径                       | 当前用途                 |
+| ---- | -------------------------- | ------------------------ |
+| GET  | `/catalog/health`          | 健康检查。               |
+| GET  | `/catalog/map?keyword=`    | 名称映射到规范植物候选。 |
+| GET  | `/catalog/plants`          | 植物目录列表。           |
+| GET  | `/catalog/plants?plantId=` | 植物详情。               |
 
 ### 7.2 `plant-user-http`
 
-| 方法 | 路径 | 当前用途 |
-|---|---|---|
-| GET | `/user-plants/health` | 健康检查。 |
-| GET | `/user-plants` | 当前用户植物列表。 |
-| POST | `/user-plants` | 新建用户植物。 |
-| PATCH | `/user-plants` | 更新用户植物，需 `id`。 |
-| DELETE | `/user-plants` | 删除用户植物，需 `id`。 |
-| POST | `/user-plants/watering-planner` | 复用共享规划器计算浇水建议。 |
+| 方法   | 路径                            | 当前用途                     |
+| ------ | ------------------------------- | ---------------------------- |
+| GET    | `/user-plants/health`           | 健康检查。                   |
+| GET    | `/user-plants`                  | 当前用户植物列表。           |
+| POST   | `/user-plants`                  | 新建用户植物。               |
+| PATCH  | `/user-plants`                  | 更新用户植物，需 `id`。      |
+| DELETE | `/user-plants`                  | 删除用户植物，需 `id`。      |
+| POST   | `/user-plants/watering-planner` | 复用共享规划器计算浇水建议。 |
 
 `plant-user-http` 需要解析到 openid；否则返回 401。
 
 ### 7.2.1 `POST /user-plants/watering-planner`
 
-本接口用于前端请求下一次浇水建议，计算逻辑复用 `cloudfunctions/layer/utils/watering-planner.js`，并与 `diagnose-http` 的建议链路共享。`buildWateringPlanner` 已从 `diagnose-http` 抽取到 layer 共享纯计算模块，diagnose-http 通过 try/catch 回退委托调用。
+本接口用于前端请求下一次浇水建议，计算逻辑复用 `cloudfunctions/layer/utils/watering-planner.js`（v2.1），并与 `diagnose-http` 的建议链路共享。`buildWateringPlanner` 已从 `diagnose-http` 抽取到 layer 共享纯计算模块，diagnose-http 通过 try/catch 回退委托调用。
+
+v2.1 算法升级：移除 `wateringCount10d` 作为核心判断，改用 `effectiveHydrationLoad` / `wetPressureLoad` / `lastEffectiveRootWateredDaysAgo` / `rootZoneMoistureIndex` / Dry/Wet Gate。盆型几何（来自 `user_plant_instances` 主表盆型列）影响干透速率、排水风险和水量建议。
 
 入参约束：
 
@@ -443,15 +451,35 @@ cloudfunctions/weather-http/config.json
 - `nextWaterReason`：人类可读的推算理由
 - `wateringContext`：`likely_too_wet` / `likely_too_dry` / `keep_baseline_or_check_soil`
 - `action`：对应 action 枚举
+- `amountClass`：水量等级 `unknown` / `mist` / `small` / `normal` / `thorough`
+- `amountRangeMl`：[minMl, maxMl] 水量区间
+- `stopCondition`：停止浇水条件描述
+- `confidenceLevel`：`low` / `normal` / `high`
+- `reasonCodes`：原因码数组（如 `OVERWATERING_RISK_WARNING`、`CHECK_SOIL_BEFORE_WATERING`、`INCREASE_WATERING_FREQUENCY` 等）
+- `effectiveHydrationLoad`：有效水合负载（0~1+）
+- `wetPressureLoad`：湿压负载（0~1+）
+- `lastEffectiveRootWateredDaysAgo`：距上次有效根区浇水天数（null 表示无记录）
+- `rootZoneMoistureIndex`：根区湿度指数（0~1）
 
 WET 阻断逻辑：
 
 - WET（偏湿/过浇）时 `nextWaterDate` 返回 null，不推导具体浇水日期
 - 前端检测到 WET 后禁用"添加至日历"按钮，提示"近期过浇，暂不安排浇水"
-- WET 触发条件（两条路径，任一满足）：
-  1. 浇水次数超限：`wateringCount10d > effectiveWetWaterings10d`
-  2. 强偏湿环境独立触发：至少 2 种偏湿天气信号命中（高湿、冷湿、雨天）且有浇水记录，不限制 lastWateredDaysAgo
+- WET 触发条件（任一满足）：
+  1. 根区湿度指数 > 0.6 且湿压负载 > 0.4
+  2. 浇透 + 近日期（≤3天）+ 强偏湿天气（≥2 种命中）
+  3. 无排水孔 + 窄底盆 + 根区湿度偏高（>0.5）
+  4. 根区湿度极高（>0.8）+ 近期有效浇水（≤2天）
 - `nextWaterDate` 所有分支均 clamp 到不早于 referenceDate + 1（明天）
+
+盆型档案读写（折叠进 /user-plants，无独立接口）：
+
+- 盆型字段随 `GET /user-plants` 列表/详情一并返回，挂在每个 item 的 `potProfile` 对象上
+- 盆型写入通过 `PATCH /user-plants`（与 nickname / location 等字段共用同一写口），后端 `updateUserPlantInstance` 识别盆型字段并单独写入主表列，保留 `pot_profile_version = pot_profile_version + 1` 版本自增语义
+- 盆型档案保存在 `user_plant_instances` 主表盆型列，不保存到单次 watering event
+- 字段：`potTopDiameterCm`、`potBottomDiameterCm`、`potHeightCm`（可选）、`hasDrainageHole`、`potMaterial`、`substrateType`
+- `substrateType` 对应 SQL 字段 `substrate_type`，当前允许两类值：单值字符串（如 `general` / `peat` / `unknown`）或 JSON 数组字符串（多选基质 + 比例）。后端读取 JSON 数组字符串时会解析为 `substrateComposition` 返回给前端；该字段不得再用固定枚举 CHECK 阻断 JSON 数组。
+- `genus_care_profiles.watering_way_quantization_json` 是 `watering_strategy_json.way/freq` 的量化扩展，必须包含 `wayClass`、`depletionTrigger`、`targetMoistureMid`、`wetTolerance`、`dryTolerance`、`amountPolicy`、`nextActionClass`、`seasonalGate`，不替代 `watering_strategy_json` 事实源。
 
 天气数据流：
 
@@ -462,7 +490,7 @@ WET 阻断逻辑：
 
 性能优化：
 
-- 接口不走 `getUserPlantInstanceById`（3 次串行 SQL），改用 `getUserPlantWateringStrategy`（2 次 SQL）
+- 接口不走 `getUserPlantInstanceById`（3 次串行 SQL），改用 `getUserPlantWateringStrategy`（含主表盆型列查询）
 - 不查 `watering_events_json`、不查 `alias_summary`
 
 实现约定：
@@ -475,6 +503,8 @@ WET 阻断逻辑：
 
 ```text
 cloudfunctions/layer/utils/watering-planner.js
+cloudfunctions/layer/utils/pot-geometry.js
+cloudfunctions/layer/utils/hydration-load.js
 cloudfunctions/diagnose-http/utils/environment-context-v7.js
 cloudfunctions/plant-user-http/app.js
 cloudfunctions/layer/utils/plant-knowledge.js

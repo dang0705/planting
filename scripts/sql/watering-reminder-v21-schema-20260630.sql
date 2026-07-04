@@ -1,37 +1,28 @@
-CREATE TABLE IF NOT EXISTS `cloud1_dev`.`user_plant_care_extensions` (
-  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '自增主键',
-  `_openid` VARCHAR(64) NOT NULL DEFAULT '' COMMENT 'CloudBase 权限模型用户 OpenID',
-  `user_plant_id` BIGINT UNSIGNED NOT NULL COMMENT '用户植物实例 ID',
-  `pot_top_diameter_cm` DECIMAL(6,2) NULL COMMENT '盆口直径，单位 cm',
-  `pot_bottom_diameter_cm` DECIMAL(6,2) NULL COMMENT '盆底直径，单位 cm',
-  `pot_height_cm` DECIMAL(6,2) NULL COMMENT '盆高，单位 cm',
-  `has_drainage_hole` VARCHAR(16) NOT NULL DEFAULT 'true' COMMENT '是否有排水孔：true/false/unknown',
-  `pot_material` VARCHAR(32) NOT NULL DEFAULT 'unknown' COMMENT '盆器材质：plastic/ceramic/terracotta/glazed/unknown',
-  `substrate_type` VARCHAR(2048) NOT NULL DEFAULT 'unknown' COMMENT '基质类型：允许 JSON 数组字符串（多选+比例）或单值',
-  `profile_version` INT UNSIGNED NOT NULL DEFAULT 1 COMMENT '养护扩展画像版本',
-  `source` VARCHAR(32) NOT NULL DEFAULT 'user' COMMENT '画像来源：user/default/inferred',
-  `confidence` VARCHAR(16) NOT NULL DEFAULT 'normal' COMMENT '画像置信度：low/normal/high',
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_user_plant_care_extensions_openid_plant` (`_openid`, `user_plant_id`),
-  KEY `idx_user_plant_care_extensions_user_plant_id` (`user_plant_id`),
-  KEY `idx_user_plant_care_extensions_profile_version` (`profile_version`),
-  CONSTRAINT `chk_user_plant_care_extensions_drainage`
-    CHECK (`has_drainage_hole` IN ('true', 'false', 'unknown')),
-  CONSTRAINT `chk_user_plant_care_extensions_pot_material`
-    CHECK (`pot_material` IN ('plastic', 'ceramic', 'terracotta', 'glazed', 'unknown')),
-  CONSTRAINT `chk_user_plant_care_extensions_source`
-    CHECK (`source` IN ('user', 'default', 'inferred')),
-  CONSTRAINT `chk_user_plant_care_extensions_confidence`
-    CHECK (`confidence` IN ('low', 'normal', 'high')),
-  CONSTRAINT `chk_user_plant_care_extensions_pot_top_positive`
-    CHECK (`pot_top_diameter_cm` IS NULL OR `pot_top_diameter_cm` > 0),
-  CONSTRAINT `chk_user_plant_care_extensions_pot_bottom_positive`
-    CHECK (`pot_bottom_diameter_cm` IS NULL OR `pot_bottom_diameter_cm` > 0),
-  CONSTRAINT `chk_user_plant_care_extensions_pot_height_positive`
-    CHECK (`pot_height_cm` IS NULL OR `pot_height_cm` > 0)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户植物养护扩展画像，长期保存盆型、基质和画像来源';
+-- 盆型信息按硬规定直接落用户植物主表 user_plant_instances，不再使用独立养护扩展表。
+-- 主表加 6 列盆型字段 + profile 元数据；has_drainage_hole/pot_material/substrate_type 用 VARCHAR 承载，
+-- substrate_type 允许 JSON 数组字符串（多选+比例）或单值。
+ALTER TABLE `cloud1_dev`.`user_plant_instances`
+  ADD COLUMN IF NOT EXISTS `pot_top_diameter_cm` DECIMAL(6,2) NULL COMMENT '盆口直径，单位 cm'
+    AFTER `light_environment_json`,
+  ADD COLUMN IF NOT EXISTS `pot_bottom_diameter_cm` DECIMAL(6,2) NULL COMMENT '盆底直径，单位 cm'
+    AFTER `pot_top_diameter_cm`,
+  ADD COLUMN IF NOT EXISTS `pot_height_cm` DECIMAL(6,2) NULL COMMENT '盆高，单位 cm'
+    AFTER `pot_bottom_diameter_cm`,
+  ADD COLUMN IF NOT EXISTS `has_drainage_hole` VARCHAR(16) NOT NULL DEFAULT 'true' COMMENT '是否有排水孔：true/false/unknown'
+    AFTER `pot_height_cm`,
+  ADD COLUMN IF NOT EXISTS `pot_material` VARCHAR(32) NOT NULL DEFAULT 'unknown' COMMENT '盆器材质：plastic/ceramic/terracotta/glazed/unknown'
+    AFTER `has_drainage_hole`,
+  ADD COLUMN IF NOT EXISTS `substrate_type` VARCHAR(2048) NOT NULL DEFAULT 'unknown' COMMENT '基质类型：允许 JSON 数组字符串（多选+比例）或单值'
+    AFTER `pot_material`,
+  ADD COLUMN IF NOT EXISTS `pot_profile_version` INT UNSIGNED NOT NULL DEFAULT 1 COMMENT '盆型画像版本'
+    AFTER `substrate_type`,
+  ADD COLUMN IF NOT EXISTS `pot_profile_source` VARCHAR(32) NOT NULL DEFAULT 'default' COMMENT '盆型画像来源：user/default/inferred'
+    AFTER `pot_profile_version`,
+  ADD COLUMN IF NOT EXISTS `pot_profile_confidence` VARCHAR(16) NOT NULL DEFAULT 'low' COMMENT '盆型画像置信度：low/normal/high'
+    AFTER `pot_profile_source`;
+
+-- 盆型信息已完整迁入主表；若历史扩展表存在则废弃（研发未上线，无需迁移历史数据）。
+DROP TABLE IF EXISTS `cloud1_dev`.`user_plant_care_extensions`;
 
 /*
   watering_way_quantization_json 是 watering_strategy_json.way/freq 的量化扩展，

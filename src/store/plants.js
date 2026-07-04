@@ -87,7 +87,8 @@ export const usePlantStore = defineStore('plants', {
           humidityMax: p.humidityMax ?? null,
           varianceLevel: p.varianceLevel || '',
           healthStatus: p.healthStatus || 'unknown',
-          healthScore: p.healthScore ?? null
+          healthScore: p.healthScore ?? null,
+          potProfile: p.potProfile || null
         }))
 
         return { success: true, total: response.data.total }
@@ -158,6 +159,41 @@ export const usePlantStore = defineStore('plants', {
 
     async updateUserPlant(id, updates) {
       return this.optimisticUpdate(id, updates)
+    },
+
+    async savePotProfile(id, potProfileFields) {
+      const plant = this.userPlants.find(p => p.id === id)
+      if (!plant) {
+        return { success: false, message: '植物不存在' }
+      }
+      const originalPotProfile = plant.potProfile
+      // 后端 updateUserPlantInstance 消费扁平字段（potTopDiameterCm 等）；
+      // 本地则维护嵌套 potProfile 视图（含 substrateComposition）供 UI 读取。
+      let substrateComposition = null
+      if (
+        typeof potProfileFields.substrateType === 'string' &&
+        potProfileFields.substrateType.startsWith('[')
+      ) {
+        try {
+          substrateComposition = JSON.parse(potProfileFields.substrateType)
+        } catch {
+          substrateComposition = null
+        }
+      }
+      plant.potProfile = { ...plant.potProfile, ...potProfileFields, substrateComposition }
+
+      try {
+        const response = await patchUserPlant({ id, ...potProfileFields })
+        if (response?.code === 200) {
+          return { success: true }
+        }
+        plant.potProfile = originalPotProfile
+        return { success: false, message: response?.message || '保存失败' }
+      } catch (error) {
+        console.error('保存盆型档案失败:', error)
+        plant.potProfile = originalPotProfile
+        return { success: false, message: error.message }
+      }
     },
 
     async completeWatering(id, { wateringEvents = null, nextWaterDate = null } = {}) {

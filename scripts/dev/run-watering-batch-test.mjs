@@ -179,9 +179,12 @@ function auditCase(testCase, plan, potVolumeMl) {
     if (ratioLo < 0.02 && amountLo > 0) flags.push({ code: 'AMOUNT_TOO_LOW', detail: `建议下限 ${amountLo}ml 仅占盆体积 ${(ratioLo * 100).toFixed(1)}%` })
   }
 
-  // 2. 天气压制：连阴雨场景 context 应为 keep_baseline 或 too_wet
-  if (weatherScenario.id === 'rainy' && context === 'likely_too_dry') {
-    flags.push({ code: 'WEATHER_SUPPRESSION_MISSING', detail: '连阴雨场景但判定为 too_dry' })
+  // 2. 天气压制：连阴雨场景（非严重超期）context 不应为 too_dry
+  //    严重超期（>freq[0]×2）时判 too_dry 是合理的——天气湿信号不应掩盖严重缺水
+  const freqMin0 = plant.wateringStrategy.freq[0]
+  const isSevereOverdueCase = wateringInterval.id === 'overdue_20d' && 20 >= freqMin0 * 2
+  if (weatherScenario.id === 'rainy' && context === 'likely_too_dry' && !isSevereOverdueCase) {
+    flags.push({ code: 'WEATHER_SUPPRESSION_MISSING', detail: '连阴雨场景（非严重超期）但判定为 too_dry' })
   }
 
   // 3. 耐旱植物间隔：freq>14 的植物，nextWaterDate 距离上次浇水不应小于 freq[0]

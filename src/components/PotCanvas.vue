@@ -1,10 +1,17 @@
 <template>
-  <view class="relative" style="width: 200px; height: 207px">
+  <view
+    class="pot-canvas-root relative"
+    :style="{ width: `${canvasWidth}px`, height: `${canvasHeight}px` }"
+  >
     <!-- 骨架屏 -->
     <view v-if="!isNormalMode" class="absolute inset-0 flex flex-col items-center justify-center">
       <view
         class="border-2 border-dashed border-gray-300 rounded-lg"
-        style="width: 110px; height: 130px; margin-top: 10px"
+        :style="{
+          width: `${110 * scaleBase}px`,
+          height: `${130 * scaleBase}px`,
+          marginTop: `${10 * scaleBase}px`
+        }"
       />
       <view class="mt-2 h-2 w-16 rounded-full bg-gray-200 animate-pulse" />
       <view class="mt-1 h-2 w-12 rounded-full bg-gray-200 animate-pulse" />
@@ -17,7 +24,9 @@
       canvas-id="potCanvas"
       id="potCanvas"
       class="absolute inset-0"
-      style="width: 200px; height: 207px"
+      :width="canvasWidth"
+      :height="canvasHeight"
+      :style="{ width: `${canvasWidth}px`, height: `${canvasHeight}px` }"
     />
 
     <!-- 盆口右把手（水平控直径 + 垂直控高度，二合一） -->
@@ -25,16 +34,19 @@
       v-if="isNormalMode"
       class="absolute flex items-center justify-center"
       :style="{
-        left: topHandleX - 10 + 'px',
-        top: topHandleY - 10 + 'px',
-        width: '20px',
-        height: '20px'
+        left: topHandleX - handleOuterSize / 2 + 'px',
+        top: topHandleY - handleOuterSize / 2 + 'px',
+        width: handleOuterSize + 'px',
+        height: handleOuterSize + 'px'
       }"
       @touchstart.stop="onTopHandleTouchStart"
       @touchmove.stop="onTopHandleTouchMove"
       @touchend.stop="onHandleTouchEnd"
     >
-      <view class="size-[12px] rounded-full bg-[#2f8f57] shadow-sm" />
+      <view
+        class="rounded-full bg-[#2f8f57] shadow-sm"
+        :style="{ width: handleInnerSize + 'px', height: handleInnerSize + 'px' }"
+      />
     </view>
 
     <!-- 盆底右把手（仅水平） -->
@@ -42,16 +54,19 @@
       v-if="isNormalMode"
       class="absolute flex items-center justify-center"
       :style="{
-        left: bottomHandleX - 10 + 'px',
-        top: bottomHandleY - 10 + 'px',
-        width: '20px',
-        height: '20px'
+        left: bottomHandleX - handleOuterSize / 2 + 'px',
+        top: bottomHandleY - handleOuterSize / 2 + 'px',
+        width: handleOuterSize + 'px',
+        height: handleOuterSize + 'px'
       }"
       @touchstart.stop="onBottomHandleTouchStart"
       @touchmove.stop="onBottomHandleTouchMove"
       @touchend.stop="onHandleTouchEnd"
     >
-      <view class="size-[12px] rounded-full bg-[#2f8f57] shadow-sm" />
+      <view
+        class="rounded-full bg-[#2f8f57] shadow-sm"
+        :style="{ width: handleInnerSize + 'px', height: handleInnerSize + 'px' }"
+      />
     </view>
   </view>
 </template>
@@ -64,6 +79,8 @@ const props = defineProps({
   potBottomDiameterCm: { type: Number, default: null },
   potHeightCm: { type: Number, default: null },
   substrateComposition: { type: Array, default: null },
+  canvasWidth: { type: Number, default: 200 },
+  canvasHeight: { type: Number, default: 207 },
   textureMap: { type: Object, default: () => ({}) }
 })
 
@@ -76,12 +93,14 @@ const emit = defineEmits([
 const instance = getCurrentInstance()
 
 // Canvas 尺寸
-const CANVAS_W = 200
-const CANVAS_H = 207
-const CENTER_X = 100 // 水平居中
+const CANVAS_BASE_W = 200
+const CANVAS_BASE_H = 207
+const HEIGHT_LABEL_RIGHT_GAP_PX = 10
+const POT_CANVAS_LEFT_SHIFT_PX = 10
 
 // 盆底固定 Y，高度往上增长
-const BOTTOM_Y = 175
+const BASE_CENTER_X = 100
+const BASE_BOTTOM_Y = 175
 
 // 比例折算常量
 const MIN_DIAMETER_CM = 10
@@ -93,6 +112,27 @@ const MIN_HEIGHT_CM = 10
 const MAX_HEIGHT_CM = 50
 const MIN_HEIGHT_PX = 57
 const MAX_HEIGHT_PX = 161
+
+const canvasWidth = ref(Math.max(1, Number(props.canvasWidth) || CANVAS_BASE_W))
+const canvasHeight = ref(Math.max(1, Number(props.canvasHeight) || CANVAS_BASE_H))
+
+function updateCanvasSizeFromProps() {
+  canvasWidth.value = Math.max(1, Number(props.canvasWidth) || CANVAS_BASE_W)
+  canvasHeight.value = Math.max(1, Number(props.canvasHeight) || CANVAS_BASE_H)
+}
+
+const scaleX = computed(() => canvasWidth.value / CANVAS_BASE_W)
+const scaleY = computed(() => canvasHeight.value / CANVAS_BASE_H)
+const scaleBase = computed(() => Math.min(scaleX.value, scaleY.value))
+const CENTER_X = computed(() => (BASE_CENTER_X - POT_CANVAS_LEFT_SHIFT_PX) * scaleX.value)
+const BOTTOM_Y = computed(() => BASE_BOTTOM_Y * scaleY.value)
+const minRadiusPx = computed(() => MIN_RADIUS_PX * scaleX.value)
+const maxRadiusPx = computed(() => MAX_RADIUS_PX * scaleX.value)
+const minHeightPx = computed(() => MIN_HEIGHT_PX * scaleY.value)
+const maxHeightPx = computed(() => MAX_HEIGHT_PX * scaleY.value)
+const handleOuterSize = computed(() => Math.max(12, Math.round(20 * scaleBase.value)))
+const handleInnerSize = computed(() => Math.max(6, Math.round(12 * scaleBase.value)))
+const labelFontSize = computed(() => Math.max(9, Math.round(11 * scaleBase.value)))
 
 const SUBSTRATE_COLORS = {
   general: '#8B7355',
@@ -132,25 +172,25 @@ function diameterToRadiusPx(cm) {
   const ratio =
     (Math.max(MIN_DIAMETER_CM, Math.min(MAX_DIAMETER_CM, cm)) - MIN_DIAMETER_CM) /
     (MAX_DIAMETER_CM - MIN_DIAMETER_CM)
-  return MIN_RADIUS_PX + ratio * (MAX_RADIUS_PX - MIN_RADIUS_PX)
+  return minRadiusPx.value + ratio * (maxRadiusPx.value - minRadiusPx.value)
 }
 
 function heightToPx(cm) {
   const ratio =
     (Math.max(MIN_HEIGHT_CM, Math.min(MAX_HEIGHT_CM, cm)) - MIN_HEIGHT_CM) /
     (MAX_HEIGHT_CM - MIN_HEIGHT_CM)
-  return MIN_HEIGHT_PX + ratio * (MAX_HEIGHT_PX - MIN_HEIGHT_PX)
+  return minHeightPx.value + ratio * (maxHeightPx.value - minHeightPx.value)
 }
 
 function radiusPxToCm(px) {
-  const ratio = (px - MIN_RADIUS_PX) / (MAX_RADIUS_PX - MIN_RADIUS_PX)
+  const ratio = (px - minRadiusPx.value) / (maxRadiusPx.value - minRadiusPx.value)
   const rawCm = MIN_DIAMETER_CM + ratio * (MAX_DIAMETER_CM - MIN_DIAMETER_CM)
   const stepped = Math.round((rawCm - MIN_DIAMETER_CM) / STEP_CM) * STEP_CM + MIN_DIAMETER_CM
   return Math.max(MIN_DIAMETER_CM, Math.min(MAX_DIAMETER_CM, stepped))
 }
 
 function heightPxToCm(px) {
-  const ratio = (px - MIN_HEIGHT_PX) / (MAX_HEIGHT_PX - MIN_HEIGHT_PX)
+  const ratio = (px - minHeightPx.value) / (maxHeightPx.value - minHeightPx.value)
   const rawCm = MIN_HEIGHT_CM + ratio * (MAX_HEIGHT_CM - MIN_HEIGHT_CM)
   const stepped = Math.round((rawCm - MIN_HEIGHT_CM) / STEP_CM) * STEP_CM + MIN_HEIGHT_CM
   return Math.max(MIN_HEIGHT_CM, Math.min(MAX_HEIGHT_CM, stepped))
@@ -161,12 +201,12 @@ const topRadiusPx = computed(() => diameterToRadiusPx(effTopCm.value))
 const bottomRadiusPx = computed(() => diameterToRadiusPx(effBottomCm.value))
 const heightPx = computed(() => heightToPx(effHeightCm.value))
 
-const topY = computed(() => BOTTOM_Y - heightPx.value)
-const bottomY = computed(() => BOTTOM_Y)
+const topY = computed(() => BOTTOM_Y.value - heightPx.value)
+const bottomY = computed(() => BOTTOM_Y.value)
 
-const topHandleX = computed(() => CENTER_X + topRadiusPx.value)
+const topHandleX = computed(() => CENTER_X.value + topRadiusPx.value)
 const topHandleY = computed(() => topY.value)
-const bottomHandleX = computed(() => CENTER_X + bottomRadiusPx.value)
+const bottomHandleX = computed(() => CENTER_X.value + bottomRadiusPx.value)
 const bottomHandleY = computed(() => bottomY.value)
 
 // 触摸状态
@@ -207,7 +247,8 @@ function draw() {
   if (!ctx) {
     return
   }
-  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H)
+
+  ctx.clearRect(0, 0, canvasWidth.value, canvasHeight.value)
 
   const topR = topRadiusPx.value
   const botR = bottomRadiusPx.value
@@ -219,33 +260,32 @@ function draw() {
     drawSubstrateLayers(topR, botR, h, ty, by)
 
     ctx.beginPath()
-    ctx.moveTo(CENTER_X - topR, ty)
-    ctx.lineTo(CENTER_X + topR, ty)
-    ctx.lineTo(CENTER_X + botR, by)
-    ctx.lineTo(CENTER_X - botR, by)
+    ctx.moveTo(CENTER_X.value - topR, ty)
+    ctx.lineTo(CENTER_X.value + topR, ty)
+    ctx.lineTo(CENTER_X.value + botR, by)
+    ctx.lineTo(CENTER_X.value - botR, by)
     ctx.closePath()
     ctx.setStrokeStyle('#2f8f57')
     ctx.setLineWidth(1.5)
     ctx.stroke()
 
     ctx.setFillStyle('#2f8f57')
-    ctx.setFontSize(11)
+    ctx.setFontSize(labelFontSize.value)
     ctx.setTextAlign('center')
-    ctx.fillText('盆口 ' + effTopCm.value + 'cm', CENTER_X, ty - 8)
-    ctx.fillText('盆底 ' + effBottomCm.value + 'cm', CENTER_X, by + 18)
+    ctx.fillText('盆口 ' + effTopCm.value + 'cm', CENTER_X.value, ty - 8 * scaleY.value)
+    ctx.fillText('盆底 ' + effBottomCm.value + 'cm', CENTER_X.value, by + 18 * scaleY.value)
 
-    // 高度文案：竖排，和盆口盆底同色同字号，放在盆模型右侧居中
     const heightText = '高' + effHeightCm.value + 'cm'
-    const labelX = CENTER_X + Math.max(topR, botR) + 10
+    const labelX =
+      CENTER_X.value + Math.max(topR, botR) + HEIGHT_LABEL_RIGHT_GAP_PX * scaleBase.value
     const labelCenterY = (ty + by) / 2
-    const charSpacing = 13
-    const startY = labelCenterY - (heightText.length * charSpacing) / 2
     ctx.setFillStyle('#2f8f57')
-    ctx.setFontSize(11)
-    ctx.setTextAlign('center')
-    for (let i = 0; i < heightText.length; i++) {
-      ctx.fillText(heightText[i], labelX, startY + i * charSpacing)
+    ctx.setFontSize(labelFontSize.value)
+    ctx.setTextAlign('left')
+    if (typeof ctx.setTextBaseline === 'function') {
+      ctx.setTextBaseline('middle')
     }
+    ctx.fillText(heightText, labelX, labelCenterY)
   }
 
   ctx.draw()
@@ -255,10 +295,10 @@ function drawSubstrateLayers(topR, botR, h, ty, by) {
   const composition = props.substrateComposition
   if (!composition || !composition.length) {
     ctx.beginPath()
-    ctx.moveTo(CENTER_X - topR, ty)
-    ctx.lineTo(CENTER_X + topR, ty)
-    ctx.lineTo(CENTER_X + botR, by)
-    ctx.lineTo(CENTER_X - botR, by)
+    ctx.moveTo(CENTER_X.value - topR, ty)
+    ctx.lineTo(CENTER_X.value + topR, ty)
+    ctx.lineTo(CENTER_X.value + botR, by)
+    ctx.lineTo(CENTER_X.value - botR, by)
     ctx.closePath()
     ctx.setFillStyle('rgba(47, 143, 87, 0.08)')
     ctx.fill()
@@ -268,10 +308,10 @@ function drawSubstrateLayers(topR, botR, h, ty, by) {
   const totalRatio = composition.reduce((sum, item) => sum + (item.ratio || 0), 0)
   if (totalRatio <= 0) {
     ctx.beginPath()
-    ctx.moveTo(CENTER_X - topR, ty)
-    ctx.lineTo(CENTER_X + topR, ty)
-    ctx.lineTo(CENTER_X + botR, by)
-    ctx.lineTo(CENTER_X - botR, by)
+    ctx.moveTo(CENTER_X.value - topR, ty)
+    ctx.lineTo(CENTER_X.value + topR, ty)
+    ctx.lineTo(CENTER_X.value + botR, by)
+    ctx.lineTo(CENTER_X.value - botR, by)
     ctx.closePath()
     ctx.setFillStyle('rgba(47, 143, 87, 0.08)')
     ctx.fill()
@@ -292,17 +332,17 @@ function drawSubstrateLayers(topR, botR, h, ty, by) {
     const layerBotR = topR + (botR - topR) * botInterp
 
     ctx.beginPath()
-    ctx.moveTo(CENTER_X - layerTopR, layerTopY)
-    ctx.lineTo(CENTER_X + layerTopR, layerTopY)
-    ctx.lineTo(CENTER_X + layerBotR, layerBotY)
-    ctx.lineTo(CENTER_X - layerBotR, layerBotY)
+    ctx.moveTo(CENTER_X.value - layerTopR, layerTopY)
+    ctx.lineTo(CENTER_X.value + layerTopR, layerTopY)
+    ctx.lineTo(CENTER_X.value + layerBotR, layerBotY)
+    ctx.lineTo(CENTER_X.value - layerBotR, layerBotY)
     ctx.closePath()
 
     const texturePath = props.textureMap?.[item.material]
     if (texturePath) {
       ctx.save()
       ctx.clip()
-      ctx.drawImage(texturePath, CENTER_X - layerTopR, layerTopY, layerTopR * 2, layerHeight)
+      ctx.drawImage(texturePath, CENTER_X.value - layerTopR, layerTopY, layerTopR * 2, layerHeight)
       ctx.restore()
     } else {
       ctx.setFillStyle(SUBSTRATE_COLORS[item.material] || SUBSTRATE_COLORS.unknown)
@@ -311,8 +351,8 @@ function drawSubstrateLayers(topR, botR, h, ty, by) {
 
     if (i < composition.length - 1) {
       ctx.beginPath()
-      ctx.moveTo(CENTER_X - layerBotR, layerBotY)
-      ctx.lineTo(CENTER_X + layerBotR, layerBotY)
+      ctx.moveTo(CENTER_X.value - layerBotR, layerBotY)
+      ctx.lineTo(CENTER_X.value + layerBotR, layerBotY)
       ctx.setStrokeStyle('rgba(255, 255, 255, 0.6)')
       ctx.setLineWidth(1)
       ctx.stroke()
@@ -340,12 +380,18 @@ function onTopHandleTouchMove(e) {
 
   // 水平 → 盆口直径
   const startRadiusPx = diameterToRadiusPx(touchStartTopCm.value)
-  const newRadiusPx = Math.max(MIN_RADIUS_PX, Math.min(MAX_RADIUS_PX, startRadiusPx + deltaX))
+  const newRadiusPx = Math.max(
+    minRadiusPx.value,
+    Math.min(maxRadiusPx.value, startRadiusPx + deltaX)
+  )
   emit('update:potTopDiameterCm', radiusPxToCm(newRadiusPx))
 
   // 垂直 → 盆高（向上拖 = 增高）
   const startHeightPx = heightToPx(touchStartHeightCm.value)
-  const newHeightPx = Math.max(MIN_HEIGHT_PX, Math.min(MAX_HEIGHT_PX, startHeightPx - deltaY))
+  const newHeightPx = Math.max(
+    minHeightPx.value,
+    Math.min(maxHeightPx.value, startHeightPx - deltaY)
+  )
   emit('update:potHeightCm', heightPxToCm(newHeightPx))
 }
 
@@ -362,7 +408,10 @@ function onBottomHandleTouchMove(e) {
   }
   const deltaX = e.touches[0].clientX - touchStartX.value
   const startRadiusPx = diameterToRadiusPx(touchStartBottomCm.value)
-  const newRadiusPx = Math.max(MIN_RADIUS_PX, Math.min(MAX_RADIUS_PX, startRadiusPx + deltaX))
+  const newRadiusPx = Math.max(
+    minRadiusPx.value,
+    Math.min(maxRadiusPx.value, startRadiusPx + deltaX)
+  )
   emit('update:potBottomDiameterCm', radiusPxToCm(newRadiusPx))
 }
 
@@ -375,9 +424,12 @@ watch(
     () => props.potTopDiameterCm,
     () => props.potBottomDiameterCm,
     () => props.potHeightCm,
-    () => props.substrateComposition
+    () => props.substrateComposition,
+    () => props.canvasWidth,
+    () => props.canvasHeight
   ],
   () => {
+    updateCanvasSizeFromProps()
     if (isNormalMode.value) {
       nextTick(() => {
         if (!ctx) {
@@ -392,6 +444,7 @@ watch(
 )
 
 onMounted(() => {
+  updateCanvasSizeFromProps()
   if (isNormalMode.value) {
     nextTick(() => setTimeout(() => initCanvas(), 300))
   }

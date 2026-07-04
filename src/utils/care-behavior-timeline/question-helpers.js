@@ -49,11 +49,21 @@ function normalizeOptionSearchText(option = {}) {
 }
 
 function compactOptionSearchText(value = '') {
-  return String(value || '').trim().toLowerCase().replace(/[\s_-]+/g, '')
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, '')
 }
 
 function hasCareBehaviorTimelineSource(question = {}) {
-  const sourceKeys = ['careBehaviorTimeline', 'care_behavior_timeline', 'careBehavior', 'timeline', 'timelineSource', 'timeline_source']
+  const sourceKeys = [
+    'careBehaviorTimeline',
+    'care_behavior_timeline',
+    'careBehavior',
+    'timeline',
+    'timelineSource',
+    'timeline_source'
+  ]
   const nestedSources = [
     pickByKeys(question || {}, sourceKeys),
     pickByKeys(question?.payload || {}, sourceKeys),
@@ -77,26 +87,36 @@ function hasCareBehaviorTimelineSource(question = {}) {
 function getQuestionText(question = {}) {
   return String(
     question?.questionTextCn ||
-    question?.questionTextUserCn ||
-    question?.questionText ||
-    question?.text ||
-    ''
-  ).trim().toLowerCase()
+      question?.questionTextUserCn ||
+      question?.questionText ||
+      question?.text ||
+      ''
+  )
+    .trim()
+    .toLowerCase()
 }
 
 function isExplicitCareBehaviorTimelineQuestion(question = {}) {
-  return String(question?.uiVariant || '').trim() === 'care_behavior_timeline' ||
+  return (
+    String(question?.uiVariant || '').trim() === 'care_behavior_timeline' ||
     hasCareBehaviorTimelineSource(question)
+  )
 }
 
 function isSessionWateringTimelineTarget(question = {}) {
-  const target = String(question?.packageTopic || '').trim().toLowerCase()
-  const qk = String(question?.questionKey || '').trim().toLowerCase()
-  return qk.includes('watering_frequency_context') ||
+  const target = String(question?.packageTopic || '')
+    .trim()
+    .toLowerCase()
+  const qk = String(question?.questionKey || '')
+    .trim()
+    .toLowerCase()
+  return (
+    qk.includes('watering_frequency_context') ||
     qk.includes('watering_context') ||
     target === 'watering' ||
     target === 'watering_context' ||
     target === 'watering_frequency_context'
+  )
 }
 
 export function isUncertainCareBehaviorOption(option = {}) {
@@ -107,7 +127,9 @@ export function isUncertainCareBehaviorOption(option = {}) {
   const compactSearchText = compactOptionSearchText(searchText)
   return CARE_BEHAVIOR_UNCERTAIN_OPTION_PATTERNS.some(pattern => {
     const normalizedPattern = compactOptionSearchText(pattern)
-    return searchText.includes(pattern.toLowerCase()) || compactSearchText.includes(normalizedPattern)
+    return (
+      searchText.includes(pattern.toLowerCase()) || compactSearchText.includes(normalizedPattern)
+    )
   })
 }
 
@@ -131,7 +153,9 @@ export function isSessionWateringTimelineQuestion(question = {}) {
 }
 
 export function isCareBehaviorTimelineQuestion(question = {}) {
-  return isExplicitCareBehaviorTimelineQuestion(question) || isSessionWateringTimelineQuestion(question)
+  return (
+    isExplicitCareBehaviorTimelineQuestion(question) || isSessionWateringTimelineQuestion(question)
+  )
 }
 
 export function isCareBehaviorWateringTimelineQuestion(question = {}) {
@@ -143,14 +167,20 @@ export function isCareBehaviorWateringTimelineQuestion(question = {}) {
     return false
   }
 
-  const target = String(question?.packageTopic || '').trim().toLowerCase()
-  const qk = String(question?.questionKey || '').trim().toLowerCase()
+  const target = String(question?.packageTopic || '')
+    .trim()
+    .toLowerCase()
+  const qk = String(question?.questionKey || '')
+    .trim()
+    .toLowerCase()
   const text = getQuestionText(question)
 
-  return target.includes('watering') ||
+  return (
+    target.includes('watering') ||
     qk.includes('watering') ||
     text.includes('浇水') ||
     text.includes('watering')
+  )
 }
 
 export function getVisibleCareBehaviorOptions(question = {}) {
@@ -163,7 +193,9 @@ export function getVisibleCareBehaviorOptions(question = {}) {
 
 function resolveQuestionDefaultOption(question = {}, options = []) {
   const defaultOptionId = String(question?.defaultOptionId || '').trim()
-  const defaultOptionKey = String(question?.defaultOptionKey || '').trim().toLowerCase()
+  const defaultOptionKey = String(question?.defaultOptionKey || '')
+    .trim()
+    .toLowerCase()
 
   if (defaultOptionId) {
     const byId = options.find(option => String(option?.optionId || '').trim() === defaultOptionId)
@@ -173,7 +205,12 @@ function resolveQuestionDefaultOption(question = {}, options = []) {
   }
 
   if (defaultOptionKey) {
-    const byKey = options.find(option => String(option?.optionKey || '').trim().toLowerCase() === defaultOptionKey)
+    const byKey = options.find(
+      option =>
+        String(option?.optionKey || '')
+          .trim()
+          .toLowerCase() === defaultOptionKey
+    )
     if (byKey) {
       return byKey
     }
@@ -196,7 +233,8 @@ export function resolveCareBehaviorTimelineAutoAnswerOptionId(question = {}) {
   }
 
   const options = Array.isArray(question?.options) ? question.options : []
-  const sentinelOption = options.find(option => isCareBehaviorTimelineSentinelOption(option)) || null
+  const sentinelOption =
+    options.find(option => isCareBehaviorTimelineSentinelOption(option)) || null
   if (!sentinelOption?.optionId) {
     return ''
   }
@@ -220,12 +258,16 @@ export function resolveCareBehaviorTimelineAutoAnswerOptionId(question = {}) {
 }
 
 export function resolveCareBehaviorTimelineRecordedAnswerOptionId(question = {}) {
-  if (!isCareBehaviorWateringTimelineQuestion(question) || isSessionWateringTimelineQuestion(question)) {
+  if (
+    !isCareBehaviorWateringTimelineQuestion(question) ||
+    isSessionWateringTimelineQuestion(question)
+  ) {
     return ''
   }
 
   const options = Array.isArray(question?.options) ? question.options : []
-  const sentinelOption = options.find(option => isCareBehaviorTimelineSentinelOption(option)) || null
+  const sentinelOption =
+    options.find(option => isCareBehaviorTimelineSentinelOption(option)) || null
   if (sentinelOption?.optionId) {
     return sentinelOption.optionId
   }
@@ -248,7 +290,9 @@ export function isCareBehaviorTimelineUnclearAnswer(question = {}, answerId = ''
   }
 
   const options = Array.isArray(question?.options) ? question.options : []
-  const answerOption = options.find(option => String(option?.optionId || '').trim() === normalizedAnswerId)
+  const answerOption = options.find(
+    option => String(option?.optionId || '').trim() === normalizedAnswerId
+  )
   return Boolean(answerOption && isUncertainCareBehaviorOption(answerOption))
 }
 
@@ -267,7 +311,9 @@ export function isCareBehaviorTimelineSentinelAnswer(question = {}, answerId = '
   }
 
   const options = Array.isArray(question?.options) ? question.options : []
-  const answerOption = options.find(option => String(option?.optionId || '').trim() === normalizedAnswerId)
+  const answerOption = options.find(
+    option => String(option?.optionId || '').trim() === normalizedAnswerId
+  )
   return Boolean(answerOption && isCareBehaviorTimelineSentinelOption(answerOption))
 }
 

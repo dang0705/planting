@@ -22,7 +22,7 @@ const globToRegExp = (pattern) => {
 };
 const matchesAny = (file, patterns = []) => patterns.some((pattern) =>
   globToRegExp(pattern).test(String(file).replaceAll('\\', '/')));
-const run = (args) => execFileSync('git', args, { encoding: 'utf8' }).trim();
+const run = (args) => execFileSync('git', args, { encoding: 'utf8' });
 const statusLines = run(['status', '--short']).split('\n').filter(Boolean);
 const files = statusLines
   .map((line) => line.slice(3).replace(/^.* -> /, '').trim())
