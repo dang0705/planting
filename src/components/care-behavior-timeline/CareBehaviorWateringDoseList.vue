@@ -31,18 +31,20 @@
 </template>
 
 <script setup>
-import { WATERING_BOTTLE_OPTIONS, resolveBottleOptionValue } from '@/utils/water-volume-format.js'
+import { computed } from 'vue'
+import { resolveWateringDoseOptions, resolveBottleOptionValue } from '@/utils/water-volume-format.js'
 
-defineProps({
-  rows: { type: Array, default: () => [] }
+const props = defineProps({
+  rows: { type: Array, default: () => [] },
+  potVolumeMl: { type: Number, default: 0 }
 })
 const emit = defineEmits(['update-dose'])
 
-const bottleOptions = WATERING_BOTTLE_OPTIONS
+const bottleOptions = computed(() => resolveWateringDoseOptions(props.potVolumeMl))
 
 function doseLabel(amountMl) {
-  const value = resolveBottleOptionValue(amountMl)
-  const opt = WATERING_BOTTLE_OPTIONS.find(o => o.value === value)
+  const value = resolveBottleOptionValue(amountMl, bottleOptions.value)
+  const opt = bottleOptions.value.find(o => o.value === value)
   return opt?.label || '不知道'
 }
 
@@ -50,7 +52,7 @@ function isSelected(rowAmountMl, optAmountMl) {
   if (optAmountMl === null) {
     return rowAmountMl === null || rowAmountMl === undefined
   }
-  return resolveBottleOptionValue(rowAmountMl) === resolveBottleOptionValue(optAmountMl)
+  return resolveBottleOptionValue(rowAmountMl, bottleOptions.value) === resolveBottleOptionValue(optAmountMl, bottleOptions.value)
 }
 
 function selectDose(date, amountMl) {

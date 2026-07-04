@@ -144,6 +144,7 @@
             id-prefix="home-watering"
             :timeline="timelineInput"
             :enable-dose-per-date="true"
+            :pot-volume-ml="plannerResult?.potVolumeMl || 0"
             @change="onTimelineChange"
           />
         </view>

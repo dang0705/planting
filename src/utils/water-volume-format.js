@@ -17,6 +17,7 @@ export const BUCKET_ML = 5000
 /**
  * 录入侧「用户上次浇了多少」瓶档选项。
  * value 为该档的代表 ml（提交给后端 amountMl）。
+ * 注意：此为无盆体积时的固定兜底选项，有盆体积时用 resolveWateringDoseOptions 动态生成。
  */
 export const WATERING_BOTTLE_OPTIONS = [
   { label: '不知道', value: null, amountMl: null },
@@ -27,6 +28,59 @@ export const WATERING_BOTTLE_OPTIONS = [
   { label: '两瓶', value: 'two', amountMl: 1100 },
   { label: '约5瓶', value: 'five', amountMl: 2600 }
 ]
+
+/** 落档体积百分比阈值（与后端 classifyDoseByVolumeRatio 一致）。 */
+const VOLUME_RATIO_THRESHOLDS = { MIST_MAX: 0.05, SMALL_MAX: 0.15, NORMAL_MAX: 0.4 }
+
+/**
+ * 按盆体积动态生成录入侧瓶档选项。
+ * 大盆（如 100cm 直径）的"浇透"可能是几十升，固定 5 瓶上限不合理。
+ *
+ * 档位按盆体积百分比生成（与 resolveMlToDoseClass 阈值一致）：
+ *   - 喷一喷：≈3% 体积（mist 档代表值）
+ *   - 少量：≈10% 体积（small 档代表值）
+ *   - 常规：≈25% 体积（normal 档代表值）
+ *   - 浇透：≈50% 体积（thorough 档代表值）
+ *   - 大量：≈80% 体积（超浇透档代表值）
+ *
+ * 单位随档位 ml 自动切换：≤5000ml 用矿泉水瓶，>5000ml 用 5 升油桶。
+ * 无盆体积时退回固定 WATERING_BOTTLE_OPTIONS。
+ *
+ * @param {number} potVolumeMl - 盆体积 ml（≤0 或非法视为无体积）
+ * @returns {Array<{label:string,value:string,amountMl:number}>}
+ */
+export function resolveWateringDoseOptions(potVolumeMl) {
+  const v = toFiniteNumber(potVolumeMl)
+  if (v === null || v <= 0) {
+    return WATERING_BOTTLE_OPTIONS
+  }
+  // 各档代表 ml = 盆体积 × 百分比
+  const mistMl = Math.max(30, Math.round(v * 0.03))
+  const smallMl = Math.round(v * 0.1)
+  const normalMl = Math.round(v * 0.25)
+  const thoroughMl = Math.round(v * 0.5)
+  const heavyMl = Math.round(v * 0.8)
+
+  // 按 ml 量级选单位和标签
+  const labelFor = (ml) => {
+    if (ml >= BUCKET_ML) {
+      const buckets = Math.max(1, Math.round(ml / BUCKET_ML))
+      return `约${buckets}桶`
+    }
+    const bottles = Math.round((ml / BOTTLE_ML) * 2) / 2
+    if (bottles <= 0.5) return '约半瓶'
+    return `约${bottles}瓶`
+  }
+
+  return [
+    { label: '不知道', value: null, amountMl: null },
+    { label: '喷一喷', value: 'spray', amountMl: mistMl },
+    { label: labelFor(smallMl), value: 'quarter', amountMl: smallMl },
+    { label: labelFor(normalMl), value: 'half', amountMl: normalMl },
+    { label: labelFor(thoroughMl), value: 'one', amountMl: thoroughMl },
+    { label: labelFor(heavyMl), value: 'two', amountMl: heavyMl }
+  ]
+}
 
 const MIST_TEXT_MAX_ML = 50
 /** ≥ 5000ml（5 升）改用油桶计量。 */
@@ -102,17 +156,19 @@ export function formatMlRangeToBottleText(rangeMl) {
 
 /**
  * 由 amountMl 反查最接近的瓶档 value（用于回显选中态）。
+ * 支持动态选项列表（有盆体积时传入 resolveWateringDoseOptions 的结果）。
  * @param {number} amountMl
+ * @param {Array} options - 可选，默认用固定 WATERING_BOTTLE_OPTIONS
  * @returns {string|null}
  */
-export function resolveBottleOptionValue(amountMl) {
+export function resolveBottleOptionValue(amountMl, options = WATERING_BOTTLE_OPTIONS) {
   const ml = toFiniteNumber(amountMl)
   if (ml === null || ml <= 0) {
     return null
   }
   let best = null
   let bestDiff = Infinity
-  for (const opt of WATERING_BOTTLE_OPTIONS) {
+  for (const opt of options) {
     if (opt.amountMl === null) {
       continue
     }

@@ -35,6 +35,7 @@
     <CareBehaviorWateringDoseList
       v-if="enableDosePerDate"
       :rows="wateringDoseRows"
+      :pot-volume-ml="potVolumeMl"
       @update-dose="onUpdateDose"
     />
   </view>
@@ -53,7 +54,8 @@ const props = defineProps({
   questionId: { type: String, default: '' },
   timeline: { type: Object, default: () => ({}) },
   idPrefix: { type: String, default: 'diagnose' },
-  enableDosePerDate: { type: Boolean, default: false }
+  enableDosePerDate: { type: Boolean, default: false },
+  potVolumeMl: { type: Number, default: 0 }
 })
 const emit = defineEmits(['change'])
 
