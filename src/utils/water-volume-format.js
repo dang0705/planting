@@ -66,7 +66,9 @@ export function formatMlToBottleText(ml) {
 /**
  * 水量区间 [min,max] → 瓶数文案。与后端 formatMlRangeToBottleText 一致。
  * - 下限 ≤ 50ml 或上下限差 ≤ 50ml → 取上限单值
- * - 否则 → 「约{min}~{max}ml」区间文案
+ * - 都在油桶级（≥5000ml）→ 「约{min}~{max}桶」
+ * - 都在瓶级（50~5000ml）→ 「约{min}~{max}瓶」
+ * - 跨瓶/桶级 → 「约{min}ml~{max}ml」
  * @param {number[]} rangeMl
  * @returns {string}
  */
@@ -80,6 +82,19 @@ export function formatMlRangeToBottleText(rangeMl) {
     return '暂停浇水'
   }
   if (lower !== null && lower > MIST_TEXT_MAX_ML && (upper - lower) > MIST_TEXT_MAX_ML) {
+    if (lower >= BUCKET_TEXT_MIN_ML) {
+      const loBuckets = Math.max(1, Math.round(lower / BUCKET_ML))
+      const hiBuckets = Math.max(loBuckets, Math.round(upper / BUCKET_ML))
+      return `约${loBuckets}~${hiBuckets}桶（5升油桶）`
+    }
+    if (upper < BUCKET_TEXT_MIN_ML) {
+      const loBottles = Math.max(0.5, Math.round((lower / BOTTLE_ML) * 2) / 2)
+      const hiBottles = Math.max(loBottles, Math.round((upper / BOTTLE_ML) * 2) / 2)
+      if (loBottles === hiBottles) {
+        return formatMlToBottleText(upper)
+      }
+      return `约${loBottles}~${hiBottles}瓶（${Math.round(lower)}~${Math.round(upper)}ml）`
+    }
     return `约${Math.round(lower)}~${Math.round(upper)}ml`
   }
   return formatMlToBottleText(upper)

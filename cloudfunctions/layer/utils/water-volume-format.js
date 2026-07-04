@@ -152,7 +152,9 @@ function resolveMlToDoseClass(ml, potVolumeMl) {
  *
  * - [0,0] → 暂停提示
  * - 下限 ≤ 50ml（喷雾级）或上下限差 ≤ 50ml → 退回单值（取上限）
- * - 否则 → 「约{min}~{max}ml」区间文案（保留范围信息）
+ * - 区间都在油桶级（≥5000ml）→ 「约{min}~{max}桶」
+ * - 区间都在瓶级（50~5000ml）→ 「约{min}~{max}瓶」
+ * - 区间跨瓶/桶级 → 「约{min}ml~{max}ml」（不跨单位换算，保留原始 ml）
  *
  * @param {number[]} rangeMl
  * @returns {string}
@@ -168,6 +170,23 @@ function formatMlRangeToBottleText(rangeMl) {
   }
   // 区间跨度足够大且下限非喷雾级时，输出区间文案
   if (lower !== null && lower > MIST_TEXT_MAX_ML && (upper - lower) > MIST_TEXT_MAX_ML) {
+    // 都在油桶级（≥5000ml）→ 换算桶数
+    if (lower >= BUCKET_TEXT_MIN_ML) {
+      const loBuckets = Math.max(1, Math.round(lower / BUCKET_ML))
+      const hiBuckets = Math.max(loBuckets, Math.round(upper / BUCKET_ML))
+      return `约${loBuckets}~${hiBuckets}桶（5升油桶）`
+    }
+    // 都在瓶级（50~5000ml）→ 换算瓶数（0.5瓶粒度）
+    if (upper < BUCKET_TEXT_MIN_ML) {
+      const loBottles = Math.max(0.5, Math.round((lower / BOTTLE_ML) * 2) / 2)
+      const hiBottles = Math.max(loBottles, Math.round((upper / BOTTLE_ML) * 2) / 2)
+      // 瓶数相同时退回单值
+      if (loBottles === hiBottles) {
+        return formatMlToBottleText(upper)
+      }
+      return `约${loBottles}~${hiBottles}瓶（${Math.round(lower)}~${Math.round(upper)}ml）`
+    }
+    // 跨瓶/桶级 → 保留原始 ml
     return `约${Math.round(lower)}~${Math.round(upper)}ml`
   }
   return formatMlToBottleText(upper)

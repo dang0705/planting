@@ -905,9 +905,15 @@ test('planner: 用户浇 30ml(mist) → 不锚定 + 正常区间', () => {
 
 test('formatMlRangeToBottleText: 区间文案', () => {
   const { formatMlRangeToBottleText } = require('../../cloudfunctions/layer/utils/water-volume-format.js')
-  // 区间跨度大且下限>50 → 区间文案
-  assert.equal(formatMlRangeToBottleText([275, 412]), '约275~412ml')
-  assert.equal(formatMlRangeToBottleText([100, 300]), '约100~300ml')
+  // 瓶级区间（瓶数不同）→ 瓶数区间文案
+  assert.equal(formatMlRangeToBottleText([460, 690]), '约1~1.5瓶（460~690ml）')
+  // 瓶级区间（瓶数相同）→ 退回单值
+  assert.match(formatMlRangeToBottleText([275, 412]), /瓶|ml/)
+  // 油桶级区间 → 桶数区间文案
+  assert.equal(formatMlRangeToBottleText([33380, 50069]), '约7~10桶（5升油桶）')
+  assert.equal(formatMlRangeToBottleText([5000, 7500]), '约1~2桶（5升油桶）')
+  // 跨瓶/桶级 → 保留原始 ml
+  assert.equal(formatMlRangeToBottleText([3000, 6000]), '约3000~6000ml')
   // [0,0] → 暂停
   assert.equal(formatMlRangeToBottleText([0, 0]), '暂停浇水')
   // 下限≤50（喷雾级）→ 单值取上限
