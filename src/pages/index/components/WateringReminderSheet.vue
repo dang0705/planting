@@ -181,7 +181,7 @@ import { getEnvironmentWeatherWindow } from '@/api/weather.js'
 import { mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline } from '@/utils/care-behavior-weather-window.js'
 import CareBehaviorTimeline from '@/components/CareBehaviorTimeline.vue'
 import PotProfileEditor from './PotProfileEditor.vue'
-import { formatMlRangeToBottleText, estimatePotVolumeMl } from '@/utils/water-volume-format.js'
+import { formatMlRangeToBottleText, formatMlToBottleText, estimatePotVolumeMl } from '@/utils/water-volume-format.js'
 import waterDefaultIcon from '@/assets/icons/home-card-water-default.svg'
 
 const props = defineProps({
@@ -368,16 +368,24 @@ const plannerSummaryRows = computed(() => {
     const echo = plannerResult.value.userDoseEcho
     // 兼容对象 { doseClass, amountMl } 和旧字符串格式
     const doseClass = typeof echo === 'string' ? echo : echo?.doseClass
-    const echoMap = {
-      unknown: '不确定',
-      mist: '喷一喷',
-      small: '小半瓶',
-      normal: '约一瓶',
-      thorough: '浇到出水'
+    const echoAmountMl = typeof echo === 'object' ? Number(echo?.amountMl) : null
+
+    // doseClass → 盆体积百分比反推代表 ml（与 resolveWateringDoseOptions 口径一致）
+    const doseRatio = { mist: 0.03, small: 0.1, normal: 0.25, thorough: 0.5 }
+    const vol = potVolumeMl.value
+    let doseText = '不确定'
+    if (doseClass === 'mist') {
+      doseText = '喷一喷'
+    } else if (doseClass && doseRatio[doseClass] && vol > 0) {
+      // 优先用后端返回的具体 amountMl，否则按百分比反推
+      const ml = (echoAmountMl && echoAmountMl > 0) ? echoAmountMl : Math.round(vol * doseRatio[doseClass])
+      doseText = formatMlToBottleText(ml)
+    } else if (doseClass === 'thorough') {
+      doseText = '浇到出水'
     }
     rows.push({
       label: '你通常浇',
-      value: echoMap[doseClass] || '约一瓶',
+      value: doseText,
       valueClass: 'text-xs text-gray-500'
     })
   }
