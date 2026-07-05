@@ -85,8 +85,8 @@ if (handoff?.figma?.link) {
   need(prompt.includes(handoff.figma.node_id), 'Figma prompt must include figma.node_id');
   need(/design context|get_design_context|Figma context|设计上下文/i.test(prompt),
     'Figma prompt must require direct design context acquisition');
-  need(/screenshot|get_screenshot|截图/i.test(prompt),
-    'Figma prompt must require direct screenshot acquisition');
+  need(/screenshot|get_screenshot|截图|screenshot_policy_skip|GLM.*截图|AGENTS/i.test(prompt),
+    'Figma prompt must define direct screenshot acquisition or explicit AGENTS/GLM screenshot skip evidence');
   need(/BLOCKED_ZCODE_FIGMA_UNAVAILABLE/.test(prompt),
     'Figma prompt must define BLOCKED_ZCODE_FIGMA_UNAVAILABLE');
 }

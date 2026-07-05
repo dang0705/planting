@@ -30,7 +30,7 @@ assert.equal(resolveSlotForTriggerName('weather-d0-now-afternoon-1820'), '', '�
 assert.equal(resolveSlotForTriggerName('weather-d0-now-sunrise__city_shanghai'), 'sunrise', 'sunrise 触发器应解析为 sunrise slot')
 assert.equal(resolveSlotForTriggerName('weather-d0-now-sunset__city_shanghai'), 'sunset', 'sunset 触发器应解析为 sunset slot，不得解析为 finalize')
 assert.equal(resolveSlotForTriggerName('weather-d0-now-sunrise'), '')
-assert.equal(resolveSlotForTriggerName('weather-d0-now-finalize-2130'), '')
+assert.equal(resolveSlotForTriggerName('weather-d0-now-finalize-2130'), 'finalize')
 assert.equal(resolveSlotForTriggerName('weather-d0-24h-0630'), 'morning')
 assert.equal(resolveSlotForTriggerName('weather-d0-24h-1130'), 'forenoon')
 assert.equal(resolveSlotForTriggerName('weather-d0-24h-1530'), 'afternoon')
@@ -92,12 +92,13 @@ assert.ok(slotTimes.sunset, 'sunset 仍应存在于 sunWindow')
 
 // --- TRIGGER_TO_SLOT 完整性 ---
 // 固定表不含动态 sunrise/sunset，动态前缀由 resolveSlotForTriggerName 解析
-assert.equal(Object.keys(TRIGGER_TO_SLOT).length, 9)
+assert.equal(Object.keys(TRIGGER_TO_SLOT).length, 10)
 assert.equal(TRIGGER_TO_SLOT['weather-d0-now-sunrise-sweep'], 'sunrise')
 assert.equal(TRIGGER_TO_SLOT['weather-d0-now-morning-0720'], 'morning')
 assert.equal(TRIGGER_TO_SLOT['weather-d0-now-forenoon-1120'], 'forenoon')
 assert.equal(TRIGGER_TO_SLOT['weather-d0-now-noon-1420'], 'noon')
 assert.equal(TRIGGER_TO_SLOT['weather-d0-now-afternoon-1620'], 'afternoon')
 assert.equal(TRIGGER_TO_SLOT['weather-d0-now-sunset-sweep'], 'sunset')
+assert.equal(TRIGGER_TO_SLOT['weather-d0-now-finalize-2130'], 'finalize')
 
 console.log('now-sample-slots tests passed')

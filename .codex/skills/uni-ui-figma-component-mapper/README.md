@@ -18,7 +18,7 @@ mkdir -p "$HOME/.agents/skills"
 cp -R uni-ui-figma-component-mapper "$HOME/.agents/skills/"
 ```
 
-如果你的本地 Codex 版本仍扫描 `.codex/skills`，可以把同一目录原样复制过去；但本包按当前官方 `.agents/skills` 结构制作。
+本包按 `.codex/skills` 目录使用；如你的本地运行时使用其他 skills 根目录，请保持目录内容不变，仅调整外层位置。
 
 ## 目录
 

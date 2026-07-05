@@ -83,36 +83,16 @@
           </button>
         </view>
 
-        <view class="grid grid-cols-3 gap-3">
-          <button
-            v-for="city in hotCities"
-            :id="`add-plant-city-option-${city.locationKey}`"
-            :key="city.locationKey"
-            class="relative m-0 h-[58px] rounded-2xl border p-0 text-center leading-normal"
-            :class="
-              isSelectedCity(city)
-                ? 'border-[#00a63e] bg-[#f0fdf4]'
-                : 'border-[#f3f4f6] bg-[#f9fafb]'
-            "
-            @click="selectCity(city, 'manual_selected')"
-          >
-            <text
-              class="block pt-2 text-[14px] font-medium"
-              :class="isSelectedCity(city) ? 'font-semibold text-[#016630]' : 'text-[#364153]'"
-              >{{ city.cityName }}</text
-            >
-            <text
-              v-if="isSelectedCity(city)"
-              class="mt-0.5 block text-[10px] font-medium text-[#00a63e]"
-              >当前定位</text
-            >
-            <text
-              v-if="isSelectedCity(city)"
-              class="absolute right-2 top-1 text-[12px] font-bold text-[#00a63e]"
-              >✓</text
-            >
-          </button>
-        </view>
+        <ChipsSelector
+          :items="cityOptions"
+          :model-value="selectedCityValue"
+          id-prefix="add-plant-city-option"
+          value-key="value"
+          label-key="label"
+          :multiple="false"
+          :get-item-id="item => item.id"
+          @change="handleCityChange"
+        />
       </view>
     </view>
 
@@ -192,6 +172,7 @@ import {
   normalizePlantCareLocation,
   saveSelectedPlantCareLocation
 } from '@/utils/plant-care-location.js'
+import ChipsSelector from '@/components/diagnose-popup/ChipsSelector.vue'
 import LightEnvironmentPicker from '@/components/LightEnvironmentPicker.vue'
 
 const props = defineProps({
@@ -209,6 +190,7 @@ const weatherLocationInitialized = ref(false)
 const selectedCareLocation = computed(() =>
   normalizePlantCareLocation(props.modelValue.careLocation)
 )
+const selectedCityValue = computed(() => selectedCareLocation.value?.locationKey || '')
 const locationStatusText = computed(() => {
   if (locationStatus.value === 'gps_matched') {
     return '已按定位匹配养护城市'
@@ -248,11 +230,24 @@ function selectCity(city, source = 'manual_selected') {
   showCitySheet.value = false
 }
 
-function isSelectedCity(city) {
-  return Boolean(
-    selectedCareLocation.value?.locationKey &&
-    selectedCareLocation.value.locationKey === city.locationKey
-  )
+const cityOptions = computed(() =>
+  hotCities.value.map((city, index) => {
+    const cityLabel = city?.cityName || ''
+    return {
+      value: city.locationKey || `fallback-city-${index}`,
+      label: cityLabel,
+      id: city.locationKey || index,
+      city
+    }
+  })
+)
+
+function handleCityChange(payload) {
+  const targetCityOption = cityOptions.value.find(item => item.value === payload.value)
+  if (!targetCityOption?.city) {
+    return
+  }
+  selectCity(targetCityOption.city, 'manual_selected')
 }
 
 async function loadHotCities() {

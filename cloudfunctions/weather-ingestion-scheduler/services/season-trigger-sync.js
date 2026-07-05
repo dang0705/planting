@@ -32,7 +32,8 @@ const BASE_TIMER_TRIGGERS_FALLBACK = [
   { name: 'weather-d0-now-forenoon-1120', type: 'timer', config: '0 20 11 * * * *' },
   { name: 'weather-d0-now-noon-1420', type: 'timer', config: '0 20 14 * * * *' },
   { name: 'weather-d0-now-afternoon-1620', type: 'timer', config: '0 20 16 * * * *' },
-  { name: 'weather-d0-now-sunset-sweep', type: 'timer', config: '0 */10 17-20 * * * *' }
+  { name: 'weather-d0-now-sunset-sweep', type: 'timer', config: '0 */10 17-20 * * * *' },
+  { name: 'weather-d0-now-finalize-2130', type: 'timer', config: '0 30 21 * * * *' }
 ]
 
 function normalizeTimerTrigger(trigger = {}) {
@@ -222,10 +223,12 @@ function createCloudBaseTriggerClient({ env = process.env, functions = null } = 
     if (typeof resolvedFunctions.createFunctionTriggers !== 'function') {
       throw new Error('CloudBase manager 缺少 createFunctionTriggers')
     }
-    const payload = dedupeTriggers(triggers.map(item => ({
-      ...item,
-      type: 'timer'
-    })))
+    const payload = dedupeTriggers(
+      triggers.map(item => ({
+        ...item,
+        type: 'timer'
+      }))
+    )
     await resolvedFunctions.createFunctionTriggers(functionName, payload)
     return { triggers: payload }
   }
@@ -243,10 +246,7 @@ function createCloudBaseTriggerClient({ env = process.env, functions = null } = 
     if (!triggerName || !cron) {
       throw new Error('更新 timer trigger 缺少 triggerName 或 cron')
     }
-    await replaceTimerTriggers([
-      ...additionalTriggers,
-      { name: triggerName, config: cron }
-    ])
+    await replaceTimerTriggers([...additionalTriggers, { name: triggerName, config: cron }])
     return { triggerName, cron, functionName }
   }
 
@@ -254,10 +254,7 @@ function createCloudBaseTriggerClient({ env = process.env, functions = null } = 
     if (!triggerName || !cron) {
       throw new Error('校验 timer trigger 缺少 triggerName 或 cron')
     }
-    await replaceTimerTriggers([
-      ...additionalTriggers,
-      { name: triggerName, config: cron }
-    ])
+    await replaceTimerTriggers([...additionalTriggers, { name: triggerName, config: cron }])
     return { triggerName, cron, functionName, ensured: true }
   }
 

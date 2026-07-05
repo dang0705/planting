@@ -10,6 +10,7 @@ import {
 } from '@/utils/weather-coordinate.js'
 import { fetchCurrentWeatherQuery } from '@/vue-query/weather/queries/current-weather.js'
 import { fetchEnvironmentWeatherQuery } from '@/vue-query/weather/queries/environment-weather.js'
+import { resolveHotCityByGps } from '@/api/weather-hot-cities.js'
 
 const CITY_LOOKUP_CACHE_TTL_MS = 5 * 60 * 1000
 const cityLookupInflight = new Map()
@@ -60,6 +61,23 @@ function normalizeEnvironmentWeatherWindowPayload(window = null) {
 function isResolvedCityName(city = '') {
   const normalizedCity = String(city || '').trim()
   return Boolean(normalizedCity && normalizedCity !== '当前位置')
+}
+
+function normalizeCityText(city = '') {
+  if (typeof city === 'string') {
+    return city.trim()
+  }
+  if (!city || typeof city !== 'object') {
+    return ''
+  }
+  return normalizeCityText(
+    city.cityName ||
+      city.city ||
+      city.name ||
+      city.cityNameCn ||
+      city.locationName ||
+      city.displayName
+  )
 }
 
 function getCachedCityLookup(cacheKey = '') {
@@ -234,7 +252,28 @@ export async function getCurrentLocation() {
             }
             try {
               console.log('获取位置成功，经纬度:', location.latitude, location.longitude)
-              const cityInfo = await getCityNameByLocation(location.latitude, location.longitude)
+              let cityInfo = await getCityNameByLocation(location.latitude, location.longitude)
+              if (!isResolvedCityName(cityInfo?.city)) {
+                try {
+                  const hotCity = await resolveHotCityByGps({
+                    latitude: location.latitude,
+                    longitude: location.longitude
+                  })
+                  const hotCityName = normalizeCityText(
+                    hotCity?.cityName || hotCity?.city || hotCity?.name || ''
+                  )
+                  if (isResolvedCityName(hotCityName)) {
+                    cityInfo = {
+                      ...cityInfo,
+                      city: hotCityName,
+                      province: cityInfo.province || hotCity?.province || '',
+                      district: cityInfo.district || hotCity?.district || ''
+                    }
+                  }
+                } catch {
+                  // 热门城市兜底失败时保留原始回退值（如‘当前位置’）
+                }
+              }
               console.log('获取城市信息成功:', cityInfo)
               resolve({
                 latitude: location.latitude,

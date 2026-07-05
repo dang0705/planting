@@ -62,6 +62,8 @@ Forbidden:
 ## Figma Direct Fetch
 {figma_direct_fetch_or_not_applicable}
 
+截图规则：若当前运行模型为 GLM 且 AGENTS 规则要求跳过 `get_screenshot`，不要调用截图工具；必须在 `figma_fetch_evidence.screenshot_policy_skip` 记录 `allowed=true` 与 `policy_ref`。若没有足够设计上下文，则返回 `BLOCKED_ZCODE_FIGMA_UNAVAILABLE`，不得猜 UI。
+
 ## Figma Blocker Policy
 {figma_blocker_policy_or_not_applicable}
 

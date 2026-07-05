@@ -1,68 +1,75 @@
 <template>
-  <view id="diagnosis-result-page" class="min-h-screen bg-[#F8F6F0] px-4 py-6">
-    <view id="diagnosis-result-page-main-card" class="bg-white rounded-3xl p-5 shadow-sm">
-      <text class="block text-lg font-bold text-gray-900 mb-1">诊断结果承接页</text>
-      <text class="block text-xs text-gray-500 mb-4">
-        主诊断流程已收敛到首页弹窗 DiagnosePopup，本页仅展示只读结果。
-      </text>
+  <Layout title="AI 诊断" left-action="back" background-class="bg-[#F8F6F0]">
+    <view id="diagnosis-result-page" class="min-h-screen bg-[#F8F6F0] px-4 py-6">
+      <view id="diagnosis-result-page-main-card" class="bg-white rounded-3xl p-5 shadow-sm">
+        <text class="block text-lg font-bold text-gray-900 mb-1">诊断结果承接页</text>
+        <text class="block text-xs text-gray-500 mb-4">
+          主诊断流程已收敛到首页弹窗 DiagnosePopup，本页仅展示只读结果。
+        </text>
 
-      <view v-if="loading" id="diagnosis-result-page-loading" class="py-4">
-        <text class="block text-sm text-gray-500">加载中...</text>
-      </view>
+        <view v-if="loading" id="diagnosis-result-page-loading" class="py-4">
+          <text class="block text-sm text-gray-500">加载中...</text>
+        </view>
 
-      <view v-else-if="viewModel" id="diagnosis-result-page-result" class="space-y-3">
-        <view id="diagnosis-result-page-plant">
-          <text class="block text-xs text-gray-500">植物</text>
-          <text class="block text-sm text-gray-900">{{ viewModel.plantName }}</text>
-        </view>
-        <view id="diagnosis-result-page-stage">
-          <text class="block text-xs text-gray-500">当前阶段</text>
-          <text class="block text-sm text-gray-900">{{ viewModel.stage }}</text>
-        </view>
-        <view id="diagnosis-result-page-main-issue">
-          <text class="block text-xs text-gray-500">诊断结论</text>
-          <text class="block text-sm text-gray-900">
-            {{ viewModel.mainIssue }}
-          </text>
-        </view>
-        <view
-          v-if="viewModel.outcomeItems.length"
-          id="diagnosis-result-page-outcome-list"
-          class="rounded-2xl bg-[#F7FAF5] p-4 space-y-2"
-        >
-          <text class="block text-xs text-gray-500">诊断结论</text>
-          <view class="space-y-2">
-            <view
-              v-for="item in viewModel.outcomeItems"
-              :key="item.key"
-              class="rounded-xl bg-white px-3 py-2 border border-gray-200"
-            >
-              <text class="block text-sm text-gray-900">{{ item.label }}</text>
+        <view v-else-if="viewModel" id="diagnosis-result-page-result" class="space-y-3">
+          <view id="diagnosis-result-page-plant">
+            <text class="block text-xs text-gray-500">植物</text>
+            <text class="block text-sm text-gray-900">{{ viewModel.plantName }}</text>
+          </view>
+          <view id="diagnosis-result-page-stage">
+            <text class="block text-xs text-gray-500">当前阶段</text>
+            <text class="block text-sm text-gray-900">{{ viewModel.stage }}</text>
+          </view>
+          <view id="diagnosis-result-page-main-issue">
+            <text class="block text-xs text-gray-500">诊断结论</text>
+            <text class="block text-sm text-gray-900">
+              {{ viewModel.mainIssue }}
+            </text>
+          </view>
+          <view
+            v-if="viewModel.outcomeItems.length"
+            id="diagnosis-result-page-outcome-list"
+            class="rounded-2xl bg-[#F7FAF5] p-4 space-y-2"
+          >
+            <text class="block text-xs text-gray-500">诊断结论</text>
+            <view class="space-y-2">
+              <view
+                v-for="item in viewModel.outcomeItems"
+                :key="item.key"
+                class="rounded-xl bg-white px-3 py-2 border border-gray-200"
+              >
+                <text class="block text-sm text-gray-900">{{ item.label }}</text>
+              </view>
             </view>
           </view>
+          <view v-if="viewModel.summary" id="diagnosis-result-page-summary">
+            <text class="block text-xs text-gray-500">摘要</text>
+            <text class="block text-sm text-gray-700 whitespace-pre-line">
+              {{ viewModel.summary }}
+            </text>
+          </view>
         </view>
-        <view v-if="viewModel.summary" id="diagnosis-result-page-summary">
-          <text class="block text-xs text-gray-500">摘要</text>
-          <text class="block text-sm text-gray-700 whitespace-pre-line">
-            {{ viewModel.summary }}
-          </text>
+
+        <view v-else id="diagnosis-result-page-empty">
+          <text class="block text-sm text-gray-600">暂无可展示的诊断记录。</text>
         </view>
       </view>
 
-      <view v-else id="diagnosis-result-page-empty">
-        <text class="block text-sm text-gray-600">暂无可展示的诊断记录。</text>
-      </view>
+      <button
+        id="diagnosis-result-page-home-button"
+        class="w-full mt-4 bg-primary text-white font-semibold py-3 rounded-2xl"
+        @click="goHome"
+      >
+        返回首页继续诊断
+      </button>
     </view>
-
-    <button id="diagnosis-result-page-home-button" class="w-full mt-4 bg-primary text-white font-semibold py-3 rounded-2xl" @click="goHome">
-      返回首页继续诊断
-    </button>
-  </view>
+  </Layout>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+import Layout from '@/Layout.vue'
 import { useDiagnoseStore } from '@/store/diagnose.js'
 import { getDiagnosisResult } from '@/api/plants-http.js'
 import { normalizeDiagnosisResult } from '@/utils/diagnose-flow.js'
@@ -81,8 +88,12 @@ onLoad(options => {
 
 const localRecord = computed(() => {
   const list = diagnoseStore.history || []
-  if (!list.length) {return null}
-  if (!routeId.value) {return list[0]}
+  if (!list.length) {
+    return null
+  }
+  if (!routeId.value) {
+    return list[0]
+  }
   return (
     list.find(item => {
       const diagnosis = item?.diagnosis || item
@@ -92,8 +103,7 @@ const localRecord = computed(() => {
         String(diagnosis?.diagnosisSessionId || '') === routeId.value ||
         String(diagnosis?.resultId || '') === routeId.value
       )
-    }) ||
-    list[0]
+    }) || list[0]
   )
 })
 
@@ -131,11 +141,13 @@ function normalizeOutcomeDisplayKey(outcome = null, index = 0) {
 }
 
 function buildOutcomeDisplayItems(diagnosis = {}) {
-  const visibleOutcomes = Array.isArray(diagnosis.visibleOutcomes) && diagnosis.visibleOutcomes.length
-    ? diagnosis.visibleOutcomes
-    : Array.isArray(diagnosis.finalResult?.visibleOutcomes) && diagnosis.finalResult.visibleOutcomes.length
-      ? diagnosis.finalResult.visibleOutcomes
-      : []
+  const visibleOutcomes =
+    Array.isArray(diagnosis.visibleOutcomes) && diagnosis.visibleOutcomes.length
+      ? diagnosis.visibleOutcomes
+      : Array.isArray(diagnosis.finalResult?.visibleOutcomes) &&
+          diagnosis.finalResult.visibleOutcomes.length
+        ? diagnosis.finalResult.visibleOutcomes
+        : []
 
   const seen = new Set()
   return visibleOutcomes
@@ -163,11 +175,7 @@ function buildOutcomeDisplayItems(diagnosis = {}) {
 const resolvedPlantName = computed(() => {
   const local = localRecord.value
   const localDiagnosis = local?.diagnosis || local
-  return String(
-    localDiagnosis?.plantName ||
-      remoteResult.value?.plantName ||
-      '植物'
-  ).trim()
+  return String(localDiagnosis?.plantName || remoteResult.value?.plantName || '植物').trim()
 })
 
 const normalizedRemoteResult = computed(() => {

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Worktree Baseline",
+  "type": "object",
+  "required": ["captured_at", "git_root", "head", "status_files", "status_entries", "dirty"],
+  "properties": {
+    "captured_at": { "type": "string" },
+    "git_root": { "type": "string" },
+    "head": { "type": "string" },
+    "status_files": { "type": "array", "items": { "type": "string" } },
+    "status_entries": { "type": "array" },
+    "dirty": { "type": "boolean" }
+  }
+}

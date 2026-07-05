@@ -34,6 +34,11 @@
       "name": "weather-d0-now-sunset-sweep",
       "type": "timer",
       "config": "0 */10 17-20 * * * *"
+    },
+    {
+      "name": "weather-d0-now-finalize-2130",
+      "type": "timer",
+      "config": "0 30 21 * * * *"
     }
   ]
 }

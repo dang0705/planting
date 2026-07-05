@@ -1,10 +1,10 @@
 name = "qa_reviewer"
 description = "独立 QA：负责 e2e、端上、UI/Figma 与运行时验收；不做代码 review，不运行单测。"
-model = "glm-latest"
-model_provider = "volcengine-coding-plan"
-model_reasoning_effort = "medium"
-model_reasoning_summary = "none"
-model_supports_reasoning_summaries = false
+model = "gpt-5.4"
+#model_provider = "volcengine-coding-plan"
+model_reasoning_effort = "xhigh"
+#model_reasoning_summary = "none"
+#model_supports_reasoning_summaries = false
 sandbox_mode = "read-only"
 nickname_candidates = ["QA"]
 developer_instructions = """

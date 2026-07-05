@@ -81,8 +81,12 @@ need(cu.manual_typing_used === false,
 if (alternativeUsed) {
   need(isObject(alternative), 'alternative_ui_automation must be an object when used');
   need(
-    alternative.user_authorized_in_current_turn === true || alternative.preauthorized_by_dispatch_standard === true,
-    'alternative_ui_automation must record current user authorization or dispatch-standard preauthorization'
+    alternative.user_authorized_in_current_turn === true,
+    'alternative_ui_automation requires explicit user authorization in the current turn'
+  );
+  need(
+    alternative.preauthorized_by_dispatch_standard !== true,
+    'alternative_ui_automation cannot rely on dispatch-standard preauthorization'
   );
   need(Array.isArray(alternative.tools) && alternative.tools.length >= 1 && alternative.tools.every(nonEmptyString),
     'alternative_ui_automation.tools must contain at least one tool');
@@ -124,8 +128,6 @@ if (receipt.status === 'blocked') {
       'computer_use_unavailable requires computer_use.tool_invoked=false');
     validateToolInvocationEvidence(cu, false);
   }
-  need(receipt.blocked_reason !== 'computer_use_required_actions_unavailable',
-    'computer_use_required_actions_unavailable is deprecated; verified alternative_ui_automation must be attempted before blocking');
   if (receipt.blocked_reason === 'alternative_ui_automation_unavailable') {
     need(alternative.attempted === true,
       'alternative_ui_automation_unavailable requires alternative_ui_automation.attempted=true');

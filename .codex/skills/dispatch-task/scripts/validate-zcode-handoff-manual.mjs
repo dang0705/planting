@@ -60,19 +60,22 @@ need(isObject(manual.validation_claims),
   'manual.validation_claims must be an object');
 need(Array.isArray(manual.blockers), 'manual.blockers must be an array');
 
+const blockers = Array.isArray(manual.blockers) ? manual.blockers : [];
+const changedFilesClaimed = Array.isArray(manual.changed_files_claimed) ? manual.changed_files_claimed : [];
+
 if (manual.status === 'completed') {
   need(['validation', 'final'].includes(manual.phase),
     'completed manual.phase must be validation or final');
-  need(manual.blockers.length === 0, 'completed handoff manual cannot contain blockers');
+  need(blockers.length === 0, 'completed handoff manual cannot contain blockers');
   if (handoff?.task?.code_changes_required === true) {
-    need(manual.changed_files_claimed.length > 0,
+    need(changedFilesClaimed.length > 0,
       'completed code task requires changed_files_claimed');
   }
 }
 
 if (manual.status === 'blocked') {
   need(manual.phase === 'blocked', 'blocked manual.phase must be blocked');
-  need(manual.blockers.length > 0, 'blocked handoff manual requires blockers');
+  need(blockers.length > 0, 'blocked handoff manual requires blockers');
 }
 
 if (manual.status === 'working') {

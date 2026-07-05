@@ -27,6 +27,7 @@ const TRIGGER_TO_SLOT = {
   'weather-d0-now-noon-1420': 'noon',
   'weather-d0-now-afternoon-1620': 'afternoon',
   [SUNSET_SWEEP_TRIGGER]: 'sunset',
+  'weather-d0-now-finalize-2130': NOW_SAMPLE_FINALIZE_SLOT,
   'weather-d0-24h-0630': 'morning',
   'weather-d0-24h-1130': 'forenoon',
   'weather-d0-24h-1530': 'afternoon'

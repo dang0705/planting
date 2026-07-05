@@ -23,14 +23,17 @@ prompt 必须一次性剪贴板粘贴；禁止逐字输入。
 
 ## 替代 UI 自动化
 
-如果 Computer Use 能确认 ZCode 会话和输入框，但当前工具不提供粘贴/发送动作，可使用已验证替代通道：系统剪贴板 + macOS UI 自动化。前提是：
+默认禁止用 shell、AppleScript、osascript、cliclick、xdotool 或类似脚本伪装完成 UI 操作。
 
-1. Computer Use 已确认前台应用、会话和输入框。
-2. 只从剪贴板一次性粘贴，不逐字输入。
-3. 发送后再由 Computer Use 确认消息进入会话。
-4. receipt 记录 `alternative_ui_automation.used=true` 与安全控制。
+只有在以下条件全部满足时，才能使用替代 UI 自动化：
 
-若完全没有 Computer Use / UI automation 工具，必须 `blocked: computer_use_unavailable`。
+1. 用户在当前会话明确授权替代方案。
+2. Computer Use 已确认前台应用、目标会话和输入框。
+3. 仍然只从剪贴板一次性粘贴，不逐字输入。
+4. 发送后仍由 Computer Use 确认消息进入会话。
+5. send receipt 记录 `alternative_ui_automation.used=true`、`user_authorized_in_current_turn=true` 与安全控制。
+
+不存在“dispatch 标准预授权”。没有用户当前明确授权时，工具不可用就必须 `blocked: computer_use_unavailable`。
 
 ## 发送后低频回收
 

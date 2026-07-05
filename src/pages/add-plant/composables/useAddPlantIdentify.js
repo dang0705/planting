@@ -1,5 +1,6 @@
 import { identifyPlantByImage } from '@/api/plants-http.js'
 import { getImageUrl, uploadPlantImage } from '@/api/storage.js'
+import { showBottomSheetAction } from '@/utils/bottom-sheet-action.js'
 
 function isRetryableRequestError(error) {
   return /timeout|timed out|network error|request:fail|fail timeout/i.test(
@@ -173,21 +174,22 @@ export function useAddPlantIdentify({
       applyIdentifySelection(null, result.name.trim(), result, 'recognized_name')
       return
     }
-    uni.showActionSheet({
+    showBottomSheetAction({
+      title: '选择识别结果',
       itemList: [
         ...candidates.slice(0, 5).map(item => item.canonicalName),
         `使用识别名称：${result.name.trim()}`
-      ],
-      success: action => {
+      ]
+    })
+      .then(action => {
         const chosen = candidates[action.tapIndex]
         if (chosen) {
           applyIdentifySelection(chosen, '', result, 'candidate')
         } else {
           applyIdentifySelection(null, result.name.trim(), result, 'recognized_name')
         }
-      },
-      fail: () => (showAIDialog.value = false)
-    })
+      })
+      .catch(() => (showAIDialog.value = false))
   }
 
   function handleAIRetry() {

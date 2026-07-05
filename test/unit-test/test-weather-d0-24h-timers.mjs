@@ -142,6 +142,8 @@ try {
   assert.equal(schedulerTriggersByName.get('weather-d0-now-afternoon-1620').config, '0 20 16 * * * *')
   assert.equal(schedulerTriggersByName.has('weather-d0-now-sunset-sweep'), true)
   assert.equal(schedulerTriggersByName.get('weather-d0-now-sunset-sweep').config, '0 */10 17-20 * * * *')
+  assert.equal(schedulerTriggersByName.has('weather-d0-now-finalize-2130'), true)
+  assert.equal(schedulerTriggersByName.get('weather-d0-now-finalize-2130').config, '0 30 21 * * * *')
   // 旧定时器名不应存在
   assert.equal(schedulerTriggersByName.has('weather-d0-now-morning-0920'), false, '旧 morning-0920 不应存在')
   assert.equal(schedulerTriggersByName.has('weather-d0-now-forenoon-1220'), false, '旧 forenoon-1220 不应存在')
@@ -206,7 +208,8 @@ try {
   )
   assert.equal(
     isD0Weather24hTimerEvent({ Type: 'Timer', TriggerName: 'weather-d0-now-finalize-2130' }),
-    false
+    true,
+    'finalize-2130 应被识别为 D0 timer 事件'
   )
 
   // 2a) sunset 是 D0 最后一枪 sample，不是 finalize
@@ -391,6 +394,28 @@ try {
     false,
     'days/{date}.json.samples[] 不得包含 slotName=finalize'
   )
+
+  process.env.WEATHER_HOT_CITY_INGESTION_KEYS = 'city:shanghai'
+  const finalizeTimerResponse = await schedulerApp.main(
+    { Type: 'Timer', TriggerName: 'weather-d0-now-finalize-2130', targetDate: '2026-06-18' },
+    {}
+  )
+  assert.equal(finalizeTimerResponse.code, 200)
+  assert.equal(finalizeTimerResponse.data.finalized, true)
+  assert.equal(finalizeTimerResponse.data.attempted, 1)
+  assert.equal(finalizeTimerResponse.data.succeeded, 1)
+  assert.equal(finalizeTimerResponse.data.failed, 0)
+  assert.equal(finalizeTimerResponse.data.cities[0].locationKey, 'city:shanghai')
+  assert.equal(
+    finalizeTimerResponse.data.cities[0].recentObjectPath,
+    'weather-cache/v1/locations/city:shanghai/recent-10d.json'
+  )
+  assert.equal(
+    storageObjects.has('weather-cache/v1/locations/city:shanghai/recent-10d.json'),
+    true,
+    'finalize timer 成功后应预生成 recent-10d'
+  )
+  delete process.env.WEATHER_HOT_CITY_INGESTION_KEYS
 
   // 5) 审计日志：4 working = 4 records
   const auditPath = buildD0TimerAuditPath({ date: '2026-06-18' })

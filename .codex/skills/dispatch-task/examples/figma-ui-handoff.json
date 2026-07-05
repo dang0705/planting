@@ -84,7 +84,8 @@
       "independent Figma baseline",
       "runtime screenshot",
       "interaction path"
-    ]
+    ],
+    "worktree_baseline_path": ".tmp/dispatch-task/example-ui-001-worktree-baseline.json"
   },
   "output_evidence_required": [
     "validation_evidence",

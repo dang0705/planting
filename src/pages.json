@@ -16,6 +16,7 @@
     {
       "path": "pages/plant-detail/plant-detail",
       "style": {
+        "navigationStyle": "custom",
         "navigationBarTitleText": "植物详情",
         "navigationBarBackgroundColor": "#2D7A4F",
         "navigationBarTextStyle": "white"
@@ -24,6 +25,7 @@
     {
       "path": "pages/add-plant/add-plant",
       "style": {
+        "navigationStyle": "custom",
         "navigationBarTitleText": "添加植物",
         "navigationBarBackgroundColor": "#2D7A4F",
         "navigationBarTextStyle": "white"
@@ -32,6 +34,7 @@
     {
       "path": "pages/diagnose/diagnose",
       "style": {
+        "navigationStyle": "custom",
         "navigationBarTitleText": "AI 诊断",
         "navigationBarBackgroundColor": "#2D7A4F",
         "navigationBarTextStyle": "white"
@@ -40,6 +43,7 @@
     {
       "path": "pages/diagnose/question-package",
       "style": {
+        "navigationStyle": "custom",
         "navigationBarTitleText": "继续问诊",
         "navigationBarBackgroundColor": "#2D7A4F",
         "navigationBarTextStyle": "white"
@@ -62,6 +66,7 @@
     {
       "path": "pages/profile/out-of-pool-review",
       "style": {
+        "navigationStyle": "custom",
         "navigationBarTitleText": "池外视觉审核",
         "navigationBarBackgroundColor": "#2F5D50",
         "navigationBarTextStyle": "white"
@@ -70,6 +75,7 @@
     {
       "path": "pages/profile/diagnosis-review",
       "style": {
+        "navigationStyle": "custom",
         "navigationBarTitleText": "诊断记录管理",
         "navigationBarBackgroundColor": "#2F5D50",
         "navigationBarTextStyle": "white"
@@ -78,6 +84,7 @@
     {
       "path": "pages/profile/watering-review",
       "style": {
+        "navigationStyle": "custom",
         "navigationBarTitleText": "浇水算法审计",
         "navigationBarBackgroundColor": "#2F5D50",
         "navigationBarTextStyle": "white"

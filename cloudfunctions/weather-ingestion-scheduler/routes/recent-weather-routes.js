@@ -29,6 +29,7 @@ const D0_WEATHER_24H_TIMER_TRIGGERS = new Set([
   'weather-d0-now-noon-1420',
   'weather-d0-now-afternoon-1620',
   SUNSET_SWEEP_TRIGGER,
+  'weather-d0-now-finalize-2130',
   'weather-d0-24h-0630',
   'weather-d0-24h-1130',
   'weather-d0-24h-1530'
@@ -273,11 +274,12 @@ function toTimerCity(city = {}) {
 }
 
 function resolveSunSweepCities({ triggerName = '', targetDate = '', now = new Date() } = {}) {
-  const slot = triggerName === SUNRISE_SWEEP_TRIGGER
-    ? 'sunrise'
-    : triggerName === SUNSET_SWEEP_TRIGGER
-      ? 'sunset'
-      : ''
+  const slot =
+    triggerName === SUNRISE_SWEEP_TRIGGER
+      ? 'sunrise'
+      : triggerName === SUNSET_SWEEP_TRIGGER
+        ? 'sunset'
+        : ''
   if (!slot) {
     return null
   }
@@ -294,9 +296,8 @@ function resolveSunSweepCities({ triggerName = '', targetDate = '', now = new Da
         },
         date
       })
-      const dueMinute = slot === 'sunrise'
-        ? sunTimes.sunriseMinuteOfDay
-        : sunTimes.sunsetMinuteOfDay
+      const dueMinute =
+        slot === 'sunrise' ? sunTimes.sunriseMinuteOfDay : sunTimes.sunsetMinuteOfDay
       return Math.abs(currentMinute - dueMinute) <= SUN_SWEEP_WINDOW_MINUTES
     })
     .map(toTimerCity)
@@ -369,10 +370,30 @@ async function handleD0Weather24hTimerEvent({ event = {}, service } = {}) {
     cities: scopedCities,
     batchSize: scopedCities ? scopedCities.length : null
   })
+  const shouldRebuildRecentAfterFinalize = Boolean(loaded.manifest?.finalized)
   const advance = await manifestService.advanceManifest({
     manifest: loaded.manifest,
     cloudPath: loaded.cloudPath,
-    worker: city => service.updateNowSample(city)
+    worker: async city => {
+      const result = await service.updateNowSample(city)
+      if (!shouldRebuildRecentAfterFinalize || !result?.finalized) {
+        return result
+      }
+      const recentResult = await service.ingestRecentForecast({
+        locationKey: city.locationKey || city.key,
+        cityName: city.cityName || city.name || '',
+        latitude: city.latitude,
+        longitude: city.longitude,
+        timezone: 'Asia/Shanghai',
+        targetDate: loaded.manifest.date
+      })
+      return {
+        ...result,
+        recentObjectPath: recentResult.recentObjectPath || '',
+        recentPayload: recentResult.recentPayload || null,
+        recentFileId: recentResult.recentFileId || ''
+      }
+    }
   })
 
   const endAt = formatIsoInTimezone(new Date(), 'Asia/Shanghai')

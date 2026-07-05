@@ -75,7 +75,8 @@ Tailwind 项目中，新增 UI 默认使用 Tailwind utility、项目 token、un
 ## Figma Direct Fetch
 Figma link: https://figma.com/design/example/file?node-id=10-20
 Node id: 10:20
-你必须在 ZCode 内直接获取 Figma metadata + design context + screenshot，并在首次 UI 编辑前完成。Result JSON 必须包含 figma_fetch_evidence。
+你必须在 ZCode 内直接获取 Figma metadata + design context，并在首次 UI 编辑前完成。
+若当前运行模型为 GLM 且 AGENTS 规则要求跳过 get_screenshot，则不要调用 get_screenshot；在 Result JSON 的 figma_fetch_evidence 中写入 screenshot_policy_skip，并引用 AGENTS 规则。若无法取得足够设计上下文，返回 BLOCKED_ZCODE_FIGMA_UNAVAILABLE，不得猜 UI。Result JSON 必须包含 figma_fetch_evidence。
 
 ## Figma Blocker Policy
 如果 ZCode 当前环境没有 Figma 能力、没有权限、节点无效或 context 不足，立即输出 BLOCKED_ZCODE_FIGMA_UNAVAILABLE，不得根据 main Lite、记忆或猜测实现 UI。

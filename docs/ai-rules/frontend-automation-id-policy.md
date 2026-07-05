@@ -29,6 +29,8 @@
 
 | 步骤                     | 文件                                      | 稳定 id                                                                                              | 操作 / 断言                                                               |
 | ------------------------ | ----------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| 首页天气位置             | `src/components/HeaderWeatherInfo.vue`    | `header-weather-location-button`                                                                     | 点击刷新定位 / 天气                                                       |
+| 首页天气缓存开关         | `src/components/HeaderWeatherInfo.vue`    | `header-weather-cache-toggle`                                                                        | 点击切换天气缓存                                                          |
 | 首页进入诊断             | `src/pages/index/index.vue`               | `diagnose-entry-button-{plant.id}`                                                                   | 点击打开诊断弹窗                                                          |
 | 植物详情进入诊断         | `src/pages/plant-detail/plant-detail.vue` | `plant-detail-diagnose-button`                                                                       | 点击打开诊断弹窗                                                          |
 | 诊断弹窗根容器           | `src/components/DiagnosePopup.vue`        | `diagnose-popup-panel`                                                                               | 断言弹窗已打开                                                            |

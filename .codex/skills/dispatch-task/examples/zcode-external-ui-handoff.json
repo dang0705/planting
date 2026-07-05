@@ -161,7 +161,8 @@
       "independent Figma baseline",
       "runtime screenshot",
       "interaction path"
-    ]
+    ],
+    "worktree_baseline_path": ".tmp/dispatch-task/example-zcode-ui-001-worktree-baseline.json"
   },
   "output_evidence_required": [
     "zcode_send_receipt",
@@ -173,5 +174,5 @@
     "component_reuse_evidence",
     "uni_ui_mapping_evidence"
   ],
-  "dispatch_tier": "external_zcode"
+  "dispatch_tier": "zcode_external"
 }

@@ -472,7 +472,7 @@ assert.equal(nestedRollup.quality, 'complete')
 assert.ok(nestedRollup.sampleSummary, 'sampleSummary must exist')
 assert.equal(nestedRollup.sampleSummary.sampleCount, 4)
 assert.equal(nestedRollup.sampleSummary.daylightSampleCount, 4)
-assert.deepEqual(nestedRollup.sampleSummary.missingSlots, [])
+assert.deepEqual(nestedRollup.sampleSummary.missingSlots, ['sunrise', 'sunset'])
 
 assert.ok(nestedRollup.lightFeatures, 'lightFeatures must exist')
 assert.ok(nestedRollup.lightFeatures.daylightCloudMean !== null)
@@ -499,6 +499,6 @@ const partialSamples = [
 const partialRollup = _bdr({ samples: partialSamples, sunWindow: {}, date: '2026-06-18', generatedAt: 'now' })
 assert.equal(partialRollup.sampleSummary.sampleCount, 2)
 assert.equal(partialRollup.sampleSummary.daylightSampleCount, 2)
-assert.deepEqual(partialRollup.sampleSummary.missingSlots, ['forenoon', 'afternoon'])
+assert.deepEqual(partialRollup.sampleSummary.missingSlots, ['sunrise', 'forenoon', 'afternoon', 'sunset'])
 
 console.log('now-sample-day-file tests passed (with nested rollup coverage)')

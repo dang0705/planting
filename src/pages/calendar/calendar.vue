@@ -1,197 +1,200 @@
 <template>
-  <view class="min-h-screen bg-[#F8F6F0]">
-    <!-- 天气预报 -->
-    <view class="bg-gradient-to-br from-[#52B788] to-primary px-4 py-6 text-white">
-      <view class="flex items-center justify-between mb-4">
-        <view>
-          <text class="block text-2xl font-bold mb-1">{{ weather.current?.temp || '22' }}°C</text>
-          <text class="block text-sm opacity-90">{{ weather.current?.desc || '晴' }}</text>
-        </view>
-        <text class="text-5xl">{{ weather.current?.icon || '🌤️' }}</text>
-      </view>
-
-      <!-- 7天预报 -->
-      <view class="flex gap-2 overflow-x-auto">
-        <view
-          v-for="day in weather.forecast"
-          :key="day.date"
-          class="flex-shrink-0 bg-white/20 rounded-2xl px-3 py-2 text-center"
-        >
-          <text class="block text-xs opacity-80 mb-1">{{ day.weekday }}</text>
-          <text class="block text-lg mb-1">{{ day.icon }}</text>
-          <text class="block text-xs font-semibold">{{ day.temp }}°</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 二十四节气 -->
-    <view class="px-4 py-4 bg-white">
-      <view class="flex items-center justify-between">
-        <view class="flex items-center">
-          <text class="text-2xl mr-2">🌾</text>
+  <Layout title="养护日历" background-class="bg-[#F8F6F0]">
+    <view class="min-h-screen bg-[#F8F6F0]">
+      <!-- 天气预报 -->
+      <view class="bg-gradient-to-br from-[#52B788] to-primary px-4 py-6 text-white">
+        <view class="flex items-center justify-between mb-4">
           <view>
-            <text class="block text-base font-semibold text-gray-900">{{
-              currentSolarTerm.name
-            }}</text>
-            <text class="block text-xs text-gray-600">{{ currentSolarTerm.date }}</text>
+            <text class="block text-2xl font-bold mb-1">{{ weather.current?.temp || '22' }}°C</text>
+            <text class="block text-sm opacity-90">{{ weather.current?.desc || '晴' }}</text>
+          </view>
+          <text class="text-5xl">{{ weather.current?.icon || '🌤️' }}</text>
+        </view>
+
+        <!-- 7天预报 -->
+        <view class="flex gap-2 overflow-x-auto">
+          <view
+            v-for="day in weather.forecast"
+            :key="day.date"
+            class="flex-shrink-0 bg-white/20 rounded-2xl px-3 py-2 text-center"
+          >
+            <text class="block text-xs opacity-80 mb-1">{{ day.weekday }}</text>
+            <text class="block text-lg mb-1">{{ day.icon }}</text>
+            <text class="block text-xs font-semibold">{{ day.temp }}°</text>
           </view>
         </view>
-        <text class="text-xs text-primary" @click="viewSolarTerms">查看全部</text>
       </view>
-      <text class="block text-sm text-gray-700 mt-3">{{ currentSolarTerm.tip }}</text>
-    </view>
 
-    <view v-if="selectedReminderFocus" class="px-4 py-4">
-      <view class="rounded-2xl bg-white p-4 shadow-sm">
-        <view class="mb-3 flex items-center justify-between">
-          <view class="min-w-0 flex-1">
-            <text class="block text-base font-semibold text-gray-900">
-              {{ selectedReminderFocus.plantName }}
-            </text>
-            <text class="block text-xs text-gray-500">
-              已定位到{{ getTaskName(selectedReminderFocus.type) }}提醒设置
-            </text>
+      <!-- 二十四节气 -->
+      <view class="px-4 py-4 bg-white">
+        <view class="flex items-center justify-between">
+          <view class="flex items-center">
+            <text class="text-2xl mr-2">🌾</text>
+            <view>
+              <text class="block text-base font-semibold text-gray-900">{{
+                currentSolarTerm.name
+              }}</text>
+              <text class="block text-xs text-gray-600">{{ currentSolarTerm.date }}</text>
+            </view>
           </view>
-          <view
-            class="rounded-full px-3 py-1"
-            :class="focusedReminderState.active ? 'bg-[#DBEAFE]' : 'bg-gray-100'"
-          >
-            <text
-              class="text-xs font-semibold"
-              :class="focusedReminderState.active ? 'text-[#2563EB]' : 'text-gray-500'"
+          <text class="text-xs text-primary" @click="viewSolarTerms">查看全部</text>
+        </view>
+        <text class="block text-sm text-gray-700 mt-3">{{ currentSolarTerm.tip }}</text>
+      </view>
+
+      <view v-if="selectedReminderFocus" class="px-4 py-4">
+        <view class="rounded-2xl bg-white p-4 shadow-sm">
+          <view class="mb-3 flex items-center justify-between">
+            <view class="min-w-0 flex-1">
+              <text class="block text-base font-semibold text-gray-900">
+                {{ selectedReminderFocus.plantName }}
+              </text>
+              <text class="block text-xs text-gray-500">
+                已定位到{{ getTaskName(selectedReminderFocus.type) }}提醒设置
+              </text>
+            </view>
+            <view
+              class="rounded-full px-3 py-1"
+              :class="focusedReminderState.active ? 'bg-[#DBEAFE]' : 'bg-gray-100'"
             >
-              {{ focusedReminderState.active ? '已高亮' : '未设置' }}
-            </text>
+              <text
+                class="text-xs font-semibold"
+                :class="focusedReminderState.active ? 'text-[#2563EB]' : 'text-gray-500'"
+              >
+                {{ focusedReminderState.active ? '已高亮' : '未设置' }}
+              </text>
+            </view>
+          </view>
+
+          <text class="mb-3 block text-sm text-gray-600">
+            {{ focusedReminderText }}
+          </text>
+
+          <view class="flex gap-2">
+            <button
+              class="m-0 flex-1 rounded-xl border-none bg-[#3B82F6] py-2 text-sm font-semibold text-white"
+              @click="enableFocusedReminder"
+            >
+              设置提醒
+            </button>
+            <button
+              class="m-0 flex-1 rounded-xl border-none bg-gray-100 py-2 text-sm font-semibold text-gray-700"
+              @click="disableFocusedReminder"
+            >
+              停用提醒
+            </button>
           </view>
         </view>
+      </view>
 
-        <text class="mb-3 block text-sm text-gray-600">
-          {{ focusedReminderText }}
-        </text>
+      <!-- 今日提醒 -->
+      <view class="px-4 py-4">
+        <text class="block text-lg font-bold text-gray-900 mb-3">📅 今日提醒</text>
 
-        <view class="flex gap-2">
-          <button
-            class="m-0 flex-1 rounded-xl border-none bg-[#3B82F6] py-2 text-sm font-semibold text-white"
-            @click="enableFocusedReminder"
-          >
-            设置提醒
-          </button>
-          <button
-            class="m-0 flex-1 rounded-xl border-none bg-gray-100 py-2 text-sm font-semibold text-gray-700"
-            @click="disableFocusedReminder"
-          >
-            停用提醒
-          </button>
+        <view
+          v-if="plantingStore.todayReminders.length === 0"
+          class="bg-white rounded-2xl p-6 text-center"
+        >
+          <text class="block text-4xl mb-2">✨</text>
+          <text class="block text-sm text-gray-600">今天没有养护任务</text>
+        </view>
+
+        <view
+          v-for="reminder in plantingStore.todayReminders"
+          :key="reminder.id"
+          class="bg-white rounded-2xl p-4 mb-3 shadow-sm"
+        >
+          <view class="flex items-center justify-between mb-3">
+            <view class="flex-1">
+              <text class="block text-base font-semibold text-gray-900 mb-1">{{
+                reminder.plantName
+              }}</text>
+              <text class="block text-sm text-gray-600">{{ reminder.location }}</text>
+            </view>
+            <view class="bg-[#D8F3DC] px-3 py-1 rounded-full">
+              <text class="text-xs text-primary font-medium">待完成</text>
+            </view>
+          </view>
+
+          <view class="flex gap-2">
+            <view
+              v-for="task in reminder.reminders"
+              :key="task.type"
+              class="flex-1 bg-gray-50 rounded-xl p-2 text-center"
+            >
+              <text class="block text-lg mb-1">{{ getTaskIcon(task.type) }}</text>
+              <text class="block text-xs text-gray-700">{{ getTaskName(task.type) }}</text>
+            </view>
+          </view>
+
+          <view class="flex gap-2 mt-3">
+            <button
+              class="flex-1 bg-primary text-white text-sm py-2 rounded-xl"
+              @click="completeTask(reminder.id)"
+            >
+              完成
+            </button>
+            <button
+              class="flex-1 bg-gray-100 text-gray-700 text-sm py-2 rounded-xl"
+              @click="postponeTask(reminder.id)"
+            >
+              推迟
+            </button>
+          </view>
         </view>
       </view>
-    </view>
 
-    <!-- 今日提醒 -->
-    <view class="px-4 py-4">
-      <text class="block text-lg font-bold text-gray-900 mb-3">📅 今日提醒</text>
-
-      <view
-        v-if="plantingStore.todayReminders.length === 0"
-        class="bg-white rounded-2xl p-6 text-center"
-      >
-        <text class="block text-4xl mb-2">✨</text>
-        <text class="block text-sm text-gray-600">今天没有养护任务</text>
-      </view>
-
-      <view
-        v-for="reminder in plantingStore.todayReminders"
-        :key="reminder.id"
-        class="bg-white rounded-2xl p-4 mb-3 shadow-sm"
-      >
+      <!-- 种植计划 -->
+      <view class="px-4 pb-20">
         <view class="flex items-center justify-between mb-3">
-          <view class="flex-1">
-            <text class="block text-base font-semibold text-gray-900 mb-1">{{
-              reminder.plantName
-            }}</text>
-            <text class="block text-sm text-gray-600">{{ reminder.location }}</text>
-          </view>
-          <view class="bg-[#D8F3DC] px-3 py-1 rounded-full">
-            <text class="text-xs text-primary font-medium">待完成</text>
-          </view>
+          <text class="block text-lg font-bold text-gray-900">🌱 我的植物</text>
+          <button class="bg-primary text-white text-sm px-4 py-2 rounded-full" @click="addPlan">
+            + 添加
+          </button>
         </view>
 
-        <view class="flex gap-2">
-          <view
-            v-for="task in reminder.reminders"
-            :key="task.type"
-            class="flex-1 bg-gray-50 rounded-xl p-2 text-center"
-          >
-            <text class="block text-lg mb-1">{{ getTaskIcon(task.type) }}</text>
-            <text class="block text-xs text-gray-700">{{ getTaskName(task.type) }}</text>
-          </view>
+        <view
+          v-if="plantingStore.activePlans.length === 0"
+          class="bg-white rounded-2xl p-6 text-center"
+        >
+          <text class="block text-4xl mb-2">🪴</text>
+          <text class="block text-sm text-gray-600 mb-4">还没有种植计划</text>
+          <button class="bg-primary text-white text-sm px-6 py-2 rounded-full" @click="addPlan">
+            添加第一株植物
+          </button>
         </view>
 
-        <view class="flex gap-2 mt-3">
-          <button
-            class="flex-1 bg-primary text-white text-sm py-2 rounded-xl"
-            @click="completeTask(reminder.id)"
-          >
-            完成
-          </button>
-          <button
-            class="flex-1 bg-gray-100 text-gray-700 text-sm py-2 rounded-xl"
-            @click="postponeTask(reminder.id)"
-          >
-            推迟
-          </button>
+        <view
+          v-for="plan in plantingStore.activePlans"
+          :key="plan.id"
+          class="bg-white rounded-2xl p-4 mb-3 shadow-sm"
+          @click="viewPlanDetail(plan)"
+        >
+          <view class="flex items-center justify-between mb-2">
+            <text class="block text-base font-semibold text-gray-900">{{ plan.plantName }}</text>
+            <text class="text-xs text-gray-500">{{ getDaysAgo(plan.plantDate) }}</text>
+          </view>
+
+          <view class="flex items-center gap-2 mb-3">
+            <view class="bg-gray-100 px-2 py-1 rounded">
+              <text class="text-xs text-gray-700">{{ plan.location }}</text>
+            </view>
+            <view class="bg-[#D8F3DC] px-2 py-1 rounded">
+              <text class="text-xs text-primary">健康</text>
+            </view>
+          </view>
+
+          <text v-if="plan.notes" class="block text-sm text-gray-600">{{ plan.notes }}</text>
         </view>
       </view>
     </view>
-
-    <!-- 种植计划 -->
-    <view class="px-4 pb-20">
-      <view class="flex items-center justify-between mb-3">
-        <text class="block text-lg font-bold text-gray-900">🌱 我的植物</text>
-        <button class="bg-primary text-white text-sm px-4 py-2 rounded-full" @click="addPlan">
-          + 添加
-        </button>
-      </view>
-
-      <view
-        v-if="plantingStore.activePlans.length === 0"
-        class="bg-white rounded-2xl p-6 text-center"
-      >
-        <text class="block text-4xl mb-2">🪴</text>
-        <text class="block text-sm text-gray-600 mb-4">还没有种植计划</text>
-        <button class="bg-primary text-white text-sm px-6 py-2 rounded-full" @click="addPlan">
-          添加第一株植物
-        </button>
-      </view>
-
-      <view
-        v-for="plan in plantingStore.activePlans"
-        :key="plan.id"
-        class="bg-white rounded-2xl p-4 mb-3 shadow-sm"
-        @click="viewPlanDetail(plan)"
-      >
-        <view class="flex items-center justify-between mb-2">
-          <text class="block text-base font-semibold text-gray-900">{{ plan.plantName }}</text>
-          <text class="text-xs text-gray-500">{{ getDaysAgo(plan.plantDate) }}</text>
-        </view>
-
-        <view class="flex items-center gap-2 mb-3">
-          <view class="bg-gray-100 px-2 py-1 rounded">
-            <text class="text-xs text-gray-700">{{ plan.location }}</text>
-          </view>
-          <view class="bg-[#D8F3DC] px-2 py-1 rounded">
-            <text class="text-xs text-primary">健康</text>
-          </view>
-        </view>
-
-        <text v-if="plan.notes" class="block text-sm text-gray-600">{{ plan.notes }}</text>
-      </view>
-    </view>
-  </view>
+  </Layout>
 </template>
 
 <script setup>
 import { computed, ref, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import Layout from '@/Layout.vue'
 import { usePlantingStore } from '@/store/planting.js'
 
 const plantingStore = usePlantingStore()

@@ -1,13 +1,14 @@
 # ZCode Routing Policy
 
-仅当内部路由字段 `implementation_mode=zcode_external` 时读取。该字段由 dispatch-task 自动推断或由用户强制指定；用户不必每次逐字输入。本文只定义外部实现者路由，不重复完整 prompt 模板。
+仅当 `implementation_mode=zcode_external` 时读取。本文只定义外部实现者路由，不重复完整 prompt 模板。
 
 ## 触发
 
-命中“用 ZCode / 走 ZCode / ZCode 实现 / 交给外部实现者 / GLM 在 ZCode 里跑”等自然语言正向触发词，或用户显式写入 `zcode_external` / `implementation_mode=zcode_external`，且任务需要代码修改时，main 自动设置：
+命中“用 ZCode / 走 ZCode / 外部实现者 / zcode_external / GLM 在 ZCode 里跑”等正向触发词，且任务需要代码修改时，设置：
 
 ```text
 implementation_mode = zcode_external
+dispatch_tier = zcode_external
 external_implementer = zcode_glm
 zcode_target = current_open_chat
 ```
@@ -40,16 +41,17 @@ prompt 必须包含 start/end sentinel、Implementation Contract、Allowed/Forbi
 .tmp/dispatch-task/{dispatch_run_id}-handoff-manual.json
 ```
 
-ZCode 开始任务后置 `status=working`，完成或阻塞时更新为 `completed|blocked`。main 低频回收时必须先读该 JSON，再判断是否进入 recovery。
+ZCode 开始任务后置 `status=working`，完成或阻塞时更新为 `completed|blocked`。main 低频回收时必须先读该 JSON，再判断是否进入 recovery。若文件缺失或 JSON 损坏，不得用聊天状态补判完成；recovery result 必须记录 `zcode_handoff_manual.status=missing|invalid` 并返回 `blocked`。
 
 ## Recovery
 
 ZCode 结束后，Codex main 生成 recovery result，并执行：
 
 ```bash
+# handoff manual 存在且可解析时执行；缺失/损坏时由 recovery result 记录 missing/invalid 并 blocked。
 node .codex/skills/dispatch-task/scripts/validate-zcode-handoff-manual.mjs <handoff.json> <handoff-manual.json>
 node .codex/skills/dispatch-task/scripts/validate-result.mjs external <handoff.json> <zcode-recovery-result.json>
-node .codex/skills/dispatch-task/scripts/validate-worktree-scope.mjs <handoff.json>
+node .codex/skills/dispatch-task/scripts/validate-worktree-scope.mjs <handoff.json> <zcode-recovery-result.json> <worktree-baseline.json>
 ```
 
 若 recovery result 为 `blocked`，它是合法阻断结果，但不能进入 Completion Gate。

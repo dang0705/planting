@@ -1,102 +1,107 @@
 <template>
-  <view class="min-h-screen bg-[#f8faf9] pb-5">
-    <swiper
-      id="add-plant-swiper"
-      class="min-h-screen"
-      :current="activeStep"
-      :duration="260"
-      :disable-touch="plantListTouching"
-      @change="handleSwiperChange"
-    >
-      <swiper-item>
-        <scroll-view scroll-y class="h-screen">
-          <PlantSelectionStep
-            v-model:search-keyword="searchKeyword"
-            :plant-groups="plantGroups"
-            :plant-count="defaultPlants.length"
-            :initial-plants-loading="initialPlantsLoading"
-            :plants-loading-more="plantsLoadingMore"
-            :has-more-plants="hasMorePlants"
-            :selected-plant="selectedPlant"
-            :recognized-name="recognizedName"
-            :can-proceed="canEnterInfoStep"
-            @search-confirm="handleSearchConfirm"
-            @clear-search="clearSearch"
-            @scroll-lower="handlePlantScrollToLower"
-            @select-plant="handlePlantSelect"
-            @ai-identify="useAIIdentify"
-            @next="goInfoStep"
-            @list-touch-start="plantListTouching = true"
-            @list-touch-end="plantListTouching = false"
-          />
-        </scroll-view>
-      </swiper-item>
+  <Layout title="添加植物" left-action="back" background-class="bg-[#f8faf9]">
+    <view class="min-h-screen bg-[#f8faf9] pb-5">
+      <swiper
+        id="add-plant-swiper"
+        class="min-h-screen"
+        :current="activeStep"
+        :duration="260"
+        :disable-touch="plantListTouching"
+        @change="handleSwiperChange"
+      >
+        <swiper-item>
+          <scroll-view scroll-y class="h-screen">
+            <PlantSelectionStep
+              v-model:search-keyword="searchKeyword"
+              :plant-groups="plantGroups"
+              :plant-count="defaultPlants.length"
+              :initial-plants-loading="initialPlantsLoading"
+              :plants-loading-more="plantsLoadingMore"
+              :has-more-plants="hasMorePlants"
+              :selected-plant="selectedPlant"
+              :recognized-name="recognizedName"
+              :can-proceed="canEnterInfoStep"
+              @search-confirm="handleSearchConfirm"
+              @clear-search="clearSearch"
+              @scroll-lower="handlePlantScrollToLower"
+              @select-plant="handlePlantSelect"
+              @ai-identify="useAIIdentify"
+              @next="goInfoStep"
+              @list-touch-start="plantListTouching = true"
+              @list-touch-end="plantListTouching = false"
+            />
+          </scroll-view>
+        </swiper-item>
 
-      <swiper-item>
-        <scroll-view scroll-y class="h-screen px-4 pb-6 pt-4">
-          <view class="mb-4">
-            <text class="block text-[24px] font-bold leading-8 text-[#1f2937]"> 完善植物信息 </text>
-            <text class="mt-1 block text-sm leading-5 text-[#6b7280]">
-              养护城市必填，光照环境可稍后补充
-            </text>
-          </view>
+        <swiper-item>
+          <scroll-view scroll-y class="h-screen px-4 pb-6 pt-4">
+            <view class="mb-4">
+              <text class="block text-[24px] font-bold leading-8 text-[#1f2937]">
+                完善植物信息
+              </text>
+              <text class="mt-1 block text-sm leading-5 text-[#6b7280]">
+                养护城市必填，光照环境可稍后补充
+              </text>
+            </view>
 
-          <PlantForm
-            v-model="formData"
-            :city-error="formErrors.careLocation"
-            :active-step="activeStep"
-            class="mb-5"
-            @upload-photo="uploadPhoto"
-            @city-change="formErrors.careLocation = ''"
-          />
+            <PlantForm
+              v-model="formData"
+              :city-error="formErrors.careLocation"
+              :active-step="activeStep"
+              class="mb-5"
+              @upload-photo="uploadPhoto"
+              @city-change="formErrors.careLocation = ''"
+            />
 
-          <view class="flex gap-3">
-            <button
-              id="add-plant-back-to-selection-button"
-              class="m-0 h-[52px] flex-1 rounded-2xl border border-[#2d7a4f] bg-white p-0 text-base font-bold leading-[52px] text-[#2d7a4f]"
-              :disabled="submitting"
-              @click="activeStep = 0"
-            >
-              上一步
-            </button>
-            <button
-              id="add-plant-submit-button"
-              class="m-0 h-[52px] flex-[2] rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
-              :class="{ 'opacity-50': submitting }"
-              :disabled="submitting"
-              @click="submitForm"
-            >
-              {{ submitting ? '保存中...' : submitButtonText }}
-            </button>
-          </view>
-        </scroll-view>
-      </swiper-item>
-    </swiper>
+            <view class="flex gap-3">
+              <button
+                id="add-plant-back-to-selection-button"
+                class="m-0 h-[52px] flex-1 rounded-2xl border border-[#2d7a4f] bg-white p-0 text-base font-bold leading-[52px] text-[#2d7a4f]"
+                :disabled="submitting"
+                @click="activeStep = 0"
+              >
+                上一步
+              </button>
+              <button
+                id="add-plant-submit-button"
+                class="m-0 h-[52px] flex-[2] rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
+                :class="{ 'opacity-50': submitting }"
+                :disabled="submitting"
+                @click="submitForm"
+              >
+                {{ submitting ? '保存中...' : submitButtonText }}
+              </button>
+            </view>
+          </scroll-view>
+        </swiper-item>
+      </swiper>
 
-    <AIStreamDialog
-      ref="aiDialogRef"
-      :visible="showAIDialog"
-      title="AI 智能识别"
-      icon="🔍"
-      loading-text="正在识别植物..."
-      confirm-text="使用识别结果"
-      @close="showAIDialog = false"
-      @confirm="handleAIConfirm"
-      @retry="handleAIRetry"
-    />
+      <AIStreamDialog
+        ref="aiDialogRef"
+        :visible="showAIDialog"
+        title="AI 智能识别"
+        icon="🔍"
+        loading-text="正在识别植物..."
+        confirm-text="使用识别结果"
+        @close="showAIDialog = false"
+        @confirm="handleAIConfirm"
+        @retry="handleAIRetry"
+      />
 
-    <LoginModal
-      :show="showLogin"
-      :message="loginMsg"
-      @close="showLogin = false"
-      @success="handleLoginSuccess"
-    />
-  </view>
+      <LoginModal
+        :show="showLogin"
+        :message="loginMsg"
+        @close="showLogin = false"
+        @success="handleLoginSuccess"
+      />
+    </view>
+  </Layout>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { onBackPress, onLoad } from '@dcloudio/uni-app'
+import Layout from '@/Layout.vue'
 import { createUserPlant, patchUserPlant } from '@/api/plants-http.js'
 import { uploadPlantImage } from '@/api/storage.js'
 import AIStreamDialog from '@/components/AIStreamDialog.vue'
@@ -169,6 +174,10 @@ onLoad(options => {
   editPlantId.value = String(options?.id || '').trim()
   editMode.value = String(options?.mode || '').trim() === 'edit' && Boolean(editPlantId.value)
   if (String(options?.step || '').trim() === 'info' && editPlantId.value) {
+    activeStep.value = 1
+    return
+  }
+  if (String(options?.step || '').trim() === 'info') {
     activeStep.value = 1
   }
 })

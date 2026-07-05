@@ -60,7 +60,7 @@ inclusion: always
 1. 开发`Vue`组件时参考`skills/uni-app`及`skills/vue-best-practices`，如有概念冲突的采纳前者。
 2. css优先使用 `Tailwind Css` 组织样式并参考 `skills/tailwindcss-base-use` ，进阶布局则参考 `skills/tailwindcss-advanced-layouts`。
 3. 合理利用前端缓存释放服务端开销，参考 `skills/pinia`。
-4. 考虑到 `miniprogram-automator` 端上测试，凡是涉及点击、交互的元素均需绑定语义化的id，并更新到 `docs/ai-rules/frontend-automation-id-policy.md`。
+4. 考虑到 `miniprogram-automator` 端上测试，凡是涉及点击、交互的元素均需绑定语义化的id，必须并更新到 `docs/ai-rules/frontend-automation-id-policy.md`。
 
 ## 5. 后端行为约束
 
@@ -87,6 +87,17 @@ inclusion: always
 5. 不得默认全量读取 `docs/`、`.brv/`、`.codex/skills/**/references/`、`docs/code-logics/`、`docs/new-rules/`、`docs/ai-runs/`、`docs/route规划及outcome瘦身计划/`。
 6. 任务上下文必须优先通过 `.codex/context-packs.yml` 选择最小文件包。
 7. `docs_keeper` 负责知识卫生、活文档维护、索引同步和既有文档归档；不得维护既有蓝图为当前事实。
+
+## 8. BRV / ByteRover 召回边界
+
+1. BRV 只负责业务知识和真相的召回：产品决策、历史约定、诊断链路事实、schema / 数据语义、跨文件业务不变量、ClickUp / Figma / 会议沉淀后的当前事实入口。
+2. 不得为了通用工程规则或当前代码事实调用 BRV。以下事项直接使用 AGENTS.md、当前 skill、代码、测试、schema、配置、package scripts 或 `.codex/context-packs.yml`：
+   - 500 行拆分、模块解耦、lint/fmt、Tailwind / SCSS、依赖策略、CloudBase 付费边界；
+   - subagent 等待、dispatch gate、validator 用法、ZCode 操作协议；
+   - 文件位置、当前实现、函数调用关系、import/export、测试入口、package script。
+3. `brv-query` 前必须能写出一句 `brv_query_reason`，且该理由必须指向业务事实/真相；如果理由只是“需要上下文”“需要规则”“需要看代码”，禁止调用 BRV。
+4. BRV 返回内容只作为索引和线索，必须回到代码、测试、schema、配置或 active docs 核验；不得用 BRV 记忆覆盖当前事实源。
+5. `brv-curate` 只写入稳定业务知识、当前有效契约、重要决策和事实入口；不得写入临时执行日志、通用工程规则、一次性 bug、agent 行为偏好或已由 AGENTS.md / skill 表达的规则。
 
 <!-- BEGIN BYTEROVER RULES -->
 

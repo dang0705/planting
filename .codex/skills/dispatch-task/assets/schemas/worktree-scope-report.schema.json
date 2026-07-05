@@ -4,20 +4,26 @@
   "type": "object",
   "required": [
     "status",
-    "changed_files"
+    "dispatch_run_id",
+    "baseline_file",
+    "baseline_dirty_files",
+    "current_dirty_files",
+    "changed_files_since_baseline",
+    "declared_changed_files",
+    "undeclared_actual_changed_files",
+    "declared_not_visible",
+    "declared_preexisting_overlap"
   ],
   "properties": {
-    "status": {
-      "enum": [
-        "passed",
-        "blocked"
-      ]
-    },
-    "changed_files": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    }
+    "status": { "enum": ["passed", "blocked"] },
+    "dispatch_run_id": { "type": "string" },
+    "baseline_file": { "type": "string" },
+    "baseline_dirty_files": { "type": "array", "items": { "type": "string" } },
+    "current_dirty_files": { "type": "array", "items": { "type": "string" } },
+    "changed_files_since_baseline": { "type": "array", "items": { "type": "string" } },
+    "declared_changed_files": { "type": "array", "items": { "type": "string" } },
+    "undeclared_actual_changed_files": { "type": "array", "items": { "type": "string" } },
+    "declared_not_visible": { "type": "array", "items": { "type": "string" } },
+    "declared_preexisting_overlap": { "type": "array", "items": { "type": "string" } }
   }
 }
