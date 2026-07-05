@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "gate": "style_stack",
+  "dispatch_run_id": "dispatch-diagnose-dialog-repair-20260705",
+  "baseline_file": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-worktree-baseline.json",
+  "styling_system": "Tailwind CSS 3 with existing scoped CSS only where already present in diagnose-popup/style.css",
+  "new_scss_policy": "forbidden",
+  "changed_files_since_baseline": [
+    "src/components/diagnose-popup/view-defaults.js"
+  ],
+  "scss_files_since_baseline": [],
+  "vue_with_new_scss_blocks": [],
+  "vue_with_new_scoped_style_blocks": [],
+  "warnings": [],
+  "errors": []
+}

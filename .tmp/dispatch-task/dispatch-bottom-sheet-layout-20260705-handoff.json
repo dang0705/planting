@@ -1,0 +1,145 @@
+{
+  "dispatch_run_id": "dispatch-bottom-sheet-layout-20260705",
+  "dispatch_tier": "deep_contract",
+  "implementation_mode": "codex_subagent",
+  "task": {
+    "objective": "先拆分全量迁移必触达的大文件，再封装全局 BottomSheet 与 src/Layout.vue，并迁移所有页面和所有底部 popup/action-sheet 使用点。",
+    "code_changes_required": true,
+    "ui_task": true,
+    "risk": "high",
+    "qa_required": true
+  },
+  "target_role": "implementer_deep",
+  "spawn_contract": {
+    "implementer_agent_type": "implementer_deep",
+    "qa_agent_type": "qa_reviewer",
+    "context_mode": "isolated",
+    "generic_fallback_forbidden": true,
+    "identity_receipt_required": true
+  },
+  "allowed_paths": [
+    "src/**",
+    "docs/ai-rules/frontend-automation-id-policy.md",
+    "test/**"
+  ],
+  "forbidden_paths": [
+    "cloudfunctions/**",
+    "scripts/sql/**",
+    "package.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "docs/code-logics/**",
+    "docs/new-rules/**",
+    ".codex/**",
+    ".brv/**"
+  ],
+  "acceptance": [
+    "先把全量迁移必触达且超过 500 行的业务文件合理拆分到高内聚子组件/composable/style 文件；拆分后本轮 touched business code files 不得超过 500 行。",
+    "新增全局 BottomSheet 组件，内部使用 uni-popup 承担所有底部 popup/action-sheet 薄壳，两个顶角圆角、白底、px-4 内容边距、右上统一圆形关闭按钮。",
+    "BottomSheet 内容最大高度按 100vh 减去 Pinia 中真实自定义头部高度计算，超过时内部滚动；底部提供满宽吸底确认按钮槽位，并支持 onConfirm 回调。",
+    "自定义头部高度必须由组件内通过小程序/uni API 真实计算，并保存到 Pinia，不能只使用硬编码默认值。",
+    "新增 src/Layout.vue，负责 header + 页面内容拼装，把头部高度写为根节点 CSS 变量，子元素可通过 CSS 变量读取。",
+    "Layout header 使用三列 grid 结构，实际视觉保持 title 居中；左侧支持返回按钮、home 按钮和自定义插槽，中间为页面 title，并能透传 header 参数。",
+    "pages.json 中所有页面对应的 Vue 页面均套用 Layout，作为标准页面范式；保留后台审核/管理页现有桌面信息密度，不改成营销或卡片化重设计。",
+    "src 下所有底部 uni-popup 与 uni.showActionSheet 使用点迁移到 BottomSheet 或等价 BottomSheet 驱动的选项薄壳；非底部弹窗不强行迁移。",
+    "涉及点击/交互新增或重命名的元素补充语义化 id，并按需更新 docs/ai-rules/frontend-automation-id-policy.md。",
+    "不新增 npm 依赖，不改 CloudBase、数据库、schema、HTTP API 或业务数据结构。",
+    "遵循 Tailwind 优先；不得新增 SCSS 或用 scoped style 重建常规 UI。",
+    "对 src/* 改动文件精准执行 npm run lint 与 npm run fmt；需要端上验收时按 LAN local-functions flow 和 miniprogram-automator 形成证据。"
+  ],
+  "project_constraints": {
+    "rule_refs": [
+      "AGENTS.md#2 全局行为硬规则",
+      "AGENTS.md#3 dispatch-task 触发规则",
+      "AGENTS.md#4 前端行为约束",
+      "AGENTS.md#6 QA行为约束",
+      "AGENTS.md#8 知识治理边界",
+      "docs/ai-rules/frontend-automation-id-policy.md#2 id 命名规则"
+    ],
+    "framework": "UniApp 3.0 + Vue 3 Composition API",
+    "styling_system": "Tailwind CSS 3",
+    "new_scss_policy": "forbidden",
+    "scss_exceptions": [],
+    "component_library": "uni-ui",
+    "dependency_policy": "no_new_dependencies",
+    "test_commands": [
+      "npm run lint -- <changed src/cloudfunctions business paths when supported by oxlint>",
+      "npm run fmt -- <changed src/cloudfunctions business paths when supported by oxfmt>",
+      "npm run test:pinia",
+      "npm run test:tailwind",
+      "npm run build:mp-weixin:local-functions"
+    ]
+  },
+  "decision_lock": {
+    "level": "strict",
+    "architecture_invariants": [
+      "Full scope is authorized: do not downgrade by skipping pages or bottom popup/action-sheet call sites.",
+      "Large-file split is part of implementation, not a blocker, unless a specific file cannot be split without changing behavior.",
+      "BottomSheet is the unified thin shell for bottom popup/action-sheet behavior; callers keep business content and actions.",
+      "Layout owns header + page composition and CSS variable publication; pages should not keep ad hoc navbarHeight top padding.",
+      "Header height source must be centralized in Pinia and measured through uni/getSystemInfo/menu button APIs.",
+      "Do not change business APIs, CloudBase functions, database schema, persistence structures, or route contracts.",
+      "Do not add dependencies; use local Vue/Tailwind and existing uni-ui.",
+      "Admin/review pages retain current dense table/tooling behavior while receiving Layout wrapper and any required style extraction."
+    ],
+    "local_decisions_allowed": [
+      "Choose split boundaries for large Vue files, including extracting styles, pure constants, option builders, helper functions, child components, or composables.",
+      "Choose BottomSheet props/slots/expose API names.",
+      "Choose Layout header prop shape and default back/home behavior.",
+      "Implement a global action-sheet bridge through Layout or a small local store/composable.",
+      "Keep admin pages under native navigation if required for H5 desktop behavior only when Layout still wraps their page root and contract is documented.",
+      "Run formatting-driven mechanical rewrites where needed."
+    ]
+  },
+  "figma": {
+    "link": "",
+    "node_id": "",
+    "lite_status": "link_only",
+    "main_access": "lite_only",
+    "main_tools_used": [],
+    "implementer_fetch_required": false,
+    "qa_baseline_fetch_required": false
+  },
+  "required_skills": {
+    "implementer": [
+      "$implementer-ui-execution-policy",
+      "$vue-best-practices",
+      "$uni-app",
+      "$pinia",
+      "$tailwindcss-advanced-layouts"
+    ],
+    "qa": [
+      "$miniprogram-automator-runtime"
+    ]
+  },
+  "validation": {
+    "implementer": [
+      "inspect current dirty worktree and preserve unrelated user changes",
+      "split touched files over 500 lines before claiming completed",
+      "verify no remaining src uni-popup type=bottom or uni.showActionSheet call sites outside BottomSheet/action bridge",
+      "verify all pages in src/pages.json use Layout",
+      "run precise lint/fmt on changed src business paths where tool supports path args",
+      "run npm run test:pinia",
+      "run npm run test:tailwind",
+      "run npm run build:mp-weixin:local-functions or explain environment blocker"
+    ],
+    "qa": [
+      "start or use npm run dev:mp-weixin:local-functions:lan when cloud deploy is not performed",
+      "connect miniprogram-automator to dist/dev/mp-weixin on port 9420",
+      "verify representative tab page, non-tab page, PotProfileEditor sheet, WateringReminderSheet main sheet, date picker sheet, DiagnosePopup sheet, and migrated action-sheet path",
+      "capture runtime screenshots for UI sheet verification",
+      "classify environment blockers separately from product failures"
+    ]
+  },
+  "output_evidence_required": [
+    "agent_identity",
+    "changed_files",
+    "validation_evidence",
+    "style_stack_compliance",
+    "component_reuse_evidence",
+    "ui_scope_map",
+    "line_count_evidence",
+    "qa_handoff"
+  ]
+}

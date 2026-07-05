@@ -1,0 +1,2532 @@
+{
+  "captured_at": "2026-07-05T08:35:57.318Z",
+  "git_root": "/Users/jay/WebstormProjects/planting",
+  "head": "a4841fcbef9f21705d9588b8d265b3040ec179ff",
+  "status_files": [
+    "\".codex/skills/dispatch-task/examples//346/231/256/351/200/232/344/273/243/347/240/201/344/273/273/345/212/241-handoff.json\"",
+    ".codex/agents/qa-reviewer.toml",
+    ".codex/skills/dispatch-task/SKILL.md",
+    ".codex/skills/dispatch-task/assets/schemas/worktree-baseline.schema.json",
+    ".codex/skills/dispatch-task/assets/schemas/worktree-scope-report.schema.json",
+    ".codex/skills/dispatch-task/assets/templates/zcode-prompt-template.md",
+    ".codex/skills/dispatch-task/examples/figma-ui-handoff.json",
+    ".codex/skills/dispatch-task/examples/no-new-deps-report.json",
+    ".codex/skills/dispatch-task/examples/simple-zcode-trigger.md",
+    ".codex/skills/dispatch-task/examples/style-stack-report.json",
+    ".codex/skills/dispatch-task/examples/worktree-baseline-clean.json",
+    ".codex/skills/dispatch-task/examples/worktree-scope-report.json",
+    ".codex/skills/dispatch-task/examples/zcode-external-prompt.md",
+    ".codex/skills/dispatch-task/examples/zcode-external-ui-handoff.json",
+    ".codex/skills/dispatch-task/references/zcode-computer-use-policy.md",
+    ".codex/skills/dispatch-task/references/zcode-routing.md",
+    ".codex/skills/dispatch-task/scripts/capture-worktree-baseline.mjs",
+    ".codex/skills/dispatch-task/scripts/validate-completion-readiness.mjs",
+    ".codex/skills/dispatch-task/scripts/validate-handoff.mjs",
+    ".codex/skills/dispatch-task/scripts/validate-no-new-deps.mjs",
+    ".codex/skills/dispatch-task/scripts/validate-result.mjs",
+    ".codex/skills/dispatch-task/scripts/validate-style-stack.mjs",
+    ".codex/skills/dispatch-task/scripts/validate-worktree-scope.mjs",
+    ".codex/skills/dispatch-task/scripts/validate-zcode-handoff-manual.mjs",
+    ".codex/skills/dispatch-task/scripts/validate-zcode-prompt.mjs",
+    ".codex/skills/dispatch-task/scripts/validate-zcode-send-receipt.mjs",
+    ".codex/skills/figma-implement-design/SKILL.md",
+    ".codex/skills/figma-implement-design/agents/openai.yaml",
+    ".codex/skills/figma-layered-ui-contract/SKILL.md",
+    ".codex/skills/figma-ui-implementation-policy/SKILL.md",
+    ".codex/skills/figma-ui-implementation-policy/agents/openai.yaml",
+    ".codex/skills/uni-ui-figma-component-mapper/README.md",
+    ".tmp/dispatch-task/dispatch-86ey3h3dt-hybrid-recovery-result.json",
+    ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-figma-addendum-send-receipt.json",
+    ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-figma-addendum.md",
+    ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-handoff-manual.json",
+    ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-handoff.json",
+    ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-lint-refactor-correction-send-receipt.json",
+    ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-lint-refactor-correction.md",
+    ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-prompt.md",
+    ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-send-receipt.json",
+    ".tmp/dispatch-task/dispatch-bottom-sheet-layout-20260705-handoff.json",
+    ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-handoff.json",
+    ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-implementer-result-corrected.json",
+    ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-implementer-result-structured.json",
+    ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-implementer-result.json",
+    ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-no-new-deps-report.json",
+    ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-style-stack-report.json",
+    ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-worktree-baseline.json",
+    ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-worktree-scope-report.json",
+    ".zcode/skills/ai-model-nodejs",
+    ".zcode/skills/ai-model-web",
+    ".zcode/skills/ai-model-wechat",
+    ".zcode/skills/auth-nodejs",
+    ".zcode/skills/auth-tool",
+    ".zcode/skills/auth-web",
+    ".zcode/skills/auth-wechat",
+    ".zcode/skills/cloud-functions",
+    ".zcode/skills/cloud-storage-web",
+    ".zcode/skills/cloudbase",
+    ".zcode/skills/cloudbase-agent",
+    ".zcode/skills/cloudbase-cli",
+    ".zcode/skills/cloudbase-platform",
+    ".zcode/skills/cloudrun-development",
+    ".zcode/skills/data-model-creation",
+    ".zcode/skills/dispatch-task",
+    ".zcode/skills/figma-implement-design",
+    ".zcode/skills/figma-layered-ui-contract",
+    ".zcode/skills/figma-ui-implementation-policy",
+    ".zcode/skills/http-api",
+    ".zcode/skills/implementer-ui-execution-policy",
+    ".zcode/skills/local-smoke-test-and-lan-direct-connection-policy",
+    ".zcode/skills/miniprogram-automator-runtime",
+    ".zcode/skills/miniprogram-development",
+    ".zcode/skills/no-sql-web-sdk",
+    ".zcode/skills/no-sql-wx-mp-sdk",
+    ".zcode/skills/ops-inspector",
+    ".zcode/skills/pinia",
+    ".zcode/skills/qa-ui-visual-baseline-policy",
+    ".zcode/skills/relational-database-tool",
+    ".zcode/skills/relational-database-web",
+    ".zcode/skills/spec-workflow",
+    ".zcode/skills/tailwindcss-advanced-layouts",
+    ".zcode/skills/ui-design",
+    ".zcode/skills/ui-implementation-scope-policy",
+    ".zcode/skills/uni-app",
+    ".zcode/skills/uni-helper",
+    ".zcode/skills/uni-ui-figma-component-mapper",
+    ".zcode/skills/vite",
+    ".zcode/skills/vitest",
+    ".zcode/skills/vue",
+    ".zcode/skills/vue-best-practices",
+    ".zcode/skills/vue-router-best-practices",
+    ".zcode/skills/vue-testing-best-practices",
+    ".zcode/skills/vueuse-functions",
+    ".zcode/skills/web-design-guidelines",
+    ".zcode/skills/web-development",
+    ".zcode/skills/wechat-devtools",
+    "AGENTS.md",
+    "docs/ai-rules/frontend-automation-id-policy.md",
+    "qa-harness.mjs",
+    "qa-probe.mjs",
+    "screenshots/pot-profile-editor-fixed-scope.png",
+    "screenshots/pot-profile-editor-fixed.png",
+    "screenshots/pot-profile-editor-shell-sized-canvas.png",
+    "screenshots/pot-profile-height-label-left-10-final.png",
+    "screenshots/pot-profile-height-label-left-10.png",
+    "slider-layout-check.mjs",
+    "slider-layout-screenshot.mjs",
+    "slider-layout-slider-check2.mjs",
+    "src/Layout.vue",
+    "src/components/BottomSheet.vue",
+    "src/components/CustomNavbar.vue",
+    "src/components/DiagnosePopup.vue",
+    "src/components/HeaderWeatherInfo.vue",
+    "src/components/diagnose-popup/DiagnoseResultStage.vue",
+    "src/components/diagnose-popup/DiagnoseUploadStage.vue",
+    "src/components/diagnose-popup/automation.js",
+    "src/components/diagnose-popup/care-behavior.js",
+    "src/components/diagnose-popup/computed.js",
+    "src/components/diagnose-popup/constants.js",
+    "src/components/diagnose-popup/deps.js",
+    "src/components/diagnose-popup/dialog-submit.js",
+    "src/components/diagnose-popup/images.js",
+    "src/components/diagnose-popup/outcome-advice.js",
+    "src/components/diagnose-popup/popup-actions.js",
+    "src/components/diagnose-popup/question-flow.js",
+    "src/components/diagnose-popup/question-text.js",
+    "src/components/diagnose-popup/setup.js",
+    "src/components/diagnose-popup/state.js",
+    "src/components/diagnose-popup/style.css",
+    "src/components/diagnose-popup/view-defaults.js",
+    "src/components/header-weather/useHeaderWeather.js",
+    "src/pages.json",
+    "src/pages/add-plant/add-plant.vue",
+    "src/pages/add-plant/composables/useAddPlantIdentify.js",
+    "src/pages/calendar/calendar.vue",
+    "src/pages/diagnose/diagnose.vue",
+    "src/pages/diagnose/question-package.vue",
+    "src/pages/index/components/PotProfileEditor.vue",
+    "src/pages/index/components/WateringReminderSheet.vue",
+    "src/pages/index/components/watering-reminder-options.js",
+    "src/pages/index/index.vue",
+    "src/pages/plant-detail/plant-detail.vue",
+    "src/pages/profile/diagnosis-review.vue",
+    "src/pages/profile/diagnosis-review/DiagnosisReviewDetailSections.vue",
+    "src/pages/profile/diagnosis-review/DiagnosisReviewDrawer.vue",
+    "src/pages/profile/diagnosis-review/DiagnosisReviewTableSections.vue",
+    "src/pages/profile/diagnosis-review/basic-format.js",
+    "src/pages/profile/diagnosis-review/computed.js",
+    "src/pages/profile/diagnosis-review/core-fields.js",
+    "src/pages/profile/diagnosis-review/detail-actions.js",
+    "src/pages/profile/diagnosis-review/display.js",
+    "src/pages/profile/diagnosis-review/environment-rows.js",
+    "src/pages/profile/diagnosis-review/environment-summary.js",
+    "src/pages/profile/diagnosis-review/formula.js",
+    "src/pages/profile/diagnosis-review/labels.js",
+    "src/pages/profile/diagnosis-review/lazy-images.js",
+    "src/pages/profile/diagnosis-review/list-actions.js",
+    "src/pages/profile/diagnosis-review/message.js",
+    "src/pages/profile/diagnosis-review/prompt-token.js",
+    "src/pages/profile/diagnosis-review/record-format.js",
+    "src/pages/profile/diagnosis-review/route-format.js",
+    "src/pages/profile/diagnosis-review/setup.js",
+    "src/pages/profile/diagnosis-review/state.js",
+    "src/pages/profile/diagnosis-review/style-h5-drawer.css",
+    "src/pages/profile/diagnosis-review/style-h5-shell.css",
+    "src/pages/profile/diagnosis-review/style-mobile.css",
+    "src/pages/profile/diagnosis-review/style-responsive.css",
+    "src/pages/profile/diagnosis-review/style.css",
+    "src/pages/profile/out-of-pool-review.vue",
+    "src/pages/profile/profile.vue",
+    "src/pages/profile/watering-review.vue",
+    "src/store/layout.js",
+    "src/utils/bottom-sheet-action.js",
+    "src/utils/component-ref.js",
+    "src/utils/component-view-proxy.js",
+    "test/batch-results/watering-batch-results.json",
+    "tmp_watering_dose_alignment.png",
+    "tmp_watering_dose_notfound.png"
+  ],
+  "status_entries": [
+    {
+      "status": " M",
+      "path": ".codex/agents/qa-reviewer.toml",
+      "raw_path": ".codex/agents/qa-reviewer.toml"
+    },
+    {
+      "status": " M",
+      "path": ".codex/skills/dispatch-task/SKILL.md",
+      "raw_path": ".codex/skills/dispatch-task/SKILL.md"
+    },
+    {
+      "status": "A ",
+      "path": ".codex/skills/dispatch-task/assets/schemas/worktree-baseline.schema.json",
+      "raw_path": ".codex/skills/dispatch-task/assets/schemas/worktree-baseline.schema.json"
+    },
+    {
+      "status": " M",
+      "path": ".codex/skills/dispatch-task/assets/schemas/worktree-scope-report.schema.json",
+      "raw_path": ".codex/skills/dispatch-task/assets/schemas/worktree-scope-report.schema.json"
+    },
+    {
+      "status": " M",
+      "path": ".codex/skills/dispatch-task/assets/templates/zcode-prompt-template.md",
+      "raw_path": ".codex/skills/dispatch-task/assets/templates/zcode-prompt-template.md"
+    },
+    {
+      "status": " M",
+      "path": ".codex/skills/dispatch-task/examples/figma-ui-handoff.json",
+      "raw_path": ".codex/skills/dispatch-task/examples/figma-ui-handoff.json"
+    },
+    {
+      "status": "A ",
+      "path": ".codex/skills/dispatch-task/examples/no-new-deps-report.json",
+      "raw_path": ".codex/skills/dispatch-task/examples/no-new-deps-report.json"
+    },
+    {
+      "status": " M",
+      "path": ".codex/skills/dispatch-task/examples/simple-zcode-trigger.md",
+      "raw_path": ".codex/skills/dispatch-task/examples/simple-zcode-trigger.md"
+    },
+    {
+      "status": "A ",
+      "path": ".codex/skills/dispatch-task/examples/style-stack-report.json",
+      "raw_path": ".codex/skills/dispatch-task/examples/style-stack-report.json"
+    },
+    {
+      "status": "A ",
+      "path": ".codex/skills/dispatch-task/examples/worktree-baseline-clean.json",
+      "raw_path": ".codex/skills/dispatch-task/examples/worktree-baseline-clean.json"
+    },
+    {
+      "status": "A ",
+      "path": ".codex/skills/dispatch-task/examples/worktree-scope-report.json",
+      "raw_path": ".codex/skills/dispatch-task/examples/worktree-scope-report.json"
+    },
+    {
+      "status": " M",
+      "path": ".codex/skills/dispatch-task/examples/zcode-external-prompt.md",
+      "raw_path": ".codex/skills/dispatch-task/examples/zcode-external-prompt.md"
+    },
+    {
+      "status": " M",
+      "path": ".codex/skills/dispatch-task/examples/zcode-external-ui-handoff.json",
+      "raw_path": ".codex/skills/dispatch-task/examples/zcode-external-ui-handoff.json"
+    },
+    {
+      "status": " M",
+      "path": "\".codex/skills/dispatch-task/examples//346/231/256/351/200/232/344/273/243/347/240/201/344/273/273/345/212/241-handoff.json\"",
+      "raw_path": "\".codex/skills/dispatch-task/examples/\\346\\231\\256\\351\\200\\232\\344\\273\\243\\347\\240\\201\\344\\273\\273\\345\\212\\241-handoff.json\""
+    },
+    {
+      "status": " M",
+      "path": ".codex/skills/dispatch-task/references/zcode-computer-use-policy.md",
+      "raw_path": ".codex/skills/dispatch-task/references/zcode-computer-use-policy.md"
+    },
+    {
+      "status": " M",
+      "path": ".codex/skills/dispatch-task/references/zcode-routing.md",
+      "raw_path": ".codex/skills/dispatch-task/references/zcode-routing.md"
+    },
+    {
+      "status": "AM",
+      "path": ".codex/skills/dispatch-task/scripts/capture-worktree-baseline.mjs",
+      "raw_path": ".codex/skills/dispatch-task/scripts/capture-worktree-baseline.mjs"
+    },
+    {
+      "status": " M",
+      "path": ".codex/skills/dispatch-task/scripts/validate-completion-readiness.mjs",
+      "raw_path": ".codex/skills/dispatch-task/scripts/validate-completion-readiness.mjs"
+    },
+    {
+      "status": " M",
+      "path": ".codex/skills/dispatch-task/scripts/validate-handoff.mjs",
+      "raw_path": ".codex/skills/dispatch-task/scripts/validate-handoff.mjs"
+    },
+    {
+      "status": " M",
+      "path": ".codex/skills/dispatch-task/scripts/validate-no-new-deps.mjs",
+      "raw_path": ".codex/skills/dispatch-task/scripts/validate-no-new-deps.mjs"
+    },
+    {
+      "status": " M",
+      "path": ".codex/skills/dispatch-task/scripts/validate-result.mjs",
+      "raw_path": ".codex/skills/dispatch-task/scripts/validate-result.mjs"
+    },
+    {
+      "status": " M",
+      "path": ".codex/skills/dispatch-task/scripts/validate-style-stack.mjs",
+      "raw_path": ".codex/skills/dispatch-task/scripts/validate-style-stack.mjs"
+    },
+    {
+      "status": " M",
+      "path": ".codex/skills/dispatch-task/scripts/validate-worktree-scope.mjs",
+      "raw_path": ".codex/skills/dispatch-task/scripts/validate-worktree-scope.mjs"
+    },
+    {
+      "status": " M",
+      "path": ".codex/skills/dispatch-task/scripts/validate-zcode-handoff-manual.mjs",
+      "raw_path": ".codex/skills/dispatch-task/scripts/validate-zcode-handoff-manual.mjs"
+    },
+    {
+      "status": " M",
+      "path": ".codex/skills/dispatch-task/scripts/validate-zcode-prompt.mjs",
+      "raw_path": ".codex/skills/dispatch-task/scripts/validate-zcode-prompt.mjs"
+    },
+    {
+      "status": " M",
+      "path": ".codex/skills/dispatch-task/scripts/validate-zcode-send-receipt.mjs",
+      "raw_path": ".codex/skills/dispatch-task/scripts/validate-zcode-send-receipt.mjs"
+    },
+    {
+      "status": "A ",
+      "path": ".codex/skills/figma-implement-design/SKILL.md",
+      "raw_path": ".codex/skills/figma-implement-design/SKILL.md"
+    },
+    {
+      "status": "A ",
+      "path": ".codex/skills/figma-implement-design/agents/openai.yaml",
+      "raw_path": ".codex/skills/figma-implement-design/agents/openai.yaml"
+    },
+    {
+      "status": "A ",
+      "path": ".codex/skills/figma-layered-ui-contract/SKILL.md",
+      "raw_path": ".codex/skills/figma-layered-ui-contract/SKILL.md"
+    },
+    {
+      "status": "A ",
+      "path": ".codex/skills/figma-ui-implementation-policy/SKILL.md",
+      "raw_path": ".codex/skills/figma-ui-implementation-policy/SKILL.md"
+    },
+    {
+      "status": "A ",
+      "path": ".codex/skills/figma-ui-implementation-policy/agents/openai.yaml",
+      "raw_path": ".codex/skills/figma-ui-implementation-policy/agents/openai.yaml"
+    },
+    {
+      "status": " M",
+      "path": ".codex/skills/uni-ui-figma-component-mapper/README.md",
+      "raw_path": ".codex/skills/uni-ui-figma-component-mapper/README.md"
+    },
+    {
+      "status": " M",
+      "path": "AGENTS.md",
+      "raw_path": "AGENTS.md"
+    },
+    {
+      "status": " M",
+      "path": "docs/ai-rules/frontend-automation-id-policy.md",
+      "raw_path": "docs/ai-rules/frontend-automation-id-policy.md"
+    },
+    {
+      "status": " M",
+      "path": "src/components/CustomNavbar.vue",
+      "raw_path": "src/components/CustomNavbar.vue"
+    },
+    {
+      "status": " M",
+      "path": "src/components/DiagnosePopup.vue",
+      "raw_path": "src/components/DiagnosePopup.vue"
+    },
+    {
+      "status": " M",
+      "path": "src/pages.json",
+      "raw_path": "src/pages.json"
+    },
+    {
+      "status": " M",
+      "path": "src/pages/add-plant/add-plant.vue",
+      "raw_path": "src/pages/add-plant/add-plant.vue"
+    },
+    {
+      "status": " M",
+      "path": "src/pages/add-plant/composables/useAddPlantIdentify.js",
+      "raw_path": "src/pages/add-plant/composables/useAddPlantIdentify.js"
+    },
+    {
+      "status": " M",
+      "path": "src/pages/calendar/calendar.vue",
+      "raw_path": "src/pages/calendar/calendar.vue"
+    },
+    {
+      "status": " M",
+      "path": "src/pages/diagnose/diagnose.vue",
+      "raw_path": "src/pages/diagnose/diagnose.vue"
+    },
+    {
+      "status": " M",
+      "path": "src/pages/diagnose/question-package.vue",
+      "raw_path": "src/pages/diagnose/question-package.vue"
+    },
+    {
+      "status": " M",
+      "path": "src/pages/index/components/PotProfileEditor.vue",
+      "raw_path": "src/pages/index/components/PotProfileEditor.vue"
+    },
+    {
+      "status": " M",
+      "path": "src/pages/index/components/WateringReminderSheet.vue",
+      "raw_path": "src/pages/index/components/WateringReminderSheet.vue"
+    },
+    {
+      "status": " M",
+      "path": "src/pages/index/index.vue",
+      "raw_path": "src/pages/index/index.vue"
+    },
+    {
+      "status": " M",
+      "path": "src/pages/plant-detail/plant-detail.vue",
+      "raw_path": "src/pages/plant-detail/plant-detail.vue"
+    },
+    {
+      "status": " M",
+      "path": "src/pages/profile/diagnosis-review.vue",
+      "raw_path": "src/pages/profile/diagnosis-review.vue"
+    },
+    {
+      "status": " M",
+      "path": "src/pages/profile/out-of-pool-review.vue",
+      "raw_path": "src/pages/profile/out-of-pool-review.vue"
+    },
+    {
+      "status": " M",
+      "path": "src/pages/profile/profile.vue",
+      "raw_path": "src/pages/profile/profile.vue"
+    },
+    {
+      "status": " M",
+      "path": "src/pages/profile/watering-review.vue",
+      "raw_path": "src/pages/profile/watering-review.vue"
+    },
+    {
+      "status": "??",
+      "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-hybrid-recovery-result.json",
+      "raw_path": ".tmp/dispatch-task/dispatch-86ey3h3dt-hybrid-recovery-result.json"
+    },
+    {
+      "status": "??",
+      "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-figma-addendum-send-receipt.json",
+      "raw_path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-figma-addendum-send-receipt.json"
+    },
+    {
+      "status": "??",
+      "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-figma-addendum.md",
+      "raw_path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-figma-addendum.md"
+    },
+    {
+      "status": "??",
+      "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-handoff-manual.json",
+      "raw_path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-handoff-manual.json"
+    },
+    {
+      "status": "??",
+      "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-handoff.json",
+      "raw_path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-handoff.json"
+    },
+    {
+      "status": "??",
+      "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-lint-refactor-correction-send-receipt.json",
+      "raw_path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-lint-refactor-correction-send-receipt.json"
+    },
+    {
+      "status": "??",
+      "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-lint-refactor-correction.md",
+      "raw_path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-lint-refactor-correction.md"
+    },
+    {
+      "status": "??",
+      "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-prompt.md",
+      "raw_path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-prompt.md"
+    },
+    {
+      "status": "??",
+      "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-send-receipt.json",
+      "raw_path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-send-receipt.json"
+    },
+    {
+      "status": "??",
+      "path": ".tmp/dispatch-task/dispatch-bottom-sheet-layout-20260705-handoff.json",
+      "raw_path": ".tmp/dispatch-task/dispatch-bottom-sheet-layout-20260705-handoff.json"
+    },
+    {
+      "status": "??",
+      "path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-handoff.json",
+      "raw_path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-handoff.json"
+    },
+    {
+      "status": "??",
+      "path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-implementer-result-corrected.json",
+      "raw_path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-implementer-result-corrected.json"
+    },
+    {
+      "status": "??",
+      "path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-implementer-result-structured.json",
+      "raw_path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-implementer-result-structured.json"
+    },
+    {
+      "status": "??",
+      "path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-implementer-result.json",
+      "raw_path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-implementer-result.json"
+    },
+    {
+      "status": "??",
+      "path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-no-new-deps-report.json",
+      "raw_path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-no-new-deps-report.json"
+    },
+    {
+      "status": "??",
+      "path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-style-stack-report.json",
+      "raw_path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-style-stack-report.json"
+    },
+    {
+      "status": "??",
+      "path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-worktree-baseline.json",
+      "raw_path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-worktree-baseline.json"
+    },
+    {
+      "status": "??",
+      "path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-worktree-scope-report.json",
+      "raw_path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-worktree-scope-report.json"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/ai-model-nodejs",
+      "raw_path": ".zcode/skills/ai-model-nodejs"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/ai-model-web",
+      "raw_path": ".zcode/skills/ai-model-web"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/ai-model-wechat",
+      "raw_path": ".zcode/skills/ai-model-wechat"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/auth-nodejs",
+      "raw_path": ".zcode/skills/auth-nodejs"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/auth-tool",
+      "raw_path": ".zcode/skills/auth-tool"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/auth-web",
+      "raw_path": ".zcode/skills/auth-web"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/auth-wechat",
+      "raw_path": ".zcode/skills/auth-wechat"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/cloud-functions",
+      "raw_path": ".zcode/skills/cloud-functions"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/cloud-storage-web",
+      "raw_path": ".zcode/skills/cloud-storage-web"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/cloudbase",
+      "raw_path": ".zcode/skills/cloudbase"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/cloudbase-agent",
+      "raw_path": ".zcode/skills/cloudbase-agent"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/cloudbase-cli",
+      "raw_path": ".zcode/skills/cloudbase-cli"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/cloudbase-platform",
+      "raw_path": ".zcode/skills/cloudbase-platform"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/cloudrun-development",
+      "raw_path": ".zcode/skills/cloudrun-development"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/data-model-creation",
+      "raw_path": ".zcode/skills/data-model-creation"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/dispatch-task",
+      "raw_path": ".zcode/skills/dispatch-task"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/figma-implement-design",
+      "raw_path": ".zcode/skills/figma-implement-design"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/figma-layered-ui-contract",
+      "raw_path": ".zcode/skills/figma-layered-ui-contract"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/figma-ui-implementation-policy",
+      "raw_path": ".zcode/skills/figma-ui-implementation-policy"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/http-api",
+      "raw_path": ".zcode/skills/http-api"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/implementer-ui-execution-policy",
+      "raw_path": ".zcode/skills/implementer-ui-execution-policy"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/local-smoke-test-and-lan-direct-connection-policy",
+      "raw_path": ".zcode/skills/local-smoke-test-and-lan-direct-connection-policy"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/miniprogram-automator-runtime",
+      "raw_path": ".zcode/skills/miniprogram-automator-runtime"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/miniprogram-development",
+      "raw_path": ".zcode/skills/miniprogram-development"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/no-sql-web-sdk",
+      "raw_path": ".zcode/skills/no-sql-web-sdk"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/no-sql-wx-mp-sdk",
+      "raw_path": ".zcode/skills/no-sql-wx-mp-sdk"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/ops-inspector",
+      "raw_path": ".zcode/skills/ops-inspector"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/pinia",
+      "raw_path": ".zcode/skills/pinia"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/qa-ui-visual-baseline-policy",
+      "raw_path": ".zcode/skills/qa-ui-visual-baseline-policy"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/relational-database-tool",
+      "raw_path": ".zcode/skills/relational-database-tool"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/relational-database-web",
+      "raw_path": ".zcode/skills/relational-database-web"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/spec-workflow",
+      "raw_path": ".zcode/skills/spec-workflow"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/tailwindcss-advanced-layouts",
+      "raw_path": ".zcode/skills/tailwindcss-advanced-layouts"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/ui-design",
+      "raw_path": ".zcode/skills/ui-design"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/ui-implementation-scope-policy",
+      "raw_path": ".zcode/skills/ui-implementation-scope-policy"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/uni-app",
+      "raw_path": ".zcode/skills/uni-app"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/uni-helper",
+      "raw_path": ".zcode/skills/uni-helper"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/uni-ui-figma-component-mapper",
+      "raw_path": ".zcode/skills/uni-ui-figma-component-mapper"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/vite",
+      "raw_path": ".zcode/skills/vite"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/vitest",
+      "raw_path": ".zcode/skills/vitest"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/vue",
+      "raw_path": ".zcode/skills/vue"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/vue-best-practices",
+      "raw_path": ".zcode/skills/vue-best-practices"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/vue-router-best-practices",
+      "raw_path": ".zcode/skills/vue-router-best-practices"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/vue-testing-best-practices",
+      "raw_path": ".zcode/skills/vue-testing-best-practices"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/vueuse-functions",
+      "raw_path": ".zcode/skills/vueuse-functions"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/web-design-guidelines",
+      "raw_path": ".zcode/skills/web-design-guidelines"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/web-development",
+      "raw_path": ".zcode/skills/web-development"
+    },
+    {
+      "status": "??",
+      "path": ".zcode/skills/wechat-devtools",
+      "raw_path": ".zcode/skills/wechat-devtools"
+    },
+    {
+      "status": "??",
+      "path": "qa-harness.mjs",
+      "raw_path": "qa-harness.mjs"
+    },
+    {
+      "status": "??",
+      "path": "qa-probe.mjs",
+      "raw_path": "qa-probe.mjs"
+    },
+    {
+      "status": "??",
+      "path": "screenshots/pot-profile-editor-fixed-scope.png",
+      "raw_path": "screenshots/pot-profile-editor-fixed-scope.png"
+    },
+    {
+      "status": "??",
+      "path": "screenshots/pot-profile-editor-fixed.png",
+      "raw_path": "screenshots/pot-profile-editor-fixed.png"
+    },
+    {
+      "status": "??",
+      "path": "screenshots/pot-profile-editor-shell-sized-canvas.png",
+      "raw_path": "screenshots/pot-profile-editor-shell-sized-canvas.png"
+    },
+    {
+      "status": "??",
+      "path": "screenshots/pot-profile-height-label-left-10-final.png",
+      "raw_path": "screenshots/pot-profile-height-label-left-10-final.png"
+    },
+    {
+      "status": "??",
+      "path": "screenshots/pot-profile-height-label-left-10.png",
+      "raw_path": "screenshots/pot-profile-height-label-left-10.png"
+    },
+    {
+      "status": "??",
+      "path": "slider-layout-check.mjs",
+      "raw_path": "slider-layout-check.mjs"
+    },
+    {
+      "status": "??",
+      "path": "slider-layout-screenshot.mjs",
+      "raw_path": "slider-layout-screenshot.mjs"
+    },
+    {
+      "status": "??",
+      "path": "slider-layout-slider-check2.mjs",
+      "raw_path": "slider-layout-slider-check2.mjs"
+    },
+    {
+      "status": "??",
+      "path": "src/Layout.vue",
+      "raw_path": "src/Layout.vue"
+    },
+    {
+      "status": "??",
+      "path": "src/components/BottomSheet.vue",
+      "raw_path": "src/components/BottomSheet.vue"
+    },
+    {
+      "status": "??",
+      "path": "src/components/HeaderWeatherInfo.vue",
+      "raw_path": "src/components/HeaderWeatherInfo.vue"
+    },
+    {
+      "status": "??",
+      "path": "src/components/diagnose-popup/DiagnoseResultStage.vue",
+      "raw_path": "src/components/diagnose-popup/DiagnoseResultStage.vue"
+    },
+    {
+      "status": "??",
+      "path": "src/components/diagnose-popup/DiagnoseUploadStage.vue",
+      "raw_path": "src/components/diagnose-popup/DiagnoseUploadStage.vue"
+    },
+    {
+      "status": "??",
+      "path": "src/components/diagnose-popup/automation.js",
+      "raw_path": "src/components/diagnose-popup/automation.js"
+    },
+    {
+      "status": "??",
+      "path": "src/components/diagnose-popup/care-behavior.js",
+      "raw_path": "src/components/diagnose-popup/care-behavior.js"
+    },
+    {
+      "status": "??",
+      "path": "src/components/diagnose-popup/computed.js",
+      "raw_path": "src/components/diagnose-popup/computed.js"
+    },
+    {
+      "status": "??",
+      "path": "src/components/diagnose-popup/constants.js",
+      "raw_path": "src/components/diagnose-popup/constants.js"
+    },
+    {
+      "status": "??",
+      "path": "src/components/diagnose-popup/deps.js",
+      "raw_path": "src/components/diagnose-popup/deps.js"
+    },
+    {
+      "status": "??",
+      "path": "src/components/diagnose-popup/dialog-submit.js",
+      "raw_path": "src/components/diagnose-popup/dialog-submit.js"
+    },
+    {
+      "status": "??",
+      "path": "src/components/diagnose-popup/images.js",
+      "raw_path": "src/components/diagnose-popup/images.js"
+    },
+    {
+      "status": "??",
+      "path": "src/components/diagnose-popup/outcome-advice.js",
+      "raw_path": "src/components/diagnose-popup/outcome-advice.js"
+    },
+    {
+      "status": "??",
+      "path": "src/components/diagnose-popup/popup-actions.js",
+      "raw_path": "src/components/diagnose-popup/popup-actions.js"
+    },
+    {
+      "status": "??",
+      "path": "src/components/diagnose-popup/question-flow.js",
+      "raw_path": "src/components/diagnose-popup/question-flow.js"
+    },
+    {
+      "status": "??",
+      "path": "src/components/diagnose-popup/question-text.js",
+      "raw_path": "src/components/diagnose-popup/question-text.js"
+    },
+    {
+      "status": "??",
+      "path": "src/components/diagnose-popup/setup.js",
+      "raw_path": "src/components/diagnose-popup/setup.js"
+    },
+    {
+      "status": "??",
+      "path": "src/components/diagnose-popup/state.js",
+      "raw_path": "src/components/diagnose-popup/state.js"
+    },
+    {
+      "status": "??",
+      "path": "src/components/diagnose-popup/style.css",
+      "raw_path": "src/components/diagnose-popup/style.css"
+    },
+    {
+      "status": "??",
+      "path": "src/components/diagnose-popup/view-defaults.js",
+      "raw_path": "src/components/diagnose-popup/view-defaults.js"
+    },
+    {
+      "status": "??",
+      "path": "src/components/header-weather/useHeaderWeather.js",
+      "raw_path": "src/components/header-weather/useHeaderWeather.js"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/index/components/watering-reminder-options.js",
+      "raw_path": "src/pages/index/components/watering-reminder-options.js"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/DiagnosisReviewDetailSections.vue",
+      "raw_path": "src/pages/profile/diagnosis-review/DiagnosisReviewDetailSections.vue"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/DiagnosisReviewDrawer.vue",
+      "raw_path": "src/pages/profile/diagnosis-review/DiagnosisReviewDrawer.vue"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/DiagnosisReviewTableSections.vue",
+      "raw_path": "src/pages/profile/diagnosis-review/DiagnosisReviewTableSections.vue"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/basic-format.js",
+      "raw_path": "src/pages/profile/diagnosis-review/basic-format.js"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/computed.js",
+      "raw_path": "src/pages/profile/diagnosis-review/computed.js"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/core-fields.js",
+      "raw_path": "src/pages/profile/diagnosis-review/core-fields.js"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/detail-actions.js",
+      "raw_path": "src/pages/profile/diagnosis-review/detail-actions.js"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/display.js",
+      "raw_path": "src/pages/profile/diagnosis-review/display.js"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/environment-rows.js",
+      "raw_path": "src/pages/profile/diagnosis-review/environment-rows.js"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/environment-summary.js",
+      "raw_path": "src/pages/profile/diagnosis-review/environment-summary.js"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/formula.js",
+      "raw_path": "src/pages/profile/diagnosis-review/formula.js"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/labels.js",
+      "raw_path": "src/pages/profile/diagnosis-review/labels.js"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/lazy-images.js",
+      "raw_path": "src/pages/profile/diagnosis-review/lazy-images.js"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/list-actions.js",
+      "raw_path": "src/pages/profile/diagnosis-review/list-actions.js"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/message.js",
+      "raw_path": "src/pages/profile/diagnosis-review/message.js"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/prompt-token.js",
+      "raw_path": "src/pages/profile/diagnosis-review/prompt-token.js"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/record-format.js",
+      "raw_path": "src/pages/profile/diagnosis-review/record-format.js"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/route-format.js",
+      "raw_path": "src/pages/profile/diagnosis-review/route-format.js"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/setup.js",
+      "raw_path": "src/pages/profile/diagnosis-review/setup.js"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/state.js",
+      "raw_path": "src/pages/profile/diagnosis-review/state.js"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/style-h5-drawer.css",
+      "raw_path": "src/pages/profile/diagnosis-review/style-h5-drawer.css"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/style-h5-shell.css",
+      "raw_path": "src/pages/profile/diagnosis-review/style-h5-shell.css"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/style-mobile.css",
+      "raw_path": "src/pages/profile/diagnosis-review/style-mobile.css"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/style-responsive.css",
+      "raw_path": "src/pages/profile/diagnosis-review/style-responsive.css"
+    },
+    {
+      "status": "??",
+      "path": "src/pages/profile/diagnosis-review/style.css",
+      "raw_path": "src/pages/profile/diagnosis-review/style.css"
+    },
+    {
+      "status": "??",
+      "path": "src/store/layout.js",
+      "raw_path": "src/store/layout.js"
+    },
+    {
+      "status": "??",
+      "path": "src/utils/bottom-sheet-action.js",
+      "raw_path": "src/utils/bottom-sheet-action.js"
+    },
+    {
+      "status": "??",
+      "path": "src/utils/component-ref.js",
+      "raw_path": "src/utils/component-ref.js"
+    },
+    {
+      "status": "??",
+      "path": "src/utils/component-view-proxy.js",
+      "raw_path": "src/utils/component-view-proxy.js"
+    },
+    {
+      "status": "??",
+      "path": "test/batch-results/watering-batch-results.json",
+      "raw_path": "test/batch-results/watering-batch-results.json"
+    },
+    {
+      "status": "??",
+      "path": "tmp_watering_dose_alignment.png",
+      "raw_path": "tmp_watering_dose_alignment.png"
+    },
+    {
+      "status": "??",
+      "path": "tmp_watering_dose_notfound.png",
+      "raw_path": "tmp_watering_dose_notfound.png"
+    }
+  ],
+  "dirty_file_fingerprints": [
+    {
+      "path": "\".codex/skills/dispatch-task/examples//346/231/256/351/200/232/344/273/243/347/240/201/344/273/273/345/212/241-handoff.json\"",
+      "exists": false,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/agents/qa-reviewer.toml",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "57ef3c3c8f4e4d3f8a807719b8a0a59243223f3463581a33f5bfa42606e7fb0a",
+      "unstaged_diff_sha256": "3a339a6167e072abf0dae476d42a72db8eb0d58a7a2c4b466b6a326a286506c8",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/SKILL.md",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "5b966cdd4c00bc5d35d8f911ac4e87b5a11c0e01b59595b5d11dfe1c86a21ebd",
+      "unstaged_diff_sha256": "2a7a4824d35f9e92b5a898c6b665a5a688e553160844249a206532a856687515",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/assets/schemas/worktree-baseline.schema.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "b9d5ccc596022d9f68b7c886ecda32f2c28c795bbf41170165e307259c84c9e3",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "de1c1f94408a135cdc8498edd7eb28c03840c776d687197e3ff7f7e36036331e"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/assets/schemas/worktree-scope-report.schema.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "7dc223145a1ab9d72f2e0f7a730bf0401f94e7a90b2140ab3486e77d84bc882b",
+      "unstaged_diff_sha256": "ea3bd6093e0dbe6883e0ca5893fa925e2cf2c2e22d0e43bfe9a10d3e3d5aa81f",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/assets/templates/zcode-prompt-template.md",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "c4b777f1cf4f3ebdb93499b27b6206bb2c74aca5ed4210a5f7daee0010d0ff57",
+      "unstaged_diff_sha256": "84aeb885fc2486c593f3bec1f35e16dc7aaab0ce146eeda85fbb204694ea1a05",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/examples/figma-ui-handoff.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "d94cc9b24b611b238542cc43b44234073e34c15babd5b2b5f1ff9f9885b7d9c0",
+      "unstaged_diff_sha256": "1841846416682a777fbdd6120a0d789a1ee6cb6a935d5433c5621ec18007f1aa",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/examples/no-new-deps-report.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "3ab848bfc1ec76d04fa3433976202aa7fd13e6f49435ba746ccf30f1f99f36ab",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "bd132c21830f1e220e5ee1116a92895091566fef201a32b682b262b0cbdd9fd8"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/examples/simple-zcode-trigger.md",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "4f8b2030b4d3cdbc3d99297d430141a34e63642495076574474c99c956ea620c",
+      "unstaged_diff_sha256": "04ee47de6ef29d97d8bb60e18b85a3610ee2b75c44b0cd40a6f085c4be0ab49d",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/examples/style-stack-report.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "9c3ee885cefd51b810da864665a96ec167faf4a9770d91aeff80075e2730e88a",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "72d5d811876dc8347ba6cceafab2d76debde9813c07cde8eca4ee1ab6c54689b"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/examples/worktree-baseline-clean.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "1c2e3d3d0939883c3f8f96aa2385ea490784a34a9881559954f899c11da091f2",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "686727c94769c44ae97caffdc23ed48f5dc1224757a66fba21d05d3b2df8c090"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/examples/worktree-scope-report.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "3a43070aef947fa386ae32dec86417ece2b5178f6889378841bf3ae916c5ea1b",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "60d549132479855a497fed4bc1fdec4f0364762299d711384c991d8b9df926e4"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/examples/zcode-external-prompt.md",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "951acd5c2f7acc487f35d625bbb1b8ba90cbd7bb11b21a3ba3c7fa6a707061f9",
+      "unstaged_diff_sha256": "075924f16479c3434adb0f58a7781e803183f6c8ffdf595887aaa518a9e63cd1",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/examples/zcode-external-ui-handoff.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "3c4a5e1d9349f8f6856f4d71bb07d0e2c30203e4533c325a31a54c2172e8094e",
+      "unstaged_diff_sha256": "c4a0b4ae0cb62fb140e551949d964a6a1433d32297143e890053076906ce96f9",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/references/zcode-computer-use-policy.md",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "a1b8350c28eef00a10380ec8125ab4f792b64a94bbf0b34e82b0ec5b20a2aad5",
+      "unstaged_diff_sha256": "cd2d4e18f56fc93ee6234772a85f4954943f36a873534142508b751f42dac001",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/references/zcode-routing.md",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "8cf5b20733af1db0575cb943be10a85a55d33ddae6bf03633e43eb5f54ac284e",
+      "unstaged_diff_sha256": "c8fa5581b659e30ca4d8610bfc331f94956b8b332a071c1d429e08016ec381ad",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/scripts/capture-worktree-baseline.mjs",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "488c5e88267f14259d2195ff2df09ed0094f490fc6270b7d2adbe08e1dc3af1e",
+      "unstaged_diff_sha256": "8b0b93e9eec79d622cdaa29d5a3e4942c8f83b64d0f1d89408132c895465d553",
+      "staged_diff_sha256": "87f5560841ca267856d64dcf0305025bd22f0d46088aaf172111639f2d78c629"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/scripts/validate-completion-readiness.mjs",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "2fb41111744bca7a40883cf305248f022e8d35df270425031aca57ff207af989",
+      "unstaged_diff_sha256": "8e85d0f5e02ae89fd5316e2138f175c274ae22924ebb540738bbf1755887cc9d",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/scripts/validate-handoff.mjs",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "7eb381ac88996022e3c285a99c904ca859cebd93356a0fe809a552d9c151a2ae",
+      "unstaged_diff_sha256": "cf34420aa0a9d89f518878ed43e5da300c18cd62c552f9bf82e0eea9d5bdb347",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/scripts/validate-no-new-deps.mjs",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "ced442ab9cb5c5e39a1261285acd54059ef2500d5657e2524a786a934498cbf2",
+      "unstaged_diff_sha256": "c2784abd08c92e48075a5febaa3f38a9ed64a03aba8d8ddcbf6cdd7579accbb0",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/scripts/validate-result.mjs",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "f28438ae233be7d3a734027c41b054729a4a811c94cfb35f8ec50560e97535c0",
+      "unstaged_diff_sha256": "8de45781ccaa8aff064ad583a6d28113b96a3718fee769e36c8510078ee998f6",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/scripts/validate-style-stack.mjs",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "faa69511753ba6baccf4ced9be7c43ca0fa504a99372249af660f1b027b873e3",
+      "unstaged_diff_sha256": "85b86269cba3eec2ad57347b3e90e8be792e04d02abcb7d430341fc48cb136f1",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/scripts/validate-worktree-scope.mjs",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "3191778583d124084641ffc7408e214e0aef81281df4cf5fbaad0740fac4480c",
+      "unstaged_diff_sha256": "43ddcc67b60f04b4bf80faded885c2862f5670c2b7747f3088fb300302c2c6f2",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/scripts/validate-zcode-handoff-manual.mjs",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "035b78fc68b3017dc16f509da1b1fcd1a4d40c1637e65a8597431869eea08295",
+      "unstaged_diff_sha256": "a1b8369048fa81f50a6e14a5fd2484934f46e351a1111a33271e4b8b13c742aa",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/scripts/validate-zcode-prompt.mjs",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "a3481c7c1ad4253164d6b4d5d2dab03be76eac1cbd30202a54e926c81c035a7d",
+      "unstaged_diff_sha256": "b7263a3c082c7a41f7e697cc57024df067eb1d8a807bdc5f0069d91f9ebcc047",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/skills/dispatch-task/scripts/validate-zcode-send-receipt.mjs",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "52e03b9919a6148736bf925a4b336aaac5e5dfd4f6ed625371182193cfac5655",
+      "unstaged_diff_sha256": "612babc13528dc78f4b4a115e26f595db0d3775473c75e86c2bd9f4b80d5bb9b",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".codex/skills/figma-implement-design/SKILL.md",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "a6d3e7956b8450f44e49fb3244bfdc80bc6022d2ec55bc366bac045854dedc93",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "c38ea7184818b215a4b8a220ebedd5bbf58063d1449a37bc75cb2626d1cd2685"
+    },
+    {
+      "path": ".codex/skills/figma-implement-design/agents/openai.yaml",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "44a3e48c0e343fbd6d70f4f3f681c5b0fae99a9cbedb125b343cbf27fd6b00dd",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "d8cf8bcd06e74c1e3f5fc3c902b68b2d0381f9a51fd2e6cd6bb9a26cda4d38ec"
+    },
+    {
+      "path": ".codex/skills/figma-layered-ui-contract/SKILL.md",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "39ee4edca4f207a7d98ccbc6d74b70720048c7eb9822f82561ce68250028edd1",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "33c4371090a5eb77d0bfa30611fa4d51b03f9bd26602b8e5d32f05a8f9d48faa"
+    },
+    {
+      "path": ".codex/skills/figma-ui-implementation-policy/SKILL.md",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "5ca97be04423bb61a1a302eb2c459ca91ab597ea7ab335017cc4f87cfce7ec8c",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "f93241e687e6d0f8dccbb12b6f541d52b691a865c6f1df116a39313dc57b56e0"
+    },
+    {
+      "path": ".codex/skills/figma-ui-implementation-policy/agents/openai.yaml",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "5e57007a2b5e35664138839b81730b9a77399ff52d34cf2eecf549e4f235a140",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "ef7e31b4c5dce2ae51b85fbf8057a68b5b1dc19ac8c9b65d1dde629a4a23096c"
+    },
+    {
+      "path": ".codex/skills/uni-ui-figma-component-mapper/README.md",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "3d0d744af5c8c47f6e940c270adbde71c744d88dc794f59814506e53e90fc035",
+      "unstaged_diff_sha256": "4527f6c63fb0cce533fd49911f9581600f295e23c403fdf4e73fad1e983c7ff4",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-hybrid-recovery-result.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "66e892bfb816e642efe5740d1e0f0d32c5ba47a1c3cdb31cb1af44db0542b014",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-figma-addendum-send-receipt.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "30ed8748df68429bf8c3ea7884ce7d76e4f7df17dbeb6c4f33340f630296e3e8",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-figma-addendum.md",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "beace067c3ba949e2df3349d641bd365f988765b88099111e2900897a8764289",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-handoff-manual.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "ac2d42d6341e65217fd2936988e87f991a0795957384881d99f555332dd63dd3",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-handoff.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "78971a99e1a7f81565d643f3d1f3e21ae39e3473cc1c1127016ac48ccdecc765",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-lint-refactor-correction-send-receipt.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "1d176a49404987c1f2c6233302967662bf7b11a1c1e53f636de634e89f273aac",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-lint-refactor-correction.md",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "c5be7ab2690fc7b2c586818186f53e8980ee5f71ce7477363da716a579e138f5",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-prompt.md",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "3893a9d401020f9d853096a8cb1e1f529a8408c50bc6631af31a2bc1a709ccd7",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-send-receipt.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "3eb460124845e0c853d23603a6ba7cecf046c47ad7fcf5f8ff9415b1260c2989",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".tmp/dispatch-task/dispatch-bottom-sheet-layout-20260705-handoff.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "76147ff2dbec5e82e38b7bd6cbd495f8321fd3a75625056631007786614d8a76",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-handoff.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "ac31118c6664dc653ca9052f91c628908e4c96e41b8bf73abb5e8dc8d11d811b",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-implementer-result-corrected.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "3ad4283e7633b02a73e7ba2121f9e3ef11177d101772fc0501680b8ec779211a",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-implementer-result-structured.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "c0d7725c5c75ff49f525fa8db56da6349845905fe749291609922c9a1c960c18",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-implementer-result.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "c4d5eb45dd15ba1f038d66a200f4ac4f098f36096b197a94b43c6a39f9183bbe",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-no-new-deps-report.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "2f560f884cda0fbb609fa64b5086825e9ee260df3fbaeeb3893ad2cfc57ce61d",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-style-stack-report.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "58e75f7c9a7b90c36b793f400b9cd03413f6b4c1e06e29b9b4efdcad52a45134",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-worktree-baseline.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "825c6596f9a353a41879cc8e82627e24d07b7e22be474a4788f267f590fe3327",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-worktree-scope-report.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "2967ad3b8c681cb952cef62185850110ff83ed6a6cbc1f13917430105e345e53",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/ai-model-nodejs",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/ai-model-web",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/ai-model-wechat",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/auth-nodejs",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/auth-tool",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/auth-web",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/auth-wechat",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/cloud-functions",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/cloud-storage-web",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/cloudbase",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/cloudbase-agent",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/cloudbase-cli",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/cloudbase-platform",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/cloudrun-development",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/data-model-creation",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/dispatch-task",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/figma-implement-design",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/figma-layered-ui-contract",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/figma-ui-implementation-policy",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/http-api",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/implementer-ui-execution-policy",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/local-smoke-test-and-lan-direct-connection-policy",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/miniprogram-automator-runtime",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/miniprogram-development",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/no-sql-web-sdk",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/no-sql-wx-mp-sdk",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/ops-inspector",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/pinia",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/qa-ui-visual-baseline-policy",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/relational-database-tool",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/relational-database-web",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/spec-workflow",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/tailwindcss-advanced-layouts",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/ui-design",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/ui-implementation-scope-policy",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/uni-app",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/uni-helper",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/uni-ui-figma-component-mapper",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/vite",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/vitest",
+      "exists": false,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/vue",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/vue-best-practices",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/vue-router-best-practices",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/vue-testing-best-practices",
+      "exists": false,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/vueuse-functions",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/web-design-guidelines",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/web-development",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".zcode/skills/wechat-devtools",
+      "exists": true,
+      "is_file": false,
+      "worktree_sha256": null,
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "AGENTS.md",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "635c96c9ffbaf03aa1602f7db711f4abafd97c70ffc0cacf9f99cced3704327c",
+      "unstaged_diff_sha256": "553d711d6d44e651194412234bc00165af5d9a342f2fe66d038b03c719be7249",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/ai-rules/frontend-automation-id-policy.md",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "52c8dd32ef8c19b30ba7634f5f4a93f48233a54a6f1943687c2a4fb7b6f4ca4a",
+      "unstaged_diff_sha256": "189310d03e546728b2355b8f26bf299fa02d632ff486b81d27f61371f9ab8794",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "qa-harness.mjs",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "658f8688ee489f766de0f078dc624dbc8dc1c866e1f0c55e229152612d37614f",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "qa-probe.mjs",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "22c3c0e68d5271c419c17adc8629d7f6c1a710dfd3e98db2c85147fff4d835f6",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "screenshots/pot-profile-editor-fixed-scope.png",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "50e6ee6380617fe878fc74ed976401d7b4ca052c728b1bfb1fbb5f49bd1babd0",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "screenshots/pot-profile-editor-fixed.png",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "50e6ee6380617fe878fc74ed976401d7b4ca052c728b1bfb1fbb5f49bd1babd0",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "screenshots/pot-profile-editor-shell-sized-canvas.png",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "0eb11b6a1dd16bb6b154f6ace3f670d9637b0ea889fffe31e694a2a044d5123a",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "screenshots/pot-profile-height-label-left-10-final.png",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "ee2cca077e3fafff6c4da5bb58d50e031fa409a659207ceeb486acf7e3cd12ae",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "screenshots/pot-profile-height-label-left-10.png",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "ee2cca077e3fafff6c4da5bb58d50e031fa409a659207ceeb486acf7e3cd12ae",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "slider-layout-check.mjs",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "ac98c1627367a95a14503dc1051733228c7ee12285c462d6f53cec5f2035a115",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "slider-layout-screenshot.mjs",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "598d7afdbe566396d45d1b8e3473cfb4bf502d2e1506c34936e60fe99960a52e",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "slider-layout-slider-check2.mjs",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "554838eb49a76c158218f363d9845e5e84afefc517617cebf94c584607b0fce3",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/Layout.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "7c29e5f85f793aab2ced08621d90842b97810b970ed380f610e4451707d09c6f",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/BottomSheet.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "7575d808e4238b20983dce95a3e735c73b73dc678da4657ac734fd3ba6bee800",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/CustomNavbar.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "0c0282181bbb88cfac26433258f3d08ee3ae5d52977b6873bcce37e0b035ad17",
+      "unstaged_diff_sha256": "6f4f0668af3b8f26af4e7688c6c84dced9327723a02ef7451f67e41f184229fb",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/DiagnosePopup.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "b642e4cfe8410ce4f41af5a83c22ac01b5b28d9b9eef029e95d71b9f8d56a752",
+      "unstaged_diff_sha256": "b143be7ff853440c98c8e73a3ed7f7859c8db8286b6dec70ef0d6a498f6febe2",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/HeaderWeatherInfo.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "b58f97e6703f84944813e232fbc5deae6c462826e4230aec911b75bf2976a29f",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/diagnose-popup/DiagnoseResultStage.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "a19e71c8159e48b3ca59d1024a1c75d03aa97f99af20c19768b6915ff73bb0c1",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/diagnose-popup/DiagnoseUploadStage.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "e7ebd6822faacf82401eef59d8b7d35c14e3dae7a85ab2cb2c423590cbfc674b",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/diagnose-popup/automation.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "d9a105e12b76dd31015b2f6e4c0204906ec90420414ed727090ecd1d5d636ee9",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/diagnose-popup/care-behavior.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "fdf4c23d21ee5c727cce02abd990d694f091db8326dd79dcadc5fe0f25666f74",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/diagnose-popup/computed.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "ad33af0c72c39334e14f8380486942179baf9ff30327bd6e7fc71cbbd181ce69",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/diagnose-popup/constants.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "572aa2dc6830d08b80099aa5ba07ab46403fe120dfd20d0981c21f3214c70031",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/diagnose-popup/deps.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "6bc53f3023abfb21fe18f61937a34dea3aefb156f7a4bc14f838e1295a1e9b03",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/diagnose-popup/dialog-submit.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "02e10b3ad70314d27585f4d0b859f92eb0e00f42a157dd6476db81da5a936368",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/diagnose-popup/images.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "08d41d245b04bdb5dd893c425c61d0d14ed938b89f525ca36177fa70b74318cc",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/diagnose-popup/outcome-advice.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "4afbea8ee7d015199987ae1ad955da3be15a63d1174bbdc13ae2d5d94b680c4b",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/diagnose-popup/popup-actions.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "b8f095df7916587cb272c9377763fedbcf8d8d11527f9d4269c40d53ae02f4bc",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/diagnose-popup/question-flow.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "2f97703444b3d8d2b04e74d952df3e246b5f42c4b1228d83a3cbf059a1a11c17",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/diagnose-popup/question-text.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "5ff065afc31b459389a131f3107e29388b4756e97dea05d0be0e20a3cfbb611d",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/diagnose-popup/setup.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "bf844ab846270a467aff12202a5b0dc24f1ea9336b1f2b81dfe5986888ff0056",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/diagnose-popup/state.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "4ab8fa0bf5d1885a8003c13c1dea853996f82476b8127a61640511e46bfdbfd3",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/diagnose-popup/style.css",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "4dde23aa4ddf9eacc41126048a3629dd1db3448ccbea1f6518f74e67c45184e1",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/diagnose-popup/view-defaults.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "80f84d9123fce761a042329df50ac954bb3541e5066f099f3e32c6ebad3fdcb9",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/components/header-weather/useHeaderWeather.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "f65674a455c21d97f4d98561642badb54fc64526ab7daa314a5107e73900babd",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "f42dfba54cca6000c3c15a34737c9068907a476b0591e41141fdb3ba73d1e26d",
+      "unstaged_diff_sha256": "b8c633754fdb52e519f621478f1003bc26b65a9e6244867a8f5afdd7ef241fe6",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/add-plant/add-plant.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "62c6fa14ec6eb205952f3e742794670fd0736fd989ab89101613814a91a11894",
+      "unstaged_diff_sha256": "5ed9c5135209c7b9bd9a5def1ada8cb99a334ee1681a0bbd9248f195c9c9859c",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/add-plant/composables/useAddPlantIdentify.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "523350184903ed8691fb07414bd0304aa1e60304ed07632777ca8d9a47017aa8",
+      "unstaged_diff_sha256": "ce9c1de50b7b1f5f8c2b05300a1dbd4c213ab0fe1dfd578a9d9f20bb812b5128",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/calendar/calendar.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "f42218f1ca37cdf5c5655f0183a1e711fd34309bce684a575835f3dc8fa153e6",
+      "unstaged_diff_sha256": "525a566f3799f3d0240b88b8337a6433b791cc48628a242127dfd1538ac039e6",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/diagnose/diagnose.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "f73335b27b657711f5c045b5303c80ebdb5cc4bba979256d86cb6acd133f8053",
+      "unstaged_diff_sha256": "c02f13b901965e573a38f12c9021e962b7e3b3b527ad69bcd2f616743e583bf7",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/diagnose/question-package.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "5c452d35589ae692563df86d720b290b9c45d103dd491d1a5675678c3600731e",
+      "unstaged_diff_sha256": "642f34b60176beeef4e63c9300a6d90bc47a1c3c1b2c59d4a1be673adfc1bdfd",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/index/components/PotProfileEditor.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "279f0e1ed04be7fc5c101e920bb3a94d48f8883ce104ffd487859bd94d04f77c",
+      "unstaged_diff_sha256": "12bddb500b8d2def234a7943746eff858c3a848c990461ad8a7d96538badfb79",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/index/components/WateringReminderSheet.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "4ea6ee5230cc8d1433c2948c87d5faf501ae21047b8bc66c046fd66b31a342c6",
+      "unstaged_diff_sha256": "1b2e1251442fa619af951b5eda9402b82d49cc863da83a135fdd04f2e463e503",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/index/components/watering-reminder-options.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "7350c7a48ef1a226b2f2961c3cc89ba1938ebfda96c786df5c6d9cf7d3d2773b",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/index/index.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "3e8aa482a44319f987d93b596de5ea3aeb89626f175ee77d48be528d40e57ac5",
+      "unstaged_diff_sha256": "48898a679de7b2de49b4e24f83c7103170cca3013ac318d417971517c2e2f408",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/plant-detail/plant-detail.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "c004b529a31b3125b265fcee3affb6be977308e7f8d15ed11c7ef67ebbaffeeb",
+      "unstaged_diff_sha256": "44c66479c01d29ea94ef14e3d2072f70e304d2f5ffd81433f599dfe68cf5a467",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "86cfc865e563fb19e719e7dce4f0202a8da7ca26a5b3db5b67cdda3f14ddaae1",
+      "unstaged_diff_sha256": "86827e3960f4485d1f7198ca1c2d3bb4f5d9e1cf1e774c7c4d470273dd789ce7",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/DiagnosisReviewDetailSections.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "940156ac8442ce752d874c96c0d9459291e9e373731a3b8f61668c54638f4ddc",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/DiagnosisReviewDrawer.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "57014f72ee1e14f4c445f7e63076803f4d6f92da9e187ecbe1f897a58730359c",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/DiagnosisReviewTableSections.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "335d01cb830fd21cfffbf0378414cd2024031abeaf00556385c7b7b7b301e21b",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/basic-format.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "5f3cb479aedeb757140f554720ae9a5355d490dc960e719c814728e64a0f9d88",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/computed.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "bece30007edc14a7e92154c4154bf5c2bddd4870c8797e19bcfd7695355f453a",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/core-fields.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "71d2881672cbc29e37fb17f1441da86cf971eb6be08aa53e2bff043e6bfb1672",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/detail-actions.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "6ee98344884b1fde641544928499ae7811c906d06e70d7b879ccf583c818cd7b",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/display.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "efcabf46980353b75bee32b9e86f6ff31e9abe171c3d10a9dd9929d290255719",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/environment-rows.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "17a44acc803b101fc486efabcd81817901983be0c2e8b7ff9fe2e788a89eb7a8",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/environment-summary.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "4d7a337643c6be33620402fb1aedc1171a7fd2c0725bf1ab939cbddb2c0a1c86",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/formula.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "bc8b1b913a278cf4b74f9f0c675f5d18532d040f49d6ace09396308234b01c84",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/labels.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "9efd305109af2724be187cf55314d6d868c91e48ee0d5c084fafe3ceb8029666",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/lazy-images.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "03a1183b1b2fd81595319a2acef409357a2ac4052d6a64437620cf876a1a8a83",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/list-actions.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "48d43da194dd426c0598c564d3afbcb81525f8858f3bc4c071846d5e8ff4cf34",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/message.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "309d251e7f99cfd6f518eb895f013e2d4951ece3564376102db7dbfb12da73b3",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/prompt-token.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "aa1ee3892d8ecb4cd155f8815bac1e4d03572fc902fd46d65ef88978c6ea1020",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/record-format.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "59d9c5feac3f036b59ea3796d55e573ce98f7f7adaa447bb6d0f758befa7902b",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/route-format.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "eb1911ccbcd0a6b783dfbd0f267ced15e5c71f56fb1d7ee65e21d90b82dade9d",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/setup.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "fd9ff53ed7a31095c76e70453c30553ffb549115acf794d0a4740d6e8b1b0f7e",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/state.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "4ae28d7f0aa382e7ec72c4915b616fa65483966fc16983edc63067d6ee5a3bf6",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/style-h5-drawer.css",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "16532275fcbdd8354516eb237d1688a3bdbbc6b96abdcbbc16528bdd3263da18",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/style-h5-shell.css",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "a59246aa088b1cc96cb3fe57707258100b42a85027c7347e6df5cd2314334c04",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/style-mobile.css",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "c5bc3c3a8ac8b5e739cd1ad9c28fc2973d38504f4e832ed5be48bf2929dd074c",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/style-responsive.css",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "4b17047785be1f90b4ecea2a400a748b5eac04bc4600fbc917eee616db477a8e",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/diagnosis-review/style.css",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "395c8776bd6b61534dd61b321e9cb8fd79f08162f6aa61f890f4a265de060ad9",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/out-of-pool-review.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "a66147c6ea30189ceb17949359cc15abcdf1be4289dfbaab5928b3b872a2ae3a",
+      "unstaged_diff_sha256": "e6d0a87cad87c3d195ebbea17ccd559c09a55c0c728c922e7f2c5085008c95c8",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/profile.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "49062b7e2b2bfa8085720d3f928d3bc48c9c2b96fda8ad36f094a8ce3104b2d1",
+      "unstaged_diff_sha256": "bc0166459e7b9cb272363ddc8f551e1512314dd6670ccf89d4a9e55d8adc21fc",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/pages/profile/watering-review.vue",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "c45f00c2a58635c64729713383b5bd43ce951faf3747e2946175886f734ad578",
+      "unstaged_diff_sha256": "9eda0e942a02608228fb3233089808b914ef136e7ae15a5bb10cdb1a0e7e7b94",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/store/layout.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "8dc36669e2848bc3929743cec174bf10a5589a056be7ae8018a3fa4bdb2fefc0",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/utils/bottom-sheet-action.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "ac9dcb889be5527bb743bf795405890819c217516d327c4b24568194db4b9962",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/utils/component-ref.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "e1bb27834502ace58b1c74517c55885bcaf7ec20a85212f93f43d449f72cc600",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/utils/component-view-proxy.js",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "f384d0aa61e34f8d6e02f4340c2069c34d38df0740c59f379fe36f51ef62f804",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "test/batch-results/watering-batch-results.json",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "dba16365821c6c43d2993aef8441f704d83201e1f36949dcb47cf1120e85ee08",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tmp_watering_dose_alignment.png",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "2d399274433c32a522a62447227d0d2a10b29e89c47d8cffcc52575d5bb0c201",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tmp_watering_dose_notfound.png",
+      "exists": true,
+      "is_file": true,
+      "worktree_sha256": "7998483e22bd3950cdb05b046e6c55005cf1df641fc0e1001af87fac01b7793b",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "dirty": true
+}

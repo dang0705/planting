@@ -1,0 +1,115 @@
+{
+  "dispatch_run_id": "dispatch-86ey3h3dt-zcode-20260630",
+  "source": "codex_recovery_after_zcode_with_internal_subagent_correction",
+  "status": "completed",
+  "updated_at": "2026-07-01T03:48:57Z",
+  "implementation_mode_actual": ["zcode_external", "internal_implementer_fast_correction"],
+  "zcode_completion_claim_treated_as_non_authoritative": true,
+  "zcode_handoff_manual": {
+    "read_by_codex": true,
+    "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-handoff-manual.json",
+    "status": "completed",
+    "updated_at": "2026-07-01T11:30:00Z"
+  },
+  "internal_subagent_correction": {
+    "agent_type": "implementer_fast",
+    "agent_id": "019f1bc2-42bb-71b2-bf2c-17a4f047e946",
+    "reason": "ZCode/GLM reached limit after implementation; internal subagent continued formatter and 500-line hard-gate cleanup.",
+    "changed_files": [
+      "src/pages/index/components/WateringReminderSheet.vue",
+      "src/pages/index/components/DoseSelector.vue"
+    ],
+    "final_line_counts": {
+      "src/pages/index/components/WateringReminderSheet.vue": 499,
+      "src/pages/index/components/DoseSelector.vue": 95,
+      "src/pages/index/components/PotProfileEditor.vue": 363,
+      "src/components/PotCanvas.vue": 399
+    }
+  },
+  "runtime_sql_recovery": {
+    "agent_type": "implementer_deep",
+    "agent_id": "019f193c-95ab-7120-8afb-7c35a69b1479",
+    "actual_database": "cloud1-2grufevs395a9d5e",
+    "ddl_deployed": true,
+    "notes": [
+      "Created user_plant_care_extensions in the actual LAN runtime database.",
+      "Verified genus_care_profiles quantization in the actual LAN runtime database: 152 total rows, 152 quantized, 152 complete key rows.",
+      "Aligned substrate_type with runtime UI/API contract: VARCHAR(2048), JSON array string or single value, enum CHECK removed."
+    ],
+    "changed_files": [
+      "scripts/sql/watering-reminder-v21-schema-20260630.sql",
+      "test/unit-test/test-watering-reminder-v21-schema-contract.mjs"
+    ]
+  },
+  "changed_files_recovered_by_codex": [
+    "cloudfunctions/layer/utils/pot-geometry.js",
+    "cloudfunctions/layer/utils/hydration-load.js",
+    "cloudfunctions/layer/utils/watering-planner.js",
+    "cloudfunctions/layer/utils/plant-knowledge.js",
+    "cloudfunctions/plant-user-http/app.js",
+    "cloudfunctions/diagnose-http/utils/environment-context-v7.js",
+    "cloudfunctions/diagnose-http/presenters/diagnosis-round-presenter.js",
+    "src/pages/index/components/WateringReminderSheet.vue",
+    "src/pages/index/components/DoseSelector.vue",
+    "src/pages/index/components/PotProfileEditor.vue",
+    "src/components/PotCanvas.vue",
+    "src/pages/profile/diagnosis-review.vue",
+    "test/unit-test/test-watering-planner-v21.mjs",
+    "test/unit-test/test-environment-care-context.mjs",
+    "test/unit-test/test-care-behavior-payload.mjs",
+    "test/unit-test/test-care-behavior-answer-runner.mjs",
+    "test/unit-test/test-route-planning.mjs",
+    "docs/ACTIVE_CONTRACTS.md",
+    "scripts/sql/watering-reminder-v21-schema-20260630.sql",
+    "test/unit-test/test-watering-reminder-v21-schema-contract.mjs"
+  ],
+  "validation_evidence": {
+    "zcode_handoff_manual": {
+      "result": "passed",
+      "commands": [
+        "node .codex/skills/dispatch-task/scripts/validate-zcode-handoff-manual.mjs .tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-handoff.json .tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-handoff-manual.json"
+      ]
+    },
+    "format": {
+      "result": "passed",
+      "commands": [
+        "npx oxfmt --check src/pages/index/components/WateringReminderSheet.vue src/pages/index/components/DoseSelector.vue src/pages/index/components/PotProfileEditor.vue src/components/PotCanvas.vue"
+      ]
+    },
+    "lint": {
+      "result": "passed",
+      "commands": [
+        "npx oxlint cloudfunctions/layer/utils/pot-geometry.js cloudfunctions/layer/utils/hydration-load.js cloudfunctions/layer/utils/watering-planner.js cloudfunctions/layer/utils/plant-knowledge.js cloudfunctions/plant-user-http/app.js cloudfunctions/diagnose-http/utils/environment-context-v7.js cloudfunctions/diagnose-http/presenters/diagnosis-round-presenter.js src/pages/index/components/WateringReminderSheet.vue src/pages/index/components/DoseSelector.vue src/pages/index/components/PotProfileEditor.vue src/components/PotCanvas.vue src/pages/profile/diagnosis-review.vue test/unit-test/test-watering-planner-v21.mjs test/unit-test/test-environment-care-context.mjs test/unit-test/test-care-behavior-payload.mjs test/unit-test/test-care-behavior-answer-runner.mjs test/unit-test/test-route-planning.mjs --quiet"
+      ],
+      "summary": "0 errors, 998 warnings"
+    },
+    "unit_tests": {
+      "result": "passed",
+      "commands": [
+        "npm run test:ci",
+        "node test/unit-test/test-watering-planner-v21.mjs && node test/unit-test/test-environment-care-context.mjs && node test/unit-test/test-care-behavior-payload.mjs && node test/unit-test/test-route-planning.mjs",
+        "node test/unit-test/test-watering-reminder-v21-schema-contract.mjs"
+      ]
+    },
+    "runtime_qa": {
+      "result": "passed",
+      "agent_type": "internal_qa_fallback",
+      "agent_id": "019f1bcc-9c3d-7971-991b-dacbd7d39841",
+      "summary": "LAN mini-program runtime wx.request created temporary Monstera plant, saved/read pot-profile with JSON substrate composition, received watering-planner v2.1 response, and cleaned temporary data."
+    },
+    "docs": {
+      "result": "passed",
+      "commands": [
+        "rg -n \"substrateType|substrate_type|substrateComposition|watering_way_quantization_json|DoseSelector|PotProfileEditor|PotCanvas\" docs/ACTIVE_CONTRACTS.md"
+      ],
+      "changed_files": ["docs/ACTIVE_CONTRACTS.md"]
+    },
+    "build": {
+      "result": "passed",
+      "commands": ["npm run build:mp-weixin:ci"],
+      "warnings": ["Browserslist data outdated", "Dart Sass legacy JS API deprecation"]
+    }
+  },
+  "remaining_gates": [],
+  "blockers": []
+}

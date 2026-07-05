@@ -1,0 +1,215 @@
+{
+  "dispatch_run_id": "dispatch-86ey3h3dt-zcode-20260630",
+  "implementation_mode": "zcode_external",
+  "task": {
+    "objective": "落地浇水提醒算法 v2.1 的应用代码、接口和前端交互；SQL/schema 由内部 implementer_deep 并行处理，ZCode 不得修改 SQL/schema 文件。",
+    "code_changes_required": true,
+    "ui_task": true,
+    "risk": "high",
+    "qa_required": true
+  },
+  "target_role": "zcode_external",
+  "spawn_contract": {
+    "qa_agent_type": "qa_reviewer",
+    "context_mode": "isolated",
+    "generic_fallback_forbidden": true,
+    "identity_receipt_required": true
+  },
+  "zcode_contract": {
+    "external_implementer": "zcode_glm",
+    "application": "ZCode",
+    "target_session": "current_open_chat",
+    "prompt_transport": "clipboard_paste",
+    "prompt_sentinel_required": true,
+    "prompt_integrity_check_required": true,
+    "input_box_check_required": true,
+    "send_receipt_required": true,
+    "send_action_required": true,
+    "allowed_send_actions": ["enter", "send_button", "blocked"],
+    "completion_claim_not_authoritative": true,
+    "codex_self_implementation_forbidden": true,
+    "generic_fallback_forbidden": true,
+    "recovery_required": true,
+    "prompt_max_chars": 30000,
+    "required_prompt_sections": [
+      "implementation_contract",
+      "allowed_forbidden_paths",
+      "project_constraints",
+      "handoff_manual_contract",
+      "validation_commands",
+      "result_json_contract",
+      "ui_scope_contract",
+      "style_stack_contract",
+      "figma_direct_fetch",
+      "figma_blocker_policy",
+      "uni_ui_mapping_contract"
+    ],
+    "handoff_manual_required": true,
+    "handoff_completion_status_source": "handoff_manual",
+    "computer_use_required": true,
+    "actual_tool_invocation_required": true,
+    "allowed_tool_targets": ["@ZCode", "@Computer"],
+    "minimum_tool_event_count": 5,
+    "computer_use_tool_invocation_required": true,
+    "computer_use_action_trace_required": true,
+    "clipboard_write_via_computer_use_required": true,
+    "manual_typing_forbidden": true,
+    "shell_only_ui_automation_forbidden": true,
+    "required_computer_use_actions": [
+      "verify_zcode_current_session",
+      "focus_chat_input",
+      "set_clipboard_to_prompt",
+      "paste_clipboard",
+      "verify_prompt_sentinel_in_input",
+      "send_prompt"
+    ]
+  },
+  "handoff_manual": {
+    "required": true,
+    "path": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-handoff-manual.json",
+    "status_field": "status",
+    "working_status": "working",
+    "terminal_statuses": ["completed", "blocked"],
+    "main_completion_probe": "read_json_before_ui"
+  },
+  "allowed_paths": [
+    "cloudfunctions/layer/utils/**",
+    "cloudfunctions/diagnose-http/**",
+    "cloudfunctions/plant-user-http/**",
+    "src/**",
+    "test/unit-test/**",
+    "test/e2e/terminal-e2e/**",
+    "tailwind.config.js",
+    "docs/ACTIVE_CONTRACTS.md",
+    "docs/CURRENT.md"
+  ],
+  "forbidden_paths": [
+    "scripts/sql/**",
+    "scripts/ensure-cloudbase-sql-schema.mjs",
+    "scripts/lib/cloudbase-sql-runner.mjs",
+    "src/data-system/config/tables.js",
+    "docs/genus_care_profiles.csv",
+    "docs/genus_care_profile.csv",
+    "docs/genus_care_profiles.md",
+    "SQL-cvs/**",
+    "package.json",
+    "package-lock.json",
+    "dist/**",
+    ".git/**"
+  ],
+  "acceptance": [
+    "盆型信息写入用户植物养护扩展，不作为单次浇水事件字段。",
+    "浇水提醒应用逻辑不再以 wateringCount10d 作为核心判断，改用补水负荷、湿压风险、干湿门禁和提醒策略。",
+    "watering_strategy_json.freq/way 能影响动态回看窗口、Dry/Wet Gate、下次水量建议和提醒时间。",
+    "同等 potVolumeMl 下，宽矮盆 potGeometryDryDownFactor 高于窄深盆；amountRangeMl 可接近但 nextCheckDate/reminderDate 不完全一致。",
+    "缺失 potHeightCm 时可估算盆高，但 potVolumeMl 与 amountRangeMl 置信度降低。",
+    "无排水孔加窄底盆会提高 wetPressureLoad 与 OVERWATERING_RISK_WARNING 权重。",
+    "unknown 浇水历史不能按 0 次处理；喷雾不能抵消干燥风险；浇透加近日期加强偏湿可触发过浇风险或查土策略。",
+    "浇水提醒页的盆型补填入口能写入植物档案，输出为提醒策略而不是 WET/DRY 盆土状态。",
+    "逐行核验中的 FAIL/REVIEW_FLAG 项在应用逻辑或待办结果中有明确处理结论。",
+    "UI 实现必须纳入 Figma 节点 317:331、338:989、362:989、359:1782、375:989、277:55 的验收边界；ZCode 需直接读取 Figma metadata/design context 并提交 figma_fetch_evidence。",
+    "Figma + uni-ui 实现必须提交 uni_ui_mapping_evidence，说明节点区域到 uni-ui/现有组件/Tailwind 实现的映射和限制。"
+  ],
+  "project_constraints": {
+    "rule_refs": [
+      "AGENTS.md §2 全局硬规则",
+      "AGENTS.md §3 项目技术上下文",
+      ".codex/skills/dispatch-task/SKILL.md Gate B2 / Gate C / Gate D",
+      ".codex/skills/dispatch-task/references/zcode-external-implementer-bridge.md",
+      ".codex/skills/dispatch-task/references/high-risk-workflow.md",
+      ".codex/skills/dispatch-task/references/clickup-workflow.md"
+    ],
+    "framework": "UniApp 3.0 + Vue 3 + JavaScript",
+    "styling_system": "Tailwind CSS 3 + weapp-tailwindcss",
+    "new_scss_policy": "forbidden",
+    "scss_exceptions": [],
+    "component_library": "uni-ui",
+    "dependency_policy": "不得新增依赖；不得修改 package.json/package-lock；优先复用现有 CloudBase、Vue Query、Pinia、uni-ui、Tailwind 能力。",
+    "test_commands": [
+      "npm run lint",
+      "npm run test:ci",
+      "npm run build:mp-weixin:ci",
+      "npm run ensure:cloudbase-sql-schema:verify"
+    ]
+  },
+  "decision_lock": {
+    "level": "strict",
+    "architecture_invariants": [
+      "SQL/schema lane 由内部 implementer_deep 并行处理；ZCode 不得修改 scripts/sql、schema runner 或 src/data-system/config/tables.js。",
+      "应用代码按 user_plant_care_extensions 表与 snake_case 字段接入：user_plant_id、pot_top_diameter_cm、pot_bottom_diameter_cm、pot_height_cm、has_drainage_hole、pot_material、substrate_type、profile_version、source、confidence。",
+      "盆型和排水孔属于用户植物养护扩展；runoffObserved/saucerWaterCleared 属于单次 WateringEvent，二者不得混淆。",
+      "genus_care_profiles.watering_strategy_json 是属级养护事实源，应用层只能解析/量化，不得重写 CSV 数据或把科名当属名补救。",
+      "算法输出是 reminder strategy，不是实时盆土 WET/DRY 状态。",
+      "不得通过保留 wateringCount10d fallback 来绕过 v2.1 主逻辑替换。"
+    ],
+    "local_decisions_allowed": [
+      "可自行拆分纯计算模块、接口服务层和前端表单组件。",
+      "可在不新增依赖的前提下复用现有 Vue Query、Pinia、uni-ui 和 Tailwind 组织交互。",
+      "可新增 focused unit tests/e2e helpers 证明算法边界。"
+    ],
+    "data_or_api_contract": [
+      "plant-user-http /user-plants/watering-planner 可扩展请求/响应，但必须保持现有调用兼容所需字段。",
+      "用户植物养护扩展保存目标是植物档案，不是 watering_events。",
+      "WateringEvent doseClass 枚举为 unknown/mist/light/normal/thorough。"
+    ],
+    "migration_or_rollback": [
+      "ZCode 不做 DDL；若缺 SQL 字段，返回 blocked 并说明等待内部 SQL lane，不得自行改 schema 文件。"
+    ],
+    "stop_conditions": [
+      "需要新增依赖。",
+      "需要修改 forbidden_paths。",
+      "无法在不改 SQL/schema 的情况下接入应用代码。",
+      "无法保留用户既有未提交改动。"
+    ]
+  },
+  "figma": {
+    "link": "https://www.figma.com/design/r5afPtZu8fRMRenk8TJVjO/planting?node-id=317-331&t=MmQvExSfzEo0COdu-4",
+    "node_id": "317:331",
+    "lite_status": "link_only",
+    "main_access": "lite_only",
+    "main_tools_used": [],
+    "implementer_fetch_required": true,
+    "qa_baseline_fetch_required": true
+  },
+  "required_skills": {
+    "qa": ["$qa-ui-visual-baseline-policy"]
+  },
+  "required_prompt_sections": [
+    "implementation_contract",
+    "allowed_forbidden_paths",
+    "project_constraints",
+    "handoff_manual_contract",
+    "validation_commands",
+    "ui_scope_contract",
+    "style_stack_contract",
+    "figma_direct_fetch",
+    "figma_blocker_policy",
+    "uni_ui_mapping_contract",
+    "result_json_contract"
+  ],
+  "validation": {
+    "external": [
+      "node .codex/skills/dispatch-task/scripts/validate-zcode-handoff-manual.mjs .tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-handoff.json .tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-handoff-manual.json",
+      "git diff --name-only",
+      "git diff --stat",
+      "forbidden paths check",
+      "npm run lint",
+      "npm run test:ci",
+      "npm run build:mp-weixin:ci",
+      "npm run ensure:cloudbase-sql-schema:verify"
+    ]
+  },
+  "output_evidence_required": [
+    "zcode_send_receipt",
+    "zcode_handoff_manual",
+    "zcode_recovery_evidence",
+    "validation_evidence",
+    "ui_scope_map",
+    "style_stack_compliance",
+    "component_reuse_evidence",
+    "figma_fetch_evidence",
+    "uni_ui_mapping_evidence",
+    "watering_algorithm_evidence",
+    "schema_integration_evidence"
+  ]
+}

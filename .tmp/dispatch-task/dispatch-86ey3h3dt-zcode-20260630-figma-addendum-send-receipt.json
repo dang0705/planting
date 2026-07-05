@@ -1,0 +1,38 @@
+{
+  "dispatch_run_id": "dispatch-86ey3h3dt-zcode-20260630",
+  "status": "sent_to_zcode",
+  "queued_at": "2026-07-01T00:35:29Z",
+  "sent_at": "2026-07-01T00:36:03Z",
+  "corrected_resend_at": "2026-07-01T00:38:37Z",
+  "validated_terminal_blocked_at": "2026-07-01T00:39:57Z",
+  "application_verified": "ZCode",
+  "same_session_verified": true,
+  "clipboard_paste_used": true,
+  "prompt_file": ".tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-figma-addendum.md",
+  "prompt_sha256_initial": "0c9c0552c48d6f64eb59b713deb51873817f0c2f6037d72defe62890ab67d891",
+  "prompt_sha256_corrected": "beace067c3ba949e2df3349d641bd365f988765b88099111e2900897a8764289",
+  "queue_evidence": {
+    "computer_use_tool_invoked": true,
+    "attachment_seen": "pasted-text-20260701-083328-1989db4a.txt",
+    "attachment_line_count_seen": 213,
+    "queued_message_button_seen": "立即",
+    "current_zcode_state_seen": "working",
+    "user_message_seen_in_thread": true,
+    "reason_not_marked_completed": "ZCode processed the Figma addendum and returned BLOCKED_ZCODE_FIGMA_UNAVAILABLE because Figma MCP returned No session found for sessionId for all 6 nodes."
+  },
+  "send_actions": [
+    "mcp__computer_use.get_app_state: verified ZCode session and pasted-text attachment",
+    "mcp__computer_use.press_key(Return): moved pasted attachment into the ZCode queued message list",
+    "osascript click button 立即: promoted the queued pasted-text attachment to a user message",
+    "mcp__computer_use.get_app_state: confirmed pasted-text message is in the conversation and ZCode is thinking",
+    "corrected the addendum schema instruction so blocked status uses phase=blocked",
+    "mcp__computer_use.press_key(Return): sent corrected pasted-text attachment pasted-text-20260701-083837-9c2cb193.txt"
+  ],
+  "terminal_handoff_manual": {
+    "status": "blocked",
+    "phase": "blocked",
+    "blocker": "BLOCKED_ZCODE_FIGMA_UNAVAILABLE",
+    "validator": "node .codex/skills/dispatch-task/scripts/validate-zcode-handoff-manual.mjs .tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-handoff.json .tmp/dispatch-task/dispatch-86ey3h3dt-zcode-20260630-handoff-manual.json",
+    "validator_status": "passed_terminal_blocked"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "gate": "no_new_deps",
+  "dispatch_run_id": "dispatch-diagnose-dialog-repair-20260705",
+  "baseline_file": ".tmp/dispatch-task/dispatch-diagnose-dialog-repair-20260705-worktree-baseline.json",
+  "dependency_policy": "no_new_dependencies",
+  "changed_files_since_baseline": [
+    "src/components/diagnose-popup/view-defaults.js"
+  ],
+  "changed_dependency_files_since_baseline": [],
+  "declared_preexisting_dependency_overlap": [],
+  "warnings": [],
+  "errors": []
+}

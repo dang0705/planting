@@ -1,0 +1,13 @@
+/* #ifdef H5 */
+@media (max-width: 1280px) {
+  .desktop-summary-grid,
+  .drawer-summary-grid,
+  .drawer-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .desktop-toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+/* #endif */
