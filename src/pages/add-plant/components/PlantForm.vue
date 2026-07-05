@@ -172,7 +172,7 @@ import {
   normalizePlantCareLocation,
   saveSelectedPlantCareLocation
 } from '@/utils/plant-care-location.js'
-import ChipsSelector from '@/components/diagnose-popup/ChipsSelector.vue'
+import ChipsSelector from '@/components/common/ChipsSelector.vue'
 import LightEnvironmentPicker from '@/components/LightEnvironmentPicker.vue'
 
 const props = defineProps({

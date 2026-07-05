@@ -79,7 +79,7 @@
 
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
-import BottomSheet from '@/components/diagnose-popup/BottomSheet.vue'
+import BottomSheet from '@/components/common/BottomSheet.vue'
 import { useLayoutStore } from '@/store/layout.js'
 import { useUserStore } from '@/store/user.js'
 import { callComponentMethod } from '@/utils/component-ref.js'

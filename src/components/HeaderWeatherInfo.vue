@@ -63,7 +63,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { fetchHotCityWeatherLocations } from '@/api/weather-hot-cities.js'
-import ChipsSelector from '@/components/diagnose-popup/ChipsSelector.vue'
+import ChipsSelector from '@/components/common/ChipsSelector.vue'
 import { useHeaderWeather } from './header-weather/useHeaderWeather.js'
 
 defineProps({

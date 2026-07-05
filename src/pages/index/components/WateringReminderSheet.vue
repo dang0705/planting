@@ -146,7 +146,7 @@
 
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
-import BottomSheet from '@/components/diagnose-popup/BottomSheet.vue'
+import BottomSheet from '@/components/common/BottomSheet.vue'
 import CareBehaviorTimeline from '@/components/CareBehaviorTimeline.vue'
 import { requestHttpFunction } from '@/api/http'
 import { getEnvironmentWeatherWindow } from '@/api/weather.js'

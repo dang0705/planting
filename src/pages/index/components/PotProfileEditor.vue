@@ -109,7 +109,7 @@
 
 <script setup>
 import { computed, getCurrentInstance, nextTick, ref, watch } from 'vue'
-import BottomSheet from '@/components/diagnose-popup/BottomSheet.vue'
+import BottomSheet from '@/components/common/BottomSheet.vue'
 import PotCanvas from '@/components/PotCanvas.vue'
 import { usePlantStore } from '@/store/plants.js'
 import { callComponentMethod } from '@/utils/component-ref.js'

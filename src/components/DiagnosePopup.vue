@@ -82,7 +82,7 @@
 
 <script>
 import AIStreamDialog from './AIStreamDialog.vue'
-import BottomSheet from '@/components/diagnose-popup/BottomSheet.vue'
+import BottomSheet from '@/components/common/BottomSheet.vue'
 import CareBehaviorTimeline from '@/components/CareBehaviorTimeline.vue'
 import DiagnoseUploadStage from './diagnose-popup/DiagnoseUploadStage.vue'
 import DiagnoseResultStage from './diagnose-popup/DiagnoseResultStage.vue'
