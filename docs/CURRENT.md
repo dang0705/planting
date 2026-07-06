@@ -59,7 +59,7 @@ stale_if_changed:
 ### 3.1 前端
 
 - `src/pages/index/index.vue`：首页，植物卡水滴 icon 点击打开浇水提醒弹框（不再跳转日历页）。
-- `src/pages/index/components/WateringReminderSheet.vue`：浇水提醒底部弹框，含上次浇水入口、建议下次浇水 Summary、添加至日历主操作；点击上次浇水打开二级日期选择器（复用 `CareBehaviorTimeline`）。
+- `src/pages/index/components/WateringReminderSheet.vue`：浇水提醒底部弹框，含上次浇水入口、建议下次浇水 Summary、添加至日历主操作；点击上次浇水打开二级日期选择器（复用 `CareBehaviorTimeline`）。已保存提醒会回显上次设置时间和下次浇水建议。
 - `src/pages/diagnose/diagnose.vue`：诊断入口。
 - 诊断延续页与相关目录：历史命名不定义当前产品口径，当前以问诊题包与结果展示理解。
 - `src/pages/profile/diagnosis-review.vue`：诊断审查页面。
@@ -79,7 +79,7 @@ stale_if_changed:
 | `identify-http` | 植物识别，当前通过百度视觉识别能力取候选。 |
 | `weather-http` | 当前天气与环境天气窗口，支持 `/weather/current`、`/weather/environment-context`、`/weather/v7/environment-context`、`/weather/health`、`/weather/recent` 与 `/weather/ingestion/recent-10d`。支持 `weather-ingestion-recent-10d` 定时触发并入库最近 10 天天气缓存。诊断模式下 `environment-context` 使用自有 recent-10d 缓存优先，`plantFeatures.weatherLightFactor10d` 参与 light 估算；未命中/读取失败时返回 `200` 且 `historicalDays` 可为空。 |
 | `plant-catalog-http` | 植物目录列表、详情、名称映射。 |
-| `plant-user-http` | 用户植物实例 CRUD，含 `/user-plants/watering-planner` 浇水规划器接口（接收 10 天浇水事件集合 + 天气数据，返回 nextWaterDate 等）。 |
+| `plant-user-http` | 用户植物实例 CRUD，含 `/user-plants/watering-planner` 浇水规划器接口（接收 10 天浇水事件集合 + 天气数据，返回 nextWaterDate 等），以及 `/user-plants/watering-reminders` 日历创建后的提醒读写接口。 |
 | `auth-user-http` | 微信登录、手机号绑定、用户资料更新、AI quota/权限等用户能力。 |
 | `wechat-identity` | 微信 openid/unionid 相关身份桥接。 |
 | `wechat-phone` | 微信手机号解密/桥接。 |
@@ -141,6 +141,7 @@ POST /diagnose
 - WET 阻断有两条触发路径：浇水次数超限、强偏湿环境独立触发（≥2 种偏湿天气信号 + 有浇水记录）。
 - `src/store/plants.js` 的 `completeWatering` 已下线旧前端平均值公式，改写回 planner 产出的 `nextWaterDate`。
 - 首页植物卡水滴 icon 不再跳转日历页，改为打开浇水提醒底部弹框。
+- 首页浇水提醒先写系统日历；`uni.addPhoneCalendar` 成功后才通过 `plant-user-http/user-plants/watering-reminders` 保存应用内提醒状态。一次性水提醒按 `nextTime` 过期，过期后水滴不再高亮。
 - `watering_events_json` TEXT 列用于持久化 10 天浇水事件集合；读写均 try/catch 容错，列不存在时不阻断主流程。
 - `diagnosis-history-http` 已下线；历史、结果、反馈通过 `diagnose-http`。
 

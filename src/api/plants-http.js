@@ -8,7 +8,9 @@ import {
   executePatchUserPlantMutation,
   executeRemoveUserPlantMutation
 } from '@/vue-query/plants/mutations/user-plants.js'
+import { executeSaveWateringReminderMutation } from '@/vue-query/plants/mutations/watering-reminders.js'
 import { executeIdentifyPlantMutation } from '@/vue-query/plants/mutations/identify.js'
+import { fetchWateringReminderQuery } from '@/vue-query/plants/queries/watering-reminders.js'
 import {
   fetchDiagnosisHistoryQuery,
   fetchDiagnosisDetailQuery
@@ -49,6 +51,14 @@ function withCareLocation(payload = {}, options = {}) {
 
 export function removeUserPlant(id) {
   return executeRemoveUserPlantMutation(id)
+}
+
+export function fetchWateringReminder(plantId) {
+  return fetchWateringReminderQuery(plantId)
+}
+
+export function saveWateringReminder(payload) {
+  return executeSaveWateringReminderMutation(payload)
 }
 
 export function identifyPlantByImage(imageUrl) {

@@ -69,6 +69,8 @@ try {
 
   const tomorrow = new Date()
   tomorrow.setDate(tomorrow.getDate() + 1)
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
   plantingStore.setPlantReminder({
     plantId: 1,
     plantName: '绿萝',
@@ -89,6 +91,39 @@ try {
   plantingStore.disablePlantReminder({ plantId: 1, type: 'water' })
   assert.equal(plantingStore.getPlantReminderState(1, 'water').active, false)
   assert.equal(plantingStore.getPlantReminderState(1, 'fertilize').active, true)
+
+  plantingStore.setPlantReminder({
+    plantId: 2,
+    plantName: '吊兰',
+    type: 'water',
+    nextTime: yesterday.toISOString(),
+    intervalDays: 0,
+    repeat: false
+  })
+  assert.equal(plantingStore.getPlantReminderState(2, 'water').active, false)
+  assert.equal(
+    plantingStore.plans
+      .find(plan => String(plan.plantId) === '2')
+      ?.reminders.find(reminder => reminder.type === 'water')?.intervalDays,
+    0
+  )
+
+  plantingStore.setPlantReminder({
+    plantId: 3,
+    plantName: '虎皮兰',
+    type: 'water',
+    nextTime: yesterday.toISOString(),
+    intervalDays: 7
+  })
+  plantingStore.setPlantReminder({
+    plantId: 3,
+    plantName: '虎皮兰',
+    type: 'fertilize',
+    nextTime: yesterday.toISOString(),
+    intervalDays: 30
+  })
+  assert.equal(plantingStore.getPlantReminderState(3, 'water').active, true)
+  assert.equal(plantingStore.getPlantReminderState(3, 'fertilize').active, true)
 
   console.log('\n' + '='.repeat(50))
   console.log('✓ 所有测试通过！Pinia 在 Vue3 + Uniapp 项目中工作正常')

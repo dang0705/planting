@@ -427,6 +427,8 @@ cloudfunctions/weather-http/config.json
 | PATCH  | `/user-plants`                  | 更新用户植物，需 `id`。      |
 | DELETE | `/user-plants`                  | 删除用户植物，需 `id`。      |
 | POST   | `/user-plants/watering-planner` | 复用共享规划器计算浇水建议。 |
+| GET    | `/user-plants/watering-reminders?plantId=...` | 读取当前用户指定植物最新未过期浇水日历提醒。 |
+| POST   | `/user-plants/watering-reminders` | 系统日历创建成功后保存完整浇水提醒事件。 |
 
 `plant-user-http` 需要解析到 openid；否则返回 401。
 
@@ -498,6 +500,16 @@ WET 阻断逻辑：
 - 数据层字段 `watering_events_json` 为未来发布前需持久化的字段；读写均具备 try/catch 容错，列不存在时不阻断主流程
 - `plant-user-http` 的 `POST /user-plants/watering-planner` 为纯调度接口，不直接修改用户植物主数据
 - `src/store/plants.js` 的 `completeWatering` 已下线旧前端平均值公式，改写回 planner 产出的 `nextWaterDate`
+
+### 7.2.2 `GET/POST /user-plants/watering-reminders`
+
+本接口只处理系统日历已创建后的应用内提醒状态，不替代 `/watering-planner` 纯计算职责。
+
+- `GET` 需要 `plantId`，只返回当前 openid 名下该植物的最新 active 且未过期水提醒；无权限返回 404。
+- `POST` 必须在前端 `uni.addPhoneCalendar` 成功后调用，保存 `plantId`、`planId`、`lastWatered`、`nextWaterDate`、`nextWaterTime/nextTime`、最近浇水事件集合、planner 结果详情和 calendar payload。
+- `POST` 会将同一植物既有 active 水提醒标记为 `superseded`，再插入新提醒，并同步 `user_plant_instances.last_watered/next_water`。
+- `GET /user-plants` 列表会附带紧凑 `wateringReminder`；若新表在旧环境缺失，列表降级为无提醒状态，不阻断植物列表加载。
+- 一次性水提醒以 `nextTime` 过期，前端不得使用 `repeat=true` 维持长期高亮。
 
 事实源：
 

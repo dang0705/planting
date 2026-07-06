@@ -4,14 +4,26 @@ import { readFileSync } from 'node:fs'
 import {
   classifyStatement,
   executeStatementsSafely,
+  extractCreateTableNames,
+  filterCreateTableStatementsForSchema,
   hasRunSqlRawCapability,
   probeDdlCapability,
   splitSqlStatements,
   verifyTablesExist
 } from '../../scripts/lib/cloudbase-sql-runner.mjs'
+import {
+  parseArgs,
+  parseTableList,
+  resolveVerificationTables
+} from '../../scripts/ensure-cloudbase-sql-schema.mjs'
 
 const ddl = readFileSync('scripts/sql/ensure-weather-history-cache-tables.sql', 'utf8')
 const statements = splitSqlStatements(ddl)
+const wateringReminderDdl = readFileSync(
+  'scripts/sql/ensure-user-watering-reminder-events-table-20260705.sql',
+  'utf8'
+)
+const wateringReminderStatements = splitSqlStatements(wateringReminderDdl)
 
 assert.equal(statements.length >= 3, true, 'DDL 文件至少应该包含三条建表语句')
 for (const statement of statements) {
@@ -28,6 +40,73 @@ assert.equal(
   'create_table_if_not_exists'
 )
 assert.equal(classifyStatement('CREATE TABLE IF NOT EXISTS foo (id INT)').allowed, true)
+assert.deepEqual(
+  extractCreateTableNames([
+    'CREATE TABLE IF NOT EXISTS `cloud1_dev`.`user_watering_reminder_events` (id INT)',
+    'CREATE TABLE IF NOT EXISTS `cloud1-2grufevs395a9d5e`.`user_watering_reminder_events` (id INT)'
+  ]),
+  ['user_watering_reminder_events']
+)
+assert.equal(wateringReminderStatements.length, 2)
+assert.deepEqual(extractCreateTableNames(wateringReminderStatements), [
+  'user_watering_reminder_events'
+])
+
+const devWateringReminderStatements = filterCreateTableStatementsForSchema(
+  wateringReminderStatements,
+  'cloud1_dev'
+)
+assert.equal(devWateringReminderStatements.length, 1)
+assert.match(devWateringReminderStatements[0], /`cloud1_dev`\.`user_watering_reminder_events`/)
+assert.doesNotMatch(devWateringReminderStatements[0], /cloud1-2grufevs395a9d5e/)
+assert.deepEqual(extractCreateTableNames(devWateringReminderStatements), [
+  'user_watering_reminder_events'
+])
+
+const prodWateringReminderStatements = filterCreateTableStatementsForSchema(
+  wateringReminderStatements,
+  'cloud1-2grufevs395a9d5e'
+)
+assert.equal(prodWateringReminderStatements.length, 1)
+assert.match(
+  prodWateringReminderStatements[0],
+  /`cloud1-2grufevs395a9d5e`\.`user_watering_reminder_events`/
+)
+assert.doesNotMatch(prodWateringReminderStatements[0], /`cloud1_dev`/)
+assert.deepEqual(extractCreateTableNames(prodWateringReminderStatements), [
+  'user_watering_reminder_events'
+])
+
+assert.deepEqual(filterCreateTableStatementsForSchema(statements, 'cloud1_dev'), statements)
+assert.throws(
+  () => filterCreateTableStatementsForSchema(wateringReminderStatements, 'missing_schema'),
+  /没有目标 schema\(missing_schema\)/
+)
+assert.deepEqual(
+  resolveVerificationTables(
+    { sqlFile: 'scripts/sql/ensure-user-watering-reminder-events-table-20260705.sql' },
+    devWateringReminderStatements
+  ),
+  ['user_watering_reminder_events']
+)
+assert.deepEqual(resolveVerificationTables({}, statements), [
+  'weather_locations',
+  'plant_care_locations',
+  'diagnosis_weather_evidence'
+])
+assert.deepEqual(parseTableList('user_watering_reminder_events, weather_locations'), [
+  'user_watering_reminder_events',
+  'weather_locations'
+])
+assert.deepEqual(
+  parseArgs(['--sql-file=a.sql', '--tables=user_watering_reminder_events']).tables,
+  'user_watering_reminder_events'
+)
+assert.deepEqual(parseArgs(['--schema=cloud1_dev', '--sql-file=a.sql']).schema, 'cloud1_dev')
+assert.deepEqual(
+  resolveVerificationTables({ tables: 'user_watering_reminder_events' }, statements),
+  ['user_watering_reminder_events']
+)
 
 const plainCreate = classifyStatement('CREATE TABLE foo (id INT)')
 assert.equal(plainCreate.kind, 'disallowed_ddl')
@@ -107,6 +186,34 @@ const fakeModels = {
 await executeStatementsSafely(fakeModels, statements)
 assert.equal(executedRawSql.length, statements.length)
 assert.equal(executedRegularSql.length, 0)
+
+const devScopedRawSql = []
+await executeStatementsSafely(
+  {
+    async $runSQLRaw(sql) {
+      devScopedRawSql.push(sql.replace(/\s+/g, ' ').trim())
+      return { ok: true }
+    }
+  },
+  devWateringReminderStatements
+)
+assert.equal(devScopedRawSql.length, 1)
+assert.match(devScopedRawSql[0], /`cloud1_dev`\.`user_watering_reminder_events`/)
+assert.doesNotMatch(devScopedRawSql[0], /cloud1-2grufevs395a9d5e/)
+
+const prodScopedRawSql = []
+await executeStatementsSafely(
+  {
+    async $runSQLRaw(sql) {
+      prodScopedRawSql.push(sql.replace(/\s+/g, ' ').trim())
+      return { ok: true }
+    }
+  },
+  prodWateringReminderStatements
+)
+assert.equal(prodScopedRawSql.length, 1)
+assert.match(prodScopedRawSql[0], /`cloud1-2grufevs395a9d5e`\.`user_watering_reminder_events`/)
+assert.doesNotMatch(prodScopedRawSql[0], /`cloud1_dev`/)
 
 await assert.rejects(
   () => executeStatementsSafely(fakeModels, ['DROP TABLE weather_locations']),

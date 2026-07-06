@@ -7,6 +7,9 @@ function normalizePlantId(value) {
 }
 
 function isRepeatReminder(reminder = {}) {
+  if (reminder.repeat === false) {
+    return false
+  }
   return Boolean(
     reminder.repeat ||
     reminder.cycle ||
@@ -29,9 +32,7 @@ export function isActivePlantReminder(plan = {}, reminder = {}, type = '', now =
   if (Number.isNaN(nextTime.getTime())) {
     return false
   }
-  const todayStart = new Date(now)
-  todayStart.setHours(0, 0, 0, 0)
-  return nextTime >= todayStart
+  return nextTime >= now
 }
 
 function findPlantReminderState(plans = [], plantId = '', type = '', now = new Date()) {
@@ -131,7 +132,9 @@ export const usePlantingStore = defineStore('planting', {
         return { success: false, message: '无效的提醒类型' }
       }
       const nextTime = payload.nextTime || buildDefaultReminderTime()
-      const intervalDays = Number(payload.intervalDays || 7)
+      const hasIntervalDays = Object.prototype.hasOwnProperty.call(payload, 'intervalDays')
+      const intervalDays = Number(hasIntervalDays ? payload.intervalDays : 7)
+      const hasRepeat = Object.prototype.hasOwnProperty.call(payload, 'repeat')
       let plan = this.plans.find(
         item => !item.archived && normalizePlantId(item.plantId) === plantId
       )
@@ -157,8 +160,10 @@ export const usePlantingStore = defineStore('planting', {
         enabled: true,
         nextTime,
         intervalDays,
-        repeat: true,
         updatedAt: new Date().toISOString()
+      }
+      if (hasRepeat) {
+        updates.repeat = Boolean(payload.repeat)
       }
       if (reminder) {
         Object.assign(reminder, updates)

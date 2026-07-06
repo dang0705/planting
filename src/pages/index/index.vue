@@ -35,7 +35,7 @@
           <view
             v-for="plant in plantStore.userPlants"
             :key="plant.id"
-            class="mb-4 rounded-3xl bg-white p-4 shadow-sm"
+            class="mb-4 rounded-3xl bg-white shadow-sm"
           >
             <PlantCard
               :plant="plant"
@@ -117,7 +117,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import HeaderWeatherInfo from '@/components/HeaderWeatherInfo.vue'
 import Layout from '@/Layout.vue'
 import DiagnosePopup from '@/components/DiagnosePopup.vue'
@@ -181,9 +181,25 @@ function viewPlantDetail(plant) {
   uni.navigateTo({ url: `/pages/plant-detail/plant-detail?id=${plant.id}` })
 }
 function getReminderSummary(plant) {
+  const backendReminder = normalizeBackendWaterReminder(plant?.wateringReminder)
+  const localWater = plantingStore.getPlantReminderState(plant.id, 'water')
   return {
-    water: plantingStore.getPlantReminderState(plant.id, 'water'),
+    water: backendReminder || localWater,
     fertilize: plantingStore.getPlantReminderState(plant.id, 'fertilize')
+  }
+}
+function normalizeBackendWaterReminder(reminder) {
+  if (!reminder?.nextTime) {
+    return null
+  }
+  const nextTime = new Date(reminder.nextTime)
+  if (Number.isNaN(nextTime.getTime()) || nextTime < new Date()) {
+    return null
+  }
+  return {
+    active: true,
+    reminder: { ...reminder, type: 'water', enabled: true },
+    nextTime: reminder.nextTime
   }
 }
 function openDiagnose(plant) {
@@ -202,9 +218,10 @@ async function openPlantHistory(plant) {
     createdAt: item.createdAt
   }))
 }
-function openReminder({ plant, type }) {
+async function openReminder({ plant, type }) {
   if (type === 'water') {
     currentReminderPlantId.value = plant.id
+    await nextTick()
     callComponentMethod(wateringReminderRef, 'open')
     return
   }

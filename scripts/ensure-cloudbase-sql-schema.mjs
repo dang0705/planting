@@ -23,6 +23,8 @@ import { fileURLToPath } from 'node:url'
 import {
   consoleLogger,
   executeStatementsSafely,
+  extractCreateTableNames,
+  filterCreateTableStatementsForSchema,
   hasRunSqlRawCapability,
   probeDdlCapability,
   splitSqlStatements,
@@ -65,9 +67,35 @@ function parseArgs(argv = []) {
     }
     if (key === 'sql-file') {
       parsed.sqlFile = value
+      continue
+    }
+    if (key === 'tables') {
+      parsed.tables = value
     }
   }
   return parsed
+}
+
+function parseTableList(value = '') {
+  return String(value || '')
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
+function resolveVerificationTables(args = {}, statements = []) {
+  const explicitTables = parseTableList(args.tables)
+  if (explicitTables.length) {
+    return explicitTables
+  }
+  if (args.sqlFile) {
+    const inferredTables = extractCreateTableNames(statements)
+    if (!inferredTables.length) {
+      throw new Error('--sql-file 未包含可推导表名的 CREATE TABLE IF NOT EXISTS 语句')
+    }
+    return inferredTables
+  }
+  return DEFAULT_TABLES
 }
 
 function printHelp() {
@@ -82,6 +110,7 @@ function printHelp() {
       '  --env=<envId>        覆盖 CloudBase env id（默认读取 CLOUDBASE_ENV_ID）',
       '  --schema=<name>      覆盖目标 schema（默认 cloud1_dev / 由运行环境推导）',
       '  --sql-file=<path>    覆盖建表 SQL 文件路径（默认 scripts/sql/ensure-weather-history-cache-tables.sql）',
+      '  --tables=a,b         覆盖执行后需要校验的表名列表；默认从 --sql-file 推导，未传 --sql-file 时校验 weather 默认表',
       '',
       '说明:',
       '  1. 凭据通过环境变量注入，请优先使用 npm run run:with-cloudbase-env -- --function=<fn> -- node scripts/ensure-cloudbase-sql-schema.mjs。',
@@ -150,6 +179,9 @@ async function main() {
   if (!statements.length) {
     throw new Error(`建表 SQL 文件为空: ${sqlFile}`)
   }
+  const schema = resolveSchemaName(args)
+  const executableStatements = filterCreateTableStatementsForSchema(statements, schema)
+  const verificationTables = resolveVerificationTables(args, executableStatements)
 
   const envId = resolveEnvId(args)
   if (!envId) {
@@ -164,7 +196,6 @@ async function main() {
     )
   }
 
-  const schema = resolveSchemaName(args)
   const cloudbase = require('@cloudbase/node-sdk')
   const app = cloudbase.init({
     env: envId,
@@ -189,10 +220,10 @@ async function main() {
           path.relative(repoRoot, sqlFile)
       )
     }
-    await executeStatementsSafely(models, statements, { logger })
+    await executeStatementsSafely(models, executableStatements, { logger })
   }
 
-  const verification = await verifyTablesExist(models, schema, DEFAULT_TABLES)
+  const verification = await verifyTablesExist(models, schema, verificationTables)
   const missing = verification.filter(item => !item.exists).map(item => item.name)
   if (missing.length) {
     throw new Error(
@@ -208,7 +239,11 @@ async function main() {
   )
 }
 
-main().catch(error => {
-  process.stderr.write(`${String(error?.stack || error)}\n`)
-  process.exit(1)
-})
+if (path.resolve(process.argv[1] || '') === __filename) {
+  main().catch(error => {
+    process.stderr.write(`${String(error?.stack || error)}\n`)
+    process.exit(1)
+  })
+}
+
+export { parseArgs, parseTableList, resolveSchemaName, resolveVerificationTables }

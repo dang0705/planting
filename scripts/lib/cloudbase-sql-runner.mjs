@@ -16,12 +16,69 @@ const DESTRUCTIVE_PREFIXES = ['drop ', 'truncate ', 'delete ']
 const DISALLOWED_DDL_PREFIXES = ['alter ', 'rename ']
 const CREATE_TABLE_IF_NOT_EXISTS_PATTERN = /^create\s+table\s+if\s+not\s+exists\s+/i
 const CREATE_PATTERN = /^create\s+/i
+const CREATE_TABLE_NAME_PATTERN =
+  /^create\s+table\s+if\s+not\s+exists\s+(?:(?:`([^`]+)`|([A-Za-z0-9_-]+))\.)?(?:`([^`]+)`|([A-Za-z0-9_-]+))/i
+
+function stripLineComments(sql = '') {
+  return String(sql || '')
+    .split('\n')
+    .filter(line => !String(line).trimStart().startsWith('--'))
+    .join('\n')
+}
 
 export function splitSqlStatements(sql = '') {
-  return String(sql || '')
+  return stripLineComments(sql)
     .split(';')
     .map(item => String(item || '').trim())
     .filter(Boolean)
+}
+
+export function extractCreateTableNames(statements = []) {
+  const tableNames = new Set()
+  for (const statement of statements) {
+    const tableName = parseCreateTableStatement(statement)?.tableName || ''
+    if (tableName) {
+      tableNames.add(tableName)
+    }
+  }
+  return Array.from(tableNames)
+}
+
+export function parseCreateTableStatement(statement = '') {
+  const match = String(statement || '')
+    .trim()
+    .match(CREATE_TABLE_NAME_PATTERN)
+  if (!match) {
+    return null
+  }
+  return {
+    schema: match[1] || match[2] || '',
+    tableName: match[3] || match[4] || ''
+  }
+}
+
+export function filterCreateTableStatementsForSchema(statements = [], schema = '') {
+  const targetSchema = String(schema || '').trim()
+  if (!targetSchema) {
+    return statements
+  }
+
+  const createStatements = statements
+    .map(statement => ({ statement, table: parseCreateTableStatement(statement) }))
+    .filter(item => item.table?.tableName)
+  const qualifiedMatches = createStatements.filter(item => item.table.schema === targetSchema)
+  if (qualifiedMatches.length) {
+    return qualifiedMatches.map(item => item.statement)
+  }
+
+  const unqualifiedStatements = createStatements.filter(item => !item.table.schema)
+  if (unqualifiedStatements.length) {
+    return unqualifiedStatements.map(item => item.statement)
+  }
+
+  throw new Error(
+    `当前 sql-file 没有目标 schema(${targetSchema}) 的 CREATE TABLE IF NOT EXISTS 语句，也没有未限定 schema 的建表语句。`
+  )
 }
 
 export function classifyStatement(sql = '') {

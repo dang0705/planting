@@ -71,6 +71,7 @@ export const usePlantStore = defineStore('plants', {
           lastWatered: p.lastWatered || null,
           nextWater: p.nextWater || null,
           wateringEvents: p.wateringEvents || null,
+          wateringReminder: p.wateringReminder || null,
           createdAt: p.createdAt || null,
           plantDate: p.plantDate || p.createdAt || null,
           notes: p.notes || '',
@@ -222,6 +223,26 @@ export const usePlantStore = defineStore('plants', {
         return { success: false, message: '缺少浇水事件或下次浇水日期' }
       }
       return this.updateUserPlant(id, updates)
+    },
+
+    applyWateringReminder(id, reminder = {}) {
+      const plant = this.userPlants.find(p => p.id === id)
+      if (!plant) {
+        return
+      }
+      const updates = {
+        wateringReminder: reminder || null
+      }
+      if (reminder?.lastWatered) {
+        updates.lastWatered = reminder.lastWatered
+      }
+      if (reminder?.nextWaterDate) {
+        updates.nextWater = reminder.nextWaterDate
+      }
+      if (Array.isArray(reminder?.wateringEvents)) {
+        updates.wateringEvents = reminder.wateringEvents
+      }
+      this.updateUserPlantLocal(id, updates)
     }
   },
   persist: false

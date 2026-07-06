@@ -25,6 +25,11 @@ const {
   attachCareLocationsToList,
   savePlantCareLocation
 } = require('./care-location-service')
+const {
+  attachWateringReminderStateToList,
+  readWateringReminder,
+  saveWateringReminder
+} = require('./watering-reminder-service')
 
 async function main(event, context) {
   const request = getHttpRequestData(event, context)
@@ -46,6 +51,46 @@ async function main(event, context) {
     }
     const openid = userInfo.openid
 
+    if (path.includes('/watering-reminders')) {
+      const plantId = Number(request.body.plantId || request.query.plantId)
+      if (!plantId) {
+        return jsonResponse(400, { code: 400, message: '缺少植物ID', data: null })
+      }
+      if (method === 'GET') {
+        const result = await readWateringReminder(openid, plantId)
+        return jsonResponse(result.statusCode, {
+          code: result.statusCode,
+          message: result.data ? '读取成功' : '暂无有效提醒',
+          data: result.data
+        })
+      }
+      if (method === 'POST') {
+        try {
+          const result = await saveWateringReminder(openid, request.body)
+          return jsonResponse(result.statusCode, {
+            code: result.statusCode,
+            message: result.message,
+            data: result.data
+          })
+        } catch (error) {
+          const diagnostic = buildWateringReminderErrorDiagnostic(error)
+          console.error(
+            'watering reminder save error:',
+            JSON.stringify({
+              errorCode: diagnostic.errorCode,
+              errorMessage: diagnostic.errorMessage
+            })
+          )
+          return jsonResponse(500, {
+            code: 500,
+            message: '浇水提醒表未就绪或保存失败，请稍后重试',
+            data: diagnostic
+          })
+        }
+      }
+      return methodNotAllowed(method)
+    }
+
     // 浇水规划器接口：接收 10 天浇水事件集合 + 天气数据，返回下次浇水建议
     if (path.includes('/watering-planner')) {
       if (method !== 'POST') {
@@ -63,13 +108,10 @@ async function main(event, context) {
       const wateringEvents = Array.isArray(request.body.wateringEvents)
         ? request.body.wateringEvents
         : []
-      const referenceDate =
-        request.body.referenceDate || new Date().toISOString().slice(0, 10)
+      const referenceDate = request.body.referenceDate || new Date().toISOString().slice(0, 10)
 
       // 从前端传入的天气数据构建历史/预报摘要
-      const weatherDays = Array.isArray(request.body.weatherDays)
-        ? request.body.weatherDays
-        : []
+      const weatherDays = Array.isArray(request.body.weatherDays) ? request.body.weatherDays : []
       const forecastWeatherDays = Array.isArray(request.body.forecastDays)
         ? request.body.forecastDays
         : []
@@ -121,7 +163,8 @@ async function main(event, context) {
         pageSize: Number(request.query.pageSize || 20)
       })
       const enrichedData = await attachCareLocationsToList({ openid, data })
-      return jsonResponse(200, { code: 200, data: enrichedData })
+      const reminderData = await attachWateringReminderStateToList(openid, enrichedData)
+      return jsonResponse(200, { code: 200, data: reminderData })
     }
 
     if (method === 'POST') {
@@ -197,6 +240,43 @@ module.exports.main = (event, context) => {
   const appEnv = resolveRequestAppEnv(request.headers, request.query, request.body)
   return runWithRequestAppEnv(appEnv, () => main(event, context))
 }
+module.exports._test = { main, buildWeatherSummary, buildWateringReminderErrorDiagnostic }
+
+function sanitizeErrorMessage(error) {
+  return String(error?.message || error || '')
+    .replace(/(secretId|secretKey|token|authorization)\s*[:=]\s*[^,\s]+/gi, '$1=[redacted]')
+    .slice(0, 500)
+}
+
+function buildWateringReminderErrorDiagnostic(error) {
+  const message = sanitizeErrorMessage(error)
+  if (
+    /ER_NO_SUCH_TABLE|no such table|doesn't exist|does not exist|user_watering_reminder_events/i.test(
+      message
+    )
+  ) {
+    return {
+      errorCode: 'WATERING_REMINDER_TABLE_NOT_READY',
+      errorMessage: message || 'user_watering_reminder_events is not ready'
+    }
+  }
+  if (/invalid json|json text|json value/i.test(message)) {
+    return {
+      errorCode: 'WATERING_REMINDER_INVALID_JSON',
+      errorMessage: message
+    }
+  }
+  if (/permission|denied|access/i.test(message)) {
+    return {
+      errorCode: 'WATERING_REMINDER_SQL_PERMISSION_DENIED',
+      errorMessage: message
+    }
+  }
+  return {
+    errorCode: 'WATERING_REMINDER_SAVE_FAILED',
+    errorMessage: message || 'unknown watering reminder save error'
+  }
+}
 
 /**
  * 从前端天气日数据（environmentWeatherWindow.historicalDays）构建 planner 所需的摘要。
@@ -228,8 +308,12 @@ function buildWeatherSummary(dailyRecords = [], plantContext = {}) {
     }
     // 适配 historicalDays 实际字段名 tempMaxC/tempMinC/precipMm/textDay
     const humidity = Number(record.humidity ?? record.humidityPercent)
-    const tempMaxVal = Number(record.tempMaxC ?? record.tempMax ?? record.temperatureMax ?? record.dayMaxTemp)
-    const tempMinVal = Number(record.tempMinC ?? record.tempMin ?? record.temperatureMin ?? record.dayMinTemp)
+    const tempMaxVal = Number(
+      record.tempMaxC ?? record.tempMax ?? record.temperatureMax ?? record.dayMaxTemp
+    )
+    const tempMinVal = Number(
+      record.tempMinC ?? record.tempMin ?? record.temperatureMin ?? record.dayMinTemp
+    )
     const precipitation = Number(record.precipMm ?? record.precipitation ?? record.precip ?? 0)
     const weatherText = String(record.textDay ?? record.weatherText ?? record.weather ?? '')
     const isHighHumidity = !isNaN(humidity) && humidity > humidityMax
@@ -253,7 +337,10 @@ function buildWeatherSummary(dailyRecords = [], plantContext = {}) {
     streakCold = isCold && isHighHumidity ? streakCold + 1 : 0
     streakRain = isRainy ? streakRain + 1 : 0
     streakDry = isHot && isLowHumidity ? streakDry + 1 : 0
-    summary.maxConsecutiveHighHumidityDays = Math.max(summary.maxConsecutiveHighHumidityDays, streakHigh)
+    summary.maxConsecutiveHighHumidityDays = Math.max(
+      summary.maxConsecutiveHighHumidityDays,
+      streakHigh
+    )
     summary.maxConsecutiveColdHumidDays = Math.max(summary.maxConsecutiveColdHumidDays, streakCold)
     summary.maxConsecutiveRainyDays = Math.max(summary.maxConsecutiveRainyDays, streakRain)
     summary.maxConsecutiveHotDryDays = Math.max(summary.maxConsecutiveHotDryDays, streakDry)

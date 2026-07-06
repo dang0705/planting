@@ -100,6 +100,8 @@
           </text>
         </view>
       </view>
+
+      <SavedWateringReminderState v-if="savedReminderActive" :display="savedReminderDisplay" />
     </BottomSheet>
 
     <BottomSheet
@@ -109,7 +111,6 @@
       close-id="watering-date-picker-close-button"
       title="选择浇水日期"
       subtitle="勾选最近 10 天内的浇水日期，用于计算浇水频率与建议下次浇水时间"
-      @change="onDatePickerChange"
     >
       <view class="pt-1">
         <CareBehaviorTimeline
@@ -148,7 +149,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import BottomSheet from '@/components/common/BottomSheet.vue'
 import CareBehaviorTimeline from '@/components/CareBehaviorTimeline.vue'
-import { requestHttpFunction } from '@/api/http'
+import { fetchWateringReminder, saveWateringReminder } from '@/api/plants-http.js'
 import { getEnvironmentWeatherWindow } from '@/api/weather.js'
 import waterDefaultIcon from '@/assets/icons/home-card-water-default.svg'
 import { usePlantingStore } from '@/store/planting.js'
@@ -156,15 +157,26 @@ import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
 import { mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline } from '@/utils/care-behavior-weather-window.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
-import {
-  estimatePotVolumeMl,
-  formatMlRangeToBottleText,
-  formatMlToBottleText
-} from '@/utils/water-volume-format.js'
+import { estimatePotVolumeMl, formatMlRangeToBottleText } from '@/utils/water-volume-format.js'
 import PotProfileEditor from './PotProfileEditor.vue'
+import SavedWateringReminderState from './SavedWateringReminderState.vue'
 import {
-  REASON_CODE_LABEL_MAP,
-  SUBSTRATE_LABEL_MAP,
+  addPhoneCalendar,
+  attachPlanIdToWateringEvents,
+  buildPlannerSummaryRows,
+  buildPotProfileSummary,
+  buildReminderNextTime,
+  buildSavedReminderDisplay,
+  buildWateringReminderInputSignature,
+  buildWateringReminderCalendarPayload,
+  buildWateringReminderSavePayload,
+  fetchWateringPlannerResult,
+  isWateringReminderActive,
+  normalizeSavedReminderPlannerResult,
+  reasonCodeLabel,
+  resolveLastWateringDate,
+  resolvePlantDisplayName,
+  resolveWeatherLocation,
   todayStr
 } from './watering-reminder-options.js'
 
@@ -176,34 +188,27 @@ const userStore = useUserStore()
 const popupRef = ref(null)
 const datePickerPopupRef = ref(null)
 const potProfileEditorRef = ref(null)
+const isSheetOpen = ref(false)
+const pendingReminderReload = ref(false)
 const loading = ref(false)
+const reminderLoading = ref(false)
 const plannerResult = ref(null)
+const savedReminder = ref(null)
+const savedReminderInputSignature = ref('')
 const hasWeatherRef = ref(false)
 const weatherDays = ref([])
 const forecastDays = ref([])
 const environmentWeatherWindow = ref(null)
 const weatherLoading = ref(false)
 const selectedWateringEvents = ref([])
+const savedReminderWateringEvents = computed(() =>
+  Array.isArray(savedReminder.value?.wateringEvents) ? savedReminder.value.wateringEvents : []
+)
 const potVolumeMl = computed(
   () => plannerResult.value?.potVolumeMl || estimatePotVolumeMl(props.plant?.potProfile)
 )
 const potProfileSummary = computed(() => {
-  const profile = props.plant?.potProfile
-  if (!profile) {
-    return '点击补充盆型信息'
-  }
-  const parts = []
-  if (profile.potTopDiameterCm) {
-    parts.push(`口径 ${profile.potTopDiameterCm}cm`)
-  }
-  parts.push(profile.hasDrainageHole === 'true' ? '有排水孔' : '无/不确定排水孔')
-  const composition = parseComposition(profile)
-  if (composition?.length) {
-    parts.push(
-      composition.map(item => SUBSTRATE_LABEL_MAP[item.material] || item.material).join('+')
-    )
-  }
-  return parts.join(' · ')
+  return buildPotProfileSummary(props.plant?.potProfile)
 })
 const initialWateringEvents = computed(() =>
   Array.isArray(props.plant?.wateringEvents) ? props.plant.wateringEvents : []
@@ -215,23 +220,45 @@ const timelineInput = computed(() => {
     : base
 })
 const selectedWateringEventsForPlanner = computed(() =>
-  selectedWateringEvents.value.length ? selectedWateringEvents.value : initialWateringEvents.value
+  selectedWateringEvents.value.length
+    ? selectedWateringEvents.value
+    : savedReminderWateringEvents.value.length
+      ? savedReminderWateringEvents.value
+      : initialWateringEvents.value
 )
-const lastWateringText = computed(() => {
-  const sorted = [...selectedWateringEventsForPlanner.value].sort((a, b) =>
-    String(b.date || '').localeCompare(String(a.date || ''))
-  )
-  return sorted[0]?.date || '尚无记录'
-})
+const lastWateringText = computed(
+  () => resolveLastWateringDate(selectedWateringEventsForPlanner.value) || '尚无记录'
+)
 const isOverWateringBlocked = computed(
   () => plannerResult.value?.wateringContext === 'likely_too_wet'
 )
+const savedReminderActive = computed(() => isWateringReminderActive(savedReminder.value))
+const currentReminderInputSignature = computed(() =>
+  buildWateringReminderInputSignature({
+    lastWatered: lastWateringText.value === '尚无记录' ? '' : lastWateringText.value,
+    potProfile: props.plant?.potProfile
+  })
+)
+const savedReminderChanged = computed(
+  () =>
+    savedReminderActive.value &&
+    savedReminderInputSignature.value &&
+    currentReminderInputSignature.value !== savedReminderInputSignature.value
+)
 const canAddToCalendar = computed(
-  () => !isOverWateringBlocked.value && Boolean(plannerResult.value?.nextWaterDate)
+  () =>
+    (!savedReminderActive.value || savedReminderChanged.value) &&
+    !isOverWateringBlocked.value &&
+    Boolean(plannerResult.value?.nextWaterDate)
 )
 const addToCalendarText = computed(() =>
-  isOverWateringBlocked.value ? '近期过浇，暂不安排浇水' : '添加到手机日历'
+  savedReminderActive.value && !savedReminderChanged.value
+    ? '已添加到手机日历'
+    : isOverWateringBlocked.value
+      ? '近期过浇，暂不安排浇水'
+      : '添加到手机日历'
 )
+const savedReminderDisplay = computed(() => buildSavedReminderDisplay(savedReminder.value))
 const nextWaterDisplay = computed(() => {
   if (!plannerResult.value?.nextWaterDate) {
     return plannerResult.value?.wateringContext === 'likely_too_wet'
@@ -248,88 +275,29 @@ const amountBottleText = computed(
       : '')
 )
 const plannerSummaryRows = computed(() => {
-  if (!amountBottleText.value || isOverWateringBlocked.value) {
-    return []
-  }
-  const rows = [
-    {
-      label: '建议水量',
-      value: amountBottleText.value,
-      valueClass: 'text-xs font-medium text-gray-700'
-    }
-  ]
-  if (plannerResult.value?.stopCondition) {
-    rows.push({
-      label: '停止条件',
-      value: plannerResult.value.stopCondition,
-      valueClass: 'text-xs text-gray-600'
-    })
-  }
-  if (plannerResult.value?.confidenceLevel) {
-    rows.push({
-      label: '置信度',
-      value: { low: '低', normal: '中', high: '高' }[plannerResult.value.confidenceLevel] || '低',
-      valueClass: 'text-xs text-gray-600'
-    })
-  }
-  const doseText = resolveDoseText(plannerResult.value?.userDoseEcho)
-  if (doseText) {
-    rows.push({ label: '你通常浇', value: doseText, valueClass: 'text-xs text-gray-500' })
-  }
-  return rows
+  return buildPlannerSummaryRows({
+    plannerResult: plannerResult.value,
+    amountBottleText: amountBottleText.value,
+    isOverWateringBlocked: isOverWateringBlocked.value,
+    potVolumeMl: potVolumeMl.value
+  })
 })
 
-function parseComposition(profile) {
-  if (profile?.substrateComposition) {
-    return profile.substrateComposition
-  }
-  if (typeof profile?.substrateType !== 'string' || !profile.substrateType.startsWith('[')) {
-    return null
-  }
-  try {
-    return JSON.parse(profile.substrateType)
-  } catch {
-    return null
-  }
+function currentPlantId() {
+  return props.plant?.id === undefined || props.plant?.id === null ? '' : String(props.plant.id)
 }
-function resolveDoseText(echo) {
-  if (!echo) {
-    return ''
-  }
-  const doseClass = typeof echo === 'string' ? echo : echo?.doseClass
-  const amountMl = typeof echo === 'object' ? Number(echo?.amountMl) : null
-  const ratios = { mist: 0.03, small: 0.1, normal: 0.25, thorough: 0.5 }
-  if (doseClass === 'mist') {
-    return '喷一喷'
-  }
-  if (doseClass === 'thorough') {
-    return '浇到出水'
-  }
-  if (doseClass && ratios[doseClass] && potVolumeMl.value > 0) {
-    return formatMlToBottleText(
-      amountMl > 0 ? amountMl : Math.round(potVolumeMl.value * ratios[doseClass])
-    )
-  }
-  return ''
-}
-function reasonCodeLabel(code) {
-  return REASON_CODE_LABEL_MAP[code] || ''
-}
-function resolveWeatherLocation() {
-  const location = userStore.location || {}
-  const lat = Number(location.latitude ?? location.lat)
-  const lng = Number(location.longitude ?? location.lng)
-  return Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0
-    ? {
-        lat,
-        lng,
-        city: String(location.city || '').trim(),
-        province: String(location.province || '').trim()
-      }
-    : null
+function resetReminderState() {
+  selectedWateringEvents.value = []
+  plannerResult.value = null
+  savedReminder.value = null
+  savedReminderInputSignature.value = ''
+  hasWeatherRef.value = false
+  weatherDays.value = []
+  forecastDays.value = []
+  environmentWeatherWindow.value = null
 }
 async function loadWeatherDays() {
-  const location = resolveWeatherLocation()
+  const location = resolveWeatherLocation(userStore.location)
   if (!location) {
     hasWeatherRef.value = false
     weatherDays.value = []
@@ -350,12 +318,20 @@ async function loadWeatherDays() {
     weatherLoading.value = false
   }
 }
-const open = () => callComponentMethod(popupRef, 'open')
+async function open() {
+  isSheetOpen.value = true
+  callComponentMethod(popupRef, 'open')
+  await nextTick()
+  await loadSavedReminder()
+}
 const close = () => callComponentMethod(popupRef, 'close')
 function onPopupChange(event) {
   if (!event.show) {
+    isSheetOpen.value = false
     emit('close')
+    return
   }
+  isSheetOpen.value = true
 }
 async function openLastWateringPicker() {
   callComponentMethod(datePickerPopupRef, 'open')
@@ -364,7 +340,6 @@ async function openLastWateringPicker() {
   }
 }
 const closeDatePicker = () => callComponentMethod(datePickerPopupRef, 'close')
-const onDatePickerChange = () => {}
 function onTimelineChange(payload) {
   selectedWateringEvents.value = payload?.watering_events_10d || []
 }
@@ -373,24 +348,62 @@ async function confirmDatePicker() {
   await nextTick()
   await fetchPlanner()
 }
+async function loadSavedReminder() {
+  const plantId = props.plant?.id
+  const requestedPlantId = currentPlantId()
+  if (!requestedPlantId) {
+    return
+  }
+  if (reminderLoading.value) {
+    pendingReminderReload.value = true
+    return
+  }
+  reminderLoading.value = true
+  try {
+    const response = await fetchWateringReminder(plantId)
+    if (currentPlantId() !== requestedPlantId) {
+      pendingReminderReload.value = true
+      return
+    }
+    const reminder = response?.code === 200 ? response.data : null
+    if (isWateringReminderActive(reminder)) {
+      savedReminder.value = reminder
+      plannerResult.value = normalizeSavedReminderPlannerResult(reminder)
+      selectedWateringEvents.value = Array.isArray(reminder.wateringEvents)
+        ? reminder.wateringEvents
+        : []
+      savedReminderInputSignature.value = currentReminderInputSignature.value
+      mirrorSavedReminder(reminder)
+      return
+    }
+    savedReminder.value = null
+  } catch (error) {
+    console.warn('读取浇水提醒失败:', error)
+  } finally {
+    reminderLoading.value = false
+    if (pendingReminderReload.value && isSheetOpen.value) {
+      pendingReminderReload.value = false
+      await nextTick()
+      await loadSavedReminder()
+    } else if (!isSheetOpen.value) {
+      pendingReminderReload.value = false
+    }
+  }
+}
 async function fetchPlanner() {
   if (!props.plant?.id) {
     return
   }
   loading.value = true
   try {
-    const response = await requestHttpFunction('plant-user-http/user-plants/watering-planner', {
-      method: 'POST',
-      body: {
-        plantId: props.plant.id,
-        wateringEvents: selectedWateringEventsForPlanner.value,
-        referenceDate: todayStr(),
-        weatherDays: weatherDays.value,
-        forecastDays: forecastDays.value
-      }
+    const result = await fetchWateringPlannerResult({
+      plantId: props.plant.id,
+      wateringEvents: selectedWateringEventsForPlanner.value,
+      weatherDays: weatherDays.value,
+      forecastDays: forecastDays.value
     })
-    if (response?.code === 200) {
-      plannerResult.value = normalizePlannerResult(response.data)
+    if (result) {
+      plannerResult.value = result
     }
   } catch (error) {
     uni.showToast({ title: error?.message || '建议计算失败，请重试', icon: 'none' })
@@ -398,50 +411,82 @@ async function fetchPlanner() {
     loading.value = false
   }
 }
-function normalizePlannerResult(data = {}) {
-  if (data.nextWaterDate && data.nextWaterDate < todayStr()) {
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    return { ...data, nextWaterDate: todayStrFromDate(tomorrow) }
-  }
-  return data
-}
-function todayStrFromDate(date) {
-  return [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, '0'),
-    String(date.getDate()).padStart(2, '0')
-  ].join('-')
-}
 const openPotProfileEditor = () => callComponentMethod(potProfileEditorRef, 'open')
 const onPotProfileSaved = () => fetchPlanner()
+function mirrorSavedReminder(reminder) {
+  plantStore.applyWateringReminder(props.plant.id, reminder)
+  plantingStore.setPlantReminder({
+    plantId: props.plant.id,
+    plantName: resolvePlantDisplayName(props.plant),
+    type: 'water',
+    nextTime: reminder.nextTime || buildReminderNextTime(reminder.nextWaterDate),
+    intervalDays: plannerResult.value?.nextWaterWindow?.[0] || 0,
+    repeat: false
+  })
+}
 async function addToCalendar() {
   if (!canAddToCalendar.value || !props.plant?.id) {
     return
   }
   const nextWaterDate = plannerResult.value.nextWaterDate
-  const planId = plannerResult.value?.planId || null
-  const newEvents = selectedWateringEventsForPlanner.value.map(event => ({ ...event, planId }))
-  await plantStore.completeWatering(props.plant.id, { wateringEvents: newEvents, nextWaterDate })
-  plantingStore.setPlantReminder({
-    plantId: props.plant.id,
-    plantName: props.plant.displayName || props.plant.canonicalName || '当前植物',
-    type: 'water',
-    nextTime: `${nextWaterDate}T09:00:00.000Z`,
-    intervalDays: plannerResult.value?.nextWaterWindow?.[0] || 7
+  const calendarPayload = buildWateringReminderCalendarPayload({
+    plant: props.plant,
+    nextWaterDate,
+    amountText: amountBottleText.value,
+    reasonText: plannerResult.value?.nextWaterReason || ''
   })
-  uni.showToast({ title: '已添加浇水提醒', icon: 'success' })
-  close()
+  loading.value = true
+  try {
+    await addPhoneCalendar(calendarPayload)
+    const planId = plannerResult.value?.planId || `calendar_${Date.now()}`
+    const wateringEvents = attachPlanIdToWateringEvents(
+      selectedWateringEventsForPlanner.value,
+      planId
+    )
+    const response = await saveWateringReminder(
+      buildWateringReminderSavePayload({
+        plantId: props.plant.id,
+        planId,
+        lastWatered: lastWateringText.value === '尚无记录' ? '' : lastWateringText.value,
+        nextWaterDate,
+        wateringEvents,
+        plannerResult: plannerResult.value,
+        calendarPayload
+      })
+    )
+    if (response?.code !== 200 || !response.data) {
+      throw new Error(response?.message || '应用内提醒保存失败')
+    }
+    savedReminder.value = response.data
+    savedReminderInputSignature.value = currentReminderInputSignature.value
+    mirrorSavedReminder(response.data)
+    await new Promise(resolve => {
+      uni.showModal({
+        title: '提醒已添加',
+        content: '提醒已添加，后续修改请到系统日历中操作。',
+        showCancel: false,
+        success: resolve,
+        fail: resolve
+      })
+    })
+    close()
+  } catch (error) {
+    uni.showToast({
+      title: error?.message || '添加失败，请重试',
+      icon: 'none'
+    })
+  } finally {
+    loading.value = false
+  }
 }
 watch(
   () => props.plant?.id,
-  () => {
-    selectedWateringEvents.value = []
-    plannerResult.value = null
-    hasWeatherRef.value = false
-    weatherDays.value = []
-    forecastDays.value = []
-    environmentWeatherWindow.value = null
+  async newPlantId => {
+    resetReminderState()
+    if (newPlantId && isSheetOpen.value) {
+      await nextTick()
+      await loadSavedReminder()
+    }
   }
 )
 defineExpose({ open, close })

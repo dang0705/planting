@@ -167,6 +167,17 @@ node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
 
 仅适用于 `implementation_mode=codex_subagent` 和需要 QA 的阶段，`simple_patch` 跳过此gate。
 
+### Spawn 授权边界
+
+进入 `dispatch-task` 且 handoff 通过 validator 后，视为本轮任务允许按 Handoff Contract 派发对应具名 `implementer_fast` / `implementer_deep` / `qa_reviewer`。本 skill 不要求 main 在每次 spawn 前额外询问用户确认。
+
+若只是因为任务涉及 API、状态链路、多文件修改或 500 行拆分，不得询问用户是否 spawn；这些正是必须走具名 implementer 的场景。
+
+如果运行时确实要求用户授权，main 只能提出一次最小确认：
+
+> 是否允许本轮按已通过校验的 Handoff Contract 派发 `<target_role>`？
+
+用户确认后必须立即 spawn；不得继续扩大只读分析、不得改代码、不得改写架构。
 `target_role` 必须是 `.codex/agents/*.toml` 中 `name` 的精确值。main 必须显式使用该值调用 `spawn_agent`，不得让运行时自行挑选角色。
 
 ```text

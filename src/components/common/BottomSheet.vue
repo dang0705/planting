@@ -8,8 +8,8 @@
   >
     <view
       :id="panelId"
-      class="bottom-sheet-panel flex max-h-[var(--bottom-sheet-max-height)] flex-col overflow-hidden rounded-t-[20px] bg-white"
-      :style="{ '--bottom-sheet-max-height': maxHeight }"
+      class="bottom-sheet-panel overflow-hidden rounded-t-[20px] bg-white"
+      :style="{ maxHeight: panelMaxHeight }"
     >
       <view class="bottom-sheet-grip mx-auto mt-2.5 h-1 w-14 rounded-full bg-gray-200" />
       <view
@@ -36,12 +36,19 @@
 
       <scroll-view
         :id="contentId"
-        scroll-y
-        class="min-h-0 flex-1 px-4"
+        :scroll-y="true"
+        :scroll-into-view="effectiveScrollIntoView"
+        :scroll-top="effectiveScrollTop"
+        :scroll-with-animation="scrollWithAnimation"
+        :scroll-anchoring="scrollAnchoring"
+        :enable-flex="true"
+        class="bottom-sheet-scroll-view px-4"
         :class="showHeader ? 'pt-3' : 'pt-4'"
         :style="{ height: scrollHeight }"
       >
-        <slot />
+        <view class="bottom-sheet-scroll-content">
+          <slot />
+        </view>
       </scroll-view>
 
       <view
@@ -94,14 +101,31 @@ const props = defineProps({
   showHeader: { type: Boolean, default: true },
   maskClick: { type: Boolean, default: true },
   closeOnConfirm: { type: Boolean, default: false },
+  scrollIntoView: { type: String, default: '' },
+  scrollTop: { type: Number, default: 0 },
+  scrollWithAnimation: { type: Boolean, default: true },
+  scrollAnchoring: { type: Boolean, default: true },
   onConfirm: { type: Function, default: null }
 })
 const emit = defineEmits(['change', 'close', 'confirm'])
 const popupRef = ref(null)
 const instance = getCurrentInstance()
 const layoutStore = useLayoutStore()
-const maxHeight = computed(() => `calc(100vh - ${Number(layoutStore.headerHeight || 0)}px)`)
+const panelMaxHeight = computed(() => `${getMaxAvailableHeight()}px`)
 const scrollHeight = ref('320px')
+const internalScrollIntoView = ref('')
+const internalScrollTop = ref(0)
+const effectiveScrollIntoView = computed(() => internalScrollIntoView.value || props.scrollIntoView)
+const effectiveScrollTop = computed(() =>
+  internalScrollIntoView.value ? internalScrollTop.value : props.scrollTop
+)
+const confirmReservedHeight = ref(0)
+const hasConfirmArea = computed(
+  () => props.showConfirm || Boolean(instance?.proxy?.$slots?.confirm)
+)
+const scrollContentPaddingBottom = computed(() =>
+  hasConfirmArea.value ? `${Math.max(24, confirmReservedHeight.value + 16)}px` : '16px'
+)
 const visible = ref(false)
 let measureTimer = null
 
@@ -148,6 +172,19 @@ function open() {
 function close() {
   callComponentMethod(popupRef, 'close')
 }
+async function scrollToAnchor(anchorId = '') {
+  const nextAnchorId = String(anchorId || '').trim()
+  if (!nextAnchorId) {
+    return
+  }
+  internalScrollIntoView.value = ''
+  await nextTick()
+  internalScrollIntoView.value = nextAnchorId
+}
+function scrollToTop() {
+  internalScrollIntoView.value = ''
+  internalScrollTop.value = internalScrollTop.value === 0 ? 1 : 0
+}
 async function confirm() {
   if (props.confirmDisabled || props.confirmLoading) {
     return
@@ -187,6 +224,7 @@ function getMaxAvailableHeight() {
 
 function setFallbackScrollHeight() {
   const reservedHeight = props.showHeader ? 104 : 64
+  confirmReservedHeight.value = hasConfirmArea.value ? 72 : 0
   scrollHeight.value = `${Math.max(160, getMaxAvailableHeight() - reservedHeight)}px`
 }
 
@@ -218,6 +256,7 @@ async function measureScrollHeight() {
     const headerHeight = props.showHeader ? Number(headerRect?.height || 0) : 0
     const confirmHeight =
       props.showConfirm || proxy.$slots?.confirm ? Number(confirmRect?.height || 0) : 0
+    confirmReservedHeight.value = confirmHeight
     const verticalPadding = props.showHeader ? 12 : 16
     const nextHeight =
       getMaxAvailableHeight() - gripHeight - headerHeight - confirmHeight - verticalPadding
@@ -225,5 +264,5 @@ async function measureScrollHeight() {
   })
 }
 
-defineExpose({ open, close, refreshLayout: measureScrollHeight })
+defineExpose({ open, close, refreshLayout: measureScrollHeight, scrollToAnchor, scrollToTop })
 </script>
