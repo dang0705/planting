@@ -111,6 +111,7 @@
       close-id="watering-date-picker-close-button"
       title="选择浇水日期"
       subtitle="勾选最近 10 天内的浇水日期，用于计算浇水频率与建议下次浇水时间"
+      height-mode="fullHeight"
     >
       <view class="pt-1">
         <CareBehaviorTimeline

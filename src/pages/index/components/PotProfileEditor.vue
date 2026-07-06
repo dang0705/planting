@@ -9,6 +9,7 @@
     subtitle="尺寸用于估算水量，基质用于修正保水与透气。"
     confirm-text="确认并保存"
     loading-text="保存中..."
+    height-mode="fullHeight"
     show-confirm
     :confirm-loading="saving"
     :on-confirm="save"

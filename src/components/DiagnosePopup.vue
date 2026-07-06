@@ -6,6 +6,7 @@
     content-id="diagnose-popup-scroll"
     close-id="diagnose-popup-close-button"
     title="AI 诊断"
+    height-mode="fullHeight"
     @change="handleChange"
   >
     <view id="diagnose-popup-content-wrap" class="popup-content-wrap">

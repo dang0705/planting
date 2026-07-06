@@ -14,6 +14,26 @@ export const BOTTLE_ML = 550
 /** 5 升油桶（大水量计量单位）。 */
 export const BUCKET_ML = 5000
 
+/** 桶数换算容差：上限超出整桶的部分 < 此值时归到当前桶，避免 50069ml 被算成 11 桶。 */
+const BUCKET_ROUND_TOLERANCE_ML = BUCKET_ML * 0.1 // 500ml
+
+/**
+ * 把 ml 换算成桶数（下限用 round，上限用带容差的 ceil）。
+ * @param {number} ml
+ * @param {'lower'|'upper'} side - lower=四舍五入；upper=超出整桶 10% 才进位
+ */
+function mlToBucketCount(ml, side) {
+  if (side === 'upper') {
+    const ceil = Math.ceil(ml / BUCKET_ML)
+    const rounded = Math.round(ml / BUCKET_ML)
+    // 上限超出整桶的部分 < 容差（500ml）时归到当前桶，否则进位
+    return ml - rounded * BUCKET_ML > BUCKET_ROUND_TOLERANCE_ML
+      ? Math.max(1, ceil)
+      : Math.max(1, rounded)
+  }
+  return Math.max(1, Math.round(ml / BUCKET_ML))
+}
+
 /**
  * 录入侧「用户上次浇了多少」瓶档选项。
  * value 为该档的代表 ml（提交给后端 amountMl）。
@@ -68,7 +88,9 @@ export function resolveWateringDoseOptions(potVolumeMl) {
   // 油桶模式下保证桶数递增，避免多档重复"约1桶"
   let bucketCounts = null
   if (useBucket) {
-    const rawCounts = [smallMl, normalMl, thoroughMl, heavyMl].map(ml => Math.max(1, Math.round(ml / BUCKET_ML)))
+    const rawCounts = [smallMl, normalMl, thoroughMl, heavyMl].map(ml =>
+      Math.max(1, Math.round(ml / BUCKET_ML))
+    )
     bucketCounts = []
     for (let i = 0; i < rawCounts.length; i++) {
       const prev = i > 0 ? bucketCounts[i - 1] : 0
@@ -80,15 +102,17 @@ export function resolveWateringDoseOptions(potVolumeMl) {
     if (useBucket) {
       return `约${bucketCounts[idx]}桶`
     }
-    if (ml <= MIST_TEXT_MAX_ML) return '喷一喷'
+    if (ml <= MIST_TEXT_MAX_ML) {
+      return '喷一喷'
+    }
     const bottles = Math.round((ml / BOTTLE_ML) * 2) / 2
-    if (bottles <= 0.5) return '约半瓶'
+    if (bottles <= 0.5) {
+      return '约半瓶'
+    }
     return `约${bottles}瓶`
   }
 
-  const options = [
-    { label: '不知道', value: null, amountMl: null }
-  ]
+  const options = [{ label: '不知道', value: null, amountMl: null }]
   // 油桶模式（大盆）不展示"喷一喷"——3% 盆体积可能上千 ml，不是喷雾语义
   if (!useBucket) {
     options.push({ label: '喷一喷', value: 'spray', amountMl: mistMl })
@@ -167,10 +191,13 @@ export function formatMlRangeToBottleText(rangeMl) {
   if (upper === null || upper <= 0) {
     return '暂停浇水'
   }
-  if (lower !== null && lower > MIST_TEXT_MAX_ML && (upper - lower) > MIST_TEXT_MAX_ML) {
+  if (lower !== null && lower > MIST_TEXT_MAX_ML && upper - lower > MIST_TEXT_MAX_ML) {
     if (lower >= BUCKET_TEXT_MIN_ML) {
-      const loBuckets = Math.max(1, Math.round(lower / BUCKET_ML))
-      const hiBuckets = Math.max(loBuckets, Math.round(upper / BUCKET_ML))
+      const loBuckets = mlToBucketCount(lower, 'lower')
+      const hiBuckets = Math.max(loBuckets, mlToBucketCount(upper, 'upper'))
+      if (loBuckets === hiBuckets) {
+        return `约${hiBuckets}桶（5升油桶）`
+      }
       return `约${loBuckets}~${hiBuckets}桶（5升油桶）`
     }
     if (upper < BUCKET_TEXT_MIN_ML) {
@@ -182,8 +209,11 @@ export function formatMlRangeToBottleText(rangeMl) {
       return `约${loBottles}~${hiBottles}瓶`
     }
     // 跨瓶/桶级（下限<5000，上限≥5000）→ 按上限统一换算油桶，不输出原始 ml
-    const loBuckets = Math.max(1, Math.round(lower / BUCKET_ML))
-    const hiBuckets = Math.max(loBuckets, Math.round(upper / BUCKET_ML))
+    const loBuckets = mlToBucketCount(lower, 'lower')
+    const hiBuckets = Math.max(loBuckets, mlToBucketCount(upper, 'upper'))
+    if (loBuckets === hiBuckets) {
+      return `约${hiBuckets}桶（5升油桶）`
+    }
     return `约${loBuckets}~${hiBuckets}桶（5升油桶）`
   }
   return formatMlToBottleText(upper)
@@ -230,7 +260,12 @@ export function estimatePotVolumeMl({ potTopDiameterCm, potBottomDiameterCm, pot
   const bottom = toFiniteNumber(potBottomDiameterCm)
   const resolvedTop = top ?? bottom
   const resolvedBottom = bottom ?? top
-  if (resolvedTop === null || resolvedTop === undefined || resolvedBottom === null || resolvedBottom === undefined) {
+  if (
+    resolvedTop === null ||
+    resolvedTop === undefined ||
+    resolvedBottom === null ||
+    resolvedBottom === undefined
+  ) {
     return 0
   }
   const avgDiameter = (resolvedTop + resolvedBottom) / 2
@@ -240,7 +275,7 @@ export function estimatePotVolumeMl({ potTopDiameterCm, potBottomDiameterCm, pot
   }
   const R = resolvedTop / 2
   const r = resolvedBottom / 2
-  return (Math.PI * height / 3) * (R * R + R * r + r * r)
+  return ((Math.PI * height) / 3) * (R * R + R * r + r * r)
 }
 
 /**

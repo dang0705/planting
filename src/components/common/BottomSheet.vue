@@ -8,8 +8,8 @@
   >
     <view
       :id="panelId"
-      class="bottom-sheet-panel overflow-hidden rounded-t-[20px] bg-white"
-      :style="{ maxHeight: panelMaxHeight }"
+      class="bottom-sheet-panel flex flex-col overflow-hidden rounded-t-[20px] bg-white"
+      :style="panelStyle"
     >
       <view class="bottom-sheet-grip mx-auto mt-2.5 h-1 w-14 rounded-full bg-gray-200" />
       <view
@@ -35,6 +35,7 @@
       </view>
 
       <scroll-view
+        v-if="isFullHeightMode"
         :id="contentId"
         :scroll-y="true"
         :scroll-into-view="effectiveScrollIntoView"
@@ -42,14 +43,19 @@
         :scroll-with-animation="scrollWithAnimation"
         :scroll-anchoring="scrollAnchoring"
         :enable-flex="true"
-        class="bottom-sheet-scroll-view px-4"
+        class="bottom-sheet-scroll-view min-h-0 flex-1 px-4"
         :class="showHeader ? 'pt-3' : 'pt-4'"
-        :style="{ height: scrollHeight }"
       >
-        <view class="bottom-sheet-scroll-content">
-          <slot />
-        </view>
+        <slot />
       </scroll-view>
+      <view
+        v-else
+        :id="contentId"
+        class="bottom-sheet-content min-h-0 px-4"
+        :class="showHeader ? 'pt-3' : 'pt-4'"
+      >
+        <slot />
+      </view>
 
       <view
         v-if="showConfirm || $slots.confirm"
@@ -72,18 +78,14 @@
 </template>
 
 <script setup>
-import {
-  computed,
-  getCurrentInstance,
-  nextTick,
-  onBeforeUnmount,
-  onMounted,
-  onUpdated,
-  ref,
-  watch
-} from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useLayoutStore } from '@/store/layout.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
+
+const HEIGHT_MODE_AUTO = 'auto'
+const HEIGHT_MODE_FULL_HEIGHT = 'fullHeight'
+const MIN_PANEL_HEIGHT = 320
+const FALLBACK_PANEL_HEIGHT = 520
 
 const props = defineProps({
   title: { type: String, default: '' },
@@ -101,6 +103,11 @@ const props = defineProps({
   showHeader: { type: Boolean, default: true },
   maskClick: { type: Boolean, default: true },
   closeOnConfirm: { type: Boolean, default: false },
+  heightMode: {
+    type: String,
+    default: 'auto',
+    validator: value => ['auto', 'fullHeight'].includes(value)
+  },
   scrollIntoView: { type: String, default: '' },
   scrollTop: { type: Number, default: 0 },
   scrollWithAnimation: { type: Boolean, default: true },
@@ -109,65 +116,29 @@ const props = defineProps({
 })
 const emit = defineEmits(['change', 'close', 'confirm'])
 const popupRef = ref(null)
-const instance = getCurrentInstance()
 const layoutStore = useLayoutStore()
 const panelMaxHeight = computed(() => `${getMaxAvailableHeight()}px`)
-const scrollHeight = ref('320px')
+const isFullHeightMode = computed(() => props.heightMode === HEIGHT_MODE_FULL_HEIGHT)
+const panelStyle = computed(() => {
+  if (isFullHeightMode.value) {
+    return { height: panelMaxHeight.value, maxHeight: panelMaxHeight.value }
+  }
+  return { maxHeight: panelMaxHeight.value }
+})
 const internalScrollIntoView = ref('')
 const internalScrollTop = ref(0)
 const effectiveScrollIntoView = computed(() => internalScrollIntoView.value || props.scrollIntoView)
 const effectiveScrollTop = computed(() =>
   internalScrollIntoView.value ? internalScrollTop.value : props.scrollTop
 )
-const confirmReservedHeight = ref(0)
-const hasConfirmArea = computed(
-  () => props.showConfirm || Boolean(instance?.proxy?.$slots?.confirm)
-)
-const scrollContentPaddingBottom = computed(() =>
-  hasConfirmArea.value ? `${Math.max(24, confirmReservedHeight.value + 16)}px` : '16px'
-)
-const visible = ref(false)
-let measureTimer = null
 
 onMounted(() => {
   layoutStore.ensureHeaderMetrics()
-  setFallbackScrollHeight()
 })
-onBeforeUnmount(() => {
-  if (measureTimer) {
-    clearTimeout(measureTimer)
-    measureTimer = null
-  }
-})
-onUpdated(() => {
-  if (visible.value) {
-    scheduleMeasure()
-  }
-})
-
-watch(
-  () => [
-    props.title,
-    props.subtitle,
-    props.showHeader,
-    props.showConfirm,
-    props.confirmText,
-    props.confirmLoading,
-    props.confirmDisabled,
-    layoutStore.headerHeight
-  ],
-  () => {
-    if (visible.value) {
-      scheduleMeasure()
-    }
-  }
-)
 
 function open() {
   layoutStore.ensureHeaderMetrics()
-  setFallbackScrollHeight()
   callComponentMethod(popupRef, 'open')
-  scheduleMeasure(80)
 }
 function close() {
   callComponentMethod(popupRef, 'close')
@@ -198,11 +169,8 @@ async function confirm() {
   }
 }
 function handleChange(event) {
-  visible.value = Boolean(event?.show)
   emit('change', event)
-  if (event?.show) {
-    scheduleMeasure(80)
-  } else {
+  if (!event?.show) {
     emit('close')
   }
 }
@@ -219,50 +187,11 @@ function getWindowHeight() {
 function getMaxAvailableHeight() {
   const windowHeight = getWindowHeight()
   const headerHeight = Number(layoutStore.headerHeight || 0)
-  return Math.max(160, windowHeight ? windowHeight - headerHeight : 520)
+  return Math.max(
+    MIN_PANEL_HEIGHT,
+    windowHeight ? windowHeight - headerHeight : FALLBACK_PANEL_HEIGHT
+  )
 }
 
-function setFallbackScrollHeight() {
-  const reservedHeight = props.showHeader ? 104 : 64
-  confirmReservedHeight.value = hasConfirmArea.value ? 72 : 0
-  scrollHeight.value = `${Math.max(160, getMaxAvailableHeight() - reservedHeight)}px`
-}
-
-function scheduleMeasure(delay = 0) {
-  if (measureTimer) {
-    clearTimeout(measureTimer)
-  }
-  measureTimer = setTimeout(async () => {
-    measureTimer = null
-    await measureScrollHeight()
-  }, delay)
-}
-
-async function measureScrollHeight() {
-  await nextTick()
-  const proxy = instance?.proxy
-  if (!proxy) {
-    setFallbackScrollHeight()
-    return
-  }
-
-  const query = uni.createSelectorQuery().in(proxy)
-  query.select('.bottom-sheet-grip').boundingClientRect()
-  query.select('.bottom-sheet-header').boundingClientRect()
-  query.select('.bottom-sheet-confirm').boundingClientRect()
-  query.exec(rects => {
-    const [gripRect, headerRect, confirmRect] = Array.isArray(rects) ? rects : []
-    const gripHeight = Number(gripRect?.height || 0)
-    const headerHeight = props.showHeader ? Number(headerRect?.height || 0) : 0
-    const confirmHeight =
-      props.showConfirm || proxy.$slots?.confirm ? Number(confirmRect?.height || 0) : 0
-    confirmReservedHeight.value = confirmHeight
-    const verticalPadding = props.showHeader ? 12 : 16
-    const nextHeight =
-      getMaxAvailableHeight() - gripHeight - headerHeight - confirmHeight - verticalPadding
-    scrollHeight.value = `${Math.max(160, Math.floor(nextHeight))}px`
-  })
-}
-
-defineExpose({ open, close, refreshLayout: measureScrollHeight, scrollToAnchor, scrollToTop })
+defineExpose({ open, close, refreshLayout: () => {}, scrollToAnchor, scrollToTop })
 </script>

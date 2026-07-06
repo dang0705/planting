@@ -16,6 +16,26 @@ const BOTTLE_ML = 550
 /** 5 升油桶（大水量计量单位）。 */
 const BUCKET_ML = 5000
 
+/** 桶数换算容差：上限超出整桶的部分 < 此值时归到当前桶，避免 50069ml 被算成 11 桶。 */
+const BUCKET_ROUND_TOLERANCE_ML = BUCKET_ML * 0.1 // 500ml
+
+/**
+ * 把 ml 换算成桶数（下限用 round，上限用带容差的 ceil）。
+ * @param {number} ml
+ * @param {'lower'|'upper'} side - lower=四舍五入；upper=超出整桶 10% 才进位
+ */
+function mlToBucketCount(ml, side) {
+  if (side === 'upper') {
+    const ceil = Math.ceil(ml / BUCKET_ML)
+    const rounded = Math.round(ml / BUCKET_ML)
+    // 上限超出整桶的部分 < 容差（500ml）时归到当前桶，否则进位
+    return ml - rounded * BUCKET_ML > BUCKET_ROUND_TOLERANCE_ML
+      ? Math.max(1, ceil)
+      : Math.max(1, rounded)
+  }
+  return Math.max(1, Math.round(ml / BUCKET_ML))
+}
+
 /**
  * 浇水量分级（与 hydration-load.DOSE_CLASS 保持一致）。
  */
@@ -167,11 +187,15 @@ function formatMlRangeToBottleText(rangeMl) {
     return '暂停浇水'
   }
   // 区间跨度足够大且下限非喷雾级时，输出区间文案
-  if (lower !== null && lower > MIST_TEXT_MAX_ML && (upper - lower) > MIST_TEXT_MAX_ML) {
+  if (lower !== null && lower > MIST_TEXT_MAX_ML && upper - lower > MIST_TEXT_MAX_ML) {
     // 都在油桶级（≥5000ml）→ 换算桶数
     if (lower >= BUCKET_TEXT_MIN_ML) {
-      const loBuckets = Math.max(1, Math.round(lower / BUCKET_ML))
-      const hiBuckets = Math.max(loBuckets, Math.round(upper / BUCKET_ML))
+      const loBuckets = mlToBucketCount(lower, 'lower')
+      const hiBuckets = Math.max(loBuckets, mlToBucketCount(upper, 'upper'))
+      // 桶数相同时退回单值
+      if (loBuckets === hiBuckets) {
+        return `约${hiBuckets}桶（5升油桶）`
+      }
       return `约${loBuckets}~${hiBuckets}桶（5升油桶）`
     }
     // 都在瓶级（50~5000ml）→ 换算瓶数（0.5瓶粒度）
@@ -182,11 +206,14 @@ function formatMlRangeToBottleText(rangeMl) {
       if (loBottles === hiBottles) {
         return formatMlToBottleText(upper)
       }
-      return `约${loBottles}~${hiBottles}瓶（${Math.round(lower)}~${Math.round(upper)}ml）`
+      return `约${loBottles}~${hiBottles}瓶`
     }
     // 跨瓶/桶级（下限<5000，上限≥5000）→ 按上限统一换算油桶，不输出原始 ml
-    const loBuckets = Math.max(1, Math.round(lower / BUCKET_ML))
-    const hiBuckets = Math.max(loBuckets, Math.round(upper / BUCKET_ML))
+    const loBuckets = mlToBucketCount(lower, 'lower')
+    const hiBuckets = Math.max(loBuckets, mlToBucketCount(upper, 'upper'))
+    if (loBuckets === hiBuckets) {
+      return `约${hiBuckets}桶（5升油桶）`
+    }
     return `约${loBuckets}~${hiBuckets}桶（5升油桶）`
   }
   return formatMlToBottleText(upper)

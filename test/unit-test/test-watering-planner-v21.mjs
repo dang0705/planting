@@ -903,21 +903,21 @@ test('planner: 用户浇 30ml(mist) → 不锚定 + 正常区间', () => {
 
 test('formatMlRangeToBottleText: 区间文案', () => {
   const { formatMlRangeToBottleText } = require('../../cloudfunctions/layer/utils/water-volume-format.js')
-  // 瓶级区间（瓶数不同）→ 瓶数区间文案
-  assert.equal(formatMlRangeToBottleText([460, 690]), '约1~1.5瓶（460~690ml）')
+  // 瓶级区间（瓶数不同）→ 瓶数区间文案（不带 ml）
+  assert.equal(formatMlRangeToBottleText([460, 690]), '约1~1.5瓶')
   // 瓶级区间（瓶数相同）→ 退回单值
-  assert.match(formatMlRangeToBottleText([275, 412]), /瓶|ml/)
+  assert.match(formatMlRangeToBottleText([275, 412]), /瓶/)
   // 油桶级区间 → 桶数区间文案
   assert.equal(formatMlRangeToBottleText([33380, 50069]), '约7~10桶（5升油桶）')
   assert.equal(formatMlRangeToBottleText([5000, 7500]), '约1~2桶（5升油桶）')
-  // 跨瓶/桶级 → 保留原始 ml
-  assert.equal(formatMlRangeToBottleText([3000, 6000]), '约3000~6000ml')
+  // 跨瓶/桶级 → 按上限统一换算油桶
+  assert.equal(formatMlRangeToBottleText([3000, 6000]), '约1~2桶（5升油桶）')
   // [0,0] → 暂停
   assert.equal(formatMlRangeToBottleText([0, 0]), '暂停浇水')
   // 下限≤50（喷雾级）→ 单值取上限
-  assert.match(formatMlRangeToBottleText([30, 200]), /瓶|ml/)
+  assert.match(formatMlRangeToBottleText([30, 200]), /瓶/)
   // 上下限差≤50 → 单值
-  assert.match(formatMlRangeToBottleText([100, 120]), /瓶|ml/)
+  assert.match(formatMlRangeToBottleText([100, 120]), /瓶/)
   // 非法
   assert.equal(formatMlRangeToBottleText(null), '暂无建议水量')
 })
