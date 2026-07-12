@@ -1,0 +1,382 @@
+version: 2
+updated: 2026-06-06
+verified_at_commit: unknown-from-upload
+policy: 'facts are compact pointers; source files are authoritative'
+
+facts:
+  - id: F-PROJECT-FRONTEND-001
+    claim_summary: 'AI植伴 is a uni-app/Vue 3 application; pages, app identity, appid and permissions are defined by frontend entry/config files.'
+    source:
+      files:
+        - src/main.js
+        - src/pages.json
+        - src/manifest.json
+        - package.json
+    invalidated_by:
+      paths:
+        - src/main.js
+        - src/pages.json
+        - src/manifest.json
+        - package.json
+    status: verified
+    confidence: high
+
+  - id: F-PROJECT-CLOUDFUNCTIONS-002
+    claim_summary: 'Current backend has separate CloudBase HTTP functions for diagnose, storage, identify, weather, plant catalog, plant user, auth user, and deprecated diagnosis history.'
+    source:
+      files:
+        - cloudfunctions/diagnose-http/app.js
+        - cloudfunctions/storage-http/app.js
+        - cloudfunctions/identify-http/app.js
+        - cloudfunctions/weather-http/app.js
+        - cloudfunctions/plant-catalog-http/app.js
+        - cloudfunctions/plant-user-http/app.js
+        - cloudfunctions/auth-user-http/app.js
+        - cloudfunctions/diagnosis-history-http/app.js
+    invalidated_by:
+      paths:
+        - cloudfunctions/**/app.js
+        - cloudfunctions/**/cloudbase-functions.json
+    status: verified
+    confidence: high
+
+  - id: F-DIAG-ENTRY-001
+    claim_summary: 'diagnose-http entry wraps request env/schema resolution before dispatching to the HTTP router.'
+    source:
+      files:
+        - cloudfunctions/diagnose-http/app.js
+        - cloudfunctions/diagnose-http/app/http-router.js
+        - cloudfunctions/diagnose-http/db/schema-resolver.js
+    invalidated_by:
+      paths:
+        - cloudfunctions/diagnose-http/app.js
+        - cloudfunctions/diagnose-http/app/http-router.js
+        - cloudfunctions/diagnose-http/db/**
+    status: verified
+    confidence: high
+
+  - id: F-DIAG-ROUTES-002
+    claim_summary: 'diagnose-http owns diagnosis start, question start, answer, result, history, feedback, review, out-of-pool, stream, and session diagnose routes.'
+    source:
+      files:
+        - cloudfunctions/diagnose-http/app/http-router.js
+    invalidated_by:
+      paths:
+        - cloudfunctions/diagnose-http/app/http-router.js
+        - src/http-functions/diagnose/**
+    status: verified
+    confidence: high
+
+  - id: F-DIAG-ROUTE-CONFIG-003
+    claim_summary: 'Superseded as product口径: prior memory said current route selection has maxQuestionsPerRound=1/maxFollowUpRounds=0. Do not use this as current UX or question-package contract.'
+    source:
+      files:
+        - cloudfunctions/diagnose-http/constants/scoring.js
+        - docs/tickets/86exv6fnx-diagnose-question-package.md
+    invalidated_by:
+      paths:
+        - cloudfunctions/diagnose-http/constants/scoring.js
+        - cloudfunctions/diagnose-http/domain/**
+        - docs/tickets/86exv6fnx-diagnose-question-package.md
+    status: superseded_for_product_contract
+    confidence: medium
+    superseded_by:
+      - F-DIAG-QUESTION-PACKAGE-005
+
+  - id: F-DIAG-PUBLIC-RESPONSE-004
+    claim_summary: 'visibleOutcomes and frontend-response/result formatter outputs are the current frontend-visible diagnosis result contract.'
+    source:
+      files:
+        - cloudfunctions/diagnose-http/app/frontend-response.js
+        - cloudfunctions/diagnose-http/domain/result-formatter.js
+        - cloudfunctions/diagnose-http/presenters/**
+        - src/utils/diagnose-result-normalizer.js
+    invalidated_by:
+      paths:
+        - cloudfunctions/diagnose-http/app/frontend-response.js
+        - cloudfunctions/diagnose-http/domain/result-formatter.js
+        - cloudfunctions/diagnose-http/presenters/**
+        - src/utils/diagnose-result-normalizer.js
+    status: verified
+    confidence: high
+
+  - id: F-DIAG-QUESTION-PACKAGE-005
+    claim_summary: 'Current diagnosis-question-package口径 is package-first with one terminal package submission. Complete fixed-package answer_submit is terminal and must return final/result instead of next rounds; frontend answer payload carries questionPackage/uiHints metadata. Valid yellow_leaf package answers persist and validate as same-current-round package siblings; non-package paths keep single-question behavior.'
+    source:
+      files:
+        - docs/tickets/86exv6fnx-diagnose-question-package.md
+        - cloudfunctions/diagnose-http/app/question-package-response.js
+        - cloudfunctions/diagnose-http/app/diagnosis-answer-runner.js
+        - cloudfunctions/diagnose-http/domain/diagnosis-engine.js
+        - cloudfunctions/diagnose-http/app/manual-symptom-question-start-fast-path.js
+        - cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js
+        - cloudfunctions/diagnose-http/services/session-question-service.js
+        - src/pages/diagnose/question-package/question-flow.js
+        - src/utils/diagnose-result-normalizer.js
+    invalidated_by:
+      paths:
+        - docs/tickets/86exv6fnx-diagnose-question-package.md
+        - cloudfunctions/diagnose-http/app/question-package-response.js
+        - cloudfunctions/diagnose-http/app/diagnosis-answer-runner.js
+        - cloudfunctions/diagnose-http/domain/diagnosis-engine.js
+        - cloudfunctions/diagnose-http/app/manual-symptom-question-start-fast-path.js
+        - cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js
+        - cloudfunctions/diagnose-http/services/session-question-service.js
+        - cloudfunctions/diagnose-http/app/http-router.js
+        - cloudfunctions/diagnose-http/app/frontend-response.js
+        - src/pages/diagnose/question-package/**
+        - src/http-functions/diagnose/client.js
+        - src/utils/diagnose-result-normalizer.js
+    status: active_requirement_pointer
+    confidence: medium
+    notes:
+      - 'ClickUp task 90182453517/86exv6fnx is the latest requirement pointer supplied by the user.'
+      - 'Authenticated ticket body was not available in this artifact package; replace this note with exported ticket content when available.'
+
+  - id: F-DIAG-HISTORY-DEPRECATED-006
+    claim_summary: 'diagnosis-history-http is deprecated and returns 410 for old history/detail/feedback/decision routes; diagnose-http is the replacement.'
+    source:
+      files:
+        - cloudfunctions/diagnosis-history-http/app.js
+        - cloudfunctions/diagnose-http/app/http-router.js
+    invalidated_by:
+      paths:
+        - cloudfunctions/diagnosis-history-http/**
+        - cloudfunctions/diagnose-http/app/http-router.js
+    status: verified
+    confidence: high
+
+  - id: F-ENV-SCHEMA-001
+    claim_summary: 'development/dev/local/test/stage route to cloud1_dev; production/prod route to cloud1-2grufevs395a9d5e; frontend production API base must be HTTPS/non-local.'
+    source:
+      files:
+        - src/api/env.js
+        - src/utils/runtime-env.js
+        - cloudfunctions/diagnose-http/db/schema-resolver.js
+        - cloudfunctions/layer/utils/http.js
+    invalidated_by:
+      paths:
+        - src/api/env.js
+        - src/utils/runtime-env.js
+        - cloudfunctions/**/db/schema-resolver.js
+        - cloudfunctions/layer/utils/http.js
+    status: verified
+    confidence: high
+
+  - id: F-STORAGE-IMAGE-001
+    claim_summary: 'storage-http supports diagnose image upload/delete, plant image upload/list/rebind, temp URL lookup, and image suffix allowlist jpg/jpeg/png/webp/heic/gif.'
+    source:
+      files:
+        - cloudfunctions/storage-http/app.js
+        - src/http-functions/storage/client.js
+    invalidated_by:
+      paths:
+        - cloudfunctions/storage-http/**
+        - src/http-functions/storage/**
+    status: verified
+    confidence: high
+
+  - id: F-IDENTIFY-001
+    claim_summary: 'identify-http uses Baidu recognition results and canonical plant matching to return identity match status and candidates.'
+    source:
+      files:
+        - cloudfunctions/identify-http/app.js
+        - cloudfunctions/layer/utils/plant-knowledge.js
+        - cloudfunctions/layer/utils/identify-runtime.js
+    invalidated_by:
+      paths:
+        - cloudfunctions/identify-http/**
+        - cloudfunctions/layer/utils/plant-knowledge.js
+        - cloudfunctions/layer/utils/identify-runtime.js
+    status: verified
+    confidence: high
+
+  - id: F-WEATHER-V7-001
+    claim_summary: 'weather-http contracts now include timer-triggered recent-10d ingestion (`weather-ingestion-recent-10d`, cron `0 20 0/6 * * * *`) and batch ingestion. Timer events are handled by top-level controlled branch in `app.js` and reuse recent-10d service. Batch ingestion only scans `weather_locations` where `is_active = 1` and `qweather_location_id` is present, with optional `limit`; no global/national city batch. Diagnosis environment-context reads self-owned cache first (`weather:recent10:{locationKey}`, `weather-cache/v1/locations/{locationKey}/recent-10d.json`) and returns 200 with `weather evidence insufficient` or empty `historicalDays` on cache miss; user diagnosis requests must not synchronously call QWeather.'
+    source:
+      files:
+        - cloudfunctions/weather-http/app.js
+        - cloudfunctions/weather-http/routes/recent-weather-routes.js
+        - cloudfunctions/weather-http/services/weather-window-service.js
+        - cloudfunctions/weather-http/services/recent-weather-service.js
+        - cloudfunctions/weather-http/services/weather-object-storage.js
+        - cloudfunctions/weather-http/repositories/weather-location-repository.js
+        - cloudfunctions/weather-http/services/recent-weather-payloads.js
+        - cloudfunctions/weather-http/services/recent-weather-archive.js
+        - cloudfunctions/weather-http/services/recent-weather-batch.js
+        - cloudfunctions/weather-http/adapters/qweather-adapter.js
+        - scripts/sql/ensure-weather-history-cache-tables.sql
+        - cloudfunctions/diagnose-http/repositories/weather-repository.js
+        - cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js
+        - cloudfunctions/weather-http/config.json
+        - src/api/weather.js
+    invalidated_by:
+      paths:
+        - cloudfunctions/weather-http/**
+        - src/api/weather.js
+    status: verified
+    confidence: high
+
+  - id: F-CB-TIMELINE-ENVCTX-001
+    claim_summary: 'CareBehaviorTimeline supports environment-context-mode. Default/full mode keeps existing multi-source weather collection; diagnosis mode consumes only QWeather historical window (`historicalDays` / `historical_days`) as weather-by-date input and skips non-window weather/weatherByDate sources.'
+    source:
+      files:
+        - src/components/CareBehaviorTimeline.vue
+        - src/components/care-behavior-timeline/useCareBehaviorTimeline.js
+        - src/components/care-behavior-timeline/weather.js
+        - src/pages/diagnose/question-flow.vue
+        - src/components/DiagnosePopup.vue
+    invalidated_by:
+      paths:
+        - src/components/CareBehaviorTimeline.vue
+        - src/components/care-behavior-timeline/useCareBehaviorTimeline.js
+        - src/components/care-behavior-timeline/weather.js
+        - src/pages/diagnose/question-flow.vue
+        - src/components/DiagnosePopup.vue
+    status: active_requirement_pointer
+    confidence: medium
+
+  - id: F-PLANT-CATALOG-001
+    claim_summary: 'plant-catalog-http exposes catalog health, name mapping, plant list and plant detail routes.'
+    source:
+      files:
+        - cloudfunctions/plant-catalog-http/app.js
+        - cloudfunctions/layer/utils/plant-knowledge.js
+    invalidated_by:
+      paths:
+        - cloudfunctions/plant-catalog-http/**
+        - cloudfunctions/layer/utils/plant-knowledge.js
+    status: verified
+    confidence: high
+
+  - id: F-PLANT-USER-001
+    claim_summary: 'plant-user-http exposes authenticated user plant CRUD and requires resolved openid except health route.'
+    source:
+      files:
+        - cloudfunctions/plant-user-http/app.js
+        - cloudfunctions/layer/utils/plant-knowledge.js
+    invalidated_by:
+      paths:
+        - cloudfunctions/plant-user-http/**
+        - cloudfunctions/layer/utils/plant-knowledge.js
+    status: verified
+    confidence: high
+
+  - id: F-AUTH-USER-001
+    claim_summary: 'auth-user-http routes through /auth/user with action values for wechat login, phone login, email/phone updates, and user lookup.'
+    source:
+      files:
+        - cloudfunctions/auth-user-http/app.js
+    invalidated_by:
+      paths:
+        - cloudfunctions/auth-user-http/**
+        - src/http-functions/**/auth*
+    status: verified
+    confidence: high
+
+  - id: F-LOCAL-GATEWAY-001
+    claim_summary: 'Local CloudBase gateway defaults to 127.0.0.1:3010 and maps HTTP functions to fixed local ports.'
+    source:
+      files:
+        - package.json
+        - scripts/dev/local-functions-gateway.mjs
+        - scripts/dev/run-local-api-env.mjs
+        - docs/RUNBOOK.md
+    invalidated_by:
+      paths:
+        - package.json
+        - scripts/dev/**
+        - docs/RUNBOOK.md
+    status: verified
+    confidence: medium
+
+  - id: F-DEPLOY-RUNBOOK-001
+    claim_summary: 'Deployment entry points are package scripts deploy:functions:ci and deploy:miniprogram:ci; validation must record actual command outputs.'
+    source:
+      files:
+        - package.json
+        - scripts/deploy-cloudbase-functions.mjs
+        - scripts/deploy-miniprogram-ci.mjs
+        - docs/RUNBOOK.md
+    invalidated_by:
+      paths:
+        - package.json
+        - scripts/deploy-*.mjs
+        - docs/RUNBOOK.md
+    status: verified
+    confidence: medium
+
+  - id: F-AI-WORKFLOW-001
+    claim_summary: 'Default AI context is AGENTS.md, .codex/memory.md, .codex/context-packs.yml, and docs/CURRENT.md; docs_keeper is a knowledge hygiene cleaner.'
+    source:
+      files:
+        - AGENTS.md
+        - .codex/memory.md
+        - .codex/context-packs.yml
+        - .codex/agents/docs-keeper.toml
+        - docs/KNOWLEDGE_GOVERNANCE.md
+    invalidated_by:
+      paths:
+        - AGENTS.md
+        - .codex/**
+        - docs/KNOWLEDGE_GOVERNANCE.md
+        - docs/_sync-map.yml
+        - docs/_doc-status.yml
+    status: verified
+    confidence: high
+
+  - id: F-WECHAT-AUTOMATOR-SKILL-PATH-007
+    claim_summary: 'Canonical local runtime QA path is .codex/skills/miniprogram-automator-runtime/SKILL.md. .codex/skills/wechat-devtools/SKILL.md remains a supporting WeChat developer-tools skill, but active project QA defaults to miniprogram-automator / 9420.'
+    source:
+      files:
+        - .brv/context-tree/tooling/miniprogram_runtime_automator_usage.md
+        - .codex/skills/wechat-devtools/SKILL.md
+        - .codex/skills/miniprogram-automator-runtime/SKILL.md
+    invalidated_by:
+      paths:
+        - .brv/context-tree/tooling/miniprogram_runtime_automator_usage.md
+        - .codex/skills/wechat-devtools/**
+        - .codex/skills/wechat-devtools-mcp/**
+        - .codex/skills/miniprogram-automator-runtime/**
+    status: active_requirement_pointer
+    confidence: high
+
+  - id: F-WECHAT-RUNTIME-QA-SUCCESS-MODE-008
+    claim_summary: 'Stable WeChat runtime QA success mode uses dist/dev/mp-weixin projectPath, 9420/WebSocket/miniprogram-automator evidence, runtime miniProgram.evaluate(wx.request) for API checks, stable UI selectors for page evidence, and product/fixture vs tool/session blocker layering.'
+    source:
+      files:
+        - .codex/context-packs.yml
+        - docs/ai-rules/codex-ai-workflow.md
+        - docs/ai-rules/miniprogram-uniapp-platform.md
+        - .brv/context-tree/tooling/miniprogram_runtime_automator_usage.md
+        - .brv/context-tree/governance/dispatch_task_and_docs_rules.md
+    invalidated_by:
+      paths:
+        - .codex/context-packs.yml
+        - docs/ai-rules/codex-ai-workflow.md
+        - docs/ai-rules/miniprogram-uniapp-platform.md
+        - .codex/skills/dispatch-task/references/wechat-devtools-automation-policy.md
+        - .codex/skills/dispatch-task/references/qa-evidence-policy.md
+        - .codex/skills/dispatch-task/references/implementation-test-contract.md
+        - .codex/skills/miniprogram-automator-runtime/**
+        - .codex/skills/wechat-devtools/**
+        - docs/ai-rules/frontend-automation-id-policy.md
+        - .brv/context-tree/tooling/miniprogram_runtime_automator_usage.md
+        - .brv/context-tree/governance/dispatch_task_and_docs_rules.md
+    status: active_requirement_pointer
+    confidence: high
+
+superseded_observations:
+  - id: S-DIAG-OLD-ROUND-ONE-QUESTION
+    old_claim_summary: 'Previous diagnosis notes used regular route extension with one question per round and a fixed 4-question package while backend package state/persistence/ownership remains first-question anchored.'
+    superseded_by:
+      - F-DIAG-QUESTION-PACKAGE-005
+    reason: 'User update on 2026-06-06 says current diagnosis no longer has multi-round extension and the wording is no longer one question per round.'
+    status: superseded
+
+  - id: S-BRV-BACKEND-PACKAGE-MISSING-FUNCTIONS
+    old_claim_summary: 'A previous BRV observation implied the reviewed backend package lacked identify-http/storage-http/weather-http/plant catalog/user functions.'
+    superseded_by:
+      - F-PROJECT-CLOUDFUNCTIONS-002
+    reason: 'The current uploaded code package includes these CloudBase HTTP function directories and app.js files.'
+    status: superseded

@@ -1,12 +1,13 @@
 /**
- * 矿泉水瓶度量 —— 前端镜像（对应 cloudfunctions/layer/utils/water-volume-format.js）。
+ * 矿泉水瓶度量 -- 前端实现（后端 cloudfunctions/layer/utils/water-volume-format.js 已移除文案换算，
+ * 只保留剂量落档算法 classifyDoseByVolumeRatio / resolveMlToDoseClass）。
  *
  * 用途：
  *   1. 录入侧：把「瓶档选项」映射为绝对 ml（amountMl），提交给后端。
- *   2. 输出侧：把后端建议水量 ml 换算成「约 X 瓶」文案（后端已透出 amountBottleText，
- *      前端此处仅作兜底/一致性展示）。
+ *   2. 输出侧：把后端建议水量 amountRangeMl（ml 数组）换算成「约 X 瓶」文案。
+ *      后端不再产出 amountBottleText，文案全部由前端自算。
  *
- * 前后端换算口径必须一致：BOTTLE_ML=550，0.5 瓶粒度。
+ * 换算口径：BOTTLE_ML=550，0.5 瓶粒度。
  */
 
 export const BOTTLE_ML = 550
@@ -14,56 +15,112 @@ export const BOTTLE_ML = 550
 /** 5 升油桶（大水量计量单位）。 */
 export const BUCKET_ML = 5000
 
-/** 桶数换算容差：上限超出整桶的部分 < 此值时归到当前桶，避免 50069ml 被算成 11 桶。 */
-const BUCKET_ROUND_TOLERANCE_ML = BUCKET_ML * 0.1 // 500ml
-
 /**
- * 把 ml 换算成桶数（下限用 round，上限用带容差的 ceil）。
- * @param {number} ml
- * @param {'lower'|'upper'} side - lower=四舍五入；upper=超出整桶 10% 才进位
+ * 进入油桶计量的下限阈值：2500ml（约半桶）。
+ * ≥ 此值即用「约 N 桶（5L油桶）」展示，桶数统一 Math.round。
  */
-function mlToBucketCount(ml, side) {
-  if (side === 'upper') {
-    const ceil = Math.ceil(ml / BUCKET_ML)
-    const rounded = Math.round(ml / BUCKET_ML)
-    // 上限超出整桶的部分 < 容差（500ml）时归到当前桶，否则进位
-    return ml - rounded * BUCKET_ML > BUCKET_ROUND_TOLERANCE_ML
-      ? Math.max(1, ceil)
-      : Math.max(1, rounded)
-  }
-  return Math.max(1, Math.round(ml / BUCKET_ML))
-}
+const BUCKET_TEXT_MIN_ML = 2500
 
 /**
  * 录入侧「用户上次浇了多少」瓶档选项。
  * value 为该档的代表 ml（提交给后端 amountMl）。
+ * label 拆为 amount（量级行）和 unit（单位行），组件分行渲染。
+ * icon: 'bottle' | 'bucket' | null — 档位对应的参照物图标，组件渲染为「数量 × icon」。
+ * count: 图标重复次数（0.5 瓶渲染为半透明单图标）。
  * 注意：此为无盆体积时的固定兜底选项，有盆体积时用 resolveWateringDoseOptions 动态生成。
  */
 export const WATERING_BOTTLE_OPTIONS = [
-  { label: '不知道', value: null, amountMl: null },
-  { label: '喷一喷', value: 'spray', amountMl: 30 },
-  { label: '小半瓶', value: 'quarter', amountMl: 150 },
-  { label: '半瓶', value: 'half', amountMl: 275 },
-  { label: '一瓶', value: 'one', amountMl: 550 },
-  { label: '两瓶', value: 'two', amountMl: 1100 },
-  { label: '约5瓶', value: 'five', amountMl: 2600 }
+  {
+    label: '不知道',
+    amount: '不知道',
+    unit: '',
+    icon: null,
+    count: 0,
+    value: null,
+    amountMl: null
+  },
+  {
+    label: '约 0.5 × 矿泉水瓶',
+    amount: '约 0.5 ×',
+    unit: '矿泉水瓶',
+    icon: 'bottle',
+    count: 0.5,
+    value: 'quarter',
+    amountMl: 150
+  },
+  {
+    label: '约 1 × 矿泉水瓶',
+    amount: '约 1 ×',
+    unit: '矿泉水瓶',
+    icon: 'bottle',
+    count: 1,
+    value: 'half',
+    amountMl: 550
+  },
+  {
+    label: '约 2 × 矿泉水瓶',
+    amount: '约 2 ×',
+    unit: '矿泉水瓶',
+    icon: 'bottle',
+    count: 2,
+    value: 'one',
+    amountMl: 1100
+  },
+  {
+    label: '约 5 × 矿泉水瓶',
+    amount: '约 5 ×',
+    unit: '矿泉水瓶',
+    icon: 'bottle',
+    count: 5,
+    value: 'two',
+    amountMl: 2600
+  },
+  {
+    label: '约 1 × 5L油桶',
+    amount: '约 1 ×',
+    unit: '5L油桶',
+    icon: 'bucket',
+    count: 1,
+    value: 'five',
+    amountMl: 5000
+  }
 ]
 
 /** 落档体积百分比阈值（与后端 classifyDoseByVolumeRatio 一致）。 */
 const VOLUME_RATIO_THRESHOLDS = { MIST_MAX: 0.05, SMALL_MAX: 0.15, NORMAL_MAX: 0.4 }
 
 /**
+ * 单值 ml -> 录入侧档位 { amount, unit, icon, count }。
+ * ≥2500ml 用桶，<2500ml 用瓶。
+ * 瓶和桶统一 0.5 粒度（2500ml=0.5桶，5000ml=1桶，7500ml=1.5桶）。
+ * 文案格式：约 N × 单位（如「约 1 × 5L油桶」「约 2 × 矿泉水瓶」）。
+ * @param {number} ml
+ * @returns {{amount:string, unit:string, icon:string|null, count:number}}
+ */
+export function formatMlToDoseLabel(ml) {
+  const value = toFiniteNumber(ml)
+  if (value === null || value <= 0) {
+    return { amount: '不知道', unit: '', icon: null, count: 0 }
+  }
+  if (value >= BUCKET_TEXT_MIN_ML) {
+    const buckets = Math.max(0.5, Math.round((value / BUCKET_ML) * 2) / 2)
+    return { amount: `约 ${buckets} ×`, unit: '5L油桶', icon: 'bucket', count: buckets }
+  }
+  const bottles = Math.max(0.5, Math.round((value / BOTTLE_ML) * 2) / 2)
+  return { amount: `约 ${bottles} ×`, unit: '矿泉水瓶', icon: 'bottle', count: bottles }
+}
+
+/**
  * 按盆体积动态生成录入侧瓶档选项。
- * 大盆（如 100cm 直径）的"浇透"可能是几十升，固定 5 瓶上限不合理。
+ * 大盆（如 100cm 直径）的"浇透"可能是几十升，固定档位上限不合理。
  *
  * 档位按盆体积百分比生成（与 resolveMlToDoseClass 阈值一致）：
- *   - 喷一喷：≈3% 体积（mist 档代表值）
  *   - 少量：≈10% 体积（small 档代表值）
  *   - 常规：≈25% 体积（normal 档代表值）
  *   - 浇透：≈50% 体积（thorough 档代表值）
  *   - 大量：≈80% 体积（超浇透档代表值）
  *
- * 单位随档位 ml 自动切换：≤5000ml 用矿泉水瓶，>5000ml 用 5 升油桶。
+ * 每个档位独立判断单位：≥2500ml 用桶，<2500ml 用瓶，瓶桶可混排。
  * 无盆体积时退回固定 WATERING_BOTTLE_OPTIONS。
  *
  * @param {number} potVolumeMl - 盆体积 ml（≤0 或非法视为无体积）
@@ -75,59 +132,38 @@ export function resolveWateringDoseOptions(potVolumeMl) {
     return WATERING_BOTTLE_OPTIONS
   }
   // 各档代表 ml = 盆体积 × 百分比
-  const mistMl = Math.max(30, Math.round(v * 0.03))
   const smallMl = Math.round(v * 0.1)
   const normalMl = Math.round(v * 0.25)
   const thoroughMl = Math.round(v * 0.5)
   const heavyMl = Math.round(v * 0.8)
 
-  // 全档位统一单位：以最高档（heavyMl）为基准判断
-  // 最高档 ≥5000ml → 全用油桶；否则全用矿泉水瓶
-  const useBucket = heavyMl >= BUCKET_ML
-
-  // 油桶模式下保证桶数递增，避免多档重复"约1桶"
-  let bucketCounts = null
-  if (useBucket) {
-    const rawCounts = [smallMl, normalMl, thoroughMl, heavyMl].map(ml =>
-      Math.max(1, Math.round(ml / BUCKET_ML))
-    )
-    bucketCounts = []
-    for (let i = 0; i < rawCounts.length; i++) {
-      const prev = i > 0 ? bucketCounts[i - 1] : 0
-      bucketCounts.push(rawCounts[i] > prev ? rawCounts[i] : prev + 1)
+  const label0 = { amount: '不知道', unit: '', icon: null, count: 0 }
+  const s = formatMlToDoseLabel(smallMl)
+  const n = formatMlToDoseLabel(normalMl)
+  const t = formatMlToDoseLabel(thoroughMl)
+  const h = formatMlToDoseLabel(heavyMl)
+  const raw = [
+    { label: '不知道', ...label0, value: null, amountMl: null },
+    { label: `${s.amount} ${s.unit}`, ...s, value: 'quarter', amountMl: smallMl },
+    { label: `${n.amount} ${n.unit}`, ...n, value: 'half', amountMl: normalMl },
+    { label: `${t.amount} ${t.unit}`, ...t, value: 'one', amountMl: thoroughMl },
+    { label: `${h.amount} ${h.unit}`, ...h, value: 'two', amountMl: heavyMl }
+  ]
+  // 去重：相邻档位如果 label 相同（同 icon + 同 count），将后者的 count 递增 0.5 直至不同
+  for (let i = 1; i < raw.length; i++) {
+    const prev = raw[i - 1]
+    const cur = raw[i]
+    if (cur.icon && cur.icon === prev.icon && cur.count === prev.count) {
+      cur.count = prev.count + 0.5
+      cur.amount = `约 ${cur.count} ×`
+      cur.label = `${cur.amount} ${cur.unit}`
     }
   }
-
-  const labelFor = (ml, idx) => {
-    if (useBucket) {
-      return `约${bucketCounts[idx]}桶`
-    }
-    if (ml <= MIST_TEXT_MAX_ML) {
-      return '喷一喷'
-    }
-    const bottles = Math.round((ml / BOTTLE_ML) * 2) / 2
-    if (bottles <= 0.5) {
-      return '约半瓶'
-    }
-    return `约${bottles}瓶`
-  }
-
-  const options = [{ label: '不知道', value: null, amountMl: null }]
-  // 油桶模式（大盆）不展示"喷一喷"——3% 盆体积可能上千 ml，不是喷雾语义
-  if (!useBucket) {
-    options.push({ label: '喷一喷', value: 'spray', amountMl: mistMl })
-  }
-  options.push(
-    { label: labelFor(smallMl, 0), value: 'quarter', amountMl: smallMl },
-    { label: labelFor(normalMl, 1), value: 'half', amountMl: normalMl },
-    { label: labelFor(thoroughMl, 2), value: 'one', amountMl: thoroughMl },
-    { label: labelFor(heavyMl, 3), value: 'two', amountMl: heavyMl }
-  )
-  return options
+  return raw
 }
 
 /**
- * 判断动态瓶档是否使用油桶单位（供说明文案切换）。
+ * 判断动态瓶档是否包含油桶单位（供说明文案切换）。
  * @param {number} potVolumeMl
  * @returns {boolean}
  */
@@ -136,12 +172,25 @@ export function isDoseOptionsUsingBucket(potVolumeMl) {
   if (v === null || v <= 0) {
     return false
   }
-  return Math.round(v * 0.8) >= BUCKET_ML
+  // 任意一档 ≥2500ml 即含桶
+  return Math.round(v * 0.1) >= BUCKET_TEXT_MIN_ML
 }
 
-const MIST_TEXT_MAX_ML = 50
-/** ≥ 5000ml（5 升）改用油桶计量。 */
-const BUCKET_TEXT_MIN_ML = BUCKET_ML
+/** 区间最小跨度：上下限差 ≤ 此值时退回单值文案（约半瓶的量级）。 */
+const RANGE_MIN_SPAN_ML = BOTTLE_ML / 2 // 275ml
+
+/** ml -> L 文案，≥5000ml 转为 L 显示。 */
+function formatMlDisplay(ml) {
+  const value = toFiniteNumber(ml)
+  if (value === null || value <= 0) {
+    return '0ml'
+  }
+  if (value >= BUCKET_ML) {
+    const liters = (value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)
+    return `${liters}L`
+  }
+  return `${Math.round(value)}ml`
+}
 
 function toFiniteNumber(value) {
   const num = Number(value)
@@ -149,8 +198,8 @@ function toFiniteNumber(value) {
 }
 
 /**
- * ml → 用户可读文案。与后端 formatMlToBottleText 口径一致：
- * ≤50 喷一喷；50~5000 矿泉水瓶（0.5瓶粒度）；≥5000 用5升油桶「约N桶」四舍五入。
+ * ml -> 用户可读文案。格式：毫升数/L（N × 矿泉水瓶/5L油桶）。
+ * ≤0 无需浇水；<2500ml 用瓶（0.5 粒度）；≥2500ml 用桶（0.5 粒度），≥5000ml 转L显示。
  * @param {number} ml
  * @returns {string}
  */
@@ -159,26 +208,22 @@ export function formatMlToBottleText(ml) {
   if (value === null || value <= 0) {
     return '无需浇水'
   }
-  if (value <= MIST_TEXT_MAX_ML) {
-    return '喷一喷'
-  }
   if (value >= BUCKET_TEXT_MIN_ML) {
-    const buckets = Math.max(1, Math.round(value / BUCKET_ML))
-    return `约${buckets}桶（5升油桶）`
+    const buckets = Math.max(0.5, Math.round((value / BUCKET_ML) * 2) / 2)
+    return `${formatMlDisplay(value)}（${buckets} × 5L油桶）`
   }
-  const bottles = Math.round((value / BOTTLE_ML) * 2) / 2
-  if (bottles <= 0.5) {
-    return '约半瓶'
-  }
-  return `约${bottles}瓶`
+  const bottles = Math.max(0.5, Math.round((value / BOTTLE_ML) * 2) / 2)
+  return `${formatMlDisplay(value)}（${bottles} × 矿泉水瓶）`
 }
 
 /**
- * 水量区间 [min,max] → 瓶数文案。与后端 formatMlRangeToBottleText 一致。
- * - 下限 ≤ 50ml 或上下限差 ≤ 50ml → 取上限单值
- * - 都在油桶级（≥5000ml）→ 「约{min}~{max}桶」
- * - 都在瓶级（50~5000ml）→ 「约{min}~{max}瓶」
- * - 跨瓶/桶级 → 「约{min}ml~{max}ml」
+ * 水量区间 [min,max] -> 可读文案。
+ * 格式：毫升数~毫升数（N~M × 矿泉水瓶/5L油桶），≥5000ml 转 L。
+ * 单位切换阈值统一为 BUCKET_TEXT_MIN_ML(2500ml)：≥2500 用桶，<2500 用瓶。
+ * - [0,0] / 上限≤0 -> 暂停
+ * - 下限≤0 或 上下限差≤ RANGE_MIN_SPAN_ML -> 取上限单值
+ * - 上限 ≥ 2500 -> 桶模式（含跨瓶/桶级，统一用桶）
+ * - 上限 < 2500 -> 瓶模式
  * @param {number[]} rangeMl
  * @returns {string}
  */
@@ -191,30 +236,24 @@ export function formatMlRangeToBottleText(rangeMl) {
   if (upper === null || upper <= 0) {
     return '暂停浇水'
   }
-  if (lower !== null && lower > MIST_TEXT_MAX_ML && upper - lower > MIST_TEXT_MAX_ML) {
-    if (lower >= BUCKET_TEXT_MIN_ML) {
-      const loBuckets = mlToBucketCount(lower, 'lower')
-      const hiBuckets = Math.max(loBuckets, mlToBucketCount(upper, 'upper'))
+  // 区间跨度足够大且下限有效时，输出区间文案
+  if (lower !== null && lower > 0 && upper - lower > RANGE_MIN_SPAN_ML) {
+    // 上限 ≥ 2500 -> 桶模式（含跨瓶/桶级，统一用桶）
+    if (upper >= BUCKET_TEXT_MIN_ML) {
+      const loBuckets = Math.max(0.5, Math.round((lower / BUCKET_ML) * 2) / 2)
+      const hiBuckets = Math.max(loBuckets, Math.round((upper / BUCKET_ML) * 2) / 2)
       if (loBuckets === hiBuckets) {
-        return `约${hiBuckets}桶（5升油桶）`
-      }
-      return `约${loBuckets}~${hiBuckets}桶（5升油桶）`
-    }
-    if (upper < BUCKET_TEXT_MIN_ML) {
-      const loBottles = Math.max(0.5, Math.round((lower / BOTTLE_ML) * 2) / 2)
-      const hiBottles = Math.max(loBottles, Math.round((upper / BOTTLE_ML) * 2) / 2)
-      if (loBottles === hiBottles) {
         return formatMlToBottleText(upper)
       }
-      return `约${loBottles}~${hiBottles}瓶`
+      return `${formatMlDisplay(lower)}~${formatMlDisplay(upper)}（${loBuckets}~${hiBuckets} × 5L油桶）`
     }
-    // 跨瓶/桶级（下限<5000，上限≥5000）→ 按上限统一换算油桶，不输出原始 ml
-    const loBuckets = mlToBucketCount(lower, 'lower')
-    const hiBuckets = Math.max(loBuckets, mlToBucketCount(upper, 'upper'))
-    if (loBuckets === hiBuckets) {
-      return `约${hiBuckets}桶（5升油桶）`
+    // 上限 < 2500 -> 瓶模式
+    const loBottles = Math.max(0.5, Math.round((lower / BOTTLE_ML) * 2) / 2)
+    const hiBottles = Math.max(loBottles, Math.round((upper / BOTTLE_ML) * 2) / 2)
+    if (loBottles === hiBottles) {
+      return formatMlToBottleText(upper)
     }
-    return `约${loBuckets}~${hiBuckets}桶（5升油桶）`
+    return `${formatMlDisplay(lower)}~${formatMlDisplay(upper)}（${loBottles}~${hiBottles} × 矿泉水瓶）`
   }
   return formatMlToBottleText(upper)
 }

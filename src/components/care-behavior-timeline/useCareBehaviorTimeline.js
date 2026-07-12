@@ -134,7 +134,6 @@ export function useCareBehaviorTimeline(props, emit) {
         isSelected: Boolean(
           state.selectedWatering &&
           item.isSelectable &&
-          !item.isToday &&
           !item.isHistoricalOutOfRange &&
           !item.isFuture
         ),
@@ -155,21 +154,27 @@ export function useCareBehaviorTimeline(props, emit) {
   )
 
   const selectedDateState = computed(() => {
-    if (!popoverDate.value) {return null}
+    if (!popoverDate.value) {
+      return null
+    }
     return dateStates.value[popoverDate.value] || null
   })
   const selectedDateLabel = computed(() =>
     selectedDateState.value ? formatDateLabel(selectedDateState.value.date) : ''
   )
   const selectedDateTemperatureText = computed(() => {
-    if (!selectedDateState.value) {return ''}
+    if (!selectedDateState.value) {
+      return ''
+    }
     return (
       selectedDateState.value.temperatureDisplayText ||
       formatCellMetricText(selectedDateState.value.temperatureText || '', '°')
     )
   })
   const selectedDateHumidityText = computed(() => {
-    if (!selectedDateState.value) {return ''}
+    if (!selectedDateState.value) {
+      return ''
+    }
     return (
       selectedDateState.value.humidityDisplayText ||
       formatCellMetricText(selectedDateState.value.humidityText || '', '%')
@@ -182,16 +187,26 @@ export function useCareBehaviorTimeline(props, emit) {
     formatDialogHumidityText(selectedDateHumidityText.value)
   )
   const selectedDateBehaviorText = computed(() => {
-    if (!selectedDateState.value) {return ''}
+    if (!selectedDateState.value) {
+      return ''
+    }
     const items = []
-    if (selectedDateState.value.recordedWatering) {items.push('浇水')}
-    if (selectedDateState.value.recordedFertilizing) {items.push('施肥')}
-    if (selectedDateState.value.recordedLightChange) {items.push('强光/位置变化')}
+    if (selectedDateState.value.recordedWatering) {
+      items.push('浇水')
+    }
+    if (selectedDateState.value.recordedFertilizing) {
+      items.push('施肥')
+    }
+    if (selectedDateState.value.recordedLightChange) {
+      items.push('强光/位置变化')
+    }
     return items.length ? items.join(' / ') : '未记录'
   })
   const selectedDateHasBehavior = computed(() => {
     const state = selectedDateState.value
-    return Boolean(state?.recordedWatering || state?.recordedFertilizing || state?.recordedLightChange)
+    return Boolean(
+      state?.recordedWatering || state?.recordedFertilizing || state?.recordedLightChange
+    )
   })
   const selectedDateBehaviorStatusText = computed(() =>
     selectedDateHasBehavior.value ? `${selectedDateBehaviorText.value} 00:00` : '未记录'
@@ -275,17 +290,24 @@ export function useCareBehaviorTimeline(props, emit) {
 
   function resolveDefaultSelectedDate() {
     const todayItem = displayWindow.value.find(item => item.isToday)
-    if (todayItem?.date) {return todayItem.date}
-    const selectableDates = displayWindow.value.filter(item => item.isSelectable).map(item => item.date)
-    const activeSelectableDate = selectableDates.slice().reverse().find(date => {
-      const state = dateStates.value[date]
-      return Boolean(
-        state?.selectedWatering ||
-        state?.recordedWatering ||
-        state?.recordedFertilizing ||
-        state?.recordedLightChange
-      )
-    })
+    if (todayItem?.date) {
+      return todayItem.date
+    }
+    const selectableDates = displayWindow.value
+      .filter(item => item.isSelectable)
+      .map(item => item.date)
+    const activeSelectableDate = selectableDates
+      .slice()
+      .reverse()
+      .find(date => {
+        const state = dateStates.value[date]
+        return Boolean(
+          state?.selectedWatering ||
+          state?.recordedWatering ||
+          state?.recordedFertilizing ||
+          state?.recordedLightChange
+        )
+      })
     return activeSelectableDate || selectableDates[selectableDates.length - 1] || ''
   }
 
@@ -308,29 +330,42 @@ export function useCareBehaviorTimeline(props, emit) {
     const nextDateStates = buildDateStates()
     dateStates.value = nextDateStates
     selectedDate.value = resolveSelectedDateAfterRebuild(nextDateStates)
-    if (popoverDate.value && !nextDateStates[popoverDate.value]) {popoverDate.value = ''}
+    if (popoverDate.value && !nextDateStates[popoverDate.value]) {
+      popoverDate.value = ''
+    }
   }
 
   function syncBucketSelection(nextStates = {}) {
-    const hasFertilizing = Object.values(nextStates).some(item => Boolean(item?.recordedFertilizing))
+    const hasFertilizing = Object.values(nextStates).some(item =>
+      Boolean(item?.recordedFertilizing)
+    )
     bucketSelection.value = hasFertilizing ? 'within_10d' : baseBucketSelection.value || 'unknown'
   }
 
   function toggleCareAction(date, action) {
     const state = dateStates.value[date]
-    if (!state || !state.isSelectable || state.isToday || state.isFuture || state.isHistoricalOutOfRange) {
+    if (!state || !state.isSelectable || state.isFuture || state.isHistoricalOutOfRange) {
       return
     }
-    if (action !== 'watering') {return}
+    if (action !== 'watering') {
+      return
+    }
     const next = { ...state, selectedWatering: !state.selectedWatering }
     const nextStates = { ...dateStates.value, [date]: next }
     dateStates.value = nextStates
-    if (!selectedDate.value || selectedDate.value === date) {selectedDate.value = date}
+    if (!selectedDate.value || selectedDate.value === date) {
+      selectedDate.value = date
+    }
     syncBucketSelection(nextStates)
   }
 
   function selectDate(item = {}) {
-    if (!item?.date || item.canOpenDetail === false || item.isFuture || item.isHistoricalOutOfRange) {
+    if (
+      !item?.date ||
+      item.canOpenDetail === false ||
+      item.isFuture ||
+      item.isHistoricalOutOfRange
+    ) {
       return
     }
     if (item.date === suppressSelectDateAfterLongPress.value) {
@@ -338,21 +373,29 @@ export function useCareBehaviorTimeline(props, emit) {
       return
     }
     selectedDate.value = item.date
-    if (item.isSelectable && !item.isToday) {toggleCareAction(item.date, 'watering')}
+    if (item.isSelectable) {
+      toggleCareAction(item.date, 'watering')
+    }
   }
 
   function clearLongPressTimer() {
-    if (longPressTimer.value) {clearTimeout(longPressTimer.value)}
+    if (longPressTimer.value) {
+      clearTimeout(longPressTimer.value)
+    }
     longPressTimer.value = null
   }
 
   function clearPopoverAutoHideTimer() {
-    if (popoverAutoHideTimer.value) {clearTimeout(popoverAutoHideTimer.value)}
+    if (popoverAutoHideTimer.value) {
+      clearTimeout(popoverAutoHideTimer.value)
+    }
     popoverAutoHideTimer.value = null
   }
 
   function clearLongPressSuppressTimer() {
-    if (longPressSuppressTimer.value) {clearTimeout(longPressSuppressTimer.value)}
+    if (longPressSuppressTimer.value) {
+      clearTimeout(longPressSuppressTimer.value)
+    }
     longPressSuppressTimer.value = null
   }
 
@@ -377,9 +420,13 @@ export function useCareBehaviorTimeline(props, emit) {
   }
 
   function openDatePopoverByDate(date = '') {
-    if (!date || !dateStates.value[date]?.canOpenDetail) {return}
+    if (!date || !dateStates.value[date]?.canOpenDetail) {
+      return
+    }
     const now = Date.now()
-    if (popoverDate.value === date && now - popoverOpenedAt.value < POPOVER_REOPEN_SUPPRESS_MS) {return}
+    if (popoverDate.value === date && now - popoverOpenedAt.value < POPOVER_REOPEN_SUPPRESS_MS) {
+      return
+    }
     popoverDate.value = date
     popoverOpenedAt.value = now
     longPressTriggeredDate.value = date
@@ -392,7 +439,9 @@ export function useCareBehaviorTimeline(props, emit) {
     const canOpen = Boolean(
       item?.date && item.canOpenDetail && !item.isFuture && !item.isHistoricalOutOfRange
     )
-    if (!canOpen) {return}
+    if (!canOpen) {
+      return
+    }
     clearLongPressTimer()
     longPressTimer.value = setTimeout(() => {
       openDatePopoverByDate(item.date)
@@ -401,7 +450,9 @@ export function useCareBehaviorTimeline(props, emit) {
 
   function handleDatePressEnd() {
     clearLongPressTimer()
-    if (longPressTriggeredDate.value) {scheduleLongPressSelectSuppressionClear()}
+    if (longPressTriggeredDate.value) {
+      scheduleLongPressSelectSuppressionClear()
+    }
   }
 
   function initializeSkeletonVisibility() {
@@ -416,9 +467,12 @@ export function useCareBehaviorTimeline(props, emit) {
     immediate: true
   })
   // 盆体积变化导致档位变化时，清除旧的剂量选中态（旧 ml 不匹配新档位）
-  watch(() => props.potVolumeMl, () => {
-    wateringDoseByDate.value = {}
-  })
+  watch(
+    () => props.potVolumeMl,
+    () => {
+      wateringDoseByDate.value = {}
+    }
+  )
   onMounted(initializeSkeletonVisibility)
   onMounted(initializeTimelineFromProps)
   onUnmounted(() => {

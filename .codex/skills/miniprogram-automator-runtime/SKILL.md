@@ -1,6 +1,6 @@
 ---
 name: miniprogram-automator-runtime
-description: "微信小程序端上自动化默认通道：使用 miniprogram-automator / 9420 获取 page_stack、page_data、真实交互和小程序运行时 wx.request 证据。"
+description: '微信小程序端上自动化默认通道：使用 miniprogram-automator / 9420 获取 page_stack、page_data、真实交互和小程序运行时 wx.request 证据。'
 ---
 
 # Mini Program Automator Runtime
@@ -75,9 +75,15 @@ ls -la /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin/project.config.js
 ```js
 const WebSocket = require('ws')
 const ws = new WebSocket('ws://127.0.0.1:9420')
-ws.on('open', () => { console.log('WS_OPEN'); ws.close() })
+ws.on('open', () => {
+  console.log('WS_OPEN')
+  ws.close()
+})
 ws.on('close', code => console.log('WS_CLOSE:' + code))
-ws.on('error', err => { console.error(err.message); process.exit(1) })
+ws.on('error', err => {
+  console.error(err.message)
+  process.exit(1)
+})
 ```
 
 `WS_OPEN` 只证明 automator transport 可达；通过验收还必须继续执行 page / selector / `wx.request` 断言。
@@ -111,9 +117,18 @@ const automator = require('miniprogram-automator')
 
 当发现 `3010/__local_functions__/health` 返回包含目标函数，但对应函数 health route 502 或提示 `connect ECONNREFUSED 127.0.0.1:900x` 时，必须归因为 stale local gateway / worker 缺失。此时不得绕过完整 LAN flow 用 scoped gateway 直接验收；应先修复并重新跑通 `npm run dev:mp-weixin:local-functions:lan`。
 
-## 8. 诊断流定位
+## 8. 元素定位
 
-诊断流自动化必须先读取 `docs/ai-rules/frontend-automation-id-policy.md` 第三点“诊断流 id 映射”，并优先使用稳定 id，例如：
+如要精确定位需要模拟交互的元素先读取 `docs/ai-rules/frontend-automation-id-policy.md` 第三点“元素 id 映射（按页面 / 模块 / 功能）”，并按任务页签只读取对应子表，例如：
+
+- 入口/跳转验证：`3.1 首页（index）`、`3.2 植物详情`
+- 弹窗交互：`3.3 诊断弹窗（DiagnosePopup.vue）`
+- AI 前置确认：`3.4 AIStreamDialog（诊断前确认）`
+- 问诊补图/问答：`3.3 诊断弹窗（DiagnosePopup.vue）` 下 `C. 追问流程`
+- 历史与结果页：`3.7 独立问诊页` / `3.8 历史结果页`
+- 个人中心：`3.9 个人中心`
+
+优先使用稳定 id，例如：
 
 ```text
 diagnose-entry-button-{plant.id}
@@ -157,7 +172,7 @@ Mini Program Automator Runtime Result
 - classification:
 - next_action:
 ```
+
 ## 11. 本地 LAN smoke 证据规则
 
 当验收使用本地 HTTP smoke 或 LAN direct HTTP 时，必须读取 `references/local-smoke-test-and-lan-direct-connection-policy.md`。缺少环境/终端头导致的会话未持久化，不得误判为产品 blocker。
-

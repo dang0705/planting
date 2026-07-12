@@ -1,0 +1,104 @@
+{
+  "completedAt": 1783574417761,
+  "id": "drm-1783574355829",
+  "operations": [
+    {
+      "action": "CROSS_REFERENCE",
+      "inputFiles": [
+        "architecture/diagnosis/diagnosis_logic_refinement.md",
+        "architecture/diagnosis/source_verified_diagnosis_facts.md"
+      ],
+      "needsReview": true,
+      "previousTexts": {
+        "architecture/diagnosis/diagnosis_logic_refinement.md": "---\ntitle: Diagnosis Logic Refinement\nsummary: Refined diagnosis logic with weather integration factors and hydration modeling updates\ntags: []\nrelated: []\nkeywords: []\ncreatedAt: '2026-07-09T05:04:06.967Z'\nupdatedAt: '2026-07-09T05:04:06.967Z'\n---\n## Reason\nCurate diagnosis logic and weather integration facts from RLM context\n\n## Raw Concept\n**Task:**\nRefine diagnosis logic and hydration modeling\n\n**Changes:**\n- Updated weather correction factors for humidity\n- Refined plant type water demand coefficients\n- Established oversized pot thresholds and WET gate logic\n\n**Flow:**\nWeather Data -> Correction Factors -> Hydration Model -> Diagnosis Result\n\n**Timestamp:** 2026-07-09\n\n## Narrative\n### Structure\nLogic resides in hydration modeling and diagnosis main chain components.\n\n### Highlights\nHumidity factor 0.8 for single factor, 0.5 for multiple. Dry-loving plants at 0.6, high-water at 1.25.\n\n### Rules\nRule 1: WET gate triggers if rootZoneMoistureIndex > 0.6 and wetPressureLoad > 0.4\nRule 2: Oversized pot threshold at 50,000ml\n\n## Facts\n- **Routing**: The implementation uses a dual entry model separating existing plants (/watering-planner) from catalog searches (/watering-advisor).\n- **Algorithm Path**: The watering advisor forces the 'DRY gate' branch of the algorithm because no historical watering events are provided.\n- **Data Retrieval**: Weather data is integrated via the getEnvironmentWeatherWindow function and summarized by buildWeatherSummary.\n- **Storage**: Ad-hoc sessions are stored in a new watering_advisor_sessions table to avoid constraints associated with plantId.\n- **Exclusions**: Facing and orientation factors are currently excluded from the diagnosis logic due to a lack of regression coefficients.\n- **API Logic**: The computeAdhocPlanner function normalizes the timeline with zero events and calculates nextWaterDate and amountRangeMl.\n- **Constants**: Default weather bounds are set at 35-75 for humidity and 12-30 for temperature.\n- **Data Source**: The system uses getPlantCatalogById to retrieve genus-level watering strategies without requiring an openid.\n- **Reasoning**: The nextWaterReason is overridden in no-history scenarios to suggest checking soil immediately.\n- **Code Structure**: The buildWeatherSummary service was moved to watering-planner-service.js to facilitate sharing between different entry points.\n",
+        "architecture/diagnosis/source_verified_diagnosis_facts.md": "---\ntitle: Source Verified Diagnosis Facts\nsummary: 当前诊断事实按 route + mode question package 维护；既有动态问诊 / 每轮一题 / 动态下一题 helper 不作为 active fact。\nupdatedAt: '2026-06-07'\nrelated: [architecture/diagnosis/question_package_answer_submission/question_package_answer_submission.md, architecture/diagnosis/leaf_yellowing_diagnosis_logic.md, architecture/backend/source_verified_backend_facts/source_verified_backend_facts.md]\n---\n\n## Facts\n\n- id: diagnosis_route_package_mode\n  type: fact\n  source_kind: code\n  statement: 当前诊断主链是 route 模式，问诊按 mode question package 工作；固定题包由 getQuestionPackageByMode(mode) 进入，前端一次性拿完整题包并本地推进。\n  source:\n    file: docs/code-logics/03_诊断运行时主链路_逐步执行逻辑.md\n    lines: 5-17\n  confidence: high\n  status: verified\n\n- id: diagnosis_dynamic_extension_not_active\n  type: fact\n  source_kind: code\n  statement: 当前主链不再采用动态追加问题模型；历史推进命名仅作为实现细节或待清理对象理解。\n  source:\n    file: docs/code-logics/03_诊断运行时主链路_逐步执行逻辑.md\n    lines: 40-50,73-93\n  confidence: high\n  status: verified\n\n- id: diagnosis_yellow_leaf_four_question_package\n  type: fact\n  source_kind: code\n  statement: 黄叶模式必须返回 4 个问答项，采用 package 展示和 package 提交；有效 yellow_leaf package 的 4 个问题按同一当前轮次持久化并参与 answer ownership，`questionPackage.questionCount` 决定题包上限，非题包路径不得反向约束固定题包。\n  source:\n    - file: cloudfunctions/diagnose-http/domain/runtime-artifacts.js\n      lines: 56-74,109-177\n    - file: cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js\n      lines: 79-87\n    - file: cloudfunctions/diagnose-http/services/session-question-service.js\n      lines: 344-365\n  confidence: high\n  status: verified\n\n- id: diagnosis_stop_output_package_basis\n  type: fact\n  source_kind: code\n  statement: 停止与输出资格按题包提交、answers 被后端接受、route 最终公开响应和 stop/output condition 表达，不按既有动态问诊、既有主动问题队列或每轮一题表达。\n  source:\n    file: docs/code-logics/03_诊断运行时主链路_逐步执行逻辑.md\n    lines: 95-121\n  confidence: high\n  status: verified\n\n- id: diagnosis_yellowing_package_visible_outcome_contract\n  type: fact\n  source_kind: code\n  statement: 黄叶题包整包提交时，`CareBehaviorTimeline.vue` 的虚拟答案 `care_behavior_timeline` 必须作为合法 package option 被接受，并在 route 运行前按环境养护上下文转成浇水 route option；过浇行为、施浓肥/近期换盆、直晒/光照突然增强三个强阳性样本必须分别输出 `overwatering_root_pressure`、`fertilizer_repot_stress`、`sunburn`，不得落入 uncertain。\n  source:\n    - file: cloudfunctions/diagnose-http/app/package-answer-ownership-runtime.js\n      lines: 54-115\n    - file: cloudfunctions/diagnose-http/app/diagnosis-answer-runner.js\n      lines: 347-382\n    - file: src/vue-query/diagnose/mutations/shared.js\n      lines: 211-273\n    - file: test/unit-test/test-yellowing-package-outcome-contract.mjs\n      lines: 172-258\n  verified: 2026-06-07\n  owner: architecture\n  confidence: high\n  status: verified\n\n- id: diagnosis_answer_slim_frontend_response_contract\n  type: fact\n  source_kind: code\n  statement: `/diagnosis/answer` 终态响应使用 `buildFrontendAnswerResponse`，只返回结果页必要字段；有 `visibleOutcomes` 时，前端建议从 outcome 的 `actionAdviceItems` / `avoidAdviceItems` 展示，响应不再返回顶层 trace、output eligibility、route decision cause、summaryCard、actionAdvice、nextSteps、whatToAvoid、treatmentText、preventionText 等非必要大字段。\n  source:\n    - file: cloudfunctions/diagnose-http/handlers/diagnosis-handlers.js\n      lines: 118-150\n    - file: cloudfunctions/diagnose-http/app/frontend-response.js\n      lines: 491-564\n    - file: test/unit-test/test-route-planning.mjs\n      lines: 2014-2048\n  verified: 2026-06-07\n  owner: architecture\n  confidence: high\n  status: verified\n\n- id: diagnosis_answer_500ms_hot_path_evidence\n  type: fact\n  source_kind: code\n  statement: 本地 diagnose-http 热路径与 WeChat mini-program runtime `wx.request` 验证显示，黄叶题包 `/diagnosis/answer` 的施浓肥与直晒场景稳定低于 500ms；端上第二轮 10 笔最大 339ms、平均 288.8ms，响应体约 1147-1251 字符。刚重载后的第一笔本地/DevTools 冷启动仍可高于 500ms，不作为热路径达标证据。\n  source:\n    - file: cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js\n      lines: 24-35,327-337\n    - file: cloudfunctions/diagnose-http/repositories/outcome-route-repository.js\n      lines: 67-82,667-681,793-805,916-935,964-972\n    - file: cloudfunctions/diagnose-http/app/diagnosis-answer-runner.js\n      lines: 423-451\n  verified: 2026-06-07\n  owner: architecture\n  confidence: high\n  status: verified\n\n## Deprecated\n\n- Historical score/ordering-based questioning authority is not current.\n- Historical round-extension question flow is not current.\n- Legacy snapshot-based completion control is not current package stop logic.\n"
+      },
+      "reason": "diagnosis_logic_refinement contains refined hydration and weather coefficients that complement the verified architectural facts in source_verified_diagnosis_facts.md.",
+      "type": "CONSOLIDATE"
+    },
+    {
+      "action": "CROSS_REFERENCE",
+      "inputFiles": [
+        "architecture/diagnosis/diagnosis_logic_refinement.md",
+        "architecture/diagnosis/leaf_yellowing_diagnosis_logic.md"
+      ],
+      "needsReview": true,
+      "previousTexts": {
+        "architecture/diagnosis/diagnosis_logic_refinement.md": "---\ntitle: Diagnosis Logic Refinement\nsummary: Refined diagnosis logic with weather integration factors and hydration modeling updates\ntags: []\nrelated: []\nkeywords: []\ncreatedAt: '2026-07-09T05:04:06.967Z'\nupdatedAt: '2026-07-09T05:04:06.967Z'\n---\n## Reason\nCurate diagnosis logic and weather integration facts from RLM context\n\n## Raw Concept\n**Task:**\nRefine diagnosis logic and hydration modeling\n\n**Changes:**\n- Updated weather correction factors for humidity\n- Refined plant type water demand coefficients\n- Established oversized pot thresholds and WET gate logic\n\n**Flow:**\nWeather Data -> Correction Factors -> Hydration Model -> Diagnosis Result\n\n**Timestamp:** 2026-07-09\n\n## Narrative\n### Structure\nLogic resides in hydration modeling and diagnosis main chain components.\n\n### Highlights\nHumidity factor 0.8 for single factor, 0.5 for multiple. Dry-loving plants at 0.6, high-water at 1.25.\n\n### Rules\nRule 1: WET gate triggers if rootZoneMoistureIndex > 0.6 and wetPressureLoad > 0.4\nRule 2: Oversized pot threshold at 50,000ml\n\n## Facts\n- **Routing**: The implementation uses a dual entry model separating existing plants (/watering-planner) from catalog searches (/watering-advisor).\n- **Algorithm Path**: The watering advisor forces the 'DRY gate' branch of the algorithm because no historical watering events are provided.\n- **Data Retrieval**: Weather data is integrated via the getEnvironmentWeatherWindow function and summarized by buildWeatherSummary.\n- **Storage**: Ad-hoc sessions are stored in a new watering_advisor_sessions table to avoid constraints associated with plantId.\n- **Exclusions**: Facing and orientation factors are currently excluded from the diagnosis logic due to a lack of regression coefficients.\n- **API Logic**: The computeAdhocPlanner function normalizes the timeline with zero events and calculates nextWaterDate and amountRangeMl.\n- **Constants**: Default weather bounds are set at 35-75 for humidity and 12-30 for temperature.\n- **Data Source**: The system uses getPlantCatalogById to retrieve genus-level watering strategies without requiring an openid.\n- **Reasoning**: The nextWaterReason is overridden in no-history scenarios to suggest checking soil immediately.\n- **Code Structure**: The buildWeatherSummary service was moved to watering-planner-service.js to facilitate sharing between different entry points.\n",
+        "architecture/diagnosis/leaf_yellowing_diagnosis_logic.md": "---\ntitle: Leaf Yellowing Diagnosis Logic\nsummary: 黄叶诊断链路在题包模型下的核心收敛逻辑与输出边界。\ngeneratedAt: '2026-06-08'\n---\n\n## 逻辑归口\n\n- 黄叶主链路采用静态题包模型，前端按固定题序收集答案，提交后一次性触发 `answer_submit`。\n- 后端按 route mode 与题包元数据判定终态，不再按轮次动态继续追问。\n\n## 关键实现文件\n\n- `cloudfunctions/diagnose-http/domain/runtime-artifacts.js`：四题链路元信息与题包进度约束；\n- `cloudfunctions/diagnose-http/app/package-answer-ownership-runtime.js`：题包快照与提交归属校验；\n- `cloudfunctions/diagnose-http/app/diagnosis-answer-runner.js`：`questionPackage` 上下文下的终态输出路由。\n\n## 输出边界\n\n- 对外输出集中到 `visibleOutcomes` 与 route 最终决策结果；\n- 在黄叶场景，强信号问题（例如过浇/肥力/光照异常）映射到固定问题路由，不再依赖下一题/评分回路迭代。\n\n## 关联入口\n\n- [architecture/diagnosis/yellowing_diagnosis_lifecycle.md](architecture/diagnosis/yellowing_diagnosis_lifecycle.md)\n- [architecture/diagnosis/question_package_answer_submission/question_package_answer_submission.md](architecture/diagnosis/question_package_answer_submission/question_package_answer_submission.md)\n- [architecture/diagnosis/source_verified_diagnosis_facts.md](architecture/diagnosis/source_verified_diagnosis_facts.md)\n"
+      },
+      "reason": "The refined logic in diagnosis_logic_refinement (weather/hydration) is executed within the terminal questioning state described in leaf_yellowing_diagnosis_logic.",
+      "type": "CONSOLIDATE"
+    },
+    {
+      "action": "TEMPORAL_UPDATE",
+      "inputFiles": [
+        "architecture/diagnosis/source_verified_diagnosis_facts.md"
+      ],
+      "needsReview": false,
+      "previousTexts": {
+        "architecture/diagnosis/source_verified_diagnosis_facts.md": "---\ntitle: Source Verified Diagnosis Facts\nsummary: 当前诊断事实按 route + mode question package 维护；既有动态问诊 / 每轮一题 / 动态下一题 helper 不作为 active fact。\nupdatedAt: '2026-06-07'\nrelated: [architecture/diagnosis/question_package_answer_submission/question_package_answer_submission.md, architecture/diagnosis/leaf_yellowing_diagnosis_logic.md, architecture/backend/source_verified_backend_facts/source_verified_backend_facts.md]\n---\n\n## Facts\n\n- id: diagnosis_route_package_mode\n  type: fact\n  source_kind: code\n  statement: 当前诊断主链是 route 模式，问诊按 mode question package 工作；固定题包由 getQuestionPackageByMode(mode) 进入，前端一次性拿完整题包并本地推进。\n  source:\n    file: docs/code-logics/03_诊断运行时主链路_逐步执行逻辑.md\n    lines: 5-17\n  confidence: high\n  status: verified\n\n- id: diagnosis_dynamic_extension_not_active\n  type: fact\n  source_kind: code\n  statement: 当前主链不再采用动态追加问题模型；历史推进命名仅作为实现细节或待清理对象理解。\n  source:\n    file: docs/code-logics/03_诊断运行时主链路_逐步执行逻辑.md\n    lines: 40-50,73-93\n  confidence: high\n  status: verified\n\n- id: diagnosis_yellow_leaf_four_question_package\n  type: fact\n  source_kind: code\n  statement: 黄叶模式必须返回 4 个问答项，采用 package 展示和 package 提交；有效 yellow_leaf package 的 4 个问题按同一当前轮次持久化并参与 answer ownership，`questionPackage.questionCount` 决定题包上限，非题包路径不得反向约束固定题包。\n  source:\n    - file: cloudfunctions/diagnose-http/domain/runtime-artifacts.js\n      lines: 56-74,109-177\n    - file: cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js\n      lines: 79-87\n    - file: cloudfunctions/diagnose-http/services/session-question-service.js\n      lines: 344-365\n  confidence: high\n  status: verified\n\n- id: diagnosis_stop_output_package_basis\n  type: fact\n  source_kind: code\n  statement: 停止与输出资格按题包提交、answers 被后端接受、route 最终公开响应和 stop/output condition 表达，不按既有动态问诊、既有主动问题队列或每轮一题表达。\n  source:\n    file: docs/code-logics/03_诊断运行时主链路_逐步执行逻辑.md\n    lines: 95-121\n  confidence: high\n  status: verified\n\n- id: diagnosis_yellowing_package_visible_outcome_contract\n  type: fact\n  source_kind: code\n  statement: 黄叶题包整包提交时，`CareBehaviorTimeline.vue` 的虚拟答案 `care_behavior_timeline` 必须作为合法 package option 被接受，并在 route 运行前按环境养护上下文转成浇水 route option；过浇行为、施浓肥/近期换盆、直晒/光照突然增强三个强阳性样本必须分别输出 `overwatering_root_pressure`、`fertilizer_repot_stress`、`sunburn`，不得落入 uncertain。\n  source:\n    - file: cloudfunctions/diagnose-http/app/package-answer-ownership-runtime.js\n      lines: 54-115\n    - file: cloudfunctions/diagnose-http/app/diagnosis-answer-runner.js\n      lines: 347-382\n    - file: src/vue-query/diagnose/mutations/shared.js\n      lines: 211-273\n    - file: test/unit-test/test-yellowing-package-outcome-contract.mjs\n      lines: 172-258\n  verified: 2026-06-07\n  owner: architecture\n  confidence: high\n  status: verified\n\n- id: diagnosis_answer_slim_frontend_response_contract\n  type: fact\n  source_kind: code\n  statement: `/diagnosis/answer` 终态响应使用 `buildFrontendAnswerResponse`，只返回结果页必要字段；有 `visibleOutcomes` 时，前端建议从 outcome 的 `actionAdviceItems` / `avoidAdviceItems` 展示，响应不再返回顶层 trace、output eligibility、route decision cause、summaryCard、actionAdvice、nextSteps、whatToAvoid、treatmentText、preventionText 等非必要大字段。\n  source:\n    - file: cloudfunctions/diagnose-http/handlers/diagnosis-handlers.js\n      lines: 118-150\n    - file: cloudfunctions/diagnose-http/app/frontend-response.js\n      lines: 491-564\n    - file: test/unit-test/test-route-planning.mjs\n      lines: 2014-2048\n  verified: 2026-06-07\n  owner: architecture\n  confidence: high\n  status: verified\n\n- id: diagnosis_answer_500ms_hot_path_evidence\n  type: fact\n  source_kind: code\n  statement: 本地 diagnose-http 热路径与 WeChat mini-program runtime `wx.request` 验证显示，黄叶题包 `/diagnosis/answer` 的施浓肥与直晒场景稳定低于 500ms；端上第二轮 10 笔最大 339ms、平均 288.8ms，响应体约 1147-1251 字符。刚重载后的第一笔本地/DevTools 冷启动仍可高于 500ms，不作为热路径达标证据。\n  source:\n    - file: cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js\n      lines: 24-35,327-337\n    - file: cloudfunctions/diagnose-http/repositories/outcome-route-repository.js\n      lines: 67-82,667-681,793-805,916-935,964-972\n    - file: cloudfunctions/diagnose-http/app/diagnosis-answer-runner.js\n      lines: 423-451\n  verified: 2026-06-07\n  owner: architecture\n  confidence: high\n  status: verified\n\n## Deprecated\n\n- Historical score/ordering-based questioning authority is not current.\n- Historical round-extension question flow is not current.\n- Legacy snapshot-based completion control is not current package stop logic.\n"
+      },
+      "reason": "Integrate new verified constants (humidity 0.8/0.5, plant coefficients 0.6/1.25) and WET gate logic (moisture > 0.6) from the 2026-07-09 refinement into the master facts file.",
+      "type": "CONSOLIDATE"
+    },
+    {
+      "action": "CREATE",
+      "confidence": 1,
+      "needsReview": false,
+      "outputFile": "architecture/unified-diagnosis-lifecycle-terminal-state-governance.md",
+      "sources": [
+        "architecture/_index.md",
+        "docs/_index.md",
+        "governance/_index.md"
+      ],
+      "type": "SYNTHESIZE"
+    },
+    {
+      "action": "CREATE",
+      "confidence": 0.95,
+      "needsReview": false,
+      "outputFile": "tooling/runtime-first-automation-truth-gate.md",
+      "sources": [
+        "tooling/_index.md",
+        "governance/_index.md",
+        "maintenance/_index.md"
+      ],
+      "type": "SYNTHESIZE"
+    },
+    {
+      "action": "CREATE",
+      "confidence": 0.9,
+      "needsReview": false,
+      "outputFile": "maintenance/source-verified-fact-quality-integrity-gate.md",
+      "sources": [
+        "maintenance/_index.md",
+        "docs/_index.md",
+        "testing/_index.md"
+      ],
+      "type": "SYNTHESIZE"
+    },
+    {
+      "action": "CREATE",
+      "confidence": 0.85,
+      "needsReview": false,
+      "outputFile": "governance/phase-gated-context-control-token-budgeting.md",
+      "sources": [
+        "governance/_index.md",
+        "maintenance/_index.md"
+      ],
+      "type": "SYNTHESIZE"
+    }
+  ],
+  "startedAt": 1783574355829,
+  "status": "completed",
+  "summary": {
+    "consolidated": 3,
+    "errors": 0,
+    "flaggedForReview": 2,
+    "pruned": 0,
+    "synthesized": 4
+  },
+  "taskId": "29539322-697b-4c2d-afb2-4f1a48869117",
+  "trigger": "agent-idle"
+}

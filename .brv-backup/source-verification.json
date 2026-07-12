@@ -1,0 +1,45 @@
+{
+  "fact_count": 86,
+  "errors": [],
+  "checked_at": "2026-06-07T00:00:00+08:00",
+  "validation_command": "docs_keeper sync after question package engine simplification; source project validation already passed before docs sync",
+  "validation_result": "docs and ai memory references updated to explicit getQuestionPackageByMode + package snapshot wording",
+  "rule": "code-base implementation is the highest source of truth; latest docs must not preserve session follow-up/per-round-one-question wording as active facts",
+  "source_package": "uploaded code-base.zip",
+  "docs_package": "docs_route_mode_question_package_corrected_2026-06-06.zip",
+  "ai_memory_package": "ai_and_memories_route_mode_question_package_corrected_2026-06-06.zip",
+  "current_diagnosis_mode": "route_mode_only",
+  "current_question_mode": "mode_question_package",
+  "yellow_leaf_package": {
+    "mode": "yellow_leaf",
+    "question_count": 4,
+    "submit_mode": "package",
+    "display_mode": "package",
+    "fixed_question_package": true,
+    "outcome_policy": {
+      "allow_multiple_outcomes": true,
+      "prefer_single_outcome": false
+    }
+  },
+  "session_concepts_removed_or_demoted": [
+    "business follow-up as current questioning model",
+    "route follow-up per round max 1 question",
+    "nextQuestionKeys as current next-question source",
+    "questionPackageSnapshot as current stop/output authority",
+    "followUpRequired=false as output qualification",
+    "dynamic next-question helpers as active runtime authority",
+    "ranking/score-gap as questioning or stop authority"
+  ],
+  "updated_docs_refs": {
+    "code_logics_index_main_conclusion": "7-14",
+    "logic00_reading_path_and_deprecated": "11-34",
+    "logic02_http_package_contract": "29-35,49-70",
+    "logic03_runtime": "5-17,19-25,40-93,123-130",
+    "logic05_package": "5-17,23-46,67-93,129-138",
+    "logic07_frontend": "9-39,72-76,91-97",
+    "logic08_persistence": "55-69",
+    "logic10_checklist": "18-33,52-61,85-87",
+    "all_in_one": "11-35,78-140,175-189,210-222"
+  },
+  "active_context_file_count": 58
+}

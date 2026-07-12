@@ -100,7 +100,7 @@ docs/ai-tasks/**
 
 - 只能作为历史证据或排查线索。
 - 不得作为当前代码事实。
-- 如果 handoff 记录的结论仍有用，应转写成 BRV facts-index，且必须指向源码。
+- 如果 handoff 记录的结论仍有用，应转写成 ByteRover V4 topic 或 recall key，且必须指向源码。
 
 ## 6. 数据库与发布规格
 
@@ -143,6 +143,7 @@ docs/*v7*.md
 ## 8. BRV 既有材料
 
 ```text
+.brv/context-tree/**
 .brv/review-backups/**
 .brv/dream-log/**
 .brv/**/snapshot*
@@ -153,7 +154,7 @@ docs/*v7*.md
 处理：
 
 - 默认不读。
-- 只允许 `.brv/context-tree/_index.md` 与 `.brv/context-tree/facts-index.yml` 进入默认 BRV 上下文。
+- 当前默认 memory source 是 `.brvspace` 绑定的 ByteRover V4 `planting` space；topics 通过 ByteRover V4 工具读取，不再把仓库内 `.brv/context-tree/**` 当默认上下文。
 - 既有 BRV 中若有与当前代码冲突的观察，必须标记 `superseded`。
 
 ## 9. 物理迁移建议

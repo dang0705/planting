@@ -15,7 +15,15 @@ import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
 
-const { computePotGeometry, resolveSubstrateRetentionFactor } = require('../../cloudfunctions/layer/utils/pot-geometry.js')
+// 前端 ESM 模块（文案换算已移至前端）
+const { formatMlRangeToBottleText, formatMlToBottleText } = await import(
+  '../../src/utils/water-volume-format.js'
+)
+
+const {
+  computePotGeometry,
+  resolveSubstrateRetentionFactor
+} = require('../../cloudfunctions/layer/utils/pot-geometry.js')
 const {
   computeEffectiveHydrationLoad,
   computeWetPressureLoad,
@@ -71,10 +79,15 @@ test('substrate: 新增排水基质因子命中非默认值', () => {
 test('substrate: JSON 数组多选按比例加权', () => {
   const single = resolveSubstrateRetentionFactor('peat')
   const mixed = resolveSubstrateRetentionFactor(
-    JSON.stringify([{ material: 'peat', ratio: 50 }, { material: 'perlite', ratio: 50 }])
+    JSON.stringify([
+      { material: 'peat', ratio: 50 },
+      { material: 'perlite', ratio: 50 }
+    ])
   )
-  assert.ok(mixed < single && mixed > resolveSubstrateRetentionFactor('perlite'),
-    '混合保水因子应介于纯泥炭与纯珍珠岩之间')
+  assert.ok(
+    mixed < single && mixed > resolveSubstrateRetentionFactor('perlite'),
+    '混合保水因子应介于纯泥炭与纯珍珠岩之间'
+  )
 })
 
 test('substrate: 非法 JSON / 空 → 1.0 基线', () => {
@@ -166,8 +179,12 @@ test('hydration: unknown 浇水历史不能当成 0 次', () => {
 test('hydration: 浇透事件湿压负载高', () => {
   const thoroughEvents = [makeEvent(1, 'thorough')]
   const normalEvents = [makeEvent(1, 'normal')]
-  const thoroughPressure = computeWetPressureLoad(thoroughEvents, REF_DATE, 10, { drainageRiskFactor: 0.5 })
-  const normalPressure = computeWetPressureLoad(normalEvents, REF_DATE, 10, { drainageRiskFactor: 0.5 })
+  const thoroughPressure = computeWetPressureLoad(thoroughEvents, REF_DATE, 10, {
+    drainageRiskFactor: 0.5
+  })
+  const normalPressure = computeWetPressureLoad(normalEvents, REF_DATE, 10, {
+    drainageRiskFactor: 0.5
+  })
   assert.ok(thoroughPressure > normalPressure, '浇透湿压应高于普通')
 })
 
@@ -277,7 +294,6 @@ test('planner: 不再输出 wateringCount10d，输出 v2.1 字段', () => {
   assert.ok(plan.wetPressureLoad !== undefined)
   assert.ok(plan.lastEffectiveRootWateredDaysAgo !== undefined)
   assert.ok(plan.rootZoneMoistureIndex !== undefined)
-  assert.ok(plan.amountBottleText !== undefined)
   assert.ok(plan.amountRangeMl !== undefined)
   assert.ok(plan.stopCondition !== undefined)
   assert.ok(plan.confidenceLevel !== undefined)
@@ -354,28 +370,34 @@ test('planner: 盆型档案影响水量建议', () => {
 })
 
 test('planner: 无排水孔 BASELINE 周期拉长（×1.15），有孔不变', () => {
-  const build = drain => buildWateringPlanner({
-    wateringStrategy: { freq: [8, 12] },
-    historical: {},
-    forecast: {},
-    behaviorTimeline: normalizeCareBehaviorTimeline({
-      referenceDate: REF_DATE,
-      wateringEvents10d: [makeEvent(6, 'normal')]
-    }),
-    potProfile: {
-      potTopDiameterCm: 15, potBottomDiameterCm: 12, potHeightCm: 14,
-      hasDrainageHole: drain, substrateType: 'general'
-    },
-    referenceDate: REF_DATE
-  })
+  const build = drain =>
+    buildWateringPlanner({
+      wateringStrategy: { freq: [8, 12] },
+      historical: {},
+      forecast: {},
+      behaviorTimeline: normalizeCareBehaviorTimeline({
+        referenceDate: REF_DATE,
+        wateringEvents10d: [makeEvent(6, 'normal')]
+      }),
+      potProfile: {
+        potTopDiameterCm: 15,
+        potBottomDiameterCm: 12,
+        potHeightCm: 14,
+        hasDrainageHole: drain,
+        substrateType: 'general'
+      },
+      referenceDate: REF_DATE
+    })
   const withHole = build('true')
   const noHole = build('false')
   // 两者都应是 BASELINE（无偏干偏湿信号）
   assert.equal(withHole.wateringContext, WATERING_CONTEXTS.BASELINE)
   assert.equal(noHole.wateringContext, WATERING_CONTEXTS.BASELINE)
   // 无孔下次浇水日期应晚于有孔（间隔被拉长）
-  assert.ok(noHole.nextWaterDate > withHole.nextWaterDate,
-    `无孔应晚于有孔：无孔=${noHole.nextWaterDate} 有孔=${withHole.nextWaterDate}`)
+  assert.ok(
+    noHole.nextWaterDate > withHole.nextWaterDate,
+    `无孔应晚于有孔：无孔=${noHole.nextWaterDate} 有孔=${withHole.nextWaterDate}`
+  )
   // 窗口上限也应拉长
   assert.ok(noHole.nextWaterWindow[1] > withHole.nextWaterWindow[1], '无孔窗口上限应拉长')
 })
@@ -428,7 +450,11 @@ test('planner: 保留导出常量向后兼容', () => {
 test('hasRecentThoroughWatering: 5天内有浇透返回 true', () => {
   assert.equal(hasRecentThoroughWatering([makeEvent(1, 'thorough')], REF_DATE), true)
   assert.equal(hasRecentThoroughWatering([makeEvent(1, 'normal')], REF_DATE), false)
-  assert.equal(hasRecentThoroughWatering([makeEvent(7, 'thorough')], REF_DATE), false, '超过5天不算近期')
+  assert.equal(
+    hasRecentThoroughWatering([makeEvent(7, 'thorough')], REF_DATE),
+    false,
+    '超过5天不算近期'
+  )
 })
 
 /* ============================================================
@@ -445,34 +471,38 @@ test('amountSuggestion: DRY 时建议量为体积 20~30% 且区间单调', () =>
   const geo = computePotGeometry({ potTopDiameterCm: 12, potBottomDiameterCm: 10, potHeightCm: 10 })
   const suggestion = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8])
   assert.ok(suggestion.amountRangeMl[1] > suggestion.amountRangeMl[0])
-  assert.equal(typeof suggestion.amountBottleText, 'string')
-  assert.ok(suggestion.amountBottleText.length > 0)
+  assert.ok(suggestion.amountRangeMl[1] > suggestion.amountRangeMl[0])
 })
 
 test('amountSuggestion: 小盆体积 → 瓶数文案偏小（喷/半瓶）', () => {
   const smallGeo = computePotGeometry({
-    potTopDiameterCm: 6, potBottomDiameterCm: 5, potHeightCm: 6,
-    hasDrainageHole: 'true', potMaterial: 'plastic', substrateType: 'general'
+    potTopDiameterCm: 6,
+    potBottomDiameterCm: 5,
+    potHeightCm: 6,
+    hasDrainageHole: 'true',
+    potMaterial: 'plastic',
+    substrateType: 'general'
   })
   const sug = computeAmountSuggestion(smallGeo, GATE_STATE.DRY)
-  assert.match(sug.amountBottleText, /喷|半瓶/,
-    `小盆 DRY 瓶数文案应偏小，实际 ${sug.amountBottleText}（上限 ${sug.amountRangeMl[1]}ml）`)
+  assert.ok(sug.amountRangeMl[1] <= 500, `小盆 DRY 上限应偏小，实际 ${sug.amountRangeMl[1]}ml`)
 })
 
 test('amountSuggestion: 大盆 DRY → 瓶数/区间文案偏大（多瓶/大桶/区间）', () => {
   const bigGeo = computePotGeometry({
-    potTopDiameterCm: 30, potBottomDiameterCm: 24, potHeightCm: 28,
-    hasDrainageHole: 'true', potMaterial: 'ceramic', substrateType: 'general'
+    potTopDiameterCm: 30,
+    potBottomDiameterCm: 24,
+    potHeightCm: 28,
+    hasDrainageHole: 'true',
+    potMaterial: 'ceramic',
+    substrateType: 'general'
   })
   const sug = computeAmountSuggestion(bigGeo, GATE_STATE.DRY)
-  assert.match(sug.amountBottleText, /瓶|桶|ml/)
+  assert.ok(sug.amountRangeMl[1] > 300, '大盆 DRY 上限应远超 300ml')
   assert.ok(sug.amountRangeMl[1] > 300, '大盆 DRY 上限应远超 300ml')
 })
 
 test('amountSuggestion: 无盆型仍给瓶数文案与保守区间', () => {
   const dry = computeAmountSuggestion({}, GATE_STATE.DRY)
-  assert.equal(typeof dry.amountBottleText, 'string')
-  assert.ok(dry.amountBottleText.length > 0)
   assert.equal(dry.confidenceLevel, 'low')
   const base = computeAmountSuggestion({}, GATE_STATE.BASELINE)
   assert.ok(base.amountRangeMl[1] > 0)
@@ -480,29 +510,53 @@ test('amountSuggestion: 无盆型仍给瓶数文案与保守区间', () => {
 
 test('planner: 录入侧 amountMl 按盆体积反推档（同 ml 大盆=少量、小盆=浇透）', () => {
   // 同一次浇水 500ml：对小盆是浇透（进而更易偏湿），对大盆只是少量
-  const build = potProfile => buildWateringPlanner({
-    wateringStrategy: { freq: [5, 8] },
-    historical: {},
-    forecast: {},
-    behaviorTimeline: normalizeCareBehaviorTimeline({
-      referenceDate: REF_DATE,
-      wateringEvents10d: [{ date: makeEvent(1).date, watered: true, amountMl: 500 }]
-    }),
-    potProfile,
-    referenceDate: REF_DATE
+  const build = potProfile =>
+    buildWateringPlanner({
+      wateringStrategy: { freq: [5, 8] },
+      historical: {},
+      forecast: {},
+      behaviorTimeline: normalizeCareBehaviorTimeline({
+        referenceDate: REF_DATE,
+        wateringEvents10d: [{ date: makeEvent(1).date, watered: true, amountMl: 500 }]
+      }),
+      potProfile,
+      referenceDate: REF_DATE
+    })
+  const smallPot = build({
+    potTopDiameterCm: 8,
+    potBottomDiameterCm: 7,
+    potHeightCm: 8,
+    hasDrainageHole: 'true'
   })
-  const smallPot = build({ potTopDiameterCm: 8, potBottomDiameterCm: 7, potHeightCm: 8, hasDrainageHole: 'true' })
-  const bigPot = build({ potTopDiameterCm: 30, potBottomDiameterCm: 24, potHeightCm: 28, hasDrainageHole: 'true' })
+  const bigPot = build({
+    potTopDiameterCm: 30,
+    potBottomDiameterCm: 24,
+    potHeightCm: 28,
+    hasDrainageHole: 'true'
+  })
   // 500ml 对小盆(V≈354)占比>100% → 浇透档回显；对大盆(V≈16000)仅 3% → 喷雾档回显
-  assert.equal(smallPot.userDoseEcho?.doseClass ?? smallPot.userDoseEcho, DOSE_CLASS.THOROUGH, `小盆 500ml 应回显浇透，实际 ${JSON.stringify(smallPot.userDoseEcho)}`)
-  assert.equal(bigPot.userDoseEcho?.doseClass ?? bigPot.userDoseEcho, DOSE_CLASS.MIST, `大盆 500ml 应回显喷雾，实际 ${JSON.stringify(bigPot.userDoseEcho)}`)
+  assert.equal(
+    smallPot.userDoseEcho?.doseClass ?? smallPot.userDoseEcho,
+    DOSE_CLASS.THOROUGH,
+    `小盆 500ml 应回显浇透，实际 ${JSON.stringify(smallPot.userDoseEcho)}`
+  )
+  assert.equal(
+    bigPot.userDoseEcho?.doseClass ?? bigPot.userDoseEcho,
+    DOSE_CLASS.MIST,
+    `大盆 500ml 应回显喷雾，实际 ${JSON.stringify(bigPot.userDoseEcho)}`
+  )
 })
 
 test('amountSuggestion: 排水孔修正矩阵按优先级调制水量', () => {
-  const geo = d => computePotGeometry({
-    potTopDiameterCm: 15, potBottomDiameterCm: 12, potHeightCm: 14,
-    hasDrainageHole: d, potMaterial: 'plastic', substrateType: 'general'
-  })
+  const geo = d =>
+    computePotGeometry({
+      potTopDiameterCm: 15,
+      potBottomDiameterCm: 12,
+      potHeightCm: 14,
+      hasDrainageHole: d,
+      potMaterial: 'plastic',
+      substrateType: 'general'
+    })
   const withHole = computeAmountSuggestion(geo('true'), GATE_STATE.DRY)
   const unknownHole = computeAmountSuggestion(geo('unknown'), GATE_STATE.DRY)
   const noHole = computeAmountSuggestion(geo('false'), GATE_STATE.DRY)
@@ -517,16 +571,35 @@ test('amountSuggestion: 排水孔修正矩阵按优先级调制水量', () => {
 })
 
 test('amountSuggestion: 无排水孔+保水基质比普通无孔更严', () => {
-  const base = { potTopDiameterCm: 18, potBottomDiameterCm: 15, potHeightCm: 16, hasDrainageHole: 'false', potMaterial: 'plastic' }
-  const normalSub = computeAmountSuggestion(computePotGeometry({ ...base, substrateType: 'general' }), GATE_STATE.DRY)
-  const waterRetaining = computeAmountSuggestion(computePotGeometry({ ...base, substrateType: 'sphagnum' }), GATE_STATE.DRY)
-  assert.ok(waterRetaining.amountRangeMl[1] <= normalSub.amountRangeMl[1], '无孔+保水基质上限不高于普通无孔')
+  const base = {
+    potTopDiameterCm: 18,
+    potBottomDiameterCm: 15,
+    potHeightCm: 16,
+    hasDrainageHole: 'false',
+    potMaterial: 'plastic'
+  }
+  const normalSub = computeAmountSuggestion(
+    computePotGeometry({ ...base, substrateType: 'general' }),
+    GATE_STATE.DRY
+  )
+  const waterRetaining = computeAmountSuggestion(
+    computePotGeometry({ ...base, substrateType: 'sphagnum' }),
+    GATE_STATE.DRY
+  )
+  assert.ok(
+    waterRetaining.amountRangeMl[1] <= normalSub.amountRangeMl[1],
+    '无孔+保水基质上限不高于普通无孔'
+  )
 })
 
 test('amountSuggestion: 无排水孔+喜干植物最严（dryTolerance high）', () => {
   const geo = computePotGeometry({
-    potTopDiameterCm: 18, potBottomDiameterCm: 15, potHeightCm: 16,
-    hasDrainageHole: 'false', potMaterial: 'plastic', substrateType: 'general'
+    potTopDiameterCm: 18,
+    potBottomDiameterCm: 15,
+    potHeightCm: 16,
+    hasDrainageHole: 'false',
+    potMaterial: 'plastic',
+    substrateType: 'general'
   })
   const normalPlant = computeAmountSuggestion(geo, GATE_STATE.DRY)
   const dryLovingPlant = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8], {
@@ -538,8 +611,12 @@ test('amountSuggestion: 无排水孔+喜干植物最严（dryTolerance high）',
 
 test('amountSuggestion: 有排水孔时不受基质/喜干修正影响', () => {
   const geo = computePotGeometry({
-    potTopDiameterCm: 15, potBottomDiameterCm: 12, potHeightCm: 14,
-    hasDrainageHole: 'true', potMaterial: 'plastic', substrateType: 'sphagnum'
+    potTopDiameterCm: 15,
+    potBottomDiameterCm: 12,
+    potHeightCm: 14,
+    hasDrainageHole: 'true',
+    potMaterial: 'plastic',
+    substrateType: 'sphagnum'
   })
   const plain = computeAmountSuggestion(geo, GATE_STATE.DRY)
   const withDryLoving = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8], {
@@ -576,7 +653,12 @@ test('planner: 返回 userDoseEcho', () => {
       referenceDate: REF_DATE,
       watering_events_10d: [makeEvent(2, 'thorough')]
     }),
-    potProfile: { potTopDiameterCm: 12, potBottomDiameterCm: 8, potHeightCm: 10, hasDrainageHole: 'true' },
+    potProfile: {
+      potTopDiameterCm: 12,
+      potBottomDiameterCm: 8,
+      potHeightCm: 10,
+      hasDrainageHole: 'true'
+    },
     referenceDate: REF_DATE
   })
   assert.equal(plan.userDoseEcho?.doseClass, DOSE_CLASS.THOROUGH)
@@ -589,7 +671,10 @@ test('planner: 返回 userDoseEcho', () => {
 test('speciesFactor: 按 targetMoistureMid 映射需水系数', () => {
   // 喜干 0.28 → 收窄；缺省 0.5 → 1.0；湿润 0.65 → 放大
   assert.ok(resolveSpeciesWaterFactor({ targetMoistureMid: 0.28 }) < 1.0, '喜干应收窄(<1)')
-  assert.ok(Math.abs(resolveSpeciesWaterFactor({ targetMoistureMid: 0.5 }) - 1.0) < 1e-9, '缺省应=1.0')
+  assert.ok(
+    Math.abs(resolveSpeciesWaterFactor({ targetMoistureMid: 0.5 }) - 1.0) < 1e-9,
+    '缺省应=1.0'
+  )
   assert.ok(resolveSpeciesWaterFactor({ targetMoistureMid: 0.65 }) > 1.0, '湿润应放大(>1)')
 })
 
@@ -601,8 +686,12 @@ test('speciesFactor: 缺省/非法量化 → 1.0 中性', () => {
 
 test('amountSuggestion: 喜干植物建议水量 < 湿润植物（同盆同gate）', () => {
   const geo = computePotGeometry({
-    potTopDiameterCm: 20, potBottomDiameterCm: 16, potHeightCm: 18,
-    hasDrainageHole: 'true', potMaterial: 'plastic', substrateType: 'general'
+    potTopDiameterCm: 20,
+    potBottomDiameterCm: 16,
+    potHeightCm: 18,
+    hasDrainageHole: 'true',
+    potMaterial: 'plastic',
+    substrateType: 'general'
   })
   const dryLoving = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8], {
     wateringQuantization: { targetMoistureMid: 0.28 }
@@ -610,15 +699,21 @@ test('amountSuggestion: 喜干植物建议水量 < 湿润植物（同盆同gate�
   const moistLoving = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8], {
     wateringQuantization: { targetMoistureMid: 0.65 }
   })
-  assert.ok(dryLoving.amountRangeMl[1] < moistLoving.amountRangeMl[1],
-    `喜干上限应小于湿润：喜干=${dryLoving.amountRangeMl[1]} 湿润=${moistLoving.amountRangeMl[1]}`)
+  assert.ok(
+    dryLoving.amountRangeMl[1] < moistLoving.amountRangeMl[1],
+    `喜干上限应小于湿润：喜干=${dryLoving.amountRangeMl[1]} 湿润=${moistLoving.amountRangeMl[1]}`
+  )
   assert.ok(dryLoving.amountRangeMl[0] < moistLoving.amountRangeMl[0], '喜干下限也应更小')
 })
 
 test('amountSuggestion: 无量化数据时需水系数不改变水量（1.0）', () => {
   const geo = computePotGeometry({
-    potTopDiameterCm: 20, potBottomDiameterCm: 16, potHeightCm: 18,
-    hasDrainageHole: 'true', potMaterial: 'plastic', substrateType: 'general'
+    potTopDiameterCm: 20,
+    potBottomDiameterCm: 16,
+    potHeightCm: 18,
+    hasDrainageHole: 'true',
+    potMaterial: 'plastic',
+    substrateType: 'general'
   })
   const noQuant = computeAmountSuggestion(geo, GATE_STATE.DRY)
   const neutralQuant = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8], {
@@ -629,21 +724,31 @@ test('amountSuggestion: 无量化数据时需水系数不改变水量（1.0）',
 
 test('amountSuggestion: 需水系数与排水孔修正叠加（喜干+无孔最严）', () => {
   const geo = computePotGeometry({
-    potTopDiameterCm: 20, potBottomDiameterCm: 16, potHeightCm: 18,
-    hasDrainageHole: 'false', potMaterial: 'plastic', substrateType: 'general'
+    potTopDiameterCm: 20,
+    potBottomDiameterCm: 16,
+    potHeightCm: 18,
+    hasDrainageHole: 'false',
+    potMaterial: 'plastic',
+    substrateType: 'general'
   })
   const dryLovingNoHole = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8], {
     wateringQuantization: { targetMoistureMid: 0.28, dryTolerance: 'high' }
   })
   const geoHole = computePotGeometry({
-    potTopDiameterCm: 20, potBottomDiameterCm: 16, potHeightCm: 18,
-    hasDrainageHole: 'true', potMaterial: 'plastic', substrateType: 'general'
+    potTopDiameterCm: 20,
+    potBottomDiameterCm: 16,
+    potHeightCm: 18,
+    hasDrainageHole: 'true',
+    potMaterial: 'plastic',
+    substrateType: 'general'
   })
   const moistHole = computeAmountSuggestion(geoHole, GATE_STATE.DRY, [5, 8], {
     wateringQuantization: { targetMoistureMid: 0.65 }
   })
-  assert.ok(dryLovingNoHole.amountRangeMl[1] < moistHole.amountRangeMl[1],
-    '喜干+无孔应远小于湿润+有孔')
+  assert.ok(
+    dryLovingNoHole.amountRangeMl[1] < moistHole.amountRangeMl[1],
+    '喜干+无孔应远小于湿润+有孔'
+  )
 })
 
 /* ============================================================
@@ -663,7 +768,10 @@ test('gate: DRY 被强偏湿环境压制为 BASELINE（无 FORECAST_HOT_DRY_HIT�
     baselineIntervalDays: [5, 8]
   })
   assert.equal(gate.gateState, GATE_STATE.BASELINE, '应被压制为 BASELINE')
-  assert.ok(gate.reasonCodes.includes(REASON_CODE.DRY_SUPPRESSED_BY_WET_ENVIRONMENT), '应含 DRY_SUPPRESSED')
+  assert.ok(
+    gate.reasonCodes.includes(REASON_CODE.DRY_SUPPRESSED_BY_WET_ENVIRONMENT),
+    '应含 DRY_SUPPRESSED'
+  )
   assert.ok(gate.reasonCodes.includes(REASON_CODE.CHECK_SOIL_BEFORE_WATERING), '应含查土提示')
 })
 
@@ -697,26 +805,32 @@ test('gate: weatherWetPressureHitCount<2 时不压制 DRY', () => {
 
 test('resolveDoseClassWithConflict: 30ml+normal 在 2749ml 盆上判冲突', () => {
   const { doseClass, doseConflict } = resolveDoseClassWithConflict(
-    { amount: 'normal', amountMl: 30 }, 2749
+    { amount: 'normal', amountMl: 30 },
+    2749
   )
   assert.equal(doseClass, DOSE_CLASS.MIST, '30ml 反推为 mist')
   assert.equal(doseConflict, true, 'normal vs mist rank差2 → 冲突')
 })
 
 test('resolveDoseClassWithConflict: 300ml+normal 在 2749ml 盆上不冲突', () => {
-  const { doseClass, doseConflict } = resolveDoseClassWithConflict(
-    { amount: 'normal', amountMl: 300 }, 2749
-  )
+  const { doseConflict } = resolveDoseClassWithConflict({ amount: 'normal', amountMl: 300 }, 2749)
   assert.equal(doseConflict, false, '300ml 反推 normal，与标签一致不冲突')
 })
 
 test('amountSuggestion: DRY + weatherWetPressureHitCount≥2 水量压制 ×0.5', () => {
   const geo = computePotGeometry({
-    potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15,
-    hasDrainageHole: 'true', substrateType: 'general'
+    potTopDiameterCm: 20,
+    potBottomDiameterCm: 10,
+    potHeightCm: 15,
+    hasDrainageHole: 'true',
+    substrateType: 'general'
   })
-  const normal = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8], { weatherWetPressureHitCount: 0 })
-  const suppressed = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8], { weatherWetPressureHitCount: 2 })
+  const normal = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8], {
+    weatherWetPressureHitCount: 0
+  })
+  const suppressed = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8], {
+    weatherWetPressureHitCount: 2
+  })
   assert.ok(suppressed.amountRangeMl[1] < normal.amountRangeMl[1], '湿信号≥2 应压制水量')
   assert.ok(suppressed.amountRangeMl[1] <= normal.amountRangeMl[1] * 0.55, '约 ×0.5')
   assert.match(suppressed.stopCondition, /查土.*干透/, 'stopCondition 应含查土提示')
@@ -724,24 +838,36 @@ test('amountSuggestion: DRY + weatherWetPressureHitCount≥2 水量压制 ×0.5'
 
 test('amountSuggestion: BASELINE 不受 weatherWetAmountFactor 影响', () => {
   const geo = computePotGeometry({
-    potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15,
-    hasDrainageHole: 'true', substrateType: 'general'
+    potTopDiameterCm: 20,
+    potBottomDiameterCm: 10,
+    potHeightCm: 15,
+    hasDrainageHole: 'true',
+    substrateType: 'general'
   })
-  const normal = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], { weatherWetPressureHitCount: 0 })
-  const withWet = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], { weatherWetPressureHitCount: 2 })
+  const normal = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], {
+    weatherWetPressureHitCount: 0
+  })
+  const withWet = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], {
+    weatherWetPressureHitCount: 2
+  })
   assert.deepEqual(normal.amountRangeMl, withWet.amountRangeMl, 'BASELINE 不受湿信号压制')
 })
 
 test('potGeometry: 田园土 retentionFactor=1.1（命中保水基质档）', () => {
   const geo = computePotGeometry({
-    potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15,
-    hasDrainageHole: 'false', substrateType: 'general'
+    potTopDiameterCm: 20,
+    potBottomDiameterCm: 10,
+    potHeightCm: 15,
+    hasDrainageHole: 'false',
+    substrateType: 'general'
   })
   assert.ok(geo.substrateRetentionFactor > 1.0, '田园土应 >1.0')
   // 无孔+保水基质 → 命中 0.5/0.4 档而非 0.6/0.5
   const modifier = computeAmountSuggestion(geo, GATE_STATE.DRY, [5, 8])
   const withHole = computeAmountSuggestion(
-    computePotGeometry({ ...geo, hasDrainageHole: 'true' }), GATE_STATE.DRY, [5, 8]
+    computePotGeometry({ ...geo, hasDrainageHole: 'true' }),
+    GATE_STATE.DRY,
+    [5, 8]
   )
   assert.ok(modifier.amountRangeMl[1] < withHole.amountRangeMl[1], '无孔田园土应比有孔更保守')
 })
@@ -751,9 +877,12 @@ test('planner: 龟背竹案例端到端 — 强湿+无有效浇水 → BASELINE 
   const plan = buildWateringPlanner({
     wateringStrategy: { freq: [5, 8] },
     historical: {
-      highHumidityDays: 5, maxConsecutiveHighHumidityDays: 3,
-      rainyDays: 4, maxConsecutiveRainyDays: 3,
-      coldHumidDays: 0, hotDryDays: 0
+      highHumidityDays: 5,
+      maxConsecutiveHighHumidityDays: 3,
+      rainyDays: 4,
+      maxConsecutiveRainyDays: 3,
+      coldHumidDays: 0,
+      hotDryDays: 0
     },
     forecast: {},
     behaviorTimeline: normalizeCareBehaviorTimeline({
@@ -761,13 +890,22 @@ test('planner: 龟背竹案例端到端 — 强湿+无有效浇水 → BASELINE 
       // D-6 浇了 normal 档（6天前，>baselineMin=5 但 <severeOverdue=10）→ DRY 被湿信号压制
       watering_events_10d: [{ date: '2026-06-27', watered: true, amount: 'normal', amountMl: 300 }]
     }),
-    potProfile: { potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15, hasDrainageHole: 'true', substrateType: 'general' },
+    potProfile: {
+      potTopDiameterCm: 20,
+      potBottomDiameterCm: 10,
+      potHeightCm: 15,
+      hasDrainageHole: 'true',
+      substrateType: 'general'
+    },
     wateringQuantization: { targetMoistureMid: 0.65, dryTolerance: 'low' },
     referenceDate: REF
   })
   // DRY 应被湿信号压制为 BASELINE
   assert.equal(plan.wateringContext, WATERING_CONTEXTS.BASELINE, '应被压制为 BASELINE')
-  assert.ok(plan.reasonCodes.includes(REASON_CODE.DRY_SUPPRESSED_BY_WET_ENVIRONMENT), '含 DRY_SUPPRESSED')
+  assert.ok(
+    plan.reasonCodes.includes(REASON_CODE.DRY_SUPPRESSED_BY_WET_ENVIRONMENT),
+    '含 DRY_SUPPRESSED'
+  )
   // 水量应保守
   assert.ok(plan.amountRangeMl[1] < 600, `BASELINE 水量应保守，实际 ${plan.amountRangeMl[1]}`)
 })
@@ -778,12 +916,54 @@ test('planner: 龟背竹案例端到端 — 强湿+无有效浇水 → BASELINE 
 
 test('resolveUserDoseEcho: 返回 { doseClass, amountMl } 对象', () => {
   // 550ml 对 V=2749ml 占比 20% → normal 档
-  const events = [
-    { date: REF_DATE, watered: true, amount: 'normal', amountMl: 550 }
-  ]
+  const events = [{ date: REF_DATE, watered: true, amount: 'normal', amountMl: 550 }]
   const echo = resolveUserDoseEcho(events, REF_DATE, 2749)
   assert.equal(echo.doseClass, DOSE_CLASS.NORMAL)
   assert.equal(echo.amountMl, 550)
+})
+
+test('timeline: 当天浇水事件参与 layer 干湿摘要和 planner', () => {
+  const timeline = normalizeCareBehaviorTimeline({
+    referenceDate: REF_DATE,
+    watering_events_10d: [{ date: REF_DATE, watered: true, amount: 'normal', amountMl: 550 }]
+  })
+  assert.equal(timeline.watering_events_10d[0].date, REF_DATE)
+  assert.equal(timeline.summary.lastEffectiveRootWateredDaysAgo, 0)
+  assert.equal(timeline.summary.lastWateredDaysAgo, 0)
+  assert.ok(timeline.summary.effectiveHydrationLoad > 0)
+  assert.ok(timeline.summary.wetPressureLoad > 0)
+
+  const plan = buildWateringPlanner({
+    wateringStrategy: { freq: [5, 8] },
+    behaviorTimeline: timeline,
+    potProfile: {
+      potTopDiameterCm: 20,
+      potBottomDiameterCm: 10,
+      potHeightCm: 15,
+      hasDrainageHole: 'true'
+    },
+    referenceDate: REF_DATE
+  })
+  assert.equal(plan.lastEffectiveRootWateredDaysAgo, 0)
+  assert.equal(plan.userDoseEcho?.amountMl, 550)
+})
+
+test('timeline: 满窗口输入时保留最近的当天事件', () => {
+  const events = Array.from({ length: 11 }, (_, daysAgo) => makeEvent(10 - daysAgo, 'normal'))
+  const timeline = normalizeCareBehaviorTimeline({
+    referenceDate: REF_DATE,
+    watering_events_10d: events
+  })
+  assert.equal(timeline.watering_events_10d.length, 10)
+  assert.equal(
+    timeline.watering_events_10d.some(event => event.date === REF_DATE),
+    true
+  )
+  assert.equal(
+    timeline.watering_events_10d.some(event => event.date === makeEvent(10).date),
+    false
+  )
+  assert.equal(timeline.summary.lastEffectiveRootWateredDaysAgo, 0)
 })
 
 test('resolveUserDoseEcho: 无 amountMl 字段时 amountMl 为 null', () => {
@@ -795,8 +975,12 @@ test('resolveUserDoseEcho: 无 amountMl 字段时 amountMl 为 null', () => {
 
 test('computeAmountSuggestion: userDoseEcho.amountMl 锚定下限（用户浇量 > 基线下限）', () => {
   const geo = computePotGeometry({
-    potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15,
-    hasDrainageHole: 'true', potMaterial: 'ceramic', substrateType: 'general'
+    potTopDiameterCm: 20,
+    potBottomDiameterCm: 10,
+    potHeightCm: 15,
+    hasDrainageHole: 'true',
+    potMaterial: 'ceramic',
+    substrateType: 'general'
   })
   // V≈2749ml, BASELINE 基线区间 [275, 412]，用户浇 350ml(normal)
   const withoutEcho = computeAmountSuggestion(geo, GATE_STATE.BASELINE)
@@ -804,19 +988,33 @@ test('computeAmountSuggestion: userDoseEcho.amountMl 锚定下限（用户浇量
     userDoseEcho: { doseClass: 'normal', amountMl: 350 }
   })
   // 无 echo 时下限 = 275
-  assert.ok(withoutEcho.amountRangeMl[0] < 350, `无锚定下限应 < 350，实际 ${withoutEcho.amountRangeMl[0]}`)
+  assert.ok(
+    withoutEcho.amountRangeMl[0] < 350,
+    `无锚定下限应 < 350，实际 ${withoutEcho.amountRangeMl[0]}`
+  )
   // 有 echo 时下限锚到 350（350 < 上限412，不被 clamp）
-  assert.equal(withEcho.amountRangeMl[0], 350, `锚定后下限应为 350，实际 ${withEcho.amountRangeMl[0]}`)
+  assert.equal(
+    withEcho.amountRangeMl[0],
+    350,
+    `锚定后下限应为 350，实际 ${withEcho.amountRangeMl[0]}`
+  )
   // 上限不变
   assert.equal(withEcho.amountRangeMl[1], withoutEcho.amountRangeMl[1], '上限不应变')
   // 含 USER_DOSE_ANCHORED reasonCode
-  assert.ok(withEcho.reasonCodes.includes(REASON_CODE.USER_DOSE_ANCHORED), '应含 USER_DOSE_ANCHORED')
+  assert.ok(
+    withEcho.reasonCodes.includes(REASON_CODE.USER_DOSE_ANCHORED),
+    '应含 USER_DOSE_ANCHORED'
+  )
 })
 
 test('computeAmountSuggestion: userDoseEcho 超过上限时不锚定（不 clamp）', () => {
   const geo = computePotGeometry({
-    potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15,
-    hasDrainageHole: 'true', potMaterial: 'ceramic', substrateType: 'general'
+    potTopDiameterCm: 20,
+    potBottomDiameterCm: 10,
+    potHeightCm: 15,
+    hasDrainageHole: 'true',
+    potMaterial: 'ceramic',
+    substrateType: 'general'
   })
   // V≈2749ml, BASELINE 区间 [275, 412]，用户浇 550ml > 上限 412
   const withoutEcho = computeAmountSuggestion(geo, GATE_STATE.BASELINE)
@@ -825,27 +1023,44 @@ test('computeAmountSuggestion: userDoseEcho 超过上限时不锚定（不 clamp
   })
   // 超过上限不锚定，区间不变
   assert.equal(withEcho.amountRangeMl[0], withoutEcho.amountRangeMl[0], '超过上限不锚定，下限不变')
-  assert.ok(!withEcho.reasonCodes?.includes(REASON_CODE.USER_DOSE_ANCHORED), '不应含 USER_DOSE_ANCHORED')
+  assert.ok(
+    !withEcho.reasonCodes?.includes(REASON_CODE.USER_DOSE_ANCHORED),
+    '不应含 USER_DOSE_ANCHORED'
+  )
 })
 
 test('computeAmountSuggestion: userDoseEcho 基线下限更高时不锚（用户浇量 < 基线下限）', () => {
   const geo = computePotGeometry({
-    potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15,
-    hasDrainageHole: 'true', potMaterial: 'ceramic', substrateType: 'general'
+    potTopDiameterCm: 20,
+    potBottomDiameterCm: 10,
+    potHeightCm: 15,
+    hasDrainageHole: 'true',
+    potMaterial: 'ceramic',
+    substrateType: 'general'
   })
   // V≈2749ml, BASELINE 基线区间 [275, 412]，用户只浇了 100ml(small)
   const withEcho = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], {
     userDoseEcho: { doseClass: 'small', amountMl: 100 }
   })
   // 100 < 275，不锚定
-  assert.ok(withEcho.amountRangeMl[0] < 100 || withEcho.amountRangeMl[0] === 275, `下限不应被拉低，实际 ${withEcho.amountRangeMl[0]}`)
-  assert.ok(!withEcho.reasonCodes?.includes(REASON_CODE.USER_DOSE_ANCHORED), '不应含 USER_DOSE_ANCHORED')
+  assert.ok(
+    withEcho.amountRangeMl[0] < 100 || withEcho.amountRangeMl[0] === 275,
+    `下限不应被拉低，实际 ${withEcho.amountRangeMl[0]}`
+  )
+  assert.ok(
+    !withEcho.reasonCodes?.includes(REASON_CODE.USER_DOSE_ANCHORED),
+    '不应含 USER_DOSE_ANCHORED'
+  )
 })
 
 test('computeAmountSuggestion: mist 不锚定', () => {
   const geo = computePotGeometry({
-    potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15,
-    hasDrainageHole: 'true', potMaterial: 'ceramic', substrateType: 'general'
+    potTopDiameterCm: 20,
+    potBottomDiameterCm: 10,
+    potHeightCm: 15,
+    hasDrainageHole: 'true',
+    potMaterial: 'ceramic',
+    substrateType: 'general'
   })
   const withMist = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], {
     userDoseEcho: { doseClass: 'mist', amountMl: 30 }
@@ -855,20 +1070,30 @@ test('computeAmountSuggestion: mist 不锚定', () => {
 
 test('computeAmountSuggestion: 无 amountMl 时按 doseClass 反推锚定', () => {
   const geo = computePotGeometry({
-    potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15,
-    hasDrainageHole: 'true', potMaterial: 'ceramic', substrateType: 'general'
+    potTopDiameterCm: 20,
+    potBottomDiameterCm: 10,
+    potHeightCm: 15,
+    hasDrainageHole: 'true',
+    potMaterial: 'ceramic',
+    substrateType: 'general'
   })
   // V≈2749ml, BASELINE [275, 412]
   // small → V×0.08=220, 220 < 275 → 不锚
   const withSmall = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], {
     userDoseEcho: { doseClass: 'small', amountMl: null }
   })
-  assert.ok(!withSmall.reasonCodes?.includes(REASON_CODE.USER_DOSE_ANCHORED), 'small 反推值 < 基线下限不应锚定')
+  assert.ok(
+    !withSmall.reasonCodes?.includes(REASON_CODE.USER_DOSE_ANCHORED),
+    'small 反推值 < 基线下限不应锚定'
+  )
   // normal → V×0.2=550, 550 > 上限412 → 超过上限不锚定
   const withNormal = computeAmountSuggestion(geo, GATE_STATE.BASELINE, [5, 8], {
     userDoseEcho: { doseClass: 'normal', amountMl: null }
   })
-  assert.ok(!withNormal.reasonCodes?.includes(REASON_CODE.USER_DOSE_ANCHORED), 'normal 反推超过上限不锚定')
+  assert.ok(
+    !withNormal.reasonCodes?.includes(REASON_CODE.USER_DOSE_ANCHORED),
+    'normal 反推超过上限不锚定'
+  )
 })
 
 test('planner: 用户浇 350ml(normal) → 下限锚定 + 区间文案', () => {
@@ -876,14 +1101,22 @@ test('planner: 用户浇 350ml(normal) → 下限锚定 + 区间文案', () => {
     wateringStrategy: { freq: [5, 8] },
     behaviorTimeline: normalizeCareBehaviorTimeline({
       referenceDate: REF_DATE,
-      watering_events_10d: [{ date: makeEvent(2).date, watered: true, amount: 'normal', amountMl: 350 }]
+      watering_events_10d: [
+        { date: makeEvent(2).date, watered: true, amount: 'normal', amountMl: 350 }
+      ]
     }),
-    potProfile: { potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15, hasDrainageHole: 'true' },
+    potProfile: {
+      potTopDiameterCm: 20,
+      potBottomDiameterCm: 10,
+      potHeightCm: 15,
+      hasDrainageHole: 'true'
+    },
     referenceDate: REF_DATE
   })
   assert.ok(plan.amountRangeMl[0] >= 350, `下限应锚定≥350，实际 ${plan.amountRangeMl[0]}`)
   assert.ok(plan.reasonCodes.includes(REASON_CODE.USER_DOSE_ANCHORED), '应含 USER_DOSE_ANCHORED')
-  assert.match(plan.amountBottleText, /瓶|桶/, '区间文案应含瓶或桶单位')
+  const bottleText = formatMlRangeToBottleText(plan.amountRangeMl)
+  assert.match(bottleText, /瓶|桶/, '区间文案应含瓶或桶单位')
 })
 
 test('planner: 用户浇 30ml(mist) → 不锚定 + 正常区间', () => {
@@ -891,9 +1124,16 @@ test('planner: 用户浇 30ml(mist) → 不锚定 + 正常区间', () => {
     wateringStrategy: { freq: [5, 8] },
     behaviorTimeline: normalizeCareBehaviorTimeline({
       referenceDate: REF_DATE,
-      watering_events_10d: [{ date: makeEvent(2).date, watered: true, amount: 'spray', amountMl: 30 }]
+      watering_events_10d: [
+        { date: makeEvent(2).date, watered: true, amount: 'spray', amountMl: 30 }
+      ]
     }),
-    potProfile: { potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 15, hasDrainageHole: 'true' },
+    potProfile: {
+      potTopDiameterCm: 20,
+      potBottomDiameterCm: 10,
+      potHeightCm: 15,
+      hasDrainageHole: 'true'
+    },
     referenceDate: REF_DATE
   })
   assert.ok(!plan.reasonCodes.includes(REASON_CODE.USER_DOSE_ANCHORED), 'mist 不应锚定')
@@ -902,21 +1142,24 @@ test('planner: 用户浇 30ml(mist) → 不锚定 + 正常区间', () => {
 })
 
 test('formatMlRangeToBottleText: 区间文案', () => {
-  const { formatMlRangeToBottleText } = require('../../cloudfunctions/layer/utils/water-volume-format.js')
-  // 瓶级区间（瓶数不同）→ 瓶数区间文案（不带 ml）
-  assert.equal(formatMlRangeToBottleText([460, 690]), '约1~1.5瓶')
-  // 瓶级区间（瓶数相同）→ 退回单值
+  // 差230ml < RANGE_MIN_SPAN_ML(275) -> 退回单值
+  assert.equal(formatMlRangeToBottleText([460, 690]), '约1.5瓶（矿泉水瓶）')
+  // 瓶级区间（瓶数相同）-> 退回单值
   assert.match(formatMlRangeToBottleText([275, 412]), /瓶/)
-  // 油桶级区间 → 桶数区间文案
-  assert.equal(formatMlRangeToBottleText([33380, 50069]), '约7~10桶（5升油桶）')
-  assert.equal(formatMlRangeToBottleText([5000, 7500]), '约1~2桶（5升油桶）')
-  // 跨瓶/桶级 → 按上限统一换算油桶
-  assert.equal(formatMlRangeToBottleText([3000, 6000]), '约1~2桶（5升油桶）')
-  // [0,0] → 暂停
+  // 油桶级区间 -> 桶数区间文案
+  assert.equal(formatMlRangeToBottleText([33380, 50069]), '约7~10桶（5L油桶）')
+  assert.equal(formatMlRangeToBottleText([5000, 7500]), '约1~2桶（5L油桶）')
+  // 跨瓶/桶级 -> 按上限统一用桶
+  assert.equal(formatMlRangeToBottleText([3000, 6000]), '约1桶（5L油桶）')
+  // 上限刚好 2500 -> 进入桶模式
+  assert.equal(formatMlRangeToBottleText([2000, 2500]), '约1桶（5L油桶）')
+  // 上限 2499 < 2500 -> 瓶模式
+  assert.match(formatMlRangeToBottleText([500, 2499]), /瓶/)
+  // [0,0] -> 暂停
   assert.equal(formatMlRangeToBottleText([0, 0]), '暂停浇水')
-  // 下限≤50（喷雾级）→ 单值取上限
+  // 差170ml < 275 -> 单值取上限
   assert.match(formatMlRangeToBottleText([30, 200]), /瓶/)
-  // 上下限差≤50 → 单值
+  // 差20ml < 275 -> 单值
   assert.match(formatMlRangeToBottleText([100, 120]), /瓶/)
   // 非法
   assert.equal(formatMlRangeToBottleText(null), '暂无建议水量')

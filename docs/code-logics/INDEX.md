@@ -1,6 +1,6 @@
 # code-logics 索引（以 code-base 为最高事实源）
 
-更新时间：2026-06-07
+更新时间：2026-07-08
 
 本目录记录当前仓库真实运行逻辑。若本文档与代码冲突，以 `code-base` 为唯一准则；文档必须被修正，而不是让实现迁就既有文档。
 
@@ -30,7 +30,7 @@
 ## 用户植物 / 浇水模块（诊断主链之外）
 
 - `09_植物识别_图片存储_天气_用户植物模块.md`：植物识别、图片存储、天气、用户植物实例。
-- `12_浇水提醒算法_逐步逻辑_盆型与Gate.md`：浇水提醒 v2.1 算法逐步逻辑，含盆型/基质如何参与、Dry/Wet Gate 判定、水量建议与"amount 恒 normal"成因、可审计性现状。事实源 `cloudfunctions/layer/utils/{watering-planner,hydration-load,pot-geometry}.js`。
+- `12_浇水提醒算法_逐步逻辑_盆型与Gate.md`：浇水提醒 v2.1 算法逐步逻辑，含盆型/基质如何参与、Dry/Wet Gate 判定、水量建议与"amount 恒 normal"成因、可审计性现状。事实源 `cloudfunctions/layer/utils/{watering-planner,hydration-load,pot-geometry,water-volume-format}.js`（后端 `water-volume-format.js` 仅保留剂量落档算法）+ 前端 `src/utils/water-volume-format.js`（文案换算）。2026-07-08 重构：后端只返回 `amountRangeMl`，文案全部由前端负责，`amountBottleText` 已从后端响应废弃。
 
 ## 与 new-rules 的关系
 

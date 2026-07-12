@@ -15,6 +15,7 @@
     <CareBehaviorTimelineGrid
       :cell-items="cellItems"
       :id-prefix="idPrefix"
+      :sticky="sticky"
       :show-loading-skeleton="showLoadingSkeleton"
       :selected-date-state="selectedDateState"
       :selected-date-label="selectedDateLabel"
@@ -54,6 +55,7 @@ const props = defineProps({
   questionId: { type: String, default: '' },
   timeline: { type: Object, default: () => ({}) },
   idPrefix: { type: String, default: 'diagnose' },
+  sticky: { type: Boolean, default: false },
   enableDosePerDate: { type: Boolean, default: false },
   potVolumeMl: { type: Number, default: 0 }
 })

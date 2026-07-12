@@ -286,26 +286,36 @@ async function confirmOversizedPot() {
   })
 }
 async function save() {
-  const plantId = props.plant?.id
-  if (!plantId || !(await confirmOversizedPot())) {
+  if (!(await confirmOversizedPot())) {
     return
   }
+  const plantId = props.plant?.id
+  const payload = {
+    potTopDiameterCm: form.value.potTopDiameterCm || null,
+    potBottomDiameterCm: form.value.potBottomDiameterCm || null,
+    potHeightCm: form.value.potHeightCm || null,
+    hasDrainageHole: form.value.hasDrainageHole,
+    substrateType: substrateComposition.value.length
+      ? JSON.stringify(substrateComposition.value)
+      : 'unknown'
+  }
+  const savedData = { ...payload, substrateComposition: substrateComposition.value }
+
+  // 无 plant：仅回传 payload，由父组件接收后自行处理（如独立浇水建议入口）
+  if (!plantId) {
+    profileData.value = savedData
+    emit('saved', savedData)
+    close()
+    return
+  }
+
+  // 有 plant：保持原落库链路
   saving.value = true
   try {
-    const payload = {
-      potTopDiameterCm: form.value.potTopDiameterCm || null,
-      potBottomDiameterCm: form.value.potBottomDiameterCm || null,
-      potHeightCm: form.value.potHeightCm || null,
-      hasDrainageHole: form.value.hasDrainageHole,
-      substrateType: substrateComposition.value.length
-        ? JSON.stringify(substrateComposition.value)
-        : 'unknown'
-    }
     const result = await plantStore.savePotProfile(plantId, payload)
     if (!result?.success) {
       throw new Error(result?.message || '保存失败')
     }
-    const savedData = { ...payload, substrateComposition: substrateComposition.value }
     profileData.value = savedData
     emit('saved', savedData)
     uni.showToast({ title: '盆型信息已保存', icon: 'success' })

@@ -1,24 +1,26 @@
 # ZCode Routing Policy
 
-仅当 `implementation_mode=zcode_external` 时读取。本文只定义外部实现者路由，不重复完整 prompt 模板。
+仅当 `external_contract.provider=zcode` 或旧 `implementation_mode=zcode_external` 时读取。本文只定义 ZCode provider adapter，不重复外部实现者公共 handoff 协议。
 
 ## 触发
 
-命中“用 ZCode / 走 ZCode / 外部实现者 / zcode_external / GLM 在 ZCode 里跑”等正向触发词，且任务需要代码修改时，设置：
+命中“用 ZCode / 走 ZCode / ZCode 写代码 / zcode_external / GLM 在 ZCode 里跑”等正向触发词，且任务需要代码修改时，设置：
 
 ```text
-implementation_mode = zcode_external
-dispatch_tier = zcode_external
-external_implementer = zcode_glm
-zcode_target = current_open_chat
+implementation_mode = external_implementer
+dispatch_tier = external_implementer
+external_contract.provider = zcode
+external_contract.target_session = current_open_chat
 ```
+
+旧字段 `implementation_mode=zcode_external`、`dispatch_tier=zcode_external`、`zcode_contract.external_implementer=zcode_glm` 继续兼容，但新合同优先使用 `external_contract`。
 
 明确出现“不用 ZCode / 禁用 ZCode / no zcode / disable zcode”，或任务只是询问流程、配置、故障时，不触发。
 
 ## 所有权
 
 1. main 负责 Architecture Direction、Implementation Contract、路径边界、项目约束、ZCode prompt 生成、发送、回收、diff review 与 Completion Gate。
-2. ZCode external implementer 只负责按 prompt 修改代码和写 handoff manual。
+2. ZCode provider external implementer 只负责按 prompt 修改代码和写 handoff manual。
 3. QA 仍由 Codex `qa_reviewer` 独立执行；ZCode 不替代 QA。
 4. ZCode 聊天中的“完成”不是完成依据，main 必须重新读取真实 git diff、测试证据和 handoff manual。
 5. ZCode 失败、无 diff、越权修改、无法读取必要 Figma 数据、prompt 未完整发送或 computer-use 不可用时，不得自动 fallback 为 main 自己写代码。

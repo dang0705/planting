@@ -82,9 +82,6 @@ export function resolveWateringDoseText(echo, potVolumeMl) {
   const doseClass = typeof echo === 'string' ? echo : echo?.doseClass
   const amountMl = typeof echo === 'object' ? Number(echo?.amountMl) : null
   const ratios = { mist: 0.03, small: 0.1, normal: 0.25, thorough: 0.5 }
-  if (doseClass === 'mist') {
-    return '喷一喷'
-  }
   if (doseClass === 'thorough') {
     return '浇到出水'
   }
@@ -344,4 +341,63 @@ export function buildWateringReminderSavePayload({
     },
     calendarPayload
   }
+}
+
+/* ---------- 独立浇水建议 API（不绑定用户植物，基于植物种类 + 临时盆型） ---------- */
+
+export function buildAdhocPlannerRequestPayload({
+  catalogPlantId,
+  potProfile,
+  weatherDays,
+  forecastDays
+}) {
+  return {
+    catalogPlantId,
+    potProfile,
+    referenceDate: todayStr(),
+    weatherDays,
+    forecastDays
+  }
+}
+
+export async function fetchAdhocPlannerResult({
+  catalogPlantId,
+  potProfile,
+  weatherDays,
+  forecastDays
+}) {
+  const response = await requestHttpFunction('plant-user-http/user-plants/watering-advisor', {
+    method: 'POST',
+    body: buildAdhocPlannerRequestPayload({ catalogPlantId, potProfile, weatherDays, forecastDays })
+  })
+  return response?.code === 200 ? normalizePlannerResultDate(response.data) : null
+}
+
+export async function saveAdvisorSession({
+  catalogPlantId,
+  catalogPlantName,
+  potProfile,
+  weatherSummary,
+  plannerResult
+}) {
+  const response = await requestHttpFunction('plant-user-http/user-plants/watering-advisor', {
+    method: 'POST',
+    body: {
+      action: 'save',
+      catalogPlantId,
+      catalogPlantName,
+      potProfile,
+      weatherSummary,
+      plannerResult
+    }
+  })
+  return response?.code === 200 ? response.data : null
+}
+
+export async function fetchAdvisorSessions({ page = 1, pageSize = 20 } = {}) {
+  const response = await requestHttpFunction(
+    `plant-user-http/user-plants/watering-advisor?page=${page}&pageSize=${pageSize}`,
+    { method: 'GET' }
+  )
+  return response?.code === 200 ? response.data : null
 }

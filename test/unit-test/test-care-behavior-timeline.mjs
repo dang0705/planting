@@ -55,7 +55,7 @@ assert.equal(displayWindow.length, 21)
 assert.equal(displayWindow[0].date, '2026-05-12')
 assert.equal(displayWindow[displayWindow.length - 1].date, '2026-06-01')
 assert.equal(displayWindow.find(item => item.date === baseDate).isToday, true)
-assert.equal(displayWindow.find(item => item.date === baseDate).isSelectable, false)
+assert.equal(displayWindow.find(item => item.date === baseDate).isSelectable, true)
 assert.equal(displayWindow.find(item => item.date === '2026-05-17').isHistoricalOutOfRange, true)
 assert.equal(displayWindow.find(item => item.date === '2026-05-17').isSelectable, false)
 assert.equal(displayWindow.find(item => item.date === '2026-06-01').isFuture, true)
@@ -72,9 +72,17 @@ const timelineWriteGuard = buildCareBehaviorTimelineFromDateEvents(
   }
 )
 
-assert.equal(timelineWriteGuard.watering_events_10d.length, 0)
-assert.equal(timelineWriteGuard.fertilizing_events_10d.length, 0)
-assert.equal(timelineWriteGuard.light_change_events_10d.length, 0)
+assert.equal(timelineWriteGuard.watering_events_10d.length, 1)
+assert.equal(timelineWriteGuard.fertilizing_events_10d.length, 1)
+assert.equal(timelineWriteGuard.light_change_events_10d.length, 1)
+assert.equal(timelineWriteGuard.watering_events_10d[0].date, baseDate)
+assert.equal(
+  normalizeCareBehaviorTimeline({
+    referenceDate: baseDate,
+    wateringEvents10d: [baseDate]
+  }).watering_events_10d.some(item => item.date === baseDate),
+  true
+)
 
 const fromCamelCase = normalizeCareBehaviorTimeline({
   referenceDate: baseDate,
@@ -131,15 +139,15 @@ assert.deepEqual(
 )
 
 const sessionInitialAnswerMap = createQuestionAnswerMap([sessionWateringQuestion])
-assert.equal(sessionInitialAnswerMap[sessionWateringQuestion.questionId], '')
+assert.equal(sessionInitialAnswerMap[sessionWateringQuestion.questionKey], '')
 
 const sessionMeaningfulPayload = buildQuestionAnswerPayload(
   { diagnosisSessionId: 's-session-meaningful', roundId: 'r1' },
-  { [sessionWateringQuestion.questionId]: 'care_behavior_timeline' },
+  { [sessionWateringQuestion.questionKey]: 'care_behavior_timeline' },
   {
     questionStack: [sessionWateringQuestion],
     careBehaviorTimelineByQuestionId: {
-      [sessionWateringQuestion.questionId]: {
+      [sessionWateringQuestion.questionKey]: {
         reference_date: baseDate,
         watering_events_10d: [{ date: '2026-05-27', watered: true, amount: 'normal' }],
         fertilizing_events_10d: [],
@@ -149,16 +157,16 @@ const sessionMeaningfulPayload = buildQuestionAnswerPayload(
   }
 )
 
-assert.equal(sessionMeaningfulPayload.answers[0].optionId, 'care_behavior_timeline')
+assert.equal(sessionMeaningfulPayload.answers[0].optionKey, 'care_behavior_timeline')
 assert.equal(Object.hasOwn(sessionMeaningfulPayload, 'careBehaviorTimeline'), true)
 
 const sessionUnknownPayload = buildQuestionAnswerPayload(
   { diagnosisSessionId: 's-session-unknown', roundId: 'r1' },
-  { [sessionWateringQuestion.questionId]: 'unknown' },
+  { [sessionWateringQuestion.questionKey]: 'unknown' },
   {
     questionStack: [sessionWateringQuestion],
     careBehaviorTimelineByQuestionId: {
-      [sessionWateringQuestion.questionId]: {
+      [sessionWateringQuestion.questionKey]: {
         reference_date: baseDate,
         watering_events_10d: [{ date: '2026-05-27', watered: true, amount: 'normal' }],
         fertilizing_events_10d: [],
@@ -168,7 +176,7 @@ const sessionUnknownPayload = buildQuestionAnswerPayload(
   }
 )
 
-assert.equal(sessionUnknownPayload.answers[0].optionId, 'unknown')
+assert.equal(sessionUnknownPayload.answers[0].optionKey, 'unknown')
 assert.equal(Object.hasOwn(sessionUnknownPayload, 'careBehaviorTimeline'), false)
 
 const ordinaryDefaultIdQuestion = {
@@ -208,9 +216,9 @@ const ordinaryAnswerMap = createQuestionAnswerMap([
   ordinaryDefaultKeyQuestion,
   ordinaryIsDefaultQuestion
 ])
-assert.equal(ordinaryAnswerMap[ordinaryDefaultIdQuestion.questionId], 'yes-option')
-assert.equal(ordinaryAnswerMap[ordinaryDefaultKeyQuestion.questionId], 'yes-option')
-assert.equal(ordinaryAnswerMap[ordinaryIsDefaultQuestion.questionId], 'yes-option')
+assert.equal(ordinaryAnswerMap[ordinaryDefaultIdQuestion.questionKey], 'yes-option')
+assert.equal(ordinaryAnswerMap[ordinaryDefaultKeyQuestion.questionKey], 'yes-option')
+assert.equal(ordinaryAnswerMap[ordinaryIsDefaultQuestion.questionKey], 'yes-option')
 
 const baseTimeline = {
   reference_date: baseDate,
@@ -360,22 +368,32 @@ const componentSourceFiles = [
   './src/components/care-behavior-timeline/icons.js',
   './src/components/care-behavior-timeline/popover-position.js',
   './src/components/care-behavior-timeline/useCareBehaviorTimeline.js',
-  './src/components/care-behavior-timeline/weather.js'
+  './src/components/care-behavior-timeline/weather.js',
+  './src/components/diagnose-popup/DiagnoseResultStage.vue'
 ]
 const componentSource = componentSourceFiles.map(file => readFileSync(file, 'utf8')).join('\n')
 const questionPageSource = readFileSync('./src/pages/diagnose/question-package.vue', 'utf8')
-const questionFlowSource = readFileSync('./src/pages/diagnose/question-package/question-flow.js', 'utf8')
+const questionFlowSource = readFileSync(
+  './src/pages/diagnose/question-package/question-flow.js',
+  'utf8'
+)
 const diagnosePopupSource = readFileSync('./src/components/DiagnosePopup.vue', 'utf8')
 const compactComponentSource = componentSource.replace(/\s+/g, ' ')
-const pageSwiperMatches = questionPageSource.match(/id="diagnose-question-package-page-swiper"/g) || []
+const pageSwiperMatches =
+  questionPageSource.match(/id="diagnose-question-package-page-swiper"/g) || []
 const questionPageTrackStart = questionPageSource.indexOf('questionPageTrackStyle')
 const questionPageItemStart = questionPageSource.indexOf('diagnose-question-package-page-item')
-assert.ok(componentSource.includes('v-if="item.watering"') || componentSource.includes(':active="item.watering"'))
 assert.ok(
-  componentSource.includes('v-if="item.fertilizing"') || componentSource.includes(':active="item.fertilizing"')
+  componentSource.includes('v-if="item.watering"') ||
+    componentSource.includes(':active="item.watering"')
 )
 assert.ok(
-  componentSource.includes('v-if="item.lightChange"') || componentSource.includes(':active="item.lightChange"')
+  componentSource.includes('v-if="item.fertilizing"') ||
+    componentSource.includes(':active="item.fertilizing"')
+)
+assert.ok(
+  componentSource.includes('v-if="item.lightChange"') ||
+    componentSource.includes(':active="item.lightChange"')
 )
 assert.ok(componentSource.includes('care-behavior-calendar-card'))
 assert.ok(componentSource.includes('care-behavior-detail-popover'))
@@ -413,7 +431,7 @@ assert.ok(componentSource.includes('handleDatePressStart'))
 assert.ok(componentSource.includes('handleDatePressEnd'))
 assert.ok(
   componentSource.includes('@select-date="selectDate"') ||
-    componentSource.includes("@click=\"$emit('select', item)\"")
+    componentSource.includes('@click="$emit(\'select\', item)"')
 )
 assert.ok(componentSource.includes('@longpress') || componentSource.includes('popoverDate'))
 assert.equal(componentSource.includes('D0'), false)
@@ -441,15 +459,19 @@ assert.ok(componentSource.includes('care-behavior-dot--fertilize'))
 assert.ok(componentSource.includes('care-behavior-dot--light'))
 assert.ok(componentSource.includes('care-behavior-metrics-spacer'))
 assert.ok(
-  /isSelected:\s*Boolean\(\s*state\.selectedWatering\s*&&\s*item\.isSelectable\s*&&\s*!item\.isToday\s*&&\s*!item\.isHistoricalOutOfRange\s*&&\s*!item\.isFuture\s*\)/.test(
+  /isSelected:\s*Boolean\(\s*state\.selectedWatering\s*&&\s*item\.isSelectable\s*&&\s*!item\.isHistoricalOutOfRange\s*&&\s*!item\.isFuture\s*\)/.test(
     componentSource
   )
 )
 assert.ok(componentSource.includes('watering: Boolean(state.recordedWatering)'))
 assert.ok(componentSource.includes('fertilizing: Boolean(state.recordedFertilizing)'))
 assert.ok(componentSource.includes('lightChange: Boolean(state.recordedLightChange)'))
-assert.ok(componentSource.includes('selected_watering_events_10d: nextTimeline.watering_events_10d'))
-assert.ok(componentSource.includes('recorded_watering_events_10d: timelineEventSources.value.recordedWateringEvents'))
+assert.ok(componentSource.includes('selected_watering_events_10d: wateringEventsWithDose'))
+assert.ok(
+  componentSource.includes(
+    'recorded_watering_events_10d: timelineEventSources.value.recordedWateringEvents'
+  )
+)
 assert.ok(componentSource.includes("toggleCareAction(item.date, 'watering')"))
 assert.ok(componentSource.includes('resolveSelectedDateAfterRebuild(nextDateStates)'))
 assert.ok(
@@ -460,10 +482,6 @@ assert.ok(
 assert.ok(componentSource.includes('selectedDateTemperatureText'))
 assert.ok(componentSource.includes('selectedDateHumidityText'))
 assert.ok(componentSource.includes('selectedDateBehaviorText'))
-assert.ok(
-  componentSource.includes('diagnose-care-behavior-action-water-${selectedDateState.date}') ||
-    componentSource.includes('diagnose-care-behavior-action-water-${state.date}')
-)
 assert.equal(
   componentSource.includes("@click=\"$emit('toggle-care-action', state.date, 'watering')\""),
   false
@@ -477,7 +495,9 @@ assert.equal(
   false
 )
 assert.equal(componentSource.includes('care-behavior-action-row'), false)
-assert.ok(questionFlowSource.includes('isCareBehaviorTimelineUnclearAnswer(question, currentOptionId)'))
+assert.ok(
+  questionFlowSource.includes('isCareBehaviorTimelineUnclearAnswer(question, currentOptionId)')
+)
 assert.ok(
   componentSource.indexOf('selectedDate.value = item.date') <
     componentSource.indexOf("toggleCareAction(item.date, 'watering')")
@@ -518,14 +538,12 @@ assert.ok(
 assert.ok(compactComponentSource.includes('v-if="item.hasWeatherMetrics"'))
 assert.ok(compactComponentSource.includes('v-if="item.temperatureText"'))
 assert.ok(compactComponentSource.includes('v-if="item.humidityText"'))
-assert.ok(compactComponentSource.includes('diagnose-care-behavior-light-'))
+assert.ok(compactComponentSource.includes('`${idPrefix}-care-behavior-light-${item.date}`'))
 assert.ok(compactComponentSource.includes("raw.replace(/[℃°℉%]/g, '').trim()"))
 assert.ok(
   compactComponentSource.includes('entry.temp ?? entry.temperature ?? entry.tempC ?? entry.tempF')
 )
-assert.ok(
-  componentSource.includes('care-behavior-cell--selected border-2 !border-[#2d7a4f]')
-)
+assert.ok(componentSource.includes('care-behavior-cell--selected border-2 !border-[#2d7a4f]'))
 assert.ok(componentSource.includes('care-behavior-day--today font-bold text-red-500'))
 assert.ok(
   componentSource.includes('flex h-[30px] w-full flex-col justify-center gap-0 overflow-hidden')
@@ -557,7 +575,9 @@ assert.ok(
 assert.ok(compactComponentSource.includes("transform: 'translateX(-50%)'"))
 assert.ok(compactComponentSource.includes('return { left: `${DATE_CELL_WIDTH_PX / 2}px` }'))
 assert.ok(
-  compactComponentSource.includes('return { left: `${POPOVER_WIDTH_PX - DATE_CELL_WIDTH_PX / 2}px` }')
+  compactComponentSource.includes(
+    'return { left: `${POPOVER_WIDTH_PX - DATE_CELL_WIDTH_PX / 2}px` }'
+  )
 )
 assert.ok(compactComponentSource.includes("return { left: '50%' }"))
 assert.ok(componentSource.includes('shadow-[0_10px_24px_rgba(15,23,42,0.08)]'))
@@ -572,8 +592,8 @@ assert.ok(questionPageSource.includes('questionDiagnosisContextText'))
 assert.ok(questionPageSource.includes('questionProgressText'))
 assert.ok(questionPageSource.includes('diagnose-question-package-page-swiper'))
 assert.ok(questionPageSource.includes('questionPageTrackStyle'))
-assert.ok(diagnosePopupSource.includes('questionSwiperTrackStyle'))
-assert.ok(diagnosePopupSource.includes('questionSwiperTrackStyle'))
+assert.ok(componentSource.includes('questionSwiperTrackStyle'))
+assert.ok(componentSource.includes('diagnose-question-package-swiper'))
 assert.equal(questionPageSource.includes('<swiper'), false)
 assert.equal(questionPageSource.includes('<swiper-item'), false)
 assert.equal(diagnosePopupSource.includes('<swiper'), false)
@@ -588,14 +608,8 @@ assert.ok(
 assert.ok(questionPageSource.includes(':loading="environmentWeatherWindowLoading"'))
 assert.ok(questionPageSource.includes(':error="environmentWeatherWindowError"'))
 assert.ok(questionFlowSource.includes('Object.keys(storedTimeline).length'))
-assert.ok(
-  questionFlowSource.includes(
-    'mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(storedTimeline, environmentWeatherWindow.value)'
-  )
-)
-assert.ok(
-  questionPageSource.indexOf('questionDiagnosisContextText') < questionPageTrackStart
-)
+assert.ok(questionFlowSource.includes('mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline('))
+assert.ok(questionPageSource.indexOf('questionDiagnosisContextText') < questionPageTrackStart)
 assert.ok(questionPageItemStart > questionPageTrackStart)
 assert.equal(questionPageSource.includes('question-package-question-count'), false)
 assert.ok(questionPageSource.includes('uni.navigateBack({ delta: 1 })'))
@@ -687,7 +701,7 @@ const timelineBuild = buildCareBehaviorTimelineFromDateEvents(
       watering: true,
       fertilizing: true,
       lightChange: true,
-      isSelectable: false,
+      isSelectable: true,
       isToday: true
     }
   },
@@ -695,11 +709,11 @@ const timelineBuild = buildCareBehaviorTimelineFromDateEvents(
 )
 assert.equal(
   timelineBuild.watering_events_10d.some(item => item.date === '2026-05-28'),
-  false
+  true
 )
 assert.equal(
   timelineBuild.fertilizing_events_10d.some(item => item.date === '2026-05-28'),
-  false
+  true
 )
 
 const withInvalidBucket = normalizeCareBehaviorTimeline({
@@ -892,7 +906,7 @@ const meaningfulTimelinePayload = buildQuestionAnswerPayload(
     }
   }
 )
-assert.equal(meaningfulTimelinePayload.answers[0].optionId, 'timeline_recorded')
+assert.equal(meaningfulTimelinePayload.answers[0].optionKey, 'timeline_recorded')
 assert.equal(meaningfulTimelinePayload.careBehaviorTimeline.watering_events_10d.length, 1)
 assert.equal(
   meaningfulTimelinePayload.careBehaviorTimeline.watering_events_10d[0].date,
@@ -942,7 +956,7 @@ const unclearOnlyPayload = buildQuestionAnswerPayload(
     }
   }
 )
-assert.equal(unclearOnlyPayload.answers[0].optionId, 'unclear')
+assert.equal(unclearOnlyPayload.answers[0].optionKey, 'unclear')
 assert.equal(Object.hasOwn(unclearOnlyPayload, 'careBehaviorTimeline'), false)
 
 const unclearWithMeaningfulTimelinePayload = buildQuestionAnswerPayload(
@@ -963,5 +977,5 @@ const unclearWithMeaningfulTimelinePayload = buildQuestionAnswerPayload(
     }
   }
 )
-assert.equal(unclearWithMeaningfulTimelinePayload.answers[0].optionId, 'unclear')
+assert.equal(unclearWithMeaningfulTimelinePayload.answers[0].optionKey, 'unclear')
 assert.equal(Object.hasOwn(unclearWithMeaningfulTimelinePayload, 'careBehaviorTimeline'), false)

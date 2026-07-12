@@ -17,10 +17,7 @@
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 
-const {
-  resolveMlToDoseClass,
-  formatMlRangeToBottleText
-} = require('./water-volume-format')
+const { resolveMlToDoseClass } = require('./water-volume-format')
 
 /**
  * 浇水量分级
@@ -105,7 +102,9 @@ function normalizeDate(value = '') {
   }
   const match = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/)
   if (match) {
-    return [match[1], String(match[2]).padStart(2, '0'), String(match[3]).padStart(2, '0')].join('-')
+    return [match[1], String(match[2]).padStart(2, '0'), String(match[3]).padStart(2, '0')].join(
+      '-'
+    )
   }
   return raw.slice(0, 10)
 }
@@ -230,7 +229,12 @@ function resolveLookbackWindowDays(baselineIntervalDays = [5, 8], potGeometry = 
  * @param {number} lookbackWindowDays - 回看窗口
  * @returns {number} 0~1+ 的水合负载
  */
-function computeEffectiveHydrationLoad(wateringEvents = [], referenceDate = '', lookbackWindowDays = 10, potVolumeMl = 0) {
+function computeEffectiveHydrationLoad(
+  wateringEvents = [],
+  referenceDate = '',
+  lookbackWindowDays = 10,
+  potVolumeMl = 0
+) {
   if (!wateringEvents.length || lookbackWindowDays <= 0) {
     return 0
   }
@@ -245,7 +249,7 @@ function computeEffectiveHydrationLoad(wateringEvents = [], referenceDate = '', 
     const recencyDecay = 1 - diff / lookbackWindowDays
     totalLoad += weight * recencyDecay
   }
-  return Math.round((totalLoad / lookbackWindowDays * 10) * 100) / 100
+  return Math.round((totalLoad / lookbackWindowDays) * 10 * 100) / 100
 }
 
 /**
@@ -282,7 +286,7 @@ function computeWetPressureLoad(
     totalPressure += weight * recencyDecay
   }
   const drainageMultiplier = Number(potGeometry.drainageRiskFactor) || 0.5
-  return Math.round((totalPressure / lookbackWindowDays * 10 * drainageMultiplier) * 100) / 100
+  return Math.round((totalPressure / lookbackWindowDays) * 10 * drainageMultiplier * 100) / 100
 }
 
 /**
@@ -295,7 +299,11 @@ function computeWetPressureLoad(
  * @param {string} referenceDate - 参考日期
  * @returns {number|null} 天数，null 表示无有效浇水记录
  */
-function computeLastEffectiveRootWateredDaysAgo(wateringEvents = [], referenceDate = '', potVolumeMl = 0) {
+function computeLastEffectiveRootWateredDaysAgo(
+  wateringEvents = [],
+  referenceDate = '',
+  potVolumeMl = 0
+) {
   let latest = null
   for (const event of wateringEvents) {
     const { doseClass, doseConflict } = resolveDoseClassWithConflict(event, potVolumeMl)
@@ -430,7 +438,11 @@ function evaluateDryWetGate({
     lastEffectiveRootWateredDaysAgo !== null &&
     lastEffectiveRootWateredDaysAgo <= 2
 
-  const isWet = isHighMoisture && isHighWetPressure || isThoroughAndRecent && weatherWetPressureHitCount >= 2 || isNoDrainageNarrowHighMoisture || isVeryHighMoistureAndRecent
+  const isWet =
+    (isHighMoisture && isHighWetPressure) ||
+    (isThoroughAndRecent && weatherWetPressureHitCount >= 2) ||
+    isNoDrainageNarrowHighMoisture ||
+    isVeryHighMoistureAndRecent
 
   if (isWet) {
     if (hasNoDrainageNarrowBottom) {
@@ -457,8 +469,7 @@ function evaluateDryWetGate({
   const isLowMoisture = rootZoneMoistureIndex < 0.3
   const baselineMinDays = Number(baselineIntervalDays[0]) || 5
   const isTooLongAgo =
-    lastEffectiveRootWateredDaysAgo === null ||
-    lastEffectiveRootWateredDaysAgo >= baselineMinDays
+    lastEffectiveRootWateredDaysAgo === null || lastEffectiveRootWateredDaysAgo >= baselineMinDays
 
   const dryReasons = []
   if (isLowMoisture && isTooLongAgo) {
@@ -476,10 +487,10 @@ function evaluateDryWetGate({
   // 但超期天数远超基线（>baselineMinDays×2）时不压制——严重缺水不会被天气湿信号掩盖
   // null（无有效根浇）且 isTooLongAgo 时也视为严重超期
   const severeOverdueDays = (baselineMinDays || 5) * 2
-  const isSevereOverdue = isTooLongAgo && (
-    lastEffectiveRootWateredDaysAgo === null ||
-    lastEffectiveRootWateredDaysAgo >= severeOverdueDays
-  )
+  const isSevereOverdue =
+    isTooLongAgo &&
+    (lastEffectiveRootWateredDaysAgo === null ||
+      lastEffectiveRootWateredDaysAgo >= severeOverdueDays)
   if (
     isDry &&
     weatherWetPressureHitCount >= 2 &&
@@ -529,7 +540,12 @@ function evaluateDryWetGate({
 /**
  * 检测近期是否有浇透事件。
  */
-function hasRecentThoroughWatering(wateringEvents = [], referenceDate = '', withinDays = 5, potVolumeMl = 0) {
+function hasRecentThoroughWatering(
+  wateringEvents = [],
+  referenceDate = '',
+  withinDays = 5,
+  potVolumeMl = 0
+) {
   for (const event of wateringEvents) {
     const diff = daysAgo(referenceDate, event.date)
     if (diff === null || diff < 0 || diff > withinDays) {
@@ -550,9 +566,17 @@ function hasRecentThoroughWatering(wateringEvents = [], referenceDate = '', with
  * @param {object} potGeometry - 盆型几何
  * @param {string} gateState - 门控状态
  * @param {number[]} baselineIntervalDays - 属级基线间隔
- * @returns {object} { amountRangeMl, amountBottleText, stopCondition, confidenceLevel }
+ * @returns {object} { amountRangeMl, stopCondition, confidenceLevel }
+ *
+ * 注：文案换算已移至前端 src/utils/water-volume-format.js，后端只返回 amountRangeMl（ml 数组），
+ * 不再产出 amountBottleText。
  */
-function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELINE, _baselineIntervalDays = [5, 8], options = {}) {
+function computeAmountSuggestion(
+  potGeometry = {},
+  gateState = GATE_STATE.BASELINE,
+  _baselineIntervalDays = [5, 8],
+  options = {}
+) {
   const volumeMl = Number(potGeometry.potVolumeMl) || 0
   const volumeConfidence = potGeometry.volumeConfidence || 'low'
 
@@ -561,7 +585,6 @@ function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELI
     if (gateState === GATE_STATE.WET) {
       return {
         amountRangeMl: [0, 0],
-        amountBottleText: formatMlRangeToBottleText([0, 0]),
         stopCondition: '暂停浇水，检查土壤干湿后再决定',
         confidenceLevel: 'low'
       }
@@ -569,14 +592,12 @@ function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELI
     if (gateState === GATE_STATE.DRY) {
       return {
         amountRangeMl: [100, 200],
-        amountBottleText: formatMlRangeToBottleText([100, 200]),
         stopCondition: '盆底出水即可停止',
         confidenceLevel: 'low'
       }
     }
     return {
       amountRangeMl: [50, 150],
-      amountBottleText: formatMlRangeToBottleText([50, 150]),
       stopCondition: '盆土表面湿润即可停止',
       confidenceLevel: 'low'
     }
@@ -586,7 +607,6 @@ function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELI
   if (gateState === GATE_STATE.WET) {
     return {
       amountRangeMl: [0, 0],
-      amountBottleText: formatMlRangeToBottleText([0, 0]),
       stopCondition: '暂停浇水，检查土壤干湿后再决定',
       confidenceLevel: volumeConfidence
     }
@@ -604,7 +624,10 @@ function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELI
   }
 
   // 天气偏湿水量压制（仅 DRY 生效，BASELINE 不压）
-  const wetFactor = resolveWeatherWetAmountFactor(gateState, Number(options.weatherWetPressureHitCount) || 0)
+  const wetFactor = resolveWeatherWetAmountFactor(
+    gateState,
+    Number(options.weatherWetPressureHitCount) || 0
+  )
   if (wetFactor < 1.0) {
     amountRangeMl = [
       Math.round(amountRangeMl[0] * wetFactor),
@@ -660,7 +683,6 @@ function computeAmountSuggestion(potGeometry = {}, gateState = GATE_STATE.BASELI
 
   return {
     amountRangeMl,
-    amountBottleText: formatMlRangeToBottleText(amountRangeMl),
     stopCondition,
     confidenceLevel: volumeConfidence,
     reasonCodes

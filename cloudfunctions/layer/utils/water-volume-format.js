@@ -1,40 +1,16 @@
 'use strict'
 
 /**
- * 矿泉水瓶度量 + 落档动态化 —— 浇水提醒算法 v2.1（Task 5）。
+ * 浇水提醒算法 v2.1 -- 剂量落档（后端）。
  *
  * 职责：
- *   1. 把绝对水量 ml 换算成用户易懂的「约 X 瓶矿泉水」文案（550ml/瓶，0.5 瓶粒度）。
- *   2. 按「水量占盆体积百分比」动态落档（解决固定 30/80/300ml 阈值对大小盆偏差的问题）。
- *   3. 录入侧用户填写的绝对 ml 反推相对档（喂给算法权重表）。
+ *   1. 按「水量占盆体积百分比」动态落档（解决固定 30/80/300ml 阈值对大小盆偏差的问题）。
+ *   2. 录入侧用户填写的绝对 ml 反推相对档（喂给算法权重表）。
  *
- * 纯函数，无 DB、无外部 IO；前端有镜像实现 src/utils/water-volume-format.js。
+ * 文案换算已移至前端 src/utils/water-volume-format.js，后端只返回 amountRangeMl（ml 数组）。
+ *
+ * 纯函数，无 DB、无外部 IO。
  */
-
-const BOTTLE_ML = 550
-
-/** 5 升油桶（大水量计量单位）。 */
-const BUCKET_ML = 5000
-
-/** 桶数换算容差：上限超出整桶的部分 < 此值时归到当前桶，避免 50069ml 被算成 11 桶。 */
-const BUCKET_ROUND_TOLERANCE_ML = BUCKET_ML * 0.1 // 500ml
-
-/**
- * 把 ml 换算成桶数（下限用 round，上限用带容差的 ceil）。
- * @param {number} ml
- * @param {'lower'|'upper'} side - lower=四舍五入；upper=超出整桶 10% 才进位
- */
-function mlToBucketCount(ml, side) {
-  if (side === 'upper') {
-    const ceil = Math.ceil(ml / BUCKET_ML)
-    const rounded = Math.round(ml / BUCKET_ML)
-    // 上限超出整桶的部分 < 容差（500ml）时归到当前桶，否则进位
-    return ml - rounded * BUCKET_ML > BUCKET_ROUND_TOLERANCE_ML
-      ? Math.max(1, ceil)
-      : Math.max(1, rounded)
-  }
-  return Math.max(1, Math.round(ml / BUCKET_ML))
-}
 
 /**
  * 浇水量分级（与 hydration-load.DOSE_CLASS 保持一致）。
@@ -65,46 +41,9 @@ const FIXED_ML_THRESHOLDS = Object.freeze({
   NORMAL_MAX: 300
 })
 
-/** 低于此 ml 视为"喷一喷"，不换算瓶数。 */
-const MIST_TEXT_MAX_ML = 50
-/** ≥ 5000ml（5 升）改用「约 N 桶」油桶计量。 */
-const BUCKET_TEXT_MIN_ML = BUCKET_ML
-
 function toFiniteNumber(value) {
   const num = Number(value)
   return Number.isFinite(num) ? num : null
-}
-
-/**
- * 把绝对水量 ml 换算成用户可读文案。
- *
- * - ≤0：无需浇水
- * - ≤50ml：喷一喷
- * - 50 ~ 5000ml：就近 0.5 瓶粒度矿泉水瓶，如「约半瓶(275ml)」「约1瓶(550ml)」
- * - ≥5000ml：改用 5 升油桶计量，四舍五入「约 N 桶（5升油桶，约 X ml）」
- *
- * @param {number} ml
- * @returns {string}
- */
-function formatMlToBottleText(ml) {
-  const value = toFiniteNumber(ml)
-  if (value === null || value <= 0) {
-    return '无需浇水'
-  }
-  if (value <= MIST_TEXT_MAX_ML) {
-    return '喷一喷'
-  }
-  if (value >= BUCKET_TEXT_MIN_ML) {
-    const buckets = Math.max(1, Math.round(value / BUCKET_ML))
-    return `约${buckets}桶（5升油桶）`
-  }
-  // 就近 0.5 瓶粒度
-  const bottles = Math.round((value / BOTTLE_ML) * 2) / 2
-  if (bottles <= 0.5) {
-    return '约半瓶'
-  }
-  const bottleLabel = Number.isInteger(bottles) ? String(bottles) : String(bottles)
-  return `约${bottleLabel}瓶`
 }
 
 /**
@@ -165,67 +104,10 @@ function resolveMlToDoseClass(ml, potVolumeMl) {
   return classifyDoseByVolumeRatio(amount, potVolumeMl)
 }
 
-/**
- * 把水量区间 [minMl, maxMl] 换算成瓶数文案。
- *
- * - [0,0] → 暂停提示
- * - 下限 ≤ 50ml（喷雾级）或上下限差 ≤ 50ml → 退回单值（取上限）
- * - 区间都在油桶级（≥5000ml）→ 「约{min}~{max}桶」
- * - 区间都在瓶级（50~5000ml）→ 「约{min}~{max}瓶」
- * - 区间跨瓶/桶级 → 「约{min}ml~{max}ml」（不跨单位换算，保留原始 ml）
- *
- * @param {number[]} rangeMl
- * @returns {string}
- */
-function formatMlRangeToBottleText(rangeMl) {
-  if (!Array.isArray(rangeMl) || rangeMl.length < 2) {
-    return '暂无建议水量'
-  }
-  const lower = toFiniteNumber(rangeMl[0])
-  const upper = toFiniteNumber(rangeMl[1])
-  if (upper === null || upper <= 0) {
-    return '暂停浇水'
-  }
-  // 区间跨度足够大且下限非喷雾级时，输出区间文案
-  if (lower !== null && lower > MIST_TEXT_MAX_ML && upper - lower > MIST_TEXT_MAX_ML) {
-    // 都在油桶级（≥5000ml）→ 换算桶数
-    if (lower >= BUCKET_TEXT_MIN_ML) {
-      const loBuckets = mlToBucketCount(lower, 'lower')
-      const hiBuckets = Math.max(loBuckets, mlToBucketCount(upper, 'upper'))
-      // 桶数相同时退回单值
-      if (loBuckets === hiBuckets) {
-        return `约${hiBuckets}桶（5升油桶）`
-      }
-      return `约${loBuckets}~${hiBuckets}桶（5升油桶）`
-    }
-    // 都在瓶级（50~5000ml）→ 换算瓶数（0.5瓶粒度）
-    if (upper < BUCKET_TEXT_MIN_ML) {
-      const loBottles = Math.max(0.5, Math.round((lower / BOTTLE_ML) * 2) / 2)
-      const hiBottles = Math.max(loBottles, Math.round((upper / BOTTLE_ML) * 2) / 2)
-      // 瓶数相同时退回单值
-      if (loBottles === hiBottles) {
-        return formatMlToBottleText(upper)
-      }
-      return `约${loBottles}~${hiBottles}瓶`
-    }
-    // 跨瓶/桶级（下限<5000，上限≥5000）→ 按上限统一换算油桶，不输出原始 ml
-    const loBuckets = mlToBucketCount(lower, 'lower')
-    const hiBuckets = Math.max(loBuckets, mlToBucketCount(upper, 'upper'))
-    if (loBuckets === hiBuckets) {
-      return `约${hiBuckets}桶（5升油桶）`
-    }
-    return `约${loBuckets}~${hiBuckets}桶（5升油桶）`
-  }
-  return formatMlToBottleText(upper)
-}
-
 module.exports = {
-  BOTTLE_ML,
   DOSE_CLASS,
   VOLUME_RATIO_THRESHOLDS,
   FIXED_ML_THRESHOLDS,
-  formatMlToBottleText,
-  formatMlRangeToBottleText,
   classifyDoseByVolumeRatio,
   resolveMlToDoseClass
 }

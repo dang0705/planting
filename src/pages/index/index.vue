@@ -73,6 +73,20 @@
             <uni-icons type="plusempty" />
             <text class="text-sm font-semibold text-primary">添加新植物</text>
           </view>
+          <view
+            id="index-watering-advisor-entry"
+            class="mt-3 flex items-center justify-between rounded-[20px] bg-white p-4 shadow-sm"
+            @click="goWateringAdvisor"
+          >
+            <view class="flex items-center gap-3">
+              <text class="text-[24px]">💧</text>
+              <view>
+                <text class="block text-sm font-semibold text-gray-800">独立浇水建议</text>
+                <text class="block text-[11px] text-gray-400">不添加植物也能获取浇水方案</text>
+              </view>
+            </view>
+            <text class="text-[18px] text-gray-300">›</text>
+          </view>
         </view>
       </template>
 
@@ -175,6 +189,9 @@ async function handleIndexPhoneLogin(event) {
 }
 function addPlant() {
   uni.navigateTo({ url: '/pages/add-plant/add-plant' })
+}
+function goWateringAdvisor() {
+  uni.navigateTo({ url: '/pages/watering-advisor/watering-advisor' })
 }
 function viewPlantDetail(plant) {
   plantStore.setCurrentPlant(plant)

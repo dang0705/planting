@@ -261,9 +261,6 @@ export function buildCareBehaviorTimelineFromDateEvents(dateEvents = {}, options
     ) {
       continue
     }
-    if (rawState.isToday) {
-      continue
-    }
     if (rawState.watering) {
       wateringEvents.push({ date, watered: true, amount: CARE_BEHAVIOR_WATERING_DEFAULT_AMOUNT })
     }

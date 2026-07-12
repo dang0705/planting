@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "byterover": {
+      "source": "campfirein/skills",
+      "sourceType": "github",
+      "skillPath": "skills/byterover/SKILL.md",
+      "computedHash": "c38855f8ac5d61b271fb16e63c8ba1e0171c80512ea2373108a778bf21befe06"
+    },
     "cloudbase": {
       "source": "tencentcloudbase/cloudbase-skills",
       "sourceType": "github",

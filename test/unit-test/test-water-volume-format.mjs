@@ -1,23 +1,23 @@
 'use strict'
 
 /**
- * 矿泉水瓶度量 + 落档动态化 单元测试（Task 5）。
+ * 水量工具单元测试。
  *
- * 覆盖：
- *   - formatMlToBottleText：ml → 「约X瓶」连续换算文案
- *   - classifyDoseByVolumeRatio：按 ml/盆体积 百分比落档（无盆体积 fallback 固定 ml）
- *   - resolveMlToDoseClass：录入侧 ml → 相对档反推
+ * Part 1：文案换算（前端 src/utils/water-volume-format.js）
+ * Part 2/3：剂量落档算法（后端 cloudfunctions/layer/utils/water-volume-format.js）
  */
 
 import assert from 'node:assert/strict'
 import { createRequire } from 'node:module'
+import {
+  BOTTLE_ML,
+  formatMlToBottleText,
+  formatMlRangeToBottleText
+} from '../../src/utils/water-volume-format.js'
 
 const require = createRequire(import.meta.url)
 
 const {
-  BOTTLE_ML,
-  formatMlToBottleText,
-  formatMlRangeToBottleText,
   classifyDoseByVolumeRatio,
   resolveMlToDoseClass,
   DOSE_CLASS
@@ -34,27 +34,27 @@ function test(name, fn) {
 }
 
 /* ============================================================
- * 1. 瓶数换算文案
+ * 1. 瓶数换算文案（前端）
  * ============================================================ */
 
 test('format: 基准瓶为 550ml', () => {
   assert.equal(BOTTLE_ML, 550)
 })
 
-test('format: 极少量走"喷一喷"', () => {
-  assert.match(formatMlToBottleText(20), /喷/)
-  assert.match(formatMlToBottleText(0), /喷|—|无/)
+test('format: 极少量归约半瓶', () => {
+  assert.match(formatMlToBottleText(20), /半瓶/)
+  assert.match(formatMlToBottleText(0), /无需/)
 })
 
 test('format: 约半瓶（275ml 附近）', () => {
   const text = formatMlToBottleText(275)
   assert.match(text, /半瓶/)
-  assert.match(text, /275|ml/)
+  assert.match(text, /矿泉水瓶/)
 })
 
 test('format: 约1瓶（550ml）', () => {
   const text = formatMlToBottleText(550)
-  assert.match(text, /1\s*瓶|一瓶/)
+  assert.match(text, /1\s*瓶/)
 })
 
 test('format: 约1.5瓶（825ml）', () => {
@@ -62,43 +62,31 @@ test('format: 约1.5瓶（825ml）', () => {
   assert.match(text, /1\.5\s*瓶/)
 })
 
-test('format: 2500~5000ml 仍用瓶（未达5升油桶）', () => {
-  const text = formatMlToBottleText(2600)
-  assert.match(text, /瓶/)
-  assert.doesNotMatch(text, /桶/)
+test('format: 2500ml 达到油桶门槛用桶', () => {
+  const text = formatMlToBottleText(2500)
+  assert.match(text, /桶/)
+  assert.doesNotMatch(text, /瓶/)
 })
 
-test('format: ≥5升改用油桶计量（约N桶）', () => {
-  // 5000ml = 1 桶
+test('format: ≥2500ml 用油桶计量（约N桶）', () => {
   assert.match(formatMlToBottleText(5000), /约1桶/)
-  assert.match(formatMlToBottleText(5000), /5升油桶|5L|升/)
-  // 12000ml ≈ 2.4 桶 → 四舍五入 约2桶
+  assert.match(formatMlToBottleText(5000), /5L/)
   assert.match(formatMlToBottleText(12000), /约2桶/)
-  // 85118ml ≈ 17.0 桶 → 约17桶
   assert.match(formatMlToBottleText(85118), /约17桶/)
 })
 
-test('format: 4999ml 仍用瓶（不足5升不进油桶）', () => {
-  assert.doesNotMatch(formatMlToBottleText(4999), /桶/)
-})
-
-test('format: 0.5 瓶粒度就近取整', () => {
-  // 400ml ≈ 0.73 瓶 → 就近 0.5 瓶粒度应落"约半瓶"或"约1瓶"，且带 ml
-  const text = formatMlToBottleText(400)
-  assert.match(text, /瓶/)
-  assert.match(text, /400|ml/)
+test('format: 2499ml 仍用瓶（不足2500不进油桶）', () => {
+  assert.doesNotMatch(formatMlToBottleText(2499), /桶/)
 })
 
 test('formatRange: 区间用上限换算瓶数', () => {
-  // [55,83] → 用上限 83 换算 ≈ 0.5 瓶
   const text = formatMlRangeToBottleText([55, 83])
-  assert.match(text, /瓶|喷/)
-  assert.match(text, /ml/)
+  assert.match(text, /瓶/)
 })
 
 test('formatRange: 暂停区间 [0,0] 提示暂停', () => {
   const text = formatMlRangeToBottleText([0, 0])
-  assert.match(text, /暂停|无需|—/)
+  assert.match(text, /暂停|无需|-/)
 })
 
 test('formatRange: 非法输入回退安全文案', () => {
@@ -106,8 +94,19 @@ test('formatRange: 非法输入回退安全文案', () => {
   assert.equal(typeof formatMlRangeToBottleText([]), 'string')
 })
 
+test('formatRange: [1000,1500] 都<2500 -> 瓶', () => {
+  const text = formatMlRangeToBottleText([1000, 1500])
+  assert.match(text, /瓶/)
+  assert.doesNotMatch(text, /桶/)
+})
+
+test('formatRange: [6000,9000] 都≥2500 -> 桶', () => {
+  const text = formatMlRangeToBottleText([6000, 9000])
+  assert.match(text, /桶/)
+})
+
 /* ============================================================
- * 2. 按盆体积百分比落档（动态化）
+ * 2. 按盆体积百分比落档（动态化）-- 后端算法
  * ============================================================ */
 
 test('classify: 有盆体积时按百分比落档（5/15/40）', () => {
@@ -119,7 +118,6 @@ test('classify: 有盆体积时按百分比落档（5/15/40）', () => {
 })
 
 test('classify: 大盆 vs 小盆 同 ml 落不同档', () => {
-  // 300ml 对 5000ml 大盆 = 6% → 少量；对 500ml 小盆 = 60% → 浇透
   assert.equal(classifyDoseByVolumeRatio(300, 5000), DOSE_CLASS.SMALL)
   assert.equal(classifyDoseByVolumeRatio(300, 500), DOSE_CLASS.THOROUGH)
 })
@@ -132,7 +130,7 @@ test('classify: 无盆体积 fallback 到固定 ml 阈值（30/80/300）', () =>
 })
 
 /* ============================================================
- * 3. 录入侧 ml → 相对档反推
+ * 3. 录入侧 ml -> 相对档反推 -- 后端算法
  * ============================================================ */
 
 test('resolveMlToDoseClass: 有盆体积按百分比反推', () => {
@@ -151,4 +149,4 @@ test('resolveMlToDoseClass: 非法 ml 返回 unknown', () => {
   assert.equal(resolveMlToDoseClass(NaN, 1000), DOSE_CLASS.UNKNOWN)
 })
 
-console.log('\n矿泉水瓶度量 + 落档动态化测试全部通过')
+console.log('\n水量工具测试全部通过')

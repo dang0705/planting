@@ -11,13 +11,13 @@ source_of_truth:
   - .codex/context-packs.yml
   - .codex/agents/docs-keeper.toml
   - .codex/skills/dispatch-task/references/knowledge-hygiene-policy.md
-  - .brv/context-tree/_manifest.json
-  - .brv/context-tree/facts-index.yml
+  - .brvspace
   - docs/_doc-status.yml
   - docs/_sync-map.yml
 stale_if_changed:
   - AGENTS.md
   - .codex/**
+  - .brvspace
   - .brv/context-tree/**
   - docs/_doc-status.yml
   - docs/_sync-map.yml
@@ -43,7 +43,7 @@ docs-keeper 从同步者变成清理者。
 |---:|---|---|
 | 1 | 代码、测试、schema、配置、package scripts | 当前事实源。 |
 | 2 | active docs | 只解释当前契约、导航和运行方式。 |
-| 3 | BRV index | 只指向源码/文档位置，不能单独当事实。 |
+| 3 | ByteRover V4 memory | 当前以 `.brvspace` 绑定的 space 为准；只能作为定位线索，不能单独当事实。 |
 | 4 | retrieval-only docs | 只能作为定位线索。 |
 | 5 | archived/superseded blueprints | 历史材料，不能作为当前事实。 |
 
@@ -112,11 +112,11 @@ reason: ""
 ```text
 命中源码
 命中活文档
-命中 BRV index
+命中 ByteRover V4 topics 或 legacy BRV archive
 相关 diff hunk
 ```
 
-禁止读取整仓、整个 docs、整套 BRV。
+禁止读取整仓、整个 docs、整套 ByteRover/BRV 材料。
 
 ### 4.3 audit 模式
 
@@ -126,7 +126,7 @@ reason: ""
 大规模架构重写
 公共契约大改
 既有文档与代码大面积冲突
-BRV 索引污染严重
+ByteRover topics 或 legacy BRV archive 污染严重
 迁移/发布事故复盘
 ```
 
@@ -144,7 +144,7 @@ BRV 索引污染严重
 - Config/schema changed: yes/no
 - Architecture/workflow changed: yes/no
 - Deployment/runbook changed: yes/no
-- BRV/source-verified memory affected: yes/no
+- ByteRover/source-verified memory affected: yes/no
 
 ## Changed files
 - ...
@@ -160,7 +160,7 @@ Only relevant hunks.
 ## Candidate active docs
 - ...
 
-## Candidate BRV index keys
+## Candidate ByteRover recall keys
 - ...
 
 ## Forbidden context
@@ -169,19 +169,21 @@ Only relevant hunks.
 
 ## 6. 触发矩阵
 
-| 变更类型 | 文档动作 | BRV 动作 |
+| 变更类型 | 文档动作 | ByteRover 动作 |
 |---|---|---|
 | 纯内部重构，无行为变化 | 通常 no-op | no-op |
-| HTTP 路由、请求/响应字段、前端可见字段变化 | 更新 `ACTIVE_CONTRACTS.md` | 更新 facts-index |
-| env/schema/CloudBase 路由变化 | 更新 `ACTIVE_CONTRACTS.md` 和 `RUNBOOK.md` | 更新 facts-index |
+| HTTP 路由、请求/响应字段、前端可见字段变化 | 更新 `ACTIVE_CONTRACTS.md` | 更新相关 ByteRover V4 topic / recall key |
+| env/schema/CloudBase 路由变化 | 更新 `ACTIVE_CONTRACTS.md` 和 `RUNBOOK.md` | 更新相关 ByteRover V4 topic / recall key |
 | package script、CI、部署、本地调试变化 | 更新 `RUNBOOK.md` | 视情况更新 |
-| agent 分工、dispatch、context pack、MCP 策略变化 | 更新 `AGENTS.md`、`.codex/context-packs.yml`、本文 | 更新 facts-index |
+| agent 分工、dispatch、context pack、MCP 策略变化 | 更新 `AGENTS.md`、`.codex/context-packs.yml`、本文 | 更新相关 ByteRover V4 topic / recall key |
 | 既有文档与代码冲突 | 标记 stale/superseded | 禁止引用既有文档为事实 |
-| 新增稳定源码事实 | 如影响契约则更新活文档 | 添加 source-index 记录 |
+| 新增稳定源码事实 | 如影响契约则更新活文档 | 添加对应的 ByteRover V4 recall 记录 |
 
-## 7. BRV 只做索引
+## 7. ByteRover V4 只做记忆索引
 
-BRV 条目必须短，并且具备来源与失效条件：
+当前默认 memory source 是 `.brvspace` 绑定的 ByteRover V4 `planting` space。legacy `.brv/context-tree/**` 只作为归档材料处理，不再作为当前默认 memory source。
+
+ByteRover 条目必须短，并且具备来源与失效条件：
 
 ```yaml
 id: F-DIAG-ROUTES-002
@@ -202,7 +204,7 @@ confidence: high
 无来源的经验性长文
 把既有蓝图当当前事实
 把 AI handoff 当运行事实
-把 BRV 写成第二套文档
+把 ByteRover/BRV 写成第二套文档
 ```
 
 ## 8. 归档策略

@@ -157,7 +157,7 @@ route planner 做四件事：
 
 枯萎/发蔫固定题包的模式是 `wilting_droop`，source mode 是 `manual_wilting_droop_route_package`。题包顺序必须保持：
 
-1. Q0：过去 10 天浇水行为，使用 `CareBehaviorTimeline` / `care_behavior_timeline`。
+1. Q0：最近 10 天浇水行为（含当日，可作为可选范围上边界），使用 `CareBehaviorTimeline` / `care_behavior_timeline`。
 2. Q1：发蔫形态。
 3. Q2：发蔫节律与环境点位。
 4. Q3：最近 7 天应激事件。

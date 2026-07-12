@@ -1,6 +1,6 @@
 # ZCode Computer Use Policy
 
-仅当 `implementation_mode=zcode_external` 时读取。本文定义 Codex main 操作 ZCode 的 UI/Computer Use 协议。
+仅当 `external_contract.provider=zcode` 或旧 `implementation_mode=zcode_external`，且需要 Codex main 操作 ZCode UI 时读取。本文定义 ZCode provider adapter 的 UI/Computer Use 协议。
 
 ## 必须真实调用工具
 

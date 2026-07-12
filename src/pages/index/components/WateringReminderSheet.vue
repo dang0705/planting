@@ -39,15 +39,12 @@
         </view>
         <view
           id="watering-reminder-pot-profile-row"
-          class="mt-1.5 flex items-center rounded-[14px] border border-[#e1e9dd] bg-[#f7faf5] p-3"
+          class="mt-1.5 flex items-center rounded-[14px] border border-[#e1e9dd] p-3"
           @click="openPotProfileEditor"
         >
           <view class="flex-1">
             <text class="block text-[14px] font-semibold text-[#1f2933]">盆形信息</text>
             <text class="mt-0.5 block text-[12px] text-[#718075]">{{ potProfileSummary }}</text>
-          </view>
-          <view class="mr-2 rounded-[12px] border border-[#bfd9c5] bg-white px-2 py-0.5">
-            <text class="text-[12px] text-[#2f8f57]">补填</text>
           </view>
           <text class="text-[20px] text-[#94a39a]">›</text>
         </view>
@@ -116,6 +113,7 @@
       <view class="pt-1">
         <CareBehaviorTimeline
           id-prefix="home-watering"
+          :sticky="true"
           :timeline="timelineInput"
           :enable-dose-per-date="true"
           :pot-volume-ml="potVolumeMl"
@@ -268,13 +266,13 @@ const nextWaterDisplay = computed(() => {
   }
   return plannerResult.value.nextWaterDate
 })
-const amountBottleText = computed(
-  () =>
-    plannerResult.value?.amountBottleText ||
-    (Array.isArray(plannerResult.value?.amountRangeMl)
-      ? formatMlRangeToBottleText(plannerResult.value.amountRangeMl)
-      : '')
-)
+const amountBottleText = computed(() => {
+  // 前端负责单位换算，不依赖后端 amountBottleText
+  if (Array.isArray(plannerResult.value?.amountRangeMl)) {
+    return formatMlRangeToBottleText(plannerResult.value.amountRangeMl)
+  }
+  return ''
+})
 const plannerSummaryRows = computed(() => {
   return buildPlannerSummaryRows({
     plannerResult: plannerResult.value,

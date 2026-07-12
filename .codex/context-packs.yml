@@ -1,5 +1,5 @@
 version: 1
-updated: 2026-06-06
+updated: 2026-07-12
 purpose: 'Define minimal AI-consumed files by task type. Do not scan large docs by default.'
 
 default_context:
@@ -16,10 +16,7 @@ default_context:
     - docs/ai-runs/**
     - docs/ai-tasks/**
     - docs/code-logics/**
-    - .brv/review-backups/**
-    - .brv/dream-log/**
     - cloudfunctions/**/logs/**
-    - scripts/terminal-e2e/manifests/*.report.json
 
 packs:
   ai-workflow:
@@ -28,8 +25,8 @@ packs:
       - AGENTS.md
       - .codex/memory.md
       - .codex/skills/dispatch-task/SKILL.md
-      - .codex/skills/dispatch-task/references/INDEX.md
-      - .codex/skills/dispatch-task/references/knowledge-hygiene-policy.md
+      - .codex/skills/dispatch-task/references/intake-and-project-constraints.md
+      - .codex/skills/dispatch-task/references/handoff-and-spawn-gates.md
       - .codex/agents/docs-keeper.toml
       - docs/KNOWLEDGE_GOVERNANCE.md
       - docs/_sync-map.yml
@@ -38,9 +35,8 @@ packs:
   wechat-runtime-qa:
     trigger: 'miniprogram-automator, 端上自动化, 9420, wx.request, qa_reviewer'
     read:
-      - .codex/skills/dispatch-task/references/wechat-devtools-automation-policy.md
-      - .codex/skills/dispatch-task/references/qa-evidence-policy.md
-      - .codex/skills/dispatch-task/references/implementation-test-contract.md
+      - .codex/skills/dispatch-task/references/mini-program-runtime-qa.md
+      - .codex/skills/dispatch-task/references/review-qa-completion-gates.md
       - .codex/skills/miniprogram-automator-runtime/SKILL.md
       - docs/ai-rules/frontend-automation-id-policy.md
     max_additional_files: 2
@@ -65,7 +61,8 @@ packs:
       - docs/RUNBOOK.md
       - docs/_sync-map.yml
       - docs/_doc-status.yml
-      - .brv/context-tree/facts-index.yml
+      - .brv/config.json
+      - .brvspace
     input_required:
       - relevant diff hunks only
       - changed source files listed by sync-map
@@ -101,13 +98,32 @@ packs:
       - cloudfunctions/diagnose-http/app/frontend-response.js
       - cloudfunctions/diagnose-http/app/http-router.js
       - src/http-functions/diagnose/client.js
-      - src/pages/diagnose/follow-up/question-flow.js
-      - src/utils/diagnose-follow-up-payload.js
+      - src/pages/diagnose/question-package/question-flow.js
+      - src/pages/diagnose/question-package/payload.js
+      - src/utils/diagnose-question-answer-payload.js
       - src/utils/diagnose-result-normalizer.js
     max_additional_files: 5
     stale_guards:
       - 'Do not use old claims saying regular route follow-up has one question per round.'
       - 'Do not infer current product口径 from follow-up file/function names alone.'
+
+  watering-planner:
+    trigger: 'watering planner, plant-user-http/user-plants/watering-planner, watering-advisor, WateringReminderSheet, 用户浇水建议, 10天浇水事件'
+    read:
+      - cloudfunctions/plant-user-http/watering-planner-service.js
+      - cloudfunctions/plant-user-http/watering-advisor-service.js
+      - cloudfunctions/layer/utils/watering-planner.js
+      - cloudfunctions/layer/utils/hydration-load.js
+      - cloudfunctions/layer/utils/pot-geometry.js
+      - cloudfunctions/layer/utils/plant-knowledge.js
+      - cloudfunctions/layer/utils/water-volume-format.js
+      - src/pages/watering-advisor/watering-advisor.vue
+      - src/pages/index/components/watering-reminder-options.js
+      - src/pages/index/components/WateringReminderSheet.vue
+      - src/pages/index/components/PotProfileEditor.vue
+      - src/api/weather.js
+      - src/utils/water-volume-format.js
+    max_additional_files: 8
 
   frontend-diagnose:
     trigger: 'diagnosis page, result normalization, frontend API client, question-package UI, legacy follow-up UI names'
@@ -117,10 +133,10 @@ packs:
       - src/http-functions/diagnose/client.js
       - src/vue-query/diagnose/mutations/useDiagnoseMutation.js
       - src/vue-query/diagnose/mutations/useDiagnosisQuestionStartMutation.js
-      - src/vue-query/diagnose/mutations/useDiagnoseFollowUpMutation.js
+      - src/vue-query/diagnose/mutations/useDiagnosisAnswerMutation.js
       - src/utils/diagnose-result-normalizer.js
       - src/pages/diagnose/diagnose.vue
-      - src/pages/diagnose/follow-up.vue
+      - src/pages/diagnose/question-package.vue
     max_additional_files: 5
 
   cloudbase-api:
@@ -177,9 +193,9 @@ packs:
     max_additional_files: 6
 
 brv_policy:
-  default_manifest: .brv/context-tree/_manifest.json
+  default_manifest: .brvspace
   default_read_only:
-    - .brv/context-tree/_index.md
-    - .brv/context-tree/facts-index.yml
+    - .brvspace
+    - .brv/config.json
   full_fact_files_require_trigger: true
   invalidation_required: true

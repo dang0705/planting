@@ -19,28 +19,121 @@ import { createRequire } from 'node:module'
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
+import { formatMlRangeToBottleText } from '../../src/utils/water-volume-format.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const projectRoot = join(__dirname, '..', '..')
 const require = createRequire(join(projectRoot, 'package.json'))
 
-const { buildWateringPlanner } = require(join(projectRoot, 'cloudfunctions/layer/utils/watering-planner.js'))
+const { buildWateringPlanner } = require(
+  join(projectRoot, 'cloudfunctions/layer/utils/watering-planner.js')
+)
 
 // ============================================================================
 // 1. 10 个喜水差异植物（genus 级别）
 // ============================================================================
 
 const PLANTS = [
-  { genus: 'Nelumbo', genusCn: '荷花', wateringStrategy: { way: '保持稳定水位/湿泥', freq: [1, 3], unit: '天' }, quantization: { targetMoistureMid: 0.85, dryTolerance: 'very_low', wetTolerance: 'high' }, tempMin: 15, tempMax: 35, humidityMin: 60, humidityMax: 90 },
-  { genus: 'Nephrolepis', genusCn: '肾蕨', wateringStrategy: { way: '保持微湿，忌积水', freq: [3, 6], unit: '天' }, quantization: { targetMoistureMid: 0.65, dryTolerance: 'low', wetTolerance: 'medium_high' }, tempMin: 12, tempMax: 28, humidityMin: 50, humidityMax: 85 },
-  { genus: 'Maranta', genusCn: '竹芋', wateringStrategy: { way: '保持微湿，表层微干即浇', freq: [4, 7], unit: '天' }, quantization: { targetMoistureMid: 0.65, dryTolerance: 'low', wetTolerance: 'medium_high' }, tempMin: 15, tempMax: 28, humidityMin: 50, humidityMax: 80 },
-  { genus: 'Monstera', genusCn: '龟背竹', wateringStrategy: { way: '表层2-3cm微干后浇透', freq: [5, 10], unit: '天' }, quantization: { targetMoistureMid: 0.45, dryTolerance: 'normal', wetTolerance: 'normal' }, tempMin: 12, tempMax: 30, humidityMin: 40, humidityMax: 80 },
-  { genus: 'Pilea', genusCn: '镜面草', wateringStrategy: { way: '表层2-3cm微干后浇透', freq: [5, 10], unit: '天' }, quantization: { targetMoistureMid: 0.45, dryTolerance: 'normal', wetTolerance: 'normal' }, tempMin: 10, tempMax: 28, humidityMin: 40, humidityMax: 75 },
-  { genus: 'Dracaena', genusCn: '龙血树', wateringStrategy: { way: '盆土大半干后浇透', freq: [10, 20], unit: '天' }, quantization: { targetMoistureMid: 0.28, dryTolerance: 'high', wetTolerance: 'low' }, tempMin: 15, tempMax: 32, humidityMin: 35, humidityMax: 70 },
-  { genus: 'Zamioculcas', genusCn: '金钱树', wateringStrategy: { way: '完全干透后浇透', freq: [14, 30], unit: '天' }, quantization: { targetMoistureMid: 0.28, dryTolerance: 'high', wetTolerance: 'low' }, tempMin: 15, tempMax: 30, humidityMin: 30, humidityMax: 70 },
-  { genus: 'Haworthiopsis', genusCn: '十二卷', wateringStrategy: { way: '完全干透再浇', freq: [14, 30], unit: '天' }, quantization: { targetMoistureMid: 0.28, dryTolerance: 'high', wetTolerance: 'low' }, tempMin: 10, tempMax: 30, humidityMin: 30, humidityMax: 65 },
-  { genus: 'Echinocactus', genusCn: '金琥', wateringStrategy: { way: '完全干透再浇；休眠期控水', freq: [20, 35], unit: '天' }, quantization: { targetMoistureMid: 0.28, dryTolerance: 'high', wetTolerance: 'low' }, tempMin: 5, tempMax: 35, humidityMin: 20, humidityMax: 60 },
-  { genus: 'Lithops', genusCn: '生石花', wateringStrategy: { way: '蜕皮期停水，生长期干透后极少量浇', freq: [30, 60], unit: '天' }, quantization: { targetMoistureMid: 0.28, dryTolerance: 'high', wetTolerance: 'low' }, tempMin: 10, tempMax: 30, humidityMin: 20, humidityMax: 50 }
+  {
+    genus: 'Nelumbo',
+    genusCn: '荷花',
+    wateringStrategy: { way: '保持稳定水位/湿泥', freq: [1, 3], unit: '天' },
+    quantization: { targetMoistureMid: 0.85, dryTolerance: 'very_low', wetTolerance: 'high' },
+    tempMin: 15,
+    tempMax: 35,
+    humidityMin: 60,
+    humidityMax: 90
+  },
+  {
+    genus: 'Nephrolepis',
+    genusCn: '肾蕨',
+    wateringStrategy: { way: '保持微湿，忌积水', freq: [3, 6], unit: '天' },
+    quantization: { targetMoistureMid: 0.65, dryTolerance: 'low', wetTolerance: 'medium_high' },
+    tempMin: 12,
+    tempMax: 28,
+    humidityMin: 50,
+    humidityMax: 85
+  },
+  {
+    genus: 'Maranta',
+    genusCn: '竹芋',
+    wateringStrategy: { way: '保持微湿，表层微干即浇', freq: [4, 7], unit: '天' },
+    quantization: { targetMoistureMid: 0.65, dryTolerance: 'low', wetTolerance: 'medium_high' },
+    tempMin: 15,
+    tempMax: 28,
+    humidityMin: 50,
+    humidityMax: 80
+  },
+  {
+    genus: 'Monstera',
+    genusCn: '龟背竹',
+    wateringStrategy: { way: '表层2-3cm微干后浇透', freq: [5, 10], unit: '天' },
+    quantization: { targetMoistureMid: 0.45, dryTolerance: 'normal', wetTolerance: 'normal' },
+    tempMin: 12,
+    tempMax: 30,
+    humidityMin: 40,
+    humidityMax: 80
+  },
+  {
+    genus: 'Pilea',
+    genusCn: '镜面草',
+    wateringStrategy: { way: '表层2-3cm微干后浇透', freq: [5, 10], unit: '天' },
+    quantization: { targetMoistureMid: 0.45, dryTolerance: 'normal', wetTolerance: 'normal' },
+    tempMin: 10,
+    tempMax: 28,
+    humidityMin: 40,
+    humidityMax: 75
+  },
+  {
+    genus: 'Dracaena',
+    genusCn: '龙血树',
+    wateringStrategy: { way: '盆土大半干后浇透', freq: [10, 20], unit: '天' },
+    quantization: { targetMoistureMid: 0.28, dryTolerance: 'high', wetTolerance: 'low' },
+    tempMin: 15,
+    tempMax: 32,
+    humidityMin: 35,
+    humidityMax: 70
+  },
+  {
+    genus: 'Zamioculcas',
+    genusCn: '金钱树',
+    wateringStrategy: { way: '完全干透后浇透', freq: [14, 30], unit: '天' },
+    quantization: { targetMoistureMid: 0.28, dryTolerance: 'high', wetTolerance: 'low' },
+    tempMin: 15,
+    tempMax: 30,
+    humidityMin: 30,
+    humidityMax: 70
+  },
+  {
+    genus: 'Haworthiopsis',
+    genusCn: '十二卷',
+    wateringStrategy: { way: '完全干透再浇', freq: [14, 30], unit: '天' },
+    quantization: { targetMoistureMid: 0.28, dryTolerance: 'high', wetTolerance: 'low' },
+    tempMin: 10,
+    tempMax: 30,
+    humidityMin: 30,
+    humidityMax: 65
+  },
+  {
+    genus: 'Echinocactus',
+    genusCn: '金琥',
+    wateringStrategy: { way: '完全干透再浇；休眠期控水', freq: [20, 35], unit: '天' },
+    quantization: { targetMoistureMid: 0.28, dryTolerance: 'high', wetTolerance: 'low' },
+    tempMin: 5,
+    tempMax: 35,
+    humidityMin: 20,
+    humidityMax: 60
+  },
+  {
+    genus: 'Lithops',
+    genusCn: '生石花',
+    wateringStrategy: { way: '蜕皮期停水，生长期干透后极少量浇', freq: [30, 60], unit: '天' },
+    quantization: { targetMoistureMid: 0.28, dryTolerance: 'high', wetTolerance: 'low' },
+    tempMin: 10,
+    tempMax: 30,
+    humidityMin: 20,
+    humidityMax: 50
+  }
 ]
 
 // ============================================================================
@@ -48,12 +141,66 @@ const PLANTS = [
 // ============================================================================
 
 const POTS = [
-  { id: 'small_no_hole', label: '小盆无孔', potTopDiameterCm: 12, potBottomDiameterCm: 8, potHeightCm: 10, hasDrainageHole: 'false', potMaterial: 'plastic', substrateType: 'peat' },
-  { id: 'small_hole', label: '小盆有孔', potTopDiameterCm: 15, potBottomDiameterCm: 10, potHeightCm: 12, hasDrainageHole: 'true', potMaterial: 'plastic', substrateType: 'general' },
-  { id: 'mid_hole', label: '中盆有孔', potTopDiameterCm: 20, potBottomDiameterCm: 15, potHeightCm: 19, hasDrainageHole: 'true', potMaterial: 'ceramic', substrateType: 'mix' },
-  { id: 'large_hole', label: '大盆有孔', potTopDiameterCm: 30, potBottomDiameterCm: 25, potHeightCm: 30, hasDrainageHole: 'true', potMaterial: 'ceramic', substrateType: 'gritty' },
-  { id: 'huge_hole', label: '巨盆有孔', potTopDiameterCm: 50, potBottomDiameterCm: 40, potHeightCm: 50, hasDrainageHole: 'true', potMaterial: 'ceramic', substrateType: 'general' },
-  { id: 'mega_no_hole', label: '超大盆无孔', potTopDiameterCm: 100, potBottomDiameterCm: 100, potHeightCm: 50, hasDrainageHole: 'false', potMaterial: 'unknown', substrateType: 'unknown' }
+  {
+    id: 'small_no_hole',
+    label: '小盆无孔',
+    potTopDiameterCm: 12,
+    potBottomDiameterCm: 8,
+    potHeightCm: 10,
+    hasDrainageHole: 'false',
+    potMaterial: 'plastic',
+    substrateType: 'peat'
+  },
+  {
+    id: 'small_hole',
+    label: '小盆有孔',
+    potTopDiameterCm: 15,
+    potBottomDiameterCm: 10,
+    potHeightCm: 12,
+    hasDrainageHole: 'true',
+    potMaterial: 'plastic',
+    substrateType: 'general'
+  },
+  {
+    id: 'mid_hole',
+    label: '中盆有孔',
+    potTopDiameterCm: 20,
+    potBottomDiameterCm: 15,
+    potHeightCm: 19,
+    hasDrainageHole: 'true',
+    potMaterial: 'ceramic',
+    substrateType: 'mix'
+  },
+  {
+    id: 'large_hole',
+    label: '大盆有孔',
+    potTopDiameterCm: 30,
+    potBottomDiameterCm: 25,
+    potHeightCm: 30,
+    hasDrainageHole: 'true',
+    potMaterial: 'ceramic',
+    substrateType: 'gritty'
+  },
+  {
+    id: 'huge_hole',
+    label: '巨盆有孔',
+    potTopDiameterCm: 50,
+    potBottomDiameterCm: 40,
+    potHeightCm: 50,
+    hasDrainageHole: 'true',
+    potMaterial: 'ceramic',
+    substrateType: 'general'
+  },
+  {
+    id: 'mega_no_hole',
+    label: '超大盆无孔',
+    potTopDiameterCm: 100,
+    potBottomDiameterCm: 100,
+    potHeightCm: 50,
+    hasDrainageHole: 'false',
+    potMaterial: 'unknown',
+    substrateType: 'unknown'
+  }
 ]
 
 // ============================================================================
@@ -86,7 +233,14 @@ function buildWeatherDay(date, scenario, daysAgo) {
     case 'rainy':
       // 连阴雨：5天降水≥10mm，湿度85-95%
       const isRainy = daysAgo <= 5
-      return { date, tempMaxC: 24, tempMinC: 21, humidity: isRainy ? 89 : 75, precipMm: isRainy ? 15 : 0, textDay: isRainy ? '雨' : '阴' }
+      return {
+        date,
+        tempMaxC: 24,
+        tempMinC: 21,
+        humidity: isRainy ? 89 : 75,
+        precipMm: isRainy ? 15 : 0,
+        textDay: isRainy ? '雨' : '阴'
+      }
     case 'hot_dry':
       // 炎热干燥：连续 32-35°C，湿度40-50%
       return { date, tempMaxC: 34, tempMinC: 24, humidity: 45, precipMm: 0, textDay: '晴' }
@@ -97,7 +251,14 @@ function buildWeatherDay(date, scenario, daysAgo) {
       // 先雨后晴：前3天降水，后7天晴热
       const isRain = daysAgo >= 8
       const isHot = daysAgo <= 7
-      return { date, tempMaxC: isHot ? 33 : 25, tempMinC: isHot ? 25 : 21, humidity: isRain ? 88 : 55, precipMm: isRain ? 12 : 0, textDay: isRain ? '雨' : '晴' }
+      return {
+        date,
+        tempMaxC: isHot ? 33 : 25,
+        tempMinC: isHot ? 25 : 21,
+        humidity: isRain ? 88 : 55,
+        precipMm: isRain ? 12 : 0,
+        textDay: isRain ? '雨' : '晴'
+      }
     default:
       return { date, tempMaxC: 25, tempMinC: 20, humidity: 65, precipMm: 0, textDay: '多云' }
   }
@@ -115,9 +276,21 @@ const WEATHER_SCENARIOS = [
 // ============================================================================
 
 const WATERING_INTERVALS = [
-  { id: 'just_watered', label: '刚浇过(D-1)', event: { date: dateOffset(REFERENCE_DATE, -1), watered: true, amount: 'normal', amountMl: 550 } },
-  { id: 'normal_7d', label: '正常间隔(D-7)', event: { date: dateOffset(REFERENCE_DATE, -7), watered: true, amount: 'normal', amountMl: 550 } },
-  { id: 'overdue_20d', label: '超期未浇(D-20)', event: { date: dateOffset(REFERENCE_DATE, -20), watered: true, amount: 'mist', amountMl: 30 } }
+  {
+    id: 'just_watered',
+    label: '刚浇过(D-1)',
+    event: { date: dateOffset(REFERENCE_DATE, -1), watered: true, amount: 'normal', amountMl: 550 }
+  },
+  {
+    id: 'normal_7d',
+    label: '正常间隔(D-7)',
+    event: { date: dateOffset(REFERENCE_DATE, -7), watered: true, amount: 'normal', amountMl: 550 }
+  },
+  {
+    id: 'overdue_20d',
+    label: '超期未浇(D-20)',
+    event: { date: dateOffset(REFERENCE_DATE, -20), watered: true, amount: 'mist', amountMl: 30 }
+  }
 ]
 
 // ============================================================================
@@ -136,13 +309,23 @@ function buildWeatherSummary(dailyRecords, plantContext) {
   const tempMax = Number(plantContext.temperatureMax || 30)
   const tempMin = Number(plantContext.temperatureMin || 12)
   const summary = {
-    highHumidityDays: 0, coldHumidDays: 0, rainyDays: 0, hotDryDays: 0,
-    maxConsecutiveHighHumidityDays: 0, maxConsecutiveColdHumidDays: 0,
-    maxConsecutiveRainyDays: 0, maxConsecutiveHotDryDays: 0
+    highHumidityDays: 0,
+    coldHumidDays: 0,
+    rainyDays: 0,
+    hotDryDays: 0,
+    maxConsecutiveHighHumidityDays: 0,
+    maxConsecutiveColdHumidDays: 0,
+    maxConsecutiveRainyDays: 0,
+    maxConsecutiveHotDryDays: 0
   }
-  let streakHigh = 0, streakCold = 0, streakRain = 0, streakDry = 0
+  let streakHigh = 0,
+    streakCold = 0,
+    streakRain = 0,
+    streakDry = 0
   for (const record of dailyRecords) {
-    if (!record || typeof record !== 'object') continue
+    if (!record || typeof record !== 'object') {
+      continue
+    }
     const humidity = Number(record.humidity ?? record.humidityPercent)
     const tempMaxVal = Number(record.tempMaxC ?? record.tempMax ?? record.temperatureMax)
     const tempMinVal = Number(record.tempMinC ?? record.tempMin ?? record.temperatureMin)
@@ -152,10 +335,40 @@ function buildWeatherSummary(dailyRecords, plantContext) {
     const isHot = !isNaN(tempMaxVal) && tempMaxVal > tempMax
     const isCold = !isNaN(tempMinVal) && tempMinVal < tempMin
     const isRainy = precipitation > 0 || /雨|rain|shower/i.test(weatherText)
-    if (isHighHumidity) { summary.highHumidityDays++; streakHigh++; summary.maxConsecutiveHighHumidityDays = Math.max(summary.maxConsecutiveHighHumidityDays, streakHigh) } else { streakHigh = 0 }
-    if (isCold && isHighHumidity) { summary.coldHumidDays++; streakCold++; summary.maxConsecutiveColdHumidDays = Math.max(summary.maxConsecutiveColdHumidDays, streakCold) } else { streakCold = 0 }
-    if (isRainy) { summary.rainyDays++; streakRain++; summary.maxConsecutiveRainyDays = Math.max(summary.maxConsecutiveRainyDays, streakRain) } else { streakRain = 0 }
-    if (isHot && !isNaN(humidity) && humidity < humidityMin) { summary.hotDryDays++; streakDry++; summary.maxConsecutiveHotDryDays = Math.max(summary.maxConsecutiveHotDryDays, streakDry) } else { streakDry = 0 }
+    if (isHighHumidity) {
+      summary.highHumidityDays++
+      streakHigh++
+      summary.maxConsecutiveHighHumidityDays = Math.max(
+        summary.maxConsecutiveHighHumidityDays,
+        streakHigh
+      )
+    } else {
+      streakHigh = 0
+    }
+    if (isCold && isHighHumidity) {
+      summary.coldHumidDays++
+      streakCold++
+      summary.maxConsecutiveColdHumidDays = Math.max(
+        summary.maxConsecutiveColdHumidDays,
+        streakCold
+      )
+    } else {
+      streakCold = 0
+    }
+    if (isRainy) {
+      summary.rainyDays++
+      streakRain++
+      summary.maxConsecutiveRainyDays = Math.max(summary.maxConsecutiveRainyDays, streakRain)
+    } else {
+      streakRain = 0
+    }
+    if (isHot && !isNaN(humidity) && humidity < humidityMin) {
+      summary.hotDryDays++
+      streakDry++
+      summary.maxConsecutiveHotDryDays = Math.max(summary.maxConsecutiveHotDryDays, streakDry)
+    } else {
+      streakDry = 0
+    }
   }
   return summary
 }
@@ -175,16 +388,29 @@ function auditCase(testCase, plan, potVolumeMl) {
   if (potVolumeMl > 0 && amountHi > 0) {
     const ratioHi = amountHi / potVolumeMl
     const ratioLo = amountLo / potVolumeMl
-    if (ratioHi > 1.0) flags.push({ code: 'AMOUNT_EXCEEDS_POT_VOLUME', detail: `建议上限 ${amountHi}ml 超过盆体积 ${potVolumeMl}ml` })
-    if (ratioLo < 0.02 && amountLo > 0) flags.push({ code: 'AMOUNT_TOO_LOW', detail: `建议下限 ${amountLo}ml 仅占盆体积 ${(ratioLo * 100).toFixed(1)}%` })
+    if (ratioHi > 1.0) {
+      flags.push({
+        code: 'AMOUNT_EXCEEDS_POT_VOLUME',
+        detail: `建议上限 ${amountHi}ml 超过盆体积 ${potVolumeMl}ml`
+      })
+    }
+    if (ratioLo < 0.02 && amountLo > 0) {
+      flags.push({
+        code: 'AMOUNT_TOO_LOW',
+        detail: `建议下限 ${amountLo}ml 仅占盆体积 ${(ratioLo * 100).toFixed(1)}%`
+      })
+    }
   }
 
   // 2. 天气压制：连阴雨场景（非严重超期）context 不应为 too_dry
   //    严重超期（>freq[0]×2）时判 too_dry 是合理的——天气湿信号不应掩盖严重缺水
   const freqMin0 = plant.wateringStrategy.freq[0]
-  const isSevereOverdueCase = wateringInterval.id === 'overdue_20d' && 20 >= freqMin0 * 2
+  const isSevereOverdueCase = wateringInterval.id === 'overdue_20d' && freqMin0 * 2 <= 20
   if (weatherScenario.id === 'rainy' && context === 'likely_too_dry' && !isSevereOverdueCase) {
-    flags.push({ code: 'WEATHER_SUPPRESSION_MISSING', detail: '连阴雨场景（非严重超期）但判定为 too_dry' })
+    flags.push({
+      code: 'WEATHER_SUPPRESSION_MISSING',
+      detail: '连阴雨场景（非严重超期）但判定为 too_dry'
+    })
   }
 
   // 3. 耐旱植物间隔：freq>14 的植物，nextWaterDate 距离上次浇水不应小于 freq[0]
@@ -194,7 +420,10 @@ function auditCase(testCase, plan, potVolumeMl) {
     if (plannerResult.nextWaterDate) {
       const daysUntilNext = daysBetween(REFERENCE_DATE, plannerResult.nextWaterDate)
       if (daysUntilNext < freqMin - 2) {
-        flags.push({ code: 'INTERVAL_TOO_SHORT', detail: `耐旱植物 freq[0]=${freqMin}天，但下次浇水建议 ${daysUntilNext} 天后` })
+        flags.push({
+          code: 'INTERVAL_TOO_SHORT',
+          detail: `耐旱植物 freq[0]=${freqMin}天，但下次浇水建议 ${daysUntilNext} 天后`
+        })
       }
     }
   }
@@ -202,15 +431,22 @@ function auditCase(testCase, plan, potVolumeMl) {
   // 4. 超期未浇：超期场景 context 应为 likely_too_dry
   if (wateringInterval.id === 'overdue_20d' && context === 'keep_baseline_or_check_soil') {
     // 超期20天仍是 baseline 可能漏检
-    if (!reasonCodes.includes('NO_RECENT_WATERING') && !reasonCodes.includes('INCREASE_WATERING_FREQUENCY')) {
+    if (
+      !reasonCodes.includes('NO_RECENT_WATERING') &&
+      !reasonCodes.includes('INCREASE_WATERING_FREQUENCY')
+    ) {
       flags.push({ code: 'OVERDUE_NOT_DETECTED', detail: '超期20天未浇但未触发 overdue 信号' })
     }
   }
 
-  // 5. 油桶级水量文案检查
+  // 5. 油桶级水量文案检查（前端负责换算，用前端函数验证）
   if (amountHi >= 5000) {
-    if (!plannerResult.amountBottleText || !plannerResult.amountBottleText.includes('桶')) {
-      flags.push({ code: 'BUCKET_TEXT_MISSING', detail: `建议水量 ${amountHi}ml ≥5000 但文案无油桶: "${plannerResult.amountBottleText}"` })
+    const bottleText = formatMlRangeToBottleText(plannerResult.amountRangeMl)
+    if (!bottleText || !bottleText.includes('桶')) {
+      flags.push({
+        code: 'BUCKET_TEXT_MISSING',
+        detail: `建议水量 ${amountHi}ml ≥5000 但文案无油桶: "${bottleText}"`
+      })
     }
   }
 
@@ -222,7 +458,10 @@ function auditCase(testCase, plan, potVolumeMl) {
   // 7. 喜水植物干旱敏感性：喜湿植物(targetMoistureMid>0.6)超期未浇应有 dry 信号
   if (plant.quantization.targetMoistureMid > 0.6 && wateringInterval.id === 'overdue_20d') {
     if (context !== 'likely_too_dry') {
-      flags.push({ code: 'HYDRophilOUS_DRY_MISSED', detail: `喜湿植物超期20天但 context=${context}` })
+      flags.push({
+        code: 'HYDRophilOUS_DRY_MISSED',
+        detail: `喜湿植物超期20天但 context=${context}`
+      })
     }
   }
 
@@ -241,7 +480,9 @@ function daysBetween(date1, date2) {
 
 async function main() {
   console.log('=== 浇水算法跑批测试 ===')
-  console.log(`植物 ${PLANTS.length} × 盆型 ${POTS.length} × 天气 ${WEATHER_SCENARIOS.length} × 间隔 ${WATERING_INTERVALS.length} = ${PLANTS.length * POTS.length * WEATHER_SCENARIOS.length * WATERING_INTERVALS.length} 组\n`)
+  console.log(
+    `植物 ${PLANTS.length} × 盆型 ${POTS.length} × 天气 ${WEATHER_SCENARIOS.length} × 间隔 ${WATERING_INTERVALS.length} = ${PLANTS.length * POTS.length * WEATHER_SCENARIOS.length * WATERING_INTERVALS.length} 组\n`
+  )
 
   const cases = []
   let count = 0
@@ -287,7 +528,6 @@ async function main() {
               wateringContext: plan.wateringContext,
               action: plan.action,
               amountRangeMl: plan.amountRangeMl,
-              amountBottleText: plan.amountBottleText,
               potVolumeMl,
               stopCondition: plan.stopCondition,
               confidenceLevel: plan.confidenceLevel,
@@ -301,7 +541,12 @@ async function main() {
 
             const testCase = {
               id: caseId,
-              plant: { genus: plant.genus, genusCn: plant.genusCn, wateringStrategy: plant.wateringStrategy, quantization: plant.quantization },
+              plant: {
+                genus: plant.genus,
+                genusCn: plant.genusCn,
+                wateringStrategy: plant.wateringStrategy,
+                quantization: plant.quantization
+              },
               pot: { id: pot.id, label: pot.label, potProfile: pot, potVolumeMl },
               weatherScenario: { id: weather.id, label: weather.label },
               wateringInterval: { id: interval.id, label: interval.label, event: interval.event },
@@ -314,7 +559,9 @@ async function main() {
             cases.push(testCase)
 
             if (count % 50 === 0) {
-              console.log(`  进度 ${count}/${PLANTS.length * POTS.length * WEATHER_SCENARIOS.length * WATERING_INTERVALS.length}`)
+              console.log(
+                `  进度 ${count}/${PLANTS.length * POTS.length * WEATHER_SCENARIOS.length * WATERING_INTERVALS.length}`
+              )
             }
           } catch (error) {
             console.error(`✗ 案例 ${caseId} 失败: ${error.message}`)

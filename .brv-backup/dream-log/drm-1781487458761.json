@@ -1,0 +1,69 @@
+{
+  "completedAt": 1781487513645,
+  "id": "drm-1781487458761",
+  "operations": [
+    {
+      "action": "CROSS_REFERENCE",
+      "inputFiles": [
+        "architecture/diagnosis/yellowing_diagnosis_lifecycle/yellowing_diagnosis_lifecycle.md",
+        "architecture/backend/source_verified_backend_facts/source_verified_backend_facts.md"
+      ],
+      "needsReview": true,
+      "previousTexts": {
+        "architecture/diagnosis/yellowing_diagnosis_lifecycle/yellowing_diagnosis_lifecycle.md": "---\ntitle: Yellowing Diagnosis Lifecycle\nsummary: Leaf yellowing diagnosis is a terminal, static 4-question package flow, deprecating dynamic follow-up logic.\ntags: []\nrelated: []\nkeywords: []\ncreatedAt: '2026-06-15T01:22:24.447Z'\nupdatedAt: '2026-06-15T01:22:24.447Z'\n---\n## Reason\nDocumenting the static 4-question package flow for leaf yellowing diagnosis\n\n## Raw Concept\n**Task:**\nDefine Leaf Yellowing Diagnosis Lifecycle\n\n**Changes:**\n- Deprecate dynamic next-question logic\n- Fix to static 4-question package flow\n\n**Timestamp:** 2026-06-15\n\n## Narrative\n### Structure\nThe diagnosis flow is terminal and fixed, consisting of exactly 4 questions.\n\n### Highlights\nDynamic follow-up mechanisms are deprecated for leaf yellowing diagnosis to ensure predictability.\n\n### Rules\nRule: Leaf yellowing diagnosis must follow a static 4-question package flow.\n\n## Facts\n- **diagnosis_flow**: Leaf yellowing diagnosis is a terminal 4-question flow [project]\n- **diagnosis_logic**: Dynamic follow-up mechanisms are deprecated for leaf yellowing diagnosis [project]\n",
+        "architecture/backend/source_verified_backend_facts/source_verified_backend_facts.md": "---\ntitle: Source Verified Backend Facts\nsummary: Centralized backend architecture, factual project constraints, and source-verified rules.\ntags: []\nrelated: [architecture/diagnosis/source_verified_diagnosis_facts.md]\nkeywords: []\ncreatedAt: '2026-06-07T03:02:40.447Z'\nupdatedAt: '2026-06-15T00:58:55.999Z'\n---\n## Reason\nCurate from RLM context: captured backend architecture and project rules.\n\n## Raw Concept\n**Task:**\nConsolidate backend system facts and architecture rules\n\n**Changes:**\n- Extracted backend architecture and project constraints from RLM context\n\n**Timestamp:** 2026-06-15\n\n## Narrative\n### Structure\nConsolidated backend facts organized by subject.\n\n### Highlights\nCapture of core system architecture, rules, and constraints.\n\n## Facts\n- **端上验收流程**: 在 planting 仓库，若代码未部署到云端，端上验收必须先成功跑通 npm run dev:mp-weixin:local-functions:lan 的完整 LAN 本地函数 flow。\n- **验收证据标准**: 9420/miniprogram-automator/wx.request 证据是端上验收通过的唯一标准。\n- **验收证据标准**: Scoped gateway、backend curl、Node HTTP 或 health route 仅能作为排障证据，不能作为验收通过依据。\n- **QA 案例分析**: 2026-06-15 weather-cache QA 案例表明，gateway health 成功不代表完整 LAN flow 通过，需警惕 worker 缺失导致的 502 错误。\n- **前端技术栈**: 项目前端技术栈为 UniApp 3.0、Vue 3 和 Tailwind CSS 3。\n- **后端技术栈**: 项目后端技术栈为 Tencent CloudBase、Cloud Functions 和 MySQL/TDSQL-C。\n- **自动化路径**: 端上自动化项目路径必须为 /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin。\n- **自动化通信**: 端上自动化默认使用 9420 端口进行 miniprogram-automator 通信。\n- **LAN flow**: LAN flow 验收必须先修复并重新跑通 `npm run dev:mp-weixin:local-functions:lan`。\n- **诊断流自动化**: 诊断流自动化必须优先使用稳定 id（如 `diagnose-entry-button-{plant.id}`），不得将中文文案、截图坐标或页面层级作为首选定位方式。\n- **失败归因**: QA 失败归因必须显式区分：devtools_automator_blocker, devtools_auth_blocker, devtools_configuration_blocker, product_blocker, recovered, not_verified。\n- **QA scope**: QA scope 由 Test Contract 或验收标准决定，而非 UI diff。\n- **QA Contract**: 涉及诊断相关接口（如 `/diagnosis/question/start`）的 QA 必须要求 Test Contract 中存在端上验证项，缺失时直接退回 contract_blocker。\n- **QA 证据**: 端上接口的合格证据必须来自小程序运行时的 `wx.request` 或真实端上交互，Node 直接 HTTP/curl 不得替代端上 QA。\n- **projectPath**: 本项目端上 automator 的 Test Contract `projectPath` 必须固定为 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`。\n- **登录态保护**: 禁止为了建立“干净 CDP 基线”默认执行会重启 DevTools 的路径，除非用户明确授权。\n- **SQL schema**: CloudBase SQL 改动必须有 schema truth gate 证据，优先使用 live INFORMATION_SCHEMA 或 CloudBase MCP 验证。\n- **输出规范**: QA 输出必须合并为一个简洁结果，禁止拆分为大量重复章节，标准输出建议不超过 600 tokens。\n- **Completion Gate**: 任务完成需满足所有 required acceptance items 已映射并测试通过，且 QA 已按 Test Contract 完成端上自动化验证。\n- **Git**: Git commit must be completed or have a documented blocker before task completion.\n- **Verification**: Unverified items must be explicitly categorized and written back.\n- **Documentation**: If docs_keeper_required is set to yes, documentation must be synced or a valid reason for skipping must be provided.\n- **Code Quality**: Touched code files must pass the 500-line split hard limit check.\n- **Testing**: Task completion is blocked if only backend tests pass without frontend or mini-program acceptance.\n- **Testing**: Task completion is blocked if only API verification is performed without UI component acceptance.\n- **Process**: Task completion is blocked if checklist or acceptance criteria are not mapped.\n- **QA**: QA automation is mandatory for tasks involving end-user interactions.\n- **Diagnosis Module**: Diagnosis-related paths (e.g., /diagnosis/question/start) require a Test Contract including concrete endpoints, payloads, and assertions.\n- **Testing**: End-user interfaces cannot be verified solely by Node, curl, backend smoke, or unit tests.\n- **Deployment**: Code must be deployed to the cloud or verified via the local LAN flow (npm run dev:mp-weixin:local-functions:lan) or mini-program runtime.\n- **CloudBase**: CloudBase SQL repository changes require a schema truth gate or live auth evidence.\n- **Reporting**: The Completion Gate template defines the mandatory fields for reporting task completion status.\n- **Data Processing**: Do not summarize table data with every row.\n- **Code Preservation**: Preserve exact code examples, API signatures, and interface definitions.\n- **Documentation**: Preserve step-by-step procedures and numbered instructions in narrative.rules.\n"
+      },
+      "reason": "The yellowing diagnosis lifecycle is a specific business logic flow governed by the broader backend architectural and QA constraints documented in source_verified_backend_facts.",
+      "type": "CONSOLIDATE"
+    },
+    {
+      "action": "CROSS_REFERENCE",
+      "inputFiles": [
+        "architecture/weather/diagnosis_logic/weather_diagnosis_logic.md",
+        "architecture/backend/source_verified_backend_facts/source_verified_backend_facts.md"
+      ],
+      "needsReview": true,
+      "previousTexts": {
+        "architecture/weather/diagnosis_logic/weather_diagnosis_logic.md": "---\ntitle: Weather Diagnosis Logic\nsummary: Weather diagnosis logic improvements including coord-based location keys, recent weather cache rebuilds from archives, and robust ingestion.\ntags: []\nrelated: []\nkeywords: []\ncreatedAt: '2026-06-15T01:22:28.795Z'\nupdatedAt: '2026-06-15T01:22:28.795Z'\n---\n## Reason\nDocumenting weather-http diagnosis mode fixes and recent weather cache logic\n\n## Raw Concept\n**Task:**\nDocument Weather-HTTP Diagnosis Logic\n\n**Changes:**\n- Added coord-based location key support (coord:lng_lat)\n- Implemented recent cache rebuild logic from daily archives\n- Added payload compatibility for multiple historical fields\n\n**Files:**\n- cloudfunctions/weather-http/services/recent-weather-service.js\n- cloudfunctions/weather-http/services/weather-cache-paths.js\n\n**Timestamp:** 2026-06-15\n\n## Narrative\n### Structure\nDiagnosis logic centers on recent-weather-service.js, handling cache loading, archive rebuilds, and ingestion.\n\n### Highlights\nSupports coordinate-based keys to handle missing city names. Robust cache rebuild logic ensures recent data availability even if weather_locations metadata is missing.\n\n### Rules\nRule: locationKey priority: explicitKey > qweatherId > coord(lng,lat) > cityName.\n\n## Facts\n- **location_key**: locationKey supports coordinate-based keys (coord:lng_lat) [project]\n- **cache_rebuild**: Recent weather cache rebuilds from daily archives if metadata is missing [project]\n",
+        "architecture/backend/source_verified_backend_facts/source_verified_backend_facts.md": "---\ntitle: Source Verified Backend Facts\nsummary: Centralized backend architecture, factual project constraints, and source-verified rules.\ntags: []\nrelated: [architecture/diagnosis/source_verified_diagnosis_facts.md]\nkeywords: []\ncreatedAt: '2026-06-07T03:02:40.447Z'\nupdatedAt: '2026-06-15T00:58:55.999Z'\n---\n## Reason\nCurate from RLM context: captured backend architecture and project rules.\n\n## Raw Concept\n**Task:**\nConsolidate backend system facts and architecture rules\n\n**Changes:**\n- Extracted backend architecture and project constraints from RLM context\n\n**Timestamp:** 2026-06-15\n\n## Narrative\n### Structure\nConsolidated backend facts organized by subject.\n\n### Highlights\nCapture of core system architecture, rules, and constraints.\n\n## Facts\n- **端上验收流程**: 在 planting 仓库，若代码未部署到云端，端上验收必须先成功跑通 npm run dev:mp-weixin:local-functions:lan 的完整 LAN 本地函数 flow。\n- **验收证据标准**: 9420/miniprogram-automator/wx.request 证据是端上验收通过的唯一标准。\n- **验收证据标准**: Scoped gateway、backend curl、Node HTTP 或 health route 仅能作为排障证据，不能作为验收通过依据。\n- **QA 案例分析**: 2026-06-15 weather-cache QA 案例表明，gateway health 成功不代表完整 LAN flow 通过，需警惕 worker 缺失导致的 502 错误。\n- **前端技术栈**: 项目前端技术栈为 UniApp 3.0、Vue 3 和 Tailwind CSS 3。\n- **后端技术栈**: 项目后端技术栈为 Tencent CloudBase、Cloud Functions 和 MySQL/TDSQL-C。\n- **自动化路径**: 端上自动化项目路径必须为 /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin。\n- **自动化通信**: 端上自动化默认使用 9420 端口进行 miniprogram-automator 通信。\n- **LAN flow**: LAN flow 验收必须先修复并重新跑通 `npm run dev:mp-weixin:local-functions:lan`。\n- **诊断流自动化**: 诊断流自动化必须优先使用稳定 id（如 `diagnose-entry-button-{plant.id}`），不得将中文文案、截图坐标或页面层级作为首选定位方式。\n- **失败归因**: QA 失败归因必须显式区分：devtools_automator_blocker, devtools_auth_blocker, devtools_configuration_blocker, product_blocker, recovered, not_verified。\n- **QA scope**: QA scope 由 Test Contract 或验收标准决定，而非 UI diff。\n- **QA Contract**: 涉及诊断相关接口（如 `/diagnosis/question/start`）的 QA 必须要求 Test Contract 中存在端上验证项，缺失时直接退回 contract_blocker。\n- **QA 证据**: 端上接口的合格证据必须来自小程序运行时的 `wx.request` 或真实端上交互，Node 直接 HTTP/curl 不得替代端上 QA。\n- **projectPath**: 本项目端上 automator 的 Test Contract `projectPath` 必须固定为 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`。\n- **登录态保护**: 禁止为了建立“干净 CDP 基线”默认执行会重启 DevTools 的路径，除非用户明确授权。\n- **SQL schema**: CloudBase SQL 改动必须有 schema truth gate 证据，优先使用 live INFORMATION_SCHEMA 或 CloudBase MCP 验证。\n- **输出规范**: QA 输出必须合并为一个简洁结果，禁止拆分为大量重复章节，标准输出建议不超过 600 tokens。\n- **Completion Gate**: 任务完成需满足所有 required acceptance items 已映射并测试通过，且 QA 已按 Test Contract 完成端上自动化验证。\n- **Git**: Git commit must be completed or have a documented blocker before task completion.\n- **Verification**: Unverified items must be explicitly categorized and written back.\n- **Documentation**: If docs_keeper_required is set to yes, documentation must be synced or a valid reason for skipping must be provided.\n- **Code Quality**: Touched code files must pass the 500-line split hard limit check.\n- **Testing**: Task completion is blocked if only backend tests pass without frontend or mini-program acceptance.\n- **Testing**: Task completion is blocked if only API verification is performed without UI component acceptance.\n- **Process**: Task completion is blocked if checklist or acceptance criteria are not mapped.\n- **QA**: QA automation is mandatory for tasks involving end-user interactions.\n- **Diagnosis Module**: Diagnosis-related paths (e.g., /diagnosis/question/start) require a Test Contract including concrete endpoints, payloads, and assertions.\n- **Testing**: End-user interfaces cannot be verified solely by Node, curl, backend smoke, or unit tests.\n- **Deployment**: Code must be deployed to the cloud or verified via the local LAN flow (npm run dev:mp-weixin:local-functions:lan) or mini-program runtime.\n- **CloudBase**: CloudBase SQL repository changes require a schema truth gate or live auth evidence.\n- **Reporting**: The Completion Gate template defines the mandatory fields for reporting task completion status.\n- **Data Processing**: Do not summarize table data with every row.\n- **Code Preservation**: Preserve exact code examples, API signatures, and interface definitions.\n- **Documentation**: Preserve step-by-step procedures and numbered instructions in narrative.rules.\n"
+      },
+      "reason": "The weather diagnosis logic is a backend service module that must adhere to the standardized testing and verification protocols defined in the backend facts.",
+      "type": "CONSOLIDATE"
+    },
+    {
+      "action": "CREATE",
+      "confidence": 1,
+      "needsReview": false,
+      "outputFile": "governance/diagnosis-lifecycle-governance-fact-integrity.md",
+      "sources": [
+        "architecture/_index.md",
+        "maintenance/_index.md",
+        "testing/_index.md"
+      ],
+      "type": "SYNTHESIZE"
+    },
+    {
+      "action": "CREATE",
+      "confidence": 0.95,
+      "needsReview": false,
+      "outputFile": "architecture/question-package-submission-contract.md",
+      "sources": [
+        "architecture/_index.md",
+        "project_management/_index.md",
+        "docs/_index.md"
+      ],
+      "type": "SYNTHESIZE"
+    }
+  ],
+  "startedAt": 1781487458761,
+  "status": "completed",
+  "summary": {
+    "consolidated": 2,
+    "errors": 0,
+    "flaggedForReview": 2,
+    "pruned": 0,
+    "synthesized": 2
+  },
+  "taskId": "f347cb23-903a-4730-a701-65295b622cb2",
+  "trigger": "agent-idle"
+}

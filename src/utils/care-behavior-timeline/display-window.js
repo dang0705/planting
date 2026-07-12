@@ -1,7 +1,7 @@
 const DEFAULT_DISPLAY_DAYS_BEFORE = 16
 const DEFAULT_DISPLAY_DAYS_AFTER = 4
 const DEFAULT_SELECTABLE_START_OFFSET = -10
-const DEFAULT_SELECTABLE_END_OFFSET = -1
+const DEFAULT_SELECTABLE_END_OFFSET = 0
 
 function toDateString(date) {
   if (!(date instanceof Date) || Number.isNaN(date.getTime())) {

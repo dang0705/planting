@@ -28,9 +28,7 @@ AGENTS.md
 .codex/agents/docs-keeper.toml
 .codex/skills/dispatch-task/SKILL.md
 .codex/skills/dispatch-task/references/knowledge-hygiene-policy.md
-.brv/context-tree/_manifest.json
-.brv/context-tree/_index.md
-.brv/context-tree/facts-index.yml
+.brvspace
 docs/CURRENT.md
 docs/ACTIVE_CONTRACTS.md
 docs/RUNBOOK.md
@@ -56,6 +54,7 @@ docs/CURRENT.md
 
 ## 重要边界
 
+- 当前仓库的 memory source 已切到 ByteRover V4：以 `.brvspace` 绑定 `planting` space，topics 通过 ByteRover V4 工具查询；`.brv/context-tree/**` 只保留为 legacy V3 材料，不再作为当前默认 memory source。
 - 本包基于上传文件静态分析生成，未连接你的实际 Git commit。落地后应把 `verified_at_commit: unknown-from-upload` 改成当前 commit hash。
 - 如果上传包与真实工作区不一致，以真实工作区代码为准。
 - 既有文档不要直接删除；先按 `docs/ARCHIVE_INDEX.md` 和 `docs/_doc-status.yml` 标记为 archive-only / retrieval-only。

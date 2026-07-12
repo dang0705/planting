@@ -441,7 +441,7 @@ v2.1 算法升级：移除 `wateringCount10d` 作为核心判断，改用 `effec
 入参约束：
 
 - `plantId`：植物实例 ID（必填）
-- `wateringEvents`：最近 10 天浇水事件集合，元素结构 `{ date: 'YYYY-MM-DD', watered: true, amount: 'normal' }`
+- `wateringEvents`：最近 10 天（含当日可回传）的浇水事件集合，元素结构 `{ date: 'YYYY-MM-DD', watered: true, amount: 'normal' }`
 - `referenceDate`：计算基准日期（ISO 字符串）
 - `weatherDays`：历史天气日数据数组（来自 `getEnvironmentWeatherWindow` 的 `historicalDays`），每日含 `tempMaxC/tempMinC/humidity/precipMm/textDay`
 - `forecastDays`：预报天气日数据数组（来自 `getEnvironmentWeatherWindow` 的 `forecastDays`），字段同 `weatherDays`

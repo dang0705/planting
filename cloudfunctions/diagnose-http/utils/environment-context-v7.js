@@ -607,6 +607,14 @@ function dedupeNormalizedEvents(events = [], keyResolver = event => JSON.stringi
   return deduped
 }
 
+function limitRecentNormalizedEvents(events = [], limit = 10) {
+  return events
+    .slice()
+    .sort((a, b) => normalizeDate(b.date).localeCompare(normalizeDate(a.date)))
+    .slice(0, limit)
+    .sort((a, b) => normalizeDate(a.date).localeCompare(normalizeDate(b.date)))
+}
+
 function latestDaysAgo(referenceDate = '', events = []) {
   let latest = null
   for (const event of events) {
@@ -764,7 +772,8 @@ function normalizeCareBehaviorTimeline(input = {}) {
     .filter(Boolean)
   const dedupedWateringEvents10d = dedupeNormalizedEvents(wateringEvents10d, event =>
     normalizeDate(event.date)
-  ).slice(0, 10)
+  )
+  const recentWateringEvents10d = limitRecentNormalizedEvents(dedupedWateringEvents10d)
   const fertilizingEvents10d = [
     ...(Array.isArray(source.fertilizingEvents10d) ? source.fertilizingEvents10d : []),
     ...(Array.isArray(source.fertilizing_events_10d) ? source.fertilizing_events_10d : []),
@@ -774,7 +783,8 @@ function normalizeCareBehaviorTimeline(input = {}) {
     .filter(Boolean)
   const dedupedFertilizingEvents10d = dedupeNormalizedEvents(fertilizingEvents10d, event =>
     normalizeDate(event.date)
-  ).slice(0, 10)
+  )
+  const recentFertilizingEvents10d = limitRecentNormalizedEvents(dedupedFertilizingEvents10d)
   const lightChangeEvents10d = [
     ...(Array.isArray(source.lightChangeEvents10d) ? source.lightChangeEvents10d : []),
     ...(Array.isArray(source.light_change_events_10d) ? source.light_change_events_10d : []),
@@ -784,7 +794,8 @@ function normalizeCareBehaviorTimeline(input = {}) {
     .filter(Boolean)
   const dedupedLightChangeEvents10d = dedupeNormalizedEvents(lightChangeEvents10d, event =>
     normalizeDate(event.date)
-  ).slice(0, 10)
+  )
+  const recentLightChangeEvents10d = limitRecentNormalizedEvents(dedupedLightChangeEvents10d)
   const lastFertilizedBucket = normalizeBucket(
     source.lastFertilizedBucket || source.last_fertilized_bucket
   )
@@ -796,11 +807,11 @@ function normalizeCareBehaviorTimeline(input = {}) {
   const summary = buildBehaviorSummary(
     referenceDate,
     {
-      wateringEvents: dedupedWateringEvents10d,
-      fertilizingEvents: dedupedFertilizingEvents10d,
-      lightChangeEvents: dedupedLightChangeEvents10d
+      wateringEvents: recentWateringEvents10d,
+      fertilizingEvents: recentFertilizingEvents10d,
+      lightChangeEvents: recentLightChangeEvents10d
     },
-    dedupedFertilizingEvents10d.length > 0 ? 'within_10d' : lastFertilizedBucket
+    recentFertilizingEvents10d.length > 0 ? 'within_10d' : lastFertilizedBucket
   )
 
   return {
@@ -808,12 +819,12 @@ function normalizeCareBehaviorTimeline(input = {}) {
     reference_date: referenceDate,
     dailyRecords: normalizedDailyRecords,
     daily_records: normalizedDailyRecords,
-    wateringEvents10d: dedupedWateringEvents10d,
-    watering_events_10d: dedupedWateringEvents10d,
-    fertilizingEvents10d: dedupedFertilizingEvents10d,
-    fertilizing_events_10d: dedupedFertilizingEvents10d,
-    lightChangeEvents10d: dedupedLightChangeEvents10d,
-    light_change_events_10d: dedupedLightChangeEvents10d,
+    wateringEvents10d: recentWateringEvents10d,
+    watering_events_10d: recentWateringEvents10d,
+    fertilizingEvents10d: recentFertilizingEvents10d,
+    fertilizing_events_10d: recentFertilizingEvents10d,
+    lightChangeEvents10d: recentLightChangeEvents10d,
+    light_change_events_10d: recentLightChangeEvents10d,
     lastFertilizedBucket: summary.lastFertilizedBucket,
     last_fertilized_bucket: summary.lastFertilizedBucket,
     summary

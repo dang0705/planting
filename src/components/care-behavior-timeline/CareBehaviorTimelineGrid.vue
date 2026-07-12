@@ -1,6 +1,7 @@
 <template>
   <view
     class="care-behavior-calendar-card relative box-border rounded-xl bg-white pt-5 shadow-[0_1px_0_rgba(45,122,79,0.02)]"
+    :class="sticky ? 'sticky top-0 z-10' : ''"
   >
     <view class="care-behavior-weekday-header mb-0.5 grid grid-cols-7 gap-[3px]">
       <text
@@ -51,6 +52,7 @@ defineEmits(['press-end', 'press-start', 'reset-autohide', 'select-date'])
 defineProps({
   cellItems: { type: Array, default: () => [] },
   idPrefix: { type: String, default: 'diagnose' },
+  sticky: { type: Boolean, default: false },
   selectedDateBehaviorStatusText: { type: String, default: '' },
   selectedDateDialogHumidityText: { type: String, default: '—' },
   selectedDateDialogTemperatureText: { type: String, default: '—' },

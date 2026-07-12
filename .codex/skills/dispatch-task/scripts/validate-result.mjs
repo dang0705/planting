@@ -17,6 +17,11 @@ const readJson = file => {
 }
 const handoff = readJson(handoffFile)
 const result = readJson(resultFile)
+const handoffMode = handoff.implementation_mode ?? 'codex_subagent'
+const handoffExternalMode = ['external_implementer', 'zcode_external'].includes(handoffMode)
+const externalContract = handoff.external_contract ?? handoff.zcode_contract ?? {}
+const externalProvider =
+  externalContract.provider || (externalContract.external_implementer === 'zcode_glm' ? 'zcode' : '')
 const errors = []
 const need = (condition, message) => {
   if (!condition) {
@@ -234,9 +239,10 @@ const validateUiCompleted = (resultObject, { figmaAcquiredBy, uniUiPolicyName })
     need(isObject(evidence), 'Figma task requires figma_fetch_evidence')
     if (isObject(evidence)) {
       need(evidence.status === 'success', 'figma_fetch_evidence.status must be success')
+      const allowedAcquirers = Array.isArray(figmaAcquiredBy) ? figmaAcquiredBy : [figmaAcquiredBy]
       need(
-        evidence.acquired_by === figmaAcquiredBy,
-        `figma_fetch_evidence.acquired_by must be ${figmaAcquiredBy}`
+        allowedAcquirers.includes(evidence.acquired_by),
+        `figma_fetch_evidence.acquired_by must be ${allowedAcquirers.join('|')}`
       )
       need(
         evidence.acquired_before_first_ui_edit === true,
@@ -252,7 +258,7 @@ const validateUiCompleted = (resultObject, { figmaAcquiredBy, uniUiPolicyName })
       )
       const calls = callsOf(evidence)
       const screenshotPolicySkip =
-        figmaAcquiredBy === 'zcode_external_implementer' &&
+        allowedAcquirers.includes('zcode_external_implementer') &&
         evidence?.screenshot_policy_skip?.allowed === true &&
         nonEmptyString(evidence?.screenshot_policy_skip?.policy_ref) &&
         /AGENTS\.md/i.test(evidence.screenshot_policy_skip.policy_ref) &&
@@ -333,12 +339,12 @@ if (role === 'implementer') {
 
 if (role === 'external') {
   need(
-    handoff.implementation_mode === 'zcode_external',
-    'role=external is only valid for implementation_mode=zcode_external'
+    handoffExternalMode,
+    'role=external is only valid for implementation_mode=external_implementer'
   )
   need(
-    result.source === 'codex_recovery_after_zcode',
-    'external result source must be codex_recovery_after_zcode'
+    ['codex_recovery_after_external', 'codex_recovery_after_zcode'].includes(result.source),
+    'external result source must be codex_recovery_after_external|codex_recovery_after_zcode'
   )
   need(
     ['completed', 'blocked'].includes(result.status),
@@ -346,8 +352,9 @@ if (role === 'external') {
   )
   need(result.codex_self_implementation === false, 'codex_self_implementation must be false')
   need(
-    result.zcode_completion_claim_treated_as_non_authoritative === true,
-    'ZCode completion claim must be treated as non-authoritative'
+    result.external_completion_claim_treated_as_non_authoritative === true ||
+      result.zcode_completion_claim_treated_as_non_authoritative === true,
+    'external completion claim must be treated as non-authoritative'
   )
   need(
     result.git_diff_recovered_by_codex === true || result.status === 'blocked',
@@ -362,72 +369,76 @@ if (role === 'external') {
     'project_constraints_checked_by_codex must be true unless blocked'
   )
   need(
-    isObject(result.zcode_handoff_manual),
-    'zcode_handoff_manual is required in external recovery result'
+    isObject(result.external_handoff_manual) || isObject(result.zcode_handoff_manual),
+    'external_handoff_manual is required in external recovery result'
   )
-  if (isObject(result.zcode_handoff_manual)) {
+  const handoffManual = result.external_handoff_manual ?? result.zcode_handoff_manual
+  if (isObject(handoffManual)) {
     need(
-      result.zcode_handoff_manual.read_by_codex === true,
-      'zcode_handoff_manual.read_by_codex must be true'
+      handoffManual.read_by_codex === true,
+      'external_handoff_manual.read_by_codex must be true'
     )
     need(
-      result.zcode_handoff_manual.path === handoff?.handoff_manual?.path,
-      'zcode_handoff_manual.path must match handoff.handoff_manual.path'
+      handoffManual.path === handoff?.handoff_manual?.path,
+      'external_handoff_manual.path must match handoff.handoff_manual.path'
     )
     if (result.status === 'completed') {
       need(
-        result.zcode_handoff_manual.status === 'completed',
+        handoffManual.status === 'completed',
         'completed external recovery requires handoff_manual.status=completed'
       )
     } else {
       need(
-        ['blocked', 'completed', 'missing', 'invalid'].includes(result.zcode_handoff_manual.status),
+        ['blocked', 'completed', 'missing', 'invalid'].includes(handoffManual.status),
         'blocked external recovery requires handoff manual blocked/completed/missing/invalid status'
       )
     }
     need(
-      nonEmptyString(result.zcode_handoff_manual.updated_at) ||
-        ['missing', 'invalid'].includes(result.zcode_handoff_manual.status),
-      'zcode_handoff_manual.updated_at is required unless missing/invalid'
+      nonEmptyString(handoffManual.updated_at) ||
+        ['missing', 'invalid'].includes(handoffManual.status),
+      'external_handoff_manual.updated_at is required unless missing/invalid'
     )
   }
   need(
-    isObject(result.zcode_send_receipt),
-    'zcode_send_receipt is required in external recovery result'
+    isObject(result.external_send_receipt) || isObject(result.zcode_send_receipt),
+    'external_send_receipt is required in external recovery result'
   )
-  if (isObject(result.zcode_send_receipt)) {
+  const sendReceipt = result.external_send_receipt ?? result.zcode_send_receipt
+  if (isObject(sendReceipt)) {
     if (result.status === 'completed') {
       need(
-        result.zcode_send_receipt.status === 'sent',
-        'completed recovery requires zcode_send_receipt.status=sent'
+        sendReceipt.status === 'sent',
+        'completed recovery requires external_send_receipt.status=sent'
       )
       need(
-        ['enter', 'send_button'].includes(result.zcode_send_receipt.send_action),
-        'completed recovery requires send_action=enter|send_button'
+        sendReceipt.prompt_integrity_verified === true,
+        'external_send_receipt.prompt_integrity_verified must be true'
       )
-      need(
-        result.zcode_send_receipt.clipboard_paste_used === true,
-        'zcode_send_receipt.clipboard_paste_used must be true'
-      )
-      need(
-        result.zcode_send_receipt.prompt_integrity_verified === true,
-        'zcode_send_receipt.prompt_integrity_verified must be true'
-      )
-      const cu = result.zcode_send_receipt.computer_use ?? {}
-      need(isObject(cu), 'zcode_send_receipt.computer_use is required')
-      need(cu.tool_invoked === true, 'zcode_send_receipt.computer_use.tool_invoked must be true')
-      validateComputerUseToolEvidence(cu)
-      need(
-        cu.shell_only_ui_automation_used === false,
-        'zcode_send_receipt.computer_use.shell_only_ui_automation_used must be false'
-      )
-      need(
-        cu.manual_typing_used === false,
-        'zcode_send_receipt.computer_use.manual_typing_used must be false'
-      )
+      if (externalProvider === 'zcode' || result.zcode_send_receipt) {
+        need(
+          ['enter', 'send_button'].includes(sendReceipt.send_action),
+          'completed ZCode recovery requires send_action=enter|send_button'
+        )
+        need(
+          sendReceipt.clipboard_paste_used === true,
+          'zcode_send_receipt.clipboard_paste_used must be true'
+        )
+        const cu = sendReceipt.computer_use ?? {}
+        need(isObject(cu), 'zcode_send_receipt.computer_use is required')
+        need(cu.tool_invoked === true, 'zcode_send_receipt.computer_use.tool_invoked must be true')
+        validateComputerUseToolEvidence(cu)
+        need(
+          cu.shell_only_ui_automation_used === false,
+          'zcode_send_receipt.computer_use.shell_only_ui_automation_used must be false'
+        )
+        need(
+          cu.manual_typing_used === false,
+          'zcode_send_receipt.computer_use.manual_typing_used must be false'
+        )
+      }
     } else {
       need(
-        ['sent', 'blocked'].includes(result.zcode_send_receipt.status),
+        ['sent', 'blocked'].includes(sendReceipt.status),
         'blocked recovery receipt status must be sent|blocked'
       )
     }
@@ -443,32 +454,33 @@ if (role === 'external') {
       result.deviations_or_blockers.length === 0,
       'completed external result cannot contain deviations_or_blockers'
     )
-    need(isObject(result.zcode_recovery_evidence), 'zcode_recovery_evidence is required')
-    if (isObject(result.zcode_recovery_evidence)) {
+    const recoveryEvidence = result.external_recovery_evidence ?? result.zcode_recovery_evidence
+    need(isObject(recoveryEvidence), 'external_recovery_evidence is required')
+    if (isObject(recoveryEvidence)) {
       need(
-        result.zcode_recovery_evidence.handoff_manual_read === true,
-        'zcode_recovery_evidence.handoff_manual_read must be true'
+        recoveryEvidence.handoff_manual_read === true,
+        'external_recovery_evidence.handoff_manual_read must be true'
       )
       need(
-        result.zcode_recovery_evidence.git_status_read === true,
-        'zcode_recovery_evidence.git_status_read must be true'
+        recoveryEvidence.git_status_read === true,
+        'external_recovery_evidence.git_status_read must be true'
       )
       need(
-        result.zcode_recovery_evidence.git_diff_read === true,
-        'zcode_recovery_evidence.git_diff_read must be true'
+        recoveryEvidence.git_diff_read === true,
+        'external_recovery_evidence.git_diff_read must be true'
       )
       need(
-        result.zcode_recovery_evidence.forbidden_paths_clean === true,
-        'zcode_recovery_evidence.forbidden_paths_clean must be true'
+        recoveryEvidence.forbidden_paths_clean === true,
+        'external_recovery_evidence.forbidden_paths_clean must be true'
       )
       need(
-        result.zcode_recovery_evidence.no_unapproved_dependencies === true,
-        'zcode_recovery_evidence.no_unapproved_dependencies must be true'
+        recoveryEvidence.no_unapproved_dependencies === true,
+        'external_recovery_evidence.no_unapproved_dependencies must be true'
       )
     }
     validateValidationEvidence(result, true)
     validateUiCompleted(result, {
-      figmaAcquiredBy: 'zcode_external_implementer',
+      figmaAcquiredBy: ['external_implementer', 'zcode_external_implementer'],
       uniUiPolicyName: 'uni-ui-figma-component-mapper-contract'
     })
   } else {

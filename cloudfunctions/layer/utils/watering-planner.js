@@ -16,9 +16,7 @@
  * 纯函数，无 DB、无外部 IO。diagnose-http 与 plant-user-http 共用此模块。
  */
 
-const {
-  computePotGeometry
-} = require('./pot-geometry')
+const { computePotGeometry } = require('./pot-geometry')
 const {
   DOSE_CLASS,
   GATE_STATE,
@@ -61,9 +59,7 @@ function normalizeRawText(value = '') {
 }
 
 function normalizeText(value = '') {
-  return normalizeRawText(value)
-    .replace(/\s+/g, '_')
-    .toLowerCase()
+  return normalizeRawText(value).replace(/\s+/g, '_').toLowerCase()
 }
 
 function isPlainObject(value) {
@@ -102,7 +98,9 @@ function normalizeDate(value = '') {
   }
   const match = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/)
   if (match) {
-    return [match[1], String(match[2]).padStart(2, '0'), String(match[3]).padStart(2, '0')].join('-')
+    return [match[1], String(match[2]).padStart(2, '0'), String(match[3]).padStart(2, '0')].join(
+      '-'
+    )
   }
   return raw.slice(0, 10)
 }
@@ -190,6 +188,14 @@ function dedupeNormalizedEvents(events = [], keyResolver = event => JSON.stringi
   return Array.from(seen.values())
 }
 
+function limitRecentNormalizedEvents(events = [], limit = 10) {
+  return events
+    .slice()
+    .sort((a, b) => normalizeDate(b.date).localeCompare(normalizeDate(a.date)))
+    .slice(0, limit)
+    .sort((a, b) => normalizeDate(a.date).localeCompare(normalizeDate(b.date)))
+}
+
 /* ---------- 行为时间线归一化 ---------- */
 
 function normalizeCareBehaviorTimeline(input = {}) {
@@ -209,17 +215,18 @@ function normalizeCareBehaviorTimeline(input = {}) {
     .filter(Boolean)
   const dedupedWateringEvents10d = dedupeNormalizedEvents(wateringEvents10d, event =>
     normalizeDate(event.date)
-  ).slice(0, 10)
+  )
+  const recentWateringEvents10d = limitRecentNormalizedEvents(dedupedWateringEvents10d)
 
   const summary = buildBehaviorSummary(referenceDate, {
-    wateringEvents: dedupedWateringEvents10d
+    wateringEvents: recentWateringEvents10d
   })
 
   return {
     referenceDate,
     reference_date: referenceDate,
-    wateringEvents10d: dedupedWateringEvents10d,
-    watering_events_10d: dedupedWateringEvents10d,
+    wateringEvents10d: recentWateringEvents10d,
+    watering_events_10d: recentWateringEvents10d,
     summary
   }
 }
@@ -269,8 +276,8 @@ function buildBehaviorSummary(referenceDate = '', events = {}, potGeometry = {})
     wetPressureLoad,
     lastEffectiveRootWateredDaysAgo,
     rootZoneMoistureIndex,
-    thoroughWateringCount10d: wateringEvents.filter(event =>
-      resolveDoseClass(event, potVolumeMl) === DOSE_CLASS.THOROUGH
+    thoroughWateringCount10d: wateringEvents.filter(
+      event => resolveDoseClass(event, potVolumeMl) === DOSE_CLASS.THOROUGH
     ).length,
     lastWateredDaysAgo: latestDaysAgo(referenceDate, wateringEvents),
     lookbackWindowDays
@@ -325,11 +332,16 @@ function buildPlannerFormulaStep({
  * @param {string} referenceDate - 参考日期 'YYYY-MM-DD'
  * @returns {{ nextWaterDate: string|null, nextWaterWindow: [number, number], nextWaterReason: string }}
  */
-function resolveNextWaterDate(baseline, wateringContext, timeline, referenceDate, intervalFactor = 1.0) {
+function resolveNextWaterDate(
+  baseline,
+  wateringContext,
+  timeline,
+  referenceDate,
+  intervalFactor = 1.0
+) {
   const interval = baseline.intervalDays || [5, 8]
   const minDays = Math.max(1, Number(interval[0]) || 5)
   const maxDays = Math.max(minDays, Number(interval[1]) || minDays)
-  const midDays = Math.max(1, Math.round((minDays + maxDays) / 2))
 
   const wateringEvents = timeline?.watering_events_10d || timeline?.wateringEvents10d || []
   const refDate = parseDate(referenceDate) || new Date()
@@ -405,9 +417,12 @@ function resolveNextWaterDate(baseline, wateringContext, timeline, referenceDate
  * 输出：
  *   baseline / wateringContext / action / reasons / thresholds / calculation
  *   nextWaterDate / nextWaterWindow / nextWaterReason
- *   amountBottleText / amountRangeMl / stopCondition / confidenceLevel / reasonCodes
+ *   amountRangeMl / stopCondition / confidenceLevel / reasonCodes
  *   effectiveHydrationLoad / wetPressureLoad / lastEffectiveRootWateredDaysAgo /
  *   rootZoneMoistureIndex / potGeometry
+ *
+ * 注：文案换算已移至前端 src/utils/water-volume-format.js，后端只返回 amountRangeMl（ml 数组），
+ * 不再产出 amountBottleText。
  */
 function buildWateringPlanner({
   wateringStrategy = {},
@@ -481,10 +496,7 @@ function buildWateringPlanner({
 
   // 近期浇透检测
   const effectiveReferenceDate =
-    referenceDate ||
-    timeline.referenceDate ||
-    timeline.reference_date ||
-    new Date().toISOString()
+    referenceDate || timeline.referenceDate || timeline.reference_date || new Date().toISOString()
   const recentThoroughWatering = hasRecentThoroughWatering(
     timeline.watering_events_10d || timeline.wateringEvents10d || [],
     effectiveReferenceDate,
@@ -528,11 +540,16 @@ function buildWateringPlanner({
   )
 
   // 水量建议（传入 userDoseEcho 锚定区间下限）
-  const amountSuggestion = computeAmountSuggestion(potGeometry, gate.gateState, baseline.intervalDays, {
-    wateringQuantization,
-    weatherWetPressureHitCount,
-    userDoseEcho
-  })
+  const amountSuggestion = computeAmountSuggestion(
+    potGeometry,
+    gate.gateState,
+    baseline.intervalDays,
+    {
+      wateringQuantization,
+      weatherWetPressureHitCount,
+      userDoseEcho
+    }
+  )
 
   // 合并水量建议产生的 reasonCodes（如 USER_DOSE_ANCHORED）
   if (Array.isArray(amountSuggestion.reasonCodes) && amountSuggestion.reasonCodes.length) {
@@ -582,7 +599,10 @@ function buildWateringPlanner({
       buildPlannerFormulaStep({
         key: 'lookback_window_days',
         expression: 'max(10, baselineMaxInterval * 1.5) * (hasDrainageHole===false ? 1.3 : 1)',
-        inputs: { baselineMaxInterval: baseline.intervalDays[1], hasDrainageHole: potGeometry.hasDrainageHole },
+        inputs: {
+          baselineMaxInterval: baseline.intervalDays[1],
+          hasDrainageHole: potGeometry.hasDrainageHole
+        },
         result: lookbackWindowDays
       }),
       buildPlannerFormulaStep({
@@ -593,8 +613,13 @@ function buildWateringPlanner({
       }),
       buildPlannerFormulaStep({
         key: 'wet_pressure_load',
-        expression: 'Σ(doseWetPressureWeight × recencyDecay) / lookbackWindowDays × drainageRiskFactor',
-        inputs: { wetPressureLoad, lookbackWindowDays, drainageRiskFactor: potGeometry.drainageRiskFactor },
+        expression:
+          'Σ(doseWetPressureWeight × recencyDecay) / lookbackWindowDays × drainageRiskFactor',
+        inputs: {
+          wetPressureLoad,
+          lookbackWindowDays,
+          drainageRiskFactor: potGeometry.drainageRiskFactor
+        },
         result: wetPressureLoad
       }),
       buildPlannerFormulaStep({
@@ -606,20 +631,28 @@ function buildWateringPlanner({
       buildPlannerFormulaStep({
         key: 'root_zone_moisture_index',
         expression: 'clamp(0,1, hydrationLoad/dryDownFactor + wetPressure×0.5 + weatherWet×0.1)',
-        inputs: { effectiveHydrationLoad, wetPressureLoad, potGeometryDryDownFactor: potGeometry.potGeometryDryDownFactor, weatherWetPressureHitCount },
+        inputs: {
+          effectiveHydrationLoad,
+          wetPressureLoad,
+          potGeometryDryDownFactor: potGeometry.potGeometryDryDownFactor,
+          weatherWetPressureHitCount
+        },
         result: rootZoneMoistureIndex
       }),
       // 兼容诊断页展示：保留天气偏湿命中追踪
       buildPlannerFormulaStep({
         key: 'high_humidity_pressure_hit',
-        expression: 'highHumidityDays >= wetHighHumidityDaysMin || maxConsecutiveHighHumidityDays >= wetHighHumidityConsecutiveDaysMin',
+        expression:
+          'highHumidityDays >= wetHighHumidityDaysMin || maxConsecutiveHighHumidityDays >= wetHighHumidityConsecutiveDaysMin',
         inputs: {
           highHumidityDays: Number(historical.highHumidityDays || 0),
           maxConsecutiveHighHumidityDays: Number(historical.maxConsecutiveHighHumidityDays || 0)
         },
         thresholds: {
           wetHighHumidityDaysMin: Number(thresholds.wetHighHumidityDaysMin || 0),
-          wetHighHumidityConsecutiveDaysMin: Number(thresholds.wetHighHumidityConsecutiveDaysMin || 0)
+          wetHighHumidityConsecutiveDaysMin: Number(
+            thresholds.wetHighHumidityConsecutiveDaysMin || 0
+          )
         },
         result: highHumidityPressureHit,
         passed: highHumidityPressureHit
@@ -627,28 +660,46 @@ function buildWateringPlanner({
       buildPlannerFormulaStep({
         key: 'wet_pressure_score',
         expression: 'wetPressureHitCount * wetPressureDeductionPerHit',
-        inputs: { wetPressureHitCount: weatherWetPressureHitCount, highHumidityPressureHit, coldHumidPressureHit, rainyPressureHit },
-        thresholds: { wetPressureDeductionPerHit: Number(thresholds.wetPressureDeductionPerHit || 1) },
+        inputs: {
+          wetPressureHitCount: weatherWetPressureHitCount,
+          highHumidityPressureHit,
+          coldHumidPressureHit,
+          rainyPressureHit
+        },
+        thresholds: {
+          wetPressureDeductionPerHit: Number(thresholds.wetPressureDeductionPerHit || 1)
+        },
         result: weatherWetPressureHitCount * Number(thresholds.wetPressureDeductionPerHit || 1)
       }),
       // 兼容诊断页展示：保留 too_wet_condition / too_dry_condition 追踪
       buildPlannerFormulaStep({
         key: 'too_wet_condition',
         expression: 'dry_wet_gate === WET',
-        inputs: { rootZoneMoistureIndex, wetPressureLoad, lastEffectiveRootWateredDaysAgo, weatherWetPressureHitCount },
+        inputs: {
+          rootZoneMoistureIndex,
+          wetPressureLoad,
+          lastEffectiveRootWateredDaysAgo,
+          weatherWetPressureHitCount
+        },
         result: gate.gateState === GATE_STATE.WET,
         passed: gate.gateState === GATE_STATE.WET
       }),
       buildPlannerFormulaStep({
         key: 'too_dry_condition',
         expression: 'dry_wet_gate === DRY',
-        inputs: { rootZoneMoistureIndex, lastEffectiveRootWateredDaysAgo, forecastHotDryHit, historicalHotDryHit },
+        inputs: {
+          rootZoneMoistureIndex,
+          lastEffectiveRootWateredDaysAgo,
+          forecastHotDryHit,
+          historicalHotDryHit
+        },
         result: gate.gateState === GATE_STATE.DRY,
         passed: gate.gateState === GATE_STATE.DRY
       }),
       buildPlannerFormulaStep({
         key: 'dry_wet_gate',
-        expression: 'evaluateDryWetGate(moistureIndex, wetPressure, lastRootWatered, potGeometry, weather)',
+        expression:
+          'evaluateDryWetGate(moistureIndex, wetPressure, lastRootWatered, potGeometry, weather)',
         inputs: {
           rootZoneMoistureIndex,
           wetPressureLoad,
@@ -688,7 +739,6 @@ function buildWateringPlanner({
     userDoseEcho,
     potGeometry,
     amountRangeMl: amountSuggestion.amountRangeMl,
-    amountBottleText: amountSuggestion.amountBottleText,
     stopCondition: amountSuggestion.stopCondition,
     confidenceLevel: hasDoseConflict ? 'low' : amountSuggestion.confidenceLevel,
     // 下次浇水日期
@@ -723,10 +773,7 @@ function resolveDefaultThresholds(overrides = {}) {
     return { watering: clonePlain(DEFAULT_WATERING_THRESHOLDS) }
   }
   return {
-    watering: Object.assign(
-      clonePlain(DEFAULT_WATERING_THRESHOLDS),
-      clonePlain(overrides.watering)
-    )
+    watering: Object.assign(clonePlain(DEFAULT_WATERING_THRESHOLDS), clonePlain(overrides.watering))
   }
 }
 

@@ -35,10 +35,10 @@ class Area:
 AREAS: tuple[Area, ...] = (
     Area(
         name="ai-workflow",
-        patterns=("AGENTS.md", ".codex/**", ".brv/context-tree/**", "docs/_sync-map.yml", "docs/_doc-status.yml"),
+        patterns=("AGENTS.md", ".codex/**", ".brvspace", ".brv/context-tree/**", "docs/_sync-map.yml", "docs/_doc-status.yml"),
         docs=("AGENTS.md", ".codex/context-packs.yml", "docs/KNOWLEDGE_GOVERNANCE.md", "docs/ARCHIVE_INDEX.md"),
         brv_keys=("F-AI-WORKFLOW-001",),
-        reason="AI default context, dispatch, docs_keeper, BRV or context-pack changed",
+        reason="AI default context, dispatch, docs_keeper, ByteRover V4 binding, legacy BRV archive, or context-pack changed",
     ),
     Area(
         name="frontend-app-map",
@@ -190,6 +190,7 @@ def classify(files: Iterable[str]) -> dict:
             "This is a classifier, not proof that docs are wrong.",
             "docs_keeper should read only matched source files, active docs, and relevant diff hunks.",
             "Archived blueprint docs should be marked stale/superseded, not bulk-synchronized.",
+            "The current memory source is the .brvspace-bound ByteRover V4 space; repo .brv/context-tree/** is legacy archive material.",
             "For diagnosis question-package work, old follow-up/one-question-per-round claims are superseded unless source-verified by current code/task.",
         ],
     }

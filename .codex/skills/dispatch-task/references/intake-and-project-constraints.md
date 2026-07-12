@@ -33,4 +33,4 @@ test_commands
 
 1. `rule_refs` 只写路径和相关章节，不复制整份 AGENTS.md。
 2. `.codex/context-packs.yml` 是任务上下文选择入口；不得默认全量读取 docs、BRV 或 references。
-3. 代码、测试、schema、配置和 package scripts 是事实源；BRV 只作索引。
+3. 当前事实源、事实优先级、ByteRover 内容资格及 Topic 的当前事实使用方式统一执行 `AGENTS.md`；dispatch-task 不重新定义。

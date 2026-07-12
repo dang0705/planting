@@ -1,6 +1,6 @@
 # 浇水提醒算法 v2.1 逐步逻辑（watering-planner）
 
-> 事实源：`cloudfunctions/layer/utils/watering-planner.js`、`hydration-load.js`、`pot-geometry.js`。
+> 事实源：`cloudfunctions/layer/utils/watering-planner.js`、`hydration-load.js`、`pot-geometry.js`、`water-volume-format.js`；前端 `src/utils/water-volume-format.js`。
 > 若本文与代码冲突，以代码为准，修正本文。行号以撰写时（2026-07-01）为准，仅作定位参考。
 
 ## 1. 定位与调用入口
@@ -27,7 +27,7 @@
 | 7. 天气信号 | 偏湿命中数、预报/历史 hot-dry 命中 | weather 信号 |
 | 8. 近期浇透 | `hasRecentThoroughWatering(events, refDate)` | 布尔 |
 | 9. Dry/Wet Gate | `evaluateDryWetGate({...})` | `gateState / wateringContext / action / reasonCodes` |
-| 10. 水量建议 | `computeAmountSuggestion(potGeometry, gate.gateState, baseline.intervalDays, { wateringQuantization })` | `amountRangeMl / amountBottleText / stopCondition / confidenceLevel` |
+| 10. 水量建议 | `computeAmountSuggestion(potGeometry, gate.gateState, baseline.intervalDays, { wateringQuantization })` | `amountRangeMl / stopCondition / confidenceLevel` |
 | 11. 下次浇水日期 | `resolveNextWaterDate(baseline, gate.wateringContext, timeline, refDate)` | `nextWaterDate / nextWaterWindow / nextWaterReason` |
 
 ## 3. 盆型 / 基质如何参与计算
@@ -123,7 +123,9 @@
 
 ## 6. 水量建议与矿泉水瓶度量（computeAmountSuggestion）
 
-接收 `(potGeometry, gateState, baselineIntervalDays, { wateringQuantization, weatherWetPressureHitCount, userDoseEcho })`。按体积算出建议水量区间（ml）后，依次乘 **天气偏湿压制（仅DRY，§6.0）** → **属级需水系数（§6.1）** → **排水孔/基质修正（§6.2）** → **用户历史剂量锚定下限（§6.3）**，最后换算成用户可读文案（`amountBottleText`）。
+接收 `(potGeometry, gateState, baselineIntervalDays, { wateringQuantization, weatherWetPressureHitCount, userDoseEcho })`。按体积算出建议水量区间（ml）后，依次乘 **天气偏湿压制（仅DRY，§6.0）** → **属级需水系数（§6.1）** → **排水孔/基质修正（§6.2）** → **用户历史剂量锚定下限（§6.3）**，产出 `amountRangeMl`（ml 数组）即止。
+
+**前后端职责分离**（2026-07-08 重构）：后端 `computeAmountSuggestion` 只返回 `amountRangeMl`（ml 数组），**不再做任何文案换算**；后端 `water-volume-format.js` 已移除 `formatMlToBottleText` / `formatMlRangeToBottleText` / `BOTTLE_ML` / `BUCKET_ML` / `BUCKET_TEXT_MIN_ML` / `RANGE_MIN_SPAN_ML` 等展示常量与函数，只保留剂量落档算法（`DOSE_CLASS` / `classifyDoseByVolumeRatio` / `resolveMlToDoseClass`）。文案换算全部由前端 `src/utils/water-volume-format.js` 负责。`amountBottleText` 字段已从后端响应中**彻底废弃**，前端 `WateringReminderSheet` 直接调 `formatMlRangeToBottleText(amountRangeMl)` 自算。
 
 | 条件 | amountRangeMl 基线 |
 | --- | --- |
@@ -133,12 +135,15 @@
 | DRY 无盆型 | `[100,200]`（保守） |
 | BASELINE 无盆型 | `[50,150]`（保守） |
 
-**输出不再有 amountClass 相对档**。原因：建议水量已是"体积 × 固定倍率"，若再按"水量/体积"百分比落档会对所有盆恒定落同一档，失去区分度。改为直接输出绝对 ml 区间 + 瓶数文案。
+**输出不再有 amountClass 相对档**。原因：建议水量已是"体积 × 固定倍率"，若再按"水量/体积"百分比落档会对所有盆恒定落同一档，失去区分度。改为直接输出绝对 ml 区间（`amountRangeMl`），文案换算由前端负责。
 
-矿泉水瓶度量（`water-volume-format.js`，前后端各一份，口径一致）：
-- `BOTTLE_ML = 550`；`formatMlToBottleText(ml)` 按 0.5 瓶粒度就近换算，附 ml。
-- ≤50ml → 「喷一喷」；≥2500ml → 「一大桶」；其余「约 X 瓶（Y ml）」。
-- `amountBottleText` 由 `formatMlRangeToBottleText(amountRangeMl)` 换算：下限 >50ml 且上下限差 >50ml 时输出区间文案「约{min}~{max}ml」；否则退回取上限单值。
+矿泉水瓶度量（**仅前端** `src/utils/water-volume-format.js`；后端 `water-volume-format.js` 已移除全部展示函数与常量，只保留剂量落档算法）。前端独占 `formatMlToBottleText` / `formatMlRangeToBottleText` / `formatMlToDoseLabel`，另有 dose-slider 专用函数（`resolveWateringDoseOptions` / `isDoseOptionsUsingBucket`）。
+- `BOTTLE_ML = 550`；`formatMlToBottleText(ml)` 按 0.5 瓶粒度就近换算，最小「约半瓶」（不附 ml）。
+- 单位切换阈值统一为 `BUCKET_TEXT_MIN_ML = 2500`（约半桶）：≥2500ml 改用 5 升油桶「约 N 桶（5L油桶）」，桶数统一 `Math.round`（天然处理 ±10% 容差：2500 与 5000 都 round 到 1 桶）；<2500ml 用矿泉水瓶。**已移除「喷一喷」展示单位**，小水量归到「约半瓶」。
+- dose-slider 桶/瓶单位切换：前端 `resolveWateringDoseOptions` 对每个档位**独立**判断单位（≥2500ml 用桶、<2500ml 用瓶），故动态档位可「瓶桶混排」；`isDoseOptionsUsingBucket` 以**最低档（10% 盆体积）是否 ≥2500ml** 判定全档位是否含桶（曾以最高档 80% 为基准，致 slider 显示「桶」而建议水量仍为「瓶」的单位错配，已修）。
+- 文案由前端 `formatMlRangeToBottleText(amountRangeMl)` 换算：下限 >0 且上下限差 > `RANGE_MIN_SPAN_ML`(275ml) 时输出区间文案「约{lo}~{hi}瓶」或「约{lo}~{hi}桶（5L油桶）」（按上限是否 ≥2500 切单位）；否则退回取上限单值。区间文案统一输出瓶/桶标签，**不再输出「约{min}~{max}ml」**。
+- `amountBottleText` 字段已从后端响应中**彻底废弃**：前端 `WateringReminderSheet` 不再依赖后端透传，直接调 `formatMlRangeToBottleText(amountRangeMl)` 自算。
+- 算法层 `hydration-load.js` 的 `DOSE_CLASS.MIST` 档位分类与 `MIST_TEXT_MAX_ML_FOR_CONFLICT`(=50) 冲突判定常量**保留不动**，它们是内部落档/冲突算法，不是展示文案。
 
 ### 6.0 天气偏湿水量压制（resolveWeatherWetAmountFactor）
 
@@ -203,17 +208,20 @@
 - 锚定命中时追加 `USER_DOSE_ANCHORED` reasonCode。
 - **上限保持体积基准不变**：不被用户浇量拉高或压低，防止"上次浇少→永远建议少"死循环。
 
-**效果示例**（V=2749ml，BASELINE 基线 [275, 412]）：
+**效果示例**（V=11000ml，BASELINE 基线 [1100, 1650]，区间跨度 550ml > `RANGE_MIN_SPAN_ML`(275) 故可输出区间文案）：
 
 | 用户上次浇量 | echo doseClass | 锚定后下限 | amountRangeMl | amountBottleText |
 | --- | --- | --- | --- | --- |
-| 350ml | small | 350 | [350, 412] | 约350~412ml |
-| 550ml | normal | clamp→412 | [412, 412] | 约半瓶（412ml） |
-| 30ml | mist | 不锚定 | [275, 412] | 约275~412ml |
+| 1200ml | small | 1200 | [1200, 1650] | 约2~3瓶 |
+| 2200ml | normal | clamp->1650 | [1650, 1650] | 约3瓶 |
+| 30ml | mist | 不锚定 | [1100, 1650] | 约2~3瓶 |
+
+> 注：小盆（如 V=2749ml，基线 [275,412]，跨度 137ml < 275）会退回取上限单值「约半瓶」，不输出区间文案。
+
 
 ### 6.4 录入侧绝对 ml 与档反推（resolveDoseClass / resolveMlToDoseClass）
 
-录入侧（用户"上次浇了多少"）改为存**绝对 amountMl**（矿泉水瓶档：喷一喷 30 / 小半瓶 150 / 半瓶 275 / 一瓶 550 / 两瓶 1100 / 一大桶 2600）。
+录入侧（用户"上次浇了多少"）改为存**绝对 amountMl**。无盆体积时退回固定 `WATERING_BOTTLE_OPTIONS`（label 为换行格式「约N瓶\n矿泉水瓶」或「约N桶\n5L油桶」）：不知道 / 约0.5瓶 150 / 约1瓶 550 / 约2瓶 1100 / 约5瓶 2600 / 约1桶 5000（**已移除「喷一喷」/`spray` 档**，小水量并入「约0.5瓶」）；有盆体积时由 `resolveWateringDoseOptions(potVolumeMl)` 按盆体积百分比动态生成档位（每档独立判单位，可瓶桶混排）。
 
 - `resolveDoseClass(event, potVolumeMl)`：事件带 `amountMl` 时优先按 **盆体积百分比反推**相对档（5%/15%/40% → mist/small/normal/thorough）；否则回退旧的 amount 字符串档匹配（兼容历史数据）。
 - `classifyDoseByVolumeRatio` / `resolveMlToDoseClass`：有盆体积按百分比、无盆体积 fallback 固定 ml 阈值（30/80/300）。
@@ -242,4 +250,4 @@
 
 ## 9. 单元测试覆盖
 
-`test/unit-test/test-watering-planner-v21.mjs` 覆盖：gate 三态、盆型影响水量区间、baseline 解析、`computeAmountSuggestion` 的 WET/DRY/无盆型分支、基质多选加权、排水材料因子、DRY baseline min 阈值、大小盆瓶数文案、录入侧 amountMl 按盆体积反推档、属级需水系数（喜干<湿润）、userDoseEcho 回显（最近非喷雾/仅喷雾/无事件）、**DRY 湿信号刹车压制为 BASELINE**、**amountMl 与 amount 标签冲突校验**、**天气偏湿水量压制（DRY ×0.5/×0.8）**、**田园土 retentionFactor 1.1**、**userDoseEcho 锚定区间下限（amountMl/doseClass反推/mist不锚/clamp）**、**区间文案 formatMlRangeToBottleText**。另有 `test/unit-test/test-water-volume-format.mjs` 覆盖瓶数换算与百分比落档。
+`test/unit-test/test-watering-planner-v21.mjs` 覆盖：gate 三态、盆型影响水量区间、baseline 解析、`computeAmountSuggestion` 的 WET/DRY/无盆型分支、基质多选加权、排水材料因子、DRY baseline min 阈值、大小盆瓶数文案、录入侧 amountMl 按盆体积反推档、属级需水系数（喜干<湿润）、userDoseEcho 回显（最近非喷雾/仅喷雾/无事件）、**DRY 湿信号刹车压制为 BASELINE**、**amountMl 与 amount 标签冲突校验**、**天气偏湿水量压制（DRY ×0.5/×0.8）**、**田园土 retentionFactor 1.1**、**userDoseEcho 锚定区间下限（amountMl/doseClass反推/mist不锚/clamp）**、**区间文案 formatMlRangeToBottleText**（此函数已 import 自前端 `src/utils/water-volume-format.js`）。另有 `test/unit-test/test-water-volume-format.mjs`（后端剂量落档 `classifyDoseByVolumeRatio`/`resolveMlToDoseClass` 与 `DOSE_CLASS`；后端已无瓶数换算函数，瓶数换算测试需迁前端）与 `test/unit-test/test-water-volume-format-frontend.mjs`（前端 dose-slider 桶/瓶单位切换阈值、`resolveWateringDoseOptions`/`isDoseOptionsUsingBucket`、体积估算、巨盆判定）覆盖。

@@ -22,7 +22,7 @@
     "publish-data": "node src/cli.js publish-data",
     "rollback-data": "node src/cli.js rollback-data",
     "validate-schema": "node src/cli.js validate-schema",
-    "check:brv-context-lifecycle": "node scripts/validate-brv-context-lifecycle.mjs",
+    "check:brv-v4-boundary": "node scripts/check-brv-v4-boundary.mjs",
     "check:secrets": "node scripts/security/check-no-secrets.mjs",
     "check:weather-season-trigger-sync": "node test/unit-test/test-season-trigger-sync.mjs",
     "check:cloudbase-http": "node test/e2e/terminal-e2e/cloudbase-http-check.mjs",

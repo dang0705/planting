@@ -23,6 +23,7 @@ stale_if_changed:
   - src/pages.json
   - src/manifest.json
   - src/http-functions/**
+  - .brvspace
   - cloudfunctions/**
   - docs/tickets/86exv6fnx-diagnose-question-package.md
   - scripts/dev/**
@@ -52,7 +53,7 @@ stale_if_changed:
 | 结果输出契约 | `cloudfunctions/diagnose-http/app/frontend-response.js`, `cloudfunctions/diagnose-http/domain/result-formatter.js`, `cloudfunctions/diagnose-http/presenters/**` |
 | 环境/schema 分流 | `src/utils/runtime-env.js`, `src/api/env.js`, `cloudfunctions/diagnose-http/db/schema-resolver.js`, `cloudfunctions/layer/utils/http.js` |
 | 本地调试/部署 | `package.json`, `scripts/dev/**`, `scripts/deploy-*.mjs`, `scripts/security/check-no-secrets.mjs` |
-| BRV/AI 工作流 | `.codex/**`, `.brv/context-tree/**`, `docs/_sync-map.yml` |
+| BRV/AI 工作流 | `.codex/**`, `.brvspace`, `docs/_sync-map.yml` |
 
 ## 3. 当前主要模块
 

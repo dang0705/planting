@@ -12,6 +12,7 @@ const projectRoot = path.resolve(__dirname, '..', '..')
 const DEFAULT_GATEWAY_PORT = 3010
 const DEFAULT_CLOUDBASE_ENV_ID = 'cloud1-2grufevs395a9d5e'
 const DEFAULT_SQL_DATABASE = 'cloud1_dev'
+const LOCAL_GATEWAY_KIND = 'planting-local-functions-gateway'
 const LOCAL_CREDENTIAL_SECRET_ID_KEYS = [
   'CLOUDBASE_SECRET_ID',
   'TENCENT_SECRET_ID',
@@ -87,7 +88,8 @@ function readEnvFile(filePath) {
     return {}
   }
 
-  return fs.readFileSync(filePath, 'utf8')
+  return fs
+    .readFileSync(filePath, 'utf8')
     .split(/\r?\n/)
     .reduce((env, line) => {
       const trimmed = line.trim()
@@ -112,11 +114,11 @@ function readEnvFile(filePath) {
 
 function readFunctionEnv(functionName) {
   const config = readJson(path.join(projectRoot, 'cloudbaserc.json'))
-  const matched = (Array.isArray(config.functions) ? config.functions : [])
-    .find(item => String(item?.name || '').trim() === functionName)
-  const envVariables = matched?.envVariables && typeof matched.envVariables === 'object'
-    ? matched.envVariables
-    : {}
+  const matched = (Array.isArray(config.functions) ? config.functions : []).find(
+    item => String(item?.name || '').trim() === functionName
+  )
+  const envVariables =
+    matched?.envVariables && typeof matched.envVariables === 'object' ? matched.envVariables : {}
   const envId =
     envVariables.CLOUDBASE_ENV_ID ||
     envVariables.TCB_ENV ||
@@ -290,8 +292,8 @@ function ensureTcbFfInstalled(functions) {
   const names = missing.map(item => item.name).join(', ')
   throw new Error(
     `缺少本地 tcb-ff 依赖: ${names}\n` +
-    '请先运行: npm run dev:functions:install\n' +
-    '本地云函数依赖统一安装在项目根目录 node_modules；线上部署仍使用各函数 package.json 自动安装。'
+      '请先运行: npm run dev:functions:install\n' +
+      '本地云函数依赖统一安装在项目根目录 node_modules；线上部署仍使用各函数 package.json 自动安装。'
   )
 }
 
@@ -355,8 +357,23 @@ function addCorsHeaders(res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
 }
 
-function createGatewayServer(functions) {
-  const functionByName = new Map(functions.map(item => [item.name, item]))
+function getFunctionHealthEntry(runtime = {}) {
+  const alive =
+    Boolean(runtime.child) && runtime.child.exitCode === null && runtime.child.signalCode === null
+
+  return {
+    name: runtime.name,
+    port: runtime.port,
+    pid: runtime.child?.pid || null,
+    status: alive ? 'running' : 'exited',
+    alive,
+    exitCode: runtime.exitCode ?? runtime.child?.exitCode ?? null,
+    signalCode: runtime.signalCode ?? runtime.child?.signalCode ?? null
+  }
+}
+
+function createGatewayServer(functionRuntimes) {
+  const functionByName = new Map(functionRuntimes.map(item => [item.name, item]))
 
   return http.createServer((req, res) => {
     addCorsHeaders(res)
@@ -369,14 +386,19 @@ function createGatewayServer(functions) {
 
     const requestUrl = new URL(req.url || '/', 'http://local.functions')
     if (requestUrl.pathname === '/__local_functions__/health') {
-      writeJson(res, 200, {
-        code: 200,
+      const functions = functionRuntimes.map(item => getFunctionHealthEntry(item))
+      const unavailableFunctions = functions.filter(item => !item.alive).map(item => item.name)
+      const healthy = unavailableFunctions.length === 0
+
+      writeJson(res, healthy ? 200 : 503, {
+        code: healthy ? 200 : 503,
         data: {
-          status: 'ok',
-          functions: functions.map(item => ({
-            name: item.name,
-            port: item.port
-          }))
+          gateway: LOCAL_GATEWAY_KIND,
+          projectRoot,
+          pid: process.pid,
+          status: healthy ? 'ok' : 'degraded',
+          unavailableFunctions,
+          functions
         }
       })
       return
@@ -440,7 +462,13 @@ async function main() {
 
   const localEnv = readEnvFile(path.join(projectRoot, '.env.local'))
   assertLocalCloudbaseCredentials(functions, localEnv)
-  const server = createGatewayServer(functions)
+  const functionRuntimes = functions.map(item => ({
+    ...item,
+    child: null,
+    exitCode: null,
+    signalCode: null
+  }))
+  const server = createGatewayServer(functionRuntimes)
   const children = []
   let shuttingDown = false
 
@@ -452,15 +480,32 @@ async function main() {
     })
   })
 
-  functions.forEach((item, index) => {
-    const child = spawnFunctionRuntime(item, localEnv)
+  function shutdown(exitCode = 0) {
+    const normalizedExitCode = Number.isInteger(exitCode) ? exitCode : 0
+    if (shuttingDown) {
+      return
+    }
+    shuttingDown = true
+    server.close()
+    children.forEach(child => child.kill('SIGTERM'))
+    setTimeout(() => process.exit(normalizedExitCode), 300).unref()
+  }
+
+  functionRuntimes.forEach((runtime, index) => {
+    const child = spawnFunctionRuntime(runtime, localEnv)
     children.push(child)
-    child.on('exit', code => {
+    runtime.child = child
+    child.on('exit', (code, signal) => {
+      runtime.exitCode = code
+      runtime.signalCode = signal
+
+      const name = functionRuntimes[index]?.name || 'unknown'
       if (shuttingDown) {
         return
       }
-      const name = functions[index]?.name || 'unknown'
-      process.stderr.write(`[${name}] 本地函数进程退出，code=${code}\n`)
+
+      process.stderr.write(`[${name}] 本地函数进程退出，code=${code}, signal=${signal || 'none'}\n`)
+      shutdown(1)
     })
   })
 
@@ -471,18 +516,8 @@ async function main() {
   })
   process.stdout.write(`已启动函数: ${functions.map(item => item.name).join(', ')}\n`)
 
-  function shutdown() {
-    if (shuttingDown) {
-      return
-    }
-    shuttingDown = true
-    server.close()
-    children.forEach(child => child.kill('SIGTERM'))
-    setTimeout(() => process.exit(0), 300).unref()
-  }
-
-  process.on('SIGINT', shutdown)
-  process.on('SIGTERM', shutdown)
+  process.on('SIGINT', () => shutdown(0))
+  process.on('SIGTERM', () => shutdown(0))
 }
 
 main().catch(error => {
@@ -490,7 +525,7 @@ main().catch(error => {
     const port = error?.port || process.env.CLOUDBASE_LOCAL_FUNCTIONS_PORT || DEFAULT_GATEWAY_PORT
     process.stderr.write(
       `本地 CloudBase 函数 gateway 端口已被占用: ${port}\n` +
-      `请关闭占用进程，或使用 CLOUDBASE_LOCAL_FUNCTIONS_PORT=${Number(port) + 1} npm run dev:functions\n`
+        `请关闭占用进程，或使用 CLOUDBASE_LOCAL_FUNCTIONS_PORT=${Number(port) + 1} npm run dev:functions\n`
     )
     process.exit(1)
   }

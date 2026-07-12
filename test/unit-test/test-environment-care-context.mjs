@@ -131,12 +131,36 @@ test('care behavior timeline normalizes events and last fertilized bucket', () =
   })
 
   assert.equal(timeline.lastFertilizedBucket, 'within_10d')
-  assert.equal(timeline.wateringEvents10d[0].amount, 'thorough')
+  assert.equal(
+    timeline.wateringEvents10d.find(event => event.date === '2026-05-26')?.amount,
+    'thorough'
+  )
   assert.equal(timeline.fertilizingEvents10d[0].strength, 'thin')
   assert.equal(timeline.lightChangeEvents10d[0].event, 'moved_to_stronger_light')
   assert.equal(timeline.summary.effectiveHydrationLoad !== undefined, true)
   assert.equal(timeline.summary.fertilizingCount10d, 1)
   assert.equal(timeline.summary.movedToStrongerLightWithin10d, true)
+})
+
+test('care behavior timeline keeps today when limiting recent events', () => {
+  const referenceDate = '2026-05-27'
+  const wateringEvents = Array.from({ length: 11 }, (_, index) => {
+    const date = new Date(`${referenceDate}T12:00:00Z`)
+    date.setDate(date.getDate() - (10 - index))
+    const normalized = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    return { date: normalized, watered: true, amount: 'normal' }
+  })
+  const timeline = normalizeCareBehaviorTimeline({
+    referenceDate,
+    wateringEvents10d: wateringEvents
+  })
+
+  assert.equal(timeline.wateringEvents10d.length, 10)
+  assert.equal(
+    timeline.wateringEvents10d.some(event => event.date === referenceDate),
+    true
+  )
+  assert.equal(timeline.summary.lastEffectiveRootWateredDaysAgo, 0)
 })
 
 test('watering planner returns wet, dry and baseline contexts', () => {

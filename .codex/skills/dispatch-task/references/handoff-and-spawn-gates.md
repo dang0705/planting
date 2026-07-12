@@ -2,17 +2,17 @@
 
 ## Gate B — Handoff Contract
 
-`standard_task`、`deep_contract`、`external_zcode` 必须生成 JSON Handoff Contract：
+`standard_task`、`deep_contract`、`external_implementer` 必须生成 JSON Handoff Contract：
 
 ```text
 dispatch_run_id
-dispatch_tier: standard_task / deep_contract / external_zcode / qa_only / docs_only
-implementation_mode: codex_subagent / zcode_external
+dispatch_tier: standard_task / deep_contract / external_implementer / qa_only / docs_only
+implementation_mode: codex_subagent / external_implementer
 task: {objective, code_changes_required, ui_task, risk, qa_required}
 target_role
 spawn_contract
-zcode_contract                      # implementation_mode=zcode_external 时必填
-handoff_manual                      # implementation_mode=zcode_external 时必填
+external_contract                   # implementation_mode=external_implementer 时必填；旧 zcode_contract 兼容
+handoff_manual                      # implementation_mode=external_implementer 时必填
 allowed_paths / forbidden_paths
 acceptance
 project_constraints
@@ -66,8 +66,8 @@ node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
 6. child 最终 JSON 必须带 `agent_identity={agent_type, dispatch_run_id}`；不一致时 validator 阻断。
 7. review/QA 返工发送到原 agent thread，不重新 spawn generic child。
 
-## Gate B2 — ZCode Bridge
+## Gate B2 — External Implementer Bridge
 
-仅适用于 `implementation_mode=zcode_external`。读取 `references/zcode-routing.md`、`references/zcode-computer-use-policy.md` 与 `assets/templates/zcode-prompt-template.md`。
+仅适用于 `implementation_mode=external_implementer`（兼容旧 `zcode_external`）。读取 `references/external-implementer-routing.md`；provider 为 ZCode 时再读取 `references/zcode-routing.md`、必要时读取 `references/zcode-computer-use-policy.md` 与 `assets/templates/zcode-prompt-template.md`。
 
-该模式下 main 不 spawn Codex implementer。ZCode prompt、send receipt、handoff manual 与 recovery result 必须分别通过对应 validator。ZCode 失败不得 fallback 成 main 自己写代码。
+该模式下 main 不 spawn Codex implementer。External prompt、send receipt、handoff manual 与 recovery result 必须分别通过对应 validator 或 provider adapter 校验。外部实现者失败不得 fallback 成 main 自己写代码。

@@ -32,6 +32,15 @@
       }
     },
     {
+      "path": "pages/watering-advisor/watering-advisor",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "浇水建议",
+        "navigationBarBackgroundColor": "#2D7A4F",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
       "path": "pages/diagnose/diagnose",
       "style": {
         "navigationStyle": "custom",
