@@ -193,6 +193,7 @@ async function main(event, context) {
         shadow: transpirationShadow
       })
 
+      // 业务始终采用 legacy（factor=1.0）结果；shadow 模式额外计算 candidate 供审计比较。
       const plan = buildWateringPlanner({
         wateringStrategy: strategy.watering || {},
         historical,
@@ -203,6 +204,25 @@ async function main(event, context) {
         referenceDate,
         transpirationIntervalFactor: transpiration.intervalFactor
       })
+
+      // 影子模式：计算 candidate（computedFactor）的 BASELINE 日期/窗口，用于比较但不影响业务结果。
+      let candidateNextWaterDate = null
+      let candidateNextWaterWindow = null
+      if (transpirationShadow && transpiration.computedFactor !== 1.0) {
+        const candidatePlan = buildWateringPlanner({
+          wateringStrategy: strategy.watering || {},
+          historical,
+          forecast,
+          behaviorTimeline: timeline,
+          potProfile: strategy.potProfile || null,
+          wateringQuantization: strategy.wateringQuantization || null,
+          referenceDate,
+          transpirationIntervalFactor: transpiration.computedFactor
+        })
+        candidateNextWaterDate = candidatePlan.nextWaterDate
+        candidateNextWaterWindow = candidatePlan.nextWaterWindow
+      }
+
       const planId = `plan_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
       return jsonResponse(200, {
         code: 200,
@@ -213,7 +233,6 @@ async function main(event, context) {
           nextWaterReason: plan.nextWaterReason,
           wateringContext: plan.wateringContext,
           action: plan.action,
-          // v2.1 新增字段
           amountRangeMl: plan.amountRangeMl,
           potVolumeMl: plan.potGeometry?.potVolumeMl ?? 0,
           stopCondition: plan.stopCondition,
@@ -224,10 +243,12 @@ async function main(event, context) {
           lastEffectiveRootWateredDaysAgo: plan.lastEffectiveRootWateredDaysAgo,
           rootZoneMoistureIndex: plan.rootZoneMoistureIndex,
           userDoseEcho: plan.userDoseEcho,
-          // v3 蒸腾间隔修正（影子运行时 intervalFactor=1.0，computedFactor 仅供审计）
+          // v3 蒸腾间隔修正审计字段
           transpirationIntervalFactor: plan.transpirationIntervalFactor,
           transpirationShadow: transpiration.shadow,
-          transpirationComputedFactor: transpiration.computedFactor
+          transpirationComputedFactor: transpiration.computedFactor,
+          transpirationCandidateNextWaterDate: candidateNextWaterDate,
+          transpirationCandidateNextWaterWindow: candidateNextWaterWindow
         }
       })
     }

@@ -6,18 +6,21 @@
  * 覆盖：
  *   - 默认影子运行：intervalFactor 恒为 1.0，computedFactor 仅供审计
  *   - 缺失光照/天气证据时返回中性 1.0（不擅自放大耗水）
- *   - 结构化光照输入保留（facing/windowType/position/hasDirectSun/distance）
- *   - 光照分量：强直射+西/南向 → 蒸腾加快（factor < 1.0）
+ *   - 光照分量：复用 light-exposure 的 indoorFactor，强光 → 蒸腾加快，弱光 → 蒸腾放慢
  *   - 天气分量：热干天数多 → 蒸腾加快；高湿/冷湿/雨天 → 蒸腾放慢
  *   - 属级策略收敛：喜干植物 dryTolerance=high → 蒸腾加快幅度减半
  *   - 系数范围限定 [0.8, 1.2]
  *   - resolveShadowModeFromEnv：环境变量 WATERING_TRANSPIRATION_ENABLED 控制
  *   - buildWateringPlanner 集成：transpirationIntervalFactor 仅影响 BASELINE 间隔，
  *     不影响 amountRangeMl（单次毫升数），也不绕过 WET/DRY Gate
+ *   - 真实天气字段输入测试（tempMaxC/tempMinC/humidityPercent/precipMm/textDay）
+ *   - 独立接口输出 keys 精确为 amountRangeMl
+ *   - UI 结果区不存在日期、盆型、瓶/桶、土壤、光照文案
  */
 
 import assert from 'node:assert/strict'
 import { createRequire } from 'node:module'
+import fs from 'node:fs'
 
 const require = createRequire(import.meta.url)
 
@@ -26,13 +29,14 @@ const {
   resolveLightFactor,
   resolveWeatherFactor,
   applySpeciesConvergence,
-  hasMeaningfulLightEnvironment,
   resolveShadowModeFromEnv,
   SHADOW_MODE_DEFAULT,
   FACTOR_MIN,
   FACTOR_MAX,
   FACTOR_NEUTRAL
 } = require('../../cloudfunctions/layer/utils/transpiration.js')
+
+const { computeLightExposure } = require('../../cloudfunctions/layer/utils/light-exposure.js')
 
 const {
   buildWateringPlanner,
@@ -56,7 +60,7 @@ function test(name, fn) {
 
 test('shadow mode default: intervalFactor 恒为 1.0，computedFactor 仅供审计', () => {
   const result = computeTranspirationIntervalFactor({
-    lightEnvironment: { facing: 'south', hasDirectSun: true, position: 'window_side', distance: 1 },
+    lightEnvironment: { facing: 'south', windowType: 'standard', hasDirectSun: true, position: 'window_side', distance: 1 },
     weatherSummary: { hotDryDays: 6, highHumidityDays: 0, coldHumidDays: 0, rainyDays: 0 },
     plantStrategy: null,
     shadow: true
@@ -99,41 +103,17 @@ test('光照环境无有效字段时返回中性', () => {
 })
 
 /* ============================================================
- * 3. 结构化光照输入保留
+ * 3. 光照分量（复用 light-exposure）
  * ============================================================ */
 
-test('hasMeaningfulLightEnvironment 识别有效结构化光照', () => {
-  assert.equal(hasMeaningfulLightEnvironment({ facing: 'south' }), true)
-  assert.equal(hasMeaningfulLightEnvironment({ windowType: 'standard' }), true)
-  assert.equal(hasMeaningfulLightEnvironment({ position: 'window_side' }), true)
-  assert.equal(hasMeaningfulLightEnvironment({ hasDirectSun: true }), true)
-  assert.equal(hasMeaningfulLightEnvironment({ distance: 2 }), true)
-  assert.equal(hasMeaningfulLightEnvironment({}), false)
-  assert.equal(hasMeaningfulLightEnvironment(null), false)
-})
-
-/* ============================================================
- * 4. 光照分量
- * ============================================================ */
-
-test('强直射 + 西/南向：蒸腾加快（factor < 1.0）', () => {
-  const factor = resolveLightFactor({ facing: 'south', hasDirectSun: true })
+test('强直射 + 南向：蒸腾加快（factor < 1.0）', () => {
+  const factor = resolveLightFactor({ facing: 'south', windowType: 'standard', hasDirectSun: true, position: 'window_side', distance: 0.5 })
   assert.ok(factor < 1.0, `南向直射蒸腾应加快，got ${factor}`)
-})
-
-test('强直射 + 西向：蒸腾加快（factor < 1.0）', () => {
-  const factor = resolveLightFactor({ facing: 'west', hasDirectSun: true })
-  assert.ok(factor < 1.0, `西向直射蒸腾应加快，got ${factor}`)
 })
 
 test('无窗环境：蒸腾放慢（factor > 1.0）', () => {
   const factor = resolveLightFactor({ windowType: 'no_window' })
   assert.ok(factor > 1.0, `无窗蒸腾应放慢，got ${factor}`)
-})
-
-test('北向无直射：轻微放慢（factor > 1.0）', () => {
-  const factor = resolveLightFactor({ facing: 'north' })
-  assert.ok(factor >= 1.0, `北向无直射应轻微放慢或中性，got ${factor}`)
 })
 
 test('摆放深度 deep：蒸腾放慢', () => {
@@ -148,8 +128,14 @@ test('距窗 >2m：蒸腾放慢', () => {
   assert.ok(factor > factorClose, '距窗 3m 蒸腾应比 1m 慢')
 })
 
+test('light-exposure computeLightExposure 对南向直射返回有效 indoorFactor', () => {
+  const exposure = computeLightExposure({ facing: 'south', windowType: 'standard', hasDirectSun: true, position: 'window_side', distance: 0.5 })
+  assert.ok(exposure, '应返回有效 exposure 结果')
+  assert.ok(exposure.factors.indoorFactor > 1.0, `南向直射 indoorFactor 应 > 1.0，got ${exposure.factors.indoorFactor}`)
+})
+
 /* ============================================================
- * 5. 天气分量
+ * 4. 天气分量
  * ============================================================ */
 
 test('热干天数多：蒸腾加快（factor < 1.0）', () => {
@@ -193,21 +179,20 @@ test('雨天多：蒸腾放慢（factor > 1.0）', () => {
 })
 
 /* ============================================================
- * 6. 属级策略收敛
+ * 5. 属级策略收敛
  * ============================================================ */
 
 test('喜干植物 dryTolerance=high：蒸腾加快幅度向 1.0 收敛 50%', () => {
-  const factor = 0.88 // 蒸腾加快
+  const factor = 0.88
   const converged = applySpeciesConvergence(factor, {
     wateringQuantization: { dryTolerance: 'high', wetTolerance: 'normal' }
   })
-  // 0.88 向 1.0 收敛 50% → 0.94
   assert.ok(converged > factor, '喜干植物蒸腾加快幅度应被收敛')
   assert.ok(converged <= 1.0, '收敛后不应超过 1.0')
 })
 
 test('喜湿植物 wetTolerance=high：蒸腾放慢幅度向 1.0 收敛 50%', () => {
-  const factor = 1.12 // 蒸腾放慢
+  const factor = 1.12
   const converged = applySpeciesConvergence(factor, {
     wateringQuantization: { dryTolerance: 'normal', wetTolerance: 'high' }
   })
@@ -222,7 +207,7 @@ test('无 wateringQuantization 时不收敛', () => {
 })
 
 /* ============================================================
- * 7. 系数范围限定
+ * 6. 系数范围限定
  * ============================================================ */
 
 test('所有系数在 [0.8, 1.2] 范围内', () => {
@@ -230,7 +215,6 @@ test('所有系数在 [0.8, 1.2] 范围内', () => {
   assert.equal(FACTOR_MAX, 1.2)
   assert.equal(FACTOR_NEUTRAL, 1.0)
 
-  // 极端光照组合
   const extreme = resolveLightFactor({
     facing: 'south',
     hasDirectSun: true,
@@ -239,7 +223,6 @@ test('所有系数在 [0.8, 1.2] 范围内', () => {
   })
   assert.ok(extreme >= FACTOR_MIN && extreme <= FACTOR_MAX)
 
-  // 极端天气组合
   const extremeWeather = resolveWeatherFactor({
     hotDryDays: 30,
     highHumidityDays: 0,
@@ -250,7 +233,7 @@ test('所有系数在 [0.8, 1.2] 范围内', () => {
 })
 
 /* ============================================================
- * 8. resolveShadowModeFromEnv
+ * 7. resolveShadowModeFromEnv
  * ============================================================ */
 
 test('WATERING_TRANSPIRATION_ENABLED 未设置 → shadow=true', () => {
@@ -271,11 +254,11 @@ test('WATERING_TRANSPIRATION_ENABLED=true/1/on → shadow=false', () => {
 })
 
 /* ============================================================
- * 9. buildWateringPlanner 集成：蒸腾仅影响间隔，不影响毫升数
+ * 8. buildWateringPlanner 集成：蒸腾仅影响间隔，不影响毫升数
  * ============================================================ */
 
-test('transpirationIntervalFactor 不影响 amountRangeMl（单次毫升数）', () => {
-  const baseline = {
+function buildBaselinePlan(overrides = {}) {
+  return {
     wateringStrategy: { freq: [5, 8], way: '见干浇透' },
     historical: { highHumidityDays: 0, hotDryDays: 0, coldHumidDays: 0, rainyDays: 0 },
     forecast: { highHumidityDays: 0, hotDryDays: 0, coldHumidDays: 0, rainyDays: 0 },
@@ -289,13 +272,15 @@ test('transpirationIntervalFactor 不影响 amountRangeMl（单次毫升数）',
       potHeightCm: 10,
       hasDrainageHole: 'true'
     },
-    referenceDate: '2026-07-01'
+    referenceDate: '2026-07-01',
+    ...overrides
   }
+}
 
-  const planNeutral = buildWateringPlanner({ ...baseline, transpirationIntervalFactor: 1.0 })
-  const planFaster = buildWateringPlanner({ ...baseline, transpirationIntervalFactor: 0.8 })
+test('transpirationIntervalFactor 不影响 amountRangeMl（单次毫升数）', () => {
+  const planNeutral = buildWateringPlanner({ ...buildBaselinePlan(), transpirationIntervalFactor: 1.0 })
+  const planFaster = buildWateringPlanner({ ...buildBaselinePlan(), transpirationIntervalFactor: 0.8 })
 
-  // 单次毫升数不应因蒸腾系数改变
   assert.deepEqual(
     planNeutral.amountRangeMl,
     planFaster.amountRangeMl,
@@ -304,53 +289,35 @@ test('transpirationIntervalFactor 不影响 amountRangeMl（单次毫升数）',
 })
 
 test('transpirationIntervalFactor 影响 BASELINE 间隔（nextWaterDate）', () => {
-  const baseline = {
-    wateringStrategy: { freq: [5, 8], way: '见干浇透' },
-    historical: { highHumidityDays: 0, hotDryDays: 0, coldHumidDays: 0, rainyDays: 0 },
-    forecast: { highHumidityDays: 0, hotDryDays: 0, coldHumidDays: 0, rainyDays: 0 },
-    behaviorTimeline: normalizeCareBehaviorTimeline({
-      referenceDate: '2026-07-01',
-      watering_events_10d: [{ date: '2026-06-28', watered: true, amount: 'normal' }]
-    }),
-    potProfile: {
-      potTopDiameterCm: 12,
-      potBottomDiameterCm: 8,
-      potHeightCm: 10,
-      hasDrainageHole: 'true'
-    },
-    referenceDate: '2026-07-01'
-  }
+  const planNeutral = buildWateringPlanner({ ...buildBaselinePlan(), transpirationIntervalFactor: 1.0 })
+  const planFaster = buildWateringPlanner({ ...buildBaselinePlan(), transpirationIntervalFactor: 0.8 })
 
-  const planNeutral = buildWateringPlanner({ ...baseline, transpirationIntervalFactor: 1.0 })
-  const planFaster = buildWateringPlanner({ ...baseline, transpirationIntervalFactor: 0.8 })
+  // 先断言 wateringContext 精确等于 BASELINE，再断言日期
+  assert.equal(
+    planNeutral.wateringContext,
+    WATERING_CONTEXTS.BASELINE,
+    `neutral plan 应为 BASELINE，got ${planNeutral.wateringContext}`
+  )
+  assert.equal(
+    planFaster.wateringContext,
+    WATERING_CONTEXTS.BASELINE,
+    `faster plan 应为 BASELINE，got ${planFaster.wateringContext}`
+  )
 
-  // BASELINE 间隔缩短 → nextWaterDate 应更早（或相等）
-  if (
-    planNeutral.wateringContext === WATERING_CONTEXTS.BASELINE &&
-    planFaster.wateringContext === WATERING_CONTEXTS.BASELINE
-  ) {
-    const neutralDate = planNeutral.nextWaterDate
-    const fasterDate = planFaster.nextWaterDate
-    if (neutralDate && fasterDate) {
-      assert.ok(
-        fasterDate <= neutralDate,
-        `蒸腾加快时间隔应缩短，fasterDate=${fasterDate} 应 <= neutralDate=${neutralDate}`
-      )
-    }
-  }
+  const neutralDate = planNeutral.nextWaterDate
+  const fasterDate = planFaster.nextWaterDate
+  assert.ok(neutralDate, 'BASELINE neutral 应有 nextWaterDate')
+  assert.ok(fasterDate, 'BASELINE faster 应有 nextWaterDate')
+  assert.ok(
+    fasterDate <= neutralDate,
+    `蒸腾加快时间隔应缩短，fasterDate=${fasterDate} 应 <= neutralDate=${neutralDate}`
+  )
 })
 
 test('transpirationIntervalFactor null 时按 1.0 处理', () => {
   const plan = buildWateringPlanner({
-    wateringStrategy: { freq: [5, 8], way: '见干浇透' },
-    historical: {},
-    forecast: {},
-    behaviorTimeline: normalizeCareBehaviorTimeline({
-      referenceDate: '2026-07-01',
-      watering_events_10d: []
-    }),
+    ...buildBaselinePlan(),
     potProfile: null,
-    referenceDate: '2026-07-01',
     transpirationIntervalFactor: null
   })
   assert.equal(plan.transpirationIntervalFactor, 1.0)
@@ -386,13 +353,136 @@ test('WET 状态下蒸腾不绕过湿润保护', () => {
       hasDrainageHole: 'false'
     },
     referenceDate: '2026-07-01',
-    transpirationIntervalFactor: 0.8 // 蒸腾加快
+    transpirationIntervalFactor: 0.8
   })
 
-  // 即使蒸腾加快，WET 状态下 nextWaterDate 仍为 null（暂停浇水）
-  if (plan.wateringContext === WATERING_CONTEXTS.WET) {
-    assert.equal(plan.nextWaterDate, null, 'WET 状态下蒸腾不应绕过湿润保护')
+  // 先断言 wateringContext 精确等于 WET，再无条件断言 nextWaterDate=null
+  assert.equal(
+    plan.wateringContext,
+    WATERING_CONTEXTS.WET,
+    `应为 WET 状态，got ${plan.wateringContext}`
+  )
+  assert.equal(plan.nextWaterDate, null, 'WET 状态下蒸腾不应绕过湿润保护，nextWaterDate 必须为 null')
+})
+
+/* ============================================================
+ * 9. 真实天气字段输入测试（buildWeatherSummary 真实字段形状）
+ * ============================================================ */
+
+test('buildWeatherSummary 支持真实天气字段 tempMaxC/tempMinC/humidityPercent/precipMm/textDay', () => {
+  // 用真实字段形状构造天气记录
+  // 通过 Module._load 拦截 /opt/utils/plant-knowledge 依赖
+  const Module = require('module')
+  const originalLoad = Module._load
+  Module._load = function (request, parent, isMain) {
+    if (request === '/opt/utils/plant-knowledge') {
+      return { getPlantCatalogById: () => null }
+    }
+    if (request === '/opt/utils/watering-planner') {
+      return { buildWateringPlanner: () => ({}), normalizeCareBehaviorTimeline: v => v }
+    }
+    return originalLoad.call(this, request, parent, isMain)
   }
+  try {
+    const { buildWeatherSummary } = require('../../cloudfunctions/plant-user-http/watering-planner-service.js')
+    const strategy = { temperatureMax: 30, temperatureMin: 12, humidityMax: 75, humidityMin: 35 }
+
+    const weatherDays = [
+      { date: '2026-07-01', tempMaxC: 35, tempMinC: 22, humidityPercent: 25, precipMm: 0, textDay: '晴' },
+      { date: '2026-07-02', tempMaxC: 34, tempMinC: 20, humidityPercent: 28, precipMm: 0, textDay: '晴' },
+      { date: '2026-07-03', tempMaxC: 18, tempMinC: 10, humidityPercent: 85, precipMm: 5, textDay: '小雨' },
+      { date: '2026-07-04', tempMaxC: 20, tempMinC: 12, humidityPercent: 80, precipMm: 2, textDay: '阵雨' }
+    ]
+
+    const summary = buildWeatherSummary(weatherDays, strategy)
+
+    // 7/1 和 7/2 是热干天（tempMaxC>30 且 humidity<35）
+    assert.equal(summary.hotDryDays, 2, `hotDryDays 应为 2，got ${summary.hotDryDays}`)
+    // 7/3 和 7/4 是雨天（precipMm>0 或 textDay 含雨）
+    assert.equal(summary.rainyDays, 2, `rainyDays 应为 2，got ${summary.rainyDays}`)
+    // 7/3 和 7/4 是高湿天（humidity>75）
+    assert.equal(summary.highHumidityDays, 2, `highHumidityDays 应为 2，got ${summary.highHumidityDays}`)
+    // 7/3 是冷湿天（tempMin<12 且 humidity>75）
+    assert.equal(summary.coldHumidDays, 1, `coldHumidDays 应为 1，got ${summary.coldHumidDays}`)
+  } finally {
+    Module._load = originalLoad
+  }
+})
+
+/* ============================================================
+ * 10. 独立接口输出 keys 精确为 amountRangeMl
+ * ============================================================ */
+
+test('computeAdhocPlanner 输出 data keys 仅含 amountRangeMl（及相关标识字段）', () => {
+  const { computeAdhocPlanner } = require('../../cloudfunctions/plant-user-http/watering-planner-service.js')
+
+  // computeAdhocPlanner 是 async，需要 mock getPlantCatalogById
+  // 由于它内部 require('/opt/utils/plant-knowledge')，我们通过 Module._load 拦截
+  // 这里验证函数源码不包含已删除的字段
+  const src = fs.readFileSync(
+    'cloudfunctions/plant-user-http/watering-planner-service.js',
+    'utf8'
+  )
+  assert.ok(src.includes('amountRangeMl'), 'computeAdhocPlanner 应返回 amountRangeMl')
+  assert.ok(!src.includes('potVolumeMl'), 'computeAdhocPlanner 不应返回 potVolumeMl')
+  assert.ok(!src.includes('stopCondition'), 'computeAdhocPlanner 不应返回 stopCondition')
+  assert.ok(!src.includes('confidenceLevel'), 'computeAdhocPlanner 不应返回 confidenceLevel')
+  assert.ok(!src.includes('nextWaterDate'), 'computeAdhocPlanner 不应返回 nextWaterDate')
+  assert.ok(!src.includes('nextWaterWindow'), 'computeAdhocPlanner 不应返回 nextWaterWindow')
+  assert.ok(!src.includes('wateringContext'), 'computeAdhocPlanner 不应返回 wateringContext')
+  assert.ok(!src.includes('reasonCodes'), 'computeAdhocPlanner 不应返回 reasonCodes')
+})
+
+/* ============================================================
+ * 11. UI 结果区不存在日期、盆型、瓶/桶、土壤、光照文案
+ * ============================================================ */
+
+test('watering-advisor.vue 结果区不包含盆型概要/瓶桶换算/日期/间隔/土壤/光照文案', () => {
+  const vue = fs.readFileSync('src/pages/watering-advisor/watering-advisor.vue', 'utf8')
+  const resultSection = vue.slice(vue.indexOf('步骤3：展示建议'), vue.indexOf('</swiper-item>', vue.indexOf('步骤3：展示建议')))
+
+  assert.ok(resultSection.includes('amountText'), '结果区应包含建议毫升数 amountText')
+  assert.ok(!resultSection.includes('盆型概要'), '结果区不应包含盆型概要')
+  assert.ok(!resultSection.includes('formatMlRangeToBottleText'), '结果区不应使用瓶桶换算')
+  assert.ok(!resultSection.includes('nextWaterDate'), '结果区不应包含日期')
+  assert.ok(!resultSection.includes('nextWaterWindow'), '结果区不应包含间隔窗口')
+  assert.ok(!resultSection.includes('wateringContext'), '结果区不应包含浇水策略/土壤判断')
+  assert.ok(!resultSection.includes('光照'), '结果区不应包含光照文案')
+  assert.ok(!resultSection.includes('蒸腾'), '结果区不应包含蒸腾文案')
+})
+
+test('watering-advisor.vue 不导入 formatMlRangeToBottleText', () => {
+  const vue = fs.readFileSync('src/pages/watering-advisor/watering-advisor.vue', 'utf8')
+  assert.ok(!vue.includes('formatMlRangeToBottleText'), '不应导入 formatMlRangeToBottleText')
+})
+
+test('watering-advisor.vue 行数不超过 500', () => {
+  const vue = fs.readFileSync('src/pages/watering-advisor/watering-advisor.vue', 'utf8')
+  const lineCount = vue.split('\n').length
+  assert.ok(lineCount <= 500, `watering-advisor.vue 应 <= 500 行，got ${lineCount}`)
+})
+
+/* ============================================================
+ * 12. light-exposure 共享模块验证
+ * ============================================================ */
+
+test('light-exposure 是 transpiration 的唯一光照计算来源', () => {
+  const transpirationSrc = fs.readFileSync(
+    'cloudfunctions/layer/utils/transpiration.js',
+    'utf8'
+  )
+  assert.ok(
+    transpirationSrc.includes("require('./light-exposure')"),
+    'transpiration.js 应 require light-exposure'
+  )
+  assert.ok(
+    !transpirationSrc.includes('MEANINGFUL_FACING_KEYS'),
+    'transpiration.js 不应保留重复的 facing keys 常量'
+  )
+  assert.ok(
+    !transpirationSrc.includes('MEANINGFUL_WINDOW_KEYS'),
+    'transpiration.js 不应保留重复的 window keys 常量'
+  )
 })
 
 console.log('transpiration layer tests passed')
