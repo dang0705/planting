@@ -19,7 +19,7 @@ external_contract.target_session = current_open_chat
 
 ## 所有权
 
-1. main 负责 Architecture Direction、Implementation Contract、路径边界、项目约束、ZCode prompt 生成、发送、回收、diff review 与 Completion Gate。
+1. main 负责 Architecture Direction、Implementation Contract、路径边界、项目约束、统一 external prompt 生成、发送、回收、diff review 与 Completion Gate。
 2. ZCode provider external implementer 只负责按 prompt 修改代码和写 handoff manual。
 3. QA 仍由 Codex `qa_reviewer` 独立执行；ZCode 不替代 QA。
 4. ZCode 聊天中的“完成”不是完成依据，main 必须重新读取真实 git diff、测试证据和 handoff manual。
@@ -30,10 +30,11 @@ external_contract.target_session = current_open_chat
 使用：
 
 ```text
-dispatch-task/assets/templates/zcode-prompt-template.md
+统一模板：`dispatch-task/assets/templates/external-implementer-prompt-template.md`
+ZCode 兼容 alias：`dispatch-task/assets/templates/zcode-prompt-template.md`
 ```
 
-prompt 必须包含 start/end sentinel、Implementation Contract、Allowed/Forbidden Paths、Project Constraints、Handoff Manual Contract、Validation Commands 和 Result JSON Contract。
+ZCode prompt 必须使用统一 external implementer sentinel，并保留统一 section 结构；ZCode adapter 只额外校验发送前的会话、输入框、sentinel 可见性和发送动作。
 
 ## Handoff Manual
 

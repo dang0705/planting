@@ -1,7 +1,7 @@
-<<<ZCODE_IMPLEMENTER_HANDOFF:{dispatch_run_id}:START>>>
-# ZCode External Implementer Handoff
+<<<EXTERNAL_IMPLEMENTER_HANDOFF:{dispatch_run_id}:START>>>
+# External Implementer Handoff
 
-本 prompt 通过剪贴板粘贴到 ZCode 当前会话。你是外部实现者，只负责按合同改代码。不要扩大范围。
+本 prompt 通过当前 provider adapter 完整交付给目标会话。你是外部实现者，只负责按合同改代码。不要扩大范围。
 
 ## Architecture Direction
 {architecture_direction}
@@ -62,7 +62,7 @@ Forbidden:
 ## Figma Direct Fetch
 {figma_direct_fetch_or_not_applicable}
 
-截图规则：若当前运行模型为 GLM 且 AGENTS 规则要求跳过 `get_screenshot`，不要调用截图工具；必须在 `figma_fetch_evidence.screenshot_policy_skip` 记录 `allowed=true` 与 `policy_ref`。若没有足够设计上下文，则返回 `BLOCKED_ZCODE_FIGMA_UNAVAILABLE`，不得猜 UI。
+截图规则：若当前运行模型为 GLM 且 AGENTS 规则要求跳过 `get_screenshot`，不要调用截图工具；必须在 `figma_fetch_evidence.screenshot_policy_skip` 记录 `allowed=true` 与 `policy_ref`。若没有足够设计上下文，则返回 `BLOCKED_EXTERNAL_FIGMA_UNAVAILABLE`，不得猜 UI。
 
 ## Figma Blocker Policy
 {figma_blocker_policy_or_not_applicable}
@@ -72,7 +72,7 @@ Forbidden:
 
 ## Result JSON Contract
 完成后输出：
-<<<ZCODE_IMPLEMENTER_RESULT:{dispatch_run_id}:START>>>
+<<<EXTERNAL_IMPLEMENTER_RESULT:{dispatch_run_id}:START>>>
 {
   "status": "completed | blocked",
   "changed_files_claimed": [],
@@ -84,7 +84,7 @@ Forbidden:
   "validation_claims": {},
   "blockers": []
 }
-<<<ZCODE_IMPLEMENTER_RESULT:{dispatch_run_id}:END>>>
+<<<EXTERNAL_IMPLEMENTER_RESULT:{dispatch_run_id}:END>>>
 
 注意：你在聊天里说完成不等于最终完成。Codex 会重新读取真实 git diff、测试和 QA。
-<<<ZCODE_IMPLEMENTER_HANDOFF:{dispatch_run_id}:END>>>
+<<<EXTERNAL_IMPLEMENTER_HANDOFF:{dispatch_run_id}:END>>>

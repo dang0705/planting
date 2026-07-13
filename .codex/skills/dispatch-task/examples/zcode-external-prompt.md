@@ -1,7 +1,7 @@
-<<<ZCODE_IMPLEMENTER_HANDOFF:example-zcode-ui-001:START>>>
-# ZCode External Implementer Handoff
+<<<EXTERNAL_IMPLEMENTER_HANDOFF:example-zcode-ui-001:START>>>
+# External Implementer Handoff
 
-本 prompt 通过剪贴板粘贴到 ZCode 当前会话。你是外部实现者，只负责按合同改代码。不要扩大范围。
+本 prompt 通过当前 provider adapter 完整交付给目标会话。你是外部实现者，只负责按合同改代码。不要扩大范围。
 
 ## Architecture Direction
 - 在既有 uni-app + Vue 页面结构内实现首页提醒卡片。
@@ -75,18 +75,18 @@ Tailwind 项目中，新增 UI 默认使用 Tailwind utility、项目 token、un
 ## Figma Direct Fetch
 Figma link: https://figma.com/design/example/file?node-id=10-20
 Node id: 10:20
-你必须在 ZCode 内直接获取 Figma metadata + design context，并在首次 UI 编辑前完成。
-若当前运行模型为 GLM 且 AGENTS 规则要求跳过 get_screenshot，则不要调用 get_screenshot；在 Result JSON 的 figma_fetch_evidence 中写入 screenshot_policy_skip，并引用 AGENTS 规则。若无法取得足够设计上下文，返回 BLOCKED_ZCODE_FIGMA_UNAVAILABLE，不得猜 UI。Result JSON 必须包含 figma_fetch_evidence。
+你必须在当前 provider 环境内直接获取 Figma metadata + design context，并在首次 UI 编辑前完成。
+若当前运行模型为 GLM 且 AGENTS 规则要求跳过 get_screenshot，则不要调用 get_screenshot；在 Result JSON 的 figma_fetch_evidence 中写入 screenshot_policy_skip，并引用 AGENTS 规则。若无法取得足够设计上下文，返回 BLOCKED_EXTERNAL_FIGMA_UNAVAILABLE，不得猜 UI。Result JSON 必须包含 figma_fetch_evidence。
 
 ## Figma Blocker Policy
-如果 ZCode 当前环境没有 Figma 能力、没有权限、节点无效或 context 不足，立即输出 BLOCKED_ZCODE_FIGMA_UNAVAILABLE，不得根据 main Lite、记忆或猜测实现 UI。
+如果当前 provider 环境没有 Figma 能力、没有权限、节点无效或 context 不足，立即输出 BLOCKED_EXTERNAL_FIGMA_UNAVAILABLE，不得根据 main Lite、记忆或猜测实现 UI。
 
 ## uni-ui Mapping Contract
 因为 component_library=uni-ui 且存在 Figma link，你必须在首次 UI 编辑前输出 uni_ui_mapping_evidence：Figma 区域/节点、视觉与交互线索、首选 uni-ui 组件、备选、采用/自定义决策、原因、风险/限制。不得先手写像素 UI。
 
 ## Result JSON Contract
 完成后输出：
-<<<ZCODE_IMPLEMENTER_RESULT:example-zcode-ui-001:START>>>
+<<<EXTERNAL_IMPLEMENTER_RESULT:example-zcode-ui-001:START>>>
 {
   "status": "completed | blocked",
   "changed_files_claimed": [],
@@ -98,7 +98,7 @@ Node id: 10:20
   "validation_claims": {},
   "blockers": []
 }
-<<<ZCODE_IMPLEMENTER_RESULT:example-zcode-ui-001:END>>>
+<<<EXTERNAL_IMPLEMENTER_RESULT:example-zcode-ui-001:END>>>
 
 注意：你在聊天里说完成不等于最终完成。Codex 会重新读取真实 git diff、测试和 QA。
-<<<ZCODE_IMPLEMENTER_HANDOFF:example-zcode-ui-001:END>>>
+<<<EXTERNAL_IMPLEMENTER_HANDOFF:example-zcode-ui-001:END>>>

@@ -29,10 +29,15 @@ const isObject = (value) => value !== null && typeof value === 'object' && !Arra
 const nonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;
 const includesAll = (array, items) => items.every((item) => array?.includes(item));
 
-need((handoff.implementation_mode ?? 'codex_subagent') === 'zcode_external',
-  'validate-zcode-send-receipt requires implementation_mode=zcode_external');
-need(handoff?.zcode_contract?.computer_use_required === true,
-  'handoff.zcode_contract.computer_use_required must be true');
+const mode = handoff.implementation_mode ?? 'codex_subagent';
+const external = handoff.external_contract ?? handoff.zcode_contract ?? {};
+const provider = external.provider || (external.external_implementer === 'zcode_glm' ? 'zcode' : '');
+
+need(['external_implementer', 'zcode_external'].includes(mode),
+  'validate-zcode-send-receipt requires implementation_mode=external_implementer|zcode_external');
+need(provider === 'zcode', 'validate-zcode-send-receipt requires external_contract.provider=zcode');
+need(external.computer_use_required === true,
+  'handoff external zcode contract must set computer_use_required=true');
 need(receipt.dispatch_run_id === handoff.dispatch_run_id,
   'send receipt dispatch_run_id must match handoff');
 need(['sent', 'blocked'].includes(receipt.status), 'send receipt status must be sent|blocked');

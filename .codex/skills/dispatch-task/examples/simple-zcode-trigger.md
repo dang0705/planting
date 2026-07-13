@@ -9,9 +9,10 @@
 Dispatch 必须解析为：
 
 ```text
-implementation_mode = zcode_external
-external_implementer = zcode_glm
-zcode_target = current_open_chat
+implementation_mode = external_implementer
+dispatch_tier = external_implementer
+external_contract.provider = zcode
+external_contract.target_session = current_open_chat
 ```
 
 用户输入：
@@ -30,4 +31,4 @@ computer_use_required=true
 actual_tool_invocation_required=true
 ```
 
-这些由 `dispatch-task` 自动生成到 `zcode_contract`。
+这些由 `dispatch-task` 自动生成到 `external_contract`。

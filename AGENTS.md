@@ -33,13 +33,14 @@ inclusion: always
 9. 对于任何的需求、任务、用户决策，严禁主观认为一定正确，必须有强烈的风险意识。当识别到任务有较大地风险或用户的决策方向存在严重错误时必须第一时间暂停开发并提供多个解决方案给用户，同时给出推荐顺序，由用户决定最后的实施方向。
 10. 具备完整开发生命周期或明显涉及业务逻辑的开发任务必须经 `$dispatch-task` 触发，再由其内部判断不同的 `dispatch-tier` 执行各自工作流。
 11. 客户端显示的文案必须从用户角度出发并符合常识，严禁将内部讨论用语、计算公式，拗口或难理解的文案暴露在界面中。必须遵循用户友好、利于用户操作的思想设计出最优的展示文案。
+12. 输出的文案、用语减少专业词汇，尤其在 plan 模式或用户显式要求 planning时，要注重用词以通俗易懂的白话结合举例代替专业词汇。
 
 ## 3. 前端行为硬约束
 
 1. 开发 `Vue` 组件时参考 `skills/uni-app` 及 `skills/vue-best-practices` ，如有概念冲突的采纳前者。
 2. css优先使用 `Tailwind CSS` 组织样式并参考 `skills/tailwindcss-base-use` ，进阶布局则参考 `skills/tailwindcss-advanced-layouts`。
 3. 合理利用前端缓存释放服务端开销，参考 `skills/pinia`。
-4. **_ 组件/页面的新增/更新中绑定了如 `@click` 、 `@change` 、 `@focus` 、 `@blur` 等交互事件的元素或 `uni-ui` 组件（非自定义组件）须同时绑定语义化的id，还需将此id的映射关系更新到 `docs/ai-rules/frontend-automation-id-policy.md` 以保证端上 `miniprogram-automator` 测试时能快速定位元素并正确触发事件 _**，示例代码如下
+4. **组件/页面的新增/更新中绑定了如 `@click` 、 `@change` 、 `@focus` 、 `@blur` 等交互事件的元素或 `uni-ui` 组件（非自定义组件）须同时绑定语义化的id，还需将此id的映射关系更新到 `docs/ai-rules/frontend-automation-id-policy.md` 以保证端上 `miniprogram-automator` 测试时能快速定位元素并正确触发事件**，示例代码如下
    ```vue
    <view class="flex " @click="toggleSubstrate(option.value)">
        <text

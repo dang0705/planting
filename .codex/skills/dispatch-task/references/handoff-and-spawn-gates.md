@@ -68,6 +68,6 @@ node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
 
 ## Gate B2 — External Implementer Bridge
 
-仅适用于 `implementation_mode=external_implementer`（兼容旧 `zcode_external`）。读取 `references/external-implementer-routing.md`；provider 为 ZCode 时再读取 `references/zcode-routing.md`、必要时读取 `references/zcode-computer-use-policy.md` 与 `assets/templates/zcode-prompt-template.md`。
+仅适用于 `implementation_mode=external_implementer`（兼容旧 `zcode_external`）。读取 `references/external-implementer-routing.md` 与 `assets/templates/external-implementer-prompt-template.md`；provider 为 ZCode 时再读取 `references/zcode-routing.md`、必要时读取 `references/zcode-computer-use-policy.md` 与 `assets/templates/zcode-prompt-template.md`。
 
 该模式下 main 不 spawn Codex implementer。External prompt、send receipt、handoff manual 与 recovery result 必须分别通过对应 validator 或 provider adapter 校验。外部实现者失败不得 fallback 成 main 自己写代码。

@@ -89,7 +89,7 @@
   ],
   "figma_fetch_evidence": {
     "status": "success",
-    "acquired_by": "zcode_external_implementer",
+    "acquired_by": "external_implementer",
     "acquired_before_first_ui_edit": true,
     "source_link": "https://figma.com/design/example/file?node-id=10-20",
     "node_id": "10:20",

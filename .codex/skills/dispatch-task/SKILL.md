@@ -210,13 +210,14 @@ node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
 references/external-implementer-routing.md
 provider=zcode 时额外读取 references/zcode-routing.md
 provider=zcode 且需要 Codex 操作 UI 时额外读取 references/zcode-computer-use-policy.md
-provider=zcode 时使用 assets/templates/zcode-prompt-template.md
+统一 external implementer 提示词模板：assets/templates/external-implementer-prompt-template.md
+provider=zcode 时可复用兼容 alias：assets/templates/zcode-prompt-template.md
 ```
 
 该模式下：
 
 1.  main 不 spawn Codex implementer。
-2.  main 生成 provider-specific 最小 handoff prompt；不得把完整 dispatch、完整 references 或完整历史塞进 prompt。
+2.  main 生成统一的 external implementer handoff prompt；不得把完整 dispatch、完整 references 或完整历史塞进 prompt；provider 只允许在 adapter 侧补充发送/校验动作，不得改变 prompt 主体结构。
 3.  `external_contract` 必须声明 `provider`、`target_session`、`prompt_transport`、`send_receipt_required`、`handoff_manual_required`、`handoff_completion_status_source=handoff_manual`、`completion_claim_not_authoritative=true`、`codex_self_implementation_forbidden=true`、`generic_fallback_forbidden=true`。
 4.  provider 可以是 `zcode`、`trae`、`chrome_cloud_agent` 或 `other`；provider 只影响发送 adapter 和验证证据，不改变 handoff/manual/recovery 的公共合同。
 5.  send receipt 必须证明 prompt 已完整交付给目标 provider；如果 adapter 使用 UI/Computer/Chrome 插件，receipt 必须包含真实工具事件或 transcript step；如果 adapter 是手工外部交接，receipt 必须明确 `tool_invoked=false` 且标记 `manual_handoff`，不得伪称工具调用。
@@ -232,10 +233,15 @@ ZCode adapter 附加规则：
 3. 不得用 shell、AppleScript、osascript、cliclick、xdotool 或类似脚本伪装完成 UI 操作，除非用户在当前会话明确授权替代方案。
 4. 发送前必须验证 ZCode 当前会话、输入框、prompt sentinel、粘贴完整性。
 
+TRAE Web adapter 附加规则：
+
+1. provider 为 `trae` 且通过 Web TRAE / Chrome 受控页面发送 prompt 时，必须遵守 `references/external-implementer-routing.md` 的 “TRAE Web provider” 小节；`SKILL.md` 不重复定义具体 DOM 操作，避免规则漂移。
+
 相关校验：
 
 ```bash
 node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
+node .codex/skills/dispatch-task/scripts/validate-external-prompt.mjs <handoff.json> <external-prompt.md>
 node .codex/skills/dispatch-task/scripts/validate-zcode-prompt.mjs <handoff.json> <zcode-prompt.md>
 node .codex/skills/dispatch-task/scripts/validate-zcode-send-receipt.mjs <handoff.json> <send-receipt.json>
 # 若 handoff manual 文件存在且可解析，先校验；若缺失/损坏，recovery result 必须记录 status=missing|invalid 并 blocked。

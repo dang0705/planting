@@ -1,6 +1,6 @@
 {
   "dispatch_run_id": "example-zcode-ui-001",
-  "implementation_mode": "zcode_external",
+  "implementation_mode": "external_implementer",
   "task": {
     "objective": "按目标 Figma 节点实现首页提醒卡片",
     "code_changes_required": true,
@@ -8,15 +8,15 @@
     "risk": "standard",
     "qa_required": true
   },
-  "target_role": "zcode_external",
+  "target_role": "external_implementer",
   "spawn_contract": {
     "qa_agent_type": "qa_reviewer",
     "context_mode": "isolated",
     "generic_fallback_forbidden": true,
     "identity_receipt_required": true
   },
-  "zcode_contract": {
-    "external_implementer": "zcode_glm",
+  "external_contract": {
+    "provider": "zcode",
     "application": "ZCode",
     "target_session": "current_open_chat",
     "prompt_transport": "clipboard_paste",
@@ -174,5 +174,5 @@
     "component_reuse_evidence",
     "uni_ui_mapping_evidence"
   ],
-  "dispatch_tier": "zcode_external"
+  "dispatch_tier": "external_implementer"
 }

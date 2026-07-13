@@ -36,19 +36,28 @@ const need = (condition, message) => {
 };
 const mode = handoff.implementation_mode ?? 'codex_subagent';
 const id = handoff.dispatch_run_id;
-const zcode = handoff.zcode_contract ?? {};
+const external = handoff.external_contract ?? handoff.zcode_contract ?? {};
+const provider = external.provider || (external.external_implementer === 'zcode_glm' ? 'zcode' : '');
+const zcode = handoff.zcode_contract ?? external;
 const sha256 = crypto.createHash('sha256').update(prompt).digest('hex');
 const maxChars = Number.isFinite(zcode.prompt_max_chars) ? zcode.prompt_max_chars : 30000;
 
-need(mode === 'zcode_external', 'validate-zcode-prompt requires implementation_mode=zcode_external');
+need(['external_implementer', 'zcode_external'].includes(mode),
+  'validate-zcode-prompt requires implementation_mode=external_implementer|zcode_external');
+need(provider === 'zcode', 'validate-zcode-prompt requires external_contract.provider=zcode');
 need(typeof id === 'string' && id.length > 0, 'dispatch_run_id is required');
 need(prompt.length <= maxChars, `prompt exceeds zcode_contract.prompt_max_chars: ${prompt.length}/${maxChars}`);
 
-const start = `<<<ZCODE_IMPLEMENTER_HANDOFF:${id}:START>>>`;
-const end = `<<<ZCODE_IMPLEMENTER_HANDOFF:${id}:END>>>`;
+const start = `<<<EXTERNAL_IMPLEMENTER_HANDOFF:${id}:START>>>`;
+const end = `<<<EXTERNAL_IMPLEMENTER_HANDOFF:${id}:END>>>`;
+const resultStart = `<<<EXTERNAL_IMPLEMENTER_RESULT:${id}:START>>>`;
+const resultEnd = `<<<EXTERNAL_IMPLEMENTER_RESULT:${id}:END>>>`;
 need(prompt.includes(start), `prompt missing sentinel start: ${start}`);
 need(prompt.includes(end), `prompt missing sentinel end: ${end}`);
 need(prompt.indexOf(start) < prompt.indexOf(end), 'sentinel start must appear before sentinel end');
+need(prompt.includes(resultStart), `prompt missing result sentinel start: ${resultStart}`);
+need(prompt.includes(resultEnd), `prompt missing result sentinel end: ${resultEnd}`);
+need(prompt.indexOf(resultStart) < prompt.indexOf(resultEnd), 'result sentinel start must appear before result sentinel end');
 
 if (typeof zcode.prompt_sha256 === 'string' && zcode.prompt_sha256.length > 0) {
   need(zcode.prompt_sha256 === sha256, `prompt_sha256 mismatch: expected ${zcode.prompt_sha256}, got ${sha256}`);
@@ -68,15 +77,13 @@ const requiredSectionMarkers = {
   uni_ui_mapping_contract: '## uni-ui Mapping Contract'
 };
 
-for (const section of zcode.required_prompt_sections ?? []) {
+for (const section of zcode.required_prompt_sections ?? external.required_prompt_sections ?? []) {
   const marker = requiredSectionMarkers[section];
     if (marker) {
       need(prompt.includes(marker), `prompt missing section marker for ${section}: ${marker}`);
     }
 }
 
-need(prompt.includes('clipboard') || prompt.includes('剪贴板') || prompt.includes('粘贴'),
-  'prompt should preserve clipboard/paste context for auditability');
 need(!prompt.includes('# Dispatch Task\n\n## 1. 角色所有权'),
   'prompt appears to include the full dispatch skill; keep ZCode prompt minimal');
 
@@ -87,8 +94,8 @@ if (handoff?.figma?.link) {
     'Figma prompt must require direct design context acquisition');
   need(/screenshot|get_screenshot|截图|screenshot_policy_skip|GLM.*截图|AGENTS/i.test(prompt),
     'Figma prompt must define direct screenshot acquisition or explicit AGENTS/GLM screenshot skip evidence');
-  need(/BLOCKED_ZCODE_FIGMA_UNAVAILABLE/.test(prompt),
-    'Figma prompt must define BLOCKED_ZCODE_FIGMA_UNAVAILABLE');
+  need(/BLOCKED_(?:EXTERNAL|ZCODE)_FIGMA_UNAVAILABLE/.test(prompt),
+    'Figma prompt must define a figma unavailable blocker token');
 }
 
 if (/uni[-_ ]?ui|uniui/i.test(String(handoff?.project_constraints?.component_library ?? ''))) {
