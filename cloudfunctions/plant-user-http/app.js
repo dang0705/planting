@@ -36,6 +36,7 @@ const {
   computeTranspirationIntervalFactor,
   resolveShadowModeFromEnv
 } = require('/opt/utils/transpiration')
+const { getUserPlantLightEnvironment } = require('/opt/utils/user-plant-light-environment')
 
 async function main(event, context) {
   const request = getHttpRequestData(event, context)
@@ -183,9 +184,11 @@ async function main(event, context) {
       // v3 蒸腾间隔修正：仅影响"我的植物"下次浇水间隔（BASELINE 间隔），
       // 不影响单次浇水毫升数（amountRangeMl 由 hydration-load 独立计算），
       // 也不绕过 WET/DRY Gate 保护。默认影子运行（intervalFactor=1.0）。
+      // 结构化光照环境（facing/windowType/position/hasDirectSun/distance）由职责单一的小模块读取。
       const transpirationShadow = resolveShadowModeFromEnv(process.env)
+      const lightEnvironment = await getUserPlantLightEnvironment(openid, plantId)
       const transpiration = computeTranspirationIntervalFactor({
-        lightEnvironment: strategy.lightEnvironment || null,
+        lightEnvironment: lightEnvironment || null,
         weatherDays: weatherDays.slice(0, 10),
         weatherSummary: historical,
         plantStrategy: strategy.wateringQuantization

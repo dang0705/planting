@@ -59,6 +59,11 @@ Module._load = function patchedWateringReminderLoad(request, parent, isMain) {
       resolveShadowModeFromEnv: () => true
     }
   }
+  if (request === '/opt/utils/user-plant-light-environment') {
+    return {
+      getUserPlantLightEnvironment: async () => null
+    }
+  }
   if (request.endsWith('/watering-planner-service')) {
     return {
       buildWeatherSummary: () => ({}),

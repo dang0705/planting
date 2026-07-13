@@ -46,10 +46,7 @@ async function getUserPlantLightEnvironment(openid, userPlantId) {
   if (!row) {
     return null
   }
-  return parseJsonField(
-    row.light_environment_json_text ?? row.light_environment_json,
-    null
-  )
+  return parseJsonField(row.light_environment_json_text ?? row.light_environment_json, null)
 }
 
 module.exports = {
