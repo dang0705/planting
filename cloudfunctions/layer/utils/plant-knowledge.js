@@ -749,7 +749,7 @@ async function insertWateringEvent(openid, userPlantId, event = {}) {
  */
 async function getUserPlantWateringStrategy(openid, id) {
   const result = await models.$runSQL(
-    'SELECT plant_id, session_plant_id, CAST(light_environment_json AS CHAR) AS light_environment_json_text FROM user_plant_instances WHERE id = {{id}} AND _openid = {{openid}} LIMIT 1',
+    'SELECT plant_id, session_plant_id FROM user_plant_instances WHERE id = {{id}} AND _openid = {{openid}} LIMIT 1',
     { openid, id: Number(id) }
   )
   const row = result?.data?.executeResultList?.[0]
@@ -772,11 +772,7 @@ async function getUserPlantWateringStrategy(openid, id) {
     temperatureMax: plant.temperatureMax ?? null,
     humidityMin: plant.humidityMin ?? null,
     humidityMax: plant.humidityMax ?? null,
-    potProfile,
-    lightEnvironment: parseJsonField(
-      row.light_environment_json_text ?? row.light_environment_json,
-      null
-    )
+    potProfile
   }
 }
 
