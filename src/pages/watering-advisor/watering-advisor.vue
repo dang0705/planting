@@ -242,58 +242,19 @@
                 </text>
               </view>
 
-              <!-- 下次浇水日期 -->
-              <view class="mb-3 rounded-2xl border border-[#e1e9dd] bg-white p-4">
-                <view class="flex items-center justify-between">
-                  <view>
-                    <text class="block text-[12px] text-[#9ca3af]">建议下次浇水</text>
-                    <text class="block text-[22px] font-bold text-[#2d7a4f]">
-                      {{ plannerResult.nextWaterDate || '待定' }}
-                    </text>
-                  </view>
-                  <text class="text-[32px]">💧</text>
-                </view>
-                <text
-                  v-if="plannerResult.nextWaterReason"
-                  class="mt-2 block text-[12px] text-[#6b7280]"
-                >
-                  {{ plannerResult.nextWaterReason }}
-                </text>
-              </view>
-
-              <!-- 建议水量 -->
+              <!-- 建议浇水毫升数（独立浇水仅展示毫升数，不显示日期/间隔/盆土判断） -->
               <view
-                v-if="amountBottleText"
+                id="watering-advisor-result-amount"
                 class="mb-3 rounded-2xl border border-[#e1e9dd] bg-white p-4"
               >
                 <view class="flex items-center justify-between">
-                  <text class="text-[14px] font-bold text-[#1f2933]">建议水量</text>
-                  <text class="text-[16px] font-bold text-[#2d7a4f]">{{ amountBottleText }}</text>
-                </view>
-                <text
-                  v-if="plannerResult.stopCondition"
-                  class="mt-1 block text-[12px] text-[#6b7280]"
-                >
-                  {{ plannerResult.stopCondition }}
-                </text>
-              </view>
-
-              <!-- 浇水策略 -->
-              <view class="mb-3 rounded-2xl border border-[#e1e9dd] bg-white p-4">
-                <text class="block text-[12px] text-[#9ca3af]">浇水策略</text>
-                <text class="mt-1 block text-[14px] text-[#1f2933]">
-                  {{ wateringContextLabel }}
-                </text>
-                <view v-if="plannerResult.reasonCodes?.length" class="mt-2 flex flex-wrap gap-1.5">
-                  <view
-                    v-for="code in plannerResult.reasonCodes"
-                    :key="code"
-                    class="rounded-full bg-[#f0f4ed] px-2 py-0.5"
-                  >
-                    <text class="text-[11px] text-[#53645a]">{{
-                      reasonCodeLabel(code) || code
-                    }}</text>
+                  <view>
+                    <text class="block text-[12px] text-[#9ca3af]">建议浇水</text>
+                    <text class="block text-[22px] font-bold text-[#2d7a4f]">
+                      {{ amountBottleText || '暂无建议' }}
+                    </text>
                   </view>
+                  <text class="text-[32px]">💧</text>
                 </view>
               </view>
 
@@ -357,7 +318,6 @@ import { callComponentMethod } from '@/utils/component-ref.js'
 import {
   fetchAdhocPlannerResult,
   saveAdvisorSession,
-  reasonCodeLabel,
   todayStr,
   resolveWeatherLocation,
   buildPotProfileSummary
@@ -412,19 +372,6 @@ const amountBottleText = computed(() => {
     return ''
   }
   return formatMlRangeToBottleText(plannerResult.value.amountRangeMl)
-})
-
-const wateringContextLabel = computed(() => {
-  const context = plannerResult.value?.wateringContext
-  if (!context) {
-    return ''
-  }
-  const labels = {
-    likely_too_wet: '近期偏湿，建议暂停浇水',
-    likely_too_dry: '偏干，建议尽快浇水',
-    keep_baseline_or_check_soil: '正常节奏，注意检查土壤'
-  }
-  return labels[context] || context
 })
 
 const hasPotProfile = computed(

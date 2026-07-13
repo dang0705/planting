@@ -48,6 +48,29 @@ Module._load = function patchedWateringReminderLoad(request, parent, isMain) {
       normalizeCareBehaviorTimeline: value => value
     }
   }
+  if (request === '/opt/utils/transpiration') {
+    return {
+      computeTranspirationIntervalFactor: () => ({
+        intervalFactor: 1.0,
+        computedFactor: 1.0,
+        shadow: true,
+        evidence: { light: false, weather: false }
+      }),
+      resolveShadowModeFromEnv: () => true
+    }
+  }
+  if (request.endsWith('/watering-planner-service')) {
+    return {
+      buildWeatherSummary: () => ({}),
+      computeAdhocPlanner: async () => ({ statusCode: 200, data: null, error: null })
+    }
+  }
+  if (request.endsWith('/watering-advisor-service')) {
+    return {
+      saveAdvisorSession: async () => ({ statusCode: 200, message: 'ok', data: null }),
+      listAdvisorSessions: async () => ({ statusCode: 200, data: { list: [], total: 0 } })
+    }
+  }
   if (request.endsWith('/care-location-service')) {
     return {
       attachCareLocation: value => value,

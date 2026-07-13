@@ -433,7 +433,8 @@ function buildWateringPlanner({
   wateringQuantization = null,
   thresholds: rawThresholds = null,
   referenceDate = '',
-  resolveThresholds = null
+  resolveThresholds = null,
+  transpirationIntervalFactor = null
 } = {}) {
   const thresholds = resolveThresholds
     ? resolveThresholds(rawThresholds).watering
@@ -562,12 +563,24 @@ function buildWateringPlanner({
 
   // 下次浇水日期（排水孔轻微拉长 BASELINE 周期：无孔 ×1.15，其余 ×1.0）
   const drainageIntervalFactor = potGeometry.hasDrainageHole === 'false' ? 1.15 : 1.0
+  // v3 蒸腾因素：仅影响 BASELINE 间隔，不影响 DRY/WET 判定，也不影响单次毫升数。
+  // 缺省/中性/影子运行时为 1.0，由调用方通过 transpiration Layer 注入。
+  const transpirationFactor =
+    transpirationIntervalFactor === null || transpirationIntervalFactor === undefined
+      ? 1.0
+      : Number.isFinite(Number(transpirationIntervalFactor))
+        ? Number(transpirationIntervalFactor)
+        : 1.0
+  const combinedIntervalFactor = Math.max(
+    0.5,
+    Math.min(1.5, drainageIntervalFactor * transpirationFactor)
+  )
   const nextWater = resolveNextWaterDate(
     baseline,
     gate.wateringContext,
     timeline,
     effectiveReferenceDate,
-    drainageIntervalFactor
+    combinedIntervalFactor
   )
 
   // 计算过程（保留 formula step 结构，兼容诊断页展示）
@@ -744,7 +757,9 @@ function buildWateringPlanner({
     // 下次浇水日期
     nextWaterDate: nextWater.nextWaterDate,
     nextWaterWindow: nextWater.nextWaterWindow,
-    nextWaterReason: nextWater.nextWaterReason
+    nextWaterReason: nextWater.nextWaterReason,
+    // v3 蒸腾间隔修正（仅 BASELINE 间隔生效，不影响单次毫升数）
+    transpirationIntervalFactor: transpirationFactor
   }
 
   return result

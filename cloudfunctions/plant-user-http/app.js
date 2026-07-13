@@ -32,6 +32,10 @@ const {
 } = require('./watering-reminder-service')
 const { buildWeatherSummary, computeAdhocPlanner } = require('./watering-planner-service')
 const { saveAdvisorSession, listAdvisorSessions } = require('./watering-advisor-service')
+const {
+  computeTranspirationIntervalFactor,
+  resolveShadowModeFromEnv
+} = require('/opt/utils/transpiration')
 
 async function main(event, context) {
   const request = getHttpRequestData(event, context)
@@ -175,6 +179,20 @@ async function main(event, context) {
         referenceDate,
         watering_events_10d: wateringEvents
       })
+
+      // v3 蒸腾间隔修正：仅影响"我的植物"下次浇水间隔（BASELINE 间隔），
+      // 不影响单次浇水毫升数（amountRangeMl 由 hydration-load 独立计算），
+      // 也不绕过 WET/DRY Gate 保护。默认影子运行（intervalFactor=1.0）。
+      const transpirationShadow = resolveShadowModeFromEnv(process.env)
+      const transpiration = computeTranspirationIntervalFactor({
+        lightEnvironment: strategy.lightEnvironment || null,
+        weatherSummary: historical,
+        plantStrategy: strategy.wateringQuantization
+          ? { wateringQuantization: strategy.wateringQuantization }
+          : null,
+        shadow: transpirationShadow
+      })
+
       const plan = buildWateringPlanner({
         wateringStrategy: strategy.watering || {},
         historical,
@@ -182,7 +200,8 @@ async function main(event, context) {
         behaviorTimeline: timeline,
         potProfile: strategy.potProfile || null,
         wateringQuantization: strategy.wateringQuantization || null,
-        referenceDate
+        referenceDate,
+        transpirationIntervalFactor: transpiration.intervalFactor
       })
       const planId = `plan_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
       return jsonResponse(200, {
@@ -204,7 +223,11 @@ async function main(event, context) {
           wetPressureLoad: plan.wetPressureLoad,
           lastEffectiveRootWateredDaysAgo: plan.lastEffectiveRootWateredDaysAgo,
           rootZoneMoistureIndex: plan.rootZoneMoistureIndex,
-          userDoseEcho: plan.userDoseEcho
+          userDoseEcho: plan.userDoseEcho,
+          // v3 蒸腾间隔修正（影子运行时 intervalFactor=1.0，computedFactor 仅供审计）
+          transpirationIntervalFactor: plan.transpirationIntervalFactor,
+          transpirationShadow: transpiration.shadow,
+          transpirationComputedFactor: transpiration.computedFactor
         }
       })
     }
