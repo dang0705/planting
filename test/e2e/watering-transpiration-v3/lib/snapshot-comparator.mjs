@@ -4,37 +4,91 @@
  * Shadow/Active 跨运行 snapshot 对比 —— 浇水算法 v3 蒸腾间隔修正端上验收。
  *
  * 职责：
- *   - shadow 运行保存 comparator snapshot（稳定输入签名 + planner 响应关键字段）
+ *   - shadow 运行保存 comparator snapshot（完整请求 canonical SHA-256 + planner 响应关键字段）
  *   - active 运行加载相容的 shadow snapshot，跨两次 LAN 运行形成可比较证据
- *   - active 必须验证：同一植物、相同可比输入、amountRangeMl 深度相等、
+ *   - active 必须验证：同一植物、相同完整输入签名 hash、amountRangeMl 深度相等、
  *     active intervalFactor 等于 shadow computedFactor、BASELINE 日期对齐、WET/DRY 保护不绕过
  *
- * 不复制业务公式；只做字段提取与深度比较。
+ * 关键修复（P0-4）：
+ *   - 对脱敏后的完整 planner 业务请求体生成 canonical JSON + SHA-256 输入签名
+ *   - 对象 key 排序，数组保持业务顺序
+ *   - areSnapshotsCompatible 比较完整 hash，不再只比较 plantId/date/url
+ *
+ * 不复制业务公式；只做字段提取与深度比较。不保存敏感值。
  */
 
 import path from 'node:path'
 import fs from 'node:fs'
+import crypto from 'node:crypto'
 
 const SNAPSHOT_FILENAME = 'shadow-snapshot.json'
 
 /**
- * 从 planner 请求/响应构建稳定输入签名（用于跨运行匹配同一植物和可比输入）。
+ * 对脱敏后的值生成 canonical JSON（对象 key 递归排序，数组保持业务顺序）。
+ */
+export function canonicalize(value) {
+  if (value === null || value === undefined) return 'null'
+  if (typeof value === 'boolean' || typeof value === 'number') return JSON.stringify(value)
+  if (typeof value === 'string') return JSON.stringify(value)
+  if (Array.isArray(value)) {
+    return '[' + value.map(canonicalize).join(',') + ']'
+  }
+  if (typeof value === 'object') {
+    const keys = Object.keys(value).sort()
+    return '{' + keys.map(k => JSON.stringify(k) + ':' + canonicalize(value[k])).join(',') + '}'
+  }
+  return JSON.stringify(String(value))
+}
+
+/**
+ * 对脱敏后的完整 planner 请求体生成 SHA-256 输入签名。
  *
- * 签名包含：
- *   - 请求 URL（去掉 query string，保留路径）
- *   - 请求 data 的稳定字段（plantId、referenceDate、weatherDays 长度）
- *   - 响应的 wateringContext、amountRangeMl
+ * 签名覆盖：
+ *   - urlPath（去掉 query string）
+ *   - method
+ *   - 请求 data 的完整 canonical JSON（已脱敏，含 plantId/referenceDate/wateringEvents/weatherDays/forecastDays）
+ *
+ * @param {object} plannerRequest - 捕获的 planner 请求（已脱敏）
+ * @returns {{hash: string, canonical: string, urlPath: string, plantId: any, referenceDate: any}}
+ */
+export function buildCanonicalHash(plannerRequest) {
+  const urlPath = String(plannerRequest.url || '').split('?')[0]
+  const method = String(plannerRequest.method || 'GET').toUpperCase()
+  const reqData = plannerRequest.data ?? null
+  const canonical = canonicalize({
+    urlPath,
+    method,
+    data: reqData
+  })
+  const hash = crypto.createHash('sha256').update(canonical, 'utf8').digest('hex')
+  return {
+    hash,
+    canonical,
+    urlPath,
+    method,
+    plantId: reqData?.plantId ?? null,
+    referenceDate: reqData?.referenceDate ?? null,
+    wateringEventsCount: Array.isArray(reqData?.wateringEvents) ? reqData.wateringEvents.length : 0,
+    weatherDaysCount: Array.isArray(reqData?.weatherDays) ? reqData.weatherDays.length : 0,
+    forecastDaysCount: Array.isArray(reqData?.forecastDays) ? reqData.forecastDays.length : 0
+  }
+}
+
+/**
+ * 从 planner 请求/响应构建稳定输入签名摘要（用于报告展示，不含敏感值）。
+ * 完整比较使用 buildCanonicalHash 返回的 hash。
  */
 export function buildInputSignature(plannerRequest) {
-  const url = String(plannerRequest.url || '').split('?')[0]
-  const reqData = plannerRequest.data || {}
+  const sig = buildCanonicalHash(plannerRequest)
   return {
-    urlPath: url,
-    plantId: reqData.plantId ?? null,
-    referenceDate: reqData.referenceDate ?? null,
-    wateringEventsCount: Array.isArray(reqData.wateringEvents) ? reqData.wateringEvents.length : 0,
-    weatherDaysCount: Array.isArray(reqData.weatherDays) ? reqData.weatherDays.length : 0,
-    forecastDaysCount: Array.isArray(reqData.forecastDays) ? reqData.forecastDays.length : 0
+    hash: sig.hash,
+    urlPath: sig.urlPath,
+    method: sig.method,
+    plantId: sig.plantId,
+    referenceDate: sig.referenceDate,
+    wateringEventsCount: sig.wateringEventsCount,
+    weatherDaysCount: sig.weatherDaysCount,
+    forecastDaysCount: sig.forecastDaysCount
   }
 }
 
@@ -44,8 +98,10 @@ export function buildInputSignature(plannerRequest) {
 export function buildResponseSnapshot(plannerRequest) {
   const data = plannerRequest?.response?.data?.data || plannerRequest?.response?.data
   if (!data || typeof data !== 'object') return null
+  const sig = buildCanonicalHash(plannerRequest)
   return {
     plantId: plannerRequest.data?.plantId ?? null,
+    inputHash: sig.hash,
     signature: buildInputSignature(plannerRequest),
     wateringContext: data.wateringContext ?? null,
     amountRangeMl: data.amountRangeMl ?? null,
@@ -61,10 +117,6 @@ export function buildResponseSnapshot(plannerRequest) {
 
 /**
  * 保存 shadow snapshot 到 artifact 目录。
- *
- * @param {string} artifactDir
- * @param {object} snapshot - buildResponseSnapshot 返回值
- * @returns {string} snapshot 文件绝对路径
  */
 export function saveShadowSnapshot(artifactDir, snapshot) {
   const filepath = path.resolve(artifactDir, SNAPSHOT_FILENAME)
@@ -79,9 +131,6 @@ export function saveShadowSnapshot(artifactDir, snapshot) {
 
 /**
  * 加载 shadow snapshot。
- *
- * @param {string} artifactDir
- * @returns {object|null} { type, savedAt, snapshot } 或 null（不存在时）
  */
 export function loadShadowSnapshot(artifactDir) {
   const filepath = path.resolve(artifactDir, SNAPSHOT_FILENAME)
@@ -95,24 +144,22 @@ export function loadShadowSnapshot(artifactDir) {
 }
 
 /**
- * 检查两个 snapshot 是否相容（同一植物、相同可比输入签名）。
+ * 检查两个 snapshot 是否相容（完整输入签名 hash 相同）。
+ *
+ * 关键修复（P0-4）：比较完整 canonical SHA-256 hash，不再只比较 plantId/date/url。
+ * 天气或浇水事件变化时会被判为不兼容。
  */
 export function areSnapshotsCompatible(shadowSnapshot, activeSnapshot) {
   if (!shadowSnapshot || !activeSnapshot) return false
-  const sigS = shadowSnapshot.signature
-  const sigA = activeSnapshot.signature
-  if (!sigS || !sigA) return false
-  // plantId 必须一致
-  if (sigS.plantId !== sigA.plantId) return false
-  // referenceDate 必须一致
-  if (sigS.referenceDate !== sigA.referenceDate) return false
-  // URL 路径必须一致
-  if (sigS.urlPath !== sigA.urlPath) return false
+  // 完整输入签名 hash 必须一致
+  if (shadowSnapshot.inputHash !== activeSnapshot.inputHash) return false
+  // plantId 也必须一致（双重保险）
+  if (shadowSnapshot.plantId !== activeSnapshot.plantId) return false
   return true
 }
 
 /**
- * 深度比较两个值是否相等（处理数组、对象、原始值）。
+ * 深度比较两个值是否相等。
  */
 export function deepEqual(a, b) {
   if (a === b) return true
@@ -133,22 +180,18 @@ export function deepEqual(a, b) {
 
 /**
  * 对比 active snapshot 与 shadow baseline，返回断言结果列表。
- *
- * @param {object} shadowSnapshot - buildResponseSnapshot 返回值
- * @param {object} activeSnapshot - buildResponseSnapshot 返回值
- * @returns {Array<{name, passed, detail}>} 断言列表
  */
 export function compareShadowVsActive(shadowSnapshot, activeSnapshot) {
   const assertions = []
 
-  // 1. 同一植物和相同可比输入
+  // 1. 完整输入签名 hash 相同（同一植物 + 相同可比输入）
   assertions.push({
-    name: 'active 与 shadow 使用同一植物和相同可比输入签名',
+    name: 'active 与 shadow 完整输入签名 hash 相同（同一植物和相同可比输入）',
     passed: areSnapshotsCompatible(shadowSnapshot, activeSnapshot),
-    detail: `shadow.plantId=${shadowSnapshot?.plantId}, active.plantId=${activeSnapshot?.plantId}`
+    detail: `shadow.hash=${shadowSnapshot?.inputHash?.slice(0, 16)}..., active.hash=${activeSnapshot?.inputHash?.slice(0, 16)}...`
   })
 
-  // 2. amountRangeMl 深度相等（蒸腾不改变单次毫升数）
+  // 2. amountRangeMl 深度相等
   const amountEqual = deepEqual(shadowSnapshot.amountRangeMl, activeSnapshot.amountRangeMl)
   assertions.push({
     name: 'active amountRangeMl 与 shadow 深度相等（蒸腾不改变毫升数）',
@@ -177,7 +220,6 @@ export function compareShadowVsActive(shadowSnapshot, activeSnapshot) {
     shadowSnapshot.transpirationComputedFactor !== null &&
     Math.abs(shadowSnapshot.transpirationComputedFactor - 1.0) > 0.001
   ) {
-    // 有实际修正：active nextWaterDate 应等于 shadow candidateNextWaterDate
     const dateAligned =
       activeSnapshot.nextWaterDate === shadowSnapshot.transpirationCandidateNextWaterDate
     assertions.push({
@@ -193,7 +235,6 @@ export function compareShadowVsActive(shadowSnapshot, activeSnapshot) {
       detail: `active.nextWaterWindow=${activeSnapshot.nextWaterWindow}, shadow.candidateNextWaterWindow=${shadowSnapshot.transpirationCandidateNextWaterWindow}`
     })
   } else if (shadowSnapshot.wateringContext === 'BASELINE') {
-    // computedFactor=1.0：无实际修正，active 日期应等于 shadow 日期
     const dateSame = activeSnapshot.nextWaterDate === shadowSnapshot.nextWaterDate
     assertions.push({
       name: 'BASELINE + computedFactor=1.0 时 active nextWaterDate 等于 shadow',
@@ -232,7 +273,6 @@ export function hasVerifiableTranspirationEvidence(snapshot) {
   if (!snapshot) return false
   const computed = snapshot.transpirationComputedFactor
   const candidate = snapshot.transpirationCandidateNextWaterDate
-  // 有实际修正：computedFactor != 1.0 且有 candidate
   if (typeof computed === 'number' && Math.abs(computed - 1.0) > 0.001 && candidate !== null) {
     return true
   }
