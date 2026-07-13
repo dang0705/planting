@@ -11,14 +11,14 @@
  *   - 缺失光照/天气证据按现有中性规则处理（factor=1.0），不擅自放大耗水。
  *
  * 光照复用：
- *   光照暴露计算下沉到 layer/utils/light-exposure.js（诊断与蒸腾共同消费同一因子表），
- *   本模块不保留第二套光照常数表。蒸腾光照分量基于 indoorFactor（室内综合光照衰减系数）
- *   推导：indoorFactor 高（强光）→ 蒸腾加快（factor < 1.0）；
- *   indoorFactor 低（弱光）→ 蒸腾放慢（factor > 1.0）。
+ *   光照暴露计算由 layer/utils/light-exposure.js 提供（诊断与蒸腾共同消费同一模块）。
+ *   蒸腾光照分量基于 indoorEqHours（含天气/UV 证据的最终暴露量）推导，
+ *   而非 indoorFactor（仅室内衰减率），使晴天/阴天得到不同的蒸腾系数。
  *
  * 输入：
  *   lightEnvironment  - 结构化光照输入 { facing, windowType, position, hasDirectSun, distance }
- *   weatherSummary    - 复用 plant-user-http 的 buildWeatherSummary 输出
+ *   weatherDays       - 逐日天气记录（传给 computeLightExposure 计算 outdoorEqHours/uvFactor）
+ *   weatherSummary    - 复用 plant-user-http 的 buildWeatherSummary 输出（天气分量）
  *   plantStrategy     - 属级策略（可选）：wateringQuantization.dryTolerance / wetTolerance
  *   options.shadow    - 默认 true。true=影子运行，仅计算不应用；false=应用 intervalFactor。
  *
@@ -46,20 +46,16 @@ const FACTOR_MAX = 1.2
 const FACTOR_NEUTRAL = 1.0
 
 /**
- * indoorFactor 与蒸腾系数的映射基准。
+ * indoorEqHours 与蒸腾系数的映射基准。
  *
- * indoorFactor 范围约 [0.02, 1.27]（诊断口径因子表乘积）：
- *   - 1.0 = 无衰减（南向 + 标准窗 + 窗边 + 直射 boost + 近距离）
- *   - 0.5 左右 = 中等衰减（如东向 + 小窗 + 中部）
- *   - 0.1 以下 = 极弱光（无窗 / 深处 / 遮挡）
- *
- * 映射策略：以 indoorFactor=1.0 为中性点，偏离越大蒸腾修正越强。
- * 强光（indoorFactor > 1.0）→ 蒸腾加快（factor < 1.0），最大 -0.12。
- * 弱光（indoorFactor < 0.8）→ 蒸腾放慢（factor > 1.0），最大 +0.12。
+ * indoorEqHours 是包含天气/UV 证据的最终光照暴露量（小时/天）：
+ *   - 典型室内植物需求 4-6 小时/天（DEFAULT_PROFILE.freq）
+ *   - indoorEqHours > 6：强光 → 蒸腾加快（factor < 1.0）
+ *   - indoorEqHours < 3：弱光 → 蒸腾放慢（factor > 1.0）
+ *   - 缺失天气证据时 indoorEqHours 基于中性 weatherLightFactor=1.0 计算
  */
-const INDOOR_FACTOR_NEUTRAL = 1.0
-const INDOOR_FACTOR_STRONG_LIGHT = 1.05
-const INDOOR_FACTOR_WEAK_LIGHT = 0.6
+const INDOOR_EQ_HOURS_STRONG_THRESHOLD = 6
+const INDOOR_EQ_HOURS_WEAK_THRESHOLD = 3
 const LIGHT_FACTOR_MAX_ADJUST = 0.12
 
 function toFiniteNumber(value, fallback = 0) {
@@ -84,32 +80,35 @@ function normalizeText(value = '') {
 }
 
 /**
- * 光照分量系数——基于共享 light-exposure 的 indoorFactor 推导。
+ * 光照分量系数——基于共享 light-exposure 的 indoorEqHours 推导。
  *
- * 复用 layer/utils/light-exposure.js 的归一化和因子表，不保留第二套常数。
- * indoorFactor 高（强光）→ 蒸腾加快（factor < 1.0）；
- * indoorFactor 低（弱光）→ 蒸腾放慢（factor > 1.0）。
+ * 复用 layer/utils/light-exposure.js 的 computeLightExposure，
+ * 消费包含天气/UV 证据的最终暴露量 indoorEqHours。
+ * indoorEqHours 高（强光）→ 蒸腾加快（factor < 1.0）；
+ * indoorEqHours 低（弱光）→ 蒸腾放慢（factor > 1.0）。
  * 缺失光照证据：返回 1.0（中性）。
+ *
+ * @param {object} lightEnvironment - 结构化光照输入
+ * @param {Array} [weatherDays] - 逐日天气记录（传给 computeLightExposure）
  */
-function resolveLightFactor(lightEnvironment = null) {
-  const exposure = computeLightExposure(lightEnvironment || {})
+function resolveLightFactor(lightEnvironment = null, weatherDays = []) {
+  const exposure = computeLightExposure({
+    userLightContext: lightEnvironment || {},
+    weatherDays
+  })
   if (!exposure) {
     return FACTOR_NEUTRAL
   }
-  const indoorFactor = exposure.factors.indoorFactor
-  const directSunHours = exposure.factors.directSunExposureHours || 0
+  const indoorEqHours = exposure.indoorEqHours
 
   let factor = FACTOR_NEUTRAL
-
-  // 强光环境（indoorFactor 高或有显著直射光）：蒸腾加快
-  if (indoorFactor >= INDOOR_FACTOR_STRONG_LIGHT || directSunHours >= 2) {
-    const lightIntensity = Math.min(1, (indoorFactor - INDOOR_FACTOR_NEUTRAL) / 0.3)
-    factor -= LIGHT_FACTOR_MAX_ADJUST * Math.max(lightIntensity, directSunHours >= 2 ? 0.8 : 0)
-  } else if (indoorFactor < INDOOR_FACTOR_WEAK_LIGHT) {
-    // 弱光环境：蒸腾放慢
+  if (indoorEqHours >= INDOOR_EQ_HOURS_STRONG_THRESHOLD) {
+    const lightIntensity = Math.min(1, (indoorEqHours - INDOOR_EQ_HOURS_STRONG_THRESHOLD) / 4)
+    factor -= LIGHT_FACTOR_MAX_ADJUST * lightIntensity
+  } else if (indoorEqHours < INDOOR_EQ_HOURS_WEAK_THRESHOLD) {
     const weakness = Math.min(
       1,
-      (INDOOR_FACTOR_WEAK_LIGHT - indoorFactor) / INDOOR_FACTOR_WEAK_LIGHT
+      (INDOOR_EQ_HOURS_WEAK_THRESHOLD - indoorEqHours) / INDOOR_EQ_HOURS_WEAK_THRESHOLD
     )
     factor += LIGHT_FACTOR_MAX_ADJUST * weakness
   }
@@ -188,6 +187,7 @@ function applySpeciesConvergence(factor, plantStrategy = null) {
  *
  * @param {object} params
  * @param {object} [params.lightEnvironment] - 结构化光照输入
+ * @param {Array} [params.weatherDays] - 逐日天气记录（传给 computeLightExposure 计算 indoorEqHours）
  * @param {object} [params.weatherSummary]  - buildWeatherSummary 输出
  * @param {object} [params.plantStrategy]   - 属级策略，含 wateringQuantization
  * @param {boolean} [params.shadow]         - 是否影子运行（默认 true）
@@ -195,11 +195,12 @@ function applySpeciesConvergence(factor, plantStrategy = null) {
  */
 function computeTranspirationIntervalFactor({
   lightEnvironment = null,
+  weatherDays = [],
   weatherSummary = null,
   plantStrategy = null,
   shadow = SHADOW_MODE_DEFAULT
 } = {}) {
-  const lightFactor = resolveLightFactor(lightEnvironment)
+  const lightFactor = resolveLightFactor(lightEnvironment, weatherDays)
   const weatherFactor = resolveWeatherFactor(weatherSummary)
   let computed = FACTOR_NEUTRAL
   if (lightFactor !== FACTOR_NEUTRAL || weatherFactor !== FACTOR_NEUTRAL) {

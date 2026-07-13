@@ -6,6 +6,7 @@
 
     <!-- 已有植物入口 -->
     <view
+      id="watering-advisor-go-my-plants"
       class="mb-3 rounded-2xl border border-[#e1e9dd] bg-white p-4"
       @click="$emit('go-my-plants')"
     >
@@ -52,7 +53,13 @@
           @confirm="handleSearchConfirm"
           @input="handleSearchInput"
         />
-        <text v-if="searchKeyword" class="text-[14px] text-[#9ca3af]" @click="clearSearch">✕</text>
+        <text
+          v-if="searchKeyword"
+          id="watering-advisor-search-clear"
+          class="text-[14px] text-[#9ca3af]"
+          @click="clearSearch"
+          >✕</text
+        >
       </view>
 
       <!-- 搜索结果列表 -->
@@ -64,6 +71,7 @@
         <view
           v-for="plant in plants"
           :key="plant.plantIdentityId || plant.sessionPlantId"
+          :id="`watering-advisor-plant-item-${plant.plantIdentityId || plant.sessionPlantId || ''}`"
           class="flex items-center gap-3 border-b border-[#f0f4ed] px-3 py-2.5"
           :class="isSelected(plant) ? 'bg-[#e8f3ea]' : 'bg-white'"
           @click="selectPlant(plant)"
@@ -87,7 +95,12 @@
           </view>
           <text v-if="isSelected(plant)" class="text-[16px] text-[#2d7a4f]">✓</text>
         </view>
-        <view v-if="hasMore" class="px-3 py-2.5 text-center" @click="$emit('load-more')">
+        <view
+          v-if="hasMore"
+          id="watering-advisor-load-more"
+          class="px-3 py-2.5 text-center"
+          @click="$emit('load-more')"
+        >
           <text class="text-[12px] text-[#2d7a4f]">
             {{ loadingMore ? '加载中...' : '加载更多' }}
           </text>
@@ -115,7 +128,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { useDefaultPlants } from '@/composables/useDefaultPlants.js'
 
 const props = defineProps({
@@ -128,18 +141,11 @@ const SEARCH_DEBOUNCE_MS = 500
 const searchKeyword = ref('')
 let searchTimer = null
 
-const { plants, loading, initialLoading, loadingMore, hasMore, load, loadNextPage } =
-  useDefaultPlants()
+const { plants, initialLoading, loadingMore, hasMore, load, loadNextPage } = useDefaultPlants()
 
-// 对外暴露加载状态，供父组件 onShow 触发
 defineExpose({
   loadPlants: keyword => load(keyword),
   loadNextPage
-})
-
-// 监听 loadingMore 变化向上传递
-watch(loadingMore, val => {
-  // no-op: 父组件通过 load-more 事件触发
 })
 
 function isSelected(plant) {

@@ -115,27 +115,14 @@
             </view>
 
             <view v-else-if="plannerResult" class="pb-6">
-              <view class="mb-4">
-                <text class="block text-[20px] font-bold leading-7 text-[#1f2937]"> 浇水建议 </text>
-                <text class="mt-1 block text-[13px] text-[#6b7280]">
-                  {{ selectedCatalogPlantName }}
-                </text>
-              </view>
-
-              <!-- 建议浇水毫升数（独立浇水仅展示毫升数，不显示日期/间隔/盆土判断） -->
+              <!-- 独立浇水最终结果：只保留友好的毫升数文本 -->
               <view
                 id="watering-advisor-result-amount"
-                class="mb-3 rounded-2xl border border-[#e1e9dd] bg-white p-4"
+                class="mb-3 rounded-2xl border border-[#e1e9dd] bg-white p-6 text-center"
               >
-                <view class="flex items-center justify-between">
-                  <view>
-                    <text class="block text-[12px] text-[#9ca3af]">建议浇水</text>
-                    <text class="block text-[22px] font-bold text-[#2d7a4f]">
-                      {{ amountText || '暂无建议' }}
-                    </text>
-                  </view>
-                  <text class="text-[32px]">💧</text>
-                </view>
+                <text class="block text-[22px] font-bold text-[#2d7a4f]">
+                  {{ amountText || '暂无建议' }}
+                </text>
               </view>
 
               <!-- 操作按钮 -->
@@ -160,6 +147,7 @@
             <view v-else class="flex flex-col items-center justify-center py-20">
               <text class="text-[14px] text-[#9ca3af]">暂无建议结果</text>
               <button
+                id="watering-advisor-empty-retry"
                 class="mt-4 rounded-xl border border-[#2d7a4f] px-6 py-2 text-[14px] text-[#2d7a4f]"
                 @click="activeStep = 1"
               >

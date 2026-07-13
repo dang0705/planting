@@ -186,6 +186,7 @@ async function main(event, context) {
       const transpirationShadow = resolveShadowModeFromEnv(process.env)
       const transpiration = computeTranspirationIntervalFactor({
         lightEnvironment: strategy.lightEnvironment || null,
+        weatherDays: weatherDays.slice(0, 10),
         weatherSummary: historical,
         plantStrategy: strategy.wateringQuantization
           ? { wateringQuantization: strategy.wateringQuantization }

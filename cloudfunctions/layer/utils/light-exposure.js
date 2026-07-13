@@ -3,279 +3,112 @@
 /**
  * 光照暴露共享 Layer —— 诊断与蒸腾共同消费的光照计算。
  *
- * 设计目标：
- *   - 作为项目唯一的光照因子表与归一化事实源（诊断口径，数值 1:1 保留不得调整）。
- *   - 产出结构化光照暴露结果：归一化环境 + 室内因子 + 直射光暴露时长 + 证据标记。
- *   - 不包含诊断评分/等级/文案，保持纯计算可复用。
+ * 产出结构化光照暴露结果：归一化环境 + 户外等效时长 + 室内因子 + 直射光暴露 + indoorEqHours。
+ * indoorEqHours = outdoorEqHours * indoorFactor + directSunExposureHours，
+ * 包含天气/UV 证据的最终暴露量，是光照强弱的正确度量。
  *
- * 被 diagnose-http/utils/light-health-estimator.js 和 layer/utils/transpiration.js 共同消费。
+ * 因子表拆分到 light-exposure-factors.js，归一化拆分到 light-exposure-normalize.js。
+ * diagnose-http/utils/light-health-*.js 通过 re-export 代理本模块，不保留第二套常量。
  */
 
-/* ---------- 因子表与常量（诊断口径，数值不得调整） ---------- */
+const {
+  DEFAULT_PROFILE,
+  DIRECT_SUN_BLOCKED_WINDOWS,
+  DIRECT_SUN_EXPOSURE_BASE_HOURS,
+  DIRECT_SUN_POSITION_EXPOSURE,
+  DIRECT_SUN_ATTENUATION_FACTOR,
+  DIRECT_SUN_BOOST_FACTOR,
+  DIRECT_SUN_FACING_CLAMP,
+  DIRECT_SUN_WINDOW_CLAMP,
+  DISTANCE_FACTOR_DEEP_MIN,
+  DISTANCE_FACTOR_DEEP_SLOPE,
+  DISTANCE_FACTOR_MID_BOUNDARY,
+  DISTANCE_FACTOR_MID_MIN,
+  DISTANCE_FACTOR_MID_SLOPE,
+  DISTANCE_FACTOR_NEAR_MAX,
+  FACTORS,
+  OVER_PENALTY,
+  OVER_PENALTY_FALLBACK,
+  SCORE_CLAMP_RANGE,
+  SCORE_FULL,
+  SCORE_MODERATE_THRESHOLD,
+  SCORE_SEVERE_THRESHOLD,
+  UNDERLIGHT_PENALTY_WEIGHT,
+  WEATHER_FACTOR_UNKNOWN,
+  WEATHER_SUN_FACTOR,
+  DAYLIGHT_FALLBACK_HOURS,
+  UV_FACTOR_CLAMP,
+  UV_FACTOR_SLOPE,
+  UV_REFERENCE,
+  SUNSHINE_COVERAGE_RATIO
+} = require('./light-exposure-factors')
+const {
+  clamp,
+  toNumber,
+  normalizeText,
+  normalizeUserLightContext,
+  normalizeWeatherDay
+} = require('./light-exposure-normalize')
 
-const DEFAULT_PROFILE = {
-  way: '明亮散射光',
-  freq: [4, 6],
-  unit: '小时/天',
-  source: 'fallback_default_indoor_profile'
+function round(value, digits = 2) {
+  const factor = 10 ** digits
+  return Math.round(Number(value || 0) * factor) / factor
 }
 
-const WEATHER_SUN_FACTOR = [
-  { pattern: /中雨|大雨|暴雨|heavy rain|storm/i, value: 0.08, label: '中到大雨' },
-  { pattern: /小雨|阵雨|rain|shower/i, value: 0.15, label: '小雨/阵雨' },
-  { pattern: /雪|snow/i, value: 0.1, label: '雪' },
-  { pattern: /阴|overcast|cloudy/i, value: 0.25, label: '阴' },
-  { pattern: /多云|partly|cloud/i, value: 0.4, label: '多云' },
-  { pattern: /晴|sunny|clear/i, value: 0.6, label: '晴' }
-]
-
-const FACTORS = {
-  facing: {
-    south: { label: '南', factor: 1 },
-    south_east: { label: '东南', factor: 0.9 },
-    south_west: { label: '西南', factor: 0.88 },
-    east: { label: '东', factor: 0.8 },
-    west: { label: '西', factor: 0.78 },
-    north_east: { label: '东北', factor: 0.62 },
-    north_west: { label: '西北', factor: 0.55 },
-    north: { label: '北', factor: 0.45 },
-    balcony: { label: '阳台', factor: 1.1 },
-    no_window: { label: '无窗', factor: 0.05 },
-    unknown: { label: '不知道', factor: 0.65 }
-  },
-  windowType: {
-    floor_to_ceiling: { label: '落地窗', factor: 1.15 },
-    standard: { label: '标准窗', factor: 1 },
-    small: { label: '小窗', factor: 0.8 },
-    curtain: { label: '有窗帘', factor: 0.78 },
-    blocked: { label: '有遮挡', factor: 0.75 },
-    grow_light: { label: '补光灯', factor: 0.92 },
-    no_window: { label: '无窗', factor: 0.05 },
-    unknown: { label: '不知道', factor: 0.9 }
-  },
-  position: {
-    window_side: { label: '窗边', factor: 1 },
-    middle: { label: '房间中部', factor: 0.72 },
-    deep: { label: '远离窗户', factor: 0.42 },
-    unknown: { label: '不知道', factor: 0.7 }
-  }
-}
-
-const DIRECT_SUN_EXPOSURE_BASE_HOURS = 2.3
-const DIRECT_SUN_POSITION_EXPOSURE = {
-  window_side: 1,
-  middle: 0.45,
-  unknown: 0.3,
-  deep: 0
-}
-const DIRECT_SUN_BLOCKED_WINDOWS = new Set(['blocked', 'no_window'])
-
-const DIRECT_SUN_BOOST_FACTOR = 1.08
-const DIRECT_SUN_ATTENUATION_FACTOR = 0.92
-const DISTANCE_FACTOR_NEAR_MAX = 1
-const DISTANCE_FACTOR_MID_BOUNDARY = 3
-const DISTANCE_FACTOR_MID_SLOPE = 0.08
-const DISTANCE_FACTOR_MID_MIN = 0.82
-const DISTANCE_FACTOR_DEEP_SLOPE = 0.06
-const DISTANCE_FACTOR_DEEP_MIN = 0.42
-const DIRECT_SUN_FACING_CLAMP = [0.35, 1.1]
-const DIRECT_SUN_WINDOW_CLAMP = [0.55, 1.2]
-
-/* ---------- 基础工具 ---------- */
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value))
-}
-
-function toNumber(value) {
-  if (value === null || value === undefined || value === '') {
+function mean(values = []) {
+  const valid = values.map(toNumber).filter(value => value !== undefined)
+  if (!valid.length) {
     return undefined
   }
-  const numberValue = Number(value)
-  return Number.isFinite(numberValue) ? numberValue : undefined
+  return valid.reduce((sum, value) => sum + value, 0) / valid.length
 }
 
-function normalizeText(value = '') {
-  return String(value || '').trim()
+function normalizeLightProfile(plantContext = {}) {
+  const sunning =
+    plantContext?.sunning || plantContext?.lightProfile || plantContext?.light_profile || {}
+  const freq = Array.isArray(sunning.freq)
+    ? sunning.freq
+    : Array.isArray(sunning.frequency)
+      ? sunning.frequency
+      : []
+  const min = toNumber(freq[0])
+  const max = toNumber(freq[1])
+  if (min !== undefined && max !== undefined && min > 0 && max >= min) {
+    return {
+      way:
+        normalizeText(sunning.way || sunning.type || plantContext.lightRequirement || '') ||
+        DEFAULT_PROFILE.way,
+      freq: [min, max],
+      unit: normalizeText(sunning.unit || '小时/天'),
+      source: 'plant_context_sunning_freq'
+    }
+  }
+  return { ...DEFAULT_PROFILE }
 }
 
-function normalizeEnum(value = '', aliases = {}) {
-  const raw = normalizeText(value).toLowerCase()
-  return aliases[raw] || aliases[normalizeText(value)] || raw
+function resolveWeatherFactor(weatherText = '') {
+  const normalized = normalizeText(weatherText)
+  const matched = WEATHER_SUN_FACTOR.find(item => item.pattern.test(normalized))
+  return matched || { value: WEATHER_FACTOR_UNKNOWN, label: '未知' }
 }
 
-/* ---------- 归一化函数 ---------- */
-
-function normalizeFacing(value = '') {
-  return normalizeEnum(value, {
-    南: 'south',
-    南窗: 'south',
-    south: 'south',
-    s: 'south',
-    东: 'east',
-    东窗: 'east',
-    east: 'east',
-    e: 'east',
-    north_east: 'north_east',
-    northeast: 'north_east',
-    东北: 'north_east',
-    south_east: 'south_east',
-    southeast: 'south_east',
-    东南: 'south_east',
-    西: 'west',
-    西窗: 'west',
-    west: 'west',
-    w: 'west',
-    north_west: 'north_west',
-    northwest: 'north_west',
-    西北: 'north_west',
-    south_west: 'south_west',
-    southwest: 'south_west',
-    西南: 'south_west',
-    北: 'north',
-    北窗: 'north',
-    north: 'north',
-    n: 'north',
-    阳台: 'balcony',
-    balcony: 'balcony',
-    无窗: 'no_window',
-    no_window: 'no_window',
-    windowless: 'no_window',
-    不知道: 'unknown',
-    不确定: 'unknown',
-    unknown: 'unknown'
-  })
-}
-
-function normalizeWindowType(value = '') {
-  return normalizeEnum(value, {
-    落地窗: 'floor_to_ceiling',
-    floor_to_ceiling: 'floor_to_ceiling',
-    标准窗: 'standard',
-    有窗: 'standard',
-    standard: 'standard',
-    normal: 'standard',
-    小窗: 'small',
-    small: 'small',
-    有窗帘: 'curtain',
-    curtain: 'curtain',
-    有遮挡: 'blocked',
-    blocked: 'blocked',
-    shade: 'blocked',
-    补光灯: 'grow_light',
-    grow_light: 'grow_light',
-    light: 'grow_light',
-    无窗: 'no_window',
-    no_window: 'no_window',
-    不知道: 'unknown',
-    不确定: 'unknown',
-    unknown: 'unknown'
-  })
-}
-
-function normalizePosition(value = '') {
-  return normalizeEnum(value, {
-    窗边: 'window_side',
-    靠窗: 'window_side',
-    window_side: 'window_side',
-    near_window: 'window_side',
-    房间中部: 'middle',
-    中部: 'middle',
-    middle: 'middle',
-    远离窗户: 'deep',
-    房间深处: 'deep',
-    深处: 'deep',
-    deep: 'deep',
-    far: 'deep',
-    不知道: 'unknown',
-    不确定: 'unknown',
-    unknown: 'unknown'
-  })
-}
-
-function normalizeDirectSun(value) {
-  if (value === true || value === false) {
-    return value
+function estimateBaseOutdoorHours(weatherDays = []) {
+  const days = (Array.isArray(weatherDays) ? weatherDays : []).map(normalizeWeatherDay)
+  const sunshineHours = days.map(day => day.sunshineHours).filter(value => value !== undefined)
+  if (sunshineHours.length >= Math.ceil(Math.max(days.length, 1) * SUNSHINE_COVERAGE_RATIO)) {
+    return { value: mean(sunshineHours) || 0, source: 'sunshine_hours_mean' }
   }
-  const normalized = normalizeText(value).toLowerCase()
-  if (['true', 'yes', 'y', '1', '是', '有', '直射'].includes(normalized)) {
-    return true
-  }
-  if (['false', 'no', 'n', '0', '否', '没有', '无'].includes(normalized)) {
-    return false
-  }
-  return 'unknown'
-}
-
-function normalizeDistance(value) {
-  const distance = toNumber(value)
-  if (distance === undefined) {
-    return undefined
-  }
-  return clamp(distance, 0, 20)
-}
-
-function derivePositionFromDistance(distance) {
-  if (distance === undefined) {
-    return ''
-  }
-  if (distance <= 1.2) {
-    return 'window_side'
-  }
-  if (distance <= 3.5) {
-    return 'middle'
-  }
-  return 'deep'
-}
-
-/**
- * 将多源用户光照环境输入归一为统一枚举。
- * 与 diagnose-http 口径完全一致。
- */
-function normalizeUserLightContext(input = {}) {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) {
-    return { hasMeaningfulInput: false }
-  }
-  const distance = normalizeDistance(
-    input.distance ?? input.distanceMeters ?? input.distance_meters
-  )
-  const rawPosition = normalizePosition(
-    input.position || input.roomPosition || input.room_position || ''
-  )
-  const position = FACTORS.position[rawPosition]
-    ? rawPosition
-    : derivePositionFromDistance(distance) || 'unknown'
-  const windowType = normalizeWindowType(input.windowType || input.window_type || '')
-  const facing = normalizeFacing(
-    input.facing || input.direction || input.windowFacing || input.window_facing || ''
-  )
-  const hasDirectSun = normalizeDirectSun(input.hasDirectSun ?? input.has_direct_sun)
-  const hasMeaningfulFacing = FACTORS.facing[facing] && facing !== 'unknown'
-  const hasMeaningfulWindow = FACTORS.windowType[windowType] && windowType !== 'unknown'
-  const hasMeaningfulPosition = FACTORS.position[position] && position !== 'unknown'
-  const hasMeaningfulInput = Boolean(
-    hasMeaningfulFacing ||
-    hasMeaningfulWindow ||
-    hasMeaningfulPosition ||
-    hasDirectSun !== 'unknown' ||
-    distance !== undefined
-  )
-
-  if (!hasMeaningfulInput) {
-    return { hasMeaningfulInput: false }
-  }
-
+  const estimated = days.length
+    ? days.map(day => {
+        const daylight = day.daylightHours ?? DAYLIGHT_FALLBACK_HOURS
+        return daylight * resolveWeatherFactor(day.weatherText).value
+      })
+    : [DAYLIGHT_FALLBACK_HOURS * WEATHER_FACTOR_UNKNOWN]
   return {
-    facing: FACTORS.facing[facing] ? facing : 'unknown',
-    windowType: FACTORS.windowType[windowType] ? windowType : 'unknown',
-    position: FACTORS.position[position] ? position : 'unknown',
-    hasDirectSun,
-    distance,
-    hasMeaningfulInput
+    value: mean(estimated) || 0,
+    source: days.length ? 'daylight_weather_factor_mean' : 'fallback_unknown_weather'
   }
 }
-
-/* ---------- 因子计算 ---------- */
 
 function getDirectSunFactor(value) {
   if (value === true) {
@@ -309,11 +142,6 @@ function getDistanceFactor(distance) {
   )
 }
 
-function round(value, digits = 2) {
-  const factor = 10 ** digits
-  return Math.round(Number(value || 0) * factor) / factor
-}
-
 function getDirectSunExposureHours({
   env = {},
   facingFactor = 1,
@@ -342,25 +170,43 @@ function getDirectSunExposureHours({
 }
 
 /**
- * 计算光照暴露（纯因子，不含评分）。
+ * 计算光照暴露（含天气/UV 证据的最终暴露量）。
  *
- * @param {object} userLightContext - 原始用户光照输入
- * @param {object} [options] - 可选参数
- * @param {number} [options.weatherLightFactor=1.0] - 天气光照因子（缺失证据时保持中性 1.0）
- * @param {number} [options.uvFactor=1.0] - UV 因子（缺失证据时保持中性 1.0）
+ * @param {object} params
+ * @param {object} params.userLightContext - 原始用户光照输入
+ * @param {Array} [params.weatherDays] - 逐日天气记录（含 uvIndex/sunshineHours/daylightHours/weatherText）
+ * @param {number} [params.weatherLightFactor] - 天气光照因子（缺失证据时 1.0）
+ * @param {number} [params.uvFactor] - UV 因子（缺失证据时 1.0）
  * @returns {object|null} 光照暴露结果，缺失有效输入时返回 null
  */
-function computeLightExposure(userLightContext = {}, options = {}) {
+function computeLightExposure({
+  userLightContext = {},
+  weatherDays = [],
+  weatherLightFactor: explicitWeatherLightFactor,
+  uvFactor: explicitUvFactor
+} = {}) {
   const env = normalizeUserLightContext(userLightContext)
   if (!env.hasMeaningfulInput) {
     return null
   }
 
-  const weatherLightFactor = Number.isFinite(options.weatherLightFactor)
-    ? Number(options.weatherLightFactor)
-    : 1.0
-  const uvFactor = Number.isFinite(options.uvFactor) ? Number(options.uvFactor) : 1.0
+  const normalizedWeatherDays = (Array.isArray(weatherDays) ? weatherDays : []).map(
+    normalizeWeatherDay
+  )
+  const baseOutdoorHours = estimateBaseOutdoorHours(normalizedWeatherDays)
+  const avgUv = mean(normalizedWeatherDays.map(day => day.uvIndex))
+  const uvFactor =
+    explicitUvFactor !== undefined && Number.isFinite(explicitUvFactor)
+      ? Number(explicitUvFactor)
+      : avgUv === undefined
+        ? 1
+        : clamp(1 + UV_FACTOR_SLOPE * ((avgUv - UV_REFERENCE) / UV_REFERENCE), ...UV_FACTOR_CLAMP)
+  const weatherLightFactor =
+    explicitWeatherLightFactor !== undefined && Number.isFinite(explicitWeatherLightFactor)
+      ? Number(explicitWeatherLightFactor)
+      : 1.0
 
+  const outdoorEqHours = baseOutdoorHours.value * uvFactor * weatherLightFactor
   const facingFactor = FACTORS.facing[env.facing].factor
   const windowFactor = FACTORS.windowType[env.windowType].factor
   const positionFactor = FACTORS.position[env.position].factor
@@ -375,9 +221,15 @@ function computeLightExposure(userLightContext = {}, options = {}) {
     distanceFactor,
     uvFactor
   })
+  const indoorEqHours = outdoorEqHours * indoorFactor + directSunExposureHours
 
   return {
     env,
+    profile: null,
+    baseOutdoorHours: { value: round(baseOutdoorHours.value, 2), source: baseOutdoorHours.source },
+    uvFactor: round(uvFactor, 3),
+    weatherLightFactor: round(weatherLightFactor, 3),
+    outdoorEqHours: round(outdoorEqHours, 2),
     factors: {
       facingFactor,
       windowFactor,
@@ -385,18 +237,19 @@ function computeLightExposure(userLightContext = {}, options = {}) {
       directSunFactor,
       distanceFactor: round(distanceFactor, 3),
       indoorFactor: round(indoorFactor, 3),
-      directSunExposureHours,
-      weatherLightFactor: round(weatherLightFactor, 3),
-      uvFactor: round(uvFactor, 3)
-    }
+      directSunExposureHours
+    },
+    indoorEqHours: round(indoorEqHours, 2)
   }
 }
 
 module.exports = {
-  // 因子表与常量
+  // 因子表与常量（re-export）
   DEFAULT_PROFILE,
   WEATHER_SUN_FACTOR,
   FACTORS,
+  OVER_PENALTY,
+  OVER_PENALTY_FALLBACK,
   DIRECT_SUN_EXPOSURE_BASE_HOURS,
   DIRECT_SUN_POSITION_EXPOSURE,
   DIRECT_SUN_BLOCKED_WINDOWS,
@@ -410,22 +263,31 @@ module.exports = {
   DISTANCE_FACTOR_DEEP_MIN,
   DIRECT_SUN_FACING_CLAMP,
   DIRECT_SUN_WINDOW_CLAMP,
+  SCORE_CLAMP_RANGE,
+  SCORE_FULL,
+  SCORE_MODERATE_THRESHOLD,
+  SCORE_SEVERE_THRESHOLD,
+  UNDERLIGHT_PENALTY_WEIGHT,
+  WEATHER_FACTOR_UNKNOWN,
+  DAYLIGHT_FALLBACK_HOURS,
+  UV_REFERENCE,
+  UV_FACTOR_SLOPE,
+  UV_FACTOR_CLAMP,
+  SUNSHINE_COVERAGE_RATIO,
   // 工具函数
   clamp,
   toNumber,
   normalizeText,
-  normalizeEnum,
-  normalizeFacing,
-  normalizeWindowType,
-  normalizePosition,
-  normalizeDirectSun,
-  normalizeDistance,
-  derivePositionFromDistance,
   normalizeUserLightContext,
+  normalizeWeatherDay,
+  normalizeLightProfile,
+  resolveWeatherFactor,
+  estimateBaseOutdoorHours,
   getDirectSunFactor,
   getDistanceFactor,
   getDirectSunExposureHours,
   round,
+  mean,
   // 主入口
   computeLightExposure
 }

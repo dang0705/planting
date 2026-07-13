@@ -156,8 +156,5 @@ async function computeAdhocPlanner({
 
 module.exports = {
   buildWeatherSummary,
-  computeAdhocPlanner,
-  normalizeDailyWeatherRecord,
-  resolveEnvironmentBounds,
-  DEFAULT_ENV_THRESHOLDS
+  computeAdhocPlanner
 }

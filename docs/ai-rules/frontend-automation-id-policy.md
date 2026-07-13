@@ -152,14 +152,19 @@
 
 ### 3.10 独立浇水建议页
 
-| 功能模块         | 文件                                        | 稳定 id                           | 操作 / 断言                                      |
-| ---------------- | ------------------------------------------- | --------------------------------- | ------------------------------------------------ |
-| 步骤容器         | `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-swiper`         | 断言三步流程 swiper 加载                         |
-| 搜索输入框       | `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-search-input`   | 输入植物名称搜索                                 |
-| 下一步按钮       | `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-next-button`    | 点击进入盆型输入步骤                             |
-| 编辑盆型按钮     | `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-edit-pot-profile` | 点击打开盆型编辑器                             |
-| 上一步按钮（盆型） | `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-back-1`        | 点击返回选植物步骤                               |
-| 获取建议按钮     | `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-compute-button` | 点击计算独立浇水建议                             |
-| 建议毫升数结果   | `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-result-amount`  | 断言仅显示建议浇水毫升数，不显示日期/间隔/盆土判断 |
-| 重新输入按钮     | `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-back-2`         | 点击返回盆型输入步骤                             |
-| 完成按钮         | `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-done`           | 点击完成独立浇水建议流程                         |
+| 功能模块           | 文件                                                   | 稳定 id                                          | 操作 / 断言                                      |
+| ------------------ | ------------------------------------------------------ | ------------------------------------------------ | ------------------------------------------------ |
+| 步骤容器           | `src/pages/watering-advisor/watering-advisor.vue`      | `watering-advisor-swiper`                        | 断言三步流程 swiper 加载                         |
+| 从我的植物入口     | `src/pages/watering-advisor/components/CatalogPlantSearch.vue` | `watering-advisor-go-my-plants`            | 点击返回我的植物列表                             |
+| 搜索输入框         | `src/pages/watering-advisor/components/CatalogPlantSearch.vue` | `watering-advisor-search-input`           | 输入植物名称搜索                                 |
+| 清空搜索           | `src/pages/watering-advisor/components/CatalogPlantSearch.vue` | `watering-advisor-search-clear`           | 点击清空搜索关键词                               |
+| 植物结果行         | `src/pages/watering-advisor/components/CatalogPlantSearch.vue` | `watering-advisor-plant-item-{id}`       | 点击选择植物种类                                 |
+| 加载更多           | `src/pages/watering-advisor/components/CatalogPlantSearch.vue` | `watering-advisor-load-more`             | 点击加载更多搜索结果                             |
+| 下一步按钮         | `src/pages/watering-advisor/components/CatalogPlantSearch.vue` | `watering-advisor-next-button`           | 点击进入盆型输入步骤                             |
+| 编辑盆型按钮       | `src/pages/watering-advisor/watering-advisor.vue`      | `watering-advisor-edit-pot-profile`              | 点击打开盆型编辑器                               |
+| 上一步按钮（盆型） | `src/pages/watering-advisor/watering-advisor.vue`      | `watering-advisor-back-1`                        | 点击返回选植物步骤                               |
+| 获取建议按钮       | `src/pages/watering-advisor/watering-advisor.vue`      | `watering-advisor-compute-button`                | 点击计算独立浇水建议                             |
+| 建议毫升数结果     | `src/pages/watering-advisor/watering-advisor.vue`      | `watering-advisor-result-amount`                 | 断言仅显示建议浇水毫升数，不显示日期/间隔/盆土判断 |
+| 重新输入按钮       | `src/pages/watering-advisor/watering-advisor.vue`      | `watering-advisor-back-2`                        | 点击返回盆型输入步骤                             |
+| 完成按钮           | `src/pages/watering-advisor/watering-advisor.vue`      | `watering-advisor-done`                          | 点击完成独立浇水建议流程                         |
+| 空态重试按钮       | `src/pages/watering-advisor/watering-advisor.vue`      | `watering-advisor-empty-retry`                   | 点击返回重新输入                                 |
