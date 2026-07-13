@@ -5,9 +5,14 @@
  *
  * 职责：
  *   - 优先按稳定 automation ID 定位元素（不以中文文案、坐标、脆弱层级为主）
- *   - 提供 findViewById / findButtonById / waitForElement
+ *   - 提供 findViewById / findByIdPrefix / waitForElement
  *   - 提供 tap / input / readText 辅助
  *   - 提供 page data / store 摘要读取
+ *
+ * 关键修复：
+ *   - safeQueryAll 直接使用正确标签 selector（view/button/input），
+ *     不先查 #view/#button（那样永远返回空数组并短路）。
+ *   - 空数组继续合法 fallback。
  *
  * 不承载业务逻辑。
  */
@@ -20,16 +25,30 @@ function sleep(ms) {
 }
 
 /**
- * 按稳定 ID 定位元素。优先 page.$('#id')，回退遍历 view/button。
+ * 按标签 selector 查询所有匹配元素。
+ * 直接使用标签名（view/button/input），不查 #view/#button。
+ */
+async function safeQueryAll(page, selector) {
+  try {
+    const list = await page.$$(selector)
+    if (Array.isArray(list) && list.length > 0) return list
+  } catch (e) {}
+  return []
+}
+
+/**
+ * 按稳定 ID 定位元素。优先 page.$('#id')，回退遍历 view/button/input。
  *
  * uni-app 自定义组件 scope 内 page.$('#id') 可能失效，
- * 回退用 page.$$('view') / page.$$('button') 遍历匹配 id 属性。
+ * 回退用 page.$$('view') / page.$$('button') / page.$$('input') 遍历匹配 id 属性。
  */
 export async function findViewById(page, id) {
+  // 优先 page.$('#id')
   try {
     const el = await page.$(`#${id}`)
     if (el) return el
   } catch (e) {}
+
   // 回退：遍历 view
   const views = await safeQueryAll(page, 'view')
   for (const v of views) {
@@ -46,11 +65,20 @@ export async function findViewById(page, id) {
       if (attr === id) return b
     } catch (e) {}
   }
+  // 回退：遍历 input
+  const inputs = await safeQueryAll(page, 'input')
+  for (const inp of inputs) {
+    try {
+      const attr = await inp.attribute('id')
+      if (attr === id) return inp
+    } catch (e) {}
+  }
   return null
 }
 
 /**
- * 按 ID 前缀定位元素（如 watering-advisor-plant-item-{id}）。
+ * 按 ID 前缀定位元素（如 plant-card-reminder-{id}-water）。
+ * 返回 { element, id } 或 null。
  */
 export async function findByIdPrefix(page, prefix) {
   const views = await safeQueryAll(page, 'view')
@@ -67,19 +95,56 @@ export async function findByIdPrefix(page, prefix) {
       if (attr && attr.startsWith(prefix)) return { element: b, id: attr }
     } catch (e) {}
   }
+  const inputs = await safeQueryAll(page, 'input')
+  for (const inp of inputs) {
+    try {
+      const attr = await inp.attribute('id')
+      if (attr && attr.startsWith(prefix)) return { element: inp, id: attr }
+    } catch (e) {}
+  }
   return null
 }
 
-async function safeQueryAll(page, selector) {
-  try {
-    return (await page.$$(`#${selector}`)) || []
-  } catch (e) {
+/**
+ * 按 ID 前缀和后缀定位元素（如 plant-card-reminder-{id}-water）。
+ * 返回 { element, id, plantId } 或 null。
+ */
+export async function findByIdPrefixAndSuffix(page, prefix, suffix) {
+  const all = [
+    ...(await safeQueryAll(page, 'view')),
+    ...(await safeQueryAll(page, 'button')),
+    ...(await safeQueryAll(page, 'input'))
+  ]
+  for (const el of all) {
     try {
-      return (await page.$$(selector)) || []
-    } catch (e2) {
-      return []
-    }
+      const attr = await el.attribute('id')
+      if (!attr || !attr.startsWith(prefix) || !attr.endsWith(suffix)) continue
+      const middle = attr.slice(prefix.length, attr.length - suffix.length)
+      return { element: el, id: attr, extractedId: middle }
+    } catch (e) {}
   }
+  return null
+}
+
+/**
+ * 收集所有匹配 ID 前缀的元素。
+ */
+export async function collectByIdPrefix(page, prefix) {
+  const results = []
+  const all = [
+    ...(await safeQueryAll(page, 'view')),
+    ...(await safeQueryAll(page, 'button')),
+    ...(await safeQueryAll(page, 'input'))
+  ]
+  for (const el of all) {
+    try {
+      const attr = await el.attribute('id')
+      if (attr && attr.startsWith(prefix)) {
+        results.push({ element: el, id: attr })
+      }
+    } catch (e) {}
+  }
+  return results
 }
 
 /**
@@ -134,24 +199,6 @@ export async function readTextById(page, id) {
 }
 
 /**
- * 收集页面上所有匹配 ID 前缀的元素文本。
- */
-export async function collectTextsByIdPrefix(page, prefix) {
-  const results = []
-  const views = await safeQueryAll(page, 'view')
-  for (const v of views) {
-    try {
-      const attr = await v.attribute('id')
-      if (attr && attr.startsWith(prefix)) {
-        const text = await v.text()
-        results.push({ id: attr, text })
-      }
-    } catch (e) {}
-  }
-  return results
-}
-
-/**
  * 读取当前页面 data 摘要（通过 evaluate）。
  */
 export async function readPageDataSummary(mp) {
@@ -165,7 +212,6 @@ export async function readPageDataSummary(mp) {
       route: cp.route || cp.__route__ || null,
       dataKeys: Object.keys(cp.data || {})
     }
-    // 收集可能的 store 状态（不深拷贝大对象）
     try {
       const store = vm.plantStore || vm.pinia?.state?.value?.plant
       if (store) {

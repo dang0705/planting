@@ -33,6 +33,7 @@ import {
   recordAssertion,
   hasFailedAssertions
 } from './lib/reporter.mjs'
+import { preflightProject } from './lib/project-check.mjs'
 import { runIndependentWateringScenario } from './scenario-independent-watering.mjs'
 import { runMyPlantPlannerScenario } from './scenario-my-plant-planner.mjs'
 
@@ -68,6 +69,28 @@ async function main() {
     branch,
     baseHead
   })
+
+  // P1-2: 连接 9420 前预检 project.config.json
+  const projectCheck = preflightProject(env.projectPath)
+  if (!projectCheck.ok) {
+    const report = createReport({
+      gitHead,
+      branch,
+      baseHead,
+      projectPath: env.projectPath,
+      mode: env.mode,
+      wsEndpoint: env.wsEndpoint
+    })
+    setClassification(report, 'BLOCKED_ENV', projectCheck.reason)
+    const reportPath = saveReport(
+      report,
+      env.artifactDir,
+      `e2e-${env.mode}-blocked-${timestampForFilename()}`
+    )
+    console.error(`[e2e] BLOCKED_ENV: ${projectCheck.reason}`)
+    console.error(`[e2e] report: ${reportPath}`)
+    process.exit(2)
+  }
 
   // 连接 9420（不自动启动 DevTools）
   let mp
