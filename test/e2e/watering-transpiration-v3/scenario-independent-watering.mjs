@@ -112,7 +112,7 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
     // P0-1: 尝试 PotCanvas 真实 touch/drag 输入盆型尺寸
     // PotCanvas 把手使用 @touchstart/@touchmove/@touchend on <view>
     // miniprogram-automator 0.12.1 仅支持 tap/input/text/attribute/evaluate/page.data/page.callMethod
-    const touchCap = assessTouchCapability(mp, page)
+    const touchCap = await assessTouchCapability(mp, page)
     recordAssertion(
       report,
       'automator 支持真实 touch/drag 事件以驱动 PotCanvas 把手',
@@ -126,6 +126,7 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
         'miniprogram-automator 不支持 touchstart/touchmove/touchend，' +
           '无法通过真实 UI 操作驱动 PotCanvas 把手输入盆型尺寸（potTopDiameterCm/potHeightCm）。' +
           'goToResult() 要求尺寸非空，但唯一输入途径是 PotCanvas touch 把手。' +
+          `实际检测结果: ${touchCap.detail}。` +
           '所需自动化表面：element.touch(start/move/end) 或 mp.swipe/drag API。' +
           '不得 page.callMethod、不得直接改 Vue/page data、不得造后端 payload、不得擅自修改 src/**。'
       )
@@ -313,19 +314,52 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
  * 评估 automator 是否支持真实 touch/drag 事件以驱动 PotCanvas 把手。
  * PotCanvas 把手使用 @touchstart/@touchmove/@touchend on <view>。
  * miniprogram-automator 0.12.1 仅支持 tap/input/text/attribute/evaluate/page.data/page.callMethod。
+ *
+ * 真实异步检查 #potCanvas 元素及可用的 element 级方法，不硬编码 false。
  */
-function assessTouchCapability(mp, page) {
+async function assessTouchCapability(mp, page) {
   const checks = [
     { name: 'mp.touch', exists: typeof mp.touch === 'function' },
     { name: 'mp.swipe', exists: typeof mp.swipe === 'function' },
     { name: 'mp.drag', exists: typeof mp.drag === 'function' }
   ]
-  // element 级 touch 检查需要 async（page.$ 返回 Promise）
-  // 在 fillPotProfileViaTouch 中实际尝试，这里只检查 mp 级
-  checks.push({ name: 'element.touch/swipe/drag', exists: false })
+
+  // 真实异步检查 #potCanvas 元素及可用方法
+  let canvasFound = false
+  const canvasMethodDetails = []
+  try {
+    const canvas = await page.$('#potCanvas')
+    if (canvas) {
+      canvasFound = true
+      const methodNames = ['touch', 'swipe', 'drag', 'tap', 'trigger', 'callMethod']
+      for (const m of methodNames) {
+        const hasMethod = typeof canvas[m] === 'function'
+        canvasMethodDetails.push(`${m}=${hasMethod}`)
+        if (hasMethod && (m === 'touch' || m === 'swipe' || m === 'drag')) {
+          checks.push({ name: `element.${m}`, exists: true })
+        }
+      }
+    } else {
+      canvasMethodDetails.push('potCanvas element not found')
+    }
+  } catch (e) {
+    canvasMethodDetails.push(`error=${e?.message || e}`)
+  }
+
+  // 如果 element 级没有 touch/swipe/drag，记录实际检测结果
+  const hasElementTouch = checks.some(c => c.name.startsWith('element.') && c.exists)
+  if (!hasElementTouch) {
+    checks.push({ name: 'element.touch/swipe/drag', exists: false })
+  }
+
   const anyAvailable = checks.some(c => c.exists)
-  const detail = checks.map(c => `${c.name}=${c.exists}`).join(', ')
-  return { available: anyAvailable, detail, checks }
+  const detail = [
+    ...checks.map(c => `${c.name}=${c.exists}`),
+    `potCanvasFound=${canvasFound}`,
+    `canvasMethods=[${canvasMethodDetails.join(', ')}]`
+  ].join(', ')
+
+  return { available: anyAvailable, detail, checks, canvasFound, canvasMethodDetails }
 }
 
 /**

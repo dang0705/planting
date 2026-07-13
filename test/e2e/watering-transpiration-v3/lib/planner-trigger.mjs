@@ -60,51 +60,46 @@ export async function closeWateringSheet(page) {
  * 该按钮无独立 ID（通过 <template #confirm> 插槽覆写），
  * 使用稳定容器 ID + 容器内 button 结构定位（不用中文文案或坐标）。
  *
- * 策略：在 watering-date-picker-content 内查找 button，确认按钮是第二个
- * （第一个是"取消"）。如果无法确定顺序，查找含 confirm 相关 class 的 button。
+ * 严格规则：只在 #watering-date-picker-content 内找到恰好 2 个 button 时
+ * 选第二个（第一个是"取消"，第二个是"确认"）。button 数量不是 2 时返回
+ * { button: null, ambiguous: true }，由调用方判定 BLOCKED_ENV。
+ * 绝不扫描全页面按中文文案点"确认"，避免误触。
  *
  * @param {object} page
- * @returns {Promise<object|null>} 按钮元素或 null
+ * @returns {Promise<{button: object|null, ambiguous: boolean, detail: string}>}
  */
 export async function findDatePickerConfirmButton(page) {
-  // 尝试 1：在 date-picker-content 容器内查找 button
   const contentEl = await findViewById(page, DATE_PICKER_CONTENT_ID)
-  if (contentEl) {
-    try {
-      const buttons = await contentEl.$$('button')
-      if (buttons && buttons.length >= 2) {
-        // 确认按钮是第二个（取消在前）
-        return buttons[1]
-      }
-      if (buttons && buttons.length === 1) {
-        return buttons[0]
-      }
-    } catch (e) {}
+  if (!contentEl) {
+    return {
+      button: null,
+      ambiguous: false,
+      detail: `${DATE_PICKER_CONTENT_ID} 容器未找到`
+    }
   }
-
-  // 尝试 2：遍历全页面 button，查找在 date-picker-sheet 内的
+  let buttonCount = 0
   try {
-    const allButtons = await page.$$('button')
-    if (Array.isArray(allButtons)) {
-      const inDatePicker = []
-      for (const btn of allButtons) {
-        try {
-          // 检查按钮是否在 date-picker-sheet 内（通过 class 或位置无法确定，
-          // 改为收集所有 button 文本，寻找"确认"——但审查要求不用中文文案作为主定位器）
-          // 这里使用结构：date-picker 的确认按钮通常有绿色背景 class
-          const text = await btn.text()
-          if (text && text.trim() === '确认') {
-            inDatePicker.push(btn)
-          }
-        } catch (e) {}
-      }
-      if (inDatePicker.length > 0) {
-        return inDatePicker[inDatePicker.length - 1]
+    const buttons = await contentEl.$$('button')
+    buttonCount = Array.isArray(buttons) ? buttons.length : 0
+    if (buttonCount === 2) {
+      return {
+        button: buttons[1],
+        ambiguous: false,
+        detail: '容器内恰好 2 个 button，选第二个（确认）'
       }
     }
-  } catch (e) {}
-
-  return null
+  } catch (e) {
+    return {
+      button: null,
+      ambiguous: true,
+      detail: `容器内 button 查询异常: ${e?.message || e}`
+    }
+  }
+  return {
+    button: null,
+    ambiguous: true,
+    detail: `容器内 button 数量=${buttonCount}，需恰好 2 个（取消+确认）才能稳定定位；不点页面任意"确认"`
+  }
 }
 
 /**
@@ -114,18 +109,19 @@ export async function findDatePickerConfirmButton(page) {
  * @param {object} page - 当前页面
  * @param {string|number} plantId - 目标植物 ID（用于定位 plant-card-reminder-{id}-water）
  * @param {object} options - { captureClear: Function, readRequests: Function, waitForRequest: Function }
- * @returns {Promise<{plannerRequest: object|null, triggerChain: Array, sideEffectDetected: boolean}>}
+ * @returns {Promise<{plannerRequest: object|null, triggerChain: Array, sideEffectDetected: boolean, confirmButtonAmbiguous: boolean}>}
  */
 export async function triggerPlannerNoSideEffect(mp, page, plantId, options) {
   const triggerChain = []
   let sideEffectDetected = false
+  let confirmButtonAmbiguous = false
 
   // 步骤 1：定位并点击 plant-card-reminder-{plantId}-water
   const entryId = `${WATERING_ENTRY_PREFIX}${plantId}${WATERING_ENTRY_SUFFIX}`
   const entryEl = await findViewById(page, entryId)
   if (!entryEl) {
     triggerChain.push({ step: 'click-entry', success: false, reason: `${entryId} not found` })
-    return { plannerRequest: null, triggerChain, sideEffectDetected }
+    return { plannerRequest: null, triggerChain, sideEffectDetected, confirmButtonAmbiguous: false }
   }
   await entryEl.tap()
   triggerChain.push({ step: 'click-entry', success: true, id: entryId })
@@ -139,7 +135,7 @@ export async function triggerPlannerNoSideEffect(mp, page, plantId, options) {
       success: false,
       reason: `${WATERING_SHEET_ID} not found`
     })
-    return { plannerRequest: null, triggerChain, sideEffectDetected }
+    return { plannerRequest: null, triggerChain, sideEffectDetected, confirmButtonAmbiguous: false }
   }
   triggerChain.push({ step: 'wait-sheet', success: true, id: WATERING_SHEET_ID })
 
@@ -152,7 +148,7 @@ export async function triggerPlannerNoSideEffect(mp, page, plantId, options) {
       reason: `${LAST_WATERING_ROW_ID} not found`
     })
     await closeWateringSheet(page)
-    return { plannerRequest: null, triggerChain, sideEffectDetected }
+    return { plannerRequest: null, triggerChain, sideEffectDetected, confirmButtonAmbiguous: false }
   }
   await lastWateringRow.tap()
   triggerChain.push({ step: 'click-last-watering-row', success: true, id: LAST_WATERING_ROW_ID })
@@ -167,20 +163,23 @@ export async function triggerPlannerNoSideEffect(mp, page, plantId, options) {
       reason: `${DATE_PICKER_SHEET_ID} not found`
     })
     await closeWateringSheet(page)
-    return { plannerRequest: null, triggerChain, sideEffectDetected }
+    return { plannerRequest: null, triggerChain, sideEffectDetected, confirmButtonAmbiguous: false }
   }
   triggerChain.push({ step: 'wait-date-picker', success: true, id: DATE_PICKER_SHEET_ID })
 
   // 步骤 5：在 watering-date-picker-content 内定位"确认"按钮并点击
-  const confirmBtn = await findDatePickerConfirmButton(page)
+  const confirmResult = await findDatePickerConfirmButton(page)
+  const confirmBtn = confirmResult.button
   if (!confirmBtn) {
+    confirmButtonAmbiguous = confirmResult.ambiguous
     triggerChain.push({
       step: 'find-confirm-button',
       success: false,
-      reason: 'confirm button not found in watering-date-picker-content'
+      reason: confirmResult.detail,
+      ambiguous: confirmResult.ambiguous
     })
     await closeWateringSheet(page)
-    return { plannerRequest: null, triggerChain, sideEffectDetected }
+    return { plannerRequest: null, triggerChain, sideEffectDetected, confirmButtonAmbiguous }
   }
   await confirmBtn.tap()
   triggerChain.push({ step: 'click-confirm-button', success: true })
@@ -220,7 +219,7 @@ export async function triggerPlannerNoSideEffect(mp, page, plantId, options) {
   // 关闭 sheet（清理状态）
   await closeWateringSheet(page)
 
-  return { plannerRequest, triggerChain, sideEffectDetected }
+  return { plannerRequest, triggerChain, sideEffectDetected, confirmButtonAmbiguous }
 }
 
 /**

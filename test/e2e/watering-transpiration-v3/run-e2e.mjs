@@ -10,8 +10,30 @@
  * 环境变量：
  *   MP_PROJECT_PATH              小程序构建目录（默认 dist/dev/mp-weixin）
  *   E2E_ARTIFACT_DIR             截图和报告目录
- *   WATERING_TRANSPIRATION_MODE  shadow | active
+ *   WATERING_TRANSPIRATION_MODE  shadow | active（期望的后端模式，实际模式以响应为准）
  *   MINIPROGRAM_AUTOMATOR_WS     ws://127.0.0.1:9420
+ *
+ * 模式语义（P0 修复）：
+ *   --watering-transpiration-mode 指定期望的后端运行模式，但脚本不自行启动/停止/重启 LAN worker。
+ *   实际模式由捕获到的真实 planner 响应中的 transpirationShadow/intervalFactor 字段推断：
+ *     - shadow: transpirationShadow===true 且 intervalFactor===1.0
+ *     - active: transpirationShadow===false 且 intervalFactor===computedFactor
+ *   若实际模式与期望模式不符，归类为 BLOCKED_ENV（非 FAIL_PRODUCT），说明本地 LAN worker
+ *   未按对应 WATERING_TRANSPIRATION_ENABLED 配置启动/重启。
+ *
+ *   两步验收流程（由 QA 在同一 worktree 手动执行，脚本不自动启动/停止服务）：
+ *     步骤 1 (shadow):
+ *       - 停止当前 LAN worker（如有）
+ *       - 以 WATERING_TRANSPIRATION_ENABLED=false（或不设置）启动:
+ *         npm run dev:mp-weixin:local-functions:lan
+ *       - 运行: npm run e2e:watering-transpiration-v3 -- --watering-transpiration-mode=shadow
+ *       - 确认报告中生成 shadow-snapshot.json
+ *     步骤 2 (active):
+ *       - 停止步骤 1 的 LAN worker
+ *       - 以 WATERING_TRANSPIRATION_ENABLED=true 启动同一 worktree 的完整 LAN flow:
+ *         WATERING_TRANSPIRATION_ENABLED=true npm run dev:mp-weixin:local-functions:lan
+ *       - 运行: npm run e2e:watering-transpiration-v3 -- --watering-transpiration-mode=active
+ *       - 确认 active 与 shadow snapshot 完整输入签名 hash 相同
  *
  * 失败语义：任何必需断言失败，进程非零退出。
  * 连接 9420 失败 → BLOCKED_ENV，非零退出。
@@ -188,6 +210,35 @@ async function main() {
     if (r.classification === 'BLOCKED_ENV' || r.classification === 'BLOCKED_FIXTURE') {
       hasBlocked = true
     }
+  }
+
+  // P0: 若有 BLOCKED_ENV 且涉及模式不符，打印两步验收指引
+  if (hasBlocked && env.mode) {
+    console.log('\n[e2e] === next_step_for_local_worktree_qa ===')
+    console.log(
+      `[e2e] 期望模式=${env.mode}。若 BLOCKED_ENV 原因是模式不符（actualMode != expectedMode），`
+    )
+    console.log('[e2e] 请按以下两步在同一 worktree 手动执行（脚本不自动启动/停止服务）：')
+    console.log('[e2e]')
+    console.log('[e2e] 步骤 1 (shadow):')
+    console.log('[e2e]   1. 停止当前 LAN worker')
+    console.log('[e2e]   2. 以 WATERING_TRANSPIRATION_ENABLED=false（或不设置）启动:')
+    console.log('[e2e]      npm run dev:mp-weixin:local-functions:lan')
+    console.log(
+      '[e2e]   3. 运行: npm run e2e:watering-transpiration-v3 -- --watering-transpiration-mode=shadow'
+    )
+    console.log('[e2e]   4. 确认报告中生成 shadow-snapshot.json')
+    console.log('[e2e]')
+    console.log('[e2e] 步骤 2 (active):')
+    console.log('[e2e]   1. 停止步骤 1 的 LAN worker')
+    console.log(
+      '[e2e]   2. 以 WATERING_TRANSPIRATION_ENABLED=true 启动同一 worktree 的完整 LAN flow:'
+    )
+    console.log('[e2e]      WATERING_TRANSPIRATION_ENABLED=true npm run dev:mp-weixin:local-functions:lan')
+    console.log(
+      '[e2e]   3. 运行: npm run e2e:watering-transpiration-v3 -- --watering-transpiration-mode=active'
+    )
+    console.log('[e2e]   4. 确认 active 与 shadow snapshot 完整输入签名 hash 相同')
   }
 
   // 退出码：PASS=0，FAIL_PRODUCT=1，BLOCKED_*=2

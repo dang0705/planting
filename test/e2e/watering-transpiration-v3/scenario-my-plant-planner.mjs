@@ -12,6 +12,8 @@
  *   - active 先加载 shadow snapshot，按 snapshot.plantId 精确选择植物
  *   - 完整请求 canonical SHA-256 签名比较（不只 plantId/date/url）
  *   - 断言没有 /watering-reminders 保存接口请求
+ *   - P0: 从真实响应推断后端实际模式，与期望模式不符时归 BLOCKED_ENV（LAN worker 未按 WATERING_TRANSPIRATION_ENABLED 启动）
+ *   - P1: confirmButtonAmbiguous 时归 BLOCKED_ENV（日期选择器容器内 button 结构无法稳定定位）
  */
 
 import { reLaunchTo } from './lib/automator-client.mjs'
@@ -198,8 +200,21 @@ export async function runMyPlantPlannerScenario(mp, report, artifactDir, mode) {
           plantId: candidatePlantId,
           triggerChain: result.triggerChain,
           sideEffectDetected: result.sideEffectDetected,
-          gotPlannerRequest: !!result.plannerRequest
+          gotPlannerRequest: !!result.plannerRequest,
+          confirmButtonAmbiguous: !!result.confirmButtonAmbiguous
         })
+
+        // P1: confirmButtonAmbiguous 是环境限制（日期选择器容器 button 结构无法稳定定位），不是 fixture 问题
+        if (result.confirmButtonAmbiguous) {
+          recordPageData(report, 'shadow-exploration-log', explorationLog)
+          setClassification(
+            report,
+            'BLOCKED_ENV',
+            `plant ${candidatePlantId} 触发链中日期选择器容器内 button 结构无法稳定定位（confirmButtonAmbiguous）。` +
+              '无法在不误触的前提下点击确认按钮。需检查 watering-date-picker-content 内 button 渲染结构。'
+          )
+          return 'BLOCKED_ENV'
+        }
 
         // 记录所有真实 wx.request
         const allRequests = await readCapturedRequests(mp)
@@ -258,6 +273,17 @@ export async function runMyPlantPlannerScenario(mp, report, artifactDir, mode) {
       triggerChainResult = result
       plannerRequest = result.plannerRequest
 
+      // P1: confirmButtonAmbiguous 是环境限制
+      if (result.confirmButtonAmbiguous) {
+        setClassification(
+          report,
+          'BLOCKED_ENV',
+          `active 触发链中日期选择器容器内 button 结构无法稳定定位（confirmButtonAmbiguous）。` +
+            '无法在不误触的前提下点击确认按钮。需检查 watering-date-picker-content 内 button 渲染结构。'
+        )
+        return 'BLOCKED_ENV'
+      }
+
       const allRequests = await readCapturedRequests(mp)
       recordRequests(report, allRequests)
 
@@ -283,8 +309,23 @@ export async function runMyPlantPlannerScenario(mp, report, artifactDir, mode) {
       }
     }
 
-    // 断言 planner 响应字段
-    await assertPlannerResponse(report, plannerRequest, mode)
+    // 断言 planner 响应字段（从真实响应推断实际模式）
+    const assertResult = await assertPlannerResponse(report, plannerRequest, mode)
+
+    // P0: 实际模式与期望模式不符 → BLOCKED_ENV（LAN worker 未按 WATERING_TRANSPIRATION_ENABLED 启动）
+    if (assertResult.modeMismatch) {
+      setClassification(
+        report,
+        'BLOCKED_ENV',
+        `期望后端模式=${mode}，但真实响应推断实际模式=${assertResult.actualMode}。` +
+          '本地 LAN worker 未按对应 WATERING_TRANSPIRATION_ENABLED 配置启动/重启。' +
+          'shadow 需 WATERING_TRANSPIRATION_ENABLED=false 或未设置；' +
+          'active 需 WATERING_TRANSPIRATION_ENABLED=true。' +
+          '请停止当前 LAN worker，以正确环境变量重启 npm run dev:mp-weixin:local-functions:lan 后重跑。' +
+          '这不是产品失败（FAIL_PRODUCT），而是端上验收环境未就绪（BLOCKED_ENV）。'
+      )
+      return 'BLOCKED_ENV'
+    }
 
     // snapshot 对比（active）
     const activeSnapshot = buildResponseSnapshot(plannerRequest)
