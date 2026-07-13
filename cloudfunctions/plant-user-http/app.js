@@ -194,7 +194,8 @@ async function main(event, context) {
         shadow: transpirationShadow
       })
 
-      // 业务始终采用 legacy（factor=1.0）结果；shadow 模式额外计算 candidate 供审计比较。
+      // shadow 模式：intervalFactor 恒为 1.0，业务采用 legacy 间隔；
+      // WATERING_TRANSPIRATION_ENABLED=true 时 intervalFactor 生效，影响 BASELINE 间隔。
       const plan = buildWateringPlanner({
         wateringStrategy: strategy.watering || {},
         historical,

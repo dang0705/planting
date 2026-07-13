@@ -8,33 +8,18 @@
 
 const { computePotGeometry } = require('./pot-geometry')
 const {
-  DOSE_CLASS,
   GATE_STATE,
   REASON_CODE,
-  resolveDoseClass,
   resolveDoseClassWithConflict,
   resolveLookbackWindowDays,
-  computeEffectiveHydrationLoad,
-  computeWetPressureLoad,
-  computeLastEffectiveRootWateredDaysAgo,
-  computeRootZoneMoistureIndex,
   evaluateDryWetGate,
   hasRecentThoroughWatering,
   computeAmountSuggestion,
   resolveUserDoseEcho
 } = require('./hydration-load')
 const {
-  MS_PER_DAY,
   WATERING_CONTEXTS,
-  normalizeRawText,
-  normalizeText,
   isPlainObject,
-  toNumber,
-  normalizeDate,
-  parseDate,
-  daysAgo,
-  latestDaysAgo,
-  formatDate,
   buildBehaviorSummary,
   normalizeCareBehaviorTimeline,
   resolveBaselineInterval,

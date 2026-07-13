@@ -227,6 +227,8 @@ function computeLightExposure({
     env,
     profile: null,
     baseOutdoorHours: { value: round(baseOutdoorHours.value, 2), source: baseOutdoorHours.source },
+    weatherDaysCount: normalizedWeatherDays.length,
+    avgUv: avgUv === undefined ? null : round(avgUv, 2),
     uvFactor: round(uvFactor, 3),
     weatherLightFactor: round(weatherLightFactor, 3),
     outdoorEqHours: round(outdoorEqHours, 2),
