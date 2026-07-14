@@ -153,14 +153,18 @@
 
 ### 3.10 独立浇水建议页
 
-| 功能模块         | 文件                                              | 稳定 id                             | 操作 / 断言                                  |
-| ---------------- | ------------------------------------------------- | ----------------------------------- | -------------------------------------------- |
-| 步骤切换 swiper  | `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-swiper`           | 断言当前步骤；滑动切换步骤                   |
-| 从我的植物选入口 | `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-my-plants-entry`  | 点击跳转到首页植物列表（`index-plant-list`） |
-| 搜索植物输入框   | `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-search-input`     | 输入 / 确认搜索植物种类                      |
-| 下一步：输入盆型 | `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-next-button`      | 点击进入盆型步骤                             |
-| 盆型编辑入口     | `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-edit-pot-profile` | 点击打开盆型编辑器                           |
-| 盆型步骤上一步   | `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-back-1`           | 点击返回选植物步骤                           |
-| 获取建议按钮     | `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-compute-button`   | 点击触发浇水建议计算                         |
-| 结果步骤重新输入 | `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-back-2`           | 点击返回盆型步骤                             |
-| 完成按钮         | `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-done`             | 点击结束浇水建议流程                         |
+| 功能模块             | 文件                                                          | 稳定 id                                        | 操作 / 断言                                            |
+| -------------------- | ------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------ |
+| 步骤切换 swiper      | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-swiper`                      | 断言当前步骤；滑动切换步骤                             |
+| 从我的植物选入口     | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-my-plants-entry`             | 点击在页内打开"我的植物"列表视图                       |
+| 我的植物列表返回按钮 | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-my-plants-back`              | 点击返回来源选择视图                                   |
+| 我的植物列表容器     | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-my-plants-list`              | 断言我的植物列表视图可见                               |
+| 我的植物卡片项       | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-my-plant-card-{plant.id}`    | 点击选中该植物；断言选中态显示                         |
+| 我的植物确认下一步   | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-my-plants-confirm-button`    | 点击确认选中植物并进入盆型步骤                         |
+| 搜索植物输入框       | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-search-input`                | 输入 / 确认搜索植物种类                                |
+| 下一步：输入盆型     | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-next-button`                 | 点击进入盆型步骤                                       |
+| 盆型编辑入口         | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-edit-pot-profile`            | 点击打开盆型编辑器                                     |
+| 盆型步骤上一步       | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-back-1`                      | 点击返回选植物步骤                                     |
+| 获取建议按钮         | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-compute-button`              | 点击触发浇水建议计算                                   |
+| 结果步骤重新输入     | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-back-2`                      | 点击返回盆型步骤                                       |
+| 完成按钮             | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-done`                        | 点击结束浇水建议流程                                   |

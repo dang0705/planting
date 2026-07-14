@@ -30,15 +30,62 @@
         <!-- 步骤1：选来源 -->
         <swiper-item>
           <scroll-view scroll-y class="h-screen px-4 pt-6">
-            <text class="mb-4 block text-[20px] font-bold leading-7 text-[#1f2937]">
-              选择浇水建议方式
-            </text>
+            <template v-if="showMyPlantsList">
+              <view class="mb-4 flex items-center gap-3">
+                <text
+                  id="watering-advisor-my-plants-back"
+                  class="text-[24px] text-[#2d7a4f]"
+                  @click="closeMyPlantsList"
+                >
+                  ‹
+                </text>
+                <text class="block text-[20px] font-bold leading-7 text-[#1f2937]">
+                  我的植物
+                </text>
+              </view>
+
+              <view v-if="loadingMyPlants" class="py-10 text-center">
+                <text class="text-[14px] text-[#9ca3af]">加载中...</text>
+              </view>
+              <view v-else-if="!plantStore.hasPlants" class="py-10 text-center">
+                <text class="text-[14px] text-[#9ca3af]">还没有添加植物</text>
+              </view>
+              <view
+                v-else
+                id="watering-advisor-my-plants-list"
+                class="flex flex-col gap-3"
+              >
+                <PlantSelectCard
+                  v-for="plant in plantStore.userPlants"
+                  :key="plant.id"
+                  :id="`watering-advisor-my-plant-card-${plant.id}`"
+                  :plant="plant"
+                  :selected="isUserPlantSelected(plant)"
+                  @select="selectUserPlant"
+                />
+              </view>
+
+              <view v-if="selectedUserPlantId" class="mt-4">
+                <button
+                  id="watering-advisor-my-plants-confirm-button"
+                  class="m-0 h-[52px] w-full rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
+                  @click="confirmUserPlantSelection"
+                >
+                  下一步：输入盆型
+                </button>
+              </view>
+            </template>
+
+            <template v-else>
+              <text class="mb-4 block text-[20px] font-bold leading-7 text-[#1f2937]">
+                选择浇水建议方式
+              </text>
 
             <!-- 已有植物入口 -->
             <view
               id="watering-advisor-my-plants-entry"
               class="mb-3 rounded-2xl border border-[#e1e9dd] bg-white p-4"
-              @click="goToMyPlants"
+              @click="openMyPlantsList"
             >
               <view class="flex items-center gap-3">
                 <view class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e8f3ea]">
@@ -157,6 +204,7 @@
                 下一步：输入盆型
               </button>
             </view>
+            </template>
           </scroll-view>
         </swiper-item>
 
@@ -350,7 +398,9 @@ import { computed, nextTick, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import Layout from '@/Layout.vue'
 import PotProfileEditor from '@/pages/index/components/PotProfileEditor.vue'
+import PlantSelectCard from './components/PlantSelectCard.vue'
 import { useUserStore } from '@/store/user.js'
+import { usePlantStore } from '@/store/plants.js'
 import { useDefaultPlants } from '@/composables/useDefaultPlants.js'
 import { getEnvironmentWeatherWindow } from '@/api/weather.js'
 import { formatMlRangeToBottleText } from '@/utils/water-volume-format.js'
@@ -365,6 +415,7 @@ import {
 } from '@/pages/index/components/watering-reminder-options.js'
 
 const userStore = useUserStore()
+const plantStore = usePlantStore()
 const {
   plants: defaultPlants,
   loading: plantsLoading,
@@ -390,6 +441,9 @@ const forecastDays = ref([])
 const savedToBackend = ref(false)
 const potProfileEditorRef = ref(null)
 const editorSummary = ref('')
+const showMyPlantsList = ref(false)
+const loadingMyPlants = ref(false)
+const selectedUserPlantId = ref(null)
 
 let searchTimer = null
 
@@ -456,6 +510,7 @@ function isCatalogPlantSelected(plant) {
 
 function selectCatalogPlant(plant) {
   selectedCatalogPlant.value = plant
+  selectedUserPlantId.value = null
 }
 
 function handleSearchInput() {
@@ -494,8 +549,45 @@ function handleSwiperChange(event) {
   activeStep.value = nextStep
 }
 
-function goToMyPlants() {
-  uni.switchTab({ url: '/pages/index/index' })
+async function openMyPlantsList() {
+  showMyPlantsList.value = true
+  if (await userStore.ensureLogin()) {
+    loadingMyPlants.value = true
+    try {
+      await plantStore.getUserPlants()
+    } finally {
+      loadingMyPlants.value = false
+    }
+  }
+}
+
+function closeMyPlantsList() {
+  showMyPlantsList.value = false
+}
+
+function isUserPlantSelected(plant) {
+  return selectedUserPlantId.value === plant.id
+}
+
+function selectUserPlant(plant) {
+  selectedUserPlantId.value = plant.id
+  selectedCatalogPlant.value = {
+    plantIdentityId: plant.plantIdentityId || '',
+    sessionPlantId: plant.sessionPlantId || '',
+    imageUrl: plant.image || '',
+    primaryDisplayName: plant.displayName || '未命名植物',
+    canonicalName: plant.canonicalName || '',
+    plantGenus: plant.genus || ''
+  }
+}
+
+function confirmUserPlantSelection() {
+  if (!selectedCatalogPlant.value) {
+    uni.showToast({ title: '请先选择植物', icon: 'none' })
+    return
+  }
+  showMyPlantsList.value = false
+  goToPotProfile()
 }
 
 function goToPotProfile() {
