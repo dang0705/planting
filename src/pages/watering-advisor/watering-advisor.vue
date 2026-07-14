@@ -36,6 +36,7 @@
 
             <!-- 已有植物入口 -->
             <view
+              id="watering-advisor-my-plants-entry"
               class="mb-3 rounded-2xl border border-[#e1e9dd] bg-white p-4"
               @click="goToMyPlants"
             >
@@ -494,7 +495,7 @@ function handleSwiperChange(event) {
 }
 
 function goToMyPlants() {
-  uni.navigateBack()
+  uni.switchTab({ url: '/pages/index/index' })
 }
 
 function goToPotProfile() {
