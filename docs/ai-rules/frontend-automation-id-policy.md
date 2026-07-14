@@ -30,6 +30,7 @@
   - 浇水提醒弹框：`src/pages/index/components/WateringReminderSheet.vue`
   - 天气头部组件：`src/components/HeaderWeatherInfo.vue`
   - 独立浇水建议页：`src/pages/watering-advisor/watering-advisor.vue`
+  - 盆型与基质共享内核（组件）：`src/components/pot-profile/PotProfileFormCore.vue`
 
 ### 3.1 首页（index）
 
@@ -166,10 +167,23 @@
 | 植物结果行           | `src/pages/watering-advisor/components/CatalogPlantSearch.vue` | `watering-advisor-plant-item-{id}`             | 点击选择植物种类                                       |
 | 加载更多             | `src/pages/watering-advisor/components/CatalogPlantSearch.vue` | `watering-advisor-load-more`                   | 点击加载更多搜索结果                                   |
 | 下一步：输入盆型     | `src/pages/watering-advisor/components/CatalogPlantSearch.vue` | `watering-advisor-next-button`                 | 点击进入盆型步骤                                       |
-| 盆型编辑入口         | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-edit-pot-profile`            | 点击打开盆型编辑器                                     |
 | 盆型步骤上一步       | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-back-1`                      | 点击返回选植物步骤                                     |
 | 获取建议按钮         | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-compute-button`              | 点击触发浇水建议计算                                   |
 | 结果步骤重新输入     | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-back-2`                      | 点击返回盆型步骤                                       |
-| 建议毫升数结果       | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-result-amount`               | 断言仅显示建议浇水毫升数，不显示日期/间隔/盆土判断     |
+| 建议水量结果         | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-result-amount`               | 断言显示建议水量（矿泉水瓶/5L油桶口径，与首页一致）    |
+| inline 盆土基质选项  | `src/components/pot-profile/PotProfileFormCore.vue`          | `watering-advisor-pot-profile-substrate-{value}` | 点击切换盆土基质选项（inline 盆型步骤）              |
+| inline 排水孔选项    | `src/components/pot-profile/PotProfileFormCore.vue`          | `watering-advisor-pot-profile-drainage-{value}` | 点击选择排水孔（inline 盆型步骤）                    |
 | 完成按钮             | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-done`                        | 点击完成独立浇水建议流程                               |
 | 空态重试按钮         | `src/pages/watering-advisor/watering-advisor.vue`             | `watering-advisor-empty-retry`                 | 点击返回重新输入                                       |
+
+### 3.11 盆型与基质共享内核（PotProfileFormCore）
+
+`PotProfileFormCore` 是盆型尺寸 / 盆土构成 / 排水孔的共享编辑内核，同时服务于首页 popup（`PotProfileEditor`）和独立浇水建议 inline 步骤。`idPrefix` prop 决定交互元素 id 前缀：
+
+- 首页 popup 外壳：`idPrefix = pot-profile-editor`
+- 独立浇水 inline 外壳：`idPrefix = watering-advisor-pot-profile`
+
+| 功能模块       | 文件                                               | 稳定 id                                   | 操作 / 断言                        |
+| -------------- | -------------------------------------------------- | ----------------------------------------- | ---------------------------------- |
+| popup 盆土基质选项 | `src/pages/index/components/PotProfileEditor.vue`  | `pot-profile-editor-substrate-{value}`    | 点击切换盆土基质选项（popup 内）   |
+| popup 排水孔选项   | `src/pages/index/components/PotProfileEditor.vue`  | `pot-profile-editor-drainage-{value}`     | 点击选择排水孔（popup 内）         |

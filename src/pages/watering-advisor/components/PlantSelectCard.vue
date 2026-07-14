@@ -19,8 +19,6 @@
         {{ plant.canonicalName || plant.genus }}
       </text>
     </view>
-
-    <text v-if="selected" class="text-[18px] text-[#2d7a4f]">✓</text>
   </view>
 </template>
 
