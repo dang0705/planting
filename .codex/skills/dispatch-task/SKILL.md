@@ -215,8 +215,10 @@ assets/templates/zcode-prompt-template.md           # ZCode 兼容 alias
 2. 统一 external prompt + send receipt +（本地 manual 或 Web PR/worktree recovery）；聊天“完成”不算完成。
 3. Codex Desktop 运行 Web/云端 provider 时，必须用 Codex 内置浏览器打开和发送 prompt；普通 Chrome、shell 或 ambient browser 状态不能替代受控发送证据。
 4. Web/云端 external implementer 即使远端自称 main/root，也必须按 implementer 身份执行：只改合同范围代码，完成后提供 unit tests 等实现者自检；有 `figma_link` 时直接用可用 Figma 插件 / MCP / 工具取设计证据。
-5. prompt 送达并开始运行后进入 Child Run Lock（见 §7）；adapter 细则与 DOM/Computer 步骤只在 references。
-6. 结果回收后走同一套 Gate C/D（`validate-result.mjs external` → postflight → completion）。
+5. Codex 内置浏览器发送成功后，必须显式保留 provider tab 为 `handoff`，send receipt 记录 `tab_retention`；不得依赖 Browser Use 默认生命周期保留外部会话。
+6. Web/云端 external implementer 的完成等待必须继承 Child Run Lock：首次正式状态检查不得早于 5 分钟，之后每 5 分钟低频检查。不得用 60 秒、90 秒等短等待作为“完成/失败/无产出”判断；短等待只允许用于一次性发送成功、页面已开始运行、身份探针这类非实现 completion 检查。
+7. prompt 送达并开始运行后进入 Child Run Lock（见 §7）；adapter 细则与 DOM/Computer 步骤只在 references。
+8. 结果回收后走同一套 Gate C/D（`validate-result.mjs external` → postflight → completion）。
 
 ## 9. Gate C — Implementation Review
 

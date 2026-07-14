@@ -17,6 +17,17 @@
     "prompt_integrity_verified": true,
     "codex_runtime_surface": "codex_desktop",
     "web_provider_open_surface": "builtin_in_app_browser",
+    "tab_retention": {
+      "status": "handoff",
+      "method": "browser.tabs.finalize.keep",
+      "session_url": "https://work.enterprise.trae.cn/session/example-web-runtime-001"
+    },
+    "external_wait_policy": {
+      "mode": "child_run_lock",
+      "initial_check_min_minutes": 5,
+      "poll_interval_min_minutes": 5,
+      "short_timeout_completion_forbidden": true
+    },
     "remote_sync": {
       "status": "pushed",
       "remote": "origin",

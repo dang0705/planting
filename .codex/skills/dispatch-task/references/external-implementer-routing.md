@@ -183,7 +183,10 @@ remote_sync           # Web/云端 provider 必填
 4. 如果 Code tab 未选中，adapter 必须点击该 `Code` button 并重新读取两个条件；仍不满足时返回 `blocked: trae_code_mode_unavailable`，不得继续发送实现 prompt。
 5. TRAE Web 的输入框通常是 Lexical/contenteditable。adapter 必须通过真实焦点与浏览器输入事件触发前端状态更新；发送前必须确认发送按钮存在且 `disabled=false`。仅设置 DOM 文本后点击禁用按钮不算 send receipt。
 6. send receipt 至少记录：目标 URL、受控 profile 或 remote-debug 端口、Code tab 的 `aria-selected` 和 `class`、输入框 selector、发送按钮 `disabled=false` 的证据、真实点击/发送动作，以及 prompt sentinel 或摘要。
-7. prompt 发送并确认 TRAE 已开始运行后，main 进入 Child Run Lock。TRAE 聊天输出不能替代 `handoff_manual.path`，只能作为排障或 recovery 辅助证据。
+7. Codex 内置浏览器发送成功后，adapter 必须显式保留 TRAE tab，避免 Browser Use 默认清理导致用户看不到会话。推荐在所有发送和状态确认动作完成后调用 `browser.tabs.finalize({ keep: [{ tab, status: "handoff" }] })`；send receipt 必须记录 `tab_retention.status="handoff"`、`tab_retention.method="browser.tabs.finalize.keep"`、`tab_retention.session_url`。如果 finalization API 不可用，必须记录 `tab_retention.status="blocked"` 与原因，不得声称内置浏览器会话已保留。
+8. prompt 发送并确认 TRAE 已开始运行后，main 进入 Child Run Lock。Web agent 正式实现任务的等待策略必须按 main 进程低频回收执行：首次正式状态检查不得早于 5 分钟，之后检查间隔不得短于 5 分钟；不得把 60 秒、90 秒等短等待作为完成、失败、无产出或需要人工接管的依据。短等待只允许用于发送动作本身的 UI 确认（例如按钮可用、session URL 出现、页面显示已开始运行）或一次性身份探针，不得流入 external implementer completion 判断。
+9. Web provider send receipt 必须记录 `external_wait_policy.mode="child_run_lock"`、`external_wait_policy.initial_check_min_minutes>=5`、`external_wait_policy.poll_interval_min_minutes>=5`、`external_wait_policy.short_timeout_completion_forbidden=true`。如果本轮只是身份探针或非代码任务，不走 external implementer completion validator，但不得把探针脚本的短等待写进正式实现规则。
+10. TRAE 聊天输出不能替代 `handoff_manual.path`，只能作为排障或 recovery 辅助证据。
 
 ## handoff_manual
 
