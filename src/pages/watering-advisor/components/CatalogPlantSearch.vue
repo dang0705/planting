@@ -6,7 +6,7 @@
 
     <!-- 已有植物入口 -->
     <view
-      id="watering-advisor-go-my-plants"
+      id="watering-advisor-my-plants-entry"
       class="mb-3 rounded-2xl border border-[#e1e9dd] bg-white p-4"
       @click="$emit('go-my-plants')"
     >

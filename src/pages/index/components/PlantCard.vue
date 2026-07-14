@@ -3,23 +3,11 @@
     class="h-[129px] w-full overflow-hidden rounded-[12px] border border-[rgba(45,122,79,0.15)] bg-white p-px shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]"
   >
     <view class="flex h-[127px] w-full overflow-hidden rounded-[11px]">
-      <view
-        class="h-[127px] w-[112px] flex-[0_0_112px] overflow-hidden bg-[#f1f8f4]"
+      <PlantDisplayBase
+        :plant="plant"
+        container-class="h-[127px] w-[112px] flex-[0_0_112px] rounded-none"
         @click.stop="$emit('detail', plant)"
-      >
-        <image v-if="plant.image" :src="plant.image" class="h-full w-full" mode="aspectFill" />
-        <view v-else class="relative h-full w-full bg-[#f1f8f4]">
-          <view
-            class="absolute left-[54px] top-[34px] h-[58px] w-[3px] rounded-full bg-[#2d7a4f]"
-          />
-          <view
-            class="absolute left-[29px] top-[38px] h-[18px] w-[28px] rotate-[-22deg] rounded-[999px_0_999px_0] bg-[#2d7a4f]"
-          />
-          <view
-            class="absolute left-[57px] top-[51px] h-[18px] w-[28px] rotate-[22deg] scale-x-[-1] rounded-[999px_0_999px_0] bg-[#2d7a4f]"
-          />
-        </view>
-      </view>
+      />
 
       <view class="flex h-[127px] min-w-0 flex-1 flex-col gap-2 p-3">
         <view class="flex h-[27px] items-center gap-1.5">
@@ -86,6 +74,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import PlantDisplayBase from '@/components/PlantDisplayBase.vue'
 import PlantProfileCompleteness from './PlantProfileCompleteness.vue'
 import diagnoseIcon from '@/assets/icons/home-card-diagnose.svg'
 import historyIcon from '@/assets/icons/home-card-history.svg'

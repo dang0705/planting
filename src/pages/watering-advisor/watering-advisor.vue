@@ -29,10 +29,52 @@
       >
         <!-- 步骤1：选来源 -->
         <swiper-item>
+          <template v-if="showMyPlantsList">
+            <scroll-view scroll-y class="h-screen px-4 pt-6">
+              <view class="mb-4 flex items-center gap-3">
+                <text
+                  id="watering-advisor-my-plants-back"
+                  class="text-[24px] text-[#2d7a4f]"
+                  @click="closeMyPlantsList"
+                >
+                  ‹
+                </text>
+                <text class="block text-[20px] font-bold leading-7 text-[#1f2937]">我的植物</text>
+              </view>
+
+              <view v-if="loadingMyPlants" class="py-10 text-center">
+                <text class="text-[14px] text-[#9ca3af]">加载中...</text>
+              </view>
+              <view v-else-if="!plantStore.hasPlants" class="py-10 text-center">
+                <text class="text-[14px] text-[#9ca3af]">还没有添加植物</text>
+              </view>
+              <view v-else id="watering-advisor-my-plants-list" class="flex flex-col gap-3">
+                <PlantSelectCard
+                  v-for="plant in plantStore.userPlants"
+                  :key="plant.id"
+                  :id="`watering-advisor-my-plant-card-${plant.id}`"
+                  :plant="plant"
+                  :selected="isUserPlantSelected(plant)"
+                  @select="selectUserPlant"
+                />
+              </view>
+
+              <view v-if="selectedUserPlantId" class="mt-4">
+                <button
+                  id="watering-advisor-my-plants-confirm-button"
+                  class="m-0 h-[52px] w-full rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
+                  @click="confirmUserPlantSelection"
+                >
+                  下一步：输入盆型
+                </button>
+              </view>
+            </scroll-view>
+          </template>
           <CatalogPlantSearch
+            v-else
             ref="searchRef"
             :selected-plant="selectedCatalogPlant"
-            @go-my-plants="goToMyPlants"
+            @go-my-plants="openMyPlantsList"
             @next="goToPotProfile"
             @load-more="handleScrollLower"
             @select="selectCatalogPlant"
@@ -172,12 +214,15 @@ import { computed, nextTick, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import Layout from '@/Layout.vue'
 import PotProfileEditor from '@/pages/index/components/PotProfileEditor.vue'
-import CatalogPlantSearch from './components/CatalogPlantSearch.vue'
+import PlantSelectCard from './components/PlantSelectCard.vue'
 import { useUserStore } from '@/store/user.js'
+import { usePlantStore } from '@/store/plants.js'
+import CatalogPlantSearch from './components/CatalogPlantSearch.vue'
 import { getEnvironmentWeatherWindow } from '@/api/weather.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
 import {
   fetchAdhocPlannerResult,
+  fetchWateringPlannerResult,
   saveAdvisorSession,
   todayStr,
   resolveWeatherLocation,
@@ -185,6 +230,7 @@ import {
 } from '@/pages/index/components/watering-reminder-options.js'
 
 const userStore = useUserStore()
+const plantStore = usePlantStore()
 
 const STEP_SOURCE = 0
 const STEP_POT_PROFILE = 1
@@ -200,6 +246,9 @@ const savedToBackend = ref(false)
 const searchRef = ref(null)
 const potProfileEditorRef = ref(null)
 const editorSummary = ref('')
+const showMyPlantsList = ref(false)
+const loadingMyPlants = ref(false)
+const selectedUserPlantId = ref(null)
 
 const potProfileForm = ref({
   potTopDiameterCm: '',
@@ -246,6 +295,7 @@ const potProfileSummary = computed(() => {
 
 function selectCatalogPlant(plant) {
   selectedCatalogPlant.value = plant
+  selectedUserPlantId.value = null
 }
 
 function handleScrollLower() {
@@ -266,8 +316,47 @@ function handleSwiperChange(event) {
   activeStep.value = nextStep
 }
 
-function goToMyPlants() {
-  uni.navigateBack()
+async function openMyPlantsList() {
+  showMyPlantsList.value = true
+  if (await userStore.ensureLogin()) {
+    loadingMyPlants.value = true
+    try {
+      await plantStore.getUserPlants()
+    } finally {
+      loadingMyPlants.value = false
+    }
+  }
+}
+
+function closeMyPlantsList() {
+  showMyPlantsList.value = false
+}
+
+function isUserPlantSelected(plant) {
+  return selectedUserPlantId.value === plant.id
+}
+
+function selectUserPlant(plant) {
+  selectedUserPlantId.value = plant.id
+  selectedCatalogPlant.value = {
+    plantIdentityId: plant.plantIdentityId || '',
+    sessionPlantId: plant.sessionPlantId || '',
+    imageUrl: plant.image || '',
+    primaryDisplayName: plant.displayName || '未命名植物',
+    canonicalName: plant.canonicalName || '',
+    plantGenus: plant.genus || '',
+    userPlantId: plant.id,
+    wateringEvents: plant.wateringEvents || null
+  }
+}
+
+function confirmUserPlantSelection() {
+  if (!selectedCatalogPlant.value) {
+    uni.showToast({ title: '请先选择植物', icon: 'none' })
+    return
+  }
+  showMyPlantsList.value = false
+  goToPotProfile()
 }
 
 function goToPotProfile() {
@@ -343,29 +432,46 @@ async function goToResult() {
   activeStep.value = STEP_RESULT
   try {
     await loadWeatherDays()
-    const catalogPlantId =
-      selectedCatalogPlant.value?.plantIdentityId ||
-      selectedCatalogPlant.value?.sessionPlantId ||
-      ''
-    const result = await fetchAdhocPlannerResult({
-      catalogPlantId,
-      potProfile: buildPotProfilePayload(),
-      weatherDays: weatherDays.value,
-      forecastDays: forecastDays.value
-    })
+    const isUserPlant = Boolean(selectedCatalogPlant.value?.userPlantId)
+    let result
+    if (isUserPlant) {
+      result = await fetchWateringPlannerResult({
+        plantId: selectedCatalogPlant.value.userPlantId,
+        wateringEvents: selectedCatalogPlant.value.wateringEvents,
+        weatherDays: weatherDays.value,
+        forecastDays: forecastDays.value
+      })
+    } else {
+      const catalogPlantId =
+        selectedCatalogPlant.value?.plantIdentityId ||
+        selectedCatalogPlant.value?.sessionPlantId ||
+        ''
+      result = await fetchAdhocPlannerResult({
+        catalogPlantId,
+        potProfile: buildPotProfilePayload(),
+        weatherDays: weatherDays.value,
+        forecastDays: forecastDays.value
+      })
+    }
     if (result) {
       plannerResult.value = result
-      try {
-        await saveAdvisorSession({
-          catalogPlantId,
-          catalogPlantName: selectedCatalogPlantName.value,
-          potProfile: buildPotProfilePayload(),
-          weatherSummary: {},
-          plannerResult: { amountRangeMl: result.amountRangeMl }
-        })
-        savedToBackend.value = true
-      } catch {
-        // 落库失败不影响展示
+      if (!isUserPlant) {
+        try {
+          const catalogPlantId =
+            selectedCatalogPlant.value?.plantIdentityId ||
+            selectedCatalogPlant.value?.sessionPlantId ||
+            ''
+          await saveAdvisorSession({
+            catalogPlantId,
+            catalogPlantName: selectedCatalogPlantName.value,
+            potProfile: buildPotProfilePayload(),
+            weatherSummary: result.weatherSummary || {},
+            plannerResult: result.plannerResult || result
+          })
+          savedToBackend.value = true
+        } catch {
+          // 落库失败不影响展示
+        }
       }
     } else {
       uni.showToast({ title: '计算失败，请重试', icon: 'none' })

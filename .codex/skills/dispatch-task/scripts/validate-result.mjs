@@ -313,6 +313,48 @@ if (role === 'external') {
             sendReceipt.web_provider_open_surface === 'builtin_in_app_browser',
             'Codex Desktop web external send receipt must record web_provider_open_surface=builtin_in_app_browser'
           )
+          const tabRetention = sendReceipt.tab_retention ?? {}
+          need(
+            isObject(tabRetention),
+            'Codex Desktop web external send receipt requires tab_retention'
+          )
+          if (isObject(tabRetention)) {
+            need(
+              tabRetention.status === 'handoff',
+              'Codex Desktop web external tab_retention.status must be handoff'
+            )
+            need(
+              tabRetention.method === 'browser.tabs.finalize.keep',
+              'Codex Desktop web external tab_retention.method must be browser.tabs.finalize.keep'
+            )
+            need(
+              nonEmptyString(tabRetention.session_url),
+              'Codex Desktop web external tab_retention.session_url is required'
+            )
+          }
+          const waitPolicy = sendReceipt.external_wait_policy ?? {}
+          need(
+            isObject(waitPolicy),
+            'Codex Desktop web external send receipt requires external_wait_policy'
+          )
+          if (isObject(waitPolicy)) {
+            need(
+              waitPolicy.mode === 'child_run_lock',
+              'Codex Desktop web external external_wait_policy.mode must be child_run_lock'
+            )
+            need(
+              Number(waitPolicy.initial_check_min_minutes) >= 5,
+              'Codex Desktop web external initial_check_min_minutes must be >= 5'
+            )
+            need(
+              Number(waitPolicy.poll_interval_min_minutes) >= 5,
+              'Codex Desktop web external poll_interval_min_minutes must be >= 5'
+            )
+            need(
+              waitPolicy.short_timeout_completion_forbidden === true,
+              'Codex Desktop web external short_timeout_completion_forbidden must be true'
+            )
+          }
         }
         const receiptRemoteSync = sendReceipt.remote_sync ?? {}
         need(isObject(receiptRemoteSync), 'web external send receipt requires remote_sync')
