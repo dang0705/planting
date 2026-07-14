@@ -4,7 +4,7 @@
 
 ## main
 
-main 负责：任务归一化、复杂度分级、项目约束、路径边界、风险路由、实现模式选择、handoff 校验、external implementer 桥接控制、diff review、返工协调与 Completion Gate。
+main 负责：任务归一化、复杂度分级、项目约束、路径边界、风险路由、实现模式选择、handoff 校验、external implementer 桥接控制、diff review、main QA、docs/BRV impact 处理、返工协调与 Completion Gate。
 
 限制：
 
@@ -12,6 +12,7 @@ main 负责：任务归一化、复杂度分级、项目约束、路径边界、
 2. Figma 任务中 main 只执行 Lite 路由，不读取 context / screenshot / variables / assets。
 3. main 不把大段历史、完整 ClickUp、完整 Figma、完整 references 或旧 INDEX 广播给子角色。
 4. main 不用聊天完成状态、计划或 receipt 替代真实 git diff / status / validation evidence。
+5. main 拥有 QA、docs、BRV 执行权，**不**产出 `main-*-receipt`；仅在 automator/batch 模式产出 `runtime-qa-evidence.json`。
 
 ## Codex implementer
 
@@ -30,10 +31,10 @@ ZCode、Trae、Chrome 插件驱动的云端 agent 等都只是 provider/adapter�
 
 ## QA
 
-QA 独立验证 e2e、端上、UI/Figma 与运行时。QA 不运行 unit tests，不替代 main code review。
+QA 由 main 独立验证 e2e、端上、UI/Figma 与运行时。main QA 不运行 unit tests，不替代 main code review，不修复业务代码。
 
-Figma/UI QA 必须使用 `$qa-ui-visual-baseline-policy` 独立读取视觉基准，并取得实际运行截图/目标页面状态。
+Figma/UI main QA 必须使用 `$qa-ui-visual-baseline-policy` 独立读取视觉基准，并取得实际运行截图/目标页面状态。仅 automator/batch 模式需要 `runtime-qa-evidence.json`。
 
-## docs_keeper
+## Main docs / BRV
 
-仅在公共契约、活文档、用户文档或索引确实受影响时使用。docs_keeper 负责知识卫生，不得把蓝图、历史设计或 archived 文档维护为当前事实。
+仅在公共契约、活文档、用户文档、索引或 ByteRover 影响确实存在时由 main 处理。main 负责知识卫生，不得把蓝图、历史设计或 archived 文档维护为当前事实。不产出 `main-docs-receipt` 或 `main-brv-receipt`。

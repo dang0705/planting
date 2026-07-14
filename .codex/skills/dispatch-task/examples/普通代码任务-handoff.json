@@ -46,6 +46,7 @@
     ]
   },
   "validation": {
+    "miniprogram_automator_required": false,
     "implementer": [
       "unit tests"
     ],
@@ -55,5 +56,6 @@
   "output_evidence_required": [
     "validation_evidence"
   ],
-  "dispatch_tier": "standard_task"
+  "dispatch_tier": "standard_task",
+  "implementation_mode": "codex_subagent"
 }

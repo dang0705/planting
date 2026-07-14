@@ -32,25 +32,39 @@ npm run dev:mp-weixin:local-functions:lan
 3. `/diagnosis/question/start`、`/diagnosis/answer`、question package、诊断入口。
 4. 小程序运行时 `wx.request` 验证接口、CloudBase local functions gateway 或 SQL schema 相关链路。
 
-## 3. 固定项目路径
+## 3. projectPath 合同
 
-端上自动化项目路径只允许：
+端上自动化使用的 `projectPath` 必须指向“本轮实际编译并准备验收的小程序工作区”下的 `dist/dev/mp-weixin`，不得脱离本轮代码来源单独指定其他目录。
+
+默认规则：
 
 ```text
 /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin
 ```
 
-`dist/build/mp-weixin` 只用于构建、CI、上传、预览类检查，不得作为端上 automator projectPath。
+Web/云端 external implementer 特例：
+
+1. 当实现阶段由 Web/云端 external implementer 完成，且 acceptance 要求 `miniprogram-automator` 端上测试时，`projectPath` 不得继续指向主工作区。
+2. 此时必须使用 handoff / QA Contract 中 `external_contract.remote_sync.planned_worktree_path` 对应的独立 worktree。
+3. 实际 `projectPath` 必须是：
+
+```text
+<planned_worktree_path>/dist/dev/mp-weixin
+```
+
+4. `npm run dev:mp-weixin:local-functions:lan`、微信开发者工具加载目录、`9420`、`miniprogram-automator`、截图和 `wx.request` 证据必须全部命中这个 worktree，不得混用主工作区产物。
+
+`dist/build/mp-weixin` 只用于构建、CI、上传、预览类检查，不得作为端上 automator `projectPath`。
 
 ## 4. 标准检查顺序
 
-默认先复用现有微信开发者工具和 `9420` 会话：
+默认先复用现有微信开发者工具和 `9420` 会话。所有检查里的 `projectPath` 都指本轮 Contract 允许的有效路径：
 
 ```bash
 npm run dev:mp-weixin:local-functions:lan
 lsof -nP -iTCP:9420 -sTCP:LISTEN
 ps aux | rg -i 'wechatwebdevtools|9420|miniprogram-automator|automator'
-ls -la /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin/project.config.json
+ls -la <projectPath>/project.config.json
 ```
 
 只有 `9420` 监听、原始 WebSocket 可握手，并且 `miniprogram-automator` 能连接当前项目，才算 automator ready。`9222` / CDP、截图存在、工具 status success 都只能作为环境信息，不能替代端上验收。
@@ -63,7 +77,7 @@ ls -la /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin/project.config.js
 
 ```bash
 /Applications/wechatwebdevtools.app/Contents/MacOS/cli auto \
-  --project /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin \
+  --project <projectPath> \
   --auto-port 9420 \
   --trust-project
 ```
@@ -134,6 +148,8 @@ const automator = require('miniprogram-automator')
 diagnose-entry-button-{plant.id}
 ```
 
+UniApp 编译产物可能把稳定 id 渲染为 `xxxx--stable-id`。自动化 helper 必须先支持 exact stable id，再支持 scoped id 的 stable 部分匹配；动态 ID 例如 `plant-card-reminder-{plantId}-water` 必须提取 stable id 后再做 prefix/suffix 断言。
+
 不得把中文文案、截图坐标或页面层级作为首选定位方式。
 
 ## 9. 失败归因
@@ -153,7 +169,10 @@ not_verified
 
 1. `9420` 无监听、WebSocket 无法握手、CLI auto timeout：`devtools_automator_blocker`。
 2. `INVALID_TOKEN` / `需要重新登录`：`devtools_auth_blocker`。
-3. projectPath 不是固定 `dist/dev/mp-weixin`：`devtools_configuration_blocker`。
+3. `projectPath` 不符合本轮 Contract 允许的工作区产物：
+   - 普通本地任务应为主工作区 `dist/dev/mp-weixin`
+   - Web/云端 external implementer + automator 验收应为 `<planned_worktree_path>/dist/dev/mp-weixin`
+   以上任一不满足都归类为 `devtools_configuration_blocker`。
 4. automator 已通且 Test Contract required item 失败：按实际断言归为 `product_blocker`。
 
 ## 10. 输出建议

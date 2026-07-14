@@ -10,7 +10,7 @@
   "target_role": "implementer_fast",
   "spawn_contract": {
     "implementer_agent_type": "implementer_fast",
-    "qa_agent_type": "qa_reviewer",
+    "qa_agent_type": null,
     "context_mode": "isolated",
     "generic_fallback_forbidden": true,
     "identity_receipt_required": true
@@ -70,20 +70,16 @@
       "$implementer-ui-execution-policy",
       "$uni-ui-figma-component-mapper"
     ],
-    "qa": [
+    "main": [
       "$qa-ui-visual-baseline-policy"
     ]
   },
   "validation": {
+    "miniprogram_automator_required": false,
     "implementer": [
       "unit tests",
       "lint/typecheck/build",
       "UI self-check"
-    ],
-    "qa": [
-      "independent Figma baseline",
-      "runtime screenshot",
-      "interaction path"
     ],
     "worktree_baseline_path": ".tmp/dispatch-task/example-ui-001-worktree-baseline.json"
   },
@@ -94,5 +90,6 @@
     "component_reuse_evidence",
     "uni_ui_mapping_evidence"
   ],
-  "dispatch_tier": "standard_task"
+  "dispatch_tier": "standard_task",
+  "implementation_mode": "codex_subagent"
 }

@@ -2,7 +2,7 @@
 doc_id: runbook
 status: current
 doc_type: runbook
-owner: docs-keeper
+owner: main
 sync_policy: active
 last_verified_date: 2026-06-06
 last_verified_commit: unknown-from-upload
@@ -231,7 +231,7 @@ npm run deploy:miniprogram:ci
 2. 构建命令通过。
 3. 本次变更命中的 smoke / regression 有实际输出。
 4. 生产 CloudBase/小程序凭证没有写入仓库。
-5. docs_keeper 已分类是否需要更新 active docs / BRV index。
+5. main 已分类是否需要更新 active docs / BRV index。
 ```
 
 ## 7. 环境变量与安全

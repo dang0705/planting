@@ -13,7 +13,7 @@ This revision supersedes the previous diagnosis facts that said regular route fo
 活文档极简化；
 契约必须同步；
 BRV 只做索引；
-docs-keeper 从同步者变成清理者。
+docs / BRV 影响由 main 按 AGENTS 边界处理（不派 docs_keeper）。
 ```
 
 ## 建议落位
@@ -25,10 +25,7 @@ AGENTS.md
 .codex/config.toml
 .codex/context-packs.yml
 .codex/memory.md
-.codex/agents/docs-keeper.toml
 .codex/skills/dispatch-task/SKILL.md
-.codex/skills/dispatch-task/references/knowledge-hygiene-policy.md
-.brvspace
 docs/CURRENT.md
 docs/ACTIVE_CONTRACTS.md
 docs/RUNBOOK.md

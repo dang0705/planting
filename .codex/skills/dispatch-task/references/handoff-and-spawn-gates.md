@@ -6,7 +6,7 @@
 
 ```text
 dispatch_run_id
-dispatch_tier: standard_task / deep_contract / external_implementer / qa_only / docs_only
+dispatch_tier: standard_task / deep_contract / external_implementer
 implementation_mode: codex_subagent / external_implementer
 task: {objective, code_changes_required, ui_task, risk, qa_required}
 target_role
@@ -27,7 +27,7 @@ figma:
   main_tools_used
   lite_receipt                       # 可选，仅身份/尺寸/顶层分区
   implementer_fetch_required
-  qa_baseline_fetch_required
+  qa_baseline_fetch_required          # 行为标志：main QA 须独立获取视觉基准
 required_skills / required_prompt_sections
 validation
 output_evidence_required
@@ -43,7 +43,7 @@ node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
 
 ## Gate B1 — Codex Named Spawn
 
-仅适用于 `implementation_mode=codex_subagent` 和需要 QA 的阶段。
+仅适用于 `implementation_mode=codex_subagent` 的实现阶段。QA、docs 和 ByteRover 阶段由 main 执行，不派 subagent。
 
 `target_role` 必须是 `.codex/agents/*.toml` 中 `name` 的精确值。main 必须显式使用该值调用 `spawn_agent`，不得让运行时自行挑选角色。
 
@@ -58,13 +58,13 @@ node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
 
 硬规则：
 
-1. Codex implementer 必须传 `agent_type=spawn_contract.implementer_agent_type`；QA 必须传 `agent_type=spawn_contract.qa_agent_type`。
+1. Codex implementer 必须传 `agent_type=spawn_contract.implementer_agent_type`。
 2. 不传 `model`、`reasoning_effort` 或 sandbox override；由具名 agent TOML 决定。
 3. 禁止 full-history fork。
 4. 角色不可用、spawn 被拒绝、runtime metadata 显示未加载目标配置时，立即阻断。
 5. 禁止回退到 `default`、`worker`、generic agent，也禁止让 generic agent“扮演”目标角色。
 6. child 最终 JSON 必须带 `agent_identity={agent_type, dispatch_run_id}`；不一致时 validator 阻断。
-7. review/QA 返工发送到原 agent thread，不重新 spawn generic child。
+7. review 返工发送到原 implementer thread，不重新 spawn generic child。
 
 ## Gate B2 — External Implementer Bridge
 

@@ -1,11 +1,11 @@
 ---
 name: qa-ui-visual-baseline-policy
-description: "QA 专用：从原始 Figma link 独立获取视觉基准，并与实际运行截图和状态比较。"
+description: "main QA 专用：从原始 Figma link 独立获取视觉基准，并与实际运行截图和状态比较。"
 ---
 
 # QA Independent Figma Baseline
 
-QA 从 Contract 取得原始 `figma_link/node_id` 和 acceptance，不把 main Lite、implementer 摘要或其自检截图当作唯一事实源。
+main QA 从 Contract 取得原始 `figma_link/node_id` 和 acceptance，不把 main Lite、implementer 摘要或其自检截图当作唯一事实源。
 
 ## 必须读取
 
@@ -28,7 +28,7 @@ QA 从 Contract 取得原始 `figma_link/node_id` 和 acceptance，不把 main L
 {
   "figma_baseline_evidence": {
     "status": "ready",
-    "acquired_by": "qa_reviewer",
+    "acquired_by": "main",
     "independent_read": true,
     "source_link": "",
     "node_id": "",

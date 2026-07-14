@@ -14,18 +14,23 @@ lsof -nP -iTCP:9420 -sTCP:LISTEN
 ps aux | rg -i 'wechatwebdevtools|9420|miniprogram-automator|automator'
 ```
 
-3. 查固定项目根是否有效：
+3. 查本轮 Contract 允许的 `projectPath` 是否有效：
 
 ```bash
-ls -la /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin/project.config.json
+ls -la <projectPath>/project.config.json
 ```
+
+`<projectPath>` 规则：
+
+1. 普通本地任务默认是 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin`
+2. Web/云端 external implementer 且要求 automator 端上验收时，必须是 `<planned_worktree_path>/dist/dev/mp-weixin`
 
 ## 恢复动作
 
 默认恢复原则：
 
 1. 先复用现有 IDE / `9420` automator 会话。
-2. 先做 `projectPath -> 9420 -> 原始 WebSocket -> miniprogram-automator -> page / wx.request` 归因。
+2. 先做 `projectPath -> 9420 -> 原始 WebSocket -> miniprogram-automator -> page / wx.request` 归因，并确认这些证据来自同一个工作区。
 3. 不得连接失败就默认 `pkill`、完整重启、全量清缓存或清登录态。
 4. 只有用户明确同意，或已证明无可复用会话且 required item 必须端上执行时，才允许 CLI auto，并记录副作用。
 
@@ -33,7 +38,7 @@ ls -la /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin/project.config.js
 
 ```bash
 /Applications/wechatwebdevtools.app/Contents/MacOS/cli auto \
-  --project /Users/jay/WebstormProjects/planting/dist/dev/mp-weixin \
+  --project <projectPath> \
   --auto-port 9420 \
   --trust-project
 ```

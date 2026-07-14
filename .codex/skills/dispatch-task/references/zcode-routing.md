@@ -21,7 +21,7 @@ external_contract.target_session = current_open_chat
 
 1. main 负责 Architecture Direction、Implementation Contract、路径边界、项目约束、统一 external prompt 生成、发送、回收、diff review 与 Completion Gate。
 2. ZCode provider external implementer 只负责按 prompt 修改代码和写 handoff manual。
-3. QA 仍由 Codex `qa_reviewer` 独立执行；ZCode 不替代 QA。
+3. QA 由 Codex main 在本地或 worktree 中独立执行；ZCode 不替代 QA。
 4. ZCode 聊天中的“完成”不是完成依据，main 必须重新读取真实 git diff、测试证据和 handoff manual。
 5. ZCode 失败、无 diff、越权修改、无法读取必要 Figma 数据、prompt 未完整发送或 computer-use 不可用时，不得自动 fallback 为 main 自己写代码。
 
@@ -53,8 +53,7 @@ ZCode 结束后，Codex main 生成 recovery result，并执行：
 ```bash
 # handoff manual 存在且可解析时执行；缺失/损坏时由 recovery result 记录 missing/invalid 并 blocked。
 node .codex/skills/dispatch-task/scripts/validate-zcode-handoff-manual.mjs <handoff.json> <handoff-manual.json>
-node .codex/skills/dispatch-task/scripts/validate-result.mjs external <handoff.json> <zcode-recovery-result.json>
-node .codex/skills/dispatch-task/scripts/validate-worktree-scope.mjs <handoff.json> <zcode-recovery-result.json> <worktree-baseline.json>
+node .codex/skills/dispatch-task/scripts/validate-implementation-postflight.mjs <handoff.json> <zcode-recovery-result.json> <worktree-baseline.json> > .tmp/dispatch-task/<dispatch_run_id>-postflight-report.json
 ```
 
 若 recovery result 为 `blocked`，它是合法阻断结果，但不能进入 Completion Gate。

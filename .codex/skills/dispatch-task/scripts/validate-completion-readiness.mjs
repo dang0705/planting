@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const [
   handoffFile,
   implementationResultFile,
-  worktreeReportFile,
-  noNewDepsReportFile,
-  styleStackReportFile,
-  qaResultFile
+  postflightReportFile,
+  runtimeQaEvidenceFile
 ] = process.argv.slice(2)
-if (!handoffFile || !implementationResultFile || !worktreeReportFile) {
+if (!handoffFile || !implementationResultFile || !postflightReportFile) {
   console.error(
-    'usage: validate-completion-readiness.mjs <handoff.json> <implementer-or-external-result.json> <worktree-scope-report.json> <no-new-deps-report.json> <style-stack-report.json> [qa-result.json]'
+    'usage: validate-completion-readiness.mjs <handoff.json> <implementer-or-external-result.json> <postflight-report.json> [runtime-qa-evidence.json]'
   )
   process.exit(2)
 }
@@ -25,19 +25,76 @@ const readJson = file => {
 }
 const handoff = readJson(handoffFile)
 const impl = readJson(implementationResultFile)
-const worktree = readJson(worktreeReportFile)
-const noDeps = noNewDepsReportFile ? readJson(noNewDepsReportFile) : null
-const style = styleStackReportFile ? readJson(styleStackReportFile) : null
-const qa = qaResultFile ? readJson(qaResultFile) : null
+const postflight = readJson(postflightReportFile)
+const runtimeQa = runtimeQaEvidenceFile ? readJson(runtimeQaEvidenceFile) : null
 const errors = []
 const need = (condition, message) => {
   if (!condition) {
     errors.push(message)
   }
 }
+const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value)
+const nonEmptyString = value => typeof value === 'string' && value.trim().length > 0
+const normalizeFsPath = value => {
+  if (!nonEmptyString(value)) {
+    return ''
+  }
+  return path
+    .resolve(String(value))
+    .replaceAll('\\', '/')
+    .replace(/\/+$/, '')
+}
+const repoRoot = path.resolve(fileURLToPath(new URL('../../../..', import.meta.url)))
+const externalContract = handoff.external_contract ?? handoff.zcode_contract ?? {}
+const externalProvider =
+  externalContract.provider || (externalContract.external_implementer === 'zcode_glm' ? 'zcode' : '')
+const webExternalProvider =
+  ['trae', 'chrome_cloud_agent'].includes(externalProvider) ||
+  externalContract.prompt_transport === 'browser_plugin'
+const mainWorkspaceMiniProgramProjectPath = normalizeFsPath(
+  path.join(repoRoot, 'dist', 'dev', 'mp-weixin')
+)
+const miniprogramAutomatorRequired = handoff?.validation?.miniprogram_automator_required === true
+const runtimeAcceptanceMode =
+  handoff?.validation?.runtime_acceptance_mode ??
+  (handoff?.validation?.miniprogram_automator_required === true ? 'automator_required' : null)
+const needsRuntimeQaEvidence = [
+  'automator_required',
+  'batch_substitute_allowed',
+  'batch_only'
+].includes(runtimeAcceptanceMode)
+const forbiddenRoleReceiptFields = [
+  'owner',
+  'agent_identity',
+  'coverage',
+  'checks_and_evidence',
+  'unit_tests_run',
+  'next_action',
+  'blocker_classification',
+  'figma_baseline_evidence'
+]
+const expectedAutomatorProjectPath = () => {
+  const plannedWorktreePath = externalContract?.remote_sync?.planned_worktree_path
+  if (webExternalProvider && nonEmptyString(plannedWorktreePath)) {
+    return normalizeFsPath(path.join(plannedWorktreePath, 'dist', 'dev', 'mp-weixin'))
+  }
+  return mainWorkspaceMiniProgramProjectPath
+}
+const validateAutomatorProjectPath = (actualPath, label) => {
+  const expectedPath = expectedAutomatorProjectPath()
+  need(nonEmptyString(actualPath), `${label} is required`)
+  if (!nonEmptyString(actualPath)) {
+    return
+  }
+  need(
+    normalizeFsPath(actualPath) === expectedPath,
+    `${label} must match expected projectPath: ${expectedPath}`
+  )
+}
 const blockers = impl.deviations_or_blockers ?? impl.blockers ?? []
 const mode = handoff.implementation_mode ?? 'codex_subagent'
 const codeChanges = handoff?.task?.code_changes_required === true
+
 need(
   impl.status === 'completed',
   `implementation result must be completed before Completion Gate, got ${impl.status}`
@@ -52,11 +109,23 @@ if (mode === 'codex_subagent') {
     'implementation result agent_identity.agent_type must match spawn_contract.implementer_agent_type'
   )
 }
-if (mode === 'zcode_external') {
-  need(
-    impl.source === 'codex_recovery_after_zcode',
-    'external implementation result source must be codex_recovery_after_zcode'
-  )
+if (mode === 'zcode_external' || mode === 'external_implementer') {
+  const allowedSources = [
+    'codex_recovery_after_zcode',
+    'codex_recovery_after_external',
+    'codex_recovery_after_external_implementer'
+  ]
+  if (mode === 'zcode_external') {
+    need(
+      impl.source === 'codex_recovery_after_zcode',
+      'external implementation result source must be codex_recovery_after_zcode'
+    )
+  } else {
+    need(
+      allowedSources.includes(impl.source) || nonEmptyString(impl.source),
+      'external implementation result source is required'
+    )
+  }
   need(
     impl.codex_self_implementation === false,
     'external implementation result must confirm codex_self_implementation=false'
@@ -64,85 +133,172 @@ if (mode === 'zcode_external') {
 }
 need(Array.isArray(blockers), 'implementation blockers/deviations must be an array')
 need(blockers.length === 0, 'Completion Gate cannot pass with deviations_or_blockers/blockers')
+
 if (codeChanges) {
-  need(noDeps !== null, 'code changes require no-new-deps report')
-  need(style !== null, 'code changes require style-stack report')
-  need(worktree.status === 'passed', `worktree scope report must be passed, got ${worktree.status}`)
-  need(worktree.gate === 'worktree_scope', 'worktree report gate must be worktree_scope')
+  need(isObject(postflight), 'code changes require implementation postflight report')
   need(
-    worktree.dispatch_run_id === handoff.dispatch_run_id,
-    'worktree scope report dispatch_run_id must match handoff'
+    postflight.status === 'passed',
+    `postflight report must be passed, got ${postflight.status}`
   )
   need(
-    Array.isArray(worktree.changed_files_since_baseline),
-    'worktree.changed_files_since_baseline must be an array'
+    postflight.gate === 'implementation_postflight',
+    'postflight report gate must be implementation_postflight'
   )
   need(
-    Array.isArray(worktree.declared_changed_files),
-    'worktree.declared_changed_files must be an array'
+    postflight.dispatch_run_id === handoff.dispatch_run_id,
+    'postflight dispatch_run_id must match handoff'
   )
-  need(
-    (worktree.undeclared_actual_changed_files ?? []).length === 0,
-    'Completion Gate cannot pass with undeclared actual changed files'
-  )
-  need(
-    (worktree.declared_not_visible ?? []).length === 0,
-    'Completion Gate cannot pass with declared files not visible in worktree'
-  )
-  need(
-    (worktree.declared_preexisting_overlap ?? []).length === 0,
-    'Completion Gate cannot pass with preexisting dirty overlap'
-  )
-  need(
-    (worktree.preexisting_dirty_modified_since_baseline ?? []).length === 0,
-    'Completion Gate cannot pass with preexisting dirty files modified since baseline'
-  )
-  need(
-    (worktree.disappeared_since_baseline ?? []).length === 0,
-    'Completion Gate cannot pass with baseline dirty files disappeared'
-  )
-  if (noDeps) {
-    need(noDeps.status === 'passed', `no-new-deps report must be passed, got ${noDeps.status}`)
-    need(noDeps.gate === 'no_new_deps', 'no-new-deps report gate must be no_new_deps')
+  need((postflight.errors ?? []).length === 0, 'Completion Gate cannot pass with postflight errors')
+
+  const worktree = postflight.worktree
+  need(isObject(worktree), 'postflight.worktree is required')
+  if (isObject(worktree)) {
+    need(worktree.status === 'passed', `postflight.worktree must be passed, got ${worktree.status}`)
     need(
-      noDeps.dispatch_run_id === handoff.dispatch_run_id,
-      'no-new-deps report dispatch_run_id must match handoff'
+      Array.isArray(worktree.changed_files_since_baseline),
+      'worktree.changed_files_since_baseline must be an array'
     )
+    need(
+      Array.isArray(worktree.declared_changed_files),
+      'worktree.declared_changed_files must be an array'
+    )
+    need(
+      (worktree.undeclared_actual_changed_files ?? []).length === 0,
+      'Completion Gate cannot pass with undeclared actual changed files'
+    )
+    need(
+      (worktree.declared_not_visible ?? []).length === 0,
+      'Completion Gate cannot pass with declared files not visible in worktree'
+    )
+    need(
+      (worktree.declared_preexisting_overlap ?? []).length === 0,
+      'Completion Gate cannot pass with preexisting dirty overlap'
+    )
+    need(
+      (worktree.preexisting_dirty_modified_since_baseline ?? []).length === 0,
+      'Completion Gate cannot pass with preexisting dirty files modified since baseline'
+    )
+    need(
+      (worktree.disappeared_since_baseline ?? []).length === 0,
+      'Completion Gate cannot pass with baseline dirty files disappeared'
+    )
+  }
+  const noDeps = postflight.no_new_deps
+  need(isObject(noDeps), 'postflight.no_new_deps is required')
+  if (isObject(noDeps)) {
+    need(noDeps.status === 'passed', `postflight.no_new_deps must be passed, got ${noDeps.status}`)
     need((noDeps.errors ?? []).length === 0, 'Completion Gate cannot pass with no-new-deps errors')
   }
-  if (style) {
-    need(style.status === 'passed', `style-stack report must be passed, got ${style.status}`)
-    need(style.gate === 'style_stack', 'style-stack report gate must be style_stack')
-    need(
-      style.dispatch_run_id === handoff.dispatch_run_id,
-      'style-stack report dispatch_run_id must match handoff'
-    )
+  const style = postflight.style_stack
+  need(isObject(style), 'postflight.style_stack is required')
+  if (isObject(style)) {
+    need(style.status === 'passed', `postflight.style_stack must be passed, got ${style.status}`)
     need((style.errors ?? []).length === 0, 'Completion Gate cannot pass with style-stack errors')
   }
 }
-if (handoff?.task?.qa_required === true) {
-  need(qa !== null, 'qa_required=true requires qa-result.json')
-  if (qa) {
-    need(qa.status === 'passed', `QA must be passed before Completion Gate, got ${qa.status}`)
-    need(
-      qa?.agent_identity?.dispatch_run_id === handoff.dispatch_run_id,
-      'QA agent_identity.dispatch_run_id must match handoff'
-    )
-    need(
-      qa?.agent_identity?.agent_type === handoff?.spawn_contract?.qa_agent_type,
-      'QA agent_identity.agent_type must match spawn_contract.qa_agent_type'
-    )
-  }
-}
-if (qa) {
-  need(Array.isArray(qa.failures), 'qa.failures must be an array')
-  need(Array.isArray(qa.not_verified), 'qa.not_verified must be an array')
-  need((qa.failures ?? []).length === 0, 'Completion Gate cannot pass with QA failures')
+
+if (needsRuntimeQaEvidence) {
   need(
-    (qa.not_verified ?? []).length === 0,
-    'Completion Gate cannot pass with QA not_verified items'
+    runtimeQa !== null,
+    `runtime_acceptance_mode=${runtimeAcceptanceMode} requires runtime-qa-evidence.json`
   )
 }
+if (runtimeQa) {
+  need(isObject(runtimeQa), 'runtime-qa-evidence must be an object')
+  need(
+    runtimeQa.dispatch_run_id === handoff.dispatch_run_id,
+    'runtime-qa-evidence dispatch_run_id must match handoff'
+  )
+  for (const field of forbiddenRoleReceiptFields) {
+    need(!(field in runtimeQa), `runtime-qa-evidence must not contain role-receipt field: ${field}`)
+  }
+  need(
+    ['passed', 'failed', 'blocked'].includes(runtimeQa.status),
+    'runtime-qa-evidence status must be passed|failed|blocked'
+  )
+  need(
+    runtimeQa.runtime_acceptance_mode === runtimeAcceptanceMode,
+    'runtime-qa-evidence.runtime_acceptance_mode must match handoff'
+  )
+  need(Array.isArray(runtimeQa.failures), 'runtime-qa-evidence.failures must be an array')
+  need(Array.isArray(runtimeQa.not_verified), 'runtime-qa-evidence.not_verified must be an array')
+  need(
+    Array.isArray(runtimeQa.evidence_paths) && runtimeQa.evidence_paths.length > 0,
+    'runtime-qa-evidence.evidence_paths must be a non-empty array'
+  )
+  need(
+    runtimeAcceptanceMode === 'batch_substitute_allowed' ||
+      (runtimeQa.not_verified ?? []).length === 0 ||
+      runtimeQa.status !== 'passed',
+    'passed runtime-qa-evidence cannot contain not_verified unless batch_substitute_allowed'
+  )
+  if (runtimeQa.status === 'passed') {
+    need((runtimeQa.failures ?? []).length === 0, 'passed runtime-qa-evidence cannot contain failures')
+    if (runtimeAcceptanceMode !== 'batch_substitute_allowed') {
+      need(
+        (runtimeQa.not_verified ?? []).length === 0,
+        'passed runtime-qa-evidence cannot contain not_verified'
+      )
+    }
+  } else {
+    need(
+      (runtimeQa.failures ?? []).length > 0 ||
+        (runtimeQa.not_verified ?? []).length > 0 ||
+        nonEmptyString(runtimeQa.blocked_reason),
+      'failed/blocked runtime-qa-evidence requires failures, not_verified, or blocked_reason'
+    )
+  }
+  if (runtimeAcceptanceMode === 'automator_required') {
+    need(
+      runtimeQa.channel === 'miniprogram_automator',
+      'automator_required requires channel=miniprogram_automator'
+    )
+    validateAutomatorProjectPath(runtimeQa.projectPath, 'runtime-qa-evidence.projectPath')
+    need(nonEmptyString(runtimeQa.pagePath), 'runtime-qa-evidence.pagePath is required')
+    const hasPort =
+      Number.isInteger(runtimeQa.automator_port) ||
+      (nonEmptyString(runtimeQa.automator_port) && /^\d+$/.test(String(runtimeQa.automator_port)))
+    need(
+      hasPort || nonEmptyString(runtimeQa.wsEndpoint),
+      'runtime-qa-evidence requires automator_port or wsEndpoint'
+    )
+  }
+  if (runtimeAcceptanceMode === 'batch_substitute_allowed') {
+    need(runtimeQa.channel === 'batch', 'batch_substitute_allowed requires channel=batch')
+    need(
+      nonEmptyString(runtimeQa.user_approval_ref) &&
+        runtimeQa.user_approval_ref === handoff?.validation?.batch_substitute_user_approval_ref,
+      'batch substitute requires matching user_approval_ref'
+    )
+    need(
+      runtimeQa.end_side_status === 'not_verified_by_user_approved_substitution',
+      'batch substitute must set end_side_status=not_verified_by_user_approved_substitution'
+    )
+  }
+  if (runtimeAcceptanceMode === 'batch_only') {
+    need(runtimeQa.channel === 'batch', 'batch_only requires channel=batch')
+  }
+  need(
+    runtimeQa.status === 'passed',
+    `runtime-qa-evidence must be passed before Completion Gate, got ${runtimeQa.status}`
+  )
+} else if (
+  runtimeAcceptanceMode === 'automator_required' &&
+  miniprogramAutomatorRequired &&
+  mode !== 'codex_subagent'
+) {
+  const recoveryEvidence = impl.external_recovery_evidence ?? impl.zcode_recovery_evidence ?? {}
+  const prReview = recoveryEvidence.pr_review ?? {}
+  need(
+    prReview.runtime_channel === 'miniprogram_automator',
+    'Completion Gate external runtime QA requires pr_review.runtime_channel=miniprogram_automator'
+  )
+  validateAutomatorProjectPath(
+    prReview.projectPath,
+    'Completion Gate external pr_review.projectPath'
+  )
+}
+
 if (errors.length) {
   console.error(
     JSON.stringify({ status: 'blocked', gate: 'completion_readiness', errors }, null, 2)

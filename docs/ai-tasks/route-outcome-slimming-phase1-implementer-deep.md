@@ -68,6 +68,6 @@
 - `code_explorer`：可选（后续 Phase 2 追问接管前复核调用链）
 - `architect_reviewer`：建议（Phase 2 前确认 route 决策边界）
 - `implementer_fast` / `implementer_deep`：Phase 2 继续由 `implementer_deep`
-- `qa_reviewer`：必须（做行为不变回归 + route fallback 回归）
-- `docs_keeper`：可选（后续补规则说明）
+- main QA：必须（做行为不变回归 + route fallback 回归）
+- main docs / BRV：可选（后续补规则说明）
 - `release_ops`：暂不需要（本轮无部署）

@@ -10,6 +10,11 @@ if (!handoffFile || !baselineFile) {
   )
   process.exit(2)
 }
+if (process.env.DISPATCH_POSTFLIGHT_INTERNAL !== '1') {
+  console.error(
+    'deprecated: prefer validate-implementation-postflight.mjs (single postflight report)'
+  )
+}
 const readJson = file => {
   try {
     return JSON.parse(fs.readFileSync(file, 'utf8'))

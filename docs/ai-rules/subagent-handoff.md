@@ -136,7 +136,7 @@ Handoff Audit Appendix:
 
 不得粘贴完整 diff。
 
-### 4.3 qa_reviewer
+### 4.3 Main QA
 
 必须输出：
 
@@ -144,12 +144,12 @@ Handoff Audit Appendix:
 - 测试执行矩阵。
 - 失败归因分类。
 - 证据路径。
-- 是否需要 implementer 返工。
+- 是否需要 implementer 或 external implementer 返工。
 - 是否需要发布 / CloudBase 证据复核流程。
 
 不得粘贴完整日志、完整 DevTools dump 或完整截图 OCR。
 
-### 4.4 docs_keeper
+### 4.4 Main docs / BRV
 
 必须输出：
 

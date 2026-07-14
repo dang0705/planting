@@ -2,7 +2,7 @@
 doc_id: ticket-86exv6fnx-diagnose-question-package
 status: current
 doc_type: requirement-pointer
-owner: docs-keeper
+owner: main
 sync_policy: active-for-diagnose-question-package
 last_verified_date: 2026-06-06
 last_verified_commit: unknown-from-upload

@@ -2,7 +2,7 @@
 
 ## 1. 定位
 
-本文件定义同一会话内 subagent 线程复用规则，避免同角色重复开线程导致上下文膨胀、模型配置漂移和 handoff 断裂。
+本文件定义同一会话内实现类 subagent 线程复用规则，避免同角色重复开线程导致上下文膨胀、模型配置漂移和 handoff 断裂。QA、docs 和 ByteRover 影响处理由 main 执行，不派 subagent。
 
 本文件只描述当前可用角色，不包含已删除角色。
 
@@ -14,8 +14,6 @@
 | `code_explorer` | 可选低成本代码定位、调用链 / 依赖来源 / 影响范围定位 | 默认复用；只在定位目标明显变化时重开 |
 | `implementer_fast` | 低风险局部契约执行 | 默认复用；同一批文件未完成前不得重开 |
 | `implementer_deep` | 高风险 / 多文件 / 诊断流 / CloudBase 等契约执行 | 默认复用；同一批文件未完成前不得重开 |
-| `qa_reviewer` | 测试执行、smoke、e2e、UI/Figma 验收、失败归因 | 默认复用；同一验收范围内不得重开 |
-| `docs_keeper` | 文档落地、索引同步、术语一致性、完整文档交付 | 默认复用；文档目标完全变化时可重开 |
 
 ## 3. 复用原则
 
@@ -77,8 +75,6 @@ Thread Reuse Input:
 
 - ``main agent``：Technical Scope Slice、Implementation Contract、Test Contract、Review Scope。
 - `implementer_fast/deep`：Implementation Contract、Implementation Packet、允许/禁止修改文件。
-- `qa_reviewer`：Test Contract、QA Acceptance Slice、测试计划、证据路径。
-- `docs_keeper`：文档同步触发依据、目标文档、需同步索引。
 - `code_explorer`：最小搜索目标、候选目录、需要回答的问题。
 
 不得广播完整 ClickUp、完整 Figma、完整规则、完整日志或完整历史 handoff。

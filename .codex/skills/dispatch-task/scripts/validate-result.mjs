@@ -1,9 +1,13 @@
 #!/usr/bin/env node
 import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const [role, handoffFile, resultFile] = process.argv.slice(2)
-if (!['implementer', 'external', 'qa'].includes(role) || !handoffFile || !resultFile) {
-  console.error('usage: validate-result.mjs <implementer|external|qa> <handoff.json> <result.json>')
+if (!['implementer', 'external'].includes(role) || !handoffFile || !resultFile) {
+  console.error(
+    'usage: validate-result.mjs <implementer|external> <handoff.json> <result.json>'
+  )
   process.exit(2)
 }
 
@@ -22,6 +26,9 @@ const handoffExternalMode = ['external_implementer', 'zcode_external'].includes(
 const externalContract = handoff.external_contract ?? handoff.zcode_contract ?? {}
 const externalProvider =
   externalContract.provider || (externalContract.external_implementer === 'zcode_glm' ? 'zcode' : '')
+const webExternalProvider =
+  ['trae', 'chrome_cloud_agent'].includes(externalProvider) ||
+  externalContract.prompt_transport === 'browser_plugin'
 const errors = []
 const need = (condition, message) => {
   if (!condition) {
@@ -44,6 +51,51 @@ const normalize = file =>
   String(file ?? '')
     .replaceAll('\\', '/')
     .replace(/^\.\//, '')
+    .replace(/\/+$/, '')
+const normalizeFsPath = value => {
+  if (!nonEmptyString(value)) {return ''}
+  return path
+    .resolve(String(value))
+    .replaceAll('\\', '/')
+    .replace(/\/+$/, '')
+}
+const repoRoot = path.resolve(fileURLToPath(new URL('../../../..', import.meta.url)))
+const mainWorkspaceMiniProgramProjectPath = normalizeFsPath(
+  path.join(repoRoot, 'dist', 'dev', 'mp-weixin')
+)
+const acceptanceMentionsMiniProgramRuntime = (handoff.acceptance ?? []).some(item => {
+  const raw = String(item ?? '')
+  const text = raw.toLowerCase()
+  return (
+    text.includes('miniprogram-automator') ||
+    text.includes('miniprogram automator') ||
+    text.includes('9420') ||
+    text.includes('wx.request') ||
+    raw.includes('小程序') ||
+    raw.includes('端上') ||
+    raw.includes('微信开发者工具')
+  )
+})
+const miniprogramAutomatorRequired =
+  typeof handoff?.validation?.miniprogram_automator_required === 'boolean'
+    ? handoff.validation.miniprogram_automator_required
+    : acceptanceMentionsMiniProgramRuntime
+const expectedAutomatorProjectPath = () => {
+  const plannedWorktreePath = externalContract?.remote_sync?.planned_worktree_path
+  if (webExternalProvider && nonEmptyString(plannedWorktreePath)) {
+    return normalizeFsPath(path.join(plannedWorktreePath, 'dist', 'dev', 'mp-weixin'))
+  }
+  return mainWorkspaceMiniProgramProjectPath
+}
+const validateAutomatorProjectPath = (actualPath, label) => {
+  const expectedPath = expectedAutomatorProjectPath()
+  need(nonEmptyString(actualPath), `${label} is required`)
+  if (!nonEmptyString(actualPath)) {return}
+  need(
+    normalizeFsPath(actualPath) === expectedPath,
+    `${label} must match expected projectPath: ${expectedPath}`
+  )
+}
 const globToRegExp = pattern => {
   let source = normalize(pattern).replace(/[.+^${}()|[\]\\]/g, '\\$&')
   source = source
@@ -374,28 +426,45 @@ if (role === 'external') {
   )
   const handoffManual = result.external_handoff_manual ?? result.zcode_handoff_manual
   if (isObject(handoffManual)) {
-    need(
-      handoffManual.read_by_codex === true,
-      'external_handoff_manual.read_by_codex must be true'
-    )
-    need(
-      handoffManual.path === handoff?.handoff_manual?.path,
-      'external_handoff_manual.path must match handoff.handoff_manual.path'
-    )
-    if (result.status === 'completed') {
+    const remotePrManualNotRequired =
+      webExternalProvider && handoffManual.status === 'not_required_remote_pr'
+    if (remotePrManualNotRequired) {
       need(
-        handoffManual.status === 'completed',
-        'completed external recovery requires handoff_manual.status=completed'
+        handoffManual.read_by_codex === false,
+        'remote PR external_handoff_manual.read_by_codex must be false when local manual is not required'
+      )
+      need(
+        nonEmptyString(handoffManual.not_required_reason),
+        'remote PR external_handoff_manual.not_required_reason is required'
       )
     } else {
       need(
-        ['blocked', 'completed', 'missing', 'invalid'].includes(handoffManual.status),
-        'blocked external recovery requires handoff manual blocked/completed/missing/invalid status'
+        handoffManual.read_by_codex === true,
+        'external_handoff_manual.read_by_codex must be true'
+      )
+      need(
+        handoffManual.path === handoff?.handoff_manual?.path,
+        'external_handoff_manual.path must match handoff.handoff_manual.path'
+      )
+    }
+    if (result.status === 'completed') {
+      need(
+        handoffManual.status === 'completed' || remotePrManualNotRequired,
+        'completed external recovery requires handoff_manual.status=completed or not_required_remote_pr for web PR recovery'
+      )
+    } else {
+      const allowedBlockedManualStatuses = ['blocked', 'completed', 'missing', 'invalid']
+      if (webExternalProvider) {
+        allowedBlockedManualStatuses.push('not_required_remote_pr')
+      }
+      need(
+        allowedBlockedManualStatuses.includes(handoffManual.status),
+        'blocked external recovery requires a valid handoff manual status'
       )
     }
     need(
       nonEmptyString(handoffManual.updated_at) ||
-        ['missing', 'invalid'].includes(handoffManual.status),
+        ['missing', 'invalid', 'not_required_remote_pr'].includes(handoffManual.status),
       'external_handoff_manual.updated_at is required unless missing/invalid'
     )
   }
@@ -434,6 +503,35 @@ if (role === 'external') {
         need(
           cu.manual_typing_used === false,
           'zcode_send_receipt.computer_use.manual_typing_used must be false'
+        )
+      }
+      if (webExternalProvider) {
+        const receiptRemoteSync = sendReceipt.remote_sync ?? {}
+        need(isObject(receiptRemoteSync), 'web external send receipt requires remote_sync')
+        need(
+          receiptRemoteSync.status === 'pushed',
+          'web external send receipt remote_sync.status must be pushed'
+        )
+        need(
+          receiptRemoteSync.remote === externalContract?.remote_sync?.remote,
+          'web external send receipt remote_sync.remote must match handoff'
+        )
+        need(
+          receiptRemoteSync.branch === externalContract?.remote_sync?.branch,
+          'web external send receipt remote_sync.branch must match handoff'
+        )
+        need(
+          receiptRemoteSync.base_commit === externalContract?.remote_sync?.base_commit,
+          'web external send receipt remote_sync.base_commit must match handoff'
+        )
+        need(
+          nonEmptyString(receiptRemoteSync.push_ref),
+          'web external send receipt remote_sync.push_ref is required'
+        )
+        need(
+          receiptRemoteSync.planned_worktree_path ===
+            externalContract?.remote_sync?.planned_worktree_path,
+          'web external send receipt remote_sync.planned_worktree_path must match handoff'
         )
       }
     } else {
@@ -477,6 +575,51 @@ if (role === 'external') {
         recoveryEvidence.no_unapproved_dependencies === true,
         'external_recovery_evidence.no_unapproved_dependencies must be true'
       )
+      if (webExternalProvider) {
+        const prReview = recoveryEvidence.pr_review ?? {}
+        const expectedRemoteBranch =
+          externalContract?.remote_sync?.push_ref ||
+          `${externalContract?.remote_sync?.remote}/${externalContract?.remote_sync?.branch}`
+        const expectedWorktreePath = externalContract?.remote_sync?.planned_worktree_path
+        const claimsAutomatorRuntime =
+          prReview.runtime_channel === 'miniprogram_automator' || nonEmptyString(prReview.projectPath)
+        const externalReviewMustCarryAutomatorPath =
+          miniprogramAutomatorRequired && handoff?.task?.qa_required !== true
+        need(isObject(prReview), 'web external recovery requires pr_review evidence')
+        need(
+          nonEmptyString(prReview.pr_url) || nonEmptyString(prReview.remote_branch),
+          'web external pr_review requires pr_url or remote_branch'
+        )
+        need(nonEmptyString(prReview.worktree_path), 'web external pr_review.worktree_path is required')
+        need(nonEmptyString(prReview.fetch_ref), 'web external pr_review.fetch_ref is required')
+        need(nonEmptyString(prReview.worktree_head), 'web external pr_review.worktree_head is required')
+        need(
+          prReview.remote_branch === expectedRemoteBranch || prReview.fetch_ref === expectedRemoteBranch,
+          'web external pr_review must match handoff remote branch'
+        )
+        need(
+          prReview.worktree_path === expectedWorktreePath,
+          'web external pr_review.worktree_path must match handoff planned_worktree_path'
+        )
+        need(
+          Array.isArray(prReview.commands_run) && prReview.commands_run.length > 0,
+          'web external pr_review.commands_run must be a non-empty array'
+        )
+        need(
+          prReview.main_workspace_untouched === true,
+          'web external pr_review.main_workspace_untouched must be true'
+        )
+        if (claimsAutomatorRuntime || externalReviewMustCarryAutomatorPath) {
+          need(
+            prReview.runtime_channel === 'miniprogram_automator',
+            'web external pr_review.runtime_channel must be miniprogram_automator when runtime QA is claimed'
+          )
+          validateAutomatorProjectPath(
+            prReview.projectPath,
+            'web external pr_review.projectPath'
+          )
+        }
+      }
     }
     validateValidationEvidence(result, true)
     validateUiCompleted(result, {
@@ -488,73 +631,6 @@ if (role === 'external') {
       nonEmptyArray(result.deviations_or_blockers),
       'blocked external result requires deviations_or_blockers'
     )
-  }
-}
-
-if (role === 'qa') {
-  need(isObject(result.agent_identity), 'agent_identity is required')
-  need(
-    result?.agent_identity?.agent_type === handoff?.spawn_contract?.qa_agent_type,
-    `QA agent_identity mismatch: expected ${handoff?.spawn_contract?.qa_agent_type}, got ${result?.agent_identity?.agent_type}`
-  )
-  need(
-    result?.agent_identity?.dispatch_run_id === handoff.dispatch_run_id,
-    'QA agent_identity.dispatch_run_id must match handoff'
-  )
-  need(
-    ['passed', 'failed', 'blocked'].includes(result.status),
-    'QA status must be passed|failed|blocked'
-  )
-  need(result.unit_tests_run === false, 'QA must report unit_tests_run=false')
-  need(nonEmptyArray(result.coverage), 'QA coverage is required')
-  need(nonEmptyArray(result.checks_and_evidence), 'QA checks_and_evidence is required')
-  need(Array.isArray(result.failures), 'failures must be an array')
-  need(Array.isArray(result.not_verified), 'not_verified must be an array')
-  if (result.status === 'passed') {
-    need(result.failures.length === 0, 'passed QA cannot contain failures')
-    need(result.not_verified.length === 0, 'passed QA cannot contain not_verified')
-  } else {
-    need(
-      result.failures.length > 0 ||
-        result.not_verified.length > 0 ||
-        nonEmptyString(result.blocked_reason),
-      'failed/blocked QA requires failures, not_verified, or blocked_reason'
-    )
-  }
-  if (nonEmptyString(handoff?.figma?.link) && result.status === 'passed') {
-    const evidence = result.figma_baseline_evidence
-    need(isObject(evidence), 'passed Figma QA requires figma_baseline_evidence')
-    if (isObject(evidence)) {
-      need(evidence.status === 'ready', 'figma_baseline_evidence.status must be ready')
-      need(
-        evidence.acquired_by === 'qa_reviewer',
-        'figma_baseline_evidence.acquired_by must be qa_reviewer'
-      )
-      need(evidence.independent_read === true, 'QA must independently read Figma')
-      need(evidence.source_link === handoff.figma.link, 'QA source_link must match handoff')
-      need(evidence.node_id === handoff.figma.node_id, 'QA node_id must match handoff')
-      const calls = callsOf(evidence)
-      for (const tool of ['get_metadata', 'get_screenshot'])
-        {need(calls.includes(tool), `QA must independently call ${tool}`)}
-      need(
-        nonEmptyString(evidence.reference_screenshot_ref),
-        'QA reference_screenshot_ref is required'
-      )
-      need(
-        nonEmptyString(evidence.actual_runtime_screenshot_ref),
-        'QA actual_runtime_screenshot_ref is required'
-      )
-      need(nonEmptyArray(evidence.states_checked), 'QA states_checked is required')
-      need(Array.isArray(evidence.differences), 'QA differences must be an array')
-      need(evidence.result === 'passed', 'figma_baseline_evidence.result must be passed')
-      const unapproved = (evidence.differences ?? []).filter(
-        difference =>
-          typeof difference === 'string' ||
-          difference?.allowed !== true ||
-          !nonEmptyString(difference?.approval_ref)
-      )
-      need(unapproved.length === 0, 'QA has unapproved Figma differences')
-    }
   }
 }
 

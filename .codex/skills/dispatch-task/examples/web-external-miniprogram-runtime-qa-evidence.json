@@ -1,0 +1,15 @@
+{
+  "dispatch_run_id": "example-web-runtime-001",
+  "status": "passed",
+  "runtime_acceptance_mode": "automator_required",
+  "channel": "miniprogram_automator",
+  "projectPath": "/tmp/planting-pr-example-web-runtime-001/dist/dev/mp-weixin",
+  "pagePath": "/pages/watering-advisor/watering-advisor",
+  "automator_port": 9420,
+  "evidence_paths": [
+    "evidence/runtime-automator.png",
+    "evidence/wx-request.log"
+  ],
+  "failures": [],
+  "not_verified": []
+}

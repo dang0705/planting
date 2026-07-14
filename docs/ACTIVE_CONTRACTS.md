@@ -2,7 +2,7 @@
 doc_id: active-contracts
 status: current
 doc_type: contract
-owner: docs-keeper
+owner: main
 sync_policy: active
 last_verified_date: 2026-06-26
 last_verified_commit: sprint-ai-workflow
@@ -48,7 +48,7 @@ stale_if_changed:
 代码 / schema / tests / package scripts > 本文 > BRV index > 归档文档
 ```
 
-当本文与源码冲突时，先信源码，然后由 `docs_keeper` 修补本文。
+当本文与源码冲突时，先信源码，然后由 main 修补本文。
 
 ## 2. HTTP 云函数通用契约
 

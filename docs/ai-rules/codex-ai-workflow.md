@@ -32,12 +32,10 @@ Phase 7: ClickUp markdown checklist 回写 + Git commit
 | `code_explorer` | 可选低成本代码定位 |
 | `implementer_fast` | 低风险局部契约执行 |
 | `implementer_deep` | 高风险 / 多文件契约执行 |
-| `qa_reviewer` | 测试执行、smoke、e2e、UI/Figma、失败归因 |
-| `docs_keeper` | 文档落地、索引同步、术语一致性 |
 
 ## 4. `main agent` 主导职责
 
-`main agent` 负责技术方向、Implementation Contract、Test Contract、Agent Assignment、code review、ClickUp 回写和 Git commit。
+`main agent` 负责技术方向、Implementation Contract、Test Contract、Agent Assignment、code review、QA、docs/BRV impact、ClickUp 回写和 Git commit。
 
 `main agent` 默认不得亲自写代码。
 
@@ -61,9 +59,9 @@ Phase 7: ClickUp markdown checklist 回写 + Git commit
 4. 不得广播完整 ClickUp、完整 Figma、完整日志、完整规则。
 5. handoff 默认只读轻量恢复摘要。
 
-6. `docs_keeper` 触发规则：
-   - 涉及业务逻辑、流程约束、接口契约、规则语义变更时，默认需要同步 `docs/code-logics` 或 `docs/new-rules`。
-   - 仅在纯文档判读/无逻辑语义变化的场景才可不派发 `docs_keeper`。
+6. docs/BRV 触发规则：
+   - 涉及业务逻辑、流程约束、接口契约、规则语义变更时，main 需要判断 active docs 或 ByteRover 是否受影响。
+   - 不再为 docs/BRV 派发专用 subagent。
 
 
 ## Dispatch-task 外置规则目录

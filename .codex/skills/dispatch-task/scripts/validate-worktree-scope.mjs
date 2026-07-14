@@ -11,6 +11,11 @@ if (!handoffFile || !resultFile || !baselineFile) {
   )
   process.exit(2)
 }
+if (process.env.DISPATCH_POSTFLIGHT_INTERNAL !== '1') {
+  console.error(
+    'deprecated: prefer validate-implementation-postflight.mjs (single postflight report)'
+  )
+}
 const readJson = file => {
   try {
     return JSON.parse(fs.readFileSync(file, 'utf8'))
@@ -124,6 +129,13 @@ need(
   currentHead === baseline.head || handoff?.validation?.allow_head_change === true,
   'git HEAD changed since baseline; commits/checkouts are not allowed during dispatch without explicit authorization'
 )
+if (currentHead !== baseline.head && handoff?.validation?.allow_head_change === true) {
+  need(
+    typeof handoff?.validation?.head_change_reason === 'string' &&
+      handoff.validation.head_change_reason.trim().length > 0,
+    'validation.head_change_reason is required when validation.allow_head_change=true'
+  )
+}
 
 const currentFiles = uniqueSorted(
   parseStatus(runGit(['status', '--short', '--untracked-files=all']))
@@ -240,6 +252,7 @@ const report = {
   missing_baseline_fingerprints: missingBaselineFingerprints,
   disappeared_since_baseline: disappearedSinceBaseline,
   head_changed: currentHead !== baseline.head,
+  head_change_reason: handoff?.validation?.head_change_reason ?? null,
   warnings,
   errors
 }

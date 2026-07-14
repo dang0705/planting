@@ -2,7 +2,7 @@
 doc_id: archive-index
 status: current
 doc_type: archive-index
-owner: docs-keeper
+owner: main
 sync_policy: active
 last_verified_date: 2026-06-06
 last_verified_commit: unknown-from-upload

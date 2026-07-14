@@ -1,20 +1,20 @@
 # Figma Task Boundaries
 
-存在 `figma_link` 时必须区分 main、Codex implementer、external implementer 与 QA 的证据边界。main Lite、implementer 摘要、自检截图不得替代 QA 独立视觉基准。
+存在 `figma_link` 时必须区分 main Lite、Codex implementer、external implementer 与 main QA 的证据边界。main Lite、implementer 摘要、自检截图不得替代 main QA 独立视觉基准。
 
 | 角色 | 必须/允许 | 禁止 |
 |---|---|---|
 | main | 执行 `references/figma-main-lite-policy.md`；可只解析 link/node，或最多一次 `get_metadata` 形成 Lite | context、screenshot、variables、assets、视觉摘要、实现切片、Drilldown |
 | Codex implementer | 使用 `$implementer-ui-execution-policy`，在首次 UI 编辑前直接取 metadata + design context + screenshot；Scope 规则在其 `references/ui-scope-policy.md` 内 | 依赖 main Lite 猜实现、整文件读取 |
 | External implementer | 在 provider-specific prompt 中被强制要求直接读取 Figma；若外部运行时有额外截图禁用规则，则遵守对应规则；缺少实现所需 Figma 证据时必须 blocker | 依赖 main Lite 猜实现、让 main 补读完整 Figma |
-| QA | 使用 `$qa-ui-visual-baseline-policy`，独立取 metadata + reference screenshot，并取得实际运行截图 | 只凭 main/实现者转述判通过、整文件读取 |
+| Main QA | 使用 `$qa-ui-visual-baseline-policy`，独立取 metadata + reference screenshot，并取得实际运行截图 | 只凭 Lite/实现者转述判通过、整文件读取 |
 
 `codex_subagent` Figma 模式必须满足：
 
 ```text
 required_skills.implementer:
   - $implementer-ui-execution-policy
-required_skills.qa:
+required_skills.main:
   - $qa-ui-visual-baseline-policy
 ```
 

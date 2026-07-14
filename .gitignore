@@ -36,6 +36,7 @@ miniprogram-ci-qrcode.*
 cloudbaserc.json
 
 /tmp
+/.tmp
 .cache
 AI-training
 

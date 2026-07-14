@@ -10,7 +10,7 @@
   },
   "target_role": "external_implementer",
   "spawn_contract": {
-    "qa_agent_type": "qa_reviewer",
+    "qa_agent_type": null,
     "context_mode": "isolated",
     "generic_fallback_forbidden": true,
     "identity_receipt_required": true
@@ -147,20 +147,16 @@
     "qa_baseline_fetch_required": true
   },
   "required_skills": {
-    "qa": [
+    "main": [
       "$qa-ui-visual-baseline-policy"
     ]
   },
   "validation": {
+    "miniprogram_automator_required": false,
     "external": [
       "ZCode prompt sentinel check",
       "git diff recovery",
       "unit/lint/typecheck/build/self-check"
-    ],
-    "qa": [
-      "independent Figma baseline",
-      "runtime screenshot",
-      "interaction path"
     ],
     "worktree_baseline_path": ".tmp/dispatch-task/example-zcode-ui-001-worktree-baseline.json"
   },

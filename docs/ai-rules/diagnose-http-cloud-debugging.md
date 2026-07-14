@@ -55,9 +55,9 @@ docs/ai-rules/diagnose-http-cloud-debugging.md
 |---|---:|---|
 | `code_explorer` | 高 | 定位 `diagnose-http`、terminal-e2e、replay、H5 管理页、schema helper、部署脚本 |
 | `implementer_deep` | 中高 | 修改 diagnose-http、replay、CloudBase、schema、H5 代理、部署脚本 |
-| `qa_reviewer` | 中高 | 审查 live 验收是否有效、是否拿既有 session / 错 schema / 错 wrapper 当证据 |
+| main QA | 中高 | 审查 live 验收是否有效、是否拿既有 session / 错 schema / 错 wrapper 当证据 |
 | `architect_reviewer` | 中 | 涉及 route、outcome、condition、replay、schema 边界设计 |
-| `docs_keeper` | 中 | 整理排障文档、同步规则、归档踩坑记录 |
+| main docs / BRV | 中 | 整理排障文档、同步规则、归档踩坑记录 |
 | `implementer_fast` | 低 | 仅当是小范围脚本修复且 Dispatch Plan 明确指定 |
 
 ---
@@ -634,7 +634,7 @@ Dispatch Plan:
   - code_explorer: 定位相关文件、脚本、调用链
   - architect_reviewer: 审查诊断流、route/outcome、schema 或规则边界
   - implementer_deep: 如需高风险实现
-  - qa_reviewer: 审查 replay/live 验收是否有效
+  - main QA: 审查 replay/live 验收是否有效
   - release_ops: 涉及部署、网关、MCP、函数日志、schema、smoke
 - 需要读取的规则文件:
   - docs/ai-rules/diagnose-http-cloud-debugging.md

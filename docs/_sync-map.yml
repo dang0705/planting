@@ -1,7 +1,7 @@
 version: 1
 updated: 2026-06-06
 verified_at_commit: unknown-from-upload
-purpose: "Map changed code/config paths to active docs and ByteRover recall keys. Used by docs_keeper classify mode."
+purpose: "Map changed code/config paths to active docs and ByteRover recall keys. Used by main docs/BRV classify mode."
 
 areas:
   ai-workflow:
@@ -17,14 +17,13 @@ areas:
       - AGENTS.md
       - .codex/context-packs.yml
       - .codex/memory.md
-      - .codex/agents/docs-keeper.toml
       - .codex/skills/dispatch-task/references/knowledge-hygiene-policy.md
       - docs/KNOWLEDGE_GOVERNANCE.md
       - docs/ARCHIVE_INDEX.md
     brv_keys:
       - F-AI-WORKFLOW-001
       - F-WECHAT-MCP-LOCAL-SKILL-PATH-007
-    trigger: "AI default context, dispatch, docs_keeper, ByteRover V4 binding, legacy BRV archive, MCP, model or context-pack changed"
+    trigger: "AI default context, dispatch, main docs/BRV, ByteRover V4 binding, legacy BRV archive, MCP, model or context-pack changed"
     public_contract: true
 
   frontend-app-map:

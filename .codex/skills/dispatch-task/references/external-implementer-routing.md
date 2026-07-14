@@ -27,6 +27,86 @@ external_contract.target_session = current_open_chat | browser_session | remote_
 3. main 负责合同、路径边界、provider 发送 adapter、Child Run Lock、diff review、QA 派发与 Completion Gate。
 4. provider 聊天或 UI 中的“完成”不是完成依据；main 必须重新读取真实 git diff、测试证据和 handoff manual。
 5. provider 失败、无 diff、越权修改、prompt 未完整发送、无法读取必要 Figma 或 adapter 不可用时，不得 silent fallback 到 main 或 Codex subagent；需要用户明确批准后才能改派。
+6. Web/云端 external implementer（TRAE Web、Chrome 插件驱动云端 agent，或 `prompt_transport=browser_plugin`）启动前必须完成 remote sync gate，确保本地要交给云端的代码已经提交并推送到同一个远端分支。
+
+## Web remote sync gate
+
+适用于 `provider=trae`、`provider=chrome_cloud_agent` 或 `prompt_transport=browser_plugin` 的代码实现任务。该 gate 在打开 provider 页面并发送 prompt 之前执行。
+
+硬规则：
+
+1. main 必须先读取 `git status --short`、当前分支、当前 HEAD、upstream 或目标 remote branch，并确认要交给 Web agent 的基线 commit。
+2. main 必须在发送 prompt 前确定本轮 Web agent 唯一远端分支和本地临时 worktree 路径。TRAE 默认分支命名为 `trae/{dispatch_run_id}`；若用户或任务平台已经给出分支，必须写入合同，不得等 Web agent 完成后再从聊天里复制分支名。
+3. 若本地存在未提交改动，必须先执行 `git add`、`git commit`、`git push`，使远端分支包含本轮启动前的完整基线；commit message 必须能识别为 dispatch/web-agent baseline。
+4. 如果工作区包含不属于本轮任务、来源不明或用户未授权打包的脏改动，main 不得静默 commit/push；必须阻断并让用户决定是纳入 baseline、拆分到其他分支，还是先清理。
+5. 发送 prompt 前的 handoff 必须记录 `external_contract.remote_sync`：
+
+```text
+required: true
+status: pushed
+remote
+branch              # 任务开始时确定；TRAE 默认 trae/{dispatch_run_id}
+base_commit
+push_ref
+planned_worktree_path
+pr_url              # 已有 PR 时必填；尚未创建时填 not_available 并在 recovery 时补齐
+dirty_policy: blocked_if_unowned_dirty
+```
+
+6. 因 remote sync 会改变 HEAD，handoff 必须显式设置 `validation.allow_head_change=true`，并记录 `validation.head_change_reason=web_external_remote_sync`。该授权只允许“启动 Web agent 前的 baseline commit/push”和“回收 PR/worktree 时切换到独立测试工作区”，不得用来掩盖实现阶段的未知 checkout、reset 或本地主工作区改写。
+7. send receipt 必须包含同一份 remote sync 证据；缺失或 `status` 不是 `pushed` 时，不得进入 Child Run Lock。
+
+## Web PR recovery and QA
+
+Web/云端 external implementer 返回后，不再要求外部 agent 在本地主工作区写 handoff manual 才能开始 review；main 以最新 PR / 远端分支作为回收入口。若 provider 同时写了 handoff manual，可以作为辅助证据，但不能替代 PR diff 和本地 worktree 验收。Web provider 的 completed 依据是 PR/worktree 证据，不是本地 handoff manual。
+
+硬规则：
+
+1. main 必须使用 handoff 中的 `external_contract.remote_sync.branch` 和 `planned_worktree_path` 回收；provider 聊天声明不能覆盖合同分支。若 Web agent 实际推到其他分支，必须阻断并让用户决定是否更新合同。
+2. main review 必须通过独立 worktree，不切换主工作区。优先使用脚本，避免自然语言步骤漂移：
+
+```bash
+node .codex/skills/dispatch-task/scripts/manage-web-pr-worktree.mjs prepare <handoff.json>
+```
+
+等价手动命令只允许作为脚本不可用时的 fallback：
+
+```bash
+git fetch origin trae/task-123
+git worktree add ../project-pr-123 origin/trae/task-123
+cd ../project-pr-123
+```
+
+3. 在独立 worktree 内执行项目声明的安装、构建和测试命令。具体命令以 `package.json` 和 Handoff Contract 为准；示例：
+
+```bash
+npm install
+npm run build:mp-weixin
+npm run test:e2e
+```
+
+4. 需要本地运行态 QA 时，main 先准备 worktree runtime env；该脚本只复制必要 `.env.local`，只输出脱敏 key 列表，结束后必须 cleanup：
+
+```bash
+node .codex/skills/dispatch-task/scripts/prepare-runtime-worktree-env.mjs <handoff.json> prepare
+node .codex/skills/dispatch-task/scripts/prepare-runtime-worktree-env.mjs <handoff.json> cleanup
+```
+
+5. 小程序端上验收仍按 `AGENTS.md` 和 `references/mini-program-runtime-qa.md` 执行。若本轮代码未部署到云端，必须在独立 worktree 内跑通完整 LAN local-functions flow，并让小程序运行时命中新代码；只跑 PR diff、Node/curl、scoped gateway 或 health route 不算端上验收完成。
+6. 如果 acceptance 包含 `miniprogram-automator` 端上测试，则 `projectPath` 必须直接绑定到 handoff 中 `external_contract.remote_sync.planned_worktree_path` 派生出的 `dist/dev/mp-weixin`。不得继续使用主工作区 `/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin` 冒充验收。main QA 必须先运行预检：
+
+```bash
+node .codex/skills/dispatch-task/scripts/check-miniprogram-qa-env.mjs <handoff.json> <projectPath>
+```
+
+7. 上述 automator 场景中，`npm run dev:mp-weixin:local-functions:lan`、微信开发者工具加载目录、`9420`、`miniprogram-automator`、截图和小程序运行时 `wx.request` 必须全部来自同一个 worktree。只要其中任何一环回到主工作区或其他目录，本轮 QA 必须判为 `devtools_configuration_blocker`。
+8. 端上 automator 验收任务完成后，先停止 `npm run dev:mp-weixin:local-functions:lan` 等长跑进程，再回到主工作区并清理临时 worktree：
+
+```bash
+node .codex/skills/dispatch-task/scripts/manage-web-pr-worktree.mjs cleanup <handoff.json>
+```
+
+9. recovery result 必须记录 `external_recovery_evidence.pr_review`，至少包含 `pr_url` 或 `remote_branch`、`worktree_path`、`fetch_ref`、`worktree_head`、`commands_run`、`main_workspace_untouched=true`。若执行了端上 automator 验收，还必须记录实际 `projectPath`，并与 handoff 中的 `planned_worktree_path` 匹配。缺失或不匹配时不得进入 Completion Gate。
 
 ## 统一 Prompt 生成规范
 
@@ -76,6 +156,7 @@ codex_self_implementation_forbidden: true
 generic_fallback_forbidden: true
 recovery_required: true
 required_prompt_sections
+remote_sync           # Web/云端 provider 必填
 ```
 
 `prompt_transport` 示例：
@@ -107,4 +188,6 @@ required_prompt_sections
 .tmp/dispatch-task/{dispatch_run_id}-handoff-manual.json
 ```
 
-external implementer 开始任务后置 `status=working`，完成或阻塞时更新为 `completed|blocked`。main 低频回收时必须先读该 JSON，再判断是否进入 recovery。若文件缺失或 JSON 损坏，不得用聊天状态补判完成；recovery result 必须记录 `handoff_manual.status=missing|invalid` 并返回 `blocked`。
+非 Web provider 的 external implementer 开始任务后置 `status=working`，完成或阻塞时更新为 `completed|blocked`。main 低频回收时必须先读该 JSON，再判断是否进入 recovery。若文件缺失或 JSON 损坏，不得用聊天状态补判完成；recovery result 必须记录 `handoff_manual.status=missing|invalid` 并返回 `blocked`。
+
+Web/云端 provider 若不能写入本地主工作区的 `handoff_manual.path`，recovery result 记录 `external_handoff_manual.status=not_required_remote_pr`，并必须提供 PR/worktree recovery evidence。不能用聊天状态补判完成。

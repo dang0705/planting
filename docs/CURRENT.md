@@ -2,7 +2,7 @@
 doc_id: current-system-map
 status: current
 doc_type: map
-owner: docs-keeper
+owner: main
 sync_policy: active
 last_verified_date: 2026-06-26
 last_verified_commit: sprint-ai-workflow

@@ -20,20 +20,19 @@ default_context:
 
 packs:
   ai-workflow:
-    trigger: 'dispatch-task, subagent routing, docs_keeper, BRV, Codex rules'
+    trigger: 'dispatch-task, implementer routing, main docs, BRV, Codex rules'
     read:
       - AGENTS.md
       - .codex/memory.md
       - .codex/skills/dispatch-task/SKILL.md
       - .codex/skills/dispatch-task/references/intake-and-project-constraints.md
       - .codex/skills/dispatch-task/references/handoff-and-spawn-gates.md
-      - .codex/agents/docs-keeper.toml
       - docs/KNOWLEDGE_GOVERNANCE.md
       - docs/_sync-map.yml
     max_additional_files: 3
 
   wechat-runtime-qa:
-    trigger: 'miniprogram-automator, 端上自动化, 9420, wx.request, qa_reviewer'
+    trigger: 'miniprogram-automator, 端上自动化, 9420, wx.request, main QA'
     read:
       - .codex/skills/dispatch-task/references/mini-program-runtime-qa.md
       - .codex/skills/dispatch-task/references/review-qa-completion-gates.md
@@ -41,7 +40,7 @@ packs:
       - docs/ai-rules/frontend-automation-id-policy.md
     max_additional_files: 2
 
-  docs-keeper-classify:
+  main-docs-classify:
     trigger: 'any code change after implementation'
     read:
       - docs/_sync-map.yml
@@ -53,7 +52,7 @@ packs:
       - Sync Packet from main agent
     max_additional_files: 0
 
-  docs-keeper-patch:
+  main-docs-patch:
     trigger: 'classify says active contract, runbook, current map, or BRV index is affected'
     read:
       - docs/CURRENT.md

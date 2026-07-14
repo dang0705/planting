@@ -35,6 +35,19 @@ const usesUniUi = value => /uni[-_ ]?ui|uniui/.test(lower(value))
 const includesAll = (array, items) => items.every(item => array?.includes(item))
 const unknownKeys = (object, allowed) =>
   isObject(object) ? Object.keys(object).filter(key => !allowed.includes(key)) : []
+const acceptanceMentionsMiniProgramRuntime = (data.acceptance ?? []).some(item => {
+  const raw = String(item ?? '')
+  const text = raw.toLowerCase()
+  return (
+    text.includes('miniprogram-automator') ||
+    text.includes('miniprogram automator') ||
+    text.includes('9420') ||
+    text.includes('wx.request') ||
+    raw.includes('小程序') ||
+    raw.includes('端上') ||
+    raw.includes('微信开发者工具')
+  )
+})
 
 const mode = data.implementation_mode ?? 'codex_subagent'
 const tier = data.dispatch_tier
@@ -46,6 +59,9 @@ const ui = task.ui_task === true
 const qaRequired = task.qa_required === true
 const risk = task.risk
 const maxContractChars = risk === 'high' ? 24000 : 14000
+const runtimeAcceptanceMode =
+  data?.validation?.runtime_acceptance_mode ??
+  (data?.validation?.miniprogram_automator_required === true ? 'automator_required' : null)
 need(
   raw.length <= maxContractChars,
   `handoff exceeds character budget: ${raw.length}/${maxContractChars}`
@@ -88,6 +104,40 @@ if (codeChanges) {
   need(
     nonEmptyString(data?.validation?.worktree_baseline_path),
     'code changes require validation.worktree_baseline_path'
+  )
+}
+need(isObject(data.validation), 'validation is required')
+need(
+  typeof data?.validation?.miniprogram_automator_required === 'boolean',
+  'validation.miniprogram_automator_required must be boolean'
+)
+need(
+  runtimeAcceptanceMode === null ||
+    ['automator_required', 'batch_substitute_allowed', 'batch_only'].includes(runtimeAcceptanceMode),
+  'validation.runtime_acceptance_mode must be automator_required|batch_substitute_allowed|batch_only'
+)
+if (acceptanceMentionsMiniProgramRuntime) {
+  need(
+    runtimeAcceptanceMode !== null && runtimeAcceptanceMode !== 'batch_only',
+    'mini-program runtime acceptance requires validation.runtime_acceptance_mode=automator_required|batch_substitute_allowed'
+  )
+}
+if (runtimeAcceptanceMode === 'automator_required') {
+  need(
+    data?.validation?.miniprogram_automator_required === true,
+    'automator_required requires validation.miniprogram_automator_required=true'
+  )
+}
+if (runtimeAcceptanceMode === 'batch_substitute_allowed') {
+  need(
+    nonEmptyString(data?.validation?.batch_substitute_user_approval_ref),
+    'batch_substitute_allowed requires validation.batch_substitute_user_approval_ref'
+  )
+}
+if (runtimeAcceptanceMode === 'batch_only') {
+  need(
+    data?.validation?.miniprogram_automator_required === false,
+    'batch_only requires validation.miniprogram_automator_required=false'
   )
 }
 
@@ -182,7 +232,8 @@ if (externalMode) {
     'manual_typing_forbidden',
     'shell_only_ui_automation_forbidden',
     'required_computer_use_actions',
-    'post_send_computer_use_policy'
+    'post_send_computer_use_policy',
+    'remote_sync'
   ])
   need(
     externalUnknown.length === 0,
@@ -217,6 +268,41 @@ if (externalMode) {
     external.handoff_completion_status_source === 'handoff_manual',
     'external_contract.handoff_completion_status_source must be handoff_manual'
   )
+  const webExternalProvider =
+    ['trae', 'chrome_cloud_agent'].includes(provider) || external.prompt_transport === 'browser_plugin'
+  if (webExternalProvider) {
+    const remoteSync = external.remote_sync ?? {}
+    need(isObject(remoteSync), 'web external provider requires external_contract.remote_sync')
+    need(remoteSync.required === true, 'external_contract.remote_sync.required must be true')
+    need(remoteSync.status === 'pushed', 'external_contract.remote_sync.status must be pushed')
+    need(nonEmptyString(remoteSync.remote), 'external_contract.remote_sync.remote is required')
+    need(nonEmptyString(remoteSync.branch), 'external_contract.remote_sync.branch is required')
+    need(
+      nonEmptyString(remoteSync.base_commit),
+      'external_contract.remote_sync.base_commit is required'
+    )
+    need(nonEmptyString(remoteSync.push_ref), 'external_contract.remote_sync.push_ref is required')
+    need(
+      nonEmptyString(remoteSync.planned_worktree_path),
+      'external_contract.remote_sync.planned_worktree_path is required'
+    )
+    need(
+      nonEmptyString(remoteSync.pr_url),
+      'external_contract.remote_sync.pr_url is required; use not_available only before PR creation'
+    )
+    need(
+      remoteSync.dirty_policy === 'blocked_if_unowned_dirty',
+      'external_contract.remote_sync.dirty_policy must be blocked_if_unowned_dirty'
+    )
+    need(
+      data?.validation?.allow_head_change === true,
+      'web external remote sync requires validation.allow_head_change=true'
+    )
+    need(
+      data?.validation?.head_change_reason === 'web_external_remote_sync',
+      'web external remote sync requires validation.head_change_reason=web_external_remote_sync'
+    )
+  }
   const zcodeUnknown = unknownKeys(zcode, [
     'provider',
     'external_implementer',
@@ -249,7 +335,8 @@ if (externalMode) {
     'manual_typing_forbidden',
     'shell_only_ui_automation_forbidden',
     'required_computer_use_actions',
-    'post_send_computer_use_policy'
+    'post_send_computer_use_policy',
+    'remote_sync'
   ])
   if (provider === 'zcode') {
     need(
@@ -397,10 +484,9 @@ if (externalMode) {
 
 if (qaRequired) {
   need(
-    nonEmptyString(data?.spawn_contract?.qa_agent_type),
-    'qa_required=true requires spawn_contract.qa_agent_type'
+    data?.spawn_contract?.qa_agent_type == null,
+    'qa_required=true is main-owned; spawn_contract.qa_agent_type must be omitted or null'
   )
-  need(data.spawn_contract.qa_agent_type === 'qa_reviewer', 'qa_agent_type must be qa_reviewer')
 }
 
 const figma = data.figma ?? {}
@@ -428,8 +514,8 @@ if (nonEmptyString(figma.link)) {
     )
   }
   need(
-    data?.required_skills?.qa?.includes('$qa-ui-visual-baseline-policy'),
-    'Figma task requires $qa-ui-visual-baseline-policy for QA'
+    data?.required_skills?.main?.includes('$qa-ui-visual-baseline-policy'),
+    'Figma task requires required_skills.main to include $qa-ui-visual-baseline-policy'
   )
   if (usesUniUi(pc.component_library)) {
     if (mode === 'codex_subagent') {

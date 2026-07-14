@@ -2,14 +2,13 @@
 doc_id: knowledge-governance
 status: current
 doc_type: policy
-owner: docs-keeper
+owner: main
 sync_policy: active
 last_verified_date: 2026-06-06
 last_verified_commit: unknown-from-upload
 source_of_truth:
   - AGENTS.md
   - .codex/context-packs.yml
-  - .codex/agents/docs-keeper.toml
   - .codex/skills/dispatch-task/references/knowledge-hygiene-policy.md
   - .brvspace
   - docs/_doc-status.yml
@@ -34,7 +33,7 @@ stale_if_changed:
 活文档极简化；
 契约必须同步；
 BRV 只做索引；
-docs-keeper 从同步者变成清理者。
+main 负责最小 active docs 与 ByteRover 影响处理。
 ```
 
 事实优先级：
@@ -80,7 +79,7 @@ docs/_sync-map.yml
 
 `docs/code-logics/**`、`docs/new-rules/**`、`docs/route规划及outcome瘦身计划/**`、`docs/ai-runs/**` 不再被维护成当前事实。
 
-## 4. docs_keeper 工作流
+## 4. Main docs / BRV 工作流
 
 ### 4.1 classify 模式
 

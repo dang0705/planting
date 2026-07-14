@@ -8,8 +8,8 @@ main 必须先判断 `dispatch_tier`，再选择内部路由字段 `implementati
 | `standard_task` | 多文件但在既有架构内，局部功能或普通 UI | `implementation_mode=codex_subagent`，通常派 `implementer_fast` |
 | `deep_contract` | API/schema/迁移/安全/跨系统状态机/兼容性或不可逆风险 | `implementation_mode=codex_subagent`，派 `implementer_deep`，读取 `references/high-risk-workflow.md` |
 | `external_implementer` | 用户或配置明确要求外部 agent 写代码（ZCode、Trae、Chrome 插件驱动的云端 agent 等） | `implementation_mode=external_implementer`，读取 external implementer references |
-| `qa_only` | 只验收、不改代码 | 只派 `qa_reviewer` 或 main 做轻审计 |
-| `docs_only` | 只改文档/说明/契约 | main 或 docs_keeper 处理，按影响范围决定 |
+
+只验收或只改文档的任务由 main 直接执行，**不**进入 Implementation Completion Gate；不得伪装成实现任务。
 
 ## `simple_patch` 边界
 

@@ -160,8 +160,8 @@ record_plan:
 1. 实现者、探索者、用户或 main 可以提出候选。
 2. main 负责内容资格裁决、冲突处理、批准 plan、指定 `record_owner` 及申请破坏性批准。
 3. `record_owner` 必须理解获批语义、处于正确项目目录、读取当前 Skill 并具备目标 Space 权限。
-4. docs_keeper 可以做结构检查、重复/related 治理、readback、Query 验收与 docs/BRV 对账；不得创造事实、扩大 plan 或自行解释 AGENTS 边界。
-5. main 可以直接作为 `record_owner`，不得为角色形式把明确语义转交给不掌握上下文的 Agent。
+4. main 可以做结构检查、重复/related 治理、readback、Query 验收与 docs/BRV 对账；不得创造事实、扩大 plan 或自行解释 AGENTS 边界。
+5. main 是默认 `record_owner`；不得为角色形式把明确语义转交给不掌握上下文的 Agent。
 
 ## 11. Record Acceptance
 
