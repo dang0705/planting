@@ -407,6 +407,7 @@ import { formatMlRangeToBottleText } from '@/utils/water-volume-format.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
 import {
   fetchAdhocPlannerResult,
+  fetchWateringPlannerResult,
   saveAdvisorSession,
   reasonCodeLabel,
   todayStr,
@@ -577,7 +578,9 @@ function selectUserPlant(plant) {
     imageUrl: plant.image || '',
     primaryDisplayName: plant.displayName || '未命名植物',
     canonicalName: plant.canonicalName || '',
-    plantGenus: plant.genus || ''
+    plantGenus: plant.genus || '',
+    userPlantId: plant.id,
+    wateringEvents: plant.wateringEvents || null
   }
 }
 
@@ -663,30 +666,46 @@ async function goToResult() {
   activeStep.value = STEP_RESULT
   try {
     await loadWeatherDays()
-    const catalogPlantId =
-      selectedCatalogPlant.value?.plantIdentityId ||
-      selectedCatalogPlant.value?.sessionPlantId ||
-      ''
-    const result = await fetchAdhocPlannerResult({
-      catalogPlantId,
-      potProfile: buildPotProfilePayload(),
-      weatherDays: weatherDays.value,
-      forecastDays: forecastDays.value
-    })
+    const isUserPlant = Boolean(selectedCatalogPlant.value?.userPlantId)
+    let result
+    if (isUserPlant) {
+      result = await fetchWateringPlannerResult({
+        plantId: selectedCatalogPlant.value.userPlantId,
+        wateringEvents: selectedCatalogPlant.value.wateringEvents,
+        weatherDays: weatherDays.value,
+        forecastDays: forecastDays.value
+      })
+    } else {
+      const catalogPlantId =
+        selectedCatalogPlant.value?.plantIdentityId ||
+        selectedCatalogPlant.value?.sessionPlantId ||
+        ''
+      result = await fetchAdhocPlannerResult({
+        catalogPlantId,
+        potProfile: buildPotProfilePayload(),
+        weatherDays: weatherDays.value,
+        forecastDays: forecastDays.value
+      })
+    }
     if (result) {
       plannerResult.value = result
-      // 落库
-      try {
-        await saveAdvisorSession({
-          catalogPlantId,
-          catalogPlantName: selectedCatalogPlantName.value,
-          potProfile: buildPotProfilePayload(),
-          weatherSummary: result.weatherSummary || {},
-          plannerResult: result.plannerResult || result
-        })
-        savedToBackend.value = true
-      } catch {
-        // 落库失败不影响展示
+      if (!isUserPlant) {
+        try {
+          const catalogPlantId =
+            selectedCatalogPlant.value?.plantIdentityId ||
+            selectedCatalogPlant.value?.sessionPlantId ||
+            ''
+          await saveAdvisorSession({
+            catalogPlantId,
+            catalogPlantName: selectedCatalogPlantName.value,
+            potProfile: buildPotProfilePayload(),
+            weatherSummary: result.weatherSummary || {},
+            plannerResult: result.plannerResult || result
+          })
+          savedToBackend.value = true
+        } catch {
+          // 落库失败不影响展示
+        }
       }
     } else {
       uni.showToast({ title: '计算失败，请重试', icon: 'none' })
