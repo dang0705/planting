@@ -1,8 +1,5 @@
 <template>
-  <view
-    class="overflow-hidden bg-[#f1f8f4]"
-    :class="containerClass"
-  >
+  <view class="overflow-hidden bg-[#f1f8f4]" :class="containerClass">
     <image v-if="plant.image" :src="plant.image" class="h-full w-full" mode="aspectFill" />
     <view v-else class="relative h-full w-full bg-[#f1f8f4]">
       <view
