@@ -310,9 +310,8 @@ onMounted(() => {
 watch(
   () => props.initialProfile,
   profile => {
-    if (profile) {
-      applyPotProfile(profile)
-    }
+    // profile 为 null 时也需重置到默认值，避免切换到无 potProfile 的植物时残留上一个植物的盆型
+    applyPotProfile(profile)
   }
 )
 

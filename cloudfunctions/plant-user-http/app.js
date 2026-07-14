@@ -199,12 +199,15 @@ async function main(event, context) {
 
       // shadow 模式：intervalFactor 恒为 1.0，业务采用 legacy 间隔；
       // WATERING_TRANSPIRATION_ENABLED=true 时 intervalFactor 生效，影响 BASELINE 间隔。
+      // potProfileOverride：独立浇水建议流程可从前端传入当前步骤盆型，优先于数据库 potProfile；
+      // 首页浇水提醒不传此字段，回退到 strategy.potProfile（DB），保持兼容。
+      const potProfileOverride = request.body.potProfile || null
       const plan = buildWateringPlanner({
         wateringStrategy: strategy.watering || {},
         historical,
         forecast,
         behaviorTimeline: timeline,
-        potProfile: strategy.potProfile || null,
+        potProfile: potProfileOverride || strategy.potProfile || null,
         wateringQuantization: strategy.wateringQuantization || null,
         referenceDate,
         transpirationIntervalFactor: transpiration.intervalFactor
@@ -219,7 +222,7 @@ async function main(event, context) {
           historical,
           forecast,
           behaviorTimeline: timeline,
-          potProfile: strategy.potProfile || null,
+          potProfile: potProfileOverride || strategy.potProfile || null,
           wateringQuantization: strategy.wateringQuantization || null,
           referenceDate,
           transpirationIntervalFactor: transpiration.computedFactor

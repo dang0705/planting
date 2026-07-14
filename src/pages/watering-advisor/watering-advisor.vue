@@ -394,11 +394,14 @@ async function goToResult() {
     const isUserPlant = Boolean(selectedCatalogPlant.value?.userPlantId)
     let result
     if (isUserPlant) {
+      // 独立浇水建议：将当前步骤中的盆型（默认值或用户修改值）传给后端参与计算，
+      // 后端优先使用此 potProfile 覆盖数据库旧值；首页浇水提醒不传此字段，仍走 DB 回退
       result = await fetchWateringPlannerResult({
         plantId: selectedCatalogPlant.value.userPlantId,
         wateringEvents: selectedCatalogPlant.value.wateringEvents,
         weatherDays: weatherDays.value,
-        forecastDays: forecastDays.value
+        forecastDays: forecastDays.value,
+        potProfile: payload
       })
     } else {
       const catalogPlantId =

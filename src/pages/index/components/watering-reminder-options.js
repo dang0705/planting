@@ -248,22 +248,30 @@ export function buildWateringPlannerRequestPayload({
   plantId,
   wateringEvents,
   weatherDays,
-  forecastDays
+  forecastDays,
+  potProfile = null
 }) {
-  return {
+  const payload = {
     plantId,
     wateringEvents,
     referenceDate: todayStr(),
     weatherDays,
     forecastDays
   }
+  // 独立浇水建议流程可传入当前步骤中的盆型（默认值或用户修改值），
+  // 后端优先使用此覆盖值；首页浇水提醒不传此字段，后端回退到数据库 potProfile。
+  if (potProfile) {
+    payload.potProfile = potProfile
+  }
+  return payload
 }
 
 export async function fetchWateringPlannerResult({
   plantId,
   wateringEvents,
   weatherDays,
-  forecastDays
+  forecastDays,
+  potProfile = null
 }) {
   const response = await requestHttpFunction('plant-user-http/user-plants/watering-planner', {
     method: 'POST',
@@ -271,7 +279,8 @@ export async function fetchWateringPlannerResult({
       plantId,
       wateringEvents,
       weatherDays,
-      forecastDays
+      forecastDays,
+      potProfile
     })
   })
   return response?.code === 200 ? normalizePlannerResultDate(response.data) : null
