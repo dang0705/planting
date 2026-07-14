@@ -78,6 +78,7 @@
     "deploy:miniprogram:ci": "node scripts/deploy-miniprogram-ci.mjs",
     "build:mp-xhs": "set VITE_APP_ENV=production&& set VITE_CLOUDBASE_ENV_ID=cloud1-2grufevs395a9d5e&& uni build -p mp-xhs",
     "build:mp-xhs:dev": "set VITE_APP_ENV=development&& set VITE_CLOUDBASE_ENV_ID=cloud1-2grufevs395a9d5e&& uni build -p mp-xhs",
+    "e2e:watering-transpiration-v3": "node test/e2e/watering-transpiration-v3/run-e2e.mjs",
     "postinstall": "weapp-tw patch"
   },
   "dependencies": {

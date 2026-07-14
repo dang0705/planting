@@ -32,6 +32,11 @@ const {
 } = require('./watering-reminder-service')
 const { buildWeatherSummary, computeAdhocPlanner } = require('./watering-planner-service')
 const { saveAdvisorSession, listAdvisorSessions } = require('./watering-advisor-service')
+const {
+  computeTranspirationIntervalFactor,
+  resolveShadowModeFromEnv
+} = require('/opt/utils/transpiration')
+const { getUserPlantLightEnvironment } = require('/opt/utils/user-plant-light-environment')
 
 async function main(event, context) {
   const request = getHttpRequestData(event, context)
@@ -175,6 +180,25 @@ async function main(event, context) {
         referenceDate,
         watering_events_10d: wateringEvents
       })
+
+      // v3 蒸腾间隔修正：仅影响"我的植物"下次浇水间隔（BASELINE 间隔），
+      // 不影响单次浇水毫升数（amountRangeMl 由 hydration-load 独立计算），
+      // 也不绕过 WET/DRY Gate 保护。默认影子运行（intervalFactor=1.0）。
+      // 结构化光照环境（facing/windowType/position/hasDirectSun/distance）由职责单一的小模块读取。
+      const transpirationShadow = resolveShadowModeFromEnv(process.env)
+      const lightEnvironment = await getUserPlantLightEnvironment(openid, plantId)
+      const transpiration = computeTranspirationIntervalFactor({
+        lightEnvironment: lightEnvironment || null,
+        weatherDays: weatherDays.slice(0, 10),
+        weatherSummary: historical,
+        plantStrategy: strategy.wateringQuantization
+          ? { wateringQuantization: strategy.wateringQuantization }
+          : null,
+        shadow: transpirationShadow
+      })
+
+      // shadow 模式：intervalFactor 恒为 1.0，业务采用 legacy 间隔；
+      // WATERING_TRANSPIRATION_ENABLED=true 时 intervalFactor 生效，影响 BASELINE 间隔。
       const plan = buildWateringPlanner({
         wateringStrategy: strategy.watering || {},
         historical,
@@ -182,8 +206,28 @@ async function main(event, context) {
         behaviorTimeline: timeline,
         potProfile: strategy.potProfile || null,
         wateringQuantization: strategy.wateringQuantization || null,
-        referenceDate
+        referenceDate,
+        transpirationIntervalFactor: transpiration.intervalFactor
       })
+
+      // 影子模式：计算 candidate（computedFactor）的 BASELINE 日期/窗口，用于比较但不影响业务结果。
+      let candidateNextWaterDate = null
+      let candidateNextWaterWindow = null
+      if (transpirationShadow && transpiration.computedFactor !== 1.0) {
+        const candidatePlan = buildWateringPlanner({
+          wateringStrategy: strategy.watering || {},
+          historical,
+          forecast,
+          behaviorTimeline: timeline,
+          potProfile: strategy.potProfile || null,
+          wateringQuantization: strategy.wateringQuantization || null,
+          referenceDate,
+          transpirationIntervalFactor: transpiration.computedFactor
+        })
+        candidateNextWaterDate = candidatePlan.nextWaterDate
+        candidateNextWaterWindow = candidatePlan.nextWaterWindow
+      }
+
       const planId = `plan_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
       return jsonResponse(200, {
         code: 200,
@@ -194,7 +238,6 @@ async function main(event, context) {
           nextWaterReason: plan.nextWaterReason,
           wateringContext: plan.wateringContext,
           action: plan.action,
-          // v2.1 新增字段
           amountRangeMl: plan.amountRangeMl,
           potVolumeMl: plan.potGeometry?.potVolumeMl ?? 0,
           stopCondition: plan.stopCondition,
@@ -204,7 +247,13 @@ async function main(event, context) {
           wetPressureLoad: plan.wetPressureLoad,
           lastEffectiveRootWateredDaysAgo: plan.lastEffectiveRootWateredDaysAgo,
           rootZoneMoistureIndex: plan.rootZoneMoistureIndex,
-          userDoseEcho: plan.userDoseEcho
+          userDoseEcho: plan.userDoseEcho,
+          // v3 蒸腾间隔修正审计字段
+          transpirationIntervalFactor: plan.transpirationIntervalFactor,
+          transpirationShadow: transpiration.shadow,
+          transpirationComputedFactor: transpiration.computedFactor,
+          transpirationCandidateNextWaterDate: candidateNextWaterDate,
+          transpirationCandidateNextWaterWindow: candidateNextWaterWindow
         }
       })
     }

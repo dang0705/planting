@@ -144,57 +144,14 @@ async function computeAdhocPlanner({
     referenceDate
   })
 
-  // 无浇水历史场景下，覆盖 nextWaterReason 为更适合独立入口的文案
-  const adhocNextWaterReason = resolveAdhocNextWaterReason(plan)
-
-  const planId = `adhoc_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+  // 独立浇水仅返回建议毫升数，不返回日期/间隔/盆土判断/蒸腾/光照文案。
   return {
     statusCode: 200,
     data: {
-      planId,
-      catalogPlantId,
-      catalogPlantName: plant.primaryDisplayName || plant.canonicalName || '',
-      nextWaterDate: plan.nextWaterDate,
-      nextWaterWindow: plan.nextWaterWindow,
-      nextWaterReason: adhocNextWaterReason,
-      wateringContext: plan.wateringContext,
-      action: plan.action,
-      amountRangeMl: plan.amountRangeMl,
-      potVolumeMl: plan.potGeometry?.potVolumeMl ?? 0,
-      stopCondition: plan.stopCondition,
-      confidenceLevel: plan.confidenceLevel,
-      reasonCodes: plan.reasonCodes,
-      effectiveHydrationLoad: plan.effectiveHydrationLoad,
-      wetPressureLoad: plan.wetPressureLoad,
-      lastEffectiveRootWateredDaysAgo: plan.lastEffectiveRootWateredDaysAgo,
-      rootZoneMoistureIndex: plan.rootZoneMoistureIndex,
-      // 用于落库的天气摘要快照
-      weatherSummary: { historical, forecast },
-      // 用于落库的完整 planner 结果
-      plannerResult: plan
-    }
+      amountRangeMl: plan.amountRangeMl
+    },
+    error: null
   }
-}
-
-/**
- * 无浇水历史场景下的下次浇水原因文案覆盖。
- *
- * planner 默认输出的 "环境偏干或距上次浇水较久" 在独立入口（无历史）场景下
- * "距上次浇水较久" 不准确，替换为更合适的表述。
- */
-function resolveAdhocNextWaterReason(plan) {
-  const original = plan.nextWaterReason || ''
-  if (plan.wateringContext === 'likely_too_dry') {
-    return '当前没有浇水记录，建议尽快检查土壤并补水'
-  }
-  if (plan.wateringContext === 'keep_baseline_or_check_soil') {
-    if (!plan.nextWaterDate) {
-      return '当前没有浇水记录，建议先观察土壤干湿状态再决定浇水'
-    }
-    return original
-  }
-  // WET 场景保持原文案
-  return original
 }
 
 module.exports = {

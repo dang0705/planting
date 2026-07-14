@@ -1,46 +1,30 @@
 'use strict'
 
 /**
- * 浇水规划器 v2.1 —— 从 diagnose-http 抽取的共享纯计算模块。
- *
- * v2.1 核心升级：
- *   - 移除 wateringCount10d 作为核心判断或 fallback。
- *   - 引入 effectiveHydrationLoad / wetPressureLoad / lastEffectiveRootWateredDaysAgo /
- *     rootZoneMoistureIndex / Dry/Wet Gate。
- *   - 接入盆型几何因子（potGeometry）影响干透速率、排水风险和水量建议。
- *   - watering_strategy_json.way/freq 影响动态回看窗口、Dry/Wet Gate、下次水量建议和提醒时间。
- *   - unknown 浇水历史不能当成 0 次；喷雾不能抵消干燥风险。
- *   - 浇透 + 近日期 + 强偏湿 → 过浇风险或查土策略。
- *   - 无排水孔 + 窄底盆 → 提高 wetPressureLoad 与 OVERWATERING_RISK_WARNING 权重。
- *
+ * 浇水规划器 v2.1 —— 共享纯计算模块。
+ * 日期算术、行为时间线、间隔/下次浇水日期组合已提取到 watering-schedule.js。
  * 纯函数，无 DB、无外部 IO。diagnose-http 与 plant-user-http 共用此模块。
  */
 
 const { computePotGeometry } = require('./pot-geometry')
 const {
-  DOSE_CLASS,
   GATE_STATE,
   REASON_CODE,
-  resolveDoseClass,
   resolveDoseClassWithConflict,
   resolveLookbackWindowDays,
-  computeEffectiveHydrationLoad,
-  computeWetPressureLoad,
-  computeLastEffectiveRootWateredDaysAgo,
-  computeRootZoneMoistureIndex,
   evaluateDryWetGate,
   hasRecentThoroughWatering,
   computeAmountSuggestion,
   resolveUserDoseEcho
 } = require('./hydration-load')
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000
-
-const WATERING_CONTEXTS = Object.freeze({
-  WET: 'likely_too_wet',
-  DRY: 'likely_too_dry',
-  BASELINE: 'keep_baseline_or_check_soil'
-})
+const {
+  WATERING_CONTEXTS,
+  isPlainObject,
+  buildBehaviorSummary,
+  normalizeCareBehaviorTimeline,
+  resolveBaselineInterval,
+  resolveNextWaterDate
+} = require('./watering-schedule')
 
 const WATERING_ACTIONS = Object.freeze({
   WET: 'delay_and_check_soil',
@@ -50,29 +34,7 @@ const WATERING_ACTIONS = Object.freeze({
 
 const FORMULA_VERSION = 'watering_planner_v21'
 
-/* ---------- 基础工具函数 ---------- */
-
-function normalizeRawText(value = '') {
-  return String(value || '')
-    .normalize('NFKC')
-    .trim()
-}
-
-function normalizeText(value = '') {
-  return normalizeRawText(value).replace(/\s+/g, '_').toLowerCase()
-}
-
-function isPlainObject(value) {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
-}
-
-function toNumber(value) {
-  if (value === null || value === undefined || value === '') {
-    return undefined
-  }
-  const number = Number(value)
-  return Number.isFinite(number) ? number : undefined
-}
+/* ---------- 基础工具函数（planner 专有） ---------- */
 
 function clonePlain(value) {
   if (!isPlainObject(value) && !Array.isArray(value)) {
@@ -91,214 +53,6 @@ function pickNumberFields(source = {}, fields = []) {
   return picked
 }
 
-function normalizeDate(value = '') {
-  const raw = normalizeRawText(value)
-  if (!raw) {
-    return ''
-  }
-  const match = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/)
-  if (match) {
-    return [match[1], String(match[2]).padStart(2, '0'), String(match[3]).padStart(2, '0')].join(
-      '-'
-    )
-  }
-  return raw.slice(0, 10)
-}
-
-function parseDate(value = '') {
-  const normalized = normalizeDate(value)
-  if (!normalized) {
-    return null
-  }
-  const date = new Date(`${normalized}T12:00:00Z`)
-  return Number.isNaN(date.getTime()) ? null : date
-}
-
-function daysAgo(referenceDate = '', eventDate = '') {
-  const reference = parseDate(referenceDate)
-  const event = parseDate(eventDate)
-  if (!reference || !event) {
-    return null
-  }
-  return Math.floor((reference.getTime() - event.getTime()) / MS_PER_DAY)
-}
-
-function latestDaysAgo(referenceDate = '', events = []) {
-  let latest = null
-  for (const event of events) {
-    const diff = daysAgo(referenceDate, event.date)
-    if (diff === null || diff < 0) {
-      continue
-    }
-    latest = latest === null ? diff : Math.min(latest, diff)
-  }
-  return latest
-}
-
-function formatDate(date) {
-  if (!date || Number.isNaN(date.getTime())) {
-    return null
-  }
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
-
-function normalizeWateringEvent(event = {}, conservativeReferenceDate = '') {
-  if (!isPlainObject(event)) {
-    return null
-  }
-  const watered = event.watered !== false && event.didWater !== false && event.action !== 'none'
-  const amount = normalizeText(
-    event.amount || event.wateringAmount || event.watering_amount || event.level || event.value
-  )
-  // 录入侧新增：绝对水量 ml（矿泉水瓶度量），优先于相对档参与算法反推
-  const amountMlRaw = event.amountMl ?? event.amount_ml
-  const amountMl = Number(amountMlRaw)
-  const hasAmountMl = Number.isFinite(amountMl) && amountMl > 0
-  const date = normalizeDate(
-    event.date || event.eventDate || event.day || conservativeReferenceDate
-  )
-  if (!watered && !amount && !hasAmountMl) {
-    return null
-  }
-  const normalized = {
-    date,
-    watered: true,
-    amount: amount || 'unknown'
-  }
-  if (hasAmountMl) {
-    normalized.amountMl = Math.round(amountMl)
-  }
-  return normalized
-}
-
-function dedupeNormalizedEvents(events = [], keyResolver = event => JSON.stringify(event)) {
-  const seen = new Map()
-  for (const event of events) {
-    if (!event) {
-      continue
-    }
-    const key = keyResolver(event)
-    if (!seen.has(key)) {
-      seen.set(key, event)
-    }
-  }
-  return Array.from(seen.values())
-}
-
-function limitRecentNormalizedEvents(events = [], limit = 10) {
-  return events
-    .slice()
-    .sort((a, b) => normalizeDate(b.date).localeCompare(normalizeDate(a.date)))
-    .slice(0, limit)
-    .sort((a, b) => normalizeDate(a.date).localeCompare(normalizeDate(b.date)))
-}
-
-/* ---------- 行为时间线归一化 ---------- */
-
-function normalizeCareBehaviorTimeline(input = {}) {
-  const source = isPlainObject(input) ? input : {}
-  const referenceDate = normalizeDate(
-    source.referenceDate ||
-      source.reference_date ||
-      source.diagnosisDate ||
-      source.diagnosis_date ||
-      new Date().toISOString()
-  )
-  const wateringEvents10d = [
-    ...(Array.isArray(source.wateringEvents10d) ? source.wateringEvents10d : []),
-    ...(Array.isArray(source.watering_events_10d) ? source.watering_events_10d : [])
-  ]
-    .map(event => normalizeWateringEvent(event, referenceDate))
-    .filter(Boolean)
-  const dedupedWateringEvents10d = dedupeNormalizedEvents(wateringEvents10d, event =>
-    normalizeDate(event.date)
-  )
-  const recentWateringEvents10d = limitRecentNormalizedEvents(dedupedWateringEvents10d)
-
-  const summary = buildBehaviorSummary(referenceDate, {
-    wateringEvents: recentWateringEvents10d
-  })
-
-  return {
-    referenceDate,
-    reference_date: referenceDate,
-    wateringEvents10d: recentWateringEvents10d,
-    watering_events_10d: recentWateringEvents10d,
-    summary
-  }
-}
-
-/**
- * 构建 v2.1 行为摘要。
- *
- * 移除 wateringCount10d，改用 v2.1 字段：
- *   - effectiveHydrationLoad
- *   - wetPressureLoad
- *   - lastEffectiveRootWateredDaysAgo
- *   - rootZoneMoistureIndex
- *   - thoroughWateringCount10d（保留用于诊断展示，非核心判断）
- *   - lastWateredDaysAgo（保留用于诊断展示，非核心判断）
- */
-function buildBehaviorSummary(referenceDate = '', events = {}, potGeometry = {}) {
-  const wateringEvents = Array.isArray(events.wateringEvents) ? events.wateringEvents : []
-  const lookbackWindowDays = resolveLookbackWindowDays([5, 8], potGeometry)
-  const potVolumeMl = Number(potGeometry.potVolumeMl) || 0
-
-  const effectiveHydrationLoad = computeEffectiveHydrationLoad(
-    wateringEvents,
-    referenceDate,
-    lookbackWindowDays,
-    potVolumeMl
-  )
-  const wetPressureLoad = computeWetPressureLoad(
-    wateringEvents,
-    referenceDate,
-    lookbackWindowDays,
-    potGeometry
-  )
-  const lastEffectiveRootWateredDaysAgo = computeLastEffectiveRootWateredDaysAgo(
-    wateringEvents,
-    referenceDate,
-    potVolumeMl
-  )
-  const rootZoneMoistureIndex = computeRootZoneMoistureIndex(
-    effectiveHydrationLoad,
-    wetPressureLoad,
-    Number(potGeometry.potGeometryDryDownFactor) || 1.0,
-    0
-  )
-
-  return {
-    effectiveHydrationLoad,
-    wetPressureLoad,
-    lastEffectiveRootWateredDaysAgo,
-    rootZoneMoistureIndex,
-    thoroughWateringCount10d: wateringEvents.filter(
-      event => resolveDoseClass(event, potVolumeMl) === DOSE_CLASS.THOROUGH
-    ).length,
-    lastWateredDaysAgo: latestDaysAgo(referenceDate, wateringEvents),
-    lookbackWindowDays
-  }
-}
-
-/* ---------- 阈值解析 ---------- */
-
-function resolveBaselineInterval(wateringStrategy = {}) {
-  const freq =
-    wateringStrategy.freq || wateringStrategy.intervalDays || wateringStrategy.interval_days
-  if (Array.isArray(freq) && freq.length >= 2) {
-    const min = toNumber(freq[0])
-    const max = toNumber(freq[1])
-    if (min !== undefined && max !== undefined) {
-      return [min, max]
-    }
-  }
-  return [5, 8]
-}
-
 function buildPlannerFormulaStep({
   key = '',
   expression = '',
@@ -314,88 +68,6 @@ function buildPlannerFormulaStep({
     thresholds,
     result,
     ...(passed === null || passed === undefined ? {} : { passed: Boolean(passed) })
-  }
-}
-
-/**
- * 从 wateringContext + baseline 推导出下次浇水日期。
- *
- * - WET：偏湿，延迟浇水，下次返回 null 让前端提示"暂停浇水并检查土壤"
- * - DRY：偏干，尽快浇水，下次 = 今天 + 1
- * - BASELINE：正常，下次 = 最近浇水日 + mid(baseline interval)；无浇水记录时返回 null
- *
- * 所有日期均 clamp 到不早于明天（referenceDate + 1），避免算出过去日期。
- *
- * @param {object} baseline - { intervalDays: [min, max] }
- * @param {string} wateringContext - WATERING_CONTEXTS 枚举值
- * @param {object} timeline - 归一化后的行为时间线
- * @param {string} referenceDate - 参考日期 'YYYY-MM-DD'
- * @returns {{ nextWaterDate: string|null, nextWaterWindow: [number, number], nextWaterReason: string }}
- */
-function resolveNextWaterDate(
-  baseline,
-  wateringContext,
-  timeline,
-  referenceDate,
-  intervalFactor = 1.0
-) {
-  const interval = baseline.intervalDays || [5, 8]
-  const minDays = Math.max(1, Number(interval[0]) || 5)
-  const maxDays = Math.max(minDays, Number(interval[1]) || minDays)
-
-  const wateringEvents = timeline?.watering_events_10d || timeline?.wateringEvents10d || []
-  const refDate = parseDate(referenceDate) || new Date()
-
-  function clampToTomorrow(date) {
-    const tomorrow = new Date(refDate)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    tomorrow.setHours(12, 0, 0, 0)
-    if (date < tomorrow) {
-      return tomorrow
-    }
-    return date
-  }
-
-  if (wateringContext === WATERING_CONTEXTS.WET) {
-    return {
-      nextWaterDate: null,
-      nextWaterWindow: [minDays, maxDays],
-      nextWaterReason: '近期浇水偏多或环境偏湿，建议暂停浇水并检查土壤干湿状态'
-    }
-  }
-
-  if (wateringContext === WATERING_CONTEXTS.DRY) {
-    const tomorrow = new Date(refDate)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    return {
-      nextWaterDate: formatDate(tomorrow),
-      nextWaterWindow: [1, minDays],
-      nextWaterReason: '环境偏干或距上次浇水较久，建议尽快检查土壤并补水'
-    }
-  }
-
-  // BASELINE：排水孔仅在此轻微调制周期（intervalFactor），DRY/WET 不受影响
-  const factor = Number(intervalFactor) > 0 ? Number(intervalFactor) : 1.0
-  const baselineMinDays = Math.max(1, Math.round(minDays * factor))
-  const baselineMaxDays = Math.max(baselineMinDays, Math.round(maxDays * factor))
-  const baselineMidDays = Math.max(1, Math.round((baselineMinDays + baselineMaxDays) / 2))
-  if (wateringEvents.length === 0) {
-    return {
-      nextWaterDate: null,
-      nextWaterWindow: [baselineMinDays, baselineMaxDays],
-      nextWaterReason: '尚无浇水记录，请先选择最近 10 天的浇水日期'
-    }
-  }
-  const latestEvent = wateringEvents
-    .slice()
-    .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))[0]
-  const base = latestEvent ? parseDate(latestEvent.date) || refDate : refDate
-  base.setDate(base.getDate() + baselineMidDays)
-  const clamped = clampToTomorrow(base)
-  return {
-    nextWaterDate: formatDate(clamped),
-    nextWaterWindow: [baselineMinDays, baselineMaxDays],
-    nextWaterReason: '按属级基线间隔建议下次浇水时间'
   }
 }
 
@@ -433,7 +105,8 @@ function buildWateringPlanner({
   wateringQuantization = null,
   thresholds: rawThresholds = null,
   referenceDate = '',
-  resolveThresholds = null
+  resolveThresholds = null,
+  transpirationIntervalFactor = null
 } = {}) {
   const thresholds = resolveThresholds
     ? resolveThresholds(rawThresholds).watering
@@ -562,12 +235,24 @@ function buildWateringPlanner({
 
   // 下次浇水日期（排水孔轻微拉长 BASELINE 周期：无孔 ×1.15，其余 ×1.0）
   const drainageIntervalFactor = potGeometry.hasDrainageHole === 'false' ? 1.15 : 1.0
+  // v3 蒸腾因素：仅影响 BASELINE 间隔，不影响 DRY/WET 判定，也不影响单次毫升数。
+  // 缺省/中性/影子运行时为 1.0，由调用方通过 transpiration Layer 注入。
+  const transpirationFactor =
+    transpirationIntervalFactor === null || transpirationIntervalFactor === undefined
+      ? 1.0
+      : Number.isFinite(Number(transpirationIntervalFactor))
+        ? Number(transpirationIntervalFactor)
+        : 1.0
+  const combinedIntervalFactor = Math.max(
+    0.5,
+    Math.min(1.5, drainageIntervalFactor * transpirationFactor)
+  )
   const nextWater = resolveNextWaterDate(
     baseline,
     gate.wateringContext,
     timeline,
     effectiveReferenceDate,
-    drainageIntervalFactor
+    combinedIntervalFactor
   )
 
   // 计算过程（保留 formula step 结构，兼容诊断页展示）
@@ -744,7 +429,9 @@ function buildWateringPlanner({
     // 下次浇水日期
     nextWaterDate: nextWater.nextWaterDate,
     nextWaterWindow: nextWater.nextWaterWindow,
-    nextWaterReason: nextWater.nextWaterReason
+    nextWaterReason: nextWater.nextWaterReason,
+    // v3 蒸腾间隔修正（仅 BASELINE 间隔生效，不影响单次毫升数）
+    transpirationIntervalFactor: transpirationFactor
   }
 
   return result
