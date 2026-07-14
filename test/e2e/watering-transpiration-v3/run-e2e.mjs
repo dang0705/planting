@@ -234,7 +234,9 @@ async function main() {
     console.log(
       '[e2e]   2. 以 WATERING_TRANSPIRATION_ENABLED=true 启动同一 worktree 的完整 LAN flow:'
     )
-    console.log('[e2e]      WATERING_TRANSPIRATION_ENABLED=true npm run dev:mp-weixin:local-functions:lan')
+    console.log(
+      '[e2e]      WATERING_TRANSPIRATION_ENABLED=true npm run dev:mp-weixin:local-functions:lan'
+    )
     console.log(
       '[e2e]   3. 运行: npm run e2e:watering-transpiration-v3 -- --watering-transpiration-mode=active'
     )

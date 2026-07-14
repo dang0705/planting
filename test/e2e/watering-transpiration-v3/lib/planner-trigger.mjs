@@ -225,17 +225,25 @@ export async function triggerPlannerNoSideEffect(mp, page, plantId, options) {
 /**
  * 从运行时 DOM 收集所有可用植物入口的 plantId。
  *
+ * 兼容构建前缀：使用 stableId（去除 `<scopeId>--` 前缀后的完整稳定 ID）
+ * 来提取中间动态 plantId，避免把 scopeId 当成 plantId 的一部分。
+ *
  * @param {object} page
- * @returns {Promise<Array<{plantId: string, element: object, id: string}>>}
+ * @returns {Promise<Array<{plantId: string, element: object, id: string, stableId: string}>>}
  */
 export async function collectWateringEntries(page) {
   const entries = await collectByIdPrefix(page, WATERING_ENTRY_PREFIX)
-  const waterEntries = entries.filter(e => e.id.endsWith(WATERING_ENTRY_SUFFIX))
-  return waterEntries.map(e => ({
-    plantId: e.id.slice(WATERING_ENTRY_PREFIX.length, e.id.length - WATERING_ENTRY_SUFFIX.length),
-    element: e.element,
-    id: e.id
-  }))
+  return entries
+    .filter(e => e.stableId.endsWith(WATERING_ENTRY_SUFFIX))
+    .map(e => ({
+      plantId: e.stableId.slice(
+        WATERING_ENTRY_PREFIX.length,
+        e.stableId.length - WATERING_ENTRY_SUFFIX.length
+      ),
+      element: e.element,
+      id: e.id,
+      stableId: e.stableId
+    }))
 }
 
 function sleep(ms) {

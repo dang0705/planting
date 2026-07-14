@@ -5,11 +5,15 @@
  *
  * 职责：
  *   - 优先按稳定 automation ID 定位元素（不以中文文案、坐标、脆弱层级为主）
- *   - 提供 findViewById / findByIdPrefix / waitForElement
+ *   - 提供 findViewById / findByIdPrefix / findByIdPrefixAndSuffix / collectByIdPrefix
  *   - 提供 tap / input / readText 辅助
  *   - 提供 page data / store 摘要读取
  *
  * 关键修复：
+ *   - 构建后 ID 前缀兼容：uni-app 构建产物会为稳定 ID 加 scope 前缀，
+ *     形如 `55d0b8b0--watering-advisor-search-input`。
+ *     精确匹配优先；精确找不到时允许匹配 `^[A-Za-z0-9]+--<稳定ID>$`。
+ *     只接受完整稳定 ID，不用中文文案、坐标或宽泛 contains。
  *   - safeQueryAll 直接使用正确标签 selector（view/button/input），
  *     不先查 #view/#button（那样永远返回空数组并短路）。
  *   - 空数组继续合法 fallback。
@@ -20,8 +24,64 @@
 const DEFAULT_WAIT_TIMEOUT_MS = 8000
 const DEFAULT_POLL_INTERVAL_MS = 300
 
+/**
+ * uni-app 构建前缀正则：^[A-Za-z0-9]+--<稳定ID>$
+ * 前缀为 scopeId（hex 或字母数字），后跟 `--`，再跟完整稳定 ID。
+ */
+const UNI_SCOPE_PREFIX_RE = /^([A-Za-z0-9]+)--(.+)$/
+
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+/**
+ * 判断 actualId 是否匹配稳定 ID（精确优先，兼容构建前缀）。
+ * - 精确匹配: actualId === stableId
+ * - 构建前缀: actualId === `<scopeId>--<stableId>`，且 scopeId 仅含字母数字
+ *
+ * @param {string|null|undefined} actualId 运行时元素 id 属性
+ * @param {string} stableId 稳定 ID（不含构建前缀）
+ * @returns {boolean}
+ */
+export function matchesStableId(actualId, stableId) {
+  if (!actualId || typeof actualId !== 'string') return false
+  if (actualId === stableId) return true
+  const m = actualId.match(UNI_SCOPE_PREFIX_RE)
+  if (m && m[2] === stableId) return true
+  return false
+}
+
+/**
+ * 判断 actualId 是否以稳定前缀开头（精确优先，兼容构建前缀）。
+ * - 精确前缀: actualId.startsWith(prefix)
+ * - 构建前缀: actualId === `<scopeId>--<prefix>...` 或 `<scopeId>--<prefix>`
+ *
+ * 用于 plant-card-reminder-{id}-water 这类动态前后缀 ID。
+ *
+ * @param {string|null|undefined} actualId
+ * @param {string} prefix 稳定前缀（不含构建前缀）
+ * @returns {boolean}
+ */
+export function matchesStableIdPrefix(actualId, prefix) {
+  if (!actualId || typeof actualId !== 'string') return false
+  if (actualId.startsWith(prefix)) return true
+  const m = actualId.match(UNI_SCOPE_PREFIX_RE)
+  if (m && m[2].startsWith(prefix)) return true
+  return false
+}
+
+/**
+ * 从实际 ID 提取稳定 ID（去除构建前缀）。
+ * 若无构建前缀，原样返回。
+ *
+ * @param {string} actualId
+ * @returns {string}
+ */
+export function extractStableId(actualId) {
+  if (!actualId || typeof actualId !== 'string') return actualId
+  const m = actualId.match(UNI_SCOPE_PREFIX_RE)
+  if (m) return m[2]
+  return actualId
 }
 
 /**
@@ -37,112 +97,87 @@ async function safeQueryAll(page, selector) {
 }
 
 /**
+ * 收集页面所有可交互元素（view/button/input）的 id 属性。
+ * @returns {Promise<Array<{element: object, id: string}>>}
+ */
+async function collectAllElementsWithId(page) {
+  const all = [
+    ...(await safeQueryAll(page, 'view')),
+    ...(await safeQueryAll(page, 'button')),
+    ...(await safeQueryAll(page, 'input'))
+  ]
+  const results = []
+  for (const el of all) {
+    try {
+      const attr = await el.attribute('id')
+      if (attr) results.push({ element: el, id: attr })
+    } catch (e) {}
+  }
+  return results
+}
+
+/**
  * 按稳定 ID 定位元素。优先 page.$('#id')，回退遍历 view/button/input。
- *
- * uni-app 自定义组件 scope 内 page.$('#id') 可能失效，
- * 回退用 page.$$('view') / page.$$('button') / page.$$('input') 遍历匹配 id 属性。
+ * 精确匹配优先；精确找不到时兼容构建前缀 `<scopeId>--<stableId>`。
  */
 export async function findViewById(page, id) {
-  // 优先 page.$('#id')
+  // 优先 page.$('#id')（精确 ID 选择器）
   try {
     const el = await page.$(`#${id}`)
     if (el) return el
   } catch (e) {}
 
-  // 回退：遍历 view
-  const views = await safeQueryAll(page, 'view')
-  for (const v of views) {
-    try {
-      const attr = await v.attribute('id')
-      if (attr === id) return v
-    } catch (e) {}
-  }
-  // 回退：遍历 button
-  const buttons = await safeQueryAll(page, 'button')
-  for (const b of buttons) {
-    try {
-      const attr = await b.attribute('id')
-      if (attr === id) return b
-    } catch (e) {}
-  }
-  // 回退：遍历 input
-  const inputs = await safeQueryAll(page, 'input')
-  for (const inp of inputs) {
-    try {
-      const attr = await inp.attribute('id')
-      if (attr === id) return inp
-    } catch (e) {}
+  // 回退：遍历所有元素，精确匹配或构建前缀匹配
+  const all = await collectAllElementsWithId(page)
+  for (const { element, id: attr } of all) {
+    if (matchesStableId(attr, id)) return element
   }
   return null
 }
 
 /**
  * 按 ID 前缀定位元素（如 plant-card-reminder-{id}-water）。
- * 返回 { element, id } 或 null。
+ * 返回 { element, id, stableId } 或 null。
+ * 兼容构建前缀：`<scopeId>--<prefix>...`
  */
 export async function findByIdPrefix(page, prefix) {
-  const views = await safeQueryAll(page, 'view')
-  for (const v of views) {
-    try {
-      const attr = await v.attribute('id')
-      if (attr && attr.startsWith(prefix)) return { element: v, id: attr }
-    } catch (e) {}
-  }
-  const buttons = await safeQueryAll(page, 'button')
-  for (const b of buttons) {
-    try {
-      const attr = await b.attribute('id')
-      if (attr && attr.startsWith(prefix)) return { element: b, id: attr }
-    } catch (e) {}
-  }
-  const inputs = await safeQueryAll(page, 'input')
-  for (const inp of inputs) {
-    try {
-      const attr = await inp.attribute('id')
-      if (attr && attr.startsWith(prefix)) return { element: inp, id: attr }
-    } catch (e) {}
+  const all = await collectAllElementsWithId(page)
+  for (const { element, id: attr } of all) {
+    if (matchesStableIdPrefix(attr, prefix)) {
+      return { element, id: attr, stableId: extractStableId(attr) }
+    }
   }
   return null
 }
 
 /**
  * 按 ID 前缀和后缀定位元素（如 plant-card-reminder-{id}-water）。
- * 返回 { element, id, plantId } 或 null。
+ * 返回 { element, id, stableId, extractedId } 或 null。
+ * 兼容构建前缀：先提取稳定 ID，再按 prefix/suffix 切割中间动态部分。
  */
 export async function findByIdPrefixAndSuffix(page, prefix, suffix) {
-  const all = [
-    ...(await safeQueryAll(page, 'view')),
-    ...(await safeQueryAll(page, 'button')),
-    ...(await safeQueryAll(page, 'input'))
-  ]
-  for (const el of all) {
-    try {
-      const attr = await el.attribute('id')
-      if (!attr || !attr.startsWith(prefix) || !attr.endsWith(suffix)) continue
-      const middle = attr.slice(prefix.length, attr.length - suffix.length)
-      return { element: el, id: attr, extractedId: middle }
-    } catch (e) {}
+  const all = await collectAllElementsWithId(page)
+  for (const { element, id: attr } of all) {
+    const stable = extractStableId(attr)
+    if (!stable.startsWith(prefix) || !stable.endsWith(suffix)) continue
+    const middle = stable.slice(prefix.length, stable.length - suffix.length)
+    return { element, id: attr, stableId: stable, extractedId: middle }
   }
   return null
 }
 
 /**
  * 收集所有匹配 ID 前缀的元素。
+ * 返回数组，每项含 { element, id, stableId }。
+ * 兼容构建前缀。
  */
 export async function collectByIdPrefix(page, prefix) {
   const results = []
-  const all = [
-    ...(await safeQueryAll(page, 'view')),
-    ...(await safeQueryAll(page, 'button')),
-    ...(await safeQueryAll(page, 'input'))
-  ]
-  for (const el of all) {
-    try {
-      const attr = await el.attribute('id')
-      if (attr && attr.startsWith(prefix)) {
-        results.push({ element: el, id: attr })
-      }
-    } catch (e) {}
+  const all = await collectAllElementsWithId(page)
+  for (const { element, id: attr } of all) {
+    if (matchesStableIdPrefix(attr, prefix)) {
+      results.push({ element, id: attr, stableId: extractStableId(attr) })
+    }
   }
   return results
 }
