@@ -2,7 +2,6 @@
   <view
     class="flex items-center gap-3 rounded-[12px] border p-3"
     :class="selected ? 'border-[#2d7a4f] bg-[#e8f3ea]' : 'border-[rgba(45,122,79,0.15)] bg-white'"
-    @click="$emit('select', plant)"
   >
     <PlantDisplayBase :plant="plant" container-class="h-[56px] w-[56px] rounded-lg" />
 
@@ -31,6 +30,4 @@ defineProps({
   plant: { type: Object, required: true },
   selected: { type: Boolean, default: false }
 })
-
-defineEmits(['select'])
 </script>

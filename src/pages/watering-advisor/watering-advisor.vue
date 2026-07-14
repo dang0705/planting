@@ -49,14 +49,14 @@
                 <text class="text-[14px] text-[#9ca3af]">还没有添加植物</text>
               </view>
               <view v-else id="watering-advisor-my-plants-list" class="flex flex-col gap-3">
-                <PlantSelectCard
+                <view
                   v-for="plant in plantStore.userPlants"
                   :key="plant.id"
                   :id="`watering-advisor-my-plant-card-${plant.id}`"
-                  :plant="plant"
-                  :selected="isUserPlantSelected(plant)"
-                  @select="selectUserPlant"
-                />
+                  @click="selectUserPlant(plant)"
+                >
+                  <PlantSelectCard :plant="plant" :selected="isUserPlantSelected(plant)" />
+                </view>
               </view>
 
               <view v-if="selectedUserPlantId" class="mt-4">
