@@ -2,6 +2,11 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import {
+  validateComputerUseToolEvidence,
+  validateValidationEvidence
+} from './validate-result-evidence.mjs'
+import { validateUiCompleted } from './validate-result-ui.mjs'
 
 const [role, handoffFile, resultFile] = process.argv.slice(2)
 if (!['implementer', 'external'].includes(role) || !handoffFile || !resultFile) {
@@ -124,221 +129,6 @@ const validateChangedFiles = (changedFiles, requireNonEmpty) => {
     )
   }
 }
-const validateEvidenceCheck = (name, check, requireSuccess) => {
-  need(isObject(check), `validation_evidence.${name} must be an object`)
-  if (!isObject(check)) {return}
-  need(
-    ['passed', 'not_applicable', 'failed', 'blocked'].includes(check.result),
-    `validation_evidence.${name}.result must be passed|not_applicable|failed|blocked`
-  )
-  need(Array.isArray(check.commands), `validation_evidence.${name}.commands must be an array`)
-  if (check.result === 'not_applicable') {
-    need(
-      nonEmptyString(check.reason),
-      `validation_evidence.${name}.reason is required for not_applicable`
-    )
-  }
-  if (requireSuccess) {
-    need(
-      ['passed', 'not_applicable'].includes(check.result),
-      `validation_evidence.${name} is not successful: ${check.result}`
-    )
-  }
-}
-const validateValidationEvidence = (resultObject, requireSuccess) => {
-  need(isObject(resultObject.validation_evidence), 'completed result requires validation_evidence')
-  if (!isObject(resultObject.validation_evidence)) {return}
-  for (const name of ['unit_tests', 'lint', 'typecheck', 'build', 'self_check']) {
-    validateEvidenceCheck(name, resultObject.validation_evidence[name], requireSuccess)
-  }
-}
-const validateComputerUseToolEvidence = cu => {
-  const tie = cu?.tool_invocation_evidence ?? {}
-  need(isObject(tie), 'computer_use.tool_invocation_evidence is required')
-  need(
-    tie.actual_tool_invocation_required === true,
-    'tool_invocation_evidence.actual_tool_invocation_required must be true'
-  )
-  need(
-    ['@ZCode', '@Computer'].includes(tie.tool_target),
-    'tool_invocation_evidence.tool_target must be @ZCode|@Computer'
-  )
-  need(tie.tool_events_seen === true, 'tool_invocation_evidence.tool_events_seen must be true')
-  need(
-    Number.isInteger(tie.tool_event_count) && tie.tool_event_count >= 5,
-    'tool_invocation_evidence.tool_event_count must be >= 5'
-  )
-  need(
-    Array.isArray(tie.transcript_event_refs) &&
-      tie.transcript_event_refs.length >= 5 &&
-      tie.transcript_event_refs.every(nonEmptyString),
-    'tool_invocation_evidence.transcript_event_refs must contain >=5 non-empty refs'
-  )
-  need(
-    Array.isArray(tie.commands_issued) &&
-      tie.commands_issued.length >= 5 &&
-      tie.commands_issued.every(nonEmptyString),
-    'tool_invocation_evidence.commands_issued must contain >=5 commands'
-  )
-}
-const validateUiCompleted = (resultObject, { figmaAcquiredBy, uniUiPolicyName }) => {
-  if (handoff?.task?.ui_task === true) {
-    need(
-      nonEmptyArray(resultObject.ui_scope_map),
-      'completed UI task requires non-empty ui_scope_map'
-    )
-    need(
-      isObject(resultObject.style_stack_compliance),
-      'completed UI task requires style_stack_compliance'
-    )
-    need(
-      isObject(resultObject.component_reuse_evidence),
-      'completed UI task requires component_reuse_evidence'
-    )
-    need(
-      nonEmptyArray(resultObject?.component_reuse_evidence?.searched),
-      'component_reuse_evidence.searched is required'
-    )
-    need(
-      Array.isArray(resultObject?.component_reuse_evidence?.newly_created),
-      'component_reuse_evidence.newly_created must be an array'
-    )
-    if (nonEmptyArray(resultObject?.component_reuse_evidence?.newly_created)) {
-      need(
-        nonEmptyString(resultObject?.component_reuse_evidence?.reason),
-        'new components require a non-reuse reason'
-      )
-    }
-    const expectedStack = lower(handoff?.project_constraints?.styling_system)
-    const actualStack = lower(resultObject?.style_stack_compliance?.styling_system)
-    need(
-      actualStack === expectedStack,
-      `styling_system mismatch: expected ${expectedStack}, got ${actualStack}`
-    )
-    need(
-      Array.isArray(resultObject?.style_stack_compliance?.new_dependencies),
-      'style_stack_compliance.new_dependencies must be an array'
-    )
-    if (expectedStack.includes('tailwind')) {
-      need(
-        resultObject?.style_stack_compliance?.tailwind_used === true,
-        'Tailwind task requires tailwind_used=true'
-      )
-      const exceptionAllowed =
-        lower(handoff?.project_constraints?.new_scss_policy) === 'explicit_exception_only' &&
-        nonEmptyString(resultObject?.style_stack_compliance?.scss_exception_ref) &&
-        (handoff?.project_constraints?.scss_exceptions ?? []).includes(
-          resultObject.style_stack_compliance.scss_exception_ref
-        )
-      need(
-        resultObject?.style_stack_compliance?.new_scss_added === false || exceptionAllowed,
-        'new SCSS is forbidden without a Contract-listed exception'
-      )
-      const changedScss = (resultObject.changed_files ?? []).filter(file =>
-        /\.s[ac]ss$/i.test(file)
-      )
-      need(
-        changedScss.length === 0 || exceptionAllowed,
-        `changed SCSS files without exception: ${changedScss.join(', ')}`
-      )
-    }
-    if (lower(handoff?.project_constraints?.dependency_policy) === 'no_new_dependencies') {
-      need(
-        (resultObject?.style_stack_compliance?.new_dependencies ?? []).length === 0,
-        'dependency_policy=no_new_dependencies but result reports new dependencies'
-      )
-    }
-  }
-  if (
-    nonEmptyString(handoff?.figma?.link) &&
-    usesUniUi(handoff?.project_constraints?.component_library)
-  ) {
-    const mapping = resultObject.uni_ui_mapping_evidence
-    need(isObject(mapping), 'Figma + uni-ui task requires uni_ui_mapping_evidence')
-    if (isObject(mapping)) {
-      need(mapping.status === 'completed', 'uni_ui_mapping_evidence.status must be completed')
-      const skillOk = mapping.skill === '$uni-ui-figma-component-mapper'
-      const policyOk = mapping.policy === uniUiPolicyName
-      need(
-        skillOk || policyOk,
-        `uni_ui_mapping_evidence must cite skill=$uni-ui-figma-component-mapper or policy=${uniUiPolicyName}`
-      )
-      need(
-        mapping.generated_before_first_ui_edit === true,
-        'uni_ui_mapping_evidence must be generated before the first UI edit'
-      )
-      need(nonEmptyArray(mapping.regions), 'uni_ui_mapping_evidence.regions is required')
-      need(
-        Array.isArray(mapping.used_components),
-        'uni_ui_mapping_evidence.used_components must be an array'
-      )
-      need(
-        Array.isArray(mapping.custom_regions),
-        'uni_ui_mapping_evidence.custom_regions must be an array'
-      )
-      need(
-        mapping.install_dependency_checked === true,
-        'uni_ui_mapping_evidence.install_dependency_checked must be true'
-      )
-      need(
-        ['easycom', 'manual_existing_pattern', 'not_applicable'].includes(mapping.easycom_policy),
-        'uni_ui_mapping_evidence.easycom_policy must be easycom|manual_existing_pattern|not_applicable'
-      )
-    }
-  }
-  if (nonEmptyString(handoff?.figma?.link)) {
-    const evidence = resultObject.figma_fetch_evidence
-    need(isObject(evidence), 'Figma task requires figma_fetch_evidence')
-    if (isObject(evidence)) {
-      need(evidence.status === 'success', 'figma_fetch_evidence.status must be success')
-      const allowedAcquirers = Array.isArray(figmaAcquiredBy) ? figmaAcquiredBy : [figmaAcquiredBy]
-      need(
-        allowedAcquirers.includes(evidence.acquired_by),
-        `figma_fetch_evidence.acquired_by must be ${allowedAcquirers.join('|')}`
-      )
-      need(
-        evidence.acquired_before_first_ui_edit === true,
-        'Figma must be acquired before the first UI edit'
-      )
-      need(
-        evidence.source_link === handoff.figma.link,
-        'figma_fetch_evidence.source_link must match handoff'
-      )
-      need(
-        evidence.node_id === handoff.figma.node_id,
-        'figma_fetch_evidence.node_id must match handoff'
-      )
-      const calls = callsOf(evidence)
-      const screenshotPolicySkip =
-        allowedAcquirers.includes('zcode_external_implementer') &&
-        evidence?.screenshot_policy_skip?.allowed === true &&
-        nonEmptyString(evidence?.screenshot_policy_skip?.policy_ref) &&
-        /AGENTS\.md/i.test(evidence.screenshot_policy_skip.policy_ref) &&
-        /GLM|screenshot|截图|skip|跳过/i.test(evidence.screenshot_policy_skip.policy_ref)
-      for (const tool of ['get_metadata', 'get_design_context']) {
-        need(calls.includes(tool), `implementer must directly call ${tool}`)
-      }
-      if (!screenshotPolicySkip)
-        {need(calls.includes('get_screenshot'), 'implementer must directly call get_screenshot')}
-      need(nonEmptyArray(evidence.nodes_read), 'figma_fetch_evidence.nodes_read is required')
-      if (!screenshotPolicySkip)
-        {need(
-          nonEmptyString(evidence.screenshot_ref),
-          'figma_fetch_evidence.screenshot_ref is required'
-        )}
-      need(
-        Array.isArray(evidence.variables_or_assets_used),
-        'variables_or_assets_used must be an array'
-      )
-      need(Array.isArray(evidence.unresolved), 'figma_fetch_evidence.unresolved must be an array')
-      need(
-        evidence.unresolved.length === 0,
-        'completed Figma implementation cannot contain unresolved design items'
-      )
-    }
-  }
-}
-
 if (role === 'implementer') {
   need(
     (handoff.implementation_mode ?? 'codex_subagent') === 'codex_subagent',
@@ -376,10 +166,18 @@ if (role === 'implementer') {
       result.deviations_or_blockers.length === 0,
       'completed result cannot contain deviations_or_blockers'
     )
-    validateValidationEvidence(result, true)
+    validateValidationEvidence(result, true, { need, isObject, nonEmptyString })
     validateUiCompleted(result, {
+      handoff,
       figmaAcquiredBy: 'implementer',
-      uniUiPolicyName: 'uni-ui-figma-component-mapper-contract'
+      uniUiPolicyName: 'uni-ui-figma-component-mapper-contract',
+      need,
+      isObject,
+      nonEmptyString,
+      nonEmptyArray,
+      lower,
+      usesUniUi,
+      callsOf
     })
   } else {
     need(
@@ -495,7 +293,7 @@ if (role === 'external') {
         const cu = sendReceipt.computer_use ?? {}
         need(isObject(cu), 'zcode_send_receipt.computer_use is required')
         need(cu.tool_invoked === true, 'zcode_send_receipt.computer_use.tool_invoked must be true')
-        validateComputerUseToolEvidence(cu)
+        validateComputerUseToolEvidence(cu, { need, isObject, nonEmptyString })
         need(
           cu.shell_only_ui_automation_used === false,
           'zcode_send_receipt.computer_use.shell_only_ui_automation_used must be false'
@@ -506,6 +304,16 @@ if (role === 'external') {
         )
       }
       if (webExternalProvider) {
+        if (externalContract?.codex_runtime_surface === 'codex_desktop') {
+          need(
+            sendReceipt.codex_runtime_surface === 'codex_desktop',
+            'web external send receipt must record codex_runtime_surface=codex_desktop'
+          )
+          need(
+            sendReceipt.web_provider_open_surface === 'builtin_in_app_browser',
+            'Codex Desktop web external send receipt must record web_provider_open_surface=builtin_in_app_browser'
+          )
+        }
         const receiptRemoteSync = sendReceipt.remote_sync ?? {}
         need(isObject(receiptRemoteSync), 'web external send receipt requires remote_sync')
         need(
@@ -621,10 +429,29 @@ if (role === 'external') {
         }
       }
     }
-    validateValidationEvidence(result, true)
+    validateValidationEvidence(result, true, { need, isObject, nonEmptyString })
+    if (webExternalProvider) {
+      const unitTests = result?.validation_evidence?.unit_tests ?? {}
+      need(
+        unitTests.result === 'passed',
+        'completed Web external implementation requires validation_evidence.unit_tests.result=passed'
+      )
+      need(
+        Array.isArray(unitTests.commands) && unitTests.commands.length > 0,
+        'completed Web external implementation requires unit test commands'
+      )
+    }
     validateUiCompleted(result, {
+      handoff,
       figmaAcquiredBy: ['external_implementer', 'zcode_external_implementer'],
-      uniUiPolicyName: 'uni-ui-figma-component-mapper-contract'
+      uniUiPolicyName: 'uni-ui-figma-component-mapper-contract',
+      need,
+      isObject,
+      nonEmptyString,
+      nonEmptyArray,
+      lower,
+      usesUniUi,
+      callsOf
     })
   } else {
     need(

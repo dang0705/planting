@@ -170,127 +170,16 @@ node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
 
 ## 6. Gate B1 — Spawn Capability Gate
 
-仅适用于 `implementation_mode=codex_subagent` 的实现阶段；`simple_patch` 跳过本 Gate。QA、docs 和 ByteRover 阶段不派发 subagent。
+仅 `implementation_mode=codex_subagent`。Handoff 通过即授权派发 `spawn_contract.implementer_agent_type`（`implementer_fast` / `implementer_deep`）；不得再为复杂度二次征求 spawn 许可（除非 runtime 明确要求一次确认）。
 
-### 6.1 授权与目标角色
+硬边界：
 
-Handoff Contract 通过 validator 后，视为本轮已授权按 Contract 派发具名 `implementer_fast` 或 `implementer_deep`。不得因任务涉及 API、状态链路、多文件修改或大文件拆分而再次询问用户是否 spawn。
+1. 必须显式 `agent_type`；禁止 full-history fork、generic/default/worker fallback。
+2. spawn 只传 `agent_type` + `fork_turns=none`/`fork_context=false` + minimal handoff message。
+3. 运行时 `effective_agent_type` 与 child `agent_identity` 必须等于 `target_role` 与本轮 `dispatch_run_id`；不可观察或不一致则 blocked。
+4. 返工回原 implementer thread，不重新 spawn generic child。
 
-仅当运行时明确要求当前会话再次授权时，main 才能提出一次最小确认：
-
-> 是否允许本轮按已通过校验的 Handoff Contract 派发 `<target_role>`？
-
-用户确认后必须立即进入能力检查；不得继续扩大分析、修改代码或改写架构。
-
-`target_role` 必须取自 Handoff Contract：
-
-```text
-实现阶段：spawn_contract.implementer_agent_type
-```
-
-该值必须与 `.codex/agents/*.toml` 中某个 `name` 完全一致。
-
-### 6.2 能力检查与派发
-
-main 必须按以下顺序执行；任一步失败都立即阻断，不得 fallback：
-
-```text
-1. target_agent_config
-   确认存在 .codex/agents/*.toml，且其中 name == target_role。
-
-   否则：
-   blocked: target_agent_config_missing
-
-2. named_selector
-   确认当前 spawn_agent 工具 schema 显式支持 agent_type。
-
-   否则：
-   blocked: named_agent_selector_unavailable
-
-3. fresh_spawn_control
-   若 schema 支持 fork_turns：
-     spawn_agent(
-       agent_type=target_role,
-       fork_turns="none",
-       message=<minimal handoff>
-     )
-   否则若 schema 支持 fork_context：
-     spawn_agent(
-       agent_type=target_role,
-       fork_context=false,
-       message=<minimal handoff>
-     )
-   否则：
-     blocked: fresh_spawn_control_unavailable
-
-4. runtime_identity
-   从 spawn 结果、child thread runtime metadata 或等价的可信运行时证据中，
-   验证 effective_agent_type == target_role。
-
-   若运行时身份不可观察：
-   blocked: named_agent_identity_unverifiable
-
-   若运行时身份与 target_role 不一致：
-   blocked: named_agent_identity_mismatch
-```
-
-spawn 调用只允许传递：
-
-```text
-agent_type
-fork_turns="none" 或 fork_context=false
-message=<minimal handoff>
-```
-
-不得传递：
-
-```text
-model
-reasoning_effort
-service_tier
-sandbox override
-```
-
-agent 的静态模型、推理等级和默认 sandbox 由目标具名 agent TOML 提供；最终有效 sandbox 与 approval policy 仍受父 turn 当前 runtime permission overrides 约束。
-
-### 6.3 身份与结果约束
-
-child 最终 JSON 必须包含：
-
-```text
-agent_identity={agent_type, dispatch_run_id}
-```
-
-该字段仅用于 child 身份声明和 dispatch 关联，不能替代运行时身份验证。
-
-parent validator 必须同时验证：
-
-```text
-agent_identity.agent_type == target_role
-agent_identity.dispatch_run_id == current_dispatch_run_id
-effective_agent_type == target_role
-```
-
-child 声明不一致时：
-
-```text
-blocked: child_identity_claim_mismatch
-```
-
-运行时身份不一致时：
-
-```text
-blocked: named_agent_identity_mismatch
-```
-
-### 6.4 禁止事项
-
-1. 禁止 full-history fork。
-2. 禁止省略 `agent_type`，或让运行时自行挑选角色。
-3. 禁止回退到 `default`、`worker` 或 generic agent。
-4. 禁止让 generic agent“扮演”目标角色或自报目标 `agent_identity`。
-5. 角色配置缺失、spawn 被拒绝、运行时身份不可验证或目标配置未实际加载时，必须立即阻断。
-6. review 返工必须发送到原 implementer thread，不得重新 spawn generic child。
+展开步骤与 blocked code 见 `references/handoff-and-spawn-gates.md`。
 
 ## 7. Gate B1.5 — Child Run Lock / 等待与工作区所有权
 
@@ -310,50 +199,24 @@ blocked: named_agent_identity_mismatch
 
 ## 8. Gate B2 — External Implementer Bridge
 
-仅适用于 `implementation_mode=external_implementer`（兼容旧值 `zcode_external`）。读取：
+仅 `implementation_mode=external_implementer`（兼容旧 `zcode_external`）。**细节不得写进本文件正文**；命中后按条件读取：
 
 ```text
-references/external-implementer-routing.md
-provider=zcode 时额外读取 references/zcode-routing.md
-provider=zcode 且需要 Codex 操作 UI 时额外读取 references/zcode-computer-use-policy.md
-统一 external implementer 提示词模板：assets/templates/external-implementer-prompt-template.md
-provider=zcode 时可复用兼容 alias：assets/templates/zcode-prompt-template.md
+references/external-implementer-routing.md          # 必读：公共合同、remote sync、PR recovery、校验命令
+references/zcode-routing.md                         # provider=zcode
+references/zcode-computer-use-policy.md             # ZCode 且需操作 UI
+assets/templates/external-implementer-prompt-template.md
+assets/templates/zcode-prompt-template.md           # ZCode 兼容 alias
 ```
 
-该模式下：
+本文件只锁这几条硬边界：
 
-1.  main 不 spawn Codex implementer。
-2.  main 生成统一的 external implementer handoff prompt；不得把完整 dispatch、完整 references 或完整历史塞进 prompt；provider 只允许在 adapter 侧补充发送/校验动作，不得改变 prompt 主体结构。
-3.  `external_contract` 必须声明 `provider`、`target_session`、`prompt_transport`、`send_receipt_required`、`handoff_manual_required`、`handoff_completion_status_source=handoff_manual`、`completion_claim_not_authoritative=true`、`codex_self_implementation_forbidden=true`、`generic_fallback_forbidden=true`。
-4.  provider 可以是 `zcode`、`trae`、`chrome_cloud_agent` 或 `other`；provider 只影响发送 adapter 和验证证据，不改变 handoff/manual/recovery 的公共合同。
-5.  send receipt 必须证明 prompt 已完整交付给目标 provider；如果 adapter 使用 UI/Computer/Chrome 插件，receipt 必须包含真实工具事件或 transcript step；如果 adapter 是手工外部交接，receipt 必须明确 `tool_invoked=false` 且标记 `manual_handoff`，不得伪称工具调用。
-6.  非 Web provider 的外部实现者必须写 `handoff_manual.path`，以 `working|completed|blocked` 表示终态，并列出 changed files、测试证据、阻塞项和越权声明。Web/云端 provider 可用最新 PR/远端分支 + 独立 worktree recovery evidence 代替本地 handoff manual。聊天里的“完成”不是完成依据。
-7.  Web/云端 external implementer（TRAE Web、Chrome 插件云端 agent，或 `prompt_transport=browser_plugin`）发送 prompt 前必须按 `references/external-implementer-routing.md` 完成 remote sync gate：本地基线 commit/push 到同一远端分支，handoff 和 send receipt 记录 `remote_sync.status=pushed`；若有未授权脏改动，不得静默 commit/push，必须阻断让用户决策。
-8.  prompt 成功发送并确认外部实现者已收到且开始运行后，main 必须进入 Child Run Lock；不得继续盯屏、保活 UI 观察或把 adapter 当进度直播。
-9.  发送后 30 分钟内只允许每 5 分钟读取一次 `handoff_manual.path`，并检查 scope 中规定文件的 diff：`git status --short`、`git diff --name-only -- <allowed_paths>`、`git diff --stat -- <allowed_paths>`。Web/云端 provider 若通过 PR/远端分支交付，则按 `references/external-implementer-routing.md` 的独立 worktree PR recovery 路径回收；分支名和临时 worktree path 必须在任务开始时写入 `external_contract.remote_sync`，优先用 `scripts/manage-web-pr-worktree.mjs` 准备和清理，不切主工作区。
-10. 外部实现者失败、无 diff、越权修改、无法读取必要 Figma、prompt 未完整发送或 adapter 不可用时，不得 fallback 成 main 自己写代码，也不得自动切到 Codex implementer，除非用户明确批准。
-
-ZCode adapter 附加规则：
-
-1. Codex main 必须真实发起 `@ZCode` 或 `@Computer` 操作 ZCode；若工具目标不可用，必须 `blocked: computer_use_unavailable`。
-2. prompt 必须通过剪贴板一次性粘贴，不得逐字输入。
-3. 不得用 shell、AppleScript、osascript、cliclick、xdotool 或类似脚本伪装完成 UI 操作，除非用户在当前会话明确授权替代方案。
-4. 发送前必须验证 ZCode 当前会话、输入框、prompt sentinel、粘贴完整性。
-
-TRAE Web adapter 附加规则：
-
-1. provider 为 `trae` 且通过 Web TRAE / Chrome 受控页面发送 prompt 时，必须遵守 `references/external-implementer-routing.md` 的 “TRAE Web provider” 小节；`SKILL.md` 不重复定义具体 DOM 操作，避免规则漂移。
-
-相关校验：
-
-```bash
-node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
-node .codex/skills/dispatch-task/scripts/validate-external-prompt.mjs <handoff.json> <external-prompt.md>
-node .codex/skills/dispatch-task/scripts/validate-zcode-prompt.mjs <handoff.json> <zcode-prompt.md>
-node .codex/skills/dispatch-task/scripts/validate-zcode-send-receipt.mjs <handoff.json> <send-receipt.json>
-# 若 handoff manual 文件存在且可解析，先校验；若缺失/损坏，recovery result 必须记录 status=missing|invalid 并 blocked。
-node .codex/skills/dispatch-task/scripts/validate-zcode-handoff-manual.mjs <handoff.json> <handoff-manual.json>
-```
+1. main 不 spawn Codex implementer，不自写业务代码；不因 external 失败自动 fallback。
+2. 统一 external prompt + send receipt +（本地 manual 或 Web PR/worktree recovery）；聊天“完成”不算完成。
+3. Codex Desktop 运行 Web/云端 provider 时，必须用 Codex 内置浏览器打开和发送 prompt；普通 Chrome、shell 或 ambient browser 状态不能替代受控发送证据。
+4. Web/云端 external implementer 即使远端自称 main/root，也必须按 implementer 身份执行：只改合同范围代码，完成后提供 unit tests 等实现者自检；有 `figma_link` 时直接用可用 Figma 插件 / MCP / 工具取设计证据。
+5. prompt 送达并开始运行后进入 Child Run Lock（见 §7）；adapter 细则与 DOM/Computer 步骤只在 references。
+6. 结果回收后走同一套 Gate C/D（`validate-result.mjs external` → postflight → completion）。
 
 ## 9. Gate C — Implementation Review
 
@@ -416,63 +279,11 @@ node .codex/skills/dispatch-task/scripts/validate-completion-readiness.mjs <hand
 
 ### 10.1 Gate D1 — Active docs / ByteRover V4 知识治理
 
-对于实现任务，Gate D1 在实现完成、main review 通过且所需 QA 结束后执行；对于不依赖代码实现、但已由 `AGENTS.md` 判定具有记录资格的任务，以及 ByteRover 专项治理任务，在 main 完成来源、范围与冲突核验后执行。
+实现完成且所需 QA 结束后（或纯知识治理任务在范围核验后），main 分别判断 `docs_impact` / `brv_memory_impact`，二者独立。
 
-main 必须分别判断：
-
-```text
-docs_impact
-brv_memory_impact
-```
-
-两者相互独立。不得把 ByteRover 影响自动等同于 active docs 影响，也不得因为 `docs_impact=false` 跳过记忆影响判断。
-
-#### Active docs
-
-只有满足以下任一条件，main 才维护 active docs：
-
-1. 本轮修改改变公共契约、对外 API、schema、数据语义、诊断链路规则、自动化 ID 约定或用户可复用的 active docs。
-2. AGENTS.md、acceptance 或 Handoff Contract 明确要求同步某个 active doc / index / context pack。
-3. 实现者结果明确声明 `docs_impact=true`，且 main review 确认该影响不是普通代码内部重构。
-
-#### ByteRover V4
-
-main 必须且只能依据 `AGENTS.md` 的 `BRV / ByteRover 内容边界` 裁决内容资格与 `brv_memory_impact`。本节不重新列举允许或禁止的知识类型，也不得用工作流需要放宽 AGENTS 边界。
-
-`brv_memory_impact=true` 时，读取：
-
-```text
-references/brv-record-governance.md
-```
-
-并形成：
-
-```text
-memory_candidate
-record_required
-record_plan
-record_owner
-governance_required
-```
-
-执行原则：
-
-1. 产生关键决策的实现者、探索者、用户或 main 可以提出 `memory_candidate`；候选不等于获准写入。
-2. main 依据 AGENTS 内容资格批准 `record_plan` 并指定 `record_owner`。
-3. `record_owner` 必须读取当前安装的 ByteRover V4 Skill，在正确项目目录与正确 Space 中执行。
-4. main 可以负责结构检查、重复治理、readback、Query 验收和 docs/BRV 对账，但不得创造、扩展或改写未经批准的事实。
-5. 脚本成功不等于 Gate D1 完成；必须完成 readback、Query、来源核验、冲突与部分失败检查。
-6. Prune、Delete，或任何会不可逆移除独有内容的 Merge / Synthesize 操作，必须取得用户明确批准；普通无损 Move、Link 或保留全部有效内容的治理按当前 Skill 和批准的 `record_plan` 执行。
-7. 未绑定或错误 Space、写权限不足、结构校验失败、batch 部分失败、readback 失败等只阻塞受影响的 ByteRover 操作，不得伪装完成。
-8. 认证不是所有本地 ByteRover 操作的通用前置条件；只有当前 Skill 或本次同步/远端验收明确要求认证时，认证失败才构成对应 blocker。
-
-#### 硬边界
-
-1. main 处理 docs/BRV 时不写业务代码、不补实现、不替代 QA，也不得把未通过 `AGENTS.md` 当前事实使用规则的内容维护成当前事实。
-2. 仅 `brv_memory_impact=true` 时，不得制造无必要的 active docs 修改。
-3. 仅 `docs_impact=true` 时，不得为流程完整性制造 ByteRover Topic。
-4. docs 或 ByteRover 影响未处理时，只能 `blocked`，或记录为用户明确批准的 follow-up；不得声称已同步。
-5. 普通 subagent 默认不得写 ByteRover；只有明确指定的 `record_owner` 可以写入。
+- **docs**：仅当公共契约 / API / schema / 诊断规则 / 自动化 ID / 明确要求的 active doc 变化时维护。
+- **BRV**：仅按 `AGENTS.md` 内容边界裁决；`brv_memory_impact=true` 时读 `references/brv-record-governance.md` 并执行批准的 `record_plan`（含 readback / Query）。破坏性 Prune/Delete/Merge 须用户明确批准。
+- 不写业务代码、不补实现、不替代 QA；不做角色 receipt。completion note 可简要写 `docs_impact` / `brv_memory_impact`。
 
 ## 11. Figma 硬边界
 

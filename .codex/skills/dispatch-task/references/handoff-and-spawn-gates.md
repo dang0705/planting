@@ -45,7 +45,16 @@ node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
 
 仅适用于 `implementation_mode=codex_subagent` 的实现阶段。QA、docs 和 ByteRover 阶段由 main 执行，不派 subagent。
 
-`target_role` 必须是 `.codex/agents/*.toml` 中 `name` 的精确值。main 必须显式使用该值调用 `spawn_agent`，不得让运行时自行挑选角色。
+Handoff 通过 validator 即授权派发 `spawn_contract.implementer_agent_type`；不得因复杂度再次征求 spawn 许可（除非 runtime 明确要求一次最小确认）。
+
+`target_role` 必须是 `.codex/agents/*.toml` 中 `name` 的精确值。main 按顺序：
+
+```text
+1. target_agent_config — TOML name == target_role，否则 blocked: target_agent_config_missing
+2. named_selector — spawn schema 显式支持 agent_type，否则 blocked: named_agent_selector_unavailable
+3. fresh_spawn_control — fork_turns=none 或 fork_context=false；否则 blocked: fresh_spawn_control_unavailable
+4. runtime_identity — effective_agent_type == target_role；不可观察 → named_agent_identity_unverifiable；不一致 → named_agent_identity_mismatch
+```
 
 ```text
 若工具 schema 支持 fork_turns：
@@ -53,7 +62,7 @@ node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
 否则若支持 fork_context：
   spawn_agent(agent_type=<exact name>, fork_context=false, message=<minimal handoff>)
 否则：
-  blocked: named_agent_selector_unavailable
+  blocked: named_agent_selector_unavailable 或 fresh_spawn_control_unavailable
 ```
 
 硬规则：
@@ -63,7 +72,7 @@ node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
 3. 禁止 full-history fork。
 4. 角色不可用、spawn 被拒绝、runtime metadata 显示未加载目标配置时，立即阻断。
 5. 禁止回退到 `default`、`worker`、generic agent，也禁止让 generic agent“扮演”目标角色。
-6. child 最终 JSON 必须带 `agent_identity={agent_type, dispatch_run_id}`；不一致时 validator 阻断。
+6. child 最终 JSON 必须带 `agent_identity={agent_type, dispatch_run_id}`；child 声明不一致 → `child_identity_claim_mismatch`；运行时不一致 → `named_agent_identity_mismatch`。
 7. review 返工发送到原 implementer thread，不重新 spawn generic child。
 
 ## Gate B2 — External Implementer Bridge

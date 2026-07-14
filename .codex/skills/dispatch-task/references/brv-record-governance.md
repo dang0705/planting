@@ -195,49 +195,11 @@ record_plan:
 
 最终关键 claim 继续按 AGENTS 知识治理边界回当前事实源验证。本文件不重列事实源优先级。
 
-## 12. 状态与 Completion Receipt
+## 12. 状态与完成说明
 
-```text
-not_required
-planned
-recorded
-governed
-read_only
-skill_unavailable
-space_unbound
-space_mismatch
-partial_failure
-validation_failed
-awaiting_destructive_approval
-sync_blocked
-blocked
-completed
-```
+合法状态：`not_required` | `planned` | `recorded` | `governed` | `read_only` | `skill_unavailable` | `space_unbound` | `space_mismatch` | `partial_failure` | `validation_failed` | `awaiting_destructive_approval` | `sync_blocked` | `blocked` | `completed`。
 
-至少记录：
-
-```text
-docs_impact:
-docs_status:
-brv_memory_impact:
-brv_status:
-brv_skill_version:
-brv_space:
-brv_space_access:
-brv_binding_verified:
-brv_record_owner:
-brv_record_operations:
-brv_topics_changed:
-brv_batch_failures:
-brv_readback_verified:
-brv_validation_queries:
-brv_query_hits:
-brv_citations_used:
-brv_related_verified:
-brv_sync_status:
-brv_destructive_approval:
-brv_blockers:
-```
+Completion note（非角色 receipt）只需标：`docs_impact` / `docs_status` / `brv_memory_impact` / `brv_status`；有实际写入时再列 `brv_topics_changed`、`brv_blockers`、`brv_readback_verified`。不做整包字段清单。
 
 `brv_topics_changed` 只列实际完成的操作，候选不得混入。
 

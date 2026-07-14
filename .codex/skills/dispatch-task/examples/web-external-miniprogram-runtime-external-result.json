@@ -1,0 +1,96 @@
+{
+  "source": "codex_recovery_after_external",
+  "status": "completed",
+  "codex_self_implementation": false,
+  "external_completion_claim_treated_as_non_authoritative": true,
+  "git_diff_recovered_by_codex": true,
+  "allowed_forbidden_paths_checked": true,
+  "project_constraints_checked_by_codex": true,
+  "external_handoff_manual": {
+    "read_by_codex": true,
+    "path": ".tmp/dispatch-task/example-web-runtime-001-handoff-manual.json",
+    "status": "completed",
+    "updated_at": "2026-07-13T10:00:00.000Z"
+  },
+  "external_send_receipt": {
+    "status": "sent",
+    "prompt_integrity_verified": true,
+    "codex_runtime_surface": "codex_desktop",
+    "web_provider_open_surface": "builtin_in_app_browser",
+    "remote_sync": {
+      "status": "pushed",
+      "remote": "origin",
+      "branch": "trae/example-web-runtime-001",
+      "base_commit": "30bf056d12ddfe59eff57c4ebe1b9b36949e33dd",
+      "push_ref": "origin/trae/example-web-runtime-001",
+      "planned_worktree_path": "/tmp/planting-pr-example-web-runtime-001"
+    }
+  },
+  "external_recovery_evidence": {
+    "handoff_manual_read": true,
+    "git_status_read": true,
+    "git_diff_read": true,
+    "forbidden_paths_clean": true,
+    "no_unapproved_dependencies": true,
+    "pr_review": {
+      "pr_url": "https://github.com/example/planting/pull/999",
+      "remote_branch": "origin/trae/example-web-runtime-001",
+      "worktree_path": "/tmp/planting-pr-example-web-runtime-001",
+      "fetch_ref": "origin/trae/example-web-runtime-001",
+      "worktree_head": "a70f84da4e4ef54749a995081b47ee437dd0fa08",
+      "commands_run": [
+        "npm run dev:mp-weixin:local-functions:lan",
+        "node qa/watering-runtime-check.mjs"
+      ],
+      "main_workspace_untouched": true,
+      "runtime_channel": "miniprogram_automator",
+      "projectPath": "/tmp/planting-pr-example-web-runtime-001/dist/dev/mp-weixin"
+    }
+  },
+  "changed_files": [
+    "src/pages/watering-advisor/watering-advisor.vue",
+    "cloudfunctions/layer/utils/transpiration.js"
+  ],
+  "implementation_summary": "Web external implementer 已完成改动，Codex 基于独立 worktree 回收 diff 并记录端上 runtime projectPath。",
+  "deviations_or_blockers": [],
+  "validation_evidence": {
+    "unit_tests": {
+      "result": "passed",
+      "commands": [
+        "node test/unit-test/test-transpiration.mjs"
+      ],
+      "evidence_ref": "evidence/unit-tests.txt",
+      "reason": ""
+    },
+    "lint": {
+      "result": "passed",
+      "commands": [
+        "npm run lint -- src/pages/watering-advisor/watering-advisor.vue cloudfunctions/layer/utils/transpiration.js"
+      ],
+      "evidence_ref": "evidence/lint.txt",
+      "reason": ""
+    },
+    "typecheck": {
+      "result": "not_applicable",
+      "commands": [],
+      "evidence_ref": "",
+      "reason": "当前示例不包含 typecheck 入口"
+    },
+    "build": {
+      "result": "passed",
+      "commands": [
+        "npm run dev:mp-weixin:local-functions:lan"
+      ],
+      "evidence_ref": "evidence/lan-runtime.txt",
+      "reason": ""
+    },
+    "self_check": {
+      "result": "passed",
+      "commands": [
+        "node qa/watering-runtime-check.mjs"
+      ],
+      "evidence_ref": "evidence/runtime-check.txt",
+      "reason": ""
+    }
+  }
+}

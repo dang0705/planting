@@ -35,6 +35,7 @@ inclusion: always
 11. 客户端显示的文案必须从用户角度出发并符合常识，严禁将内部讨论用语、计算公式，拗口或难理解的文案暴露在界面中。必须遵循用户友好、利于用户操作的思想设计出最优的展示文案。
 12. 输出的文案、用语减少专业词汇，尤其在 plan 模式或用户显式要求 planning时，要注重用词以通俗易懂的白话结合举例代替专业词汇。
 13. `dispatch-task` 当前只允许实现阶段使用 subagent 或 external implementer；QA、端上验收、docs 同步和 ByteRover 影响处理均由 main 执行，不再派发 QA 或 docs 专用 subagent。main 自守门不写角色 receipt；仅跨 agent 边界与机器可校验证据（含端上 `runtime-qa-evidence.json`、一份 implementation postflight）才写产物。
+14. Web/云端 external implementer 即使运行时自称 main/root，也必须在本项目中承担 implementer 角色：只按 handoff 修改代码，完成后执行实现者自检和 unit tests；有 `figma_link` 的 UI 任务必须直接使用可用的 Figma 插件 / MCP / 工具读取设计并对齐 UI，不能依赖 Codex main 的转述。
 
 ## 3. 前端行为硬约束
 

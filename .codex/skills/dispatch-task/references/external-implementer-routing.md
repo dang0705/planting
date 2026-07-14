@@ -24,10 +24,12 @@ external_contract.target_session = current_open_chat | browser_session | remote_
 
 1. main 不 spawn Codex implementer，不自己写代码。
 2. external implementer 只负责按 prompt 修改代码并写 handoff manual。
-3. main 负责合同、路径边界、provider 发送 adapter、Child Run Lock、diff review、QA 派发与 Completion Gate。
+3. main 负责合同、路径边界、provider 发送 adapter、Child Run Lock、diff review、main QA 与 Completion Gate。
 4. provider 聊天或 UI 中的“完成”不是完成依据；main 必须重新读取真实 git diff、测试证据和 handoff manual。
 5. provider 失败、无 diff、越权修改、prompt 未完整发送、无法读取必要 Figma 或 adapter 不可用时，不得 silent fallback 到 main 或 Codex subagent；需要用户明确批准后才能改派。
 6. Web/云端 external implementer（TRAE Web、Chrome 插件驱动云端 agent，或 `prompt_transport=browser_plugin`）启动前必须完成 remote sync gate，确保本地要交给云端的代码已经提交并推送到同一个远端分支。
+7. 当 Codex 运行环境是 Codex Desktop，Web/云端 provider 页面必须通过 Codex 内置浏览器打开和发送 prompt；不得改用用户普通 Chrome 窗口、shell 脚本或仅凭 ambient browser 状态冒充受控发送。
+8. Web/云端 external implementer 即使远端运行时自称 main/root，也必须按 implementer 角色工作：只改合同内代码，执行 unit tests / lint / build / self-check；有 `figma_link` 时必须直接使用可用 Figma 插件 / MCP / 工具读取设计并输出 `figma_fetch_evidence`。
 
 ## Web remote sync gate
 
@@ -55,6 +57,7 @@ dirty_policy: blocked_if_unowned_dirty
 
 6. 因 remote sync 会改变 HEAD，handoff 必须显式设置 `validation.allow_head_change=true`，并记录 `validation.head_change_reason=web_external_remote_sync`。该授权只允许“启动 Web agent 前的 baseline commit/push”和“回收 PR/worktree 时切换到独立测试工作区”，不得用来掩盖实现阶段的未知 checkout、reset 或本地主工作区改写。
 7. send receipt 必须包含同一份 remote sync 证据；缺失或 `status` 不是 `pushed` 时，不得进入 Child Run Lock。
+8. 当 handoff 写明 `external_contract.codex_runtime_surface=codex_desktop` 时，必须写明 `external_contract.web_provider_open_surface=builtin_in_app_browser`。send receipt 必须记录同样字段，并包含真实内置浏览器发送证据。
 
 ## Web PR recovery and QA
 
@@ -148,6 +151,8 @@ prompt 必须完整包含以下 section，且顺序不得变化：
 provider
 target_session
 prompt_transport
+codex_runtime_surface            # Web/云端 provider 必填：codex_desktop | other
+web_provider_open_surface        # codex_desktop 时必须 builtin_in_app_browser
 send_receipt_required: true
 handoff_manual_required: true
 handoff_completion_status_source: handoff_manual
@@ -191,3 +196,15 @@ remote_sync           # Web/云端 provider 必填
 非 Web provider 的 external implementer 开始任务后置 `status=working`，完成或阻塞时更新为 `completed|blocked`。main 低频回收时必须先读该 JSON，再判断是否进入 recovery。若文件缺失或 JSON 损坏，不得用聊天状态补判完成；recovery result 必须记录 `handoff_manual.status=missing|invalid` 并返回 `blocked`。
 
 Web/云端 provider 若不能写入本地主工作区的 `handoff_manual.path`，recovery result 记录 `external_handoff_manual.status=not_required_remote_pr`，并必须提供 PR/worktree recovery evidence。不能用聊天状态补判完成。
+
+## Validators（external 模式）
+
+```bash
+node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
+node .codex/skills/dispatch-task/scripts/validate-external-prompt.mjs <handoff.json> <external-prompt.md>
+node .codex/skills/dispatch-task/scripts/validate-zcode-prompt.mjs <handoff.json> <zcode-prompt.md>
+node .codex/skills/dispatch-task/scripts/validate-zcode-send-receipt.mjs <handoff.json> <send-receipt.json>
+node .codex/skills/dispatch-task/scripts/validate-zcode-handoff-manual.mjs <handoff.json> <handoff-manual.json>
+node .codex/skills/dispatch-task/scripts/validate-result.mjs external <handoff.json> <recovery-result.json>
+node .codex/skills/dispatch-task/scripts/validate-implementation-postflight.mjs <handoff.json> <recovery-result.json> <worktree-baseline.json>
+```

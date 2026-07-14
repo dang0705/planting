@@ -16,6 +16,12 @@
   - 优先复用现有组件与 uni-ui。
   - 只修改 allowed_paths 内文件。
 
+身份切换：
+- 你当前运行环境即使显示为 main/root/primary agent，在本任务中也必须担任 implementer 角色。
+- 只允许按本 handoff 修改代码；不要替代 Codex main 做架构裁决、PR review、QA 或 Completion Gate。
+- 完成开发后必须像 Codex implementer subagent 一样执行实现者自检，至少包括 unit tests、lint/typecheck/build/self-check 中合同要求的项目。
+- Web/云端 external implementer 不得把“没有本地环境”作为跳过 unit tests 的默认理由；无法执行时必须返回 blocked，并写明缺少的环境条件。
+
 ## Allowed / Forbidden Paths
 Allowed:
 - src/pages/home/**
@@ -76,6 +82,7 @@ Tailwind 项目中，新增 UI 默认使用 Tailwind utility、项目 token、un
 Figma link: https://figma.com/design/example/file?node-id=10-20
 Node id: 10:20
 你必须在当前 provider 环境内直接获取 Figma metadata + design context，并在首次 UI 编辑前完成。
+如果本任务包含 Figma link / node id，你必须直接使用当前环境可用的 Figma 插件 / MCP / 工具读取 Figma；不得依赖 Codex main 的转述、截图描述或聊天摘要来猜 UI。首次 UI 编辑前必须完成 Figma 读取，并在 `figma_fetch_evidence` 记录实际调用、节点、截图或截图跳过政策。
 若当前运行模型为 GLM 且 AGENTS 规则要求跳过 get_screenshot，则不要调用 get_screenshot；在 Result JSON 的 figma_fetch_evidence 中写入 screenshot_policy_skip，并引用 AGENTS 规则。若无法取得足够设计上下文，返回 BLOCKED_EXTERNAL_FIGMA_UNAVAILABLE，不得猜 UI。Result JSON 必须包含 figma_fetch_evidence。
 
 ## Figma Blocker Policy
@@ -95,6 +102,13 @@ Node id: 10:20
   "style_stack_compliance": {},
   "component_reuse_evidence": {},
   "uni_ui_mapping_evidence": {},
+  "validation_evidence": {
+    "unit_tests": {"result": "passed | failed | blocked", "commands": [], "evidence_ref": ""},
+    "lint": {"result": "passed | not_applicable | failed | blocked", "commands": [], "evidence_ref": ""},
+    "typecheck": {"result": "passed | not_applicable | failed | blocked", "commands": [], "evidence_ref": ""},
+    "build": {"result": "passed | not_applicable | failed | blocked", "commands": [], "evidence_ref": ""},
+    "self_check": {"result": "passed | not_applicable | failed | blocked", "commands": [], "evidence_ref": ""}
+  },
   "validation_claims": {},
   "blockers": []
 }

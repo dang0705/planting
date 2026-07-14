@@ -42,6 +42,8 @@ const id = handoff.dispatch_run_id
 const external = handoff.external_contract ?? handoff.zcode_contract ?? {}
 const provider = external.provider || (external.external_implementer === 'zcode_glm' ? 'zcode' : '')
 const maxChars = Number.isFinite(external.prompt_max_chars) ? external.prompt_max_chars : 30000
+const webExternalProvider =
+  ['trae', 'chrome_cloud_agent'].includes(provider) || external.prompt_transport === 'browser_plugin'
 
 need(
   ['external_implementer', 'zcode_external'].includes(mode),
@@ -83,6 +85,22 @@ need(
   !prompt.includes('# Dispatch Task\n\n## 1. 角色所有权'),
   'prompt appears to include the full dispatch skill; keep external prompt minimal'
 )
+need(
+  /implementer 角色|implementer role|担任 implementer/i.test(prompt),
+  'external prompt must tell the provider to act as implementer even if its runtime says main/root'
+)
+need(
+  /unit tests|unit_tests|单测/i.test(prompt),
+  'external prompt must require implementer unit tests'
+)
+need(prompt.includes('validation_evidence'), 'external prompt must require validation_evidence')
+
+if (webExternalProvider) {
+  need(
+    /Web\/云端 external implementer|Web external|云端 external/i.test(prompt),
+    'Web external prompt must identify the provider as a Web/cloud external implementer'
+  )
+}
 
 if (handoff?.figma?.link) {
   need(prompt.includes(handoff.figma.link), 'Figma prompt must include original figma.link')
@@ -90,6 +108,10 @@ if (handoff?.figma?.link) {
   need(
     /design context|get_design_context|Figma context|设计上下文/i.test(prompt),
     'Figma prompt must require direct design context acquisition'
+  )
+  need(
+    /Figma 插件|Figma plugin|Figma MCP|Figma.*工具/i.test(prompt),
+    'Figma prompt must require direct Figma plugin/MCP/tool usage'
   )
   need(
     /screenshot|get_screenshot|截图|screenshot_policy_skip|GLM.*截图|AGENTS/i.test(prompt),

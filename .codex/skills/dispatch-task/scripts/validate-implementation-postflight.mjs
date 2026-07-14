@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 /**
- * Single postflight gate: runs worktree scope + no-new-deps + style-stack once.
+ * Single postflight gate: worktree scope + no-new-deps + style-stack inlined.
  * Usage:
  *   node validate-implementation-postflight.mjs <handoff.json> <impl-result.json> <worktree-baseline.json>
  */
-import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import {
+  buildNoNewDepsReport,
+  buildStyleStackReport,
+  buildWorktreeScopeReport
+} from './lib/implementation-postflight-checks.mjs'
 
 const [handoffFile, resultFile, baselineFile] = process.argv.slice(2)
 if (!handoffFile || !resultFile || !baselineFile) {
@@ -17,7 +19,6 @@ if (!handoffFile || !resultFile || !baselineFile) {
   process.exit(2)
 }
 
-const scriptsDir = path.dirname(fileURLToPath(import.meta.url))
 const readJson = file => {
   try {
     return JSON.parse(fs.readFileSync(file, 'utf8'))
@@ -26,46 +27,15 @@ const readJson = file => {
     process.exit(2)
   }
 }
-const handoff = readJson(handoffFile)
-const runValidator = (scriptName, args) => {
-  const scriptPath = path.join(scriptsDir, scriptName)
-  const spawned = spawnSync(process.execPath, [scriptPath, ...args], {
-    encoding: 'utf8',
-    env: { ...process.env, DISPATCH_POSTFLIGHT_INTERNAL: '1' }
-  })
-  const stdout = String(spawned.stdout ?? '').trim()
-  const stderr = String(spawned.stderr ?? '').trim()
-  const payloadText = stdout || stderr
-  let report = null
-  try {
-    report = JSON.parse(payloadText)
-  } catch {
-    report = {
-      status: 'blocked',
-      gate: scriptName,
-      errors: [
-        `failed to parse ${scriptName} output (exit ${spawned.status}): ${payloadText.slice(0, 500)}`
-      ]
-    }
-  }
-  return report
-}
 
-const worktree = runValidator('validate-worktree-scope.mjs', [
-  handoffFile,
-  resultFile,
-  baselineFile
-])
-const noNewDeps = runValidator('validate-no-new-deps.mjs', [
-  handoffFile,
-  baselineFile,
-  resultFile
-])
-const styleStack = runValidator('validate-style-stack.mjs', [
-  handoffFile,
-  baselineFile,
-  resultFile
-])
+const handoff = readJson(handoffFile)
+const result = readJson(resultFile)
+const baseline = readJson(baselineFile)
+
+const builderArgs = { handoff, result, baseline, baselineFile }
+const worktree = buildWorktreeScopeReport(builderArgs)
+const noNewDeps = buildNoNewDepsReport(builderArgs)
+const styleStack = buildStyleStackReport(builderArgs)
 
 const childErrors = [
   ...(worktree.errors ?? []),
