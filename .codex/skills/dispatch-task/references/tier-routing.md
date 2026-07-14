@@ -4,7 +4,7 @@ main 必须先判断 `dispatch_tier`，再选择内部路由字段 `implementati
 
 | dispatch_tier | 适用任务 | 默认处理 |
 |---|---|---|
-| `simple_patch` | 单文件/少量文件、低风险、无 Figma、无 schema/API/状态机、无需外部实现者 | main 可直接修改；不生成完整 Handoff Contract；仍必须做 diff review 和最小验证 |
+| `simple_patch` | 单文件/少量文件、低风险、无 Figma、无 schema/API/状态机、无需外部实现者 | `implementation_mode=main_direct`；main 可直接修改；不生成完整 Handoff Contract；仍必须做 diff review 和最小验证 |
 | `standard_task` | 多文件但在既有架构内，局部功能或普通 UI | `implementation_mode=codex_subagent`，通常派 `implementer_fast` |
 | `deep_contract` | API/schema/迁移/安全/跨系统状态机/兼容性或不可逆风险 | `implementation_mode=codex_subagent`，派 `implementer_deep`，读取 `references/high-risk-workflow.md` |
 | `external_implementer` | 用户或配置明确要求外部 agent 写代码（ZCode、Trae、Chrome 插件驱动的云端 agent 等） | `implementation_mode=external_implementer`，读取 external implementer references |
@@ -15,6 +15,8 @@ main 必须先判断 `dispatch_tier`，再选择内部路由字段 `implementati
 
 `simple_patch` 不是逃避约束：不得触碰 forbidden path，不得新增未授权依赖，不得扩大需求；完成时仍需给出 changed files、验证命令和风险说明。
 
+child / external 终态后的格式、lint/build、typo 或机械冲突修复不重新派发，按 `maintenance_patch` 处理；它必须满足 `SKILL.md` §1.3 的文件数、语义行数和风险边界。maintenance patch 不是新的产品实现路由。
+
 存在 Figma link、UI 还原、API/schema、迁移、安全、CloudBase、跨端状态机、外部工具协作或用户指定外部实现者时，不得走 `simple_patch`。
 
 ## implementation_mode
@@ -23,6 +25,7 @@ main 必须先判断 `dispatch_tier`，再选择内部路由字段 `implementati
 
 - `codex_subagent`：默认重任务实现模式，使用 `implementer_fast` / `implementer_deep`。
 - `external_implementer`：Gate A0 命中外部实现者触发词，或任务配置明确指定。旧 `zcode_external` 兼容为 provider=zcode。
+- `main_direct`：仅用于 `simple_patch`；main 直接承担实现、diff review 与 scoped 验证，不得声明 implementer target 或 spawn contract。
 
 ## Gate A0 — External Implementer 简单触发
 

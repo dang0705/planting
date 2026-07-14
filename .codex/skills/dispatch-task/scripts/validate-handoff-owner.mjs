@@ -5,6 +5,7 @@ export function validateImplementationOwnerHandoff({
   externalTier,
   codeChanges,
   external,
+  mode,
   zcode,
   need,
   isObject,
@@ -25,12 +26,15 @@ export function validateImplementationOwnerHandoff({
     )
     need(isObject(data.handoff_manual), 'external_implementer requires handoff_manual')
     validateExternalContract({ data, external, need, isObject, nonEmptyString, unknownKeys })
-    validateZcodeContract({ zcode, external, need, nonEmptyString, includesAll, unknownKeys })
+    validateZcodeContract({ zcode, external, need, includesAll, unknownKeys })
     need(nonEmptyString(data.handoff_manual.path), 'handoff_manual.path is required')
     need(
       data.handoff_manual.path.includes(data.dispatch_run_id),
       'handoff_manual.path should include dispatch_run_id'
     )
+    return
+  }
+  if (mode === 'main_direct') {
     return
   }
   validateCodexSubagentContract({ data, tier, need, isObject, nonEmptyString })
@@ -82,7 +86,9 @@ function validateWebExternalContract({ data, external, provider, need, isObject,
   const webExternalProvider =
     ['trae', 'chrome_cloud_agent'].includes(provider) ||
     external.prompt_transport === 'browser_plugin'
-  if (!webExternalProvider) {return}
+  if (!webExternalProvider) {
+    return
+  }
   const remoteSync = external.remote_sync ?? {}
   need(
     ['codex_desktop', 'other'].includes(external.codex_runtime_surface),
@@ -95,11 +101,18 @@ function validateWebExternalContract({ data, external, provider, need, isObject,
     )
   }
   need(isObject(remoteSync), 'web external provider requires external_contract.remote_sync')
+  need(
+    external.pr_policy === 'required',
+    'web external provider requires external_contract.pr_policy=required'
+  )
   need(remoteSync.required === true, 'external_contract.remote_sync.required must be true')
   need(remoteSync.status === 'pushed', 'external_contract.remote_sync.status must be pushed')
   need(nonEmptyString(remoteSync.remote), 'external_contract.remote_sync.remote is required')
   need(nonEmptyString(remoteSync.branch), 'external_contract.remote_sync.branch is required')
-  need(nonEmptyString(remoteSync.base_commit), 'external_contract.remote_sync.base_commit is required')
+  need(
+    nonEmptyString(remoteSync.base_commit),
+    'external_contract.remote_sync.base_commit is required'
+  )
   need(nonEmptyString(remoteSync.push_ref), 'external_contract.remote_sync.push_ref is required')
   need(
     nonEmptyString(remoteSync.planned_worktree_path),
@@ -123,11 +136,13 @@ function validateWebExternalContract({ data, external, provider, need, isObject,
   )
 }
 
-function validateZcodeContract({ zcode, external, need, nonEmptyString, includesAll, unknownKeys }) {
+function validateZcodeContract({ zcode, external, need, includesAll, unknownKeys }) {
   const provider =
     external.provider || (external.external_implementer === 'zcode_glm' ? 'zcode' : '')
   const zcodeUnknown = unknownKeys(zcode, externalContractAllowedKeys())
-  if (provider !== 'zcode') {return}
+  if (provider !== 'zcode') {
+    return
+  }
   need(
     zcodeUnknown.length === 0,
     `zcode_contract contains unknown fields: ${zcodeUnknown.join(', ')}`
@@ -136,15 +151,30 @@ function validateZcodeContract({ zcode, external, need, nonEmptyString, includes
     zcode.external_implementer === 'zcode_glm' || zcode.provider === 'zcode',
     'zcode_contract.external_implementer must be zcode_glm or provider must be zcode'
   )
-  need(!zcode.application || zcode.application === 'ZCode', 'zcode_contract.application must be ZCode')
-  need(zcode.target_session === 'current_open_chat', 'zcode_contract.target_session must be current_open_chat')
-  need(zcode.prompt_transport === 'clipboard_paste', 'zcode_contract.prompt_transport must be clipboard_paste')
-  need(zcode.prompt_sentinel_required === true, 'zcode_contract.prompt_sentinel_required must be true')
+  need(
+    !zcode.application || zcode.application === 'ZCode',
+    'zcode_contract.application must be ZCode'
+  )
+  need(
+    zcode.target_session === 'current_open_chat',
+    'zcode_contract.target_session must be current_open_chat'
+  )
+  need(
+    zcode.prompt_transport === 'clipboard_paste',
+    'zcode_contract.prompt_transport must be clipboard_paste'
+  )
+  need(
+    zcode.prompt_sentinel_required === true,
+    'zcode_contract.prompt_sentinel_required must be true'
+  )
   need(
     zcode.prompt_integrity_check_required === true,
     'zcode_contract.prompt_integrity_check_required must be true'
   )
-  need(zcode.input_box_check_required === true, 'zcode_contract.input_box_check_required must be true')
+  need(
+    zcode.input_box_check_required === true,
+    'zcode_contract.input_box_check_required must be true'
+  )
   need(zcode.send_action_required === true, 'zcode_contract.send_action_required must be true')
   need(
     includesAll(zcode.allowed_send_actions, ['enter', 'send_button', 'blocked']),
@@ -175,7 +205,10 @@ function validateZcodeContract({ zcode, external, need, nonEmptyString, includes
     zcode.clipboard_write_via_computer_use_required === true,
     'zcode_contract.clipboard_write_via_computer_use_required must be true'
   )
-  need(zcode.manual_typing_forbidden === true, 'zcode_contract.manual_typing_forbidden must be true')
+  need(
+    zcode.manual_typing_forbidden === true,
+    'zcode_contract.manual_typing_forbidden must be true'
+  )
   need(
     zcode.shell_only_ui_automation_forbidden === true,
     'zcode_contract.shell_only_ui_automation_forbidden must be true'
@@ -219,7 +252,10 @@ function validateCodexSubagentContract({ data, tier, need, isObject, nonEmptyStr
   need(nonEmptyString(data.target_role), 'codex_subagent requires target_role')
   need(isObject(data.spawn_contract), 'codex_subagent requires spawn_contract')
   if (isObject(data.spawn_contract)) {
-    need(data.spawn_contract.context_mode === 'isolated', 'spawn_contract.context_mode must be isolated')
+    need(
+      data.spawn_contract.context_mode === 'isolated',
+      'spawn_contract.context_mode must be isolated'
+    )
     need(
       data.spawn_contract.generic_fallback_forbidden === true,
       'spawn_contract.generic_fallback_forbidden must be true'
@@ -272,6 +308,7 @@ function externalContractAllowedKeys() {
     'prompt_max_chars',
     'prompt_sha256',
     'required_prompt_sections',
+    'pr_policy',
     'handoff_manual_required',
     'handoff_completion_status_source',
     'computer_use_required',

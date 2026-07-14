@@ -50,8 +50,9 @@ const acceptanceMentionsMiniProgramRuntime = (data.acceptance ?? []).some(item =
   )
 })
 
-const mode = data.implementation_mode ?? 'codex_subagent'
 const tier = data.dispatch_tier
+const mode =
+  data.implementation_mode ?? (tier === 'simple_patch' ? 'main_direct' : 'codex_subagent')
 const externalMode = ['external_implementer', 'zcode_external'].includes(mode)
 const externalTier = ['external_implementer', 'zcode_external'].includes(tier)
 const task = data.task ?? {}
@@ -70,8 +71,8 @@ need(
 
 need(nonEmptyString(data.dispatch_run_id), 'dispatch_run_id is required')
 need(
-  ['codex_subagent', 'external_implementer', 'zcode_external'].includes(mode),
-  'implementation_mode must be codex_subagent|external_implementer|zcode_external'
+  ['main_direct', 'codex_subagent', 'external_implementer', 'zcode_external'].includes(mode),
+  'implementation_mode must be main_direct|codex_subagent|external_implementer|zcode_external'
 )
 need(
   [
@@ -107,7 +108,7 @@ need(
   'decision_lock.level must be standard|strict'
 )
 
-if (codeChanges) {
+if (codeChanges && mode !== 'main_direct') {
   need(
     nonEmptyString(data?.validation?.worktree_baseline_path),
     'code changes require validation.worktree_baseline_path'
@@ -187,9 +188,14 @@ if (risk === 'high') {
 }
 
 if (tier === 'simple_patch') {
-  need(mode === 'codex_subagent', 'simple_patch must use codex_subagent')
+  need(mode === 'main_direct', 'simple_patch must use main_direct')
   need(!ui, 'simple_patch cannot be a UI task')
   need(risk === 'local', 'simple_patch requires task.risk=local')
+}
+if (mode === 'main_direct') {
+  need(tier === 'simple_patch', 'main_direct is only valid for simple_patch')
+  need(data.target_role === undefined, 'main_direct must not declare target_role')
+  need(data.spawn_contract === undefined, 'main_direct must not declare spawn_contract')
 }
 if (tier === 'deep_contract') {
   need(data?.decision_lock?.level === 'strict', 'deep_contract requires decision_lock.level=strict')
@@ -204,6 +210,7 @@ validateImplementationOwnerHandoff({
   externalTier,
   codeChanges,
   external,
+  mode,
   zcode,
   need,
   isObject,

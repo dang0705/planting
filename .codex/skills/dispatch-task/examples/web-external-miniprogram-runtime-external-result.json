@@ -26,7 +26,15 @@
       "mode": "child_run_lock",
       "initial_check_min_minutes": 5,
       "poll_interval_min_minutes": 5,
-      "short_timeout_completion_forbidden": true
+      "short_timeout_completion_forbidden": true,
+      "monitoring_automation": {
+        "mode": "recurring_wakeup",
+        "automation_id": "dispatch-task-example-web-runtime-001",
+        "status": "stopped",
+        "initial_delay_minutes": 5,
+        "poll_interval_minutes": 5,
+        "session_url": "https://work.enterprise.trae.cn/session/example-web-runtime-001"
+      }
     },
     "remote_sync": {
       "status": "pushed",
@@ -56,6 +64,26 @@
       "main_workspace_untouched": true,
       "runtime_channel": "miniprogram_automator",
       "projectPath": "/tmp/planting-pr-example-web-runtime-001/dist/dev/mp-weixin"
+    },
+    "pr_merge": {
+      "provider": "github_plugin",
+      "pr_url": "https://github.com/example/planting/pull/999",
+      "pr_number": 999,
+      "base_branch": "sprint-ai-workflow",
+      "head_sha_before_merge": "a70f84da4e4ef54749a995081b47ee437dd0fa08",
+      "merge_method": "merge",
+      "merged": true,
+      "merge_commit_sha": "b80f84da4e4ef54749a995081b47ee437dd0fa09"
+    },
+    "local_base_sync": {
+      "branch": "sprint-ai-workflow",
+      "remote": "origin",
+      "fetch_completed": true,
+      "pull_mode": "ff-only",
+      "pull_completed": true,
+      "head": "b80f84da4e4ef54749a995081b47ee437dd0fa09",
+      "matches_remote": true,
+      "clean": true
     }
   },
   "changed_files": [
@@ -67,9 +95,7 @@
   "validation_evidence": {
     "unit_tests": {
       "result": "passed",
-      "commands": [
-        "node test/unit-test/test-transpiration.mjs"
-      ],
+      "commands": ["node test/unit-test/test-transpiration.mjs"],
       "evidence_ref": "evidence/unit-tests.txt",
       "reason": ""
     },
@@ -89,17 +115,13 @@
     },
     "build": {
       "result": "passed",
-      "commands": [
-        "npm run dev:mp-weixin:local-functions:lan"
-      ],
+      "commands": ["npm run dev:mp-weixin:local-functions:lan"],
       "evidence_ref": "evidence/lan-runtime.txt",
       "reason": ""
     },
     "self_check": {
       "result": "passed",
-      "commands": [
-        "node qa/watering-runtime-check.mjs"
-      ],
+      "commands": ["node qa/watering-runtime-check.mjs"],
       "evidence_ref": "evidence/runtime-check.txt",
       "reason": ""
     }

@@ -10,9 +10,7 @@ import { validateUiCompleted } from './validate-result-ui.mjs'
 
 const [role, handoffFile, resultFile] = process.argv.slice(2)
 if (!['implementer', 'external'].includes(role) || !handoffFile || !resultFile) {
-  console.error(
-    'usage: validate-result.mjs <implementer|external> <handoff.json> <result.json>'
-  )
+  console.error('usage: validate-result.mjs <implementer|external> <handoff.json> <result.json>')
   process.exit(2)
 }
 
@@ -30,7 +28,8 @@ const handoffMode = handoff.implementation_mode ?? 'codex_subagent'
 const handoffExternalMode = ['external_implementer', 'zcode_external'].includes(handoffMode)
 const externalContract = handoff.external_contract ?? handoff.zcode_contract ?? {}
 const externalProvider =
-  externalContract.provider || (externalContract.external_implementer === 'zcode_glm' ? 'zcode' : '')
+  externalContract.provider ||
+  (externalContract.external_implementer === 'zcode_glm' ? 'zcode' : '')
 const webExternalProvider =
   ['trae', 'chrome_cloud_agent'].includes(externalProvider) ||
   externalContract.prompt_transport === 'browser_plugin'
@@ -58,11 +57,10 @@ const normalize = file =>
     .replace(/^\.\//, '')
     .replace(/\/+$/, '')
 const normalizeFsPath = value => {
-  if (!nonEmptyString(value)) {return ''}
-  return path
-    .resolve(String(value))
-    .replaceAll('\\', '/')
-    .replace(/\/+$/, '')
+  if (!nonEmptyString(value)) {
+    return ''
+  }
+  return path.resolve(String(value)).replaceAll('\\', '/').replace(/\/+$/, '')
 }
 const repoRoot = path.resolve(fileURLToPath(new URL('../../../..', import.meta.url)))
 const mainWorkspaceMiniProgramProjectPath = normalizeFsPath(
@@ -95,7 +93,9 @@ const expectedAutomatorProjectPath = () => {
 const validateAutomatorProjectPath = (actualPath, label) => {
   const expectedPath = expectedAutomatorProjectPath()
   need(nonEmptyString(actualPath), `${label} is required`)
-  if (!nonEmptyString(actualPath)) {return}
+  if (!nonEmptyString(actualPath)) {
+    return
+  }
   need(
     normalizeFsPath(actualPath) === expectedPath,
     `${label} must match expected projectPath: ${expectedPath}`
@@ -113,9 +113,12 @@ const matchesAny = (file, patterns = []) =>
   patterns.some(pattern => globToRegExp(pattern).test(normalize(file)))
 const validateChangedFiles = (changedFiles, requireNonEmpty) => {
   need(Array.isArray(changedFiles), 'changed_files must be an array')
-  if (!Array.isArray(changedFiles)) {return}
-  if (requireNonEmpty)
-    {need(changedFiles.length > 0, 'completed code task requires non-empty changed_files')}
+  if (!Array.isArray(changedFiles)) {
+    return
+  }
+  if (requireNonEmpty) {
+    need(changedFiles.length > 0, 'completed code task requires non-empty changed_files')
+  }
   for (const raw of changedFiles) {
     const file = normalize(raw)
     need(nonEmptyString(file), 'changed_files entries must be non-empty strings')
@@ -354,6 +357,41 @@ if (role === 'external') {
               waitPolicy.short_timeout_completion_forbidden === true,
               'Codex Desktop web external short_timeout_completion_forbidden must be true'
             )
+            const monitoring = waitPolicy.monitoring_automation ?? {}
+            need(
+              isObject(monitoring),
+              'Codex Desktop web external requires external_wait_policy.monitoring_automation'
+            )
+            if (isObject(monitoring)) {
+              need(
+                monitoring.mode === 'recurring_wakeup',
+                'web external monitoring_automation.mode must be recurring_wakeup'
+              )
+              need(
+                nonEmptyString(monitoring.automation_id),
+                'web external monitoring_automation.automation_id is required'
+              )
+              need(
+                monitoring.automation_id.includes(handoff.dispatch_run_id),
+                'web external monitoring_automation.automation_id must include dispatch_run_id'
+              )
+              need(
+                Number(monitoring.initial_delay_minutes) >= 5,
+                'web external monitoring_automation.initial_delay_minutes must be >= 5'
+              )
+              need(
+                Number(monitoring.poll_interval_minutes) >= 5,
+                'web external monitoring_automation.poll_interval_minutes must be >= 5'
+              )
+              need(
+                ['stopped', 'unavailable'].includes(monitoring.status),
+                'completed web external monitoring_automation.status must be stopped|unavailable'
+              )
+              need(
+                nonEmptyString(monitoring.session_url),
+                'web external monitoring_automation.session_url is required'
+              )
+            }
           }
         }
         const receiptRemoteSync = sendReceipt.remote_sync ?? {}
@@ -432,7 +470,8 @@ if (role === 'external') {
           `${externalContract?.remote_sync?.remote}/${externalContract?.remote_sync?.branch}`
         const expectedWorktreePath = externalContract?.remote_sync?.planned_worktree_path
         const claimsAutomatorRuntime =
-          prReview.runtime_channel === 'miniprogram_automator' || nonEmptyString(prReview.projectPath)
+          prReview.runtime_channel === 'miniprogram_automator' ||
+          nonEmptyString(prReview.projectPath)
         const externalReviewMustCarryAutomatorPath =
           miniprogramAutomatorRequired && handoff?.task?.qa_required !== true
         need(isObject(prReview), 'web external recovery requires pr_review evidence')
@@ -440,11 +479,18 @@ if (role === 'external') {
           nonEmptyString(prReview.pr_url) || nonEmptyString(prReview.remote_branch),
           'web external pr_review requires pr_url or remote_branch'
         )
-        need(nonEmptyString(prReview.worktree_path), 'web external pr_review.worktree_path is required')
-        need(nonEmptyString(prReview.fetch_ref), 'web external pr_review.fetch_ref is required')
-        need(nonEmptyString(prReview.worktree_head), 'web external pr_review.worktree_head is required')
         need(
-          prReview.remote_branch === expectedRemoteBranch || prReview.fetch_ref === expectedRemoteBranch,
+          nonEmptyString(prReview.worktree_path),
+          'web external pr_review.worktree_path is required'
+        )
+        need(nonEmptyString(prReview.fetch_ref), 'web external pr_review.fetch_ref is required')
+        need(
+          nonEmptyString(prReview.worktree_head),
+          'web external pr_review.worktree_head is required'
+        )
+        need(
+          prReview.remote_branch === expectedRemoteBranch ||
+            prReview.fetch_ref === expectedRemoteBranch,
           'web external pr_review must match handoff remote branch'
         )
         need(
@@ -464,10 +510,7 @@ if (role === 'external') {
             prReview.runtime_channel === 'miniprogram_automator',
             'web external pr_review.runtime_channel must be miniprogram_automator when runtime QA is claimed'
           )
-          validateAutomatorProjectPath(
-            prReview.projectPath,
-            'web external pr_review.projectPath'
-          )
+          validateAutomatorProjectPath(prReview.projectPath, 'web external pr_review.projectPath')
         }
       }
     }

@@ -34,7 +34,7 @@ inclusion: always
 10. 具备完整开发生命周期或明显涉及业务逻辑的开发任务必须经 `$dispatch-task` 触发，再由其内部判断不同的 `dispatch-tier` 执行各自工作流。
 11. 客户端显示的文案必须从用户角度出发并符合常识，严禁将内部讨论用语、计算公式，拗口或难理解的文案暴露在界面中。必须遵循用户友好、利于用户操作的思想设计出最优的展示文案。
 12. 输出的文案、用语减少专业词汇，尤其在 plan 模式或用户显式要求 planning时，要注重用词以通俗易懂的白话结合举例代替专业词汇。
-13. `dispatch-task` 当前只允许实现阶段使用 subagent 或 external implementer；QA、端上验收、docs 同步和 ByteRover 影响处理均由 main 执行，不再派发 QA 或 docs 专用 subagent。main 自守门不写角色 receipt；仅跨 agent 边界与机器可校验证据（含端上 `runtime-qa-evidence.json`、一份 implementation postflight）才写产物。
+13. `dispatch-task` 当前默认由具名 implementer 或 external implementer 承担复杂实现；`simple_patch` 以及 child / external 返回终态后的受限 `maintenance_patch` 可由 main 直接处理，但不得在 child 仍运行时触碰代码。QA、端上验收、docs 同步和 ByteRover 影响处理均由 main 执行，不再派发 QA 或 docs 专用 subagent。main 自守门不写角色 receipt；仅跨 agent 边界与机器可校验证据（含端上 `runtime-qa-evidence.json`、一份 implementation postflight）才写产物。
 14. Web/云端 external implementer 即使运行时自称 main/root，也必须在本项目中承担 implementer 角色：只按 handoff 修改代码，完成后执行实现者自检和 unit tests；有 `figma_link` 的 UI 任务必须直接使用可用的 Figma 插件 / MCP / 工具读取设计并对齐 UI，不能依赖 Codex main 的转述。
 
 ## 3. 前端行为硬约束
@@ -68,7 +68,7 @@ inclusion: always
 1. 使用端上 `miniprogram-automator` / `9420` 做诊断相关自动化测试时，先读取 `docs/ai-rules/frontend-automation-id-policy.md` 的“第三点 元素 id 映射”，并按该映射执行入口定位与关键断言。
 2. `miniprogram-automator` 的目的若为了验证UI，必须对比截图。
 3. QA 不运行 unit tests；QA 负责运行时、端上、UI/Figma、E2E 和用户可观察行为验证。
-4. dispatch-task flow 中 QA owner 为 main；main 执行 QA 不授权其修改业务代码，发现产品问题必须退回原 implementer 或 external implementer。
+4. dispatch-task flow 中 QA owner 为 main；main 执行 QA 不授权其修改业务代码。发现产品问题必须退回原 implementer 或 external implementer；只有经 `dispatch-task` §1.3 判定为受限 maintenance patch 的格式、lint/build、typo 或机械冲突修复，main 才可在终态后处理。
 
 ## 6. 读取边界
 

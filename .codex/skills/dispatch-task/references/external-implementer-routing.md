@@ -61,7 +61,7 @@ dirty_policy: blocked_if_unowned_dirty
 
 ## Web PR recovery and QA
 
-Web/云端 external implementer 返回后，不再要求外部 agent 在本地主工作区写 handoff manual 才能开始 review；main 以最新 PR / 远端分支作为回收入口。若 provider 同时写了 handoff manual，可以作为辅助证据，但不能替代 PR diff 和本地 worktree 验收。Web provider 的 completed 依据是 PR/worktree 证据，不是本地 handoff manual。
+Web/云端 external implementer 返回后，不再要求外部 agent 在本地主工作区写 handoff manual 才能开始 review；main 以最新 PR / 远端分支作为回收入口。若 provider 同时写了 handoff manual，可以作为辅助证据，但不能替代 PR diff 和本地 worktree 验收。Web provider 的 `completed` 依据是 PR/worktree 证据，不是本地 handoff manual；provider 的终态只代表实现交付阶段结束，随后进入 Gate C Main Review，不代表 dispatch-task 已完成。
 
 硬规则：
 
@@ -88,7 +88,7 @@ npm run build:mp-weixin
 npm run test:e2e
 ```
 
-4. 需要本地运行态 QA 时，main 先准备 worktree runtime env；该脚本只复制必要 `.env.local`，只输出脱敏 key 列表，结束后必须 cleanup：
+4. 需要本地运行态 QA 时，main 先准备 worktree runtime env。runtime worktree 必须复用主工作区的 `.env.local` 和 `node_modules`：`.env.local` 使用下面的脚本复制，`node_modules` 优先从主工作区建立软链接；不得因为 provider worktree 自身没有凭据或依赖目录就把项目环境判为缺失。脚本只输出脱敏 key 列表，结束后必须 cleanup：
 
 ```bash
 node .codex/skills/dispatch-task/scripts/prepare-runtime-worktree-env.mjs <handoff.json> prepare
@@ -110,6 +110,37 @@ node .codex/skills/dispatch-task/scripts/manage-web-pr-worktree.mjs cleanup <han
 ```
 
 9. recovery result 必须记录 `external_recovery_evidence.pr_review`，至少包含 `pr_url` 或 `remote_branch`、`worktree_path`、`fetch_ref`、`worktree_head`、`commands_run`、`main_workspace_untouched=true`。若执行了端上 automator 验收，还必须记录实际 `projectPath`，并与 handoff 中的 `planned_worktree_path` 匹配。缺失或不匹配时不得进入 Completion Gate。
+
+### Web external monitoring automation
+
+TRAE Web / Chrome cloud agent 的等待以一次性发送确认 + 低频 recurring wakeup 为主，不使用持续浏览器盯屏：
+
+1. 发送动作只允许做短时 UI 确认：host、Code tab、输入框、发送按钮可用、消息已送达、provider 已开始运行；这些不是 completion 检查；
+2. provider 开始运行后，main 创建或复用一个与 `dispatch_run_id` 绑定的监控自动化，记录 `automation_id`、provider session URL、`initial_delay_minutes=5`、`poll_interval_minutes=5`、`mode=recurring_wakeup`；首次正式检查不早于 5 分钟，后续不短于 5 分钟；
+3. 每次唤醒只检查是否出现最终结果、PR URL、handoff/manual 终态或明确阻断。仍在执行时不得读取流式中间过程、半成品 diff、临时 status，也不得把“暂无结果”报告给用户；
+4. provider 终态出现后，先停用/删除该自动化，再进入 PR recovery、QA、merge 和 local sync；`completed` 才能进入维护补丁和后续合并，`blocked` 只能进入阻断处理；任务完成、阻断、用户中止或会话失效时都必须清理自动化，避免 stale wakeup；
+5. 若产品无法创建 recurring automation，必须退化为产品提供的 heartbeat/wakeup，仍遵守同样的 5 分钟下限；不得退化为 20 秒/40 秒/60 秒循环或持续 UI 轮询。
+
+send receipt 的 `external_wait_policy` 应扩展为：
+
+```json
+{
+  "mode": "child_run_lock",
+  "initial_check_min_minutes": 5,
+  "poll_interval_min_minutes": 5,
+  "short_timeout_completion_forbidden": true,
+  "monitoring_automation": {
+    "mode": "recurring_wakeup",
+    "automation_id": "dispatch-task-{dispatch_run_id}",
+    "status": "active | unavailable | stopped",
+    "initial_delay_minutes": 5,
+    "poll_interval_minutes": 5,
+    "session_url": "https://work.enterprise.trae.cn/session/..."
+  }
+}
+```
+
+`status=unavailable` 只能表示产品没有自动化能力，不得放宽等待下限；终态回收后必须记录 `status=stopped` 或等价的删除证据。
 
 ## 统一 Prompt 生成规范
 
@@ -162,6 +193,7 @@ generic_fallback_forbidden: true
 recovery_required: true
 required_prompt_sections
 remote_sync           # Web/云端 provider 必填
+pr_policy: required   # Web/云端代码任务必须产出 PR；合并由 main 使用 GitHub 插件完成
 ```
 
 `prompt_transport` 示例：
@@ -184,9 +216,10 @@ remote_sync           # Web/云端 provider 必填
 5. TRAE Web 的输入框通常是 Lexical/contenteditable。adapter 必须通过真实焦点与浏览器输入事件触发前端状态更新；发送前必须确认发送按钮存在且 `disabled=false`。仅设置 DOM 文本后点击禁用按钮不算 send receipt。
 6. send receipt 至少记录：目标 URL、受控 profile 或 remote-debug 端口、Code tab 的 `aria-selected` 和 `class`、输入框 selector、发送按钮 `disabled=false` 的证据、真实点击/发送动作，以及 prompt sentinel 或摘要。
 7. Codex 内置浏览器发送成功后，adapter 必须显式保留 TRAE tab，避免 Browser Use 默认清理导致用户看不到会话。推荐在所有发送和状态确认动作完成后调用 `browser.tabs.finalize({ keep: [{ tab, status: "handoff" }] })`；send receipt 必须记录 `tab_retention.status="handoff"`、`tab_retention.method="browser.tabs.finalize.keep"`、`tab_retention.session_url`。如果 finalization API 不可用，必须记录 `tab_retention.status="blocked"` 与原因，不得声称内置浏览器会话已保留。
-8. prompt 发送并确认 TRAE 已开始运行后，main 进入 Child Run Lock。Web agent 正式实现任务的等待策略必须按 main 进程低频回收执行：首次正式状态检查不得早于 5 分钟，之后检查间隔不得短于 5 分钟；不得把 60 秒、90 秒等短等待作为完成、失败、无产出或需要人工接管的依据。短等待只允许用于发送动作本身的 UI 确认（例如按钮可用、session URL 出现、页面显示已开始运行）或一次性身份探针，不得流入 external implementer completion 判断。
-9. Web provider send receipt 必须记录 `external_wait_policy.mode="child_run_lock"`、`external_wait_policy.initial_check_min_minutes>=5`、`external_wait_policy.poll_interval_min_minutes>=5`、`external_wait_policy.short_timeout_completion_forbidden=true`。如果本轮只是身份探针或非代码任务，不走 external implementer completion validator，但不得把探针脚本的短等待写进正式实现规则。
-10. TRAE 聊天输出不能替代 `handoff_manual.path`，只能作为排障或 recovery 辅助证据。
+8. prompt 发送并确认 TRAE 已开始运行后，main 进入 Child Run Lock，并按上方 Web external monitoring automation 创建 recurring wakeup。正式实现任务首次状态检查不得早于 5 分钟，之后检查间隔不得短于 5 分钟；不得把 60 秒、90 秒等短等待作为完成、失败、无产出或人工接管依据。短等待只允许用于发送动作本身的 UI 确认或一次性身份探针。
+9. Web provider send receipt 必须记录 `external_wait_policy.mode="child_run_lock"`、`external_wait_policy.initial_check_min_minutes>=5`、`external_wait_policy.poll_interval_min_minutes>=5`、`external_wait_policy.short_timeout_completion_forbidden=true` 及 `monitoring_automation`。如果本轮只是身份探针或非代码任务，不走 external implementer completion validator，但不得把探针脚本的短等待写进正式实现规则。
+10. TRAE 聊天输出不能替代 `handoff_manual.path` 或 PR/worktree evidence，只能作为排障或 recovery 辅助证据。
+11. Web external PR recovery 必须在 Gate C Main Review 中完成 diff review、必要的受限 `maintenance_patch` 和验证，然后在 merge 后记录 `pr_merge` 与 `local_base_sync`：包括 PR URL/number、merge 前 head SHA、merge commit SHA、base branch、GitHub merge 成功证据，以及本地 `fetch + pull --ff-only` 后的 branch/head/clean status。缺少任一项不得标记 dispatch-task `completed`。
 
 ## handoff_manual
 
@@ -210,4 +243,7 @@ node .codex/skills/dispatch-task/scripts/validate-zcode-send-receipt.mjs <handof
 node .codex/skills/dispatch-task/scripts/validate-zcode-handoff-manual.mjs <handoff.json> <handoff-manual.json>
 node .codex/skills/dispatch-task/scripts/validate-result.mjs external <handoff.json> <recovery-result.json>
 node .codex/skills/dispatch-task/scripts/validate-implementation-postflight.mjs <handoff.json> <recovery-result.json> <worktree-baseline.json>
+node .codex/skills/dispatch-task/scripts/validate-completion-readiness.mjs <handoff.json> <recovery-result.json> <postflight-report.json> [runtime-qa-evidence.json]
 ```
+
+`validate-completion-readiness` 只能在 GitHub 插件完成 PR merge、main 已 `fetch + pull --ff-only` 且 recovery result 已补齐 `pr_merge` / `local_base_sync` 后执行。

@@ -3,12 +3,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const [
-  handoffFile,
-  implementationResultFile,
-  postflightReportFile,
-  runtimeQaEvidenceFile
-] = process.argv.slice(2)
+const [handoffFile, implementationResultFile, postflightReportFile, runtimeQaEvidenceFile] =
+  process.argv.slice(2)
 if (!handoffFile || !implementationResultFile || !postflightReportFile) {
   console.error(
     'usage: validate-completion-readiness.mjs <handoff.json> <implementer-or-external-result.json> <postflight-report.json> [runtime-qa-evidence.json]'
@@ -39,15 +35,13 @@ const normalizeFsPath = value => {
   if (!nonEmptyString(value)) {
     return ''
   }
-  return path
-    .resolve(String(value))
-    .replaceAll('\\', '/')
-    .replace(/\/+$/, '')
+  return path.resolve(String(value)).replaceAll('\\', '/').replace(/\/+$/, '')
 }
 const repoRoot = path.resolve(fileURLToPath(new URL('../../../..', import.meta.url)))
 const externalContract = handoff.external_contract ?? handoff.zcode_contract ?? {}
 const externalProvider =
-  externalContract.provider || (externalContract.external_implementer === 'zcode_glm' ? 'zcode' : '')
+  externalContract.provider ||
+  (externalContract.external_implementer === 'zcode_glm' ? 'zcode' : '')
 const webExternalProvider =
   ['trae', 'chrome_cloud_agent'].includes(externalProvider) ||
   externalContract.prompt_transport === 'browser_plugin'
@@ -134,12 +128,49 @@ if (mode === 'zcode_external' || mode === 'external_implementer') {
 need(Array.isArray(blockers), 'implementation blockers/deviations must be an array')
 need(blockers.length === 0, 'Completion Gate cannot pass with deviations_or_blockers/blockers')
 
+if (webExternalProvider && impl.status === 'completed') {
+  const recoveryEvidence = impl.external_recovery_evidence ?? impl.zcode_recovery_evidence
+  const prMerge = recoveryEvidence?.pr_merge ?? {}
+  const localSync = recoveryEvidence?.local_base_sync ?? {}
+  need(
+    isObject(prMerge),
+    'completed Web external task requires external_recovery_evidence.pr_merge'
+  )
+  if (isObject(prMerge)) {
+    need(prMerge.provider === 'github_plugin', 'pr_merge.provider must be github_plugin')
+    need(nonEmptyString(prMerge.pr_url), 'pr_merge.pr_url is required')
+    need(Number.isInteger(prMerge.pr_number), 'pr_merge.pr_number must be an integer')
+    need(nonEmptyString(prMerge.base_branch), 'pr_merge.base_branch is required')
+    need(
+      nonEmptyString(prMerge.head_sha_before_merge),
+      'pr_merge.head_sha_before_merge is required'
+    )
+    need(
+      ['merge', 'squash', 'rebase'].includes(prMerge.merge_method),
+      'pr_merge.merge_method must be merge|squash|rebase'
+    )
+    need(prMerge.merged === true, 'pr_merge.merged must be true')
+    need(nonEmptyString(prMerge.merge_commit_sha), 'pr_merge.merge_commit_sha is required')
+  }
+  need(
+    isObject(localSync),
+    'completed Web external task requires external_recovery_evidence.local_base_sync'
+  )
+  if (isObject(localSync)) {
+    need(nonEmptyString(localSync.branch), 'local_base_sync.branch is required')
+    need(localSync.remote === 'origin', 'local_base_sync.remote must be origin')
+    need(localSync.fetch_completed === true, 'local_base_sync.fetch_completed must be true')
+    need(localSync.pull_mode === 'ff-only', 'local_base_sync.pull_mode must be ff-only')
+    need(localSync.pull_completed === true, 'local_base_sync.pull_completed must be true')
+    need(nonEmptyString(localSync.head), 'local_base_sync.head is required')
+    need(localSync.matches_remote === true, 'local_base_sync.matches_remote must be true')
+    need(localSync.clean === true, 'local_base_sync.clean must be true')
+  }
+}
+
 if (codeChanges) {
   need(isObject(postflight), 'code changes require implementation postflight report')
-  need(
-    postflight.status === 'passed',
-    `postflight report must be passed, got ${postflight.status}`
-  )
+  need(postflight.status === 'passed', `postflight report must be passed, got ${postflight.status}`)
   need(
     postflight.gate === 'implementation_postflight',
     'postflight report gate must be implementation_postflight'
@@ -233,7 +264,10 @@ if (runtimeQa) {
     'passed runtime-qa-evidence cannot contain not_verified unless batch_substitute_allowed'
   )
   if (runtimeQa.status === 'passed') {
-    need((runtimeQa.failures ?? []).length === 0, 'passed runtime-qa-evidence cannot contain failures')
+    need(
+      (runtimeQa.failures ?? []).length === 0,
+      'passed runtime-qa-evidence cannot contain failures'
+    )
     if (runtimeAcceptanceMode !== 'batch_substitute_allowed') {
       need(
         (runtimeQa.not_verified ?? []).length === 0,

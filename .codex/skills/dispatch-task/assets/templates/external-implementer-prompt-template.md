@@ -42,6 +42,7 @@ Forbidden:
 - 完成代码修改和自检后更新为 `status=completed`。
 - 无法继续时更新为 `status=blocked`，并在 `blockers` 写明原因。
 - 如果你运行在不能写入本地主工作区文件的 Web/云端环境，必须通过 PR 或远端分支交付，并在最终结果中给出 PR URL 或 remote branch；本地 handoff manual 可标记为不可用，但聊天完成声明不能替代 PR/branch。
+- Web/云端代码任务必须优先创建或更新合同指定分支上的 PR；最终结果必须给出 PR URL、head branch 和最终 head SHA。PR 的合并由 Codex main 使用 GitHub 插件完成，不能在没有 PR/worktree 证据时仅凭聊天声明完成。
 - Codex main 会先读取该手册的 `status` 来判断你是否结束；聊天里说完成不算完成。
 
 最小 JSON 结构：
@@ -90,6 +91,11 @@ Forbidden:
   "style_stack_compliance": {},
   "component_reuse_evidence": {},
   "uni_ui_mapping_evidence": {},
+  "delivery_evidence": {
+    "pr_url": "not_applicable | https://...",
+    "remote_branch": "not_applicable | origin/trae/...",
+    "head_sha": "not_applicable | <sha>"
+  },
   "validation_evidence": {
     "unit_tests": {"result": "passed | failed | blocked", "commands": [], "evidence_ref": ""},
     "lint": {"result": "passed | not_applicable | failed | blocked", "commands": [], "evidence_ref": ""},

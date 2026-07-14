@@ -29,6 +29,7 @@
     "recovery_required": true,
     "handoff_manual_required": true,
     "handoff_completion_status_source": "handoff_manual",
+    "pr_policy": "required",
     "required_prompt_sections": [
       "implementation_contract",
       "allowed_forbidden_paths",
@@ -54,47 +55,25 @@
     "path": ".tmp/dispatch-task/example-web-runtime-001-handoff-manual.json",
     "status_field": "status",
     "working_status": "working",
-    "terminal_statuses": [
-      "completed",
-      "blocked"
-    ],
+    "terminal_statuses": ["completed", "blocked"],
     "main_completion_probe": "read_json_before_ui"
   },
-  "allowed_paths": [
-    "src/pages/watering-advisor/**",
-    "cloudfunctions/layer/utils/transpiration.js"
-  ],
-  "forbidden_paths": [
-    "package.json",
-    "package-lock.json",
-    "scripts/**"
-  ],
+  "allowed_paths": ["src/pages/watering-advisor/**", "cloudfunctions/layer/utils/transpiration.js"],
+  "forbidden_paths": ["package.json", "package-lock.json", "scripts/**"],
   "acceptance": [
     "完成小程序端上 miniprogram-automator 验收",
     "小程序运行时 wx.request 命中新代码",
     "只修改 allowed_paths 内文件"
   ],
   "project_constraints": {
-    "rule_refs": [
-      "AGENTS.md#QA行为约束",
-      "AGENTS.md#全局行为硬规则"
-    ],
+    "rule_refs": ["AGENTS.md#QA行为约束", "AGENTS.md#全局行为硬规则"],
     "dependency_policy": "no_new_dependencies",
-    "test_commands": [
-      "npm run dev:mp-weixin:local-functions:lan",
-      "npm run test:e2e"
-    ]
+    "test_commands": ["npm run dev:mp-weixin:local-functions:lan", "npm run test:e2e"]
   },
   "decision_lock": {
     "level": "standard",
-    "architecture_invariants": [
-      "不修改数据库 schema",
-      "不修改 CloudBase 权限模型"
-    ],
-    "local_decisions_allowed": [
-      "局部实现细节",
-      "允许的文件内重构"
-    ]
+    "architecture_invariants": ["不修改数据库 schema", "不修改 CloudBase 权限模型"],
+    "local_decisions_allowed": ["局部实现细节", "允许的文件内重构"]
   },
   "validation": {
     "miniprogram_automator_required": true,
@@ -102,11 +81,7 @@
     "allow_head_change": true,
     "head_change_reason": "web_external_remote_sync",
     "worktree_baseline_path": ".tmp/dispatch-task/example-web-runtime-001-worktree-baseline.json",
-    "external": [
-      "remote sync",
-      "recovery diff review",
-      "validation evidence"
-    ]
+    "external": ["remote sync", "recovery diff review", "validation evidence"]
   },
   "output_evidence_required": [
     "external_send_receipt",

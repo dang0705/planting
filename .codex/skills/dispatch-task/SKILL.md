@@ -1,6 +1,6 @@
 ---
 name: dispatch-task
-description: 'main 只做路由、合同、等待、回收、审计与 Completion Gate；代码修改由具名 implementer 或 external implementer 执行。'
+description: 'main 只做路由、合同、等待、回收、审计与 Completion Gate；复杂代码修改由具名 implementer 或 external implementer 执行，simple_patch 与终态后的受限 maintenance patch 可由 main 直接完成。'
 ---
 
 # Dispatch Task
@@ -17,7 +17,7 @@ description: 'main 只做路由、合同、等待、回收、审计与 Completio
 其余环节（main QA、docs、BRV）由 main 按行为规则执行，**不**产出 `main-*-receipt`，**不**调用 `validate-result.mjs main_qa`。
 
 - **main**：任务归一化、项目约束、路径边界、风险路由、实现模式选择、handoff 校验、external implementer 桥接控制、Child Run Lock、diff-first review、返工协调、QA、docs/BRV 影响处理与 Completion Gate；
-  - 除非任务在后续 `dispatch_tier` 被定位为 `simple_patch` 可直接修改代码，否则 main 只允许读取代码、生成/校验合同、查看 diff、运行 validator。
+  - 除非任务在后续 `dispatch_tier` 被定位为 `simple_patch`，或 child / external 已返回终态后命中受限 `maintenance_patch`，否则 main 只允许读取代码、生成/校验合同、查看 diff、运行 validator。
   - **分配了 `Implementer` 时不运行单测/lint/typecheck。当处理 Figma 任务时，只允许按 `$figma-ui-implementation-policy` 进行 Lite 路由；最多使用 `get_metadata`，不得读取 design context、screenshot、variables 或 assets。**。
   - **QA、端上 `miniprogram automator`、UI/Figma 运行态验收、docs 同步和 ByteRover 影响处理均由 main 执行；main 执行 QA/docs 不授权其修改业务代码。**
   - 代码类文件包括但不限于：`src/**`、`cloudfunctions/**`、测试代码、schema、配置、package/lockfile、构建脚本、迁移脚本。
@@ -44,8 +44,14 @@ description: 'main 只做路由、合同、等待、回收、审计与 Completio
 
 - 任务开始阶段是否需要执行 ByteRover recall；
 - Query、Read、当前事实源核验与最小上下文下发；
-- 任务结束阶段的 `brv_memory_impact`、`record_plan`、执行所有权与验收；
+- 任务过程中的 `brv_memory_impact`、`record_plan`、执行所有权与验收；
 - Space、权限、冲突、部分失败及破坏性操作的流程状态。
+
+BRV 记录时机必须按候选事实是否依赖实现结果区分：
+
+- 已由用户明确确认，且已由当前事实源核验、独立于本次代码修改结果的稳定业务事实，可以在任务中途立即完成 `record_plan`、写入和 readback/Query 验证；不得为了等待实现、QA 或 Completion Gate 而延迟。
+- 只有依赖最终实现、评审或端上验收才能确认的业务行为，才延后到对应证据齐备后记录。
+- 无论时机如何，均不得记录当前代码位置、一次性 bug 修复过程、dispatch/provider 过程、临时环境状态或未经验证的实现方案。任务结束时仍须复核已写入的记录，或明确说明 `brv_memory_impact=false`。
 
 ByteRover 的具体命令、Topic Schema、Vocabulary 和引擎行为以当前安装的 ByteRover V4 Skill 为准。当前实现事实及冲突优先级按 `AGENTS.md` 的知识治理边界执行，dispatch-task 不另建一套事实优先级。
 
@@ -86,6 +92,22 @@ objective / dispatch_tier / code_changes_required / ui_task / figma_link / risk 
 | `standard_task`        | 多文件但在既有架构内，局部功能或普通 UI                                                                 | `implementation_mode=codex_subagent`，通常派 `implementer_fast`                                      | implementer_fast     |
 | `deep_contract`        | API/schema/迁移/安全/跨系统状态机/兼容性或不可逆风险                                                    | `implementation_mode=codex_subagent`，派 `implementer_deep`，读取 `references/high-risk-workflow.md` | implementer_deep     |
 | `external_implementer` | 用户或配置明确要求外部 agent 写代码（ZCode、Trae、Chrome 插件驱动的云端 agent 等）                      | `implementation_mode=external_implementer`，读取 external implementer bridge references              | external implementer |
+
+### 1.3 Main 直接小修复与终态后维护补丁
+
+`simple_patch` 是 main 在 intake 阶段直接实现的正式路由；不生成 implementer handoff、send receipt 或角色 receipt。`main_direct` 只允许以下范围：格式化、lint/build 触发的机械修复、拼写/文案/注释、稳定自动化 ID typo，以及不改变 API、schema、权限、数据结构、状态机、架构边界或用户业务行为的单点修复。
+
+这里的“实现者终态”只表示 implementer/provider 已返回合同要求的最终结果：`completed` 或 `blocked`。它表示实现交付阶段结束并进入 main review，不表示整个 dispatch-task 已完成。只有 `completed` 结果且 recovery evidence 已齐备时，main 才可以在 Gate C Main Review（Web external 为 PR recovery review 子阶段）中执行一次受限 `maintenance_patch`；`blocked` 只能进入阻断处理，不授权 main 接管实现。
+
+1. 不得在 child / provider 仍运行时修改任何代码类文件；
+2. 变更默认不超过 3 个文件、80 行语义变更；纯格式化可扩大文件数，但必须证明无语义 diff；
+3. 只能修复已被验证的 typo、格式、lint/build 阻断或合同内的机械冲突，不得借机改变产品方向；
+4. external Web 任务只能在合同指定的 PR worktree 修改，并提交、推送到同一 PR head；不得把 PR worktree 的修复带回主工作区直接提交；
+5. 若需要新增业务判断、跨模块重构、API/schema/状态机变化，立即升级回原 implementer 或请求用户决策；不得把“大修”伪装成 maintenance patch。
+
+`maintenance_patch` 的有效窗口只在 Gate C Main Review 内：从 completed 结果和 recovery evidence 可审查时开始，到 PR merge / local base sync / Completion Gate 之前结束。它不是任务完成后的补丁入口；一旦已通过 Completion Gate，后续问题必须回到原 implementer 或新建任务，不得重新打开已完成任务直接修改。
+
+maintenance patch 完成后必须重新执行 scoped diff review、oxfmt/lint/build 或合同指定验证；external Web 任务还必须重新执行 postflight，并以新的 head SHA 进入 PR merge gate。
 
 只验收或只改文档的任务由 main 直接执行，不进入 Implementation Completion Gate；不得伪装成实现任务。
 
@@ -192,8 +214,8 @@ node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
 3.  child 正在运行时，main 不得用 `git status` / `git diff` 的“暂时没有可见 diff”推断 child 失败。
 4.  Codex subagent 首次状态检查不得早于 5 分钟；之后低频检查间隔不得短于 5 分钟。检查只允许确认是否已有最终消息/结果文件，不得读取半成品 diff 后继续实现。
 5.  `deep_contract`、UI/Figma、跨模块、状态机或大文件拆分任务，首次状态检查建议不早于 10 分钟；没有最终 JSON 时默认仍在执行。
-6.  如果 main 误写了代码类文件，必须立即停止并返回 `blocked: main_workspace_contamination`，说明触碰文件、原因和建议处理方式；不得在 child 仍可能写入时自行撤回或继续加工。
-7.  只有在 child 返回 `completed|blocked` 终态后，main 才能进入 Gate C 做 diff-first review。返工必须回到原 child thread 或原外部实现者；main 不得亲自修复。
+6.  如果 main 在 child 仍可能写入时误写了代码类文件，必须立即停止并返回 `blocked: main_workspace_contamination`，说明触碰文件、原因和建议处理方式；不得自行撤回或继续加工。
+7.  只有在 child 返回 `completed|blocked` 终态后，main 才能进入 Gate C 做 diff-first review；其中只有 `completed` 且证据齐备时，才允许按 §1.3 执行受限 maintenance patch。`blocked` 不授权 main 修复；超出范围的返工必须回到原 child thread 或原外部实现者，main 不得亲自修复。
 
 违反本节视为 Hard stop。
 
@@ -230,13 +252,13 @@ node .codex/skills/dispatch-task/scripts/validate-result.mjs implementer <handof
 node .codex/skills/dispatch-task/scripts/validate-implementation-postflight.mjs <handoff.json> <impl-result.json> <worktree-baseline.json> > .tmp/dispatch-task/<dispatch_run_id>-postflight-report.json
 ```
 
-`completed` 结果进入 main review；`blocked` 结果是合法阻断结果，但不得进入 Completion Gate。
+`completed` 结果进入 Gate C Main Review；`blocked` 结果是合法阻断结果，但不得进入 Completion Gate，也不得触发 `maintenance_patch`。因此，implementer/provider 的“完成”是 review 的起点，Completion Gate 通过才是 dispatch-task 的完成。
 
 所有代码修改任务都必须做 diff-first review：身份/来源、实际变更文件、路径边界、项目约束、decision lock、依赖、验证证据。UI 重点检查 Tailwind/SCSS、组件复用与 uni-ui 映射证据；Figma 任务必须存在实现者直接读取证据。失败退回原实现路径，main 不亲自修复。
 
 postflight report 必须确认 git root 与 HEAD 未相对 baseline 变化，并覆盖 worktree scope、no-new-deps、style-stack 等实现后机器证据。
 
-`simple_patch` 跳过 validate-handoff / validate-implementation-postflight / validate-completion-readiness，只执行 git diff review + scoped lint/fmt。
+`simple_patch` / `main_direct` 跳过 validate-handoff / validate-implementation-postflight / validate-completion-readiness，只执行 git diff review + scoped lint/fmt/build；若 main 在 child 终态后执行了 `maintenance_patch`，必须把补丁纳入原实现结果的 changed files、postflight 和最终 PR recovery evidence。
 
 缺少 baseline 或 postflight report 时，不得进入 Completion Gate。postflight report 在 `passed` 和 `blocked` 时都必须产出 JSON；`blocked` 不授权 main 修复，必须回到原实现路径或请用户决策。
 
@@ -281,11 +303,24 @@ node .codex/skills/dispatch-task/scripts/validate-completion-readiness.mjs <hand
 
 ### 10.1 Gate D1 — Active docs / ByteRover V4 知识治理
 
-实现完成且所需 QA 结束后（或纯知识治理任务在范围核验后），main 分别判断 `docs_impact` / `brv_memory_impact`，二者独立。
+main 在任务过程中持续判断 `docs_impact` / `brv_memory_impact`，二者独立；不得把 BRV 影响判断机械地推迟到实现完成后。
 
 - **docs**：仅当公共契约 / API / schema / 诊断规则 / 自动化 ID / 明确要求的 active doc 变化时维护。
-- **BRV**：仅按 `AGENTS.md` 内容边界裁决；`brv_memory_impact=true` 时读 `references/brv-record-governance.md` 并执行批准的 `record_plan`（含 readback / Query）。破坏性 Prune/Delete/Merge 须用户明确批准。
+- **BRV**：仅按 `AGENTS.md` 内容边界裁决。若稳定业务事实已独立于实现结果完成用户确认与当前事实源核验，`brv_memory_impact=true` 可在实现或 QA 完成前处理；此时读 `references/brv-record-governance.md` 并执行批准的 `record_plan`（含 readback / Query）。若候选事实依赖最终实现、评审或端上验收，则等证据齐备后处理。破坏性 Prune/Delete/Merge 须用户明确批准。
 - 不写业务代码、不补实现、不替代 QA；不做角色 receipt。completion note 可简要写 `docs_impact` / `brv_memory_impact`。
+
+### 10.2 Gate D2 — Web external PR 合并与本地同步
+
+Web/云端 external implementer 的“实现完成”不等于任务完成。完成顺序固定为：
+
+1. 低频唤醒发现 provider 已返回最终结果后，先回收 PR/worktree、执行 diff review、postflight 和必要 QA；
+2. 使用 GitHub 插件读取最新 PR 元数据，核对 base branch、head branch、head SHA、冲突状态和 required checks；不得用浏览器页面文案或旧聊天摘要代替；
+3. 若 PR 有冲突，优先在合同指定 PR worktree 解决。只有 §1.3 的 maintenance patch 才能由 main 处理；语义冲突超出范围时阻断或退回原 external implementer；
+4. 使用 GitHub 插件的 merge 操作，传入最新 `expected_head_sha`。merge 返回成功前不得报告完成；
+5. merge 成功后，main 切回 PR base branch，执行 `git fetch origin` 与 `git pull --ff-only`（或等价 fast-forward），确认本地 HEAD 与远端 base 一致、工作区干净，再关闭监控自动化并通过 Completion Gate；
+6. 若主工作区有未授权 dirty files、base branch 不能 fast-forward、PR head 在 review 期间变化或 GitHub merge 失败，状态必须保持 blocked，不得擅自 reset、force-push 或覆盖用户改动。
+
+Completion evidence 必须区分 `provider_completed`、`pr_merged` 和 `local_base_synced` 三个状态；只有三者全部为真，Web external 任务才可标记 `completed`。
 
 ## 11. Figma 硬边界
 
@@ -354,7 +389,7 @@ main 不得读取或转述 uni-ui 组件索引、映射表、组件规则；只�
 7. 仅用 shell/脚本/自然语言声明替代声明为 required 的 UI/Computer/Chrome adapter 操作，或用“dispatch 预授权”替代用户当前明确授权。
 8. external implementer 失败后 main 自己写代码，或自动 fallback 到 Codex implementer 而未获得用户明确批准。
 9. external handoff 缺少 handoff manual，或 main 未先读取 handoff manual 就用 UI/聊天状态判定外部实现者已结束。
-10. external implementer 已收到 prompt 并开始运行后，main 仍持续盯屏或 30 分钟内读取 provider UI 进度。
+10. external implementer 已收到 prompt 并开始运行后，main 仍持续盯屏、使用短轮询或在 30 分钟内读取 provider UI 进度；正式等待必须使用 5 分钟下限的 recurring wakeup。
 11. child `agent_identity` 与 Contract 不一致。
 12. UI handoff 缺少 styling system、SCSS policy、component library 或 rule refs。
 13. main 在 Figma 任务使用 `get_design_context/get_screenshot/variables/assets`，或把视觉细节塞进 handoff。

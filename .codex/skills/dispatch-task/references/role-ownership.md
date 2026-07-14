@@ -4,11 +4,11 @@
 
 ## main
 
-main 负责：任务归一化、复杂度分级、项目约束、路径边界、风险路由、实现模式选择、handoff 校验、external implementer 桥接控制、diff review、main QA、docs/BRV impact 处理、返工协调与 Completion Gate。
+main 负责：任务归一化、复杂度分级、项目约束、路径边界、风险路由、实现模式选择、handoff 校验、external implementer 桥接控制、diff review、main QA、docs/BRV impact 处理、受限 `simple_patch` / `maintenance_patch`、返工协调与 Completion Gate。
 
 限制：
 
-1. `standard_task`、`deep_contract`、`external_implementer` 中 main 不直接修改代码类文件。
+1. `standard_task`、`deep_contract`、`external_implementer` 中 child / provider 仍运行时 main 不直接修改代码类文件；provider/child 返回 `completed` 且进入 Gate C Main Review 后，main 才可按 `SKILL.md` §1.3 执行受限 `maintenance_patch`。`blocked` 不授权接管实现，`simple_patch` 由 main 直接实现。
 2. Figma 任务中 main 只执行 Lite 路由，不读取 context / screenshot / variables / assets。
 3. main 不把大段历史、完整 ClickUp、完整 Figma、完整 references 或旧 INDEX 广播给子角色。
 4. main 不用聊天完成状态、计划或 receipt 替代真实 git diff / status / validation evidence。
