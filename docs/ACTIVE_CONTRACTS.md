@@ -445,6 +445,7 @@ v2.1 算法升级：移除 `wateringCount10d` 作为核心判断，改用 `effec
 - `referenceDate`：计算基准日期（ISO 字符串）
 - `weatherDays`：历史天气日数据数组（来自 `getEnvironmentWeatherWindow` 的 `historicalDays`），每日含 `tempMaxC/tempMinC/humidity/precipMm/textDay`
 - `forecastDays`：预报天气日数据数组（来自 `getEnvironmentWeatherWindow` 的 `forecastDays`），字段同 `weatherDays`
+- `potProfile`：可选的盆型档案临时覆盖（字段同下方"盆型档案读写"小节）。独立浇水建议流程（`watering-advisor`）在"我的植物"路径下，会将当前步骤中的盆型（默认值或用户修改值，由前端 `PotProfileFormCore` 产出）通过此字段传入，仅用于本次计算，不写回 `user_plant_instances` 主表。后端优先使用 `request.body.potProfile`，未传时回退到 `strategy.potProfile`（来自 `getUserPlantWateringStrategy` 读取的数据库盆型列），保持首页 `WateringReminderSheet` 浇水提醒的旧行为不变。
 
 返回字段：
 
