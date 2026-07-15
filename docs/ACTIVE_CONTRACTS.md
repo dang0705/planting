@@ -419,16 +419,16 @@ cloudfunctions/weather-http/config.json
 
 ### 7.2 `plant-user-http`
 
-| 方法   | 路径                            | 当前用途                     |
-| ------ | ------------------------------- | ---------------------------- |
-| GET    | `/user-plants/health`           | 健康检查。                   |
-| GET    | `/user-plants`                  | 当前用户植物列表。           |
-| POST   | `/user-plants`                  | 新建用户植物。               |
-| PATCH  | `/user-plants`                  | 更新用户植物，需 `id`。      |
-| DELETE | `/user-plants`                  | 删除用户植物，需 `id`。      |
-| POST   | `/user-plants/watering-planner` | 复用共享规划器计算浇水建议。 |
+| 方法   | 路径                                          | 当前用途                                     |
+| ------ | --------------------------------------------- | -------------------------------------------- |
+| GET    | `/user-plants/health`                         | 健康检查。                                   |
+| GET    | `/user-plants`                                | 当前用户植物列表。                           |
+| POST   | `/user-plants`                                | 新建用户植物。                               |
+| PATCH  | `/user-plants`                                | 更新用户植物，需 `id`。                      |
+| DELETE | `/user-plants`                                | 删除用户植物，需 `id`。                      |
+| POST   | `/user-plants/watering-planner`               | 复用共享规划器计算浇水建议。                 |
 | GET    | `/user-plants/watering-reminders?plantId=...` | 读取当前用户指定植物最新未过期浇水日历提醒。 |
-| POST   | `/user-plants/watering-reminders` | 系统日历创建成功后保存完整浇水提醒事件。 |
+| POST   | `/user-plants/watering-reminders`             | 系统日历创建成功后保存完整浇水提醒事件。     |
 
 `plant-user-http` 需要解析到 openid；否则返回 401。
 
