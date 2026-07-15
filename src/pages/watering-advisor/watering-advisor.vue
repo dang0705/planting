@@ -81,7 +81,7 @@
           />
         </swiper-item>
 
-        <!-- 步骤2：输入盆型 -->
+        <!-- 步骤2：输入盆型（inline 渲染共享内核，不打开 popup） -->
         <swiper-item>
           <scroll-view scroll-y class="h-screen px-4 pt-6">
             <view class="mb-4">
@@ -112,21 +112,13 @@
               </text>
             </view>
 
-            <view class="rounded-2xl border border-[#e1e9dd] bg-white p-4">
-              <view class="flex items-center justify-between gap-3">
-                <view class="flex-1">
-                  <text class="block text-[14px] font-bold text-[#1f2933]">盆型与基质</text>
-                  <text class="mt-1 block text-[12px] text-[#6b7280]">{{ potProfileSummary }}</text>
-                </view>
-                <button
-                  id="watering-advisor-edit-pot-profile"
-                  class="m-0 h-[40px] rounded-xl bg-[#e8f3ea] px-4 py-0 text-[13px] font-bold leading-[40px] text-[#2d7a4f]"
-                  @click="openPotProfileEditor"
-                >
-                  {{ hasPotProfile ? '重新编辑' : '补充盆型' }}
-                </button>
-              </view>
-            </view>
+            <!-- inline 共享盆型表单内核 -->
+            <PotProfileFormCore
+              ref="potProfileFormRef"
+              :initial-profile="selectedCatalogPlantPotProfile"
+              :id-prefix="'watering-advisor-pot-profile'"
+              @summary="handlePotProfileSummary"
+            />
 
             <view class="mt-4 flex gap-3">
               <button
@@ -157,7 +149,7 @@
             </view>
 
             <view v-else-if="plannerResult" class="pb-6">
-              <!-- 独立浇水最终结果：只保留友好的毫升数文本 -->
+              <!-- 独立浇水最终结果：矿泉水瓶/5L油桶口径，与首页一致 -->
               <view
                 id="watering-advisor-result-amount"
                 class="mb-3 rounded-2xl border border-[#e1e9dd] bg-white p-6 text-center"
@@ -199,27 +191,21 @@
           </scroll-view>
         </swiper-item>
       </swiper>
-      <PotProfileEditor
-        ref="potProfileEditorRef"
-        :plant="null"
-        @saved="handlePotProfileSaved"
-        @summary="handlePotProfileSummary"
-      />
     </view>
   </Layout>
 </template>
 
 <script setup>
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import Layout from '@/Layout.vue'
-import PotProfileEditor from '@/pages/index/components/PotProfileEditor.vue'
+import PotProfileFormCore from '@/components/pot-profile/PotProfileFormCore.vue'
 import PlantSelectCard from './components/PlantSelectCard.vue'
 import { useUserStore } from '@/store/user.js'
 import { usePlantStore } from '@/store/plants.js'
 import CatalogPlantSearch from './components/CatalogPlantSearch.vue'
 import { getEnvironmentWeatherWindow } from '@/api/weather.js'
-import { callComponentMethod } from '@/utils/component-ref.js'
+import { formatMlRangeToBottleText } from '@/utils/water-volume-format.js'
 import {
   fetchAdhocPlannerResult,
   fetchWateringPlannerResult,
@@ -244,19 +230,11 @@ const weatherDays = ref([])
 const forecastDays = ref([])
 const savedToBackend = ref(false)
 const searchRef = ref(null)
-const potProfileEditorRef = ref(null)
+const potProfileFormRef = ref(null)
 const editorSummary = ref('')
 const showMyPlantsList = ref(false)
 const loadingMyPlants = ref(false)
 const selectedUserPlantId = ref(null)
-
-const potProfileForm = ref({
-  potTopDiameterCm: '',
-  potBottomDiameterCm: '',
-  potHeightCm: '',
-  hasDrainageHole: 'true'
-})
-const substrateComposition = ref([])
 
 const selectedCatalogPlantName = computed(
   () =>
@@ -265,31 +243,38 @@ const selectedCatalogPlantName = computed(
     '未选择植物'
 )
 
+// 当前选中植物（我的植物）已有的 potProfile，传给共享内核作为 initialProfile
+const selectedCatalogPlantPotProfile = computed(() => {
+  const plant = selectedCatalogPlant.value
+  if (!plant?.userPlantId) {
+    return null
+  }
+  // 我的植物路径：从 plantStore 取该植物的 potProfile
+  const userPlant = plantStore.userPlants?.find(item => item.id === plant.userPlantId)
+  return userPlant?.potProfile || null
+})
+
+// 统一水量文案：调用全局 formatMlRangeToBottleText，与首页 WateringReminderSheet 口径一致
 const amountText = computed(() => {
   const range = plannerResult.value?.amountRangeMl
   if (!range || !Array.isArray(range) || range.length < 2) {
     return ''
   }
-  const [min, max] = range
-  return min === max ? `${min} 毫升` : `${min}–${max} 毫升`
+  return formatMlRangeToBottleText(range)
 })
 
-const hasPotProfile = computed(
-  () => Boolean(potProfileForm.value.potTopDiameterCm) && Boolean(potProfileForm.value.potHeightCm)
-)
-
 const potProfileSummary = computed(() => {
-  if (!potProfileForm.value.potTopDiameterCm && !potProfileForm.value.potHeightCm) {
-    return editorSummary.value || '未填写盆型信息'
+  const summaryText = editorSummary.value
+  if (summaryText) {
+    return summaryText
   }
+  // 默认状态摘要：复用 buildPotProfileSummary，传入默认值
   return buildPotProfileSummary({
-    potTopDiameterCm: potProfileForm.value.potTopDiameterCm,
-    potBottomDiameterCm: potProfileForm.value.potBottomDiameterCm,
-    potHeightCm: potProfileForm.value.potHeightCm,
-    hasDrainageHole: potProfileForm.value.hasDrainageHole,
-    substrateType: substrateComposition.value.length
-      ? JSON.stringify(substrateComposition.value)
-      : 'unknown'
+    potTopDiameterCm: '20',
+    potBottomDiameterCm: '10',
+    potHeightCm: '15',
+    hasDrainageHole: 'true',
+    substrateType: 'unknown'
   })
 })
 
@@ -346,7 +331,8 @@ function selectUserPlant(plant) {
     canonicalName: plant.canonicalName || '',
     plantGenus: plant.genus || '',
     userPlantId: plant.id,
-    wateringEvents: plant.wateringEvents || null
+    wateringEvents: plant.wateringEvents || null,
+    potProfile: plant.potProfile || null
   }
 }
 
@@ -365,27 +351,24 @@ function goToPotProfile() {
     return
   }
   activeStep.value = STEP_POT_PROFILE
-  nextTick(() => openPotProfileEditor())
 }
 
-function openPotProfileEditor() {
-  callComponentMethod(potProfileEditorRef, 'open')
-}
-
-function handlePotProfileSaved(payload) {
-  potProfileForm.value = {
-    potTopDiameterCm: payload?.potTopDiameterCm ? String(payload.potTopDiameterCm) : '',
-    potBottomDiameterCm: payload?.potBottomDiameterCm ? String(payload.potBottomDiameterCm) : '',
-    potHeightCm: payload?.potHeightCm ? String(payload.potHeightCm) : '',
-    hasDrainageHole: payload?.hasDrainageHole || 'true'
+// 进入盆型步骤时初始化 canvas（swiper-item 切换后 DOM 才渲染）
+watch(activeStep, step => {
+  if (step === STEP_POT_PROFILE) {
+    nextTick(() => {
+      potProfileFormRef.value?.initCanvas()
+    })
   }
-  substrateComposition.value = Array.isArray(payload?.substrateComposition)
-    ? payload.substrateComposition
-    : []
-}
+})
 
 function handlePotProfileSummary(value) {
   editorSummary.value = value || ''
+}
+
+function buildPotProfilePayload() {
+  // 从共享内核取当前表单数据（默认值或用户修改值）
+  return potProfileFormRef.value?.getPayload() || null
 }
 
 async function loadWeatherDays() {
@@ -408,21 +391,9 @@ async function loadWeatherDays() {
   }
 }
 
-function buildPotProfilePayload() {
-  return {
-    potTopDiameterCm: potProfileForm.value.potTopDiameterCm || null,
-    potBottomDiameterCm: potProfileForm.value.potBottomDiameterCm || null,
-    potHeightCm: potProfileForm.value.potHeightCm || null,
-    hasDrainageHole: potProfileForm.value.hasDrainageHole,
-    substrateType: substrateComposition.value.length
-      ? JSON.stringify(substrateComposition.value)
-      : 'unknown'
-  }
-}
-
 async function goToResult() {
-  const dims = potProfileForm.value
-  if (!dims.potTopDiameterCm || !dims.potHeightCm) {
+  const payload = buildPotProfilePayload()
+  if (!payload || !payload.potTopDiameterCm || !payload.potHeightCm) {
     uni.showToast({ title: '请填写盆型尺寸', icon: 'none' })
     return
   }
@@ -435,11 +406,14 @@ async function goToResult() {
     const isUserPlant = Boolean(selectedCatalogPlant.value?.userPlantId)
     let result
     if (isUserPlant) {
+      // 独立浇水建议：将当前步骤中的盆型（默认值或用户修改值）传给后端参与计算，
+      // 后端优先使用此 potProfile 覆盖数据库旧值；首页浇水提醒不传此字段，仍走 DB 回退
       result = await fetchWateringPlannerResult({
         plantId: selectedCatalogPlant.value.userPlantId,
         wateringEvents: selectedCatalogPlant.value.wateringEvents,
         weatherDays: weatherDays.value,
-        forecastDays: forecastDays.value
+        forecastDays: forecastDays.value,
+        potProfile: payload
       })
     } else {
       const catalogPlantId =
@@ -448,7 +422,7 @@ async function goToResult() {
         ''
       result = await fetchAdhocPlannerResult({
         catalogPlantId,
-        potProfile: buildPotProfilePayload(),
+        potProfile: payload,
         weatherDays: weatherDays.value,
         forecastDays: forecastDays.value
       })
@@ -464,7 +438,7 @@ async function goToResult() {
           await saveAdvisorSession({
             catalogPlantId,
             catalogPlantName: selectedCatalogPlantName.value,
-            potProfile: buildPotProfilePayload(),
+            potProfile: payload,
             weatherSummary: result.weatherSummary || {},
             plannerResult: result.plannerResult || result
           })

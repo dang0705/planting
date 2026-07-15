@@ -419,16 +419,16 @@ cloudfunctions/weather-http/config.json
 
 ### 7.2 `plant-user-http`
 
-| 方法   | 路径                            | 当前用途                     |
-| ------ | ------------------------------- | ---------------------------- |
-| GET    | `/user-plants/health`           | 健康检查。                   |
-| GET    | `/user-plants`                  | 当前用户植物列表。           |
-| POST   | `/user-plants`                  | 新建用户植物。               |
-| PATCH  | `/user-plants`                  | 更新用户植物，需 `id`。      |
-| DELETE | `/user-plants`                  | 删除用户植物，需 `id`。      |
-| POST   | `/user-plants/watering-planner` | 复用共享规划器计算浇水建议。 |
+| 方法   | 路径                                          | 当前用途                                     |
+| ------ | --------------------------------------------- | -------------------------------------------- |
+| GET    | `/user-plants/health`                         | 健康检查。                                   |
+| GET    | `/user-plants`                                | 当前用户植物列表。                           |
+| POST   | `/user-plants`                                | 新建用户植物。                               |
+| PATCH  | `/user-plants`                                | 更新用户植物，需 `id`。                      |
+| DELETE | `/user-plants`                                | 删除用户植物，需 `id`。                      |
+| POST   | `/user-plants/watering-planner`               | 复用共享规划器计算浇水建议。                 |
 | GET    | `/user-plants/watering-reminders?plantId=...` | 读取当前用户指定植物最新未过期浇水日历提醒。 |
-| POST   | `/user-plants/watering-reminders` | 系统日历创建成功后保存完整浇水提醒事件。 |
+| POST   | `/user-plants/watering-reminders`             | 系统日历创建成功后保存完整浇水提醒事件。     |
 
 `plant-user-http` 需要解析到 openid；否则返回 401。
 
@@ -445,6 +445,7 @@ v2.1 算法升级：移除 `wateringCount10d` 作为核心判断，改用 `effec
 - `referenceDate`：计算基准日期（ISO 字符串）
 - `weatherDays`：历史天气日数据数组（来自 `getEnvironmentWeatherWindow` 的 `historicalDays`），每日含 `tempMaxC/tempMinC/humidity/precipMm/textDay`
 - `forecastDays`：预报天气日数据数组（来自 `getEnvironmentWeatherWindow` 的 `forecastDays`），字段同 `weatherDays`
+- `potProfile`：可选的盆型档案临时覆盖（字段同下方"盆型档案读写"小节）。独立浇水建议流程（`watering-advisor`）在"我的植物"路径下，会将当前步骤中的盆型（默认值或用户修改值，由前端 `PotProfileFormCore` 产出）通过此字段传入，仅用于本次计算，不写回 `user_plant_instances` 主表。后端优先使用 `request.body.potProfile`，未传时回退到 `strategy.potProfile`（来自 `getUserPlantWateringStrategy` 读取的数据库盆型列），保持首页 `WateringReminderSheet` 浇水提醒的旧行为不变。
 
 返回字段：
 

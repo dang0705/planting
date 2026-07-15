@@ -86,9 +86,6 @@ export const WATERING_BOTTLE_OPTIONS = [
   }
 ]
 
-/** 落档体积百分比阈值（与后端 classifyDoseByVolumeRatio 一致）。 */
-const VOLUME_RATIO_THRESHOLDS = { MIST_MAX: 0.05, SMALL_MAX: 0.15, NORMAL_MAX: 0.4 }
-
 /**
  * 单值 ml -> 录入侧档位 { amount, unit, icon, count }。
  * ≥2500ml 用桶，<2500ml 用瓶。
