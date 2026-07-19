@@ -1,0 +1,291 @@
+{
+  "totalUncertain": 81,
+  "buckets": {
+    "retakeFirstNoVisual": {
+      "count": 58,
+      "topSymptoms": [],
+      "sample": [
+        {
+          "sessionId": "diag_1776504498738_5ce6dtmj",
+          "routePrimaryAction": "retake_first",
+          "stopReasonDetail": "no_observed_symptoms",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "symptomCandidates": [],
+          "round1Q": [],
+          "round2Q": []
+        },
+        {
+          "sessionId": "diag_1776504520682_uq8461pi",
+          "routePrimaryAction": "retake_first",
+          "stopReasonDetail": "no_observed_symptoms",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "symptomCandidates": [],
+          "round1Q": [],
+          "round2Q": []
+        },
+        {
+          "sessionId": "diag_1776504716159_lvmsaixt",
+          "routePrimaryAction": "retake_first",
+          "stopReasonDetail": "no_observed_symptoms",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "symptomCandidates": [],
+          "round1Q": [],
+          "round2Q": []
+        },
+        {
+          "sessionId": "diag_1776504783515_azvky6ra",
+          "routePrimaryAction": "retake_first",
+          "stopReasonDetail": "no_observed_symptoms",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "symptomCandidates": [],
+          "round1Q": [],
+          "round2Q": []
+        },
+        {
+          "sessionId": "diag_1776505031230_twahzzq8",
+          "routePrimaryAction": "retake_first",
+          "stopReasonDetail": "no_observed_symptoms",
+          "summary": "请优先补拍：补拍更清晰的受损部位特写和整株图",
+          "symptomCandidates": [],
+          "round1Q": [],
+          "round2Q": []
+        }
+      ]
+    },
+    "twoRoundNoObserved": {
+      "count": 20,
+      "topSymptoms": [],
+      "sample": [
+        {
+          "sessionId": "diag_1776505368688_loeict2e",
+          "routePrimaryAction": "uncertain_prepare",
+          "stopReasonDetail": "no_observed_symptoms",
+          "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+          "symptomCandidates": [],
+          "round1Q": [
+            "q_black_spots_spreading_confirm",
+            "q_black_spots_surface_layer_check"
+          ],
+          "round2Q": [
+            "q_bacterial_water_soaked",
+            "q_black_spots_tissue_moisture_check"
+          ]
+        },
+        {
+          "sessionId": "diag_1776508681282_yj7uloly",
+          "routePrimaryAction": "uncertain_prepare",
+          "stopReasonDetail": "no_observed_symptoms",
+          "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+          "symptomCandidates": [],
+          "round1Q": [
+            "q_brown_spots_halo_confirm",
+            "q_black_spots_surface_layer_check"
+          ],
+          "round2Q": [
+            "q_bacterial_water_soaked",
+            "q_black_spots_tissue_moisture_check",
+            "q_observed_probe__brown_spots_halo__surface_residue"
+          ]
+        },
+        {
+          "sessionId": "diag_1776509843283_jyeiinh1",
+          "routePrimaryAction": "uncertain_prepare",
+          "stopReasonDetail": "no_observed_symptoms",
+          "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+          "symptomCandidates": [],
+          "round1Q": [
+            "q_black_spots_spreading_confirm",
+            "q_black_spots_surface_layer_check"
+          ],
+          "round2Q": [
+            "q_bacterial_water_soaked",
+            "q_black_spots_tissue_moisture_check"
+          ]
+        },
+        {
+          "sessionId": "diag_1776510087231_6eshq4o9",
+          "routePrimaryAction": "uncertain_prepare",
+          "stopReasonDetail": "no_observed_symptoms",
+          "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+          "symptomCandidates": [],
+          "round1Q": [
+            "q_black_spots_spreading_confirm",
+            "q_black_spots_surface_layer_check"
+          ],
+          "round2Q": [
+            "q_bacterial_water_soaked",
+            "q_black_spots_tissue_moisture_check"
+          ]
+        },
+        {
+          "sessionId": "diag_1776497922780_65wwumt8",
+          "routePrimaryAction": "uncertain_prepare",
+          "stopReasonDetail": "no_observed_symptoms",
+          "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+          "symptomCandidates": [],
+          "round1Q": [
+            "q_black_spots_spreading_confirm",
+            "q_black_spots_surface_layer_check"
+          ],
+          "round2Q": [
+            "q_bacterial_water_soaked",
+            "q_black_spots_tissue_moisture_check"
+          ]
+        },
+        {
+          "sessionId": "diag_1776499605525_ljwtdbrq",
+          "routePrimaryAction": "uncertain_prepare",
+          "stopReasonDetail": "no_observed_symptoms",
+          "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+          "symptomCandidates": [],
+          "round1Q": [
+            "q_brown_spots_halo_confirm",
+            "q_black_spots_surface_layer_check"
+          ],
+          "round2Q": [
+            "q_bacterial_water_soaked",
+            "q_black_spots_tissue_moisture_check",
+            "q_observed_probe__brown_spots_halo__surface_residue"
+          ]
+        },
+        {
+          "sessionId": "diag_1776499909048_q52urlsk",
+          "routePrimaryAction": "uncertain_prepare",
+          "stopReasonDetail": "no_observed_symptoms",
+          "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+          "symptomCandidates": [],
+          "round1Q": [
+            "q_black_spots_spreading_confirm",
+            "q_black_spots_surface_layer_check"
+          ],
+          "round2Q": [
+            "q_bacterial_water_soaked",
+            "q_black_spots_tissue_moisture_check"
+          ]
+        },
+        {
+          "sessionId": "diag_1776500730181_9fqhembp",
+          "routePrimaryAction": "uncertain_prepare",
+          "stopReasonDetail": "no_observed_symptoms",
+          "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+          "symptomCandidates": [],
+          "round1Q": [
+            "q_brown_spots_halo_confirm",
+            "q_black_spots_surface_layer_check"
+          ],
+          "round2Q": [
+            "q_bacterial_water_soaked",
+            "q_black_spots_tissue_moisture_check",
+            "q_observed_probe__brown_spots_halo__surface_residue"
+          ]
+        },
+        {
+          "sessionId": "diag_1776501043833_rr816ylh",
+          "routePrimaryAction": "uncertain_prepare",
+          "stopReasonDetail": "no_observed_symptoms",
+          "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+          "symptomCandidates": [],
+          "round1Q": [
+            "q_black_spots_spreading_confirm",
+            "q_black_spots_surface_layer_check"
+          ],
+          "round2Q": [
+            "q_bacterial_water_soaked",
+            "q_black_spots_tissue_moisture_check"
+          ]
+        },
+        {
+          "sessionId": "diag_1776501535686_8g36txb0",
+          "routePrimaryAction": "uncertain_prepare",
+          "stopReasonDetail": "no_observed_symptoms",
+          "summary": "当前可用症状较少，建议在自然光下重新拍摄受损部位和整株照片。",
+          "symptomCandidates": [],
+          "round1Q": [
+            "q_black_spots_spreading_confirm",
+            "q_black_spots_surface_layer_check"
+          ],
+          "round2Q": [
+            "q_bacterial_water_soaked",
+            "q_black_spots_tissue_moisture_check"
+          ]
+        }
+      ]
+    },
+    "yellowingBlocked": {
+      "count": 1,
+      "topSymptoms": [
+        {
+          "key": "leaf_yellowing",
+          "count": 1
+        }
+      ],
+      "sample": [
+        {
+          "sessionId": "diag_1776454789717_1xgbrzxv",
+          "routePrimaryAction": "uncertain_prepare",
+          "stopReasonDetail": "class_converged_context_guard_blocked",
+          "summary": "当前已收敛到“黄叶模式”，但还缺少足够的补充事实，暂时不能安全定位到具体原因。 当前证据仍不够稳定，建议补查叶背、根部、盆土状态，必要时重新开始诊断。",
+          "symptomCandidates": [
+            "leaf_yellowing"
+          ],
+          "round1Q": [
+            "q_leaf_yellowing_light_background",
+            "q_leaf_yellowing_watering_background",
+            "q_leaf_yellowing_fertilization_background"
+          ],
+          "round2Q": [
+            "q_iron_new_leaves_yellow",
+            "q_nitrogen_old_leaves_yellow",
+            "q_underwater_dry_wilt"
+          ]
+        }
+      ]
+    },
+    "noForceable": {
+      "count": 2,
+      "topSymptoms": [
+        {
+          "key": "leaf_yellowing",
+          "count": 2
+        }
+      ],
+      "sample": [
+        {
+          "sessionId": "diag_1775994067124_rrgh8vys",
+          "routePrimaryAction": "uncertain_prepare",
+          "stopReasonDetail": "no_forceable_output_problem_after_followup",
+          "summary": "当前已收敛到“黄叶模式”，但还缺少足够的补充事实，暂时不能安全定位到具体原因。 当前证据仍不够稳定，建议补查叶背、根部、盆土状态，必要时重新开始诊断。",
+          "symptomCandidates": [
+            "leaf_yellowing"
+          ],
+          "round1Q": [
+            "q_leaf_yellowing_light_background",
+            "q_leaf_yellowing_watering_background",
+            "q_leaf_yellowing_fertilization_background"
+          ],
+          "round2Q": []
+        },
+        {
+          "sessionId": "diag_1776088561131_q53r5l01",
+          "routePrimaryAction": "uncertain_prepare",
+          "stopReasonDetail": "no_forceable_output_problem_after_followup",
+          "summary": "当前已收敛到“黄叶模式”，但还缺少足够的补充事实，暂时不能安全定位到具体原因。 当前证据仍不够稳定，建议补查叶背、根部、盆土状态，必要时重新开始诊断。",
+          "symptomCandidates": [
+            "leaf_yellowing"
+          ],
+          "round1Q": [
+            "q_leaf_yellowing_light_background",
+            "q_leaf_yellowing_watering_background",
+            "q_leaf_yellowing_fertilization_background"
+          ],
+          "round2Q": []
+        }
+      ]
+    },
+    "other": {
+      "count": 0,
+      "topSymptoms": [],
+      "sample": []
+    }
+  }
+}

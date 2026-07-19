@@ -1,0 +1,1378 @@
+{
+  "checkedThresholdMinutes": 5,
+  "totalRowsScanned": 5209,
+  "batchesQueried": 18,
+  "nonContinuousCount": 110,
+  "manualLikeCount": 50,
+  "nonContinuousManualCount": 18,
+  "manualLikeTop": [
+    {
+      "order": 0,
+      "diagnosisId": "diag_1776524906841_9gzq2dil",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-04-18T23:08:40",
+      "outcomeType": "uncertain",
+      "latestVisualBatch": "visbatch_1776524906842_5mi3kaa5",
+      "reviewSourceType": "manual"
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diag_1776521814145_3n9ak1w5",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-04-18T22:17:16",
+      "outcomeType": "problematic",
+      "latestVisualBatch": "visbatch_1776521814146_5y0ce6nw",
+      "reviewSourceType": "manual"
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diag_1776509556300_t80mp3tg",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-04-18T18:52:46",
+      "outcomeType": "problematic",
+      "latestVisualBatch": "visbatch_1776509556301_7u6ejva6",
+      "reviewSourceType": "manual"
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diag_1776497216908_nloxmvtp",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-04-18T15:27:11",
+      "outcomeType": "problematic",
+      "latestVisualBatch": "visbatch_1776497216909_9ykt5imd",
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774528251142_okjop1wc8",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T20:30:51",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774485949786_emko1qim0",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:45:49",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774485936830_dfiva3c9i",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:45:36",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774485920227_in6g30trs",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:45:20",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774485884615_n34xd6ho0",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:44:44",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774485795769_50a2p8uxv",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:43:15",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774485475215_0jkprrovr",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:37:55",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774485425541_bisdfu0es",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:37:05",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774485412943_lu2rliur8",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:36:53",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774485318933_e0376xe3p",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:35:19",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774485273512_6cfg00ffk",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:34:33",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774485068566_m3675hp7d",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:31:08",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774484943574_4k21pn1hz",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:29:03",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774484752240_7m3uqlt5b",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:25:52",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774484491066_wteznzumd",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:21:31",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774483822585_a1aktk22p",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:10:22",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774483760555_dltm8bw2w",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:09:20",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774483732229_ohvs1mn5v",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:08:52",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774483630195_z1dysdr0u",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:07:10",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774483603557_jm5mx4ggo",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:06:43",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774483556269_ls6sc8nep",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:05:56",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774483483883_mfoyn1c55",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-26T08:04:43",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774445520826_c0bbm0qrs",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-25T21:32:00",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774398180920_qei79ahaa",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-25T08:23:01",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774398162288_g57eesovn",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-25T08:22:42",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774398121883_o53hzok56",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-25T08:22:02",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774365739897_l04lr8e57",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T23:22:19",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774365001221_9at3h04wm",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T23:10:01",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774364853663_nap96hejt",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T23:07:33",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774362271478_wp3f6vs1u",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T22:24:31",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774361733642_ohu0qxns6",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T22:15:33",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774361677138_ul2ykn5b5",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T22:14:37",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774361537657_3kyexp61m",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T22:12:17",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774361137794_un5w60ege",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T22:05:37",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774360435084_su009rzq9",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T21:53:55",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774359253709_68kzicfj6",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T21:34:13",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774314558087_96sjrnk9o",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T09:09:18",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774314369725_ohk5gcxbp",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T09:06:09",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774314340093_j155ve388",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T09:05:40",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774313994625_gtbfhmdbr",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T08:59:54",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774313973603_l2w2g7bjc",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T08:59:33",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774313186537_nvue00dm8",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T08:46:26",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774313154387_pup3cfiyv",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-24T08:45:54",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774278531431_vp7ab7fiw",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-23T23:08:51",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774278504923_bwvt8de3r",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-23T23:08:25",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    },
+    {
+      "order": 0,
+      "diagnosisId": "diagnose_1774278458177_df5iesism",
+      "openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+      "createdAt": "2026-03-23T23:07:38",
+      "outcomeType": "problematic",
+      "latestVisualBatch": null,
+      "reviewSourceType": ""
+    }
+  ],
+  "nonContinuousTop": [
+    {
+      "diagnosisId": "diag_1776524419665_gstrtkff",
+      "createdAt": "2026-04-18T23:00:35",
+      "gapMinutes": 8.08,
+      "previousDiagnosisId": "diag_1776524906841_9gzq2dil",
+      "previousCreatedAt": "2026-04-18T23:08:40"
+    },
+    {
+      "diagnosisId": "diag_1776523732979_y4j59si7",
+      "createdAt": "2026-04-18T22:49:07",
+      "gapMinutes": 9.07,
+      "previousDiagnosisId": "diag_1776524274656_5pdu1vck",
+      "previousCreatedAt": "2026-04-18T22:58:11"
+    },
+    {
+      "diagnosisId": "diag_1776521814145_3n9ak1w5",
+      "createdAt": "2026-04-18T22:17:16",
+      "gapMinutes": 31.85,
+      "previousDiagnosisId": "diag_1776523732979_y4j59si7",
+      "previousCreatedAt": "2026-04-18T22:49:07"
+    },
+    {
+      "diagnosisId": "diag_1776514404791_tfotfxxk",
+      "createdAt": "2026-04-18T20:13:40",
+      "gapMinutes": 123.6,
+      "previousDiagnosisId": "diag_1776521814145_3n9ak1w5",
+      "previousCreatedAt": "2026-04-18T22:17:16"
+    },
+    {
+      "diagnosisId": "diag_1776507975058_bugac0zm",
+      "createdAt": "2026-04-18T18:26:25",
+      "gapMinutes": 10.53,
+      "previousDiagnosisId": "diag_1776508607368_qopvhpdw",
+      "previousCreatedAt": "2026-04-18T18:36:57"
+    },
+    {
+      "diagnosisId": "diag_1776506519845_oy4445at",
+      "createdAt": "2026-04-18T18:02:16",
+      "gapMinutes": 11.75,
+      "previousDiagnosisId": "diag_1776507231749_7no6mksh",
+      "previousCreatedAt": "2026-04-18T18:14:01"
+    },
+    {
+      "diagnosisId": "diag_1776488478987_2q0mhflz",
+      "createdAt": "2026-04-18T13:01:28",
+      "gapMinutes": 145.72,
+      "previousDiagnosisId": "diag_1776497216908_nloxmvtp",
+      "previousCreatedAt": "2026-04-18T15:27:11"
+    },
+    {
+      "diagnosisId": "diag_1776481683794_y5jorkwx",
+      "createdAt": "2026-04-18T11:08:17",
+      "gapMinutes": 97.32,
+      "previousDiagnosisId": "diag_1776487522329_1roaw83u",
+      "previousCreatedAt": "2026-04-18T12:45:36"
+    },
+    {
+      "diagnosisId": "diag_1776455457671_qn52zrin",
+      "createdAt": "2026-04-18T03:51:14",
+      "gapMinutes": 437.05,
+      "previousDiagnosisId": "diag_1776481683794_y5jorkwx",
+      "previousCreatedAt": "2026-04-18T11:08:17"
+    },
+    {
+      "diagnosisId": "diag_1776398686735_z19hsm1q",
+      "createdAt": "2026-04-17T12:04:51",
+      "gapMinutes": 599.38,
+      "previousDiagnosisId": "diag_1776434642374_q2ma5wnq",
+      "previousCreatedAt": "2026-04-17T22:04:14"
+    },
+    {
+      "diagnosisId": "diag_1776397867139_cergyjkk",
+      "createdAt": "2026-04-17T11:51:24",
+      "gapMinutes": 10.68,
+      "previousDiagnosisId": "diag_1776398508158_a8ypxluo",
+      "previousCreatedAt": "2026-04-17T12:02:05"
+    },
+    {
+      "diagnosisId": "diag_1776394476800_p6xh7q51",
+      "createdAt": "2026-04-17T10:54:52",
+      "gapMinutes": 45.1,
+      "previousDiagnosisId": "diag_1776397192714_o0lly7qp",
+      "previousCreatedAt": "2026-04-17T11:39:58"
+    },
+    {
+      "diagnosisId": "diag_1776392280919_m9ch95g2",
+      "createdAt": "2026-04-17T10:18:12",
+      "gapMinutes": 36.27,
+      "previousDiagnosisId": "diag_1776394457771_tqdkghup",
+      "previousCreatedAt": "2026-04-17T10:54:28"
+    },
+    {
+      "diagnosisId": "diag_1776388704310_a6vi533f",
+      "createdAt": "2026-04-17T09:18:40",
+      "gapMinutes": 51.98,
+      "previousDiagnosisId": "diag_1776391819345_1mwm1k0q",
+      "previousCreatedAt": "2026-04-17T10:10:39"
+    },
+    {
+      "diagnosisId": "diag_1776388145059_hkxih4p7",
+      "createdAt": "2026-04-17T09:09:14",
+      "gapMinutes": 8.92,
+      "previousDiagnosisId": "diag_1776388677224_b2savtht",
+      "previousCreatedAt": "2026-04-17T09:18:09"
+    },
+    {
+      "diagnosisId": "diag_1776335772065_y0mao94i",
+      "createdAt": "2026-04-16T18:36:27",
+      "gapMinutes": 868.75,
+      "previousDiagnosisId": "diag_1776387904792_6m58781b",
+      "previousCreatedAt": "2026-04-17T09:05:12"
+    },
+    {
+      "diagnosisId": "diag_1776318234357_dm6n7pda",
+      "createdAt": "2026-04-16T13:44:04",
+      "gapMinutes": 292.38,
+      "previousDiagnosisId": "diag_1776335772065_y0mao94i",
+      "previousCreatedAt": "2026-04-16T18:36:27"
+    },
+    {
+      "diagnosisId": "diag_1776317859405_w4x4zepo",
+      "createdAt": "2026-04-16T13:37:49",
+      "gapMinutes": 6.25,
+      "previousDiagnosisId": "diag_1776318234357_dm6n7pda",
+      "previousCreatedAt": "2026-04-16T13:44:04"
+    },
+    {
+      "diagnosisId": "diag_1776316416074_cxpbeybn",
+      "createdAt": "2026-04-16T13:13:47",
+      "gapMinutes": 24.03,
+      "previousDiagnosisId": "diag_1776317859405_w4x4zepo",
+      "previousCreatedAt": "2026-04-16T13:37:49"
+    },
+    {
+      "diagnosisId": "diag_1776314365883_y8ppho3m",
+      "createdAt": "2026-04-16T12:39:33",
+      "gapMinutes": 33.18,
+      "previousDiagnosisId": "diag_1776316356726_0kv8xdrl",
+      "previousCreatedAt": "2026-04-16T13:12:44"
+    },
+    {
+      "diagnosisId": "diag_1776313509373_7fi7z718",
+      "createdAt": "2026-04-16T12:25:17",
+      "gapMinutes": 5.88,
+      "previousDiagnosisId": "diag_1776313862705_l54wputo",
+      "previousCreatedAt": "2026-04-16T12:31:10"
+    },
+    {
+      "diagnosisId": "diag_1776312968898_owwq2ups",
+      "createdAt": "2026-04-16T12:16:16",
+      "gapMinutes": 9.02,
+      "previousDiagnosisId": "diag_1776313509373_7fi7z718",
+      "previousCreatedAt": "2026-04-16T12:25:17"
+    },
+    {
+      "diagnosisId": "diag_1776306425307_tkqep66u",
+      "createdAt": "2026-04-16T10:27:06",
+      "gapMinutes": 108.42,
+      "previousDiagnosisId": "diag_1776312923138_axomaesg",
+      "previousCreatedAt": "2026-04-16T12:15:31"
+    },
+    {
+      "diagnosisId": "diag_1776298190801_1w3exglo",
+      "createdAt": "2026-04-16T08:09:52",
+      "gapMinutes": 124.72,
+      "previousDiagnosisId": "diag_1776305673772_6uelifrd",
+      "previousCreatedAt": "2026-04-16T10:14:35"
+    },
+    {
+      "diagnosisId": "diag_1776264226735_bnwrw4gv",
+      "createdAt": "2026-04-15T22:43:48",
+      "gapMinutes": 566.07,
+      "previousDiagnosisId": "diag_1776298190801_1w3exglo",
+      "previousCreatedAt": "2026-04-16T08:09:52"
+    },
+    {
+      "diagnosisId": "diag_1776235470625_0zmv6lc9",
+      "createdAt": "2026-04-15T14:44:31",
+      "gapMinutes": 479.28,
+      "previousDiagnosisId": "diag_1776264226735_bnwrw4gv",
+      "previousCreatedAt": "2026-04-15T22:43:48"
+    },
+    {
+      "diagnosisId": "diag_1776233419658_33niqxth",
+      "createdAt": "2026-04-15T14:10:21",
+      "gapMinutes": 33.68,
+      "previousDiagnosisId": "diag_1776235441296_5a32znhs",
+      "previousCreatedAt": "2026-04-15T14:44:02"
+    },
+    {
+      "diagnosisId": "diag_1776227806915_hckqfnaf",
+      "createdAt": "2026-04-15T12:36:59",
+      "gapMinutes": 92.82,
+      "previousDiagnosisId": "diag_1776233378129_2hmqtibf",
+      "previousCreatedAt": "2026-04-15T14:09:48"
+    },
+    {
+      "diagnosisId": "diag_1776227050964_48om5qtw",
+      "createdAt": "2026-04-15T12:24:19",
+      "gapMinutes": 11.8,
+      "previousDiagnosisId": "diag_1776227753296_i8cnm4hk",
+      "previousCreatedAt": "2026-04-15T12:36:07"
+    },
+    {
+      "diagnosisId": "diag_1776215245746_v2d5hghl",
+      "createdAt": "2026-04-15T09:07:39",
+      "gapMinutes": 196.67,
+      "previousDiagnosisId": "diag_1776227050964_48om5qtw",
+      "previousCreatedAt": "2026-04-15T12:24:19"
+    },
+    {
+      "diagnosisId": "diag_1776214326933_fzato122",
+      "createdAt": "2026-04-15T08:52:14",
+      "gapMinutes": 15.42,
+      "previousDiagnosisId": "diag_1776215245746_v2d5hghl",
+      "previousCreatedAt": "2026-04-15T09:07:39"
+    },
+    {
+      "diagnosisId": "diag_1776213863225_vo9q15xd",
+      "createdAt": "2026-04-15T08:44:30",
+      "gapMinutes": 7.73,
+      "previousDiagnosisId": "diag_1776214326933_fzato122",
+      "previousCreatedAt": "2026-04-15T08:52:14"
+    },
+    {
+      "diagnosisId": "diag_1776175218726_jv0ckjf6",
+      "createdAt": "2026-04-14T22:00:30",
+      "gapMinutes": 642.77,
+      "previousDiagnosisId": "diag_1776213782371_6b9tx0sv",
+      "previousCreatedAt": "2026-04-15T08:43:16"
+    },
+    {
+      "diagnosisId": "diag_1776173832664_czklme8g",
+      "createdAt": "2026-04-14T21:37:27",
+      "gapMinutes": 13.4,
+      "previousDiagnosisId": "diag_1776174641234_al21pcf2",
+      "previousCreatedAt": "2026-04-14T21:50:51"
+    },
+    {
+      "diagnosisId": "diag_1776171462410_j33jwhfd",
+      "createdAt": "2026-04-14T20:57:50",
+      "gapMinutes": 39.62,
+      "previousDiagnosisId": "diag_1776173832664_czklme8g",
+      "previousCreatedAt": "2026-04-14T21:37:27"
+    },
+    {
+      "diagnosisId": "diag_1776170179100_swrmbfpc",
+      "createdAt": "2026-04-14T20:36:30",
+      "gapMinutes": 9.98,
+      "previousDiagnosisId": "diag_1776170778888_7ckeoy0k",
+      "previousCreatedAt": "2026-04-14T20:46:29"
+    },
+    {
+      "diagnosisId": "diag_1776168054194_k6m9o368",
+      "createdAt": "2026-04-14T20:01:03",
+      "gapMinutes": 33.72,
+      "previousDiagnosisId": "diag_1776170076781_uffu23gj",
+      "previousCreatedAt": "2026-04-14T20:34:46"
+    },
+    {
+      "diagnosisId": "diag_1776167742842_6akcjho2",
+      "createdAt": "2026-04-14T19:55:53",
+      "gapMinutes": 5.17,
+      "previousDiagnosisId": "diag_1776168054194_k6m9o368",
+      "previousCreatedAt": "2026-04-14T20:01:03"
+    },
+    {
+      "diagnosisId": "diag_1776125403748_50i20c9c",
+      "createdAt": "2026-04-14T08:10:14",
+      "gapMinutes": 701.75,
+      "previousDiagnosisId": "diag_1776167505983_nvuysv9g",
+      "previousCreatedAt": "2026-04-14T19:51:59"
+    },
+    {
+      "diagnosisId": "diag_1776125073381_vaftiqeq",
+      "createdAt": "2026-04-14T08:04:43",
+      "gapMinutes": 5.52,
+      "previousDiagnosisId": "diag_1776125403748_50i20c9c",
+      "previousCreatedAt": "2026-04-14T08:10:14"
+    },
+    {
+      "diagnosisId": "diag_1776124670900_0imqr6sc",
+      "createdAt": "2026-04-14T07:57:59",
+      "gapMinutes": 5.35,
+      "previousDiagnosisId": "diag_1776124993563_n9j7ncs2",
+      "previousCreatedAt": "2026-04-14T08:03:20"
+    },
+    {
+      "diagnosisId": "diag_1776124361609_nc0eo91p",
+      "createdAt": "2026-04-14T07:52:48",
+      "gapMinutes": 5.18,
+      "previousDiagnosisId": "diag_1776124670900_0imqr6sc",
+      "previousCreatedAt": "2026-04-14T07:57:59"
+    },
+    {
+      "diagnosisId": "diag_1776096492748_9zfrp93v",
+      "createdAt": "2026-04-14T00:08:21",
+      "gapMinutes": 464.45,
+      "previousDiagnosisId": "diag_1776124361609_nc0eo91p",
+      "previousCreatedAt": "2026-04-14T07:52:48"
+    },
+    {
+      "diagnosisId": "diag_1776095159505_pbtbg9q3",
+      "createdAt": "2026-04-13T23:46:08",
+      "gapMinutes": 6.43,
+      "previousDiagnosisId": "diag_1776095545446_nbhyhfsl",
+      "previousCreatedAt": "2026-04-13T23:52:34"
+    },
+    {
+      "diagnosisId": "diag_1776092316508_8k0nkti7",
+      "createdAt": "2026-04-13T22:58:43",
+      "gapMinutes": 47.42,
+      "previousDiagnosisId": "diag_1776095159505_pbtbg9q3",
+      "previousCreatedAt": "2026-04-13T23:46:08"
+    },
+    {
+      "diagnosisId": "diag_1776090522170_oecv0ggy",
+      "createdAt": "2026-04-13T22:28:49",
+      "gapMinutes": 29.13,
+      "previousDiagnosisId": "diag_1776092265806_ro794skz",
+      "previousCreatedAt": "2026-04-13T22:57:57"
+    },
+    {
+      "diagnosisId": "diag_1776089277086_929a4f5j",
+      "createdAt": "2026-04-13T22:08:06",
+      "gapMinutes": 18.52,
+      "previousDiagnosisId": "diag_1776090388377_onuvalod",
+      "previousCreatedAt": "2026-04-13T22:26:37"
+    },
+    {
+      "diagnosisId": "diag_1776088053180_78ihy2gx",
+      "createdAt": "2026-04-13T21:47:42",
+      "gapMinutes": 8.52,
+      "previousDiagnosisId": "diag_1776088561131_q53r5l01",
+      "previousCreatedAt": "2026-04-13T21:56:13"
+    },
+    {
+      "diagnosisId": "diag_1776063707045_6rj7jbtx",
+      "createdAt": "2026-04-13T15:01:47",
+      "gapMinutes": 404.02,
+      "previousDiagnosisId": "diag_1776087937426_4iu8eo6r",
+      "previousCreatedAt": "2026-04-13T21:45:48"
+    },
+    {
+      "diagnosisId": "diag_1776041336732_5n3hrfjo",
+      "createdAt": "2026-04-13T08:49:09",
+      "gapMinutes": 372.53,
+      "previousDiagnosisId": "diag_1776063700957_6x91qqbj",
+      "previousCreatedAt": "2026-04-13T15:01:41"
+    },
+    {
+      "diagnosisId": "diag_1775997789326_rcqs4py9",
+      "createdAt": "2026-04-12T20:43:10",
+      "gapMinutes": 725.98,
+      "previousDiagnosisId": "diag_1776041336732_5n3hrfjo",
+      "previousCreatedAt": "2026-04-13T08:49:09"
+    },
+    {
+      "diagnosisId": "diag_1775994679099_ahhy2kvv",
+      "createdAt": "2026-04-12T19:51:20",
+      "gapMinutes": 43.57,
+      "previousDiagnosisId": "diag_1775997272326_mgt69vdk",
+      "previousCreatedAt": "2026-04-12T20:34:54"
+    },
+    {
+      "diagnosisId": "diag_1775990870916_owngmdno",
+      "createdAt": "2026-04-12T18:47:51",
+      "gapMinutes": 44.75,
+      "previousDiagnosisId": "diag_1775993539178_f3ver4wz",
+      "previousCreatedAt": "2026-04-12T19:32:36"
+    },
+    {
+      "diagnosisId": "diag_1775989094936_slmgidix",
+      "createdAt": "2026-04-12T18:18:26",
+      "gapMinutes": 18.43,
+      "previousDiagnosisId": "diag_1775990195707_f28urfmo",
+      "previousCreatedAt": "2026-04-12T18:36:52"
+    },
+    {
+      "diagnosisId": "diag_1775987810314_e93b2vwa",
+      "createdAt": "2026-04-12T17:56:50",
+      "gapMinutes": 11.58,
+      "previousDiagnosisId": "diag_1775988489553_areblv7l",
+      "previousCreatedAt": "2026-04-12T18:08:25"
+    },
+    {
+      "diagnosisId": "diag_1775979817821_q6onkzsw",
+      "createdAt": "2026-04-12T15:43:38",
+      "gapMinutes": 131.48,
+      "previousDiagnosisId": "diag_1775987691400_mcvqtgrg",
+      "previousCreatedAt": "2026-04-12T17:55:07"
+    },
+    {
+      "diagnosisId": "diag_1775973827704_co6xhi8k",
+      "createdAt": "2026-04-12T14:04:01",
+      "gapMinutes": 94.02,
+      "previousDiagnosisId": "diag_1775979464991_odvgoiex",
+      "previousCreatedAt": "2026-04-12T15:38:02"
+    },
+    {
+      "diagnosisId": "diag_1775973363947_dc90yrk8",
+      "createdAt": "2026-04-12T13:56:36",
+      "gapMinutes": 7.42,
+      "previousDiagnosisId": "diag_1775973827704_co6xhi8k",
+      "previousCreatedAt": "2026-04-12T14:04:01"
+    },
+    {
+      "diagnosisId": "diag_1775972512463_pdu1cgyi",
+      "createdAt": "2026-04-12T13:41:52",
+      "gapMinutes": 10.97,
+      "previousDiagnosisId": "diag_1775973151865_2jr8ax8n",
+      "previousCreatedAt": "2026-04-12T13:52:50"
+    },
+    {
+      "diagnosisId": "diag_1775965108296_980usjtp",
+      "createdAt": "2026-04-12T11:38:39",
+      "gapMinutes": 121.65,
+      "previousDiagnosisId": "diag_1775972408971_7y60i57d",
+      "previousCreatedAt": "2026-04-12T13:40:18"
+    },
+    {
+      "diagnosisId": "diag_1775956575236_u2dce0si",
+      "createdAt": "2026-04-12T09:16:24",
+      "gapMinutes": 127.82,
+      "previousDiagnosisId": "diag_1775964244556_llj62ubz",
+      "previousCreatedAt": "2026-04-12T11:24:13"
+    },
+    {
+      "diagnosisId": "diag_1775956257124_mmtxp0ch",
+      "createdAt": "2026-04-12T09:11:05",
+      "gapMinutes": 5.32,
+      "previousDiagnosisId": "diag_1775956575236_u2dce0si",
+      "previousCreatedAt": "2026-04-12T09:16:24"
+    },
+    {
+      "diagnosisId": "diag_1775954928535_d3tjajz3",
+      "createdAt": "2026-04-12T08:48:59",
+      "gapMinutes": 8.67,
+      "previousDiagnosisId": "diag_1775955449378_xk4u6wxn",
+      "previousCreatedAt": "2026-04-12T08:57:39"
+    },
+    {
+      "diagnosisId": "diag_1775954111130_19x71hlz",
+      "createdAt": "2026-04-12T08:35:11",
+      "gapMinutes": 10.83,
+      "previousDiagnosisId": "diag_1775954749947_jgr9aobj",
+      "previousCreatedAt": "2026-04-12T08:46:01"
+    },
+    {
+      "diagnosisId": "diag_1775911635373_idsdyc6g",
+      "createdAt": "2026-04-11T20:47:41",
+      "gapMinutes": 698.1,
+      "previousDiagnosisId": "diag_1775953538649_ok9q13yi",
+      "previousCreatedAt": "2026-04-12T08:25:47"
+    },
+    {
+      "diagnosisId": "diag_1775910818030_gx6vass3",
+      "createdAt": "2026-04-11T20:33:38",
+      "gapMinutes": 8.73,
+      "previousDiagnosisId": "diag_1775911320784_742voxwo",
+      "previousCreatedAt": "2026-04-11T20:42:22"
+    },
+    {
+      "diagnosisId": "diag_1775910017741_i8vmdofb",
+      "createdAt": "2026-04-11T20:20:42",
+      "gapMinutes": 6.28,
+      "previousDiagnosisId": "diag_1775910402234_fy5o6ov5",
+      "previousCreatedAt": "2026-04-11T20:26:59"
+    },
+    {
+      "diagnosisId": "diag_1775909394418_5mc5pzpd",
+      "createdAt": "2026-04-11T20:09:54",
+      "gapMinutes": 8.53,
+      "previousDiagnosisId": "diag_1775909878932_qz67wm1p",
+      "previousCreatedAt": "2026-04-11T20:18:26"
+    },
+    {
+      "diagnosisId": "diag_1775908064395_pg4zfsa0",
+      "createdAt": "2026-04-11T19:48:11",
+      "gapMinutes": 21.57,
+      "previousDiagnosisId": "diag_1775909384873_zarh6jh6",
+      "previousCreatedAt": "2026-04-11T20:09:45"
+    },
+    {
+      "diagnosisId": "diag_1775907368246_0gck6bix",
+      "createdAt": "2026-04-11T19:36:31",
+      "gapMinutes": 9.43,
+      "previousDiagnosisId": "diag_1775907912160_0m3v9mf1",
+      "previousCreatedAt": "2026-04-11T19:45:57"
+    },
+    {
+      "diagnosisId": "diag_1775899637330_6orr0in8",
+      "createdAt": "2026-04-11T17:27:54",
+      "gapMinutes": 124.18,
+      "previousDiagnosisId": "diag_1775907099458_o20gq31o",
+      "previousCreatedAt": "2026-04-11T19:32:05"
+    },
+    {
+      "diagnosisId": "diag_1775898185790_i6cmqr69",
+      "createdAt": "2026-04-11T17:03:33",
+      "gapMinutes": 22.5,
+      "previousDiagnosisId": "diag_1775899537486_m8k4y4za",
+      "previousCreatedAt": "2026-04-11T17:26:03"
+    },
+    {
+      "diagnosisId": "diag_1775897065388_3nflgbri",
+      "createdAt": "2026-04-11T16:44:47",
+      "gapMinutes": 18.77,
+      "previousDiagnosisId": "diag_1775898185790_i6cmqr69",
+      "previousCreatedAt": "2026-04-11T17:03:33"
+    },
+    {
+      "diagnosisId": "diag_1775893888105_zx20tl0c",
+      "createdAt": "2026-04-11T15:52:36",
+      "gapMinutes": 49.55,
+      "previousDiagnosisId": "diag_1775896853559_wx3xm5x8",
+      "previousCreatedAt": "2026-04-11T16:42:09"
+    },
+    {
+      "diagnosisId": "diag_1775881557868_jqxfeikq",
+      "createdAt": "2026-04-11T12:26:08",
+      "gapMinutes": 206.47,
+      "previousDiagnosisId": "diag_1775893888105_zx20tl0c",
+      "previousCreatedAt": "2026-04-11T15:52:36"
+    },
+    {
+      "diagnosisId": "diag_1775830083668_spmznz37",
+      "createdAt": "2026-04-10T22:08:44",
+      "gapMinutes": 857.4,
+      "previousDiagnosisId": "diag_1775881557868_jqxfeikq",
+      "previousCreatedAt": "2026-04-11T12:26:08"
+    },
+    {
+      "diagnosisId": "diag_1775825834017_lqgnwcvr",
+      "createdAt": "2026-04-10T20:57:54",
+      "gapMinutes": 59.32,
+      "previousDiagnosisId": "diag_1775829392429_v8ab26xz",
+      "previousCreatedAt": "2026-04-10T21:57:13"
+    },
+    {
+      "diagnosisId": "diag_1775825002644_w6ztlohg",
+      "createdAt": "2026-04-10T20:43:58",
+      "gapMinutes": 10.48,
+      "previousDiagnosisId": "diag_1775825626565_rtk9k75c",
+      "previousCreatedAt": "2026-04-10T20:54:27"
+    },
+    {
+      "diagnosisId": "diag_1775824471462_knhlc15c",
+      "createdAt": "2026-04-10T20:35:12",
+      "gapMinutes": 7.82,
+      "previousDiagnosisId": "diag_1775824969025_kn35o0i5",
+      "previousCreatedAt": "2026-04-10T20:43:01"
+    },
+    {
+      "diagnosisId": "diag_1775823646101_iwd3yzl8",
+      "createdAt": "2026-04-10T20:21:06",
+      "gapMinutes": 14.1,
+      "previousDiagnosisId": "diag_1775824471462_knhlc15c",
+      "previousCreatedAt": "2026-04-10T20:35:12"
+    },
+    {
+      "diagnosisId": "diag_1775816103048_f90xdyup",
+      "createdAt": "2026-04-10T18:15:43",
+      "gapMinutes": 118.03,
+      "previousDiagnosisId": "diag_1775823182467_5f6z7o6q",
+      "previousCreatedAt": "2026-04-10T20:13:45"
+    },
+    {
+      "diagnosisId": "diag_1775795937189_a9y2ibbw",
+      "createdAt": "2026-04-10T12:38:58",
+      "gapMinutes": 317.45,
+      "previousDiagnosisId": "diag_1775814943548_zbn21dfd",
+      "previousCreatedAt": "2026-04-10T17:56:25"
+    },
+    {
+      "diagnosisId": "diag_1775795451371_46xjmy81",
+      "createdAt": "2026-04-10T12:30:52",
+      "gapMinutes": 5.13,
+      "previousDiagnosisId": "diag_1775795759457_vk6hg74e",
+      "previousCreatedAt": "2026-04-10T12:36:00"
+    },
+    {
+      "diagnosisId": "diag_1775794786001_60yif7dk",
+      "createdAt": "2026-04-10T12:19:47",
+      "gapMinutes": 10.6,
+      "previousDiagnosisId": "diag_1775795422217_vwggwrhb",
+      "previousCreatedAt": "2026-04-10T12:30:23"
+    },
+    {
+      "diagnosisId": "diag_1775773781860_3g432vwm",
+      "createdAt": "2026-04-10T06:29:42",
+      "gapMinutes": 348.13,
+      "previousDiagnosisId": "diag_1775794668510_p70etkim",
+      "previousCreatedAt": "2026-04-10T12:17:50"
+    },
+    {
+      "diagnosisId": "diag_1775772515774_tioelj34",
+      "createdAt": "2026-04-10T06:08:38",
+      "gapMinutes": 10.73,
+      "previousDiagnosisId": "diag_1775773161188_6j9f30lt",
+      "previousCreatedAt": "2026-04-10T06:19:22"
+    },
+    {
+      "diagnosisId": "diag_1775749535231_mvz7zo4x",
+      "createdAt": "2026-04-09T23:45:36",
+      "gapMinutes": 383.03,
+      "previousDiagnosisId": "diag_1775772515774_tioelj34",
+      "previousCreatedAt": "2026-04-10T06:08:38"
+    },
+    {
+      "diagnosisId": "diag_1775747999215_50ppm8na",
+      "createdAt": "2026-04-09T23:19:59",
+      "gapMinutes": 25.35,
+      "previousDiagnosisId": "diag_1775749520102_tqtnixe1",
+      "previousCreatedAt": "2026-04-09T23:45:20"
+    },
+    {
+      "diagnosisId": "diag_1775746794404_08x6wtdf",
+      "createdAt": "2026-04-09T22:59:54",
+      "gapMinutes": 20.08,
+      "previousDiagnosisId": "diag_1775747999215_50ppm8na",
+      "previousCreatedAt": "2026-04-09T23:19:59"
+    },
+    {
+      "diagnosisId": "diag_1775745871120_2b8jhgl7",
+      "createdAt": "2026-04-09T22:44:31",
+      "gapMinutes": 15.38,
+      "previousDiagnosisId": "diag_1775746794404_08x6wtdf",
+      "previousCreatedAt": "2026-04-09T22:59:54"
+    },
+    {
+      "diagnosisId": "diag_1775745281371_h38w61wf",
+      "createdAt": "2026-04-09T22:34:42",
+      "gapMinutes": 8.9,
+      "previousDiagnosisId": "diag_1775745815248_xv5xsi5q",
+      "previousCreatedAt": "2026-04-09T22:43:36"
+    },
+    {
+      "diagnosisId": "diag_1775657015576_jegtcf8m",
+      "createdAt": "2026-04-08T22:03:37",
+      "gapMinutes": 1466.37,
+      "previousDiagnosisId": "diag_1775744997558_vez6o1kd",
+      "previousCreatedAt": "2026-04-09T22:29:59"
+    },
+    {
+      "diagnosisId": "diag_1775651995624_tgj454uc",
+      "createdAt": "2026-04-08T20:39:56",
+      "gapMinutes": 83.68,
+      "previousDiagnosisId": "diag_1775657015576_jegtcf8m",
+      "previousCreatedAt": "2026-04-08T22:03:37"
+    },
+    {
+      "diagnosisId": "diagnose_1774528251142_okjop1wc8",
+      "createdAt": "2026-03-26T20:30:51",
+      "gapMinutes": 18726.58,
+      "previousDiagnosisId": "diag_1775651845882_n9tcyjkd",
+      "previousCreatedAt": "2026-04-08T20:37:26"
+    },
+    {
+      "diagnosisId": "diagnose_1774485949786_emko1qim0",
+      "createdAt": "2026-03-26T08:45:49",
+      "gapMinutes": 705.03,
+      "previousDiagnosisId": "diagnose_1774528251142_okjop1wc8",
+      "previousCreatedAt": "2026-03-26T20:30:51"
+    },
+    {
+      "diagnosisId": "diagnose_1774485475215_0jkprrovr",
+      "createdAt": "2026-03-26T08:37:55",
+      "gapMinutes": 5.33,
+      "previousDiagnosisId": "diagnose_1774485795769_50a2p8uxv",
+      "previousCreatedAt": "2026-03-26T08:43:15"
+    },
+    {
+      "diagnosisId": "diagnose_1774483822585_a1aktk22p",
+      "createdAt": "2026-03-26T08:10:22",
+      "gapMinutes": 11.15,
+      "previousDiagnosisId": "diagnose_1774484491066_wteznzumd",
+      "previousCreatedAt": "2026-03-26T08:21:31"
+    },
+    {
+      "diagnosisId": "diagnose_1774445520826_c0bbm0qrs",
+      "createdAt": "2026-03-25T21:32:00",
+      "gapMinutes": 632.72,
+      "previousDiagnosisId": "diagnose_1774483483883_mfoyn1c55",
+      "previousCreatedAt": "2026-03-26T08:04:43"
+    },
+    {
+      "diagnosisId": "diagnose_1774398180920_qei79ahaa",
+      "createdAt": "2026-03-25T08:23:01",
+      "gapMinutes": 788.98,
+      "previousDiagnosisId": "diagnose_1774445520826_c0bbm0qrs",
+      "previousCreatedAt": "2026-03-25T21:32:00"
+    },
+    {
+      "diagnosisId": "diagnose_1774365739897_l04lr8e57",
+      "createdAt": "2026-03-24T23:22:19",
+      "gapMinutes": 539.72,
+      "previousDiagnosisId": "diagnose_1774398121883_o53hzok56",
+      "previousCreatedAt": "2026-03-25T08:22:02"
+    },
+    {
+      "diagnosisId": "diagnose_1774365001221_9at3h04wm",
+      "createdAt": "2026-03-24T23:10:01",
+      "gapMinutes": 12.3,
+      "previousDiagnosisId": "diagnose_1774365739897_l04lr8e57",
+      "previousCreatedAt": "2026-03-24T23:22:19"
+    },
+    {
+      "diagnosisId": "diagnose_1774362271478_wp3f6vs1u",
+      "createdAt": "2026-03-24T22:24:31",
+      "gapMinutes": 43.03,
+      "previousDiagnosisId": "diagnose_1774364853663_nap96hejt",
+      "previousCreatedAt": "2026-03-24T23:07:33"
+    },
+    {
+      "diagnosisId": "diagnose_1774361733642_ohu0qxns6",
+      "createdAt": "2026-03-24T22:15:33",
+      "gapMinutes": 8.97,
+      "previousDiagnosisId": "diagnose_1774362271478_wp3f6vs1u",
+      "previousCreatedAt": "2026-03-24T22:24:31"
+    },
+    {
+      "diagnosisId": "diagnose_1774361137794_un5w60ege",
+      "createdAt": "2026-03-24T22:05:37",
+      "gapMinutes": 6.67,
+      "previousDiagnosisId": "diagnose_1774361537657_3kyexp61m",
+      "previousCreatedAt": "2026-03-24T22:12:17"
+    },
+    {
+      "diagnosisId": "diagnose_1774360435084_su009rzq9",
+      "createdAt": "2026-03-24T21:53:55",
+      "gapMinutes": 11.7,
+      "previousDiagnosisId": "diagnose_1774361137794_un5w60ege",
+      "previousCreatedAt": "2026-03-24T22:05:37"
+    },
+    {
+      "diagnosisId": "diagnose_1774359253709_68kzicfj6",
+      "createdAt": "2026-03-24T21:34:13",
+      "gapMinutes": 19.7,
+      "previousDiagnosisId": "diagnose_1774360435084_su009rzq9",
+      "previousCreatedAt": "2026-03-24T21:53:55"
+    },
+    {
+      "diagnosisId": "diagnose_1774314558087_96sjrnk9o",
+      "createdAt": "2026-03-24T09:09:18",
+      "gapMinutes": 744.92,
+      "previousDiagnosisId": "diagnose_1774359253709_68kzicfj6",
+      "previousCreatedAt": "2026-03-24T21:34:13"
+    },
+    {
+      "diagnosisId": "diagnose_1774313994625_gtbfhmdbr",
+      "createdAt": "2026-03-24T08:59:54",
+      "gapMinutes": 5.77,
+      "previousDiagnosisId": "diagnose_1774314340093_j155ve388",
+      "previousCreatedAt": "2026-03-24T09:05:40"
+    },
+    {
+      "diagnosisId": "diagnose_1774313186537_nvue00dm8",
+      "createdAt": "2026-03-24T08:46:26",
+      "gapMinutes": 13.12,
+      "previousDiagnosisId": "diagnose_1774313973603_l2w2g7bjc",
+      "previousCreatedAt": "2026-03-24T08:59:33"
+    },
+    {
+      "diagnosisId": "diagnose_1774278531431_vp7ab7fiw",
+      "createdAt": "2026-03-23T23:08:51",
+      "gapMinutes": 577.05,
+      "previousDiagnosisId": "diagnose_1774313154387_pup3cfiyv",
+      "previousCreatedAt": "2026-03-24T08:45:54"
+    }
+  ],
+  "nonContinuousManualTop": [
+    {
+      "diagnosisId": "diag_1776521814145_3n9ak1w5",
+      "createdAt": "2026-04-18T22:17:16",
+      "gapMinutes": 31.85,
+      "previousDiagnosisId": "diag_1776523732979_y4j59si7",
+      "previousCreatedAt": "2026-04-18T22:49:07",
+      "isManualLike": true
+    },
+    {
+      "diagnosisId": "diagnose_1774528251142_okjop1wc8",
+      "createdAt": "2026-03-26T20:30:51",
+      "gapMinutes": 18726.58,
+      "previousDiagnosisId": "diag_1775651845882_n9tcyjkd",
+      "previousCreatedAt": "2026-04-08T20:37:26",
+      "isManualLike": true
+    },
+    {
+      "diagnosisId": "diagnose_1774485949786_emko1qim0",
+      "createdAt": "2026-03-26T08:45:49",
+      "gapMinutes": 705.03,
+      "previousDiagnosisId": "diagnose_1774528251142_okjop1wc8",
+      "previousCreatedAt": "2026-03-26T20:30:51",
+      "isManualLike": true
+    },
+    {
+      "diagnosisId": "diagnose_1774485475215_0jkprrovr",
+      "createdAt": "2026-03-26T08:37:55",
+      "gapMinutes": 5.33,
+      "previousDiagnosisId": "diagnose_1774485795769_50a2p8uxv",
+      "previousCreatedAt": "2026-03-26T08:43:15",
+      "isManualLike": true
+    },
+    {
+      "diagnosisId": "diagnose_1774483822585_a1aktk22p",
+      "createdAt": "2026-03-26T08:10:22",
+      "gapMinutes": 11.15,
+      "previousDiagnosisId": "diagnose_1774484491066_wteznzumd",
+      "previousCreatedAt": "2026-03-26T08:21:31",
+      "isManualLike": true
+    },
+    {
+      "diagnosisId": "diagnose_1774445520826_c0bbm0qrs",
+      "createdAt": "2026-03-25T21:32:00",
+      "gapMinutes": 632.72,
+      "previousDiagnosisId": "diagnose_1774483483883_mfoyn1c55",
+      "previousCreatedAt": "2026-03-26T08:04:43",
+      "isManualLike": true
+    },
+    {
+      "diagnosisId": "diagnose_1774398180920_qei79ahaa",
+      "createdAt": "2026-03-25T08:23:01",
+      "gapMinutes": 788.98,
+      "previousDiagnosisId": "diagnose_1774445520826_c0bbm0qrs",
+      "previousCreatedAt": "2026-03-25T21:32:00",
+      "isManualLike": true
+    },
+    {
+      "diagnosisId": "diagnose_1774365739897_l04lr8e57",
+      "createdAt": "2026-03-24T23:22:19",
+      "gapMinutes": 539.72,
+      "previousDiagnosisId": "diagnose_1774398121883_o53hzok56",
+      "previousCreatedAt": "2026-03-25T08:22:02",
+      "isManualLike": true
+    },
+    {
+      "diagnosisId": "diagnose_1774365001221_9at3h04wm",
+      "createdAt": "2026-03-24T23:10:01",
+      "gapMinutes": 12.3,
+      "previousDiagnosisId": "diagnose_1774365739897_l04lr8e57",
+      "previousCreatedAt": "2026-03-24T23:22:19",
+      "isManualLike": true
+    },
+    {
+      "diagnosisId": "diagnose_1774362271478_wp3f6vs1u",
+      "createdAt": "2026-03-24T22:24:31",
+      "gapMinutes": 43.03,
+      "previousDiagnosisId": "diagnose_1774364853663_nap96hejt",
+      "previousCreatedAt": "2026-03-24T23:07:33",
+      "isManualLike": true
+    },
+    {
+      "diagnosisId": "diagnose_1774361733642_ohu0qxns6",
+      "createdAt": "2026-03-24T22:15:33",
+      "gapMinutes": 8.97,
+      "previousDiagnosisId": "diagnose_1774362271478_wp3f6vs1u",
+      "previousCreatedAt": "2026-03-24T22:24:31",
+      "isManualLike": true
+    },
+    {
+      "diagnosisId": "diagnose_1774361137794_un5w60ege",
+      "createdAt": "2026-03-24T22:05:37",
+      "gapMinutes": 6.67,
+      "previousDiagnosisId": "diagnose_1774361537657_3kyexp61m",
+      "previousCreatedAt": "2026-03-24T22:12:17",
+      "isManualLike": true
+    },
+    {
+      "diagnosisId": "diagnose_1774360435084_su009rzq9",
+      "createdAt": "2026-03-24T21:53:55",
+      "gapMinutes": 11.7,
+      "previousDiagnosisId": "diagnose_1774361137794_un5w60ege",
+      "previousCreatedAt": "2026-03-24T22:05:37",
+      "isManualLike": true
+    },
+    {
+      "diagnosisId": "diagnose_1774359253709_68kzicfj6",
+      "createdAt": "2026-03-24T21:34:13",
+      "gapMinutes": 19.7,
+      "previousDiagnosisId": "diagnose_1774360435084_su009rzq9",
+      "previousCreatedAt": "2026-03-24T21:53:55",
+      "isManualLike": true
+    },
+    {
+      "diagnosisId": "diagnose_1774314558087_96sjrnk9o",
+      "createdAt": "2026-03-24T09:09:18",
+      "gapMinutes": 744.92,
+      "previousDiagnosisId": "diagnose_1774359253709_68kzicfj6",
+      "previousCreatedAt": "2026-03-24T21:34:13",
+      "isManualLike": true
+    },
+    {
+      "diagnosisId": "diagnose_1774313994625_gtbfhmdbr",
+      "createdAt": "2026-03-24T08:59:54",
+      "gapMinutes": 5.77,
+      "previousDiagnosisId": "diagnose_1774314340093_j155ve388",
+      "previousCreatedAt": "2026-03-24T09:05:40",
+      "isManualLike": true
+    },
+    {
+      "diagnosisId": "diagnose_1774313186537_nvue00dm8",
+      "createdAt": "2026-03-24T08:46:26",
+      "gapMinutes": 13.12,
+      "previousDiagnosisId": "diagnose_1774313973603_l2w2g7bjc",
+      "previousCreatedAt": "2026-03-24T08:59:33",
+      "isManualLike": true
+    },
+    {
+      "diagnosisId": "diagnose_1774278531431_vp7ab7fiw",
+      "createdAt": "2026-03-23T23:08:51",
+      "gapMinutes": 577.05,
+      "previousDiagnosisId": "diagnose_1774313154387_pup3cfiyv",
+      "previousCreatedAt": "2026-03-24T08:45:54",
+      "isManualLike": true
+    }
+  ]
+}

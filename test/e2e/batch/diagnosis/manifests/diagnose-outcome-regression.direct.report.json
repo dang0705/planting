@@ -1,0 +1,129 @@
+{
+  "generatedAt": "2026-05-08T16:54:44.302Z",
+  "mode": "direct-runtime",
+  "caseGroupsCount": 3,
+  "summary": {
+    "total": 3,
+    "success": 0,
+    "failed": 3,
+    "skipped": 0,
+    "byLabel": {
+      "non_problematic_normal_leaf_aging": {
+        "total": 1,
+        "success": 0,
+        "failed": 1,
+        "skipped": 0
+      },
+      "uncertain_unknown_answers": {
+        "total": 1,
+        "success": 0,
+        "failed": 1,
+        "skipped": 0
+      },
+      "problematic_leaf_yellowing_followup_overwatering": {
+        "total": 1,
+        "success": 0,
+        "failed": 1,
+        "skipped": 0
+      }
+    }
+  },
+  "results": [
+    {
+      "ok": false,
+      "label": "non_problematic_normal_leaf_aging",
+      "caseKey": "normal_leaf_aging_from_observed_evidence",
+      "expected": {
+        "outcome": "non_problematic",
+        "nonProblematicType": "normal_leaf_aging",
+        "routePrimaryAction": "standard_flow",
+        "identityResolutionStatus": "matched"
+      },
+      "plantCatalogId": "1",
+      "openid": "",
+      "observedEvidenceKeys": [
+        "normal_leaf_aging_stable"
+      ],
+      "observedSymptomKeys": [
+        "normal_leaf_aging_stable"
+      ],
+      "diagnosisSessionId": "",
+      "historyId": "",
+      "outcomeType": "",
+      "nonProblematicType": "",
+      "problemId": "",
+      "problemKey": "",
+      "routePrimaryAction": "",
+      "identityResolutionStatus": "",
+      "taxonomyMatchStatus": "",
+      "displayName": "",
+      "severity": "",
+      "startStage": "",
+      "startQuestionCount": 0,
+      "error": "WxCloudSDKError: 【错误】getaddrinfo ENOTFOUND cloud1-2grufevs395a9d5e.tcb-api.tencentcloudapi.com\n      【操作】调用 models.$runSQL\n      【请求ID】N/A\n    at new WxCloudSDKError (/Users/jay/WebstormProjects/planting/cloudfunctions/layer/node_modules/@cloudbase/wx-cloud-client-sdk/lib/wxCloudClientSDK.cjs.js:88:28)\n    at /Users/jay/WebstormProjects/planting/cloudfunctions/layer/node_modules/@cloudbase/wx-cloud-client-sdk/lib/wxCloudClientSDK.cjs.js:202:31\n    at step (/Users/jay/WebstormProjects/planting/cloudfunctions/layer/node_modules/@cloudbase/wx-cloud-client-sdk/lib/wxCloudClientSDK.cjs.js:79:23)\n    at Object.throw (/Users/jay/WebstormProjects/planting/cloudfunctions/layer/node_modules/@cloudbase/wx-cloud-client-sdk/lib/wxCloudClientSDK.cjs.js:60:53)\n    at rejected (/Users/jay/WebstormProjects/planting/cloudfunctions/layer/node_modules/@cloudbase/wx-cloud-client-sdk/lib/wxCloudClientSDK.cjs.js:51:65)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)"
+    },
+    {
+      "ok": false,
+      "label": "uncertain_unknown_answers",
+      "caseKey": "uncertain_from_unknown_answers",
+      "expected": {
+        "outcome": "uncertain",
+        "routePrimaryAction": "uncertain_prepare",
+        "identityResolutionStatus": "matched"
+      },
+      "plantCatalogId": "1",
+      "openid": "",
+      "observedEvidenceKeys": [],
+      "observedSymptomKeys": [],
+      "diagnosisSessionId": "",
+      "historyId": "",
+      "outcomeType": "",
+      "nonProblematicType": "",
+      "problemId": "",
+      "problemKey": "",
+      "routePrimaryAction": "",
+      "identityResolutionStatus": "",
+      "taxonomyMatchStatus": "",
+      "displayName": "",
+      "severity": "",
+      "startStage": "",
+      "startQuestionCount": 0,
+      "error": "WxCloudSDKError: 【错误】getaddrinfo ENOTFOUND cloud1-2grufevs395a9d5e.tcb-api.tencentcloudapi.com\n      【操作】调用 models.$runSQL\n      【请求ID】N/A\n    at new WxCloudSDKError (/Users/jay/WebstormProjects/planting/cloudfunctions/layer/node_modules/@cloudbase/wx-cloud-client-sdk/lib/wxCloudClientSDK.cjs.js:88:28)\n    at /Users/jay/WebstormProjects/planting/cloudfunctions/layer/node_modules/@cloudbase/wx-cloud-client-sdk/lib/wxCloudClientSDK.cjs.js:202:31\n    at step (/Users/jay/WebstormProjects/planting/cloudfunctions/layer/node_modules/@cloudbase/wx-cloud-client-sdk/lib/wxCloudClientSDK.cjs.js:79:23)\n    at Object.throw (/Users/jay/WebstormProjects/planting/cloudfunctions/layer/node_modules/@cloudbase/wx-cloud-client-sdk/lib/wxCloudClientSDK.cjs.js:60:53)\n    at rejected (/Users/jay/WebstormProjects/planting/cloudfunctions/layer/node_modules/@cloudbase/wx-cloud-client-sdk/lib/wxCloudClientSDK.cjs.js:51:65)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)"
+    },
+    {
+      "ok": false,
+      "label": "problematic_leaf_yellowing_followup_overwatering",
+      "caseKey": "overwatering_leaf_yellowing_followup",
+      "expected": {
+        "outcome": "problematic",
+        "problemKey": "overwatering_root_pressure",
+        "routePrimaryAction": "standard_flow",
+        "identityResolutionStatus": "matched",
+        "startStage": "followup",
+        "minStartQuestionCount": 1
+      },
+      "plantCatalogId": "1",
+      "openid": "",
+      "observedEvidenceKeys": [
+        "leaf_yellowing"
+      ],
+      "observedSymptomKeys": [
+        "leaf_yellowing"
+      ],
+      "diagnosisSessionId": "",
+      "historyId": "",
+      "outcomeType": "",
+      "nonProblematicType": "",
+      "problemId": "",
+      "problemKey": "",
+      "routePrimaryAction": "",
+      "identityResolutionStatus": "",
+      "taxonomyMatchStatus": "",
+      "displayName": "",
+      "severity": "",
+      "startStage": "",
+      "startQuestionCount": 0,
+      "error": "WxCloudSDKError: 【错误】getaddrinfo ENOTFOUND cloud1-2grufevs395a9d5e.tcb-api.tencentcloudapi.com\n      【操作】调用 models.$runSQL\n      【请求ID】N/A\n    at new WxCloudSDKError (/Users/jay/WebstormProjects/planting/cloudfunctions/layer/node_modules/@cloudbase/wx-cloud-client-sdk/lib/wxCloudClientSDK.cjs.js:88:28)\n    at /Users/jay/WebstormProjects/planting/cloudfunctions/layer/node_modules/@cloudbase/wx-cloud-client-sdk/lib/wxCloudClientSDK.cjs.js:202:31\n    at step (/Users/jay/WebstormProjects/planting/cloudfunctions/layer/node_modules/@cloudbase/wx-cloud-client-sdk/lib/wxCloudClientSDK.cjs.js:79:23)\n    at Object.throw (/Users/jay/WebstormProjects/planting/cloudfunctions/layer/node_modules/@cloudbase/wx-cloud-client-sdk/lib/wxCloudClientSDK.cjs.js:60:53)\n    at rejected (/Users/jay/WebstormProjects/planting/cloudfunctions/layer/node_modules/@cloudbase/wx-cloud-client-sdk/lib/wxCloudClientSDK.cjs.js:51:65)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)"
+    }
+  ]
+}

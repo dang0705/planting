@@ -1,0 +1,264 @@
+{
+  "generatedAt": "2026-04-11T12:47:46.400Z",
+  "envId": "cloud1-2grufevs395a9d5e",
+  "samplesDir": "",
+  "caseGroupsCount": 4,
+  "label": "",
+  "limit": 0,
+  "summary": {
+    "total": 4,
+    "success": 4,
+    "failed": 0,
+    "skipped": 0,
+    "byLabel": {
+      "root_rot_single_leaf": {
+        "total": 1,
+        "success": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "root_rot_single_whole_plant": {
+        "total": 1,
+        "success": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "root_rot_pair": {
+        "total": 1,
+        "success": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "healthy_uncertain_single": {
+        "total": 1,
+        "success": 1,
+        "failed": 0,
+        "skipped": 0
+      }
+    }
+  },
+  "results": [
+    {
+      "ok": true,
+      "skipped": false,
+      "label": "root_rot_single_leaf",
+      "caseKey": "root_rot_single_leaf_1",
+      "fileName": "1.jpeg",
+      "absolutePath": "/Users/jay/WebstormProjects/planting/AI-training/images/1.jpeg",
+      "absolutePaths": [
+        "/Users/jay/WebstormProjects/planting/AI-training/images/1.jpeg"
+      ],
+      "imageCount": 1,
+      "inputSlotTypes": [
+        "leaf"
+      ],
+      "expected": {
+        "outcomeType": "problematic",
+        "nonProblematicType": "",
+        "problemKey": "root_rot",
+        "observedEvidenceSymptomKeys": [
+          "yellow_new_leaves",
+          "leaf_yellowing"
+        ],
+        "minObservedSymptoms": 0,
+        "minObservedEvidenceCount": 2
+      },
+      "plantCatalogId": "1",
+      "openid": "anon_dev_visual_batch_root_rot_single_leaf_root_rot_single__1f79",
+      "diagnosisSessionId": "diag_1775911452847_sq6gr9yg",
+      "historyId": "diag_1775911452847_sq6gr9yg",
+      "outcomeType": "problematic",
+      "nonProblematicType": "",
+      "problemId": "p_cm9vdF9yb3Q",
+      "problemKey": "root_rot",
+      "routePrimaryAction": "standard_flow",
+      "displayName": "根腐",
+      "severity": "high",
+      "startStage": "followup",
+      "startQuestionCount": 3,
+      "startObservedSymptomsCount": 1,
+      "resultObservedSymptomsCount": 4,
+      "resultObservedSymptomKeys": [
+        "yellow_new_leaves",
+        "uniform_yellowing",
+        "bad_root_smell",
+        "leaf_yellowing"
+      ],
+      "resultObservedEvidenceSetCount": 7,
+      "resultObservedEvidenceSymptomKeys": [
+        "bad_root_smell",
+        "uniform_yellowing",
+        "yellow_new_leaves",
+        "leaf_yellowing",
+        "bad_root_smell",
+        "uniform_yellowing",
+        "yellow_new_leaves"
+      ],
+      "cleanupDeleted": true,
+      "error": ""
+    },
+    {
+      "ok": true,
+      "skipped": false,
+      "label": "root_rot_single_whole_plant",
+      "caseKey": "root_rot_single_whole_plant_2",
+      "fileName": "2.jpeg",
+      "absolutePath": "/Users/jay/WebstormProjects/planting/AI-training/images/2.jpeg",
+      "absolutePaths": [
+        "/Users/jay/WebstormProjects/planting/AI-training/images/2.jpeg"
+      ],
+      "imageCount": 1,
+      "inputSlotTypes": [
+        "whole_plant"
+      ],
+      "expected": {
+        "outcomeType": "problematic",
+        "nonProblematicType": "",
+        "problemKey": "root_rot",
+        "observedEvidenceSymptomKeys": [
+          "yellow_new_leaves",
+          "leaf_yellowing"
+        ],
+        "minObservedSymptoms": 0,
+        "minObservedEvidenceCount": 2
+      },
+      "plantCatalogId": "1",
+      "openid": "anon_dev_visual_batch_root_rot_single_whole_plant_root_rot_singl",
+      "diagnosisSessionId": "diag_1775911501630_qmv06kxc",
+      "historyId": "diag_1775911501630_qmv06kxc",
+      "outcomeType": "problematic",
+      "nonProblematicType": "",
+      "problemId": "p_cm9vdF9yb3Q",
+      "problemKey": "root_rot",
+      "routePrimaryAction": "standard_flow",
+      "displayName": "根腐",
+      "severity": "high",
+      "startStage": "followup",
+      "startQuestionCount": 3,
+      "startObservedSymptomsCount": 1,
+      "resultObservedSymptomsCount": 4,
+      "resultObservedSymptomKeys": [
+        "yellow_new_leaves",
+        "bad_root_smell",
+        "roots_black",
+        "leaf_yellowing"
+      ],
+      "resultObservedEvidenceSetCount": 7,
+      "resultObservedEvidenceSymptomKeys": [
+        "bad_root_smell",
+        "roots_black",
+        "yellow_new_leaves",
+        "leaf_yellowing",
+        "bad_root_smell",
+        "roots_black",
+        "yellow_new_leaves"
+      ],
+      "cleanupDeleted": true,
+      "error": ""
+    },
+    {
+      "ok": true,
+      "skipped": false,
+      "label": "root_rot_pair",
+      "caseKey": "root_rot_pair_leaf_whole",
+      "fileName": "1.jpeg",
+      "absolutePath": "/Users/jay/WebstormProjects/planting/AI-training/images/1.jpeg",
+      "absolutePaths": [
+        "/Users/jay/WebstormProjects/planting/AI-training/images/1.jpeg",
+        "/Users/jay/WebstormProjects/planting/AI-training/images/2.jpeg"
+      ],
+      "imageCount": 2,
+      "inputSlotTypes": [
+        "leaf",
+        "whole_plant"
+      ],
+      "expected": {
+        "outcomeType": "problematic",
+        "nonProblematicType": "",
+        "problemKey": "root_rot",
+        "observedEvidenceSymptomKeys": [
+          "yellow_new_leaves",
+          "leaf_yellowing"
+        ],
+        "minObservedSymptoms": 0,
+        "minObservedEvidenceCount": 2
+      },
+      "plantCatalogId": "1",
+      "openid": "anon_dev_visual_batch_root_rot_pair_root_rot_pair_le_c7e76af7f82",
+      "diagnosisSessionId": "diag_1775911544513_degw5vcp",
+      "historyId": "diag_1775911544513_degw5vcp",
+      "outcomeType": "problematic",
+      "nonProblematicType": "",
+      "problemId": "p_cm9vdF9yb3Q",
+      "problemKey": "root_rot",
+      "routePrimaryAction": "standard_flow",
+      "displayName": "根腐",
+      "severity": "high",
+      "startStage": "followup",
+      "startQuestionCount": 3,
+      "startObservedSymptomsCount": 1,
+      "resultObservedSymptomsCount": 4,
+      "resultObservedSymptomKeys": [
+        "yellow_new_leaves",
+        "bad_root_smell",
+        "wilting_wet_soil",
+        "leaf_yellowing"
+      ],
+      "resultObservedEvidenceSetCount": 7,
+      "resultObservedEvidenceSymptomKeys": [
+        "bad_root_smell",
+        "wilting_wet_soil",
+        "yellow_new_leaves",
+        "leaf_yellowing",
+        "bad_root_smell",
+        "wilting_wet_soil",
+        "yellow_new_leaves"
+      ],
+      "cleanupDeleted": true,
+      "error": ""
+    },
+    {
+      "ok": true,
+      "skipped": false,
+      "label": "healthy_uncertain_single",
+      "caseKey": "healthy_golden_pothos_uncertain_1",
+      "fileName": "golden_pothos_1.jpg",
+      "absolutePath": "/Users/jay/WebstormProjects/planting/plant-sample/symptoms/healthy/golden_pothos_1.jpg",
+      "absolutePaths": [
+        "/Users/jay/WebstormProjects/planting/plant-sample/symptoms/healthy/golden_pothos_1.jpg"
+      ],
+      "imageCount": 1,
+      "inputSlotTypes": [
+        "whole_plant"
+      ],
+      "expected": {
+        "outcomeType": "uncertain",
+        "nonProblematicType": "",
+        "problemKey": "",
+        "observedEvidenceSymptomKeys": [],
+        "minObservedSymptoms": 0,
+        "minObservedEvidenceCount": 0
+      },
+      "plantCatalogId": "1",
+      "openid": "anon_dev_visual_batch_healthy_uncertain_single_healthy_golden_p_",
+      "diagnosisSessionId": "diag_1775911635373_idsdyc6g",
+      "historyId": "diag_1775911635373_idsdyc6g",
+      "outcomeType": "uncertain",
+      "nonProblematicType": "",
+      "problemId": "",
+      "problemKey": "",
+      "routePrimaryAction": "uncertain_prepare",
+      "displayName": "暂不能稳定判断",
+      "severity": "low",
+      "startStage": "final",
+      "startQuestionCount": 0,
+      "startObservedSymptomsCount": 0,
+      "resultObservedSymptomsCount": 0,
+      "resultObservedSymptomKeys": [],
+      "resultObservedEvidenceSetCount": 0,
+      "resultObservedEvidenceSymptomKeys": [],
+      "cleanupDeleted": true,
+      "error": ""
+    }
+  ]
+}

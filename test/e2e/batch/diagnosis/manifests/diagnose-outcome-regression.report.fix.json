@@ -1,0 +1,79 @@
+{
+  "generatedAt": "2026-04-11T12:29:04.108Z",
+  "envId": "cloud1-2grufevs395a9d5e",
+  "caseGroupsCount": 2,
+  "summary": {
+    "total": 2,
+    "success": 2,
+    "failed": 0,
+    "skipped": 0,
+    "byLabel": {
+      "non_problematic_normal_leaf_aging": {
+        "total": 1,
+        "success": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "uncertain_unknown_answers": {
+        "total": 1,
+        "success": 1,
+        "failed": 0,
+        "skipped": 0
+      }
+    }
+  },
+  "results": [
+    {
+      "ok": true,
+      "label": "non_problematic_normal_leaf_aging",
+      "caseKey": "normal_leaf_aging_from_observed_evidence",
+      "expected": {
+        "outcomeType": "non_problematic",
+        "nonProblematicType": "normal_leaf_aging",
+        "problemKey": ""
+      },
+      "plantCatalogId": "1",
+      "openid": "anon_dev_diagnose_outcome_batch_non_problematic_normal_leaf_agin",
+      "observedSymptomKeys": [
+        "normal_leaf_aging_stable"
+      ],
+      "diagnosisSessionId": "diag_1775910531484_j7xeyyc2",
+      "historyId": "diag_1775910531484_j7xeyyc2",
+      "outcomeType": "non_problematic",
+      "nonProblematicType": "normal_leaf_aging",
+      "problemId": "p_bm9ybWFsX2xlYWZfYWdpbmc",
+      "problemKey": "normal_leaf_aging",
+      "routePrimaryAction": "standard_flow",
+      "displayName": "暂未见明显问题",
+      "severity": "low",
+      "startStage": "final",
+      "startQuestionCount": 0,
+      "error": ""
+    },
+    {
+      "ok": true,
+      "label": "uncertain_unknown_answers",
+      "caseKey": "uncertain_from_unknown_answers",
+      "expected": {
+        "outcomeType": "uncertain",
+        "nonProblematicType": "",
+        "problemKey": ""
+      },
+      "plantCatalogId": "1",
+      "openid": "anon_dev_diagnose_outcome_batch_uncertain_unknown_answers_uncert",
+      "observedSymptomKeys": [],
+      "diagnosisSessionId": "diag_1775910542853_7x1eykqa",
+      "historyId": "diag_1775910542853_7x1eykqa",
+      "outcomeType": "uncertain",
+      "nonProblematicType": "",
+      "problemId": "",
+      "problemKey": "",
+      "routePrimaryAction": "uncertain_prepare",
+      "displayName": "暂不能稳定判断",
+      "severity": "low",
+      "startStage": "final",
+      "startQuestionCount": 0,
+      "error": ""
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "batchSource": "diagnose-popup-dev-mode-pairwise",
+  "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+  "generatedAt": "2026-04-30T13:55:26.464Z",
+  "summary": {
+    "modeCount": 28,
+    "directFinalCount": 2,
+    "discoveredQuestionCount": 0,
+    "scheduledPairCount": 0,
+    "coveredPairCount": 0,
+    "reviewRecordCount": 2,
+    "failureCount": 26
+  },
+  "splitMeta": {
+    "rootBaseName": "diagnose-popup-dev-mode-pairwise-20260430-215526",
+    "partIndex": 1,
+    "partCount": 1,
+    "maxResultsPerFile": 100
+  },
+  "results": [
+    {
+      "sessionId": "engine_1777557331477_in8dybh3",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "normal_leaf_aging_stable",
+          "symptomCn": "底部老叶稳定黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "natural_aging_mode",
+        "classKey": "natural_aging_mode",
+        "symptomKey": "normal_leaf_aging_stable"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "non_problematic",
+        "stopReason": "non_problematic_output_ready",
+        "title": "暂未见明显问题",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂未见明显问题",
+        "topProblemKey": "",
+        "topProblemDisplayName": "暂未见明显问题",
+        "topProblemScore": 0,
+        "topScoreGap": 0,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "natural_aging_mode/normal_leaf_aging_stable > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true,
+        "followUpStopPolicy": null
+      }
+    },
+    {
+      "sessionId": "engine_1777557331476_6sqvt0fl",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "fine_webbing",
+          "symptomCn": "细密蛛网",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "mite_damage_mode",
+        "classKey": "mite_damage_mode",
+        "symptomKey": "fine_webbing"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "红蜘蛛",
+        "pendingTopTitle": "",
+        "currentTopTitle": "红蜘蛛",
+        "topProblemKey": "spider_mites",
+        "topProblemDisplayName": "红蜘蛛",
+        "topProblemScore": 0.7066,
+        "topScoreGap": 0.7066,
+        "stopReasonDetail": ""
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "mite_damage_mode/fine_webbing > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true,
+        "followUpStopPolicy": {
+          "shouldStop": false,
+          "reason": "",
+          "details": {}
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "updated_at": "2026-07-19",
+  "entries": [
+    {
+      "id": "diagnosis.yellowing-mcp",
+      "domain": "diagnosis",
+      "kind": "miniprogram_automator",
+      "script": "test/e2e/automator/diagnosis/diagnose-yellowing-mcp.mjs",
+      "script_sha256": "adf401451503f24259e7b68e52cf063eef81c30b27c39df37c2ed17c705f3939",
+      "required_id_policy_refs": [
+        "docs/ai-rules/frontend-automation-id-policy.md#3.1 首页（index）",
+        "docs/ai-rules/frontend-automation-id-policy.md#3.3 诊断弹窗（`DiagnosePopup.vue`）",
+        "docs/ai-rules/frontend-automation-id-policy.md#3.7 独立问诊页（follow-up）"
+      ],
+      "requires_live_automator": true,
+      "default_execution_mode": "qa-run"
+    },
+    {
+      "id": "watering.transpiration-v3",
+      "domain": "watering",
+      "kind": "miniprogram_automator",
+      "script": "test/e2e/automator/watering/transpiration-v3/run-e2e.mjs",
+      "script_sha256": "53389933a6ba52d37511db6de6ae4834be7a9fd9840d865c86f38b3a20b25ec9",
+      "required_id_policy_refs": [
+        "docs/ai-rules/frontend-automation-id-policy.md#3.10 独立浇水建议页"
+      ],
+      "requires_live_automator": true,
+      "default_execution_mode": "qa-run"
+    }
+  ]
+}

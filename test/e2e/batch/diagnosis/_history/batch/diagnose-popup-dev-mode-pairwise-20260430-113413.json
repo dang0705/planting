@@ -1,0 +1,583 @@
+{
+  "batchSource": "diagnose-popup-dev-mode-pairwise",
+  "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+  "generatedAt": "2026-04-30T03:34:13.335Z",
+  "summary": {
+    "modeCount": 28,
+    "directFinalCount": 17,
+    "discoveredQuestionCount": 11,
+    "scheduledPairCount": 38,
+    "coveredPairCount": 0,
+    "reviewRecordCount": 17,
+    "failureCount": 38
+  },
+  "splitMeta": {
+    "rootBaseName": "diagnose-popup-dev-mode-pairwise-20260430-113413",
+    "partIndex": 1,
+    "partCount": 1,
+    "maxResultsPerFile": 100
+  },
+  "results": [
+    {
+      "sessionId": "diag_1777520055440_k5n32b19",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "distorted_growth",
+          "symptomCn": "整体畸形",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "general_stress_mode",
+        "classKey": "general_stress_mode",
+        "symptomKey": "distorted_growth"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "更像是病毒花叶",
+        "pendingTopTitle": "",
+        "currentTopTitle": "更像是病毒花叶"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "general_stress_mode/distorted_growth > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777520055434_53cnk32g",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "bud_drop",
+          "symptomCn": "掉花苞",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "flower_stress_mode",
+        "classKey": "flower_stress_mode",
+        "symptomKey": "bud_drop"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "flower_stress_mode/bud_drop > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777520055436_2ky9zz26",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "water_soaked_spots",
+          "symptomCn": "水渍斑",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "bacterial_leaf_spot_mode",
+        "classKey": "bacterial_leaf_spot_mode",
+        "symptomKey": "water_soaked_spots"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "更像是细菌叶斑",
+        "pendingTopTitle": "",
+        "currentTopTitle": "更像是细菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "bacterial_leaf_spot_mode/water_soaked_spots > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777520085220_9hmdlv0v",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "normal_leaf_aging_stable",
+          "symptomCn": "底部老叶稳定黄化",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "natural_aging_mode",
+        "classKey": "natural_aging_mode",
+        "symptomKey": "normal_leaf_aging_stable"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "non_problematic",
+        "stopReason": "non_problematic_output_ready",
+        "title": "更像是暂未见明显问题",
+        "pendingTopTitle": "",
+        "currentTopTitle": "更像是暂未见明显问题"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "natural_aging_mode/normal_leaf_aging_stable > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777520081819_v1jgkjz2",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "tunnels_in_leaf",
+          "symptomCn": "叶内潜道",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leafminer_mode",
+        "classKey": "leafminer_mode",
+        "symptomKey": "tunnels_in_leaf"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "更像是潜叶虫",
+        "pendingTopTitle": "",
+        "currentTopTitle": "更像是潜叶虫"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leafminer_mode/tunnels_in_leaf > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777520081728_bnk3cjkf",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "irregular_blotches",
+          "symptomCn": "不规则斑块",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_spot_complex_mode",
+        "classKey": "leaf_spot_complex_mode",
+        "symptomKey": "irregular_blotches"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "更像是真菌叶斑",
+        "pendingTopTitle": "",
+        "currentTopTitle": "更像是真菌叶斑"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_spot_complex_mode/irregular_blotches > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777520081945_8i8a4jit",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "wind_damage",
+          "symptomCn": "风伤",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "mechanical_damage_mode",
+        "classKey": "mechanical_damage_mode",
+        "symptomKey": "wind_damage"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "mechanical_damage_mode/wind_damage > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777520083776_906b2uzu",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "fine_webbing",
+          "symptomCn": "细密蛛网",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "mite_damage_mode",
+        "classKey": "mite_damage_mode",
+        "symptomKey": "fine_webbing"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "更像是红蜘蛛",
+        "pendingTopTitle": "",
+        "currentTopTitle": "更像是红蜘蛛"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "mite_damage_mode/fine_webbing > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777520080977_nrgc4cwi",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_margin_necrosis",
+          "symptomCn": "叶缘坏死",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "leaf_edge_necrosis_mode",
+        "classKey": "leaf_edge_necrosis_mode",
+        "symptomKey": "leaf_margin_necrosis"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "leaf_edge_necrosis_mode/leaf_margin_necrosis > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777520081918_dpxks6in",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_bleaching",
+          "symptomCn": "叶片漂白",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "light_stress_mode",
+        "classKey": "light_stress_mode",
+        "symptomKey": "leaf_bleaching"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "light_stress_mode/leaf_bleaching > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777520079720_oepjaaj0",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "low_humidity_damage",
+          "symptomCn": "低湿伤害",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "humidity_stress_mode",
+        "classKey": "humidity_stress_mode",
+        "symptomKey": "low_humidity_damage"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "humidity_stress_mode/low_humidity_damage > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777520108278_v3ylaor5",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "rust_pustules",
+          "symptomCn": "锈孢子堆",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "rust_mode",
+        "classKey": "rust_mode",
+        "symptomKey": "rust_pustules"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "rust_mode/rust_pustules > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777520112637_xd28j91c",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "small_flies_soil",
+          "symptomCn": "土壤小飞虫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "soil_moisture_pest_mode",
+        "classKey": "soil_moisture_pest_mode",
+        "symptomKey": "small_flies_soil"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "更像是真菌蚊",
+        "pendingTopTitle": "",
+        "currentTopTitle": "更像是真菌蚊"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "soil_moisture_pest_mode/small_flies_soil > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777520108834_9rrkgzm8",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "white_flies",
+          "symptomCn": "有白色小飞虫，一碰会飞起来",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "sap_sucking_honeydew_pest_mode",
+        "classKey": "sap_sucking_honeydew_pest_mode",
+        "symptomKey": "white_flies"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "更像是白粉虱",
+        "pendingTopTitle": "",
+        "currentTopTitle": "更像是白粉虱"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "sap_sucking_honeydew_pest_mode/white_flies > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777520108296_yjqnnhrx",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "tip_burn",
+          "symptomCn": "叶尖焦枯",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "salt_dry_edge_mode",
+        "classKey": "salt_dry_edge_mode",
+        "symptomKey": "tip_burn"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "salt_dry_edge_mode/tip_burn > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777520127393_ypnl3nnl",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "heat_stress",
+          "symptomCn": "高温胁迫",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "temperature_stress_mode",
+        "classKey": "temperature_stress_mode",
+        "symptomKey": "heat_stress"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "problematic",
+        "stopReason": "problematic_output_ready",
+        "title": "更像是高温伤害",
+        "pendingTopTitle": "",
+        "currentTopTitle": "更像是高温伤害"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "temperature_stress_mode/heat_stress > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true
+      }
+    },
+    {
+      "sessionId": "diag_1777520134350_ebpykv9b",
+      "visualFinalEvidence": [
+        {
+          "symptomKey": "leaf_mosaic_mottling",
+          "symptomCn": "叶子上有深浅不一、花花绿绿的斑驳花纹",
+          "confidence": 0.92,
+          "source": "development_visual_dropdown"
+        }
+      ],
+      "symptomClassReplay": {
+        "modeKey": "virus_mosaic_mode",
+        "classKey": "virus_mosaic_mode",
+        "symptomKey": "leaf_mosaic_mottling"
+      },
+      "round1": null,
+      "round2": [],
+      "outcome": {
+        "outcomeType": "uncertain",
+        "stopReason": "uncertain_output_ready",
+        "title": "暂不能稳定判断",
+        "pendingTopTitle": "",
+        "currentTopTitle": "暂不能稳定判断"
+      },
+      "calculationProcess": {
+        "batchSource": "diagnose-popup-dev-mode-pairwise",
+        "sourceSchema": "diagnose_popup_dev_mode_pairwise_v1",
+        "answerPathSignature": "virus_mosaic_mode/leaf_mosaic_mottling > direct",
+        "roundsUsed": 0,
+        "questionCount": 0,
+        "isFinal": true
+      }
+    }
+  ]
+}
