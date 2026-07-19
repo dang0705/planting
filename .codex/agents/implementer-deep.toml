@@ -40,7 +40,7 @@ developer_instructions = """
 - style_stack_compliance: {styling_system, tailwind_used, new_scss_added, scss_exception_ref, new_dependencies}（UI 时必填）
 - validation_evidence: {unit_tests, lint, typecheck, build, self_check}；各项为 {result, commands, evidence_ref, reason}
 - deviations_or_blockers: []
-- qa_handoff: {}
+- qa_handoff: {}；dispatch/test 治理任务必须写入 migration_inventory、每条实际命令、hook_self_test、e2e_catalog_validation、known_limitations
 
 【Deep 边界】
 - strict contract 下必须遵守 architecture/data/API/compatibility/rollback 不变量。

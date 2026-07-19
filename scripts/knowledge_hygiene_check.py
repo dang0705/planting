@@ -113,7 +113,7 @@ AREAS: tuple[Area, ...] = (
     ),
     Area(
         name="local-debug-deploy",
-        patterns=("package.json", "scripts/dev/**", "scripts/deploy-*.mjs", "scripts/security/**", "test/e2e/terminal-e2e/**", "cloudfunctions/**/package.json", "cloudfunctions/**/cloudbase-functions.json"),
+        patterns=("package.json", "scripts/dev/**", "scripts/deploy-*.mjs", "scripts/security/**", "test/e2e/batch/diagnosis/**", "cloudfunctions/**/package.json", "cloudfunctions/**/cloudbase-functions.json"),
         docs=("docs/RUNBOOK.md",),
         brv_keys=("F-LOCAL-GATEWAY-001", "F-DEPLOY-RUNBOOK-001"),
         reason="package script, local gateway, deploy, smoke or secret check changed",

@@ -16,8 +16,8 @@ description: 'main 只做路由、合同、等待、回收、审计与 Completio
 
 其余环节（main QA、docs、BRV）由 main 按行为规则执行，**不**产出 `main-*-receipt`，**不**调用 `validate-result.mjs main_qa`。
 
-- **main**：任务归一化、项目约束、路径边界、风险路由、实现模式选择、handoff 校验、external implementer 桥接控制、Child Run Lock、diff-first review、返工协调、QA、docs/BRV 影响处理与 Completion Gate；
-  - 除非任务在后续 `dispatch_tier` 被定位为 `simple_patch`，或 child / external 已返回终态后命中受限 `maintenance_patch`，否则 main 只允许读取代码、生成/校验合同、查看 diff、运行 validator。
+- **main**：任务归一化、项目约束、路径边界、风险路由、实现模式选择、handoff 校验、codex subagent spawn、external implementer 桥接控制、Codex Subagent Run Lock、diff-first review、返工协调、QA、docs/BRV 影响处理与 Completion Gate；
+  - 除非任务在后续 `dispatch_tier` 被定位为 `simple_patch`，或 codex subagent / external 已返回终态后命中受限 `maintenance_patch`，否则 main 只允许读取代码、生成/校验合同、查看 diff、运行 validator。
   - **分配了 `Implementer` 时不运行单测/lint/typecheck。当处理 Figma 任务时，只允许按 `$figma-ui-implementation-policy` 进行 Lite 路由；最多使用 `get_metadata`，不得读取 design context、screenshot、variables 或 assets。**。
   - **QA、端上 `miniprogram automator`、UI/Figma 运行态验收、docs 同步和 ByteRover 影响处理均由 main 执行；main 执行 QA/docs 不授权其修改业务代码。**
   - 代码类文件包括但不限于：`src/**`、`cloudfunctions/**`、测试代码、schema、配置、package/lockfile、构建脚本、迁移脚本。
@@ -99,7 +99,7 @@ objective / dispatch_tier / code_changes_required / ui_task / figma_link / risk 
 
 这里的“实现者终态”只表示 implementer/provider 已返回合同要求的最终结果：`completed` 或 `blocked`。它表示实现交付阶段结束并进入 main review，不表示整个 dispatch-task 已完成。只有 `completed` 结果且 recovery evidence 已齐备时，main 才可以在 Gate C Main Review（Web external 为 PR recovery review 子阶段）中执行一次受限 `maintenance_patch`；`blocked` 只能进入阻断处理，不授权 main 接管实现。
 
-1. 不得在 child / provider 仍运行时修改任何代码类文件；
+1. 不得在 Codex Subagent / provider 仍运行时修改任何代码类文件；
 2. 变更默认不超过 3 个文件、80 行语义变更；纯格式化可扩大文件数，但必须证明无语义 diff；
 3. 只能修复已被验证的 typo、格式、lint/build 阻断或合同内的机械冲突，不得借机改变产品方向；
 4. external Web 任务只能在合同指定的 PR worktree 修改，并提交、推送到同一 PR head；不得把 PR worktree 的修复带回主工作区直接提交；
@@ -128,6 +128,7 @@ node .codex/skills/dispatch-task/scripts/capture-worktree-baseline.mjs .tmp/disp
 1.  baseline 用于区分本轮变更与用户/其他线程已有变更；不得用它自动 restore 或覆盖用户改动。
 2.  若 baseline 已经存在 dirty files，handoff 必须记录 `validation.worktree_baseline_path`，main review 必须特别检查是否与本轮 `changed_files` 重叠。
 3.  如果本轮声明修改的文件在 baseline 中已 dirty，且用户未明确授权覆盖/协作，Completion Gate 必须 blocked，不能擅自回滚。
+4.  当用户明确要求在脏共享工作区直接协作时，implementer result 可声明 `preexisting_dirty_overlap_acknowledged=true`；postflight 只允许 overlap 全部落在 `allowed_paths` 且未命中 `forbidden_paths`，否则仍 blocked。
 
 ## 4. Project Constraints
 
@@ -198,24 +199,40 @@ node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
 
 1. 必须显式 `agent_type`；禁止 full-history fork、generic/default/worker fallback。
 2. spawn 只传 `agent_type` + `fork_turns=none`/`fork_context=false` + minimal handoff message。
-3. 运行时 `effective_agent_type` 与 child `agent_identity` 必须等于 `target_role` 与本轮 `dispatch_run_id`；不可观察或不一致则 blocked。
-4. 返工回原 implementer thread，不重新 spawn generic child。
+3. 运行时 `effective_agent_type` 与 Codex Subagent `agent_identity` 必须等于 `target_role` 与本轮 `dispatch_run_id`；不可观察或不一致则 blocked。
+4. 返工回原 implementer thread，不重新 spawn generic Codex Subagent。
 
 展开步骤与 blocked code 见 `references/handoff-and-spawn-gates.md`。
 
-## 7. Gate B1.5 — Child Run Lock / 等待与工作区所有权
+## 7. Gate B1.5 — Codex Subagent Run Lock / 等待与工作区所有权
 
-一旦 `implementer_fast`、`implementer_deep` 或 external implementer 被派发，main 进入 Child Run Lock。
+一旦 `implementer_fast`、`implementer_deep` 或 external implementer 被派发，main 进入 Codex Subagent Run Lock。
+
+本仓库启用本地 dispatch hook gate：
+
+```text
+.codex/hooks.json -> .codex/hooks/dispatch-gate-adapter.mjs -> .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs
+```
+
+hook gate 的职责是记录、注入和恢复，不替代本 skill 的人工判断。`SubagentStart` 注入任务卡，`PostToolUse` 记录 telemetry，`SubagentStop` 只允许在原 implementer thread 生成一次汇总返工提示。普通遗漏（缺 Figma、缺 feature unit test、未完成 BRV recall、未运行 QA）不得阻断普通对话或写入；只能进入 postflight、review 或原线程返工。
+
+`PreToolUse` 只允许对以下硬风险返回 deny：
+
+1. 写入或格式化 `forbidden_paths`、疑似覆盖用户/其他线程工作区改动；
+2. 伪造 QA evidence、伪造 runtime/catolog/hash/execution id；
+3. 未经 catalog gate 裸跑 automator 并试图作为验收。
+
+缺失 Figma 读取、缺 unit test、`required_skills` 未执行或 BRV recall degraded 不得作为 `PreToolUse` deny 理由。
 
 硬规则：
 
-1.  main 必须等待 child 返回最终 JSON、handoff manual 终态，或用户明确中止；不得用 20 秒/40 秒等短轮询判定“无产出”。
-2.  child 正在运行时，main 不得修改、撤回、格式化、restore、checkout、apply_patch、sed 重写或自动修补任何代码类文件。
-3.  child 正在运行时，main 不得用 `git status` / `git diff` 的“暂时没有可见 diff”推断 child 失败。
+1.  main 必须等待 Codex Subagent 返回最终 JSON、handoff manual 终态，或用户明确中止；不得用 20 秒/40 秒等短轮询判定“无产出”。
+2.  Codex Subagent 正在运行时，main 不得修改、撤回、格式化、restore、checkout、apply_patch、sed 重写或自动修补任何代码类文件。
+3.  Codex Subagent 正在运行时，main 不得用 `git status` / `git diff` 的“暂时没有可见 diff”推断 Codex Subagent 失败。
 4.  Codex subagent 首次状态检查不得早于 5 分钟；之后低频检查间隔不得短于 5 分钟。检查只允许确认是否已有最终消息/结果文件，不得读取半成品 diff 后继续实现。
 5.  `deep_contract`、UI/Figma、跨模块、状态机或大文件拆分任务，首次状态检查建议不早于 10 分钟；没有最终 JSON 时默认仍在执行。
-6.  如果 main 在 child 仍可能写入时误写了代码类文件，必须立即停止并返回 `blocked: main_workspace_contamination`，说明触碰文件、原因和建议处理方式；不得自行撤回或继续加工。
-7.  只有在 child 返回 `completed|blocked` 终态后，main 才能进入 Gate C 做 diff-first review；其中只有 `completed` 且证据齐备时，才允许按 §1.3 执行受限 maintenance patch。`blocked` 不授权 main 修复；超出范围的返工必须回到原 child thread 或原外部实现者，main 不得亲自修复。
+6.  如果 main 在 Codex Subagent 仍可能写入时误写了代码类文件，必须立即停止并返回 `blocked: main_workspace_contamination`，说明触碰文件、原因和建议处理方式；不得自行撤回或继续加工。
+7.  只有在 Codex Subagent 返回 `completed|blocked` 终态后，main 才能进入 Gate C 做 diff-first review；其中只有 `completed` 且证据齐备时，才允许按 §1.3 执行受限 maintenance patch。`blocked` 不授权 main 修复；超出范围的返工必须回到原 Codex Subagent thread 或原外部实现者，main 不得亲自修复。
 
 违反本节视为 Hard stop。
 
@@ -238,8 +255,8 @@ assets/templates/zcode-prompt-template.md           # ZCode 兼容 alias
 3. Codex Desktop 运行 Web/云端 provider 时，必须用 Codex 内置浏览器打开和发送 prompt；普通 Chrome、shell 或 ambient browser 状态不能替代受控发送证据。
 4. Web/云端 external implementer 即使远端自称 main/root，也必须按 implementer 身份执行：只改合同范围代码，完成后提供 unit tests 等实现者自检；有 `figma_link` 时直接用可用 Figma 插件 / MCP / 工具取设计证据。
 5. Codex 内置浏览器发送成功后，必须显式保留 provider tab 为 `handoff`，send receipt 记录 `tab_retention`；不得依赖 Browser Use 默认生命周期保留外部会话。
-6. Web/云端 external implementer 的完成等待必须继承 Child Run Lock：首次正式状态检查不得早于 5 分钟，之后每 5 分钟低频检查。不得用 60 秒、90 秒等短等待作为“完成/失败/无产出”判断；短等待只允许用于一次性发送成功、页面已开始运行、身份探针这类非实现 completion 检查。
-7. prompt 送达并开始运行后进入 Child Run Lock（见 §7）；adapter 细则与 DOM/Computer 步骤只在 references。
+6. Web/云端 external implementer 的完成等待必须继承 Codex Subagent Run Lock：首次正式状态检查不得早于 5 分钟，之后每 5 分钟低频检查。不得用 60 秒、90 秒等短等待作为“完成/失败/无产出”判断；短等待只允许用于一次性发送成功、页面已开始运行、身份探针这类非实现 completion 检查。
+7. prompt 送达并开始运行后进入 Codex Subagent Run Lock（见 §7）；adapter 细则与 DOM/Computer 步骤只在 references。
 8. 结果回收后走同一套 Gate C/D（`validate-result.mjs external` → postflight → completion）。
 
 ## 9. Gate C — Implementation Review
@@ -256,9 +273,11 @@ node .codex/skills/dispatch-task/scripts/validate-implementation-postflight.mjs 
 
 所有代码修改任务都必须做 diff-first review：身份/来源、实际变更文件、路径边界、项目约束、decision lock、依赖、验证证据。UI 重点检查 Tailwind/SCSS、组件复用与 uni-ui 映射证据；Figma 任务必须存在实现者直接读取证据。失败退回原实现路径，main 不亲自修复。
 
-postflight report 必须确认 git root 与 HEAD 未相对 baseline 变化，并覆盖 worktree scope、no-new-deps、style-stack 等实现后机器证据。
+postflight report 必须确认 git root 与 HEAD 未相对 baseline 变化，并覆盖 worktree scope、no-new-deps、style-stack 等实现后机器证据。`no_new_deps` 对 `package.json` 只以依赖字段相对 HEAD 的变化作为新增依赖风险；仅 scripts/config 调整可通过并记录 warning，lockfile 或依赖字段变化仍 blocked。
 
-`simple_patch` / `main_direct` 跳过 validate-handoff / validate-implementation-postflight / validate-completion-readiness，只执行 git diff review + scoped lint/fmt/build；若 main 在 child 终态后执行了 `maintenance_patch`，必须把补丁纳入原实现结果的 changed files、postflight 和最终 PR recovery evidence。
+postflight 通过后应由 dispatch gate 创建 `.tmp/dispatch-task/<dispatch_run_id>/qa-skeleton.json`，供 main QA 继续补 runtime/batch evidence。该 skeleton 只表示 QA 计划已建立，不表示端上验收已通过。
+
+`simple_patch` / `main_direct` 跳过 validate-handoff / validate-implementation-postflight / validate-completion-readiness，只执行 git diff review + scoped lint/fmt/build；若 main 在 Codex Subagent 终态后执行了 `maintenance_patch`，必须把补丁纳入原实现结果的 changed files、postflight 和最终 PR recovery evidence。
 
 缺少 baseline 或 postflight report 时，不得进入 Completion Gate。postflight report 在 `passed` 和 `blocked` 时都必须产出 JSON；`blocked` 不授权 main 修复，必须回到原实现路径或请用户决策。
 
@@ -267,6 +286,15 @@ postflight report 必须确认 git root 与 HEAD 未相对 baseline 变化，并
 Figma、UI、用户可观察行为、API/schema/数据链路、端上运行、高风险或用户明确要求时需要 QA；对应 handoff 可设置 `task.qa_required=true`。**`qa_required=true` 本身不强制任何 QA JSON**——QA 由 main 按需要执行；失败则退回原 implementer 或 external implementer。纯文档、注释或不影响行为的机械改动可跳过，但要记录理由。
 
 main QA 不运行 unit tests，不修改业务代码。
+
+automator QA 必须先通过 catalog gate：
+
+```bash
+node .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs validate-e2e-catalog
+node .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs qa-run --catalog-id=<leaf-id> --execution-id=<run-id> --dry-run
+```
+
+只有 catalog 精确叶子、`docs/ai-rules/frontend-automation-id-policy.md` 引用、脚本 hash 和 execution id 全部通过后，才允许进入 LAN/DevTools/automator。裸跑 automator 脚本只能作为排障，不能作为 `runtime-qa-evidence.json` 的验收来源。
 
 运行态验收模式由 `validation.runtime_acceptance_mode` 显式声明；仅当模式为 `automator_required` | `batch_substitute_allowed` | `batch_only` 时，必须产出 `runtime-qa-evidence.json`：
 
@@ -281,6 +309,9 @@ dispatch_run_id
 status: passed | failed | blocked
 runtime_acceptance_mode
 channel
+catalog_id                  # automator_required 必填
+execution_id                # automator_required 必填
+script_sha256               # automator_required 必填
 projectPath
 pagePath
 automator_port | wsEndpoint
@@ -380,8 +411,8 @@ main 不得读取或转述 uni-ui 组件索引、映射表、组件规则；只�
 
 ## 13. Hard stops
 
-1. child 已派发但未返回终态时，main 继续实现、撤回草稿、格式化、restore、checkout、apply_patch、sed 重写或自动修补代码类文件。
-2. main 用 20 秒/40 秒等短轮询、临时 `git status` 或“暂无可见 diff”判定 child 无产出、失败或可由 main 接管。
+1. Codex Subagent 已派发但未返回终态时，main 继续实现、撤回草稿、格式化、restore、checkout、apply_patch、sed 重写或自动修补代码类文件。
+2. main 用 20 秒/40 秒等短轮询、临时 `git status` 或“暂无可见 diff”判定 Codex Subagent 无产出、失败或可由 main 接管。
 3. 代码修改任务缺少 worktree baseline，baseline 与本轮变更重叠未处理，或未通过 postflight report 仍完成。
 4. `codex_subagent` 模式未显式传精确 `agent_type`，使用 full-history fork，或发生 generic/default/worker fallback。
 5. `external_implementer` 模式 spawn 了 Codex implementer、缺少 send receipt、缺少 handoff manual，或 provider 交付证据与 `external_contract.prompt_transport` 不一致。
@@ -390,7 +421,7 @@ main 不得读取或转述 uni-ui 组件索引、映射表、组件规则；只�
 8. external implementer 失败后 main 自己写代码，或自动 fallback 到 Codex implementer 而未获得用户明确批准。
 9. external handoff 缺少 handoff manual，或 main 未先读取 handoff manual 就用 UI/聊天状态判定外部实现者已结束。
 10. external implementer 已收到 prompt 并开始运行后，main 仍持续盯屏、使用短轮询或在 30 分钟内读取 provider UI 进度；正式等待必须使用 5 分钟下限的 recurring wakeup。
-11. child `agent_identity` 与 Contract 不一致。
+11. Codex Subagent `agent_identity` 与 Contract 不一致。
 12. UI handoff 缺少 styling system、SCSS policy、component library 或 rule refs。
 13. main 在 Figma 任务使用 `get_design_context/get_screenshot/variables/assets`，或把视觉细节塞进 handoff。
 14. figma_link 存在，但实现者没有直接读取 Figma 证据，或 main QA 没有独立 baseline。

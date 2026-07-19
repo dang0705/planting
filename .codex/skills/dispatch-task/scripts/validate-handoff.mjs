@@ -49,6 +49,16 @@ const acceptanceMentionsMiniProgramRuntime = (data.acceptance ?? []).some(item =
     raw.includes('微信开发者工具')
   )
 })
+const acceptanceMentionsDispatchHookGate = (data.acceptance ?? []).some(item => {
+  const raw = String(item ?? '')
+  const text = raw.toLowerCase()
+  return (
+    text.includes('hook') ||
+    text.includes('catalog') ||
+    raw.includes('钩子') ||
+    raw.includes('目录治理')
+  )
+})
 
 const tier = data.dispatch_tier
 const mode =
@@ -161,6 +171,26 @@ need(
 )
 need(nonEmptyString(pc.dependency_policy), 'project_constraints.dependency_policy is required')
 need(Array.isArray(pc.test_commands), 'project_constraints.test_commands must be an array')
+
+if (acceptanceMentionsDispatchHookGate) {
+  need(
+    includesAll(data.allowed_paths, ['.codex/hooks.json', '.codex/hooks/**']),
+    'dispatch hook gate handoff must allow .codex/hooks.json and .codex/hooks/**'
+  )
+  need(
+    (data.allowed_paths ?? []).includes('.codex/skills/dispatch-task/**'),
+    'dispatch hook gate handoff must allow dispatch-task skill updates'
+  )
+  const testCommands = (pc.test_commands ?? []).join('\n')
+  need(
+    /dispatch-gate\/cli\.mjs validate-e2e-catalog/.test(testCommands),
+    'dispatch hook gate handoff must require validate-e2e-catalog'
+  )
+  need(
+    /dispatch-gate\/cli\.mjs hook-self-test/.test(testCommands),
+    'dispatch hook gate handoff must require hook-self-test'
+  )
+}
 
 if (ui) {
   need(tier !== 'simple_patch', 'UI/Figma tasks must not use simple_patch')

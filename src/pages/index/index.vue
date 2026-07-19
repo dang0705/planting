@@ -42,7 +42,7 @@
               :reminder-summary="getReminderSummary(plant)"
               @diagnose="openDiagnose"
               @history="openPlantHistory"
-              @detail="viewPlantDetail"
+              @edit="openEditPlant"
               @reminder="openReminder"
             />
             <view
@@ -144,6 +144,10 @@ import { callComponentMethod } from '@/utils/component-ref.js'
 import PlantCard from './components/PlantCard.vue'
 import WateringReminderSheet from './components/WateringReminderSheet.vue'
 
+const JUST_NOW_MS = 60000
+const ONE_HOUR_MS = 3600000
+const ONE_DAY_MS = 86400000
+
 const plantStore = usePlantStore()
 const userStore = useUserStore()
 const plantingStore = usePlantingStore()
@@ -193,9 +197,8 @@ function addPlant() {
 function goWateringAdvisor() {
   uni.navigateTo({ url: '/pages/watering-advisor/watering-advisor' })
 }
-function viewPlantDetail(plant) {
-  plantStore.setCurrentPlant(plant)
-  uni.navigateTo({ url: `/pages/plant-detail/plant-detail?id=${plant.id}` })
+function openEditPlant(plant) {
+  uni.navigateTo({ url: `/pages/edit-plant/edit-plant?id=${plant.id}` })
 }
 function getReminderSummary(plant) {
   const backendReminder = normalizeBackendWaterReminder(plant?.wateringReminder)
@@ -263,15 +266,15 @@ function viewDiagnoseDetail(recordId) {
 }
 function formatTime(time) {
   const diff = Date.now() - new Date(time).getTime()
-  if (diff < 60000) {
+  if (diff < JUST_NOW_MS) {
     return '刚刚'
   }
-  if (diff < 3600000) {
-    return `${Math.floor(diff / 60000)}分钟前`
+  if (diff < ONE_HOUR_MS) {
+    return `${Math.floor(diff / JUST_NOW_MS)}分钟前`
   }
-  if (diff < 86400000) {
-    return `${Math.floor(diff / 3600000)}小时前`
+  if (diff < ONE_DAY_MS) {
+    return `${Math.floor(diff / ONE_HOUR_MS)}小时前`
   }
-  return `${Math.floor(diff / 86400000)}天前`
+  return `${Math.floor(diff / ONE_DAY_MS)}天前`
 }
 </script>

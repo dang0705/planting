@@ -89,11 +89,7 @@
       id="add-plant-next-button"
       class="m-0 mt-5 h-14 w-full rounded-2xl border border-solid p-0 text-base font-medium leading-[56px] after:border-0"
       hover-class="none"
-      :class="
-        canProceed
-          ? 'border-transparent text-white'
-          : 'border-primary bg-white text-primary'
-      "
+      :class="canProceed ? 'border-transparent text-white' : 'border-primary bg-white text-primary'"
       :disabled="!canProceed"
       :style="canProceed ? primaryButtonStyle : ''"
       @click="$emit('next')"

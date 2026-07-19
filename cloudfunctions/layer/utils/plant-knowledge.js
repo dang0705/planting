@@ -1,6 +1,7 @@
 'use strict'
 
 const { models } = require('/opt/utils/cloudbase')
+const MAX_USER_PLANT_NOTES_LENGTH = 200
 
 function normalizePlantKeyword(value) {
   return String(value || '')
@@ -68,6 +69,18 @@ function normalizeNullableString(value) {
   }
 
   return normalized
+}
+
+function toNullableDateParam(value) {
+  const normalized = normalizeNullableString(value)
+  return normalized && /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : ''
+}
+
+function normalizeUserPlantNotes(value) {
+  if (value === null || value === undefined) {
+    return null
+  }
+  return String(value).slice(0, MAX_USER_PLANT_NOTES_LENGTH)
 }
 
 /**
@@ -383,6 +396,8 @@ async function createUserPlantInstance({
   visualCallBatchId = null,
   nickname = null,
   location = null,
+  plantDate = null,
+  notes = null,
   lightEnvironment = null,
   photos = null
 }) {
@@ -458,12 +473,12 @@ async function createUserPlantInstance({
     INSERT INTO user_plant_instances (
       _openid, plant_id, plant_identity_id, session_plant_id, canonical_name, recognized_name,
       source_type, recognition_type, recognition_confidence, identity_resolution_status,
-      visual_call_batch_id, nickname, location, light_environment_json, photos,
+      visual_call_batch_id, nickname, location, plant_date, notes, light_environment_json, photos,
       plant_genus, plant_family_en, plant_latin_name
     ) VALUES (
       {{openid}}, {{plantId}}, {{plantIdentityId}}, {{sessionPlantId}}, {{canonicalName}}, {{recognizedName}},
       {{sourceType}}, {{recognitionType}}, NULLIF({{recognitionConfidence}}, ''), {{identityResolutionStatus}},
-      {{visualCallBatchId}}, {{nickname}}, {{location}}, {{lightEnvironmentJson}}, {{photos}},
+      {{visualCallBatchId}}, {{nickname}}, {{location}}, NULLIF({{plantDate}}, ''), {{notes}}, {{lightEnvironmentJson}}, {{photos}},
       {{plantGenus}}, {{plantFamilyEn}}, {{plantLatinName}}
     )
   `
@@ -488,6 +503,8 @@ async function createUserPlantInstance({
     visualCallBatchId: normalizedVisualCallBatchId,
     nickname: normalizeNullableString(nickname),
     location: normalizeNullableString(location),
+    plantDate: toNullableDateParam(plantDate),
+    notes: normalizeUserPlantNotes(notes),
     lightEnvironmentJson: stringifyNullableJson(lightEnvironment),
     photos: photos ? JSON.stringify(photos) : null,
     plantGenus,
@@ -566,6 +583,8 @@ function mapUserPlantInstanceRow(row, plant = null) {
       row.identity_resolution_status || (plantIdentityId ? 'matched' : 'unresolved'),
     visualCallBatchId: row.visual_call_batch_id || '',
     location: row.location || '未设置',
+    plantDate: row.plant_date || null,
+    notes: row.notes ?? '',
     photos: parseJsonField(row.photos, []),
     lightEnvironment: parseJsonField(
       row.light_environment_json_text ?? row.light_environment_json,
@@ -649,6 +668,8 @@ async function getUserPlantInstanceById(openid, id) {
       up.visual_call_batch_id,
       up.nickname,
       up.location,
+      up.plant_date,
+      up.notes,
       CAST(up.light_environment_json AS CHAR) AS light_environment_json_text,
       up.photos,
       up.last_watered,
@@ -794,6 +815,8 @@ async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) 
       up.visual_call_batch_id,
       up.nickname,
       up.location,
+      up.plant_date,
+      up.notes,
       CAST(up.light_environment_json AS CHAR) AS light_environment_json_text,
       up.photos,
       up.last_watered,
@@ -861,6 +884,14 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
   if (updates.location !== undefined) {
     fields.push('location = {{location}}')
     params.location = updates.location
+  }
+  if (hasOwnField(updates, 'plantDate')) {
+    fields.push("plant_date = NULLIF({{plantDate}}, '')")
+    params.plantDate = toNullableDateParam(updates.plantDate)
+  }
+  if (hasOwnField(updates, 'notes')) {
+    fields.push('notes = {{notes}}')
+    params.notes = normalizeUserPlantNotes(updates.notes)
   }
   if (updates.photos !== undefined) {
     fields.push('photos = {{photos}}')
@@ -944,7 +975,8 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
       potHeightCm: toNullableDecimal(updates.potHeightCm ?? updates.pot_height_cm),
       hasDrainageHole:
         normalizeNullableString(updates.hasDrainageHole ?? updates.has_drainage_hole) || 'true',
-      potMaterial: normalizeNullableString(updates.potMaterial ?? updates.pot_material) || 'unknown',
+      potMaterial:
+        normalizeNullableString(updates.potMaterial ?? updates.pot_material) || 'unknown',
       substrateType:
         normalizeNullableString(updates.substrateType ?? updates.substrate_type) || 'unknown',
       source: normalizeNullableString(updates.source) || 'user',

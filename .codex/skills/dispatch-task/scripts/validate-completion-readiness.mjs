@@ -201,18 +201,28 @@ if (codeChanges) {
       (worktree.declared_not_visible ?? []).length === 0,
       'Completion Gate cannot pass with declared files not visible in worktree'
     )
-    need(
-      (worktree.declared_preexisting_overlap ?? []).length === 0,
-      'Completion Gate cannot pass with preexisting dirty overlap'
-    )
-    need(
-      (worktree.preexisting_dirty_modified_since_baseline ?? []).length === 0,
-      'Completion Gate cannot pass with preexisting dirty files modified since baseline'
-    )
-    need(
-      (worktree.disappeared_since_baseline ?? []).length === 0,
-      'Completion Gate cannot pass with baseline dirty files disappeared'
-    )
+    const dirtyOverlapExplicitlyAllowed =
+      worktree.preexisting_dirty_overlap_explicitly_allowed === true
+    const unsafePreexistingOverlap = worktree.unsafe_preexisting_overlap ?? []
+    if (dirtyOverlapExplicitlyAllowed) {
+      need(
+        unsafePreexistingOverlap.length === 0,
+        'Completion Gate cannot pass with unsafe preexisting dirty overlap'
+      )
+    } else {
+      need(
+        (worktree.declared_preexisting_overlap ?? []).length === 0,
+        'Completion Gate cannot pass with preexisting dirty overlap'
+      )
+      need(
+        (worktree.preexisting_dirty_modified_since_baseline ?? []).length === 0,
+        'Completion Gate cannot pass with preexisting dirty files modified since baseline'
+      )
+      need(
+        (worktree.disappeared_since_baseline ?? []).length === 0,
+        'Completion Gate cannot pass with baseline dirty files disappeared'
+      )
+    }
   }
   const noDeps = postflight.no_new_deps
   need(isObject(noDeps), 'postflight.no_new_deps is required')
@@ -286,6 +296,18 @@ if (runtimeQa) {
     need(
       runtimeQa.channel === 'miniprogram_automator',
       'automator_required requires channel=miniprogram_automator'
+    )
+    need(
+      nonEmptyString(runtimeQa.catalog_id),
+      'automator_required requires runtime-qa-evidence.catalog_id'
+    )
+    need(
+      nonEmptyString(runtimeQa.execution_id),
+      'automator_required requires runtime-qa-evidence.execution_id'
+    )
+    need(
+      nonEmptyString(runtimeQa.script_sha256) && /^[a-f0-9]{64}$/i.test(runtimeQa.script_sha256),
+      'automator_required requires runtime-qa-evidence.script_sha256'
     )
     validateAutomatorProjectPath(runtimeQa.projectPath, 'runtime-qa-evidence.projectPath')
     need(nonEmptyString(runtimeQa.pagePath), 'runtime-qa-evidence.pagePath is required')

@@ -27,6 +27,8 @@
   - 历史结果页：`src/pages/diagnose/diagnose.vue`
   - 个人中心：`src/pages/profile/profile.vue`
   - 首页卡片组件：`src/pages/index/components/PlantCard.vue`
+  - 添加植物：`src/pages/add-plant/add-plant.vue`
+  - 编辑植物：`src/pages/edit-plant/edit-plant.vue`
   - 浇水提醒弹框：`src/pages/index/components/WateringReminderSheet.vue`
   - 天气头部组件：`src/components/HeaderWeatherInfo.vue`
   - 独立浇水建议页：`src/pages/watering-advisor/watering-advisor.vue`
@@ -39,6 +41,8 @@
 | 天气位置信息   | `src/components/HeaderWeatherInfo.vue`     | `header-weather-location-button`       | 点击刷新定位 / 天气                    |
 | 天气缓存开关   | `src/components/HeaderWeatherInfo.vue`     | `header-weather-cache-toggle`          | 点击切换天气缓存                       |
 | 进入诊断入口   | `src/pages/index/index.vue`                | `diagnose-entry-button-{plant.id}`     | 点击打开诊断弹窗                       |
+| 编辑植物入口   | `src/pages/index/components/PlantCard.vue` | `index-plant-card-edit-{plant.id}`     | 点击卡片主体进入编辑植物页             |
+| 卡片历史入口   | `src/pages/index/components/PlantCard.vue` | `index-plant-card-history-{plant.id}`  | 点击查看该植物诊断历史                 |
 | 浇水提醒入口   | `src/pages/index/components/PlantCard.vue` | `plant-card-reminder-{plant.id}-water` | 点击打开浇水提醒弹框；断言水滴提醒状态 |
 | 主页历史记录项 | `src/pages/index/index.vue`                | `index-diagnose-record-{record._id}`   | 点击查看历史结果                       |
 
@@ -175,3 +179,34 @@
 | 建议水量结果         | `src/pages/watering-advisor/watering-advisor.vue`              | `watering-advisor-result-amount`                 | 断言显示建议水量（矿泉水瓶/5L油桶口径，与首页一致） |
 | 完成按钮             | `src/pages/watering-advisor/watering-advisor.vue`              | `watering-advisor-done`                          | 点击完成独立浇水建议流程                            |
 | 空态重试按钮         | `src/pages/watering-advisor/watering-advisor.vue`              | `watering-advisor-empty-retry`                   | 点击返回重新输入                                    |
+
+### 3.11 添加植物 / 编辑植物
+
+| 功能模块         | 文件                                                    | 稳定 id                                                               | 操作 / 断言                                       |
+| ---------------- | ------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------- |
+| 选植物搜索框     | `src/pages/add-plant/components/PlantSelectionStep.vue` | `add-plant-search-input`                                              | 输入搜索植物                                      |
+| AI 识别入口      | `src/pages/add-plant/components/PlantSelectionStep.vue` | `add-plant-ai-identify-button`                                        | 点击拍照识别                                      |
+| 植物卡片项       | `src/pages/add-plant/components/PlantSelectionStep.vue` | `add-plant-card-{plant.id}`                                           | 点击选中植物                                      |
+| 添加植物下一步   | `src/pages/add-plant/components/PlantSelectionStep.vue` | `add-plant-next-button`                                               | 点击进入信息填写步骤                              |
+| 信息表单根节点   | `src/pages/add-plant/components/PlantForm.vue`          | `add-plant-form` / `edit-plant-form`                                  | 断言添加/编辑植物表单已渲染                       |
+| 植物照片上传     | `src/pages/add-plant/components/PlantForm.vue`          | `add-plant-photo-upload` / `edit-plant-photo-upload`                  | 点击上传或替换植物照片                            |
+| 植物昵称输入     | `src/pages/add-plant/components/PlantForm.vue`          | `add-plant-nickname-input` / `edit-plant-nickname-input`              | 输入植物昵称                                      |
+| 城市修改按钮     | `src/pages/add-plant/components/PlantForm.vue`          | `add-plant-city-button` / `edit-plant-city-button`                    | 点击打开养护城市选择弹层                          |
+| 城市弹层关闭     | `src/pages/add-plant/components/PlantForm.vue`          | `add-plant-city-sheet-close` / `edit-plant-city-sheet-close`          | 点击关闭城市选择弹层                              |
+| 城市选项         | `src/pages/add-plant/components/PlantForm.vue`          | `add-plant-city-option-{locationKey}` / `edit-plant-city-option-{locationKey}` | 点击选择养护城市                        |
+| 光照环境控件     | `src/pages/add-plant/components/PlantForm.vue`          | `add-plant-light-*` / `edit-plant-light-*`                            | 断言光照环境选择器可见并执行对应选择             |
+| 摆放位置选项     | `src/pages/add-plant/components/PlantForm.vue`          | `add-plant-location-{slot}` / `edit-plant-location-{slot}`            | 点击切换摆放位置；`slot` 如 `balcony`            |
+| 种植日期选择     | `src/pages/add-plant/components/PlantForm.vue`          | `add-plant-plant-date-picker` / `edit-plant-plant-date-picker`        | 点击选择种植日期                                  |
+| 备注输入         | `src/pages/add-plant/components/PlantForm.vue`          | `add-plant-notes-input` / `edit-plant-notes-input`                    | 输入备注                                          |
+| 添加植物上一步   | `src/pages/add-plant/components/PlantInfoStepPanel.vue` | `add-plant-back-to-selection-button`                                  | 点击返回植物选择步骤                              |
+| 添加植物提交     | `src/pages/add-plant/components/PlantInfoStepPanel.vue` | `add-plant-submit-button`                                             | 点击完成添加植物                                  |
+| 编辑植物提交     | `src/pages/add-plant/components/PlantInfoStepPanel.vue` | `edit-plant-submit-button`                                            | 点击保存植物信息                                  |
+
+## 4. automator catalog 映射
+
+端上 automator 验收必须先通过 `test/e2e/automator/catalog.json` 选择精确叶子脚本，并校验脚本 hash 与 execution id。当前叶子与本文件章节对应关系：
+
+| catalog id | 脚本 | 必读 id policy 章节 |
+| ---------- | ---- | ------------------- |
+| `diagnosis.yellowing-mcp` | `test/e2e/automator/diagnosis/diagnose-yellowing-mcp.mjs` | `3.1`、`3.3`、`3.7` |
+| `watering.transpiration-v3` | `test/e2e/automator/watering/transpiration-v3/run-e2e.mjs` | `3.10` |

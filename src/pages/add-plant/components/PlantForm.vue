@@ -1,9 +1,13 @@
 <template>
-  <view id="add-plant-form">
+  <view :id="`${idPrefix}-form`">
     <!-- 植物照片 -->
     <view class="mb-6">
       <text class="block text-sm font-semibold text-gray-800 mb-3">植物照片</text>
-      <view class="w-[120px] h-[120px] rounded-2xl overflow-hidden" @click="$emit('upload-photo')">
+      <view
+        :id="`${idPrefix}-photo-upload`"
+        class="h-[120px] w-[120px] overflow-hidden rounded-2xl"
+        @click="$emit('upload-photo')"
+      >
         <image
           v-if="modelValue.image"
           :src="modelValue.image"
@@ -26,6 +30,7 @@
         >植物昵称 <text class="font-normal text-gray-400">(可选)</text></text
       >
       <input
+        :id="`${idPrefix}-nickname-input`"
         :value="modelValue.nickname"
         @input="update('nickname', $event.detail.value)"
         class="w-full py-3 px-4 bg-white border border-gray-300 rounded-xl text-sm"
@@ -49,7 +54,7 @@
           <text class="mt-1 block text-xs text-gray-400">{{ locationStatusText }}</text>
         </view>
         <button
-          id="add-plant-city-button"
+          :id="`${idPrefix}-city-button`"
           class="m-0 h-9 rounded-full border border-emerald-200 bg-emerald-50 px-4 text-xs font-semibold leading-9 text-[#016630]"
           @click="showCitySheet = true"
         >
@@ -61,6 +66,7 @@
 
     <view
       v-if="showCitySheet"
+      :id="`${idPrefix}-city-sheet`"
       class="fixed inset-0 z-50 flex items-end bg-black/30"
       @click.self="showCitySheet = false"
     >
@@ -76,6 +82,7 @@
             </view>
           </view>
           <button
+            :id="`${idPrefix}-city-sheet-close`"
             class="m-0 h-9 w-9 rounded-full bg-gray-100 p-0 text-xl leading-9 text-gray-500"
             @click="showCitySheet = false"
           >
@@ -86,7 +93,7 @@
         <ChipsSelector
           :items="cityOptions"
           :model-value="selectedCityValue"
-          id-prefix="add-plant-city-option"
+          :id-prefix="`${idPrefix}-city-option`"
           value-key="value"
           label-key="label"
           :multiple="false"
@@ -101,7 +108,7 @@
         光照环境 <text class="font-normal text-gray-400">(可选)</text>
       </text>
       <LightEnvironmentPicker
-        id-prefix="add-plant-light"
+        :id-prefix="`${idPrefix}-light`"
         question-id="profile"
         :model-value="modelValue.lightEnvironment"
         @change="value => update('lightEnvironment', value)"
@@ -113,15 +120,18 @@
       <view class="flex flex-wrap gap-2">
         <view
           v-for="loc in locations"
-          :key="loc"
+          :id="`${idPrefix}-location-${loc.key}`"
+          :key="loc.value"
           class="py-2 px-4 bg-white border rounded-[20px] transition-all duration-300"
-          :class="modelValue.location === loc ? 'bg-primary border-primary' : 'border-gray-300'"
-          @click="update('location', loc)"
+          :class="
+            modelValue.location === loc.value ? 'bg-primary border-primary' : 'border-gray-300'
+          "
+          @click="update('location', loc.value)"
         >
           <text
             class="text-sm"
-            :class="modelValue.location === loc ? 'text-white' : 'text-gray-600'"
-            >{{ loc }}</text
+            :class="modelValue.location === loc.value ? 'text-white' : 'text-gray-600'"
+            >{{ loc.label }}</text
           >
         </view>
       </view>
@@ -131,6 +141,7 @@
     <view class="mb-6">
       <text class="block text-sm font-semibold text-gray-800 mb-3">种植日期</text>
       <picker
+        :id="`${idPrefix}-plant-date-picker`"
         mode="date"
         :value="modelValue.plantDate"
         @change="update('plantDate', $event.detail.value)"
@@ -150,6 +161,7 @@
         >备注 <text class="font-normal text-gray-400">(可选)</text></text
       >
       <textarea
+        :id="`${idPrefix}-notes-input`"
         :value="modelValue.notes"
         @input="update('notes', $event.detail.value)"
         class="w-full min-h-[100px] py-3 px-4 bg-white border border-gray-300 rounded-xl text-sm"
@@ -175,14 +187,23 @@ import {
 import ChipsSelector from '@/components/common/ChipsSelector.vue'
 import LightEnvironmentPicker from '@/components/LightEnvironmentPicker.vue'
 
+const INFO_STEP = 1
 const props = defineProps({
   modelValue: { type: Object, required: true },
   cityError: { type: String, default: '' },
-  activeStep: { type: Number, default: 0 }
+  activeStep: { type: Number, default: 0 },
+  idPrefix: { type: String, default: 'add-plant' }
 })
 const emit = defineEmits(['update:modelValue', 'upload-photo', 'city-change'])
 
-const locations = ['阳台', '客厅', '卧室', '书房', '办公室', '其他']
+const locations = [
+  { key: 'balcony', label: '阳台', value: '阳台' },
+  { key: 'living-room', label: '客厅', value: '客厅' },
+  { key: 'bedroom', label: '卧室', value: '卧室' },
+  { key: 'study', label: '书房', value: '书房' },
+  { key: 'office', label: '办公室', value: '办公室' },
+  { key: 'other', label: '其他', value: '其他' }
+]
 const hotCities = ref([])
 const showCitySheet = ref(false)
 const locationStatus = ref('locating')
@@ -305,7 +326,7 @@ async function initWeatherLocation() {
 watch(
   () => props.activeStep,
   step => {
-    if (step === 1) {
+    if (step === INFO_STEP) {
       initWeatherLocation()
     }
   },

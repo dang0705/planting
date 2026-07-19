@@ -71,9 +71,6 @@ export function useQuestionPackageFlow({
   const isQuestionPackageMode = computed(
     () => isPackageResult(result.value) && questionStack.value.length > 1
   )
-  const questionPageTrackStyle = computed(
-    () => `transform: translateX(-${activeQuestionIndex.value * 100}%);`
-  )
   const questionSwiperStyle = computed(() => ({
     height: `${estimateQuestionSwiperHeight(currentQuestion.value)}px`
   }))
@@ -471,7 +468,6 @@ export function useQuestionPackageFlow({
     lightEnvironmentByQuestionId,
     currentQuestion,
     isQuestionPackageMode,
-    questionPageTrackStyle,
     questionSwiperStyle,
     questionProgressText,
     nextButtonText,

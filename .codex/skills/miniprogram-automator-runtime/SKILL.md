@@ -5,6 +5,10 @@ description: '微信小程序端上自动化默认通道：使用 miniprogram-au
 
 # Mini Program Automator Runtime
 
+本 skill 是小程序端上自动化的实施细节唯一来源。`dispatch-task/references/mini-program-runtime-qa.md`
+只定义何时必须验收、证据字段和 Completion Gate；涉及真实入口、滚动、selector 作用域、截图和
+automator API 的执行方法，以本文件为准。
+
 ## 1. 定位
 
 本 skill 是本项目微信小程序端上自动化的默认通道。默认执行模式固定为：
@@ -21,7 +25,7 @@ npm run dev:mp-weixin:local-functions:lan -> dist/dev/mp-weixin -> 9420 automato
 npm run dev:mp-weixin:local-functions:lan
 ```
 
-只有该命令完成本地 CloudBase 函数 gateway readiness、函数 health route readiness、关键业务探针，并进入 `dist/dev/mp-weixin` watch 状态后，后续 `9420` / `miniprogram-automator` / `wx.request` 证据才可作为本轮端上验收。只启动 `LOCAL_FUNCTIONS=weather-http` 等 scoped gateway、只用 Node/curl 请求、只看 `__local_functions__/health` 或单函数 health，均只能作为排障证据，不得作为验收通过。
+只有该命令完成本地 CloudBase 函数 gateway readiness、函数 health route readiness、合同要求的关键探针，并进入 `dist/dev/mp-weixin` watch 状态后，后续 `9420` / `miniprogram-automator` / `wx.request` 证据才可作为本轮端上验收。只启动 scoped gateway、只用 Node/curl 请求、只看 gateway health 或单函数 health，均只能作为排障证据，不得作为验收通过。
 
 ## 2. 适用触发
 
@@ -29,8 +33,13 @@ npm run dev:mp-weixin:local-functions:lan
 
 1. 小程序页面点选、输入、跳转、弹窗或组件状态。
 2. Figma/UI 对齐的真实页面状态或截图。
-3. `/diagnosis/question/start`、`/diagnosis/answer`、question package、诊断入口。
-4. 小程序运行时 `wx.request` 验证接口、CloudBase local functions gateway 或 SQL schema 相关链路。
+3. 需要证明小程序运行时发出的 `wx.request`、本地函数代理或数据链路请求。
+4. 需要区分工具/登录/配置 blocker 与产品行为 failure。
+
+dispatch-task flow 中，真实 automator 脚本必须先通过
+`.codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs qa-run` 选择
+`test/e2e/automator/catalog.json` 中的精确叶子，并校验 automation id policy、脚本 hash 与
+execution id。直接执行 `node test/e2e/automator/...` 只能作为排障，不能作为端上验收通过证据。
 
 ## 3. projectPath 合同
 
@@ -58,7 +67,16 @@ Web/云端 external implementer 特例：
 
 ## 4. 标准检查顺序
 
-默认先复用现有微信开发者工具和 `9420` 会话。所有检查里的 `projectPath` 都指本轮 Contract 允许的有效路径：
+默认先复用当前活跃的微信开发者工具进程，不能先执行 `cli open`、`cli quit` 或无条件 `cli auto`。所有检查里的 `projectPath` 都指本轮 Contract 允许的有效路径。
+
+必须先判定项目，再判定端口：
+
+1. 先读取当前活跃 DevTools 进程的 PID、IDE 控制端口和当前加载项目路径，确认当前项目是否为本轮目标项目（以 Contract 的 expected `projectPath` 为准）。项目路径未知时不得猜测，先阻断并保留原进程。
+2. 当前项目是目标项目时：已监听 `9420` 就直接连接；未监听 `9420` 或监听其他端口，就复用同一 DevTools 进程，通过现有 IDE 控制通道切换/启用 `9420`。切换前后必须核对 PID 和项目路径未变，分别记录 `reused_existing_devtools_process` 或 `reused_process_reconfigured_port_9420`。
+3. 当前项目不是目标项目时，保留原项目进程，另开目标项目 DevTools 进程，记录 `opened_new_devtools_process` 及原因。
+4. 没有活跃 DevTools 进程时，才允许首次打开目标项目并启用 `9420`。
+
+完成上述项目和端口判定后，才执行：
 
 ```bash
 npm run dev:mp-weixin:local-functions:lan
@@ -73,7 +91,9 @@ ls -la <projectPath>/project.config.json
 
 默认禁止为了“干净基线”执行 `pkill`、完整重启、全量清缓存或清登录态。
 
-只有用户明确同意，或已经证明没有可复用 IDE / `9420` 会话且 required item 必须端上执行时，才允许用 CLI 拉起 automator：
+`cli auto` 只有在已证明同一目标项目进程会被复用时才可使用；执行前后必须核对 PID 和项目路径不变。若无法证明复用，当前项目是目标项目时必须阻断，不得继续。
+
+只有用户明确同意，或已经证明没有可复用目标项目进程且 required item 必须端上执行时，才允许用 CLI 拉起 automator：
 
 ```bash
 /Applications/wechatwebdevtools.app/Contents/MacOS/cli auto \
@@ -82,7 +102,7 @@ ls -la <projectPath>/project.config.json
   --trust-project
 ```
 
-拉起或重启必须记录原因、副作用、登录态 / 授权态风险和 raw error。
+新开进程必须记录原因、副作用、登录态 / 授权态风险和 raw error；复用进程改端口必须记录改动前后的 PID、项目路径、端口和控制通道证据。无法证明同一进程时不得把结果标记为 reused。
 
 ## 6. 原始 WebSocket 探活
 
@@ -129,26 +149,29 @@ const automator = require('miniprogram-automator')
 
 接口验收必须在小程序运行时用 `wx.request` 发起，Node 直接 HTTP、curl、local gateway smoke 只能作为后端 smoke。
 
-当发现 `3010/__local_functions__/health` 返回包含目标函数，但对应函数 health route 502 或提示 `connect ECONNREFUSED 127.0.0.1:900x` 时，必须归因为 stale local gateway / worker 缺失。此时不得绕过完整 LAN flow 用 scoped gateway 直接验收；应先修复并重新跑通 `npm run dev:mp-weixin:local-functions:lan`。
+本地函数代理、LAN direct HTTP 或 gateway health 的排障规则读取 `references/local-smoke-test-and-lan-direct-connection-policy.md`。这些 smoke 证据只能辅助归因，不能替代小程序运行时 `wx.request` 验收。
+
+### 7.1 真实入口与滚动硬规则
+
+1. acceptance 包含入口、跳转或完整用户流程时，必须从用户入口所在页面开始：只允许 `reLaunch` 入口页，随后定位入口、滚动到可操作位置、真实 `tap()`，并断言跳转后的 `currentPage().path`。直接 `reLaunch` 目标页只能用于页面内排障，不能作为入口或完整流程通过证据。
+2. 元素存在但不在当前视口时，不得跳过点击、改用直达路由或 `setData` 推进状态。普通页面先读取 `element.offset()`，再用 `miniProgram.pageScrollTo()`；`scroll-view` 内元素使用对应 `ScrollViewElement.scrollTo(x, y)`，滚动后再 `tap()`。
+3. 超过一屏的列表必须形成真实滚动证据：记录 `scrollView.size().height`、`scrollHeight()`，执行 `scrollTo()` 后断言 `property('scrollTop') > 0`。当前 fixture 未形成溢出时，应使用合同允许的真实查询或 fixture 产生超屏数据，不得以“当前看起来能显示”为由跳过滚动验收。
+4. 完整流程至少记录 `入口页 -> 入口点击 -> 各步骤真实按钮 -> 结果/完成 -> 返回页`。若 acceptance 涉及缓存或二次访问，还必须从入口页再次点击进入，不能复用目标页直达。
+5. `screenshot()` 超时、截图窗口未激活或视觉证据暂不可用，不授权跳过入口点击、滚动或按钮交互；交互链仍须继续执行。若合同要求截图，视觉证据单独保持未通过，不能用直达路由伪装完成。
 
 ## 8. 元素定位
 
-如要精确定位需要模拟交互的元素先读取 `docs/ai-rules/frontend-automation-id-policy.md` 第三点“元素 id 映射（按页面 / 模块 / 功能）”，并按任务页签只读取对应子表，例如：
-
-- 入口/跳转验证：`3.1 首页（index）`、`3.2 植物详情`
-- 弹窗交互：`3.3 诊断弹窗（DiagnosePopup.vue）`
-- AI 前置确认：`3.4 AIStreamDialog（诊断前确认）`
-- 问诊补图/问答：`3.3 诊断弹窗（DiagnosePopup.vue）` 下 `C. 追问流程`
-- 历史与结果页：`3.7 独立问诊页` / `3.8 历史结果页`
-- 个人中心：`3.9 个人中心`
+如要精确定位需要模拟交互的元素，先读取 `docs/ai-rules/frontend-automation-id-policy.md` 第三点“元素 id 映射（按页面 / 模块 / 功能）”，并只读取本轮目标页面或模块对应子表。
 
 优先使用稳定 id，例如：
 
 ```text
-diagnose-entry-button-{plant.id}
+feature-action-button-{entityId}
 ```
 
-UniApp 编译产物可能把稳定 id 渲染为 `xxxx--stable-id`。自动化 helper 必须先支持 exact stable id，再支持 scoped id 的 stable 部分匹配；动态 ID 例如 `plant-card-reminder-{plantId}-water` 必须提取 stable id 后再做 prefix/suffix 断言。
+UniApp 编译产物可能把稳定 id 渲染为 `xxxx--stable-id`。自动化 helper 必须先支持 exact stable id，再支持 scoped id 的 stable 部分匹配；动态 ID 例如 `feature-action-{entityId}` 必须提取 stable id 后再做 prefix/suffix 断言。
+
+自定义组件内的稳定 id 必须先进入组件作用域定位，例如 `const component = await page.$('feature-panel')` 后再执行 `component.$('#stable-id')`。若编译后 id 已带作用域前缀，使用组件内的 `[id*="stable-id"]` 部分匹配；不得因为 `page.$('#stable-id')` 返回 `null` 就认定按钮不存在、跳过交互或改走目标页直达。
 
 不得把中文文案、截图坐标或页面层级作为首选定位方式。
 

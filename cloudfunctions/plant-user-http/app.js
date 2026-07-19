@@ -11,6 +11,7 @@ const {
 } = require('/opt/utils/http')
 const {
   createUserPlantInstance,
+  getUserPlantInstanceById,
   listUserPlantInstances,
   updateUserPlantInstance,
   deleteUserPlantInstance,
@@ -262,6 +263,18 @@ async function main(event, context) {
     }
 
     if (method === 'GET') {
+      const id = Number(request.query.id)
+      if (id) {
+        const plant = await getUserPlantInstanceById(openid, id)
+        if (!plant) {
+          return jsonResponse(404, { code: 404, message: '植物不存在或无权限', data: null })
+        }
+        const enriched = await attachCareLocationsToList({
+          openid,
+          data: { list: [plant], total: 1, page: 1, pageSize: 1 }
+        })
+        return jsonResponse(200, { code: 200, data: enriched.list[0] || plant })
+      }
       const data = await listUserPlantInstances(openid, {
         page: Number(request.query.page || 1),
         pageSize: Number(request.query.pageSize || 20)
@@ -285,6 +298,8 @@ async function main(event, context) {
         visualCallBatchId: request.body.visualCallBatchId || null,
         nickname: request.body.nickname || request.body.nickName || null,
         location: request.body.location || '阳台',
+        plantDate: request.body.plantDate || null,
+        notes: request.body.notes ?? null,
         lightEnvironment: Object.prototype.hasOwnProperty.call(
           request.body || {},
           'lightEnvironment'

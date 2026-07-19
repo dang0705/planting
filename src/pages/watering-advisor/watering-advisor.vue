@@ -1,6 +1,6 @@
 <template>
   <Layout title="浇水建议" left-action="back" background-class="bg-[#f8faf9]">
-    <view class="min-h-screen bg-[#f8faf9] pb-5">
+    <view class="flex h-screen min-h-0 flex-col bg-[#f8faf9] pb-5">
       <!-- 步骤指示器 -->
       <view class="flex items-center justify-center gap-2 px-4 pt-4">
         <view v-for="(label, index) in stepLabels" :key="index" class="flex items-center gap-2">
@@ -20,72 +20,38 @@
         </view>
       </view>
 
-      <swiper
+      <ButtonStepTrack
         id="watering-advisor-swiper"
-        class="min-h-screen"
-        :current="activeStep"
-        :duration="260"
-        @change="handleSwiperChange"
+        :active-index="activeStep"
+        :step-count="stepLabels.length"
+        viewport-class="w-full"
+        item-class="relative min-h-0 overflow-hidden"
+        active-item-class="h-full"
       >
-        <!-- 步骤1：选来源 -->
-        <swiper-item>
-          <template v-if="showMyPlantsList">
-            <scroll-view scroll-y class="h-screen px-4 pt-6">
-              <view class="mb-4 flex items-center gap-3">
-                <text
-                  id="watering-advisor-my-plants-back"
-                  class="text-[24px] text-[#2d7a4f]"
-                  @click="closeMyPlantsList"
-                >
-                  ‹
-                </text>
-                <text class="block text-[20px] font-bold leading-7 text-[#1f2937]">我的植物</text>
-              </view>
+        <template #step="{ index, active }">
+          <view v-if="active && index === STEP_SOURCE" class="h-full">
+            <CatalogPlantSearch
+              ref="searchRef"
+              :selected-plant="selectedCatalogPlant"
+              :my-plants-expanded="showMyPlantsList"
+              :my-plants-loading="shouldShowMyPlantsLoading"
+              :my-plants="plantStore.userPlants"
+              :selected-user-plant-id="selectedUserPlantId"
+              @toggle-my-plants="handleMyPlantsPanelToggle"
+              @select-user-plant="selectUserPlant"
+              @load-more="handleScrollLower"
+              @select="selectCatalogPlant"
+            />
+          </view>
 
-              <view v-if="loadingMyPlants" class="py-10 text-center">
-                <text class="text-[14px] text-[#9ca3af]">加载中...</text>
-              </view>
-              <view v-else-if="!plantStore.hasPlants" class="py-10 text-center">
-                <text class="text-[14px] text-[#9ca3af]">还没有添加植物</text>
-              </view>
-              <view v-else id="watering-advisor-my-plants-list" class="flex flex-col gap-3">
-                <PlantSelectCard
-                  v-for="plant in plantStore.userPlants"
-                  :key="plant.id"
-                  :id="`watering-advisor-my-plant-card-${plant.id}`"
-                  :plant="plant"
-                  :selected="isUserPlantSelected(plant)"
-                  @select="selectUserPlant"
-                />
-              </view>
-
-              <view v-if="selectedUserPlantId" class="mt-4">
-                <button
-                  id="watering-advisor-my-plants-confirm-button"
-                  class="m-0 h-[52px] w-full rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
-                  @click="confirmUserPlantSelection"
-                >
-                  下一步：输入盆型
-                </button>
-              </view>
-            </scroll-view>
-          </template>
-          <CatalogPlantSearch
-            v-else
-            ref="searchRef"
-            :selected-plant="selectedCatalogPlant"
-            @go-my-plants="openMyPlantsList"
-            @next="goToPotProfile"
-            @load-more="handleScrollLower"
-            @select="selectCatalogPlant"
-          />
-        </swiper-item>
-
-        <!-- 步骤2：输入盆型（inline 渲染共享内核，不打开 popup） -->
-        <swiper-item>
-          <scroll-view scroll-y class="h-screen px-4 pt-6">
+          <!-- 步骤2：输入盆型（inline 渲染共享内核，不打开 popup） -->
+          <scroll-view
+            v-if="active && index === STEP_POT_PROFILE"
+            scroll-y
+            class="box-border h-full min-h-0 px-4 pt-6 pb-[112px]"
+          >
             <view class="mb-4">
-              <text class="block text-[20px] font-bold leading-7 text-[#1f2937]"> 盆型信息 </text>
+              <text class="block text-[20px] font-bold leading-7 text-[#1f2937]">盆型信息</text>
               <text class="mt-1 block text-[13px] text-[#6b7280]">
                 尺寸用于估算水量，基质和排水孔影响浇水策略
               </text>
@@ -119,31 +85,14 @@
               :id-prefix="'watering-advisor-pot-profile'"
               @summary="handlePotProfileSummary"
             />
-
-            <view class="mt-4 flex gap-3">
-              <button
-                id="watering-advisor-back-1"
-                class="m-0 h-[52px] flex-1 rounded-2xl border border-[#2d7a4f] bg-white p-0 text-base font-bold leading-[52px] text-[#2d7a4f]"
-                @click="activeStep = 0"
-              >
-                上一步
-              </button>
-              <button
-                id="watering-advisor-compute-button"
-                class="m-0 h-[52px] flex-[2] rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
-                :class="{ 'opacity-50': computing }"
-                :disabled="computing"
-                @click="goToResult"
-              >
-                {{ computing ? '计算中...' : '获取建议' }}
-              </button>
-            </view>
           </scroll-view>
-        </swiper-item>
 
-        <!-- 步骤3：展示建议 -->
-        <swiper-item>
-          <scroll-view scroll-y class="h-screen px-4 pt-6">
+          <!-- 步骤3：展示建议 -->
+          <scroll-view
+            v-if="active && index === STEP_RESULT"
+            scroll-y
+            class="box-border h-full min-h-0 px-4 pt-6 pb-[112px]"
+          >
             <view v-if="computing" class="flex flex-col items-center justify-center py-20">
               <text class="text-[14px] text-[#9ca3af]">正在计算浇水建议...</text>
             </view>
@@ -158,39 +107,79 @@
                   {{ amountText || '暂无建议' }}
                 </text>
               </view>
-
-              <!-- 操作按钮 -->
-              <view class="flex gap-3">
-                <button
-                  id="watering-advisor-back-2"
-                  class="m-0 h-[52px] flex-1 rounded-2xl border border-[#2d7a4f] bg-white p-0 text-base font-bold leading-[52px] text-[#2d7a4f]"
-                  @click="activeStep = 1"
-                >
-                  重新输入
-                </button>
-                <button
-                  id="watering-advisor-done"
-                  class="m-0 h-[52px] flex-[2] rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
-                  @click="finishAdvisor"
-                >
-                  完成
-                </button>
-              </view>
             </view>
 
             <view v-else class="flex flex-col items-center justify-center py-20">
               <text class="text-[14px] text-[#9ca3af]">暂无建议结果</text>
-              <button
-                id="watering-advisor-empty-retry"
-                class="mt-4 rounded-xl border border-[#2d7a4f] px-6 py-2 text-[14px] text-[#2d7a4f]"
-                @click="activeStep = 1"
-              >
-                返回重新输入
-              </button>
             </view>
           </scroll-view>
-        </swiper-item>
-      </swiper>
+        </template>
+      </ButtonStepTrack>
+
+      <!-- 统一吸底操作区：置于步骤轨道外，避免被任一步骤的滚动容器裁剪 -->
+      <view
+        v-if="activeStep === STEP_SOURCE"
+        class="fixed bottom-0 left-0 right-0 z-[100] box-border border-t border-[#e1e9dd] bg-[#f8faf9] px-4 pb-5 pt-3"
+      >
+        <button
+          id="watering-advisor-next-button"
+          class="m-0 h-[52px] w-full rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
+          :class="{ 'opacity-50': !selectedCatalogPlant }"
+          :disabled="!selectedCatalogPlant"
+          @click="goToPotProfile"
+        >
+          下一步：输入盆型
+        </button>
+      </view>
+      <view
+        v-else-if="activeStep === STEP_POT_PROFILE"
+        class="fixed bottom-0 left-0 right-0 z-[100] box-border flex gap-3 border-t border-[#e1e9dd] bg-[#f8faf9] px-4 pb-5 pt-3"
+      >
+        <button
+          id="watering-advisor-back-1"
+          class="m-0 h-[52px] flex-1 rounded-2xl border border-[#2d7a4f] bg-white p-0 text-base font-bold leading-[52px] text-[#2d7a4f]"
+          @click="goToSourceStep"
+        >
+          上一步
+        </button>
+        <button
+          id="watering-advisor-compute-button"
+          class="m-0 h-[52px] flex-[2] rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
+          :class="{ 'opacity-50': computing }"
+          :disabled="computing"
+          @click="goToResult"
+        >
+          {{ computing ? '计算中...' : '获取建议' }}
+        </button>
+      </view>
+      <view
+        v-else-if="activeStep === STEP_RESULT"
+        class="fixed bottom-0 left-0 right-0 z-[100] box-border flex gap-3 border-t border-[#e1e9dd] bg-[#f8faf9] px-4 pb-5 pt-3"
+      >
+        <button
+          id="watering-advisor-back-2"
+          class="m-0 h-[52px] flex-1 rounded-2xl border border-[#2d7a4f] bg-white p-0 text-base font-bold leading-[52px] text-[#2d7a4f]"
+          @click="goBackToPotProfile"
+        >
+          {{ plannerResult ? '重新输入' : '返回重新输入' }}
+        </button>
+        <button
+          v-if="plannerResult"
+          id="watering-advisor-done"
+          class="m-0 h-[52px] flex-[2] rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
+          @click="finishAdvisor"
+        >
+          完成
+        </button>
+        <button
+          v-else
+          id="watering-advisor-empty-retry"
+          class="m-0 h-[52px] flex-[2] rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
+          @click="goBackToPotProfile"
+        >
+          返回重新输入
+        </button>
+      </view>
     </view>
   </Layout>
 </template>
@@ -199,8 +188,8 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import Layout from '@/Layout.vue'
+import ButtonStepTrack from '@/components/common/ButtonStepTrack.vue'
 import PotProfileFormCore from '@/components/pot-profile/PotProfileFormCore.vue'
-import PlantSelectCard from './components/PlantSelectCard.vue'
 import { useUserStore } from '@/store/user.js'
 import { usePlantStore } from '@/store/plants.js'
 import CatalogPlantSearch from './components/CatalogPlantSearch.vue'
@@ -221,6 +210,7 @@ const plantStore = usePlantStore()
 const STEP_SOURCE = 0
 const STEP_POT_PROFILE = 1
 const STEP_RESULT = 2
+const AMOUNT_RANGE_MIN_LENGTH = 2
 const stepLabels = ['选植物', '盆型', '建议']
 const activeStep = ref(STEP_SOURCE)
 const selectedCatalogPlant = ref(null)
@@ -243,6 +233,10 @@ const selectedCatalogPlantName = computed(
     '未选择植物'
 )
 
+const shouldShowMyPlantsLoading = computed(
+  () => loadingMyPlants.value && !plantStore.userPlants.length
+)
+
 // 当前选中植物（我的植物）已有的 potProfile，传给共享内核作为 initialProfile
 const selectedCatalogPlantPotProfile = computed(() => {
   const plant = selectedCatalogPlant.value
@@ -257,7 +251,7 @@ const selectedCatalogPlantPotProfile = computed(() => {
 // 统一水量文案：调用全局 formatMlRangeToBottleText，与首页 WateringReminderSheet 口径一致
 const amountText = computed(() => {
   const range = plannerResult.value?.amountRangeMl
-  if (!range || !Array.isArray(range) || range.length < 2) {
+  if (!range || !Array.isArray(range) || range.length < AMOUNT_RANGE_MIN_LENGTH) {
     return ''
   }
   return formatMlRangeToBottleText(range)
@@ -287,29 +281,21 @@ function handleScrollLower() {
   searchRef.value?.loadNextPage()
 }
 
-function handleSwiperChange(event) {
-  const nextStep = Number(event?.detail?.current || STEP_SOURCE)
-  if (nextStep > STEP_SOURCE && !selectedCatalogPlant.value) {
-    uni.showToast({ title: '请先选择植物种类', icon: 'none' })
-    activeStep.value = STEP_SOURCE
-    return
-  }
-  if (nextStep > STEP_POT_PROFILE && !plannerResult.value && !computing.value) {
-    activeStep.value = Math.min(nextStep, STEP_POT_PROFILE)
-    return
-  }
-  activeStep.value = nextStep
-}
-
 async function openMyPlantsList() {
   showMyPlantsList.value = true
-  if (await userStore.ensureLogin()) {
-    loadingMyPlants.value = true
-    try {
-      await plantStore.getUserPlants()
-    } finally {
-      loadingMyPlants.value = false
-    }
+  if (!(await userStore.ensureLogin())) {
+    showMyPlantsList.value = false
+    return
+  }
+  if (plantStore.userPlants.length) {
+    await plantStore.getUserPlants()
+    return
+  }
+  loadingMyPlants.value = true
+  try {
+    await plantStore.getUserPlants()
+  } finally {
+    loadingMyPlants.value = false
   }
 }
 
@@ -317,8 +303,12 @@ function closeMyPlantsList() {
   showMyPlantsList.value = false
 }
 
-function isUserPlantSelected(plant) {
-  return selectedUserPlantId.value === plant.id
+async function handleMyPlantsPanelToggle(expanded) {
+  if (expanded) {
+    await openMyPlantsList()
+    return
+  }
+  closeMyPlantsList()
 }
 
 function selectUserPlant(plant) {
@@ -336,24 +326,23 @@ function selectUserPlant(plant) {
   }
 }
 
-function confirmUserPlantSelection() {
-  if (!selectedCatalogPlant.value) {
-    uni.showToast({ title: '请先选择植物', icon: 'none' })
-    return
-  }
-  showMyPlantsList.value = false
-  goToPotProfile()
-}
-
 function goToPotProfile() {
   if (!selectedCatalogPlant.value) {
-    uni.showToast({ title: '请先选择植物种类', icon: 'none' })
+    uni.showToast({ title: '请先选择植物', icon: 'none' })
     return
   }
   activeStep.value = STEP_POT_PROFILE
 }
 
-// 进入盆型步骤时初始化 canvas（swiper-item 切换后 DOM 才渲染）
+function goToSourceStep() {
+  activeStep.value = STEP_SOURCE
+}
+
+function goBackToPotProfile() {
+  activeStep.value = STEP_POT_PROFILE
+}
+
+// 进入盆型步骤时初始化 canvas（step track 切换后 DOM 才渲染）
 watch(activeStep, step => {
   if (step === STEP_POT_PROFILE) {
     nextTick(() => {

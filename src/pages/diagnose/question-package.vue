@@ -15,128 +15,123 @@
             }}</text>
           </view>
 
-          <view
+          <ButtonStepTrack
             id="diagnose-question-package-page-swiper"
-            class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-visible"
-            :style="questionSwiperStyle"
+            :items="questionStack"
+            :active-index="activeQuestionIndex"
+            viewport-class="min-h-0 w-full flex-1 overflow-y-visible"
+            :viewport-style="questionSwiperStyle"
+            item-class="relative h-full overflow-hidden"
           >
-            <view
-              class="flex h-full min-h-0 w-full transition-transform duration-[260ms] ease-in-out will-change-transform"
-              :style="questionPageTrackStyle"
-            >
-              <view
-                v-for="(question, questionIndex) in questionStack"
-                :key="getQuestionId(question) || questionIndex"
-                :id="`diagnose-question-package-page-item-${getQuestionId(question) || questionIndex}`"
-                class="h-full w-full shrink-0 grow-0 basis-full overflow-x-hidden overflow-y-visible"
+            <template #step="{ item: question, index: questionIndex }">
+              <scroll-view
+                v-if="question"
+                :id="`diagnose-question-package-page-question-scroll-${getQuestionId(question) || questionIndex}`"
+                scroll-y
+                class="h-full"
               >
-                <scroll-view
-                  :id="`diagnose-question-package-page-question-scroll-${getQuestionId(question) || questionIndex}`"
-                  scroll-y
-                  class="h-full"
+                <view
+                  :id="`diagnose-question-package-page-question-shell-${getQuestionId(question) || questionIndex}`"
+                  class="box-border min-h-full px-4 pb-[112px]"
                 >
                   <view
-                    :id="`diagnose-question-package-page-question-shell-${getQuestionId(question) || questionIndex}`"
-                    class="box-border min-h-full px-4 pb-[34px]"
+                    :id="`diagnose-question-package-page-question-card-${getQuestionId(question) || questionIndex}`"
+                    class="question-package-card-enter rounded-[20px] border border-emerald-100 bg-white px-4 py-4 shadow-sm"
                   >
-                    <view
-                      :id="`diagnose-question-package-page-question-card-${getQuestionId(question) || questionIndex}`"
-                      class="question-package-card-enter rounded-[20px] border border-emerald-100 bg-white px-4 py-4 shadow-sm"
+                    <text class="block text-base font-semibold leading-7 text-[#2d7a4f]">
+                      {{ getQuestionTitle(question) }}
+                    </text>
+                    <text
+                      v-if="getQuestionHelpText(question)"
+                      class="mt-2 block text-xs leading-relaxed text-gray-500"
                     >
-                      <text class="block text-base font-semibold leading-7 text-[#2d7a4f]">
-                        {{ getQuestionTitle(question) }}
-                      </text>
-                      <text
-                        v-if="getQuestionHelpText(question)"
-                        class="mt-2 block text-xs leading-relaxed text-gray-500"
-                      >
-                        {{ getQuestionHelpText(question) }}
-                      </text>
+                      {{ getQuestionHelpText(question) }}
+                    </text>
 
-                      <CareBehaviorTimeline
-                        v-if="isCareBehaviorWateringTimelineQuestion(question)"
-                        :question-id="getQuestionId(question)"
-                        :question="question"
-                        :timeline="getCareBehaviorTimelineByQuestion(question)"
-                        :loading="environmentWeatherWindowLoading"
-                        :error="environmentWeatherWindowError"
-                        @change="payload => handleCareBehaviorTimelineChange(question, payload)"
-                      />
-                      <LightEnvironmentPicker
-                        v-if="isLightEnvironmentQuestion(question)"
-                        :question-id="getQuestionId(question)"
-                        :id-prefix="'diagnose-light'"
-                        :model-value="getLightEnvironmentByQuestion(question)"
-                        @change="payload => handleLightEnvironmentChange(question, payload)"
-                      />
+                    <CareBehaviorTimeline
+                      v-if="isCareBehaviorWateringTimelineQuestion(question)"
+                      :question-id="getQuestionId(question)"
+                      :question="question"
+                      :timeline="getCareBehaviorTimelineByQuestion(question)"
+                      :loading="environmentWeatherWindowLoading"
+                      :error="environmentWeatherWindowError"
+                      @change="payload => handleCareBehaviorTimelineChange(question, payload)"
+                    />
+                    <LightEnvironmentPicker
+                      v-if="isLightEnvironmentQuestion(question)"
+                      :question-id="getQuestionId(question)"
+                      :id-prefix="'diagnose-light'"
+                      :model-value="getLightEnvironmentByQuestion(question)"
+                      @change="payload => handleLightEnvironmentChange(question, payload)"
+                    />
 
+                    <view
+                      v-if="
+                        !isLightEnvironmentQuestion(question) &&
+                        getVisibleCareBehaviorOptions(question).length
+                      "
+                      :id="`diagnose-question-package-page-option-stack-${getQuestionId(question) || questionIndex}`"
+                      class="mt-4 flex flex-col gap-2.5"
+                    >
                       <view
-                        v-if="
-                          !isLightEnvironmentQuestion(question) &&
-                          getVisibleCareBehaviorOptions(question).length
+                        v-for="(option, optionIndex) in getVisibleCareBehaviorOptions(question)"
+                        :key="option.optionId || option.optionKey || option.text"
+                        :id="`diagnose-question-package-page-option-${getQuestionId(question) || questionIndex}-${option.optionId || option.optionKey || optionIndex}`"
+                        class="overflow-hidden rounded-2xl border border-emerald-100 bg-white"
+                        :class="
+                          isSelectedQuestionOption(question, option)
+                            ? 'border-[#2d7a4f] bg-emerald-50'
+                            : ''
                         "
-                        :id="`diagnose-question-package-page-option-stack-${getQuestionId(question) || questionIndex}`"
-                        class="mt-4 flex flex-col gap-2.5"
+                        @click="selectQuestionOption(question, option)"
                       >
-                        <view
-                          v-for="(option, optionIndex) in getVisibleCareBehaviorOptions(question)"
-                          :key="option.optionId || option.optionKey || option.text"
-                          :id="`diagnose-question-package-page-option-${getQuestionId(question) || questionIndex}-${option.optionId || option.optionKey || optionIndex}`"
-                          class="overflow-hidden rounded-2xl border border-emerald-100 bg-white"
-                          :class="
-                            isSelectedQuestionOption(question, option)
-                              ? 'border-[#2d7a4f] bg-emerald-50'
-                              : ''
-                          "
-                          @click="selectQuestionOption(question, option)"
-                        >
-                          <view class="flex items-center justify-between gap-3 px-3.5 py-3">
-                            <text
-                              class="min-w-0 flex-1 text-[13px] font-bold leading-snug text-gray-700"
-                              >{{ getOptionText(question, option) }}</text
-                            >
-                            <text
-                              class="shrink-0 rounded-full border border-current px-2 py-0.5 text-[10px] font-extrabold text-[#8b7355]"
-                            >
-                              {{ isSelectedQuestionOption(question, option) ? '已选' : '单选' }}
-                            </text>
-                          </view>
+                        <view class="flex items-center justify-between gap-3 px-3.5 py-3">
                           <text
-                            v-if="getOptionDescription(option)"
-                            class="block whitespace-pre-line px-3.5 pb-3 text-[11px] leading-relaxed text-gray-500"
+                            class="min-w-0 flex-1 text-[13px] font-bold leading-snug text-gray-700"
+                            >{{ getOptionText(question, option) }}</text
                           >
-                            {{ getOptionDescription(option) }}
+                          <text
+                            class="shrink-0 rounded-full border border-current px-2 py-0.5 text-[10px] font-extrabold text-[#8b7355]"
+                          >
+                            {{ isSelectedQuestionOption(question, option) ? '已选' : '单选' }}
                           </text>
                         </view>
-                      </view>
-
-                      <view class="mt-[18px] flex gap-3">
-                        <button
-                          id="diagnose-question-package-page-prev-button"
-                          class="h-[52px] flex-1 rounded-xl border border-emerald-100 bg-white p-0 text-[13px] font-bold leading-[52px] text-[#2d6a4f]"
-                          :class="{
-                            'opacity-[0.45]': isSubmittingQuestionAnswer || activeQuestionIndex <= 0
-                          }"
-                          :disabled="isSubmittingQuestionAnswer || activeQuestionIndex <= 0"
-                          @click="goPreviousQuestion"
+                        <text
+                          v-if="getOptionDescription(option)"
+                          class="block whitespace-pre-line px-3.5 pb-3 text-[11px] leading-relaxed text-gray-500"
                         >
-                          上一题
-                        </button>
-                        <button
-                          id="diagnose-question-package-page-next-button"
-                          class="h-[52px] flex-1 rounded-xl border border-[#2d7a4f] bg-[#2d7a4f] p-0 text-[13px] font-bold leading-[52px] text-white"
-                          :class="{ 'opacity-[0.45]': !canProceedQuestion() }"
-                          :disabled="!canProceedQuestion()"
-                          @click="handleNextQuestion"
-                        >
-                          {{ nextButtonText }}
-                        </button>
+                          {{ getOptionDescription(option) }}
+                        </text>
                       </view>
                     </view>
                   </view>
-                </scroll-view>
-              </view>
-            </view>
+                </view>
+              </scroll-view>
+            </template>
+          </ButtonStepTrack>
+          <view
+            class="fixed bottom-0 left-0 right-0 z-30 box-border flex gap-3 border-t border-emerald-100 bg-[#f8faf9] px-4 pb-5 pt-3"
+          >
+            <button
+              id="diagnose-question-package-page-prev-button"
+              class="h-[52px] flex-1 rounded-xl border border-emerald-100 bg-white p-0 text-[13px] font-bold leading-[52px] text-[#2d6a4f]"
+              :class="{
+                'opacity-[0.45]': isSubmittingQuestionAnswer || activeQuestionIndex <= 0
+              }"
+              :disabled="isSubmittingQuestionAnswer || activeQuestionIndex <= 0"
+              @click="goPreviousQuestion"
+            >
+              上一题
+            </button>
+            <button
+              id="diagnose-question-package-page-next-button"
+              class="h-[52px] flex-1 rounded-xl border border-[#2d7a4f] bg-[#2d7a4f] p-0 text-[13px] font-bold leading-[52px] text-white"
+              :class="{ 'opacity-[0.45]': !canProceedQuestion() }"
+              :disabled="!canProceedQuestion()"
+              @click="handleNextQuestion"
+            >
+              {{ nextButtonText }}
+            </button>
           </view>
         </view>
       </template>
@@ -379,6 +374,7 @@ import { onLoad } from '@dcloudio/uni-app'
 import Layout from '@/Layout.vue'
 import { useDiagnoseStore } from '@/store/diagnose.js'
 import { useUserStore } from '@/store/user.js'
+import ButtonStepTrack from '@/components/common/ButtonStepTrack.vue'
 import CareBehaviorTimeline from '@/components/CareBehaviorTimeline.vue'
 import LightEnvironmentPicker from '@/components/LightEnvironmentPicker.vue'
 import { useDiagnosisAnswerMutation } from '@/vue-query/diagnose/mutations/useDiagnosisAnswerMutation.js'
@@ -431,7 +427,6 @@ const questionDiagnosisContextText = computed(() => {
 const {
   questionStack,
   activeQuestionIndex,
-  questionPageTrackStyle,
   questionSwiperStyle,
   questionProgressText,
   nextButtonText,

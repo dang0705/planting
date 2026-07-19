@@ -1,17 +1,19 @@
 <template>
   <view
+    :id="`index-plant-card-edit-${plant.id}`"
     class="h-[129px] w-full overflow-hidden rounded-[12px] border border-[rgba(45,122,79,0.15)] bg-white p-px shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]"
+    @click="$emit('edit', plant)"
   >
     <view class="flex h-[127px] w-full overflow-hidden rounded-[11px]">
       <PlantDisplayBase
         :plant="plant"
         container-class="h-[127px] w-[112px] flex-[0_0_112px] rounded-none"
-        @click.stop="$emit('detail', plant)"
+        @click.stop="$emit('edit', plant)"
       />
 
       <view class="flex h-[127px] min-w-0 flex-1 flex-col gap-2 p-3">
         <view class="flex h-[27px] items-center gap-1.5">
-          <PlantProfileCompleteness :plant="plant" @click="$emit('detail', plant)" />
+          <PlantProfileCompleteness :plant="plant" @click="$emit('edit', plant)" />
           <text
             class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[18px] font-medium leading-[27px] text-[#0a0a0a]"
           >
@@ -43,9 +45,10 @@
             <text>诊断</text>
           </button>
           <button
+            :id="`index-plant-card-history-${plant.id}`"
             class="m-0 flex h-9 border border-solid border-primary flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] bg-white px-3 py-2 text-sm font-medium leading-5 text-[#0a0a0a] after:border-0"
             hover-class="none"
-            @click="$emit('history', plant)"
+            @click.stop="$emit('history', plant)"
           >
             <image :src="historyIcon" class="size-4 flex-[0_0_16px]" mode="aspectFit" />
             <text>历史</text>
@@ -91,7 +94,7 @@ const props = defineProps({
   }
 })
 
-defineEmits(['diagnose', 'history', 'detail', 'reminder'])
+defineEmits(['diagnose', 'history', 'edit', 'reminder'])
 
 const reminderItems = computed(() => [
   {

@@ -32,6 +32,15 @@
       }
     },
     {
+      "path": "pages/edit-plant/edit-plant",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "编辑植物",
+        "navigationBarBackgroundColor": "#2D7A4F",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
       "path": "pages/watering-advisor/watering-advisor",
       "style": {
         "navigationStyle": "custom",

@@ -11,7 +11,11 @@ source_of_truth:
   - scripts/dev/**
   - scripts/deploy-*.mjs
   - scripts/security/check-no-secrets.mjs
-  - test/e2e/terminal-e2e/**
+  - test/unit/**
+  - test/e2e/batch/**
+  - test/e2e/automator/catalog.json
+  - .codex/hooks.json
+  - .codex/skills/dispatch-task/scripts/dispatch-gate/**
   - docs/deploy-pipeline.md
   - docs/local-cloudbase-functions-debugging.md
   - docs/cautions/cloudfunctions_local_root_dependencies.md
@@ -20,7 +24,11 @@ stale_if_changed:
   - scripts/dev/**
   - scripts/deploy-*.mjs
   - scripts/security/**
-  - test/e2e/terminal-e2e/**
+  - test/unit/**
+  - test/e2e/batch/**
+  - test/e2e/automator/catalog.json
+  - .codex/hooks.json
+  - .codex/skills/dispatch-task/scripts/dispatch-gate/**
   - cloudfunctions/**/package.json
 ---
 
@@ -51,7 +59,21 @@ npm run test:ci
 npm run build:mp-weixin:ci
 ```
 
-注意：上传包中的根目录未包含 `test-*.mjs` 文件；如果真实仓库也缺失，`npm run test:*` 可能是 package script 与源码包不同步，而不是业务测试失败。验证时必须记录实际命令输出。
+`npm run test:ci` 与 `npm run test:all` 只运行 `test/unit/frontend` 和 `test/unit/backend`。跨 `src` 与 `cloudfunctions` 的合同检查属于 batch E2E，使用独立入口，例如：
+
+```bash
+npm run e2e:route-planning
+npm run e2e:route-sql
+npm run e2e:user-plant-edit-contract
+npm run e2e:dispatch-gate-contract
+```
+
+automator 端上脚本必须先通过 catalog gate 选择精确叶子，并带 execution id：
+
+```bash
+npm run check:e2e-catalog
+node .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs qa-run --catalog-id=<leaf-id> --execution-id=<run-id> --dry-run
+```
 
 ## 3. 本地 CloudBase HTTP 函数调试
 
@@ -107,7 +129,7 @@ npm run ensure:cloudbase-sql-schema:verify
 脚本路径：
 
 ```text
-test/e2e/terminal-e2e/run-with-cloudbase-env.mjs --function=weather-http -- node scripts/ensure-cloudbase-sql-schema.mjs --verify-only
+scripts/dev/run-with-cloudbase-env.mjs --function=weather-http -- node scripts/ensure-cloudbase-sql-schema.mjs --verify-only
 ```
 
 如需初始化/修复表结构，仍走：

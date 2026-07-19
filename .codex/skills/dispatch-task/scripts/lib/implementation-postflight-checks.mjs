@@ -100,6 +100,40 @@ const changedSinceBaselineFiles = baseline => {
   return currentUnsortedStatusFiles().filter(file => !baselineSet.has(file))
 }
 
+const PACKAGE_DEPENDENCY_SECTIONS = [
+  'dependencies',
+  'devDependencies',
+  'peerDependencies',
+  'optionalDependencies',
+  'bundleDependencies',
+  'bundledDependencies',
+  'overrides',
+  'resolutions',
+  'packageManager'
+]
+
+const readJsonText = text => {
+  try {
+    return JSON.parse(text)
+  } catch {
+    return null
+  }
+}
+
+const dependencySectionsChangedFromHead = file => {
+  if (normalize(file) !== 'package.json') {
+    return true
+  }
+  const current = readJsonText(fs.readFileSync('package.json', 'utf8'))
+  const head = readJsonText(safeGit(['show', 'HEAD:package.json']))
+  if (!current || !head) {
+    return true
+  }
+  return PACKAGE_DEPENDENCY_SECTIONS.some(
+    key => JSON.stringify(current[key] ?? null) !== JSON.stringify(head[key] ?? null)
+  )
+}
+
 export function buildWorktreeScopeReport({ handoff, result, baseline, baselineFile }) {
   const errors = []
   const warnings = []
@@ -150,9 +184,12 @@ export function buildWorktreeScopeReport({ handoff, result, baseline, baselineFi
   const baselineSet = new Set(baselineFiles)
   const currentSet = new Set(currentFiles)
   const declaredSet = new Set(declaredFiles)
+  const overlapExplicitlyAllowed = handoff?.validation?.allow_preexisting_dirty_overlap === true
   const changedSinceBaseline = uniqueSorted(currentFiles.filter(file => !baselineSet.has(file)))
   const disappearedSinceBaseline = uniqueSorted(baselineFiles.filter(file => !currentSet.has(file)))
-  const declaredPreexistingOverlap = uniqueSorted(declaredFiles.filter(file => baselineSet.has(file)))
+  const declaredPreexistingOverlap = uniqueSorted(
+    declaredFiles.filter(file => baselineSet.has(file))
+  )
 
   const baselineFingerprints = new Map(
     (baseline.dirty_file_fingerprints ?? []).map(entry => [normalize(entry.path), entry])
@@ -200,42 +237,44 @@ export function buildWorktreeScopeReport({ handoff, result, baseline, baselineFi
       `declared changed_files not visible in current worktree: ${declaredNotVisible.join(', ')}`
     )
   }
-  if (
-    declaredPreexistingOverlap.length &&
-    handoff?.validation?.allow_preexisting_dirty_overlap !== true
-  ) {
+  const unsafePreexistingOverlap = uniqueSorted(
+    [
+      ...declaredPreexistingOverlap,
+      ...preexistingDirtyModified,
+      ...missingBaselineFingerprints,
+      ...disappearedSinceBaseline
+    ].filter(
+      file =>
+        !matchesAny(file, handoff.allowed_paths ?? []) ||
+        matchesAny(file, handoff.forbidden_paths ?? [])
+    )
+  )
+  if (overlapExplicitlyAllowed && unsafePreexistingOverlap.length) {
+    errors.push(
+      `preexisting dirty overlap touches forbidden or non-allowed paths: ${unsafePreexistingOverlap.join(', ')}`
+    )
+  }
+  if (declaredPreexistingOverlap.length && !overlapExplicitlyAllowed) {
     errors.push(
       `declared changed_files were already dirty at baseline; cannot prove child ownership: ${declaredPreexistingOverlap.join(', ')}`
     )
   }
-  if (
-    preexistingDirtyModified.length &&
-    handoff?.validation?.allow_preexisting_dirty_overlap !== true
-  ) {
+  if (preexistingDirtyModified.length && !overlapExplicitlyAllowed) {
     errors.push(
       `preexisting dirty files changed after baseline; cannot prove user changes were preserved: ${preexistingDirtyModified.join(', ')}`
     )
   }
-  if (
-    missingBaselineFingerprints.length &&
-    handoff?.validation?.allow_preexisting_dirty_overlap !== true
-  ) {
+  if (missingBaselineFingerprints.length && !overlapExplicitlyAllowed) {
     errors.push(
       `baseline dirty files have no fingerprints; cannot prove preservation: ${missingBaselineFingerprints.join(', ')}`
     )
   }
-  if (
-    disappearedSinceBaseline.length &&
-    handoff?.validation?.allow_preexisting_dirty_overlap !== true
-  ) {
+  if (disappearedSinceBaseline.length && !overlapExplicitlyAllowed) {
     errors.push(
       `baseline dirty files disappeared; possible restore/delete of user changes: ${disappearedSinceBaseline.join(', ')}`
     )
   }
-  if (
-    disappearedSinceBaseline.length &&
-    handoff?.validation?.allow_preexisting_dirty_overlap === true
-  ) {
+  if (disappearedSinceBaseline.length && overlapExplicitlyAllowed) {
     warnings.push(
       `baseline dirty files disappeared under explicit overlap allowance: ${disappearedSinceBaseline.join(', ')}`
     )
@@ -253,6 +292,8 @@ export function buildWorktreeScopeReport({ handoff, result, baseline, baselineFi
     undeclared_actual_changed_files: undeclaredActual,
     declared_not_visible: declaredNotVisible,
     declared_preexisting_overlap: declaredPreexistingOverlap,
+    preexisting_dirty_overlap_explicitly_allowed: overlapExplicitlyAllowed,
+    unsafe_preexisting_overlap: unsafePreexistingOverlap,
     preexisting_dirty_modified_since_baseline: preexistingDirtyModified,
     missing_baseline_fingerprints: missingBaselineFingerprints,
     disappeared_since_baseline: disappearedSinceBaseline,
@@ -271,7 +312,9 @@ export function buildNoNewDepsReport({ handoff, result, baseline, baselineFile }
   const warnings = []
   const expectedBaselinePath = normalize(handoff?.validation?.worktree_baseline_path ?? '')
   if (expectedBaselinePath && path.resolve(expectedBaselinePath) !== path.resolve(baselineFile)) {
-    errors.push(`baseline file path mismatch: expected ${expectedBaselinePath}, got ${baselineFile}`)
+    errors.push(
+      `baseline file path mismatch: expected ${expectedBaselinePath}, got ${baselineFile}`
+    )
   }
   const changedSinceBaseline = changedSinceBaselineFiles(baseline)
   const baselineSet = new Set((baseline.status_files ?? []).map(normalize))
@@ -282,16 +325,28 @@ export function buildNoNewDepsReport({ handoff, result, baseline, baselineFile }
   const declaredPreexistingDeps = (result?.changed_files ?? [])
     .map(normalize)
     .filter(file => baselineSet.has(file) && depPattern.test(file))
-  if (dependencyPolicyForbidsNewDeps && depFiles.length) {
-    errors.push(`dependency files changed since baseline: ${depFiles.join(', ')}`)
+  const dependencyChangedFiles = depFiles.filter(dependencySectionsChangedFromHead)
+  const declaredPreexistingDependencyChanges = declaredPreexistingDeps.filter(
+    dependencySectionsChangedFromHead
+  )
+  const packageScriptOnlyChanges = [...new Set([...depFiles, ...declaredPreexistingDeps])].filter(
+    file => depPattern.test(file) && !dependencySectionsChangedFromHead(file)
+  )
+  if (dependencyPolicyForbidsNewDeps && dependencyChangedFiles.length) {
+    errors.push(`dependency files changed since baseline: ${dependencyChangedFiles.join(', ')}`)
   }
   if (
     dependencyPolicyForbidsNewDeps &&
-    declaredPreexistingDeps.length &&
+    declaredPreexistingDependencyChanges.length &&
     handoff?.validation?.allow_preexisting_dirty_overlap !== true
   ) {
     errors.push(
-      `dependency files were already dirty at baseline and declared changed; cannot prove no new deps: ${declaredPreexistingDeps.join(', ')}`
+      `dependency files were already dirty at baseline and declared changed; cannot prove no new deps: ${declaredPreexistingDependencyChanges.join(', ')}`
+    )
+  }
+  if (dependencyPolicyForbidsNewDeps && packageScriptOnlyChanges.length) {
+    warnings.push(
+      `package dependency sections unchanged; allowed script/config-only package changes: ${packageScriptOnlyChanges.join(', ')}`
     )
   }
   for (const file of depFiles) {
@@ -307,7 +362,9 @@ export function buildNoNewDepsReport({ handoff, result, baseline, baselineFile }
     dependency_policy: handoff?.project_constraints?.dependency_policy ?? null,
     changed_files_since_baseline: changedSinceBaseline,
     changed_dependency_files_since_baseline: depFiles,
+    dependency_section_changed_files: dependencyChangedFiles,
     declared_preexisting_dependency_overlap: declaredPreexistingDeps,
+    declared_preexisting_dependency_section_changes: declaredPreexistingDependencyChanges,
     warnings,
     errors
   }
@@ -320,7 +377,9 @@ export function buildStyleStackReport({ handoff, result, baseline, baselineFile 
   const warnings = []
   const expectedBaselinePath = normalize(handoff?.validation?.worktree_baseline_path ?? '')
   if (expectedBaselinePath && path.resolve(expectedBaselinePath) !== path.resolve(baselineFile)) {
-    errors.push(`baseline file path mismatch: expected ${expectedBaselinePath}, got ${baselineFile}`)
+    errors.push(
+      `baseline file path mismatch: expected ${expectedBaselinePath}, got ${baselineFile}`
+    )
   }
   const changedSinceBaseline = changedSinceBaselineFiles(baseline)
   const declared = new Set((result?.changed_files ?? []).map(normalize))

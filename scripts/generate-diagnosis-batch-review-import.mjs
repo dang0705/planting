@@ -4,7 +4,7 @@ import path from 'node:path'
 const projectRoot = '/Users/jay/WebstormProjects/planting'
 const reportPath = path.join(
   projectRoot,
-  'test/e2e/terminal-e2e/manifests/plant-sample-combination-audit.report.json'
+  'test/e2e/batch/diagnosis/manifests/plant-sample-combination-audit.report.json'
 )
 const outputDir = path.join(projectRoot, 'tmp/import-sql/diagnosis')
 const schemaFilePath = path.join(outputDir, '36-diagnosis-batch-review-schema.sql')
