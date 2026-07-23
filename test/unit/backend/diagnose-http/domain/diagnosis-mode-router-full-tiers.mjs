@@ -73,16 +73,28 @@ assert.equal(singlePestMedium.questionBudget, 2)
 
 // ---------------------------------------------------------------------------
 // 4. 单真菌/霉菌候选（powdery_mildew，visual_direct_only）
-// 0.85 走"很像"直接结果（very_likely + 非 fixed package + visual_direct_only）
+// 低置信 visual-direct 必须按 3/2/1 问题预算进入可解释路径，不能越过问诊。
+// 0.55 (low) → question_package (3 题)；0.85 (high) → question_package (1 题)；
+// 0.92 (very_likely) → direct_result。
 // ---------------------------------------------------------------------------
+const singleMoldLow = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'full',
+  admittedEvidence: [],
+  visualModeCandidates: [{ mode: 'powdery_mildew', confidence: 0.55 }]
+})
+assert.equal(singleMoldLow.nextAction, 'question_package')
+assert.equal(singleMoldLow.confidenceTier, 'low')
+assert.equal(singleMoldLow.questionBudget, 3)
+
 const singleMoldHigh = resolveDiagnosisModeRoute({
   diagnosisProfile: 'full',
   admittedEvidence: [],
   visualModeCandidates: [{ mode: 'powdery_mildew', confidence: 0.85 }]
 })
-assert.equal(singleMoldHigh.nextAction, 'direct_result')
+assert.equal(singleMoldHigh.nextAction, 'question_package')
 assert.deepEqual(singleMoldHigh.associatedModes, ['powdery_mildew'])
 assert.equal(singleMoldHigh.confidenceTier, 'high')
+assert.equal(singleMoldHigh.questionBudget, 1)
 assert.equal(singleMoldHigh.likelyResult, false)
 
 // 0.92 走"很像"直接结果

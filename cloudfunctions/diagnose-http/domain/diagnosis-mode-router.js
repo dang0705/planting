@@ -215,6 +215,8 @@ function resolveDiagnosisModeRoute({
     : directModeKeys[0] || candidateModeKeys[0] || ''
   // directConclusion (>=0.95) 时，固定题包模式仍需走问诊路径，
   // 因为这些模式依赖结构化问诊确认。
+  // visual_direct_only 模式（如 powdery_mildew）仅在 high+ 置信（very_likely/direct）时
+  // 可直接结论；低置信 visual-direct 必须按 3/2/1 问题预算进入可解释路径，不能越过问诊。
   const nextAction = crossFamilyConflict
     ? 'choose_direction'
     : singleFixedQuestionPackageMode
@@ -223,7 +225,7 @@ function resolveDiagnosisModeRoute({
         ? 'direct_result'
         : candidateModeKeys.length
           ? (directConclusion && !candidateHasFixedPackageMode) ||
-            candidateAllVisualDirectOnly ||
+            (candidateAllVisualDirectOnly && (likelyResult || directConclusion)) ||
             (likelyResult && !candidateHasFixedPackageMode) ||
             confirmationCandidates.some(
               item => item.matchedEvidence.length || item.candidateEvidence.length
