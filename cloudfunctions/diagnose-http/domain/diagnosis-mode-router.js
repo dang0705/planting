@@ -17,8 +17,46 @@ const HIGH_BAND = 'high'
 const STRONG_LEVEL = 'strong'
 const MEDIUM_BAND = 'medium'
 const MEDIUM_LEVEL = 'medium'
-const MIN_PEST_MODE_CANDIDATE_CONFIDENCE = 0.65
-const EXPLICIT_PEST_MODE_CANDIDATE_CONFIDENCE = 0.9
+
+// 置信度分档：决定候选模式能否进入问诊路径以及最多提问数。
+// 0.60 为候选进入路由的最低门槛；<0.60 视为弱候选，仅在无更强候选时兜底使用。
+// 0.60/0.80/0.90/0.95 四档分别对应 3/2/1/0 题（0.90-<0.95 仍保留 1 个可选排查问题）。
+const CANDIDATE_ADMIT_CONFIDENCE = 0.6
+const STRONG_CANDIDATE_CONFIDENCE = 0.8
+const VERY_LIKELY_CANDIDATE_CONFIDENCE = 0.9
+const DIRECT_CONCLUSION_CONFIDENCE = 0.95
+
+// 候选模式对应的最大问诊题数（按候选最高置信度档位决定）。
+// low (<0.60) 兜底也走 3 题；very_likely (0.90-<0.95) 走 1 个可选排查题；direct (>=0.95) 不问。
+const TIER_MAX_QUESTIONS = Object.freeze({
+  low: 3,
+  medium: 2,
+  high: 1,
+  very_likely: 1,
+  direct: 0
+})
+
+function candidateConfidenceTier(confidence = 0) {
+  const value = Number(confidence) || 0
+  if (value >= DIRECT_CONCLUSION_CONFIDENCE) {
+    return 'direct'
+  }
+  if (value >= VERY_LIKELY_CANDIDATE_CONFIDENCE) {
+    return 'very_likely'
+  }
+  if (value >= STRONG_CANDIDATE_CONFIDENCE) {
+    return 'high'
+  }
+  if (value >= CANDIDATE_ADMIT_CONFIDENCE) {
+    return 'medium'
+  }
+  return 'low'
+}
+
+function maxQuestionsForTier(tier = '') {
+  return TIER_MAX_QUESTIONS[normalizeKey(tier)] ?? 0
+}
+
 function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
   return normalized || conservative
@@ -150,6 +188,57 @@ function normalizeModeKey(value = '') {
 function isFixedQuestionPackageMode(modeKey = '') {
   const entry = DIAGNOSIS_MODE_REGISTRY[modeKey]
   return ['fixed_yellow_leaf', 'fixed_wilting_droop'].includes(entry?.questionPackageKind)
+}
+
+function isVisualDirectOnlyMode(modeKey = '') {
+  const entry = DIAGNOSIS_MODE_REGISTRY[modeKey]
+  return entry?.questionPackageKind === 'visual_direct_only'
+}
+
+function isModeAllowedForProfile(modeKey = '', profile = 'full') {
+  const entry = DIAGNOSIS_MODE_REGISTRY[modeKey]
+  if (!entry) {
+    return false
+  }
+  return entry.allowedProfiles.includes(profile)
+}
+
+// 判断候选模式是否可进入路由。
+// pest profile 保持原严格逻辑：虫害候选需证据支撑或单候选 >=0.60。
+// full profile 放宽：合法候选（在 REGISTRY 且 allowedProfiles 含 full）且 >=0.60 即可进入，
+// 不强制要求 hasSupportingEvidenceForMode——证据只用于问题锁定和跳题。
+function isCandidateAdmissible(modeKey = '', profile = 'full', context = {}) {
+  const { normalizedModeCandidates = [], candidateOnlyModeKeys = [], confirmationEvidenceItems = [] } = context
+  if (!isModeAllowedForProfile(modeKey, profile)) {
+    return false
+  }
+  const hasCandidate = normalizedModeCandidates.some(
+    item => item.modeKey === modeKey && item.confidence >= CANDIDATE_ADMIT_CONFIDENCE
+  )
+  const hasEvidence = hasSupportingEvidenceForMode(modeKey, confirmationEvidenceItems)
+  if (PEST_MODE_KEYS.includes(modeKey)) {
+    if (profile === 'full') {
+      return hasCandidate || hasEvidence
+    }
+    return hasEvidence || (hasCandidate && candidateOnlyModeKeys.length === 1)
+  }
+  // 非虫害候选只在 full profile 处理
+  if (profile !== 'full') {
+    return false
+  }
+  return hasCandidate || hasEvidence
+}
+
+// 取候选列表中的最高置信度，用于决定分档
+function topCandidateConfidence(modeKeys = [], normalizedModeCandidates = []) {
+  const keySet = new Set(unique(modeKeys))
+  let top = 0
+  for (const item of normalizedModeCandidates) {
+    if (keySet.has(item.modeKey) && item.confidence > top) {
+      top = item.confidence
+    }
+  }
+  return top
 }
 
 function classifyModeEvidence(modeKey = '', evidenceItems = []) {
@@ -379,37 +468,31 @@ function resolveDiagnosisModeRoute({
   ])
   const candidateOnlyModeKeys = unique(
     normalizedModeCandidates
-      .filter(item => item.confidence >= MIN_PEST_MODE_CANDIDATE_CONFIDENCE)
+      .filter(item => item.confidence >= CANDIDATE_ADMIT_CONFIDENCE)
       .map(item => item.modeKey)
   )
-  const highConfidenceExplicitPestModeKeys = unique(
+  const directConclusionPestModeKeys = unique(
     normalizedModeCandidates
       .filter(
         item =>
           PEST_MODE_KEYS.includes(item.modeKey) &&
-          item.confidence >= EXPLICIT_PEST_MODE_CANDIDATE_CONFIDENCE
+          item.confidence >= DIRECT_CONCLUSION_CONFIDENCE
       )
       .map(item => item.modeKey)
   )
+  const candidateAdmissionContext = {
+    normalizedModeCandidates,
+    candidateOnlyModeKeys,
+    confirmationEvidenceItems
+  }
   const candidateModeKeys = unique([
-    ...normalizedModeCandidates
-      .filter(item => item.confidence >= MIN_PEST_MODE_CANDIDATE_CONFIDENCE)
-      .map(item => item.modeKey),
+    ...candidateOnlyModeKeys,
     ...evidenceDerivedModeKeys
   ])
     .filter(modeKey => !directModeKeys.includes(modeKey))
     .filter(modeKey =>
-      PEST_MODE_KEYS.includes(modeKey)
-        ? hasSupportingEvidenceForMode(modeKey, confirmationEvidenceItems) ||
-          normalizedModeCandidates.some(
-            item =>
-              item.modeKey === modeKey &&
-              item.confidence >= MIN_PEST_MODE_CANDIDATE_CONFIDENCE &&
-              candidateOnlyModeKeys.length === 1
-          )
-        : normalizedProfile === 'full' &&
-          hasSupportingEvidenceForMode(modeKey, confirmationEvidenceItems)
-  )
+      isCandidateAdmissible(modeKey, normalizedProfile, candidateAdmissionContext)
+    )
   const associatedModes = unique([...directModeKeys, ...candidateModeKeys])
   const pestCandidateModeKeys = candidateModeKeys.filter(modeKey =>
     PEST_MODE_KEYS.includes(modeKey)
@@ -426,7 +509,7 @@ function resolveDiagnosisModeRoute({
   const candidateOnlyNeedsQuestion =
     confirmationCandidates.length > 0 &&
     !confirmationCandidates.some(item =>
-      highConfidenceExplicitPestModeKeys.includes(item.modeKey)
+      directConclusionPestModeKeys.includes(item.modeKey)
     ) &&
     confirmationCandidates.every(
       item => !item.matchedEvidence.length && !item.candidateEvidence.length
@@ -436,6 +519,20 @@ function resolveDiagnosisModeRoute({
     matchType: 'candidate',
     matchedEvidence: supportingEvidenceForMode(modeKey, confirmationEvidenceItems)
   }))
+  // 置信度分档：取候选模式中的最高置信度决定 tier 与 questionBudget。
+  // directModeKeys（直接证据匹配）视为 direct tier；否则按候选最高置信度分档。
+  const topCandidateValue = topCandidateConfidence(candidateModeKeys, normalizedModeCandidates)
+  const candidateTier = candidateConfidenceTier(topCandidateValue)
+  const directTier = directModeKeys.length ? 'direct' : ''
+  const activeTier = directTier || candidateTier || ''
+  const questionBudget = maxQuestionsForTier(activeTier)
+  const likelyResult = activeTier === 'very_likely'
+  const directConclusion = activeTier === 'direct'
+  // 0.90-<0.95 且候选模式均为 visual_direct_only（如白粉病）：直接出"很像"结论，无疑问。
+  const veryLikelyVisualDirectOnly =
+    likelyResult &&
+    candidateModeKeys.length > 0 &&
+    candidateModeKeys.every(modeKey => isVisualDirectOnlyMode(modeKey))
   const directionChoices = buildDirectionChoices({
     associatedModes,
     directMatches,
@@ -452,17 +549,17 @@ function resolveDiagnosisModeRoute({
     : directModeKeys[0] || candidateModeKeys[0] || ''
   const nextAction = crossFamilyConflict
     ? 'choose_direction'
-    : singleFixedQuestionPackageMode || confirmationCandidates.length
-      ? pestCandidateModeKeys.length &&
-        (normalizedProfile === 'pest' || hasExplicitPestCandidate) &&
-        associatedModes.every(modeKey => PEST_MODE_KEYS.includes(modeKey))
-        ? candidateOnlyNeedsQuestion
-          ? 'question_package'
-          : 'direct_result'
-        : 'question_package'
+    : singleFixedQuestionPackageMode
+      ? 'question_package'
       : directModeKeys.length
         ? 'direct_result'
-        : 'uncertain'
+        : candidateModeKeys.length
+          ? directConclusion ||
+            likelyResult ||
+            confirmationCandidates.some(item => item.matchedEvidence.length)
+            ? 'direct_result'
+            : 'question_package'
+          : 'uncertain'
   const snapshotSeed = JSON.stringify({
     profile: normalizedProfile,
     directModeKeys,
@@ -512,6 +609,11 @@ function resolveDiagnosisModeRoute({
           }
         : null,
     nextAction,
+    confidenceTier: activeTier,
+    questionBudget,
+    likelyResult,
+    directConclusion,
+    veryLikelyVisualDirectOnly,
     followupCapturePlan: confirmationCandidates.length
       ? {
           reason: 'specific_pest_confirmation_needed',
@@ -542,10 +644,15 @@ module.exports = {
   buildRetakeAuthorization,
   evidenceGroupForKey,
   assertRetakeAuthorizationActive,
+  candidateConfidenceTier,
+  maxQuestionsForTier,
   _test: {
     normalizeVisualEvidence,
     evidenceGroupForKey,
     resolveIndirectDirectCombination,
-    resolveDirectModeEvidence
+    resolveDirectModeEvidence,
+    isCandidateAdmissible,
+    isVisualDirectOnlyMode,
+    topCandidateConfidence
   }
 }
