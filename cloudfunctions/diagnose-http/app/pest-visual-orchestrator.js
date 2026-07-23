@@ -6,12 +6,12 @@ const {
   PEST_MODE_LABELS
 } = require('./pest-question-package')
 const { resolveSpecificPestAnswerResult } = require('./specific-pest-answer-resolver')
-const { normalizeCaptureRegion } = require('../utils/capture-region-normalizer')
 const { DIAGNOSIS_MODE_REGISTRY } = require('../domain/diagnosis-mode-registry')
 const { isVisualDirectOnlyMode } = require('../domain/diagnosis-mode-helpers')
 const {
   buildFullCandidateFallbackResponse,
-  attachLikelyOptionalQuestion
+  attachLikelyOptionalQuestion,
+  buildRetakeRequest
 } = require('./pest-route-helpers')
 
 const STATIC_ROUTE_MODE_OPTIONS = Object.freeze({
@@ -78,11 +78,25 @@ function directEvidence(routeResult = {}) {
   })
 }
 
-// >=0.95 direct tier 下，候选模式即使没有视觉证据锁定也应被视为 direct_match，
+// >=0.95 direct tier（来自 confidence，无 evidence-based direct match）下，
+// 候选模式即使没有视觉证据锁定也应被视为 direct_match，
 // 确保 resolveSpecificPestAnswerResult 输出 direct 级置信度和不带"可能是"的文案。
+// 注意：direct tier 来自 evidence-based direct match 时不在此合成，
+// 否则会把低置信 confirmation 候选错误提升为 direct_match。
 function directEvidenceLedgerForDirectResult(routeResult = {}, pestCandidateModes = [], tier = '') {
   const baseLedger = routeEvidenceLedger(routeResult)
   if (normalizeKey(tier) !== 'direct') {
+    return baseLedger
+  }
+  const directModeKeys = (Array.isArray(routeResult.directMatches)
+    ? routeResult.directMatches
+    : []
+  )
+    .map(item => item.modeKey)
+    .filter(Boolean)
+  // direct tier 由 evidence-based direct match 触发时，候选应保留各自的
+  // confirmation/candidate 角色，不在此处提升为 direct_match。
+  if (directModeKeys.length > 0) {
     return baseLedger
   }
   const lockedSet = new Set(
@@ -155,44 +169,6 @@ function routeEvidenceLedger(routeResult = {}) {
       }
     })
   )
-}
-
-function buildRetakeRequest({ sessionId = '', routeResult = {}, aggregateResult = null } = {}) {
-  const plan = routeResult.followupCapturePlan || {}
-  const riskLevel = String(plan.riskLevel || '').trim() || 'low'
-  const isRiskRetake = ['medium', 'high'].includes(riskLevel)
-  const safetyInstructions = Array.isArray(plan.safetyInstructions)
-    ? plan.safetyInstructions.map(item => String(item || '').trim()).filter(Boolean)
-    : []
-  return {
-    diagnosisSessionId: sessionId,
-    status: 'needs_confirmation',
-    serverAuthorized: false,
-    requestedCaptureRegion: normalizeCaptureRegion(
-      plan.requestedCaptureRegion || '',
-      'other_local'
-    ),
-    reason: plan.reason || 'visual_confirmation_needed',
-    originVisualCallBatchId:
-      aggregateResult?.visual_call_batch_id || aggregateResult?.visualCallBatchId || '',
-    expiresInSeconds: 300,
-    riskLevel,
-    riskNotice:
-      String(plan.riskNotice || '').trim() ||
-      (isRiskRetake
-        ? '需要靠近可疑位置补拍，不方便操作时可以跳过。'
-        : '这次只需要补一张更清楚的照片。'),
-    safetyInstructions,
-    requiresExplicitConsent:
-      plan.requiresExplicitConsent === undefined
-        ? isRiskRetake
-        : Boolean(plan.requiresExplicitConsent),
-    skipOptionEnabled:
-      plan.skipOptionEnabled === undefined ? isRiskRetake : Boolean(plan.skipOptionEnabled),
-    skipAnswerValue: String(plan.skipAnswerValue || '').trim() || 'unknown',
-    confirmText: plan.confirmText || '确认开始补拍',
-    confirmButtonText: plan.confirmButtonText || '确认开始'
-  }
 }
 
 function buildBaseResponse({
@@ -306,11 +282,24 @@ async function buildPestRouteResponse({
         aggregateResult
       })
     }
-    const probableModes = (
-      Array.isArray(routeResult.provisionalMatches) ? routeResult.provisionalMatches : []
+    const isDirectTier = normalizeKey(routeResult.confidenceTier) === 'direct'
+    const directModeKeysForProbable = (
+      Array.isArray(routeResult.directMatches) ? routeResult.directMatches : []
     )
       .map(item => item.modeKey)
-      .filter(mode => Object.prototype.hasOwnProperty.call(PEST_MODE_LABELS, mode))
+      .filter(Boolean)
+    // 仅当 direct tier 来自 >=0.95 confidence（无 evidence-based direct match）时，
+    // 候选已由 directEvidenceLedgerForDirectResult 锁定为 direct_match，
+    // 不应再作为 provisional 候选拉低置信度。
+    // direct tier 来自 evidence-based direct match 时，confirmation 候选必须保留 probable 角色。
+    const directFromConfidence = isDirectTier && directModeKeysForProbable.length === 0
+    const probableModes = directFromConfidence
+      ? []
+      : (
+          Array.isArray(routeResult.provisionalMatches) ? routeResult.provisionalMatches : []
+        )
+          .map(item => item.modeKey)
+          .filter(mode => Object.prototype.hasOwnProperty.call(PEST_MODE_LABELS, mode))
     if (!pestCandidateModes.length) {
       return null
     }

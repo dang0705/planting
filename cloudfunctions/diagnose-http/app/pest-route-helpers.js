@@ -2,10 +2,10 @@
 
 const {
   buildSpecificPestQuestionPackage,
-  buildSpecificPestObservedEvidenceSet,
-  PEST_MODE_LABELS
+  buildSpecificPestObservedEvidenceSet
 } = require('./pest-question-package')
 const { resolveSpecificPestAnswerResult } = require('./specific-pest-answer-resolver')
+const { normalizeCaptureRegion } = require('../utils/capture-region-normalizer')
 
 // 给结论名加"很像"前缀，避免重复前缀（如已经是"可能是"/"很像"则不再加）。
 function prefixLikelyLabel(label = '') {
@@ -169,8 +169,49 @@ function attachLikelyOptionalQuestion(resolvedResult = {}, options = {}) {
   }
 }
 
+// 根据路由结果的 followupCapturePlan 构建补拍请求载荷。
+// riskLevel 决定是否需要显式同意与跳过选项；safetyInstructions 透传给前端。
+function buildRetakeRequest({ sessionId = '', routeResult = {}, aggregateResult = null } = {}) {
+  const plan = routeResult.followupCapturePlan || {}
+  const riskLevel = String(plan.riskLevel || '').trim() || 'low'
+  const isRiskRetake = ['medium', 'high'].includes(riskLevel)
+  const safetyInstructions = Array.isArray(plan.safetyInstructions)
+    ? plan.safetyInstructions.map(item => String(item || '').trim()).filter(Boolean)
+    : []
+  return {
+    diagnosisSessionId: sessionId,
+    status: 'needs_confirmation',
+    serverAuthorized: false,
+    requestedCaptureRegion: normalizeCaptureRegion(
+      plan.requestedCaptureRegion || '',
+      'other_local'
+    ),
+    reason: plan.reason || 'visual_confirmation_needed',
+    originVisualCallBatchId:
+      aggregateResult?.visual_call_batch_id || aggregateResult?.visualCallBatchId || '',
+    expiresInSeconds: 300,
+    riskLevel,
+    riskNotice:
+      String(plan.riskNotice || '').trim() ||
+      (isRiskRetake
+        ? '需要靠近可疑位置补拍，不方便操作时可以跳过。'
+        : '这次只需要补一张更清楚的照片。'),
+    safetyInstructions,
+    requiresExplicitConsent:
+      plan.requiresExplicitConsent === undefined
+        ? isRiskRetake
+        : Boolean(plan.requiresExplicitConsent),
+    skipOptionEnabled:
+      plan.skipOptionEnabled === undefined ? isRiskRetake : Boolean(plan.skipOptionEnabled),
+    skipAnswerValue: String(plan.skipAnswerValue || '').trim() || 'unknown',
+    confirmText: plan.confirmText || '确认开始补拍',
+    confirmButtonText: plan.confirmButtonText || '确认开始'
+  }
+}
+
 module.exports = {
   prefixLikelyLabel,
   buildFullCandidateFallbackResponse,
-  attachLikelyOptionalQuestion
+  attachLikelyOptionalQuestion,
+  buildRetakeRequest
 }
