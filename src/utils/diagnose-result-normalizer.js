@@ -209,10 +209,14 @@ export function normalizeDiagnosisResult(
       normalizeQuestionMode(diagnosis.sessionStatus || diagnosis.status) === 'completed' &&
       Array.isArray(diagnosis.visibleOutcomes) &&
       diagnosis.visibleOutcomes.length > 0)
+  // 0.90-<0.95 很像结果的可选追问问题不能被 directVisualResult early return 清空。
+  const hasOptionalFollowUp = Boolean(
+    rawUiHints?.optionalFollowUp || rawQuestionPackage?.optionalFollowUp
+  )
   const normalizedQuestions = normalizeQuestions(resolveDiagnosisQuestionSource(diagnosis), {
     limit: resolveQuestionPackageLimit(rawQuestionPackage, rawUiHints)
   })
-  const questions = directVisualResult ? [] : normalizedQuestions
+  const questions = directVisualResult && !hasOptionalFollowUp ? [] : normalizedQuestions
   const finalResult = diagnosis.finalResult || null
   const explanation = diagnosis.explanation || diagnosis.resultExplanation || {}
   const normalizedNextSteps = normalizeDiagnosisAdviceSteps(diagnosis, explanation)
@@ -226,8 +230,9 @@ export function normalizeDiagnosisResult(
       questions
     })
   const hasActiveQuestions = Boolean(
-    questions.length &&
-    (activeQuestionPackage || normalizeQuestionMode(stage) === 'question_package')
+    (questions.length &&
+      (activeQuestionPackage || normalizeQuestionMode(stage) === 'question_package')) ||
+    (hasOptionalFollowUp && questions.length > 0)
   )
   const observedSymptoms = normalizeObservedSymptoms(
     diagnosis.observedSymptoms || diagnosis.symptoms
@@ -416,7 +421,11 @@ export function normalizeDiagnosisResult(
       questionDisplayMode,
       answerSubmitMode,
       optionLayout: rawUiHints?.optionLayout || 'vertical',
-      transition: rawUiHints?.transition || 'swiper'
+      transition: rawUiHints?.transition || 'swiper',
+      ...(rawUiHints?.optionalFollowUp ? { optionalFollowUp: true } : {}),
+      ...(rawUiHints?.likelyResult ? { likelyResult: true } : {}),
+      ...(rawQuestionPackage?.optionalFollowUp ? { optionalFollowUp: true } : {}),
+      ...(rawQuestionPackage?.likelyResult ? { likelyResult: true } : {})
     },
     confidenceLevel: diagnosis.confidenceLevel || 'normal',
     confidenceReasons: normalizeStringList(diagnosis.confidenceReasons),

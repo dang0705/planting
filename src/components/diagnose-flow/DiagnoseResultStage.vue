@@ -313,7 +313,7 @@
                     :disabled="!canProceedQuestionNow"
                     @click="handleNextQuestion"
                   >
-                    下一题
+                    {{ isOptionalFollowUpQuestion ? '提交（可不答）' : '下一题' }}
                   </button></view
                 >
                 <text

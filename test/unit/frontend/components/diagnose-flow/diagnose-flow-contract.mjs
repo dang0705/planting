@@ -133,6 +133,10 @@ assert.match(retakeExpirySource, /补拍时间已结束，本次诊断已结束/
 assert.match(diagnoseClientSource, /businessCode/)
 assert.match(questionFlowSource, /goNextQuestion\(\)/)
 assert.match(questionFlowSource, /await submitQuestionAnswers\(\)/)
+// Fix 2: 可选追问问题跳过时必须提交明确 unknown，不能发送 answers:[]。
+assert.match(questionFlowSource, /isOptionalFollowUpQuestion\.value/)
+assert.match(questionFlowSource, /submitAnswerMap\[questionId\] = 'unknown'/)
+assert.match(questionFlowSource, /可选追问问题跳过时提交明确 unknown/)
 assert.match(flowSetupSource, /getQuestionSafetyInstructionsText/)
 assert.match(resultStageSource, /getQuestionSafetyInstructionsText\(question\)/)
 assert.doesNotMatch(resultStageSource, /\{\{\s*question\.safetyInstructions\s*\}\}/)
