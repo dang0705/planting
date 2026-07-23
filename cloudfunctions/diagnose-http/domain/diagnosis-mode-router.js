@@ -205,28 +205,31 @@ function isModeAllowedForProfile(modeKey = '', profile = 'full') {
 
 // 判断候选模式是否可进入路由。
 // pest profile 保持原严格逻辑：虫害候选需证据支撑或单候选 >=0.60。
-// full profile 放宽：合法候选（在 REGISTRY 且 allowedProfiles 含 full）且 >=0.60 即可进入，
-// 不强制要求 hasSupportingEvidenceForMode——证据只用于问题锁定和跳题。
+// full profile 放宽：合法候选（在 REGISTRY 且 allowedProfiles 含 full）无论 confidence 高低均可进入，
+// <0.60 走 low tier（最多 3 题）；证据只用于问题锁定和跳题，不凭空生成模式。
 function isCandidateAdmissible(modeKey = '', profile = 'full', context = {}) {
   const { normalizedModeCandidates = [], candidateOnlyModeKeys = [], confirmationEvidenceItems = [] } = context
   if (!isModeAllowedForProfile(modeKey, profile)) {
     return false
   }
-  const hasCandidate = normalizedModeCandidates.some(
-    item => item.modeKey === modeKey && item.confidence >= CANDIDATE_ADMIT_CONFIDENCE
-  )
   const hasEvidence = hasSupportingEvidenceForMode(modeKey, confirmationEvidenceItems)
   if (PEST_MODE_KEYS.includes(modeKey)) {
     if (profile === 'full') {
-      return hasCandidate || hasEvidence
+      // full profile: 合法虫害候选无论 confidence 高低都进入路由
+      return normalizedModeCandidates.some(item => item.modeKey === modeKey) || hasEvidence
     }
-    return hasEvidence || (hasCandidate && candidateOnlyModeKeys.length === 1)
+    // pest profile 保持严格：需证据支撑或单候选 >=0.60
+    const hasStrongCandidate = normalizedModeCandidates.some(
+      item => item.modeKey === modeKey && item.confidence >= CANDIDATE_ADMIT_CONFIDENCE
+    )
+    return hasEvidence || (hasStrongCandidate && candidateOnlyModeKeys.length === 1)
   }
   // 非虫害候选只在 full profile 处理
   if (profile !== 'full') {
     return false
   }
-  return hasCandidate || hasEvidence
+  // full profile: 合法候选无论 confidence 高低都进入路由
+  return normalizedModeCandidates.some(item => item.modeKey === modeKey) || hasEvidence
 }
 
 // 取候选列表中的最高置信度，用于决定分档
@@ -471,13 +474,16 @@ function resolveDiagnosisModeRoute({
       .filter(item => item.confidence >= CANDIDATE_ADMIT_CONFIDENCE)
       .map(item => item.modeKey)
   )
+  // full profile 下所有合法候选 mode key（不限 confidence），用于构造 candidateModeKeys；
+  // pest profile 仍使用 >=0.60 的 candidateOnlyModeKeys 保持严格边界。
+  const allCandidateModeKeys = unique(normalizedModeCandidates.map(item => item.modeKey))
   const candidateAdmissionContext = {
     normalizedModeCandidates,
     candidateOnlyModeKeys,
     confirmationEvidenceItems
   }
   const candidateModeKeys = unique([
-    ...candidateOnlyModeKeys,
+    ...(normalizedProfile === 'full' ? allCandidateModeKeys : candidateOnlyModeKeys),
     ...evidenceDerivedModeKeys
   ])
     .filter(modeKey => !directModeKeys.includes(modeKey))

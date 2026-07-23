@@ -111,14 +111,39 @@ assert.equal(directConclusionRoute.questionBudget, 0)
 // ---------------------------------------------------------------------------
 // 6. 题数分档：3/2/1/0 题
 // ---------------------------------------------------------------------------
-// <0.60 候选 + 无证据：仍进入路由（full 兜底），tier=low，budget=3
+// <0.60 候选 + 无证据：full profile 下合法候选无论 confidence 高低都进入路由，
+// 走 low tier（最多 3 题），不回退 uncertain。
 const lowTierRoute = resolveDiagnosisModeRoute({
   diagnosisProfile: 'full',
   admittedEvidence: [],
   visualModeCandidates: [{ mode: 'spider_mite', confidence: 0.55 }]
 })
+assert.notEqual(lowTierRoute.nextAction, 'uncertain')
+assert.equal(lowTierRoute.nextAction, 'question_package')
+assert.deepEqual(lowTierRoute.associatedModes, ['spider_mite'])
 assert.equal(lowTierRoute.confidenceTier, 'low')
 assert.equal(lowTierRoute.questionBudget, 3)
+
+// yellow_leaf 0.55（非虫害合法候选）同样进入 low tier 问诊路径
+const lowTierYellowRoute = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'full',
+  admittedEvidence: [],
+  visualModeCandidates: [{ mode: 'yellow_leaf', confidence: 0.55 }]
+})
+assert.notEqual(lowTierYellowRoute.nextAction, 'uncertain')
+assert.equal(lowTierYellowRoute.nextAction, 'question_package')
+assert.deepEqual(lowTierYellowRoute.associatedModes, ['yellow_leaf'])
+assert.equal(lowTierYellowRoute.confidenceTier, 'low')
+assert.equal(lowTierYellowRoute.questionBudget, 3)
+
+// 无合法候选（空候选 + 无证据）：仍须 uncertain
+const noCandidateRoute = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'full',
+  admittedEvidence: [],
+  visualModeCandidates: []
+})
+assert.equal(noCandidateRoute.nextAction, 'uncertain')
+assert.deepEqual(noCandidateRoute.associatedModes, [])
 
 // 0.60-<0.80：medium，budget=2
 assert.equal(singlePestMedium.questionBudget, 2)
@@ -275,14 +300,23 @@ assert.equal(
   }),
   true
 )
-// full profile: yellow_leaf 0.55 候选不可进入（<0.60）
+// full profile: yellow_leaf 0.55 合法候选可进入（<0.60 走 low tier，不回退 uncertain）
 assert.equal(
   _test.isCandidateAdmissible('yellow_leaf', 'full', {
     normalizedModeCandidates: [{ modeKey: 'yellow_leaf', confidence: 0.55 }],
     candidateOnlyModeKeys: [],
     confirmationEvidenceItems: []
   }),
-  false
+  true
+)
+// full profile: spider_mite 0.55 虫害候选同样可进入（<0.60 走 low tier）
+assert.equal(
+  _test.isCandidateAdmissible('spider_mite', 'full', {
+    normalizedModeCandidates: [{ modeKey: 'spider_mite', confidence: 0.55 }],
+    candidateOnlyModeKeys: [],
+    confirmationEvidenceItems: []
+  }),
+  true
 )
 // pest profile: yellow_leaf 候选不进入（非虫害）
 assert.equal(
