@@ -327,9 +327,16 @@ const specklingYellowRoute = resolveDiagnosisModeRoute({
   admittedEvidence: [evidence('yellow_speckling')],
   visualModeCandidates: [{ mode: 'yellow_leaf', confidence: 0.9 }]
 })
-assert.equal(specklingYellowRoute.nextAction, 'uncertain')
+// full profile 下 yellow_leaf 候选 0.9 属于合法候选（>=0.60），应进入固定题包问诊路径，
+// 而不是回退 uncertain。yellow_leaf 是固定题包模式，不走"很像"直接结论。
+assert.equal(specklingYellowRoute.nextAction, 'question_package')
 assert.deepEqual(specklingYellowRoute.directMatches, [])
-assert.deepEqual(specklingYellowRoute.confirmationCandidates, [])
+assert.deepEqual(
+  specklingYellowRoute.associatedModes,
+  ['yellow_leaf']
+)
+assert.equal(specklingYellowRoute.confidenceTier, 'very_likely')
+assert.equal(specklingYellowRoute.likelyResult, true)
 
 const stipplingRoute = resolveDiagnosisModeRoute({
   diagnosisProfile: 'pest',

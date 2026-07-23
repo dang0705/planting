@@ -471,15 +471,6 @@ function resolveDiagnosisModeRoute({
       .filter(item => item.confidence >= CANDIDATE_ADMIT_CONFIDENCE)
       .map(item => item.modeKey)
   )
-  const directConclusionPestModeKeys = unique(
-    normalizedModeCandidates
-      .filter(
-        item =>
-          PEST_MODE_KEYS.includes(item.modeKey) &&
-          item.confidence >= DIRECT_CONCLUSION_CONFIDENCE
-      )
-      .map(item => item.modeKey)
-  )
   const candidateAdmissionContext = {
     normalizedModeCandidates,
     candidateOnlyModeKeys,
@@ -497,23 +488,12 @@ function resolveDiagnosisModeRoute({
   const pestCandidateModeKeys = candidateModeKeys.filter(modeKey =>
     PEST_MODE_KEYS.includes(modeKey)
   )
-  const hasExplicitPestCandidate = normalizedModeCandidates.some(item =>
-    PEST_MODE_KEYS.includes(item.modeKey)
-  )
   const confirmationCandidates = pestCandidateModeKeys.map(modeKey => ({
     modeKey,
     reason: 'visual_mode_candidate_needs_confirmation',
     matchedEvidence: supportingEvidenceForMode(modeKey, evidenceItems),
     candidateEvidence: supportingEvidenceForMode(modeKey, retainedEvidenceItems)
   }))
-  const candidateOnlyNeedsQuestion =
-    confirmationCandidates.length > 0 &&
-    !confirmationCandidates.some(item =>
-      directConclusionPestModeKeys.includes(item.modeKey)
-    ) &&
-    confirmationCandidates.every(
-      item => !item.matchedEvidence.length && !item.candidateEvidence.length
-    )
   const provisionalMatches = pestCandidateModeKeys.map(modeKey => ({
     modeKey,
     matchType: 'candidate',
@@ -531,6 +511,15 @@ function resolveDiagnosisModeRoute({
   // 0.90-<0.95 且候选模式均为 visual_direct_only（如白粉病）：直接出"很像"结论，无疑问。
   const veryLikelyVisualDirectOnly =
     likelyResult &&
+    candidateModeKeys.length > 0 &&
+    candidateModeKeys.every(modeKey => isVisualDirectOnlyMode(modeKey))
+  // 候选中包含固定题包模式（黄叶/枯萎）：即使置信度高也走固定题包问诊，
+  // 因为这些模式本身依赖结构化问诊确认，不适合直接出"很像"结论。
+  const candidateHasFixedPackageMode = candidateModeKeys.some(modeKey =>
+    isFixedQuestionPackageMode(modeKey)
+  )
+  // 候选全部为 visual_direct_only 模式（如白粉病）：无疑问可问，走直接结果。
+  const candidateAllVisualDirectOnly =
     candidateModeKeys.length > 0 &&
     candidateModeKeys.every(modeKey => isVisualDirectOnlyMode(modeKey))
   const directionChoices = buildDirectionChoices({
@@ -555,8 +544,11 @@ function resolveDiagnosisModeRoute({
         ? 'direct_result'
         : candidateModeKeys.length
           ? directConclusion ||
-            likelyResult ||
-            confirmationCandidates.some(item => item.matchedEvidence.length)
+            candidateAllVisualDirectOnly ||
+            (likelyResult && !candidateHasFixedPackageMode) ||
+            confirmationCandidates.some(
+              item => item.matchedEvidence.length || item.candidateEvidence.length
+            )
             ? 'direct_result'
             : 'question_package'
           : 'uncertain'

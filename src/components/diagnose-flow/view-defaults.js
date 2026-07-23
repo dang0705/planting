@@ -76,6 +76,7 @@ export const DIAGNOSE_VIEW_DEFAULTS = {
   avoidAdviceGroups: [],
   popupPanelStyle: {},
   canProceedQuestionNow: false,
+  isOptionalFollowUpQuestion: false,
   canStartDiagnoseNow: false,
   canSubmitAdditionalImagesNow: false,
   getHealthClass: () => '',

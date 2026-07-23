@@ -199,6 +199,13 @@ export function useDiagnoseQuestionFlow(ctx) {
     )
   }
 
+  // 0.90-<0.95 很像结果的可选排查问题：用户可答可不答，提交时不强制校验答案。
+  const isOptionalFollowUpQuestion = computed(
+    () =>
+      Boolean(result.value?.uiHints?.optionalFollowUp) ||
+      Boolean(result.value?.questionPackage?.optionalFollowUp)
+  )
+
   function canProceedQuestion() {
     const question = currentQuestion.value
     const questionId = getQuestionId(question)
@@ -217,6 +224,10 @@ export function useDiagnoseQuestionFlow(ctx) {
       hasAdditionalImageUploadErrors.value
     ) {
       return false
+    }
+    // 0.90-<0.95 很像结果的可选排查问题：允许未答提交（跳过）。
+    if (isOptionalFollowUpQuestion.value) {
+      return true
     }
     return Boolean(questionAnswers.value[questionId])
   }
@@ -393,6 +404,11 @@ export function useDiagnoseQuestionFlow(ctx) {
       return false
     }
 
+    // 0.90-<0.95 很像结果的可选排查问题：允许未答提交（用户可跳过）。
+    if (isOptionalFollowUpQuestion.value) {
+      return true
+    }
+
     if (
       !hasDirtyQuestionAnswers.value &&
       activeQuestionIndex.value < questionStack.value.length - 1
@@ -481,6 +497,7 @@ export function useDiagnoseQuestionFlow(ctx) {
     goPreviousQuestion,
     canProceedQuestionNow,
     handleNextQuestion,
+    isOptionalFollowUpQuestion,
     resetQuestionState,
     mergeQuestionState,
     setQuestionAnswer,

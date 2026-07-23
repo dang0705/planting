@@ -213,6 +213,7 @@ export function setupDiagnoseFlowState(props, { emit, expose }) {
     goPreviousQuestion: ctx.goPreviousQuestion,
     canProceedQuestionNow: ctx.canProceedQuestionNow,
     handleNextQuestion: ctx.handleNextQuestion,
+    isOptionalFollowUpQuestion: ctx.isOptionalFollowUpQuestion,
     open: ctx.open,
     close: ctx.close,
     handleChange: ctx.handleChange,

@@ -2,9 +2,18 @@
 
 const {
   LOCKED_SPECIFIC_PEST_MODES,
-  evidenceGroupForKey,
-  maxQuestionsForTier
+  evidenceGroupForKey
 } = require('../domain/diagnosis-mode-router')
+
+// 置信度分档对应的最大题数，需与 diagnosis-mode-router.js 的 TIER_MAX_QUESTIONS 保持一致。
+// direct=0 表示 >=0.95 直接结论无疑问；未指定 tier 时回退到 registry 默认上限 2。
+const TIER_MAX_QUESTIONS_MAP = Object.freeze({
+  low: 3,
+  medium: 2,
+  high: 1,
+  very_likely: 1,
+  direct: 0
+})
 
 const PEST_MODE_LABELS = Object.freeze({
   spider_mite: '红蜘蛛（叶螨）',
@@ -305,7 +314,9 @@ function selectDistinctModeQuestions(questions = [], modes = [], maxQuestions = 
 
 function buildSpecificPestQuestionPackage({
   candidateModes = [],
-  hiddenPrefilledEvidence = []
+  hiddenPrefilledEvidence = [],
+  confidenceTier = '',
+  maxQuestions
 } = {}) {
   const modes = uniqueModes(candidateModes)
   if (!modes.length) {
@@ -322,7 +333,23 @@ function buildSpecificPestQuestionPackage({
   )
     .map(blueprint => buildQuestion(blueprint, modes))
     .filter(question => question.candidateModes.length)
-  const questions = selectDistinctModeQuestions(eligibleQuestions, modes, 2)
+  // 动态题数：
+  // - 显式传入 maxQuestions（含 0）：直接使用。
+  // - 未传 maxQuestions 但有 confidenceTier：按 tier 分档（direct=0, very_likely=1, ...）。
+  // - 都没有：回退到 registry 默认上限 2。
+  const trimmedTier = normalizeText(confidenceTier)
+  const tierBasedLimit =
+    trimmedTier && Object.prototype.hasOwnProperty.call(TIER_MAX_QUESTIONS_MAP, trimmedTier)
+      ? TIER_MAX_QUESTIONS_MAP[trimmedTier]
+      : null
+  const explicitMax = Number.isFinite(Number(maxQuestions)) ? Number(maxQuestions) : null
+  const resolvedMax =
+    explicitMax !== null
+      ? Math.max(0, explicitMax)
+      : tierBasedLimit !== null
+        ? tierBasedLimit
+        : 2
+  const questions = selectDistinctModeQuestions(eligibleQuestions, modes, resolvedMax)
   return {
     mode: 'specific_pest_visual',
     route: 'specific_pest_visual',
@@ -334,6 +361,8 @@ function buildSpecificPestQuestionPackage({
     fixedQuestionPackage: false,
     dynamicQuestionPackage: true,
     candidateModes: modes,
+    confidenceTier: trimmedTier,
+    maxQuestions: resolvedMax,
     hiddenPrefilledEvidence: Array.isArray(hiddenPrefilledEvidence) ? hiddenPrefilledEvidence : [],
     outcomePolicy: { allowMultipleOutcomes: true, preferSingleOutcome: false },
     packageQuestions: questions

@@ -252,6 +252,20 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
       }
     : null
 
+  const hasOptionalFollowUp = Boolean(
+    publicResponse?.questionPackage?.optionalFollowUp ||
+      publicResponse?.uiHints?.optionalFollowUp
+  )
+  const likelyResult = Boolean(
+    publicResponse?.uiHints?.likelyResult || publicResponse?.questionPackage?.likelyResult
+  )
+  const hasActiveQuestionsFlag = Boolean(
+    publicResponse?.hasActiveQuestions ||
+      (hasOptionalFollowUp && Array.isArray(publicResponse?.questions) && publicResponse.questions.length > 0)
+  )
+  const optionalQuestions = hasOptionalFollowUp
+    ? pickMinimalQuestions(resolveResponseQuestions(publicResponse))
+    : []
   const hasVisibleOutcomes = Array.isArray(visibleOutcomes) && visibleOutcomes.length > 0
   const treatmentText = normalizeText(
     publicResponse.treatmentText ||
@@ -273,7 +287,7 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
     publicResponse.careBehaviorTimeline || null
   )
 
-  return {
+  const responsePayload = {
     diagnosisSessionId: publicResponse.diagnosisSessionId || '',
     resultId: publicResponse.resultId || finalResult?.resultId || '',
     roundId: publicResponse.roundId || 'round_1',
@@ -311,12 +325,33 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
     ...(!hasVisibleOutcomes && summaryCard ? { summaryCard } : {}),
     confidenceLevel: publicResponse.confidenceLevel || finalResult?.confidenceLevel || '',
     ...(publicResponse.needHumanReview ? { needHumanReview: true } : {}),
-    hasActiveQuestions: false,
-    questions: [],
+    hasActiveQuestions: hasActiveQuestionsFlag,
+    questions: optionalQuestions,
     ...(environmentCareContext ? { environmentCareContext } : {}),
     ...pickActiveIntermediateFields(publicResponse),
-    ...(packageUiHints ? { uiHints: packageUiHints } : {})
+    ...(packageUiHints
+      ? { uiHints: packageUiHints }
+      : {
+          uiHints: {
+            ...(publicResponse.uiHints || {}),
+            canUploadMoreImages: Boolean(publicResponse?.uiHints?.canUploadMoreImages),
+            maxQuestionsThisRound: optionalQuestions.length || 0,
+            questionDisplayMode: 'single',
+            answerSubmitMode: 'per_question',
+            optionLayout: 'vertical',
+            transition: 'swiper'
+          }
+        })
   }
+  if (hasOptionalFollowUp) {
+    responsePayload.uiHints = {
+      ...(responsePayload.uiHints || {}),
+      optionalFollowUp: true,
+      likelyResult,
+      maxQuestionsThisRound: optionalQuestions.length || 1
+    }
+  }
+  return responsePayload
 }
 
 module.exports = {
