@@ -1,9 +1,7 @@
 'use strict'
 
-const crypto = require('crypto')
 const {
   DIAGNOSIS_MODE_REGISTRY,
-  GENERIC_EVIDENCE_GROUP_KEYS,
   LOCKED_SPECIFIC_PEST_MODES,
   PEST_CATEGORY,
   PEST_EVIDENCE_RULES,
@@ -11,346 +9,27 @@ const {
 } = require('./diagnosis-mode-registry')
 const { buildDirectionChoices, hasCrossFamilyModes } = require('./diagnosis-mode-direction-choice')
 const { normalizeCaptureRegion } = require('../utils/capture-region-normalizer')
+const {
+  CANDIDATE_ADMIT_CONFIDENCE,
+  candidateConfidenceTier,
+  maxQuestionsForTier,
+  normalizeText,
+  normalizeKey,
+  unique,
+  normalizeVisualEvidence,
+  normalizeModeCandidates,
+  hasSupportingEvidenceForMode,
+  supportingEvidenceForMode,
+  resolveDirectModeEvidence,
+  isFixedQuestionPackageMode,
+  isVisualDirectOnlyMode,
+  isCandidateAdmissible,
+  topCandidateConfidence,
+  evidenceGroupForKey,
+  stableHash
+} = require('./diagnosis-mode-helpers')
 
 const THREE_MINUTES_MS = 3 * 60 * 1000
-const HIGH_BAND = 'high'
-const STRONG_LEVEL = 'strong'
-const MEDIUM_BAND = 'medium'
-const MEDIUM_LEVEL = 'medium'
-
-// 置信度分档：决定候选模式能否进入问诊路径以及最多提问数。
-// 0.60 为候选进入路由的最低门槛；<0.60 视为弱候选，仅在无更强候选时兜底使用。
-// 0.60/0.80/0.90/0.95 四档分别对应 3/2/1/0 题（0.90-<0.95 仍保留 1 个可选排查问题）。
-const CANDIDATE_ADMIT_CONFIDENCE = 0.6
-const STRONG_CANDIDATE_CONFIDENCE = 0.8
-const VERY_LIKELY_CANDIDATE_CONFIDENCE = 0.9
-const DIRECT_CONCLUSION_CONFIDENCE = 0.95
-
-// 候选模式对应的最大问诊题数（按候选最高置信度档位决定）。
-// low (<0.60) 兜底也走 3 题；very_likely (0.90-<0.95) 走 1 个可选排查题；direct (>=0.95) 不问。
-const TIER_MAX_QUESTIONS = Object.freeze({
-  low: 3,
-  medium: 2,
-  high: 1,
-  very_likely: 1,
-  direct: 0
-})
-
-function candidateConfidenceTier(confidence = 0) {
-  const value = Number(confidence) || 0
-  if (value >= DIRECT_CONCLUSION_CONFIDENCE) {
-    return 'direct'
-  }
-  if (value >= VERY_LIKELY_CANDIDATE_CONFIDENCE) {
-    return 'very_likely'
-  }
-  if (value >= STRONG_CANDIDATE_CONFIDENCE) {
-    return 'high'
-  }
-  if (value >= CANDIDATE_ADMIT_CONFIDENCE) {
-    return 'medium'
-  }
-  return 'low'
-}
-
-function maxQuestionsForTier(tier = '') {
-  return TIER_MAX_QUESTIONS[normalizeKey(tier)] ?? 0
-}
-
-function normalizeText(value = '', conservative = '') {
-  const normalized = String(value || '').trim()
-  return normalized || conservative
-}
-
-function normalizeKey(value = '') {
-  return normalizeText(value, '').toLowerCase()
-}
-
-function unique(items = []) {
-  return Array.from(new Set((Array.isArray(items) ? items : []).map(normalizeKey).filter(Boolean)))
-}
-
-function rankBand(value = '') {
-  return { low: 1, medium: 2, high: 3 }[normalizeKey(value)] || 0
-}
-
-function rankStrength(value = '') {
-  return { weak: 1, medium: 2, strong: 3 }[normalizeKey(value)] || 0
-}
-
-function isStrongHighEvidence(item = {}) {
-  return (
-    rankBand(item.confidenceBand) >= rankBand(HIGH_BAND) &&
-    rankStrength(item.strengthLevel) >= rankStrength(STRONG_LEVEL)
-  )
-}
-
-function isAtLeastMediumEvidence(item = {}) {
-  return (
-    rankBand(item.confidenceBand) >= rankBand(MEDIUM_BAND) &&
-    rankStrength(item.strengthLevel) >= rankStrength(MEDIUM_LEVEL)
-  )
-}
-
-function evidenceGroupForKey(evidenceKey = '') {
-  const key = normalizeKey(evidenceKey)
-  if (GENERIC_EVIDENCE_GROUP_KEYS.has(key)) {
-    return key
-  }
-  for (const rule of Object.values(PEST_EVIDENCE_RULES)) {
-    for (const group of [...rule.directGroups, ...rule.indirectGroups]) {
-      if (group.includes(key)) {
-        return group[0]
-      }
-    }
-  }
-  return key
-}
-
-function stableHash(value = '') {
-  return crypto
-    .createHash('sha1')
-    .update(String(value || ''))
-    .digest('hex')
-    .slice(0, 16)
-}
-
-function normalizeVisualEvidence(items = []) {
-  return (Array.isArray(items) ? items : [])
-    .map(item => {
-      const evidenceKey = normalizeKey(
-        item?.evidenceKey || item?.evidence_key || item?.symptomKey || item?.symptom_key
-      )
-      const symptomKey = normalizeKey(item?.symptomKey || item?.symptom_key || evidenceKey)
-      if (!evidenceKey && !symptomKey) {
-        return null
-      }
-      const group = evidenceGroupForKey(
-        item?.evidenceGroup || item?.evidence_group || evidenceKey || symptomKey
-      )
-      return {
-        evidenceKey: evidenceKey || symptomKey,
-        symptomKey: symptomKey || evidenceKey,
-        evidenceGroup: group,
-        confidenceBand: normalizeKey(item?.confidenceBand || item?.confidence_band || 'low'),
-        strengthLevel: normalizeKey(item?.strengthLevel || item?.strength_level || 'weak'),
-        imageId: normalizeText(item?.imageId || item?.image_id || item?.supportImageId || ''),
-        regionRef: normalizeCaptureRegion(
-          item?.regionRef || item?.region_ref || item?.captureRegion || item?.capture_region
-        ),
-        sourceRecordId: normalizeText(item?.sourceRecordId || item?.source_record_id || ''),
-        currentStatus: normalizeKey(item?.currentStatus || item?.current_status || 'active')
-      }
-    })
-    .filter(item => item && item.currentStatus === 'active')
-}
-
-function normalizeModeCandidates(items = []) {
-  return (Array.isArray(items) ? items : [])
-    .map(item => ({
-      modeKey: normalizeModeKey(
-        item?.modeKey || item?.mode || item?.diagnosisMode || item?.diagnosis_mode
-      ),
-      confidence: Number(item?.confidence || 0),
-      imageId: normalizeText(item?.imageId || item?.image_id || ''),
-      regionRef: normalizeCaptureRegion(item?.regionRef || item?.region_ref || item?.captureRegion)
-    }))
-    .filter(item => DIAGNOSIS_MODE_REGISTRY[item.modeKey])
-}
-
-function hasSupportingEvidenceForMode(modeKey = '', evidenceItems = []) {
-  return supportingEvidenceForMode(modeKey, evidenceItems).length > 0
-}
-
-function supportingEvidenceForMode(modeKey = '', evidenceItems = []) {
-  const candidateGroups = PEST_EVIDENCE_RULES[modeKey]?.candidateGroups || []
-  const classified = classifyModeEvidence(modeKey, evidenceItems)
-  return [...classified.direct, ...classified.indirect]
-    .filter(isAtLeastMediumEvidence)
-    .filter(item => candidateGroups.some(group => groupIncludesEvidence(group, item)))
-}
-
-function normalizeModeKey(value = '') {
-  const key = normalizeKey(value)
-  const aliases = {
-    spider_mites: 'spider_mite',
-    scale_insects: 'scale_insect',
-    whiteflies: 'whitefly',
-    aphids: 'aphid',
-    mealybugs: 'mealybug',
-    leafminer: 'leaf_miner',
-    leaf_miner_mode: 'leaf_miner',
-    fungus_gnats: 'fungus_gnat'
-  }
-  return aliases[key] || key
-}
-
-function isFixedQuestionPackageMode(modeKey = '') {
-  const entry = DIAGNOSIS_MODE_REGISTRY[modeKey]
-  return ['fixed_yellow_leaf', 'fixed_wilting_droop'].includes(entry?.questionPackageKind)
-}
-
-function isVisualDirectOnlyMode(modeKey = '') {
-  const entry = DIAGNOSIS_MODE_REGISTRY[modeKey]
-  return entry?.questionPackageKind === 'visual_direct_only'
-}
-
-function isModeAllowedForProfile(modeKey = '', profile = 'full') {
-  const entry = DIAGNOSIS_MODE_REGISTRY[modeKey]
-  if (!entry) {
-    return false
-  }
-  return entry.allowedProfiles.includes(profile)
-}
-
-// 判断候选模式是否可进入路由。
-// pest profile 保持原严格逻辑：虫害候选需证据支撑或单候选 >=0.60。
-// full profile 放宽：合法候选（在 REGISTRY 且 allowedProfiles 含 full）无论 confidence 高低均可进入，
-// <0.60 走 low tier（最多 3 题）；证据只用于问题锁定和跳题，不凭空生成模式。
-function isCandidateAdmissible(modeKey = '', profile = 'full', context = {}) {
-  const { normalizedModeCandidates = [], candidateOnlyModeKeys = [], confirmationEvidenceItems = [] } = context
-  if (!isModeAllowedForProfile(modeKey, profile)) {
-    return false
-  }
-  const hasEvidence = hasSupportingEvidenceForMode(modeKey, confirmationEvidenceItems)
-  if (PEST_MODE_KEYS.includes(modeKey)) {
-    if (profile === 'full') {
-      // full profile: 合法虫害候选无论 confidence 高低都进入路由
-      return normalizedModeCandidates.some(item => item.modeKey === modeKey) || hasEvidence
-    }
-    // pest profile 保持严格：需证据支撑或单候选 >=0.60
-    const hasStrongCandidate = normalizedModeCandidates.some(
-      item => item.modeKey === modeKey && item.confidence >= CANDIDATE_ADMIT_CONFIDENCE
-    )
-    return hasEvidence || (hasStrongCandidate && candidateOnlyModeKeys.length === 1)
-  }
-  // 非虫害候选只在 full profile 处理
-  if (profile !== 'full') {
-    return false
-  }
-  // full profile: 合法候选无论 confidence 高低都进入路由
-  return normalizedModeCandidates.some(item => item.modeKey === modeKey) || hasEvidence
-}
-
-// 取候选列表中的最高置信度，用于决定分档
-function topCandidateConfidence(modeKeys = [], normalizedModeCandidates = []) {
-  const keySet = new Set(unique(modeKeys))
-  let top = 0
-  for (const item of normalizedModeCandidates) {
-    if (keySet.has(item.modeKey) && item.confidence > top) {
-      top = item.confidence
-    }
-  }
-  return top
-}
-
-function classifyModeEvidence(modeKey = '', evidenceItems = []) {
-  const rule = PEST_EVIDENCE_RULES[modeKey]
-  if (!rule) {
-    return {
-      direct: [],
-      indirect: []
-    }
-  }
-  const classifyGroups = (groups, kind) =>
-    groups.flatMap(group => {
-      const matchedByGroup = new Map()
-      for (const item of evidenceItems) {
-        if (!group.includes(item.evidenceKey) && !group.includes(item.symptomKey)) {
-          continue
-        }
-        const current = matchedByGroup.get(item.evidenceGroup)
-        if (!current || rankBand(item.confidenceBand) > rankBand(current.confidenceBand)) {
-          matchedByGroup.set(item.evidenceGroup, {
-            ...item,
-            evidenceKind: kind
-          })
-        }
-      }
-      return Array.from(matchedByGroup.values())
-    })
-
-  return {
-    direct: classifyGroups(rule.directGroups, 'direct'),
-    indirect: classifyGroups(rule.indirectGroups, 'indirect')
-  }
-}
-
-function groupIncludesEvidence(group = [], item = {}) {
-  return group.includes(item.evidenceKey) || group.includes(item.symptomKey)
-}
-
-function resolveIndirectDirectCombination(rule = {}, indirect = []) {
-  if (!rule.allowIndirectDirect || !Array.isArray(rule.directCombinationGroups)) {
-    return null
-  }
-  const eligible = indirect.filter(isAtLeastMediumEvidence)
-  for (const combination of rule.directCombinationGroups) {
-    if (!Array.isArray(combination) || !combination.length) {
-      continue
-    }
-    const matchesByGroup = combination.map(group =>
-      eligible.filter(item => Array.isArray(group) && groupIncludesEvidence(group, item))
-    )
-    if (matchesByGroup.some(matches => !matches.length)) {
-      continue
-    }
-    const evidenceByPair = new Map()
-    for (const matches of matchesByGroup) {
-      for (const item of matches) {
-        const imageId = normalizeText(item.imageId || '')
-        const regionRef = normalizeKey(item.regionRef || '')
-        if (!imageId || !regionRef || regionRef === 'unknown') {
-          continue
-        }
-        const pairKey = `${imageId}::${regionRef}`
-        const list = evidenceByPair.get(pairKey) || []
-        list.push(item)
-        evidenceByPair.set(pairKey, list)
-      }
-    }
-    for (const pairEvidence of evidenceByPair.values()) {
-      const coversAllGroups = matchesByGroup.every(matches =>
-        matches.some(match =>
-          pairEvidence.some(
-            item =>
-              item.evidenceKey === match.evidenceKey && item.evidenceGroup === match.evidenceGroup
-          )
-        )
-      )
-      if (coversAllGroups && pairEvidence.some(isStrongHighEvidence)) {
-        return Array.from(
-          new Map(
-            pairEvidence.map(item => [`${item.evidenceKey}::${item.evidenceGroup}`, item])
-          ).values()
-        )
-      }
-    }
-  }
-  return null
-}
-
-function resolveDirectModeEvidence(modeKey = '', evidenceItems = []) {
-  const rule = PEST_EVIDENCE_RULES[modeKey]
-  const classified = classifyModeEvidence(modeKey, evidenceItems)
-  const directMatch = classified.direct.find(isStrongHighEvidence)
-  if (directMatch) {
-    return {
-      modeKey,
-      matchType: 'direct',
-      matchedEvidence: [directMatch]
-    }
-  }
-  const combinationMatch = resolveIndirectDirectCombination(rule, classified.indirect)
-  if (combinationMatch) {
-    return {
-      modeKey,
-      matchType: 'indirect',
-      matchedEvidence: combinationMatch
-    }
-  }
-  return null
-}
 
 function buildRetakeAuthorization({
   authorizationId = '',
@@ -455,10 +134,6 @@ function resolveDiagnosisModeRoute({
     normalizedProfile === 'pest' ? PEST_MODE_KEYS.includes(modeKey) : true
   )
   const directMatches = directModeScope
-    // Direct thresholds must be evaluated against both formally admitted and
-    // retained visual evidence. A candidate marked cautious is not enough to
-    // route by itself, but it must still be allowed to complete a hard,
-    // same-image/same-region combination with another strong cue.
     .map(modeKey => resolveDirectModeEvidence(modeKey, confirmationEvidenceItems))
     .filter(Boolean)
   const directModeKeys = directMatches.map(item => item.modeKey)
@@ -505,8 +180,6 @@ function resolveDiagnosisModeRoute({
     matchType: 'candidate',
     matchedEvidence: supportingEvidenceForMode(modeKey, confirmationEvidenceItems)
   }))
-  // 置信度分档：取候选模式中的最高置信度决定 tier 与 questionBudget。
-  // directModeKeys（直接证据匹配）视为 direct tier；否则按候选最高置信度分档。
   const topCandidateValue = topCandidateConfidence(candidateModeKeys, normalizedModeCandidates)
   const candidateTier = candidateConfidenceTier(topCandidateValue)
   const directTier = directModeKeys.length ? 'direct' : ''
@@ -514,17 +187,15 @@ function resolveDiagnosisModeRoute({
   const questionBudget = maxQuestionsForTier(activeTier)
   const likelyResult = activeTier === 'very_likely'
   const directConclusion = activeTier === 'direct'
-  // 0.90-<0.95 且候选模式均为 visual_direct_only（如白粉病）：直接出"很像"结论，无疑问。
   const veryLikelyVisualDirectOnly =
     likelyResult &&
     candidateModeKeys.length > 0 &&
     candidateModeKeys.every(modeKey => isVisualDirectOnlyMode(modeKey))
   // 候选中包含固定题包模式（黄叶/枯萎）：即使置信度高也走固定题包问诊，
-  // 因为这些模式本身依赖结构化问诊确认，不适合直接出"很像"结论。
+  // 因为这些模式本身依赖结构化问诊确认，不适合直接出结论。
   const candidateHasFixedPackageMode = candidateModeKeys.some(modeKey =>
     isFixedQuestionPackageMode(modeKey)
   )
-  // 候选全部为 visual_direct_only 模式（如白粉病）：无疑问可问，走直接结果。
   const candidateAllVisualDirectOnly =
     candidateModeKeys.length > 0 &&
     candidateModeKeys.every(modeKey => isVisualDirectOnlyMode(modeKey))
@@ -542,6 +213,8 @@ function resolveDiagnosisModeRoute({
   const recommendedDirection = associatedModes.some(modeKey => PEST_MODE_KEYS.includes(modeKey))
     ? PEST_CATEGORY
     : directModeKeys[0] || candidateModeKeys[0] || ''
+  // directConclusion (>=0.95) 时，固定题包模式仍需走问诊路径，
+  // 因为这些模式依赖结构化问诊确认。
   const nextAction = crossFamilyConflict
     ? 'choose_direction'
     : singleFixedQuestionPackageMode
@@ -549,7 +222,7 @@ function resolveDiagnosisModeRoute({
       : directModeKeys.length
         ? 'direct_result'
         : candidateModeKeys.length
-          ? directConclusion ||
+          ? (directConclusion && !candidateHasFixedPackageMode) ||
             candidateAllVisualDirectOnly ||
             (likelyResult && !candidateHasFixedPackageMode) ||
             confirmationCandidates.some(
@@ -644,10 +317,15 @@ module.exports = {
   assertRetakeAuthorizationActive,
   candidateConfidenceTier,
   maxQuestionsForTier,
+  // 从 helpers 重新导出，保持调用契约不变
+  isCandidateAdmissible,
+  isVisualDirectOnlyMode,
+  isFixedQuestionPackageMode,
+  topCandidateConfidence,
   _test: {
     normalizeVisualEvidence,
     evidenceGroupForKey,
-    resolveIndirectDirectCombination,
+    resolveIndirectDirectCombination: require('./diagnosis-mode-helpers').resolveIndirectDirectCombination,
     resolveDirectModeEvidence,
     isCandidateAdmissible,
     isVisualDirectOnlyMode,
