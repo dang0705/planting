@@ -7,6 +7,11 @@ const {
 } = require('./pest-question-package')
 const { resolveSpecificPestAnswerResult } = require('./specific-pest-answer-resolver')
 const { normalizeCaptureRegion } = require('../utils/capture-region-normalizer')
+const { DIAGNOSIS_MODE_REGISTRY } = require('../domain/diagnosis-mode-registry')
+const {
+  buildFullCandidateFallbackResponse,
+  attachLikelyOptionalQuestion
+} = require('./pest-route-helpers')
 
 const STATIC_ROUTE_MODE_OPTIONS = Object.freeze({
   yellow_leaf: Object.freeze({
@@ -37,7 +42,8 @@ function getBuildStaticQuestionPackageStartRoundResult() {
   return require('./static-question-package-start').buildStaticQuestionPackageStartRoundResult
 }
 
-function routeModes(routeResult = {}) {
+// 返回路由结果中的所有候选模式 key（不限虫害），用于 full profile direct_result 等
+function allRouteModes(routeResult = {}) {
   return Array.from(
     new Set(
       [
@@ -55,7 +61,14 @@ function routeModes(routeResult = {}) {
         ...(Array.isArray(routeResult.associatedModes) ? routeResult.associatedModes : [])
       ].filter(Boolean)
     )
-  ).filter(mode => Object.prototype.hasOwnProperty.call(PEST_MODE_LABELS, mode))
+  )
+}
+
+// 仅返回虫害候选模式 key，用于 pest-specific 问诊逻辑
+function routeModes(routeResult = {}) {
+  return allRouteModes(routeResult).filter(mode =>
+    Object.prototype.hasOwnProperty.call(PEST_MODE_LABELS, mode)
+  )
 }
 
 function directEvidence(routeResult = {}) {
@@ -167,6 +180,43 @@ function buildBaseResponse({
   }
 }
 
+// 为非虫害模式（如白粉病、黄叶、枯萎）构建直接结果
+function buildNonPestDirectResult({ modeKey, sessionId, round, plantContext, routeResult, aggregateResult }) {
+  const entry = DIAGNOSIS_MODE_REGISTRY[modeKey] || {}
+  const displayName = entry.userDisplayName || modeKey
+  return {
+    diagnosisSessionId: sessionId,
+    roundId: `round_${round}`,
+    plantContext,
+    routePrimaryAction: 'finalize',
+    diagnosisModeRouteResult: routeResult,
+    visualAggregateResult: aggregateResult,
+    stage: 'final',
+    status: 'closed',
+    finalResult: {
+      problemKey: modeKey,
+      problemName: displayName,
+      displayName,
+      outcomeType: 'diagnosis',
+      confidenceLevel: 'high'
+    },
+    visibleOutcomes: [
+      {
+        modeKey,
+        displayNameCn: displayName,
+        displayName,
+        outcomeType: 'diagnosis'
+      }
+    ],
+    topProblem: {
+      modeKey,
+      displayName,
+      problemKey: modeKey
+    },
+    candidateModes: [modeKey]
+  }
+}
+
 async function buildPestRouteResponse({
   sessionId = '',
   round = 1,
@@ -179,37 +229,51 @@ async function buildPestRouteResponse({
     return null
   }
   const action = routeResult.nextAction || ''
-  const candidateModes = routeModes(routeResult)
+  const candidateModes = allRouteModes(routeResult)
+  const pestCandidateModes = routeModes(routeResult)
   const confidenceTier = String(routeResult.confidenceTier || '').trim()
   const questionBudget = Number(routeResult.questionBudget || 0)
   const likelyResult = Boolean(routeResult.likelyResult)
   // full profile 下：有候选模式时不再因 uncertain 直接返回 null。
-  // 只有真的没有候选模式且 action=uncertain 时，才允许上层走 uncertain 兜底。
   if (action === 'uncertain' && diagnosisProfile !== 'pest') {
     if (!candidateModes.length) {
       return null
     }
-    // full profile 候选存在但被路由判 uncertain（理论上新逻辑下不会发生），
-    // 兜底走 question_package，避免低置信候选被丢弃。
     return buildFullCandidateFallbackResponse({
       sessionId,
       round,
       plantContext,
       routeResult,
       aggregateResult,
-      candidateModes,
+      candidateModes: pestCandidateModes,
       confidenceTier,
-      questionBudget
+      questionBudget,
+      buildBaseResponse,
+      routeEvidenceLedger
     })
   }
   const base = buildBaseResponse({ sessionId, round, plantContext, routeResult, aggregateResult })
   if (action === 'direct_result') {
+    const nonPestModes = candidateModes.filter(
+      mode => !Object.prototype.hasOwnProperty.call(PEST_MODE_LABELS, mode)
+    )
+    // 非虫害模式（白粉病等 visual_direct_only）：直接出结果
+    if (nonPestModes.length && !pestCandidateModes.length) {
+      return buildNonPestDirectResult({
+        modeKey: nonPestModes[0],
+        sessionId,
+        round,
+        plantContext,
+        routeResult,
+        aggregateResult
+      })
+    }
     const probableModes = (
       Array.isArray(routeResult.provisionalMatches) ? routeResult.provisionalMatches : []
     )
       .map(item => item.modeKey)
       .filter(mode => Object.prototype.hasOwnProperty.call(PEST_MODE_LABELS, mode))
-    if (!candidateModes.length) {
+    if (!pestCandidateModes.length) {
       return null
     }
     const resolved = resolveSpecificPestAnswerResult({
@@ -217,7 +281,7 @@ async function buildPestRouteResponse({
       round,
       answers: [],
       questionPackage: {
-        candidateModes,
+        candidateModes: pestCandidateModes,
         hiddenPrefilledEvidence: routeEvidenceLedger(routeResult),
         packageQuestions: []
       },
@@ -228,7 +292,7 @@ async function buildPestRouteResponse({
     // 0.90-<0.95 很像结果：保留 1 个可选排查问题供用户确认。
     if (likelyResult) {
       return attachLikelyOptionalQuestion(resolved, {
-        candidateModes,
+        candidateModes: pestCandidateModes,
         hiddenPrefilledEvidence: routeEvidenceLedger(routeResult),
         confidenceTier,
         questionBudget
@@ -255,20 +319,20 @@ async function buildPestRouteResponse({
     }
 
     const questionPackage = buildSpecificPestQuestionPackage({
-      candidateModes,
+      candidateModes: pestCandidateModes,
       hiddenPrefilledEvidence: routeEvidenceLedger(routeResult),
       confidenceTier,
       maxQuestions: questionBudget
     })
     if (!questionPackage || questionPackage.questionCount === 0) {
       // 候选存在但所有问题被视觉证据锁定：输出候选结果，不回退 uncertain。
-      if (candidateModes.length) {
+      if (pestCandidateModes.length) {
         const fallback = resolveSpecificPestAnswerResult({
           sessionId,
           round,
           answers: [],
           questionPackage: {
-            candidateModes,
+            candidateModes: pestCandidateModes,
             hiddenPrefilledEvidence: routeEvidenceLedger(routeResult),
             packageQuestions: []
           },
@@ -328,7 +392,7 @@ async function buildPestRouteResponse({
         statusText: '待确认'
       },
       observedEvidenceSet: buildSpecificPestObservedEvidenceSet({
-        candidateModes
+        candidateModes: pestCandidateModes
       })
     }
   }
@@ -376,173 +440,12 @@ async function buildPestRouteResponse({
   return null
 }
 
-// full profile 下候选存在但路由判 uncertain 时的兜底：尝试构造问诊包，
-// 若问题被全部锁定则输出候选结果，避免低置信候选被丢弃到 uncertain。
-async function buildFullCandidateFallbackResponse({
-  sessionId = '',
-  round = 1,
-  plantContext = {},
-  routeResult = {},
-  aggregateResult = null,
-  candidateModes = [],
-  confidenceTier = '',
-  questionBudget = 0
-} = {}) {
-  const hiddenPrefilledEvidence = routeEvidenceLedger(routeResult)
-  const questionPackage = buildSpecificPestQuestionPackage({
-    candidateModes,
-    hiddenPrefilledEvidence,
-    confidenceTier,
-    maxQuestions: questionBudget
-  })
-  if (questionPackage && questionPackage.questionCount > 0) {
-    const subtitle =
-      questionPackage.questionCount === 1
-        ? '根据图片线索补充 1 个问题。'
-        : `根据图片线索补充 ${questionPackage.questionCount} 个问题。`
-    return {
-      ...buildBaseResponse({ sessionId, round, plantContext, routeResult, aggregateResult }),
-      routePrimaryAction: 'question_package',
-      sessionStatus: 'awaiting_follow_up',
-      questionRequired: true,
-      outcomeType: '',
-      questions: questionPackage.packageQuestions,
-      questionPackage,
-      uiHints: {
-        canUploadMoreImages: false,
-        maxQuestionsThisRound: questionPackage.questionCount,
-        questionDisplayMode: 'package',
-        answerSubmitMode: 'package',
-        optionLayout: 'vertical',
-        transition: 'swiper'
-      },
-      summaryCard: {
-        title: '需要再确认虫害线索',
-        subtitle,
-        severity: 'medium',
-        statusText: '待确认'
-      },
-      observedEvidenceSet: buildSpecificPestObservedEvidenceSet({ candidateModes })
-    }
-  }
-  // 候选存在但问题全部被视觉证据锁定：输出候选结果。
-  const fallback = resolveSpecificPestAnswerResult({
-    sessionId,
-    round,
-    answers: [],
-    questionPackage: {
-      candidateModes,
-      hiddenPrefilledEvidence,
-      packageQuestions: []
-    },
-    probableModes: [],
-    plantContext,
-    visualAggregateResult: aggregateResult
-  })
-  return {
-    ...fallback,
-    routePrimaryAction: 'finalize',
-    diagnosisModeRouteResult: routeResult,
-    visualAggregateResult: aggregateResult
-  }
-}
-
-// 0.90-<0.95 很像结果：在已确认候选结果上挂载 1 个可选排查问题，
-// 用户可选择回答或跳过。问题来自候选模式的 blueprint，跳过被证据锁定的。
-function attachLikelyOptionalQuestion(resolvedResult = {}, options = {}) {
-  const {
-    candidateModes = [],
-    hiddenPrefilledEvidence = [],
-    confidenceTier = 'very_likely',
-    questionBudget = 1
-  } = options
-  const optionalPackage = buildSpecificPestQuestionPackage({
-    candidateModes,
-    hiddenPrefilledEvidence,
-    confidenceTier,
-    maxQuestions: Math.max(1, questionBudget)
-  })
-  const optionalQuestions = optionalPackage?.packageQuestions?.slice(0, 1) || []
-  if (!optionalQuestions.length) {
-    return resolvedResult
-  }
-  const optionalQuestion = optionalQuestions[0]
-  // 0.90-<0.95 很像结果：给结论名加"很像"前缀，用户友好且不暴露 confidence。
-  const baseVisibleOutcomes = Array.isArray(resolvedResult.visibleOutcomes)
-    ? resolvedResult.visibleOutcomes
-    : []
-  const likelyVisibleOutcomes = baseVisibleOutcomes.map(outcome => ({
-    ...outcome,
-    displayNameCn: prefixLikelyLabel(outcome?.displayNameCn),
-    displayName: prefixLikelyLabel(outcome?.displayName)
-  }))
-  const baseFinalResult = resolvedResult.finalResult || {}
-  const likelyFinalResult = {
-    ...baseFinalResult,
-    displayName: prefixLikelyLabel(baseFinalResult.displayName),
-    problemName: prefixLikelyLabel(baseFinalResult.problemName),
-    visibleOutcomes: likelyVisibleOutcomes
-  }
-  const baseTopProblem = resolvedResult.topProblem || null
-  const likelyTopProblem = baseTopProblem
-    ? {
-        ...baseTopProblem,
-        displayName: prefixLikelyLabel(baseTopProblem.displayName)
-      }
-    : null
-  return {
-    ...resolvedResult,
-    // 保留 finalize 作为主结论，同时挂载可选问题供前端展示。
-    routePrimaryAction: 'finalize',
-    questionRequired: false,
-    hasActiveQuestions: true,
-    questions: [optionalQuestion],
-    questionPackage: {
-      ...(optionalPackage || {}),
-      questionCount: 1,
-      packageQuestions: [optionalQuestion],
-      packageTopics: [optionalQuestion.packageTopic],
-      optionalFollowUp: true,
-      likelyResult: true
-    },
-    visibleOutcomes: likelyVisibleOutcomes,
-    finalResult: likelyFinalResult,
-    topProblem: likelyTopProblem,
-    uiHints: {
-      ...(resolvedResult.uiHints || {}),
-      optionalFollowUp: true,
-      likelyResult: true,
-      maxQuestionsThisRound: 1,
-      questionDisplayMode: 'single',
-      answerSubmitMode: 'per_question',
-      optionLayout: 'vertical',
-      transition: 'swiper'
-    },
-    summaryCard: {
-      ...(resolvedResult.summaryCard || {}),
-      title: '很像的虫害方向',
-      subtitle: '当前图片很像某种虫害，可回答下方问题进一步确认，也可直接按建议处理。'
-    }
-  }
-}
-
-// 给结论名加"很像"前缀，避免重复前缀（如已经是"可能是"/"很像"则不再加）。
-function prefixLikelyLabel(label = '') {
-  const text = String(label || '').trim()
-  if (!text) {
-    return text
-  }
-  if (text.startsWith('很像') || text.startsWith('可能是')) {
-    return text
-  }
-  return `很像${text}`
-}
-
 module.exports = {
   buildPestRouteResponse,
   buildRetakeRequest,
   routeFromAggregate,
   routeModes,
+  allRouteModes,
   directEvidence,
   routeEvidenceLedger,
   routeFixedQuestionPackageMode,

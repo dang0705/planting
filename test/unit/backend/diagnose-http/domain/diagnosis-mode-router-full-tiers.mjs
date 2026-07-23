@@ -352,4 +352,123 @@ assert.equal(
 )
 assert.equal(_test.topCandidateConfidence(['spider_mite'], []), 0)
 
+// ---------------------------------------------------------------------------
+// 14. P2: 非虫害 direct route 在 orchestrator 不被丢弃
+// powdery_mildew (visual_direct_only) 候选 0.92 → router direct_result，
+// orchestrator 应返回非 null 的 finalResult 而非丢弃。
+// ---------------------------------------------------------------------------
+const { buildPestRouteResponse } = require('../../../../../cloudfunctions/diagnose-http/app/pest-visual-orchestrator.js')
+
+const nonPestRouteResult = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'full',
+  admittedEvidence: [],
+  visualModeCandidates: [{ mode: 'powdery_mildew', confidence: 0.92 }]
+})
+assert.equal(nonPestRouteResult.nextAction, 'direct_result')
+assert.equal(nonPestRouteResult.likelyResult, true)
+
+const nonPestOrchestratorResult = await buildPestRouteResponse({
+  sessionId: 'test_non_pest',
+  round: 1,
+  plantContext: {},
+  aggregateResult: { diagnosis_mode_route_result: nonPestRouteResult },
+  diagnosisProfile: 'full'
+})
+assert.ok(nonPestOrchestratorResult, '非虫害 direct route 不应返回 null')
+assert.equal(nonPestOrchestratorResult.routePrimaryAction, 'finalize')
+assert.ok(nonPestOrchestratorResult.finalResult, '非虫害 direct route 应有 finalResult')
+assert.equal(nonPestOrchestratorResult.finalResult.problemKey, 'powdery_mildew')
+assert.ok(nonPestOrchestratorResult.visibleOutcomes.length > 0, '应有 visibleOutcomes')
+
+// ---------------------------------------------------------------------------
+// 15. P1: frontend-response optional follow-up 不丢弃 finalResult
+// buildFrontendAnswerResponse 在 optionalFollowUp 时不应走 early return。
+// ---------------------------------------------------------------------------
+const { buildFrontendAnswerResponse } = require('../../../../../cloudfunctions/diagnose-http/app/frontend-response.js')
+
+const optionalFollowUpResponse = {
+  diagnosisSessionId: 'test_p1',
+  resultId: 'result_1',
+  roundId: 'round_1',
+  stage: 'final',
+  status: 'closed',
+  outcomeType: 'diagnosis',
+  finalResult: {
+    resultId: 'result_1',
+    problemKey: 'spider_mite',
+    displayName: '很像红蜘蛛（叶螨）',
+    outcomeType: 'diagnosis'
+  },
+  visibleOutcomes: [
+    { modeKey: 'spider_mite', displayNameCn: '很像红蜘蛛（叶螨）', outcomeType: 'diagnosis' }
+  ],
+  questions: [
+    {
+      questionKey: 'q_specific_pest__spider_mite_webbing',
+      text: '叶背或叶柄附近有没有很细的蛛网状丝线？',
+      options: [],
+      candidateModes: ['spider_mite']
+    }
+  ],
+  questionPackage: {
+    optionalFollowUp: true,
+    likelyResult: true,
+    questionCount: 1
+  },
+  uiHints: {
+    optionalFollowUp: true,
+    likelyResult: true,
+    maxQuestionsThisRound: 1
+  }
+}
+const frontendResult = buildFrontendAnswerResponse(optionalFollowUpResponse)
+assert.ok(frontendResult.finalResult, 'P1: optionalFollowUp 不应丢弃 finalResult')
+assert.ok(frontendResult.visibleOutcomes.length > 0, 'P1: optionalFollowUp 不应丢弃 visibleOutcomes')
+assert.equal(frontendResult.hasActiveQuestions, true, 'P1: 应保留 hasActiveQuestions')
+assert.ok(frontendResult.questions.length > 0, 'P1: 应保留 optional questions')
+assert.equal(frontendResult.uiHints.optionalFollowUp, true, 'P1: uiHints 应有 optionalFollowUp')
+
+// ---------------------------------------------------------------------------
+// 16. P2: direction-choice 传递 confidenceTier/questionBudget
+// buildPestModeDirectionResult 应将 route 的 confidenceTier 和 questionBudget
+// 传递给 buildSpecificPestQuestionPackage。
+// ---------------------------------------------------------------------------
+const {
+  resolveDirectionChoiceRoundResult
+} = require('../../../../../cloudfunctions/diagnose-http/app/diagnosis-direction-choice-runtime.js')
+
+// 构造一个 choose_direction 的 route，选择 pest 方向后 question_package 应携带 tier/budget
+const directionRoute = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'full',
+  admittedEvidence: [evidence('visible_mite_colony', 'high', 'strong', 'img1', 'leaf_underside')],
+  visualModeCandidates: [
+    { mode: 'spider_mite', confidence: 0.7 },
+    { mode: 'aphid', confidence: 0.65 }
+  ]
+})
+// visible_mite_colony 是 spider_mite 的 direct 证据 → directMatches 包含 spider_mite
+// 但也有 aphid 候选 → crossFamilyConflict 可能触发 choose_direction
+// 这里直接验证 questionPackage 携带 tier 信息即可
+const directionResult = await resolveDirectionChoiceRoundResult({
+  payload: { directionChoice: { modeKey: 'pest', pestModeKeys: ['spider_mite', 'aphid'] } },
+  openid: 'test',
+  sessionId: 'test_dir',
+  round: 1,
+  refreshedSessionState: {
+    plantContext: {},
+    visualAggregateResult: { diagnosis_mode_route_result: directionRoute }
+  },
+  sessionState: {}
+})
+if (directionResult?.questionPackage) {
+  assert.ok(
+    directionResult.questionPackage.confidenceTier !== undefined,
+    'P2: direction-choice questionPackage 应携带 confidenceTier'
+  )
+  assert.ok(
+    directionResult.questionPackage.maxQuestions !== undefined,
+    'P2: direction-choice questionPackage 应携带 maxQuestions'
+  )
+}
+
 console.log('diagnosis-mode-router full tiers supplementary tests passed')

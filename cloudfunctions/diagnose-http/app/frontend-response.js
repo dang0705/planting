@@ -201,7 +201,13 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
 
 function buildFrontendAnswerResponse(publicResponse = {}) {
   const questions = pickMinimalQuestions(resolveResponseQuestions(publicResponse))
-  if (questions.length) {
+  // 可选追问（likely result）场景：questions 非空但带有 finalResult/visibleOutcomes，
+  // 不能走 buildFrontendDiagnosisResponse 的问诊包路径，否则会丢弃结论数据。
+  const hasOptionalFollowUp = Boolean(
+    publicResponse?.questionPackage?.optionalFollowUp ||
+      publicResponse?.uiHints?.optionalFollowUp
+  )
+  if (questions.length && !hasOptionalFollowUp) {
     return buildFrontendDiagnosisResponse(publicResponse)
   }
 
@@ -252,10 +258,6 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
       }
     : null
 
-  const hasOptionalFollowUp = Boolean(
-    publicResponse?.questionPackage?.optionalFollowUp ||
-      publicResponse?.uiHints?.optionalFollowUp
-  )
   const likelyResult = Boolean(
     publicResponse?.uiHints?.likelyResult || publicResponse?.questionPackage?.likelyResult
   )

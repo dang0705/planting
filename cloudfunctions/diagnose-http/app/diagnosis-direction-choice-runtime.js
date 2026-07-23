@@ -512,9 +512,18 @@ function buildPestModeDirectionResult({
       visualAggregateResult: selectedAggregate
     })
   }
+  // 方向选择后构建确认问题包：仅在 route 为 question_package 模式且携带有效 tier 时
+  // 传递 tier/budget，避免 fallback 路由或 direct_result 细化路径误传 budget=0。
+  const routeTier = String(selectedRoute.confidenceTier || '').trim()
+  const routeBudget = Number(selectedRoute.questionBudget || 0)
+  const shouldApplyTier =
+    selectedRoute.nextAction === 'question_package' && routeTier && routeBudget > 0
   const questionPackage = buildSpecificPestQuestionPackage({
     candidateModes: confirmationModeKeys,
-    hiddenPrefilledEvidence
+    hiddenPrefilledEvidence,
+    ...(shouldApplyTier
+      ? { confidenceTier: routeTier, maxQuestions: routeBudget }
+      : {})
   })
   const directOutcome = directModeKeys.length
     ? resolveSpecificPestAnswerResult({
