@@ -385,7 +385,17 @@ export function useDiagnoseQuestionFlow(ctx) {
           : currentQuestion.value
             ? [currentQuestion.value]
             : []
-      const payload = buildQuestionAnswerPayload(result.value, questionAnswers.value, {
+      // 可选追问问题跳过时提交明确 unknown，不发送 answers:[]。
+      const submitAnswerMap = { ...questionAnswers.value }
+      if (isOptionalFollowUpQuestion.value) {
+        for (const question of submitQuestionStack) {
+          const questionId = getQuestionId(question)
+          if (questionId && !submitAnswerMap[questionId]) {
+            submitAnswerMap[questionId] = 'unknown'
+          }
+        }
+      }
+      const payload = buildQuestionAnswerPayload(result.value, submitAnswerMap, {
         questionStack: submitQuestionStack,
         requestMode: isRevisionSubmit ? 'answer_revision' : 'answer_submit',
         baseAnswerRevision: questionAnswerRevision.value,

@@ -8,6 +8,7 @@ const {
 const { resolveSpecificPestAnswerResult } = require('./specific-pest-answer-resolver')
 const { normalizeCaptureRegion } = require('../utils/capture-region-normalizer')
 const { DIAGNOSIS_MODE_REGISTRY } = require('../domain/diagnosis-mode-registry')
+const { isVisualDirectOnlyMode } = require('../domain/diagnosis-mode-helpers')
 const {
   buildFullCandidateFallbackResponse,
   attachLikelyOptionalQuestion
@@ -75,6 +76,39 @@ function directEvidence(routeResult = {}) {
   return routeEvidenceLedger({
     directMatches: Array.isArray(routeResult.directMatches) ? routeResult.directMatches : []
   })
+}
+
+// >=0.95 direct tier 下，候选模式即使没有视觉证据锁定也应被视为 direct_match，
+// 确保 resolveSpecificPestAnswerResult 输出 direct 级置信度和不带"可能是"的文案。
+function directEvidenceLedgerForDirectResult(routeResult = {}, pestCandidateModes = [], tier = '') {
+  const baseLedger = routeEvidenceLedger(routeResult)
+  if (normalizeKey(tier) !== 'direct') {
+    return baseLedger
+  }
+  const lockedSet = new Set(
+    baseLedger
+      .filter(item => normalizeKey(item.routeEvidenceRole) === 'direct_match')
+      .map(item => normalizeKey(item.diagnosisMode || item.modeKey))
+      .filter(Boolean)
+  )
+  const additional = pestCandidateModes
+    .filter(mode => !lockedSet.has(normalizeKey(mode)))
+    .map(mode => ({
+      evidenceKey: mode,
+      symptomKey: mode,
+      diagnosisMode: mode,
+      modeKey: mode,
+      routeEvidenceRole: 'direct_match',
+      sourceType: 'visual_mode_router',
+      currentStatus: 'active',
+      suppressEquivalentQuestion: true,
+      lockedInQuestionnaire: true
+    }))
+  return [...baseLedger, ...additional]
+}
+
+function normalizeKey(value = '') {
+  return String(value || '').trim().toLowerCase()
 }
 
 function routeFixedQuestionPackageMode(routeResult = {}) {
@@ -180,7 +214,8 @@ function buildBaseResponse({
   }
 }
 
-// 为非虫害模式（如白粉病、黄叶、枯萎）构建直接结果
+// 为非虫害 visual_direct_only 模式（如白粉病）构建直接结果。
+// 固定题包模式（yellow_leaf/wilting_droop）不在此列，它们必须走问诊路径。
 function buildNonPestDirectResult({ modeKey, sessionId, round, plantContext, routeResult, aggregateResult }) {
   const entry = DIAGNOSIS_MODE_REGISTRY[modeKey] || {}
   const displayName = entry.userDisplayName || modeKey
@@ -197,7 +232,7 @@ function buildNonPestDirectResult({ modeKey, sessionId, round, plantContext, rou
       problemKey: modeKey,
       problemName: displayName,
       displayName,
-      outcomeType: 'diagnosis',
+      outcomeType: 'problematic',
       confidenceLevel: 'high'
     },
     visibleOutcomes: [
@@ -205,7 +240,7 @@ function buildNonPestDirectResult({ modeKey, sessionId, round, plantContext, rou
         modeKey,
         displayNameCn: displayName,
         displayName,
-        outcomeType: 'diagnosis'
+        outcomeType: 'problematic'
       }
     ],
     topProblem: {
@@ -255,9 +290,12 @@ async function buildPestRouteResponse({
   const base = buildBaseResponse({ sessionId, round, plantContext, routeResult, aggregateResult })
   if (action === 'direct_result') {
     const nonPestModes = candidateModes.filter(
-      mode => !Object.prototype.hasOwnProperty.call(PEST_MODE_LABELS, mode)
+      mode =>
+        !Object.prototype.hasOwnProperty.call(PEST_MODE_LABELS, mode) &&
+        isVisualDirectOnlyMode(mode)
     )
-    // 非虫害模式（白粉病等 visual_direct_only）：直接出结果
+    // 仅 visual_direct_only 非虫害模式可直接结论；
+    // 固定题包模式（yellow_leaf/wilting_droop）必须走问诊路径。
     if (nonPestModes.length && !pestCandidateModes.length) {
       return buildNonPestDirectResult({
         modeKey: nonPestModes[0],
@@ -282,7 +320,7 @@ async function buildPestRouteResponse({
       answers: [],
       questionPackage: {
         candidateModes: pestCandidateModes,
-        hiddenPrefilledEvidence: routeEvidenceLedger(routeResult),
+        hiddenPrefilledEvidence: directEvidenceLedgerForDirectResult(routeResult, pestCandidateModes, routeResult.confidenceTier),
         packageQuestions: []
       },
       probableModes,
@@ -447,6 +485,7 @@ module.exports = {
   routeModes,
   allRouteModes,
   directEvidence,
+  directEvidenceLedgerForDirectResult,
   routeEvidenceLedger,
   routeFixedQuestionPackageMode,
   buildFullCandidateFallbackResponse,
