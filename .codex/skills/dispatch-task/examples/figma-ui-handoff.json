@@ -57,13 +57,29 @@
     ]
   },
   "figma": {
+    "required": true,
     "link": "https://figma.com/design/example/file?node-id=1-2",
     "node_id": "1:2",
+    "mode": "internal_mcp",
     "lite_status": "link_only",
     "main_access": "lite_only",
     "main_tools_used": [],
     "implementer_fetch_required": true,
     "qa_baseline_fetch_required": true
+  },
+  "brv_relevance": {
+    "required": false,
+    "reason": "UI implementation example; no stable business fact recall required"
+  },
+  "feature_test_plan": {
+    "required": true,
+    "targets": ["src/pages/example/**", "src/components/example/**"],
+    "commands": ["npm run typecheck", "npm run build:mp-weixin"]
+  },
+  "e2e_plan": {
+    "required": false,
+    "automator_required": false,
+    "catalog_required": false
   },
   "required_skills": {
     "implementer": [

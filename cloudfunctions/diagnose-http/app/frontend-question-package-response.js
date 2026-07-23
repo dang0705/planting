@@ -16,6 +16,20 @@ function pickMinimalPackageQuestions(items = [], options = {}) {
         defaultOptionKey: String(item?.defaultOptionKey || '').trim(),
         defaultOptionId: String(item?.defaultOptionId || '').trim(),
         uiVariant: String(item?.uiVariant || '').trim(),
+        riskLevel: String(item?.riskLevel || '').trim(),
+        riskNotice: String(item?.riskNotice || '').trim(),
+        safetyInstructions: Array.isArray(item?.safetyInstructions)
+          ? item.safetyInstructions.map(text => String(text || '').trim()).filter(Boolean)
+          : [],
+        requiresExplicitConsent: Boolean(item?.requiresExplicitConsent),
+        skipOptionEnabled: Boolean(item?.skipOptionEnabled),
+        skipAnswerValue: String(item?.skipAnswerValue || '').trim(),
+        candidateModes: Array.isArray(item?.candidateModes)
+          ? item.candidateModes.map(text => String(text || '').trim()).filter(Boolean)
+          : [],
+        requiredEvidenceKeys: Array.isArray(item?.requiredEvidenceKeys)
+          ? item.requiredEvidenceKeys.map(text => String(text || '').trim()).filter(Boolean)
+          : [],
         text: questionText,
         helpText: String(item?.helpText || '').trim(),
         options: (Array.isArray(item?.options) ? item.options : [])
@@ -24,7 +38,16 @@ function pickMinimalPackageQuestions(items = [], options = {}) {
             optionId: String(option?.optionId || option?.optionKey || '').trim(),
             optionKey: String(option?.optionKey || option?.optionId || '').trim(),
             text: String(option?.text || option?.label || '').trim(),
-            isDefault: Boolean(option?.isDefault)
+            description: String(option?.description || option?.desc || '').trim(),
+            isDefault: Boolean(option?.isDefault),
+            answerValue: String(option?.answerValue || '').trim(),
+            mapsToModes: Array.isArray(option?.mapsToModes)
+              ? option.mapsToModes.map(text => String(text || '').trim()).filter(Boolean)
+              : [],
+            mapsToEvidenceKeys: Array.isArray(option?.mapsToEvidenceKeys)
+              ? option.mapsToEvidenceKeys.map(text => String(text || '').trim()).filter(Boolean)
+              : [],
+            value: Number(option?.value || 0)
           }))
       }
     })

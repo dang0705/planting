@@ -71,6 +71,7 @@ inclusion: always
 4. QA 不运行 unit tests；QA 负责运行时、端上、UI/Figma、E2E 和用户可观察行为验证。
 5. automator QA 必须通过 `test/e2e/automator/catalog.json` 精确选择叶子脚本，并在 LAN/DevTools/automator 前校验 automation id policy、脚本 hash 和 execution id；直接裸跑 automator 脚本只能作为排障，不能作为验收证据。
 6. dispatch-task flow 中 QA owner 为 main；main 执行 QA 不授权其修改业务代码。发现产品问题必须退回原 implementer 或 external implementer；只有经 `dispatch-task` §1.3 判定为受限 maintenance patch 的格式、lint/build、typo 或机械冲突修复，main 才可在终态后处理。
+7. `src/**` 或 `cloudfunctions/**` 文件移动、拆分或重命名时，必须同步移动对应 `test/unit/frontend/**` 或 `test/unit/backend/**` 镜像测试；frontend/backend unit 使用同一递归镜像约定：`test/unit/frontend/<src 相对目录>/...` 对应 `src/<相对目录>/...`，`test/unit/backend/<cloudfunctions 相对目录>/...` 对应 `cloudfunctions/<相对目录>/...`。unit 文件名不得使用 `test-` 前缀；无单一源目录映射或跨 `src` 与 `cloudfunctions` 的行为必须放入 `test/e2e/batch` 或 `test/e2e/automator`。
 
 ## 6. 读取边界
 
@@ -88,9 +89,9 @@ inclusion: always
 
 ## 8. BRV / ByteRover 内容边界
 
-ByteRover 的具体存取机制、Topic Schema 和操作能力由当前安装的 `ByteRover V4 Skill` 定义，本节只负责项目级内容资格和事实使用边界。
+ByteRover 的具体存取机制、Topic Schema 和操作能力由当前安装的 `ByteRover V4 Skill` 定义，严禁在系统环境中调用V3的运行时 `brv`。本节只负责项目级内容资格和事实使用边界。
 
-BRV 内容资格必须遵守本节边界。`dispatch-task` 只负责具体任务中的调用时机、结果验证、记忆影响判断和验收流程，不得放宽本节内容边界。
+BRV 内容资格必须遵守本节边界。用户已明确确认：本项目应长期记录经过当前事实源与实际验收验证的 dispatch-task 工作流契约，以及可复现、跨文件、会导致重复返工的 Automator/QA 卡点与解决方法。`dispatch-task` 负责调用时机、结果验证、记忆影响判断和验收流程；本条允许其将上述稳定工作流知识纳入 BRV，但不得把临时日志或未验证推测写入 BRV。
 
 ByteRover Topic 是长期项目知识，不是代码索引、通用知识库、执行规则仓库、项目日志、附件库或第二事实源。查询结果只能作为长期上下文和事实线索；涉及当前实现时，必须回到代码、测试、schema、配置或 package scripts 验证。
 
@@ -108,6 +109,8 @@ ByteRover Topic 是长期项目知识，不是代码索引、通用知识库、�
 - 经跨文件验证、具有重复发生风险且不容易从局部源码直接发现的 `validated_recurring_gotcha`；
 - 经跨文件验证、可在多个模块或未来功能中复用的 `validated_reusable_project_pattern`；
 - 经跨文件验证、未来任务不召回便容易误判、破坏契约或重复推导的稳定业务行为边界。
+- 用户明确采纳、经当前源码、合同和实际运行证据共同验证，并会约束后续任务的 `stable_workflow_contract`，包括 dispatch episode、主流程职责、返工与等待边界、BRV 召回/记录责任；
+- 经至少一次失败与一次修复后复现验证、且可跨任务复用的 `validated_recurring_workflow_gotcha`，包括 Automator/DevTools/QA 的卡点、根因、判定信号和已验证解决方法。
 
 候选知识只有同时满足以下条件时才允许记录：
 
@@ -122,8 +125,8 @@ ByteRover Topic 是长期项目知识，不是代码索引、通用知识库、�
 - 每次都应从当前源码确认的 code fact；
 - 仅描述当前实现位置的文件、函数、组件、路由、调用关系或 import/export 清单；
 - lint、format、style、500 行拆分、普通机械重构和依赖安装流程；
-- AGENTS.md、Skill、validator、dispatch gate 或 Handoff Contract 的规则副本；
-- 临时 bug 修复、一次性排障过程、当前 Sprint 状态、短期 TODO 和任务执行日志；
+- 仅把 AGENTS.md、Skill、validator、dispatch gate 或 Handoff Contract 原文复制成规则副本；但经用户确认并由源码、合同和运行证据共同证明的稳定工作流契约，不属于此禁项；
+- 仅描述一次性的临时 bug 修复、当前 Sprint 状态、短期 TODO 和任务执行日志；若已提炼为跨任务可复现的根因、识别信号和经验证解决方法，可按 `validated_recurring_workflow_gotcha` 记录；
 - 测试命令、测试文件索引、断言写法、覆盖率要求、mock/fixture 实现和 QA 执行步骤；
 - 通用工程知识、公开行业知识、外部文档内容或一般领域知识，除非已经被当前项目明确采纳并形成稳定项目决策或契约；
 - 整段源码、完整文档、日志、issue、会话记录、测试输出或其他未经提炼的原始材料；
@@ -131,7 +134,7 @@ ByteRover Topic 是长期项目知识，不是代码索引、通用知识库、�
 - 易变化的运行状态、临时环境值、部署状态和监控数据；
 - 未经当前事实源验证或用户明确确认的推测。
 
-代码、测试、schema、配置、package scripts 和 Active docs 可以作为 Topic 的来源证据，但来源文件本身的存在、路径或实现方式不得成为录入理由。录入理由必须是这些来源共同证明了允许范围内的稳定项目知识。
+代码、测试、schema、配置、package scripts、Active docs 和实际端上验收可以作为 Topic 的来源证据，但来源文件本身的存在、路径或实现方式不得成为录入理由。录入理由必须是这些来源共同证明了允许范围内的稳定项目知识。不得录入凭据、原始日志、临时执行 ID、PID、一次性时间戳、缓存内容或未经复核的模型推测。
 
 ### BRV 治理例外
 

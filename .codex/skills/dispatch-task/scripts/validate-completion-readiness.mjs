@@ -2,6 +2,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { spawnSync } from 'node:child_process'
 
 const [handoffFile, implementationResultFile, postflightReportFile, runtimeQaEvidenceFile] =
   process.argv.slice(2)
@@ -38,6 +39,7 @@ const normalizeFsPath = value => {
   return path.resolve(String(value)).replaceAll('\\', '/').replace(/\/+$/, '')
 }
 const repoRoot = path.resolve(fileURLToPath(new URL('../../../..', import.meta.url)))
+const automatorCatalogPath = path.join(repoRoot, 'test', 'e2e', 'automator', 'catalog.json')
 const externalContract = handoff.external_contract ?? handoff.zcode_contract ?? {}
 const externalProvider =
   externalContract.provider ||
@@ -88,6 +90,35 @@ const validateAutomatorProjectPath = (actualPath, label) => {
 const blockers = impl.deviations_or_blockers ?? impl.blockers ?? []
 const mode = handoff.implementation_mode ?? 'codex_subagent'
 const codeChanges = handoff?.task?.code_changes_required === true
+const resultRole =
+  mode === 'codex_subagent'
+    ? 'implementer'
+    : mode === 'zcode_external' || mode === 'external_implementer'
+      ? 'external'
+      : null
+
+if (codeChanges && resultRole) {
+  const validator = path.join(
+    repoRoot,
+    '.codex',
+    'skills',
+    'dispatch-task',
+    'scripts',
+    'validate-result.mjs'
+  )
+  const checked = spawnSync(
+    process.execPath,
+    [validator, resultRole, handoffFile, implementationResultFile],
+    {
+      cwd: repoRoot,
+      encoding: 'utf8'
+    }
+  )
+  need(
+    checked.status === 0,
+    `implementation result contract validation failed before Completion Gate: ${checked.stderr || checked.stdout}`
+  )
+}
 
 need(
   impl.status === 'completed',
@@ -309,6 +340,71 @@ if (runtimeQa) {
       nonEmptyString(runtimeQa.script_sha256) && /^[a-f0-9]{64}$/i.test(runtimeQa.script_sha256),
       'automator_required requires runtime-qa-evidence.script_sha256'
     )
+    need(
+      nonEmptyString(runtimeQa.script) || nonEmptyString(runtimeQa.script_path),
+      'automator_required requires exact E2E script path evidence'
+    )
+    need(
+      nonEmptyString(runtimeQa.qa_run_execution_record),
+      'automator_required requires runtime-qa-evidence.qa_run_execution_record'
+    )
+    if (nonEmptyString(runtimeQa.qa_run_execution_record)) {
+      const recordPath = path.resolve(runtimeQa.qa_run_execution_record)
+      need(
+        fs.existsSync(recordPath),
+        `qa_run_execution_record does not exist: ${runtimeQa.qa_run_execution_record}`
+      )
+      if (fs.existsSync(recordPath)) {
+        const record = readJson(recordPath)
+        need(
+          record.catalog_id === runtimeQa.catalog_id,
+          'qa_run_execution_record catalog_id must match runtime evidence'
+        )
+        need(
+          record.execution_id === runtimeQa.execution_id,
+          'qa_run_execution_record execution_id must match runtime evidence'
+        )
+        need(
+          record.script_sha256 === runtimeQa.script_sha256,
+          'qa_run_execution_record script_sha256 must match runtime evidence'
+        )
+        need(
+          record.status === 'passed',
+          'qa_run_execution_record status must be passed for automator acceptance'
+        )
+        need(
+          record.preflight?.status === 'passed',
+          'qa_run_execution_record must contain a passed qa preflight before automator acceptance'
+        )
+        need(
+          record.frozen_script_sha256 === runtimeQa.script_sha256,
+          'qa_run_execution_record frozen_script_sha256 must match runtime evidence'
+        )
+        need(
+          record.observed_script_sha256_after_run === runtimeQa.script_sha256,
+          'qa_run_execution_record must prove the frozen hash survived the live attempt'
+        )
+      }
+    }
+    if (fs.existsSync(automatorCatalogPath) && nonEmptyString(runtimeQa.catalog_id)) {
+      const catalog = readJson(automatorCatalogPath)
+      const entry = (catalog.entries ?? []).find(item => item.id === runtimeQa.catalog_id)
+      need(
+        !!entry,
+        `runtime-qa-evidence.catalog_id not found in automator catalog: ${runtimeQa.catalog_id}`
+      )
+      if (entry) {
+        const expectedScript = entry.leaf_script ?? entry.script
+        need(
+          [runtimeQa.script, runtimeQa.script_path].filter(nonEmptyString).includes(expectedScript),
+          `runtime-qa-evidence script must match catalog leaf script: ${expectedScript}`
+        )
+        need(
+          entry.script_sha256 === runtimeQa.script_sha256,
+          'runtime-qa-evidence script_sha256 must match catalog script_sha256'
+        )
+      }
+    }
     validateAutomatorProjectPath(runtimeQa.projectPath, 'runtime-qa-evidence.projectPath')
     need(nonEmptyString(runtimeQa.pagePath), 'runtime-qa-evidence.pagePath is required')
     const hasPort =
@@ -322,6 +418,18 @@ if (runtimeQa) {
   if (runtimeAcceptanceMode === 'batch_substitute_allowed') {
     need(runtimeQa.channel === 'batch', 'batch_substitute_allowed requires channel=batch')
     need(
+      !nonEmptyString(runtimeQa.catalog_id),
+      'batch substitute must not include automator catalog_id'
+    )
+    need(
+      !nonEmptyString(runtimeQa.execution_id),
+      'batch substitute must not include automator execution_id'
+    )
+    need(
+      !nonEmptyString(runtimeQa.script_sha256),
+      'batch substitute must not include automator script_sha256'
+    )
+    need(
       nonEmptyString(runtimeQa.user_approval_ref) &&
         runtimeQa.user_approval_ref === handoff?.validation?.batch_substitute_user_approval_ref,
       'batch substitute requires matching user_approval_ref'
@@ -333,6 +441,15 @@ if (runtimeQa) {
   }
   if (runtimeAcceptanceMode === 'batch_only') {
     need(runtimeQa.channel === 'batch', 'batch_only requires channel=batch')
+    need(!nonEmptyString(runtimeQa.catalog_id), 'batch_only must not include automator catalog_id')
+    need(
+      !nonEmptyString(runtimeQa.execution_id),
+      'batch_only must not include automator execution_id'
+    )
+    need(
+      !nonEmptyString(runtimeQa.script_sha256),
+      'batch_only must not include automator script_sha256'
+    )
   }
   need(
     runtimeQa.status === 'passed',

@@ -38,8 +38,14 @@ npm run dev:mp-weixin:local-functions:lan
 
 dispatch-task flow 中，真实 automator 脚本必须先通过
 `.codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs qa-run` 选择
-`test/e2e/automator/catalog.json` 中的精确叶子，并校验 automation id policy、脚本 hash 与
-execution id。直接执行 `node test/e2e/automator/...` 只能作为排障，不能作为端上验收通过证据。
+`test/e2e/automator/catalog.json` 中的精确叶子，并校验 automation id policy、脚本 hash、
+execution id 与 qa-run execution record。直接执行 `node test/e2e/automator/...` 只能作为排障，不能作为端上验收通过证据；排障结果不能写入 automator_required 的 `runtime-qa-evidence.json`。
+
+main 进入 live `qa-run` 时，还必须传入已观察到的 target `projectPath` 和只读 `wx.request` probe URL。qa-run 会在叶子脚本前保存 project/LAN/9420/WS/page data/截图/`wx.request` preflight；它会冻结脚本 hash、串行锁定 9420，并把每次 live execution 收口为 `passed`、`failed_environment`、`failed_product`、`failed_script` 或 `aborted`。实现者只能运行 deterministic dry-run，不能把 qa-run 的 live 路径当作实现阶段验证。
+
+preflight 的 `connect`、`currentPage`、`page.data`、`screenshot`、每次 runtime `evaluate` 与 `disconnect` 都必须有独立 deadline，并将 step、code、timeout 与耗时写入 execution evidence；整个 capture 也必须有总 deadline。超时后的 `disconnect` 仍要在独立有界 deadline 内执行，不能因一个挂起 RPC 遗留 automator session。已证明为唯一 target 项目的前提下，只有截图或 transport timeout 才可触发一次 target-only recovery；其他 preflight failure 直接终态化。叶子脚本若输出结构化 JSON report，qa-run 必须保存 raw report artifact：断言/产品 failure 归 `failed_product`，transport/RPC/timeout 归 `failed_environment`，malformed report 归 `failed_script`。
+
+已终态的失败记录若因旧分类规则归因错误，只能使用 `qa-reconcile --dispatch-run-id=<id> --execution-id=<id>` 从既有 `raw_report_ref` 重算失败类型。该动作必须保留 prior status/classification history，只更新 failure classification metadata；不得把记录变为 passed，也不得重置 frozen hash 或 live-attempt budget。
 
 ## 3. projectPath 合同
 
@@ -71,7 +77,7 @@ Web/云端 external implementer 特例：
 
 必须先判定项目，再判定端口：
 
-1. 先读取当前活跃 DevTools 进程的 PID、IDE 控制端口和当前加载项目路径，确认当前项目是否为本轮目标项目（以 Contract 的 expected `projectPath` 为准）。项目路径未知时不得猜测，先阻断并保留原进程。
+1. 先读取当前活跃 DevTools 进程的 PID、IDE 控制端口和当前加载项目路径，确认当前项目是否为本轮目标项目（以 Contract 的 expected `projectPath` 为准）。常规证据为同一 `9420` listener 祖先链的 `--project` / 已打开的 `project.config.json`。若二者均不可得，只能读取该 main 进程 `--user-data-dir` 下 `WeappLog/logs/*-<--app-session-id>.log`：同一 session 的近期 `AUTO` 必须精确为 port `9420` 和目标路径，且同 session 的近期 `FileUtils` 也必须精确为目标路径；记录 source、相对文件名和每条记录时间。session id、端口、路径不符或过期日志一律拒绝。项目路径仍未知时不得猜测，先阻断并保留原进程。
 2. 当前项目是目标项目时：已监听 `9420` 就直接连接；未监听 `9420` 或监听其他端口，就复用同一 DevTools 进程，通过现有 IDE 控制通道切换/启用 `9420`。切换前后必须核对 PID 和项目路径未变，分别记录 `reused_existing_devtools_process` 或 `reused_process_reconfigured_port_9420`。
 3. 当前项目不是目标项目时，保留原项目进程，另开目标项目 DevTools 进程，记录 `opened_new_devtools_process` 及原因。
 4. 没有活跃 DevTools 进程时，才允许首次打开目标项目并启用 `9420`。
@@ -91,18 +97,18 @@ ls -la <projectPath>/project.config.json
 
 默认禁止为了“干净基线”执行 `pkill`、完整重启、全量清缓存或清登录态。
 
-`cli auto` 只有在已证明同一目标项目进程会被复用时才可使用；执行前后必须核对 PID 和项目路径不变。若无法证明复用，当前项目是目标项目时必须阻断，不得继续。
+`cli auto` 只有在已证明同一目标项目进程会被复用时才可使用；`--port` 是 IDE 控制端口，不是 automator `9420`。不得虚构或传入 `--auto-port`。若当前目标项目的截图 RPC 失效，只有先从 `9420` listener 的进程祖先链证明 main DevTools PID、真实 `--remote-port` 控制端口和唯一目标 projectPath，才可按 `close -> open -> auto` 对同一 `--project` 做一次受控恢复；唯一目标路径可使用上述严格同 session WeappLog 证明，不能使用任意历史日志。前后必须记录 main PID、9420 listener PID、控制端口、projectPath、身份证据 source / file / timestamp、每次 CLI 调用及截图 / `wx.request` 重试结果。未证明 runtime 已重启时必须以 `devtools_automator_blocker` 失败，不得把单独 `cli auto` 记为重启。
 
 只有用户明确同意，或已经证明没有可复用目标项目进程且 required item 必须端上执行时，才允许用 CLI 拉起 automator：
 
 ```bash
 /Applications/wechatwebdevtools.app/Contents/MacOS/cli auto \
   --project <projectPath> \
-  --auto-port 9420 \
+  --port <verifiedDevToolsControlPort> \
   --trust-project
 ```
 
-新开进程必须记录原因、副作用、登录态 / 授权态风险和 raw error；复用进程改端口必须记录改动前后的 PID、项目路径、端口和控制通道证据。无法证明同一进程时不得把结果标记为 reused。
+新开进程必须记录原因、副作用、登录态 / 授权态风险和 raw error；复用进程改端口必须记录改动前后的 PID、项目路径、9420 listener、真实控制端口和控制通道证据。无法证明同一进程时不得把结果标记为 reused。
 
 ## 6. 原始 WebSocket 探活
 
@@ -145,7 +151,7 @@ const automator = require('miniprogram-automator')
 5. `page.$(selector)` / `page.$$(selector)`
 6. `element.text()` / `element.attribute(name)` / `element.tap()`
 7. `page.data(path?)` / `page.setData(data)` / `page.callMethod(method, ...args)`
-8. `miniProgram.evaluate(() => new Promise(resolve => wx.request(...)))`
+8. `miniProgram.evaluate` 只用于在 runtime 内创建 `wx.request` 状态槽、启动请求、轮询槽和清理槽；不得依赖 App.callFunction await `Promise(resolve => wx.request(...))`，该调用可能直接返回 `null`。三个回调必须是保守 ES5 `function (...) {}`，slot/url 分开传参，禁止解构、展开、箭头、可选链、空值合并、`const` 与 `let`；轮询必须有界，并记录 statusCode / error / timeout / cleanup。
 
 接口验收必须在小程序运行时用 `wx.request` 发起，Node 直接 HTTP、curl、local gateway smoke 只能作为后端 smoke。
 
@@ -195,7 +201,7 @@ not_verified
 3. `projectPath` 不符合本轮 Contract 允许的工作区产物：
    - 普通本地任务应为主工作区 `dist/dev/mp-weixin`
    - Web/云端 external implementer + automator 验收应为 `<planned_worktree_path>/dist/dev/mp-weixin`
-   以上任一不满足都归类为 `devtools_configuration_blocker`。
+     以上任一不满足都归类为 `devtools_configuration_blocker`。
 4. automator 已通且 Test Contract required item 失败：按实际断言归为 `product_blocker`。
 
 ## 10. 输出建议

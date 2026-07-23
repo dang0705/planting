@@ -75,6 +75,26 @@
     "architecture_invariants": ["不修改数据库 schema", "不修改 CloudBase 权限模型"],
     "local_decisions_allowed": ["局部实现细节", "允许的文件内重构"]
   },
+  "brv_relevance": {
+    "required": false,
+    "reason": "external runtime example; no BRV content required"
+  },
+  "figma": {
+    "required": false,
+    "link": "",
+    "mode": "external_prompt_recovery"
+  },
+  "feature_test_plan": {
+    "required": true,
+    "targets": ["src/pages/watering-advisor/**", "cloudfunctions/layer/utils/transpiration.js"],
+    "commands": ["npm run test:e2e"]
+  },
+  "e2e_plan": {
+    "required": true,
+    "automator_required": true,
+    "catalog_required": true,
+    "catalog_candidates": ["care.watering.transpiration_v3.independent_advice"]
+  },
   "validation": {
     "miniprogram_automator_required": true,
     "runtime_acceptance_mode": "automator_required",

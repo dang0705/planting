@@ -16767,17 +16767,6 @@ async function readRegistry() {
     `[byterover] Expected object root in ${bindingsPath()}, got ${parsed === null ? "null" : Array.isArray(parsed) ? "array" : typeof parsed}`
   ), emptyRegistry()) : normalizeRegistryDocument(parsed);
 }
-async function removeBinding(folder) {
-  let canonicalFolder = resolve3(folder);
-  await mutateRegistry((reg) => {
-    let activeIdx = reg.bindings.findIndex(
-      (b) => b.folder === canonicalFolder && b.removedAt === void 0
-    );
-    if (activeIdx < 0) return;
-    let existing = reg.bindings[activeIdx];
-    existing && (existing.removedAt = (/* @__PURE__ */ new Date()).toISOString());
-  });
-}
 async function findBindingForCwd(cwd) {
   let canonicalCwd = resolve3(cwd), reg = await readRegistry(), best = null;
   for (let b of reg.bindings)
@@ -16968,7 +16957,7 @@ function parseMarker(content) {
 
 // ../../packages/core/src/tree/space-resolver.ts
 import { randomUUID } from "node:crypto";
-import { access, mkdir as mkdir4, readFile as readFile8, rm as rm7 } from "node:fs/promises";
+import { access, mkdir as mkdir4, readFile as readFile8 } from "node:fs/promises";
 import { dirname as dirname5, join as join10, resolve as resolve4 } from "node:path";
 var DEFAULT_SPACE_DISPLAY_NAME = "Personal", NoDefaultSpaceError = class extends Error {
   constructor() {
@@ -17003,32 +16992,6 @@ async function checkDeleted(space_id) {
   let deletion = await isSpaceDeleted(space_id);
   return deletion.deleted ? { deleted: { hard: deletion.hard } } : {};
 }
-async function spaceDirExists(space_id) {
-  try {
-    return await access(join10(getProjectsDir(), space_id)), !0;
-  } catch {
-    return !1;
-  }
-}
-var MAX_HEAL_PASSES = 16;
-async function resolveSpaceClearingOrphans(cwd = process.cwd()) {
-  for (let pass = 0; pass < MAX_HEAL_PASSES; pass++) {
-    let resolution = await resolveSpace(cwd);
-    if (resolution.deleted !== void 0) return resolution;
-    if (resolution.source === "marker") {
-      if (await spaceDirExists(resolution.space_id)) return resolution;
-      await rm7(resolution.markerPath, { force: !0 });
-      continue;
-    }
-    if (resolution.source === "registry") {
-      if (await spaceDirExists(resolution.space_id)) return resolution;
-      await removeBinding(resolution.bindingFolder);
-      continue;
-    }
-    return resolution;
-  }
-  return resolveSpace(cwd);
-}
 async function findMarker(startDir) {
   let dir = startDir;
   for (; ; ) {
@@ -17060,7 +17023,7 @@ async function ensureContextRoot(baseDir = process.cwd(), opts) {
   if (opts?.space_id !== void 0)
     return ensureSpaceDir(opts.space_id, opts.displayName);
   try {
-    let resolution = await resolveSpaceClearingOrphans(baseDir), root = spaceContextTreePath(resolution.space_id);
+    let resolution = await resolveSpace(baseDir), root = spaceContextTreePath(resolution.space_id);
     return await mkdir4(root, { recursive: !0 }), root;
   } catch (err) {
     if (err instanceof NoDefaultSpaceError) {
@@ -20480,7 +20443,7 @@ import {
   readFile as readFile9,
   readdir as readdir4,
   rename as rename4,
-  rm as rm8,
+  rm as rm7,
   writeFile as writeFile5
 } from "node:fs/promises";
 import { join as join12 } from "node:path";
@@ -20518,13 +20481,6 @@ async function writeIntentFile(dir, intent) {
     mode: 384
   }), await rename4(tmpPath, finalPath);
 }
-async function hasDeleteIntents(syncDir) {
-  try {
-    return (await readdir4(intentsDir(syncDir))).some((name) => name.endsWith(".json"));
-  } catch {
-    return !1;
-  }
-}
 async function readDeleteIntents(syncDir, opts) {
   let now = opts?.now ?? /* @__PURE__ */ new Date(), dir = intentsDir(syncDir), entries;
   try {
@@ -20541,7 +20497,7 @@ async function readDeleteIntents(syncDir, opts) {
     } catch {
       parsed = null;
     }
-    parsed ? result.push(parsed) : await rm8(filePath, { force: !0 }).catch(() => {
+    parsed ? result.push(parsed) : await rm7(filePath, { force: !0 }).catch(() => {
     });
   }
   return result;
@@ -20560,13 +20516,13 @@ async function recordDeleteIntent(input) {
   return await writeIntentFile(dir, intent), intent;
 }
 async function consumeDeleteIntent(syncDir, intentId) {
-  await rm8(join12(intentsDir(syncDir), `${intentId}.json`), {
+  await rm7(join12(intentsDir(syncDir), `${intentId}.json`), {
     force: !0
   }).catch(() => {
   });
 }
 async function clearDeleteIntents(syncDir) {
-  await rm8(intentsDir(syncDir), { recursive: !0, force: !0 }).catch(
+  await rm7(intentsDir(syncDir), { recursive: !0, force: !0 }).catch(
     () => {
     }
   );
@@ -20604,7 +20560,7 @@ function planBidirectional(inputs, localDeletePolicy, suppressRestoreForKeys, fo
   for (let key of [...keys].sort()) {
     let L = local.get(key), R = remote.get(key), B = baseline[key];
     if (forceDeleteKeys.has(key)) {
-      !L && R ? actions.push({ kind: "delete-remote", key, reason: "forced-delete" }) : L && actions.push({ kind: "delete-local", key, forced: !0 });
+      L && actions.push({ kind: "delete-local", key, forced: !0 });
       continue;
     }
     if (L && R) {
@@ -20684,7 +20640,7 @@ async function runWithConcurrency(items, limit, worker) {
 
 // ../../packages/sync/src/move-intent.ts
 import { createHash as createHash4, randomUUID as randomUUID4 } from "node:crypto";
-import { chmod as chmod4, mkdir as mkdir6, readFile as readFile10, readdir as readdir5, rename as rename5, rm as rm9, writeFile as writeFile6 } from "node:fs/promises";
+import { chmod as chmod4, mkdir as mkdir6, readFile as readFile10, readdir as readdir5, rename as rename5, rm as rm8, writeFile as writeFile6 } from "node:fs/promises";
 import { join as join13 } from "node:path";
 
 // ../../packages/sync/src/sync-key.ts
@@ -20787,13 +20743,6 @@ function parseIntent2(raw, now) {
 function intentsDir2(syncDir) {
   return join13(syncDir, MOVE_INTENTS_DIR);
 }
-async function hasMoveIntents(syncDir) {
-  try {
-    return (await readdir5(intentsDir2(syncDir))).some((name) => name.endsWith(".json"));
-  } catch {
-    return !1;
-  }
-}
 function serialiseIntent(intent) {
   return {
     ...intent,
@@ -20852,7 +20801,7 @@ async function readMoveIntents(syncDir, opts) {
     } catch {
       parsed = null;
     }
-    parsed ? result.push(parsed) : await rm9(filePath, { force: !0 }).catch(() => {
+    parsed ? result.push(parsed) : await rm8(filePath, { force: !0 }).catch(() => {
     });
   }
   for (let entry of await readLegacyFileRaw(syncDir)) {
@@ -20860,7 +20809,7 @@ async function readMoveIntents(syncDir, opts) {
     parsed && !result.some((intent) => intent.id === parsed.id) && (result.push(parsed), opts?.compact && await writeIntentFile2(dir, parsed).catch(() => {
     }));
   }
-  return opts?.compact && await rm9(join13(syncDir, "move-intents.json"), { force: !0 }).catch(() => {
+  return opts?.compact && await rm8(join13(syncDir, "move-intents.json"), { force: !0 }).catch(() => {
   }), result;
 }
 async function recordMoveIntent(input) {
@@ -20889,7 +20838,7 @@ async function recordMoveIntent(input) {
   return await writeIntentFile2(intentsDir2(syncDir), intent), intent;
 }
 async function consumeMoveIntent(syncDir, intentId) {
-  await rm9(join13(intentsDir2(syncDir), `${intentId}.json`), {
+  await rm8(join13(intentsDir2(syncDir), `${intentId}.json`), {
     force: !0
   }).catch(() => {
   });
@@ -20898,8 +20847,8 @@ async function dropInvalidMoveIntent(syncDir, intentId) {
   await consumeMoveIntent(syncDir, intentId);
 }
 async function clearMoveIntents(syncDir) {
-  await rm9(intentsDir2(syncDir), { recursive: !0, force: !0 }).catch(() => {
-  }), await rm9(join13(syncDir, "move-intents.json"), { force: !0 }).catch(() => {
+  await rm8(intentsDir2(syncDir), { recursive: !0, force: !0 }).catch(() => {
+  }), await rm8(join13(syncDir, "move-intents.json"), { force: !0 }).catch(() => {
   });
 }
 
@@ -20957,15 +20906,6 @@ var BASELINE_KEY = "baseline", BASELINE_REVISION_KEY = "baselineRevision", STATU
   }
   async clearDeleteIntents() {
     await clearDeleteIntents(this.syncDir);
-  }
-  /**
-   * Cheap pending-intent probe (readdir-only, no JSON parse). The scheduled
-   * poll calls this every cycle to decide whether to escalate from the
-   * delta-only catch-up path to a full reconcile — only the full reconcile
-   * drains intents to the server.
-   */
-  async hasPendingIntents() {
-    return await hasDeleteIntents(this.syncDir) || await hasMoveIntents(this.syncDir);
   }
 };
 
@@ -21171,7 +21111,7 @@ function nextPollDelay(input) {
 
 // ../../packages/sync/src/fast-sync/bootstrap.ts
 var import_realtime_contracts3 = __toESM(require_realtime_contracts());
-import { rm as rm10 } from "node:fs/promises";
+import { rm as rm9 } from "node:fs/promises";
 async function tryFastBootstrap(input) {
   if (!input.enabled)
     return { kind: "disabled" };
@@ -21291,7 +21231,7 @@ async function tryFastBootstrap(input) {
       toRev: bootstrapValue.currentRevision
     }
   }), changes.kind === "fallback_required")
-    return await rm10(extracted.stagingPath, { recursive: !0, force: !0 }), changes.fallback === "legacy" ? {
+    return await rm9(extracted.stagingPath, { recursive: !0, force: !0 }), changes.fallback === "legacy" ? {
       kind: "legacy_allowed",
       reason: "backend_legacy_allowed"
     } : changes.fallback === "retry_bootstrap" ? {
@@ -21323,12 +21263,12 @@ async function tryFastBootstrap(input) {
   });
   let deltaResult = stagedRevisionResult.value;
   if (deltaResult.stagedRevision !== bootstrapValue.currentRevision)
-    return await rm10(extracted.stagingPath, { recursive: !0, force: !0 }), {
+    return await rm9(extracted.stagingPath, { recursive: !0, force: !0 }), {
       kind: "fatal_blocked",
       reason: "revision_gap"
     };
   if (input.shouldCancel?.())
-    return await rm10(extracted.stagingPath, { recursive: !0, force: !0 }), { kind: "cancelled", reason: "worker_revoked" };
+    return await rm9(extracted.stagingPath, { recursive: !0, force: !0 }), { kind: "cancelled", reason: "worker_revoked" };
   input.emitStatus?.(status("snapshot", "promoting"));
   let promoteResult = await timed(
     input,
@@ -21390,7 +21330,7 @@ import { mkdtemp } from "node:fs/promises";
 import { join as join17 } from "node:path";
 
 // ../../packages/sync/src/fast-sync/delta-apply.ts
-import { mkdir as mkdir7, rm as rm11 } from "node:fs/promises";
+import { mkdir as mkdir7, rm as rm10 } from "node:fs/promises";
 import { createHash as createHash5 } from "node:crypto";
 import { dirname as dirname7, join as join14 } from "node:path";
 
@@ -21418,7 +21358,7 @@ async function applyRevisionRecordsToStaging(input) {
       };
     } else if (record.op === "delete") {
       let key = (0, import_realtime_contracts4.assertSafeTarEntryName)(record.key);
-      await rm11(join14(input.stagingPath, key), { force: !0 }), delete nextBaseline[key];
+      await rm10(join14(input.stagingPath, key), { force: !0 }), delete nextBaseline[key];
     } else {
       if ([...record.deletedKeys].sort((a, b) => a.localeCompare(b)).join(`
 `) !== record.deletedKeys.join(`
@@ -21426,7 +21366,7 @@ async function applyRevisionRecordsToStaging(input) {
         throw new Error("deletedKeys must be sorted");
       for (let key of record.deletedKeys) {
         let safeKey = (0, import_realtime_contracts4.assertSafeTarEntryName)(key);
-        await rm11(join14(input.stagingPath, safeKey), { force: !0 }), delete nextBaseline[safeKey];
+        await rm10(join14(input.stagingPath, safeKey), { force: !0 }), delete nextBaseline[safeKey];
       }
     }
     stagedRevision = record.rev;
@@ -21497,38 +21437,38 @@ async function extractSnapshotBundle(input) {
 }
 
 // ../../packages/sync/src/fast-sync/promote-transaction.ts
-import { mkdir as mkdir9, readdir as readdir6, readFile as readFile11, rename as rename6, rm as rm12, stat as stat4 } from "node:fs/promises";
+import { mkdir as mkdir9, readdir as readdir6, readFile as readFile11, rename as rename6, rm as rm11, stat as stat4 } from "node:fs/promises";
 import { dirname as dirname9, join as join16 } from "node:path";
 async function promoteSnapshotTree(input) {
   await mkdir9(input.syncDir, { recursive: !0 });
   let markerPath = join16(input.syncDir, "bootstrap-transaction.json"), backupPath = join16(input.syncDir, "bootstrap-target-backup");
   if (await writeMarker2(markerPath, input, "prepared"), await mkdir9(dirname9(input.targetPath), { recursive: !0 }), !input.allowReplaceExisting && await nonEmpty2(input.targetPath))
     throw new Error("target tree is not empty");
-  await rm12(backupPath, { recursive: !0, force: !0 }), await exists(input.targetPath) && (await writeMarker2(markerPath, input, "backing_up_target"), await rename6(input.targetPath, backupPath)), await writeMarker2(markerPath, input, "promoting_tree"), await rename6(input.stagingPath, input.targetPath), await writeMarker2(markerPath, input, "writing_baseline");
+  await rm11(backupPath, { recursive: !0, force: !0 }), await exists(input.targetPath) && (await writeMarker2(markerPath, input, "backing_up_target"), await rename6(input.targetPath, backupPath)), await writeMarker2(markerPath, input, "promoting_tree"), await rename6(input.stagingPath, input.targetPath), await writeMarker2(markerPath, input, "writing_baseline");
   let state = new SyncState(input.syncDir);
-  await state.setBaseline(input.baseline), await state.setBaselineRevision(input.targetRevision), await writeMarker2(markerPath, input, "ready"), await rm12(backupPath, { recursive: !0, force: !0 }), await rm12(markerPath, { force: !0 });
+  await state.setBaseline(input.baseline), await state.setBaselineRevision(input.targetRevision), await writeMarker2(markerPath, input, "ready"), await rm11(backupPath, { recursive: !0, force: !0 }), await rm11(markerPath, { force: !0 });
 }
 async function recoverPromoteTransaction(syncDir) {
   let markerPath = join16(syncDir, "bootstrap-transaction.json");
   if (!await exists(markerPath)) return;
   let marker = JSON.parse(await readFile11(markerPath, "utf8"));
   if (marker.phase === "prepared" || marker.phase === "backing_up_target") {
-    !await exists(marker.targetPath) && await exists(marker.backupPath) && await rename6(marker.backupPath, marker.targetPath), await rm12(marker.stagingPath, { recursive: !0, force: !0 }), await rm12(marker.backupPath, { recursive: !0, force: !0 }), await rm12(markerPath, { force: !0 });
+    !await exists(marker.targetPath) && await exists(marker.backupPath) && await rename6(marker.backupPath, marker.targetPath), await rm11(marker.stagingPath, { recursive: !0, force: !0 }), await rm11(marker.backupPath, { recursive: !0, force: !0 }), await rm11(markerPath, { force: !0 });
     return;
   }
   if (marker.phase === "promoting_tree" && !await exists(marker.targetPath)) {
     if (await exists(marker.stagingPath))
       await rename6(marker.stagingPath, marker.targetPath);
     else if (await exists(marker.backupPath)) {
-      await rename6(marker.backupPath, marker.targetPath), await rm12(markerPath, { force: !0 });
+      await rename6(marker.backupPath, marker.targetPath), await rm11(markerPath, { force: !0 });
       return;
     }
   }
   if (marker.phase === "promoting_tree" || marker.phase === "writing_baseline" || marker.phase === "ready") {
     let state = new SyncState(syncDir);
-    await state.setBaseline(marker.baseline), await state.setBaselineRevision(marker.targetRevision), await rm12(marker.backupPath, { recursive: !0, force: !0 });
+    await state.setBaseline(marker.baseline), await state.setBaselineRevision(marker.targetRevision), await rm11(marker.backupPath, { recursive: !0, force: !0 });
   }
-  await rm12(markerPath, { force: !0 });
+  await rm11(markerPath, { force: !0 });
 }
 async function writeMarker2(markerPath, input, phase) {
   await writeFileAtomic(
@@ -22530,10 +22470,6 @@ function createSyncEngine(inputConfig, deps = {}) {
     await doReconcileOnce(snapshot.files), await state.setBaselineRevision(snapshot.rev);
   }
   async function runCatchUp() {
-    if (await state.hasPendingIntents()) {
-      await doReconcileOnce();
-      return;
-    }
     let rev = await state.getBaselineRevision();
     if (rev === null) {
       await doReconcileOnce();
@@ -23218,15 +23154,7 @@ function createSyncEngine(inputConfig, deps = {}) {
       progressKind: void 0
     });
   }
-  return {
-    reconcileOnce,
-    catchUp,
-    start,
-    stop,
-    status: status2,
-    setToken,
-    on: on2
-  };
+  return { reconcileOnce, start, stop, status: status2, setToken, on: on2 };
 }
 
 // ../../packages/sync/src/daemon-auth-store.ts
@@ -23236,7 +23164,7 @@ import {
   createHash as createHash7,
   randomBytes as randomBytes3
 } from "node:crypto";
-import { chmod as chmod5, mkdir as mkdir11, readFile as readFile12, rename as rename7, writeFile as writeFile7, rm as rm13 } from "node:fs/promises";
+import { chmod as chmod5, mkdir as mkdir11, readFile as readFile12, rename as rename7, writeFile as writeFile7, rm as rm12 } from "node:fs/promises";
 import { basename as basename2, dirname as dirname10, join as join18 } from "node:path";
 var DAEMON_AUTH_KEY_BYTES = 32, DAEMON_AUTH_IV_BYTES = 12, DAEMON_AUTH_KEY_FILENAME = "daemon-auth.key";
 function daemonAuthPath(projectsRoot) {
@@ -23379,7 +23307,7 @@ async function writeDaemonAuth(path, record) {
 }
 async function clearDaemonAuthIfFingerprint(path, fingerprint2) {
   let current = await readDaemonAuth(path);
-  return !current || current.tokenFingerprint !== fingerprint2 ? !1 : (await rm13(path, { force: !0 }), !0);
+  return !current || current.tokenFingerprint !== fingerprint2 ? !1 : (await rm12(path, { force: !0 }), !0);
 }
 
 // ../../packages/sync/src/daemon-status.ts
@@ -24270,11 +24198,11 @@ function syncModeForSpace(mint, teamId, spaceId) {
 }
 
 // src/sync/device-flow.ts
-import { chmod as chmod8, mkdir as mkdir15, readFile as readFile18, rename as rename9, rm as rm15, writeFile as writeFile10 } from "node:fs/promises";
+import { chmod as chmod8, mkdir as mkdir15, readFile as readFile18, rename as rename9, rm as rm14, writeFile as writeFile10 } from "node:fs/promises";
 import { dirname as dirname12, join as join26 } from "node:path";
 
 // src/sync/pidfile.ts
-import { chmod as chmod7, mkdir as mkdir14, open as open3, readFile as readFile17, rm as rm14 } from "node:fs/promises";
+import { chmod as chmod7, mkdir as mkdir14, open as open3, readFile as readFile17, rm as rm13 } from "node:fs/promises";
 import { join as join22 } from "node:path";
 var FILE = "daemon.pid";
 async function readPid(daemonDir2) {
@@ -24298,7 +24226,7 @@ async function readPid(daemonDir2) {
   }
 }
 async function removePid(daemonDir2) {
-  await rm14(join22(daemonDir2, FILE), { force: !0 });
+  await rm13(join22(daemonDir2, FILE), { force: !0 });
 }
 function isAlive(pid) {
   try {
@@ -24506,7 +24434,7 @@ function deviceFlowStatePath(projectsRoot) {
   return join26(projectsRoot, ".daemon", "device-flow.json");
 }
 async function abortPendingDeviceFlow(projectsRoot) {
-  await rm15(deviceFlowStatePath(projectsRoot), { force: !0 });
+  await rm14(deviceFlowStatePath(projectsRoot), { force: !0 });
 }
 
 // src/sync/auth-actions.ts
@@ -24653,7 +24581,7 @@ function redactNullable(value2) {
 
 // src/sync/readiness.ts
 import { constants } from "node:fs";
-import { chmod as chmod10, mkdir as mkdir17, open as open4, readFile as readFile20, rm as rm16, writeFile as writeFile12 } from "node:fs/promises";
+import { chmod as chmod10, mkdir as mkdir17, open as open4, readFile as readFile20, rm as rm15, writeFile as writeFile12 } from "node:fs/promises";
 var MAX_DAEMON_READY_JSON_BYTES = 64 * 1024;
 async function readDaemonReadyJson(path) {
   let file = null;

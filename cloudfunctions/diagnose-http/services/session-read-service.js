@@ -1,17 +1,12 @@
 'use strict'
 
-const {
-  fromProblemId,
-  toResultId
-} = require('../mappers/public-id-mapper')
+const { fromProblemId, toResultId } = require('../mappers/public-id-mapper')
 const {
   getDiagnosisSessionStateRow,
   listDiagnosisSessionHistoryRows,
   countDiagnosisSessionHistoryRows
 } = require('../repositories/diagnosis-session-read-repository')
-const {
-  getVisualAggregateResultByBatchId
-} = require('../repositories/visual-aggregate-repository')
+const { getVisualAggregateResultByBatchId } = require('../repositories/visual-aggregate-repository')
 const { getProblemsByKeys } = require('../repositories/problem-repository')
 const { listQuestionRows } = require('../repositories/session-question-repository')
 const { getLatestStopStateBySession } = require('../repositories/stop-state-repository')
@@ -21,27 +16,20 @@ const {
   readRoundFromRationale
 } = require('./session-question-service')
 const { resolveLatestVisualCallBatchId } = require('../utils/visual-batch-id')
-const {
-  safeJsonParse,
-  normalizeStoredNullableText
-} = require('../utils/stored-value')
+const { safeJsonParse, normalizeStoredNullableText } = require('../utils/stored-value')
 const {
   normalizeOutcomeType,
   normalizeDiagnosisRoutePrimaryAction
 } = require('../utils/diagnosis-contract')
-const {
-  mapSeverityHintToLevel
-} = require('./session-service-helpers')
+const { mapSeverityHintToLevel } = require('./session-service-helpers')
 const {
   normalizePublicObservedEvidenceSet,
   normalizePublicSymptomClassRuntime
 } = require('./session-runtime-snapshot-codec')
-const {
-  normalizePublicDerivedEvidenceSet
-} = require('../utils/derived-evidence')
-const {
-  normalizePublicDiagnosisDirectionSet
-} = require('../utils/diagnosis-directions')
+const { normalizePublicDerivedEvidenceSet } = require('../utils/derived-evidence')
+const { assertRetakeAuthorizationActive } = require('../domain/diagnosis-mode-router')
+const { upsertDiagnosisSession } = require('./session-state-write-service')
+const { normalizePublicDiagnosisDirectionSet } = require('../utils/diagnosis-directions')
 const {
   getObservedSymptomsBySession,
   getObservedEvidenceSetBySession,
@@ -51,10 +39,104 @@ const {
   getResultById
 } = require('./session-result-read-service')
 
+function buildLazyExpiredRetakeResponse({
+  sessionId = '',
+  session = {},
+  runtimeSnapshot = {},
+  state = {}
+} = {}) {
+  const plantContext = {
+    ...(runtimeSnapshot?.plantContext && typeof runtimeSnapshot.plantContext === 'object'
+      ? runtimeSnapshot.plantContext
+      : {}),
+    userPlantId: session.user_plant_id || runtimeSnapshot?.plantContext?.userPlantId || null,
+    plantId: normalizeStoredNullableText(
+      session.plant_id,
+      runtimeSnapshot?.plantContext?.plantId || null
+    ),
+    plantIdentityId: normalizeStoredNullableText(
+      session.current_plant_identity_id,
+      runtimeSnapshot?.plantContext?.plantIdentityId || ''
+    )
+  }
+  return {
+    diagnosisSessionId: sessionId,
+    roundId: runtimeSnapshot.roundId || session.current_round_id || 'round_1',
+    plantContext,
+    routePrimaryAction: 'request_followup_capture',
+    questionRequired: false,
+    questions: [],
+    outcomeType: 'uncertain',
+    sessionStatus: 'completed',
+    stopReason: 'ended_retake_timeout',
+    visualBatchTrace: runtimeSnapshot?.visualBatchTrace || null,
+    visualAggregateSummary: runtimeSnapshot?.visualAggregateSummary || null,
+    observedEvidenceSet: runtimeSnapshot?.observedEvidenceSet || [],
+    retakeAuthorizationState: state,
+    retakeRequest: runtimeSnapshot?.retakeRequest || null,
+    finalResult: {
+      resultId: `${sessionId || 'diagnosis'}_retake_timeout`,
+      summary: '补拍时间已过，本次诊断已结束。请重新开始诊断。',
+      outcomeType: 'uncertain',
+      visibleOutcomes: []
+    },
+    visibleOutcomes: []
+  }
+}
+
+async function expireRetakeAuthorizationIfNeeded({
+  openid = '',
+  sessionId = '',
+  session = {},
+  runtimeSnapshot = {},
+  now = Date.now()
+} = {}) {
+  const state = runtimeSnapshot?.retakeAuthorizationState
+  if (!state || state.status !== 'active') {
+    return runtimeSnapshot
+  }
+  try {
+    assertRetakeAuthorizationActive(state, now)
+    return runtimeSnapshot
+  } catch (error) {
+    if (error?.code !== 'RETAKE_WINDOW_EXPIRED') {
+      return runtimeSnapshot
+    }
+    const expiredState = { ...state, status: 'ended_retake_timeout', serverNow: now }
+    const response = buildLazyExpiredRetakeResponse({
+      sessionId,
+      session,
+      runtimeSnapshot,
+      state: expiredState
+    })
+    await upsertDiagnosisSession({
+      sessionId,
+      openid,
+      plantContext: response.plantContext,
+      response,
+      round: Number(session.current_round_index || 1),
+      reliabilityScore: 0,
+      mode: 'new_v13',
+      image: '',
+      description: '',
+      clientContext: runtimeSnapshot?.clientContext || null
+    })
+    return { ...runtimeSnapshot, retakeAuthorizationState: expiredState }
+  }
+}
+
 async function getSessionState(openid, sessionId) {
   const session = await getDiagnosisSessionStateRow(openid, sessionId)
-  if (!session) {return null}
-  const runtimeSnapshot = safeJsonParse(session.runtime_snapshot_json, {}) || {}
+  if (!session) {
+    return null
+  }
+  let runtimeSnapshot = safeJsonParse(session.runtime_snapshot_json, {}) || {}
+  runtimeSnapshot = await expireRetakeAuthorizationIfNeeded({
+    openid,
+    sessionId,
+    session,
+    runtimeSnapshot
+  })
   const latestVisualCallBatchId = resolveLatestVisualCallBatchId(
     session.latest_visual_call_batch_id,
     runtimeSnapshot
@@ -62,13 +144,18 @@ async function getSessionState(openid, sessionId) {
   const hasSnapshotStopState = Boolean(
     runtimeSnapshot && (runtimeSnapshot?.stopState || runtimeSnapshot?.outputEligibility)
   )
-  const snapshotObservedEvidenceSet = normalizePublicObservedEvidenceSet(runtimeSnapshot?.observedEvidenceSet || [])
+  const snapshotObservedEvidenceSet = normalizePublicObservedEvidenceSet(
+    runtimeSnapshot?.observedEvidenceSet || []
+  )
   const snapshotHasObservedEvidenceSet = Array.isArray(runtimeSnapshot?.observedEvidenceSet)
   const snapshotVisualAggregateSummary = runtimeSnapshot?.visualAggregateSummary || null
+  const snapshotHasDirectionChoices =
+    Array.isArray(runtimeSnapshot?.directionChoices) &&
+    Boolean(runtimeSnapshot.directionChoices.length)
   const shouldLoadObservedEvidenceSet = !snapshotHasObservedEvidenceSet
-  const shouldLoadVisualAggregateResult = !snapshotVisualAggregateSummary && Boolean(
-    latestVisualCallBatchId
-  )
+  const shouldLoadVisualAggregateResult =
+    Boolean(latestVisualCallBatchId) &&
+    (!snapshotVisualAggregateSummary || snapshotHasDirectionChoices)
   const [
     persistedStopStateBundle,
     questionRows,
@@ -100,18 +187,25 @@ async function getSessionState(openid, sessionId) {
   let maxRound = 1
 
   for (const row of questionRows) {
-    const questionKey = readQuestionKeyFromRationale(row.rationale) || String(row.symptom_key || '').trim()
+    const questionKey =
+      readQuestionKeyFromRationale(row.rationale) || String(row.symptom_key || '').trim()
     const groupKey = readQuestionGroupKeyFromRationale(row.rationale)
     if (Number(row.asked || 0) === 1 && questionKey) {
       askedQuestionKeys.push(questionKey)
     }
     const round = readRoundFromRationale(row.rationale)
-    if (round > maxRound) {maxRound = round}
+    if (round > maxRound) {
+      maxRound = round
+    }
 
     const answered = Number(row.asked || 0) === 1
-    if (!answered) {continue}
+    if (!answered) {
+      continue
+    }
 
-    const answerValue = String(row.answer_value || '').trim().toLowerCase()
+    const answerValue = String(row.answer_value || '')
+      .trim()
+      .toLowerCase()
     if (questionKey && answerValue) {
       answeredAnswerMap.set(questionKey, {
         questionKey,
@@ -138,7 +232,10 @@ async function getSessionState(openid, sessionId) {
       userPlantId: session.user_plant_id || null,
       plantId: normalizeStoredNullableText(session.plant_id, null),
       plantIdentityId: normalizeStoredNullableText(session.current_plant_identity_id, ''),
-      identityResolutionStatus: normalizeStoredNullableText(session.current_identity_resolution_status, ''),
+      identityResolutionStatus: normalizeStoredNullableText(
+        session.current_identity_resolution_status,
+        ''
+      ),
       latestVisualCallBatchId,
       genus: session.plant_genus || '',
       family: session.plant_family || '',
@@ -159,6 +256,12 @@ async function getSessionState(openid, sessionId) {
     visualBatchTrace: runtimeSnapshot?.visualBatchTrace || null,
     visualAggregateSummary: runtimeSnapshot?.visualAggregateSummary || null,
     visualAggregateResult: persistedVisualAggregateResult || null,
+    retakeRequest: runtimeSnapshot?.retakeRequest || null,
+    retakeAuthorizationState: runtimeSnapshot?.retakeAuthorizationState || null,
+    directionChoices: Array.isArray(runtimeSnapshot?.directionChoices)
+      ? runtimeSnapshot.directionChoices
+      : [],
+    pendingDirectPestSnapshot: runtimeSnapshot?.pendingDirectPestSnapshot || null,
     shadowCompareSummary:
       runtimeSnapshot?.shadowCompareSummary ||
       runtimeSnapshot?.visualAggregateSummary?.shadowCompareSummary ||
@@ -177,7 +280,10 @@ async function getSessionState(openid, sessionId) {
       ? runtimeSnapshot.environmentDeviationHints
       : [],
     plantIdentityId: normalizeStoredNullableText(session.current_plant_identity_id, ''),
-    identityResolutionStatus: normalizeStoredNullableText(session.current_identity_resolution_status, ''),
+    identityResolutionStatus: normalizeStoredNullableText(
+      session.current_identity_resolution_status,
+      ''
+    ),
     routePrimaryAction: normalizeDiagnosisRoutePrimaryAction(
       session.current_route_primary_action,
       ''
@@ -198,11 +304,17 @@ async function getSessionState(openid, sessionId) {
     ),
     secondaryClassKeys: Array.isArray(runtimeSnapshot?.symptomClassRuntime?.secondaryClasses)
       ? runtimeSnapshot.symptomClassRuntime.secondaryClasses
-        .map(item => normalizeStoredNullableText(item?.classKey, ''))
-        .filter(Boolean)
+          .map(item => normalizeStoredNullableText(item?.classKey, ''))
+          .filter(Boolean)
       : [],
-    currentClassKey: normalizeStoredNullableText(runtimeSnapshot?.symptomClassRuntime?.currentClassKey, ''),
-    currentGroupKey: normalizeStoredNullableText(runtimeSnapshot?.symptomClassRuntime?.currentGroupKey, ''),
+    currentClassKey: normalizeStoredNullableText(
+      runtimeSnapshot?.symptomClassRuntime?.currentClassKey,
+      ''
+    ),
+    currentGroupKey: normalizeStoredNullableText(
+      runtimeSnapshot?.symptomClassRuntime?.currentGroupKey,
+      ''
+    ),
     classScores: Array.isArray(runtimeSnapshot?.symptomClassRuntime?.classScores)
       ? runtimeSnapshot.symptomClassRuntime.classScores
       : [],
@@ -214,7 +326,10 @@ async function getSessionState(openid, sessionId) {
   }
 }
 
-async function listDiagnosisHistory(openid, { userPlantId = null, plantId = null, page = 1, pageSize = 20 } = {}) {
+async function listDiagnosisHistory(
+  openid,
+  { userPlantId = null, plantId = null, page = 1, pageSize = 20 } = {}
+) {
   const limit = Math.max(1, Number(pageSize || 20))
   const currentPage = Math.max(1, Number(page || 1))
   const offset = (currentPage - 1) * limit
@@ -249,7 +364,10 @@ async function listDiagnosisHistory(openid, { userPlantId = null, plantId = null
     const normalizedTopProblemKey = normalizeStoredNullableText(row.top_problem_key, null)
     const internalProblemKey = fromProblemId(normalizedTopProblemKey || '')
     const problemMeta = internalProblemKey ? problemMap.get(internalProblemKey) : null
-    const normalizedProblemDisplayName = normalizeStoredNullableText(problemMeta?.displayNameCn, null)
+    const normalizedProblemDisplayName = normalizeStoredNullableText(
+      problemMeta?.displayNameCn,
+      null
+    )
     const normalizedSeverityHint = mapSeverityHintToLevel(problemMeta?.severityHintCn)
     const historyRound = Math.max(
       1,
@@ -277,29 +395,29 @@ async function listDiagnosisHistory(openid, { userPlantId = null, plantId = null
       createdAt: row.created_at,
       summary: {
         problemId:
-          normalizedOutcomeType === 'problematic'
-            ? toPublicProblemId(normalizedTopProblemKey)
-            : '',
+          normalizedOutcomeType === 'problematic' ? toPublicProblemId(normalizedTopProblemKey) : '',
         displayName:
           normalizedOutcomeType === 'problematic'
-            ? (normalizedFinalProblemCn || normalizedProblemDisplayName || normalizedTopProblemKey || '待确认')
+            ? normalizedFinalProblemCn ||
+              normalizedProblemDisplayName ||
+              normalizedTopProblemKey ||
+              '待确认'
             : normalizedOutcomeType === 'non_problematic'
               ? '暂未见明显问题'
               : normalizedOutcomeType === 'uncertain'
                 ? '暂不能稳定判断'
                 : '待确认',
-        severity:
-          !normalizedOutcomeType
+        severity: !normalizedOutcomeType
+          ? 'low'
+          : normalizedOutcomeType === 'uncertain'
             ? 'low'
-            : normalizedOutcomeType === 'uncertain'
+            : normalizedOutcomeType === 'non_problematic'
               ? 'low'
-              : normalizedOutcomeType === 'non_problematic'
-                ? 'low'
-                : normalizedSeverityHint === 'high'
+              : normalizedSeverityHint === 'high'
+                ? 'high'
+                : row.health_status === 'danger'
                   ? 'high'
-                  : row.health_status === 'danger'
-                    ? 'high'
-                    : normalizedSeverityHint || 'medium'
+                  : normalizedSeverityHint || 'medium'
       }
     }
   })

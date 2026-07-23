@@ -1,5 +1,7 @@
 import { computed } from 'vue'
 
+const MULTIPLE_OUTCOME_COUNT = 1
+
 function uniqueStrings(values = []) {
   return Array.from(
     new Set(
@@ -75,13 +77,14 @@ function buildUniqueOutcomesForAdvice(outcomes = []) {
     .map(item => item.outcome)
 }
 
-function buildOutcomeAdviceGroups({
+export function buildOutcomeAdviceGroups({
   outcomeSources = [],
   getOutcomeItems,
   fallbackItems = [],
   fallbackLabel = '通用建议'
 } = {}) {
-  const sourceGroups = buildUniqueOutcomesForAdvice(outcomeSources)
+  const sourceOutcomes = buildUniqueOutcomesForAdvice(outcomeSources)
+  const sourceGroups = sourceOutcomes
     .map((outcome, index) => ({
       key: normalizeOutcomeDisplayKey(outcome, index),
       outcomeLabel: formatOutcomeDisplayLabel(outcome),
@@ -89,9 +92,19 @@ function buildOutcomeAdviceGroups({
     }))
     .filter(group => group.outcomeLabel && group.items.length)
   if (sourceGroups.length || !fallbackItems.length) {
-    return sourceGroups
+    return sourceGroups.map(group => ({
+      ...group,
+      showOutcomeLabel: sourceOutcomes.length > MULTIPLE_OUTCOME_COUNT
+    }))
   }
-  return [{ key: '__fallback__', outcomeLabel: fallbackLabel, items: uniqueStrings(fallbackItems) }]
+  return [
+    {
+      key: '__fallback__',
+      outcomeLabel: fallbackLabel,
+      items: uniqueStrings(fallbackItems),
+      showOutcomeLabel: true
+    }
+  ]
 }
 
 function buildOutcomeActionAdviceItems(outcome = {}) {

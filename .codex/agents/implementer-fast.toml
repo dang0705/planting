@@ -1,6 +1,7 @@
 name = "implementer_fast"
 description = "局部、低风险、边界明确的快速实现 agent。"
-model = "gpt-5.4"
+model = "gpt-5.6-luna"
+service_tier = "fast"
 model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
 nickname_candidates = ["FastBuilder"]

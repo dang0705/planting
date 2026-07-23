@@ -22,6 +22,8 @@ export function useDiagnoseStreamMutation() {
       observedEvidenceSet = [],
       latestVisualCallBatchId = null,
       visualBatchTrace = null,
+      diagnosisProfile = 'full',
+      entrySource = 'diagnose_tab',
       onText,
       onFinish,
       onError,
@@ -29,7 +31,15 @@ export function useDiagnoseStreamMutation() {
     } = {}) => {
       try {
         onText?.('思考中...', '思考中...')
-        validateDiagnoseInput({ plantId, userPlantId, image, images, observedSymptoms })
+        validateDiagnoseInput({
+          plantId,
+          userPlantId,
+          plantCatalogId,
+          entrySource,
+          image,
+          images,
+          observedSymptoms
+        })
 
         const normalizedResult = await requestDiagnoseStream(
           buildDiagnosePayload({
@@ -44,6 +54,8 @@ export function useDiagnoseStreamMutation() {
             observedEvidenceSet,
             latestVisualCallBatchId,
             visualBatchTrace,
+            diagnosisProfile,
+            entrySource,
             skipAuth
           }),
           {

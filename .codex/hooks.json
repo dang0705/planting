@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .codex/hooks/dispatch-gate-adapter.mjs --event PreToolUse"
+            "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/dispatch-gate-adapter.mjs\" --event=PreToolUse"
           }
         ]
       }
@@ -17,29 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .codex/hooks/dispatch-gate-adapter.mjs --event PostToolUse"
-          }
-        ]
-      }
-    ],
-    "SubagentStart": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .codex/hooks/dispatch-gate-adapter.mjs --event SubagentStart"
-          }
-        ]
-      }
-    ],
-    "SubagentStop": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .codex/hooks/dispatch-gate-adapter.mjs --event SubagentStop"
+            "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/dispatch-gate-adapter.mjs\" --event=PostToolUse"
           }
         ]
       }

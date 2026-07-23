@@ -74,6 +74,10 @@ const maxContractChars = risk === 'high' ? 24000 : 14000
 const runtimeAcceptanceMode =
   data?.validation?.runtime_acceptance_mode ??
   (data?.validation?.miniprogram_automator_required === true ? 'automator_required' : null)
+const brvRelevance = data.brv_relevance
+const figmaPlan = data.figma
+const featureTestPlan = data.feature_test_plan
+const e2ePlan = data.e2e_plan
 need(
   raw.length <= maxContractChars,
   `handoff exceeds character budget: ${raw.length}/${maxContractChars}`
@@ -123,8 +127,65 @@ if (codeChanges && mode !== 'main_direct') {
     nonEmptyString(data?.validation?.worktree_baseline_path),
     'code changes require validation.worktree_baseline_path'
   )
+  need(isObject(brvRelevance), 'code changes require structured brv_relevance')
+  need(isObject(figmaPlan), 'code changes require structured figma')
+  need(isObject(featureTestPlan), 'code changes require structured feature_test_plan')
+  need(isObject(e2ePlan), 'code changes require structured e2e_plan')
 }
 need(isObject(data.validation), 'validation is required')
+if (brvRelevance !== undefined) {
+  need(isObject(brvRelevance), 'brv_relevance must be an object')
+  need(typeof brvRelevance?.required === 'boolean', 'brv_relevance.required must be boolean')
+  if (brvRelevance?.required === true) {
+    need(
+      nonEmptyString(brvRelevance?.official_query_command),
+      'brv_relevance.required=true requires official_query_command'
+    )
+    need(
+      !/workflow|dispatch|hook|validator|test directory/i.test(brvRelevance?.topic_hint ?? ''),
+      'brv_relevance.topic_hint must not target workflow/test governance facts'
+    )
+  }
+}
+if (figmaPlan !== undefined) {
+  need(isObject(figmaPlan), 'figma must be an object')
+  need(typeof figmaPlan?.required === 'boolean', 'figma.required must be boolean')
+  need(
+    ['internal_mcp', 'external_prompt_recovery'].includes(figmaPlan?.mode),
+    'figma.mode must be internal_mcp|external_prompt_recovery'
+  )
+  if (figmaPlan?.required === true) {
+    need(nonEmptyString(figmaPlan?.link), 'figma.required=true requires figma.link')
+  }
+}
+if (featureTestPlan !== undefined) {
+  need(isObject(featureTestPlan), 'feature_test_plan must be an object')
+  need(typeof featureTestPlan?.required === 'boolean', 'feature_test_plan.required must be boolean')
+  if (featureTestPlan?.required === true) {
+    need(
+      stringArray(featureTestPlan?.targets, { min: 1, max: 20 }),
+      'feature_test_plan.required=true requires targets/source scopes'
+    )
+    need(
+      stringArray(featureTestPlan?.commands, { min: 1, max: 20 }),
+      'feature_test_plan.required=true requires commands'
+    )
+    need(
+      !(featureTestPlan.commands ?? []).every(command => /test\/unit\/run-all\.mjs$/.test(command)),
+      'feature_test_plan.commands must include at least one feature-specific command, not generic unit run-all alone'
+    )
+  }
+}
+if (e2ePlan !== undefined) {
+  need(isObject(e2ePlan), 'e2e_plan must be an object')
+  need(typeof e2ePlan?.required === 'boolean', 'e2e_plan.required must be boolean')
+  if (e2ePlan?.automator_required === true) {
+    need(
+      e2ePlan?.catalog_required === true,
+      'e2e_plan.automator_required=true requires catalog_required=true'
+    )
+  }
+}
 need(
   typeof data?.validation?.miniprogram_automator_required === 'boolean',
   'validation.miniprogram_automator_required must be boolean'
@@ -189,6 +250,24 @@ if (acceptanceMentionsDispatchHookGate) {
   need(
     /dispatch-gate\/cli\.mjs hook-self-test/.test(testCommands),
     'dispatch hook gate handoff must require hook-self-test'
+  )
+  need(
+    data?.brv_relevance?.child_brv_allowed === false,
+    'dispatch hook gate handoff must set brv_relevance.child_brv_allowed=false'
+  )
+  need(
+    nonEmptyString(data?.brv_relevance?.recall_packet_path),
+    'dispatch hook gate handoff must provide the main-owned brv_relevance.recall_packet_path'
+  )
+  need(
+    Array.isArray(data.output_evidence_required) &&
+      includesAll(data.output_evidence_required, [
+        'episode_state_contract',
+        'status_card_contract',
+        'automator_preflight_contract',
+        'known_limitations'
+      ]),
+    'dispatch hook gate handoff must require episode/status/preflight/limitations evidence'
   )
 }
 

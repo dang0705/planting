@@ -138,13 +138,35 @@
     ]
   },
   "figma": {
+    "required": true,
     "link": "https://figma.com/design/example/file?node-id=10-20",
     "node_id": "10:20",
+    "mode": "external_prompt_recovery",
     "lite_status": "link_only",
     "main_access": "lite_only",
     "main_tools_used": [],
     "implementer_fetch_required": true,
     "qa_baseline_fetch_required": true
+  },
+  "brv_relevance": {
+    "required": false,
+    "reason": "UI example; no BRV content recall required"
+  },
+  "feature_test_plan": {
+    "required": true,
+    "targets": [
+      "src/pages/home/**",
+      "src/components/home/**"
+    ],
+    "commands": [
+      "npm run typecheck",
+      "npm run build:mp-weixin"
+    ]
+  },
+  "e2e_plan": {
+    "required": false,
+    "automator_required": false,
+    "catalog_required": false
   },
   "required_skills": {
     "main": [

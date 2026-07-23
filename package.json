@@ -9,9 +9,9 @@
     "test": "npm run test:all",
     "test:ci": "node test/unit/run-all.mjs",
     "build": "npm run build:h5",
-    "test:pinia": "node test/unit/frontend/pinia.mjs",
-    "test:tailwind": "node test/unit/frontend/tailwind.mjs",
-    "test:wilting-droop-package": "node test/unit/backend/wilting-droop-package.mjs",
+    "test:pinia": "node test/unit/frontend/store/pinia.mjs",
+    "test:tailwind": "node test/unit/frontend/styles/tailwind.mjs",
+    "test:wilting-droop-package": "node test/unit/backend/diagnose-http/app/wilting-droop-package.mjs",
     "test:diagnosis-review-perf": "node test/e2e/batch/diagnosis/diagnosis-review-perf.mjs",
     "test:all": "node test/unit/run-all.mjs",
     "e2e:route-planning": "node test/e2e/batch/cross-contract/route-planning.mjs",
@@ -82,7 +82,9 @@
     "deploy:miniprogram:ci": "node scripts/deploy-miniprogram-ci.mjs",
     "build:mp-xhs": "set VITE_APP_ENV=production&& set VITE_CLOUDBASE_ENV_ID=cloud1-2grufevs395a9d5e&& uni build -p mp-xhs",
     "build:mp-xhs:dev": "set VITE_APP_ENV=development&& set VITE_CLOUDBASE_ENV_ID=cloud1-2grufevs395a9d5e&& uni build -p mp-xhs",
-    "e2e:watering-transpiration-v3": "node .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs qa-run --catalog-id=watering.transpiration-v3 --execution-id=manual-watering-transpiration-v3 --allow-live",
+    "e2e:watering-transpiration-v3": "node .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs qa-run --catalog-id=care.watering.transpiration_v3.independent_advice --execution-id=manual-watering-transpiration-v3-independent --allow-live",
+    "e2e:watering-transpiration-v3:independent": "node .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs qa-run --catalog-id=care.watering.transpiration_v3.independent_advice --execution-id=manual-watering-transpiration-v3-independent --allow-live",
+    "e2e:watering-transpiration-v3:user-plant": "node .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs qa-run --catalog-id=care.watering.transpiration_v3.user_plant_planner --execution-id=manual-watering-transpiration-v3-user-plant --allow-live",
     "postinstall": "weapp-tw patch"
   },
   "dependencies": {

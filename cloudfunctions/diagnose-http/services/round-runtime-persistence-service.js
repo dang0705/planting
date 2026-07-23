@@ -31,8 +31,38 @@ function buildQuestionPackageSnapshot(response = {}) {
     sourceMode: questionPackage.sourceMode || '',
     answerSubmitMode: questionPackage.answerSubmitMode || '',
     questionDisplayMode: questionPackage.questionDisplayMode || '',
+    fixedQuestionPackage: Boolean(questionPackage.fixedQuestionPackage),
+    dynamicQuestionPackage: Boolean(questionPackage.dynamicQuestionPackage),
+    candidateModes: Array.isArray(questionPackage.candidateModes)
+      ? questionPackage.candidateModes
+      : [],
+    hiddenPrefilledEvidence: Array.isArray(questionPackage.hiddenPrefilledEvidence)
+      ? questionPackage.hiddenPrefilledEvidence
+      : [],
+    outcomePolicy:
+      questionPackage.outcomePolicy && typeof questionPackage.outcomePolicy === 'object'
+        ? questionPackage.outcomePolicy
+        : null,
     packageQuestions
   }
+}
+
+function shouldPersistQuestionPackageSnapshot(response = {}, explicitSnapshotOnly = false) {
+  if (explicitSnapshotOnly || response?.questionPackageSnapshot) {
+    return true
+  }
+  const questionPackage = response?.questionPackage || {}
+  const packageQuestions = Array.isArray(response?.questions)
+    ? response.questions
+    : Array.isArray(questionPackage?.packageQuestions)
+      ? questionPackage.packageQuestions
+      : []
+  return Boolean(
+    questionPackage &&
+    typeof questionPackage === 'object' &&
+    questionPackage.answerSubmitMode === 'package' &&
+    packageQuestions.length
+  )
 }
 
 function runDeferredPersistenceJobs(sessionId = '', jobs = []) {
@@ -64,10 +94,15 @@ async function persistRoundRuntime({
   questionPackageSnapshotOnly = false
 } = {}) {
   const isInitialRound = Number(round || 1) <= 1
-  const persistenceResponse = questionPackageSnapshotOnly
+  const shouldWriteQuestionPackageSnapshot = shouldPersistQuestionPackageSnapshot(
+    response,
+    questionPackageSnapshotOnly
+  )
+  const persistenceResponse = shouldWriteQuestionPackageSnapshot
     ? {
         ...response,
-        questionPackageSnapshot: buildQuestionPackageSnapshot(response)
+        questionPackageSnapshot:
+          response?.questionPackageSnapshot || buildQuestionPackageSnapshot(response)
       }
     : response
   await upsertDiagnosisSession({
@@ -110,8 +145,8 @@ async function persistRoundRuntime({
     )
   }
 
-  if (questionPackageSnapshotOnly || shouldWriteSessionQuestionRows(response)) {
-    if (!questionPackageSnapshotOnly) {
+  if (shouldWriteQuestionPackageSnapshot || shouldWriteSessionQuestionRows(response)) {
+    if (shouldWriteSessionQuestionRows(response)) {
       await writeSessionRoundQuestionRows({
         sessionId,
         round,
@@ -137,6 +172,7 @@ module.exports = {
   persistRoundRuntime,
   _test: {
     buildQuestionPackageSnapshot,
+    shouldPersistQuestionPackageSnapshot,
     runDeferredPersistenceJobs
   }
 }

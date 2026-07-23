@@ -89,6 +89,39 @@ function cloneOutcomePolicy(outcomePolicy = null) {
   }
 }
 
+function cloneDynamicQuestionPackage(questionPackage = {}, questionCount = 0) {
+  if (!questionPackage?.dynamicQuestionPackage) {
+    return null
+  }
+  const expectedCount = Number(questionPackage.questionCount || questionCount || 0)
+  if (questionCount && expectedCount !== questionCount) {
+    return null
+  }
+  return {
+    mode: normalizeText(questionPackage.mode || questionPackage.diagnosisMode || ''),
+    route: normalizeText(questionPackage.route || ''),
+    sourceMode: normalizeText(questionPackage.sourceMode || questionPackage.source_mode || ''),
+    questionCount: expectedCount,
+    packageTopics: Array.isArray(questionPackage.packageTopics)
+      ? questionPackage.packageTopics.map(item => normalizeText(item)).filter(Boolean)
+      : [],
+    answerSubmitMode: normalizeText(questionPackage.answerSubmitMode || 'package'),
+    questionDisplayMode: normalizeText(questionPackage.questionDisplayMode || 'package'),
+    fixedQuestionPackage: false,
+    dynamicQuestionPackage: true,
+    candidateModes: Array.isArray(questionPackage.candidateModes)
+      ? questionPackage.candidateModes.map(item => normalizeText(item)).filter(Boolean)
+      : [],
+    hiddenPrefilledEvidence: Array.isArray(questionPackage.hiddenPrefilledEvidence)
+      ? questionPackage.hiddenPrefilledEvidence
+      : [],
+    outcomePolicy: cloneOutcomePolicy(questionPackage.outcomePolicy),
+    packageQuestions: Array.isArray(questionPackage.packageQuestions)
+      ? questionPackage.packageQuestions
+      : []
+  }
+}
+
 function getQuestionPackageByMode(mode = '', options = {}) {
   const normalizedMode = normalizeQuestionPackageMode(mode)
   const packageConfig = QUESTION_PACKAGE_BY_MODE[normalizedMode]
@@ -199,7 +232,7 @@ function resolveQuestionPackageAnswerCount(payload = {}, answerCount = 0) {
   if (Number.isFinite(declaredQuestionCount) && declaredQuestionCount > 0) {
     return declaredQuestionCount
   }
-  return answerCount > 1 ? answerCount : 0
+  return answerCount > 0 ? answerCount : 0
 }
 
 function isQuestionPackageAnswerSubmitPayload({
@@ -214,7 +247,7 @@ function isQuestionPackageAnswerSubmitPayload({
   const questionKeys = collectUniqueAnswerQuestionKeys(answers)
   if (hasQuestionPackageSubmitMetadata(payload)) {
     const expectedAnswerCount = resolveQuestionPackageAnswerCount(payload, questionKeys.length)
-    return expectedAnswerCount > 1 && questionKeys.length === expectedAnswerCount
+    return expectedAnswerCount >= 1 && questionKeys.length === expectedAnswerCount
   }
 
   return isCompleteYellowingFrontloadedCarePackage(questionKeys)
@@ -233,6 +266,13 @@ function buildYellowingQuestionPackage(response = {}, questions = []) {
 
 function buildQuestionPackage(response = {}, questions = []) {
   const questionCount = Array.isArray(questions) ? questions.length : 0
+  const dynamicQuestionPackage = cloneDynamicQuestionPackage(
+    response?.questionPackage,
+    questionCount
+  )
+  if (dynamicQuestionPackage) {
+    return dynamicQuestionPackage
+  }
   const mode = normalizeQuestionPackageMode(
     response?.questionPackage?.mode ||
       response?.questionPackage?.diagnosisMode ||

@@ -4,8 +4,8 @@ status: current
 doc_type: map
 owner: main
 sync_policy: active
-last_verified_date: 2026-06-26
-last_verified_commit: sprint-ai-workflow
+last_verified_date: 2026-07-20
+last_verified_commit: working-tree-pest-visual-mode
 source_of_truth:
   - package.json
   - src/main.js
@@ -43,7 +43,7 @@ stale_if_changed:
 | 领域 | 当前事实源 |
 |---|---|
 | 前端入口 | `src/main.js`, `src/pages.json`, `src/manifest.json` |
-| 前端诊断页面 | `src/pages/diagnose/**`, `src/components/DiagnosePopup.vue` |
+| 前端诊断页面 | `src/pages/diagnose/**`, `src/components/diagnose-flow/**`, `src/components/DiagnosePopup.vue` |
 | 前端 HTTP 函数客户端 | `src/http-functions/**`, `src/api/env.js` |
 | Vue Query 数据流 | `src/vue-query/**` |
 | 前端诊断归一化 | `src/utils/diagnose-result-normalizer.js`, `src/utils/diagnose-flow*.js` |
@@ -61,7 +61,12 @@ stale_if_changed:
 
 - `src/pages/index/index.vue`：首页，植物卡水滴 icon 点击打开浇水提醒弹框（不再跳转日历页）。
 - `src/pages/index/components/WateringReminderSheet.vue`：浇水提醒底部弹框，含上次浇水入口、建议下次浇水 Summary、添加至日历主操作；点击上次浇水打开二级日期选择器（复用 `CareBehaviorTimeline`）。已保存提醒会回显上次设置时间和下次浇水建议。
-- `src/pages/diagnose/diagnose.vue`：诊断入口。
+- `src/pages/diagnose/diagnose.vue`：五项 tab 中的诊断入口，直接复用共享 `DiagnoseFlow`；默认 `full`，可切换 `pest`，并显要展示黄叶、枯萎无图直入。
+- `src/components/diagnose-flow/**`：诊断 tab 与植物卡片弹窗共用的完整诊断内核，负责模式选择、图片、视觉请求、方向选择、题包交接、补拍和结果状态；所有可见题包统一由公共题包页承接。
+- `src/pages/diagnose/question-package.vue`：黄叶、发蔫或下垂及 1～2 题动态虫害包的公共答题页；题包只按整包 `answer_submit` 提交。
+- `src/components/DiagnosePopup.vue`：植物卡片诊断按钮使用的 BottomSheet 容器，保留 open/close/reset、植物上下文和弹窗生命周期，内部嵌入 `DiagnoseFlow`。
+- `src/pages/diagnose/result.vue`：诊断历史的只读结果承接页；不与新诊断入口页混用。
+- `src/pages/reminder/reminder.vue`：五项 tab 中的提醒页；当前仅展示浇水分支并复用 `WateringReminderSheet`，不展示未实现的施肥入口。
 - 诊断延续页与相关目录：历史命名不定义当前产品口径，当前以问诊题包与结果展示理解。
 - `src/pages/profile/diagnosis-review.vue`：诊断审查页面。
 - `src/pages/profile/out-of-pool-review.vue`：池外视觉候选和代理映射审查。
@@ -104,9 +109,11 @@ cloudfunctions/diagnose-http/app.js
 
 ```text
 GET  /health
-POST /diagnosis/start
+POST /diagnosis/start            # streamVisualDecision=true 时返回视觉阶段 SSE
 POST /diagnosis/question/start   # 题包初始化入口；不要从名称反推当前仍是追问
 POST /diagnosis/answer           # 题包/问题答案提交；不要按每轮 1 题解释
+POST /diagnosis/retake/authorize # 用户确认后创建唯一的三分钟补拍授权
+POST /diagnosis/retake/skip      # 风险补拍跳过；以 unknown 结束本次诊断
 GET  /diagnosis/result
 GET  /diagnosis/history
 POST /diagnosis/feedback
@@ -128,6 +135,16 @@ POST /diagnose
 
 - 诊断运行时已是 route/outcome 主导，不应以历史排序文档当当前事实。
 - `visibleOutcomes` 是前端可见结果的首要出口；`primaryOutcome` / `secondaryOutcomes` 仅为历史回读来源，不应作为新契约中心。
+- AI 视觉结果只能通过全局 `resolveDiagnosisModeRoute` 进入症状模式；页面和 handler 不得各自判断模式，也不得直接相信模型输出的模式名称。
+- 全局模式注册表用 `requiresAiInitialAssessment` 区分入口：`yellow_leaf`、`wilting_droop` 保持无图手工直入；八种具体虫害必须先经过 AI 视觉。`pest` 只作为诊断 profile/上位分类，不是用户可见的泛虫害题包。
+- 诊断 tab 未绑定植物时使用匿名诊断会话；可用用户位置读取天气背景，但不会把匿名占位 ID 当成用户植物执行资料更新。
+- 虫害直判和题包结果允许同时保留多个 `visibleOutcomes`；动态虫害题包为 0～2 题，正式接纳的视觉证据锁定为正向证据并隐藏同组重复题。
+- 补拍建议不会自动开始计时；只有用户在同一确认框阅读风险说明、安全步骤和三分钟截止后确认，服务端才创建一次三分钟授权。过期返回 `RETAKE_WINDOW_EXPIRED` 并把会话终止为 `ended_retake_timeout`，旧会话不可恢复。
+- “不敢操作 / 跳过”由服务端持久化为 `skipped_unknown`，值为 `unknown`，不会当成“没有虫”；会话以不确定结果结束，只能重新诊断。授权和跳过的网络重试不会重置原三分钟时间。
+- 视觉 Prompt 采用稳定静态前缀和动态尾部；不提供逐虫虫体形态描述，模型先独立识别当前图中的虫体或叶内潜道，再按当前器官映射模式与直接证据键；细网、点状白黄伤痕、银白擦伤、同区针尖黑点和叶内潜道等非虫体异常仍在动态尾部说明；`full/pest`、首次/补拍共用静态前缀，补拍只分析新图并通过正式证据摘要与 `originVisualCallBatchId` 衔接前一批证据。
+- 合法且器官匹配的具体虫害 `mode_candidates` 在置信度 `>=0.90` 时会作为独立实体候选继续进入 route；不能因同次返回未带重复的正式症状键而被丢弃，且不会被改写成并不存在的正式症状。低置信、profile 不匹配或器官不匹配候选仍会过滤；单独的 `yellow_speckling` / `stippling` 不能把结果推为 `spider_mite`。
+- 视觉流式入口仍复用 `/diagnosis/start`：只有 `streamVisualDecision=true` 才使用 `context.sse()`；前端以单个 chunked 请求接收 `visual_*` 生命周期事件和唯一 `done`，失败时不得再重放一次普通诊断。SSE 建立后先发送不承诺会话或模型已启动的 `visual_preparing`；单图模型首个非空内容到达时最多补发一次不含模型内容的 `visual_model_response_started`。模型 JSON、机器键和提示词不得进入进度文案。TokenHub 视觉请求仅在有稳定 system 静态前缀时发送由契约版本、模型和静态前缀哈希组成的全局 `prompt_cache_key`，让所有诊断共用该静态前缀缓存；动态尾部、图片、用户和会话信息不得进入该键。存在服务端诊断会话时，另发送由不可逆摘要生成的 `X-Session-ID` 仅作同会话实例亲和，且不参与缓存键。缓存是否命中只看服务商 usage 的 `cached_tokens`，不从三分钟倒计时或耗时推测；TokenHub Chat 的“创建量”为零不能单独判为失败。模型链路的 `firstByteMs` 与 `firstContentMs` 分别记录首字节和首个可见内容。
+- 诊断图片在上传前按 `1,638,400` 像素上限和 32 像素网格做物理缩放，不放大小图；随后按 Q72 起步压缩且不低于 Q68。视觉 token 由最终像素规模主导，不能用 JPEG 文件大小代替；原始/输出尺寸、像素数和估算 Qwen 视觉 token 会随请求进入审计链路。
 - 2026-06-06 最新题包口径：当前不存在“追问”，也不再以“每轮最多 1 题”作为产品/UX 契约。
 - `maxQuestionsPerRound: 1` 及相关历史参数/命名即使在实现中可见，也只能视为实现细节或历史命名，不能覆盖当前题包口径。
 - 问诊题包是当前任务口径；黄叶 4 题是已知历史题包形态之一，不再作为题包长度或题包场景上限。

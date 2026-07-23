@@ -17,6 +17,7 @@ const {
   normalizePublicObservedEvidenceSet,
   normalizePublicSymptomClassRuntime
 } = require('./session-runtime-normalizers')
+const { compactClientContextForSnapshot } = require('./session-runtime-client-context')
 
 const SNAPSHOT_CARE_DAILY_RECORD_LIMIT = 25
 const SNAPSHOT_HISTORICAL_DAYS_LIMIT = 10
@@ -197,7 +198,9 @@ function buildSnapshotPayload({
             structuredImageCount: Number(clientContext?.structuredImageCount || 0),
             auditLabel: String(clientContext?.auditLabel || '').trim(),
             auditFileName: String(clientContext?.auditFileName || '').trim(),
-            auditCaseKey: String(clientContext?.auditCaseKey || '').trim()
+            auditCaseKey: String(clientContext?.auditCaseKey || '').trim(),
+            diagnosisProfile: String(clientContext?.diagnosisProfile || '').trim(),
+            entrySource: String(clientContext?.entrySource || '').trim()
           }
         : null,
     reviewSourceType:
@@ -401,19 +404,7 @@ function buildRuntimeSnapshotPayload({
     roundId: response?.roundId || `round_${round}`,
     roundIndex: Number(round || 1),
     plantContext: compactPlantContextForSnapshot(plantContext),
-    clientContext:
-      clientContext && typeof clientContext === 'object'
-        ? {
-            source: String(clientContext?.source || '').trim(),
-            platform: String(clientContext?.platform || '').trim(),
-            reviewSourceType: String(clientContext?.reviewSourceType || '').trim(),
-            visualInputVersion: String(clientContext?.visualInputVersion || '').trim(),
-            structuredImageCount: Number(clientContext?.structuredImageCount || 0),
-            auditLabel: String(clientContext?.auditLabel || '').trim(),
-            auditFileName: String(clientContext?.auditFileName || '').trim(),
-            auditCaseKey: String(clientContext?.auditCaseKey || '').trim()
-          }
-        : null,
+    clientContext: compactClientContextForSnapshot(clientContext),
     reviewSourceType:
       clientContext && typeof clientContext === 'object'
         ? String(clientContext?.reviewSourceType || '').trim()
@@ -471,6 +462,19 @@ function buildRuntimeSnapshotPayload({
       : [],
     confidenceLevel: response?.confidenceLevel || 'normal',
     confidenceReasons: Array.isArray(response?.confidenceReasons) ? response.confidenceReasons : [],
+    retakeRequest:
+      response?.retakeRequest && typeof response.retakeRequest === 'object'
+        ? response.retakeRequest
+        : null,
+    retakeAuthorizationState:
+      response?.retakeAuthorizationState && typeof response.retakeAuthorizationState === 'object'
+        ? response.retakeAuthorizationState
+        : null,
+    directionChoices: Array.isArray(response?.directionChoices) ? response.directionChoices : [],
+    pendingDirectPestSnapshot:
+      response?.pendingDirectPestSnapshot && typeof response.pendingDirectPestSnapshot === 'object'
+        ? response.pendingDirectPestSnapshot
+        : null,
     routeDecision: compactRouteDecision,
     metrics: null
   })
@@ -487,7 +491,5 @@ module.exports = {
   resolveSessionStatus,
   buildOutcomePayload,
   buildCompactRouteDecision,
-  compactPlantContextForSnapshot,
-  compactEnvironmentWeatherWindowForSnapshot,
   buildRuntimeSnapshotPayload
 }

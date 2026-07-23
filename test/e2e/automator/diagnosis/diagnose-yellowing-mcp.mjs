@@ -7,7 +7,7 @@ import automator from 'miniprogram-automator'
 
 const DEFAULT_PORT = 9420
 const DEFAULT_PROJECT = path.join(process.cwd(), 'dist/dev/mp-weixin')
-const DEFAULT_REPORT_DIR = path.join(process.cwd(), 'test/e2e/automator/diagnosis/qa-artifacts')
+const DEFAULT_REPORT_DIR = path.join(process.cwd(), '.tmp/e2e/diagnosis/yellowing-qa-artifacts')
 const DEFAULT_MAX_STEPS = 12
 const DEFAULT_SCREENSHOT_TIMEOUT_MS = 12000
 const DEFAULT_SCREENSHOT_RETRIES = 2
@@ -80,12 +80,19 @@ async function screenshot(miniProgram, reportDir, name) {
   await fs.promises.mkdir(reportDir, { recursive: true })
   const filePath = path.join(reportDir, `${nowStamp().replace(/[:.]/g, '-')}-${name}.png`)
   const timeoutMs = toNumber(process.env.MP_SCREENSHOT_TIMEOUT_MS, DEFAULT_SCREENSHOT_TIMEOUT_MS)
-  const retries = Math.max(0, toNumber(process.env.MP_SCREENSHOT_RETRIES, DEFAULT_SCREENSHOT_RETRIES))
+  const retries = Math.max(
+    0,
+    toNumber(process.env.MP_SCREENSHOT_RETRIES, DEFAULT_SCREENSHOT_RETRIES)
+  )
 
   let lastError
   for (let attempt = 1; attempt <= retries + 1; attempt += 1) {
     try {
-      await withTimeout(miniProgram.screenshot({ path: filePath }), timeoutMs, `attempt=${attempt}/${retries + 1}, name=${name}`)
+      await withTimeout(
+        miniProgram.screenshot({ path: filePath }),
+        timeoutMs,
+        `attempt=${attempt}/${retries + 1}, name=${name}`
+      )
       return filePath
     } catch (error) {
       lastError = error
@@ -97,7 +104,11 @@ async function screenshot(miniProgram, reportDir, name) {
 
   try {
     const fallbackPath = filePath.replace(/\.png$/, `-fallback-${Date.now()}.png`)
-    const raw = await withTimeout(miniProgram.screenshot(), timeoutMs, `fallback no-path, name=${name}`)
+    const raw = await withTimeout(
+      miniProgram.screenshot(),
+      timeoutMs,
+      `fallback no-path, name=${name}`
+    )
     if (typeof raw === 'string' && raw) {
       await fs.promises.writeFile(fallbackPath, raw, 'base64')
       return fallbackPath
@@ -203,10 +214,12 @@ function parseQuestionIdFromStackId(elementId) {
 }
 
 function safeFirstLine(text) {
-  return text
-    .split('\n')
-    .map(line => normalize(line))
-    .find(line => Boolean(line)) || ''
+  return (
+    text
+      .split('\n')
+      .map(line => normalize(line))
+      .find(line => Boolean(line)) || ''
+  )
 }
 
 function decodeQuestionKey(rawId) {
@@ -219,7 +232,9 @@ function decodeQuestionKey(rawId) {
   }
   const body = key.slice(2)
   try {
-    const decoded = Buffer.from(body.replace(/_/g, '/').replace(/-/g, '+'), 'base64').toString('utf8')
+    const decoded = Buffer.from(body.replace(/_/g, '/').replace(/-/g, '+'), 'base64').toString(
+      'utf8'
+    )
     return normalize(decoded)
   } catch {
     return key
@@ -263,7 +278,8 @@ async function resolveQuestionState(page) {
         ? result.questionStack
         : []
 
-    const stackHasValue = stack.length > 0 ? stack : Array.isArray(result.questions) ? result.questions : []
+    const stackHasValue =
+      stack.length > 0 ? stack : Array.isArray(result.questions) ? result.questions : []
     const resultHasActive = Boolean(result?.hasActiveQuestions)
     const activeQuestionIndex = [
       data.activeQuestionIndex,
@@ -280,9 +296,10 @@ async function resolveQuestionState(page) {
     state.questionCount = stackHasValue.length
     state.activeQuestionIndex = Number.isInteger(activeQuestionIndex) ? activeQuestionIndex : null
     state.currentQuestionId =
-      stackHasValue[state.activeQuestionIndex]?.questionId || stackHasValue[state.activeQuestionIndex]?.questionKey
+      stackHasValue[state.activeQuestionIndex]?.questionId ||
+      stackHasValue[state.activeQuestionIndex]?.questionKey
     state.hasActiveQuestions = resultHasActive
-    state.isCompleted = (state.questionCount > 0 && !resultHasActive)
+    state.isCompleted = state.questionCount > 0 && !resultHasActive
   }
 
   return state
@@ -376,7 +393,10 @@ function pickBestOption(questionMeta, options, profile) {
 
   const unknownOptions = list.filter(item => /说不清|没留意|不确定|unknown/i.test(item.text))
   if (profile === 'overwatering') {
-    if (contains(qTarget, ['watering_frequency_context']) || contains(combined, ['watering', '浇水'])) {
+    if (
+      contains(qTarget, ['watering_frequency_context']) ||
+      contains(combined, ['watering', '浇水'])
+    ) {
       return (
         pickByText('偏多') ||
         pickByText('2 次以上') ||
@@ -399,13 +419,14 @@ function pickBestOption(questionMeta, options, profile) {
 
     if (contains(combined, ['施肥', '换盆', '换土']) || contains(qTarget, ['fertil'])) {
       return (
-        list.find(item => normalizeText(item.text).includes('偏稳')) ||
-        unknownOptions[0] ||
-        list[0]
+        list.find(item => normalizeText(item.text).includes('偏稳')) || unknownOptions[0] || list[0]
       )
     }
 
-    if (contains(combined, ['通风', '湿度', '空气']) || contains(qTarget, ['airflow', 'humidity'])) {
+    if (
+      contains(combined, ['通风', '湿度', '空气']) ||
+      contains(qTarget, ['airflow', 'humidity'])
+    ) {
       return (
         list.find(item => /偏闷|偏潮|通风弱|偏湿|偏干|空调/.test(item.text)) ||
         unknownOptions[0] ||
@@ -429,7 +450,12 @@ async function clickQuestionNext(page, questionId) {
     200
   )
   if (!nextByQuestion) {
-    const fallback = await findElementByIdSuffix(page, 'diagnose-question-package-page-next-button', 2000, 200)
+    const fallback = await findElementByIdSuffix(
+      page,
+      'diagnose-question-package-page-next-button',
+      2000,
+      200
+    )
     if (!fallback) {
       return false
     }
@@ -440,7 +466,12 @@ async function clickQuestionNext(page, questionId) {
   const host = nextByQuestion
   const next = await host.$('[id$="diagnose-question-package-page-next-button"]')
   if (!next) {
-    const fallback = await findElementByIdSuffix(page, 'diagnose-question-package-page-next-button', 2000, 200)
+    const fallback = await findElementByIdSuffix(
+      page,
+      'diagnose-question-package-page-next-button',
+      2000,
+      200
+    )
     if (!fallback) {
       return false
     }
@@ -452,12 +483,7 @@ async function clickQuestionNext(page, questionId) {
   return true
 }
 
-async function runYellowingQuickFlow({
-  port,
-  projectPath: _projectPath,
-  maxSteps,
-  profile
-}) {
+async function runYellowingQuickFlow({ port, projectPath: _projectPath, maxSteps, profile }) {
   const reportDir = path.join(DEFAULT_REPORT_DIR, nowStamp().replace(/[:.]/g, '-'))
   const logs = []
 
@@ -500,14 +526,28 @@ async function runYellowingQuickFlow({
     if (!popup) {
       throw new Error('未命中诊断弹窗（diagnose-popup-panel）')
     }
-    pushLog({ type: 'state', label: 'popup-opened', path: (await resolveQuestionState(startPage)).path })
+    pushLog({
+      type: 'state',
+      label: 'popup-opened',
+      path: (await resolveQuestionState(startPage)).path
+    })
     shots.push(await screenshot(miniProgram, reportDir, '00-popup-opened'))
 
-    const quickEntry = await findElementByIdSuffix(startPage, '3ef72261--diagnose-dev-symptom-class-quick-select', 12000, 300)
+    const quickEntry = await findElementByIdSuffix(
+      startPage,
+      '3ef72261--diagnose-dev-symptom-class-quick-select',
+      12000,
+      300
+    )
     if (!quickEntry) {
       throw new Error('未找到黄叶快捷入口容器（3ef72261--diagnose-dev-symptom-class-quick-select）')
     }
-    const yellowBtn = await findElementByIdSuffix(startPage, 'diagnose-dev-symptom-class-option-yellowing_mode', 12000, 300)
+    const yellowBtn = await findElementByIdSuffix(
+      startPage,
+      'diagnose-dev-symptom-class-option-yellowing_mode',
+      12000,
+      300
+    )
     if (!yellowBtn) {
       throw new Error('未找到黄叶症状项（diagnose-dev-symptom-class-option-yellowing_mode）')
     }
@@ -530,7 +570,9 @@ async function runYellowingQuickFlow({
       const optionsByQuestion = await collectQuestionOptions(pageNow)
       const shellQuestionIds = await collectQuestionShellIds(pageNow)
       const orderQuestionId =
-        shellQuestionIds.length > 0 ? shellQuestionIds[Math.min(questionIndex, shellQuestionIds.length - 1)] : null
+        shellQuestionIds.length > 0
+          ? shellQuestionIds[Math.min(questionIndex, shellQuestionIds.length - 1)]
+          : null
       const currentQuestionId =
         current.currentQuestionId ||
         findActiveQuestionIdFromDom(pageNow) ||
@@ -545,16 +587,22 @@ async function runYellowingQuickFlow({
 
       const candidates = optionsByQuestion.get(currentQuestionId) || []
       if (!candidates.length) {
-        const fallback = optionsByQuestion.get(orderQuestionId) || [...optionsByQuestion.values()][0]
+        const fallback =
+          optionsByQuestion.get(orderQuestionId) || [...optionsByQuestion.values()][0]
         if (!fallback || !fallback.length) {
           pushLog({ type: 'state', label: 'no-options', questionId: currentQuestionId })
           break
         }
-        pushLog({ type: 'state', label: 'fallback-question', mapped: false, questionId: currentQuestionId })
+        pushLog({
+          type: 'state',
+          label: 'fallback-question',
+          mapped: false,
+          questionId: currentQuestionId
+        })
       }
 
       const questionMeta = await resolveQuestionMetaByShell(pageNow, currentQuestionId)
-      const options = candidates.length ? candidates : ([...optionsByQuestion.values()][0] || [])
+      const options = candidates.length ? candidates : [...optionsByQuestion.values()][0] || []
 
       if (!options.length) {
         pushLog({ type: 'state', label: 'no-available-option', questionId: currentQuestionId })
@@ -597,14 +645,19 @@ async function runYellowingQuickFlow({
         break
       }
 
-      if (afterState.isCompleted || (!afterState.hasActiveQuestions && afterState.questionCount > 0)) {
+      if (
+        afterState.isCompleted ||
+        (!afterState.hasActiveQuestions && afterState.questionCount > 0)
+      ) {
         pushLog({ type: 'state', label: 'completed-in-package', path: afterState.path })
         break
       }
 
-      if (afterState.activeQuestionIndex !== null &&
-          current.activeQuestionIndex !== null &&
-          afterState.activeQuestionIndex > current.activeQuestionIndex) {
+      if (
+        afterState.activeQuestionIndex !== null &&
+        current.activeQuestionIndex !== null &&
+        afterState.activeQuestionIndex > current.activeQuestionIndex
+      ) {
         questionIndex += 1
         continue
       }
@@ -623,15 +676,28 @@ async function runYellowingQuickFlow({
     })
 
     const resultShells = await collectElementsWithId(finalPage)
-    const outcomeHits = resultShells.filter(item =>
-      item.elementId.includes('diagnose-question-package-result')
-    ).map(item => item.elementId)
+    const outcomeHits = resultShells
+      .filter(item => item.elementId.includes('diagnose-question-package-result'))
+      .map(item => item.elementId)
     pushLog({ type: 'result-elements', outcomeHits })
 
     const finalShot = await screenshot(miniProgram, reportDir, 'final-state')
     pushLog({ type: 'result', screenshot: finalShot })
   } finally {
-    await screenshot(miniProgram, DEFAULT_REPORT_DIR, `final-${Date.now()}`)
+    try {
+      await screenshot(miniProgram, DEFAULT_REPORT_DIR, `final-${Date.now()}`)
+    } finally {
+      if (miniProgram && typeof miniProgram.disconnect === 'function') {
+        try {
+          await withTimeout(miniProgram.disconnect(), 5000, 'automator disconnect')
+        } catch (error) {
+          pushLog({
+            type: 'cleanup-error',
+            message: error.message || String(error)
+          })
+        }
+      }
+    }
   }
 
   return {
@@ -661,16 +727,24 @@ async function main() {
 
   const reportFile = path.join(result.reportDir, 'yellowing-mcp-report.json')
   await fs.promises.mkdir(result.reportDir, { recursive: true })
-  await fs.promises.writeFile(reportFile, JSON.stringify({
-    tool: 'miniprogram-automator',
-    startedAt: result.startedAt,
-    port,
-    projectPath,
-    profile,
-    maxSteps,
-    logs: result.logs,
-    screenshots: result.shots
-  }, null, 2), 'utf8')
+  await fs.promises.writeFile(
+    reportFile,
+    JSON.stringify(
+      {
+        tool: 'miniprogram-automator',
+        startedAt: result.startedAt,
+        port,
+        projectPath,
+        profile,
+        maxSteps,
+        logs: result.logs,
+        screenshots: result.shots
+      },
+      null,
+      2
+    ),
+    'utf8'
+  )
 
   log(`[结束] 结果路径: ${result.reportDir}`)
   log(`[结束] 日志文件: ${reportFile}`)

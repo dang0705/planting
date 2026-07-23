@@ -4,7 +4,7 @@ const { appendQuestionQuestions: writeSessionQuestionRows } = require('./session
 const { buildYellowingQuestionPackage } = require('../app/question-package-response')
 
 function shouldWriteSessionQuestionRows(response = {}) {
-  return Boolean(response?.questionRequired)
+  return Boolean(response?.questionRequired) && !response?.__skipQuestionRowWrite
 }
 
 async function writeSessionRoundQuestionRows({

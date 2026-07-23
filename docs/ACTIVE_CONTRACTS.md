@@ -4,8 +4,8 @@ status: current
 doc_type: contract
 owner: main
 sync_policy: active
-last_verified_date: 2026-06-26
-last_verified_commit: sprint-ai-workflow
+last_verified_date: 2026-07-20
+last_verified_commit: working-tree-pest-visual-mode
 source_of_truth:
   - src/http-functions/**
   - src/api/env.js
@@ -29,7 +29,10 @@ source_of_truth:
   - src/components/PotCanvas.vue
   - src/store/plants.js
   - src/components/CareBehaviorTimeline.vue
+  - src/components/diagnose-flow/**
+  - src/components/DiagnosePopup.vue
   - scripts/sql/watering-reminder-v21-schema-20260630.sql
+  - scripts/sql/add-specific-pest-diagnosis-mvp-20260720.sql
 stale_if_changed:
   - src/http-functions/**
   - src/api/env.js
@@ -109,9 +112,11 @@ cloudfunctions/layer/utils/http.js
 | 方法 | 路径                                         | 当前用途                                             |
 | ---- | -------------------------------------------- | ---------------------------------------------------- |
 | GET  | `/health`                                    | 健康检查。                                           |
-| POST | `/diagnosis/start`                           | 开始诊断主链。                                       |
+| POST | `/diagnosis/start`                           | 开始诊断主链；`streamVisualDecision=true` 时使用 SSE 返回视觉阶段事件。 |
 | POST | `/diagnosis/question/start`                  | 题包初始化入口；不要从路径名反推当前仍是“追问”。     |
 | POST | `/diagnosis/answer`                          | 提交题包/问题答案；当前契约不按“每轮最多 1 题”定义。 |
+| POST | `/diagnosis/retake/authorize`                | 用户确认补拍后创建本次会话唯一的三分钟服务端授权。   |
+| POST | `/diagnosis/retake/skip`                     | 跳过风险补拍并以 `unknown` 结束本次诊断。            |
 | GET  | `/diagnosis/result`                          | 读取诊断结果。                                       |
 | GET  | `/diagnosis/history`                         | 读取诊断历史。                                       |
 | POST | `/diagnosis/feedback`                        | 提交反馈。                                           |
@@ -132,17 +137,19 @@ cloudfunctions/layer/utils/http.js
 
 ### 3.2 前端诊断客户端
 
-前端当前通过 `src/http-functions/diagnose/client.js` 暴露以下能力。注意：以下能力只作为接口入口与链路实现，不定义额外追问产品口径：
+前端当前通过 `src/http-functions/diagnose/client.js` 暴露诊断主链能力，通过 `src/http-functions/diagnose/retake.js` 暴露补拍授权与跳过能力。以下能力只作为接口入口与链路实现，不定义额外追问产品口径：
 
 ```text
 requestDiagnosisStart
+requestDiagnoseStream
 requestDiagnosisQuestionStart
 requestDiagnosisAnswer
 requestDiagnosisResult
+requestDiagnosisRetakeAuthorize
+requestDiagnosisRetakeSkip
 requestDiagnosisHistory
 requestDiagnosisFeedback
 requestDiagnoseSync
-requestDiagnoseStream
 ```
 
 Review 与池外候选治理使用：
@@ -200,6 +207,15 @@ confidenceReasons
 needHumanReview
 careBehaviorTimeline
 environmentCareContext
+diagnosisProfile
+diagnosisModeRouteResult
+directionChoices
+directMatches
+confirmationCandidates
+retakeRequest
+retakeAuthorizationState
+originVisualCallBatchId
+evidenceSnapshotId
 ```
 
 事实源：
@@ -242,6 +258,37 @@ options[]
 - `wilting_droop` 固定题包使用 `sourceMode: manual_wilting_droop_route_package`，共 5 题：Q0 为 `care_behavior_timeline`/`CareBehaviorTimeline` 水分行为时间线，Q1-Q4 分别覆盖发蔫形态、节律/环境、近期应激和高危异常。
 - `wilting_droop` 终端结果以 `visibleOutcomes` 多行动建议为中心，公开标题/结果名为“建议行动清单”；不提供 top 顺序口径或“最可能原因”排序输出。
 - `wilting_droop` 结果可额外返回 `blockedActionExplanations`、`highRiskWarning`、`observationPeriod`。当高危异常阻断补水、喷水、施肥、暴晒等动作时，前端应展示冲突动作解释，而不是把被阻断动作继续作为主要建议。
+- `yellow_leaf` 仍为原固定 4 题，`wilting_droop` 仍为原固定 5 题；两者可无图直入，不调用视觉模型，题目 ID、顺序、选项、答案提交和结果逻辑不得被动态虫害包覆盖。
+- 诊断 tab 未绑定植物时可以用匿名会话启动上述固定题包，并可临时使用用户位置补齐天气背景；匿名占位 ID 不得写入或更新用户植物资料。
+- 具体虫害模式必须由 AI 初诊后的正式接纳证据进入；`pest` 是 profile/上位类别，不提供无图泛虫害题包。
+- `dynamic_specific_pest` 为 0～2 题动态题包。已正式接纳的视觉证据在题包中正向预填、锁定并隐藏同证据组问题；低置信或未接纳线索不得预填。
+- 动态虫害题包允许 1 题正式 package 提交，也允许多个具体虫害同时保留到 `visibleOutcomes`；命中项只排序，不删除次要结果。
+- 所有可见题包统一进入 `pages/diagnose/question-package`；`DiagnoseFlow` 只负责把当前会话和题包交给公共题包页，不在内核中维护另一套动态虫害答题 UI。
+- 题包答案统一以 `requestMode: answer_submit` 整包提交。服务端以会话中持久化的 `questionPackageSnapshot` 校验问题和选项归属，客户端回传的题包元数据不得成为选项授权来源。
+- 风险任务必须返回风险说明、明确同意和“不敢操作 / 跳过”；跳过值固定为 `unknown`，不得计作阴性。
+
+### 3.5 视觉模式路由与补拍契约
+
+- 所有“正式接纳的 AI 视觉证据 → 症状模式”只调用 `resolveDiagnosisModeRoute`。模型只输出可见证据和候选，不能直接确诊或启动题包。
+- `POST /diagnosis/start` 仅在请求明确携带 `streamVisualDecision=true` 且函数运行时提供 `context.sse()` 时进入视觉 SSE 分支；该分支依次发送用户可读的 `visual_*` 生命周期事件，最后只发送一次 `done`。原始模型 JSON、模型思考内容和内部路由术语不得流向客户端。
+- SSE 建立后、身份与模型前置流程完成前可先发送 `visual_preparing`，但不得伪称会话或模型已经启动；单图模型收到首个非空内容时最多发送一次 `visual_model_response_started`，其负载不得含模型 chunk、JSON、机器键或提示词。模型传输时序把 `firstByteMs` 与 `firstContentMs` 分开记录；后者只代表首个可见内容到达，不承诺模型推理变快。
+- SSE 客户端使用一次 `enableChunked` 请求消费事件流；流式请求失败时不得自动重放一次普通 `/diagnosis/start`。运行时不支持 SSE 时，服务端在调用模型前返回 `SSE_UNSUPPORTED`；不带流式标记的旧调用继续使用 `{ code, message, data }` JSON 包装。
+- `diagnosisProfile=full` 可提出黄叶、枯萎和具体虫害方向；`diagnosisProfile=pest` 只允许八种具体虫害成为模式候选，黄叶、下垂只作为伴随现象保存。
+- 高特异性组合只能使用同一图片、同一 `regionRef` 的独立证据组；同义证据最多计一次。一个以上虫害达到门槛时全部保留。
+- Prompt 的静态区包含完整 schema、器官/拍摄区域、证据与模式目录；profile、分析轮次、入口、植物上下文、前序正式证据摘要和未解决缺口只放动态尾部。
+- 提示词不描述逐虫虫体形状，也不得以文字特征诱导模型找虫；模型先独立识别当前图中的虫体或叶内潜道，随后 `PEST_VISUAL_RULES` 才按当前器官把模式键和 `PEST_EVIDENCE_RULES` 的直接证据组合编译到动态尾部。细网、叶片点状白黄伤痕、银白擦伤、同区针尖黑点、叶内潜道等非虫体可见异常必须保留在动态尾部，辅助证据不得被误写成直判必填项。
+- 合法、器官匹配且置信度不低于 `0.90` 的具体虫害 `mode_candidates` 是独立的实体候选来源；不得仅因同次输出没有重复的正式症状键而在 parser 或 route 层丢弃。该保留不会伪造正式症状证据，也不放宽低置信、profile 不匹配或器官不匹配候选的过滤。`yellow_speckling` 或 `stippling` 单独不得生成 `spider_mite` 候选；叶螨仍要求可见虫群，或同图同区的细网加点状伤痕组合才可直判。
+- `full/pest` 与首次/补拍必须保持同一静态前缀哈希。TokenHub 仅对有非空 system 静态前缀的视觉请求发送全局 `prompt_cache_key`，其值只含固定契约版本、模型和静态前缀哈希，以让所有诊断复用该静态前缀缓存；动态尾部、图片、用户、会话或批次信息不得进入。存在服务端诊断会话时，另发送不可逆摘要形式的 `X-Session-ID` 只用于同会话实例亲和，不能参与缓存键，也不得泄露原始会话值。是否真正命中服务商缓存只能以模型 usage 中的 `cached_tokens` / `prompt_cache_hit_tokens` 为准；三分钟补拍时限不是缓存命中保证，Chat 监控中的创建量为零也不能单独作为失败结论。
+- `DiagnoseFlow` 的首次图片和补拍图片在上传前统一执行物理像素预算：最多 `1,638,400` 像素、按 32 像素网格对齐且禁止放大；缩放后再进行 JPEG 压缩，质量不得低于 68。文件 KB 变小不等于视觉 token 变少，视觉 token 优化必须以最终宽高为准。服务端 `max_pixels` 仅作额外保护，不得假定 CloudBase 网关一定透传。
+- 图片审计必须分别保留原始宽高、最终宽高、原始/最终像素数、是否缩放、像素预算及估算视觉 token。服务商明确返回 `image_tokens` 时记录精确值；未返回时只能记录按 Qwen 32×32 网格计算的估算值，不得伪造精确拆分。
+- 首次分析只能提出补拍计划。用户确认后服务端生成一次授权，`retakeExpiresAt = serverNow + 3 分钟`；上传时服务端再次验时。
+- 风险补拍的风险说明、安全步骤和三分钟硬截止在同一次确认中展示；“不敢操作 / 跳过”由服务端持久化为 `skipped_unknown`，答案值为 `unknown`，并结束本次诊断。
+- 授权和跳过接口允许网络超时后的同状态幂等重放，但不会重置既有 `retakeExpiresAt`；授权后不能再跳过，跳过后不能再授权。
+- 授权超时后返回业务错误 `RETAKE_WINDOW_EXPIRED`，会话终态为 `ended_retake_timeout`，前端只允许重新诊断。
+- 补拍模型只分析新图；证据账本保留首批正式证据，并通过 `originVisualCallBatchId`、前序证据摘要和未解决证据组衔接。
+- `surface_glossy_residue` 只表示“叶片或枝条表面可见发亮、近透明的滴状或薄膜状残留”，视觉层不得推断“发黏”或“蜜露”。只有用户明确选择发黏时，结果才可说明“甜黏的透明分泌物（也叫蜜露）”。
+
+当前 SQL artifact 为 `scripts/sql/add-specific-pest-diagnosis-mvp-20260720.sql`。它只补充正式虫害视觉证据目录，本次未执行生产或本地数据库迁移；未应用该 artifact 的环境不能把缺失键当成已审计正式证据。
 
 需求指针：`docs/tickets/86exv6fnx-diagnose-question-package.md`。
 
@@ -252,11 +299,18 @@ cloudfunctions/diagnose-http/app/wilting-droop-question-package.js
 cloudfunctions/diagnose-http/domain/wilting-droop-outcome-resolver.js
 cloudfunctions/diagnose-http/app/question-package-response.js
 cloudfunctions/diagnose-http/app/diagnosis-answer-runner.js
+cloudfunctions/diagnose-http/app/pest-question-package.js
+cloudfunctions/diagnose-http/app/retake-authorization.js
+cloudfunctions/diagnose-http/domain/diagnosis-mode-registry.js
+cloudfunctions/diagnose-http/domain/diagnosis-mode-router.js
 cloudfunctions/diagnose-http/domain/diagnosis-engine.js
 cloudfunctions/diagnose-http/app/manual-symptom-question-start-fast-path.js
 cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js
 cloudfunctions/diagnose-http/services/session-question-service.js
 cloudfunctions/diagnose-http/constants/scoring.js
+cloudfunctions/diagnose-http/utils/symptom-labeler-prompt.js
+src/components/diagnose-flow/**
+src/http-functions/diagnose/retake.js
 src/pages/diagnose/question-package/question-flow.js
 src/utils/diagnose-result-normalizer.js
 ```

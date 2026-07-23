@@ -27,6 +27,8 @@ export function useDiagnosisAnswerMutation() {
       onError,
       careBehaviorTimeline = null,
       environmentWeatherWindow = null,
+      selectedModeKey = '',
+      directionChoice = null,
       ...careBehaviorSidecar
     } = {}) => {
       try {
@@ -47,6 +49,8 @@ export function useDiagnosisAnswerMutation() {
             uiHints,
             careBehaviorTimeline,
             environmentWeatherWindow,
+            selectedModeKey,
+            directionChoice,
             ...careBehaviorSidecar
           })
         )

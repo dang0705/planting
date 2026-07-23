@@ -15,20 +15,26 @@ export function findDiagnosisPlant({ result = {}, plantStore } = {}) {
   if (!plantId) {
     return null
   }
+  const userPlants = Array.isArray(plantStore?.userPlants) ? plantStore.userPlants : []
   return (
-    plantStore.userPlants.find(
+    userPlants.find(
       item => normalizeText(item.id) === plantId || normalizeText(item.plantId) === plantId
     ) || null
   )
 }
 
+function getRealPlantId(plant = null) {
+  return plant ? normalizeText(plant.id || plant.plantId) : ''
+}
+
 export async function resolveDiagnosisCareLocation({ result = {}, plantStore, userLocation } = {}) {
   const plant = findDiagnosisPlant({ result, plantStore })
+  const realPlantId = getRealPlantId(plant)
   const plantCareLocation = normalizePlantCareLocation(plant?.careLocation)
   if (plantCareLocation?.locationKey) {
     return {
       ...plantCareLocation,
-      plantId: normalizeText(plant?.id || result.userPlantId || result.plantId),
+      plantId: realPlantId,
       source: plantCareLocation.source || CARE_LOCATION_SOURCE.MANUAL_SELECTED
     }
   }
@@ -44,13 +50,12 @@ export async function resolveDiagnosisCareLocation({ result = {}, plantStore, us
   if (!legacyCareLocation) {
     return null
   }
-  const plantId = normalizeText(plant?.id || result.userPlantId || result.plantId)
-  if (plantId) {
-    patchUserPlant({ id: plantId, careLocation: legacyCareLocation }).catch(() => {})
+  if (realPlantId) {
+    patchUserPlant({ id: realPlantId, careLocation: legacyCareLocation }).catch(() => {})
   }
   return {
     ...legacyCareLocation,
-    plantId,
+    plantId: realPlantId,
     source: CARE_LOCATION_SOURCE.LEGACY_USER_LOCATION
   }
 }

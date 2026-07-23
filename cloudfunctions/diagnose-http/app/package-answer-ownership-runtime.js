@@ -149,10 +149,26 @@ function resolvePackageAnswerOwnership({ questionPackageSnapshot = null, answers
     .map(item => normalizeText(item?.questionKey))
     .filter(Boolean)
   const invalidQuestionKeys = answerQuestionKeys.filter(key => !allowedQuestionKeys.has(key))
+  const allowedOptionPairs = new Set(
+    buildPackageAnswerOptionMappings(questionPackageSnapshot).map(
+      item => `${item.questionKey}::${item.optionKey}`
+    )
+  )
+  const invalidOptionPairs = (Array.isArray(answers) ? answers : [])
+    .map(item => {
+      const questionKey = normalizeText(item?.questionKey)
+      const optionKey = normalizeOptionKey(item?.optionKey)
+      return questionKey && optionKey ? `${questionKey}::${optionKey}` : ''
+    })
+    .filter(pair => pair && !allowedOptionPairs.has(pair))
 
   return {
-    ok: answerQuestionKeys.length > 0 && invalidQuestionKeys.length === 0,
-    invalidQuestionKeys
+    ok:
+      answerQuestionKeys.length > 0 &&
+      invalidQuestionKeys.length === 0 &&
+      invalidOptionPairs.length === 0,
+    invalidQuestionKeys,
+    invalidOptionPairs
   }
 }
 

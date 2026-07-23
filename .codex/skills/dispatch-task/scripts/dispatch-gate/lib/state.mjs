@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { canReclaimStaleLock } from './process-liveness.mjs'
 
 export const repoRoot = path.resolve(fileURLToPath(new URL('../../../../../../', import.meta.url)))
 export const dispatchRoot = path.join(repoRoot, '.tmp', 'dispatch-task')
@@ -61,8 +62,7 @@ export function withRunLock(dispatchRunId, fn, { timeoutMs = 5000, staleMs = 300
         throw error
       }
       try {
-        const stat = fs.statSync(lockPath)
-        if (Date.now() - stat.mtimeMs > staleMs) {
+        if (canReclaimStaleLock({ lockPath, staleMs })) {
           fs.unlinkSync(lockPath)
         }
       } catch {
@@ -88,6 +88,39 @@ export function appendEvent(dispatchRunId, event) {
   })
 }
 
+export function readEvents(dispatchRunId) {
+  const file = path.join(stateDir(dispatchRunId), 'events.jsonl')
+  if (!fs.existsSync(file)) {
+    return []
+  }
+  return fs
+    .readFileSync(file, 'utf8')
+    .split('\n')
+    .filter(Boolean)
+    .map(line => {
+      try {
+        return JSON.parse(line)
+      } catch {
+        return null
+      }
+    })
+    .filter(Boolean)
+}
+
+export function readRunState(dispatchRunId) {
+  return readJson(path.join(stateDir(dispatchRunId), 'state.json'), {})
+}
+
+export function updateRunState(dispatchRunId, updater) {
+  return withRunLock(dispatchRunId, () => {
+    const file = path.join(stateDir(dispatchRunId), 'state.json')
+    const current = readJson(file, {})
+    const next = updater(current) ?? current
+    writeJsonAtomic(file, next)
+    return next
+  })
+}
+
 export function findHandoff(dispatchRunId) {
   const exact = path.join(dispatchRoot, `${dispatchRunId}-handoff.json`)
   if (fs.existsSync(exact)) {
@@ -105,14 +138,5 @@ export function inferDispatchRunId(payload = {}) {
   if (direct) {
     return String(direct)
   }
-  const candidates = fs.existsSync(dispatchRoot)
-    ? fs
-        .readdirSync(dispatchRoot)
-        .filter(name => name.endsWith('-handoff.json'))
-        .sort()
-    : []
-  if (candidates.length === 1) {
-    return candidates[0].replace(/-handoff\.json$/, '')
-  }
-  return 'unknown-dispatch-run'
+  return ''
 }

@@ -22,6 +22,8 @@ export function useDiagnoseMutation() {
       observedEvidenceSet = [],
       latestVisualCallBatchId = null,
       visualBatchTrace = null,
+      diagnosisProfile = 'full',
+      entrySource = 'diagnose_tab',
       onText,
       onFinish,
       onError,
@@ -29,7 +31,15 @@ export function useDiagnoseMutation() {
     } = {}) => {
       try {
         onText?.('思考中...', '思考中...')
-        validateDiagnoseInput({ plantId, userPlantId, image, images, observedSymptoms })
+        validateDiagnoseInput({
+          plantId,
+          userPlantId,
+          plantCatalogId,
+          entrySource,
+          image,
+          images,
+          observedSymptoms
+        })
 
         const requestPayload = buildDiagnosePayload({
           plantId,
@@ -43,6 +53,8 @@ export function useDiagnoseMutation() {
           observedEvidenceSet,
           latestVisualCallBatchId,
           visualBatchTrace,
+          diagnosisProfile,
+          entrySource,
           skipAuth
         })
         const normalizedResult =

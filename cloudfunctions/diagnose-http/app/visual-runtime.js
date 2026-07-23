@@ -2,6 +2,7 @@
 
 const { analyzeAndPersistVisualBatch } = require('../services/visual-diagnosis-service')
 const { persistRoundRuntime } = require('../services/round-runtime-persistence-service')
+const { attachDiagnosisModeRoute } = require('../services/visual-mode-route-service')
 
 function emitStartVisualEvent(onVisualEvent, eventName, payload = {}) {
   if (typeof onVisualEvent !== 'function') {
@@ -34,7 +35,7 @@ async function extractVisualSymptoms({
     }
   }
 
-  return analyzeAndPersistVisualBatch({
+  const extraction = await analyzeAndPersistVisualBatch({
     sessionId,
     openid,
     imageInputs,
@@ -44,6 +45,21 @@ async function extractVisualSymptoms({
     onVisualEvent,
     llmOptions
   })
+  if (!extraction?.aggregateResult) {
+    return extraction
+  }
+  const aggregateResult = attachDiagnosisModeRoute({
+    aggregateResult: extraction.aggregateResult,
+    successfulResults: extraction.imageResults || [],
+    diagnosisProfile: llmOptions?.diagnosisProfile || 'full',
+    priorEvidenceLedger: llmOptions?.priorEvidenceLedger || [],
+    requestedCaptureRegion: llmOptions?.requestedCaptureRegion || '',
+    originVisualCallBatchId
+  })
+  return {
+    ...extraction,
+    aggregateResult
+  }
 }
 
 async function extractVisualSymptomsSafely({

@@ -2,28 +2,13 @@ import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { execFileSync } from 'node:child_process'
+import {
+  canonicalizeLegacyQuotedBaseline,
+  normalizeGitPath,
+  parsePorcelainV1Z
+} from './git-status.mjs'
 
-const normalize = file =>
-  String(file ?? '')
-    .replaceAll('\\', '/')
-    .replace(/^\.\//, '')
-
-const splitStatusPaths = rawPath => {
-  const raw = String(rawPath ?? '').trim()
-  if (raw.includes(' -> ')) {
-    return raw.split(' -> ').map(normalize).filter(Boolean)
-  }
-  return [normalize(raw)].filter(Boolean)
-}
-
-const parseStatusRaw = text =>
-  text
-    .split('\n')
-    .filter(Boolean)
-    .flatMap(line => splitStatusPaths(line.slice(3)))
-    .filter(Boolean)
-
-const parseStatus = text => parseStatusRaw(text).map(normalize)
+const normalize = normalizeGitPath
 
 const ignoredStatusFile = file =>
   file === '.tmp' ||
@@ -85,13 +70,18 @@ const sameFingerprint = (a, b) =>
   a.unstaged_diff_sha256 === b.unstaged_diff_sha256 &&
   a.staged_diff_sha256 === b.staged_diff_sha256
 
+const currentStatusEntries = () =>
+  parsePorcelainV1Z(
+    execFileSync('git', ['status', '--porcelain=v1', '-z', '--untracked-files=all'])
+  )
+
 const currentStatusFiles = () =>
-  uniqueSorted(parseStatus(runGit(['status', '--short', '--untracked-files=all']))).filter(
+  uniqueSorted(currentStatusEntries().map(entry => entry.path)).filter(
     file => !ignoredStatusFile(file)
   )
 
 const currentUnsortedStatusFiles = () =>
-  [...new Set(parseStatusRaw(runGit(['status', '--short', '--untracked-files=all'])))].filter(
+  [...new Set(currentStatusEntries().map(entry => entry.path))].filter(
     file => !ignoredStatusFile(file)
   )
 
@@ -141,6 +131,20 @@ export function buildWorktreeScopeReport({ handoff, result, baseline, baselineFi
     if (!condition) {
       errors.push(message)
     }
+  }
+
+  const baselineRepair = canonicalizeLegacyQuotedBaseline(baseline, {
+    currentStatusEntries: currentStatusEntries(),
+    getFingerprint: fileFingerprint
+  })
+  baseline = baselineRepair.baseline
+  errors.push(...baselineRepair.errors)
+  if (baselineRepair.canonicalizations.length) {
+    warnings.push(
+      `canonicalized legacy Git quoted baseline paths: ${baselineRepair.canonicalizations
+        .map(entry => entry.path)
+        .join(', ')}`
+    )
   }
 
   need(Array.isArray(result.changed_files), 'result.changed_files must be an array')
@@ -254,6 +258,23 @@ export function buildWorktreeScopeReport({ handoff, result, baseline, baselineFi
       `preexisting dirty overlap touches forbidden or non-allowed paths: ${unsafePreexistingOverlap.join(', ')}`
     )
   }
+  if (overlapExplicitlyAllowed) {
+    const ownershipProof = handoff?.validation?.preexisting_dirty_overlap_owners ?? {}
+    const overlapNeedingProof = uniqueSorted([
+      ...declaredPreexistingOverlap,
+      ...preexistingDirtyModified,
+      ...disappearedSinceBaseline
+    ])
+    const missingOwnershipProof = overlapNeedingProof.filter(file => {
+      const proof = ownershipProof[file]
+      return !(proof && typeof proof === 'object' && String(proof.owner ?? '').trim())
+    })
+    if (missingOwnershipProof.length) {
+      errors.push(
+        `preexisting dirty overlap requires contract-level ownership proof per path: ${missingOwnershipProof.join(', ')}`
+      )
+    }
+  }
   if (declaredPreexistingOverlap.length && !overlapExplicitlyAllowed) {
     errors.push(
       `declared changed_files were already dirty at baseline; cannot prove child ownership: ${declaredPreexistingOverlap.join(', ')}`
@@ -299,6 +320,7 @@ export function buildWorktreeScopeReport({ handoff, result, baseline, baselineFi
     disappeared_since_baseline: disappearedSinceBaseline,
     head_changed: currentHead !== baseline.head,
     head_change_reason: handoff?.validation?.head_change_reason ?? null,
+    baseline_path_canonicalizations: baselineRepair.canonicalizations,
     warnings,
     errors
   }

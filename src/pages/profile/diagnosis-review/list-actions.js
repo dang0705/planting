@@ -116,6 +116,14 @@ export function useDiagnosisReviewListActions(ctx) {
       })
       updateListState(sourceType, data)
       syncCombinedItems()
+      if (import.meta.env.DEV) {
+        console.info('[diagnosis-review] list state updated', {
+          sourceType,
+          itemCount: currentState.items.length,
+          total: currentState.total,
+          fallbackMode: currentState.fallbackMode
+        })
+      }
       if (
         selectedSessionId.value &&
         !items.value.some(item => item.diagnosisSessionId === selectedSessionId.value)
@@ -124,6 +132,12 @@ export function useDiagnosisReviewListActions(ctx) {
         selectedSessionId.value = ''
       }
     } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('[diagnosis-review] list state update failed', {
+          sourceType,
+          message: error?.message || String(error)
+        })
+      }
       currentState.items = []
       currentState.total = 0
       currentState.hasMore = false

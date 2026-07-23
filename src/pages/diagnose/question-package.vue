@@ -65,45 +65,18 @@
                       @change="payload => handleLightEnvironmentChange(question, payload)"
                     />
 
-                    <view
+                    <QuestionPackageOptions
                       v-if="
                         !isLightEnvironmentQuestion(question) &&
                         getVisibleCareBehaviorOptions(question).length
                       "
-                      :id="`diagnose-question-package-page-option-stack-${getQuestionId(question) || questionIndex}`"
-                      class="mt-4 flex flex-col gap-2.5"
-                    >
-                      <view
-                        v-for="(option, optionIndex) in getVisibleCareBehaviorOptions(question)"
-                        :key="option.optionId || option.optionKey || option.text"
-                        :id="`diagnose-question-package-page-option-${getQuestionId(question) || questionIndex}-${option.optionId || option.optionKey || optionIndex}`"
-                        class="overflow-hidden rounded-2xl border border-emerald-100 bg-white"
-                        :class="
-                          isSelectedQuestionOption(question, option)
-                            ? 'border-[#2d7a4f] bg-emerald-50'
-                            : ''
-                        "
-                        @click="selectQuestionOption(question, option)"
-                      >
-                        <view class="flex items-center justify-between gap-3 px-3.5 py-3">
-                          <text
-                            class="min-w-0 flex-1 text-[13px] font-bold leading-snug text-gray-700"
-                            >{{ getOptionText(question, option) }}</text
-                          >
-                          <text
-                            class="shrink-0 rounded-full border border-current px-2 py-0.5 text-[10px] font-extrabold text-[#8b7355]"
-                          >
-                            {{ isSelectedQuestionOption(question, option) ? '已选' : '单选' }}
-                          </text>
-                        </view>
-                        <text
-                          v-if="getOptionDescription(option)"
-                          class="block whitespace-pre-line px-3.5 pb-3 text-[11px] leading-relaxed text-gray-500"
-                        >
-                          {{ getOptionDescription(option) }}
-                        </text>
-                      </view>
-                    </view>
+                      :question="question"
+                      :question-id="getQuestionId(question) || String(questionIndex)"
+                      :options="getVisibleCareBehaviorOptions(question)"
+                      :selected-option-id="getSelectedQuestionOptionId(question)"
+                      @select="option => selectQuestionOption(question, option)"
+                      @skip="option => skipQuestionRisk(question, option)"
+                    />
                   </view>
                 </view>
               </scroll-view>
@@ -135,6 +108,26 @@
           </view>
         </view>
       </template>
+
+      <QuestionPackageRetake
+        v-else-if="result?.retakeRequest"
+        :retake-request="retakeRequest"
+        :retake-authorization-state="retakeAuthorizationState"
+        :retake-countdown-text="retakeCountdownText"
+        :retake-expired="retakeExpired"
+        :has-active-retake-authorization="hasActiveRetakeAuthorization"
+        :files="retakeFiles"
+        :can-choose-image="canChooseRetakeImage"
+        :can-submit-image="canSubmitRetakeImage"
+        :is-submitting-image="isSubmittingRetakeImage"
+        :show-restart-action="showRetakeRestartAction"
+        @begin="beginRetakeAuthorization"
+        @skip="skipRetakeRequest"
+        @choose="chooseRetakeImage"
+        @remove="removeRetakeImage"
+        @submit="submitRetakeImage"
+        @restart="returnPreviousPage"
+      />
 
       <scroll-view
         v-else-if="result && !result.hasActiveQuestions && !hasRouteConvergenceDetails"
@@ -179,7 +172,9 @@
           >
             <text class="block text-[15px] font-black text-gray-900">处理建议</text>
             <view v-for="group in actionAdviceGroups" :key="group.key" class="mb-3 last:mb-0">
-              <text class="mt-2.5 block text-xs font-extrabold leading-snug text-gray-800"
+              <text
+                v-if="group.showOutcomeLabel"
+                class="mt-2.5 block text-xs font-extrabold leading-snug text-gray-800"
                 >{{ group.outcomeLabel }}：</text
               >
               <text
@@ -199,7 +194,9 @@
           >
             <text class="block text-[15px] font-black text-gray-900">暂时不要做</text>
             <view v-for="group in avoidAdviceGroups" :key="group.key" class="mb-3 last:mb-0">
-              <text class="mt-2.5 block text-xs font-extrabold leading-snug text-gray-800"
+              <text
+                v-if="group.showOutcomeLabel"
+                class="mt-2.5 block text-xs font-extrabold leading-snug text-gray-800"
                 >{{ group.outcomeLabel }}：</text
               >
               <text
@@ -294,7 +291,9 @@
                 :key="`action_group_${group.key}`"
                 class="mb-2 last:mb-0"
               >
-                <text class="block text-xs font-extrabold leading-snug text-gray-800"
+                <text
+                  v-if="group.showOutcomeLabel"
+                  class="block text-xs font-extrabold leading-snug text-gray-800"
                   >{{ group.outcomeLabel }}：</text
                 >
                 <text
@@ -323,7 +322,9 @@
                 :key="`avoid_group_${group.key}`"
                 class="mb-2 last:mb-0"
               >
-                <text class="block text-xs font-extrabold leading-snug text-gray-800"
+                <text
+                  v-if="group.showOutcomeLabel"
+                  class="block text-xs font-extrabold leading-snug text-gray-800"
                   >{{ group.outcomeLabel }}：</text
                 >
                 <text
@@ -377,6 +378,8 @@ import { useUserStore } from '@/store/user.js'
 import ButtonStepTrack from '@/components/common/ButtonStepTrack.vue'
 import CareBehaviorTimeline from '@/components/CareBehaviorTimeline.vue'
 import LightEnvironmentPicker from '@/components/LightEnvironmentPicker.vue'
+import QuestionPackageOptions from './question-package/QuestionPackageOptions.vue'
+import QuestionPackageRetake from './question-package/QuestionPackageRetake.vue'
 import { useDiagnosisAnswerMutation } from '@/vue-query/diagnose/mutations/useDiagnosisAnswerMutation.js'
 import QuestionPackageEmptyState from './question-package/QuestionPackageEmptyState.vue'
 import {
@@ -386,13 +389,10 @@ import {
 } from './question-package/payload.js'
 import { useQuestionPackageFlow } from './question-package/question-flow.js'
 import { getQuestionIdentity as getQuestionId } from '@/utils/diagnose-question-identity.js'
-import {
-  getOptionDescription,
-  getOptionText,
-  getQuestionHelpText,
-  getQuestionTitle
-} from './question-package/question-display.js'
+import { getQuestionHelpText, getQuestionTitle } from './question-package/question-display.js'
 import { useQuestionPackageResultView } from './question-package/result-view.js'
+import { useQuestionPackageRetake } from './question-package/retake-flow.js'
+import { useQuestionPackageContext } from './question-package/page-context.js'
 
 const diagnoseStore = useDiagnoseStore()
 const userStore = useUserStore()
@@ -403,25 +403,12 @@ const payload = ref({})
 const result = ref(null)
 const images = ref([])
 
-function returnPreviousPage() {
-  uni.navigateBack({ delta: 1 })
-}
+const returnPreviousPage = () => uni.navigateBack({ delta: 1 })
 
-const plantName = computed(() => {
-  const plant = payload.value?.plant || payload.value?.plantInfo || {}
-  return String(
-    payload.value?.plantName ||
-      plant.displayName ||
-      plant.name ||
-      result.value?.plantName ||
-      routeOptions.value?.plantName ||
-      '植物'
-  ).trim()
-})
-const questionDiagnosisContextText = computed(() => {
-  const mode = String(result.value?.questionPackage?.mode || '').trim()
-  const modeTitle = mode === 'wilting_droop' ? '枯萎 / 发蔫问诊' : '黄叶问诊'
-  return `针对${plantName.value || '植物'}的${modeTitle}`
+const { plantName, questionDiagnosisContextText } = useQuestionPackageContext({
+  payload,
+  result,
+  routeOptions
 })
 
 const {
@@ -442,7 +429,8 @@ const {
   isCareBehaviorWateringTimelineQuestion,
   isLightEnvironmentQuestion,
   selectQuestionOption,
-  isSelectedQuestionOption,
+  getSelectedQuestionOptionId,
+  skipQuestionRisk,
   canProceedQuestion,
   goPreviousQuestion,
   handleNextQuestion
@@ -453,6 +441,32 @@ const {
   userStore,
   diagnoseStore,
   diagnosisAnswerMutation
+})
+
+const {
+  retakeRequest,
+  retakeAuthorizationState,
+  retakeCountdownText,
+  retakeExpired,
+  hasActiveRetakeAuthorization,
+  retakeFiles,
+  canChooseRetakeImage,
+  canSubmitRetakeImage,
+  isSubmittingRetakeImage,
+  showRetakeRestartAction,
+  beginRetakeAuthorization,
+  skipRetakeRequest,
+  chooseRetakeImage,
+  removeRetakeImage,
+  submitRetakeImage
+} = useQuestionPackageRetake({
+  result,
+  payload,
+  images,
+  plantName,
+  diagnoseStore,
+  diagnosisAnswerMutation,
+  resetQuestionState
 })
 
 const {

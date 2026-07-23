@@ -11,36 +11,7 @@ const {
   resolveQuestionText,
   buildQuestionTextCandidateKeys
 } = require('../utils/question-text-resolver')
-
-function normalizeUploadCompression(value = null) {
-  if (!value || typeof value !== 'object') {
-    return null
-  }
-
-  const numberFields = [
-    'originalSizeBytes',
-    'uploadedSizeBytes',
-    'compressionRatio',
-    'quality',
-    'width',
-    'height',
-    'targetSizeBytes',
-    'minimumQuality'
-  ]
-  const normalized = {
-    source: String(value.source || '').trim(),
-    compressed: Boolean(value.compressed),
-    preserveImageDetails: Boolean(value.preserveImageDetails),
-    doubleConfirmedForHunyuan: Boolean(value.doubleConfirmedForHunyuan)
-  }
-
-  for (const field of numberFields) {
-    const num = Number(value[field])
-    normalized[field] = Number.isFinite(num) && num > 0 ? num : null
-  }
-
-  return normalized
-}
+const { normalizeUploadCompression } = require('../utils/upload-compression')
 
 function normalizeAnswerQuestionKey(value = '') {
   return String(value || '').trim()
@@ -52,7 +23,9 @@ function parseQuestionRationale(value = '') {
   }
 
   const raw = String(value || '').trim()
-  if (!raw) {return {}}
+  if (!raw) {
+    return {}
+  }
 
   try {
     const parsed = JSON.parse(raw)
@@ -64,11 +37,7 @@ function parseQuestionRationale(value = '') {
 
 function resolveQuestionKey(item = {}) {
   return String(
-    item?.questionKey ||
-      item?.question_key ||
-      item?.questionId ||
-      item?.question_id ||
-      ''
+    item?.questionKey || item?.question_key || item?.questionId || item?.question_id || ''
   ).trim()
 }
 
@@ -98,10 +67,7 @@ async function withQuestionTextConservative(response = {}) {
 
   const questionRows = await getQuestionsByKeys(missingQuestionKeys)
   const questionMetaByKey = new Map(
-    questionRows.map(item => [
-      String(item?.questionKey || '').trim(),
-      item
-    ])
+    questionRows.map(item => [String(item?.questionKey || '').trim(), item])
   )
 
   const hydrateItem = item => {
@@ -162,32 +128,23 @@ function buildAskedQuestionRowsFromQuestionRows(rows = []) {
     result.push({
       questionKey: normalizedQuestionKey,
       targetSymptomKey: normalizeAnswerQuestionKey(
-        rationale?.tsk ||
-          rationale?.targetSymptomKey ||
-          row?.target_symptom_key ||
-          ''
+        rationale?.tsk || rationale?.targetSymptomKey || row?.target_symptom_key || ''
       ),
-      packageTopic: normalizeAnswerQuestionKey(
-        rationale?.td ||
-          rationale?.packageTopic ||
-          ''
-      ),
-      questionGroupKey: normalizeAnswerQuestionKey(
-        groupKey ||
-          rationale?.questionGroupKey ||
-          row?.question_group_key ||
-          '__default__'
-      ) || '__default__',
-      packageSection: normalizeAnswerQuestionKey(
-        rationale?.rs ||
-          rationale?.packageSection ||
-          ''
-      ),
+      packageTopic: normalizeAnswerQuestionKey(rationale?.td || rationale?.packageTopic || ''),
+      questionGroupKey:
+        normalizeAnswerQuestionKey(
+          groupKey || rationale?.questionGroupKey || row?.question_group_key || '__default__'
+        ) || '__default__',
+      packageSection: normalizeAnswerQuestionKey(rationale?.rs || rationale?.packageSection || ''),
       questionText,
       questionTextUserCn: questionText,
       questionTextCn: questionText,
-      status: String(row?.status || '').trim().toLowerCase(),
-      optionKey: String(row?.answer_value || row?.answerValue || '').trim().toLowerCase()
+      status: String(row?.status || '')
+        .trim()
+        .toLowerCase(),
+      optionKey: String(row?.answer_value || row?.answerValue || '')
+        .trim()
+        .toLowerCase()
     })
   }
 
@@ -199,7 +156,9 @@ function buildRuntimeAnswersFromQuestionUpdates(previousAnswers = [], updatedQue
 
   for (const item of Array.isArray(previousAnswers) ? previousAnswers : []) {
     const key = normalizeAnswerQuestionKey(item?.questionKey || '')
-    if (!key) {continue}
+    if (!key) {
+      continue
+    }
     answerMap.set(key, {
       questionKey: key,
       optionKey: String(item?.optionKey || '').trim()
@@ -209,7 +168,9 @@ function buildRuntimeAnswersFromQuestionUpdates(previousAnswers = [], updatedQue
   for (const item of Array.isArray(updatedQuestionAnswers) ? updatedQuestionAnswers : []) {
     const key = normalizeAnswerQuestionKey(item?.questionKey || '')
     const optionKey = String(item?.optionKey || '').trim()
-    if (!key || !optionKey) {continue}
+    if (!key || !optionKey) {
+      continue
+    }
     answerMap.set(key, {
       questionKey: key,
       optionKey: optionKey.toLowerCase()
@@ -219,22 +180,26 @@ function buildRuntimeAnswersFromQuestionUpdates(previousAnswers = [], updatedQue
   return Array.from(answerMap.values())
 }
 
-function buildRuntimeUnknownCountByGroup(previousUnknownCountByGroup = {}, updatedQuestionAnswers = []) {
+function buildRuntimeUnknownCountByGroup(
+  previousUnknownCountByGroup = {},
+  updatedQuestionAnswers = []
+) {
   const nextUnknownCountByGroup = {
     ...previousUnknownCountByGroup
   }
 
   for (const item of Array.isArray(updatedQuestionAnswers) ? updatedQuestionAnswers : []) {
     const groupKey = String(item?.questionGroupKey || '__default__').trim() || '__default__'
-    const status = String(item?.status || '').trim().toLowerCase()
+    const status = String(item?.status || '')
+      .trim()
+      .toLowerCase()
 
     if (groupKey === '__default__') {
       continue
     }
 
-    nextUnknownCountByGroup[groupKey] = status === 'skipped'
-      ? Number(nextUnknownCountByGroup[groupKey] || 0) + 1
-      : 0
+    nextUnknownCountByGroup[groupKey] =
+      status === 'skipped' ? Number(nextUnknownCountByGroup[groupKey] || 0) + 1 : 0
   }
 
   return nextUnknownCountByGroup
@@ -253,7 +218,9 @@ function resolveVisualImageInputs(payload = {}) {
     const imageRef = String(
       item?.imageRef || item?.imageUrl || item?.image || item?.url || item?.imageId || ''
     ).trim()
-    if (!imageRef) {continue}
+    if (!imageRef) {
+      continue
+    }
 
     const normalizedOrderIndex = Number(item?.orderIndex ?? index)
     const normalizedInputSlotOrder = Number(item?.inputSlotOrder ?? item?.orderIndex ?? index)
@@ -268,9 +235,7 @@ function resolveVisualImageInputs(payload = {}) {
       inputSlotType:
         item?.inputSlotType || item?.slotType || item?.organHint || item?.organ || 'unknown',
       orderIndex: Number.isFinite(normalizedOrderIndex) ? normalizedOrderIndex : index,
-      inputSlotOrder: Number.isFinite(normalizedInputSlotOrder)
-        ? normalizedInputSlotOrder
-        : index,
+      inputSlotOrder: Number.isFinite(normalizedInputSlotOrder) ? normalizedInputSlotOrder : index,
       inputSlotLabel: item?.inputSlotLabel || item?.slotLabel || '',
       userDeclaredOrganType:
         item?.userDeclaredOrganType || item?.declaredOrganType || item?.userDeclaredOrgan || '',
@@ -282,6 +247,7 @@ function resolveVisualImageInputs(payload = {}) {
           : Number.isFinite(Number(normalizedDeclaredOrganConfidence))
             ? Number(normalizedDeclaredOrganConfidence)
             : null,
+      captureRegion: String(item?.captureRegion || item?.capture_region || '').trim(),
       ...(uploadCompression ? { uploadCompression } : {})
     })
   }
@@ -324,13 +290,19 @@ function resolveVisualImageInputs(payload = {}) {
 }
 
 function normalizeEvidenceSourceType(value = '') {
-  return String(value || '').trim().toLowerCase()
+  return String(value || '')
+    .trim()
+    .toLowerCase()
 }
 
 function isVisualEvidenceItem(item = {}) {
   const sourceType = normalizeEvidenceSourceType(item?.sourceType || item?.source_type || '')
-  if (!sourceType) {return false}
-  if (sourceType === 'session_observed_symptom') {return true}
+  if (!sourceType) {
+    return false
+  }
+  if (sourceType === 'session_observed_symptom') {
+    return true
+  }
   return sourceType.includes('visual')
 }
 
@@ -342,23 +314,31 @@ function stripVisualEvidenceItems(observedEvidenceSet = []) {
 
 function normalizeRoundFromRoundId(roundId) {
   const match = String(roundId || '').match(/round_(\d+)/i)
-  if (!match) {return null}
+  if (!match) {
+    return null
+  }
   return Number(match[1] || 0) || null
 }
 
 function normalizePublicAnswers(answers = []) {
   const normalized = (Array.isArray(answers) ? answers : [])
     .map(item => {
-      if (!item) {return null}
+      if (!item) {
+        return null
+      }
 
       const questionKey =
         fromQuestionId(item.questionId || '') ||
         String(item.questionKey || item.question_key || item.questionId || '').trim()
       const optionKey =
         fromOptionId(item.optionId || '') ||
-        normalizeOptionKey(item.optionKey || item.option_key || item.answerValue || item.optionId || '')
+        normalizeOptionKey(
+          item.optionKey || item.option_key || item.answerValue || item.optionId || ''
+        )
 
-      if (!questionKey || !optionKey) {return null}
+      if (!questionKey || !optionKey) {
+        return null
+      }
 
       return {
         questionKey,
@@ -375,7 +355,9 @@ function normalizePublicAnswers(answers = []) {
 }
 
 function normalizeRequestMode(value = '') {
-  return String(value || '').trim().toLowerCase()
+  return String(value || '')
+    .trim()
+    .toLowerCase()
 }
 
 function resolveNextAnswerRevision(sessionState = {}, baseAnswerRevision = null) {
@@ -389,7 +371,9 @@ function mergeClientContextFields(primary = null, conservative = null) {
   const base = conservative && typeof conservative === 'object' ? conservative : {}
   const pickText = key => {
     const first = String(source?.[key] || '').trim()
-    if (first) {return first}
+    if (first) {
+      return first
+    }
     const second = String(base?.[key] || '').trim()
     return second || ''
   }
@@ -409,10 +393,14 @@ function mergeClientContextFields(primary = null, conservative = null) {
           : 0,
     auditLabel: pickText('auditLabel'),
     auditFileName: pickText('auditFileName'),
-    auditCaseKey: pickText('auditCaseKey')
+    auditCaseKey: pickText('auditCaseKey'),
+    diagnosisProfile: pickText('diagnosisProfile') || 'full',
+    entrySource: pickText('entrySource')
   }
 
-  return Object.values(merged).some(value => (typeof value === 'number' ? value > 0 : Boolean(value)))
+  return Object.values(merged).some(value =>
+    typeof value === 'number' ? value > 0 : Boolean(value)
+  )
     ? merged
     : null
 }
@@ -426,10 +414,15 @@ function resolveRequestClientContext(payload = {}, conservative = null) {
     structuredImageCount: payload?.structuredImageCount,
     auditLabel: payload?.auditLabel,
     auditFileName: payload?.auditFileName,
-    auditCaseKey: payload?.auditCaseKey
+    auditCaseKey: payload?.auditCaseKey,
+    diagnosisProfile: payload?.diagnosisProfile,
+    entrySource: payload?.entrySource
   }
 
-  return mergeClientContextFields(payload?.clientContext || null, mergeClientContextFields(explicitContext, conservative))
+  return mergeClientContextFields(
+    payload?.clientContext || null,
+    mergeClientContextFields(explicitContext, conservative)
+  )
 }
 
 module.exports = {

@@ -59,7 +59,7 @@ npm run test:ci
 npm run build:mp-weixin:ci
 ```
 
-`npm run test:ci` 与 `npm run test:all` 只运行 `test/unit/frontend` 和 `test/unit/backend`。跨 `src` 与 `cloudfunctions` 的合同检查属于 batch E2E，使用独立入口，例如：
+`npm run test:ci` 与 `npm run test:all` 只运行递归 unit 镜像：`test/unit/frontend/<src 相对目录>/...` 与 `test/unit/backend/<cloudfunctions 相对目录>/...`。unit runner 会拒绝 `test-` 前缀、无源目录映射、frontend/backend 交叉 import；跨 `src` 与 `cloudfunctions` 或只覆盖 workflow/scripts 的合同检查属于 batch E2E，使用独立入口，例如：
 
 ```bash
 npm run e2e:route-planning
@@ -73,6 +73,12 @@ automator 端上脚本必须先通过 catalog gate 选择精确叶子，并带 e
 ```bash
 npm run check:e2e-catalog
 node .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs qa-run --catalog-id=<leaf-id> --execution-id=<run-id> --dry-run
+```
+
+Automator catalog 是完整层级映射，固定顶层 domain 包括 `ai-vision`、`diagnosis`、`care`、`user`、`plants`；watering 叶子必须位于 `care.watering.*`。迁移完整性可用以下命令校验：
+
+```bash
+node .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs validate-e2e-migration
 ```
 
 ## 3. 本地 CloudBase HTTP 函数调试

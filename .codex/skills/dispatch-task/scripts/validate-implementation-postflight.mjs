@@ -10,7 +10,6 @@ import {
   buildStyleStackReport,
   buildWorktreeScopeReport
 } from './lib/implementation-postflight-checks.mjs'
-import { createQaSkeleton } from './dispatch-gate/lib/catalog.mjs'
 
 const [handoffFile, resultFile, baselineFile] = process.argv.slice(2)
 if (!handoffFile || !resultFile || !baselineFile) {
@@ -53,18 +52,6 @@ const report = {
   no_new_deps: noNewDeps,
   style_stack: styleStack,
   errors: childErrors
-}
-
-if (!blocked) {
-  const qaSkeleton = createQaSkeleton({
-    dispatchRunId: handoff.dispatch_run_id,
-    handoff,
-    postflight: report
-  })
-  report.qa_skeleton = {
-    status: 'created',
-    path: qaSkeleton.file.replace(`${process.cwd()}/`, '')
-  }
 }
 
 console.log(JSON.stringify(report, null, 2))

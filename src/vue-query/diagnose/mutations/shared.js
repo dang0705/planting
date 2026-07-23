@@ -16,6 +16,8 @@ export function buildDiagnosePayload({
   observedEvidenceSet = [],
   latestVisualCallBatchId = null,
   visualBatchTrace = null,
+  diagnosisProfile = 'full',
+  entrySource = 'diagnose_tab',
   skipAuth = false,
   platform = resolveDiagnoseClientPlatform()
 }) {
@@ -29,6 +31,7 @@ export function buildDiagnosePayload({
     ? normalizedImageIds
     : normalizedImages.map(item => item.imageRef).filter(Boolean)
   const reviewSourceType = resolveDiagnoseReviewSourceType(platform)
+  const normalizedEntrySource = normalizeDiagnoseEntrySource(entrySource)
 
   return {
     plantId,
@@ -40,17 +43,31 @@ export function buildDiagnosePayload({
     ...(normalizedImages.length ? { images: normalizedImages } : {}),
     ...(description ? { description } : {}),
     ...(Array.isArray(observedSymptoms) && observedSymptoms.length ? { observedSymptoms } : {}),
-    ...(Array.isArray(observedEvidenceSet) && observedEvidenceSet.length ? { observedEvidenceSet } : {}),
+    ...(Array.isArray(observedEvidenceSet) && observedEvidenceSet.length
+      ? { observedEvidenceSet }
+      : {}),
     ...(latestVisualCallBatchId ? { latestVisualCallBatchId } : {}),
     ...(visualBatchTrace && typeof visualBatchTrace === 'object' ? { visualBatchTrace } : {}),
+    diagnosisProfile,
+    entrySource: normalizedEntrySource,
     clientContext: {
-      source: 'DiagnosePopup',
+      source: normalizedEntrySource,
       platform,
       reviewSourceType,
       visualInputVersion: 'multi_image_contract_v1',
-      structuredImageCount: normalizedImages.length
+      structuredImageCount: normalizedImages.length,
+      diagnosisProfile,
+      entrySource: normalizedEntrySource
     }
   }
+}
+
+function normalizeDiagnoseEntrySource(value = '') {
+  return String(value || 'diagnose_tab').trim() || 'diagnose_tab'
+}
+
+function allowsStandaloneDiagnoseTab({ entrySource = 'diagnose_tab' } = {}) {
+  return normalizeDiagnoseEntrySource(entrySource) === 'diagnose_tab'
 }
 
 function resolveDiagnoseClientPlatform() {
@@ -66,8 +83,14 @@ function resolveDiagnoseClientPlatform() {
 }
 
 function resolveDiagnoseReviewSourceType(platform = '') {
-  const normalized = String(platform || '').trim().toLowerCase()
-  if (normalized === 'wechat-mini-program' || normalized === 'wechat_mp' || normalized === 'mini-program') {
+  const normalized = String(platform || '')
+    .trim()
+    .toLowerCase()
+  if (
+    normalized === 'wechat-mini-program' ||
+    normalized === 'wechat_mp' ||
+    normalized === 'mini-program'
+  ) {
     return 'manual'
   }
   return 'web'
@@ -150,35 +173,60 @@ function normalizeDiagnoseImages(images = []) {
 
       const normalizedOrderIndex = Number(item?.orderIndex ?? index)
       const normalizedInputSlotOrder = Number(item?.inputSlotOrder ?? item?.orderIndex ?? index)
-      const normalizedConfidence = item?.userDeclaredOrganConfidence ?? item?.declaredOrganConfidence ?? null
+      const normalizedConfidence =
+        item?.userDeclaredOrganConfidence ?? item?.declaredOrganConfidence ?? null
       const uploadCompression = normalizeUploadCompression(
         item?.uploadCompression || item?.compression || null
       )
 
       return {
         imageRef,
-        inputSlotType: String(item?.inputSlotType || item?.slotType || item?.organHint || 'unknown').trim() || 'unknown',
+        inputSlotType:
+          String(item?.inputSlotType || item?.slotType || item?.organHint || 'unknown').trim() ||
+          'unknown',
         orderIndex: Number.isFinite(normalizedOrderIndex) ? normalizedOrderIndex : index,
-        inputSlotOrder: Number.isFinite(normalizedInputSlotOrder) ? normalizedInputSlotOrder : index,
-        inputSlotLabel: String(item?.inputSlotLabel || item?.slotLabel || `图片${index + 1}`).trim(),
+        inputSlotOrder: Number.isFinite(normalizedInputSlotOrder)
+          ? normalizedInputSlotOrder
+          : index,
+        inputSlotLabel: String(
+          item?.inputSlotLabel || item?.slotLabel || `图片${index + 1}`
+        ).trim(),
         userDeclaredOrganType: String(
           item?.userDeclaredOrganType || item?.declaredOrganType || item?.userDeclaredOrgan || ''
         ).trim(),
         userDeclaredOrganConfidence:
-          normalizedConfidence === null || normalizedConfidence === undefined || normalizedConfidence === ''
+          normalizedConfidence === null ||
+          normalizedConfidence === undefined ||
+          normalizedConfidence === ''
             ? null
             : Number.isFinite(Number(normalizedConfidence))
               ? Number(normalizedConfidence)
               : null,
         ...(uploadCompression ? { uploadCompression } : {}),
+        ...(item?.captureRegion || item?.capture_region
+          ? { captureRegion: String(item.captureRegion || item.capture_region).trim() }
+          : {}),
         ...(item?.fileId ? { fileId: String(item.fileId).trim() } : {})
       }
     })
     .filter(Boolean)
 }
 
-export function validateDiagnoseInput({ plantId, userPlantId, image, images = [], observedSymptoms = [] }) {
-  if (!plantId && !userPlantId) {
+export function validateDiagnoseInput({
+  plantId,
+  userPlantId,
+  plantCatalogId,
+  entrySource = 'diagnose_tab',
+  image,
+  images = [],
+  observedSymptoms = []
+}) {
+  if (
+    !plantId &&
+    !userPlantId &&
+    !plantCatalogId &&
+    !allowsStandaloneDiagnoseTab({ entrySource })
+  ) {
     throw new Error('缺少植物ID，无法进行诊断')
   }
   if (Array.isArray(observedSymptoms) && observedSymptoms.length) {
@@ -217,6 +265,9 @@ export function buildDiagnosisAnswerMutationPayload({
   imageIds = [],
   latestVisualCallBatchId = null,
   visualBatchTrace = null,
+  retakeAuthorizationId = '',
+  requestedCaptureRegion = '',
+  originVisualCallBatchId = '',
   requestMode = '',
   baseAnswerRevision = 0,
   dirtyFromQuestionId = '',
@@ -224,6 +275,8 @@ export function buildDiagnosisAnswerMutationPayload({
   uiHints = null,
   careBehaviorTimeline = null,
   environmentWeatherWindow = null,
+  selectedModeKey = '',
+  directionChoice = null,
   ...careBehaviorSidecar
 }) {
   if (!diagnosisSessionId) {
@@ -251,24 +304,25 @@ export function buildDiagnosisAnswerMutationPayload({
     roundId,
     answers,
     ...(requestMode ? { requestMode } : {}),
-    ...(Number(baseAnswerRevision || 0) ? { baseAnswerRevision: Number(baseAnswerRevision || 0) } : {}),
+    ...(selectedModeKey ? { selectedModeKey: String(selectedModeKey).trim() } : {}),
+    ...(directionChoice && typeof directionChoice === 'object' ? { directionChoice } : {}),
+    ...(Number(baseAnswerRevision || 0)
+      ? { baseAnswerRevision: Number(baseAnswerRevision || 0) }
+      : {}),
     ...(dirtyFromQuestionId ? { dirtyFromQuestionId } : {}),
-    ...(questionPackage && typeof questionPackage === 'object'
-      ? { questionPackage }
-      : {}),
-    ...(uiHints && typeof uiHints === 'object'
-      ? { uiHints }
-      : {}),
+    ...(questionPackage && typeof questionPackage === 'object' ? { questionPackage } : {}),
+    ...(uiHints && typeof uiHints === 'object' ? { uiHints } : {}),
     imageIds: resolvedImageIds.length ? resolvedImageIds : primaryImageRef ? [primaryImageRef] : [],
     ...(primaryImageRef ? { image: primaryImageRef } : {}),
     ...(normalizedImages.length ? { images: normalizedImages } : {}),
     ...(latestVisualCallBatchId ? { latestVisualCallBatchId } : {}),
     ...(visualBatchTrace && typeof visualBatchTrace === 'object' ? { visualBatchTrace } : {}),
+    ...(retakeAuthorizationId ? { retakeAuthorizationId } : {}),
+    ...(requestedCaptureRegion ? { requestedCaptureRegion } : {}),
+    ...(originVisualCallBatchId ? { originVisualCallBatchId } : {}),
     ...(environmentWeatherWindow && typeof environmentWeatherWindow === 'object'
       ? { environmentWeatherWindow }
       : {}),
-    ...(hasSidecar
-      ? { careBehaviorTimeline: normalizedSidecar }
-      : {})
+    ...(hasSidecar ? { careBehaviorTimeline: normalizedSidecar } : {})
   }
 }

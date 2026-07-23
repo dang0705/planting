@@ -68,7 +68,23 @@
       }
     },
     {
+      "path": "pages/diagnose/result",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "诊断结果",
+        "navigationBarBackgroundColor": "#2D7A4F",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
       "path": "pages/calendar/calendar",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/reminder/reminder",
       "style": {
         "navigationStyle": "custom",
         "navigationBarTextStyle": "white"
@@ -132,6 +148,18 @@
         "text": "日历",
         "iconPath": "static/tabbar/calendar.png",
         "selectedIconPath": "static/tabbar/calendar-active.png"
+      },
+      {
+        "pagePath": "pages/diagnose/diagnose",
+        "text": "诊断",
+        "iconPath": "static/tabbar/diagnose.png",
+        "selectedIconPath": "static/tabbar/diagnose-active.png"
+      },
+      {
+        "pagePath": "pages/reminder/reminder",
+        "text": "提醒",
+        "iconPath": "static/tabbar/reminder.png",
+        "selectedIconPath": "static/tabbar/reminder-active.png"
       },
       {
         "pagePath": "pages/profile/profile",

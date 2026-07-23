@@ -350,13 +350,13 @@ function handleMenuClick(item) {
 
 function viewAllHistory() {
   uni.navigateTo({
-    url: '/pages/diagnose/diagnose'
+    url: '/pages/profile/diagnosis-review'
   })
 }
 
 function viewDiagnoseDetail(item) {
   uni.navigateTo({
-    url: `/pages/diagnose/diagnose?id=${item._id}`
+    url: `/pages/diagnose/result?id=${item._id}`
   })
 }
 

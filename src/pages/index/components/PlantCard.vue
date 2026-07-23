@@ -81,8 +81,6 @@ import PlantDisplayBase from '@/components/PlantDisplayBase.vue'
 import PlantProfileCompleteness from './PlantProfileCompleteness.vue'
 import diagnoseIcon from '@/assets/icons/home-card-diagnose.svg'
 import historyIcon from '@/assets/icons/home-card-history.svg'
-import fertilizeActiveIcon from '@/assets/icons/home-card-fertilize-active.svg'
-import fertilizeDefaultIcon from '@/assets/icons/home-card-fertilize-default.svg'
 import waterActiveIcon from '@/assets/icons/home-card-water-active.svg'
 import waterDefaultIcon from '@/assets/icons/home-card-water-default.svg'
 
@@ -90,7 +88,7 @@ const props = defineProps({
   plant: { type: Object, required: true },
   reminderSummary: {
     type: Object,
-    default: () => ({ water: { active: false }, fertilize: { active: false } })
+    default: () => ({ water: { active: false } })
   }
 })
 
@@ -101,11 +99,6 @@ const reminderItems = computed(() => [
     type: 'water',
     active: Boolean(props.reminderSummary?.water?.active),
     icon: props.reminderSummary?.water?.active ? waterActiveIcon : waterDefaultIcon
-  },
-  {
-    type: 'fertilize',
-    active: Boolean(props.reminderSummary?.fertilize?.active),
-    icon: props.reminderSummary?.fertilize?.active ? fertilizeActiveIcon : fertilizeDefaultIcon
   }
 ])
 </script>

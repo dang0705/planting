@@ -6,7 +6,9 @@ const LOCAL_DIAGNOSIS_REVIEW_PREFIX = '/__local_diagnosis_review__'
 const MINI_PROGRAM_CLIENT_PLATFORMS = new Set(['wechat-mini-program', 'wechat_mp', 'mini-program'])
 
 function isH5Runtime() {
-  return typeof window !== 'undefined' && (typeof wx === 'undefined' || typeof wx?.cloud === 'undefined')
+  return (
+    typeof window !== 'undefined' && (typeof wx === 'undefined' || typeof wx?.cloud === 'undefined')
+  )
 }
 
 function shouldUseDevBypass() {
@@ -29,7 +31,9 @@ function buildQueryString(query = {}) {
   const entries = Object.entries(query).filter(
     ([, value]) => value !== undefined && value !== null && value !== ''
   )
-  if (!entries.length) {return ''}
+  if (!entries.length) {
+    return ''
+  }
 
   return `?${entries
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
@@ -70,15 +74,33 @@ async function requestLocalDiagnosisReviewImages(query = {}) {
   return unwrapResponseEnvelope(response?.data, '读取本地诊断审计图片失败')
 }
 
-function normalizeReviewSourceEvidence(value = '', reviewSourceType = 'session', clientPlatform = '') {
+function normalizeReviewSourceEvidence(
+  value = '',
+  reviewSourceType = 'session',
+  clientPlatform = ''
+) {
   const normalized = String(value || '').trim()
-  if (normalized) {return normalized}
-  if (reviewSourceType === 'batch') {return 'batch_table'}
-  if (reviewSourceType === 'web') {return 'web_tagged'}
-  if (MINI_PROGRAM_CLIENT_PLATFORMS.has(String(clientPlatform || '').trim().toLowerCase())) {
+  if (normalized) {
+    return normalized
+  }
+  if (reviewSourceType === 'batch') {
+    return 'batch_table'
+  }
+  if (reviewSourceType === 'web') {
+    return 'web_tagged'
+  }
+  if (
+    MINI_PROGRAM_CLIENT_PLATFORMS.has(
+      String(clientPlatform || '')
+        .trim()
+        .toLowerCase()
+    )
+  ) {
     return 'platform_tagged'
   }
-  if (reviewSourceType === 'manual') {return 'openid_inferred_manual'}
+  if (reviewSourceType === 'manual') {
+    return 'openid_inferred_manual'
+  }
   return 'openid_inferred_session'
 }
 
@@ -109,10 +131,16 @@ function buildNormalizedSummaryFromRaw(data = {}, fallbackSummary = {}) {
       ? rawSummary.total
       : data?.total || fallbackSummary.total || 0
   )
-  const problematicCount = Number(rawSummary?.problematicCount || fallbackSummary.problematicCount || 0)
-  const nonProblematicCount = Number(rawSummary?.nonProblematicCount || fallbackSummary.nonProblematicCount || 0)
+  const problematicCount = Number(
+    rawSummary?.problematicCount || fallbackSummary.problematicCount || 0
+  )
+  const nonProblematicCount = Number(
+    rawSummary?.nonProblematicCount || fallbackSummary.nonProblematicCount || 0
+  )
   const uncertainCount = Number(rawSummary?.uncertainCount || fallbackSummary.uncertainCount || 0)
-  const otherOutcomeCount = Number(rawSummary?.otherOutcomeCount || fallbackSummary.otherOutcomeCount || 0)
+  const otherOutcomeCount = Number(
+    rawSummary?.otherOutcomeCount || fallbackSummary.otherOutcomeCount || 0
+  )
   const finalizedCount = Number(
     Object.prototype.hasOwnProperty.call(rawSummary, 'finalizedCount')
       ? rawSummary.finalizedCount
@@ -171,6 +199,14 @@ export async function requestDiagnosisReviewList(query = {}) {
     const response = await listDiagnosisReviewRequester({ query: buildDevBypassPayload(query) })
     const data = unwrapResponseEnvelope(response?.data, '读取诊断记录失败')
     const normalizedData = normalizeReviewListResponse(data, query?.sourceType || 'all')
+    if (import.meta.env.DEV) {
+      console.info('[diagnosis-review] formal list response', {
+        sourceType: query?.sourceType || 'all',
+        itemCount: normalizedData.items.length,
+        total: normalizedData.total,
+        fallbackMode: 'formal_review'
+      })
+    }
     if (shouldUseDevBypass()) {
       const localData = await requestLocalDiagnosisReviewList(query).catch(() => null)
       if (Array.isArray(localData?.items) && localData.items.length) {
@@ -179,12 +215,15 @@ export async function requestDiagnosisReviewList(query = {}) {
             .filter(item => item?.diagnosisSessionId)
             .map(item => [String(item.diagnosisSessionId).trim(), item])
         )
+        const baseItems = normalizedData.items.length ? normalizedData.items : localData.items
         return {
           ...normalizedData,
-          items: normalizedData.items.map(item => {
+          items: baseItems.map(item => {
             const sessionId = String(item?.diagnosisSessionId || '').trim()
             const localItem = localItemsBySessionId.get(sessionId)
-            const previewImageRef = String(item?.previewImageRef || localItem?.previewImageRef || '').trim()
+            const previewImageRef = String(
+              item?.previewImageRef || localItem?.previewImageRef || ''
+            ).trim()
             const imageCount = Math.max(
               Number(item?.imageCount || 0),
               Number(localItem?.imageCount || 0)
@@ -195,6 +234,13 @@ export async function requestDiagnosisReviewList(query = {}) {
               imageCount
             }
           }),
+          total: normalizedData.items.length
+            ? normalizedData.total
+            : Number(localData.total || localData.items.length || 0),
+          hasMore: normalizedData.items.length
+            ? normalizedData.hasMore
+            : Boolean(localData.hasMore),
+          summary: normalizedData.items.length ? normalizedData.summary : localData.summary,
           fallbackMode: 'formal_review'
         }
       }
@@ -207,6 +253,12 @@ export async function requestDiagnosisReviewList(query = {}) {
       fallbackMode: 'formal_review'
     }
   } catch (error) {
+    if (import.meta.env.DEV) {
+      console.error('[diagnosis-review] formal list request failed', {
+        sourceType: query?.sourceType || 'all',
+        message: error?.message || String(error)
+      })
+    }
     if (shouldUseDevBypass()) {
       try {
         const localData = await requestLocalDiagnosisReviewList(query)
@@ -264,7 +316,9 @@ export async function requestDiagnosisReviewDetail(query = {}) {
     if (shouldUseDevBypass()) {
       try {
         const data = await requestLocalDiagnosisReviewDetail(query)
-        return mapHistoryDetailToReviewDetail(data, { requestedSourceType: query?.sourceType || 'all' })
+        return mapHistoryDetailToReviewDetail(data, {
+          requestedSourceType: query?.sourceType || 'all'
+        })
       } catch {
         // Fall through to original error.
       }
@@ -289,13 +343,21 @@ function deriveQuestionCountSummaryFromQuestions(questionRecords = []) {
   const totalItems = safeItems.length
   const askedItems = safeItems.filter(item => Number(item?.asked || 0) === 1).length
   const answeredItems = safeItems.filter(item => {
-    const status = String(item?.status || '').trim().toLowerCase()
-    if (status === 'answered' || status === 'answered_or_confirmed') {return true}
-    if (Number(item?.answered || 0) === 1) {return true}
+    const status = String(item?.status || '')
+      .trim()
+      .toLowerCase()
+    if (status === 'answered' || status === 'answered_or_confirmed') {
+      return true
+    }
+    if (Number(item?.answered || 0) === 1) {
+      return true
+    }
     return String(item?.optionKey || '').trim() !== ''
   }).length
   const invalidatedItems = safeItems.filter(item => {
-    const status = String(item?.status || '').trim().toLowerCase()
+    const status = String(item?.status || '')
+      .trim()
+      .toLowerCase()
     return status === 'invalidated' || Number(item?.invalidated || 0) === 1
   }).length
 
@@ -318,11 +380,15 @@ function normalizeFeedbackSummary(feedbackSummary = null) {
           isHelpful:
             latestFeedback?.isHelpful === null || latestFeedback?.isHelpful === undefined
               ? null
-              : Number(latestFeedback.isHelpful) ? 1 : 0,
+              : Number(latestFeedback.isHelpful)
+                ? 1
+                : 0,
           isAccurate:
             latestFeedback?.isAccurate === null || latestFeedback?.isAccurate === undefined
               ? null
-              : Number(latestFeedback.isAccurate) ? 1 : 0,
+              : Number(latestFeedback.isAccurate)
+                ? 1
+                : 0,
           note: String(latestFeedback?.note || '').trim(),
           createdAt: String(latestFeedback?.createdAt || '').trim()
         }
@@ -331,7 +397,8 @@ function normalizeFeedbackSummary(feedbackSummary = null) {
 }
 
 function _mapHistoryItemToReviewRow(item = {}) {
-  const symptomClass = item?.symptomClass && typeof item.symptomClass === 'object' ? item.symptomClass : null
+  const symptomClass =
+    item?.symptomClass && typeof item.symptomClass === 'object' ? item.symptomClass : null
 
   return {
     diagnosisSessionId: String(item?.diagnosisSessionId || item?.resultId || '').trim(),
@@ -386,11 +453,15 @@ function _mapHistoryItemToReviewRow(item = {}) {
 function buildFallbackSummary(items = []) {
   const safeItems = Array.isArray(items) ? items : []
   const problematicCount = safeItems.filter(item => item?.outcomeType === 'problematic').length
-  const nonProblematicCount = safeItems.filter(item => item?.outcomeType === 'non_problematic').length
+  const nonProblematicCount = safeItems.filter(
+    item => item?.outcomeType === 'non_problematic'
+  ).length
   const uncertainCount = safeItems.filter(item => item?.outcomeType === 'uncertain').length
   const finalizedCount = problematicCount + nonProblematicCount + uncertainCount
   const otherOutcomeCount = safeItems.filter(item => {
-    const outcomeType = String(item?.outcomeType || '').trim().toLowerCase()
+    const outcomeType = String(item?.outcomeType || '')
+      .trim()
+      .toLowerCase()
     return outcomeType && !['problematic', 'non_problematic', 'uncertain'].includes(outcomeType)
   }).length
   const pendingCount = Math.max(0, safeItems.length - finalizedCount - otherOutcomeCount)
@@ -409,12 +480,24 @@ function buildFallbackSummary(items = []) {
 }
 
 function normalizeReviewSourceType(value = '', fallback = 'session') {
-  const normalized = String(value || '').trim().toLowerCase()
-  if (normalized === 'all') {return 'all'}
-  if (normalized === 'batch') {return 'batch'}
-  if (normalized === 'manual') {return 'manual'}
-  if (normalized === 'session') {return 'session'}
-  if (normalized === 'web') {return 'web'}
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase()
+  if (normalized === 'all') {
+    return 'all'
+  }
+  if (normalized === 'batch') {
+    return 'batch'
+  }
+  if (normalized === 'manual') {
+    return 'manual'
+  }
+  if (normalized === 'session') {
+    return 'session'
+  }
+  if (normalized === 'web') {
+    return 'web'
+  }
   return fallback
 }
 
@@ -426,8 +509,12 @@ function resolveNormalizedReviewSourceType({
   requestedSourceType = 'all'
 } = {}) {
   const normalizedType = normalizeReviewSourceType(reviewSourceType, '')
-  const normalizedEvidence = String(reviewSourceEvidence || '').trim().toLowerCase()
-  const normalizedPlatform = String(clientPlatform || '').trim().toLowerCase()
+  const normalizedEvidence = String(reviewSourceEvidence || '')
+    .trim()
+    .toLowerCase()
+  const normalizedPlatform = String(clientPlatform || '')
+    .trim()
+    .toLowerCase()
   const requested = normalizeReviewSourceType(requestedSourceType, 'all')
 
   if (
@@ -441,11 +528,9 @@ function resolveNormalizedReviewSourceType({
 
   if (
     normalizedType === 'manual' &&
-    (
-      normalizedEvidence === 'platform_tagged' ||
+    (normalizedEvidence === 'platform_tagged' ||
       normalizedEvidence === 'openid_inferred_manual' ||
-      MINI_PROGRAM_CLIENT_PLATFORMS.has(normalizedPlatform)
-    )
+      MINI_PROGRAM_CLIENT_PLATFORMS.has(normalizedPlatform))
   ) {
     return 'manual'
   }
@@ -464,7 +549,9 @@ function resolveNormalizedReviewSourceType({
 function normalizeReviewListResponse(data = {}, sourceType = 'all') {
   const normalizedItems = (Array.isArray(data?.items) ? data.items : []).map(item => {
     const batchReviewMeta =
-      item?.batchReviewMeta && typeof item.batchReviewMeta === 'object' ? item.batchReviewMeta : null
+      item?.batchReviewMeta && typeof item.batchReviewMeta === 'object'
+        ? item.batchReviewMeta
+        : null
     const clientPlatform = String(item?.clientPlatform || '').trim()
     const reviewSourceType = resolveNormalizedReviewSourceType({
       reviewSourceType: item?.reviewSourceType || (batchReviewMeta ? 'batch' : ''),
@@ -488,7 +575,9 @@ function normalizeReviewListResponse(data = {}, sourceType = 'all') {
   })
   const requestedSourceType = normalizeReviewSourceType(sourceType, 'all')
   const items = normalizedItems.filter(item => {
-    if (requestedSourceType === 'all') {return item.reviewSourceType !== 'session'}
+    if (requestedSourceType === 'all') {
+      return item.reviewSourceType !== 'session'
+    }
     return item.reviewSourceType === requestedSourceType
   })
 
@@ -504,9 +593,11 @@ function normalizeReviewListResponse(data = {}, sourceType = 'all') {
     nonProblematicCount: items.filter(item => item?.outcomeType === 'non_problematic').length,
     uncertainCount: items.filter(item => item?.outcomeType === 'uncertain').length,
     otherOutcomeCount: items.filter(item => {
-        const outcomeType = String(item?.outcomeType || '').trim().toLowerCase()
-        return outcomeType && !['problematic', 'non_problematic', 'uncertain'].includes(outcomeType)
-      }).length
+      const outcomeType = String(item?.outcomeType || '')
+        .trim()
+        .toLowerCase()
+      return outcomeType && !['problematic', 'non_problematic', 'uncertain'].includes(outcomeType)
+    }).length
   }
   directSourceSummary.finalizedCount =
     directSourceSummary.problematicCount +
@@ -514,7 +605,9 @@ function normalizeReviewListResponse(data = {}, sourceType = 'all') {
     directSourceSummary.uncertainCount
   directSourceSummary.pendingCount = Math.max(
     0,
-    directSourceSummary.total - directSourceSummary.finalizedCount - directSourceSummary.otherOutcomeCount
+    directSourceSummary.total -
+      directSourceSummary.finalizedCount -
+      directSourceSummary.otherOutcomeCount
   )
   const effectiveSummary =
     requestedSourceType === 'session'
@@ -527,7 +620,9 @@ function normalizeReviewListResponse(data = {}, sourceType = 'all') {
             sessionCount: Number(rawSummary.sessionCount || fallbackSummary.sessionCount || 0)
           }
         : {
-            ...(hasExplicitSummary(data) && useRawSummaryForSource ? rawSummary : directSourceSummary)
+            ...(hasExplicitSummary(data) && useRawSummaryForSource
+              ? rawSummary
+              : directSourceSummary)
           }
   const manualCount =
     requestedSourceType === 'manual'
@@ -569,13 +664,16 @@ function normalizeReviewListResponse(data = {}, sourceType = 'all') {
 
 function mapHistoryDetailToReviewDetail(detail = {}, options = {}) {
   const safeOptions = typeof options === 'object' && options !== null ? options : {}
-  const requestedSourceType = normalizeReviewSourceType(safeOptions.requestedSourceType || 'all', 'all')
+  const requestedSourceType = normalizeReviewSourceType(
+    safeOptions.requestedSourceType || 'all',
+    'all'
+  )
   const clientPlatform = String(detail?.clientPlatform || detail?.client_platform || '').trim()
-  const questionRecords = Array.isArray(detail?.questionRecords)
-    ? detail.questionRecords
-    : []
+  const questionRecords = Array.isArray(detail?.questionRecords) ? detail.questionRecords : []
   const rawBatchReviewMeta =
-    detail?.batchReviewMeta && typeof detail.batchReviewMeta === 'object' ? detail.batchReviewMeta : null
+    detail?.batchReviewMeta && typeof detail.batchReviewMeta === 'object'
+      ? detail.batchReviewMeta
+      : null
   const firstRoundQuestions = Array.isArray(detail?.firstRoundQuestions)
     ? detail.firstRoundQuestions
     : questionRecords.filter(item => Number(item?.roundIndex || 1) <= 1)
@@ -584,19 +682,26 @@ function mapHistoryDetailToReviewDetail(detail = {}, options = {}) {
       detail?.coreProcess?.questions?.routePrimaryAction ||
       (detail?.finalResult?.displayName === '暂不能稳定判断' ? 'standard_flow' : '')
   ).trim()
-  const stopReason = String(detail?.stopReason || detail?.coreProcess?.decision?.stopReason || '').trim()
+  const stopReason = String(
+    detail?.stopReason || detail?.coreProcess?.decision?.stopReason || ''
+  ).trim()
   const questionCountSummary = normalizeQuestionCountSummary(
     detail?.questionCountSummary || detail?.coreProcess?.questions?.questionCountSummary || null
   )
-  const diagnosisDirectionLabels = (Array.isArray(detail?.coreProcess?.evidence?.diagnosisDirections)
-    ? detail.coreProcess.evidence.diagnosisDirections
-    : []
+  const diagnosisDirectionLabels = (
+    Array.isArray(detail?.coreProcess?.evidence?.diagnosisDirections)
+      ? detail.coreProcess.evidence.diagnosisDirections
+      : []
   )
     .map(item => String(item?.label || item?.directionKey || '').trim())
     .filter(Boolean)
   const reviewSourceType = resolveNormalizedReviewSourceType({
-    reviewSourceType: String(detail?.reviewSourceType || '').trim().toLowerCase(),
-    reviewSourceEvidence: String(detail?.reviewSourceEvidence || detail?.review_source_evidence || '').trim(),
+    reviewSourceType: String(detail?.reviewSourceType || '')
+      .trim()
+      .toLowerCase(),
+    reviewSourceEvidence: String(
+      detail?.reviewSourceEvidence || detail?.review_source_evidence || ''
+    ).trim(),
     clientPlatform,
     hasBatchReviewMeta: Boolean(rawBatchReviewMeta),
     requestedSourceType
@@ -606,12 +711,15 @@ function mapHistoryDetailToReviewDetail(detail = {}, options = {}) {
     reviewSourceType,
     clientPlatform
   )
-  const coreProcess = detail?.coreProcess && typeof detail.coreProcess === 'object' ? detail.coreProcess : null
+  const coreProcess =
+    detail?.coreProcess && typeof detail.coreProcess === 'object' ? detail.coreProcess : null
   const fallbackQuestionCountSummary = deriveQuestionCountSummaryFromQuestions
     ? deriveQuestionCountSummaryFromQuestions(questionRecords)
     : questionCountSummary
   const finalQuestionCountSummary =
-    questionCountSummary.totalItems || questionCountSummary.askedItems || questionCountSummary.answeredItems
+    questionCountSummary.totalItems ||
+    questionCountSummary.askedItems ||
+    questionCountSummary.answeredItems
       ? questionCountSummary
       : fallbackQuestionCountSummary
   const symptomClass =
@@ -640,9 +748,7 @@ function mapHistoryDetailToReviewDetail(detail = {}, options = {}) {
       Array.isArray(detail?.visualRawRecords) ? detail.visualRawRecords.length : 0
     ),
     previewVisualRawImageRecordId: String(
-      detail?.previewVisualRawImageRecordId ||
-        detail?.preview_visual_raw_image_record_id ||
-        ''
+      detail?.previewVisualRawImageRecordId || detail?.preview_visual_raw_image_record_id || ''
     ).trim(),
     previewImageRef: String(detail?.previewImageRef || detail?.preview_image_ref || '').trim(),
     hasReplayImage: Number(detail?.hasReplayImage || detail?.has_replay_image || 0),
@@ -659,7 +765,10 @@ function mapHistoryDetailToReviewDetail(detail = {}, options = {}) {
       detail?.derivedEvidenceCount || detail?.coreProcess?.evidence?.derivedEvidenceCount || 0
     ),
     diagnosisDirectionCount: Number(
-      detail?.diagnosisDirectionCount || detail?.coreProcess?.evidence?.diagnosisDirectionCount || diagnosisDirectionLabels.length || 0
+      detail?.diagnosisDirectionCount ||
+        detail?.coreProcess?.evidence?.diagnosisDirectionCount ||
+        diagnosisDirectionLabels.length ||
+        0
     ),
     diagnosisDirectionLabels,
     questionCountSummary: finalQuestionCountSummary,
@@ -669,8 +778,16 @@ function mapHistoryDetailToReviewDetail(detail = {}, options = {}) {
     coreSummary: {
       routePrimaryAction,
       stopReason,
-      observedEvidenceCount: Number(detail?.coreSummary?.observedEvidenceCount || detail?.coreProcess?.evidence?.observedEvidenceCount || 0),
-      derivedEvidenceCount: Number(detail?.coreSummary?.derivedEvidenceCount || detail?.coreProcess?.evidence?.derivedEvidenceCount || 0),
+      observedEvidenceCount: Number(
+        detail?.coreSummary?.observedEvidenceCount ||
+          detail?.coreProcess?.evidence?.observedEvidenceCount ||
+          0
+      ),
+      derivedEvidenceCount: Number(
+        detail?.coreSummary?.derivedEvidenceCount ||
+          detail?.coreProcess?.evidence?.derivedEvidenceCount ||
+          0
+      ),
       diagnosisDirectionLabels,
       questionCountSummary: finalQuestionCountSummary
     },

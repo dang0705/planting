@@ -41,12 +41,10 @@ const {
 const {
   listAuditedOutOfPoolProxyMappings
 } = require('../repositories/out-of-pool-proxy-mapping-repository')
-const {
-  getPromptSymptomDictionary
-} = require('../repositories/symptom-repository')
-const {
-  buildOutOfPoolSymptomHintsFromCandidates
-} = require('../utils/out-of-pool-proxy')
+const { getPromptSymptomDictionary } = require('../repositories/symptom-repository')
+const { buildOutOfPoolSymptomHintsFromCandidates } = require('../utils/out-of-pool-proxy')
+const { normalizeUploadCompression } = require('../utils/upload-compression')
+const { normalizeCaptureRegion } = require('../utils/capture-region-normalizer')
 
 function normalizeServiceValue(value = '') {
   return String(value || '')
@@ -56,7 +54,9 @@ function normalizeServiceValue(value = '') {
 
 function normalizePersistedImageRef(value = '') {
   const normalized = normalizeText(value, '')
-  if (!normalized) {return ''}
+  if (!normalized) {
+    return ''
+  }
   if (/^data:image\//i.test(normalized)) {
     return '[inline_data_url]'
   }
@@ -67,9 +67,10 @@ function extractOutOfPoolSymptomCandidates(payload = null) {
   if (!payload || typeof payload !== 'object') {
     return []
   }
-  return (Array.isArray(payload.out_of_pool_symptom_candidates)
-    ? payload.out_of_pool_symptom_candidates
-    : []
+  return (
+    Array.isArray(payload.out_of_pool_symptom_candidates)
+      ? payload.out_of_pool_symptom_candidates
+      : []
   ).filter(item => item && typeof item === 'object')
 }
 
@@ -206,39 +207,11 @@ async function buildOutOfPoolSymptomHints(successfulResults = []) {
 }
 
 function normalizeNullableSqlNumber(value) {
-  if (value === null || value === undefined || value === '') {return null}
-  const num = Number(value)
-  return Number.isFinite(num) ? num : null
-}
-
-function normalizeUploadCompression(value = null) {
-  if (!value || typeof value !== 'object') {
+  if (value === null || value === undefined || value === '') {
     return null
   }
-
-  const numberFields = [
-    'originalSizeBytes',
-    'uploadedSizeBytes',
-    'compressionRatio',
-    'quality',
-    'width',
-    'height',
-    'targetSizeBytes',
-    'minimumQuality'
-  ]
-  const normalized = {
-    source: normalizeText(value.source || '', ''),
-    compressed: Boolean(value.compressed),
-    preserveImageDetails: Boolean(value.preserveImageDetails),
-    doubleConfirmedForHunyuan: Boolean(value.doubleConfirmedForHunyuan)
-  }
-
-  for (const field of numberFields) {
-    const num = Number(value[field])
-    normalized[field] = Number.isFinite(num) && num > 0 ? num : null
-  }
-
-  return normalized
+  const num = Number(value)
+  return Number.isFinite(num) ? num : null
 }
 
 function buildNullableSqlNumberBinding(value) {
@@ -251,10 +224,11 @@ function buildNullableSqlNumberBinding(value) {
 
 const normalizedPrimaryService = normalizeServiceValue(configuredPrimaryService) || 'hunyuan'
 const normalizedShadowService = normalizeServiceValue(configuredShadowService)
-const shouldEnableShadowCompare = Boolean(normalizedShadowService) && (
-  normalizedShadowService !== normalizedPrimaryService ||
-  normalizeText(configuredShadowModel || '', '') !== normalizeText(configuredPrimaryModel || '', '')
-)
+const shouldEnableShadowCompare =
+  Boolean(normalizedShadowService) &&
+  (normalizedShadowService !== normalizedPrimaryService ||
+    normalizeText(configuredShadowModel || '', '') !==
+      normalizeText(configuredPrimaryModel || '', ''))
 
 const primaryVisualAdapter = getVisualAdapter(normalizedPrimaryService)
 const shadowVisualAdapter = shouldEnableShadowCompare
@@ -277,29 +251,49 @@ const shadowAdapterMetaOverride = shadowVisualAdapter
 
 function scoreQuality(grade = 'medium') {
   const normalized = normalizeQualityGrade(grade, 'medium')
-  if (normalized === 'good') {return 3}
-  if (normalized === 'poor') {return 1}
+  if (normalized === 'good') {
+    return 3
+  }
+  if (normalized === 'poor') {
+    return 1
+  }
   return 2
 }
 
 function scoreAnalyzability(level = 'medium') {
   const normalized = normalizeAnalyzability(level, 'medium')
-  if (normalized === 'high') {return 4}
-  if (normalized === 'marginal') {return 2}
-  if (normalized === 'low') {return 1}
+  if (normalized === 'high') {
+    return 4
+  }
+  if (normalized === 'marginal') {
+    return 2
+  }
+  if (normalized === 'low') {
+    return 1
+  }
   return 3
 }
 
 function scoreToQuality(score = 0) {
-  if (score >= 2.5) {return 'good'}
-  if (score <= 1.5) {return 'poor'}
+  if (score >= 2.5) {
+    return 'good'
+  }
+  if (score <= 1.5) {
+    return 'poor'
+  }
   return 'medium'
 }
 
 function scoreToAnalyzability(score = 0) {
-  if (score >= 3.5) {return 'high'}
-  if (score >= 2.5) {return 'medium'}
-  if (score >= 1.5) {return 'marginal'}
+  if (score >= 3.5) {
+    return 'high'
+  }
+  if (score >= 2.5) {
+    return 'medium'
+  }
+  if (score >= 1.5) {
+    return 'marginal'
+  }
   return 'low'
 }
 
@@ -363,13 +357,87 @@ function buildSupportViewGroupDescriptor({
 
 function appendDistinctValue(target = [], value = '') {
   const normalized = normalizeText(value, '')
-  if (!normalized) {return target}
-  if (!target.includes(normalized)) {target.push(normalized)}
+  if (!normalized) {
+    return target
+  }
+  if (!target.includes(normalized)) {
+    target.push(normalized)
+  }
   return target
 }
 
+function buildVisualUsageSummary(results = []) {
+  const items = (Array.isArray(results) ? results : [])
+    .map((result, index) => {
+      const usage = result?.llmUsage
+      if (!usage || typeof usage !== 'object') {
+        return null
+      }
+      return {
+        imageIndex: index,
+        imageId: result?.imageId || null,
+        inputTokens: Number(usage.promptTokens || 0),
+        outputTokens: Number(usage.completionTokens ?? usage.outputTokens ?? 0),
+        totalTokens: Number(usage.totalTokens || 0),
+        reasoningTokens:
+          usage.reasoningTokens === null || usage.reasoningTokens === undefined
+            ? null
+            : Number(usage.reasoningTokens),
+        cachedTokens: Number(usage.promptCacheHitTokens || 0),
+        cacheCreationTokens: Number(usage.promptCacheCreationInputTokens || 0),
+        cacheMissTokens: Number(usage.promptCacheMissTokens || 0),
+        providerPromptTextTokens:
+          usage.providerPromptTextTokens === null || usage.providerPromptTextTokens === undefined
+            ? null
+            : Number(usage.providerPromptTextTokens),
+        providerPromptImageTokens:
+          usage.providerPromptImageTokens === null || usage.providerPromptImageTokens === undefined
+            ? null
+            : Number(usage.providerPromptImageTokens)
+      }
+    })
+    .filter(Boolean)
+
+  return {
+    imageCount: items.length,
+    inputTokens: items.reduce((sum, item) => sum + item.inputTokens, 0),
+    outputTokens: items.reduce((sum, item) => sum + item.outputTokens, 0),
+    totalTokens: items.reduce((sum, item) => sum + item.totalTokens, 0),
+    cachedTokens: items.reduce((sum, item) => sum + item.cachedTokens, 0),
+    cacheCreationTokens: items.reduce((sum, item) => sum + item.cacheCreationTokens, 0),
+    cacheMissTokens: items.reduce((sum, item) => sum + item.cacheMissTokens, 0),
+    reasoningTokens: items.every(item => item.reasoningTokens === null)
+      ? null
+      : items.reduce((sum, item) => sum + Number(item.reasoningTokens || 0), 0),
+    providerPromptTextTokens: items.every(item => item.providerPromptTextTokens === null)
+      ? null
+      : items.reduce((sum, item) => sum + Number(item.providerPromptTextTokens || 0), 0),
+    providerPromptImageTokens: items.every(item => item.providerPromptImageTokens === null)
+      ? null
+      : items.reduce((sum, item) => sum + Number(item.providerPromptImageTokens || 0), 0),
+    items
+  }
+}
+
+function buildVisualAiDebug(results = []) {
+  return (Array.isArray(results) ? results : [])
+    .map((result, imageIndex) => ({
+      imageIndex,
+      imageId: result?.imageId || null,
+      formattedPrompt: String(result?.llmPromptAudit?.promptText || ''),
+      promptAudit: result?.llmPromptAudit || null,
+      rawTextOutput: String(result?.rawTextOutput || ''),
+      rawStructuredOutput: result?.rawStructuredOutput || null,
+      usage: result?.llmUsage || null,
+      adapterMeta: result?.adapterMeta || null
+    }))
+    .filter(item => item.formattedPrompt || item.rawTextOutput || item.rawStructuredOutput)
+}
+
 function appendSupportViewGroup(candidateRecord = {}, descriptor = {}) {
-  if (!descriptor?.group_key) {return}
+  if (!descriptor?.group_key) {
+    return
+  }
 
   if (!Array.isArray(candidateRecord.support_view_groups)) {
     candidateRecord.support_view_groups = []
@@ -400,10 +468,15 @@ function appendSupportViewGroup(candidateRecord = {}, descriptor = {}) {
     currentGroup.visual_normalized_image_result_ids,
     descriptor.visual_normalized_image_result_id
   )
-  appendDistinctValue(currentGroup.visual_raw_image_record_ids, descriptor.visual_raw_image_record_id)
+  appendDistinctValue(
+    currentGroup.visual_raw_image_record_ids,
+    descriptor.visual_raw_image_record_id
+  )
   currentGroup.image_count = currentGroup.image_ids.length
 
-  candidateRecord.support_group_keys = candidateRecord.support_view_groups.map(item => item.group_key)
+  candidateRecord.support_group_keys = candidateRecord.support_view_groups.map(
+    item => item.group_key
+  )
   candidateRecord.support_count = candidateRecord.support_view_groups.length
 }
 
@@ -418,9 +491,15 @@ function resolvePerImageRoutePrimaryAction({
     ? suggestedFollowupCapture.length
     : 0
 
-  if (normalizedAnalyzability === 'low') {return 'retake_first'}
-  if (candidateCount > 0) {return 'standard_flow'}
-  if (normalizedAnalyzability === 'marginal' || questionCount > 0) {return 'ask_first'}
+  if (normalizedAnalyzability === 'low') {
+    return 'retake_first'
+  }
+  if (candidateCount > 0) {
+    return 'standard_flow'
+  }
+  if (normalizedAnalyzability === 'marginal' || questionCount > 0) {
+    return 'ask_first'
+  }
   return 'uncertain_prepare'
 }
 
@@ -428,18 +507,26 @@ function resolveOrganSource(inputSlotType = 'unknown', normalizedOrgan = 'unknow
   const normalizedInput = normalizeOrgan(inputSlotType, 'unknown')
   const normalizedResult = normalizeOrgan(normalizedOrgan, 'unknown')
 
-  if (normalizedInput === 'unknown' && normalizedResult === 'unknown') {return 'unknown'}
-  if (normalizedInput === 'unknown') {return 'model_detected'}
-  if (normalizedResult === 'unknown') {return 'ui_hint'}
-  if (normalizedInput === normalizedResult) {return 'merged'}
+  if (normalizedInput === 'unknown' && normalizedResult === 'unknown') {
+    return 'unknown'
+  }
+  if (normalizedInput === 'unknown') {
+    return 'model_detected'
+  }
+  if (normalizedResult === 'unknown') {
+    return 'ui_hint'
+  }
+  if (normalizedInput === normalizedResult) {
+    return 'merged'
+  }
   return 'ui_hint'
 }
 
 function buildImageRuntimeInput(input = {}, index = 0) {
-  const imageRef = normalizeText(
-    input.imageRef || input.imageUrl || input.url || input.image || ''
-  )
-  if (!imageRef) {return null}
+  const imageRef = normalizeText(input.imageRef || input.imageUrl || input.url || input.image || '')
+  if (!imageRef) {
+    return null
+  }
 
   const normalizedOrderIndex = Number(input.orderIndex ?? index)
   const normalizedInputSlotOrder = Number(input.inputSlotOrder ?? input.orderIndex ?? index)
@@ -452,7 +539,10 @@ function buildImageRuntimeInput(input = {}, index = 0) {
     inputSlotOrder: Number.isFinite(normalizedInputSlotOrder) ? normalizedInputSlotOrder : index,
     inputSlotLabel: normalizeText(input.inputSlotLabel || input.slotLabel || '', ''),
     userDeclaredOrganType: normalizeOrgan(
-      input.userDeclaredOrganType || input.declaredOrganType || input.userDeclaredOrgan || 'unknown',
+      input.userDeclaredOrganType ||
+        input.declaredOrganType ||
+        input.userDeclaredOrgan ||
+        'unknown',
       'unknown'
     ),
     userDeclaredOrganConfidence:
@@ -494,7 +584,9 @@ function buildCaseSlotSummary(imageInputs = []) {
 }
 
 function emitVisualStreamEvent(onVisualEvent, eventName, payload = {}) {
-  if (typeof onVisualEvent !== 'function') {return}
+  if (typeof onVisualEvent !== 'function') {
+    return
+  }
   try {
     onVisualEvent(eventName, payload)
   } catch (error) {
@@ -509,7 +601,9 @@ function normalizeVisualStreamList(value) {
 function pickVisualStreamText(...values) {
   for (const value of values) {
     const text = normalizeText(value, '')
-    if (text) {return text}
+    if (text) {
+      return text
+    }
   }
   return ''
 }
@@ -517,15 +611,24 @@ function pickVisualStreamText(...values) {
 function pickVisualStreamNumber(...values) {
   for (const value of values) {
     const number = Number(value)
-    if (Number.isFinite(number)) {return number}
+    if (Number.isFinite(number)) {
+      return number
+    }
   }
   return null
 }
 
 function pickVisualStreamCandidate(item = {}) {
-  if (!item || typeof item !== 'object') {return null}
+  if (!item || typeof item !== 'object') {
+    return null
+  }
   return {
-    symptomKey: pickVisualStreamText(item.symptomKey, item.symptom_key, item.objectKey, item.object_key),
+    symptomKey: pickVisualStreamText(
+      item.symptomKey,
+      item.symptom_key,
+      item.objectKey,
+      item.object_key
+    ),
     symptomCn: pickVisualStreamText(
       item.symptomCn,
       item.symptom_cn,
@@ -562,7 +665,9 @@ function compactVisualDiscriminators(items = [], limit = 8) {
     .map(item => {
       const dimensionKey = pickVisualStreamText(item?.dimensionKey, item?.dimension_key)
       const valueKey = pickVisualStreamText(item?.valueKey, item?.value_key)
-      if (!dimensionKey || !valueKey) {return null}
+      if (!dimensionKey || !valueKey) {
+        return null
+      }
 
       return {
         dimensionKey,
@@ -580,7 +685,9 @@ function compactMissingInfoForPath(items = [], limit = 8) {
     .map(item => {
       const dimensionKey = pickVisualStreamText(item?.dimensionKey, item?.dimension_key)
       const reasonCn = pickVisualStreamText(item?.reasonCn, item?.reason_cn, item?.reason)
-      if (!dimensionKey || !reasonCn) {return null}
+      if (!dimensionKey || !reasonCn) {
+        return null
+      }
 
       return {
         dimensionKey,
@@ -664,12 +771,13 @@ function buildVisualDecisionStreamSummary(aggregateResult = {}) {
 
 async function analyzeSingleImage(
   imageRuntimeInput,
-  { visualCallBatchId, onText, llmOptions = {} } = {}
+  { visualCallBatchId, sessionId = '', onText, llmOptions = {} } = {}
 ) {
   const startedAt = Date.now()
   const primaryStartedAt = Date.now()
   const primaryResult = await primaryVisualAdapter.analyzeImage(imageRuntimeInput, {
     visualCallBatchId,
+    sessionId,
     onText,
     adapterMetaOverride: primaryAdapterMetaOverride,
     llmOptions
@@ -708,6 +816,7 @@ async function analyzeSingleImage(
       },
       {
         visualCallBatchId,
+        sessionId,
         adapterMetaOverride: shadowAdapterMetaOverride
       }
     )
@@ -764,9 +873,17 @@ function buildAggregatedSymptomCandidates(successfulResults = []) {
 
     for (const candidate of result?.normalizedResult?.symptom_candidates || []) {
       const symptomKey = normalizeText(candidate?.symptom_key || '')
-      if (!symptomKey) {continue}
+      if (!symptomKey) {
+        continue
+      }
 
       const candidateScore = scoreCandidatePriority(candidate)
+      const candidateCaptureRegion = normalizeCaptureRegion(
+        candidate?.capture_region ||
+          candidate?.captureRegion ||
+          candidate?.region_ref ||
+          result?.normalizedResult?.capture_region
+      )
       let current = aggregatedMap.get(symptomKey)
       if (!current) {
         current = {
@@ -790,13 +907,20 @@ function buildAggregatedSymptomCandidates(successfulResults = []) {
           primary_visual_normalized_image_result_id: visualNormalizedImageResultId || null,
           primary_visual_raw_image_record_id: visualRawImageRecordId || null,
           primary_support_image_id: imageId || null,
+          primary_capture_region: candidateCaptureRegion,
           primary_support_score: candidateScore
         }
         aggregatedMap.set(symptomKey, current)
       }
 
-      current.strength_level = pickStrongerStrength(current.strength_level, candidate?.strength_level)
-      current.confidence_band = pickStrongerBand(current.confidence_band, candidate?.confidence_band)
+      current.strength_level = pickStrongerStrength(
+        current.strength_level,
+        candidate?.strength_level
+      )
+      current.confidence_band = pickStrongerBand(
+        current.confidence_band,
+        candidate?.confidence_band
+      )
       current.admission_readiness = pickHigherReadiness(
         current.admission_readiness,
         candidate?.admission_readiness
@@ -805,7 +929,9 @@ function buildAggregatedSymptomCandidates(successfulResults = []) {
       appendDistinctValue(current.support_image_ids, imageId)
       appendDistinctValue(current.support_normalized_result_ids, visualNormalizedImageResultId)
       appendDistinctValue(current.support_raw_image_record_ids, visualRawImageRecordId)
-      if (normalizedOrgan !== 'unknown') {appendDistinctValue(current.support_organs, normalizedOrgan)}
+      if (normalizedOrgan !== 'unknown') {
+        appendDistinctValue(current.support_organs, normalizedOrgan)
+      }
       appendSupportViewGroup(
         current,
         buildSupportViewGroupDescriptor({
@@ -826,19 +952,22 @@ function buildAggregatedSymptomCandidates(successfulResults = []) {
         current.primary_visual_normalized_image_result_id = visualNormalizedImageResultId || null
         current.primary_visual_raw_image_record_id = visualRawImageRecordId || null
         current.primary_support_image_id = imageId || null
+        current.primary_capture_region = candidateCaptureRegion
         current.primary_support_score = candidateScore
       }
     }
   }
 
-  return Array.from(aggregatedMap.values()).map(candidate => ({
-    ...candidate,
-    visual_structural_evidence_status: resolveStructuralVisualEvidenceStatus(candidate)
-  })).sort((a, b) => {
-    const scoreA = scoreCandidatePriority(a)
-    const scoreB = scoreCandidatePriority(b)
-    return scoreB - scoreA
-  })
+  return Array.from(aggregatedMap.values())
+    .map(candidate => ({
+      ...candidate,
+      visual_structural_evidence_status: resolveStructuralVisualEvidenceStatus(candidate)
+    }))
+    .sort((a, b) => {
+      const scoreA = scoreCandidatePriority(a)
+      const scoreB = scoreCandidatePriority(b)
+      return scoreB - scoreA
+    })
 }
 
 function buildDuplicateViewGroups(aggregatedCandidates = []) {
@@ -892,11 +1021,21 @@ function resolveAdmissionDecision(candidate = {}, aggregateAnalyzability = 'medi
     }
   }
 
-  if (analyzability === 'low') {reasons.push('aggregate_analyzability_low')}
-  if (!organReady) {reasons.push('organ_not_reliably_bound')}
-  if (band === 'low') {reasons.push('confidence_band_low')}
-  if (strength === 'weak') {reasons.push('strength_weak')}
-  if (supportCount <= 1) {reasons.push('single_support_group')}
+  if (analyzability === 'low') {
+    reasons.push('aggregate_analyzability_low')
+  }
+  if (!organReady) {
+    reasons.push('organ_not_reliably_bound')
+  }
+  if (band === 'low') {
+    reasons.push('confidence_band_low')
+  }
+  if (strength === 'weak') {
+    reasons.push('strength_weak')
+  }
+  if (supportCount <= 1) {
+    reasons.push('single_support_group')
+  }
 
   const allowFormalAdmission =
     readiness === 'ready' &&
@@ -915,8 +1054,7 @@ function resolveAdmissionDecision(candidate = {}, aggregateAnalyzability = 'medi
   }
 
   const keepAsCandidate =
-    analyzability !== 'low' &&
-    (band !== 'low' || supportCount >= 2 || strength !== 'weak')
+    analyzability !== 'low' && (band !== 'low' || supportCount >= 2 || strength !== 'weak')
 
   if (keepAsCandidate) {
     return {
@@ -997,7 +1135,9 @@ function buildAggregateRouteHints({
   for (const result of successfulResults) {
     for (const hint of result?.normalizedResult?.route_hints || []) {
       const key = `${normalizeText(hint?.type)}::${normalizeText(hint?.reason)}`
-      if (!key || routeHintMap.has(key)) {continue}
+      if (!key || routeHintMap.has(key)) {
+        continue
+      }
       routeHintMap.set(key, {
         type: normalizeText(hint?.type || ''),
         reason: normalizeText(hint?.reason || '')
@@ -1042,9 +1182,13 @@ function buildAggregateVisualDiscriminators(successfulResults = []) {
       : []) {
       const dimensionKey = normalizeText(item?.dimension_key || '')
       const valueKey = normalizeText(item?.value_key || '')
-      if (!dimensionKey || !valueKey) {continue}
+      if (!dimensionKey || !valueKey) {
+        continue
+      }
       const dedupeKey = `${dimensionKey}::${valueKey}`
-      if (seen.has(dedupeKey)) {continue}
+      if (seen.has(dedupeKey)) {
+        continue
+      }
       seen.add(dedupeKey)
       output.push({
         dimension_key: dimensionKey,
@@ -1068,9 +1212,13 @@ function buildAggregateMissingInfoForPath(successfulResults = []) {
       : []) {
       const dimensionKey = normalizeText(item?.dimension_key || '')
       const reasonCn = normalizeText(item?.reason_cn || '')
-      if (!dimensionKey || !reasonCn) {continue}
+      if (!dimensionKey || !reasonCn) {
+        continue
+      }
       const dedupeKey = `${dimensionKey}::${reasonCn}`
-      if (seen.has(dedupeKey)) {continue}
+      if (seen.has(dedupeKey)) {
+        continue
+      }
       seen.add(dedupeKey)
       output.push({
         dimension_key: dimensionKey,
@@ -1113,7 +1261,7 @@ function buildShadowCompareSummary(successfulResults = []) {
         ? 'partial_or_succeeded'
         : skippedImageCount > 0
           ? 'skipped'
-        : 'failed',
+          : 'failed',
     compared_image_count: compareResults.length,
     succeeded_image_count: succeededImageCount,
     skipped_image_count: skippedImageCount,
@@ -1136,8 +1284,7 @@ function buildVisualBatchTrace({
 
   return {
     current_visual_call_batch_id: currentBatchId || null,
-    origin_visual_call_batch_id:
-      (supersedeApplied ? previousBatchId : currentBatchId) || null,
+    origin_visual_call_batch_id: (supersedeApplied ? previousBatchId : currentBatchId) || null,
     supersede_target_batch_id: supersedeApplied ? previousBatchId : null,
     superseded_by_batch_id: null,
     supersede_applied: supersedeApplied ? 1 : 0,
@@ -1354,7 +1501,9 @@ async function persistVisualBatchArtifacts({
 
   for (const settled of settledResults) {
     const input = settled?.imageRuntimeInput || null
-    if (!input) {continue}
+    if (!input) {
+      continue
+    }
 
     const success = settled?.status === 'fulfilled'
     const result = success ? settled.value : null
@@ -1419,34 +1568,34 @@ async function persistVisualBatchArtifacts({
           input.userDeclaredOrganConfidence
         )
         return {
-        visualRawImageRecordId: input.visualRawImageRecordId,
-        openid: String(openid || ''),
-        sessionId,
-        visualCallBatchId,
-        imageRef: normalizePersistedImageRef(input.imageRef),
-        inputSlotType: input.inputSlotType,
-        inputSlotOrder: Number.isFinite(Number(input.inputSlotOrder ?? input.orderIndex ?? 0))
-          ? Number(input.inputSlotOrder ?? input.orderIndex ?? 0)
-          : 0,
-        inputSlotLabel: input.inputSlotLabel || '',
-        userDeclaredOrganType: input.userDeclaredOrganType || '',
-        userDeclaredOrganConfidenceValue: userDeclaredOrganConfidenceBinding.value,
-        userDeclaredOrganConfidenceHasValue: userDeclaredOrganConfidenceBinding.hasValue,
-        sourceModelProvider: adapterMeta.source_model_provider || '',
-        sourceModelName: adapterMeta.source_model_name || '',
-        modelName: adapterMeta.source_model_name || '',
-        modelVersion: adapterMeta.model_version || '',
-        promptVersion: adapterMeta.prompt_version || '',
-        rawTextOutput: success ? result?.rawTextOutput || '' : '',
-        rawStructuredOutput: stringifyJson(rawStructuredOutput),
-        callStatus: success ? 'succeeded' : 'failed',
-        latencyMs: Number(
-          result?.visualAdapterTiming?.primaryMs ||
-            result?.adapterTiming?.llmMs ||
-            result?.llmTiming?.totalMs ||
-            0
-        ),
-        errorCode: success ? '' : 'visual_adapter_failed'
+          visualRawImageRecordId: input.visualRawImageRecordId,
+          openid: String(openid || ''),
+          sessionId,
+          visualCallBatchId,
+          imageRef: normalizePersistedImageRef(input.imageRef),
+          inputSlotType: input.inputSlotType,
+          inputSlotOrder: Number.isFinite(Number(input.inputSlotOrder ?? input.orderIndex ?? 0))
+            ? Number(input.inputSlotOrder ?? input.orderIndex ?? 0)
+            : 0,
+          inputSlotLabel: input.inputSlotLabel || '',
+          userDeclaredOrganType: input.userDeclaredOrganType || '',
+          userDeclaredOrganConfidenceValue: userDeclaredOrganConfidenceBinding.value,
+          userDeclaredOrganConfidenceHasValue: userDeclaredOrganConfidenceBinding.hasValue,
+          sourceModelProvider: adapterMeta.source_model_provider || '',
+          sourceModelName: adapterMeta.source_model_name || '',
+          modelName: adapterMeta.source_model_name || '',
+          modelVersion: adapterMeta.model_version || '',
+          promptVersion: adapterMeta.prompt_version || '',
+          rawTextOutput: success ? result?.rawTextOutput || '' : '',
+          rawStructuredOutput: stringifyJson(rawStructuredOutput),
+          callStatus: success ? 'succeeded' : 'failed',
+          latencyMs: Number(
+            result?.visualAdapterTiming?.primaryMs ||
+              result?.adapterTiming?.llmMs ||
+              result?.llmTiming?.totalMs ||
+              0
+          ),
+          errorCode: success ? '' : 'visual_adapter_failed'
         }
       })()
     )
@@ -1474,7 +1623,9 @@ async function persistVisualBatchArtifacts({
       user_declared_organ_type:
         normalizedResult.user_declared_organ_type || input.userDeclaredOrganType || 'unknown',
       user_declared_organ_confidence:
-        normalizedResult.user_declared_organ_confidence ?? input.userDeclaredOrganConfidence ?? null,
+        normalizedResult.user_declared_organ_confidence ??
+        input.userDeclaredOrganConfidence ??
+        null,
       model_detected_organ: normalizedResult.model_detected_organ || 'unknown',
       organ_source:
         normalizedResult.organ_source ||
@@ -1531,67 +1682,73 @@ async function persistVisualBatchArtifacts({
         )
         const primaryOrganConfidenceBinding = buildNullableSqlNumberBinding(null)
         return {
-        visualNormalizedImageResultId: input.visualNormalizedImageResultId,
-        openid: String(openid || ''),
-        sessionId,
-        visualCallBatchId,
-        visualRawImageRecordId: input.visualRawImageRecordId,
-        sourceModelProvider:
-          normalizedResult.source_model_provider || adapterMeta.source_model_provider || '',
-        sourceModelName: normalizedResult.source_model_name || adapterMeta.source_model_name || '',
-        inputSlotOrder: Number.isFinite(
-          Number(normalizedResult.input_slot_order ?? input.inputSlotOrder ?? input.orderIndex ?? 0)
-        )
-          ? Number(normalizedResult.input_slot_order ?? input.inputSlotOrder ?? input.orderIndex ?? 0)
-          : 0,
-        inputSlotLabel: normalizedResult.input_slot_label || input.inputSlotLabel || '',
-        userDeclaredOrganType: normalizedResult.user_declared_organ_type || input.userDeclaredOrganType || '',
-        userDeclaredOrganConfidenceValue: userDeclaredOrganConfidenceBinding.value,
-        userDeclaredOrganConfidenceHasValue: userDeclaredOrganConfidenceBinding.hasValue,
-        analyzabilityLevel: normalizedResult.analyzability,
-        clarityLevel: qualityGradeToClarityLevel(normalizedResult.image_quality_grade),
-        subjectCompletenessLevel: resolveSubjectCompletenessLevel(
-          input.inputSlotType,
-          normalizedResult.analyzability
-        ),
-        primaryOrganType:
-          normalizedResult.normalized_organ && normalizedResult.normalized_organ !== 'unknown'
-            ? normalizedResult.normalized_organ
-            : '',
-        primaryOrganConfidenceValue: primaryOrganConfidenceBinding.value,
-        primaryOrganConfidenceHasValue: primaryOrganConfidenceBinding.hasValue,
-        organSource:
-          normalizedResult.organ_source ||
-          resolveOrganSource(input.inputSlotType, normalizedResult.normalized_organ),
-        multiOrganDetected: Number(normalizedResult.multi_organ_detected || 0),
-        organConflictFlag: Number(normalizedResult.organ_conflict_flag || 0),
-        organResolutionReason: normalizedResult.organ_resolution_reason || '',
-        topkSymptomsJson: stringifyJson(normalizedResult.symptom_candidates || []),
-        patternCandidatesJson: stringifyJson(patternCandidatesJson),
-        routeHintsJson: stringifyJson(normalizedResult.route_hints || []),
-        routePrimaryAction: resolvePerImageRoutePrimaryAction({
-          analyzability: normalizedResult.analyzability,
-          symptomCandidates: normalizedResult.symptom_candidates,
-          suggestedFollowupCapture: normalizedResult.suggested_question_capture
-        }),
-        top1StabilityScore: Number.isFinite(candidateScores[0]) ? candidateScores[0] : 0,
-        top3StabilityScore:
-          candidateScores.length > 0
-            ? candidateScores.slice(0, 3).reduce((sum, value) => sum + value, 0) /
-              Math.min(candidateScores.length, 3)
-            : 0,
-        longTailNoiseFlag:
-          normalizedResult.symptom_candidates.length <= 1 &&
-          normalizedResult.symptom_candidates.some(
-            item => normalizeConfidenceBand(item?.confidence_band, 'medium') === 'low'
+          visualNormalizedImageResultId: input.visualNormalizedImageResultId,
+          openid: String(openid || ''),
+          sessionId,
+          visualCallBatchId,
+          visualRawImageRecordId: input.visualRawImageRecordId,
+          sourceModelProvider:
+            normalizedResult.source_model_provider || adapterMeta.source_model_provider || '',
+          sourceModelName:
+            normalizedResult.source_model_name || adapterMeta.source_model_name || '',
+          inputSlotOrder: Number.isFinite(
+            Number(
+              normalizedResult.input_slot_order ?? input.inputSlotOrder ?? input.orderIndex ?? 0
+            )
           )
-            ? 1
+            ? Number(
+                normalizedResult.input_slot_order ?? input.inputSlotOrder ?? input.orderIndex ?? 0
+              )
             : 0,
-        patternDerivationStatus:
-          Array.isArray(normalizedResult.out_of_pool_symptom_candidates) &&
-          normalizedResult.out_of_pool_symptom_candidates.length > 0
-            ? 'symptom_candidates_with_out_of_pool_audit'
-            : 'symptom_candidates_only'
+          inputSlotLabel: normalizedResult.input_slot_label || input.inputSlotLabel || '',
+          userDeclaredOrganType:
+            normalizedResult.user_declared_organ_type || input.userDeclaredOrganType || '',
+          userDeclaredOrganConfidenceValue: userDeclaredOrganConfidenceBinding.value,
+          userDeclaredOrganConfidenceHasValue: userDeclaredOrganConfidenceBinding.hasValue,
+          analyzabilityLevel: normalizedResult.analyzability,
+          clarityLevel: qualityGradeToClarityLevel(normalizedResult.image_quality_grade),
+          subjectCompletenessLevel: resolveSubjectCompletenessLevel(
+            input.inputSlotType,
+            normalizedResult.analyzability
+          ),
+          primaryOrganType:
+            normalizedResult.normalized_organ && normalizedResult.normalized_organ !== 'unknown'
+              ? normalizedResult.normalized_organ
+              : '',
+          primaryOrganConfidenceValue: primaryOrganConfidenceBinding.value,
+          primaryOrganConfidenceHasValue: primaryOrganConfidenceBinding.hasValue,
+          organSource:
+            normalizedResult.organ_source ||
+            resolveOrganSource(input.inputSlotType, normalizedResult.normalized_organ),
+          multiOrganDetected: Number(normalizedResult.multi_organ_detected || 0),
+          organConflictFlag: Number(normalizedResult.organ_conflict_flag || 0),
+          organResolutionReason: normalizedResult.organ_resolution_reason || '',
+          topkSymptomsJson: stringifyJson(normalizedResult.symptom_candidates || []),
+          patternCandidatesJson: stringifyJson(patternCandidatesJson),
+          routeHintsJson: stringifyJson(normalizedResult.route_hints || []),
+          routePrimaryAction: resolvePerImageRoutePrimaryAction({
+            analyzability: normalizedResult.analyzability,
+            symptomCandidates: normalizedResult.symptom_candidates,
+            suggestedFollowupCapture: normalizedResult.suggested_question_capture
+          }),
+          top1StabilityScore: Number.isFinite(candidateScores[0]) ? candidateScores[0] : 0,
+          top3StabilityScore:
+            candidateScores.length > 0
+              ? candidateScores.slice(0, 3).reduce((sum, value) => sum + value, 0) /
+                Math.min(candidateScores.length, 3)
+              : 0,
+          longTailNoiseFlag:
+            normalizedResult.symptom_candidates.length <= 1 &&
+            normalizedResult.symptom_candidates.some(
+              item => normalizeConfidenceBand(item?.confidence_band, 'medium') === 'low'
+            )
+              ? 1
+              : 0,
+          patternDerivationStatus:
+            Array.isArray(normalizedResult.out_of_pool_symptom_candidates) &&
+            normalizedResult.out_of_pool_symptom_candidates.length > 0
+              ? 'symptom_candidates_with_out_of_pool_audit'
+              : 'symptom_candidates_only'
         }
       })()
     )
@@ -1697,13 +1854,23 @@ async function analyzeAndPersistVisualBatch({
     visualCallBatchId,
     imageCount: normalizedInputs.length
   })
+  let firstContentEventSent = false
   const settledResults = await Promise.allSettled(
     normalizedInputs.map((imageRuntimeInput, index) =>
       analyzeSingleImage(imageRuntimeInput, {
         visualCallBatchId,
+        sessionId,
         onText:
           normalizedInputs.length === 1 && index === 0
             ? (chunk, fullText) => {
+                if (!firstContentEventSent && String(chunk || '').trim()) {
+                  firstContentEventSent = true
+                  emitVisualStreamEvent(onVisualEvent, 'visual_model_response_started', {
+                    sessionId,
+                    visualCallBatchId,
+                    imageCount: 1
+                  })
+                }
                 if (typeof onText === 'function') {
                   onText(chunk, fullText)
                 }
@@ -1739,7 +1906,12 @@ async function analyzeAndPersistVisualBatch({
   const successfulResults = canonicalizedSettledResults
     .filter(item => item.status === 'fulfilled' && item?.value?.normalizedResult)
     .map(item => item.value)
-  const visualFailureSummary = buildVisualFailureSummary(canonicalizedSettledResults, normalizedInputs)
+  const usageSummary = buildVisualUsageSummary(successfulResults)
+  const aiDebug = buildVisualAiDebug(successfulResults)
+  const visualFailureSummary = buildVisualFailureSummary(
+    canonicalizedSettledResults,
+    normalizedInputs
+  )
 
   const aggregateStartedAt = Date.now()
   const aggregateResult = await buildAggregateResult({
@@ -1758,6 +1930,7 @@ async function analyzeAndPersistVisualBatch({
     successCount: successfulResults.length,
     failedCount: Math.max(0, canonicalizedSettledResults.length - successfulResults.length),
     elapsedMs: aggregateMs,
+    usage: usageSummary,
     decision: buildVisualDecisionStreamSummary(aggregateResult)
   })
 
@@ -1781,7 +1954,11 @@ async function analyzeAndPersistVisualBatch({
     persistStatus = 'succeeded'
     persistedVisualCallBatchId = visualCallBatchId
   } catch (error) {
-    persistMs = Math.max(0, Date.now() - (batchStartedAt + inputNormalizeMs + modelFanoutMs + canonicalizeMs + aggregateMs))
+    persistMs = Math.max(
+      0,
+      Date.now() -
+        (batchStartedAt + inputNormalizeMs + modelFanoutMs + canonicalizeMs + aggregateMs)
+    )
     persistStatus = 'degraded'
     console.warn('diagnose-http visual batch persistence degraded:', error?.message || error)
   }
@@ -1826,7 +2003,9 @@ async function analyzeAndPersistVisualBatch({
     draftVisualCallBatchId: visualCallBatchId,
     visualBatchTrace: aggregateResult.visual_batch_trace || null,
     imageResults: successfulResults,
-    aggregateResult
+    aggregateResult,
+    usageSummary,
+    aiDebug
   }
 }
 

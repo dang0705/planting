@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { execFileSync } from 'node:child_process'
+import { normalizeGitPath, parsePorcelainV1Z } from './lib/git-status.mjs'
 
 const [outFile] = process.argv.slice(2)
 if (!outFile) {
@@ -12,31 +13,6 @@ if (!outFile) {
 
 const runGit = args => execFileSync('git', args, { encoding: 'utf8' }).replace(/\n$/, '')
 const sha256 = textOrBuffer => crypto.createHash('sha256').update(textOrBuffer).digest('hex')
-const normalize = file =>
-  String(file ?? '')
-    .replaceAll('\\', '/')
-    .replace(/^\.\//, '')
-const splitStatusPaths = rawPath => {
-  const raw = String(rawPath ?? '').trim()
-  if (raw.includes(' -> ')) {
-    return raw.split(' -> ').map(normalize).filter(Boolean)
-  }
-  return [normalize(raw)].filter(Boolean)
-}
-const parseStatus = text =>
-  text
-    .split('\n')
-    .filter(Boolean)
-    .flatMap(line => {
-      const status = line.slice(0, 2)
-      const rawPath = line.slice(3).trim()
-      return splitStatusPaths(rawPath).map(filePath => ({
-        status,
-        path: filePath,
-        raw_path: rawPath
-      }))
-    })
-    .filter(item => item.path)
 const safeGit = args => {
   try {
     return runGit(args)
@@ -45,7 +21,7 @@ const safeGit = args => {
   }
 }
 const fileFingerprint = file => {
-  const normalized = normalize(file)
+  const normalized = normalizeGitPath(file)
   const exists = fs.existsSync(normalized)
   const stat = exists ? fs.statSync(normalized) : null
   const isFile = Boolean(stat?.isFile?.())
@@ -62,8 +38,9 @@ const fileFingerprint = file => {
   }
 }
 
-const statusText = runGit(['status', '--short', '--untracked-files=all'])
-const status = parseStatus(statusText)
+const status = parsePorcelainV1Z(
+  execFileSync('git', ['status', '--porcelain=v1', '-z', '--untracked-files=all'])
+)
 const statusFiles = [...new Set(status.map(item => item.path))].sort()
 const baseline = {
   captured_at: new Date().toISOString(),

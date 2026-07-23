@@ -10,7 +10,9 @@ function buildQueryString(query = {}) {
   const entries = Object.entries(query).filter(
     ([, value]) => value !== undefined && value !== null && value !== ''
   )
-  if (!entries.length) {return ''}
+  if (!entries.length) {
+    return ''
+  }
 
   const search = entries
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
@@ -73,7 +75,9 @@ async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}) {
     ...headers,
     'x-app-env': getRequestAppEnvHeader(),
     'x-env': getRequestAppEnvHeader(),
-    ...(IS_LOCAL_API_BASE_URL ? { 'x-terminal-e2e': 'true', 'x-anonymous-dev-identity': 'true' } : {}),
+    ...(IS_LOCAL_API_BASE_URL
+      ? { 'x-terminal-e2e': 'true', 'x-anonymous-dev-identity': 'true' }
+      : {}),
     ...(openid ? { 'x-wx-openid': openid, 'x-openid': openid } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {})
   }
@@ -149,12 +153,13 @@ export function httpRequest(defaults = {}) {
         ...headers
       }
     })
-    const {
-      requestMethod,
-      requestQuery,
-      requestHeaders
-    } = resolveHttpMethodTransport(method, query, mergedHeaders)
+    const { requestMethod, requestQuery, requestHeaders } = resolveHttpMethodTransport(
+      method,
+      query,
+      mergedHeaders
+    )
     const url = createUrl(functionPath, requestQuery)
+    console.log('[http-request] request url:', url)
 
     return new Promise((resolve, reject) => {
       const requestTask = uni.request({

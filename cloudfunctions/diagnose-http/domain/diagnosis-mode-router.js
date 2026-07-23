@@ -1,0 +1,528 @@
+'use strict'
+
+const crypto = require('crypto')
+const {
+  DIAGNOSIS_MODE_REGISTRY,
+  GENERIC_EVIDENCE_GROUP_KEYS,
+  LOCKED_SPECIFIC_PEST_MODES,
+  PEST_CATEGORY,
+  PEST_EVIDENCE_RULES,
+  PEST_MODE_KEYS
+} = require('./diagnosis-mode-registry')
+const { buildDirectionChoices, hasCrossFamilyModes } = require('./diagnosis-mode-direction-choice')
+const { normalizeCaptureRegion } = require('../utils/capture-region-normalizer')
+
+const THREE_MINUTES_MS = 3 * 60 * 1000
+const HIGH_BAND = 'high'
+const STRONG_LEVEL = 'strong'
+const MEDIUM_BAND = 'medium'
+const MEDIUM_LEVEL = 'medium'
+const EXPLICIT_PEST_MODE_CANDIDATE_CONFIDENCE = 0.9
+function normalizeText(value = '', conservative = '') {
+  const normalized = String(value || '').trim()
+  return normalized || conservative
+}
+
+function normalizeKey(value = '') {
+  return normalizeText(value, '').toLowerCase()
+}
+
+function unique(items = []) {
+  return Array.from(new Set((Array.isArray(items) ? items : []).map(normalizeKey).filter(Boolean)))
+}
+
+function rankBand(value = '') {
+  return { low: 1, medium: 2, high: 3 }[normalizeKey(value)] || 0
+}
+
+function rankStrength(value = '') {
+  return { weak: 1, medium: 2, strong: 3 }[normalizeKey(value)] || 0
+}
+
+function isStrongHighEvidence(item = {}) {
+  return (
+    rankBand(item.confidenceBand) >= rankBand(HIGH_BAND) &&
+    rankStrength(item.strengthLevel) >= rankStrength(STRONG_LEVEL)
+  )
+}
+
+function isAtLeastMediumEvidence(item = {}) {
+  return (
+    rankBand(item.confidenceBand) >= rankBand(MEDIUM_BAND) &&
+    rankStrength(item.strengthLevel) >= rankStrength(MEDIUM_LEVEL)
+  )
+}
+
+function evidenceGroupForKey(evidenceKey = '') {
+  const key = normalizeKey(evidenceKey)
+  if (GENERIC_EVIDENCE_GROUP_KEYS.has(key)) {
+    return key
+  }
+  for (const rule of Object.values(PEST_EVIDENCE_RULES)) {
+    for (const group of [...rule.directGroups, ...rule.indirectGroups]) {
+      if (group.includes(key)) {
+        return group[0]
+      }
+    }
+  }
+  return key
+}
+
+function stableHash(value = '') {
+  return crypto
+    .createHash('sha1')
+    .update(String(value || ''))
+    .digest('hex')
+    .slice(0, 16)
+}
+
+function normalizeVisualEvidence(items = []) {
+  return (Array.isArray(items) ? items : [])
+    .map(item => {
+      const evidenceKey = normalizeKey(
+        item?.evidenceKey || item?.evidence_key || item?.symptomKey || item?.symptom_key
+      )
+      const symptomKey = normalizeKey(item?.symptomKey || item?.symptom_key || evidenceKey)
+      if (!evidenceKey && !symptomKey) {
+        return null
+      }
+      const group = evidenceGroupForKey(
+        item?.evidenceGroup || item?.evidence_group || evidenceKey || symptomKey
+      )
+      return {
+        evidenceKey: evidenceKey || symptomKey,
+        symptomKey: symptomKey || evidenceKey,
+        evidenceGroup: group,
+        confidenceBand: normalizeKey(item?.confidenceBand || item?.confidence_band || 'low'),
+        strengthLevel: normalizeKey(item?.strengthLevel || item?.strength_level || 'weak'),
+        imageId: normalizeText(item?.imageId || item?.image_id || item?.supportImageId || ''),
+        regionRef: normalizeCaptureRegion(
+          item?.regionRef || item?.region_ref || item?.captureRegion || item?.capture_region
+        ),
+        sourceRecordId: normalizeText(item?.sourceRecordId || item?.source_record_id || ''),
+        currentStatus: normalizeKey(item?.currentStatus || item?.current_status || 'active')
+      }
+    })
+    .filter(item => item && item.currentStatus === 'active')
+}
+
+function normalizeModeCandidates(items = []) {
+  return (Array.isArray(items) ? items : [])
+    .map(item => ({
+      modeKey: normalizeModeKey(
+        item?.modeKey || item?.mode || item?.diagnosisMode || item?.diagnosis_mode
+      ),
+      confidence: Number(item?.confidence || 0),
+      imageId: normalizeText(item?.imageId || item?.image_id || ''),
+      regionRef: normalizeCaptureRegion(item?.regionRef || item?.region_ref || item?.captureRegion)
+    }))
+    .filter(item => DIAGNOSIS_MODE_REGISTRY[item.modeKey])
+}
+
+function hasSupportingEvidenceForMode(modeKey = '', evidenceItems = []) {
+  return supportingEvidenceForMode(modeKey, evidenceItems).length > 0
+}
+
+function supportingEvidenceForMode(modeKey = '', evidenceItems = []) {
+  const candidateGroups = PEST_EVIDENCE_RULES[modeKey]?.candidateGroups || []
+  const classified = classifyModeEvidence(modeKey, evidenceItems)
+  return [...classified.direct, ...classified.indirect]
+    .filter(isAtLeastMediumEvidence)
+    .filter(item => candidateGroups.some(group => groupIncludesEvidence(group, item)))
+}
+
+function normalizeModeKey(value = '') {
+  const key = normalizeKey(value)
+  const aliases = {
+    spider_mites: 'spider_mite',
+    scale_insects: 'scale_insect',
+    whiteflies: 'whitefly',
+    aphids: 'aphid',
+    mealybugs: 'mealybug',
+    leafminer: 'leaf_miner',
+    leaf_miner_mode: 'leaf_miner',
+    fungus_gnats: 'fungus_gnat'
+  }
+  return aliases[key] || key
+}
+
+function isFixedQuestionPackageMode(modeKey = '') {
+  const entry = DIAGNOSIS_MODE_REGISTRY[modeKey]
+  return ['fixed_yellow_leaf', 'fixed_wilting_droop'].includes(entry?.questionPackageKind)
+}
+
+function classifyModeEvidence(modeKey = '', evidenceItems = []) {
+  const rule = PEST_EVIDENCE_RULES[modeKey]
+  if (!rule) {
+    return {
+      direct: [],
+      indirect: []
+    }
+  }
+  const classifyGroups = (groups, kind) =>
+    groups.flatMap(group => {
+      const matchedByGroup = new Map()
+      for (const item of evidenceItems) {
+        if (!group.includes(item.evidenceKey) && !group.includes(item.symptomKey)) {
+          continue
+        }
+        const current = matchedByGroup.get(item.evidenceGroup)
+        if (!current || rankBand(item.confidenceBand) > rankBand(current.confidenceBand)) {
+          matchedByGroup.set(item.evidenceGroup, {
+            ...item,
+            evidenceKind: kind
+          })
+        }
+      }
+      return Array.from(matchedByGroup.values())
+    })
+
+  return {
+    direct: classifyGroups(rule.directGroups, 'direct'),
+    indirect: classifyGroups(rule.indirectGroups, 'indirect')
+  }
+}
+
+function groupIncludesEvidence(group = [], item = {}) {
+  return group.includes(item.evidenceKey) || group.includes(item.symptomKey)
+}
+
+function resolveIndirectDirectCombination(rule = {}, indirect = []) {
+  if (!rule.allowIndirectDirect || !Array.isArray(rule.directCombinationGroups)) {
+    return null
+  }
+  const eligible = indirect.filter(isAtLeastMediumEvidence)
+  for (const combination of rule.directCombinationGroups) {
+    if (!Array.isArray(combination) || !combination.length) {
+      continue
+    }
+    const matchesByGroup = combination.map(group =>
+      eligible.filter(item => Array.isArray(group) && groupIncludesEvidence(group, item))
+    )
+    if (matchesByGroup.some(matches => !matches.length)) {
+      continue
+    }
+    const evidenceByPair = new Map()
+    for (const matches of matchesByGroup) {
+      for (const item of matches) {
+        const imageId = normalizeText(item.imageId || '')
+        const regionRef = normalizeKey(item.regionRef || '')
+        if (!imageId || !regionRef || regionRef === 'unknown') {
+          continue
+        }
+        const pairKey = `${imageId}::${regionRef}`
+        const list = evidenceByPair.get(pairKey) || []
+        list.push(item)
+        evidenceByPair.set(pairKey, list)
+      }
+    }
+    for (const pairEvidence of evidenceByPair.values()) {
+      const coversAllGroups = matchesByGroup.every(matches =>
+        matches.some(match =>
+          pairEvidence.some(
+            item =>
+              item.evidenceKey === match.evidenceKey && item.evidenceGroup === match.evidenceGroup
+          )
+        )
+      )
+      if (coversAllGroups && pairEvidence.some(isStrongHighEvidence)) {
+        return Array.from(
+          new Map(
+            pairEvidence.map(item => [`${item.evidenceKey}::${item.evidenceGroup}`, item])
+          ).values()
+        )
+      }
+    }
+  }
+  return null
+}
+
+function resolveDirectModeEvidence(modeKey = '', evidenceItems = []) {
+  const rule = PEST_EVIDENCE_RULES[modeKey]
+  const classified = classifyModeEvidence(modeKey, evidenceItems)
+  const directMatch = classified.direct.find(isStrongHighEvidence)
+  if (directMatch) {
+    return {
+      modeKey,
+      matchType: 'direct',
+      matchedEvidence: [directMatch]
+    }
+  }
+  const combinationMatch = resolveIndirectDirectCombination(rule, classified.indirect)
+  if (combinationMatch) {
+    return {
+      modeKey,
+      matchType: 'indirect',
+      matchedEvidence: combinationMatch
+    }
+  }
+  return null
+}
+
+function buildRetakeAuthorization({
+  authorizationId = '',
+  now = Date.now(),
+  durationMs = THREE_MINUTES_MS,
+  originVisualCallBatchId = '',
+  requestedCaptureRegion = ''
+} = {}) {
+  const serverNow = Number(now || Date.now())
+  return {
+    retakeAuthorizationId:
+      authorizationId || `retake_${serverNow}_${Math.random().toString(36).slice(2, 10)}`,
+    retakeStartedAt: serverNow,
+    retakeExpiresAt: serverNow + Math.max(1, Number(durationMs || THREE_MINUTES_MS)),
+    serverNow,
+    originVisualCallBatchId: normalizeText(originVisualCallBatchId, ''),
+    requestedCaptureRegion: normalizeCaptureRegion(requestedCaptureRegion),
+    status: 'active'
+  }
+}
+
+function assertRetakeAuthorizationActive(auth = {}, now = Date.now()) {
+  const serverNow = Number(now || Date.now())
+  const expiresAt = Number(auth?.retakeExpiresAt || auth?.expiresAt || auth?.expires_at || 0)
+  const status = normalizeKey(auth?.status || 'active')
+  if (!expiresAt || status !== 'active' || serverNow >= expiresAt) {
+    const error = new Error('RETAKE_WINDOW_EXPIRED')
+    error.code = 'RETAKE_WINDOW_EXPIRED'
+    error.statusCode = 409
+    error.terminalState = 'ended_retake_timeout'
+    throw error
+  }
+  return {
+    retakeAuthorizationId: normalizeText(
+      auth?.retakeAuthorizationId || auth?.authorizationId || auth?.authorization_id || ''
+    ),
+    serverNow,
+    retakeExpiresAt: expiresAt,
+    originVisualCallBatchId: normalizeText(auth?.originVisualCallBatchId || '', ''),
+    requestedCaptureRegion: normalizeCaptureRegion(auth?.requestedCaptureRegion || ''),
+    status: 'active'
+  }
+}
+
+function resolveDiagnosisModeRoute({
+  diagnosisProfile = 'full',
+  admittedVisualEvidence = [],
+  admittedEvidence = [],
+  retainedVisualEvidence = [],
+  visualModeCandidates = [],
+  modeCandidates = [],
+  priorEvidenceLedger = [],
+  imageContext = {},
+  aggregateAnalyzability = ''
+} = {}) {
+  const normalizedProfile = normalizeKey(diagnosisProfile) === 'pest' ? 'pest' : 'full'
+  const analyzability = normalizeKey(
+    aggregateAnalyzability ||
+      imageContext?.aggregateAnalyzability ||
+      imageContext?.analyzability ||
+      ''
+  )
+  if (analyzability === 'low') {
+    const snapshotSeed = JSON.stringify({
+      profile: normalizedProfile,
+      action: 'request_followup_capture',
+      reason: 'low_visual_quality',
+      origin: imageContext?.originVisualCallBatchId || ''
+    })
+    return {
+      diagnosisProfile: normalizedProfile,
+      directMatches: [],
+      confirmationCandidates: [],
+      associatedModes: [],
+      directionChoices: [],
+      nextAction: 'request_followup_capture',
+      followupCapturePlan: {
+        reason: 'low_visual_quality',
+        requestedCaptureRegion: normalizeText(
+          normalizeCaptureRegion(imageContext?.requestedCaptureRegion, 'other_local')
+        ),
+        riskLevel: 'low',
+        riskNotice: '这次只需要补一张更清楚的照片。',
+        safetyInstructions: ['保持手机稳定，拍清楚可疑位置。'],
+        requiresExplicitConsent: false,
+        skipOptionEnabled: false,
+        skipAnswerValue: 'unknown'
+      },
+      evidenceSnapshotId: `evidence_snapshot_${stableHash(snapshotSeed)}`,
+      routePrimaryAction: 'request_followup_capture'
+    }
+  }
+
+  const evidenceItems = normalizeVisualEvidence([
+    ...admittedVisualEvidence,
+    ...admittedEvidence,
+    ...priorEvidenceLedger
+  ])
+  const retainedEvidenceItems = normalizeVisualEvidence(retainedVisualEvidence)
+  const confirmationEvidenceItems = [...evidenceItems, ...retainedEvidenceItems]
+  const directModeScope = Object.keys(PEST_EVIDENCE_RULES).filter(modeKey =>
+    normalizedProfile === 'pest' ? PEST_MODE_KEYS.includes(modeKey) : true
+  )
+  const directMatches = directModeScope
+    // Direct thresholds must be evaluated against both formally admitted and
+    // retained visual evidence. A candidate marked cautious is not enough to
+    // route by itself, but it must still be allowed to complete a hard,
+    // same-image/same-region combination with another strong cue.
+    .map(modeKey => resolveDirectModeEvidence(modeKey, confirmationEvidenceItems))
+    .filter(Boolean)
+  const directModeKeys = directMatches.map(item => item.modeKey)
+  const evidenceDerivedModeKeys = directModeScope.filter(modeKey =>
+    hasSupportingEvidenceForMode(modeKey, confirmationEvidenceItems)
+  )
+  const normalizedModeCandidates = normalizeModeCandidates([
+    ...visualModeCandidates,
+    ...modeCandidates
+  ])
+  const highConfidenceExplicitPestModeKeys = unique(
+    normalizedModeCandidates
+      .filter(
+        item =>
+          PEST_MODE_KEYS.includes(item.modeKey) &&
+          item.confidence >= EXPLICIT_PEST_MODE_CANDIDATE_CONFIDENCE
+      )
+      .map(item => item.modeKey)
+  )
+  const candidateModeKeys = unique([
+    ...normalizedModeCandidates.filter(item => item.confidence >= 0.65).map(item => item.modeKey),
+    ...evidenceDerivedModeKeys
+  ])
+    .filter(modeKey => !directModeKeys.includes(modeKey))
+    .filter(modeKey =>
+      PEST_MODE_KEYS.includes(modeKey)
+        ? hasSupportingEvidenceForMode(modeKey, confirmationEvidenceItems) ||
+          highConfidenceExplicitPestModeKeys.includes(modeKey)
+        : normalizedProfile === 'full' &&
+          hasSupportingEvidenceForMode(modeKey, confirmationEvidenceItems)
+    )
+  const associatedModes = unique([...directModeKeys, ...candidateModeKeys])
+  const pestCandidateModeKeys = candidateModeKeys.filter(modeKey =>
+    PEST_MODE_KEYS.includes(modeKey)
+  )
+  const hasExplicitPestCandidate = normalizedModeCandidates.some(item =>
+    PEST_MODE_KEYS.includes(item.modeKey)
+  )
+  const confirmationCandidates = pestCandidateModeKeys.map(modeKey => ({
+    modeKey,
+    reason: 'visual_mode_candidate_needs_confirmation',
+    matchedEvidence: supportingEvidenceForMode(modeKey, evidenceItems),
+    candidateEvidence: supportingEvidenceForMode(modeKey, retainedEvidenceItems)
+  }))
+  const provisionalMatches = pestCandidateModeKeys.map(modeKey => ({
+    modeKey,
+    matchType: 'candidate',
+    matchedEvidence: supportingEvidenceForMode(modeKey, confirmationEvidenceItems)
+  }))
+  const directionChoices = buildDirectionChoices({
+    associatedModes,
+    directMatches,
+    confirmationCandidates
+  })
+  const crossFamilyConflict = hasCrossFamilyModes(associatedModes)
+  const pestDirectMatches = directMatches.filter(item => PEST_MODE_KEYS.includes(item.modeKey))
+  const singleFixedQuestionPackageMode =
+    directModeKeys.length === 1 &&
+    candidateModeKeys.length === 0 &&
+    isFixedQuestionPackageMode(directModeKeys[0])
+  const recommendedDirection = associatedModes.some(modeKey => PEST_MODE_KEYS.includes(modeKey))
+    ? PEST_CATEGORY
+    : directModeKeys[0] || candidateModeKeys[0] || ''
+  const nextAction = crossFamilyConflict
+    ? 'choose_direction'
+    : singleFixedQuestionPackageMode || confirmationCandidates.length
+      ? pestCandidateModeKeys.length &&
+        (normalizedProfile === 'pest' || hasExplicitPestCandidate) &&
+        associatedModes.every(modeKey => PEST_MODE_KEYS.includes(modeKey))
+        ? 'direct_result'
+        : 'question_package'
+      : directModeKeys.length
+        ? 'direct_result'
+        : 'uncertain'
+  const snapshotSeed = JSON.stringify({
+    profile: normalizedProfile,
+    directModeKeys,
+    candidateModeKeys,
+    evidenceDerivedModeKeys,
+    evidence: evidenceItems.map(item => [
+      item.evidenceKey,
+      item.evidenceGroup,
+      item.confidenceBand,
+      item.strengthLevel,
+      item.imageId,
+      item.regionRef
+    ]),
+    retainedEvidence: retainedEvidenceItems.map(item => [
+      item.evidenceKey,
+      item.evidenceGroup,
+      item.confidenceBand,
+      item.strengthLevel
+    ])
+  })
+
+  return {
+    diagnosisProfile: normalizedProfile,
+    directMatches,
+    provisionalMatches,
+    confirmationCandidates,
+    associatedModes,
+    directionChoices,
+    recommendedDirection,
+    recommendedMode: directModeKeys[0] || candidateModeKeys[0] || '',
+    pendingDirectPestSnapshot:
+      crossFamilyConflict && pestDirectMatches.length
+        ? {
+            directMatches: pestDirectMatches,
+            evidenceSnapshotId: `evidence_snapshot_${stableHash(
+              JSON.stringify({
+                profile: normalizedProfile,
+                directModeKeys: pestDirectMatches.map(item => item.modeKey),
+                evidence: evidenceItems.map(item => [
+                  item.evidenceKey,
+                  item.evidenceGroup,
+                  item.imageId,
+                  item.regionRef
+                ])
+              })
+            )}`
+          }
+        : null,
+    nextAction,
+    followupCapturePlan: confirmationCandidates.length
+      ? {
+          reason: 'specific_pest_confirmation_needed',
+          requestedCaptureRegion: normalizeText(
+            normalizeCaptureRegion(
+              imageContext?.requestedCaptureRegion || imageContext?.captureRegion,
+              'other_local'
+            )
+          ),
+          riskLevel: 'medium',
+          riskNotice: '需要靠近可疑位置补拍，可能要轻轻翻看叶背或茎节。',
+          safetyInstructions: ['动作放轻，避免折断叶片。', '如果不方便靠近或翻看，可以选择跳过。'],
+          requiresExplicitConsent: true,
+          skipOptionEnabled: true,
+          skipAnswerValue: 'unknown'
+        }
+      : null,
+    evidenceSnapshotId: `evidence_snapshot_${stableHash(snapshotSeed)}`,
+    routePrimaryAction: nextAction
+  }
+}
+
+module.exports = {
+  DIAGNOSIS_MODE_REGISTRY,
+  LOCKED_SPECIFIC_PEST_MODES,
+  PEST_MODE_KEYS,
+  resolveDiagnosisModeRoute,
+  buildRetakeAuthorization,
+  evidenceGroupForKey,
+  assertRetakeAuthorizationActive,
+  _test: {
+    normalizeVisualEvidence,
+    evidenceGroupForKey,
+    resolveIndirectDirectCombination,
+    resolveDirectModeEvidence
+  }
+}

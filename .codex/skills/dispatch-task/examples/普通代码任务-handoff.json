@@ -45,6 +45,25 @@
       "局部实现与测试用例组织"
     ]
   },
+  "brv_relevance": {
+    "required": false,
+    "reason": "local code fix; source-first validation is sufficient"
+  },
+  "figma": {
+    "required": false,
+    "link": "",
+    "mode": "internal_mcp"
+  },
+  "feature_test_plan": {
+    "required": true,
+    "targets": ["src/utils/example.ts"],
+    "commands": ["npm test -- example"]
+  },
+  "e2e_plan": {
+    "required": false,
+    "automator_required": false,
+    "catalog_required": false
+  },
   "validation": {
     "miniprogram_automator_required": false,
     "implementer": [

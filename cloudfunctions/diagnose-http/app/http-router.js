@@ -90,43 +90,73 @@ async function main(event, context) {
     }
 
     if (path.includes('/diagnosis/start')) {
-      if (method !== 'POST') {return methodNotAllowed(method)}
+      if (method !== 'POST') {
+        return methodNotAllowed(method)
+      }
       const { handleDiagnosisStart } = getDiagnosisHandlers()
       return handleDiagnosisStart(request, context, payload)
     }
 
     if (path.includes('/diagnosis/question/start')) {
-      if (method !== 'POST') {return methodNotAllowed(method)}
+      if (method !== 'POST') {
+        return methodNotAllowed(method)
+      }
       const { handleDiagnosisQuestionStart } = getDiagnosisHandlers()
       return handleDiagnosisQuestionStart(request, context, payload)
     }
 
     if (path.includes('/diagnosis/answer')) {
-      if (method !== 'POST') {return methodNotAllowed(method)}
+      if (method !== 'POST') {
+        return methodNotAllowed(method)
+      }
       const { handleDiagnosisAnswer } = getDiagnosisHandlers()
       return handleDiagnosisAnswer(request, context, payload)
     }
 
+    if (path.includes('/diagnosis/retake/authorize')) {
+      if (method !== 'POST') {
+        return methodNotAllowed(method)
+      }
+      const { handleDiagnosisRetakeAuthorize } = getDiagnosisHandlers()
+      return handleDiagnosisRetakeAuthorize(request, context, payload)
+    }
+
+    if (path.includes('/diagnosis/retake/skip')) {
+      if (method !== 'POST') {
+        return methodNotAllowed(method)
+      }
+      const { handleDiagnosisRetakeSkip } = getDiagnosisHandlers()
+      return handleDiagnosisRetakeSkip(request, context, payload)
+    }
+
     if (path.includes('/diagnosis/result')) {
-      if (method !== 'GET') {return methodNotAllowed(method)}
+      if (method !== 'GET') {
+        return methodNotAllowed(method)
+      }
       const { handleDiagnosisResult } = getDiagnosisHandlers()
       return handleDiagnosisResult(request, context, request.query)
     }
 
     if (path.includes('/diagnosis/history')) {
-      if (method !== 'GET') {return methodNotAllowed(method)}
+      if (method !== 'GET') {
+        return methodNotAllowed(method)
+      }
       const { handleDiagnosisHistory } = getDiagnosisHandlers()
       return handleDiagnosisHistory(request, context, request.query)
     }
 
     if (path.includes('/diagnosis/review/list')) {
-      if (method !== 'GET') {return methodNotAllowed(method)}
+      if (method !== 'GET') {
+        return methodNotAllowed(method)
+      }
       const { handleDiagnosisReviewList } = getReviewHandlers()
       return handleDiagnosisReviewList(request, context, request.query)
     }
 
     if (path.includes('/diagnosis/review/images')) {
-      if (method !== 'GET') {return methodNotAllowed(method)}
+      if (method !== 'GET') {
+        return methodNotAllowed(method)
+      }
       const { handleDiagnosisReviewImages } = getReviewHandlers()
       return handleDiagnosisReviewImages(request, context, request.query)
     }
@@ -139,22 +169,26 @@ async function main(event, context) {
         const { handleDiagnosisReviewImportBatch } = getReviewHandlers()
         return handleDiagnosisReviewImportBatch(request, context, payload)
       }
-      if (method !== 'GET') {return methodNotAllowed(method)}
+      if (method !== 'GET') {
+        return methodNotAllowed(method)
+      }
       const { handleDiagnosisReviewDetail } = getReviewHandlers()
       return handleDiagnosisReviewDetail(request, context, request.query)
     }
 
     if (path.includes('/diagnosis/review/import')) {
-      if (method !== 'POST') {return methodNotAllowed(method)}
+      if (method !== 'POST') {
+        return methodNotAllowed(method)
+      }
       const { handleDiagnosisReviewImportBatch } = getReviewHandlers()
       return handleDiagnosisReviewImportBatch(request, context, payload)
     }
 
     if (path.includes('/diagnosis/feedback')) {
-      if (method !== 'POST') {return methodNotAllowed(method)}
-      if (
-        String(payload?.action || request.query?.action || '').trim() === 'importBatch'
-      ) {
+      if (method !== 'POST') {
+        return methodNotAllowed(method)
+      }
+      if (String(payload?.action || request.query?.action || '').trim() === 'importBatch') {
         const { handleDiagnosisReviewImportBatch } = getReviewHandlers()
         return handleDiagnosisReviewImportBatch(request, context, payload)
       }
@@ -163,37 +197,49 @@ async function main(event, context) {
     }
 
     if (path.includes('/visual/out-of-pool/list')) {
-      if (method !== 'GET') {return methodNotAllowed(method)}
+      if (method !== 'GET') {
+        return methodNotAllowed(method)
+      }
       const { handleOutOfPoolCandidateList } = getOutOfPoolHandlers()
       return handleOutOfPoolCandidateList(request, context, request.query)
     }
 
     if (path.includes('/visual/out-of-pool/image')) {
-      if (method !== 'GET') {return methodNotAllowed(method)}
+      if (method !== 'GET') {
+        return methodNotAllowed(method)
+      }
       const { handleOutOfPoolCandidateImage } = getOutOfPoolHandlers()
       return handleOutOfPoolCandidateImage(request, context, request.query)
     }
 
     if (path.includes('/visual/out-of-pool/review')) {
-      if (method !== 'POST') {return methodNotAllowed(method)}
+      if (method !== 'POST') {
+        return methodNotAllowed(method)
+      }
       const { handleOutOfPoolCandidateReview } = getOutOfPoolHandlers()
       return handleOutOfPoolCandidateReview(request, context, payload)
     }
 
     if (path.includes('/visual/out-of-pool/proxy-mappings/list')) {
-      if (method !== 'GET') {return methodNotAllowed(method)}
+      if (method !== 'GET') {
+        return methodNotAllowed(method)
+      }
       const { handleOutOfPoolProxyMappingList } = getOutOfPoolHandlers()
       return handleOutOfPoolProxyMappingList(request, context, request.query)
     }
 
     if (path.includes('/visual/out-of-pool/proxy-mappings/upsert')) {
-      if (method !== 'POST') {return methodNotAllowed(method)}
+      if (method !== 'POST') {
+        return methodNotAllowed(method)
+      }
       const { handleOutOfPoolProxyMappingUpsert } = getOutOfPoolHandlers()
       return handleOutOfPoolProxyMappingUpsert(request, context, payload)
     }
 
     if (path.includes('/visual/out-of-pool/proxy-mappings/disable')) {
-      if (method !== 'POST') {return methodNotAllowed(method)}
+      if (method !== 'POST') {
+        return methodNotAllowed(method)
+      }
       const { handleOutOfPoolProxyMappingDisable } = getOutOfPoolHandlers()
       return handleOutOfPoolProxyMappingDisable(request, context, payload)
     }

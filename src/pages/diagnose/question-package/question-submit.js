@@ -1,4 +1,5 @@
 import { buildQuestionAnswerPayload, normalizeDiagnosisResult } from '@/utils/diagnose-flow.js'
+import { preserveDiagnosisContinuationContext } from '@/components/diagnose-flow/retake-continuation.js'
 
 export async function submitQuestionPackageAnswers({
   result,
@@ -29,10 +30,13 @@ export async function submitQuestionPackageAnswers({
     environmentWeatherWindow
   })
   const rerunResult = await diagnosisAnswerMutation.mutateAsync(payloadForSubmit)
-  const nextResult = normalizeDiagnosisResult(rerunResult, {
-    images,
-    plantName: plantName || currentResult.plantName || '植物'
-  })
+  const nextResult = preserveDiagnosisContinuationContext(
+    normalizeDiagnosisResult(rerunResult, {
+      images,
+      plantName: plantName || currentResult.plantName || '植物'
+    }),
+    currentResult
+  )
   result.value = nextResult
   resetQuestionState(nextResult?.questions || [])
   diagnoseStore.addToHistory({
@@ -41,7 +45,11 @@ export async function submitQuestionPackageAnswers({
     diagnosisId: nextResult.diagnosisSessionId || ''
   })
   uni.showToast({
-    title: nextResult.hasActiveQuestions ? '问诊已更新' : '诊断已完成',
+    title: nextResult.retakeRequest
+      ? '请按提示完成补拍'
+      : nextResult.hasActiveQuestions
+        ? '问诊已更新'
+        : '诊断已完成',
     icon: 'success'
   })
 }

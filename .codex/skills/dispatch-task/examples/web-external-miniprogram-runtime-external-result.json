@@ -95,7 +95,7 @@
   "validation_evidence": {
     "unit_tests": {
       "result": "passed",
-      "commands": ["node test/unit/backend/transpiration.mjs"],
+      "commands": ["node test/unit/backend/layer/utils/transpiration.mjs"],
       "evidence_ref": "evidence/unit-tests.txt",
       "reason": ""
     },

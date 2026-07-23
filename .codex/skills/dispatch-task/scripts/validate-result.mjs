@@ -79,6 +79,10 @@ const acceptanceMentionsMiniProgramRuntime = (handoff.acceptance ?? []).some(ite
     raw.includes('微信开发者工具')
   )
 })
+const acceptanceMentionsDispatchGovernance = (handoff.acceptance ?? []).some(item => {
+  const raw = String(item ?? '')
+  return /hook|catalog|episode|automator preflight/i.test(raw) || raw.includes('钩子')
+})
 const miniprogramAutomatorRequired =
   typeof handoff?.validation?.miniprogram_automator_required === 'boolean'
     ? handoff.validation.miniprogram_automator_required
@@ -170,6 +174,9 @@ if (role === 'implementer') {
       'completed result cannot contain deviations_or_blockers'
     )
     validateValidationEvidence(result, true, { need, isObject, nonEmptyString })
+    if (acceptanceMentionsDispatchGovernance) {
+      validateDispatchGovernanceEvidence(result, { need, isObject, nonEmptyString })
+    }
     validateUiCompleted(result, {
       handoff,
       figmaAcquiredBy: 'implementer',
@@ -186,6 +193,35 @@ if (role === 'implementer') {
     need(
       nonEmptyArray(result.deviations_or_blockers),
       'blocked result requires deviations_or_blockers'
+    )
+  }
+}
+
+function validateDispatchGovernanceEvidence(resultObject, { need, isObject, nonEmptyString }) {
+  for (const name of [
+    'migration_inventory',
+    'hook_self_test',
+    'e2e_catalog_validation',
+    'episode_state_contract',
+    'status_card_contract',
+    'automator_preflight_contract'
+  ]) {
+    need(isObject(resultObject[name]), `dispatch governance result requires ${name}`)
+    if (isObject(resultObject[name])) {
+      need(nonEmptyString(resultObject[name].status), `${name}.status is required`)
+      need(Array.isArray(resultObject[name].commands), `${name}.commands must be an array`)
+      need(nonEmptyString(resultObject[name].evidence_ref), `${name}.evidence_ref is required`)
+    }
+  }
+  need(
+    Array.isArray(resultObject.known_limitations),
+    'dispatch governance result requires known_limitations array'
+  )
+  need(isObject(resultObject.qa_handoff), 'dispatch governance result requires qa_handoff')
+  if (isObject(resultObject.qa_handoff)) {
+    need(
+      Array.isArray(resultObject.qa_handoff.actual_commands),
+      'dispatch governance qa_handoff.actual_commands must be an array'
     )
   }
 }

@@ -28,10 +28,10 @@ description: 'main 只做路由、合同、等待、回收、审计与 Completio
 
 ### 1.2 三种实现流
 
-| 流 | 合同 / 证据 | 实现后校验 |
-|---|---|---|
-| `simple_patch` | 无 handoff / 无 receipt | diff review + scoped lint/fmt |
-| `codex_subagent` | handoff + impl result + 一个 postflight report | `validate-implementation-postflight.mjs` |
+| 流                     | 合同 / 证据                                                                                              | 实现后校验                               |
+| ---------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| `simple_patch`         | 无 handoff / 无 receipt                                                                                  | diff review + scoped lint/fmt            |
+| `codex_subagent`       | handoff + impl result + 一个 postflight report                                                           | `validate-implementation-postflight.mjs` |
 | `external_implementer` | 既有 external artifacts（prompt、send receipt、handoff manual、recovery result）+ 同一 postflight report | `validate-implementation-postflight.mjs` |
 
 普通任务默认只读本文件。不得先读完整历史、完整 ClickUp、完整 Figma、全仓规则、`.codex/skills/**/references/` 或旧 INDEX。
@@ -51,7 +51,7 @@ BRV 记录时机必须按候选事实是否依赖实现结果区分：
 
 - 已由用户明确确认，且已由当前事实源核验、独立于本次代码修改结果的稳定业务事实，可以在任务中途立即完成 `record_plan`、写入和 readback/Query 验证；不得为了等待实现、QA 或 Completion Gate 而延迟。
 - 只有依赖最终实现、评审或端上验收才能确认的业务行为，才延后到对应证据齐备后记录。
-- 无论时机如何，均不得记录当前代码位置、一次性 bug 修复过程、dispatch/provider 过程、临时环境状态或未经验证的实现方案。任务结束时仍须复核已写入的记录，或明确说明 `brv_memory_impact=false`。
+- 无论时机如何，均不得记录当前代码位置、一次性 bug 修复过程、临时环境状态或未经验证的实现方案。用户已明确要求并确认：经过当前源码、合同和实际验收共同验证、会约束后续任务的 dispatch 工作流契约，以及可复现的 Automator/QA 卡点与解决方法，应由 main 记录为稳定 workflow contract 或 validated recurring gotcha；不得把 provider 聊天过程、原始日志、临时执行 ID、凭据或一次性排障细节直接写入 BRV。任务结束时仍须复核已写入的记录，或明确说明 `brv_memory_impact=false`。
 
 ByteRover 的具体命令、Topic Schema、Vocabulary 和引擎行为以当前安装的 ByteRover V4 Skill 为准。当前实现事实及冲突优先级按 `AGENTS.md` 的知识治理边界执行，dispatch-task 不另建一套事实优先级。
 
@@ -128,7 +128,7 @@ node .codex/skills/dispatch-task/scripts/capture-worktree-baseline.mjs .tmp/disp
 1.  baseline 用于区分本轮变更与用户/其他线程已有变更；不得用它自动 restore 或覆盖用户改动。
 2.  若 baseline 已经存在 dirty files，handoff 必须记录 `validation.worktree_baseline_path`，main review 必须特别检查是否与本轮 `changed_files` 重叠。
 3.  如果本轮声明修改的文件在 baseline 中已 dirty，且用户未明确授权覆盖/协作，Completion Gate 必须 blocked，不能擅自回滚。
-4.  当用户明确要求在脏共享工作区直接协作时，implementer result 可声明 `preexisting_dirty_overlap_acknowledged=true`；postflight 只允许 overlap 全部落在 `allowed_paths` 且未命中 `forbidden_paths`，否则仍 blocked。
+4.  当用户明确要求在脏共享工作区直接协作时，handoff 必须设置 `validation.allow_preexisting_dirty_overlap=true`，并在 `validation.preexisting_dirty_overlap_owners` 为每个可能重叠路径提供合同级 ownership proof；implementer result 的自我声明不能授权 overlap。
 
 ## 4. Project Constraints
 
@@ -162,14 +162,23 @@ decision_lock:
   level: standard / strict
   architecture_invariants
   local_decisions_allowed
+brv_relevance:
+  required: boolean
+  official_query_command              # required=true 时必填；失败记 recall_degraded source-first
 figma:
+  required: boolean
   link / node_id
-  lite_status
-  main_access: lite_only
-  main_tools_used
-  lite_receipt                       # 可选，仅身份/尺寸/顶层分区
+  mode: internal_mcp / external_prompt_recovery
   implementer_fetch_required
   qa_baseline_fetch_required          # 行为标志：main QA 须独立获取视觉基准
+feature_test_plan:
+  required: boolean
+  targets                             # 源/目标范围；代码任务 required=true 时必填
+  commands                            # 至少一个 feature-specific command；generic run-all 不能单独验收
+e2e_plan:
+  required: boolean
+  automator_required
+  catalog_required
 required_skills / required_prompt_sections
 validation:
   miniprogram_automator_required
@@ -214,7 +223,13 @@ node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
 .codex/hooks.json -> .codex/hooks/dispatch-gate-adapter.mjs -> .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs
 ```
 
-hook gate 的职责是记录、注入和恢复，不替代本 skill 的人工判断。`SubagentStart` 注入任务卡，`PostToolUse` 记录 telemetry，`SubagentStop` 只允许在原 implementer thread 生成一次汇总返工提示。普通遗漏（缺 Figma、缺 feature unit test、未完成 BRV recall、未运行 QA）不得阻断普通对话或写入；只能进入 postflight、review 或原线程返工。
+hook gate 的职责是可观测性与硬风险拦截，不替代本 skill 的人工判断。main 在派发前用 `dispatch-gate cli.mjs episode open` 建立一个 active episode；spawn 返回 agent id 后必须立即执行 `episode start`（`episode bind` 为等价别名）完成明确的 episode/agent binding。没有 active episode 的 hook 事件必须快速退出，绝不能写入 `unknown-dispatch-run`。同一目标的用户反馈用 `episode amend` 追加，默认复用 main 已生成的 recall packet；只有 `knowledgeScopeChanged=true` 时才要求 main 重新召回。
+
+review 缺陷必须先合并成一个完整返工清单，再执行一次 `episode rework --defect-signature=... --summary=...`。单个 episode 最多允许一个 consolidated rework batch；第二次 rework 会触发 circuit breaker，episode 不得完成，main 必须停止补丁式拉扯并进入整体重设计、明确 blocked 或请求用户决策。普通用户 amendment 不计入 rework budget。
+
+`SubagentStart` 只读取 handoff 提供的 main-owned recall packet，禁止执行 BRV Query。`PostToolUse` 记录真实 tool/terminal/Figma/code-edit telemetry；`SubagentStop` 只能为 forbidden-path、QA evidence forgery 等 true blocker 返回 `decision:"block"`。缺 Figma、缺 feature test、未执行 main-owned Automator、docs 或 BRV 都是普通遗漏：写入审计摘要，但不得阻断 implementer 停止或强制 continuation。`stop_hook_active=true` 必须允许停止以避免循环。
+
+hook-self-test 只证明 CLI adapter 行为，不能证明 Desktop 原生生命周期已接通。必须用 `hook-capability`/运行态探针标明 `native_supported` 或 `cli_fallback`；native 不可用时 `.codex/hooks.json` 只保留可观测的 `PreToolUse`/`PostToolUse`，生命周期由 `episode open/start/status/finish` 显式执行，严禁继续挂载无效的 `SubagentStart`/`SubagentStop` 来制造已接通的假象。
 
 `PreToolUse` 只允许对以下硬风险返回 deny：
 
@@ -233,6 +248,7 @@ hook gate 的职责是记录、注入和恢复，不替代本 skill 的人工判
 5.  `deep_contract`、UI/Figma、跨模块、状态机或大文件拆分任务，首次状态检查建议不早于 10 分钟；没有最终 JSON 时默认仍在执行。
 6.  如果 main 在 Codex Subagent 仍可能写入时误写了代码类文件，必须立即停止并返回 `blocked: main_workspace_contamination`，说明触碰文件、原因和建议处理方式；不得自行撤回或继续加工。
 7.  只有在 Codex Subagent 返回 `completed|blocked` 终态后，main 才能进入 Gate C 做 diff-first review；其中只有 `completed` 且证据齐备时，才允许按 §1.3 执行受限 maintenance patch。`blocked` 不授权 main 修复；超出范围的返工必须回到原 Codex Subagent thread 或原外部实现者，main 不得亲自修复。
+8.  同一 episode 的实现沟通上限是“一次初始实现 + 一次整包返工”；第二批实现缺陷必须触发 circuit breaker，不得继续逐条 `send_message`/`followup_task`。
 
 违反本节视为 Hard stop。
 
@@ -294,7 +310,7 @@ node .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs validate-e2e-cata
 node .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs qa-run --catalog-id=<leaf-id> --execution-id=<run-id> --dry-run
 ```
 
-只有 catalog 精确叶子、`docs/ai-rules/frontend-automation-id-policy.md` 引用、脚本 hash 和 execution id 全部通过后，才允许进入 LAN/DevTools/automator。裸跑 automator 脚本只能作为排障，不能作为 `runtime-qa-evidence.json` 的验收来源。
+只有 catalog 精确叶子、`docs/ai-rules/frontend-automation-id-policy.md` 引用、冻结脚本 hash、execution id 和 qa-run execution record 全部通过后，才允许进入 LAN/DevTools/automator。live `qa-run` 在调用叶子脚本前必须完成 target projectPath、完整 LAN flow、9420/WS、page data、截图和小程序运行时 `wx.request` preflight；错误项目绝不能重启。截图 RPC 失效时，必须先从 9420 listener 的祖先进程链证明唯一 target projectPath、main DevTools PID 与真实控制端口；进程 `--project` / 已打开 config 缺失时，仅可用同一 main `--app-session-id` 的近期 WeappLog 补强：`AUTO` 必须精确 port `9420` 和 target 路径，且同 session `FileUtils` 精确 target 路径，并持久化 source、file、timestamp；过期或 session / port / path 不匹配的记录必须拒绝。一次受控 `close -> open -> auto` 后必须重新证明 main PID、9420 listener PID、控制端口和项目路径，并重跑截图与 `wx.request`。任何项目证据、控制端口或 restart PID 证明缺失均为 `devtools_automator_blocker`，不得把单独 `cli auto` 记为重启。qa-run 必须串行锁定 9420、同一冻结 hash 最多两次 live attempt，产品失败不得原地重试，所有异常都必须终态化为 `aborted`、`failed_environment`、`failed_product` 或 `failed_script`。裸跑 automator 脚本只能作为排障，不能作为 `runtime-qa-evidence.json` 的验收来源；将裸跑结果包装成通过证据属于 QA evidence forgery。
 
 运行态验收模式由 `validation.runtime_acceptance_mode` 显式声明；仅当模式为 `automator_required` | `batch_substitute_allowed` | `batch_only` 时，必须产出 `runtime-qa-evidence.json`：
 
@@ -312,6 +328,8 @@ channel
 catalog_id                  # automator_required 必填
 execution_id                # automator_required 必填
 script_sha256               # automator_required 必填
+script | script_path         # automator_required 必填，必须等于 catalog leaf_script
+qa_run_execution_record      # automator_required 必填
 projectPath
 pagePath
 automator_port | wsEndpoint

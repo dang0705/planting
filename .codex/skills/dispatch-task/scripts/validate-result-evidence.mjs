@@ -1,7 +1,9 @@
 export function validateValidationEvidence(resultObject, requireSuccess, context) {
   const { need, isObject, nonEmptyString } = context
   need(isObject(resultObject.validation_evidence), 'completed result requires validation_evidence')
-  if (!isObject(resultObject.validation_evidence)) {return}
+  if (!isObject(resultObject.validation_evidence)) {
+    return
+  }
   for (const name of ['unit_tests', 'lint', 'typecheck', 'build', 'self_check']) {
     validateEvidenceCheck(name, resultObject.validation_evidence[name], requireSuccess, {
       need,
@@ -44,16 +46,24 @@ export function validateComputerUseToolEvidence(cu, context) {
 
 function validateEvidenceCheck(name, check, requireSuccess, { need, isObject, nonEmptyString }) {
   need(isObject(check), `validation_evidence.${name} must be an object`)
-  if (!isObject(check)) {return}
+  if (!isObject(check)) {
+    return
+  }
   need(
     ['passed', 'not_applicable', 'failed', 'blocked'].includes(check.result),
     `validation_evidence.${name}.result must be passed|not_applicable|failed|blocked`
   )
   need(Array.isArray(check.commands), `validation_evidence.${name}.commands must be an array`)
+  need(nonEmptyString(check.evidence_ref), `validation_evidence.${name}.evidence_ref is required`)
   if (check.result === 'not_applicable') {
     need(
       nonEmptyString(check.reason),
       `validation_evidence.${name}.reason is required for not_applicable`
+    )
+  } else {
+    need(
+      check.commands.length > 0,
+      `validation_evidence.${name}.commands must be non-empty unless not_applicable`
     )
   }
   if (requireSuccess) {

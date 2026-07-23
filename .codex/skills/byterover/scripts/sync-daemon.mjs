@@ -20951,13 +20951,6 @@ async function writeIntentFile(dir, intent) {
     mode: 384
   }), await rename3(tmpPath, finalPath);
 }
-async function hasDeleteIntents(syncDir) {
-  try {
-    return (await readdir4(intentsDir(syncDir))).some((name) => name.endsWith(".json"));
-  } catch {
-    return !1;
-  }
-}
 async function readDeleteIntents(syncDir, opts) {
   let now = opts?.now ?? /* @__PURE__ */ new Date(), dir = intentsDir(syncDir), entries;
   try {
@@ -21037,7 +21030,7 @@ function planBidirectional(inputs, localDeletePolicy, suppressRestoreForKeys, fo
   for (let key of [...keys].sort()) {
     let L = local.get(key), R = remote.get(key), B = baseline[key];
     if (forceDeleteKeys.has(key)) {
-      !L && R ? actions.push({ kind: "delete-remote", key, reason: "forced-delete" }) : L && actions.push({ kind: "delete-local", key, forced: !0 });
+      L && actions.push({ kind: "delete-local", key, forced: !0 });
       continue;
     }
     if (L && R) {
@@ -21220,13 +21213,6 @@ function parseIntent2(raw, now) {
 function intentsDir2(syncDir) {
   return join15(syncDir, MOVE_INTENTS_DIR);
 }
-async function hasMoveIntents(syncDir) {
-  try {
-    return (await readdir5(intentsDir2(syncDir))).some((name) => name.endsWith(".json"));
-  } catch {
-    return !1;
-  }
-}
 function serialiseIntent(intent) {
   return {
     ...intent,
@@ -21390,15 +21376,6 @@ var BASELINE_KEY = "baseline", BASELINE_REVISION_KEY = "baselineRevision", STATU
   }
   async clearDeleteIntents() {
     await clearDeleteIntents(this.syncDir);
-  }
-  /**
-   * Cheap pending-intent probe (readdir-only, no JSON parse). The scheduled
-   * poll calls this every cycle to decide whether to escalate from the
-   * delta-only catch-up path to a full reconcile — only the full reconcile
-   * drains intents to the server.
-   */
-  async hasPendingIntents() {
-    return await hasDeleteIntents(this.syncDir) || await hasMoveIntents(this.syncDir);
   }
 };
 
@@ -22963,10 +22940,6 @@ function createSyncEngine(inputConfig, deps = {}) {
     await doReconcileOnce(snapshot.files), await state.setBaselineRevision(snapshot.rev);
   }
   async function runCatchUp() {
-    if (await state.hasPendingIntents()) {
-      await doReconcileOnce();
-      return;
-    }
     let rev = await state.getBaselineRevision();
     if (rev === null) {
       await doReconcileOnce();
@@ -23651,15 +23624,7 @@ function createSyncEngine(inputConfig, deps = {}) {
       progressKind: void 0
     });
   }
-  return {
-    reconcileOnce,
-    catchUp,
-    start,
-    stop,
-    status: status2,
-    setToken,
-    on: on2
-  };
+  return { reconcileOnce, start, stop, status: status2, setToken, on: on2 };
 }
 
 // ../../packages/core/src/analytics/identity-promoter.ts

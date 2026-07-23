@@ -38,3 +38,5 @@ node .codex/skills/dispatch-task/scripts/validate-completion-readiness.mjs <hand
    - 普通本地任务：主工作区 `dist/dev/mp-weixin`
    - Web/云端 external implementer：`external_contract.remote_sync.planned_worktree_path/dist/dev/mp-weixin`
 2. Web agent 自称完成本地 QA 不能替代 Codex worktree recovery evidence。
+3. `automator_required` 必须提供 catalog leaf id、leaf script path、script hash、execution id、qa-run execution record 和真实 E2E evidence；Completion Gate 会比对 catalog 与 qa-run 记录。
+4. `batch_substitute_allowed` 与 `batch_only` 只能使用 batch channel，不得携带 automator catalog/hash/execution 字段来伪装端上验收。

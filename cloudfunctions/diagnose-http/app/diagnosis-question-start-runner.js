@@ -1,13 +1,11 @@
 'use strict'
 
-const {
-  buildMinimalPlantContext,
-  buildStaticQuestionPackageStartRoundResult,
-  isYellowingStaticQuestionStartMode,
-  isWiltingDroopStaticQuestionStartMode,
-  _test: staticQuestionPackageStartTest
-} = require('./static-question-package-start')
 const { createReviewTimingLogger } = require('../repositories/diagnosis-review/review-performance')
+const { DIAGNOSIS_MODE_REGISTRY } = require('../domain/diagnosis-mode-registry')
+
+function getStaticQuestionPackageStart() {
+  return require('./static-question-package-start')
+}
 
 function getManualQuestionStartFastPath() {
   return require('./manual-symptom-question-start-fast-path')
@@ -41,15 +39,32 @@ const manualQuestionStartFastPathTest = {
   }
 }
 
+const staticQuestionPackageStartTest = {
+  buildWiltingDroopPackageQuestions(...args) {
+    return getStaticQuestionPackageStart()._test.buildWiltingDroopPackageQuestions(...args)
+  },
+  buildYellowingStaticQuestions(...args) {
+    return getStaticQuestionPackageStart()._test.buildYellowingStaticQuestions(...args)
+  },
+  buildStaticObservedSymptoms(...args) {
+    return getStaticQuestionPackageStart()._test.buildStaticObservedSymptoms(...args)
+  },
+  buildStaticObservedEvidenceSet(...args) {
+    return getStaticQuestionPackageStart()._test.buildStaticObservedEvidenceSet(...args)
+  }
+}
+
 const MANUAL_SYMPTOM_MODE_OPTIONS = [
   {
     classKey: 'wilting_droop_mode',
+    modeKey: 'wilting_droop',
     classNameCn: '枯萎 / 发蔫模式',
     symptomKey: 'wilting_droop',
     symptomCn: '枯萎 / 发蔫'
   },
   {
     classKey: 'yellowing_mode',
+    modeKey: 'yellow_leaf',
     classNameCn: '黄叶模式',
     symptomKey: 'uniform_yellowing',
     symptomCn: '整叶黄化'
@@ -238,6 +253,18 @@ function resolveManualSymptomMode(payload = {}) {
   if (!option) {
     throw Object.assign(new Error('不支持的症状模式'), { statusCode: 400 })
   }
+  const registryEntry = DIAGNOSIS_MODE_REGISTRY[option.modeKey || '']
+  if (
+    !registryEntry ||
+    registryEntry.requiresAiInitialAssessment ||
+    !registryEntry.manualDirectEntryEnabled ||
+    !['fixed_yellow_leaf', 'fixed_wilting_droop'].includes(registryEntry.questionPackageKind)
+  ) {
+    throw Object.assign(new Error('该症状模式需要先上传照片识别，不能无图启动'), {
+      statusCode: 403,
+      code: 'MANUAL_MODE_REQUIRES_AI'
+    })
+  }
 
   const requestedSymptomKey = normalizeKey(payload.symptomKey || payload.symptom_key)
   if (requestedSymptomKey && requestedSymptomKey !== option.symptomKey) {
@@ -300,9 +327,11 @@ async function runQuestionStartDiagnosis({ payload, openid, skipPersistence = fa
   const plantCatalogId = payload.plantCatalogId || payload.catalogPlantId || null
   const userPlantId = payload.userPlantId || null
   const plantId = plantCatalogId || requestPlantId
-  if (!userPlantId && !plantId) {
+  const allowsAnonymousPlantContext = clientContext?.entrySource === 'diagnose_tab'
+  if (!userPlantId && !plantId && !allowsAnonymousPlantContext) {
     throw Object.assign(new Error('缺少 userPlantId 或 plantCatalogId'), { statusCode: 400 })
   }
+  const runtimePlantId = plantId || 'diagnose_tab_anonymous'
 
   const option = resolveManualSymptomMode(payload)
   const sessionId = buildQuestionStartSessionId()
@@ -311,18 +340,24 @@ async function runQuestionStartDiagnosis({ payload, openid, skipPersistence = fa
     hasUserPlantId: Boolean(userPlantId)
   })
 
-  if (isYellowingStaticQuestionStartMode(option) || isWiltingDroopStaticQuestionStartMode(option)) {
-    const plantContext = buildMinimalPlantContext({
-      plantId,
+  const staticQuestionPackageStart = getStaticQuestionPackageStart()
+  if (
+    staticQuestionPackageStart.isYellowingStaticQuestionStartMode(option) ||
+    staticQuestionPackageStart.isWiltingDroopStaticQuestionStartMode(option)
+  ) {
+    const plantContext = staticQuestionPackageStart.buildMinimalPlantContext({
+      plantId: runtimePlantId,
       userPlantId,
       plantCatalogId
     })
-    const roundResult = await buildStaticQuestionPackageStartRoundResult({
-      sessionId,
-      option,
-      plantContext,
-      round: 1
-    })
+    const roundResult = await staticQuestionPackageStart.buildStaticQuestionPackageStartRoundResult(
+      {
+        sessionId,
+        option,
+        plantContext,
+        round: 1
+      }
+    )
     timing.mark('static-question-package-ready', {
       packageQuestionCount: Array.isArray(roundResult?.questions) ? roundResult.questions.length : 0
     })
@@ -350,9 +385,9 @@ async function runQuestionStartDiagnosis({ payload, openid, skipPersistence = fa
       plantId:
         roundResult?.plantContext?.userPlantId ||
         roundResult?.plantContext?.plantId ||
-        plantId ||
+        runtimePlantId ||
         '',
-      plantCatalogId: roundResult?.plantContext?.plantId || plantId || null,
+      plantCatalogId: roundResult?.plantContext?.plantId || runtimePlantId || null,
       plantIdentityId: roundResult?.plantContext?.plantIdentityId || '',
       latestVisualCallBatchId: null,
       diagnosisText: '',
@@ -377,8 +412,14 @@ module.exports = {
     ...staticQuestionPackageStartTest,
     buildQuestionStartSessionId,
     getResolveRequestClientContext,
-    buildMinimalPlantContext,
-    buildStaticQuestionPackageStartRoundResult,
-    isYellowingStaticQuestionStartMode
+    buildMinimalPlantContext(...args) {
+      return getStaticQuestionPackageStart().buildMinimalPlantContext(...args)
+    },
+    buildStaticQuestionPackageStartRoundResult(...args) {
+      return getStaticQuestionPackageStart().buildStaticQuestionPackageStartRoundResult(...args)
+    },
+    isYellowingStaticQuestionStartMode(...args) {
+      return getStaticQuestionPackageStart().isYellowingStaticQuestionStartMode(...args)
+    }
   }
 }

@@ -125,5 +125,3 @@
 </template>
 
 <script src="./diagnosis-review/setup.js"></script>
-
-<style scoped src="./diagnosis-review/style.css"></style>

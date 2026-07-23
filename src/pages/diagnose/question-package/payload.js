@@ -1,4 +1,5 @@
 import { normalizeDiagnosisResult } from '@/utils/diagnose-flow.js'
+import { preserveDiagnosisContinuationContext } from '@/components/diagnose-flow/retake-continuation.js'
 
 export const DEFAULT_CACHE_KEY = 'diagnose_question_package_payload'
 
@@ -53,11 +54,15 @@ export function resolveQuestionPackagePayload(options = {}, key = DEFAULT_CACHE_
 
 export function resolveInitialDiagnosisResult(value = {}) {
   if (value?.normalizedResult) {
-    return value.normalizedResult
+    return preserveDiagnosisContinuationContext(value.normalizedResult, {}, value)
   }
   const rawResult = value?.diagnosisResult || value?.result || value?.visualDiagnosisResult || value
-  return normalizeDiagnosisResult(rawResult, {
-    images: Array.isArray(value?.images) ? value.images : [],
-    plantName: value?.plantName || value?.plant?.displayName || '植物'
-  })
+  return preserveDiagnosisContinuationContext(
+    normalizeDiagnosisResult(rawResult, {
+      images: Array.isArray(value?.images) ? value.images : [],
+      plantName: value?.plantName || value?.plant?.displayName || '植物'
+    }),
+    {},
+    value
+  )
 }

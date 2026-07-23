@@ -1,17 +1,12 @@
 'use strict'
 
-const { fromQuestionId } = require('../mappers/public-id-mapper')
 const { runDiagnosisRound } = require('../domain/diagnosis-engine')
 const { getQuestionOptionMappings } = require('../repositories/question-repository')
 const { getSessionState, getObservedSymptomsBySession } = require('../services/session-service')
-const { resolveLatestVisualCallBatchId } = require('../utils/visual-batch-id')
 const {
   resolveRuntimeEnvironmentCarePayload,
   buildRouteAnswersFromRuntimeEnvironmentCarePayload
 } = require('./care-behavior-payload')
-const { isQuestionPackageAnswerSubmitPayload } = require('./question-package-response')
-const { resolveWiltingDroopOutcomeResult } = require('../domain/wilting-droop-outcome-resolver')
-const { resolveYellowLeafOutcomeResult } = require('../domain/yellow-leaf-outcome-resolver')
 const {
   resolveQuestionPackageSnapshot,
   resolvePackageAnswerOwnership,
@@ -20,22 +15,23 @@ const {
 } = require('./package-answer-ownership-runtime')
 const { buildPackageAnswerRuntimeState } = require('./answer-runtime-state')
 const { runDeferredAnswerPersistence } = require('./answer-runner-helpers')
-const {
-  resolveVisualImageInputs,
-  stripVisualEvidenceItems,
-  normalizeRoundFromRoundId,
-  normalizePublicAnswers,
-  normalizeRequestMode,
-  resolveRequestClientContext
-} = require('./request-normalizers')
-const { extractVisualSymptomsSafely, persistRoundResult } = require('./visual-runtime')
+const { normalizeRoundFromRoundId, resolveRequestClientContext } = require('./request-normalizers')
+const { persistRoundResult } = require('./visual-runtime')
 const outcomeRouteRepository = require('../repositories/outcome-route-repository')
 const { createReviewTimingLogger } = require('../repositories/diagnosis-review/review-performance')
 const { triggerStaticRepositoryCachePreload } = require('./static-cache-preloader')
 const {
-  getQuestionPackageByMode,
-  buildQuestionPackageUiHints
-} = require('./question-package-response')
+  applyConsumedRetakeState,
+  isCompleteQuestionPackageSnapshotAnswerSubmit,
+  runRetakeImageFollowup
+} = require('./diagnosis-answer-retake-runtime')
+const { resolveDirectionChoiceRoundResult } = require('./diagnosis-direction-choice-runtime')
+const { resolveAnswerInputRuntime } = require('./diagnosis-answer-input-runtime')
+const { resolveSpecializedAnswerRoundResults } = require('./diagnosis-answer-outcome-runtime')
+const { attachTerminalQuestionPackage } = require('./diagnosis-answer-package-finalizer')
+const { buildAnswerRunnerResult } = require('./diagnosis-answer-result-builder')
+const { buildSpecificPestQuestionPackage } = require('./pest-question-package')
+const { PEST_MODE_KEYS } = require('../domain/diagnosis-mode-registry')
 
 function getSessionQuestionRowRuntime() {
   return require('./session-question-row-runtime')
@@ -49,41 +45,112 @@ function getAnswerRevisionRuntime() {
   return require('./answer-revision-runtime')
 }
 
-function getSessionImageInputRuntime() {
-  return require('./session-image-input-runtime')
+function normalizePackageMode(value = '') {
+  return String(value || '').trim()
 }
 
-function isCompleteQuestionPackageSnapshotAnswerSubmit({
-  requestMode = '',
-  questionPackageSnapshot = null,
-  answers = []
-} = {}) {
-  if (normalizeRequestMode(requestMode) !== 'answer_submit') {
+function isSpecificPestQuestionPackage(value = null) {
+  if (!value || typeof value !== 'object') {
     return false
   }
+  return (
+    normalizePackageMode(value.mode) === 'specific_pest_visual' ||
+    normalizePackageMode(value.route) === 'specific_pest_visual' ||
+    normalizePackageMode(value.sourceMode) === 'visual_specific_pest'
+  )
+}
 
-  const packageQuestionKeys = new Set(
-    (Array.isArray(questionPackageSnapshot?.packageQuestions)
-      ? questionPackageSnapshot.packageQuestions
+function resolvePayloadSpecificPestQuestionPackage(payload = {}) {
+  const packageCandidate = payload?.questionPackage || payload?.question_package || null
+  if (!isSpecificPestQuestionPackage(packageCandidate)) {
+    return null
+  }
+  const packageQuestions = Array.isArray(packageCandidate.packageQuestions)
+    ? packageCandidate.packageQuestions
+    : Array.isArray(packageCandidate.package_questions)
+      ? packageCandidate.package_questions
       : []
-    )
-      .map(item => String(item?.questionKey || '').trim())
-      .filter(Boolean)
-  )
-  if (!packageQuestionKeys.size) {
-    return false
+  if (!packageQuestions.length) {
+    return null
   }
-
-  const answerQuestionKeys = new Set(
-    (Array.isArray(answers) ? answers : [])
-      .map(item => String(item?.questionKey || '').trim())
-      .filter(Boolean)
-  )
-  if (answerQuestionKeys.size < packageQuestionKeys.size) {
-    return false
+  return {
+    ...packageCandidate,
+    mode: 'specific_pest_visual',
+    packageQuestions
   }
+}
 
-  return Array.from(packageQuestionKeys).every(questionKey => answerQuestionKeys.has(questionKey))
+function safeJsonParse(value = '', fallback = {}) {
+  try {
+    const parsed = JSON.parse(String(value || ''))
+    return parsed && typeof parsed === 'object' ? parsed : fallback
+  } catch {
+    return fallback
+  }
+}
+
+function normalizeRowRound(row = {}) {
+  const rationale = safeJsonParse(row?.rationale || '{}')
+  return Number(rationale.round || rationale.r || 1) || 1
+}
+
+function normalizeRowQuestionKey(row = {}) {
+  const rationale = safeJsonParse(row?.rationale || '{}')
+  return String(rationale.questionKey || rationale.qk || row?.symptom_key || '').trim()
+}
+
+function normalizeRowTargetMode(row = {}) {
+  const rationale = safeJsonParse(row?.rationale || '{}')
+  const modeKey = String(rationale.targetSymptomKey || rationale.tsk || row?.targetSymptomKey || '')
+    .trim()
+    .toLowerCase()
+  return PEST_MODE_KEYS.includes(modeKey) ? modeKey : ''
+}
+
+function resolveSpecificPestQuestionPackageFromRows({
+  rows = [],
+  answerRound = 1,
+  hiddenPrefilledEvidence = []
+} = {}) {
+  const packageRows = (Array.isArray(rows) ? rows : [])
+    .filter(row => {
+      const questionKey = normalizeRowQuestionKey(row)
+      return (
+        normalizeRowRound(row) === Number(answerRound || 1) &&
+        questionKey.startsWith('q_specific_pest__')
+      )
+    })
+    .sort((a, b) => Number(a?.question_order || 0) - Number(b?.question_order || 0))
+  if (!packageRows.length) {
+    return null
+  }
+  const candidateModes = Array.from(
+    new Set(packageRows.map(normalizeRowTargetMode).filter(Boolean))
+  )
+  const rebuiltPackage = buildSpecificPestQuestionPackage({
+    candidateModes,
+    hiddenPrefilledEvidence
+  })
+  if (!rebuiltPackage?.packageQuestions?.length) {
+    return null
+  }
+  const rebuiltByQuestionKey = new Map(
+    rebuiltPackage.packageQuestions.map(question => [question.questionKey, question])
+  )
+  const packageQuestions = packageRows
+    .map(row => rebuiltByQuestionKey.get(normalizeRowQuestionKey(row)))
+    .filter(Boolean)
+  if (!packageQuestions.length) {
+    return null
+  }
+  return {
+    ...rebuiltPackage,
+    questionCount: packageQuestions.length,
+    packageTopics: packageQuestions.map(question => question.packageTopic).filter(Boolean),
+    candidateModes,
+    hiddenPrefilledEvidence: Array.isArray(hiddenPrefilledEvidence) ? hiddenPrefilledEvidence : [],
+    packageQuestions
+  }
 }
 
 async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } = {}) {
@@ -113,44 +180,19 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   })
   timing.mark('static-cache-preload-triggered')
 
-  const answers = normalizePublicAnswers(payload.answers || [])
-  const imageInputs = resolveVisualImageInputs(payload)
-  const hasAnswers = answers.length > 0
-  const hasImageInputs = imageInputs.length > 0
-  const requestMode = normalizeRequestMode(payload.requestMode || payload.mode || '')
-  const isAnswerRevision = requestMode === 'answer_revision'
-  const payloadQuestionPackageSubmit = isQuestionPackageAnswerSubmitPayload({
-    payload,
+  const {
     answers,
-    requestMode
-  })
-  const dirtyQuestionKey = isAnswerRevision
-    ? fromQuestionId(payload.dirtyFromQuestionId || '') ||
-      String(
-        payload.dirtyFromQuestionKey ||
-          payload.dirtyQuestionKey ||
-          payload.dirtyFromQuestionId ||
-          ''
-      ).trim()
-    : ''
+    imageInputs,
+    hasAnswers,
+    hasImageInputs,
+    requestMode,
+    hasDirectionChoice,
+    isAnswerRevision,
+    payloadQuestionPackageSubmit,
+    dirtyQuestionKey
+  } = resolveAnswerInputRuntime(payload)
   let answerRevision = null
   let uiPatch = null
-
-  if (!hasAnswers && !hasImageInputs) {
-    throw Object.assign(new Error('缺少 answers 或 images'), { statusCode: 400 })
-  }
-
-  if (isAnswerRevision && hasImageInputs) {
-    throw Object.assign(new Error('answer_revision 不支持同时提交补图'), { statusCode: 400 })
-  }
-
-  if (isAnswerRevision && !dirtyQuestionKey) {
-    throw Object.assign(new Error('缺少 dirtyFromQuestionId'), { statusCode: 400 })
-  }
-
-  if (hasAnswers && hasImageInputs) {
-    throw Object.assign(new Error('题包答案与补图必须分开提交'), { statusCode: 400 })
-  }
 
   const observedSymptoms =
     Array.isArray(sessionState.observedEvidenceSet) && sessionState.observedEvidenceSet.length
@@ -174,8 +216,12 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
 
   const answerRound = roundFromClient || expectedRound
   let refreshedSessionState = sessionState
-  const questionPackageSnapshot = resolveQuestionPackageSnapshot(refreshedSessionState)
-  const isTerminalQuestionPackageSubmit =
+  const storedQuestionPackageSnapshot = resolveQuestionPackageSnapshot(refreshedSessionState)
+  const payloadSpecificPestQuestionPackage = resolvePayloadSpecificPestQuestionPackage(payload)
+  let questionPackageSnapshot = storedQuestionPackageSnapshot || payloadSpecificPestQuestionPackage
+  let hasSpecificPestQuestionPackageSnapshot =
+    questionPackageSnapshot?.mode === 'specific_pest_visual'
+  let isTerminalQuestionPackageSubmit =
     payloadQuestionPackageSubmit ||
     isCompleteQuestionPackageSnapshotAnswerSubmit({
       requestMode,
@@ -193,14 +239,40 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   let runtimeAskedQuestionKeys = refreshedSessionState.askedQuestionKeys
   let runtimeAnsweredQuestionGroupKeys = refreshedSessionState.answeredQuestionGroupKeys || []
   let runtimeUnknownCountByGroup = refreshedSessionState.unknownCountByGroup
-  const needsSessionQuestionState = !isTerminalQuestionPackageSubmit || hasImageInputs
+  const needsSessionQuestionState =
+    !isTerminalQuestionPackageSubmit || hasImageInputs || hasSpecificPestQuestionPackageSnapshot
   const sessionQuestionState = needsSessionQuestionState
     ? getSessionQuestionRowRuntime().resolveSessionQuestionState(refreshedSessionState)
     : { rows: [], progress: null }
   const sessionQuestionRowsForSession = sessionQuestionState.rows
   const sessionQuestionProgress = sessionQuestionState.progress
+  const rowSpecificPestQuestionPackage = resolveSpecificPestQuestionPackageFromRows({
+    rows: sessionQuestionRowsForSession,
+    answerRound,
+    hiddenPrefilledEvidence: questionPackageSnapshot?.hiddenPrefilledEvidence || []
+  })
+  if (
+    rowSpecificPestQuestionPackage &&
+    (!questionPackageSnapshot ||
+      rowSpecificPestQuestionPackage.packageQuestions.length >
+        (Array.isArray(questionPackageSnapshot.packageQuestions)
+          ? questionPackageSnapshot.packageQuestions.length
+          : 0))
+  ) {
+    questionPackageSnapshot = rowSpecificPestQuestionPackage
+  }
+  hasSpecificPestQuestionPackageSnapshot = questionPackageSnapshot?.mode === 'specific_pest_visual'
+  const completeQuestionPackageSnapshotSubmit = isCompleteQuestionPackageSnapshotAnswerSubmit({
+    requestMode,
+    questionPackageSnapshot,
+    answers
+  })
+  isTerminalQuestionPackageSubmit = hasSpecificPestQuestionPackageSnapshot
+    ? completeQuestionPackageSnapshotSubmit
+    : payloadQuestionPackageSubmit || completeQuestionPackageSnapshotSubmit
   let runtimeAnswerOptionMappings = []
   let runtimeRouteAnswerEffects = []
+  let retakeAuthorizationRuntime = null
   let sessionQuestionRowsForRound = sessionQuestionRowsForSession
   let runtimeAskedQuestionRows = []
   const requiredAnswerPersistenceTasks = []
@@ -272,15 +344,16 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
       answerRound
     })
 
-    const optionMappings = isTerminalQuestionPackageSubmit
-      ? mergePackageAnswerOptionMappings(
-          questionOptionMappingsFromStore,
-          buildPackageAnswerOptionMappings(questionPackageSnapshot)
-        )
-      : getSessionAnswerSubmitRuntime().buildSessionAnswerOptionMappings(
-          questionKeys,
-          questionOptionMappingsFromStore
-        )
+    const optionMappings =
+      isTerminalQuestionPackageSubmit || hasSpecificPestQuestionPackageSnapshot
+        ? mergePackageAnswerOptionMappings(
+            questionOptionMappingsFromStore,
+            buildPackageAnswerOptionMappings(questionPackageSnapshot)
+          )
+        : getSessionAnswerSubmitRuntime().buildSessionAnswerOptionMappings(
+            questionKeys,
+            questionOptionMappingsFromStore
+          )
     runtimeAnswerOptionMappings = optionMappings
     sessionQuestionRowsForRound = getSessionQuestionRowRuntime().resolveSessionOwnershipRows(
       ownership,
@@ -361,29 +434,22 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   }
 
   if (hasImageInputs) {
-    await getSessionImageInputRuntime().prepareSessionImageInputRuntime({
+    const followupRuntime = await runRetakeImageFollowup({
+      payload,
       sessionId,
       openid,
       answerRound,
-      sessionQuestionProgress,
-      visualBatchTrace: refreshedSessionState.visualBatchTrace || null
-    })
-
-    visualExtraction = await extractVisualSymptomsSafely({
-      sessionId,
-      openid,
       imageInputs,
-      originVisualCallBatchId:
-        refreshedSessionState.latestVisualCallBatchId ||
-        refreshedSessionState?.plantContext?.latestVisualCallBatchId ||
-        '',
-      supersedeSource: 'diagnosis_package_image'
+      sessionQuestionProgress,
+      refreshedSessionState,
+      sessionState,
+      clientContext
     })
+    retakeAuthorizationRuntime = followupRuntime.retakeAuthorizationRuntime
+    visualExtraction = followupRuntime.visualExtraction
 
     runtimeAnswers = []
-    runtimeObservedEvidenceSet = stripVisualEvidenceItems(
-      refreshedSessionState.observedEvidenceSet || []
-    )
+    runtimeObservedEvidenceSet = refreshedSessionState.observedEvidenceSet || []
     runtimeAskedQuestionKeys = []
     runtimeAnsweredQuestionGroupKeys = []
     runtimeUnknownCountByGroup = {}
@@ -404,35 +470,42 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
       ? runtimeAskedQuestionKeys.length
       : 0
   })
-  const wiltingDroopRoundResult = isTerminalQuestionPackageSubmit
-    ? resolveWiltingDroopOutcomeResult({
+  const {
+    wiltingDroopRoundResult,
+    yellowLeafRoundResult,
+    specificPestRoundResult,
+    pestVisualRouteRoundResult
+  } = await resolveSpecializedAnswerRoundResults({
+    isTerminalQuestionPackageSubmit,
+    questionPackageSnapshot,
+    payload,
+    routeRuntimeAnswers,
+    sessionId,
+    answerRound,
+    round,
+    refreshedSessionState,
+    sessionState,
+    runtimeCarePayload,
+    runtimeRouteAnswerEffects,
+    visualExtraction,
+    clientContext
+  })
+  const directionChoiceRoundResult = hasDirectionChoice
+    ? await resolveDirectionChoiceRoundResult({
+        payload,
+        openid,
         sessionId,
         round,
-        answers: routeRuntimeAnswers,
-        questionPackage:
-          payload.questionPackage || questionPackageSnapshot?.questionPackage || null,
-        plantContext: refreshedSessionState.plantContext || sessionState.plantContext || {},
-        careBehaviorTimeline: runtimeCarePayload.careBehaviorTimeline,
-        environmentCareContext: runtimeCarePayload.environmentCareContext
+        refreshedSessionState,
+        sessionState
       })
     : null
-  const yellowLeafRoundResult =
-    isTerminalQuestionPackageSubmit && !wiltingDroopRoundResult
-      ? await resolveYellowLeafOutcomeResult({
-          sessionId,
-          round,
-          answers: routeRuntimeAnswers,
-          questionPackage:
-            payload.questionPackage || questionPackageSnapshot?.questionPackage || null,
-          plantContext: refreshedSessionState.plantContext || sessionState.plantContext || {},
-          careBehaviorTimeline: runtimeCarePayload.careBehaviorTimeline,
-          environmentCareContext: runtimeCarePayload.environmentCareContext,
-          routeAnswerEffects: runtimeRouteAnswerEffects
-        })
-      : null
   const roundResult =
+    directionChoiceRoundResult ||
     wiltingDroopRoundResult ||
     yellowLeafRoundResult ||
+    specificPestRoundResult ||
+    pestVisualRouteRoundResult ||
     (await runDiagnosisRound({
       openid,
       userPlantId: refreshedSessionState.userPlantId,
@@ -467,6 +540,7 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   if (visualExtraction?.visualBatchTrace) {
     roundResult.visualBatchTrace = visualExtraction.visualBatchTrace
   }
+  applyConsumedRetakeState(roundResult, retakeAuthorizationRuntime)
 
   if (answerRevision) {
     roundResult.answerRevision = answerRevision
@@ -480,26 +554,12 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   if (runtimeCarePayload.environmentCareContext) {
     roundResult.environmentCareContext = runtimeCarePayload.environmentCareContext
   }
-  if (isTerminalQuestionPackageSubmit) {
-    const terminalQuestionPackage =
-      payload.questionPackage ||
-      questionPackageSnapshot?.questionPackage ||
-      getQuestionPackageByMode(questionPackageSnapshot?.mode || '', {
-        questionCount: Array.isArray(questionPackageSnapshot?.packageQuestions)
-          ? questionPackageSnapshot.packageQuestions.length
-          : 0,
-        sourceMode: questionPackageSnapshot?.sourceMode || ''
-      }) ||
-      null
-    if (terminalQuestionPackage) {
-      roundResult.questionPackage = terminalQuestionPackage
-      roundResult.uiHints = buildQuestionPackageUiHints(
-        roundResult.uiHints || {},
-        terminalQuestionPackage,
-        Number(terminalQuestionPackage.questionCount || 0)
-      )
-    }
-  }
+  attachTerminalQuestionPackage({
+    roundResult,
+    payload,
+    questionPackageSnapshot,
+    isTerminalQuestionPackageSubmit
+  })
 
   if (!roundResult.visualBatchTrace && refreshedSessionState.visualBatchTrace) {
     roundResult.visualBatchTrace = refreshedSessionState.visualBatchTrace
@@ -531,12 +591,13 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   } else {
     await Promise.all(requiredAnswerPersistenceTasks)
   }
+  const persistenceRound = roundResult?.reuseAnswerRoundForQuestionPackage ? answerRound : round
   await persistRoundResult({
     sessionId,
     openid,
     plantContext: roundResult.plantContext,
     response: roundResult,
-    round,
+    round: persistenceRound,
     image: '',
     description: '',
     skipPersistence,
@@ -546,21 +607,13 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   })
   runDeferredAnswerPersistence(sessionId, deferredAnswerPersistenceJobs)
 
-  const answerResult = {
+  const answerResult = buildAnswerRunnerResult({
     sessionId,
-    userPlantId: refreshedSessionState.userPlantId || null,
-    plantId: refreshedSessionState.userPlantId || refreshedSessionState.plantId,
-    plantCatalogId: refreshedSessionState.plantId || null,
-    plantIdentityId:
-      refreshedSessionState?.plantContext?.plantIdentityId ||
-      roundResult?.plantContext?.plantIdentityId ||
-      '',
-    latestVisualCallBatchId: resolveLatestVisualCallBatchId(roundResult, refreshedSessionState),
-    diagnosisText: roundResult?.topProblem?.summary || '',
-    response: roundResult,
+    refreshedSessionState,
+    roundResult,
     answerRevision,
     uiPatch
-  }
+  })
   timing.finish({
     answerRevision: Boolean(answerRevision),
     hasImageInputs: Boolean(hasImageInputs)
@@ -572,6 +625,8 @@ module.exports = {
   runAnswerDiagnosis,
   _test: {
     runDeferredAnswerPersistence,
-    isCompleteQuestionPackageSnapshotAnswerSubmit
+    isCompleteQuestionPackageSnapshotAnswerSubmit,
+    resolvePayloadSpecificPestQuestionPackage,
+    resolveSpecificPestQuestionPackageFromRows
   }
 }

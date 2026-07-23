@@ -1,33 +1,24 @@
 #!/usr/bin/env node
-import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-
-const repoRoot = path.resolve(fileURLToPath(new URL('../..', import.meta.url)))
-const cliPath = path.join(
-  repoRoot,
-  '.codex',
-  'skills',
-  'dispatch-task',
-  'scripts',
-  'dispatch-gate',
-  'cli.mjs'
-)
+import { handleHookEvent } from '../skills/dispatch-task/scripts/dispatch-gate/lib/hook-events.mjs'
 
 const args = process.argv.slice(2)
-const stdin = fs.readFileSync(0, 'utf8')
-const child = spawnSync(process.execPath, [cliPath, 'hook-event', ...args], {
-  cwd: repoRoot,
-  input: stdin,
-  encoding: 'utf8',
-  env: process.env
-})
+const eventArg = args.find(arg => arg.startsWith('--event='))
+const eventIndex = args.indexOf('--event')
+const eventName = eventArg
+  ? eventArg.slice('--event='.length)
+  : eventIndex >= 0
+    ? (args[eventIndex + 1] ?? '')
+    : ''
+const raw = fs.readFileSync(0, 'utf8').trim()
+let payload = {}
+try {
+  payload = raw ? JSON.parse(raw) : {}
+} catch {
+  payload = { raw_stdin: raw }
+}
 
-if (child.stdout) {
-  process.stdout.write(child.stdout)
-}
-if (child.stderr) {
-  process.stderr.write(child.stderr)
-}
-process.exit(child.status ?? 1)
+const result = handleHookEvent({ payload, eventName })
+const denied = result.hookSpecificOutput?.permissionDecision === 'deny'
+process.stdout.write(`${JSON.stringify(result, null, 2)}\n`)
+process.exitCode = denied ? 2 : 0

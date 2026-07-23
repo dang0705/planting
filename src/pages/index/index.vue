@@ -118,6 +118,8 @@
         ref="diagnosePopupRef"
         :plant-id="currentPlantId"
         :plant-name="currentPlantName"
+        diagnosis-profile="full"
+        entry-source="plant_card"
         @success="handleDiagnoseSuccess"
         @close="handleDiagnosePopupClose"
       />
@@ -204,8 +206,7 @@ function getReminderSummary(plant) {
   const backendReminder = normalizeBackendWaterReminder(plant?.wateringReminder)
   const localWater = plantingStore.getPlantReminderState(plant.id, 'water')
   return {
-    water: backendReminder || localWater,
-    fertilize: plantingStore.getPlantReminderState(plant.id, 'fertilize')
+    water: backendReminder || localWater
   }
 }
 function normalizeBackendWaterReminder(reminder) {
@@ -243,14 +244,7 @@ async function openReminder({ plant, type }) {
     currentReminderPlantId.value = plant.id
     await nextTick()
     callComponentMethod(wateringReminderRef, 'open')
-    return
   }
-  plantingStore.setReminderFocus({
-    plantId: plant.id,
-    plantName: plant.displayName || plant.canonicalName || '当前植物',
-    type
-  })
-  uni.switchTab({ url: '/pages/calendar/calendar' })
 }
 function handleDiagnoseSuccess() {
   if (currentPlantId.value) {
@@ -262,7 +256,7 @@ function handleDiagnosePopupClose() {
   currentPlantName.value = ''
 }
 function viewDiagnoseDetail(recordId) {
-  uni.navigateTo({ url: `/pages/diagnose/diagnose?id=${recordId}` })
+  uni.navigateTo({ url: `/pages/diagnose/result?id=${recordId}` })
 }
 function formatTime(time) {
   const diff = Date.now() - new Date(time).getTime()

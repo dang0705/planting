@@ -68,9 +68,7 @@ export function useQuestionPackageFlow({
   const isSubmittingQuestionAnswer = ref(false)
 
   const currentQuestion = computed(() => questionStack.value[activeQuestionIndex.value] || null)
-  const isQuestionPackageMode = computed(
-    () => isPackageResult(result.value) && questionStack.value.length > 1
-  )
+  const isQuestionPackageMode = computed(() => isPackageResult(result.value))
   const questionSwiperStyle = computed(() => ({
     height: `${estimateQuestionSwiperHeight(currentQuestion.value)}px`
   }))
@@ -298,6 +296,14 @@ export function useQuestionPackageFlow({
     )
   }
 
+  const getSelectedQuestionOptionId = question =>
+    normalizeText(questionAnswers.value[getQuestionId(question)])
+
+  async function skipQuestionRisk(question, option) {
+    selectQuestionOption(question, option)
+    await handleNextQuestion()
+  }
+
   function isQuestionAnswered(question) {
     const questionId = getQuestionId(question)
     if (!questionId) {
@@ -484,6 +490,8 @@ export function useQuestionPackageFlow({
     isLightEnvironmentQuestion,
     selectQuestionOption,
     isSelectedQuestionOption,
+    getSelectedQuestionOptionId,
+    skipQuestionRisk,
     canProceedQuestion,
     goPreviousQuestion,
     handleNextQuestion

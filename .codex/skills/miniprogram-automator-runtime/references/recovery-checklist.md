@@ -34,14 +34,16 @@ ls -la <projectPath>/project.config.json
 3. 不得连接失败就默认 `pkill`、完整重启、全量清缓存或清登录态。
 4. 只有用户明确同意，或已证明无可复用会话且 required item 必须端上执行时，才允许 CLI auto，并记录副作用。
 
-受控例外：手动拉起 automator：
+受控例外：已验证目标项目的 CLI 调用。`--port` 为从 main DevTools 进程 `--remote-port` 读取的控制端口，不是 `9420`；CLI 没有 `--auto-port` 参数：
 
 ```bash
 /Applications/wechatwebdevtools.app/Contents/MacOS/cli auto \
   --project <projectPath> \
-  --auto-port 9420 \
+  --port <verifiedDevToolsControlPort> \
   --trust-project
 ```
+
+截图 RPC 失效时，单独 `auto` 不能作为 restart 证据。仅在 9420 listener、main DevTools PID、控制端口和唯一 `<projectPath>` 已被同一进程拓扑证明后，才可一次执行 `close --project <projectPath> --port <controlPort>`、`open`、`auto`；若没有进程 `--project` 或已打开 config，可用同一 main `--app-session-id` 的近期 WeappLog 作唯一补充：`AUTO` 精确 port `9420` 和路径，另有同 session `FileUtils` 精确路径，并记录 source / file / timestamp。过期、不同 session、端口或路径不符的日志均拒绝。随后重新观察 main PID / 9420 listener PID / projectPath，并重试截图和 `wx.request`。任一项未证明或 PID 均未变化时，记录 `devtools_automator_blocker`，不得操作其他项目。
 
 ## 不要误判
 
