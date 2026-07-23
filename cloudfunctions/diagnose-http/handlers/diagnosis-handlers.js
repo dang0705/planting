@@ -91,7 +91,7 @@ function createVisualSseEmitter(sse) {
 
 async function executeDiagnosisStart(request, payload, principal, onVisualEvent) {
   assertAuthenticatedUser({ ...principal, message: '请先登录' })
-  await getRefactorReadiness().ensureRefactorReady()
+  await getRefactorReadiness().ensureDiagnosisStartRefactorReady()
   const executed = await runWithQuotaGuard({
     request,
     openid: principal.userInfo?.openid || '',

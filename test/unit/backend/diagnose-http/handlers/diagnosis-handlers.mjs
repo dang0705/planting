@@ -7,6 +7,7 @@ const handlerPath =
 const originalLoad = Module._load
 let runnerCalls = 0
 let runnerImplementation = null
+let strictReadinessCalls = 0
 const operationOrder = []
 
 const publicResponse = {
@@ -56,7 +57,13 @@ Module._load = function loadDiagnosisHandlerWithStubs(request, parent, isMain) {
     return { withQuestionTextConservative: async value => value }
   }
   if (request === '../app/refactor-readiness') {
-    return { ensureRefactorReady: async () => operationOrder.push('readiness') }
+    return {
+      ensureDiagnosisStartRefactorReady: async () => operationOrder.push('readiness-fast'),
+      ensureRefactorReady: async () => {
+        strictReadinessCalls += 1
+        operationOrder.push('readiness-strict')
+      }
+    }
   }
   if (request === '../app/frontend-response') {
     return {
@@ -136,10 +143,11 @@ try {
     'sse:visual_preparing',
     'principal',
     'auth',
-    'readiness',
+    'readiness-fast',
     'quota',
     'runner'
   ])
+  assert.equal(strictReadinessCalls, 0)
   assert.deepEqual(
     stream.events.map(item => item.event),
     [...streamEvents, 'done']

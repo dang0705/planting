@@ -142,6 +142,24 @@ assert.equal(singleWiltVisualResponse.selectedModeKey, 'wilting_droop')
 assert.equal(singleWiltVisualResponse.questionPackage.mode, 'wilting_droop')
 assert.equal(singleWiltVisualResponse.questionPackage.questionCount, 5)
 assert.equal(singleWiltVisualResponse.questions.length, 5)
+
+const singleSpiderCandidateRoute = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'pest',
+  visualModeCandidates: [{ mode: 'spider_mite', confidence: 0.75 }]
+})
+const singleSpiderCandidateResponse = await buildPestRouteResponse({
+  sessionId: 'diag_spider_candidate_visual',
+  aggregateResult: {
+    visual_call_batch_id: 'visbatch_spider_candidate_visual',
+    diagnosis_mode_route_result: singleSpiderCandidateRoute
+  },
+  diagnosisProfile: 'pest'
+})
+assert.equal(singleSpiderCandidateResponse.routePrimaryAction, 'question_package')
+assert.equal(singleSpiderCandidateResponse.questionPackage.mode, 'specific_pest_visual')
+assert.deepEqual(singleSpiderCandidateResponse.questionPackage.candidateModes, ['spider_mite'])
+assert.ok(singleSpiderCandidateResponse.questions.length > 0)
+
 assert.match(JSON.stringify(thripsPackage.packageQuestions), /补齐图片尚未确定的不同维度线索/)
 
 const multiPackage = buildSpecificPestQuestionPackage({

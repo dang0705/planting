@@ -17,6 +17,7 @@ const HIGH_BAND = 'high'
 const STRONG_LEVEL = 'strong'
 const MEDIUM_BAND = 'medium'
 const MEDIUM_LEVEL = 'medium'
+const MIN_PEST_MODE_CANDIDATE_CONFIDENCE = 0.65
 const EXPLICIT_PEST_MODE_CANDIDATE_CONFIDENCE = 0.9
 function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
@@ -376,6 +377,11 @@ function resolveDiagnosisModeRoute({
     ...visualModeCandidates,
     ...modeCandidates
   ])
+  const candidateOnlyModeKeys = unique(
+    normalizedModeCandidates
+      .filter(item => item.confidence >= MIN_PEST_MODE_CANDIDATE_CONFIDENCE)
+      .map(item => item.modeKey)
+  )
   const highConfidenceExplicitPestModeKeys = unique(
     normalizedModeCandidates
       .filter(
@@ -386,17 +392,24 @@ function resolveDiagnosisModeRoute({
       .map(item => item.modeKey)
   )
   const candidateModeKeys = unique([
-    ...normalizedModeCandidates.filter(item => item.confidence >= 0.65).map(item => item.modeKey),
+    ...normalizedModeCandidates
+      .filter(item => item.confidence >= MIN_PEST_MODE_CANDIDATE_CONFIDENCE)
+      .map(item => item.modeKey),
     ...evidenceDerivedModeKeys
   ])
     .filter(modeKey => !directModeKeys.includes(modeKey))
     .filter(modeKey =>
       PEST_MODE_KEYS.includes(modeKey)
         ? hasSupportingEvidenceForMode(modeKey, confirmationEvidenceItems) ||
-          highConfidenceExplicitPestModeKeys.includes(modeKey)
+          normalizedModeCandidates.some(
+            item =>
+              item.modeKey === modeKey &&
+              item.confidence >= MIN_PEST_MODE_CANDIDATE_CONFIDENCE &&
+              candidateOnlyModeKeys.length === 1
+          )
         : normalizedProfile === 'full' &&
           hasSupportingEvidenceForMode(modeKey, confirmationEvidenceItems)
-    )
+  )
   const associatedModes = unique([...directModeKeys, ...candidateModeKeys])
   const pestCandidateModeKeys = candidateModeKeys.filter(modeKey =>
     PEST_MODE_KEYS.includes(modeKey)
@@ -410,6 +423,14 @@ function resolveDiagnosisModeRoute({
     matchedEvidence: supportingEvidenceForMode(modeKey, evidenceItems),
     candidateEvidence: supportingEvidenceForMode(modeKey, retainedEvidenceItems)
   }))
+  const candidateOnlyNeedsQuestion =
+    confirmationCandidates.length > 0 &&
+    !confirmationCandidates.some(item =>
+      highConfidenceExplicitPestModeKeys.includes(item.modeKey)
+    ) &&
+    confirmationCandidates.every(
+      item => !item.matchedEvidence.length && !item.candidateEvidence.length
+    )
   const provisionalMatches = pestCandidateModeKeys.map(modeKey => ({
     modeKey,
     matchType: 'candidate',
@@ -435,7 +456,9 @@ function resolveDiagnosisModeRoute({
       ? pestCandidateModeKeys.length &&
         (normalizedProfile === 'pest' || hasExplicitPestCandidate) &&
         associatedModes.every(modeKey => PEST_MODE_KEYS.includes(modeKey))
-        ? 'direct_result'
+        ? candidateOnlyNeedsQuestion
+          ? 'question_package'
+          : 'direct_result'
         : 'question_package'
       : directModeKeys.length
         ? 'direct_result'

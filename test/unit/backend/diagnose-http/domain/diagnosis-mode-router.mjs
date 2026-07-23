@@ -135,8 +135,11 @@ const unsupportedCandidateRoute = resolveDiagnosisModeRoute({
   diagnosisProfile: 'pest',
   visualModeCandidates: [{ mode: 'thrips', confidence: 0.89, regionRef: 'leaf_front' }]
 })
-assert.equal(unsupportedCandidateRoute.nextAction, 'uncertain')
-assert.deepEqual(unsupportedCandidateRoute.confirmationCandidates, [])
+assert.equal(unsupportedCandidateRoute.nextAction, 'question_package')
+assert.deepEqual(
+  unsupportedCandidateRoute.confirmationCandidates.map(item => item.modeKey),
+  ['thrips']
+)
 
 const explicitAphidWithoutFormalEvidence = parseLLMVisualResult(
   JSON.stringify({
@@ -204,8 +207,22 @@ const lowConfidenceAphidRoute = resolveDiagnosisModeRoute({
   diagnosisProfile: 'pest',
   visualModeCandidates: [{ mode: 'aphid', confidence: 0.89, regionRef: 'leaf_upper_surface' }]
 })
-assert.equal(lowConfidenceAphidRoute.nextAction, 'uncertain')
-assert.deepEqual(lowConfidenceAphidRoute.confirmationCandidates, [])
+assert.equal(lowConfidenceAphidRoute.nextAction, 'question_package')
+assert.deepEqual(
+  lowConfidenceAphidRoute.confirmationCandidates.map(item => item.modeKey),
+  ['aphid']
+)
+
+const singleSpiderCandidateRoute = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'pest',
+  visualModeCandidates: [{ mode: 'spider_mite', confidence: 0.75 }]
+})
+assert.equal(singleSpiderCandidateRoute.nextAction, 'question_package')
+assert.deepEqual(
+  singleSpiderCandidateRoute.confirmationCandidates.map(item => item.modeKey),
+  ['spider_mite']
+)
+assert.deepEqual(singleSpiderCandidateRoute.confirmationCandidates[0].matchedEvidence, [])
 
 const invalidProfileOrOrganCandidates = parseLLMVisualResult(
   JSON.stringify({

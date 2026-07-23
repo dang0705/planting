@@ -22,10 +22,10 @@ inclusion: always
 
 ## 2. 全局行为硬规则
 
-1. 业务逻辑、数据结构的变动，优先采取最彻底的解决方案，避免使用保守策略如兼容、兜底代码应对此类变动从而导致无谓的代码膨胀。
-2. 开发结束后，只针对业务代码范围内的 `src/*` 和 `cloudfunctions/*` 下所改动的文件路径精准执行 `js npm run lint` 和 `js npm run fmt` 。
+1. 迭代过程中的业务逻辑、数据结构变动，如 ```{a:{b:1}}``` 改为 ```{a:[1]}``` 这种结构性调整的，优先采取最彻底的解决方案，避免使用保守策略如兼容、兜底代码应对此类变动从而导致无谓的代码膨胀。
+2. 计划模式和实际开发过程中必须遵循 `如无必要、勿增实体` 的开发原则。以合理复用、扩展已有的表结构、字段、功能模块、组件为优先。确认以上实体或相似度超过80%的实体不存在、无法复用和扩展该实体或此类操作对原有实体存在污染风险的才考虑新增。
 3. 开发过程中涉及到的文件超过 500 行的必须解耦拆分模块，拆分遵循高内聚、低耦合的设计思路，以提高维护性和复用性为最终目的。要求命名和目录划分合理并保证加载的性能。
-4. 新增或重构复杂功能的，优先探索并复用现有组件或模块，现有不满足的需联网探索 `npm`/ `github` 上成熟的插件。非常不鼓励复杂组件/模块手搓，其为最末位兜底。
+4. 新增或重构复杂功能的，优先探索并复用现有组件或模块，现有不满足的需联网探索 `npm`/ `github` 上成熟的插件。避免复杂组件/模块手搓，其为最末位兜底。
 5. 如需依赖新插件，必须考证其适配微信小程序、包体积、npm / GitHub 状态、周下载量、star 数和最近 3 年 release 记录，并提供简短介绍，征得用户同意。
 6. 所有端上验收如果本轮代码未部署到云端，必须先成功跑通 `js npm run dev:mp-weixin:local-functions:lan` 的完整 LAN 本地函数 flow，并让小程序运行时命中新代码；只启动 scoped/local 单函数 gateway、backend curl、Node HTTP 或 gateway health，不得算端上验收完成。
 7. 除非用户显式要求，否则 subagent 在条件允许的情况下优先考虑线程复用。
@@ -33,9 +33,8 @@ inclusion: always
 9. 对于任何的需求、任务、用户决策，严禁主观认为一定正确，必须有强烈的风险意识。当识别到任务有较大地风险或用户的决策方向存在严重错误时必须第一时间暂停开发并提供多个解决方案给用户，同时给出推荐顺序，由用户决定最后的实施方向。
 10. 具备完整开发生命周期或明显涉及业务逻辑的开发任务必须经 `$dispatch-task` 触发，再由其内部判断不同的 `dispatch-tier` 执行各自工作流。
 11. 客户端显示的文案必须从用户角度出发并符合常识，严禁将内部讨论用语、计算公式，拗口或难理解的文案暴露在界面中。必须遵循用户友好、利于用户操作的思想设计出最优的展示文案。
-12. 输出的文案、用语减少专业词汇，尤其在 plan 模式或用户显式要求 planning时，要注重用词以通俗易懂的白话结合举例代替专业词汇。
-13. `dispatch-task` 当前默认由具名 implementer 或 external implementer 承担复杂实现；`simple_patch` 以及 Codex Subagent / external 返回终态后的受限 `maintenance_patch` 可由 main 直接处理，但不得在 Codex Subagent 仍运行时触碰代码。QA、端上验收、docs 同步和 ByteRover 影响处理均由 main 执行，不再派发 QA 或 docs 专用 subagent。main 自守门不写角色 receipt；仅跨 agent 边界与机器可校验证据（含端上 `runtime-qa-evidence.json`、一份 implementation postflight）才写产物。
-14. Web/云端 external implementer 即使运行时自称 main/root，也必须在本项目中承担 implementer 角色：只按 handoff 修改代码，完成后执行实现者自检和 unit tests；有 `figma_link` 的 UI 任务必须直接使用可用的 Figma 插件 / MCP / 工具读取设计并对齐 UI，不能依赖 Codex main 的转述。
+12. 输出的文案、用语减少专业词汇，尤其在 plan 模式或用户显式要求 planning时，要注重用词以通俗易懂的白话结合举例代替专业词汇。 
+13. Web/云端 external implementer 即使运行时自称 main/root，也必须在本项目中承担 implementer 角色：只按 handoff 修改代码，完成后执行实现者自检和 unit tests；有 `figma_link` 的 UI 任务必须直接使用可用的 Figma 插件 / MCP / 工具读取设计并对齐 UI，不能依赖 Codex main 的转述。
 
 ## 3. 前端行为硬约束
 

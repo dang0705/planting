@@ -236,7 +236,7 @@ function formatDiagnosisResponse({
   const routeAvoidTexts = shouldUseRouteActionAdvice
     ? buildActionAvoidTexts(actionAdvice)
     : []
-  const nextSteps = outcomeType === 'uncertain'
+  const rawNextSteps = outcomeType === 'uncertain'
     ? [
         ...lowConfidenceAdviceSteps,
         ...careGuidance.nextSteps,
@@ -258,6 +258,9 @@ function formatDiagnosisResponse({
             '先处理最明显的问题，再观察 3-7 天变化。'
         }
       ]
+  const nextSteps = uniqList(rawNextSteps.map(item => item?.text)).map(text =>
+    rawNextSteps.find(item => item?.text === text)
+  )
   const contributingFactors = shouldSuppressProblemLikePresentation ? [] : rawContributingFactors
   const intermediateStates = shouldSuppressProblemLikePresentation ? [] : rawIntermediateStates
   const topProblemPayload = shouldSuppressProblemLikePresentation || !primary
