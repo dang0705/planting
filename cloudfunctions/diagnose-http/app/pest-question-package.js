@@ -2,7 +2,8 @@
 
 const {
   LOCKED_SPECIFIC_PEST_MODES,
-  evidenceGroupForKey
+  evidenceGroupForKey,
+  maxQuestionsForTier
 } = require('../domain/diagnosis-mode-router')
 
 const PEST_MODE_LABELS = Object.freeze({
