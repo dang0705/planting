@@ -53,8 +53,14 @@ assert.match(
 
 assert.match(
   weatherApiSource,
-  /forecastDays: normalizedForecastDays\.slice\(0, MAX_ARRAY_FORECAST_DAYS_TO_KEEP\)/,
-  'normalizeEnvironmentWeatherWindowPayload 应将 forecastDays 截断为 14 项'
+  /forecastDaysWithoutD0 = diagnosisDate/,
+  'normalizeEnvironmentWeatherWindowPayload 应按 diagnosisDate 过滤 D0 记录'
+)
+
+assert.match(
+  weatherApiSource,
+  /forecastDays: forecastDaysWithoutD0\.slice\(0, MAX_ARRAY_FORECAST_DAYS_TO_KEEP\)/,
+  'normalizeEnvironmentWeatherWindowPayload 应将去掉 D0 后的 forecastDays 截断为 14 项'
 )
 
 /* ============================================================

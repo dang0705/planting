@@ -124,6 +124,31 @@
 | 补拍超时终态 | `src/components/diagnose-flow/RetakeCard.vue` | `diagnose-retake-expired-text` | 断言本次诊断结束，只能重新诊断 |
 | 超时后重新诊断 | `src/pages/diagnose/question-package/QuestionPackageRetake.vue` | `diagnose-retake-expired-reset-button` | 结束旧会话并返回诊断入口重新开始 |
 
+#### D.1 诊断结果内问诊题包（DiagnoseQuestionPackageSection）
+
+| 功能模块 | 文件 | 稳定 id | 操作 / 断言 |
+| -------- | ---- | ------- | ----------- |
+| 题包容器 | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-result-question-package-required` | 断言结果卡内进入继续问诊阶段 |
+| 题包 Swiper | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-package-swiper` | 断言问诊题卡轮播容器可见 |
+| 当前题卡 | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-package-question-{questionId}` | 断言当前问题卡可见 |
+| 风险说明 | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-risk-notice-{questionId}` | 断言风险操作说明可见 |
+| 同意风险操作 | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-risk-consent-{questionId}` | 用户明确同意后才可执行对应任务 |
+| 不敢操作 / 跳过 | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-risk-skip-{questionId}` | 点击后跳过当前题 |
+| 选项栈 | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-package-option-stack-{questionId}` | 断言当前题选项组可见 |
+| 折叠面板 | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-package-collapse-{questionId}` | 展开折叠选项 |
+| 选项按钮 | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-package-option-{questionId}-{optionId}` | 点击选择当前题答案 |
+| 上一题 | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-package-prev-button` | 导航到上一题 |
+| 下一题 / 提交 | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-package-next-button` | 提交当前题或完成问诊 |
+| 空问题占位 | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-package-empty-question` | 断言无可继续回答的问题 |
+| 补图区域 | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-package-image-section` | 断言补图入口可见 |
+| 建议补拍部位 | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-package-capture-suggestions` | 断言建议优先补拍部位可见 |
+| 补图槽位网格 | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-package-upload-slot-grid` | 断言补图槽位组可见 |
+| 补图槽位 | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-package-upload-slot-{slotType}` | 断言指定槽位存在 |
+| 补图上传按钮 | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-package-upload-{slotType}-button` | 点击补到指定槽位 |
+| 删除补图 | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-package-remove-image-{index}-button` | 删除已选补图 |
+| 清空补图 | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-package-clear-images-button` | 清空所有补图 |
+| 补图被阻止 | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-package-upload-blocked` | 断言当前阶段不能补图的原因 |
+
 ### 3.4 AIStreamDialog（诊断前确认）
 
 | 功能模块        | 文件                                | 稳定 id                    | 操作 / 断言              |
