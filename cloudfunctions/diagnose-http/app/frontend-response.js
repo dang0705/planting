@@ -140,7 +140,19 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
     publicResponse.environmentCareContext || null,
     publicResponse.careBehaviorTimeline || null
   )
-  return {
+  // 终端分支也可能承载初始 likely result（0.90–<0.95 + optionalFollowUp），
+  // 保留 optionalFollowUp/likelyResult 与 questionPackage，否则 /diagnosis/start 会把
+  // 可选追问渲染成 inactive，客户端无法发起确认。与 buildFrontendAnswerResponse 保持一致。
+  const likelyResultFlag = Boolean(
+    publicResponse?.uiHints?.likelyResult || publicResponse?.questionPackage?.likelyResult
+  )
+  const optionalQuestionPackage =
+    hasOptionalFollowUp &&
+    publicResponse.questionPackage &&
+    typeof publicResponse.questionPackage === 'object'
+      ? publicResponse.questionPackage
+      : null
+  const response = {
     diagnosisSessionId: publicResponse.diagnosisSessionId || '',
     resultId: publicResponse.resultId || '',
     roundId: publicResponse.roundId || 'round_1',
@@ -207,6 +219,19 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
     ...(careBehaviorTimeline ? { careBehaviorTimeline } : {}),
     ...(environmentCareContext ? { environmentCareContext } : {})
   }
+  if (hasOptionalFollowUp) {
+    response.uiHints = {
+      ...(response.uiHints || {}),
+      optionalFollowUp: true,
+      likelyResult: likelyResultFlag,
+      maxQuestionsThisRound: questions.length || 1
+    }
+    if (optionalQuestionPackage) {
+      response.questionPackage = optionalQuestionPackage
+    }
+    response.hasActiveQuestions = questions.length > 0
+  }
+  return response
 }
 
 function buildFrontendAnswerResponse(publicResponse = {}) {

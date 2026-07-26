@@ -193,16 +193,14 @@ import PotProfileFormCore from '@/components/pot-profile/PotProfileFormCore.vue'
 import { useUserStore } from '@/store/user.js'
 import { usePlantStore } from '@/store/plants.js'
 import CatalogPlantSearch from './components/CatalogPlantSearch.vue'
-import { getEnvironmentWeatherWindow } from '@/api/weather.js'
 import { formatMlRangeToBottleText } from '@/utils/water-volume-format.js'
 import {
   fetchAdhocPlannerResult,
   fetchWateringPlannerResult,
   saveAdvisorSession,
-  todayStr,
-  resolveWeatherLocation,
   buildPotProfileSummary
 } from '@/pages/index/components/watering-reminder-options.js'
+import { useWateringAdvisorWeather } from './useWateringAdvisorWeather.js'
 
 const userStore = useUserStore()
 const plantStore = usePlantStore()
@@ -216,9 +214,6 @@ const activeStep = ref(STEP_SOURCE)
 const selectedCatalogPlant = ref(null)
 const computing = ref(false)
 const plannerResult = ref(null)
-const weatherDays = ref([])
-const forecastDays = ref([])
-const weatherLocationKey = ref('')
 const savedToBackend = ref(false)
 const searchRef = ref(null)
 const potProfileFormRef = ref(null)
@@ -226,6 +221,13 @@ const editorSummary = ref('')
 const showMyPlantsList = ref(false)
 const loadingMyPlants = ref(false)
 const selectedUserPlantId = ref(null)
+const {
+  weatherDays,
+  forecastDays,
+  weatherLocationKey,
+  plannerLocationKey,
+  loadWeatherDays
+} = useWateringAdvisorWeather({ selectedCatalogPlant, plantStore, userStore })
 
 const selectedCatalogPlantName = computed(
   () =>
@@ -247,22 +249,6 @@ const selectedCatalogPlantPotProfile = computed(() => {
   // 我的植物路径：从 plantStore 取该植物的 potProfile
   const userPlant = plantStore.userPlants?.find(item => item.id === plant.userPlantId)
   return userPlant?.potProfile || null
-})
-
-// D0 注入契约：locationKey 统一从 plant.careLocation.locationKey 读取，
-// 用于后端从 day file latestSample 注入当日天气；缺失时 todayWeatherSource='missing'。
-// 我的植物路径优先用 careLocation.locationKey；目录植物无 careLocation，兜底 weather window。
-const plannerLocationKey = computed(() => {
-  const plant = selectedCatalogPlant.value
-  if (plant?.userPlantId) {
-    const userPlant = plantStore.userPlants?.find(item => item.id === plant.userPlantId)
-    const fromCareLocation =
-      userPlant?.careLocation?.locationKey || userPlant?.locationKey || ''
-    if (fromCareLocation) {
-      return String(fromCareLocation).trim()
-    }
-  }
-  return String(weatherLocationKey.value || '').trim()
 })
 
 // 统一水量文案：调用全局 formatMlRangeToBottleText，与首页 WateringReminderSheet 口径一致
@@ -375,51 +361,6 @@ function handlePotProfileSummary(value) {
 function buildPotProfilePayload() {
   // 从共享内核取当前表单数据（默认值或用户修改值）
   return potProfileFormRef.value?.getPayload() || null
-}
-
-async function loadWeatherDays() {
-  // fix #75: D0 与 forecast 必须同源。选中"我的植物"时优先用 plant.careLocation 拉 weather window，
-  // 否则会出现 D0 用 plant location、forecast 用 user GPS 的拼接错位，corrupting 摘要。
-  // plant 无 careLocation 时 fallback 到 userStore.location（此时 D0 也用 user location，保持同源）。
-  const selectedPlant = selectedCatalogPlant.value
-  const userPlant = selectedPlant?.userPlantId
-    ? plantStore.userPlants?.find(item => item.id === selectedPlant.userPlantId)
-    : null
-  const plantCareLocation = userPlant?.careLocation || null
-  const locationSource = plantCareLocation
-    ? {
-        latitude: plantCareLocation.lat ?? plantCareLocation.latitude,
-        longitude: plantCareLocation.lng ?? plantCareLocation.longitude,
-        city: plantCareLocation.city || '',
-        province: plantCareLocation.province || '',
-        locationKey: plantCareLocation.locationKey || ''
-      }
-    : userStore.location
-  const location = resolveWeatherLocation(locationSource)
-  if (!location) {
-    uni.showToast({ title: '未获取到定位，建议将使用默认天气', icon: 'none' })
-    return
-  }
-  try {
-    const window = await getEnvironmentWeatherWindow({
-      ...location,
-      // 透传 plant careLocation 的 locationKey，让后端用同一 key 解析 D0 day file
-      ...(plantCareLocation?.locationKey
-        ? { locationKey: plantCareLocation.locationKey }
-        : {}),
-      diagnosisDate: todayStr(),
-      mode: 'environment'
-    })
-    weatherDays.value = window?.historicalDays || window?.historical_days || []
-    forecastDays.value = window?.forecastDays || window?.forecast_days || []
-    weatherLocationKey.value = String(
-      window?.locationKey || window?.location?.locationKey || ''
-    ).trim()
-  } catch {
-    weatherDays.value = []
-    forecastDays.value = []
-    weatherLocationKey.value = ''
-  }
 }
 
 async function goToResult() {

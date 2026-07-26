@@ -31,6 +31,10 @@ const resultStageSource = fs.readFileSync(
   path.join(repoRoot, 'src/components/diagnose-flow/DiagnoseResultStage.vue'),
   'utf8'
 )
+const questionPackageSectionSource = fs.readFileSync(
+  path.join(repoRoot, 'src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue'),
+  'utf8'
+)
 const retakeCopySource = fs.readFileSync(
   path.join(repoRoot, 'src/components/diagnose-flow/retake-copy.js'),
   'utf8'
@@ -138,8 +142,9 @@ assert.match(questionFlowSource, /isOptionalFollowUpQuestion\.value/)
 assert.match(questionFlowSource, /submitAnswerMap\[questionId\] = 'unknown'/)
 assert.match(questionFlowSource, /可选追问问题跳过时提交明确 unknown/)
 assert.match(flowSetupSource, /getQuestionSafetyInstructionsText/)
-assert.match(resultStageSource, /getQuestionSafetyInstructionsText\(question\)/)
-assert.doesNotMatch(resultStageSource, /\{\{\s*question\.safetyInstructions\s*\}\}/)
+assert.match(resultStageSource, /<DiagnoseQuestionPackageSection\s+:view="view"\s*\/>/)
+assert.match(questionPackageSectionSource, /getQuestionSafetyInstructionsText\(question\)/)
+assert.doesNotMatch(questionPackageSectionSource, /\{\{\s*question\.safetyInstructions\s*\}\}/)
 assert.match(riskSource, /requiresExplicitConsent/)
 assert.match(riskSource, /isQuestionRiskOptionBlocked/)
 assert.match(popupSource, /diagnosisProfile: \{ type: String, default: 'full' \}/)
