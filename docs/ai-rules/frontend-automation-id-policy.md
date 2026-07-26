@@ -85,6 +85,8 @@
 | 当前结论     | `src/components/DiagnosePopup.vue` | `diagnose-result-current-conclusion` | 断言结论标题 / 摘要可见 |
 | 处理建议     | `src/components/DiagnosePopup.vue` | `diagnose-result-action-advice`      | 断言行动建议可见        |
 | 暂时不要做   | `src/components/DiagnosePopup.vue` | `diagnose-result-avoid-advice`       | 断言避免项可见          |
+| 根腐诊断入口（outcomes 命中 overwatering 时显示，禁用态） | `src/components/diagnose-flow/DiagnoseResultStage.vue` | `diagnose-result-root-rot-entry` | 断言过浇 outcome 存在时根腐入口可见；本轮为禁用占位，无 @click |
+| 根腐诊断入口按钮（即将上线） | `src/components/diagnose-flow/DiagnoseResultStage.vue` | `diagnose-result-root-rot-entry-button` | 断言禁用文案"即将上线"可见；题包完善后切换为真实 @click 入口 |
 
 #### C. 追问流程
 

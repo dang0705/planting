@@ -32,8 +32,7 @@ Module._load = originalModuleLoad
 const QUESTION_KEYS = {
   watering: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
   light: 'q_observed_probe__leaf_yellowing__light_change_context',
-  fertilization: 'q_observed_probe__leaf_yellowing__fertilization_growth_context',
-  airflow: 'q_observed_probe__leaf_yellowing__airflow_humidity_context'
+  fertilization: 'q_observed_probe__leaf_yellowing__fertilization_growth_context'
 }
 
 const ROUTE_EFFECTS = [
@@ -196,8 +195,7 @@ function buildOverwateringTimelineAnswers() {
     answers: [
       { questionKey: QUESTION_KEYS.watering, optionKey: 'care_behavior_timeline' },
       { questionKey: QUESTION_KEYS.light, optionKey: 'no_clear_change' },
-      { questionKey: QUESTION_KEYS.fertilization, optionKey: 'normal_light_fertilizer' },
-      { questionKey: QUESTION_KEYS.airflow, optionKey: 'stable_airflow' }
+      { questionKey: QUESTION_KEYS.fertilization, optionKey: 'normal_light_fertilizer' }
     ],
     runtimeEnvironmentCarePayload
   })
@@ -236,8 +234,7 @@ await assertYellowingPackageOutcome({
   answers: [
     { questionKey: QUESTION_KEYS.watering, optionKey: 'normal_or_stable' },
     { questionKey: QUESTION_KEYS.light, optionKey: 'no_clear_change' },
-    { questionKey: QUESTION_KEYS.fertilization, optionKey: 'recent_heavy_fertilizer_or_repot' },
-    { questionKey: QUESTION_KEYS.airflow, optionKey: 'stable_airflow' }
+    { questionKey: QUESTION_KEYS.fertilization, optionKey: 'recent_heavy_fertilizer_or_repot' }
   ],
   expectedOutcomeKey: 'fertilizer_repot_stress'
 })
@@ -247,8 +244,7 @@ await assertYellowingPackageOutcome({
   answers: [
     { questionKey: QUESTION_KEYS.watering, optionKey: 'normal_or_stable' },
     { questionKey: QUESTION_KEYS.light, optionKey: 'stronger_direct_light' },
-    { questionKey: QUESTION_KEYS.fertilization, optionKey: 'normal_light_fertilizer' },
-    { questionKey: QUESTION_KEYS.airflow, optionKey: 'stable_airflow' }
+    { questionKey: QUESTION_KEYS.fertilization, optionKey: 'normal_light_fertilizer' }
   ],
   expectedOutcomeKey: 'sunburn'
 })

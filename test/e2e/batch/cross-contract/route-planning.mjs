@@ -1441,10 +1441,6 @@ async function testYellowingRouteDoesNotHoldVisibleOutcomeForMissingPackageGroup
       {
         questionKey: 'q_observed_probe__leaf_yellowing__fertilization_growth_context',
         optionKey: 'unknown'
-      },
-      {
-        questionKey: 'q_observed_probe__leaf_yellowing__airflow_humidity_context',
-        optionKey: 'unknown'
       }
     ],
     routeAnswerEffects: [
@@ -3157,15 +3153,14 @@ async function testManualQuestionStartFastPathBuildsQuestionRound() {
   assert.equal(result.questionRequired, true)
   assert.equal(result.stage, 'question_package')
   assert.equal(result.sessionStatus, 'awaiting_question_package')
-  assert.equal(result.questions.length, 4)
+  assert.equal(result.questions.length, 3)
   assert.equal(result.questions[0].selectionSource, 'route_planner')
   assert.deepEqual(
     result.questions.map(item => item.questionKey),
     [
       'q_observed_probe__leaf_yellowing__watering_frequency_context',
       'q_observed_probe__leaf_yellowing__light_change_context',
-      'q_observed_probe__leaf_yellowing__fertilization_growth_context',
-      'q_observed_probe__leaf_yellowing__airflow_humidity_context'
+      'q_observed_probe__leaf_yellowing__fertilization_growth_context'
     ]
   )
   assert.equal(

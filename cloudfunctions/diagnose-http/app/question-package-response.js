@@ -9,7 +9,9 @@ const {
 
 const YELLOW_LEAF_PACKAGE_MODE = 'yellow_leaf'
 const YELLOWING_PACKAGE_SOURCE_MODE = 'manual_yellowing_care_environment_frontloaded'
-const YELLOWING_PACKAGE_QUESTION_COUNT = 4
+const YELLOWING_PACKAGE_QUESTION_COUNT = 3
+const ROOT_ROT_PACKAGE_MODE = 'root_rot_package'
+const ROOT_ROT_PACKAGE_SOURCE_MODE = 'root_rot'
 const QUESTION_PACKAGE_MODE_ALIASES = new Map([
   [YELLOW_LEAF_PACKAGE_MODE, YELLOW_LEAF_PACKAGE_MODE],
   [YELLOWING_PACKAGE_SOURCE_MODE, YELLOW_LEAF_PACKAGE_MODE],
@@ -20,7 +22,10 @@ const QUESTION_PACKAGE_MODE_ALIASES = new Map([
   ['wilt_droop', WILTING_DROOP_PACKAGE_MODE],
   ['wilting', WILTING_DROOP_PACKAGE_MODE],
   ['drooping', WILTING_DROOP_PACKAGE_MODE],
-  ['wilting_droop_mode', WILTING_DROOP_PACKAGE_MODE]
+  ['wilting_droop_mode', WILTING_DROOP_PACKAGE_MODE],
+  [ROOT_ROT_PACKAGE_MODE, ROOT_ROT_PACKAGE_MODE],
+  [ROOT_ROT_PACKAGE_SOURCE_MODE, ROOT_ROT_PACKAGE_MODE],
+  ['root_rot_mode', ROOT_ROT_PACKAGE_MODE]
 ])
 const QUESTION_PACKAGE_BY_MODE = {
   [YELLOW_LEAF_PACKAGE_MODE]: {
@@ -31,8 +36,7 @@ const QUESTION_PACKAGE_BY_MODE = {
     packageTopics: [
       'watering_frequency_context',
       'light_change_context',
-      'fertilization_growth_context',
-      'airflow_humidity_context'
+      'fertilization_growth_context'
     ],
     answerSubmitMode: 'package',
     questionDisplayMode: 'package',
@@ -61,13 +65,27 @@ const QUESTION_PACKAGE_BY_MODE = {
       allowMultipleOutcomes: true,
       preferSingleOutcome: false
     }
+  },
+  [ROOT_ROT_PACKAGE_MODE]: {
+    mode: ROOT_ROT_PACKAGE_MODE,
+    route: 'root_rot',
+    sourceMode: ROOT_ROT_PACKAGE_SOURCE_MODE,
+    questionCount: 0,
+    packageTopics: [],
+    answerSubmitMode: 'package',
+    questionDisplayMode: 'package',
+    fixedQuestionPackage: true,
+    pendingImplementation: true,
+    outcomePolicy: {
+      allowMultipleOutcomes: true,
+      preferSingleOutcome: false
+    }
   }
 }
 const YELLOWING_FRONTLOADED_CARE_CONTEXT_DIMENSIONS = new Set([
   'watering_frequency_context',
   'light_change_context',
-  'fertilization_growth_context',
-  'airflow_humidity_context'
+  'fertilization_growth_context'
 ])
 
 function normalizeText(value = '') {
@@ -320,6 +338,8 @@ module.exports = {
   YELLOW_LEAF_PACKAGE_MODE,
   YELLOWING_PACKAGE_SOURCE_MODE,
   YELLOWING_PACKAGE_QUESTION_COUNT,
+  ROOT_ROT_PACKAGE_MODE,
+  ROOT_ROT_PACKAGE_SOURCE_MODE,
   WILTING_DROOP_PACKAGE_MODE,
   WILTING_DROOP_PACKAGE_SOURCE_MODE,
   WILTING_DROOP_PACKAGE_QUESTION_COUNT,

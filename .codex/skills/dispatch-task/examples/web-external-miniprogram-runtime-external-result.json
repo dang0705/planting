@@ -39,9 +39,9 @@
     "remote_sync": {
       "status": "pushed",
       "remote": "origin",
-      "branch": "trae/example-web-runtime-001",
+      "branch": "trae-test-example-web-runtime-001",
       "base_commit": "30bf056d12ddfe59eff57c4ebe1b9b36949e33dd",
-      "push_ref": "origin/trae/example-web-runtime-001",
+      "push_ref": "origin/trae-test-example-web-runtime-001",
       "planned_worktree_path": "/tmp/planting-pr-example-web-runtime-001"
     }
   },
@@ -53,9 +53,9 @@
     "no_unapproved_dependencies": true,
     "pr_review": {
       "pr_url": "https://github.com/example/planting/pull/999",
-      "remote_branch": "origin/trae/example-web-runtime-001",
+      "remote_branch": "origin/trae-test-example-web-runtime-001",
       "worktree_path": "/tmp/planting-pr-example-web-runtime-001",
-      "fetch_ref": "origin/trae/example-web-runtime-001",
+      "fetch_ref": "origin/trae-test-example-web-runtime-001",
       "worktree_head": "a70f84da4e4ef54749a995081b47ee437dd0fa08",
       "commands_run": [
         "npm run dev:mp-weixin:local-functions:lan",

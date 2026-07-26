@@ -136,6 +136,22 @@ const DIAGNOSIS_DIRECTION_DEFINITIONS = [
       'scale_insects',
       'bacterial_leaf_spot'
     ]
+  },
+  {
+    directionKey: 'root_rot_direction',
+    categoryKey: 'root_rot',
+    label: '根腐方向',
+    symptomKeys: [
+      'wilting_wet_soil',
+      'roots_black',
+      'roots_mushy',
+      'bad_root_smell',
+      'blackened_stem_base'
+    ],
+    patternKeys: [],
+    preferredQuestionDimensions: [],
+    candidateProblemKeys: ['root_rot', 'crown_rot', 'soft_rot', 'root_stress'],
+    pendingImplementation: true
   }
 ]
 

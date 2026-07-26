@@ -218,6 +218,7 @@ async function buildStaticQuestionPackageStartRoundResult({
     routePrimaryAction: 'ask_first',
     stopReason: 'await_package_answers',
     sessionStatus: 'awaiting_package_answers',
+    questionRequired: true,
     outcomeType: '',
     plantId: plantContext?.userPlantId || plantContext?.plantId || '',
     plantIdentityId: plantContext?.plantIdentityId || '',

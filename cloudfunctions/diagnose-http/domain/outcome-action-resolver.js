@@ -45,7 +45,6 @@ const YELLOWING_REVIEW_OUTCOME_KEYS = new Set([
   'overwatering_root_pressure',
   'underwatering',
   'root_stress',
-  'root_rot',
   'iron_deficiency',
   'nitrogen_deficiency',
   'nutrient_deficiency',

@@ -259,7 +259,9 @@ export function useCareBehaviorTimeline(props, emit) {
   const wateringDoseRows = computed(() =>
     (timelinePayload.value?.selected_watering_events_10d || []).map(ev => ({
       date: ev.date,
-      amountMl: ev.amountMl ?? null
+      amountMl: ev.amountMl ?? null,
+      // 标记本次会话用户是否主动选过档位：用于区分「未选择」（默认第二档）与「选了不知道」（保持第一档）
+      hasSelection: Object.prototype.hasOwnProperty.call(wateringDoseByDate.value, ev.date)
     }))
   )
 

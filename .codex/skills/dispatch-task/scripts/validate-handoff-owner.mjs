@@ -110,6 +110,10 @@ function validateWebExternalContract({ data, external, provider, need, isObject,
   need(nonEmptyString(remoteSync.remote), 'external_contract.remote_sync.remote is required')
   need(nonEmptyString(remoteSync.branch), 'external_contract.remote_sync.branch is required')
   need(
+    !(['trae', 'chrome_cloud_agent'].includes(provider) && remoteSync.branch.startsWith('trae/')),
+    'Web external provider branch must not use the filtered trae/ prefix; use a visible non-slash branch such as trae-test-{dispatch_run_id}'
+  )
+  need(
     nonEmptyString(remoteSync.base_commit),
     'external_contract.remote_sync.base_commit is required'
   )

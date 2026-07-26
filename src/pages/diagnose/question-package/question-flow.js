@@ -69,9 +69,22 @@ export function useQuestionPackageFlow({
 
   const currentQuestion = computed(() => questionStack.value[activeQuestionIndex.value] || null)
   const isQuestionPackageMode = computed(() => isPackageResult(result.value))
-  const questionSwiperStyle = computed(() => ({
-    height: `${estimateQuestionSwiperHeight(currentQuestion.value)}px`
-  }))
+  const questionSwiperStyle = computed(() => {
+    // 光照环境题包含 LightEnvironmentPicker，展开后有方位选择器、滑块等大量动态内容，
+    // 固定像素高度容易裁剪折叠面板下方内容；改为占满可用高度，由内部 scroll-view 自行滚动。
+    if (isLightEnvironmentQuestion(currentQuestion.value)) {
+      return {}
+    }
+    // 养护行为浇水时间线题包含 CareBehaviorWateringDoseList，多日期 dose slider 行数动态，
+    // 固定像素高度（estimateQuestionSwiperHeight 默认 220）会裁剪多日期档位；
+    // 改为占满可用高度，由内部 scroll-view 自行滚动，保证所有档位 slider 都可见。
+    if (isCareBehaviorWateringTimelineQuestion(currentQuestion.value)) {
+      return {}
+    }
+    return {
+      height: `${estimateQuestionSwiperHeight(currentQuestion.value)}px`
+    }
+  })
   const questionProgressText = computed(() => {
     const currentIndex = Math.min(activeQuestionIndex.value + 1, questionStack.value.length || 1)
     return `问题 ${currentIndex} / ${questionStack.value.length || 1}`

@@ -218,6 +218,7 @@ const computing = ref(false)
 const plannerResult = ref(null)
 const weatherDays = ref([])
 const forecastDays = ref([])
+const weatherLocationKey = ref('')
 const savedToBackend = ref(false)
 const searchRef = ref(null)
 const potProfileFormRef = ref(null)
@@ -246,6 +247,22 @@ const selectedCatalogPlantPotProfile = computed(() => {
   // 我的植物路径：从 plantStore 取该植物的 potProfile
   const userPlant = plantStore.userPlants?.find(item => item.id === plant.userPlantId)
   return userPlant?.potProfile || null
+})
+
+// D0 注入契约：locationKey 统一从 plant.careLocation.locationKey 读取，
+// 用于后端从 day file latestSample 注入当日天气；缺失时 todayWeatherSource='missing'。
+// 我的植物路径优先用 careLocation.locationKey；目录植物无 careLocation，兜底 weather window。
+const plannerLocationKey = computed(() => {
+  const plant = selectedCatalogPlant.value
+  if (plant?.userPlantId) {
+    const userPlant = plantStore.userPlants?.find(item => item.id === plant.userPlantId)
+    const fromCareLocation =
+      userPlant?.careLocation?.locationKey || userPlant?.locationKey || ''
+    if (fromCareLocation) {
+      return String(fromCareLocation).trim()
+    }
+  }
+  return String(weatherLocationKey.value || '').trim()
 })
 
 // 统一水量文案：调用全局 formatMlRangeToBottleText，与首页 WateringReminderSheet 口径一致
@@ -374,9 +391,13 @@ async function loadWeatherDays() {
     })
     weatherDays.value = window?.historicalDays || window?.historical_days || []
     forecastDays.value = window?.forecastDays || window?.forecast_days || []
+    weatherLocationKey.value = String(
+      window?.locationKey || window?.location?.locationKey || ''
+    ).trim()
   } catch {
     weatherDays.value = []
     forecastDays.value = []
+    weatherLocationKey.value = ''
   }
 }
 
@@ -402,7 +423,9 @@ async function goToResult() {
         wateringEvents: selectedCatalogPlant.value.wateringEvents,
         weatherDays: weatherDays.value,
         forecastDays: forecastDays.value,
-        potProfile: payload
+        potProfile: payload,
+        locationKey: plannerLocationKey.value,
+        timezone: 'Asia/Shanghai'
       })
     } else {
       const catalogPlantId =
@@ -413,7 +436,9 @@ async function goToResult() {
         catalogPlantId,
         potProfile: payload,
         weatherDays: weatherDays.value,
-        forecastDays: forecastDays.value
+        forecastDays: forecastDays.value,
+        locationKey: plannerLocationKey.value,
+        timezone: 'Asia/Shanghai'
       })
     }
     if (result) {

@@ -7,7 +7,8 @@ const {
 } = require('../../../../../cloudfunctions/diagnose-http/domain/diagnosis-mode-router.js')
 const {
   buildPestRouteResponse,
-  directEvidenceLedgerForDirectResult
+  directEvidenceLedgerForDirectResult,
+  routeFixedQuestionPackageMode
 } = require('../../../../../cloudfunctions/diagnose-http/app/pest-visual-orchestrator.js')
 
 function evidence(
@@ -21,11 +22,10 @@ function evidence(
 }
 
 // ---------------------------------------------------------------------------
-// Fix 3: 固定题包模式（yellow_leaf/wilting_droop）不得走 non-pest direct final。
-// full profile 下 yellow_leaf + wilting_droop 关联候选在 direct_result 路由中
-// 不应被 buildNonPestDirectResult 直接结论，因为它们是固定题包模式而非
-// visual_direct_only。orchestrator 应返回 null 让上层走 choose_direction 或
-// question_package 路径。
+// Fix 3: 固定题包模式（yellow_leaf/wilting_droop）优先走 question_package。
+// full profile 下 yellow_leaf + wilting_droop 都在 directMatches 时，
+// 路由层直接走 question_package 而非 direct_result。
+// routeFixedQuestionPackageMode 多模式时选取 directMatches 中的第一个。
 // ---------------------------------------------------------------------------
 const fixedPackageAssociatedRoute = resolveDiagnosisModeRoute({
   diagnosisProfile: 'full',
@@ -35,25 +35,18 @@ const fixedPackageAssociatedRoute = resolveDiagnosisModeRoute({
     { mode: 'wilting_droop', confidence: 0.75 }
   ]
 })
-assert.equal(fixedPackageAssociatedRoute.nextAction, 'direct_result')
+assert.equal(fixedPackageAssociatedRoute.nextAction, 'question_package')
 assert.deepEqual(fixedPackageAssociatedRoute.associatedModes, [
   'yellow_leaf',
   'wilting_droop'
 ])
 
-const fixedPackageAssociatedResponse = await buildPestRouteResponse({
-  sessionId: 'test_fixed_package_associated',
-  round: 1,
-  plantContext: {},
-  aggregateResult: {
-    diagnosis_mode_route_result: fixedPackageAssociatedRoute
-  },
-  diagnosisProfile: 'full'
-})
+// 多固定题包模式时 routeFixedQuestionPackageMode 选取 directMatches 中的第一个
+const fixedPackageStaticModeKey = routeFixedQuestionPackageMode(fixedPackageAssociatedRoute)
 assert.equal(
-  fixedPackageAssociatedResponse,
-  null,
-  'Fix 3: yellow_leaf/wilting_droop 固定题包模式不应走 non-pest direct final'
+  fixedPackageStaticModeKey,
+  'yellow_leaf',
+  'Fix 3: 多固定题包模式时选取 directMatches 中的第一个'
 )
 
 // 单独 yellow_leaf 候选在路由层应进入 question_package（固定题包路径），

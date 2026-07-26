@@ -206,6 +206,24 @@ const savedReminderWateringEvents = computed(() =>
 const potVolumeMl = computed(
   () => plannerResult.value?.potVolumeMl || estimatePotVolumeMl(props.plant?.potProfile)
 )
+// D0 注入契约：locationKey 统一从 plant.careLocation.locationKey 读取，
+// 用于后端从 day file latestSample 注入当日天气；缺失时 todayWeatherSource='missing'。
+const plannerLocationKey = computed(() => {
+  const fromPlant =
+    props.plant?.careLocation?.locationKey || props.plant?.locationKey || ''
+  const fromWindow =
+    environmentWeatherWindow.value?.locationKey ||
+    environmentWeatherWindow.value?.location?.locationKey ||
+    ''
+  return String(fromPlant || fromWindow || '').trim()
+})
+const plannerTimezone = computed(() => {
+  const fromWindow =
+    environmentWeatherWindow.value?.location?.timezone ||
+    environmentWeatherWindow.value?.meta?.timezone ||
+    ''
+  return String(fromWindow || 'Asia/Shanghai').trim() || 'Asia/Shanghai'
+})
 const potProfileSummary = computed(() => {
   return buildPotProfileSummary(props.plant?.potProfile)
 })
@@ -399,7 +417,9 @@ async function fetchPlanner() {
       plantId: props.plant.id,
       wateringEvents: selectedWateringEventsForPlanner.value,
       weatherDays: weatherDays.value,
-      forecastDays: forecastDays.value
+      forecastDays: forecastDays.value,
+      locationKey: plannerLocationKey.value,
+      timezone: plannerTimezone.value
     })
     if (result) {
       plannerResult.value = result

@@ -267,7 +267,9 @@ function resolveDirectModeEvidence(modeKey = '', evidenceItems = []) {
 
 function isFixedQuestionPackageMode(modeKey = '') {
   const entry = DIAGNOSIS_MODE_REGISTRY[modeKey]
-  return ['fixed_yellow_leaf', 'fixed_wilting_droop'].includes(entry?.questionPackageKind)
+  return ['fixed_yellow_leaf', 'fixed_wilting_droop', 'fixed_root_rot'].includes(
+    entry?.questionPackageKind
+  )
 }
 
 function isVisualDirectOnlyMode(modeKey = '') {

@@ -24,7 +24,9 @@ function evidence(
 }
 
 // ---------------------------------------------------------------------------
-// full profile：多方向关联候选（yellow_leaf + wilting_droop）走 direct_result
+// full profile：多方向关联候选（yellow_leaf + wilting_droop）走 question_package
+// 两者都是固定题包模式，directMatches 中含固定题包模式时优先走问诊路径，
+// 不走 direct_result。
 // ---------------------------------------------------------------------------
 const fullAssociatedRoute = resolveDiagnosisModeRoute({
   diagnosisProfile: 'full',
@@ -34,7 +36,7 @@ const fullAssociatedRoute = resolveDiagnosisModeRoute({
     { mode: 'wilting_droop', confidence: 0.75 }
   ]
 })
-assert.equal(fullAssociatedRoute.nextAction, 'direct_result')
+assert.equal(fullAssociatedRoute.nextAction, 'question_package')
 assert.deepEqual(fullAssociatedRoute.associatedModes, ['yellow_leaf', 'wilting_droop'])
 assert.deepEqual(
   fullAssociatedRoute.directionChoices.map(item => item.modeKey),
@@ -55,7 +57,7 @@ assert.deepEqual(
   ['yellow_leaf']
 )
 assert.equal(DIAGNOSIS_MODE_REGISTRY.yellow_leaf.questionPackageKind, 'fixed_yellow_leaf')
-assert.equal(getQuestionPackageByMode('yellow_leaf').questionCount, 4)
+assert.equal(getQuestionPackageByMode('yellow_leaf').questionCount, 3)
 
 // ---------------------------------------------------------------------------
 // full profile：wilting_droop 固定题包模式（0.9 进入 question_package）

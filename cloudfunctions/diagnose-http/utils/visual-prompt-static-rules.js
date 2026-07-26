@@ -5,6 +5,7 @@ const crypto = require('crypto')
 const { ALLOWED_CAPTURE_REGIONS } = require('./capture-region-normalizer')
 const {
   FORMAL_PEST_VISUAL_EVIDENCE_KEYS,
+  GENERAL_VISUAL_RULES,
   PEST_EVIDENCE_RULES,
   PEST_VISUAL_RULES
 } = require('../domain/diagnosis-mode-registry')
@@ -41,14 +42,14 @@ const STATIC_ROUTE_CATALOG_TEXT = [
   'normalized_organ=leaf|stem|flower|root|root_crown|whole_plant|fruit|other|unknown；capture_region/region_ref=' +
     ALLOWED_CAPTURE_REGIONS.join('|') +
     '。',
-  'mode_candidates=yellow_leaf|wilting_droop|powdery_mildew|spider_mite|mealybug|scale_insect|whitefly|aphid|thrips|leaf_miner|fungus_gnat。',
+  'mode_candidates=yellow_leaf|wilting_droop|powdery_mildew|sooty_mold|spider_mite|mealybug|scale_insect|whitefly|aphid|thrips|leaf_miner|fungus_gnat。',
   '虫害可见证据键=' + FORMAL_PEST_VISUAL_EVIDENCE_KEYS.join('|') + '。'
 ].join('\n')
 
 const STATIC_VISUAL_WORKFLOW_BASE_RULES = [
   '【工作流程】',
   '1. 只标当前图可见证据；不推断触感、气味、遮挡、历史、病因、治疗或最终状态。',
-  '2. 只依据图片独立判断当前图是否可见虫体或叶内潜道；不得从 mode key、evidence key、器官名或文字反推画面；不清楚或不在图中=uncertain。',
+  '2. 只依据图片独立判断当前图是否可见虫体、叶内潜道、霉层、粉层或异常变色下垂；不得从 mode key、evidence key、器官名或文字反推画面；只报告当前图明确可见的项，不因本条列举存在而强行报告；不清楚或不在图中=uncertain。',
   '3. 不同图不互投；候选只用动态 allowed_symptom_keys，池外异常用 out_of_pool_symptom_candidates。',
   '4. 当前图证据不是最终诊断；只有图片中明确可见的内容才能作为证据，不能把普通证据键直接当作虫害 mode。',
   '【输出规则】',
@@ -64,7 +65,7 @@ const STATIC_READING_DISCIPLINE_TEXT = [
   '2. 每项可见证据都依次核对对象、位置、形态、边缘、颜色或质地、分布范围和清晰度。关键要素缺失时应降低把握，不得用植物常识、常见概率或想象出的细节补全。',
   '3. 判断虫体必须先看到可辨认的实体，再描述体形、分节、翅、足、蜡质、硬壳、群集、附着或活动痕迹。只有啃食、排泄物、网丝、蜜状残留或受害纹理时，不能写成已经看见虫体。',
   '4. 判断叶内潜道必须同时看见组织内部连续延伸的轨迹和周围叶肉变化；叶面擦伤、褪绿、斑驳、阴影、折痕或叶脉走向不能替代潜道。无法区分时保留不确定，不强行归类。',
-  '5. 判断斑点、霉层、粉层、坏死、缺刻或穿孔时，要区分表面附着、组织变色和缺失边缘。颜色受光照、白平衡、反光和压缩影响时，应以形态和空间关系为主，不把色偏当成独立证据。',
+  '5. 判断斑点、霉层、粉层、坏死、缺刻或穿孔时，要先区分表面附着（霉层、粉层）与组织变色（病斑、黄化）两类：表面附着物有明确边界和质地，可描述覆盖范围；组织变色无独立附着物，只有颜色变化。颜色受光照、白平衡、反光和压缩影响时，应以形态和空间关系为主，不把色偏当成独立证据。',
   '6. 位置必须落在图片中能分辨的具体部位，区分叶面、叶背、叶缘、叶脉附近、叶柄、茎节、花部、根部和盆土表面。前景遮挡、重叠叶片和模糊背景不能被当作精确位置。',
   '7. 多种现象同时出现时，先分别记录可直接看见的事实，再判断它们是否属于同一对象。不能因为两个现象常常一起出现，就把其中一个当成另一个的证明，也不能把相邻位置误写成因果关系。',
   '8. 细小目标需要先确认轮廓是否稳定、是否与背景纹理可分离、是否在相邻区域重复出现。单个噪点、压缩块、灰尘、土屑、失焦颗粒或水珠不得直接升级为虫卵、虫体或病原结构。',
@@ -74,7 +75,8 @@ const STATIC_READING_DISCIPLINE_TEXT = [
   '12. 先检查每个候选是否有独立的可见依据，再检查依据是否真的支持该候选。没有独立依据时不新增候选；依据不足时保留空缺或不确定，不以凑满数量为目标。',
   '13. 结构化输出应保持字段之间相互一致：位置描述、可见证据、候选和把握程度必须能由同一画面事实追溯。若无法同时满足，应优先保留可见事实并删除过度推断。',
   '14. 输出前进行一次反证检查：若把对象换成阴影、反光、泥土、叶脉、损伤边缘或背景纹理，现有证据是否仍成立；不能排除这些替代解释时，应使用保守表述。',
-  '15. 不因任务名称、器官提示、候选目录、前序结论或文字标签改变对画面的判断顺序。任何结论都必须从当前图片中可复核的结构出发，并允许结果为未见、无法辨认或不确定。'
+  '15. 不因任务名称、器官提示、候选目录、前序结论或文字标签改变对画面的判断顺序。任何结论都必须从当前图片中可复核的结构出发，并允许结果为未见、无法辨认或不确定。',
+  '16. 判断霉层或粉层必须看到明确的表面附着物，描述其颜色（黑、白、灰）、质地（粉状、绒状、薄膜状）与覆盖范围；叶片单纯变色、反光或水渍不得写成霉层或粉层。'
 ].join('\n')
 
 const STATIC_VISUAL_WORKFLOW_RULES = [
@@ -169,6 +171,98 @@ function compilePestVisibleAnomalyDescriptions(locationKeys = []) {
     : ''
 }
 
+function compileGeneralVisualMapping(locationKeys = []) {
+  const normalizedLocationKeys = new Set(
+    (Array.isArray(locationKeys) ? locationKeys : [])
+      .map(value =>
+        String(value || '')
+          .trim()
+          .toLowerCase()
+      )
+      .filter(Boolean)
+  )
+  if (!normalizedLocationKeys.size) {
+    return ''
+  }
+
+  const mappings = GENERAL_VISUAL_RULES.filter(rule =>
+    rule.organKeys.some(organKey => normalizedLocationKeys.has(organKey))
+  )
+  const bindingText = mappings
+    .map(rule => {
+      const directRule = PEST_EVIDENCE_RULES[rule.modeKey] || {}
+      const visualEvidenceKeys = new Set(rule.evidence.map(item => item.evidenceKey))
+      const formatEvidenceGroup = group =>
+        Array.from(
+          new Set(
+            (Array.isArray(group) ? group : [])
+              .map(evidenceKey => (visualEvidenceKeys.has(evidenceKey) ? evidenceKey : ''))
+              .filter(Boolean)
+          )
+        ).join('|')
+      const directAlternatives = [
+        ...(Array.isArray(directRule.directGroups) ? directRule.directGroups : []).map(
+          formatEvidenceGroup
+        ),
+        ...(Array.isArray(directRule.directCombinationGroups)
+          ? directRule.directCombinationGroups.map(combination =>
+              (Array.isArray(combination) ? combination : [])
+                .map(formatEvidenceGroup)
+                .filter(Boolean)
+                .join('+')
+            )
+          : [])
+      ].filter(Boolean)
+      const evidenceText = directAlternatives.join(' OR ')
+      // 当模式键与唯一证据键同名时，裸映射是废话；补一句纯视觉特征避免模型忽略。
+      if (evidenceText === rule.modeKey) {
+        const anomaly = (rule.visibleAnomalies || []).find(
+          item => item.evidenceKey === evidenceText
+        )
+        if (anomaly) {
+          return `${rule.modeKey}→${evidenceText}(${anomaly.description})`
+        }
+      }
+      return `${rule.modeKey}→${evidenceText}`
+    })
+    .join(';')
+
+  return mappings.length
+    ? `【通用映射】organ=${Array.from(normalizedLocationKeys).join(',')}:${bindingText}`
+    : ''
+}
+
+function compileGeneralVisibleAnomalyDescriptions(locationKeys = []) {
+  const normalizedLocationKeys = new Set(
+    (Array.isArray(locationKeys) ? locationKeys : [])
+      .map(value =>
+        String(value || '')
+          .trim()
+          .toLowerCase()
+      )
+      .filter(Boolean)
+  )
+  if (!normalizedLocationKeys.size) {
+    return ''
+  }
+
+  const descriptions = Array.from(
+    new Map(
+      GENERAL_VISUAL_RULES.filter(rule =>
+        rule.organKeys.some(organKey => normalizedLocationKeys.has(organKey))
+      )
+        .flatMap(rule => rule.visibleAnomalies || [])
+        .map(item => [item.evidenceKey, item.description])
+    ).entries()
+  )
+
+  return descriptions.length
+    ? `【当前图通用可见异常说明】${descriptions
+        .map(([evidenceKey, description]) => `${evidenceKey}=${description}`)
+        .join('；')}`
+    : ''
+}
+
 function hashPromptText(value = '') {
   return crypto
     .createHash('sha1')
@@ -194,6 +288,8 @@ module.exports = {
   FULL_CASE_LOCATION_KEYS,
   LOCATION_LABEL_MAP,
   PROMPT_SYMPTOM_HINTS,
+  compileGeneralVisibleAnomalyDescriptions,
+  compileGeneralVisualMapping,
   compilePestVisibleAnomalyDescriptions,
   compilePestVisualMapping,
   STATIC_ROUTE_CATALOG_TEXT,

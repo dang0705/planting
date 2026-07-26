@@ -25,6 +25,8 @@ try {
 const WATERING_CONTEXTS = WATERING_CONTEXTS_SHARED
 const WATERING_ACTIONS = WATERING_ACTIONS_SHARED
 
+const { resolveMlToDoseClass } = require('../../layer/utils/water-volume-format')
+
 const FERTILIZING_ACTIONS = Object.freeze({
   PAUSE: 'pause',
   THIN_AFTER_DUE: 'thin_after_due',
@@ -476,13 +478,19 @@ function normalizeWateringEvent(event = {}, conservativeReferenceDate = '') {
   const date = normalizeDate(
     event.date || event.eventDate || event.day || conservativeReferenceDate
   )
-  if (!watered && !amount) {
+  const amountMlRaw = event.amountMl ?? event.amount_ml ?? event.wateringAmountMl
+  const amountMl = Number.isFinite(Number(amountMlRaw)) ? Number(amountMlRaw) : null
+  const doseClassFromMl =
+    amountMl !== null && amountMl > 0 ? resolveMlToDoseClass(amountMl, 0) : null
+  if (!watered && !amount && !doseClassFromMl) {
     return null
   }
   return {
     date,
     watered: true,
-    amount: amount || 'unknown'
+    amount: amount || doseClassFromMl || 'unknown',
+    amountMl,
+    doseClass: doseClassFromMl || amount || 'unknown'
   }
 }
 
@@ -663,6 +671,33 @@ function buildBehaviorSummary(referenceDate = '', events = {}, lastFertilizedBuc
 }
 
 /**
+ * 从浇水事件解析 doseClass。优先用 normalizeWateringEvent 已落档的 doseClass，
+ * 不存在时回退到 amount 字符串匹配，保证旧数据兼容。
+ */
+function resolveDoseClassFromEvent(event = {}) {
+  const preset = normalizeText(event?.doseClass)
+  if (preset && preset !== 'unknown') {
+    return preset
+  }
+  const amount = normalizeText(
+    event?.amount || event?.wateringAmount || event?.level || event?.value
+  )
+  if (['mist', '喷雾', '喷淋'].includes(amount)) {
+    return 'mist'
+  }
+  if (['small', '少量', '少许'].includes(amount)) {
+    return 'small'
+  }
+  if (['normal', '普通', '常规'].includes(amount)) {
+    return 'normal'
+  }
+  if (['thorough', 'deep', 'soaked', '浇透', '透浇', '大水'].includes(amount)) {
+    return 'thorough'
+  }
+  return 'unknown'
+}
+
+/**
  * diagnose-http 简化水合负载计算（不依赖盆型几何）。
  * 按 doseClass 权重 × recencyDecay 求和，归一化到 0~1。
  */
@@ -678,17 +713,7 @@ function computeSimplifiedHydrationLoad(wateringEvents = [], referenceDate = '')
     if (diff === null || diff < 0 || diff >= lookback) {
       continue
     }
-    const amount = normalizeText(event.amount || event.wateringAmount || event.level || event.value)
-    let doseClass = 'unknown'
-    if (['mist', '喷雾', '喷淋'].includes(amount)) {
-      doseClass = 'mist'
-    } else if (['small', '少量', '少许'].includes(amount)) {
-      doseClass = 'small'
-    } else if (['normal', '普通', '常规'].includes(amount)) {
-      doseClass = 'normal'
-    } else if (['thorough', 'deep', 'soaked', '浇透', '透浇', '大水'].includes(amount)) {
-      doseClass = 'thorough'
-    }
+    const doseClass = resolveDoseClassFromEvent(event)
     const weight = weightMap[doseClass] ?? 0.4
     const recencyDecay = 1 - diff / lookback
     total += weight * recencyDecay
@@ -711,17 +736,7 @@ function computeSimplifiedWetPressure(wateringEvents = [], referenceDate = '') {
     if (diff === null || diff < 0 || diff >= lookback) {
       continue
     }
-    const amount = normalizeText(event.amount || event.wateringAmount || event.level || event.value)
-    let doseClass = 'unknown'
-    if (['mist', '喷雾', '喷淋'].includes(amount)) {
-      doseClass = 'mist'
-    } else if (['small', '少量', '少许'].includes(amount)) {
-      doseClass = 'small'
-    } else if (['normal', '普通', '常规'].includes(amount)) {
-      doseClass = 'normal'
-    } else if (['thorough', 'deep', 'soaked', '浇透', '透浇', '大水'].includes(amount)) {
-      doseClass = 'thorough'
-    }
+    const doseClass = resolveDoseClassFromEvent(event)
     const weight = weightMap[doseClass] ?? 0.3
     const recencyDecay = 1 - diff / lookback
     total += weight * recencyDecay
@@ -735,8 +750,8 @@ function computeSimplifiedWetPressure(wateringEvents = [], referenceDate = '') {
 function computeLastEffectiveRootWatered(wateringEvents = [], referenceDate = '') {
   let latest = null
   for (const event of wateringEvents) {
-    const amount = normalizeText(event.amount || event.wateringAmount || event.level || event.value)
-    if (['mist', '喷雾', '喷淋'].includes(amount)) {
+    const doseClass = resolveDoseClassFromEvent(event)
+    if (doseClass === 'mist') {
       continue
     }
     const diff = daysAgo(referenceDate, event.date)

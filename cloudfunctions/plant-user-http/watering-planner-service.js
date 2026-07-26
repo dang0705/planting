@@ -15,6 +15,8 @@ const {
   buildWateringPlanner,
   normalizeCareBehaviorTimeline
 } = require('/opt/utils/watering-planner')
+// D0 注入器已下沉到 layer 共享：plant-user-http / diagnose-http 共用同一实现。
+const { injectD0IntoForecastDays } = require('/opt/utils/weather-day-file-reader')
 
 /**
  * 从前端天气日数据（environmentWeatherWindow.historicalDays）构建 planner 所需的摘要。
@@ -92,12 +94,17 @@ function buildWeatherSummary(dailyRecords = [], plantContext = {}) {
  * 通过 catalogPlantId 从植物知识库取属级浇水策略 + 温湿度 bounds，
  * 盆型由前端临时传入，天气由前端自动获取后传入。
  *
+ * D0 当日天气从 day file latestSample 注入：前端传 forecastDays 为 D+1..D+14（14 项），
+ * 后端注入 D0 后 buildWeatherSummary 统计 15 天。D0 缺失/超时 todayWeatherSource='missing'，summary 按 14 天统计。
+ *
  * @param {object} params
  * @param {string} params.catalogPlantId - 植物种类 ID
  * @param {object} params.potProfile - 盆型档案 { potTopDiameterCm, potBottomDiameterCm, potHeightCm, hasDrainageHole, substrateType }
  * @param {Array}  params.weatherDays - 历史 10d 天气日数据
- * @param {Array}  params.forecastDays - 预报 15d 天气日数据
+ * @param {Array}  params.forecastDays - 预报 D+1..D+14 天气日数据（14 项，不含 D0）
  * @param {string} params.referenceDate - 参考日期 YYYY-MM-DD
+ * @param {string} params.locationKey - 地点 key（用于 D0 day file 读取）
+ * @param {string} params.timezone - 时区，默认 Asia/Shanghai
  * @returns {Promise<object>} planner 计算结果 + catalog 植物信息
  */
 async function computeAdhocPlanner({
@@ -105,7 +112,9 @@ async function computeAdhocPlanner({
   potProfile = null,
   weatherDays = [],
   forecastDays = [],
-  referenceDate = ''
+  referenceDate = '',
+  locationKey = '',
+  timezone = 'Asia/Shanghai'
 } = {}) {
   if (!catalogPlantId) {
     return { error: '缺少植物种类ID', statusCode: 400 }
@@ -125,12 +134,21 @@ async function computeAdhocPlanner({
     humidityMax: plant.humidityMax ?? null
   }
 
+  // D0 注入：前端传 D+1..D+14（14 项），后端注入 D0 latestSample 作为当日天气
+  const { forecastDays: forecastWithD0, todayWeatherSource, todayWeatherReason, referenceDate: resolvedReferenceDate } =
+    await injectD0IntoForecastDays({
+      locationKey,
+      timezone,
+      referenceDate,
+      forecastDays: forecastDays.slice(0, 14)
+    })
+
   const historical = buildWeatherSummary(weatherDays.slice(0, 10), strategy)
-  const forecast = buildWeatherSummary(forecastDays.slice(0, 15), strategy)
+  const forecast = buildWeatherSummary(forecastWithD0.slice(0, 15), strategy)
 
   // 独立入口无浇水历史，传空事件集合
   const timeline = normalizeCareBehaviorTimeline({
-    referenceDate,
+    referenceDate: resolvedReferenceDate,
     watering_events_10d: []
   })
 
@@ -141,14 +159,16 @@ async function computeAdhocPlanner({
     behaviorTimeline: timeline,
     potProfile: potProfile || null,
     wateringQuantization: strategy.wateringQuantization || null,
-    referenceDate
+    referenceDate: resolvedReferenceDate
   })
 
   // 独立浇水仅返回建议毫升数，不返回日期/间隔/盆土判断/蒸腾/光照文案。
   return {
     statusCode: 200,
     data: {
-      amountRangeMl: plan.amountRangeMl
+      amountRangeMl: plan.amountRangeMl,
+      todayWeatherSource,
+      todayWeatherReason
     },
     error: null
   }
@@ -156,5 +176,6 @@ async function computeAdhocPlanner({
 
 module.exports = {
   buildWeatherSummary,
-  computeAdhocPlanner
+  computeAdhocPlanner,
+  injectD0IntoForecastDays
 }

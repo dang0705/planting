@@ -135,7 +135,9 @@ function routeFixedQuestionPackageMode(routeResult = {}) {
     ])
   ).filter(modeKey => Object.prototype.hasOwnProperty.call(STATIC_ROUTE_MODE_OPTIONS, modeKey))
 
-  return modeKeys.length === 1 ? modeKeys[0] : ''
+  // 多固定题包模式时按优先级选取第一个（directMatches 优先于 associatedModes）。
+  // 同时识别黄叶+枯萎的概率极低，选取一个走题包不阻塞用户。
+  return modeKeys.length >= 1 ? modeKeys[0] : ''
 }
 
 function routeEvidenceLedger(routeResult = {}) {

@@ -114,11 +114,12 @@ function buildEnvironmentWeatherWindowByMode(weatherWindow = null, mode = '') {
   const historicalDays = asArray(sourceWindow.historicalDays)
   const historicalDaysLegacy = asArray(sourceWindow.historical_days)
   const normalizedHistoricalDays = historicalDays.length ? historicalDays : historicalDaysLegacy
+  // 诊断模式保留 currentWeather（D0 当天观测，由 buildDiagnosisRecentWeatherWindow 填充），
+  // 但仍 omit forecastDays/forecast_days（诊断模式不返回预报）。
   const omitFields = new Set([
     'forecastDays',
     'forecast_days',
     'historical_days',
-    'currentWeather',
     'daily',
     'dailyRecords',
     'daily_records'
@@ -359,8 +360,11 @@ async function main(event, context) {
   }
 }
 
-module.exports.main = (event, context) => {
-  const request = getHttpRequestData(event, context)
-  const appEnv = resolveRequestAppEnv(request.headers, request.query, request.body)
-  return runWithRequestAppEnv(appEnv, () => main(event, context))
+module.exports = {
+  main: (event, context) => {
+    const request = getHttpRequestData(event, context)
+    const appEnv = resolveRequestAppEnv(request.headers, request.query, request.body)
+    return runWithRequestAppEnv(appEnv, () => main(event, context))
+  },
+  buildEnvironmentWeatherWindowByMode
 }

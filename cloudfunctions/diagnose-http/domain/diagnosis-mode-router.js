@@ -210,6 +210,12 @@ function resolveDiagnosisModeRoute({
     directModeKeys.length === 1 &&
     candidateModeKeys.length === 0 &&
     isFixedQuestionPackageMode(directModeKeys[0])
+  // directMatches 中含固定题包模式（黄叶/枯萎）时优先走问诊路径，
+  // 即使同时有其他非虫害 visual_direct_only 模式（如白粉病）也不能走 direct_result，
+  // 因为固定题包模式依赖结构化问诊确认。
+  const directHasFixedPackageMode = directModeKeys.some(modeKey =>
+    isFixedQuestionPackageMode(modeKey)
+  )
   const recommendedDirection = associatedModes.some(modeKey => PEST_MODE_KEYS.includes(modeKey))
     ? PEST_CATEGORY
     : directModeKeys[0] || candidateModeKeys[0] || ''
@@ -221,15 +227,18 @@ function resolveDiagnosisModeRoute({
     ? 'choose_direction'
     : singleFixedQuestionPackageMode
       ? 'question_package'
-      : directModeKeys.length
-        ? 'direct_result'
-        : candidateModeKeys.length
+      : directHasFixedPackageMode
+        ? 'question_package'
+        : directModeKeys.length
+          ? 'direct_result'
+          : candidateModeKeys.length
           ? (directConclusion && !candidateHasFixedPackageMode) ||
             (candidateAllVisualDirectOnly && (likelyResult || directConclusion)) ||
             (likelyResult && !candidateHasFixedPackageMode) ||
-            confirmationCandidates.some(
-              item => item.matchedEvidence.length || item.candidateEvidence.length
-            )
+            (!candidateHasFixedPackageMode &&
+              confirmationCandidates.some(
+                item => item.matchedEvidence.length || item.candidateEvidence.length
+              ))
             ? 'direct_result'
             : 'question_package'
           : 'uncertain'

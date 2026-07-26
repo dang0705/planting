@@ -49,6 +49,26 @@
         }}</text></view
       ></view
     >
+    <view
+      v-if="hasOverwateringOutcome"
+      id="diagnose-result-root-rot-entry"
+      class="mb-3 rounded-[10px] border border-dashed border-amber-300 bg-amber-50 px-3 py-2"
+    >
+      <view class="flex items-center justify-between">
+        <view class="flex-1">
+          <text class="block text-xs text-amber-800 font-semibold">怀疑根腐？</text>
+          <text class="block text-[10px] text-amber-700 mt-0.5">
+            过浇持续可能伤根，根腐诊断题包完善中
+          </text>
+        </view>
+        <text
+          id="diagnose-result-root-rot-entry-button"
+          class="text-[10px] text-amber-600 font-medium px-2 py-1 rounded bg-amber-100"
+        >
+          即将上线
+        </text>
+      </view>
+    </view>
     <RetakeCard
       v-if="hasRetakeRequest"
       :retake-request="retakeRequest"
@@ -190,6 +210,8 @@
                   :timeline="getCareBehaviorTimelineByQuestion(question)"
                   :loading="environmentWeatherWindowLoading"
                   :error="environmentWeatherWindowError"
+                  :enable-dose-per-date="true"
+                  :pot-volume-ml="0"
                   @change="payload => handleCareBehaviorTimelineChange(question, payload)"
                 />
                 <view
@@ -484,7 +506,24 @@ export default {
     view: { type: Object, required: true }
   },
   setup(props) {
-    return exposeViewProp(props, DIAGNOSE_VIEW_DEFAULTS)
+    const exposed = exposeViewProp(props, DIAGNOSE_VIEW_DEFAULTS)
+    Object.defineProperty(exposed, 'hasOverwateringOutcome', {
+      enumerable: true,
+      configurable: true,
+      get() {
+        const result = props.view?.result
+        const outcomes = result?.visibleOutcomes || result?.allOutcomes || []
+        return (
+          Array.isArray(outcomes) &&
+          outcomes.some(item =>
+            ['overwatering', 'overwatering_root_pressure'].includes(
+              item?.outcomeKey || item?.problemKey
+            )
+          )
+        )
+      }
+    })
+    return exposed
   }
 }
 </script>

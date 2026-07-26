@@ -112,8 +112,8 @@ const singleYellowVisualResponse = await buildPestRouteResponse({
 assert.equal(singleYellowVisualResponse.stage, 'question_package')
 assert.equal(singleYellowVisualResponse.selectedModeKey, 'yellow_leaf')
 assert.equal(singleYellowVisualResponse.questionPackage.mode, 'yellow_leaf')
-assert.equal(singleYellowVisualResponse.questionPackage.questionCount, 4)
-assert.equal(singleYellowVisualResponse.questions.length, 4)
+assert.equal(singleYellowVisualResponse.questionPackage.questionCount, 3)
+assert.equal(singleYellowVisualResponse.questions.length, 3)
 
 const singleWiltVisualRoute = resolveDiagnosisModeRoute({
   diagnosisProfile: 'full',

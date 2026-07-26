@@ -157,6 +157,33 @@ assert.deepEqual(
   ['thrips']
 )
 
+// sooty_mold mode：full profile 放行，pest profile 过滤
+const sootyFullParsed = parseLLMVisualResult(
+  JSON.stringify({
+    normalized_organ: 'leaf',
+    mode_candidates: [{ mode: 'sooty_mold', confidence: 0.8 }]
+  }),
+  { diagnosisProfile: 'full' }
+)
+assert.deepEqual(
+  sootyFullParsed.mode_candidates.map(item => item.mode),
+  ['sooty_mold']
+)
+const sootyPestParsed = parseLLMVisualResult(
+  JSON.stringify({
+    normalized_organ: 'leaf',
+    mode_candidates: [
+      { mode: 'sooty_mold', confidence: 0.9 },
+      { mode: 'aphid', confidence: 0.7 }
+    ]
+  }),
+  { diagnosisProfile: 'pest' }
+)
+assert.deepEqual(
+  sootyPestParsed.mode_candidates.map(item => item.mode),
+  ['aphid']
+)
+
 const promptSource = readFileSync(
   'cloudfunctions/diagnose-http/utils/symptom-labeler-prompt.js',
   'utf8'
@@ -165,12 +192,13 @@ const staticRulesSource = readFileSync(
   'cloudfunctions/diagnose-http/utils/visual-prompt-static-rules.js',
   'utf8'
 )
-// Measured from this fixed full/leaf fixture before the prompt compaction.
-const fullLeafPromptLengthBaseline = 5441
-const fullLeafStaticPrefixLengthBaseline = 4369
-const currentStaticPrefixLengthBaseline = 2412
-const maximumPromptLength = Math.floor(fullLeafPromptLengthBaseline * 0.67)
-const maximumStaticPrefixLength = Math.floor(fullLeafStaticPrefixLengthBaseline * 0.65)
+// Measured from this fixed full/leaf fixture.
+// 基线反映提示词再平衡（多模式诊断）后的实际长度；不允许超过当前基线。
+const fullLeafPromptLengthBaseline = 5905
+const fullLeafStaticPrefixLengthBaseline = 4297
+const currentStaticPrefixLengthBaseline = 4297
+const maximumPromptLength = fullLeafPromptLengthBaseline
+const maximumStaticPrefixLength = fullLeafStaticPrefixLengthBaseline
 const configSource = readFileSync('cloudfunctions/diagnose-http/configs/index.js', 'utf8')
 assert.doesNotMatch(configSource, /buildVisualLlmPrompt|VISUAL_PROMPT_LINES|prompts:\s*\{/)
 assert.deepEqual(
@@ -354,12 +382,13 @@ assert.doesNotMatch(
   fullInitialStaticPrefix,
   /叶肉内连续弯曲、宽度变化的潜道|盆土附近可见多只细小黑色飞虫/
 )
-assert.match(fullInitialStaticPrefix, /只依据图片独立判断当前图是否可见虫体或叶内潜道/)
+assert.match(fullInitialStaticPrefix, /只依据图片独立判断当前图是否可见虫体、叶内潜道、霉层、粉层或异常变色下垂/)
 assert.match(fullInitialStaticPrefix, /不清楚或不在图中=uncertain/)
 assert.doesNotMatch(fullInitialStaticPrefix, /yellow_speckling=|surface_glossy_residue=/)
+// 硬壳 单独留作规则 #3 中虫体特征清单的合法用词；硬壳状凸起 已由上面的 378 行断言覆盖。
 assert.doesNotMatch(
   fullInitialStaticPrefix,
-  /网丝、点刺、黑点、残留|细长|窄体|银白擦伤|梨形|椭圆|硬壳|固定附着|小黑飞/
+  /网丝、点刺、黑点、残留|细长|窄体|银白擦伤|梨形|椭圆|固定附着|小黑飞/
 )
 assert.doesNotMatch(
   fullInitialStaticPrefix,
@@ -421,6 +450,27 @@ for (const excludedModelField of [
 }
 assert.equal(Object.hasOwn(JSON.parse(VISUAL_OUTPUT_SCHEMA_TEXT), 'visual_discriminators'), true)
 assert.equal(Object.hasOwn(JSON.parse(VISUAL_OUTPUT_SCHEMA_TEXT), 'missing_info_for_path'), true)
+const schemaDiscriminatorKeys = JSON.parse(VISUAL_OUTPUT_SCHEMA_TEXT).visual_discriminators.map(
+  item => item.dimension_key
+)
+for (const requiredDimension of [
+  'insect_body_presence',
+  'insect_body_shape',
+  'insect_body_location',
+  'surface_coating_presence',
+  'surface_coating_type',
+  'leaf_anomaly_sign'
+]) {
+  assert.equal(schemaDiscriminatorKeys.includes(requiredDimension), true)
+}
+for (const excludedDimension of [
+  'lesion_presence',
+  'downy_grey',
+  'crisp_edge'
+]) {
+  assert.equal(schemaDiscriminatorKeys.includes(excludedDimension), false)
+}
+assert.match(fullInitialStaticPrefix, /sooty_mold\|spider_mite\|mealybug/)
 assert.ok(
   fullInitialPromptLength <= maximumPromptLength,
   `full/leaf prompt ${fullInitialPromptLength} exceeds ${maximumPromptLength}`
@@ -537,9 +587,20 @@ assert.doesNotMatch(
 )
 assert.match(fullInitialDynamicTail, /【虫害映射】organ=leaf/)
 assert.match(fullInitialDynamicTail, /【当前图可见异常说明】/)
+assert.match(fullInitialDynamicTail, /【通用映射】organ=leaf/)
+assert.match(fullInitialDynamicTail, /【当前图通用可见异常说明】/)
 assert.match(
   fullInitialDynamicTail,
-  /识别明确后，若有虫体实体必须优先报告对应 mode_candidates 与正式 evidence key，不能只报同图异常而遗漏实体/
+  /sooty_mold→sooty_mold\(叶片或茎部表面黑色绒状或薄膜状霉层\)/
+)
+assert.match(fullInitialDynamicTail, /powdery_mildew→powder_white/)
+assert.match(fullInitialDynamicTail, /yellow_leaf→leaf_yellowing OR yellowing_patchy/)
+assert.match(fullInitialDynamicTail, /wilting_droop→leaf_droop/)
+assert.match(fullInitialDynamicTail, /powder_white=叶片或茎部表面白色粉状附着物/)
+assert.match(fullInitialDynamicTail, /leaf_yellowing=叶片均匀黄化/)
+assert.match(
+  fullInitialDynamicTail,
+  /识别明确后，若有可见虫体、霉层或粉层必须优先报告对应 mode_candidates 与正式 evidence key，不能只报同图异常而遗漏实体/
 )
 assert.doesNotMatch(fullInitialDynamicTail, /本图收窄候选|【叶片】/)
 assert.match(
@@ -589,7 +650,7 @@ assert.match(pestDynamicTail, /不能输出 yellow_leaf 或 wilting_droop 作为
 assert.match(pestDynamicTail, /识别明确后，虫害 mode_candidates\[\]\.mode 只能填模式键/)
 assert.match(
   pestDynamicTail,
-  /先基于当前图片独立识别可见虫体或叶内潜道；识别明确后，若有虫体实体必须优先报告对应 mode_candidates 与正式 evidence key，不能只报同图异常而遗漏实体；不得从 mode key、evidence key、器官名或文字反推画面/
+  /先基于当前图片独立识别可见虫体、叶内潜道、霉层、粉层或异常变色下垂；识别明确后，若有可见虫体、霉层或粉层必须优先报告对应 mode_candidates 与正式 evidence key，不能只报同图异常而遗漏实体；只报告当前图明确可见的项，不因本条列举存在而强行报告；不得从 mode key、evidence key、器官名或文字反推画面/
 )
 assert.match(pestDynamicTail, /silver_scarring=同区银白擦伤/)
 assert.match(pestDynamicTail, /black_fecal_spots=同区针尖黑点\/短线/)

@@ -15,7 +15,7 @@
  *   - computeTranspirationIntervalFactor 收到该精确对象作为 lightEnvironment
  *   - buildWateringPlanner 收到 computeTranspirationIntervalFactor 产出的 intervalFactor
  *   - 响应保留既有浇水结果字段
- *   - 独立 /watering-advisor 边界不变（仅 amountRangeMl）
+ *   - 独立 /watering-advisor 返回 amountRangeMl + D0 当日天气审计字段
  */
 
 import assert from 'node:assert/strict'
@@ -207,8 +207,15 @@ function loadAppWithSpies(overrides = {}) {
         }),
         computeAdhocPlanner: async () => ({
           statusCode: 200,
-          data: { amountRangeMl: [80, 150] },
+          data: { amountRangeMl: [80, 150], todayWeatherSource: 'missing', todayWeatherReason: 'test_mock' },
           error: null
+        }),
+        injectD0IntoForecastDays: async ({ forecastDays = [], referenceDate = '' }) => ({
+          forecastDays,
+          todayWeatherSource: 'missing',
+          todayWeatherRecord: null,
+          todayWeatherReason: 'test_mock',
+          referenceDate: referenceDate || '2026-06-18'
         })
       }
     }
@@ -422,13 +429,16 @@ test('响应包含 v3 蒸腾审计字段', async () => {
   assert.ok('transpirationComputedFactor' in data)
   assert.ok('transpirationCandidateNextWaterDate' in data)
   assert.ok('transpirationCandidateNextWaterWindow' in data)
+  // D0 当日天气来源审计字段
+  assert.ok('todayWeatherSource' in data, '响应应包含 todayWeatherSource')
+  assert.ok('todayWeatherReason' in data, '响应应包含 todayWeatherReason')
 })
 
 /* ============================================================
- * 5. 独立 /watering-advisor 边界不变
+ * 5. 独立 /watering-advisor 返回 amountRangeMl + D0 审计字段
  * ============================================================ */
 
-test('独立 /watering-advisor 边界不变：data keys 精确为 ["amountRangeMl"]', async () => {
+test('独立 /watering-advisor：data keys 包含 amountRangeMl + D0 审计字段', async () => {
   const { app } = loadAppWithSpies()
   const response = await app._test.main({
     path: '/user-plants/watering-advisor',
@@ -446,8 +456,8 @@ test('独立 /watering-advisor 边界不变：data keys 精确为 ["amountRangeM
   assert.equal(response.statusCode, 200)
   assert.deepEqual(
     Object.keys(response.payload.data).sort(),
-    ['amountRangeMl'],
-    `watering-advisor data keys 应精确为 ["amountRangeMl"]，got ${JSON.stringify(
+    ['amountRangeMl', 'todayWeatherReason', 'todayWeatherSource'],
+    `watering-advisor data keys 应包含 amountRangeMl + D0 审计字段，got ${JSON.stringify(
       Object.keys(response.payload.data)
     )}`
   )

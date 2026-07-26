@@ -10,6 +10,7 @@ const { VISUAL_OUTPUT_SCHEMA_TEXT } = require('./visual-contract')
 const { normalizeCaptureRegion } = require('./capture-region-normalizer')
 const {
   FORMAL_PEST_VISUAL_EVIDENCE_KEYS,
+  GENERAL_VISUAL_RULES,
   PEST_MODE_KEYS,
   PEST_VISUAL_RULES
 } = require('../domain/diagnosis-mode-registry')
@@ -18,6 +19,8 @@ const {
   FULL_CASE_LOCATION_KEYS,
   LOCATION_LABEL_MAP,
   PROMPT_SYMPTOM_HINTS,
+  compileGeneralVisibleAnomalyDescriptions,
+  compileGeneralVisualMapping,
   compilePestVisibleAnomalyDescriptions,
   compilePestVisualMapping,
   STATIC_ROUTE_CATALOG_TEXT,
@@ -76,9 +79,21 @@ function resolvePromptSymptomKeys({ imageContext = {}, locationKeys = [], sympto
   )
 
   if (diagnosisProfile !== 'pest') {
-    return (Array.isArray(symptoms) ? symptoms : [])
+    const symptomKeys = (Array.isArray(symptoms) ? symptoms : [])
       .map(item => normalizeText(item?.symptomKey, ''))
       .filter(Boolean)
+    // full profile 下合并当前器官相关的通用视觉证据键（leaf_yellowing、yellowing_patchy、
+    // powder_white 等），确保非虫害模式的证据键可用于 symptom_candidates 和 mode 路由。
+    // 这些键可能未在 symptoms 表中设置 ai_visual_pool='yes'，需要在此补充。
+    const generalKeys = (Array.isArray(GENERAL_VISUAL_RULES) ? GENERAL_VISUAL_RULES : [])
+      .filter(rule =>
+        normalizedLocationKeys.length
+          ? rule.organKeys.some(organKey => normalizedLocationKeys.includes(organKey))
+          : true
+      )
+      .flatMap(rule => rule.evidence.map(item => item.evidenceKey))
+      .filter(key => !symptomKeys.includes(key))
+    return [...symptomKeys, ...generalKeys]
   }
 
   if (!normalizedLocationKeys.length) {
@@ -202,7 +217,7 @@ function buildImageContextText(
 
   const lines = [`task_context=${JSON.stringify(taskContext)}。`]
   lines.push(
-    '视觉识别顺序：先基于当前图片独立识别可见虫体或叶内潜道；识别明确后，若有虫体实体必须优先报告对应 mode_candidates 与正式 evidence key，不能只报同图异常而遗漏实体；不得从 mode key、evidence key、器官名或文字反推画面。'
+    '视觉识别顺序：先基于当前图片独立识别可见虫体、叶内潜道、霉层、粉层或异常变色下垂；识别明确后，若有可见虫体、霉层或粉层必须优先报告对应 mode_candidates 与正式 evidence key，不能只报同图异常而遗漏实体；只报告当前图明确可见的项，不因本条列举存在而强行报告；不得从 mode key、evidence key、器官名或文字反推画面。'
   )
 
   if (normalizedLocationKeys.length) {
@@ -224,10 +239,21 @@ function buildImageContextText(
     lines.push(pestVisualMapping)
   }
 
+  const generalVisualMapping = compileGeneralVisualMapping(normalizedLocationKeys)
+  if (generalVisualMapping) {
+    lines.push(generalVisualMapping)
+  }
+
   const pestVisibleAnomalyDescriptions =
     compilePestVisibleAnomalyDescriptions(normalizedLocationKeys)
   if (pestVisibleAnomalyDescriptions) {
     lines.push(pestVisibleAnomalyDescriptions)
+  }
+
+  const generalVisibleAnomalyDescriptions =
+    compileGeneralVisibleAnomalyDescriptions(normalizedLocationKeys)
+  if (generalVisibleAnomalyDescriptions) {
+    lines.push(generalVisibleAnomalyDescriptions)
   }
 
   if (promptContext.diagnosisProfile === 'pest') {

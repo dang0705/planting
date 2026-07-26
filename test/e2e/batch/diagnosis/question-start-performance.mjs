@@ -121,8 +121,7 @@ function assertStaticQuestionStartResult(result) {
     [
       'q_observed_probe__leaf_yellowing__watering_frequency_context',
       'q_observed_probe__leaf_yellowing__light_change_context',
-      'q_observed_probe__leaf_yellowing__fertilization_growth_context',
-      'q_observed_probe__leaf_yellowing__airflow_humidity_context'
+      'q_observed_probe__leaf_yellowing__fertilization_growth_context'
     ]
   )
   assert.equal(
@@ -134,7 +133,7 @@ function assertStaticQuestionStartResult(result) {
 
 function assertMinimalFrontendResponse(response) {
   const frontendResponse = buildFrontendDiagnosisResponse(response)
-  assert.equal(frontendResponse.questions.length, 4)
+  assert.equal(frontendResponse.questions.length, 3)
   assert.equal(frontendResponse.questionPackage.mode, 'yellow_leaf')
   assert.deepEqual(
     Object.keys(frontendResponse).filter(key => key.toLowerCase().includes('follow')),
