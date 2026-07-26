@@ -148,6 +148,13 @@ function buildCompactAnswerRoundResponse(
     ...(roundResult?.questionPackage && typeof roundResult.questionPackage === 'object'
       ? { questionPackage: roundResult.questionPackage }
       : {}),
+    // fix #78: optionalFollowUp 场景下 questions 必须透传到 client，
+    // 否则 likely 结论响应中 finalResult 存在但客户端看不到可选确认问题。
+    ...(roundResult?.questionPackage?.optionalFollowUp &&
+    Array.isArray(roundResult?.questions) &&
+    roundResult.questions.length > 0
+      ? { questions: roundResult.questions.slice(0, 1) }
+      : {}),
     uiHints: {
       canUploadMoreImages: false,
       maxQuestionsThisRound: roundResult?.questionPackage?.questionCount || 0,
@@ -409,6 +416,16 @@ function buildPublicRoundResponse(roundResult = {}, helpers = diagnosisRoundPres
     outcomeMode: String(roundResult?.outcomeMode || '').trim(),
     routeDecisionCause: roundResult?.routeDecisionCause || null,
     questionRequired: false,
+    // fix #78: optionalFollowUp 场景下 questionPackage 和 questions 必须透传到 client，
+    // 否则 likely 结论响应中 finalResult 存在但客户端看不到可选确认问题。
+    ...(roundResult?.questionPackage && typeof roundResult.questionPackage === 'object'
+      ? { questionPackage: roundResult.questionPackage }
+      : {}),
+    ...(roundResult?.questionPackage?.optionalFollowUp &&
+    Array.isArray(roundResult?.questions) &&
+    roundResult.questions.length > 0
+      ? { questions: roundResult.questions.slice(0, 1) }
+      : {}),
     uiHints: {
       canUploadMoreImages: false,
       maxQuestionsThisRound: 0,

@@ -378,7 +378,24 @@ function buildPotProfilePayload() {
 }
 
 async function loadWeatherDays() {
-  const location = resolveWeatherLocation(userStore.location)
+  // fix #75: D0 与 forecast 必须同源。选中"我的植物"时优先用 plant.careLocation 拉 weather window，
+  // 否则会出现 D0 用 plant location、forecast 用 user GPS 的拼接错位，corrupting 摘要。
+  // plant 无 careLocation 时 fallback 到 userStore.location（此时 D0 也用 user location，保持同源）。
+  const selectedPlant = selectedCatalogPlant.value
+  const userPlant = selectedPlant?.userPlantId
+    ? plantStore.userPlants?.find(item => item.id === selectedPlant.userPlantId)
+    : null
+  const plantCareLocation = userPlant?.careLocation || null
+  const locationSource = plantCareLocation
+    ? {
+        latitude: plantCareLocation.lat ?? plantCareLocation.latitude,
+        longitude: plantCareLocation.lng ?? plantCareLocation.longitude,
+        city: plantCareLocation.city || '',
+        province: plantCareLocation.province || '',
+        locationKey: plantCareLocation.locationKey || ''
+      }
+    : userStore.location
+  const location = resolveWeatherLocation(locationSource)
   if (!location) {
     uni.showToast({ title: '未获取到定位，建议将使用默认天气', icon: 'none' })
     return
@@ -386,6 +403,10 @@ async function loadWeatherDays() {
   try {
     const window = await getEnvironmentWeatherWindow({
       ...location,
+      // 透传 plant careLocation 的 locationKey，让后端用同一 key 解析 D0 day file
+      ...(plantCareLocation?.locationKey
+        ? { locationKey: plantCareLocation.locationKey }
+        : {}),
       diagnosisDate: todayStr(),
       mode: 'environment'
     })

@@ -247,6 +247,12 @@ export function useCareBehaviorTimeline(props, emit) {
     const wateringEventsWithDose = (nextTimeline.watering_events_10d || []).map(ev => {
       const hasSelection = Object.prototype.hasOwnProperty.call(wateringDoseByDate.value, ev.date)
       const selectedMl = hasSelection ? wateringDoseByDate.value[ev.date] : undefined
+      // fix #76: hasSelection=true 且 selectedMl===null 表示用户主动选了"不知道"（第一档），
+      // 必须保留 null，不得用 fallbackMl 替换；只有未主动选档位时才用 fallbackMl 兜底，
+      // 否则 UI 默认显示第二档但 emitted amountMl=null 的"不知道"语义会被吞掉。
+      if (hasSelection && selectedMl === null) {
+        return { ...ev, amountMl: null }
+      }
       // 未主动选档位且后端无 amountMl 时，填入默认第二档 amountMl，保持 UI 与 emitted 一致
       const resolvedMl = selectedMl !== undefined ? selectedMl : ev.amountMl
       const amountMl =

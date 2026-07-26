@@ -6,30 +6,24 @@ const {
   PEST_MODE_LABELS
 } = require('./pest-question-package')
 const { resolveSpecificPestAnswerResult } = require('./specific-pest-answer-resolver')
-const { DIAGNOSIS_MODE_REGISTRY } = require('../domain/diagnosis-mode-registry')
 const { isVisualDirectOnlyMode } = require('../domain/diagnosis-mode-helpers')
 const {
   buildFullCandidateFallbackResponse,
   attachLikelyOptionalQuestion,
   buildRetakeRequest
 } = require('./pest-route-helpers')
-
-const STATIC_ROUTE_MODE_OPTIONS = Object.freeze({
-  yellow_leaf: Object.freeze({
-    classKey: 'yellowing_mode',
-    modeKey: 'yellow_leaf',
-    classNameCn: '黄叶模式',
-    symptomKey: 'uniform_yellowing',
-    symptomCn: '整叶黄化'
-  }),
-  wilting_droop: Object.freeze({
-    classKey: 'wilting_droop_mode',
-    modeKey: 'wilting_droop',
-    classNameCn: '枯萎 / 发蔫模式',
-    symptomKey: 'wilting_droop',
-    symptomCn: '枯萎 / 发蔫'
-  })
-})
+// fix #77: 拆分证据 ledger 与非虫害直接结果到独立模块，主文件聚焦路由编排
+const {
+  STATIC_ROUTE_MODE_OPTIONS,
+  directEvidenceLedgerForDirectResult,
+  normalizeKey,
+  routeEvidenceLedger,
+  routeFixedQuestionPackageMode
+} = require('./pest-route-evidence')
+const {
+  buildNonPestDirectResult,
+  resolveNonPestCandidateTier
+} = require('./non-pest-direct-result')
 
 function routeFromAggregate(aggregateResult = null) {
   return (
@@ -78,101 +72,6 @@ function directEvidence(routeResult = {}) {
   })
 }
 
-// >=0.95 direct tier（来自 confidence，无 evidence-based direct match）下，
-// 候选模式即使没有视觉证据锁定也应被视为 direct_match，
-// 确保 resolveSpecificPestAnswerResult 输出 direct 级置信度和不带"可能是"的文案。
-// 注意：direct tier 来自 evidence-based direct match 时不在此合成，
-// 否则会把低置信 confirmation 候选错误提升为 direct_match。
-function directEvidenceLedgerForDirectResult(routeResult = {}, pestCandidateModes = [], tier = '') {
-  const baseLedger = routeEvidenceLedger(routeResult)
-  if (normalizeKey(tier) !== 'direct') {
-    return baseLedger
-  }
-  const directModeKeys = (Array.isArray(routeResult.directMatches)
-    ? routeResult.directMatches
-    : []
-  )
-    .map(item => item.modeKey)
-    .filter(Boolean)
-  // direct tier 由 evidence-based direct match 触发时，候选应保留各自的
-  // confirmation/candidate 角色，不在此处提升为 direct_match。
-  if (directModeKeys.length > 0) {
-    return baseLedger
-  }
-  const lockedSet = new Set(
-    baseLedger
-      .filter(item => normalizeKey(item.routeEvidenceRole) === 'direct_match')
-      .map(item => normalizeKey(item.diagnosisMode || item.modeKey))
-      .filter(Boolean)
-  )
-  const additional = pestCandidateModes
-    .filter(mode => !lockedSet.has(normalizeKey(mode)))
-    .map(mode => ({
-      evidenceKey: mode,
-      symptomKey: mode,
-      diagnosisMode: mode,
-      modeKey: mode,
-      routeEvidenceRole: 'direct_match',
-      sourceType: 'visual_mode_router',
-      currentStatus: 'active',
-      suppressEquivalentQuestion: true,
-      lockedInQuestionnaire: true
-    }))
-  return [...baseLedger, ...additional]
-}
-
-function normalizeKey(value = '') {
-  return String(value || '').trim().toLowerCase()
-}
-
-function routeFixedQuestionPackageMode(routeResult = {}) {
-  const modeKeys = Array.from(
-    new Set([
-      ...(Array.isArray(routeResult.directMatches) ? routeResult.directMatches : []).map(
-        item => item.modeKey
-      ),
-      ...(Array.isArray(routeResult.associatedModes) ? routeResult.associatedModes : [])
-    ])
-  ).filter(modeKey => Object.prototype.hasOwnProperty.call(STATIC_ROUTE_MODE_OPTIONS, modeKey))
-
-  // 多固定题包模式时按优先级选取第一个（directMatches 优先于 associatedModes）。
-  // 同时识别黄叶+枯萎的概率极低，选取一个走题包不阻塞用户。
-  return modeKeys.length >= 1 ? modeKeys[0] : ''
-}
-
-function routeEvidenceLedger(routeResult = {}) {
-  const sources = [
-    ...(Array.isArray(routeResult.directMatches) ? routeResult.directMatches : []).map(item => ({
-      ...item,
-      routeEvidenceRole: 'direct_match'
-    })),
-    ...(Array.isArray(routeResult.confirmationCandidates)
-      ? routeResult.confirmationCandidates
-      : []
-    ).map(item => ({ ...item, routeEvidenceRole: 'confirmation_support' })),
-    ...(Array.isArray(routeResult.provisionalMatches) ? routeResult.provisionalMatches : []).map(
-      item => ({ ...item, routeEvidenceRole: 'candidate_match' })
-    )
-  ]
-  const seen = new Set()
-  return sources.flatMap(item =>
-    (Array.isArray(item.matchedEvidence) ? item.matchedEvidence : []).flatMap(evidence => {
-      const key = `${item.modeKey}::${evidence.evidenceKey || evidence.symptomKey || ''}::${evidence.evidenceGroup || ''}`
-      if (seen.has(key)) {
-        return []
-      }
-      seen.add(key)
-      return {
-        ...evidence,
-        diagnosisMode: item.modeKey,
-        modeKey: item.modeKey,
-        routeEvidenceRole: item.routeEvidenceRole,
-        sourceType: 'visual_mode_router'
-      }
-    })
-  )
-}
-
 function buildBaseResponse({
   sessionId = '',
   round = 1,
@@ -192,58 +91,12 @@ function buildBaseResponse({
   }
 }
 
-// 为非虫害 visual_direct_only 模式（如白粉病）构建直接结果。
-// 固定题包模式（yellow_leaf/wilting_droop）不在此列，它们必须走问诊路径。
-// likelyResult=true（0.90-<0.95 very_likely tier）时，给 displayName 加"很像"前缀、
-// confidenceLevel 降为 'likely'，并标记 optionalFollowUp，与 pest 路径的 attachLikelyOptionalQuestion 对齐。
-function buildNonPestDirectResult({ modeKey, sessionId, round, plantContext, routeResult, aggregateResult, likelyResult = false }) {
-  const entry = DIAGNOSIS_MODE_REGISTRY[modeKey] || {}
-  const baseDisplayName = entry.userDisplayName || modeKey
-  // likelyResult 时加"很像"前缀，避免重复前缀
-  const displayName = likelyResult
-    ? (baseDisplayName.startsWith('很像') || baseDisplayName.startsWith('可能是')
-      ? baseDisplayName
-      : `很像${baseDisplayName}`)
-    : baseDisplayName
-  const confidenceLevel = likelyResult ? 'likely' : 'high'
-  return {
-    diagnosisSessionId: sessionId,
-    roundId: `round_${round}`,
-    plantContext,
-    routePrimaryAction: 'finalize',
-    diagnosisModeRouteResult: routeResult,
-    visualAggregateResult: aggregateResult,
-    stage: 'final',
-    status: 'closed',
-    finalResult: {
-      problemKey: modeKey,
-      problemName: displayName,
-      displayName,
-      outcomeType: 'problematic',
-      confidenceLevel
-    },
-    visibleOutcomes: [
-      {
-        modeKey,
-        displayNameCn: displayName,
-        displayName,
-        outcomeType: 'problematic'
-      }
-    ],
-    topProblem: {
-      modeKey,
-      displayName,
-      problemKey: modeKey
-    },
-    candidateModes: [modeKey],
-    // likelyResult 标记，供 frontend-response.js 的 hasOptionalFollowUp 判断使用
-    ...(likelyResult
-      ? {
-          uiHints: { optionalFollowUp: true, likelyResult: true },
-          questionPackage: { optionalFollowUp: true, likelyResult: true, questionCount: 0 }
-        }
-      : {})
-  }
+// 生成 resultId（与 diagnosis-handlers 的 resolveResultId 口径一致）
+function resolveResultId(routeResult = {}, sessionId = '') {
+  const evidenceSnapshotId = routeResult.evidenceSnapshotId || ''
+  return evidenceSnapshotId
+    ? `result_${evidenceSnapshotId}`
+    : `result_${sessionId}_${Date.now()}`
 }
 
 async function buildPestRouteResponse({
@@ -263,6 +116,7 @@ async function buildPestRouteResponse({
   const confidenceTier = String(routeResult.confidenceTier || '').trim()
   const questionBudget = Number(routeResult.questionBudget || 0)
   const likelyResult = Boolean(routeResult.likelyResult)
+  const resultId = resolveResultId(routeResult, sessionId)
   // full profile 下：有候选模式时不再因 uncertain 直接返回 null。
   if (action === 'uncertain' && diagnosisProfile !== 'pest') {
     if (!candidateModes.length) {
@@ -291,15 +145,38 @@ async function buildPestRouteResponse({
     // 仅 visual_direct_only 非虫害模式可直接结论；
     // 固定题包模式（yellow_leaf/wilting_droop）必须走问诊路径。
     if (nonPestModes.length && !pestCandidateModes.length) {
-      return buildNonPestDirectResult({
-        modeKey: nonPestModes[0],
-        sessionId,
-        round,
-        plantContext,
-        routeResult,
-        aggregateResult,
-        likelyResult
-      })
+      // fix #73: <0.90 candidate 不应 high confidence 直接结论，需检查 tier
+      const tierInfo = resolveNonPestCandidateTier(nonPestModes[0], routeResult)
+      if (tierInfo.eligible) {
+        return buildNonPestDirectResult({
+          modeKey: nonPestModes[0],
+          sessionId,
+          round,
+          plantContext,
+          routeResult,
+          aggregateResult,
+          likelyResult: tierInfo.likelyResult,
+          resultId
+        })
+      }
+      // <0.90 保留 uncertainty，走 retake 路径
+      return {
+        ...base,
+        routePrimaryAction: 'request_followup_capture',
+        sessionStatus: 'awaiting_retake',
+        outcomeType: 'uncertain',
+        questionRequired: false,
+        questions: [],
+        retakeRequest: buildRetakeRequest({ sessionId, routeResult, aggregateResult }),
+        summaryCard: {
+          title: '还需要补拍确认',
+          subtitle: '现有图片线索不足以直接判断具体问题。',
+          severity: 'low',
+          statusText: '待补拍'
+        },
+        finalResult: null,
+        visibleOutcomes: []
+      }
     }
     const isDirectTier = normalizeKey(routeResult.confidenceTier) === 'direct'
     const directModeKeysForProbable = (
@@ -307,10 +184,6 @@ async function buildPestRouteResponse({
     )
       .map(item => item.modeKey)
       .filter(Boolean)
-    // 仅当 direct tier 来自 >=0.95 confidence（无 evidence-based direct match）时，
-    // 候选已由 directEvidenceLedgerForDirectResult 锁定为 direct_match，
-    // 不应再作为 provisional 候选拉低置信度。
-    // direct tier 来自 evidence-based direct match 时，confirmation 候选必须保留 probable 角色。
     const directFromConfidence = isDirectTier && directModeKeysForProbable.length === 0
     const probableModes = directFromConfidence
       ? []
@@ -328,6 +201,8 @@ async function buildPestRouteResponse({
       answers: [],
       questionPackage: {
         candidateModes: pestCandidateModes,
+        // fix #72: directEvidenceLedgerForDirectResult 内部按 candidate confidence 过滤，
+        // 只提升 >=0.95 的候选为 direct_match，避免低置信候选被错误展示为已确认
         hiddenPrefilledEvidence: directEvidenceLedgerForDirectResult(routeResult, pestCandidateModes, routeResult.confidenceTier),
         packageQuestions: []
       },
@@ -393,25 +268,28 @@ async function buildPestRouteResponse({
           visualAggregateResult: aggregateResult
         }
       }
-      // 非虫害 visual_direct_only candidate（如 powdery_mildew 0.85）走 question_package 但
+      // 非虫害 visual_direct_only candidate（如 powdery_mildew）走 question_package 但
       // pestCandidateModes 为空、buildSpecificPestQuestionPackage 返回 null：
-      // 不应零问题 retake，应 fall through 到 buildNonPestDirectResult（与 direct_result 路径一致）。
-      // 0.90-<0.95 very_likely 走 likely 分支，<0.90 走普通 direct 结果。
+      // fix #73: <0.90 不应直接结论，需检查 tier；>=0.90 可 fall through 到 buildNonPestDirectResult
       const nonPestModes = candidateModes.filter(
         mode =>
           !Object.prototype.hasOwnProperty.call(PEST_MODE_LABELS, mode) &&
           isVisualDirectOnlyMode(mode)
       )
       if (nonPestModes.length) {
-        return buildNonPestDirectResult({
-          modeKey: nonPestModes[0],
-          sessionId,
-          round,
-          plantContext,
-          routeResult,
-          aggregateResult,
-          likelyResult
-        })
+        const tierInfo = resolveNonPestCandidateTier(nonPestModes[0], routeResult)
+        if (tierInfo.eligible) {
+          return buildNonPestDirectResult({
+            modeKey: nonPestModes[0],
+            sessionId,
+            round,
+            plantContext,
+            routeResult,
+            aggregateResult,
+            likelyResult: tierInfo.likelyResult,
+            resultId
+          })
+        }
       }
       return {
         ...base,
@@ -423,7 +301,7 @@ async function buildPestRouteResponse({
         retakeRequest: buildRetakeRequest({ sessionId, routeResult, aggregateResult }),
         summaryCard: {
           title: '还需要补拍确认',
-          subtitle: '现有图片线索不足以直接判断具体虫害。',
+          subtitle: '现有图片线索不足以直接判断具体问题。',
           severity: 'low',
           statusText: '待补拍'
         },
@@ -494,7 +372,7 @@ async function buildPestRouteResponse({
       questions: [],
       retakeRequest: buildRetakeRequest({ sessionId, routeResult, aggregateResult }),
       summaryCard: {
-        title: action === 'uncertain' ? '暂不能判断具体虫害' : '需要补拍确认',
+        title: action === 'uncertain' ? '暂不能判断具体问题' : '需要补拍确认',
         subtitle: '请确认后在 3 分钟内补拍更清晰的位置。',
         severity: 'low',
         statusText: '待补拍'
