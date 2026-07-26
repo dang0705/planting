@@ -114,11 +114,12 @@ function buildEnvironmentWeatherWindowByMode(weatherWindow = null, mode = '') {
   const historicalDays = asArray(sourceWindow.historicalDays)
   const historicalDaysLegacy = asArray(sourceWindow.historical_days)
   const normalizedHistoricalDays = historicalDays.length ? historicalDays : historicalDaysLegacy
+  // 诊断模式保留 currentWeather（D0 当天观测，由 buildDiagnosisRecentWeatherWindow 填充），
+  // 但仍 omit forecastDays/forecast_days（诊断模式不返回预报）。
   const omitFields = new Set([
     'forecastDays',
     'forecast_days',
     'historical_days',
-    'currentWeather',
     'daily',
     'dailyRecords',
     'daily_records'
@@ -231,7 +232,13 @@ async function main(event, context) {
             diagnosisDate: payload.diagnosisDate || payload.diagnosis_date || payload.date,
             appEnv,
             apiKey: QWEATHER_CONFIG.apiKey,
-            baseUrl: QWEATHER_CONFIG.baseUrl
+            baseUrl: QWEATHER_CONFIG.baseUrl,
+            // 透传 locationKey / qweather id / city，让后端用 buildLocationKey 解析并暴露到 response 顶层，
+            // 供前端 catalog 植物 D0 day file 查询使用（无 qweather id / hot city 时走 coord 兜底）。
+            locationKey: payload.locationKey || payload.location_key || '',
+            qweatherLocationId: payload.qweatherLocationId || payload.qweather_location_id || '',
+            cityName: payload.cityName || payload.city_name || '',
+            city: payload.city || ''
           })
       const responseWindow = buildEnvironmentWeatherWindowByMode(
         weatherWindow,
@@ -359,8 +366,11 @@ async function main(event, context) {
   }
 }
 
-module.exports.main = (event, context) => {
-  const request = getHttpRequestData(event, context)
-  const appEnv = resolveRequestAppEnv(request.headers, request.query, request.body)
-  return runWithRequestAppEnv(appEnv, () => main(event, context))
+module.exports = {
+  main: (event, context) => {
+    const request = getHttpRequestData(event, context)
+    const appEnv = resolveRequestAppEnv(request.headers, request.query, request.body)
+    return runWithRequestAppEnv(appEnv, () => main(event, context))
+  },
+  buildEnvironmentWeatherWindowByMode
 }

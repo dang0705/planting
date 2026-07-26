@@ -1,6 +1,7 @@
 'use strict'
 
 const { createQWeatherAdapter } = require('../adapters/qweather-adapter')
+const { buildLocationKey } = require('./weather-cache-paths')
 
 function normalizeDate(value = '') {
   const raw = String(value || '').trim()
@@ -58,7 +59,10 @@ function buildLocalDevWeatherWindow({ diagnosisDate = '', lat, lng } = {}) {
     source: 'local_dev_fallback'
   }))
 
+  // 本地开发无 qweather id / hot city，locationKey 走 coord 兜底，便于前端 D0 day file 查询一致。
+  const locationKey = buildLocationKey({ lat, lng })
   return {
+    locationKey,
     meta: {
       diagnosisDate: d0,
       historicalWindow: {
@@ -141,7 +145,11 @@ async function buildEnvironmentWeatherWindow({
   appEnv = 'production',
   apiKey = '',
   baseUrl = '',
-  adapter = null
+  adapter = null,
+  locationKey = '',
+  qweatherLocationId = '',
+  cityName = '',
+  city = ''
 } = {}) {
   if (!hasLocation({ lat, lng })) {
     throw new Error('缺少位置参数：lat 和 lng')
@@ -182,7 +190,20 @@ async function buildEnvironmentWeatherWindow({
     warnings.push(`current_weather_failed:${error.message || error}`)
   }
 
+  // 暴露 locationKey：前端 catalog 植物 D0 注入需要用它查 day file latestSample；
+  // 缺失时前端 plannerLocationKey 为空，后端 todayWeatherReason='location_key_missing'。
+  // 优先用前端传入的显式 key，其次 qweather id / hot city / coord 兜底。
+  const resolvedLocationKey = buildLocationKey({
+    locationKey,
+    qweatherLocationId,
+    cityName,
+    city,
+    lat,
+    lng
+  })
+
   return {
+    locationKey: resolvedLocationKey,
     meta: {
       diagnosisDate: d0,
       historicalWindow: {

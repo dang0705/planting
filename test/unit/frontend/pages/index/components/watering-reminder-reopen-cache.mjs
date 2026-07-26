@@ -3,6 +3,10 @@ import { readFileSync } from 'node:fs'
 
 const indexSource = readFileSync('src/pages/index/index.vue', 'utf8')
 const sheetSource = readFileSync('src/pages/index/components/WateringReminderSheet.vue', 'utf8')
+const sheetPlannerSource = readFileSync(
+  'src/pages/index/components/useWateringReminderPlanner.js',
+  'utf8'
+)
 const savedStateSource = readFileSync(
   'src/pages/index/components/SavedWateringReminderState.vue',
   'utf8'
@@ -57,7 +61,8 @@ assert.match(savedStateSource, /id="watering-reminder-saved-reason"/)
 assert.match(savedStateSource, /display\.createdText/)
 assert.match(savedStateSource, /display\.nextText/)
 assert.match(savedStateSource, /display\.reasonText/)
-assert.match(sheetSource, /fetchWateringPlannerResult\(/)
+assert.match(sheetSource, /useWateringReminderPlanner\(/)
+assert.match(sheetPlannerSource, /fetchWateringPlannerResult\(/)
 assert.match(sheetSource, /buildWateringReminderCalendarPayload\(/)
 assert.match(sheetSource, /attachPlanIdToWateringEvents\(/)
 

@@ -30,6 +30,7 @@ external_contract.target_session = current_open_chat | browser_session | remote_
 6. Web/云端 external implementer（TRAE Web、Chrome 插件驱动云端 agent，或 `prompt_transport=browser_plugin`）启动前必须完成 remote sync gate，确保本地要交给云端的代码已经提交并推送到同一个远端分支。
 7. 当 Codex 运行环境是 Codex Desktop，Web/云端 provider 页面必须通过 Codex 内置浏览器打开和发送 prompt；不得改用用户普通 Chrome 窗口、shell 脚本或仅凭 ambient browser 状态冒充受控发送。
 8. Web/云端 external implementer 即使远端运行时自称 main/root，也必须按 implementer 角色工作：只改合同内代码，执行 unit tests / lint / build / self-check；有 `figma_link` 时必须直接使用可用 Figma 插件 / MCP / 工具读取设计并输出 `figma_fetch_evidence`。
+9. Provider 能力必须显式区分。Trae Web 默认使用 GLM 文本模型，不承担真实图片视觉诊断；图片上传、视觉模型调用、raw visual response、标准化视觉候选和真实图片回放由 main QA 负责。Trae 报告本地图片不可访问时，不得单独据此阻断代码实现，除非 handoff 明确声明该 provider 具备视觉能力且视觉验证属于 external implementer 的必需交付。
 
 ## Web remote sync gate
 
@@ -38,7 +39,7 @@ external_contract.target_session = current_open_chat | browser_session | remote_
 硬规则：
 
 1. main 必须先读取 `git status --short`、当前分支、当前 HEAD、upstream 或目标 remote branch，并确认要交给 Web agent 的基线 commit。
-2. main 必须在发送 prompt 前确定本轮 Web agent 唯一远端分支和本地临时 worktree 路径。TRAE 默认分支命名为 `trae/{dispatch_run_id}`；若用户或任务平台已经给出分支，必须写入合同，不得等 Web agent 完成后再从聊天里复制分支名。
+2. main 必须在发送 prompt 前确定本轮 Web agent 唯一远端分支和本地临时 worktree 路径。TRAE Web 默认分支命名为 `trae-test-{dispatch_run_id}`；禁止使用 `trae/` 前缀。若用户或任务平台已经给出分支，必须写入合同，不得等 Web agent 完成后再从聊天里复制分支名。
 3. 若本地存在未提交改动，必须先执行 `git add`、`git commit`、`git push`，使远端分支包含本轮启动前的完整基线；commit message 必须能识别为 dispatch/web-agent baseline。
 4. 如果工作区包含不属于本轮任务、来源不明或用户未授权打包的脏改动，main 不得静默 commit/push；必须阻断并让用户决定是纳入 baseline、拆分到其他分支，还是先清理。
 5. 发送 prompt 前的 handoff 必须记录 `external_contract.remote_sync`：
@@ -47,7 +48,7 @@ external_contract.target_session = current_open_chat | browser_session | remote_
 required: true
 status: pushed
 remote
-branch              # 任务开始时确定；TRAE 默认 trae/{dispatch_run_id}
+branch              # 任务开始时确定；TRAE Web 默认 trae-test-{dispatch_run_id}，禁止 trae/ 前缀
 base_commit
 push_ref
 planned_worktree_path
@@ -57,7 +58,8 @@ dirty_policy: blocked_if_unowned_dirty
 
 6. 因 remote sync 会改变 HEAD，handoff 必须显式设置 `validation.allow_head_change=true`，并记录 `validation.head_change_reason=web_external_remote_sync`。该授权只允许“启动 Web agent 前的 baseline commit/push”和“回收 PR/worktree 时切换到独立测试工作区”，不得用来掩盖实现阶段的未知 checkout、reset 或本地主工作区改写。
 7. send receipt 必须包含同一份 remote sync 证据；缺失或 `status` 不是 `pushed` 时，不得进入 Child Run Lock。
-8. 当 handoff 写明 `external_contract.codex_runtime_surface=codex_desktop` 时，必须写明 `external_contract.web_provider_open_surface=builtin_in_app_browser`。send receipt 必须记录同样字段，并包含真实内置浏览器发送证据。
+8. 发送前必须在受控 Trae Web 页面重新读取分支选择器，并确认合同中的 `remote_sync.branch` 可见且已选中。分支不可见时必须记录 `blocked: trae_branch_unavailable`，不得发送到 `master`、当前默认分支或任何替代分支。
+9. 当 handoff 写明 `external_contract.codex_runtime_surface=codex_desktop` 时，必须写明 `external_contract.web_provider_open_surface=builtin_in_app_browser`。send receipt 必须记录同样字段，并包含真实内置浏览器发送证据。
 
 ## Web PR recovery and QA
 
@@ -75,8 +77,8 @@ node .codex/skills/dispatch-task/scripts/manage-web-pr-worktree.mjs prepare <han
 等价手动命令只允许作为脚本不可用时的 fallback：
 
 ```bash
-git fetch origin trae/task-123
-git worktree add ../project-pr-123 origin/trae/task-123
+git fetch origin trae-test-task-123
+git worktree add ../project-pr-123 origin/trae-test-task-123
 cd ../project-pr-123
 ```
 
@@ -116,10 +118,10 @@ node .codex/skills/dispatch-task/scripts/manage-web-pr-worktree.mjs cleanup <han
 TRAE Web / Chrome cloud agent 的等待以一次性发送确认 + 低频 recurring wakeup 为主，不使用持续浏览器盯屏：
 
 1. 发送动作只允许做短时 UI 确认：host、Code tab、输入框、发送按钮可用、消息已送达、provider 已开始运行；这些不是 completion 检查；
-2. provider 开始运行后，main 创建或复用一个与 `dispatch_run_id` 绑定的监控自动化，记录 `automation_id`、provider session URL、`initial_delay_minutes=5`、`poll_interval_minutes=5`、`mode=recurring_wakeup`；首次正式检查不早于 5 分钟，后续不短于 5 分钟；
+2. provider 开始运行后，main 必须立即创建或复用一个与 `dispatch_run_id` 绑定的 heartbeat/监控自动化；heartbeat 首次唤醒延迟必须为 5 分钟，后续唤醒间隔必须不短于 5 分钟。必须记录 `automation_id`、provider session URL、`initial_delay_minutes=5`、`poll_interval_minutes=5`、`mode=recurring_wakeup`。未创建 heartbeat 或未取得产品提供的等价 wakeup 凭证前，不得结束本轮 dispatch 协调并声称已进入等待态；首次正式检查不早于 5 分钟，后续不短于 5 分钟；
 3. 每次唤醒只检查是否出现最终结果、PR URL、handoff/manual 终态或明确阻断。仍在执行时不得读取流式中间过程、半成品 diff、临时 status，也不得把“暂无结果”报告给用户；
 4. provider 终态出现后，先停用/删除该自动化，再进入 PR recovery、QA、merge 和 local sync；`completed` 才能进入维护补丁和后续合并，`blocked` 只能进入阻断处理；任务完成、阻断、用户中止或会话失效时都必须清理自动化，避免 stale wakeup；
-5. 若产品无法创建 recurring automation，必须退化为产品提供的 heartbeat/wakeup，仍遵守同样的 5 分钟下限；不得退化为 20 秒/40 秒/60 秒循环或持续 UI 轮询。
+5. 若产品无法创建 recurring automation，必须退化为产品提供的 heartbeat/wakeup，并在 send receipt 中记录 `monitoring_automation.status="unavailable"`、原因和 heartbeat/wakeup 凭证；仍遵守同样的 5 分钟下限。不得退化为 20 秒/40 秒/60 秒循环或持续 UI 轮询。
 
 send receipt 的 `external_wait_policy` 应扩展为：
 
@@ -210,16 +212,17 @@ pr_policy: required   # Web/云端代码任务必须产出 PR；合并由 main �
 硬规则：
 
 1. TRAE Web 受控页面的目标 host 固定为 `work.enterprise.trae.cn`。adapter 打开页面后必须先校验 `location.origin`/`location.host`；若不是该 host，返回 `blocked: trae_wrong_origin`，不得在其他 TRAE 域名或未知镜像页面发送实现 prompt。
-2. Web TRAE 默认可能处于 `Work` 模式；作为 external implementer 执行代码任务前必须切到 `Code` 模式。
-3. Code 模式验证路径固定为页面左上角 `div[role="tablist"]` 下文本为 `Code` 的 `button`。只有该按钮同时满足 `aria-selected="true"` 且 `class` 包含 `tabActive-` 前缀，才算已选中 Code 模式。
-4. 如果 Code tab 未选中，adapter 必须点击该 `Code` button 并重新读取两个条件；仍不满足时返回 `blocked: trae_code_mode_unavailable`，不得继续发送实现 prompt。
-5. TRAE Web 的输入框通常是 Lexical/contenteditable。adapter 必须通过真实焦点与浏览器输入事件触发前端状态更新；发送前必须确认发送按钮存在且 `disabled=false`。仅设置 DOM 文本后点击禁用按钮不算 send receipt。
-6. send receipt 至少记录：目标 URL、受控 profile 或 remote-debug 端口、Code tab 的 `aria-selected` 和 `class`、输入框 selector、发送按钮 `disabled=false` 的证据、真实点击/发送动作，以及 prompt sentinel 或摘要。
-7. Codex 内置浏览器发送成功后，adapter 必须显式保留 TRAE tab，避免 Browser Use 默认清理导致用户看不到会话。推荐在所有发送和状态确认动作完成后调用 `browser.tabs.finalize({ keep: [{ tab, status: "handoff" }] })`；send receipt 必须记录 `tab_retention.status="handoff"`、`tab_retention.method="browser.tabs.finalize.keep"`、`tab_retention.session_url`。如果 finalization API 不可用，必须记录 `tab_retention.status="blocked"` 与原因，不得声称内置浏览器会话已保留。
-8. prompt 发送并确认 TRAE 已开始运行后，main 进入 Child Run Lock，并按上方 Web external monitoring automation 创建 recurring wakeup。正式实现任务首次状态检查不得早于 5 分钟，之后检查间隔不得短于 5 分钟；不得把 60 秒、90 秒等短等待作为完成、失败、无产出或人工接管依据。短等待只允许用于发送动作本身的 UI 确认或一次性身份探针。
-9. Web provider send receipt 必须记录 `external_wait_policy.mode="child_run_lock"`、`external_wait_policy.initial_check_min_minutes>=5`、`external_wait_policy.poll_interval_min_minutes>=5`、`external_wait_policy.short_timeout_completion_forbidden=true` 及 `monitoring_automation`。如果本轮只是身份探针或非代码任务，不走 external implementer completion validator，但不得把探针脚本的短等待写进正式实现规则。
-10. TRAE 聊天输出不能替代 `handoff_manual.path` 或 PR/worktree evidence，只能作为排障或 recovery 辅助证据。
-11. Web external PR recovery 必须在 Gate C Main Review 中完成 diff review、必要的受限 `maintenance_patch` 和验证，然后在 merge 后记录 `pr_merge` 与 `local_base_sync`：包括 PR URL/number、merge 前 head SHA、merge commit SHA、base branch、GitHub merge 成功证据，以及本地 `fetch + pull --ff-only` 后的 branch/head/clean status。缺少任一项不得标记 dispatch-task `completed`。
+2. Trae Web 分支选择器过滤所有 `trae/` 开头的分支。handoff 生成器和 validator 必须拒绝 `remote_sync.branch` 以 `trae/` 开头；推荐使用 `trae-test-{dispatch_run_id}` 或用户已确认可见的等价非斜杠分支名。
+3. Web TRAE 默认可能处于 `Work` 模式；作为 external implementer 执行代码任务前必须切到 `Code` 模式。
+4. Code 模式验证路径固定为页面左上角 `div[role="tablist"]` 下文本为 `Code` 的 `button`。只有该按钮同时满足 `aria-selected="true"` 且 `class` 包含 `tabActive-` 前缀，才算已选中 Code 模式。
+5. 如果 Code tab 未选中，adapter 必须点击该 `Code` button 并重新读取两个条件；仍不满足时返回 `blocked: trae_code_mode_unavailable`，不得继续发送实现 prompt。
+6. TRAE Web 的输入框通常是 Lexical/contenteditable。adapter 必须通过真实焦点与浏览器输入事件触发前端状态更新；发送前必须确认发送按钮存在且 `disabled=false`。仅设置 DOM 文本后点击禁用按钮不算 send receipt。
+7. send receipt 至少记录：目标 URL、受控 profile 或 remote-debug 端口、Code tab 的 `aria-selected` 和 `class`、已选分支及分支可见性证据、输入框 selector、发送按钮 `disabled=false` 的证据、真实点击/发送动作，以及 prompt sentinel 或摘要。
+8. Codex 内置浏览器发送成功后，adapter 必须显式保留 TRAE tab，避免 Browser Use 默认清理导致用户看不到会话。推荐在所有发送和状态确认动作完成后调用 `browser.tabs.finalize({ keep: [{ tab, status: "handoff" }] })`；send receipt 必须记录 `tab_retention.status="handoff"`、`tab_retention.method="browser.tabs.finalize.keep"`、`tab_retention.session_url`。如果 finalization API 不可用，必须记录 `tab_retention.status="blocked"` 与原因，不得声称内置浏览器会话已保留。
+9. prompt 发送并确认 TRAE 已开始运行后，main 进入 Child Run Lock，并按上方 Web external monitoring automation 创建 recurring wakeup。正式实现任务首次状态检查不得早于 5 分钟，之后检查间隔不得短于 5 分钟；不得把 60 秒、90 秒等短等待作为完成、失败、无产出或人工接管依据。短等待只允许用于发送动作本身的 UI 确认或一次性身份探针。
+10. Web provider send receipt 必须记录 `external_wait_policy.mode="child_run_lock"`、`external_wait_policy.initial_check_min_minutes>=5`、`external_wait_policy.poll_interval_min_minutes>=5`、`external_wait_policy.short_timeout_completion_forbidden=true` 及 `monitoring_automation`。如果本轮只是身份探针或非代码任务，不走 external implementer completion validator，但不得把探针脚本的短等待写进正式实现规则。
+11. TRAE 聊天输出不能替代 `handoff_manual.path` 或 PR/worktree evidence，只能作为排障或 recovery 辅助证据。
+12. Web external PR recovery 必须在 Gate C Main Review 中完成 diff review、必要的受限 `maintenance_patch` 和验证，然后在 merge 后记录 `pr_merge` 与 `local_base_sync`：包括 PR URL/number、merge 前 head SHA、merge commit SHA、base branch、GitHub merge 成功证据，以及本地 `fetch + pull --ff-only` 后的 branch/head/clean status。缺少任一项不得标记 dispatch-task `completed`。
 
 ## handoff_manual
 

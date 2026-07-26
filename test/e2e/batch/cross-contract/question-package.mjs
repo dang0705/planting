@@ -114,30 +114,29 @@ function buildPackageResponse(overrides = {}) {
     questionPackage: {
       mode: 'yellow_leaf',
       sourceMode: 'manual_yellowing_care_environment_frontloaded',
-      questionCount: 4,
+      questionCount: 3,
       answerSubmitMode: 'package',
       questionDisplayMode: 'package'
     },
-    questions: [1, 2, 3, 4].map(buildQuestion),
+    questions: [1, 2, 3].map(buildQuestion),
     ...overrides
   }
 }
 
 function testYellowingPackageFrontendResponse() {
   const response = buildFrontendDiagnosisResponse(buildPackageResponse())
-  assert.equal(response.questions.length, 4)
+  assert.equal(response.questions.length, 3)
   assert.deepEqual(
     response.questions.map(item => item.questionKey),
     [
       'q_observed_probe__leaf_yellowing__package_1',
       'q_observed_probe__leaf_yellowing__package_2',
-      'q_observed_probe__leaf_yellowing__package_3',
-      'q_observed_probe__leaf_yellowing__package_4'
+      'q_observed_probe__leaf_yellowing__package_3'
     ]
   )
   assert.deepEqual(
     response.questions.map(item => Object.prototype.hasOwnProperty.call(item, 'questionId')),
-    [false, false, false, false]
+    [false, false, false]
   )
   assert.equal(response.questionPackage.mode, 'yellow_leaf')
   assert.equal(response.questionPackage.sourceMode, 'manual_yellowing_care_environment_frontloaded')
@@ -147,7 +146,7 @@ function testYellowingPackageFrontendResponse() {
   })
   assert.equal(response.uiHints.questionDisplayMode, 'package')
   assert.equal(response.uiHints.answerSubmitMode, 'package')
-  assert.equal(response.uiHints.maxQuestionsThisRound, 4)
+  assert.equal(response.uiHints.maxQuestionsThisRound, 3)
   assert.deepEqual(
     Object.keys(response).filter(key => key.toLowerCase().includes('follow')),
     []
@@ -158,12 +157,11 @@ function testModeToQuestionPackageMapping() {
   const questionPackage = getQuestionPackageByMode('yellow_leaf')
   assert.equal(questionPackage.mode, 'yellow_leaf')
   assert.equal(questionPackage.route, 'yellow_leaf')
-  assert.equal(questionPackage.questionCount, 4)
+  assert.equal(questionPackage.questionCount, 3)
   assert.deepEqual(questionPackage.packageTopics, [
     'watering_frequency_context',
     'light_change_context',
-    'fertilization_growth_context',
-    'airflow_humidity_context'
+    'fertilization_growth_context'
   ])
   assert.equal(questionPackage.answerSubmitMode, 'package')
   assert.equal(questionPackage.questionDisplayMode, 'package')
@@ -190,8 +188,7 @@ function testPackageAnswerSubmitPayload() {
   const questions = [
     'watering_frequency_context',
     'light_change_context',
-    'fertilization_growth_context',
-    'airflow_humidity_context'
+    'fertilization_growth_context'
   ].map(buildYellowingPackageQuestion)
   const payload = {
     ...buildPackageResponse({ questions }),
@@ -249,8 +246,7 @@ function testYellowingCompletePackageAnswersAreTerminalQuestioningPayload() {
   const answers = [
     'watering_frequency_context',
     'light_change_context',
-    'fertilization_growth_context',
-    'airflow_humidity_context'
+    'fertilization_growth_context'
   ].map(packageTopic => ({
     questionKey: `q_observed_probe__leaf_yellowing__${packageTopic}`,
     optionKey: `${packageTopic}_normal`

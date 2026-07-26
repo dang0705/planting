@@ -18,7 +18,7 @@
     <view v-for="row in rows" :key="row.date" class="mt-3">
       <view class="flex items-center justify-between">
         <text class="text-xs font-medium text-gray-700">{{ row.date }}</text>
-        <text class="text-sm font-bold text-[#2f8f57]">{{ doseLabel(row.amountMl) }}</text>
+        <text class="text-sm font-bold text-[#2f8f57]">{{ doseLabel(row.amountMl, row.hasSelection) }}</text>
       </view>
       <view class="mt-2">
         <slider
@@ -27,7 +27,7 @@
           :min="0"
           :max="sliderMaxIndex"
           :step="1"
-          :value="doseOptionIndex(row.amountMl)"
+          :value="doseOptionIndex(row.amountMl, row.hasSelection)"
           activeColor="#2f8f57"
           backgroundColor="#e5e7eb"
           block-color="#ffffff"
@@ -86,13 +86,28 @@ const sliderMaxIndex = computed(() => Math.max(0, bottleOptions.value.length - 1
 const hasBottle = computed(() => bottleOptions.value.some(o => o.icon === 'bottle'))
 const hasBucket = computed(() => bottleOptions.value.some(o => o.icon === 'bucket'))
 
-function doseLabel(amountMl) {
+/**
+ * 默认档位索引：第二档。
+ * 第一档为「不知道」（value=null, amountMl=null），不作为默认值；
+ * 未选择时 slider 默认落在第二档，用户主动选「不知道」后保持第一档。
+ */
+const DEFAULT_DOSE_INDEX = 1
+
+function doseLabel(amountMl, hasSelection = false) {
+  // 未选择且无值：默认显示第二档 label
+  if (!hasSelection && (amountMl === null || amountMl === undefined)) {
+    return bottleOptions.value[DEFAULT_DOSE_INDEX]?.label || '不知道'
+  }
   const value = resolveBottleOptionValue(amountMl, bottleOptions.value)
   const opt = bottleOptions.value.find(o => o.value === value)
   return opt?.label || '不知道'
 }
 
-function doseOptionIndex(amountMl) {
+function doseOptionIndex(amountMl, hasSelection = false) {
+  // 未选择且无值：默认落在第二档
+  if (!hasSelection && (amountMl === null || amountMl === undefined)) {
+    return DEFAULT_DOSE_INDEX
+  }
   const optionValue = resolveBottleOptionValue(amountMl, bottleOptions.value)
   const index = bottleOptions.value.findIndex(option => option.value === optionValue)
   return index >= 0 ? index : 0

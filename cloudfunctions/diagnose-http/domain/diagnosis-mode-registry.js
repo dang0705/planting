@@ -46,7 +46,9 @@ const FORMAL_PEST_VISUAL_EVIDENCE_KEYS = Object.freeze([
 const GENERAL_VISUAL_EVIDENCE_KEYS = Object.freeze([
   'leaf_yellowing',
   'yellowing_patchy',
-  'leaf_droop'
+  'leaf_droop',
+  'powder_white',
+  'sooty_mold'
 ])
 
 function createModeRegistryEntry({
@@ -58,7 +60,9 @@ function createModeRegistryEntry({
   allowedProfiles = ['full'],
   questionPackageKind,
   maxQuestions,
-  allowsMultipleResults = true
+  allowsMultipleResults = true,
+  enabled = true,
+  pendingImplementation = false
 }) {
   return Object.freeze({
     modeKey,
@@ -69,7 +73,9 @@ function createModeRegistryEntry({
     allowedProfiles,
     questionPackageKind,
     maxQuestions,
-    allowsMultipleResults
+    allowsMultipleResults,
+    enabled,
+    pendingImplementation
   })
 }
 
@@ -95,6 +101,23 @@ const DIAGNOSIS_MODE_REGISTRY = Object.freeze({
     questionPackageKind: 'visual_direct_only',
     maxQuestions: 0
   }),
+  sooty_mold: createModeRegistryEntry({
+    modeKey: 'sooty_mold',
+    userDisplayName: '煤污病（霉菌）',
+    requiresAiInitialAssessment: true,
+    manualDirectEntryEnabled: false,
+    allowedProfiles: ['full'],
+    questionPackageKind: 'visual_direct_only',
+    maxQuestions: 0
+  }),
+  root_rot: createModeRegistryEntry({
+    modeKey: 'root_rot',
+    userDisplayName: '根腐诊断',
+    questionPackageKind: 'fixed_root_rot',
+    maxQuestions: 0,
+    enabled: false,
+    pendingImplementation: true
+  }),
   ...Object.fromEntries(
     PEST_MODE_KEYS.map(modeKey => [
       modeKey,
@@ -112,7 +135,7 @@ const DIAGNOSIS_MODE_REGISTRY = Object.freeze({
   )
 })
 
-function createPestVisualRule({ modeKey, organKeys, evidence, visibleAnomalies = [] }) {
+function createVisualRule({ modeKey, organKeys, evidence, visibleAnomalies = [] }) {
   return Object.freeze({
     modeKey,
     organKeys: Object.freeze([...organKeys]),
@@ -135,7 +158,7 @@ function createPestVisualRule({ modeKey, organKeys, evidence, visibleAnomalies =
 }
 
 const PEST_VISUAL_RULES = Object.freeze([
-  createPestVisualRule({
+  createVisualRule({
     modeKey: 'spider_mite',
     organKeys: ['leaf', 'stem'],
     evidence: [
@@ -148,7 +171,7 @@ const PEST_VISUAL_RULES = Object.freeze([
       { evidenceKey: 'yellow_speckling', description: '叶片点状白黄伤痕' }
     ]
   }),
-  createPestVisualRule({
+  createVisualRule({
     modeKey: 'mealybug',
     organKeys: ['leaf', 'stem'],
     evidence: [
@@ -164,7 +187,7 @@ const PEST_VISUAL_RULES = Object.freeze([
       { evidenceKey: 'sooty_mold', description: '叶片或茎部可见黑色霉膜' }
     ]
   }),
-  createPestVisualRule({
+  createVisualRule({
     modeKey: 'scale_insect',
     organKeys: ['leaf', 'stem'],
     evidence: [
@@ -180,7 +203,7 @@ const PEST_VISUAL_RULES = Object.freeze([
       { evidenceKey: 'sooty_mold', description: '叶片或茎部可见黑色霉膜' }
     ]
   }),
-  createPestVisualRule({
+  createVisualRule({
     modeKey: 'whitefly',
     organKeys: ['leaf'],
     evidence: [
@@ -197,7 +220,7 @@ const PEST_VISUAL_RULES = Object.freeze([
       { evidenceKey: 'sooty_mold', description: '叶片或茎部可见黑色霉膜' }
     ]
   }),
-  createPestVisualRule({
+  createVisualRule({
     modeKey: 'aphid',
     organKeys: ['leaf', 'stem'],
     evidence: [{ evidenceKey: 'aphids_visible' }, { evidenceKey: 'surface_glossy_residue' }],
@@ -208,7 +231,7 @@ const PEST_VISUAL_RULES = Object.freeze([
       }
     ]
   }),
-  createPestVisualRule({
+  createVisualRule({
     modeKey: 'thrips',
     organKeys: ['leaf', 'flower'],
     evidence: [
@@ -223,13 +246,13 @@ const PEST_VISUAL_RULES = Object.freeze([
       { evidenceKey: 'yellow_speckling', description: '叶片点状白黄伤痕' }
     ]
   }),
-  createPestVisualRule({
+  createVisualRule({
     modeKey: 'leaf_miner',
     organKeys: ['leaf'],
     evidence: [{ evidenceKey: 'tunnels_in_leaf' }],
     visibleAnomalies: [{ evidenceKey: 'tunnels_in_leaf', description: '叶内潜道' }]
   }),
-  createPestVisualRule({
+  createVisualRule({
     modeKey: 'fungus_gnat',
     organKeys: ['soil'],
     evidence: [{ evidenceKey: 'small_flies_soil' }, { evidenceKey: 'wet_soil_surface' }],
@@ -237,17 +260,53 @@ const PEST_VISUAL_RULES = Object.freeze([
   })
 ])
 
+const GENERAL_VISUAL_RULES = Object.freeze([
+  createVisualRule({
+    modeKey: 'yellow_leaf',
+    organKeys: ['leaf'],
+    evidence: [{ evidenceKey: 'leaf_yellowing' }, { evidenceKey: 'yellowing_patchy' }],
+    visibleAnomalies: [
+      { evidenceKey: 'leaf_yellowing', description: '叶片均匀黄化' },
+      { evidenceKey: 'yellowing_patchy', description: '叶片斑状黄化' }
+    ]
+  }),
+  createVisualRule({
+    modeKey: 'wilting_droop',
+    organKeys: ['leaf', 'whole_plant'],
+    evidence: [{ evidenceKey: 'leaf_droop' }],
+    visibleAnomalies: [
+      { evidenceKey: 'leaf_droop', description: '叶片整体下垂偏离正常着生角度' }
+    ]
+  }),
+  createVisualRule({
+    modeKey: 'powdery_mildew',
+    organKeys: ['leaf', 'stem'],
+    evidence: [{ evidenceKey: 'powder_white' }],
+    visibleAnomalies: [
+      { evidenceKey: 'powder_white', description: '叶片或茎部表面白色粉状附着物' }
+    ]
+  }),
+  createVisualRule({
+    modeKey: 'sooty_mold',
+    organKeys: ['leaf', 'stem'],
+    evidence: [{ evidenceKey: 'sooty_mold' }],
+    visibleAnomalies: [
+      { evidenceKey: 'sooty_mold', description: '叶片或茎部表面黑色绒状或薄膜状霉层' }
+    ]
+  })
+])
+
 const PEST_EVIDENCE_RULES = Object.freeze({
   yellow_leaf: Object.freeze({
     directGroups: [['leaf_yellowing'], ['yellowing_patchy']],
-    candidateGroups: [],
+    candidateGroups: [['leaf_yellowing'], ['yellowing_patchy']],
     indirectGroups: [],
     allowIndirectDirect: false,
     directCombinationGroups: []
   }),
   wilting_droop: Object.freeze({
     directGroups: [['leaf_droop']],
-    candidateGroups: [],
+    candidateGroups: [['leaf_droop']],
     indirectGroups: [],
     allowIndirectDirect: false,
     directCombinationGroups: []
@@ -327,6 +386,20 @@ const PEST_EVIDENCE_RULES = Object.freeze({
     indirectGroups: [],
     allowIndirectDirect: false,
     directCombinationGroups: []
+  }),
+  sooty_mold: Object.freeze({
+    directGroups: [['sooty_mold']],
+    candidateGroups: [['sooty_mold']],
+    indirectGroups: [],
+    allowIndirectDirect: false,
+    directCombinationGroups: []
+  }),
+  root_rot: Object.freeze({
+    directGroups: [],
+    candidateGroups: [],
+    indirectGroups: [],
+    allowIndirectDirect: false,
+    directCombinationGroups: []
   })
 })
 
@@ -350,6 +423,7 @@ module.exports = {
   DIAGNOSIS_MODE_REGISTRY,
   FORMAL_PEST_VISUAL_EVIDENCE_KEYS,
   GENERAL_VISUAL_EVIDENCE_KEYS,
+  GENERAL_VISUAL_RULES,
   GENERIC_EVIDENCE_GROUP_KEYS,
   LOCKED_SPECIFIC_PEST_MODES,
   PEST_CATEGORY,

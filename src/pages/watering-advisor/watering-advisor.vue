@@ -193,16 +193,14 @@ import PotProfileFormCore from '@/components/pot-profile/PotProfileFormCore.vue'
 import { useUserStore } from '@/store/user.js'
 import { usePlantStore } from '@/store/plants.js'
 import CatalogPlantSearch from './components/CatalogPlantSearch.vue'
-import { getEnvironmentWeatherWindow } from '@/api/weather.js'
 import { formatMlRangeToBottleText } from '@/utils/water-volume-format.js'
 import {
   fetchAdhocPlannerResult,
   fetchWateringPlannerResult,
   saveAdvisorSession,
-  todayStr,
-  resolveWeatherLocation,
   buildPotProfileSummary
 } from '@/pages/index/components/watering-reminder-options.js'
+import { useWateringAdvisorWeather } from './useWateringAdvisorWeather.js'
 
 const userStore = useUserStore()
 const plantStore = usePlantStore()
@@ -216,8 +214,6 @@ const activeStep = ref(STEP_SOURCE)
 const selectedCatalogPlant = ref(null)
 const computing = ref(false)
 const plannerResult = ref(null)
-const weatherDays = ref([])
-const forecastDays = ref([])
 const savedToBackend = ref(false)
 const searchRef = ref(null)
 const potProfileFormRef = ref(null)
@@ -225,6 +221,13 @@ const editorSummary = ref('')
 const showMyPlantsList = ref(false)
 const loadingMyPlants = ref(false)
 const selectedUserPlantId = ref(null)
+const {
+  weatherDays,
+  forecastDays,
+  weatherLocationKey,
+  plannerLocationKey,
+  loadWeatherDays
+} = useWateringAdvisorWeather({ selectedCatalogPlant, plantStore, userStore })
 
 const selectedCatalogPlantName = computed(
   () =>
@@ -360,26 +363,6 @@ function buildPotProfilePayload() {
   return potProfileFormRef.value?.getPayload() || null
 }
 
-async function loadWeatherDays() {
-  const location = resolveWeatherLocation(userStore.location)
-  if (!location) {
-    uni.showToast({ title: '未获取到定位，建议将使用默认天气', icon: 'none' })
-    return
-  }
-  try {
-    const window = await getEnvironmentWeatherWindow({
-      ...location,
-      diagnosisDate: todayStr(),
-      mode: 'environment'
-    })
-    weatherDays.value = window?.historicalDays || window?.historical_days || []
-    forecastDays.value = window?.forecastDays || window?.forecast_days || []
-  } catch {
-    weatherDays.value = []
-    forecastDays.value = []
-  }
-}
-
 async function goToResult() {
   const payload = buildPotProfilePayload()
   if (!payload || !payload.potTopDiameterCm || !payload.potHeightCm) {
@@ -402,7 +385,9 @@ async function goToResult() {
         wateringEvents: selectedCatalogPlant.value.wateringEvents,
         weatherDays: weatherDays.value,
         forecastDays: forecastDays.value,
-        potProfile: payload
+        potProfile: payload,
+        locationKey: plannerLocationKey.value,
+        timezone: 'Asia/Shanghai'
       })
     } else {
       const catalogPlantId =
@@ -413,7 +398,9 @@ async function goToResult() {
         catalogPlantId,
         potProfile: payload,
         weatherDays: weatherDays.value,
-        forecastDays: forecastDays.value
+        forecastDays: forecastDays.value,
+        locationKey: plannerLocationKey.value,
+        timezone: 'Asia/Shanghai'
       })
     }
     if (result) {

@@ -49,7 +49,7 @@ const LIGHT_QUESTION_KEY = 'q_observed_probe__leaf_yellowing__light_change_conte
 const questionPackage = {
   mode: 'yellow_leaf',
   sourceMode: 'manual_yellowing_care_environment_frontloaded',
-  questionCount: 4,
+  questionCount: 3,
   answerSubmitMode: 'package',
   questionDisplayMode: 'package'
 }

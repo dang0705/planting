@@ -55,6 +55,8 @@
                       :timeline="getCareBehaviorTimelineByQuestion(question)"
                       :loading="environmentWeatherWindowLoading"
                       :error="environmentWeatherWindowError"
+                      :enable-dose-per-date="true"
+                      :pot-volume-ml="0"
                       @change="payload => handleCareBehaviorTimelineChange(question, payload)"
                     />
                     <LightEnvironmentPicker

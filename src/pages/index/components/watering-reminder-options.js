@@ -249,14 +249,18 @@ export function buildWateringPlannerRequestPayload({
   wateringEvents,
   weatherDays,
   forecastDays,
-  potProfile = null
+  potProfile = null,
+  locationKey = '',
+  timezone = 'Asia/Shanghai'
 }) {
   const payload = {
     plantId,
     wateringEvents,
     referenceDate: todayStr(),
     weatherDays,
-    forecastDays
+    forecastDays,
+    locationKey: String(locationKey || '').trim(),
+    timezone: String(timezone || 'Asia/Shanghai').trim() || 'Asia/Shanghai'
   }
   // 独立浇水建议流程可传入当前步骤中的盆型（默认值或用户修改值），
   // 后端优先使用此覆盖值；首页浇水提醒不传此字段，后端回退到数据库 potProfile。
@@ -271,7 +275,9 @@ export async function fetchWateringPlannerResult({
   wateringEvents,
   weatherDays,
   forecastDays,
-  potProfile = null
+  potProfile = null,
+  locationKey = '',
+  timezone = 'Asia/Shanghai'
 }) {
   const response = await requestHttpFunction('plant-user-http/user-plants/watering-planner', {
     method: 'POST',
@@ -280,7 +286,9 @@ export async function fetchWateringPlannerResult({
       wateringEvents,
       weatherDays,
       forecastDays,
-      potProfile
+      potProfile,
+      locationKey,
+      timezone
     })
   })
   return response?.code === 200 ? normalizePlannerResultDate(response.data) : null
@@ -358,14 +366,18 @@ export function buildAdhocPlannerRequestPayload({
   catalogPlantId,
   potProfile,
   weatherDays,
-  forecastDays
+  forecastDays,
+  locationKey = '',
+  timezone = 'Asia/Shanghai'
 }) {
   return {
     catalogPlantId,
     potProfile,
     referenceDate: todayStr(),
     weatherDays,
-    forecastDays
+    forecastDays,
+    locationKey: String(locationKey || '').trim(),
+    timezone: String(timezone || 'Asia/Shanghai').trim() || 'Asia/Shanghai'
   }
 }
 
@@ -373,11 +385,20 @@ export async function fetchAdhocPlannerResult({
   catalogPlantId,
   potProfile,
   weatherDays,
-  forecastDays
+  forecastDays,
+  locationKey = '',
+  timezone = 'Asia/Shanghai'
 }) {
   const response = await requestHttpFunction('plant-user-http/user-plants/watering-advisor', {
     method: 'POST',
-    body: buildAdhocPlannerRequestPayload({ catalogPlantId, potProfile, weatherDays, forecastDays })
+    body: buildAdhocPlannerRequestPayload({
+      catalogPlantId,
+      potProfile,
+      weatherDays,
+      forecastDays,
+      locationKey,
+      timezone
+    })
   })
   return response?.code === 200 ? normalizePlannerResultDate(response.data) : null
 }

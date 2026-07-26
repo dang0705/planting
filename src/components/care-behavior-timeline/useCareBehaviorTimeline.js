@@ -21,6 +21,7 @@ import {
   getDatePopoverStyle,
   POPOVER_REOPEN_SUPPRESS_MS
 } from './popover-position.js'
+import { resolveWateringDoseOptions } from '@/utils/water-volume-format.js'
 
 const LONG_PRESS_DURATION_MS = 1000
 const POPOVER_AUTO_HIDE_MS = 5000
@@ -224,6 +225,15 @@ export function useCareBehaviorTimeline(props, emit) {
     return getDatePopoverArrowStyle(index)
   })
 
+  // 默认剂量（第二档）：当用户选择浇水日期但未触碰 slider 时，UI 显示第二档作为默认值；
+  // emitted timeline 也需同步填入此默认 amountMl，避免 UI 与后端计算不一致
+  // （UI 显示具体量级但 amountMl=null 会被诊断/浇水计算当作"不知道"）。
+  // 第一档为"不知道"（amountMl=null），不作为默认值；用户主动选"不知道"后 hasSelection=true，按值反查回第一档。
+  const defaultDoseMl = computed(() => {
+    const options = resolveWateringDoseOptions(props.potVolumeMl)
+    return options[1]?.amountMl ?? null
+  })
+
   const timelinePayload = computed(() => {
     const nextTimeline = buildCareBehaviorTimelineFromDateEvents(
       buildTimelinePayloadDateEvents(dateStates.value),
@@ -233,10 +243,24 @@ export function useCareBehaviorTimeline(props, emit) {
         last_fertilized_bucket: bucketSelection.value
       }
     )
+    const fallbackMl = defaultDoseMl.value
     const wateringEventsWithDose = (nextTimeline.watering_events_10d || []).map(ev => {
       const hasSelection = Object.prototype.hasOwnProperty.call(wateringDoseByDate.value, ev.date)
       const selectedMl = hasSelection ? wateringDoseByDate.value[ev.date] : undefined
-      const amountMl = selectedMl !== undefined ? selectedMl : ev.amountMl
+      // fix #76: hasSelection=true 且 selectedMl===null 表示用户主动选了"不知道"（第一档），
+      // 必须保留 null，不得用 fallbackMl 替换；只有未主动选档位时才用 fallbackMl 兜底，
+      // 否则 UI 默认显示第二档但 emitted amountMl=null 的"不知道"语义会被吞掉。
+      if (hasSelection && selectedMl === null) {
+        return { ...ev, amountMl: null }
+      }
+      // 未主动选档位且后端无 amountMl 时，填入默认第二档 amountMl，保持 UI 与 emitted 一致
+      const resolvedMl = selectedMl !== undefined ? selectedMl : ev.amountMl
+      const amountMl =
+        resolvedMl !== null && resolvedMl !== undefined
+          ? resolvedMl
+          : fallbackMl !== null && fallbackMl !== undefined
+            ? fallbackMl
+            : null
       const next = { ...ev }
       if (amountMl !== null && amountMl !== undefined) {
         next.amountMl = amountMl
@@ -259,7 +283,9 @@ export function useCareBehaviorTimeline(props, emit) {
   const wateringDoseRows = computed(() =>
     (timelinePayload.value?.selected_watering_events_10d || []).map(ev => ({
       date: ev.date,
-      amountMl: ev.amountMl ?? null
+      amountMl: ev.amountMl ?? null,
+      // 标记本次会话用户是否主动选过档位：用于区分「未选择」（默认第二档）与「选了不知道」（保持第一档）
+      hasSelection: Object.prototype.hasOwnProperty.call(wateringDoseByDate.value, ev.date)
     }))
   )
 

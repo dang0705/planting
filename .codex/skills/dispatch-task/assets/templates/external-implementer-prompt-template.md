@@ -93,7 +93,7 @@ Forbidden:
   "uni_ui_mapping_evidence": {},
   "delivery_evidence": {
     "pr_url": "not_applicable | https://...",
-    "remote_branch": "not_applicable | origin/trae/...",
+    "remote_branch": "not_applicable | origin/trae-test-...",
     "head_sha": "not_applicable | <sha>"
   },
   "validation_evidence": {

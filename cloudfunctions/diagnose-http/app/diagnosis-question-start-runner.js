@@ -172,6 +172,15 @@ const MANUAL_SYMPTOM_MODE_OPTIONS = [
     symptomCn: '白色菌丝'
   },
   {
+    classKey: 'root_rot_mode',
+    modeKey: 'root_rot',
+    classNameCn: '根腐诊断模式',
+    symptomKey: 'root_rot_suspect',
+    symptomCn: '怀疑根腐',
+    disabled: true,
+    pendingImplementation: true
+  },
+  {
     classKey: 'root_rot_wet_wilt_mode',
     classNameCn: '湿土萎蔫/根腐模式',
     symptomKey: 'wilting_wet_soil',
@@ -258,7 +267,9 @@ function resolveManualSymptomMode(payload = {}) {
     !registryEntry ||
     registryEntry.requiresAiInitialAssessment ||
     !registryEntry.manualDirectEntryEnabled ||
-    !['fixed_yellow_leaf', 'fixed_wilting_droop'].includes(registryEntry.questionPackageKind)
+    !['fixed_yellow_leaf', 'fixed_wilting_droop', 'fixed_root_rot'].includes(
+      registryEntry.questionPackageKind
+    )
   ) {
     throw Object.assign(new Error('该症状模式需要先上传照片识别，不能无图启动'), {
       statusCode: 403,

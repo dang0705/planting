@@ -1,6 +1,7 @@
 /* oxlint-disable no-unused-vars, no-magic-numbers */
 import { computed, watch } from 'vue'
 import { resolveRiskSkipAction } from './question-skip'
+import { mergeQuestionStateFactory } from './question-flow-helpers'
 
 export function useDiagnoseQuestionFlow(ctx) {
   const {
@@ -199,6 +200,13 @@ export function useDiagnoseQuestionFlow(ctx) {
     )
   }
 
+  // 0.90-<0.95 很像结果的可选排查问题：用户可答可不答，提交时不强制校验答案。
+  const isOptionalFollowUpQuestion = computed(
+    () =>
+      Boolean(result.value?.uiHints?.optionalFollowUp) ||
+      Boolean(result.value?.questionPackage?.optionalFollowUp)
+  )
+
   function canProceedQuestion() {
     const question = currentQuestion.value
     const questionId = getQuestionId(question)
@@ -217,6 +225,10 @@ export function useDiagnoseQuestionFlow(ctx) {
       hasAdditionalImageUploadErrors.value
     ) {
       return false
+    }
+    // 0.90-<0.95 很像结果的可选排查问题：允许未答提交（跳过）。
+    if (isOptionalFollowUpQuestion.value) {
+      return true
     }
     return Boolean(questionAnswers.value[questionId])
   }
@@ -254,80 +266,24 @@ export function useDiagnoseQuestionFlow(ctx) {
   }
 
   function mergeQuestionState(nextResult = null, submittedPayload = null) {
-    const nextQuestions = Array.isArray(nextResult?.questions)
-      ? nextResult.questions.filter(item => getQuestionId(item))
-      : []
-    const submittedAnswers = Array.isArray(submittedPayload?.answers)
-      ? submittedPayload.answers
-      : []
-    const submittedAnswerMap = submittedAnswers.reduce((entries, item) => {
-      const questionId = getQuestionId(item)
-      const optionId = String(item?.optionKey || item?.optionId || '').trim()
-      if (questionId && optionId) {
-        entries[questionId] = {
-          optionId,
-          answerRevision: Number(
-            nextResult?.answerRevision || submittedPayload?.baseAnswerRevision || 0
-          )
-        }
-      }
-      return entries
-    }, {})
-
-    const dirtyIndex = dirtyQuestionFromIndex.value
-    const patchKeepUntilQuestionId = String(nextResult?.uiPatch?.keepUntilQuestionId || '').trim()
-    const patchKeepIndex = patchKeepUntilQuestionId
-      ? findQuestionIndex(patchKeepUntilQuestionId)
-      : -1
-    const keepEndIndex =
-      patchKeepIndex >= 0
-        ? patchKeepIndex
-        : dirtyIndex >= 0
-          ? dirtyIndex
-          : questionStack.value.length - 1
-    const keptQuestions = questionStack.value.slice(0, Math.max(0, keepEndIndex + 1))
-    const keptQuestionIds = new Set(keptQuestions.map(item => getQuestionId(item)).filter(Boolean))
-    const appendQuestions = nextQuestions.filter(item => !keptQuestionIds.has(getQuestionId(item)))
-    const nextStack = nextResult?.hasActiveQuestions ? [...keptQuestions, ...appendQuestions] : []
-    const nextStackQuestionIds = new Set(nextStack.map(item => getQuestionId(item)).filter(Boolean))
-
-    questionStack.value = nextStack
-    questionAnswers.value = {
-      ...Object.fromEntries(
-        Object.entries(questionAnswers.value || {}).filter(([questionId]) =>
-          nextStackQuestionIds.has(questionId)
-        )
-      ),
-      ...createQuestionAnswerMap(appendQuestions)
-    }
-    careBehaviorTimelineByQuestionId.value = {
-      ...Object.fromEntries(
-        Object.entries(careBehaviorTimelineByQuestionId.value || {}).filter(([questionId]) =>
-          nextStackQuestionIds.has(questionId)
-        )
-      ),
-      ...buildCareBehaviorTimelineByQuestionIdMap(nextStack)
-    }
-    committedQuestionAnswers.value = {
-      ...Object.fromEntries(
-        Object.entries(committedQuestionAnswers.value || {}).filter(([questionId]) =>
-          nextStackQuestionIds.has(questionId)
-        )
-      ),
-      ...Object.fromEntries(
-        Object.entries(submittedAnswerMap).filter(([questionId]) =>
-          nextStackQuestionIds.has(questionId)
-        )
-      )
-    }
-    dirtyQuestionFromIndex.value = -1
-    questionAnswerRevision.value = Number(
-      nextResult?.answerRevision || questionAnswerRevision.value || 0
-    )
-    activeQuestionIndex.value = nextStack.length ? nextStack.length - 1 : 0
-    expandedQuestionOptionByQuestion.value = {}
-    refreshEnvironmentWeatherWindowForCareBehavior(nextStack)
+    return mergeQuestionStateImpl(nextResult, submittedPayload)
   }
+
+  const mergeQuestionStateImpl = mergeQuestionStateFactory({
+    questionStack,
+    questionAnswers,
+    careBehaviorTimelineByQuestionId,
+    committedQuestionAnswers,
+    dirtyQuestionFromIndex,
+    questionAnswerRevision,
+    activeQuestionIndex,
+    expandedQuestionOptionByQuestion,
+    getQuestionId,
+    createQuestionAnswerMap,
+    buildCareBehaviorTimelineByQuestionIdMap,
+    refreshEnvironmentWeatherWindowForCareBehavior,
+    findQuestionIndex
+  })
 
   watch(
     () => [
@@ -393,6 +349,11 @@ export function useDiagnoseQuestionFlow(ctx) {
       return false
     }
 
+    // 0.90-<0.95 很像结果的可选排查问题：允许未答提交（用户可跳过）。
+    if (isOptionalFollowUpQuestion.value) {
+      return true
+    }
+
     if (
       !hasDirtyQuestionAnswers.value &&
       activeQuestionIndex.value < questionStack.value.length - 1
@@ -424,7 +385,17 @@ export function useDiagnoseQuestionFlow(ctx) {
           : currentQuestion.value
             ? [currentQuestion.value]
             : []
-      const payload = buildQuestionAnswerPayload(result.value, questionAnswers.value, {
+      // 可选追问问题跳过时提交明确 unknown，不发送 answers:[]。
+      const submitAnswerMap = { ...questionAnswers.value }
+      if (isOptionalFollowUpQuestion.value) {
+        for (const question of submitQuestionStack) {
+          const questionId = getQuestionId(question)
+          if (questionId && !submitAnswerMap[questionId]) {
+            submitAnswerMap[questionId] = 'unknown'
+          }
+        }
+      }
+      const payload = buildQuestionAnswerPayload(result.value, submitAnswerMap, {
         questionStack: submitQuestionStack,
         requestMode: isRevisionSubmit ? 'answer_revision' : 'answer_submit',
         baseAnswerRevision: questionAnswerRevision.value,
@@ -481,6 +452,7 @@ export function useDiagnoseQuestionFlow(ctx) {
     goPreviousQuestion,
     canProceedQuestionNow,
     handleNextQuestion,
+    isOptionalFollowUpQuestion,
     resetQuestionState,
     mergeQuestionState,
     setQuestionAnswer,

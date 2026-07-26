@@ -7,6 +7,7 @@ const {
   YELLOWING_PACKAGE_SOURCE_MODE
 } = require('../app/question-package-response')
 const { OUTCOME_EFFECT_TYPE } = require('../constants/outcome-route')
+const { filterYellowingCareEnvironmentCandidateOutcomeKeys } = require('../utils/yellowing-question-policy')
 
 const LIGHT_CONTEXT_QUESTION_KEY = 'q_observed_probe__leaf_yellowing__light_change_context'
 const LIGHT_HEALTH_ROUTE_BY_DIRECTION = {
@@ -127,6 +128,76 @@ function buildLightHealthOutcomeEffects(environmentCareContext = null) {
       evidence
     }
   ]
+}
+
+const HYDRATION_OUTCOME_KEY = 'overwatering_root_pressure'
+const HYDRATION_ROUTE_KEY = 'watering_root_pressure_route'
+
+function hasValidHydrationEvidence(environmentCareContext = null) {
+  const summary = environmentCareContext?.behaviorSummary10d
+  if (!summary || typeof summary !== 'object') {
+    return false
+  }
+  const wetPressureLoad = Number(summary.wetPressureLoad)
+  return Number.isFinite(wetPressureLoad)
+}
+
+/**
+ * 基于 behaviorSummary10d 的湿压指标对 overwatering_root_pressure 注入 SUPPORT/WEAKEN effect。
+ * 与 buildLightHealthOutcomeEffects 同构：直接累加 effectStrength 进入 buildOutcomeScoreMap。
+ */
+function buildHydrationOutcomeEffects(environmentCareContext = null) {
+  if (!hasValidHydrationEvidence(environmentCareContext)) {
+    return []
+  }
+  const summary = environmentCareContext.behaviorSummary10d
+  const wetPressureLoad = Number(summary.wetPressureLoad ?? 0)
+  const thoroughCount = Number(summary.thoroughWateringCount10d ?? 0)
+  const lastEffectiveDaysAgo = Number(summary.lastEffectiveRootWateredDaysAgo ?? 0)
+
+  if (wetPressureLoad >= 0.7 && thoroughCount >= 2) {
+    return [
+      {
+        questionKey: 'hydration_evidence',
+        optionKey: 'thorough_wet_pressure',
+        outcomeKey: HYDRATION_OUTCOME_KEY,
+        routeKey: HYDRATION_ROUTE_KEY,
+        effectType: OUTCOME_EFFECT_TYPE.SUPPORT,
+        effectStrength: 2.0,
+        evidenceDimension: 'hydration_pressure',
+        evidence: { wetPressureLoad, thoroughWateringCount10d: thoroughCount }
+      }
+    ]
+  }
+  if (wetPressureLoad >= 0.5 && thoroughCount >= 1) {
+    return [
+      {
+        questionKey: 'hydration_evidence',
+        optionKey: 'moderate_wet_pressure',
+        outcomeKey: HYDRATION_OUTCOME_KEY,
+        routeKey: HYDRATION_ROUTE_KEY,
+        effectType: OUTCOME_EFFECT_TYPE.SUPPORT,
+        effectStrength: 1.5,
+        evidenceDimension: 'hydration_pressure',
+        evidence: { wetPressureLoad, thoroughWateringCount10d: thoroughCount }
+      }
+    ]
+  }
+  if (wetPressureLoad <= 0.2 && lastEffectiveDaysAgo >= 7) {
+    return [
+      {
+        questionKey: 'hydration_evidence',
+        optionKey: 'dry_low_pressure',
+        outcomeKey: HYDRATION_OUTCOME_KEY,
+        routeKey: HYDRATION_ROUTE_KEY,
+        effectType: OUTCOME_EFFECT_TYPE.WEAKEN,
+        effectStrength: 0.5,
+        evidenceDimension: 'hydration_pressure',
+        evidence: { wetPressureLoad, lastEffectiveRootWateredDaysAgo: lastEffectiveDaysAgo }
+      }
+    ]
+  }
+  return []
 }
 
 function shouldUseAnswerEffect(effect = {}, hasLightHealthEvidence = false) {
@@ -257,11 +328,20 @@ async function resolveYellowLeafOutcomeResult({
   const hasLightHealthEvidence = hasValidLightHealthEvidence(environmentCareContext)
   const matchedEffects = [
     ...buildLightHealthOutcomeEffects(environmentCareContext),
+    ...buildHydrationOutcomeEffects(environmentCareContext),
     ...collectMatchedAnswerEffects(routeAnswerEffects, answers).filter(effect =>
       shouldUseAnswerEffect(effect, hasLightHealthEvidence)
     )
   ]
-  const rankedOutcomeScores = buildOutcomeScoreMap(matchedEffects)
+  const rawRankedOutcomeScores = buildOutcomeScoreMap(matchedEffects)
+  const allowedOutcomeKeySet = new Set(
+    filterYellowingCareEnvironmentCandidateOutcomeKeys(
+      rawRankedOutcomeScores.map(item => item.outcomeKey)
+    )
+  )
+  const rankedOutcomeScores = rawRankedOutcomeScores.filter(item =>
+    allowedOutcomeKeySet.has(item.outcomeKey)
+  )
   const matchedOutcomeKeys = rankedOutcomeScores.map(item => item.outcomeKey)
   const repositoryDiagnosisOutcomes = matchedOutcomeKeys.length
     ? await outcomeRouteRepository.getDiagnosisOutcomesByKeys(matchedOutcomeKeys)
@@ -395,6 +475,8 @@ module.exports = {
     buildOutcomeScoreMap,
     buildLightHealthOutcomeEffects,
     hasValidLightHealthEvidence,
+    buildHydrationOutcomeEffects,
+    hasValidHydrationEvidence,
     mergeBuiltinLightActionProfiles,
     mergeBuiltinLightOutcomes
   }

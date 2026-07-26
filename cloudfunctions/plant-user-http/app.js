@@ -31,7 +31,7 @@ const {
   readWateringReminder,
   saveWateringReminder
 } = require('./watering-reminder-service')
-const { buildWeatherSummary, computeAdhocPlanner } = require('./watering-planner-service')
+const { buildWeatherSummary, computeAdhocPlanner, injectD0IntoForecastDays } = require('./watering-planner-service')
 const { saveAdvisorSession, listAdvisorSessions } = require('./watering-advisor-service')
 const {
   computeTranspirationIntervalFactor,
@@ -128,7 +128,9 @@ async function main(event, context) {
           potProfile: request.body.potProfile || null,
           weatherDays: Array.isArray(request.body.weatherDays) ? request.body.weatherDays : [],
           forecastDays: Array.isArray(request.body.forecastDays) ? request.body.forecastDays : [],
-          referenceDate: request.body.referenceDate || new Date().toISOString().slice(0, 10)
+          referenceDate: request.body.referenceDate || '',
+          locationKey: String(request.body.locationKey || '').trim(),
+          timezone: String(request.body.timezone || 'Asia/Shanghai').trim() || 'Asia/Shanghai'
         })
         return jsonResponse(result.statusCode, {
           code: result.statusCode,
@@ -167,15 +169,33 @@ async function main(event, context) {
       const wateringEvents = Array.isArray(request.body.wateringEvents)
         ? request.body.wateringEvents
         : []
-      const referenceDate = request.body.referenceDate || new Date().toISOString().slice(0, 10)
+      // locationKey 统一从 plant.careLocation.locationKey 读取（前端从植物详情获取后传入）；
+      // timezone 用于 referenceDate 时区修正（默认 Asia/Shanghai），修复原 UTC slice 导致的日期错位。
+      const locationKey = String(request.body.locationKey || '').trim()
+      const timezone = String(request.body.timezone || 'Asia/Shanghai').trim() || 'Asia/Shanghai'
 
       // 从前端传入的天气数据构建历史/预报摘要
       const weatherDays = Array.isArray(request.body.weatherDays) ? request.body.weatherDays : []
       const forecastWeatherDays = Array.isArray(request.body.forecastDays)
         ? request.body.forecastDays
         : []
+
+      // D0 注入：前端传 D+1..D+14（14 项），后端从 day file latestSample 注入 D0 作为当日天气。
+      // 命中时 forecast 为 15 天（D0 + D+1..D+14）；缺失/超时 todayWeatherSource='missing'，按 14 天统计。
+      const {
+        forecastDays: forecastWithD0,
+        todayWeatherSource,
+        todayWeatherReason,
+        referenceDate
+      } = await injectD0IntoForecastDays({
+        locationKey,
+        timezone,
+        referenceDate: request.body.referenceDate || '',
+        forecastDays: forecastWeatherDays.slice(0, 14)
+      })
+
       const historical = buildWeatherSummary(weatherDays.slice(0, 10), strategy)
-      const forecast = buildWeatherSummary(forecastWeatherDays.slice(0, 15), strategy)
+      const forecast = buildWeatherSummary(forecastWithD0.slice(0, 15), strategy)
 
       const timeline = normalizeCareBehaviorTimeline({
         referenceDate,
@@ -257,7 +277,10 @@ async function main(event, context) {
           transpirationShadow: transpiration.shadow,
           transpirationComputedFactor: transpiration.computedFactor,
           transpirationCandidateNextWaterDate: candidateNextWaterDate,
-          transpirationCandidateNextWaterWindow: candidateNextWaterWindow
+          transpirationCandidateNextWaterWindow: candidateNextWaterWindow,
+          // D0 当日天气来源审计：'day_latest_sample' | 'missing'
+          todayWeatherSource,
+          todayWeatherReason
         }
       })
     }

@@ -1,5 +1,4 @@
 import { computed, ref, watch } from 'vue'
-import { getEnvironmentWeatherWindow } from '@/api/weather.js'
 import { usePlantStore } from '@/store/plants.js'
 import { createQuestionAnswerMap } from '@/utils/diagnose-flow.js'
 import { getQuestionIdentity as getQuestionId } from '@/utils/diagnose-question-identity.js'
@@ -25,11 +24,10 @@ import {
 import {
   buildLightEnvironmentByQuestionIdMap,
   dedupeQuestionsById,
-  getLightEnvironmentForQuestion,
-  resolveCareBehaviorReferenceDate
+  getLightEnvironmentForQuestion
 } from './question-environment.js'
-import { resolveDiagnosisCareLocation } from './question-care-location.js'
 import { estimateQuestionSwiperHeight } from './question-display.js'
+import { useEnvironmentWeatherWindow } from './question-weather-window.js'
 import { submitQuestionPackageAnswers } from './question-submit.js'
 
 function normalizeText(value = '') {
@@ -60,18 +58,33 @@ export function useQuestionPackageFlow({
   const questionAnswers = ref({})
   const careBehaviorTimelineByQuestionId = ref({})
   const lightEnvironmentByQuestionId = ref({})
-  const environmentWeatherWindow = ref(null)
-  const environmentWeatherWindowRequestKey = ref('')
-  const environmentWeatherWindowLoading = ref(false)
-  const environmentWeatherWindowError = ref('')
   const suppressedTimelineAnswerByQuestionId = ref({})
   const isSubmittingQuestionAnswer = ref(false)
+  const {
+    environmentWeatherWindow,
+    environmentWeatherWindowLoading,
+    environmentWeatherWindowError,
+    refreshEnvironmentWeatherWindowForCareBehavior
+  } = useEnvironmentWeatherWindow({ result, plantStore, userStore })
 
   const currentQuestion = computed(() => questionStack.value[activeQuestionIndex.value] || null)
   const isQuestionPackageMode = computed(() => isPackageResult(result.value))
-  const questionSwiperStyle = computed(() => ({
-    height: `${estimateQuestionSwiperHeight(currentQuestion.value)}px`
-  }))
+  const questionSwiperStyle = computed(() => {
+    // 光照环境题包含 LightEnvironmentPicker，展开后有方位选择器、滑块等大量动态内容，
+    // 固定像素高度容易裁剪折叠面板下方内容；改为占满可用高度，由内部 scroll-view 自行滚动。
+    if (isLightEnvironmentQuestion(currentQuestion.value)) {
+      return {}
+    }
+    // 养护行为浇水时间线题包含 CareBehaviorWateringDoseList，多日期 dose slider 行数动态，
+    // 固定像素高度（estimateQuestionSwiperHeight 默认 220）会裁剪多日期档位；
+    // 改为占满可用高度，由内部 scroll-view 自行滚动，保证所有档位 slider 都可见。
+    if (isCareBehaviorWateringTimelineQuestion(currentQuestion.value)) {
+      return {}
+    }
+    return {
+      height: `${estimateQuestionSwiperHeight(currentQuestion.value)}px`
+    }
+  })
   const questionProgressText = computed(() => {
     const currentIndex = Math.min(activeQuestionIndex.value + 1, questionStack.value.length || 1)
     return `问题 ${currentIndex} / ${questionStack.value.length || 1}`
@@ -112,7 +125,7 @@ export function useQuestionPackageFlow({
       lightEnvironmentByQuestionId.value
     )
     suppressedTimelineAnswerByQuestionId.value = {}
-    refreshEnvironmentWeatherWindowForCareBehavior(nextQuestions)
+    refreshEnvironmentWeatherWindowForCareBehavior(nextQuestions, careBehaviorTimelineByQuestionId)
   }
   function getCareBehaviorTimelineByQuestion(question = {}) {
     const questionId = getQuestionId(question)
@@ -388,74 +401,6 @@ export function useQuestionPackageFlow({
     await submitQuestionAnswers()
   }
 
-  function applyEnvironmentWeatherWindowToCareBehaviorTimelines() {
-    if (!environmentWeatherWindow.value) {
-      return
-    }
-    careBehaviorTimelineByQuestionId.value = Object.fromEntries(
-      Object.entries(careBehaviorTimelineByQuestionId.value || {}).map(([questionId, timeline]) => [
-        questionId,
-        mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(
-          timeline,
-          environmentWeatherWindow.value
-        )
-      ])
-    )
-  }
-
-  async function refreshEnvironmentWeatherWindowForCareBehavior(questions = questionStack.value) {
-    environmentWeatherWindowError.value = ''
-    try {
-      const environmentQuestions = (Array.isArray(questions) ? questions : []).filter(
-        item => isCareBehaviorWateringTimelineQuestion(item) || isLightEnvironmentQuestion(item)
-      )
-      if (!environmentQuestions.length || environmentWeatherWindowLoading.value) {
-        return
-      }
-      const location = await resolveDiagnosisCareLocation({
-        result: result.value,
-        plantStore,
-        userLocation: userStore.location || {}
-      })
-      if (!location) {
-        return
-      }
-      const diagnosisDate = resolveCareBehaviorReferenceDate(environmentQuestions)
-      const requestKey = `${location.locationKey}|${diagnosisDate}`
-      if (
-        requestKey === environmentWeatherWindowRequestKey.value &&
-        environmentWeatherWindow.value
-      ) {
-        applyEnvironmentWeatherWindowToCareBehaviorTimelines()
-        return
-      }
-      environmentWeatherWindowLoading.value = true
-      const weatherWindow = await getEnvironmentWeatherWindow({
-        lat: location.latitude,
-        lng: location.longitude,
-        city: location.cityName,
-        locationKey: location.locationKey,
-        careLocationId: location.careLocationId,
-        source: location.source,
-        plantId: location.plantId || result.value?.userPlantId || result.value?.plantId || '',
-        diagnosisDate,
-        mode: 'diagnosis'
-      })
-      if (weatherWindow) {
-        environmentWeatherWindow.value = weatherWindow
-        environmentWeatherWindowRequestKey.value = requestKey
-        applyEnvironmentWeatherWindowToCareBehaviorTimelines()
-      }
-    } catch (error) {
-      console.warn('获取养护时间线环境天气失败:', error)
-      environmentWeatherWindowError.value = String(
-        error?.message || error?.msg || '养护时间线天气加载失败，请稍后重试。'
-      ).trim()
-    } finally {
-      environmentWeatherWindowLoading.value = false
-    }
-  }
-
   watch(
     () => [
       userStore.location?.latitude,
@@ -464,7 +409,11 @@ export function useQuestionPackageFlow({
       userStore.location?.province,
       questionStack.value.map(item => getQuestionId(item)).join('|')
     ],
-    () => refreshEnvironmentWeatherWindowForCareBehavior()
+    () =>
+      refreshEnvironmentWeatherWindowForCareBehavior(
+        questionStack.value,
+        careBehaviorTimelineByQuestionId
+      )
   )
 
   return {

@@ -71,7 +71,7 @@ const {
 Module._load = originalModuleLoad
 
 const QUESTION_KEY = 'q_observed_probe__leaf_yellowing__light_change_context'
-const questionPackage = { mode: 'yellow_leaf', questionCount: 4 }
+const questionPackage = { mode: 'yellow_leaf', questionCount: 3 }
 const weatherWindow = {
   meta: { diagnosisDate: '2026-06-14' },
   historicalDays: Array.from({ length: 7 }, (_, index) => ({

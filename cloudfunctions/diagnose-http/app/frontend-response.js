@@ -32,8 +32,18 @@ const {
 
 function buildFrontendDiagnosisResponse(publicResponse = {}) {
   const rawQuestions = resolveResponseQuestions(publicResponse)
+  // 可选追问（likely result）场景：questions 非空但带有 finalResult/visibleOutcomes + optionalFollowUp 标记，
+  // 不能走问诊包分支（hasActiveQuestionPackage），否则会丢弃 finalResult/visibleOutcomes。
+  // 初始 /diagnosis/start 与 answer 路径都通过 buildFrontendDiagnosisResponse 输出，
+  // 这里统一处理 optionalFollowUp，避免初始响应丢失 likely 结论。
+  const hasOptionalFollowUp = Boolean(
+    publicResponse?.questionPackage?.optionalFollowUp ||
+      publicResponse?.uiHints?.optionalFollowUp
+  )
   const hasActiveQuestionPackage =
-    Boolean(publicResponse?.questionPackage) && rawQuestions.length > 0
+    Boolean(publicResponse?.questionPackage) &&
+    rawQuestions.length > 0 &&
+    !hasOptionalFollowUp
   const questionPackage = hasActiveQuestionPackage
     ? buildQuestionPackage(publicResponse, rawQuestions) ||
       buildYellowingQuestionPackage(publicResponse, rawQuestions)
@@ -130,7 +140,19 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
     publicResponse.environmentCareContext || null,
     publicResponse.careBehaviorTimeline || null
   )
-  return {
+  // 终端分支也可能承载初始 likely result（0.90–<0.95 + optionalFollowUp），
+  // 保留 optionalFollowUp/likelyResult 与 questionPackage，否则 /diagnosis/start 会把
+  // 可选追问渲染成 inactive，客户端无法发起确认。与 buildFrontendAnswerResponse 保持一致。
+  const likelyResultFlag = Boolean(
+    publicResponse?.uiHints?.likelyResult || publicResponse?.questionPackage?.likelyResult
+  )
+  const optionalQuestionPackage =
+    hasOptionalFollowUp &&
+    publicResponse.questionPackage &&
+    typeof publicResponse.questionPackage === 'object'
+      ? publicResponse.questionPackage
+      : null
+  const response = {
     diagnosisSessionId: publicResponse.diagnosisSessionId || '',
     resultId: publicResponse.resultId || '',
     roundId: publicResponse.roundId || 'round_1',
@@ -197,11 +219,30 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
     ...(careBehaviorTimeline ? { careBehaviorTimeline } : {}),
     ...(environmentCareContext ? { environmentCareContext } : {})
   }
+  if (hasOptionalFollowUp) {
+    response.uiHints = {
+      ...(response.uiHints || {}),
+      optionalFollowUp: true,
+      likelyResult: likelyResultFlag,
+      maxQuestionsThisRound: questions.length || 1
+    }
+    if (optionalQuestionPackage) {
+      response.questionPackage = optionalQuestionPackage
+    }
+    response.hasActiveQuestions = questions.length > 0
+  }
+  return response
 }
 
 function buildFrontendAnswerResponse(publicResponse = {}) {
   const questions = pickMinimalQuestions(resolveResponseQuestions(publicResponse))
-  if (questions.length) {
+  // 可选追问（likely result）场景：questions 非空但带有 finalResult/visibleOutcomes，
+  // 不能走 buildFrontendDiagnosisResponse 的问诊包路径，否则会丢弃结论数据。
+  const hasOptionalFollowUp = Boolean(
+    publicResponse?.questionPackage?.optionalFollowUp ||
+      publicResponse?.uiHints?.optionalFollowUp
+  )
+  if (questions.length && !hasOptionalFollowUp) {
     return buildFrontendDiagnosisResponse(publicResponse)
   }
 
@@ -252,6 +293,16 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
       }
     : null
 
+  const likelyResult = Boolean(
+    publicResponse?.uiHints?.likelyResult || publicResponse?.questionPackage?.likelyResult
+  )
+  const hasActiveQuestionsFlag = Boolean(
+    publicResponse?.hasActiveQuestions ||
+      (hasOptionalFollowUp && Array.isArray(publicResponse?.questions) && publicResponse.questions.length > 0)
+  )
+  const optionalQuestions = hasOptionalFollowUp
+    ? pickMinimalQuestions(resolveResponseQuestions(publicResponse))
+    : []
   const hasVisibleOutcomes = Array.isArray(visibleOutcomes) && visibleOutcomes.length > 0
   const treatmentText = normalizeText(
     publicResponse.treatmentText ||
@@ -273,7 +324,7 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
     publicResponse.careBehaviorTimeline || null
   )
 
-  return {
+  const responsePayload = {
     diagnosisSessionId: publicResponse.diagnosisSessionId || '',
     resultId: publicResponse.resultId || finalResult?.resultId || '',
     roundId: publicResponse.roundId || 'round_1',
@@ -311,12 +362,33 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
     ...(!hasVisibleOutcomes && summaryCard ? { summaryCard } : {}),
     confidenceLevel: publicResponse.confidenceLevel || finalResult?.confidenceLevel || '',
     ...(publicResponse.needHumanReview ? { needHumanReview: true } : {}),
-    hasActiveQuestions: false,
-    questions: [],
+    hasActiveQuestions: hasActiveQuestionsFlag,
+    questions: optionalQuestions,
     ...(environmentCareContext ? { environmentCareContext } : {}),
     ...pickActiveIntermediateFields(publicResponse),
-    ...(packageUiHints ? { uiHints: packageUiHints } : {})
+    ...(packageUiHints
+      ? { uiHints: packageUiHints }
+      : {
+          uiHints: {
+            ...(publicResponse.uiHints || {}),
+            canUploadMoreImages: Boolean(publicResponse?.uiHints?.canUploadMoreImages),
+            maxQuestionsThisRound: optionalQuestions.length || 0,
+            questionDisplayMode: 'single',
+            answerSubmitMode: 'per_question',
+            optionLayout: 'vertical',
+            transition: 'swiper'
+          }
+        })
   }
+  if (hasOptionalFollowUp) {
+    responsePayload.uiHints = {
+      ...(responsePayload.uiHints || {}),
+      optionalFollowUp: true,
+      likelyResult,
+      maxQuestionsThisRound: optionalQuestions.length || 1
+    }
+  }
+  return responsePayload
 }
 
 module.exports = {

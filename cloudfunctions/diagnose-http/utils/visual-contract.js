@@ -77,6 +77,24 @@ const VISUAL_OUTPUT_SCHEMA_TEXT = JSON.stringify({
       value_key: 'leaf_upper|leaf_lower|stem|soil_surface|leaf_internal|unknown',
       confidence_band: 'high|medium|low',
       visible_basis_cn: ''
+    },
+    {
+      dimension_key: 'surface_coating_presence',
+      value_key: 'present|absent|uncertain',
+      confidence_band: 'high|medium|low',
+      visible_basis_cn: ''
+    },
+    {
+      dimension_key: 'surface_coating_type',
+      value_key: 'powdery_white|sooty_black|none|uncertain',
+      confidence_band: 'high|medium|low',
+      visible_basis_cn: ''
+    },
+    {
+      dimension_key: 'leaf_anomaly_sign',
+      value_key: 'uniform_yellow|patchy_yellow|droop_wilt|none|uncertain',
+      confidence_band: 'high|medium|low',
+      visible_basis_cn: ''
     }
   ],
   missing_info_for_path: [
