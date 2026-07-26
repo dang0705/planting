@@ -222,4 +222,125 @@ assert.match(
   'Fix 5 对照: very_likely tier 无锁定证据时应保留"可能是"前缀'
 )
 
+// ---------------------------------------------------------------------------
+// Review #13: router return 必须透传 normalizedModeCandidates（含 confidence），
+// 供 directEvidenceLedgerForDirectResult 按候选 confidence 过滤。
+// ---------------------------------------------------------------------------
+const routerWithCandidates = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'full',
+  admittedEvidence: [],
+  visualModeCandidates: [{ mode: 'powdery_mildew', confidence: 0.92 }]
+})
+assert.ok(
+  Array.isArray(routerWithCandidates.normalizedModeCandidates),
+  'Review #13: router return 应包含 normalizedModeCandidates 数组'
+)
+assert.ok(
+  routerWithCandidates.normalizedModeCandidates.some(
+    item => item.modeKey === 'powdery_mildew' && Number.isFinite(Number(item.confidence))
+  ),
+  'Review #13: normalizedModeCandidates 每项应含 modeKey + confidence'
+)
+
+// ---------------------------------------------------------------------------
+// Review #18: 非虫害 visibleOutcomes 每项必须含 outcomeKey + problemKey = modeKey，
+// 避免 resolveOutcomeIdentityKey 回退到 outcome_N 合成 key。
+// ---------------------------------------------------------------------------
+assert.ok(
+  powderyDirectResponse.visibleOutcomes[0].outcomeKey === 'powdery_mildew',
+  'Review #18: visibleOutcomes[0].outcomeKey 应等于 modeKey'
+)
+assert.ok(
+  powderyDirectResponse.visibleOutcomes[0].problemKey === 'powdery_mildew',
+  'Review #18: visibleOutcomes[0].problemKey 应等于 modeKey'
+)
+
+// ---------------------------------------------------------------------------
+// Review #17: 多高置信非虫害病害应输出全部 outcomes + 细分入口 directionChoices。
+// powdery_mildew=0.96 + sooty_mold=0.97 应产生 2 个 visibleOutcomes、2 个 candidateModes、
+// directionChoices 含两个非虫害选项、routePrimaryAction='choose_direction'。
+// finalResult/topProblem 取置信度最高的（sooty_mold=0.97）。
+// ---------------------------------------------------------------------------
+const multiNonPestRoute = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'full',
+  admittedEvidence: [],
+  visualModeCandidates: [
+    { mode: 'powdery_mildew', confidence: 0.96 },
+    { mode: 'sooty_mold', confidence: 0.97 }
+  ]
+})
+assert.equal(
+  multiNonPestRoute.nextAction,
+  'direct_result',
+  'Review #17: 多非虫害高置信模式应走 direct_result'
+)
+
+const multiNonPestResponse = await buildPestRouteResponse({
+  sessionId: 'test_multi_non_pest',
+  round: 1,
+  plantContext: {},
+  aggregateResult: {
+    diagnosis_mode_route_result: multiNonPestRoute
+  },
+  diagnosisProfile: 'full'
+})
+assert.ok(multiNonPestResponse, 'Review #17: 多非虫害应产生响应')
+assert.equal(
+  multiNonPestResponse.visibleOutcomes.length,
+  2,
+  'Review #17: 应输出 2 个 visibleOutcomes（powdery_mildew + sooty_mold）'
+)
+assert.equal(
+  multiNonPestResponse.candidateModes.length,
+  2,
+  'Review #17: 应输出 2 个 candidateModes'
+)
+// finalResult/topProblem 取置信度最高（sooty_mold=0.97）
+assert.equal(
+  multiNonPestResponse.finalResult.problemKey,
+  'sooty_mold',
+  'Review #17: finalResult 应取置信度最高的 sooty_mold'
+)
+assert.equal(
+  multiNonPestResponse.topProblem.modeKey,
+  'sooty_mold',
+  'Review #17: topProblem 应取置信度最高的 sooty_mold'
+)
+// 两个 outcomes 都应含 outcomeKey/problemKey（#18）
+assert.ok(
+  multiNonPestResponse.visibleOutcomes.every(
+    item => item.outcomeKey === item.modeKey && item.problemKey === item.modeKey
+  ),
+  'Review #17+#18: 每个 visibleOutcomes 项的 outcomeKey/problemKey 应等于 modeKey'
+)
+// 细分入口：directionChoices 含两个非虫害选项
+assert.ok(
+  Array.isArray(multiNonPestResponse.directionChoices) &&
+    multiNonPestResponse.directionChoices.length === 2,
+  'Review #17: 应附加 directionChoices 细分入口含两个选项'
+)
+assert.ok(
+  multiNonPestResponse.directionChoices.some(item => item.modeKey === 'powdery_mildew') &&
+    multiNonPestResponse.directionChoices.some(item => item.modeKey === 'sooty_mold'),
+  'Review #17: directionChoices 应含 powdery_mildew 和 sooty_mold 两个选项'
+)
+assert.equal(
+  multiNonPestResponse.routePrimaryAction,
+  'choose_direction',
+  'Review #17: 多非虫害匹配时 routePrimaryAction 应为 choose_direction（细分入口）'
+)
+
+// ---------------------------------------------------------------------------
+// Review #17 对照组：单非虫害模式不应附加 directionChoices，routePrimaryAction='finalize'。
+// ---------------------------------------------------------------------------
+assert.equal(
+  powderyDirectResponse.routePrimaryAction,
+  'finalize',
+  'Review #17 对照: 单非虫害模式 routePrimaryAction 应为 finalize（无细分入口）'
+)
+assert.ok(
+  !Array.isArray(powderyDirectResponse.directionChoices),
+  'Review #17 对照: 单非虫害模式不应附加 directionChoices'
+)
+
 console.log('pest-visual-orchestrator direct result regression tests passed')

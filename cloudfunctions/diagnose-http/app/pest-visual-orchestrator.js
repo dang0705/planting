@@ -146,10 +146,11 @@ async function buildPestRouteResponse({
     // 固定题包模式（yellow_leaf/wilting_droop）必须走问诊路径。
     if (nonPestModes.length && !pestCandidateModes.length) {
       // fix #73: <0.90 candidate 不应 high confidence 直接结论，需检查 tier
-      const tierInfo = resolveNonPestCandidateTier(nonPestModes[0], routeResult)
+      // review #17: 传全部 nonPestModes，支持多非虫害病害 outcomes + 细分入口
+      const tierInfo = resolveNonPestCandidateTier(nonPestModes, routeResult)
       if (tierInfo.eligible) {
         return buildNonPestDirectResult({
-          modeKey: nonPestModes[0],
+          modeKeys: nonPestModes,
           sessionId,
           round,
           plantContext,
@@ -277,10 +278,10 @@ async function buildPestRouteResponse({
           isVisualDirectOnlyMode(mode)
       )
       if (nonPestModes.length) {
-        const tierInfo = resolveNonPestCandidateTier(nonPestModes[0], routeResult)
+        const tierInfo = resolveNonPestCandidateTier(nonPestModes, routeResult)
         if (tierInfo.eligible) {
           return buildNonPestDirectResult({
-            modeKey: nonPestModes[0],
+            modeKeys: nonPestModes,
             sessionId,
             round,
             plantContext,

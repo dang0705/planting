@@ -278,6 +278,9 @@ function resolveDiagnosisModeRoute({
     directMatches,
     provisionalMatches,
     confirmationCandidates,
+    // 透传 normalizedModeCandidates（含每候选 confidence），供 directEvidenceLedgerForDirectResult
+    // 与 resolveNonPestCandidateTier 按候选 confidence 过滤，避免回退到"全部提升"。
+    normalizedModeCandidates,
     associatedModes,
     directionChoices,
     recommendedDirection,

@@ -9,10 +9,15 @@
 // - very_likely tier (0.90-<0.95) 加"很像"前缀 + optionalFollowUp 标记
 // - below-likely tier (<0.90) 保留 uncertainty，不输出 high confidence 病害诊断（fix #73）
 //
-// 字段完整性契约（fix #74）：
+// 字段完整性契约（fix #74 / review #18）：
 // - 顶层必须包含 outcomeType、resultId，供 session-state-write-service 持久化
 // - finalResult 必须包含 problemId（与 problemKey 同值），供 session-state 读取
-// - visibleOutcomes 每项必须有 modeKey + outcomeType
+// - visibleOutcomes 每项必须有 modeKey + outcomeKey + problemKey + outcomeType
+//
+// 多非虫害匹配契约（review #17）：
+// - 当图片同时命中多个高置信非虫害病害时，输出全部 eligible 模式作为 visibleOutcomes
+// - finalResult/topProblem 取置信度最高的模式
+// - 附加 directionChoices 细分入口，供用户在结果页选择优先处理哪个病害
 
 const { DIAGNOSIS_MODE_REGISTRY } = require('../domain/diagnosis-mode-registry')
 
@@ -29,10 +34,32 @@ function prefixLikelyLabel(label = '') {
 }
 
 /**
+ * 从 normalizedModeCandidates 解析每个 modeKey 的最高 confidence。
+ * @param {Array<{modeKey: string, confidence: number}>} normalizedModeCandidates
+ * @returns {Map<string, number>} modeKey -> 最高 confidence
+ */
+function buildCandidateConfidenceMap(normalizedModeCandidates = []) {
+  const map = new Map()
+  for (const item of Array.isArray(normalizedModeCandidates) ? normalizedModeCandidates : []) {
+    if (item?.modeKey !== undefined && Number.isFinite(Number(item?.confidence))) {
+      const conf = Number(item.confidence)
+      const existing = map.get(item.modeKey)
+      if (existing === undefined || conf > existing) {
+        map.set(item.modeKey, conf)
+      }
+    }
+  }
+  return map
+}
+
+/**
  * 构建非虫害 visual_direct_only 模式的直接结果。
  *
+ * 支持单模式和多模式（review #17）：当 modeKeys 含多个模式时，visibleOutcomes 输出全部，
+ * finalResult/topProblem 取置信度最高的模式，并附加 directionChoices 细分入口。
+ *
  * @param {object} params
- * @param {string} params.modeKey - 模式 key（如 powdery_mildew）
+ * @param {string|string[]} params.modeKeys - 模式 key（如 powdery_mildew）或其数组；兼容旧 modeKey
  * @param {string} params.sessionId
  * @param {number} params.round
  * @param {object} params.plantContext
@@ -43,7 +70,7 @@ function prefixLikelyLabel(label = '') {
  * @returns {object} 完整的诊断响应对象
  */
 function buildNonPestDirectResult({
-  modeKey,
+  modeKeys,
   sessionId,
   round,
   plantContext,
@@ -52,15 +79,42 @@ function buildNonPestDirectResult({
   likelyResult = false,
   resultId = ''
 } = {}) {
-  const entry = DIAGNOSIS_MODE_REGISTRY[modeKey] || {}
-  const baseDisplayName = entry.userDisplayName || modeKey
-  // likelyResult 时加"很像"前缀
+  // 兼容旧调用：modeKeys 可为单字符串
+  const modeKeyList = Array.isArray(modeKeys)
+    ? modeKeys.filter(Boolean)
+    : [modeKeys].filter(Boolean)
+  const normalizedModeCandidates = Array.isArray(routeResult?.normalizedModeCandidates)
+    ? routeResult.normalizedModeCandidates
+    : []
+  const confidenceMap = buildCandidateConfidenceMap(normalizedModeCandidates)
+
+  // 按置信度降序排列：finalResult/topProblem 取首个（最高置信）
+  const sortedModes = modeKeyList
+    .slice()
+    .sort((a, b) => (confidenceMap.get(b) ?? -1) - (confidenceMap.get(a) ?? -1))
+  const primaryModeKey = sortedModes[0]
+  const entry = DIAGNOSIS_MODE_REGISTRY[primaryModeKey] || {}
+  const baseDisplayName = entry.userDisplayName || primaryModeKey
+  // likelyResult 时给主结论加"很像"前缀
   const displayName = likelyResult ? prefixLikelyLabel(baseDisplayName) : baseDisplayName
   const confidenceLevel = likelyResult ? 'likely' : 'high'
 
-  // fix #74: 补全 problemId（session-state-write-service 读 problemId 而非 problemKey）
-  // fix #74: 顶层补全 outcomeType + resultId，供 session 持久化与 frontend-response 输出
-  return {
+  // review #18: visibleOutcomes 每项补 outcomeKey + problemKey = modeKey，
+  // 与 finalResult/topProblem 一致，避免 resolveOutcomeIdentityKey 回退到 outcome_N 合成 key。
+  const visibleOutcomes = sortedModes.map(modeKey => {
+    const modeEntry = DIAGNOSIS_MODE_REGISTRY[modeKey] || {}
+    const modeDisplayName = modeEntry.userDisplayName || modeKey
+    return {
+      modeKey,
+      outcomeKey: modeKey,
+      problemKey: modeKey,
+      displayNameCn: modeDisplayName,
+      displayName: modeDisplayName,
+      outcomeType: 'problematic'
+    }
+  })
+
+  const response = {
     diagnosisSessionId: sessionId,
     resultId,
     roundId: `round_${round}`,
@@ -73,29 +127,23 @@ function buildNonPestDirectResult({
     outcomeType: 'problematic',
     finalResult: {
       resultId,
-      problemId: modeKey,
-      problemKey: modeKey,
+      problemId: primaryModeKey,
+      problemKey: primaryModeKey,
       problemName: displayName,
       displayName,
       outcomeType: 'problematic',
       confidenceLevel
     },
-    visibleOutcomes: [
-      {
-        modeKey,
-        displayNameCn: displayName,
-        displayName,
-        outcomeType: 'problematic'
-      }
-    ],
+    visibleOutcomes,
     topProblem: {
-      modeKey,
+      modeKey: primaryModeKey,
       displayName,
-      problemKey: modeKey,
-      problemId: modeKey
+      problemKey: primaryModeKey,
+      problemId: primaryModeKey
     },
-    candidateModes: [modeKey],
+    candidateModes: sortedModes,
     // likelyResult 标记，供 frontend-response.js 的 hasOptionalFollowUp 判断使用
+    // review #14: 保留 optionalFollowUp 作为入口（实际问题后续设计），questionCount=0 无实际问题
     ...(likelyResult
       ? {
           uiHints: { optionalFollowUp: true, likelyResult: true },
@@ -103,32 +151,58 @@ function buildNonPestDirectResult({
         }
       : {})
   }
+
+  // review #17: 多非虫害匹配时附加细分入口（directionChoices），
+  // 让用户在结果页可选择优先处理哪个病害。
+  if (sortedModes.length > 1) {
+    const directionChoices = sortedModes.map(modeKey => {
+      const modeEntry = DIAGNOSIS_MODE_REGISTRY[modeKey] || {}
+      return {
+        modeKey,
+        directionKey: modeKey,
+        familyKey: 'general',
+        problemKey: modeKey,
+        category: modeEntry.category || 'general',
+        userDisplayName: modeEntry.userDisplayName || modeKey
+      }
+    })
+    response.directionChoices = directionChoices
+    response.routePrimaryAction = 'choose_direction'
+  }
+
+  return response
 }
 
 /**
  * 判断非虫害 visual_direct_only candidate 的 confidence tier。
  * 用于 question_package fall-through 时决定输出 direct result 还是保留 uncertainty。
  *
- * @param {string} modeKey
+ * 支持多模式（review #17）：任一候选 eligible 即视为 eligible；likelyResult 取所有候选
+ * 中存在 0.90-<0.95 即为 true。
+ *
+ * @param {string|string[]} modeKeys - 单 modeKey 或其数组
  * @param {object} routeResult
  * @returns {{ eligible: boolean, likelyResult: boolean, reason: string }}
- *   - eligible: 是否可以直接结论（confidence >= 0.90）
- *   - likelyResult: 是否为 0.90-<0.95 very_likely tier
+ *   - eligible: 是否可以直接结论（至少一个候选 confidence >= 0.90 或 direct tier）
+ *   - likelyResult: 是否存在 0.90-<0.95 very_likely tier 候选
  *   - reason: 不 eligible 时的原因
  */
-function resolveNonPestCandidateTier(modeKey, routeResult = {}) {
-  // 从 routeResult 各候选源查 modeKey 的 confidence
+function resolveNonPestCandidateTier(modeKeys, routeResult = {}) {
+  const modeKeyList = Array.isArray(modeKeys)
+    ? modeKeys.filter(Boolean)
+    : [modeKeys].filter(Boolean)
   const candidateSources = [
     ...(Array.isArray(routeResult.confirmationCandidates) ? routeResult.confirmationCandidates : []),
     ...(Array.isArray(routeResult.provisionalMatches) ? routeResult.provisionalMatches : []),
     ...(Array.isArray(routeResult.normalizedModeCandidates) ? routeResult.normalizedModeCandidates : [])
   ]
-  let maxConfidence = -1
+  const confidenceByMode = new Map()
   for (const item of candidateSources) {
-    if (item?.modeKey === modeKey && Number.isFinite(Number(item?.confidence))) {
+    if (item?.modeKey !== undefined && Number.isFinite(Number(item?.confidence))) {
       const conf = Number(item.confidence)
-      if (conf > maxConfidence) {
-        maxConfidence = conf
+      const existing = confidenceByMode.get(item.modeKey)
+      if (existing === undefined || conf > existing) {
+        confidenceByMode.set(item.modeKey, conf)
       }
     }
   }
@@ -136,25 +210,52 @@ function resolveNonPestCandidateTier(modeKey, routeResult = {}) {
   // direct tier 由 routeResult.confidenceTier='direct' 触发，candidate confidence 缺失时也允许（保守：用 tier 判断）
   const tier = String(routeResult.confidenceTier || '').trim().toLowerCase()
   if (tier === 'direct') {
-    return { eligible: true, likelyResult: false, reason: 'direct_tier' }
+    // very_likely 仍需逐候选判断；direct tier 下 >=0.95 为 direct，0.90-<0.95 为 likely
+    let anyLikely = false
+    for (const modeKey of modeKeyList) {
+      const conf = confidenceByMode.get(modeKey)
+      if (conf !== undefined && conf >= 0.90 && conf < 0.95) {
+        anyLikely = true
+      }
+    }
+    return { eligible: true, likelyResult: anyLikely, reason: 'direct_tier' }
   }
-  // very_likely tier (0.90-<0.95)
-  if (tier === 'very_likely' || (maxConfidence >= 0.90 && maxConfidence < 0.95)) {
+
+  let anyEligible = false
+  let anyLikely = false
+  let hasConfidenceData = false
+  for (const modeKey of modeKeyList) {
+    const conf = confidenceByMode.get(modeKey)
+    if (conf === undefined) {
+      continue
+    }
+    hasConfidenceData = true
+    if (conf >= 0.95) {
+      anyEligible = true
+    } else if (conf >= 0.90) {
+      anyEligible = true
+      anyLikely = true
+    }
+  }
+
+  // very_likely tier (0.90-<0.95) 由 tier 标记触发
+  if (tier === 'very_likely') {
     return { eligible: true, likelyResult: true, reason: 'very_likely_tier' }
   }
-  // >=0.95 confidence（即使 tier 不是 direct，也按 direct 处理）
-  if (maxConfidence >= 0.95) {
-    return { eligible: true, likelyResult: false, reason: 'high_confidence' }
+
+  if (anyEligible) {
+    return {
+      eligible: true,
+      likelyResult: anyLikely,
+      reason: anyLikely ? 'likely_confidence' : 'high_confidence'
+    }
   }
-  // 0.90-<0.95
-  if (maxConfidence >= 0.90) {
-    return { eligible: true, likelyResult: true, reason: 'likely_confidence' }
-  }
+
   // fix #73: <0.90 不应输出 high confidence 病害诊断，保留 uncertainty
   return {
     eligible: false,
     likelyResult: false,
-    reason: maxConfidence < 0 ? 'no_confidence_data' : 'below_likely_threshold'
+    reason: !hasConfidenceData ? 'no_confidence_data' : 'below_likely_threshold'
   }
 }
 
