@@ -25,7 +25,15 @@ try {
 const WATERING_CONTEXTS = WATERING_CONTEXTS_SHARED
 const WATERING_ACTIONS = WATERING_ACTIONS_SHARED
 
-const { resolveMlToDoseClass } = require('../../layer/utils/water-volume-format')
+// 剂量分类器同 watering-planner：部署环境通过 /opt/utils 加载，本地回退到相对路径。
+// 之前无条件相对路径 require 在 CloudBase 部署时会 MODULE_NOT_FOUND（diagnose-http 函数包不包含 layer 目录）。
+let resolveMlToDoseClassShared
+try {
+  ;({ resolveMlToDoseClass: resolveMlToDoseClassShared } = require('/opt/utils/water-volume-format'))
+} catch {
+  ;({ resolveMlToDoseClass: resolveMlToDoseClassShared } = require('../../layer/utils/water-volume-format'))
+}
+const resolveMlToDoseClass = resolveMlToDoseClassShared
 
 const FERTILIZING_ACTIONS = Object.freeze({
   PAUSE: 'pause',

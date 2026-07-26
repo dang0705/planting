@@ -232,7 +232,13 @@ async function main(event, context) {
             diagnosisDate: payload.diagnosisDate || payload.diagnosis_date || payload.date,
             appEnv,
             apiKey: QWEATHER_CONFIG.apiKey,
-            baseUrl: QWEATHER_CONFIG.baseUrl
+            baseUrl: QWEATHER_CONFIG.baseUrl,
+            // 透传 locationKey / qweather id / city，让后端用 buildLocationKey 解析并暴露到 response 顶层，
+            // 供前端 catalog 植物 D0 day file 查询使用（无 qweather id / hot city 时走 coord 兜底）。
+            locationKey: payload.locationKey || payload.location_key || '',
+            qweatherLocationId: payload.qweatherLocationId || payload.qweather_location_id || '',
+            cityName: payload.cityName || payload.city_name || '',
+            city: payload.city || ''
           })
       const responseWindow = buildEnvironmentWeatherWindowByMode(
         weatherWindow,

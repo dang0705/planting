@@ -216,6 +216,14 @@ function resolveDiagnosisModeRoute({
   const directHasFixedPackageMode = directModeKeys.some(modeKey =>
     isFixedQuestionPackageMode(modeKey)
   )
+  // directMatches 中同时含固定题包与视觉直达模式时（如 yellow_leaf + powdery_mildew），
+  // 固定题包 outcome resolver 会过滤掉非题包模式，直接进题包会让视觉直达结果丢失。
+  // 此时走 choose_direction，让用户在题包与直达结论之间显式选择。
+  const directHasVisualDirectOnlyMode = directModeKeys.some(modeKey =>
+    isVisualDirectOnlyMode(modeKey)
+  )
+  const directMixedFixedAndVisualDirectOnly =
+    directHasFixedPackageMode && directHasVisualDirectOnlyMode
   const recommendedDirection = associatedModes.some(modeKey => PEST_MODE_KEYS.includes(modeKey))
     ? PEST_CATEGORY
     : directModeKeys[0] || candidateModeKeys[0] || ''
@@ -227,21 +235,23 @@ function resolveDiagnosisModeRoute({
     ? 'choose_direction'
     : singleFixedQuestionPackageMode
       ? 'question_package'
-      : directHasFixedPackageMode
-        ? 'question_package'
-        : directModeKeys.length
-          ? 'direct_result'
-          : candidateModeKeys.length
-          ? (directConclusion && !candidateHasFixedPackageMode) ||
-            (candidateAllVisualDirectOnly && (likelyResult || directConclusion)) ||
-            (likelyResult && !candidateHasFixedPackageMode) ||
-            (!candidateHasFixedPackageMode &&
-              confirmationCandidates.some(
-                item => item.matchedEvidence.length || item.candidateEvidence.length
-              ))
+      : directMixedFixedAndVisualDirectOnly
+        ? 'choose_direction'
+        : directHasFixedPackageMode
+          ? 'question_package'
+          : directModeKeys.length
             ? 'direct_result'
-            : 'question_package'
-          : 'uncertain'
+            : candidateModeKeys.length
+            ? (directConclusion && !candidateHasFixedPackageMode) ||
+              (candidateAllVisualDirectOnly && (likelyResult || directConclusion)) ||
+              (likelyResult && !candidateHasFixedPackageMode) ||
+              (!candidateHasFixedPackageMode &&
+                confirmationCandidates.some(
+                  item => item.matchedEvidence.length || item.candidateEvidence.length
+                ))
+              ? 'direct_result'
+              : 'question_package'
+            : 'uncertain'
   const snapshotSeed = JSON.stringify({
     profile: normalizedProfile,
     directModeKeys,

@@ -142,7 +142,8 @@ function normalizeModeCandidates(items = []) {
       imageId: normalizeText(item?.imageId || item?.image_id || ''),
       regionRef: normalizeCaptureRegion(item?.regionRef || item?.region_ref || item?.captureRegion)
     }))
-    .filter(item => DIAGNOSIS_MODE_REGISTRY[item.modeKey])
+    // 过滤掉 registry 中不存在或 enabled=false 的模式（如 root_rot 骨架）
+    .filter(item => DIAGNOSIS_MODE_REGISTRY[item.modeKey]?.enabled === true)
 }
 
 function hasSupportingEvidenceForMode(modeKey = '', evidenceItems = []) {

@@ -58,7 +58,7 @@
         <view class="flex-1">
           <text class="block text-xs text-amber-800 font-semibold">怀疑根腐？</text>
           <text class="block text-[10px] text-amber-700 mt-0.5">
-            过浇持续可能伤根，根腐诊断题包完善中
+            持续浇水过多可能伤根，建议观察根部并考虑换土修根
           </text>
         </view>
         <text
