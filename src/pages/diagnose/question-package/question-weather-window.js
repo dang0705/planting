@@ -1,10 +1,8 @@
 import { ref } from 'vue'
 import { getEnvironmentWeatherWindow } from '@/api/weather.js'
 import { mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline } from '@/utils/care-behavior-weather-window.js'
-import {
-  isCareBehaviorWateringTimelineQuestion,
-  isLightEnvironmentQuestion
-} from '@/utils/care-behavior-timeline.js'
+import { isCareBehaviorWateringTimelineQuestion } from '@/utils/care-behavior-timeline.js'
+import { isLightEnvironmentQuestion } from '@/utils/light-environment.js'
 import { resolveDiagnosisCareLocation } from './question-care-location.js'
 import { resolveCareBehaviorReferenceDate } from './question-environment.js'
 

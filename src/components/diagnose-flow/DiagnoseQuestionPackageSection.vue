@@ -208,18 +208,18 @@
                     @click="handleNextQuestion"
                   >
                     {{ isOptionalFollowUpQuestion ? '提交（可不答）' : '下一题' }}
-                  </button></view
-                >
+                  </button>
+                </view>
                 <text
                   v-if="hasDirtyQuestionAnswers"
                   class="block text-[10px] text-[#8B7355] leading-relaxed mt-2"
                 >
-                  你修改了之前的答案，点下一题后后续问题会交给后端重新判断。</text
-                ></view
-              ></view
-            ></view
-          ></view
-        >
+                  你修改了之前的答案，点下一题后后续问题会交给后端重新判断。
+                </text>
+              </view>
+            </view>
+          </view>
+        </view>
         <view
           v-else
           id="diagnose-question-package-empty-question"
