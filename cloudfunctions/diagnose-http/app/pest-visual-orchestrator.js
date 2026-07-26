@@ -194,9 +194,18 @@ function buildBaseResponse({
 
 // 为非虫害 visual_direct_only 模式（如白粉病）构建直接结果。
 // 固定题包模式（yellow_leaf/wilting_droop）不在此列，它们必须走问诊路径。
-function buildNonPestDirectResult({ modeKey, sessionId, round, plantContext, routeResult, aggregateResult }) {
+// likelyResult=true（0.90-<0.95 very_likely tier）时，给 displayName 加"很像"前缀、
+// confidenceLevel 降为 'likely'，并标记 optionalFollowUp，与 pest 路径的 attachLikelyOptionalQuestion 对齐。
+function buildNonPestDirectResult({ modeKey, sessionId, round, plantContext, routeResult, aggregateResult, likelyResult = false }) {
   const entry = DIAGNOSIS_MODE_REGISTRY[modeKey] || {}
-  const displayName = entry.userDisplayName || modeKey
+  const baseDisplayName = entry.userDisplayName || modeKey
+  // likelyResult 时加"很像"前缀，避免重复前缀
+  const displayName = likelyResult
+    ? (baseDisplayName.startsWith('很像') || baseDisplayName.startsWith('可能是')
+      ? baseDisplayName
+      : `很像${baseDisplayName}`)
+    : baseDisplayName
+  const confidenceLevel = likelyResult ? 'likely' : 'high'
   return {
     diagnosisSessionId: sessionId,
     roundId: `round_${round}`,
@@ -211,7 +220,7 @@ function buildNonPestDirectResult({ modeKey, sessionId, round, plantContext, rou
       problemName: displayName,
       displayName,
       outcomeType: 'problematic',
-      confidenceLevel: 'high'
+      confidenceLevel
     },
     visibleOutcomes: [
       {
@@ -226,7 +235,14 @@ function buildNonPestDirectResult({ modeKey, sessionId, round, plantContext, rou
       displayName,
       problemKey: modeKey
     },
-    candidateModes: [modeKey]
+    candidateModes: [modeKey],
+    // likelyResult 标记，供 frontend-response.js 的 hasOptionalFollowUp 判断使用
+    ...(likelyResult
+      ? {
+          uiHints: { optionalFollowUp: true, likelyResult: true },
+          questionPackage: { optionalFollowUp: true, likelyResult: true, questionCount: 0 }
+        }
+      : {})
   }
 }
 
@@ -281,7 +297,8 @@ async function buildPestRouteResponse({
         round,
         plantContext,
         routeResult,
-        aggregateResult
+        aggregateResult,
+        likelyResult
       })
     }
     const isDirectTier = normalizeKey(routeResult.confidenceTier) === 'direct'
@@ -375,6 +392,26 @@ async function buildPestRouteResponse({
           diagnosisModeRouteResult: routeResult,
           visualAggregateResult: aggregateResult
         }
+      }
+      // 非虫害 visual_direct_only candidate（如 powdery_mildew 0.85）走 question_package 但
+      // pestCandidateModes 为空、buildSpecificPestQuestionPackage 返回 null：
+      // 不应零问题 retake，应 fall through 到 buildNonPestDirectResult（与 direct_result 路径一致）。
+      // 0.90-<0.95 very_likely 走 likely 分支，<0.90 走普通 direct 结果。
+      const nonPestModes = candidateModes.filter(
+        mode =>
+          !Object.prototype.hasOwnProperty.call(PEST_MODE_LABELS, mode) &&
+          isVisualDirectOnlyMode(mode)
+      )
+      if (nonPestModes.length) {
+        return buildNonPestDirectResult({
+          modeKey: nonPestModes[0],
+          sessionId,
+          round,
+          plantContext,
+          routeResult,
+          aggregateResult,
+          likelyResult
+        })
       }
       return {
         ...base,

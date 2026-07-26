@@ -32,8 +32,18 @@ const {
 
 function buildFrontendDiagnosisResponse(publicResponse = {}) {
   const rawQuestions = resolveResponseQuestions(publicResponse)
+  // 可选追问（likely result）场景：questions 非空但带有 finalResult/visibleOutcomes + optionalFollowUp 标记，
+  // 不能走问诊包分支（hasActiveQuestionPackage），否则会丢弃 finalResult/visibleOutcomes。
+  // 初始 /diagnosis/start 与 answer 路径都通过 buildFrontendDiagnosisResponse 输出，
+  // 这里统一处理 optionalFollowUp，避免初始响应丢失 likely 结论。
+  const hasOptionalFollowUp = Boolean(
+    publicResponse?.questionPackage?.optionalFollowUp ||
+      publicResponse?.uiHints?.optionalFollowUp
+  )
   const hasActiveQuestionPackage =
-    Boolean(publicResponse?.questionPackage) && rawQuestions.length > 0
+    Boolean(publicResponse?.questionPackage) &&
+    rawQuestions.length > 0 &&
+    !hasOptionalFollowUp
   const questionPackage = hasActiveQuestionPackage
     ? buildQuestionPackage(publicResponse, rawQuestions) ||
       buildYellowingQuestionPackage(publicResponse, rawQuestions)

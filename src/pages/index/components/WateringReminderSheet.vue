@@ -314,7 +314,20 @@ function resetReminderState() {
   environmentWeatherWindow.value = null
 }
 async function loadWeatherDays() {
-  const location = resolveWeatherLocation(userStore.location)
+  // D0 与 forecast 必须同源：优先用 plant.careLocation 拉 weather window，
+  // 否则会出现 D0 用 plant location、forecast 用 user GPS 的拼接错位， corrupting humidity/rain/temp 摘要。
+  // plant 无 careLocation 时 fallback 到 userStore.location（此时 D0 也用 user location，保持同源）。
+  const plantCareLocation = props.plant?.careLocation || null
+  const plantLocationSource = plantCareLocation
+    ? {
+        latitude: plantCareLocation.lat ?? plantCareLocation.latitude,
+        longitude: plantCareLocation.lng ?? plantCareLocation.longitude,
+        city: plantCareLocation.city || '',
+        province: plantCareLocation.province || '',
+        locationKey: plantCareLocation.locationKey || ''
+      }
+    : userStore.location
+  const location = resolveWeatherLocation(plantLocationSource)
   if (!location) {
     hasWeatherRef.value = false
     weatherDays.value = []
@@ -324,6 +337,10 @@ async function loadWeatherDays() {
   try {
     const window = await getEnvironmentWeatherWindow({
       ...location,
+      // 透传 plant careLocation 的 locationKey，让后端用同一 key 解析 D0 day file
+      ...(plantLocationSource.locationKey
+        ? { locationKey: plantLocationSource.locationKey }
+        : {}),
       diagnosisDate: todayStr(),
       mode: 'environment'
     })

@@ -125,6 +125,26 @@ function validateWebExternalContract({ data, external, provider, need, isObject,
     'external_contract.remote_sync.base_commit is required'
   )
   need(nonEmptyString(remoteSync.push_ref), 'external_contract.remote_sync.push_ref is required')
+  // push_ref 必须与 ${remote}/${branch} 一致：manage-web-pr-worktree.mjs checkout ${remote}/${branch}，
+  // validate-result.mjs 用 handoff push_ref 作为 expected recovery branch，不一致会让 recovery evidence
+  // 被校验到与 reviewed worktree 不同的 ref 上。
+  if (nonEmptyString(remoteSync.push_ref) && nonEmptyString(remoteSync.remote) && nonEmptyString(remoteSync.branch)) {
+    const canonicalPushRef = `${remoteSync.remote}/${remoteSync.branch}`
+    need(
+      remoteSync.push_ref === canonicalPushRef,
+      `external_contract.remote_sync.push_ref must equal "${canonicalPushRef}" (got "${remoteSync.push_ref}")`
+    )
+    // 同样禁止 trae/ 前缀的 push_ref，避免通过 push_ref 绕过 branch 前缀校验。
+    if (
+      ['trae', 'chrome_cloud_agent'].includes(provider) &&
+      remoteSync.branch.startsWith('trae/')
+    ) {
+      need(
+        false,
+        'Web external provider push_ref must not resolve to the filtered trae/ prefix'
+      )
+    }
+  }
   need(
     nonEmptyString(remoteSync.planned_worktree_path),
     'external_contract.remote_sync.planned_worktree_path is required'
