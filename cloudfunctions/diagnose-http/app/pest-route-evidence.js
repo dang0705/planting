@@ -97,9 +97,10 @@ function directEvidenceLedgerForDirectResult(routeResult = {}, pestCandidateMode
 
   // fix #72: 按 candidate confidence 过滤，只提升 >=0.95 的候选为 direct_match。
   // 候选 confidence 来自 routeResult.confirmationCandidates / provisionalMatches / normalizedModeCandidates。
-  // 当 routeResult 中候选不带 confidence 字段时（router 未透传 visualModeCandidates.confidence），
-  // 不能保守地全部不提升——这会破坏 direct tier 的原有行为。
-  // 此时回退到原逻辑：所有 pestCandidateModes 都提升为 direct_match（信任 confidenceTier=direct）。
+  // dispatch-20260726 consolidated rework: 当 routeResult 中候选不带 confidence 字段时，
+  // 不能保守地全部不提升，也不能回退到"全部提升"——后者会让缺失 confidence 的低置信候选
+  // 被错误展示为已确认。此时不提升任何候选（保守），direct tier 仅由 evidence-based
+  // direct match 支撑；若都没有则 direct tier 无 direct_match，下游按 candidate 角色处理。
   const candidateConfidenceMap = new Map()
   for (const item of [
     ...(Array.isArray(routeResult.confirmationCandidates) ? routeResult.confirmationCandidates : []),
@@ -119,9 +120,11 @@ function directEvidenceLedgerForDirectResult(routeResult = {}, pestCandidateMode
   const additional = pestCandidateModes
     .filter(mode => !lockedSet.has(normalizeKey(mode)))
     .filter(mode => {
-      // routeResult 未透传 confidence 时回退到原行为（全部提升）
+      // dispatch-20260726 consolidated rework: 缺失 confidence 数据时不提升任何候选。
+      // 旧逻辑回退到"全部提升"会让低置信/未知置信候选被错误标记为 direct_match，
+      // 违反"missing per-candidate confidence must never promote all candidates"。
       if (!hasAnyConfidenceData) {
-        return true
+        return false
       }
       const conf = candidateConfidenceMap.get(mode)
       // 仅提升 confidence>=0.95 的候选；缺失 confidence 时不提升（保守）

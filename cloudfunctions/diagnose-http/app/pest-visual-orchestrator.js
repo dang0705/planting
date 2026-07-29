@@ -147,10 +147,13 @@ async function buildPestRouteResponse({
     if (nonPestModes.length && !pestCandidateModes.length) {
       // fix #73: <0.90 candidate 不应 high confidence 直接结论，需检查 tier
       // review #17: 传全部 nonPestModes，支持多非虫害病害 outcomes + 细分入口
+      // dispatch-20260726 consolidated rework: resolveNonPestCandidateTier 返回
+      // eligibleModeKeys（individually eligible），仅这些 mode 进入 direct result。
+      // 不能因整体 eligible 就把所有 modeKeys 都送进 buildNonPestDirectResult。
       const tierInfo = resolveNonPestCandidateTier(nonPestModes, routeResult)
       if (tierInfo.eligible) {
         return buildNonPestDirectResult({
-          modeKeys: nonPestModes,
+          modeKeys: tierInfo.eligibleModeKeys,
           sessionId,
           round,
           plantContext,
@@ -272,6 +275,7 @@ async function buildPestRouteResponse({
       // 非虫害 visual_direct_only candidate（如 powdery_mildew）走 question_package 但
       // pestCandidateModes 为空、buildSpecificPestQuestionPackage 返回 null：
       // fix #73: <0.90 不应直接结论，需检查 tier；>=0.90 可 fall through 到 buildNonPestDirectResult
+      // dispatch-20260726 consolidated rework: 仅 individually eligible 的 mode 进入 direct result。
       const nonPestModes = candidateModes.filter(
         mode =>
           !Object.prototype.hasOwnProperty.call(PEST_MODE_LABELS, mode) &&
@@ -281,7 +285,7 @@ async function buildPestRouteResponse({
         const tierInfo = resolveNonPestCandidateTier(nonPestModes, routeResult)
         if (tierInfo.eligible) {
           return buildNonPestDirectResult({
-            modeKeys: nonPestModes,
+            modeKeys: tierInfo.eligibleModeKeys,
             sessionId,
             round,
             plantContext,

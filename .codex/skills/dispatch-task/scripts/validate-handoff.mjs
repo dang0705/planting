@@ -65,6 +65,7 @@ const mode =
   data.implementation_mode ?? (tier === 'simple_patch' ? 'main_direct' : 'codex_subagent')
 const externalMode = ['external_implementer', 'zcode_external'].includes(mode)
 const externalTier = ['external_implementer', 'zcode_external'].includes(tier)
+const mainTakeoverMode = mode === 'main_takeover'
 const task = data.task ?? {}
 const codeChanges = task.code_changes_required === true
 const ui = task.ui_task === true
@@ -85,8 +86,8 @@ need(
 
 need(nonEmptyString(data.dispatch_run_id), 'dispatch_run_id is required')
 need(
-  ['main_direct', 'codex_subagent', 'external_implementer', 'zcode_external'].includes(mode),
-  'implementation_mode must be main_direct|codex_subagent|external_implementer|zcode_external'
+  ['main_direct', 'codex_subagent', 'main_takeover', 'external_implementer', 'zcode_external'].includes(mode),
+  'implementation_mode must be main_direct|codex_subagent|main_takeover|external_implementer|zcode_external'
 )
 need(
   [
@@ -116,6 +117,92 @@ need(
   stringArray(data.forbidden_paths, { min: 0, max: 50 }),
   'forbidden_paths must be an array of non-empty strings'
 )
+// Glob intersection check: a handoff must not simultaneously allow and forbid
+// the same file. If any allowed_path glob can match a file that any forbidden_path
+// glob also matches, the contract is self-contradictory and the implementer cannot
+// produce a legal changed_files list. This must be rejected before dispatch so the
+// recovery result is never trapped between an impossible allow/forbid pair.
+//
+// This is an exact intersection check for the supported glob language. Each glob
+// is treated as an epsilon-NFA: '*' consumes zero or more non-slash characters and
+// '**' consumes zero or more characters including slash. The product automaton of
+// the two NFAs is finite; searching it with one representative for each literal
+// character, slash, and an otherwise-unseen non-slash character cannot miss an
+// intersection. No bounded sample expansion is used.
+const handoffNormalizePath = value =>
+  String(value ?? '')
+    .replaceAll('\\', '/')
+    .replace(/^\.\//, '')
+    .replace(/\/+$/, '')
+const handoffEpsilonClosure = (pattern, states) => {
+  const closure = new Set(states)
+  const pending = [...closure]
+  while (pending.length) {
+    const index = pending.pop()
+    if (pattern.startsWith('**', index) && !closure.has(index + 2)) {
+      closure.add(index + 2)
+      pending.push(index + 2)
+    } else if (pattern[index] === '*' && pattern[index + 1] !== '*' && !closure.has(index + 1)) {
+      closure.add(index + 1)
+      pending.push(index + 1)
+    }
+  }
+  return closure
+}
+const handoffConsume = (pattern, states, character) => {
+  const next = new Set()
+  for (const index of states) {
+    if (index >= pattern.length) continue
+    if (pattern.startsWith('**', index)) {
+      next.add(index)
+    } else if (pattern[index] === '*' && pattern[index + 1] !== '*') {
+      if (character !== '/') next.add(index)
+    } else if (pattern[index] === character) {
+      next.add(index + 1)
+    }
+  }
+  return handoffEpsilonClosure(pattern, next)
+}
+const handoffStateKey = (left, right) =>
+  `${[...left].sort((a, b) => a - b).join(',')}|${[...right].sort((a, b) => a - b).join(',')}`
+const handoffGlobsIntersect = (leftGlob, rightGlob) => {
+  const left = handoffNormalizePath(leftGlob)
+  const right = handoffNormalizePath(rightGlob)
+  const alphabet = new Set(['/', '\u0000'])
+  for (const character of `${left}${right}`) {
+    if (character !== '*') alphabet.add(character)
+  }
+  const initialLeft = handoffEpsilonClosure(left, new Set([0]))
+  const initialRight = handoffEpsilonClosure(right, new Set([0]))
+  const queue = [[initialLeft, initialRight]]
+  const visited = new Set([handoffStateKey(initialLeft, initialRight)])
+  for (let cursor = 0; cursor < queue.length; cursor += 1) {
+    const [leftStates, rightStates] = queue[cursor]
+    if (leftStates.has(left.length) && rightStates.has(right.length)) return true
+    for (const character of alphabet) {
+      const nextLeft = handoffConsume(left, leftStates, character)
+      const nextRight = handoffConsume(right, rightStates, character)
+      if (!nextLeft.size || !nextRight.size) continue
+      const key = handoffStateKey(nextLeft, nextRight)
+      if (visited.has(key)) continue
+      visited.add(key)
+      queue.push([nextLeft, nextRight])
+    }
+  }
+  return false
+}
+if (Array.isArray(data.allowed_paths) && Array.isArray(data.forbidden_paths)) {
+  for (const allowed of data.allowed_paths) {
+    for (const forbidden of data.forbidden_paths) {
+      if (handoffGlobsIntersect(allowed, forbidden)) {
+        need(
+          false,
+          `allowed_paths and forbidden_paths conflict: allowed "${allowed}" and forbidden "${forbidden}" can match the same file`
+        )
+      }
+    }
+  }
+}
 need(isObject(data.decision_lock), 'decision_lock is required')
 need(
   ['standard', 'strict'].includes(data?.decision_lock?.level),
@@ -306,6 +393,12 @@ if (mode === 'main_direct') {
   need(data.target_role === undefined, 'main_direct must not declare target_role')
   need(data.spawn_contract === undefined, 'main_direct must not declare spawn_contract')
 }
+if (mainTakeoverMode) {
+  need(tier === 'deep_contract', 'main_takeover requires dispatch_tier=deep_contract')
+  need(data.target_role === 'main_takeover', 'main_takeover requires target_role=main_takeover')
+  need(data.main_takeover_authorization === true, 'main_takeover requires explicit main_takeover_authorization=true')
+  need(nonEmptyString(data.main_takeover_reason), 'main_takeover_reason is required')
+}
 if (tier === 'deep_contract') {
   need(data?.decision_lock?.level === 'strict', 'deep_contract requires decision_lock.level=strict')
 }
@@ -317,6 +410,7 @@ validateImplementationOwnerHandoff({
   tier,
   externalMode,
   externalTier,
+  mainTakeoverMode,
   codeChanges,
   external,
   mode,
@@ -327,6 +421,32 @@ validateImplementationOwnerHandoff({
   includesAll,
   unknownKeys
 })
+
+// Selection-to-consumer contract: every code task must explicitly declare
+// selection_to_consumer.required=true (selection task) or false with a reason
+// (non-selection task). Omitting the contract on a code task is rejected so the
+// implementer always produces the corresponding evidence. Non-code tasks are
+// exempted.
+const selectionContract = data.selection_to_consumer
+if (codeChanges) {
+  need(isObject(selectionContract), 'code task requires selection_to_consumer contract (required=true|false)')
+  need(typeof selectionContract?.required === 'boolean', 'selection_to_consumer.required must be boolean')
+  if (selectionContract?.required === false) {
+    need(
+      nonEmptyString(selectionContract?.not_applicable_reason),
+      'selection_to_consumer.required=false requires not_applicable_reason'
+    )
+  }
+} else if (selectionContract !== undefined) {
+  need(isObject(selectionContract), 'selection_to_consumer must be an object')
+  need(typeof selectionContract?.required === 'boolean', 'selection_to_consumer.required must be boolean')
+  if (selectionContract?.required === false) {
+    need(
+      nonEmptyString(selectionContract?.not_applicable_reason),
+      'selection_to_consumer.required=false requires not_applicable_reason'
+    )
+  }
+}
 
 if (qaRequired) {
   need(

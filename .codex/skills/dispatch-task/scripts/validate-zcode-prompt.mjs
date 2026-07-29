@@ -74,7 +74,8 @@ const requiredSectionMarkers = {
   style_stack_contract: '## Style Stack Contract',
   figma_direct_fetch: '## Figma Direct Fetch',
   figma_blocker_policy: '## Figma Blocker Policy',
-  uni_ui_mapping_contract: '## uni-ui Mapping Contract'
+  uni_ui_mapping_contract: '## uni-ui Mapping Contract',
+  selection_to_consumer_contract: '## Selection to Consumer Contract'
 };
 
 for (const section of zcode.required_prompt_sections ?? external.required_prompt_sections ?? []) {
@@ -86,6 +87,13 @@ for (const section of zcode.required_prompt_sections ?? external.required_prompt
 
 need(!prompt.includes('# Dispatch Task\n\n## 1. 角色所有权'),
   'prompt appears to include the full dispatch skill; keep ZCode prompt minimal');
+
+need(prompt.includes('selection_to_consumer'),
+  'ZCode prompt must require selection_to_consumer evidence');
+need(
+  /provider_status|provider 交付与 dispatch 完成状态分离|delivered.*不表示.*完成/i.test(prompt),
+  'ZCode prompt must separate provider delivery status from dispatch completion (provider_status=running|delivered|blocked; delivered is not completion)'
+);
 
 if (handoff?.figma?.link) {
   need(prompt.includes(handoff.figma.link), 'Figma prompt must include original figma.link');

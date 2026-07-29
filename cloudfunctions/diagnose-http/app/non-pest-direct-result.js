@@ -180,12 +180,17 @@ function buildNonPestDirectResult({
  * 支持多模式（review #17）：任一候选 eligible 即视为 eligible；likelyResult 取所有候选
  * 中存在 0.90-<0.95 即为 true。
  *
+ * dispatch-20260726 consolidated rework: 新增 eligibleModeKeys 返回值，列出每个 individually
+ * eligible 的 mode（>=0.90 或 direct tier 下 >=0.95 / 0.90-<0.95）。下游必须仅消费
+ * eligibleModeKeys，不能因整体 eligible 就把所有 modeKeys 都送进 buildNonPestDirectResult。
+ *
  * @param {string|string[]} modeKeys - 单 modeKey 或其数组
  * @param {object} routeResult
- * @returns {{ eligible: boolean, likelyResult: boolean, reason: string }}
+ * @returns {{ eligible: boolean, likelyResult: boolean, reason: string, eligibleModeKeys: string[] }}
  *   - eligible: 是否可以直接结论（至少一个候选 confidence >= 0.90 或 direct tier）
  *   - likelyResult: 是否存在 0.90-<0.95 very_likely tier 候选
  *   - reason: 不 eligible 时的原因
+ *   - eligibleModeKeys: individually eligible 的 modeKey 列表（仅这些可进入 direct result）
  */
 function resolveNonPestCandidateTier(modeKeys, routeResult = {}) {
   const modeKeyList = Array.isArray(modeKeys)
@@ -212,18 +217,31 @@ function resolveNonPestCandidateTier(modeKeys, routeResult = {}) {
   if (tier === 'direct') {
     // very_likely 仍需逐候选判断；direct tier 下 >=0.95 为 direct，0.90-<0.95 为 likely
     let anyLikely = false
+    const eligibleModeKeys = []
     for (const modeKey of modeKeyList) {
       const conf = confidenceByMode.get(modeKey)
-      if (conf !== undefined && conf >= 0.90 && conf < 0.95) {
-        anyLikely = true
+      // direct tier 下：有 confidence 数据时按 >=0.90 判定 individually eligible；
+      // 缺失 confidence 数据时（不应发生，因为 router 透传了 normalizedModeCandidates），
+      // 保守不纳入 eligibleModeKeys，避免"一个 eligible 释放所有"。
+      if (conf !== undefined && conf >= 0.90) {
+        eligibleModeKeys.push(modeKey)
+        if (conf < 0.95) {
+          anyLikely = true
+        }
       }
     }
-    return { eligible: true, likelyResult: anyLikely, reason: 'direct_tier' }
+    return {
+      eligible: eligibleModeKeys.length > 0,
+      likelyResult: anyLikely,
+      reason: eligibleModeKeys.length ? 'direct_tier' : 'no_eligible_mode_in_direct_tier',
+      eligibleModeKeys
+    }
   }
 
   let anyEligible = false
   let anyLikely = false
   let hasConfidenceData = false
+  const eligibleModeKeys = []
   for (const modeKey of modeKeyList) {
     const conf = confidenceByMode.get(modeKey)
     if (conf === undefined) {
@@ -232,22 +250,32 @@ function resolveNonPestCandidateTier(modeKeys, routeResult = {}) {
     hasConfidenceData = true
     if (conf >= 0.95) {
       anyEligible = true
+      eligibleModeKeys.push(modeKey)
     } else if (conf >= 0.90) {
       anyEligible = true
       anyLikely = true
+      eligibleModeKeys.push(modeKey)
     }
   }
 
   // very_likely tier (0.90-<0.95) 由 tier 标记触发
   if (tier === 'very_likely') {
-    return { eligible: true, likelyResult: true, reason: 'very_likely_tier' }
+    // very_likely tier 下：仅有 confidence 数据且 >=0.90 的候选 individually eligible。
+    // 缺失 confidence 数据的候选不纳入 eligibleModeKeys。
+    return {
+      eligible: eligibleModeKeys.length > 0,
+      likelyResult: true,
+      reason: eligibleModeKeys.length ? 'very_likely_tier' : 'no_eligible_mode_in_very_likely_tier',
+      eligibleModeKeys
+    }
   }
 
   if (anyEligible) {
     return {
       eligible: true,
       likelyResult: anyLikely,
-      reason: anyLikely ? 'likely_confidence' : 'high_confidence'
+      reason: anyLikely ? 'likely_confidence' : 'high_confidence',
+      eligibleModeKeys
     }
   }
 
@@ -255,7 +283,8 @@ function resolveNonPestCandidateTier(modeKeys, routeResult = {}) {
   return {
     eligible: false,
     likelyResult: false,
-    reason: !hasConfidenceData ? 'no_confidence_data' : 'below_likely_threshold'
+    reason: !hasConfidenceData ? 'no_confidence_data' : 'below_likely_threshold',
+    eligibleModeKeys: []
   }
 }
 

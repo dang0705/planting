@@ -98,6 +98,10 @@ export function writeGovernanceHandoff(dispatchRunId, patch = {}) {
       'automator_preflight_contract',
       'known_limitations'
     ],
+    selection_to_consumer: {
+      required: false,
+      not_applicable_reason: 'synthetic governance contract has no user-selectable values'
+    },
     ...patch
   }
   writeJson(file, handoff)

@@ -1,5 +1,5 @@
 <template>
-  <Layout title="青花植" content-class="pb-[70px]">
+  <Layout title="青花植">
     <template #left-info>
       <HeaderWeatherInfo />
     </template>

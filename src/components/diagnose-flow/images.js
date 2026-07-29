@@ -319,7 +319,7 @@ export function useDiagnoseImages(ctx) {
     }
 
     if (!userStore.canDiagnose) {
-      uni.showModal({
+      /*uni.showModal({
         title: '提示',
         content: '免费诊断次数已用完，升级会员享受无限次诊断',
         confirmText: '升级会员',
@@ -330,7 +330,7 @@ export function useDiagnoseImages(ctx) {
           }
         }
       })
-      return
+      return*/
     }
 
     try {

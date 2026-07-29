@@ -13,7 +13,8 @@ function wait(ms) {
 export async function withAutomatorPortLock(
   fn,
   {
-    lockPath = path.join(repoRoot, '.tmp', 'dispatch-task', 'automator-9420.lock'),
+    wsPort = 9420,
+    lockPath = path.join(repoRoot, '.tmp', 'dispatch-task', `automator-${Number(wsPort)}.lock`),
     timeoutMs = 5000,
     staleMs = 30 * 60 * 1000
   } = {}
@@ -37,7 +38,7 @@ export async function withAutomatorPortLock(
         continue
       }
       if (Date.now() >= deadline) {
-        throw new Error('automator 9420 lock timeout')
+        throw new Error(`automator ${Number(wsPort)} lock timeout`)
       }
       await wait(50)
     }

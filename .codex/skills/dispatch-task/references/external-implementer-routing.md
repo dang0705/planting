@@ -236,6 +236,38 @@ pr_policy: required   # Web/云端代码任务必须产出 PR；合并由 main �
 
 Web/云端 provider 若不能写入本地主工作区的 `handoff_manual.path`，recovery result 记录 `external_handoff_manual.status=not_required_remote_pr`，并必须提供 PR/worktree recovery evidence。不能用聊天状态补判完成。
 
+### provider_status 与 dispatch 完成状态分离
+
+本轮 legacy manual 仍用 `status=working|completed|blocked`，其中 `completed` 只表示本次 provider 交付结束，不表示整个 dispatch 完成。未来生成的 provider 合同改用 `provider_status=running|delivered|blocked`：
+
+- `provider_status=delivered` 只记录 provider 交付结束并触发 recovery，绝不表示 dispatch 完成。
+- dispatch 完成由 episode `lifecycleStage=completion_ready` 经 `validate-completion-readiness` 唯一记录，与 provider 交付状态彻底分离。
+- 唯一标识只能是 `dispatch_run_id`；不接受 `dispatch_id` 别名，不允许 `delivered`/`completed` 语义混用。
+
+`validate-zcode-handoff-manual` 接受 legacy `status` 与 future `provider_status` 中的恰好一个；同时声明两者、混用语义或使用 `dispatch_id` 别名均被拒绝。
+
+## Continuation contract - provider 交付不等于 dispatch 完成
+
+provider 返回终态后进入受持久化状态机和 validator 约束的 `lifecycleStage` 严格转移（见 SKILL.md §7.1）。external implementer bridge 必须按顺序执行：
+
+```bash
+# 1. provider 终态：只记录 provider_delivered + recovery_required，不 finish
+node .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs episode provider-delivered --dispatch-run-id=<run>
+# 2. 显式开始 recovery
+node .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs episode start-recovery --dispatch-run-id=<run>
+# ... review/QA 由 main 推进 ...
+# 3. completion_ready 只能由成功验证的 validate-completion-readiness 记录
+node .codex/skills/dispatch-task/scripts/validate-completion-readiness.mjs <handoff> <result> <postflight> [runtime-qa]
+# 4. completion_ready 后才允许 finish completed
+node .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs episode finish --dispatch-run-id=<run> --status=completed
+```
+
+在 `completion_ready` 之前 `episode finish --status=completed` 会被拒绝。provider 聊天、manual 或 result 自称完成一律不接受为 `completion_ready`。
+
+## Selection to consumer contract
+
+任务新增或变更用户可选值时，handoff 声明 `selection_to_consumer.required=true`；external result 必须在 `selection_to_consumer.values` 列出每个具体 value、`submit_payload`、`consumer_branch`、`expected_entry`、`anti_fallback_assertion`，并设 `consumer_verified=true`。非选择类任务必须写 `selection_to_consumer.not_applicable=true` 与原因。external prompt template 已包含 `## Selection to Consumer Contract` section，validator 与 Completion Gate 会拒绝缺失证据的任务。
+
 ## Validators（external 模式）
 
 ```bash

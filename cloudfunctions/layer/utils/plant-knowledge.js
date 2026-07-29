@@ -96,11 +96,37 @@ function toNullableDecimal(value) {
 }
 
 function resolveCatalogPlantId(row = {}) {
-  return row.session_plant_id || row.plant_identity_id || ''
+  return normalizeNullableString(row.session_plant_id) || normalizeNullableString(row.plant_identity_id) || ''
 }
 
 function resolveUserPlantCatalogLookupId(row = {}) {
-  return row.plant_identity_id || row.plant_id || row.session_plant_id || ''
+  return (
+    normalizeNullableString(row.plant_identity_id) ||
+    normalizeNullableString(row.plant_id) ||
+    normalizeNullableString(row.session_plant_id) ||
+    ''
+  )
+}
+
+const USER_PLANT_DISPLAY_IDENTITY_FIELDS = [
+  'plant_id',
+  'plant_identity_id',
+  'session_plant_id',
+  'canonical_name',
+  'recognized_name',
+  'nickname'
+]
+
+function hasDisplayableUserPlantIdentity(row = {}) {
+  return USER_PLANT_DISPLAY_IDENTITY_FIELDS.some(field => Boolean(normalizeNullableString(row[field])))
+}
+
+function displayableUserPlantSqlCondition(tableAlias = 'up') {
+  return `(
+    ${USER_PLANT_DISPLAY_IDENTITY_FIELDS.map(
+      field => `LOWER(TRIM(COALESCE(${tableAlias}.${field}, ''))) NOT IN ('', 'null', 'undefined')`
+    ).join('\n      OR ')}
+  )`
 }
 
 function buildCatalogFieldMatchCondition(operator, paramName) {
@@ -560,19 +586,25 @@ const USER_PLANT_LATEST_DIAGNOSIS_SQL = `
 `
 
 function mapUserPlantInstanceRow(row, plant = null) {
-  const plantIdentityId = plant?.plantIdentityId || row.plant_identity_id || ''
-  const sessionPlantId = plant?.sessionPlantId || row.session_plant_id || ''
-  const canonicalName = row.canonical_name || plant?.canonicalName || row.recognized_name || ''
+  const plantIdentityId = plant?.plantIdentityId || normalizeNullableString(row.plant_identity_id) || ''
+  const sessionPlantId = plant?.sessionPlantId || normalizeNullableString(row.session_plant_id) || ''
+  const canonicalName =
+    normalizeNullableString(row.canonical_name) ||
+    plant?.canonicalName ||
+    normalizeNullableString(row.recognized_name) ||
+    ''
+  const nickname = normalizeNullableString(row.nickname) || ''
+  const recognizedName = normalizeNullableString(row.recognized_name) || ''
 
   return {
     id: row.id,
-    plantId: row.plant_id,
+    plantId: normalizeNullableString(row.plant_id) || '',
     plantIdentityId,
     sessionPlantId,
     canonicalName,
-    nickname: row.nickname || '',
-    displayName: row.nickname || canonicalName || row.recognized_name || '未命名植物',
-    recognizedName: row.recognized_name || '',
+    nickname,
+    displayName: nickname || canonicalName || recognizedName || '未命名植物',
+    recognizedName,
     sourceType: row.source_type || 'catalog',
     recognitionType: row.recognition_type || '',
     recognitionConfidence:
@@ -800,6 +832,7 @@ async function getUserPlantWateringStrategy(openid, id) {
 async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) {
   const limit = Number(pageSize)
   const offset = (Number(page) - 1) * limit
+  const displayableIdentityCondition = displayableUserPlantSqlCondition('up')
   const sql = `
     SELECT
       up.id,
@@ -839,16 +872,20 @@ async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) 
     FROM user_plant_instances up
     ${USER_PLANT_LATEST_DIAGNOSIS_SQL}
     WHERE up._openid = {{openid}}
+      AND ${displayableIdentityCondition}
     ORDER BY up.created_at DESC
     LIMIT {{limit}} OFFSET {{offset}}
   `
   const countResult = await models.$runSQL(
-    'SELECT COUNT(*) AS total FROM user_plant_instances WHERE _openid = {{openid}}',
+    `SELECT COUNT(*) AS total
+     FROM user_plant_instances up
+     WHERE up._openid = {{openid}}
+       AND ${displayableIdentityCondition}`,
     { openid }
   )
   const total = Number(countResult?.data?.executeResultList?.[0]?.total || 0)
   const result = await models.$runSQL(sql, { openid, limit, offset })
-  const rows = result?.data?.executeResultList || []
+  const rows = (result?.data?.executeResultList || []).filter(hasDisplayableUserPlantIdentity)
   const plantIds = Array.from(
     new Set(rows.map(row => resolveUserPlantCatalogLookupId(row)).filter(Boolean))
   )
@@ -1273,6 +1310,7 @@ module.exports = {
   getUserPlantWateringStrategy,
   getUserPlantCareExtension,
   listUserPlantInstances,
+  hasDisplayableUserPlantIdentity,
   updateUserPlantInstance,
   deleteUserPlantInstance,
   recordIdentifySession,

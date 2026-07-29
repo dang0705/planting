@@ -343,4 +343,307 @@ assert.ok(
   'Review #17 对照: 单非虫害模式不应附加 directionChoices'
 )
 
+// ---------------------------------------------------------------------------
+// dispatch-20260726-model-mode-precedence-zcode: aphid=0.95 模型直判不被
+// leaf_yellowing 证据派生模式污染。端到端验证：
+// - 路由层 associatedModes 只含 aphid，无 yellow_leaf 污染
+// - nextAction=direct_result，无 cross-family choose_direction
+// - visibleOutcomes 只含具体 aphid outcome（不压缩为 pest 大类）
+// - 无关 directionChoices 不产生
+// - confidenceLevel 为 high（非 low），文案不带"可能是"
+// ---------------------------------------------------------------------------
+const aphidModelDirectRoute = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'pest',
+  admittedEvidence: [
+    evidence('leaf_yellowing', 'high', 'strong', 'img_mix', 'leaf_upper_surface')
+  ],
+  visualModeCandidates: [
+    { mode: 'aphid', confidence: 0.95, regionRef: 'leaf_upper_surface' }
+  ]
+})
+assert.deepEqual(
+  aphidModelDirectRoute.associatedModes,
+  ['aphid'],
+  'model-mode-precedence: aphid 模型直判 associatedModes 不应被 yellow_leaf 污染'
+)
+assert.equal(
+  aphidModelDirectRoute.nextAction,
+  'direct_result',
+  'model-mode-precedence: aphid=0.95 走 direct_result，无 cross-family 阻断'
+)
+
+const aphidModelDirectResponse = await buildPestRouteResponse({
+  sessionId: 'test_aphid_model_direct',
+  round: 1,
+  plantContext: {},
+  aggregateResult: {
+    diagnosis_mode_route_result: aphidModelDirectRoute
+  },
+  diagnosisProfile: 'pest'
+})
+assert.ok(
+  aphidModelDirectResponse,
+  'model-mode-precedence: aphid 模型直判应有响应'
+)
+assert.ok(
+  aphidModelDirectResponse.visibleOutcomes.length > 0,
+  'model-mode-precedence: aphid 模型直判应有 visibleOutcomes'
+)
+assert.equal(
+  aphidModelDirectResponse.visibleOutcomes[0].outcomeKey,
+  'aphid',
+  'model-mode-precedence: visibleOutcomes 应是具体 aphid，不压缩为 pest 大类'
+)
+assert.equal(
+  aphidModelDirectResponse.visibleOutcomes.length,
+  1,
+  'model-mode-precedence: 单 aphid 模型直判只输出 1 个 outcome'
+)
+assert.doesNotMatch(
+  aphidModelDirectResponse.visibleOutcomes[0].displayNameCn,
+  /可能是/,
+  'model-mode-precedence: aphid=0.95 直判文案不带"可能是"前缀'
+)
+assert.notEqual(
+  aphidModelDirectResponse.confidenceLevel,
+  'low',
+  'model-mode-precedence: aphid=0.95 直判 confidenceLevel 不能是 low'
+)
+assert.ok(
+  !Array.isArray(aphidModelDirectResponse.directionChoices) ||
+    aphidModelDirectResponse.directionChoices.length === 0,
+  'model-mode-precedence: 单 aphid 模型直判不应产生无关 directionChoices'
+)
+assert.equal(
+  aphidModelDirectResponse.routePrimaryAction,
+  'finalize',
+  'model-mode-precedence: 单 aphid 模型直判 routePrimaryAction 应为 finalize'
+)
+
+// ---------------------------------------------------------------------------
+// dispatch-20260726-model-mode-precedence-zcode: aphid=0.95 + spider_mite=0.96
+// 多模型直判（同家族虫害）只保留这两个模型模式，evidence-derived 被排除。
+// 端到端 visibleOutcomes 应含两个具体虫害 outcomes。
+// ---------------------------------------------------------------------------
+const multiPestModelDirectRoute = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'pest',
+  admittedEvidence: [
+    evidence('leaf_yellowing', 'high', 'strong', 'img_mix2', 'leaf_upper_surface')
+  ],
+  visualModeCandidates: [
+    { mode: 'aphid', confidence: 0.95, regionRef: 'leaf_upper_surface' },
+    { mode: 'spider_mite', confidence: 0.96, regionRef: 'leaf_underside' }
+  ]
+})
+assert.deepEqual(
+  multiPestModelDirectRoute.modelDirectModeKeys,
+  ['aphid', 'spider_mite'],
+  'model-mode-precedence: 多模型直判都应进入 modelDirectModeKeys'
+)
+assert.deepEqual(
+  multiPestModelDirectRoute.associatedModes,
+  ['aphid', 'spider_mite'],
+  'model-mode-precedence: 多模型直判只保留模型模式'
+)
+
+const multiPestModelDirectResponse = await buildPestRouteResponse({
+  sessionId: 'test_multi_pest_model_direct',
+  round: 1,
+  plantContext: {},
+  aggregateResult: {
+    diagnosis_mode_route_result: multiPestModelDirectRoute
+  },
+  diagnosisProfile: 'pest'
+})
+assert.ok(
+  multiPestModelDirectResponse,
+  'model-mode-precedence: 多虫害模型直判应有响应'
+)
+assert.ok(
+  multiPestModelDirectResponse.visibleOutcomes.length >= 1,
+  'model-mode-precedence: 多虫害模型直判应有 visibleOutcomes'
+)
+// visibleOutcomes 应只含 aphid / spider_mite，不应混入 yellow_leaf 或 pest 大类
+assert.ok(
+  multiPestModelDirectResponse.visibleOutcomes.every(
+    item => item.outcomeKey === 'aphid' || item.outcomeKey === 'spider_mite'
+  ),
+  'model-mode-precedence: visibleOutcomes 应只含模型直判的 aphid / spider_mite'
+)
+
+// ---------------------------------------------------------------------------
+// dispatch-20260726 consolidated rework regression tests
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Rework 1: aphid=0.95 + leaf_yellowing evidence - confidence flows through
+// finalResult/topProblem as 'high', displayNameCn without "可能是" prefix.
+// ---------------------------------------------------------------------------
+const rework1Route = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'pest',
+  admittedEvidence: [
+    evidence('leaf_yellowing', 'high', 'strong', 'img_r1', 'leaf_upper_surface')
+  ],
+  visualModeCandidates: [
+    { mode: 'aphid', confidence: 0.95, regionRef: 'leaf_upper_surface' }
+  ]
+})
+const rework1Response = await buildPestRouteResponse({
+  sessionId: 'test_rework1',
+  round: 1,
+  plantContext: {},
+  aggregateResult: { diagnosis_mode_route_result: rework1Route },
+  diagnosisProfile: 'pest'
+})
+assert.equal(
+  rework1Response.visibleOutcomes[0].outcomeKey,
+  'aphid',
+  'Rework 1: visibleOutcomes 应是具体 aphid'
+)
+assert.doesNotMatch(
+  rework1Response.visibleOutcomes[0].displayNameCn,
+  /可能是/,
+  'Rework 1: aphid=0.95 直判文案不带"可能是"前缀'
+)
+assert.equal(
+  rework1Response.finalResult.confidenceLevel,
+  'high',
+  'Rework 1: aphid=0.95 模型直判 finalResult.confidenceLevel 应为 high'
+)
+assert.equal(
+  rework1Response.confidenceLevel,
+  'high',
+  'Rework 1: aphid=0.95 模型直判 top-level confidenceLevel 应为 high'
+)
+assert.equal(
+  rework1Response.routePrimaryAction,
+  'finalize',
+  'Rework 1: 单一模型直判 routePrimaryAction 应为 finalize'
+)
+
+// ---------------------------------------------------------------------------
+// Rework 2: aphid=0.75 specific likely outcome - keeps question_package path
+// (medium tier, needs confirmation question). Does not skip to direct_result.
+// ---------------------------------------------------------------------------
+const rework2Route = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'pest',
+  visualModeCandidates: [
+    { mode: 'aphid', confidence: 0.75, regionRef: 'leaf_upper_surface' }
+  ]
+})
+assert.equal(
+  rework2Route.nextAction,
+  'question_package',
+  'Rework 2: aphid=0.75 应走 question_package（medium tier 需确认）'
+)
+assert.equal(
+  rework2Route.confidenceTier,
+  'medium',
+  'Rework 2: aphid=0.75 应为 medium tier'
+)
+
+// ---------------------------------------------------------------------------
+// Rework 3: missing per-candidate confidence must not promote all to direct_match.
+// directEvidenceLedgerForDirectResult 在 routeResult 无 confidence 数据时，
+// 不应把所有 pestCandidateModes 提升为 direct_match。
+// ---------------------------------------------------------------------------
+const rework3RouteResult = {
+  confidenceTier: 'direct',
+  directMatches: [],
+  confirmationCandidates: [{ modeKey: 'aphid' }],
+  provisionalMatches: [{ modeKey: 'aphid' }],
+  normalizedModeCandidates: [{ modeKey: 'aphid' }]
+}
+const rework3Ledger = directEvidenceLedgerForDirectResult(
+  rework3RouteResult,
+  ['aphid'],
+  'direct'
+)
+const rework3DirectMatches = rework3Ledger.filter(
+  item => item.routeEvidenceRole === 'direct_match'
+)
+assert.equal(
+  rework3DirectMatches.length,
+  0,
+  'Rework 3: 缺失 confidence 数据时不应把候选提升为 direct_match'
+)
+
+// ---------------------------------------------------------------------------
+// Rework 4: non-pest powdery_mildew=0.96 + sooty_mold=0.20 - only individually
+// eligible mode (powdery_mildew) enters direct result. sooty_mold=0.20 excluded.
+// ---------------------------------------------------------------------------
+const rework4Route = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'full',
+  visualModeCandidates: [
+    { mode: 'powdery_mildew', confidence: 0.96 },
+    { mode: 'sooty_mold', confidence: 0.20 }
+  ]
+})
+const rework4Response = await buildPestRouteResponse({
+  sessionId: 'test_rework4',
+  round: 1,
+  plantContext: {},
+  aggregateResult: { diagnosis_mode_route_result: rework4Route },
+  diagnosisProfile: 'full'
+})
+assert.equal(
+  rework4Response.visibleOutcomes.length,
+  1,
+  'Rework 4: 仅 powdery_mildew=0.96 eligible，sooty_mold=0.20 不应进入 visibleOutcomes'
+)
+assert.equal(
+  rework4Response.visibleOutcomes[0].outcomeKey,
+  'powdery_mildew',
+  'Rework 4: visibleOutcomes 应只含 powdery_mildew'
+)
+assert.ok(
+  !rework4Response.visibleOutcomes.some(item => item.outcomeKey === 'sooty_mold'),
+  'Rework 4: sooty_mold=0.20 不应在 visibleOutcomes 中'
+)
+
+// ---------------------------------------------------------------------------
+// Rework 5: multiple pest identity - aphid + spider_mite both model-direct.
+// directionChoices uses generic 'pest' (multi pest), pestModeKeys lists both.
+// visibleOutcomes contains both concrete pest outcomes (not compressed).
+// ---------------------------------------------------------------------------
+const rework5Route = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'pest',
+  visualModeCandidates: [
+    { mode: 'aphid', confidence: 0.96, regionRef: 'leaf_upper_surface' },
+    { mode: 'spider_mite', confidence: 0.95, regionRef: 'leaf_underside' }
+  ]
+})
+assert.equal(
+  rework5Route.directionChoices[0].modeKey,
+  'pest',
+  'Rework 5: 多虫害模式 directionChoices 应聚合为 pest 大类入口'
+)
+assert.deepEqual(
+  rework5Route.directionChoices[0].pestModeKeys,
+  ['aphid', 'spider_mite'],
+  'Rework 5: pestModeKeys 应含两个具体虫害模式'
+)
+assert.equal(
+  rework5Route.recommendedDirection,
+  'pest',
+  'Rework 5: 多虫害模式 recommendedDirection 应为 pest'
+)
+const rework5Response = await buildPestRouteResponse({
+  sessionId: 'test_rework5',
+  round: 1,
+  plantContext: {},
+  aggregateResult: { diagnosis_mode_route_result: rework5Route },
+  diagnosisProfile: 'pest'
+})
+assert.equal(
+  rework5Response.visibleOutcomes.length,
+  2,
+  'Rework 5: 多虫害模型直判应输出 2 个 visibleOutcomes'
+)
+assert.ok(
+  rework5Response.visibleOutcomes.some(item => item.outcomeKey === 'aphid') &&
+    rework5Response.visibleOutcomes.some(item => item.outcomeKey === 'spider_mite'),
+  'Rework 5: visibleOutcomes 应含 aphid 和 spider_mite 两个具体 outcome'
+)
+
 console.log('pest-visual-orchestrator direct result regression tests passed')

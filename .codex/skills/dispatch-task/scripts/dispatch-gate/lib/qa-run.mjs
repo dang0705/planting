@@ -15,6 +15,8 @@ import {
   writeJsonAtomic
 } from './state.mjs'
 
+export const CURRENT_ACCOUNT_AUTOMATOR_PORT = 9420
+
 const qaGateOptionsWithValue = new Set([
   '--catalog-id',
   '--execution-id',
@@ -249,6 +251,10 @@ function prepareQaGate({ args, argValue, hasFlag }) {
   if (!validExecutionTimeout(argValue('execution-timeout-ms'))) {
     gate.errors.push('--execution-timeout-ms must be 1000-900000 milliseconds')
   }
+  const requestedPort = Number(argValue('ws-port') || CURRENT_ACCOUNT_AUTOMATOR_PORT)
+  if (requestedPort !== CURRENT_ACCOUNT_AUTOMATOR_PORT) {
+    gate.errors.push(`formal current-account QA requires --ws-port ${CURRENT_ACCOUNT_AUTOMATOR_PORT}`)
+  }
   return {
     catalogId,
     executionId,
@@ -259,24 +265,20 @@ function prepareQaGate({ args, argValue, hasFlag }) {
   }
 }
 
-function preflightOptions({
-  argValue,
-  expectedProjectPath,
-  allowTargetedRestart,
-  dispatchRunId,
-  executionId
-}) {
+export function currentAccountQaRunOptions({ argValue, expectedProjectPath, allowTargetedRestart, dispatchRunId, executionId }) {
+  const wsPort = Number(argValue('ws-port') || CURRENT_ACCOUNT_AUTOMATOR_PORT)
   return {
     projectPath: expectedProjectPath,
     observedProjectPath: argValue('observed-project-path'),
-    wsPort: Number(argValue('ws-port') || 9420),
+    wsPort,
+    wsEndpoint: `ws://127.0.0.1:${wsPort}`,
     wxRequestUrl: argValue('wx-request-url'),
     screenshotPath: path.join(stateDir(dispatchRunId), 'qa-runs', `${executionId}-preflight.png`),
     allowTargetedRestart
   }
 }
 
-export function createQaRunCommands({ args, argValue, hasFlag, emit }) {
+export function createQaRunCommands({ args, argValue, hasFlag, emit, preflightRunner = runQaPreflight, leafRunner = runLeafWithWatchdog }) {
   async function qaRun() {
     const prepared = prepareQaGate({ args, argValue, hasFlag })
     const { catalogId, executionId, dispatchRunId, gate, expectedProjectPath } = prepared
@@ -316,6 +318,7 @@ export function createQaRunCommands({ args, argValue, hasFlag, emit }) {
       return emit({ ...dry, execution_record: path.relative(repoRoot, recordFile) })
     }
     try {
+      const runtimeOptions = currentAccountQaRunOptions({ ...prepared, argValue, expectedProjectPath })
       return await withAutomatorPortLock(async () => {
         recoverStaleQaRuns(dispatchRunId)
         const attemptGate = previousAttemptGate({
@@ -348,19 +351,17 @@ export function createQaRunCommands({ args, argValue, hasFlag, emit }) {
         writeJsonAtomic(recordFile, record)
         appendQaEvent(dispatchRunId, record, 'live_started')
         try {
-          const preflight = await runQaPreflight(
-            preflightOptions({ ...prepared, argValue, expectedProjectPath })
-          )
+          const preflight = await preflightRunner(runtimeOptions)
           if (preflight.status !== 'passed') {
             const failed = terminalRecord(recordFile, record, 'failed_environment', { preflight })
             appendQaEvent(dispatchRunId, failed, failed.status)
             return emit({ ...failed, execution_record: path.relative(repoRoot, recordFile) }, 1)
           }
           let terminalFromLifecycle
-          const lifecycle = await runLeafWithWatchdog({
+          const lifecycle = await leafRunner({
             script: gate.script,
             args: stripQaGateArgs(args),
-            env: { ...process.env, DISPATCH_QA_EXECUTION_ID: executionId },
+            env: { ...process.env, DISPATCH_QA_EXECUTION_ID: executionId, MINIPROGRAM_AUTOMATOR_WS: runtimeOptions.wsEndpoint, MP_PROJECT_PATH: expectedProjectPath, MP_AUTOMATOR_PORT: String(runtimeOptions.wsPort) },
             timeoutMs: argValue('execution-timeout-ms'),
             onStarted: started => {
               record = { ...record, ...started }
@@ -422,7 +423,7 @@ export function createQaRunCommands({ args, argValue, hasFlag, emit }) {
           appendQaEvent(dispatchRunId, aborted, aborted.status)
           return emit({ ...aborted, execution_record: path.relative(repoRoot, recordFile) }, 1)
         }
-      })
+      }, { wsPort: runtimeOptions.wsPort })
     } catch (error) {
       const lockFailure = terminalRecord(
         recordFile,
@@ -437,9 +438,9 @@ export function createQaRunCommands({ args, argValue, hasFlag, emit }) {
         }),
         'failed_environment',
         {
-          terminal_reason: 'automator_9420_lock_unavailable',
+          terminal_reason: `automator_${Number(argValue('ws-port') || CURRENT_ACCOUNT_AUTOMATOR_PORT)}_lock_unavailable`,
           failure: {
-            code: 'automator_9420_lock_unavailable',
+            code: `automator_${Number(argValue('ws-port') || CURRENT_ACCOUNT_AUTOMATOR_PORT)}_lock_unavailable`,
             message: error.message
           },
           live_attempt_consumed: false
@@ -458,7 +459,8 @@ export function createQaRunCommands({ args, argValue, hasFlag, emit }) {
         1
       )
     }
-    const report = await runQaPreflight(preflightOptions({ ...prepared, argValue }))
+    const runtimeOptions = currentAccountQaRunOptions({ ...prepared, argValue })
+    const report = await preflightRunner(runtimeOptions)
     return emit(report, report.status === 'passed' ? 0 : 1)
   }
 

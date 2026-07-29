@@ -1,5 +1,5 @@
 <template>
-  <Layout title="AI 诊断" content-class="bg-[#F8F6F0] pb-[70px]">
+  <Layout title="AI 诊断" content-class="bg-[#F8F6F0]">
     <view id="diagnose-tab-page" class="min-h-screen bg-[#F8F6F0] px-4 py-4">
       <DiagnoseFlow
         id="diagnose-tab-flow"

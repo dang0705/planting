@@ -2,6 +2,7 @@ const TERMINAL_KINDS = new Set(['failed_environment', 'failed_product', 'failed_
 export const LEAF_CLASSIFICATION_VERSION = 'qa_leaf_classification_v2'
 const TRANSPORT_MARKERS =
   /timeout|timed out|transport|websocket|\brpc\b|connection|screenshot(?:\s+channel)?|app\.callfunction|capturescreenshot/i
+const FAILURE_PAYLOAD_FIELDS = ['detail', 'message', 'error', 'stack', 'errMsg', 'reason', 'cause', 'code']
 
 function objectEnd(text, start) {
   let depth = 0
@@ -102,12 +103,35 @@ function failedStepOrFailureEntries(report) {
   const failedSteps = Array.isArray(report.steps)
     ? report.steps.filter(step => step?.status === 'failed')
     : []
-  return [...failedSteps, ...(Array.isArray(report.failures) ? report.failures : [])]
+  const failedAssertions = Array.isArray(report.assertions)
+    ? report.assertions.filter(assertion => assertion?.passed === false)
+    : []
+  return [
+    ...failedSteps,
+    ...(Array.isArray(report.failures) ? report.failures : []),
+    ...failedAssertions,
+    ...(Array.isArray(report.failed_assertions) ? report.failed_assertions : [])
+  ]
+}
+
+function failurePayloadText(entry) {
+  return FAILURE_PAYLOAD_FIELDS.map(field => {
+    const value = entry?.[field]
+    if (typeof value === 'string') {
+      return value
+    }
+    if (value && typeof value === 'object') {
+      return JSON.stringify(value)
+    }
+    return ''
+  })
+    .filter(Boolean)
+    .join('\n')
 }
 
 function hasTransportFailure(report) {
   return failedStepOrFailureEntries(report).some(entry =>
-    TRANSPORT_MARKERS.test(JSON.stringify(entry))
+    TRANSPORT_MARKERS.test(failurePayloadText(entry))
   )
 }
 

@@ -76,6 +76,7 @@ for (const marker of [
   '## Figma Direct Fetch',
   '## Figma Blocker Policy',
   '## uni-ui Mapping Contract',
+  '## Selection to Consumer Contract',
   '## Result JSON Contract'
 ]) {
   need(prompt.includes(marker), `prompt missing required section marker: ${marker}`)
@@ -94,6 +95,11 @@ need(
   'external prompt must require implementer unit tests'
 )
 need(prompt.includes('validation_evidence'), 'external prompt must require validation_evidence')
+need(prompt.includes('selection_to_consumer'), 'external prompt must require selection_to_consumer evidence')
+need(
+  /provider_status|provider 交付与 dispatch 完成状态分离|delivered.*不表示.*完成/i.test(prompt),
+  'external prompt must separate provider delivery status from dispatch completion (provider_status=running|delivered|blocked; delivered is not completion)'
+)
 
 if (webExternalProvider) {
   need(
@@ -141,9 +147,33 @@ if (handoff?.handoff_manual?.required === true || external.handoff_manual_requir
   if (typeof handoff?.handoff_manual?.path === 'string') {
     need(prompt.includes(handoff.handoff_manual.path), 'external prompt must include handoff_manual.path')
   }
-  need(/status=working|status.*working/i.test(prompt), 'Handoff Manual Contract must instruct status=working on start')
-  need(/status=completed|status.*completed/i.test(prompt), 'Handoff Manual Contract must instruct status=completed on completion')
-  need(/status=blocked|status.*blocked/i.test(prompt), 'Handoff Manual Contract must instruct status=blocked when blocked')
+  // Legacy in-flight manual instructions (status=working|completed|blocked) are
+  // accepted as a migration note; completed here only means provider delivery
+  // ended, not dispatch completion.
+  need(/status=working|status.*working/i.test(prompt), 'Handoff Manual Contract must instruct legacy status=working on start (or document it as the legacy migration note)')
+  need(/status=completed|status.*completed/i.test(prompt), 'Handoff Manual Contract must instruct legacy status=completed on provider delivery end (or document it as the legacy migration note)')
+  need(/status=blocked|status.*blocked/i.test(prompt), 'Handoff Manual Contract must instruct legacy status=blocked when blocked (or document it as the legacy migration note)')
+  // Future provider_status manual instructions: the prompt must require
+  // provider_status=running|delivered|blocked. delivered only records provider
+  // delivery + recovery_required and must never be presented as dispatch
+  // completion. The prompt must explicitly state that delivered is not dispatch
+  // completion (separation of provider delivery from dispatch completion).
+  need(
+    /provider_status=running|provider_status.*running/i.test(prompt),
+    'Handoff Manual Contract must instruct future provider_status=running on start'
+  )
+  need(
+    /provider_status=delivered|provider_status.*delivered/i.test(prompt),
+    'Handoff Manual Contract must instruct future provider_status=delivered on provider delivery end'
+  )
+  need(
+    /provider_status=blocked|provider_status.*blocked/i.test(prompt),
+    'Handoff Manual Contract must instruct future provider_status=blocked when blocked'
+  )
+  need(
+    /delivered.*不表示.*完成|delivered.*不等于.*完成|delivered.*not.*dispatch.*completion|delivered.*never.*completion/i.test(prompt),
+    'Handoff Manual Contract must state that provider_status=delivered is not dispatch completion'
+  )
 }
 
 if (errors.length) {

@@ -9,8 +9,8 @@ import {
 import { validateUiCompleted } from './validate-result-ui.mjs'
 
 const [role, handoffFile, resultFile] = process.argv.slice(2)
-if (!['implementer', 'external'].includes(role) || !handoffFile || !resultFile) {
-  console.error('usage: validate-result.mjs <implementer|external> <handoff.json> <result.json>')
+if (!['implementer', 'external', 'main_takeover'].includes(role) || !handoffFile || !resultFile) {
+  console.error('usage: validate-result.mjs <implementer|external|main_takeover> <handoff.json> <result.json>')
   process.exit(2)
 }
 
@@ -115,7 +115,14 @@ const globToRegExp = pattern => {
 }
 const matchesAny = (file, patterns = []) =>
   patterns.some(pattern => globToRegExp(pattern).test(normalize(file)))
-const validateChangedFiles = (changedFiles, requireNonEmpty) => {
+// validateChangedFiles enforces path boundaries. For completed results every
+// changed file must be inside allowed_paths and outside forbidden_paths. For
+// blocked results the implementer may honestly list actual out-of-scope or
+// forbidden files that caused the block (e.g. a forbidden write was attempted);
+// these are recorded as blocked evidence, not as a legal completion. Blocked
+// results still require changed_files to be a string array so the field stays
+// machine-readable, but they are exempt from the allow/forbid boundary check.
+const validateChangedFiles = (changedFiles, requireNonEmpty, { allowOutOfScope = false } = {}) => {
   need(Array.isArray(changedFiles), 'changed_files must be an array')
   if (!Array.isArray(changedFiles)) {
     return
@@ -126,6 +133,11 @@ const validateChangedFiles = (changedFiles, requireNonEmpty) => {
   for (const raw of changedFiles) {
     const file = normalize(raw)
     need(nonEmptyString(file), 'changed_files entries must be non-empty strings')
+    if (allowOutOfScope) {
+      // blocked result: record the real out-of-scope/forbidden file as block
+      // evidence without rejecting the result contract.
+      continue
+    }
     need(
       matchesAny(file, handoff.allowed_paths ?? []),
       `changed file outside allowed_paths: ${file}`
@@ -136,27 +148,37 @@ const validateChangedFiles = (changedFiles, requireNonEmpty) => {
     )
   }
 }
-if (role === 'implementer') {
+if (role === 'implementer' || role === 'main_takeover') {
   need(
-    (handoff.implementation_mode ?? 'codex_subagent') === 'codex_subagent',
-    'role=implementer is only valid for implementation_mode=codex_subagent'
+    role === 'main_takeover'
+      ? handoff.implementation_mode === 'main_takeover'
+      : (handoff.implementation_mode ?? 'codex_subagent') === 'codex_subagent',
+    role === 'main_takeover'
+      ? 'role=main_takeover is only valid for implementation_mode=main_takeover'
+      : 'role=implementer is only valid for implementation_mode=codex_subagent'
   )
-  need(isObject(result.agent_identity), 'agent_identity is required')
-  need(
-    result?.agent_identity?.agent_type === handoff?.spawn_contract?.implementer_agent_type,
-    `implementer agent_identity mismatch: expected ${handoff?.spawn_contract?.implementer_agent_type}, got ${result?.agent_identity?.agent_type}`
-  )
-  need(
-    result?.agent_identity?.dispatch_run_id === handoff.dispatch_run_id,
-    'implementer agent_identity.dispatch_run_id must match handoff'
-  )
+  if (role === 'implementer') {
+    need(isObject(result.agent_identity), 'agent_identity is required')
+    need(
+      result?.agent_identity?.agent_type === handoff?.spawn_contract?.implementer_agent_type,
+      `implementer agent_identity mismatch: expected ${handoff?.spawn_contract?.implementer_agent_type}, got ${result?.agent_identity?.agent_type}`
+    )
+    need(
+      result?.agent_identity?.dispatch_run_id === handoff.dispatch_run_id,
+      'implementer agent_identity.dispatch_run_id must match handoff'
+    )
+  } else {
+    need(handoff.main_takeover_authorization === true, 'main takeover result requires explicit handoff authorization')
+    need(result.main_takeover_authorized === true, 'main takeover result requires main_takeover_authorized=true')
+  }
   need(
     ['completed', 'blocked'].includes(result.status),
     'implementer status must be completed|blocked'
   )
   validateChangedFiles(
     result.changed_files,
-    result.status === 'completed' && handoff?.task?.code_changes_required === true
+    result.status === 'completed' && handoff?.task?.code_changes_required === true,
+    { allowOutOfScope: result.status === 'blocked' }
   )
   need(nonEmptyString(result.implementation_summary), 'implementation_summary is required')
   need(
@@ -189,6 +211,7 @@ if (role === 'implementer') {
       usesUniUi,
       callsOf
     })
+    validateSelectionToConsumer(result, handoff, { need, isObject, nonEmptyString })
   } else {
     need(
       nonEmptyArray(result.deviations_or_blockers),
@@ -223,6 +246,43 @@ function validateDispatchGovernanceEvidence(resultObject, { need, isObject, nonE
       Array.isArray(resultObject.qa_handoff.actual_commands),
       'dispatch governance qa_handoff.actual_commands must be an array'
     )
+  }
+}
+
+// Selection-to-consumer contract enforcement for implementer/external results.
+// If the handoff declares selection_to_consumer.required=true, the completed
+// result must carry concrete values, submit payload, consumer branch, expected
+// entry and anti-fallback assertion. Non-selection tasks must declare
+// not_applicable=true with a reason. Blocked results are exempted.
+function validateSelectionToConsumer(resultObject, handoffObject, { need, isObject, nonEmptyString }) {
+  const selectionContract = handoffObject?.selection_to_consumer
+  if (!selectionContract || selectionContract.required !== true) {
+    need(
+      isObject(resultObject.selection_to_consumer) &&
+        resultObject.selection_to_consumer.not_applicable === true &&
+        nonEmptyString(resultObject.selection_to_consumer.reason),
+      'non-selection result must declare selection_to_consumer.not_applicable=true with a reason'
+    )
+    return
+  }
+  need(
+    isObject(resultObject.selection_to_consumer),
+    'selection_to_consumer.required=true requires result selection_to_consumer evidence'
+  )
+  if (!isObject(resultObject.selection_to_consumer)) {
+    return
+  }
+  const sel = resultObject.selection_to_consumer
+  need(Array.isArray(sel.values) && sel.values.length > 0, 'selection_to_consumer.values must be a non-empty array')
+  if (!Array.isArray(sel.values) || sel.values.length === 0) {
+    return
+  }
+  for (const entry of sel.values) {
+    need(isObject(entry) && nonEmptyString(entry.value), 'each selection_to_consumer.values entry must have a non-empty value')
+    need(isObject(entry.submit_payload), 'each selection_to_consumer.values entry must include a submit_payload object')
+    need(nonEmptyString(entry.consumer_branch), 'each selection_to_consumer.values entry must declare a consumer_branch')
+    need(nonEmptyString(entry.expected_entry), 'each selection_to_consumer.values entry must declare an expected_entry')
+    need(nonEmptyString(entry.anti_fallback_assertion), 'each selection_to_consumer.values entry must declare an anti_fallback_assertion')
   }
 }
 
@@ -285,9 +345,17 @@ if (role === 'external') {
       )
     }
     if (result.status === 'completed') {
+      // The recovery handoff manual may use the legacy in-flight status=completed
+      // (completed only means provider delivery ended) or the future
+      // provider_status=delivered (delivered only records provider delivery +
+      // recovery_required). Both represent the provider terminal and are accepted
+      // for a completed recovery. Neither means dispatch completion; dispatch
+      // completion is governed by the episode lifecycleStage=completion_ready.
       need(
-        handoffManual.status === 'completed' || remotePrManualNotRequired,
-        'completed external recovery requires handoff_manual.status=completed or not_required_remote_pr for web PR recovery'
+        handoffManual.status === 'completed' ||
+          handoffManual.provider_status === 'delivered' ||
+          remotePrManualNotRequired,
+        'completed external recovery requires handoff_manual.status=completed or provider_status=delivered (or not_required_remote_pr for web PR recovery)'
       )
     } else {
       const allowedBlockedManualStatuses = ['blocked', 'completed', 'missing', 'invalid']
@@ -467,7 +535,8 @@ if (role === 'external') {
   }
   validateChangedFiles(
     result.changed_files,
-    result.status === 'completed' && handoff?.task?.code_changes_required === true
+    result.status === 'completed' && handoff?.task?.code_changes_required === true,
+    { allowOutOfScope: result.status === 'blocked' }
   )
   need(nonEmptyString(result.implementation_summary), 'implementation_summary is required')
   need(Array.isArray(result.deviations_or_blockers), 'deviations_or_blockers must be an array')
@@ -574,6 +643,7 @@ if (role === 'external') {
       usesUniUi,
       callsOf
     })
+    validateSelectionToConsumer(result, handoff, { need, isObject, nonEmptyString })
   } else {
     need(
       nonEmptyArray(result.deviations_or_blockers),

@@ -3,12 +3,14 @@ import { spawnSync } from 'node:child_process'
 import {
   inspectDevToolsRuntime,
   normalizeRuntimePath,
-  recoverVerifiedTargetDevTools
+  recoverVerifiedTargetDevTools,
+  enableAutomatorForVerifiedTargetDevTools
 } from './devtools-runtime.mjs'
 import {
   captureRuntimeEvidence,
   isRecoverableRuntimeFailure,
   PREFLIGHT_CAPTURE_TIMEOUT_MS,
+  PREFLIGHT_SCREENSHOT_TIMEOUT_MS,
   probeWxRequest,
   withPreflightDeadline
 } from './qa-preflight-runtime.mjs'
@@ -81,30 +83,30 @@ function addFailure(report, item) {
   return report
 }
 
-function preflightChecks({ report, projectPath, wsPort, runtimeInspector, lanFlowProbe }) {
-  const runtime = runtimeInspector({ expectedProjectPath: projectPath, wsPort })
-  report.devtools_runtime = runtime
-  report.observed_project_path = runtime.observed_project_path ?? 'unavailable'
+function preflightChecks({ report, projectPath, wsPort, runtimeInspector, lanFlowProbe, runtime }) {
+  const inspectedRuntime = runtime ?? runtimeInspector({ expectedProjectPath: projectPath, wsPort })
+  report.devtools_runtime = inspectedRuntime
+  report.observed_project_path = inspectedRuntime.observed_project_path ?? 'unavailable'
   report.checks.project_identity = {
     expected: projectPath,
     observed: report.observed_project_path,
-    main_devtools_pid: runtime.main_devtools_pid ?? 'unavailable',
+    main_devtools_pid: inspectedRuntime.main_devtools_pid ?? 'unavailable',
     automation_listener_pid:
-      runtime.automation_listener_pid ?? runtime.port_owner_pid ?? 'unavailable',
-    port_owner_pid: runtime.port_owner_pid ?? 'unavailable',
-    automator_port: runtime.automator_port ?? wsPort,
-    control_port: runtime.control_port ?? 'unavailable',
-    control_port_source: runtime.control_port_source ?? 'unavailable',
-    evidence: runtime.project_evidence ?? [],
-    identity_source: runtime.project_identity_source ?? 'unavailable',
-    evidence_records: runtime.project_evidence_records ?? [],
-    session_log_evidence: runtime.session_log_evidence ?? [],
-    passed: runtime.status === 'verified' && runtime.project_identity_verified === true
+      inspectedRuntime.automation_listener_pid ?? inspectedRuntime.port_owner_pid ?? 'unavailable',
+    port_owner_pid: inspectedRuntime.port_owner_pid ?? 'unavailable',
+    automator_port: inspectedRuntime.automator_port ?? wsPort,
+    control_port: inspectedRuntime.control_port ?? 'unavailable',
+    control_port_source: inspectedRuntime.control_port_source ?? 'unavailable',
+    evidence: inspectedRuntime.project_evidence ?? [],
+    identity_source: inspectedRuntime.project_identity_source ?? 'unavailable',
+    evidence_records: inspectedRuntime.project_evidence_records ?? [],
+    session_log_evidence: inspectedRuntime.session_log_evidence ?? [],
+    passed: inspectedRuntime.status === 'verified' && inspectedRuntime.project_identity_verified === true
   }
   if (!report.checks.project_identity.passed) {
     return failure(
-      runtime.status === 'wrong_project' ? 'project_path_mismatch' : 'project_identity_unverified',
-      'target project identity must be proven from the 9420 owning runtime before QA',
+      inspectedRuntime.status === 'wrong_project' ? 'project_path_mismatch' : 'project_identity_unverified',
+      `target project identity must be proven from the ${wsPort} owning runtime before QA`,
       report.checks.project_identity
     )
   }
@@ -223,6 +225,7 @@ export async function runQaPreflight({
   preflightTimeoutMs = PREFLIGHT_CAPTURE_TIMEOUT_MS,
   runtimeInspector = inspectDevToolsRuntime,
   recoveryExecutor = recoverVerifiedTargetDevTools,
+  bootstrapExecutor = enableAutomatorForVerifiedTargetDevTools,
   lanFlowProbe = lanFlowRunning,
   portProbe = connectPort,
   runtimeCapture = captureRuntimeEvidence
@@ -235,12 +238,40 @@ export async function runQaPreflight({
     wsEndpoint,
     wxRequestUrl
   })
+  let runtime = runtimeInspector({ expectedProjectPath: resolvedProjectPath, wsPort })
+  if (runtime.status === 'unavailable' && (runtime.automator_listener_pids ?? []).length === 0) {
+    const bootstrap = await bootstrapExecutor({
+      projectPath: resolvedProjectPath,
+      wsPort,
+      runtimeInspector
+    })
+    report.automator_bootstrap = {
+      attempted: true,
+      status: bootstrap.status,
+      invocations: bootstrap.invocations ?? [],
+      reason: bootstrap.reason ?? null
+    }
+    if (bootstrap.status !== 'enabled') {
+      return addFailure(
+        report,
+        failure(
+          bootstrap.code ?? 'devtools_automator_blocker',
+          'target DevTools could not safely enable the Automator port',
+          { bootstrap }
+        )
+      )
+    }
+    runtime = runtimeInspector({ expectedProjectPath: resolvedProjectPath, wsPort })
+  } else {
+    report.automator_bootstrap = { attempted: false, status: 'not_needed', invocations: [] }
+  }
   const earlyFailure = preflightChecks({
     report,
     projectPath: resolvedProjectPath,
     wsPort,
     runtimeInspector,
-    lanFlowProbe
+    lanFlowProbe,
+    runtime
   })
   if (earlyFailure) {
     return addFailure(report, earlyFailure)
@@ -248,10 +279,16 @@ export async function runQaPreflight({
   if (!(await portProbe(wsPort))) {
     return addFailure(
       report,
-      failure('automator_port_unavailable', `9420 is not listening on ${wsEndpoint}`)
+      failure('automator_port_unavailable', `${wsPort} is not listening on ${wsEndpoint}`)
     )
   }
-  const captureOptions = { report, wsEndpoint, screenshotPath, wxRequestUrl }
+  const captureOptions = {
+    report,
+    wsEndpoint,
+    screenshotPath,
+    wxRequestUrl,
+    screenshotTimeoutMs: PREFLIGHT_SCREENSHOT_TIMEOUT_MS
+  }
   try {
     await captureWithinDeadline({ report, runtimeCapture, captureOptions, preflightTimeoutMs })
   } catch (error) {

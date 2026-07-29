@@ -25,6 +25,7 @@ const {
   isVisualDirectOnlyMode,
   isCandidateAdmissible,
   topCandidateConfidence,
+  resolveModelDirectModeKeys,
   evidenceGroupForKey,
   stableHash
 } = require('./diagnosis-mode-helpers')
@@ -144,6 +145,12 @@ function resolveDiagnosisModeRoute({
     ...visualModeCandidates,
     ...modeCandidates
   ])
+  // 模型直判模式优先（dispatch-20260726-model-mode-precedence-zcode）：
+  // 模型以 >=0.95 返回的具体 mode key 是模型对具体问题的高置信判断，
+  // 必须作为唯一主路由集合。禁止把任何未由模型以直判置信度返回的
+  // evidence-derived mode（如 leaf_yellowing 证据派生的 yellow_leaf）加入集合。
+  // 该规则对 aphid / yellow_leaf / wilting_droop / powdery_mildew 等所有已注册模式统一生效。
+  const modelDirectModeKeys = resolveModelDirectModeKeys(normalizedModeCandidates)
   const candidateOnlyModeKeys = unique(
     normalizedModeCandidates
       .filter(item => item.confidence >= CANDIDATE_ADMIT_CONFIDENCE)
@@ -157,7 +164,7 @@ function resolveDiagnosisModeRoute({
     candidateOnlyModeKeys,
     confirmationEvidenceItems
   }
-  const candidateModeKeys = unique([
+  let candidateModeKeys = unique([
     ...(normalizedProfile === 'full' ? allCandidateModeKeys : candidateOnlyModeKeys),
     ...evidenceDerivedModeKeys
   ])
@@ -165,7 +172,23 @@ function resolveDiagnosisModeRoute({
     .filter(modeKey =>
       isCandidateAdmissible(modeKey, normalizedProfile, candidateAdmissionContext)
     )
-  const associatedModes = unique([...directModeKeys, ...candidateModeKeys])
+  // 模型直判优先：当存在 >=0.95 模型模式时，这些 mode 成为唯一主路由集合。
+  // 清空 evidence-derived directMatches（避免 leaf_yellowing 证据派生的 yellow_leaf
+  // 污染 aphid 模型直判），candidateModeKeys 也仅保留模型直判模式。
+  // 模型直判模式直接进入 candidateModeKeys，绕过 profile 严格 admission：
+  // pest profile 多候选无证据时 isCandidateAdmissible 会拒绝，但模型 >=0.95
+  // 高置信判断必须保留，不能被 profile 严格逻辑剔除。
+  let effectiveDirectMatches = directMatches
+  let effectiveDirectModeKeys = directModeKeys
+  if (modelDirectModeKeys.length > 0) {
+    const modelDirectSet = new Set(modelDirectModeKeys)
+    effectiveDirectMatches = directMatches.filter(item => modelDirectSet.has(item.modeKey))
+    effectiveDirectModeKeys = effectiveDirectMatches.map(item => item.modeKey)
+    candidateModeKeys = modelDirectModeKeys.filter(
+      modeKey => !effectiveDirectModeKeys.includes(modeKey)
+    )
+  }
+  const associatedModes = unique([...effectiveDirectModeKeys, ...candidateModeKeys])
   const pestCandidateModeKeys = candidateModeKeys.filter(modeKey =>
     PEST_MODE_KEYS.includes(modeKey)
   )
@@ -182,7 +205,7 @@ function resolveDiagnosisModeRoute({
   }))
   const topCandidateValue = topCandidateConfidence(candidateModeKeys, normalizedModeCandidates)
   const candidateTier = candidateConfidenceTier(topCandidateValue)
-  const directTier = directModeKeys.length ? 'direct' : ''
+  const directTier = effectiveDirectModeKeys.length ? 'direct' : ''
   const activeTier = directTier || candidateTier || ''
   const questionBudget = maxQuestionsForTier(activeTier)
   const likelyResult = activeTier === 'very_likely'
@@ -201,45 +224,71 @@ function resolveDiagnosisModeRoute({
     candidateModeKeys.every(modeKey => isVisualDirectOnlyMode(modeKey))
   const directionChoices = buildDirectionChoices({
     associatedModes,
-    directMatches,
+    directMatches: effectiveDirectMatches,
     confirmationCandidates
   })
   const crossFamilyConflict = hasCrossFamilyModes(associatedModes)
-  const pestDirectMatches = directMatches.filter(item => PEST_MODE_KEYS.includes(item.modeKey))
+  const pestDirectMatches = effectiveDirectMatches.filter(item =>
+    PEST_MODE_KEYS.includes(item.modeKey)
+  )
   const singleFixedQuestionPackageMode =
-    directModeKeys.length === 1 &&
+    effectiveDirectModeKeys.length === 1 &&
     candidateModeKeys.length === 0 &&
-    isFixedQuestionPackageMode(directModeKeys[0])
+    isFixedQuestionPackageMode(effectiveDirectModeKeys[0])
   // directMatches 中含固定题包模式（黄叶/枯萎）时优先走问诊路径，
   // 即使同时有其他非虫害 visual_direct_only 模式（如白粉病）也不能走 direct_result，
   // 因为固定题包模式依赖结构化问诊确认。
-  const directHasFixedPackageMode = directModeKeys.some(modeKey =>
+  const directHasFixedPackageMode = effectiveDirectModeKeys.some(modeKey =>
     isFixedQuestionPackageMode(modeKey)
   )
   // directMatches 中同时含固定题包与视觉直达模式时（如 yellow_leaf + powdery_mildew），
   // 固定题包 outcome resolver 会过滤掉非题包模式，直接进题包会让视觉直达结果丢失。
   // 此时走 choose_direction，让用户在题包与直达结论之间显式选择。
-  const directHasVisualDirectOnlyMode = directModeKeys.some(modeKey =>
+  const directHasVisualDirectOnlyMode = effectiveDirectModeKeys.some(modeKey =>
     isVisualDirectOnlyMode(modeKey)
   )
   const directMixedFixedAndVisualDirectOnly =
     directHasFixedPackageMode && directHasVisualDirectOnlyMode
-  const recommendedDirection = associatedModes.some(modeKey => PEST_MODE_KEYS.includes(modeKey))
-    ? PEST_CATEGORY
-    : directModeKeys[0] || candidateModeKeys[0] || ''
+  // dispatch-20260726 consolidated rework: 多个固定题包模式（如 yellow_leaf + wilting_droop
+  // 都由模型 >=0.95 返回）时，routeFixedQuestionPackageMode 只能选取一个进题包，
+  // 另一个会被静默丢弃。此时走 choose_direction，让用户显式选择先走哪个题包，
+  // 不静默丢弃任何固定题包模式。
+  // 仅对模型直判场景生效：非模型直判的多固定题包模式（如 0.8/0.75 候选 + 证据）
+  // 保留原有 question_package 行为（选取第一个进题包），不改变既有契约。
+  const fixedPackageModesInAssociated = associatedModes.filter(modeKey =>
+    isFixedQuestionPackageMode(modeKey)
+  )
+  const modelDirectFixedPackageModes = fixedPackageModesInAssociated.filter(modeKey =>
+    modelDirectModeKeys.includes(modeKey)
+  )
+  const multipleModelDirectFixedPackageModes =
+    modelDirectFixedPackageModes.length > 1
+  // dispatch-20260726 consolidated rework: recommendedDirection 对单一虫害模式时
+  // 指向具体 mode（如 spider_mite），而非通用 pest 大类；多虫害模式时仍用 pest 大类。
+  const pestModesInAssociated = associatedModes.filter(modeKey =>
+    PEST_MODE_KEYS.includes(modeKey)
+  )
+  const recommendedDirection =
+    pestModesInAssociated.length === 1
+      ? pestModesInAssociated[0]
+      : pestModesInAssociated.length > 1
+        ? PEST_CATEGORY
+        : effectiveDirectModeKeys[0] || candidateModeKeys[0] || ''
   // directConclusion (>=0.95) 时，固定题包模式仍需走问诊路径，
   // 因为这些模式依赖结构化问诊确认。
   // visual_direct_only 模式（如 powdery_mildew）仅在 high+ 置信（very_likely/direct）时
   // 可直接结论；低置信 visual-direct 必须按 3/2/1 问题预算进入可解释路径，不能越过问诊。
   const nextAction = crossFamilyConflict
     ? 'choose_direction'
-    : singleFixedQuestionPackageMode
-      ? 'question_package'
-      : directMixedFixedAndVisualDirectOnly
+    : multipleModelDirectFixedPackageModes
+      ? 'choose_direction'
+      : singleFixedQuestionPackageMode
+        ? 'question_package'
+        : directMixedFixedAndVisualDirectOnly
         ? 'choose_direction'
         : directHasFixedPackageMode
           ? 'question_package'
-          : directModeKeys.length
+          : effectiveDirectModeKeys.length
             ? 'direct_result'
             : candidateModeKeys.length
             ? (directConclusion && !candidateHasFixedPackageMode) ||
@@ -254,9 +303,10 @@ function resolveDiagnosisModeRoute({
             : 'uncertain'
   const snapshotSeed = JSON.stringify({
     profile: normalizedProfile,
-    directModeKeys,
+    directModeKeys: effectiveDirectModeKeys,
     candidateModeKeys,
     evidenceDerivedModeKeys,
+    modelDirectModeKeys,
     evidence: evidenceItems.map(item => [
       item.evidenceKey,
       item.evidenceGroup,
@@ -275,16 +325,21 @@ function resolveDiagnosisModeRoute({
 
   return {
     diagnosisProfile: normalizedProfile,
-    directMatches,
+    directMatches: effectiveDirectMatches,
     provisionalMatches,
     confirmationCandidates,
     // 透传 normalizedModeCandidates（含每候选 confidence），供 directEvidenceLedgerForDirectResult
     // 与 resolveNonPestCandidateTier 按候选 confidence 过滤，避免回退到"全部提升"。
     normalizedModeCandidates,
+    // 模型直判模式审计字段（dispatch-20260726-model-mode-precedence-zcode）：
+    // 记录模型以 >=0.95 返回的具体 mode key，供下游显式判断"模型模式优先"。
+    // 下游消费方（orchestrator / non-pest-direct-result）应优先消费此字段，
+    // 不能把模型模式伪装成普通 symptom evidence。
+    modelDirectModeKeys,
     associatedModes,
     directionChoices,
     recommendedDirection,
-    recommendedMode: directModeKeys[0] || candidateModeKeys[0] || '',
+    recommendedMode: effectiveDirectModeKeys[0] || candidateModeKeys[0] || '',
     pendingDirectPestSnapshot:
       crossFamilyConflict && pestDirectMatches.length
         ? {
@@ -346,6 +401,7 @@ module.exports = {
   isVisualDirectOnlyMode,
   isFixedQuestionPackageMode,
   topCandidateConfidence,
+  resolveModelDirectModeKeys,
   _test: {
     normalizeVisualEvidence,
     evidenceGroupForKey,
@@ -353,6 +409,7 @@ module.exports = {
     resolveDirectModeEvidence,
     isCandidateAdmissible,
     isVisualDirectOnlyMode,
-    topCandidateConfidence
+    topCandidateConfidence,
+    resolveModelDirectModeKeys
   }
 }

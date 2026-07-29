@@ -23,6 +23,7 @@ import {
 } from '../../../../../.codex/skills/dispatch-task/scripts/lib/git-status.mjs'
 import {
   cleanupDispatchState,
+  handoffValidator,
   parseJson,
   repoRoot,
   resultValidator,
@@ -67,6 +68,295 @@ assert.match(
   parseJson(noProductRetry).errors.join('\n'),
   /failed_product_requires_implementation_recovery/
 )
+
+// --- Regression: handoff must reject self-contradictory allowed/forbidden paths ---
+// A prior dispatch simultaneously allowed qa-and-validation.mjs (exact) and
+// forbade qa-*.mjs (glob), trapping the recovery result. validate-handoff must
+// reject this intersection before dispatch so the implementer is never handed an
+// impossible allow/forbid pair. These regression assertions run before the
+// devtools preflight section so they execute even if the pre-existing devtools
+// assertion (line ~207, caused by a forbidden-path dirty devtools-recovery.mjs)
+// blocks the rest of the file.
+const conflictRunId = `dispatch-gate-path-conflict-${Date.now()}`
+const conflictHandoff = path.join('.tmp', 'dispatch-task', `${conflictRunId}-handoff.json`)
+writeJson(conflictHandoff, {
+  dispatch_run_id: conflictRunId,
+  dispatch_tier: 'deep_contract',
+  implementation_mode: 'codex_subagent',
+  task: { objective: 'path conflict regression', code_changes_required: true, ui_task: false, risk: 'high', qa_required: true },
+  target_role: 'implementer_deep',
+  spawn_contract: { implementer_agent_type: 'implementer_deep', qa_agent_type: null, context_mode: 'isolated', generic_fallback_forbidden: true, identity_receipt_required: true },
+  allowed_paths: [
+    '.codex/skills/dispatch-task/scripts/validate-result.mjs',
+    'test/e2e/batch/workflow/dispatch-gate-contract/qa-and-validation.mjs'
+  ],
+  forbidden_paths: ['test/e2e/batch/workflow/dispatch-gate-contract/qa-*.mjs'],
+  acceptance: ['path conflict regression'],
+  project_constraints: { rule_refs: ['AGENTS.md#QA行为约束'], framework: 'Node.js ESM', dependency_policy: 'no_new_dependencies', test_commands: ['node test/e2e/batch/workflow/dispatch-gate-contract/qa-and-validation.mjs'] },
+  decision_lock: { level: 'strict', architecture_invariants: [], local_decisions_allowed: [] },
+  brv_relevance: { required: false, recall_packet_path: '/tmp/x.json', child_brv_allowed: false },
+  figma: { required: false, link: '', mode: 'internal_mcp' },
+  feature_test_plan: { required: true, targets: ['test/e2e/batch/workflow/dispatch-gate-contract/qa-and-validation.mjs'], commands: ['node test/e2e/batch/workflow/dispatch-gate-contract/qa-and-validation.mjs'] },
+  e2e_plan: { required: true, automator_required: true, catalog_required: true },
+  validation: { miniprogram_automator_required: true, runtime_acceptance_mode: 'automator_required', worktree_baseline_path: `/tmp/${conflictRunId}-baseline.json` },
+  selection_to_consumer: { required: false, not_applicable_reason: 'validator contract fix has no user-selectable values' }
+})
+const conflictValidation = spawnSync(process.execPath, [handoffValidator, conflictHandoff], { cwd: repoRoot, encoding: 'utf8' })
+assert.notEqual(conflictValidation.status, 0, 'conflicting allow/forbid handoff must be rejected')
+const conflictOutput = conflictValidation.stdout || conflictValidation.stderr
+assert.match(
+  JSON.parse(conflictOutput).errors.join('\n'),
+  /allowed_paths and forbidden_paths conflict/,
+  'conflict error must locate the conflicting allow/forbid pair'
+)
+// Positive control: non-overlapping allow/forbid must not trip the intersection check.
+const okConflictRunId = `dispatch-gate-path-ok-${Date.now()}`
+const okConflictHandoff = path.join('.tmp', 'dispatch-task', `${okConflictRunId}-handoff.json`)
+writeJson(okConflictHandoff, {
+  ...JSON.parse(fs.readFileSync(conflictHandoff, 'utf8')),
+  dispatch_run_id: okConflictRunId,
+  allowed_paths: [
+    '.codex/skills/dispatch-task/scripts/validate-result.mjs',
+    'test/e2e/batch/workflow/dispatch-gate-contract/episode-and-hook.mjs'
+  ]
+})
+const okConflictValidation = spawnSync(process.execPath, [handoffValidator, okConflictHandoff], { cwd: repoRoot, encoding: 'utf8' })
+const okConflictOutput = okConflictValidation.stdout || okConflictValidation.stderr
+const okConflictParsed = JSON.parse(okConflictOutput)
+const okConflictErrors = Array.isArray(okConflictParsed.errors) ? okConflictParsed.errors.join('\n') : ''
+assert.doesNotMatch(
+  okConflictErrors,
+  /allowed_paths and forbidden_paths conflict/,
+  'non-overlapping allow/forbid must not report a conflict'
+)
+
+// --- Regression: blocked external recovery may honestly carry forbidden changed_files ---
+// A blocked result that records an actual out-of-scope/forbidden file as block
+// evidence must pass the result-contract validator. Completed results must still
+// be strictly rejected for the same file. This proves validate-result no longer
+// traps blocked recovery between an impossible allow/forbid pair.
+const blockedRecoveryRunId = `dispatch-gate-blocked-recovery-${Date.now()}`
+const blockedRecoveryHandoff = path.join('.tmp', 'dispatch-task', `${blockedRecoveryRunId}-handoff.json`)
+writeJson(blockedRecoveryHandoff, {
+  dispatch_run_id: blockedRecoveryRunId,
+  dispatch_tier: 'external_implementer',
+  implementation_mode: 'external_implementer',
+  task: { objective: 'blocked recovery regression', code_changes_required: true, ui_task: false, risk: 'standard', qa_required: false },
+  external_contract: {
+    provider: 'zcode', target_session: 'current_open_chat', prompt_transport: 'clipboard_paste',
+    send_receipt_required: true, handoff_manual_required: true, handoff_completion_status_source: 'handoff_manual',
+    completion_claim_not_authoritative: true, codex_self_implementation_forbidden: true, generic_fallback_forbidden: true,
+    recovery_required: true,
+    required_prompt_sections: ['implementation_contract', 'allowed_forbidden_paths', 'project_constraints', 'handoff_manual_contract', 'validation_commands', 'result_json_contract', 'ui_scope_contract', 'style_stack_contract', 'figma_direct_fetch', 'figma_blocker_policy', 'uni_ui_mapping_contract', 'selection_to_consumer_contract']
+  },
+  handoff_manual: { required: true, path: `/tmp/${blockedRecoveryRunId}-manual.json` },
+  allowed_paths: ['.codex/skills/dispatch-task/scripts/validate-result.mjs'],
+  forbidden_paths: ['src/**', 'cloudfunctions/**'],
+  acceptance: ['blocked recovery regression'],
+  project_constraints: { rule_refs: ['AGENTS.md#QA行为约束'], framework: 'Node.js ESM', dependency_policy: 'no_new_dependencies', test_commands: ['node test/e2e/batch/workflow/dispatch-gate-contract/qa-and-validation.mjs'] },
+  decision_lock: { level: 'standard', architecture_invariants: [], local_decisions_allowed: [] },
+  brv_relevance: { required: false, child_brv_allowed: false },
+  figma: { required: false, link: '', mode: 'internal_mcp' },
+  feature_test_plan: { required: true, targets: ['test/e2e/batch/workflow/dispatch-gate-contract/qa-and-validation.mjs'], commands: ['node test/e2e/batch/workflow/dispatch-gate-contract/qa-and-validation.mjs'] },
+  e2e_plan: { required: true, automator_required: false, catalog_required: false },
+  validation: { miniprogram_automator_required: false },
+  selection_to_consumer: { required: false, not_applicable_reason: 'validator contract fix has no user-selectable values' }
+})
+const blockedRecoveryResult = path.join('.tmp', 'dispatch-task', `${blockedRecoveryRunId}-result.json`)
+writeJson(blockedRecoveryResult, {
+  source: 'codex_recovery_after_external', status: 'blocked', codex_self_implementation: false,
+  external_completion_claim_treated_as_non_authoritative: true, git_diff_recovered_by_codex: true,
+  allowed_forbidden_paths_checked: true, project_constraints_checked_by_codex: true,
+  external_handoff_manual: { read_by_codex: true, path: `/tmp/${blockedRecoveryRunId}-manual.json`, status: 'missing', updated_at: '' },
+  external_send_receipt: { status: 'blocked' },
+  changed_files: ['src/forbidden/file.js'],
+  implementation_summary: 'blocked after touching forbidden path',
+  deviations_or_blockers: [{ reason: 'forbidden path touched' }],
+  selection_to_consumer: { not_applicable: true, reason: 'validator contract fix has no user-selectable values' }
+})
+const blockedRecoveryValidation = spawnSync(process.execPath, [resultValidator, 'external', blockedRecoveryHandoff, blockedRecoveryResult], { cwd: repoRoot, encoding: 'utf8' })
+assert.equal(blockedRecoveryValidation.status, 0, `blocked external recovery with forbidden changed_file must pass result-contract: ${blockedRecoveryValidation.stderr || blockedRecoveryValidation.stdout}`)
+assert.equal(JSON.parse(blockedRecoveryValidation.stdout).result_status, 'blocked')
+// Negative control: completed with the same forbidden file must still be rejected.
+const completedRecoveryResult = path.join('.tmp', 'dispatch-task', `${blockedRecoveryRunId}-completed-result.json`)
+writeJson(completedRecoveryResult, {
+  source: 'codex_recovery_after_external', status: 'completed', codex_self_implementation: false,
+  external_completion_claim_treated_as_non_authoritative: true, git_diff_recovered_by_codex: true,
+  allowed_forbidden_paths_checked: true, project_constraints_checked_by_codex: true,
+  external_recovery_evidence: { handoff_manual_read: true, git_status_read: true, git_diff_read: true, forbidden_paths_clean: true, no_unapproved_dependencies: true },
+  external_handoff_manual: { read_by_codex: true, path: `/tmp/${blockedRecoveryRunId}-manual.json`, status: 'completed', updated_at: '2026-07-27T21:00:00Z' },
+  external_send_receipt: {
+    status: 'sent', prompt_integrity_verified: true, send_action: 'send_button', clipboard_paste_used: true,
+    computer_use: {
+      tool_invoked: true,
+      tool_invocation_evidence: { actual_tool_invocation_required: true, actual_tool_invocation: true, tool_target: '@ZCode', invocations: [{ tool: 'shell', purpose: 'send', success: true }] },
+      shell_only_ui_automation_used: false, manual_typing_used: false, evidence_paths: ['/tmp/x']
+    }
+  },
+  changed_files: ['src/forbidden/file.js'],
+  implementation_summary: 'completed with forbidden file',
+  deviations_or_blockers: [],
+  selection_to_consumer: { not_applicable: true, reason: 'validator contract fix has no user-selectable values' }
+})
+const completedRecoveryValidation = spawnSync(process.execPath, [resultValidator, 'external', blockedRecoveryHandoff, completedRecoveryResult], { cwd: repoRoot, encoding: 'utf8' })
+assert.notEqual(completedRecoveryValidation.status, 0, 'completed external recovery with forbidden changed_file must still be rejected')
+const completedErrors = JSON.parse(completedRecoveryValidation.stdout || completedRecoveryValidation.stderr).errors.join('\n')
+assert.match(completedErrors, /changed file matches forbidden_paths|changed file outside allowed_paths/)
+
+// --- Regression: reliable glob-vs-glob intersection must catch overlaps the
+// sampling algorithm missed (allow a/*.js vs forbid a/foo*.js both match
+// a/foobar.js, but a/sample.js does not match a/foo*.js). A prior sampling
+// implementation let this through; the reliable two-glob intersection must
+// reject it before dispatch.
+const globVsGlobRunId = `dispatch-gate-glob-vs-glob-${Date.now()}`
+const globVsGlobHandoff = path.join('.tmp', 'dispatch-task', `${globVsGlobRunId}-handoff.json`)
+writeJson(globVsGlobHandoff, {
+  dispatch_run_id: globVsGlobRunId,
+  dispatch_tier: 'deep_contract',
+  implementation_mode: 'codex_subagent',
+  task: { objective: 'glob vs glob regression', code_changes_required: true, ui_task: false, risk: 'high', qa_required: true },
+  target_role: 'implementer_deep',
+  spawn_contract: { implementer_agent_type: 'implementer_deep', qa_agent_type: null, context_mode: 'isolated', generic_fallback_forbidden: true, identity_receipt_required: true },
+  allowed_paths: ['test/e2e/batch/workflow/dispatch-gate-contract/a/*.js'],
+  forbidden_paths: ['test/e2e/batch/workflow/dispatch-gate-contract/a/foo*.js'],
+  acceptance: ['glob vs glob regression'],
+  project_constraints: { rule_refs: ['AGENTS.md#QA行为约束'], framework: 'Node.js ESM', dependency_policy: 'no_new_dependencies', test_commands: ['node test/e2e/batch/workflow/dispatch-gate-contract/qa-and-validation.mjs'] },
+  decision_lock: { level: 'strict', architecture_invariants: [], local_decisions_allowed: [] },
+  brv_relevance: { required: false, recall_packet_path: '/tmp/x.json', child_brv_allowed: false },
+  figma: { required: false, link: '', mode: 'internal_mcp' },
+  feature_test_plan: { required: true, targets: ['test/e2e/batch/workflow/dispatch-gate-contract/qa-and-validation.mjs'], commands: ['node test/e2e/batch/workflow/dispatch-gate-contract/qa-and-validation.mjs'] },
+  e2e_plan: { required: true, automator_required: true, catalog_required: true },
+  validation: { miniprogram_automator_required: true, runtime_acceptance_mode: 'automator_required', worktree_baseline_path: `/tmp/${globVsGlobRunId}-baseline.json` },
+  selection_to_consumer: { required: false, not_applicable_reason: 'validator contract fix has no user-selectable values' }
+})
+const globVsGlobValidation = spawnSync(process.execPath, [handoffValidator, globVsGlobHandoff], { cwd: repoRoot, encoding: 'utf8' })
+assert.notEqual(globVsGlobValidation.status, 0, 'glob-vs-glob overlap (a/*.js vs a/foo*.js) must be rejected before dispatch')
+const globVsGlobOutput = globVsGlobValidation.stdout || globVsGlobValidation.stderr
+assert.match(
+  JSON.parse(globVsGlobOutput).errors.join('\n'),
+  /allowed_paths and forbidden_paths conflict/,
+  'glob-vs-glob conflict must be located'
+)
+// Regression: fixed representative samples must never be used as a proxy for
+// language intersection. The two globs overlap at p/za, while the old bounded
+// expansion missed it because neither pattern's fixed samples contained z in the
+// required position.
+const missedSampleRunId = `dispatch-gate-glob-exact-${Date.now()}`
+const missedSampleHandoff = path.join('.tmp', 'dispatch-task', `${missedSampleRunId}-handoff.json`)
+writeJson(missedSampleHandoff, {
+  ...JSON.parse(fs.readFileSync(globVsGlobHandoff, 'utf8')),
+  dispatch_run_id: missedSampleRunId,
+  allowed_paths: ['test/e2e/**/p/*a'],
+  forbidden_paths: ['test/e2e/**/p/z*']
+})
+const missedSampleValidation = spawnSync(process.execPath, [handoffValidator, missedSampleHandoff], { cwd: repoRoot, encoding: 'utf8' })
+assert.notEqual(missedSampleValidation.status, 0, 'exact glob intersection must catch p/*a vs p/z* overlap')
+assert.match(
+  JSON.parse(missedSampleValidation.stdout || missedSampleValidation.stderr).errors.join('\n'),
+  /allowed_paths and forbidden_paths conflict/,
+  'exact glob intersection must locate the missed-sample conflict'
+)
+// Positive control: a ** vs literal-subdir overlap is also caught.
+const doubleStarRunId = `dispatch-gate-double-star-${Date.now()}`
+const doubleStarHandoff = path.join('.tmp', 'dispatch-task', `${doubleStarRunId}-handoff.json`)
+writeJson(doubleStarHandoff, {
+  ...JSON.parse(fs.readFileSync(globVsGlobHandoff, 'utf8')),
+  dispatch_run_id: doubleStarRunId,
+  allowed_paths: ['test/e2e/**'],
+  forbidden_paths: ['test/e2e/batch/c.js']
+})
+const doubleStarValidation = spawnSync(process.execPath, [handoffValidator, doubleStarHandoff], { cwd: repoRoot, encoding: 'utf8' })
+assert.notEqual(doubleStarValidation.status, 0, '** vs literal overlap must be rejected')
+const doubleStarOutput = doubleStarValidation.stdout || doubleStarValidation.stderr
+assert.match(JSON.parse(doubleStarOutput).errors.join('\n'), /allowed_paths and forbidden_paths conflict/)
+
+// --- Regression: completed external recovery must accept future
+// provider_status=delivered manual without forcing main to rewrite it to
+// status=completed. delivered only records provider delivery + recovery_required
+// and must not be confused with dispatch completion. Legacy status=completed
+// manual stays compatible. The existing completed-with-forbidden-file strict
+// rejection (above) must continue to pass.
+const deliveredManualRunId = `dispatch-gate-delivered-manual-${Date.now()}`
+const deliveredManualHandoff = path.join('.tmp', 'dispatch-task', `${deliveredManualRunId}-handoff.json`)
+writeJson(deliveredManualHandoff, {
+  dispatch_run_id: deliveredManualRunId,
+  dispatch_tier: 'external_implementer',
+  implementation_mode: 'external_implementer',
+  task: { objective: 'delivered manual regression', code_changes_required: true, ui_task: false, risk: 'standard', qa_required: false },
+  external_contract: {
+    provider: 'zcode', target_session: 'current_open_chat', prompt_transport: 'clipboard_paste',
+    send_receipt_required: true, handoff_manual_required: true, handoff_completion_status_source: 'handoff_manual',
+    completion_claim_not_authoritative: true, codex_self_implementation_forbidden: true, generic_fallback_forbidden: true,
+    recovery_required: true,
+    required_prompt_sections: ['implementation_contract', 'allowed_forbidden_paths', 'project_constraints', 'handoff_manual_contract', 'validation_commands', 'result_json_contract', 'ui_scope_contract', 'style_stack_contract', 'figma_direct_fetch', 'figma_blocker_policy', 'uni_ui_mapping_contract', 'selection_to_consumer_contract']
+  },
+  handoff_manual: { required: true, path: `/tmp/${deliveredManualRunId}-manual.json` },
+  allowed_paths: ['.codex/skills/dispatch-task/scripts/validate-result.mjs'],
+  forbidden_paths: ['src/**', 'cloudfunctions/**'],
+  acceptance: ['delivered manual regression'],
+  project_constraints: { rule_refs: ['AGENTS.md#QA行为约束'], framework: 'Node.js ESM', dependency_policy: 'no_new_dependencies', test_commands: ['node test/e2e/batch/workflow/dispatch-gate-contract/qa-and-validation.mjs'] },
+  decision_lock: { level: 'standard', architecture_invariants: [], local_decisions_allowed: [] },
+  brv_relevance: { required: false, child_brv_allowed: false },
+  figma: { required: false, link: '', mode: 'internal_mcp' },
+  feature_test_plan: { required: true, targets: ['test/e2e/batch/workflow/dispatch-gate-contract/qa-and-validation.mjs'], commands: ['node test/e2e/batch/workflow/dispatch-gate-contract/qa-and-validation.mjs'] },
+  e2e_plan: { required: true, automator_required: false, catalog_required: false },
+  validation: { miniprogram_automator_required: false },
+  selection_to_consumer: { required: false, not_applicable_reason: 'validator contract fix has no user-selectable values' }
+})
+const deliveredManualResult = path.join('.tmp', 'dispatch-task', `${deliveredManualRunId}-result.json`)
+const fullComputerUse = {
+  tool_invoked: true,
+  tool_invocation_evidence: {
+    actual_tool_invocation_required: true, actual_tool_invocation: true, tool_target: '@ZCode',
+    tool_events_seen: true, tool_event_count: 6,
+    transcript_event_refs: ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'],
+    commands_issued: ['c1', 'c2', 'c3', 'c4', 'c5', 'c6']
+  },
+  shell_only_ui_automation_used: false, manual_typing_used: false, evidence_paths: ['/tmp/x']
+}
+const fullValidationEvidence = {
+  unit_tests: { result: 'passed', commands: ['c'], evidence_ref: 's' },
+  lint: { result: 'passed', commands: ['c'], evidence_ref: 's' },
+  typecheck: { result: 'passed', commands: ['c'], evidence_ref: 's' },
+  build: { result: 'passed', commands: ['c'], evidence_ref: 's' },
+  self_check: { result: 'passed', commands: ['c'], evidence_ref: 's' }
+}
+writeJson(deliveredManualResult, {
+  source: 'codex_recovery_after_external', status: 'completed', codex_self_implementation: false,
+  external_completion_claim_treated_as_non_authoritative: true, git_diff_recovered_by_codex: true,
+  allowed_forbidden_paths_checked: true, project_constraints_checked_by_codex: true,
+  external_recovery_evidence: { handoff_manual_read: true, git_status_read: true, git_diff_read: true, forbidden_paths_clean: true, no_unapproved_dependencies: true },
+  external_handoff_manual: { read_by_codex: true, path: `/tmp/${deliveredManualRunId}-manual.json`, provider_status: 'delivered', updated_at: '2026-07-27T22:00:00Z' },
+  external_send_receipt: { status: 'sent', prompt_integrity_verified: true, send_action: 'send_button', clipboard_paste_used: true, computer_use: fullComputerUse },
+  changed_files: ['.codex/skills/dispatch-task/scripts/validate-result.mjs'],
+  implementation_summary: 'completed recovery with delivered manual',
+  validation_evidence: fullValidationEvidence,
+  deviations_or_blockers: [],
+  selection_to_consumer: { not_applicable: true, reason: 'validator contract fix has no user-selectable values' }
+})
+const deliveredManualValidation = spawnSync(process.execPath, [resultValidator, 'external', deliveredManualHandoff, deliveredManualResult], { cwd: repoRoot, encoding: 'utf8' })
+assert.equal(deliveredManualValidation.status, 0, `completed external recovery with provider_status=delivered manual must pass result-contract: ${deliveredManualValidation.stderr || deliveredManualValidation.stdout}`)
+assert.equal(JSON.parse(deliveredManualValidation.stdout).result_status, 'completed')
+// Legacy compatibility: the same recovery with status=completed manual must also pass.
+const legacyManualResult = path.join('.tmp', 'dispatch-task', `${deliveredManualRunId}-legacy-result.json`)
+writeJson(legacyManualResult, {
+  ...JSON.parse(fs.readFileSync(deliveredManualResult, 'utf8')),
+  external_handoff_manual: { read_by_codex: true, path: `/tmp/${deliveredManualRunId}-manual.json`, status: 'completed', updated_at: '2026-07-27T22:00:00Z' },
+  implementation_summary: 'completed recovery with legacy manual'
+})
+const legacyManualValidation = spawnSync(process.execPath, [resultValidator, 'external', deliveredManualHandoff, legacyManualResult], { cwd: repoRoot, encoding: 'utf8' })
+assert.equal(legacyManualValidation.status, 0, `completed external recovery with legacy status=completed manual must stay compatible: ${legacyManualValidation.stderr || legacyManualValidation.stdout}`)
+// Negative: provider_status=blocked manual must not satisfy completed recovery.
+const blockedManualResult = path.join('.tmp', 'dispatch-task', `${deliveredManualRunId}-blocked-manual-result.json`)
+writeJson(blockedManualResult, {
+  ...JSON.parse(fs.readFileSync(deliveredManualResult, 'utf8')),
+  external_handoff_manual: { read_by_codex: true, path: `/tmp/${deliveredManualRunId}-manual.json`, provider_status: 'blocked', updated_at: '2026-07-27T22:00:00Z' },
+  implementation_summary: 'completed recovery with blocked manual'
+})
+const blockedManualValidation = spawnSync(process.execPath, [resultValidator, 'external', deliveredManualHandoff, blockedManualResult], { cwd: repoRoot, encoding: 'utf8' })
+assert.notEqual(blockedManualValidation.status, 0, 'completed recovery with provider_status=blocked manual must be rejected')
+const blockedManualErrors = JSON.parse(blockedManualValidation.stdout || blockedManualValidation.stderr).errors.join('\n')
+assert.match(blockedManualErrors, /provider_status=delivered/)
 
 const expectedProjectPath = path.join(repoRoot, 'dist', 'dev', 'mp-weixin')
 const verifiedRuntime = ({ mainPid = 43100, listenerPid = 43210 } = {}) => ({
@@ -462,6 +752,10 @@ writeJson(governanceResult, {
   automator_preflight_contract: passedCheck('preflight'),
   known_limitations: [],
   qa_handoff: { actual_commands: ['synthetic command'] },
+  selection_to_consumer: {
+    not_applicable: true,
+    reason: 'synthetic governance contract has no user-selectable values'
+  },
   deviations_or_blockers: []
 })
 const governanceValidation = spawnSync(

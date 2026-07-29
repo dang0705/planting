@@ -343,6 +343,34 @@ function topCandidateConfidence(modeKeys = [], normalizedModeCandidates = []) {
   return top
 }
 
+// 模型直判模式：模型以 >= DIRECT_CONCLUSION_CONFIDENCE(0.95) 返回的具体 mode key。
+// 这些 mode 是模型对具体问题（如 aphid / yellow_leaf / wilting_droop）的高置信判断，
+// 路由必须将其作为唯一主路由集合，禁止被 evidence-derived 模式（如 leaf_yellowing
+// 证据派生的 yellow_leaf）污染。返回结果保持入参顺序，去重且仅保留 registry 中
+// enabled 的合法模式（normalizeModeCandidates 已过滤，这里再做一次防御）。
+function resolveModelDirectModeKeys(normalizedModeCandidates = []) {
+  const seen = new Set()
+  const result = []
+  for (const item of Array.isArray(normalizedModeCandidates) ? normalizedModeCandidates : []) {
+    if (!item?.modeKey) {
+      continue
+    }
+    const conf = Number(item.confidence || 0)
+    if (!Number.isFinite(conf) || conf < DIRECT_CONCLUSION_CONFIDENCE) {
+      continue
+    }
+    if (DIAGNOSIS_MODE_REGISTRY[item.modeKey]?.enabled !== true) {
+      continue
+    }
+    if (seen.has(item.modeKey)) {
+      continue
+    }
+    seen.add(item.modeKey)
+    result.push(item.modeKey)
+  }
+  return result
+}
+
 module.exports = {
   CANDIDATE_ADMIT_CONFIDENCE,
   STRONG_CANDIDATE_CONFIDENCE,
@@ -373,5 +401,6 @@ module.exports = {
   candidateConfidenceTier,
   maxQuestionsForTier,
   isCandidateAdmissible,
-  topCandidateConfidence
+  topCandidateConfidence,
+  resolveModelDirectModeKeys
 }

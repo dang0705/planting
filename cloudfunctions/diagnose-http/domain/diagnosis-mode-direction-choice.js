@@ -33,23 +33,47 @@ function buildDirectionChoices({
   const pestModeKeys = unique(associatedModes.filter(modeKey => PEST_MODE_KEYS.includes(modeKey)))
   const choices = []
   if (pestModeKeys.length) {
-    choices.push({
-      modeKey: PEST_CATEGORY,
-      directionKey: PEST_CATEGORY,
-      familyKey: PEST_CATEGORY,
-      category: PEST_CATEGORY,
-      problemKey: PEST_CATEGORY,
-      userDisplayName: '虫害',
-      pestModeKeys,
-      directModeKeys: unique(
-        directMatches.map(item => item.modeKey).filter(modeKey => PEST_MODE_KEYS.includes(modeKey))
-      ),
-      confirmationModeKeys: unique(
-        confirmationCandidates
-          .map(item => item.modeKey)
-          .filter(modeKey => PEST_MODE_KEYS.includes(modeKey))
-      )
-    })
+    // 单一具体虫害模式（如 aphid）应作为具体 mode 展示，不压缩为通用 pest 大类。
+    // 多虫害模式时仍聚合为 pest 大类入口，供用户在结果页继续细分。
+    // confirmationModeKeys 始终保留，供内部后续问诊/锁定使用，不暴露给用户作为大类入口。
+    if (pestModeKeys.length === 1) {
+      const singleModeKey = pestModeKeys[0]
+      choices.push({
+        modeKey: singleModeKey,
+        directionKey: singleModeKey,
+        familyKey: PEST_CATEGORY,
+        category: PEST_CATEGORY,
+        problemKey: singleModeKey,
+        userDisplayName: DIAGNOSIS_MODE_REGISTRY[singleModeKey]?.userDisplayName || singleModeKey,
+        pestModeKeys,
+        directModeKeys: unique(
+          directMatches.map(item => item.modeKey).filter(modeKey => PEST_MODE_KEYS.includes(modeKey))
+        ),
+        confirmationModeKeys: unique(
+          confirmationCandidates
+            .map(item => item.modeKey)
+            .filter(modeKey => PEST_MODE_KEYS.includes(modeKey))
+        )
+      })
+    } else {
+      choices.push({
+        modeKey: PEST_CATEGORY,
+        directionKey: PEST_CATEGORY,
+        familyKey: PEST_CATEGORY,
+        category: PEST_CATEGORY,
+        problemKey: PEST_CATEGORY,
+        userDisplayName: '虫害',
+        pestModeKeys,
+        directModeKeys: unique(
+          directMatches.map(item => item.modeKey).filter(modeKey => PEST_MODE_KEYS.includes(modeKey))
+        ),
+        confirmationModeKeys: unique(
+          confirmationCandidates
+            .map(item => item.modeKey)
+            .filter(modeKey => PEST_MODE_KEYS.includes(modeKey))
+        )
+      })
+    }
   }
   for (const modeKey of associatedModes) {
     if (PEST_MODE_KEYS.includes(modeKey)) {

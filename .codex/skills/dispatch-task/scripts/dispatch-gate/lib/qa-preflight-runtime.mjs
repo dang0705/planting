@@ -1,14 +1,20 @@
 import fs from 'node:fs'
+import { spawn } from 'node:child_process'
 import path from 'node:path'
 import { repoRoot } from './state.mjs'
 
 /* eslint-disable no-var -- these callback bodies are serialized for ES5-only App.callFunction parsing. */
 
 export const PREFLIGHT_RPC_TIMEOUT_MS = 8000
+export const PREFLIGHT_SCREENSHOT_TIMEOUT_MS = 20000
 export const PREFLIGHT_DISCONNECT_TIMEOUT_MS = 3000
 export const PREFLIGHT_CAPTURE_TIMEOUT_MS = 30000
 const WX_REQUEST_TIMEOUT_MS = 10000
 const WX_REQUEST_POLL_INTERVAL_MS = 200
+const SCREENSHOT_WORKER_PATH = path.join(
+  repoRoot,
+  '.codex/skills/dispatch-task/scripts/dispatch-gate/lib/automator-screenshot-worker.mjs'
+)
 let wxRequestProbeSequence = 0
 
 function wait(ms) {
@@ -75,6 +81,98 @@ export function withPreflightDeadline({ report, step, timeoutMs, action }) {
           })
         }
       )
+  })
+}
+
+function screenshotWorkerError(message) {
+  const error = new Error(message)
+  error.code = 'preflight_screenshot_failed'
+  error.preflight_step = 'screenshot'
+  return error
+}
+
+export function captureIsolatedPreflightScreenshot({
+  report,
+  wsEndpoint,
+  screenshotPath,
+  timeoutMs,
+  workerPath = SCREENSHOT_WORKER_PATH,
+  spawnProcess = spawn
+}) {
+  const startedAt = Date.now()
+  recordStep(report, 'screenshot', { status: 'running', timeout_ms: timeoutMs, started_at: now() })
+  return new Promise((resolve, reject) => {
+    let settled = false
+    let killTimer = null
+    let stdout = ''
+    let stderr = ''
+    let child
+
+    const finish = (callback, value, evidence) => {
+      if (settled) {
+        return
+      }
+      settled = true
+      if (killTimer) {
+        clearTimeout(killTimer)
+      }
+      recordStep(report, 'screenshot', {
+        ...evidence,
+        timeout_ms: timeoutMs,
+        duration_ms: Date.now() - startedAt,
+        completed_at: now()
+      })
+      callback(value)
+    }
+
+    try {
+      child = spawnProcess(process.execPath, [workerPath, wsEndpoint, screenshotPath, String(timeoutMs)], {
+        stdio: ['ignore', 'pipe', 'pipe']
+      })
+    } catch (error) {
+      const normalized = screenshotWorkerError(`preflight screenshot worker failed to start: ${error.message}`)
+      finish(reject, normalized, { status: 'failed', code: normalized.code, message: normalized.message })
+      return
+    }
+
+    killTimer = setTimeout(() => {
+      try {
+        child.kill('SIGKILL')
+      } catch {
+        // The child may already have exited; its close handler owns the final result.
+      }
+      const error = stepError('screenshot', timeoutMs)
+      finish(reject, error, { status: 'timed_out', code: error.code, message: error.message })
+    }, timeoutMs)
+
+    child.stdout?.on('data', chunk => {
+      stdout += chunk.toString()
+    })
+    child.stderr?.on('data', chunk => {
+      stderr += chunk.toString()
+    })
+    child.on('error', error => {
+      const normalized = screenshotWorkerError(`preflight screenshot worker error: ${error.message}`)
+      finish(reject, normalized, { status: 'failed', code: normalized.code, message: normalized.message })
+    })
+    child.on('close', (code, signal) => {
+      if (settled) {
+        return
+      }
+      let result
+      try {
+        result = JSON.parse(stdout.trim())
+      } catch {
+        result = null
+      }
+      if (result?.status === 'passed' && fs.existsSync(screenshotPath)) {
+        finish(resolve, result, { status: 'passed', code: 'preflight_screenshot_passed' })
+        return
+      }
+      const detail = result?.error || stderr.trim() || `worker exited code=${code} signal=${signal ?? 'none'}`
+      const normalized = screenshotWorkerError(`preflight screenshot worker failed: ${detail}`)
+      finish(reject, normalized, { status: 'failed', code: normalized.code, message: normalized.message })
+    })
   })
 }
 
@@ -240,7 +338,10 @@ export async function captureRuntimeEvidence({
   wxRequestUrl,
   connect = connectMiniProgram,
   rpcTimeoutMs = PREFLIGHT_RPC_TIMEOUT_MS,
-  disconnectTimeoutMs = PREFLIGHT_DISCONNECT_TIMEOUT_MS
+  screenshotTimeoutMs = PREFLIGHT_SCREENSHOT_TIMEOUT_MS,
+  disconnectTimeoutMs = PREFLIGHT_DISCONNECT_TIMEOUT_MS,
+  screenshotCapture = captureIsolatedPreflightScreenshot,
+  probeRequest = probeWxRequest
 }) {
   let miniProgram
   let primaryError
@@ -274,21 +375,10 @@ export async function captureRuntimeEvidence({
     if (!report.checks.page_data.passed) {
       throw new Error('page data unavailable')
     }
-    await withPreflightDeadline({
-      report,
-      step: 'screenshot',
-      timeoutMs: rpcTimeoutMs,
-      action: () => miniProgram.screenshot({ path: screenshotPath })
-    })
-    if (!fs.existsSync(screenshotPath)) {
-      throw new Error('screenshot RPC returned without creating evidence file')
-    }
-    report.checks.screenshot = { passed: true, path: screenshotPath }
-    report.evidence_paths.push(path.relative(repoRoot, screenshotPath))
     if (!wxRequestUrl) {
       throw new Error('wx_request_url is required for live preflight')
     }
-    const request = await probeWxRequest({
+    const request = await probeRequest({
       miniProgram,
       url: wxRequestUrl,
       evaluateStep: (step, callback, args) =>
@@ -310,6 +400,19 @@ export async function captureRuntimeEvidence({
     if (!report.checks.wx_request.passed) {
       throw new Error(requestFailureMessage(request, WX_REQUEST_TIMEOUT_MS))
     }
+    await withPreflightDeadline({
+      report,
+      step: 'disconnect',
+      timeoutMs: disconnectTimeoutMs,
+      action: () => miniProgram.disconnect()
+    })
+    miniProgram = null
+    await screenshotCapture({ report, wsEndpoint, screenshotPath, timeoutMs: screenshotTimeoutMs })
+    if (!fs.existsSync(screenshotPath)) {
+      throw new Error('screenshot worker returned without creating evidence file')
+    }
+    report.checks.screenshot = { passed: true, path: screenshotPath, capture_mode: 'isolated_worker' }
+    report.evidence_paths.push(path.relative(repoRoot, screenshotPath))
     captureResult = {
       page_data: report.checks.page_data,
       screenshot: report.checks.screenshot,

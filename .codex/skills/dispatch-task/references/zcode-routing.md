@@ -46,6 +46,14 @@ ZCode prompt 必须使用统一 external implementer sentinel，并保留统一 
 
 ZCode 开始任务后置 `status=working`，完成或阻塞时更新为 `completed|blocked`。main 低频回收时必须先读该 JSON，再判断是否进入 recovery。若文件缺失或 JSON 损坏，不得用聊天状态补判完成；recovery result 必须记录 `zcode_handoff_manual.status=missing|invalid` 并返回 `blocked`。
 
+### provider_status 与 dispatch 完成状态分离
+
+本轮 legacy manual 仍用 `status=working|completed|blocked`，`completed` 只表示本次 provider 交付结束。未来生成的 provider 合同改用 `provider_status=running|delivered|blocked`：`delivered` 只触发 recovery，绝不等于 dispatch 完成。dispatch 完成由 episode `lifecycleStage=completion_ready` 经 `validate-completion-readiness` 唯一记录。唯一标识只能是 `dispatch_run_id`；不接受 `dispatch_id` 别名，不允许 `delivered`/`completed` 语义混用。
+
+## Continuation contract
+
+ZCode provider 返回终态后进入 `lifecycleStage` 严格转移（见 SKILL.md §7.1）。`episode provider-delivered` 只记录交付 + recovery_required，不 finish；`completion_ready` 只能由成功验证的 `validate-completion-readiness` 记录；`episode finish --status=completed` 在 `completion_ready` 之前被拒绝。ZCode 聊天中的“完成”不是完成依据。
+
 ## Recovery
 
 ZCode 结束后，Codex main 生成 recovery result，并执行：

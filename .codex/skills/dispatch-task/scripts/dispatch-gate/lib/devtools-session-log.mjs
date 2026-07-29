@@ -37,14 +37,25 @@ function recentSessionRecord(timestamp, nowMs) {
   )
 }
 
-function evidenceRecord({ file, type, timestamp, projectPath, port }) {
+function evidenceRecord({ file, type, timestamp, projectPath, projectName, port }) {
   return {
     source: 'weapp_log_current_session',
     file,
     type,
     timestamp: new Date(timestamp).toISOString(),
     project_path: projectPath,
+    ...(projectName ? { project_name: projectName } : {}),
     ...(port === undefined ? {} : { automator_port: port })
+  }
+}
+
+function projectNameFromConfig(projectPath, fsModule) {
+  try {
+    const configPath = path.join(projectPath, 'project.config.json')
+    const config = JSON.parse(fsModule.readFileSync(configPath, 'utf8'))
+    return String(config.projectname || config.projectName || '').trim()
+  } catch {
+    return ''
   }
 }
 
@@ -52,10 +63,12 @@ export function readCurrentSessionProjectEvidence({
   mainProcess,
   expectedProjectPath,
   wsPort = 9420,
+  requireAutomatorPort = true,
   nowMs = Date.now(),
   fsModule = fs
 } = {}) {
   const expected = normalizeRuntimePath(expectedProjectPath)
+  const expectedProjectName = projectNameFromConfig(expected, fsModule)
   const userDataDir = commandFlagValue(mainProcess?.command, '--user-data-dir')
   const sessionId = commandFlagValue(mainProcess?.command, '--app-session-id')
   if (!userDataDir || !sessionId) {
@@ -143,24 +156,48 @@ export function readCurrentSessionProjectEvidence({
         normalizeRuntimePath(fileUtilsMatch[1]) === expected &&
         recentSessionRecord(timestamp, nowMs)
       ) {
+        const openedProjectPath = normalizeRuntimePath(fileUtilsMatch[1])
+        const openedProjectName = projectNameFromConfig(openedProjectPath, fsModule)
         evidenceRecords.push(
           evidenceRecord({
             file: relativeFile,
             type: 'FileUtils',
             timestamp,
-            projectPath: expected
+            projectPath: expected,
+            projectName: openedProjectName
           })
         )
+        // ProjectConfig is supplementary metadata only: it attaches projectname to an
+        // already-proven recent FileUtils record. It must never independently prove
+        // that the running DevTools is the target project, so the verified condition
+        // below does not check ProjectConfig alone.
+        if (expectedProjectName && openedProjectName === expectedProjectName) {
+          evidenceRecords.push(
+            evidenceRecord({
+              file: relativeFile,
+              type: 'ProjectConfig',
+              timestamp,
+              projectPath: expected,
+              projectName: openedProjectName
+            })
+          )
+        }
       }
     }
   }
   const types = new Set(evidenceRecords.map(record => record.type))
-  if (sessionLineSeen && types.has('AUTO') && types.has('FileUtils')) {
+  // A running 9420 session requires AUTO + FileUtils. Before 9420 exists, the only
+  // permitted bootstrap proof is the current main-process session binding plus an exact,
+  // recent FileUtils target path; it never inherits an old AUTO record from another run.
+  const identityVerified = sessionLineSeen && types.has('FileUtils')
+  const automatorVerified = identityVerified && types.has('AUTO')
+  if ((requireAutomatorPort && automatorVerified) || (!requireAutomatorPort && identityVerified)) {
     return {
-      status: 'verified',
+      status: requireAutomatorPort ? 'verified' : 'bootstrap_verified',
       source: 'weapp_log_current_session',
       session_id: sessionId,
       user_data_dir: userDataDir,
+      proof_mode: requireAutomatorPort ? 'automator_session' : 'project_session',
       evidence_records: evidenceRecords,
       files_considered: fileNames
     }
@@ -171,7 +208,9 @@ export function readCurrentSessionProjectEvidence({
     session_id: sessionId,
     user_data_dir: userDataDir,
     rejection: sessionLineSeen
-      ? 'matching_session_project_or_port_evidence_missing'
+      ? requireAutomatorPort
+        ? 'matching_session_project_or_port_evidence_missing'
+        : 'matching_session_project_evidence_missing'
       : 'matching_session_binding_missing',
     evidence_records: evidenceRecords,
     files_considered: fileNames,

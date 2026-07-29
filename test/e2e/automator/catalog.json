@@ -77,7 +77,7 @@
       "id": "diagnosis.pest.visual_mode_retake",
       "category_path": ["diagnosis", "pest", "visual-mode-retake"],
       "leaf_script": "test/e2e/automator/diagnosis/pest-mode-and-retake.mjs",
-      "script_sha256": "d0674e36de534bb76ba9b49c853110dbad104abba56e3b43473b5c5a0f1e7e96",
+      "script_sha256": "ff1b7014f194d284016362db6e033d76b7c58a8d29370ed73b3ff6e7da620518",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": ["3.3", "3.12"],

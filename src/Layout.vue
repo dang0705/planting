@@ -84,6 +84,9 @@ import { useLayoutStore } from '@/store/layout.js'
 import { useUserStore } from '@/store/user.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
 
+const DIAGNOSE_PAGE_ROUTE = 'pages/diagnose/diagnose'
+const QUESTION_PACKAGE_PAGE_ROUTE = 'pages/diagnose/question-package'
+
 const props = defineProps({
   title: { type: String, default: '' },
   leftAction: { type: String, default: '' },
@@ -109,10 +112,26 @@ onMounted(() => {
 })
 onBeforeUnmount(() => uni.$off('app:bottom-sheet-action', openActionSheet))
 
+function isDiagnoseQuestionPackageStack(pages) {
+  const currentRoute = pages[pages.length - 1]?.route
+  const previousRoute = pages[pages.length - 2]?.route
+  return (
+    currentRoute === QUESTION_PACKAGE_PAGE_ROUTE && previousRoute === DIAGNOSE_PAGE_ROUTE
+  )
+}
+
 function goBack() {
   const pages = getCurrentPages?.() || []
   if (pages.length > 1) {
-    uni.navigateBack()
+    if (isDiagnoseQuestionPackageStack(pages)) {
+      uni.switchTab({ url: '/pages/diagnose/diagnose' })
+      return
+    }
+    uni.navigateBack({
+      fail: error => {
+        console.warn('[Layout.goBack] navigateBack failed', error)
+      }
+    })
     return
   }
   goHome()

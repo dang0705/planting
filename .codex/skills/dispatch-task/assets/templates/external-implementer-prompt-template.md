@@ -45,6 +45,11 @@ Forbidden:
 - Web/云端代码任务必须优先创建或更新合同指定分支上的 PR；最终结果必须给出 PR URL、head branch 和最终 head SHA。PR 的合并由 Codex main 使用 GitHub 插件完成，不能在没有 PR/worktree 证据时仅凭聊天声明完成。
 - Codex main 会先读取该手册的 `status` 来判断你是否结束；聊天里说完成不算完成。
 
+provider 交付与 dispatch 完成状态分离（未来合同方向）：
+- 本轮仍使用 legacy manual 的 `status=working|completed|blocked`，`completed` 只表示本次 provider 交付结束，不表示整个 dispatch 完成。
+- 未来生成的 provider 合同将改用 `provider_status=running|delivered|blocked`：`delivered` 只记录 provider 交付结束并触发 recovery，绝不表示 dispatch 完成；dispatch 完成由 episode lifecycleStage=completion_ready 经 `validate-completion-readiness` 唯一记录。
+- 唯一标识只能是 `dispatch_run_id`；不接受 `dispatch_id` 别名，不允许 `delivered`/`completed` 语义混用。
+
 最小 JSON 结构：
 ```json
 {
@@ -80,6 +85,11 @@ Forbidden:
 ## uni-ui Mapping Contract
 {uni_ui_mapping_contract_or_not_applicable}
 
+## Selection to Consumer Contract
+{selection_to_consumer_contract_or_not_applicable}
+
+如果本任务新增或变更用户可选值（如选项、模式、开关、分支路径），你必须在结果 JSON 的 `selection_to_consumer` 列出每个具体 value、产生该选择的提交 payload、消费该选择的 consumer branch、预期入口和 anti-fallback 断言。非选择类任务必须明确写 `selection_to_consumer.not_applicable=true` 并给出原因。validator 和 Completion Gate 会拒绝缺失该合同或实现者证据的任务。
+
 ## Result JSON Contract
 完成后输出：
 <<<EXTERNAL_IMPLEMENTER_RESULT:{dispatch_run_id}:START>>>
@@ -104,6 +114,10 @@ Forbidden:
     "self_check": {"result": "passed | not_applicable | failed | blocked", "commands": [], "evidence_ref": ""}
   },
   "validation_claims": {},
+  "selection_to_consumer": {
+    "not_applicable": true,
+    "reason": "not_applicable reason; OR values: [{value, submit_payload, consumer_branch, expected_entry, anti_fallback_assertion}], consumer_verified: true"
+  },
   "blockers": []
 }
 <<<EXTERNAL_IMPLEMENTER_RESULT:{dispatch_run_id}:END>>>

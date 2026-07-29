@@ -1,7 +1,11 @@
 'use strict'
 
-const { DIAGNOSIS_MODE_REGISTRY, PEST_CATEGORY } = require('../domain/diagnosis-mode-registry')
-const { routeEvidenceLedger, routeFromAggregate } = require('./pest-visual-orchestrator')
+const {
+  DIAGNOSIS_MODE_REGISTRY,
+  PEST_CATEGORY,
+  PEST_MODE_KEYS
+} = require('../domain/diagnosis-mode-registry')
+const { routeEvidenceLedger, routeFromAggregate, directEvidenceLedgerForDirectResult } = require('./pest-visual-orchestrator')
 const {
   buildSpecificPestQuestionPackage,
   buildSpecificPestObservedEvidenceSet,
@@ -101,6 +105,25 @@ async function buildStaticModeDirectionResult({
   }
 }
 
+// dispatch-20260726-mode-outcome-runtime-recovery: 为 resolveSpecificPestAnswerResult 返回的
+// direct result 附加 selectedModeKey / selectedModeKeys，保持具体虫害身份。
+// 单一虫害 mode（如 aphid）提交时 selectedModeKey 必须是具体 mode，不回退为 pest 大类；
+// 多虫害仍使用 pest 聚合入口。
+function attachSelectedModeIdentity(result = null, selectedModeKeys = []) {
+  if (!result || typeof result !== 'object') {
+    return result
+  }
+  const resolvedSelectedModeKey =
+    selectedModeKeys.length === SINGLE_SELECTED_MODE_COUNT
+      ? selectedModeKeys[0]
+      : PEST_CATEGORY
+  return {
+    ...result,
+    selectedModeKey: resolvedSelectedModeKey,
+    selectedModeKeys
+  }
+}
+
 function buildPestModeDirectionResult({
   selectedModeKeys = [],
   sessionId = '',
@@ -116,7 +139,7 @@ function buildPestModeDirectionResult({
   )
     .map(item => item.modeKey)
     .filter(Boolean)
-  const confirmationModeKeys = (
+  let confirmationModeKeys = (
     Array.isArray(selectedRoute.confirmationCandidates) ? selectedRoute.confirmationCandidates : []
   )
     .map(item => item.modeKey)
@@ -150,50 +173,71 @@ function buildPestModeDirectionResult({
       lockedInQuestionnaire: true
     })
   }
+  // dispatch-20260726-mode-outcome-runtime-recovery: 当 route 为 direct tier（>=0.95 模型直判）
+  // 但所选 pest mode 仅在 confirmationCandidates 中（无 evidence-based direct match）时，
+  // 使用 directEvidenceLedgerForDirectResult 把 >=0.95 候选提升为 direct_match，
+  // 与 pest-visual-orchestrator 的 direct_result 路径保持一致。
+  // 这样 resolveSpecificPestAnswerResult 会输出 direct 级 confidenceLevel 和不带"可能是"的文案，
+  // 而不是落入 question_package 分支产生 selectedModeKey='pest' 的空问题包。
+  const effectiveRouteTier = String(selectedRoute.confidenceTier || '').trim()
+  if (
+    effectiveRouteTier === 'direct' &&
+    !directModeKeys.length &&
+    confirmationModeKeys.length > 0
+  ) {
+    const directTierLedger = directEvidenceLedgerForDirectResult(
+      selectedRoute,
+      confirmationModeKeys,
+      effectiveRouteTier
+    )
+    // 合并 direct tier 提升的 direct_match evidence（去重）
+    const mergedMap = new Map(
+      hiddenPrefilledEvidence.map(item => [
+        `${item?.modeKey || ''}::${item?.evidenceKey || ''}::${item?.routeEvidenceRole || ''}`,
+        item
+      ])
+    )
+    for (const item of directTierLedger) {
+      if (item?.routeEvidenceRole !== 'direct_match') {
+        continue
+      }
+      const key = `${item?.modeKey || ''}::${item?.evidenceKey || ''}::${item?.routeEvidenceRole || ''}`
+      if (!mergedMap.has(key)) {
+        mergedMap.set(key, item)
+        hiddenPrefilledEvidence.push(item)
+        hiddenDirectModes.add(item.modeKey)
+      }
+    }
+    // 提升后 directModeKeys 应包含被提升的 >=0.95 候选
+    for (const modeKey of confirmationModeKeys) {
+      if (hiddenDirectModes.has(modeKey) && !directModeKeys.includes(modeKey)) {
+        directModeKeys.push(modeKey)
+      }
+    }
+    // 已提升为 direct 的 mode 不再作为 confirmation candidate
+    confirmationModeKeys = confirmationModeKeys.filter(modeKey => !directModeKeys.includes(modeKey))
+  }
   if (completedResultRefinement && selectedModeKeys.length <= SINGLE_SELECTED_MODE_COUNT) {
-    return resolveSpecificPestAnswerResult({
-      sessionId,
-      round,
-      answers: [],
-      questionPackage: {
-        candidateModes: selectedModeKeys,
-        hiddenPrefilledEvidence,
-        packageQuestions: []
-      },
-      probableModes: directModeKeys.length ? [] : confirmationModeKeys,
-      plantContext,
-      visualAggregateResult: selectedAggregate
-    })
+    return attachSelectedModeIdentity(
+      resolveSpecificPestAnswerResult({
+        sessionId,
+        round,
+        answers: [],
+        questionPackage: {
+          candidateModes: selectedModeKeys,
+          hiddenPrefilledEvidence,
+          packageQuestions: []
+        },
+        probableModes: directModeKeys.length ? [] : confirmationModeKeys,
+        plantContext,
+        visualAggregateResult: selectedAggregate
+      }),
+      selectedModeKeys
+    )
   }
   if (directModeKeys.length && !confirmationModeKeys.length) {
-    return resolveSpecificPestAnswerResult({
-      sessionId,
-      round,
-      answers: [],
-      questionPackage: {
-        candidateModes: directModeKeys,
-        hiddenPrefilledEvidence,
-        packageQuestions: []
-      },
-      plantContext,
-      visualAggregateResult: selectedAggregate
-    })
-  }
-  // 方向选择后构建确认问题包：仅在 route 为 question_package 模式且携带有效 tier 时
-  // 传递 tier/budget，避免 fallback 路由或 direct_result 细化路径误传 budget=0。
-  const routeTier = String(selectedRoute.confidenceTier || '').trim()
-  const routeBudget = Number(selectedRoute.questionBudget || 0)
-  const shouldApplyTier =
-    selectedRoute.nextAction === 'question_package' && routeTier && routeBudget > 0
-  const questionPackage = buildSpecificPestQuestionPackage({
-    candidateModes: confirmationModeKeys,
-    hiddenPrefilledEvidence,
-    ...(shouldApplyTier
-      ? { confidenceTier: routeTier, maxQuestions: routeBudget }
-      : {})
-  })
-  const directOutcome = directModeKeys.length
-    ? resolveSpecificPestAnswerResult({
+    return attachSelectedModeIdentity(
+      resolveSpecificPestAnswerResult({
         sessionId,
         round,
         answers: [],
@@ -204,16 +248,54 @@ function buildPestModeDirectionResult({
         },
         plantContext,
         visualAggregateResult: selectedAggregate
-      })
+      }),
+      selectedModeKeys
+    )
+  }
+  // 方向选择后构建确认问题包：仅在 route 为 question_package 模式且携带有效 tier 时
+  // 传递 tier/budget，避免 fallback 路由或 direct_result 细化路径误传 budget=0。
+  const routeBudget = Number(selectedRoute.questionBudget || 0)
+  const shouldApplyTier =
+    selectedRoute.nextAction === 'question_package' && effectiveRouteTier && routeBudget > 0
+  const questionPackage = buildSpecificPestQuestionPackage({
+    candidateModes: confirmationModeKeys,
+    hiddenPrefilledEvidence,
+    ...(shouldApplyTier
+      ? { confidenceTier: effectiveRouteTier, maxQuestions: routeBudget }
+      : {})
+  })
+  const directOutcome = directModeKeys.length
+    ? attachSelectedModeIdentity(
+        resolveSpecificPestAnswerResult({
+          sessionId,
+          round,
+          answers: [],
+          questionPackage: {
+            candidateModes: directModeKeys,
+            hiddenPrefilledEvidence,
+            packageQuestions: []
+          },
+          plantContext,
+          visualAggregateResult: selectedAggregate
+        }),
+        selectedModeKeys
+      )
     : null
   if (directOutcome && (!questionPackage || questionPackage.questionCount === 0)) {
     return directOutcome
   }
+  // dispatch-20260726-mode-outcome-runtime-recovery: 单一具体虫害 mode 提交时，
+  // selectedModeKey 必须保持具体虫害身份（如 aphid），不回退为通用 pest 大类。
+  // 多虫害（selectedModeKeys.length > 1）仍使用 pest 聚合入口。
+  const resolvedSelectedModeKey =
+    selectedModeKeys.length === SINGLE_SELECTED_MODE_COUNT
+      ? selectedModeKeys[0]
+      : PEST_CATEGORY
   return {
     diagnosisSessionId: sessionId,
     roundId: `round_${round}`,
     plantContext,
-    selectedModeKey: PEST_CATEGORY,
+    selectedModeKey: resolvedSelectedModeKey,
     selectedModeKeys,
     routePrimaryAction: 'question_package',
     sessionStatus: 'awaiting_follow_up',
@@ -299,6 +381,21 @@ async function resolveDirectionChoiceRoundResult({
       plantContext,
       aggregateResult: effectiveAggregateResult,
       completedResultRefinement: canRefineCompletedPest
+    })
+  }
+  // dispatch-20260726-mode-outcome-runtime-recovery: 单一具体虫害 mode（如 aphid）
+  // 作为 directionChoice 提交时，必须路由至 buildPestModeDirectionResult，不能落入
+  // static/AI 分支或抛 501。pest 模式（spider_mite/aphid/...）都是已注册虫害模式，
+  // requiresAiInitialAssessment=true 会让其误入 AI 分支；此处优先识别 pest mode 并
+  // 走虫害问诊/outcome 构建器，保留具体虫害身份。
+  if (PEST_MODE_KEYS.includes(selectedModeKey)) {
+    return buildPestModeDirectionResult({
+      selectedModeKeys: [selectedModeKey],
+      sessionId,
+      round,
+      plantContext,
+      aggregateResult: effectiveAggregateResult,
+      completedResultRefinement: false
     })
   }
   const staticResult = await buildStaticModeDirectionResult({

@@ -48,6 +48,29 @@ function collectLockedModes(hiddenPrefilledEvidence = []) {
   )
 }
 
+// dispatch-20260726 consolidated rework: 识别 direct tier 锁定的模式。
+// directEvidenceLedgerForDirectResult 为 >=0.95 模型直判候选合成 direct_match evidence 时，
+// 会附加 suppressEquivalentQuestion + lockedInQuestionnaire 标记。
+// 这些标记表示该 mode 是模型高置信直判，confidenceLevel 应为 'high' 而非 'normal'。
+function collectDirectTierLockedModes(hiddenPrefilledEvidence = []) {
+  return uniqueModes(
+    (Array.isArray(hiddenPrefilledEvidence) ? hiddenPrefilledEvidence : [])
+      .filter(
+        item =>
+          item?.routeEvidenceRole === 'direct_match' &&
+          item?.suppressEquivalentQuestion === true &&
+          item?.lockedInQuestionnaire === true
+      )
+      .flatMap(item => [
+        item?.diagnosisMode,
+        item?.diagnosis_mode,
+        item?.modeKey,
+        item?.evidenceKey,
+        item?.symptomKey
+      ])
+  )
+}
+
 function collectAnsweredModeStates({ questionPackage = {}, answers = [] } = {}) {
   const answerMap = normalizeAnswerMap(answers)
   const positiveModes = new Set()
@@ -124,6 +147,12 @@ function resolveSpecificPestAnswerResult({
   visualAggregateResult = null
 } = {}) {
   const lockedModes = collectLockedModes(questionPackage?.hiddenPrefilledEvidence || [])
+  // dispatch-20260726 consolidated rework: 识别 >=0.95 模型直判锁定的模式，
+  // 这些模式的 confidenceLevel 应为 'high'，而非普通 'normal'。
+  const directTierLockedModes = collectDirectTierLockedModes(
+    questionPackage?.hiddenPrefilledEvidence || []
+  )
+  const hasDirectTierLock = directTierLockedModes.length > EMPTY_COUNT
   const { positiveModes, negativeModes } = collectAnsweredModeStates({ questionPackage, answers })
   for (const mode of lockedModes) {
     positiveModes.add(mode)
@@ -226,8 +255,11 @@ function resolveSpecificPestAnswerResult({
       problemName: primary?.displayNameCn || '',
       summary,
       severity: primary?.severity || 'low',
-      confidenceLevel:
-        provisionalModes.length || hasUnconfirmedCandidateFallback
+      // dispatch-20260726 consolidated rework: >=0.95 模型直判锁定模式 confidenceLevel='high'，
+      // 让模型高置信判断透传到 finalResult，不被普通 'normal' 压低。
+      confidenceLevel: hasDirectTierLock
+        ? 'high'
+        : provisionalModes.length || hasUnconfirmedCandidateFallback
           ? 'low'
           : hasOutcomes
             ? 'normal'
@@ -259,8 +291,9 @@ function resolveSpecificPestAnswerResult({
     },
     nextSteps: hasOutcomes ? [{ text: '隔离植株并连续观察 3 天。' }] : [],
     whatToAvoid: ['不要在未确认前混用多种药剂。'],
-    confidenceLevel:
-      provisionalModes.length || hasUnconfirmedCandidateFallback
+    confidenceLevel: hasDirectTierLock
+      ? 'high'
+      : provisionalModes.length || hasUnconfirmedCandidateFallback
         ? 'low'
         : hasOutcomes
           ? 'normal'
@@ -274,6 +307,7 @@ module.exports = {
   _test: {
     collectAnsweredModeStates,
     collectLockedModes,
+    collectDirectTierLockedModes,
     buildSpecificPestOutcome,
     hasStickyHoneydewAnswer,
     hasUnknownAnswer

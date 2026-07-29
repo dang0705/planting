@@ -3,6 +3,10 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
+import {
+  issueCompletionReadyAuthorization,
+  markCompletionReady
+} from './dispatch-gate/lib/episode-state.mjs'
 
 const [handoffFile, implementationResultFile, postflightReportFile, runtimeQaEvidenceFile] =
   process.argv.slice(2)
@@ -93,6 +97,8 @@ const codeChanges = handoff?.task?.code_changes_required === true
 const resultRole =
   mode === 'codex_subagent'
     ? 'implementer'
+    : mode === 'main_takeover'
+      ? 'main_takeover'
     : mode === 'zcode_external' || mode === 'external_implementer'
       ? 'external'
       : null
@@ -472,15 +478,90 @@ if (runtimeQa) {
   )
 }
 
+// Selection-to-consumer contract: if the task adds or changes user-selectable
+// values, the implementation result must declare the concrete value(s), the
+// submit payload that produces the selection, the consumer branch that reads it,
+// the expected entry point, and an anti-fallback assertion. Non-selection tasks
+// must explicitly declare selection_to_consumer.not_applicable=true with a reason.
+// Missing contract or implementer evidence is rejected by the Completion Gate.
+const selectionContract = handoff.selection_to_consumer ?? null
+const implSelection = impl.selection_to_consumer ?? null
+if (selectionContract && selectionContract.required === true) {
+  need(isObject(implSelection), 'selection_to_consumer.required=true requires implementation result selection_to_consumer evidence')
+  if (isObject(implSelection)) {
+    need(
+      Array.isArray(implSelection.values) && implSelection.values.length > 0,
+      'selection_to_consumer.values must be a non-empty array of concrete selectable values'
+    )
+    for (const entry of implSelection.values ?? []) {
+      need(
+        isObject(entry) && nonEmptyString(entry.value),
+        'each selection_to_consumer.values entry must have a non-empty value'
+      )
+      need(
+        isObject(entry.submit_payload),
+        'each selection_to_consumer.values entry must include a submit_payload object'
+      )
+      need(
+        nonEmptyString(entry.consumer_branch),
+        'each selection_to_consumer.values entry must declare a consumer_branch'
+      )
+      need(
+        nonEmptyString(entry.expected_entry),
+        'each selection_to_consumer.values entry must declare an expected_entry'
+      )
+      need(
+        nonEmptyString(entry.anti_fallback_assertion),
+        'each selection_to_consumer.values entry must declare an anti_fallback_assertion'
+      )
+    }
+    need(
+      implSelection.consumer_verified === true,
+      'selection_to_consumer.consumer_verified must be true at Completion Gate'
+    )
+  }
+} else {
+  need(
+    isObject(implSelection) && implSelection.not_applicable === true && nonEmptyString(implSelection.reason),
+    'non-selection tasks must declare selection_to_consumer.not_applicable=true with a reason'
+  )
+}
+
 if (errors.length) {
   console.error(
     JSON.stringify({ status: 'blocked', gate: 'completion_readiness', errors }, null, 2)
   )
   process.exit(1)
 }
+
+// Continuation contract: a successful validate-completion-readiness run is the
+// ONLY path that records completion_ready on the episode. finishEpisode(completed)
+// rejects unless lifecycleStage=completion_ready. The authorization proof binds
+// the dispatch_run_id and the validated evidence paths with an HMAC keyed by a
+// shared secret, so the public CLI mark-completion-ready action cannot forge it.
+// Provider delivery, recovery, review, QA, chat, manual or provider self-claims
+// are not authoritative. If no active episode exists (e.g. synthetic contract
+// test), the marker is skipped but the gate still passes.
+const authorizationProof = issueCompletionReadyAuthorization({
+  dispatchRunId: handoff.dispatch_run_id,
+  handoffFile,
+  implementationResultFile,
+  postflightReportFile,
+  runtimeQaEvidenceFile: runtimeQaEvidenceFile ?? null
+})
+const completionReadyMarker = markCompletionReady({
+  dispatchRunId: handoff.dispatch_run_id,
+  authorizationProof
+})
 console.log(
   JSON.stringify(
-    { status: 'passed', gate: 'completion_readiness', dispatch_run_id: handoff.dispatch_run_id },
+    {
+      status: 'passed',
+      gate: 'completion_readiness',
+      dispatch_run_id: handoff.dispatch_run_id,
+      completion_ready_recorded: completionReadyMarker.status === 'completion_ready',
+      completion_ready_episode_id: completionReadyMarker.episode?.episode_id ?? null
+    },
     null,
     2
   )

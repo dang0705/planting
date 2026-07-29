@@ -1,5 +1,5 @@
 <template>
-  <Layout title="提醒" content-class="bg-[#F8F6F0] pb-[70px]">
+  <Layout title="提醒" content-class="bg-[#F8F6F0]">
     <view id="reminder-tab-page" class="min-h-screen bg-[#F8F6F0] p-4">
       <view v-if="loadingPlants" id="reminder-tab-loading" class="py-10 text-center">
         <image :src="loadingIcon" class="mx-auto size-16" />

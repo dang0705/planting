@@ -9,9 +9,18 @@ import {
   auditEpisodeTrace,
   bindAgentToEpisode,
   finishEpisode,
+  issueCompletionReadyAuthorization,
+  linkSuccessorDispatch,
+  markCompletionReady,
+  migrateLegacyEpisodeLifecycle,
   openEpisode,
+  openSuccessorEpisode,
+  recordProviderDelivered,
+  recordQaOutcome,
+  recordReviewPassed,
   registerEpisodeRework,
   renderEpisodeStatus,
+  startRecovery,
   watchEpisode
 } from './lib/episode-state.mjs'
 import { createQaRunCommands } from './lib/qa-run.mjs'
@@ -139,7 +148,61 @@ function hookSelfTest() {
     capability.status === 'cli_fallback' &&
     fs.existsSync(statePath) &&
     catalog.status === 'passed'
-  const finished = finishEpisode({ dispatchRunId, status: passed ? 'completed' : 'aborted' })
+  // Exercise the continuation contract lifecycle so hook-self-test also proves the
+  // completion_ready gate. Provider delivery must never finish the episode; only
+  // completion_ready (authorized by validate-completion-readiness) authorizes completed.
+  const providerDelivered = recordProviderDelivered({
+    dispatchRunId,
+    objectiveKey,
+    providerOutcome: 'delivered',
+    evidence: 'hook-self-test-synthetic'
+  })
+  const prematureFinish = finishEpisode({ dispatchRunId, status: 'completed' })
+  const recoveryStarted = startRecovery({ dispatchRunId, objectiveKey })
+  const reviewPassed = recordReviewPassed({
+    dispatchRunId,
+    objectiveKey,
+    reviewSummary: 'hook-self-test-synthetic-review'
+  })
+  const qaOutcome = recordQaOutcome({
+    dispatchRunId,
+    objectiveKey,
+    qaStatus: 'not_required',
+    qaEvidence: 'hook-self-test-synthetic-qa'
+  })
+  const completionReadyAuthorization = issueCompletionReadyAuthorization({
+    dispatchRunId,
+    handoffFile,
+    implementationResultFile: handoffFile,
+    postflightReportFile: handoffFile,
+    runtimeQaEvidenceFile: null
+  })
+  const completionReady = markCompletionReady({
+    dispatchRunId,
+    objectiveKey,
+    authorizationProof: completionReadyAuthorization
+  })
+  // P0-2 regression: the public CLI mark-completion-ready action must reject
+  // because it cannot construct the unforgeable authorization proof.
+  const cliMarkRejected = spawnSync(
+    process.execPath,
+    [process.argv[1], 'episode', 'mark-completion-ready', `--dispatch-run-id=${dispatchRunId}`],
+    { cwd: repoRoot, encoding: 'utf8' }
+  )
+  const lifecyclePassed =
+    passed &&
+    providerDelivered.status === 'provider_delivered' &&
+    prematureFinish.status === 'blocked' &&
+    prematureFinish.reason === 'completion_requires_completion_ready_lifecycle_stage' &&
+    recoveryStarted.status === 'recovery_in_progress' &&
+    reviewPassed.status === 'review_passed' &&
+    qaOutcome.status === 'qa_not_required' &&
+    completionReady.status === 'completion_ready' &&
+    cliMarkRejected.status !== 0
+  const finished = finishEpisode({
+    dispatchRunId,
+    status: lifecyclePassed ? 'completed' : 'aborted'
+  })
   const cleanupTargets = {
     handoff: handoffFile,
     run_state: stateDir(dispatchRunId),
@@ -151,30 +214,37 @@ function hookSelfTest() {
       `${opened.episode?.episode_id ?? 'unavailable'}.json`
     )
   }
-  if (passed && finished.status === 'finished') {
+  if (lifecyclePassed && finished.status === 'finished') {
     fs.rmSync(cleanupTargets.handoff, { force: true })
     fs.rmSync(cleanupTargets.run_state, { recursive: true, force: true })
     fs.rmSync(cleanupTargets.episode, { force: true })
   }
   return emit(
     {
-      status: passed && finished.status === 'finished' ? 'passed' : 'failed',
+      status: lifecyclePassed && finished.status === 'finished' ? 'passed' : 'failed',
       gate: 'hook_self_test',
       dispatch_run_id: dispatchRunId,
       state_path: path.relative(repoRoot, statePath),
-      cleaned_up: passed && finished.status === 'finished',
+      cleaned_up: lifecyclePassed && finished.status === 'finished',
       hook_capability: capability,
       checks: {
         opened: opened.status,
         bound: bound.status,
         pre,
         post,
+        provider_delivered: providerDelivered.status,
+        premature_finish_blocked: prematureFinish.status === 'blocked',
+        recovery_started: recoveryStarted.status,
+        review_passed: reviewPassed.status,
+        qa_outcome: qaOutcome.status,
+        completion_ready: completionReady.status,
+        cli_mark_completion_ready_rejected: cliMarkRejected.status !== 0,
         finished: finished.status,
         catalog_status: catalog.status
       },
       errors: catalog.errors
     },
-    passed && finished.status === 'finished' ? 0 : 1
+    lifecyclePassed && finished.status === 'finished' ? 0 : 1
   )
 }
 
@@ -241,14 +311,109 @@ function episodeCommand() {
     return emit(result, result.status === 'bound' ? 0 : 1)
   }
   if (action === 'rework') {
+    const supersedesTarget = {}
+    const successorRunId = argValue('successor-dispatch-run-id')
+    const userDecisionReason = argValue('user-decision-reason')
+    const fixTarget = argValue('fix-target')
+    const relationship = argValue('relationship')
+    if (successorRunId) supersedesTarget.successorDispatchRunId = successorRunId
+    if (userDecisionReason) supersedesTarget.userDecisionReason = userDecisionReason
+    if (fixTarget) supersedesTarget.fixTarget = fixTarget
+    if (relationship) supersedesTarget.relationship = relationship
     const result = registerEpisodeRework({
       dispatchRunId,
       objectiveKey,
       episodeId,
       defectSignature: argValue('defect-signature'),
-      summary: argValue('summary')
+      summary: argValue('summary'),
+      supersedesTarget: Object.keys(supersedesTarget).length ? supersedesTarget : null
     })
     return emit(result, result.status === 'rework_requested' ? 0 : 1)
+  }
+  if (action === 'provider-delivered') {
+    const result = recordProviderDelivered({
+      dispatchRunId,
+      objectiveKey,
+      episodeId,
+      providerOutcome: argValue('provider-outcome') || 'delivered',
+      evidence: argValue('evidence') || null
+    })
+    return emit(result, result.status === 'provider_delivered' ? 0 : 1)
+  }
+  if (action === 'start-recovery') {
+    const result = startRecovery({
+      dispatchRunId,
+      objectiveKey,
+      episodeId,
+      recoveryMode: argValue('recovery-mode') || 'codex_main_recovery'
+    })
+    return emit(result, result.status === 'recovery_in_progress' ? 0 : 1)
+  }
+  if (action === 'review-passed') {
+    const result = recordReviewPassed({
+      dispatchRunId,
+      objectiveKey,
+      episodeId,
+      reviewSummary: argValue('review-summary') || ''
+    })
+    return emit(result, result.status === 'review_passed' ? 0 : 1)
+  }
+  if (action === 'qa-outcome') {
+    const result = recordQaOutcome({
+      dispatchRunId,
+      objectiveKey,
+      episodeId,
+      qaStatus: argValue('qa-status'),
+      qaEvidence: argValue('qa-evidence') || null
+    })
+    return emit(result, ['qa_passed', 'qa_not_required'].includes(result.status) ? 0 : 1)
+  }
+  if (action === 'mark-completion-ready') {
+    // P0-2: completion_ready must only be recorded by a successful
+    // validate-completion-readiness run. The public CLI cannot construct the
+    // unforgeable authorization proof (HMAC over validated evidence paths keyed
+    // by a shared secret), so this action always rejects. Use
+    // validate-completion-readiness.mjs, which issues the proof internally on
+    // success.
+    return emit(
+      {
+        status: 'blocked',
+        reason: 'completion_ready_requires_validate_completion_readiness_authorization',
+        explanation:
+          'mark-completion-ready is not callable from the CLI; run validate-completion-readiness.mjs to record completion_ready on success'
+      },
+      1
+    )
+  }
+  if (action === 'migrate-legacy-lifecycle') {
+    const result = migrateLegacyEpisodeLifecycle({ dispatchRunId, objectiveKey, episodeId })
+    return emit(
+      result,
+      ['migrated', 'already_migrated'].includes(result.status) ? 0 : 1
+    )
+  }
+  if (action === 'open-successor') {
+    const result = openSuccessorEpisode({
+      dispatchRunId,
+      objectiveKey,
+      supersedesDispatchRunId: argValue('supersedes-dispatch-run-id'),
+      metadata: {
+        requested_model: argValue('requested-model'),
+        reasoning_effort: argValue('reasoning-effort'),
+        service_tier: argValue('service-tier')
+      }
+    })
+    return emit(result, result.status === 'opened' ? 0 : 1)
+  }
+  if (action === 'link-successor') {
+    const result = linkSuccessorDispatch({
+      dispatchRunId,
+      objectiveKey,
+      episodeId,
+      successorDispatchRunId: argValue('successor-dispatch-run-id'),
+      relationship: argValue('relationship') || 'redesign_recovery'
+    })
+    return emit(result, ['linked', 'already_linked'].includes(result.status) ? 0 : 1)
   }
   if (action === 'status') {
     const checkpoint = watchEpisode({
@@ -303,7 +468,10 @@ function episodeCommand() {
   return emit(
     {
       status: 'usage',
-      commands: ['episode open|bind|start|amend|rework|status|watch|finish|trace-audit']
+      commands: [
+        'episode open|bind|start|amend|rework|status|watch|finish|trace-audit',
+        'episode provider-delivered|start-recovery|review-passed|qa-outcome|link-successor|migrate-legacy-lifecycle|open-successor'
+      ]
     },
     2
   )

@@ -148,4 +148,72 @@ assert.equal(
 assert.equal(optionalFollowUpFromPackageOnly.hasActiveQuestions, true)
 assert.equal(optionalFollowUpFromPackageOnly.uiHints.optionalFollowUp, true)
 
+// ---------------------------------------------------------------------------
+// dispatch-20260726-model-mode-precedence-zcode: 单一模型直判 visibleOutcomes
+// 不应保留无关 directionChoices 与 stale candidateRefinementAvailable。
+// 模型直判 aphid=0.95 场景：routePrimaryAction=finalize + 单 visibleOutcome，
+// 即使后端误传 directionChoices / candidateRefinementAvailable=true，
+// normalizer 也应清空，避免前端展示无关方向入口。
+// ---------------------------------------------------------------------------
+const modelDirectSingleOutcome = normalizeDiagnosisResult({
+  diagnosisSessionId: 'diag_model_direct_aphid',
+  stage: 'final',
+  status: 'completed',
+  questionRequired: false,
+  routePrimaryAction: 'finalize',
+  visibleOutcomes: [{ outcomeKey: 'aphid', displayNameCn: '成群小软虫（蚜虫）' }],
+  // 模拟后端误传的 stale directionChoices（应被清空）
+  directionChoices: [
+    { modeKey: 'pest', userDisplayName: '继续细分虫害方向' },
+    { modeKey: 'yellow_leaf', userDisplayName: '叶片发黄' }
+  ],
+  candidateRefinementAvailable: true,
+  questions: [{ questionKey: 'stale_question', text: '不应继续显示' }],
+  questionPackage: {
+    mode: 'specific_pest_visual',
+    questionCount: 2,
+    answerSubmitMode: 'package'
+  },
+  uiHints: {
+    answerSubmitMode: 'package',
+    maxQuestionsThisRound: 2
+  }
+})
+
+assert.deepEqual(
+  modelDirectSingleOutcome.questions,
+  [],
+  'model-mode-precedence: 模型直判 finalize 不应保留 stale questions'
+)
+assert.equal(
+  modelDirectSingleOutcome.questionPackage,
+  undefined,
+  'model-mode-precedence: 模型直判 finalize 不应保留 stale questionPackage'
+)
+assert.equal(
+  modelDirectSingleOutcome.hasActiveQuestions,
+  false,
+  'model-mode-precedence: 模型直判 finalize hasActiveQuestions 应为 false'
+)
+assert.deepEqual(
+  modelDirectSingleOutcome.directionChoices,
+  [],
+  'model-mode-precedence: 单 visibleOutcome + finalize 应清空无关 directionChoices'
+)
+assert.equal(
+  modelDirectSingleOutcome.candidateRefinementAvailable,
+  false,
+  'model-mode-precedence: 单 visibleOutcome + finalize 应清空 stale candidateRefinementAvailable'
+)
+assert.equal(
+  modelDirectSingleOutcome.visibleOutcomes.length,
+  1,
+  'model-mode-precedence: 单模型直判 visibleOutcomes 应保留为 1 个'
+)
+assert.equal(
+  modelDirectSingleOutcome.visibleOutcomes[0].outcomeKey,
+  'aphid',
+  'model-mode-precedence: visibleOutcomes 应保留具体 aphid outcome'
+)
+
 console.log('diagnosis result normalizer direct/package tests passed')

@@ -244,7 +244,7 @@ onLoad(options => {
 })
 
 function startDiagnosis() {
-  if (!userStore.canDiagnose) {
+  /*if (!userStore.canDiagnose) {
     uni.showModal({
       title: '提示',
       content: '免费诊断次数已用完，升级会员享受无限次诊断',
@@ -256,7 +256,7 @@ function startDiagnosis() {
       }
     })
     return
-  }
+  }*/
   callComponentMethod(diagnosePopupRef, 'open')
 }
 

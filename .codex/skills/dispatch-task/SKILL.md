@@ -225,7 +225,31 @@ node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
 
 hook gate 的职责是可观测性与硬风险拦截，不替代本 skill 的人工判断。main 在派发前用 `dispatch-gate cli.mjs episode open` 建立一个 active episode；spawn 返回 agent id 后必须立即执行 `episode start`（`episode bind` 为等价别名）完成明确的 episode/agent binding。没有 active episode 的 hook 事件必须快速退出，绝不能写入 `unknown-dispatch-run`。同一目标的用户反馈用 `episode amend` 追加，默认复用 main 已生成的 recall packet；只有 `knowledgeScopeChanged=true` 时才要求 main 重新召回。
 
-review 缺陷必须先合并成一个完整返工清单，再执行一次 `episode rework --defect-signature=... --summary=...`。单个 episode 最多允许一个 consolidated rework batch；第二次 rework 会触发 circuit breaker，episode 不得完成，main 必须停止补丁式拉扯并进入整体重设计、明确 blocked 或请求用户决策。普通用户 amendment 不计入 rework budget。
+review 缺陷必须先合并成一个完整返工清单，再执行一次 `episode rework --defect-signature=... --summary=...`。单个 episode 最多允许一个 consolidated rework batch；第二次 rework 必须产出可审计 successor dispatch（`--successor-dispatch-run-id=...`，新 run 记录 `supersedes_dispatch_run_id`，原 run 记录 `successor_dispatch_run_id`）或明确 `user_decision_required`（仅在确实缺少产品决策且无修复目标时允许）。有既定修复目标时不得直接停止。普通用户 amendment 不计入 rework budget。
+
+### 7.1 Continuation contract - provider 交付与 dispatch 完成状态分离
+
+provider（Codex Subagent 或 external implementer）返回终态只表示实现交付阶段结束，绝不表示整个 dispatch-task 完成。episode 通过受持久化状态机和 validator 约束的 `lifecycleStage` 强制实现严格转移：
+
+```text
+implementation_running -> provider_delivered -> recovery_in_progress -> review_passed -> qa_passed|qa_not_required -> completion_ready -> completed
+```
+
+硬规则：
+
+1. provider 终态处理只记录 `provider_delivered` + `recovery_required`（`episode provider-delivered`），不得 finish 或完成 episode；episode 保持 active。
+2. 恢复开始必须有显式状态/事件（`episode start-recovery` -> `recovery_in_progress`）。
+3. `review_passed`（`episode review-passed`）与 `qa_passed|qa_not_required`（`episode qa-outcome`）必须依次推进，不得跳过。
+4. `completion_ready` 只能由成功验证的 `validate-completion-readiness` 路径记录（`episode mark-completion-ready --authorized-by=validate-completion-readiness`）；聊天、manual、provider result 自称完成一律不接受。
+5. `episode finish --status=completed` 拒绝所有未达到 `completion_ready` 的 episode；`completion_ready` 之前任何阶段都不得完成。
+6. 在恢复、后继 dispatch 或明确决策阻断出现前，任务仍 active。
+7. `lifecycleStage` 与 `continuation`（providerDelivered/recoveryRequired/recoveryStartedAt/reviewPassedAt/qaOutcome/completionReadyAt/completionReadyAuthorizedBy）记录在 episode 与 status card；`successorDispatch`（successor_dispatch_run_id/supersedes_dispatch_run_id/relationship）记录 circuit breaker 后继链路。
+
+外部实现者 handoff manual 的 provider 完成状态与 dispatch 完成状态彻底分离：本轮 legacy manual 仍用 `status=working|completed|blocked`（`completed` 只表示 provider 交付结束）；未来生成的 provider 合同改用 `provider_status=running|delivered|blocked`，`delivered` 只触发 recovery，绝不等于 dispatch 完成。唯一标识只能是 `dispatch_run_id`；不接受 `dispatch_id` 别名，不允许 `delivered`/`completed` 语义混用。
+
+### 7.2 Selection to consumer contract
+
+任务新增或变更用户可选值（选项、模式、开关、分支路径）时，handoff 必须声明 `selection_to_consumer.required=true`，implementer/external result 必须在 `selection_to_consumer.values` 列出每个具体 value、产生该选择的 `submit_payload`、消费该选择的 `consumer_branch`、`expected_entry` 和 `anti_fallback_assertion`，并设 `consumer_verified=true`。非选择类任务必须明确写 `selection_to_consumer.not_applicable=true` 并给出原因。`validate-handoff`、`validate-result` 和 `validate-completion-readiness` 会拒绝缺失该合同或实现者证据的任务。
 
 `SubagentStart` 只读取 handoff 提供的 main-owned recall packet，禁止执行 BRV Query。`PostToolUse` 记录真实 tool/terminal/Figma/code-edit telemetry；`SubagentStop` 只能为 forbidden-path、QA evidence forgery 等 true blocker 返回 `decision:"block"`。缺 Figma、缺 feature test、未执行 main-owned Automator、docs 或 BRV 都是普通遗漏：写入审计摘要，但不得阻断 implementer 停止或强制 continuation。`stop_hook_active=true` 必须允许停止以避免循环。
 
@@ -448,3 +472,8 @@ main 不得读取或转述 uni-ui 组件索引、映射表、组件规则；只�
 17. 变更越过 allowed/forbidden paths，未声明真实 changed files，或引入未授权依赖/API/schema。
 18. main QA 重跑单测，或用“看起来正确”替代运行证据。
 19. 在 `AGENTS.md` 判定无常规召回或记录资格时仍调用或写入 ByteRover，或用本 skill/reference 的示例绕过、扩大或缩小 AGENTS 的内容边界。
+20. provider 终态后直接 finish 或完成 episode，跳过 `provider_delivered -> recovery_in_progress -> review_passed -> qa_*  -> completion_ready` 严格转移；或在 `completion_ready` 之前 `episode finish --status=completed`。
+21. 聊天、manual、provider result 自称完成被当作 `completion_ready`；`completion_ready` 只能由成功验证的 `validate-completion-readiness` 记录。
+22. 第二次 rework 无可审计 successor dispatch 或无明确 `user_decision_required`（仅在无修复目标时）就停止；或有修复目标却直接停止。
+23. 未来 provider 合同混用 `provider_status=delivered` 与 `completed` 语义，或使用 `dispatch_id` 别名替代 `dispatch_run_id`。
+24. 选择类任务缺失 `selection_to_consumer` 合同或实现者证据；非选择类任务未声明 `not_applicable=true` 与原因。

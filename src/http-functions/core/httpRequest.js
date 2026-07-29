@@ -44,29 +44,32 @@ function getLocalDevOpenId() {
   return String(import.meta.env.VITE_DEV_OPENID || 'dev_terminal_mp_local').trim()
 }
 
-async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}) {
+export async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}) {
   if (!auth) {
     return headers
   }
 
-  let openid = getStoredUserOpenId()
+  let openid = ''
   let token = ''
 
   if (IS_LOCAL_API_BASE_URL) {
-    openid = openid || getLocalDevOpenId()
-  } else if (isWechatMiniProgramRuntime()) {
-    try {
-      token = await getCloudbaseAccessToken()
-    } catch (error) {
-      console.warn('获取 CloudBase access token 失败，将继续尝试使用本地 openid:', error)
-    }
-
-    if (!openid) {
+    openid = getLocalDevOpenId()
+  } else {
+    openid = getStoredUserOpenId()
+    if (isWechatMiniProgramRuntime()) {
       try {
-        const identity = await getCloudbaseUserIdentity()
-        openid = identity?.openid || ''
+        token = await getCloudbaseAccessToken()
       } catch (error) {
-        console.warn('获取 CloudBase 用户 openid 失败:', error)
+        console.warn('获取 CloudBase access token 失败，将继续尝试使用本地 openid:', error)
+      }
+
+      if (!openid) {
+        try {
+          const identity = await getCloudbaseUserIdentity()
+          openid = identity?.openid || ''
+        } catch (error) {
+          console.warn('获取 CloudBase 用户 openid 失败:', error)
+        }
       }
     }
   }

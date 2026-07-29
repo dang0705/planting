@@ -369,4 +369,120 @@ assert.deepEqual(
   ['spider_mite']
 )
 
+// ---------------------------------------------------------------------------
+// dispatch-20260726-model-mode-precedence-zcode: 模型高置信 mode 优先路由。
+// aphid=0.95 (model-direct) + formally_admitted leaf_yellowing 证据时，
+// 证据派生的 yellow_leaf 不能污染 aphid 模型直判路由。
+// 路由必须只采用 aphid，associatedModes=[aphid]，nextAction=direct_result，
+// 无 cross-family conflict，无 directionChoices 细分入口。
+// ---------------------------------------------------------------------------
+const aphidWithYellowingEvidenceRoute = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'pest',
+  admittedEvidence: [
+    evidence('leaf_yellowing', 'high', 'strong', 'img_mix', 'leaf_upper_surface')
+  ],
+  visualModeCandidates: [
+    { mode: 'aphid', confidence: 0.95, regionRef: 'leaf_upper_surface' }
+  ]
+})
+assert.deepEqual(
+  aphidWithYellowingEvidenceRoute.modelDirectModeKeys,
+  ['aphid'],
+  'model-mode-precedence: modelDirectModeKeys 应只含 aphid'
+)
+assert.deepEqual(
+  aphidWithYellowingEvidenceRoute.associatedModes,
+  ['aphid'],
+  'model-mode-precedence: associatedModes 应只含 aphid，不应被 yellow_leaf 污染'
+)
+assert.deepEqual(
+  aphidWithYellowingEvidenceRoute.directMatches,
+  [],
+  'model-mode-precedence: evidence-derived yellow_leaf directMatches 应被清空'
+)
+assert.deepEqual(
+  aphidWithYellowingEvidenceRoute.confirmationCandidates.map(item => item.modeKey),
+  ['aphid'],
+  'model-mode-precedence: confirmationCandidates 应只含 aphid'
+)
+assert.equal(
+  aphidWithYellowingEvidenceRoute.nextAction,
+  'direct_result',
+  'model-mode-precedence: aphid=0.95 应走 direct_result，不应被 cross-family 阻断'
+)
+assert.equal(
+  aphidWithYellowingEvidenceRoute.confidenceTier,
+  'direct',
+  'model-mode-precedence: aphid=0.95 应为 direct tier'
+)
+// directionChoices 不应含 evidence-derived yellow_leaf 选项（即使 buildDirectionChoices
+// 仍会为 pest 家族产生入口，也只能含模型直判的 aphid，不应混入 yellow_leaf）
+assert.ok(
+  aphidWithYellowingEvidenceRoute.directionChoices.every(
+    item => item.modeKey !== 'yellow_leaf'
+  ),
+  'model-mode-precedence: directionChoices 不应含 evidence-derived yellow_leaf'
+)
+assert.equal(
+  aphidWithYellowingEvidenceRoute.recommendedMode,
+  'aphid',
+  'model-mode-precedence: recommendedMode 应为 aphid'
+)
+
+// ---------------------------------------------------------------------------
+// 对照组：无 model-direct mode 时，evidence fallback 仍有效。
+// 仅 leaf_yellowing 证据 + aphid=0.89 (<0.95) 候选时，evidence-derived yellow_leaf
+// 仍可参与路由（pest profile 下 yellow_leaf 不被 pest profile 接收，故无 admission）。
+// aphid=0.89 走 question_package（pest profile 严格候选逻辑）。
+// ---------------------------------------------------------------------------
+const noModelDirectRoute = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'pest',
+  admittedEvidence: [
+    evidence('leaf_yellowing', 'high', 'strong', 'img_mix', 'leaf_upper_surface')
+  ],
+  visualModeCandidates: [
+    { mode: 'aphid', confidence: 0.89, regionRef: 'leaf_upper_surface' }
+  ]
+})
+assert.deepEqual(
+  noModelDirectRoute.modelDirectModeKeys,
+  [],
+  'model-mode-precedence: aphid=0.89 <0.95 不应进入 modelDirectModeKeys'
+)
+assert.equal(
+  noModelDirectRoute.nextAction,
+  'question_package',
+  'model-mode-precedence: 无 model-direct 时 aphid=0.89 走 question_package fallback'
+)
+
+// ---------------------------------------------------------------------------
+// 多个 >=0.95 模型模式只保留这些模型模式（同家族多虫害）。
+// aphid=0.95 + spider_mite=0.96 都在模型直判集合中，evidence-derived 模式被排除。
+// ---------------------------------------------------------------------------
+const multiModelDirectRoute = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'pest',
+  admittedEvidence: [
+    evidence('leaf_yellowing', 'high', 'strong', 'img_mix', 'leaf_upper_surface')
+  ],
+  visualModeCandidates: [
+    { mode: 'aphid', confidence: 0.95, regionRef: 'leaf_upper_surface' },
+    { mode: 'spider_mite', confidence: 0.96, regionRef: 'leaf_underside' }
+  ]
+})
+assert.deepEqual(
+  multiModelDirectRoute.modelDirectModeKeys,
+  ['aphid', 'spider_mite'],
+  'model-mode-precedence: 多个 >=0.95 模型模式都应进入 modelDirectModeKeys'
+)
+assert.deepEqual(
+  multiModelDirectRoute.associatedModes,
+  ['aphid', 'spider_mite'],
+  'model-mode-precedence: 多模型模式只保留模型模式，evidence-derived 被排除'
+)
+assert.equal(
+  multiModelDirectRoute.nextAction,
+  'direct_result',
+  'model-mode-precedence: 多同家族模型模式仍走 direct_result'
+)
+
 console.log('diagnosis-mode-router pest profile tests passed')

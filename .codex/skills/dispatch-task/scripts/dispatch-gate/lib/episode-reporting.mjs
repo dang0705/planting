@@ -21,6 +21,19 @@ export function renderEpisodeStatusRecord(episode, { maxReworkBatches }) {
       reason: null,
       tripped_at: null
     },
+    lifecycle_stage: episode.lifecycleStage ?? 'implementation_running',
+    continuation: episode.continuation ?? {
+      providerDelivered: false,
+      providerDeliveredAt: null,
+      recoveryRequired: false,
+      recoveryStartedAt: null,
+      reviewPassedAt: null,
+      qaOutcome: 'pending',
+      completionReadyAt: null,
+      completionReadyAuthorizedBy: null
+    },
+    successor_dispatch: episode.successorDispatch ?? null,
+    supersedes_dispatch_run_id: episode.supersedesDispatchRunId ?? null,
     implementationStatus: episode.implementationStatus,
     reviewStatus: episode.reviewStatus,
     qaStatus: episode.qaStatus,
@@ -71,11 +84,65 @@ export function auditEpisodeTraceRecord(episode, { maxReworkBatches, legalEarlyC
     }
     previousNextCheck = item.nextCheckNotBefore ?? previousNextCheck
   }
+  // Continuation contract audit: verify lifecycle stage transitions follow the
+  // strict ordering and that completion_ready was only recorded by an authorized
+  // validate-completion-readiness run. A provider_delivered event must never be
+  // followed by episode_finished with terminal_status=completed unless an
+  // episode_completion_ready event appears between them.
+  const LIFECYCLE_ORDER = [
+    'implementation_running',
+    'provider_delivered',
+    'recovery_in_progress',
+    'review_passed',
+    'qa_passed',
+    'qa_not_required',
+    'completion_ready'
+  ]
+  const stageIndex = new Map(LIFECYCLE_ORDER.map((stage, index) => [stage, index]))
+  const lifecycleEvents = (episode.trace ?? []).filter(item =>
+    [
+      'episode_provider_delivered',
+      'episode_recovery_started',
+      'episode_review_passed',
+      'episode_qa_outcome_recorded',
+      'episode_completion_ready'
+    ].includes(item.event)
+  )
+  let highWaterMark = stageIndex.get(episode.lifecycleStage ?? 'implementation_running') ?? 0
+  for (const item of lifecycleEvents) {
+    let stage = null
+    if (item.event === 'episode_provider_delivered') stage = 'provider_delivered'
+    else if (item.event === 'episode_recovery_started') stage = 'recovery_in_progress'
+    else if (item.event === 'episode_review_passed') stage = 'review_passed'
+    else if (item.event === 'episode_qa_outcome_recorded') {
+      stage = item.qa_status === 'not_required' ? 'qa_not_required' : 'qa_passed'
+    } else if (item.event === 'episode_completion_ready') stage = 'completion_ready'
+    if (stage && stageIndex.has(stage)) {
+      const idx = stageIndex.get(stage)
+      // review_passed -> qa_passed|qa_not_required are siblings at >= review_passed.
+      // Allow equal-or-higher transitions; reject regressions to early stages.
+      if (idx < highWaterMark && idx < stageIndex.get('review_passed')) {
+        errors.push(`lifecycle stage regression: ${stage} after stage index ${highWaterMark}`)
+      }
+      if (idx > highWaterMark) {
+        highWaterMark = idx
+      }
+    }
+  }
+  if (
+    episode.lifecycleStage === 'completion_ready' &&
+    !lifecycleEvents.some(item => item.event === 'episode_completion_ready')
+  ) {
+    errors.push(
+      'completion_ready lifecycle stage recorded without an episode_completion_ready trace event'
+    )
+  }
   return {
     status: errors.length ? 'failed' : 'passed',
     gate: 'episode_trace_audit',
     episode_id: episode.episode_id,
     legal_early_reasons: [...legalEarlyCheckReasons],
+    lifecycle_stage: episode.lifecycleStage ?? 'implementation_running',
     errors
   }
 }

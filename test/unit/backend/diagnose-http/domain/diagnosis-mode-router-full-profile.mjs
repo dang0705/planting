@@ -119,16 +119,22 @@ const pestAndYellowRoute = resolveDiagnosisModeRoute({
   visualModeCandidates: [{ mode: 'yellow_leaf', confidence: 0.82 }]
 })
 assert.equal(pestAndYellowRoute.nextAction, 'choose_direction')
-assert.equal(pestAndYellowRoute.recommendedDirection, 'pest')
+// dispatch-20260726 consolidated rework: 单一虫害模式 spider_mite 应作为具体 mode 展示，
+// recommendedDirection 指向具体 spider_mite 而非通用 pest 大类。
+assert.equal(pestAndYellowRoute.recommendedDirection, 'spider_mite')
 assert.deepEqual(
   pestAndYellowRoute.directMatches.map(item => item.modeKey),
   ['yellow_leaf', 'spider_mite']
 )
 assert.deepEqual(
   pestAndYellowRoute.directionChoices.map(item => item.modeKey),
-  ['pest', 'yellow_leaf']
+  ['spider_mite', 'yellow_leaf']
 )
 assert.deepEqual(pestAndYellowRoute.directionChoices[0].pestModeKeys, ['spider_mite'])
+// spider_mite 是 evidence-based direct match（visible_mite_colony），不是 confirmation candidate，
+// 故 directModeKeys 含 spider_mite，confirmationModeKeys 为空。
+assert.deepEqual(pestAndYellowRoute.directionChoices[0].directModeKeys, ['spider_mite'])
+assert.deepEqual(pestAndYellowRoute.directionChoices[0].confirmationModeKeys, [])
 assert.deepEqual(
   pestAndYellowRoute.pendingDirectPestSnapshot.directMatches.map(item => item.modeKey),
   ['spider_mite']
@@ -224,5 +230,129 @@ const powderyPlan = resolveHighSpecificityConvergencePlan({
 })
 assert.equal(powderyPlan.shouldBypassQuestion, true)
 assert.equal(powderyPlan.problemKey, 'powdery_mildew')
+
+// ---------------------------------------------------------------------------
+// dispatch-20260726-model-mode-precedence-zcode: full profile 模型直判优先。
+// yellow_leaf=0.95 (model-direct, fixed package) + leaf_yellowing 证据派生时，
+// 模型直判 yellow_leaf 必须优先，但仍走固定题包问诊路径（不直接出结论）。
+// evidence-derived yellow_leaf 不应产生额外污染。
+// ---------------------------------------------------------------------------
+const yellowLeafModelDirectRoute = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'full',
+  admittedEvidence: [
+    evidence('leaf_yellowing', 'high', 'strong', 'img_yl', 'leaf_upper_surface'),
+    evidence('leaf_droop', 'high', 'strong', 'img_yl', 'leaf_upper_surface')
+  ],
+  visualModeCandidates: [{ mode: 'yellow_leaf', confidence: 0.95, regionRef: 'leaf_upper_surface' }]
+})
+assert.deepEqual(
+  yellowLeafModelDirectRoute.modelDirectModeKeys,
+  ['yellow_leaf'],
+  'model-mode-precedence: yellow_leaf=0.95 应进入 modelDirectModeKeys'
+)
+assert.deepEqual(
+  yellowLeafModelDirectRoute.associatedModes,
+  ['yellow_leaf'],
+  'model-mode-precedence: yellow_leaf 模型直判应排除 evidence-derived wilting_droop 污染'
+)
+assert.equal(
+  yellowLeafModelDirectRoute.nextAction,
+  'question_package',
+  'model-mode-precedence: yellow_leaf 固定题包模式即使模型直判也走 question_package'
+)
+assert.deepEqual(
+  yellowLeafModelDirectRoute.directionChoices.map(item => item.modeKey),
+  ['yellow_leaf'],
+  'model-mode-precedence: 单一 yellow_leaf 模型直判 directionChoices 只含 yellow_leaf'
+)
+
+// ---------------------------------------------------------------------------
+// wilting_droop=0.95 (model-direct, fixed package) 同样模型优先但走题包。
+// ---------------------------------------------------------------------------
+const wiltingDroopModelDirectRoute = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'full',
+  admittedEvidence: [
+    evidence('leaf_yellowing', 'high', 'strong', 'img_wd', 'leaf_upper_surface'),
+    evidence('leaf_droop', 'high', 'strong', 'img_wd', 'leaf_upper_surface')
+  ],
+  visualModeCandidates: [{ mode: 'wilting_droop', confidence: 0.95, regionRef: 'leaf_upper_surface' }]
+})
+assert.deepEqual(
+  wiltingDroopModelDirectRoute.modelDirectModeKeys,
+  ['wilting_droop'],
+  'model-mode-precedence: wilting_droop=0.95 应进入 modelDirectModeKeys'
+)
+assert.deepEqual(
+  wiltingDroopModelDirectRoute.associatedModes,
+  ['wilting_droop'],
+  'model-mode-precedence: wilting_droop 模型直判应排除 evidence-derived yellow_leaf 污染'
+)
+assert.equal(
+  wiltingDroopModelDirectRoute.nextAction,
+  'question_package',
+  'model-mode-precedence: wilting_droop 固定题包模式即使模型直判也走 question_package'
+)
+
+// ---------------------------------------------------------------------------
+// powdery_mildew=0.95 (model-direct, visual_direct_only) 模型直判直接结论。
+// 同时有 evidence-derived yellow_leaf（来自 leaf_yellowing 证据）时，
+// yellow_leaf 不能污染 powdery_mildew 模型直判，powdery_mildew 直接出结论。
+// ---------------------------------------------------------------------------
+const powderyModelDirectRoute = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'full',
+  admittedEvidence: [
+    evidence('leaf_yellowing', 'high', 'strong', 'img_pm', 'leaf_upper_surface')
+  ],
+  visualModeCandidates: [{ mode: 'powdery_mildew', confidence: 0.95, regionRef: 'leaf_front' }]
+})
+assert.deepEqual(
+  powderyModelDirectRoute.modelDirectModeKeys,
+  ['powdery_mildew'],
+  'model-mode-precedence: powdery_mildew=0.95 应进入 modelDirectModeKeys'
+)
+assert.deepEqual(
+  powderyModelDirectRoute.associatedModes,
+  ['powdery_mildew'],
+  'model-mode-precedence: powdery_mildew 模型直判应排除 evidence-derived yellow_leaf 污染'
+)
+assert.equal(
+  powderyModelDirectRoute.nextAction,
+  'direct_result',
+  'model-mode-precedence: powdery_mildew 模型直判走 direct_result'
+)
+// directionChoices 不应含 evidence-derived yellow_leaf 选项
+assert.ok(
+  powderyModelDirectRoute.directionChoices.every(item => item.modeKey !== 'yellow_leaf'),
+  'model-mode-precedence: directionChoices 不应含 evidence-derived yellow_leaf'
+)
+
+// ---------------------------------------------------------------------------
+// 对照组：无 model-direct 时，evidence fallback 仍有效。
+// 仅 leaf_yellowing + leaf_droop 证据 + 0.80 候选（<0.95）时，
+// evidence-derived yellow_leaf + wilting_droop 仍可进入 associatedModes 走题包。
+// ---------------------------------------------------------------------------
+const noModelDirectFullRoute = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'full',
+  admittedEvidence: [evidence('leaf_yellowing'), evidence('leaf_droop')],
+  visualModeCandidates: [
+    { mode: 'yellow_leaf', confidence: 0.8 },
+    { mode: 'wilting_droop', confidence: 0.75 }
+  ]
+})
+assert.deepEqual(
+  noModelDirectFullRoute.modelDirectModeKeys,
+  [],
+  'model-mode-precedence: <0.95 候选不应进入 modelDirectModeKeys'
+)
+assert.deepEqual(
+  noModelDirectFullRoute.associatedModes,
+  ['yellow_leaf', 'wilting_droop'],
+  'model-mode-precedence: 无 model-direct 时 evidence fallback 仍保留多模式'
+)
+assert.equal(
+  noModelDirectFullRoute.nextAction,
+  'question_package',
+  'model-mode-precedence: 无 model-direct 时仍走 question_package'
+)
 
 console.log('diagnosis-mode-router full profile supplementary tests passed')

@@ -3,6 +3,7 @@ export function validateImplementationOwnerHandoff({
   tier,
   externalMode,
   externalTier,
+  mainTakeoverMode,
   codeChanges,
   external,
   mode,
@@ -35,6 +36,9 @@ export function validateImplementationOwnerHandoff({
     return
   }
   if (mode === 'main_direct') {
+    return
+  }
+  if (mainTakeoverMode) {
     return
   }
   validateCodexSubagentContract({ data, tier, need, isObject, nonEmptyString })
@@ -80,6 +84,41 @@ function validateExternalContract({ data, external, need, isObject, nonEmptyStri
     'external_contract.handoff_completion_status_source must be handoff_manual'
   )
   validateWebExternalContract({ data, external, provider, need, isObject, nonEmptyString })
+  validateZcodeClipboardBridgeAuthorization({ data, external, need, isObject })
+}
+
+// dispatch-20260726-devtools-screenshot-recovery-zcode: 持久用户授权校验。
+// 当 external_contract.zcode_clipboard_bridge_authorization 存在时，校验其结构。
+// 授权仅适用于 provider=zcode + external-implementer handoff。
+// 迁移来源：schema 落地前同一授权可暂存于 validation.zcode_clipboard_bridge_authorization，
+// 正式 external_contract 字段优先。
+function validateZcodeClipboardBridgeAuthorization({ data, external, need, isObject }) {
+  const auth =
+    external.zcode_clipboard_bridge_authorization ??
+    data?.validation?.zcode_clipboard_bridge_authorization
+  if (auth === undefined) {
+    return
+  }
+  need(isObject(auth), 'zcode_clipboard_bridge_authorization must be an object')
+  if (!isObject(auth)) {
+    return
+  }
+  need(
+    ['persistent_user_authorization'].includes(auth.mode),
+    'zcode_clipboard_bridge_authorization.mode must be persistent_user_authorization'
+  )
+  need(
+    auth.enabled === true || auth.enabled === false,
+    'zcode_clipboard_bridge_authorization.enabled must be boolean'
+  )
+  if (auth.enabled === true) {
+    const provider =
+      external.provider || (external.external_implementer === 'zcode_glm' ? 'zcode' : '')
+    need(
+      provider === 'zcode',
+      'zcode_clipboard_bridge_authorization requires external_contract.provider=zcode'
+    )
+  }
 }
 
 function validateWebExternalContract({ data, external, provider, need, isObject, nonEmptyString }) {
@@ -353,6 +392,7 @@ function externalContractAllowedKeys() {
     'shell_only_ui_automation_forbidden',
     'required_computer_use_actions',
     'post_send_computer_use_policy',
-    'remote_sync'
+    'remote_sync',
+    'zcode_clipboard_bridge_authorization'
   ]
 }
