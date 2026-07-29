@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { spawn } from 'node:child_process'
+import { execFile, spawn } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -8,8 +8,11 @@ import { fileURLToPath } from 'node:url'
 
 const DEFAULT_PORT = 3010
 const DEFAULT_OPENID = 'dev_terminal_mp_local'
-const LOCAL_FUNCTIONS_GATEWAY_SCRIPT = fileURLToPath(new URL('./local-functions-gateway.mjs', import.meta.url))
+const LOCAL_FUNCTIONS_GATEWAY_SCRIPT = fileURLToPath(
+  new URL('./local-functions-gateway.mjs', import.meta.url)
+)
 const PROJECT_ROOT = path.resolve(path.dirname(LOCAL_FUNCTIONS_GATEWAY_SCRIPT), '..', '..')
+const LOCAL_GATEWAY_KIND = 'planting-local-functions-gateway'
 const DEFAULT_REQUIRED_FUNCTIONS = [
   'diagnose-http',
   'plant-catalog-http',
@@ -30,8 +33,19 @@ const FUNCTION_HEALTH_PATHS = {
   'weather-http': 'weather-http/weather/health',
   'storage-http': 'storage-http/storage/health'
 }
+const FUNCTION_PORTS = {
+  'diagnose-http': 9000,
+  'plant-catalog-http': 9001,
+  'plant-user-http': 9002,
+  'identify-http': 9003,
+  'diagnosis-history-http': 9004,
+  'auth-user-http': 9005,
+  'weather-http': 9006,
+  'storage-http': 9007
+}
 const GATEWAY_READY_TIMEOUT_MS = 60000
 const HEALTH_REQUEST_TIMEOUT_MS = 3000
+const GATEWAY_RECOVERY_TIMEOUT_MS = 5000
 const LOCAL_CREDENTIAL_SECRET_ID_KEYS = [
   'CLOUDBASE_SECRET_ID',
   'TENCENT_SECRET_ID',
@@ -69,9 +83,11 @@ const FUNCTION_BUSINESS_PROBES = {
 }
 
 function getFirstLanAddress() {
-  return Object.values(os.networkInterfaces())
-    .flat()
-    .find(item => item && item.family === 'IPv4' && !item.internal)?.address || ''
+  return (
+    Object.values(os.networkInterfaces())
+      .flat()
+      .find(item => item && item.family === 'IPv4' && !item.internal)?.address || ''
+  )
 }
 
 function parseArgs(argv = []) {
@@ -111,7 +127,10 @@ function parseArgs(argv = []) {
     }
     if (key === '--required-functions') {
       options.requiredFunctions = value
-        ? value.split(',').map(item => item.trim()).filter(Boolean)
+        ? value
+            .split(',')
+            .map(item => item.trim())
+            .filter(Boolean)
         : []
     }
     if (key === '--start-functions') {
@@ -173,7 +192,8 @@ function readEnvFile(filePath) {
     return {}
   }
 
-  return fs.readFileSync(filePath, 'utf8')
+  return fs
+    .readFileSync(filePath, 'utf8')
     .split(/\r?\n/)
     .reduce((env, line) => {
       const trimmed = line.trim()
@@ -210,8 +230,9 @@ function assertLocalCloudbaseCredentials(requiredFunctions = []) {
     return
   }
 
-  const functionsNeedingCredentials = requiredFunctions
-    .filter(name => FUNCTIONS_REQUIRING_CLOUDBASE_CREDENTIALS.has(name))
+  const functionsNeedingCredentials = requiredFunctions.filter(name =>
+    FUNCTIONS_REQUIRING_CLOUDBASE_CREDENTIALS.has(name)
+  )
   if (!functionsNeedingCredentials.length) {
     return
   }
@@ -253,6 +274,20 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+function execFileAsync(file, args = []) {
+  return new Promise((resolve, reject) => {
+    execFile(file, args, { encoding: 'utf8' }, (error, stdout, stderr) => {
+      if (error) {
+        error.stdout = stdout
+        error.stderr = stderr
+        reject(error)
+        return
+      }
+      resolve({ stdout, stderr })
+    })
+  })
+}
+
 async function fetchJsonWithTimeout(url, options = {}) {
   const controller = new AbortController()
   const timeout = setTimeout(
@@ -289,40 +324,123 @@ async function fetchJsonWithTimeout(url, options = {}) {
     }
     throw createLocalGatewayError(
       'LOCAL_GATEWAY_NOT_RUNNING',
-      `本地 CloudBase 函数 gateway 未启动: ${url}\n` +
-        '将尝试自动启动本地函数 gateway。'
+      `本地 CloudBase 函数 gateway 未启动: ${url}\n` + '将尝试自动启动本地函数 gateway。'
     )
   } finally {
     clearTimeout(timeout)
   }
 }
 
-async function assertLocalFunctionsGatewayReady(apiBaseUrl = '', requiredFunctions = []) {
-  const healthUrl = `${String(apiBaseUrl || '').replace(/\/+$/, '')}/__local_functions__/health`
+function normalizeGatewayFunctionEntries(entries = []) {
+  return Array.isArray(entries)
+    ? entries
+        .map(item => {
+          if (typeof item === 'string') {
+            return {
+              name: item,
+              port: null,
+              status: '',
+              alive: null
+            }
+          }
 
+          return {
+            name: String(item?.name || '').trim(),
+            port: Number(item?.port || 0) || null,
+            status: String(item?.status || '').trim(),
+            alive: typeof item?.alive === 'boolean' ? item.alive : null,
+            pid: Number(item?.pid || 0) || null,
+            exitCode: item?.exitCode ?? null,
+            signalCode: item?.signalCode ?? null
+          }
+        })
+        .filter(item => item.name)
+    : []
+}
+
+function parseGatewayState(body = null) {
+  const data = body?.data && typeof body.data === 'object' ? body.data : {}
+  const functions = normalizeGatewayFunctionEntries(data.functions)
+
+  return {
+    gateway: String(data.gateway || '').trim(),
+    projectRoot: String(data.projectRoot || '').trim(),
+    pid: Number(data.pid || 0) || null,
+    status: String(data.status || '').trim(),
+    unavailableFunctions: Array.isArray(data.unavailableFunctions)
+      ? data.unavailableFunctions.map(item => String(item || '').trim()).filter(Boolean)
+      : [],
+    functions
+  }
+}
+
+function buildHealthUrl(apiBaseUrl = '') {
+  return `${String(apiBaseUrl || '').replace(/\/+$/, '')}/__local_functions__/health`
+}
+
+async function fetchGatewayHealth(apiBaseUrl = '') {
+  const healthUrl = buildHealthUrl(apiBaseUrl)
   const { response, body } = await fetchJsonWithTimeout(healthUrl)
 
-  if (!response.ok || body?.data?.status !== 'ok') {
+  return {
+    healthUrl,
+    response,
+    body,
+    state: parseGatewayState(body)
+  }
+}
+
+function isLegacyRepoGateway(state = {}, requiredFunctions = []) {
+  if (!state.functions.length) {
+    return false
+  }
+
+  const functionPorts = new Map(
+    state.functions.filter(item => item.port).map(item => [item.name, item.port])
+  )
+
+  return requiredFunctions.every(name => functionPorts.get(name) === FUNCTION_PORTS[name])
+}
+
+function isRepoLocalGateway(state = {}, requiredFunctions = []) {
+  if (state.gateway === LOCAL_GATEWAY_KIND && state.projectRoot === PROJECT_ROOT) {
+    return true
+  }
+
+  return isLegacyRepoGateway(state, requiredFunctions)
+}
+
+function formatUnavailableGatewayWorkers(state = {}) {
+  const unavailable = state.functions
+    .filter(item => item.alive === false || (item.status && item.status !== 'running'))
+    .map(item => `${item.name}${item.pid ? `(${item.pid})` : ''}`)
+
+  return unavailable.length ? unavailable.join(', ') : ''
+}
+
+async function assertLocalFunctionsGatewayReady(apiBaseUrl = '', requiredFunctions = []) {
+  const { healthUrl, response, state } = await fetchGatewayHealth(apiBaseUrl)
+
+  if (!response.ok || state.status !== 'ok') {
     const poweredBy = response.headers.get('x-powered-by') || response.headers.get('server') || ''
-    throw createLocalGatewayError(
+    const unavailable = formatUnavailableGatewayWorkers(state)
+    const error = createLocalGatewayError(
       'LOCAL_GATEWAY_BAD_RESPONSE',
       `本地 CloudBase 函数 gateway 未就绪: ${response.status} ${response.statusText}\n` +
         `检查地址: ${healthUrl}\n` +
         `${poweredBy ? `当前端口响应服务: ${poweredBy}\n` : ''}` +
+        `${unavailable ? `不可用函数: ${unavailable}\n` : ''}` +
         '请确认该端口没有被其他项目占用。'
     )
+    error.gatewayState = state
+    throw error
   }
 
-  const availableFunctions = Array.isArray(body?.data?.functions)
-    ? body.data.functions
-      .map(item => typeof item === 'string' ? item : item?.name)
-      .map(item => String(item || '').trim())
-      .filter(Boolean)
-    : []
+  const availableFunctions = state.functions.map(item => item.name)
   const availableSet = new Set(availableFunctions)
   const missingFunctions = requiredFunctions.filter(name => !availableSet.has(name))
   if (missingFunctions.length) {
-    throw createLocalGatewayError(
+    const error = createLocalGatewayError(
       'LOCAL_GATEWAY_MISSING_FUNCTIONS',
       '本地 CloudBase 函数 gateway 未启动完整函数集。\n' +
         `检查地址: ${healthUrl}\n` +
@@ -331,12 +449,15 @@ async function assertLocalFunctionsGatewayReady(apiBaseUrl = '', requiredFunctio
         '微信小程序本地模式请运行 `npm run dev:functions`，不要只运行 `npm run dev:functions:diagnose`。' +
         '如只验证少量函数，可显式传入 `--required-functions=diagnose-http`。'
     )
+    error.gatewayState = state
+    throw error
   }
 }
 
 async function assertLocalFunctionRoutesReady(apiBaseUrl = '', requiredFunctions = []) {
   const baseUrl = String(apiBaseUrl || '').replace(/\/+$/, '')
   const unavailable = []
+  const details = []
 
   for (const functionName of requiredFunctions) {
     const healthPath = FUNCTION_HEALTH_PATHS[functionName]
@@ -347,19 +468,37 @@ async function assertLocalFunctionRoutesReady(apiBaseUrl = '', requiredFunctions
     try {
       const { response, body } = await fetchJsonWithTimeout(url)
       if (!response.ok || body?.code !== 200) {
-        unavailable.push(`${functionName}: ${response.status}`)
+        const message = String(body?.message || response.statusText || '').trim()
+        unavailable.push(`${functionName}: ${response.status}${message ? ` ${message}` : ''}`)
+        details.push({
+          functionName,
+          url,
+          status: response.status,
+          bodyCode: body?.code ?? null,
+          message
+        })
       }
     } catch (error) {
-      unavailable.push(`${functionName}: ${error?.message || error}`)
+      const message = String(error?.message || error)
+      unavailable.push(`${functionName}: ${message}`)
+      details.push({
+        functionName,
+        url,
+        status: null,
+        bodyCode: error?.code ?? null,
+        message
+      })
     }
   }
 
   if (unavailable.length) {
-    throw createLocalGatewayError(
+    const error = createLocalGatewayError(
       'LOCAL_FUNCTION_ROUTES_NOT_READY',
       '本地 CloudBase 函数 health route 尚未全部就绪。\n' +
         unavailable.map(item => `- ${item}`).join('\n')
     )
+    error.details = details
+    throw error
   }
 }
 
@@ -392,7 +531,9 @@ async function assertLocalBusinessRoutesReady(apiBaseUrl = '', options = {}) {
         body: probe.body ? JSON.stringify(probe.body) : undefined
       })
       if (!response.ok || body?.code !== 200) {
-        unavailable.push(`${functionName}: ${response.status} ${body?.message || response.statusText}`)
+        unavailable.push(
+          `${functionName}: ${response.status} ${body?.message || response.statusText}`
+        )
       }
     } catch (error) {
       unavailable.push(`${functionName}: ${error?.message || error}`)
@@ -414,6 +555,9 @@ function buildLocalBusinessRouteHint(unavailable = []) {
   if (message.includes('secret id error') || message.includes('sign_param_invalid')) {
     return '\n请检查 .env.local 中的 CloudBase SecretId/SecretKey 是否存在、已轮换且有目标环境 SQL 权限。'
   }
+  if (message.includes('unknown column') || message.includes('sqlstate: 42s22')) {
+    return '\nCloudBase SQL 已连接成功，但当前开发库表结构与代码不一致。请先补齐缺失字段或执行对应 schema 迁移，再重新启动。'
+  }
   if (
     message.includes('database connection failed') ||
     message.includes('run query failed') ||
@@ -421,7 +565,7 @@ function buildLocalBusinessRouteHint(unavailable = []) {
   ) {
     return (
       '\nCloudBase 密钥已进入 SQL 调用，但数据库连接配置未通过。请检查：\n' +
-      '- 当前 shell 是否用旧的 CLOUDBASE_* / TENCENT_* 覆盖了 .env.local。\n' +
+      '- 当前 shell 是否用既有的 CLOUDBASE_* / TENCENT_* 覆盖了 .env.local。\n' +
       '- CloudBase 关系型数据库实例是否 READY，且密钥账号有该环境 SQL 权限。\n' +
       '- 如控制台使用非默认数据库连接名，在 .env.local 设置 CLOUDBASE_SQL_DBLINK_NAME。'
     )
@@ -434,6 +578,109 @@ async function assertLocalRuntimeReady(apiBaseUrl = '', options = {}) {
   await assertLocalFunctionsGatewayReady(apiBaseUrl, options.requiredFunctions)
   await assertLocalFunctionRoutesReady(apiBaseUrl, options.requiredFunctions)
   await assertLocalBusinessRoutesReady(apiBaseUrl, options)
+}
+
+function routeFailureLooksStale(details = []) {
+  return details.some(
+    item =>
+      item.status === 502 &&
+      (item.bodyCode === 'LOCAL_FUNCTION_PROXY_FAILED' || item.bodyCode === 502) &&
+      /ECONNREFUSED|ECONNRESET|socket hang up/i.test(String(item.message || ''))
+  )
+}
+
+function gatewayStateLooksStale(state = {}, requiredFunctions = []) {
+  const requiredSet = new Set(requiredFunctions)
+  return state.functions.some(
+    item =>
+      requiredSet.has(item.name) &&
+      (item.alive === false || (item.status && item.status !== 'running'))
+  )
+}
+
+function hasRuntimeLivenessMetadata(state = {}) {
+  return (
+    state.gateway === LOCAL_GATEWAY_KIND &&
+    state.projectRoot === PROJECT_ROOT &&
+    state.functions.some(item => typeof item.alive === 'boolean')
+  )
+}
+
+async function resolveGatewayListenerPid(port) {
+  try {
+    const { stdout } = await execFileAsync('lsof', ['-tiTCP:' + port, '-sTCP:LISTEN'])
+    return (
+      String(stdout || '')
+        .split(/\r?\n/)
+        .map(item => item.trim())
+        .find(Boolean) || ''
+    )
+  } catch (error) {
+    if (error?.code === 1) {
+      return ''
+    }
+    if (error?.code === 'ENOENT') {
+      return ''
+    }
+    throw error
+  }
+}
+
+async function waitForGatewayListenerExit(port, expectedPid = '') {
+  const startedAt = Date.now()
+
+  while (Date.now() - startedAt < GATEWAY_RECOVERY_TIMEOUT_MS) {
+    const listeningPid = await resolveGatewayListenerPid(port)
+    if (!listeningPid || (expectedPid && listeningPid !== String(expectedPid))) {
+      return
+    }
+    await sleep(250)
+  }
+
+  throw createLocalGatewayError(
+    'LOCAL_GATEWAY_STALE_RECOVERY_FAILED',
+    `检测到 stale gateway，但在 ${GATEWAY_RECOVERY_TIMEOUT_MS}ms 内未能释放端口 ${port}。`
+  )
+}
+
+async function recoverStaleGateway(apiBaseUrl = '', options = {}, error = null) {
+  let snapshot
+  try {
+    snapshot = await fetchGatewayHealth(apiBaseUrl)
+  } catch {
+    return null
+  }
+
+  if (!isRepoLocalGateway(snapshot.state, options.requiredFunctions)) {
+    return null
+  }
+
+  const staleByHealth = gatewayStateLooksStale(snapshot.state, options.requiredFunctions)
+  const staleByRoutes =
+    routeFailureLooksStale(error?.details) && !hasRuntimeLivenessMetadata(snapshot.state)
+  if (!staleByHealth && !staleByRoutes) {
+    return null
+  }
+
+  const gatewayPid =
+    snapshot.state.pid || Number((await resolveGatewayListenerPid(options.port)) || 0)
+  if (!gatewayPid) {
+    throw createLocalGatewayError(
+      'LOCAL_GATEWAY_STALE_RECOVERY_FAILED',
+      `检测到 stale gateway，但无法定位端口 ${options.port} 的监听进程。`
+    )
+  }
+
+  process.stdout.write(
+    `检测到 stale 本地 CloudBase gateway，正在重启 ${options.port} 端口监听进程 pid=${gatewayPid}...\n`
+  )
+  process.kill(gatewayPid, 'SIGINT')
+  await waitForGatewayListenerExit(options.port, gatewayPid)
+
+  const gatewayChild = spawnLocalFunctionsGateway(options)
+  await waitForLocalRuntime(apiBaseUrl, options, gatewayChild)
+  process.stdout.write('本地 CloudBase 函数 gateway 已自动恢复。\n')
+  return gatewayChild
 }
 
 function spawnLocalFunctionsGateway(options = {}) {
@@ -498,10 +745,24 @@ async function ensureLocalRuntimeReady(apiBaseUrl = '', options = {}) {
     }
 
     if (error?.code === 'LOCAL_FUNCTION_ROUTES_NOT_READY') {
-      process.stdout.write('本地 CloudBase 函数 gateway 已运行，正在等待函数 health route 就绪...\n')
+      const recoveredGateway = await recoverStaleGateway(apiBaseUrl, options, error)
+      if (recoveredGateway) {
+        return recoveredGateway
+      }
+      process.stdout.write(
+        '本地 CloudBase 函数 gateway 已运行，正在等待函数 health route 就绪...\n'
+      )
       await waitForLocalRuntime(apiBaseUrl, options)
       process.stdout.write('本地 CloudBase 函数 gateway 已就绪。\n')
       return null
+    }
+
+    if (error?.code === 'LOCAL_GATEWAY_BAD_RESPONSE') {
+      const recoveredGateway = await recoverStaleGateway(apiBaseUrl, options, error)
+      if (recoveredGateway) {
+        return recoveredGateway
+      }
+      throw error
     }
 
     if (!['LOCAL_GATEWAY_NOT_RUNNING', 'LOCAL_GATEWAY_TIMEOUT'].includes(error?.code)) {
@@ -533,7 +794,9 @@ async function stopChild(child) {
 async function main() {
   const { options, command } = parseArgs(process.argv.slice(2))
   if (!command.length) {
-    throw new Error('缺少待执行命令，示例：node scripts/dev/run-local-api-env.mjs -- uni -p mp-weixin')
+    throw new Error(
+      '缺少待执行命令，示例：node scripts/dev/run-local-api-env.mjs -- uni -p mp-weixin'
+    )
   }
 
   const apiBaseUrl = resolveApiBaseUrl(options)

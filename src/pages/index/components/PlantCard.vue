@@ -1,0 +1,104 @@
+<template>
+  <view
+    :id="`index-plant-card-edit-${plant.id}`"
+    class="h-[129px] w-full overflow-hidden rounded-[12px] border border-[rgba(45,122,79,0.15)] bg-white p-px shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]"
+    @click="$emit('edit', plant)"
+  >
+    <view class="flex h-[127px] w-full overflow-hidden rounded-[11px]">
+      <PlantDisplayBase
+        :plant="plant"
+        container-class="h-[127px] w-[112px] flex-[0_0_112px] rounded-none"
+        @click.stop="$emit('edit', plant)"
+      />
+
+      <view class="flex h-[127px] min-w-0 flex-1 flex-col gap-2 p-3">
+        <view class="flex h-[27px] items-center gap-1.5">
+          <PlantProfileCompleteness :plant="plant" @click="$emit('edit', plant)" />
+          <text
+            class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[18px] font-medium leading-[27px] text-[#0a0a0a]"
+          >
+            {{ plant.displayName }}
+          </text>
+        </view>
+
+        <view class="flex h-[22px] items-center gap-1.5">
+          <view
+            class="inline-flex h-[22px] items-center justify-center rounded-full border border-[#b9f8cf] bg-[#dcfce7] px-[9px] py-[3px] text-xs font-normal leading-4 text-[#008236]"
+          >
+            <text>健康</text>
+          </view>
+          <view
+            class="inline-flex h-[22px] items-center justify-center rounded-full border border-[#b8e6fe] bg-[#dff2fe] px-[9px] py-[3px] text-xs font-normal leading-4 text-[#0069a8]"
+          >
+            <text>需浇水</text>
+          </view>
+        </view>
+
+        <view class="flex h-[38px] items-center gap-2">
+          <button
+            :id="`diagnose-entry-button-${plant.id}`"
+            class="m-0 flex h-9 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] border-0 bg-[#2d7a4f] px-3 py-2 text-sm font-medium leading-5 text-white after:border-0"
+            hover-class="none"
+            @click.stop="$emit('diagnose', plant)"
+          >
+            <image :src="diagnoseIcon" class="size-4 flex-[0_0_16px]" mode="aspectFit" />
+            <text>诊断</text>
+          </button>
+          <button
+            :id="`index-plant-card-history-${plant.id}`"
+            class="m-0 flex h-9 border border-solid border-primary flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] bg-white px-3 py-2 text-sm font-medium leading-5 text-[#0a0a0a] after:border-0"
+            hover-class="none"
+            @click.stop="$emit('history', plant)"
+          >
+            <image :src="historyIcon" class="size-4 flex-[0_0_16px]" mode="aspectFit" />
+            <text>历史</text>
+          </button>
+        </view>
+      </view>
+
+      <view
+        class="flex h-[127px] w-[49px] flex-[0_0_49px] flex-col items-center justify-center gap-2 border-l border-[rgba(45,122,79,0.15)] py-3 pl-[9px] pr-2"
+      >
+        <button
+          v-for="item in reminderItems"
+          :key="item.type"
+          :id="`plant-card-reminder-${plant.id}-${item.type}`"
+          class="m-0 flex size-8 items-center justify-center rounded-full border p-0 after:border-0"
+          :class="item.active ? 'border-[#74d4ff] bg-[#f0f9ff]' : 'border-[#e5e7eb] bg-[#f9fafb]'"
+          hover-class="none"
+          @click.stop="$emit('reminder', { plant, type: item.type })"
+        >
+          <image :src="item.icon" class="size-4 flex-[0_0_16px]" mode="aspectFit" />
+        </button>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script setup>
+import { computed } from 'vue'
+import PlantDisplayBase from '@/components/PlantDisplayBase.vue'
+import PlantProfileCompleteness from './PlantProfileCompleteness.vue'
+import diagnoseIcon from '@/assets/icons/home-card-diagnose.svg'
+import historyIcon from '@/assets/icons/home-card-history.svg'
+import waterActiveIcon from '@/assets/icons/home-card-water-active.svg'
+import waterDefaultIcon from '@/assets/icons/home-card-water-default.svg'
+
+const props = defineProps({
+  plant: { type: Object, required: true },
+  reminderSummary: {
+    type: Object,
+    default: () => ({ water: { active: false } })
+  }
+})
+
+defineEmits(['diagnose', 'history', 'edit', 'reminder'])
+
+const reminderItems = computed(() => [
+  {
+    type: 'water',
+    active: Boolean(props.reminderSummary?.water?.active),
+    icon: props.reminderSummary?.water?.active ? waterActiveIcon : waterDefaultIcon
+  }
+])
+</script>

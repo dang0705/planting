@@ -1,0 +1,66 @@
+{
+  "completedAt": 1781855829154,
+  "id": "drm-1781855770457",
+  "operations": [
+    {
+      "action": "CROSS_REFERENCE",
+      "inputFiles": [
+        "architecture/backend/cloudbase_mysql_ddl_execution.md",
+        "architecture/backend/source_verified_backend_facts.md"
+      ],
+      "needsReview": false,
+      "previousTexts": {
+        "architecture/backend/cloudbase_mysql_ddl_execution.md": "---\ntitle: CloudBase MySQL DDL Execution\nsummary: CloudBase MySQL DDL execution guide using official CLI and verification scripts, resolving the InvalidParameter blocker.\ntags: []\nrelated: []\nkeywords: []\ncreatedAt: '2026-06-19T07:41:04.100Z'\nupdatedAt: '2026-06-19T07:41:04.100Z'\n---\n## Reason\nDocumenting CloudBase MySQL DDL execution path and verification scripts after resolving a perceived blocker.\n\n## Raw Concept\n**Task:**\nExecute and verify CloudBase MySQL DDL schema changes\n\n**Changes:**\n- Resolved InvalidParameter blocker for DDL by switching to official CLI\n- Established idempotent DDL execution path via tcb db execute\n- Added schema verification entry point\n\n**Files:**\n- test/e2e/terminal-e2e/run-with-cloudbase-env.mjs\n- package.json\n\n**Flow:**\nLocate instance (tcb db instance list) -> Execute DDL (tcb db execute) -> Verify (npm run ensure:cloudbase-sql-schema:verify)\n\n**Timestamp:** 2026-06-19\n\n**Author:** implementer_fast\n\n## Narrative\n### Structure\nCloudBase MySQL DDL management is handled via the official CLI rather than the Manager API (models.$runSQL).\n\n### Dependencies\n@cloudbase/cli, weather-http credentials\n\n### Highlights\nInvalidParameter error in $runSQLRaw is a semantic limitation, not a MySQL blocker. Use tcb db execute for schema updates.\n\n### Rules\nRule 1: Do not stop at $runSQLRaw InvalidParameter for DDL blockers.\nRule 2: Use official CLI for DDL execution.\nRule 3: Verify schema using the designated npm script.\n\n### Examples\nLocate instance: npx -y -p @cloudbase/cli tcb db instance list -e cloud1-2grufevs395a9d5e --json\nVerify: npm run ensure:cloudbase-sql-schema:verify\n\n## Facts\n- **cloudbase_manager_api_limitation**: The error InvalidParameter returned by models.$runSQL/$runSQLRaw for DDL is a CloudBase Manager API semantic limitation and not a blocker for MySQL DDL execution. [project]\n- **cloudbase_cli_ddl**: CloudBase MySQL DDL can be successfully executed using the official CLI @cloudbase/cli. [project]\n- **db_instance_discovery**: The command 'npx -y -p @cloudbase/cli tcb db instance list -e cloud1-2grufevs395a9d5e --json' is used to locate the database instance cynosdbmysql-ins-nq6qok1d. [project]\n- **ddl_execution**: The command 'tcb db execute' is used to perform idempotent DDL operations on a specific CloudBase instance and schema. [project]\n- **schema_verification_script**: The verification entry point for CloudBase SQL schema is 'npm run ensure:cloudbase-sql-schema:verify'. [convention]\n- **verification_signals**: Successful DDL verification is indicated by the signals weather_locations=ok, plant_care_locations=ok, and diagnosis_weather_evidence=ok. [convention]\n",
+        "architecture/backend/source_verified_backend_facts.md": "# Source-Verified Backend Facts\n\nStatus: active  \nOwner: architecture  \nVerified: 2026-06-06  \nReview after: 90d\n\n## Facts\n\n- id: F-BACKEND-DIAG-ENTRY-001\n  type: fact\n  status: verified\n  confidence: high\n  source_kind: code\n  source:\n    - file: cloudfunctions/diagnose-http/app.js\n      lines: 3-17\n      symbol: module.exports.main\n  statement: `diagnose-http/app.js` is a thin entry wrapper: it reads HTTP request data, resolves app/schema environment, then calls `app/http-router.main(event, context)` inside `runWithRequestAppEnv` and `runWithSchemaEnv`.\n\n- id: F-BACKEND-DIAG-EXPORTS-002\n  type: fact\n  status: verified\n  confidence: high\n  source_kind: code\n  source:\n    - file: cloudfunctions/diagnose-http/app.js\n      lines: 20-25\n      symbol: module.exports.runStartDiagnosis / runAnswerDiagnosis / buildFrontendDiagnosisResponse\n  statement: `diagnose-http/app.js` re-exports `runStartDiagnosis`, `runAnswerDiagnosis`, and `buildFrontendDiagnosisResponse` from internal runner/formatter modules.\n\n- id: F-BACKEND-DIAG-ROUTES-003\n  type: fact\n  status: verified\n  confidence: high\n  source_kind: code\n  source:\n    - file: cloudfunctions/diagnose-http/app/http-router.js\n      lines: 66-228\n      symbol: main\n  statement: `diagnose-http` routes `/health`, `/diagnosis/start`, `/diagnosis/question/start`, `/diagnosis/answer`, `/diagnosis/result`, `/diagnosis/history`, `/diagnosis/review/*`, `/diagnosis/feedback`, `/visual/out-of-pool/*`, `/stream/diagnose`, and session `/diagnose` through `app/http-router.main`.\n\n- id: F-BACKEND-DIAG-REVIEW-ROUTES-004\n  type: fact\n  status: verified\n  confidence: high\n  source_kind: code\n  source:\n    - file: cloudfunctions/diagnose-http/app/http-router.js\n      lines: 137-165\n      symbol: diagnosis review routes\n    - file: cloudfunctions/diagnose-http/handlers/review-handlers.js\n      lines: 1-80\n      symbol: review handler module\n  statement: Diagnosis review list/images/detail/import routes are handled through `getReviewHandlers()` and the review handler module rather than the main diagnosis handlers.\n\n- id: F-BACKEND-DIAG-PACKAGE-005\n  type: fact\n  status: verified\n  confidence: high\n  source_kind: package\n  source:\n    - file: cloudfunctions/diagnose-http/package.json\n      lines: 1-15\n      symbol: diagnose-http package\n  statement: The provided backend source package includes a `diagnose-http` CloudBase HTTP function package whose main entry is `app.js` and whose local `start` script runs CloudBase functions-framework on port 9000.\n\n## Observations\n\n- id: O-BACKEND-SOURCE-SCOPE-001\n  type: observation\n  status: observation\n  confidence: high\n  source_kind: archive_inventory\n  source:\n    - file: planting-brv-review-source.zip\n      lines: n/a\n      symbol: source package inventory\n  statement: The current review package includes `cloudfunctions/diagnose-http` but does not include separate `identify-http`, `storage-http`, `weather-http`, `plant-catalog-http`, or `plant-user-http` function source directories. Session facts that referenced those directories are not active source-verified facts in this package.\n"
+      },
+      "reason": "The DDL execution guide provides the infrastructure path (CLI-based) for database changes, while the source-verified facts document the current state of the backend code (diagnose-http). Linking them connects database operations to the codebases they support.",
+      "type": "CONSOLIDATE"
+    },
+    {
+      "action": "CREATE",
+      "confidence": 1,
+      "needsReview": false,
+      "outputFile": "architecture/diagnosis-main-chain-terminal-state-governance.md",
+      "sources": [
+        "architecture/_index.md",
+        "project_management/_index.md",
+        "docs/_index.md"
+      ],
+      "type": "SYNTHESIZE"
+    },
+    {
+      "action": "CREATE",
+      "confidence": 0.95,
+      "needsReview": false,
+      "outputFile": "maintenance/source-verified-fact-integrity-gate.md",
+      "sources": [
+        "maintenance/_index.md",
+        "testing/_index.md",
+        "governance/_index.md"
+      ],
+      "type": "SYNTHESIZE"
+    },
+    {
+      "action": "CREATE",
+      "confidence": 0.85,
+      "needsReview": false,
+      "outputFile": "governance/phase-gated-dispatch-and-budget-governance.md",
+      "sources": [
+        "governance/_index.md",
+        "maintenance/_index.md"
+      ],
+      "type": "SYNTHESIZE"
+    }
+  ],
+  "startedAt": 1781855770457,
+  "status": "completed",
+  "summary": {
+    "consolidated": 1,
+    "errors": 0,
+    "flaggedForReview": 0,
+    "pruned": 0,
+    "synthesized": 3
+  },
+  "taskId": "f9816d8d-8215-444d-9937-f3968c90c84a",
+  "trigger": "agent-idle"
+}

@@ -44,6 +44,9 @@ jobs:
       - name: Check tracked secrets
         run: npm run check:secrets
 
+      - name: Check ByteRover V4 boundary
+        run: npm run check:brv-v4-boundary
+
       - name: Lint
         run: npm run lint
 

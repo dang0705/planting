@@ -14,11 +14,10 @@ const ROUTE_STATUS = Object.freeze({
   BLOCKED: 'blocked'
 })
 
-const GATE_RESULT = Object.freeze({
+const CONDITION_RESULT = Object.freeze({
   PASS: 'pass',
   FAIL: 'fail',
   BLOCK: 'block',
-  NEED_MORE_INFO: 'need_more_info',
   CONFLICT: 'conflict'
 })
 
@@ -30,14 +29,14 @@ const OUTCOME_EFFECT_TYPE = Object.freeze({
   NEUTRAL: 'neutral'
 })
 
-const ROUTE_FALLBACK_POLICY = Object.freeze({
+const ROUTE_CONSERVATIVE_POLICY = Object.freeze({
   UNCERTAIN: 'uncertain'
 })
 
 module.exports = {
   ROUTE_MODE,
   ROUTE_STATUS,
-  GATE_RESULT,
+  CONDITION_RESULT,
   OUTCOME_EFFECT_TYPE,
-  ROUTE_FALLBACK_POLICY
+  ROUTE_CONSERVATIVE_POLICY
 }

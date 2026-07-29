@@ -4,17 +4,17 @@ const {
   isWeakBroadStructuralObservedEvidence
 } = require('./structural-visual-evidence')
 const {
-  QUESTION_TARGET_DIMENSIONS: _QUESTION_TARGET_DIMENSIONS,
-  normalizeQuestionTargetDimension,
+  QUESTION_PACKAGE_TOPICS: _QUESTION_PACKAGE_TOPICS,
+  normalizeQuestionPackageTopic,
   isGenericObservedProbeDirectEvidenceDimension
-} = require('./question-target-dimension')
+} = require('./question-package-topic')
 const {
   isDisabledYellowingFlowQuestion
 } = require('./yellowing-question-policy')
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 const CONTEXT_REQUIRED_PROBLEM_GUARDS = {
@@ -316,7 +316,7 @@ function collectDirectPositiveAnswerContextKeys(answerEffects = [], problemKey =
       Number(item?.value || 0) > 0 &&
       !isDisabledYellowingFlowQuestion(item) &&
       !isGenericObservedProbeDirectEvidenceDimension(
-        normalizeQuestionTargetDimension(item?.targetDimension || '', '')
+        normalizeQuestionPackageTopic(item?.packageTopic || '', '')
       ) &&
       !item?.isGenericObservedProbeDirectPositive
     )

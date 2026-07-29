@@ -1,0 +1,20 @@
+{
+  "dispatch_run_id": "example-web-runtime-001",
+  "status": "passed",
+  "runtime_acceptance_mode": "automator_required",
+  "channel": "miniprogram_automator",
+  "catalog_id": "care.watering.transpiration_v3.independent_advice",
+  "execution_id": "example-web-runtime-001-qa",
+  "script": "test/e2e/automator/care/watering/transpiration-v3/independent-advice.mjs",
+  "script_sha256": "10db2f3a2c9576817aaa2f869be32956da194aab001db5cd9fa439283c9d9e69",
+  "qa_run_execution_record": ".tmp/dispatch-task/example-web-runtime-001/qa-runs/example-web-runtime-001-qa.json",
+  "projectPath": "/tmp/planting-pr-example-web-runtime-001/dist/dev/mp-weixin",
+  "pagePath": "/pages/watering-advisor/watering-advisor",
+  "automator_port": 9420,
+  "evidence_paths": [
+    "evidence/runtime-automator.png",
+    "evidence/wx-request.log"
+  ],
+  "failures": [],
+  "not_verified": []
+}

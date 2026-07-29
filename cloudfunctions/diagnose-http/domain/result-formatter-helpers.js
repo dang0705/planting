@@ -6,9 +6,9 @@ function roundValue(value, digits = 4) {
   return Number(Number(value || 0).toFixed(digits))
 }
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function uniqList(values = []) {
@@ -173,7 +173,7 @@ function isOutOfPoolLowConfidence(lowConfidence = {}) {
     legalityReason === 'out_of_pool_review_required' ||
     legalityReason === 'out_of_pool_hint_unconfirmed' ||
     reasonSet.has('weak_out_of_pool_proxy_only') ||
-    reasonSet.has('out_of_pool_hint_unconfirmed_after_followup')
+    reasonSet.has('out_of_pool_hint_unconfirmed_after_package')
   )
 }
 
@@ -238,7 +238,7 @@ function buildUncertainExplanation(lowConfidence = {}, symptomClassRuntime = nul
   const classLabel = normalizeText(primaryClass?.classNameCn || primaryClass?.classKey)
   const runtimeNotes = normalizeText(primaryClass?.runtimeNotes)
   const whyItHappens = classLabel
-    ? `当前视觉和追问更支持“${classLabel}”这一症状模式，但具体 root cause 仍缺少关键上下文，继续硬判风险较高。`
+    ? `当前视觉和题包答案更支持“${classLabel}”这一症状模式，但具体 root cause 仍缺少关键上下文，继续硬判风险较高。`
     : '当前证据不足或仍有冲突，继续硬判具体问题风险较高。'
   const whatToCheckNext = uniqList([
     advice[0],
@@ -282,11 +282,11 @@ function buildUncertainFinalResult({ resultId, lowConfidence = {} } = {}) {
 }
 
 function resolveOutcomeType({
-  followUpRequired = false,
+  questionRequired = false,
   lowConfidence = {},
   stopDecision = null
 } = {}) {
-  if (followUpRequired) {return null}
+  if (questionRequired) {return null}
 
   const lockedOutcomeType = normalizeText(stopDecision?.outcomeLocked || '', '')
   if (lockedOutcomeType === 'uncertain') {
@@ -300,18 +300,18 @@ function resolveOutcomeType({
 }
 
 function resolveRoutePrimaryAction({
-  followUpRequired = false,
+  questionRequired = false,
   outcomeType = null,
   preferredRoutePrimaryAction = ''
 } = {}) {
   if (preferredRoutePrimaryAction === 'retake_first') {return 'retake_first'}
-  if (followUpRequired) {return 'ask_first'}
+  if (questionRequired) {return 'ask_first'}
   if (outcomeType === 'uncertain') {return 'uncertain_prepare'}
   return 'standard_flow'
 }
 
-function resolveStopReason({ followUpRequired = false, stopDecision = null } = {}) {
-  if (followUpRequired) {return 'await_follow_up'}
+function resolveStopReason({ questionRequired = false, stopDecision = null } = {}) {
+  if (questionRequired) {return 'await_follow_up'}
   return normalizeText(stopDecision?.stopReason || '', '')
 }
 

@@ -1,17 +1,30 @@
-# Project Memory
+# Codex Memory Index
 
-## SQL / Schema Default
+Status: active  
+Updated: 2026-06-06
 
-- Unless the user explicitly specifies otherwise, all SQL-related actions default to `cloud1_dev`.
-- This includes:
-  - SQL queries
-  - table inspection
-  - schema verification
-  - data backfill / import
-  - local diagnose review / H5 debugging validation
-- Only switch to `cloud1-2grufevs395a9d5e` when the user explicitly asks for production/online verification, or when the task is clearly about live prod behavior.
+This file is a compact AI-consumed memory pointer. It is not a source of truth.
 
-## Operational Rule
+## Read order
 
-- Before any diagnose-related SQL debugging, first confirm which schema is being used.
-- Default assumption for local work is always `cloud1_dev`.
+1. Code, tests, schema, config, package scripts.
+2. Active docs listed in `.codex/context-packs.yml`.
+3. `.brv/context-tree/facts-index.yml` as index only.
+4. Archived docs only when explicitly requested.
+
+## Current diagnosis package guard
+
+- Current diagnosis-question-package口径: no follow-up questions; not one question per round; package-first question flow.
+- Latest requirement pointer: `docs/tickets/86exv6fnx-diagnose-question-package.md`.
+- Old claims saying “regular route follow-up asks one question per round” are superseded.
+- Legacy code names such as `follow-up`, `QuestionStart`, or `FollowUpMutation` do not by themselves prove the current product口径.
+- Route planner must not emit dynamic question planning (`NEED_MORE_INFO`, `requiresFollowUp`, `nextQuestionKeys`) for missing evidence; the old route-planned follow-up resolver was removed.
+
+## Default BRV files
+
+Read only:
+
+```text
+.brv/context-tree/_index.md
+.brv/context-tree/facts-index.yml
+```

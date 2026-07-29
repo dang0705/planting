@@ -1,0 +1,45 @@
+{
+  "status": "passed",
+  "gate": "implementation_postflight",
+  "dispatch_run_id": "example-web-runtime-001",
+  "worktree": {
+    "status": "passed",
+    "gate": "worktree_scope",
+    "dispatch_run_id": "example-web-runtime-001",
+    "baseline_file": ".tmp/dispatch-task/example-web-runtime-001-worktree-baseline.json",
+    "baseline_dirty_files": [],
+    "current_dirty_files": [
+      "src/pages/watering-advisor/watering-advisor.vue",
+      "cloudfunctions/layer/utils/transpiration.js"
+    ],
+    "changed_files_since_baseline": [
+      "src/pages/watering-advisor/watering-advisor.vue",
+      "cloudfunctions/layer/utils/transpiration.js"
+    ],
+    "declared_changed_files": [
+      "src/pages/watering-advisor/watering-advisor.vue",
+      "cloudfunctions/layer/utils/transpiration.js"
+    ],
+    "undeclared_actual_changed_files": [],
+    "declared_not_visible": [],
+    "declared_preexisting_overlap": [],
+    "preexisting_dirty_modified_since_baseline": [],
+    "disappeared_since_baseline": [],
+    "warnings": [],
+    "errors": [],
+    "head_changed": false
+  },
+  "no_new_deps": {
+    "status": "passed",
+    "gate": "no_new_deps",
+    "dispatch_run_id": "example-web-runtime-001",
+    "errors": []
+  },
+  "style_stack": {
+    "status": "passed",
+    "gate": "style_stack",
+    "dispatch_run_id": "example-web-runtime-001",
+    "errors": []
+  },
+  "errors": []
+}

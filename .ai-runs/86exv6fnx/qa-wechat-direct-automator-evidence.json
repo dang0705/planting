@@ -1,0 +1,436 @@
+{
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/build/mp-weixin",
+  "pagePath": "pages/diagnose/follow-up",
+  "cacheKey": "qa_followup_86exv6fnx_direct",
+  "operationChain": [
+    "direct automator connect ws://localhost:9420 after MCP transport closed",
+    "wx.setStorageSync(cacheKey, yellow leaf package payload)",
+    "mock wx.request and store submit payloads",
+    "reLaunch /pages/diagnose/follow-up?cacheKey=...",
+    "tap qa_q1_a -> Next",
+    "tap qa_q2_a -> Next",
+    "tap qa_q3_a -> Next",
+    "tap qa_q4_a -> 完成问诊"
+  ],
+  "states": [
+    {
+      "label": "initial_q1_unanswered",
+      "path": "pages/diagnose/follow-up",
+      "query": {
+        "cacheKey": "qa_followup_86exv6fnx_direct"
+      },
+      "progressText": "问题 1 / 4",
+      "questionCount": 4,
+      "nextButtonText": "下一题",
+      "nextDisabled": true,
+      "prevButtonText": "上一题",
+      "prevDisabled": true,
+      "trackStyle": "transform: translateX(-0%);",
+      "renderedText": "针对绿萝QA的黄叶问诊\n问题 1 / 4\n黄叶主要出现在老叶还是新叶？\n主要是底部老叶\n单选\n新叶也明显发黄\n单选\n上一题\n下一题\n最近盆土干湿状态更接近哪种？\n经常偏干\n单选\n经常偏湿\n单选\n上一题\n下一题\n黄叶前光照是否明显变化？\n没有明显变化\n单选\n突然更晒或更暗\n单选\n上一题\n下一题\n黄叶是否在继续扩散？\n基本没有扩散\n单选\n还在继续扩散\n单选\n上一题\n下一题",
+      "selectedSummary": [
+        {
+          "questionId": "qa_q1",
+          "selectedOptions": []
+        },
+        {
+          "questionId": "qa_q2",
+          "selectedOptions": []
+        },
+        {
+          "questionId": "qa_q3",
+          "selectedOptions": []
+        },
+        {
+          "questionId": "qa_q4",
+          "selectedOptions": []
+        }
+      ],
+      "resultShellText": ""
+    },
+    {
+      "label": "q1_answered",
+      "path": "pages/diagnose/follow-up",
+      "query": {
+        "cacheKey": "qa_followup_86exv6fnx_direct"
+      },
+      "progressText": "问题 1 / 4",
+      "questionCount": 4,
+      "nextButtonText": "下一题",
+      "nextDisabled": false,
+      "prevButtonText": "上一题",
+      "prevDisabled": true,
+      "trackStyle": "transform: translateX(-0%);",
+      "renderedText": "针对绿萝QA的黄叶问诊\n问题 1 / 4\n黄叶主要出现在老叶还是新叶？\n主要是底部老叶\n已选\n新叶也明显发黄\n单选\n上一题\n下一题\n最近盆土干湿状态更接近哪种？\n经常偏干\n单选\n经常偏湿\n单选\n上一题\n下一题\n黄叶前光照是否明显变化？\n没有明显变化\n单选\n突然更晒或更暗\n单选\n上一题\n下一题\n黄叶是否在继续扩散？\n基本没有扩散\n单选\n还在继续扩散\n单选\n上一题\n下一题",
+      "selectedSummary": [
+        {
+          "questionId": "qa_q1",
+          "selectedOptions": [
+            "qa_q1_a"
+          ]
+        },
+        {
+          "questionId": "qa_q2",
+          "selectedOptions": []
+        },
+        {
+          "questionId": "qa_q3",
+          "selectedOptions": []
+        },
+        {
+          "questionId": "qa_q4",
+          "selectedOptions": []
+        }
+      ],
+      "resultShellText": ""
+    },
+    {
+      "label": "q2_unanswered",
+      "path": "pages/diagnose/follow-up",
+      "query": {
+        "cacheKey": "qa_followup_86exv6fnx_direct"
+      },
+      "progressText": "问题 2 / 4",
+      "questionCount": 4,
+      "nextButtonText": "下一题",
+      "nextDisabled": true,
+      "prevButtonText": "上一题",
+      "prevDisabled": false,
+      "trackStyle": "transform: translateX(-100%);",
+      "renderedText": "针对绿萝QA的黄叶问诊\n问题 2 / 4\n黄叶主要出现在老叶还是新叶？\n主要是底部老叶\n已选\n新叶也明显发黄\n单选\n上一题\n下一题\n最近盆土干湿状态更接近哪种？\n经常偏干\n单选\n经常偏湿\n单选\n上一题\n下一题\n黄叶前光照是否明显变化？\n没有明显变化\n单选\n突然更晒或更暗\n单选\n上一题\n下一题\n黄叶是否在继续扩散？\n基本没有扩散\n单选\n还在继续扩散\n单选\n上一题\n下一题",
+      "selectedSummary": [
+        {
+          "questionId": "qa_q1",
+          "selectedOptions": [
+            "qa_q1_a"
+          ]
+        },
+        {
+          "questionId": "qa_q2",
+          "selectedOptions": []
+        },
+        {
+          "questionId": "qa_q3",
+          "selectedOptions": []
+        },
+        {
+          "questionId": "qa_q4",
+          "selectedOptions": []
+        }
+      ],
+      "resultShellText": ""
+    },
+    {
+      "label": "q2_answered",
+      "path": "pages/diagnose/follow-up",
+      "query": {
+        "cacheKey": "qa_followup_86exv6fnx_direct"
+      },
+      "progressText": "问题 2 / 4",
+      "questionCount": 4,
+      "nextButtonText": "下一题",
+      "nextDisabled": false,
+      "prevButtonText": "上一题",
+      "prevDisabled": false,
+      "trackStyle": "transform: translateX(-100%);",
+      "renderedText": "针对绿萝QA的黄叶问诊\n问题 2 / 4\n黄叶主要出现在老叶还是新叶？\n主要是底部老叶\n已选\n新叶也明显发黄\n单选\n上一题\n下一题\n最近盆土干湿状态更接近哪种？\n经常偏干\n已选\n经常偏湿\n单选\n上一题\n下一题\n黄叶前光照是否明显变化？\n没有明显变化\n单选\n突然更晒或更暗\n单选\n上一题\n下一题\n黄叶是否在继续扩散？\n基本没有扩散\n单选\n还在继续扩散\n单选\n上一题\n下一题",
+      "selectedSummary": [
+        {
+          "questionId": "qa_q1",
+          "selectedOptions": [
+            "qa_q1_a"
+          ]
+        },
+        {
+          "questionId": "qa_q2",
+          "selectedOptions": [
+            "qa_q2_a"
+          ]
+        },
+        {
+          "questionId": "qa_q3",
+          "selectedOptions": []
+        },
+        {
+          "questionId": "qa_q4",
+          "selectedOptions": []
+        }
+      ],
+      "resultShellText": ""
+    },
+    {
+      "label": "q3_unanswered",
+      "path": "pages/diagnose/follow-up",
+      "query": {
+        "cacheKey": "qa_followup_86exv6fnx_direct"
+      },
+      "progressText": "问题 3 / 4",
+      "questionCount": 4,
+      "nextButtonText": "下一题",
+      "nextDisabled": true,
+      "prevButtonText": "上一题",
+      "prevDisabled": false,
+      "trackStyle": "transform: translateX(-200%);",
+      "renderedText": "针对绿萝QA的黄叶问诊\n问题 3 / 4\n黄叶主要出现在老叶还是新叶？\n主要是底部老叶\n已选\n新叶也明显发黄\n单选\n上一题\n下一题\n最近盆土干湿状态更接近哪种？\n经常偏干\n已选\n经常偏湿\n单选\n上一题\n下一题\n黄叶前光照是否明显变化？\n没有明显变化\n单选\n突然更晒或更暗\n单选\n上一题\n下一题\n黄叶是否在继续扩散？\n基本没有扩散\n单选\n还在继续扩散\n单选\n上一题\n下一题",
+      "selectedSummary": [
+        {
+          "questionId": "qa_q1",
+          "selectedOptions": [
+            "qa_q1_a"
+          ]
+        },
+        {
+          "questionId": "qa_q2",
+          "selectedOptions": [
+            "qa_q2_a"
+          ]
+        },
+        {
+          "questionId": "qa_q3",
+          "selectedOptions": []
+        },
+        {
+          "questionId": "qa_q4",
+          "selectedOptions": []
+        }
+      ],
+      "resultShellText": ""
+    },
+    {
+      "label": "q3_answered",
+      "path": "pages/diagnose/follow-up",
+      "query": {
+        "cacheKey": "qa_followup_86exv6fnx_direct"
+      },
+      "progressText": "问题 3 / 4",
+      "questionCount": 4,
+      "nextButtonText": "下一题",
+      "nextDisabled": false,
+      "prevButtonText": "上一题",
+      "prevDisabled": false,
+      "trackStyle": "transform: translateX(-200%);",
+      "renderedText": "针对绿萝QA的黄叶问诊\n问题 3 / 4\n黄叶主要出现在老叶还是新叶？\n主要是底部老叶\n已选\n新叶也明显发黄\n单选\n上一题\n下一题\n最近盆土干湿状态更接近哪种？\n经常偏干\n已选\n经常偏湿\n单选\n上一题\n下一题\n黄叶前光照是否明显变化？\n没有明显变化\n已选\n突然更晒或更暗\n单选\n上一题\n下一题\n黄叶是否在继续扩散？\n基本没有扩散\n单选\n还在继续扩散\n单选\n上一题\n下一题",
+      "selectedSummary": [
+        {
+          "questionId": "qa_q1",
+          "selectedOptions": [
+            "qa_q1_a"
+          ]
+        },
+        {
+          "questionId": "qa_q2",
+          "selectedOptions": [
+            "qa_q2_a"
+          ]
+        },
+        {
+          "questionId": "qa_q3",
+          "selectedOptions": [
+            "qa_q3_a"
+          ]
+        },
+        {
+          "questionId": "qa_q4",
+          "selectedOptions": []
+        }
+      ],
+      "resultShellText": ""
+    },
+    {
+      "label": "q4_unanswered",
+      "path": "pages/diagnose/follow-up",
+      "query": {
+        "cacheKey": "qa_followup_86exv6fnx_direct"
+      },
+      "progressText": "问题 4 / 4",
+      "questionCount": 4,
+      "nextButtonText": "完成问诊",
+      "nextDisabled": true,
+      "prevButtonText": "上一题",
+      "prevDisabled": false,
+      "trackStyle": "transform: translateX(-300%);",
+      "renderedText": "针对绿萝QA的黄叶问诊\n问题 4 / 4\n黄叶主要出现在老叶还是新叶？\n主要是底部老叶\n已选\n新叶也明显发黄\n单选\n上一题\n完成问诊\n最近盆土干湿状态更接近哪种？\n经常偏干\n已选\n经常偏湿\n单选\n上一题\n完成问诊\n黄叶前光照是否明显变化？\n没有明显变化\n已选\n突然更晒或更暗\n单选\n上一题\n完成问诊\n黄叶是否在继续扩散？\n基本没有扩散\n单选\n还在继续扩散\n单选\n上一题\n完成问诊",
+      "selectedSummary": [
+        {
+          "questionId": "qa_q1",
+          "selectedOptions": [
+            "qa_q1_a"
+          ]
+        },
+        {
+          "questionId": "qa_q2",
+          "selectedOptions": [
+            "qa_q2_a"
+          ]
+        },
+        {
+          "questionId": "qa_q3",
+          "selectedOptions": [
+            "qa_q3_a"
+          ]
+        },
+        {
+          "questionId": "qa_q4",
+          "selectedOptions": []
+        }
+      ],
+      "resultShellText": ""
+    },
+    {
+      "label": "q4_answered_before_submit",
+      "path": "pages/diagnose/follow-up",
+      "query": {
+        "cacheKey": "qa_followup_86exv6fnx_direct"
+      },
+      "progressText": "问题 4 / 4",
+      "questionCount": 4,
+      "nextButtonText": "完成问诊",
+      "nextDisabled": false,
+      "prevButtonText": "上一题",
+      "prevDisabled": false,
+      "trackStyle": "transform: translateX(-300%);",
+      "renderedText": "针对绿萝QA的黄叶问诊\n问题 4 / 4\n黄叶主要出现在老叶还是新叶？\n主要是底部老叶\n已选\n新叶也明显发黄\n单选\n上一题\n完成问诊\n最近盆土干湿状态更接近哪种？\n经常偏干\n已选\n经常偏湿\n单选\n上一题\n完成问诊\n黄叶前光照是否明显变化？\n没有明显变化\n已选\n突然更晒或更暗\n单选\n上一题\n完成问诊\n黄叶是否在继续扩散？\n基本没有扩散\n已选\n还在继续扩散\n单选\n上一题\n完成问诊",
+      "selectedSummary": [
+        {
+          "questionId": "qa_q1",
+          "selectedOptions": [
+            "qa_q1_a"
+          ]
+        },
+        {
+          "questionId": "qa_q2",
+          "selectedOptions": [
+            "qa_q2_a"
+          ]
+        },
+        {
+          "questionId": "qa_q3",
+          "selectedOptions": [
+            "qa_q3_a"
+          ]
+        },
+        {
+          "questionId": "qa_q4",
+          "selectedOptions": [
+            "qa_q4_a"
+          ]
+        }
+      ],
+      "resultShellText": ""
+    },
+    {
+      "label": "after_submit_result",
+      "path": "pages/diagnose/follow-up",
+      "query": {
+        "cacheKey": "qa_followup_86exv6fnx_direct"
+      },
+      "progressText": "问题 4 / 4",
+      "questionCount": 4,
+      "nextButtonText": "完成问诊",
+      "nextDisabled": false,
+      "prevButtonText": "上一题",
+      "prevDisabled": false,
+      "trackStyle": "transform: translateX(-300%);",
+      "renderedText": "针对绿萝QA的黄叶问诊\n问题 4 / 4\n黄叶主要出现在老叶还是新叶？\n主要是底部老叶\n已选\n新叶也明显发黄\n单选\n上一题\n完成问诊\n最近盆土干湿状态更接近哪种？\n经常偏干\n已选\n经常偏湿\n单选\n上一题\n完成问诊\n黄叶前光照是否明显变化？\n没有明显变化\n已选\n突然更晒或更暗\n单选\n上一题\n完成问诊\n黄叶是否在继续扩散？\n基本没有扩散\n已选\n还在继续扩散\n单选\n上一题\n完成问诊",
+      "selectedSummary": [
+        {
+          "questionId": "qa_q1",
+          "selectedOptions": [
+            "qa_q1_a"
+          ]
+        },
+        {
+          "questionId": "qa_q2",
+          "selectedOptions": [
+            "qa_q2_a"
+          ]
+        },
+        {
+          "questionId": "qa_q3",
+          "selectedOptions": [
+            "qa_q3_a"
+          ]
+        },
+        {
+          "questionId": "qa_q4",
+          "selectedOptions": [
+            "qa_q4_a"
+          ]
+        }
+      ],
+      "resultShellText": ""
+    }
+  ],
+  "submitRequests": [
+    {
+      "url": "https://cloud1-2grufevs395a9d5e.api.tcloudbasegateway.com/v1/functions/diagnose-http/diagnosis/answer?webfn=true",
+      "method": "POST",
+      "data": {
+        "diagnosisSessionId": "qa_package_session_86exv6fnx",
+        "roundId": "round_1",
+        "answers": [
+          {
+            "questionId": "qa_q1",
+            "optionId": "qa_q1_a"
+          },
+          {
+            "questionId": "qa_q2",
+            "optionId": "qa_q2_a"
+          },
+          {
+            "questionId": "qa_q3",
+            "optionId": "qa_q3_a"
+          },
+          {
+            "questionId": "qa_q4",
+            "optionId": "qa_q4_a"
+          }
+        ],
+        "requestMode": "answer_submit",
+        "imageIds": []
+      },
+      "header": {
+        "Content-Type": "application/json",
+        "x-app-env": "production",
+        "x-env": "production",
+        "x-wx-openid": "[redacted]",
+        "x-openid": "[redacted]",
+        "Authorization": "[redacted]"
+      }
+    }
+  ],
+  "events": {
+    "console": [
+      {
+        "type": "error",
+        "args": [
+          "问诊重算失败:",
+          {}
+        ]
+      },
+      {
+        "type": "error",
+        "args": [
+          "问诊重算失败:",
+          {}
+        ]
+      },
+      {
+        "type": "error",
+        "args": [
+          "问诊处理失败:",
+          {}
+        ]
+      },
+      {
+        "type": "error",
+        "args": [
+          "问诊处理失败:",
+          {}
+        ]
+      }
+    ],
+    "exception": []
+  },
+  "screenshotPath": "/Users/jay/WebstormProjects/planting/.ai-runs/86exv6fnx/qa-wechat-followup-result.png",
+  "sanitized": true
+}

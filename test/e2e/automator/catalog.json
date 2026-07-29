@@ -1,0 +1,286 @@
+{
+  "version": 2,
+  "top_domains": ["ai-vision", "diagnosis", "care", "user", "plants"],
+  "executable_leaf_convention": {
+    "roots": ["test/e2e/automator"],
+    "extensions": [".mjs", ".cjs"],
+    "excluded_path_segments": ["_shared", "_history"],
+    "rule": "Every .mjs/.cjs file under test/e2e/automator is an executable leaf unless one path segment is _shared or _history."
+  },
+  "id_policy": {
+    "source": "docs/ai-rules/frontend-automation-id-policy.md",
+    "stable_id_prefixes": [
+      "diagnosis-",
+      "diagnose-",
+      "watering-advisor-",
+      "plant-card-reminder-",
+      "watering-reminder-",
+      "watering-date-picker-",
+      "care-behavior-date-",
+      "pot-profile-"
+    ]
+  },
+  "category_tree": {
+    "ai-vision": {},
+    "diagnosis": {
+      "yellowing": {
+        "no-image-quick": "diagnosis.yellowing.no_image_quick"
+      },
+      "pest": {
+        "visual-mode-retake": "diagnosis.pest.visual_mode_retake"
+      }
+    },
+    "care": {
+      "watering": {
+        "transpiration-v3": {
+          "independent-advice": "care.watering.transpiration_v3.independent_advice",
+          "user-plant-planner": "care.watering.transpiration_v3.user_plant_planner"
+        },
+        "reminder-dose": {
+          "bottle-text": "care.watering.reminder_dose.bottle_text",
+          "dose-dynamic": "care.watering.reminder_dose.dose_dynamic",
+          "dose-label-layout": "care.watering.reminder_dose.dose_label_layout",
+          "unit-alignment-final": "care.watering.reminder_dose.unit_alignment_final",
+          "unit-alignment-v4": "care.watering.reminder_dose.unit_alignment_v4"
+        }
+      }
+    },
+    "user": {},
+    "plants": {}
+  },
+  "entries": [
+    {
+      "id": "diagnosis.yellowing.no_image_quick",
+      "category_path": ["diagnosis", "yellowing", "no-image-quick"],
+      "leaf_script": "test/e2e/automator/diagnosis/diagnose-yellowing-mcp.mjs",
+      "script_sha256": "a4ef17dd2733f9f26a2e8d50d297777a2b18b33a543ab56b83abee52af49ac3d",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.1", "3.3", "3.7"],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.1",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.3",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.7"
+        ],
+        "stable_ids": ["diagnosis-yellowing-entry"],
+        "stable_id_prefixes": ["diagnosis-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["diagnose"],
+        "cache": "must_record_cache_state_if_diagnosis_cache_is_touched",
+        "reentry": false,
+        "fixtures": ["logged-in or dev-mode test account with diagnosis entry visible"]
+      }
+    },
+    {
+      "id": "diagnosis.pest.visual_mode_retake",
+      "category_path": ["diagnosis", "pest", "visual-mode-retake"],
+      "leaf_script": "test/e2e/automator/diagnosis/pest-mode-and-retake.mjs",
+      "script_sha256": "ff1b7014f194d284016362db6e033d76b7c58a8d29370ed73b3ff6e7da620518",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.3", "3.12"],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.3",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.12"
+        ],
+        "stable_ids": [
+          "diagnose-tab-page",
+          "diagnose-flow",
+          "diagnose-profile-full-button",
+          "diagnose-profile-pest-button",
+          "diagnose-no-image-entry-panel",
+          "diagnose-direction-choice-card",
+          "layout-left-action",
+          "diagnose-retake-card",
+          "diagnose-retake-start-button",
+          "diagnose-retake-skip-button",
+          "diagnose-retake-safety-instructions",
+          "diagnose-retake-countdown",
+          "diagnose-retake-expired-text",
+          "diagnose-retake-skipped-text"
+        ],
+        "stable_id_prefixes": ["diagnose-", "diagnosis-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": [
+          "diagnose-http/diagnosis/question/start",
+          "diagnose-http/diagnosis/start",
+          "diagnose-http/diagnosis/answer",
+          "diagnose-http/diagnosis/retake/authorize",
+          "diagnose-http/diagnosis/retake/skip"
+        ],
+        "cache": "real model runs must record provider usage.cached_tokens; fixture runs must mark it not_verified",
+        "reentry": true,
+        "fixtures": [
+          "E2E_DIAGNOSE_FIXTURE=1 deterministic runtime harness",
+          "automation image injection enabled"
+        ]
+      }
+    },
+    {
+      "id": "care.watering.transpiration_v3.independent_advice",
+      "category_path": ["care", "watering", "transpiration-v3", "independent-advice"],
+      "leaf_script": "test/e2e/automator/care/watering/transpiration-v3/independent-advice.mjs",
+      "script_sha256": "10db2f3a2c9576817aaa2f869be32956da194aab001db5cd9fa439283c9d9e69",
+      "reusable_scenarios": [
+        "test/e2e/automator/care/watering/transpiration-v3/_shared/scenarios/independent-watering.mjs"
+      ],
+      "id_policy": {
+        "sections": ["3.10"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
+        "stable_ids": [
+          "watering-advisor-search-input",
+          "watering-advisor-next-button",
+          "pot-profile-editor-sheet",
+          "watering-advisor-compute-button",
+          "watering-advisor-result-amount"
+        ],
+        "stable_id_prefixes": ["watering-advisor-", "pot-profile-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["/watering-advisor"],
+        "cache": false,
+        "reentry": true,
+        "fixtures": [
+          "at least one searchable advisor plant",
+          "PotCanvas touch automation capability"
+        ]
+      }
+    },
+    {
+      "id": "care.watering.transpiration_v3.user_plant_planner",
+      "category_path": ["care", "watering", "transpiration-v3", "user-plant-planner"],
+      "leaf_script": "test/e2e/automator/care/watering/transpiration-v3/user-plant-planner.mjs",
+      "script_sha256": "62a2824371cbfbdaa65f195f14bde667a8121597c0923c7e7a4c3ca1f26e5c37",
+      "reusable_scenarios": [
+        "test/e2e/automator/care/watering/transpiration-v3/_shared/scenarios/my-plant-planner.mjs"
+      ],
+      "id_policy": {
+        "sections": ["3.10"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
+        "stable_ids": [
+          "watering-reminder-last-watering-row",
+          "watering-date-picker-sheet",
+          "watering-reminder-close-button"
+        ],
+        "stable_id_prefixes": [
+          "plant-card-reminder-",
+          "watering-reminder-",
+          "watering-date-picker-",
+          "care-behavior-date-"
+        ]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["/user-plants/watering-planner"],
+        "cache": "shadow/active snapshot signature must match when active mode is used",
+        "reentry": true,
+        "fixtures": ["test account has at least one user plant with a watering reminder entry"]
+      }
+    },
+    {
+      "id": "care.watering.reminder_dose.bottle_text",
+      "category_path": ["care", "watering", "reminder-dose", "bottle-text"],
+      "leaf_script": "test/e2e/automator/care/watering/reminder-dose/bottle-text.mjs",
+      "script_sha256": "687eb3e827573163e9cb22ff7aaa4cf6bba3ee147fad92ee39c0627591f88a1a",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.10"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
+        "stable_ids": ["watering-reminder-last-watering-row", "pot-profile-row"],
+        "stable_id_prefixes": ["plant-card-reminder-", "watering-reminder-", "care-behavior-date-"]
+      },
+      "requirements": {
+        "screenshot": false,
+        "wx_request": ["/user-plants/watering-planner"],
+        "cache": false,
+        "reentry": false,
+        "fixtures": ["user plant with watering reminder and dose options"]
+      }
+    },
+    {
+      "id": "care.watering.reminder_dose.dose_dynamic",
+      "category_path": ["care", "watering", "reminder-dose", "dose-dynamic"],
+      "leaf_script": "test/e2e/automator/care/watering/reminder-dose/dose-dynamic.mjs",
+      "script_sha256": "1fafb110673bd2f4cc1185fd1d3ef58296a491f4705505336626215babf49257",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.10"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
+        "stable_ids": ["watering-reminder-last-watering-row"],
+        "stable_id_prefixes": ["plant-card-reminder-", "watering-reminder-", "care-behavior-date-"]
+      },
+      "requirements": {
+        "screenshot": false,
+        "wx_request": ["/user-plants/watering-planner"],
+        "cache": false,
+        "reentry": false,
+        "fixtures": ["plant id 14 fixture with large pot volume"]
+      }
+    },
+    {
+      "id": "care.watering.reminder_dose.dose_label_layout",
+      "category_path": ["care", "watering", "reminder-dose", "dose-label-layout"],
+      "leaf_script": "test/e2e/automator/care/watering/reminder-dose/dose-label-layout.mjs",
+      "script_sha256": "ea2309805a11a338ed15751312df3a027ee55a5bbbda512dd2c16c945f27fef2",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.10"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
+        "stable_ids": ["watering-reminder-last-watering-row"],
+        "stable_id_prefixes": ["plant-card-reminder-", "watering-reminder-", "care-behavior-date-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["/user-plants/watering-planner"],
+        "cache": false,
+        "reentry": false,
+        "fixtures": ["user plant with historical watering date entries"]
+      }
+    },
+    {
+      "id": "care.watering.reminder_dose.unit_alignment_final",
+      "category_path": ["care", "watering", "reminder-dose", "unit-alignment-final"],
+      "leaf_script": "test/e2e/automator/care/watering/reminder-dose/unit-alignment-final.cjs",
+      "script_sha256": "59dc48432eb7588334bbf2f49dfb06b107f1dd71a1d2af3e5e5929fccb9d2f14",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.10"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
+        "stable_ids": ["plant-card-reminder-14-water"],
+        "stable_id_prefixes": ["plant-card-reminder-", "watering-reminder-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["/user-plants/watering-planner"],
+        "cache": false,
+        "reentry": false,
+        "fixtures": ["plant id 14 fixture"]
+      }
+    },
+    {
+      "id": "care.watering.reminder_dose.unit_alignment_v4",
+      "category_path": ["care", "watering", "reminder-dose", "unit-alignment-v4"],
+      "leaf_script": "test/e2e/automator/care/watering/reminder-dose/unit-alignment-v4.cjs",
+      "script_sha256": "8514f5fec688afa5e39e8028937f59a388d4297b30010852624cd896ed319858",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.10"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
+        "stable_ids": ["plant-card-reminder-14-water"],
+        "stable_id_prefixes": ["plant-card-reminder-", "watering-reminder-", "care-behavior-date-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["/user-plants/watering-planner"],
+        "cache": false,
+        "reentry": false,
+        "fixtures": ["plant id 14 fixture"]
+      }
+    }
+  ]
+}

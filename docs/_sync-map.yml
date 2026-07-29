@@ -1,0 +1,189 @@
+version: 1
+updated: 2026-06-06
+verified_at_commit: unknown-from-upload
+purpose: "Map changed code/config paths to active docs and ByteRover recall keys. Used by main docs/BRV classify mode."
+
+areas:
+  ai-workflow:
+    code:
+      - AGENTS.md
+      - .codex/**
+      - .agents/**
+      - .brvspace
+      - .brv/context-tree/**
+      - docs/_sync-map.yml
+      - docs/_doc-status.yml
+    docs:
+      - AGENTS.md
+      - .codex/context-packs.yml
+      - .codex/memory.md
+      - .codex/skills/dispatch-task/references/knowledge-hygiene-policy.md
+      - docs/KNOWLEDGE_GOVERNANCE.md
+      - docs/ARCHIVE_INDEX.md
+    brv_keys:
+      - F-AI-WORKFLOW-001
+      - F-WECHAT-MCP-LOCAL-SKILL-PATH-007
+    trigger: "AI default context, dispatch, main docs/BRV, ByteRover V4 binding, legacy BRV archive, MCP, model or context-pack changed"
+    public_contract: true
+
+  frontend-app-map:
+    code:
+      - src/main.js
+      - src/pages.json
+      - src/manifest.json
+      - src/pages/**
+      - src/components/**
+      - src/store/**
+    docs:
+      - docs/CURRENT.md
+    brv_keys:
+      - F-PROJECT-FRONTEND-001
+    trigger: "pages, app name, appid, permission, navigation, major UI entry changed"
+    public_contract: true
+
+  frontend-http-core:
+    code:
+      - src/http-functions/core/**
+      - src/api/env.js
+      - src/utils/runtime-env.js
+    docs:
+      - docs/ACTIVE_CONTRACTS.md
+      - docs/RUNBOOK.md
+    brv_keys:
+      - F-ENV-SCHEMA-001
+    trigger: "API base, auth header, x-app-env/x-env, production URL guard changed"
+    public_contract: true
+
+  diagnose-runtime:
+    code:
+      - cloudfunctions/diagnose-http/app.js
+      - cloudfunctions/diagnose-http/app/**
+      - cloudfunctions/diagnose-http/handlers/**
+      - cloudfunctions/diagnose-http/domain/**
+      - cloudfunctions/diagnose-http/presenters/**
+      - cloudfunctions/diagnose-http/constants/**
+      - cloudfunctions/diagnose-http/repositories/**
+      - cloudfunctions/diagnose-http/services/**
+      - cloudfunctions/diagnose-http/db/**
+    docs:
+      - docs/CURRENT.md
+      - docs/ACTIVE_CONTRACTS.md
+    brv_keys:
+      - F-DIAG-ENTRY-001
+      - F-DIAG-ROUTES-002
+      - F-DIAG-ROUTE-CONFIG-003
+      - F-DIAG-PUBLIC-RESPONSE-004
+    tests:
+      - npm run check:diagnose-smoke
+      - npm run check:diagnose-business-guards
+    trigger: "diagnosis routes, outcome, visible response, route scoring, db schema resolution changed"
+    public_contract: true
+
+  diagnose-question-package:
+    code:
+      - cloudfunctions/diagnose-http/app/question-package-response.js
+      - cloudfunctions/diagnose-http/app/wilting-droop-question-package.js
+      - cloudfunctions/diagnose-http/app/manual-symptom-question-start-fast-path.js
+      - cloudfunctions/diagnose-http/app/frontend-response.js
+      - cloudfunctions/diagnose-http/domain/wilting-droop-outcome-resolver.js
+      - src/pages/diagnose/follow-up/**
+      - src/pages/diagnose/question-package/**
+      - src/utils/diagnose-follow-up-payload.js
+      - src/utils/diagnose-result-normalizer.js
+      - src/http-functions/diagnose/client.js
+    docs:
+      - docs/CURRENT.md
+      - docs/ACTIVE_CONTRACTS.md
+      - docs/tickets/86exv6fnx-diagnose-question-package.md
+    brv_keys:
+      - F-DIAG-QUESTION-PACKAGE-005
+      - F-DIAG-ROUTE-CONFIG-003
+    tests:
+      - npm run check:diagnose-popup-dev-mode-pairwise
+      - npm run check:diagnose-business-guards
+    trigger: "questionPackage/questions, no-follow-up product口径, batch/package answer, old one-question-per-round claim changed"
+    public_contract: true
+
+  diagnosis-history-deprecated:
+    code:
+      - cloudfunctions/diagnosis-history-http/**
+      - src/http-functions/diagnosis-history/**
+      - src/http-functions/diagnose/client.js
+    docs:
+      - docs/ACTIVE_CONTRACTS.md
+      - docs/CURRENT.md
+    brv_keys:
+      - F-DIAG-HISTORY-DEPRECATED-006
+    trigger: "deprecated history function behavior or replacement route changed"
+    public_contract: true
+
+  storage-identify-weather-plants:
+    code:
+      - cloudfunctions/storage-http/**
+      - cloudfunctions/identify-http/**
+      - cloudfunctions/weather-http/**
+      - cloudfunctions/plant-catalog-http/**
+      - cloudfunctions/plant-user-http/**
+      - cloudfunctions/auth-user-http/**
+      - src/http-functions/storage/**
+      - src/api/weather.js
+      - src/http-functions/**/client.js
+    docs:
+      - docs/CURRENT.md
+      - docs/ACTIVE_CONTRACTS.md
+    brv_keys:
+      - F-STORAGE-IMAGE-001
+      - F-IDENTIFY-001
+      - F-WEATHER-V7-001
+      - F-PLANT-CATALOG-001
+      - F-PLANT-USER-001
+      - F-AUTH-USER-001
+    trigger: "non-diagnose HTTP function route, payload, auth or response changed"
+    public_contract: true
+
+  local-debug-deploy:
+    code:
+      - package.json
+      - scripts/dev/**
+      - scripts/deploy-*.mjs
+      - scripts/security/**
+      - test/e2e/terminal-e2e/**
+      - cloudfunctions/**/package.json
+      - cloudfunctions/**/cloudbase-functions.json
+    docs:
+      - docs/RUNBOOK.md
+    brv_keys:
+      - F-LOCAL-GATEWAY-001
+      - F-DEPLOY-RUNBOOK-001
+    trigger: "package script, local gateway, deploy, smoke, secret check changed"
+    public_contract: true
+
+  database-schema:
+    code:
+      - scripts/sql/**
+      - cloudfunctions/diagnose-http/constants/tables.js
+      - cloudfunctions/diagnose-http/db/**
+      - docs/data-base/**
+    docs:
+      - docs/ACTIVE_CONTRACTS.md
+    brv_keys:
+      - F-ENV-SCHEMA-001
+      - F-DATABASE-SCHEMA-001
+    trigger: "SQL table, schema resolver, data publishing spec changed"
+    public_contract: true
+
+  archive-docs:
+    code:
+      - docs/code-logics/**
+      - docs/new-rules/**
+      - docs/route规划及outcome瘦身计划/**
+      - docs/ai-runs/**
+      - docs/ai-tasks/**
+      - docs/planting_ai_diagnosis_all_in_one_package/**
+    docs:
+      - docs/ARCHIVE_INDEX.md
+      - docs/_doc-status.yml
+    brv_keys: []
+    trigger: "archived/retrieval-only docs changed or conflict found"
+    public_contract: false
+    rule: "mark status/index only; do not sync old blueprint content"

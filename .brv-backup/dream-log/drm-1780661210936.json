@@ -1,0 +1,16 @@
+{
+  "completedAt": 1780661210973,
+  "id": "drm-1780661210936",
+  "operations": [],
+  "startedAt": 1780661210936,
+  "status": "completed",
+  "summary": {
+    "consolidated": 0,
+    "errors": 0,
+    "flaggedForReview": 0,
+    "pruned": 0,
+    "synthesized": 0
+  },
+  "taskId": "58f1bd65-76e8-41b6-8918-efc70e5f07a2",
+  "trigger": "cli"
+}

@@ -3,13 +3,13 @@
 const {
   routeSelection: questionSelectionConfig,
   unknownFlow,
-  followUpSelection
+  questionSelection
 } = require('../constants/scoring')
 const { projectObservedSymptomsFromEvidence } = require('./observed-evidence')
 const {
-  QUESTION_TARGET_DIMENSIONS,
-  normalizeQuestionTargetDimension
-} = require('../utils/question-target-dimension')
+  QUESTION_PACKAGE_TOPICS,
+  normalizeQuestionPackageTopic
+} = require('../utils/question-package-topic')
 const {
   computeDiagnosisDirectionQuestionBoost
 } = require('../utils/diagnosis-directions')
@@ -61,9 +61,9 @@ function groupByQuestion(optionMappings = []) {
   return map
 }
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function buildObservedSymptomIndex(observedSymptoms = []) {
@@ -112,7 +112,7 @@ function mergeObservedSymptomContext(projectedObservedSymptoms = [], providedObs
   })
 }
 
-function selectFollowUpQuestions({
+function selectQuestionQuestions({
   candidateOutcomes = [],
   strategies = [],
   questions = [],
@@ -195,16 +195,16 @@ function selectFollowUpQuestions({
     if (askedSet.has(question.questionKey)) {continue}
 
     const targetSymptomKey = normalizeText(question.targetSymptomKey || '', '')
-    const targetDimension = normalizeQuestionTargetDimension(
-      question?.targetDimension,
-      QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
+    const packageTopic = normalizeQuestionPackageTopic(
+      question?.packageTopic,
+      QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE
     )
     if (targetSymptomKey && blockedTargetSymptomSet.has(targetSymptomKey)) {
       continue
     }
     if (
       targetSymptomKey &&
-      askedDimensionsByTargetSymptom.get(targetSymptomKey)?.has(targetDimension)
+      askedDimensionsByTargetSymptom.get(targetSymptomKey)?.has(packageTopic)
     ) {
       continue
     }
@@ -235,16 +235,16 @@ function selectFollowUpQuestions({
     const observedTarget = observedSymptomMap.get(targetSymptomKey)
     const strongVisualLock = Boolean(
       observedTarget &&
-      observedTarget.confidence >= followUpSelection.visualLockThreshold &&
-      observedTarget.signalReliability >= followUpSelection.highSpecificityThreshold
+      observedTarget.confidence >= questionSelection.visualLockThreshold &&
+      observedTarget.signalReliability >= questionSelection.highSpecificityThreshold
     )
     const weakVisualOverlap = Boolean(observedTarget && !strongVisualLock)
     const nonRedundancyFactor =
-      targetDimension === QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
+      packageTopic === QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE
         ? strongVisualLock
-          ? 1 - followUpSelection.strongOverlapPenalty
+          ? 1 - questionSelection.strongOverlapPenalty
           : weakVisualOverlap
-            ? 1 - followUpSelection.weakOverlapPenalty
+            ? 1 - questionSelection.weakOverlapPenalty
             : 1
         : 1
 
@@ -308,11 +308,11 @@ function selectFollowUpQuestions({
     defaultOptionKey: item.defaultOptionKey || '',
     uiVariant: item.uiVariant || '',
     renderMode: item.renderMode || '',
-    targetDimension: normalizeQuestionTargetDimension(
-      item.targetDimension,
-      QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
+    packageTopic: normalizeQuestionPackageTopic(
+      item.packageTopic,
+      QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE
     ),
-    routingScope: normalizeText(item.routingScope || '', ''),
+    packageSection: normalizeText(item.packageSection || '', ''),
     questionType: item.questionType || 'single_choice',
     options: ensureUnknownOption(optionMap.get(item.questionKey) || []).map(opt => ({
       optionKey: opt.optionKey,
@@ -325,6 +325,6 @@ function selectFollowUpQuestions({
 }
 
 module.exports = {
-  selectFollowUpQuestions,
+  selectQuestionQuestions,
   shouldAllowSecondaryObservedSymptomProbe
 }

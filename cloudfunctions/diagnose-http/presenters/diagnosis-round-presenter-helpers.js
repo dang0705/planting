@@ -13,7 +13,7 @@ function isEnglishLikeSymptomLabel(value = '') {
   return /[A-Za-z]/.test(normalized) && !/[\u4e00-\u9fff]/.test(normalized)
 }
 
-function resolvePublicSymptomCn(item = {}, fallback = '') {
+function resolvePublicSymptomCn(item = {}, conservative = '') {
   const candidate = String(
     item?.symptomCn ||
       item?.symptom_cn ||
@@ -26,7 +26,7 @@ function resolvePublicSymptomCn(item = {}, fallback = '') {
       item?.symptom_key ||
       item?.evidenceKey ||
       item?.evidence_key ||
-      fallback ||
+      conservative ||
       ''
   ).trim()
 
@@ -40,11 +40,11 @@ function resolvePublicSymptomCn(item = {}, fallback = '') {
 function isVisualEvidenceItem(item = {}) {
   const sourceType = normalizeEvidenceSourceType(item?.sourceType || item?.source_type || '')
   if (!sourceType) {return false}
-  if (sourceType === 'legacy_observed_symptom') {return true}
+  if (sourceType === 'session_observed_symptom') {return true}
   return sourceType.includes('visual')
 }
 
-function hasConsumedFollowUpRetakeQuota(visualBatchTrace = null) {
+function hasConsumedQuestionRetakeQuota(visualBatchTrace = null) {
   if (!visualBatchTrace || typeof visualBatchTrace !== 'object') {
     return false
   }
@@ -70,8 +70,8 @@ function hasConsumedFollowUpRetakeQuota(visualBatchTrace = null) {
   return Boolean(currentBatchId && originBatchId && currentBatchId !== originBatchId)
 }
 
-function resolveFollowUpCanUploadMoreImages(visualAggregateSummary = null, visualBatchTrace = null) {
-  if (hasConsumedFollowUpRetakeQuota(visualBatchTrace)) {
+function resolveQuestionCanUploadMoreImages(visualAggregateSummary = null, visualBatchTrace = null) {
+  if (hasConsumedQuestionRetakeQuota(visualBatchTrace)) {
     return false
   }
 
@@ -87,7 +87,7 @@ function resolveFollowUpCanUploadMoreImages(visualAggregateSummary = null, visua
     visualAggregateSummary.suggestedFollowupCapture.length > 0
 }
 
-function resolvePublicPlantRefs(source = {}, fallbackPlantId = '') {
+function resolvePublicPlantRefs(source = {}, conservativePlantId = '') {
   const plantContext = source?.plantContext || {}
   const userPlantId = plantContext?.userPlantId || null
   const plantCatalogId = plantContext?.plantId || null
@@ -99,7 +99,7 @@ function resolvePublicPlantRefs(source = {}, fallbackPlantId = '') {
     plantCatalogId,
     plantIdentityId,
     latestVisualCallBatchId,
-    plantId: userPlantId || plantCatalogId || fallbackPlantId || ''
+    plantId: userPlantId || plantCatalogId || conservativePlantId || ''
   }
 }
 
@@ -114,21 +114,21 @@ function buildSummaryCard(roundResult = {}) {
   }
 
   const topProblem = roundResult?.topProblem || roundResult?.finalResult || null
-  const followUpCount = Array.isArray(roundResult?.followUps) ? roundResult.followUps.length : 0
+  const questionCount = Array.isArray(roundResult?.questions) ? roundResult.questions.length : 0
 
   return {
     resultId: roundResult?.resultId || roundResult?.finalResult?.resultId || '',
     title: topProblem?.displayName ? `更像是${topProblem.displayName}` : '正在进一步确认诊断方向',
     subtitle:
-      followUpCount > 0
-        ? `还需要再确认 ${followUpCount} 个关键信息`
+      questionCount > 0
+        ? `还需要再确认 ${questionCount} 个关键信息`
         : '当前证据已基本收敛',
     severity: topProblem?.severity || 'medium'
   }
 }
 
-function toPublicQuestions(followUps = []) {
-  return (Array.isArray(followUps) ? followUps : []).map(item => {
+function toPublicQuestions(questions = []) {
+  return (Array.isArray(questions) ? questions : []).map(item => {
     const questionText = resolveQuestionText(item)
 
     return {
@@ -137,11 +137,11 @@ function toPublicQuestions(followUps = []) {
       selectionSource: item.selectionSource || '',
       targetSymptomKey: item.targetSymptomKey || '',
       questionGroupKey: item.questionGroupKey || '',
-      targetDimension: item.targetDimension || '',
-      routingScope: item.routingScope || '',
-      questionRole: item.questionRole || item.questionCategory || '',
-      questionCategory: item.questionCategory || item.questionRole || '',
-      effectMode: item.effectMode || '',
+      packageTopic: item.packageTopic || '',
+      packageSection: item.packageSection || '',
+      routePackageRole: item.routePackageRole || item.routePackageRole || '',
+      routePackageRole: item.routePackageRole || item.routePackageRole || '',
+      packageEffect: item.packageEffect || '',
       defaultOptionKey: item.defaultOptionKey || '',
       defaultOptionId: item.defaultOptionId || '',
       uiVariant: item.uiVariant || '',
@@ -231,14 +231,14 @@ const diagnosisRoundPresenterHelpers = {
   toPublicObservedEvidenceSet,
   toPublicQuestions,
   buildSummaryCard,
-  resolveFollowUpCanUploadMoreImages
+  resolveQuestionCanUploadMoreImages
 }
 
 module.exports = {
   normalizeEvidenceSourceType,
   isVisualEvidenceItem,
-  hasConsumedFollowUpRetakeQuota,
-  resolveFollowUpCanUploadMoreImages,
+  hasConsumedQuestionRetakeQuota,
+  resolveQuestionCanUploadMoreImages,
   resolvePublicPlantRefs,
   buildSummaryCard,
   toPublicQuestions,

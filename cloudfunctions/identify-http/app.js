@@ -21,7 +21,7 @@ function pickPlantMatchFields(plant) {
   return {
     id: plant.id || '',
     plantIdentityId: plant.plantIdentityId || '',
-    legacyPlantId: plant.legacyPlantId || '',
+    sessionPlantId: plant.sessionPlantId || '',
     canonicalName: plant.canonicalName || '',
     matchAlias: plant.matchAlias || '',
     internetName: plant.internetName || ''
@@ -254,7 +254,7 @@ async function main(event, context) {
       taxonomyMatchStatus,
       identityResolutionStatus,
       inputSlotType: 'unknown',
-      legacyCanonicalPlantId: simplifiedMatchedPlant?.id || null
+      sessionCanonicalPlantId: simplifiedMatchedPlant?.id || null
     })
 
     return jsonResponse(200, {

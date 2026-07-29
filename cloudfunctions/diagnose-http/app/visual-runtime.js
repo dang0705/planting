@@ -2,9 +2,12 @@
 
 const { analyzeAndPersistVisualBatch } = require('../services/visual-diagnosis-service')
 const { persistRoundRuntime } = require('../services/round-runtime-persistence-service')
+const { attachDiagnosisModeRoute } = require('../services/visual-mode-route-service')
 
 function emitStartVisualEvent(onVisualEvent, eventName, payload = {}) {
-  if (typeof onVisualEvent !== 'function') {return}
+  if (typeof onVisualEvent !== 'function') {
+    return
+  }
   try {
     onVisualEvent(eventName, payload)
   } catch (error) {
@@ -32,7 +35,7 @@ async function extractVisualSymptoms({
     }
   }
 
-  return analyzeAndPersistVisualBatch({
+  const extraction = await analyzeAndPersistVisualBatch({
     sessionId,
     openid,
     imageInputs,
@@ -42,6 +45,21 @@ async function extractVisualSymptoms({
     onVisualEvent,
     llmOptions
   })
+  if (!extraction?.aggregateResult) {
+    return extraction
+  }
+  const aggregateResult = attachDiagnosisModeRoute({
+    aggregateResult: extraction.aggregateResult,
+    successfulResults: extraction.imageResults || [],
+    diagnosisProfile: llmOptions?.diagnosisProfile || 'full',
+    priorEvidenceLedger: llmOptions?.priorEvidenceLedger || [],
+    requestedCaptureRegion: llmOptions?.requestedCaptureRegion || '',
+    originVisualCallBatchId
+  })
+  return {
+    ...extraction,
+    aggregateResult
+  }
 }
 
 async function extractVisualSymptomsSafely({
@@ -88,9 +106,12 @@ async function persistRoundResult({
   skipPersistence = false,
   awaitPersistence = true,
   clientContext = null,
-  followUpRows = null
+  sessionQuestionRows = null,
+  questionRows = null
 }) {
-  if (skipPersistence) {return}
+  if (skipPersistence) {
+    return
+  }
 
   const persistencePromise = persistRoundRuntime({
     sessionId,
@@ -101,7 +122,7 @@ async function persistRoundResult({
     image,
     description,
     clientContext,
-    followUpRows
+    sessionQuestionRows: sessionQuestionRows || questionRows
   })
   if (!awaitPersistence) {
     persistencePromise.catch(error => {

@@ -1,0 +1,12 @@
+interface:
+  display_name: "QA Figma Baseline"
+  short_description: "QA 独立获取 Figma 视觉基准"
+policy:
+  allow_implicit_invocation: false
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "figma"
+      description: "Figma MCP server"
+      transport: "streamable_http"
+      url: "https://mcp.figma.com/mcp"

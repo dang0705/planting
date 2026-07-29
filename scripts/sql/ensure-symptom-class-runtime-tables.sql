@@ -5,16 +5,16 @@ CREATE TABLE IF NOT EXISTS symptom_classes (
   question_mode VARCHAR(255) NOT NULL DEFAULT '' COMMENT '问询模式说明',
   class_level VARCHAR(64) NOT NULL DEFAULT 'mode' COMMENT '类层级',
   parent_class_key VARCHAR(128) NULL COMMENT '父类 taxonomy label，不做 FK',
-  followup_enabled_v1 TINYINT(1) NOT NULL DEFAULT 0 COMMENT '旧版 follow-up 开关，仅兼容保留',
+  question_enabled_v1 TINYINT(1) NOT NULL DEFAULT 0 COMMENT '问题开关',
   data_status VARCHAR(64) NOT NULL DEFAULT 'unknown' COMMENT '数据状态',
   data_source TEXT NULL COMMENT '数据来源',
   audit_note TEXT NULL COMMENT '审计说明',
-  followup_mode_v1 VARCHAR(64) NOT NULL DEFAULT 'disabled' COMMENT '运行时 follow-up 模式',
-  runtime_gate_rule VARCHAR(255) NOT NULL DEFAULT '' COMMENT '运行时 gate 规则',
+  question_mode_v1 VARCHAR(64) NOT NULL DEFAULT 'disabled' COMMENT '运行时问题模式',
+  runtime_condition_rule VARCHAR(255) NOT NULL DEFAULT '' COMMENT '运行时条件规则',
   runtime_notes TEXT NULL COMMENT '运行时说明',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  KEY idx_symptom_classes_followup_mode (followup_mode_v1),
+  KEY idx_symptom_classes_question_mode (question_mode_v1),
   KEY idx_symptom_classes_data_status (data_status),
   KEY idx_symptom_classes_parent_label (parent_class_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='症状模式主表';
@@ -30,11 +30,11 @@ CREATE TABLE IF NOT EXISTS symptom_class_mapping (
   visual_scoring_allowed TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否允许视觉打分',
   question_activation_allowed TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否允许问题激活',
   explanation_only_allowed TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否仅限 explanation',
-  followup_enabled_v1 TINYINT(1) NOT NULL DEFAULT 0 COMMENT '旧版 follow-up 开关，仅兼容保留',
+  question_enabled_v1 TINYINT(1) NOT NULL DEFAULT 0 COMMENT '问题开关',
   data_status VARCHAR(64) NOT NULL DEFAULT 'unknown' COMMENT '数据状态',
   data_source TEXT NULL COMMENT '数据来源',
   audit_note TEXT NULL COMMENT '审计说明',
-  followup_mode_v1 VARCHAR(64) NOT NULL DEFAULT 'disabled' COMMENT '运行时 follow-up 模式',
+  question_mode_v1 VARCHAR(64) NOT NULL DEFAULT 'disabled' COMMENT '运行时问题模式',
   explanation_only_semantic TEXT NULL COMMENT 'explanation-only 语义说明',
   effective_question_activation_v1 TINYINT(1) NOT NULL DEFAULT 0 COMMENT '问题激活最终开关',
   runtime_policy TEXT NULL COMMENT '运行时策略说明',
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS symptom_class_mapping (
   PRIMARY KEY (symptom_key, class_key, mapping_type),
   KEY idx_symptom_class_mapping_class_key (class_key),
   KEY idx_symptom_class_mapping_data_status (data_status),
-  KEY idx_symptom_class_mapping_followup_mode (followup_mode_v1)
+  KEY idx_symptom_class_mapping_question_mode (question_mode_v1)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='症状到症状模式映射表';
 
 CREATE TABLE IF NOT EXISTS class_question_group_strategy (
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS class_question_group_strategy (
   allow_when_ai_locked TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'AI 已锁定时是否仍可提问',
   max_questions_per_round INT NOT NULL DEFAULT 1 COMMENT '单轮该组最多提问数',
   activation_condition TEXT NULL COMMENT '激活条件',
-  class_gate_type VARCHAR(64) NOT NULL DEFAULT 'soft' COMMENT 'class gate 类型',
+  class_condition_type VARCHAR(64) NOT NULL DEFAULT 'soft' COMMENT 'class condition 类型',
   class_switch_allowed TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否允许切 class',
   unknown_switch_policy VARCHAR(128) NOT NULL DEFAULT '' COMMENT 'unknown 切组策略',
   ai_locked_confirm_penalty DECIMAL(6,4) NOT NULL DEFAULT 0.0000 COMMENT 'AI 已锁定时 confirm 降权',
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS class_question_group_strategy (
   data_status VARCHAR(64) NOT NULL DEFAULT 'unknown' COMMENT '数据状态',
   data_source TEXT NULL COMMENT '数据来源',
   audit_note TEXT NULL COMMENT '审计说明',
-  followup_mode_v1 VARCHAR(64) NOT NULL DEFAULT 'disabled' COMMENT '运行时 follow-up 模式',
+  question_mode_v1 VARCHAR(64) NOT NULL DEFAULT 'disabled' COMMENT '运行时问题模式',
   class_level_allows_runtime_v1 TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'class 层级是否允许进入 runtime',
   group_runtime_eligibility_rule TEXT NULL COMMENT '题组运行时准入规则',
   asset_validation_required TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否要求资产校验',
@@ -82,5 +82,5 @@ CREATE TABLE IF NOT EXISTS class_question_group_strategy (
   PRIMARY KEY (class_key, group_key),
   KEY idx_class_group_strategy_data_status (data_status),
   KEY idx_class_group_strategy_runtime (effective_runtime_v1),
-  KEY idx_class_group_strategy_followup_mode (followup_mode_v1)
+  KEY idx_class_group_strategy_question_mode (question_mode_v1)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='症状模式到问题组策略表';

@@ -25,9 +25,9 @@ function getSchemaCache(schema) {
   return cacheBySchema.get(safeSchema)
 }
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value ?? '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function normalizeCacheSignature(items = []) {
@@ -57,7 +57,7 @@ function normalizeBoolean(value) {
   return normalized === '1' || normalized === 'true' || normalized === 'yes'
 }
 
-function normalizeFollowupMode(value = '') {
+function normalizeQuestionMode(value = '') {
   const normalized = String(value || '').trim().toLowerCase()
   if (normalized === 'full' || normalized === 'limited' || normalized === 'explanation_only') {
     return normalized
@@ -73,12 +73,12 @@ function mapClassRow(row = {}) {
     questionMode: normalizeText(row.question_mode),
     classLevel: normalizeText(row.class_level, 'mode'),
     parentClassKey: normalizeText(row.parent_class_key),
-    followupEnabledV1: normalizeBoolean(row.followup_enabled_v1),
+    questionEnabledV1: normalizeBoolean(row.question_enabled_v1),
     dataStatus: normalizeText(row.data_status, 'unknown'),
     dataSource: normalizeText(row.data_source),
     auditNote: normalizeText(row.audit_note),
-    followupModeV1: normalizeFollowupMode(row.followup_mode_v1),
-    runtimeGateRule: normalizeText(row.runtime_gate_rule, 'soft'),
+    questionModeV1: normalizeQuestionMode(row.question_mode_v1),
+    runtimeConditionRule: normalizeText(row.runtime_condition_rule, 'soft'),
     runtimeNotes: normalizeText(row.runtime_notes)
   }
 }
@@ -95,11 +95,11 @@ function mapMappingRow(row = {}) {
     visualScoringAllowed: normalizeBoolean(row.visual_scoring_allowed),
     questionActivationAllowed: normalizeBoolean(row.question_activation_allowed),
     explanationOnlyAllowed: normalizeBoolean(row.explanation_only_allowed),
-    followupEnabledV1: normalizeBoolean(row.followup_enabled_v1),
+    questionEnabledV1: normalizeBoolean(row.question_enabled_v1),
     dataStatus: normalizeText(row.data_status, 'unknown'),
     dataSource: normalizeText(row.data_source),
     auditNote: normalizeText(row.audit_note),
-    followupModeV1: normalizeFollowupMode(row.followup_mode_v1),
+    questionModeV1: normalizeQuestionMode(row.question_mode_v1),
     explanationOnlySemantic: normalizeText(row.explanation_only_semantic),
     effectiveQuestionActivationV1: normalizeBoolean(row.effective_question_activation_v1),
     runtimePolicy: normalizeText(row.runtime_policy),
@@ -136,12 +136,12 @@ async function querySymptomClasses(classKeys = []) {
           question_mode,
           class_level,
           parent_class_key,
-          followup_enabled_v1,
+          question_enabled_v1,
           data_status,
           data_source,
           audit_note,
-          followup_mode_v1,
-          runtime_gate_rule,
+          question_mode_v1,
+          runtime_condition_rule,
           runtime_notes
         FROM ${table('symptom_classes')}
         WHERE class_key IN ${sqlInList(safeKeys)}
@@ -153,7 +153,7 @@ async function querySymptomClasses(classKeys = []) {
     return (result?.data?.executeResultList || []).map(mapClassRow)
   } catch (error) {
     if (isMissingRuntimeTableError(error)) {
-      console.warn('symptom class runtime tables not ready, fallback to legacy flow:', error.message)
+      console.warn('symptom class runtime tables not ready, conservative to session flow:', error.message)
       return []
     }
     throw error
@@ -178,11 +178,11 @@ async function querySymptomClassMappings(symptomKeys = []) {
           visual_scoring_allowed,
           question_activation_allowed,
           explanation_only_allowed,
-          followup_enabled_v1,
+          question_enabled_v1,
           data_status,
           data_source,
           audit_note,
-          followup_mode_v1,
+          question_mode_v1,
           explanation_only_semantic,
           effective_question_activation_v1,
           runtime_policy,
@@ -199,7 +199,7 @@ async function querySymptomClassMappings(symptomKeys = []) {
     return (result?.data?.executeResultList || []).map(mapMappingRow)
   } catch (error) {
     if (isMissingRuntimeTableError(error)) {
-      console.warn('symptom class mapping table not ready, fallback to legacy flow:', error.message)
+      console.warn('symptom class mapping table not ready, conservative to session flow:', error.message)
       return []
     }
     throw error

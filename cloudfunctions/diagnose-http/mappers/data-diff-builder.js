@@ -84,25 +84,6 @@ const expectedColumns = {
     'created_at',
     'updated_at'
   ],
-  question_queue: [
-    'question_queue_id',
-    '_openid',
-    'session_id',
-    'diagnosis_id',
-    'round_id',
-    'round_index',
-    'route_primary_action',
-    'queue_status',
-    'service_target',
-    'exhausted_reason',
-    'question_items_json',
-    'active_item_count',
-    'asked_item_count',
-    'answered_item_count',
-    'invalidated_item_count',
-    'created_at',
-    'updated_at'
-  ],
   stop_state: [
     'stop_state_id',
     '_openid',

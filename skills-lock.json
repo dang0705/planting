@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "byterover": {
+      "source": "campfirein/skills",
+      "sourceType": "github",
+      "skillPath": "skills/byterover/SKILL.md",
+      "computedHash": "c38855f8ac5d61b271fb16e63c8ba1e0171c80512ea2373108a778bf21befe06"
+    },
+    "cloudbase": {
+      "source": "tencentcloudbase/cloudbase-skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloudbase/SKILL.md",
+      "computedHash": "0e644669045506684e9bb9cb338e26eb098bacfdc6b6840df22c7dea3bd10667"
+    },
+    "tailwindcss-advanced-layouts": {
+      "source": "josiahsiegel/claude-plugin-marketplace",
+      "sourceType": "github",
+      "skillPath": "plugins/tailwindcss-master/skills/tailwindcss-advanced-layouts/SKILL.md",
+      "computedHash": "159d8a8f9eb20136492a9971633fd8658be1e34d5f8dc3bcf1afe7bbb4511bdf"
+    }
+  }
+}

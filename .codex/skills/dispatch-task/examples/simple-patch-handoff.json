@@ -1,0 +1,29 @@
+{
+  "dispatch_run_id": "example-simple-patch-001",
+  "implementation_mode": "main_direct",
+  "dispatch_tier": "simple_patch",
+  "task": {
+    "objective": "修复一个稳定自动化 ID 的拼写错误",
+    "code_changes_required": true,
+    "ui_task": false,
+    "risk": "local",
+    "qa_required": false
+  },
+  "acceptance": ["只修改合同允许的单个文件", "完成定向格式检查和 lint"],
+  "allowed_paths": ["src/pages/example.vue"],
+  "forbidden_paths": ["package.json", "cloudfunctions/**"],
+  "decision_lock": {
+    "level": "standard",
+    "architecture_invariants": ["不改变业务行为"],
+    "local_decisions_allowed": ["修正 typo"]
+  },
+  "project_constraints": {
+    "rule_refs": ["AGENTS.md#全局行为硬规则"],
+    "dependency_policy": "no_new_dependencies",
+    "test_commands": []
+  },
+  "validation": {
+    "miniprogram_automator_required": false,
+    "runtime_acceptance_mode": null
+  }
+}

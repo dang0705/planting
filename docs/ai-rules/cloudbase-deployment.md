@@ -16,7 +16,7 @@
 
 ## 3. 标准部署入口
 
-部署、SQL、查诊断 session 等 CloudBase 相关任务，优先使用当前会话可用的 CloudBase MCP 工具。项目 wrapper 仅作为 MCP 不可用、用户明确允许或需要本地打包兼容时的 fallback / convenience path，不能单独作为发布通过证据。
+部署、SQL、查诊断 session 等 CloudBase 相关任务，优先使用当前会话可用的 CloudBase MCP 工具。项目 wrapper 仅作为 MCP 不可用、用户明确允许或需要本地打包适配时的 fallback / convenience path，不能单独作为发布通过证据。
 
 fallback wrapper：
 
@@ -57,7 +57,7 @@ tcb fn detail <functionName> -e <envId>
 2. 必须有真实 HTTP smoke。
 3. 当任务涉及诊断行为变化时，必须检查 `diagnosis_sessions` / `diagnosis_follow_ups` DB 证据。
 4. publish 只有在真实部署证据、HTTP smoke 和必要 DB 证据均满足时才算通过。
-5. 若涉及 ranking → route、outcome 瘦身、gate、问诊路径、replay，必须结合 `docs/ai-rules/diagnosis-replay.md` 的验证要求。
+5. 若涉及 ranking → route、outcome 瘦身、condition、问诊路径、replay，必须结合 `docs/ai-rules/diagnosis-replay.md` 的验证要求。
 6. 若涉及诊断 `fast path`、`warm path`、`early return`、缓存命中或性能优化路径，发布验收必须包含“应继续追问而非 final”的真实 `/diagnosis/answer` 负向 smoke、完整路径正向 smoke，以及对应 DB 状态证据；部署命令成功或函数详情正常不能替代该验收。
 
 ## 7. 参考文档

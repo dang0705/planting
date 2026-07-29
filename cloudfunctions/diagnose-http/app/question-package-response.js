@@ -1,0 +1,361 @@
+'use strict'
+
+const { fromQuestionId } = require('../mappers/public-id-mapper')
+const {
+  WILTING_DROOP_PACKAGE_MODE,
+  WILTING_DROOP_PACKAGE_SOURCE_MODE,
+  WILTING_DROOP_PACKAGE_QUESTION_COUNT
+} = require('./wilting-droop-question-package')
+
+const YELLOW_LEAF_PACKAGE_MODE = 'yellow_leaf'
+const YELLOWING_PACKAGE_SOURCE_MODE = 'manual_yellowing_care_environment_frontloaded'
+const YELLOWING_PACKAGE_QUESTION_COUNT = 3
+const ROOT_ROT_PACKAGE_MODE = 'root_rot_package'
+const ROOT_ROT_PACKAGE_SOURCE_MODE = 'root_rot'
+const QUESTION_PACKAGE_MODE_ALIASES = new Map([
+  [YELLOW_LEAF_PACKAGE_MODE, YELLOW_LEAF_PACKAGE_MODE],
+  [YELLOWING_PACKAGE_SOURCE_MODE, YELLOW_LEAF_PACKAGE_MODE],
+  ['yellowing_mode', YELLOW_LEAF_PACKAGE_MODE],
+  ['leaf_yellowing', YELLOW_LEAF_PACKAGE_MODE],
+  [WILTING_DROOP_PACKAGE_MODE, WILTING_DROOP_PACKAGE_MODE],
+  [WILTING_DROOP_PACKAGE_SOURCE_MODE, WILTING_DROOP_PACKAGE_MODE],
+  ['wilt_droop', WILTING_DROOP_PACKAGE_MODE],
+  ['wilting', WILTING_DROOP_PACKAGE_MODE],
+  ['drooping', WILTING_DROOP_PACKAGE_MODE],
+  ['wilting_droop_mode', WILTING_DROOP_PACKAGE_MODE],
+  [ROOT_ROT_PACKAGE_MODE, ROOT_ROT_PACKAGE_MODE],
+  [ROOT_ROT_PACKAGE_SOURCE_MODE, ROOT_ROT_PACKAGE_MODE],
+  ['root_rot_mode', ROOT_ROT_PACKAGE_MODE]
+])
+const QUESTION_PACKAGE_BY_MODE = {
+  [YELLOW_LEAF_PACKAGE_MODE]: {
+    mode: YELLOW_LEAF_PACKAGE_MODE,
+    route: 'yellow_leaf',
+    sourceMode: YELLOWING_PACKAGE_SOURCE_MODE,
+    questionCount: YELLOWING_PACKAGE_QUESTION_COUNT,
+    packageTopics: [
+      'watering_frequency_context',
+      'light_change_context',
+      'fertilization_growth_context'
+    ],
+    answerSubmitMode: 'package',
+    questionDisplayMode: 'package',
+    fixedQuestionPackage: true,
+    outcomePolicy: {
+      allowMultipleOutcomes: true,
+      preferSingleOutcome: false
+    }
+  },
+  [WILTING_DROOP_PACKAGE_MODE]: {
+    mode: WILTING_DROOP_PACKAGE_MODE,
+    route: 'wilting_droop',
+    sourceMode: WILTING_DROOP_PACKAGE_SOURCE_MODE,
+    questionCount: WILTING_DROOP_PACKAGE_QUESTION_COUNT,
+    packageTopics: [
+      'watering_frequency_context',
+      'wilting_shape',
+      'wilting_rhythm_environment',
+      'recent_stress',
+      'wilting_high_risk'
+    ],
+    answerSubmitMode: 'package',
+    questionDisplayMode: 'package',
+    fixedQuestionPackage: true,
+    outcomePolicy: {
+      allowMultipleOutcomes: true,
+      preferSingleOutcome: false
+    }
+  },
+  [ROOT_ROT_PACKAGE_MODE]: {
+    mode: ROOT_ROT_PACKAGE_MODE,
+    route: 'root_rot',
+    sourceMode: ROOT_ROT_PACKAGE_SOURCE_MODE,
+    questionCount: 0,
+    packageTopics: [],
+    answerSubmitMode: 'package',
+    questionDisplayMode: 'package',
+    fixedQuestionPackage: true,
+    pendingImplementation: true,
+    outcomePolicy: {
+      allowMultipleOutcomes: true,
+      preferSingleOutcome: false
+    }
+  }
+}
+const YELLOWING_FRONTLOADED_CARE_CONTEXT_DIMENSIONS = new Set([
+  'watering_frequency_context',
+  'light_change_context',
+  'fertilization_growth_context'
+])
+
+function normalizeText(value = '') {
+  return String(value || '').trim()
+}
+
+function normalizeQuestionPackageMode(mode = '') {
+  const normalized = normalizeText(mode)
+  return QUESTION_PACKAGE_MODE_ALIASES.get(normalized) || normalized
+}
+
+function cloneOutcomePolicy(outcomePolicy = null) {
+  if (!outcomePolicy || typeof outcomePolicy !== 'object') {
+    return null
+  }
+  return {
+    allowMultipleOutcomes: Boolean(outcomePolicy.allowMultipleOutcomes),
+    preferSingleOutcome: Boolean(outcomePolicy.preferSingleOutcome)
+  }
+}
+
+function cloneDynamicQuestionPackage(questionPackage = {}, questionCount = 0) {
+  if (!questionPackage?.dynamicQuestionPackage) {
+    return null
+  }
+  const expectedCount = Number(questionPackage.questionCount || questionCount || 0)
+  if (questionCount && expectedCount !== questionCount) {
+    return null
+  }
+  return {
+    mode: normalizeText(questionPackage.mode || questionPackage.diagnosisMode || ''),
+    route: normalizeText(questionPackage.route || ''),
+    sourceMode: normalizeText(questionPackage.sourceMode || questionPackage.source_mode || ''),
+    questionCount: expectedCount,
+    packageTopics: Array.isArray(questionPackage.packageTopics)
+      ? questionPackage.packageTopics.map(item => normalizeText(item)).filter(Boolean)
+      : [],
+    answerSubmitMode: normalizeText(questionPackage.answerSubmitMode || 'package'),
+    questionDisplayMode: normalizeText(questionPackage.questionDisplayMode || 'package'),
+    fixedQuestionPackage: false,
+    dynamicQuestionPackage: true,
+    candidateModes: Array.isArray(questionPackage.candidateModes)
+      ? questionPackage.candidateModes.map(item => normalizeText(item)).filter(Boolean)
+      : [],
+    hiddenPrefilledEvidence: Array.isArray(questionPackage.hiddenPrefilledEvidence)
+      ? questionPackage.hiddenPrefilledEvidence
+      : [],
+    outcomePolicy: cloneOutcomePolicy(questionPackage.outcomePolicy),
+    packageQuestions: Array.isArray(questionPackage.packageQuestions)
+      ? questionPackage.packageQuestions
+      : []
+  }
+}
+
+function getQuestionPackageByMode(mode = '', options = {}) {
+  const normalizedMode = normalizeQuestionPackageMode(mode)
+  const packageConfig = QUESTION_PACKAGE_BY_MODE[normalizedMode]
+  if (!packageConfig) {
+    return null
+  }
+
+  const questionCount = Number(options.questionCount || packageConfig.questionCount || 0)
+  return {
+    mode: packageConfig.mode,
+    route: normalizeText(options.route || packageConfig.route),
+    sourceMode: normalizeText(options.sourceMode || packageConfig.sourceMode),
+    questionCount,
+    packageTopics: Array.isArray(options.packageTopics)
+      ? options.packageTopics.map(item => normalizeText(item)).filter(Boolean)
+      : packageConfig.packageTopics.slice(),
+    answerSubmitMode: packageConfig.answerSubmitMode,
+    questionDisplayMode: packageConfig.questionDisplayMode,
+    fixedQuestionPackage: Boolean(packageConfig.fixedQuestionPackage),
+    outcomePolicy: cloneOutcomePolicy(options.outcomePolicy || packageConfig.outcomePolicy)
+  }
+}
+
+function resolveSourceMode(response = {}) {
+  return normalizeText(
+    response?.questionPackage?.sourceMode ||
+      response?.questionPackage?.source_mode ||
+      response?.metrics?.routeDecision?.mode ||
+      response?.__runtimeRouteDecision?.mode ||
+      response?.uiHints?.sourceMode ||
+      response?.uiHints?.source_mode
+  )
+}
+
+function isYellowingQuestionPackage(response = {}) {
+  const mode = normalizeQuestionPackageMode(
+    response?.questionPackage?.mode ||
+      response?.questionPackage?.diagnosisMode ||
+      resolveSourceMode(response)
+  )
+  return mode === YELLOW_LEAF_PACKAGE_MODE
+}
+
+function normalizeAnswerQuestionKey(answer = {}) {
+  return (
+    fromQuestionId(answer?.questionId || '') ||
+    normalizeText(answer?.questionKey || answer?.question_key || answer?.questionId || '')
+  )
+}
+
+function parseYellowingFrontloadedCareQuestionKey(questionKey = '') {
+  const normalizedQuestionKey = normalizeText(questionKey)
+  const prefix = 'q_observed_probe__leaf_yellowing__'
+  if (!normalizedQuestionKey.startsWith(prefix)) {
+    return ''
+  }
+  return normalizedQuestionKey.slice(prefix.length)
+}
+
+function hasQuestionPackageSubmitMetadata(payload = {}) {
+  const questionPackage = payload?.questionPackage || {}
+  const uiHints = payload?.uiHints || {}
+  return (
+    Boolean(questionPackage && Object.keys(questionPackage).length) ||
+    normalizeText(uiHints.answerSubmitMode || uiHints.answer_submit_mode) === 'package' ||
+    normalizeText(uiHints.questionDisplayMode || uiHints.question_display_mode) === 'package'
+  )
+}
+
+function collectUniqueAnswerQuestionKeys(answers = []) {
+  const questionKeys = Array.from(
+    new Set((Array.isArray(answers) ? answers : []).map(normalizeAnswerQuestionKey).filter(Boolean))
+  )
+  return questionKeys
+}
+
+function isCompleteYellowingFrontloadedCarePackage(questionKeys = []) {
+  if (questionKeys.length !== YELLOWING_PACKAGE_QUESTION_COUNT) {
+    return false
+  }
+
+  const dimensions = questionKeys.map(parseYellowingFrontloadedCareQuestionKey).filter(Boolean)
+  if (dimensions.length !== YELLOWING_PACKAGE_QUESTION_COUNT) {
+    return false
+  }
+
+  const dimensionSet = new Set(dimensions)
+  const hasCompleteFrontloadedCarePackage =
+    dimensionSet.size === YELLOWING_PACKAGE_QUESTION_COUNT &&
+    Array.from(YELLOWING_FRONTLOADED_CARE_CONTEXT_DIMENSIONS).every(dimension =>
+      dimensionSet.has(dimension)
+    )
+
+  return hasCompleteFrontloadedCarePackage
+}
+
+function resolveQuestionPackageAnswerCount(payload = {}, answerCount = 0) {
+  const questionPackage = payload?.questionPackage || {}
+  const declaredQuestionCount = Number(
+    questionPackage.questionCount ??
+      questionPackage.question_count ??
+      questionPackage.maxQuestionsThisRound ??
+      questionPackage.max_questions_this_round ??
+      payload?.uiHints?.maxQuestionsThisRound ??
+      payload?.uiHints?.max_questions_this_round ??
+      0
+  )
+  if (Number.isFinite(declaredQuestionCount) && declaredQuestionCount > 0) {
+    return declaredQuestionCount
+  }
+  return answerCount > 0 ? answerCount : 0
+}
+
+function isQuestionPackageAnswerSubmitPayload({
+  payload = {},
+  answers = [],
+  requestMode = ''
+} = {}) {
+  if (normalizeText(requestMode).toLowerCase() !== 'answer_submit') {
+    return false
+  }
+
+  const questionKeys = collectUniqueAnswerQuestionKeys(answers)
+  if (hasQuestionPackageSubmitMetadata(payload)) {
+    const expectedAnswerCount = resolveQuestionPackageAnswerCount(payload, questionKeys.length)
+    return expectedAnswerCount >= 1 && questionKeys.length === expectedAnswerCount
+  }
+
+  return isCompleteYellowingFrontloadedCarePackage(questionKeys)
+}
+
+function buildYellowingQuestionPackage(response = {}, questions = []) {
+  const questionCount = Array.isArray(questions) ? questions.length : 0
+  if (!isYellowingQuestionPackage(response) || questionCount !== YELLOWING_PACKAGE_QUESTION_COUNT) {
+    return null
+  }
+  return getQuestionPackageByMode(YELLOW_LEAF_PACKAGE_MODE, {
+    questionCount,
+    sourceMode: resolveSourceMode(response) || YELLOWING_PACKAGE_SOURCE_MODE
+  })
+}
+
+function buildQuestionPackage(response = {}, questions = []) {
+  const questionCount = Array.isArray(questions) ? questions.length : 0
+  const dynamicQuestionPackage = cloneDynamicQuestionPackage(
+    response?.questionPackage,
+    questionCount
+  )
+  if (dynamicQuestionPackage) {
+    return dynamicQuestionPackage
+  }
+  const mode = normalizeQuestionPackageMode(
+    response?.questionPackage?.mode ||
+      response?.questionPackage?.diagnosisMode ||
+      resolveSourceMode(response)
+  )
+  const questionPackage = getQuestionPackageByMode(mode, {
+    questionCount,
+    sourceMode: resolveSourceMode(response) || response?.questionPackage?.sourceMode || ''
+  })
+  if (!questionPackage || questionCount !== questionPackage.questionCount) {
+    return null
+  }
+  return questionPackage
+}
+
+function buildQuestionPackageUiHints(baseUiHints = {}, questionPackage = null, questionCount = 0) {
+  if (!questionPackage) {
+    return {
+      canUploadMoreImages: Boolean(baseUiHints?.canUploadMoreImages),
+      maxQuestionsThisRound: questionCount ? 1 : 0,
+      questionDisplayMode: 'single',
+      answerSubmitMode: 'per_question',
+      optionLayout: 'vertical',
+      transition: 'swiper'
+    }
+  }
+  return {
+    canUploadMoreImages: Boolean(baseUiHints?.canUploadMoreImages),
+    maxQuestionsThisRound: questionPackage.questionCount,
+    questionDisplayMode: questionPackage.questionDisplayMode,
+    answerSubmitMode: questionPackage.answerSubmitMode,
+    optionLayout: 'vertical',
+    transition: 'swiper'
+  }
+}
+
+function resolveResponseQuestions(publicResponse = {}) {
+  if (Array.isArray(publicResponse.questions) && publicResponse.questions.length) {
+    return publicResponse.questions
+  }
+  return Array.isArray(publicResponse.questions) ? publicResponse.questions : []
+}
+
+module.exports = {
+  YELLOW_LEAF_PACKAGE_MODE,
+  YELLOWING_PACKAGE_SOURCE_MODE,
+  YELLOWING_PACKAGE_QUESTION_COUNT,
+  ROOT_ROT_PACKAGE_MODE,
+  ROOT_ROT_PACKAGE_SOURCE_MODE,
+  WILTING_DROOP_PACKAGE_MODE,
+  WILTING_DROOP_PACKAGE_SOURCE_MODE,
+  WILTING_DROOP_PACKAGE_QUESTION_COUNT,
+  getQuestionPackageByMode,
+  buildQuestionPackage,
+  buildYellowingQuestionPackage,
+  buildQuestionPackageUiHints,
+  resolveResponseQuestions,
+  isYellowingQuestionPackage,
+  isQuestionPackageAnswerSubmitPayload,
+  _test: {
+    normalizeQuestionPackageMode,
+    resolveSourceMode,
+    hasQuestionPackageSubmitMetadata,
+    resolveQuestionPackageAnswerCount,
+    isCompleteYellowingFrontloadedCarePackage,
+    parseYellowingFrontloadedCareQuestionKey
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "source": {
+    "head": "bd8c472d9a7ea30e6f0b15871c5338cd0e51229b",
+    "enumeration_command": "git ls-tree -r --name-only HEAD test/e2e",
+    "tracked_head_count": 509
+  },
+  "current_roots": {
+    "test/e2e": ["batch", "automator"],
+    "automator_helpers_excluded_by_convention": ["_shared", "_history"]
+  },
+  "explicit_moves": [
+    {
+      "source": "test/e2e/automator/watering/transpiration-v3/run-e2e.mjs",
+      "destination": "test/e2e/automator/care/watering/transpiration-v3/_shared/run-transpiration-v3.mjs",
+      "intent": "shared runner after splitting executable leaf scripts",
+      "modified_after_move": true
+    },
+    {
+      "source": "test/e2e/automator/watering/transpiration-v3/scenario-independent-watering.mjs",
+      "destination": "test/e2e/automator/care/watering/transpiration-v3/_shared/scenarios/independent-watering.mjs",
+      "intent": "shared scenario for independent watering leaf",
+      "modified_after_move": true
+    },
+    {
+      "source": "test/e2e/automator/watering/transpiration-v3/scenario-my-plant-planner.mjs",
+      "destination": "test/e2e/automator/care/watering/transpiration-v3/_shared/scenarios/my-plant-planner.mjs",
+      "intent": "shared scenario for user plant planner leaf",
+      "modified_after_move": true
+    },
+    {
+      "source": "test/e2e/automator/watering/transpiration-v3/lib/automator-client.mjs",
+      "destination": "test/e2e/automator/care/watering/transpiration-v3/_shared/lib/automator-client.mjs",
+      "intent": "shared automator helper",
+      "modified_after_move": false
+    },
+    {
+      "source": "test/e2e/automator/watering/transpiration-v3/lib/element-helpers.mjs",
+      "destination": "test/e2e/automator/care/watering/transpiration-v3/_shared/lib/element-helpers.mjs",
+      "intent": "shared automator helper",
+      "modified_after_move": false
+    },
+    {
+      "source": "test/e2e/automator/watering/transpiration-v3/lib/env.mjs",
+      "destination": "test/e2e/automator/care/watering/transpiration-v3/_shared/lib/env.mjs",
+      "intent": "shared automator helper",
+      "modified_after_move": false
+    },
+    {
+      "source": "test/e2e/automator/watering/transpiration-v3/lib/id-prefix-self-test.mjs",
+      "destination": "test/e2e/automator/care/watering/transpiration-v3/_shared/lib/id-prefix-self-test.mjs",
+      "intent": "shared automator helper",
+      "modified_after_move": true
+    },
+    {
+      "source": "test/e2e/automator/watering/transpiration-v3/lib/planner-assertions.mjs",
+      "destination": "test/e2e/automator/care/watering/transpiration-v3/_shared/lib/planner-assertions.mjs",
+      "intent": "shared automator helper",
+      "modified_after_move": false
+    },
+    {
+      "source": "test/e2e/automator/watering/transpiration-v3/lib/planner-trigger.mjs",
+      "destination": "test/e2e/automator/care/watering/transpiration-v3/_shared/lib/planner-trigger.mjs",
+      "intent": "shared automator helper",
+      "modified_after_move": false
+    },
+    {
+      "source": "test/e2e/automator/watering/transpiration-v3/lib/project-check.mjs",
+      "destination": "test/e2e/automator/care/watering/transpiration-v3/_shared/lib/project-check.mjs",
+      "intent": "shared automator helper",
+      "modified_after_move": false
+    },
+    {
+      "source": "test/e2e/automator/watering/transpiration-v3/lib/reporter.mjs",
+      "destination": "test/e2e/automator/care/watering/transpiration-v3/_shared/lib/reporter.mjs",
+      "intent": "shared automator helper",
+      "modified_after_move": false
+    },
+    {
+      "source": "test/e2e/automator/watering/transpiration-v3/lib/request-capture.mjs",
+      "destination": "test/e2e/automator/care/watering/transpiration-v3/_shared/lib/request-capture.mjs",
+      "intent": "shared automator helper",
+      "modified_after_move": false
+    },
+    {
+      "source": "test/e2e/automator/watering/transpiration-v3/lib/screenshot.mjs",
+      "destination": "test/e2e/automator/care/watering/transpiration-v3/_shared/lib/screenshot.mjs",
+      "intent": "shared automator helper",
+      "modified_after_move": false
+    },
+    {
+      "source": "test/e2e/automator/watering/transpiration-v3/lib/snapshot-comparator.mjs",
+      "destination": "test/e2e/automator/care/watering/transpiration-v3/_shared/lib/snapshot-comparator.mjs",
+      "intent": "shared automator helper",
+      "modified_after_move": false
+    },
+    {
+      "source": "test/e2e/batch/watering/verify-dose-label-layout.mjs",
+      "destination": "test/e2e/automator/care/watering/reminder-dose/dose-label-layout.mjs",
+      "intent": "true automator leaf moved out of batch",
+      "modified_after_move": false
+    },
+    {
+      "source": "test/e2e/batch/watering/verify-watering-bottle-text.mjs",
+      "destination": "test/e2e/automator/care/watering/reminder-dose/bottle-text.mjs",
+      "intent": "true automator leaf moved out of batch",
+      "modified_after_move": false
+    },
+    {
+      "source": "test/e2e/batch/watering/verify-watering-dose-dynamic.mjs",
+      "destination": "test/e2e/automator/care/watering/reminder-dose/dose-dynamic.mjs",
+      "intent": "true automator leaf moved out of batch",
+      "modified_after_move": false
+    },
+    {
+      "source": "test/e2e/batch/watering/qa-watering-unit-alignment-final.cjs",
+      "destination": "test/e2e/automator/care/watering/reminder-dose/unit-alignment-final.cjs",
+      "intent": "true automator leaf moved out of batch",
+      "modified_after_move": false
+    },
+    {
+      "source": "test/e2e/batch/watering/qa-watering-unit-alignment-v4.cjs",
+      "destination": "test/e2e/automator/care/watering/reminder-dose/unit-alignment-v4.cjs",
+      "intent": "true automator leaf moved out of batch",
+      "modified_after_move": false
+    }
+  ],
+  "intentional_non_e2e_destinations": []
+}

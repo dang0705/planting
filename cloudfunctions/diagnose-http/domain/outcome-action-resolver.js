@@ -6,9 +6,9 @@ const {
   isAuthoritativeRouteDecision
 } = require('../utils/outcome-route-contract')
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function normalizeKey(value = '') {
@@ -45,7 +45,6 @@ const YELLOWING_REVIEW_OUTCOME_KEYS = new Set([
   'overwatering_root_pressure',
   'underwatering',
   'root_stress',
-  'root_rot',
   'iron_deficiency',
   'nitrogen_deficiency',
   'nutrient_deficiency',
@@ -134,7 +133,7 @@ function buildOutcomeSummary(routeOutcome = null, problem = null, explanation = 
   )
 }
 
-function resolveDisplayName(routeOutcome, problem, explanation, fallbackOutcomeKey = '') {
+function resolveDisplayName(routeOutcome, problem, explanation, conservativeOutcomeKey = '') {
   return normalizeText(
     routeOutcome?.displayNameCn ||
       routeOutcome?.outcomeNameCn ||
@@ -143,7 +142,7 @@ function resolveDisplayName(routeOutcome, problem, explanation, fallbackOutcomeK
       explanation?.displayNameCn ||
       '',
     ''
-  ) || normalizeText(fallbackOutcomeKey)
+  ) || normalizeText(conservativeOutcomeKey)
 }
 
 function resolveOutcomeSummary(routeOutcome, problem, explanation) {
@@ -170,7 +169,7 @@ function buildOutcomeEntry({
     return null
   }
 
-  const fallbackDisplayName = resolveDisplayName(
+  const conservativeDisplayName = resolveDisplayName(
     routeOutcome,
     problem,
     explanation,
@@ -186,7 +185,7 @@ function buildOutcomeEntry({
     actionProfileKey: normalizeText(routeOutcome?.actionProfileKey || actionProfile?.actionProfileKey || ''),
     outcomeType: normalizeText(routeOutcome?.outcomeType || ''),
     outcomeCategory: normalizeText(routeOutcome?.outcomeCategory || ''),
-    displayNameCn: normalizeText(fallbackDisplayName),
+    displayNameCn: normalizeText(conservativeDisplayName),
     summary: resolveOutcomeSummary(routeOutcome, problem, explanation),
     severity: mapSeverity(problem || routeOutcome),
     urgency: mapUrgency(problem || routeOutcome),
@@ -202,7 +201,21 @@ function buildOutcomeEntry({
   }
 }
 
-function buildActionAdviceFallback({
+function isUncertainOutcome(outcome = null) {
+  const outcomeKey = normalizeKey(outcome?.outcomeKey || outcome?.problemKey || '')
+  const outcomeType = normalizeKey(outcome?.outcomeType || '')
+  return outcomeType === 'uncertain' || outcomeKey === 'uncertain_observation'
+}
+
+function suppressUncertainWhenConcreteOutcomeExists(outcomes = []) {
+  const safeOutcomes = Array.isArray(outcomes) ? outcomes.filter(Boolean) : []
+  const hasConcreteOutcome = safeOutcomes.some(outcome => !isUncertainOutcome(outcome))
+  return hasConcreteOutcome
+    ? safeOutcomes.filter(outcome => !isUncertainOutcome(outcome))
+    : safeOutcomes
+}
+
+function buildActionAdviceConservative({
   actionProfiles = [],
   careGuidance = {},
   leadingVisibleOutcome = null
@@ -229,7 +242,7 @@ function buildActionAdviceFallback({
   return {
     todayActions: uniqKeys(firstAid ? [firstAid] : ['先保持当前浇水和光照节奏，避免同时调整多项参数。']),
     threeDayActions: ['观察 3-7 天症状变化，确认是新叶/老叶扩展规律。'],
-    sevenDayObserve: ['保留近期叶片新旧对比照片，便于下一轮确认。'],
+    sevenDayObserve: ['保留近期叶片新既有对比照片，便于下一轮确认。'],
     avoidActions: uniqKeys(avoid ? [avoid] : ['避免大幅改变量，尤其避免一次性重施肥或大范围停浇。']),
     retakeOrEscalate: ['建议补拍新老叶重点部位并继续问诊后再收敛。'],
     conflictDetected: false
@@ -238,11 +251,11 @@ function buildActionAdviceFallback({
 
 function resolveOutcomeMode({
   authoritativeRouteDecision = false,
-  followUpRequired = false,
+  questionRequired = false,
   visibleOutcomes = []
 } = {}) {
-  if (followUpRequired) {return 'follow_up_required'}
-  if (!authoritativeRouteDecision) {return 'route_fallback_uncertain'}
+  if (questionRequired) {return 'follow_up_required'}
+  if (!authoritativeRouteDecision) {return 'route_conservative_uncertain'}
   if (visibleOutcomes.length) {return 'visible_outcomes'}
   return 'uncertain_only'
 }
@@ -256,7 +269,7 @@ function resolveRouteOutcomePayload({
   plantContext = {},
   observedEvidenceSet = [],
   outcomeType = '',
-  followUpRequired = false
+  questionRequired = false
 } = {}) {
   const problemMap = new Map((Array.isArray(problems) ? problems : []).map(item => [item.problemKey, item]))
   const explanationMap = new Map(
@@ -292,7 +305,8 @@ function resolveRouteOutcomePayload({
   const visibleOutcomes = rawVisibleOutcomes
     .map(outcome => appendYellowingReviewAdviceToOutcome(outcome, shouldAppendYellowingReviewAdvice))
     .filter(Boolean)
-  const leadingVisibleOutcome = visibleOutcomes[0] || null
+  const effectiveVisibleOutcomes = suppressUncertainWhenConcreteOutcomeExists(visibleOutcomes)
+  const leadingVisibleOutcome = effectiveVisibleOutcomes[0] || null
   const visibleActionConflictGroups = uniqKeys(routeDecision?.visibleActionConflictGroups)
   const hasActionConflict = visibleActionConflictGroups.length > 1
   const careGuidance = buildCareGuidance({
@@ -335,27 +349,27 @@ function resolveRouteOutcomePayload({
         conflictDetected: false
       }
 
-  const actionAdviceFallback = buildActionAdviceFallback({
+  const actionAdviceConservative = buildActionAdviceConservative({
     actionProfiles: safeActionProfiles,
     careGuidance,
     leadingVisibleOutcome
   })
 
-  const actionAdvice = appendYellowingReviewAdvice(hasActionConflict || !actionAdviceFallback
+  const actionAdvice = appendYellowingReviewAdvice(hasActionConflict || !actionAdviceConservative
     ? mergedActionAdvice
     : {
         ...mergedActionAdvice,
-        ...actionAdviceFallback
+        ...actionAdviceConservative
       }, shouldAppendYellowingReviewAdvice)
 
   return {
     authoritativeRouteDecision,
     leadingVisibleOutcome,
-    visibleOutcomes,
+    visibleOutcomes: effectiveVisibleOutcomes,
     outcomeMode: resolveOutcomeMode({
       authoritativeRouteDecision,
-      followUpRequired,
-      visibleOutcomes
+      questionRequired,
+      visibleOutcomes: effectiveVisibleOutcomes
     }),
     routeDecisionCause: normalizeRouteDecisionCause(routeDecision?.decisionCause),
     routeSafeSummary: buildRouteSafeSummary(leadingVisibleOutcome),
@@ -367,5 +381,6 @@ function resolveRouteOutcomePayload({
 module.exports = {
   resolveRouteOutcomePayload,
   buildOutcomeEntry,
-  buildRouteSafeSummary
+  buildRouteSafeSummary,
+  suppressUncertainWhenConcreteOutcomeExists
 }

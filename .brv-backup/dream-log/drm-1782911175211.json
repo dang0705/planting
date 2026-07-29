@@ -1,0 +1,95 @@
+{
+  "completedAt": 1782911269931,
+  "id": "drm-1782911175211",
+  "operations": [
+    {
+      "action": "MERGE",
+      "inputFiles": [
+        "architecture/watering_planner/context.md",
+        "architecture/watering_planner/watering_planner_v2_1_logic.md"
+      ],
+      "needsReview": true,
+      "outputFile": "architecture/watering_planner/watering_planner_v2_1_logic.md",
+      "previousTexts": {
+        "architecture/watering_planner/context.md": "# Topic: watering_planner\n\n## Overview\nAdvanced watering recommendation engine based on physical pot characteristics and historical hydration loads.\n\n## Key Concepts\n- effectiveHydrationLoad\n- rootZoneMoistureIndex\n- potGeometryDryDownFactor\n",
+        "architecture/watering_planner/watering_planner_v2_1_logic.md": "---\ntitle: 浇水规划器V2.1逻辑\nsummary: 基于10天行为窗、盆型几何和way/freq的浇水策略重算\ntags: []\nrelated: []\nkeywords: []\ncreatedAt: '2026-07-01T12:50:26.652Z'\nupdatedAt: '2026-07-01T12:50:26.652Z'\n---\n## Reason\n记录浇水规划器v2.1核心升级\n\n## Raw Concept\n**Task:**\n实现浇水规划器v2.1\n\n**Files:**\n- cloudfunctions/layer/utils/watering-planner.js\n- cloudfunctions/layer/utils/hydration-load.js\n- cloudfunctions/layer/utils/pot-geometry.js\n\n**Flow:**\n盆型几何计算 -> 行为时间线归一 -> 干湿门控判定 -> 下次浇水建议生成\n\n**Timestamp:** 2026-07-01\n\n## Narrative\n### Structure\n分层结构：\n- watering-planner.js 负责入口编排（行为线归一、基线间隔、输出字段）\n- hydration-load.js 负责干湿荷载与门控计算\n- pot-geometry.js 负责盆型几何因子（干透与排水风险）\n\n### Highlights\n算法输出改为量化指标与建议策略，强调“mist 不代表根区浇透，unknown 不归零”，并将盆型几何纳入过浇/欠浇判定。\n\n### Rules\n规则1：way/freq 取属级策略作为基线间隔和回看窗的核心输入  \n规则2：unknown 浇水历史保留权重，不等于 0 次  \n规则3：mist 不计入有效根区浇水，不能抵消干燥风险  \n规则4：无排水孔或窄底盆提高 drainageRiskFactor，提升过浇风险权重\n\n## Facts\n- **algorithm**: 浇水规划器v2.1不再以 wateringCount10d 为核心判定，改用 effectiveHydrationLoad / wetPressureLoad / rootZoneMoistureIndex [项目]\n- **algorithm**: 根区湿度与门控结合 way/freq 形成动态回看窗与 nextWater 建议 [项目]\n- **algorithm_constant**: unknown 浇水事件、mist 和 thorough 在权重表中有独立贡献策略，mist 不能作为根区有效浇水 [项目]\n- **algorithm_constant**: 无排水孔或窄底盆会提高过浇风险评分 [项目]\n"
+      },
+      "reason": "The context.md is a thin placeholder for the watering_planner topic. watering_planner_v2_1_logic.md contains the full implementation details and facts for the current version. Merging ensures a single source of truth for the planner logic.",
+      "type": "CONSOLIDATE"
+    },
+    {
+      "action": "CROSS_REFERENCE",
+      "inputFiles": [
+        "architecture/backend/watering_reminder_v2_1_schema.md",
+        "architecture/watering_planner/watering_planner_v2_1_logic.md",
+        "architecture/system_logic/plant_knowledge_integration.md"
+      ],
+      "needsReview": false,
+      "previousTexts": {
+        "architecture/backend/watering_reminder_v2_1_schema.md": "---\ntitle: 浇水提醒V2.1数据库契约\nsummary: user_plant_instances 增补盆型画像字段，genus_care_profiles 增加 way 量化字段\ntags: []\nrelated: []\nkeywords: []\ncreatedAt: '2026-07-01T12:50:26.650Z'\nupdatedAt: '2026-07-01T12:50:26.650Z'\n---\n## Reason\n记录浇水提醒V2.1数据库变更。\n\n## Raw Concept\n**Task:**\n更新浇水提醒V2.1的数据库结构\n\n**Changes:**\n- user_plant_instances 主表新增：\n  - pot_top_diameter_cm\n  - pot_bottom_diameter_cm\n  - pot_height_cm\n  - has_drainage_hole\n  - pot_material\n  - substrate_type\n  - pot_profile_version\n  - pot_profile_source\n  - pot_profile_confidence\n- genus_care_profiles 新增：\n  - watering_way_quantization_json（JSON，可从 watering_strategy_json 回填）\n  - watering_strategy_version\n  - watering_strategy_review_status\n- 丢弃历史扩展表 user_plant_care_extensions（DROP TABLE IF EXISTS）\n\n**Files:**\n- scripts/sql/watering-reminder-v21-schema-20260630.sql\n\n**Timestamp:** 2026-06-30\n\n## Narrative\n### Structure\n以属级策略表和用户植物主表为中心：盆型数据不再拆扩展表，量化字段落在属级养护表。\n\n### Highlights\n盆型画像已折叠到 user_plant_instances，减少表依赖；watering_way_quantization_json 提供 way/freq 到算法字段的量化映射。\n\n## Facts\n- **database_schema**: user_plant_instances 直接承载盆型画像字段 [project]\n- **database_schema**: user_plant_care_extensions 不再使用，历史表被废弃 [project]\n- **database_schema**: genus_care_profiles 新增 watering_way_quantization_json 并支持 way/freq 量化回填 [project]\n",
+        "architecture/watering_planner/watering_planner_v2_1_logic.md": "---\ntitle: 浇水规划器V2.1逻辑\nsummary: 基于10天行为窗、盆型几何和way/freq的浇水策略重算\ntags: []\nrelated: []\nkeywords: []\ncreatedAt: '2026-07-01T12:50:26.652Z'\nupdatedAt: '2026-07-01T12:50:26.652Z'\n---\n## Reason\n记录浇水规划器v2.1核心升级\n\n## Raw Concept\n**Task:**\n实现浇水规划器v2.1\n\n**Files:**\n- cloudfunctions/layer/utils/watering-planner.js\n- cloudfunctions/layer/utils/hydration-load.js\n- cloudfunctions/layer/utils/pot-geometry.js\n\n**Flow:**\n盆型几何计算 -> 行为时间线归一 -> 干湿门控判定 -> 下次浇水建议生成\n\n**Timestamp:** 2026-07-01\n\n## Narrative\n### Structure\n分层结构：\n- watering-planner.js 负责入口编排（行为线归一、基线间隔、输出字段）\n- hydration-load.js 负责干湿荷载与门控计算\n- pot-geometry.js 负责盆型几何因子（干透与排水风险）\n\n### Highlights\n算法输出改为量化指标与建议策略，强调“mist 不代表根区浇透，unknown 不归零”，并将盆型几何纳入过浇/欠浇判定。\n\n### Rules\n规则1：way/freq 取属级策略作为基线间隔和回看窗的核心输入  \n规则2：unknown 浇水历史保留权重，不等于 0 次  \n规则3：mist 不计入有效根区浇水，不能抵消干燥风险  \n规则4：无排水孔或窄底盆提高 drainageRiskFactor，提升过浇风险权重\n\n## Facts\n- **algorithm**: 浇水规划器v2.1不再以 wateringCount10d 为核心判定，改用 effectiveHydrationLoad / wetPressureLoad / rootZoneMoistureIndex [项目]\n- **algorithm**: 根区湿度与门控结合 way/freq 形成动态回看窗与 nextWater 建议 [项目]\n- **algorithm_constant**: unknown 浇水事件、mist 和 thorough 在权重表中有独立贡献策略，mist 不能作为根区有效浇水 [项目]\n- **algorithm_constant**: 无排水孔或窄底盆会提高过浇风险评分 [项目]\n",
+        "architecture/system_logic/plant_knowledge_integration.md": "---\ntitle: 植物数据映射与同步\nsummary: user_plant_instances 读取与更新链路已对齐盆型画像与planner所需字段\ntags: []\nrelated: []\nkeywords: []\ncreatedAt: '2026-07-01T12:50:26.654Z'\nupdatedAt: '2026-07-01T12:50:26.654Z'\n---\n## Reason\n记录植入端到端的盆型画像与浇水字段映射\n\n## Raw Concept\n**Task:**\n对齐前后端盆型画像和浇水规划数据结构\n\n**Changes:**\n- 从 user_plant_instances 映射 potProfile 到前端模型\n- planner 输入补齐 potProfile，并通过 patch 接口保存盆型信息\n\n**Files:**\n- cloudfunctions/layer/utils/plant-knowledge.js\n- src/pages/index/components/WateringReminderSheet.vue\n- src/pages/index/components/PotProfileEditor.vue\n- src/store/plants.js\n\n**Timestamp:** 2026-07-01\n\n## Narrative\n### Structure\n数据读取链路：数据库行 -> plant-knowledge map -> 前端 store -> WateringReminderSheet 输入 -> 规划器计算\n\n### Highlights\n主表缺字段也不会阻断核心流程，盆型保存与更新采用分段更新策略，兼容历史数据缺列场景。\n\n## Facts\n- **system_integration**: mapUserPlantInstanceRow 与 mapCareExtensionRow 把主表的盆型字段映射为前端 potProfile [项目]\n- **system_integration**: WateringReminderSheet/PotProfileEditor 提供盆型补填，planner 入参带入 potProfile [项目]\n- **system_integration**: store 层通过 savePotProfile/patchUserPlant 把 potProfile 字段透传给后端 [项目]\n- **system_integration**: 后端 getUserPlantWateringStrategy 从主表读取 potProfile，减少多表 join [项目]\n"
+      },
+      "reason": "These three files form the 'V2.1 Watering Reminder' feature set: schema (data storage), logic (algorithm), and integration (data flow). They are highly complementary.",
+      "type": "CONSOLIDATE"
+    },
+    {
+      "action": "TEMPORAL_UPDATE",
+      "inputFiles": [
+        "architecture/backend/cloudbase_mysql_ddl_execution.md"
+      ],
+      "needsReview": false,
+      "previousTexts": {
+        "architecture/backend/cloudbase_mysql_ddl_execution.md": "---\ntitle: CloudBase MySQL DDL Execution\nsummary: CloudBase MySQL DDL execution guide using official CLI and verification scripts, resolving the InvalidParameter blocker.\ntags: []\nrelated: [architecture/backend/source_verified_backend_facts.md]\nkeywords: []\ncreatedAt: '2026-06-19T07:41:04.100Z'\nupdatedAt: '2026-06-19T07:41:04.100Z'\n---\n## Reason\nDocumenting CloudBase MySQL DDL execution path and verification scripts after resolving a perceived blocker.\n\n## Raw Concept\n**Task:**\nExecute and verify CloudBase MySQL DDL schema changes\n\n**Changes:**\n- Resolved InvalidParameter blocker for DDL by switching to official CLI\n- Established idempotent DDL execution path via tcb db execute\n- Added schema verification entry point\n\n**Files:**\n- test/e2e/terminal-e2e/run-with-cloudbase-env.mjs\n- package.json\n\n**Flow:**\nLocate instance (tcb db instance list) -> Execute DDL (tcb db execute) -> Verify (npm run ensure:cloudbase-sql-schema:verify)\n\n**Timestamp:** 2026-06-19\n\n**Author:** implementer_fast\n\n## Narrative\n### Structure\nCloudBase MySQL DDL management is handled via the official CLI rather than the Manager API (models.$runSQL).\n\n### Dependencies\n@cloudbase/cli, weather-http credentials\n\n### Highlights\nInvalidParameter error in $runSQLRaw is a semantic limitation, not a MySQL blocker. Use tcb db execute for schema updates.\n\n### Rules\nRule 1: Do not stop at $runSQLRaw InvalidParameter for DDL blockers.\nRule 2: Use official CLI for DDL execution.\nRule 3: Verify schema using the designated npm script.\n\n### Examples\nLocate instance: npx -y -p @cloudbase/cli tcb db instance list -e cloud1-2grufevs395a9d5e --json\nVerify: npm run ensure:cloudbase-sql-schema:verify\n\n## Facts\n- **cloudbase_manager_api_limitation**: The error InvalidParameter returned by models.$runSQL/$runSQLRaw for DDL is a CloudBase Manager API semantic limitation and not a blocker for MySQL DDL execution. [project]\n- **cloudbase_cli_ddl**: CloudBase MySQL DDL can be successfully executed using the official CLI @cloudbase/cli. [project]\n- **db_instance_discovery**: The command 'npx -y -p @cloudbase/cli tcb db instance list -e cloud1-2grufevs395a9d5e --json' is used to locate the database instance cynosdbmysql-ins-nq6qok1d. [project]\n- **ddl_execution**: The command 'tcb db execute' is used to perform idempotent DDL operations on a specific CloudBase instance and schema. [project]\n- **schema_verification_script**: The verification entry point for CloudBase SQL schema is 'npm run ensure:cloudbase-sql-schema:verify'. [convention]\n- **verification_signals**: Successful DDL verification is indicated by the signals weather_locations=ok, plant_care_locations=ok, and diagnosis_weather_evidence=ok. [convention]\n"
+      },
+      "reason": "The existing DDL execution guide needs to be acknowledged as the standard for the V2.1 schema updates mentioned in the new files. No contradiction, but temporal context links them.",
+      "type": "CONSOLIDATE"
+    },
+    {
+      "action": "CREATE",
+      "confidence": 1,
+      "needsReview": false,
+      "outputFile": "architecture/question-package-terminal-state-governance.md",
+      "sources": [
+        "architecture/_index.md",
+        "project_management/_index.md",
+        "governance/_index.md"
+      ],
+      "type": "SYNTHESIZE"
+    },
+    {
+      "action": "CREATE",
+      "confidence": 0.9,
+      "needsReview": false,
+      "outputFile": "tooling/wechat-runtime-first-automation-policy.md",
+      "sources": [
+        "architecture/_index.md",
+        "governance/_index.md",
+        "tooling/_index.md"
+      ],
+      "type": "SYNTHESIZE"
+    },
+    {
+      "action": "CREATE",
+      "confidence": 0.85,
+      "needsReview": false,
+      "outputFile": "architecture/location-priority-weather-integration.md",
+      "sources": [
+        "architecture/_index.md",
+        "architecture/_index.md"
+      ],
+      "type": "SYNTHESIZE"
+    }
+  ],
+  "startedAt": 1782911175211,
+  "status": "completed",
+  "summary": {
+    "consolidated": 3,
+    "errors": 0,
+    "flaggedForReview": 1,
+    "pruned": 0,
+    "synthesized": 3
+  },
+  "taskId": "22df1adc-0400-41f1-a272-dce4cc04cb1d",
+  "trigger": "agent-idle"
+}

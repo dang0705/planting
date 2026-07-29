@@ -1,38 +1,80 @@
 <template>
   <view
-    class="bg-white border-2 rounded-2xl overflow-hidden transition-all duration-300"
-    :class="selected ? 'border-primary bg-[#D8F3DC]' : 'border-transparent'"
+    class="h-[234px] w-[142px] shrink-0 overflow-hidden rounded-2xl border bg-white transition-all duration-200"
+    :style="cardStyle"
     @click="$emit('select')"
   >
-    <image
-      v-if="plant.image"
-      :src="plant.image"
-      class="w-full block aspect-square"
-      mode="aspectFill"
-    />
-    <view v-else class="w-full aspect-square bg-gray-100 flex items-center justify-center">
-      <text class="text-[28px]">🌱</text>
+    <view class="h-[117px] w-full" style="background-color: rgba(45, 122, 79, 0.05)">
+      <image v-if="plant.image" :src="plant.image" class="block h-full w-full" mode="aspectFill" />
+      <view v-else class="flex h-full w-full items-center justify-center">
+        <text class="text-[28px]">🌱</text>
+      </view>
     </view>
-    <view class="px-2 py-2">
-      <text class="block text-gray-700 font-medium text-center mb-1.5">{{ plant.canonicalName }}</text>
-      <view class="flex flex-wrap justify-center gap-1">
-        <text class="text-xs px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500"
-          >💧{{ plant.watering?.way || plant.categoryCn || '植物目录' }}</text
-        >
-        <text
-          class="text-xs px-1.5 py-0.5 rounded-full"
-          :class="plant.sunning?.way === '全日光' || plant.sunning?.way === '强光' ? 'bg-orange-100 text-orange-700' : 'bg-amber-50 text-orange-400'"
-          >{{ plant.sunning?.way ? `${plant.sunning.way}` : `难度 ${plant.difficulty || 0}/5` }}</text
-        >
+    <view class="flex h-[116px] flex-col gap-[6px] px-[10px] py-[10px]">
+      <text class="block truncate text-sm font-medium leading-5 text-[#101828]">
+        {{ plant.canonicalName }}
+      </text>
+      <view class="flex flex-col gap-[3px]">
+        <text class="text-xs font-medium leading-4 text-[#4a5565]">💧 浇水 {{ waterLevel }}</text>
+        <text class="text-xs font-medium leading-4 text-[#4a5565]">☀️ 光照 {{ lightLevel }}</text>
+        <text class="text-xs font-medium leading-4 text-[#4a5565]">
+          🍃 通风 {{ ventilationLevel }}
+        </text>
       </view>
     </view>
   </view>
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   plant: { type: Object, required: true },
   selected: { type: Boolean, default: false }
 })
 defineEmits(['select'])
+
+const cardStyle = computed(() =>
+  props.selected
+    ? 'border-color: #2d7a4f; box-shadow: 0 0 0 2px rgba(45, 122, 79, 0.3)'
+    : 'border-color: rgba(45, 122, 79, 0.15)'
+)
+const waterLevel = computed(() => resolveCareLevel(props.plant.watering, '中'))
+const lightLevel = computed(() => resolveCareLevel(props.plant.sunning, '低'))
+const ventilationLevel = computed(() => resolveCareLevel(props.plant.ventilation, '中'))
+
+function resolveCareLevel(strategy, fallback) {
+  const explicit = [
+    strategy?.level,
+    strategy?.demand,
+    strategy?.intensity,
+    strategy?.frequencyLevel,
+    strategy?.degree
+  ]
+    .map(value => String(value || '').trim())
+    .find(Boolean)
+
+  if (explicit) {
+    return normalizeLevel(explicit, fallback)
+  }
+
+  return normalizeLevel(
+    [strategy?.way, strategy?.frequency, strategy?.description, strategy?.note].join(' '),
+    fallback
+  )
+}
+
+function normalizeLevel(text, fallback) {
+  const value = String(text || '')
+  if (/高|强|多|频繁|全日|充足|湿润|每天/.test(value)) {
+    return '高'
+  }
+  if (/低|弱|少|耐旱|半干|干透|微干|低光|散射/.test(value)) {
+    return '低'
+  }
+  if (/中|适中|普通|一般|半阴/.test(value)) {
+    return '中'
+  }
+  return fallback
+}
 </script>

@@ -1,11 +1,23 @@
-@import "./tailwind.css";
+@import './tailwind.css';
+/*
+ * The diagnosis review page renders its table and drawer through child
+ * components. Keep those layout rules in the application-level stylesheet so
+ * Vue's page scope attribute cannot prevent the child DOM from matching them.
+ */
+@import '../pages/profile/diagnosis-review/style.css';
 page {
-	--primary-color:#2D7A4F;
-	--secondary-color:#F8F6F0;
+  --primary-color: #2d7a4f;
+  --secondary-color: #f8f6f0;
 }
-view,scroll-view{
-	box-sizing: border-box;
+view,
+scroll-view {
+  box-sizing: border-box;
 }
-image{
-	height:unset;
+image {
+  height: unset;
+}
+wx-button {
+  &:after {
+    content: none;
+  }
 }

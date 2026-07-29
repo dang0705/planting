@@ -1,9 +1,9 @@
 const PRIMARY_IMAGE_LIMIT = 3
-const FOLLOW_UP_IMAGE_LIMIT = 1
+const ADDITIONAL_IMAGE_LIMIT = 1
 const SLOT_IMAGE_LIMIT = 2
 
 const PRIMARY_SLOT_SEQUENCE = ['whole_plant', 'leaf', 'stem', 'root_crown', 'other']
-const FOLLOW_UP_SLOT_SEQUENCE = ['whole_plant', 'leaf', 'stem', 'root_crown', 'other']
+const ADDITIONAL_IMAGE_SLOT_SEQUENCE = ['whole_plant', 'leaf', 'stem', 'root_crown', 'other']
 
 const ORGAN_SLOT_OPTIONS = [
   { value: 'leaf', label: '叶片图' },
@@ -118,7 +118,7 @@ function buildSlotMetadata(slotType = 'unknown', index = 0) {
   }
 }
 
-function inferFollowUpSlotTypeFromSuggestion(suggestion = '', fallback = 'whole_plant') {
+function inferAdditionalImageSlotTypeFromSuggestion(suggestion = '', fallback = 'whole_plant') {
   const normalized = String(suggestion || '').trim()
   if (!normalized) {return fallback}
   if (normalized.includes('根颈')) {return 'root_crown'}
@@ -133,10 +133,10 @@ function inferFollowUpSlotTypeFromSuggestion(suggestion = '', fallback = 'whole_
 
 export {
   PRIMARY_IMAGE_LIMIT,
-  FOLLOW_UP_IMAGE_LIMIT,
+  ADDITIONAL_IMAGE_LIMIT,
   SLOT_IMAGE_LIMIT,
   PRIMARY_SLOT_SEQUENCE,
-  FOLLOW_UP_SLOT_SEQUENCE,
+  ADDITIONAL_IMAGE_SLOT_SEQUENCE,
   getOrganOptionLabel,
   normalizeSlotType,
   getSlotCapacity,
@@ -144,5 +144,5 @@ export {
   getSlotHintText,
   buildSlotGroups,
   buildSlotMetadata,
-  inferFollowUpSlotTypeFromSuggestion
+  inferAdditionalImageSlotTypeFromSuggestion
 }

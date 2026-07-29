@@ -11,10 +11,10 @@ INSERT INTO question_library_v5_real (
   question_group_key,
   question_level,
   observability,
-  target_dimension,
-  routing_scope,
-  question_role,
-  effect_mode,
+  package_topic,
+  package_section,
+  route_package_role,
+  package_effect,
   allow_unknown,
   priority,
   data_status,
@@ -65,7 +65,7 @@ INSERT INTO question_library_v5_real (
   'fix_yellowing_route_non_watering_20260511',
   'v20260511_route_non_watering_fix',
   'audited',
-  '补齐黄叶旧叶自然代谢 route 所需问题。',
+  '补齐黄叶既有叶自然代谢 route 所需问题。',
   1,
   NOW(),
   NOW(),
@@ -76,10 +76,10 @@ INSERT INTO question_library_v5_real (
   question_text_user_cn = VALUES(question_text_user_cn),
   target_symptom_key = VALUES(target_symptom_key),
   question_group_key = VALUES(question_group_key),
-  target_dimension = VALUES(target_dimension),
-  routing_scope = VALUES(routing_scope),
-  question_role = VALUES(question_role),
-  effect_mode = VALUES(effect_mode),
+  package_topic = VALUES(package_topic),
+  package_section = VALUES(package_section),
+  route_package_role = VALUES(route_package_role),
+  package_effect = VALUES(package_effect),
   help_text_cn = VALUES(help_text_cn),
   why_this_question_cn = VALUES(why_this_question_cn),
   ui_variant = VALUES(ui_variant),
@@ -134,7 +134,7 @@ ON DUPLICATE KEY UPDATE
 -- 只有用户明确 unknown 或正式证据不足时才保守进入 uncertain_observation。
 REPLACE INTO diagnosis_outcomes (
   outcome_key,
-  legacy_problem_key,
+  problem_key,
   outcome_name_cn,
   outcome_type,
   outcome_category,
@@ -237,25 +237,25 @@ REPLACE INTO outcome_routes (
   ('yellowing_airflow_humidity_stress_route', 'yellowing_care_split_group', 'humidity_airflow_stress', '黄叶 + 通风湿度环境压力路径', 'visual_symptom', JSON_ARRAY('leaf_yellowing', 'uniform_yellowing', 'yellow_lower_leaves', 'yellow_new_leaves', 'interveinal_chlorosis'), JSON_ARRAY('yellowing_direction'), JSON_ARRAY('yellowing_mode'), JSON_OBJECT(), 78, 2, 'uncertain', 'action_humidity_airflow_stabilize', 'environment_stabilize', 1, 'audited', 'active'),
   ('yellowing_airflow_unknown_route', 'yellowing_care_split_group', 'uncertain_observation', '黄叶 + 通风湿度进展不确定路径', 'visual_symptom', JSON_ARRAY('leaf_yellowing', 'uniform_yellowing', 'yellow_lower_leaves', 'yellow_new_leaves', 'interveinal_chlorosis'), JSON_ARRAY('yellowing_direction'), JSON_ARRAY('yellowing_mode'), JSON_OBJECT(), 40, 2, 'uncertain', 'action_uncertain_prepare', '', 1, 'audited', 'active');
 
-DELETE FROM outcome_route_gates
-WHERE gate_key IN (
-  'fertilization_confirmation_gate',
-  'airflow_confirmation_gate',
-  'low_fertilizer_iron_gate',
-  'low_fertilizer_nitrogen_gate',
-  'low_fertilizer_nutrient_gate',
-  'heavy_fertilizer_repot_gate',
-  'fertilization_unknown_gate',
-  'airflow_leaf_spot_gate',
-  'airflow_root_stress_gate',
-  'airflow_humidity_stress_gate',
-  'airflow_unknown_gate'
+DELETE FROM outcome_route_conditions
+WHERE condition_key IN (
+  'fertilization_confirmation_condition',
+  'airflow_confirmation_condition',
+  'low_fertilizer_iron_condition',
+  'low_fertilizer_nitrogen_condition',
+  'low_fertilizer_nutrient_condition',
+  'heavy_fertilizer_repot_condition',
+  'fertilization_unknown_condition',
+  'airflow_leaf_spot_condition',
+  'airflow_root_stress_condition',
+  'airflow_humidity_stress_condition',
+  'airflow_unknown_condition'
 );
 
-REPLACE INTO outcome_route_gates (
-  gate_key,
+REPLACE INTO outcome_route_conditions (
+  condition_key,
   route_key,
-  gate_role,
+  condition_role,
   required_evidence_json,
   required_answer_effects_json,
   blocker_evidence_json,
@@ -266,18 +266,18 @@ REPLACE INTO outcome_route_gates (
   on_unknown,
   decision_cause_key,
   decision_cause_text_cn,
-  gate_priority,
+  condition_priority,
   enabled,
   review_status,
   data_status
 ) VALUES
   (
-    'low_fertilizer_iron_gate',
+    'low_fertilizer_iron_condition',
     'yellowing_low_fertilizer_iron_route',
     'display',
     JSON_OBJECT('anySymptomKeys', JSON_ARRAY('yellow_new_leaves', 'interveinal_chlorosis')),
     JSON_OBJECT(
-      'questionOptionPairs', JSON_ARRAY('q_observed_probe__leaf_yellowing__yellowing_care_area_gate:fertilization_area', 'q_observed_probe__leaf_yellowing__fertilization_growth_context:low_or_no_fertilizer'),
+      'questionOptionPairs', JSON_ARRAY('q_observed_probe__leaf_yellowing__yellowing_care_area_condition:fertilization_area', 'q_observed_probe__leaf_yellowing__fertilization_growth_context:low_or_no_fertilizer'),
       'routeKeys', JSON_ARRAY('yellowing_low_fertilizer_iron_route')
     ),
     JSON_OBJECT(),
@@ -294,12 +294,12 @@ REPLACE INTO outcome_route_gates (
     'active'
   ),
   (
-    'low_fertilizer_nitrogen_gate',
+    'low_fertilizer_nitrogen_condition',
     'yellowing_low_fertilizer_nitrogen_route',
     'display',
     JSON_OBJECT('anySymptomKeys', JSON_ARRAY('uniform_yellowing', 'yellow_lower_leaves')),
     JSON_OBJECT(
-      'questionOptionPairs', JSON_ARRAY('q_observed_probe__leaf_yellowing__yellowing_care_area_gate:fertilization_area', 'q_observed_probe__leaf_yellowing__fertilization_growth_context:low_or_no_fertilizer'),
+      'questionOptionPairs', JSON_ARRAY('q_observed_probe__leaf_yellowing__yellowing_care_area_condition:fertilization_area', 'q_observed_probe__leaf_yellowing__fertilization_growth_context:low_or_no_fertilizer'),
       'routeKeys', JSON_ARRAY('yellowing_low_fertilizer_nitrogen_route')
     ),
     JSON_OBJECT(),
@@ -316,12 +316,12 @@ REPLACE INTO outcome_route_gates (
     'active'
   ),
   (
-    'low_fertilizer_nutrient_gate',
+    'low_fertilizer_nutrient_condition',
     'yellowing_low_fertilizer_nutrient_route',
     'display',
     JSON_OBJECT('anySymptomKeys', JSON_ARRAY('leaf_yellowing')),
     JSON_OBJECT(
-      'questionOptionPairs', JSON_ARRAY('q_observed_probe__leaf_yellowing__yellowing_care_area_gate:fertilization_area', 'q_observed_probe__leaf_yellowing__fertilization_growth_context:low_or_no_fertilizer'),
+      'questionOptionPairs', JSON_ARRAY('q_observed_probe__leaf_yellowing__yellowing_care_area_condition:fertilization_area', 'q_observed_probe__leaf_yellowing__fertilization_growth_context:low_or_no_fertilizer'),
       'routeKeys', JSON_ARRAY('yellowing_low_fertilizer_nutrient_route')
     ),
     JSON_OBJECT('anySymptomKeys', JSON_ARRAY('uniform_yellowing', 'yellow_lower_leaves', 'yellow_new_leaves', 'interveinal_chlorosis')),
@@ -338,12 +338,12 @@ REPLACE INTO outcome_route_gates (
     'active'
   ),
   (
-    'heavy_fertilizer_repot_gate',
+    'heavy_fertilizer_repot_condition',
     'yellowing_heavy_fertilizer_repot_route',
     'display',
     JSON_OBJECT('anySymptomKeys', JSON_ARRAY('leaf_yellowing', 'uniform_yellowing', 'yellow_lower_leaves', 'yellow_new_leaves', 'interveinal_chlorosis')),
     JSON_OBJECT(
-      'questionOptionPairs', JSON_ARRAY('q_observed_probe__leaf_yellowing__yellowing_care_area_gate:fertilization_area', 'q_observed_probe__leaf_yellowing__fertilization_growth_context:recent_heavy_fertilizer_or_repot'),
+      'questionOptionPairs', JSON_ARRAY('q_observed_probe__leaf_yellowing__yellowing_care_area_condition:fertilization_area', 'q_observed_probe__leaf_yellowing__fertilization_growth_context:recent_heavy_fertilizer_or_repot'),
       'routeKeys', JSON_ARRAY('yellowing_heavy_fertilizer_repot_route')
     ),
     JSON_OBJECT(),
@@ -360,12 +360,12 @@ REPLACE INTO outcome_route_gates (
     'active'
   ),
   (
-    'fertilization_unknown_gate',
+    'fertilization_unknown_condition',
     'yellowing_fertilization_unknown_route',
     'display',
     JSON_OBJECT('anySymptomKeys', JSON_ARRAY('leaf_yellowing', 'uniform_yellowing', 'yellow_lower_leaves', 'yellow_new_leaves', 'interveinal_chlorosis')),
     JSON_OBJECT(
-      'questionOptionPairs', JSON_ARRAY('q_observed_probe__leaf_yellowing__yellowing_care_area_gate:fertilization_area', 'q_observed_probe__leaf_yellowing__fertilization_growth_context:unknown'),
+      'questionOptionPairs', JSON_ARRAY('q_observed_probe__leaf_yellowing__yellowing_care_area_condition:fertilization_area', 'q_observed_probe__leaf_yellowing__fertilization_growth_context:unknown'),
       'routeKeys', JSON_ARRAY('yellowing_fertilization_unknown_route')
     ),
     JSON_OBJECT(),
@@ -382,7 +382,7 @@ REPLACE INTO outcome_route_gates (
     'active'
   ),
   (
-    'airflow_leaf_spot_gate',
+    'airflow_leaf_spot_condition',
     'yellowing_airflow_leaf_spot_route',
     'display',
     JSON_OBJECT(
@@ -390,7 +390,7 @@ REPLACE INTO outcome_route_gates (
       'anySymptomKeys', JSON_ARRAY('leaf_yellowing', 'uniform_yellowing', 'yellow_lower_leaves', 'yellow_new_leaves', 'interveinal_chlorosis')
     ),
     JSON_OBJECT(
-      'questionOptionPairs', JSON_ARRAY('q_observed_probe__leaf_yellowing__yellowing_care_area_gate:airflow_humidity_area', 'q_observed_probe__leaf_yellowing__yellowing_progression_speed:rapid_spreading'),
+      'questionOptionPairs', JSON_ARRAY('q_observed_probe__leaf_yellowing__yellowing_care_area_condition:airflow_humidity_area', 'q_observed_probe__leaf_yellowing__yellowing_progression_speed:rapid_spreading'),
       'routeKeys', JSON_ARRAY('yellowing_airflow_leaf_spot_route')
     ),
     JSON_OBJECT(),
@@ -407,12 +407,12 @@ REPLACE INTO outcome_route_gates (
     'active'
   ),
   (
-    'airflow_root_stress_gate',
+    'airflow_root_stress_condition',
     'yellowing_airflow_root_stress_route',
     'display',
     JSON_OBJECT('anySymptomKeys', JSON_ARRAY('leaf_yellowing', 'uniform_yellowing', 'yellow_lower_leaves', 'yellow_new_leaves', 'interveinal_chlorosis')),
     JSON_OBJECT(
-      'questionOptionPairs', JSON_ARRAY('q_observed_probe__leaf_yellowing__yellowing_care_area_gate:airflow_humidity_area', 'q_observed_probe__leaf_yellowing__yellowing_progression_speed:with_wilting_or_drop'),
+      'questionOptionPairs', JSON_ARRAY('q_observed_probe__leaf_yellowing__yellowing_care_area_condition:airflow_humidity_area', 'q_observed_probe__leaf_yellowing__yellowing_progression_speed:with_wilting_or_drop'),
       'routeKeys', JSON_ARRAY('yellowing_airflow_root_stress_route')
     ),
     JSON_OBJECT(),
@@ -429,12 +429,12 @@ REPLACE INTO outcome_route_gates (
     'active'
   ),
   (
-    'airflow_humidity_stress_gate',
+    'airflow_humidity_stress_condition',
     'yellowing_airflow_humidity_stress_route',
     'display',
     JSON_OBJECT('anySymptomKeys', JSON_ARRAY('leaf_yellowing', 'uniform_yellowing', 'yellow_lower_leaves', 'yellow_new_leaves', 'interveinal_chlorosis')),
     JSON_OBJECT(
-      'questionOptionPairs', JSON_ARRAY('q_observed_probe__leaf_yellowing__yellowing_care_area_gate:airflow_humidity_area', 'q_observed_probe__leaf_yellowing__yellowing_progression_speed:slow_stable'),
+      'questionOptionPairs', JSON_ARRAY('q_observed_probe__leaf_yellowing__yellowing_care_area_condition:airflow_humidity_area', 'q_observed_probe__leaf_yellowing__yellowing_progression_speed:slow_stable'),
       'routeKeys', JSON_ARRAY('yellowing_airflow_humidity_stress_route')
     ),
     JSON_OBJECT(),
@@ -451,12 +451,12 @@ REPLACE INTO outcome_route_gates (
     'active'
   ),
   (
-    'airflow_unknown_gate',
+    'airflow_unknown_condition',
     'yellowing_airflow_unknown_route',
     'display',
     JSON_OBJECT('anySymptomKeys', JSON_ARRAY('leaf_yellowing', 'uniform_yellowing', 'yellow_lower_leaves', 'yellow_new_leaves', 'interveinal_chlorosis')),
     JSON_OBJECT(
-      'questionOptionPairs', JSON_ARRAY('q_observed_probe__leaf_yellowing__yellowing_care_area_gate:airflow_humidity_area', 'q_observed_probe__leaf_yellowing__yellowing_progression_speed:unknown'),
+      'questionOptionPairs', JSON_ARRAY('q_observed_probe__leaf_yellowing__yellowing_care_area_condition:airflow_humidity_area', 'q_observed_probe__leaf_yellowing__yellowing_progression_speed:unknown'),
       'routeKeys', JSON_ARRAY('yellowing_airflow_unknown_route')
     ),
     JSON_OBJECT(),
@@ -492,8 +492,8 @@ REPLACE INTO outcome_route_questions (
   route_key,
   step_no,
   question_key,
-  gate_key,
-  question_role,
+  condition_key,
+  route_package_role,
   required_for_closure,
   ask_priority,
   skip_if_evidence_json,
@@ -502,28 +502,28 @@ REPLACE INTO outcome_route_questions (
   review_status,
   data_status
 ) VALUES
-  ('yellowing_low_fertilizer_iron_route', 1, 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate', 'low_fertilizer_iron_gate', 'critical_split', 1, 230, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
-  ('yellowing_low_fertilizer_iron_route', 2, 'q_observed_probe__leaf_yellowing__fertilization_growth_context', 'low_fertilizer_iron_gate', 'context_probe', 1, 228, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
-  ('yellowing_low_fertilizer_nitrogen_route', 1, 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate', 'low_fertilizer_nitrogen_gate', 'critical_split', 1, 230, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
-  ('yellowing_low_fertilizer_nitrogen_route', 2, 'q_observed_probe__leaf_yellowing__fertilization_growth_context', 'low_fertilizer_nitrogen_gate', 'context_probe', 1, 228, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
-  ('yellowing_low_fertilizer_nutrient_route', 1, 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate', 'low_fertilizer_nutrient_gate', 'critical_split', 1, 230, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
-  ('yellowing_low_fertilizer_nutrient_route', 2, 'q_observed_probe__leaf_yellowing__fertilization_growth_context', 'low_fertilizer_nutrient_gate', 'context_probe', 1, 228, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
-  ('yellowing_heavy_fertilizer_repot_route', 1, 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate', 'heavy_fertilizer_repot_gate', 'critical_split', 1, 230, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
-  ('yellowing_heavy_fertilizer_repot_route', 2, 'q_observed_probe__leaf_yellowing__fertilization_growth_context', 'heavy_fertilizer_repot_gate', 'context_probe', 1, 228, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
-  ('yellowing_fertilization_unknown_route', 1, 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate', 'fertilization_unknown_gate', 'critical_split', 1, 230, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
-  ('yellowing_fertilization_unknown_route', 2, 'q_observed_probe__leaf_yellowing__fertilization_growth_context', 'fertilization_unknown_gate', 'context_probe', 1, 228, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
-  ('yellowing_airflow_leaf_spot_route', 1, 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate', 'airflow_leaf_spot_gate', 'critical_split', 1, 220, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
-  ('yellowing_airflow_leaf_spot_route', 2, 'q_observed_probe__leaf_yellowing__yellowing_progression_speed', 'airflow_leaf_spot_gate', 'context_probe', 1, 218, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
-  ('yellowing_airflow_root_stress_route', 1, 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate', 'airflow_root_stress_gate', 'critical_split', 1, 220, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
-  ('yellowing_airflow_root_stress_route', 2, 'q_observed_probe__leaf_yellowing__yellowing_progression_speed', 'airflow_root_stress_gate', 'context_probe', 1, 218, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
-  ('yellowing_airflow_humidity_stress_route', 1, 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate', 'airflow_humidity_stress_gate', 'critical_split', 1, 220, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
-  ('yellowing_airflow_humidity_stress_route', 2, 'q_observed_probe__leaf_yellowing__yellowing_progression_speed', 'airflow_humidity_stress_gate', 'context_probe', 1, 218, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
-  ('yellowing_airflow_unknown_route', 1, 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate', 'airflow_unknown_gate', 'critical_split', 1, 220, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
-  ('yellowing_airflow_unknown_route', 2, 'q_observed_probe__leaf_yellowing__yellowing_progression_speed', 'airflow_unknown_gate', 'context_probe', 1, 218, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active');
+  ('yellowing_low_fertilizer_iron_route', 1, 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition', 'low_fertilizer_iron_condition', 'critical_split', 1, 230, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
+  ('yellowing_low_fertilizer_iron_route', 2, 'q_observed_probe__leaf_yellowing__fertilization_growth_context', 'low_fertilizer_iron_condition', 'context_probe', 1, 228, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
+  ('yellowing_low_fertilizer_nitrogen_route', 1, 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition', 'low_fertilizer_nitrogen_condition', 'critical_split', 1, 230, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
+  ('yellowing_low_fertilizer_nitrogen_route', 2, 'q_observed_probe__leaf_yellowing__fertilization_growth_context', 'low_fertilizer_nitrogen_condition', 'context_probe', 1, 228, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
+  ('yellowing_low_fertilizer_nutrient_route', 1, 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition', 'low_fertilizer_nutrient_condition', 'critical_split', 1, 230, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
+  ('yellowing_low_fertilizer_nutrient_route', 2, 'q_observed_probe__leaf_yellowing__fertilization_growth_context', 'low_fertilizer_nutrient_condition', 'context_probe', 1, 228, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
+  ('yellowing_heavy_fertilizer_repot_route', 1, 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition', 'heavy_fertilizer_repot_condition', 'critical_split', 1, 230, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
+  ('yellowing_heavy_fertilizer_repot_route', 2, 'q_observed_probe__leaf_yellowing__fertilization_growth_context', 'heavy_fertilizer_repot_condition', 'context_probe', 1, 228, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
+  ('yellowing_fertilization_unknown_route', 1, 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition', 'fertilization_unknown_condition', 'critical_split', 1, 230, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
+  ('yellowing_fertilization_unknown_route', 2, 'q_observed_probe__leaf_yellowing__fertilization_growth_context', 'fertilization_unknown_condition', 'context_probe', 1, 228, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
+  ('yellowing_airflow_leaf_spot_route', 1, 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition', 'airflow_leaf_spot_condition', 'critical_split', 1, 220, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
+  ('yellowing_airflow_leaf_spot_route', 2, 'q_observed_probe__leaf_yellowing__yellowing_progression_speed', 'airflow_leaf_spot_condition', 'context_probe', 1, 218, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
+  ('yellowing_airflow_root_stress_route', 1, 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition', 'airflow_root_stress_condition', 'critical_split', 1, 220, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
+  ('yellowing_airflow_root_stress_route', 2, 'q_observed_probe__leaf_yellowing__yellowing_progression_speed', 'airflow_root_stress_condition', 'context_probe', 1, 218, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
+  ('yellowing_airflow_humidity_stress_route', 1, 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition', 'airflow_humidity_stress_condition', 'critical_split', 1, 220, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
+  ('yellowing_airflow_humidity_stress_route', 2, 'q_observed_probe__leaf_yellowing__yellowing_progression_speed', 'airflow_humidity_stress_condition', 'context_probe', 1, 218, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
+  ('yellowing_airflow_unknown_route', 1, 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition', 'airflow_unknown_condition', 'critical_split', 1, 220, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active'),
+  ('yellowing_airflow_unknown_route', 2, 'q_observed_probe__leaf_yellowing__yellowing_progression_speed', 'airflow_unknown_condition', 'context_probe', 1, 218, JSON_OBJECT(), 'never_repeat', 1, 'audited', 'active');
 
 DELETE FROM outcome_answer_effects
 WHERE question_key IN (
-  'q_observed_probe__leaf_yellowing__yellowing_care_area_gate',
+  'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
   'q_observed_probe__leaf_yellowing__fertilization_growth_context',
   'q_observed_probe__leaf_yellowing__yellowing_progression_speed'
 ) AND route_key IN (
@@ -554,58 +554,58 @@ INSERT INTO outcome_answer_effects (
   review_status,
   data_status
 ) VALUES
-  ('q_observed_probe__leaf_yellowing__yellowing_care_area_gate', 'fertilization_area', 'iron_deficiency', 'yellowing_low_fertilizer_iron_route', 'support', 0.3500, '', 'fertilization_context', '施肥/换盆分流进入缺铁/新叶黄化判断。', 1, 'audited', 'active'),
-  ('q_observed_probe__leaf_yellowing__yellowing_care_area_gate', 'fertilization_area', 'nitrogen_deficiency', 'yellowing_low_fertilizer_nitrogen_route', 'support', 0.3500, '', 'fertilization_context', '施肥/换盆分流进入缺氮/老叶黄化判断。', 1, 'audited', 'active'),
-  ('q_observed_probe__leaf_yellowing__yellowing_care_area_gate', 'fertilization_area', 'nutrient_deficiency', 'yellowing_low_fertilizer_nutrient_route', 'support', 0.3500, '', 'fertilization_context', '施肥/换盆分流进入营养供给判断。', 1, 'audited', 'active'),
-  ('q_observed_probe__leaf_yellowing__yellowing_care_area_gate', 'fertilization_area', 'fertilizer_repot_stress', 'yellowing_heavy_fertilizer_repot_route', 'support', 0.3500, '', 'fertilization_context', '施肥/换盆分流进入重肥或换盆应激判断。', 1, 'audited', 'active'),
-  ('q_observed_probe__leaf_yellowing__yellowing_care_area_gate', 'fertilization_area', 'uncertain_observation', 'yellowing_fertilization_unknown_route', 'support', 0.2000, '', 'fertilization_context', '施肥背景不明确时保守观察。', 1, 'audited', 'active'),
+  ('q_observed_probe__leaf_yellowing__yellowing_care_area_condition', 'fertilization_area', 'iron_deficiency', 'yellowing_low_fertilizer_iron_route', 'support', 0.3500, '', 'fertilization_context', '施肥/换盆分流进入缺铁/新叶黄化判断。', 1, 'audited', 'active'),
+  ('q_observed_probe__leaf_yellowing__yellowing_care_area_condition', 'fertilization_area', 'nitrogen_deficiency', 'yellowing_low_fertilizer_nitrogen_route', 'support', 0.3500, '', 'fertilization_context', '施肥/换盆分流进入缺氮/老叶黄化判断。', 1, 'audited', 'active'),
+  ('q_observed_probe__leaf_yellowing__yellowing_care_area_condition', 'fertilization_area', 'nutrient_deficiency', 'yellowing_low_fertilizer_nutrient_route', 'support', 0.3500, '', 'fertilization_context', '施肥/换盆分流进入营养供给判断。', 1, 'audited', 'active'),
+  ('q_observed_probe__leaf_yellowing__yellowing_care_area_condition', 'fertilization_area', 'fertilizer_repot_stress', 'yellowing_heavy_fertilizer_repot_route', 'support', 0.3500, '', 'fertilization_context', '施肥/换盆分流进入重肥或换盆应激判断。', 1, 'audited', 'active'),
+  ('q_observed_probe__leaf_yellowing__yellowing_care_area_condition', 'fertilization_area', 'uncertain_observation', 'yellowing_fertilization_unknown_route', 'support', 0.2000, '', 'fertilization_context', '施肥背景不明确时保守观察。', 1, 'audited', 'active'),
   ('q_observed_probe__leaf_yellowing__fertilization_growth_context', 'low_or_no_fertilizer', 'iron_deficiency', 'yellowing_low_fertilizer_iron_route', 'support', 1.0000, '', 'fertilization_growth_context', '长期施肥不足叠加新叶/脉间黄化，支持缺铁/营养吸收方向。', 1, 'audited', 'active'),
   ('q_observed_probe__leaf_yellowing__fertilization_growth_context', 'low_or_no_fertilizer', 'nitrogen_deficiency', 'yellowing_low_fertilizer_nitrogen_route', 'support', 1.0000, '', 'fertilization_growth_context', '长期施肥不足叠加老叶/均匀黄化，支持缺氮方向。', 1, 'audited', 'active'),
   ('q_observed_probe__leaf_yellowing__fertilization_growth_context', 'low_or_no_fertilizer', 'nutrient_deficiency', 'yellowing_low_fertilizer_nutrient_route', 'support', 1.0000, '', 'fertilization_growth_context', '长期施肥不足，支持营养供给偏弱方向。', 1, 'audited', 'active'),
   ('q_observed_probe__leaf_yellowing__fertilization_growth_context', 'normal_light_fertilizer', 'nutrient_deficiency', 'yellowing_low_fertilizer_nutrient_route', 'weaken', 0.5000, '', 'fertilization_growth_context', '施肥接近常规范围，削弱营养不足路径。', 1, 'audited', 'active'),
   ('q_observed_probe__leaf_yellowing__fertilization_growth_context', 'recent_heavy_fertilizer_or_repot', 'fertilizer_repot_stress', 'yellowing_heavy_fertilizer_repot_route', 'support', 1.0000, '', 'fertilization_growth_context', '近期重肥、频繁施肥或换盆换土，支持施肥/换盆应激方向。', 1, 'audited', 'active'),
   ('q_observed_probe__leaf_yellowing__fertilization_growth_context', 'unknown', 'uncertain_observation', 'yellowing_fertilization_unknown_route', 'support', 0.5000, '', 'fertilization_growth_context', '施肥信息不明确，保留不确定输出。', 1, 'audited', 'active'),
-  ('q_observed_probe__leaf_yellowing__yellowing_care_area_gate', 'airflow_humidity_area', 'leaf_spot_problem', 'yellowing_airflow_leaf_spot_route', 'support', 0.3500, '', 'airflow_humidity_context', '通风/湿度分流进入叶斑扩散判断。', 1, 'audited', 'active'),
-  ('q_observed_probe__leaf_yellowing__yellowing_care_area_gate', 'airflow_humidity_area', 'root_stress', 'yellowing_airflow_root_stress_route', 'support', 0.3500, '', 'airflow_humidity_context', '通风/湿度分流进入根部环境压力判断。', 1, 'audited', 'active'),
-  ('q_observed_probe__leaf_yellowing__yellowing_care_area_gate', 'airflow_humidity_area', 'humidity_airflow_stress', 'yellowing_airflow_humidity_stress_route', 'support', 0.3500, '', 'airflow_humidity_context', '通风/湿度分流进入环境压力判断。', 1, 'audited', 'active'),
-  ('q_observed_probe__leaf_yellowing__yellowing_care_area_gate', 'airflow_humidity_area', 'uncertain_observation', 'yellowing_airflow_unknown_route', 'support', 0.2000, '', 'airflow_humidity_context', '通风/湿度背景不明确时保守观察。', 1, 'audited', 'active'),
+  ('q_observed_probe__leaf_yellowing__yellowing_care_area_condition', 'airflow_humidity_area', 'leaf_spot_problem', 'yellowing_airflow_leaf_spot_route', 'support', 0.3500, '', 'airflow_humidity_context', '通风/湿度分流进入叶斑扩散判断。', 1, 'audited', 'active'),
+  ('q_observed_probe__leaf_yellowing__yellowing_care_area_condition', 'airflow_humidity_area', 'root_stress', 'yellowing_airflow_root_stress_route', 'support', 0.3500, '', 'airflow_humidity_context', '通风/湿度分流进入根部环境压力判断。', 1, 'audited', 'active'),
+  ('q_observed_probe__leaf_yellowing__yellowing_care_area_condition', 'airflow_humidity_area', 'humidity_airflow_stress', 'yellowing_airflow_humidity_stress_route', 'support', 0.3500, '', 'airflow_humidity_context', '通风/湿度分流进入环境压力判断。', 1, 'audited', 'active'),
+  ('q_observed_probe__leaf_yellowing__yellowing_care_area_condition', 'airflow_humidity_area', 'uncertain_observation', 'yellowing_airflow_unknown_route', 'support', 0.2000, '', 'airflow_humidity_context', '通风/湿度背景不明确时保守观察。', 1, 'audited', 'active'),
   ('q_observed_probe__leaf_yellowing__yellowing_progression_speed', 'rapid_spreading', 'leaf_spot_problem', 'yellowing_airflow_leaf_spot_route', 'support', 1.0000, '', 'yellowing_progression_speed', '黄叶快速扩散，支持叶斑类或潮湿扩散方向。', 1, 'audited', 'active'),
   ('q_observed_probe__leaf_yellowing__yellowing_progression_speed', 'slow_stable', 'humidity_airflow_stress', 'yellowing_airflow_humidity_stress_route', 'support', 1.0000, '', 'yellowing_progression_speed', '黄叶变化缓慢，支持通风/湿度环境压力方向。', 1, 'audited', 'active'),
   ('q_observed_probe__leaf_yellowing__yellowing_progression_speed', 'with_wilting_or_drop', 'root_stress', 'yellowing_airflow_root_stress_route', 'support', 1.0000, '', 'yellowing_progression_speed', '伴随萎蔫或掉叶，支持根部环境压力方向。', 1, 'audited', 'active'),
   ('q_observed_probe__leaf_yellowing__yellowing_progression_speed', 'unknown', 'uncertain_observation', 'yellowing_airflow_unknown_route', 'support', 0.5000, '', 'yellowing_progression_speed', '进展未明确，保留不确定输出。', 1, 'audited', 'active');
 
-UPDATE outcome_route_gates
+UPDATE outcome_route_conditions
 SET blocker_evidence_json = CASE route_key
   WHEN 'yellowing_wet_soil_route' THEN JSON_OBJECT('anyQuestionOptionPairs', JSON_ARRAY(
     'q_observed_probe__leaf_yellowing__watering_frequency_context:often_dry',
-    'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:light_area',
-    'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:fertilization_area',
-    'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:airflow_humidity_area'
+    'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:light_area',
+    'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:fertilization_area',
+    'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:airflow_humidity_area'
   ))
   WHEN 'yellowing_dry_soil_route' THEN JSON_OBJECT('anyQuestionOptionPairs', JSON_ARRAY(
     'q_observed_probe__leaf_yellowing__watering_frequency_context:often_wet',
-    'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:light_area',
-    'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:fertilization_area',
-    'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:airflow_humidity_area'
+    'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:light_area',
+    'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:fertilization_area',
+    'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:airflow_humidity_area'
   ))
   WHEN 'yellowing_low_light_route' THEN JSON_OBJECT('anyQuestionOptionPairs', JSON_ARRAY(
     'q_observed_probe__leaf_yellowing__light_change_context:stronger_direct_light',
-    'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:watering_area',
-    'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:fertilization_area',
-    'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:airflow_humidity_area'
+    'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:watering_area',
+    'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:fertilization_area',
+    'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:airflow_humidity_area'
   ))
   WHEN 'yellowing_sunburn_route' THEN JSON_OBJECT('anyQuestionOptionPairs', JSON_ARRAY(
     'q_observed_probe__leaf_yellowing__light_change_context:weaker_light',
-    'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:watering_area',
-    'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:fertilization_area',
-    'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:airflow_humidity_area'
+    'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:watering_area',
+    'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:fertilization_area',
+    'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:airflow_humidity_area'
   ))
   WHEN 'yellowing_old_leaf_route' THEN JSON_OBJECT('anyQuestionOptionPairs', JSON_ARRAY(
     'q_observed_probe__leaf_yellowing__yellowing_leaf_age_pattern:new_leaves_first',
-    'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:watering_area',
-    'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:light_area',
-    'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:fertilization_area',
-    'q_observed_probe__leaf_yellowing__yellowing_care_area_gate:airflow_humidity_area'
+    'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:watering_area',
+    'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:light_area',
+    'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:fertilization_area',
+    'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:airflow_humidity_area'
   ))
   ELSE blocker_evidence_json
 END

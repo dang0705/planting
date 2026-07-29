@@ -10,35 +10,147 @@ const {
   buildPublicShadowCompareSummary,
   buildPublicVisualAggregateSummary
 } = require('../utils/public-runtime-summary')
-const {
-  normalizePublicDerivedEvidenceSet
-} = require('../utils/derived-evidence')
-const {
-  normalizePublicDiagnosisDirectionSet
-} = require('../utils/diagnosis-directions')
+const { normalizePublicDerivedEvidenceSet } = require('../utils/derived-evidence')
+const { normalizePublicDiagnosisDirectionSet } = require('../utils/diagnosis-directions')
 const {
   resolveStoredSymptomCn,
   normalizePublicObservedEvidenceSet,
   normalizePublicSymptomClassRuntime
 } = require('./session-runtime-normalizers')
+const { compactClientContextForSnapshot } = require('./session-runtime-client-context')
+
+const SNAPSHOT_CARE_DAILY_RECORD_LIMIT = 25
+const SNAPSHOT_HISTORICAL_DAYS_LIMIT = 10
+const SNAPSHOT_FORECAST_DAYS_LIMIT = 15
 
 function resolvePrivateSymptomClassRuntime(response = {}) {
   return normalizePublicSymptomClassRuntime(
-    response?.__symptomClassRuntime ||
-      response?.symptomClassRuntime ||
-      null
+    response?.__symptomClassRuntime || response?.symptomClassRuntime || null
   )
+}
+
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function compactCareBehaviorTimelineForSnapshot(value = null) {
+  if (!isPlainObject(value)) {
+    return null
+  }
+
+  const dailyRecords = Array.isArray(value.dailyRecords)
+    ? value.dailyRecords.slice(0, SNAPSHOT_CARE_DAILY_RECORD_LIMIT)
+    : Array.isArray(value.daily_records)
+      ? value.daily_records.slice(0, SNAPSHOT_CARE_DAILY_RECORD_LIMIT)
+      : []
+
+  return {
+    ...value,
+    dailyRecords,
+    daily_records: dailyRecords
+  }
+}
+
+function normalizeSnapshotNumber(value) {
+  if (value === null || value === undefined || value === '') {
+    return null
+  }
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) ? numberValue : null
+}
+
+function compactPlantContextForSnapshot(plantContext = null) {
+  if (!isPlainObject(plantContext)) {
+    return null
+  }
+
+  return {
+    userPlantId: plantContext?.userPlantId || null,
+    plantId: plantContext?.plantId || null,
+    plantDisplayName: plantContext?.plantDisplayName || '',
+    plantIdentityId: plantContext?.plantIdentityId || null,
+    identityResolutionStatus: plantContext?.identityResolutionStatus || '',
+    latestVisualCallBatchId: plantContext?.latestVisualCallBatchId || '',
+    genus: plantContext?.genus || '',
+    family: plantContext?.family || '',
+    category: plantContext?.category || '',
+    watering: plantContext?.watering || null,
+    fertilization: plantContext?.fertilization || null,
+    sunning: plantContext?.sunning || null,
+    ventilation: plantContext?.ventilation || null,
+    temperatureMin: normalizeSnapshotNumber(plantContext?.temperatureMin),
+    temperatureMax: normalizeSnapshotNumber(plantContext?.temperatureMax),
+    humidityMin: normalizeSnapshotNumber(plantContext?.humidityMin),
+    humidityMax: normalizeSnapshotNumber(plantContext?.humidityMax),
+    uvIndexMax: normalizeSnapshotNumber(plantContext?.uvIndexMax),
+    careAuditStatus: plantContext?.careAuditStatus || '',
+    varianceLevel: plantContext?.varianceLevel || ''
+  }
+}
+
+function compactEnvironmentWeatherWindowForSnapshot(value = null) {
+  if (!isPlainObject(value)) {
+    return null
+  }
+
+  const historicalDays = Array.isArray(value.historicalDays)
+    ? value.historicalDays.slice(0, SNAPSHOT_HISTORICAL_DAYS_LIMIT)
+    : Array.isArray(value.historical_days)
+      ? value.historical_days.slice(0, SNAPSHOT_HISTORICAL_DAYS_LIMIT)
+      : []
+  const forecastDays = Array.isArray(value.forecastDays)
+    ? value.forecastDays.slice(0, SNAPSHOT_FORECAST_DAYS_LIMIT)
+    : Array.isArray(value.forecast_days)
+      ? value.forecast_days.slice(0, SNAPSHOT_FORECAST_DAYS_LIMIT)
+      : []
+
+  return {
+    ...value,
+    historicalDays,
+    historical_days: historicalDays,
+    forecastDays,
+    forecast_days: forecastDays
+  }
+}
+
+function compactEnvironmentCareContextForSnapshot(value = null) {
+  if (!isPlainObject(value)) {
+    return null
+  }
+
+  return {
+    version: String(value.version || '').trim() || 'v7',
+    outputs: isPlainObject(value.outputs) ? value.outputs : null,
+    behaviorSummary10d: isPlainObject(value.behaviorSummary10d) ? value.behaviorSummary10d : null,
+    historicalSummary10d: isPlainObject(value.historicalSummary10d)
+      ? value.historicalSummary10d
+      : null,
+    forecastSummary15d: isPlainObject(value.forecastSummary15d) ? value.forecastSummary15d : null,
+    thresholds: isPlainObject(value.thresholds) ? value.thresholds : null,
+    watering: isPlainObject(value.watering) ? value.watering : null,
+    fertilizing: isPlainObject(value.fertilizing) ? value.fertilizing : null,
+    light: isPlainObject(value.light) ? value.light : null,
+    calculationTrace: isPlainObject(value.calculationTrace) ? value.calculationTrace : null,
+    environmentWeatherWindow: compactEnvironmentWeatherWindowForSnapshot(
+      value.environmentWeatherWindow || value.environment_weather_window || null
+    ),
+    careBehaviorTimeline: compactCareBehaviorTimelineForSnapshot(
+      value.careBehaviorTimeline || value.care_behavior_timeline || null
+    )
+  }
 }
 
 function buildSnapshotPayload({
   sessionId,
   plantContext,
   response,
-  followUps = [],
+  questions = [],
   clientContext = null
 } = {}) {
   const explanation = response?.explanation || response?.resultExplanation || {}
-  const observedSymptoms = (Array.isArray(response?.observedSymptoms) ? response.observedSymptoms : [])
+  const observedSymptoms = (
+    Array.isArray(response?.observedSymptoms) ? response.observedSymptoms : []
+  )
     .map(item => ({
       symptomKey: String(item?.symptomKey || '').trim(),
       symptomCn: resolveStoredSymptomCn(item, String(item?.symptomKey || '').trim()),
@@ -46,9 +158,13 @@ function buildSnapshotPayload({
       source: String(item?.source || item?.evidenceSource || '').trim()
     }))
     .filter(item => item.symptomKey)
-  const observedEvidenceSet = normalizePublicObservedEvidenceSet(response?.observedEvidenceSet || [])
+  const observedEvidenceSet = normalizePublicObservedEvidenceSet(
+    response?.observedEvidenceSet || []
+  )
   const derivedEvidenceSet = normalizePublicDerivedEvidenceSet(response?.derivedEvidenceSet || [])
-  const diagnosisDirections = normalizePublicDiagnosisDirectionSet(response?.diagnosisDirections || [])
+  const diagnosisDirections = normalizePublicDiagnosisDirectionSet(
+    response?.diagnosisDirections || []
+  )
   const symptomClassRuntime = resolvePrivateSymptomClassRuntime(response)
   const visualAggregateSummary = buildPublicVisualAggregateSummary(
     response?.visualAggregateSummary || response?.visualAggregateResult || null
@@ -62,35 +178,31 @@ function buildSnapshotPayload({
     ''
   )
   const normalizedOutcomeType = normalizeOutcomeType(response?.outcomeType, '')
+  const careBehaviorTimeline = compactCareBehaviorTimelineForSnapshot(
+    response?.careBehaviorTimeline || null
+  )
+  const environmentCareContext = compactEnvironmentCareContextForSnapshot(
+    response?.environmentCareContext || null
+  )
 
   return {
     diagnosisSessionId: sessionId,
-    plantContext: {
-      userPlantId: plantContext?.userPlantId || null,
-      plantId: plantContext?.plantId || null,
-      plantIdentityId: plantContext?.plantIdentityId || null,
-      genus: plantContext?.genus || '',
-      family: plantContext?.family || '',
-      category: plantContext?.category || '',
-      watering: plantContext?.watering || null,
-      fertilization: plantContext?.fertilization || null,
-      sunning: plantContext?.sunning || null,
-      ventilation: plantContext?.ventilation || null,
-      careAuditStatus: plantContext?.careAuditStatus || '',
-      varianceLevel: plantContext?.varianceLevel || ''
-    },
-    clientContext: clientContext && typeof clientContext === 'object'
-      ? {
-          source: String(clientContext?.source || '').trim(),
-          platform: String(clientContext?.platform || '').trim(),
-          reviewSourceType: String(clientContext?.reviewSourceType || '').trim(),
-          visualInputVersion: String(clientContext?.visualInputVersion || '').trim(),
-          structuredImageCount: Number(clientContext?.structuredImageCount || 0),
-          auditLabel: String(clientContext?.auditLabel || '').trim(),
-          auditFileName: String(clientContext?.auditFileName || '').trim(),
-          auditCaseKey: String(clientContext?.auditCaseKey || '').trim()
-        }
-      : null,
+    plantContext: compactPlantContextForSnapshot(plantContext),
+    clientContext:
+      clientContext && typeof clientContext === 'object'
+        ? {
+            source: String(clientContext?.source || '').trim(),
+            platform: String(clientContext?.platform || '').trim(),
+            reviewSourceType: String(clientContext?.reviewSourceType || '').trim(),
+            visualInputVersion: String(clientContext?.visualInputVersion || '').trim(),
+            structuredImageCount: Number(clientContext?.structuredImageCount || 0),
+            auditLabel: String(clientContext?.auditLabel || '').trim(),
+            auditFileName: String(clientContext?.auditFileName || '').trim(),
+            auditCaseKey: String(clientContext?.auditCaseKey || '').trim(),
+            diagnosisProfile: String(clientContext?.diagnosisProfile || '').trim(),
+            entrySource: String(clientContext?.entrySource || '').trim()
+          }
+        : null,
     reviewSourceType:
       clientContext && typeof clientContext === 'object'
         ? String(clientContext?.reviewSourceType || '').trim()
@@ -108,7 +220,6 @@ function buildSnapshotPayload({
     visualBatchTrace: response?.visualBatchTrace || null,
     visualAggregateSummary,
     shadowCompareSummary,
-    questionQueue: response?.questionQueue || null,
     stopState: response?.stopState || null,
     outputEligibility: response?.outputEligibility || null,
     diagnosticTrace: Array.isArray(response?.diagnosticTrace) ? response.diagnosticTrace : [],
@@ -118,12 +229,18 @@ function buildSnapshotPayload({
     diagnosisDirections,
     symptomClassRuntime,
     careBaselineSummary: response?.careBaselineSummary || null,
+    careBehaviorTimeline,
+    environmentCareContext,
     environmentDeviationHints: Array.isArray(response?.environmentDeviationHints)
       ? response.environmentDeviationHints
       : [],
     finalResult: response?.finalResult || null,
-    contributingFactors: Array.isArray(response?.contributingFactors) ? response.contributingFactors : [],
-    intermediateStates: Array.isArray(response?.intermediateStates) ? response.intermediateStates : [],
+    contributingFactors: Array.isArray(response?.contributingFactors)
+      ? response.contributingFactors
+      : [],
+    intermediateStates: Array.isArray(response?.intermediateStates)
+      ? response.intermediateStates
+      : [],
     explanation: {
       whyItHappens: explanation?.whyItHappens || '',
       whatToCheckNext: explanation?.whatToCheckNext || '',
@@ -135,13 +252,13 @@ function buildSnapshotPayload({
     needHumanReview: Boolean(response?.needHumanReview),
     nextSteps: Array.isArray(response?.nextSteps) ? response.nextSteps : [],
     whatToAvoid: Array.isArray(response?.whatToAvoid) ? response.whatToAvoid : [],
-    askedQuestions: (followUps || []).map(item => ({
+    askedQuestions: (questions || []).map(item => ({
       questionOrder: Number(item?.questionOrder || 0),
       text: item?.questionText || '',
       answerValue: item?.answerValue || '',
       status: item?.status || 'pending'
     })),
-    chosenAnswers: (followUps || [])
+    chosenAnswers: (questions || [])
       .filter(item => String(item?.answerValue || '').trim())
       .map(item => ({
         questionOrder: Number(item?.questionOrder || 0),
@@ -164,7 +281,7 @@ function resolveSessionRoute(response = {}) {
   if (response?.routePrimaryAction) {
     return normalizeDiagnosisRoutePrimaryAction(response.routePrimaryAction, 'ask_first')
   }
-  if (response?.followUpRequired) {
+  if (response?.questionRequired) {
     return 'ask_first'
   }
   if (normalizeOutcomeType(response?.outcomeType, '') === 'uncertain') {
@@ -177,12 +294,14 @@ function resolveSessionStatus(response = {}) {
   if (response?.sessionStatus) {
     return response.sessionStatus
   }
-  return response?.followUpRequired ? 'awaiting_follow_up' : 'completed'
+  return response?.questionRequired ? 'awaiting_follow_up' : 'completed'
 }
 
 function buildOutcomePayload(response = {}) {
   const normalizedOutcomeType = normalizeOutcomeType(response?.outcomeType, '')
-  if (!normalizedOutcomeType) {return null}
+  if (!normalizedOutcomeType) {
+    return null
+  }
 
   return JSON.stringify({
     outcomeType: normalizedOutcomeType,
@@ -191,46 +310,48 @@ function buildOutcomePayload(response = {}) {
     finalResult: response.finalResult || null,
     topProblem: response.topProblem || null,
     confidenceLevel: response.confidenceLevel || 'normal',
-    confidenceReasons: Array.isArray(response.confidenceReasons)
-      ? response.confidenceReasons
-      : [],
+    confidenceReasons: Array.isArray(response.confidenceReasons) ? response.confidenceReasons : [],
     needHumanReview: Boolean(response.needHumanReview)
   })
 }
 
 function normalizeRuntimeStringList(items = []) {
-  return (Array.isArray(items) ? items : [])
-    .map(item => String(item || '').trim())
-    .filter(Boolean)
+  return (Array.isArray(items) ? items : []).map(item => String(item || '').trim()).filter(Boolean)
 }
 
 function buildCompactRouteDecision(routeDecision = null) {
-  if (!routeDecision || typeof routeDecision !== 'object') {return null}
-  const decisionCause = routeDecision.decisionCause && typeof routeDecision.decisionCause === 'object'
-    ? {
-        decisionCauseKey: String(routeDecision.decisionCause.decisionCauseKey || '').trim(),
-        decisionCauseText: String(routeDecision.decisionCause.decisionCauseText || '').trim(),
-        decisionCauseCategory: String(routeDecision.decisionCause.decisionCauseCategory || '').trim()
-      }
-    : null
+  if (!routeDecision || typeof routeDecision !== 'object') {
+    return null
+  }
+  const decisionCause =
+    routeDecision.decisionCause && typeof routeDecision.decisionCause === 'object'
+      ? {
+          decisionCauseKey: String(routeDecision.decisionCause.decisionCauseKey || '').trim(),
+          decisionCauseText: String(routeDecision.decisionCause.decisionCauseText || '').trim(),
+          decisionCauseCategory: String(
+            routeDecision.decisionCause.decisionCauseCategory || ''
+          ).trim()
+        }
+      : null
   return {
     stopReason: String(routeDecision.stopReason || '').trim(),
     activeRouteGroupKeys: normalizeRuntimeStringList(routeDecision.activeRouteGroupKeys),
     visibleOutcomeKeys: normalizeRuntimeStringList(routeDecision.visibleOutcomeKeys),
-    nextQuestionKeys: normalizeRuntimeStringList(routeDecision.nextQuestionKeys),
-    visibleActionConflictGroups: normalizeRuntimeStringList(routeDecision.visibleActionConflictGroups),
+    visibleActionConflictGroups: normalizeRuntimeStringList(
+      routeDecision.visibleActionConflictGroups
+    ),
     visibleActionProfileKeys: normalizeRuntimeStringList(routeDecision.visibleActionProfileKeys),
-    requiresFollowUp: Boolean(routeDecision.requiresFollowUp),
+    requiresQuestion: Boolean(routeDecision.requiresQuestion),
     ...(decisionCause ? { decisionCause } : {}),
     candidateOutcomeStates: (Array.isArray(routeDecision.candidateOutcomeStates)
       ? routeDecision.candidateOutcomeStates
-      : [])
+      : []
+    )
       .map(state => ({
         outcomeKey: String(state?.outcomeKey || '').trim(),
         state: String(state?.state || '').trim(),
         routeKeys: normalizeRuntimeStringList(state?.routeKeys),
-        missingGateKeys: normalizeRuntimeStringList(state?.missingGateKeys),
-        nextQuestionKeys: normalizeRuntimeStringList(state?.nextQuestionKeys)
+        missingConditionKeys: normalizeRuntimeStringList(state?.missingConditionKeys)
       }))
       .filter(state => state.outcomeKey || state.state)
   }
@@ -254,7 +375,9 @@ function buildRuntimeSnapshotPayload({
     visualAggregateSummary?.shadowCompareSummary ||
     null
   const derivedEvidenceSet = normalizePublicDerivedEvidenceSet(response?.derivedEvidenceSet || [])
-  const diagnosisDirections = normalizePublicDiagnosisDirectionSet(response?.diagnosisDirections || [])
+  const diagnosisDirections = normalizePublicDiagnosisDirectionSet(
+    response?.diagnosisDirections || []
+  )
   const symptomClassRuntime = resolvePrivateSymptomClassRuntime(response)
   const runtimeRouteDecision =
     response?.__runtimeRouteDecision && typeof response.__runtimeRouteDecision === 'object'
@@ -266,39 +389,22 @@ function buildRuntimeSnapshotPayload({
         ? response.metrics.routeDecision
         : null)
   )
-  const isFollowUpRuntimeSnapshot = Boolean(response?.followUpRequired)
+  const isQuestionPackageSnapshot = Boolean(response?.questionPackageSnapshot)
+  const isQuestionRuntimeSnapshot =
+    Boolean(response?.questionRequired) && !isQuestionPackageSnapshot
+  const careBehaviorTimeline = compactCareBehaviorTimelineForSnapshot(
+    response?.careBehaviorTimeline || null
+  )
+  const environmentCareContext = compactEnvironmentCareContextForSnapshot(
+    response?.environmentCareContext || null
+  )
 
   return JSON.stringify({
     diagnosisSessionId: sessionId,
     roundId: response?.roundId || `round_${round}`,
     roundIndex: Number(round || 1),
-    plantContext: {
-      userPlantId: plantContext?.userPlantId || null,
-      plantId: plantContext?.plantId || null,
-      plantIdentityId: plantContext?.plantIdentityId || null,
-      genus: plantContext?.genus || '',
-      family: plantContext?.family || '',
-      category: plantContext?.category || '',
-      watering: plantContext?.watering || null,
-      fertilization: plantContext?.fertilization || null,
-      sunning: plantContext?.sunning || null,
-      ventilation: plantContext?.ventilation || null,
-      careAuditStatus: plantContext?.careAuditStatus || '',
-      varianceLevel: plantContext?.varianceLevel || ''
-    },
-    clientContext:
-      clientContext && typeof clientContext === 'object'
-        ? {
-            source: String(clientContext?.source || '').trim(),
-            platform: String(clientContext?.platform || '').trim(),
-            reviewSourceType: String(clientContext?.reviewSourceType || '').trim(),
-            visualInputVersion: String(clientContext?.visualInputVersion || '').trim(),
-            structuredImageCount: Number(clientContext?.structuredImageCount || 0),
-            auditLabel: String(clientContext?.auditLabel || '').trim(),
-            auditFileName: String(clientContext?.auditFileName || '').trim(),
-            auditCaseKey: String(clientContext?.auditCaseKey || '').trim()
-          }
-        : null,
+    plantContext: compactPlantContextForSnapshot(plantContext),
+    clientContext: compactClientContextForSnapshot(clientContext),
     reviewSourceType:
       clientContext && typeof clientContext === 'object'
         ? String(clientContext?.reviewSourceType || '').trim()
@@ -309,7 +415,9 @@ function buildRuntimeSnapshotPayload({
       response?.uiPatch && typeof response.uiPatch === 'object'
         ? {
             keepUntilQuestionId: String(response.uiPatch.keepUntilQuestionId || '').trim(),
-            invalidatedFromQuestionId: String(response.uiPatch.invalidatedFromQuestionId || '').trim()
+            invalidatedFromQuestionId: String(
+              response.uiPatch.invalidatedFromQuestionId || ''
+            ).trim()
           }
         : null,
     identityResolutionStatus: resolveSessionIdentityStatus({ plantContext, response }),
@@ -326,24 +434,47 @@ function buildRuntimeSnapshotPayload({
       : 0,
     observedEvidenceSet,
     observedEvidenceSetCount: observedEvidenceSet.length,
-    derivedEvidenceSet: isFollowUpRuntimeSnapshot ? [] : derivedEvidenceSet,
-    diagnosisDirections: isFollowUpRuntimeSnapshot ? [] : diagnosisDirections,
+    derivedEvidenceSet: isQuestionRuntimeSnapshot ? [] : derivedEvidenceSet,
+    diagnosisDirections: isQuestionRuntimeSnapshot ? [] : diagnosisDirections,
     symptomClassRuntime,
-    followUpCount: Array.isArray(response?.followUps) ? response.followUps.length : 0,
-    questionQueue: response?.questionQueue || null,
+    ...(isQuestionPackageSnapshot
+      ? {
+          packageQuestionCount: Array.isArray(response?.questionPackageSnapshot?.packageQuestions)
+            ? response.questionPackageSnapshot.packageQuestions.length
+            : 0
+        }
+      : {
+          questionCount: Array.isArray(response?.questions) ? response.questions.length : 0
+        }),
+    questionPackageSnapshot: response?.questionPackageSnapshot || null,
     stopState: response?.stopState || null,
     outputEligibility: response?.outputEligibility || null,
-    diagnosticTrace: isFollowUpRuntimeSnapshot
+    diagnosticTrace: isQuestionRuntimeSnapshot
       ? []
-      : (Array.isArray(response?.diagnosticTrace) ? response.diagnosticTrace : []),
-    careBaselineSummary: isFollowUpRuntimeSnapshot ? null : (response?.careBaselineSummary || null),
+      : Array.isArray(response?.diagnosticTrace)
+        ? response.diagnosticTrace
+        : [],
+    careBaselineSummary: isQuestionRuntimeSnapshot ? null : response?.careBaselineSummary || null,
+    careBehaviorTimeline,
+    environmentCareContext,
     environmentDeviationHints: Array.isArray(response?.environmentDeviationHints)
       ? response.environmentDeviationHints
       : [],
     confidenceLevel: response?.confidenceLevel || 'normal',
-    confidenceReasons: Array.isArray(response?.confidenceReasons)
-      ? response.confidenceReasons
-      : [],
+    confidenceReasons: Array.isArray(response?.confidenceReasons) ? response.confidenceReasons : [],
+    retakeRequest:
+      response?.retakeRequest && typeof response.retakeRequest === 'object'
+        ? response.retakeRequest
+        : null,
+    retakeAuthorizationState:
+      response?.retakeAuthorizationState && typeof response.retakeAuthorizationState === 'object'
+        ? response.retakeAuthorizationState
+        : null,
+    directionChoices: Array.isArray(response?.directionChoices) ? response.directionChoices : [],
+    pendingDirectPestSnapshot:
+      response?.pendingDirectPestSnapshot && typeof response.pendingDirectPestSnapshot === 'object'
+        ? response.pendingDirectPestSnapshot
+        : null,
     routeDecision: compactRouteDecision,
     metrics: null
   })

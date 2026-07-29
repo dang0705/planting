@@ -1,0 +1,111 @@
+{
+  "dispatch_run_id": "example-web-runtime-001",
+  "implementation_mode": "external_implementer",
+  "dispatch_tier": "external_implementer",
+  "task": {
+    "objective": "通过 Web external implementer 修改浇水建议页面，并要求端上 automator 验收",
+    "code_changes_required": true,
+    "ui_task": false,
+    "risk": "standard",
+    "qa_required": true
+  },
+  "target_role": "external_implementer",
+  "spawn_contract": {
+    "qa_agent_type": null,
+    "context_mode": "isolated",
+    "generic_fallback_forbidden": true,
+    "identity_receipt_required": true
+  },
+  "external_contract": {
+    "provider": "trae",
+    "target_session": "browser_session",
+    "prompt_transport": "browser_plugin",
+    "codex_runtime_surface": "codex_desktop",
+    "web_provider_open_surface": "builtin_in_app_browser",
+    "send_receipt_required": true,
+    "completion_claim_not_authoritative": true,
+    "codex_self_implementation_forbidden": true,
+    "generic_fallback_forbidden": true,
+    "recovery_required": true,
+    "handoff_manual_required": true,
+    "handoff_completion_status_source": "handoff_manual",
+    "pr_policy": "required",
+    "required_prompt_sections": [
+      "implementation_contract",
+      "allowed_forbidden_paths",
+      "project_constraints",
+      "handoff_manual_contract",
+      "validation_commands",
+      "result_json_contract"
+    ],
+    "remote_sync": {
+      "required": true,
+      "status": "pushed",
+      "remote": "origin",
+      "branch": "trae-test-example-web-runtime-001",
+      "base_commit": "30bf056d12ddfe59eff57c4ebe1b9b36949e33dd",
+      "push_ref": "origin/trae-test-example-web-runtime-001",
+      "planned_worktree_path": "/tmp/planting-pr-example-web-runtime-001",
+      "pr_url": "not_available",
+      "dirty_policy": "blocked_if_unowned_dirty"
+    }
+  },
+  "handoff_manual": {
+    "required": true,
+    "path": ".tmp/dispatch-task/example-web-runtime-001-handoff-manual.json",
+    "status_field": "status",
+    "working_status": "working",
+    "terminal_statuses": ["completed", "blocked"],
+    "main_completion_probe": "read_json_before_ui"
+  },
+  "allowed_paths": ["src/pages/watering-advisor/**", "cloudfunctions/layer/utils/transpiration.js"],
+  "forbidden_paths": ["package.json", "package-lock.json", "scripts/**"],
+  "acceptance": [
+    "完成小程序端上 miniprogram-automator 验收",
+    "小程序运行时 wx.request 命中新代码",
+    "只修改 allowed_paths 内文件"
+  ],
+  "project_constraints": {
+    "rule_refs": ["AGENTS.md#QA行为约束", "AGENTS.md#全局行为硬规则"],
+    "dependency_policy": "no_new_dependencies",
+    "test_commands": ["npm run dev:mp-weixin:local-functions:lan", "npm run test:e2e"]
+  },
+  "decision_lock": {
+    "level": "standard",
+    "architecture_invariants": ["不修改数据库 schema", "不修改 CloudBase 权限模型"],
+    "local_decisions_allowed": ["局部实现细节", "允许的文件内重构"]
+  },
+  "brv_relevance": {
+    "required": false,
+    "reason": "external runtime example; no BRV content required"
+  },
+  "figma": {
+    "required": false,
+    "link": "",
+    "mode": "external_prompt_recovery"
+  },
+  "feature_test_plan": {
+    "required": true,
+    "targets": ["src/pages/watering-advisor/**", "cloudfunctions/layer/utils/transpiration.js"],
+    "commands": ["npm run test:e2e"]
+  },
+  "e2e_plan": {
+    "required": true,
+    "automator_required": true,
+    "catalog_required": true,
+    "catalog_candidates": ["care.watering.transpiration_v3.independent_advice"]
+  },
+  "validation": {
+    "miniprogram_automator_required": true,
+    "runtime_acceptance_mode": "automator_required",
+    "allow_head_change": true,
+    "head_change_reason": "web_external_remote_sync",
+    "worktree_baseline_path": ".tmp/dispatch-task/example-web-runtime-001-worktree-baseline.json",
+    "external": ["remote sync", "recovery diff review", "validation evidence"]
+  },
+  "output_evidence_required": [
+    "external_send_receipt",
+    "external_recovery_evidence",
+    "validation_evidence"
+  ]
+}

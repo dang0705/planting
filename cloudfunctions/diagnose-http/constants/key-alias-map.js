@@ -1,6 +1,6 @@
 'use strict'
 
-// 中央化维护旧 key -> 新 key 映射，禁止在业务代码散落 if/else。
+// 中央化维护既有 key -> 新 key 映射，禁止在业务代码散落 if/else。
 module.exports = {
   symptom: {
     // 示例映射，可按历史数据继续扩展
@@ -14,7 +14,7 @@ module.exports = {
     red_spider: 'spider_mites'
   },
   question: {
-    // 旧问诊 key 与新 question_library key 对齐
+    // 既有问诊 key 与新 question_library key 对齐
   },
   option: {
     unsure: 'unknown',

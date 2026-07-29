@@ -10,11 +10,11 @@ const {
   toResultId
 } = require('../mappers/public-id-mapper')
 const {
-  normalizeQuestionRole,
-  normalizeQuestionEffectMode,
-  inferQuestionRole,
-  inferQuestionEffectMode
-} = require('../utils/question-target-dimension')
+  normalizeRoutePackageRole,
+  normalizeQuestionPackageEffect,
+  inferRoutePackageRole,
+  inferQuestionPackageEffect
+} = require('../utils/question-package-topic')
 const {
   buildActionAdviceSteps,
   buildActionAvoidTexts,
@@ -74,14 +74,14 @@ function formatDiagnosisResponse({
   derivedEvidenceSet = [],
   diagnosisDirections = [],
   candidateOutcomes = [],
-  followUps = [],
+  questions = [],
   problems = [],
   explanations = [],
   routeOutcomes = [],
   causality = [],
   plantContext = {},
   plantId,
-  followUpRequired = false,
+  questionRequired = false,
   lowConfidence = { isLowConfidence: false, reasons: [], advice: [] },
   symptomClassRuntime = null,
   highSpecificityFastConvergence = null,
@@ -140,15 +140,15 @@ function formatDiagnosisResponse({
         baseSummaryText,
         lowConfidence
       )
-  const outcomeType = resolveOutcomeType({ followUpRequired, lowConfidence, stopDecision })
+  const outcomeType = resolveOutcomeType({ questionRequired, lowConfidence, stopDecision })
   const shouldSuppressProblemLikePresentation = outcomeType === 'uncertain'
   const routePrimaryAction = resolveRoutePrimaryAction({
-    followUpRequired,
+    questionRequired,
     outcomeType,
     preferredRoutePrimaryAction
   })
-  const stopReason = resolveStopReason({ followUpRequired, stopDecision })
-  const legacyExplanationPayload = outcomeType === 'uncertain'
+  const stopReason = resolveStopReason({ questionRequired, stopDecision })
+  const currentExplanationPayload = outcomeType === 'uncertain'
     ? buildUncertainExplanation(lowConfidence, symptomClassRuntime)
     : buildExplanation(primaryProblem, primaryExplanation)
   const routeOutcomePayload = resolveRouteOutcomePayload({
@@ -160,7 +160,7 @@ function formatDiagnosisResponse({
     plantContext,
     observedEvidenceSet,
     outcomeType,
-    followUpRequired
+    questionRequired
   })
   const {
     authoritativeRouteDecision,
@@ -189,7 +189,7 @@ function formatDiagnosisResponse({
         routePrimaryExplanation: explanationMap.get(routeLeadingVisibleOutcome.problemKey) || null,
         routeSafeSummary
       })
-    : legacyExplanationPayload
+    : currentExplanationPayload
   if (careGuidance.environmentDeviationHints.length) {
     explanationPayload.whatToCheckNext = uniqList([
       explanationPayload.whatToCheckNext,
@@ -227,7 +227,7 @@ function formatDiagnosisResponse({
     : []
   const shouldUseRouteActionAdvice = Boolean(
     authoritativeRouteDecision &&
-    !followUpRequired &&
+    !questionRequired &&
     outcomeType !== 'uncertain'
   )
   const routeActionSteps = shouldUseRouteActionAdvice
@@ -236,7 +236,7 @@ function formatDiagnosisResponse({
   const routeAvoidTexts = shouldUseRouteActionAdvice
     ? buildActionAvoidTexts(actionAdvice)
     : []
-  const nextSteps = outcomeType === 'uncertain'
+  const rawNextSteps = outcomeType === 'uncertain'
     ? [
         ...lowConfidenceAdviceSteps,
         ...careGuidance.nextSteps,
@@ -258,6 +258,9 @@ function formatDiagnosisResponse({
             '先处理最明显的问题，再观察 3-7 天变化。'
         }
       ]
+  const nextSteps = uniqList(rawNextSteps.map(item => item?.text)).map(text =>
+    rawNextSteps.find(item => item?.text === text)
+  )
   const contributingFactors = shouldSuppressProblemLikePresentation ? [] : rawContributingFactors
   const intermediateStates = shouldSuppressProblemLikePresentation ? [] : rawIntermediateStates
   const topProblemPayload = shouldSuppressProblemLikePresentation || !primary
@@ -288,7 +291,7 @@ function formatDiagnosisResponse({
 
   const routeBackedFinalResultPayload =
     routeLeadingVisibleOutcome &&
-    !followUpRequired &&
+    !questionRequired &&
     !shouldSuppressProblemLikePresentation &&
     outcomeType === 'problematic'
       ? {
@@ -303,7 +306,7 @@ function formatDiagnosisResponse({
           actionAdvice
         }
       : routeLeadingVisibleOutcome &&
-        !followUpRequired &&
+        !questionRequired &&
         outcomeType === 'non_problematic'
         ? {
             resultId,
@@ -326,15 +329,15 @@ function formatDiagnosisResponse({
     observedSymptoms,
     topProblem: authoritativeRouteDecision ? routeBackedTopProblemPayload : topProblemPayload,
     finalResult: authoritativeRouteDecision ? routeBackedFinalResultPayload : finalResultPayload,
-    followUpRequired: Boolean(followUpRequired && followUps.length),
-    followUps: followUps.map(question => {
-      const questionRole = normalizeQuestionRole(
-        question.questionRole || question.question_role || '',
-        inferQuestionRole(question.targetDimension || question.target_dimension || '', question.routingScope || question.routing_scope || '')
+    questionRequired: Boolean(questionRequired && questions.length),
+    questions: questions.map(question => {
+      const routePackageRole = normalizeRoutePackageRole(
+        question.routePackageRole || question.route_package_role || '',
+        inferRoutePackageRole(question.packageTopic || question.package_topic || '', question.packageSection || question.package_section || '')
       )
-      const effectMode = normalizeQuestionEffectMode(
-        question.effectMode || question.effect_mode || '',
-        inferQuestionEffectMode(questionRole, question.targetDimension || question.target_dimension || '')
+      const packageEffect = normalizeQuestionPackageEffect(
+        question.packageEffect || question.package_effect || '',
+        inferQuestionPackageEffect(routePackageRole, question.packageTopic || question.package_topic || '')
       )
       const resolvedQuestionText = String(
         question.questionText ||
@@ -350,11 +353,11 @@ function formatDiagnosisResponse({
         questionKey: question.questionKey,
         targetSymptomKey: question.targetSymptomKey || '',
         questionGroupKey: question.questionGroupKey,
-        targetDimension: question.targetDimension || '',
-        routingScope: question.routingScope || '',
-        questionRole,
-        questionCategory: questionRole,
-        effectMode,
+        packageTopic: question.packageTopic || '',
+        packageSection: question.packageSection || '',
+        routePackageRole,
+        routePackageRole: routePackageRole,
+        packageEffect,
         type: 'single_choice',
         text: resolvedQuestionText,
         questionText: resolvedQuestionText,
@@ -421,7 +424,7 @@ function formatDiagnosisResponse({
     routePrimaryAction,
     stopReason,
     stopReasonDetail: normalizeText(stopDecision?.stopReasonDetail || '', ''),
-    sessionStatus: followUpRequired ? 'awaiting_follow_up' : 'completed',
+    sessionStatus: questionRequired ? 'awaiting_follow_up' : 'completed',
     plantId,
     observedEvidenceSet,
     derivedEvidenceSet,

@@ -2,6 +2,8 @@
 
 const { callLLMDiagnose } = require('../../utils/llm')
 const { parseLLMVisualResult } = require('../../utils/diagnosis-parser')
+const { normalizeCaptureRegion } = require('../../utils/capture-region-normalizer')
+const { withLlmImagePromptContext } = require('../../utils/llm-image-context')
 const {
   normalizeOrgan,
   normalizeQualityGrade,
@@ -55,7 +57,11 @@ function isStructuralDamageSymptomKey(symptomKey = '') {
   )
 }
 
-function hasExplicitStructuralDamageCue(symptomKey = '', supportingRegionNote = '', normalizationNotes = []) {
+function hasExplicitStructuralDamageCue(
+  symptomKey = '',
+  supportingRegionNote = '',
+  normalizationNotes = []
+) {
   const normalizedSymptomKey = normalizeText(symptomKey || '', '')
   if (!isStructuralDamageSymptomKey(normalizedSymptomKey)) {
     return true
@@ -209,9 +215,8 @@ function normalizeModelVisualResult(
     qualityGradeToAnalyzability(imageQualityGrade)
   )
   const normalizationNotes = normalizeNotes(parsedResult?.normalization_notes || [])
-  const rawSymptomCandidates = (Array.isArray(parsedResult?.symptom_candidates)
-    ? parsedResult.symptom_candidates
-    : []
+  const rawSymptomCandidates = (
+    Array.isArray(parsedResult?.symptom_candidates) ? parsedResult.symptom_candidates : []
   )
     .map(item => ({
       symptom_key: normalizeText(item?.symptom_key || ''),
@@ -225,16 +230,25 @@ function normalizeModelVisualResult(
     .filter(item => item.symptom_key)
     .slice(0, 8)
   const symptomCandidates = rawSymptomCandidates.filter(item => {
-    if (hasExplicitStructuralDamageCue(item.symptom_key, item.supporting_region_note, normalizationNotes)) {
+    if (
+      hasExplicitStructuralDamageCue(
+        item.symptom_key,
+        item.supporting_region_note,
+        normalizationNotes
+      )
+    ) {
       return true
     }
 
-    normalizationNotes.push(`structural_candidate_dropped:${item.symptom_key}:missing_explicit_structural_cue`)
+    normalizationNotes.push(
+      `structural_candidate_dropped:${item.symptom_key}:missing_explicit_structural_cue`
+    )
     return false
   })
-  const outOfPoolSymptomCandidates = (Array.isArray(parsedResult?.out_of_pool_symptom_candidates)
-    ? parsedResult.out_of_pool_symptom_candidates
-    : []
+  const outOfPoolSymptomCandidates = (
+    Array.isArray(parsedResult?.out_of_pool_symptom_candidates)
+      ? parsedResult.out_of_pool_symptom_candidates
+      : []
   )
     .map(item => ({
       raw_visual_name_cn: normalizeText(item?.raw_visual_name_cn || '', ''),
@@ -286,8 +300,27 @@ function normalizeModelVisualResult(
     symptom_candidates: symptomCandidates,
     out_of_pool_symptom_candidates: outOfPoolSymptomCandidates,
     route_hints: normalizeRouteHints(parsedResult?.route_hints || []),
-    suggested_followup_capture: normalizeSuggestedFollowupCapture(
-      parsedResult?.suggested_followup_capture || []
+    capture_region: normalizeCaptureRegion(
+      parsedResult?.capture_region || imageRuntimeInput?.captureRegion
+    ),
+    mode_candidates: (Array.isArray(parsedResult?.mode_candidates)
+      ? parsedResult.mode_candidates
+      : []
+    )
+      .map(item => ({
+        mode: normalizeText(item?.mode || item?.diagnosis_mode || item?.diagnosisMode || ''),
+        confidence: normalizeOptionalConfidence(item?.confidence) || 0,
+        region_ref: normalizeCaptureRegion(
+          item?.region_ref || item?.regionRef || item?.capture_region
+        )
+      }))
+      .filter(item => item.mode)
+      .slice(0, 8),
+    region_ref: normalizeCaptureRegion(
+      parsedResult?.region_ref || imageRuntimeInput?.captureRegion
+    ),
+    suggested_question_capture: normalizeSuggestedFollowupCapture(
+      parsedResult?.suggested_question_capture || []
     ),
     normalization_notes: normalizeNotes(normalizationNotes)
   }
@@ -295,22 +328,23 @@ function normalizeModelVisualResult(
 
 async function analyzeImage(
   imageRuntimeInput,
-  { visualCallBatchId, onText, adapterMetaOverride = {}, llmOptions = {} } = {}
+  { visualCallBatchId, sessionId = '', onText, adapterMetaOverride = {}, llmOptions = {} } = {}
 ) {
   const startedAt = Date.now()
   const llmStartedAt = Date.now()
-  const llmResult = await callLLMDiagnose([imageRuntimeInput], { onText, ...llmOptions })
+  const llmResult = await withLlmImagePromptContext(llmOptions, () =>
+    callLLMDiagnose([imageRuntimeInput], { onText, sessionId })
+  )
   const llmMs = Math.max(0, Date.now() - llmStartedAt)
   const adapterMeta = getAdapterMeta({
     ...adapterMetaOverride,
     ...(llmResult && typeof llmResult === 'object' ? llmResult.adapterMetaOverride || {} : {})
   })
-  const rawTextOutput =
-    typeof llmResult === 'string'
-      ? llmResult
-      : String(llmResult?.text || '')
+  const rawTextOutput = typeof llmResult === 'string' ? llmResult : String(llmResult?.text || '')
   const parseStartedAt = Date.now()
-  const rawStructuredOutput = parseLLMVisualResult(rawTextOutput)
+  const rawStructuredOutput = parseLLMVisualResult(rawTextOutput, {
+    diagnosisProfile: llmOptions?.diagnosisProfile || imageRuntimeInput?.diagnosisProfile || 'full'
+  })
   const parseMs = Math.max(0, Date.now() - parseStartedAt)
   const normalizeStartedAt = Date.now()
   const normalizedResult = normalizeModelVisualResult(
@@ -330,8 +364,7 @@ async function analyzeImage(
     adapterMeta,
     llmPromptAudit:
       llmResult && typeof llmResult === 'object' ? llmResult.promptAudit || null : null,
-    llmUsage:
-      llmResult && typeof llmResult === 'object' ? llmResult.usage || null : null,
+    llmUsage: llmResult && typeof llmResult === 'object' ? llmResult.usage || null : null,
     llmTiming:
       llmResult && typeof llmResult === 'object'
         ? llmResult.llmTiming || { totalMs: llmMs }

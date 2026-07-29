@@ -2,7 +2,7 @@
 
 ## 1. 适用范围
 
-本文件适用于 `diagnose-http` zero-model replay、DB-backed replay、诊断历史会话复盘、batch artifact / conclusion artifact 生成、需要 CloudBase 凭证与 SQL schema 对齐的本地脚本、视觉诊断证据正式分析，以及 ranking → route、outcome 瘦身、路径规划、问诊路径、gate、runtime 等诊断流改造后的回放验证。
+本文件适用于 `diagnose-http` zero-model replay、DB-backed replay、诊断历史会话复盘、batch artifact / conclusion artifact 生成、需要 CloudBase 凭证与 SQL schema 对齐的本地脚本、视觉诊断证据正式分析，以及 ranking → route、outcome 瘦身、路径规划、问诊路径、condition、runtime 等诊断流改造后的回放验证。
 
 ## 2. 禁止事项
 
@@ -27,7 +27,7 @@ npm run run:with-cloudbase-env -- --function=diagnose-http -- node <script> ...
 标准 wrapper：
 
 ```text
-scripts/terminal-e2e/run-with-cloudbase-env.mjs
+test/e2e/terminal-e2e/run-with-cloudbase-env.mjs
 ```
 
 ## 4. 历史诊断决策点复盘
@@ -56,13 +56,13 @@ scripts/terminal-e2e/run-with-cloudbase-env.mjs
 每个 diagnosis replay batch 必须输出 canonical batch artifact：
 
 ```text
-scripts/terminal-e2e/batch/
+test/e2e/terminal-e2e/batch/
 ```
 
 并输出成对 conclusion artifact：
 
 ```text
-scripts/terminal-e2e/conclusion/
+test/e2e/terminal-e2e/conclusion/
 ```
 
 canonical batch results 只保留 replay audit 核心字段：
@@ -90,10 +90,10 @@ canonical batch results 只保留 replay audit 核心字段：
 
 ## 8. 诊断 fast path / guard parity 回归
 
-涉及 `diagnose-http`、route、outcome、gate、runtime、`fast path`、`warm path`、`early return`、缓存命中或性能优化路径时，replay / smoke 不能只跑完整闭合路径，必须补充快捷路径负向回归：
+涉及 `diagnose-http`、route、outcome、condition、runtime、`fast path`、`warm path`、`early return`、缓存命中或性能优化路径时，replay / smoke 不能只跑完整闭合路径，必须补充快捷路径负向回归：
 
 1. 明确列出主链路径与快捷路径各自的 follow-up / final / outcome 输出点。
-2. 证明快捷路径复用了主链输出守卫；不得只因为单个 gate 命中就提前 final。
+2. 证明快捷路径复用了主链输出守卫；不得只因为单个 condition 命中就提前 final。
 3. 黄叶路径必须覆盖首个浇水分组题的两个负向样本：`often_wet` 与 `often_dry` 首答后都应保持 follow-up / awaiting_follow_up，不能返回 final 或写入最终 outcome。
 4. 同一组变更还必须保留一个完整路径正向样本，证明必答分组完成后仍能进入最终结果。
 5. 真实 HTTP smoke 后需要核对 DB：`diagnosis_sessions.session_status`、`diagnosis_sessions.needs_follow_up`、最终 problem / outcome 字段，以及必要的 `diagnosis_follow_ups` 追问记录。

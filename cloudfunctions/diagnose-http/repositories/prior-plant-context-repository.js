@@ -1,10 +1,7 @@
 'use strict'
 
 const { models } = require('/opt/utils/cloudbase')
-const {
-  getPlantCatalogById,
-  getUserPlantInstanceById
-} = require('/opt/utils/plant-knowledge')
+const { getPlantCatalogById, getUserPlantInstanceById } = require('/opt/utils/plant-knowledge')
 const { table } = require('../db/table-helper')
 const {
   priorCache,
@@ -18,14 +15,20 @@ const { debugLog } = require('../utils/common')
 
 async function getGenusCareProfile(genusName = '', familyName = '') {
   const safeGenusName = String(genusName || '').trim()
-  if (!safeGenusName) {return null}
+  if (!safeGenusName) {
+    return null
+  }
   const cacheKey = `${safeGenusName}::${String(familyName || '').trim()}`
   const cached = getCacheEntry(priorCache.genusCareProfileByGenusFamily, cacheKey)
-  if (cached) {return cached}
+  if (cached) {
+    return cached
+  }
 
   return withPending(pendingPriorCache.genusCareProfileByGenusFamily, cacheKey, async () => {
     const cachedAfterWait = getCacheEntry(priorCache.genusCareProfileByGenusFamily, cacheKey)
-    if (cachedAfterWait) {return cachedAfterWait}
+    if (cachedAfterWait) {
+      return cachedAfterWait
+    }
 
     const conditions = ['genus_name = {{genusName}}', 'is_active = 1']
     const params = { genusName: safeGenusName }
@@ -58,16 +61,26 @@ async function getGenusCareProfile(genusName = '', familyName = '') {
     )
 
     const row = result?.data?.executeResultList?.[0] || null
-    if (!row) {return null}
+    if (!row) {
+      return null
+    }
     const careProfile = {
       watering: normalizeCareStrategy(row.watering_strategy_json_text),
       fertilization: normalizeCareStrategy(row.fertilizing_strategy_json_text),
       sunning: normalizeCareStrategy(row.light_strategy_json_text),
       ventilation: normalizeCareStrategy(row.airflow_strategy_json_text),
-      temperatureMin: row.temp_min_c === null || row.temp_min_c === undefined ? null : Number(row.temp_min_c),
-      temperatureMax: row.temp_max_c === null || row.temp_max_c === undefined ? null : Number(row.temp_max_c),
-      humidityMin: row.humidity_min === null || row.humidity_min === undefined ? null : Number(row.humidity_min),
-      humidityMax: row.humidity_max === null || row.humidity_max === undefined ? null : Number(row.humidity_max),
+      temperatureMin:
+        row.temp_min_c === null || row.temp_min_c === undefined ? null : Number(row.temp_min_c),
+      temperatureMax:
+        row.temp_max_c === null || row.temp_max_c === undefined ? null : Number(row.temp_max_c),
+      humidityMin:
+        row.humidity_min === null || row.humidity_min === undefined
+          ? null
+          : Number(row.humidity_min),
+      humidityMax:
+        row.humidity_max === null || row.humidity_max === undefined
+          ? null
+          : Number(row.humidity_max),
       careAuditStatus: row.review_status || '',
       varianceLevel: row.evidence_level || ''
     }
@@ -82,19 +95,24 @@ function buildResolvedPlantContext({
   plantId = null,
   careProfile = null
 } = {}) {
-  const normalizedPlantWatering = normalizeCareStrategy(plant?.watering || userPlant?.watering || null)
-  const normalizedPlantFertilization = normalizeCareStrategy(plant?.fertilization || userPlant?.fertilization || null)
+  const normalizedPlantWatering = normalizeCareStrategy(
+    plant?.watering || userPlant?.watering || null
+  )
+  const normalizedPlantFertilization = normalizeCareStrategy(
+    plant?.fertilization || userPlant?.fertilization || null
+  )
   const normalizedPlantSunning = normalizeCareStrategy(plant?.sunning || userPlant?.sunning || null)
-  const normalizedPlantVentilation = normalizeCareStrategy(plant?.ventilation || userPlant?.ventilation || null)
+  const normalizedPlantVentilation = normalizeCareStrategy(
+    plant?.ventilation || userPlant?.ventilation || null
+  )
   const resolvedPlantId =
     plant?.plantId ||
     userPlant?.plantId ||
-    userPlant?.legacyPlantId ||
+    userPlant?.requestPlantId ||
     (plantId !== null && plantId !== undefined ? String(plantId) : '')
   const resolvedPlantIdentityId = plant?.plantIdentityId || userPlant?.plantIdentityId || ''
   const resolvedIdentityStatus =
-    userPlant?.identityResolutionStatus ||
-    (resolvedPlantIdentityId ? 'matched' : 'unresolved')
+    userPlant?.identityResolutionStatus || (resolvedPlantIdentityId ? 'matched' : 'unresolved')
   const resolvedDisplayName =
     userPlant?.displayName ||
     userPlant?.canonicalName ||
@@ -107,7 +125,7 @@ function buildResolvedPlantContext({
     plantId: resolvedPlantId || null,
     plantDisplayName: resolvedDisplayName,
     plantIdentityId: resolvedPlantIdentityId,
-    legacyPlantId: plant?.legacyPlantId || userPlant?.legacyPlantId || '',
+    requestPlantId: plant?.requestPlantId || userPlant?.requestPlantId || '',
     identityResolutionStatus: resolvedIdentityStatus,
     latestVisualCallBatchId: userPlant?.visualCallBatchId || '',
     recognizedName: userPlant?.recognizedName || '',
@@ -123,22 +141,23 @@ function buildResolvedPlantContext({
     watering: normalizedPlantWatering || careProfile?.watering || null,
     fertilization: normalizedPlantFertilization || careProfile?.fertilization || null,
     sunning: normalizedPlantSunning || careProfile?.sunning || null,
+    userLightContext: userPlant?.lightEnvironment || null,
     ventilation: normalizedPlantVentilation || careProfile?.ventilation || null,
     temperatureMin:
       plant?.temperatureMin === null || plant?.temperatureMin === undefined
-        ? careProfile?.temperatureMin ?? null
+        ? (careProfile?.temperatureMin ?? null)
         : Number(plant.temperatureMin),
     temperatureMax:
       plant?.temperatureMax === null || plant?.temperatureMax === undefined
-        ? careProfile?.temperatureMax ?? null
+        ? (careProfile?.temperatureMax ?? null)
         : Number(plant.temperatureMax),
     humidityMin:
       plant?.humidityMin === null || plant?.humidityMin === undefined
-        ? careProfile?.humidityMin ?? null
+        ? (careProfile?.humidityMin ?? null)
         : Number(plant.humidityMin),
     humidityMax:
       plant?.humidityMax === null || plant?.humidityMax === undefined
-        ? careProfile?.humidityMax ?? null
+        ? (careProfile?.humidityMax ?? null)
         : Number(plant.humidityMax),
     careAuditStatus: plant?.careAuditStatus || careProfile?.careAuditStatus || '',
     varianceLevel: plant?.varianceLevel || careProfile?.varianceLevel || ''
@@ -151,21 +170,30 @@ async function resolvePlantContext({
   userPlantId = null,
   preferCatalogPlantId = false
 } = {}) {
-  const candidateUserPlantId = preferCatalogPlantId ? userPlantId : (userPlantId || plantId)
+  const candidateUserPlantId = preferCatalogPlantId ? userPlantId : userPlantId || plantId
 
-  if (candidateUserPlantId !== null && candidateUserPlantId !== undefined && candidateUserPlantId !== '') {
+  if (
+    candidateUserPlantId !== null &&
+    candidateUserPlantId !== undefined &&
+    candidateUserPlantId !== ''
+  ) {
     const userPlant = await getUserPlantInstanceById(openid, Number(candidateUserPlantId))
     if (userPlant) {
-      const catalogLookupId = userPlant.plantIdentityId || userPlant.legacyPlantId || userPlant.plantId || ''
+      const catalogLookupId =
+        userPlant.plantIdentityId || userPlant.requestPlantId || userPlant.plantId || ''
       const plant = catalogLookupId ? await getPlantCatalogById(String(catalogLookupId)) : null
-      const careProfile = await getGenusCareProfile(plant?.genus || userPlant?.genus || '', plant?.familyEn || userPlant?.familyEn || '')
+      const careProfile = await getGenusCareProfile(
+        plant?.genus || userPlant?.genus || '',
+        plant?.familyEn || userPlant?.familyEn || ''
+      )
       debugLog('diagnose-http plant-context resolved from userPlant:', {
         catalogLookupId,
         genus: plant?.genus || userPlant?.genus || '',
         family: plant?.familyEn || userPlant?.familyEn || '',
         plantHasWatering: Boolean(normalizeCareStrategy(plant?.watering || null)),
         careProfileHasWatering: Boolean(careProfile?.watering),
-        careProfileHasLight: Boolean(careProfile?.sunning)
+        careProfileHasLight: Boolean(careProfile?.sunning),
+        userPlantHasLightContext: Boolean(userPlant?.lightEnvironment)
       })
       return buildResolvedPlantContext({ userPlant, plant, careProfile })
     }

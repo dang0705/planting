@@ -1,27 +1,13 @@
 'use strict'
 
 const { models } = require('/opt/utils/cloudbase')
-const { diagnosis: DIAGNOSIS_RULES } = require('/opt/configs')
+const MAX_USER_PLANT_NOTES_LENGTH = 200
 
 function normalizePlantKeyword(value) {
   return String(value || '')
     .toLowerCase()
     .replace(/[^\u4e00-\u9fa5a-z0-9]/gi, '')
     .trim()
-}
-
-function escapeSqlLiteral(value) {
-  return `'${String(value || '').replace(/\\/g, '\\\\').replace(/'/g, "''")}'`
-}
-
-function sqlInList(values) {
-  const safe = values
-    .map(value => String(value || '').trim())
-    .filter(value => /^[a-z0-9_:-]+$/i.test(value))
-  if (!safe.length) {
-    return '(NULL)'
-  }
-  return `(${safe.map(escapeSqlLiteral).join(', ')})`
 }
 
 function parseJsonField(value, fallback = null) {
@@ -36,10 +22,6 @@ function parseJsonField(value, fallback = null) {
   } catch {
     return fallback
   }
-}
-
-function round(value, digits = 4) {
-  return Number(Number(value || 0).toFixed(digits))
 }
 
 function clamp(value, min, max) {
@@ -64,9 +46,22 @@ function parseCareJson(value) {
   return parseJsonField(value, null)
 }
 
+function stringifyNullableJson(value) {
+  if (value === undefined || value === null || value === '') {
+    return null
+  }
+  return JSON.stringify(value)
+}
+
+function hasOwnField(payload, key) {
+  return Object.prototype.hasOwnProperty.call(payload || {}, key)
+}
+
 function normalizeNullableString(value) {
   const normalized = String(value ?? '').trim()
-  if (!normalized) {return null}
+  if (!normalized) {
+    return null
+  }
 
   const lowered = normalized.toLowerCase()
   if (lowered === 'null' || lowered === 'undefined') {
@@ -76,12 +71,62 @@ function normalizeNullableString(value) {
   return normalized
 }
 
+function toNullableDateParam(value) {
+  const normalized = normalizeNullableString(value)
+  return normalized && /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : ''
+}
+
+function normalizeUserPlantNotes(value) {
+  if (value === null || value === undefined) {
+    return null
+  }
+  return String(value).slice(0, MAX_USER_PLANT_NOTES_LENGTH)
+}
+
+/**
+ * DECIMAL 列：$runSQL 会把 JS null 序列化成字符串 'null' 导致 Incorrect decimal value，
+ * 统一转成空字符串 '' 传入，SQL 侧用 NULLIF(x, '') 转回 NULL
+ */
+function toNullableDecimal(value) {
+  if (value === null || value === undefined || value === '' || value === 'null') {
+    return ''
+  }
+  const num = Number(value)
+  return Number.isFinite(num) ? num : ''
+}
+
 function resolveCatalogPlantId(row = {}) {
-  return row.legacy_plant_id || row.plant_identity_id || ''
+  return normalizeNullableString(row.session_plant_id) || normalizeNullableString(row.plant_identity_id) || ''
 }
 
 function resolveUserPlantCatalogLookupId(row = {}) {
-  return row.plant_identity_id || row.plant_id || row.legacy_plant_id || ''
+  return (
+    normalizeNullableString(row.plant_identity_id) ||
+    normalizeNullableString(row.plant_id) ||
+    normalizeNullableString(row.session_plant_id) ||
+    ''
+  )
+}
+
+const USER_PLANT_DISPLAY_IDENTITY_FIELDS = [
+  'plant_id',
+  'plant_identity_id',
+  'session_plant_id',
+  'canonical_name',
+  'recognized_name',
+  'nickname'
+]
+
+function hasDisplayableUserPlantIdentity(row = {}) {
+  return USER_PLANT_DISPLAY_IDENTITY_FIELDS.some(field => Boolean(normalizeNullableString(row[field])))
+}
+
+function displayableUserPlantSqlCondition(tableAlias = 'up') {
+  return `(
+    ${USER_PLANT_DISPLAY_IDENTITY_FIELDS.map(
+      field => `LOWER(TRIM(COALESCE(${tableAlias}.${field}, ''))) NOT IN ('', 'null', 'undefined')`
+    ).join('\n      OR ')}
+  )`
 }
 
 function buildCatalogFieldMatchCondition(operator, paramName) {
@@ -154,7 +199,7 @@ const CATALOG_FROM_SQL = `
 const CATALOG_SELECT_SQL = `
   SELECT
     pie.plant_identity_id,
-    pie.legacy_plant_id,
+    pie.session_plant_id,
     pie.canonical_identity_name,
     pie.canonical_identity_name_cn,
     pie.canonical_identity_name_en,
@@ -172,6 +217,7 @@ const CATALOG_SELECT_SQL = `
     pie.cover_image_ref,
     pie.review_status AS identity_review_status,
     gcp.watering_strategy_json,
+    gcp.watering_way_quantization_json,
     gcp.fertilizing_strategy_json,
     gcp.light_strategy_json,
     gcp.airflow_strategy_json,
@@ -195,13 +241,15 @@ function mapPlantRow(row) {
     ''
   const scientificName = row.scientific_name || row.canonical_identity_name_en || ''
   const internetName =
-    scientificName && scientificName !== canonicalName ? scientificName : row.canonical_identity_name_en || ''
+    scientificName && scientificName !== canonicalName
+      ? scientificName
+      : row.canonical_identity_name_en || ''
 
   return {
     id: catalogId,
     plantId: catalogId,
     plantIdentityId: row.plant_identity_id || '',
-    legacyPlantId: row.legacy_plant_id || '',
+    sessionPlantId: row.session_plant_id || '',
     canonicalName,
     aliasNames: row.alias_names || '',
     latinName: scientificName,
@@ -213,18 +261,24 @@ function mapPlantRow(row) {
     genus: row.genus_name || '',
     familyCn: row.family_name_cn || '',
     familyEn: row.family_name_en || row.family_name_canonical || '',
-    difficulty: row.difficulty === null || row.difficulty === undefined ? 0 : Number(row.difficulty || 0),
+    difficulty:
+      row.difficulty === null || row.difficulty === undefined ? 0 : Number(row.difficulty || 0),
     internetName,
     identityLevel: row.identity_level || '',
     identityReviewStatus: row.identity_review_status || '',
     watering: parseCareJson(row.watering_strategy_json),
+    wateringQuantization: parseCareJson(row.watering_way_quantization_json),
     fertilization: parseCareJson(row.fertilizing_strategy_json),
     sunning: parseCareJson(row.light_strategy_json),
     ventilation: parseCareJson(row.airflow_strategy_json),
-    temperatureMin: row.temp_min_c === null || row.temp_min_c === undefined ? null : Number(row.temp_min_c),
-    temperatureMax: row.temp_max_c === null || row.temp_max_c === undefined ? null : Number(row.temp_max_c),
-    humidityMin: row.humidity_min === null || row.humidity_min === undefined ? null : Number(row.humidity_min),
-    humidityMax: row.humidity_max === null || row.humidity_max === undefined ? null : Number(row.humidity_max),
+    temperatureMin:
+      row.temp_min_c === null || row.temp_min_c === undefined ? null : Number(row.temp_min_c),
+    temperatureMax:
+      row.temp_max_c === null || row.temp_max_c === undefined ? null : Number(row.temp_max_c),
+    humidityMin:
+      row.humidity_min === null || row.humidity_min === undefined ? null : Number(row.humidity_min),
+    humidityMax:
+      row.humidity_max === null || row.humidity_max === undefined ? null : Number(row.humidity_max),
     varianceLevel: row.evidence_level || '',
     careAuditStatus: row.care_review_status || ''
   }
@@ -251,7 +305,7 @@ async function listPlantCatalog({ keyword = '', page = 1, pageSize = 10, offset 
   sql += `
     WHERE ${conditions.join(' AND ')}
     ORDER BY
-      CAST(COALESCE(NULLIF(pie.legacy_plant_id, ''), '0') AS UNSIGNED),
+      CAST(COALESCE(NULLIF(pie.session_plant_id, ''), '0') AS UNSIGNED),
       pie.primary_display_name,
       pie.plant_identity_id
     LIMIT {{limit}} OFFSET {{offset}}
@@ -286,11 +340,11 @@ async function getPlantCatalogById(plantId) {
     WHERE pie.is_active = 1
       AND (
         pie.plant_identity_id = {{plantId}}
-        OR pie.legacy_plant_id = {{plantId}}
+        OR pie.session_plant_id = {{plantId}}
       )
     ORDER BY
       CASE
-        WHEN pie.legacy_plant_id = {{plantId}} THEN 0
+        WHEN pie.session_plant_id = {{plantId}} THEN 0
         ELSE 1
       END,
       pie.primary_display_name,
@@ -304,7 +358,9 @@ async function getPlantCatalogById(plantId) {
 
 async function findCanonicalPlantMatch(name, limit = 5) {
   const normalized = normalizePlantKeyword(name)
-  if (!normalized) {return []}
+  if (!normalized) {
+    return []
+  }
 
   const sql = `
     ${CATALOG_SELECT_SQL},
@@ -326,7 +382,7 @@ async function findCanonicalPlantMatch(name, limit = 5) {
       )
     ORDER BY
       match_score DESC,
-      CAST(COALESCE(NULLIF(pie.legacy_plant_id, ''), '0') AS UNSIGNED),
+      CAST(COALESCE(NULLIF(pie.session_plant_id, ''), '0') AS UNSIGNED),
       pie.primary_display_name,
       pie.plant_identity_id
     LIMIT {{limit}}
@@ -357,7 +413,7 @@ async function createUserPlantInstance({
   openid,
   plantId = null,
   plantIdentityId = null,
-  legacyPlantId = null,
+  sessionPlantId = null,
   recognizedName = null,
   sourceType = 'catalog',
   recognitionType = null,
@@ -366,29 +422,28 @@ async function createUserPlantInstance({
   visualCallBatchId = null,
   nickname = null,
   location = null,
+  plantDate = null,
+  notes = null,
+  lightEnvironment = null,
   photos = null
 }) {
   let plant = null
   const normalizedPlantId = normalizeNullableString(plantId)
   const normalizedPlantIdentityId = normalizeNullableString(plantIdentityId)
-  const normalizedLegacyPlantId = normalizeNullableString(legacyPlantId)
+  const normalizedSessionPlantId = normalizeNullableString(sessionPlantId)
   const normalizedRecognizedName = normalizeNullableString(recognizedName)
   const normalizedIdentityResolutionStatus = normalizeNullableString(identityResolutionStatus)
   const normalizedVisualCallBatchId = normalizeNullableString(visualCallBatchId)
-  let compatibilityPlantId = null
+  let matchedPlantId = null
   let persistedPlantIdentityId = normalizedPlantIdentityId
-  let persistedLegacyPlantId = normalizedLegacyPlantId
+  let persistedSessionPlantId = normalizedSessionPlantId
   let canonicalName = normalizedRecognizedName
   let plantGenus = null
   let plantFamilyEn = null
   let plantLatinName = null
   const lookupCandidates = Array.from(
     new Set(
-      [
-        normalizedPlantIdentityId,
-        normalizedLegacyPlantId,
-        normalizedPlantId
-      ].filter(Boolean)
+      [normalizedPlantIdentityId, normalizedSessionPlantId, normalizedPlantId].filter(Boolean)
     )
   )
 
@@ -423,11 +478,12 @@ async function createUserPlantInstance({
   }
 
   if (plant) {
-    compatibilityPlantId = plant.id || normalizedPlantId || normalizedLegacyPlantId || normalizedPlantIdentityId
+    matchedPlantId =
+      plant.id || normalizedPlantId || normalizedSessionPlantId || normalizedPlantIdentityId
     persistedPlantIdentityId = plant.plantIdentityId || persistedPlantIdentityId
-    persistedLegacyPlantId = plant.legacyPlantId || persistedLegacyPlantId
-    if (!persistedLegacyPlantId && compatibilityPlantId && compatibilityPlantId !== persistedPlantIdentityId) {
-      persistedLegacyPlantId = compatibilityPlantId
+    persistedSessionPlantId = plant.sessionPlantId || persistedSessionPlantId
+    if (!persistedSessionPlantId && matchedPlantId && matchedPlantId !== persistedPlantIdentityId) {
+      persistedSessionPlantId = matchedPlantId
     }
     canonicalName = plant.canonicalName
     plantGenus = plant.genus
@@ -435,28 +491,29 @@ async function createUserPlantInstance({
     plantLatinName = plant.latinName
   }
 
-  const finalIdentityResolutionStatus =
-    persistedPlantIdentityId
-      ? 'matched'
-      : normalizedIdentityResolutionStatus || 'unresolved'
+  const finalIdentityResolutionStatus = persistedPlantIdentityId
+    ? 'matched'
+    : normalizedIdentityResolutionStatus || 'unresolved'
 
   const sql = `
     INSERT INTO user_plant_instances (
-      _openid, plant_id, plant_identity_id, legacy_plant_id, canonical_name, recognized_name,
+      _openid, plant_id, plant_identity_id, session_plant_id, canonical_name, recognized_name,
       source_type, recognition_type, recognition_confidence, identity_resolution_status,
-      visual_call_batch_id, nickname, location, photos, plant_genus, plant_family_en, plant_latin_name
+      visual_call_batch_id, nickname, location, plant_date, notes, light_environment_json, photos,
+      plant_genus, plant_family_en, plant_latin_name
     ) VALUES (
-      {{openid}}, {{plantId}}, {{plantIdentityId}}, {{legacyPlantId}}, {{canonicalName}}, {{recognizedName}},
+      {{openid}}, {{plantId}}, {{plantIdentityId}}, {{sessionPlantId}}, {{canonicalName}}, {{recognizedName}},
       {{sourceType}}, {{recognitionType}}, NULLIF({{recognitionConfidence}}, ''), {{identityResolutionStatus}},
-      {{visualCallBatchId}}, {{nickname}}, {{location}}, {{photos}}, {{plantGenus}}, {{plantFamilyEn}}, {{plantLatinName}}
+      {{visualCallBatchId}}, {{nickname}}, {{location}}, NULLIF({{plantDate}}, ''), {{notes}}, {{lightEnvironmentJson}}, {{photos}},
+      {{plantGenus}}, {{plantFamilyEn}}, {{plantLatinName}}
     )
   `
 
   await models.$runSQL(sql, {
     openid,
-    plantId: compatibilityPlantId,
+    plantId: matchedPlantId,
     plantIdentityId: persistedPlantIdentityId,
-    legacyPlantId: persistedLegacyPlantId,
+    sessionPlantId: persistedSessionPlantId,
     canonicalName,
     recognizedName: normalizedRecognizedName,
     sourceType: normalizeNullableString(sourceType) || 'catalog',
@@ -472,6 +529,9 @@ async function createUserPlantInstance({
     visualCallBatchId: normalizedVisualCallBatchId,
     nickname: normalizeNullableString(nickname),
     location: normalizeNullableString(location),
+    plantDate: toNullableDateParam(plantDate),
+    notes: normalizeUserPlantNotes(notes),
+    lightEnvironmentJson: stringifyNullableJson(lightEnvironment),
     photos: photos ? JSON.stringify(photos) : null,
     plantGenus,
     plantFamilyEn,
@@ -488,7 +548,7 @@ async function createUserPlantInstance({
         FROM user_plant_instances
         WHERE _openid = {{openid}}
           AND COALESCE(plant_identity_id, '') = COALESCE({{plantIdentityId}}, '')
-          AND COALESCE(legacy_plant_id, '') = COALESCE({{legacyPlantId}}, '')
+          AND COALESCE(session_plant_id, '') = COALESCE({{sessionPlantId}}, '')
           AND COALESCE(recognized_name, '') = COALESCE({{recognizedName}}, '')
           AND COALESCE(nickname, '') = COALESCE({{nickname}}, '')
           AND COALESCE(location, '') = COALESCE({{location}}, '')
@@ -498,7 +558,7 @@ async function createUserPlantInstance({
       {
         openid,
         plantIdentityId: persistedPlantIdentityId,
-        legacyPlantId: persistedLegacyPlantId,
+        sessionPlantId: persistedSessionPlantId,
         recognizedName: normalizedRecognizedName,
         nickname: normalizeNullableString(nickname),
         location: normalizeNullableString(location)
@@ -526,19 +586,25 @@ const USER_PLANT_LATEST_DIAGNOSIS_SQL = `
 `
 
 function mapUserPlantInstanceRow(row, plant = null) {
-  const plantIdentityId = plant?.plantIdentityId || row.plant_identity_id || ''
-  const legacyPlantId = plant?.legacyPlantId || row.legacy_plant_id || ''
-  const canonicalName = row.canonical_name || plant?.canonicalName || row.recognized_name || ''
+  const plantIdentityId = plant?.plantIdentityId || normalizeNullableString(row.plant_identity_id) || ''
+  const sessionPlantId = plant?.sessionPlantId || normalizeNullableString(row.session_plant_id) || ''
+  const canonicalName =
+    normalizeNullableString(row.canonical_name) ||
+    plant?.canonicalName ||
+    normalizeNullableString(row.recognized_name) ||
+    ''
+  const nickname = normalizeNullableString(row.nickname) || ''
+  const recognizedName = normalizeNullableString(row.recognized_name) || ''
 
   return {
     id: row.id,
-    plantId: row.plant_id,
+    plantId: normalizeNullableString(row.plant_id) || '',
     plantIdentityId,
-    legacyPlantId,
+    sessionPlantId,
     canonicalName,
-    nickname: row.nickname || '',
-    displayName: row.nickname || canonicalName || row.recognized_name || '未命名植物',
-    recognizedName: row.recognized_name || '',
+    nickname,
+    displayName: nickname || canonicalName || recognizedName || '未命名植物',
+    recognizedName,
     sourceType: row.source_type || 'catalog',
     recognitionType: row.recognition_type || '',
     recognitionConfidence:
@@ -549,7 +615,13 @@ function mapUserPlantInstanceRow(row, plant = null) {
       row.identity_resolution_status || (plantIdentityId ? 'matched' : 'unresolved'),
     visualCallBatchId: row.visual_call_batch_id || '',
     location: row.location || '未设置',
+    plantDate: row.plant_date || null,
+    notes: row.notes ?? '',
     photos: parseJsonField(row.photos, []),
+    lightEnvironment: parseJsonField(
+      row.light_environment_json_text ?? row.light_environment_json,
+      null
+    ),
     imageFileId: plant?.imageFileId || '',
     lastWatered: row.last_watered || null,
     nextWater: row.next_water || null,
@@ -568,7 +640,47 @@ function mapUserPlantInstanceRow(row, plant = null) {
     humidityMax: plant?.humidityMax ?? null,
     varianceLevel: plant?.varianceLevel || '',
     healthStatus: row.health_status || 'unknown',
-    healthScore: row.health_score === null || row.health_score === undefined ? null : Number(row.health_score)
+    healthScore:
+      row.health_score === null || row.health_score === undefined ? null : Number(row.health_score),
+    // 盆型档案（直接来自主表列，前端 WateringReminderSheet 直接读取）
+    potProfile: mapPotProfileFromRow(row)
+  }
+}
+
+/**
+ * 从 user_plant_instances 行提取盆型档案。
+ * substrate_type 可能是 JSON 数组字符串（多选+比例）或单值。
+ */
+function mapPotProfileFromRow(row) {
+  const substrateType = row.substrate_type || 'unknown'
+  let substrateComposition = null
+  if (typeof substrateType === 'string' && substrateType.startsWith('[')) {
+    try {
+      substrateComposition = JSON.parse(substrateType)
+    } catch {
+      substrateComposition = null
+    }
+  }
+  return {
+    potTopDiameterCm:
+      row.pot_top_diameter_cm === null || row.pot_top_diameter_cm === undefined
+        ? null
+        : Number(row.pot_top_diameter_cm),
+    potBottomDiameterCm:
+      row.pot_bottom_diameter_cm === null || row.pot_bottom_diameter_cm === undefined
+        ? null
+        : Number(row.pot_bottom_diameter_cm),
+    potHeightCm:
+      row.pot_height_cm === null || row.pot_height_cm === undefined
+        ? null
+        : Number(row.pot_height_cm),
+    hasDrainageHole: row.has_drainage_hole || 'true',
+    potMaterial: row.pot_material || 'unknown',
+    substrateType,
+    substrateComposition,
+    profileVersion: Number(row.pot_profile_version || 1),
+    source: row.pot_profile_source || 'default',
+    confidence: row.pot_profile_confidence || 'low'
   }
 }
 
@@ -578,7 +690,7 @@ async function getUserPlantInstanceById(openid, id) {
       up.id,
       up.plant_id,
       up.plant_identity_id,
-      up.legacy_plant_id,
+      up.session_plant_id,
       up.canonical_name,
       up.recognized_name,
       up.source_type,
@@ -588,6 +700,9 @@ async function getUserPlantInstanceById(openid, id) {
       up.visual_call_batch_id,
       up.nickname,
       up.location,
+      up.plant_date,
+      up.notes,
+      CAST(up.light_environment_json AS CHAR) AS light_environment_json_text,
       up.photos,
       up.last_watered,
       up.next_water,
@@ -595,6 +710,15 @@ async function getUserPlantInstanceById(openid, id) {
       up.plant_genus,
       up.plant_family_en,
       up.plant_latin_name,
+      up.pot_top_diameter_cm,
+      up.pot_bottom_diameter_cm,
+      up.pot_height_cm,
+      up.has_drainage_hole,
+      up.pot_material,
+      up.substrate_type,
+      up.pot_profile_version,
+      up.pot_profile_source,
+      up.pot_profile_confidence,
       ds.health_status,
       ds.health_score
     FROM user_plant_instances up
@@ -604,22 +728,117 @@ async function getUserPlantInstanceById(openid, id) {
   `
   const result = await models.$runSQL(sql, { openid, id: Number(id) })
   const row = result?.data?.executeResultList?.[0]
-  if (!row) {return null}
+  if (!row) {
+    return null
+  }
 
   const plantLookupId = resolveUserPlantCatalogLookupId(row)
   const plant = plantLookupId ? await getPlantCatalogById(plantLookupId) : null
-  return mapUserPlantInstanceRow(row, plant)
+  const plantInstance = mapUserPlantInstanceRow(row, plant)
+  // 单独 try/catch 查询 watering_events_json，列不存在时不阻断主流程
+  plantInstance.wateringEvents = await getUserPlantWateringEvents(openid, id)
+  return plantInstance
+}
+
+async function getUserPlantWateringEvents(openid, id, limit = 10) {
+  try {
+    const result = await models.$runSQL(
+      `SELECT id, event_date, amount_label, amount_ml, source, plan_id, created_at
+       FROM user_watering_events
+       WHERE _openid = {{openid}} AND user_plant_id = {{userPlantId}}
+       ORDER BY event_date DESC LIMIT {{limit}}`,
+      { openid, userPlantId: Number(id), limit: Number(limit) }
+    )
+    const rows = result?.data?.executeResultList || []
+    return rows.map(row => ({
+      id: row.id,
+      date: row.event_date,
+      watered: true,
+      amount: row.amount_label,
+      amountMl: row.amount_ml,
+      source: row.source,
+      planId: row.plan_id
+    }))
+  } catch {
+    // 表不存在或查询失败时返回 null，不阻断主流程
+    return null
+  }
+}
+
+/**
+ * 插入单条浇水事件到独立审计表。
+ * @param {string} openid
+ * @param {number} userPlantId - user_plant_instances.id
+ * @param {object} event - { date, amount, amountMl, source, planId }
+ */
+async function insertWateringEvent(openid, userPlantId, event = {}) {
+  const params = {
+    openid,
+    userPlantId: Number(userPlantId),
+    eventDate: event.date || null,
+    amountLabel: event.amount || event.amount_label || null,
+    amountMl: event.amountMl || event.amount_ml || null,
+    source: event.source || 'manual',
+    planId: event.planId || event.plan_id || null
+  }
+  if (!params.eventDate) {
+    return null
+  }
+  await models.$runSQL(
+    `INSERT INTO user_watering_events (_openid, user_plant_id, event_date, amount_label, amount_ml, source, plan_id)
+     VALUES ({{openid}}, {{userPlantId}}, {{eventDate}}, {{amountLabel}}, {{amountMl}}, {{source}}, {{planId}})`,
+    params
+  )
+  return params
+}
+
+/**
+ * 精简查询：仅取 planner 所需的属级浇水策略 + 温湿度 bounds + 盆型扩展。
+ * 分两步查询避免跨表 JOIN collation 冲突：
+ *   1. 从 user_plant_instances 取 plant_id / session_plant_id
+ *   2. 用 getPlantCatalogById 取属级 watering 策略
+ *   3. 从 user_plant_instances 主表盆型列取盆型档案（v2.1）
+ * 不查 watering_events_json（planner 不需要），比 getUserPlantInstanceById 少一次 SQL。
+ */
+async function getUserPlantWateringStrategy(openid, id) {
+  const result = await models.$runSQL(
+    'SELECT plant_id, session_plant_id FROM user_plant_instances WHERE id = {{id}} AND _openid = {{openid}} LIMIT 1',
+    { openid, id: Number(id) }
+  )
+  const row = result?.data?.executeResultList?.[0]
+  if (!row) {
+    return null
+  }
+  const lookupId = resolveUserPlantCatalogLookupId(row)
+  if (!lookupId) {
+    return null
+  }
+  const plant = await getPlantCatalogById(lookupId)
+  if (!plant) {
+    return null
+  }
+  const potProfile = await getUserPlantCareExtension(openid, id)
+  return {
+    watering: plant.watering || null,
+    wateringQuantization: plant.wateringQuantization || null,
+    temperatureMin: plant.temperatureMin ?? null,
+    temperatureMax: plant.temperatureMax ?? null,
+    humidityMin: plant.humidityMin ?? null,
+    humidityMax: plant.humidityMax ?? null,
+    potProfile
+  }
 }
 
 async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) {
   const limit = Number(pageSize)
   const offset = (Number(page) - 1) * limit
+  const displayableIdentityCondition = displayableUserPlantSqlCondition('up')
   const sql = `
     SELECT
       up.id,
       up.plant_id,
       up.plant_identity_id,
-      up.legacy_plant_id,
+      up.session_plant_id,
       up.canonical_name,
       up.recognized_name,
       up.source_type,
@@ -629,6 +848,9 @@ async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) 
       up.visual_call_batch_id,
       up.nickname,
       up.location,
+      up.plant_date,
+      up.notes,
+      CAST(up.light_environment_json AS CHAR) AS light_environment_json_text,
       up.photos,
       up.last_watered,
       up.next_water,
@@ -636,27 +858,36 @@ async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) 
       up.plant_genus,
       up.plant_family_en,
       up.plant_latin_name,
+      up.pot_top_diameter_cm,
+      up.pot_bottom_diameter_cm,
+      up.pot_height_cm,
+      up.has_drainage_hole,
+      up.pot_material,
+      up.substrate_type,
+      up.pot_profile_version,
+      up.pot_profile_source,
+      up.pot_profile_confidence,
       ds.health_status,
       ds.health_score
     FROM user_plant_instances up
     ${USER_PLANT_LATEST_DIAGNOSIS_SQL}
     WHERE up._openid = {{openid}}
+      AND ${displayableIdentityCondition}
     ORDER BY up.created_at DESC
     LIMIT {{limit}} OFFSET {{offset}}
   `
   const countResult = await models.$runSQL(
-    'SELECT COUNT(*) AS total FROM user_plant_instances WHERE _openid = {{openid}}',
+    `SELECT COUNT(*) AS total
+     FROM user_plant_instances up
+     WHERE up._openid = {{openid}}
+       AND ${displayableIdentityCondition}`,
     { openid }
   )
   const total = Number(countResult?.data?.executeResultList?.[0]?.total || 0)
   const result = await models.$runSQL(sql, { openid, limit, offset })
-  const rows = result?.data?.executeResultList || []
+  const rows = (result?.data?.executeResultList || []).filter(hasDisplayableUserPlantIdentity)
   const plantIds = Array.from(
-    new Set(
-      rows
-        .map(row => resolveUserPlantCatalogLookupId(row))
-        .filter(Boolean)
-    )
+    new Set(rows.map(row => resolveUserPlantCatalogLookupId(row)).filter(Boolean))
   )
   const plants = await Promise.all(
     plantIds.map(async plantId => [plantId, await getPlantCatalogById(plantId)])
@@ -665,10 +896,7 @@ async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) 
 
   return {
     list: rows.map(row =>
-      mapUserPlantInstanceRow(
-        row,
-        plantMap.get(resolveUserPlantCatalogLookupId(row)) || null
-      )
+      mapUserPlantInstanceRow(row, plantMap.get(resolveUserPlantCatalogLookupId(row)) || null)
     ),
     total,
     page: Number(page),
@@ -694,9 +922,21 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
     fields.push('location = {{location}}')
     params.location = updates.location
   }
+  if (hasOwnField(updates, 'plantDate')) {
+    fields.push("plant_date = NULLIF({{plantDate}}, '')")
+    params.plantDate = toNullableDateParam(updates.plantDate)
+  }
+  if (hasOwnField(updates, 'notes')) {
+    fields.push('notes = {{notes}}')
+    params.notes = normalizeUserPlantNotes(updates.notes)
+  }
   if (updates.photos !== undefined) {
     fields.push('photos = {{photos}}')
     params.photos = updates.photos ? JSON.stringify(updates.photos) : null
+  }
+  if (hasOwnField(updates, 'lightEnvironment')) {
+    fields.push('light_environment_json = {{lightEnvironmentJson}}')
+    params.lightEnvironmentJson = stringifyNullableJson(updates.lightEnvironment)
   }
   if (updates.lastWatered !== undefined) {
     fields.push('last_watered = {{lastWatered}}')
@@ -706,18 +946,103 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
     fields.push('next_water = {{nextWater}}')
     params.nextWater = updates.nextWater
   }
+  if (hasOwnField(updates, 'wateringEvents')) {
+    // 事件写入独立审计表，不再覆盖写 JSON 列
+    params.wateringEvents = updates.wateringEvents
+  }
 
-  if (!fields.length) {
+  // 盆型档案字段检测（同时兼容 camelCase / snake_case）
+  const hasPotProfileUpdate =
+    hasOwnField(updates, 'potTopDiameterCm') ||
+    hasOwnField(updates, 'pot_top_diameter_cm') ||
+    hasOwnField(updates, 'potBottomDiameterCm') ||
+    hasOwnField(updates, 'pot_bottom_diameter_cm') ||
+    hasOwnField(updates, 'potHeightCm') ||
+    hasOwnField(updates, 'pot_height_cm') ||
+    hasOwnField(updates, 'hasDrainageHole') ||
+    hasOwnField(updates, 'has_drainage_hole') ||
+    hasOwnField(updates, 'potMaterial') ||
+    hasOwnField(updates, 'pot_material') ||
+    hasOwnField(updates, 'substrateType') ||
+    hasOwnField(updates, 'substrate_type') ||
+    hasOwnField(updates, 'source') ||
+    hasOwnField(updates, 'confidence')
+
+  if (!fields.length && params.wateringEvents === undefined && !hasPotProfileUpdate) {
     return existing
   }
 
-  const sql = `
-    UPDATE user_plant_instances
-    SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP
-    WHERE id = {{id}} AND _openid = {{openid}}
-  `
-  await models.$runSQL(sql, params)
-  return getUserPlantInstanceById(openid, id)
+  // 主 UPDATE 不含 watering_events_json，避免列不存在时整条 SQL 失败
+  // （last_watered / next_water 等字段必须能正常写入）
+  let updated
+  if (fields.length) {
+    const sql = `
+      UPDATE user_plant_instances
+      SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP
+      WHERE id = {{id}} AND _openid = {{openid}}
+    `
+    await models.$runSQL(sql, params)
+    updated = await getUserPlantInstanceById(openid, id)
+  } else {
+    updated = existing
+  }
+
+  // 浇水事件逐条 INSERT 到独立审计表
+  if (params.wateringEvents !== undefined && Array.isArray(params.wateringEvents)) {
+    for (const ev of params.wateringEvents) {
+      try {
+        await insertWateringEvent(openid, id, ev)
+      } catch {
+        // 单条事件写入失败不阻断其余事件
+      }
+    }
+    updated = await getUserPlantInstanceById(openid, id)
+  }
+
+  // 盆型档案单独 try/catch 写入，列不存在时跳过而不阻断主流程
+  // 保留 pot_profile_version = pot_profile_version + 1 的版本自增语义
+  if (hasPotProfileUpdate) {
+    const potParams = {
+      openid,
+      id: Number(id),
+      potTopDiameterCm: toNullableDecimal(updates.potTopDiameterCm ?? updates.pot_top_diameter_cm),
+      potBottomDiameterCm: toNullableDecimal(
+        updates.potBottomDiameterCm ?? updates.pot_bottom_diameter_cm
+      ),
+      potHeightCm: toNullableDecimal(updates.potHeightCm ?? updates.pot_height_cm),
+      hasDrainageHole:
+        normalizeNullableString(updates.hasDrainageHole ?? updates.has_drainage_hole) || 'true',
+      potMaterial:
+        normalizeNullableString(updates.potMaterial ?? updates.pot_material) || 'unknown',
+      substrateType:
+        normalizeNullableString(updates.substrateType ?? updates.substrate_type) || 'unknown',
+      source: normalizeNullableString(updates.source) || 'user',
+      confidence: normalizeNullableString(updates.confidence) || 'normal'
+    }
+    try {
+      await models.$runSQL(
+        `UPDATE user_plant_instances
+        SET
+          pot_top_diameter_cm = NULLIF({{potTopDiameterCm}}, ''),
+          pot_bottom_diameter_cm = NULLIF({{potBottomDiameterCm}}, ''),
+          pot_height_cm = NULLIF({{potHeightCm}}, ''),
+          has_drainage_hole = {{hasDrainageHole}},
+          pot_material = {{potMaterial}},
+          substrate_type = {{substrateType}},
+          pot_profile_source = {{source}},
+          pot_profile_confidence = {{confidence}},
+          pot_profile_version = pot_profile_version + 1,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = {{id}} AND _openid = {{openid}}`,
+        potParams
+      )
+    } catch {
+      // 列不存在时忽略，不阻断 nickname / last_watered 等字段的写入
+    }
+    updated = await getUserPlantInstanceById(openid, id)
+  }
+
+  return updated
 }
 
 async function deleteUserPlantInstance(openid, id) {
@@ -725,11 +1050,99 @@ async function deleteUserPlantInstance(openid, id) {
   if (!existing) {
     throw new Error('植物不存在或无权限删除')
   }
-  await models.$runSQL('DELETE FROM user_plant_instances WHERE id = {{id}} AND _openid = {{openid}}', {
-    id: Number(id),
-    openid
-  })
+  await models.$runSQL(
+    'DELETE FROM user_plant_instances WHERE id = {{id}} AND _openid = {{openid}}',
+    {
+      id: Number(id),
+      openid
+    }
+  )
   return true
+}
+
+/* ---------- 用户植物盆型档案（v2.1，落用户植物主表 user_plant_instances） ---------- */
+
+/**
+ * 读取用户植物盆型档案。
+ * 盆型信息直接存在 user_plant_instances 主表列上，不再使用独立扩展表。
+ * 列不存在时返回默认档案，不阻断主流程。
+ */
+async function getUserPlantCareExtension(openid, userPlantId) {
+  try {
+    const result = await models.$runSQL(
+      `SELECT
+        pot_top_diameter_cm,
+        pot_bottom_diameter_cm,
+        pot_height_cm,
+        has_drainage_hole,
+        pot_material,
+        substrate_type,
+        pot_profile_version,
+        pot_profile_source,
+        pot_profile_confidence
+      FROM user_plant_instances
+      WHERE _openid = {{openid}} AND id = {{userPlantId}}
+      LIMIT 1`,
+      { openid, userPlantId: Number(userPlantId) }
+    )
+    const row = result?.data?.executeResultList?.[0]
+    if (!row) {
+      return buildDefaultPotProfile()
+    }
+    return mapCareExtensionRow(row)
+  } catch {
+    // 列不存在或查询失败时返回默认档案
+    return buildDefaultPotProfile()
+  }
+}
+
+function mapCareExtensionRow(row) {
+  // substrate_type 可能是 JSON（多选+比例）或单值字符串
+  const substrateType = row.substrate_type || 'unknown'
+  let substrateComposition = null
+  if (typeof substrateType === 'string' && substrateType.startsWith('[')) {
+    try {
+      substrateComposition = JSON.parse(substrateType)
+    } catch {
+      substrateComposition = null
+    }
+  }
+
+  return {
+    potTopDiameterCm:
+      row.pot_top_diameter_cm === null || row.pot_top_diameter_cm === undefined
+        ? null
+        : Number(row.pot_top_diameter_cm),
+    potBottomDiameterCm:
+      row.pot_bottom_diameter_cm === null || row.pot_bottom_diameter_cm === undefined
+        ? null
+        : Number(row.pot_bottom_diameter_cm),
+    potHeightCm:
+      row.pot_height_cm === null || row.pot_height_cm === undefined
+        ? null
+        : Number(row.pot_height_cm),
+    hasDrainageHole: row.has_drainage_hole || 'true',
+    potMaterial: row.pot_material || 'unknown',
+    substrateType,
+    substrateComposition,
+    profileVersion: Number(row.pot_profile_version || 1),
+    source: row.pot_profile_source || 'user',
+    confidence: row.pot_profile_confidence || 'normal'
+  }
+}
+
+function buildDefaultPotProfile() {
+  return {
+    potTopDiameterCm: null,
+    potBottomDiameterCm: null,
+    potHeightCm: null,
+    hasDrainageHole: 'true',
+    potMaterial: 'unknown',
+    substrateType: 'unknown',
+    profileVersion: 1,
+    source: 'default',
+    confidence: 'low'
+  }
 }
 
 async function recordIdentifySession({
@@ -833,7 +1246,10 @@ async function listDiagnosisSessions(openid, { page = 1, pageSize = 10, userPlan
       mainIssue: row.final_problem_cn || row.top_problem_key || null,
       summary: normalizeReliabilitySummary(row.ai_summary || '', row.reliability_score),
       imageUrl: row.image_url || '',
-      healthScore: row.health_score === null || row.health_score === undefined ? null : Number(row.health_score),
+      healthScore:
+        row.health_score === null || row.health_score === undefined
+          ? null
+          : Number(row.health_score),
       healthStatus: row.health_status || 'unknown',
       reliabilityScore:
         row.reliability_score === null || row.reliability_score === undefined
@@ -845,7 +1261,9 @@ async function listDiagnosisSessions(openid, { page = 1, pageSize = 10, userPlan
     total: Number(countResult?.data?.executeResultList?.[0]?.total || 0),
     page: Number(page),
     pageSize: limit,
-    hasMore: offset + (listResult?.data?.executeResultList || []).length < Number(countResult?.data?.executeResultList?.[0]?.total || 0)
+    hasMore:
+      offset + (listResult?.data?.executeResultList || []).length <
+      Number(countResult?.data?.executeResultList?.[0]?.total || 0)
   }
 }
 
@@ -880,376 +1298,6 @@ async function resolvePlantContext({ openid, plantId = null, userPlantId = null 
   }
 }
 
-async function loadProblemRelations(problemKey) {
-  if (!problemKey) {
-    return { causes: [], effects: [] }
-  }
-
-  const result = await models.$runSQL(
-    `
-      SELECT
-        cause_problem_key,
-        effect_problem_key,
-        relation_type,
-        relation_strength,
-        note
-      FROM problem_causality
-      WHERE is_active = 1
-        AND (
-          cause_problem_key = {{problemKey}}
-          OR effect_problem_key = {{problemKey}}
-        )
-      ORDER BY relation_strength DESC, id ASC
-    `,
-    { problemKey }
-  )
-
-  const rows = result?.data?.executeResultList || []
-  return {
-    causes: rows
-      .filter(row => row.cause_problem_key === problemKey)
-      .map(row => ({
-        causeProblemKey: row.cause_problem_key,
-        effectProblemKey: row.effect_problem_key,
-        relationType: row.relation_type || 'causes',
-        relationStrength: Number(row.relation_strength || 0),
-        note: row.note || ''
-      })),
-    effects: rows
-      .filter(row => row.effect_problem_key === problemKey)
-      .map(row => ({
-        causeProblemKey: row.cause_problem_key,
-        effectProblemKey: row.effect_problem_key,
-        relationType: row.relation_type || 'causes',
-        relationStrength: Number(row.relation_strength || 0),
-        note: row.note || ''
-      }))
-  }
-}
-
-async function loadProblemCausality(problemKeys) {
-  const keys = Array.from(
-    new Set(
-      (problemKeys || [])
-        .map(key => String(key || '').trim())
-        .filter(Boolean)
-    )
-  )
-  if (!keys.length) {
-    return []
-  }
-
-  const result = await models.$runSQL(
-    `
-      SELECT
-        cause_problem_key,
-        effect_problem_key,
-        relation_type,
-        relation_strength,
-        note
-      FROM problem_causality
-      WHERE is_active = 1
-        AND (
-          cause_problem_key IN ${sqlInList(keys)}
-          OR effect_problem_key IN ${sqlInList(keys)}
-        )
-      ORDER BY relation_strength DESC, id ASC
-    `,
-    {}
-  )
-
-  return result?.data?.executeResultList || []
-}
-
-function buildQuestionText(symptom) {
-  switch (symptom.locationKey) {
-    case 'leaf':
-      return `叶片上是否出现“${symptom.symptomCn}”？`
-    case 'root':
-      return `根部是否出现“${symptom.symptomCn}”？`
-    case 'soil':
-      return `盆土或基质是否出现“${symptom.symptomCn}”？`
-    case 'flower':
-      return `花朵是否出现“${symptom.symptomCn}”？`
-    case 'stem':
-      return `茎部是否出现“${symptom.symptomCn}”？`
-    default:
-      return `植株是否出现“${symptom.symptomCn}”？`
-  }
-}
-
-async function buildDiagnosisDecision({
-  openid,
-  plantId = null,
-  userPlantId = null,
-  observedSymptoms = [],
-  excludedSymptomKeys = []
-}) {
-  const plantContext = await resolvePlantContext({ openid, plantId, userPlantId })
-  const candidateResult = await models.$runSQL(
-    `
-      SELECT
-        ppp.problem_key,
-        p.problem_cn,
-        p.problem_type,
-        ppp.host_compatibility,
-        COALESCE(ppp.genus_compatibility, 0) AS is_genus_candidate
-      FROM plant_problem_profiles ppp
-      JOIN problems p ON p.problem_key = ppp.problem_key
-      WHERE ppp.plant_id = {{plantId}}
-      ORDER BY ppp.host_compatibility DESC, ppp.problem_key ASC
-    `,
-    { plantId: plantContext.plantId }
-  )
-  const candidates = candidateResult?.data?.executeResultList || []
-  if (!candidates.length) {
-    return {
-      plant: plantContext,
-      rankings: [],
-      topProblemKey: '',
-      topProblemCn: '',
-      topScore: 0,
-      topScoreGap: 0,
-      reliabilityScore: 0,
-      supportingSymptomCount: 0,
-      decisiveSymptomCount: 0,
-      needsFollowUp: true,
-      followUps: []
-    }
-  }
-
-  const symptomInputs = observedSymptoms
-    .map(item => ({
-      symptomKey: String(item.symptomKey || item.symptom_key || '').trim(),
-      confidence: Number(item.confidence || 0)
-    }))
-    .filter(item => item.symptomKey && item.confidence > 0)
-  const symptomKeys = symptomInputs.map(item => item.symptomKey)
-
-  const evidenceByProblem = new Map()
-  const symptomsByKey = new Map()
-
-  if (symptomKeys.length) {
-    const [symptomResult, evidenceResult] = await Promise.all([
-      models.$runSQL(
-        `
-          SELECT
-            symptom_key,
-            symptom_cn,
-            location_key,
-            COALESCE(signal_reliability, 0) AS base_evidence_weight,
-            COALESCE(signal_reliability, 0) AS symptom_reliability
-          FROM symptoms
-          WHERE symptom_key IN ${sqlInList(symptomKeys)}
-        `,
-        {}
-      ),
-      models.$runSQL(
-        `
-          SELECT symptom_key, problem_key, association_strength, edge_reliability AS evidence_reliability
-          FROM symptom_problem_evidence
-          WHERE symptom_key IN ${sqlInList(symptomKeys)}
-            AND problem_key IN ${sqlInList(candidates.map(item => item.problem_key))}
-        `,
-        {}
-      )
-    ])
-
-    for (const row of symptomResult?.data?.executeResultList || []) {
-      symptomsByKey.set(row.symptom_key, row)
-    }
-    for (const row of evidenceResult?.data?.executeResultList || []) {
-      const list = evidenceByProblem.get(row.problem_key) || []
-      list.push(row)
-      evidenceByProblem.set(row.problem_key, list)
-    }
-  }
-
-  const rankings = candidates
-    .map(candidate => {
-      const hostCompatibility = clampProbability(candidate.host_compatibility)
-      const genusCompatibility = Number(candidate.is_genus_candidate || 0) > 0 ? 1 : 0
-      const evidenceRows = evidenceByProblem.get(candidate.problem_key) || []
-      let symptomSupportScore = 0
-      let evidenceCount = 0
-      let decisiveSymptomCount = 0
-
-      for (const symptomInput of symptomInputs) {
-        const symptomMeta = symptomsByKey.get(symptomInput.symptomKey)
-        const evidence = evidenceRows.find(item => item.symptom_key === symptomInput.symptomKey)
-        if (!symptomMeta || !evidence) {continue}
-
-        const contribution =
-          Number(evidence.association_strength || 0) *
-          Number(symptomMeta.symptom_reliability || 0) *
-          genusCompatibility *
-          hostCompatibility
-
-        symptomSupportScore += contribution
-        if (contribution > DIAGNOSIS_RULES.decisiveContributionThreshold) {
-          evidenceCount += 1
-        }
-        if (
-          Number(evidence.association_strength || 0) >= DIAGNOSIS_RULES.decisiveAssociationStrength &&
-          Number(symptomMeta.symptom_reliability || 0) >= DIAGNOSIS_RULES.decisiveSymptomReliability &&
-          genusCompatibility === 1 &&
-          hostCompatibility >= DIAGNOSIS_RULES.decisiveHostCompatibility
-        ) {
-          decisiveSymptomCount += 1
-        }
-      }
-
-      const maxSupportScore = symptomInputs.reduce((total, symptomInput) => {
-        const symptomMeta = symptomsByKey.get(symptomInput.symptomKey)
-        return total + Number(symptomMeta?.symptom_reliability || 0)
-      }, 0)
-      const weightedScore = maxSupportScore > 0 ? symptomSupportScore / maxSupportScore : 0
-
-      return {
-        problemKey: candidate.problem_key,
-        problemCn: candidate.problem_cn || candidate.problem_key,
-        problemType: candidate.problem_type || '',
-        genusCompatibility: round(genusCompatibility),
-        hostCompatibility: round(hostCompatibility),
-        symptomSupportScore: round(symptomSupportScore),
-        evidenceCount,
-        decisiveSymptomCount,
-        weightedScore: round(weightedScore)
-      }
-    })
-    .sort((a, b) => b.weightedScore - a.weightedScore)
-    .map((item, index) => ({
-      ...item,
-      rankNo: index + 1,
-      isDecisive: index === 0 && item.decisiveSymptomCount > 0
-    }))
-
-  const top = rankings[0]
-  const second = rankings[1] || { weightedScore: 0 }
-  const topScoreGap = round(top.weightedScore - second.weightedScore)
-  const reliabilityScore = round(clampProbability(
-    top.weightedScore +
-      Math.min(topScoreGap, DIAGNOSIS_RULES.reliabilityGapCap) * DIAGNOSIS_RULES.reliabilityGapFactor
-  ))
-  const supportingSymptomCount = top.evidenceCount
-  const decisiveSymptomCount = top.decisiveSymptomCount
-  const needsFollowUp = !(
-    top.weightedScore >= DIAGNOSIS_RULES.followUpTopScoreThreshold &&
-    topScoreGap >= DIAGNOSIS_RULES.followUpScoreGapThreshold &&
-    supportingSymptomCount >= DIAGNOSIS_RULES.followUpSupportingSymptomThreshold &&
-    decisiveSymptomCount >= DIAGNOSIS_RULES.followUpDecisiveSymptomThreshold
-  )
-
-  const followUps = []
-  if (needsFollowUp) {
-    const topRankingKeys = rankings.slice(0, DIAGNOSIS_RULES.followUpMaxQuestions).map(item => item.problemKey)
-    const causalityRows = await loadProblemCausality(topRankingKeys)
-    const causalityCandidateKeys = []
-
-    for (const row of causalityRows) {
-      if (topRankingKeys.includes(row.cause_problem_key) && row.effect_problem_key) {
-        causalityCandidateKeys.push(row.effect_problem_key)
-      }
-      if (topRankingKeys.includes(row.effect_problem_key) && row.cause_problem_key) {
-        causalityCandidateKeys.push(row.cause_problem_key)
-      }
-    }
-
-    const topCandidateKeys = Array.from(
-      new Set([...topRankingKeys, ...causalityCandidateKeys])
-    ).slice(0, DIAGNOSIS_RULES.followUpMaxQuestions + causalityCandidateKeys.length)
-    const evidenceResult = await models.$runSQL(
-      `
-        SELECT
-          spe.symptom_key,
-          spe.problem_key,
-          spe.association_strength,
-          spe.edge_reliability AS evidence_reliability,
-          s.symptom_cn,
-          s.location_key,
-          COALESCE(s.signal_reliability, 0) AS symptom_reliability,
-          COALESCE(s.signal_reliability, 0) AS base_evidence_weight
-        FROM symptom_problem_evidence spe
-        JOIN symptoms s ON s.symptom_key = spe.symptom_key
-        WHERE spe.problem_key IN ${sqlInList(topCandidateKeys)}
-      `,
-      {}
-    )
-
-    const observedSet = new Set(symptomKeys)
-    const excludedSet = new Set(
-      excludedSymptomKeys.map(item => String(item || '').trim()).filter(Boolean)
-    )
-    const candidateMetaMap = new Map(rankings.map(item => [item.problemKey, item]))
-    const questionMap = new Map()
-    for (const row of evidenceResult?.data?.executeResultList || []) {
-      if (observedSet.has(row.symptom_key) || excludedSet.has(row.symptom_key)) {continue}
-      const candidateMeta = candidateMetaMap.get(row.problem_key)
-      if (!candidateMeta) {continue}
-      const item = questionMap.get(row.symptom_key) || {
-        symptomKey: row.symptom_key,
-        symptomCn: row.symptom_cn,
-        locationKey: row.location_key,
-        symptomReliability: Number(row.symptom_reliability || 0),
-        weights: {}
-      }
-      item.weights[row.problem_key] =
-        Number(row.association_strength || 0) *
-        Number(row.symptom_reliability || 0) *
-        Number(candidateMeta.genusCompatibility || 0) *
-        Number(candidateMeta.hostCompatibility || 0)
-      questionMap.set(row.symptom_key, item)
-    }
-
-    const questions = Array.from(questionMap.values())
-      .map(item => {
-        const values = topCandidateKeys.map(problemKey => Number(item.weights[problemKey] || 0))
-        const informationGain = (Math.max(...values) - Math.min(...values)) * item.symptomReliability
-        return {
-          symptomKey: item.symptomKey,
-          symptomCn: item.symptomCn,
-          locationKey: item.locationKey,
-          informationGain: round(informationGain),
-          questionText: buildQuestionText(item),
-          rationale: `用于区分 ${rankings
-            .slice(0, 2)
-            .map(candidate => candidate.problemCn)
-            .join(' / ')}${causalityRows.length ? '，并覆盖相关诱因链' : ''}`
-        }
-      })
-      .filter(item => item.informationGain > 0)
-      .sort((a, b) => b.informationGain - a.informationGain)
-      .slice(0, 3)
-
-    for (let index = 0; index < questions.length; index += 1) {
-      followUps.push({
-        questionOrder: index + 1,
-        ...questions[index]
-      })
-    }
-  }
-
-  const finalNeedsFollowUp = Boolean(needsFollowUp && followUps.length > 0)
-
-  const problemRelations = await loadProblemRelations(top.problemKey)
-
-  return {
-    plant: plantContext,
-    rankings,
-    topProblemKey: top.problemKey,
-    topProblemCn: top.problemCn,
-    topScore: top.weightedScore,
-    topScoreGap,
-    reliabilityScore,
-    supportingSymptomCount,
-    decisiveSymptomCount,
-    needsFollowUp: finalNeedsFollowUp,
-    followUps,
-    problemRelations,
-    problemCausality: await loadProblemCausality([top.problemKey])
-  }
-}
-
 module.exports = {
   normalizePlantKeyword,
   listPlantCatalog,
@@ -1257,10 +1305,15 @@ module.exports = {
   findCanonicalPlantMatch,
   createUserPlantInstance,
   getUserPlantInstanceById,
+  getUserPlantWateringEvents,
+  insertWateringEvent,
+  getUserPlantWateringStrategy,
+  getUserPlantCareExtension,
   listUserPlantInstances,
+  hasDisplayableUserPlantIdentity,
   updateUserPlantInstance,
   deleteUserPlantInstance,
   recordIdentifySession,
   listDiagnosisSessions,
-  buildDiagnosisDecision
+  resolvePlantContext
 }

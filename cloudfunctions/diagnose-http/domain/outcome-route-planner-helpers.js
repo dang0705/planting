@@ -3,11 +3,9 @@
 const {
   ROUTE_MODE,
   ROUTE_STATUS,
-  ROUTE_FALLBACK_POLICY
+  ROUTE_CONSERVATIVE_POLICY
 } = require('../constants/outcome-route')
-const {
-  isDisabledYellowingFlowQuestion
-} = require('../utils/yellowing-question-policy')
+const { isDisabledYellowingFlowQuestion } = require('../utils/yellowing-question-policy')
 
 function normalizeKey(value = '') {
   return String(value || '').trim()
@@ -22,7 +20,9 @@ const ROUTE_SYMPTOM_KEY_ALIASES = {
 
 function expandRouteSymptomKeys(value = '') {
   const normalized = normalizeKey(value)
-  if (!normalized) {return []}
+  if (!normalized) {
+    return []
+  }
 
   const candidates = [normalized]
   const aliases = ROUTE_SYMPTOM_KEY_ALIASES[normalized]
@@ -51,7 +51,9 @@ function collectVisualRouteSymptomKeys(visualAggregateResult = null) {
     return []
   }
 
-  const aggregatedSymptomCandidates = Array.isArray(visualAggregateResult?.aggregated_symptom_candidates)
+  const aggregatedSymptomCandidates = Array.isArray(
+    visualAggregateResult?.aggregated_symptom_candidates
+  )
     ? visualAggregateResult.aggregated_symptom_candidates
     : Array.isArray(visualAggregateResult?.aggregatedSymptomCandidates)
       ? visualAggregateResult.aggregatedSymptomCandidates
@@ -74,7 +76,11 @@ function collectVisualRouteSymptomKeys(visualAggregateResult = null) {
     ...admissionRecords
       .filter(item => {
         const admissionResult = normalizeKey(item?.admission_result || item?.admissionResult || '')
-        return !admissionResult || admissionResult === 'candidate_retained' || admissionResult === 'admitted'
+        return (
+          !admissionResult ||
+          admissionResult === 'candidate_retained' ||
+          admissionResult === 'admitted'
+        )
       })
       .flatMap(item =>
         expandRouteSymptomKeys(
@@ -97,19 +103,20 @@ function collectVisualRouteSymptomKeys(visualAggregateResult = null) {
   ])
 }
 
-function buildFallbackDecision({
+function buildConservativeDecision({
   candidateOutcomeKeys = [],
   candidateOutcomes = [],
-  decisionCauseKey = 'route_fallback',
+  decisionCauseKey = 'route_conservative',
   decisionCauseText = 'route 未形成权威闭合，转保守不确定输出'
 } = {}) {
-  const legacyOutcomeKeys = dedupeKeys(
-    (Array.isArray(candidateOutcomes) ? candidateOutcomes : [])
-      .map(item => normalizeKey(item?.problemKey || item?.outcomeKey || item?.candidateOutcomeKey || ''))
+  const currentOutcomeKeys = dedupeKeys(
+    (Array.isArray(candidateOutcomes) ? candidateOutcomes : []).map(item =>
+      normalizeKey(item?.problemKey || item?.outcomeKey || item?.candidateOutcomeKey || '')
+    )
   )
   const outcomeKeys = dedupeKeys(candidateOutcomeKeys).length
     ? dedupeKeys(candidateOutcomeKeys)
-    : legacyOutcomeKeys
+    : currentOutcomeKeys
 
   return {
     mode: ROUTE_MODE.MULTI_OUTCOME_ROUTE,
@@ -117,24 +124,22 @@ function buildFallbackDecision({
       outcomeKey,
       state: ROUTE_STATUS.CANDIDATE,
       routeKeys: [],
-      missingGateKeys: [],
-      nextQuestionKeys: []
+      missingConditionKeys: []
     })),
     activeRouteGroupKeys: [],
     visibleOutcomeKeys: [],
-    requiresFollowUp: false,
-    nextQuestionKeys: [],
+    requiresQuestion: false,
     nextQuestions: [],
-    gateResults: [],
+    conditionResults: [],
     blockedOutcomeKeys: [],
     conflictingOutcomePairs: [],
     visibleActionProfileKeys: [],
     visibleActionConflictGroups: [],
     routeTrace: [],
-    fallbackPolicy: ROUTE_FALLBACK_POLICY.UNCERTAIN,
+    conservativePolicy: ROUTE_CONSERVATIVE_POLICY.UNCERTAIN,
     decisionCause: {
       decisionCauseKey,
-      decisionCauseCategory: 'route_fallback',
+      decisionCauseCategory: 'route_conservative',
       decisionCauseText,
       decisionCauseDetails: {}
     },
@@ -144,6 +149,7 @@ function buildFallbackDecision({
 
 function buildRouteEvidenceContext({
   plantContext = {},
+  environmentCareContext = null,
   observedEvidenceSet = [],
   derivedEvidenceSet = [],
   diagnosisDirections = [],
@@ -165,24 +171,34 @@ function buildRouteEvidenceContext({
   const safeAnswers = (Array.isArray(answers) ? answers : []).filter(
     item => !isDisabledYellowingFlowQuestion(item)
   )
-  const safeAskedQuestionKeys = (Array.isArray(askedQuestionKeys) ? askedQuestionKeys : [])
-    .filter(questionKey => !isDisabledYellowingFlowQuestion({ questionKey }))
+  const safeAskedQuestionKeys = (Array.isArray(askedQuestionKeys) ? askedQuestionKeys : []).filter(
+    questionKey => !isDisabledYellowingFlowQuestion({ questionKey })
+  )
+  const lightHealthEvidence =
+    environmentCareContext && typeof environmentCareContext === 'object'
+      ? environmentCareContext?.outputs?.lightHealthEvidence || null
+      : null
 
   const visualRouteSymptomKeys = collectVisualRouteSymptomKeys(visualAggregateResult)
   const activeSymptomKeys = dedupeKeys([
     ...safeObservedEvidenceSet
-      .filter(item =>
-        Number(item?.enteredRuntime ?? item?.entered_runtime ?? 1) === 1 &&
-        normalizeKey(item?.currentStatus || item?.current_status || 'active') !== 'superseded'
+      .filter(
+        item =>
+          Number(item?.enteredRuntime ?? item?.entered_runtime ?? 1) === 1 &&
+          normalizeKey(item?.currentStatus || item?.current_status || 'active') !== 'superseded'
       )
       .flatMap(item => expandRouteSymptomKeys(item?.symptomKey || item?.symptom_key || '')),
     ...visualRouteSymptomKeys
   ])
   const derivedEvidenceKeys = dedupeKeys(
-    safeDerivedEvidenceSet.map(item => item?.derivedSymptomKey || item?.symptomKey || item?.key || '')
+    safeDerivedEvidenceSet.map(
+      item => item?.derivedSymptomKey || item?.symptomKey || item?.key || ''
+    )
   )
   const diagnosisDirectionKeys = dedupeKeys(
-    safeDiagnosisDirections.map(item => item?.directionKey || item?.direction_key || item?.key || '')
+    safeDiagnosisDirections.map(
+      item => item?.directionKey || item?.direction_key || item?.key || ''
+    )
   )
   const answeredQuestionKeys = dedupeKeys([
     ...safeAnswers.map(item => item?.questionKey || item?.question_key || ''),
@@ -202,10 +218,14 @@ function buildRouteEvidenceContext({
   const matchedRouteAnswerEffects = dedupeKeys(
     (Array.isArray(routeAnswerEffects) ? routeAnswerEffects : [])
       .filter(item => {
-        if (isDisabledYellowingFlowQuestion(item)) {return false}
+        if (isDisabledYellowingFlowQuestion(item)) {
+          return false
+        }
         const questionKey = normalizeKey(item?.questionKey || item?.question_key || '')
         const optionKey = normalizeKey(item?.optionKey || item?.option_key || '')
-        if (!questionKey || !optionKey) {return false}
+        if (!questionKey || !optionKey) {
+          return false
+        }
         return answeredQuestionOptionPairSet.has(`${questionKey}:${optionKey}`)
       })
       .map(item =>
@@ -226,6 +246,10 @@ function buildRouteEvidenceContext({
   )
   return {
     plantContext,
+    environmentCareContext,
+    lightHealthEvidence,
+    lightHealthScore: environmentCareContext?.outputs?.lightHealthScore ?? null,
+    lightHealthLevel: environmentCareContext?.outputs?.lightHealthLevel || '',
     activeSymptomKeys,
     activeSymptomKeySet: new Set(activeSymptomKeys),
     derivedEvidenceKeys,
@@ -236,8 +260,10 @@ function buildRouteEvidenceContext({
       dedupeKeys([
         symptomClassRuntime?.currentClassKey,
         symptomClassRuntime?.primaryClass?.classKey,
-        symptomClassRuntime?.classGateDecision?.currentClassKey,
-        ...safeObservedEvidenceSet.map(item => item?.symptomClassKey || item?.symptom_class_key || '')
+        symptomClassRuntime?.classConditionDecision?.currentClassKey,
+        ...safeObservedEvidenceSet.map(
+          item => item?.symptomClassKey || item?.symptom_class_key || ''
+        )
       ])
     ),
     answerEffects: routeEligibleAnswerEffects,
@@ -278,7 +304,9 @@ function normalizeQuestionOptionPairs(value) {
   if (Array.isArray(value)) {
     return value.map(item => normalizeKey(item)).filter(Boolean)
   }
-  if (!value && value !== 0) {return []}
+  if (!value && value !== 0) {
+    return []
+  }
   return String(value)
     .split(',')
     .map(item => normalizeKey(item))
@@ -293,16 +321,21 @@ function splitQuestionOptionPair(pair = '') {
   }
 }
 
-function isGateContradictedByAnsweredSplit(gate = {}, routeEvidenceContext = {}) {
+function isConditionContradictedByAnsweredSplit(condition = {}, routeEvidenceContext = {}) {
   const answeredQuestionKeySet = routeEvidenceContext?.answeredQuestionKeySet || new Set()
-  const answeredQuestionOptionPairSet = routeEvidenceContext?.answeredQuestionOptionPairSet || new Set()
-  const requiredPairs = normalizeQuestionOptionPairs(gate?.requiredAnswerEffects?.questionOptionPairs)
+  const answeredQuestionOptionPairSet =
+    routeEvidenceContext?.answeredQuestionOptionPairSet || new Set()
+  const requiredPairs = normalizeQuestionOptionPairs(
+    condition?.requiredAnswerEffects?.questionOptionPairs
+  )
 
   return requiredPairs.some(pair => {
     const { questionKey } = splitQuestionOptionPair(pair)
-    return questionKey &&
+    return (
+      questionKey &&
       answeredQuestionKeySet.has(questionKey) &&
       !answeredQuestionOptionPairSet.has(pair)
+    )
   })
 }
 
@@ -317,21 +350,25 @@ function sortCandidateStates(states = [], candidateOutcomeOrderMap = new Map()) 
   return safeStates.sort((a, b) => {
     const stateA = Number(statePriority[a.state] ?? Number.MAX_SAFE_INTEGER)
     const stateB = Number(statePriority[b.state] ?? Number.MAX_SAFE_INTEGER)
-    if (stateA !== stateB) {return stateA - stateB}
+    if (stateA !== stateB) {
+      return stateA - stateB
+    }
     const orderA = Number(candidateOutcomeOrderMap.get(a.outcomeKey) ?? Number.MAX_SAFE_INTEGER)
     const orderB = Number(candidateOutcomeOrderMap.get(b.outcomeKey) ?? Number.MAX_SAFE_INTEGER)
-    if (orderA !== orderB) {return orderA - orderB}
+    if (orderA !== orderB) {
+      return orderA - orderB
+    }
     return String(a.outcomeKey || '').localeCompare(String(b.outcomeKey || ''))
   })
 }
 
 module.exports = {
-  buildFallbackDecision,
+  buildConservativeDecision,
   buildRouteDecisionCause,
   buildRouteEvidenceContext,
   collectVisualRouteSymptomKeys,
   dedupeKeys,
-  isGateContradictedByAnsweredSplit,
+  isConditionContradictedByAnsweredSplit,
   normalizeKey,
   sortCandidateStates
 }

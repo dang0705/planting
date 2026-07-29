@@ -1,0 +1,95 @@
+{
+  "completedAt": 1780846031861,
+  "id": "drm-1780845955647",
+  "operations": [
+    {
+      "action": "MERGE",
+      "inputFiles": [
+        "architecture/diagnosis/question_package_answer_submission.md",
+        "architecture/diagnosis/question_package_answer_submission/question_package_answer_submission.md"
+      ],
+      "needsReview": true,
+      "outputFile": "architecture/diagnosis/question_package_answer_submission/question_package_answer_submission.md",
+      "previousTexts": {
+        "architecture/diagnosis/question_package_answer_submission.md": "---\ntitle: Question Package Answer Submission\nsummary: Generic terminal detection logic for question packages and yellow-leaf legacy compatibility\ntags: []\nrelated: [architecture/diagnosis/leaf_yellowing_diagnosis_logic.md, architecture/diagnosis/source_verified_diagnosis_facts.md]\nkeywords: []\ncreatedAt: '2026-06-06T13:48:27.943Z'\nupdatedAt: '2026-06-06T13:48:27.943Z'\n---\n## Reason\nCurating terminal detection logic and question package infrastructure\n\n## Raw Concept\n**Task:**\nImplement generic question-package answer submission terminal detection\n\n**Changes:**\n- Genericized terminal detection for question packages\n- Updated diagnosis-answer-runner to validate via isQuestionPackageAnswerSubmitPayload\n- Ensured engine-level follow-up blockers for package submissions\n\n**Files:**\n- cloudfunctions/diagnose-http/app/question-package-response.js\n- test-question-package.mjs\n\n**Flow:**\nrequestMode=answer_submit -> validate package metadata/uiHints -> check submitted answer count -> terminal status\n\n**Timestamp:** 2026-06-06\n\n## Narrative\n### Structure\nTerminal state logic is centralized in isQuestionPackageAnswerSubmitPayload, with legacy support for yellow_leaf mode.\n\n### Dependencies\ndiagnosis-engine.js checks !terminalQuestioningState to allow follow-ups.\n\n### Highlights\nSupports generic package counts (3, 5+), legacy 4-answer yellowing compatibility, and proper runtime follow-up blocking.\n\n### Rules\nTerminal condition requires unique submitted answer count to match questionPackage.questionCount or multi-answer package count.\n\n## Facts\n- **terminal_detection**: Terminal detection is now generic and question-package based [project]\n- **legacy_compatibility**: Legacy yellow_leaf support uses frontloaded four-answer keys as fallback [project]\n",
+        "architecture/diagnosis/question_package_answer_submission/question_package_answer_submission.md": "---\ntitle: Question Package Answer Submission\nsummary: Question package answer submission flow for static diagnosis packages\ntags: []\nrelated: []\nkeywords: []\ncreatedAt: '2026-06-07T15:07:59.393Z'\nupdatedAt: '2026-06-07T15:07:59.393Z'\n---\n## Reason\nCurate latest diagnosis question package submission logic\n\n## Raw Concept\n**Task:**\nDocument question package answer submission flow\n\n**Changes:**\n- Consolidated answer submission logic\n\n**Flow:**\nfrontend aggregates answers -> submit to backend -> backend validates package -> process result\n\n**Timestamp:** 2026-06-07\n\n## Narrative\n### Structure\nSubmission is handled via the question package response handler.\n\n### Highlights\nSupports static 4-question diagnosis packages.\n\n## Facts\n- **wilting_droop**: The wilting_droop diagnosis mode is a static 5-question package implemented for route-based diagnosis.\n- **Action Resolver**: The system blocks conflicting actions, such as increasing watering when root rot odors are detected.\n- **High-Risk Signals**: High-risk signals for wilting include black soft stems, soil odor, and water-soaked leaves.\n- **Observation Period**: The observation period is set to 24-48 hours for high-risk findings and 48-72 hours for normal findings.\n- **Frontend Integration**: The RouteDebugPanel component displays decision metadata including mode and visible outcomes during development.\n- **Testing**: The assertNoRankingFields test constraint ensures that no ranking, score, confidence, or probability fields exist in the output.\n- **Question Package**: The diagnosis flow consists of a care behavior timeline question followed by four static questions.\n- **Outcome Resolver**: The finalResult object aggregates actionAdviceItems and avoidAdviceItems into a structured format.\n"
+      },
+      "reason": "These files cover the same topic (question package answer submission flow) and are highly redundant. Merging them into the structured subfolder location is preferred.",
+      "type": "CONSOLIDATE"
+    },
+    {
+      "action": "CROSS_REFERENCE",
+      "inputFiles": [
+        "architecture/diagnosis/leaf_yellowing_diagnosis_logic.md",
+        "architecture/diagnosis/yellowing_diagnosis_lifecycle.md"
+      ],
+      "needsReview": true,
+      "previousTexts": {
+        "architecture/diagnosis/leaf_yellowing_diagnosis_logic.md": "---\ntitle: Leaf Yellowing Diagnosis Logic\nsummary: Terminal questioning state for yellow leaf diagnosis with 4 frontloaded questions\ntags: []\nrelated: [architecture/diagnosis/question_package_answer_submission.md, architecture/diagnosis/source_verified_diagnosis_facts.md]\nkeywords: []\ncreatedAt: '2026-06-06T13:43:41.878Z'\nupdatedAt: '2026-06-06T13:43:41.878Z'\n---\n## Reason\nCurate diagnosis engine logic for leaf yellowing from RLM context\n\n## Raw Concept\n**Task:**\nDocument leaf yellowing diagnosis architecture\n\n**Files:**\n- cloudfunctions/diagnose-http/app/question-package-response.js\n- cloudfunctions/diagnose-http/app/diagnosis-answer-runner.js\n- cloudfunctions/diagnose-http/domain/diagnosis-engine.js\n\n**Flow:**\nanswer_submit -> detect yellowing package -> set terminalQuestioningState -> runDiagnosisRound -> disable follow-up\n\n## Narrative\n### Structure\nDiagnosis engine state management for yellow leaf care packages.\n\n### Highlights\nTerminal state triggered by 4 care context questions; disables follow-up rounds and route decisions.\n\n### Examples\nbuildYellowingQuestionPackage returns metadata when mode matches and question count is 4.\n\n## Facts\n- **diagnosis_logic**: Leaf yellowing diagnosis uses a terminal questioning state when 4 care context questions are frontloaded [project]\n- **diagnosis_trigger**: The backend detects 'answer_submit' mode for leaf yellowing packages [project]\n- **diagnosis_constraints**: Terminal questioning state disables follow-up rounds and route decisions [project]\n",
+        "architecture/diagnosis/yellowing_diagnosis_lifecycle.md": "---\ntitle: Yellowing Diagnosis Lifecycle\nsummary: Terminal 4-question package flow for leaf yellowing, deprecating dynamic follow-up\ntags: []\nrelated: []\nkeywords: []\ncreatedAt: '2026-06-07T13:53:49.101Z'\nupdatedAt: '2026-06-07T13:53:49.101Z'\n---\n## Reason\nConsolidating diagnosis lifecycle and architectural constraints\n\n## Raw Concept\n**Task:**\nConsolidate diagnosis lifecycle governance\n\n**Changes:**\n- Deprecated dynamic next-question logic\n- Implemented terminal 4-question package flow\n\n**Flow:**\nStatic package-based progression -> Full package submission\n\n**Timestamp:** 2026-06-07\n\n## Narrative\n### Structure\nDiagnosis questioning uses a route-based, static package flow.\n\n### Highlights\nLeaf yellowing is a terminal 4-question flow; dynamic follow-up is deprecated.\n\n### Rules\nAll leaf yellowing diagnosis must follow the terminal 4-question package structure.\n\n## Facts\n- **Yellow Leaf Question Package**: 黄叶问题包采用静态4题题包模式，前端维护固定问题集并一次性提交。\n- **Dynamic Follow-up**: 废弃动态追问机制，包括Ranking、Score Gap和Dynamic Branching。\n- **questionPackage**: 使用questionPackage元数据定义题数和状态。\n- **CareBehaviorTimeline.vue**: CareBehaviorTimeline.vue提交虚拟选项care_behavior_timeline，需在answer runtime中保留。\n- **static-question-package-start.js**: static-question-package-start.js负责加载yellow_leaf模式并构造4个护理上下文问题。\n- **Snapshot Management**: persistRoundRuntime保存runtimeSnapshot.questionPackageSnapshot.packageQuestions用于归属校验。\n- **Route Conversion**: buildRouteAnswersFromRuntimeEnvironmentCarePayload将care_behavior_timeline转换为often_wet。\n- **Output Rules**: 积水（likely_too_wet）映射输出为overwatering_root_pressure。\n- **Output Rules**: 施浓肥/换盆（recent_heavy_fertilizer_or_repot）映射输出为fertilizer_repot_stress。\n- **Output Rules**: 直晒/强光（stronger_direct_light）映射输出为sunburn。\n- **package-answer-ownership-runtime.js**: cloudfunctions/diagnose-http/app/package-answer-ownership-runtime.js负责归属校验。\n- **outcome-route-planner.js**: cloudfunctions/diagnose-http/domain/outcome-route-planner.js负责诊断路由规划。\n- **Output Eligibility**: 最终输出需经由evaluateStopState和evaluateOutputEligibility判定，且必须处于final状态。\n"
+      },
+      "reason": "These files are complementary: the logic file focuses on the engine-level state transition (terminal questioning), while the lifecycle file focuses on governance and architectural consolidation of the yellowing mode. Both are high-value and distinct enough to coexist with cross-referencing.",
+      "type": "CONSOLIDATE"
+    },
+    {
+      "action": "CROSS_REFERENCE",
+      "inputFiles": [
+        "architecture/diagnosis/source_verified_diagnosis_facts.md",
+        "architecture/backend/source_verified_backend_facts/source_verified_backend_facts.md"
+      ],
+      "needsReview": false,
+      "previousTexts": {
+        "architecture/diagnosis/source_verified_diagnosis_facts.md": "---\ntitle: Source Verified Diagnosis Facts\nsummary: 当前诊断事实按 route + mode question package 维护；旧动态问诊 / 每轮一题 / 动态下一题 helper 不作为 active fact。\nupdatedAt: '2026-06-07'\nrelated: [architecture/diagnosis/question_package_answer_submission.md, architecture/diagnosis/leaf_yellowing_diagnosis_logic.md]\n---\n\n## Facts\n\n- id: diagnosis_route_package_mode\n  type: fact\n  source_kind: code\n  statement: 当前诊断主链是 route 模式，问诊按 mode question package 工作；固定题包由 getQuestionPackageByMode(mode) 进入，前端一次性拿完整题包并本地推进。\n  source:\n    file: docs/code-logics/03_诊断运行时主链路_逐步执行逻辑.md\n    lines: 5-17\n  confidence: high\n  status: verified\n\n- id: diagnosis_no_followup_business_concept\n  type: fact\n  source_kind: code\n  statement: 当前不存在旧动态问诊业务模型；旧动态下一题、旧主动问题队列等命名只能作为兼容字段、运行时校验结构或待清理对象理解。\n  source:\n    file: docs/code-logics/03_诊断运行时主链路_逐步执行逻辑.md\n    lines: 40-50,73-93\n  confidence: high\n  status: verified\n\n- id: diagnosis_yellow_leaf_four_question_package\n  type: fact\n  source_kind: code\n  statement: 黄叶模式必须返回 4 个问答项，采用 package 展示和 package 提交；有效 yellow_leaf package 的 4 个问题按同一当前轮次持久化并参与 answer ownership，`questionPackage.questionCount` 决定题包上限，非题包路径不得反向约束固定题包。\n  source:\n    - file: cloudfunctions/diagnose-http/domain/question-queue/question-queue-planner.js\n      lines: 56-74,109-177\n    - file: cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js\n      lines: 79-87\n    - file: cloudfunctions/diagnose-http/services/session-question-service.js\n      lines: 344-365\n  confidence: high\n  status: verified\n\n- id: diagnosis_stop_output_package_basis\n  type: fact\n  source_kind: code\n  statement: 停止与输出资格按题包提交、answers 被后端接受、route 最终公开响应和 stop/output gate 表达，不按旧动态问诊、旧主动问题队列或每轮一题表达。\n  source:\n    file: docs/code-logics/03_诊断运行时主链路_逐步执行逻辑.md\n    lines: 95-121\n  confidence: high\n  status: verified\n\n- id: diagnosis_yellowing_package_visible_outcome_contract\n  type: fact\n  source_kind: code\n  statement: 黄叶题包整包提交时，`CareBehaviorTimeline.vue` 的虚拟答案 `care_behavior_timeline` 必须作为合法 package option 被接受，并在 route 运行前按环境养护上下文转成浇水 route option；过浇行为、施浓肥/近期换盆、直晒/光照突然增强三个强阳性样本必须分别输出 `overwatering_root_pressure`、`fertilizer_repot_stress`、`sunburn`，不得落入 uncertain。\n  source:\n    - file: cloudfunctions/diagnose-http/app/package-answer-ownership-runtime.js\n      lines: 54-115\n    - file: cloudfunctions/diagnose-http/app/diagnosis-answer-runner.js\n      lines: 347-382\n    - file: src/vue-query/diagnose/mutations/shared.js\n      lines: 211-273\n    - file: test-yellowing-package-outcome-contract.mjs\n      lines: 172-258\n  verified: 2026-06-07\n  owner: architecture\n  confidence: high\n  status: verified\n\n- id: diagnosis_answer_slim_frontend_response_contract\n  type: fact\n  source_kind: code\n  statement: `/diagnosis/answer` 终态响应使用 `buildFrontendAnswerResponse`，只返回结果页必要字段；有 `visibleOutcomes` 时，前端建议从 outcome 的 `actionAdviceItems` / `avoidAdviceItems` 展示，响应不再返回顶层 trace、output eligibility、route decision cause、summaryCard、actionAdvice、nextSteps、whatToAvoid、treatmentText、preventionText 等非必要大字段。\n  source:\n    - file: cloudfunctions/diagnose-http/handlers/diagnosis-handlers.js\n      lines: 118-150\n    - file: cloudfunctions/diagnose-http/app/frontend-response.js\n      lines: 491-564\n    - file: test-route-planning.mjs\n      lines: 2014-2048\n  verified: 2026-06-07\n  owner: architecture\n  confidence: high\n  status: verified\n\n- id: diagnosis_answer_500ms_hot_path_evidence\n  type: fact\n  source_kind: code\n  statement: 本地 diagnose-http 热路径与 WeChat mini-program runtime `wx.request` 验证显示，黄叶题包 `/diagnosis/answer` 的施浓肥与直晒场景稳定低于 500ms；端上第二轮 10 笔最大 339ms、平均 288.8ms，响应体约 1147-1251 字符。刚重载后的第一笔本地/DevTools 冷启动仍可高于 500ms，不作为热路径达标证据。\n  source:\n    - file: cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js\n      lines: 24-35,327-337\n    - file: cloudfunctions/diagnose-http/repositories/outcome-route-repository.js\n      lines: 67-82,667-681,793-805,916-935,964-972\n    - file: cloudfunctions/diagnose-http/app/diagnosis-answer-runner.js\n      lines: 423-451\n  verified: 2026-06-07\n  owner: architecture\n  confidence: high\n  status: verified\n\n## Deprecated\n\n- ranking/score-gap as current questioning authority\n- old dynamic questioning as current package authority\n- old next-question keys as current next-question source\n- old boolean completion flag as output eligibility\n- old active-question queue state as package stop condition\n- old active-question queue as fixed package question-count authority\n",
+        "architecture/backend/source_verified_backend_facts/source_verified_backend_facts.md": "---\ntitle: Source Verified Backend Facts\nsummary: Curated backend facts including configuration, logic, and implementation details.\ntags: []\nrelated: []\nkeywords: []\ncreatedAt: '2026-06-07T03:02:40.447Z'\nupdatedAt: '2026-06-07T03:02:40.447Z'\n---\n## Reason\nCurate backend facts from RLM context\n\n## Raw Concept\n**Task:**\nCurate backend facts\n\n**Timestamp:** 2026-06-07\n\n**Author:** System\n\n## Narrative\n### Structure\nBackend implementation facts organized by subject.\n\n### Highlights\nExtracted 9 factual statements.\n\n## Facts\n- **yellowing_mode**: The yellowing_mode uses a module-level static yellow_leaf question package before plant context resolution.\n- **metrics**: The metrics.questionStartPath is set to 'static_question_package' when using the static yellowing start path.\n- **test-question-start-performance.mjs**: The performance test script test-question-start-performance.mjs verifies that warm runs complete in <= 500ms.\n- **MANUAL_SYMPTOM_MODE_OPTIONS**: MANUAL_SYMPTOM_MODE_OPTIONS in diagnosis-question-start-runner.js contains 28 symptom modes.\n- **runQuestionStartDiagnosis**: The runQuestionStartDiagnosis function falls back to the full diagnosis-engine round if the manual fast path fails.\n- **buildYellowingStaticQuestions**: buildYellowingStaticQuestions generates questions via buildSyntheticObservedProbeQuestions and filters them using filterDisabledYellowingFlowQuestions.\n- **test-question-start-performance.mjs**: test-question-start-performance.mjs mocks Module._load to intercept and fail attempts to resolve plant context or load the diagnosis-engine.\n- **static yellowing flow**: The static yellowing flow returns exactly 4 package questions.\n- **YELLOWING_CLASS_KEY**: The YELLOWING_CLASS_KEY is defined as 'yellowing_mode' in static-question-package-start.js.\n"
+      },
+      "reason": "These provide verified facts for different domains (diagnosis vs. backend implementation). They are complementary sources of truth.",
+      "type": "CONSOLIDATE"
+    },
+    {
+      "action": "CREATE",
+      "confidence": 1,
+      "needsReview": false,
+      "outputFile": "architecture/diagnosis-lifecycle-synchronization.md",
+      "sources": [
+        "architecture/_index.md",
+        "docs/_index.md",
+        "maintenance/_index.md"
+      ],
+      "type": "SYNTHESIZE"
+    },
+    {
+      "action": "CREATE",
+      "confidence": 0.95,
+      "needsReview": false,
+      "outputFile": "maintenance/source-verified-fact-integrity.md",
+      "sources": [
+        "maintenance/_index.md",
+        "testing/_index.md",
+        "validation/_index.md"
+      ],
+      "type": "SYNTHESIZE"
+    },
+    {
+      "action": "CREATE",
+      "confidence": 0.9,
+      "needsReview": false,
+      "outputFile": "architecture/static-question-package-progression.md",
+      "sources": [
+        "architecture/_index.md",
+        "project_management/_index.md"
+      ],
+      "type": "SYNTHESIZE"
+    }
+  ],
+  "startedAt": 1780845955647,
+  "status": "completed",
+  "summary": {
+    "consolidated": 3,
+    "errors": 0,
+    "flaggedForReview": 2,
+    "pruned": 0,
+    "synthesized": 3
+  },
+  "taskId": "f360ad0d-6f71-4e2e-af45-ff4eb59ffe8c",
+  "trigger": "agent-idle"
+}

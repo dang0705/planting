@@ -1,0 +1,46 @@
+{
+  "agent_identity": {
+    "agent_type": "implementer_fast",
+    "dispatch_run_id": "example-code-001"
+  },
+  "status": "completed",
+  "changed_files": [
+    "src/utils/example.ts",
+    "src/utils/__tests__/example.test.ts"
+  ],
+  "implementation_summary": "修复边界条件并补单测",
+  "project_constraints_verified": true,
+  "deviations_or_blockers": [],
+  "validation_evidence": {
+    "unit_tests": {
+      "result": "passed",
+      "commands": ["npm test -- example"],
+      "evidence_ref": "evidence/unit.txt",
+      "reason": ""
+    },
+    "lint": {
+      "result": "passed",
+      "commands": ["npm run lint -- src/utils/example.ts"],
+      "evidence_ref": "evidence/lint.txt",
+      "reason": ""
+    },
+    "typecheck": {
+      "result": "not_applicable",
+      "commands": [],
+      "evidence_ref": "",
+      "reason": "无独立 typecheck 入口"
+    },
+    "build": {
+      "result": "not_applicable",
+      "commands": [],
+      "evidence_ref": "",
+      "reason": "非构建路径变更"
+    },
+    "self_check": {
+      "result": "passed",
+      "commands": ["manual review"],
+      "evidence_ref": "",
+      "reason": ""
+    }
+  }
+}

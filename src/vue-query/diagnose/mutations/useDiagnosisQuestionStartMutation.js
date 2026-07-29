@@ -1,9 +1,30 @@
-import { useMutation } from '@tanstack/vue-query'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { requestDiagnosisQuestionStart } from '@/http-functions/diagnose/client'
-import {
-  handleDiagnoseError,
-  runDiagnoseSuccessCallbacks
-} from './shared'
+import { handleDiagnoseError, runDiagnoseSuccessCallbacks } from './shared'
+
+const QUESTION_START_CACHE_STALE_MS = 1000 * 45
+
+function makeQuestionStartCacheKey(payload = {}) {
+  const userPlantId = String(payload.userPlantId || payload.plantId || '').trim()
+  const plantCatalogId = String(payload.plantCatalogId || '').trim()
+  const symptomClassKey = String(payload.symptomClassKey || '').trim()
+  const symptomKey = String(payload.symptomKey || '').trim()
+  const description = String(payload.description || '').trim()
+  const platform = String(payload.clientContext?.platform || 'web').trim()
+  const skipAuth = Number(Boolean(payload.skipAuth)) ? '1' : '0'
+
+  return [
+    'diagnose',
+    'question-start',
+    userPlantId,
+    plantCatalogId,
+    symptomClassKey,
+    symptomKey,
+    platform,
+    skipAuth,
+    description
+  ]
+}
 
 function normalizeQuestionStartPayload({
   plantId,
@@ -13,9 +34,14 @@ function normalizeQuestionStartPayload({
   symptomClassKey,
   symptomKey,
   description,
+  diagnosisProfile = 'full',
+  entrySource = 'diagnose_tab',
   skipAuth = false
 } = {}) {
-  if (!plantId && !userPlantId && !plantCatalogId) {
+  const normalizedEntrySource = normalizeQuestionStartEntrySource(entrySource)
+  const allowsStandaloneDiagnoseTab = normalizedEntrySource === 'diagnose_tab'
+
+  if (!plantId && !userPlantId && !plantCatalogId && !allowsStandaloneDiagnoseTab) {
     throw new Error('缺少植物ID，无法开始问诊')
   }
 
@@ -32,15 +58,23 @@ function normalizeQuestionStartPayload({
     symptomClassKey: normalizedSymptomClassKey,
     ...(symptomKey ? { symptomKey } : {}),
     ...(description ? { description } : {}),
+    diagnosisProfile,
+    entrySource: normalizedEntrySource,
     skipAuth,
     clientContext: {
-      source: 'DiagnosePopup',
+      source: normalizedEntrySource,
       platform: resolveQuestionStartClientPlatform(),
       reviewSourceType: 'manual_symptom_mode',
       visualInputVersion: 'manual_symptom_mode_v1',
-      structuredImageCount: 0
+      structuredImageCount: 0,
+      diagnosisProfile,
+      entrySource: normalizedEntrySource
     }
   }
+}
+
+function normalizeQuestionStartEntrySource(value = '') {
+  return String(value || 'diagnose_tab').trim() || 'diagnose_tab'
 }
 
 function resolveQuestionStartClientPlatform() {
@@ -56,6 +90,8 @@ function resolveQuestionStartClientPlatform() {
 }
 
 export function useDiagnosisQuestionStartMutation() {
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationKey: ['diagnose', 'question-start'],
     mutationFn: async ({
@@ -66,6 +102,8 @@ export function useDiagnosisQuestionStartMutation() {
       symptomClassKey,
       symptomKey,
       description,
+      diagnosisProfile = 'full',
+      entrySource = 'diagnose_tab',
       onText,
       onFinish,
       onError,
@@ -81,9 +119,16 @@ export function useDiagnosisQuestionStartMutation() {
           symptomClassKey,
           symptomKey,
           description,
+          diagnosisProfile,
+          entrySource,
           skipAuth
         })
-        const normalizedResult = await requestDiagnosisQuestionStart(requestPayload)
+        const cacheKey = makeQuestionStartCacheKey(requestPayload)
+        const normalizedResult = await queryClient.fetchQuery({
+          queryKey: cacheKey,
+          staleTime: QUESTION_START_CACHE_STALE_MS,
+          queryFn: () => requestDiagnosisQuestionStart(requestPayload)
+        })
         return runDiagnoseSuccessCallbacks(normalizedResult, { onText, onFinish })
       } catch (error) {
         return handleDiagnoseError(error, { onError })

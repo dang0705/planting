@@ -10,7 +10,9 @@ function buildQueryString(query = {}) {
   const entries = Object.entries(query).filter(
     ([, value]) => value !== undefined && value !== null && value !== ''
   )
-  if (!entries.length) {return ''}
+  if (!entries.length) {
+    return ''
+  }
 
   const search = entries
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
@@ -42,29 +44,32 @@ function getLocalDevOpenId() {
   return String(import.meta.env.VITE_DEV_OPENID || 'dev_terminal_mp_local').trim()
 }
 
-async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}) {
+export async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}) {
   if (!auth) {
     return headers
   }
 
-  let openid = getStoredUserOpenId()
+  let openid = ''
   let token = ''
 
   if (IS_LOCAL_API_BASE_URL) {
-    openid = openid || getLocalDevOpenId()
-  } else if (isWechatMiniProgramRuntime()) {
-    try {
-      token = await getCloudbaseAccessToken()
-    } catch (error) {
-      console.warn('获取 CloudBase access token 失败，将继续尝试使用本地 openid:', error)
-    }
-
-    if (!openid) {
+    openid = getLocalDevOpenId()
+  } else {
+    openid = getStoredUserOpenId()
+    if (isWechatMiniProgramRuntime()) {
       try {
-        const identity = await getCloudbaseUserIdentity()
-        openid = identity?.openid || ''
+        token = await getCloudbaseAccessToken()
       } catch (error) {
-        console.warn('获取 CloudBase 用户 openid 失败:', error)
+        console.warn('获取 CloudBase access token 失败，将继续尝试使用本地 openid:', error)
+      }
+
+      if (!openid) {
+        try {
+          const identity = await getCloudbaseUserIdentity()
+          openid = identity?.openid || ''
+        } catch (error) {
+          console.warn('获取 CloudBase 用户 openid 失败:', error)
+        }
       }
     }
   }
@@ -73,7 +78,9 @@ async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}) {
     ...headers,
     'x-app-env': getRequestAppEnvHeader(),
     'x-env': getRequestAppEnvHeader(),
-    ...(IS_LOCAL_API_BASE_URL ? { 'x-terminal-e2e': 'true', 'x-anonymous-dev-identity': 'true' } : {}),
+    ...(IS_LOCAL_API_BASE_URL
+      ? { 'x-terminal-e2e': 'true', 'x-anonymous-dev-identity': 'true' }
+      : {}),
     ...(openid ? { 'x-wx-openid': openid, 'x-openid': openid } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {})
   }
@@ -149,12 +156,13 @@ export function httpRequest(defaults = {}) {
         ...headers
       }
     })
-    const {
-      requestMethod,
-      requestQuery,
-      requestHeaders
-    } = resolveHttpMethodTransport(method, query, mergedHeaders)
+    const { requestMethod, requestQuery, requestHeaders } = resolveHttpMethodTransport(
+      method,
+      query,
+      mergedHeaders
+    )
     const url = createUrl(functionPath, requestQuery)
+    console.log('[http-request] request url:', url)
 
     return new Promise((resolve, reject) => {
       const requestTask = uni.request({

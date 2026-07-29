@@ -1,0 +1,51 @@
+{
+  "completedAt": 1780651001864,
+  "id": "drm-1780650979189",
+  "operations": [
+    {
+      "action": "MERGE",
+      "inputFiles": [
+        "project_management/setup_rules/project_setup_and_rules.md",
+        "project_management/setup_rules/project_setup_and_rules.abstract.md",
+        "project_management/setup_rules/project_setup_and_rules.overview.md"
+      ],
+      "needsReview": true,
+      "outputFile": "project_management/setup_rules/project_setup_and_rules.md",
+      "previousTexts": {
+        "project_management/setup_rules/project_setup_and_rules.md": "---\ntitle: Project Setup and Rules\nsummary: Project setup documentation including rules, conventions, and operational guidelines\ntags: []\nrelated: []\nkeywords: []\ncreatedAt: '2026-06-05T09:01:10.137Z'\nupdatedAt: '2026-06-05T09:01:10.137Z'\n---\n## Reason\nCurate project rules and setup guidelines from provided context\n\n## Raw Concept\n**Task:**\nDocument project setup and operational rules\n\n**Flow:**\nSetup -> Configuration -> Operation\n\n**Timestamp:** 2026-06-05\n\n## Narrative\n### Structure\nConsolidated project setup rules and operational guidelines.\n\n### Highlights\nCentralized rules for development, CI/CD, and project structure.\n\n### Rules\nFollow standard project setup guidelines as defined in .brv/ and .rules/ directories.\n\n## Facts\n- **context_management**: Project uses .brv/ for context management [project]\n- **directory_structure**: Project follows specified directory hierarchy [convention]\n",
+        "project_management/setup_rules/project_setup_and_rules.abstract.md": "This document outlines the centralized project setup rules, operational guidelines, and directory conventions managed through the .brv/ directory structure.",
+        "project_management/setup_rules/project_setup_and_rules.overview.md": "- Centralizes project setup, configuration, and operational guidelines.\n- Mandates strict adherence to directory conventions defined in .brv/ and .rules/.\n- Establishes a standardized operational flow: Setup -> Configuration -> Operation.\n- Utilizes the .brv/ directory specifically for project context management.\n- Ensures consistency across development and CI/CD environments through centralized rules.\n\nStructure / sections summary:\n- Reason: Purpose of the document.\n- Raw Concept: Task definition, operational flow, and timestamp.\n- Narrative: High-level structure, highlights, and specific rules.\n- Facts: Key technical conventions and directory structure requirements.\n\nNotable entities, patterns, or decisions:\n- .brv/ directory: Designated for context management.\n- .rules/ directory: Designated for project-wide rule definitions.\n- Pattern: Centralized configuration management to ensure project-wide consistency."
+      },
+      "reason": "These files are redundant components of the same topic. The .md file contains the full context, while the .abstract.md and .overview.md are derivative summaries that should be consolidated into the main content file to maintain a cleaner context tree.",
+      "type": "CONSOLIDATE"
+    },
+    {
+      "action": "MERGE",
+      "inputFiles": [
+        "testing/unit_strategy/unit_test_strategy.md",
+        "testing/unit_strategy/unit_test_strategy.abstract.md",
+        "testing/unit_strategy/unit_test_strategy.overview.md"
+      ],
+      "needsReview": true,
+      "outputFile": "testing/unit_strategy/unit_test_strategy.md",
+      "previousTexts": {
+        "testing/unit_strategy/unit_test_strategy.md": "---\ntitle: Unit Test Strategy\nsummary: Node script-driven unit testing strategy for Pinia, Tailwind, Route Planning, and SQL consistency\ntags: []\nrelated: []\nkeywords: []\ncreatedAt: '2026-06-05T09:01:14.108Z'\nupdatedAt: '2026-06-05T09:01:14.108Z'\n---\n## Reason\nCurate unit testing strategy from initial context\n\n## Raw Concept\n**Task:**\nDocument unit testing strategy\n\n**Flow:**\nTest setup -> Execution -> CI gate\n\n**Timestamp:** 2026-06-05\n\n## Narrative\n### Structure\nNode.js script-driven lightweight unit testing without standard frameworks.\n\n### Highlights\nFast execution via in-memory mocks, CI gate via test:ci, covers Pinia, Tailwind, Route Planning, and SQL consistency.\n\n### Rules\nDefault tests run in-process with no external dependencies; use _test exports for mock injection.\n\n## Facts\n- **test_framework**: Tests are Node script-driven [convention]\n- **ci_gate**: CI uses test:ci command [convention]\n- **test_database**: Database tests use local SQL/schema text files [project]\n",
+        "testing/unit_strategy/unit_test_strategy.abstract.md": "The unit testing strategy utilizes lightweight Node.js scripts with in-memory mocks to ensure fast execution and CI integration for Pinia, Tailwind, and SQL consistency.",
+        "testing/unit_strategy/unit_test_strategy.overview.md": "- Implements a lightweight, Node.js script-driven unit testing strategy.\n- Replaces standard testing frameworks with in-process execution for faster performance.\n- Covers critical domains: Pinia, Tailwind, Route Planning, and SQL consistency.\n- Enforces a CI gate using the test:ci command.\n- Utilizes _test exports to facilitate mock injection without external dependencies.\n\nStructure / sections summary:\n- Reason: Purpose of the document.\n- Raw Concept: Task definition, testing flow, and timestamp.\n- Narrative: Overview of the script-driven approach, highlights, and testing rules.\n- Facts: Technical conventions for CI and database testing.\n\nNotable entities, patterns, or decisions:\n- test:ci: Standardized command for the CI gate.\n- _test exports: Pattern for enabling mock injection.\n- Decision: Use local SQL/schema text files for database testing instead of external database instances."
+      },
+      "reason": "These files all cover the exact same topic (Unit Test Strategy) and contain overlapping information. The .md file is the primary source, while the .abstract and .overview files are summaries redundant to the main context file.",
+      "type": "CONSOLIDATE"
+    }
+  ],
+  "startedAt": 1780650979189,
+  "status": "completed",
+  "summary": {
+    "consolidated": 2,
+    "errors": 0,
+    "flaggedForReview": 2,
+    "pruned": 0,
+    "synthesized": 0
+  },
+  "taskId": "93bc33bd-4abf-486f-ab85-f7cc6e39b31c",
+  "trigger": "agent-idle"
+}

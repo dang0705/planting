@@ -8,6 +8,6 @@
     "@cloudbase/node-sdk": "^3.16.0"
   },
   "scripts": {
-    "start": "node node_modules/@cloudbase/functions-framework/bin/tcb-ff.js --port=9002 --functionsConfigFile=cloudbase-functions.json"
+    "start": "node ../../node_modules/@cloudbase/functions-framework/bin/tcb-ff.js --port=9002 --functionsConfigFile=cloudbase-functions.json"
   }
 }

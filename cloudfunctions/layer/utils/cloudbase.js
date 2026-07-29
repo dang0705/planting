@@ -15,10 +15,7 @@ function sleep(ms) {
 
 function isRetryableRunSqlError(error) {
   const message = String(error?.message || error || '')
-  return (
-    message.includes('Database connection failed') ||
-    message.includes('Run query failed')
-  )
+  return message.includes('Database connection failed') || message.includes('Run query failed')
 }
 
 const SQL_TABLES = [
@@ -60,14 +57,18 @@ const SQL_TABLES = [
   'observed_evidence_set',
   'diagnosis_symptom_observations',
   'diagnosis_follow_ups',
-  'question_queue',
+  'question_package_snapshot',
   'stop_state',
   'diagnosis_feedback',
   'diagnosis_batch_reviews',
   'identify_sessions',
   'user_diagnose_quota',
   'user_identify_quota',
-  'weather_cache'
+  'weather_cache',
+  'weather_locations',
+  'plant_care_locations',
+  'diagnosis_weather_evidence',
+  'user_watering_reminder_events'
 ]
 
 function qualifySqlTableNames(sql, databaseName) {
@@ -79,13 +80,15 @@ function qualifySqlTableNames(sql, databaseName) {
   const escapedDbName = `\`${dbName.replace(/`/g, '``')}\``
   const tablePattern = SQL_TABLES.join('|')
 
-  return String(sql || '')
-    .replace(
-      new RegExp(`\\b(FROM|JOIN|UPDATE|INTO)\\s+(?!\\()(?!(?:\\\`?${dbName.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\\`?)\\.)((?:\\\`)?(${tablePattern})(?:\\\`)?)\\b`, 'gi'),
-      (match, keyword, originalTableRef, tableName) => {
-        return `${keyword} ${escapedDbName}.\`${tableName}\``
-      }
-    )
+  return String(sql || '').replace(
+    new RegExp(
+      `\\b(FROM|JOIN|UPDATE|INTO)\\s+(?!\\()(?!(?:\\\`?${dbName.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\\`?)\\.)((?:\\\`)?(${tablePattern})(?:\\\`)?)\\b`,
+      'gi'
+    ),
+    (match, keyword, originalTableRef, tableName) => {
+      return `${keyword} ${escapedDbName}.\`${tableName}\``
+    }
+  )
 }
 
 /**
@@ -93,20 +96,14 @@ function qualifySqlTableNames(sql, databaseName) {
  *
  * 线上云函数通常可以使用运行时身份；本地 tcb-ff 调试则需要显式凭据。
  * 本仓库的 GitHub Actions 使用 TENCENT_* 命名，历史本地脚本使用 CLOUDBASE_*，
- * 这里统一兼容，避免本地只配置 TENCENT_* 时仍报 secret id error。
+ * 这里统一适配，避免本地只配置 TENCENT_* 时仍报 secret id error。
  */
 function resolveCloudbaseCredentials(env = process.env) {
   const secretId = String(
-    env.CLOUDBASE_SECRET_ID ||
-      env.TENCENT_SECRET_ID ||
-      env.TENCENTCLOUD_SECRETID ||
-      ''
+    env.CLOUDBASE_SECRET_ID || env.TENCENT_SECRET_ID || env.TENCENTCLOUD_SECRETID || ''
   ).trim()
   const secretKey = String(
-    env.CLOUDBASE_SECRET_KEY ||
-      env.TENCENT_SECRET_KEY ||
-      env.TENCENTCLOUD_SECRETKEY ||
-      ''
+    env.CLOUDBASE_SECRET_KEY || env.TENCENT_SECRET_KEY || env.TENCENTCLOUD_SECRETKEY || ''
   ).trim()
 
   return { secretId, secretKey }
@@ -175,27 +172,11 @@ function getUserInfo(context) {
   const runtimeEnv = context?.environment || context?.environ || {}
   const extendedContext = context?.extendedContext || {}
 
-  const runtimeOpenId =
-    runtimeEnv.WX_OPENID ||
-    process.env.WX_OPENID ||
-    ''
-  const runtimeAppId =
-    runtimeEnv.WX_APPID ||
-    process.env.WX_APPID ||
-    ''
-  const runtimeUid =
-    runtimeEnv.TCB_UUID ||
-    extendedContext.userId ||
-    process.env.TCB_UUID ||
-    ''
-  const runtimeCustomUserId =
-    runtimeEnv.TCB_CUSTOM_USER_ID ||
-    process.env.TCB_CUSTOM_USER_ID ||
-    ''
-  const runtimeUnionId =
-    runtimeEnv.WX_UNIONID ||
-    process.env.WX_UNIONID ||
-    ''
+  const runtimeOpenId = runtimeEnv.WX_OPENID || process.env.WX_OPENID || ''
+  const runtimeAppId = runtimeEnv.WX_APPID || process.env.WX_APPID || ''
+  const runtimeUid = runtimeEnv.TCB_UUID || extendedContext.userId || process.env.TCB_UUID || ''
+  const runtimeCustomUserId = runtimeEnv.TCB_CUSTOM_USER_ID || process.env.TCB_CUSTOM_USER_ID || ''
+  const runtimeUnionId = runtimeEnv.WX_UNIONID || process.env.WX_UNIONID || ''
 
   if (runtimeOpenId || runtimeUid || runtimeCustomUserId) {
     const openid = runtimeOpenId || runtimeUid || runtimeCustomUserId

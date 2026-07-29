@@ -1,10 +1,8 @@
 'use strict'
 
-const { summarizeQuestionQueue } = require('../question-queue/question-queue-invalidator')
-
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function normalizeStringList(values = []) {
@@ -14,7 +12,6 @@ function normalizeStringList(values = []) {
 }
 
 function resolveOutputConservatism(response = {}) {
-  if (response?.followUpRequired) {return 'blocked'}
   if (normalizeText(response?.outcomeType) === 'uncertain') {return 'high'}
   if (normalizeText(response?.outcomeType) === 'non_problematic') {return 'guarded'}
   if (response?.highSpecificityFastConvergence?.applied) {return 'guarded'}
@@ -22,7 +19,6 @@ function resolveOutputConservatism(response = {}) {
 }
 
 function resolveConclusionStatus(response = {}, stopState = null) {
-  if (response?.followUpRequired) {return 'pending_follow_up'}
   if (stopState?.isStopped !== 1) {return 'pending_stop_judgment'}
   if (normalizeText(stopState?.stopReason) === 'route_visible_outcomes_ready') {
     return 'route_visible_outcomes_ready'
@@ -38,13 +34,8 @@ function resolveConclusionStatus(response = {}, stopState = null) {
   return 'pending'
 }
 
-function resolveUnresolvedRisks(response = {}, questionQueue = null) {
+function resolveUnresolvedRisks(response = {}) {
   const risks = []
-  const queueSummary = summarizeQuestionQueue(questionQueue || {})
-
-  if (response?.followUpRequired || queueSummary.activeItemCount > 0) {
-    risks.push('当前仍存在未完成的高价值 follow-up。')
-  }
 
   const confidenceReasons = normalizeStringList(response?.confidenceReasons)
   risks.push(...confidenceReasons)
@@ -76,8 +67,15 @@ function resolveNextStepHints(response = {}) {
   return Array.from(new Set(hints)).filter(Boolean)
 }
 
-function evaluateOutputEligibility({ response = {}, questionQueue = null, stopState = null } = {}) {
-  const queueSummary = summarizeQuestionQueue(questionQueue || {})
+function hasPendingQuestions(response = {}) {
+  const terminalQuestioningState = response?.terminalQuestioningState
+  if (terminalQuestioningState && typeof terminalQuestioningState === 'object') {
+    return Number(terminalQuestioningState?.requiresQuestion || 0) === 1
+  }
+  return Array.isArray(response?.questions) && response.questions.length > 0
+}
+
+function evaluateOutputEligibility({ response = {}, stopState = null } = {}) {
   const outcomeType = normalizeText(response?.outcomeType)
   const hasFormalOutcome = ['problematic', 'non_problematic', 'uncertain'].includes(outcomeType)
   const hasFormalStopDecision = Boolean(
@@ -88,7 +86,7 @@ function evaluateOutputEligibility({ response = {}, questionQueue = null, stopSt
   const eligible =
     normalizeText(response?.stage) === 'final' &&
     stopState?.isStopped === 1 &&
-    queueSummary.activeItemCount === 0 &&
+    !hasPendingQuestions(response) &&
     hasFormalStopDecision &&
     hasFormalOutcome
       ? 1
@@ -96,7 +94,7 @@ function evaluateOutputEligibility({ response = {}, questionQueue = null, stopSt
 
   return {
     eligible,
-    judgment: eligible ? 'eligible' : 'blocked_pending_follow_up',
+    judgment: eligible ? 'eligible' : 'blocked_pending_output',
     conclusionType: outcomeType,
     conclusionStatus: resolveConclusionStatus(response, stopState),
     outputConservatism: resolveOutputConservatism(response),
@@ -112,7 +110,7 @@ function evaluateOutputEligibility({ response = {}, questionQueue = null, stopSt
       response?.explanation?.whyItHappens ||
       response?.resultExplanation?.whyItHappens
     ),
-    unresolvedRisks: resolveUnresolvedRisks(response, questionQueue),
+    unresolvedRisks: resolveUnresolvedRisks(response),
     nextStepHints: resolveNextStepHints(response)
   }
 }

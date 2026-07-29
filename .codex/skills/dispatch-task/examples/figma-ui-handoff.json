@@ -1,0 +1,111 @@
+{
+  "dispatch_run_id": "example-ui-001",
+  "task": {
+    "objective": "按目标 Figma 节点实现页面卡片",
+    "code_changes_required": true,
+    "ui_task": true,
+    "risk": "standard",
+    "qa_required": true
+  },
+  "target_role": "implementer_fast",
+  "spawn_contract": {
+    "implementer_agent_type": "implementer_fast",
+    "qa_agent_type": null,
+    "context_mode": "isolated",
+    "generic_fallback_forbidden": true,
+    "identity_receipt_required": true
+  },
+  "allowed_paths": [
+    "src/pages/example/**",
+    "src/components/example/**"
+  ],
+  "forbidden_paths": [
+    "package-lock.json",
+    "src/api/**",
+    "src/stores/**"
+  ],
+  "acceptance": [
+    "视觉、文案与交互匹配目标 Figma 节点",
+    "使用项目 TailwindCSS，不新增 SCSS",
+    "优先复用现有组件与 uni-ui",
+    "Figma 语义区域优先映射到可用 uni-ui 组件；无法覆盖时说明自定义原因"
+  ],
+  "project_constraints": {
+    "rule_refs": [
+      "AGENTS.md#UI-与样式"
+    ],
+    "framework": "uni-app + Vue",
+    "styling_system": "tailwindcss",
+    "new_scss_policy": "forbidden",
+    "scss_exceptions": [],
+    "component_library": "uni-ui",
+    "dependency_policy": "no_new_dependencies",
+    "test_commands": [
+      "npm run typecheck",
+      "npm run build:mp-weixin"
+    ]
+  },
+  "decision_lock": {
+    "level": "standard",
+    "architecture_invariants": [
+      "不得新增 store/API/schema"
+    ],
+    "local_decisions_allowed": [
+      "组件局部拆分",
+      "Tailwind utility 组合",
+      "现有组件复用落点"
+    ]
+  },
+  "figma": {
+    "required": true,
+    "link": "https://figma.com/design/example/file?node-id=1-2",
+    "node_id": "1:2",
+    "mode": "internal_mcp",
+    "lite_status": "link_only",
+    "main_access": "lite_only",
+    "main_tools_used": [],
+    "implementer_fetch_required": true,
+    "qa_baseline_fetch_required": true
+  },
+  "brv_relevance": {
+    "required": false,
+    "reason": "UI implementation example; no stable business fact recall required"
+  },
+  "feature_test_plan": {
+    "required": true,
+    "targets": ["src/pages/example/**", "src/components/example/**"],
+    "commands": ["npm run typecheck", "npm run build:mp-weixin"]
+  },
+  "e2e_plan": {
+    "required": false,
+    "automator_required": false,
+    "catalog_required": false
+  },
+  "required_skills": {
+    "implementer": [
+      "$implementer-ui-execution-policy",
+      "$uni-ui-figma-component-mapper"
+    ],
+    "main": [
+      "$qa-ui-visual-baseline-policy"
+    ]
+  },
+  "validation": {
+    "miniprogram_automator_required": false,
+    "implementer": [
+      "unit tests",
+      "lint/typecheck/build",
+      "UI self-check"
+    ],
+    "worktree_baseline_path": ".tmp/dispatch-task/example-ui-001-worktree-baseline.json"
+  },
+  "output_evidence_required": [
+    "validation_evidence",
+    "figma_fetch_evidence",
+    "style_stack_compliance",
+    "component_reuse_evidence",
+    "uni_ui_mapping_evidence"
+  ],
+  "dispatch_tier": "standard_task",
+  "implementation_mode": "codex_subagent"
+}

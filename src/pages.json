@@ -1,111 +1,172 @@
 {
-	"easycom": {
-		"autoscan": true,
-		"custom": {
-			"^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue"
-		}
-	},
-	"pages": [
-		{
-			"path": "pages/index/index",
-			"style": {
-				"navigationStyle": "custom",
-				"navigationBarTextStyle": "white"
-			}
-		},
-		{
-			"path": "pages/plant-detail/plant-detail",
-			"style": {
-				"navigationBarTitleText": "植物详情",
-				"navigationBarBackgroundColor": "#2D7A4F",
-				"navigationBarTextStyle": "white"
-			}
-		},
-		{
-			"path": "pages/add-plant/add-plant",
-			"style": {
-				"navigationBarTitleText": "添加植物",
-				"navigationBarBackgroundColor": "#2D7A4F",
-				"navigationBarTextStyle": "white"
-			}
-		},
-		{
-			"path": "pages/diagnose/diagnose",
-			"style": {
-				"navigationBarTitleText": "AI 诊断",
-				"navigationBarBackgroundColor": "#2D7A4F",
-				"navigationBarTextStyle": "white"
-			}
-		},
-		{
-			"path": "pages/diagnose/follow-up",
-			"style": {
-				"navigationBarTitleText": "继续问诊",
-				"navigationBarBackgroundColor": "#2D7A4F",
-				"navigationBarTextStyle": "white"
-			}
-		},
-		{
-			"path": "pages/calendar/calendar",
-			"style": {
-				"navigationStyle": "custom",
-				"navigationBarTextStyle": "white"
-			}
-		},
-		{
-			"path": "pages/profile/profile",
-			"style": {
-				"navigationStyle": "custom",
-				"navigationBarTextStyle": "white"
-			}
-		},
-		{
-			"path": "pages/profile/out-of-pool-review",
-			"style": {
-				"navigationBarTitleText": "池外视觉审核",
-				"navigationBarBackgroundColor": "#2F5D50",
-				"navigationBarTextStyle": "white"
-			}
-		},
-		{
-			"path": "pages/profile/diagnosis-review",
-			"style": {
-				"navigationBarTitleText": "诊断记录管理",
-				"navigationBarBackgroundColor": "#2F5D50",
-				"navigationBarTextStyle": "white"
-			}
-		}
-	],
-	"globalStyle": {
-		"navigationBarTextStyle": "white",
-		"navigationBarTitleText": "AI 植伴",
-		"navigationBarBackgroundColor": "#2D7A4F",
-		"backgroundColor": "#F8F6F0"
-	},
-	"tabBar": {
-		"color": "#8B7355",
-		"selectedColor": "#2D7A4F",
-		"backgroundColor": "#FFFFFF",
-		"borderStyle": "white",
-		"list": [
-			{
-				"pagePath": "pages/index/index",
-				"text": "首页",
-				"iconPath": "static/tabbar/home.png",
-				"selectedIconPath": "static/tabbar/home-active.png"
-			},
-			{
-				"pagePath": "pages/calendar/calendar",
-				"text": "日历",
-				"iconPath": "static/tabbar/calendar.png",
-				"selectedIconPath": "static/tabbar/calendar-active.png"
-			},
-			{
-				"pagePath": "pages/profile/profile",
-				"text": "我的",
-				"iconPath": "static/tabbar/profile.png",
-				"selectedIconPath": "static/tabbar/profile-active.png"
-			}
-		]
-	}
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue"
+    }
+  },
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/plant-detail/plant-detail",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "植物详情",
+        "navigationBarBackgroundColor": "#2D7A4F",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/add-plant/add-plant",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "添加植物",
+        "navigationBarBackgroundColor": "#2D7A4F",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/edit-plant/edit-plant",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "编辑植物",
+        "navigationBarBackgroundColor": "#2D7A4F",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/watering-advisor/watering-advisor",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "浇水建议",
+        "navigationBarBackgroundColor": "#2D7A4F",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/diagnose/diagnose",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "AI 诊断",
+        "navigationBarBackgroundColor": "#2D7A4F",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/diagnose/question-package",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "继续问诊",
+        "navigationBarBackgroundColor": "#2D7A4F",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/diagnose/result",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "诊断结果",
+        "navigationBarBackgroundColor": "#2D7A4F",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/calendar/calendar",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/reminder/reminder",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/profile/profile",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/profile/out-of-pool-review",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "池外视觉审核",
+        "navigationBarBackgroundColor": "#2F5D50",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/profile/diagnosis-review",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "诊断记录管理",
+        "navigationBarBackgroundColor": "#2F5D50",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/profile/watering-review",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "浇水算法审计",
+        "navigationBarBackgroundColor": "#2F5D50",
+        "navigationBarTextStyle": "white"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "AI 植伴",
+    "navigationBarBackgroundColor": "#2D7A4F",
+    "backgroundColor": "#F8F6F0"
+  },
+  "tabBar": {
+    "color": "#8B7355",
+    "selectedColor": "#2D7A4F",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "static/tabbar/home.png",
+        "selectedIconPath": "static/tabbar/home-active.png"
+      },
+      {
+        "pagePath": "pages/calendar/calendar",
+        "text": "日历",
+        "iconPath": "static/tabbar/calendar.png",
+        "selectedIconPath": "static/tabbar/calendar-active.png"
+      },
+      {
+        "pagePath": "pages/diagnose/diagnose",
+        "text": "诊断",
+        "iconPath": "static/tabbar/diagnose.png",
+        "selectedIconPath": "static/tabbar/diagnose-active.png"
+      },
+      {
+        "pagePath": "pages/reminder/reminder",
+        "text": "提醒",
+        "iconPath": "static/tabbar/reminder.png",
+        "selectedIconPath": "static/tabbar/reminder-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "static/tabbar/profile.png",
+        "selectedIconPath": "static/tabbar/profile-active.png"
+      }
+    ]
+  }
 }

@@ -24,7 +24,7 @@
 
 4. 问题簇。
 
-5. gate 守卫。
+5. condition 守卫。
 
 6. replay 逻辑。
 
@@ -44,13 +44,13 @@
 
 ## 升级规则
 
-当 `implementer_fast` 发现以下任一情况时，必须停止实现并请求 main agent 改派 `implementer_deep`：
+当 `implementer_fast` 发现以下任一情况时，必须停止实现并请求 `main agent` 改派 `implementer_deep`：
 
 1. 修改范围超过原 Dispatch Plan。
 
 2. 涉及多文件核心逻辑。
 
-3. 涉及诊断 runtime、outcome、gate、replay。
+3. 涉及诊断 runtime、outcome、condition、replay。
 
 4. 涉及 CloudBase 云函数或部署。
 

@@ -5,7 +5,7 @@
 - 当前代码压缩包：`Archive 2.zip`
 - 项目规则压缩包：`rules.zip`
 - 诊断运行时粗文档：`diagnosis-runtime-code-logic.md`
-- 本次会话中关于“主动瘦身、养护类主轴、ranking 到 route、多候选 outcome 收敛、gate 守卫、LLM prompt 职责边界”的讨论结论
+- 本次会话中关于“主动瘦身、养护类主轴、ranking 到 route、多候选 outcome 收敛、condition 守卫、LLM prompt 职责边界”的讨论结论
 
 权威优先级：**当前代码 > 项目 rules > 已有运行时说明 > 本次设计讨论**。如果后续实施时发现文档和代码冲突，必须以代码为准，并同步修正文档。
 
@@ -22,7 +22,7 @@
 正确口径是：
 
 ```text
-视觉证据 → 形成多个候选 outcome → 通过 route group、route、gate 和问诊回答不断增强、削弱、阻断 → 收窄到 1～3 个前端可见 outcome → 输出处理方向和行动建议
+视觉证据 → 形成多个候选 outcome → 通过 route group、route、condition 和问诊回答不断增强、削弱、阻断 → 收窄到 1～3 个前端可见 outcome → 输出处理方向和行动建议
 ```
 
 因此，本项目采用的模型名称是：
@@ -100,7 +100,7 @@
       supportEvidenceKeys: ['yellowing_leaf'],
       weakenEvidenceKeys: [],
       blockerEvidenceKeys: [],
-      missingGateKeys: ['soil_moisture_confirmation_gate'],
+      missingConditionKeys: ['soil_moisture_confirmation_condition'],
       nextQuestionKeys: ['q_soil_moisture_recent'],
       actionConflictGroup: 'watering_stop'
     }
@@ -119,8 +119,8 @@
 | `strengthened` | 已增强 | 问诊或证据增强了该方向。 |
 | `weakened` | 已削弱 | 有反向证据，但不足以排除。 |
 | `blocked` | 已阻断 | 关键反证命中，不应继续前端展示。 |
-| `display_eligible` | 可展示 | 通过展示 gate，可作为前端 1～3 个方向之一。 |
-| `closure_eligible` | 可闭合 | 通过闭合 gate，可作为主方向或伴随方向输出。 |
+| `display_eligible` | 可展示 | 通过展示 condition，可作为前端 1～3 个方向之一。 |
+| `closure_eligible` | 可闭合 | 通过闭合 condition，可作为主方向或伴随方向输出。 |
 | `uncertain_candidate` | 不确定候选 | 证据不足或冲突，适合进入不确定说明。 |
 
 ### 3. 分流路径组：`routeGroup`
@@ -166,25 +166,25 @@ outcome：积水/根系压力
 
 这些 route 的入口症状不同，但最终处理建议相容，因此可以收敛到同一个 outcome。
 
-### 5. 门：`gate`
+### 5. 门：`condition`
 
 中文定义：**候选 outcome 或 route 能否展示、增强、阻断、闭合、转不确定的判断条件**。
 
-代码建议名：`gateKey`。
+代码建议名：`conditionKey`。
 
-典型 gate 类型：
+典型 condition 类型：
 
-| gate 类型 | 中文含义 | 示例 |
+| condition 类型 | 中文含义 | 示例 |
 |---|---|---|
-| `entry_gate` | 入口门 | 正式证据中有黄叶或萎蔫。 |
-| `split_gate` | 分流门 | 盆土久湿支持积水，盆土干透支持缺水。 |
-| `confirmation_gate` | 确认门 | 用户确认盆土长期潮湿。 |
-| `display_gate` | 展示门 | 有正式证据支持且无关键反证，可前端展示。 |
-| `blocker_gate` | 阻断门 | 用户明确说土完全干透，阻断积水路径。 |
-| `conflict_gate` | 冲突门 | 同时出现补水与停水方向，需要继续分流。 |
-| `closure_gate` | 闭合门 | 支持证据足够且无冲突，可以作为主方向或伴随方向。 |
-| `uncertain_gate` | 不确定门 | 信息不足且无法继续问，输出不确定。 |
-| `action_safety_gate` | 行动安全门 | 多个可见 outcome 的建议不得互相打架。 |
+| `entry_condition` | 入口门 | 正式证据中有黄叶或萎蔫。 |
+| `split_condition` | 分流门 | 盆土久湿支持积水，盆土干透支持缺水。 |
+| `confirmation_condition` | 确认门 | 用户确认盆土长期潮湿。 |
+| `display_condition` | 展示门 | 有正式证据支持且无关键反证，可前端展示。 |
+| `blocker_condition` | 阻断门 | 用户明确说土完全干透，阻断积水路径。 |
+| `conflict_condition` | 冲突门 | 同时出现补水与停水方向，需要继续分流。 |
+| `closure_condition` | 闭合门 | 支持证据足够且无冲突，可以作为主方向或伴随方向。 |
+| `uncertain_condition` | 不确定门 | 信息不足且无法继续问，输出不确定。 |
+| `action_safety_condition` | 行动安全门 | 多个可见 outcome 的建议不得互相打架。 |
 
 ### 6. 路径决策：`routeDecision`
 
@@ -202,7 +202,7 @@ outcome：积水/根系压力
   secondaryOutcomeKeys: [],
   requiresFollowUp: false,
   nextQuestionKeys: [],
-  gateResults: [],
+  conditionResults: [],
   blockedOutcomeKeys: [],
   conflictingOutcomePairs: [],
   routeTrace: [],
@@ -223,7 +223,7 @@ outcome：积水/根系压力
 - 证据不足时的 1～3 个待排查方向；
 - 不确定结果下的保守观察方向。
 
-展示 gate 必须保证：
+展示 condition 必须保证：
 
 1. 有至少一个正式证据支持。
 2. 没有关键 blocker。
@@ -316,16 +316,16 @@ LLM 看图 → outcomeKey → 输出
 
 ### 原则 7：ranking 只能辅助候选，不得直接决定结果
 
-ranking 可以告诉系统“哪些方向更值得进入候选集合”，但不能绕过 gate。
+ranking 可以告诉系统“哪些方向更值得进入候选集合”，但不能绕过 condition。
 
 最终判断应是：
 
 ```text
 ranking 选候选
 routeGroup 组织分流
-route/gate 管理增强、削弱、阻断
-visible gate 决定前端可见方向
-action safety gate 决定公开建议
+route/condition 管理增强、削弱、阻断
+visible condition 决定前端可见方向
+action safety condition 决定公开建议
 ```
 
 ---
@@ -357,7 +357,7 @@ action safety gate 决定公开建议
 | `leaf_tip_burn_environment_stress` | 叶尖焦枯/环境压力 | 养护问题簇 | 是 | 检查湿度、水质、肥料、缺水、强光。 |
 | `leaf_spot_cluster_basic` | 叶斑类问题 | 问题簇 | 是 | 停止喷水、通风、隔离、剪重症叶，暂不细分病原。 |
 | `pest_trace_cluster_basic` | 疑似虫害痕迹 | 问题簇 | 是 | 隔离、查叶背、擦拭/冲洗、观察活动虫体。 |
-| `structural_damage_old_injury` | 结构损伤/旧伤 | 非病害问题簇 | 是 | 若不扩散，通常观察即可。 |
+| `structural_damage_old_injury` | 结构损伤/既有伤 | 非病害问题簇 | 是 | 若不扩散，通常观察即可。 |
 | `natural_senescence_non_problematic` | 自然代谢/老叶更新 | 非问题性 | 是 | 不过度处理，观察新叶。 |
 | `variegation_or_normal_color_non_problematic` | 正常斑纹/艺斑/新叶嫩色 | 非问题性 | 是 | 不误判为病斑或缺素。 |
 | `out_of_scope_or_unmappable_visual_abnormality` | 范围外/暂不支持异常 | 不确定类 | 是 | 说明当前池外，建议补图/观察。 |
@@ -373,7 +373,7 @@ action safety gate 决定公开建议
 5. 叶尖焦枯/环境压力
 6. 叶斑类问题
 7. 疑似虫害痕迹
-8. 结构损伤/旧伤
+8. 结构损伤/既有伤
 9. 自然代谢/非问题
 10. 正常斑纹/艺斑/非问题
 11. 不确定
@@ -439,7 +439,7 @@ action safety gate 决定公开建议
 |---|---|---|
 | 叶斑类问题 | 斑点扩散、水渍状、边缘发黄发黑 | 最近这些斑点是否在扩大或变多？ |
 | 晒伤/强光刺激 | 斑块集中受光面，近期强光变化 | 最近是否突然搬到强光或暴晒处？ |
-| 结构损伤/旧伤 | 撕裂、摩擦、稳定不扩散 | 这个缺口或斑块最近有没有继续变大或变多？ |
+| 结构损伤/既有伤 | 撕裂、摩擦、稳定不扩散 | 这个缺口或斑块最近有没有继续变大或变多？ |
 | 正常斑纹/艺斑 | 规律斑纹、品种特征、新叶嫩色 | 这类斑纹是否从新叶展开时就存在且边界稳定？ |
 | 不确定 | 图像证据宽泛 | 输出不确定或叶斑类保守建议。 |
 
@@ -452,7 +452,7 @@ action safety gate 决定公开建议
 | 候选 outcome | 支持路径 | 关键分流问题 |
 |---|---|---|
 | 疑似虫害痕迹 | 孔洞 + 虫体/虫粪/新鲜缺口/继续变多 | 缺口附近是否有虫、虫粪或继续变多？ |
-| 结构损伤/旧伤 | 缺口固定、撕裂、摩擦伤 | 最近是否搬动、擦碰、修剪或被宠物碰过？ |
+| 结构损伤/既有伤 | 缺口固定、撕裂、摩擦伤 | 最近是否搬动、擦碰、修剪或被宠物碰过？ |
 | 叶斑类问题 | 病斑坏死后脱落 | 斑点是否先变黑褐再破洞？ |
 | 不确定 | 信息不足 | 不直接默认虫咬。 |
 
@@ -466,7 +466,7 @@ action safety gate 决定公开建议
 
 核心建议：停水、通风、查盆底、观察根/茎基部，严重时脱盆查根。
 
-| routeKey | 中文路径 | 入口证据 | 关键 gate | 典型问题 |
+| routeKey | 中文路径 | 入口证据 | 关键 condition | 典型问题 |
 |---|---|---|---|---|
 | `yellowing_wet_soil_route` | 黄叶 + 盆土久湿路径 | 黄叶类正式证据 | 用户确认盆土长期潮湿 | 最近盆土是不是一直湿，浇水后很久不干？ |
 | `wilting_wet_soil_route` | 萎蔫 + 土仍湿路径 | 萎蔫/发软 | 土仍湿且叶片发软 | 叶片发软时，土是湿的还是干的？ |
@@ -474,7 +474,7 @@ action safety gate 决定公开建议
 | `soil_gnat_wet_soil_route` | 土表小飞虫 + 潮湿路径 | 土表小飞虫 | 盆土长期潮湿 | 土表是否潮湿且有小飞虫？ |
 | `high_risk_host_overwater_route` | 高风险植物频繁浇水路径 | 发财树/金钱树/多肉等 | 高频浇水 + 异常表现 | 这类植物最近是否频繁浇水？ |
 
-阻断 gate：
+阻断 condition：
 
 ```text
 用户确认土长期干透，且没有盆底积水/异味/软茎 → 阻断积水路径，转向缺水或不确定。
@@ -486,13 +486,13 @@ action safety gate 决定公开建议
 
 核心建议：补水、观察恢复、后续调整浇水节奏。
 
-| routeKey | 中文路径 | 入口证据 | 关键 gate | 典型问题 |
+| routeKey | 中文路径 | 入口证据 | 关键 condition | 典型问题 |
 |---|---|---|---|---|
 | `wilting_dry_soil_route` | 萎蔫 + 土干路径 | 萎蔫/发软 | 土明显干透 | 叶片发软时，土是干透还是仍湿？ |
 | `yellowing_dry_soil_route` | 黄叶 + 长期缺水路径 | 黄叶 | 久未浇水或土干 | 最近是否很久没浇水，盆土明显干？ |
 | `leaf_tip_dry_stress_route` | 焦边 + 缺水压力路径 | 焦边/卷叶 | 干燥、缺水、恢复慢 | 最近是否经常干透到叶片发软？ |
 
-阻断 gate：
+阻断 condition：
 
 ```text
 用户确认盆土长期潮湿 → 阻断缺水路径，转积水/根系压力或不确定。
@@ -504,7 +504,7 @@ action safety gate 决定公开建议
 
 核心建议：逐步增加散射光，避免突然暴晒。
 
-| routeKey | 中文路径 | 入口证据 | 关键 gate | 典型问题 |
+| routeKey | 中文路径 | 入口证据 | 关键 condition | 典型问题 |
 |---|---|---|---|---|
 | `weak_growth_low_light_route` | 生长弱 + 弱光路径 | 生长慢、新叶小、叶色淡 | 长期弱光 | 平时是否放在离窗较远或光线很弱的位置？ |
 | `leggy_growth_low_light_route` | 徒长 + 弱光路径 | 节间拉长、枝条细弱 | 长期弱光 | 新枝是否越来越细长、叶间距变大？ |
@@ -515,12 +515,12 @@ action safety gate 决定公开建议
 
 核心建议：移到明亮散射光，避免中午直晒，剪除严重坏死叶。
 
-| routeKey | 中文路径 | 入口证据 | 关键 gate | 典型问题 |
+| routeKey | 中文路径 | 入口证据 | 关键 condition | 典型问题 |
 |---|---|---|---|---|
 | `sun_exposed_patch_route` | 受光面斑块路径 | 局部浅褐/焦斑 | 最近强光/突然换位 | 最近是否突然搬到强光或暴晒处？ |
 | `new_position_sunburn_route` | 换位置后晒伤路径 | 焦斑/叶片发白 | 换位后出现 | 问题是否在换位置后几天出现？ |
 
-阻断 gate：
+阻断 condition：
 
 ```text
 完全无强光变化，且斑点持续扩散 → 转叶斑类或不确定。
@@ -532,7 +532,7 @@ action safety gate 决定公开建议
 
 核心建议：检查空气湿度、水质、肥料、缺水、强光，不急于喷药。
 
-| routeKey | 中文路径 | 入口证据 | 关键 gate | 典型问题 |
+| routeKey | 中文路径 | 入口证据 | 关键 condition | 典型问题 |
 |---|---|---|---|---|
 | `dry_air_tip_burn_route` | 干燥焦尖路径 | 叶尖焦枯/卷边 | 空气干、靠空调/暖气 | 是否靠近空调、暖气或环境很干？ |
 | `fertilizer_salt_tip_burn_route` | 肥盐焦尖路径 | 焦尖/焦边 | 最近施肥或水质硬 | 最近是否施肥偏多或用水水质偏硬？ |
@@ -544,13 +544,13 @@ action safety gate 决定公开建议
 
 核心建议：隔离、通风、停止喷水、剪重症叶，观察扩散，不强行细分真菌/细菌。
 
-| routeKey | 中文路径 | 入口证据 | 关键 gate | 典型问题 |
+| routeKey | 中文路径 | 入口证据 | 关键 condition | 典型问题 |
 |---|---|---|---|---|
 | `spreading_spot_route` | 斑点扩散路径 | 不规则斑块、黑褐斑 | 斑点扩大/增多 | 最近这些斑点是否在扩大或变多？ |
 | `water_soaked_spot_route` | 水渍状斑点路径 | 水渍感/边缘发黄 | 水渍、扩散 | 斑点边缘是否发黄、发黑或像水浸过？ |
 | `spray_humidity_spot_route` | 喷水潮湿环境路径 | 叶斑候选 | 经常喷水/通风差 | 最近是否经常往叶面喷水或通风较差？ |
 
-阻断 gate：
+阻断 condition：
 
 ```text
 斑块稳定不扩散，且明显在受光面或撕裂位置 → 转晒伤/结构损伤。
@@ -562,27 +562,27 @@ action safety gate 决定公开建议
 
 核心建议：隔离、查叶背和茎节、擦拭/冲洗、观察活动虫体。
 
-| routeKey | 中文路径 | 入口证据 | 关键 gate | 典型问题 |
+| routeKey | 中文路径 | 入口证据 | 关键 condition | 典型问题 |
 |---|---|---|---|---|
 | `visible_pest_trace_route` | 可见虫害痕迹路径 | 小虫、网、黏液、壳状物 | 用户确认 | 叶背或茎节是否看到小虫、网、黏液或壳状物？ |
 | `holes_with_pest_trace_route` | 孔洞 + 虫害痕迹路径 | 孔洞/缺损 | 有新鲜虫咬或虫体 | 缺口附近是否有虫、虫粪或继续变多？ |
 | `sticky_residue_route` | 黏液/蜜露路径 | 黏液、发亮 | 黏液和虫体 | 叶片是否发黏，叶背是否有虫？ |
 
-阻断 gate：
+阻断 condition：
 
 ```text
 缺口固定不扩散，且无虫体/虫粪/黏液/网 → 转结构损伤。
 ```
 
-### 8. 结构损伤/旧伤
+### 8. 结构损伤/既有伤
 
 `outcomeKey`：`structural_damage_old_injury`
 
 核心建议：如果不扩散，通常观察即可；避免误喷药。
 
-| routeKey | 中文路径 | 入口证据 | 关键 gate | 典型问题 |
+| routeKey | 中文路径 | 入口证据 | 关键 condition | 典型问题 |
 |---|---|---|---|---|
-| `stable_hole_old_injury_route` | 稳定孔洞/旧伤路径 | 孔洞、撕裂、缺口 | 不扩散、无虫害痕迹 | 这个缺口最近有没有继续变大或变多？ |
+| `stable_hole_old_injury_route` | 稳定孔洞/既有伤路径 | 孔洞、撕裂、缺口 | 不扩散、无虫害痕迹 | 这个缺口最近有没有继续变大或变多？ |
 | `mechanical_tear_route` | 机械撕裂路径 | 线性撕裂/折伤 | 移动/摩擦/人为碰伤 | 最近是否搬动、擦碰、修剪或被宠物碰过？ |
 
 ### 9. 自然代谢/非问题
@@ -591,7 +591,7 @@ action safety gate 决定公开建议
 
 核心建议：少量老叶黄化可摘除，观察新叶，不要过度处理。
 
-| routeKey | 中文路径 | 入口证据 | 关键 gate | 典型问题 |
+| routeKey | 中文路径 | 入口证据 | 关键 condition | 典型问题 |
 |---|---|---|---|---|
 | `lower_old_leaf_yellowing_route` | 底部老叶自然黄化路径 | 下部老叶少量黄 | 新叶正常、不扩散 | 是否只有底部少量老叶发黄，新叶正常？ |
 | `post_purchase_adjustment_route` | 环境变化适应路径 | 少量掉叶/黄叶 | 刚换环境，整体稳定 | 是否刚买回家或最近换了环境？ |
@@ -655,20 +655,20 @@ outcome_routes where outcome_key in candidateOutcomeKeys and enabled=1
 
 根据入口条件筛出候选 route，并写入 `candidateOutcomeStates`。
 
-### Step 5：评估 gate
+### Step 5：评估 condition
 
-对每个候选 outcome / route 执行 gate：
+对每个候选 outcome / route 执行 condition：
 
 ```text
-entry gate
-split gate
-confirmation gate
-display gate
-blocker gate
-conflict gate
-closure gate
-uncertain gate
-action safety gate
+entry condition
+split condition
+confirmation condition
+display condition
+blocker condition
+conflict condition
+closure condition
+uncertain condition
+action safety condition
 ```
 
 结果可能是：
@@ -689,9 +689,9 @@ uncertain_candidate
 
 1. 能区分相反处理动作的问题。
 2. 能排除高风险 outcome 的问题。
-3. 能让当前最强候选通过展示或闭合 gate 的问题。
+3. 能让当前最强候选通过展示或闭合 condition 的问题。
 4. 能降低不确定性的通用补充问题。
-5. route 数据缺失时，回退旧 ranking follow-up。
+5. route 数据缺失时，回退既有 ranking follow-up。
 
 示例：当候选同时包含“积水/根系压力”和“缺水压力”时，下一题应优先问盆土干湿，而不是先问具体病斑形态。
 
@@ -701,9 +701,9 @@ uncertain_candidate
 
 ```text
 有正式证据支持
-未被 blocker gate 阻断
-通过 display gate
-通过 action safety gate
+未被 blocker condition 阻断
+通过 display condition
+通过 action safety condition
 不泄漏内部最高 ranking
 最多 1～3 个
 ```
@@ -854,28 +854,28 @@ uncertain_candidate
 {
   "activeRouteGroupKeys": ["yellowing_care_split_group"],
   "routeTrace": [],
-  "gateResults": [],
+  "conditionResults": [],
   "rankingsForAudit": []
 }
 ```
 
-用户侧不展示 routeTrace、gateResults、rankingsForAudit。
+用户侧不展示 routeTrace、conditionResults、rankingsForAudit。
 
 ---
 
 ## 十一、和当前守卫的关系
 
-route/gate 不是替代所有守卫，而是把一部分守卫前移。
+route/condition 不是替代所有守卫，而是把一部分守卫前移。
 
 | 当前守卫 | 多候选 route 模式下的位置 |
 |---|---|
-| 黄叶必须分流 | 黄叶 route group 的 split gate。 |
-| 孔洞不能默认虫咬 | 孔洞 route group 的 pest trace gate / structural gate。 |
+| 黄叶必须分流 | 黄叶 route group 的 split condition。 |
+| 孔洞不能默认虫咬 | 孔洞 route group 的 pest trace condition / structural condition。 |
 | 宽泛斑块不能直出具体问题 | 叶斑/斑块 route group 只能展示叶斑类、晒伤、结构伤、不确定等粗方向。 |
-| 用户否定方向不能乱跳 | blocker gate / exclude effect。 |
+| 用户否定方向不能乱跳 | blocker condition / exclude effect。 |
 | 不确定不能泄漏 topProblem | result-formatter 继续保留。 |
 | 视觉原始结果不能直接输出 | observed-evidence 准入层继续保留。 |
-| 多个可见 outcome 行动建议冲突 | action safety gate 阻止同时展示，必要时输出不确定。 |
+| 多个可见 outcome 行动建议冲突 | action safety condition 阻止同时展示，必要时输出不确定。 |
 
 ---
 

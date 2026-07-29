@@ -1,0 +1,47 @@
+{
+  "createdAt": "2026-06-05T08:53:14.905Z",
+  "cwd": "/Users/jay/WebstormProjects/planting",
+  "version": "0.0.1",
+  "optimizedAt": "2026-06-06T00:00:00+08:00",
+  "optimizedBy": "ChatGPT package-mode docs correction",
+  "sourcePolicy": "code-base is the highest fact source; docs/new-rules/ai memory must conform to current route + mode question package implementation; outdated follow-up or one-question-per-round wording is not an active diagnosis fact.",
+  "diagnosisDocumentationPolicy": {
+    "currentDiagnosisMode": "route_mode_only",
+    "currentQuestionMode": "mode_question_package",
+    "followUpBusinessConceptActive": false,
+    "perRoundOneQuestionWordingAllowed": false,
+    "yellowLeafPackage": {
+      "mode": "yellow_leaf",
+      "questionCount": 4,
+      "answerSubmitMode": "package",
+      "questionDisplayMode": "package"
+    },
+    "historicalFieldsPolicy": "followUp/nextQuestion/question-sequence names, if still present, are cleanup or migration targets, not current business concepts",
+    "runtimeDocs": [
+      {
+        "file": "docs/code-logics/INDEX.md",
+        "keyLines": "7-15"
+      },
+      {
+        "file": "docs/code-logics/03_诊断运行时主链路_逐步执行逻辑.md",
+        "keyLines": "5-19,21-30,53-71"
+      },
+      {
+        "file": "docs/code-logics/05_问诊系统_模式题包_完成与输出策略.md",
+        "keyLines": "5-15,32-52,66-87,99-107"
+      },
+      {
+        "file": "docs/code-logics/07_结果格式化_公开响应_前端接入契约.md",
+        "keyLines": "5-30,32-52,54-86"
+      },
+      {
+        "file": "docs/code-logics/10_实施规则映射_开发约束_审计清单.md",
+        "keyLines": "5-13,15-27,28-44,46-60"
+      },
+      {
+        "file": "docs/new-rules/planting_ai_diagnosis_all_in_one.md",
+        "keyLines": "11-20,22-34,36-67,69-92,94-113,126-134"
+      }
+    ]
+  }
+}

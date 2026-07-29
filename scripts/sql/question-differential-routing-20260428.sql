@@ -4,15 +4,15 @@
 
 UPDATE `question_library_v5_real`
 SET
-  `target_dimension` = CASE `question_key`
+  `package_topic` = CASE `question_key`
     WHEN 'q_holes_in_leaf_confirm' THEN 'structural_cause'
     WHEN 'q_chewed_edges_confirm' THEN 'structural_cause'
     WHEN 'q_skeletonized_leaves_confirm' THEN 'structural_cause'
     WHEN 'q_tunnels_in_leaf_confirm' THEN 'leaf_tunnel_pattern'
     WHEN 'q_powder_white_visible' THEN 'powder_pattern'
-    ELSE `target_dimension`
+    ELSE `package_topic`
   END,
-  `routing_scope` = 'differential_probe',
+  `package_section` = 'differential_probe',
   `question_text_cn` = CASE `question_key`
     WHEN 'q_holes_in_leaf_confirm' THEN '这些叶片孔洞周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？'
     WHEN 'q_chewed_edges_confirm' THEN '这些叶片边缘缺口周围，能看到小虫、黑色颗粒、黏液痕，或很新的不规则缺口吗？'

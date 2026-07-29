@@ -8,9 +8,9 @@ const {
   listAuditedOutOfPoolProxyMappings
 } = require('./out-of-pool-proxy-mapping-repository')
 
-function safeJsonParse(value, fallback = null) {
+function safeJsonParse(value, conservative = null) {
   if (value === null || value === undefined || value === '') {
-    return fallback
+    return conservative
   }
 
   if (typeof value === 'object') {
@@ -20,7 +20,7 @@ function safeJsonParse(value, fallback = null) {
   try {
     return JSON.parse(String(value))
   } catch {
-    return fallback
+    return conservative
   }
 }
 

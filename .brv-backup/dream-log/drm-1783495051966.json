@@ -1,0 +1,106 @@
+{
+  "completedAt": 1783495110120,
+  "id": "drm-1783495051966",
+  "operations": [
+    {
+      "action": "CROSS_REFERENCE",
+      "inputFiles": [
+        "architecture/watering_planner/watering_planner_v2_1_logic.md",
+        "architecture/watering_planner/watering_reminder_algorithm_v2_1.md"
+      ],
+      "needsReview": false,
+      "previousTexts": {
+        "architecture/watering_planner/watering_planner_v2_1_logic.md": "---\ntitle: 浇水规划器V2.1逻辑\nsummary: 基于10天行为窗、盆型几何和way/freq的浇水策略重算，涵盖物理建模与水分荷载计算。\ntags: [algorithm, watering_planner]\nrelated: [architecture/backend/watering_reminder_v2_1_schema.md, architecture/system_logic/plant_knowledge_integration.md]\nkeywords: [effectiveHydrationLoad, rootZoneMoistureIndex, potGeometryDryDownFactor]\ncreatedAt: '2026-07-01T12:50:26.652Z'\nupdatedAt: '2026-07-01T13:06:15.000Z'\nconsolidated_at: '2026-07-01T13:06:28.007Z'\nconsolidated_from: [{date: '2026-07-01T13:06:28.007Z', path: architecture/watering_planner/context.md, reason: The context.md is a thin placeholder for the watering_planner topic. watering_planner_v2_1_logic.md contains the full implementation details and facts for the current version. Merging ensures a single source of truth for the planner logic.}]\n---\n## Topic: watering_planner\n\n## Overview\nAdvanced watering recommendation engine based on physical pot characteristics and historical hydration loads. Replaces simple watering counts with complex metrics like effectiveHydrationLoad and rootZoneMoistureIndex.\n\n## Reason\n记录浇水规划器v2.1核心升级，引入物理建模算法。\n\n## Raw Concept\n**Task:**\n实现浇水规划器v2.1\n\n**Files:**\n- cloudfunctions/layer/utils/watering-planner.js\n- cloudfunctions/layer/utils/hydration-load.js\n- cloudfunctions/layer/utils/pot-geometry.js\n\n**Flow:**\n盆型几何计算 -> 行为时间线归一 -> 干湿门控判定 -> 下次浇水建议生成\n\n**Timestamp:** 2026-07-01\n\n## Narrative\n### Structure\n分层结构：\n- watering-planner.js 负责入口编排（行为线归一、基线间隔、输出字段）\n- hydration-load.js 负责干湿荷载与门控计算\n- pot-geometry.js 负责盆型几何因子（干透与排水风险），使用圆台体积公式（frustum volume formula）计算。\n\n### Highlights\n算法输出改为量化指标与建议策略，强调“mist 不代表根区浇透，unknown 不归零”，并将盆型几何纳入过浇/欠浇判定。考虑材质特性，如红陶（terracotta）具有 1.35 的高蒸发因子。\n\n### Rules\n规则1：way/freq 取属级策略作为基线间隔和回看窗的核心输入  \n规则2：unknown 浇水历史保留权重，不等于 0 次  \n规则3：mist 不计入有效根区浇水，不能抵消干燥风险  \n规则4：无排水孔或窄底盆提高 drainageRiskFactor，提升过浇风险权重\n\n## Facts\n- **algorithm**: 浇水规划器v2.1不再以 wateringCount10d 为核心判定，改用 effectiveHydrationLoad / wetPressureLoad / rootZoneMoistureIndex [项目]\n- **algorithm**: 根区湿度与门控结合 way/freq 形成动态回看窗与 nextWater 建议 [项目]\n- **algorithm_constant**: unknown 浇水事件、mist 和 thorough 在权重表中有独立贡献策略，mist 不能作为根区有效浇水 [项目]\n- **algorithm_constant**: 无排水孔或窄底盆会提高过浇风险评分 [项目]\n- **key_concept**: effectiveHydrationLoad (有效水分荷载)\n- **key_concept**: rootZoneMoistureIndex (根区水分指数)\n- **key_concept**: potGeometryDryDownFactor (盆型几何干透因子)",
+        "architecture/watering_planner/watering_reminder_algorithm_v2_1.md": "---\ntitle: Watering Reminder Algorithm v2.1\nsummary: Watering reminder algorithm v2.1 uses hydration/wet pressure weights, gate states (WET/DRY/BASELINE), and various correction coefficients.\ntags: []\nrelated: []\nkeywords: []\ncreatedAt: '2026-07-08T07:02:20.359Z'\nupdatedAt: '2026-07-08T07:02:20.359Z'\n---\n## Reason\nDocumenting core factors and coefficients for the watering reminder algorithm\n\n## Raw Concept\n**Task:**\nWatering reminder algorithm core factors and logic\n\n**Files:**\n- cloudfunctions/layer/utils/hydration-load.js\n\n**Flow:**\nMoisture index + load -> gate state evaluation -> coefficient adjustment -> suggestion\n\n**Timestamp:** 2026-07-08\n\n## Narrative\n### Structure\nAlgorithm resides in cloudfunctions layer, evaluating dry/wet gates based on moisture and load.\n\n### Highlights\nGate states: WET (over-watering risk), DRY (drought), BASELINE (normal).\n\n### Rules\nWET gate: rootZoneMoistureIndex > 0.6 and wetPressureLoad > 0.4\nDRY gate: index < 0.3 and days since last watering >= baseline\n\n### Examples\nWeather correction: 0.8 for 1 wet item, 0.5 for >=2 items. Genus correction: Dry-loving 0.6, High-moisture 1.25.\n\n## Facts\n- **watering_gate**: WET gate is triggered if moisture index > 0.6 and wet pressure > 0.4 [other]\n- **watering_gate**: DRY gate is triggered if moisture index < 0.3 [other]\n- **pot_volume_threshold**: Oversized pot threshold is 50000ml [project]\n"
+      },
+      "reason": "The watering planner logic (v2.1) is the high-level implementation that uses the specific reminder algorithm coefficients and gate states defined in the reminder algorithm file. They are complementary parts of the same versioned system.",
+      "type": "CONSOLIDATE"
+    },
+    {
+      "action": "CROSS_REFERENCE",
+      "inputFiles": [
+        "architecture/watering_planner/watering_planner_v2_1_logic.md",
+        "architecture/watering_planner/watering_volume_conversion_logic.md"
+      ],
+      "needsReview": false,
+      "previousTexts": {
+        "architecture/watering_planner/watering_planner_v2_1_logic.md": "---\ntitle: 浇水规划器V2.1逻辑\nsummary: 基于10天行为窗、盆型几何和way/freq的浇水策略重算，涵盖物理建模与水分荷载计算。\ntags: [algorithm, watering_planner]\nrelated: [architecture/backend/watering_reminder_v2_1_schema.md, architecture/system_logic/plant_knowledge_integration.md]\nkeywords: [effectiveHydrationLoad, rootZoneMoistureIndex, potGeometryDryDownFactor]\ncreatedAt: '2026-07-01T12:50:26.652Z'\nupdatedAt: '2026-07-01T13:06:15.000Z'\nconsolidated_at: '2026-07-01T13:06:28.007Z'\nconsolidated_from: [{date: '2026-07-01T13:06:28.007Z', path: architecture/watering_planner/context.md, reason: The context.md is a thin placeholder for the watering_planner topic. watering_planner_v2_1_logic.md contains the full implementation details and facts for the current version. Merging ensures a single source of truth for the planner logic.}]\n---\n## Topic: watering_planner\n\n## Overview\nAdvanced watering recommendation engine based on physical pot characteristics and historical hydration loads. Replaces simple watering counts with complex metrics like effectiveHydrationLoad and rootZoneMoistureIndex.\n\n## Reason\n记录浇水规划器v2.1核心升级，引入物理建模算法。\n\n## Raw Concept\n**Task:**\n实现浇水规划器v2.1\n\n**Files:**\n- cloudfunctions/layer/utils/watering-planner.js\n- cloudfunctions/layer/utils/hydration-load.js\n- cloudfunctions/layer/utils/pot-geometry.js\n\n**Flow:**\n盆型几何计算 -> 行为时间线归一 -> 干湿门控判定 -> 下次浇水建议生成\n\n**Timestamp:** 2026-07-01\n\n## Narrative\n### Structure\n分层结构：\n- watering-planner.js 负责入口编排（行为线归一、基线间隔、输出字段）\n- hydration-load.js 负责干湿荷载与门控计算\n- pot-geometry.js 负责盆型几何因子（干透与排水风险），使用圆台体积公式（frustum volume formula）计算。\n\n### Highlights\n算法输出改为量化指标与建议策略，强调“mist 不代表根区浇透，unknown 不归零”，并将盆型几何纳入过浇/欠浇判定。考虑材质特性，如红陶（terracotta）具有 1.35 的高蒸发因子。\n\n### Rules\n规则1：way/freq 取属级策略作为基线间隔和回看窗的核心输入  \n规则2：unknown 浇水历史保留权重，不等于 0 次  \n规则3：mist 不计入有效根区浇水，不能抵消干燥风险  \n规则4：无排水孔或窄底盆提高 drainageRiskFactor，提升过浇风险权重\n\n## Facts\n- **algorithm**: 浇水规划器v2.1不再以 wateringCount10d 为核心判定，改用 effectiveHydrationLoad / wetPressureLoad / rootZoneMoistureIndex [项目]\n- **algorithm**: 根区湿度与门控结合 way/freq 形成动态回看窗与 nextWater 建议 [项目]\n- **algorithm_constant**: unknown 浇水事件、mist 和 thorough 在权重表中有独立贡献策略，mist 不能作为根区有效浇水 [项目]\n- **algorithm_constant**: 无排水孔或窄底盆会提高过浇风险评分 [项目]\n- **key_concept**: effectiveHydrationLoad (有效水分荷载)\n- **key_concept**: rootZoneMoistureIndex (根区水分指数)\n- **key_concept**: potGeometryDryDownFactor (盆型几何干透因子)",
+        "architecture/watering_planner/watering_volume_conversion_logic.md": "---\ntitle: Watering Volume Conversion Logic\nsummary: Watering volume conversion uses 550ml bottles and 5L buckets with a 5000ml threshold and 500ml tolerance.\ntags: []\nrelated: []\nkeywords: []\ncreatedAt: '2026-07-08T07:02:20.353Z'\nupdatedAt: '2026-07-08T07:02:20.353Z'\n---\n## Reason\nDocumenting watering volume conversion, unit thresholds, and display logic\n\n## Raw Concept\n**Task:**\nWatering volume unit conversion and display logic\n\n**Files:**\n- src/utils/water-volume-format.js\n- cloudfunctions/layer/utils/water-volume-format.js\n\n**Flow:**\nML value -> unit threshold check -> bottle/bucket conversion -> formatted text\n\n**Timestamp:** 2026-07-08\n\n## Narrative\n### Structure\nConversion logic is mirrored between frontend and backend layers.\n\n### Highlights\nUses 550ml (Bottle) and 5000ml (Bucket) as base units. Threshold for bucket display is 5000ml.\n\n### Rules\nRule 1: BOTTLE_ML = 550ml\nRule 2: BUCKET_ML = 5000ml\nRule 3: Use bucket if ml >= 5000, else bottle\nRule 4: BUCKET_ROUND_TOLERANCE_ML = 500ml\n\n### Examples\n50ml ~ 5000ml -> \"Approx X bottles\" (0.5 precision); >= 5000ml -> \"Approx N buckets\"\n\n## Facts\n- **watering_unit**: BOTTLE_ML is defined as 550ml [project]\n- **watering_unit**: BUCKET_ML is defined as 5000ml [project]\n- **unit_threshold**: Bucket unit is used for volumes >= 5000ml [convention]\n"
+      },
+      "reason": "The volume conversion logic provides the display formatting for the output generated by the watering planner's quantitative suggestions.",
+      "type": "CONSOLIDATE"
+    },
+    {
+      "action": "CROSS_REFERENCE",
+      "inputFiles": [
+        "architecture/watering_planner/watering_reminder_algorithm_v2_1.md",
+        "architecture/watering_planner/watering_volume_conversion_logic.md"
+      ],
+      "needsReview": false,
+      "previousTexts": {
+        "architecture/watering_planner/watering_reminder_algorithm_v2_1.md": "---\ntitle: Watering Reminder Algorithm v2.1\nsummary: Watering reminder algorithm v2.1 uses hydration/wet pressure weights, gate states (WET/DRY/BASELINE), and various correction coefficients.\ntags: []\nrelated: []\nkeywords: []\ncreatedAt: '2026-07-08T07:02:20.359Z'\nupdatedAt: '2026-07-08T07:02:20.359Z'\n---\n## Reason\nDocumenting core factors and coefficients for the watering reminder algorithm\n\n## Raw Concept\n**Task:**\nWatering reminder algorithm core factors and logic\n\n**Files:**\n- cloudfunctions/layer/utils/hydration-load.js\n\n**Flow:**\nMoisture index + load -> gate state evaluation -> coefficient adjustment -> suggestion\n\n**Timestamp:** 2026-07-08\n\n## Narrative\n### Structure\nAlgorithm resides in cloudfunctions layer, evaluating dry/wet gates based on moisture and load.\n\n### Highlights\nGate states: WET (over-watering risk), DRY (drought), BASELINE (normal).\n\n### Rules\nWET gate: rootZoneMoistureIndex > 0.6 and wetPressureLoad > 0.4\nDRY gate: index < 0.3 and days since last watering >= baseline\n\n### Examples\nWeather correction: 0.8 for 1 wet item, 0.5 for >=2 items. Genus correction: Dry-loving 0.6, High-moisture 1.25.\n\n## Facts\n- **watering_gate**: WET gate is triggered if moisture index > 0.6 and wet pressure > 0.4 [other]\n- **watering_gate**: DRY gate is triggered if moisture index < 0.3 [other]\n- **pot_volume_threshold**: Oversized pot threshold is 50000ml [project]\n",
+        "architecture/watering_planner/watering_volume_conversion_logic.md": "---\ntitle: Watering Volume Conversion Logic\nsummary: Watering volume conversion uses 550ml bottles and 5L buckets with a 5000ml threshold and 500ml tolerance.\ntags: []\nrelated: []\nkeywords: []\ncreatedAt: '2026-07-08T07:02:20.353Z'\nupdatedAt: '2026-07-08T07:02:20.353Z'\n---\n## Reason\nDocumenting watering volume conversion, unit thresholds, and display logic\n\n## Raw Concept\n**Task:**\nWatering volume unit conversion and display logic\n\n**Files:**\n- src/utils/water-volume-format.js\n- cloudfunctions/layer/utils/water-volume-format.js\n\n**Flow:**\nML value -> unit threshold check -> bottle/bucket conversion -> formatted text\n\n**Timestamp:** 2026-07-08\n\n## Narrative\n### Structure\nConversion logic is mirrored between frontend and backend layers.\n\n### Highlights\nUses 550ml (Bottle) and 5000ml (Bucket) as base units. Threshold for bucket display is 5000ml.\n\n### Rules\nRule 1: BOTTLE_ML = 550ml\nRule 2: BUCKET_ML = 5000ml\nRule 3: Use bucket if ml >= 5000, else bottle\nRule 4: BUCKET_ROUND_TOLERANCE_ML = 500ml\n\n### Examples\n50ml ~ 5000ml -> \"Approx X bottles\" (0.5 precision); >= 5000ml -> \"Approx N buckets\"\n\n## Facts\n- **watering_unit**: BOTTLE_ML is defined as 550ml [project]\n- **watering_unit**: BUCKET_ML is defined as 5000ml [project]\n- **unit_threshold**: Bucket unit is used for volumes >= 5000ml [convention]\n"
+      },
+      "reason": "Both files reference thresholds (e.g., 5000ml for buckets vs 50000ml for oversized pots) that define the system's physical modeling and user feedback scales.",
+      "type": "CONSOLIDATE"
+    },
+    {
+      "action": "CREATE",
+      "confidence": 1,
+      "needsReview": false,
+      "outputFile": "architecture/terminal-state-governance-for-diagnostic-lifecycle.md",
+      "sources": [
+        "architecture/_index.md",
+        "project_management/_index.md",
+        "governance/_index.md"
+      ],
+      "type": "SYNTHESIZE"
+    },
+    {
+      "action": "CREATE",
+      "confidence": 1,
+      "needsReview": false,
+      "outputFile": "tooling/wechat-runtime-first-evidence-policy.md",
+      "sources": [
+        "tooling/_index.md",
+        "governance/_index.md",
+        "testing/_index.md"
+      ],
+      "type": "SYNTHESIZE"
+    },
+    {
+      "action": "CREATE",
+      "confidence": 0.95,
+      "needsReview": false,
+      "outputFile": "maintenance/source-verified-fact-quality-gate.md",
+      "sources": [
+        "maintenance/_index.md",
+        "testing/_index.md",
+        "governance/_index.md"
+      ],
+      "type": "SYNTHESIZE"
+    },
+    {
+      "action": "CREATE",
+      "confidence": 0.9,
+      "needsReview": false,
+      "outputFile": "architecture/physics-based-hydration-modeling-v2-1.md",
+      "sources": [
+        "architecture/_index.md",
+        "system_logic/_index.md"
+      ],
+      "type": "SYNTHESIZE"
+    }
+  ],
+  "startedAt": 1783495051966,
+  "status": "completed",
+  "summary": {
+    "consolidated": 3,
+    "errors": 0,
+    "flaggedForReview": 0,
+    "pruned": 0,
+    "synthesized": 4
+  },
+  "taskId": "80b94168-8543-4493-af1d-871576436e39",
+  "trigger": "agent-idle"
+}

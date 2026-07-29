@@ -20,7 +20,7 @@ const {
   buildProblemSetCacheKey
 } = require('./prior-cache')
 
-async function getGenusCompatibilityMap(genus, problemKeys = []) {
+async function getGenusSuitabilityMap(genus, problemKeys = []) {
   const safeKeys = Array.from(new Set((problemKeys || []).map(item => String(item || '').trim()).filter(Boolean)))
   if (!genus || !safeKeys.length) {return {}}
   const cacheKey = `${String(genus || '').trim()}::${buildProblemSetCacheKey(safeKeys)}`
@@ -33,7 +33,7 @@ async function getGenusCompatibilityMap(genus, problemKeys = []) {
     const map = {}
     for (const row of cachedGenusPriors) {
       if (!safeKeySet.has(row.problemKey)) {continue}
-      map[row.problemKey] = clamp01(row.genusCompatibility)
+      map[row.problemKey] = clamp01(row.genusSuitability)
     }
     setCacheEntry(priorCache.genusCompatibilityByGenusAndProblemSet, cacheKey, map)
     return map
@@ -63,7 +63,7 @@ async function getGenusCompatibilityMap(genus, problemKeys = []) {
   })
 }
 
-async function getHostCompatibilityMap({ genus = '', family = '', category = '' } = {}, problemKeys = []) {
+async function getHostSuitabilityMap({ genus = '', family = '', category = '' } = {}, problemKeys = []) {
   const safeKeys = Array.from(new Set((problemKeys || []).map(item => String(item || '').trim()).filter(Boolean)))
   if (!safeKeys.length) {return {}}
   const cacheKey = `${buildHostContextCacheKey({ genus, family, category })}::${buildProblemSetCacheKey(safeKeys)}`
@@ -77,11 +77,11 @@ async function getHostCompatibilityMap({ genus = '', family = '', category = '' 
     const map = {}
     for (const row of cachedHostPriors) {
       if (!safeKeySet.has(row.problemKey)) {continue}
-      const score = clamp01(row.hostCompatibility)
+      const score = clamp01(row.hostSuitability)
       const existing = map[row.problemKey]
-      if (!existing || score > existing.hostCompatibility) {
+      if (!existing || score > existing.hostSuitability) {
         map[row.problemKey] = {
-          hostCompatibility: score,
+          hostSuitability: score,
           hostLevel: row.matchedHostLevel || ''
         }
       }
@@ -123,9 +123,9 @@ async function getHostCompatibilityMap({ genus = '', family = '', category = '' 
       for (const row of result?.data?.executeResultList || []) {
         const existing = map[row.problem_key]
         const score = clamp01(row.host_compatibility)
-        if (!existing || score > existing.hostCompatibility) {
+        if (!existing || score > existing.hostSuitability) {
           map[row.problem_key] = {
-            hostCompatibility: score,
+            hostSuitability: score,
             hostLevel: row.host_level || ''
           }
         }
@@ -143,6 +143,6 @@ module.exports = {
   getCandidateProblemPriors,
   getGenusCandidatePriors,
   getHostCandidatePriors,
-  getGenusCompatibilityMap,
-  getHostCompatibilityMap
+  getGenusSuitabilityMap,
+  getHostSuitabilityMap
 }

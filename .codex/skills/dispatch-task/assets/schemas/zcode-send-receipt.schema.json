@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ZCode Send Receipt",
+  "type": "object",
+  "required": [
+    "dispatch_run_id",
+    "status",
+    "send_action",
+    "computer_use"
+  ],
+  "properties": {
+    "status": {
+      "enum": [
+        "sent",
+        "blocked"
+      ]
+    },
+    "send_action": {
+      "enum": [
+        "enter",
+        "send_button",
+        "blocked"
+      ]
+    }
+  }
+}

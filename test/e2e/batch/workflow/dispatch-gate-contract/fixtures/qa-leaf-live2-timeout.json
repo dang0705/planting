@@ -1,0 +1,67 @@
+{
+  "status": "failed",
+  "channel": "miniprogram-automator",
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+  "pagePath": "",
+  "wsEndpoint": "ws://127.0.0.1:9420",
+  "fixture": {
+    "enabled": true,
+    "injectionPath": "miniProgram.evaluate monkey-patches uni.request/wx.request for diagnose-http endpoints"
+  },
+  "assertions": [
+    {
+      "name": "runtime scenario completed without transport error",
+      "passed": false,
+      "detail": "[automator-step:scenario.fiveTabAndReuse] timeout",
+      "time": "2026-07-21T09:49:46.452Z"
+    }
+  ],
+  "steps": [
+    {
+      "name": "runtime.connect",
+      "status": "passed",
+      "startedAt": "2026-07-21T09:49:36.402Z",
+      "endedAt": "2026-07-21T09:49:36.408Z",
+      "detail": ""
+    },
+    {
+      "name": "runtime.installHarness",
+      "status": "passed",
+      "startedAt": "2026-07-21T09:49:36.408Z",
+      "endedAt": "2026-07-21T09:49:36.426Z",
+      "detail": ""
+    },
+    {
+      "name": "scenario.fiveTabAndReuse",
+      "status": "failed",
+      "startedAt": "2026-07-21T09:49:36.426Z",
+      "endedAt": "2026-07-21T09:49:46.452Z",
+      "detail": "timeout"
+    },
+    {
+      "name": "runtime.restoreHarness",
+      "status": "passed",
+      "startedAt": "2026-07-21T09:49:46.452Z",
+      "endedAt": "2026-07-21T09:49:46.454Z",
+      "detail": ""
+    }
+  ],
+  "failures": [
+    {
+      "name": "runtime scenario completed without transport error",
+      "detail": "[automator-step:scenario.fiveTabAndReuse] timeout"
+    }
+  ],
+  "not_verified": [],
+  "requests": [],
+  "modals": [],
+  "screenshots": [],
+  "screenshot_attempts": [],
+  "requested_screenshots": [],
+  "evidence_paths": [
+    "/Users/jay/WebstormProjects/planting/.tmp/e2e/diagnosis/pest-mode-and-retake/dispatch-efficiency-governance-20260721-live2/pest-mode-and-retake-runtime-report.json"
+  ],
+  "startedAt": "2026-07-21T09:49:36.346Z",
+  "endedAt": "2026-07-21T09:49:46.455Z",
+  "report_path": "/Users/jay/WebstormProjects/planting/.tmp/e2e/diagnosis/pest-mode-and-retake/dispatch-efficiency-governance-20260721-live2/pest-mode-and-retake-runtime-report.json"
+}

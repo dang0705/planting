@@ -20,7 +20,9 @@ export const usePlantStore = defineStore('plants', {
     plantsNeedWater: state => {
       const now = new Date()
       return state.userPlants.filter(p => {
-        if (!p.nextWater) {return false}
+        if (!p.nextWater) {
+          return false
+        }
         return new Date(p.nextWater) <= now
       })
     }
@@ -47,10 +49,11 @@ export const usePlantStore = defineStore('plants', {
           id: p.id,
           plantId: p.plantId || null,
           plantIdentityId: p.plantIdentityId || '',
-          legacyPlantId: p.legacyPlantId || '',
+          sessionPlantId: p.sessionPlantId || '',
           canonicalName: p.canonicalName || '',
           nickname: p.nickname || '',
-          displayName: p.displayName || p.nickname || p.canonicalName || p.recognizedName || '未命名植物',
+          displayName:
+            p.displayName || p.nickname || p.canonicalName || p.recognizedName || '未命名植物',
           recognizedName: p.recognizedName || '',
           sourceType: p.sourceType || 'catalog',
           recognitionType: p.recognitionType || '',
@@ -58,12 +61,20 @@ export const usePlantStore = defineStore('plants', {
           identityResolutionStatus: p.identityResolutionStatus || '',
           visualCallBatchId: p.visualCallBatchId || '',
           location: p.location || '未设置',
+          careLocationId: p.careLocationId || '',
+          careLocation: p.careLocation || null,
+          locationKey: p.locationKey || p.careLocation?.locationKey || '',
+          lightEnvironment: p.lightEnvironment || null,
           image: p.image || '',
           photos: p.photos || [],
           imageFileId: p.imageFileId || '',
           lastWatered: p.lastWatered || null,
           nextWater: p.nextWater || null,
+          wateringEvents: p.wateringEvents || null,
+          wateringReminder: p.wateringReminder || null,
           createdAt: p.createdAt || null,
+          plantDate: p.plantDate || null,
+          notes: p.notes ?? '',
           genus: p.genus || '',
           familyEn: p.familyEn || '',
           latinName: p.latinName || '',
@@ -77,7 +88,8 @@ export const usePlantStore = defineStore('plants', {
           humidityMax: p.humidityMax ?? null,
           varianceLevel: p.varianceLevel || '',
           healthStatus: p.healthStatus || 'unknown',
-          healthScore: p.healthScore ?? null
+          healthScore: p.healthScore ?? null,
+          potProfile: p.potProfile || null
         }))
 
         return { success: true, total: response.data.total }
@@ -94,8 +106,7 @@ export const usePlantStore = defineStore('plants', {
     updateUserPlantLocal(id, updates) {
       const index = this.userPlants.findIndex(p => p.id === id)
       if (index !== -1) {
-        const nextNickname =
-          updates.nickname !== undefined ? updates.nickname : updates.nickName
+        const nextNickname = updates.nickname !== undefined ? updates.nickname : updates.nickName
         if (nextNickname !== undefined) {
           updates.nickname = nextNickname
           updates.displayName =
@@ -151,21 +162,87 @@ export const usePlantStore = defineStore('plants', {
       return this.optimisticUpdate(id, updates)
     },
 
-    async completeWatering(id) {
-      const plant = this.userPlants.find(item => item.id === id)
-      const now = new Date()
-      const nextWater = new Date(now)
-      const freq = plant?.watering?.freq
-      const minDays = Array.isArray(freq) && freq.length ? Number(freq[0] || 0) : 0
-      const maxDays =
-        Array.isArray(freq) && freq.length > 1 ? Number(freq[1] || minDays || 0) : minDays
-      const intervalDays = Math.max(1, Math.round((minDays + maxDays) / 2) || 7)
-      nextWater.setDate(nextWater.getDate() + intervalDays)
+    async savePotProfile(id, potProfileFields) {
+      const plant = this.userPlants.find(p => p.id === id)
+      if (!plant) {
+        return { success: false, message: '植物不存在' }
+      }
+      const originalPotProfile = plant.potProfile
+      // 后端 updateUserPlantInstance 消费扁平字段（potTopDiameterCm 等）；
+      // 本地则维护嵌套 potProfile 视图（含 substrateComposition）供 UI 读取。
+      let substrateComposition = null
+      if (
+        typeof potProfileFields.substrateType === 'string' &&
+        potProfileFields.substrateType.startsWith('[')
+      ) {
+        try {
+          substrateComposition = JSON.parse(potProfileFields.substrateType)
+        } catch {
+          substrateComposition = null
+        }
+      }
+      plant.potProfile = { ...plant.potProfile, ...potProfileFields, substrateComposition }
 
-      return this.updateUserPlant(id, {
-        lastWatered: now.toISOString(),
-        nextWater: nextWater.toISOString()
-      })
+      try {
+        const response = await patchUserPlant({ id, ...potProfileFields })
+        if (response?.code === 200) {
+          return { success: true }
+        }
+        plant.potProfile = originalPotProfile
+        return { success: false, message: response?.message || '保存失败' }
+      } catch (error) {
+        console.error('保存盆型档案失败:', error)
+        plant.potProfile = originalPotProfile
+        return { success: false, message: error.message }
+      }
+    },
+
+    async completeWatering(id, { wateringEvents = null, nextWaterDate = null } = {}) {
+      // nextWater 不再在前端用平均值公式计算，由后端 buildWateringPlanner 产出
+      const updates = {}
+      const nowIso = new Date().toISOString()
+
+      if (wateringEvents && wateringEvents.length > 0) {
+        updates.wateringEvents = wateringEvents
+        const sorted = [...wateringEvents].sort((a, b) =>
+          String(b.date || '').localeCompare(String(a.date || ''))
+        )
+        if (sorted[0]?.date) {
+          updates.lastWatered = sorted[0].date
+        }
+      } else if (wateringEvents === null) {
+        // 旧调用方式（无参数）：仅记录当前时间为 lastWatered
+        updates.lastWatered = nowIso
+      }
+
+      if (nextWaterDate) {
+        updates.nextWater = nextWaterDate
+      }
+
+      if (Object.keys(updates).length === 0) {
+        return { success: false, message: '缺少浇水事件或下次浇水日期' }
+      }
+      return this.updateUserPlant(id, updates)
+    },
+
+    applyWateringReminder(id, reminder = {}) {
+      const plant = this.userPlants.find(p => p.id === id)
+      if (!plant) {
+        return
+      }
+      const updates = {
+        wateringReminder: reminder || null
+      }
+      if (reminder?.lastWatered) {
+        updates.lastWatered = reminder.lastWatered
+      }
+      if (reminder?.nextWaterDate) {
+        updates.nextWater = reminder.nextWaterDate
+      }
+      if (Array.isArray(reminder?.wateringEvents)) {
+        updates.wateringEvents = reminder.wateringEvents
+      }
+      this.updateUserPlantLocal(id, updates)
     }
   },
   persist: false

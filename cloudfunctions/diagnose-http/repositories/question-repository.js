@@ -105,18 +105,10 @@ async function preloadQuestionRepositoryCache() {
             question_group_key,
             question_level,
             observability,
-            target_dimension,
-            routing_scope,
-            question_role,
-            effect_mode,
             allow_unknown,
             priority,
             help_text_cn,
             why_this_question_cn,
-            default_option_key,
-            ui_variant,
-            render_mode,
-            template_engine_rule_key,
             data_status,
             review_status
           FROM ${table('question_library_v5_real')}
@@ -137,16 +129,12 @@ async function preloadQuestionRepositoryCache() {
             value,
             association_strength,
             answer_effect_cn,
-            option_description_user_cn,
-            display_order,
-            is_default,
             data_status,
             review_status
           FROM ${table('question_option_mapping_v5_real')}
           WHERE data_status = 'audited'
             AND review_status = 'audited'
-            AND is_active = 1
-          ORDER BY question_key ASC, COALESCE(display_order, 9999) ASC, option_key ASC
+          ORDER BY question_key ASC, option_key ASC
         `,
         {}
       )
@@ -295,18 +283,10 @@ async function getQuestionsByKeys(questionKeys = []) {
           question_group_key,
           question_level,
           observability,
-          target_dimension,
-          routing_scope,
-          question_role,
-          effect_mode,
           allow_unknown,
           priority,
           help_text_cn,
           why_this_question_cn,
-          default_option_key,
-          ui_variant,
-          render_mode,
-          template_engine_rule_key,
           data_status,
           review_status
         FROM ${table('question_library_v5_real')}
@@ -357,18 +337,10 @@ async function getQuestionsByGroupKeys(groupKeys = []) {
           question_group_key,
           question_level,
           observability,
-          target_dimension,
-          routing_scope,
-          question_role,
-          effect_mode,
           allow_unknown,
           priority,
           help_text_cn,
           why_this_question_cn,
-          default_option_key,
-          ui_variant,
-          render_mode,
-          template_engine_rule_key,
           data_status,
           review_status
         FROM ${table('question_library_v5_real')}
@@ -425,17 +397,13 @@ async function getQuestionOptionMappings(questionKeys = []) {
           value,
           association_strength,
           answer_effect_cn,
-          option_description_user_cn,
-          display_order,
-          is_default,
           data_status,
           review_status
         FROM ${table('question_option_mapping_v5_real')}
         WHERE question_key IN ${sqlInList(missingKeys)}
           AND data_status = 'audited'
           AND review_status = 'audited'
-          AND is_active = 1
-        ORDER BY question_key ASC, COALESCE(display_order, 9999) ASC, option_key ASC
+        ORDER BY question_key ASC, option_key ASC
       `,
       {}
     )

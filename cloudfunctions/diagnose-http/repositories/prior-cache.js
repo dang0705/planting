@@ -90,9 +90,9 @@ function buildProblemSetCacheKey(problemKeys = []) {
   return normalizeCacheSignature((problemKeys || []).map(item => String(item || '').trim()).filter(Boolean))
 }
 
-function parseJsonField(value, fallback = null) {
+function parseJsonField(value, conservative = null) {
   if (value === null || value === undefined || value === '') {
-    return fallback
+    return conservative
   }
 
   if (typeof value === 'object') {
@@ -102,7 +102,7 @@ function parseJsonField(value, fallback = null) {
   try {
     return JSON.parse(String(value))
   } catch {
-    return fallback
+    return conservative
   }
 }
 
@@ -118,8 +118,8 @@ function normalizeCareStrategy(value) {
 function mapCandidateRow(row = {}) {
   return {
     problemKey: row.problem_key,
-    genusCompatibility: clamp01(row.genus_compatibility),
-    hostCompatibility: clamp01(row.host_compatibility),
+    genusSuitability: clamp01(row.genus_compatibility),
+    hostSuitability: clamp01(row.host_compatibility),
     finalPriorScore: clamp01(row.final_prior_score),
     matchedHostLevel: row.matched_host_level || '',
     sourceLayer: row.source_layer || '',
